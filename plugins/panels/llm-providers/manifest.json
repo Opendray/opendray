@@ -1,0 +1,14 @@
+{
+  "name": "llm-providers",
+  "displayName": "LLM Providers",
+  "description": "Address book of OpenAI-compatible model endpoints — local Ollama, LM Studio, Groq, Gemini, or any custom provider. Sessions route through these at spawn time.",
+  "icon": "\ud83d\udef0\ufe0f",
+  "version": "1.0.0",
+  "type": "panel",
+  "category": "endpoints",
+  "capabilities": {
+    "supportsResume": false,
+    "supportsStream": false
+  },
+  "configSchema": []
+}

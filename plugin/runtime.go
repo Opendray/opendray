@@ -1,0 +1,433 @@
+package plugin
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"os/exec"
+	"sort"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/linivek/ntc/kernel/store"
+)
+
+// ProviderConfig holds user-customizable settings, keyed by ConfigField.Key.
+type ProviderConfig map[string]any
+
+// ProviderInfo is the API response for a provider.
+type ProviderInfo struct {
+	Provider  Provider       `json:"provider"`
+	Config    ProviderConfig `json:"config"`
+	Installed bool           `json:"installed"`
+	Enabled   bool           `json:"enabled"`
+}
+
+// liveProvider tracks a loaded provider's runtime state.
+type liveProvider struct {
+	provider  Provider
+	config    ProviderConfig
+	installed bool
+	enabled   bool
+}
+
+// Runtime manages provider lifecycle and configuration.
+type Runtime struct {
+	db        *store.DB
+	hookBus   *HookBus
+	logger    *slog.Logger
+	pluginDir string
+
+	mu        sync.RWMutex
+	providers map[string]*liveProvider // name → live state
+}
+
+// NewRuntime creates a provider runtime.
+func NewRuntime(db *store.DB, hookBus *HookBus, pluginDir string, logger *slog.Logger) *Runtime {
+	if logger == nil {
+		logger = slog.Default()
+	}
+	return &Runtime{
+		db:        db,
+		hookBus:   hookBus,
+		logger:    logger,
+		pluginDir: pluginDir,
+		providers: make(map[string]*liveProvider),
+	}
+}
+
+// ── Loading ─────────────────────────────────────────────────────
+
+// LoadAll loads providers from DB first, then seeds new ones from filesystem.
+func (rt *Runtime) LoadAll(ctx context.Context) error {
+	dbPlugins, err := rt.db.ListPlugins(ctx, false)
+	if err != nil {
+		return fmt.Errorf("plugin runtime: load from db: %w", err)
+	}
+
+	loaded := make(map[string]bool)
+	for _, dbp := range dbPlugins {
+		var p Provider
+		if err := json.Unmarshal(dbp.Manifest, &p); err != nil {
+			rt.logger.Warn("invalid manifest in DB", "plugin", dbp.Name, "error", err)
+			continue
+		}
+		var cfg ProviderConfig
+		if len(dbp.Config) > 2 {
+			_ = json.Unmarshal(dbp.Config, &cfg)
+		}
+		rt.loadIntoMemory(p, cfg, dbp.Enabled)
+		loaded[p.Name] = true
+		rt.logger.Info("provider loaded from DB", "name", p.Name, "enabled", dbp.Enabled)
+	}
+
+	// Seed new providers from filesystem
+	providers, _ := ScanPluginDir(rt.pluginDir)
+	for _, p := range providers {
+		if loaded[p.Name] {
+			continue
+		}
+		if err := rt.seed(ctx, p); err != nil {
+			rt.logger.Warn("seed failed", "name", p.Name, "error", err)
+			continue
+		}
+		rt.logger.Info("provider seeded from filesystem", "name", p.Name)
+	}
+	return nil
+}
+
+func (rt *Runtime) seed(ctx context.Context, p Provider) error {
+	manifestJSON, err := json.Marshal(p)
+	if err != nil {
+		return err
+	}
+	_, err = rt.db.UpsertPlugin(ctx, store.Plugin{
+		Name: p.Name, Version: p.Version, Manifest: manifestJSON, Enabled: true,
+	})
+	if err != nil {
+		return err
+	}
+	rt.loadIntoMemory(p, ProviderConfig{}, true)
+	return nil
+}
+
+func (rt *Runtime) loadIntoMemory(p Provider, cfg ProviderConfig, enabled bool) {
+	installed := detectInstalled(p, cfg)
+
+	rt.mu.Lock()
+	rt.providers[p.Name] = &liveProvider{
+		provider: p, config: cfg, installed: installed, enabled: enabled,
+	}
+	rt.mu.Unlock()
+}
+
+func detectInstalled(p Provider, cfg ProviderConfig) bool {
+	if p.CLI == nil {
+		return true
+	}
+	cmd := p.CLI.Command
+	if v, ok := cfg["command"].(string); ok && v != "" {
+		cmd = v
+	}
+	detectScript := "which " + cmd + " || ls " + cmd + " 2>/dev/null"
+	if p.CLI.DetectCmd != "" && (cfg["command"] == nil || cfg["command"] == "") {
+		detectScript = p.CLI.DetectCmd
+	}
+	return exec.Command("sh", "-c", detectScript).Run() == nil
+}
+
+// ── Query ───────────────────────────────────────────────────────
+
+// Get returns a provider by name.
+func (rt *Runtime) Get(name string) (Provider, bool) {
+	rt.mu.RLock()
+	defer rt.mu.RUnlock()
+	lp, ok := rt.providers[name]
+	if !ok {
+		return Provider{}, false
+	}
+	return lp.provider, true
+}
+
+// List returns all providers.
+func (rt *Runtime) List() []Provider {
+	rt.mu.RLock()
+	defer rt.mu.RUnlock()
+	result := make([]Provider, 0, len(rt.providers))
+	for _, lp := range rt.providers {
+		result = append(result, lp.provider)
+	}
+	return result
+}
+
+// ListInfo returns all providers with runtime status and config.
+// Results are sorted by Provider.Name so clients see a stable order —
+// without this, the random map iteration would cause the mobile UI to
+// reshuffle cards after every toggle/config update.
+func (rt *Runtime) ListInfo() []ProviderInfo {
+	rt.mu.RLock()
+	defer rt.mu.RUnlock()
+	result := make([]ProviderInfo, 0, len(rt.providers))
+	for _, lp := range rt.providers {
+		result = append(result, ProviderInfo{
+			Provider: lp.provider, Config: lp.config,
+			Installed: lp.installed, Enabled: lp.enabled,
+		})
+	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Provider.Name < result[j].Provider.Name
+	})
+	return result
+}
+
+// ── Mutation ────────────────────────────────────────────────────
+
+// SetEnabled toggles a provider's enabled state.
+func (rt *Runtime) SetEnabled(ctx context.Context, name string, enabled bool) error {
+	rt.mu.Lock()
+	lp, ok := rt.providers[name]
+	if !ok {
+		rt.mu.Unlock()
+		return fmt.Errorf("provider %q not found", name)
+	}
+	lp.enabled = enabled
+	rt.mu.Unlock()
+	return rt.db.UpdatePluginEnabled(ctx, name, enabled)
+}
+
+// UpdateConfig saves provider configuration and re-detects installation.
+func (rt *Runtime) UpdateConfig(ctx context.Context, name string, cfg ProviderConfig) error {
+	rt.mu.Lock()
+	lp, ok := rt.providers[name]
+	if !ok {
+		rt.mu.Unlock()
+		return fmt.Errorf("provider %q not found", name)
+	}
+	lp.config = cfg
+	lp.installed = detectInstalled(lp.provider, cfg)
+	rt.mu.Unlock()
+
+	cfgJSON, _ := json.Marshal(cfg)
+	return rt.db.UpdatePluginConfig(ctx, name, cfgJSON)
+}
+
+// Register adds a new provider at runtime (no filesystem needed).
+func (rt *Runtime) Register(ctx context.Context, p Provider) error {
+	manifestJSON, err := json.Marshal(p)
+	if err != nil {
+		return err
+	}
+	_, err = rt.db.UpsertPlugin(ctx, store.Plugin{
+		Name: p.Name, Version: p.Version, Manifest: manifestJSON, Enabled: true,
+	})
+	if err != nil {
+		return err
+	}
+	rt.loadIntoMemory(p, ProviderConfig{}, true)
+	return nil
+}
+
+// Remove deletes a provider from runtime and DB.
+func (rt *Runtime) Remove(ctx context.Context, name string) error {
+	rt.mu.Lock()
+	if _, ok := rt.providers[name]; !ok {
+		rt.mu.Unlock()
+		return fmt.Errorf("provider %q not found", name)
+	}
+	delete(rt.providers, name)
+	rt.mu.Unlock()
+	rt.hookBus.Unregister(name)
+	return rt.db.DeletePlugin(ctx, name)
+}
+
+// ── CLI Tool Resolution (used by Hub) ───────────────────────────
+
+// ResolvedCLI is the final CLI specification with config overrides applied.
+type ResolvedCLI struct {
+	Command string
+	Args    []string
+	Env     map[string]string
+}
+
+// ResolveCLI returns the CLI launch spec for a provider, with config overrides applied.
+// Handles: command override, auth type, boolean→cliFlag, select→cliFlag, env var injection.
+func (rt *Runtime) ResolveCLI(name string) (ResolvedCLI, bool) {
+	rt.mu.RLock()
+	defer rt.mu.RUnlock()
+
+	lp, ok := rt.providers[name]
+	if !ok || lp.provider.CLI == nil || !lp.enabled {
+		return ResolvedCLI{}, false
+	}
+
+	p := lp.provider
+	cfg := lp.config
+
+	// 1. Command override
+	command := p.CLI.Command
+	if v, ok := cfg["command"].(string); ok && v != "" {
+		command = v
+	}
+
+	// 2. Base args
+	args := make([]string, len(p.CLI.DefaultArgs))
+	copy(args, p.CLI.DefaultArgs)
+
+	// 3. Process configSchema fields → args and env
+	env := make(map[string]string)
+
+	for _, field := range p.ConfigSchema {
+		val, hasVal := cfg[field.Key]
+
+		// Auth type: only inject env var when authType = "custom"
+		if field.Key == "apiKey" && field.EnvVar != "" {
+			authType, _ := cfg["authType"].(string)
+			if authType == "custom" {
+				if s, ok := val.(string); ok && s != "" {
+					env[field.EnvVar] = s
+				}
+			}
+			// "env" = don't set (use system), "oauth" = don't set (tool handles it)
+			continue
+		}
+
+		// Boolean with cliFlag → append flag when true
+		if field.Type == "boolean" && field.CLIFlag != "" && hasVal {
+			if b, ok := val.(bool); ok && b {
+				args = append(args, field.CLIFlag)
+			}
+			continue
+		}
+
+		// Select with cliFlag → append flag + value
+		if field.Type == "select" && field.CLIFlag != "" && hasVal {
+			if s, ok := val.(string); ok && s != "" {
+				if field.CLIValue {
+					args = append(args, field.CLIFlag, s)
+				} else {
+					args = append(args, field.CLIFlag)
+				}
+			}
+			continue
+		}
+
+		// EnvVar mapping (non-auth fields)
+		if field.EnvVar != "" && hasVal {
+			if s, ok := val.(string); ok && s != "" {
+				env[field.EnvVar] = s
+			}
+		}
+	}
+
+	// 4. Extra args (freeform)
+	if v, ok := cfg["extraArgs"].(string); ok && v != "" {
+		args = append(args, strings.Fields(v)...)
+	}
+
+	return ResolvedCLI{Command: command, Args: args, Env: env}, true
+}
+
+// ── Model Detection ─────────────────────────────────────────────
+
+// DetectModels runs runtime detection for providers with dynamicModels capability.
+func (rt *Runtime) DetectModels(name string) ([]ModelDef, error) {
+	rt.mu.RLock()
+	lp, ok := rt.providers[name]
+	rt.mu.RUnlock()
+	if !ok {
+		return nil, fmt.Errorf("provider %q not found", name)
+	}
+	if !lp.provider.Capabilities.DynamicModels {
+		return lp.provider.Capabilities.Models, nil
+	}
+
+	cmd := lp.provider.CLI.Command
+	if v, ok := lp.config["command"].(string); ok && v != "" {
+		cmd = v
+	}
+
+	var script string
+	switch lp.provider.Name {
+	case "lmstudio":
+		script = cmd + " ls 2>/dev/null"
+	case "ollama":
+		script = cmd + " list 2>/dev/null | tail -n +2 | awk '{print $1}'"
+	default:
+		return lp.provider.Capabilities.Models, nil
+	}
+
+	out, err := exec.Command("sh", "-c", script).Output()
+	if err != nil {
+		return lp.provider.Capabilities.Models, nil
+	}
+
+	var models []ModelDef
+	if lp.provider.Name == "lmstudio" {
+		inLLM := false
+		for _, line := range strings.Split(string(out), "\n") {
+			line = strings.TrimSpace(line)
+			if strings.HasPrefix(line, "LLM") {
+				inLLM = true
+				continue
+			}
+			if strings.HasPrefix(line, "EMBEDDING") {
+				break
+			}
+			if inLLM && line != "" {
+				parts := strings.Fields(line)
+				if len(parts) >= 1 {
+					models = append(models, ModelDef{ID: parts[0], Name: parts[0]})
+				}
+			}
+		}
+	} else {
+		for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+			line = strings.TrimSpace(line)
+			if line != "" {
+				models = append(models, ModelDef{ID: line, Name: line})
+			}
+		}
+	}
+
+	if len(models) == 0 {
+		return lp.provider.Capabilities.Models, nil
+	}
+	return models, nil
+}
+
+// ── Health Check ────────────────────────────────────────────────
+
+func (rt *Runtime) StartHealthCheck(ctx context.Context, interval time.Duration) {
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				rt.mu.RLock()
+				for name, lp := range rt.providers {
+					newInstalled := detectInstalled(lp.provider, lp.config)
+					if newInstalled != lp.installed {
+						rt.logger.Info("provider install status changed", "name", name, "installed", newInstalled)
+					}
+				}
+				rt.mu.RUnlock()
+			}
+		}
+	}()
+}
+
+// HookBus returns the event bus.
+func (rt *Runtime) HookBus() *HookBus {
+	return rt.hookBus
+}
+
+// Proxy is kept for panel-type plugins (future).
+func (rt *Runtime) Proxy(name string) (http.Handler, error) {
+	return nil, fmt.Errorf("proxy not implemented for provider %q", name)
+}

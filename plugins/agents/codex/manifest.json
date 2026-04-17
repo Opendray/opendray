@@ -1,0 +1,56 @@
+{
+  "name": "codex",
+  "displayName": "Codex CLI",
+  "description": "OpenAI Codex CLI — agentic coding with sandboxed execution",
+  "icon": "🤖",
+  "version": "1.0.0",
+  "type": "cli",
+  "cli": {
+    "command": "codex",
+    "defaultArgs": [],
+    "detectCmd": "which codex"
+  },
+  "capabilities": {
+    "models": [
+      { "id": "o4-mini", "name": "o4-mini", "description": "Fast reasoning, cost-effective" },
+      { "id": "o3", "name": "o3", "description": "Most capable reasoning" },
+      { "id": "gpt-4.1", "name": "GPT-4.1", "description": "Balanced coding performance" },
+      { "id": "gpt-4.1-mini", "name": "GPT-4.1 Mini", "description": "Lightweight, fast" }
+    ],
+    "supportsResume": false,
+    "supportsStream": true,
+    "supportsImages": false,
+    "supportsMcp": true,
+    "dynamicModels": false
+  },
+  "configSchema": [
+    {
+      "key": "authType", "label": "Authentication", "type": "select", "group": "auth",
+      "options": ["env", "custom"], "default": "env",
+      "description": "env = read OPENAI_API_KEY from system; custom = use key below"
+    },
+    {
+      "key": "apiKey", "label": "API Key", "type": "secret", "group": "auth",
+      "envVar": "OPENAI_API_KEY", "placeholder": "sk-...",
+      "dependsOn": "authType", "dependsVal": "custom"
+    },
+    {
+      "key": "model", "label": "Default Model", "type": "select", "group": "runtime",
+      "options": ["o4-mini", "o3", "gpt-4.1", "gpt-4.1-mini"], "default": "o4-mini",
+      "cliFlag": "--model", "cliValue": true
+    },
+    {
+      "key": "approval", "label": "Approval Mode", "type": "select", "group": "runtime",
+      "options": ["suggest", "auto-edit", "full-auto"], "default": "suggest",
+      "cliFlag": "--approval-mode", "cliValue": true,
+      "description": "suggest = ask before changes; auto-edit = auto-apply file edits; full-auto = YOLO mode"
+    },
+    {
+      "key": "command", "label": "Command Path", "type": "string", "group": "advanced",
+      "placeholder": "codex"
+    },
+    {
+      "key": "extraArgs", "label": "Extra CLI Args", "type": "args", "group": "advanced"
+    }
+  ]
+}

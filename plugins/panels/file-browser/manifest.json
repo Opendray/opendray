@@ -1,0 +1,52 @@
+{
+  "name": "file-browser",
+  "displayName": "File Browser",
+  "description": "Browse and view project files on the server with syntax highlighting",
+  "icon": "📁",
+  "version": "1.0.0",
+  "type": "panel",
+  "category": "files",
+  "capabilities": {
+    "models": [],
+    "supportsResume": false,
+    "supportsStream": false,
+    "supportsImages": false,
+    "supportsMcp": false,
+    "dynamicModels": false
+  },
+  "configSchema": [
+    {
+      "key": "allowedRoots",
+      "label": "Allowed Directories",
+      "type": "string",
+      "group": "connection",
+      "placeholder": "$HOME/projects",
+      "required": true,
+      "description": "Comma-separated root directories that can be browsed. All paths must be under these roots."
+    },
+    {
+      "key": "showHidden",
+      "label": "Show Hidden Files",
+      "type": "boolean",
+      "group": "runtime",
+      "default": false,
+      "description": "Show files and directories starting with ."
+    },
+    {
+      "key": "maxFileSize",
+      "label": "Max File Size (KB)",
+      "type": "number",
+      "group": "runtime",
+      "default": 512,
+      "description": "Maximum file size to read. Larger files will show metadata only."
+    },
+    {
+      "key": "defaultPath",
+      "label": "Default Path",
+      "type": "string",
+      "group": "runtime",
+      "placeholder": "$HOME/projects",
+      "description": "Starting directory when opening the file browser"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "name": "claude",
+  "displayName": "Claude Code",
+  "description": "Anthropic Claude Code CLI — agentic coding with tool use, MCP, and session resume",
+  "icon": "🟣",
+  "version": "1.0.0",
+  "type": "cli",
+  "cli": {
+    "command": "claude",
+    "defaultArgs": [],
+    "detectCmd": "which claude"
+  },
+  "capabilities": {
+    "models": [
+      { "id": "sonnet", "name": "Claude Sonnet 4.6", "description": "Fast, balanced — default for daily work" },
+      { "id": "opus", "name": "Claude Opus 4.6", "description": "Most capable, deep reasoning and architecture" },
+      { "id": "haiku", "name": "Claude Haiku 4.5", "description": "Lightweight, quick tasks and pair programming" }
+    ],
+    "supportsResume": true,
+    "supportsStream": true,
+    "supportsImages": true,
+    "supportsMcp": true,
+    "dynamicModels": false
+  },
+  "configSchema": [
+    {
+      "key": "authType", "label": "Authentication", "type": "select", "group": "auth",
+      "options": ["env", "custom", "oauth"], "default": "env",
+      "description": "env = read ANTHROPIC_API_KEY from system; custom = use key below; oauth = browser login"
+    },
+    {
+      "key": "apiKey", "label": "API Key", "type": "secret", "group": "auth",
+      "envVar": "ANTHROPIC_API_KEY", "placeholder": "sk-ant-...",
+      "dependsOn": "authType", "dependsVal": "custom"
+    },
+    {
+      "key": "model", "label": "Default Model", "type": "select", "group": "runtime",
+      "options": ["sonnet", "opus", "haiku"], "default": "sonnet",
+      "cliFlag": "--model", "cliValue": true
+    },
+    {
+      "key": "bypassPermissions", "label": "Bypass Permissions", "type": "boolean", "group": "runtime",
+      "default": false, "cliFlag": "--dangerously-skip-permissions",
+      "description": "Skip all permission prompts — full autonomous mode"
+    },
+    {
+      "key": "maxTurns", "label": "Max Turns", "type": "number", "group": "runtime",
+      "description": "Limit autonomous agentic turns (0 = unlimited)"
+    },
+    {
+      "key": "command", "label": "Command Path", "type": "string", "group": "advanced",
+      "placeholder": "claude"
+    },
+    {
+      "key": "extraArgs", "label": "Extra CLI Args", "type": "args", "group": "advanced"
+    }
+  ]
+}

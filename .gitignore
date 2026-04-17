@@ -1,0 +1,36 @@
+# Binary
+bin/
+*.exe
+
+# Release tarballs / deploy artefacts
+dist/
+
+# Frontend
+web/node_modules/
+web/dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+
+# Environment (never commit — DB passwords etc.)
+.env
+.env.*
+!.env.example
+
+# Runtime logs (not the gateway/logs package or plugins/panels/log-viewer)
+/logs/
+app/logs/
+
+# Plugin data
+plugins/*/data/
+
+# Local-only — not pushed to Gitea
+CLAUDE.md
+deploy/
+docs/
