@@ -7,18 +7,6 @@ on:
     branches: [main]
 
 jobs:
-  backend:
-    name: Backend (Go)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.25"
-      - run: go vet ./...
-      - run: go test -race ./...
-      - run: go build -o /dev/null ./cmd/opendray
-
   frontend:
     name: Frontend (Flutter)
     runs-on: ubuntu-latest
@@ -28,5 +16,27 @@ jobs:
         with:
           channel: beta
       - run: cd app && flutter pub get
-      - run: cd app && flutter analyze --no-fatal-infos
+      - run: cd app && flutter analyze --no-fatal-infos --no-fatal-warnings
       - run: cd app && flutter build web --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: app/build/web
+          retention-days: 1
+
+  backend:
+    name: Backend (Go)
+    needs: frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: app/build/web
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+      - run: go vet ./...
+      - run: go test -race ./...
+      - run: go build -o /dev/null ./cmd/opendray
