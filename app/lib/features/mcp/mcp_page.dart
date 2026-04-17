@@ -155,7 +155,7 @@ class _MCPPageState extends State<MCPPage> {
             : ListView.separated(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
                 itemCount: _servers.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (_, i) => _serverCard(_servers[i]),
               ),
       ),
@@ -189,7 +189,7 @@ class _MCPPageState extends State<MCPPage> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: enabled ? AppColors.accent.withOpacity(0.25) : AppColors.border),
+        side: BorderSide(color: enabled ? AppColors.accent.withValues(alpha: 0.25) : AppColors.border),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
@@ -226,7 +226,7 @@ class _MCPPageState extends State<MCPPage> {
                 Switch(
                   value: enabled,
                   onChanged: (v) => _toggle(s, v),
-                  activeColor: AppColors.accent,
+                  activeThumbColor: AppColors.accent,
                 ),
               ],
             ),
@@ -245,7 +245,7 @@ class _MCPPageState extends State<MCPPage> {
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: AppColors.accent.withOpacity(0.12),
+                    color: AppColors.accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -527,7 +527,7 @@ class _ServerEditorDialogState extends State<_ServerEditorDialog> {
                 onChanged: (v) => setState(() => _enabled = v),
                 title: Text(context.tr('Enabled')),
                 contentPadding: EdgeInsets.zero,
-                activeColor: AppColors.accent,
+                activeThumbColor: AppColors.accent,
               ),
             ],
           ),

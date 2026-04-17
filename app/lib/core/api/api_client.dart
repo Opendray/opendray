@@ -216,7 +216,7 @@ class ApiClient {
 
   Future<Map<String, dynamic>> telegramTest({String? text}) async {
     final res = await _dio.post('/api/telegram/test',
-        data: {if (text != null) 'text': text});
+        data: {'text': ?text});
     return Map<String, dynamic>.from(res.data as Map);
   }
 

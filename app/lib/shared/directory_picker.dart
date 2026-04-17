@@ -35,7 +35,7 @@ class _DirectoryPickerSheetState extends State<_DirectoryPickerSheet> {
   List<ProviderInfo> _plugins = [];
   String? _plugin;
   String _currentPath = '';
-  List<String> _pathStack = [];
+  final List<String> _pathStack = [];
   List<Map<String, dynamic>> _entries = [];
   bool _loading = true;
   String? _error;
