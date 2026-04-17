@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!--
+    Option 2: "The Session Grid"
+    Three terminal prompt chevrons (>) stacked vertically.
+    Represents multiplexed agent sessions.
+    Clean, geometric, unmistakably "terminal".
+  -->
+  <rect width="512" height="512" rx="112" fill="#0F172A"/>
+
+  <!-- Top chevron -->
+  <path fill="white" d="M152 112 L296 176 L152 240 L152 200 L240 176 L152 152 Z"/>
+
+  <!-- Middle chevron (larger, primary) -->
+  <path fill="white" d="M152 216 L328 280 L152 344 L152 304 L272 280 L152 256 Z"/>
+
+  <!-- Bottom chevron -->
+  <path fill="white" d="M152 320 L296 384 L152 448 L152 408 L240 384 L152 360 Z"/>
+
+  <!-- Cursor blocks (right side) -->
+  <rect x="312" y="164" width="48" height="24" rx="4" fill="white" opacity="0.4"/>
+  <rect x="344" y="268" width="48" height="24" rx="4" fill="white"/>
+  <rect x="312" y="372" width="48" height="24" rx="4" fill="white" opacity="0.4"/>
+</svg>

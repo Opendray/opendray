@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!--
+    Option 1: "The Pilot Console"
+    Bold D with a chevron (play) cutout.
+    D = Dray. Chevron = piloting / go / execute.
+    Inspired by Maestri's clean geometry.
+  -->
+  <rect width="512" height="512" rx="112" fill="#0F172A"/>
+  <path fill-rule="evenodd" fill="white" d="
+    M 152 96
+    L 296 96
+    C 392 96 416 160 416 256
+    C 416 352 392 416 296 416
+    L 152 416
+    Z
+    M 232 200
+    L 232 312
+    L 312 256
+    Z
+  "/>
+</svg>
