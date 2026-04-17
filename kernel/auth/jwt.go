@@ -1,4 +1,4 @@
-// Package auth provides JWT authentication for NTC.
+// Package auth provides JWT authentication for OpenDray.
 package auth
 
 import (

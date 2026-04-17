@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/linivek/ntc/gateway/telegram/jsonl"
+	"github.com/opendray/opendray/gateway/telegram/jsonl"
 )
 
 // DetectQuestion scans cleaned terminal output for interactive prompts

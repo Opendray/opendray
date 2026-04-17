@@ -33,7 +33,7 @@ class MobileTerminalViewState extends State<MobileTerminalView> {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0xFF0B0D11))
-      ..addJavaScriptChannel('NTC', onMessageReceived: _onMessage)
+      ..addJavaScriptChannel('OpenDray', onMessageReceived: _onMessage)
       ..setNavigationDelegate(NavigationDelegate(
         onPageFinished: (_) => _injectMessageBridge(),
       ));
@@ -53,7 +53,7 @@ class MobileTerminalViewState extends State<MobileTerminalView> {
     final jsonStr = jsonEncode(data);
     try {
       _controller.runJavaScript(
-        'window.ntcSendKey && window.ntcSendKey($jsonStr);',
+        'window.openDraySendKey && window.openDraySendKey($jsonStr);',
       );
       return true;
     } catch (_) {
@@ -80,13 +80,13 @@ class MobileTerminalViewState extends State<MobileTerminalView> {
     _controller.loadRequest(Uri.parse(url));
   }
 
-  /// Bridge window.postMessage → WebViewController JavaScript channel (NTC)
+  /// Bridge window.postMessage → WebViewController JavaScript channel (OpenDray)
   Future<void> _injectMessageBridge() async {
     await _controller.runJavaScript('''
       window.addEventListener('message', function(ev) {
         try {
-          if (ev.data && ev.data.type && ev.data.type.startsWith('ntc:')) {
-            NTC.postMessage(JSON.stringify(ev.data));
+          if (ev.data && ev.data.type && ev.data.type.startsWith('opendray:')) {
+            OpenDray.postMessage(JSON.stringify(ev.data));
           }
         } catch (e) {}
       });
@@ -99,15 +99,15 @@ class MobileTerminalViewState extends State<MobileTerminalView> {
       final type = data['type'] as String?;
       if (type == null) return;
       switch (type) {
-        case 'ntc:idle':
+        case 'opendray:idle':
           widget.onEvent?.call('idle');
-        case 'ntc:exit':
+        case 'opendray:exit':
           widget.onEvent?.call('exit');
-        case 'ntc:connected':
+        case 'opendray:connected':
           widget.onEvent?.call('connected');
-        case 'ntc:disconnected':
+        case 'opendray:disconnected':
           widget.onEvent?.call('disconnected');
-        case 'ntc:ready':
+        case 'opendray:ready':
           widget.onEvent?.call('ready');
       }
     } catch (_) {}

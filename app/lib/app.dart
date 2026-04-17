@@ -44,7 +44,7 @@ class NtcApp extends StatelessWidget {
           return Provider<ApiClient>.value(
             value: apiClient,
             child: MaterialApp.router(
-              title: 'NTC',
+              title: 'OpenDray',
               theme: buildAppTheme(),
               debugShowCheckedModeBanner: false,
               routerConfig: config.isConfigured ? _mainRouter : _setupRouter,

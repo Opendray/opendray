@@ -10,8 +10,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 
-	"github.com/linivek/ntc/gateway/tasks"
-	"github.com/linivek/ntc/plugin"
+	"github.com/opendray/opendray/gateway/tasks"
+	"github.com/opendray/opendray/plugin"
 )
 
 // getTasksConfig resolves a task-runner panel plugin's config into a

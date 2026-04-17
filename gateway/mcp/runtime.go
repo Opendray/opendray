@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/linivek/ntc/kernel/store"
+	"github.com/opendray/opendray/kernel/store"
 )
 
 // Runtime is the session-scoped MCP injector. It also holds the
@@ -29,14 +29,14 @@ type Runtime struct {
 type Config struct {
 	DB      *store.DB
 	Logger  *slog.Logger
-	BaseDir string // parent dir for per-session scratch; defaults to /tmp/ntc-mcp
+	BaseDir string // parent dir for per-session scratch; defaults to /tmp/opendray-mcp
 }
 
 // New constructs a Runtime.
 func New(cfg Config) *Runtime {
 	base := cfg.BaseDir
 	if base == "" {
-		base = filepath.Join(os.TempDir(), "ntc-mcp")
+		base = filepath.Join(os.TempDir(), "opendray-mcp")
 	}
 	logger := cfg.Logger
 	if logger == nil {

@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/linivek/ntc/gateway/telegram/jsonl"
+	"github.com/opendray/opendray/gateway/telegram/jsonl"
 )
 
 // MultiSelectStore holds in-flight checkbox-keyboard state keyed by
@@ -135,7 +135,7 @@ func (s *MultiSelectStore) Submit(chatID, messageID int64) *MultiSelectState {
 }
 
 // gcLocked drops entries past TTL. Cheap enough to run on every access
-// at NTC's scale (dozens of concurrent prompts max).
+// at OpenDray's scale (dozens of concurrent prompts max).
 func (s *MultiSelectStore) gcLocked() {
 	if s.ttl <= 0 {
 		return

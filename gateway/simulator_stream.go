@@ -110,8 +110,10 @@ func (ss *simStream) readLoop(ctx context.Context, cancel context.CancelFunc) {
 		var msg struct {
 			Type     string `json:"type"`
 			Action   string `json:"action"`
-			X, Y     int    `json:"x"`
-			X2, Y2   int    `json:"x2"`
+			X        int    `json:"x"`
+			Y        int    `json:"y"`
+			X2       int    `json:"x2"`
+			Y2       int    `json:"y2"`
 			Duration int    `json:"duration"`
 			Key      string `json:"key"`
 			Text     string `json:"text"`

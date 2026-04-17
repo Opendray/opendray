@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/linivek/ntc/gateway/telegram/jsonl"
+	"github.com/opendray/opendray/gateway/telegram/jsonl"
 )
 
 func testOptions() []jsonl.PromptOption {

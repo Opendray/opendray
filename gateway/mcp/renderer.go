@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/linivek/ntc/kernel/store"
+	"github.com/opendray/opendray/kernel/store"
 )
 
 // Injection is the output of rendering MCP servers for one session.

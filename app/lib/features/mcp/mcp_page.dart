@@ -10,7 +10,7 @@ import '../../shared/theme/app_theme.dart';
 
 /// MCP Servers panel.
 ///
-/// Lists MCP server definitions stored on the NTC server. Each entry can be
+/// Lists MCP server definitions stored on the OpenDray server. Each entry can be
 /// toggled, edited, or deleted. Enabled entries are rendered into a
 /// per-session temp config at spawn and handed to the selected agents via
 /// their native flags (e.g. claude `--mcp-config`, codex `CODEX_HOME`).
@@ -93,7 +93,7 @@ class _MCPPageState extends State<MCPPage> {
       builder: (dialogCtx) => AlertDialog(
         title: Text(dialogCtx.tr('Delete MCP server?')),
         content: Text(
-          dialogCtx.tr('This removes "@name" from NTC. Sessions already running keep their injected config.')
+          dialogCtx.tr('This removes "@name" from OpenDray. Sessions already running keep their injected config.')
               .replaceAll('@name', s['name'] as String? ?? ''),
         ),
         actions: [

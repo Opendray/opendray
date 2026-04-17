@@ -17,7 +17,7 @@ const maxImageBytes = 25 << 20
 
 // sessionAttachImage stores an uploaded image and returns its absolute path.
 //
-// The image is written to an NTC-owned directory outside the session's working
+// The image is written to an OpenDray-owned directory outside the session's working
 // directory (so it never pollutes the user's project). The server does NOT
 // type the path into the PTY — that is the client's decision, exposed via the
 // existing /api/sessions/{id}/input endpoint, so the user can preview, copy,
@@ -61,7 +61,7 @@ func (s *Server) sessionAttachImage(w http.ResponseWriter, r *http.Request) {
 
 	// Use a server-owned directory outside the user's project. Persists across
 	// session stop/start; cleaned up by the OS's tmp-reaper over time.
-	baseDir := filepath.Join(os.TempDir(), "ntc-images", sessionID)
+	baseDir := filepath.Join(os.TempDir(), "opendray-images", sessionID)
 	if err := os.MkdirAll(baseDir, 0o755); err != nil {
 		respondError(w, http.StatusInternalServerError, fmt.Errorf("mkdir: %w", err).Error())
 		return

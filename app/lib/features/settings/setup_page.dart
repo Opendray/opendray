@@ -62,9 +62,9 @@ class _SetupPageState extends State<SetupPage> {
                   child: const Center(child: Text('N', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 32))),
                 ),
                 const SizedBox(height: 20),
-                const Text('Welcome to NTC', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600)),
+                const Text('Welcome to OpenDray', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 6),
-                const Text('Connect to your NTC server', style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
+                const Text('Connect to your OpenDray server', style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
                 const SizedBox(height: 32),
 
                 // URL input
@@ -136,7 +136,7 @@ class _SetupPageState extends State<SetupPage> {
 
                 const SizedBox(height: 32),
                 const Text(
-                  'Run the NTC server on your Mac:\nmake dev',
+                  'Run the OpenDray server on your Mac:\nmake dev',
                   style: TextStyle(color: AppColors.textMuted, fontSize: 12, fontFamily: 'monospace'),
                   textAlign: TextAlign.center,
                 ),

@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:xterm/xterm.dart';
 
-/// NTC custom terminal theme — dark, high-contrast, inspired by iTerm2/Warp.
+/// OpenDray custom terminal theme — dark, high-contrast, inspired by iTerm2/Warp.
 /// Colors tuned for readability on the app's #0B0D11 background.
 const ntcTerminalTheme = TerminalTheme(
   cursor: Color(0xFFA0A4B8),

@@ -11,8 +11,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/linivek/ntc/kernel/store"
-	"github.com/linivek/ntc/kernel/terminal"
+	"github.com/opendray/opendray/kernel/store"
+	"github.com/opendray/opendray/kernel/terminal"
 )
 
 const maxConcurrent = 20
@@ -276,7 +276,7 @@ func (h *Hub) Start(ctx context.Context, id string) error {
 				"config", inj.ConfigPath)
 		default:
 			if apiKey == "" {
-				apiKey = "ntc-local-" + p.ID
+				apiKey = "opendray-local-" + p.ID
 			}
 			env["OPENAI_BASE_URL"] = p.BaseURL
 			env["OPENAI_API_KEY"] = apiKey

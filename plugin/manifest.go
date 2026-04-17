@@ -1,4 +1,4 @@
-// Package plugin provides the plugin runtime for NTC.
+// Package plugin provides the plugin runtime for OpenDray.
 package plugin
 
 import (
@@ -18,7 +18,7 @@ const (
 )
 
 // Provider is the unified model for all AI tools and terminal types.
-// Every tool in NTC — including Claude and Terminal — is a Provider.
+// Every tool in OpenDray — including Claude and Terminal — is a Provider.
 type Provider struct {
 	// Identity
 	Name        string `json:"name"`

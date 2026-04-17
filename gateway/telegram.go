@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/linivek/ntc/gateway/telegram"
+	"github.com/opendray/opendray/gateway/telegram"
 )
 
 // telegramStatus returns the current bot connection status — used by the

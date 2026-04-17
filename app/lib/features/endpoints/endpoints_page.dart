@@ -15,7 +15,7 @@ import '../../shared/theme/app_theme.dart';
 /// dialog can show a dropdown.
 ///
 /// API keys themselves are never kept in the DB — users configure an
-/// env var name on the NTC host (e.g. GROQ_API_KEY). The gateway
+/// env var name on the OpenDray host (e.g. GROQ_API_KEY). The gateway
 /// reports `apiKeySet` so this page can warn when the var is missing.
 class EndpointsPage extends StatefulWidget {
   const EndpointsPage({super.key});
@@ -106,7 +106,7 @@ class _EndpointsPageState extends State<EndpointsPage> {
       builder: (ctx) => AlertDialog(
         title: Text(ctx.tr('Delete LLM provider?')),
         content: Text(
-          ctx.tr('This removes the provider from NTC. Sessions currently bound to it will be unbound.'),
+          ctx.tr('This removes the provider from OpenDray. Sessions currently bound to it will be unbound.'),
         ),
         actions: [
           TextButton(
@@ -462,7 +462,7 @@ class _ProviderEditorDialogState extends State<_ProviderEditorDialog> {
                   help: context.tr('OpenAI-compatible endpoint. Mac Ollama: http://<mac-ip>:11434/v1. LM Studio: http://<mac-ip>:1234/v1. Groq: https://api.groq.com/openai/v1.')),
               _field(context.tr('API Key env var'), _apiKeyEnv,
                   hint: 'GROQ_API_KEY',
-                  help: context.tr('Optional. Name of an env var on the NTC server whose value the gateway forwards as Bearer token. Leave empty for local Ollama / LM Studio.')),
+                  help: context.tr('Optional. Name of an env var on the OpenDray server whose value the gateway forwards as Bearer token. Leave empty for local Ollama / LM Studio.')),
               _field(context.tr('Description'), _description),
               const SizedBox(height: 8),
               SwitchListTile(

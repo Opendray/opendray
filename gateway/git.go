@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	gitpkg "github.com/linivek/ntc/gateway/git"
-	"github.com/linivek/ntc/plugin"
+	gitpkg "github.com/opendray/opendray/gateway/git"
+	"github.com/opendray/opendray/plugin"
 )
 
 // getGitConfig resolves the "git" panel plugin's saved config into the

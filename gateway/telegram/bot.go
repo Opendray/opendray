@@ -1,4 +1,4 @@
-// Package telegram is the in-process Telegram bot bridge for NTC.
+// Package telegram is the in-process Telegram bot bridge for OpenDray.
 //
 // One Bot instance long-polls api.telegram.org for incoming updates and
 // dispatches them to command handlers (see commands.go). Notifications

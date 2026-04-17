@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/linivek/ntc/gateway/telegram/jsonl"
-	"github.com/linivek/ntc/kernel/hub"
+	"github.com/opendray/opendray/gateway/telegram/jsonl"
+	"github.com/opendray/opendray/kernel/hub"
 )
 
 // Forwarder is now stateless + event-driven: no goroutines, no polling.

@@ -10,11 +10,11 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/linivek/ntc/gateway/database"
-	"github.com/linivek/ntc/gateway/docs"
-	"github.com/linivek/ntc/gateway/files"
-	"github.com/linivek/ntc/kernel/store"
-	"github.com/linivek/ntc/plugin"
+	"github.com/opendray/opendray/gateway/database"
+	"github.com/opendray/opendray/gateway/docs"
+	"github.com/opendray/opendray/gateway/files"
+	"github.com/opendray/opendray/kernel/store"
+	"github.com/opendray/opendray/plugin"
 )
 
 // ── Session handlers ────────────────────────────────────────────
@@ -488,7 +488,7 @@ func (s *Server) getDatabaseConfig(pluginName string) (database.PGConfig, error)
 		// Password: prefer secret field, fall back to env var named after plugin.
 		password := stringVal(cfg, "password", "")
 		if password == "" {
-			envKey := "NTC_DB_PASSWORD_" + strings.ToUpper(strings.ReplaceAll(pluginName, "-", "_"))
+			envKey := "OPENDRAY_DB_PASSWORD_" + strings.ToUpper(strings.ReplaceAll(pluginName, "-", "_"))
 			password = os.Getenv(envKey)
 		}
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/linivek/ntc/kernel/store"
+	"github.com/opendray/opendray/kernel/store"
 )
 
 // Handlers returns HTTP handlers for MCP server CRUD.

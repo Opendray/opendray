@@ -1,4 +1,4 @@
-module github.com/linivek/ntc
+module github.com/opendray/opendray
 
 go 1.25.6
 

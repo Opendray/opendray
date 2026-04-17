@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/linivek/ntc/kernel/store"
+	"github.com/opendray/opendray/kernel/store"
 )
 
 func TestClaudeRenderer_StdioAndSSE(t *testing.T) {

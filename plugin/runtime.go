@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/linivek/ntc/kernel/store"
+	"github.com/opendray/opendray/kernel/store"
 )
 
 // ProviderConfig holds user-customizable settings, keyed by ConfigField.Key.

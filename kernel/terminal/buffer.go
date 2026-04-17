@@ -1,4 +1,4 @@
-// Package terminal provides the PTY engine for NTC.
+// Package terminal provides the PTY engine for OpenDray.
 package terminal
 
 import (

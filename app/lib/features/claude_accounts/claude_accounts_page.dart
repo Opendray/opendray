@@ -124,7 +124,7 @@ class _ClaudeAccountsPageState extends State<ClaudeAccountsPage> {
       builder: (dialogCtx) => AlertDialog(
         title: Text(dialogCtx.tr('Delete Claude account?')),
         content: Text(
-          dialogCtx.tr('This removes "@name" from NTC. The on-disk token file and config directory are left intact.')
+          dialogCtx.tr('This removes "@name" from OpenDray. The on-disk token file and config directory are left intact.')
               .replaceAll('@name', a['name'] as String? ?? ''),
         ),
         actions: [

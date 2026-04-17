@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 
-	"github.com/linivek/ntc/plugin"
+	"github.com/opendray/opendray/plugin"
 )
 
 var upgrader = websocket.Upgrader{

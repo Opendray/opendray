@@ -61,7 +61,7 @@ class _DashboardPageState extends State<DashboardPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('NTC', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                const Text('OpenDray', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 Text('${_sessions.length} sessions', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
               ],
             ),

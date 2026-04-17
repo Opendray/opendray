@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/linivek/ntc/kernel/store"
+	"github.com/opendray/opendray/kernel/store"
 )
 
 // OpenCode doesn't consume plain OPENAI_* env vars the way the rest of
@@ -109,14 +109,14 @@ func cleanupOpenCodeConfig(sessionID string) {
 // openCodeConfigDir picks a predictable, user-findable location for
 // the generated config. macOS's os.TempDir() returns a hashed path
 // like /var/folders/xx/yy/T/ which is awful to debug; putting our
-// files under ~/.ntc makes them trivial to `ls` and diff.
+// files under ~/.opendray makes them trivial to `ls` and diff.
 func openCodeConfigDir(sessionID string) string {
 	home, err := os.UserHomeDir()
 	if err != nil || home == "" {
 		// Fallback to OS temp dir if somehow HOME is unavailable.
-		return filepath.Join(os.TempDir(), "ntc-opencode-"+sessionID)
+		return filepath.Join(os.TempDir(), "opendray-opencode-"+sessionID)
 	}
-	return filepath.Join(home, ".ntc", "opencode-sessions", sessionID)
+	return filepath.Join(home, ".opendray", "opencode-sessions", sessionID)
 }
 
 // rewriteModelArg replaces the value of any existing "--model <val>"

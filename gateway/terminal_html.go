@@ -8,7 +8,7 @@ const terminalHTML = `<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>NTC Terminal</title>
+<title>OpenDray Terminal</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css">
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -36,12 +36,12 @@ const terminalHTML = `<!DOCTYPE html>
   if(!sessionId){document.body.innerText='Missing session param';return}
 
   // emit() — delivers events to the Flutter host.
-  // Mobile WebView: NTC JavaScript channel is injected by Flutter; use it directly.
-  // Web iframe: NTC is not available; fall back to postMessage to the parent frame.
-  // Using NTC exclusively (when available) prevents the _injectMessageBridge doubling.
+  // Mobile WebView: OpenDray JavaScript channel is injected by Flutter; use it directly.
+  // Web iframe: OpenDray is not available; fall back to postMessage to the parent frame.
+  // Using OpenDray exclusively (when available) prevents the _injectMessageBridge doubling.
   function emit(type) {
     try {
-      if(typeof NTC !== 'undefined') { NTC.postMessage(JSON.stringify({type:type})); return; }
+      if(typeof OpenDray !== 'undefined') { OpenDray.postMessage(JSON.stringify({type:type})); return; }
     } catch(e){}
     try { window.parent.postMessage({type:type},'*'); } catch(e){}
   }
@@ -172,10 +172,10 @@ const terminalHTML = `<!DOCTYPE html>
     } else {
       try {
         const msg = JSON.parse(ev.data);
-        if      (msg.type === 'waiting_for_input') emit('ntc:idle');
-        else if (msg.type === 'process_exit')      emit('ntc:exit');
-        else if (msg.type === 'replay_start')      emit('ntc:replay_start');
-        else if (msg.type === 'replay_end')        emit('ntc:replay_end');
+        if      (msg.type === 'waiting_for_input') emit('opendray:idle');
+        else if (msg.type === 'process_exit')      emit('opendray:exit');
+        else if (msg.type === 'replay_start')      emit('opendray:replay_start');
+        else if (msg.type === 'replay_end')        emit('opendray:replay_end');
       } catch(_){}
     }
   }
@@ -199,12 +199,12 @@ const terminalHTML = `<!DOCTYPE html>
     ws.binaryType = 'arraybuffer';
     ws.onopen    = function(){
       reconnectAttempts = 0;
-      emit('ntc:connected');
+      emit('opendray:connected');
     };
     ws.onmessage = handleMessage;
     ws.onerror   = function(){ /* onclose handles the reconnect */ };
     ws.onclose   = function(){
-      emit('ntc:disconnected');
+      emit('opendray:disconnected');
       scheduleReconnect();
     };
   }
@@ -226,13 +226,13 @@ const terminalHTML = `<!DOCTYPE html>
 
   // Exposed for Flutter WebView: send raw key sequences from quick-keys bar
   // or the image-attach flow. Pure WebSocket write — no focus side-effects.
-  window.ntcSendKey = function(data){
+  window.openDraySendKey = function(data){
     return sendRaw(new TextEncoder().encode(data));
   };
 
   // Expose a connection status getter for the Flutter side to poll if it
   // wants to show "reconnecting N/5" instead of a vague "...".
-  window.ntcWsState = function(){
+  window.openDrayWsState = function(){
     if (!ws) return 'closed';
     switch (ws.readyState) {
       case WebSocket.CONNECTING: return 'connecting';
@@ -273,8 +273,8 @@ const terminalHTML = `<!DOCTYPE html>
   // Listen for messages from parent Flutter app
   window.addEventListener('message', function(ev){
     if(!ev.data || !ev.data.type) return;
-    if(ev.data.type==='ntc:focus') focusIfUnfocused();
-    if(ev.data.type==='ntc:close'){
+    if(ev.data.type==='opendray:focus') focusIfUnfocused();
+    if(ev.data.type==='opendray:close'){
       shouldReconnect = false;
       if (ws) ws.close();
     }
@@ -287,7 +287,7 @@ const terminalHTML = `<!DOCTYPE html>
   }, 30000);
 
   // Notify parent we're ready
-  emit('ntc:ready');
+  emit('opendray:ready');
 })();
 </script>
 </body>

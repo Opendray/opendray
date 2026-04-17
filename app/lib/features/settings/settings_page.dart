@@ -108,7 +108,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     controller: _urlController,
                     decoration: const InputDecoration(
                       labelText: 'Server URL',
-                      hintText: 'https://ntc.example.com',
+                      hintText: 'https://opendray.example.com',
                       prefixIcon: Icon(Icons.link, size: 18),
                     ),
                     style: const TextStyle(fontSize: 14),
@@ -256,7 +256,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('NTC', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                          Text('OpenDray', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                           Text('Terminal-Centric Development Cockpit', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
                         ],
                       ),

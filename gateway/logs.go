@@ -11,8 +11,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 
-	"github.com/linivek/ntc/gateway/logs"
-	"github.com/linivek/ntc/plugin"
+	"github.com/opendray/opendray/gateway/logs"
+	"github.com/opendray/opendray/plugin"
 )
 
 // getLogsConfig resolves the plugin config for the log-viewer plugin.

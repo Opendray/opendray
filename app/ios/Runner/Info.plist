@@ -12,15 +12,15 @@
 		<true/>
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>NTC needs local network access to connect to your self-hosted server.</string>
+	<string>OpenDray needs local network access to connect to your self-hosted server.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>NTC attaches photos from your library into terminal sessions (e.g. for Claude to analyse).</string>
+	<string>OpenDray attaches photos from your library into terminal sessions (e.g. for Claude to analyse).</string>
 	<key>NSCameraUsageDescription</key>
-	<string>NTC captures photos to attach into terminal sessions (e.g. for Claude to analyse).</string>
+	<string>OpenDray captures photos to attach into terminal sessions (e.g. for Claude to analyse).</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Ntc</string>
+	<string>OpenDray</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -28,7 +28,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>ntc</string>
+	<string>OpenDray</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

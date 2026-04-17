@@ -1,4 +1,4 @@
-name: Deploy NTC
+name: Deploy OpenDray
 
 # CI/CD temporarily disabled — LXC deployment paused, developing on Mac.
 # To re-enable: change branch back to [main].
@@ -13,7 +13,7 @@ jobs:
       image: node:20-bookworm
     env:
       DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-      NTC_DEPLOY_HOST: ${{ secrets.NTC_DEPLOY_HOST }}
+      OPENDRAY_DEPLOY_HOST: ${{ secrets.OPENDRAY_DEPLOY_HOST }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,37 +32,37 @@ jobs:
           echo '<!DOCTYPE html><html><body>CI build — run make deploy for full frontend</body></html>' > app/build/web/index.html
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
             go build -ldflags="-s -w -X main.version=${VERSION} -X main.buildSha=${VERSION}" \
-            -trimpath -o ntc-linux-amd64 ./cmd/ntc
-          ls -lh ntc-linux-amd64
+            -trimpath -o opendray-linux-amd64 ./cmd/opendray
+          ls -lh opendray-linux-amd64
 
-      - name: Deploy to ntc-gateway
+      - name: Deploy to opendray-gateway
         run: |
           apt-get update -qq && apt-get install -y -qq openssh-client
           mkdir -p ~/.ssh
           echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          TARGET="$NTC_DEPLOY_HOST"
+          TARGET="$OPENDRAY_DEPLOY_HOST"
           SSH="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no"
           SCP="scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no"
 
           echo "==> preparing release dir"
-          $SSH $TARGET "mkdir -p /opt/ntc/releases/${VERSION}"
+          $SSH $TARGET "mkdir -p /opt/opendray/releases/${VERSION}"
 
           echo "==> copying binary"
-          $SCP ntc-linux-amd64 $TARGET:/opt/ntc/releases/${VERSION}/ntc
-          $SSH $TARGET "chmod +x /opt/ntc/releases/${VERSION}/ntc"
+          $SCP opendray-linux-amd64 $TARGET:/opt/opendray/releases/${VERSION}/opendray
+          $SSH $TARGET "chmod +x /opt/opendray/releases/${VERSION}/opendray"
 
           echo "==> syncing plugins + deploy scripts from current"
           $SSH $TARGET "
-            cp -r /opt/ntc/current/plugins /opt/ntc/releases/${VERSION}/ 2>/dev/null || true
-            cp -r /opt/ntc/current/deploy  /opt/ntc/releases/${VERSION}/ 2>/dev/null || true
-            chown -R ntc:ntc /opt/ntc/releases/${VERSION}
+            cp -r /opt/opendray/current/plugins /opt/opendray/releases/${VERSION}/ 2>/dev/null || true
+            cp -r /opt/opendray/current/deploy  /opt/opendray/releases/${VERSION}/ 2>/dev/null || true
+            chown -R opendray:opendray /opt/opendray/releases/${VERSION}
           "
 
           echo "==> atomic switch + restart"
           $SSH $TARGET "
-            ln -sfn /opt/ntc/releases/${VERSION} /opt/ntc/current
-            systemctl restart ntc
+            ln -sfn /opt/opendray/releases/${VERSION} /opt/opendray/current
+            systemctl restart opendray
           "
 
           echo "==> health check"
@@ -79,8 +79,8 @@ jobs:
       - name: Prune old releases
         if: success()
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "$NTC_DEPLOY_HOST" '
-            cd /opt/ntc/releases
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "$OPENDRAY_DEPLOY_HOST" '
+            cd /opt/opendray/releases
             ls -1dt */ 2>/dev/null | tail -n +6 | while read old; do
               echo "pruning $old"
               rm -rf "$old"

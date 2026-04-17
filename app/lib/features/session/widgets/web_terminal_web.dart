@@ -35,7 +35,7 @@ class _WebTerminalViewState extends State<WebTerminalView> {
   @override
   void initState() {
     super.initState();
-    _viewType = 'ntc-terminal-${widget.sessionId.hashCode}-${DateTime.now().millisecondsSinceEpoch}';
+    _viewType = 'opendray-terminal-${widget.sessionId.hashCode}-${DateTime.now().millisecondsSinceEpoch}';
     _registerView();
     _listenMessages();
   }
@@ -73,15 +73,15 @@ class _WebTerminalViewState extends State<WebTerminalView> {
         if (type == null) return;
 
         switch (type) {
-          case 'ntc:idle':
+          case 'opendray:idle':
             widget.onEvent?.call('idle');
-          case 'ntc:exit':
+          case 'opendray:exit':
             widget.onEvent?.call('exit');
-          case 'ntc:connected':
+          case 'opendray:connected':
             widget.onEvent?.call('connected');
-          case 'ntc:disconnected':
+          case 'opendray:disconnected':
             widget.onEvent?.call('disconnected');
-          case 'ntc:ready':
+          case 'opendray:ready':
             widget.onEvent?.call('ready');
         }
       } catch (_) {}
@@ -108,13 +108,13 @@ class _WebTerminalViewState extends State<WebTerminalView> {
 
   /// Focus the terminal inside the iframe.
   void focus() {
-    _iframe?.contentWindow?.postMessage('{"type":"ntc:focus"}'.toJS, '*'.toJS);
+    _iframe?.contentWindow?.postMessage('{"type":"opendray:focus"}'.toJS, '*'.toJS);
   }
 
   @override
   void dispose() {
     _messageSub?.cancel();
-    _iframe?.contentWindow?.postMessage('{"type":"ntc:close"}'.toJS, '*'.toJS);
+    _iframe?.contentWindow?.postMessage('{"type":"opendray:close"}'.toJS, '*'.toJS);
     super.dispose();
   }
 

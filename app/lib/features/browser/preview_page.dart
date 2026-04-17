@@ -138,8 +138,8 @@ class _PreviewPageState extends State<PreviewPage> with WidgetsBindingObserver {
       return;
     }
     // Pre-fill the URL bar from plugin config but do NOT auto-load.
-    // Auto-loading the NTC server's own URL (e.g. port 8640) would render
-    // the NTC admin UI inside the WebView, stacking its bottom nav behind
+    // Auto-loading the OpenDray server's own URL (e.g. port 8640) would render
+    // the OpenDray admin UI inside the WebView, stacking its bottom nav behind
     // the mobile app's nav. The user presses Go to navigate explicitly.
     final url  = (pi.config['url'] as String? ?? '').trim();
     final port = pi.config['port'];

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/linivek/ntc/gateway/telegram/jsonl"
-	"github.com/linivek/ntc/kernel/hub"
+	"github.com/opendray/opendray/gateway/telegram/jsonl"
+	"github.com/opendray/opendray/kernel/hub"
 )
 
 // Dispatcher implements UpdateHandler. It owns no terminal state itself —
@@ -129,7 +129,7 @@ func (d *Dispatcher) cmdHelp(ctx context.Context, chatID int64, replyTo int64) {
 		uname = "this bot"
 	}
 	body := strings.Join([]string{
-		"*NTC Telegram Bridge*",
+		"*OpenDray Telegram Bridge*",
 		"",
 		"You are talking to " + uname + ". Commands:",
 		"",

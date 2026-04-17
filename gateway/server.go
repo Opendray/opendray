@@ -1,4 +1,4 @@
-// Package gateway provides the HTTP/WebSocket API for NTC.
+// Package gateway provides the HTTP/WebSocket API for OpenDray.
 package gateway
 
 import (
@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -16,16 +17,16 @@ import (
 
 	"context"
 
-	gitpkg "github.com/linivek/ntc/gateway/git"
-	"github.com/linivek/ntc/gateway/mcp"
-	"github.com/linivek/ntc/gateway/tasks"
-	"github.com/linivek/ntc/gateway/telegram"
-	"github.com/linivek/ntc/kernel/auth"
-	"github.com/linivek/ntc/kernel/hub"
-	"github.com/linivek/ntc/plugin"
+	gitpkg "github.com/opendray/opendray/gateway/git"
+	"github.com/opendray/opendray/gateway/mcp"
+	"github.com/opendray/opendray/gateway/tasks"
+	"github.com/opendray/opendray/gateway/telegram"
+	"github.com/opendray/opendray/kernel/auth"
+	"github.com/opendray/opendray/kernel/hub"
+	"github.com/opendray/opendray/plugin"
 )
 
-// Server is the main HTTP server for NTC.
+// Server is the main HTTP server for OpenDray.
 type Server struct {
 	router   chi.Router
 	hub      *hub.Hub
@@ -76,6 +77,11 @@ func New(cfg Config) *Server {
 	r.Use(corsMiddleware)
 	r.Use(middleware.Recoverer)
 	r.Use(loggingMiddleware(cfg.Logger))
+	r.Use(bodySizeLimiter(1 << 20)) // 1 MB cap on request bodies
+
+	// Rate limiter: 10 req/min for session mutate, 60 req/min for reads.
+	sessionRL := newRateLimiter(10, time.Minute)
+	readRL := newRateLimiter(60, time.Minute)
 
 	// Public routes
 	r.Get("/api/health", s.health)
@@ -89,12 +95,12 @@ func New(cfg Config) *Server {
 		}
 
 		// Session management
-		r.Get("/api/sessions", s.listSessions)
-		r.Post("/api/sessions", s.createSession)
-		r.Get("/api/sessions/{id}", s.getSession)
-		r.Delete("/api/sessions/{id}", s.deleteSession)
-		r.Post("/api/sessions/{id}/start", s.startSession)
-		r.Post("/api/sessions/{id}/stop", s.stopSession)
+		r.With(readRL.middleware).Get("/api/sessions", s.listSessions)
+		r.With(sessionRL.middleware).Post("/api/sessions", s.createSession)
+		r.With(readRL.middleware).Get("/api/sessions/{id}", s.getSession)
+		r.With(sessionRL.middleware).Delete("/api/sessions/{id}", s.deleteSession)
+		r.With(sessionRL.middleware).Post("/api/sessions/{id}/start", s.startSession)
+		r.With(sessionRL.middleware).Post("/api/sessions/{id}/stop", s.stopSession)
 		r.Post("/api/sessions/{id}/input", s.sendInput)
 		r.Post("/api/sessions/{id}/resize", s.resizeSession)
 		r.Post("/api/sessions/{id}/image", s.sessionAttachImage)
@@ -254,7 +260,7 @@ func (s *Server) serveTerminalHTML(w http.ResponseWriter, r *http.Request) {
 func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]any{
 		"status":   "ok",
-		"service":  "ntc",
+		"service":  "opendray",
 		"sessions": s.hub.RunningCount(),
 		"plugins":  len(s.plugins.List()),
 	})
@@ -351,4 +357,89 @@ func (sw *statusWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 		return hj.Hijack()
 	}
 	return nil, nil, http.ErrNotSupported
+}
+
+// ── Rate limiter (token bucket per IP, no external deps) ───────
+
+type ipBucket struct {
+	tokens int
+	last   time.Time
+}
+
+type rateLimiter struct {
+	mu       sync.Mutex
+	buckets  sync.Map // string -> *ipBucket
+	limit    int
+	window   time.Duration
+}
+
+func newRateLimiter(limit int, window time.Duration) *rateLimiter {
+	rl := &rateLimiter{limit: limit, window: window}
+	// Background cleanup every 5 minutes to prevent unbounded growth.
+	go func() {
+		for {
+			time.Sleep(5 * time.Minute)
+			cutoff := time.Now().Add(-2 * window)
+			rl.buckets.Range(func(key, value any) bool {
+				b := value.(*ipBucket)
+				if b.last.Before(cutoff) {
+					rl.buckets.Delete(key)
+				}
+				return true
+			})
+		}
+	}()
+	return rl
+}
+
+func (rl *rateLimiter) allow(ip string) bool {
+	now := time.Now()
+	val, _ := rl.buckets.LoadOrStore(ip, &ipBucket{tokens: rl.limit, last: now})
+	b := val.(*ipBucket)
+
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	elapsed := now.Sub(b.last)
+	refill := int(elapsed * time.Duration(rl.limit) / rl.window)
+	if refill > 0 {
+		b.tokens += refill
+		if b.tokens > rl.limit {
+			b.tokens = rl.limit
+		}
+		b.last = now
+	}
+	if b.tokens <= 0 {
+		return false
+	}
+	b.tokens--
+	return true
+}
+
+func (rl *rateLimiter) middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+		if ip == "" {
+			ip = r.RemoteAddr
+		}
+		if !rl.allow(ip) {
+			respondError(w, http.StatusTooManyRequests, "rate limit exceeded")
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// ── Body size limiter ──────────────────────────────────────────
+
+func bodySizeLimiter(maxBytes int64) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodPost, http.MethodPut, http.MethodPatch:
+				r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }

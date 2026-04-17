@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/linivek/ntc/kernel/hub"
-	"github.com/linivek/ntc/kernel/store"
+	"github.com/opendray/opendray/kernel/hub"
+	"github.com/opendray/opendray/kernel/store"
 )
 
 // SessionResolver caches a numbered list of sessions per chat so the user
@@ -61,7 +61,7 @@ func (r *SessionResolver) Refresh(ctx context.Context, chatID int64) ([]store.Se
 }
 
 // Resolve turns a user-typed argument into a full session ID.
-// Accepts: "1" (number), "ntc-dev" (name), "0c3b" (prefix), or full UUID.
+// Accepts: "1" (number), "opendray-dev" (name), "0c3b" (prefix), or full UUID.
 func (r *SessionResolver) Resolve(ctx context.Context, chatID int64, arg string) (string, error) {
 	arg = strings.TrimSpace(arg)
 	if arg == "" {

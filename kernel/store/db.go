@@ -1,4 +1,4 @@
-// Package store provides PostgreSQL database access for the NTC kernel.
+// Package store provides PostgreSQL database access for the OpenDray kernel.
 package store
 
 import (

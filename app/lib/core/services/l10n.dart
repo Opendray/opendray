@@ -16,7 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///   • `en` — English (the canonical source; no catalog lookup needed)
 ///   • `zh` — 简体中文
 class L10n extends ChangeNotifier {
-  static const _prefsKey = 'ntc.lang';
+  static const _prefsKey = 'opendray.lang';
 
   String _code;
   L10n(this._code);
@@ -224,8 +224,8 @@ class L10n extends ChangeNotifier {
     'Messaging':                            '消息',
     'Telegram Bridge':                      'Telegram 桥',
     'Telegram Bridge not enabled':          'Telegram 桥未启用',
-    'Two-way bridge between NTC and a Telegram bot — control sessions, receive idle/exit notifications, send commands when you\'re away from the app.':
-        'NTC 与 Telegram 机器人的双向桥 —— 远程控制会话、接收空闲/退出通知,在远离应用时也能发送命令。',
+    'Two-way bridge between OpenDray and a Telegram bot — control sessions, receive idle/exit notifications, send commands when you\'re away from the app.':
+        'OpenDray 与 Telegram 机器人的双向桥 —— 远程控制会话、接收空闲/退出通知,在远离应用时也能发送命令。',
     'Enable the Telegram plugin in Settings → Plugins, then add a Bot Token (from @BotFather) and Allowed Chat IDs.':
         '请在 设置 → 插件 中启用 Telegram 插件, 然后填入 Bot Token(来自 @BotFather)和 Allowed Chat IDs。',
     'Connected as':                         '已连接:',
@@ -274,8 +274,8 @@ class L10n extends ChangeNotifier {
     'Notify on Exit':                       '退出时通知',
     'Notification Tail Lines':              '通知中包含的末尾行数',
     'Poll Interval (seconds)':              '轮询间隔(秒)',
-    'Token from @BotFather. Send /newbot in Telegram, follow the prompts, copy the token here. Or leave blank and set the NTC_TELEGRAM_BOT_TOKEN env var on the server.':
-        '来自 @BotFather 的 Token。在 Telegram 中发送 /newbot, 按提示操作并将 Token 复制到这里。也可以留空并在服务器上设置 NTC_TELEGRAM_BOT_TOKEN 环境变量。',
+    'Token from @BotFather. Send /newbot in Telegram, follow the prompts, copy the token here. Or leave blank and set the OPENDRAY_TELEGRAM_BOT_TOKEN env var on the server.':
+        '来自 @BotFather 的 Token。在 Telegram 中发送 /newbot, 按提示操作并将 Token 复制到这里。也可以留空并在服务器上设置 OPENDRAY_TELEGRAM_BOT_TOKEN 环境变量。',
     'Comma-separated Telegram chat / user IDs allowed to talk to the bot. Anything from a chat NOT in this list is silently dropped. Use @userinfobot to find your own ID.':
         '允许与机器人对话的 Telegram chat / user ID, 用逗号分隔。不在列表中的聊天会被静默丢弃。可用 @userinfobot 查看自己的 ID。',
     'Default chat that receives idle / exit / task-finish notifications. Defaults to the first allowed chat ID.':
@@ -305,8 +305,8 @@ class L10n extends ChangeNotifier {
     'New Claude account':                      '新建 Claude 账号',
     'Edit Claude account':                     '编辑 Claude 账号',
     'Delete Claude account?':                  '删除此 Claude 账号?',
-    'This removes "@name" from NTC. The on-disk token file and config directory are left intact.':
-        '将从 NTC 删除 "@name"。服务器上的 token 文件与 config 目录保持不变。',
+    'This removes "@name" from OpenDray. The on-disk token file and config directory are left intact.':
+        '将从 OpenDray 删除 "@name"。服务器上的 token 文件与 config 目录保持不变。',
     'Name must be 1-32 chars of [a-z0-9_-]':   '名称必须为 1-32 个 [a-z0-9_-] 字符',
     'Lowercase alphanumeric, dash or underscore. Matches claude-<name> shortcut.':
         '小写字母/数字/短横线/下划线。对应 claude-<name> 快捷命令。',
@@ -349,8 +349,8 @@ class L10n extends ChangeNotifier {
     'New MCP server':              '新建 MCP 服务器',
     'Edit MCP server':             '编辑 MCP 服务器',
     'Delete MCP server?':          '删除此 MCP 服务器?',
-    'This removes "@name" from NTC. Sessions already running keep their injected config.':
-        '将从 NTC 删除 "@name"。已在运行的会话仍保留已注入的配置。',
+    'This removes "@name" from OpenDray. Sessions already running keep their injected config.':
+        '将从 OpenDray 删除 "@name"。已在运行的会话仍保留已注入的配置。',
     'Name is required':            '名称必填',
     'Transport':                   '传输',
     'Command':                     '命令',
@@ -538,8 +538,8 @@ class L10n extends ChangeNotifier {
         '显示以 . 开头的文件和目录',
     'Maximum file size to read. Larger files will show metadata only.':
         '读取的最大文件大小。超过此大小的文件仅显示元数据。',
-    'Leave blank to read from the env var NTC_DB_PASSWORD_<PLUGIN_NAME>.':
-        '留空则从环境变量 NTC_DB_PASSWORD_<插件名> 中读取。',
+    'Leave blank to read from the env var OPENDRAY_DB_PASSWORD_<PLUGIN_NAME>.':
+        '留空则从环境变量 OPENDRAY_DB_PASSWORD_<插件名> 中读取。',
     'Use a role that only has SELECT on the objects you want to browse.':
         '建议使用只对要浏览的对象具有 SELECT 权限的角色。',
     'The database to connect to for listing all other databases. Usually \'postgres\'. The UI will let you switch databases at runtime.':
@@ -562,8 +562,8 @@ class L10n extends ChangeNotifier {
         '截图刷新间隔。设为 0 可禁用自动刷新。',
     'Full URL to open (any framework, any host). Takes priority over the Port field.':
         '要打开的完整 URL(任意框架、任意主机)。优先于端口字段。',
-    'Port on the NTC server — host is auto-filled from your connection. Used only when URL above is empty.':
-        'NTC 服务器上的端口 —— 主机自动从连接中填充。仅当 URL 为空时使用。',
+    'Port on the OpenDray server — host is auto-filled from your connection. Used only when URL above is empty.':
+        'OpenDray 服务器上的端口 —— 主机自动从连接中填充。仅当 URL 为空时使用。',
     'Appended to \'ollama run <model>\'. Detect available models in Providers page.':
         '附加到 \'ollama run <模型>\' 后。可在 Providers 页面检测可用模型。',
     'Model to load. Use Providers page to detect available models.':

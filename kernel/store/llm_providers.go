@@ -8,10 +8,10 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// LLMProvider is one OpenAI-compatible endpoint the NTC agent plugins
+// LLMProvider is one OpenAI-compatible endpoint the OpenDray agent plugins
 // can route to (Mac Ollama, LM Studio, Groq, Gemini, custom). The
 // actual model weights live behind BaseURL — this row is pure address
-// book. APIKeyEnv (if set) names an env var on the NTC host that the
+// book. APIKeyEnv (if set) names an env var on the OpenDray host that the
 // gateway reads at spawn time and forwards as Bearer token; the key
 // value itself never enters the DB.
 type LLMProvider struct {

@@ -21,8 +21,8 @@ func makeRepo(t *testing.T) string {
 	dir := t.TempDir()
 	commands := [][]string{
 		{"init", "-q", "-b", "main"},
-		{"config", "user.email", "test@ntc.local"},
-		{"config", "user.name", "NTC Test"},
+		{"config", "user.email", "test@opendray.local"},
+		{"config", "user.name", "OpenDray Test"},
 		{"config", "commit.gpgsign", "false"},
 	}
 	for _, args := range commands {

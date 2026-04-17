@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// Link binds one Telegram chat to one NTC session. While linked, plain
+// Link binds one Telegram chat to one OpenDray session. While linked, plain
 // (non-slash) messages from the chat get forwarded as session input, and
 // new session output is pushed back to the chat (coalesced into 2-second
 // windows by Forwarder — see forwarder.go).
@@ -48,10 +48,10 @@ type pending struct {
 }
 
 // NewLinkStore loads from disk if present, otherwise starts empty.
-// path defaults to {tmp}/ntc-telegram-links.json when "" is passed.
+// path defaults to {tmp}/opendray-telegram-links.json when "" is passed.
 func NewLinkStore(path string) *LinkStore {
 	if path == "" {
-		path = filepath.Join(os.TempDir(), "ntc-telegram-links.json")
+		path = filepath.Join(os.TempDir(), "opendray-telegram-links.json")
 	}
 	s := &LinkStore{
 		path:        path,

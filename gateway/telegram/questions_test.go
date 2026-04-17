@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/linivek/ntc/gateway/telegram/jsonl"
+	"github.com/opendray/opendray/gateway/telegram/jsonl"
 )
 
 func TestDetectPrompt_Priority(t *testing.T) {

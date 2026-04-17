@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/linivek/ntc/kernel/hub"
-	"github.com/linivek/ntc/plugin"
+	"github.com/opendray/opendray/kernel/hub"
+	"github.com/opendray/opendray/plugin"
 )
 
 // Manager is the top-level entry point used by the gateway. It watches the
@@ -89,7 +89,7 @@ func (m *Manager) SendTest(ctx context.Context, body string) (int64, error) {
 		return 0, errNoNotifyChat
 	}
 	if body == "" {
-		body = "👋 Test message from NTC at " + time.Now().Format(time.RFC3339)
+		body = "👋 Test message from OpenDray at " + time.Now().Format(time.RFC3339)
 	}
 	if _, err := bot.Send(ctx, chatID, body, &SendOpts{}); err != nil {
 		return 0, err
@@ -174,7 +174,7 @@ func (m *Manager) tearDownLocked() {
 }
 
 // findPluginConfig pulls the running plugin's config, applies the
-// `NTC_TELEGRAM_BOT_TOKEN` env-var fallback, and returns a parsed Config.
+// `OPENDRAY_TELEGRAM_BOT_TOKEN` env-var fallback, and returns a parsed Config.
 func (m *Manager) findPluginConfig() (Config, bool, bool) {
 	for _, pi := range m.plugins.ListInfo() {
 		if pi.Provider.Name != "telegram" {
@@ -183,7 +183,7 @@ func (m *Manager) findPluginConfig() (Config, bool, bool) {
 		raw := pi.Config
 		token := stringFrom(raw, "botToken")
 		if token == "" {
-			token = os.Getenv("NTC_TELEGRAM_BOT_TOKEN")
+			token = os.Getenv("OPENDRAY_TELEGRAM_BOT_TOKEN")
 		}
 		allowed := parseChatIDs(stringFrom(raw, "allowedChatIds"))
 		notify := parseChatID(stringFrom(raw, "notifyChatId"))

@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/linivek/ntc/gateway/telegram/jsonl"
-	"github.com/linivek/ntc/kernel/hub"
-	"github.com/linivek/ntc/plugin"
+	"github.com/opendray/opendray/gateway/telegram/jsonl"
+	"github.com/opendray/opendray/kernel/hub"
+	"github.com/opendray/opendray/plugin"
 )
 
 // Minimum gap between two idle notifications for the same session.
