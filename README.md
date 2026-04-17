@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/logo.png" alt="OpenDray" width="180">
+
 <h1>OpenDray</h1>
 
 <p><strong>Pilot AI coding agents from your phone. Self-hosted. Multi-agent. Plugin-driven.</strong></p>
