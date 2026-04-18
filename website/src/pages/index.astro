@@ -14,8 +14,8 @@ const features = [
   },
   {
     icon: '🧩',
-    title: 'Plugin Architecture',
-    description: 'Add any AI CLI with a manifest.json. No code changes, no recompilation. Just describe and restart.',
+    title: 'Plugin Standard',
+    description: 'An open manifest spec for wrapping any CLI tool. Declare the command, config schema, capabilities, and UI — OpenDray does the rest.',
   },
   {
     icon: '💬',
@@ -65,16 +65,50 @@ const techStack = ['Go', 'Flutter', 'PostgreSQL', 'WebSocket', 'xterm.js'];
 
 const manifestExample = `{
   "name": "my-agent",
-  "display_name": "My Custom Agent",
-  "command": "/usr/local/bin/my-agent",
-  "args": ["--interactive"],
-  "env": {
-    "MY_API_KEY": "{{.Env.MY_API_KEY}}"
+  "displayName": "My Custom Agent",
+  "type": "cli",
+  "icon": "🤖",
+  "cli": {
+    "command": "my-agent-cli",
+    "defaultArgs": ["--no-color"],
+    "detectCmd": "which my-agent-cli"
   },
   "capabilities": {
-    "streaming": true,
-    "interrupt": true
-  }
+    "models": [
+      { "id": "fast", "name": "Fast Mode" },
+      { "id": "deep", "name": "Deep Analysis" }
+    ],
+    "supportsResume": false,
+    "supportsStream": true,
+    "supportsMcp": true,
+    "supportsImages": false,
+    "dynamicModels": false
+  },
+  "configSchema": [
+    {
+      "key": "apiKey",
+      "label": "API Key",
+      "type": "secret",
+      "envVar": "MY_AGENT_API_KEY",
+      "required": true,
+      "group": "auth"
+    },
+    {
+      "key": "model",
+      "label": "Model",
+      "type": "select",
+      "options": ["fast", "deep"],
+      "cliFlag": "--model",
+      "cliValue": true,
+      "default": "fast"
+    },
+    {
+      "key": "verbose",
+      "label": "Verbose output",
+      "type": "boolean",
+      "cliFlag": "--verbose"
+    }
+  ]
 }`;
 ---
 
@@ -252,20 +286,32 @@ const manifestExample = `{
     </div>
   </section>
 
-  <!-- ===== PLUGIN SYSTEM ===== -->
+  <!-- ===== PLUGIN STANDARD ===== -->
   <section class="plugin-system" id="plugins">
     <div class="container">
       <div class="plugin-grid">
         <div class="plugin-text">
-          <span class="section-label">Plugin System</span>
-          <h2 class="section-title">Add any AI CLI.<br />No code changes.</h2>
+          <span class="section-label">Open Plugin Standard</span>
+          <h2 class="section-title">A spec anyone can build on.</h2>
           <p class="plugin-description">
-            Define a <code>manifest.json</code> with the command, arguments, and
-            environment variables. Restart. Your new agent appears in the app.
+            OpenDray defines an open <code>manifest.json</code> standard for wrapping
+            any CLI tool &mdash; AI agents, shells, dev tools. Declare the command,
+            config schema, capabilities, and the UI generates itself.
+          </p>
+          <p class="plugin-description">
+            <strong>Typed config fields</strong> &mdash; string, secret, select, number,
+            boolean, args. Each field can map to a CLI flag or environment variable
+            automatically. Conditional visibility via <code>dependsOn</code>.
+          </p>
+          <p class="plugin-description">
+            <strong>Capabilities</strong> &mdash; declare what the tool supports:
+            resume, streaming, images, MCP injection, dynamic model detection.
+            OpenDray adapts its UI and session lifecycle accordingly.
           </p>
           <p class="plugin-description plugin-description--muted">
-            Template variables, capability flags, and environment injection are
-            all built in. Five minutes from idea to working agent.
+            Two plugin types: <code>cli</code> (spawns a PTY process with full terminal I/O)
+            and <code>panel</code> (stateless HTTP API with config-driven UI).
+            Both share the same manifest schema, database, and enable/disable lifecycle.
           </p>
         </div>
         <div class="plugin-code">
@@ -273,7 +319,7 @@ const manifestExample = `{
             <span class="terminal-dot terminal-dot--red"></span>
             <span class="terminal-dot terminal-dot--yellow"></span>
             <span class="terminal-dot terminal-dot--green"></span>
-            <span class="terminal-title">manifest.json</span>
+            <span class="terminal-title">plugins/agents/my-agent/manifest.json</span>
           </div>
           <pre class="code-block"><code>{manifestExample}</code></pre>
         </div>
