@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -171,6 +172,14 @@ func (h *setupHandlers) dbCommit(w http.ResponseWriter, r *http.Request) {
 	}
 	switch req.Mode {
 	case "embedded":
+		// Same initdb-as-root guard as the CLI wizard. We block at the
+		// API level so the browser wizard also fails fast instead of
+		// reaching the Apply step and dying mid-initdb.
+		if isRootProcess() {
+			respondError(w, http.StatusBadRequest,
+				"Embedded PostgreSQL cannot run as root — create an unprivileged user and run as that user, or pick External instead")
+			return
+		}
 		h.mgr.UpdateDraft(func(c *config.Config) {
 			c.DB.Mode = "embedded"
 			if req.Embedded != nil {
@@ -337,4 +346,11 @@ func (h *setupHandlers) finalize(w http.ResponseWriter, r *http.Request) {
 // to go.
 func setupStatusString() string {
 	return "setup required — open /setup (bootstrap token in stderr)"
+}
+
+// isRootProcess reports whether the current process is running as uid 0
+// (Linux / macOS). Windows always returns false — no equivalent concept
+// and embedded PG isn't supported there anyway.
+func isRootProcess() bool {
+	return os.Geteuid() == 0
 }

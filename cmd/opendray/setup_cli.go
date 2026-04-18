@@ -92,6 +92,24 @@ func runSetupCLI() int {
 		}
 	default:
 		cfg.DB.Mode = "embedded"
+		// PostgreSQL's initdb refuses to run as uid 0 — it's a hard check
+		// in upstream. Fail fast with a useful message rather than
+		// letting the user walk to step 3 and hit the wall.
+		if os.Geteuid() == 0 {
+			fmt.Println()
+			fmt.Println("✗ Embedded PostgreSQL cannot run as root.")
+			fmt.Println("  PostgreSQL's initdb refuses uid 0 for security reasons.")
+			fmt.Println()
+			fmt.Println("  Fix — create an unprivileged user and re-run as that user:")
+			fmt.Println()
+			fmt.Println("      useradd -r -m -s /bin/bash -d /home/opendray opendray")
+			fmt.Println("      cp $(which opendray) /usr/local/bin/opendray    # if not already")
+			fmt.Println("      su - opendray")
+			fmt.Println("      opendray setup")
+			fmt.Println()
+			fmt.Println("  Alternatively, pick [X] External to connect to an existing PostgreSQL.")
+			return 1
+		}
 		cfg.DB.Embedded.DataDir = expandHomeCLI(
 			promptDefault(in, "Data directory", cfg.DB.Embedded.DataDir))
 		cfg.DB.Embedded.CacheDir = expandHomeCLI(
