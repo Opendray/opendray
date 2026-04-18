@@ -143,18 +143,16 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
     return true;
   }
 
-  /// Opens a bottom sheet with clipboard actions for the session:
-  ///   • Copy selection  — whatever the user long-pressed and highlighted
-  ///   • Copy visible    — the full current viewport (useful when nothing
-  ///                       is selected but the whole OAuth URL is on screen)
-  ///   • Paste           — reads system clipboard, sends to terminal
+  /// Opens a full-screen "buffer text" page with SelectableText so the
+  /// user can pick words/urls with the native OS selection handles (drag
+  /// anchors + magnifier + OS copy menu). This is the only reliable way
+  /// on small touch screens — the xterm-native long-press selection
+  /// clears the moment focus shifts to the toolbar, and small fonts make
+  /// precise finger-based selection infeasible.
   ///
-  /// Driven from the clipboard toolbar icon. Web terminals have their
-  /// own copy/paste from xterm.js so this is mobile-native only.
+  /// The companion "Paste" route opens a text field pre-filled with the
+  /// current clipboard so the user can verify/edit before sending.
   Future<void> _showClipboardMenu() async {
-    final selectionRange = _termController.selection;
-    final hasSelection = selectionRange != null;
-
     await showAppModalBottomSheet<void>(
       context: context,
       backgroundColor: AppColors.surface,
@@ -177,37 +175,17 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
             ),
             const Divider(height: 1),
             ListTile(
-              leading: Icon(Icons.copy_outlined,
-                  color: hasSelection ? AppColors.accent : AppColors.textMuted,
-                  size: 20),
-              title: Text(context.tr('Copy selection'),
-                  style: const TextStyle(fontSize: 14)),
-              subtitle: Text(
-                hasSelection
-                    ? context.tr('Long-pressed text → clipboard')
-                    : context.tr('Long-press text in the terminal first'),
-                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
-              ),
-              enabled: hasSelection,
-              onTap: hasSelection
-                  ? () {
-                      Navigator.pop(ctx);
-                      _copySelection();
-                    }
-                  : null,
-            ),
-            ListTile(
-              leading: const Icon(Icons.select_all,
+              leading: const Icon(Icons.copy_outlined,
                   color: AppColors.accent, size: 20),
-              title: Text(context.tr('Copy visible screen'),
+              title: Text(context.tr('Select and copy'),
                   style: const TextStyle(fontSize: 14)),
               subtitle: Text(
-                context.tr('Everything currently on the terminal view'),
+                context.tr('Opens the terminal output in a selectable view'),
                 style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
               onTap: () {
                 Navigator.pop(ctx);
-                _copyVisible();
+                _openSelectCopyPage();
               },
             ),
             const Divider(height: 1, indent: 16),
@@ -217,12 +195,12 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
               title: Text(context.tr('Paste'),
                   style: const TextStyle(fontSize: 14)),
               subtitle: Text(
-                context.tr('Send clipboard contents to the session'),
+                context.tr('Edit/confirm clipboard contents, then send'),
                 style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
               onTap: () {
                 Navigator.pop(ctx);
-                _pasteFromClipboard();
+                _openPastePage();
               },
             ),
             const SizedBox(height: 8),
@@ -232,63 +210,43 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
     );
   }
 
-  /// Copies the user's current terminal selection (set via long-press /
-  /// drag on the xterm view) to the system clipboard.
-  Future<void> _copySelection() async {
-    final range = _termController.selection;
-    if (range == null) return;
-    final text = _terminal.buffer.getText(range);
-    final emptyMsg = context.tr('Nothing selected');
-    final copiedLabel = context.tr('Copied');
-    if (text.isEmpty) {
-      _snack(emptyMsg);
-      return;
-    }
-    await Clipboard.setData(ClipboardData(text: text));
-    _termController.clearSelection();
-    _snack('$copiedLabel (${text.length} chars)');
-  }
-
-  /// Copies the entire terminal buffer (scrollback included) — useful
-  /// when the user wants a multi-line OAuth URL that wraps across rows
-  /// without wrestling with selection on a small touch screen.
-  Future<void> _copyVisible() async {
-    final rows = <String>[];
+  /// Pushes a full-screen SelectableText view of the entire buffer.
+  /// Native OS selection works normally — magnifier, drag handles, the
+  /// system Copy / Share / Look Up menu — so users can grab a URL out
+  /// of a wrapped Claude `/login` dump without fighting finger imprecision.
+  Future<void> _openSelectCopyPage() async {
     final buf = _terminal.buffer;
-    final total = buf.lines.length;
-    for (int i = 0; i < total; i++) {
+    final rows = <String>[];
+    for (int i = 0; i < buf.lines.length; i++) {
       rows.add(buf.lines[i].toString().trimRight());
     }
-    // Trim leading blank rows so the user doesn't get N screenfuls of
-    // pre-boot whitespace when the buffer isn't full yet.
     while (rows.isNotEmpty && rows.first.isEmpty) {
       rows.removeAt(0);
     }
     final text = rows.join('\n').trimRight();
-    final emptyMsg = context.tr('Screen is empty');
-    final copiedLabel = context.tr('Copied');
-    if (text.isEmpty) {
-      _snack(emptyMsg);
-      return;
-    }
-    await Clipboard.setData(ClipboardData(text: text));
-    _snack('$copiedLabel (${text.split("\n").length} lines)');
+
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => _SelectCopyPage(text: text)),
+    );
   }
 
-  /// Writes clipboard contents into the session, as if the user had
-  /// typed them. Keeps newlines intact — an OAuth `code` usually is a
-  /// single line, but scripts / multiline paste works too.
-  Future<void> _pasteFromClipboard() async {
-    final emptyMsg = context.tr('Clipboard is empty');
-    final pastedLabel = context.tr('Pasted');
-    final data = await Clipboard.getData(Clipboard.kTextPlain);
-    final text = data?.text;
-    if (text == null || text.isEmpty) {
-      _snack(emptyMsg);
-      return;
-    }
-    await _sendToTerminal(text);
-    _snack('$pastedLabel (${text.length} chars)');
+  /// Pushes a full-screen "Paste" editor. The controller is pre-filled
+  /// with the current clipboard so the common case (copy-then-paste)
+  /// is single-tap Send. Users who typed something by hand or want to
+  /// strip a trailing newline can do so before sending.
+  Future<void> _openPastePage() async {
+    final clip = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!mounted) return;
+    final result = await Navigator.of(context).push<String?>(
+      MaterialPageRoute(builder: (_) => _PastePage(initial: clip?.text ?? '')),
+    );
+    if (result == null || result.isEmpty) return;
+    final ok = await _sendToTerminal(result);
+    if (!mounted) return;
+    _snack(ok
+        ? '${context.tr('Pasted')} (${result.length} chars)'
+        : context.tr('Paste failed — session not connected'));
   }
 
   void _snack(String msg) {
@@ -1083,6 +1041,223 @@ class _AccountChip extends StatelessWidget {
               const SizedBox(width: 2),
               Icon(Icons.arrow_drop_down, size: 12, color: color),
             ]),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Full-screen "pick text with your finger" view. SelectableText uses
+/// the OS-native text-selection controls (magnifier, drag handles,
+/// system Copy menu), which is the only reliable way to grab text on
+/// small screens — fiddly finger-based xterm gestures lose to this
+/// every time.
+class _SelectCopyPage extends StatelessWidget {
+  final String text;
+  const _SelectCopyPage({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0B0D11),
+      appBar: AppBar(
+        title: Text(context.tr('Select & copy')),
+        backgroundColor: AppColors.surface,
+        actions: [
+          IconButton(
+            tooltip: context.tr('Copy all'),
+            icon: const Icon(Icons.copy_all, size: 20),
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: text));
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('${context.tr('Copied')} (${text.length} chars)'),
+                duration: const Duration(seconds: 2),
+              ));
+            },
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                context.tr('Long-press any text to start selecting. Use the OS handles / magnifier to adjust.'),
+                style: const TextStyle(
+                    fontSize: 11, color: AppColors.textMuted, height: 1.3),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Scrollbar(
+                    child: SingleChildScrollView(
+                      child: SelectableText(
+                        text.isEmpty ? context.tr('(empty buffer)') : text,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 12,
+                          color: AppColors.text,
+                          height: 1.4,
+                        ),
+                        showCursor: true,
+                        cursorColor: AppColors.accent,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Full-screen "paste into session" editor. Pre-populated with the
+/// current clipboard so the common flow (copy URL elsewhere → paste into
+/// OAuth prompt) is one-tap. Users can edit / trim before sending —
+/// e.g. strip a trailing newline if the target CLI doesn't want an
+/// auto-Enter.
+class _PastePage extends StatefulWidget {
+  final String initial;
+  const _PastePage({required this.initial});
+  @override
+  State<_PastePage> createState() => _PastePageState();
+}
+
+class _PastePageState extends State<_PastePage> {
+  late final TextEditingController _ctrl =
+      TextEditingController(text: widget.initial);
+  final FocusNode _focus = FocusNode();
+  bool _appendEnter = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focus.requestFocus();
+      _ctrl.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _ctrl.text.length,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  void _send() {
+    final v = _ctrl.text;
+    if (v.isEmpty) return;
+    Navigator.of(context).pop(_appendEnter ? '$v\n' : v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      appBar: AppBar(
+        title: Text(context.tr('Paste into session')),
+        backgroundColor: AppColors.surface,
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                context.tr('Edit if needed, then Send. Multiline paste is OK.'),
+                style: const TextStyle(
+                    fontSize: 11, color: AppColors.textMuted, height: 1.3),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: TextField(
+                  controller: _ctrl,
+                  focusNode: _focus,
+                  maxLines: null,
+                  expands: true,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  textCapitalization: TextCapitalization.none,
+                  keyboardType: TextInputType.multiline,
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 13,
+                    color: AppColors.text,
+                  ),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: AppColors.surface,
+                    contentPadding: const EdgeInsets.all(12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: AppColors.accent),
+                    ),
+                    hintText: context.tr('Paste or type here'),
+                    hintStyle: const TextStyle(color: AppColors.textMuted),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(children: [
+                Checkbox(
+                  value: _appendEnter,
+                  onChanged: (v) => setState(() => _appendEnter = v ?? false),
+                  activeColor: AppColors.accent,
+                  visualDensity: VisualDensity.compact,
+                ),
+                Expanded(
+                  child: Text(
+                    context.tr('Append Enter — sends as a command'),
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 6),
+              Row(children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(context.tr('Cancel')),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton.icon(
+                    onPressed: _send,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.accent,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    icon: const Icon(Icons.send, size: 16),
+                    label: Text(context.tr('Send')),
+                  ),
+                ),
+              ]),
+            ],
           ),
         ),
       ),
