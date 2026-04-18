@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -140,6 +141,162 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
     }
     _ws.sendBinary(Uint8List.fromList(utf8.encode(text)));
     return true;
+  }
+
+  /// Opens a bottom sheet with clipboard actions for the session:
+  ///   • Copy selection  — whatever the user long-pressed and highlighted
+  ///   • Copy visible    — the full current viewport (useful when nothing
+  ///                       is selected but the whole OAuth URL is on screen)
+  ///   • Paste           — reads system clipboard, sends to terminal
+  ///
+  /// Driven from the clipboard toolbar icon. Web terminals have their
+  /// own copy/paste from xterm.js so this is mobile-native only.
+  Future<void> _showClipboardMenu() async {
+    final selectionRange = _termController.selection;
+    final hasSelection = selectionRange != null;
+
+    await showAppModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+              child: Row(children: [
+                const Icon(Icons.content_paste_outlined,
+                    size: 18, color: AppColors.accent),
+                const SizedBox(width: 8),
+                Text(context.tr('Clipboard'),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 14)),
+              ]),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: Icon(Icons.copy_outlined,
+                  color: hasSelection ? AppColors.accent : AppColors.textMuted,
+                  size: 20),
+              title: Text(context.tr('Copy selection'),
+                  style: const TextStyle(fontSize: 14)),
+              subtitle: Text(
+                hasSelection
+                    ? context.tr('Long-pressed text → clipboard')
+                    : context.tr('Long-press text in the terminal first'),
+                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+              ),
+              enabled: hasSelection,
+              onTap: hasSelection
+                  ? () {
+                      Navigator.pop(ctx);
+                      _copySelection();
+                    }
+                  : null,
+            ),
+            ListTile(
+              leading: const Icon(Icons.select_all,
+                  color: AppColors.accent, size: 20),
+              title: Text(context.tr('Copy visible screen'),
+                  style: const TextStyle(fontSize: 14)),
+              subtitle: Text(
+                context.tr('Everything currently on the terminal view'),
+                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                _copyVisible();
+              },
+            ),
+            const Divider(height: 1, indent: 16),
+            ListTile(
+              leading: const Icon(Icons.content_paste,
+                  color: AppColors.accent, size: 20),
+              title: Text(context.tr('Paste'),
+                  style: const TextStyle(fontSize: 14)),
+              subtitle: Text(
+                context.tr('Send clipboard contents to the session'),
+                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pasteFromClipboard();
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Copies the user's current terminal selection (set via long-press /
+  /// drag on the xterm view) to the system clipboard.
+  Future<void> _copySelection() async {
+    final range = _termController.selection;
+    if (range == null) return;
+    final text = _terminal.buffer.getText(range);
+    final emptyMsg = context.tr('Nothing selected');
+    final copiedLabel = context.tr('Copied');
+    if (text.isEmpty) {
+      _snack(emptyMsg);
+      return;
+    }
+    await Clipboard.setData(ClipboardData(text: text));
+    _termController.clearSelection();
+    _snack('$copiedLabel (${text.length} chars)');
+  }
+
+  /// Copies the entire terminal buffer (scrollback included) — useful
+  /// when the user wants a multi-line OAuth URL that wraps across rows
+  /// without wrestling with selection on a small touch screen.
+  Future<void> _copyVisible() async {
+    final rows = <String>[];
+    final buf = _terminal.buffer;
+    final total = buf.lines.length;
+    for (int i = 0; i < total; i++) {
+      rows.add(buf.lines[i].toString().trimRight());
+    }
+    // Trim leading blank rows so the user doesn't get N screenfuls of
+    // pre-boot whitespace when the buffer isn't full yet.
+    while (rows.isNotEmpty && rows.first.isEmpty) {
+      rows.removeAt(0);
+    }
+    final text = rows.join('\n').trimRight();
+    final emptyMsg = context.tr('Screen is empty');
+    final copiedLabel = context.tr('Copied');
+    if (text.isEmpty) {
+      _snack(emptyMsg);
+      return;
+    }
+    await Clipboard.setData(ClipboardData(text: text));
+    _snack('$copiedLabel (${text.split("\n").length} lines)');
+  }
+
+  /// Writes clipboard contents into the session, as if the user had
+  /// typed them. Keeps newlines intact — an OAuth `code` usually is a
+  /// single line, but scripts / multiline paste works too.
+  Future<void> _pasteFromClipboard() async {
+    final emptyMsg = context.tr('Clipboard is empty');
+    final pastedLabel = context.tr('Pasted');
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text;
+    if (text == null || text.isEmpty) {
+      _snack(emptyMsg);
+      return;
+    }
+    await _sendToTerminal(text);
+    _snack('$pastedLabel (${text.length} chars)');
+  }
+
+  void _snack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      duration: const Duration(seconds: 2),
+    ));
   }
 
   void _scrollToBottom() {
@@ -685,6 +842,18 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               tooltip: context.tr('Voice input'),
+            ),
+          // Clipboard — copy terminal selection / paste into the session.
+          // Essential for headless-server workflows where the user needs
+          // to bounce an OAuth URL out to a browser and a code back in.
+          if (!kIsWeb && _session?.isRunning == true)
+            IconButton(
+              icon: const Icon(Icons.content_paste_outlined,
+                  size: 20, color: AppColors.accent),
+              onPressed: _showClipboardMenu,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              tooltip: context.tr('Clipboard'),
             ),
           // Toggle quick keys bar (mobile only)
           if (!kIsWeb && _session?.isRunning == true)
