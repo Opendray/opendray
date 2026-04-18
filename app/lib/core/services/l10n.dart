@@ -188,9 +188,8 @@ class L10n extends ChangeNotifier {
     'Change':             '更改',
     'About':              '关于',
     'Language':           '语言',
-    'Architecture':       '架构',
-    'Micro-kernel + 插件 (Plugins)': '微内核 + 插件',
     'Version':            '版本',
+    'Build Date':         '构建日期',
 
     // Image attach
     'Send to session':          '发送到会话',

@@ -59,7 +59,7 @@ class _SetupPageState extends State<SetupPage> {
                 Container(
                   width: 64, height: 64,
                   decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(16)),
-                  child: const Center(child: Text('N', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 32))),
+                  child: const Icon(Icons.terminal_rounded, color: Colors.white, size: 40),
                 ),
                 const SizedBox(height: 20),
                 const Text('Welcome to OpenDray', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600)),
