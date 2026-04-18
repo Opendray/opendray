@@ -28,7 +28,52 @@ import (
 	"github.com/opendray/opendray/plugin"
 )
 
+// version is injected at build time via -ldflags. Defaults to "dev" for
+// `go run` without a release.
+var (
+	version  = "dev"
+	buildSha = "unknown"
+)
+
+// printHelp is the output of `opendray help` / `-h`. Keep it short —
+// full docs live in the README.
+func printHelp() {
+	fmt.Println(`OpenDray — pilot AI coding agents from your phone.
+
+Usage:
+  opendray [command]
+
+Commands:
+  (no args)   Start the server (first run triggers the setup wizard)
+  setup       Interactive CLI wizard for headless / no-browser installs
+  version     Print version info
+  help        Show this help
+
+Env vars:
+  OPENDRAY_CONFIG        path to config.toml
+  OPENDRAY_NO_BROWSER    don't auto-open the browser in first-run setup
+
+Docs: https://github.com/Opendray/opendray`)
+}
+
 func main() {
+	// Subcommand dispatch. Only one subcommand today — `opendray setup`
+	// runs the interactive CLI wizard for headless installs where no
+	// browser is available. Everything else falls through to normal
+	// boot + setup-mode-on-demand.
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "setup":
+			os.Exit(runSetupCLI())
+		case "version", "-v", "--version":
+			fmt.Println(version)
+			return
+		case "-h", "--help", "help":
+			printHelp()
+			return
+		}
+	}
+
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	slog.SetDefault(logger)
 
@@ -107,7 +152,10 @@ func runSetupMode(logger *slog.Logger, cfg config.Config) bool {
 	fmt.Fprintln(os.Stderr, "│                                                               │")
 	fmt.Fprintf (os.Stderr, "│   %s\n", padRight(setupURL, 60))
 	fmt.Fprintln(os.Stderr, "│                                                               │")
+	fmt.Fprintln(os.Stderr, "│   Headless server (no browser)?                               │")
+	fmt.Fprintln(os.Stderr, "│   Stop this (Ctrl-C) and run: opendray setup                  │")
 	if tokenPath != "" {
+		fmt.Fprintln(os.Stderr, "│                                                               │")
 		fmt.Fprintf (os.Stderr, "│   Token: %s\n", padRight(tokenPath, 55))
 	}
 	fmt.Fprintln(os.Stderr, "│                                                               │")

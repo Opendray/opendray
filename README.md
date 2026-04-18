@@ -63,6 +63,17 @@ The installer detects your OS and architecture, downloads the matching binary fr
 
 Pin a version with `OPENDRAY_VERSION=v0.5.0` or change the install dir with `OPENDRAY_INSTALL_DIR=/usr/local/bin`.
 
+### Headless / SSH server?
+
+Running on a VPS or LXC with no browser? Use the interactive CLI wizard instead:
+
+```bash
+opendray setup      # prompts for DB, admin creds, JWT — no browser needed
+opendray            # starts the server normally
+```
+
+Or, if your server's `:8640` is reachable from your laptop on the LAN, just run `opendray` and open the URL printed to stderr from your laptop's browser — the bootstrap token protects the session so LAN exposure is safe.
+
 ### Manual download
 
 Grab a binary from the [Releases page](https://github.com/Opendray/opendray/releases) for your platform:
