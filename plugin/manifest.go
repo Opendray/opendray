@@ -4,6 +4,7 @@ package plugin
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -100,6 +101,62 @@ func LoadManifest(pluginDir string) (Provider, error) {
 		p.DisplayName = p.Name
 	}
 	return p, nil
+}
+
+// ScanFS walks fsys under root recursively, mirroring [ScanPluginDir]
+// but reading from any [fs.FS] rather than the local filesystem. This is
+// how the runtime seeds itself from embedded plugin manifests on a
+// fresh install where the `plugins/` directory isn't next to the binary.
+//
+// Walk rules match the filesystem version:
+//   - stops descending into a plugin as soon as its manifest.json is found
+//   - skips `_template/` and any directory whose name starts with "."
+//   - surface-level errors (missing root, bad JSON) are logged by the
+//     caller via a non-nil providers slice; this function only returns
+//     an error for truly unexpected walk failures.
+func ScanFS(fsys fs.FS, root string) ([]Provider, error) {
+	entries, err := fs.ReadDir(fsys, root)
+	if err != nil {
+		// Embedded-only builds will always have a root; filesystem
+		// fallbacks are allowed to be empty.
+		return nil, nil
+	}
+	_ = entries
+
+	var providers []Provider
+	err = fs.WalkDir(fsys, root, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if !d.IsDir() {
+			return nil
+		}
+		name := d.Name()
+		if path != root && (name == "_template" || strings.HasPrefix(name, ".")) {
+			return fs.SkipDir
+		}
+		manifestPath := path + "/manifest.json"
+		data, mErr := fs.ReadFile(fsys, manifestPath)
+		if mErr != nil {
+			return nil // not a plugin dir, keep descending
+		}
+		var p Provider
+		if jErr := json.Unmarshal(data, &p); jErr != nil {
+			return nil // corrupt manifest — skip, don't abort siblings
+		}
+		if p.Name == "" {
+			return nil
+		}
+		if p.DisplayName == "" {
+			p.DisplayName = p.Name
+		}
+		providers = append(providers, p)
+		return fs.SkipDir // don't descend into a plugin
+	})
+	if err != nil {
+		return nil, fmt.Errorf("plugin: scan fs %s: %w", root, err)
+	}
+	return providers, nil
 }
 
 // ScanPluginDir walks baseDir recursively and loads any directory that
