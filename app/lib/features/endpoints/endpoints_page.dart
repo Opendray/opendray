@@ -181,7 +181,7 @@ class _EndpointsPageState extends State<EndpointsPage> {
       decoration: BoxDecoration(
         color: AppColors.accentSoft,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.accent.withOpacity(0.35)),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
       ),
       child: Row(children: [
         const Icon(Icons.info_outline, size: 18, color: AppColors.accent),
@@ -225,7 +225,7 @@ class _EndpointsPageState extends State<EndpointsPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: enabled ? AppColors.accent.withOpacity(0.25) : AppColors.border,
+          color: enabled ? AppColors.accent.withValues(alpha: 0.25) : AppColors.border,
         ),
       ),
       child: Padding(
@@ -285,7 +285,7 @@ class _EndpointsPageState extends State<EndpointsPage> {
               Switch(
                 value: enabled,
                 onChanged: (v) => _toggle(p, v),
-                activeColor: AppColors.accent,
+                activeThumbColor: AppColors.accent,
               ),
             ]),
             const SizedBox(height: 4),
@@ -447,7 +447,7 @@ class _ProviderEditorDialogState extends State<_ProviderEditorDialog> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: DropdownButtonFormField<String>(
-                  value: _providerType,
+                  initialValue: _providerType,
                   items: _typeOptions
                       .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                       .toList(),
@@ -470,7 +470,7 @@ class _ProviderEditorDialogState extends State<_ProviderEditorDialog> {
                 onChanged: (v) => setState(() => _enabled = v),
                 title: Text(context.tr('Enabled')),
                 contentPadding: EdgeInsets.zero,
-                activeColor: AppColors.accent,
+                activeThumbColor: AppColors.accent,
               ),
             ],
           ),

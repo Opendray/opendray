@@ -64,7 +64,7 @@ class _WebTerminalViewState extends State<WebTerminalView> {
 
   void _listenMessages() {
     _messageSub = web.window.onMessage.listen((event) {
-      final data = (event as web.MessageEvent).data;
+      final data = event.data;
       if (data == null) return;
 
       // Convert JSAny to map

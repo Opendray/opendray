@@ -180,7 +180,7 @@ class _BrowserPageState extends State<BrowserPage> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.12),
+                color: AppColors.accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(e.icon, color: AppColors.accent, size: 22),

@@ -340,7 +340,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                         decoration: BoxDecoration(
                           color: AppColors.warningSoft,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.warning.withOpacity(0.4)),
+                          border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
                         ),
                         child: const Text(
                           'No LLM providers configured yet. Open Browser → LLM Providers to add one before starting this session.',

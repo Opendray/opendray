@@ -55,7 +55,7 @@ class _DashboardPageState extends State<DashboardPage> {
             Container(
               width: 28, height: 28,
               decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(7)),
-              child: const Center(child: Text('N', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14))),
+              child: const Icon(Icons.terminal_rounded, color: Colors.white, size: 18),
             ),
             const SizedBox(width: 10),
             Column(

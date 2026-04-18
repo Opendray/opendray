@@ -69,9 +69,9 @@ class MobileTerminalViewState extends State<MobileTerminalView> {
   }
 
   @override
-  void didUpdateWidget(MobileTerminalView old) {
-    super.didUpdateWidget(old);
-    if (widget.isRunning && !old.isRunning) _loadTerminal();
+  void didUpdateWidget(MobileTerminalView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isRunning && !oldWidget.isRunning) _loadTerminal();
   }
 
   void _loadTerminal() {

@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/api/api_client.dart';
 import '../../core/services/l10n.dart';
 import '../../core/services/server_config.dart';
 import '../../shared/theme/app_theme.dart';
 import 'widgets/plugins_section.dart';
+
+const String _kBuildDate =
+    String.fromEnvironment('BUILD_DATE', defaultValue: '');
+const String _kRepoUrl = 'https://github.com/Opendray/opendray';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -250,7 +256,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       Container(
                         width: 28, height: 28,
                         decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(7)),
-                        child: const Center(child: Text('N', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14))),
+                        child: const Icon(Icons.terminal_rounded, color: Colors.white, size: 18),
                       ),
                       const SizedBox(width: 10),
                       const Column(
@@ -263,11 +269,50 @@ class _SettingsPageState extends State<SettingsPage> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _InfoRow(label: context.tr('Architecture'),
-                      value: context.tr('Micro-kernel + Plugins')),
-                  const _InfoRow(label: 'Backend', value: 'Go + chi + gorilla/websocket'),
-                  const _InfoRow(label: 'Frontend', value: 'Flutter (Web + Android + iOS)'),
-                  const _InfoRow(label: 'Terminal', value: 'xterm.dart + WebSocket'),
+                  FutureBuilder<PackageInfo>(
+                    future: PackageInfo.fromPlatform(),
+                    builder: (context, snap) {
+                      final info = snap.data;
+                      final version = info == null
+                          ? '—'
+                          : '${info.version} (${info.buildNumber})';
+                      final buildDate =
+                          _kBuildDate.isEmpty ? '—' : _kBuildDate;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _InfoRow(
+                              label: context.tr('Version'), value: version),
+                          _InfoRow(
+                              label: context.tr('Build Date'),
+                              value: buildDate),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 4),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(6),
+                    onTap: () => launchUrl(Uri.parse(_kRepoUrl),
+                        mode: LaunchMode.externalApplication),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.code, size: 16, color: AppColors.accent),
+                          const SizedBox(width: 8),
+                          Text(context.tr('GitHub'),
+                              style: const TextStyle(
+                                  color: AppColors.accent,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500)),
+                          const SizedBox(width: 6),
+                          const Icon(Icons.open_in_new,
+                              size: 13, color: AppColors.accent),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
