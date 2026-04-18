@@ -52,7 +52,30 @@ No other tool does this.
 
 ## Quick Start
 
-Grab a pre-built binary from [Releases](https://github.com/Opendray/opendray/releases) or build locally:
+### One-line install (macOS / Linux)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/install.sh | sh
+opendray
+```
+
+The installer detects your OS and architecture, downloads the matching binary from [Releases](https://github.com/Opendray/opendray/releases), verifies the SHA256, strips the macOS quarantine flag, and drops it into `~/.local/bin/`.
+
+Pin a version with `OPENDRAY_VERSION=v0.5.0` or change the install dir with `OPENDRAY_INSTALL_DIR=/usr/local/bin`.
+
+### Manual download
+
+Grab a binary from the [Releases page](https://github.com/Opendray/opendray/releases) for your platform:
+- `opendray-darwin-arm64` — Apple Silicon Mac
+- `opendray-darwin-amd64` — Intel Mac
+- `opendray-linux-amd64` / `opendray-linux-arm64`
+
+```bash
+chmod +x opendray-darwin-arm64
+./opendray-darwin-arm64
+```
+
+### Build from source
 
 ```bash
 git clone https://github.com/opendray/opendray.git

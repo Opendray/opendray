@@ -1,0 +1,78 @@
+# Release workflow — triggered by tags starting with "v".
+#
+# Builds the Flutter web bundle, cross-compiles the Go binary for
+# darwin/linux × amd64/arm64 with the bundle embedded, and uploads the
+# four binaries + a SHA256SUMS file to the matching GitHub Release.
+#
+# To cut a release:
+#   git tag v0.5.0
+#   git push origin v0.5.0
+#
+# GitHub will create the Release automatically and this workflow will
+# attach the assets. install.sh in the repo root uses
+# /releases/latest/download/<asset> so users always get the newest tag.
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: beta
+
+      - name: Build web bundle
+        run: |
+          cd app
+          flutter pub get
+          flutter build web --release --no-tree-shake-icons
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - name: Cross-compile binaries
+        run: |
+          mkdir -p bin
+          VERSION=${GITHUB_REF_NAME}
+          BUILD_SHA=$(git rev-parse --short HEAD)
+          LDFLAGS="-s -w -X main.version=${VERSION} -X main.buildSha=${BUILD_SHA}"
+          for os in darwin linux; do
+            for arch in amd64 arm64; do
+              echo "→ building $os/$arch"
+              GOOS=$os GOARCH=$arch CGO_ENABLED=0 \
+                go build -ldflags="${LDFLAGS}" -trimpath \
+                -o bin/opendray-$os-$arch ./cmd/opendray
+            done
+          done
+
+      - name: Generate SHA256SUMS
+        run: |
+          cd bin
+          sha256sum opendray-* > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Attach binaries to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            bin/opendray-darwin-amd64
+            bin/opendray-darwin-arm64
+            bin/opendray-linux-amd64
+            bin/opendray-linux-arm64
+            bin/SHA256SUMS
+          # The tag message is rendered as the release body on first push.
+          # If you want richer notes, edit the release on github.com after
+          # this job finishes — assets will already be there.
+          generate_release_notes: true
