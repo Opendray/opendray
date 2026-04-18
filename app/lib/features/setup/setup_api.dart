@@ -71,12 +71,6 @@ class SetupApi {
     return null;
   }
 
-  Future<EnvProbe> env() async {
-    final res = await _dio.get('/api/setup/env');
-    _ensureOk(res, 'env');
-    return EnvProbe.fromJson(Map<String, dynamic>.from(res.data as Map));
-  }
-
   Future<void> testDB({
     required String host,
     required int port,
@@ -157,33 +151,6 @@ class SetupApi {
     _ensureOk(res, 'finalize');
   }
 
-  /// Kicks off `npm install -g <pkg>`. Returns the ephemeral job id the
-  /// caller uses to subscribe to the output stream.
-  Future<String> startCliInstall(String cli) async {
-    final res = await _dio.post('/api/setup/cli-install', data: {'cli': cli});
-    _ensureOk(res, 'cli-install');
-    final id = (res.data as Map)['sessionId'] as String?;
-    if (id == null || id.isEmpty) {
-      throw SetupApiException(0, 'server did not return a sessionId');
-    }
-    return id;
-  }
-
-  /// Builds the WS URL for streaming a running install's output.
-  /// The token rides in the query string because browsers can't set
-  /// custom headers on WebSocket handshakes.
-  Uri cliInstallStreamUri(String serverUrl, String jobId) {
-    final u = Uri.parse(serverUrl);
-    final wsScheme = u.scheme == 'https' ? 'wss' : 'ws';
-    return Uri(
-      scheme: wsScheme,
-      host: u.host,
-      port: u.hasPort ? u.port : null,
-      path: '/api/setup/cli-install/$jobId/ws',
-      queryParameters: {'token': bootstrapToken},
-    );
-  }
-
   void _ensureOk(Response res, String step) {
     if (res.statusCode == 200) return;
     final msg = (res.data is Map && (res.data as Map)['error'] is String)
@@ -226,49 +193,5 @@ class SetupStatus {
         dbTested: j['dbTested'] == true,
         adminConfigured: j['adminConfigured'] == true,
         schemaVersion: (j['schemaVersion'] as num?)?.toInt() ?? 1,
-      );
-}
-
-/// Mirrors GET /api/setup/env.
-class EnvProbe {
-  final String os;
-  final String arch;
-  final Tool node;
-  final Tool npm;
-  final Map<String, Tool> clis; // "claude" / "codex" / "gemini"
-
-  EnvProbe({
-    required this.os,
-    required this.arch,
-    required this.node,
-    required this.npm,
-    required this.clis,
-  });
-
-  factory EnvProbe.fromJson(Map<String, dynamic> j) {
-    final rawClis = (j['clis'] as Map?) ?? {};
-    return EnvProbe(
-      os: (j['os'] as String?) ?? '',
-      arch: (j['arch'] as String?) ?? '',
-      node: Tool.fromJson(Map<String, dynamic>.from((j['node'] as Map?) ?? {})),
-      npm: Tool.fromJson(Map<String, dynamic>.from((j['npm'] as Map?) ?? {})),
-      clis: {
-        for (final e in rawClis.entries)
-          e.key as String: Tool.fromJson(Map<String, dynamic>.from(e.value as Map? ?? {})),
-      },
-    );
-  }
-}
-
-class Tool {
-  final bool installed;
-  final String version;
-  final String path;
-  Tool({required this.installed, required this.version, required this.path});
-
-  factory Tool.fromJson(Map<String, dynamic> j) => Tool(
-        installed: j['installed'] == true,
-        version: (j['version'] as String?) ?? '',
-        path: (j['path'] as String?) ?? '',
       );
 }

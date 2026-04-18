@@ -1,5 +1,3 @@
-import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +5,6 @@ import 'package:provider/provider.dart';
 
 import '../../core/services/auth_service.dart';
 import '../../core/services/server_config.dart';
-import '../../core/services/ws_connect.dart';
 import '../../shared/theme/app_theme.dart';
 import 'setup_api.dart';
 
@@ -27,7 +24,7 @@ class SetupWizardPage extends StatefulWidget {
   State<SetupWizardPage> createState() => _SetupWizardPageState();
 }
 
-enum _Step { loading, needToken, welcome, db, admin, advanced, cli, apply, done, noNeed, error }
+enum _Step { loading, needToken, welcome, db, admin, advanced, apply, done, noNeed, error }
 
 enum _Path { quick, custom }
 
@@ -304,7 +301,7 @@ class _SetupWizardPageState extends State<SetupWizardPage> {
               return;
             }
             setState(() =>
-                _step = _path == _Path.quick ? _Step.cli : _Step.advanced);
+                _step = _path == _Path.quick ? _Step.apply : _Step.advanced);
           },
         );
       case _Step.advanced:
@@ -313,14 +310,6 @@ class _SetupWizardPageState extends State<SetupWizardPage> {
           onJwtModeChange: (m) => setState(() => _jwtMode = m),
           jwtCustomCtrl: _jwtCustomCtrl,
           onBack: () => setState(() => _step = _Step.admin),
-          onNext: () => setState(() => _step = _Step.cli),
-        );
-      case _Step.cli:
-        return _CliCard(
-          api: _api!,
-          serverUrl: _baseUrl,
-          onBack: () => setState(() =>
-              _step = _path == _Path.quick ? _Step.admin : _Step.advanced),
           onNext: () => setState(() => _step = _Step.apply),
         );
       case _Step.apply:
@@ -1012,256 +1001,6 @@ class _DoneCard extends StatelessWidget {
     );
   }
 }
-
-// ─── CLI step ─────────────────────────────────────────────────────────────
-
-/// Optional CLI installer. Renders the env probe (claude/codex/gemini
-/// installed?) and, for each missing one, an Install button that streams
-/// `npm install -g <pkg>` output live. Skip is always available — the
-/// underlying env auth path handles "CLI not installed" gracefully at
-/// session-spawn time.
-class _CliCard extends StatefulWidget {
-  final SetupApi api;
-  final String serverUrl;
-  final VoidCallback onBack, onNext;
-  const _CliCard({
-    required this.api,
-    required this.serverUrl,
-    required this.onBack,
-    required this.onNext,
-  });
-
-  @override
-  State<_CliCard> createState() => _CliCardState();
-}
-
-class _CliCardState extends State<_CliCard> {
-  EnvProbe? _env;
-  String? _loadError;
-  final Set<String> _installing = {};
-  final Map<String, List<String>> _logs = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    try {
-      final env = await widget.api.env();
-      if (!mounted) return;
-      setState(() { _env = env; _loadError = null; });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _loadError = e.toString());
-    }
-  }
-
-  Future<void> _install(String cli) async {
-    setState(() {
-      _installing.add(cli);
-      _logs[cli] = [];
-    });
-    try {
-      final jobId = await widget.api.startCliInstall(cli);
-      final uri = widget.api.cliInstallStreamUri(widget.serverUrl, jobId);
-      final ch = connectWs(uri);
-      final sub = ch.stream.listen(
-        (data) {
-          if (!mounted) return;
-          final s = data is String ? data : utf8.decode(data as List<int>);
-          try {
-            final msg = jsonDecode(s) as Map<String, dynamic>;
-            final type = msg['type'] as String?;
-            if (type == 'stdout' || type == 'stderr') {
-              setState(() => _logs[cli]!.add((msg['data'] as String?) ?? ''));
-            } else if (type == 'exit') {
-              final code = (msg['code'] as num?)?.toInt() ?? 0;
-              setState(() => _logs[cli]!.add(code == 0
-                  ? '── ✓ Install complete'
-                  : '── ✗ npm exited with code $code'));
-            }
-          } catch (_) {
-            setState(() => _logs[cli]!.add(s));
-          }
-        },
-        onDone: () async {
-          if (!mounted) return;
-          setState(() => _installing.remove(cli));
-          // Refresh env so the installed flag flips.
-          await _load();
-        },
-        onError: (e) {
-          if (!mounted) return;
-          setState(() {
-            _logs[cli]!.add('── ✗ stream error: $e');
-            _installing.remove(cli);
-          });
-        },
-      );
-      // Hold ref just so Dart doesn't GC it
-      unawaited(sub.asFuture<void>());
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _installing.remove(cli);
-        _logs[cli] = ['── ✗ $e'];
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: const [
-            Text('Agent CLIs',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            Spacer(),
-            Text('Optional',
-                style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
-          ]),
-          const SizedBox(height: 10),
-          const Text(
-            'Install the CLIs OpenDray drives. You can skip this step — '
-            'each CLI prompts for login the first time you launch it from '
-            'a session, and you can always install them later from your '
-            'terminal.',
-            style: TextStyle(fontSize: 12, color: AppColors.textMuted, height: 1.4),
-          ),
-          const SizedBox(height: 16),
-          if (_loadError != null)
-            _bannerError(_loadError!)
-          else if (_env == null)
-            const Center(child: Padding(
-              padding: EdgeInsets.all(16),
-              child: CircularProgressIndicator(color: AppColors.accent),
-            ))
-          else ...[
-            if (!_env!.node.installed)
-              _bannerWarn(
-                'Node.js not found on PATH. Install from nodejs.org to enable CLI installs.',
-              ),
-            const SizedBox(height: 8),
-            for (final cli in const ['claude', 'codex', 'gemini'])
-              _cliRow(cli),
-          ],
-          const SizedBox(height: 20),
-          _NavRow(onBack: widget.onBack, onNext: widget.onNext),
-        ]),
-      ),
-    );
-  }
-
-  Widget _cliRow(String cli) {
-    final tool = _env!.clis[cli];
-    final installed = tool?.installed ?? false;
-    final installing = _installing.contains(cli);
-    final canInstall = _env!.node.installed && !installing;
-    final log = _logs[cli];
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surfaceAlt,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(children: [
-          ListTile(
-            leading: Icon(
-              installed ? Icons.check_circle : Icons.download,
-              color: installed ? AppColors.success : AppColors.textMuted,
-              size: 20,
-            ),
-            title: Text(_cliLabel(cli),
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-            subtitle: Text(
-              installed
-                  ? (tool?.version.isNotEmpty == true ? 'v${tool!.version}' : 'installed')
-                  : 'not installed — npm install -g ${_pkgFor(cli)}',
-              style: const TextStyle(fontSize: 11, color: AppColors.textMuted, fontFamily: 'monospace'),
-            ),
-            trailing: installing
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                : TextButton.icon(
-                    onPressed: canInstall ? () => _install(cli) : null,
-                    icon: Icon(installed ? Icons.refresh : Icons.download, size: 16),
-                    label: Text(installed ? 'Reinstall' : 'Install'),
-                    style: TextButton.styleFrom(foregroundColor: AppColors.accent),
-                  ),
-          ),
-          if (log != null && log.isNotEmpty)
-            Container(
-              width: double.infinity,
-              constraints: const BoxConstraints(maxHeight: 160),
-              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0B0D11),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: SingleChildScrollView(
-                reverse: true,
-                child: SelectableText(
-                  log.join('\n'),
-                  style: const TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 11,
-                    color: AppColors.text,
-                    height: 1.35,
-                  ),
-                ),
-              ),
-            ),
-        ]),
-      ),
-    );
-  }
-
-  String _cliLabel(String cli) => switch (cli) {
-        'claude' => 'Claude Code',
-        'codex'  => 'Codex CLI',
-        'gemini' => 'Gemini CLI',
-        _ => cli,
-      };
-  String _pkgFor(String cli) => switch (cli) {
-        'claude' => '@anthropic-ai/claude-code',
-        'codex'  => '@openai/codex',
-        'gemini' => '@google/gemini-cli',
-        _ => cli,
-      };
-
-  Widget _bannerWarn(String msg) => Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: AppColors.warningSoft,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
-        ),
-        child: Row(children: [
-          const Icon(Icons.warning_amber, size: 16, color: AppColors.warning),
-          const SizedBox(width: 8),
-          Expanded(child: Text(msg, style: const TextStyle(fontSize: 12))),
-        ]),
-      );
-
-  Widget _bannerError(String msg) => Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: AppColors.errorSoft,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(msg, style: const TextStyle(fontSize: 12, color: AppColors.error)),
-      );
-}
-
-// Helper — avoids pulling dart:async for a single unawaited call.
-void unawaited(Future<void> f) {}
 
 // ─── Shared bits ──────────────────────────────────────────────────────────
 

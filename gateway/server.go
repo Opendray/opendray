@@ -296,16 +296,14 @@ func NewSetup(mgr *setup.Manager, frontendFS fs.FS, logger *slog.Logger) http.Ha
 	// Token endpoint — loopback-only; handler enforces that.
 	r.Get("/api/setup/token", h.loopbackToken)
 
-	// Token-gated setup endpoints.
-	r.Get("/api/setup/env", h.tokenGate(h.envProbe))
+	// Token-gated setup endpoints. Scope is strictly OpenDray's own
+	// first-run config — DB choice, admin credentials, JWT. Installing
+	// agent CLIs (claude/codex/gemini) is out of scope; users handle
+	// their own package installs.
 	r.Post("/api/setup/db/test", h.tokenGate(h.dbTest))
 	r.Post("/api/setup/db/commit", h.tokenGate(h.dbCommit))
 	r.Post("/api/setup/admin", h.tokenGate(h.adminSet))
 	r.Post("/api/setup/jwt", h.tokenGate(h.jwtSet))
-	r.Post("/api/setup/cli-install", h.tokenGate(h.cliInstallStart))
-	// WS uses ?token= query param because browsers can't set custom
-	// headers on WebSocket handshakes; token gate already handles both.
-	r.Get("/api/setup/cli-install/{id}/ws", h.tokenGate(h.cliInstallStream))
 	r.Post("/api/setup/finalize", h.tokenGate(h.finalize))
 
 	// Catch-all /api/* → 503 so callers realise setup is in progress.

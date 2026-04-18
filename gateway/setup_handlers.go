@@ -7,9 +7,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
-	"runtime"
-	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -21,15 +18,11 @@ import (
 // setupHandlers owns the /api/setup/* endpoints. Wired by the gateway
 // when the manager is non-nil (i.e. setup mode is active at boot).
 type setupHandlers struct {
-	mgr      *setup.Manager
-	installs *installRegistry
+	mgr *setup.Manager
 }
 
 func newSetupHandlers(mgr *setup.Manager) *setupHandlers {
-	return &setupHandlers{
-		mgr:      mgr,
-		installs: newInstallRegistry(),
-	}
+	return &setupHandlers{mgr: mgr}
 }
 
 // tokenGate requires X-Setup-Token or ?token= matching mgr.BootstrapToken.
@@ -72,47 +65,6 @@ func (h *setupHandlers) loopbackToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, map[string]string{"token": h.mgr.BootstrapToken()})
-}
-
-// envProbe — GET /api/setup/env
-// Detects presence of Node, npm, claude, codex, gemini + reports OS info
-// so the wizard's CLI step can render accurate enable/disable state.
-func (h *setupHandlers) envProbe(w http.ResponseWriter, r *http.Request) {
-	type tool struct {
-		Installed bool   `json:"installed"`
-		Version   string `json:"version,omitempty"`
-		Path      string `json:"path,omitempty"`
-	}
-	probe := func(cmd string, versionArgs ...string) tool {
-		path, err := exec.LookPath(cmd)
-		if err != nil {
-			return tool{Installed: false}
-		}
-		args := versionArgs
-		if len(args) == 0 {
-			args = []string{"--version"}
-		}
-		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-		defer cancel()
-		out, _ := exec.CommandContext(ctx, cmd, args...).Output()
-		v := strings.TrimSpace(string(out))
-		// Keep the first line only — claude prints a banner.
-		if nl := strings.IndexByte(v, '\n'); nl > 0 {
-			v = v[:nl]
-		}
-		return tool{Installed: true, Version: v, Path: path}
-	}
-	respondJSON(w, http.StatusOK, map[string]any{
-		"os":     runtime.GOOS,
-		"arch":   runtime.GOARCH,
-		"node":   probe("node"),
-		"npm":    probe("npm"),
-		"clis": map[string]tool{
-			"claude": probe("claude"),
-			"codex":  probe("codex"),
-			"gemini": probe("gemini"),
-		},
-	})
 }
 
 // dbTest — POST /api/setup/db/test
