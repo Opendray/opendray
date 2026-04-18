@@ -190,6 +190,7 @@ class L10n extends ChangeNotifier {
     'Language':           '语言',
     'Version':            '版本',
     'Build Date':         '构建日期',
+    'GitHub':             'GitHub 仓库',
 
     // Image attach
     'Send to session':          '发送到会话',
