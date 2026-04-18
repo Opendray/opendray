@@ -697,6 +697,102 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
   }
 
   Widget _buildToolbar() {
+    // Trailing widgets (account chip, status badges, dot, action icons,
+    // Start/Stop) live inside a horizontally scrollable Row so the toolbar
+    // never overflows on narrow phones (iPhone SE → Pro Max). reverse:true
+    // anchors the strip at the right edge so Start/Stop is always visible
+    // and the user scrolls leftward to reach the secondary buttons.
+    final trailing = <Widget>[
+      if (_session?.sessionType == 'claude' && _claudeAccounts.isNotEmpty)
+        _AccountChip(
+          account: _boundAccount,
+          switching: _switchingAccount,
+          onTap: _showAccountPicker,
+        ),
+      if (_waitingForInput)
+        const _StatusBadge(
+          label: 'Idle',
+          color: AppColors.warning,
+          bgColor: AppColors.warningSoft,
+        ),
+      if (!_connected &&
+          _session?.isRunning == true &&
+          _reconnectAttempt == 0)
+        const Padding(
+          padding: EdgeInsets.only(left: 6),
+          child: _StatusBadge(
+            label: '...',
+            color: AppColors.error,
+            bgColor: AppColors.errorSoft,
+          ),
+        ),
+      const SizedBox(width: 6),
+      _AnimatedDot(
+        color: _session?.isRunning == true
+            ? (_connected ? AppColors.success : AppColors.warning)
+            : AppColors.textMuted,
+        animate: _session?.isRunning == true && !_connected,
+      ),
+      const SizedBox(width: 4),
+      if (_session?.isRunning == true)
+        IconButton(
+          icon: const Icon(Icons.attach_file, size: 20, color: AppColors.accent),
+          onPressed: () => pickAndSendImage(
+            context,
+            targetSession: _session,
+            inserter: (text) async { await _sendToTerminal(text); },
+          ),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          tooltip: context.tr('Attach image'),
+        ),
+      if (_session?.isRunning == true)
+        IconButton(
+          icon: const Icon(Icons.mic_none, size: 20, color: AppColors.accent),
+          onPressed: () => showVoiceComposer(
+            context,
+            onSend: (text) => _sendToTerminal(text),
+          ),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          tooltip: context.tr('Voice input'),
+        ),
+      if (!kIsWeb && _session?.isRunning == true)
+        IconButton(
+          icon: const Icon(Icons.content_paste_outlined,
+              size: 20, color: AppColors.accent),
+          onPressed: _showClipboardMenu,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          tooltip: context.tr('Clipboard'),
+        ),
+      if (!kIsWeb && _session?.isRunning == true)
+        IconButton(
+          icon: Icon(
+            _showQuickKeys ? Icons.keyboard_hide : Icons.keyboard,
+            size: 20,
+            color: _showQuickKeys ? AppColors.accent : AppColors.textMuted,
+          ),
+          onPressed: () => setState(() => _showQuickKeys = !_showQuickKeys),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          tooltip: 'Toggle quick keys',
+        ),
+      const SizedBox(width: 4),
+      if (_session?.isRunning != true)
+        _SmallButton(
+          label: 'Start',
+          color: AppColors.success,
+          onTap: _start,
+        ),
+      if (_session?.isRunning == true)
+        _SmallButton(
+          label: 'Stop',
+          color: AppColors.error,
+          onTap: _stop,
+        ),
+    ];
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: const BoxDecoration(
@@ -718,9 +814,11 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
             style: const TextStyle(fontSize: 18),
           ),
           const SizedBox(width: 8),
-          Expanded(
+          Flexible(
+            flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   _session?.name ?? 'Session',
@@ -737,108 +835,23 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
                       fontSize: 10,
                       color: AppColors.textMuted,
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
               ],
             ),
           ),
-          // Claude account chip — tap to hot-swap. Only rendered for Claude
-          // sessions, and only when there's at least one viable account.
-          if (_session?.sessionType == 'claude' && _claudeAccounts.isNotEmpty)
-            _AccountChip(
-              account: _boundAccount,
-              switching: _switchingAccount,
-              onTap: _showAccountPicker,
-            ),
-          // Status badges
-          if (_waitingForInput)
-            _StatusBadge(
-              label: 'Idle',
-              color: AppColors.warning,
-              bgColor: AppColors.warningSoft,
-            ),
-          if (!_connected &&
-              _session?.isRunning == true &&
-              _reconnectAttempt == 0)
-            const Padding(
-              padding: EdgeInsets.only(left: 6),
-              child: _StatusBadge(
-                label: '...',
-                color: AppColors.error,
-                bgColor: AppColors.errorSoft,
+          Flexible(
+            flex: 5,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              reverse: true,
+              physics: const ClampingScrollPhysics(),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: trailing,
               ),
             ),
-          const SizedBox(width: 6),
-          // Connection dot
-          _AnimatedDot(
-            color: _session?.isRunning == true
-                ? (_connected ? AppColors.success : AppColors.warning)
-                : AppColors.textMuted,
-            animate: _session?.isRunning == true && !_connected,
           ),
-          const SizedBox(width: 4),
-          // Attach image — upload photo / gallery, insert path via live WS
-          if (_session?.isRunning == true)
-            IconButton(
-              icon: const Icon(Icons.attach_file, size: 20, color: AppColors.accent),
-              onPressed: () => pickAndSendImage(
-                context,
-                targetSession: _session,
-                inserter: (text) async { await _sendToTerminal(text); },
-              ),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              tooltip: context.tr('Attach image'),
-            ),
-          // Voice dictation — opens a composer; the phone's IME handles STT
-          if (_session?.isRunning == true)
-            IconButton(
-              icon: const Icon(Icons.mic_none, size: 20, color: AppColors.accent),
-              onPressed: () => showVoiceComposer(
-                context,
-                onSend: (text) => _sendToTerminal(text),
-              ),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              tooltip: context.tr('Voice input'),
-            ),
-          // Clipboard — copy terminal selection / paste into the session.
-          // Essential for headless-server workflows where the user needs
-          // to bounce an OAuth URL out to a browser and a code back in.
-          if (!kIsWeb && _session?.isRunning == true)
-            IconButton(
-              icon: const Icon(Icons.content_paste_outlined,
-                  size: 20, color: AppColors.accent),
-              onPressed: _showClipboardMenu,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              tooltip: context.tr('Clipboard'),
-            ),
-          // Toggle quick keys bar (mobile only)
-          if (!kIsWeb && _session?.isRunning == true)
-            IconButton(
-              icon: Icon(
-                _showQuickKeys ? Icons.keyboard_hide : Icons.keyboard,
-                size: 20,
-                color: _showQuickKeys ? AppColors.accent : AppColors.textMuted,
-              ),
-              onPressed: () => setState(() => _showQuickKeys = !_showQuickKeys),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              tooltip: 'Toggle quick keys',
-            ),
-          const SizedBox(width: 4),
-          if (_session?.isRunning != true)
-            _SmallButton(
-              label: 'Start',
-              color: AppColors.success,
-              onTap: _start,
-            ),
-          if (_session?.isRunning == true)
-            _SmallButton(
-              label: 'Stop',
-              color: AppColors.error,
-              onTap: _stop,
-            ),
         ],
       ),
     );
