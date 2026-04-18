@@ -19,9 +19,16 @@ enum AuthState { unknown, setupRequired, disabled, unauthed, authed }
 class AuthService extends ChangeNotifier {
   // Tokens are scoped by server URL so pointing the app at a different
   // backend (e.g. dev LXC vs. production) doesn't send a foreign JWT to
-  // a server that can't verify it. We persist a JSON blob under one key:
-  //     {"url": "<effectiveUrl>", "token": "<jwt>"}
-  static const _keyAuth = 'opendray.auth.v2';
+  // a server that can't verify it.
+  //
+  // v3 store: a map of URL → token, so users with multiple OpenDray
+  // deployments can hop between them without re-login each time.
+  //     {"tokens": {"http://10.0.0.1:8640": "jwtA", ...}}
+  //
+  // v2 (single {url, token}) is read once on upgrade and transparently
+  // migrated; v1 (bare string) is dropped (user re-logs once).
+  static const _keyAuth = 'opendray.auth.v3';
+  static const _keyAuthV2 = 'opendray.auth.v2'; // legacy, migrated on first read
 
   String? _token;
   AuthState _state = AuthState.unknown;
@@ -196,46 +203,78 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Reads the persisted token ONLY if it was issued by [currentUrl].
-  /// Legacy installs (before v2) had a bare string under the old key —
-  /// those are dropped silently: the user re-logs once.
+  /// Reads the persisted token for [currentUrl] from the URL→token map.
+  /// Migrates a v2 single-entry blob into the new map on first run.
   Future<void> _loadStoredFor(String currentUrl) async {
     final prefs = await SharedPreferences.getInstance();
+    final tokens = await _loadTokenMap(prefs);
+    final t = tokens[currentUrl];
+    _token = (t != null && t.isNotEmpty) ? t : null;
+  }
+
+  Future<Map<String, String>> _loadTokenMap(SharedPreferences prefs) async {
     final raw = prefs.getString(_keyAuth);
-    if (raw == null || raw.isEmpty) {
-      _token = null;
-      return;
+    if (raw != null && raw.isNotEmpty) {
+      try {
+        final data = jsonDecode(raw) as Map<String, dynamic>;
+        final tokens = data['tokens'];
+        if (tokens is Map) {
+          return {
+            for (final e in tokens.entries)
+              e.key.toString(): e.value.toString(),
+          };
+        }
+      } catch (_) {}
     }
-    try {
-      final data = jsonDecode(raw) as Map<String, dynamic>;
-      final storedUrl = (data['url'] as String?) ?? '';
-      final storedToken = (data['token'] as String?) ?? '';
-      if (storedUrl == currentUrl && storedToken.isNotEmpty) {
-        _token = storedToken;
-      } else {
-        // URL mismatch — either user pointed at a different server, or
-        // their old token is from before we scoped by URL. Either way
-        // we don't trust it here; keep the blob on disk so switching
-        // back restores it, but don't apply it to THIS server.
-        _token = null;
-      }
-    } catch (_) {
-      _token = null;
+    // v2 migration — single {url, token}. Fold it into the map and
+    // drop the old key so subsequent reads hit the fast path.
+    final v2 = prefs.getString(_keyAuthV2);
+    if (v2 != null && v2.isNotEmpty) {
+      try {
+        final data = jsonDecode(v2) as Map<String, dynamic>;
+        final url = (data['url'] as String?) ?? '';
+        final tok = (data['token'] as String?) ?? '';
+        if (url.isNotEmpty && tok.isNotEmpty) {
+          final migrated = {url: tok};
+          await _saveTokenMap(prefs, migrated);
+          await prefs.remove(_keyAuthV2);
+          return migrated;
+        }
+      } catch (_) {}
+      await prefs.remove(_keyAuthV2);
     }
+    return {};
+  }
+
+  Future<void> _saveTokenMap(SharedPreferences prefs, Map<String, String> tokens) async {
+    await prefs.setString(_keyAuth, jsonEncode({'tokens': tokens}));
   }
 
   Future<void> _storeToken(String t) async {
     _token = t;
+    final url = _lastServerUrl ?? '';
+    if (url.isEmpty) return;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyAuth, jsonEncode({
-      'url': _lastServerUrl ?? '',
-      'token': t,
-    }));
+    final tokens = await _loadTokenMap(prefs);
+    tokens[url] = t;
+    await _saveTokenMap(prefs, tokens);
   }
 
+  /// Drops the token for the CURRENT server URL only. Tokens for other
+  /// servers in the map stay intact, so switching back auto-restores
+  /// their session.
   Future<void> _clearStoredToken() async {
     _token = null;
+    final url = _lastServerUrl ?? '';
+    if (url.isEmpty) return;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_keyAuth);
+    final tokens = await _loadTokenMap(prefs);
+    if (tokens.remove(url) != null) {
+      if (tokens.isEmpty) {
+        await prefs.remove(_keyAuth);
+      } else {
+        await _saveTokenMap(prefs, tokens);
+      }
+    }
   }
 }
