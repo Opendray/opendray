@@ -4,33 +4,33 @@ import Layout from '../layouts/Layout.astro';
 const features = [
   {
     icon: '📱',
-    title: 'Mobile-First',
-    description: 'Launch sessions from your phone, close the app, come back later. Your agents keep running.',
-  },
-  {
-    icon: '🤖',
-    title: 'Multi-Agent',
-    description: 'Claude Code, Codex, and Gemini CLI running side-by-side. Switch between them in a tap.',
-  },
-  {
-    icon: '🧩',
-    title: 'Plugin Standard',
-    description: 'An open manifest spec for wrapping any CLI tool. Declare the command, config schema, capabilities, and UI — OpenDray does the rest.',
+    title: 'Persistent Cloud Sessions',
+    description: 'Sessions run on your server as PTY processes. Close the app, leave for hours — when you come back, the full history replays instantly via a 4 MB ring buffer. Claude sessions resume exactly where they left off.',
   },
   {
     icon: '💬',
     title: 'Telegram Bridge',
-    description: 'Full bidirectional session control. Read output, answer prompts, send control keys, and reply to idle notifications — all from Telegram.',
+    description: 'Not just notifications — a true two-way terminal over Telegram. When Claude goes idle, it reads the structured JSONL output and renders multi-select prompts as inline keyboards. Reply to approve, reject, or type a response.',
+  },
+  {
+    icon: '🧩',
+    title: 'Open Plugin Standard',
+    description: 'An open manifest.json spec for wrapping any CLI tool. Declare the command, config schema with typed fields, capabilities — OpenDray generates the UI form, maps config to CLI flags and env vars automatically.',
   },
   {
     icon: '🔀',
-    title: 'LLM Routing',
-    description: 'Any OpenAI-compatible endpoint. Route per-session, per-agent, or per-provider. Your keys, your rules.',
+    title: 'LLM Provider Routing',
+    description: 'Register Ollama, Groq, LM Studio, or any OpenAI-compatible endpoint. When spawning an OpenCode session, pick a provider — OpenDray generates a per-session config and injects it at launch time.',
+  },
+  {
+    icon: '🔌',
+    title: 'MCP Injection',
+    description: 'Register MCP servers once in the UI. At session spawn, OpenDray renders per-session temp config files and injects them via CLI args. No global config pollution. Temp files cleaned on session exit.',
   },
   {
     icon: '🏠',
-    title: 'Self-Hosted',
-    description: 'Single binary + PostgreSQL. Your code never leaves your infrastructure. MIT licensed, forever.',
+    title: 'Single Binary, Self-Hosted',
+    description: 'Go backend with the Flutter web build embedded via go:embed. One binary + PostgreSQL. All config lives in the database — editable from the app. Your code and credentials never leave your infrastructure.',
   },
 ];
 
@@ -46,18 +46,18 @@ const agents = [
 const steps = [
   {
     num: '01',
-    title: 'Start a session from your phone',
-    description: 'Open the app, pick an agent, choose a project directory. One tap to launch.',
+    title: 'Pick an agent, set a working directory, launch',
+    description: 'Choose from Claude Code, Codex, Gemini, OpenCode, Qwen, or a plain shell. Select a project directory and model. If using Claude, pick which OAuth account. For OpenCode, pick an LLM provider endpoint. Hit Create & Start.',
   },
   {
     num: '02',
-    title: 'The agent runs on your server',
-    description: 'Full PTY session in a sandboxed process. Real terminal, real output, real control.',
+    title: 'The agent runs as a real PTY process on your server',
+    description: 'OpenDray spawns the CLI in a pseudo-terminal, injects MCP server configs and LLM provider credentials as temp files, and starts capturing output in a ring buffer. Idle detection fires after 8 seconds of silence — triggering Telegram notifications.',
   },
   {
     num: '03',
-    title: 'Come back to the results',
-    description: 'Sessions persist. Review diffs, approve changes, or keep the conversation going.',
+    title: 'Come back any time — or control it from Telegram',
+    description: 'Reopen the app and the WebSocket reconnects, replaying full session history. Or stay away and let the Telegram bridge handle it: idle notifications arrive with the latest output, structured prompts render as inline keyboards, your replies go straight to the agent.',
   },
 ];
 
@@ -151,8 +151,8 @@ const manifestExample = `{
         Open<span class="hero-title-accent">Dray</span>
       </h1>
       <p class="hero-tagline">
-        Pilot AI coding agents from your phone.<br />
-        Self-hosted. Multi-agent. Plugin-driven.
+        Run AI coding agents on your server.<br />
+        Control them from your phone, browser, or Telegram.
       </p>
       <div class="hero-actions">
         <a href="https://github.com/opendray/opendray" target="_blank" rel="noopener" class="btn btn-primary">
@@ -173,16 +173,19 @@ const manifestExample = `{
         <div class="terminal-body">
           <div class="terminal-line">
             <span class="terminal-prompt">$</span>
-            <span class="terminal-cmd">opendray serve</span>
+            <span class="terminal-cmd">./opendray</span>
           </div>
           <div class="terminal-line terminal-output">
-            <span class="terminal-info">INFO</span> Starting OpenDray v0.1.0
+            <span class="terminal-info">INFO</span> database connected and migrated
           </div>
           <div class="terminal-line terminal-output">
-            <span class="terminal-info">INFO</span> Loaded 6 agent plugins
+            <span class="terminal-info">INFO</span> providers loaded count=17
           </div>
           <div class="terminal-line terminal-output">
-            <span class="terminal-success">READY</span> Listening on :8080
+            <span class="terminal-info">INFO</span> telegram bot online @your_bot
+          </div>
+          <div class="terminal-line terminal-output">
+            <span class="terminal-success">INFO</span> OpenDray starting addr=127.0.0.1:8640
           </div>
           <div class="terminal-line">
             <span class="terminal-cursor"></span>
@@ -205,11 +208,11 @@ const manifestExample = `{
             <span class="terminal-title">frustration.sh</span>
           </div>
           <div class="terminal-body">
-            <div class="terminal-line terminal-output terminal-dim">You SSH into your server.</div>
-            <div class="terminal-line terminal-output terminal-dim">You squint at tmux.</div>
-            <div class="terminal-line terminal-output terminal-dim">You forget which session had the diff.</div>
-            <div class="terminal-line terminal-output terminal-dim">You wonder if the agent is still running.</div>
-            <div class="terminal-line terminal-output terminal-dim">You check your phone. Nothing there.</div>
+            <div class="terminal-line terminal-output terminal-dim">You SSH into your server to check on Claude.</div>
+            <div class="terminal-line terminal-output terminal-dim">You attach to tmux. Wrong pane.</div>
+            <div class="terminal-line terminal-output terminal-dim">Claude asked a question 20 minutes ago. It's been waiting.</div>
+            <div class="terminal-line terminal-output terminal-dim">You wanted to approve it from the bus. But there was no way to.</div>
+            <div class="terminal-line terminal-output terminal-dim">You close the laptop. The session dies.</div>
             <div class="terminal-line terminal-output" style="margin-top: 0.75rem;">
               <span class="terminal-accent">There has to be a better way.</span>
             </div>
@@ -224,9 +227,9 @@ const manifestExample = `{
     <div class="container">
       <div class="section-header">
         <span class="section-label">Features</span>
-        <h2 class="section-title">Everything you need to<br />command your AI fleet</h2>
+        <h2 class="section-title">What OpenDray actually does</h2>
         <p class="section-subtitle">
-          A single pane of glass for every coding agent you run.
+          Manages persistent terminal sessions for AI coding agents. Controls them from a mobile app, web browser, or Telegram.
         </p>
       </div>
       <div class="features-grid">
@@ -246,9 +249,11 @@ const manifestExample = `{
     <div class="container">
       <div class="section-header">
         <span class="section-label">Agents</span>
-        <h2 class="section-title">Bring your own agents</h2>
+        <h2 class="section-title">Ships with six. Add more via manifest.</h2>
         <p class="section-subtitle">
-          First-class support for the top AI coding CLIs. Add more in minutes.
+          Each agent is a plugin with a manifest.json declaring its CLI command, available models,
+          and capabilities. The UI adapts: resume buttons for Claude, model pickers for OpenCode,
+          approval-mode selectors for Codex.
         </p>
       </div>
       <div class="agents-track">
@@ -293,26 +298,28 @@ const manifestExample = `{
       <div class="plugin-grid">
         <div class="plugin-text">
           <span class="section-label">Open Plugin Standard</span>
-          <h2 class="section-title">A spec anyone can build on.</h2>
+          <h2 class="section-title">Declarative, not imperative.</h2>
           <p class="plugin-description">
-            OpenDray defines an open <code>manifest.json</code> standard for wrapping
-            any CLI tool &mdash; AI agents, shells, dev tools. Declare the command,
-            config schema, capabilities, and the UI generates itself.
+            Every provider in OpenDray &mdash; agents, panels, tools &mdash; is defined by a
+            <code>manifest.json</code>. The manifest declares the CLI command, available models,
+            and a <code>configSchema</code> that drives the settings form in the app.
           </p>
           <p class="plugin-description">
-            <strong>Typed config fields</strong> &mdash; string, secret, select, number,
-            boolean, args. Each field can map to a CLI flag or environment variable
-            automatically. Conditional visibility via <code>dependsOn</code>.
+            <strong>Config &rarr; CLI args + env vars</strong> &mdash; each config field has a
+            <code>type</code> (string, secret, select, number, boolean, args) and optional
+            <code>cliFlag</code> or <code>envVar</code>. When a session launches, OpenDray
+            reads the user's config and builds the final command line and environment automatically.
+            Boolean fields append flags. Select fields append flag + value. Secrets inject as env vars.
           </p>
           <p class="plugin-description">
-            <strong>Capabilities</strong> &mdash; declare what the tool supports:
-            resume, streaming, images, MCP injection, dynamic model detection.
-            OpenDray adapts its UI and session lifecycle accordingly.
+            <strong>Conditional fields</strong> &mdash; <code>dependsOn</code> and
+            <code>dependsVal</code> let fields appear only when relevant. For example,
+            an API key field only shows when the auth type is set to "custom" instead of "env" or "oauth".
           </p>
           <p class="plugin-description plugin-description--muted">
-            Two plugin types: <code>cli</code> (spawns a PTY process with full terminal I/O)
-            and <code>panel</code> (stateless HTTP API with config-driven UI).
-            Both share the same manifest schema, database, and enable/disable lifecycle.
+            Two plugin types: <code>cli</code> spawns a PTY process and manages its lifecycle.
+            <code>panel</code> is a stateless HTTP API backed by config (file browser, database viewer, log tailer).
+            Both are stored in PostgreSQL, toggleable at runtime, and health-checked in the background.
           </p>
         </div>
         <div class="plugin-code">
@@ -334,20 +341,28 @@ const manifestExample = `{
       <div class="plugin-grid">
         <div class="plugin-text">
           <span class="section-label">Telegram Bridge</span>
-          <h2 class="section-title">Control agents from any chat.</h2>
+          <h2 class="section-title">A real two-way terminal over Telegram.</h2>
           <p class="plugin-description">
-            Link a Telegram chat to a running session and it becomes a two-way terminal.
-            Your messages go to the agent as input. Agent output streams back in batches.
-            Reply to any idle notification and it routes to that session automatically.
+            When a session goes idle (agent waiting for input), OpenDray reads the
+            structured output &mdash; for Claude, it parses the JSONL response log directly &mdash;
+            and sends the latest content to linked Telegram chats.
+            Reply to the notification and your text goes straight to the agent's stdin.
           </p>
           <p class="plugin-description">
-            <strong>Structured prompts</strong> &mdash; when an agent shows a multi-select
-            dialog (permission approvals, tool lists), it renders as inline Telegram
-            keyboards with checkboxes and a submit button.
+            <strong>Structured prompts</strong> &mdash; if Claude shows a permission dialog
+            or multi-choice question, the bridge parses the prompt type and renders it as
+            inline Telegram keyboards. Tap a button to approve, or check multiple boxes and
+            hit Submit. The response is formatted exactly as the CLI expects it.
+          </p>
+          <p class="plugin-description">
+            <strong>Event-driven, not polling</strong> &mdash; the bridge hooks into the
+            session idle detector. No busy loops. Notifications fire within seconds of the
+            agent going quiet. Output is diffed against the last sent snapshot so you only
+            see genuinely new content.
           </p>
           <p class="plugin-description plugin-description--muted">
-            No app install required. Works on any device with Telegram.
-            Set up with a BotFather token and an allowed chat ID list.
+            Works on any device with Telegram. Set up with a BotFather token and
+            an allowed chat ID list. Multiple chats can link to the same session.
           </p>
         </div>
         <div class="plugin-code">
@@ -382,9 +397,11 @@ const manifestExample = `{
     <div class="container">
       <div class="section-header">
         <span class="section-label">Architecture</span>
-        <h2 class="section-title">Simple by design</h2>
+        <h2 class="section-title">One binary. One database.</h2>
         <p class="section-subtitle">
-          A single Go binary orchestrates everything. No microservices, no Kubernetes, no drama.
+          Go backend embeds the Flutter web build via go:embed. PostgreSQL stores sessions,
+          plugin configs, Claude accounts, and LLM provider endpoints. Agents are spawned as
+          real PTY subprocesses with injected credentials and MCP configs.
         </p>
       </div>
       <div class="arch-diagram">
