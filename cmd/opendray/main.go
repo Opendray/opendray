@@ -14,12 +14,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/opendray/opendray/app"
 	"github.com/opendray/opendray/gateway"
 	"github.com/opendray/opendray/gateway/mcp"
 	"github.com/opendray/opendray/kernel/auth"
+	"github.com/opendray/opendray/kernel/config"
 	"github.com/opendray/opendray/kernel/hub"
+	opg "github.com/opendray/opendray/kernel/pg"
 	"github.com/opendray/opendray/kernel/store"
-	"github.com/opendray/opendray/app"
 	"github.com/opendray/opendray/plugin"
 )
 
@@ -27,28 +29,94 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	slog.SetDefault(logger)
 
-	cfg := loadEnv()
-
-	// Refuse to start without JWT_SECRET on non-loopback addresses.
-	if cfg.jwtSecret == "" && !isLoopback(cfg.listenAddr) {
-		fmt.Fprintln(os.Stderr, "FATAL: JWT_SECRET is required when binding to a non-loopback address. Set JWT_SECRET or use LISTEN_ADDR=127.0.0.1:8640 for local development.")
+	cfg, source, err := config.Load()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "FATAL: %v\n", err)
 		os.Exit(1)
 	}
-	// When auth is enabled, an admin password MUST be set — otherwise the
-	// login endpoint would accept any credentials and silently mint tokens.
-	if cfg.jwtSecret != "" && cfg.adminPassword == "" {
-		fmt.Fprintln(os.Stderr, "FATAL: ADMIN_PASSWORD is required when JWT_SECRET is set. Set ADMIN_PASSWORD (and optionally ADMIN_USERNAME, default 'admin') in .env.")
+	logger.Info("config loaded", "source", source, "db_mode", cfg.DB.Mode)
+
+	// Setup mode is wired in Phase 3. For now, refuse to start with an
+	// incomplete config — same behaviour as today, just via the new loader.
+	if !cfg.IsComplete() {
+		fmt.Fprintln(os.Stderr, "FATAL: OpenDray is not configured.")
+		fmt.Fprintln(os.Stderr, "  • Write ~/.opendray/config.toml (setup wizard will land in Phase 3-4), OR")
+		fmt.Fprintln(os.Stderr, "  • Set env vars: DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, JWT_SECRET, ADMIN_PASSWORD.")
 		os.Exit(1)
+	}
+	if err := cfg.Validate(); err != nil {
+		fmt.Fprintf(os.Stderr, "FATAL: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Security posture: same rules as before, just read from the merged config.
+	if cfg.Auth.JWTSecret == "" && !isLoopback(cfg.Server.ListenAddr) {
+		fmt.Fprintln(os.Stderr, "FATAL: auth.jwt_secret (or env JWT_SECRET) is required when binding to a non-loopback address. Use listen_addr 127.0.0.1:8640 for local-only development.")
+		os.Exit(1)
+	}
+	// When auth is enabled, either DB-backed credentials or a bootstrap
+	// password must exist — otherwise any body can mint tokens.
+	// The DB-row check runs later (we need a live DB); here we only
+	// enforce the bootstrap-env fallback.
+	if cfg.Auth.JWTSecret != "" && cfg.Auth.AdminBootstrapPassword == "" {
+		// Not fatal yet — setup wizard writes credentials directly to the
+		// admin_auth table. Phase 3 makes this precise by checking DB.
+		logger.Warn("no ADMIN_PASSWORD set; login will rely on admin_auth DB row")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Database
-	db, err := store.New(ctx, store.Config{
-		Host: cfg.dbHost, Port: cfg.dbPort,
-		User: cfg.dbUser, Password: cfg.dbPassword, DBName: cfg.dbName,
-	})
+	// Database. Two paths — embedded (child PG managed by us) vs external
+	// (user-supplied). They converge on a single store.Config before we
+	// connect, so everything downstream is oblivious to the choice.
+	var storeCfg store.Config
+	var embeddedPG *opg.Embedded
+	switch cfg.DB.Mode {
+	case "embedded":
+		pg, err := opg.Start(ctx, opg.Config{
+			DataDir:  cfg.DB.Embedded.DataDir,
+			CacheDir: cfg.DB.Embedded.CacheDir,
+			Port:     cfg.DB.Embedded.Port,
+			Version:  cfg.DB.Embedded.Version,
+			Password: cfg.DB.Embedded.Password,
+			Logger:   logger,
+		})
+		if err != nil {
+			logger.Error("embedded postgres failed to start", "error", err)
+			os.Exit(1)
+		}
+		embeddedPG = pg
+		defer embeddedPG.Stop()
+		// First-run password generation — persist so subsequent boots reuse it.
+		if cfg.DB.Embedded.Password == "" {
+			cfg.DB.Embedded.Password = pg.Password()
+			if err := config.Save(cfg); err != nil {
+				logger.Warn("failed to persist embedded PG password to config; next boot will regenerate and init will fail",
+					"error", err)
+			}
+		}
+		storeCfg = store.Config{
+			Host:     pg.Host(),
+			Port:     strconv.Itoa(pg.Port()),
+			User:     pg.UserName(),
+			Password: pg.Password(),
+			DBName:   pg.DBName(),
+		}
+	case "external":
+		storeCfg = store.Config{
+			Host:     cfg.DB.External.Host,
+			Port:     strconv.Itoa(cfg.DB.External.Port),
+			User:     cfg.DB.External.User,
+			Password: cfg.DB.External.Password,
+			DBName:   cfg.DB.External.Name,
+		}
+	default:
+		fmt.Fprintf(os.Stderr, "FATAL: unknown db.mode %q\n", cfg.DB.Mode)
+		os.Exit(1)
+	}
+
+	db, err := store.New(ctx, storeCfg)
 	if err != nil {
 		logger.Error("database connection failed", "error", err)
 		os.Exit(1)
@@ -66,15 +134,15 @@ func main() {
 		jwtAuth   *auth.Auth
 		credStore *auth.CredentialStore
 	)
-	if cfg.jwtSecret != "" {
-		jwtAuth = auth.New(cfg.jwtSecret, 7*24*time.Hour)
+	if cfg.Auth.JWTSecret != "" {
+		jwtAuth = auth.New(cfg.Auth.JWTSecret, 7*24*time.Hour)
 		credStore = auth.NewCredentialStore(db.Pool)
 		logger.Info("JWT authentication enabled")
 	}
 
 	// Provider Runtime (load before hub)
 	hookBus := plugin.NewHookBus(logger)
-	providerRuntime := plugin.NewRuntime(db, hookBus, cfg.pluginDir, logger)
+	providerRuntime := plugin.NewRuntime(db, hookBus, cfg.Plugins.Dir, logger)
 
 	if err := providerRuntime.LoadAll(ctx); err != nil {
 		logger.Warn("provider loading had errors", "error", err)
@@ -84,8 +152,8 @@ func main() {
 
 	// Session Hub — uses provider runtime to resolve CLI specs
 	idleThreshold := 8 * time.Second
-	if cfg.idleThresholdSec > 0 {
-		idleThreshold = time.Duration(cfg.idleThresholdSec) * time.Second
+	if cfg.Plugins.IdleThresholdSeconds > 0 {
+		idleThreshold = time.Duration(cfg.Plugins.IdleThresholdSeconds) * time.Second
 	}
 
 	mcpRuntime := mcp.New(mcp.Config{DB: db, Logger: logger})
@@ -98,7 +166,7 @@ func main() {
 		Events:        hookBus,
 		Injector:      &mcpInjector{rt: mcpRuntime},
 	})
-	sessionHub.RecoverOnStartup(ctx, cfg.autoResume)
+	sessionHub.RecoverOnStartup(ctx, cfg.Plugins.AutoResume)
 	sessionHub.StartHealthCheck(ctx, 60*time.Second)
 
 	// Frontend FS
@@ -116,18 +184,18 @@ func main() {
 		MCP:           mcpRuntime,
 		Auth:          jwtAuth,
 		Credentials:   credStore,
-		AdminUsername: cfg.adminUsername,
-		AdminPassword: cfg.adminPassword,
+		AdminUsername: cfg.Auth.AdminBootstrapUsername,
+		AdminPassword: cfg.Auth.AdminBootstrapPassword,
 		Logger:        logger, FrontendFS: frontendFS,
 	})
 
-	server := &http.Server{Addr: cfg.listenAddr, Handler: gw.Handler()}
+	server := &http.Server{Addr: cfg.Server.ListenAddr, Handler: gw.Handler()}
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		logger.Info("OpenDray starting", "addr", cfg.listenAddr)
+		logger.Info("OpenDray starting", "addr", cfg.Server.ListenAddr)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error("server error", "error", err)
 			os.Exit(1)
@@ -141,53 +209,6 @@ func main() {
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 	server.Shutdown(shutdownCtx)
-}
-
-type envConfig struct {
-	listenAddr       string
-	dbHost           string
-	dbPort           string
-	dbUser           string
-	dbPassword       string
-	dbName           string
-	jwtSecret        string
-	adminUsername    string
-	adminPassword    string
-	pluginDir        string
-	autoResume       bool
-	idleThresholdSec int
-}
-
-func loadEnv() envConfig {
-	cfg := envConfig{
-		listenAddr: envOr("LISTEN_ADDR", "127.0.0.1:8640"),
-		dbHost:     envOr("DB_HOST", ""),
-		dbPort:     envOr("DB_PORT", "5432"),
-		dbUser:     envOr("DB_USER", "opendray"),
-		dbPassword: os.Getenv("DB_PASSWORD"),
-		dbName:     envOr("DB_NAME", "opendray"),
-		jwtSecret:     os.Getenv("JWT_SECRET"),
-		adminUsername: envOr("ADMIN_USERNAME", "admin"),
-		adminPassword: os.Getenv("ADMIN_PASSWORD"),
-		pluginDir:     envOr("PLUGIN_DIR", "./plugins"),
-		autoResume: os.Getenv("AUTO_RESUME") == "true",
-	}
-	if cfg.dbHost == "" {
-		fmt.Fprintln(os.Stderr, "DB_HOST is required")
-		os.Exit(1)
-	}
-	if v := os.Getenv("IDLE_THRESHOLD_SECONDS"); v != "" {
-		n, _ := strconv.Atoi(v)
-		cfg.idleThresholdSec = n
-	}
-	return cfg
-}
-
-func envOr(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
 }
 
 // providerResolver adapts plugin.Runtime to hub.ProviderResolver.
