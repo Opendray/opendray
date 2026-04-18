@@ -20,11 +20,15 @@ import (
 // setupHandlers owns the /api/setup/* endpoints. Wired by the gateway
 // when the manager is non-nil (i.e. setup mode is active at boot).
 type setupHandlers struct {
-	mgr *setup.Manager
+	mgr      *setup.Manager
+	installs *installRegistry
 }
 
 func newSetupHandlers(mgr *setup.Manager) *setupHandlers {
-	return &setupHandlers{mgr: mgr}
+	return &setupHandlers{
+		mgr:      mgr,
+		installs: newInstallRegistry(),
+	}
 }
 
 // tokenGate requires X-Setup-Token or ?token= matching mgr.BootstrapToken.

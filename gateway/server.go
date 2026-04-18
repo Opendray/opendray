@@ -302,6 +302,10 @@ func NewSetup(mgr *setup.Manager, frontendFS fs.FS, logger *slog.Logger) http.Ha
 	r.Post("/api/setup/db/commit", h.tokenGate(h.dbCommit))
 	r.Post("/api/setup/admin", h.tokenGate(h.adminSet))
 	r.Post("/api/setup/jwt", h.tokenGate(h.jwtSet))
+	r.Post("/api/setup/cli-install", h.tokenGate(h.cliInstallStart))
+	// WS uses ?token= query param because browsers can't set custom
+	// headers on WebSocket handshakes; token gate already handles both.
+	r.Get("/api/setup/cli-install/{id}/ws", h.tokenGate(h.cliInstallStream))
 	r.Post("/api/setup/finalize", h.tokenGate(h.finalize))
 
 	// Catch-all /api/* → 503 so callers realise setup is in progress.

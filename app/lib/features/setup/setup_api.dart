@@ -157,6 +157,33 @@ class SetupApi {
     _ensureOk(res, 'finalize');
   }
 
+  /// Kicks off `npm install -g <pkg>`. Returns the ephemeral job id the
+  /// caller uses to subscribe to the output stream.
+  Future<String> startCliInstall(String cli) async {
+    final res = await _dio.post('/api/setup/cli-install', data: {'cli': cli});
+    _ensureOk(res, 'cli-install');
+    final id = (res.data as Map)['sessionId'] as String?;
+    if (id == null || id.isEmpty) {
+      throw SetupApiException(0, 'server did not return a sessionId');
+    }
+    return id;
+  }
+
+  /// Builds the WS URL for streaming a running install's output.
+  /// The token rides in the query string because browsers can't set
+  /// custom headers on WebSocket handshakes.
+  Uri cliInstallStreamUri(String serverUrl, String jobId) {
+    final u = Uri.parse(serverUrl);
+    final wsScheme = u.scheme == 'https' ? 'wss' : 'ws';
+    return Uri(
+      scheme: wsScheme,
+      host: u.host,
+      port: u.hasPort ? u.port : null,
+      path: '/api/setup/cli-install/$jobId/ws',
+      queryParameters: {'token': bootstrapToken},
+    );
+  }
+
   void _ensureOk(Response res, String step) {
     if (res.statusCode == 200) return;
     final msg = (res.data is Map && (res.data as Map)['error'] is String)
