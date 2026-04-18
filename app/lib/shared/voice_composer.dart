@@ -1,16 +1,21 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../core/services/l10n.dart';
+import 'app_modals.dart';
 import 'theme/app_theme.dart';
+import 'web_speech.dart';
 
-/// Opens a bottom-sheet composer optimised for the phone's built-in voice
-/// dictation. The sheet autofocuses a multi-line [TextField] so the soft
-/// keyboard pops up immediately — the user taps the IME's own mic button
-/// (iOS Dictation / Gboard voice typing / SwiftKey / etc.) to dictate.
+/// Opens a bottom-sheet composer for voice dictation.
 ///
-/// We deliberately do NOT run any STT in-app: the OS-level dictation is
-/// already best-in-class for the user's language, works offline on recent
-/// devices, and has zero battery / binary-size cost for us.
+/// - On mobile, it autofocuses a multi-line [TextField] so the soft keyboard
+///   pops up; the user taps the IME's own mic button (iOS Dictation /
+///   Gboard voice typing) to dictate.
+/// - On web, the IME mic is not available, so we also surface a "Start
+///   dictation" button that drives the browser's SpeechRecognition API
+///   (Chromium / Safari). Falls back to plain typing where the API
+///   isn't available (Firefox).
 ///
 /// [onSend] is called with the final text. Return `true` on successful
 /// delivery so the sheet can close; return `false` to keep it open with
@@ -20,7 +25,7 @@ Future<void> showVoiceComposer(
   required Future<bool> Function(String text) onSend,
   String? initialText,
 }) {
-  return showModalBottomSheet(
+  return showAppModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: AppColors.surface,
@@ -50,16 +55,30 @@ class _VoiceComposerSheetState extends State<_VoiceComposerSheet> {
   bool _appendEnter = true;
   bool _sending = false;
 
+  // Web Speech API state
+  WebSpeechSession? _speech;
+  bool _listening = false;
+  // Text committed before the current dictation run started — so interim
+  // results cleanly replace the tail without erasing what the user typed.
+  String _baseText = '';
+  String _lastInterim = '';
+
+  bool get _canUseWebSpeech => kIsWeb && webSpeechSupported;
+
   @override
   void initState() {
     super.initState();
-    // Nudge the keyboard up on next frame — bottom sheet focus-on-init is
-    // flaky on some Android skins.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _focus.requestFocus());
+    // On mobile we rely on the OS IME mic, so pull the keyboard up.
+    // On web it's better not to auto-focus — the keyboard isn't relevant
+    // and it can shift viewport awkwardly.
+    if (!kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _focus.requestFocus());
+    }
   }
 
   @override
   void dispose() {
+    _speech?.dispose();
     _ctrl.dispose();
     _focus.dispose();
     super.dispose();
@@ -69,11 +88,73 @@ class _VoiceComposerSheetState extends State<_VoiceComposerSheet> {
     final text = _ctrl.text.trim();
     if (text.isEmpty || _sending) return;
     setState(() => _sending = true);
+    _stopListening();
     final payload = _appendEnter ? '$text\n' : text;
     final ok = await widget.onSend(payload);
     if (!mounted) return;
     setState(() => _sending = false);
     if (ok) Navigator.of(context).maybePop();
+  }
+
+  void _startListening() {
+    if (_listening || !_canUseWebSpeech) return;
+    _baseText = _ctrl.text;
+    if (_baseText.isNotEmpty && !_baseText.endsWith(' ')) _baseText += ' ';
+    _lastInterim = '';
+
+    final lang = _detectLang(context);
+    _speech = WebSpeechSession(
+      lang: lang,
+      onResult: (text, isFinal) {
+        if (!mounted) return;
+        if (isFinal) {
+          _baseText = '$_baseText$text';
+          _lastInterim = '';
+        } else {
+          _lastInterim = text;
+        }
+        final combined = _baseText + _lastInterim;
+        _ctrl.value = TextEditingValue(
+          text: combined,
+          selection: TextSelection.collapsed(offset: combined.length),
+        );
+        setState(() {});
+      },
+      onEnd: () {
+        if (!mounted) return;
+        setState(() => _listening = false);
+      },
+      onError: (err) {
+        if (!mounted) return;
+        setState(() => _listening = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Voice error: $err'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      },
+    );
+    _speech!.start();
+    setState(() => _listening = true);
+  }
+
+  void _stopListening() {
+    _speech?.stop();
+    _speech = null;
+    if (_listening && mounted) setState(() => _listening = false);
+  }
+
+  String _detectLang(BuildContext context) {
+    // Pass the app's locale through so users dictating in Chinese don't get
+    // English transcripts. Falls back to browser default otherwise.
+    try {
+      final code = context.read<L10n>().code;
+      if (code == 'zh') return 'zh-CN';
+      return 'en-US';
+    } catch (_) {
+      return 'en-US';
+    }
   }
 
   @override
@@ -101,7 +182,9 @@ class _VoiceComposerSheetState extends State<_VoiceComposerSheet> {
               textInputAction: TextInputAction.newline,
               style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
-                hintText: context.tr('Tap the mic on your keyboard and speak…'),
+                hintText: context.tr(_canUseWebSpeech
+                    ? 'Tap "Dictate", speak, then Send…'
+                    : 'Tap the mic on your keyboard and speak…'),
                 hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
                 filled: true,
                 fillColor: AppColors.surfaceAlt,
@@ -147,13 +230,17 @@ class _VoiceComposerSheetState extends State<_VoiceComposerSheet> {
   }
 
   Widget _hintRow(BuildContext context) {
+    final hint = _canUseWebSpeech
+        ? 'Your browser handles the speech recognition. Review the text before sending.'
+        : (kIsWeb
+            ? 'This browser does not support in-page voice input. Type the message and Send.'
+            : 'Dictation uses your phone\'s built-in speech recognition. Review the text before sending.');
     return Row(children: [
       const Icon(Icons.info_outline, size: 13, color: AppColors.textMuted),
       const SizedBox(width: 6),
       Expanded(
         child: Text(
-          context.tr(
-              'Dictation uses your phone\'s built-in speech recognition. Review the text before sending.'),
+          context.tr(hint),
           style: const TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.4),
         ),
       ),
@@ -164,40 +251,63 @@ class _VoiceComposerSheetState extends State<_VoiceComposerSheet> {
     final canSend = _ctrl.text.trim().isNotEmpty && !_sending;
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 4),
-      child: Row(children: [
-        Expanded(
-          child: CheckboxListTile(
-            value: _appendEnter,
-            onChanged: (v) => setState(() => _appendEnter = v ?? true),
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-            visualDensity: VisualDensity.compact,
-            title: Text(
-              context.tr('Append Enter'),
-              style: const TextStyle(fontSize: 12),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        if (_canUseWebSpeech)
+          Row(children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _listening ? _stopListening : _startListening,
+                icon: Icon(_listening ? Icons.stop_circle : Icons.mic, size: 16),
+                label: Text(_listening
+                    ? context.tr('Stop')
+                    : context.tr('Dictate')),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor:
+                      _listening ? AppColors.error : AppColors.accent,
+                  side: BorderSide(
+                      color: _listening ? AppColors.error : AppColors.accent),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                ),
+              ),
             ),
-            subtitle: Text(
-              context.tr('Sends as a command — a newline is added after the text.'),
-              style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+          ]),
+        if (_canUseWebSpeech) const SizedBox(height: 6),
+        Row(children: [
+          Expanded(
+            child: CheckboxListTile(
+              value: _appendEnter,
+              onChanged: (v) => setState(() => _appendEnter = v ?? true),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              visualDensity: VisualDensity.compact,
+              title: Text(
+                context.tr('Append Enter'),
+                style: const TextStyle(fontSize: 12),
+              ),
+              subtitle: Text(
+                context.tr('Sends as a command — a newline is added after the text.'),
+                style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        FilledButton.icon(
-          onPressed: canSend ? _send : null,
-          icon: _sending
-              ? const SizedBox(
-                  width: 14, height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                )
-              : const Icon(Icons.send, size: 16),
-          label: Text(context.tr('Send')),
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.accent,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          const SizedBox(width: 8),
+          FilledButton.icon(
+            onPressed: canSend ? _send : null,
+            icon: _sending
+                ? const SizedBox(
+                    width: 14, height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Icon(Icons.send, size: 16),
+            label: Text(context.tr('Send')),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.accent,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            ),
           ),
-        ),
+        ]),
       ]),
     );
   }

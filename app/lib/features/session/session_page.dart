@@ -11,6 +11,7 @@ import '../../core/models/session.dart';
 import '../../core/services/l10n.dart';
 import '../../core/services/server_config.dart';
 import '../../core/services/ws_client.dart';
+import '../../shared/app_modals.dart';
 import '../../shared/image_attach.dart';
 import '../../shared/voice_composer.dart';
 import '../../shared/theme/app_theme.dart';
@@ -422,7 +423,7 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
 
   Future<void> _showAccountPicker() async {
     final currentId = _session?.claudeAccountId ?? '';
-    final picked = await showModalBottomSheet<String?>(
+    final picked = await showAppModalBottomSheet<String?>(
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
@@ -509,7 +510,7 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
     List<Session> sessions = [];
     try { sessions = await _api.listSessions(); } catch (_) {}
     if (!mounted) return;
-    showModalBottomSheet(
+    showAppModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
