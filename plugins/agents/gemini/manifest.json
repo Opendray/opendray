@@ -3,7 +3,7 @@
   "displayName": "Gemini CLI",
   "description": "Google Gemini CLI — agentic coding with sandbox, multimodal, and Google Search",
   "icon": "✨",
-  "version": "1.0.0",
+  "version": "1.1.2",
   "type": "cli",
   "cli": {
     "command": "gemini",
@@ -11,10 +11,7 @@
     "detectCmd": "which gemini"
   },
   "capabilities": {
-    "models": [
-      { "id": "gemini-2.5-pro", "name": "Gemini 2.5 Pro", "description": "Most capable, 1M context" },
-      { "id": "gemini-2.5-flash", "name": "Gemini 2.5 Flash", "description": "Fast, cost-effective" }
-    ],
+    "models": [],
     "supportsResume": false,
     "supportsStream": true,
     "supportsImages": true,
@@ -24,18 +21,13 @@
   "configSchema": [
     {
       "key": "authType", "label": "Authentication", "type": "select", "group": "auth",
-      "options": ["env", "custom", "oauth"], "default": "env",
-      "description": "env = read GOOGLE_API_KEY from system; custom = use key below; oauth = gcloud auth"
+      "options": ["env", "custom"], "default": "env",
+      "description": "env = read GOOGLE_API_KEY from system; falls back to the Gemini CLI's own cached OAuth token when unset (the CLI will prompt for /auth on first run) · custom = use the key below"
     },
     {
       "key": "apiKey", "label": "API Key", "type": "secret", "group": "auth",
       "envVar": "GOOGLE_API_KEY", "placeholder": "AIza...",
       "dependsOn": "authType", "dependsVal": "custom"
-    },
-    {
-      "key": "model", "label": "Default Model", "type": "select", "group": "runtime",
-      "options": ["gemini-2.5-pro", "gemini-2.5-flash"], "default": "gemini-2.5-pro",
-      "cliFlag": "-m", "cliValue": true
     },
     {
       "key": "yolo", "label": "YOLO Mode", "type": "boolean", "group": "runtime",
@@ -46,7 +38,7 @@
       "key": "sandbox", "label": "Sandbox", "type": "select", "group": "runtime",
       "options": ["", "none"], "default": "",
       "cliFlag": "-s", "cliValue": true,
-      "description": "Empty = default sandbox; none = no sandbox"
+      "description": "Empty = default sandbox · none = no sandbox"
     },
     {
       "key": "command", "label": "Command Path", "type": "string", "group": "advanced",

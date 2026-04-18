@@ -84,10 +84,29 @@ func (rt *Runtime) LoadAll(ctx context.Context) error {
 		rt.logger.Info("provider loaded from DB", "name", p.Name, "enabled", dbp.Enabled)
 	}
 
-	// Seed new providers from filesystem
+	// Seed new providers from filesystem, and sync manifests for plugins
+	// that already exist in the DB — so schema/capabilities edits in code
+	// flow into the DB on every restart without clobbering user config or
+	// the enabled flag.
 	providers, _ := ScanPluginDir(rt.pluginDir)
 	for _, p := range providers {
 		if loaded[p.Name] {
+			manifestJSON, err := json.Marshal(p)
+			if err != nil {
+				rt.logger.Warn("marshal for sync failed", "name", p.Name, "error", err)
+				continue
+			}
+			if err := rt.db.SyncManifest(ctx, p.Name, p.Version, manifestJSON); err != nil {
+				rt.logger.Warn("manifest sync failed", "name", p.Name, "error", err)
+				continue
+			}
+			// Refresh the in-memory live provider so the running process
+			// sees the new schema without needing a restart round-trip.
+			rt.mu.Lock()
+			if lp, ok := rt.providers[p.Name]; ok {
+				lp.provider = p
+			}
+			rt.mu.Unlock()
 			continue
 		}
 		if err := rt.seed(ctx, p); err != nil {

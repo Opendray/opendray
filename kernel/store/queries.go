@@ -153,6 +153,23 @@ func (d *DB) UpsertPlugin(ctx context.Context, p Plugin) (Plugin, error) {
 	return scanPlugin(row)
 }
 
+// SyncManifest refreshes a plugin's version + manifest from the filesystem
+// without touching its enabled flag or user config. Called at startup so
+// code-side manifest edits (new fields, updated model lists, etc.) flow
+// into the DB on every restart — but existing user preferences survive.
+func (d *DB) SyncManifest(ctx context.Context, name, version string, manifest json.RawMessage) error {
+	_, err := d.Pool.Exec(ctx,
+		`UPDATE plugins
+		 SET version = $2, manifest = $3, updated_at = now()
+		 WHERE name = $1`,
+		name, version, manifest,
+	)
+	if err != nil {
+		return fmt.Errorf("store: sync plugin manifest: %w", err)
+	}
+	return nil
+}
+
 func (d *DB) ListPlugins(ctx context.Context, enabledOnly bool) ([]Plugin, error) {
 	q := `SELECT id, name, version, enabled, manifest, config, health_status, health_checked_at, created_at, updated_at
 	      FROM plugins`

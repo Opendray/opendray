@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/api/api_client.dart';
 import '../../core/models/session.dart';
+import '../../core/services/auth_service.dart';
 import '../../shared/session_launcher.dart';
 import '../../shared/theme/app_theme.dart';
 import 'widgets/session_card.dart';
@@ -85,18 +86,7 @@ class _DashboardPageState extends State<DashboardPage> {
       body: _loading && _sessions.isEmpty
           ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
           : _error != null && _sessions.isEmpty
-          ? Center(child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.cloud_off, color: AppColors.error, size: 40),
-                const SizedBox(height: 12),
-                const Text('Cannot connect to server', style: TextStyle(fontWeight: FontWeight.w500)),
-                const SizedBox(height: 4),
-                Text('Check Settings → Server URL', style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
-                const SizedBox(height: 16),
-                FilledButton(onPressed: _load, style: FilledButton.styleFrom(backgroundColor: AppColors.accent), child: const Text('Retry')),
-              ]),
-            ))
+          ? _buildOfflineState()
           : _sessions.isEmpty
               ? _buildEmpty()
               : RefreshIndicator(
@@ -114,6 +104,60 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                 ),
+    );
+  }
+
+  /// Offline / "can't reach backend" state. Beyond the "Retry" button we
+  /// expose explicit escape hatches so the user is never trapped: go to
+  /// Settings (fix server URL), or sign out (drop a dead token and return
+  /// to /login under a different account).
+  Widget _buildOfflineState() {
+    final auth = context.watch<AuthService>();
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.cloud_off, color: AppColors.error, size: 40),
+          const SizedBox(height: 12),
+          const Text('Cannot connect to server',
+              style: TextStyle(fontWeight: FontWeight.w500)),
+          const SizedBox(height: 4),
+          const Text('Check Settings → Server URL, or sign in again',
+              style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+              textAlign: TextAlign.center),
+          const SizedBox(height: 18),
+          FilledButton.icon(
+            onPressed: _load,
+            style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+            icon: const Icon(Icons.refresh, size: 16),
+            label: const Text('Retry'),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => context.go('/settings'),
+                icon: const Icon(Icons.settings, size: 16),
+                label: const Text('Settings'),
+              ),
+              if (auth.hasStoredToken)
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await context.read<AuthService>().logout();
+                    // Router redirect picks up the state change and sends
+                    // us to /login automatically.
+                  },
+                  style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error),
+                  icon: const Icon(Icons.logout, size: 16),
+                  label: const Text('Sign out'),
+                ),
+            ],
+          ),
+        ]),
+      ),
     );
   }
 

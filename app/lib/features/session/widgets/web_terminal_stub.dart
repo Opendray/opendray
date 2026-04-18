@@ -8,6 +8,7 @@ class WebTerminalView extends StatelessWidget {
   final String serverUrl;
   final String sessionId;
   final bool isRunning;
+  final String? authToken;
   final TerminalEventCallback? onEvent;
 
   const WebTerminalView({
@@ -15,6 +16,7 @@ class WebTerminalView extends StatelessWidget {
     required this.serverUrl,
     required this.sessionId,
     required this.isRunning,
+    this.authToken,
     this.onEvent,
   });
 

@@ -3,6 +3,7 @@ package gateway
 
 import (
 	"bufio"
+	"crypto/subtle"
 	"encoding/json"
 	"io/fs"
 	"log/slog"
@@ -28,25 +29,31 @@ import (
 
 // Server is the main HTTP server for OpenDray.
 type Server struct {
-	router   chi.Router
-	hub      *hub.Hub
-	plugins  *plugin.Runtime
-	auth     *auth.Auth
-	logger   *slog.Logger
-	tasks    *tasks.Runner
-	telegram *telegram.Manager
-	mcp      *mcp.Handlers
-	git      *gitpkg.Manager
+	router        chi.Router
+	hub           *hub.Hub
+	plugins       *plugin.Runtime
+	auth          *auth.Auth
+	creds         *auth.CredentialStore
+	adminUsername string
+	adminPassword string
+	logger        *slog.Logger
+	tasks         *tasks.Runner
+	telegram      *telegram.Manager
+	mcp           *mcp.Handlers
+	git           *gitpkg.Manager
 }
 
 // Config holds gateway configuration.
 type Config struct {
-	Hub        *hub.Hub
-	Plugins    *plugin.Runtime
-	MCP        *mcp.Runtime
-	Auth       *auth.Auth
-	Logger     *slog.Logger
-	FrontendFS fs.FS // embedded frontend dist (optional)
+	Hub           *hub.Hub
+	Plugins       *plugin.Runtime
+	MCP           *mcp.Runtime
+	Auth          *auth.Auth
+	Credentials   *auth.CredentialStore
+	AdminUsername string
+	AdminPassword string
+	Logger        *slog.Logger
+	FrontendFS    fs.FS // embedded frontend dist (optional)
 }
 
 // New creates a gateway server with all routes configured.
@@ -56,12 +63,15 @@ func New(cfg Config) *Server {
 	}
 
 	s := &Server{
-		hub:     cfg.Hub,
-		plugins: cfg.Plugins,
-		auth:    cfg.Auth,
-		logger:  cfg.Logger,
-		tasks:   tasks.NewRunner(),
-		git:     gitpkg.NewManager(),
+		hub:           cfg.Hub,
+		plugins:       cfg.Plugins,
+		auth:          cfg.Auth,
+		creds:         cfg.Credentials,
+		adminUsername: cfg.AdminUsername,
+		adminPassword: cfg.AdminPassword,
+		logger:        cfg.Logger,
+		tasks:         tasks.NewRunner(),
+		git:           gitpkg.NewManager(),
 	}
 	if cfg.MCP != nil {
 		s.mcp = mcp.NewHandlers(cfg.MCP)
@@ -85,6 +95,7 @@ func New(cfg Config) *Server {
 
 	// Public routes
 	r.Get("/api/health", s.health)
+	r.Get("/api/auth/status", s.authStatus)
 	r.Post("/api/auth/login", s.login)
 	r.Get("/terminal.html", s.serveTerminalHTML)
 
@@ -93,6 +104,10 @@ func New(cfg Config) *Server {
 		if cfg.Auth != nil {
 			r.Use(cfg.Auth.Middleware)
 		}
+
+		// Admin credential management — under the authenticated group so
+		// only a signed-in caller can rotate the password.
+		r.Post("/api/auth/change-credentials", s.changeCredentials)
 
 		// Session management
 		r.With(readRL.middleware).Get("/api/sessions", s.listSessions)
@@ -283,8 +298,11 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// For now, accept configured credentials
-	// TODO: proper user management
+	if !s.verifyCredentials(r.Context(), req.Username, req.Password) {
+		respondError(w, http.StatusUnauthorized, "invalid credentials")
+		return
+	}
+
 	token, err := s.auth.Issue(req.Username)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to issue token")
@@ -292,6 +310,107 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, map[string]string{"token": token})
+}
+
+// verifyCredentials checks a candidate username/password against the DB
+// row if one exists, otherwise against the bootstrap env credentials.
+// Always does BOTH comparisons so the branch doesn't leak through timing
+// whether the username or the password was wrong.
+func (s *Server) verifyCredentials(ctx context.Context, username, password string) bool {
+	var (
+		dbUser     string
+		dbHashOK   bool
+		usingStore = false
+	)
+
+	if s.creds != nil {
+		c, err := s.creds.Load(ctx)
+		if err != nil {
+			s.logger.Error("auth: load credentials", "error", err)
+			return false
+		}
+		if c != nil {
+			usingStore = true
+			dbUser = c.Username
+			dbHashOK = auth.VerifyPassword(c.PasswordHash, password)
+		}
+	}
+
+	if usingStore {
+		userOK := subtle.ConstantTimeCompare([]byte(username), []byte(dbUser)) == 1
+		return userOK && dbHashOK
+	}
+
+	// Bootstrap path — env-provided credentials. Constant-time compare to
+	// keep bootstrap-mode and DB-mode behaviour similar in timing.
+	userOK := subtle.ConstantTimeCompare([]byte(username), []byte(s.adminUsername)) == 1
+	passOK := subtle.ConstantTimeCompare([]byte(password), []byte(s.adminPassword)) == 1
+	return userOK && passOK
+}
+
+// changeCredentials updates the admin username + password after verifying
+// the current password. On success writes a bcrypt hash to the DB (so env
+// values stop being used) and issues a fresh token under the new username.
+func (s *Server) changeCredentials(w http.ResponseWriter, r *http.Request) {
+	if s.auth == nil || s.creds == nil {
+		respondError(w, http.StatusBadRequest, "credential management not enabled")
+		return
+	}
+
+	var req struct {
+		CurrentPassword string `json:"currentPassword"`
+		NewUsername     string `json:"newUsername"`
+		NewPassword     string `json:"newPassword"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request")
+		return
+	}
+
+	// Identity from the JWT middleware — trust this over anything in the
+	// body, so a valid token can't be used to rename someone else.
+	actingUser := r.Header.Get("X-User")
+	if actingUser == "" {
+		respondError(w, http.StatusUnauthorized, "missing identity")
+		return
+	}
+
+	if !s.verifyCredentials(r.Context(), actingUser, req.CurrentPassword) {
+		respondError(w, http.StatusUnauthorized, "current password is incorrect")
+		return
+	}
+
+	newUser := strings.TrimSpace(req.NewUsername)
+	if newUser == "" {
+		newUser = actingUser
+	}
+	if len(req.NewPassword) < 8 {
+		respondError(w, http.StatusBadRequest, "password must be at least 8 characters")
+		return
+	}
+
+	if err := s.creds.Save(r.Context(), newUser, req.NewPassword); err != nil {
+		s.logger.Error("auth: save credentials", "error", err)
+		respondError(w, http.StatusInternalServerError, "failed to save credentials")
+		return
+	}
+
+	token, err := s.auth.Issue(newUser)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to issue token")
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]string{
+		"token":    token,
+		"username": newUser,
+	})
+}
+
+// authStatus is a public endpoint the client hits before showing a login
+// page — it reveals whether the server has JWT enabled at all, without
+// exposing any config detail.
+func (s *Server) authStatus(w http.ResponseWriter, r *http.Request) {
+	respondJSON(w, http.StatusOK, map[string]bool{"authRequired": s.auth != nil})
 }
 
 // ── Hooks ───────────────────────────────────────────────────────

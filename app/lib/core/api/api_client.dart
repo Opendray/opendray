@@ -42,14 +42,45 @@ class ApiClient {
   final Dio _dio;
   final String baseUrl;
   final Map<String, String> extraHeaders;
+  final String Function()? _tokenProvider;
+  final void Function()? _onUnauthorized;
 
-  ApiClient({required this.baseUrl, this.extraHeaders = const {}})
-      : _dio = Dio(BaseOptions(
+  ApiClient({
+    required this.baseUrl,
+    this.extraHeaders = const {},
+    String Function()? tokenProvider,
+    void Function()? onUnauthorized,
+  })  : _tokenProvider = tokenProvider,
+        _onUnauthorized = onUnauthorized,
+        _dio = Dio(BaseOptions(
           baseUrl: baseUrl,
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 10),
           headers: extraHeaders,
-        ));
+        )) {
+    // Inject Authorization header on every request when a token is available,
+    // and trap 401 responses so AuthService can tear down state and route
+    // back to the login page.
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) {
+        final t = _tokenProvider?.call();
+        if (t != null && t.isNotEmpty) {
+          options.headers['Authorization'] = 'Bearer $t';
+        }
+        handler.next(options);
+      },
+      onError: (e, handler) {
+        if (e.response?.statusCode == 401) {
+          _onUnauthorized?.call();
+        }
+        handler.next(e);
+      },
+    ));
+  }
+
+  /// Current bearer token (if any) — WsClient appends it as `?token=` since
+  /// browsers can't set the Authorization header on a WebSocket handshake.
+  String? get token => _tokenProvider?.call();
 
   /// Callers wrap API calls with this so DioException bodies bubble up as
   /// readable user-facing messages. Rethrows ApiException; passes other
@@ -249,6 +280,8 @@ class ApiClient {
     final wsScheme = u.scheme == 'https' ? 'wss' : 'ws';
     final qp = <String, String>{'path': path};
     if (grep.isNotEmpty) qp['grep'] = grep;
+    final t = token;
+    if (t != null && t.isNotEmpty) qp['token'] = t;
     return Uri(
       scheme: wsScheme,
       host: u.host,
@@ -346,7 +379,9 @@ class ApiClient {
   Uri tasksRunWsUri(String plugin, String runId) {
     final scheme = baseUrl.startsWith('https') ? 'wss' : 'ws';
     final host = baseUrl.replaceAll(RegExp(r'^https?://'), '');
-    return Uri.parse('$scheme://$host/api/tasks/$plugin/run/$runId/ws');
+    final t = token;
+    final q = (t != null && t.isNotEmpty) ? '?token=${Uri.encodeQueryComponent(t)}' : '';
+    return Uri.parse('$scheme://$host/api/tasks/$plugin/run/$runId/ws$q');
   }
 
   // ── Simulator stream ──────────────────────────────────────
@@ -357,6 +392,8 @@ class ApiClient {
     final wsScheme = u.scheme == 'https' ? 'wss' : 'ws';
     final qp = <String, String>{'platform': platform};
     if (device.isNotEmpty) qp['device'] = device;
+    final t = token;
+    if (t != null && t.isNotEmpty) qp['token'] = t;
     return Uri(
       scheme: wsScheme,
       host: u.host,
@@ -637,6 +674,24 @@ class ApiClient {
     } catch (_) {
       return null;
     }
+  }
+
+  // ── Auth ──────────────────────────────────────────────────
+
+  /// Changes the admin username/password. On success the server returns a
+  /// fresh token issued under the new username so the client can swap in
+  /// the new credentials without re-login.
+  Future<Map<String, dynamic>> changeCredentials({
+    required String currentPassword,
+    required String newUsername,
+    required String newPassword,
+  }) async {
+    final res = await _dio.post('/api/auth/change-credentials', data: {
+      'currentPassword': currentPassword,
+      'newUsername': newUsername,
+      'newPassword': newPassword,
+    });
+    return Map<String, dynamic>.from(res.data as Map);
   }
 
   // ── Health ────────────────────────────────────────────────

@@ -4,8 +4,10 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/api/api_client.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/services/l10n.dart';
 import '../../core/services/server_config.dart';
+import '../../shared/app_modals.dart';
 import '../../shared/theme/app_theme.dart';
 import 'widgets/plugins_section.dart';
 
@@ -244,6 +246,10 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 16),
 
+          // Account — only shown when the server has auth enabled and we
+          // actually hold a token; otherwise there's nothing to sign out of.
+          _buildAccountCard(context),
+
           // About
           Card(
             child: Padding(
@@ -318,6 +324,328 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Account card — Change credentials + Sign out. Shown whenever there's
+  /// a stored token so the user always has an escape hatch, even if the
+  /// server is currently unreachable or the auth state is unknown.
+  /// "Change credentials" still requires a live server (it hits an API),
+  /// so we disable it when we're not confirmed-authed.
+  Widget _buildAccountCard(BuildContext context) {
+    final auth = context.watch<AuthService>();
+    if (!auth.hasStoredToken && auth.state != AuthState.authed) {
+      return const SizedBox.shrink();
+    }
+    final canChange = auth.state == AuthState.authed;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Card(
+        child: Column(children: [
+          ListTile(
+            enabled: canChange,
+            leading: Icon(Icons.lock_reset,
+                color: canChange ? AppColors.accent : AppColors.textMuted),
+            title: Text(context.tr('Change credentials'),
+                style: const TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w500)),
+            subtitle: Text(
+              canChange
+                  ? context.tr('Update the admin username and password')
+                  : context.tr('Reconnect to the server to change credentials'),
+              style: const TextStyle(
+                  fontSize: 11, color: AppColors.textMuted),
+            ),
+            trailing: const Icon(Icons.chevron_right,
+                size: 20, color: AppColors.textMuted),
+            onTap: canChange ? () => _showChangeCredentialsSheet(context) : null,
+          ),
+          const Divider(height: 1, indent: 16),
+          ListTile(
+            leading: const Icon(Icons.logout, color: AppColors.error),
+            title: Text(context.tr('Sign out'),
+                style: const TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w500)),
+            subtitle: Text(
+              context.tr('Clear the saved token on this device'),
+              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+            ),
+            trailing: const Icon(Icons.chevron_right,
+                size: 20, color: AppColors.textMuted),
+            onTap: () async {
+              await context.read<AuthService>().logout();
+              // Router's redirect handles the actual navigation to /login.
+            },
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Future<void> _showChangeCredentialsSheet(BuildContext context) async {
+    await showAppModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => const _ChangeCredentialsSheet(),
+    );
+  }
+}
+
+/// Bottom-sheet form for rotating the admin credentials. Keyboard-aware,
+/// keeps the submit button above the IME, mirrors the NewFolder sheet's
+/// layout conventions so the UX feels consistent.
+class _ChangeCredentialsSheet extends StatefulWidget {
+  const _ChangeCredentialsSheet();
+
+  @override
+  State<_ChangeCredentialsSheet> createState() =>
+      _ChangeCredentialsSheetState();
+}
+
+class _ChangeCredentialsSheetState extends State<_ChangeCredentialsSheet> {
+  final _currentCtrl = TextEditingController();
+  final _newUserCtrl = TextEditingController();
+  final _newPassCtrl = TextEditingController();
+  final _confirmCtrl = TextEditingController();
+  bool _obscureCurrent = true;
+  bool _obscureNew = true;
+  bool _submitting = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _currentCtrl.dispose();
+    _newUserCtrl.dispose();
+    _newPassCtrl.dispose();
+    _confirmCtrl.dispose();
+    super.dispose();
+  }
+
+  String? _validate() {
+    if (_currentCtrl.text.isEmpty) return 'Enter your current password';
+    if (_newPassCtrl.text.length < 8) {
+      return 'New password must be at least 8 characters';
+    }
+    if (_newPassCtrl.text != _confirmCtrl.text) {
+      return 'New passwords do not match';
+    }
+    return null;
+  }
+
+  Future<void> _submit() async {
+    final v = _validate();
+    if (v != null) { setState(() => _error = v); return; }
+    setState(() { _submitting = true; _error = null; });
+    // Pull Providers BEFORE the first await so we don't touch `context`
+    // after an async gap (lint + real hazard if widget unmounts mid-request).
+    final api = context.read<ApiClient>();
+    final auth = context.read<AuthService>();
+    try {
+      final res = await ApiClient.describeErrors(() => api.changeCredentials(
+            currentPassword: _currentCtrl.text,
+            newUsername: _newUserCtrl.text.trim(),
+            newPassword: _newPassCtrl.text,
+          ));
+      final newToken = res['token'] as String? ?? '';
+      if (newToken.isNotEmpty) {
+        await auth.acceptNewToken(newToken);
+      }
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Credentials updated'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() { _submitting = false; _error = e.toString(); });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36, height: 4,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Row(children: [
+                const Icon(Icons.lock_reset, size: 18, color: AppColors.accent),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(context.tr('Change credentials'),
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w600)),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 18),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
+                ),
+              ]),
+              const SizedBox(height: 14),
+              _field(
+                controller: _currentCtrl,
+                label: context.tr('Current password'),
+                obscure: _obscureCurrent,
+                onToggle: () =>
+                    setState(() => _obscureCurrent = !_obscureCurrent),
+                hint: '••••••••',
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _newUserCtrl,
+                autocorrect: false,
+                enableSuggestions: false,
+                textCapitalization: TextCapitalization.none,
+                decoration: InputDecoration(
+                  labelText: context.tr('New username (leave blank to keep)'),
+                  isDense: true,
+                  filled: true,
+                  fillColor: AppColors.surfaceAlt,
+                  border: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              _field(
+                controller: _newPassCtrl,
+                label: context.tr('New password'),
+                obscure: _obscureNew,
+                onToggle: () => setState(() => _obscureNew = !_obscureNew),
+                hint: context.tr('at least 8 characters'),
+              ),
+              const SizedBox(height: 10),
+              _field(
+                controller: _confirmCtrl,
+                label: context.tr('Confirm new password'),
+                obscure: _obscureNew,
+                onToggle: () => setState(() => _obscureNew = !_obscureNew),
+                hint: '',
+                onSubmitted: (_) => _submit(),
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.errorSoft,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(children: [
+                    const Icon(Icons.error_outline,
+                        size: 16, color: AppColors.error),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(_error!,
+                          style: const TextStyle(
+                              color: AppColors.error, fontSize: 12)),
+                    ),
+                  ]),
+                ),
+              ],
+              const SizedBox(height: 14),
+              Row(children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _submitting
+                        ? null
+                        : () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Text(context.tr('Cancel')),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton.icon(
+                    onPressed: _submitting ? null : _submit,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.accent,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    icon: _submitting
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.check, size: 16),
+                    label: Text(context.tr('Update')),
+                  ),
+                ),
+              ]),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _field({
+    required TextEditingController controller,
+    required String label,
+    required bool obscure,
+    required VoidCallback onToggle,
+    required String hint,
+    void Function(String)? onSubmitted,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      autocorrect: false,
+      enableSuggestions: false,
+      textCapitalization: TextCapitalization.none,
+      onSubmitted: onSubmitted,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        isDense: true,
+        filled: true,
+        fillColor: AppColors.surfaceAlt,
+        border: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(10)),
+          borderSide: BorderSide.none,
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(
+            obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+            size: 18,
+          ),
+          onPressed: onToggle,
+        ),
       ),
     );
   }
