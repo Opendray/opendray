@@ -20,7 +20,7 @@ const features = [
   {
     icon: '💬',
     title: 'Telegram Bridge',
-    description: 'Bidirectional session control with 15 commands. Start, stop, and monitor agents from any chat.',
+    description: 'Full bidirectional session control. Read output, answer prompts, send control keys, and reply to idle notifications — all from Telegram.',
   },
   {
     icon: '🔀',
@@ -125,7 +125,8 @@ const manifestExample = `{
       </a>
       <div class="nav-links">
         <a href="#features">Features</a>
-        <a href="#how-it-works">How It Works</a>
+        <a href="#plugins">Plugins</a>
+        <a href="#telegram">Telegram</a>
         <a href="#quick-start">Quick Start</a>
         <a href="https://github.com/opendray/opendray" target="_blank" rel="noopener" class="nav-github">
           GitHub
@@ -322,6 +323,55 @@ const manifestExample = `{
             <span class="terminal-title">plugins/agents/my-agent/manifest.json</span>
           </div>
           <pre class="code-block"><code>{manifestExample}</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TELEGRAM BRIDGE ===== -->
+  <section class="telegram-bridge" id="telegram">
+    <div class="container">
+      <div class="plugin-grid">
+        <div class="plugin-text">
+          <span class="section-label">Telegram Bridge</span>
+          <h2 class="section-title">Control agents from any chat.</h2>
+          <p class="plugin-description">
+            Link a Telegram chat to a running session and it becomes a two-way terminal.
+            Your messages go to the agent as input. Agent output streams back in batches.
+            Reply to any idle notification and it routes to that session automatically.
+          </p>
+          <p class="plugin-description">
+            <strong>Structured prompts</strong> &mdash; when an agent shows a multi-select
+            dialog (permission approvals, tool lists), it renders as inline Telegram
+            keyboards with checkboxes and a submit button.
+          </p>
+          <p class="plugin-description plugin-description--muted">
+            No app install required. Works on any device with Telegram.
+            Set up with a BotFather token and an allowed chat ID list.
+          </p>
+        </div>
+        <div class="plugin-code">
+          <div class="terminal-bar">
+            <span class="terminal-dot terminal-dot--red"></span>
+            <span class="terminal-dot terminal-dot--yellow"></span>
+            <span class="terminal-dot terminal-dot--green"></span>
+            <span class="terminal-title">OpenDray Telegram Bridge</span>
+          </div>
+          <pre class="code-block"><code><span style="color:#94A3B8">Read</span>
+/sessions        &mdash; list running sessions
+/screen [1]      &mdash; current screen snapshot
+/tail 1 [n]      &mdash; last N lines of output
+/whoami          &mdash; show your chat ID
+
+<span style="color:#94A3B8">Control</span>
+/link 1          &mdash; bind this chat to session #1
+/unlink          &mdash; remove the binding
+/links           &mdash; list all active bindings
+/send 1 &lt;text&gt;   &mdash; one-shot send without /link
+/stop 1          &mdash; stop a running session
+
+<span style="color:#94A3B8">Quick keys</span> <span style="color:#64748B">(sent to linked session)</span>
+/cc  /cd  /tab  /enter  /yes  /no</code></pre>
         </div>
       </div>
     </div>
@@ -1103,6 +1153,12 @@ const manifestExample = `{
 
   .code-block code {
     color: var(--text-secondary);
+  }
+
+  /* ===== TELEGRAM BRIDGE ===== */
+  .telegram-bridge {
+    padding: var(--section-padding) 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(14, 165, 233, 0.03) 50%, transparent 100%);
   }
 
   /* ===== ARCHITECTURE ===== */
