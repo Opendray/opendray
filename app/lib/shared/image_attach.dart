@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -5,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../core/api/api_client.dart';
 import '../core/models/session.dart';
+import 'app_modals.dart';
 import 'theme/app_theme.dart';
 
 /// Picks a running session via a bottom sheet. Returns null if the user
@@ -24,7 +26,7 @@ Future<Session?> pickSession(BuildContext context,
     return null;
   }
   if (!context.mounted) return null;
-  return showModalBottomSheet<Session>(
+  return showAppModalBottomSheet<Session>(
     context: context,
     backgroundColor: AppColors.surface,
     shape: const RoundedRectangleBorder(
@@ -124,7 +126,7 @@ Future<void> sendImageToSession({
 Future<void> pickAndSendImage(BuildContext context,
     {Session? targetSession, TerminalInserter? inserter}) async {
   final picker = ImagePicker();
-  final source = await showModalBottomSheet<ImageSource>(
+  final source = await showAppModalBottomSheet<ImageSource>(
     context: context,
     backgroundColor: AppColors.surface,
     shape: const RoundedRectangleBorder(
@@ -135,11 +137,14 @@ Future<void> pickAndSendImage(BuildContext context,
         title: const Text('Photo Library', style: TextStyle(fontSize: 14)),
         onTap: () => Navigator.pop(ctx, ImageSource.gallery),
       ),
-      ListTile(
-        leading: const Icon(Icons.camera_alt_outlined, color: AppColors.accent),
-        title: const Text('Take Photo', style: TextStyle(fontSize: 14)),
-        onTap: () => Navigator.pop(ctx, ImageSource.camera),
-      ),
+      // The camera option is phone-only. On desktop browsers `pickImage(source: camera)`
+      // returns an error because there's no camera bound to the file picker.
+      if (!kIsWeb)
+        ListTile(
+          leading: const Icon(Icons.camera_alt_outlined, color: AppColors.accent),
+          title: const Text('Take Photo', style: TextStyle(fontSize: 14)),
+          onTap: () => Navigator.pop(ctx, ImageSource.camera),
+        ),
       ListTile(
         leading: const Icon(Icons.close, color: AppColors.textMuted),
         title: const Text('Cancel',
@@ -156,7 +161,10 @@ Future<void> pickAndSendImage(BuildContext context,
     );
     if (picked == null || !context.mounted) return;
     final imgBytes = await picked.readAsBytes();
-    final mime = _mimeFromPath(picked.path);
+    // On web, picked.path is a blob URL so it has no extension.
+    // image_picker_for_web sets mimeType explicitly; fall back to name or path.
+    final mime = picked.mimeType ??
+        _mimeFromPath(picked.name.isNotEmpty ? picked.name : picked.path);
     if (!context.mounted) return;
     await sendImageToSession(
       context: context,
@@ -210,7 +218,7 @@ Future<void> _showResultSheet({
     if (context.mounted) _snack(context, 'Path copied to clipboard');
   }
 
-  return showModalBottomSheet<void>(
+  return showAppModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: AppColors.surface,

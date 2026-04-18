@@ -126,17 +126,26 @@ class _BrowserPageState extends State<BrowserPage> {
               ? _emptyState(context)
               : RefreshIndicator(
                   onRefresh: _load,
-                  child: GridView.builder(
-                    padding: const EdgeInsets.all(14),
-                    itemCount: _panels.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 1.05,
-                    ),
-                    itemBuilder: (_, i) => _card(context, _panels[i]),
-                  ),
+                  child: LayoutBuilder(builder: (ctx, constraints) {
+                    // Responsive grid: one card per ~260px of width, capped
+                    // so cards stay tile-shaped on large desktops instead of
+                    // ballooning into half-screen rectangles.
+                    final w = constraints.maxWidth;
+                    final isWide = w >= 720;
+                    return GridView.builder(
+                      padding: EdgeInsets.all(isWide ? 20 : 14),
+                      itemCount: _panels.length,
+                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: isWide ? 260 : 220,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        // Shorter, wider cards: reads like a launcher tile,
+                        // not a half-empty poster.
+                        childAspectRatio: isWide ? 1.35 : 1.1,
+                      ),
+                      itemBuilder: (_, i) => _card(context, _panels[i]),
+                    );
+                  }),
                 ),
     );
   }
@@ -176,6 +185,7 @@ class _BrowserPageState extends State<BrowserPage> {
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
               padding: const EdgeInsets.all(10),
@@ -185,19 +195,22 @@ class _BrowserPageState extends State<BrowserPage> {
               ),
               child: Icon(e.icon, color: AppColors.accent, size: 22),
             ),
-            const Spacer(),
-            Text(
-              context.tr(e.titleKey),
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-            ),
-            const SizedBox(height: 4),
-            Expanded(
-              child: Text(
-                context.tr(e.descKey),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 12, height: 1.3),
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  context.tr(e.titleKey),
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  context.tr(e.descKey),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppColors.textMuted, fontSize: 12, height: 1.3),
+                ),
+              ],
             ),
           ],
         ),
