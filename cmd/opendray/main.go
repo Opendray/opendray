@@ -21,6 +21,7 @@ import (
 	"github.com/opendray/opendray/kernel/config"
 	"github.com/opendray/opendray/kernel/hub"
 	opg "github.com/opendray/opendray/kernel/pg"
+	"github.com/opendray/opendray/kernel/setup"
 	"github.com/opendray/opendray/kernel/store"
 	"github.com/opendray/opendray/plugin"
 )
@@ -29,47 +30,146 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	slog.SetDefault(logger)
 
-	cfg, source, err := config.Load()
+	// Outer loop: runs setup mode on a fresh install, then transitions
+	// into normal mode once /api/setup/finalize writes config.toml. On a
+	// fully-configured install, setup mode is skipped entirely.
+	for {
+		cfg, source, err := config.Load()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "FATAL: %v\n", err)
+			os.Exit(1)
+		}
+		logger.Info("config loaded", "source", source, "db_mode", cfg.DB.Mode,
+			"complete", cfg.IsComplete())
+
+		if !cfg.IsComplete() {
+			if !runSetupMode(logger, cfg) {
+				// Setup was interrupted (SIGTERM before finalize) — exit.
+				return
+			}
+			// Setup finished — loop around to load the freshly-written
+			// config and boot normally.
+			continue
+		}
+
+		if err := cfg.Validate(); err != nil {
+			fmt.Fprintf(os.Stderr, "FATAL: %v\n", err)
+			os.Exit(1)
+		}
+		runNormalMode(logger, cfg)
+		return
+	}
+}
+
+// runSetupMode boots the minimal setup-only gateway until finalize is
+// called or SIGTERM arrives. Returns true when finalize succeeded (so
+// main can loop into normal mode), false on signal-driven shutdown.
+func runSetupMode(logger *slog.Logger, cfg config.Config) bool {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	mgr, err := setup.New(func() {
+		// onFinish: /api/setup/finalize has written config. Cancel the
+		// listen loop so the main loop reloads config and enters normal
+		// mode. We deliberately delay a beat so the 200 reply flushes.
+		go func() {
+			time.Sleep(250 * time.Millisecond)
+			cancel()
+		}()
+	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "FATAL: %v\n", err)
-		os.Exit(1)
-	}
-	logger.Info("config loaded", "source", source, "db_mode", cfg.DB.Mode)
-
-	// Setup mode is wired in Phase 3. For now, refuse to start with an
-	// incomplete config — same behaviour as today, just via the new loader.
-	if !cfg.IsComplete() {
-		fmt.Fprintln(os.Stderr, "FATAL: OpenDray is not configured.")
-		fmt.Fprintln(os.Stderr, "  • Write ~/.opendray/config.toml (setup wizard will land in Phase 3-4), OR")
-		fmt.Fprintln(os.Stderr, "  • Set env vars: DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, JWT_SECRET, ADMIN_PASSWORD.")
-		os.Exit(1)
-	}
-	if err := cfg.Validate(); err != nil {
-		fmt.Fprintf(os.Stderr, "FATAL: %v\n", err)
+		logger.Error("setup: init manager", "error", err)
 		os.Exit(1)
 	}
 
-	// Security posture: same rules as before, just read from the merged config.
+	// Persist the token so the Flutter wizard can fetch it over same-origin
+	// when the user opens /setup without the ?token= query. Mode 0600 —
+	// it's a short-lived shared secret.
+	tokenPath, err := writeBootstrapToken(mgr.BootstrapToken())
+	if err != nil {
+		logger.Warn("setup: could not persist token file; wizard needs ?token= in URL", "error", err)
+	}
+
+	listen := cfg.Server.ListenAddr
+	if listen == "" {
+		listen = "127.0.0.1:8640"
+	}
+	fmt.Fprintln(os.Stderr, "────────────────────────────────────────────")
+	fmt.Fprintln(os.Stderr, " OpenDray: SETUP REQUIRED")
+	fmt.Fprintln(os.Stderr, " No usable config.toml / env found.")
+	fmt.Fprintln(os.Stderr, " Open this URL to finish setup:")
+	fmt.Fprintf(os.Stderr, "   http://%s/setup?token=%s\n",
+		displayAddr(listen), mgr.BootstrapToken())
+	if tokenPath != "" {
+		fmt.Fprintf(os.Stderr, " (Token also written to %s)\n", tokenPath)
+	}
+	fmt.Fprintln(os.Stderr, "────────────────────────────────────────────")
+
+	// Frontend FS — setup mode still serves the Flutter web wizard from
+	// the embedded dist. If the binary was built without dist (dev mode),
+	// a bare HTML stub would be nicer; left for Phase 4.
+	var frontendFS fs.FS
+	if distFS, err := fs.Sub(app.DistFS, "build/web"); err == nil {
+		if entries, err := fs.ReadDir(distFS, "."); err == nil && len(entries) > 0 {
+			frontendFS = distFS
+		}
+	}
+
+	handler := gateway.NewSetup(mgr, frontendFS, logger)
+	server := &http.Server{Addr: listen, Handler: handler}
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+
+	errCh := make(chan error, 1)
+	go func() {
+		logger.Info("setup server listening", "addr", listen)
+		errCh <- server.ListenAndServe()
+	}()
+
+	select {
+	case <-ctx.Done():
+		// finalize() invoked our cancel.
+		logger.Info("setup complete — transitioning to normal mode")
+	case sig := <-sigCh:
+		logger.Info("setup mode: signal received; exiting", "signal", sig)
+		cancel()
+	case err := <-errCh:
+		if err != nil && err != http.ErrServerClosed {
+			logger.Error("setup server error", "error", err)
+			os.Exit(1)
+		}
+	}
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+	_ = server.Shutdown(shutdownCtx)
+
+	// Clean up the one-shot bootstrap token file — it's no longer valid
+	// once the manager has flipped inactive.
+	if tokenPath != "" {
+		_ = os.Remove(tokenPath)
+	}
+
+	return !mgr.Active()
+}
+
+// runNormalMode is the original boot path, now cleanly factored out of
+// main so the setup→normal transition is just a function call.
+func runNormalMode(logger *slog.Logger, cfg config.Config) {
+	// Security posture: same rules as before, read from the merged config.
 	if cfg.Auth.JWTSecret == "" && !isLoopback(cfg.Server.ListenAddr) {
-		fmt.Fprintln(os.Stderr, "FATAL: auth.jwt_secret (or env JWT_SECRET) is required when binding to a non-loopback address. Use listen_addr 127.0.0.1:8640 for local-only development.")
+		fmt.Fprintln(os.Stderr, "FATAL: auth.jwt_secret (or env JWT_SECRET) is required when binding to a non-loopback address.")
 		os.Exit(1)
 	}
-	// When auth is enabled, either DB-backed credentials or a bootstrap
-	// password must exist — otherwise any body can mint tokens.
-	// The DB-row check runs later (we need a live DB); here we only
-	// enforce the bootstrap-env fallback.
 	if cfg.Auth.JWTSecret != "" && cfg.Auth.AdminBootstrapPassword == "" {
-		// Not fatal yet — setup wizard writes credentials directly to the
-		// admin_auth table. Phase 3 makes this precise by checking DB.
 		logger.Warn("no ADMIN_PASSWORD set; login will rely on admin_auth DB row")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Database. Two paths — embedded (child PG managed by us) vs external
-	// (user-supplied). They converge on a single store.Config before we
-	// connect, so everything downstream is oblivious to the choice.
+	// Database — embedded vs external converge on a single store.Config.
 	var storeCfg store.Config
 	var embeddedPG *opg.Embedded
 	switch cfg.DB.Mode {
@@ -88,12 +188,10 @@ func main() {
 		}
 		embeddedPG = pg
 		defer embeddedPG.Stop()
-		// First-run password generation — persist so subsequent boots reuse it.
 		if cfg.DB.Embedded.Password == "" {
 			cfg.DB.Embedded.Password = pg.Password()
 			if err := config.Save(cfg); err != nil {
-				logger.Warn("failed to persist embedded PG password to config; next boot will regenerate and init will fail",
-					"error", err)
+				logger.Warn("failed to persist embedded PG password to config", "error", err)
 			}
 		}
 		storeCfg = store.Config{
@@ -140,7 +238,25 @@ func main() {
 		logger.Info("JWT authentication enabled")
 	}
 
-	// Provider Runtime (load before hub)
+	// If the wizard staged a bootstrap password, plant it in admin_auth
+	// now that the DB is ready. Safe-idempotent: the store.Save upsert
+	// only writes when the row is absent, so a second launch after a UI
+	// password change never clobbers user edits.
+	if credStore != nil && cfg.Auth.AdminBootstrapPassword != "" {
+		if existing, err := credStore.Load(ctx); err == nil && existing == nil {
+			user := cfg.Auth.AdminBootstrapUsername
+			if user == "" {
+				user = "admin"
+			}
+			if err := credStore.Save(ctx, user, cfg.Auth.AdminBootstrapPassword); err != nil {
+				logger.Warn("failed to plant bootstrap admin credentials", "error", err)
+			} else {
+				logger.Info("bootstrap admin credentials written", "username", user)
+			}
+		}
+	}
+
+	// Provider Runtime
 	hookBus := plugin.NewHookBus(logger)
 	providerRuntime := plugin.NewRuntime(db, hookBus, cfg.Plugins.Dir, logger)
 
@@ -150,7 +266,7 @@ func main() {
 	providerRuntime.StartHealthCheck(ctx, 60*time.Second)
 	logger.Info("providers loaded", "count", len(providerRuntime.List()))
 
-	// Session Hub — uses provider runtime to resolve CLI specs
+	// Session Hub
 	idleThreshold := 8 * time.Second
 	if cfg.Plugins.IdleThresholdSeconds > 0 {
 		idleThreshold = time.Duration(cfg.Plugins.IdleThresholdSeconds) * time.Second
@@ -169,7 +285,7 @@ func main() {
 	sessionHub.RecoverOnStartup(ctx, cfg.Plugins.AutoResume)
 	sessionHub.StartHealthCheck(ctx, 60*time.Second)
 
-	// Frontend FS
+	// Frontend
 	var frontendFS fs.FS
 	if distFS, err := fs.Sub(app.DistFS, "build/web"); err == nil {
 		if entries, err := fs.ReadDir(distFS, "."); err == nil && len(entries) > 0 {
@@ -178,7 +294,6 @@ func main() {
 		}
 	}
 
-	// Gateway
 	gw := gateway.New(gateway.Config{
 		Hub: sessionHub, Plugins: providerRuntime,
 		MCP:           mcpRuntime,
@@ -209,6 +324,35 @@ func main() {
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 	server.Shutdown(shutdownCtx)
+}
+
+// writeBootstrapToken persists the token to ~/.opendray/setup-token so the
+// Flutter wizard can fetch it same-origin if the user opens /setup without
+// ?token= in the URL. Returns the path on success.
+func writeBootstrapToken(token string) (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	dir := home + "/.opendray"
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return "", err
+	}
+	path := dir + "/setup-token"
+	if err := os.WriteFile(path, []byte(token), 0o600); err != nil {
+		return "", err
+	}
+	return path, nil
+}
+
+// displayAddr converts a listen addr like ":8640" into something
+// click-usable in the stderr hint ("127.0.0.1:8640"). Non-wildcard
+// addrs pass through unchanged.
+func displayAddr(addr string) string {
+	if strings.HasPrefix(addr, ":") {
+		return "127.0.0.1" + addr
+	}
+	return addr
 }
 
 // providerResolver adapts plugin.Runtime to hub.ProviderResolver.
@@ -244,8 +388,8 @@ func (m *mcpInjector) RenderFor(ctx context.Context, sessionID, agent string) (h
 func (m *mcpInjector) Cleanup(sessionID string) { m.rt.Cleanup(sessionID) }
 
 // isLoopback returns true if the listen address binds only to a loopback
-// interface (127.0.0.1, ::1, localhost). An empty host (e.g. ":8640") binds
-// all interfaces and is NOT considered loopback.
+// interface. An empty host (e.g. ":8640") binds all interfaces and is NOT
+// considered loopback.
 func isLoopback(addr string) bool {
 	host, _, err := net.SplitHostPort(addr)
 	if err != nil {
@@ -253,7 +397,7 @@ func isLoopback(addr string) bool {
 	}
 	host = strings.TrimSpace(host)
 	if host == "" {
-		return false // binds all interfaces
+		return false
 	}
 	if strings.EqualFold(host, "localhost") {
 		return true
