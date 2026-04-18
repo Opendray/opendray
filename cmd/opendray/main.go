@@ -8,7 +8,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -94,16 +96,34 @@ func runSetupMode(logger *slog.Logger, cfg config.Config) bool {
 	if listen == "" {
 		listen = "127.0.0.1:8640"
 	}
-	fmt.Fprintln(os.Stderr, "────────────────────────────────────────────")
-	fmt.Fprintln(os.Stderr, " OpenDray: SETUP REQUIRED")
-	fmt.Fprintln(os.Stderr, " No usable config.toml / env found.")
-	fmt.Fprintln(os.Stderr, " Open this URL to finish setup:")
-	fmt.Fprintf(os.Stderr, "   http://%s/setup?token=%s\n",
+	setupURL := fmt.Sprintf("http://%s/setup?token=%s",
 		displayAddr(listen), mgr.BootstrapToken())
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "╭───────────────────────────────────────────────────────────────╮")
+	fmt.Fprintln(os.Stderr, "│                                                               │")
+	fmt.Fprintln(os.Stderr, "│   🚀  OpenDray — first-run setup                              │")
+	fmt.Fprintln(os.Stderr, "│                                                               │")
+	fmt.Fprintln(os.Stderr, "│   Your browser should open automatically. If not, visit:      │")
+	fmt.Fprintln(os.Stderr, "│                                                               │")
+	fmt.Fprintf (os.Stderr, "│   %s\n", padRight(setupURL, 60))
+	fmt.Fprintln(os.Stderr, "│                                                               │")
 	if tokenPath != "" {
-		fmt.Fprintf(os.Stderr, " (Token also written to %s)\n", tokenPath)
+		fmt.Fprintf (os.Stderr, "│   Token: %s\n", padRight(tokenPath, 55))
 	}
-	fmt.Fprintln(os.Stderr, "────────────────────────────────────────────")
+	fmt.Fprintln(os.Stderr, "│                                                               │")
+	fmt.Fprintln(os.Stderr, "╰───────────────────────────────────────────────────────────────╯")
+	fmt.Fprintln(os.Stderr, "")
+
+	// Fire-and-forget browser launch. Suppressed when OPENDRAY_NO_BROWSER
+	// is set (for CI / headless server deploys).
+	if os.Getenv("OPENDRAY_NO_BROWSER") == "" {
+		// Give the server ~250ms to start listening before we open the
+		// URL, otherwise the browser races the TCP listener on slow boxes.
+		go func() {
+			time.Sleep(250 * time.Millisecond)
+			_ = openBrowser(setupURL)
+		}()
+	}
 
 	// Frontend FS — setup mode still serves the Flutter web wizard from
 	// the embedded dist. If the binary was built without dist (dev mode),
@@ -353,6 +373,41 @@ func displayAddr(addr string) string {
 		return "127.0.0.1" + addr
 	}
 	return addr
+}
+
+// openBrowser fires the OS-native "open a URL" handler. Best-effort:
+// failures are silent — the stderr banner already tells the user how to
+// proceed if no browser opens.
+func openBrowser(url string) error {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "darwin":
+		cmd = exec.Command("open", url)
+	case "windows":
+		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+	default: // linux, freebsd, openbsd, etc.
+		// Try xdg-open first, fall back to common alternatives.
+		for _, candidate := range []string{"xdg-open", "sensible-browser", "gnome-open", "kfmclient"} {
+			if _, err := exec.LookPath(candidate); err == nil {
+				cmd = exec.Command(candidate, url)
+				break
+			}
+		}
+		if cmd == nil {
+			return fmt.Errorf("no known browser launcher found")
+		}
+	}
+	return cmd.Start()
+}
+
+// padRight right-pads a string with spaces up to n runes. Used to align
+// the ASCII border in the setup banner.
+func padRight(s string, n int) string {
+	diff := n - len(s)
+	if diff <= 0 {
+		return s + " │"
+	}
+	return s + strings.Repeat(" ", diff) + "│"
 }
 
 // providerResolver adapts plugin.Runtime to hub.ProviderResolver.
