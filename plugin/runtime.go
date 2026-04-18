@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/opendray/opendray/kernel/store"
+	bundled "github.com/opendray/opendray/plugins"
 )
 
 // ProviderConfig holds user-customizable settings, keyed by ConfigField.Key.
@@ -84,11 +85,19 @@ func (rt *Runtime) LoadAll(ctx context.Context) error {
 		rt.logger.Info("provider loaded from DB", "name", p.Name, "enabled", dbp.Enabled)
 	}
 
-	// Seed new providers from filesystem, and sync manifests for plugins
-	// that already exist in the DB — so schema/capabilities edits in code
-	// flow into the DB on every restart without clobbering user config or
-	// the enabled flag.
-	providers, _ := ScanPluginDir(rt.pluginDir)
+	// Seed new providers and sync manifests for plugins that already exist
+	// in the DB — so schema/capabilities edits in code flow into the DB
+	// on every restart without clobbering user config or the enabled flag.
+	//
+	// Two sources, filesystem wins by name:
+	//   1. Embedded: bundled with the binary, so release-binary deploys
+	//      (LXC, Docker, GitHub Release) ship every core plugin by default.
+	//   2. Filesystem `rt.pluginDir`: optional overlay for user-added or
+	//      forked plugins — absent on a fresh install, fine.
+	providers := mergeProviders(
+		embeddedProviders(rt.logger),
+		filesystemProviders(rt.logger, rt.pluginDir),
+	)
 	for _, p := range providers {
 		if loaded[p.Name] {
 			manifestJSON, err := json.Marshal(p)
@@ -113,9 +122,57 @@ func (rt *Runtime) LoadAll(ctx context.Context) error {
 			rt.logger.Warn("seed failed", "name", p.Name, "error", err)
 			continue
 		}
-		rt.logger.Info("provider seeded from filesystem", "name", p.Name)
+		rt.logger.Info("provider seeded", "name", p.Name)
 	}
 	return nil
+}
+
+// embeddedProviders returns the manifests bundled inside the binary.
+// Fails gracefully if the embed can't be walked — logs a warning and
+// returns nil so the runtime can still limp along on filesystem plugins.
+func embeddedProviders(logger *slog.Logger) []Provider {
+	var out []Provider
+	for _, root := range []string{"agents", "panels"} {
+		ps, err := ScanFS(bundled.FS, root)
+		if err != nil {
+			logger.Warn("embedded plugin scan failed", "root", root, "error", err)
+			continue
+		}
+		out = append(out, ps...)
+	}
+	return out
+}
+
+// filesystemProviders walks the (optional) user-managed plugin dir.
+func filesystemProviders(logger *slog.Logger, dir string) []Provider {
+	if dir == "" {
+		return nil
+	}
+	ps, err := ScanPluginDir(dir)
+	if err != nil {
+		logger.Warn("filesystem plugin scan failed", "dir", dir, "error", err)
+		return nil
+	}
+	return ps
+}
+
+// mergeProviders combines embedded + filesystem lists with filesystem
+// taking precedence by name. Forks / overrides can replace a core
+// plugin by dropping the same-named manifest into pluginDir.
+func mergeProviders(embedded, overlay []Provider) []Provider {
+	byName := make(map[string]Provider, len(embedded)+len(overlay))
+	for _, p := range embedded {
+		byName[p.Name] = p
+	}
+	for _, p := range overlay {
+		byName[p.Name] = p // overlay wins
+	}
+	out := make([]Provider, 0, len(byName))
+	for _, p := range byName {
+		out = append(out, p)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	return out
 }
 
 func (rt *Runtime) seed(ctx context.Context, p Provider) error {

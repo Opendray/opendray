@@ -52,21 +52,79 @@ No other tool does this.
 
 ## Quick Start
 
+### One-line install (macOS / Linux)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/install.sh | sh
+opendray
+```
+
+The installer detects your OS and architecture, downloads the matching binary from [Releases](https://github.com/Opendray/opendray/releases), verifies the SHA256, strips the macOS quarantine flag, and drops it into `~/.local/bin/`.
+
+Pin a version with `OPENDRAY_VERSION=v0.5.0` or change the install dir with `OPENDRAY_INSTALL_DIR=/usr/local/bin`.
+
+### Headless / SSH server?
+
+Running on a VPS or LXC with no browser? Use the interactive CLI wizard instead:
+
+```bash
+opendray setup      # prompts for DB, admin creds, JWT — no browser needed
+opendray            # starts the server normally
+```
+
+Or, if your server's `:8640` is reachable from your laptop on the LAN, just run `opendray` and open the URL printed to stderr from your laptop's browser — the bootstrap token protects the session so LAN exposure is safe.
+
+### Manual download
+
+Grab a binary from the [Releases page](https://github.com/Opendray/opendray/releases) for your platform:
+- `opendray-darwin-arm64` — Apple Silicon Mac
+- `opendray-darwin-amd64` — Intel Mac
+- `opendray-linux-amd64` / `opendray-linux-arm64`
+
+```bash
+chmod +x opendray-darwin-arm64
+./opendray-darwin-arm64
+```
+
+### Build from source
+
 ```bash
 git clone https://github.com/opendray/opendray.git
 cd opendray
-cp .env.example .env     # edit with your PostgreSQL credentials
-make dev                  # starts Go backend + Flutter web client
+make release-all         # darwin/linux × amd64/arm64 binaries in bin/
+./bin/opendray-darwin-arm64
 ```
 
+The binary drops into **setup mode** on first run, prints a URL to stderr with a bootstrap token, and serves a browser wizard at that URL. The wizard walks you through:
+
+1. **Database** — embedded PostgreSQL (managed by OpenDray, ~50 MB one-time download) or connect to an existing PG with a Test Connection button
+2. **Admin account** — pick a username + password
+3. **Agent CLIs** — optionally install `claude` / `codex` / `gemini` via `npm install -g` with live streaming output
+
+Everything persists to `~/.opendray/config.toml` (or `$XDG_CONFIG_HOME/opendray/config.toml`). On subsequent launches it boots straight into normal mode.
+
 <details>
-<summary><b>Database setup</b></summary>
+<summary><b>Dev mode (hot-reload)</b></summary>
+
+```bash
+cp .env.example .env     # point at your own PostgreSQL
+make dev                  # Go backend + Flutter web client
+```
+
+With `.env` set the wizard is skipped — env vars win over the config file, which preserves existing LXC/Docker deployments.
+
+</details>
+
+<details>
+<summary><b>Bring your own PostgreSQL</b></summary>
 
 ```sql
 CREATE DATABASE opendray;
 CREATE USER opendray WITH PASSWORD 'changeme';
 GRANT ALL PRIVILEGES ON DATABASE opendray TO opendray;
 ```
+
+Enter those credentials in the wizard's "External PostgreSQL" option, or set `DB_HOST` / `DB_USER` / `DB_PASSWORD` / `DB_NAME` env vars to skip the wizard entirely.
 
 </details>
 
@@ -78,7 +136,7 @@ make release-linux                    # cross-compile linux/amd64 with embedded 
 ./bin/opendray-linux-amd64            # single binary, migrations run on startup
 ```
 
-Requires `JWT_SECRET` when binding to non-loopback addresses. The server refuses to start without it.
+`JWT_SECRET` is required when binding to a non-loopback address. The wizard auto-generates one; for env-var deploys, set it yourself.
 
 </details>
 

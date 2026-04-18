@@ -1,5 +1,5 @@
 .PHONY: dev dev-backend dev-app build build-web build-apk run test vet clean \
-        release-linux release package deploy ssh logs status
+        release-linux release-all release package deploy ssh logs status
 
 # Linux target for the LXC deployment.
 LINUX_GOOS   ?= linux
@@ -59,6 +59,19 @@ release-linux: build-web
 	  go build -ldflags='$(LDFLAGS)' -trimpath \
 	  -o bin/opendray-$(LINUX_GOOS)-$(LINUX_GOARCH) ./cmd/opendray
 	@ls -lh bin/opendray-$(LINUX_GOOS)-$(LINUX_GOARCH)
+
+# Build binaries for darwin/linux × amd64/arm64 + SHA256 sums. Output
+# lands in bin/ alongside a checksums file. Run `make release-all` before
+# uploading artefacts to a GitHub release.
+release-all: build-web
+	@mkdir -p bin
+	@for os in darwin linux; do for arch in amd64 arm64; do \
+	  echo "→ building $$os/$$arch"; \
+	  GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 \
+	    go build -ldflags='$(LDFLAGS)' -trimpath \
+	    -o bin/opendray-$$os-$$arch ./cmd/opendray; \
+	done; done
+	@cd bin && shasum -a 256 opendray-* > SHA256SUMS && cat SHA256SUMS
 
 # Pack the release tarball: binary + plugins + deploy helpers.
 release: release-linux
