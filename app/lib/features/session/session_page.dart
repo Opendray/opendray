@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:xterm/xterm.dart';
 import '../../core/api/api_client.dart';
 import '../../core/models/session.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/services/l10n.dart';
 import '../../core/services/server_config.dart';
 import '../../core/services/ws_client.dart';
@@ -66,9 +67,11 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
     _scrollController = ScrollController();
 
     final config = context.read<ServerConfig>();
+    final auth = context.read<AuthService>();
     _ws = WsClient(
       baseUrl: config.effectiveUrl,
       extraHeaders: config.cfAccessHeaders,
+      tokenProvider: () => auth.token,
     );
 
     // Native terminal: keyboard → onOutput → WebSocket (zero bridge latency)
@@ -263,6 +266,7 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
                         serverUrl: context.read<ServerConfig>().effectiveUrl,
                         sessionId: widget.sessionId,
                         isRunning: _session?.isRunning == true,
+                        authToken: context.read<AuthService>().token,
                         onEvent: (type) {
                           switch (type) {
                             case 'idle':

@@ -11,6 +11,7 @@ typedef VoidCallback = void Function();
 class WsClient {
   final String baseUrl;
   final Map<String, String> extraHeaders;
+  final String? Function()? tokenProvider;
   WebSocketChannel? _channel;
   StreamSubscription? _subscription;
   Timer? _reconnectTimer;
@@ -31,7 +32,11 @@ class WsClient {
   VoidCallback? onReplayEnd;
   void Function(int attempt, int delaySec)? onReconnecting;
 
-  WsClient({required this.baseUrl, this.extraHeaders = const {}});
+  WsClient({
+    required this.baseUrl,
+    this.extraHeaders = const {},
+    this.tokenProvider,
+  });
 
   void connect(String sessionId) {
     _sessionId = sessionId;
@@ -45,7 +50,11 @@ class WsClient {
 
     final scheme = baseUrl.startsWith('https') ? 'wss' : 'ws';
     final host = baseUrl.replaceAll(RegExp(r'^https?://'), '');
-    final uri = Uri.parse('$scheme://$host/api/sessions/$_sessionId/ws');
+    final token = tokenProvider?.call();
+    final uri = Uri.parse('$scheme://$host/api/sessions/$_sessionId/ws')
+        .replace(queryParameters: {
+      if (token != null && token.isNotEmpty) 'token': token,
+    });
 
     _channel = connectWs(uri,
         headers: extraHeaders.isNotEmpty ? extraHeaders : null);

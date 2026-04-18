@@ -33,6 +33,7 @@ const terminalHTML = `<!DOCTYPE html>
   const params = new URLSearchParams(location.search);
   const sessionId = params.get('session');
   const wsBase = params.get('wsBase') || location.origin;
+  const wsToken = params.get('token') || '';
   if(!sessionId){document.body.innerText='Missing session param';return}
 
   // emit() — delivers events to the Flutter host.
@@ -160,7 +161,8 @@ const terminalHTML = `<!DOCTYPE html>
   // use the latest socket.
   const scheme = wsBase.startsWith('https') ? 'wss' : 'ws';
   const host   = wsBase.replace(/^https?:\/\//, '');
-  const wsUrl  = scheme + '://' + host + '/api/sessions/' + sessionId + '/ws';
+  const wsUrl  = scheme + '://' + host + '/api/sessions/' + sessionId + '/ws' +
+                 (wsToken ? ('?token=' + encodeURIComponent(wsToken)) : '');
   var ws = null;
   var reconnectAttempts = 0;
   var reconnectTimer    = null;

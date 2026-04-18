@@ -13,6 +13,7 @@ class WebTerminalView extends StatefulWidget {
   final String serverUrl;
   final String sessionId;
   final bool isRunning;
+  final String? authToken;
   final TerminalEventCallback? onEvent;
 
   const WebTerminalView({
@@ -20,6 +21,7 @@ class WebTerminalView extends StatefulWidget {
     required this.serverUrl,
     required this.sessionId,
     required this.isRunning,
+    this.authToken,
     this.onEvent,
   });
 
@@ -59,7 +61,12 @@ class _WebTerminalViewState extends State<WebTerminalView> {
 
   void _setIframeSrc(web.HTMLIFrameElement iframe) {
     final base = widget.serverUrl;
-    iframe.src = '$base/terminal.html?session=${widget.sessionId}&wsBase=$base';
+    final token = widget.authToken ?? '';
+    final tokenParam = token.isNotEmpty
+        ? '&token=${Uri.encodeQueryComponent(token)}'
+        : '';
+    iframe.src =
+        '$base/terminal.html?session=${widget.sessionId}&wsBase=$base$tokenParam';
   }
 
   void _listenMessages() {

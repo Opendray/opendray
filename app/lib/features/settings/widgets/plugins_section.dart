@@ -392,6 +392,12 @@ class _PluginsSectionState extends State<PluginsSection> {
               // resource, not per-plugin config; surfaced here because users
               // look inside the Claude card when wondering "how do I switch
               // accounts?".
+              //
+              // We deliberately DON'T surface a similar "launch login"
+              // shortcut for Codex / Gemini: each CLI already prompts for
+              // OAuth on first run when it has no cached token, so an
+              // explicit launcher in Settings just adds noise. Users get
+              // auth automatically when they start a real session.
               if (pi.provider.name == 'claude') ...[
                 const SizedBox(height: 10),
                 _buildClaudeAccountsShortcut(),

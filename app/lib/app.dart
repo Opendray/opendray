@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'core/api/api_client.dart';
+import 'core/services/auth_service.dart';
 import 'core/services/l10n.dart';
 import 'core/services/server_config.dart';
 import 'shared/theme/app_theme.dart';
+import 'features/auth/login_page.dart';
 import 'features/dashboard/dashboard_page.dart';
 import 'features/session/session_page.dart';
 import 'features/browser/browser_page.dart';
@@ -22,24 +24,52 @@ import 'features/settings/settings_page.dart';
 import 'features/settings/setup_page.dart';
 import 'features/tasks/tasks_page.dart';
 
-class NtcApp extends StatelessWidget {
+class NtcApp extends StatefulWidget {
   final ServerConfig serverConfig;
   final L10n l10n;
+  final AuthService authService;
 
-  const NtcApp({super.key, required this.serverConfig, required this.l10n});
+  const NtcApp({
+    super.key,
+    required this.serverConfig,
+    required this.l10n,
+    required this.authService,
+  });
+
+  @override
+  State<NtcApp> createState() => _NtcAppState();
+}
+
+class _NtcAppState extends State<NtcApp> {
+  late final GoRouter _router;
+
+  @override
+  void initState() {
+    super.initState();
+    _router = _buildRouter(widget.serverConfig, widget.authService);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<ServerConfig>.value(value: serverConfig),
-        ChangeNotifierProvider<L10n>.value(value: l10n),
+        ChangeNotifierProvider<ServerConfig>.value(value: widget.serverConfig),
+        ChangeNotifierProvider<L10n>.value(value: widget.l10n),
+        ChangeNotifierProvider<AuthService>.value(value: widget.authService),
       ],
-      child: Consumer<ServerConfig>(
-        builder: (context, config, _) {
+      // Rebuild ApiClient whenever the server URL, CF Access headers, or
+      // bearer token change, so every screen picks up the right identity.
+      child: Consumer2<ServerConfig, AuthService>(
+        builder: (context, config, auth, _) {
           final apiClient = ApiClient(
             baseUrl: config.effectiveUrl,
             extraHeaders: config.cfAccessHeaders,
+            tokenProvider: () => auth.token ?? '',
+            onUnauthorized: () {
+              // Server says our token is dead — log out, router redirect
+              // pushes us to /login.
+              auth.logout();
+            },
           );
           return Provider<ApiClient>.value(
             value: apiClient,
@@ -47,7 +77,7 @@ class NtcApp extends StatelessWidget {
               title: 'OpenDray',
               theme: buildAppTheme(),
               debugShowCheckedModeBanner: false,
-              routerConfig: config.isConfigured ? _mainRouter : _setupRouter,
+              routerConfig: _router,
             ),
           );
         },
@@ -56,10 +86,113 @@ class NtcApp extends StatelessWidget {
   }
 }
 
-// Setup flow — shown when server URL is not configured (mobile only)
-final _setupRouter = GoRouter(
-  routes: [GoRoute(path: '/', builder: (_, _) => const SetupPage())],
-);
+/// Merges multiple Listenable sources into one refreshListenable so
+/// GoRouter re-evaluates its redirect whenever any of them fires.
+class _RouterListenable extends ChangeNotifier {
+  _RouterListenable(List<Listenable> sources) {
+    for (final s in sources) {
+      s.addListener(notifyListeners);
+    }
+  }
+}
+
+GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
+  return GoRouter(
+    initialLocation: '/',
+    refreshListenable: _RouterListenable([serverConfig, authService]),
+    redirect: (context, state) {
+      final loc = state.matchedLocation;
+
+      // 1. Server not configured → setup wizard.
+      if (!serverConfig.isConfigured) {
+        return loc == '/setup' ? null : '/setup';
+      }
+
+      final s = authService.state;
+
+      // 2. First probe hasn't resolved yet — don't redirect, just let the
+      //    current route render; AuthService.probe() fires shortly after
+      //    this frame and a refresh re-enters this function.
+      if (s == AuthState.unknown) return null;
+
+      // 3. Auth required but not logged in → /login.
+      if (s == AuthState.unauthed) {
+        return loc == '/login' ? null : '/login';
+      }
+
+      // 4. Authed (or auth disabled on server): bounce away from /login
+      //    and /setup if we somehow land there.
+      if (loc == '/login' || loc == '/setup') return '/';
+      return null;
+    },
+    routes: [
+      GoRoute(path: '/setup', builder: (_, _) => const SetupPage()),
+      GoRoute(path: '/login', builder: (_, _) => const LoginPage()),
+      ShellRoute(
+        builder: (context, state, child) => _Shell(child: child),
+        routes: [
+          GoRoute(path: '/',        builder: (_, _) => const DashboardPage()),
+          GoRoute(path: '/browser', builder: (_, _) => const BrowserPage()),
+          GoRoute(
+            path: '/browser/docs',
+            builder: (ctx, _) => _panelShell(ctx, 'Docs', const DocsPage()),
+          ),
+          GoRoute(
+            path: '/browser/files',
+            builder: (ctx, _) => _panelShell(ctx, 'Files', const FilesPage()),
+          ),
+          GoRoute(
+            path: '/browser/database',
+            builder: (ctx, _) => _panelShell(ctx, 'Database', const DatabasePage()),
+          ),
+          GoRoute(
+            path: '/browser/tasks',
+            builder: (ctx, _) => _panelShell(ctx, 'Tasks', const TasksPage()),
+          ),
+          GoRoute(
+            path: '/browser/git',
+            builder: (ctx, _) => _panelShell(ctx, 'Git', const GitPage()),
+          ),
+          GoRoute(
+            path: '/browser/logs',
+            builder: (ctx, _) => _panelShell(ctx, 'Logs', const LogsPage()),
+          ),
+          GoRoute(
+            path: '/browser/messaging',
+            builder: (ctx, _) => _panelShell(ctx, 'Messaging', const TelegramPage()),
+          ),
+          GoRoute(
+            path: '/browser/mcp',
+            builder: (ctx, _) => _panelShell(ctx, 'MCP Servers', const MCPPage()),
+          ),
+          GoRoute(
+            path: '/browser/preview',
+            builder: (ctx, _) => _panelShell(ctx, 'Preview',
+                const PreviewPage(categoryFilter: 'preview')),
+          ),
+          GoRoute(
+            path: '/browser/simulator',
+            builder: (ctx, _) => _panelShell(ctx, 'Simulator',
+                const PreviewPage(categoryFilter: 'simulator')),
+          ),
+          GoRoute(
+            path: '/browser/endpoints',
+            builder: (ctx, _) => _panelShell(ctx, 'LLM Providers', const EndpointsPage()),
+          ),
+          GoRoute(path: '/settings', builder: (_, _) => const SettingsPage()),
+          GoRoute(
+            path: '/settings/claude-accounts',
+            builder: (ctx, _) => _panelShell(ctx, 'Claude Accounts', const ClaudeAccountsPage()),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/session/:id',
+        builder: (_, state) => SessionPage(sessionId: state.pathParameters['id']!),
+      ),
+    ],
+  );
+}
 
 // Panels opened from the launcher. Titles look up via L10n, so the same
 // key ("Docs", "Files", …) already used on the launcher card is reused.
@@ -69,75 +202,6 @@ Widget _panelShell(BuildContext ctx, String titleKey, Widget child) {
     body: child,
   );
 }
-
-// Main app
-final _mainRouter = GoRouter(
-  initialLocation: '/',
-  routes: [
-    ShellRoute(
-      builder: (context, state, child) => _Shell(child: child),
-      routes: [
-        GoRoute(path: '/',        builder: (_, _) => const DashboardPage()),
-        GoRoute(path: '/browser', builder: (_, _) => const BrowserPage()),
-        GoRoute(
-          path: '/browser/docs',
-          builder: (ctx, _) => _panelShell(ctx, 'Docs', const DocsPage()),
-        ),
-        GoRoute(
-          path: '/browser/files',
-          builder: (ctx, _) => _panelShell(ctx, 'Files', const FilesPage()),
-        ),
-        GoRoute(
-          path: '/browser/database',
-          builder: (ctx, _) => _panelShell(ctx, 'Database', const DatabasePage()),
-        ),
-        GoRoute(
-          path: '/browser/tasks',
-          builder: (ctx, _) => _panelShell(ctx, 'Tasks', const TasksPage()),
-        ),
-        GoRoute(
-          path: '/browser/git',
-          builder: (ctx, _) => _panelShell(ctx, 'Git', const GitPage()),
-        ),
-        GoRoute(
-          path: '/browser/logs',
-          builder: (ctx, _) => _panelShell(ctx, 'Logs', const LogsPage()),
-        ),
-        GoRoute(
-          path: '/browser/messaging',
-          builder: (ctx, _) => _panelShell(ctx, 'Messaging', const TelegramPage()),
-        ),
-        GoRoute(
-          path: '/browser/mcp',
-          builder: (ctx, _) => _panelShell(ctx, 'MCP Servers', const MCPPage()),
-        ),
-        GoRoute(
-          path: '/browser/preview',
-          builder: (ctx, _) => _panelShell(ctx, 'Preview',
-              const PreviewPage(categoryFilter: 'preview')),
-        ),
-        GoRoute(
-          path: '/browser/simulator',
-          builder: (ctx, _) => _panelShell(ctx, 'Simulator',
-              const PreviewPage(categoryFilter: 'simulator')),
-        ),
-        GoRoute(
-          path: '/browser/endpoints',
-          builder: (ctx, _) => _panelShell(ctx, 'LLM Providers', const EndpointsPage()),
-        ),
-        GoRoute(path: '/settings', builder: (_, _) => const SettingsPage()),
-        GoRoute(
-          path: '/settings/claude-accounts',
-          builder: (ctx, _) => _panelShell(ctx, 'Claude Accounts', const ClaudeAccountsPage()),
-        ),
-      ],
-    ),
-    GoRoute(
-      path: '/session/:id',
-      builder: (_, state) => SessionPage(sessionId: state.pathParameters['id']!),
-    ),
-  ],
-);
 
 class _Shell extends StatelessWidget {
   final Widget child;

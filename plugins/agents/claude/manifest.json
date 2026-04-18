@@ -3,7 +3,7 @@
   "displayName": "Claude Code",
   "description": "Anthropic Claude Code CLI — agentic coding with tool use, MCP, and session resume",
   "icon": "🟣",
-  "version": "1.0.0",
+  "version": "1.1.2",
   "type": "cli",
   "cli": {
     "command": "claude",
@@ -11,11 +11,7 @@
     "detectCmd": "which claude"
   },
   "capabilities": {
-    "models": [
-      { "id": "sonnet", "name": "Claude Sonnet 4.6", "description": "Fast, balanced — default for daily work" },
-      { "id": "opus", "name": "Claude Opus 4.6", "description": "Most capable, deep reasoning and architecture" },
-      { "id": "haiku", "name": "Claude Haiku 4.5", "description": "Lightweight, quick tasks and pair programming" }
-    ],
+    "models": [],
     "supportsResume": true,
     "supportsStream": true,
     "supportsImages": true,
@@ -25,18 +21,13 @@
   "configSchema": [
     {
       "key": "authType", "label": "Authentication", "type": "select", "group": "auth",
-      "options": ["env", "custom", "oauth"], "default": "env",
-      "description": "env = read ANTHROPIC_API_KEY from system; custom = use key below; oauth = browser login"
+      "options": ["env", "custom"], "default": "env",
+      "description": "env = read ANTHROPIC_API_KEY from system; falls back to the Claude CLI's own login when unset (use the Claude Accounts panel above to manage multiple tokens) · custom = use the key below"
     },
     {
       "key": "apiKey", "label": "API Key", "type": "secret", "group": "auth",
       "envVar": "ANTHROPIC_API_KEY", "placeholder": "sk-ant-...",
       "dependsOn": "authType", "dependsVal": "custom"
-    },
-    {
-      "key": "model", "label": "Default Model", "type": "select", "group": "runtime",
-      "options": ["sonnet", "opus", "haiku"], "default": "sonnet",
-      "cliFlag": "--model", "cliValue": true
     },
     {
       "key": "bypassPermissions", "label": "Bypass Permissions", "type": "boolean", "group": "runtime",

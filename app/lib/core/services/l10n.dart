@@ -105,6 +105,11 @@ class L10n extends ChangeNotifier {
     '(root)':             '（根目录）',
     'No sub-folders here':'此处没有子文件夹',
     'Browse from':        '浏览于',
+    'Recent':             '最近',
+    'Starred':            '已收藏',
+    'Star':               '收藏',
+    'Unstar':             '取消收藏',
+    'New folder & use':   '新建并使用',
 
     // Session page
     'Switch session':    '切换会话',

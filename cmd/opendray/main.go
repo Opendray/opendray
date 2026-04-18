@@ -34,6 +34,12 @@ func main() {
 		fmt.Fprintln(os.Stderr, "FATAL: JWT_SECRET is required when binding to a non-loopback address. Set JWT_SECRET or use LISTEN_ADDR=127.0.0.1:8640 for local development.")
 		os.Exit(1)
 	}
+	// When auth is enabled, an admin password MUST be set — otherwise the
+	// login endpoint would accept any credentials and silently mint tokens.
+	if cfg.jwtSecret != "" && cfg.adminPassword == "" {
+		fmt.Fprintln(os.Stderr, "FATAL: ADMIN_PASSWORD is required when JWT_SECRET is set. Set ADMIN_PASSWORD (and optionally ADMIN_USERNAME, default 'admin') in .env.")
+		os.Exit(1)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -56,9 +62,13 @@ func main() {
 	logger.Info("database connected and migrated")
 
 	// Auth
-	var jwtAuth *auth.Auth
+	var (
+		jwtAuth   *auth.Auth
+		credStore *auth.CredentialStore
+	)
 	if cfg.jwtSecret != "" {
 		jwtAuth = auth.New(cfg.jwtSecret, 7*24*time.Hour)
+		credStore = auth.NewCredentialStore(db.Pool)
 		logger.Info("JWT authentication enabled")
 	}
 
@@ -103,8 +113,12 @@ func main() {
 	// Gateway
 	gw := gateway.New(gateway.Config{
 		Hub: sessionHub, Plugins: providerRuntime,
-		MCP:  mcpRuntime,
-		Auth: jwtAuth, Logger: logger, FrontendFS: frontendFS,
+		MCP:           mcpRuntime,
+		Auth:          jwtAuth,
+		Credentials:   credStore,
+		AdminUsername: cfg.adminUsername,
+		AdminPassword: cfg.adminPassword,
+		Logger:        logger, FrontendFS: frontendFS,
 	})
 
 	server := &http.Server{Addr: cfg.listenAddr, Handler: gw.Handler()}
@@ -137,6 +151,8 @@ type envConfig struct {
 	dbPassword       string
 	dbName           string
 	jwtSecret        string
+	adminUsername    string
+	adminPassword    string
 	pluginDir        string
 	autoResume       bool
 	idleThresholdSec int
@@ -150,8 +166,10 @@ func loadEnv() envConfig {
 		dbUser:     envOr("DB_USER", "opendray"),
 		dbPassword: os.Getenv("DB_PASSWORD"),
 		dbName:     envOr("DB_NAME", "opendray"),
-		jwtSecret:  os.Getenv("JWT_SECRET"),
-		pluginDir:  envOr("PLUGIN_DIR", "./plugins"),
+		jwtSecret:     os.Getenv("JWT_SECRET"),
+		adminUsername: envOr("ADMIN_USERNAME", "admin"),
+		adminPassword: os.Getenv("ADMIN_PASSWORD"),
+		pluginDir:     envOr("PLUGIN_DIR", "./plugins"),
 		autoResume: os.Getenv("AUTO_RESUME") == "true",
 	}
 	if cfg.dbHost == "" {
