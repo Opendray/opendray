@@ -22,6 +22,7 @@ import 'features/mcp/mcp_page.dart';
 import 'features/messaging/telegram_page.dart';
 import 'features/settings/settings_page.dart';
 import 'features/settings/setup_page.dart';
+import 'features/setup/setup_wizard.dart';
 import 'features/tasks/tasks_page.dart';
 
 class NtcApp extends StatefulWidget {
@@ -103,31 +104,39 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
     redirect: (context, state) {
       final loc = state.matchedLocation;
 
-      // 1. Server not configured → setup wizard.
+      // 1. Phone / web client doesn't know where the server lives yet.
+      //    This is the "enter a URL" prompt, only reachable on mobile
+      //    where the app doesn't auto-detect the origin.
       if (!serverConfig.isConfigured) {
-        return loc == '/setup' ? null : '/setup';
+        return loc == '/connect' ? null : '/connect';
       }
 
       final s = authService.state;
 
-      // 2. First probe hasn't resolved yet — don't redirect, just let the
-      //    current route render; AuthService.probe() fires shortly after
-      //    this frame and a refresh re-enters this function.
+      // 2. First probe hasn't resolved yet — don't redirect, let the
+      //    current route render; AuthService.probe() fires shortly and
+      //    the refreshListenable re-enters this function.
       if (s == AuthState.unknown) return null;
 
-      // 3. Auth required but not logged in → /login.
+      // 3. The server itself hasn't been set up yet → first-run wizard.
+      if (s == AuthState.setupRequired) {
+        return loc == '/setup' ? null : '/setup';
+      }
+
+      // 4. Auth required but not logged in → /login.
       if (s == AuthState.unauthed) {
         return loc == '/login' ? null : '/login';
       }
 
-      // 4. Authed (or auth disabled on server): bounce away from /login
-      //    and /setup if we somehow land there.
-      if (loc == '/login' || loc == '/setup') return '/';
+      // 5. Authed (or auth disabled on server): bounce away from any
+      //    gate route if we somehow land there.
+      if (loc == '/login' || loc == '/setup' || loc == '/connect') return '/';
       return null;
     },
     routes: [
-      GoRoute(path: '/setup', builder: (_, _) => const SetupPage()),
-      GoRoute(path: '/login', builder: (_, _) => const LoginPage()),
+      GoRoute(path: '/connect', builder: (_, _) => const SetupPage()),
+      GoRoute(path: '/setup',   builder: (_, _) => const SetupWizardPage()),
+      GoRoute(path: '/login',   builder: (_, _) => const LoginPage()),
       ShellRoute(
         builder: (context, state, child) => _Shell(child: child),
         routes: [

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"os/exec"
 	"runtime"
@@ -46,6 +47,26 @@ func (h *setupHandlers) tokenGate(next http.HandlerFunc) http.HandlerFunc {
 // status — GET /api/setup/status
 func (h *setupHandlers) status(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, h.mgr.Status())
+}
+
+// loopbackToken — GET /api/setup/token
+//
+// Returns the bootstrap token but ONLY when the request's peer address
+// is loopback. This lets the Flutter wizard served by the same binary
+// auto-pick-up the token for a true one-click experience, while a LAN
+// attacker would still need to see the stderr banner.
+func (h *setupHandlers) loopbackToken(w http.ResponseWriter, r *http.Request) {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		respondError(w, http.StatusForbidden, "forbidden")
+		return
+	}
+	ip := net.ParseIP(host)
+	if ip == nil || !ip.IsLoopback() {
+		respondError(w, http.StatusForbidden, "token only served to loopback callers")
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]string{"token": h.mgr.BootstrapToken()})
 }
 
 // envProbe — GET /api/setup/env

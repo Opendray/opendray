@@ -5,13 +5,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_client.dart';
 
 /// Authentication lifecycle: probes the server for whether auth is required,
-/// stores the JWT across launches, and surfaces three states the router
-/// cares about:
-///   • [AuthState.unknown]     — first frame, before probe completes
-///   • [AuthState.disabled]    — server has no JWT_SECRET set
-///   • [AuthState.unauthed]    — auth required, no token / bad token
-///   • [AuthState.authed]      — token present and accepted
-enum AuthState { unknown, disabled, unauthed, authed }
+/// stores the JWT across launches, and surfaces the states the router cares
+/// about:
+///   • [AuthState.unknown]       — first frame, before probe completes
+///   • [AuthState.setupRequired] — server is in first-run setup mode
+///   • [AuthState.disabled]      — server has no JWT_SECRET set
+///   • [AuthState.unauthed]      — auth required, no token / bad token
+///   • [AuthState.authed]        — token present and accepted
+enum AuthState { unknown, setupRequired, disabled, unauthed, authed }
 
 class AuthService extends ChangeNotifier {
   static const _keyToken = 'opendray.auth.token';
@@ -44,13 +45,37 @@ class AuthService extends ChangeNotifier {
       connectTimeout: const Duration(seconds: 6),
       receiveTimeout: const Duration(seconds: 6),
       headers: extraHeaders,
-      // Accept 4xx so we can inspect status without try/catch.
-      validateStatus: (s) => s != null && s < 500,
+      // Accept 4xx AND 5xx so we can distinguish "setup mode" (503 from
+      // the catch-all in setup mode) from transport errors.
+      validateStatus: (s) => s != null && s < 600,
     ));
+
+    // First, ask /api/setup/status — it's public and answered in both setup
+    // and normal mode. A "needsSetup: true" answer short-circuits the
+    // regular auth probe and routes the user into the wizard.
+    try {
+      final s = await probeDio.get('/api/setup/status');
+      if (s.statusCode == 200 && s.data is Map && s.data['needsSetup'] == true) {
+        _state = AuthState.setupRequired;
+        notifyListeners();
+        return;
+      }
+    } catch (_) {
+      // Fall through to the auth-status probe below — older servers don't
+      // have /api/setup/status at all.
+    }
 
     bool authRequired;
     try {
       final res = await probeDio.get('/api/auth/status');
+      if (res.statusCode == 503) {
+        // Server is still in setup mode but /api/setup/status gave us a
+        // transient error above. Treat it as setupRequired rather than
+        // trapping the user in "unknown".
+        _state = AuthState.setupRequired;
+        notifyListeners();
+        return;
+      }
       authRequired = (res.data is Map && res.data['authRequired'] == true);
     } catch (_) {
       // Server unreachable. If we already hold a token from a previous

@@ -293,6 +293,8 @@ func NewSetup(mgr *setup.Manager, frontendFS fs.FS, logger *slog.Logger) http.Ha
 	// Status is public too — lets the client render the correct step
 	// without authenticating.
 	r.Get("/api/setup/status", h.status)
+	// Token endpoint — loopback-only; handler enforces that.
+	r.Get("/api/setup/token", h.loopbackToken)
 
 	// Token-gated setup endpoints.
 	r.Get("/api/setup/env", h.tokenGate(h.envProbe))
