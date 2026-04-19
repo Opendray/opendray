@@ -315,6 +315,7 @@ func New(cfg Config) *Server {
 		// DELETE /consents/{cap} fires bridgeMgr.InvalidateConsent synchronously
 		// so in-flight WS subs terminate within the 200 ms SLO.
 		r.Get("/api/plugins/{name}/consents", s.pluginsConsentsGet)
+		r.Patch("/api/plugins/{name}/consents", s.pluginsConsentsPatch)
 		r.Delete("/api/plugins/{name}/consents/{cap}", s.pluginsConsentsRevokeCap)
 		r.Delete("/api/plugins/{name}/consents", s.pluginsConsentsRevokeAll)
 

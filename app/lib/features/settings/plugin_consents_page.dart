@@ -46,6 +46,15 @@ class _CapSpec {
   const _CapSpec(this.key, this.label, this.icon);
 }
 
+/// One entry inside a structured grant (e.g. one fs.read glob, one
+/// exec pattern, one http URL glob). `side` identifies the sub-map
+/// key for fs ("read" / "write"); empty for flat list caps.
+class _SubEntry {
+  final String side;
+  final String value;
+  const _SubEntry({required this.side, required this.value});
+}
+
 const List<_CapSpec> _caps = [
   _CapSpec('fs', 'File access', Icons.folder_open),
   _CapSpec('exec', 'Run commands', Icons.terminal),
@@ -352,6 +361,32 @@ class _PluginConsentsPageState extends State<PluginConsentsPage> {
   Widget _capRow(_CapSpec spec, PluginConsents c) {
     final granted = c.isCapGranted(spec.key);
     final subtitle = _subtitleFor(spec.key, c);
+    // Fs / exec / http grant structured lists that the user may want
+    // to prune one at a time. When the cap is granted AND carries
+    // sub-entries, render an ExpansionTile instead of a plain ListTile
+    // so per-entry toggles become reachable. M3 T21.
+    final sub = _subEntries(spec.key, c);
+    if (granted && sub.isNotEmpty) {
+      return ExpansionTile(
+        shape: const Border(),
+        collapsedShape: const Border(),
+        leading: Icon(spec.icon, color: AppColors.accent, size: 22),
+        title: Text(spec.label,
+            style: const TextStyle(fontSize: 14, color: AppColors.text)),
+        subtitle: Text(subtitle,
+            style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+        trailing: Switch(
+          value: true,
+          activeTrackColor: AppColors.accent,
+          onChanged: _busy ? null : (_) => _revokeCap(spec.key, spec.label),
+        ),
+        childrenPadding: const EdgeInsets.only(left: 56, right: 16, bottom: 8),
+        children: [
+          for (final entry in sub)
+            _subEntryTile(spec.key, entry),
+        ],
+      );
+    }
     return ListTile(
       leading: Icon(
         spec.icon,
@@ -381,6 +416,118 @@ class _PluginConsentsPageState extends State<PluginConsentsPage> {
             : null,
       ),
     );
+  }
+
+  /// Extracts the list of sub-entries (fs globs, exec patterns, http
+  /// URL globs, events patterns) the user can toggle individually.
+  /// Each entry is a ("sub-key", "value") pair — the sub-key is the
+  /// wire-shape marker for fs ("read"/"write") and empty otherwise.
+  ///
+  /// Returns an empty list for scalar caps (bool/string) — the caller
+  /// falls back to the plain ListTile with a single top-level toggle.
+  List<_SubEntry> _subEntries(String cap, PluginConsents c) {
+    final v = c.perms[cap];
+    switch (cap) {
+      case 'fs':
+        if (v is Map) {
+          final out = <_SubEntry>[];
+          for (final side in const ['read', 'write']) {
+            final list = v[side];
+            if (list is List) {
+              for (final g in list) {
+                out.add(_SubEntry(side: side, value: g.toString()));
+              }
+            }
+          }
+          return out;
+        }
+        return const [];
+      case 'exec':
+      case 'http':
+      case 'events':
+        if (v is List) {
+          return [
+            for (final p in v)
+              _SubEntry(side: '', value: p.toString()),
+          ];
+        }
+        return const [];
+      default:
+        return const [];
+    }
+  }
+
+  Widget _subEntryTile(String cap, _SubEntry entry) {
+    final label = entry.side.isEmpty
+        ? entry.value
+        : '${entry.side}: ${entry.value}';
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      title: Text(label,
+          style: const TextStyle(fontSize: 12, fontFamily: 'monospace')),
+      trailing: Switch.adaptive(
+        value: true,
+        activeTrackColor: AppColors.accent,
+        onChanged: _busy ? null : (_) => _removeSubEntry(cap, entry),
+      ),
+    );
+  }
+
+  /// Removes one sub-entry from a grant list and PATCHes the server.
+  /// For fs, the remaining list is nested under its side ("read" or
+  /// "write"). For exec/http/events, the remaining list is top-level.
+  Future<void> _removeSubEntry(String cap, _SubEntry toRemove) async {
+    if (_busy || _consents == null) return;
+    setState(() => _busy = true);
+    try {
+      final perms = _consents!.perms;
+      final patch = <String, dynamic>{};
+      switch (cap) {
+        case 'fs':
+          final raw = perms['fs'];
+          if (raw is Map) {
+            final next = <String, dynamic>{};
+            for (final side in const ['read', 'write']) {
+              final list = raw[side];
+              if (list is List) {
+                final keep = [
+                  for (final g in list)
+                    if (!(side == toRemove.side && g.toString() == toRemove.value))
+                      g.toString(),
+                ];
+                if (keep.isNotEmpty) {
+                  next[side] = keep;
+                }
+              }
+            }
+            patch['fs'] = next;
+          }
+          break;
+        case 'exec':
+        case 'http':
+        case 'events':
+          final raw = perms[cap];
+          if (raw is List) {
+            patch[cap] = [
+              for (final p in raw)
+                if (p.toString() != toRemove.value) p.toString(),
+            ];
+          }
+          break;
+        default:
+          return;
+      }
+      await widget.api.patchPluginConsents(widget.pluginName, patch);
+      _notify('Removed ${toRemove.value} from $cap');
+      await _refresh();
+    } on PluginConsentNotFoundException {
+      _notify('Consent row disappeared', isError: true);
+    } catch (e) {
+      _notify('Failed: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   String _subtitleFor(String cap, PluginConsents c) {

@@ -967,4 +967,30 @@ class ApiClient {
       throw apiExceptionFrom(e);
     }
   }
+
+  /// Patches a subset of capability grants (M3 T20). `patch` is a
+  /// partial PermissionsV1 — only keys present in the map replace
+  /// the stored value. Typical use from the Flutter UI: shrink
+  /// `fs.read` by one glob, or toggle `storage` off without touching
+  /// `events`.
+  ///
+  /// Fires InvalidateConsent server-side for every touched cap so
+  /// active bridge WS subs terminate with EPERM within the 200 ms SLO.
+  ///
+  /// Throws:
+  ///   - [PluginConsentNotFoundException] on 404 ENOENT
+  ///   - [ApiException] on 400 EINVAL (unknown cap, bad body) and 5xx
+  Future<void> patchPluginConsents(
+    String pluginName,
+    Map<String, dynamic> patch,
+  ) async {
+    try {
+      await _dio.patch('/api/plugins/$pluginName/consents', data: patch);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw PluginConsentNotFoundException(pluginName);
+      }
+      throw apiExceptionFrom(e);
+    }
+  }
 }
