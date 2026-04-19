@@ -33,4 +33,5 @@ plugins/*/data/
 # Local-only — not pushed to Gitea
 CLAUDE.md
 deploy/
-/docs/
+/docs/*
+!/docs/plugin-platform/
