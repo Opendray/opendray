@@ -26,6 +26,7 @@ import (
 	"github.com/opendray/opendray/kernel/hub"
 	"github.com/opendray/opendray/kernel/setup"
 	"github.com/opendray/opendray/plugin"
+	"github.com/opendray/opendray/plugin/install"
 )
 
 // Server is the main HTTP server for OpenDray.
@@ -42,6 +43,7 @@ type Server struct {
 	telegram      *telegram.Manager
 	mcp           *mcp.Handlers
 	git           *gitpkg.Manager
+	installer     *install.Installer
 }
 
 // Config holds gateway configuration.
@@ -54,7 +56,8 @@ type Config struct {
 	AdminUsername string
 	AdminPassword string
 	Logger        *slog.Logger
-	FrontendFS    fs.FS // embedded frontend dist (optional)
+	FrontendFS    fs.FS             // embedded frontend dist (optional)
+	Installer     *install.Installer // plugin install/uninstall orchestrator (T7)
 }
 
 // New creates a gateway server with all routes configured.
@@ -73,6 +76,7 @@ func New(cfg Config) *Server {
 		logger:        cfg.Logger,
 		tasks:         tasks.NewRunner(),
 		git:           gitpkg.NewManager(),
+		installer:     cfg.Installer,
 	}
 	if cfg.MCP != nil {
 		s.mcp = mcp.NewHandlers(cfg.MCP)
@@ -232,6 +236,14 @@ func New(cfg Config) *Server {
 
 		// Hook subscriptions
 		r.Get("/api/hooks", s.listHooks)
+
+		// Plugin install / uninstall / audit (T7).
+		// DELETE /api/providers/{name} stays for legacy compat (see api.go).
+		// These new routes provide the full install lifecycle via Installer.
+		r.Post("/api/plugins/install", s.pluginsInstall)
+		r.Post("/api/plugins/install/confirm", s.pluginsInstallConfirm)
+		r.Delete("/api/plugins/{name}", s.pluginsUninstall)
+		r.Get("/api/plugins/{name}/audit", s.pluginsAudit)
 	})
 
 	// SPA frontend (serve embedded dist or fallback)

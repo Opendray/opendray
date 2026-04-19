@@ -433,6 +433,23 @@ func (i *Installer) janitor(reapEvery time.Duration) {
 	}
 }
 
+// PeekName returns the plugin name for a pending token without consuming it.
+// Returns ("", false) when the token is absent or expired. This is used by
+// the HTTP confirm handler to include the name in the response body, since
+// Confirm itself only returns an error.
+func (i *Installer) PeekName(token string) (string, bool) {
+	i.pending.mu.Lock()
+	defer i.pending.mu.Unlock()
+	p, ok := i.pending.byToken[token]
+	if !ok {
+		return "", false
+	}
+	if i.pending.now().After(p.ExpiresAt) {
+		return "", false
+	}
+	return p.Name, true
+}
+
 // pendingCount exposes the in-memory count for tests — keeps tests from
 // having to poke at unexported fields.
 func (i *Installer) pendingCount() int {
