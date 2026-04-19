@@ -196,13 +196,25 @@ ok "built $BIN_OUT ($BIN_SIZE, $VERSION_YAML@$BUILD_SHA)"
 phase "Flutter APK (release)"
 cd app
 
-# android/local.properties is gitignored + auto-generated. If the repo
-# was ever rsync'd from a Mac dev box, a stale file with Homebrew +
-# /Users/... paths survives the clone and breaks Gradle with
-# "Included build '/opt/homebrew/share/flutter/...' does not exist".
-# Blow it away every run; `flutter pub get` regenerates with the Linux
-# paths from ~/.config/flutter/settings.
+# If the repo was ever rsync'd from a Mac dev box, three artefacts
+# survive with Homebrew / /Users paths baked in and cross-contaminate
+# every subsequent Linux build:
+#
+#   android/local.properties       (sdk.dir + flutter.sdk)
+#   .flutter-plugins-dependencies  (plugin source paths → Mac pub-cache)
+#   .dart_tool/                    (compiled Dart hooks with Mac paths)
+#
+# `flutter pub get` PRESERVES existing entries in the plugins file
+# rather than regenerating them, which leaks Mac paths into every
+# build it touches (including back into local.properties). The only
+# reliable escape is a full `flutter clean` — then pub get rebuilds
+# everything from scratch using ~/.config/flutter/settings.
+#
+# Trade-off: every run discards build/ too, so incremental builds are
+# gone. Worth it for correctness; first build after clean is the slow
+# one, subsequent runs in the same session reuse Gradle's daemon cache.
 rm -f android/local.properties
+"$FLUTTER_HOME/bin/flutter" clean >/dev/null
 
 CURRENT="$(grep -E '^version:' pubspec.yaml | awk '{print $2}')"
 VERSION="${CURRENT%+*}"
