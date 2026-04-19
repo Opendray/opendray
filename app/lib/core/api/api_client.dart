@@ -16,6 +16,103 @@ class ApiException implements Exception {
   String toString() => message.isNotEmpty ? message : 'HTTP $statusCode';
 }
 
+/// Thrown when a consent-lookup endpoint returns 404 — the plugin has no
+/// consent row on file (never installed, or already fully revoked). Callers
+/// render an empty state rather than surfacing this as an error banner.
+class PluginConsentNotFoundException implements Exception {
+  final String pluginName;
+  PluginConsentNotFoundException(this.pluginName);
+  @override
+  String toString() => 'No consent for plugin $pluginName';
+}
+
+/// Snapshot of a plugin's install-time consent grant as returned by
+/// `GET /api/plugins/{name}/consents`.
+///
+/// [perms] mirrors the raw PermissionsV1 shape (see
+/// `plugin/manifest.go`) — heterogeneous per-capability values:
+///   • `storage` / `secret` / `telegram` / `llm` → bool
+///   • `session` / `clipboard` / `git`           → string ("" = none)
+///   • `fs` / `exec` / `http`                    → bool | list | object
+///   • `events`                                  → `List<String>`
+///
+/// Kept as a raw map (rather than a typed 11-field struct) so additions
+/// to PermissionsV1 don't require a client release — the UI reads via
+/// [isCapGranted], which encodes the rule matrix in one place.
+class PluginConsents {
+  final String pluginName;
+  final Map<String, dynamic> perms;
+  final DateTime? grantedAt;
+  final DateTime? updatedAt;
+
+  const PluginConsents({
+    required this.pluginName,
+    required this.perms,
+    this.grantedAt,
+    this.updatedAt,
+  });
+
+  factory PluginConsents.fromJson(
+    Map<String, dynamic> json, {
+    required String pluginName,
+  }) {
+    final rawPerms = json['perms'];
+    final perms = rawPerms is Map
+        ? Map<String, dynamic>.from(rawPerms)
+        : const <String, dynamic>{};
+    return PluginConsents(
+      pluginName: pluginName,
+      perms: perms,
+      grantedAt: _parseTs(json['grantedAt']),
+      updatedAt: _parseTs(json['updatedAt']),
+    );
+  }
+
+  static DateTime? _parseTs(Object? v) {
+    if (v is String && v.isNotEmpty) return DateTime.tryParse(v);
+    return null;
+  }
+
+  /// Returns true if the named capability is currently granted.
+  /// Rule matrix:
+  ///
+  ///   storage / secret / telegram / llm   → bool
+  ///   session / clipboard / git           → non-empty string
+  ///   fs / exec / http                    → any non-null/non-empty value
+  ///   events                              → non-empty array
+  ///
+  /// Unknown cap keys return false (defensive). Keep this in lock-step
+  /// with `plugin/manifest.go` PermissionsV1 and the revoke-cap allowlist
+  /// in `gateway/plugins_consents.go`.
+  bool isCapGranted(String cap) {
+    final v = perms[cap];
+    switch (cap) {
+      case 'storage':
+      case 'secret':
+      case 'telegram':
+      case 'llm':
+        return v == true;
+      case 'session':
+      case 'clipboard':
+      case 'git':
+        return v is String && v.isNotEmpty;
+      case 'fs':
+      case 'exec':
+      case 'http':
+        if (v == null) return false;
+        if (v is bool) return v;
+        if (v is List) return v.isNotEmpty;
+        if (v is Map) return v.isNotEmpty;
+        if (v is String) return v.isNotEmpty;
+        return true;
+      case 'events':
+        return v is List && v.isNotEmpty;
+      default:
+        return false;
+    }
+  }
+}
+
 /// Extracts the server's error message from a DioException, falling back
 /// to a sensible default when the body isn't JSON or the server is offline.
 ApiException apiExceptionFrom(DioException e) {
@@ -756,6 +853,68 @@ class ApiClient {
         throw PluginCommandUnavailableException(pluginName, commandId,
             msg.isEmpty ? 'run kind deferred to M2/M3' : msg,
             deferred: true);
+      }
+      throw apiExceptionFrom(e);
+    }
+  }
+
+  // ── Plugin consents (T12/T21) ─────────────────────────────
+  //
+  // Runtime consent surface. GET returns the raw PermissionsV1 shape;
+  // the two DELETE endpoints drive hot-revoke — the server fires
+  // InvalidateConsent synchronously so WS subs terminate before the
+  // HTTP response flushes (the 200 ms SLO asserted in T12).
+
+  /// Fetches the current consent grant for [pluginName]. Throws
+  /// [PluginConsentNotFoundException] when the server has no row on
+  /// file (treated as an empty state rather than an error banner in
+  /// the settings UI).
+  Future<PluginConsents> getPluginConsents(String pluginName) async {
+    try {
+      final res = await _dio.get('/api/plugins/$pluginName/consents');
+      final data = res.data;
+      if (data is Map) {
+        return PluginConsents.fromJson(
+          Map<String, dynamic>.from(data),
+          pluginName: pluginName,
+        );
+      }
+      return PluginConsents(pluginName: pluginName, perms: const {});
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw PluginConsentNotFoundException(pluginName);
+      }
+      throw apiExceptionFrom(e);
+    }
+  }
+
+  /// Revokes a single capability on the plugin's install-time grant.
+  /// Fires server-side InvalidateConsent so live WS subs get their
+  /// EPERM terminal envelope before this future completes.
+  ///
+  /// Throws:
+  ///   - [PluginConsentNotFoundException] on 404 ENOCONSENT
+  ///   - [ApiException] on 400 EINVAL (unknown cap) and 5xx
+  Future<void> revokePluginCapability(String pluginName, String cap) async {
+    try {
+      await _dio.delete('/api/plugins/$pluginName/consents/$cap');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw PluginConsentNotFoundException(pluginName);
+      }
+      throw apiExceptionFrom(e);
+    }
+  }
+
+  /// Revokes every capability on the plugin and deletes the consent
+  /// row. Idempotent — a missing row also returns 200. The server
+  /// fires one InvalidateConsent broadcast per previously-granted cap.
+  Future<void> revokeAllPluginConsents(String pluginName) async {
+    try {
+      await _dio.delete('/api/plugins/$pluginName/consents');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw PluginConsentNotFoundException(pluginName);
       }
       throw apiExceptionFrom(e);
     }
