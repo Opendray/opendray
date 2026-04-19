@@ -252,6 +252,10 @@ func New(cfg Config) *Server {
 		r.Delete("/api/plugins/{name}", s.pluginsUninstall)
 		r.Get("/api/plugins/{name}/audit", s.pluginsAudit)
 
+		// Plugin asset server — serves plugin ui/ bundles (T8).
+		// T7 bridge WS (/api/plugins/{name}/bridge/ws) will go here when T7 lands.
+		r.Get("/api/plugins/{name}/assets/*", s.pluginsAssets)
+
 		// Workbench contributions — flat view of all installed plugin contribution
 		// points (commands, statusBar, keybindings, menus). Pure read; no DB (T9).
 		r.Get("/api/workbench/contributions", s.workbenchContributions)
