@@ -106,6 +106,15 @@ void main() {
       expect(r.output, 'hello\n');
     });
 
+    test('openView kind surfaces viewId', () {
+      final r = InvokeResult.fromJson({
+        'kind': 'openView',
+        'viewId': 'kanban.board',
+      });
+      expect(r.kind, 'openView');
+      expect(r.viewId, 'kanban.board');
+    });
+
     test('defaults fill missing fields', () {
       final r = InvokeResult.fromJson({});
       expect(r.kind, '');

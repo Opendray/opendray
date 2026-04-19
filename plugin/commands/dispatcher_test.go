@@ -405,23 +405,57 @@ func TestDispatcher_RunTaskNoRunner(t *testing.T) {
 // ─── TestDispatcher_HostKindReturnsEUNAVAIL ──────────────────────────────────
 
 func TestDispatcher_HostKindReturnsEUNAVAIL(t *testing.T) {
-	tests := []struct{ kind string }{
-		{"host"},
-		{"openView"},
+	reg := buildRegistry("myplugin", command("cmd.h", run("host", "", "", "", "")))
+	d, _ := commands.NewDispatcher(commands.Config{
+		Registry: reg,
+		Gate:     &fakeGate{allow: true},
+		Log:      silentLog(),
+	})
+	_, err := d.Invoke(context.Background(), "myplugin", "cmd.h", nil)
+	if !errors.Is(err, commands.ErrRunKindUnimpl) {
+		t.Errorf("want ErrRunKindUnimpl, got %v", err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.kind, func(t *testing.T) {
-			reg := buildRegistry("myplugin", command("cmd.h", run(tt.kind, "", "", "", "")))
-			d, _ := commands.NewDispatcher(commands.Config{
-				Registry: reg,
-				Gate:     &fakeGate{allow: true},
-				Log:      silentLog(),
-			})
-			_, err := d.Invoke(context.Background(), "myplugin", "cmd.h", nil)
-			if !errors.Is(err, commands.ErrRunKindUnimpl) {
-				t.Errorf("want ErrRunKindUnimpl, got %v", err)
-			}
-		})
+}
+
+// ─── TestDispatcher_OpenViewKind ─────────────────────────────────────────────
+
+func TestDispatcher_OpenViewKind(t *testing.T) {
+	reg := buildRegistry("kanban", command("kanban.focus", &plugin.CommandRunV1{
+		Kind:   "openView",
+		ViewID: "kanban.board",
+	}))
+	d, _ := commands.NewDispatcher(commands.Config{
+		Registry: reg,
+		Gate:     &fakeGate{allow: true},
+		Log:      silentLog(),
+	})
+	res, err := d.Invoke(context.Background(), "kanban", "kanban.focus", nil)
+	if err != nil {
+		t.Fatalf("Invoke: unexpected error: %v", err)
+	}
+	if res.Kind != "openView" {
+		t.Errorf("Kind = %q, want openView", res.Kind)
+	}
+	if res.ViewID != "kanban.board" {
+		t.Errorf("ViewID = %q, want kanban.board", res.ViewID)
+	}
+}
+
+// ─── TestDispatcher_OpenViewMissingViewID ────────────────────────────────────
+
+func TestDispatcher_OpenViewMissingViewID(t *testing.T) {
+	reg := buildRegistry("kanban", command("kanban.focus", &plugin.CommandRunV1{
+		Kind: "openView",
+		// ViewID deliberately empty — should surface ErrMissingViewID.
+	}))
+	d, _ := commands.NewDispatcher(commands.Config{
+		Registry: reg,
+		Gate:     &fakeGate{allow: true},
+		Log:      silentLog(),
+	})
+	_, err := d.Invoke(context.Background(), "kanban", "kanban.focus", nil)
+	if !errors.Is(err, commands.ErrMissingViewID) {
+		t.Fatalf("want ErrMissingViewID, got %v", err)
 	}
 }
 

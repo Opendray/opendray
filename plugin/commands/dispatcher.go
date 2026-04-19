@@ -39,9 +39,14 @@ var (
 	// the commandID is absent from its contributions.
 	ErrCommandNotFound = errors.New("command not found")
 
-	// ErrRunKindUnimpl is returned for run kinds that are not implemented in M1
-	// (host, openView) or for unknown kinds (defensive future-proofing).
+	// ErrRunKindUnimpl is returned for run kinds that are not implemented yet
+	// (today: host — M3) or for unknown kinds (defensive future-proofing).
 	ErrRunKindUnimpl = errors.New("run kind requires M2/M3")
+
+	// ErrMissingViewID is returned by the openView run-kind when the
+	// command's manifest entry has an empty viewId. Validated at manifest
+	// parse time already, so this is a belt-and-braces check at dispatch.
+	ErrMissingViewID = errors.New("openView: viewId is required")
 
 	// ErrMissingRunSpec is returned when a command has a nil Run field or the
 	// required run-kind fields are empty (e.g. exec with no Method).
@@ -119,6 +124,7 @@ type Result struct {
 	Kind    string `json:"kind"`
 	Message string `json:"message,omitempty"`
 	URL     string `json:"url,omitempty"`
+	ViewID  string `json:"viewId,omitempty"`
 	TaskID  string `json:"taskId,omitempty"`
 	Output  string `json:"output,omitempty"`
 	Exit    int    `json:"exit,omitempty"`
@@ -134,6 +140,7 @@ type resolvedCmd struct {
 	rawURL     string
 	method     string
 	taskID     string
+	viewID     string
 }
 
 // ─── Invoke ───────────────────────────────────────────────────────────────────
@@ -146,7 +153,8 @@ type resolvedCmd struct {
 // Errors:
 //
 //	ErrCommandNotFound   — plugin not registered OR commandID absent
-//	ErrRunKindUnimpl     — kind is "host" or "openView" (M2/M3 territory)
+//	ErrRunKindUnimpl     — kind is "host" (M3 territory) or unknown
+//	ErrMissingViewID     — openView kind with empty viewId
 //	*bridge.PermError    — capability denied (pass through unchanged)
 //	other errors         — execution failures
 func (d *Dispatcher) Invoke(ctx context.Context, pluginName, commandID string, _ map[string]any) (*Result, error) {
@@ -162,12 +170,14 @@ func (d *Dispatcher) Invoke(ctx context.Context, pluginName, commandID string, _
 		return d.runNotify(rc)
 	case "openUrl":
 		return d.runOpenURL(rc)
+	case "openView":
+		return d.runOpenView(rc)
 	case "exec":
 		return d.runExec(ctx, rc)
 	case "runTask":
 		return d.runTask(ctx, rc)
-	case "host", "openView":
-		return nil, fmt.Errorf("%w: kind=%q requires M2/M3", ErrRunKindUnimpl, rc.kind)
+	case "host":
+		return nil, fmt.Errorf("%w: kind=%q requires M3", ErrRunKindUnimpl, rc.kind)
 	default:
 		return nil, fmt.Errorf("%w: unknown kind=%q", ErrRunKindUnimpl, rc.kind)
 	}
@@ -196,6 +206,7 @@ func (d *Dispatcher) resolve(pluginName, commandID string) (*resolvedCmd, error)
 			rawURL:     c.Run.URL,
 			method:     c.Run.Method,
 			taskID:     c.Run.TaskID,
+			viewID:     c.Run.ViewID,
 		}, nil
 	}
 	return nil, ErrCommandNotFound
@@ -218,6 +229,19 @@ func (d *Dispatcher) runOpenURL(rc *resolvedCmd) (*Result, error) {
 		return nil, fmt.Errorf("invalid openUrl: %w", err)
 	}
 	return &Result{Kind: "openUrl", URL: rc.rawURL}, nil
+}
+
+// runOpenView handles kind=openView. No capability check required —
+// workbench navigation is pure UX. The Flutter caller reads Result.ViewID
+// and focuses the matching contributed view via WorkbenchService.openView.
+// The server does not verify viewId points to a registered view; Flutter
+// silently falls back to its dashboard if the id is unknown, which is
+// the less-noisy outcome if a plugin is uninstalled mid-flight.
+func (d *Dispatcher) runOpenView(rc *resolvedCmd) (*Result, error) {
+	if rc.viewID == "" {
+		return nil, ErrMissingViewID
+	}
+	return &Result{Kind: "openView", ViewID: rc.viewID}, nil
 }
 
 // runExec handles kind=exec.

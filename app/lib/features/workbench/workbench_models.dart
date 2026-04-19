@@ -295,9 +295,10 @@ class FlatContributions {
 /// Response from `POST /api/plugins/{name}/commands/{id}/invoke` when the
 /// server returns 200. `kind` mirrors the dispatcher's `Result.kind`.
 class InvokeResult {
-  final String kind; // "notify" | "openUrl" | "exec" | "runTask"
+  final String kind; // "notify" | "openUrl" | "openView" | "exec" | "runTask"
   final String message;
   final String url;
+  final String viewId;
   final String taskId;
   final String output;
   final int exit;
@@ -306,6 +307,7 @@ class InvokeResult {
     required this.kind,
     this.message = '',
     this.url = '',
+    this.viewId = '',
     this.taskId = '',
     this.output = '',
     this.exit = 0,
@@ -315,6 +317,7 @@ class InvokeResult {
         kind: json['kind'] as String? ?? '',
         message: json['message'] as String? ?? '',
         url: json['url'] as String? ?? '',
+        viewId: json['viewId'] as String? ?? '',
         taskId: json['taskId'] as String? ?? '',
         output: json['output'] as String? ?? '',
         exit: (json['exit'] as num?)?.toInt() ?? 0,

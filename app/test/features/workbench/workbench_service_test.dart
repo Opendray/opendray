@@ -181,6 +181,29 @@ void main() {
       expect(r?.taskId, 'abc');
     });
 
+    test('openView focuses the view and returns the Result', () async {
+      final api = _FakeApi()
+        ..invokeReturn =
+            const InvokeResult(kind: 'openView', viewId: 'kanban.board');
+      final service =
+          WorkbenchService(api: api, showMessage: (_, {bool isError = false}) {});
+      expect(service.currentViewID, isNull);
+      final r = await service.invoke('kanban', 'kanban.focus');
+      expect(r?.kind, 'openView');
+      expect(r?.viewId, 'kanban.board');
+      expect(service.currentViewID, 'kanban.board');
+    });
+
+    test('openView with empty viewId does not focus', () async {
+      final api = _FakeApi()
+        ..invokeReturn = const InvokeResult(kind: 'openView');
+      final service =
+          WorkbenchService(api: api, showMessage: (_, {bool isError = false}) {});
+      final r = await service.invoke('p', 'c');
+      expect(r?.kind, 'openView');
+      expect(service.currentViewID, isNull);
+    });
+
     test('permission denied → error SnackBar, returns null', () async {
       final api = _FakeApi()
         ..invokeThrow =

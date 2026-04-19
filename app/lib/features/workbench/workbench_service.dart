@@ -96,6 +96,8 @@ class WorkbenchService extends ChangeNotifier {
       );
       if (result.kind == 'notify' && result.message.isNotEmpty) {
         _showMessage(result.message, isError: false);
+      } else if (result.kind == 'openView' && result.viewId.isNotEmpty) {
+        openView(result.viewId);
       }
       return result;
     } on PluginPermissionDeniedException catch (e) {
