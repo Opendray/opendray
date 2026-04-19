@@ -232,6 +232,35 @@ fi
 
 BUILD_DATE="$(date +%Y%m%d)"
 "$FLUTTER_HOME/bin/flutter" pub get >/dev/null
+
+# MUTAGEN RACE FIX — the opendray repo is live-synced from a Mac via
+# mutagen-agent, which re-writes android/local.properties with Mac
+# paths (Homebrew Flutter, /Users/... Android SDK) any time the Mac
+# side's file differs from ours. `flutter pub get` + `flutter clean`
+# write the correct Linux paths, then mutagen overwrites them a few
+# hundred ms later. Gradle then reads Mac paths → build dies with
+# "Included build '/opt/homebrew/share/flutter/...' does not exist".
+#
+# We win the race by force-writing local.properties IMMEDIATELY
+# before `flutter build apk` fires — Gradle's settings.gradle.kts
+# reads it in the first ~300ms, long before mutagen's next sync cycle.
+# Subsequent mutagen overwrites don't matter: Gradle doesn't re-read
+# the file during the build.
+#
+# Permanent fix lives on the Mac: add these globs to mutagen sync
+# ignores so machine-local artefacts stop travelling across:
+#   app/android/local.properties
+#   app/.flutter-plugins-dependencies
+#   app/.dart_tool/
+#   app/build/
+cat > android/local.properties <<EOF
+sdk.dir=$ANDROID_SDK_ROOT
+flutter.sdk=$FLUTTER_HOME
+flutter.buildMode=release
+flutter.versionName=$VERSION
+flutter.versionCode=$BUILD
+EOF
+
 "$FLUTTER_HOME/bin/flutter" build apk --release \
   --dart-define=BUILD_DATE="$BUILD_DATE" \
   || { cd "$REPO_ROOT"; fail "flutter build apk failed (Android SDK configured?)" 3; }
