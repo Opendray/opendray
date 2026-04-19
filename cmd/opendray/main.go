@@ -63,6 +63,8 @@ func main() {
 	// boot + setup-mode-on-demand.
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
+		case "plugin":
+			os.Exit(runPluginCLI(os.Args[2:]))
 		case "setup":
 			os.Exit(runSetupCLI())
 		case "version", "-v", "--version":
