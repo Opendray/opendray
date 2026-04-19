@@ -7,7 +7,9 @@
   "type": "shell",
   "cli": {
     "command": "/bin/zsh",
-    "defaultArgs": ["-l"],
+    "defaultArgs": [
+      "-l"
+    ],
     "detectCmd": "true"
   },
   "capabilities": {
@@ -19,7 +21,25 @@
     "dynamicModels": false
   },
   "configSchema": [
-    { "key": "command", "label": "Shell", "type": "select", "group": "runtime", "options": ["/bin/zsh", "/bin/bash", "/bin/sh"], "default": "/bin/zsh" },
-    { "key": "extraArgs", "label": "Shell Args", "type": "args", "group": "advanced", "default": "-l" }
-  ]
+    {
+      "key": "command",
+      "label": "Shell",
+      "type": "select",
+      "group": "runtime",
+      "options": [
+        "/bin/zsh",
+        "/bin/bash",
+        "/bin/sh"
+      ],
+      "default": "/bin/zsh"
+    },
+    {
+      "key": "extraArgs",
+      "label": "Shell Args",
+      "type": "args",
+      "group": "advanced",
+      "default": "-l"
+    }
+  ],
+  "required": true
 }

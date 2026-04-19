@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -182,6 +183,10 @@ func (s *Server) toggleProvider(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.plugins.SetEnabled(r.Context(), chi.URLParam(r, "name"), req.Enabled); err != nil {
+		if errors.Is(err, plugin.ErrRequiredPlugin) {
+			respondError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		respondError(w, http.StatusNotFound, err.Error())
 		return
 	}
@@ -203,6 +208,10 @@ func (s *Server) updateProviderConfig(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) deleteProvider(w http.ResponseWriter, r *http.Request) {
 	if err := s.plugins.Remove(r.Context(), chi.URLParam(r, "name")); err != nil {
+		if errors.Is(err, plugin.ErrRequiredPlugin) {
+			respondError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		respondError(w, http.StatusNotFound, err.Error())
 		return
 	}

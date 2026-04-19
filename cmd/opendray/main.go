@@ -30,6 +30,7 @@ import (
 	"github.com/opendray/opendray/plugin"
 	"github.com/opendray/opendray/plugin/bridge"
 	"github.com/opendray/opendray/plugin/commands"
+	"github.com/opendray/opendray/plugin/compat"
 	"github.com/opendray/opendray/plugin/contributions"
 	"github.com/opendray/opendray/plugin/install"
 )
@@ -336,7 +337,8 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 	hookBus := plugin.NewHookBus(logger)
 	contribRegistry := contributions.NewRegistry()
 	providerRuntime := plugin.NewRuntime(db, hookBus, cfg.Plugins.Dir, logger,
-		plugin.WithContributions(contribRegistry))
+		plugin.WithContributions(contribRegistry),
+		plugin.WithSynthesizer(synthesizeContributes))
 
 	if err := providerRuntime.LoadAll(ctx); err != nil {
 		logger.Warn("provider loading had errors", "error", err)
@@ -569,6 +571,18 @@ func (s *dbAuditSink) Append(ctx context.Context, ev bridge.AuditEvent) error {
 		Caps: ev.Caps, Result: ev.Result, DurationMs: ev.DurationMs,
 		ArgsHash: ev.ArgsHash, Message: ev.Message,
 	})
+}
+
+// synthesizeContributes adapts compat.Synthesize to plugin.SynthesizerFn —
+// compat returns a full Provider overlay but the runtime only cares about
+// the ContributesV1 block at load time. Keeping the adapter here avoids
+// compat.Synthesize leaking into plugin.Runtime's surface.
+func synthesizeContributes(p plugin.Provider) plugin.ContributesV1 {
+	out := compat.Synthesize(p)
+	if out.Contributes == nil {
+		return plugin.ContributesV1{}
+	}
+	return *out.Contributes
 }
 
 // dispatcherAdapter satisfies both gateway's unexported commandInvoker

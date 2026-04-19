@@ -53,6 +53,21 @@ func WithContributions(r ContribRegistry) RuntimeOption {
 	return func(rt *Runtime) { rt.contributionsReg = r }
 }
 
+// SynthesizerFn projects a legacy (pre-v1) Provider into a v1 ContributesV1
+// shape in-memory. main.go wires compat.Synthesize here. Keeping this a
+// function rather than a direct compat import avoids a cycle
+// (plugin/compat already imports plugin).
+type SynthesizerFn func(Provider) ContributesV1
+
+// WithSynthesizer wires a legacy→v1 contribution synthesizer into the
+// Runtime. When a provider is loaded without a v1 `contributes` block,
+// the synthesizer derives one so legacy panel / agent plugins still show
+// up in the workbench. Omitting this option reverts to the previous
+// behaviour (empty contributions for legacy manifests).
+func WithSynthesizer(fn SynthesizerFn) RuntimeOption {
+	return func(rt *Runtime) { rt.synthesizer = fn }
+}
+
 // Runtime manages provider lifecycle and configuration.
 type Runtime struct {
 	db        *store.DB
@@ -66,6 +81,12 @@ type Runtime struct {
 	// contributionsReg is optional. Nil means no contribution tracking —
 	// all existing callers that omit WithContributions are unaffected.
 	contributionsReg ContribRegistry
+
+	// synthesizer is optional. Nil means legacy manifests get an empty
+	// ContributesV1 — matches pre-M2 behaviour. main.go wires
+	// compat.Synthesize here so legacy panels/agents surface as
+	// synthesized v1 contributions in the workbench.
+	synthesizer SynthesizerFn
 }
 
 // NewRuntime creates a provider runtime. Accepts zero or more RuntimeOption
@@ -227,18 +248,20 @@ func (rt *Runtime) loadIntoMemory(p Provider, cfg ProviderConfig, enabled bool) 
 	}
 	rt.mu.Unlock()
 
-	// T12: push contributions. Any manifest that declared a Contributes
-	// block wins (v1 manifests always do; legacy ones never do). Legacy
-	// manifests fall back to a synthesized empty ContributesV1 — M1's
-	// struct has no AgentProviders/Views fields yet (those are M2), so
-	// the synthesis is identity-only. Overlay is in-memory; disk is
-	// never rewritten.
+	// Push contributions. v1 manifests declare their own block; legacy
+	// manifests fall back to the synthesizer (M2 T4) so panels/agents
+	// appear in the workbench as synthesized views. When no synthesizer
+	// is wired, legacy plugins get an empty ContributesV1 (pre-M2
+	// behaviour). Overlay is in-memory; disk is never rewritten.
 	if rt.contributionsReg == nil {
 		return
 	}
 	var c ContributesV1
-	if p.Contributes != nil {
+	switch {
+	case p.Contributes != nil:
 		c = *p.Contributes
+	case rt.synthesizer != nil:
+		c = rt.synthesizer(p)
 	}
 	rt.contributionsReg.Set(p.Name, c)
 }
@@ -304,13 +327,26 @@ func (rt *Runtime) ListInfo() []ProviderInfo {
 
 // ── Mutation ────────────────────────────────────────────────────
 
+// ErrRequiredPlugin is returned when a caller tries to disable or
+// remove a plugin that has `required:true` in its manifest. The three
+// built-ins (claude / terminal / file-browser) rely on this so the
+// mobile shell can't be broken by an accidental tap.
+var ErrRequiredPlugin = fmt.Errorf("required plugin cannot be modified")
+
 // SetEnabled toggles a provider's enabled state.
+//
+// Returns ErrRequiredPlugin (wrapped) when the caller tries to disable
+// a required plugin — re-enabling is always allowed.
 func (rt *Runtime) SetEnabled(ctx context.Context, name string, enabled bool) error {
 	rt.mu.Lock()
 	lp, ok := rt.providers[name]
 	if !ok {
 		rt.mu.Unlock()
 		return fmt.Errorf("provider %q not found", name)
+	}
+	if !enabled && lp.provider.Required {
+		rt.mu.Unlock()
+		return fmt.Errorf("disable %q: %w", name, ErrRequiredPlugin)
 	}
 	lp.enabled = enabled
 	rt.mu.Unlock()
@@ -350,11 +386,19 @@ func (rt *Runtime) Register(ctx context.Context, p Provider) error {
 }
 
 // Remove deletes a provider from runtime and DB.
+//
+// Returns ErrRequiredPlugin (wrapped) when the caller tries to remove a
+// required plugin.
 func (rt *Runtime) Remove(ctx context.Context, name string) error {
 	rt.mu.Lock()
-	if _, ok := rt.providers[name]; !ok {
+	lp, ok := rt.providers[name]
+	if !ok {
 		rt.mu.Unlock()
 		return fmt.Errorf("provider %q not found", name)
+	}
+	if lp.provider.Required {
+		rt.mu.Unlock()
+		return fmt.Errorf("remove %q: %w", name, ErrRequiredPlugin)
 	}
 	delete(rt.providers, name)
 	rt.mu.Unlock()

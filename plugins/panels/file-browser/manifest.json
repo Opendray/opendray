@@ -48,5 +48,6 @@
       "placeholder": "$HOME/projects",
       "description": "Starting directory when opening the file browser"
     }
-  ]
+  ],
+  "required": true
 }

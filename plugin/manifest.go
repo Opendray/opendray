@@ -48,6 +48,14 @@ type Provider struct {
 	// Configuration schema — drives the frontend form
 	ConfigSchema []ConfigField `json:"configSchema"`
 
+	// Required marks a plugin as load-bearing — it cannot be toggled off
+	// or uninstalled via the normal API. Used for the three built-in
+	// plugins (claude / terminal / file-browser) that the mobile shell
+	// needs at all times. The flag is read from the manifest `required`
+	// field and surfaced on /api/providers so Flutter can hide the
+	// toggle/delete controls.
+	Required bool `json:"required,omitempty"`
+
 	// ─── v1 superset fields ──────────────────────────────────────
 	// Every field below is optional. Legacy manifests leave them
 	// zero and [Provider.IsV1] returns false so the existing compat

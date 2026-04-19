@@ -20,30 +20,56 @@
   },
   "configSchema": [
     {
-      "key": "authType", "label": "Authentication", "type": "select", "group": "auth",
-      "options": ["env", "custom"], "default": "env",
+      "key": "authType",
+      "label": "Authentication",
+      "type": "select",
+      "group": "auth",
+      "options": [
+        "env",
+        "custom"
+      ],
+      "default": "env",
       "description": "env = read ANTHROPIC_API_KEY from system; falls back to the Claude CLI's own login when unset (use the Claude Accounts panel above to manage multiple tokens) · custom = use the key below"
     },
     {
-      "key": "apiKey", "label": "API Key", "type": "secret", "group": "auth",
-      "envVar": "ANTHROPIC_API_KEY", "placeholder": "sk-ant-...",
-      "dependsOn": "authType", "dependsVal": "custom"
+      "key": "apiKey",
+      "label": "API Key",
+      "type": "secret",
+      "group": "auth",
+      "envVar": "ANTHROPIC_API_KEY",
+      "placeholder": "sk-ant-...",
+      "dependsOn": "authType",
+      "dependsVal": "custom"
     },
     {
-      "key": "bypassPermissions", "label": "Bypass Permissions", "type": "boolean", "group": "runtime",
-      "default": false, "cliFlag": "--dangerously-skip-permissions",
+      "key": "bypassPermissions",
+      "label": "Bypass Permissions",
+      "type": "boolean",
+      "group": "runtime",
+      "default": false,
+      "cliFlag": "--dangerously-skip-permissions",
       "description": "Skip all permission prompts — full autonomous mode"
     },
     {
-      "key": "maxTurns", "label": "Max Turns", "type": "number", "group": "runtime",
+      "key": "maxTurns",
+      "label": "Max Turns",
+      "type": "number",
+      "group": "runtime",
       "description": "Limit autonomous agentic turns (0 = unlimited)"
     },
     {
-      "key": "command", "label": "Command Path", "type": "string", "group": "advanced",
+      "key": "command",
+      "label": "Command Path",
+      "type": "string",
+      "group": "advanced",
       "placeholder": "claude"
     },
     {
-      "key": "extraArgs", "label": "Extra CLI Args", "type": "args", "group": "advanced"
+      "key": "extraArgs",
+      "label": "Extra CLI Args",
+      "type": "args",
+      "group": "advanced"
     }
-  ]
+  ],
+  "required": true
 }
