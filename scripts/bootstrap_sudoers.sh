@@ -1,27 +1,38 @@
 #!/usr/bin/env bash
 # bootstrap_sudoers.sh — one-time root setup so task-runner can deploy
-# opendray without prompting for a sudo password.
+# opendray autonomously AND safely (with rollback) without being killed
+# mid-restart.
 #
 # Run ONCE per LXC, as root:
-#
 #   sudo bash scripts/bootstrap_sudoers.sh
-#     (or as root shell: bash scripts/bootstrap_sudoers.sh)
 #
-# What it does:
-#   • Drops /etc/sudoers.d/opendray-deploy with a TIGHT command allowlist
-#     covering only the four ops deploy_release.sh needs:
-#       install → /usr/local/bin/opendray.new
-#       systemctl stop  opendray.service
-#       systemctl start opendray.service
-#       mv     /usr/local/bin/opendray.new → /usr/local/bin/opendray
-#   • chmod 440 (the only mode visudo accepts for sudoers drop-ins)
-#   • Validates syntax with `visudo -c` before leaving it in place —
-#     syntax errors get rolled back so you can't accidentally lock
-#     yourself out of sudo.
+# It installs four things:
 #
-# Nothing about this grants linivek general root. The four commands
-# above and nothing else. Any other sudo invocation still prompts
-# for a password as usual.
+#   1. /etc/sudoers.d/opendray-deploy — tight NOPASSWD allowlist with
+#      exactly ONE command: triggering the deploy worker service.
+#      Everything else still prompts.
+#
+#   2. /etc/systemd/system/opendray.service.d/deploy-override.conf —
+#      drops NoNewPrivileges=no so the kernel allows sudo's setuid
+#      bit. Other hardening (ProtectHome, ProtectSystem, PrivateTmp)
+#      stays in place.
+#
+#   3. /var/lib/opendray-deploy/ — staging directory owned by linivek
+#      so task-runner can drop the new binary without sudo at all.
+#
+#   4. /etc/systemd/system/opendray-deployer.service +
+#      /usr/local/sbin/opendray-deployer — a one-shot service that
+#      runs OUTSIDE opendray.service's cgroup. Task-runner triggers
+#      it and exits; the deployer does stop→swap→start→health-check,
+#      with AUTOMATIC ROLLBACK to the previous binary if the new one
+#      fails health within 55 s. Logs to journald
+#      (journalctl -u opendray-deployer -f).
+#
+# This layout means:
+#   • task-runner's sudo surface is one command — minimal blast radius
+#   • deploy survives task-runner's death (different cgroup)
+#   • failed new binary automatically rolls back — syz stays reachable
+#   • rollback also fails? the service is logged as CRITICAL in journald
 
 set -euo pipefail
 
@@ -32,108 +43,221 @@ fi
 
 USER_NAME="${OPENDRAY_DEPLOY_USER:-linivek}"
 REPO_ROOT="${OPENDRAY_REPO_ROOT:-/home/linivek/workspace/opendray}"
-BIN_SRC="$REPO_ROOT/bin/opendray-linux-amd64"
-BIN_STAGING="/usr/local/bin/opendray.new"
-BIN_FINAL="/usr/local/bin/opendray"
+LIVE_BIN="/usr/local/bin/opendray"
+STAGE_DIR="/var/lib/opendray-deploy"
+STAGED_BIN="$STAGE_DIR/opendray.staged"
+DEPLOYER_SH="/usr/local/sbin/opendray-deployer"
+DEPLOYER_UNIT="/etc/systemd/system/opendray-deployer.service"
 SERVICE="opendray.service"
+HEALTH_URL="${OPENDRAY_HEALTH_URL:-http://127.0.0.1:8640/api/health}"
 
 SUDOERS_FILE="/etc/sudoers.d/opendray-deploy"
+OVERRIDE_DIR="/etc/systemd/system/${SERVICE}.d"
+OVERRIDE_FILE="$OVERRIDE_DIR/deploy-override.conf"
 
 if ! id -u "$USER_NAME" >/dev/null 2>&1; then
   echo "error: user '$USER_NAME' does not exist on this host" >&2
   exit 1
 fi
 
-# Generate into a tempfile first; validate with visudo; only then install.
-# This is the standard defence against bricking sudo via a syntax error.
+# ─── 1. Staging directory ──────────────────────────────────────────────
+mkdir -p "$STAGE_DIR"
+chown "$USER_NAME:$USER_NAME" "$STAGE_DIR"
+chmod 0750 "$STAGE_DIR"
+echo "✓ staging dir: $STAGE_DIR (owner $USER_NAME, 0750)"
+
+# ─── 2. opendray-deployer script ───────────────────────────────────────
+cat > "$DEPLOYER_SH" <<'DEPLOYER'
+#!/usr/bin/env bash
+# opendray-deployer — root-side deploy worker, triggered by
+# opendray-deployer.service. Runs in its OWN cgroup so
+# `systemctl stop opendray.service` can't kill it mid-flight.
+#
+# Flow: validate staged binary → backup live → stop → swap → start →
+# health-check (55 s) → on failure, automatic rollback to backup.
+# Everything logs to journald (journalctl -u opendray-deployer).
+
+set -eo pipefail
+
+STAGE_DIR="/var/lib/opendray-deploy"
+STAGED_BIN="$STAGE_DIR/opendray.staged"
+LIVE_BIN="/usr/local/bin/opendray"
+BACKUP_BIN="/usr/local/bin/opendray.prev"
+SERVICE="opendray.service"
+HEALTH_URL="${OPENDRAY_HEALTH_URL:-http://127.0.0.1:8640/api/health}"
+
+log() { printf '[%s] %s\n' "$(date -Is)" "$*"; }
+
+# ── Staged binary must exist and be a real ELF ───────────────────────
+if [[ ! -f "$STAGED_BIN" ]]; then
+  log "ABORT: no staged binary at $STAGED_BIN"
+  exit 1
+fi
+if ! file "$STAGED_BIN" 2>/dev/null | grep -q 'ELF.*executable'; then
+  log "ABORT: staged binary is not a Linux ELF executable"
+  file "$STAGED_BIN" 2>&1 | log "  file says: $(cat)"
+  exit 1
+fi
+
+# ── Sanity probe: running the staged binary with --help should not
+# segfault. If it does, reject without touching the live binary.
+if ! "$STAGED_BIN" --help >/dev/null 2>&1; then
+  # Not fatal — some versions may not have --help. Just warn.
+  log "WARN: staged binary --help exits non-zero (tolerated)"
+fi
+
+# ── Backup live binary ───────────────────────────────────────────────
+log "backup: cp $LIVE_BIN → $BACKUP_BIN"
+cp --preserve=all "$LIVE_BIN" "$BACKUP_BIN"
+
+# ── Stop service (our cgroup is separate; we won't get killed) ──────
+log "systemctl stop $SERVICE"
+systemctl stop "$SERVICE"
+
+# ── Swap binary ──────────────────────────────────────────────────────
+log "install: $STAGED_BIN → $LIVE_BIN"
+install -m 0755 "$STAGED_BIN" "$LIVE_BIN"
+
+# ── Start service ────────────────────────────────────────────────────
+log "systemctl start $SERVICE"
+if ! systemctl start "$SERVICE"; then
+  log "FAIL: start returned non-zero — rolling back"
+  install -m 0755 "$BACKUP_BIN" "$LIVE_BIN"
+  if systemctl start "$SERVICE"; then
+    log "rollback started — previous binary running"
+  else
+    log "CRITICAL: rollback start ALSO failed — SERVICE DOWN"
+  fi
+  exit 1
+fi
+
+# ── Health check with exponential backoff (max ~55 s) ───────────────
+ok=0
+for i in 1 4 9 16 25; do
+  if curl -fsS --max-time 5 "$HEALTH_URL" >/dev/null 2>&1; then
+    log "health ok after ~$((i))s"
+    ok=1
+    break
+  fi
+  log "not ready yet, retry in ${i}s"
+  sleep "$i"
+done
+
+if [[ "$ok" == "1" ]]; then
+  # Keep backup for manual rollback; cleaning up the staging file is
+  # safe since we've already deployed + health-checked.
+  rm -f "$STAGED_BIN"
+  log "deploy complete — new binary live, previous kept at $BACKUP_BIN"
+  exit 0
+fi
+
+# ── Health failed — rollback ─────────────────────────────────────────
+log "health FAILED after 55s — rolling back to $BACKUP_BIN"
+systemctl stop "$SERVICE" || log "WARN: stop during rollback failed"
+install -m 0755 "$BACKUP_BIN" "$LIVE_BIN"
+if systemctl start "$SERVICE"; then
+  log "rollback start OK"
+else
+  log "CRITICAL: rollback start FAILED — SERVICE DOWN, manual intervention needed"
+  exit 2
+fi
+
+# Verify rollback health
+for i in 1 4 9 16; do
+  if curl -fsS --max-time 5 "$HEALTH_URL" >/dev/null 2>&1; then
+    log "rollback verified — previous binary answering health checks"
+    exit 1
+  fi
+  sleep "$i"
+done
+
+log "CRITICAL: rollback started but service not answering health — manual intervention needed"
+exit 2
+DEPLOYER
+chmod 0755 "$DEPLOYER_SH"
+echo "✓ installed $DEPLOYER_SH"
+
+# ─── 3. opendray-deployer.service unit ────────────────────────────────
+cat > "$DEPLOYER_UNIT" <<EOF
+[Unit]
+Description=Opendray deploy worker (one-shot, rollback-safe)
+# NOT After=$SERVICE — the two run at different cgroups on purpose.
+# When this service stops $SERVICE, it must not be dragged down with it.
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=$DEPLOYER_SH
+TimeoutStartSec=180
+StandardOutput=journal
+StandardError=journal
+# No hardening — this service needs to write /usr/local/bin, call
+# systemctl, and run for <3 minutes.
+EOF
+chmod 0644 "$DEPLOYER_UNIT"
+echo "✓ installed $DEPLOYER_UNIT"
+
+# ─── 4. sudoers NOPASSWD (just the trigger) ──────────────────────────
 TMP="$(mktemp /tmp/opendray-sudoers.XXXXXX)"
 trap 'rm -f "$TMP"' EXIT
 
 cat > "$TMP" <<EOF
-# Managed by scripts/bootstrap_sudoers.sh — re-run that script to update.
-# Purpose: let opendray's task-runner plugin (running as $USER_NAME) deploy
-# a new binary + restart the service, without a password prompt. The list
-# below is the complete allowlist; any other sudo invocation still prompts.
+# Managed by scripts/bootstrap_sudoers.sh — re-run to update.
+# task-runner (running as $USER_NAME inside opendray.service) is
+# granted NOPASSWD for ONE command: triggering the deploy worker.
+# The worker itself runs as root in its own systemd service and
+# handles install/stop/start/health-check/rollback.
 
-$USER_NAME ALL=(root) NOPASSWD: /usr/bin/install -m 0755 $BIN_SRC $BIN_STAGING
-$USER_NAME ALL=(root) NOPASSWD: /usr/bin/systemctl stop $SERVICE
-$USER_NAME ALL=(root) NOPASSWD: /usr/bin/systemctl start $SERVICE
-$USER_NAME ALL=(root) NOPASSWD: /usr/bin/systemctl is-active --quiet $SERVICE
-$USER_NAME ALL=(root) NOPASSWD: /usr/bin/mv $BIN_STAGING $BIN_FINAL
+$USER_NAME ALL=(root) NOPASSWD: /usr/bin/systemctl start --no-block opendray-deployer.service
+$USER_NAME ALL=(root) NOPASSWD: /usr/bin/systemctl start opendray-deployer.service
 EOF
-
-chmod 440 "$TMP"
+chmod 0440 "$TMP"
 
 if ! visudo -c -f "$TMP" >/dev/null; then
   echo "error: sudoers syntax check FAILED — nothing installed" >&2
   visudo -c -f "$TMP" >&2 || true
   exit 2
 fi
-
-# Move into place atomically with the correct mode + ownership.
 install -m 0440 -o root -g root "$TMP" "$SUDOERS_FILE"
-
-# Final re-check on the installed file itself.
 if ! visudo -c -f "$SUDOERS_FILE" >/dev/null; then
-  echo "error: installed sudoers file FAILED its own check — removing" >&2
+  echo "error: installed sudoers FAILED its own check — removing" >&2
   rm -f "$SUDOERS_FILE"
   exit 2
 fi
-
 echo "✓ installed $SUDOERS_FILE"
-echo "  user: $USER_NAME"
-echo "  repo: $REPO_ROOT"
-echo "  service: $SERVICE"
 
-# ─── systemd hardening drop-in ─────────────────────────────────────────
-#
-# opendray.service ships with NoNewPrivileges=yes + ProtectSystem=strict
-# as standard hardening. Both block our deploy path:
-#
-#   • NoNewPrivileges=yes makes the kernel refuse sudo's setuid bit,
-#     so even a perfect sudoers file leaves task-runner unable to
-#     escalate. That's why you saw the "no new privileges flag is set"
-#     error — the kernel intercepted sudo before sudoers ever ran.
-#
-#   • ProtectSystem=strict bind-mounts /usr read-only for every child
-#     process of the service. Even if NoNewPrivileges were off, root
-#     under sudo still couldn't write /usr/local/bin/opendray.new.
-#
-# Minimal surgical override: drop-in conf that flips NoNewPrivileges
-# off and carves a narrow ReadWritePaths=/usr/local/bin hole. All
-# other hardening (ProtectHome, PrivateTmp, the rest of ProtectSystem)
-# stays intact.
-
-OVERRIDE_DIR="/etc/systemd/system/${SERVICE}.d"
-OVERRIDE_FILE="$OVERRIDE_DIR/deploy-override.conf"
-
+# ─── 5. systemd drop-in for opendray.service ─────────────────────────
 mkdir -p "$OVERRIDE_DIR"
-
 cat > "$OVERRIDE_FILE" <<EOF
-# Managed by scripts/bootstrap_sudoers.sh — do not edit by hand.
-# Purpose: let opendray's task-runner (running inside this service) use
-# sudo to stage a new binary at /usr/local/bin/opendray.new and restart
-# the service. NoNewPrivileges off is required so the kernel allows
-# sudo's setuid bit; ReadWritePaths punches a /usr/local/bin hole
-# through ProtectSystem=strict so install(1) can write the staging
-# file.
+# Managed by scripts/bootstrap_sudoers.sh — do not edit.
+# NoNewPrivileges=no is required for sudo's setuid to work from
+# task-runner (which is a child of this service). Sudo is only ever
+# invoked to trigger opendray-deployer.service.
 [Service]
 NoNewPrivileges=no
-ReadWritePaths=/usr/local/bin
 EOF
 chmod 0644 "$OVERRIDE_FILE"
+echo "✓ installed $OVERRIDE_FILE"
 
 systemctl daemon-reload
-echo "✓ installed $OVERRIDE_FILE"
-echo "  (NoNewPrivileges=no, ReadWritePaths=/usr/local/bin for $SERVICE)"
+echo "✓ systemctl daemon-reload"
 
 echo
-echo "IMPORTANT: the override takes effect only after the next service"
-echo "restart. Trigger it once now so task-runner inherits the new flags:"
+echo "═══ Bootstrap done. Two things you still need to do: ═══"
 echo
-echo "  systemctl restart $SERVICE"
+echo "1. Reload opendray.service so the NoNewPrivileges override takes"
+echo "   effect — it only activates after restart:"
 echo
-echo "After that restart, task-runner deploys run end-to-end."
+echo "     systemctl restart $SERVICE"
 echo
-echo "Smoke-test (run AS $USER_NAME in a fresh shell, expect no prompt):"
-echo "  sudo -n /usr/bin/systemctl is-active --quiet $SERVICE && echo ok"
+echo "2. Smoke-test the deploy trigger (run as $USER_NAME, expect no prompt):"
+echo
+echo "     sudo -n /usr/bin/systemctl start --no-block opendray-deployer.service && echo ok"
+echo
+echo "   (That will fire the deployer with an empty staging dir, so"
+echo "    journalctl -u opendray-deployer will show 'ABORT: no staged"
+echo "    binary at $STAGED_BIN' — that's expected; it confirms the"
+echo "    trigger works.)"
+echo
+echo "After that, task-runner's scripts/deploy_release.sh runs end-to-end"
+echo "without any manual SSH."

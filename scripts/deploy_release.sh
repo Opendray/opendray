@@ -329,60 +329,60 @@ fi
 ok "verified on UNAS: $APK_NAME ($REMOTE_SIZE_CHECK bytes match local)"
 ok "path: //$UNAS_SERVER/$UNAS_SHARE/$UNAS_REL_DIR/$APK_NAME"
 
-# ── 6. Deploy backend (detached — task-runner WILL be killed) ────────
-phase "Deploy backend (detached restart)"
-TMP_TARGET="${OPENDRAY_DEPLOY_BIN_PATH}.new"
+# ── 6. Deploy backend via opendray-deployer.service ─────────────────
+#
+# The previous architecture (nohup-forked detached worker) had a fatal
+# flaw: opendray.service's default KillMode=control-group means that
+# `systemctl stop opendray.service` SIGKILLs every process in the
+# cgroup — including our "detached" worker. The worker died before
+# it could run the `mv` + `start` pair, leaving opendray stopped.
+#
+# Fix: hand off to a SEPARATE systemd service (opendray-deployer.service)
+# installed by bootstrap_sudoers.sh. That service runs in its own cgroup,
+# survives opendray's restart, and has rollback logic: if the new binary
+# fails its health check within 55 s, it swaps back to the previous
+# binary. Task-runner just stages the binary + triggers the service +
+# exits; everything load-bearing happens off-cgroup.
+#
+# This means losing remote access is no longer a failure mode — either
+# the new binary works, or the old binary comes back automatically.
 
-# Absolute paths to match the NOPASSWD allowlist installed by
-# scripts/bootstrap_sudoers.sh exactly. sudoers matches the literal
-# command line, so a bare `install` or `systemctl` would miss the
-# allowlist and prompt for a password (which task-runner can't answer).
-INSTALL_BIN="/usr/bin/install"
-SYSTEMCTL_BIN="/usr/bin/systemctl"
-MV_BIN="/usr/bin/mv"
+phase "Deploy backend via opendray-deployer.service"
 
-# Stage the new binary now while we're still alive. Capture stderr so
-# a sudo denial (most common cause of failure) is visible in the trace
-# log and echoed by fail() — otherwise task-runner panels that hide
-# stderr swallow the "password required" message and the user only
-# sees a mysterious exit 4.
-STAGE_ERR="$($SUDO "$INSTALL_BIN" -m 0755 "$BIN_OUT" "$TMP_TARGET" 2>&1)" \
-  || fail "failed to stage new binary at $TMP_TARGET: ${STAGE_ERR:-no stderr}
-  (if this is 'a password is required' or 'a terminal is required',
-  run once as root: sudo bash scripts/bootstrap_sudoers.sh)" 4
-ok "staged at $TMP_TARGET"
+STAGE_DIR="/var/lib/opendray-deploy"
+STAGE_FILE="$STAGE_DIR/opendray.staged"
 
-# The detached worker sleeps briefly (so this script can return to
-# task-runner with exit 0), stops the service (which kills task-runner),
-# atomically swaps the binary, restarts, and runs health-check — all
-# appended to a timestamped log.
-LOG="/tmp/opendray-deploy-$(date +%Y%m%dT%H%M%S).log"
+if [[ ! -d "$STAGE_DIR" ]]; then
+  fail "$STAGE_DIR missing. Run once as root:
+    sudo bash scripts/bootstrap_sudoers.sh" 4
+fi
+if [[ ! -w "$STAGE_DIR" ]]; then
+  fail "$STAGE_DIR not writable by $USER. Run once as root:
+    sudo bash scripts/bootstrap_sudoers.sh
+  (it chowns the dir to you; re-run after that.)" 4
+fi
 
-nohup bash -c "
-  exec >>'$LOG' 2>&1
-  set -eo pipefail
-  echo '[deploy] '\$(date -Is)' — detached worker starting'
-  sleep 2   # let task-runner return exit 0 first
-  $SUDO $SYSTEMCTL_BIN stop $OPENDRAY_DEPLOY_SERVICE
-  $SUDO $MV_BIN $TMP_TARGET $OPENDRAY_DEPLOY_BIN_PATH
-  $SUDO $SYSTEMCTL_BIN start $OPENDRAY_DEPLOY_SERVICE
-  for i in 1 4 9 16 25; do
-    if curl -fsS --max-time 5 '$OPENDRAY_HEALTH_URL' >/dev/null 2>&1; then
-      echo '[deploy] '\$(date -Is)' — health ok'
-      exit 0
-    fi
-    echo '[deploy] '\$(date -Is)' — not ready, retry in '\$i's'
-    sleep \$i
-  done
-  echo '[deploy] '\$(date -Is)' — HEALTH FAILED — journalctl -u $OPENDRAY_DEPLOY_SERVICE -n 200'
-  exit 1
-" </dev/null >/dev/null 2>&1 &
-DEPLOY_PID=$!
-disown "$DEPLOY_PID"
-ok "detached restart worker forked (pid $DEPLOY_PID)"
-ok "log: $LOG"
-warn "task-runner will lose connection shortly — reconnect the app, then:"
-warn "  tail -f $LOG"
+# Stage the new binary into the dir that opendray-deployer reads from.
+# No sudo needed — the bootstrap chowned it to us.
+install -m 0755 "$BIN_OUT" "$STAGE_FILE" \
+  || fail "failed to stage binary at $STAGE_FILE" 4
+ok "staged: $STAGE_FILE ($(du -h "$STAGE_FILE" | cut -f1))"
+
+# Fire the deploy worker in its own cgroup, non-blocking. Sudo is only
+# needed for this single command (NOPASSWD whitelisted by bootstrap).
+# --no-block ensures systemctl returns immediately, before the worker
+# stops opendray.service — if we waited, we'd get SIGKILLed with our
+# own cgroup.
+TRIGGER_ERR="$(sudo -n /usr/bin/systemctl start --no-block opendray-deployer.service 2>&1)" \
+  || fail "failed to trigger opendray-deployer.service: ${TRIGGER_ERR:-no stderr}
+  Run once as root: sudo bash scripts/bootstrap_sudoers.sh
+  (or if it's 'no new privileges': systemctl restart opendray.service
+  to pick up the override it installed earlier)" 4
+
+ok "opendray-deployer.service triggered (runs in its own cgroup with rollback)"
+ok "watch progress: journalctl -u opendray-deployer -f"
+warn "task-runner will lose connection when opendray-deployer restarts opendray.service"
+warn "reconnect the app in ~30 s; if new binary fails health, rollback to previous runs automatically"
 
 phase "Done"
 ok "APK shipped: $UNAS_REL_DIR/$APK_NAME"
