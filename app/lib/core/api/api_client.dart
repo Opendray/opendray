@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../models/session.dart';
@@ -810,6 +811,53 @@ class ApiClient {
       return FlatContributions.fromJson(Map<String, dynamic>.from(data));
     }
     return FlatContributions.empty;
+  }
+
+  /// Subscribes to `GET /api/workbench/stream` (SSE) and yields each
+  /// decoded event envelope (`{kind, plugin?, payload}`). The stream
+  /// stays open until cancel; caller handles retry on error/onDone.
+  ///
+  /// Heartbeat lines (`:`) are silently consumed. Malformed `data:`
+  /// frames are dropped without killing the stream.
+  Stream<Map<String, dynamic>> workbenchEvents() async* {
+    final response = await _dio.get<ResponseBody>(
+      '/api/workbench/stream',
+      options: Options(
+        responseType: ResponseType.stream,
+        headers: {'Accept': 'text/event-stream'},
+        // No receive timeout — SSE streams are long-lived by design.
+        receiveTimeout: Duration.zero,
+      ),
+    );
+    final body = response.data;
+    if (body == null) return;
+
+    final buffer = StringBuffer();
+    await for (final chunk in body.stream) {
+      buffer.write(utf8.decode(chunk, allowMalformed: true));
+      while (true) {
+        final text = buffer.toString();
+        final idx = text.indexOf('\n\n');
+        if (idx < 0) break;
+        final frame = text.substring(0, idx);
+        buffer
+          ..clear()
+          ..write(text.substring(idx + 2));
+
+        for (final line in frame.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          final jsonStr = line.substring(6);
+          try {
+            final decoded = jsonDecode(jsonStr);
+            if (decoded is Map) {
+              yield Map<String, dynamic>.from(decoded);
+            }
+          } catch (_) {
+            // Malformed frame — skip but keep the stream alive.
+          }
+        }
+      }
+    }
   }
 
   /// Invokes a plugin command via the T11 HTTP endpoint. Maps server

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../core/api/api_client.dart';
@@ -25,6 +27,11 @@ class WorkbenchService extends ChangeNotifier {
   FlatContributions _contribs = FlatContributions.empty;
   bool _loading = false;
   Object? _lastError;
+
+  // SSE stream lifecycle. `_streaming` guards against overlapping starts.
+  StreamSubscription<Map<String, dynamic>>? _eventSub;
+  bool _streaming = false;
+  bool _disposed = false;
 
   FlatContributions get contributions => _contribs;
   List<WorkbenchCommand> get commands => _contribs.commands;
@@ -127,5 +134,75 @@ class WorkbenchService extends ChangeNotifier {
       return e.message.isEmpty ? 'HTTP ${e.statusCode}' : e.message;
     }
     return e.toString();
+  }
+
+  /// Opens the SSE subscription on `/api/workbench/stream` and forwards
+  /// host → UI events. Idempotent — a second call while already
+  /// streaming is a no-op.
+  ///
+  /// Handled event kinds:
+  ///   - `contributionsChanged` → [refresh]
+  ///   - `showMessage`          → `_showMessage(text, isError: kind=="error")`
+  ///   - `openView`             → [openView]
+  ///
+  /// Unknown kinds are ignored (forward-compat). Stream errors trigger
+  /// a 3-second backoff + retry; `dispose()` breaks the loop.
+  void startListening() {
+    if (_streaming || _disposed) return;
+    _streaming = true;
+    _subscribe();
+  }
+
+  void _subscribe() {
+    if (_disposed) return;
+    _eventSub = _api.workbenchEvents().listen(
+      _onEvent,
+      onError: (Object _) => _scheduleReconnect(),
+      onDone: _scheduleReconnect,
+      cancelOnError: true,
+    );
+  }
+
+  void _scheduleReconnect() {
+    _eventSub = null;
+    if (_disposed) return;
+    Future.delayed(const Duration(seconds: 3), () {
+      if (_disposed) return;
+      _subscribe();
+    });
+  }
+
+  void _onEvent(Map<String, dynamic> event) {
+    final kind = event['kind'];
+    final payload = event['payload'];
+    switch (kind) {
+      case 'contributionsChanged':
+        unawaited(refresh());
+        break;
+      case 'showMessage':
+        if (payload is Map) {
+          final text = payload['text']?.toString() ?? '';
+          final msgKind = payload['kind']?.toString() ?? 'info';
+          if (text.isNotEmpty) {
+            _showMessage(text, isError: msgKind == 'error');
+          }
+        }
+        break;
+      case 'openView':
+        if (payload is String && payload.isNotEmpty) {
+          openView(payload);
+        }
+        break;
+      // updateStatusBar / theme — covered by status bar source + theme
+      // hook in later tasks.
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _eventSub?.cancel();
+    _eventSub = null;
+    super.dispose();
   }
 }

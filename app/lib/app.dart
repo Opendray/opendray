@@ -99,7 +99,8 @@ class _NtcAppState extends State<NtcApp> {
               key: ValueKey(apiClient),
               create: (_) =>
                   WorkbenchService(api: apiClient, showMessage: _toast)
-                    ..refresh(),
+                    ..refresh()
+                    ..startListening(),
               child: MaterialApp.router(
                 title: 'OpenDray',
                 theme: buildAppTheme(),
