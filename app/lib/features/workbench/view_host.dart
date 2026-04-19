@@ -8,7 +8,12 @@
 ///
 /// Rendering rules:
 ///   - `view.render == "webview"`    → [PluginWebView] (T16)
-///   - `view.render == "declarative"` → placeholder card pointing to M5
+///   - `view.render == "declarative"` + id matched in [legacyPanelBuilders]
+///     → call the builder (bridge from compat-synthesised legacy panels to
+///     their existing bespoke Flutter pages — see M2 T4 + the phone
+///     activity-bar rollout)
+///   - `view.render == "declarative"` without a legacy match → placeholder
+///     card pointing to M5's generic declarative renderer
 ///   - id set but view not found (plugin uninstalled mid-session) → we
 ///     auto-call `service.closeView()` and render [fallback]
 ///
@@ -33,6 +38,7 @@ class ViewHost extends StatelessWidget {
     required this.baseUrl,
     required this.bearerToken,
     required this.fallback,
+    this.legacyPanelBuilders = const <String, WidgetBuilder>{},
     @visibleForTesting PluginWebViewBuilder? webViewBuilder,
     super.key,
   }) : _webViewBuilder = webViewBuilder;
@@ -53,6 +59,12 @@ class ViewHost extends StatelessWidget {
   /// longer matches any contribution (e.g. plugin was uninstalled).
   final Widget fallback;
 
+  /// Map of viewId → builder for legacy panels that have a bespoke
+  /// Flutter page (pre-M2 code that compat.Synthesize surfaces as
+  /// `render:"declarative"`). On a match we call the builder instead of
+  /// the M5 placeholder. Empty map = current/default behaviour.
+  final Map<String, WidgetBuilder> legacyPanelBuilders;
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -72,7 +84,7 @@ class ViewHost extends StatelessWidget {
           return fallback;
         }
 
-        final body = _buildBody(view);
+        final body = _buildBody(context, view);
         return Column(
           children: [
             _ViewTopBar(
@@ -86,7 +98,7 @@ class ViewHost extends StatelessWidget {
     );
   }
 
-  Widget _buildBody(WorkbenchView view) {
+  Widget _buildBody(BuildContext context, WorkbenchView view) {
     if (view.render == 'webview') {
       final builder = _webViewBuilder;
       if (builder != null) return builder(view);
@@ -99,6 +111,8 @@ class ViewHost extends StatelessWidget {
       );
     }
     if (view.render == 'declarative') {
+      final legacy = legacyPanelBuilders[view.id];
+      if (legacy != null) return legacy(context);
       return const _DeclarativePlaceholder();
     }
     // Unknown render kind — degrade to the declarative hint rather than

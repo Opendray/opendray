@@ -7,6 +7,16 @@ import '../../core/models/session.dart';
 import '../../core/services/auth_service.dart';
 import '../../shared/session_launcher.dart';
 import '../../shared/theme/app_theme.dart';
+import '../browser/preview_page.dart';
+import '../database/database_page.dart';
+import '../docs/docs_page.dart';
+import '../endpoints/endpoints_page.dart';
+import '../files/files_page.dart';
+import '../git/git_page.dart';
+import '../logs/logs_page.dart';
+import '../mcp/mcp_page.dart';
+import '../messaging/telegram_page.dart';
+import '../tasks/tasks_page.dart';
 import '../workbench/activity_bar.dart';
 import '../workbench/menu_slot.dart';
 import '../workbench/status_bar_strip.dart';
@@ -14,6 +24,30 @@ import '../workbench/view_host.dart';
 import '../workbench/workbench_service.dart';
 import '../workbench/workbench_sources.dart';
 import 'widgets/session_card.dart';
+
+/// Legacy panel bridge: maps the viewId compat.Synthesize emits for each
+/// pre-M2 panel plugin to the existing bespoke Flutter page. When a user
+/// taps a panel icon in the activity bar, ViewHost calls the matching
+/// builder so the page renders inline inside the dashboard instead of
+/// showing the "Declarative views arrive in M5" placeholder.
+///
+/// Keys must match the plugin name in `/opt/opendray/plugins/panels/*/
+/// manifest.json` one-to-one — compat uses the manifest name as both the
+/// view id AND the activityBar item id.
+Map<String, WidgetBuilder> get _legacyPanelBuilders => <String, WidgetBuilder>{
+      'database': (_) => const DatabasePage(),
+      'file-browser': (_) => const FilesPage(),
+      'git': (_) => const GitPage(),
+      'llm-providers': (_) => const EndpointsPage(),
+      'log-viewer': (_) => const LogsPage(),
+      'mcp': (_) => const MCPPage(),
+      'obsidian-reader': (_) => const DocsPage(),
+      'simulator-preview': (_) =>
+          const PreviewPage(categoryFilter: 'simulator'),
+      'task-runner': (_) => const TasksPage(),
+      'telegram': (_) => const TelegramPage(),
+      'web-preview': (_) => const PreviewPage(categoryFilter: 'preview'),
+    };
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -308,6 +342,7 @@ class _DashboardViewHost extends StatelessWidget {
       baseUrl: api.baseUrl,
       bearerToken: api.token ?? '',
       fallback: fallback,
+      legacyPanelBuilders: _legacyPanelBuilders,
     );
   }
 }
