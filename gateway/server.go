@@ -26,6 +26,7 @@ import (
 	"github.com/opendray/opendray/kernel/hub"
 	"github.com/opendray/opendray/kernel/setup"
 	"github.com/opendray/opendray/plugin"
+	"github.com/opendray/opendray/plugin/contributions"
 	"github.com/opendray/opendray/plugin/install"
 )
 
@@ -44,6 +45,7 @@ type Server struct {
 	mcp           *mcp.Handlers
 	git           *gitpkg.Manager
 	installer     *install.Installer
+	contribReg    *contributions.Registry
 }
 
 // Config holds gateway configuration.
@@ -57,7 +59,8 @@ type Config struct {
 	AdminPassword string
 	Logger        *slog.Logger
 	FrontendFS    fs.FS             // embedded frontend dist (optional)
-	Installer     *install.Installer // plugin install/uninstall orchestrator (T7)
+	Installer     *install.Installer         // plugin install/uninstall orchestrator (T7)
+	Contributions *contributions.Registry    // workbench contribution registry (T9)
 }
 
 // New creates a gateway server with all routes configured.
@@ -77,6 +80,7 @@ func New(cfg Config) *Server {
 		tasks:         tasks.NewRunner(),
 		git:           gitpkg.NewManager(),
 		installer:     cfg.Installer,
+		contribReg:   cfg.Contributions,
 	}
 	if cfg.MCP != nil {
 		s.mcp = mcp.NewHandlers(cfg.MCP)
@@ -244,6 +248,10 @@ func New(cfg Config) *Server {
 		r.Post("/api/plugins/install/confirm", s.pluginsInstallConfirm)
 		r.Delete("/api/plugins/{name}", s.pluginsUninstall)
 		r.Get("/api/plugins/{name}/audit", s.pluginsAudit)
+
+		// Workbench contributions — flat view of all installed plugin contribution
+		// points (commands, statusBar, keybindings, menus). Pure read; no DB (T9).
+		r.Get("/api/workbench/contributions", s.workbenchContributions)
 	})
 
 	// SPA frontend (serve embedded dist or fallback)
