@@ -18,6 +18,7 @@ import '../../shared/image_attach.dart';
 import '../../shared/voice_composer.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/theme/terminal_theme.dart';
+import '../workbench/panel_slot.dart';
 import '../workbench/status_bar_strip.dart';
 import '../workbench/workbench_service.dart';
 import '../workbench/workbench_sources.dart';
@@ -542,6 +543,16 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
             // _SessionStatusBar so the adapter's listener lifecycle is
             // bound to a stable State (no leak on rebuild).
             const _SessionStatusBar(),
+            // T19 — plugin-contributed bottom panels. Reads the
+            // workbench service + server config from the existing
+            // providers; renders nothing when no plugin contributes a
+            // panel (see PanelSlot docstring). Phone: collapsed drawer.
+            // Tablet: always-visible tab bar.
+            PanelSlot(
+              service: context.watch<WorkbenchService>(),
+              baseUrl: context.read<ServerConfig>().effectiveUrl,
+              bearerToken: context.read<AuthService>().token ?? '',
+            ),
           ],
         ),
       ),
