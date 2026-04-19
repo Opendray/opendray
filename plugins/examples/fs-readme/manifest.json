@@ -1,0 +1,39 @@
+{
+  "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
+  "name": "fs-readme",
+  "version": "1.0.0",
+  "publisher": "opendray-examples",
+  "displayName": "FS Readme",
+  "description": "M3 reference — a sidecar that reads the workspace README and returns a preview.",
+  "icon": "📖",
+  "engines": { "opendray": "^1.0.0" },
+  "form": "host",
+  "activation": ["onStartup"],
+  "host": {
+    "entry": "sidecar.js",
+    "runtime": "node",
+    "protocol": "jsonrpc-stdio",
+    "restart": "on-failure",
+    "idleShutdownMinutes": 10
+  },
+  "contributes": {
+    "commands": [
+      {
+        "id": "fs-readme.summarise",
+        "title": "FS Readme: summarise",
+        "icon": "📖",
+        "run": { "kind": "host", "method": "summarise" }
+      }
+    ],
+    "activityBar": [
+      {
+        "id": "fs-readme.activity",
+        "icon": "📖",
+        "title": "FS Readme"
+      }
+    ]
+  },
+  "permissions": {
+    "fs": { "read": ["${home}/**"] }
+  }
+}
