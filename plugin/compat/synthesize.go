@@ -55,16 +55,42 @@ func Synthesize(p plugin.Provider) plugin.Provider {
 
 	// ── contributes ───────────────────────────────────────────────────────
 	// M1's ContributesV1 only has Commands/StatusBar/Keybindings/Menus.
-	// There are no AgentProviders or Views fields, so the synthesized
-	// contribution set is empty. The contributions registry will accept an
-	// empty ContributesV1 (isZero == true → no-op Set, which is correct for
-	// legacy builtins that have no workbench contributions in M1).
-	//
-	// When M2 adds contributes.views, this function gains:
-	//   if p.Type == "panel" { out.Contributes.Views = [...] }
-	// That is an additive change that does not require on-disk manifest edits.
+	// M2 adds Views for legacy panel plugins so the Flutter workbench can
+	// include them in the activity bar discovery list. The view entry is
+	// metadata-only — legacy panels keep their bespoke widget rendering.
 	if out.Contributes == nil {
 		out.Contributes = &plugin.ContributesV1{}
+	}
+
+	// For legacy panel plugins: synthesize one view entry so the Flutter
+	// workbench can discover the panel in the activity bar rail.
+	// The view entry is metadata-only; legacy panels keep their existing
+	// bespoke widget rendering (no entry path needed).
+	//
+	// Guard: only add when no view with the same id already exists (defensive
+	// against callers who re-synthesize a provider that was already processed).
+	if p.Type == plugin.ProviderTypePanel {
+		alreadyPresent := false
+		for _, v := range out.Contributes.Views {
+			if v.ID == p.Name {
+				alreadyPresent = true
+				break
+			}
+		}
+		if !alreadyPresent {
+			title := p.DisplayName
+			if title == "" {
+				title = p.Name
+			}
+			out.Contributes.Views = append(out.Contributes.Views, plugin.ViewV1{
+				ID:        p.Name,
+				Title:     title,
+				Container: "activityBar",
+				Render:    "declarative",
+				// Entry intentionally omitted: legacy panels render via
+				// bespoke Flutter widgets, not the webview view host.
+			})
+		}
 	}
 
 	// ── permissions ───────────────────────────────────────────────────────
@@ -115,6 +141,21 @@ func copyProvider(p plugin.Provider) plugin.Provider {
 				menus[k] = entries
 			}
 			c.Menus = menus
+		}
+		if len(c.ActivityBar) > 0 {
+			ab := make([]plugin.ActivityBarItemV1, len(c.ActivityBar))
+			copy(ab, c.ActivityBar)
+			c.ActivityBar = ab
+		}
+		if len(c.Views) > 0 {
+			views := make([]plugin.ViewV1, len(c.Views))
+			copy(views, c.Views)
+			c.Views = views
+		}
+		if len(c.Panels) > 0 {
+			panels := make([]plugin.PanelV1, len(c.Panels))
+			copy(panels, c.Panels)
+			c.Panels = panels
 		}
 		out.Contributes = &c
 	}
