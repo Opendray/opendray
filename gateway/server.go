@@ -46,6 +46,7 @@ type Server struct {
 	git           *gitpkg.Manager
 	installer     *install.Installer
 	contribReg    *contributions.Registry
+	cmdInvoker    commandInvoker
 }
 
 // Config holds gateway configuration.
@@ -61,6 +62,7 @@ type Config struct {
 	FrontendFS    fs.FS             // embedded frontend dist (optional)
 	Installer     *install.Installer         // plugin install/uninstall orchestrator (T7)
 	Contributions *contributions.Registry    // workbench contribution registry (T9)
+	CommandInvoker commandInvoker            // command dispatcher (T11)
 }
 
 // New creates a gateway server with all routes configured.
@@ -80,7 +82,8 @@ func New(cfg Config) *Server {
 		tasks:         tasks.NewRunner(),
 		git:           gitpkg.NewManager(),
 		installer:     cfg.Installer,
-		contribReg:   cfg.Contributions,
+		contribReg:    cfg.Contributions,
+		cmdInvoker:    cfg.CommandInvoker,
 	}
 	if cfg.MCP != nil {
 		s.mcp = mcp.NewHandlers(cfg.MCP)
@@ -252,6 +255,9 @@ func New(cfg Config) *Server {
 		// Workbench contributions — flat view of all installed plugin contribution
 		// points (commands, statusBar, keybindings, menus). Pure read; no DB (T9).
 		r.Get("/api/workbench/contributions", s.workbenchContributions)
+
+		// Command invoke — dispatches a named command on a named plugin (T11).
+		r.Post("/api/plugins/{name}/commands/{id}/invoke", s.commandInvoke)
 	})
 
 	// SPA frontend (serve embedded dist or fallback)
