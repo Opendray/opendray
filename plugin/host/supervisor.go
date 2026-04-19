@@ -389,14 +389,22 @@ func resolveRuntime(kind, entry, installDir string) (string, []string, error) {
 }
 
 func buildEnv(extra map[string]string) []string {
-	// Minimal env for security: only PATH and the plugin's declared
-	// vars. This avoids leaking the gateway's JWT_SECRET etc. into
-	// arbitrary sidecars.
-	base := []string{"PATH=/usr/local/bin:/usr/bin:/bin"}
-	for k, v := range extra {
-		base = append(base, k+"="+v)
+	// Minimal env for security: whitelist a short list of common env
+	// vars (PATH, HOME, USER, LANG, TMPDIR) from the host process + the
+	// plugin's declared Host.Env. Everything else — JWT_SECRET,
+	// DB_PASSWORD, etc. — stays behind. The host-process PATH is used
+	// instead of a hardcoded string so tools installed via fnm /
+	// node-version-manager / user-local dirs are reachable.
+	out := make([]string, 0, 8+len(extra))
+	for _, key := range []string{"PATH", "HOME", "USER", "LANG", "TMPDIR"} {
+		if v := os.Getenv(key); v != "" {
+			out = append(out, key+"="+v)
+		}
 	}
-	return base
+	for k, v := range extra {
+		out = append(out, k+"="+v)
+	}
+	return out
 }
 
 // ─────────────────────────────────────────────
@@ -529,10 +537,12 @@ func (s *Sidecar) startWait(sup *Supervisor) {
 
 // drainStderr buffers stderr line by line and logs each line. Keeps
 // the pipe flowing so the child doesn't stall on a full buffer.
+// Logged at Info level — sidecar stderr is load-bearing for debugging
+// a misbehaving host plugin.
 func drainStderr(plugin string, r io.Reader, log *slog.Logger) {
 	sc := bufio.NewScanner(r)
 	for sc.Scan() {
-		log.Debug("host: sidecar stderr", "plugin", plugin, "line", sc.Text())
+		log.Info("host: sidecar stderr", "plugin", plugin, "line", sc.Text())
 	}
 }
 
