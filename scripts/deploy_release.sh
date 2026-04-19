@@ -317,8 +317,28 @@ ok "path: //$UNAS_SERVER/$UNAS_SHARE/$UNAS_REL_DIR/$APK_NAME"
 phase "Deploy backend (detached restart)"
 TMP_TARGET="${OPENDRAY_DEPLOY_BIN_PATH}.new"
 
-# Stage the new binary now while we're still alive.
-$SUDO install -m 0755 "$BIN_OUT" "$TMP_TARGET" \
+# Absolute paths to match the NOPASSWD allowlist installed by
+# scripts/bootstrap_sudoers.sh exactly. sudoers matches the literal
+# command line, so a bare `install` or `systemctl` would miss the
+# allowlist and prompt for a password (which task-runner can't answer).
+INSTALL_BIN="/usr/bin/install"
+SYSTEMCTL_BIN="/usr/bin/systemctl"
+MV_BIN="/usr/bin/mv"
+
+# Pre-flight the NOPASSWD grant. Better to fail loudly here with a
+# one-line remedy than mid-way through the detached worker where we
+# have no stdout.
+if [[ -n "$SUDO" ]]; then
+  if ! sudo -n "$SYSTEMCTL_BIN" is-active --quiet "$OPENDRAY_DEPLOY_SERVICE" 2>/dev/null; then
+    fail "sudo NOPASSWD not configured — run once as root:
+    sudo bash scripts/bootstrap_sudoers.sh
+  (then re-run deploy)" 4
+  fi
+fi
+
+# Stage the new binary now while we're still alive. Uses install(1)
+# so permissions land correctly on first try.
+$SUDO "$INSTALL_BIN" -m 0755 "$BIN_OUT" "$TMP_TARGET" \
   || fail "failed to stage new binary at $TMP_TARGET" 4
 ok "staged at $TMP_TARGET"
 
@@ -333,9 +353,9 @@ nohup bash -c "
   set -eo pipefail
   echo '[deploy] '\$(date -Is)' — detached worker starting'
   sleep 2   # let task-runner return exit 0 first
-  $SUDO systemctl stop '$OPENDRAY_DEPLOY_SERVICE'
-  $SUDO mv '$TMP_TARGET' '$OPENDRAY_DEPLOY_BIN_PATH'
-  $SUDO systemctl start '$OPENDRAY_DEPLOY_SERVICE'
+  $SUDO $SYSTEMCTL_BIN stop $OPENDRAY_DEPLOY_SERVICE
+  $SUDO $MV_BIN $TMP_TARGET $OPENDRAY_DEPLOY_BIN_PATH
+  $SUDO $SYSTEMCTL_BIN start $OPENDRAY_DEPLOY_SERVICE
   for i in 1 4 9 16 25; do
     if curl -fsS --max-time 5 '$OPENDRAY_HEALTH_URL' >/dev/null 2>&1; then
       echo '[deploy] '\$(date -Is)' — health ok'
