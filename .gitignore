@@ -30,6 +30,9 @@ app/logs/
 # Plugin data
 plugins/*/data/
 
+# Deploy script config (hosts + SMB password)
+scripts/deploy.env
+
 # Local-only — not pushed to Gitea
 CLAUDE.md
 deploy/
