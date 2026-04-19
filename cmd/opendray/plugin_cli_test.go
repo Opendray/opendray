@@ -99,18 +99,25 @@ func TestRunPluginCLI_ScaffoldDispatch(t *testing.T) {
 	}
 }
 
-// TestRunPluginCLI_InstallStub verifies the install stub returns 1 with a
-// "not yet implemented" message on stderr.
-func TestRunPluginCLI_InstallStub(t *testing.T) {
+// TestRunPluginCLI_InstallDispatch verifies the install subcommand is wired
+// and runs real logic (T15). With no server available, it exits non-zero.
+// We only assert the command is dispatched (not the old "not yet implemented" stub).
+func TestRunPluginCLI_InstallDispatch(t *testing.T) {
+	// Point at a non-listening port so the install attempt fails fast.
+	t.Setenv("OPENDRAY_SERVER_URL", "http://127.0.0.1:0")
+
 	var stdout, stderr bytes.Buffer
 
-	code := runPluginCLIWith([]string{"install", "./x"}, &stdout, &stderr)
+	code := runPluginCLIWith([]string{"install", "--yes", "./x"}, &stdout, &stderr)
 
-	if code != 1 {
-		t.Errorf("expected exit code 1, got %d", code)
+	// Non-zero: install tried to reach the server and failed (exit 2) or
+	// the server rejected the request (exit 1). Either is fine — we only
+	// verify the stub is gone and real logic ran (no "not yet implemented").
+	if code == 0 {
+		t.Errorf("expected non-zero exit code when server is unavailable, got 0")
 	}
-	if !strings.Contains(stderr.String(), "not yet implemented") {
-		t.Errorf("expected stderr to contain \"not yet implemented\", got %q", stderr.String())
+	if strings.Contains(stderr.String(), "not yet implemented") {
+		t.Errorf("stub message still present — T15 implementation not wired: %q", stderr.String())
 	}
 }
 

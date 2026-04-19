@@ -76,9 +76,8 @@ func pluginCmdInstall(args []string) int {
 	return pluginCmdInstallWith(args, os.Stdout, os.Stderr)
 }
 
-func pluginCmdInstallWith(_ []string, _ io.Writer, stderr io.Writer) int {
-	fmt.Fprintln(stderr, "not yet implemented — see docs/plugin-platform/M1-PLAN.md T15")
-	return 1
+func pluginCmdInstallWith(args []string, stdout, stderr io.Writer) int {
+	return runInstall(args, stdout, stderr)
 }
 
 // pluginCmdValidate is the stub for T16.
