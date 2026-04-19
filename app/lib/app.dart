@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'core/api/api_client.dart';
@@ -24,6 +25,9 @@ import 'features/settings/settings_page.dart';
 import 'features/settings/setup_page.dart';
 import 'features/setup/setup_wizard.dart';
 import 'features/tasks/tasks_page.dart';
+import 'features/workbench/command_palette.dart';
+import 'features/workbench/keybindings.dart';
+import 'features/workbench/workbench_service.dart';
 
 class NtcApp extends StatefulWidget {
   final ServerConfig serverConfig;
@@ -43,11 +47,26 @@ class NtcApp extends StatefulWidget {
 
 class _NtcAppState extends State<NtcApp> {
   late final GoRouter _router;
+  // Shared messenger key so WorkbenchService can surface SnackBars
+  // from anywhere (command palette invocations, plugin install errors)
+  // without needing a BuildContext tied to a specific subtree.
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
     super.initState();
     _router = _buildRouter(widget.serverConfig, widget.authService);
+  }
+
+  void _toast(String text, {bool isError = false}) {
+    final m = _scaffoldMessengerKey.currentState;
+    if (m == null) return;
+    m.hideCurrentSnackBar();
+    m.showSnackBar(SnackBar(
+      content: Text(text),
+      backgroundColor: isError ? Colors.red.shade700 : null,
+    ));
   }
 
   @override
@@ -74,14 +93,66 @@ class _NtcAppState extends State<NtcApp> {
           );
           return Provider<ApiClient>.value(
             value: apiClient,
-            child: MaterialApp.router(
-              title: 'OpenDray',
-              theme: buildAppTheme(),
-              debugShowCheckedModeBanner: false,
-              routerConfig: _router,
+            // WorkbenchService lives above MaterialApp so pages can
+            // context.read it; rebuilt whenever ApiClient identity changes.
+            child: ChangeNotifierProvider<WorkbenchService>(
+              key: ValueKey(apiClient),
+              create: (_) =>
+                  WorkbenchService(api: apiClient, showMessage: _toast)
+                    ..refresh(),
+              child: MaterialApp.router(
+                title: 'OpenDray',
+                theme: buildAppTheme(),
+                debugShowCheckedModeBanner: false,
+                scaffoldMessengerKey: _scaffoldMessengerKey,
+                routerConfig: _router,
+                builder: (ctx, child) => _WorkbenchRoot(
+                  service: ctx.read<WorkbenchService>(),
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              ),
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Intent fired by Cmd/Ctrl+Shift+P to open the command palette.
+class _OpenPaletteIntent extends Intent {
+  const _OpenPaletteIntent();
+}
+
+/// Mounts plugin keybindings (T21) + the Cmd/Ctrl+Shift+P palette
+/// shortcut (T19) above every routed page.
+class _WorkbenchRoot extends StatelessWidget {
+  final Widget child;
+  final WorkbenchService service;
+  const _WorkbenchRoot({required this.child, required this.service});
+
+  @override
+  Widget build(BuildContext context) {
+    return WorkbenchKeybindings(
+      service: service,
+      child: Shortcuts(
+        shortcuts: <LogicalKeySet, Intent>{
+          LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.shift,
+              LogicalKeyboardKey.keyP): const _OpenPaletteIntent(),
+          LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.shift,
+              LogicalKeyboardKey.keyP): const _OpenPaletteIntent(),
+        },
+        child: Actions(
+          actions: <Type, Action<Intent>>{
+            _OpenPaletteIntent: CallbackAction<_OpenPaletteIntent>(
+              onInvoke: (_) {
+                CommandPalette.show(context, service);
+                return null;
+              },
+            ),
+          },
+          child: child,
+        ),
       ),
     );
   }
