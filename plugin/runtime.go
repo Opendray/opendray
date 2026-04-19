@@ -226,6 +226,18 @@ func (rt *Runtime) loadIntoMemory(p Provider, cfg ProviderConfig, enabled bool) 
 		provider: p, config: cfg, installed: installed, enabled: enabled,
 	}
 	rt.mu.Unlock()
+
+	// T12: push contributions. v1 manifests contribute directly; legacy
+	// manifests get a synthesized empty ContributesV1 (M1 ContributesV1 has
+	// no AgentProviders/Views fields — that's M2). Overlay is in-memory only.
+	if rt.contributionsReg == nil {
+		return
+	}
+	var c ContributesV1
+	if p.IsV1() && p.Contributes != nil {
+		c = *p.Contributes
+	}
+	rt.contributionsReg.Set(p.Name, c)
 }
 
 func detectInstalled(p Provider, cfg ProviderConfig) bool {
@@ -331,9 +343,6 @@ func (rt *Runtime) Register(ctx context.Context, p Provider) error {
 		return err
 	}
 	rt.loadIntoMemory(p, ProviderConfig{}, true)
-	if rt.contributionsReg != nil && p.Contributes != nil {
-		rt.contributionsReg.Set(p.Name, *p.Contributes)
-	}
 	return nil
 }
 
