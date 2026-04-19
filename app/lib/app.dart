@@ -21,12 +21,15 @@ import 'features/git/git_page.dart';
 import 'features/logs/logs_page.dart';
 import 'features/mcp/mcp_page.dart';
 import 'features/messaging/telegram_page.dart';
+import 'features/plugins/plugins_page.dart';
 import 'features/settings/settings_page.dart';
 import 'features/settings/setup_page.dart';
 import 'features/setup/setup_wizard.dart';
 import 'features/tasks/tasks_page.dart';
 import 'features/workbench/command_palette.dart';
 import 'features/workbench/keybindings.dart';
+import 'features/workbench/webview_host.dart';
+import 'features/workbench/workbench_models.dart';
 import 'features/workbench/workbench_service.dart';
 
 class NtcApp extends StatefulWidget {
@@ -260,6 +263,17 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
             path: '/browser/endpoints',
             builder: (ctx, _) => _panelShell(ctx, 'LLM Providers', const EndpointsPage()),
           ),
+          // Generic v1 webview plugin route. Resolves the first
+          // activityBar view owned by the plugin and hosts it in a
+          // PluginWebView. Legacy panels still have their dedicated
+          // routes above and never hit this path.
+          GoRoute(
+            path: '/browser/plugin/:name',
+            builder: (ctx, state) => _PluginWebRoute(
+              pluginName: state.pathParameters['name']!,
+            ),
+          ),
+          GoRoute(path: '/plugins', builder: (_, _) => const PluginsPage()),
           GoRoute(path: '/settings', builder: (_, _) => const SettingsPage()),
           GoRoute(
             path: '/settings/claude-accounts',
@@ -282,6 +296,71 @@ Widget _panelShell(BuildContext ctx, String titleKey, Widget child) {
     appBar: AppBar(title: Text(ctx.tr(titleKey))),
     body: child,
   );
+}
+
+/// Route shell for `/browser/plugin/:name`. Finds the plugin's first
+/// contributed view in the workbench registry and renders it via the
+/// right backend — [PluginWebView] for `render:"webview"`. Works for
+/// every webview plugin the server exposes without per-plugin routing
+/// glue.
+class _PluginWebRoute extends StatelessWidget {
+  const _PluginWebRoute({required this.pluginName});
+  final String pluginName;
+
+  @override
+  Widget build(BuildContext context) {
+    final service = context.watch<WorkbenchService>();
+    final api = context.read<ApiClient>();
+
+    WorkbenchView? view;
+    for (final v in service.views) {
+      if (v.pluginName == pluginName) {
+        view = v;
+        break;
+      }
+    }
+    if (view == null) {
+      return Scaffold(
+        appBar: AppBar(title: Text(pluginName)),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'Plugin view not found. The plugin may have been '
+              'uninstalled or disabled.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+    final title = view.title.isEmpty ? pluginName : view.title;
+    if (view.render == 'webview') {
+      return Scaffold(
+        appBar: AppBar(title: Text(title)),
+        body: PluginWebView(
+          pluginName: view.pluginName,
+          viewId: view.id,
+          entryPath: view.entry,
+          baseUrl: api.baseUrl,
+          bearerToken: api.token ?? '',
+        ),
+      );
+    }
+    // Declarative renderer is M5 work. Show a pointer until then.
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'Declarative views arrive in M5.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _Shell extends StatelessWidget {

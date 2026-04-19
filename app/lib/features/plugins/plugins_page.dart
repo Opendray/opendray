@@ -1,0 +1,402 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../core/api/api_client.dart';
+import '../../core/models/provider.dart' as provider_model;
+import '../../shared/providers_bus.dart';
+import '../../shared/theme/app_theme.dart';
+import '../settings/plugin_consents_page.dart';
+
+/// Full-surface plugin management page at `/plugins`.
+///
+/// One screen, three sections:
+///   1. **Installed** — real data from `/api/providers`. Per-plugin
+///      enable/disable, permission detail, and uninstall (unless
+///      marked required in the manifest).
+///   2. **Marketplace** — stub with the bundled `plugins/examples/*`
+///      as installable examples. A real remote marketplace lands in
+///      M3.
+///
+/// Replaces the per-plugin consent page in Settings — Settings keeps
+/// a "Plugins →" link that routes here. The decluttered Settings
+/// surface was the motivation Kev called out.
+class PluginsPage extends StatefulWidget {
+  const PluginsPage({super.key});
+
+  @override
+  State<PluginsPage> createState() => _PluginsPageState();
+}
+
+class _PluginsPageState extends State<PluginsPage> {
+  List<provider_model.ProviderInfo> _providers = [];
+  bool _loading = true;
+  String? _error;
+  StreamSubscription<void>? _providersSub;
+
+  ApiClient get _api => context.read<ApiClient>();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+    // Any toggle/install/uninstall across the app fires ProvidersBus —
+    // we refetch so rows stay in sync without manual refresh.
+    _providersSub = ProvidersBus.instance.changes.listen((_) => _load());
+  }
+
+  @override
+  void dispose() {
+    _providersSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    try {
+      final providers = await _api.listProviders();
+      if (!mounted) return;
+      setState(() {
+        _providers = providers;
+        _loading = false;
+        _error = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  void _notify(String msg, {bool isError = false}) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.showSnackBar(SnackBar(
+      content: Text(msg),
+      backgroundColor: isError ? AppColors.error : null,
+    ));
+  }
+
+  Future<void> _toggleProvider(
+      provider_model.ProviderInfo p, bool enabled) async {
+    try {
+      await _api.toggleProvider(p.provider.name, enabled);
+      ProvidersBus.instance.notify();
+    } catch (e) {
+      _notify('Failed: $e', isError: true);
+    }
+  }
+
+  Future<void> _uninstall(provider_model.ProviderInfo p) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Uninstall ${p.provider.displayName}?'),
+        content: const Text(
+          'Removes the plugin, its stored data, and all granted '
+          'permissions. This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Uninstall'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await _api.deleteProvider(p.provider.name);
+      _notify('Uninstalled ${p.provider.displayName}');
+      ProvidersBus.instance.notify();
+    } catch (e) {
+      _notify('Failed: $e', isError: true);
+    }
+  }
+
+  void _openConsents(provider_model.ProviderInfo p) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => PluginConsentsPage(
+        pluginName: p.provider.name,
+        api: _api,
+        onMessage: _notify,
+      ),
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Plugins')),
+      body: _loading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.accent))
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  if (_error != null) _errorBanner(),
+                  _sectionHeader('Installed', '${_providers.length}'),
+                  const SizedBox(height: 8),
+                  for (final p in _sortProviders(_providers)) _pluginCard(p),
+                  const SizedBox(height: 24),
+                  _sectionHeader('Marketplace', 'preview'),
+                  const SizedBox(height: 8),
+                  _marketplaceStub(),
+                ],
+              ),
+            ),
+    );
+  }
+
+  /// Sort: required first, then by type group (panel → webview → cli →
+  /// shell), then by name. Gives a stable, predictable layout.
+  List<provider_model.ProviderInfo> _sortProviders(
+      List<provider_model.ProviderInfo> input) {
+    int rank(provider_model.Provider p) {
+      if (p.required) return 0;
+      if (p.form == 'webview') return 1;
+      if (p.type == 'panel') return 2;
+      if (p.type == 'cli') return 3;
+      if (p.type == 'shell') return 4;
+      return 5;
+    }
+
+    final copy = [...input];
+    copy.sort((a, b) {
+      final r = rank(a.provider).compareTo(rank(b.provider));
+      if (r != 0) return r;
+      return a.provider.displayName.compareTo(b.provider.displayName);
+    });
+    return copy;
+  }
+
+  Widget _errorBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.errorSoft,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(children: [
+        const Icon(Icons.error_outline,
+            color: AppColors.error, size: 18),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            _error ?? '',
+            style: const TextStyle(color: AppColors.error, fontSize: 12),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _sectionHeader(String title, String badge) {
+    return Row(
+      children: [
+        Text(title,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceAlt,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(badge,
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
+        ),
+      ],
+    );
+  }
+
+  Widget _pluginCard(provider_model.ProviderInfo p) {
+    final prov = p.provider;
+    final required = prov.required;
+    final kindLabel = _kindLabel(prov);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _iconBadge(prov.icon),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          prov.displayName,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      if (required)
+                        _chip('required', AppColors.accent)
+                      else
+                        _chip(kindLabel, AppColors.textMuted),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    prov.description.isEmpty
+                        ? 'v${prov.version}'
+                        : '${prov.description} · v${prov.version}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        color: AppColors.textMuted, fontSize: 11, height: 1.3),
+                  ),
+                ],
+              ),
+            ),
+            _actionsMenu(p),
+            Switch(
+              value: p.enabled,
+              activeTrackColor: AppColors.accent,
+              onChanged: required ? null : (v) => _toggleProvider(p, v),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _kindLabel(provider_model.Provider p) {
+    if (p.form == 'webview') return 'webview';
+    if (p.type == 'panel') return 'panel';
+    if (p.type == 'cli') return 'agent';
+    if (p.type == 'shell') return 'shell';
+    return p.type.isEmpty ? 'plugin' : p.type;
+  }
+
+  Widget _chip(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w500),
+      ),
+    );
+  }
+
+  Widget _iconBadge(String icon) {
+    final isEmoji = icon.length <= 4 && !icon.contains('/');
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: AppColors.accent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      alignment: Alignment.center,
+      child: isEmoji
+          ? Text(icon, style: const TextStyle(fontSize: 18))
+          : const Icon(Icons.extension, color: AppColors.accent, size: 20),
+    );
+  }
+
+  Widget _actionsMenu(provider_model.ProviderInfo p) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert, color: AppColors.textMuted, size: 20),
+      onSelected: (value) {
+        switch (value) {
+          case 'consents':
+            _openConsents(p);
+            break;
+          case 'uninstall':
+            _uninstall(p);
+            break;
+        }
+      },
+      itemBuilder: (ctx) => [
+        const PopupMenuItem(
+          value: 'consents',
+          child: ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.shield, size: 18),
+            title: Text('Permissions'),
+          ),
+        ),
+        if (!p.provider.required)
+          const PopupMenuItem(
+            value: 'uninstall',
+            child: ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading:
+                  Icon(Icons.delete_outline, size: 18, color: AppColors.error),
+              title: Text('Uninstall',
+                  style: TextStyle(color: AppColors.error)),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _marketplaceStub() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: const [
+              Icon(Icons.storefront, color: AppColors.accent, size: 20),
+              SizedBox(width: 8),
+              Text('Remote marketplace',
+                  style:
+                      TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+            ]),
+            const SizedBox(height: 8),
+            const Text(
+              'Landing in M3: browse, pull, and update third-party plugins '
+              'from a signed registry. Until then, install bundled examples '
+              'via the CLI:',
+              style: TextStyle(color: AppColors.textMuted, fontSize: 12, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const SelectableText(
+                'OPENDRAY_TOKEN=<token> opendray plugin install \\\n'
+                '    --yes ./plugins/examples/kanban',
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 11,
+                  color: AppColors.text,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

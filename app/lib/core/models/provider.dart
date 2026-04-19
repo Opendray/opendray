@@ -99,8 +99,10 @@ class Provider {
   final String description;
   final String icon;
   final String version;
-  final String type; // cli | local | shell | panel
+  final String type; // cli | local | shell | panel (legacy) | '' (v1)
   final String category; // for panels: docs | files | custom
+  final String form; // v1: declarative | webview | host
+  final bool required;
   final Capabilities capabilities;
   final List<ConfigField> configSchema;
 
@@ -112,6 +114,8 @@ class Provider {
     required this.version,
     required this.type,
     this.category = '',
+    this.form = '',
+    this.required = false,
     required this.capabilities,
     this.configSchema = const [],
   });
@@ -124,6 +128,8 @@ class Provider {
         version: json['version'] as String? ?? '0.0.0',
         type: json['type'] as String? ?? 'cli',
         category: json['category'] as String? ?? '',
+        form: json['form'] as String? ?? '',
+        required: json['required'] as bool? ?? false,
         capabilities: Capabilities.fromJson(
             json['capabilities'] as Map<String, dynamic>? ?? {}),
         configSchema: (json['configSchema'] as List<dynamic>?)

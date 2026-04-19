@@ -9,7 +9,6 @@ import '../../core/services/l10n.dart';
 import '../../core/services/server_config.dart';
 import '../../shared/app_modals.dart';
 import '../../shared/theme/app_theme.dart';
-import 'widgets/plugins_section.dart';
 
 const String _kBuildDate =
     String.fromEnvironment('BUILD_DATE', defaultValue: '');
@@ -205,8 +204,41 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 16),
 
-          // Plugins
-          const PluginsSection(),
+          // Plugins — moved to the dedicated /plugins page to keep the
+          // Settings surface lean as the plugin count grows. The link
+          // card here replaces the 700+ line embedded PluginsSection.
+          Card(
+            child: InkWell(
+              onTap: () => context.push('/plugins'),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(children: [
+                  const Icon(Icons.extension_outlined,
+                      color: AppColors.accent, size: 20),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Plugins',
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600)),
+                        SizedBox(height: 2),
+                        Text(
+                          'Install, manage, and revoke permissions',
+                          style: TextStyle(
+                              fontSize: 12, color: AppColors.textMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right,
+                      color: AppColors.textMuted, size: 20),
+                ]),
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
 
           // Claude accounts entry — opens the dedicated management page.

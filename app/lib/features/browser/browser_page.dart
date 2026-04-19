@@ -50,7 +50,25 @@ class _BrowserPageState extends State<BrowserPage> {
           .toList();
       bool has(bool Function(ProviderInfo) pred) => panels.any(pred);
 
+      // v1 webview plugins (form=="webview") get generic cards rendered
+      // via the plugin-view route. One card per enabled webview plugin.
+      final webviews = providers
+          .where((p) => p.provider.form == 'webview' && p.enabled)
+          .toList();
+
       final entries = <_PanelEntry>[
+        for (final w in webviews)
+          _PanelEntry(
+            route: 'plugin/${w.provider.name}',
+            titleKey: w.provider.displayName.isEmpty
+                ? w.provider.name
+                : w.provider.displayName,
+            descKey: w.provider.description.isEmpty
+                ? 'Webview plugin · v${w.provider.version}'
+                : w.provider.description,
+            icon: Icons.extension,
+            emoji: w.provider.icon,
+          ),
         if (has((p) => p.provider.category == 'docs'))
           const _PanelEntry(
             route: 'docs', titleKey: 'Docs', icon: Icons.description,
@@ -193,13 +211,17 @@ class _BrowserPageState extends State<BrowserPage> {
                 color: AppColors.accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(e.icon, color: AppColors.accent, size: 22),
+              child: e.emoji != null && e.emoji!.isNotEmpty
+                  ? Text(e.emoji!, style: const TextStyle(fontSize: 20))
+                  : Icon(e.icon, color: AppColors.accent, size: 22),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
+                  // webview plugin titles come straight from the manifest;
+                  // L10n lookup is a no-op pass-through for unknown keys.
                   context.tr(e.titleKey),
                   style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                 ),
@@ -224,10 +246,14 @@ class _PanelEntry {
   final String titleKey;
   final String descKey;
   final IconData icon;
+  /// Optional emoji / glyph — when present, rendered instead of [icon].
+  /// v1 webview plugins surface their manifest icon string here.
+  final String? emoji;
   const _PanelEntry({
     required this.route,
     required this.titleKey,
     required this.descKey,
     required this.icon,
+    this.emoji,
   });
 }

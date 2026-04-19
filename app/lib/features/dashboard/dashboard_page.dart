@@ -17,7 +17,6 @@ import '../logs/logs_page.dart';
 import '../mcp/mcp_page.dart';
 import '../messaging/telegram_page.dart';
 import '../tasks/tasks_page.dart';
-import '../workbench/activity_bar.dart';
 import '../workbench/menu_slot.dart';
 import '../workbench/status_bar_strip.dart';
 import '../workbench/view_host.dart';
@@ -89,14 +88,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Phone-only drawer hosts the activity bar; tablet+ keeps it docked
-    // on the left rail (see body LayoutBuilder below). We read
-    // MediaQuery once here so both places agree on the breakpoint.
-    final mq = MediaQuery.of(context);
-    final isTablet = mq.size.width > 600;
-    final service = context.read<WorkbenchService>();
     return Scaffold(
-      drawer: isTablet ? null : _PhoneActivityBarDrawer(service: service),
       appBar: AppBar(
         title: Row(
           children: [
@@ -116,6 +108,11 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: 'Plugins',
+            icon: const Icon(Icons.extension_outlined),
+            onPressed: () => context.push('/plugins'),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 4),
             child: FilledButton.icon(
@@ -136,30 +133,12 @@ class _DashboardPageState extends State<DashboardPage> {
           const SizedBox(width: 8),
         ],
       ),
-      // T17/T18 — wrap the dashboard body in a ViewHost so plugin views
-      // (focused via the activity bar) replace the session list. When no
-      // view is focused, fallback renders the normal dashboard body.
-      // ActivityBar docks as a left rail on tablet/desktop (width > 600);
-      // on phone we defer rail placement to avoid fighting with
-      // Scaffold.bottomNavigationBar (which owns the status bar strip).
-      // TODO(T17/T18): wire the phone bottom-nav rail in a follow-up task
-      // that reworks the bottom slot to host both status bar + rail.
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final mainBody = _buildMainBody();
-          final viewHost = _DashboardViewHost(fallback: mainBody);
-          // Phone: activity bar lives in the drawer (see Scaffold.drawer
-          // above), so the body is just the view host. Tablet+: docked
-          // left rail alongside the view host.
-          if (!isTablet) return viewHost;
-          return Row(
-            children: [
-              ActivityBar(service: service, axis: Axis.vertical),
-              Expanded(child: viewHost),
-            ],
-          );
-        },
-      ),
+      // Plugin views (opened via workbench.openView from a plugin's
+      // command or menu entry) replace the session list when focused.
+      // With no view focused, the dashboard shows its usual body. The
+      // activity bar rail was removed — plugin discovery now lives under
+      // /plugins (install/manage) and the launcher cards on /browser.
+      body: _DashboardViewHost(fallback: _buildMainBody()),
       // T20 footer — renders nothing until a plugin contributes a status-bar
       // item. Backed by the real WorkbenchService via an adapter held in
       // _DashboardStatusBar so the adapter's listener lifecycle is bound
@@ -347,56 +326,3 @@ class _DashboardViewHost extends StatelessWidget {
   }
 }
 
-/// Phone-only left drawer hosting the vertical [ActivityBar]. Listens to
-/// [WorkbenchService.currentViewID] and auto-closes the drawer as soon
-/// as a new view is focused — so tapping an icon jumps directly to the
-/// plugin view without a second dismiss gesture.
-class _PhoneActivityBarDrawer extends StatefulWidget {
-  const _PhoneActivityBarDrawer({required this.service});
-
-  final WorkbenchService service;
-
-  @override
-  State<_PhoneActivityBarDrawer> createState() =>
-      _PhoneActivityBarDrawerState();
-}
-
-class _PhoneActivityBarDrawerState extends State<_PhoneActivityBarDrawer> {
-  String? _lastViewID;
-
-  @override
-  void initState() {
-    super.initState();
-    _lastViewID = widget.service.currentViewID;
-    widget.service.addListener(_onServiceChanged);
-  }
-
-  @override
-  void dispose() {
-    widget.service.removeListener(_onServiceChanged);
-    super.dispose();
-  }
-
-  void _onServiceChanged() {
-    final current = widget.service.currentViewID;
-    if (current != _lastViewID) {
-      _lastViewID = current;
-      // Only auto-close when a view is actively focused (not when it's
-      // cleared). Guard with maybePop so we don't explode if the drawer
-      // is already closed — e.g. tablet resize tore it down mid-flight.
-      if (current != null && current.isNotEmpty && mounted) {
-        final nav = Navigator.of(context);
-        if (nav.canPop()) nav.pop();
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Drawer(
-      child: SafeArea(
-        child: ActivityBar(service: widget.service, axis: Axis.vertical),
-      ),
-    );
-  }
-}
