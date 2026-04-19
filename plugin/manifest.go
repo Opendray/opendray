@@ -10,6 +10,15 @@ import (
 	"strings"
 )
 
+// Plugin forms (v1). A plugin's runtime shape is declared by this
+// field; legacy manifests that don't set it are mapped on the fly by
+// [Provider.EffectiveForm] so the compat path works unchanged.
+const (
+	FormDeclarative = "declarative"
+	FormWebview     = "webview"
+	FormHost        = "host"
+)
+
 // Provider types.
 const (
 	ProviderTypeCLI   = "cli"   // Interactive CLI tool (claude, gemini, codex)
@@ -38,6 +47,156 @@ type Provider struct {
 
 	// Configuration schema — drives the frontend form
 	ConfigSchema []ConfigField `json:"configSchema"`
+
+	// ─── v1 superset fields ──────────────────────────────────────
+	// Every field below is optional. Legacy manifests leave them
+	// zero and [Provider.IsV1] returns false so the existing compat
+	// load path keeps working untouched.
+
+	// Publisher is the marketplace-namespace owner id (e.g. "opendray").
+	// Required on v1 manifests.
+	Publisher string `json:"publisher,omitempty"`
+
+	// Engines declares host-compatibility ranges. `engines.opendray`
+	// is required on v1 manifests (semver range, e.g. "^1.0.0").
+	Engines *EnginesV1 `json:"engines,omitempty"`
+
+	// Form is the plugin runtime shape: declarative | webview | host.
+	// Absent = derived from legacy Type via [Provider.EffectiveForm].
+	Form string `json:"form,omitempty"`
+
+	// Activation is the list of events that wake the plugin (empty =
+	// lazy, never auto-activated; onStartup forces eager load).
+	Activation []string `json:"activation,omitempty"`
+
+	// Contributes declares every workbench slot this plugin fills.
+	// M1 only interprets commands / statusBar / keybindings / menus;
+	// other fields are accepted by schema but not yet rendered.
+	Contributes *ContributesV1 `json:"contributes,omitempty"`
+
+	// Permissions is the capability manifest. Host asks the user to
+	// consent to these at install time and enforces them at every
+	// bridge call.
+	Permissions *PermissionsV1 `json:"permissions,omitempty"`
+
+	// V2Reserved is a forward-compat escape hatch: the host ignores
+	// unknown keys inside it instead of erroring, so plugins written
+	// against a later schema degrade gracefully on older hosts.
+	V2Reserved json.RawMessage `json:"v2Reserved,omitempty"`
+}
+
+// EnginesV1 declares plugin → host version compatibility.
+type EnginesV1 struct {
+	Opendray string `json:"opendray"`
+	Node     string `json:"node,omitempty"`
+	Deno     string `json:"deno,omitempty"`
+}
+
+// ContributesV1 holds every workbench-slot contribution.
+// Only commands/statusBar/keybindings/menus are honoured in M1.
+type ContributesV1 struct {
+	Commands    []CommandV1              `json:"commands,omitempty"`
+	StatusBar   []StatusBarItemV1        `json:"statusBar,omitempty"`
+	Keybindings []KeybindingV1           `json:"keybindings,omitempty"`
+	Menus       map[string][]MenuEntryV1 `json:"menus,omitempty"`
+}
+
+// CommandV1 registers a runnable command with the workbench.
+type CommandV1 struct {
+	ID       string        `json:"id"`
+	Title    string        `json:"title"`
+	Icon     string        `json:"icon,omitempty"`
+	Category string        `json:"category,omitempty"`
+	When     string        `json:"when,omitempty"`
+	Run      *CommandRunV1 `json:"run,omitempty"`
+}
+
+// CommandRunV1 is the declarative action dispatcher. The `kind` field
+// is the discriminator; only `notify` / `openUrl` / `exec` / `runTask`
+// are live in M1 — `host` and `openView` return EUNAVAIL.
+type CommandRunV1 struct {
+	Kind    string            `json:"kind"`
+	Method  string            `json:"method,omitempty"`
+	Args    []json.RawMessage `json:"args,omitempty"`
+	ViewID  string            `json:"viewId,omitempty"`
+	URL     string            `json:"url,omitempty"`
+	Message string            `json:"message,omitempty"`
+	TaskID  string            `json:"taskId,omitempty"`
+}
+
+// StatusBarItemV1 renders a small label/icon in the workbench status strip.
+type StatusBarItemV1 struct {
+	ID        string `json:"id"`
+	Text      string `json:"text"`
+	Tooltip   string `json:"tooltip,omitempty"`
+	Command   string `json:"command,omitempty"`
+	Alignment string `json:"alignment,omitempty"`
+	Priority  int    `json:"priority,omitempty"`
+}
+
+// KeybindingV1 binds a key (+ optional platform-specific mac key) to a command id.
+type KeybindingV1 struct {
+	Command string `json:"command"`
+	Key     string `json:"key"`
+	Mac     string `json:"mac,omitempty"`
+	When    string `json:"when,omitempty"`
+}
+
+// MenuEntryV1 inserts a command (or submenu) into a named menu path.
+type MenuEntryV1 struct {
+	Command string `json:"command,omitempty"`
+	Submenu string `json:"submenu,omitempty"`
+	When    string `json:"when,omitempty"`
+	Group   string `json:"group,omitempty"`
+}
+
+// PermissionsV1 is the install-time capability grant.
+//
+// Polymorphic fields (fs/exec/http) accept either a boolean (grant-all
+// or grant-none) or a more specific shape (allowed paths / commands /
+// URLs). v1 parsing preserves the raw JSON so each call-site can
+// interpret under the shape that bridge method expects — keeps T1
+// additive and lets T2 (validator) pin down semantics without a
+// schema rewrite.
+type PermissionsV1 struct {
+	Fs        json.RawMessage `json:"fs,omitempty"`
+	Exec      json.RawMessage `json:"exec,omitempty"`
+	HTTP      json.RawMessage `json:"http,omitempty"`
+	Session   string          `json:"session,omitempty"`
+	Storage   bool            `json:"storage,omitempty"`
+	Secret    bool            `json:"secret,omitempty"`
+	Clipboard string          `json:"clipboard,omitempty"`
+	Telegram  bool            `json:"telegram,omitempty"`
+	Git       string          `json:"git,omitempty"`
+	LLM       bool            `json:"llm,omitempty"`
+	Events    []string        `json:"events,omitempty"`
+}
+
+// IsV1 reports whether this manifest opted into the v1 plugin contract.
+// Opting in requires both `publisher` and `engines.opendray` — the two
+// fields that identify a plugin author and gate host compatibility.
+// Zero-valued manifests (the legacy compat path) always return false.
+func (p Provider) IsV1() bool {
+	return p.Publisher != "" && p.Engines != nil && p.Engines.Opendray != ""
+}
+
+// EffectiveForm returns the runtime shape the host should use. Explicit
+// `form` wins; otherwise legacy `type` is mapped:
+//
+//	cli | local | shell  →  host
+//	panel                →  declarative  (M1 compat path; M2 introduces webview)
+//	anything else        →  declarative
+func (p Provider) EffectiveForm() string {
+	if p.Form != "" {
+		return p.Form
+	}
+	switch p.Type {
+	case ProviderTypeCLI, ProviderTypeLocal, ProviderTypeShell:
+		return FormHost
+	case ProviderTypePanel:
+		return FormDeclarative
+	}
+	return FormDeclarative
 }
 
 // CLISpec describes how to spawn this tool as a process.

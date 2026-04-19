@@ -69,6 +69,10 @@ func (d *DB) Migrate(ctx context.Context) error {
 		"migrations/007_rollback_local_backend.sql",
 		"migrations/008_llm_providers.sql",
 		"migrations/009_admin_auth.sql",
+		"migrations/010_plugin_consents.sql",
+		"migrations/011_plugin_kv.sql",
+		"migrations/012_plugin_secret.sql",
+		"migrations/013_plugin_audit.sql",
 	}
 	for _, path := range files {
 		sql, err := migrationsFS.ReadFile(path)
