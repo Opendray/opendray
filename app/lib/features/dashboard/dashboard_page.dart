@@ -7,7 +7,10 @@ import '../../core/models/session.dart';
 import '../../core/services/auth_service.dart';
 import '../../shared/session_launcher.dart';
 import '../../shared/theme/app_theme.dart';
+import '../workbench/menu_slot.dart';
 import '../workbench/status_bar_strip.dart';
+import '../workbench/workbench_service.dart';
+import '../workbench/workbench_sources.dart';
 import 'widgets/session_card.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -22,11 +25,6 @@ class _DashboardPageState extends State<DashboardPage> {
   String? _error;
   Timer? _pollTimer;
 
-  // TODO(M1): wire real StatusBarSource from WorkbenchService once T19 lands.
-  // For now, a no-op source reserves the footer slot so the layout doesn't
-  // shift when plugins eventually contribute status-bar items.
-  final StatusBarSource _statusBarSource = NullStatusBarSource();
-
   ApiClient get _api => context.read<ApiClient>();
 
   @override
@@ -39,7 +37,6 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void dispose() {
     _pollTimer?.cancel();
-    (_statusBarSource as ChangeNotifier).dispose();
     super.dispose();
   }
 
@@ -77,7 +74,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(right: 4),
             child: FilledButton.icon(
               onPressed: _showCreateDialog,
               icon: const Icon(Icons.add, size: 16),
@@ -88,6 +85,12 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
           ),
+          // T22 — plugin-contributed menu entries (e.g. time-ninja's
+          // `time.start`). Collapses to SizedBox.shrink when no plugin
+          // has contributed to appBar/right, so this adds zero chrome
+          // until a plugin registers a menu contribution.
+          const _AppBarMenuSlot(),
+          const SizedBox(width: 8),
         ],
       ),
       body: _loading && _sessions.isEmpty
@@ -112,9 +115,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ),
       // T20 footer — renders nothing until a plugin contributes a status-bar
-      // item (NullStatusBarSource for now; real WorkbenchService wires in
-      // when T19 lands).
-      bottomNavigationBar: StatusBarStrip(source: _statusBarSource),
+      // item. Backed by the real WorkbenchService via an adapter held in
+      // _DashboardStatusBar so the adapter's listener lifecycle is bound
+      // to a stable State (no leak on every Scaffold rebuild).
+      bottomNavigationBar: const _DashboardStatusBar(),
     );
   }
 
@@ -196,4 +200,54 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
+}
+
+/// Holds a [WorkbenchMenuSource] tied to this State's lifecycle so the
+/// adapter's forwarding listener is registered exactly once — not per
+/// Scaffold rebuild — and released on dispose. Keeps app.dart untouched
+/// (that file is frozen for this task) while avoiding a listener leak.
+class _AppBarMenuSlot extends StatefulWidget {
+  const _AppBarMenuSlot();
+
+  @override
+  State<_AppBarMenuSlot> createState() => _AppBarMenuSlotState();
+}
+
+class _AppBarMenuSlotState extends State<_AppBarMenuSlot> {
+  late final WorkbenchMenuSource _source =
+      WorkbenchMenuSource(context.read<WorkbenchService>());
+
+  @override
+  void dispose() {
+    _source.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      MenuSlot(id: 'appBar/right', source: _source);
+}
+
+/// Holds a [WorkbenchStatusBarSource] for the dashboard footer. Same
+/// pattern as [_AppBarMenuSlot] — State owns the adapter so disposal
+/// removes the listener from the underlying service cleanly.
+class _DashboardStatusBar extends StatefulWidget {
+  const _DashboardStatusBar();
+
+  @override
+  State<_DashboardStatusBar> createState() => _DashboardStatusBarState();
+}
+
+class _DashboardStatusBarState extends State<_DashboardStatusBar> {
+  late final WorkbenchStatusBarSource _source =
+      WorkbenchStatusBarSource(context.read<WorkbenchService>());
+
+  @override
+  void dispose() {
+    _source.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => StatusBarStrip(source: _source);
 }
