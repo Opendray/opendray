@@ -364,6 +364,7 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 	// as ShowMessage/OpenView/StatusBar sink for the workbench namespace.
 	bridgeMgr := bridge.NewManager(logger)
 	workbenchBus := gateway.NewWorkbenchBus(logger)
+	installer.OnContributionsChanged = workbenchBus.PublishContributionsChanged
 	workbenchAPI := bridge.NewWorkbenchAPI(bridge.WorkbenchConfig{
 		Message:   workbenchBus,
 		OpenView:  workbenchBus,

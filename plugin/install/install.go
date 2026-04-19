@@ -64,6 +64,13 @@ type Installer struct {
 	// mutation is not supported.
 	AllowLocal bool // T25: controlled by kernel/config.Config.AllowLocalPlugins
 
+	// OnContributionsChanged fires once per successful Confirm and Uninstall
+	// after the runtime registry is updated. Callers wire this to
+	// gateway.WorkbenchBus.PublishContributionsChanged so Flutter SSE
+	// subscribers refetch /api/workbench/contributions (T15). Called
+	// synchronously — keep the callback fast; nil is a no-op.
+	OnContributionsChanged func()
+
 	pending *pendingStore
 
 	// janitor lifecycle
@@ -384,6 +391,10 @@ func (i *Installer) Confirm(ctx context.Context, token string) error {
 		ArgsHash:   shortHash(pend.Token[:16]), // token is already a secret; short-hashing it protects the audit log
 	})
 
+	if i.OnContributionsChanged != nil {
+		i.OnContributionsChanged()
+	}
+
 	return nil
 }
 
@@ -427,6 +438,10 @@ func (i *Installer) Uninstall(ctx context.Context, name string) error {
 		Result:     "ok",
 		ArgsHash:   shortHash(name),
 	})
+
+	if i.OnContributionsChanged != nil {
+		i.OnContributionsChanged()
+	}
 
 	return nil
 }

@@ -609,6 +609,72 @@ func TestInstaller_ExpiredTokenRejected(t *testing.T) {
 	}
 }
 
+// TestInstaller_OnContributionsChangedFires — T15.
+// Confirms that Installer fires OnContributionsChanged exactly once per
+// successful Confirm AND per successful Uninstall, in that order, so the
+// gateway SSE hub can publish contributionsChanged to Flutter clients.
+func TestInstaller_OnContributionsChangedFires(t *testing.T) {
+	db := bootDB(t)
+	ctx := context.Background()
+
+	src := writeValidBundle(t, t.TempDir(), "ccplug", "1.0.0")
+	dataDir := t.TempDir()
+
+	rt := mustRuntime(db)
+	inst := NewInstaller(dataDir, db, rt, bridge.NewGate(nil, nil, slog.Default()), slog.Default())
+	t.Cleanup(inst.Stop)
+	inst.AllowLocal = true
+
+	var (
+		mu     sync.Mutex
+		events []string
+	)
+	inst.OnContributionsChanged = func() {
+		mu.Lock()
+		events = append(events, fmt.Sprintf("t=%d", len(events)))
+		mu.Unlock()
+	}
+
+	pend, err := inst.Stage(ctx, LocalSource{Path: src})
+	if err != nil {
+		t.Fatalf("Stage: %v", err)
+	}
+	if err := inst.Confirm(ctx, pend.Token); err != nil {
+		t.Fatalf("Confirm: %v", err)
+	}
+
+	mu.Lock()
+	if got := len(events); got != 1 {
+		mu.Unlock()
+		t.Fatalf("OnContributionsChanged after Confirm: got %d, want 1", got)
+	}
+	mu.Unlock()
+
+	if err := inst.Uninstall(ctx, "ccplug"); err != nil {
+		t.Fatalf("Uninstall: %v", err)
+	}
+
+	mu.Lock()
+	afterUninstall := len(events)
+	mu.Unlock()
+	if afterUninstall != 2 {
+		t.Fatalf("OnContributionsChanged after Uninstall: got %d, want 2", afterUninstall)
+	}
+
+	// Second (idempotent) uninstall still fires — current contract is
+	// "fire on every successful Uninstall call"; the gateway publishing
+	// an extra no-op event is cheap (Flutter refetch is idempotent too).
+	if err := inst.Uninstall(ctx, "ccplug"); err != nil {
+		t.Fatalf("Uninstall (second): %v", err)
+	}
+	mu.Lock()
+	afterSecond := len(events)
+	mu.Unlock()
+	if afterSecond != 3 {
+		t.Fatalf("OnContributionsChanged after idempotent Uninstall: got %d, want 3", afterSecond)
+	}
+}
+
 func TestInstaller_UninstallRemovesAllTraces(t *testing.T) {
 	db := bootDB(t)
 	ctx := context.Background()
