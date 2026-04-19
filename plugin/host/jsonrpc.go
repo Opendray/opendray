@@ -62,11 +62,19 @@ type RPC struct {
 	Error   *RPCError       `json:"error,omitempty"`
 }
 
-// RPCError is the error envelope used inside RPC.Error.
+// RPCError is the error envelope used inside RPC.Error. Implements
+// the error interface so handlers can return it through the standard
+// Go error chain — the Mux unwraps it back into the on-the-wire shape.
 type RPCError struct {
 	Code    int             `json:"code"`
 	Message string          `json:"message"`
 	Data    json.RawMessage `json:"data,omitempty"`
+}
+
+// Error makes *RPCError implement error. The format matches the wire
+// shape so log lines are self-explanatory.
+func (e *RPCError) Error() string {
+	return fmt.Sprintf("jsonrpc %d: %s", e.Code, e.Message)
 }
 
 // RPC standard error codes (see JSON-RPC 2.0 §5.1). Ranges -32000 to
