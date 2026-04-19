@@ -64,6 +64,16 @@ type Server struct {
 	// s.hub.DB() and s.bridgeMgr.
 	consentStoreOverride  consentStore
 	consentBridgeOverride consentInvalidator
+
+	// T14 — SSE workbench stream.
+	// workbenchBus is the fan-out channel for host → Flutter out-of-band
+	// events (showMessage, openView, updateStatusBar, contributionsChanged).
+	// Nil disables the stream endpoint (returns 503 EBUS).
+	workbenchBus *WorkbenchBus
+
+	// heartbeatInterval overrides the 20 s production heartbeat in tests.
+	// Zero means use defaultHeartbeatInterval (20 s).
+	heartbeatInterval time.Duration
 }
 
 // Config holds gateway configuration.
@@ -84,6 +94,9 @@ type Config struct {
 	// M2 T7 — plugin bridge WS.
 	BridgeManager *bridge.Manager // shared bridge.Manager instance; nil disables
 	Plugins2      PluginsConfig   // plugin-bridge-tunable knobs
+
+	// T14 — SSE workbench stream. Nil disables the endpoint (returns 503 EBUS).
+	WorkbenchBus *WorkbenchBus
 }
 
 // PluginsConfig holds runtime-tunable knobs for the bridge handler.
@@ -129,6 +142,7 @@ func New(cfg Config) *Server {
 		bridgeMgr:       cfg.BridgeManager,
 		bridgeCfg:       bridgeCfg,
 		bridgeNamespace: newNamespaceRegistry(),
+		workbenchBus:    cfg.WorkbenchBus,
 	}
 	if cfg.MCP != nil {
 		s.mcp = mcp.NewHandlers(cfg.MCP)
@@ -313,6 +327,10 @@ func New(cfg Config) *Server {
 		// Workbench contributions — flat view of all installed plugin contribution
 		// points (commands, statusBar, keybindings, menus). Pure read; no DB (T9).
 		r.Get("/api/workbench/contributions", s.workbenchContributions)
+
+		// Workbench SSE stream — host → Flutter out-of-band events (T14).
+		// Streams showMessage, openView, updateStatusBar, contributionsChanged.
+		r.Get("/api/workbench/stream", s.workbenchStream)
 
 		// Command invoke — dispatches a named command on a named plugin (T11).
 		r.Post("/api/plugins/{name}/commands/{id}/invoke", s.commandInvoke)
