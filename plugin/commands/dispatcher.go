@@ -20,6 +20,7 @@ package commands
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -74,6 +75,24 @@ type TaskRunner interface {
 	Run(ctx context.Context, id string, stdout, stderr io.Writer) (exitCode int, err error)
 }
 
+// HostCaller is the minimum surface Dispatcher needs to dispatch the
+// host run kind. Nil disables the kind (ErrRunKindUnimpl).
+// Production wiring passes a function that calls
+// `Supervisor.Ensure(ctx, plugin).Call(ctx, method, params)`. Keeping
+// it as a function (not a struct) avoids the `plugin/commands` package
+// having to import `plugin/host`.
+type HostCaller interface {
+	Call(ctx context.Context, plugin, method string, params json.RawMessage) (json.RawMessage, error)
+}
+
+// HostCallerFunc is a func-to-interface adapter.
+type HostCallerFunc func(ctx context.Context, plugin, method string, params json.RawMessage) (json.RawMessage, error)
+
+// Call implements HostCaller.
+func (f HostCallerFunc) Call(ctx context.Context, plugin, method string, params json.RawMessage) (json.RawMessage, error) {
+	return f(ctx, plugin, method, params)
+}
+
 // ─── Config + Dispatcher ─────────────────────────────────────────────────────
 
 // Config bundles Dispatcher dependencies. Using a struct instead of positional
@@ -83,6 +102,7 @@ type Config struct {
 	Registry *contributions.Registry // required — looks up commands
 	Gate     CapabilityChecker       // required — capability enforcement
 	Tasks    TaskRunner              // optional — nil disables runTask kind
+	Host     HostCaller              // optional — nil disables host kind (M3)
 	Log      *slog.Logger            // optional — defaults to slog.Default()
 }
 
@@ -92,6 +112,7 @@ type Dispatcher struct {
 	registry *contributions.Registry
 	gate     CapabilityChecker
 	tasks    TaskRunner
+	host     HostCaller
 	log      *slog.Logger
 }
 
@@ -111,6 +132,7 @@ func NewDispatcher(cfg Config) (*Dispatcher, error) {
 		registry: cfg.Registry,
 		gate:     cfg.Gate,
 		tasks:    cfg.Tasks,
+		host:     cfg.Host,
 		log:      log,
 	}, nil
 }
@@ -141,6 +163,7 @@ type resolvedCmd struct {
 	method     string
 	taskID     string
 	viewID     string
+	args       []json.RawMessage // host kind — passed through to sidecar
 }
 
 // ─── Invoke ───────────────────────────────────────────────────────────────────
@@ -177,10 +200,42 @@ func (d *Dispatcher) Invoke(ctx context.Context, pluginName, commandID string, _
 	case "runTask":
 		return d.runTask(ctx, rc)
 	case "host":
-		return nil, fmt.Errorf("%w: kind=%q requires M3", ErrRunKindUnimpl, rc.kind)
+		return d.runHost(ctx, rc)
 	default:
 		return nil, fmt.Errorf("%w: unknown kind=%q", ErrRunKindUnimpl, rc.kind)
 	}
+}
+
+// runHost dispatches to the plugin's sidecar via the configured
+// HostCaller (T17 bridge). The method string is the CommandRunV1.Method
+// field; params are the CommandRunV1.Args array marshalled as-is.
+//
+// Errors:
+//   - ErrRunKindUnimpl when HostCaller is nil (no supervisor wired).
+//   - Wrapped transport error from the supervisor / mux.
+func (d *Dispatcher) runHost(ctx context.Context, rc *resolvedCmd) (*Result, error) {
+	if d.host == nil {
+		return nil, fmt.Errorf("%w: host caller not configured", ErrRunKindUnimpl)
+	}
+	if rc.method == "" {
+		return nil, ErrMissingRunSpec
+	}
+	var params json.RawMessage
+	if len(rc.args) > 0 {
+		p, err := json.Marshal(rc.args)
+		if err != nil {
+			return nil, fmt.Errorf("host: marshal params: %w", err)
+		}
+		params = p
+	}
+	raw, err := d.host.Call(ctx, rc.pluginName, rc.method, params)
+	if err != nil {
+		return nil, err
+	}
+	// The sidecar returns arbitrary JSON. Encode it as the Output field
+	// so the caller (HTTP /invoke handler) can surface it without a
+	// type assertion.
+	return &Result{Kind: "host", Output: string(raw)}, nil
 }
 
 // resolve looks up the command in the registry and returns a resolvedCmd.
@@ -207,6 +262,7 @@ func (d *Dispatcher) resolve(pluginName, commandID string) (*resolvedCmd, error)
 			method:     c.Run.Method,
 			taskID:     c.Run.TaskID,
 			viewID:     c.Run.ViewID,
+			args:       c.Run.Args,
 		}, nil
 	}
 	return nil, ErrCommandNotFound

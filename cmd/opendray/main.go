@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -355,8 +356,23 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 	pluginGate := bridge.NewGate(&dbConsentReader{db: db}, &dbAuditSink{db: db}, logger)
 	installer := install.NewInstaller(cfg.PluginsDataDir, db, providerRuntime, pluginGate, logger)
 	installer.AllowLocal = cfg.AllowLocalPlugins
+	// hostSupervisor is constructed below once the namespace APIs exist;
+	// declared here so the dispatcher's HostCaller closure can reference
+	// it by name. The closure is safe as long as a sidecar isn't invoked
+	// before hostSupervisor is assigned (startup order guarantees this).
+	var hostSupervisor *host.Supervisor
 	dispatcher, err := commands.NewDispatcher(commands.Config{
 		Registry: contribRegistry, Gate: pluginGate, Log: logger,
+		Host: commands.HostCallerFunc(func(ctx context.Context, plugin, method string, params json.RawMessage) (json.RawMessage, error) {
+			if hostSupervisor == nil {
+				return nil, fmt.Errorf("host: supervisor not initialised")
+			}
+			sc, serr := hostSupervisor.Ensure(ctx, plugin)
+			if serr != nil {
+				return nil, serr
+			}
+			return sc.Call(ctx, method, params)
+		}),
 	})
 	if err != nil {
 		logger.Error("plugin command dispatcher init failed", "error", err)
@@ -419,7 +435,7 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 		"events":    host.NamespaceAdapter{Inner: eventsAPI.Dispatch},
 	}
 
-	hostSupervisor := host.NewSupervisor(host.Config{
+	hostSupervisor = host.NewSupervisor(host.Config{
 		DataDir:   cfg.PluginsDataDir,
 		Providers: providerRuntime,
 		State:     &hostStateAdapter{db: db, log: logger},
