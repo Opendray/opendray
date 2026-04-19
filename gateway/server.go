@@ -57,6 +57,13 @@ type Server struct {
 	// standing up a real Runtime with filesystem manifests. Production leaves
 	// this nil and the handler falls back to s.plugins.Get.
 	bridgePluginsOverride func(name string) (plugin.Provider, bool)
+
+	// consentStoreOverride / consentBridgeOverride let tests inject fakes for
+	// the T12 revoke endpoints without wiring embedded-pg or a real bridge
+	// Manager. Production leaves both nil and the handlers resolve via
+	// s.hub.DB() and s.bridgeMgr.
+	consentStoreOverride  consentStore
+	consentBridgeOverride consentInvalidator
 }
 
 // Config holds gateway configuration.
@@ -289,6 +296,13 @@ func New(cfg Config) *Server {
 		r.Post("/api/plugins/install/confirm", s.pluginsInstallConfirm)
 		r.Delete("/api/plugins/{name}", s.pluginsUninstall)
 		r.Get("/api/plugins/{name}/audit", s.pluginsAudit)
+
+		// Consent management (T12) — read current perms + hot-revoke.
+		// DELETE /consents/{cap} fires bridgeMgr.InvalidateConsent synchronously
+		// so in-flight WS subs terminate within the 200 ms SLO.
+		r.Get("/api/plugins/{name}/consents", s.pluginsConsentsGet)
+		r.Delete("/api/plugins/{name}/consents/{cap}", s.pluginsConsentsRevokeCap)
+		r.Delete("/api/plugins/{name}/consents", s.pluginsConsentsRevokeAll)
 
 		// Plugin asset server — serves plugin ui/ bundles (T8).
 		r.Get("/api/plugins/{name}/assets/*", s.pluginsAssets)

@@ -255,6 +255,86 @@ func TestConsentDelete(t *testing.T) {
 	})
 }
 
+// ── TestUpdateConsentPerms ──────────────────────────────────────────────────
+
+// TestUpdateConsentPerms verifies that UpdateConsentPerms:
+//   - overwrites only perms_json on an existing row,
+//   - bumps updated_at,
+//   - leaves manifest_hash and granted_at untouched,
+//   - returns ErrConsentNotFound (wrapped) for an unknown plugin.
+func TestUpdateConsentPerms(t *testing.T) {
+	db := bootDBForConsents(t)
+	ctx := context.Background()
+
+	insertTestPlugin(t, ctx, db, "update-perms-plugin", "1.0.0")
+
+	orig := PluginConsent{
+		PluginName:   "update-perms-plugin",
+		ManifestHash: "original-hash",
+		PermsJSON:    json.RawMessage(`{"storage":true,"events":["session.*"]}`),
+	}
+	if err := db.UpsertConsent(ctx, orig); err != nil {
+		t.Fatalf("UpsertConsent: %v", err)
+	}
+	before, err := db.GetConsent(ctx, orig.PluginName)
+	if err != nil {
+		t.Fatalf("GetConsent before update: %v", err)
+	}
+
+	// Make sure now() inside Postgres advances between upsert and update.
+	time.Sleep(10 * time.Millisecond)
+
+	newPerms := json.RawMessage(`{"events":["session.*"]}`)
+	if err := db.UpdateConsentPerms(ctx, orig.PluginName, newPerms); err != nil {
+		t.Fatalf("UpdateConsentPerms: %v", err)
+	}
+
+	after, err := db.GetConsent(ctx, orig.PluginName)
+	if err != nil {
+		t.Fatalf("GetConsent after update: %v", err)
+	}
+
+	t.Run("perms_json replaced", func(t *testing.T) {
+		var want, got any
+		if err := json.Unmarshal(newPerms, &want); err != nil {
+			t.Fatalf("unmarshal want: %v", err)
+		}
+		if err := json.Unmarshal(after.PermsJSON, &got); err != nil {
+			t.Fatalf("unmarshal got: %v", err)
+		}
+		wantB, _ := json.Marshal(want)
+		gotB, _ := json.Marshal(got)
+		if string(wantB) != string(gotB) {
+			t.Errorf("perms: got %s want %s", gotB, wantB)
+		}
+	})
+	t.Run("manifest_hash unchanged", func(t *testing.T) {
+		if after.ManifestHash != before.ManifestHash {
+			t.Errorf("ManifestHash changed: before=%q after=%q",
+				before.ManifestHash, after.ManifestHash)
+		}
+	})
+	t.Run("granted_at unchanged", func(t *testing.T) {
+		if !after.GrantedAt.Equal(before.GrantedAt) {
+			t.Errorf("GrantedAt changed: before=%v after=%v",
+				before.GrantedAt, after.GrantedAt)
+		}
+	})
+	t.Run("updated_at bumped", func(t *testing.T) {
+		if !after.UpdatedAt.After(before.UpdatedAt) {
+			t.Errorf("UpdatedAt not bumped: before=%v after=%v",
+				before.UpdatedAt, after.UpdatedAt)
+		}
+	})
+	t.Run("unknown plugin returns ErrConsentNotFound", func(t *testing.T) {
+		err := db.UpdateConsentPerms(ctx, "never-existed-plugin",
+			json.RawMessage(`{}`))
+		if !errors.Is(err, ErrConsentNotFound) {
+			t.Errorf("want ErrConsentNotFound, got %v", err)
+		}
+	})
+}
+
 // ── TestConsentCascade ───────────────────────────────────────────────────────
 
 // TestConsentCascade verifies:

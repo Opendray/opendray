@@ -96,6 +96,31 @@ func (d *DB) DeleteConsent(ctx context.Context, name string) error {
 	return nil
 }
 
+// UpdateConsentPerms overwrites only the perms_json column for an existing
+// consent row and bumps updated_at. The manifest_hash and granted_at columns
+// are left untouched — this is a revoke-path mutation that must not change
+// the identity of the consent grant, only its scope.
+//
+// Returns ErrConsentNotFound (wrapped) when no row exists for name, so callers
+// can distinguish "plugin never consented" from "DB error" via errors.Is.
+// All other DB errors are wrapped with context.
+func (d *DB) UpdateConsentPerms(ctx context.Context, name string, perms json.RawMessage) error {
+	tag, err := d.Pool.Exec(ctx,
+		`UPDATE plugin_consents
+		 SET perms_json = $2,
+		     updated_at = now()
+		 WHERE plugin_name = $1`,
+		name, []byte(perms),
+	)
+	if err != nil {
+		return fmt.Errorf("store: update consent perms: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("store: update consent perms %q: %w", name, ErrConsentNotFound)
+	}
+	return nil
+}
+
 // AppendAudit writes one audit row. Must not fail silently — audit is
 // load-bearing for security review and post-incident forensics.
 // All fields are passed as parameterised values; no string interpolation.
