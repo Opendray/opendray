@@ -115,6 +115,14 @@ func ValidateV1(p Provider) []ValidationError {
 		errs = append(errs, validatePermissions(p.Permissions)...)
 	}
 
+	// host.* — only inspected when the effective form is "host". The
+	// iOS build-tag gate (plugin/host_os_*.go) additionally refuses
+	// host-form entirely; validateHostV1 returns a single error in
+	// that case.
+	if p.EffectiveForm() == FormHost {
+		errs = append(errs, validateHostV1(p.Host)...)
+	}
+
 	return errs
 }
 
@@ -534,6 +542,100 @@ func validatePermissions(p *PermissionsV1) []ValidationError {
 				Msg:  fmt.Sprintf("must be read|write (or omitted for false), got %q", p.Git),
 			})
 		}
+	}
+
+	return errs
+}
+
+// ─── host.* ───────────────────────────────────────────────────────────────────
+
+var (
+	hostPlatformKeyRE = regexp.MustCompile(`^(linux|darwin|windows)-(x64|arm64)$`)
+	hostEnvKeyRE      = regexp.MustCompile(`^[A-Z_][A-Z0-9_]*$`)
+)
+
+// validateHostV1 checks a form:"host" manifest's .host block.
+//
+// iOS builds refuse host-form plugins outright — a nil-safe check keeps
+// the error message actionable when the host field is set but the OS
+// doesn't allow it. Everywhere else, this validates the field set per
+// 02-manifest.md §host.
+func validateHostV1(h *HostV1) []ValidationError {
+	if !HostFormAllowed {
+		return []ValidationError{{
+			Path: "host",
+			Msg:  "host-form plugins are not supported on this platform",
+		}}
+	}
+	if h == nil {
+		return []ValidationError{{
+			Path: "host",
+			Msg:  `required when form:"host"`,
+		}}
+	}
+
+	var errs []ValidationError
+
+	if h.Entry == "" {
+		errs = append(errs, ValidationError{Path: "host.entry", Msg: "required"})
+	} else if strings.Contains(h.Entry, "..") {
+		errs = append(errs, ValidationError{Path: "host.entry", Msg: `must not contain ".."`})
+	}
+
+	switch h.Runtime {
+	case "", HostRuntimeBinary, HostRuntimeNode, HostRuntimeDeno,
+		HostRuntimePython3, HostRuntimeBun, HostRuntimeCustom:
+		// valid (empty → defaults to binary)
+	default:
+		errs = append(errs, ValidationError{
+			Path: "host.runtime",
+			Msg: fmt.Sprintf("must be one of binary|node|deno|python3|bun|custom, got %q",
+				h.Runtime),
+		})
+	}
+
+	if h.Protocol != "" && h.Protocol != HostProtocolJSONRPCStdio {
+		errs = append(errs, ValidationError{
+			Path: "host.protocol",
+			Msg:  fmt.Sprintf("must be %q, got %q", HostProtocolJSONRPCStdio, h.Protocol),
+		})
+	}
+
+	switch h.Restart {
+	case "", HostRestartOnFailure, HostRestartAlways, HostRestartNever:
+		// valid
+	default:
+		errs = append(errs, ValidationError{
+			Path: "host.restart",
+			Msg:  fmt.Sprintf("must be on-failure|always|never, got %q", h.Restart),
+		})
+	}
+
+	for k := range h.Platforms {
+		if !hostPlatformKeyRE.MatchString(k) {
+			errs = append(errs, ValidationError{
+				Path: fmt.Sprintf("host.platforms[%q]", k),
+				Msg:  `key must match ^(linux|darwin|windows)-(x64|arm64)$`,
+			})
+		}
+	}
+	for k := range h.Env {
+		if !hostEnvKeyRE.MatchString(k) {
+			errs = append(errs, ValidationError{
+				Path: fmt.Sprintf("host.env[%q]", k),
+				Msg:  `key must match ^[A-Z_][A-Z0-9_]*$`,
+			})
+		}
+	}
+
+	if strings.Contains(h.Cwd, "..") {
+		errs = append(errs, ValidationError{Path: "host.cwd", Msg: `must not contain ".."`})
+	}
+	if h.IdleShutdownMinutes < 0 {
+		errs = append(errs, ValidationError{
+			Path: "host.idleShutdownMinutes",
+			Msg:  "must be ≥ 0 (0 = use supervisor default)",
+		})
 	}
 
 	return errs

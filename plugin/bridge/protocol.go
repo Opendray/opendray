@@ -112,3 +112,17 @@ func NewStreamChunk(id string, data any) (Envelope, error) {
 func NewStreamEnd(id string) Envelope {
 	return Envelope{V: ProtocolVersion, ID: id, Stream: "end"}
 }
+
+// NewStreamChunkErr emits an error chunk inside a live stream. Used
+// when a stream-producing capability (exec.spawn non-zero exit mid-
+// stream, http.stream truncated, fs.watch errored) needs to surface
+// a recoverable problem without tearing the subscription down. The
+// SDK receives it as a chunk with an error payload — unlike
+// NewStreamEnd, the correlation id stays live and more chunks may
+// follow.
+//
+// For terminal errors, callers should pair this with a subsequent
+// NewStreamEnd.
+func NewStreamChunkErr(id string, we *WireError) Envelope {
+	return Envelope{V: ProtocolVersion, ID: id, Stream: "chunk", Error: we}
+}

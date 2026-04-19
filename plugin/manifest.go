@@ -87,11 +87,80 @@ type Provider struct {
 	// bridge call.
 	Permissions *PermissionsV1 `json:"permissions,omitempty"`
 
+	// Host describes the sidecar runtime for form:"host" plugins. Ignored
+	// (should be absent) for declarative and webview plugins. Validated
+	// only when EffectiveForm() == FormHost and the current build supports
+	// host-form (see plugin/host_os_*.go for the iOS gate).
+	Host *HostV1 `json:"host,omitempty"`
+
 	// V2Reserved is a forward-compat escape hatch: the host ignores
 	// unknown keys inside it instead of erroring, so plugins written
 	// against a later schema degrade gracefully on older hosts.
 	V2Reserved json.RawMessage `json:"v2Reserved,omitempty"`
 }
+
+// HostV1 declares the sidecar configuration for form:"host" plugins.
+// The supervisor (plugin/host.Supervisor, M3 T14) reads this to spawn
+// and pipe stdio to the sidecar process. Absent on legacy manifests;
+// absent on declarative / webview v1 manifests.
+type HostV1 struct {
+	// Entry is the command or script path executed by the supervisor.
+	// For runtime="binary" it's an executable path; for runtime="node"
+	// it's a JS file passed as argv[1] to `node`; similarly for deno /
+	// python3 / bun. Must not contain "..".
+	Entry string `json:"entry"`
+
+	// Runtime is one of: binary | node | deno | python3 | bun | custom.
+	// "custom" means entry is invoked directly and is expected to be
+	// executable (shebang or native).
+	Runtime string `json:"runtime,omitempty"`
+
+	// Platforms maps "<os>-<arch>" to a platform-specific entry override
+	// (binary downloads on different OSes). Keys match the regex
+	// ^(linux|darwin|windows)-(x64|arm64)$. Empty map = Entry used
+	// unchanged on every platform.
+	Platforms map[string]string `json:"platforms,omitempty"`
+
+	// Protocol is the stdio wire protocol. Only "jsonrpc-stdio"
+	// (JSON-RPC 2.0 with LSP Content-Length framing) is accepted today.
+	Protocol string `json:"protocol,omitempty"`
+
+	// Restart is one of: on-failure (default) | always | never.
+	Restart string `json:"restart,omitempty"`
+
+	// Env extends the sidecar's environment. Keys must match
+	// ^[A-Z_][A-Z0-9_]*$ (standard env-var name rules).
+	Env map[string]string `json:"env,omitempty"`
+
+	// Cwd overrides the sidecar's working directory. Relative paths are
+	// resolved against the plugin's install dir. Absolute paths must
+	// pass through the capability gate's fs.read/fs.write grants.
+	Cwd string `json:"cwd,omitempty"`
+
+	// IdleShutdownMinutes is the idle timeout before the supervisor
+	// shuts the sidecar down. 0 = use supervisor default (10 min).
+	IdleShutdownMinutes int `json:"idleShutdownMinutes,omitempty"`
+}
+
+// HostRuntimeNode / HostRuntimeDeno / ... name the allowed runtime values.
+const (
+	HostRuntimeBinary  = "binary"
+	HostRuntimeNode    = "node"
+	HostRuntimeDeno    = "deno"
+	HostRuntimePython3 = "python3"
+	HostRuntimeBun     = "bun"
+	HostRuntimeCustom  = "custom"
+)
+
+// HostProtocolJSONRPCStdio is the only protocol shipped in M3.
+const HostProtocolJSONRPCStdio = "jsonrpc-stdio"
+
+// HostRestart* enumerates valid Restart values.
+const (
+	HostRestartOnFailure = "on-failure"
+	HostRestartAlways    = "always"
+	HostRestartNever     = "never"
+)
 
 // EnginesV1 declares plugin → host version compatibility.
 type EnginesV1 struct {
