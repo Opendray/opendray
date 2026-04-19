@@ -32,7 +32,10 @@ import (
 	"github.com/opendray/opendray/plugin/commands"
 	"github.com/opendray/opendray/plugin/compat"
 	"github.com/opendray/opendray/plugin/contributions"
+	"github.com/opendray/opendray/plugin/host"
 	"github.com/opendray/opendray/plugin/install"
+
+	"github.com/jackc/pgx/v5"
 )
 
 // version is injected at build time via -ldflags. Defaults to "dev" for
@@ -377,6 +380,41 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 	hookAdapter := newHookBusAdapter(hookBus, logger)
 	eventsAPI := bridge.NewEventsAPI(hookAdapter, pluginGate)
 
+	// M3 — privileged namespaces + host sidecar supervisor.
+	pathVars := &gateway.PathVarResolver{
+		DataDir:   cfg.PluginsDataDir,
+		Providers: providerRuntime,
+	}
+	fsAPI := bridge.NewFSAPI(bridge.FSConfig{
+		Gate: pluginGate, Resolver: pathVars, Log: logger,
+	})
+	execAPI := bridge.NewExecAPI(bridge.ExecConfig{
+		Gate: pluginGate, Resolver: pathVars, Log: logger,
+	})
+	httpAPI := bridge.NewHTTPAPI(bridge.HTTPConfig{
+		Gate: pluginGate, Log: logger,
+	})
+	kekProvider := auth.NewKEKProviderFromAdminAuth(credStore)
+	secretAPI := bridge.NewSecretAPI(bridge.SecretConfig{
+		Store: &secretStoreAdapter{db: db},
+		Gate:  pluginGate,
+		KEK:   kekProvider,
+		Log:   logger,
+	})
+
+	hostSupervisor := host.NewSupervisor(host.Config{
+		DataDir:   cfg.PluginsDataDir,
+		Providers: providerRuntime,
+		State:     &hostStateAdapter{db: db, log: logger},
+		Log:       logger,
+		PluginVersion: func(name string) string {
+			if p, ok := providerRuntime.Get(name); ok {
+				return p.Version
+			}
+			return ""
+		},
+	})
+
 	// Session Hub
 	idleThreshold := 8 * time.Second
 	if cfg.Plugins.IdleThresholdSeconds > 0 {
@@ -424,6 +462,10 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 	gw.RegisterNamespace("workbench", workbenchAPI)
 	gw.RegisterNamespace("storage", storageAPI)
 	gw.RegisterNamespace("events", eventsAPI)
+	gw.RegisterNamespace("fs", fsAPI)
+	gw.RegisterNamespace("exec", execAPI)
+	gw.RegisterNamespace("http", httpAPI)
+	gw.RegisterNamespace("secret", secretAPI)
 
 	server := &http.Server{Addr: cfg.Server.ListenAddr, Handler: gw.Handler()}
 
@@ -444,6 +486,9 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 	sessionHub.StopAll()
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
+	// Stop host sidecars before the HTTP server — they may depend on
+	// the gateway's HTTP routes during their own shutdown requests.
+	_ = hostSupervisor.Stop(shutdownCtx)
 	server.Shutdown(shutdownCtx)
 }
 
@@ -583,6 +628,75 @@ func synthesizeContributes(p plugin.Provider) plugin.ContributesV1 {
 		return plugin.ContributesV1{}
 	}
 	return *out.Contributes
+}
+
+// secretStoreAdapter wraps *store.DB to satisfy bridge.SecretStore.
+// The only real job is to translate pgx.ErrNoRows (what the store
+// layer returns from GetWrappedDEK) into bridge.WrappedDEKNotFound
+// (the sentinel the bridge layer checks via errors.Is). Every other
+// method passes through unchanged. Keeping this adapter here — not
+// in kernel/store — preserves the bridge's rule of not importing
+// pgx.
+type secretStoreAdapter struct{ db *store.DB }
+
+func (a *secretStoreAdapter) SecretGet(ctx context.Context, plugin, key string) ([]byte, []byte, bool, error) {
+	return a.db.SecretGet(ctx, plugin, key)
+}
+func (a *secretStoreAdapter) SecretSet(ctx context.Context, plugin, key string, ciphertext, nonce []byte) error {
+	return a.db.SecretSet(ctx, plugin, key, ciphertext, nonce)
+}
+func (a *secretStoreAdapter) SecretDelete(ctx context.Context, plugin, key string) error {
+	return a.db.SecretDelete(ctx, plugin, key)
+}
+func (a *secretStoreAdapter) SecretList(ctx context.Context, plugin string) ([]string, error) {
+	return a.db.SecretList(ctx, plugin)
+}
+func (a *secretStoreAdapter) EnsureKEKRow(ctx context.Context, plugin string, wrapped []byte, kid string) error {
+	return a.db.EnsureKEKRow(ctx, plugin, wrapped, kid)
+}
+func (a *secretStoreAdapter) GetWrappedDEK(ctx context.Context, plugin string) ([]byte, string, error) {
+	wrapped, kid, err := a.db.GetWrappedDEK(ctx, plugin)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, "", bridge.WrappedDEKNotFound
+	}
+	return wrapped, kid, err
+}
+
+// hostStateAdapter implements host.StateWriter with best-effort
+// writes to plugin_host_state (migration 015). Failures are logged
+// at warn; the supervisor never fails a start on State unavailability.
+type hostStateAdapter struct {
+	db  *store.DB
+	log *slog.Logger
+}
+
+func (a *hostStateAdapter) RecordStarted(ctx context.Context, plugin string) error {
+	_, err := a.db.Pool.Exec(ctx,
+		`INSERT INTO plugin_host_state (plugin_name, last_started_at, restart_count)
+		 VALUES ($1, now(), 0)
+		 ON CONFLICT (plugin_name) DO UPDATE
+		   SET last_started_at = now(),
+		       restart_count = plugin_host_state.restart_count + 1,
+		       last_error = NULL`,
+		plugin,
+	)
+	if err != nil {
+		a.log.Warn("host: record started failed", "plugin", plugin, "err", err)
+	}
+	return err
+}
+
+func (a *hostStateAdapter) RecordExited(ctx context.Context, plugin string, exitCode int, lastErr string) error {
+	_, err := a.db.Pool.Exec(ctx,
+		`UPDATE plugin_host_state
+		 SET last_exit_code = $2, last_error = $3
+		 WHERE plugin_name = $1`,
+		plugin, exitCode, lastErr,
+	)
+	if err != nil {
+		a.log.Warn("host: record exited failed", "plugin", plugin, "err", err)
+	}
+	return err
 }
 
 // dispatcherAdapter satisfies both gateway's unexported commandInvoker
