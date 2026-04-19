@@ -453,3 +453,106 @@ func TestRuntime_NilContributionsRegistry(t *testing.T) {
 		t.Fatalf("Remove (nil contrib reg): %v", err)
 	}
 }
+
+// ─── M2 T3 — activityBar / views / panels slots ────────────────────────
+
+// TestFlatten_ActivityBar_Views_Panels_Sorted sets two plugins that each
+// contribute one of each new slot type, and asserts the Flatten output
+// sorts by (PluginName, ID) deterministically.
+func TestFlatten_ActivityBar_Views_Panels_Sorted(t *testing.T) {
+	r := contributions.NewRegistry()
+
+	r.Set("zebra", plugin.ContributesV1{
+		ActivityBar: []plugin.ActivityBarItemV1{
+			{ID: "zebra.board", Icon: "🦓", Title: "Zebra", ViewID: "zebra.view"},
+		},
+		Views: []plugin.ViewV1{
+			{ID: "zebra.view", Title: "Zebra View", Render: "webview", Entry: "ui/index.html"},
+		},
+		Panels: []plugin.PanelV1{
+			{ID: "zebra.console", Title: "Zebra Log", Position: "bottom", Render: "webview", Entry: "ui/log.html"},
+		},
+	})
+	r.Set("antelope", plugin.ContributesV1{
+		ActivityBar: []plugin.ActivityBarItemV1{
+			{ID: "antelope.a", Icon: "🦌", Title: "Antelope", ViewID: "antelope.v"},
+		},
+		Views: []plugin.ViewV1{
+			{ID: "antelope.v", Title: "Antelope View", Render: "declarative"},
+		},
+		// no panels
+	})
+
+	flat := r.Flatten()
+
+	// activityBar: antelope first (alphabetic by PluginName)
+	if len(flat.ActivityBar) != 2 {
+		t.Fatalf("ActivityBar len = %d, want 2", len(flat.ActivityBar))
+	}
+	if flat.ActivityBar[0].PluginName != "antelope" || flat.ActivityBar[0].ID != "antelope.a" {
+		t.Errorf("ActivityBar[0] = %+v", flat.ActivityBar[0])
+	}
+	if flat.ActivityBar[1].PluginName != "zebra" || flat.ActivityBar[1].Icon != "🦓" {
+		t.Errorf("ActivityBar[1] = %+v", flat.ActivityBar[1])
+	}
+
+	// views: antelope first
+	if len(flat.Views) != 2 {
+		t.Fatalf("Views len = %d, want 2", len(flat.Views))
+	}
+	if flat.Views[0].PluginName != "antelope" {
+		t.Errorf("Views[0].PluginName = %q, want antelope", flat.Views[0].PluginName)
+	}
+	if flat.Views[1].PluginName != "zebra" || flat.Views[1].Entry != "ui/index.html" {
+		t.Errorf("Views[1] = %+v", flat.Views[1])
+	}
+
+	// panels: only zebra contributed one
+	if len(flat.Panels) != 1 {
+		t.Fatalf("Panels len = %d, want 1", len(flat.Panels))
+	}
+	if flat.Panels[0].PluginName != "zebra" || flat.Panels[0].ID != "zebra.console" {
+		t.Errorf("Panels[0] = %+v", flat.Panels[0])
+	}
+}
+
+// TestFlatten_EmptyWebviewSlots confirms plugins with only M1
+// contributions (no activityBar/views/panels) still register and
+// Flatten returns empty — not nil — slices so JSON always emits `[]`
+// rather than `null`. Flutter treats null as invalid DTO.
+func TestFlatten_EmptyWebviewSlots(t *testing.T) {
+	r := contributions.NewRegistry()
+	r.Set("m1-only", plugin.ContributesV1{
+		Commands: []plugin.CommandV1{{ID: "m.hi", Title: "Hi"}},
+	})
+
+	flat := r.Flatten()
+	if flat.ActivityBar == nil {
+		t.Error("ActivityBar = nil, want empty slice")
+	}
+	if flat.Views == nil {
+		t.Error("Views = nil, want empty slice")
+	}
+	if flat.Panels == nil {
+		t.Error("Panels = nil, want empty slice")
+	}
+	if len(flat.ActivityBar) != 0 || len(flat.Views) != 0 || len(flat.Panels) != 0 {
+		t.Errorf("unexpected non-empty slices: %+v", flat)
+	}
+}
+
+// TestIsZero_OnlyWebviewFieldsPresent guards an edge case: a plugin
+// that ONLY contributes a view (nothing else) must not be treated as
+// zero by Set — it's a legitimate webview-only plugin.
+func TestIsZero_OnlyWebviewFieldsPresent(t *testing.T) {
+	r := contributions.NewRegistry()
+	r.Set("webview-only", plugin.ContributesV1{
+		Views: []plugin.ViewV1{{ID: "v", Title: "V"}},
+	})
+	if !r.Has("webview-only") {
+		t.Fatal("Has(webview-only) = false — isZero is too aggressive on webview-only plugins")
+	}
+	if len(r.Flatten().Views) != 1 {
+		t.Error("view not reflected in Flatten")
+	}
+}

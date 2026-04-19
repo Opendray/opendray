@@ -215,3 +215,121 @@ func TestLoadManifest_V1PermissionsExecBool(t *testing.T) {
 		t.Error("permissions.exec = false, want true")
 	}
 }
+
+// ─── M2 T1 — webview contribution points ────────────────────────────
+
+// TestLoadManifest_V1Webview loads a manifest that exercises
+// activityBar / views / panels and asserts every field round-trips.
+// These are the three slots M2 introduces.
+func TestLoadManifest_V1Webview(t *testing.T) {
+	dir := t.TempDir()
+	body := `{
+		"name": "kanban",
+		"version": "1.0.0",
+		"publisher": "opendray-examples",
+		"engines": { "opendray": "^1.0.0" },
+		"form": "webview",
+		"contributes": {
+			"activityBar": [
+				{
+					"id": "kanban.board",
+					"icon": "📋",
+					"title": "Kanban",
+					"viewId": "kanban.board"
+				}
+			],
+			"views": [
+				{
+					"id": "kanban.board",
+					"title": "Kanban Board",
+					"container": "activityBar",
+					"icon": "📋",
+					"when": "workspaceOpen",
+					"render": "webview",
+					"entry": "ui/index.html"
+				}
+			],
+			"panels": [
+				{
+					"id": "kanban.console",
+					"title": "Kanban Log",
+					"icon": "📝",
+					"position": "bottom",
+					"render": "webview",
+					"entry": "ui/console.html"
+				}
+			]
+		}
+	}`
+	if err := os.WriteFile(filepath.Join(dir, "manifest.json"), []byte(body), 0o644); err != nil {
+		t.Fatalf("write manifest: %v", err)
+	}
+	p, err := LoadManifest(dir)
+	if err != nil {
+		t.Fatalf("LoadManifest: %v", err)
+	}
+	if p.Contributes == nil {
+		t.Fatal("Contributes is nil")
+	}
+
+	if len(p.Contributes.ActivityBar) != 1 {
+		t.Fatalf("ActivityBar = %d, want 1", len(p.Contributes.ActivityBar))
+	}
+	ab := p.Contributes.ActivityBar[0]
+	if ab.ID != "kanban.board" || ab.Icon != "📋" || ab.Title != "Kanban" || ab.ViewID != "kanban.board" {
+		t.Errorf("ActivityBar[0] = %+v", ab)
+	}
+
+	if len(p.Contributes.Views) != 1 {
+		t.Fatalf("Views = %d, want 1", len(p.Contributes.Views))
+	}
+	v := p.Contributes.Views[0]
+	if v.ID != "kanban.board" || v.Title != "Kanban Board" ||
+		v.Container != "activityBar" || v.Render != "webview" ||
+		v.Entry != "ui/index.html" || v.When != "workspaceOpen" {
+		t.Errorf("Views[0] = %+v", v)
+	}
+
+	if len(p.Contributes.Panels) != 1 {
+		t.Fatalf("Panels = %d, want 1", len(p.Contributes.Panels))
+	}
+	pn := p.Contributes.Panels[0]
+	if pn.ID != "kanban.console" || pn.Position != "bottom" ||
+		pn.Render != "webview" || pn.Entry != "ui/console.html" {
+		t.Errorf("Panels[0] = %+v", pn)
+	}
+}
+
+// TestLoadManifest_V1WebviewOmittedDefaultsEmpty confirms the new fields
+// follow omitempty discipline — when a manifest leaves them off, the
+// parsed struct must end up with nil/empty slices (not surprising
+// default shapes that leak into the wire format).
+func TestLoadManifest_V1WebviewOmittedDefaultsEmpty(t *testing.T) {
+	dir := t.TempDir()
+	body := `{
+		"name": "minimal-webview",
+		"version": "0.1.0",
+		"publisher": "opendray",
+		"engines": { "opendray": "^1.0.0" },
+		"contributes": { "commands": [{ "id": "m.hi", "title": "Hi" }] }
+	}`
+	if err := os.WriteFile(filepath.Join(dir, "manifest.json"), []byte(body), 0o644); err != nil {
+		t.Fatalf("write manifest: %v", err)
+	}
+	p, err := LoadManifest(dir)
+	if err != nil {
+		t.Fatalf("LoadManifest: %v", err)
+	}
+	if p.Contributes == nil {
+		t.Fatal("Contributes is nil despite commands being set")
+	}
+	if p.Contributes.ActivityBar != nil {
+		t.Errorf("ActivityBar should be nil when absent, got %v", p.Contributes.ActivityBar)
+	}
+	if p.Contributes.Views != nil {
+		t.Errorf("Views should be nil when absent, got %v", p.Contributes.Views)
+	}
+	if p.Contributes.Panels != nil {
+		t.Errorf("Panels should be nil when absent, got %v", p.Contributes.Panels)
+	}
+}

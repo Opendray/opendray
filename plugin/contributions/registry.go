@@ -28,11 +28,17 @@ func NewRegistry() *Registry {
 }
 
 // isZero reports whether a ContributesV1 is entirely empty (no contributions).
+// M1 slots (commands/statusBar/keybindings/menus) AND M2 slots
+// (activityBar/views/panels) all count — a plugin that contributes
+// ONLY a view (no commands at all) is still a legitimate registration.
 func isZero(c plugin.ContributesV1) bool {
 	return len(c.Commands) == 0 &&
 		len(c.StatusBar) == 0 &&
 		len(c.Keybindings) == 0 &&
-		len(c.Menus) == 0
+		len(c.Menus) == 0 &&
+		len(c.ActivityBar) == 0 &&
+		len(c.Views) == 0 &&
+		len(c.Panels) == 0
 }
 
 // Set replaces the contribution set for the given plugin name.
@@ -90,6 +96,27 @@ type OwnedMenuEntry struct {
 	plugin.MenuEntryV1
 }
 
+// OwnedActivityBarItem is an ActivityBarItemV1 annotated with its
+// contributing plugin name (M2 webview slot).
+type OwnedActivityBarItem struct {
+	PluginName string `json:"pluginName"`
+	plugin.ActivityBarItemV1
+}
+
+// OwnedView is a ViewV1 annotated with its contributing plugin name
+// (M2 webview slot).
+type OwnedView struct {
+	PluginName string `json:"pluginName"`
+	plugin.ViewV1
+}
+
+// OwnedPanel is a PanelV1 annotated with its contributing plugin name
+// (M2 webview slot).
+type OwnedPanel struct {
+	PluginName string `json:"pluginName"`
+	plugin.PanelV1
+}
+
 // FlatContributions is the materialised registry view returned to the workbench.
 // Ordering within each slice is deterministic — sorted by (PluginName, ID/Key/etc)
 // so the Flutter UI doesn't reshuffle between polls. StatusBar honours the
@@ -99,6 +126,11 @@ type FlatContributions struct {
 	StatusBar   []OwnedStatusBarItem        `json:"statusBar"`
 	Keybindings []OwnedKeybinding           `json:"keybindings"`
 	Menus       map[string][]OwnedMenuEntry `json:"menus"`
+
+	// ── M2 webview slots ───────────────────────────────────────────
+	ActivityBar []OwnedActivityBarItem `json:"activityBar"`
+	Views       []OwnedView            `json:"views"`
+	Panels      []OwnedPanel           `json:"panels"`
 }
 
 // Flatten materialises the registry into a stable, sorted view.
@@ -127,6 +159,9 @@ func (r *Registry) Flatten() FlatContributions {
 		StatusBar:   make([]OwnedStatusBarItem, 0),
 		Keybindings: make([]OwnedKeybinding, 0),
 		Menus:       make(map[string][]OwnedMenuEntry),
+		ActivityBar: make([]OwnedActivityBarItem, 0),
+		Views:       make([]OwnedView, 0),
+		Panels:      make([]OwnedPanel, 0),
 	}
 
 	for _, e := range entries {
@@ -155,6 +190,24 @@ func (r *Registry) Flatten() FlatContributions {
 					MenuEntryV1: me,
 				})
 			}
+		}
+		for _, ab := range e.c.ActivityBar {
+			flat.ActivityBar = append(flat.ActivityBar, OwnedActivityBarItem{
+				PluginName:        e.name,
+				ActivityBarItemV1: ab,
+			})
+		}
+		for _, v := range e.c.Views {
+			flat.Views = append(flat.Views, OwnedView{
+				PluginName: e.name,
+				ViewV1:     v,
+			})
+		}
+		for _, pn := range e.c.Panels {
+			flat.Panels = append(flat.Panels, OwnedPanel{
+				PluginName: e.name,
+				PanelV1:    pn,
+			})
 		}
 	}
 
@@ -192,6 +245,30 @@ func (r *Registry) Flatten() FlatContributions {
 			return flat.Keybindings[i].PluginName < flat.Keybindings[j].PluginName
 		}
 		return flat.Keybindings[i].Key < flat.Keybindings[j].Key
+	})
+
+	// ── Sort ActivityBar: primary PluginName asc, secondary ID asc ──────
+	sort.Slice(flat.ActivityBar, func(i, j int) bool {
+		if flat.ActivityBar[i].PluginName != flat.ActivityBar[j].PluginName {
+			return flat.ActivityBar[i].PluginName < flat.ActivityBar[j].PluginName
+		}
+		return flat.ActivityBar[i].ID < flat.ActivityBar[j].ID
+	})
+
+	// ── Sort Views: primary PluginName asc, secondary ID asc ────────────
+	sort.Slice(flat.Views, func(i, j int) bool {
+		if flat.Views[i].PluginName != flat.Views[j].PluginName {
+			return flat.Views[i].PluginName < flat.Views[j].PluginName
+		}
+		return flat.Views[i].ID < flat.Views[j].ID
+	})
+
+	// ── Sort Panels: primary PluginName asc, secondary ID asc ───────────
+	sort.Slice(flat.Panels, func(i, j int) bool {
+		if flat.Panels[i].PluginName != flat.Panels[j].PluginName {
+			return flat.Panels[i].PluginName < flat.Panels[j].PluginName
+		}
+		return flat.Panels[i].ID < flat.Panels[j].ID
 	})
 
 	// ── Sort each menu path: primary Group asc (empty group last),

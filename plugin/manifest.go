@@ -93,12 +93,19 @@ type EnginesV1 struct {
 }
 
 // ContributesV1 holds every workbench-slot contribution.
-// Only commands/statusBar/keybindings/menus are honoured in M1.
+// M1 honours commands/statusBar/keybindings/menus; M2 adds
+// activityBar/views/panels (parsed here from day one, rendered
+// by the Flutter shell once the workbench webview host lands).
 type ContributesV1 struct {
 	Commands    []CommandV1              `json:"commands,omitempty"`
 	StatusBar   []StatusBarItemV1        `json:"statusBar,omitempty"`
 	Keybindings []KeybindingV1           `json:"keybindings,omitempty"`
 	Menus       map[string][]MenuEntryV1 `json:"menus,omitempty"`
+
+	// ── M2 webview slots ───────────────────────────────────────────
+	ActivityBar []ActivityBarItemV1 `json:"activityBar,omitempty"`
+	Views       []ViewV1            `json:"views,omitempty"`
+	Panels      []PanelV1           `json:"panels,omitempty"`
 }
 
 // CommandV1 registers a runnable command with the workbench.
@@ -148,6 +155,45 @@ type MenuEntryV1 struct {
 	Submenu string `json:"submenu,omitempty"`
 	When    string `json:"when,omitempty"`
 	Group   string `json:"group,omitempty"`
+}
+
+// ActivityBarItemV1 puts an icon on the workbench activity bar — the
+// vertical strip of top-level entry points on the left (tablet/desktop)
+// or the bottom tab row (phone). Tapping it opens the associated view.
+type ActivityBarItemV1 struct {
+	ID     string `json:"id"`
+	Icon   string `json:"icon"`             // emoji OR relative path into the plugin's ui/
+	Title  string `json:"title"`            // shown as tooltip + accessible label
+	ViewID string `json:"viewId,omitempty"` // which view opens on activation; may be ommitted if an action handler is wired later
+}
+
+// ViewV1 declares a workbench view — either a webview-hosted plugin UI
+// or a declarative schema-driven form. Rendered inside the activity
+// bar's primary panel or (on phone) as a full-screen pane.
+//
+// Container selects where the view is anchored; Render selects the
+// view backend. When Render is "webview", Entry must be a path
+// relative to the plugin's ui/ directory.
+type ViewV1 struct {
+	ID        string `json:"id"`
+	Title     string `json:"title"`
+	Container string `json:"container,omitempty"` // "activityBar" (default) | "panel" | "sidebar"
+	Icon      string `json:"icon,omitempty"`
+	When      string `json:"when,omitempty"`  // context expression, e.g. "workspaceOpen"
+	Render    string `json:"render,omitempty"` // "webview" (default) | "declarative"
+	Entry     string `json:"entry,omitempty"`
+}
+
+// PanelV1 declares a bottom / right panel, sibling to terminal and
+// logs. Useful for transient workspaces that benefit from a strip view
+// rather than a full primary view.
+type PanelV1 struct {
+	ID       string `json:"id"`
+	Title    string `json:"title"`
+	Icon     string `json:"icon,omitempty"`
+	Position string `json:"position,omitempty"` // "bottom" (default) | "right"
+	Render   string `json:"render,omitempty"`   // "webview" (default)
+	Entry    string `json:"entry,omitempty"`
 }
 
 // PermissionsV1 is the install-time capability grant.
