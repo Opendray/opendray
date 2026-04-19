@@ -370,9 +370,13 @@ class _Shell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
-    // Any /browser* path (launcher and every sub-panel) lights up tab 1.
+    // /browser* (runtime launcher + every sub-panel) lights tab 1.
+    // /plugins (install / manage / configure) lights tab 2.
+    // /settings → tab 3. Everything else (sessions) → tab 0.
     final int index;
-    if (location == '/settings') {
+    if (location == '/settings' || location.startsWith('/settings/')) {
+      index = 3;
+    } else if (location == '/plugins' || location.startsWith('/plugins/')) {
       index = 2;
     } else if (location.startsWith('/browser')) {
       index = 1;
@@ -383,16 +387,25 @@ class _Shell extends StatelessWidget {
     return Scaffold(
       body: child,
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: index,
         onTap: (i) {
-          final path = switch (i) { 1 => '/browser', 2 => '/settings', _ => '/' };
+          final path = switch (i) {
+            1 => '/browser',
+            2 => '/plugins',
+            3 => '/settings',
+            _ => '/',
+          };
           context.go(path);
         },
         items: [
           BottomNavigationBarItem(
               icon: const Icon(Icons.terminal), label: context.tr('Sessions')),
           BottomNavigationBarItem(
-              icon: const Icon(Icons.folder_copy), label: context.tr('Browser')),
+              icon: const Icon(Icons.folder_copy), label: context.tr('Plugin')),
+          BottomNavigationBarItem(
+              icon: const Icon(Icons.extension_outlined),
+              label: context.tr('Hub')),
           BottomNavigationBarItem(
               icon: const Icon(Icons.settings), label: context.tr('Settings')),
         ],

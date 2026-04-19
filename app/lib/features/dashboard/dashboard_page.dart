@@ -108,11 +108,6 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
         actions: [
-          IconButton(
-            tooltip: 'Plugins',
-            icon: const Icon(Icons.extension_outlined),
-            onPressed: () => context.push('/plugins'),
-          ),
           Padding(
             padding: const EdgeInsets.only(right: 4),
             child: FilledButton.icon(

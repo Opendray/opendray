@@ -8,6 +8,7 @@ import '../../core/models/provider.dart' as provider_model;
 import '../../shared/providers_bus.dart';
 import '../../shared/theme/app_theme.dart';
 import '../settings/plugin_consents_page.dart';
+import 'plugin_config_page.dart';
 
 /// Full-surface plugin management page at `/plugins`.
 ///
@@ -127,6 +128,12 @@ class _PluginsPageState extends State<PluginsPage> {
         api: _api,
         onMessage: _notify,
       ),
+    ));
+  }
+
+  void _openConfig(provider_model.ProviderInfo p) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => PluginConfigPage(info: p),
     ));
   }
 
@@ -322,6 +329,9 @@ class _PluginsPageState extends State<PluginsPage> {
       icon: const Icon(Icons.more_vert, color: AppColors.textMuted, size: 20),
       onSelected: (value) {
         switch (value) {
+          case 'configure':
+            _openConfig(p);
+            break;
           case 'consents':
             _openConsents(p);
             break;
@@ -331,6 +341,16 @@ class _PluginsPageState extends State<PluginsPage> {
         }
       },
       itemBuilder: (ctx) => [
+        if (p.provider.configSchema.isNotEmpty)
+          const PopupMenuItem(
+            value: 'configure',
+            child: ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.tune, size: 18),
+              title: Text('Configure'),
+            ),
+          ),
         const PopupMenuItem(
           value: 'consents',
           child: ListTile(
