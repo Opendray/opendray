@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"log/slog"
@@ -26,6 +27,10 @@ import (
 	"github.com/opendray/opendray/kernel/setup"
 	"github.com/opendray/opendray/kernel/store"
 	"github.com/opendray/opendray/plugin"
+	"github.com/opendray/opendray/plugin/bridge"
+	"github.com/opendray/opendray/plugin/commands"
+	"github.com/opendray/opendray/plugin/contributions"
+	"github.com/opendray/opendray/plugin/install"
 )
 
 // version is injected at build time via -ldflags. Defaults to "dev" for
@@ -326,15 +331,31 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 		}
 	}
 
-	// Provider Runtime
+	// Provider Runtime + plugin platform (M1)
 	hookBus := plugin.NewHookBus(logger)
-	providerRuntime := plugin.NewRuntime(db, hookBus, cfg.Plugins.Dir, logger)
+	contribRegistry := contributions.NewRegistry()
+	providerRuntime := plugin.NewRuntime(db, hookBus, cfg.Plugins.Dir, logger,
+		plugin.WithContributions(contribRegistry))
 
 	if err := providerRuntime.LoadAll(ctx); err != nil {
 		logger.Warn("provider loading had errors", "error", err)
 	}
 	providerRuntime.StartHealthCheck(ctx, 60*time.Second)
 	logger.Info("providers loaded", "count", len(providerRuntime.List()))
+
+	// Plugin platform wiring (T5 gate, T6 installer, T10 dispatcher). The
+	// gate reads consents and writes audit; adapters thread store.DB
+	// through bridge's deliberately-store-agnostic interfaces.
+	pluginGate := bridge.NewGate(&dbConsentReader{db: db}, &dbAuditSink{db: db}, logger)
+	installer := install.NewInstaller(cfg.PluginsDataDir, db, providerRuntime, pluginGate, logger)
+	installer.AllowLocal = cfg.AllowLocalPlugins
+	dispatcher, err := commands.NewDispatcher(commands.Config{
+		Registry: contribRegistry, Gate: pluginGate, Log: logger,
+	})
+	if err != nil {
+		logger.Error("plugin command dispatcher init failed", "error", err)
+		return
+	}
 
 	// Session Hub
 	idleThreshold := 8 * time.Second
@@ -372,6 +393,10 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 		AdminUsername: cfg.Auth.AdminBootstrapUsername,
 		AdminPassword: cfg.Auth.AdminBootstrapPassword,
 		Logger:        logger, FrontendFS: frontendFS,
+		// Plugin platform (M1)
+		Installer:      installer,
+		Contributions:  contribRegistry,
+		CommandInvoker: &dispatcherAdapter{d: dispatcher},
 	})
 
 	server := &http.Server{Addr: cfg.Server.ListenAddr, Handler: gw.Handler()}
@@ -491,6 +516,45 @@ func (m *mcpInjector) RenderFor(ctx context.Context, sessionID, agent string) (h
 }
 
 func (m *mcpInjector) Cleanup(sessionID string) { m.rt.Cleanup(sessionID) }
+
+// ── Plugin-platform adapters ───────────────────────────────────────────
+//
+// bridge.Gate is intentionally store-agnostic (it takes small interfaces
+// so tests and mocks don't need a real DB). These adapters thread the
+// production store.DB through bridge's interfaces + translate between
+// the two AuditEntry shapes.
+
+type dbConsentReader struct{ db *store.DB }
+
+func (r *dbConsentReader) Load(ctx context.Context, pluginName string) ([]byte, bool, error) {
+	c, err := r.db.GetConsent(ctx, pluginName)
+	if errors.Is(err, store.ErrConsentNotFound) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, err
+	}
+	return c.PermsJSON, true, nil
+}
+
+type dbAuditSink struct{ db *store.DB }
+
+func (s *dbAuditSink) Append(ctx context.Context, ev bridge.AuditEvent) error {
+	return s.db.AppendAudit(ctx, store.AuditEntry{
+		PluginName: ev.PluginName, Ns: ev.Ns, Method: ev.Method,
+		Caps: ev.Caps, Result: ev.Result, DurationMs: ev.DurationMs,
+		ArgsHash: ev.ArgsHash, Message: ev.Message,
+	})
+}
+
+// dispatcherAdapter satisfies gateway's unexported commandInvoker
+// interface by widening commands.Dispatcher.Invoke's *Result return
+// to any — the HTTP handler just marshals it to JSON.
+type dispatcherAdapter struct{ d *commands.Dispatcher }
+
+func (a *dispatcherAdapter) Invoke(ctx context.Context, pluginName, commandID string, args map[string]any) (any, error) {
+	return a.d.Invoke(ctx, pluginName, commandID, args)
+}
 
 // isLoopback returns true if the listen address binds only to a loopback
 // interface. An empty host (e.g. ":8640") binds all interfaces and is NOT

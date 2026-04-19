@@ -227,14 +227,17 @@ func (rt *Runtime) loadIntoMemory(p Provider, cfg ProviderConfig, enabled bool) 
 	}
 	rt.mu.Unlock()
 
-	// T12: push contributions. v1 manifests contribute directly; legacy
-	// manifests get a synthesized empty ContributesV1 (M1 ContributesV1 has
-	// no AgentProviders/Views fields — that's M2). Overlay is in-memory only.
+	// T12: push contributions. Any manifest that declared a Contributes
+	// block wins (v1 manifests always do; legacy ones never do). Legacy
+	// manifests fall back to a synthesized empty ContributesV1 — M1's
+	// struct has no AgentProviders/Views fields yet (those are M2), so
+	// the synthesis is identity-only. Overlay is in-memory; disk is
+	// never rewritten.
 	if rt.contributionsReg == nil {
 		return
 	}
 	var c ContributesV1
-	if p.IsV1() && p.Contributes != nil {
+	if p.Contributes != nil {
 		c = *p.Contributes
 	}
 	rt.contributionsReg.Set(p.Name, c)

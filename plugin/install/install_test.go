@@ -464,6 +464,7 @@ func TestInstaller_HappyPath(t *testing.T) {
 	gate := bridge.NewGate(nil, nil, slog.Default())
 	inst := NewInstaller(dataDir, db, rt, gate, slog.Default())
 	t.Cleanup(inst.Stop)
+	inst.AllowLocal = true
 
 	pend, err := inst.Stage(ctx, LocalSource{Path: src})
 	if err != nil {
@@ -539,6 +540,7 @@ func TestInstaller_InvalidManifestRejected(t *testing.T) {
 
 	inst := NewInstaller(dataDir, db, mustRuntime(db), bridge.NewGate(nil, nil, slog.Default()), slog.Default())
 	t.Cleanup(inst.Stop)
+	inst.AllowLocal = true
 
 	_, err := inst.Stage(ctx, LocalSource{Path: bad})
 	if !errors.Is(err, ErrInvalidManifest) {
@@ -570,6 +572,7 @@ func TestInstaller_LegacyManifestRejected(t *testing.T) {
 
 	inst := NewInstaller(dataDir, db, mustRuntime(db), bridge.NewGate(nil, nil, slog.Default()), slog.Default())
 	t.Cleanup(inst.Stop)
+	inst.AllowLocal = true
 
 	_, err := inst.Stage(ctx, LocalSource{Path: legacy})
 	if !errors.Is(err, ErrInvalidManifest) {
@@ -588,6 +591,7 @@ func TestInstaller_ExpiredTokenRejected(t *testing.T) {
 		bridge.NewGate(nil, nil, slog.Default()), slog.Default(),
 		100*time.Millisecond, 50*time.Millisecond)
 	t.Cleanup(inst.Stop)
+	inst.AllowLocal = true
 
 	pend, err := inst.Stage(ctx, LocalSource{Path: src})
 	if err != nil {
@@ -615,6 +619,7 @@ func TestInstaller_UninstallRemovesAllTraces(t *testing.T) {
 	rt := mustRuntime(db)
 	inst := NewInstaller(dataDir, db, rt, bridge.NewGate(nil, nil, slog.Default()), slog.Default())
 	t.Cleanup(inst.Stop)
+	inst.AllowLocal = true
 
 	pend, err := inst.Stage(ctx, LocalSource{Path: src})
 	if err != nil {
@@ -665,6 +670,7 @@ func TestInstaller_ConcurrentStage(t *testing.T) {
 
 	inst := NewInstaller(t.TempDir(), db, mustRuntime(db), bridge.NewGate(nil, nil, slog.Default()), slog.Default())
 	t.Cleanup(inst.Stop)
+	inst.AllowLocal = true
 
 	// Each goroutine stages from its own temp dir so I/O does not collide.
 	const N = 20
@@ -718,6 +724,7 @@ func TestInstaller_ConfirmAtomicity(t *testing.T) {
 
 	inst := NewInstaller(dataDir, db, mustRuntime(db), bridge.NewGate(nil, nil, slog.Default()), slog.Default())
 	t.Cleanup(inst.Stop)
+	inst.AllowLocal = true
 
 	pend, err := inst.Stage(ctx, LocalSource{Path: src})
 	if err != nil {
@@ -757,6 +764,7 @@ func TestInstaller_ConfirmReplacesExisting(t *testing.T) {
 	rt := mustRuntime(db)
 	inst := NewInstaller(dataDir, db, rt, bridge.NewGate(nil, nil, slog.Default()), slog.Default())
 	t.Cleanup(inst.Stop)
+	inst.AllowLocal = true
 
 	// First install.
 	src1 := writeValidBundle(t, t.TempDir(), "replace-plugin", "1.0.0")
@@ -800,6 +808,7 @@ func TestInstaller_ConfirmStagedDirDeletedBetween(t *testing.T) {
 
 	inst := NewInstaller(dataDir, db, mustRuntime(db), bridge.NewGate(nil, nil, slog.Default()), slog.Default())
 	t.Cleanup(inst.Stop)
+	inst.AllowLocal = true
 
 	pend, err := inst.Stage(ctx, LocalSource{Path: src})
 	if err != nil {
@@ -831,6 +840,7 @@ func TestInstaller_ConfirmTokenGoneAfterFirstConfirm(t *testing.T) {
 
 	inst := NewInstaller(dataDir, db, mustRuntime(db), bridge.NewGate(nil, nil, slog.Default()), slog.Default())
 	t.Cleanup(inst.Stop)
+	inst.AllowLocal = true
 
 	pend, err := inst.Stage(ctx, LocalSource{Path: src})
 	if err != nil {
@@ -854,6 +864,7 @@ func TestInstaller_JanitorReapsExpired(t *testing.T) {
 		bridge.NewGate(nil, nil, slog.Default()), slog.Default(),
 		80*time.Millisecond, 30*time.Millisecond)
 	t.Cleanup(inst.Stop)
+	inst.AllowLocal = true
 
 	var stagedPaths []string
 	for i := 0; i < 3; i++ {
