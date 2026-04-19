@@ -402,6 +402,23 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 		Log:   logger,
 	})
 
+	// Supervisor handler factory — each sidecar gets an RPCHandler
+	// bound to its plugin name so sidecar→host JSON-RPC calls route
+	// through the same bridge.Namespace surface webview plugins use.
+	// Namespaces adapter-wraps each *bridge.*API's Dispatch(ctx,
+	// plugin, method, args, envID, conn) for the stdio-only sidecar
+	// path. envID="" + conn=nil — neither is read in the non-stream
+	// dispatch path of M3 namespaces.
+	nsMap := map[string]host.NSDispatcher{
+		"fs":        host.NamespaceAdapter{Inner: fsAPI.Dispatch},
+		"exec":      host.NamespaceAdapter{Inner: execAPI.Dispatch},
+		"http":      host.NamespaceAdapter{Inner: httpAPI.Dispatch},
+		"secret":    host.NamespaceAdapter{Inner: secretAPI.Dispatch},
+		"workbench": host.NamespaceAdapter{Inner: workbenchAPI.Dispatch},
+		"storage":   host.NamespaceAdapter{Inner: storageAPI.Dispatch},
+		"events":    host.NamespaceAdapter{Inner: eventsAPI.Dispatch},
+	}
+
 	hostSupervisor := host.NewSupervisor(host.Config{
 		DataDir:   cfg.PluginsDataDir,
 		Providers: providerRuntime,
@@ -412,6 +429,17 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 				return p.Version
 			}
 			return ""
+		},
+		HandlerFactory: func(pluginName string) host.RPCHandler {
+			h, err := host.NewHostRPCHandler(host.HostRPCConfig{
+				Plugin:     pluginName,
+				Namespaces: nsMap,
+			})
+			if err != nil {
+				logger.Error("host: handler factory", "plugin", pluginName, "err", err)
+				return nil
+			}
+			return h
 		},
 	})
 

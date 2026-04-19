@@ -77,6 +77,18 @@ type Config struct {
 	// ${DataDir}/<plugin>/<version>/. Returning "" disables the
 	// version suffix so the fallback is ${DataDir}/<plugin>/.
 	PluginVersion func(plugin string) string
+
+	// HandlerFactory builds an RPCHandler for each spawned sidecar.
+	// When non-nil, the Supervisor automatically constructs a Mux
+	// around the sidecar's stdio pipes so sidecar→host JSON-RPC
+	// requests route through the returned handler. Typical wiring in
+	// main.go returns a *HostRPCHandler bound to the per-plugin
+	// Namespaces map.
+	//
+	// nil = sidecars run without a Mux — direct Writer/Reader access
+	// via Sidecar.Writer/Reader stays available for callers that
+	// want raw LSP framing (e.g. the LSP proxy, T19).
+	HandlerFactory func(plugin string) RPCHandler
 }
 
 // Defaults fills unset fields with conservative values.
@@ -322,8 +334,18 @@ func (s *Supervisor) spawn(ctx context.Context, pluginName string, prov plugin.P
 		exited: make(chan struct{}),
 	}
 	sc.touch()
-	sc.startWait(s)
 
+	// Attach a Mux if the supervisor has a factory. The factory-built
+	// RPCHandler owns the sidecar→host routing; outbound Call/Notify
+	// rides the same mux.
+	if s.cfg.HandlerFactory != nil {
+		handler := s.cfg.HandlerFactory(pluginName)
+		sc.mux = NewMux(sc.reader, sc.writer, handler, s.cfg.Log)
+		sc.muxCtx, sc.muxCancel = context.WithCancel(context.Background())
+		sc.mux.Start(sc.muxCtx)
+	}
+
+	sc.startWait(s)
 	return sc, nil
 }
 
@@ -393,10 +415,45 @@ type Sidecar struct {
 	reader *FramedReader
 	stderr io.ReadCloser
 
+	// mux is attached when Config.HandlerFactory is non-nil. Caller-
+	// accessible via Call / Notify / Notifications. nil when the
+	// supervisor runs in raw-stdio mode (LSP proxy path).
+	mux      *Mux
+	muxOnce  sync.Once
+	muxCtx    context.Context
+	muxCancel context.CancelFunc
+
 	mu         sync.Mutex
 	lastUsedAt time.Time
 	exited     chan struct{}
 	exitErr    error
+}
+
+// Call forwards a JSON-RPC request to the sidecar via the attached
+// Mux. Returns an error if the supervisor was built without a
+// HandlerFactory (no Mux attached). Safe for concurrent callers.
+func (s *Sidecar) Call(ctx context.Context, method string, params any) ([]byte, error) {
+	if s.mux == nil {
+		return nil, errors.New("host: sidecar has no Mux — Config.HandlerFactory was nil")
+	}
+	return s.mux.Call(ctx, method, params)
+}
+
+// Notify forwards a one-way notification. Same caveat as Call.
+func (s *Sidecar) Notify(method string, params any) error {
+	if s.mux == nil {
+		return errors.New("host: sidecar has no Mux — Config.HandlerFactory was nil")
+	}
+	return s.mux.Notify(method, params)
+}
+
+// Notifications exposes the Mux's notification channel. Returns nil
+// when the supervisor runs in raw-stdio mode.
+func (s *Sidecar) Notifications() <-chan Notification {
+	if s.mux == nil {
+		return nil
+	}
+	return s.mux.Notifications()
 }
 
 func (s *Sidecar) touch() {
@@ -483,6 +540,13 @@ func drainStderr(plugin string, r io.Reader, log *slog.Logger) {
 // (EOF), then wait up to timeout, then kill the process group. Safe
 // for concurrent callers — only the first triggers the actual close.
 func (s *Sidecar) shutdown(timeout time.Duration) error {
+	// Cancel the mux so its reader goroutine exits cleanly and any
+	// pending Call() rejects with ctx.Canceled rather than stalling.
+	s.muxOnce.Do(func() {
+		if s.muxCancel != nil {
+			s.muxCancel()
+		}
+	})
 	// Attempt a graceful close of stdin so well-behaved sidecars exit
 	// on EOF. Ignore errors — the writer may already be closed.
 	if s.stdin != nil {
