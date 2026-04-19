@@ -56,7 +56,8 @@ func passThroughGateCheck(_ context.Context, _, _ string) error { return nil }
 func loopbackTransport() http.RoundTripper {
 	d := &net.Dialer{Timeout: 2 * time.Second}
 	return &http.Transport{
-		DialContext:     d.DialContext,
+		DialContext: d.DialContext,
+		// #nosec G402 — test-only transport; httptest servers use self-signed certs.
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true, MinVersion: tls.VersionTLS12},
 	}
 }
@@ -436,7 +437,8 @@ func newRecordingTransport(control func(network, address string, c syscall.RawCo
 		},
 	}
 	tr := &http.Transport{
-		DialContext:     d.DialContext,
+		DialContext: d.DialContext,
+		// #nosec G402 — test-only transport; we don't actually complete TLS here.
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true, MinVersion: tls.VersionTLS12},
 	}
 	return &recordingTransport{inner: tr, rd: rd}

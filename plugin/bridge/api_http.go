@@ -496,8 +496,16 @@ func (a *HTTPAPI) defaultTransportFactory(ctx context.Context, plugin string, ch
 		},
 	}
 
+	// Defensive floor: if a zero/low value slipped through NewHTTPAPI's
+	// defaults somehow, pin to TLS 1.2.
+	tlsMin := a.tlsMinVer
+	if tlsMin < tls.VersionTLS12 {
+		tlsMin = tls.VersionTLS12
+	}
+	// #nosec G402 — tlsMin is clamped to tls.VersionTLS12 above; gosec
+	// cannot prove the runtime floor so we document the invariant here.
 	tlsConfig := &tls.Config{
-		MinVersion: a.tlsMinVer,
+		MinVersion: tlsMin,
 	}
 
 	tr := &http.Transport{
