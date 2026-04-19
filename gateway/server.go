@@ -26,6 +26,7 @@ import (
 	"github.com/opendray/opendray/kernel/hub"
 	"github.com/opendray/opendray/kernel/setup"
 	"github.com/opendray/opendray/plugin"
+	"github.com/opendray/opendray/plugin/bridge"
 	"github.com/opendray/opendray/plugin/contributions"
 	"github.com/opendray/opendray/plugin/install"
 )
@@ -47,6 +48,15 @@ type Server struct {
 	installer     *install.Installer
 	contribReg    *contributions.Registry
 	cmdInvoker    commandInvoker
+
+	// Bridge (M2 T7): plugin WebSocket API.
+	bridgeMgr       *bridge.Manager
+	bridgeCfg       PluginsConfig
+	bridgeNamespace *namespaceRegistry
+	// bridgePluginsOverride lets tests inject a plugin-lookup function without
+	// standing up a real Runtime with filesystem manifests. Production leaves
+	// this nil and the handler falls back to s.plugins.Get.
+	bridgePluginsOverride func(name string) (plugin.Provider, bool)
 }
 
 // Config holds gateway configuration.
@@ -63,6 +73,22 @@ type Config struct {
 	Installer     *install.Installer         // plugin install/uninstall orchestrator (T7)
 	Contributions *contributions.Registry    // workbench contribution registry (T9)
 	CommandInvoker commandInvoker            // command dispatcher (T11)
+
+	// M2 T7 — plugin bridge WS.
+	BridgeManager *bridge.Manager // shared bridge.Manager instance; nil disables
+	Plugins2      PluginsConfig   // plugin-bridge-tunable knobs
+}
+
+// PluginsConfig holds runtime-tunable knobs for the bridge handler.
+type PluginsConfig struct {
+	// BridgeRatePerMinute caps inbound requests per plugin connection (default 60).
+	BridgeRatePerMinute int
+	// BridgeReadTimeout is the idle read deadline on each bridge WS (default 60s).
+	BridgeReadTimeout time.Duration
+	// FrontendOrigin, when set, is an additional Origin allowed by the bridge
+	// handshake (for production deployments where the UI is served from a
+	// different host than the gateway).
+	FrontendOrigin string
 }
 
 // New creates a gateway server with all routes configured.
@@ -71,19 +97,31 @@ func New(cfg Config) *Server {
 		cfg.Logger = slog.Default()
 	}
 
+	// Fill in bridge config defaults.
+	bridgeCfg := cfg.Plugins2
+	if bridgeCfg.BridgeRatePerMinute <= 0 {
+		bridgeCfg.BridgeRatePerMinute = 60
+	}
+	if bridgeCfg.BridgeReadTimeout <= 0 {
+		bridgeCfg.BridgeReadTimeout = 60 * time.Second
+	}
+
 	s := &Server{
-		hub:           cfg.Hub,
-		plugins:       cfg.Plugins,
-		auth:          cfg.Auth,
-		creds:         cfg.Credentials,
-		adminUsername: cfg.AdminUsername,
-		adminPassword: cfg.AdminPassword,
-		logger:        cfg.Logger,
-		tasks:         tasks.NewRunner(),
-		git:           gitpkg.NewManager(),
-		installer:     cfg.Installer,
-		contribReg:    cfg.Contributions,
-		cmdInvoker:    cfg.CommandInvoker,
+		hub:             cfg.Hub,
+		plugins:         cfg.Plugins,
+		auth:            cfg.Auth,
+		creds:           cfg.Credentials,
+		adminUsername:   cfg.AdminUsername,
+		adminPassword:   cfg.AdminPassword,
+		logger:          cfg.Logger,
+		tasks:           tasks.NewRunner(),
+		git:             gitpkg.NewManager(),
+		installer:       cfg.Installer,
+		contribReg:      cfg.Contributions,
+		cmdInvoker:      cfg.CommandInvoker,
+		bridgeMgr:       cfg.BridgeManager,
+		bridgeCfg:       bridgeCfg,
+		bridgeNamespace: newNamespaceRegistry(),
 	}
 	if cfg.MCP != nil {
 		s.mcp = mcp.NewHandlers(cfg.MCP)
@@ -253,8 +291,10 @@ func New(cfg Config) *Server {
 		r.Get("/api/plugins/{name}/audit", s.pluginsAudit)
 
 		// Plugin asset server — serves plugin ui/ bundles (T8).
-		// T7 bridge WS (/api/plugins/{name}/bridge/ws) will go here when T7 lands.
 		r.Get("/api/plugins/{name}/assets/*", s.pluginsAssets)
+
+		// Plugin bridge WebSocket (T7) — per-plugin JSON envelope protocol.
+		r.Get("/api/plugins/{name}/bridge/ws", s.pluginsBridgeWS)
 
 		// Workbench contributions — flat view of all installed plugin contribution
 		// points (commands, statusBar, keybindings, menus). Pure read; no DB (T9).
