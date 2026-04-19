@@ -62,26 +62,29 @@ func Synthesize(p plugin.Provider) plugin.Provider {
 		out.Contributes = &plugin.ContributesV1{}
 	}
 
-	// For legacy panel plugins: synthesize one view entry so the Flutter
-	// workbench can discover the panel in the activity bar rail.
-	// The view entry is metadata-only; legacy panels keep their existing
-	// bespoke widget rendering (no entry path needed).
+	// For legacy panel plugins: synthesize a paired (activityBar item, view)
+	// tuple so the Flutter workbench can both show the icon in the rail
+	// AND resolve it to a renderable view on tap.
 	//
-	// Guard: only add when no view with the same id already exists (defensive
-	// against callers who re-synthesize a provider that was already processed).
+	// Flutter reads `contributions.activityBar[]` — without the item
+	// entry, the side rail stays empty even when views exist.
+	//
+	// Guard: both adds are idempotent against callers who re-synthesize
+	// a provider that was already processed.
 	if p.Type == plugin.ProviderTypePanel {
-		alreadyPresent := false
+		title := p.DisplayName
+		if title == "" {
+			title = p.Name
+		}
+
+		viewAlready := false
 		for _, v := range out.Contributes.Views {
 			if v.ID == p.Name {
-				alreadyPresent = true
+				viewAlready = true
 				break
 			}
 		}
-		if !alreadyPresent {
-			title := p.DisplayName
-			if title == "" {
-				title = p.Name
-			}
+		if !viewAlready {
 			out.Contributes.Views = append(out.Contributes.Views, plugin.ViewV1{
 				ID:        p.Name,
 				Title:     title,
@@ -89,6 +92,22 @@ func Synthesize(p plugin.Provider) plugin.Provider {
 				Render:    "declarative",
 				// Entry intentionally omitted: legacy panels render via
 				// bespoke Flutter widgets, not the webview view host.
+			})
+		}
+
+		abAlready := false
+		for _, a := range out.Contributes.ActivityBar {
+			if a.ID == p.Name {
+				abAlready = true
+				break
+			}
+		}
+		if !abAlready {
+			out.Contributes.ActivityBar = append(out.Contributes.ActivityBar, plugin.ActivityBarItemV1{
+				ID:     p.Name,
+				Icon:   p.Icon,
+				Title:  title,
+				ViewID: p.Name,
 			})
 		}
 	}
