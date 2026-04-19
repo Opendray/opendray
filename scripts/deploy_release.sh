@@ -97,11 +97,27 @@ NO_BUMP="${NO_BUMP:-0}"
 
 export PATH="$JAVA_HOME/bin:$FLUTTER_HOME/bin:$(dirname "$GO_BIN"):$PATH"
 
+# ── Trace log — every run tees stdout+stderr here so post-mortem is
+# possible even when task-runner hides one of the streams.
+TRACE_LOG="/tmp/opendray-deploy-trace-$(date +%Y%m%dT%H%M%S).log"
+exec > >(tee -a "$TRACE_LOG")
+exec 2> >(tee -a "$TRACE_LOG" >&2)
+printf '[trace] %s — deploy_release.sh pid %s — log: %s\n' \
+  "$(date -Is)" "$$" "$TRACE_LOG"
+
 # ── Pretty logging ────────────────────────────────────────────────────
 phase()  { printf '\n\033[1;34m▶ %s\033[0m\n' "$*"; }
 ok()     { printf '  \033[1;32m✓\033[0m %s\n' "$*"; }
 warn()   { printf '  \033[1;33m!\033[0m %s\n' "$*" >&2; }
-fail()   { printf '  \033[1;31m✗ %s\033[0m\n' "$*" >&2; exit "${2:-1}"; }
+# fail() writes the red ✗ line to BOTH stdout and stderr — task-runner's
+# panel tends to show only stdout, while interactive shells want it on
+# stderr. Duplicating is the only way to guarantee visibility everywhere.
+fail()   {
+  printf '\n  \033[1;31m✗ %s\033[0m\n' "$*"
+  printf '\n  \033[1;31m✗ %s\033[0m\n' "$*" >&2
+  printf '     (exit %s; full trace: %s)\n' "${2:-1}" "$TRACE_LOG"
+  exit "${2:-1}"
+}
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || fail "required tool not found: $1" 2
@@ -325,21 +341,15 @@ INSTALL_BIN="/usr/bin/install"
 SYSTEMCTL_BIN="/usr/bin/systemctl"
 MV_BIN="/usr/bin/mv"
 
-# Pre-flight the NOPASSWD grant. Better to fail loudly here with a
-# one-line remedy than mid-way through the detached worker where we
-# have no stdout.
-if [[ -n "$SUDO" ]]; then
-  if ! sudo -n "$SYSTEMCTL_BIN" is-active --quiet "$OPENDRAY_DEPLOY_SERVICE" 2>/dev/null; then
-    fail "sudo NOPASSWD not configured — run once as root:
-    sudo bash scripts/bootstrap_sudoers.sh
-  (then re-run deploy)" 4
-  fi
-fi
-
-# Stage the new binary now while we're still alive. Uses install(1)
-# so permissions land correctly on first try.
-$SUDO "$INSTALL_BIN" -m 0755 "$BIN_OUT" "$TMP_TARGET" \
-  || fail "failed to stage new binary at $TMP_TARGET" 4
+# Stage the new binary now while we're still alive. Capture stderr so
+# a sudo denial (most common cause of failure) is visible in the trace
+# log and echoed by fail() — otherwise task-runner panels that hide
+# stderr swallow the "password required" message and the user only
+# sees a mysterious exit 4.
+STAGE_ERR="$($SUDO "$INSTALL_BIN" -m 0755 "$BIN_OUT" "$TMP_TARGET" 2>&1)" \
+  || fail "failed to stage new binary at $TMP_TARGET: ${STAGE_ERR:-no stderr}
+  (if this is 'a password is required' or 'a terminal is required',
+  run once as root: sudo bash scripts/bootstrap_sudoers.sh)" 4
 ok "staged at $TMP_TARGET"
 
 # The detached worker sleeps briefly (so this script can return to
