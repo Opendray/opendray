@@ -17,8 +17,11 @@
 #      bit. Other hardening (ProtectHome, ProtectSystem, PrivateTmp)
 #      stays in place.
 #
-#   3. /var/lib/opendray-deploy/ — staging directory owned by linivek
-#      so task-runner can drop the new binary without sudo at all.
+#   3. $HOME/.opendray-deploy/ — staging directory under linivek's home
+#      so task-runner can drop the new binary without sudo at all, AND
+#      without needing extra ReadWritePaths gymnastics around
+#      ProtectSystem=strict (opendray.service already has /home/linivek
+#      in its ReadWritePaths list).
 #
 #   4. /etc/systemd/system/opendray-deployer.service +
 #      /usr/local/sbin/opendray-deployer — a one-shot service that
@@ -44,7 +47,7 @@ fi
 USER_NAME="${OPENDRAY_DEPLOY_USER:-linivek}"
 REPO_ROOT="${OPENDRAY_REPO_ROOT:-/home/linivek/workspace/opendray}"
 LIVE_BIN="/usr/local/bin/opendray"
-STAGE_DIR="/var/lib/opendray-deploy"
+STAGE_DIR="/home/$USER_NAME/.opendray-deploy"
 STAGED_BIN="$STAGE_DIR/opendray.staged"
 DEPLOYER_SH="/usr/local/sbin/opendray-deployer"
 DEPLOYER_UNIT="/etc/systemd/system/opendray-deployer.service"
@@ -79,7 +82,7 @@ cat > "$DEPLOYER_SH" <<'DEPLOYER'
 
 set -eo pipefail
 
-STAGE_DIR="/var/lib/opendray-deploy"
+STAGE_DIR="/home/$USER_NAME/.opendray-deploy"
 STAGED_BIN="$STAGE_DIR/opendray.staged"
 LIVE_BIN="/usr/local/bin/opendray"
 BACKUP_BIN="/usr/local/bin/opendray.prev"
@@ -174,6 +177,15 @@ done
 log "CRITICAL: rollback started but service not answering health — manual intervention needed"
 exit 2
 DEPLOYER
+
+# The heredoc above is quoted ('DEPLOYER') to keep bash $VARS inside the
+# deployer script untouched — we want it to expand them at RUNTIME, not
+# at bootstrap time. But STAGE_DIR="/home/$USER_NAME/.opendray-deploy"
+# is the one line we want resolved NOW, while USER_NAME is known, so
+# the deployer script knows where to look without needing its own env
+# wiring. A targeted sed just for that line:
+sed -i "s|^STAGE_DIR=\".*\"|STAGE_DIR=\"/home/$USER_NAME/.opendray-deploy\"|" "$DEPLOYER_SH"
+
 chmod 0755 "$DEPLOYER_SH"
 echo "✓ installed $DEPLOYER_SH"
 

@@ -349,7 +349,11 @@ ok "path: //$UNAS_SERVER/$UNAS_SHARE/$UNAS_REL_DIR/$APK_NAME"
 
 phase "Deploy backend via opendray-deployer.service"
 
-STAGE_DIR="/var/lib/opendray-deploy"
+# Staging lives under $HOME — opendray.service's ReadWritePaths already
+# includes /home/linivek, so task-runner can write here without any
+# systemd override, and the root-owned deployer service can still read
+# it (no ProtectHome on that service).
+STAGE_DIR="$HOME/.opendray-deploy"
 STAGE_FILE="$STAGE_DIR/opendray.staged"
 
 if [[ ! -d "$STAGE_DIR" ]]; then
