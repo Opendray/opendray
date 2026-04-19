@@ -195,6 +195,15 @@ ok "built $BIN_OUT ($BIN_SIZE, $VERSION_YAML@$BUILD_SHA)"
 # ── 4. Flutter APK (bump build number, release) ──────────────────────
 phase "Flutter APK (release)"
 cd app
+
+# android/local.properties is gitignored + auto-generated. If the repo
+# was ever rsync'd from a Mac dev box, a stale file with Homebrew +
+# /Users/... paths survives the clone and breaks Gradle with
+# "Included build '/opt/homebrew/share/flutter/...' does not exist".
+# Blow it away every run; `flutter pub get` regenerates with the Linux
+# paths from ~/.config/flutter/settings.
+rm -f android/local.properties
+
 CURRENT="$(grep -E '^version:' pubspec.yaml | awk '{print $2}')"
 VERSION="${CURRENT%+*}"
 BUILD="${CURRENT#*+}"
