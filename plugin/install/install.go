@@ -37,6 +37,12 @@ var (
 	// install flow is v1-only; legacy plugins are handled by the compat
 	// synthesiser (T12) at startup, not through Installer.
 	ErrInvalidManifest = errors.New("install: manifest failed v1 validation")
+
+	// ErrLocalDisabled is returned by Stage when the source is a local-scheme
+	// source (local:<abs> or bare absolute path) and AllowLocal is false.
+	// Callers should surface this as HTTP 403 EFORBIDDEN. Set AllowLocal=true
+	// (via OPENDRAY_ALLOW_LOCAL_PLUGINS=1) to permit local installs.
+	ErrLocalDisabled = errors.New("install: local plugin installs disabled")
 )
 
 // Installer orchestrates the plugin install flow.
@@ -50,6 +56,13 @@ type Installer struct {
 	Runtime *plugin.Runtime
 	Gate    *bridge.Gate
 	Log     *slog.Logger
+
+	// AllowLocal gates local-scheme sources in Stage. When false (the default),
+	// Stage returns ErrLocalDisabled for any LocalSource. Set to true when
+	// OPENDRAY_ALLOW_LOCAL_PLUGINS=1 (or equivalent) is configured.
+	// This field is safe to set before the first Stage call; concurrent
+	// mutation is not supported.
+	AllowLocal bool // T25: controlled by kernel/config.Config.AllowLocalPlugins
 
 	pending *pendingStore
 
@@ -111,6 +124,12 @@ func (i *Installer) Stop() {
 func (i *Installer) Stage(ctx context.Context, src Source) (*PendingInstall, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
+	}
+
+	// 0) T25 local-scheme gate. Check before any I/O so we never create
+	// staging artefacts for a denied request.
+	if _, isLocal := src.(LocalSource); isLocal && !i.AllowLocal {
+		return nil, fmt.Errorf("%w: set OPENDRAY_ALLOW_LOCAL_PLUGINS=1 to enable", ErrLocalDisabled)
 	}
 
 	// 1) Fetch the source into a temp dir (external to DataDir).

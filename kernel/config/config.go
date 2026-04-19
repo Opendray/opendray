@@ -33,14 +33,27 @@ const SchemaVersion = 1
 
 // Config is the fully-merged runtime configuration.
 type Config struct {
-	SchemaVersion    int       `toml:"schema_version"`
-	SetupCompletedAt string    `toml:"setup_completed_at,omitempty"`
-	Server           Server    `toml:"server"`
-	Auth             Auth      `toml:"auth"`
-	DB               DB        `toml:"db"`
-	Plugins          Plugins   `toml:"plugins"`
-	Telegram         Telegram  `toml:"telegram"`
-	CFAccess         CFAccess  `toml:"cf_access,omitempty"`
+	SchemaVersion    int            `toml:"schema_version"`
+	SetupCompletedAt string         `toml:"setup_completed_at,omitempty"`
+	Server           Server         `toml:"server"`
+	Auth             Auth           `toml:"auth"`
+	DB               DB             `toml:"db"`
+	Plugins          Plugins        `toml:"plugins"`
+	Telegram         Telegram       `toml:"telegram"`
+	CFAccess         CFAccess       `toml:"cf_access,omitempty"`
+	PluginPlatform   PluginPlatform `toml:"plugin_platform,omitempty"`
+
+	// Plugin platform top-level convenience fields (M1/T25).
+	// These shadow PluginPlatform fields for direct access throughout the
+	// codebase without chaining through the nested struct.
+	//
+	// PluginsDataDir is the root directory for installed plugin bundles.
+	// Default: ${HOME}/.opendray/plugins. Env: OPENDRAY_PLUGINS_DATA_DIR.
+	PluginsDataDir string `toml:"-"` // computed; not round-tripped in TOML
+
+	// AllowLocalPlugins gates local-scheme plugin installs.
+	// Default: false. Env: OPENDRAY_ALLOW_LOCAL_PLUGINS (truthy: 1|true|yes|on).
+	AllowLocalPlugins bool `toml:"-"` // computed; not round-tripped in TOML
 }
 
 // Server holds HTTP listener configuration.
@@ -106,6 +119,24 @@ type CFAccess struct {
 	ClientSecret string `toml:"client_secret"`
 }
 
+// PluginPlatform holds the M1 plugin-platform configuration knobs.
+// These fields are intentionally separate from the legacy Plugins struct so
+// they don't conflict with the provider-runtime settings.
+type PluginPlatform struct {
+	// DataDir is the root directory where installed plugin bundles are
+	// written. Defaults to ${HOME}/.opendray/plugins. Override via
+	// OPENDRAY_PLUGINS_DATA_DIR.
+	DataDir string `toml:"data_dir"`
+
+	// AllowLocalPlugins controls whether POST /api/plugins/install accepts
+	// local-scheme sources ("local:<abs>" or bare absolute paths). Defaults
+	// to false (deny). Override via OPENDRAY_ALLOW_LOCAL_PLUGINS.
+	//
+	// Truthy values (case-insensitive): "1", "true", "yes", "on"
+	// Falsy / unset: everything else → false
+	AllowLocalPlugins bool `toml:"allow_local_plugins"`
+}
+
 // Source describes where the effective config came from. Useful for log
 // lines ("config loaded source=…") and the setup wizard.
 type Source string
@@ -120,6 +151,9 @@ const (
 // Defaults returns a config with the hard-coded defaults applied. Env
 // and file layers merge on top of this.
 func Defaults() Config {
+	home, _ := os.UserHomeDir()
+	defaultPluginsDataDir := filepath.Join(home, ".opendray", "plugins")
+
 	return Config{
 		SchemaVersion: SchemaVersion,
 		Server: Server{
@@ -143,6 +177,8 @@ func Defaults() Config {
 			Dir:                  "./plugins",
 			IdleThresholdSeconds: 8,
 		},
+		PluginsDataDir:    defaultPluginsDataDir,
+		AllowLocalPlugins: false,
 	}
 }
 
@@ -373,7 +409,33 @@ func applyEnvOverrides(cfg *Config) bool {
 	// Telegram
 	setStr(&cfg.Telegram.BotToken, "OPENDRAY_TELEGRAM_BOT_TOKEN")
 
+	// Plugin platform (M1/T25).
+	//
+	// OPENDRAY_PLUGINS_DATA_DIR overrides the root directory for installed
+	// plugin bundles. An empty value is ignored — callers who want to clear
+	// the default must use the TOML file.
+	setStr(&cfg.PluginsDataDir, "OPENDRAY_PLUGINS_DATA_DIR")
+
+	// OPENDRAY_ALLOW_LOCAL_PLUGINS gates local-scheme install sources.
+	// Truthy (case-insensitive): "1", "true", "yes", "on" → true.
+	// All other values, including unset or empty string → false.
+	if v, ok := os.LookupEnv("OPENDRAY_ALLOW_LOCAL_PLUGINS"); ok {
+		cfg.AllowLocalPlugins = isTruthy(v)
+		changed = true
+	}
+
 	return changed
+}
+
+// isTruthy returns true when s is one of the canonical truthy strings
+// (case-insensitive): "1", "true", "yes", "on". All other values → false.
+// This is the single source of truth for AllowLocalPlugins parsing.
+func isTruthy(s string) bool {
+	switch strings.ToLower(s) {
+	case "1", "true", "yes", "on":
+		return true
+	}
+	return false
 }
 
 // expandHome turns a leading "~/" into the user's home directory. No-op

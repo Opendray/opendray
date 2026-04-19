@@ -214,9 +214,8 @@ func TestPluginsInstall_EndToEnd(t *testing.T) {
 	dataDir := t.TempDir()
 	bundleDir := writeTestBundle(t, t.TempDir(), "e2e-plugin")
 
-	t.Setenv("OPENDRAY_ALLOW_LOCAL_PLUGINS", "1")
-
 	inst := buildInstaller(t, db, dataDir)
+	inst.AllowLocal = true // T25: enable local installs for the end-to-end test
 
 	h := hub.New(hub.Config{DB: db})
 	s := buildTestServer(t, inst, h)
@@ -268,13 +267,26 @@ func TestPluginsInstall_EndToEnd(t *testing.T) {
 	}
 }
 
-// TestPluginsInstall_LocalSourceGated verifies that without
-// OPENDRAY_ALLOW_LOCAL_PLUGINS=1, a local: source returns 403 EFORBIDDEN.
-func TestPluginsInstall_LocalSourceGated(t *testing.T) {
-	// Ensure env var is unset.
-	t.Setenv("OPENDRAY_ALLOW_LOCAL_PLUGINS", "")
+// buildGateInstaller creates a minimal Installer with no DB/runtime, used
+// for testing only the AllowLocal gate in the handler. The janitor is started
+// but stops immediately on t.Cleanup(Stop).
+func buildGateInstaller(t *testing.T, allowLocal bool) *install.Installer {
+	t.Helper()
+	// nil DB and nil runtime: Stage will hit the local gate before any DB call.
+	inst := install.NewInstallerWithTTL(t.TempDir(), nil, nil, nil, nil, 10*time.Minute, time.Hour)
+	inst.AllowLocal = allowLocal
+	t.Cleanup(inst.Stop)
+	return inst
+}
 
-	s := buildTestServer(t, nil, nil)
+// TestPluginsInstall_LocalSourceGated verifies that a Server whose installer
+// has AllowLocal=false returns 403 EFORBIDDEN for a local: source.
+// This is the T25 config-backed check — the env var is NOT consulted by the
+// handler; that decision lives in the Installer.
+func TestPluginsInstall_LocalSourceGated(t *testing.T) {
+	inst := buildGateInstaller(t, false) // AllowLocal=false
+
+	s := buildTestServer(t, inst, nil)
 
 	rr := postJSON(t, s.pluginsInstall, map[string]any{"src": "local:/some/path"})
 	if rr.Code != http.StatusForbidden {
@@ -283,6 +295,30 @@ func TestPluginsInstall_LocalSourceGated(t *testing.T) {
 	m := decodeBody(t, rr)
 	if code, _ := m["code"].(string); code != "EFORBIDDEN" {
 		t.Fatalf("want code=EFORBIDDEN, got %q", code)
+	}
+	if msg, _ := m["msg"].(string); msg == "" {
+		t.Errorf("want non-empty msg in 403 response; body=%s", rr.Body)
+	}
+}
+
+// TestPluginsInstall_LocalSourceAllowed verifies that a Server whose installer
+// has AllowLocal=true allows a local: source past the gate. The request may
+// fail for other reasons (e.g. path not found), but it must NOT return 403.
+func TestPluginsInstall_LocalSourceAllowed(t *testing.T) {
+	inst := buildGateInstaller(t, true) // AllowLocal=true
+
+	s := buildTestServer(t, inst, nil)
+
+	// Use a non-existent path: we expect the gate passes (not 403) but
+	// Stage fails with a different error (bad path → 500 or similar).
+	rr := postJSON(t, s.pluginsInstall, map[string]any{"src": "local:/tmp/no-such-plugin-xyz"})
+	if rr.Code == http.StatusForbidden {
+		t.Fatalf("AllowLocal=true: must NOT return 403; body=%s", rr.Body)
+	}
+	// Specifically assert code is not EFORBIDDEN.
+	m := decodeBody(t, rr)
+	if code, _ := m["code"].(string); code == "EFORBIDDEN" {
+		t.Fatalf("AllowLocal=true: must NOT return code=EFORBIDDEN; body=%s", rr.Body)
 	}
 }
 
@@ -305,9 +341,10 @@ func TestPluginsInstall_MissingSrc(t *testing.T) {
 }
 
 // TestPluginsInstall_BadScheme verifies that an unrecognised scheme → 400 EBADSRC.
+// garbage:// is not a local scheme so the AllowLocal gate does not fire.
 func TestPluginsInstall_BadScheme(t *testing.T) {
-	// Set env so we pass the local-gate check before hitting ParseSource.
-	t.Setenv("OPENDRAY_ALLOW_LOCAL_PLUGINS", "1")
+	// A nil installer means s.installer == nil; the gate fires only for local
+	// sources. garbage:// is not local, so ParseSource is reached → 400.
 	s := buildTestServer(t, nil, nil)
 
 	rr := postJSON(t, s.pluginsInstall, map[string]any{"src": "garbage://x"})
@@ -322,11 +359,12 @@ func TestPluginsInstall_BadScheme(t *testing.T) {
 
 // TestPluginsInstall_HTTPSNotImplemented verifies that https:// sources
 // return 501 ENOTIMPL in M1.
+// https:// is not a local scheme so the AllowLocal gate does not fire.
 func TestPluginsInstall_HTTPSNotImplemented(t *testing.T) {
-	// Must set the env so the handler passes the local-gate check for
-	// non-local sources (the gate only fires for local: scheme).
-	t.Setenv("OPENDRAY_ALLOW_LOCAL_PLUGINS", "1")
-	s := buildTestServer(t, nil, nil)
+	// A nil installer here; gate only fires for local sources. We supply a
+	// minimal installer with AllowLocal=true to let https:// reach Stage.
+	inst := buildGateInstaller(t, true)
+	s := buildTestServer(t, inst, nil)
 
 	rr := postJSON(t, s.pluginsInstall, map[string]any{"src": "https://example.com/plugin.zip"})
 	if rr.Code != http.StatusNotImplemented {
@@ -399,9 +437,8 @@ func TestPluginsAudit_DefaultLimit(t *testing.T) {
 	dataDir := t.TempDir()
 	bundleDir := writeTestBundle(t, t.TempDir(), "audit-plugin")
 
-	t.Setenv("OPENDRAY_ALLOW_LOCAL_PLUGINS", "1")
-
 	inst := buildInstaller(t, db, dataDir)
+	inst.AllowLocal = true // T25: enable local installs for this audit test
 	ctx := context.Background()
 
 	// Stage + Confirm so the plugin row exists (audit FK not enforced but

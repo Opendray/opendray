@@ -880,5 +880,83 @@ func TestInstaller_JanitorReapsExpired(t *testing.T) {
 	}
 }
 
+// ─── T25: AllowLocal gate ─────────────────────────────────────────────────
+
+// TestInstaller_LocalSourceGatedByConfig verifies that an Installer with
+// AllowLocal=false refuses to Stage a local-scheme source with
+// ErrLocalDisabled, and that setting AllowLocal=true allows it to proceed
+// past the gate (it may still fail for other reasons — we only assert that
+// ErrLocalDisabled is NOT returned).
+func TestInstaller_LocalSourceGatedByConfig(t *testing.T) {
+	db := bootDB(t)
+	ctx := context.Background()
+
+	src := writeValidBundle(t, t.TempDir(), "gate-plugin", "1.0.0")
+	dataDir := t.TempDir()
+
+	rt := mustRuntime(db)
+	gate := bridge.NewGate(nil, nil, slog.Default())
+
+	// ── Case 1: AllowLocal=false → ErrLocalDisabled ───────────────────────
+	instDeny := NewInstaller(dataDir, db, rt, gate, slog.Default())
+	instDeny.AllowLocal = false
+	t.Cleanup(instDeny.Stop)
+
+	_, err := instDeny.Stage(ctx, LocalSource{Path: src})
+	if !errors.Is(err, ErrLocalDisabled) {
+		t.Errorf("Stage with AllowLocal=false: want ErrLocalDisabled, got %v", err)
+	}
+
+	// No staging artefacts should have been created.
+	entries, _ := os.ReadDir(dataDir)
+	for _, e := range entries {
+		if len(e.Name()) > 8 && e.Name()[:8] == "staging-" {
+			t.Errorf("staging dir leaked when AllowLocal=false: %s", e.Name())
+		}
+	}
+
+	// ── Case 2: AllowLocal=true → gate passes, Stage succeeds ────────────
+	instAllow := NewInstaller(dataDir, db, rt, gate, slog.Default())
+	instAllow.AllowLocal = true
+	t.Cleanup(instAllow.Stop)
+
+	pend, err := instAllow.Stage(ctx, LocalSource{Path: src})
+	if errors.Is(err, ErrLocalDisabled) {
+		t.Errorf("Stage with AllowLocal=true: got unexpected ErrLocalDisabled")
+	}
+	if err != nil {
+		t.Fatalf("Stage with AllowLocal=true: unexpected error %v", err)
+	}
+	if pend == nil || pend.Name != "gate-plugin" {
+		t.Errorf("Stage with AllowLocal=true: unexpected pending %+v", pend)
+	}
+}
+
+// TestInstaller_LocalSourceGatedByConfig_HTTPSUnaffected verifies that the
+// AllowLocal gate does NOT affect non-local sources: an HTTPSSource with
+// AllowLocal=false returns ErrNotImplemented (not ErrLocalDisabled).
+func TestInstaller_LocalSourceGatedByConfig_HTTPSUnaffected(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	// We only need an Installer with no DB for this; the gate fires before
+	// any DB or file I/O when the source is local. For HTTPS the gate is
+	// skipped entirely, so ErrNotImplemented comes from the source itself.
+	inst := &Installer{
+		DataDir:    t.TempDir(),
+		AllowLocal: false,
+		pending:    newPendingStore(10*time.Minute, nil),
+		Log:        slog.Default(),
+	}
+
+	_, err := inst.Stage(ctx, HTTPSSource{URL: "https://example.com/x.zip"})
+	if errors.Is(err, ErrLocalDisabled) {
+		t.Errorf("HTTPS source should not be blocked by AllowLocal gate; got ErrLocalDisabled")
+	}
+	if !errors.Is(err, ErrNotImplemented) {
+		t.Errorf("HTTPS source with AllowLocal=false: want ErrNotImplemented, got %v", err)
+	}
+}
+
 // ─── compile-only guard: ensures I/O helpers used above keep referenced ───
 var _ = io.Copy

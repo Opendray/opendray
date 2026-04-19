@@ -258,6 +258,110 @@ func TestSaveAndReload(t *testing.T) {
 	}
 }
 
+// ─── T25: PluginsDataDir + AllowLocalPlugins ───────────────────────────────
+
+// TestConfig_PluginsDataDir_Default verifies that when OPENDRAY_PLUGINS_DATA_DIR
+// is not set, Load() returns a PluginsDataDir that ends with .opendray/plugins
+// and is rooted under the user's home directory.
+func TestConfig_PluginsDataDir_Default(t *testing.T) {
+	// Isolate from any real config file and from the data-dir env var.
+	t.Setenv("OPENDRAY_CONFIG", filepath.Join(t.TempDir(), "no-such-config.toml"))
+	t.Setenv("OPENDRAY_PLUGINS_DATA_DIR", "")
+
+	cfg, _, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		t.Skipf("os.UserHomeDir: %v", err)
+	}
+	want := filepath.Join(home, ".opendray", "plugins")
+	if cfg.PluginsDataDir != want {
+		t.Errorf("PluginsDataDir = %q, want %q", cfg.PluginsDataDir, want)
+	}
+}
+
+// TestConfig_PluginsDataDir_EnvOverride verifies that OPENDRAY_PLUGINS_DATA_DIR
+// is respected when set.
+func TestConfig_PluginsDataDir_EnvOverride(t *testing.T) {
+	t.Setenv("OPENDRAY_CONFIG", filepath.Join(t.TempDir(), "no-such-config.toml"))
+	t.Setenv("OPENDRAY_PLUGINS_DATA_DIR", "/custom/plugins/path")
+
+	cfg, _, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.PluginsDataDir != "/custom/plugins/path" {
+		t.Errorf("PluginsDataDir = %q, want /custom/plugins/path", cfg.PluginsDataDir)
+	}
+}
+
+// TestConfig_AllowLocalPlugins_Truthy is a table-driven test covering every
+// truthy and falsy variant documented on the AllowLocalPlugins field.
+//
+// Truthy (→ true):  "1", "true", "True", "TRUE", "yes", "Yes", "YES", "on", "On", "ON"
+// Falsy  (→ false): "0", "false", "no", "off", "" (empty), unset, "bogus", "2"
+func TestConfig_AllowLocalPlugins_Truthy(t *testing.T) {
+	// This test calls Defaults() directly to avoid file I/O and avoid the
+	// pre-existing TestLoadEnvOverridesFile env-leakage bug that affects Load().
+	type row struct {
+		val  string // env value to set ("" means set-to-empty, not unset)
+		want bool
+	}
+	truthy := []row{
+		{"1", true},
+		{"true", true},
+		{"True", true},
+		{"TRUE", true},
+		{"yes", true},
+		{"Yes", true},
+		{"YES", true},
+		{"on", true},
+		{"On", true},
+		{"ON", true},
+	}
+	falsy := []row{
+		{"0", false},
+		{"false", false},
+		{"no", false},
+		{"off", false},
+		{"", false},
+		{"bogus", false},
+		{"2", false},
+	}
+
+	for _, tc := range append(truthy, falsy...) {
+		tc := tc
+		t.Run("OPENDRAY_ALLOW_LOCAL_PLUGINS="+tc.val, func(t *testing.T) {
+			t.Setenv("OPENDRAY_ALLOW_LOCAL_PLUGINS", tc.val)
+			cfg := Defaults()
+			changed := applyEnvOverrides(&cfg)
+			_ = changed
+			if cfg.AllowLocalPlugins != tc.want {
+				t.Errorf("AllowLocalPlugins = %v, want %v (env=%q)", cfg.AllowLocalPlugins, tc.want, tc.val)
+			}
+		})
+	}
+}
+
+// TestConfig_AllowLocalPlugins_Unset confirms the zero-value / unset case → false.
+func TestConfig_AllowLocalPlugins_Unset(t *testing.T) {
+	// Explicitly unset the env var using os.Unsetenv so we don't rely on
+	// t.Setenv's restore semantics.
+	orig, had := os.LookupEnv("OPENDRAY_ALLOW_LOCAL_PLUGINS")
+	if had {
+		defer os.Setenv("OPENDRAY_ALLOW_LOCAL_PLUGINS", orig)
+		os.Unsetenv("OPENDRAY_ALLOW_LOCAL_PLUGINS")
+	}
+	cfg := Defaults()
+	applyEnvOverrides(&cfg)
+	if cfg.AllowLocalPlugins {
+		t.Errorf("AllowLocalPlugins = true when env var is unset, want false")
+	}
+}
+
 func TestGenerateJWTSecret(t *testing.T) {
 	a, err := GenerateJWTSecret()
 	if err != nil {

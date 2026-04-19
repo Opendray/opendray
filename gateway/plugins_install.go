@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -112,12 +111,15 @@ func (s *Server) pluginsInstall(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Gate local: + bare absolute-path sources on the allow-list env var.
+	// T25: Gate local: + bare absolute-path sources on the config-backed
+	// AllowLocal flag (populated from OPENDRAY_ALLOW_LOCAL_PLUGINS by the
+	// config loader). The env var is no longer read directly here — the
+	// config layer owns that decision and propagates it via Installer.AllowLocal.
 	// This prevents production deployments from being used to install
 	// arbitrary local filesystem paths.
-	if isLocalScheme(req.Src) && os.Getenv("OPENDRAY_ALLOW_LOCAL_PLUGINS") != "1" {
+	if isLocalScheme(req.Src) && (s.installer == nil || !s.installer.AllowLocal) {
 		writeJSONError(w, http.StatusForbidden, "EFORBIDDEN",
-			"local plugin install requires OPENDRAY_ALLOW_LOCAL_PLUGINS=1")
+			"local plugin installs disabled; set OPENDRAY_ALLOW_LOCAL_PLUGINS=1")
 		return
 	}
 
@@ -130,6 +132,13 @@ func (s *Server) pluginsInstall(w http.ResponseWriter, r *http.Request) {
 	pending, err := s.installer.Stage(r.Context(), src)
 	if err != nil {
 		switch {
+		case errors.Is(err, install.ErrLocalDisabled):
+			// Defence-in-depth: Stage itself returns ErrLocalDisabled when
+			// AllowLocal==false. The explicit isLocalScheme check above fires
+			// first for direct local: requests, but this catches any path
+			// that reaches Stage with a local source despite the handler gate.
+			writeJSONError(w, http.StatusForbidden, "EFORBIDDEN",
+				"local plugin installs disabled; set OPENDRAY_ALLOW_LOCAL_PLUGINS=1")
 		case errors.Is(err, install.ErrInvalidManifest):
 			writeJSONError(w, http.StatusBadRequest, "EBADMANIFEST", err.Error())
 		case errors.Is(err, install.ErrNotImplemented):
