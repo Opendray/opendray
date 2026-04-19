@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -356,6 +357,22 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 		logger.Error("plugin command dispatcher init failed", "error", err)
 		return
 	}
+	invoker := &dispatcherAdapter{d: dispatcher}
+
+	// M2 bridge wiring (T7 manager, T9 workbench, T10 storage, T11 events,
+	// T14 SSE bus). WorkbenchBus is the host→Flutter fan-out; it doubles
+	// as ShowMessage/OpenView/StatusBar sink for the workbench namespace.
+	bridgeMgr := bridge.NewManager(logger)
+	workbenchBus := gateway.NewWorkbenchBus(logger)
+	workbenchAPI := bridge.NewWorkbenchAPI(bridge.WorkbenchConfig{
+		Message:   workbenchBus,
+		OpenView:  workbenchBus,
+		StatusBar: workbenchBus,
+		Command:   invoker,
+	})
+	storageAPI := bridge.NewStorageAPI(db, pluginGate)
+	hookAdapter := newHookBusAdapter(hookBus, logger)
+	eventsAPI := bridge.NewEventsAPI(hookAdapter, pluginGate)
 
 	// Session Hub
 	idleThreshold := 8 * time.Second
@@ -396,8 +413,14 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 		// Plugin platform (M1)
 		Installer:      installer,
 		Contributions:  contribRegistry,
-		CommandInvoker: &dispatcherAdapter{d: dispatcher},
+		CommandInvoker: invoker,
+		// M2 bridge
+		BridgeManager: bridgeMgr,
+		WorkbenchBus:  workbenchBus,
 	})
+	gw.RegisterNamespace("workbench", workbenchAPI)
+	gw.RegisterNamespace("storage", storageAPI)
+	gw.RegisterNamespace("events", eventsAPI)
 
 	server := &http.Server{Addr: cfg.Server.ListenAddr, Handler: gw.Handler()}
 
@@ -547,13 +570,123 @@ func (s *dbAuditSink) Append(ctx context.Context, ev bridge.AuditEvent) error {
 	})
 }
 
-// dispatcherAdapter satisfies gateway's unexported commandInvoker
-// interface by widening commands.Dispatcher.Invoke's *Result return
-// to any — the HTTP handler just marshals it to JSON.
+// dispatcherAdapter satisfies both gateway's unexported commandInvoker
+// and bridge.CommandInvoker by widening commands.Dispatcher.Invoke's
+// *Result return to any.
 type dispatcherAdapter struct{ d *commands.Dispatcher }
 
 func (a *dispatcherAdapter) Invoke(ctx context.Context, pluginName, commandID string, args map[string]any) (any, error) {
 	return a.d.Invoke(ctx, pluginName, commandID, args)
+}
+
+// ── HookBus ↔ bridge.HookBusLike adapter (M2 T11) ──────────────────────
+//
+// The production *plugin.HookBus exposes typed HookEvent callbacks via
+// SubscribeLocal + DispatchOutput/DispatchSessionEvent — not the generic
+// SubscribeByName / Publish surface bridge.EventsAPI consumes. This
+// adapter translates:
+//
+//   - Legacy HookEvent types → M2 dotted names:
+//     onSessionStart → "session.start"
+//     onSessionStop  → "session.stop"
+//     onIdle         → "session.idle"
+//     onOutput       → "session.output"
+//
+//   - bridge.Publish calls into a private in-memory fan-out (not
+//     re-dispatched to HookBus — legacy plugins filter by HookEvent.Type
+//     and would drop unqualified plugin.* names).
+//
+// Pattern matching reuses bridge.MatchEventPattern so the semantics are
+// identical to the subscribe path in EventsAPI.
+
+type hookBusAdapter struct {
+	mu   sync.Mutex
+	subs []*hookBusAdapterSub
+	log  *slog.Logger
+}
+
+type hookBusAdapterSub struct {
+	pattern string
+	handler func(name string, data any)
+	active  bool
+}
+
+func newHookBusAdapter(hb *plugin.HookBus, log *slog.Logger) *hookBusAdapter {
+	a := &hookBusAdapter{log: log}
+	// One local listener covers every hook type the bridge surfaces today.
+	hb.SubscribeLocal(
+		[]string{
+			plugin.HookOnSessionStart,
+			plugin.HookOnSessionStop,
+			plugin.HookOnIdle,
+			plugin.HookOnOutput,
+		},
+		func(e plugin.HookEvent) {
+			name := hookEventToM2Name(e.Type)
+			if name == "" {
+				return
+			}
+			a.dispatch(name, map[string]any{
+				"sessionId": e.SessionID,
+				"data":      e.Data,
+				"timestamp": e.Timestamp,
+			})
+		},
+	)
+	return a
+}
+
+func hookEventToM2Name(t string) string {
+	switch t {
+	case plugin.HookOnSessionStart:
+		return "session.start"
+	case plugin.HookOnSessionStop:
+		return "session.stop"
+	case plugin.HookOnIdle:
+		return "session.idle"
+	case plugin.HookOnOutput:
+		return "session.output"
+	}
+	return ""
+}
+
+func (a *hookBusAdapter) SubscribeByName(pattern string, handler func(name string, data any)) (func(), error) {
+	sub := &hookBusAdapterSub{pattern: pattern, handler: handler, active: true}
+	a.mu.Lock()
+	a.subs = append(a.subs, sub)
+	a.mu.Unlock()
+	return func() {
+		a.mu.Lock()
+		sub.active = false
+		a.mu.Unlock()
+	}, nil
+}
+
+func (a *hookBusAdapter) Publish(name string, data any) {
+	a.dispatch(name, data)
+}
+
+func (a *hookBusAdapter) dispatch(name string, data any) {
+	a.mu.Lock()
+	matched := make([]*hookBusAdapterSub, 0, len(a.subs))
+	for _, s := range a.subs {
+		if s.active && bridge.MatchEventPattern([]string{s.pattern}, name) {
+			matched = append(matched, s)
+		}
+	}
+	a.mu.Unlock()
+	for _, s := range matched {
+		s := s
+		go func() {
+			defer func() {
+				if r := recover(); r != nil && a.log != nil {
+					a.log.Warn("bridge hookBusAdapter: subscriber panicked",
+						"pattern", s.pattern, "panic", r)
+				}
+			}()
+			s.handler(name, data)
+		}()
+	}
 }
 
 // isLoopback returns true if the listen address binds only to a loopback
