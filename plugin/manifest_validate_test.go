@@ -675,3 +675,372 @@ func TestValidateV1_ValidCommandRunKinds(t *testing.T) {
 		})
 	}
 }
+
+// ─── M2 T2: webview contribution-point validator ────────────────────────────
+
+// hasErrorMsg returns true if any ValidationError contains both pathSubstr in
+// Path and msgSubstr in Msg.
+func hasErrorMsg(errs []ValidationError, pathSubstr, msgSubstr string) bool {
+	for _, e := range errs {
+		if strings.Contains(e.Path, pathSubstr) && strings.Contains(e.Msg, msgSubstr) {
+			return true
+		}
+	}
+	return false
+}
+
+// baseV1 is a minimal valid v1 JSON preamble — append contributes to build fixtures.
+const baseV1 = `{"name":"ok","version":"1.0.0","publisher":"acme","engines":{"opendray":"^1"}}`
+
+// withContributes wraps a contributes JSON fragment into a full v1 manifest.
+func withContributes(t *testing.T, contributes string) Provider {
+	t.Helper()
+	return mustParseProvider(t, `{"name":"ok","version":"1.0.0","publisher":"acme","engines":{"opendray":"^1"},"contributes":`+contributes+`}`)
+}
+
+// ── Count limits ──────────────────────────────────────────────────────────────
+
+// TestValidate_Webview_ActivityBarCountLimit asserts that 5 activityBar entries
+// (exceeding the max-4 limit from 03-contribution-points.md §1) yields an error
+// path containing "contributes.activityBar" and message containing "4".
+func TestValidate_Webview_ActivityBarCountLimit(t *testing.T) {
+	p := withContributes(t, `{"activityBar":[
+		{"id":"a.1","icon":"i","title":"T1"},
+		{"id":"a.2","icon":"i","title":"T2"},
+		{"id":"a.3","icon":"i","title":"T3"},
+		{"id":"a.4","icon":"i","title":"T4"},
+		{"id":"a.5","icon":"i","title":"T5"}
+	]}`)
+	errs := ValidateV1(p)
+	if !hasErrorMsg(errs, "contributes.activityBar", "4") {
+		t.Errorf("expected contributes.activityBar too-many error containing '4', got: %v", errs)
+	}
+}
+
+// TestValidate_Webview_ViewsCountLimit asserts that 9 views (exceeding max-8
+// from 03-contribution-points.md §2) yield an error with "max 8".
+func TestValidate_Webview_ViewsCountLimit(t *testing.T) {
+	p := withContributes(t, `{"views":[
+		{"id":"v.1","title":"V1"},
+		{"id":"v.2","title":"V2"},
+		{"id":"v.3","title":"V3"},
+		{"id":"v.4","title":"V4"},
+		{"id":"v.5","title":"V5"},
+		{"id":"v.6","title":"V6"},
+		{"id":"v.7","title":"V7"},
+		{"id":"v.8","title":"V8"},
+		{"id":"v.9","title":"V9"}
+	]}`)
+	errs := ValidateV1(p)
+	if !hasErrorMsg(errs, "contributes.views", "8") {
+		t.Errorf("expected contributes.views too-many error containing '8', got: %v", errs)
+	}
+}
+
+// TestValidate_Webview_PanelsCountLimit asserts that 5 panels (exceeding max-4
+// from 03-contribution-points.md §3) yield an error with "max 4".
+func TestValidate_Webview_PanelsCountLimit(t *testing.T) {
+	p := withContributes(t, `{"panels":[
+		{"id":"p.1","title":"P1"},
+		{"id":"p.2","title":"P2"},
+		{"id":"p.3","title":"P3"},
+		{"id":"p.4","title":"P4"},
+		{"id":"p.5","title":"P5"}
+	]}`)
+	errs := ValidateV1(p)
+	if !hasErrorMsg(errs, "contributes.panels", "4") {
+		t.Errorf("expected contributes.panels too-many error containing '4', got: %v", errs)
+	}
+}
+
+// ── ID regex ─────────────────────────────────────────────────────────────────
+
+// TestValidate_Webview_ActivityBarIDRegex asserts that an activityBar item
+// with id "Bad ID" (uppercase + space) fails at contributes.activityBar[0].id.
+func TestValidate_Webview_ActivityBarIDRegex(t *testing.T) {
+	p := withContributes(t, `{"activityBar":[
+		{"id":"Bad ID","icon":"i","title":"T"}
+	]}`)
+	errs := ValidateV1(p)
+	if !hasError(errs, "contributes.activityBar[0].id") {
+		t.Errorf("expected contributes.activityBar[0].id error, got: %v", errs)
+	}
+}
+
+// ── Enum validation ──────────────────────────────────────────────────────────
+
+// TestValidate_Webview_ViewsRenderEnum asserts that render="native" (not in
+// {webview, declarative}) fails at contributes.views[0].render.
+func TestValidate_Webview_ViewsRenderEnum(t *testing.T) {
+	p := withContributes(t, `{"views":[
+		{"id":"v.1","title":"T","render":"native"}
+	]}`)
+	errs := ValidateV1(p)
+	if !hasError(errs, "contributes.views[0].render") {
+		t.Errorf("expected contributes.views[0].render error, got: %v", errs)
+	}
+}
+
+// TestValidate_Webview_PanelsPositionEnum asserts that position="top" (not in
+// {bottom, right}) fails at contributes.panels[0].position.
+func TestValidate_Webview_PanelsPositionEnum(t *testing.T) {
+	p := withContributes(t, `{"panels":[
+		{"id":"p.1","title":"T","position":"top"}
+	]}`)
+	errs := ValidateV1(p)
+	if !hasError(errs, "contributes.panels[0].position") {
+		t.Errorf("expected contributes.panels[0].position error, got: %v", errs)
+	}
+}
+
+// ── Entry path validation ─────────────────────────────────────────────────────
+
+// TestValidate_Webview_EntryRequiredWhenWebview asserts that a view with
+// render=webview but missing entry field produces an error at
+// contributes.views[0].entry containing "required".
+func TestValidate_Webview_EntryRequiredWhenWebview(t *testing.T) {
+	t.Run("view missing entry", func(t *testing.T) {
+		p := withContributes(t, `{"views":[
+			{"id":"v.1","title":"T","render":"webview"}
+		]}`)
+		errs := ValidateV1(p)
+		if !hasErrorMsg(errs, "contributes.views[0].entry", "required") {
+			t.Errorf("expected views[0].entry required error, got: %v", errs)
+		}
+	})
+	t.Run("panel missing entry", func(t *testing.T) {
+		p := withContributes(t, `{"panels":[
+			{"id":"p.1","title":"T","render":"webview"}
+		]}`)
+		errs := ValidateV1(p)
+		if !hasErrorMsg(errs, "contributes.panels[0].entry", "required") {
+			t.Errorf("expected panels[0].entry required error, got: %v", errs)
+		}
+	})
+}
+
+// TestValidate_Webview_EntryMustBeRelative tests the validateRelativeBundlePath
+// helper via views and panels:
+//   - absolute path "/etc/passwd" → fails
+//   - path traversal "../escape" → fails
+//   - valid relative path "ui/index.html" → passes
+func TestValidate_Webview_EntryMustBeRelative(t *testing.T) {
+	t.Run("absolute path rejected", func(t *testing.T) {
+		p := withContributes(t, `{"views":[
+			{"id":"v.1","title":"T","render":"webview","entry":"/etc/passwd"}
+		]}`)
+		errs := ValidateV1(p)
+		if !hasErrorMsg(errs, "contributes.views[0].entry", "relative") {
+			t.Errorf("expected 'must be relative' error, got: %v", errs)
+		}
+	})
+	t.Run("dotdot path rejected", func(t *testing.T) {
+		p := withContributes(t, `{"views":[
+			{"id":"v.1","title":"T","render":"webview","entry":"../escape"}
+		]}`)
+		errs := ValidateV1(p)
+		if !hasErrorMsg(errs, "contributes.views[0].entry", "..") {
+			t.Errorf("expected must-not-contain-'..' error, got: %v", errs)
+		}
+	})
+	t.Run("valid relative path passes", func(t *testing.T) {
+		p := withContributes(t, `{"views":[
+			{"id":"v.1","title":"T","render":"webview","entry":"ui/index.html"}
+		]}`)
+		errs := ValidateV1(p)
+		if hasError(errs, "contributes.views[0].entry") {
+			t.Errorf("expected no entry error for valid relative path, got: %v", errs)
+		}
+	})
+	t.Run("panel absolute path rejected", func(t *testing.T) {
+		p := withContributes(t, `{"panels":[
+			{"id":"p.1","title":"T","render":"webview","entry":"/etc/passwd"}
+		]}`)
+		errs := ValidateV1(p)
+		if !hasErrorMsg(errs, "contributes.panels[0].entry", "relative") {
+			t.Errorf("expected 'must be relative' error for panel, got: %v", errs)
+		}
+	})
+	t.Run("panel dotdot path rejected", func(t *testing.T) {
+		p := withContributes(t, `{"panels":[
+			{"id":"p.1","title":"T","render":"webview","entry":"../../etc/shadow"}
+		]}`)
+		errs := ValidateV1(p)
+		if !hasErrorMsg(errs, "contributes.panels[0].entry", "..") {
+			t.Errorf("expected must-not-contain-'..' error for panel, got: %v", errs)
+		}
+	})
+}
+
+// ── Cross-reference check ─────────────────────────────────────────────────────
+
+// TestValidate_Webview_ActivityBarOrphanViewId asserts that an activityBar item
+// referencing a viewId that does not appear in contributes.views fails with a
+// message containing "unknown view".
+func TestValidate_Webview_ActivityBarOrphanViewId(t *testing.T) {
+	t.Run("orphan viewId with empty views list", func(t *testing.T) {
+		p := withContributes(t, `{"activityBar":[
+			{"id":"a.1","icon":"i","title":"T","viewId":"nope"}
+		]}`)
+		errs := ValidateV1(p)
+		if !hasErrorMsg(errs, "contributes.activityBar[0].viewId", "nope") {
+			t.Errorf("expected orphan-viewId error mentioning 'nope', got: %v", errs)
+		}
+	})
+	t.Run("orphan viewId with non-matching views", func(t *testing.T) {
+		p := withContributes(t, `{
+			"activityBar":[{"id":"a.1","icon":"i","title":"T","viewId":"wrong"}],
+			"views":[{"id":"right.view","title":"R"}]
+		}`)
+		errs := ValidateV1(p)
+		if !hasErrorMsg(errs, "contributes.activityBar[0].viewId", "wrong") {
+			t.Errorf("expected orphan-viewId error mentioning 'wrong', got: %v", errs)
+		}
+	})
+	t.Run("valid viewId reference passes", func(t *testing.T) {
+		p := withContributes(t, `{
+			"activityBar":[{"id":"a.1","icon":"i","title":"T","viewId":"my.view"}],
+			"views":[{"id":"my.view","title":"My View"}]
+		}`)
+		errs := ValidateV1(p)
+		if hasError(errs, "contributes.activityBar[0].viewId") {
+			t.Errorf("expected no viewId error for valid cross-reference, got: %v", errs)
+		}
+	})
+}
+
+// ── Full-manifest happy-path ──────────────────────────────────────────────────
+
+// TestValidate_Webview_KanbanPasses verifies that the reference kanban manifest
+// from M2-PLAN.md §10 passes ValidateV1 with zero errors.
+func TestValidate_Webview_KanbanPasses(t *testing.T) {
+	const kanbanManifest = `{
+		"$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
+		"name": "kanban",
+		"version": "1.0.0",
+		"publisher": "opendray-examples",
+		"displayName": "Kanban",
+		"description": "A minimal kanban board.",
+		"icon": "📋",
+		"engines": { "opendray": "^1.0.0" },
+		"form": "webview",
+		"activation": ["onView:kanban.board"],
+		"contributes": {
+			"activityBar": [
+				{ "id": "kanban.activity", "icon": "📋", "title": "Kanban", "viewId": "kanban.board" }
+			],
+			"views": [
+				{ "id": "kanban.board", "title": "Kanban Board",
+				  "container": "activityBar", "render": "webview", "entry": "index.html" }
+			]
+		},
+		"permissions": {
+			"storage": true
+		}
+	}`
+	p := mustParseProvider(t, kanbanManifest)
+	errs := ValidateV1(p)
+	if len(errs) != 0 {
+		t.Errorf("kanban manifest: expected no errors, got:\n%v", errs)
+	}
+}
+
+// ── validateRelativeBundlePath unit tests ─────────────────────────────────────
+
+// TestValidateRelativeBundlePath exercises the helper directly covering all
+// edge cases: empty, absolute, dotdot, newline, and valid paths.
+func TestValidateRelativeBundlePath(t *testing.T) {
+	type tc struct {
+		name  string
+		input string
+		valid bool
+	}
+	cases := []tc{
+		// valid
+		{"simple filename", "index.html", true},
+		{"subdir path", "ui/index.html", true},
+		{"deep path", "dist/assets/main.js", true},
+		// invalid
+		{"empty string", "", false},
+		{"absolute path", "/etc/passwd", false},
+		{"dotdot traversal", "../escape", false},
+		{"dotdot in middle", "ui/../../../etc/passwd", false},
+		{"newline injection", "ui/index.html\nX-Injected: bad", false},
+		{"carriage return injection", "ui/index.html\rother", false},
+		{"null byte", "ui/index\x00.html", false},
+	}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateRelativeBundlePath(tc.input)
+			if tc.valid && err != nil {
+				t.Errorf("validateRelativeBundlePath(%q) = %v, want nil", tc.input, err)
+			}
+			if !tc.valid && err == nil {
+				t.Errorf("validateRelativeBundlePath(%q) = nil, want error", tc.input)
+			}
+		})
+	}
+}
+
+// ── Additional field-level validation ────────────────────────────────────────
+
+// TestValidate_Webview_ActivityBarFieldRules tests per-field rules for
+// activityBar items: icon required, title length bounds.
+func TestValidate_Webview_ActivityBarFieldRules(t *testing.T) {
+	t.Run("icon empty fails", func(t *testing.T) {
+		p := withContributes(t, `{"activityBar":[{"id":"a.1","icon":"","title":"T"}]}`)
+		errs := ValidateV1(p)
+		if !hasError(errs, "contributes.activityBar[0].icon") {
+			t.Errorf("expected icon required error, got: %v", errs)
+		}
+	})
+	t.Run("title too long (49 chars) fails", func(t *testing.T) {
+		title := strings.Repeat("x", 49)
+		p := withContributes(t, `{"activityBar":[{"id":"a.1","icon":"i","title":"`+title+`"}]}`)
+		errs := ValidateV1(p)
+		if !hasError(errs, "contributes.activityBar[0].title") {
+			t.Errorf("expected title-too-long error, got: %v", errs)
+		}
+	})
+	t.Run("title at max (48 chars) passes", func(t *testing.T) {
+		title := strings.Repeat("x", 48)
+		p := withContributes(t, `{"activityBar":[{"id":"a.1","icon":"i","title":"`+title+`"}]}`)
+		errs := ValidateV1(p)
+		if hasError(errs, "contributes.activityBar[0].title") {
+			t.Errorf("unexpected title error for 48-char title, got: %v", errs)
+		}
+	})
+}
+
+// TestValidate_Webview_ViewsContainerEnum asserts container="unknown" fails.
+func TestValidate_Webview_ViewsContainerEnum(t *testing.T) {
+	p := withContributes(t, `{"views":[{"id":"v.1","title":"T","container":"unknown"}]}`)
+	errs := ValidateV1(p)
+	if !hasError(errs, "contributes.views[0].container") {
+		t.Errorf("expected views[0].container error, got: %v", errs)
+	}
+}
+
+// TestValidate_Webview_ValidContainerValues checks all allowed container values pass.
+func TestValidate_Webview_ValidContainerValues(t *testing.T) {
+	for _, container := range []string{"activityBar", "panel", "sidebar"} {
+		container := container
+		t.Run(container, func(t *testing.T) {
+			p := withContributes(t, `{"views":[{"id":"v.1","title":"T","container":"`+container+`"}]}`)
+			errs := ValidateV1(p)
+			if hasError(errs, "contributes.views[0].container") {
+				t.Errorf("container=%q: unexpected error, got: %v", container, errs)
+			}
+		})
+	}
+}
+
+// TestValidate_Webview_PanelRenderEnum asserts render="native" on a panel fails.
+func TestValidate_Webview_PanelRenderEnum(t *testing.T) {
+	p := withContributes(t, `{"panels":[{"id":"p.1","title":"T","render":"native"}]}`)
+	errs := ValidateV1(p)
+	if !hasError(errs, "contributes.panels[0].render") {
+		t.Errorf("expected panels[0].render error, got: %v", errs)
+	}
+}

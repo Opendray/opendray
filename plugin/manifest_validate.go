@@ -9,6 +9,7 @@ package plugin
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 // ─── package-level compiled regexes ─────────────────────────────────────────
@@ -272,7 +273,221 @@ func validateContributes(c *ContributesV1) []ValidationError {
 		}
 	}
 
+	// ── M2: activityBar ──────────────────────────────────────────────────────
+	// Limit: max 4 items (03-contribution-points.md §1).
+	if len(c.ActivityBar) > 4 {
+		errs = append(errs, ValidationError{
+			Path: "contributes.activityBar",
+			Msg:  fmt.Sprintf("too many (max 4), got %d", len(c.ActivityBar)),
+		})
+	}
+
+	// Build a set of declared view IDs for cross-reference checks.
+	viewIDs := make(map[string]struct{}, len(c.Views))
+	for _, v := range c.Views {
+		if v.ID != "" {
+			viewIDs[v.ID] = struct{}{}
+		}
+	}
+
+	for i, ab := range c.ActivityBar {
+		base := fmt.Sprintf("contributes.activityBar[%d]", i)
+
+		// id: required + regex ^[a-z0-9._-]+$
+		if ab.ID == "" {
+			errs = append(errs, ValidationError{Path: base + ".id", Msg: "must not be empty"})
+		} else if err := validateCommandID(ab.ID); err != nil {
+			errs = append(errs, ValidationError{Path: base + ".id", Msg: err.Error()})
+		}
+
+		// icon: required, non-empty
+		if ab.Icon == "" {
+			errs = append(errs, ValidationError{Path: base + ".icon", Msg: "must not be empty"})
+		}
+
+		// title: required, 1–48 chars
+		if ab.Title == "" {
+			errs = append(errs, ValidationError{Path: base + ".title", Msg: "must not be empty"})
+		} else if len([]rune(ab.Title)) > 48 {
+			errs = append(errs, ValidationError{
+				Path: base + ".title",
+				Msg:  fmt.Sprintf("must be 1–48 chars, got %d", len([]rune(ab.Title))),
+			})
+		}
+
+		// viewId: optional; if set must reference a declared view id
+		if ab.ViewID != "" {
+			if _, ok := viewIDs[ab.ViewID]; !ok {
+				errs = append(errs, ValidationError{
+					Path: base + ".viewId",
+					Msg:  fmt.Sprintf("references unknown view %q", ab.ViewID),
+				})
+			}
+		}
+	}
+
+	// ── M2: views ────────────────────────────────────────────────────────────
+	// Limit: max 8 items (03-contribution-points.md §2).
+	if len(c.Views) > 8 {
+		errs = append(errs, ValidationError{
+			Path: "contributes.views",
+			Msg:  fmt.Sprintf("too many (max 8), got %d", len(c.Views)),
+		})
+	}
+
+	for i, v := range c.Views {
+		base := fmt.Sprintf("contributes.views[%d]", i)
+
+		// id: required + regex
+		if v.ID == "" {
+			errs = append(errs, ValidationError{Path: base + ".id", Msg: "must not be empty"})
+		} else if err := validateCommandID(v.ID); err != nil {
+			errs = append(errs, ValidationError{Path: base + ".id", Msg: err.Error()})
+		}
+
+		// title: required, 1–64 chars
+		if v.Title == "" {
+			errs = append(errs, ValidationError{Path: base + ".title", Msg: "must not be empty"})
+		} else if len([]rune(v.Title)) > 64 {
+			errs = append(errs, ValidationError{
+				Path: base + ".title",
+				Msg:  fmt.Sprintf("must be 1–64 chars, got %d", len([]rune(v.Title))),
+			})
+		}
+
+		// container: optional; if set must be "activityBar" | "panel" | "sidebar"
+		if v.Container != "" {
+			switch v.Container {
+			case "activityBar", "panel", "sidebar":
+				// valid — 03-contribution-points.md §2
+			default:
+				errs = append(errs, ValidationError{
+					Path: base + ".container",
+					Msg:  fmt.Sprintf("must be one of activityBar|panel|sidebar, got %q", v.Container),
+				})
+			}
+		}
+
+		// render: optional; if set must be "webview" | "declarative"
+		if v.Render != "" {
+			switch v.Render {
+			case "webview", "declarative":
+				// valid
+			default:
+				errs = append(errs, ValidationError{
+					Path: base + ".render",
+					Msg:  fmt.Sprintf("must be one of webview|declarative, got %q", v.Render),
+				})
+			}
+		}
+
+		// entry: required when render=webview; must be a relative path
+		if v.Render == "webview" {
+			if v.Entry == "" {
+				errs = append(errs, ValidationError{
+					Path: base + ".entry",
+					Msg:  "required when render=webview",
+				})
+			} else if err := validateRelativeBundlePath(v.Entry); err != nil {
+				errs = append(errs, ValidationError{Path: base + ".entry", Msg: err.Error()})
+			}
+		}
+	}
+
+	// ── M2: panels ───────────────────────────────────────────────────────────
+	// Limit: max 4 items (03-contribution-points.md §3).
+	if len(c.Panels) > 4 {
+		errs = append(errs, ValidationError{
+			Path: "contributes.panels",
+			Msg:  fmt.Sprintf("too many (max 4), got %d", len(c.Panels)),
+		})
+	}
+
+	for i, panel := range c.Panels {
+		base := fmt.Sprintf("contributes.panels[%d]", i)
+
+		// id: required + regex
+		if panel.ID == "" {
+			errs = append(errs, ValidationError{Path: base + ".id", Msg: "must not be empty"})
+		} else if err := validateCommandID(panel.ID); err != nil {
+			errs = append(errs, ValidationError{Path: base + ".id", Msg: err.Error()})
+		}
+
+		// title: required, 1–64 chars
+		if panel.Title == "" {
+			errs = append(errs, ValidationError{Path: base + ".title", Msg: "must not be empty"})
+		} else if len([]rune(panel.Title)) > 64 {
+			errs = append(errs, ValidationError{
+				Path: base + ".title",
+				Msg:  fmt.Sprintf("must be 1–64 chars, got %d", len([]rune(panel.Title))),
+			})
+		}
+
+		// position: optional; if set must be "bottom" | "right"
+		if panel.Position != "" {
+			switch panel.Position {
+			case "bottom", "right":
+				// valid — 03-contribution-points.md §3
+			default:
+				errs = append(errs, ValidationError{
+					Path: base + ".position",
+					Msg:  fmt.Sprintf("must be one of bottom|right, got %q", panel.Position),
+				})
+			}
+		}
+
+		// render: optional; if set must be "webview" | "declarative"
+		if panel.Render != "" {
+			switch panel.Render {
+			case "webview", "declarative":
+				// valid
+			default:
+				errs = append(errs, ValidationError{
+					Path: base + ".render",
+					Msg:  fmt.Sprintf("must be one of webview|declarative, got %q", panel.Render),
+				})
+			}
+		}
+
+		// entry: required when render=webview; must be a relative path
+		if panel.Render == "webview" {
+			if panel.Entry == "" {
+				errs = append(errs, ValidationError{
+					Path: base + ".entry",
+					Msg:  "required when render=webview",
+				})
+			} else if err := validateRelativeBundlePath(panel.Entry); err != nil {
+				errs = append(errs, ValidationError{Path: base + ".entry", Msg: err.Error()})
+			}
+		}
+	}
+
 	return errs
+}
+
+// validateRelativeBundlePath enforces that p is a legitimate reference into a
+// plugin's ui/ directory:
+//   - non-empty
+//   - does not start with '/' (must be relative)
+//   - does not contain '..' (defence-in-depth; the asset server also cleans
+//     paths at serve time)
+//   - does not contain newlines or other ASCII control characters
+func validateRelativeBundlePath(p string) error {
+	if p == "" {
+		return fmt.Errorf("must not be empty")
+	}
+	if strings.HasPrefix(p, "/") {
+		return fmt.Errorf("must be relative (must not start with '/')")
+	}
+	if strings.Contains(p, "..") {
+		return fmt.Errorf("must not contain '..'")
+	}
+	for _, r := range p {
+		if r < 0x20 || r == 0x7f {
+			return fmt.Errorf("must not contain control characters")
+		}
+	}
+	return nil
 }
 
 // validatePermissions checks the permission values against their allowed enums.
