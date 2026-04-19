@@ -7,6 +7,7 @@ import '../../core/models/session.dart';
 import '../../core/services/auth_service.dart';
 import '../../shared/session_launcher.dart';
 import '../../shared/theme/app_theme.dart';
+import '../workbench/status_bar_strip.dart';
 import 'widgets/session_card.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -21,6 +22,11 @@ class _DashboardPageState extends State<DashboardPage> {
   String? _error;
   Timer? _pollTimer;
 
+  // TODO(M1): wire real StatusBarSource from WorkbenchService once T19 lands.
+  // For now, a no-op source reserves the footer slot so the layout doesn't
+  // shift when plugins eventually contribute status-bar items.
+  final StatusBarSource _statusBarSource = NullStatusBarSource();
+
   ApiClient get _api => context.read<ApiClient>();
 
   @override
@@ -33,6 +39,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void dispose() {
     _pollTimer?.cancel();
+    (_statusBarSource as ChangeNotifier).dispose();
     super.dispose();
   }
 
@@ -104,6 +111,10 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                 ),
+      // T20 footer — renders nothing until a plugin contributes a status-bar
+      // item (NullStatusBarSource for now; real WorkbenchService wires in
+      // when T19 lands).
+      bottomNavigationBar: StatusBarStrip(source: _statusBarSource),
     );
   }
 

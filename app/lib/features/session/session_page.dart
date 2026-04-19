@@ -18,6 +18,7 @@ import '../../shared/image_attach.dart';
 import '../../shared/voice_composer.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/theme/terminal_theme.dart';
+import '../workbench/status_bar_strip.dart';
 import 'widgets/quick_keys_bar.dart';
 import 'widgets/web_terminal.dart';
 
@@ -56,6 +57,11 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
   // is a Claude agent. The chip/menu opens for hot-swap.
   List<Map<String, dynamic>> _claudeAccounts = [];
   bool _switchingAccount = false;
+
+  // TODO(M1): wire real StatusBarSource from WorkbenchService once T19 lands.
+  // No-op source reserves the footer slot so the layout doesn't shift when
+  // plugins eventually contribute status-bar items.
+  final StatusBarSource _statusBarSource = NullStatusBarSource();
 
   ApiClient get _api => context.read<ApiClient>();
 
@@ -269,6 +275,7 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
     _ws.dispose();
     _scrollController.dispose();
     _termController.dispose();
+    (_statusBarSource as ChangeNotifier).dispose();
     super.dispose();
   }
 
@@ -534,6 +541,10 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
             // re-focus on tap/visibility/focus) makes this reliable.
             if (!kIsWeb && _showQuickKeys && _session?.isRunning == true)
               QuickKeysBar(onSendKey: (data) => _sendToTerminal(data)),
+            // T20 footer — plugin-contributed status-bar chips. Renders
+            // nothing until a plugin contributes; real WorkbenchService
+            // wires in when T19 lands.
+            StatusBarStrip(source: _statusBarSource),
           ],
         ),
       ),
