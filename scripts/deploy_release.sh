@@ -83,10 +83,19 @@ OPENDRAY_HEALTH_URL="${OPENDRAY_HEALTH_URL:-http://127.0.0.1:8640/api/health}"
 FLUTTER_HOME="${FLUTTER_HOME:-$HOME/flutter}"
 GO_BIN="${GO_BIN:-/usr/local/go/bin/go}"
 
+# Android build tooling — Flutter reads SDK/JDK from ~/.config/flutter/settings,
+# but the Gradle task spawned during `flutter build apk` needs JAVA_HOME set
+# in its environment. task-runner spawns with a minimal env, so we must
+# re-export here rather than rely on login shell rc files.
+JAVA_HOME="${JAVA_HOME:-$HOME/opt/java}"
+ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}"
+ANDROID_HOME="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+export JAVA_HOME ANDROID_SDK_ROOT ANDROID_HOME
+
 # Behaviour flags.
 NO_BUMP="${NO_BUMP:-0}"
 
-export PATH="$FLUTTER_HOME/bin:$(dirname "$GO_BIN"):$PATH"
+export PATH="$JAVA_HOME/bin:$FLUTTER_HOME/bin:$(dirname "$GO_BIN"):$PATH"
 
 # ── Pretty logging ────────────────────────────────────────────────────
 phase()  { printf '\n\033[1;34m▶ %s\033[0m\n' "$*"; }
@@ -112,6 +121,10 @@ require_cmd curl
 require_cmd "$GO_BIN"
 [[ -x "$FLUTTER_HOME/bin/flutter" ]] \
   || fail "flutter not found at $FLUTTER_HOME/bin" 2
+[[ -x "$JAVA_HOME/bin/java" ]] \
+  || fail "java not found at $JAVA_HOME/bin/java (need JDK 17 for APK build)" 2
+[[ -d "$ANDROID_SDK_ROOT/platforms" ]] \
+  || fail "Android SDK platforms dir missing at $ANDROID_SDK_ROOT/platforms" 2
 
 python3 -c 'import smbprotocol' 2>/dev/null \
   || fail "smbprotocol not installed. run: pip3 install --user smbprotocol" 2
