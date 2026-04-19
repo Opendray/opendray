@@ -35,6 +35,24 @@ type liveProvider struct {
 	enabled   bool
 }
 
+// RuntimeOption is a functional option for configuring a Runtime.
+type RuntimeOption func(*Runtime)
+
+// ContribRegistry is the minimal interface the Runtime requires to keep a
+// contributions registry in sync. *contributions.Registry satisfies it.
+// Defined here to avoid an import cycle (plugin ↛ plugin/contributions).
+type ContribRegistry interface {
+	Set(pluginName string, c ContributesV1)
+	Remove(pluginName string)
+}
+
+// WithContributions wires a ContribRegistry into the Runtime.
+// When set, Register and Remove automatically sync the registry after each
+// successful DB write. Callers that omit this option get zero behaviour change.
+func WithContributions(r ContribRegistry) RuntimeOption {
+	return func(rt *Runtime) { rt.contributionsReg = r }
+}
+
 // Runtime manages provider lifecycle and configuration.
 type Runtime struct {
 	db        *store.DB
@@ -44,20 +62,30 @@ type Runtime struct {
 
 	mu        sync.RWMutex
 	providers map[string]*liveProvider // name → live state
+
+	// contributionsReg is optional. Nil means no contribution tracking —
+	// all existing callers that omit WithContributions are unaffected.
+	contributionsReg ContribRegistry
 }
 
-// NewRuntime creates a provider runtime.
-func NewRuntime(db *store.DB, hookBus *HookBus, pluginDir string, logger *slog.Logger) *Runtime {
+// NewRuntime creates a provider runtime. Accepts zero or more RuntimeOption
+// values; callers that pass no options get identical behaviour to before
+// this parameter was added.
+func NewRuntime(db *store.DB, hookBus *HookBus, pluginDir string, logger *slog.Logger, opts ...RuntimeOption) *Runtime {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Runtime{
+	rt := &Runtime{
 		db:        db,
 		hookBus:   hookBus,
 		logger:    logger,
 		pluginDir: pluginDir,
 		providers: make(map[string]*liveProvider),
 	}
+	for _, opt := range opts {
+		opt(rt)
+	}
+	return rt
 }
 
 // ── Loading ─────────────────────────────────────────────────────
@@ -303,6 +331,9 @@ func (rt *Runtime) Register(ctx context.Context, p Provider) error {
 		return err
 	}
 	rt.loadIntoMemory(p, ProviderConfig{}, true)
+	if rt.contributionsReg != nil && p.Contributes != nil {
+		rt.contributionsReg.Set(p.Name, *p.Contributes)
+	}
 	return nil
 }
 
@@ -316,7 +347,13 @@ func (rt *Runtime) Remove(ctx context.Context, name string) error {
 	delete(rt.providers, name)
 	rt.mu.Unlock()
 	rt.hookBus.Unregister(name)
-	return rt.db.DeletePlugin(ctx, name)
+	if err := rt.db.DeletePlugin(ctx, name); err != nil {
+		return err
+	}
+	if rt.contributionsReg != nil {
+		rt.contributionsReg.Remove(name)
+	}
+	return nil
 }
 
 // ── CLI Tool Resolution (used by Hub) ───────────────────────────
