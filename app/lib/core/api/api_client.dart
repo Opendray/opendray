@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../models/session.dart';
 import '../models/provider.dart';
+import '../../features/workbench/workbench_models.dart';
 
 /// Thrown when a server endpoint returns 4xx/5xx. Carries the server's own
 /// error message (from `{"error": "..."}`) so UI can show a useful reason
@@ -699,5 +700,64 @@ class ApiClient {
   Future<Map<String, dynamic>> health() async {
     final res = await _dio.get('/api/health');
     return res.data;
+  }
+
+  // ── Workbench (plugin platform, M1) ───────────────────────
+
+  /// Pulls the current [FlatContributions] snapshot. Safe to call at
+  /// app start + after plugin install/uninstall events.
+  Future<FlatContributions> getContributions() async {
+    final res = await _dio.get('/api/workbench/contributions');
+    final data = res.data;
+    if (data is Map) {
+      return FlatContributions.fromJson(Map<String, dynamic>.from(data));
+    }
+    return FlatContributions.empty;
+  }
+
+  /// Invokes a plugin command via the T11 HTTP endpoint. Maps server
+  /// error codes to typed exceptions so UI code can branch without
+  /// string-matching.
+  ///
+  /// Throws:
+  ///   - [PluginPermissionDeniedException] on 403 EPERM
+  ///   - [PluginCommandUnavailableException] on 404 ENOTFOUND (not found)
+  ///     or 501 ENOTIMPL (run kind deferred to M2/M3)
+  ///   - [ApiException] for anything else (malformed body, 5xx, network)
+  Future<InvokeResult> invokePluginCommand(
+    String pluginName,
+    String commandId, {
+    Map<String, dynamic>? args,
+  }) async {
+    try {
+      final res = await _dio.post(
+        '/api/plugins/$pluginName/commands/$commandId/invoke',
+        data: {'args': args ?? const <String, dynamic>{}},
+      );
+      final data = res.data;
+      if (data is Map) {
+        return InvokeResult.fromJson(Map<String, dynamic>.from(data));
+      }
+      return const InvokeResult(kind: '');
+    } on DioException catch (e) {
+      final status = e.response?.statusCode ?? 0;
+      final body = e.response?.data;
+      final code = body is Map ? body['code']?.toString() ?? '' : '';
+      final msg = body is Map ? body['msg']?.toString() ?? '' : '';
+      if (status == 403 && code == 'EPERM') {
+        throw PluginPermissionDeniedException(pluginName, commandId,
+            msg.isEmpty ? 'permission denied' : msg);
+      }
+      if (status == 404 && code == 'ENOTFOUND') {
+        throw PluginCommandUnavailableException(pluginName, commandId,
+            msg.isEmpty ? 'command not found' : msg);
+      }
+      if (status == 501 && code == 'ENOTIMPL') {
+        throw PluginCommandUnavailableException(pluginName, commandId,
+            msg.isEmpty ? 'run kind deferred to M2/M3' : msg,
+            deferred: true);
+      }
+      throw apiExceptionFrom(e);
+    }
   }
 }
