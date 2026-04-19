@@ -2,6 +2,10 @@
 # deploy_release.sh — syz LXC one-shot release:
 #     preflight UNAS  →  build APK  →  upload (verified)  →  deploy backend
 #
+# UNAS access goes through scripts/unas_upload.py (pure-Python smbprotocol
+# client) because the LXC sandbox blocks installing samba-client. Bootstrap:
+#     pip3 install --user smbprotocol
+#
 # DESIGN GOAL: never leave the system in a half-updated state. The APK
 # MUST be reachable on UNAS before we touch the running backend. If UNAS
 # is unreachable, the script aborts before building — never deploys.
@@ -23,7 +27,7 @@
 #   2. Flutter web       — build web (Go embed input)
 #   3. Go binary         — CGO=0 linux/amd64, version stamped
 #   4. Flutter APK       — bump pubspec.yaml build number, build release
-#   5. UNAS upload       — smbclient put + verify by size
+#   5. UNAS upload       — smbprotocol put + verify by size
 #   6. Deploy backend    — fork detached restart worker, exit
 #
 # EXIT CODES:
@@ -69,7 +73,9 @@ if [[ -z "${UNAS_PASSWORD:-}" ]]; then
 fi
 
 # Backend (LOCAL always — task-runner lives inside this service).
-OPENDRAY_DEPLOY_BIN_PATH="${OPENDRAY_DEPLOY_BIN_PATH:-/opt/opendray/opendray}"
+# Default path matches the running syz LXC install (verified via
+# `systemctl cat opendray.service` → /usr/local/bin/opendray).
+OPENDRAY_DEPLOY_BIN_PATH="${OPENDRAY_DEPLOY_BIN_PATH:-/usr/local/bin/opendray}"
 OPENDRAY_DEPLOY_SERVICE="${OPENDRAY_DEPLOY_SERVICE:-opendray.service}"
 OPENDRAY_HEALTH_URL="${OPENDRAY_HEALTH_URL:-http://127.0.0.1:8640/api/health}"
 
@@ -96,12 +102,19 @@ require_cmd() {
 if [[ $EUID -eq 0 ]]; then SUDO=""; else SUDO="sudo"; fi
 
 # ── 0. Preflight UNAS (MUST succeed or we abort before building) ─────
+# NOTE: we use a pure-Python SMB client (scripts/unas_upload.py, backed
+# by the `smbprotocol` pip package) instead of the system `smbclient`
+# binary — the syz LXC sandbox blocks `sudo apt install samba-client`,
+# so we picked a library that installs cleanly via `pip install --user`.
 phase "Preflight UNAS connectivity"
-require_cmd smbclient
+require_cmd python3
 require_cmd curl
 require_cmd "$GO_BIN"
 [[ -x "$FLUTTER_HOME/bin/flutter" ]] \
   || fail "flutter not found at $FLUTTER_HOME/bin" 2
+
+python3 -c 'import smbprotocol' 2>/dev/null \
+  || fail "smbprotocol not installed. run: pip3 install --user smbprotocol" 2
 
 if [[ -z "${UNAS_PASSWORD:-}" ]]; then
   fail "UNAS_PASSWORD not set. Options:
@@ -110,26 +123,30 @@ if [[ -z "${UNAS_PASSWORD:-}" ]]; then
     (c) add UNAS_PASSWORD=... to scripts/deploy.env" 1
 fi
 
-UNAS_HOST="//${UNAS_SERVER}/${UNAS_SHARE}"
 UNAS_REL_DIR="${UNAS_PROJECT}/android"
+UNAS_PY="$SCRIPT_DIR/unas_upload.py"
+[[ -f "$UNAS_PY" ]] || fail "unas_upload.py missing at $UNAS_PY" 1
 
-# Test: connect + list the share root (fast, non-destructive).
-if ! smbclient "$UNAS_HOST" -U "$UNAS_USER%$UNAS_PASSWORD" \
-        -c "ls" >/dev/null 2>&1; then
-  fail "cannot reach UNAS at $UNAS_HOST as $UNAS_USER — check network, credentials, or share permissions.
+# Wrapper: feed password over stdin, never argv (argv leaks to /proc/*/cmdline).
+unas() {
+  printf '%s' "$UNAS_PASSWORD" \
+    | python3 "$UNAS_PY" "$@" "$UNAS_SERVER" "$UNAS_SHARE" "$UNAS_USER"
+}
+# NB: unas_upload.py's argv order is <cmd> <server> <share> <user> [args...]
+# so we reshape here.
+unas_ping()  { printf '%s' "$UNAS_PASSWORD" | python3 "$UNAS_PY" ping "$UNAS_SERVER" "$UNAS_SHARE" "$UNAS_USER"; }
+unas_mkdir() { printf '%s' "$UNAS_PASSWORD" | python3 "$UNAS_PY" mkdir "$UNAS_SERVER" "$UNAS_SHARE" "$UNAS_USER" "$1"; }
+unas_put()   { printf '%s' "$UNAS_PASSWORD" | python3 "$UNAS_PY" put "$UNAS_SERVER" "$UNAS_SHARE" "$UNAS_USER" "$1" "$2"; }
+unas_size()  { printf '%s' "$UNAS_PASSWORD" | python3 "$UNAS_PY" size "$UNAS_SERVER" "$UNAS_SHARE" "$UNAS_USER" "$1" "$2"; }
+
+if ! unas_ping >/dev/null 2>&1; then
+  fail "cannot reach UNAS at //$UNAS_SERVER/$UNAS_SHARE as $UNAS_USER — check network, credentials, or share permissions.
   Backend was NOT touched; nothing built." 6
 fi
-ok "UNAS reachable at $UNAS_HOST"
+ok "UNAS reachable at //$UNAS_SERVER/$UNAS_SHARE"
 
-# Test: ensure the target directory exists (create if missing).
-# `cd` in smbclient fails gracefully on missing dir — we use `mkdir`
-# (idempotent per smbclient semantics when combined with cd).
-smbclient "$UNAS_HOST" -U "$UNAS_USER%$UNAS_PASSWORD" \
-  -c "mkdir $UNAS_PROJECT; cd $UNAS_PROJECT; mkdir android" 2>/dev/null || true
-
-if ! smbclient "$UNAS_HOST" -U "$UNAS_USER%$UNAS_PASSWORD" \
-        -c "cd $UNAS_REL_DIR; ls" >/dev/null 2>&1; then
-  fail "UNAS target dir $UNAS_REL_DIR not accessible; create manually or fix share perms" 6
+if ! unas_mkdir "$UNAS_REL_DIR" >/dev/null 2>&1; then
+  fail "cannot create/access UNAS target dir $UNAS_REL_DIR" 6
 fi
 ok "UNAS target dir $UNAS_REL_DIR ready"
 
@@ -203,43 +220,34 @@ phase "Upload to UNAS"
 APK_NAME="$(basename "$APK_PATH")"
 APK_DIR="$(dirname "$APK_PATH")"
 
-upload_attempt() {
-  smbclient "$UNAS_HOST" -U "$UNAS_USER%$UNAS_PASSWORD" \
-    -D "$UNAS_REL_DIR" \
-    -c "lcd $APK_DIR; put $APK_NAME"
-}
-
+# unas_put self-verifies (re-stats the remote file after upload and
+# aborts with exit 1 on size mismatch) and prints the remote byte
+# count to stdout on success.
 UPLOAD_OK=0
+REMOTE_SIZE=""
 for attempt in 1 2 3; do
-  if upload_attempt 2>&1 | tee /tmp/opendray-smb-$$.log | grep -qE 'putting file|copied'; then
+  if REMOTE_SIZE="$(unas_put "$UNAS_REL_DIR" "$APK_PATH")"; then
     UPLOAD_OK=1
     break
   fi
   warn "upload attempt $attempt failed; retrying in $((attempt * 3))s"
   sleep $((attempt * 3))
 done
-rm -f /tmp/opendray-smb-$$.log
 
 if [[ "$UPLOAD_OK" != "1" ]]; then
-  fail "smbclient put failed after 3 attempts — backend NOT deployed. APK is still at $APK_PATH for manual upload." 5
-fi
-ok "put succeeded"
-
-# Post-upload verification: size on UNAS must match local size.
-REMOTE_SIZE="$(
-  smbclient "$UNAS_HOST" -U "$UNAS_USER%$UNAS_PASSWORD" \
-    -c "cd $UNAS_REL_DIR; ls $APK_NAME" 2>/dev/null \
-    | awk -v f="$APK_NAME" '$1 == f { print $3 }'
-)"
-
-if [[ -z "$REMOTE_SIZE" ]]; then
-  fail "UNAS listing shows no $APK_NAME after put — upload looks dropped. Backend NOT deployed." 5
+  fail "UNAS put failed after 3 attempts — backend NOT deployed. APK is still at $APK_PATH for manual upload." 5
 fi
 
-if [[ "$REMOTE_SIZE" != "$LOCAL_SIZE" ]]; then
-  fail "size mismatch: local=$LOCAL_SIZE UNAS=$REMOTE_SIZE — retry or rotate password. Backend NOT deployed." 5
+# Double-check with an independent size call (defensive — catches races
+# where the put reported success but the remote file was replaced out
+# from under us between our upload and this check).
+REMOTE_SIZE_CHECK="$(unas_size "$UNAS_REL_DIR" "$APK_NAME")" \
+  || fail "UNAS listing lost $APK_NAME after put — Backend NOT deployed." 5
+
+if [[ "$REMOTE_SIZE_CHECK" != "$LOCAL_SIZE" ]]; then
+  fail "size mismatch on re-check: local=$LOCAL_SIZE UNAS=$REMOTE_SIZE_CHECK — Backend NOT deployed." 5
 fi
-ok "verified on UNAS: $APK_NAME ($REMOTE_SIZE bytes match)"
+ok "verified on UNAS: $APK_NAME ($REMOTE_SIZE_CHECK bytes match local)"
 ok "path: //$UNAS_SERVER/$UNAS_SHARE/$UNAS_REL_DIR/$APK_NAME"
 
 # ── 6. Deploy backend (detached — task-runner WILL be killed) ────────
