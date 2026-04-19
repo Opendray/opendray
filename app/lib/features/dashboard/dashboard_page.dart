@@ -55,7 +55,14 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Phone-only drawer hosts the activity bar; tablet+ keeps it docked
+    // on the left rail (see body LayoutBuilder below). We read
+    // MediaQuery once here so both places agree on the breakpoint.
+    final mq = MediaQuery.of(context);
+    final isTablet = mq.size.width > 600;
+    final service = context.read<WorkbenchService>();
     return Scaffold(
+      drawer: isTablet ? null : _PhoneActivityBarDrawer(service: service),
       appBar: AppBar(
         title: Row(
           children: [
@@ -105,11 +112,12 @@ class _DashboardPageState extends State<DashboardPage> {
       // that reworks the bottom slot to host both status bar + rail.
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isTablet = constraints.maxWidth > 600;
           final mainBody = _buildMainBody();
           final viewHost = _DashboardViewHost(fallback: mainBody);
+          // Phone: activity bar lives in the drawer (see Scaffold.drawer
+          // above), so the body is just the view host. Tablet+: docked
+          // left rail alongside the view host.
           if (!isTablet) return viewHost;
-          final service = context.read<WorkbenchService>();
           return Row(
             children: [
               ActivityBar(service: service, axis: Axis.vertical),
@@ -300,6 +308,60 @@ class _DashboardViewHost extends StatelessWidget {
       baseUrl: api.baseUrl,
       bearerToken: api.token ?? '',
       fallback: fallback,
+    );
+  }
+}
+
+/// Phone-only left drawer hosting the vertical [ActivityBar]. Listens to
+/// [WorkbenchService.currentViewID] and auto-closes the drawer as soon
+/// as a new view is focused — so tapping an icon jumps directly to the
+/// plugin view without a second dismiss gesture.
+class _PhoneActivityBarDrawer extends StatefulWidget {
+  const _PhoneActivityBarDrawer({required this.service});
+
+  final WorkbenchService service;
+
+  @override
+  State<_PhoneActivityBarDrawer> createState() =>
+      _PhoneActivityBarDrawerState();
+}
+
+class _PhoneActivityBarDrawerState extends State<_PhoneActivityBarDrawer> {
+  String? _lastViewID;
+
+  @override
+  void initState() {
+    super.initState();
+    _lastViewID = widget.service.currentViewID;
+    widget.service.addListener(_onServiceChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.service.removeListener(_onServiceChanged);
+    super.dispose();
+  }
+
+  void _onServiceChanged() {
+    final current = widget.service.currentViewID;
+    if (current != _lastViewID) {
+      _lastViewID = current;
+      // Only auto-close when a view is actively focused (not when it's
+      // cleared). Guard with maybePop so we don't explode if the drawer
+      // is already closed — e.g. tablet resize tore it down mid-flight.
+      if (current != null && current.isNotEmpty && mounted) {
+        final nav = Navigator.of(context);
+        if (nav.canPop()) nav.pop();
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: SafeArea(
+        child: ActivityBar(service: widget.service, axis: Axis.vertical),
+      ),
     );
   }
 }
