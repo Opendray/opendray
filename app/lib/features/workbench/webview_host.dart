@@ -332,16 +332,27 @@ Uri _buildBridgeUrl(String baseUrl, String pluginName) {
   );
 }
 
-/// The 40-line preload shim from M2-PLAN §10. Injected into every
-/// plugin WebView on `onPageFinished`; exposes `window.opendray` with
-/// the `workbench`, `storage`, and `events` namespaces.
+/// The preload shim from M2-PLAN §10 (extended in T20 for streams).
+/// Injected into every plugin WebView on `onPageFinished`; exposes
+/// `window.opendray` with `workbench`, `storage`, and `events`.
 ///
-/// Transcribed byte-exact from the plan. The `events.subscribe` branch
-/// keeps the placeholder marker — full stream handling lands in T20
-/// (see commit message).
+/// Events namespace notes (T20):
+///  * `events.subscribe(name, cb)` posts args as a JSON object
+///    `{name}` (NOT an array) — the Go side unmarshals into
+///    `subscribeArgs{Name string}` in plugin/bridge/api_events.go.
+///    Same goes for `unsubscribe({subId})` and `publish({name,data})`.
+///  * Chunk envelopes (`stream:"chunk"`) call the subscriber with
+///    `cb(data)`. The stream-end envelope (`stream:"end"`) silently
+///    removes the sub from the map; if the end carries an `error` we
+///    surface it via `console.warn` (no error path to the plugin cb
+///    since `subscribe` returns an unsubscribe fn, not a Promise).
+///  * `unsubscribe()` (the returned cleanup fn) posts a normal
+///    round-trip `events.unsubscribe` call and deletes the local sub
+///    entry eagerly so late chunks after cleanup are dropped.
 const String pluginPreloadShim = r'''
 (() => {
   const calls = new Map();
+  const streams = new Map();
   let nextId = 1;
   function call(ns, method, args) {
     const id = String(nextId++);
@@ -352,6 +363,8 @@ const String pluginPreloadShim = r'''
   }
   window.__opendray_onMessage = (raw) => {
     const env = JSON.parse(raw);
+    if (env.stream === "chunk") { const cb = streams.get(env.id); if (cb) cb(env.data); return; }
+    if (env.stream === "end")   { streams.delete(env.id); if (env.error) console.warn("opendray events stream ended with error:", env.error); return; }
     const pending = calls.get(env.id);
     if (!pending) return;
     calls.delete(env.id);
@@ -360,12 +373,18 @@ const String pluginPreloadShim = r'''
   };
   const nsProxy = (ns, methods) => Object.fromEntries(
     methods.map(m => [m, (...args) => call(ns, m, args)]));
+  function subscribe(name, cb) {
+    const id = String(nextId++);
+    streams.set(id, cb);
+    window.OpenDrayBridge.postMessage(JSON.stringify({ v: 1, id, ns: "events", method: "subscribe", args: { name } }));
+    return () => { streams.delete(id); call("events", "unsubscribe", { subId: id }).catch(() => {}); };
+  }
   window.opendray = {
     version: "1",
     plugin: window.__opendray_plugin_ctx || {},
     workbench: nsProxy("workbench", ["showMessage","openView","updateStatusBar","runCommand","theme","onThemeChange"]),
     storage:   nsProxy("storage",   ["get","set","delete","list"]),
-    events:    { subscribe: (name, cb) => { /* stream envelope handling */ }, publish: (n, p) => call("events","publish",[n,p]) },
+    events:    { subscribe, publish: (name, data) => call("events","publish",{ name, data }) },
   };
 })();
 ''';

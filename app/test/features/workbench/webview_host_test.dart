@@ -295,6 +295,38 @@ void main() {
           .length;
       expect(nonEmpty, lessThanOrEqualTo(40));
     });
+
+    test('T20: events.subscribe / unsubscribe / publish use Go-shaped args', () {
+      // subscribe posts args as an object {name}, matching subscribeArgs on
+      // the Go side (plugin/bridge/api_events.go). Never as an array.
+      expect(pluginPreloadShim, contains('method: "subscribe", args: { name }'));
+      // unsubscribe uses {subId: ...} — matches unsubscribeArgs.
+      expect(pluginPreloadShim, contains('{ subId: id }'));
+      // publish uses {name, data} — matches publishArgs.
+      expect(
+        pluginPreloadShim,
+        contains('call("events","publish",{ name, data })'),
+      );
+    });
+
+    test('T20: shim handles stream:"chunk" and stream:"end" envelopes', () {
+      // Chunk branch: routes envelope.data to the subscriber cb.
+      expect(pluginPreloadShim, contains('env.stream === "chunk"'));
+      expect(pluginPreloadShim, contains('streams.get(env.id)'));
+      // End branch: cleans up the streams entry. Error on end → console.warn.
+      expect(pluginPreloadShim, contains('env.stream === "end"'));
+      expect(pluginPreloadShim, contains('streams.delete(env.id)'));
+      expect(pluginPreloadShim, contains('console.warn'));
+    });
+
+    test('T20: events.subscribe returns an unsubscribe function', () {
+      // The cleanup fn eagerly removes the local stream entry and posts
+      // events.unsubscribe — late chunks after unsubscribe are dropped.
+      expect(
+        pluginPreloadShim,
+        contains('streams.delete(id); call("events", "unsubscribe"'),
+      );
+    });
   });
 }
 
