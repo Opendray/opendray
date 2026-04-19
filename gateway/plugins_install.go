@@ -251,7 +251,7 @@ func (s *Server) pluginsAudit(w http.ResponseWriter, r *http.Request) {
 			caps = []string{}
 		}
 		dtos = append(dtos, auditEntryDTO{
-			Ts:         time.Time{}, // M1: TailAudit does not surface ts yet
+			Ts:         e.Ts,
 			Ns:         e.Ns,
 			Method:     e.Method,
 			Caps:       caps,

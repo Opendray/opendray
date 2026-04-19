@@ -32,6 +32,7 @@ type PluginConsent struct {
 // ArgsHash is a sha256-prefix of the call args so we can correlate without
 // logging secrets. Message is optional free-form text (errors, deny reason).
 type AuditEntry struct {
+	Ts         time.Time
 	PluginName string
 	Ns         string
 	Method     string
@@ -129,7 +130,7 @@ func (d *DB) TailAudit(ctx context.Context, name string, limit int) ([]AuditEntr
 	}
 
 	rows, err := d.Pool.Query(ctx,
-		`SELECT plugin_name, ns, method, caps, result, duration_ms, args_hash,
+		`SELECT ts, plugin_name, ns, method, caps, result, duration_ms, args_hash,
 		        COALESCE(message, '')
 		 FROM plugin_audit
 		 WHERE plugin_name = $1
@@ -147,7 +148,7 @@ func (d *DB) TailAudit(ctx context.Context, name string, limit int) ([]AuditEntr
 		var e AuditEntry
 		var caps []string
 		if err := rows.Scan(
-			&e.PluginName, &e.Ns, &e.Method, &caps,
+			&e.Ts, &e.PluginName, &e.Ns, &e.Method, &caps,
 			&e.Result, &e.DurationMs, &e.ArgsHash, &e.Message,
 		); err != nil {
 			return nil, fmt.Errorf("store: tail audit scan: %w", err)
