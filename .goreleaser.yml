@@ -1,0 +1,36 @@
+project_name: opendray
+before:
+  hooks:
+    - cd app && flutter pub get && flutter build web --release
+
+builds:
+  - id: opendray
+    main: ./cmd/opendray
+    binary: opendray
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.buildSha={{.ShortCommit}}
+
+archives:
+  - id: opendray
+    format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+release:
+  github:
+    owner: opendray
+    name: opendray
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^chore:'
