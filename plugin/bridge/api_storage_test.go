@@ -129,7 +129,7 @@ func TestStorage_GateDeniesReturnsPermError(t *testing.T) {
 	api := NewStorageAPI(kv, deniedGate())
 
 	_, err := api.Dispatch(context.Background(), "test-plugin", "get",
-		marshalArgs("some-key"), nil)
+		marshalArgs("some-key"), "", nil)
 	if err == nil {
 		t.Fatal("want error, got nil")
 	}
@@ -149,7 +149,7 @@ func TestStorage_Get_FoundReturnsValue(t *testing.T) {
 	api := NewStorageAPI(kv, grantedGate())
 
 	result, err := api.Dispatch(context.Background(), "myplugin", "get",
-		marshalArgs("greeting"), nil)
+		marshalArgs("greeting"), "", nil)
 	if err != nil {
 		t.Fatalf("Dispatch: %v", err)
 	}
@@ -170,7 +170,7 @@ func TestStorage_Get_MissingReturnsFallback(t *testing.T) {
 	args, _ := json.Marshal([]json.RawMessage{json.RawMessage(`"absent-key"`), fallback})
 
 	result, err := api.Dispatch(context.Background(), "myplugin", "get",
-		json.RawMessage(args), nil)
+		json.RawMessage(args), "", nil)
 	if err != nil {
 		t.Fatalf("Dispatch: %v", err)
 	}
@@ -187,7 +187,7 @@ func TestStorage_Get_MissingNoFallbackReturnsNull(t *testing.T) {
 	api := NewStorageAPI(kv, grantedGate())
 
 	result, err := api.Dispatch(context.Background(), "myplugin", "get",
-		marshalArgs("absent-key"), nil)
+		marshalArgs("absent-key"), "", nil)
 	if err != nil {
 		t.Fatalf("Dispatch: %v", err)
 	}
@@ -203,7 +203,7 @@ func TestStorage_Set_RoundTrip(t *testing.T) {
 
 	args, _ := json.Marshal([]any{"my-key", map[string]any{"x": 1}})
 	result, err := api.Dispatch(context.Background(), "myplugin", "set",
-		json.RawMessage(args), nil)
+		json.RawMessage(args), "", nil)
 	if err != nil {
 		t.Fatalf("Dispatch set: %v", err)
 	}
@@ -233,7 +233,7 @@ func TestStorage_Set_ValueTooLarge(t *testing.T) {
 
 	args, _ := json.Marshal([]any{"big-key", "some value"})
 	_, err := api.Dispatch(context.Background(), "myplugin", "set",
-		json.RawMessage(args), nil)
+		json.RawMessage(args), "", nil)
 	if err == nil {
 		t.Fatal("want error, got nil")
 	}
@@ -255,7 +255,7 @@ func TestStorage_Set_QuotaExceeded(t *testing.T) {
 
 	args, _ := json.Marshal([]any{"any-key", "value"})
 	_, err := api.Dispatch(context.Background(), "myplugin", "set",
-		json.RawMessage(args), nil)
+		json.RawMessage(args), "", nil)
 	if err == nil {
 		t.Fatal("want error, got nil")
 	}
@@ -275,7 +275,7 @@ func TestStorage_Delete_RoundTrip(t *testing.T) {
 	api := NewStorageAPI(kv, grantedGate())
 
 	result, err := api.Dispatch(context.Background(), "myplugin", "delete",
-		marshalArgs("bye"), nil)
+		marshalArgs("bye"), "", nil)
 	if err != nil {
 		t.Fatalf("Dispatch delete: %v", err)
 	}
@@ -297,7 +297,7 @@ func TestStorage_List_DefaultPrefix(t *testing.T) {
 
 	// No args → empty prefix.
 	result, err := api.Dispatch(context.Background(), "myplugin", "list",
-		json.RawMessage(`[]`), nil)
+		json.RawMessage(`[]`), "", nil)
 	if err != nil {
 		t.Fatalf("Dispatch list: %v", err)
 	}
@@ -319,7 +319,7 @@ func TestStorage_List_WithPrefix(t *testing.T) {
 	api := NewStorageAPI(kv, grantedGate())
 
 	result, err := api.Dispatch(context.Background(), "myplugin", "list",
-		marshalArgs("ns."), nil)
+		marshalArgs("ns."), "", nil)
 	if err != nil {
 		t.Fatalf("Dispatch list: %v", err)
 	}
@@ -338,7 +338,7 @@ func TestStorage_UnknownMethod_ReturnsEUNAVAIL(t *testing.T) {
 	api := NewStorageAPI(kv, grantedGate())
 
 	_, err := api.Dispatch(context.Background(), "myplugin", "nonexistent",
-		json.RawMessage(`[]`), nil)
+		json.RawMessage(`[]`), "", nil)
 	if err == nil {
 		t.Fatal("want error, got nil")
 	}
@@ -358,7 +358,7 @@ func TestStorage_MalformedArgs_ReturnsEINVAL(t *testing.T) {
 
 	// get requires at least one string arg; passing a non-array is invalid.
 	_, err := api.Dispatch(context.Background(), "myplugin", "get",
-		json.RawMessage(`"not-an-array"`), nil)
+		json.RawMessage(`"not-an-array"`), "", nil)
 	if err == nil {
 		t.Fatal("want error, got nil")
 	}
@@ -379,7 +379,7 @@ func TestStorage_Get_NonStringKey_ReturnsEINVAL(t *testing.T) {
 
 	// key must be a string; 42 is invalid.
 	_, err := api.Dispatch(context.Background(), "myplugin", "get",
-		marshalArgs(42), nil)
+		marshalArgs(42), "", nil)
 	if err == nil {
 		t.Fatal("want error, got nil")
 	}
@@ -400,7 +400,7 @@ func TestStorage_Set_MalformedArgs_ReturnsEINVAL(t *testing.T) {
 
 	// set needs [key, value]; passing only one element is invalid.
 	_, err := api.Dispatch(context.Background(), "myplugin", "set",
-		marshalArgs("key-only"), nil)
+		marshalArgs("key-only"), "", nil)
 	if err == nil {
 		t.Fatal("want error, got nil")
 	}
@@ -420,7 +420,7 @@ func TestStorage_Set_NonStringKey_ReturnsEINVAL(t *testing.T) {
 	api := NewStorageAPI(kv, grantedGate())
 
 	_, err := api.Dispatch(context.Background(), "myplugin", "set",
-		marshalArgs(99, "value"), nil)
+		marshalArgs(99, "value"), "", nil)
 	if err == nil {
 		t.Fatal("want error, got nil")
 	}
@@ -440,7 +440,7 @@ func TestStorage_Delete_MalformedArgs_ReturnsEINVAL(t *testing.T) {
 	api := NewStorageAPI(kv, grantedGate())
 
 	_, err := api.Dispatch(context.Background(), "myplugin", "delete",
-		json.RawMessage(`[]`), nil)
+		json.RawMessage(`[]`), "", nil)
 	if err == nil {
 		t.Fatal("want error, got nil")
 	}
@@ -460,7 +460,7 @@ func TestStorage_Delete_NonStringKey_ReturnsEINVAL(t *testing.T) {
 	api := NewStorageAPI(kv, grantedGate())
 
 	_, err := api.Dispatch(context.Background(), "myplugin", "delete",
-		marshalArgs(false), nil)
+		marshalArgs(false), "", nil)
 	if err == nil {
 		t.Fatal("want error, got nil")
 	}
@@ -480,7 +480,7 @@ func TestStorage_List_MalformedJSON_ReturnsEINVAL(t *testing.T) {
 	api := NewStorageAPI(kv, grantedGate())
 
 	_, err := api.Dispatch(context.Background(), "myplugin", "list",
-		json.RawMessage(`"not-an-array"`), nil)
+		json.RawMessage(`"not-an-array"`), "", nil)
 	if err == nil {
 		t.Fatal("want error, got nil")
 	}
@@ -500,7 +500,7 @@ func TestStorage_List_NonStringPrefix_ReturnsEINVAL(t *testing.T) {
 	api := NewStorageAPI(kv, grantedGate())
 
 	_, err := api.Dispatch(context.Background(), "myplugin", "list",
-		marshalArgs(42), nil)
+		marshalArgs(42), "", nil)
 	if err == nil {
 		t.Fatal("want error, got nil")
 	}
@@ -519,7 +519,7 @@ func TestStorage_Get_InternalError(t *testing.T) {
 	api := NewStorageAPI(kv, grantedGate())
 
 	_, err := api.Dispatch(context.Background(), "myplugin", "get",
-		marshalArgs("any-key"), nil)
+		marshalArgs("any-key"), "", nil)
 	if err == nil {
 		t.Fatal("want error, got nil")
 	}
@@ -549,7 +549,7 @@ func TestStorage_Set_InternalError(t *testing.T) {
 
 	args, _ := json.Marshal([]any{"k", "v"})
 	_, err := api.Dispatch(context.Background(), "myplugin", "set",
-		json.RawMessage(args), nil)
+		json.RawMessage(args), "", nil)
 	if err == nil {
 		t.Fatal("want error, got nil")
 	}
@@ -568,7 +568,7 @@ func TestStorage_Delete_InternalError(t *testing.T) {
 	api := NewStorageAPI(kv, grantedGate())
 
 	_, err := api.Dispatch(context.Background(), "myplugin", "delete",
-		marshalArgs("k"), nil)
+		marshalArgs("k"), "", nil)
 	if err == nil {
 		t.Fatal("want error, got nil")
 	}
@@ -587,7 +587,7 @@ func TestStorage_List_InternalError(t *testing.T) {
 	api := NewStorageAPI(kv, grantedGate())
 
 	_, err := api.Dispatch(context.Background(), "myplugin", "list",
-		json.RawMessage(`[]`), nil)
+		json.RawMessage(`[]`), "", nil)
 	if err == nil {
 		t.Fatal("want error, got nil")
 	}

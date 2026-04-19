@@ -63,8 +63,13 @@ import (
 // Subscribe/unsubscribe-capable namespaces (events) accept conn; stateless
 // namespaces (workbench, storage) ignore it. The parameter is always supplied
 // so the method signature is uniform.
+//
+// envID is the inbound envelope's id. Stream-capable methods (events.subscribe)
+// use it as the subId tagged on every chunk (M2-PLAN §11 wire contract — the
+// subId MUST equal the subscribe envelope id so the client's in-flight request
+// completer and the chunk-stream handler share a correlation key).
 type Namespace interface {
-	Dispatch(ctx context.Context, plugin string, method string, args json.RawMessage, conn *bridge.Conn) (any, error)
+	Dispatch(ctx context.Context, plugin string, method string, args json.RawMessage, envID string, conn *bridge.Conn) (any, error)
 }
 
 // ─── Internal types ──────────────────────────────────────────────────────────
@@ -352,7 +357,7 @@ func (s *Server) dispatchInvoke(ctx context.Context, plugin string, conn *bridge
 		}
 	}()
 
-	result, err := ns.Dispatch(ctx, plugin, env.Method, env.Args, conn)
+	result, err := ns.Dispatch(ctx, plugin, env.Method, env.Args, env.ID, conn)
 	if err != nil {
 		// PermError → EPERM envelope; everything else → EINTERNAL.
 		var permErr *bridge.PermError

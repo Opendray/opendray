@@ -267,8 +267,8 @@ func TestEvents_SubscribeCapGate(t *testing.T) {
 	ctx := context.Background()
 
 	// Request a name NOT in the grant → should get EPERM
-	argsOutput, _ := json.Marshal(map[string]string{"name": "session.output"})
-	_, err := api.Dispatch(ctx, "testplugin", "subscribe", argsOutput, conn)
+	argsOutput, _ := json.Marshal([]string{"session.output"})
+	_, err := api.Dispatch(ctx, "testplugin", "subscribe", argsOutput, "sub1", conn)
 	if err == nil {
 		t.Fatal("expected error for denied event name, got nil")
 	}
@@ -281,8 +281,8 @@ func TestEvents_SubscribeCapGate(t *testing.T) {
 	}
 
 	// Request an allowed name → should succeed
-	argsIdle, _ := json.Marshal(map[string]string{"name": "session.idle"})
-	result, err2 := api.Dispatch(ctx, "testplugin", "subscribe", argsIdle, conn)
+	argsIdle, _ := json.Marshal([]string{"session.idle"})
+	result, err2 := api.Dispatch(ctx, "testplugin", "subscribe", argsIdle, "sub1", conn)
 	if err2 != nil {
 		t.Fatalf("subscribe session.idle should succeed, got: %v", err2)
 	}
@@ -306,8 +306,8 @@ func TestEvents_PublishRewritesPrefix(t *testing.T) {
 	conn, _ := newTestConnForEvents(t, "kanban")
 
 	ctx := context.Background()
-	args, _ := json.Marshal(map[string]any{"name": "board.update", "data": map[string]string{"key": "val"}})
-	_, err := api.Dispatch(ctx, "kanban", "publish", args, conn)
+	args, _ := json.Marshal([]any{"board.update", map[string]string{"key": "val"}})
+	_, err := api.Dispatch(ctx, "kanban", "publish", args, "", conn)
 	if err != nil {
 		t.Fatalf("publish should succeed: %v", err)
 	}
@@ -341,8 +341,8 @@ func TestEvents_PublishIgnoresCap(t *testing.T) {
 	conn, _ := newTestConnForEvents(t, "myplugin")
 
 	ctx := context.Background()
-	args, _ := json.Marshal(map[string]any{"name": "task.done", "data": nil})
-	_, err := api.Dispatch(ctx, "myplugin", "publish", args, conn)
+	args, _ := json.Marshal([]any{"task.done"})
+	_, err := api.Dispatch(ctx, "myplugin", "publish", args, "", conn)
 	if err != nil {
 		t.Fatalf("publish should succeed even without events cap: %v", err)
 	}
@@ -365,8 +365,8 @@ func TestEvents_SubscribeDeliversChunkEnvelope(t *testing.T) {
 	conn, ws := newTestConnForEvents(t, "testplugin")
 
 	ctx := context.Background()
-	args, _ := json.Marshal(map[string]string{"name": "session.idle"})
-	result, err := api.Dispatch(ctx, "testplugin", "subscribe", args, conn)
+	args, _ := json.Marshal([]string{"session.idle"})
+	result, err := api.Dispatch(ctx, "testplugin", "subscribe", args, "sub1", conn)
 	if err != nil {
 		t.Fatalf("subscribe failed: %v", err)
 	}
@@ -412,16 +412,16 @@ func TestEvents_UnsubscribeStopsDelivery(t *testing.T) {
 	conn, ws := newTestConnForEvents(t, "testplugin")
 
 	ctx := context.Background()
-	subArgs, _ := json.Marshal(map[string]string{"name": "session.idle"})
-	result, err := api.Dispatch(ctx, "testplugin", "subscribe", subArgs, conn)
+	subArgs, _ := json.Marshal([]string{"session.idle"})
+	result, err := api.Dispatch(ctx, "testplugin", "subscribe", subArgs, "sub1", conn)
 	if err != nil {
 		t.Fatalf("subscribe failed: %v", err)
 	}
 	subId := result.(map[string]string)["subId"]
 
 	// Unsubscribe
-	unsubArgs, _ := json.Marshal(map[string]string{"subId": subId})
-	_, err = api.Dispatch(ctx, "testplugin", "unsubscribe", unsubArgs, conn)
+	unsubArgs, _ := json.Marshal([]string{subId})
+	_, err = api.Dispatch(ctx, "testplugin", "unsubscribe", unsubArgs, "", conn)
 	if err != nil {
 		t.Fatalf("unsubscribe failed: %v", err)
 	}
@@ -457,8 +457,8 @@ func TestEvents_NoGoroutineLeakAfterConnClose(t *testing.T) {
 	before := runtime.NumGoroutine()
 
 	ctx := context.Background()
-	subArgs, _ := json.Marshal(map[string]string{"name": "session.idle"})
-	_, err := api.Dispatch(ctx, "testplugin", "subscribe", subArgs, conn)
+	subArgs, _ := json.Marshal([]string{"session.idle"})
+	_, err := api.Dispatch(ctx, "testplugin", "subscribe", subArgs, "sub1", conn)
 	if err != nil {
 		t.Fatalf("subscribe failed: %v", err)
 	}
@@ -498,7 +498,7 @@ func TestEvents_UnknownMethodReturnsEUNAVAIL(t *testing.T) {
 	conn, _ := newTestConnForEvents(t, "testplugin")
 
 	ctx := context.Background()
-	_, err := api.Dispatch(ctx, "testplugin", "frobnicate", json.RawMessage(`{}`), conn)
+	_, err := api.Dispatch(ctx, "testplugin", "frobnicate", json.RawMessage(`{}`), "", conn)
 	if err == nil {
 		t.Fatal("expected error for unknown method")
 	}
@@ -524,7 +524,7 @@ func TestEvents_MalformedArgsReturnsEINVAL(t *testing.T) {
 	ctx := context.Background()
 
 	// Malformed JSON for subscribe
-	_, err := api.Dispatch(ctx, "testplugin", "subscribe", json.RawMessage(`{bad json`), conn)
+	_, err := api.Dispatch(ctx, "testplugin", "subscribe", json.RawMessage(`{bad json`), "sub1", conn)
 	if err == nil {
 		t.Fatal("expected error for malformed args")
 	}
@@ -548,8 +548,8 @@ func TestEvents_UnsubscribeUnknownSubIdNoOp(t *testing.T) {
 	conn, _ := newTestConnForEvents(t, "testplugin")
 
 	ctx := context.Background()
-	args, _ := json.Marshal(map[string]string{"subId": "nonexistent"})
-	result, err := api.Dispatch(ctx, "testplugin", "unsubscribe", args, conn)
+	args, _ := json.Marshal([]string{"nonexistent"})
+	result, err := api.Dispatch(ctx, "testplugin", "unsubscribe", args, "", conn)
 	if err != nil {
 		t.Fatalf("unsubscribe unknown subId should be a no-op, got: %v", err)
 	}
@@ -569,8 +569,8 @@ func TestEvents_PublishReturnsNil(t *testing.T) {
 	conn, _ := newTestConnForEvents(t, "testplugin")
 
 	ctx := context.Background()
-	args, _ := json.Marshal(map[string]any{"name": "evt", "data": "hello"})
-	result, err := api.Dispatch(ctx, "testplugin", "publish", args, conn)
+	args, _ := json.Marshal([]any{"evt", "hello"})
+	result, err := api.Dispatch(ctx, "testplugin", "publish", args, "", conn)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -592,8 +592,8 @@ func TestEvents_SubscribeNoConsentRow(t *testing.T) {
 	conn, _ := newTestConnForEvents(t, "testplugin")
 
 	ctx := context.Background()
-	args, _ := json.Marshal(map[string]string{"name": "session.idle"})
-	_, err := api.Dispatch(ctx, "testplugin", "subscribe", args, conn)
+	args, _ := json.Marshal([]string{"session.idle"})
+	_, err := api.Dispatch(ctx, "testplugin", "subscribe", args, "sub1", conn)
 	if err == nil {
 		t.Fatal("expected error when no consent row")
 	}
@@ -617,8 +617,8 @@ func TestEvents_PublishMissingNameEINVAL(t *testing.T) {
 	conn, _ := newTestConnForEvents(t, "testplugin")
 
 	ctx := context.Background()
-	args, _ := json.Marshal(map[string]any{"name": "", "data": nil})
-	_, err := api.Dispatch(ctx, "testplugin", "publish", args, conn)
+	args, _ := json.Marshal([]any{""})
+	_, err := api.Dispatch(ctx, "testplugin", "publish", args, "", conn)
 	if err == nil {
 		t.Fatal("expected EINVAL for empty name")
 	}
@@ -642,8 +642,8 @@ func TestEvents_SubscribeMissingNameEINVAL(t *testing.T) {
 	conn, _ := newTestConnForEvents(t, "testplugin")
 
 	ctx := context.Background()
-	args, _ := json.Marshal(map[string]string{"name": ""})
-	_, err := api.Dispatch(ctx, "testplugin", "subscribe", args, conn)
+	args, _ := json.Marshal([]string{""})
+	_, err := api.Dispatch(ctx, "testplugin", "subscribe", args, "sub1", conn)
 	if err == nil {
 		t.Fatal("expected EINVAL for empty name")
 	}

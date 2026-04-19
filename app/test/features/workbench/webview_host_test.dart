@@ -296,16 +296,17 @@ void main() {
       expect(nonEmpty, lessThanOrEqualTo(40));
     });
 
-    test('T20: events.subscribe / unsubscribe / publish use Go-shaped args', () {
-      // subscribe posts args as an object {name}, matching subscribeArgs on
-      // the Go side (plugin/bridge/api_events.go). Never as an array.
-      expect(pluginPreloadShim, contains('method: "subscribe", args: { name }'));
-      // unsubscribe uses {subId: ...} — matches unsubscribeArgs.
-      expect(pluginPreloadShim, contains('{ subId: id }'));
-      // publish uses {name, data} — matches publishArgs.
+    test('T20: events.subscribe / unsubscribe / publish use array args', () {
+      // subscribe posts args as [name] — matching the array-shaped decoder
+      // in plugin/bridge/api_events.go. All namespaces use arrays so the
+      // Dart bridge channel needs no per-namespace marshalling.
+      expect(pluginPreloadShim, contains('method: "subscribe", args: [name]'));
+      // unsubscribe uses [id].
+      expect(pluginPreloadShim, contains('"unsubscribe", [id]'));
+      // publish uses [name, data].
       expect(
         pluginPreloadShim,
-        contains('call("events","publish",{ name, data })'),
+        contains('call("events","publish",[name, data])'),
       );
     });
 

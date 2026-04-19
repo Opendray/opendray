@@ -59,7 +59,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"strings"
 	"sync"
 )
@@ -142,10 +141,14 @@ func NewEventsAPI(bus HookBusLike, gate *Gate) *EventsAPI {
 // Supported methods: subscribe, unsubscribe, publish.
 // Unknown methods → *WireError{Code:"EUNAVAIL"}.
 // Malformed args  → *WireError{Code:"EINVAL"}.
-func (e *EventsAPI) Dispatch(ctx context.Context, plugin, method string, args json.RawMessage, conn *Conn) (any, error) {
+//
+// envID is the inbound envelope id. For subscribe it becomes the subId —
+// M2-PLAN §11 mandates this correlation so the subscribe-call completer
+// and the resulting chunk stream share a single key on the client side.
+func (e *EventsAPI) Dispatch(ctx context.Context, plugin, method string, args json.RawMessage, envID string, conn *Conn) (any, error) {
 	switch method {
 	case "subscribe":
-		return e.subscribe(ctx, plugin, args, conn)
+		return e.subscribe(ctx, plugin, args, envID, conn)
 	case "unsubscribe":
 		return e.unsubscribe(args)
 	case "publish":
@@ -162,26 +165,31 @@ func (e *EventsAPI) Dispatch(ctx context.Context, plugin, method string, args js
 // subscribe
 // ─────────────────────────────────────────────
 
-type subscribeArgs struct {
-	Name string `json:"name"`
-}
-
-func (e *EventsAPI) subscribe(ctx context.Context, plugin string, raw json.RawMessage, conn *Conn) (any, error) {
-	var a subscribeArgs
-	if err := json.Unmarshal(raw, &a); err != nil {
-		return nil, &WireError{Code: "EINVAL", Message: fmt.Sprintf("events.subscribe: bad args: %v", err)}
+// subscribeArgs is the decoded shape of the [name] array the client sends.
+// Args are array-shaped for consistency with storage / workbench — see
+// M2-PLAN §11.
+func (e *EventsAPI) subscribe(ctx context.Context, plugin string, raw json.RawMessage, envID string, conn *Conn) (any, error) {
+	if envID == "" {
+		return nil, &WireError{Code: "EINVAL", Message: "events.subscribe: envelope id is required for stream correlation"}
 	}
-	if a.Name == "" {
-		return nil, &WireError{Code: "EINVAL", Message: "events.subscribe: name is required"}
+	var argList []json.RawMessage
+	if err := json.Unmarshal(raw, &argList); err != nil || len(argList) < 1 {
+		return nil, &WireError{Code: "EINVAL", Message: "events.subscribe: args must be [name]"}
+	}
+	var name string
+	if err := json.Unmarshal(argList[0], &name); err != nil || name == "" {
+		return nil, &WireError{Code: "EINVAL", Message: "events.subscribe: name must be a non-empty string"}
 	}
 
 	// Events capability check: load consent and verify via MatchEventPattern.
-	if err := e.checkEventsCap(ctx, plugin, a.Name); err != nil {
+	if err := e.checkEventsCap(ctx, plugin, name); err != nil {
 		return nil, err
 	}
 
-	// Generate subscription ID.
-	subId := newSubID()
+	// subId = envelope id per spec: lets the client's subscribe Promise
+	// completer and the chunk-stream handler share a single correlation
+	// key. Hot-revoke also tags EPERM envelopes with the same id.
+	subId := envID
 
 	// Register with conn (returns done channel; closed on revoke or Unsubscribe).
 	done, err := conn.Subscribe(subId, "events")
@@ -190,7 +198,7 @@ func (e *EventsAPI) subscribe(ctx context.Context, plugin string, raw json.RawMe
 	}
 
 	// Register with bus.
-	busUnsub, err := e.bus.SubscribeByName(a.Name, func(name string, data any) {
+	busUnsub, err := e.bus.SubscribeByName(name, func(name string, data any) {
 		env, buildErr := NewStreamChunk(subId, map[string]any{
 			"name": name,
 			"data": data,
@@ -263,20 +271,21 @@ func (e *EventsAPI) checkEventsCap(ctx context.Context, plugin, name string) err
 // unsubscribe
 // ─────────────────────────────────────────────
 
-type unsubscribeArgs struct {
-	SubID string `json:"subId"`
-}
-
+// unsubscribe parses array-shaped args [subId]. Consistent with subscribe.
 func (e *EventsAPI) unsubscribe(raw json.RawMessage) (any, error) {
-	var a unsubscribeArgs
-	if err := json.Unmarshal(raw, &a); err != nil {
-		return nil, &WireError{Code: "EINVAL", Message: fmt.Sprintf("events.unsubscribe: bad args: %v", err)}
+	var argList []json.RawMessage
+	if err := json.Unmarshal(raw, &argList); err != nil || len(argList) < 1 {
+		return nil, &WireError{Code: "EINVAL", Message: "events.unsubscribe: args must be [subId]"}
+	}
+	var subID string
+	if err := json.Unmarshal(argList[0], &subID); err != nil || subID == "" {
+		return nil, &WireError{Code: "EINVAL", Message: "events.unsubscribe: subId must be a non-empty string"}
 	}
 
 	e.subMu.Lock()
-	sub, ok := e.subs[a.SubID]
+	sub, ok := e.subs[subID]
 	if ok {
-		delete(e.subs, a.SubID)
+		delete(e.subs, subID)
 	}
 	e.subMu.Unlock()
 
@@ -284,7 +293,7 @@ func (e *EventsAPI) unsubscribe(raw json.RawMessage) (any, error) {
 		// Stop the bus handler first, then close the conn sub (which triggers
 		// the pump goroutine to exit).
 		sub.busUnsub()
-		sub.conn.Unsubscribe(a.SubID)
+		sub.conn.Unsubscribe(subID)
 	}
 	// Unknown subId → no-op (idempotent). Spec: "always allowed to release".
 	return nil, nil
@@ -294,25 +303,28 @@ func (e *EventsAPI) unsubscribe(raw json.RawMessage) (any, error) {
 // publish
 // ─────────────────────────────────────────────
 
-type publishArgs struct {
-	Name string `json:"name"`
-	Data any    `json:"data"`
-}
-
+// publish parses array-shaped args [name, data]. `data` is optional.
 func (e *EventsAPI) publish(plugin string, raw json.RawMessage) (any, error) {
-	var a publishArgs
-	if err := json.Unmarshal(raw, &a); err != nil {
-		return nil, &WireError{Code: "EINVAL", Message: fmt.Sprintf("events.publish: bad args: %v", err)}
+	var argList []json.RawMessage
+	if err := json.Unmarshal(raw, &argList); err != nil || len(argList) < 1 {
+		return nil, &WireError{Code: "EINVAL", Message: "events.publish: args must be [name] or [name, data]"}
 	}
-	if a.Name == "" {
-		return nil, &WireError{Code: "EINVAL", Message: "events.publish: name is required"}
+	var name string
+	if err := json.Unmarshal(argList[0], &name); err != nil || name == "" {
+		return nil, &WireError{Code: "EINVAL", Message: "events.publish: name must be a non-empty string"}
+	}
+	var data any
+	if len(argList) >= 2 {
+		if err := json.Unmarshal(argList[1], &data); err != nil {
+			return nil, &WireError{Code: "EINVAL", Message: "events.publish: data must be JSON-serialisable"}
+		}
 	}
 
 	// Always rewrite name to plugin.<pluginName>.<name> so plugins cannot
 	// masquerade as host events (e.g. session.*).
-	qualifiedName := "plugin." + plugin + "." + a.Name
+	qualifiedName := "plugin." + plugin + "." + name
 
-	e.bus.Publish(qualifiedName, a.Data)
+	e.bus.Publish(qualifiedName, data)
 	return nil, nil
 }
 
@@ -420,20 +432,6 @@ func matchSegment(pattern, seg string) bool {
 	}
 
 	return false
-}
-
-// ─────────────────────────────────────────────
-// newSubID — random subscription identifier
-// ─────────────────────────────────────────────
-
-const subIDAlphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
-
-func newSubID() string {
-	b := make([]byte, 16)
-	for i := range b {
-		b[i] = subIDAlphabet[rand.Intn(len(subIDAlphabet))]
-	}
-	return string(b)
 }
 
 // ─────────────────────────────────────────────

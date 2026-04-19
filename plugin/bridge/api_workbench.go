@@ -118,6 +118,7 @@ const defaultUserID = "default"
 
 // Dispatch routes bridge requests. Conn is unused (workbench is not
 // stream-capable), accepted to match the Namespace interface shape.
+// envID is ignored — workbench methods are all round-trip.
 //
 // Methods implemented in M2:
 //
@@ -132,7 +133,8 @@ const defaultUserID = "default"
 //	confirm(text, opts?)            — SnackBar-based confirm is M6 polish
 //	prompt(text, opts?)             — M6
 //	onThemeChange()                 — should be an events.subscribe; M3
-func (w *WorkbenchAPI) Dispatch(ctx context.Context, plugin, method string, args json.RawMessage, conn *Conn) (any, error) {
+func (w *WorkbenchAPI) Dispatch(ctx context.Context, plugin, method string, args json.RawMessage, envID string, conn *Conn) (any, error) {
+	_ = envID
 	switch method {
 	case "showMessage":
 		return w.handleShowMessage(plugin, args)

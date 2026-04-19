@@ -38,7 +38,7 @@ type echoNS struct {
 	calls atomic.Int64
 }
 
-func (n *echoNS) Dispatch(_ context.Context, _ string, method string, args json.RawMessage, _ *bridge.Conn) (any, error) {
+func (n *echoNS) Dispatch(_ context.Context, _ string, method string, args json.RawMessage, _ string, _ *bridge.Conn) (any, error) {
 	n.calls.Add(1)
 	// Method "echo" returns the args as-is; any other method returns a marker
 	// so tests can distinguish.
@@ -57,7 +57,7 @@ func (n *echoNS) Dispatch(_ context.Context, _ string, method string, args json.
 // panicNS panics on every Dispatch — used to verify recovery.
 type panicNS struct{}
 
-func (p *panicNS) Dispatch(_ context.Context, _ string, _ string, _ json.RawMessage, _ *bridge.Conn) (any, error) {
+func (p *panicNS) Dispatch(_ context.Context, _ string, _ string, _ json.RawMessage, _ string, _ *bridge.Conn) (any, error) {
 	panic("boom")
 }
 
@@ -641,7 +641,7 @@ func TestBridgeWS_AcceptsConfiguredFrontendOrigin(t *testing.T) {
 // that the handler maps it to an EPERM envelope.
 type permDenyNS struct{}
 
-func (p *permDenyNS) Dispatch(_ context.Context, _ string, _ string, _ json.RawMessage, _ *bridge.Conn) (any, error) {
+func (p *permDenyNS) Dispatch(_ context.Context, _ string, _ string, _ json.RawMessage, _ string, _ *bridge.Conn) (any, error) {
 	return nil, &bridge.PermError{Code: "EPERM", Msg: "capability denied"}
 }
 
@@ -671,7 +671,7 @@ func TestBridgeWS_PermErrorReturnsEPERM(t *testing.T) {
 // errorNS returns a plain error — should map to EINTERNAL.
 type errorNS struct{}
 
-func (e *errorNS) Dispatch(_ context.Context, _ string, _ string, _ json.RawMessage, _ *bridge.Conn) (any, error) {
+func (e *errorNS) Dispatch(_ context.Context, _ string, _ string, _ json.RawMessage, _ string, _ *bridge.Conn) (any, error) {
 	return nil, fmt.Errorf("something went wrong")
 }
 
@@ -762,7 +762,7 @@ func TestBridgeWS_BridgeManagerMissing(t *testing.T) {
 // unmarshalableNS returns a result that cannot be JSON-marshalled (a channel).
 type unmarshalableNS struct{}
 
-func (u *unmarshalableNS) Dispatch(_ context.Context, _ string, _ string, _ json.RawMessage, _ *bridge.Conn) (any, error) {
+func (u *unmarshalableNS) Dispatch(_ context.Context, _ string, _ string, _ json.RawMessage, _ string, _ *bridge.Conn) (any, error) {
 	return make(chan int), nil // channels don't marshal → EINTERNAL path
 }
 

@@ -44,8 +44,9 @@ func NewStorageAPI(kv KVStore, gate *Gate) *StorageAPI {
 //	delete(key)           → null
 //	list(prefix?)         → []string
 //
-// conn is ignored (storage is not stream-capable).
-func (s *StorageAPI) Dispatch(ctx context.Context, plugin, method string, args json.RawMessage, conn *Conn) (any, error) {
+// conn + envID are ignored (storage is not stream-capable).
+func (s *StorageAPI) Dispatch(ctx context.Context, plugin, method string, args json.RawMessage, envID string, conn *Conn) (any, error) {
+	_ = envID
 	// Capability gate — checked before any DB work.
 	if err := s.gate.Check(ctx, plugin, Need{Cap: "storage"}); err != nil {
 		return nil, err

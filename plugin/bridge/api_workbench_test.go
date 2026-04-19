@@ -101,7 +101,7 @@ func mustMarshal(v any) json.RawMessage {
 // dispatchWorkbench is a test helper that calls Dispatch on a WorkbenchAPI.
 func dispatchWorkbench(t *testing.T, w *WorkbenchAPI, method string, args json.RawMessage) (any, error) {
 	t.Helper()
-	return w.Dispatch(context.Background(), "test-plugin", method, args, nil)
+	return w.Dispatch(context.Background(), "test-plugin", method, args, "", nil)
 }
 
 // ─────────────────────────────────────────────

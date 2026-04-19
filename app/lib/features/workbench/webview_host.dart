@@ -339,8 +339,10 @@ Uri _buildBridgeUrl(String baseUrl, String pluginName) {
 /// Events namespace notes (T20):
 ///  * `events.subscribe(name, cb)` posts args as a JSON object
 ///    `{name}` (NOT an array) — the Go side unmarshals into
-///    `subscribeArgs{Name string}` in plugin/bridge/api_events.go.
-///    Same goes for `unsubscribe({subId})` and `publish({name,data})`.
+///    `plugin/bridge/api_events.go` parses [name]. Same array shape for
+///    unsubscribe ([subId]) and publish ([name, data]) — matches the
+///    workbench/storage namespaces so the Dart bridge channel doesn't
+///    need per-namespace arg marshalling.
 ///  * Chunk envelopes (`stream:"chunk"`) call the subscriber with
 ///    `cb(data)`. The stream-end envelope (`stream:"end"`) silently
 ///    removes the sub from the map; if the end carries an `error` we
@@ -376,15 +378,15 @@ const String pluginPreloadShim = r'''
   function subscribe(name, cb) {
     const id = String(nextId++);
     streams.set(id, cb);
-    window.OpenDrayBridge.postMessage(JSON.stringify({ v: 1, id, ns: "events", method: "subscribe", args: { name } }));
-    return () => { streams.delete(id); call("events", "unsubscribe", { subId: id }).catch(() => {}); };
+    window.OpenDrayBridge.postMessage(JSON.stringify({ v: 1, id, ns: "events", method: "subscribe", args: [name] }));
+    return () => { streams.delete(id); call("events", "unsubscribe", [id]).catch(() => {}); };
   }
   window.opendray = {
     version: "1",
     plugin: window.__opendray_plugin_ctx || {},
     workbench: nsProxy("workbench", ["showMessage","openView","updateStatusBar","runCommand","theme","onThemeChange"]),
     storage:   nsProxy("storage",   ["get","set","delete","list"]),
-    events:    { subscribe, publish: (name, data) => call("events","publish",{ name, data }) },
+    events:    { subscribe, publish: (name, data) => call("events","publish",[name, data]) },
   };
 })();
 ''';
