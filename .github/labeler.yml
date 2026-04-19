@@ -1,0 +1,42 @@
+backend:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'cmd/**'
+      - 'gateway/**'
+      - 'kernel/**'
+      - 'plugin/**'
+      - 'go.mod'
+      - 'go.sum'
+
+frontend:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'app/**'
+
+plugins:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'plugins/**'
+
+telegram:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'gateway/telegram/**'
+
+mcp:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'gateway/mcp/**'
+
+ci:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/**'
+      - 'Dockerfile'
+      - '.goreleaser.yml'
+
+docs:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '*.md'
+      - 'docs/**'

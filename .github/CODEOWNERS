@@ -1,0 +1,19 @@
+# Default owners for everything
+* @navidrast @linivek
+
+# Backend
+/cmd/ @navidrast
+/gateway/ @navidrast
+/kernel/ @navidrast
+/plugin/ @navidrast
+
+# Frontend
+/app/ @linivek @navidrast
+
+# Plugins
+/plugins/ @navidrast @linivek
+
+# CI/CD
+/.github/ @navidrast
+/Dockerfile @navidrast
+/.goreleaser.yml @navidrast
