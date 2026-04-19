@@ -1,21 +1,33 @@
 #!/usr/bin/env bash
-# deploy_release.sh — one-shot update: rebuild backend → push to syz server,
-#                     rebuild Android APK → upload to UNAS.
+# deploy_release.sh — one-shot update: rebuild backend → swap binary →
+#                     restart service, rebuild Android APK → UNAS upload.
 #
-# Designed to run via the task-runner plugin (discovered as ./scripts/*.sh).
-# Every input is an env var — no hard-coded hosts, no secrets in source.
-# Set them once in scripts/deploy.env (gitignored) and the task-runner
-# panel will pass them in.
+# Designed to run via the task-runner plugin (./scripts/*.sh discovery).
 #
-# Phases (skip with SKIP_BACKEND=1 / SKIP_APK=1 / SKIP_UNAS=1):
-#   1. Preflight  — tool + env var check; fail fast
-#   2. Web bundle — flutter build web → app/build/web/
-#   3. Go binary  — CGO=0 linux/amd64, embeds the fresh web bundle
-#   4. SSH push   — scp binary to syz, systemctl restart, health check
-#   5. APK build  — flutter build apk --release
-#   6. UNAS upload— smbclient put APK into the project dir
+# Two deploy modes:
+#   • LOCAL (default)  — same box as the running opendray service. No SSH
+#                        required. The restart is forked as a detached
+#                        background worker so task-runner can exit
+#                        cleanly before systemd terminates it (task-runner
+#                        IS a subprocess of the service being restarted).
+#                        Progress logged to /tmp/opendray-deploy-<ts>.log.
+#   • REMOTE           — set OPENDRAY_DEPLOY_HOST to an ssh target and
+#                        the script will scp + ssh systemctl restart.
+#                        Health check runs inline (we're not being killed).
 #
-# Exit codes (meaningful for task-runner UI):
+# Phase order (every phase skippable):
+#   1. Preflight   — tool + mode detect; auto-skip UNAS if not configured
+#   2. Web bundle  — flutter build web → app/build/web/ (Go embed input)
+#   3. Go binary   — CGO=0 linux/amd64 with version + sha stamped
+#   4. APK build   — flutter build apk --release, stamps name
+#   5. UNAS upload — smbclient put APK into project dir
+#   6. Deploy      — backend LAST (local mode forks detached; remote inline)
+#
+# The backend deploy is last on purpose: once we kick the restart in
+# local mode, this script is dead. APK+UNAS run BEFORE that so nothing
+# important is lost if restart fails.
+#
+# Exit codes (meaningful in task-runner UI):
 #   0  success
 #   1  missing / invalid env var
 #   2  preflight tool missing
@@ -23,23 +35,21 @@
 #   4  remote deploy failure (ssh / scp / service)
 #   5  APK upload failure (smbclient)
 #
-# Usage (manual):
-#   scripts/deploy_release.sh                     # full pipeline
-#   SKIP_APK=1 scripts/deploy_release.sh          # backend only
-#   SKIP_BACKEND=1 scripts/deploy_release.sh      # APK + UNAS only
+# Usage:
+#   scripts/deploy_release.sh                    # full pipeline, local mode
+#   SKIP_APK=1 scripts/deploy_release.sh         # backend only
+#   SKIP_BACKEND=1 scripts/deploy_release.sh     # APK + UNAS only
+#   SKIP_UNAS=1 scripts/deploy_release.sh        # don't upload to UNAS
+#   OPENDRAY_DEPLOY_HOST=root@192.168.3.X ./deploy_release.sh  # remote mode
 #
-# Required env vars (see scripts/deploy.env.example):
-#   OPENDRAY_DEPLOY_HOST       ssh destination, e.g. root@192.168.3.XX
-#   OPENDRAY_DEPLOY_BIN_PATH   remote binary path, e.g. /opt/opendray/opendray
-#   OPENDRAY_DEPLOY_SERVICE    systemd unit, e.g. opendray.service
-#   OPENDRAY_HEALTH_URL        smoke-test URL, e.g. http://192.168.3.XX:8640/api/health
-#   UNAS_HOST                  SMB host, e.g. //192.168.9.8/Claude_Workspace
-#   UNAS_USER                  SMB user
-#   UNAS_PASSWORD              SMB password (DO NOT commit — source from secret store)
-#   UNAS_PATH                  subdir, e.g. OpenDray/android
-#
-# Optional:
-#   OPENDRAY_SSH_KEY           default ~/.ssh/home_lab_key
+# Env vars (all optional; see scripts/deploy.env.example for ALL knobs):
+#   OPENDRAY_DEPLOY_HOST       empty → local; set → remote ssh target
+#   OPENDRAY_DEPLOY_BIN_PATH   default /opt/opendray/opendray
+#   OPENDRAY_DEPLOY_SERVICE    default opendray.service
+#   OPENDRAY_HEALTH_URL        default http://127.0.0.1:8640/api/health
+#   OPENDRAY_SSH_KEY           default ~/.ssh/home_lab_key (remote only)
+#   UNAS_HOST, UNAS_USER, UNAS_PASSWORD, UNAS_PATH
+#                              set all 4 to enable; any missing → auto-skip
 #   FLUTTER_HOME               default ~/flutter
 #   GO_BIN                     default /usr/local/go/bin/go
 #   SKIP_BACKEND, SKIP_APK, SKIP_UNAS, NO_BUMP   flags ("1" to enable)
@@ -89,36 +99,72 @@ require_cmd() {
 # ── 1. Preflight ──────────────────────────────────────────────────────
 phase "Preflight"
 
-# Backend vars only needed if we're doing a backend deploy.
+# Deploy mode detection.
+#   LOCAL  — task-runner is running on the same box as the opendray service
+#            (the normal case; no SSH, no extra config needed). All backend
+#            defaults apply: /opt/opendray/opendray, opendray.service,
+#            http://127.0.0.1:8640/api/health.
+#   REMOTE — user explicitly set OPENDRAY_DEPLOY_HOST to something other
+#            than local/localhost. scp + ssh path kicks in.
+if [[ -z "${OPENDRAY_DEPLOY_HOST:-}" \
+      || "$OPENDRAY_DEPLOY_HOST" == "local" \
+      || "$OPENDRAY_DEPLOY_HOST" == "localhost" ]]; then
+  DEPLOY_MODE="local"
+else
+  DEPLOY_MODE="remote"
+fi
+
+# Sensible defaults for local mode. Users override via env only if their
+# install deviates from the standard layout.
+OPENDRAY_DEPLOY_BIN_PATH="${OPENDRAY_DEPLOY_BIN_PATH:-/opt/opendray/opendray}"
+OPENDRAY_DEPLOY_SERVICE="${OPENDRAY_DEPLOY_SERVICE:-opendray.service}"
+OPENDRAY_HEALTH_URL="${OPENDRAY_HEALTH_URL:-http://127.0.0.1:8640/api/health}"
+
+# Sudo is only used when not already root — inside LXC you typically run
+# as root and this is a no-op.
+if [[ $EUID -eq 0 ]]; then
+  SUDO=""
+else
+  SUDO="sudo"
+fi
+
+# Backend tools.
 if [[ "$SKIP_BACKEND" != "1" ]]; then
-  require_var OPENDRAY_DEPLOY_HOST
-  require_var OPENDRAY_DEPLOY_BIN_PATH
-  require_var OPENDRAY_DEPLOY_SERVICE
-  require_var OPENDRAY_HEALTH_URL
-  require_cmd ssh
-  require_cmd scp
   require_cmd curl
   [[ -f "$GO_BIN" ]] || fail "go not found at $GO_BIN (set GO_BIN env var)" 2
+  if [[ "$DEPLOY_MODE" == "remote" ]]; then
+    require_cmd ssh
+    require_cmd scp
+  else
+    require_cmd systemctl
+  fi
 fi
 
 # APK phase needs flutter + Android SDK.
 if [[ "$SKIP_APK" != "1" ]]; then
   [[ -x "$FLUTTER_HOME/bin/flutter" ]] \
     || fail "flutter not found at $FLUTTER_HOME/bin (set FLUTTER_HOME)" 2
-  # Android SDK: flutter reports it in doctor; we check ANDROID_SDK_ROOT or
-  # let flutter build apk fail with its own clear message below.
+  # Android SDK readiness is checked by `flutter build apk` itself — it
+  # emits a clear error if the SDK isn't configured.
 fi
 
-# UNAS upload needs smbclient.
+# UNAS upload — auto-skip if not fully configured, so the deploy still
+# completes the backend phase even when UNAS creds aren't in place yet.
 if [[ "$SKIP_UNAS" != "1" ]]; then
-  require_var UNAS_HOST
-  require_var UNAS_USER
-  require_var UNAS_PASSWORD
-  require_var UNAS_PATH
-  require_cmd smbclient
+  if [[ -z "${UNAS_HOST:-}" || -z "${UNAS_USER:-}" \
+        || -z "${UNAS_PASSWORD:-}" || -z "${UNAS_PATH:-}" ]]; then
+    warn "UNAS_* not fully configured; skipping UNAS upload"
+    warn "to enable: copy scripts/deploy.env.example → scripts/deploy.env and fill UNAS_*"
+    SKIP_UNAS=1
+  else
+    require_cmd smbclient
+  fi
 fi
 
-ok "env + tools ok"
+ok "mode: $DEPLOY_MODE"
+ok "binary: $OPENDRAY_DEPLOY_BIN_PATH"
+ok "service: $OPENDRAY_DEPLOY_SERVICE"
+ok "health: $OPENDRAY_HEALTH_URL"
 
 # ── 2. Web bundle (always built when backend runs, since binary embeds it) ──
 if [[ "$SKIP_BACKEND" != "1" ]]; then
@@ -146,45 +192,11 @@ if [[ "$SKIP_BACKEND" != "1" ]]; then
   ok "built $BIN_OUT ($BIN_SIZE, $VERSION@$BUILD_SHA)"
 fi
 
-# ── 4. SSH push to syz + restart ──────────────────────────────────────
-if [[ "$SKIP_BACKEND" != "1" ]]; then
-  phase "Deploy to $OPENDRAY_DEPLOY_HOST"
-  BIN_OUT="$REPO_ROOT/bin/opendray-linux-amd64"
-  SSH_OPTS="-i $OPENDRAY_SSH_KEY -o StrictHostKeyChecking=accept-new -o BatchMode=yes"
+# Backend binary staged but NOT yet swapped — we do APK + UNAS first so a
+# deploy-triggered restart (which likely kills this script in local mode)
+# doesn't lose work downstream.
 
-  # Stage to a tempfile, swap atomically.
-  REMOTE_TMP="${OPENDRAY_DEPLOY_BIN_PATH}.new"
-  scp $SSH_OPTS "$BIN_OUT" "$OPENDRAY_DEPLOY_HOST:$REMOTE_TMP" \
-    || fail "scp failed" 4
-
-  ssh $SSH_OPTS "$OPENDRAY_DEPLOY_HOST" bash -s <<EOF \
-    || fail "remote deploy failed" 4
-set -euo pipefail
-chmod 0755 "$REMOTE_TMP"
-systemctl stop "$OPENDRAY_DEPLOY_SERVICE"
-mv "$REMOTE_TMP" "$OPENDRAY_DEPLOY_BIN_PATH"
-systemctl start "$OPENDRAY_DEPLOY_SERVICE"
-systemctl is-active --quiet "$OPENDRAY_DEPLOY_SERVICE"
-EOF
-  ok "service restarted"
-
-  # Health check with exponential backoff (max ~15s).
-  phase "Health check"
-  for attempt in 1 2 3 4 5; do
-    sleep_for=$((attempt * attempt))
-    if curl -fsS --max-time 5 "$OPENDRAY_HEALTH_URL" >/dev/null 2>&1; then
-      ok "health ok on attempt $attempt"
-      break
-    fi
-    if [[ $attempt -eq 5 ]]; then
-      fail "health check failed after 5 attempts — service may be crashing" 4
-    fi
-    warn "not ready yet, retry in ${sleep_for}s"
-    sleep "$sleep_for"
-  done
-fi
-
-# ── 5. APK build ──────────────────────────────────────────────────────
+# ── 4. APK build ──────────────────────────────────────────────────────
 APK_PATH=""
 if [[ "$SKIP_APK" != "1" ]]; then
   phase "Flutter APK (release)"
@@ -224,7 +236,7 @@ if [[ "$SKIP_APK" != "1" ]]; then
   cd "$REPO_ROOT"
 fi
 
-# ── 6. UNAS upload ────────────────────────────────────────────────────
+# ── 5. UNAS upload ────────────────────────────────────────────────────
 if [[ "$SKIP_UNAS" != "1" ]]; then
   phase "Upload to UNAS"
   if [[ -z "$APK_PATH" ]]; then
@@ -244,6 +256,91 @@ if [[ "$SKIP_UNAS" != "1" ]]; then
     || fail "smbclient upload failed" 5
 
   ok "uploaded $APK_NAME → $UNAS_HOST/$UNAS_PATH/"
+fi
+
+# ── 6. Deploy backend (LAST — local mode detaches to survive self-kill) ──
+if [[ "$SKIP_BACKEND" != "1" ]]; then
+  BIN_OUT="$REPO_ROOT/bin/opendray-linux-amd64"
+  TMP_TARGET="${OPENDRAY_DEPLOY_BIN_PATH}.new"
+
+  if [[ "$DEPLOY_MODE" == "local" ]]; then
+    phase "Deploy (local, detached restart)"
+    # Stage the new binary NOW while we're still alive — atomic rename is
+    # cheap and can't fail if FS has space.
+    $SUDO install -m 0755 "$BIN_OUT" "$TMP_TARGET" \
+      || fail "install staged binary failed" 4
+    ok "staged new binary at $TMP_TARGET"
+
+    # Task-runner is almost certainly a subprocess of the service we're
+    # about to stop. systemctl stop kills our whole process group — so
+    # we fork a detached worker that survives task-runner's death. It
+    # does the mv + restart + health check and appends to a log the
+    # user can tail after the workbench reconnects.
+    LOG="/tmp/opendray-deploy-$(date +%Y%m%dT%H%M%S).log"
+    nohup bash -c "
+      exec >>'$LOG' 2>&1
+      set -eo pipefail
+      trap 'echo \"[deploy] \$(date -Is) — script exiting with code \$?\"' EXIT
+      echo '[deploy] '\$(date -Is)' — starting local restart'
+      # Give the parent task-runner a moment to return its exit code to
+      # the user before we start terminating the service.
+      sleep 2
+      $SUDO systemctl stop '$OPENDRAY_DEPLOY_SERVICE'
+      $SUDO mv '$TMP_TARGET' '$OPENDRAY_DEPLOY_BIN_PATH'
+      $SUDO systemctl start '$OPENDRAY_DEPLOY_SERVICE'
+      for i in 1 4 9 16 25; do
+        if curl -fsS --max-time 5 '$OPENDRAY_HEALTH_URL' >/dev/null 2>&1; then
+          echo '[deploy] '\$(date -Is)' — health ok'
+          exit 0
+        fi
+        echo '[deploy] '\$(date -Is)' — not ready, retry in '\$i's'
+        sleep \$i
+      done
+      echo '[deploy] '\$(date -Is)' — HEALTH FAILED — run: journalctl -u $OPENDRAY_DEPLOY_SERVICE -n 100'
+      exit 1
+    " </dev/null >/dev/null 2>&1 &
+    DEPLOY_PID=$!
+    disown "$DEPLOY_PID"
+    ok "detached restart worker forked (pid $DEPLOY_PID)"
+    ok "log: $LOG"
+    warn "task-runner will lose connection during restart — reconnect the app and tail the log above"
+    # In local mode we do NOT run a health check from this script —
+    # the detached worker owns it. Exit 0 here; the worker's outcome
+    # appears in the log.
+  else
+    phase "Deploy to $OPENDRAY_DEPLOY_HOST (remote)"
+    SSH_OPTS="-i $OPENDRAY_SSH_KEY -o StrictHostKeyChecking=accept-new -o BatchMode=yes"
+
+    scp $SSH_OPTS "$BIN_OUT" "$OPENDRAY_DEPLOY_HOST:$TMP_TARGET" \
+      || fail "scp failed" 4
+
+    ssh $SSH_OPTS "$OPENDRAY_DEPLOY_HOST" bash -s <<EOF \
+      || fail "remote deploy failed" 4
+set -euo pipefail
+chmod 0755 "$TMP_TARGET"
+systemctl stop "$OPENDRAY_DEPLOY_SERVICE"
+mv "$TMP_TARGET" "$OPENDRAY_DEPLOY_BIN_PATH"
+systemctl start "$OPENDRAY_DEPLOY_SERVICE"
+systemctl is-active --quiet "$OPENDRAY_DEPLOY_SERVICE"
+EOF
+    ok "service restarted on $OPENDRAY_DEPLOY_HOST"
+
+    # Remote deploy: health check is safe inline because we're not the
+    # ones being restarted.
+    phase "Health check"
+    for attempt in 1 2 3 4 5; do
+      sleep_for=$((attempt * attempt))
+      if curl -fsS --max-time 5 "$OPENDRAY_HEALTH_URL" >/dev/null 2>&1; then
+        ok "health ok on attempt $attempt"
+        break
+      fi
+      if [[ $attempt -eq 5 ]]; then
+        fail "health check failed after 5 attempts — check journalctl on $OPENDRAY_DEPLOY_HOST" 4
+      fi
+      warn "not ready yet, retry in ${sleep_for}s"
+      sleep "$sleep_for"
+    done
+  fi
 fi
 
 phase "Done"
