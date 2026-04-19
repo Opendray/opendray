@@ -31,8 +31,34 @@ class WorkbenchService extends ChangeNotifier {
   List<WorkbenchStatusBarItem> get statusBarItems => _contribs.statusBar;
   List<WorkbenchKeybinding> get keybindings => _contribs.keybindings;
   Map<String, List<WorkbenchMenuEntry>> get menus => _contribs.menus;
+  List<WorkbenchActivityBarItem> get activityBarItems => _contribs.activityBar;
+  List<WorkbenchView> get views => _contribs.views;
+  List<WorkbenchPanel> get panels => _contribs.panels;
   bool get isLoading => _loading;
   Object? get lastError => _lastError;
+
+  /// Currently-focused view id. `null` when no view is open, which tells
+  /// `ViewHost` to render its fallback (the dashboard's normal body).
+  ///
+  /// Named `_currentViewID` (not `_currentView`) because it stores the id
+  /// string, not the [WorkbenchView] object — lookup happens on read.
+  String? get currentViewID => _currentViewID;
+  String? _currentViewID;
+
+  /// Focus the view with `viewID`. No-op if already focused — avoids an
+  /// unnecessary notify during rapid taps on the same activity-bar icon.
+  void openView(String viewID) {
+    if (_currentViewID == viewID) return;
+    _currentViewID = viewID;
+    notifyListeners();
+  }
+
+  /// Close the currently-open view. No-op when nothing is open.
+  void closeView() {
+    if (_currentViewID == null) return;
+    _currentViewID = null;
+    notifyListeners();
+  }
 
   /// Refetches `/api/workbench/contributions`. On error, keeps the
   /// previous snapshot intact (so an install flicker doesn't wipe the

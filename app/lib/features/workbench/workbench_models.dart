@@ -98,6 +98,110 @@ class WorkbenchKeybinding {
       );
 }
 
+/// An activity-bar icon a plugin contributed.
+///
+/// The `viewId` field (often matches the linked `contributes.views[].id`)
+/// is the handle tapping the icon uses to ask the workbench to focus that
+/// view. `icon` is either an emoji-ish Unicode string or a plugin-relative
+/// asset path — M2 renders emoji as-is and defers asset-backed icons to
+/// M6 polish (see [ActivityBar] for the render contract).
+class WorkbenchActivityBarItem {
+  final String pluginName;
+  final String id;
+  final String icon;
+  final String title;
+  final String viewId;
+
+  const WorkbenchActivityBarItem({
+    required this.pluginName,
+    required this.id,
+    required this.icon,
+    required this.title,
+    this.viewId = '',
+  });
+
+  factory WorkbenchActivityBarItem.fromJson(Map<String, dynamic> json) =>
+      WorkbenchActivityBarItem(
+        pluginName: json['pluginName'] as String? ?? '',
+        id: json['id'] as String? ?? '',
+        icon: json['icon'] as String? ?? '',
+        title: json['title'] as String? ?? '',
+        viewId: json['viewId'] as String? ?? '',
+      );
+}
+
+/// A view a plugin contributed — rendered inside a `ViewHost`.
+///
+/// `container` ∈ {"activityBar", "panel", "sidebar"} mirrors the Go-side
+/// slot name. `render` ∈ {"webview", "declarative"} picks the host:
+///   - "webview"     → `PluginWebView` loads `entry` from the plugin bundle.
+///   - "declarative" → placeholder in M2; full JSON-driven widget tree in M5.
+class WorkbenchView {
+  final String pluginName;
+  final String id;
+  final String title;
+  final String container;
+  final String icon;
+  final String when;
+  final String render;
+  final String entry;
+
+  const WorkbenchView({
+    required this.pluginName,
+    required this.id,
+    required this.title,
+    this.container = '',
+    this.icon = '',
+    this.when = '',
+    this.render = '',
+    this.entry = '',
+  });
+
+  factory WorkbenchView.fromJson(Map<String, dynamic> json) => WorkbenchView(
+        pluginName: json['pluginName'] as String? ?? '',
+        id: json['id'] as String? ?? '',
+        title: json['title'] as String? ?? '',
+        container: json['container'] as String? ?? '',
+        icon: json['icon'] as String? ?? '',
+        when: json['when'] as String? ?? '',
+        render: json['render'] as String? ?? '',
+        entry: json['entry'] as String? ?? '',
+      );
+}
+
+/// A panel a plugin contributed — rendered inside the bottom/side panel
+/// host (T19, not wired here). Parsed in M2 so the service carries the
+/// data even before the panel slot widget lands.
+class WorkbenchPanel {
+  final String pluginName;
+  final String id;
+  final String title;
+  final String icon;
+  final String position;
+  final String render;
+  final String entry;
+
+  const WorkbenchPanel({
+    required this.pluginName,
+    required this.id,
+    required this.title,
+    this.icon = '',
+    this.position = '',
+    this.render = '',
+    this.entry = '',
+  });
+
+  factory WorkbenchPanel.fromJson(Map<String, dynamic> json) => WorkbenchPanel(
+        pluginName: json['pluginName'] as String? ?? '',
+        id: json['id'] as String? ?? '',
+        title: json['title'] as String? ?? '',
+        icon: json['icon'] as String? ?? '',
+        position: json['position'] as String? ?? '',
+        render: json['render'] as String? ?? '',
+        entry: json['entry'] as String? ?? '',
+      );
+}
+
 /// A menu entry a plugin contributed under a named slot.
 class WorkbenchMenuEntry {
   final String pluginName;
@@ -133,12 +237,18 @@ class FlatContributions {
   final List<WorkbenchStatusBarItem> statusBar;
   final List<WorkbenchKeybinding> keybindings;
   final Map<String, List<WorkbenchMenuEntry>> menus;
+  final List<WorkbenchActivityBarItem> activityBar;
+  final List<WorkbenchView> views;
+  final List<WorkbenchPanel> panels;
 
   const FlatContributions({
     this.commands = const [],
     this.statusBar = const [],
     this.keybindings = const [],
     this.menus = const {},
+    this.activityBar = const [],
+    this.views = const [],
+    this.panels = const [],
   });
 
   static const empty = FlatContributions();
@@ -175,6 +285,9 @@ class FlatContributions {
       statusBar: readList('statusBar', WorkbenchStatusBarItem.fromJson),
       keybindings: readList('keybindings', WorkbenchKeybinding.fromJson),
       menus: readMenus(),
+      activityBar: readList('activityBar', WorkbenchActivityBarItem.fromJson),
+      views: readList('views', WorkbenchView.fromJson),
+      panels: readList('panels', WorkbenchPanel.fromJson),
     );
   }
 }

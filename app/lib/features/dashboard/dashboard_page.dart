@@ -7,8 +7,10 @@ import '../../core/models/session.dart';
 import '../../core/services/auth_service.dart';
 import '../../shared/session_launcher.dart';
 import '../../shared/theme/app_theme.dart';
+import '../workbench/activity_bar.dart';
 import '../workbench/menu_slot.dart';
 import '../workbench/status_bar_strip.dart';
+import '../workbench/view_host.dart';
 import '../workbench/workbench_service.dart';
 import '../workbench/workbench_sources.dart';
 import 'widgets/session_card.dart';
@@ -93,32 +95,61 @@ class _DashboardPageState extends State<DashboardPage> {
           const SizedBox(width: 8),
         ],
       ),
-      body: _loading && _sessions.isEmpty
-          ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
-          : _error != null && _sessions.isEmpty
-          ? _buildOfflineState()
-          : _sessions.isEmpty
-              ? _buildEmpty()
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _sessions.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (_, i) => SessionCard(
-                      session: _sessions[i],
-                      onTap: () => context.push('/session/${_sessions[i].id}'),
-                      onStart: () async { await _api.startSession(_sessions[i].id); _load(); },
-                      onStop: () async { await _api.stopSession(_sessions[i].id); _load(); },
-                      onDelete: () async { await _api.deleteSession(_sessions[i].id); _load(); },
-                    ),
-                  ),
-                ),
+      // T17/T18 — wrap the dashboard body in a ViewHost so plugin views
+      // (focused via the activity bar) replace the session list. When no
+      // view is focused, fallback renders the normal dashboard body.
+      // ActivityBar docks as a left rail on tablet/desktop (width > 600);
+      // on phone we defer rail placement to avoid fighting with
+      // Scaffold.bottomNavigationBar (which owns the status bar strip).
+      // TODO(T17/T18): wire the phone bottom-nav rail in a follow-up task
+      // that reworks the bottom slot to host both status bar + rail.
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isTablet = constraints.maxWidth > 600;
+          final mainBody = _buildMainBody();
+          final viewHost = _DashboardViewHost(fallback: mainBody);
+          if (!isTablet) return viewHost;
+          final service = context.read<WorkbenchService>();
+          return Row(
+            children: [
+              ActivityBar(service: service, axis: Axis.vertical),
+              Expanded(child: viewHost),
+            ],
+          );
+        },
+      ),
       // T20 footer — renders nothing until a plugin contributes a status-bar
       // item. Backed by the real WorkbenchService via an adapter held in
       // _DashboardStatusBar so the adapter's listener lifecycle is bound
       // to a stable State (no leak on every Scaffold rebuild).
       bottomNavigationBar: const _DashboardStatusBar(),
+    );
+  }
+
+  /// The dashboard's normal body — extracted so [ViewHost] can use it as
+  /// a fallback while still letting plugin views replace it when focused.
+  Widget _buildMainBody() {
+    if (_loading && _sessions.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.accent),
+      );
+    }
+    if (_error != null && _sessions.isEmpty) return _buildOfflineState();
+    if (_sessions.isEmpty) return _buildEmpty();
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: _sessions.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 10),
+        itemBuilder: (_, i) => SessionCard(
+          session: _sessions[i],
+          onTap: () => context.push('/session/${_sessions[i].id}'),
+          onStart: () async { await _api.startSession(_sessions[i].id); _load(); },
+          onStop: () async { await _api.stopSession(_sessions[i].id); _load(); },
+          onDelete: () async { await _api.deleteSession(_sessions[i].id); _load(); },
+        ),
+      ),
     );
   }
 
@@ -250,4 +281,25 @@ class _DashboardStatusBarState extends State<_DashboardStatusBar> {
 
   @override
   Widget build(BuildContext context) => StatusBarStrip(source: _source);
+}
+
+/// T18 — wraps [ViewHost] and pulls `baseUrl` + `bearerToken` from the
+/// ambient [ApiClient]. A thin adapter so dashboard_page keeps its
+/// surgical footprint (one Widget, not a chunk of inlined setup).
+class _DashboardViewHost extends StatelessWidget {
+  const _DashboardViewHost({required this.fallback});
+
+  final Widget fallback;
+
+  @override
+  Widget build(BuildContext context) {
+    final api = context.read<ApiClient>();
+    final service = context.read<WorkbenchService>();
+    return ViewHost(
+      service: service,
+      baseUrl: api.baseUrl,
+      bearerToken: api.token ?? '',
+      fallback: fallback,
+    );
+  }
 }
