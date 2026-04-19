@@ -84,6 +84,56 @@ echo "✓ installed $SUDOERS_FILE"
 echo "  user: $USER_NAME"
 echo "  repo: $REPO_ROOT"
 echo "  service: $SERVICE"
+
+# ─── systemd hardening drop-in ─────────────────────────────────────────
+#
+# opendray.service ships with NoNewPrivileges=yes + ProtectSystem=strict
+# as standard hardening. Both block our deploy path:
+#
+#   • NoNewPrivileges=yes makes the kernel refuse sudo's setuid bit,
+#     so even a perfect sudoers file leaves task-runner unable to
+#     escalate. That's why you saw the "no new privileges flag is set"
+#     error — the kernel intercepted sudo before sudoers ever ran.
+#
+#   • ProtectSystem=strict bind-mounts /usr read-only for every child
+#     process of the service. Even if NoNewPrivileges were off, root
+#     under sudo still couldn't write /usr/local/bin/opendray.new.
+#
+# Minimal surgical override: drop-in conf that flips NoNewPrivileges
+# off and carves a narrow ReadWritePaths=/usr/local/bin hole. All
+# other hardening (ProtectHome, PrivateTmp, the rest of ProtectSystem)
+# stays intact.
+
+OVERRIDE_DIR="/etc/systemd/system/${SERVICE}.d"
+OVERRIDE_FILE="$OVERRIDE_DIR/deploy-override.conf"
+
+mkdir -p "$OVERRIDE_DIR"
+
+cat > "$OVERRIDE_FILE" <<EOF
+# Managed by scripts/bootstrap_sudoers.sh — do not edit by hand.
+# Purpose: let opendray's task-runner (running inside this service) use
+# sudo to stage a new binary at /usr/local/bin/opendray.new and restart
+# the service. NoNewPrivileges off is required so the kernel allows
+# sudo's setuid bit; ReadWritePaths punches a /usr/local/bin hole
+# through ProtectSystem=strict so install(1) can write the staging
+# file.
+[Service]
+NoNewPrivileges=no
+ReadWritePaths=/usr/local/bin
+EOF
+chmod 0644 "$OVERRIDE_FILE"
+
+systemctl daemon-reload
+echo "✓ installed $OVERRIDE_FILE"
+echo "  (NoNewPrivileges=no, ReadWritePaths=/usr/local/bin for $SERVICE)"
+
 echo
-echo "Smoke-test (run AS $USER_NAME, expect no password prompt):"
+echo "IMPORTANT: the override takes effect only after the next service"
+echo "restart. Trigger it once now so task-runner inherits the new flags:"
+echo
+echo "  systemctl restart $SERVICE"
+echo
+echo "After that restart, task-runner deploys run end-to-end."
+echo
+echo "Smoke-test (run AS $USER_NAME in a fresh shell, expect no prompt):"
 echo "  sudo -n /usr/bin/systemctl is-active --quiet $SERVICE && echo ok"
