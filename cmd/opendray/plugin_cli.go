@@ -65,9 +65,8 @@ func pluginCmdScaffold(args []string) int {
 	return pluginCmdScaffoldWith(args, os.Stdout, os.Stderr)
 }
 
-func pluginCmdScaffoldWith(_ []string, _ io.Writer, stderr io.Writer) int {
-	fmt.Fprintln(stderr, "not yet implemented — see docs/plugin-platform/M1-PLAN.md T14")
-	return 1
+func pluginCmdScaffoldWith(args []string, stdout io.Writer, stderr io.Writer) int {
+	return runScaffold(args, stdout, stderr)
 }
 
 // pluginCmdInstall is the stub for T15.
@@ -89,7 +88,6 @@ func pluginCmdValidate(args []string) int {
 	return pluginCmdValidateWith(args, os.Stdout, os.Stderr)
 }
 
-func pluginCmdValidateWith(_ []string, _ io.Writer, stderr io.Writer) int {
-	fmt.Fprintln(stderr, "not yet implemented — see docs/plugin-platform/M1-PLAN.md T16")
-	return 1
+func pluginCmdValidateWith(args []string, stdout, stderr io.Writer) int {
+	return runValidate(args, stdout, stderr)
 }

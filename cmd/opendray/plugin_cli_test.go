@@ -79,18 +79,23 @@ func TestRunPluginCLI_UnknownSubcommand(t *testing.T) {
 	}
 }
 
-// TestRunPluginCLI_ScaffoldStub verifies the scaffold stub returns 1 with a
-// "not yet implemented" message on stderr, passing args through intact.
-func TestRunPluginCLI_ScaffoldStub(t *testing.T) {
+// TestRunPluginCLI_ScaffoldDispatch verifies that the scaffold subcommand is
+// wired correctly via runPluginCLIWith and succeeds (exit 0) when given valid
+// args pointing at a fresh temp directory. T14 replaces the old stub test.
+func TestRunPluginCLI_ScaffoldDispatch(t *testing.T) {
+	tmpDir := t.TempDir()
 	var stdout, stderr bytes.Buffer
 
-	code := runPluginCLIWith([]string{"scaffold", "--form", "declarative", "foo"}, &stdout, &stderr)
+	code := runPluginCLIWith(
+		[]string{"scaffold", "--form", "declarative", "--out-dir", tmpDir, "my-wired-plugin"},
+		&stdout, &stderr,
+	)
 
-	if code != 1 {
-		t.Errorf("expected exit code 1, got %d", code)
+	if code != 0 {
+		t.Errorf("expected exit code 0, got %d; stderr: %s", code, stderr.String())
 	}
-	if !strings.Contains(stderr.String(), "not yet implemented") {
-		t.Errorf("expected stderr to contain \"not yet implemented\", got %q", stderr.String())
+	if !strings.Contains(stdout.String(), "scaffolded") {
+		t.Errorf("expected stdout to contain \"scaffolded\", got %q", stdout.String())
 	}
 }
 
@@ -109,33 +114,35 @@ func TestRunPluginCLI_InstallStub(t *testing.T) {
 	}
 }
 
-// TestRunPluginCLI_ValidateStub_NoArgs verifies the validate stub returns 1 with a
-// "not yet implemented" message on stderr when called with no arguments.
-func TestRunPluginCLI_ValidateStub_NoArgs(t *testing.T) {
-	var stdout, stderr bytes.Buffer
+// TestRunPluginCLI_ValidateNoArgs verifies that "opendray plugin validate" with
+// no args and no manifest.json in CWD returns exit code 2 (unreadable manifest)
+// now that T16 is implemented (the "not yet implemented" stub is gone).
+func TestRunPluginCLI_ValidateNoArgs(t *testing.T) {
+	// Use a CWD with no manifest.json so we get exit 2.
+	dir := t.TempDir()
+	t.Chdir(dir)
 
+	var stdout, stderr bytes.Buffer
 	code := runPluginCLIWith([]string{"validate"}, &stdout, &stderr)
 
-	if code != 1 {
-		t.Errorf("expected exit code 1, got %d", code)
-	}
-	if !strings.Contains(stderr.String(), "not yet implemented") {
-		t.Errorf("expected stderr to contain \"not yet implemented\", got %q", stderr.String())
+	// exit 2 = manifest unreadable (no manifest.json in empty temp dir)
+	if code != 2 {
+		t.Errorf("expected exit code 2 (no manifest), got %d; stderr=%q", code, stderr.String())
 	}
 }
 
-// TestRunPluginCLI_ValidateStub_WithArg verifies the validate stub returns 1 with a
-// "not yet implemented" message on stderr when called with a path argument.
-func TestRunPluginCLI_ValidateStub_WithArg(t *testing.T) {
+// TestRunPluginCLI_ValidateWithNonExistentDir verifies that pointing validate
+// at a non-existent path returns exit code 2 (unreadable manifest).
+func TestRunPluginCLI_ValidateWithNonExistentDir(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 
-	code := runPluginCLIWith([]string{"validate", "./x"}, &stdout, &stderr)
+	code := runPluginCLIWith([]string{"validate", "/nonexistent/path/abc123"}, &stdout, &stderr)
 
-	if code != 1 {
-		t.Errorf("expected exit code 1, got %d", code)
+	if code != 2 {
+		t.Errorf("expected exit code 2 (no manifest), got %d; stderr=%q", code, stderr.String())
 	}
-	if !strings.Contains(stderr.String(), "not yet implemented") {
-		t.Errorf("expected stderr to contain \"not yet implemented\", got %q", stderr.String())
+	if !strings.Contains(stderr.String(), "error: ") {
+		t.Errorf("expected stderr to contain \"error: \", got %q", stderr.String())
 	}
 }
 
