@@ -25,8 +25,10 @@ var reVersion = regexp.MustCompile(`^\d+\.\d+\.\d+(-[A-Za-z0-9.-]+)?$`)
 var rePublisher = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?$`)
 
 // reActivation — 02-manifest.md line 84 (items.pattern).
-// JSON source: "^(onStartup|onCommand:[a-z0-9._-]+|onView:[a-z0-9._-]+|onSession:(start|stop|idle|output)|onLanguage:[a-z0-9_-]+|onFile:[^\\s]+|onSchedule:(cron:[^\\s]+))$"
-var reActivation = regexp.MustCompile(`^(onStartup|onCommand:[a-z0-9._-]+|onView:[a-z0-9._-]+|onSession:(start|stop|idle|output)|onLanguage:[a-z0-9_-]+|onFile:[^\s]+|onSchedule:(cron:[^\s]+))$`)
+// JSON source: "^(onStartup|onCommand:[a-z0-9._-]+|onView:[a-z0-9._-]+|onSession:(start|stop|idle|output)|onLanguage:[a-z0-9_-]+|onFile:[^\\s]+|onSchedule:cron:.+)$"
+// cron: segment accepts any non-empty tail so five-field expressions with
+// spaces ("0 * * * *") are valid — the original [^\s]+ shape rejected them.
+var reActivation = regexp.MustCompile(`^(onStartup|onCommand:[a-z0-9._-]+|onView:[a-z0-9._-]+|onSession:(start|stop|idle|output)|onLanguage:[a-z0-9_-]+|onFile:[^\s]+|onSchedule:cron:.+)$`)
 
 // reCommandID — derived from the activation pattern's command-id fragment and
 // used in 02-manifest.md §command $defs to describe id format: ^[a-z0-9._-]+$

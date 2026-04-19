@@ -550,12 +550,10 @@ func TestValidateV1_ValidActivationEvents(t *testing.T) {
 		`"onLanguage:go"`,
 		`"onFile:*.rs"`,
 		`"onFile:src/main.go"`,
-		// NOTE: 02-manifest.md line 84 uses [^\s]+ for the cron expression,
-		// which disallows spaces. A standard "0 * * * *" expression would fail
-		// because it contains spaces. The doc pattern appears to intend a compact
-		// cron-like token (e.g. "0_*_*_*_*" or similar). We use a non-space
-		// expression here to match the spec regex exactly. This is documented as
-		// spec drift — see PR description.
+		// Standard five-field cron with spaces — 02-manifest.md L84 was
+		// widened to `cron:.+` after T2 surfaced the drift; real plugin
+		// schedules need this shape.
+		`"onSchedule:cron:0 * * * *"`,
 		`"onSchedule:cron:@hourly"`,
 	}
 

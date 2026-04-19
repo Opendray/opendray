@@ -81,7 +81,7 @@ Every plugin bundle contains exactly one `manifest.json` at its root. This file 
       "description": "Events that trigger plugin activation. Empty = lazy, never auto-activate.",
       "items": {
         "type": "string",
-        "pattern": "^(onStartup|onCommand:[a-z0-9._-]+|onView:[a-z0-9._-]+|onSession:(start|stop|idle|output)|onLanguage:[a-z0-9_-]+|onFile:[^\\s]+|onSchedule:(cron:[^\\s]+))$"
+        "pattern": "^(onStartup|onCommand:[a-z0-9._-]+|onView:[a-z0-9._-]+|onSession:(start|stop|idle|output)|onLanguage:[a-z0-9_-]+|onFile:[^\\s]+|onSchedule:cron:.+)$"
       },
       "maxItems": 32
     },
