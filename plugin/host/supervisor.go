@@ -165,7 +165,9 @@ func (s *Supervisor) Ensure(ctx context.Context, pluginName string) (*Sidecar, e
 	if !ok {
 		return nil, fmt.Errorf("host: plugin %q not installed", pluginName)
 	}
-	if prov.EffectiveForm() != plugin.FormHost || prov.Host == nil {
+	// Any plugin with a host block gets a sidecar — including M5's
+	// form:"webview" + host:{} combined form.
+	if !prov.HasHostBackend() {
 		return nil, fmt.Errorf("%w: %s", ErrNoHost, pluginName)
 	}
 

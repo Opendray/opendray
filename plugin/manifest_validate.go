@@ -115,11 +115,15 @@ func ValidateV1(p Provider) []ValidationError {
 		errs = append(errs, validatePermissions(p.Permissions)...)
 	}
 
-	// host.* — only inspected when the effective form is "host". The
-	// iOS build-tag gate (plugin/host_os_*.go) additionally refuses
-	// host-form entirely; validateHostV1 returns a single error in
-	// that case.
-	if p.EffectiveForm() == FormHost {
+	// host.* — validated when:
+	//   - form="host" (requires host block; nil → error).
+	//   - form="webview" + host!=nil (M5 B1 combined form; validate
+	//     the sidecar spec just like a pure-host plugin).
+	//
+	// The iOS build-tag gate (plugin/host_os_*.go) additionally
+	// refuses host-form entirely; validateHostV1 returns a single
+	// error in that case.
+	if p.EffectiveForm() == FormHost || (p.EffectiveForm() == FormWebview && p.Host != nil) {
 		errs = append(errs, validateHostV1(p.Host)...)
 	}
 

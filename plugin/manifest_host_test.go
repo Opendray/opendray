@@ -190,3 +190,108 @@ func TestValidateV1_HostInvalid(t *testing.T) {
 		})
 	}
 }
+
+// TestValidateV1_WebviewHostCombined — M5 B1 combined form: a
+// form:"webview" manifest may optionally ship a host:{} block so
+// the webview UI can call its own privileged sidecar methods via
+// opendray.commands.execute. The host block has to pass the same
+// validation as a pure form:"host" plugin when present.
+func TestValidateV1_WebviewHostCombined(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name     string
+		manifest string
+		wantOK   bool
+		wantPath string
+	}{
+		{
+			name: "webview no host — legal pure webview",
+			manifest: `{
+				"name": "ui-only", "version": "1.0.0", "publisher": "x",
+				"engines": {"opendray": "^1.0.0"}, "form": "webview"
+			}`,
+			wantOK: true,
+		},
+		{
+			name: "webview + valid host — combined form",
+			manifest: `{
+				"name": "combo", "version": "1.0.0", "publisher": "x",
+				"engines": {"opendray": "^1.0.0"}, "form": "webview",
+				"host": {"entry": "sidecar.js", "runtime": "node"}
+			}`,
+			wantOK: true,
+		},
+		{
+			name: "webview + malformed host — combined form still validates",
+			manifest: `{
+				"name": "combo-bad", "version": "1.0.0", "publisher": "x",
+				"engines": {"opendray": "^1.0.0"}, "form": "webview",
+				"host": {"entry": "../escape", "runtime": "node"}
+			}`,
+			wantOK:   false,
+			wantPath: "host.entry",
+		},
+		{
+			name: "declarative + host — still ignored (neither form needs one)",
+			manifest: `{
+				"name": "dec", "version": "1.0.0", "publisher": "x",
+				"engines": {"opendray": "^1.0.0"}, "form": "declarative",
+				"host": {"entry": "junk", "runtime": "lolcode"}
+			}`,
+			wantOK: true,
+		},
+	}
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			p := mustParseProvider(t, tc.manifest)
+			errs := ValidateV1(p)
+			if tc.wantOK {
+				if len(errs) > 0 {
+					t.Fatalf("want ok, got errors: %v", errs)
+				}
+				return
+			}
+			found := false
+			for _, e := range errs {
+				if strings.Contains(e.Path, tc.wantPath) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("want error on %q, got %v", tc.wantPath, errs)
+			}
+		})
+	}
+}
+
+// TestProvider_HasHostBackend — the helper centralising the
+// "does this plugin spawn a sidecar" predicate. Keep the table
+// small but covering every form × host-presence combo.
+func TestProvider_HasHostBackend(t *testing.T) {
+	t.Parallel()
+	host := &HostV1{Entry: "s.js", Runtime: "node"}
+	cases := []struct {
+		name string
+		p    Provider
+		want bool
+	}{
+		{"host + block", Provider{Form: FormHost, Host: host}, true},
+		{"host + no block (invalid but truthful)", Provider{Form: FormHost}, false},
+		{"webview + block (combined)", Provider{Form: FormWebview, Host: host}, true},
+		{"webview + no block", Provider{Form: FormWebview}, false},
+		{"declarative + block (ignored)", Provider{Form: FormDeclarative, Host: host}, false},
+		{"declarative + no block", Provider{Form: FormDeclarative}, false},
+	}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := tc.p.HasHostBackend(); got != tc.want {
+				t.Errorf("HasHostBackend() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}

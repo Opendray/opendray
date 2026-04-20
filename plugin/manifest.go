@@ -322,6 +322,23 @@ func (p Provider) EffectiveForm() string {
 	return FormDeclarative
 }
 
+// HasHostBackend reports whether the plugin ships a sidecar the
+// supervisor should spawn on demand. True for:
+//
+//   - Classic form:"host" plugins (the M3 case).
+//   - form:"webview" plugins that ALSO declare a host:{} block —
+//     the "combined form" M5 B1 introduces so webview UIs can call
+//     their own privileged sidecar via opendray.commands.execute.
+//
+// The rule is uniform: a host block means a sidecar, regardless of
+// which form drives the primary UI surface.
+func (p Provider) HasHostBackend() bool {
+	if p.Host == nil {
+		return false
+	}
+	return p.EffectiveForm() == FormHost || p.EffectiveForm() == FormWebview
+}
+
 // CLISpec describes how to spawn this tool as a process.
 type CLISpec struct {
 	Command     string   `json:"command"`
