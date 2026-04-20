@@ -13,20 +13,25 @@ import '../../shared/theme/app_theme.dart';
 /// PostgreSQL SQL editor + schema browser for the pg-browser@2.0.0
 /// plugin.
 ///
-/// Toolbar exposes a **database** picker (lists every non-template
-/// database the configured user can connect to) and a schema picker.
-/// The selected database threads through every downstream API call
-/// as the `database` override — the server's overrideDatabase helper
-/// swaps cfg.Database per-request, so switching DBs is a pure client
-/// concern and doesn't require re-configuring the plugin.
+/// Two layouts, chosen responsively:
 ///
-/// Tapping a table **immediately** runs a preview (SELECT * LIMIT N)
-/// against the active schema.database.table and renders rows — the
-/// SQL editor is reserved for custom power-user queries, not the
-/// required path to viewing data.
+///   * **Phone** (<700 px): a tabbed UX — *Browse* (default) lists
+///     tables under chip-based DB/schema pickers; tapping a table
+///     pushes a full-screen rows page that renders each row as a
+///     key→value card (far more readable than a sideways-scrolling
+///     grid on a 400 px screen). *SQL* tab is the opt-in editor for
+///     power users.
+///   * **Wide** (≥700 px): three-pane layout — sidebar with tables,
+///     centre SQL editor, bottom DataTable results. Cmd/Ctrl+Enter
+///     runs the editor query.
 ///
-/// Cmd/Ctrl+Enter runs the editor query. Destructive statements
-/// (DROP / TRUNCATE / DELETE without WHERE) pop a confirmation.
+/// Shared contract across both layouts:
+///   * DB override threads through every API call as a per-request
+///     `database` field — no plugin re-configuration to switch DBs.
+///   * Destructive statements (DROP / TRUNCATE / DELETE without
+///     WHERE) pop a confirmation before going to the server.
+///   * Read-only mode refuses write verbs client-side with a clear
+///     message before hitting the network.
 class PGPage extends StatefulWidget {
   const PGPage({super.key});
 
@@ -34,12 +39,15 @@ class PGPage extends StatefulWidget {
   State<PGPage> createState() => _PGPageState();
 }
 
-class _PGPageState extends State<PGPage> {
+class _PGPageState extends State<PGPage>
+    with SingleTickerProviderStateMixin {
   ProviderInfo? _plugin;
   StreamSubscription<void>? _providersSub;
 
   final _sqlCtrl = TextEditingController(text: 'SELECT 1;');
   final _sqlFocus = FocusNode();
+  final _tableFilterCtrl = TextEditingController();
+  late final TabController _tabCtrl;
 
   List<String> _databases = [];
   String? _activeDatabase;
@@ -47,6 +55,7 @@ class _PGPageState extends State<PGPage> {
   List<String> _schemas = [];
   String? _activeSchema;
   List<Map<String, dynamic>> _tables = [];
+  String _tableFilter = '';
 
   Map<String, dynamic>? _queryResult;
   Map<String, dynamic>? _executeResult;
@@ -62,9 +71,24 @@ class _PGPageState extends State<PGPage> {
     return true;
   }
 
+  List<Map<String, dynamic>> get _filteredTables {
+    if (_tableFilter.isEmpty) return _tables;
+    final q = _tableFilter.toLowerCase();
+    return _tables.where((t) {
+      final n = (t['name'] as String? ?? '').toLowerCase();
+      return n.contains(q);
+    }).toList();
+  }
+
   @override
   void initState() {
     super.initState();
+    _tabCtrl = TabController(length: 2, vsync: this);
+    _tableFilterCtrl.addListener(() {
+      if (_tableFilter != _tableFilterCtrl.text) {
+        setState(() => _tableFilter = _tableFilterCtrl.text);
+      }
+    });
     _loadPlugin();
     _providersSub = ProvidersBus.instance.changes.listen((_) => _loadPlugin());
   }
@@ -73,6 +97,8 @@ class _PGPageState extends State<PGPage> {
   void dispose() {
     _sqlCtrl.dispose();
     _sqlFocus.dispose();
+    _tableFilterCtrl.dispose();
+    _tabCtrl.dispose();
     _providersSub?.cancel();
     super.dispose();
   }
@@ -288,6 +314,14 @@ class _PGPageState extends State<PGPage> {
             'Install pg-browser from the Hub and configure host/user/password in Plugins → Configure.'),
       );
     }
+    return LayoutBuilder(builder: (ctx, constraints) {
+      final isPhone = constraints.maxWidth < 700;
+      if (isPhone) return _buildPhone();
+      return _buildDesktop();
+    });
+  }
+
+  Widget _buildDesktop() {
     return Shortcuts(
       shortcuts: {
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.enter):
@@ -307,10 +341,405 @@ class _PGPageState extends State<PGPage> {
           child: Column(children: [
             _toolbar(),
             if (_error != null) _errorBar(_error!),
-            Expanded(child: _bodyLayout()),
+            Expanded(child: _desktopBody()),
           ]),
         ),
       ),
+    );
+  }
+
+  // ─── Phone layout ────────────────────────────────────────
+
+  Widget _buildPhone() {
+    return Column(children: [
+      _phoneHeader(),
+      if (_error != null) _errorBar(_error!),
+      Container(
+        color: AppColors.surface,
+        child: TabBar(
+          controller: _tabCtrl,
+          labelColor: AppColors.accent,
+          unselectedLabelColor: AppColors.textMuted,
+          indicatorColor: AppColors.accent,
+          labelStyle:
+              const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          tabs: [
+            Tab(height: 36, text: context.tr('Browse')),
+            Tab(height: 36, text: context.tr('SQL')),
+          ],
+        ),
+      ),
+      const Divider(height: 1, color: AppColors.border),
+      Expanded(
+        child: TabBarView(
+          controller: _tabCtrl,
+          children: [_phoneBrowseTab(), _phoneSqlTab()],
+        ),
+      ),
+    ]);
+  }
+
+  /// Phone header: compact chip row with DB + schema + read-only
+  /// badge. Tap a chip to open a bottom-sheet picker — much easier
+  /// to hit with a thumb than an inline dropdown button.
+  Widget _phoneHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(bottom: BorderSide(color: AppColors.border)),
+      ),
+      child: Row(children: [
+        Expanded(
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _chipButton(
+                icon: Icons.storage,
+                label: _activeDatabase ?? context.tr('Database'),
+                onTap: _databases.isEmpty ? null : _showDatabasePicker,
+              ),
+              _chipButton(
+                icon: Icons.folder_outlined,
+                label: _activeSchema ?? context.tr('Schema'),
+                onTap: _schemas.isEmpty ? null : _showSchemaPicker,
+              ),
+              if (_readOnly)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.textMuted.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text('read-only',
+                      style: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600)),
+                ),
+            ],
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _chipButton({
+    required IconData icon,
+    required String label,
+    VoidCallback? onTap,
+  }) {
+    final enabled = onTap != null;
+    return Material(
+      color: enabled
+          ? AppColors.accent.withValues(alpha: 0.12)
+          : AppColors.textMuted.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon,
+                size: 14,
+                color: enabled ? AppColors.accent : AppColors.textMuted),
+            const SizedBox(width: 6),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 140),
+              child: Text(label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: enabled ? AppColors.accent : AppColors.textMuted)),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.arrow_drop_down,
+                size: 16,
+                color: enabled ? AppColors.accent : AppColors.textMuted),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _phoneBrowseTab() {
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+        child: TextField(
+          controller: _tableFilterCtrl,
+          decoration: InputDecoration(
+            hintText: context.tr('Search tables'),
+            prefixIcon: const Icon(Icons.search, size: 18),
+            isDense: true,
+            filled: true,
+            fillColor: AppColors.surfaceAlt,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
+            suffixIcon: _tableFilter.isEmpty
+                ? null
+                : IconButton(
+                    icon: const Icon(Icons.clear, size: 16),
+                    onPressed: () => _tableFilterCtrl.clear(),
+                  ),
+          ),
+        ),
+      ),
+      Expanded(
+        child: _filteredTables.isEmpty
+            ? Center(
+                child: Text(
+                  _tables.isEmpty
+                      ? context.tr('No tables in this schema')
+                      : context.tr('No matches'),
+                  style: const TextStyle(
+                      color: AppColors.textMuted, fontSize: 13),
+                ),
+              )
+            : ListView.separated(
+                itemCount: _filteredTables.length,
+                separatorBuilder: (_, _) =>
+                    const Divider(height: 1, color: AppColors.border),
+                itemBuilder: (_, i) => _phoneTableRow(_filteredTables[i]),
+              ),
+      ),
+    ]);
+  }
+
+  Widget _phoneTableRow(Map<String, dynamic> t) {
+    final name = t['name'] as String? ?? '';
+    final kind = t['kind'] as String? ?? 'table';
+    return ListTile(
+      dense: true,
+      leading: Icon(
+        kind == 'view' || kind == 'matview'
+            ? Icons.visibility_outlined
+            : Icons.table_chart_outlined,
+        size: 20,
+        color: AppColors.textMuted,
+      ),
+      title: Text(name,
+          style:
+              const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+      subtitle: kind == 'table'
+          ? null
+          : Text(kind,
+              style:
+                  const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+      trailing: const Icon(Icons.chevron_right,
+          size: 18, color: AppColors.textMuted),
+      onTap: () => _pushPhoneRowsPage(t),
+    );
+  }
+
+  /// Full-screen rows page. Dedicated route so the rows view gets
+  /// the entire screen — no toolbar, no tab bar eating pixels on a
+  /// 400 px phone.
+  void _pushPhoneRowsPage(Map<String, dynamic> t) {
+    final pname = _pluginName;
+    if (pname == null) return;
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => PGTableRowsPage(
+        pluginName: pname,
+        database: _activeDatabase,
+        schema: t['schema'] as String? ?? _activeSchema ?? 'public',
+        table: t['name'] as String? ?? '',
+        kind: t['kind'] as String? ?? 'table',
+        limit: _previewLimit(),
+      ),
+    ));
+  }
+
+  Widget _phoneSqlTab() {
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+        child: Row(children: [
+          const Icon(Icons.terminal, size: 16, color: AppColors.textMuted),
+          const SizedBox(width: 6),
+          Text(context.tr('SQL editor'),
+              style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w600)),
+          const Spacer(),
+          TextButton.icon(
+            onPressed: () {
+              setState(() {
+                _queryResult = null;
+                _executeResult = null;
+                _error = null;
+              });
+            },
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: const Size(0, 28),
+            ),
+            icon: const Icon(Icons.clear_all, size: 14),
+            label: Text(context.tr('Clear'),
+                style: const TextStyle(fontSize: 12)),
+          ),
+          const SizedBox(width: 4),
+          FilledButton.icon(
+            onPressed: _running ? null : _run,
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.accent,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              minimumSize: const Size(0, 32),
+            ),
+            icon: _running
+                ? const SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.play_arrow, size: 14),
+            label: Text(context.tr('Run'),
+                style: const TextStyle(fontSize: 12)),
+          ),
+        ]),
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+        child: SizedBox(
+          height: 140,
+          child: TextField(
+            controller: _sqlCtrl,
+            focusNode: _sqlFocus,
+            maxLines: null,
+            expands: true,
+            keyboardType: TextInputType.multiline,
+            textAlignVertical: TextAlignVertical.top,
+            style: const TextStyle(
+                fontFamily: 'monospace', fontSize: 13, height: 1.4),
+            decoration: InputDecoration(
+              hintText: 'SELECT * FROM users LIMIT 100;',
+              filled: true,
+              fillColor: AppColors.surfaceAlt,
+              contentPadding: const EdgeInsets.all(10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: AppColors.border),
+              ),
+            ),
+          ),
+        ),
+      ),
+      const Divider(height: 1, color: AppColors.border),
+      Expanded(child: _resultsPane(phone: true)),
+    ]);
+  }
+
+  Future<void> _showDatabasePicker() async {
+    final picked = await _pickFromList(
+      title: context.tr('Select database'),
+      items: _databases,
+      selected: _activeDatabase,
+      leading: Icons.storage,
+    );
+    if (picked != null && picked != _activeDatabase) {
+      setState(() {
+        _activeDatabase = picked;
+        _activeSchema = null;
+        _schemas = [];
+        _tables = [];
+      });
+      await _loadSchemas();
+    }
+  }
+
+  Future<void> _showSchemaPicker() async {
+    final picked = await _pickFromList(
+      title: context.tr('Select schema'),
+      items: _schemas,
+      selected: _activeSchema,
+      leading: Icons.folder_outlined,
+    );
+    if (picked != null && picked != _activeSchema) {
+      setState(() => _activeSchema = picked);
+      await _loadTables();
+    }
+  }
+
+  Future<String?> _pickFromList({
+    required String title,
+    required List<String> items,
+    required String? selected,
+    required IconData leading,
+  }) async {
+    if (items.isEmpty) return null;
+    return showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(top: 8, bottom: 8),
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(title,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600)),
+              ),
+            ),
+            const Divider(height: 1, color: AppColors.border),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: items.length,
+                itemBuilder: (_, i) {
+                  final v = items[i];
+                  final isSelected = v == selected;
+                  return ListTile(
+                    dense: true,
+                    leading: Icon(leading,
+                        size: 18,
+                        color: isSelected
+                            ? AppColors.accent
+                            : AppColors.textMuted),
+                    title: Text(v,
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            color: isSelected
+                                ? AppColors.accent
+                                : AppColors.text)),
+                    trailing: isSelected
+                        ? const Icon(Icons.check,
+                            size: 18, color: AppColors.accent)
+                        : null,
+                    onTap: () => Navigator.of(ctx).pop(v),
+                  );
+                },
+              ),
+            ),
+          ]),
+        );
+      },
     );
   }
 
@@ -414,27 +843,17 @@ class _PGPageState extends State<PGPage> {
     );
   }
 
-  Widget _bodyLayout() {
-    return LayoutBuilder(builder: (ctx, constraints) {
-      final isWide = constraints.maxWidth > 720;
-      final editorArea = Column(children: [
-        Expanded(flex: 2, child: _editor()),
-        const Divider(height: 1, color: AppColors.border),
-        Expanded(flex: 3, child: _resultsPane()),
-      ]);
-      if (!isWide) {
-        return Column(children: [
-          _tablesStrip(),
-          const Divider(height: 1, color: AppColors.border),
-          Expanded(child: editorArea),
-        ]);
-      }
-      return Row(children: [
-        SizedBox(width: 240, child: _tablesSidebar()),
-        const VerticalDivider(width: 1, color: AppColors.border),
-        Expanded(child: editorArea),
-      ]);
-    });
+  Widget _desktopBody() {
+    final editorArea = Column(children: [
+      Expanded(flex: 2, child: _editor()),
+      const Divider(height: 1, color: AppColors.border),
+      Expanded(flex: 3, child: _resultsPane()),
+    ]);
+    return Row(children: [
+      SizedBox(width: 240, child: _tablesSidebar()),
+      const VerticalDivider(width: 1, color: AppColors.border),
+      Expanded(child: editorArea),
+    ]);
   }
 
   Widget _tablesSidebar() {
@@ -449,30 +868,6 @@ class _PGPageState extends State<PGPage> {
               itemCount: _tables.length,
               itemBuilder: (_, i) => _tableTile(_tables[i]),
             ),
-    );
-  }
-
-  /// Narrow-screen horizontal strip (one chip per table). Keeps the
-  /// UX intelligible on phones where a 240px sidebar would swallow
-  /// the editor.
-  Widget _tablesStrip() {
-    if (_tables.isEmpty) return const SizedBox.shrink();
-    return SizedBox(
-      height: 36,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        itemCount: _tables.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 4),
-        itemBuilder: (_, i) {
-          final t = _tables[i];
-          return ActionChip(
-            label: Text(t['name'] as String? ?? '',
-                style: const TextStyle(fontSize: 11)),
-            onPressed: () => _previewTable(t),
-          );
-        },
-      ),
     );
   }
 
@@ -588,8 +983,10 @@ class _PGPageState extends State<PGPage> {
     );
   }
 
-  Widget _resultsPane() {
-    if (_queryResult != null) return _queryResultView(_queryResult!);
+  Widget _resultsPane({bool phone = false}) {
+    if (_queryResult != null) {
+      return _queryResultView(_queryResult!, phone: phone);
+    }
     if (_executeResult != null) return _executeResultView(_executeResult!);
     return Center(
       child: Text(context.tr('Run a query to see results here.'),
@@ -597,7 +994,7 @@ class _PGPageState extends State<PGPage> {
     );
   }
 
-  Widget _queryResultView(Map<String, dynamic> res) {
+  Widget _queryResultView(Map<String, dynamic> res, {bool phone = false}) {
     final cols = (res['columns'] as List?) ?? [];
     final rows = (res['rows'] as List?) ?? [];
     final rowCount = (res['rowCount'] as num?)?.toInt() ?? 0;
@@ -623,52 +1020,56 @@ class _PGPageState extends State<PGPage> {
                     style: const TextStyle(
                         color: AppColors.textMuted, fontSize: 12)),
               )
-            : SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  child: DataTable(
-                    columnSpacing: 20,
-                    headingRowHeight: 32,
-                    dataRowMinHeight: 28,
-                    dataRowMaxHeight: 44,
-                    columns: [
-                      for (final c in cols)
-                        DataColumn(
-                          label: Tooltip(
-                            message: (c as Map)['type'] as String? ?? '',
-                            child: Text(c['name'] as String? ?? '',
-                                style: const TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 11)),
-                          ),
-                        ),
-                    ],
-                    rows: [
-                      for (final row in rows)
-                        DataRow(cells: [
-                          for (final v in (row as List))
-                            DataCell(SelectableText(
-                              v == null ? 'NULL' : v.toString(),
-                              style: TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 11,
-                                color: v == null
-                                    ? AppColors.textMuted
-                                    : AppColors.text,
-                                fontStyle: v == null
-                                    ? FontStyle.italic
-                                    : FontStyle.normal,
-                              ),
-                            )),
-                        ]),
-                    ],
-                  ),
-                ),
-              ),
+            : (phone
+                ? pgRowCardList(cols: cols, rows: rows)
+                : _queryResultTable(cols, rows)),
       ),
     ]);
+  }
+
+  Widget _queryResultTable(List cols, List rows) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: DataTable(
+          columnSpacing: 20,
+          headingRowHeight: 32,
+          dataRowMinHeight: 28,
+          dataRowMaxHeight: 44,
+          columns: [
+            for (final c in cols)
+              DataColumn(
+                label: Tooltip(
+                  message: (c as Map)['type'] as String? ?? '',
+                  child: Text(c['name'] as String? ?? '',
+                      style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11)),
+                ),
+              ),
+          ],
+          rows: [
+            for (final row in rows)
+              DataRow(cells: [
+                for (final v in (row as List))
+                  DataCell(SelectableText(
+                    v == null ? 'NULL' : v.toString(),
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                      color:
+                          v == null ? AppColors.textMuted : AppColors.text,
+                      fontStyle:
+                          v == null ? FontStyle.italic : FontStyle.normal,
+                    ),
+                  )),
+              ]),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _executeResultView(Map<String, dynamic> res) {
@@ -751,4 +1152,286 @@ class _PGPageState extends State<PGPage> {
 
 class _RunIntent extends Intent {
   const _RunIntent();
+}
+
+/// Renders query rows as a scrollable list of cards (one card per
+/// row, key→value pairs inside). Way more legible on a phone than a
+/// sideways-scrolling grid: every column name is a visible label
+/// next to its value instead of hiding above a scrolled-away header.
+Widget pgRowCardList({required List cols, required List rows}) {
+  final colNames = [
+    for (final c in cols) (c as Map)['name'] as String? ?? '',
+  ];
+  final colTypes = [
+    for (final c in cols) (c as Map)['type'] as String? ?? '',
+  ];
+
+  return ListView.separated(
+    padding: const EdgeInsets.fromLTRB(10, 10, 10, 16),
+    itemCount: rows.length,
+    separatorBuilder: (_, _) => const SizedBox(height: 8),
+    itemBuilder: (_, i) {
+      final row = (rows[i] as List);
+      return Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text('#${i + 1}',
+                    style: const TextStyle(
+                        color: AppColors.accent,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600)),
+              ),
+            ]),
+            const SizedBox(height: 6),
+            for (int j = 0; j < colNames.length && j < row.length; j++)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Text(colNames[j],
+                          style: const TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.text)),
+                      const SizedBox(width: 6),
+                      if (colTypes[j].isNotEmpty)
+                        Text(colTypes[j],
+                            style: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 10,
+                                color: AppColors.textMuted)),
+                    ]),
+                    const SizedBox(height: 2),
+                    SelectableText(
+                      row[j] == null ? 'NULL' : row[j].toString(),
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                        color: row[j] == null
+                            ? AppColors.textMuted
+                            : AppColors.text,
+                        fontStyle: row[j] == null
+                            ? FontStyle.italic
+                            : FontStyle.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+/// Full-screen rows page pushed from the phone Browse tab. Gets the
+/// entire screen to display data — no lateral toolbars eating pixels.
+/// Auto-loads on init, supports pull-to-refresh, offers a "copy SELECT
+/// to SQL tab" action in the app bar menu so a user can jump to
+/// custom querying without retyping the SELECT.
+class PGTableRowsPage extends StatefulWidget {
+  final String pluginName;
+  final String? database;
+  final String schema;
+  final String table;
+  final String kind;
+  final int limit;
+
+  const PGTableRowsPage({
+    super.key,
+    required this.pluginName,
+    required this.database,
+    required this.schema,
+    required this.table,
+    required this.kind,
+    required this.limit,
+  });
+
+  @override
+  State<PGTableRowsPage> createState() => _PGTableRowsPageState();
+}
+
+class _PGTableRowsPageState extends State<PGTableRowsPage> {
+  Map<String, dynamic>? _result;
+  bool _loading = false;
+  String? _error;
+
+  String get _selectSql =>
+      'SELECT * FROM "${widget.schema}"."${widget.table}" LIMIT ${widget.limit};';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final api = context.read<ApiClient>();
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final res = await ApiClient.describeErrors(() => api.pgQuery(
+          widget.pluginName, _selectSql,
+          database: widget.database ?? ''));
+      if (!mounted) return;
+      setState(() => _result = res);
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cols = (_result?['columns'] as List?) ?? [];
+    final rows = (_result?['rows'] as List?) ?? [];
+    final rowCount = (_result?['rowCount'] as num?)?.toInt() ?? 0;
+    final durationMs = (_result?['durationMs'] as num?)?.toInt() ?? 0;
+    final truncated = _result?['truncated'] == true;
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.text,
+        elevation: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.table,
+                style: const TextStyle(
+                    fontSize: 15,
+                    fontFamily: 'monospace',
+                    fontWeight: FontWeight.w600)),
+            Text(
+              '${widget.database ?? ''} · ${widget.schema}'
+              '${widget.kind == 'table' ? '' : ' · ${widget.kind}'}',
+              style: const TextStyle(
+                  fontSize: 11, color: AppColors.textMuted),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            tooltip: context.tr('Refresh'),
+            onPressed: _loading ? null : _load,
+            icon: _loading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.refresh, size: 20),
+          ),
+          IconButton(
+            tooltip: context.tr('Copy SELECT'),
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              final msg = context.tr('SELECT copied to clipboard');
+              await Clipboard.setData(ClipboardData(text: _selectSql));
+              if (!mounted) return;
+              messenger.showSnackBar(SnackBar(
+                content: Text(msg),
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 2),
+              ));
+            },
+            icon: const Icon(Icons.copy, size: 18),
+          ),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(26),
+          child: Container(
+            width: double.infinity,
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            color: AppColors.surfaceAlt,
+            child: Row(children: [
+              Text('$rowCount ${context.tr('rows')}',
+                  style: const TextStyle(fontSize: 11)),
+              const SizedBox(width: 12),
+              Text('${durationMs}ms',
+                  style: const TextStyle(
+                      fontSize: 11, color: AppColors.textMuted)),
+              if (truncated) ...[
+                const SizedBox(width: 12),
+                Text('⚠️ ${context.tr('truncated')}',
+                    style: const TextStyle(
+                        fontSize: 11, color: AppColors.warning)),
+              ],
+            ]),
+          ),
+        ),
+      ),
+      body: _error != null
+          ? _errorBody(_error!)
+          : (_loading && _result == null
+              ? const Center(child: CircularProgressIndicator())
+              : (rows.isEmpty
+                  ? Center(
+                      child: Text(context.tr('No rows'),
+                          style: const TextStyle(
+                              color: AppColors.textMuted, fontSize: 13)),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _load,
+                      child: pgRowCardList(cols: cols, rows: rows),
+                    ))),
+    );
+  }
+
+  Widget _errorBody(String msg) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.errorSoft,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                  color: AppColors.error.withValues(alpha: 0.3)),
+            ),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Icon(Icons.error_outline,
+                  color: AppColors.error, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: SelectableText(msg,
+                      style: const TextStyle(
+                          color: AppColors.error, fontSize: 12))),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: _load,
+            icon: const Icon(Icons.refresh, size: 16),
+            label: Text(context.tr('Retry')),
+          ),
+        ],
+      ),
+    );
+  }
 }
