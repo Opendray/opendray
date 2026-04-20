@@ -47,21 +47,15 @@ func (s *Server) getForgeConfig(r *http.Request, pluginName string) (forge.Confi
 	}
 	cfg := s.effectiveConfig(r.Context(), pluginName, pi.Config)
 
-	token := ""
-	if secrets := s.configSecrets(); secrets != nil {
-		// The configure form writes to __config.token — same prefix
-		// pluginsConfigGet uses. A missing value is normal for new
-		// installs (public-repo case); the adapter handles it.
-		if v, found, err := secrets.PlatformGet(r.Context(), pluginName, configKeyPrefix+"token"); err == nil && found {
-			token = v
-		}
-	}
-
+	// effectiveConfig's secret overlay decrypts plugin_secret entries
+	// and injects them into the merged map so stringVal can read the
+	// token alongside every other field. A missing value is normal
+	// for new installs on public repos; the adapter handles it.
 	return forge.Config{
 		ForgeType: stringVal(cfg, "forgeType", ""),
 		BaseURL:   stringVal(cfg, "baseUrl", ""),
 		Repo:      stringVal(cfg, "repo", ""),
-		Token:     token,
+		Token:     stringVal(cfg, "token", ""),
 		Timeout:   time.Duration(intVal(cfg, "commandTimeoutSec", 20)) * time.Second,
 	}, nil
 }

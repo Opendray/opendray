@@ -12,6 +12,7 @@ import '../docs/docs_page.dart';
 import '../files/files_page.dart';
 import '../forge/forge_page.dart';
 import '../git/git_page.dart';
+import '../pg/pg_page.dart';
 import '../logs/logs_page.dart';
 import '../mcp/mcp_page.dart';
 import '../messaging/telegram_page.dart';
@@ -38,6 +39,7 @@ Map<String, WidgetBuilder> get _legacyPanelBuilders => <String, WidgetBuilder>{
       'file-browser': (_) => const FilesPage(),
       'git-viewer': (_) => const GitPage(),
       'git-forge': (_) => const ForgePage(),
+      'pg-browser': (_) => const PGPage(),
       'log-viewer': (_) => const LogsPage(),
       'mcp': (_) => const MCPPage(),
       'obsidian-reader': (_) => const DocsPage(),

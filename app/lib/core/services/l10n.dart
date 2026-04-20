@@ -136,6 +136,21 @@ class L10n extends ChangeNotifier {
     'Address book of OpenAI-compatible model endpoints (Ollama, LM Studio, Groq, Gemini, custom). Shared by every agent.':
         'OpenAI 兼容模型端点地址簿(Ollama / LM Studio / Groq / Gemini / 自定义),所有 agent 共享。',
     'Pull Requests':                  'Pull Request 列表',
+    'PostgreSQL':                     'PostgreSQL',
+    'SQL editor + schema browser with read-only safety':
+        'SQL 编辑器 + 结构浏览(读写分离 / 只读保护)',
+    'pg-browser plugin not enabled':  'pg-browser 插件未启用',
+    'Install pg-browser from the Hub and configure host/user/password in Plugins → Configure.':
+        '在 Hub 里安装 pg-browser,并在 Plugins → Configure 里填 host / user / password。',
+    'Run':                            '运行',
+    'rows':                           '行',
+    'rows affected':                  '行受影响',
+    'Executed':                       '执行完成',
+    'No tables':                      '无表',
+    'No rows':                        '无数据',
+    'truncated':                      '已截断',
+    'Run a query to see results here.':
+        '运行一条查询以在此显示结果。',
     'Review PRs from Gitea, GitHub, or GitLab':
         '浏览 Gitea / GitHub / GitLab 上的 Pull Request',
     'Git Forge plugin not enabled':   'Git Forge 插件未启用',

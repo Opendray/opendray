@@ -20,7 +20,9 @@ import (
 
 	gitpkg "github.com/opendray/opendray/gateway/git"
 	"github.com/opendray/opendray/gateway/mcp"
+	pgpkg "github.com/opendray/opendray/gateway/pg"
 	"github.com/opendray/opendray/gateway/tasks"
+
 	"github.com/opendray/opendray/gateway/telegram"
 	"github.com/opendray/opendray/kernel/auth"
 	"github.com/opendray/opendray/kernel/hub"
@@ -47,6 +49,7 @@ type Server struct {
 	telegram      *telegram.Manager
 	mcp           *mcp.Handlers
 	git           *gitpkg.Manager
+	pg            *pgpkg.Manager
 	installer     *install.Installer
 	contribReg    *contributions.Registry
 	cmdInvoker    commandInvoker
@@ -209,6 +212,7 @@ func New(cfg Config) *Server {
 		logger:          cfg.Logger,
 		tasks:           tasks.NewRunner(),
 		git:             gitpkg.NewManager(),
+		pg:              pgpkg.NewManager(),
 		installer:       cfg.Installer,
 		contribReg:      cfg.Contributions,
 		cmdInvoker:      cfg.CommandInvoker,
@@ -280,7 +284,6 @@ func New(cfg Config) *Server {
 		r.Post("/api/providers", s.registerProvider)
 		r.Get("/api/providers/{name}", s.getProvider)
 		r.Patch("/api/providers/{name}/toggle", s.toggleProvider)
-		r.Put("/api/providers/{name}/config", s.updateProviderConfig)
 		r.Delete("/api/providers/{name}", s.deleteProvider)
 		r.Get("/api/providers/{name}/models", s.detectModels)
 
@@ -380,6 +383,17 @@ func New(cfg Config) *Server {
 		r.Get("/api/git-forge/{plugin}/pulls/{number}",           s.forgePullDetail)
 		r.Get("/api/git-forge/{plugin}/pulls/{number}/diff",      s.forgePullDiff)
 		r.Get("/api/git-forge/{plugin}/pulls/{number}/comments",  s.forgePullComments)
+
+		// pg-browser panel — SQL editor + schema browser backed by pgx.
+		// Read-only is enforced server-side via BEGIN READ ONLY + verb
+		// guard; statement timeout + max rows gated from configSchema.
+		// Write statements go through the separate /execute route so
+		// the Flutter client can prompt for confirmation first.
+		r.Post("/api/pg/{plugin}/query",   s.pgQuery)
+		r.Post("/api/pg/{plugin}/execute", s.pgExecute)
+		r.Get("/api/pg/{plugin}/schemas",  s.pgSchemas)
+		r.Get("/api/pg/{plugin}/tables",   s.pgTables)
+		r.Get("/api/pg/{plugin}/columns",  s.pgColumns)
 
 
 		// Hook subscriptions

@@ -191,19 +191,6 @@ func (s *Server) toggleProvider(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]any{"name": chi.URLParam(r, "name"), "enabled": req.Enabled})
 }
 
-func (s *Server) updateProviderConfig(w http.ResponseWriter, r *http.Request) {
-	var cfg plugin.ProviderConfig
-	if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid config")
-		return
-	}
-	if err := s.plugins.UpdateConfig(r.Context(), chi.URLParam(r, "name"), cfg); err != nil {
-		respondError(w, http.StatusNotFound, err.Error())
-		return
-	}
-	respondJSON(w, http.StatusOK, map[string]string{"status": "updated"})
-}
-
 func (s *Server) deleteProvider(w http.ResponseWriter, r *http.Request) {
 	if err := s.plugins.Remove(r.Context(), chi.URLParam(r, "name")); err != nil {
 		if errors.Is(err, plugin.ErrRequiredPlugin) {
@@ -232,12 +219,10 @@ func (s *Server) getDocsConfig(ctx context.Context, pluginName string) (docs.For
 	for _, pi := range info {
 		if pi.Provider.Name == pluginName && pi.Provider.Type == plugin.ProviderTypePanel && pi.Enabled {
 			cfg := s.effectiveConfig(ctx, pluginName, pi.Config)
-			// NOTE: token should migrate to s.configSecrets().PlatformGet
-			// to match the git-forge pattern (secrets never in plugin_kv).
-			// For now the effectiveConfig overlay skips secret fields so
-			// the inline token here still works but reads from pi.Config
-			// only. Left as-is to preserve the existing Configure UX
-			// until obsidian-reader's next iteration.
+			// effectiveConfig overlays both non-secret (plugin_kv) and
+			// secret (plugin_secret → AES-GCM decrypted) field values
+			// onto pi.Config, so the token field here reads as plain
+			// text even though it's stored encrypted.
 			return docs.ForgeConfig{
 				ForgeType:      stringVal(cfg, "forgeType", "gitea"),
 				BaseURL:        stringVal(cfg, "baseUrl", ""),

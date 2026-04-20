@@ -184,13 +184,11 @@ ApiException apiExceptionFrom(DioException e) {
 class ApiClient {
   final Dio _dio;
   final String baseUrl;
-  final Map<String, String> extraHeaders;
   final String Function()? _tokenProvider;
   final void Function()? _onUnauthorized;
 
   ApiClient({
     required this.baseUrl,
-    this.extraHeaders = const {},
     String Function()? tokenProvider,
     void Function()? onUnauthorized,
   })  : _tokenProvider = tokenProvider,
@@ -199,7 +197,6 @@ class ApiClient {
           baseUrl: baseUrl,
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 10),
-          headers: extraHeaders,
         )) {
     // Inject Authorization header on every request when a token is available,
     // and trap 401 responses so AuthService can tear down state and route
@@ -330,10 +327,6 @@ class ApiClient {
 
   Future<void> toggleProvider(String name, bool enabled) async {
     await _dio.patch('/api/providers/$name/toggle', data: {'enabled': enabled});
-  }
-
-  Future<void> updateProviderConfig(String name, Map<String, dynamic> config) async {
-    await _dio.put('/api/providers/$name/config', data: config);
   }
 
   Future<void> deleteProvider(String name) async {
@@ -667,6 +660,39 @@ class ApiClient {
   Future<List<Map<String, dynamic>>> forgePullComments(
       String plugin, int number) async {
     final res = await _dio.get('/api/git-forge/$plugin/pulls/$number/comments');
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  // ── PostgreSQL (pg-browser plugin) ───────────────────────
+
+  Future<Map<String, dynamic>> pgQuery(String plugin, String sql) async {
+    final res = await _dio.post('/api/pg/$plugin/query', data: {'sql': sql});
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  Future<Map<String, dynamic>> pgExecute(String plugin, String sql) async {
+    final res = await _dio.post('/api/pg/$plugin/execute', data: {'sql': sql});
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  Future<List<String>> pgSchemas(String plugin) async {
+    final res = await _dio.get('/api/pg/$plugin/schemas');
+    return (res.data as List).cast<String>();
+  }
+
+  Future<List<Map<String, dynamic>>> pgTables(String plugin,
+      {String schema = ''}) async {
+    final res = await _dio.get('/api/pg/$plugin/tables',
+        queryParameters: {if (schema.isNotEmpty) 'schema': schema});
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<List<Map<String, dynamic>>> pgColumns(String plugin,
+      {String schema = '', required String table}) async {
+    final res = await _dio.get('/api/pg/$plugin/columns', queryParameters: {
+      if (schema.isNotEmpty) 'schema': schema,
+      'table': table,
+    });
     return (res.data as List).cast<Map<String, dynamic>>();
   }
 

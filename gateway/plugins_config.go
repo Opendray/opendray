@@ -129,14 +129,31 @@ func (s *Server) effectiveConfig(ctx context.Context, pluginName string, base pl
 		return merged
 	}
 	kv := s.configKVStore()
-	if kv == nil {
-		return merged
-	}
+	secrets := s.configSecrets()
 	for _, f := range schema {
+		storeKey := configKeyPrefix + f.Key
 		if f.Type == "secret" {
+			// Secret fields live in plugin_secret (AES-GCM) so we
+			// have to decrypt via configSecrets — kv.KVGet won't see
+			// them. Handlers that need the plaintext (telegram bot
+			// token, obsidian-reader / git-forge forge tokens) read
+			// it from the merged map just like any other field.
+			// Empty string when unset — matches the JSONB-null shape
+			// legacy handlers already handle.
+			if secrets == nil {
+				continue
+			}
+			val, found, err := secrets.PlatformGet(ctx, pluginName, storeKey)
+			if err != nil || !found {
+				continue
+			}
+			merged[f.Key] = val
 			continue
 		}
-		raw, found, err := kv.KVGet(ctx, pluginName, configKeyPrefix+f.Key)
+		if kv == nil {
+			continue
+		}
+		raw, found, err := kv.KVGet(ctx, pluginName, storeKey)
 		if err != nil || !found {
 			continue
 		}

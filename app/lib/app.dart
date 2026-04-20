@@ -10,12 +10,12 @@ import 'shared/theme/app_theme.dart';
 import 'features/auth/login_page.dart';
 import 'features/dashboard/dashboard_page.dart';
 import 'features/session/session_page.dart';
-import 'features/browser/browser_page.dart';
 import 'features/browser/preview_page.dart';
 import 'features/claude_accounts/claude_accounts_page.dart';
 import 'features/docs/docs_page.dart';
 import 'features/endpoints/endpoints_page.dart';
 import 'features/forge/forge_page.dart';
+import 'features/pg/pg_page.dart';
 import 'features/files/files_page.dart';
 import 'features/git/git_page.dart';
 import 'features/logs/logs_page.dart';
@@ -81,13 +81,12 @@ class _NtcAppState extends State<NtcApp> {
         ChangeNotifierProvider<L10n>.value(value: widget.l10n),
         ChangeNotifierProvider<AuthService>.value(value: widget.authService),
       ],
-      // Rebuild ApiClient whenever the server URL, CF Access headers, or
-      // bearer token change, so every screen picks up the right identity.
+      // Rebuild ApiClient whenever the server URL or bearer token change,
+      // so every screen picks up the right identity.
       child: Consumer2<ServerConfig, AuthService>(
         builder: (context, config, auth, _) {
           final apiClient = ApiClient(
             baseUrl: config.effectiveUrl,
-            extraHeaders: config.cfAccessHeaders,
             tokenProvider: () => auth.token ?? '',
             onUnauthorized: () {
               // Server says our token is dead — log out, router redirect
@@ -229,7 +228,9 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
         builder: (context, state, child) => _Shell(child: child),
         routes: [
           GoRoute(path: '/',        builder: (_, _) => const DashboardPage()),
-          GoRoute(path: '/browser', builder: (_, _) => const BrowserPage()),
+          // /browser parent grid is gone — per-plugin surfaces are now
+          // opened from /plugins. The /browser/<panel> children below
+          // stay because plugins_page._handOpenRoute pushes to them.
           GoRoute(
             path: '/browser/docs',
             builder: (ctx, _) => _panelShell(ctx, 'Docs', const DocsPage()),
@@ -250,6 +251,11 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
             path: '/browser/forge',
             builder: (ctx, _) =>
                 _panelShell(ctx, 'Pull Requests', const ForgePage()),
+          ),
+          GoRoute(
+            path: '/browser/database',
+            builder: (ctx, _) =>
+                _panelShell(ctx, 'PostgreSQL', const PGPage()),
           ),
           GoRoute(
             path: '/browser/logs',
@@ -386,18 +392,19 @@ class _Shell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
-    // Tab layout: Sessions | Browser | Plugin | Hub | Settings.
-    // Plugin = installed CRUD (/plugins). Hub = marketplace (/hub) —
-    // keeping them on separate tabs removes the old "Hub label pointed
-    // at installed plugins" confusion.
+    // Tab layout: Sessions | Plugin | Hub | Settings.
+    // Plugin = installed CRUD (/plugins) and the surface from which
+    // every plugin is opened. Hub = marketplace (/hub). /browser/*
+    // are plugin-owned pages opened from /plugins — they highlight
+    // the Plugin tab so the nav bar matches the user's mental path.
     final int index;
     if (location == '/settings' || location.startsWith('/settings/')) {
-      index = 4;
-    } else if (location == '/hub' || location.startsWith('/hub/')) {
       index = 3;
-    } else if (location == '/plugins' || location.startsWith('/plugins/')) {
+    } else if (location == '/hub' || location.startsWith('/hub/')) {
       index = 2;
-    } else if (location.startsWith('/browser')) {
+    } else if (location == '/plugins' ||
+        location.startsWith('/plugins/') ||
+        location.startsWith('/browser')) {
       index = 1;
     } else {
       index = 0;
@@ -410,10 +417,9 @@ class _Shell extends StatelessWidget {
         currentIndex: index,
         onTap: (i) {
           final path = switch (i) {
-            1 => '/browser',
-            2 => '/plugins',
-            3 => '/hub',
-            4 => '/settings',
+            1 => '/plugins',
+            2 => '/hub',
+            3 => '/settings',
             _ => '/',
           };
           context.go(path);
@@ -421,8 +427,6 @@ class _Shell extends StatelessWidget {
         items: [
           BottomNavigationBarItem(
               icon: const Icon(Icons.terminal), label: context.tr('Sessions')),
-          BottomNavigationBarItem(
-              icon: const Icon(Icons.folder_copy), label: context.tr('Browser')),
           BottomNavigationBarItem(
               icon: const Icon(Icons.extension_outlined),
               label: context.tr('Plugin')),

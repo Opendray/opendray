@@ -305,3 +305,129 @@ func TestConfigPut_EmptySchemaRejected(t *testing.T) {
 		t.Errorf("want 400, got %d; body=%s", rr.Code, rr.Body.String())
 	}
 }
+
+// ─── effectiveConfig invariants (contract for handlers) ─────────────────────
+
+// TestEffectiveConfig_NewUserEmptyReturnsBase covers the fresh-install
+// shape: no plugin_kv rows, no plugin_secret rows, pi.Config empty.
+// effectiveConfig must return something stringVal/intVal/boolVal can
+// consume without panicking — the handlers still work with defaults.
+func TestEffectiveConfig_NewUserEmptyReturnsBase(t *testing.T) {
+	schema := []plugin.ConfigField{
+		{Key: "allowedRoots", Label: "Roots", Type: "string", Required: true},
+		{Key: "token", Label: "Token", Type: "secret"},
+	}
+	s, _, _, _ := buildConfigTestServer(t, schema)
+
+	got := s.effectiveConfig(context.Background(), "test", plugin.ProviderConfig{})
+	if got == nil {
+		t.Fatal("effectiveConfig must return a non-nil map")
+	}
+	if _, ok := got["allowedRoots"]; ok {
+		t.Error("unset fields should not appear in merged map")
+	}
+	if _, ok := got["token"]; ok {
+		t.Error("unset secrets should not appear in merged map")
+	}
+}
+
+// TestEffectiveConfig_OverlaysPluginKV is the core drift-fix invariant
+// from Phase 6: values saved through the v1 Configure form (written to
+// plugin_kv with __config.* prefix) must show up when handlers read the
+// merged map. Any regression here breaks every panel plugin
+// (git-viewer, task-runner, log-viewer, file-browser, obsidian-reader,
+// simulator-preview) simultaneously.
+func TestEffectiveConfig_OverlaysPluginKV(t *testing.T) {
+	schema := []plugin.ConfigField{
+		{Key: "allowedRoots", Label: "Roots", Type: "string"},
+		{Key: "showHidden", Label: "Show hidden", Type: "boolean"},
+		{Key: "logLimit", Label: "Log limit", Type: "number"},
+	}
+	s, kv, _, _ := buildConfigTestServer(t, schema)
+
+	// Simulate pluginsConfigPut's canonical shape: every non-secret
+	// value is a JSON-encoded string, regardless of schema type.
+	kv.rows["test"] = map[string]json.RawMessage{
+		"__config.allowedRoots": json.RawMessage(`"/home/kev/projects"`),
+		"__config.showHidden":   json.RawMessage(`"true"`),
+		"__config.logLimit":     json.RawMessage(`"100"`),
+	}
+
+	got := s.effectiveConfig(context.Background(), "test", plugin.ProviderConfig{})
+	if got["allowedRoots"] != "/home/kev/projects" {
+		t.Errorf("allowedRoots = %q", got["allowedRoots"])
+	}
+	if got["showHidden"] != "true" {
+		t.Errorf("showHidden = %q; stringVal/boolVal both need this to be the literal JSON string", got["showHidden"])
+	}
+	if got["logLimit"] != "100" {
+		t.Errorf("logLimit = %q", got["logLimit"])
+	}
+}
+
+// TestEffectiveConfig_OverlaysSecrets pins the secret overlay that
+// makes obsidian-reader / telegram / git-forge work for new users who
+// store a token through the v1 Configure form. Before this overlay,
+// effectiveConfig skipped secret fields and handlers got empty tokens
+// — Gitea / Telegram upstream then rejected the requests (502 / 400
+// to the client).
+func TestEffectiveConfig_OverlaysSecrets(t *testing.T) {
+	schema := []plugin.ConfigField{
+		{Key: "baseUrl", Label: "Base URL", Type: "string"},
+		{Key: "token", Label: "API token", Type: "secret"},
+	}
+	s, kv, sec, _ := buildConfigTestServer(t, schema)
+
+	kv.rows["test"] = map[string]json.RawMessage{
+		"__config.baseUrl": json.RawMessage(`"https://gitea.example.com"`),
+	}
+	sec.rows["test"] = map[string]string{
+		"__config.token": "ghp_secret",
+	}
+
+	got := s.effectiveConfig(context.Background(), "test", plugin.ProviderConfig{})
+	if got["baseUrl"] != "https://gitea.example.com" {
+		t.Errorf("baseUrl = %q", got["baseUrl"])
+	}
+	if got["token"] != "ghp_secret" {
+		t.Errorf("token = %q; secret overlay regressed — obsidian/telegram/git-forge will break for new users", got["token"])
+	}
+}
+
+// TestEffectiveConfig_BaseTakesFallbackWhenStoreEmpty covers the
+// legacy pi.Config fallback: plugins that never went through the v1
+// Configure form still have their JSONB column read as the base, and
+// nothing in plugin_kv / plugin_secret overrides it.
+func TestEffectiveConfig_BaseTakesFallbackWhenStoreEmpty(t *testing.T) {
+	schema := []plugin.ConfigField{
+		{Key: "host", Label: "Host", Type: "string"},
+	}
+	s, _, _, _ := buildConfigTestServer(t, schema)
+
+	base := plugin.ProviderConfig{"host": "legacy.example.com"}
+	got := s.effectiveConfig(context.Background(), "test", base)
+	if got["host"] != "legacy.example.com" {
+		t.Errorf("legacy pi.Config not preserved when stores are empty: got %q", got["host"])
+	}
+}
+
+// TestEffectiveConfig_PluginKVWinsOverPiConfig documents the precedence
+// rule: when both stores have a value for the same key, plugin_kv (the
+// v1 Configure form's home) wins. This is what makes upgrades from a
+// pre-v1 install correct — the user re-saves via the new form, and the
+// stale JSONB value gets shadowed until they click Save on every field.
+func TestEffectiveConfig_PluginKVWinsOverPiConfig(t *testing.T) {
+	schema := []plugin.ConfigField{
+		{Key: "host", Label: "Host", Type: "string"},
+	}
+	s, kv, _, _ := buildConfigTestServer(t, schema)
+	kv.rows["test"] = map[string]json.RawMessage{
+		"__config.host": json.RawMessage(`"new.example.com"`),
+	}
+	base := plugin.ProviderConfig{"host": "old.example.com"}
+
+	got := s.effectiveConfig(context.Background(), "test", base)
+	if got["host"] != "new.example.com" {
+		t.Errorf("plugin_kv must win; got %q", got["host"])
+	}
+}

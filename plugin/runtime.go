@@ -125,11 +125,13 @@ func (rt *Runtime) LoadAll(ctx context.Context) error {
 			rt.logger.Warn("invalid manifest in DB", "plugin", dbp.Name, "error", err)
 			continue
 		}
-		var cfg ProviderConfig
-		if len(dbp.Config) > 2 {
-			_ = json.Unmarshal(dbp.Config, &cfg)
-		}
-		rt.loadIntoMemory(p, cfg, dbp.Enabled)
+		// The in-memory ProviderConfig starts empty and stays that
+		// way — live config values come from plugin_kv via gateway's
+		// Server.effectiveConfig on every HTTP handler call, so the
+		// runtime never needs to cache them. This also means a user
+		// saving through Configure sees their new value on the next
+		// request, no restart required.
+		rt.loadIntoMemory(p, ProviderConfig{}, dbp.Enabled)
 		loaded[p.Name] = true
 		rt.logger.Info("provider loaded from DB", "name", p.Name, "enabled", dbp.Enabled)
 	}
@@ -351,22 +353,6 @@ func (rt *Runtime) SetEnabled(ctx context.Context, name string, enabled bool) er
 	lp.enabled = enabled
 	rt.mu.Unlock()
 	return rt.db.UpdatePluginEnabled(ctx, name, enabled)
-}
-
-// UpdateConfig saves provider configuration and re-detects installation.
-func (rt *Runtime) UpdateConfig(ctx context.Context, name string, cfg ProviderConfig) error {
-	rt.mu.Lock()
-	lp, ok := rt.providers[name]
-	if !ok {
-		rt.mu.Unlock()
-		return fmt.Errorf("provider %q not found", name)
-	}
-	lp.config = cfg
-	lp.installed = detectInstalled(lp.provider, cfg)
-	rt.mu.Unlock()
-
-	cfgJSON, _ := json.Marshal(cfg)
-	return rt.db.UpdatePluginConfig(ctx, name, cfgJSON)
 }
 
 // Register adds a new provider at runtime (no filesystem needed).

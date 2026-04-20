@@ -161,7 +161,7 @@ func Search(cfg ForgeConfig, query string) ([]FileEntry, error) {
 	// For simplicity, do a tree walk. For large repos, use search API.
 	// Here we use the Gitea search endpoint if available.
 	apiURL := fmt.Sprintf("%s/api/v1/repos/%s/git/trees/%s?recursive=true",
-		cfg.BaseURL, cfg.Repo, url.PathEscape(cfg.Branch))
+		strings.TrimRight(cfg.BaseURL, "/"), cfg.Repo, url.PathEscape(cfg.Branch))
 
 	body, err := doRequest(cfg, apiURL)
 	if err != nil {
@@ -221,6 +221,12 @@ func buildContentsURL(cfg ForgeConfig, path string) string {
 	escapedPath := url.PathEscape(path)
 	// Fix: url.PathEscape escapes /, we need to keep them
 	escapedPath = strings.ReplaceAll(escapedPath, "%2F", "/")
+	// User-pasted baseUrls sometimes carry a trailing "/" (e.g.
+	// "https://tea.linivek.online/"). Without trimming, the URL ends
+	// up as "https://host//api/v1/..." — Gitea rejects that with 404
+	// which then surfaces here as a 502. Trim unconditionally so the
+	// composition stays predictable.
+	base := strings.TrimRight(cfg.BaseURL, "/")
 
 	switch cfg.ForgeType {
 	case "github":
@@ -230,10 +236,10 @@ func buildContentsURL(cfg ForgeConfig, path string) string {
 		encodedRepo := url.PathEscape(cfg.Repo)
 		encodedPath := url.PathEscape(path)
 		return fmt.Sprintf("%s/api/v4/projects/%s/repository/tree?path=%s&ref=%s",
-			cfg.BaseURL, encodedRepo, encodedPath, cfg.Branch)
+			base, encodedRepo, encodedPath, cfg.Branch)
 	default: // gitea
 		return fmt.Sprintf("%s/api/v1/repos/%s/contents/%s?ref=%s",
-			cfg.BaseURL, cfg.Repo, escapedPath, cfg.Branch)
+			base, cfg.Repo, escapedPath, cfg.Branch)
 	}
 }
 

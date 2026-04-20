@@ -10,7 +10,6 @@ import '../../core/services/l10n.dart';
 import '../../shared/providers_bus.dart';
 import '../../shared/theme/app_theme.dart';
 import '../settings/plugin_consents_page.dart';
-import 'plugin_config_page.dart';
 import 'plugin_configure_page.dart';
 import 'plugin_run_page.dart';
 
@@ -178,16 +177,16 @@ class _PluginsPageState extends State<PluginsPage> {
   }
 
   void _openConfig(provider_model.ProviderInfo p) {
-    // v1 plugins use the new configSchema pipeline (plugin_kv +
-    // plugin_secret + sidecar restart). Legacy providers still edit
-    // the old `providers.config` column via PluginConfigPage.
-    final builder = p.provider.isV1
-        ? (BuildContext _) => PluginConfigurePage(
-              pluginName: p.provider.name,
-              displayName: p.provider.displayName,
-            )
-        : (BuildContext _) => PluginConfigPage(info: p);
-    Navigator.of(context).push(MaterialPageRoute(builder: builder));
+    // Every installed plugin is v1 after the Phase 5/6 migration —
+    // the legacy PluginConfigPage and the PUT /api/providers/{name}/
+    // config route it backed are gone together with the plugins.config
+    // JSONB column.
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => PluginConfigurePage(
+        pluginName: p.provider.name,
+        displayName: p.provider.displayName,
+      ),
+    ));
   }
 
   /// Hand-routes for plugins whose Open action has a bespoke Flutter
@@ -202,6 +201,7 @@ class _PluginsPageState extends State<PluginsPage> {
     'file-browser': '/browser/files',
     'git-viewer': '/browser/git',
     'git-forge': '/browser/forge',
+    'pg-browser': '/browser/database',
     'log-viewer': '/browser/logs',
     'mcp': '/browser/mcp',
     'obsidian-reader': '/browser/docs',
@@ -357,92 +357,123 @@ class _PluginsPageState extends State<PluginsPage> {
     );
   }
 
-  /// CLI / shell agents don't have a useful "Open" panel — the way a
-  /// user launches them is the New Session dialog on the dashboard.
-  /// The Plugin page therefore hides the Open affordance for those
-  /// kinds and, when the user taps the card body anyway, nudges them
-  /// toward the right entry point instead of surfacing a confusing
-  /// "No open target" error.
-  bool _hasOpenTarget(provider_model.Provider prov) {
-    return prov.type != 'cli' && prov.type != 'shell';
+  /// How the user can enter a plugin from the Plugin page.
+  ///   • [inApp]      — tapping the card opens a dedicated page
+  ///                    (legacy panel, PluginRunPage, or webview).
+  ///   • [launchFromSession] — cli/shell agents; launched via the
+  ///     dashboard's New Session dialog, not a page in this app.
+  ///   • [none]       — config-only plugin, no runtime surface. The
+  ///     card is rendered disabled (grayed, non-tappable).
+  _EntryKind _entryKind(provider_model.Provider prov) {
+    if (_handOpenRoute.containsKey(prov.name)) return _EntryKind.inApp;
+    if (prov.isV1 && (prov.form == 'host' || prov.form == 'webview')) {
+      return _EntryKind.inApp;
+    }
+    if (prov.type == 'cli' || prov.type == 'shell') {
+      return _EntryKind.launchFromSession;
+    }
+    return _EntryKind.none;
   }
 
   Widget _pluginCard(provider_model.ProviderInfo p) {
     final prov = p.provider;
     final required = prov.required;
     final kindLabel = _kindLabel(prov);
-    final hasOpen = _hasOpenTarget(prov);
-    // Tapping the card body opens the plugin's runtime surface (legacy
-    // panel page, command runner, or webview). CLI/shell agents route
-    // through the dashboard's New Session dialog instead — the switch
-    // + menu on the right trail have their own tap handlers and don't
-    // bubble.
+    final entry = _entryKind(prov);
+    // Body is tappable only when the plugin is enabled AND has a
+    // runtime surface reachable from this page. Config-only plugins
+    // render dimmed with no tap — the `…` menu (Configure / Perms /
+    // Uninstall) and the Enable switch on the trailing side still
+    // work because they're separate widgets outside the InkWell.
+    final bodyTappable = p.enabled && entry != _EntryKind.none;
+    final VoidCallback? onBodyTap = !bodyTappable
+        ? null
+        : entry == _EntryKind.inApp
+            ? () => _openPlugin(p)
+            : () => _notify(context.tr(
+                'Launch this agent from the New Session dialog on the dashboard.'));
+    final bodyOpacity = bodyTappable ? 1.0 : 0.5;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: !p.enabled
-            ? null
-            : hasOpen
-                ? () => _openPlugin(p)
-                : () => _notify(context.tr(
-                    'Launch this agent from the New Session dialog on the dashboard.')),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              _iconBadge(prov.icon),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            prov.displayName,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600, fontSize: 14),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Opacity(
+              opacity: bodyOpacity,
+              child: InkWell(
+                borderRadius: const BorderRadius.horizontal(
+                    left: Radius.circular(8)),
+                onTap: onBodyTap,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _iconBadge(prov.icon),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    prov.displayName,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                if (required)
+                                  _chip('required', AppColors.accent)
+                                else
+                                  _chip(kindLabel, AppColors.textMuted),
+                                if (entry == _EntryKind.none) ...[
+                                  const SizedBox(width: 4),
+                                  _chip(context.tr('config only'),
+                                      AppColors.textMuted),
+                                ],
+                                if (_updateAvailable(p) != '') ...[
+                                  const SizedBox(width: 4),
+                                  _chip('update → v${_updateAvailable(p)}',
+                                      AppColors.accent),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              prov.description.isEmpty
+                                  ? 'v${prov.version}'
+                                  : '${prov.description} · v${prov.version}',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  color: AppColors.textMuted,
+                                  fontSize: 11,
+                                  height: 1.3),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 6),
-                        if (required)
-                          _chip('required', AppColors.accent)
-                        else
-                          _chip(kindLabel, AppColors.textMuted),
-                        if (_updateAvailable(p) != '') ...[
-                          const SizedBox(width: 4),
-                          _chip('update → v${_updateAvailable(p)}',
-                              AppColors.accent),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      prov.description.isEmpty
-                          ? 'v${prov.version}'
-                          : '${prov.description} · v${prov.version}',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          color: AppColors.textMuted, fontSize: 11, height: 1.3),
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              _actionsMenu(p),
-              Switch(
-                value: p.enabled,
-                activeTrackColor: AppColors.accent,
-                onChanged: required ? null : (v) => _toggleProvider(p, v),
-              ),
-            ],
+            ),
           ),
-        ),
+          _actionsMenu(p),
+          Switch(
+            value: p.enabled,
+            activeTrackColor: AppColors.accent,
+            onChanged: required ? null : (v) => _toggleProvider(p, v),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
     );
   }
@@ -510,10 +541,10 @@ class _PluginsPageState extends State<PluginsPage> {
       itemBuilder: (ctx) => [
         // Open is only useful when the plugin has a real runtime
         // surface in the Flutter app — panels, webviews, host
-        // sidecars. CLI/shell agents are launched from the dashboard,
-        // so we drop the entry entirely instead of offering a dead
-        // button.
-        if (p.enabled && _hasOpenTarget(p.provider))
+        // sidecars. CLI/shell agents are launched from the dashboard;
+        // config-only plugins have nothing to open. Both drop the
+        // menu entry instead of offering a dead button.
+        if (p.enabled && _entryKind(p.provider) == _EntryKind.inApp)
           const PopupMenuItem(
             value: 'open',
             child: ListTile(
@@ -571,5 +602,9 @@ class _PluginsPageState extends State<PluginsPage> {
       ],
     );
   }
-
 }
+
+/// How the Plugin page lets the user enter a plugin. Drives both the
+/// card-body tap handler and the Open menu item visibility — keep the
+/// two in sync via [_PluginsPageState._entryKind].
+enum _EntryKind { inApp, launchFromSession, none }
