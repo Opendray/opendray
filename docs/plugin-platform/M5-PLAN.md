@@ -192,12 +192,13 @@ to degrade gracefully when the route 404s).
 
 ### Track D — Carry-over cleanup
 
-| ID | Task | Effort |
-|---|---|---|
-| D1 | `fs.write` + `fs.watch` (T10 M3 deferral) | M |
-| D2 | CSP golden-file test + kanban E2E (T27 M3 deferral) | S |
-| D3 | KEK auto-rotation on admin password change | M |
-| D4 | DB upgrade-path smoke test in CI | S |
+| ID | Task | Effort | Notes |
+|---|---|---|---|
+| D1.write | `fs.writeFile` + `fs.mkdir` + `fs.remove` | S | ✅ parent-symlink TOCTOU guard + 10 MiB write cap + mode bits |
+| D1.watch | `fs.watch(glob, cb)` — streaming namespace method | M | Pending — needs stream-capable Conn + subscription lifecycle |
+| D2 | CSP golden-file test + kanban E2E (T27 M3 deferral) | S | |
+| D3 | KEK auto-rotation on admin password change | M | |
+| D4 | DB upgrade-path smoke test in CI | S | |
 
 ### Track E — Contract freeze
 

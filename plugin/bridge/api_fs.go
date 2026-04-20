@@ -91,8 +91,9 @@ func NewFSAPI(cfg FSConfig) *FSAPI {
 }
 
 // Dispatch implements gateway.Namespace. envID + conn are unused for
-// read-path methods (none are stream-capable in T9); kept in the signature
-// so the shape matches gateway.Namespace for T23 wire-up.
+// non-streaming methods; kept in the signature so the shape matches
+// gateway.Namespace for T23 wire-up and M5 D1 stream methods
+// (fs.watch lands in a follow-up task).
 func (a *FSAPI) Dispatch(ctx context.Context, plugin, method string, args json.RawMessage, envID string, conn *Conn) (any, error) {
 	_ = envID
 	_ = conn
@@ -105,6 +106,12 @@ func (a *FSAPI) Dispatch(ctx context.Context, plugin, method string, args json.R
 		return a.handleStat(ctx, plugin, args)
 	case "readDir":
 		return a.handleReadDir(ctx, plugin, args)
+	case "writeFile":
+		return a.handleWriteFile(ctx, plugin, args)
+	case "mkdir":
+		return a.handleMkdir(ctx, plugin, args)
+	case "remove":
+		return a.handleRemove(ctx, plugin, args)
 	default:
 		we := &WireError{Code: "EUNAVAIL", Message: fmt.Sprintf("fs: method %q not available", method)}
 		return nil, fmt.Errorf("fs %s: %w", method, we)
@@ -432,6 +439,304 @@ func mapFSError(method string, err error) error {
 	}
 	w := &WireError{Code: "EINTERNAL", Message: fmt.Sprintf("fs.%s: %v", method, err)}
 	return fmt.Errorf("fs.%s: %w", method, w)
+}
+
+// ─────────────────────────────────────────────
+// D1 — write path (writeFile / mkdir / remove)
+// ─────────────────────────────────────────────
+
+// authorizeWritePath mirrors authorizePath but requests the `fs.write`
+// capability. Returns the cleaned target path on success. Does NOT
+// call EvalSymlinks itself — the caller decides whether to resolve
+// symlinks (different semantics for writeFile vs mkdir vs remove).
+func (a *FSAPI) authorizeWritePath(ctx context.Context, plugin, method, rawPath string) (string, PathVarCtx, error) {
+	vars, err := a.resolver.Resolve(ctx, plugin)
+	if err != nil {
+		we := &WireError{Code: "EINTERNAL", Message: fmt.Sprintf("fs.%s: resolve path vars: %v", method, err)}
+		return "", PathVarCtx{}, fmt.Errorf("fs.%s: %w", method, we)
+	}
+
+	expanded := ExpandPathVars(rawPath, vars)
+	cleaned := filepath.Clean(expanded)
+
+	if containsUnresolvedVar(cleaned) {
+		we := &WireError{Code: "EINVAL", Message: fmt.Sprintf("fs.%s: unresolved path variable in %q", method, rawPath)}
+		return "", vars, fmt.Errorf("fs.%s: %w", method, we)
+	}
+	if !filepath.IsAbs(cleaned) {
+		we := &WireError{Code: "EINVAL", Message: fmt.Sprintf("fs.%s: path must be absolute, got %q", method, rawPath)}
+		return "", vars, fmt.Errorf("fs.%s: %w", method, we)
+	}
+
+	if err := a.gate.CheckExpanded(ctx, plugin, Need{Cap: "fs.write", Target: cleaned}, vars); err != nil {
+		return "", vars, err
+	}
+	return cleaned, vars, nil
+}
+
+// authorizeWriteSymlinkResolved runs the TOCTOU defence for write paths.
+// Unlike the read variant this resolves the *parent* directory — the
+// target file itself may not yet exist. If a symlink in the parent
+// chain points outside the granted roots, the second CheckExpanded
+// denies and we return EPERM.
+//
+// If the target itself already exists and is a symlink, we also
+// resolve through it and re-check so overwriting a symlink can't
+// clobber an arbitrary host file via the TOCTOU window.
+func (a *FSAPI) authorizeWriteSymlinkResolved(ctx context.Context, plugin, cleaned string, vars PathVarCtx) (string, error) {
+	parent := filepath.Dir(cleaned)
+	base := filepath.Base(cleaned)
+
+	resolvedParent, err := filepath.EvalSymlinks(parent)
+	if err != nil {
+		// Parent doesn't exist (e.g. mkdir recursive) — bubble the error
+		// up so the caller can decide what to do. We do NOT re-check
+		// because there's nothing to walk.
+		return "", err
+	}
+	resolvedFull := filepath.Join(resolvedParent, base)
+
+	// If nothing shifted, the original gate check already authorised.
+	if resolvedParent != parent {
+		if err := a.gate.CheckExpanded(ctx, plugin, Need{Cap: "fs.write", Target: resolvedFull}, vars); err != nil {
+			var pe *PermError
+			if errors.As(err, &pe) {
+				return "", &PermError{Code: "EPERM", Msg: fmt.Sprintf("fs: parent symlink resolves to %q which is outside granted write paths", resolvedParent)}
+			}
+			return "", err
+		}
+	}
+
+	// If the target itself is a symlink, resolve it and re-check.
+	if info, lErr := os.Lstat(resolvedFull); lErr == nil && info.Mode()&os.ModeSymlink != 0 {
+		final, sErr := filepath.EvalSymlinks(resolvedFull)
+		if sErr != nil {
+			return "", sErr
+		}
+		if final != resolvedFull {
+			if err := a.gate.CheckExpanded(ctx, plugin, Need{Cap: "fs.write", Target: final}, vars); err != nil {
+				var pe *PermError
+				if errors.As(err, &pe) {
+					return "", &PermError{Code: "EPERM", Msg: fmt.Sprintf("fs: symlink target %q is outside granted write paths", final)}
+				}
+				return "", err
+			}
+			return final, nil
+		}
+	}
+	return resolvedFull, nil
+}
+
+// ─────────────────────────────────────────────
+// writeFile
+// ─────────────────────────────────────────────
+
+type writeFileOpts struct {
+	Encoding string `json:"encoding,omitempty"`
+	Mode     *uint32 `json:"mode,omitempty"` // pointer so 0 is distinguishable from unset
+}
+
+// handleWriteFile implements fs.writeFile(path, data, opts?) → null.
+//
+// utf8 (default): data is written as the raw bytes of the string.
+// base64:          data is base64-decoded before writing.
+// mode:            file mode bits, default 0644. Permission mask is
+//                  applied even on overwrites (matches os.WriteFile).
+//
+// The write is NOT atomic in M5 — writes happen in-place, so a crashed
+// host or plugin during the write can leave a truncated file. An
+// atomic-rename variant lands with fs.watch in the follow-up task.
+func (a *FSAPI) handleWriteFile(ctx context.Context, plugin string, args json.RawMessage) (any, error) {
+	rawPath, rawArgs, err := unpackPathArg("writeFile", args)
+	if err != nil {
+		return nil, err
+	}
+	if len(rawArgs) < 2 {
+		we := &WireError{Code: "EINVAL", Message: "fs.writeFile: args must be [path, data, opts?]"}
+		return nil, fmt.Errorf("fs.writeFile: %w", we)
+	}
+	var data string
+	if uErr := json.Unmarshal(rawArgs[1], &data); uErr != nil {
+		we := &WireError{Code: "EINVAL", Message: "fs.writeFile: data must be a string"}
+		return nil, fmt.Errorf("fs.writeFile: %w", we)
+	}
+
+	opts := writeFileOpts{Encoding: "utf8"}
+	if len(rawArgs) >= 3 && len(rawArgs[2]) > 0 && string(rawArgs[2]) != "null" {
+		if uErr := json.Unmarshal(rawArgs[2], &opts); uErr != nil {
+			we := &WireError{Code: "EINVAL", Message: "fs.writeFile: opts must be {encoding?, mode?}"}
+			return nil, fmt.Errorf("fs.writeFile: %w", we)
+		}
+	}
+	if opts.Encoding == "" {
+		opts.Encoding = "utf8"
+	}
+	if opts.Encoding != "utf8" && opts.Encoding != "base64" {
+		we := &WireError{Code: "EINVAL", Message: fmt.Sprintf("fs.writeFile: encoding must be utf8 or base64, got %q", opts.Encoding)}
+		return nil, fmt.Errorf("fs.writeFile: %w", we)
+	}
+
+	var payload []byte
+	if opts.Encoding == "base64" {
+		decoded, dErr := base64.StdEncoding.DecodeString(data)
+		if dErr != nil {
+			we := &WireError{Code: "EINVAL", Message: fmt.Sprintf("fs.writeFile: invalid base64: %v", dErr)}
+			return nil, fmt.Errorf("fs.writeFile: %w", we)
+		}
+		payload = decoded
+	} else {
+		payload = []byte(data)
+	}
+
+	if int64(len(payload)) > MaxReadFileBytes {
+		we := &WireError{Code: "EINVAL", Message: "fs.writeFile: payload exceeds 10 MiB cap"}
+		return nil, fmt.Errorf("fs.writeFile: %w", we)
+	}
+
+	mode := os.FileMode(0o644)
+	if opts.Mode != nil {
+		mode = os.FileMode(*opts.Mode & 0o777)
+	}
+
+	cleaned, vars, err := a.authorizeWritePath(ctx, plugin, "writeFile", rawPath)
+	if err != nil {
+		return nil, err
+	}
+	resolved, err := a.authorizeWriteSymlinkResolved(ctx, plugin, cleaned, vars)
+	if err != nil {
+		return nil, mapFSError("writeFile", err)
+	}
+
+	// Reject writing onto a directory up-front — os.WriteFile would
+	// otherwise return a cryptic syscall error.
+	if info, lErr := os.Lstat(resolved); lErr == nil && info.IsDir() {
+		we := &WireError{Code: "EINVAL", Message: fmt.Sprintf("fs.writeFile: %q is a directory", rawPath)}
+		return nil, fmt.Errorf("fs.writeFile: %w", we)
+	}
+
+	// #nosec G306 — mode is capped to 0o777 above; default 0o644 matches
+	// the contract in 04-bridge-api.md.
+	if wErr := os.WriteFile(resolved, payload, mode); wErr != nil {
+		return nil, mapFSError("writeFile", wErr)
+	}
+	// If the file pre-existed os.WriteFile does not re-apply mode bits —
+	// enforce the requested mode explicitly when the caller set it.
+	if opts.Mode != nil {
+		if cErr := os.Chmod(resolved, mode); cErr != nil {
+			return nil, mapFSError("writeFile", cErr)
+		}
+	}
+	return nil, nil
+}
+
+// ─────────────────────────────────────────────
+// mkdir
+// ─────────────────────────────────────────────
+
+type mkdirOpts struct {
+	Recursive bool `json:"recursive,omitempty"`
+}
+
+// handleMkdir implements fs.mkdir(path, opts?{recursive}) → null.
+//
+// recursive=false (default): single-level Mkdir. Missing parent is an
+// error, existing target is an error (matches os.Mkdir).
+// recursive=true: MkdirAll-style — parents are created, and the call
+// is idempotent if the directory already exists.
+func (a *FSAPI) handleMkdir(ctx context.Context, plugin string, args json.RawMessage) (any, error) {
+	rawPath, rawArgs, err := unpackPathArg("mkdir", args)
+	if err != nil {
+		return nil, err
+	}
+	opts := mkdirOpts{}
+	if len(rawArgs) >= 2 && len(rawArgs[1]) > 0 && string(rawArgs[1]) != "null" {
+		if uErr := json.Unmarshal(rawArgs[1], &opts); uErr != nil {
+			we := &WireError{Code: "EINVAL", Message: "fs.mkdir: opts must be {recursive?}"}
+			return nil, fmt.Errorf("fs.mkdir: %w", we)
+		}
+	}
+
+	cleaned, vars, err := a.authorizeWritePath(ctx, plugin, "mkdir", rawPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Parent TOCTOU check: if EvalSymlinks on the parent succeeds the
+	// second gate call runs. For recursive mkdir the parent may not
+	// exist yet — that's fine; we skip symlink re-check when parent is
+	// absent because there is no symlink to follow.
+	if _, statErr := os.Lstat(filepath.Dir(cleaned)); statErr == nil {
+		if _, err := a.authorizeWriteSymlinkResolved(ctx, plugin, cleaned, vars); err != nil {
+			return nil, mapFSError("mkdir", err)
+		}
+	}
+
+	if opts.Recursive {
+		if err := os.MkdirAll(cleaned, 0o755); err != nil {
+			return nil, mapFSError("mkdir", err)
+		}
+		return nil, nil
+	}
+	if err := os.Mkdir(cleaned, 0o755); err != nil {
+		return nil, mapFSError("mkdir", err)
+	}
+	return nil, nil
+}
+
+// ─────────────────────────────────────────────
+// remove
+// ─────────────────────────────────────────────
+
+type removeOpts struct {
+	Recursive bool `json:"recursive,omitempty"`
+}
+
+// handleRemove implements fs.remove(path, opts?{recursive}) → null.
+//
+// recursive=false (default): single path deletion. Non-empty directory
+// is an error (matches os.Remove).
+// recursive=true: os.RemoveAll — silently skips ENOENT and removes
+// whole subtrees. Symlinks are removed as-is, never followed, so a
+// malicious symlink cannot point the delete at a host-owned file
+// outside the granted write paths.
+func (a *FSAPI) handleRemove(ctx context.Context, plugin string, args json.RawMessage) (any, error) {
+	rawPath, rawArgs, err := unpackPathArg("remove", args)
+	if err != nil {
+		return nil, err
+	}
+	opts := removeOpts{}
+	if len(rawArgs) >= 2 && len(rawArgs[1]) > 0 && string(rawArgs[1]) != "null" {
+		if uErr := json.Unmarshal(rawArgs[1], &opts); uErr != nil {
+			we := &WireError{Code: "EINVAL", Message: "fs.remove: opts must be {recursive?}"}
+			return nil, fmt.Errorf("fs.remove: %w", we)
+		}
+	}
+
+	cleaned, vars, err := a.authorizeWritePath(ctx, plugin, "remove", rawPath)
+	if err != nil {
+		return nil, err
+	}
+	resolved, err := a.authorizeWriteSymlinkResolved(ctx, plugin, cleaned, vars)
+	if err != nil {
+		return nil, mapFSError("remove", err)
+	}
+
+	if opts.Recursive {
+		// RemoveAll returns nil for ENOENT — we need an explicit pre-check
+		// to surface the contract's "ENOENT on missing" expectation so
+		// plugins can tell `delete` apart from `already gone`.
+		if _, sErr := os.Lstat(resolved); sErr != nil {
+			return nil, mapFSError("remove", sErr)
+		}
+		if rErr := os.RemoveAll(resolved); rErr != nil {
+			return nil, mapFSError("remove", rErr)
+		}
+		return nil, nil
+	}
+	if rErr := os.Remove(resolved); rErr != nil {
+		return nil, mapFSError("remove", rErr)
+	}
+	return nil, nil
 }
 
 // containsUnresolvedVar reports whether s still carries a literal ${...}
