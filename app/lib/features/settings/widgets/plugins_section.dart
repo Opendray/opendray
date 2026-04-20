@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/models/provider.dart';
 import '../../../core/services/l10n.dart';
 import '../../../shared/providers_bus.dart';
 import '../../../shared/theme/app_theme.dart';
+import '../../claude_accounts/claude_accounts_page.dart';
 
 class PluginsSection extends StatefulWidget {
   const PluginsSection({super.key});
@@ -19,12 +19,6 @@ class _PluginsSectionState extends State<PluginsSection> {
   String? _expandedName;
   final Map<String, Map<String, dynamic>> _editConfigs = {};
   String? _error;
-
-  // Cache of Claude accounts used only to render the live "N ready · M disabled"
-  // line inside the Claude plugin config card. Loaded lazily when the card
-  // first expands.
-  List<Map<String, dynamic>> _claudeAccounts = [];
-  bool _claudeAccountsLoaded = false;
 
   ApiClient get _api => context.read<ApiClient>();
 
@@ -43,20 +37,6 @@ class _PluginsSectionState extends State<PluginsSection> {
     }
   }
 
-  Future<void> _loadClaudeAccounts() async {
-    try {
-      final accounts = await _api.claudeAccounts();
-      if (mounted) {
-        setState(() {
-          _claudeAccounts = accounts;
-          _claudeAccountsLoaded = true;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _claudeAccountsLoaded = true);
-    }
-  }
-
   void _toggleExpand(String name) {
     setState(() {
       if (_expandedName == name) {
@@ -67,11 +47,6 @@ class _PluginsSectionState extends State<PluginsSection> {
       final pi = _plugins.firstWhere((p) => p.provider.name == name);
       _editConfigs[name] = Map<String, dynamic>.from(pi.config);
     });
-    // Fetch account summary when the Claude card expands, so the shortcut
-    // row can show "2 accounts ready · 1 no token" instead of a static label.
-    if (name == 'claude' && !_claudeAccountsLoaded) {
-      _loadClaudeAccounts();
-    }
   }
 
   Future<void> _saveConfig(String name) async {
@@ -546,71 +521,35 @@ class _PluginsSectionState extends State<PluginsSection> {
     );
   }
 
+  /// M5 A3.2 — render Claude account management inline inside the
+  /// Claude plugin card, replacing the shortcut-to-separate-page.
+  /// Users see the full account list + add/delete/import right next
+  /// to the plugin's configSchema fields instead of jumping to a
+  /// separate route.
   Widget _buildClaudeAccountsShortcut() {
-    final ready = _claudeAccounts.where((a) =>
-        (a['enabled'] as bool? ?? true) &&
-        (a['tokenFilled'] as bool? ?? false)).length;
-    final total = _claudeAccounts.length;
-
-    String summary;
-    if (!_claudeAccountsLoaded) {
-      summary = '…';
-    } else if (total == 0) {
-      summary = context.tr('No accounts registered — tap to add');
-    } else if (ready == total) {
-      summary = '$ready ${context.tr('ready')}';
-    } else {
-      summary = '$ready ${context.tr('ready')} · ${total - ready} ${context.tr('need token')}';
-    }
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: AppColors.accentSoft,
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: () async {
-            await context.push('/settings/claude-accounts');
-            // Refresh when we come back so the count reflects any changes.
-            _loadClaudeAccounts();
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(children: [
-              const Icon(Icons.people_outline, size: 20, color: AppColors.accent),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.tr('Claude Accounts'),
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                          color: AppColors.accent),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      summary,
-                      style: const TextStyle(
-                          fontSize: 11, color: AppColors.textMuted),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      context.tr('Each session picks one account. Add, delete, or rotate tokens here.'),
-                      style: const TextStyle(
-                          fontSize: 10, color: AppColors.textMuted),
-                    ),
-                  ],
-                ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            const Icon(Icons.people_outline, size: 16, color: AppColors.accent),
+            const SizedBox(width: 6),
+            Text(
+              context.tr('ACCOUNTS'),
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMuted,
+                letterSpacing: 0.5,
               ),
-              const Icon(Icons.chevron_right,
-                  size: 20, color: AppColors.accent),
-            ]),
-          ),
-        ),
+            ),
+          ]),
+          const SizedBox(height: 8),
+          // The inline ClaudeAccountsPage does its own data fetch +
+          // refresh; no state duplication here.
+          const ClaudeAccountsPage(inline: true),
+        ],
       ),
     );
   }

@@ -80,6 +80,7 @@ func TestLoadManifest_LegacyCompat(t *testing.T) {
 	v1Migrated := map[string]bool{
 		"terminal":     true, // M5 A1
 		"file-browser": true, // M5 A2
+		"claude":       true, // M5 A3.1
 	}
 
 	for _, p := range providers {

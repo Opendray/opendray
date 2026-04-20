@@ -60,7 +60,7 @@ rewritten.
 |---|---|---|
 | A1 | Terminal plugin → v1                                   | ✅ |
 | A2 | File-browser plugin → v1                               | ✅ |
-| A3 | Claude plugin → v1                                     | ⏸ |
+| A3 | Claude plugin → v1 + accounts UI unified               | 🟡 manifest + UI done; data layer (claude_accounts→plugin_kv) folded into A4 |
 | A4 | Retire compat synthesizer path                         | ⏸ |
 
 **Summary:** 12 ✅ / 10 ⏸ (Phase 2 + Phase 5 + B3).

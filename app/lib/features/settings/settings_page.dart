@@ -267,42 +267,13 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 16),
 
-          // Claude accounts entry — opens the dedicated management page.
-          // Kept out of the Plugins section because accounts are a kernel-level
-          // resource (they drive env injection in the hub), not a plugin.
-          Card(
-            child: InkWell(
-              onTap: () => context.push('/settings/claude-accounts'),
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(children: [
-                  const Icon(Icons.people_outline,
-                      color: AppColors.accent, size: 20),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(context.tr('Claude Accounts'),
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600, fontSize: 15)),
-                        const SizedBox(height: 4),
-                        Text(
-                          context.tr('Manage multiple Claude subscriptions (OAuth tokens). Each session picks an account at creation time.'),
-                          style: const TextStyle(
-                              fontSize: 12, color: AppColors.textMuted),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.chevron_right,
-                      color: AppColors.textMuted, size: 20),
-                ]),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
+          // M5 A3.2 — "Claude Accounts" was a top-level entry here that
+          // jumped to /settings/claude-accounts. Account management is now
+          // inlined into Settings → Plugins → Claude (accounts render
+          // inside the plugin card alongside configSchema fields) so users
+          // manage everything Claude-related from one place. The
+          // /settings/claude-accounts route still exists as a deep-link
+          // fallback.
 
           // Account — only shown when the server has auth enabled and we
           // actually hold a token; otherwise there's nothing to sign out of.

@@ -1,9 +1,14 @@
 {
+  "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
   "name": "claude",
   "displayName": "Claude Code",
   "description": "Anthropic Claude Code CLI — agentic coding with tool use, MCP, and session resume",
   "icon": "🟣",
   "version": "1.1.2",
+  "publisher": "opendray-builtin",
+  "engines": { "opendray": "^1.0.0" },
+  "form": "declarative",
+  "activation": ["onStartup"],
   "type": "cli",
   "cli": {
     "command": "claude",
@@ -24,12 +29,9 @@
       "label": "Authentication",
       "type": "select",
       "group": "auth",
-      "options": [
-        "env",
-        "custom"
-      ],
+      "options": ["env", "custom"],
       "default": "env",
-      "description": "env = read ANTHROPIC_API_KEY from system; falls back to the Claude CLI's own login when unset (use the Claude Accounts panel above to manage multiple tokens) · custom = use the key below"
+      "description": "env = read ANTHROPIC_API_KEY from system; falls back to the Claude CLI's own login when unset (use the Accounts section below to manage multiple tokens) · custom = use the key below"
     },
     {
       "key": "apiKey",
@@ -71,5 +73,13 @@
       "group": "advanced"
     }
   ],
+  "contributes": {
+    "activityBar": [
+      { "id": "claude", "icon": "🟣", "title": "Claude Code", "viewId": "claude" }
+    ],
+    "views": [
+      { "id": "claude", "title": "Claude Code", "container": "activityBar", "render": "declarative" }
+    ]
+  },
   "required": true
 }

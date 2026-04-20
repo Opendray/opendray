@@ -12,8 +12,18 @@ import '../../shared/theme/app_theme.dart';
 /// sandbox managed by the `claude-acc` host tool. Tokens never flow through
 /// Flutter — they're written server-side with chmod 600 and read only at
 /// session-spawn time.
+///
+/// Renders in two modes:
+///   - default (standalone page) — wraps the content in a Scaffold + FAB so
+///     the /settings/claude-accounts deep-link route still works for users
+///     arriving from older bookmarks.
+///   - inline=true (M5 A3.2) — returns just the intro/list/add-button
+///     column so the Settings → Plugins → Claude card can embed account
+///     management directly. No Scaffold, no FAB; the "Add" action lives in
+///     a normal button at the top of the column.
 class ClaudeAccountsPage extends StatefulWidget {
-  const ClaudeAccountsPage({super.key});
+  const ClaudeAccountsPage({super.key, this.inline = false});
+  final bool inline;
   @override
   State<ClaudeAccountsPage> createState() => _ClaudeAccountsPageState();
 }
@@ -164,6 +174,9 @@ class _ClaudeAccountsPageState extends State<ClaudeAccountsPage> {
         body: _error!,
       );
     }
+    if (widget.inline) {
+      return _buildInlineBody();
+    }
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openEditor(),
@@ -194,6 +207,47 @@ class _ClaudeAccountsPageState extends State<ClaudeAccountsPage> {
           ],
         ),
       ),
+    );
+  }
+
+  /// Inline rendering for the Settings → Plugins → Claude card (A3.2).
+  ///
+  /// Drops the Scaffold + FAB that the standalone route uses and replaces
+  /// them with a normal "Add account" button at the top of the column.
+  /// Intro + import + list are identical to the standalone render so the
+  /// two views stay behaviourally in sync.
+  Widget _buildInlineBody() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _intro(),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: _importButton()),
+            const SizedBox(width: 8),
+            FilledButton.icon(
+              onPressed: () => _openEditor(),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+              icon: const Icon(Icons.add, size: 16),
+              label: Text(context.tr('Add account'),
+                  style: const TextStyle(fontSize: 12)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (_accounts.isEmpty)
+          _emptyState(
+            icon: Icons.person_outline,
+            title: context.tr('No Claude accounts yet'),
+            body: context.tr('Register a Claude subscription token so this server can launch sessions as that account. Tokens stay chmod 600 on the host — this UI only tracks metadata.'),
+          )
+        else
+          ..._accounts.map((a) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _accountCard(a),
+              )),
+      ],
     );
   }
 
