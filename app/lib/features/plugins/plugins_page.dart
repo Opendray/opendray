@@ -135,10 +135,12 @@ class _PluginsPageState extends State<PluginsPage> {
   }
 
   Future<void> _uninstall(provider_model.ProviderInfo p) async {
+    final displayName =
+        context.pickL10nOnce(p.provider.displayName, p.provider.displayNameZh);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Uninstall ${p.provider.displayName}?'),
+        title: Text('Uninstall $displayName?'),
         content: const Text(
           'Removes the plugin, its stored data, and all granted '
           'permissions. This cannot be undone.',
@@ -159,7 +161,7 @@ class _PluginsPageState extends State<PluginsPage> {
     if (confirmed != true) return;
     try {
       await _api.deleteProvider(p.provider.name);
-      _notify('Uninstalled ${p.provider.displayName}');
+      _notify('Uninstalled $displayName');
       ProvidersBus.instance.notify();
     } catch (e) {
       _notify('Failed: $e', isError: true);
@@ -421,7 +423,8 @@ class _PluginsPageState extends State<PluginsPage> {
                               children: [
                                 Flexible(
                                   child: Text(
-                                    prov.displayName,
+                                    context.pickL10n(prov.displayName,
+                                        prov.displayNameZh),
                                     style: const TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 14),
@@ -433,6 +436,15 @@ class _PluginsPageState extends State<PluginsPage> {
                                   _chip('required', AppColors.accent)
                                 else
                                   _chip(kindLabel, AppColors.textMuted),
+                                if (_isBuiltin(prov)) ...[
+                                  const SizedBox(width: 4),
+                                  Tooltip(
+                                    message:
+                                        'Ships with OpenDray. Upgrades arrive with OpenDray releases, not through the Hub.',
+                                    child: _chip('built-in',
+                                        const Color(0xFF7C3AED)),
+                                  ),
+                                ],
                                 if (entry == _EntryKind.none) ...[
                                   const SizedBox(width: 4),
                                   _chip(context.tr('config only'),
@@ -446,17 +458,21 @@ class _PluginsPageState extends State<PluginsPage> {
                               ],
                             ),
                             const SizedBox(height: 2),
-                            Text(
-                              prov.description.isEmpty
-                                  ? 'v${prov.version}'
-                                  : '${prov.description} · v${prov.version}',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  color: AppColors.textMuted,
-                                  fontSize: 11,
-                                  height: 1.3),
-                            ),
+                            Builder(builder: (ctx) {
+                              final desc = ctx.pickL10n(
+                                  prov.description, prov.descriptionZh);
+                              return Text(
+                                desc.isEmpty
+                                    ? 'v${prov.version}'
+                                    : '$desc · v${prov.version}',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    color: AppColors.textMuted,
+                                    fontSize: 11,
+                                    height: 1.3),
+                              );
+                            }),
                           ],
                         ),
                       ),
@@ -484,6 +500,18 @@ class _PluginsPageState extends State<PluginsPage> {
     if (p.type == 'cli') return 'agent';
     if (p.type == 'shell') return 'shell';
     return p.type.isEmpty ? 'plugin' : p.type;
+  }
+
+  /// A plugin is "built-in" when it's published by `opendray-builtin`
+  /// with a declarative form — its code isn't in the bundle (manifest
+  /// only); the feature itself lives in the OpenDray gateway + Flutter
+  /// binaries. Surfacing this in a chip makes the Hub's marketplace
+  /// semantics honest: users understand these aren't third-party
+  /// extensions they can replace — upgrades ship with OpenDray itself.
+  /// See docs/plugin-platform/06-plugin-formats.md §"Declarative = a
+  /// registration form, not a third-party form".
+  bool _isBuiltin(provider_model.Provider p) {
+    return p.publisher == 'opendray-builtin' && p.form == 'declarative';
   }
 
   Widget _chip(String text, Color color) {

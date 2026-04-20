@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/services/l10n.dart';
 import '../../shared/providers_bus.dart';
 import '../../shared/theme/app_theme.dart';
 import '../plugins/plugin_config_form.dart';
@@ -32,6 +33,17 @@ class _HubPageState extends State<HubPage> {
   bool _busy = false;
 
   ApiClient get _api => context.read<ApiClient>();
+
+  /// Localized display name: picks the manifest's `displayName_zh`
+  /// overlay when the user's locale is zh and it's non-empty; else
+  /// falls back to the English source or, as a last resort, the
+  /// plugin's bare `name`. Subscribes via watch so the widget
+  /// rebuilds on language switch.
+  String _resolveDisplayName(MarketplaceEntry entry) {
+    final localized =
+        context.pickL10n(entry.displayName, entry.displayNameZh);
+    return localized.isEmpty ? entry.name : localized;
+  }
 
   @override
   void initState() {
@@ -115,8 +127,7 @@ class _HubPageState extends State<HubPage> {
   /// is fine; the user can re-open the form from Plugin → Configure.
   Future<void> _promptConfigureAfterInstall(
       MarketplaceEntry entry, String installedName) async {
-    final displayName =
-        entry.displayName.isEmpty ? entry.name : entry.displayName;
+    final displayName = _resolveDisplayName(entry);
     await showDialog<void>(
       context: context,
       builder: (dialogCtx) {
@@ -154,8 +165,7 @@ class _HubPageState extends State<HubPage> {
 
   Future<bool?> _showConsentDialog(
       MarketplaceEntry entry, PendingInstall pending) {
-    final displayName =
-        entry.displayName.isEmpty ? entry.name : entry.displayName;
+    final displayName = _resolveDisplayName(entry);
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -168,12 +178,16 @@ class _HubPageState extends State<HubPage> {
               Text('Version ${pending.version} · by ${entry.publisher}',
                   style: const TextStyle(
                       color: AppColors.textMuted, fontSize: 12)),
-              if (entry.description.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(entry.description,
-                    style:
-                        const TextStyle(fontSize: 13, height: 1.4)),
-              ],
+              Builder(builder: (ctx) {
+                final desc =
+                    ctx.pickL10n(entry.description, entry.descriptionZh);
+                if (desc.isEmpty) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(desc,
+                      style: const TextStyle(fontSize: 13, height: 1.4)),
+                );
+              }),
               const SizedBox(height: 14),
               const Text('Grants:',
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
@@ -338,8 +352,7 @@ class _HubPageState extends State<HubPage> {
 
   Widget _entryCard(MarketplaceEntry entry) {
     final installed = _installedNames.contains(entry.name);
-    final displayName =
-        entry.displayName.isEmpty ? entry.name : entry.displayName;
+    final displayName = _resolveDisplayName(entry);
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: Padding(
@@ -367,29 +380,20 @@ class _HubPageState extends State<HubPage> {
                   ),
                 ),
                 _trustBadge(entry.trust),
-                if (entry.form.isNotEmpty)
-                  Container(
-                    margin: const EdgeInsets.only(left: 4, right: 8),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: AppColors.textMuted.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(entry.form,
-                        style: const TextStyle(
-                            fontSize: 10,
-                            color: AppColors.textMuted,
-                            fontWeight: FontWeight.w500)),
-                  ),
+                _formBadge(entry),
               ],
             ),
-            if (entry.description.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(entry.description,
-                  style: const TextStyle(
-                      fontSize: 12, color: AppColors.text, height: 1.4)),
-            ],
+            Builder(builder: (ctx) {
+              final desc =
+                  ctx.pickL10n(entry.description, entry.descriptionZh);
+              if (desc.isEmpty) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(desc,
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.text, height: 1.4)),
+              );
+            }),
             const SizedBox(height: 10),
             Align(
               alignment: Alignment.centerRight,
@@ -457,6 +461,63 @@ class _HubPageState extends State<HubPage> {
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.4)),
         ],
+      ),
+    );
+  }
+
+  /// Form badge makes the plugin's code-ownership visible at a glance:
+  ///
+  ///   built-in   — publisher=opendray-builtin + form=declarative.
+  ///                The "code" lives in the OpenDray gateway/Flutter
+  ///                binaries; the marketplace entry is a registration
+  ///                manifest. Cannot be replaced by a third party
+  ///                without forking OpenDray. Upgrades ship with
+  ///                OpenDray releases.
+  ///   webview    — plugin ships HTML/JS bundle; runs in a sandboxed
+  ///                WebView via the bridge. Third-party replaceable.
+  ///   host       — plugin ships a sidecar process (Node, Python …);
+  ///                speaks JSON-RPC over stdio. Third-party replaceable.
+  ///
+  /// Declarative plugins by a non-builtin publisher fall back to the
+  /// raw form string — that combination is unusual (user forked a
+  /// core panel?) and needs to stand out, not hide behind the
+  /// built-in badge.
+  Widget _formBadge(MarketplaceEntry entry) {
+    if (entry.form.isEmpty) return const SizedBox.shrink();
+    final isBuiltin = entry.publisher == 'opendray-builtin' &&
+        entry.form == 'declarative';
+    final (label, color, tooltip) = isBuiltin
+        ? (
+            'BUILT-IN',
+            const Color(0xFF7C3AED), // violet-600
+            'Ships with OpenDray. The marketplace entry is a registration '
+                'manifest — the feature\'s code lives in the OpenDray gateway + '
+                'Flutter app. Upgrades via OpenDray releases, not Hub.',
+          )
+        : (
+            entry.form.toUpperCase(),
+            AppColors.textMuted,
+            entry.form == 'webview'
+                ? 'Ships an HTML/JS bundle; runs in a sandboxed WebView.'
+                : entry.form == 'host'
+                    ? 'Ships a sidecar process; speaks JSON-RPC over stdio.'
+                    : entry.form,
+          );
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        margin: const EdgeInsets.only(left: 4, right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(label,
+            style: TextStyle(
+                fontSize: 10,
+                color: color,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.4)),
       ),
     );
   }

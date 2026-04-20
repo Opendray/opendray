@@ -18,7 +18,7 @@ Need background CPU, long-lived process, or LSP/DAP?
 
 ## A. Declarative
 
-**Use cases:** status bar clocks, keybindings, themes, menus, command shortcuts, Telegram command wiring.
+**Use cases:** status bar clocks, keybindings, themes, menus, command shortcuts, Telegram command wiring. Also the registration form used by every built-in OpenDray panel (git-viewer, git-forge, pg-browser, file-browser, task-runner, log-viewer, obsidian-reader, simulator-preview, web-browser, mcp, telegram) — those bundles ship only a `manifest.json`; the rendering code lives in the OpenDray gateway + Flutter app.
 
 **Cannot do:** custom UI rendering beyond `contributes.*`, subscribe to events with custom handlers (events can only trigger declarative `run.kind`), heavy logic.
 
@@ -28,6 +28,28 @@ Need background CPU, long-lived process, or LSP/DAP?
 - Impossible to spawn processes, read files, call network (unless via a declarative `run.kind: "exec"` that triggers the `exec` capability, which the manifest must declare).
 
 **Quotas:** n/a (host memory only).
+
+### Declarative = a registration form, not a third-party form
+
+Important semantic boundary: `form: "declarative"` is how OpenDray's **own core panels** surface in the Hub so they share the install / Configure / consent flow with real plugins. It is **not** a form a third party can use to add a new full-featured panel, because the panel's rendering + HTTP logic has to live somewhere — and for declarative plugins, that somewhere is the OpenDray binaries, which the third party cannot modify.
+
+Concretely:
+
+| Aspect | Declarative built-in | Webview | Host |
+|---|---|---|---|
+| Bundle ships code? | ❌ manifest only | ✅ HTML/JS bundle | ✅ sidecar process |
+| Publisher | `opendray-builtin` | any | any |
+| Upgrade path | with OpenDray release | Hub re-install | Hub re-install |
+| Can a third party replace it? | ❌ (must fork OpenDray) | ✅ | ✅ |
+| Runs isolated from host? | ❌ (in-process Go + Dart) | ✅ sandboxed WebView | ✅ separate OS process |
+
+The Hub surfaces this with a **BUILT-IN** badge on any marketplace entry where `publisher == "opendray-builtin"` and `form == "declarative"`. Plugin listings in the app use the same badge. The intent is: users see at a glance that the plugin is part of OpenDray itself, not a third-party extension they can replace or uninstall without functional loss (they can disable the UI entry but the Go/Dart code stays in the binary regardless).
+
+**Third parties writing a new panel must use `webview` or `host`.** The declarative form has two legitimate third-party shapes only:
+1. A plugin that contributes purely declarative surfaces (status bar, keybindings, command shortcuts, menus) — no panel, no custom UI.
+2. A plugin that wraps a declarative `run.kind` (e.g. `exec`) behind a command contribution.
+
+If a third party needs a data panel with custom rendering, the answer is webview. If they need a long-lived background process, the answer is host. Declarative-plus-panel-with-logic is reserved for OpenDray itself, because only OpenDray's binary can provide the logic.
 
 ## B. Webview
 
