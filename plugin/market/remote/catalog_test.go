@@ -388,6 +388,40 @@ func TestResolve_MissingArtifact(t *testing.T) {
 	}
 }
 
+// ─── FetchPublisher ────────────────────────────────────────────────────────
+
+func TestFetchPublisher_HappyPath(t *testing.T) {
+	c := newTestCatalog(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/publishers/acme.json" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, `{
+			"name": "acme",
+			"trust": "verified",
+			"keys": [{"alg":"ed25519","publicKey":"xyz","addedAt":"2024-01-01T00:00:00Z"}]
+		}`)
+	})
+	rec, err := c.FetchPublisher(context.Background(), "acme")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Name != "acme" || rec.Trust != "verified" || len(rec.Keys) != 1 {
+		t.Errorf("rec = %+v", rec)
+	}
+}
+
+func TestFetchPublisher_NotFound(t *testing.T) {
+	c := newTestCatalog(t, func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	})
+	_, err := c.FetchPublisher(context.Background(), "missing")
+	if !errors.Is(err, market.ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
 // ─── BundlePath stays a no-op for remote ───────────────────────────────────
 
 func TestBundlePath_RemoteOnlyReturnsFalse(t *testing.T) {

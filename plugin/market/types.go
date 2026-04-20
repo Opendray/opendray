@@ -76,8 +76,45 @@ type Entry struct {
 // per-version JSON schema.
 type Signature struct {
 	Alg       string `json:"alg"`       // "ed25519"
+	PublicKey string `json:"publicKey"` // base64 of the raw 32-byte key
+	Value     string `json:"value"`     // base64 of the 64-byte signature
+}
+
+// PublisherRecord mirrors publishers/<name>.json in the marketplace
+// repo (schemas/publisher.schema.json). Clients verify a plugin
+// signature by:
+//   1. Fetching the publisher record for the entry's publisher.
+//   2. Checking that Signature.PublicKey matches one of the
+//      record's Keys entries (same base64) and that key is not
+//      expired or revoked.
+//   3. ed25519.Verify(pubKeyBytes, canonicalSignedBytes, sigBytes).
+type PublisherRecord struct {
+	Name               string              `json:"name"`
+	DisplayName        string              `json:"displayName,omitempty"`
+	Homepage           string              `json:"homepage,omitempty"`
+	Trust              string              `json:"trust"`
+	Keys               []PublisherKey      `json:"keys"`
+	DomainVerification *DomainVerification `json:"domainVerification,omitempty"`
+}
+
+// PublisherKey is one registered public key. A key verifies when its
+// PublicKey matches the signature's key AND current time is inside
+// (AddedAt, ExpiresAt) AND it hasn't been revoked.
+type PublisherKey struct {
+	Alg       string `json:"alg"`       // "ed25519"
 	PublicKey string `json:"publicKey"` // base64
-	Value     string `json:"value"`     // base64
+	AddedAt   string `json:"addedAt"`
+	ExpiresAt string `json:"expiresAt,omitempty"`
+	RevokedAt string `json:"revokedAt,omitempty"`
+}
+
+// DomainVerification is the DNS-TXT identity proof the publisher
+// registered. Consumed by CI on the marketplace repo side (T24);
+// clients just surface the presence as part of the trust badge.
+type DomainVerification struct {
+	Method     string `json:"method"`
+	Record     string `json:"record"`
+	VerifiedAt string `json:"verifiedAt,omitempty"`
 }
 
 // Ref is the canonical ref pair the install flow passes around.
@@ -120,6 +157,13 @@ type Catalog interface {
 	// the backend can only produce the artifact URL — the install
 	// layer then downloads via HTTPSSource instead of copying.
 	BundlePath(ctx context.Context, ref Ref) (string, bool, error)
+
+	// FetchPublisher returns the publisher record — the set of
+	// registered Ed25519 keys the install-time signature verifier
+	// checks against, plus trust level. Remote backends fetch
+	// publishers/<name>.json; local backends read the on-disk copy.
+	// ErrNotFound when the publisher isn't known.
+	FetchPublisher(ctx context.Context, publisher string) (PublisherRecord, error)
 }
 
 // ParseRef splits a marketplace reference into a Ref.

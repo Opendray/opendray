@@ -119,6 +119,35 @@ func (c *Catalog) Resolve(_ context.Context, ref market.Ref) (market.Entry, erro
 	return c.entries[c.byKey[key]], nil
 }
 
+// FetchPublisher implements market.Catalog. Reads
+// `publishers/<publisher>.json` relative to the catalog root. A
+// missing record returns ErrNotFound so callers can surface a
+// clean 404 rather than a stat error.
+func (c *Catalog) FetchPublisher(_ context.Context, publisher string) (market.PublisherRecord, error) {
+	if c.Dir == "" || publisher == "" {
+		return market.PublisherRecord{}, fmt.Errorf("%w: publisher %q", market.ErrNotFound, publisher)
+	}
+	path := filepath.Join(c.Dir, "publishers", publisher+".json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return market.PublisherRecord{}, fmt.Errorf("%w: publisher %q", market.ErrNotFound, publisher)
+		}
+		return market.PublisherRecord{}, fmt.Errorf("market/local: read publisher %q: %w", publisher, err)
+	}
+	var rec market.PublisherRecord
+	if err := json.Unmarshal(data, &rec); err != nil {
+		return market.PublisherRecord{}, fmt.Errorf("market/local: parse publisher %q: %w", publisher, err)
+	}
+	if rec.Name == "" {
+		rec.Name = publisher
+	}
+	if rec.Trust == "" {
+		rec.Trust = "community"
+	}
+	return rec, nil
+}
+
 // BundlePath implements market.Catalog. The local backend always has
 // the bundle on disk, so returns (path, true, nil) when the ref
 // resolves.

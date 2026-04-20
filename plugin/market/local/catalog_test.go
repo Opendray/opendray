@@ -139,3 +139,63 @@ func TestResolve_NotFound(t *testing.T) {
 		t.Errorf("Resolve want ErrNotFound, got %v", err)
 	}
 }
+
+func TestFetchPublisher(t *testing.T) {
+	dir := t.TempDir()
+	writeCatalog(t, dir, `{"entries":[]}`)
+	if err := os.MkdirAll(filepath.Join(dir, "publishers"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	body := `{
+		"name": "acme",
+		"trust": "verified",
+		"keys": [
+			{"alg":"ed25519","publicKey":"base64pubkey==","addedAt":"2024-01-01T00:00:00Z"}
+		]
+	}`
+	if err := os.WriteFile(filepath.Join(dir, "publishers", "acme.json"), []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	c, _ := Load(dir)
+
+	rec, err := c.FetchPublisher(context.Background(), "acme")
+	if err != nil {
+		t.Fatalf("FetchPublisher: %v", err)
+	}
+	if rec.Trust != "verified" {
+		t.Errorf("Trust = %q, want verified", rec.Trust)
+	}
+	if len(rec.Keys) != 1 || rec.Keys[0].PublicKey != "base64pubkey==" {
+		t.Errorf("keys = %+v", rec.Keys)
+	}
+}
+
+func TestFetchPublisher_NotFound(t *testing.T) {
+	dir := t.TempDir()
+	writeCatalog(t, dir, `{"entries":[]}`)
+	c, _ := Load(dir)
+	_, err := c.FetchPublisher(context.Background(), "missing")
+	if !errors.Is(err, market.ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestFetchPublisher_DefaultsTrust(t *testing.T) {
+	dir := t.TempDir()
+	writeCatalog(t, dir, `{"entries":[]}`)
+	if err := os.MkdirAll(filepath.Join(dir, "publishers"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "publishers", "newbie.json"),
+		[]byte(`{"name":"newbie","keys":[]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	c, _ := Load(dir)
+	rec, err := c.FetchPublisher(context.Background(), "newbie")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Trust != "community" {
+		t.Errorf("default Trust = %q, want community", rec.Trust)
+	}
+}

@@ -362,6 +362,37 @@ func (c *Catalog) BundlePath(_ context.Context, _ market.Ref) (string, bool, err
 	return "", false, nil
 }
 
+// FetchPublisher implements market.Catalog. Pulls
+// publishers/<publisher>.json from the registry. A 404 surfaces
+// as market.ErrNotFound so callers can branch cleanly.
+func (c *Catalog) FetchPublisher(ctx context.Context, publisher string) (market.PublisherRecord, error) {
+	if publisher == "" {
+		return market.PublisherRecord{}, fmt.Errorf("%w: empty publisher", market.ErrBadRef)
+	}
+	u, err := c.resolveRelative("publishers/" + publisher + ".json")
+	if err != nil {
+		return market.PublisherRecord{}, err
+	}
+	body, err := c.fetch(ctx, u, maxVersionBytes)
+	if err != nil {
+		if strings.Contains(err.Error(), "HTTP 404") {
+			return market.PublisherRecord{}, fmt.Errorf("%w: publisher %q", market.ErrNotFound, publisher)
+		}
+		return market.PublisherRecord{}, fmt.Errorf("market/remote: fetch publisher: %w", err)
+	}
+	var rec market.PublisherRecord
+	if err := json.Unmarshal(body, &rec); err != nil {
+		return market.PublisherRecord{}, fmt.Errorf("market/remote: parse publisher: %w", err)
+	}
+	if rec.Name == "" {
+		rec.Name = publisher
+	}
+	if rec.Trust == "" {
+		rec.Trust = "community"
+	}
+	return rec, nil
+}
+
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 // resolveRelative joins a relative path onto the configured base
