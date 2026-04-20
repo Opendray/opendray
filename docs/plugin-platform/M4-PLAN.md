@@ -1,15 +1,19 @@
-# OpenDray Plugin Platform M4 — Marketplace client + publisher
+# OpenDray Plugin Platform M4 — Marketplace (consumer side)
 
-**Status:** Planning
+**Status:** Ready to start
 **Depends on:** M3 closed at commit `208bcb3` (`kevlab`)
-**Unlocks per roadmap:** plugin ecosystem — third parties can publish, users can discover/install/auto-update.
-**Contract freeze date (immovable):** 2026-10-01 — M4 + M5 must fit inside the remaining window.
+**Scope:** M4.1 only — consumer-side marketplace. Third-party
+publisher CLI (M4.2) deferred until after v1 launch; Kev is the
+sole publisher in the meantime and edits the marketplace repo by
+hand.
+**Contract freeze date (immovable):** 2026-10-01 — M4.1 + M5 must
+fit inside the remaining window.
 
 ## 1. Scope boundary
 
-### In scope
+### In scope (M4.1 — this milestone)
 
-- A real remote marketplace: `plugin/market/` package fetches
+- Real remote marketplace: `plugin/market/` package fetches
   `index.json` + per-version JSON from a public registry URL,
   verifies SHA-256, verifies Ed25519 signatures, caches locally.
 - `HTTPSSource.Fetch` wired — `marketplace://` refs resolve against
@@ -17,53 +21,146 @@
   replaces it with the real one).
 - Revocation list polling (6 h default + on launch). Actions:
   `uninstall` / `disable` / `warn`.
-- Publisher CLI `opendray plugin` with subcommands `scaffold`,
-  `validate`, `build`, `publish`. `publish` forks the marketplace
-  repo, commits, and opens a PR.
-- Flutter: Hub migrates from reading the local-catalog JSON to
-  calling a new `/api/marketplace/registry/*` endpoint backed by
-  the remote fetch; trust badges + auto-update indicator surface.
+- Flutter: Hub migrates from reading the local catalog to calling
+  a new `/api/marketplace/registry/*` endpoint backed by the
+  remote fetch; trust badges + auto-update indicator surface.
 - Marketplace repo template (`github.com/opendray/marketplace`)
   with a CI workflow that regenerates `index.json` on every merge
-  to `main`.
+  to `main`. Needed even in sole-publisher mode so Kev's hand-
+  edited PRs get validated + published consistently.
 
-### Out of scope (push to M5)
+### Deferred to M4.2 (post-launch)
 
-- Legacy-plugin migration to v1 — still happens in M5 per
-  12-roadmap §Deprecation plan. Marketplace exists in M4 so M5's
-  migration has somewhere to publish to.
-- Webview + sidecar combined form. New work item flagged in
-  M3-RELEASE §3; scope in M5.
+- **Publisher CLI `opendray plugin {scaffold,validate,build,
+  publish}`.** Third-party developers can't self-publish yet;
+  until M4.2 lands they either submit a PR against the
+  marketplace repo manually or go through Kev. Rationale: the
+  app ship date is tight, publisher workflow is a non-blocking
+  ergonomics layer on top of the same wire format. Tracked in
+  project memory `m4_2_publisher_cli.md`.
+
+### Out of scope (push to M5 or later)
+
+- Legacy-plugin migration to v1 — M5 per 12-roadmap §Deprecation.
+- Webview + sidecar combined form — M5, flagged in M3-RELEASE §3.
 - iOS App Store submission — M5.
-- Paid plugins / billing — M7 per roadmap.
-- Private marketplaces — M7.
+- Paid plugins / billing — M7.
+- Private marketplaces first-class — M7.
 - In-marketplace ratings / reviews — post-v1.
 
-## 2. Open questions (resolve before T1)
+## 2. Resolved design decisions
 
-1. **Registry URL default.** Roadmap suggests
-   `https://raw.githubusercontent.com/opendray/marketplace/main/`
-   OR a Cloudflare-fronted copy. Which ships as the default?
-   Mirror list is client-configurable — pick which public URL is
-   authoritative.
-2. **Signing-key bootstrap.** `opendray plugin build` needs a
-   publisher private key. Options:
-   (a) file in `~/.config/opendray/keys/<publisher>.ed25519`;
-   (b) macOS Keychain / Linux Secret Service; (c) passphrase-
-   encrypted file. (a) is simplest and portable; (b) is nicer.
-3. **CI infrastructure for the marketplace repo.** GitHub Actions
-   (public, native to the source of truth) or self-hosted Gitea
-   (matches existing `tea.linivek.online`)? Probably GitHub so
-   contributors can submit PRs without a Gitea account.
-4. **Revocation-list poll cadence override.** 6 h matches the
-   spec; should we expose `OPENDRAY_REVOCATION_POLL_HOURS`? Nice
-   for airgapped deployments but could confuse users — lean "no,
-   use the spec value" unless someone asks.
-5. **Hub page vs Settings → Marketplace.** M3 shipped Hub as the
-   install entry. Spec lists a separate "Settings → Marketplace"
-   for registry URL + auto-update toggle. Resolution: keep Hub
-   as the browse/install surface, add a Settings → Marketplace
-   subpage for admin knobs only.
+All five open questions resolved 2026-04-20. Recorded here so T1
+starts from a fixed set of constraints; future ambiguity resolves
+by reading this section.
+
+### 2.1 Registry URL — CDN-fronted custom domain
+
+**Primary:** `https://marketplace.opendray.dev/` (Cloudflare CDN).
+**Fallback mirror 1:** `https://raw.githubusercontent.com/opendray/marketplace/main/`
+**Reserved mirror slot:** community-run mirror (configurable, no
+default).
+
+Why not raw GitHub: unauth rate limit is 60 req/hr per IP. At
+ecosystem scale every app launch pulls `index.json` + any plugin
+install pulls a per-version JSON — one office building on
+shared-NAT hits the limit in minutes. CDN absorbs that plus gives
+global latency. Custom domain also reads as legitimate in the
+consent sheet ("marketplace.opendray.dev said this plugin…").
+
+Infra: Cloudflare DNS CNAME → GitHub Pages or R2. Kev already
+runs CF tunnels; added surface area ≈ zero.
+
+### 2.2 Signing keys — three-tier lookup
+
+Publisher CLI + server's signing verifier resolve the private key
+in this priority:
+
+1. `OPENDRAY_SIGNING_KEY` env var — for CI / GitHub Actions.
+2. OS keychain (macOS Keychain / Linux Secret Service / Windows
+   Credential Manager) — default for devs. Service name
+   `opendray`, account `<publisher>`. Use `github.com/zalando/go-keyring`
+   for cross-platform.
+3. `~/.config/opendray/keys/<publisher>.age` — passphrase-
+   encrypted file for edge cases (shared workstation, headless
+   Linux where Secret Service isn't available).
+
+Mirrors the `age` / `sops` / `gpg` / `vsce` pattern every plugin
+author already recognises.
+
+### 2.3 Marketplace CI — GitHub Actions
+
+Public repo with third-party PR contributors. Self-hosted Gitea
+would require contributors to register on `tea.linivek.online` —
+enough friction to kill the ecosystem.
+
+Budget: public repos get unlimited GitHub Actions minutes on the
+standard runners.
+
+### 2.4 Revocation poll cadence — env-overridable
+
+Default 6 h (per spec). Expose `OPENDRAY_REVOCATION_POLL_HOURS`
+with floor 1 / ceiling 168.
+
+- `1 h` — high-security (finance, healthcare).
+- `24 h` — mobile-battery sensitive.
+- `168 h` (1 week) — enterprise fleets with local mirror.
+
+Ceiling 168 prevents "never" — revocation is security
+infrastructure, must poll eventually.
+
+### 2.5 Hub vs Settings → Marketplace — both
+
+- **Hub** (exists from M3): consumer surface. Browse cards,
+  install button, consent dialog, config dialog.
+- **Settings → Marketplace** (new subpage in M4): admin surface.
+  Registry URL + mirrors, auto-update toggle, trust-level filter
+  ("only show verified+"), "Refresh cache now", revocation log.
+
+Two roles, two pages. Same split as App Store "browse" vs iOS
+Settings → "App Store" preferences.
+
+## 3. Additional ecosystem-level decisions
+
+### 3.1 Trust levels — semantics
+
+| Level | Means | Granted by |
+|-------|-------|-----------|
+| `official` | OpenDray core team maintained or audited | Manual edit to `publishers/opendray.json` |
+| `verified` | Publisher passed DNS TXT + identity check, Ed25519 key registered | CI verifies DNS TXT; human sets `trust: verified` on merge |
+| `community` | Any merged PR author | Default |
+| `sideloaded` | Client-side label when install source isn't marketplace | Client attaches automatically on `local:` / bare path |
+
+### 3.2 Publisher verification flow (for reference; implemented in M4.2)
+
+1. Third-party dev forks `github.com/opendray/marketplace`.
+2. Adds `publishers/<name>.json` with `keys: [ed25519 pubkey]` +
+   `domainVerification.record: "opendray-verify=<token>"`.
+3. Adds DNS TXT `opendray-verify=<token>` to the claimed domain.
+4. Opens PR.
+5. CI (T24) verifies the TXT record resolves + matches the token.
+6. Human maintainer reviews → merges → trust starts at
+   `community`. Upgrade to `verified` is a separate manual edit
+   after identity check.
+
+Documented in the marketplace repo README. Publisher CLI in M4.2
+automates steps 1–2 and 4.
+
+### 3.3 Version pinning — no "latest"
+
+Install refs MUST carry a specific version:
+`marketplace://<publisher>/<name>@<version>`. Bare `<name>`
+refs resolve client-side to the latest at-browse-time, but the
+install call carries the pinned version. Prevents silent upgrade
+on PR merge. Auto-update is a separate per-plugin opt-in.
+
+### 3.4 Namespace — `publisher/name` from day one
+
+Install refs use `publisher/name` format. Reserving a shape
+compatible with the third-party ecosystem avoids a breaking
+change once M4.2 lands. M3's bare-`name` refs (e.g.
+`marketplace://fs-readme`) get backwards-compat resolved to
+`opendray-examples/fs-readme` during T1's refactor.
 
 ## 3. Task graph (29 tasks)
 
@@ -84,10 +181,14 @@
 | T11 | Gateway `GET /api/marketplace/registry` (index + per-version) + `POST /refresh` | T7, T10 | S |
 | T12 | Settings → Marketplace admin subpage backing — registry URL + mirrors in config + auto-update toggle in user prefs | T11 | S |
 
-### Publisher CLI (T13–T17)
+### Publisher CLI (T13–T17) — **deferred to M4.2**
 
 `cmd/opendray-plugin/` is a new binary separate from `cmd/opendray`
-so plugin authors don't need the full gateway.
+so plugin authors don't need the full gateway. **Not in M4.1
+scope** — until M4.2 lands, the sole publisher (Kev) hand-edits
+the marketplace repo + relies on CI (T22–T24) to validate.
+
+Tracked in memory `m4_2_publisher_cli.md` so it's not forgotten.
 
 | ID | Title | Depends on | Effort |
 |----|-------|------------|--------|
@@ -95,7 +196,7 @@ so plugin authors don't need the full gateway.
 | T14 | `scaffold` — interactive manifest wizard (form / permissions / configSchema) | T13 | M |
 | T15 | `validate` — runs `ValidateV1` against local manifest + lint bundle rules (zip size, setuid bit, symlink escape) | T13 | S |
 | T16 | `build` — zip + SHA256 + optional Ed25519 sign | T15, T5 | M |
-| T17 | `publish` — fork marketplace repo, create branch, write per-version JSON, open PR with templated body | T16, T11 | M |
+| T17 | `publish` — fork marketplace repo, create branch, write per-version JSON, open PR with templated body (+ DNS TXT verification helper for publisher onboarding) | T16, T11 | M |
 
 ### Flutter (T18–T21)
 
@@ -131,7 +232,8 @@ These land on `github.com/opendray/marketplace`, not the main repo.
 | T28 | Update `11-developer-experience.md` with publisher workflow + new CLI | T17 | S |
 | T29 | M4-RELEASE.md — status table + smoke test + commit history | all | S |
 
-**Totals:** 29 tasks · 10 M / 18 S / 1 parked. Expected duration: 3–5 weeks of focused work at the rate M3 shipped.
+**Totals (M4.1):** 24 tasks · 8 M / 16 S. Expected duration: ~3 weeks at M3's rate.
+**Totals (M4.2):** 5 tasks · 3 M / 2 S. Runs after v1 launch.
 
 ## 4. Dependency chain
 
@@ -149,53 +251,68 @@ T1 (refactor)
                      │                                                           │
                      └▶ T8 (revocations) ──▶ T9 (actions) ────────────────────── └▶ T21 (banner)
 
-T13 (CLI skel) ──▶ T14 (scaffold)
-               └─▶ T15 (validate) ──▶ T16 (build) ──▶ T17 (publish)
+T13–T17 (publisher CLI) — **deferred to M4.2**, unblocks after v1 launch.
 
 T22 (repo tmpl) ──▶ T23 (CI regen) ──▶ T24 (PR checks)
 
 Tests/docs depend on everything above; rollout order below.
 ```
 
-## 5. Rollout order
+## 5. Rollout order (M4.1)
 
-1. **T1 → T2 → T7 → T3 → T11** — thinnest useful slice: gateway
+1. **T22 → T23** — create the marketplace repo + CI that
+   regenerates `index.json`. Even sole-publisher mode needs this
+   running before T2 has anything to fetch from.
+2. **T1 → T2 → T7 → T3 → T11** — thinnest useful slice: gateway
    can talk to a remote registry and return the index. Flutter
    still shows the M3 local-catalog fallback; no user-visible
    change yet.
-2. **T4 → T6** — HTTPS install path wired. At this point
-   `marketplace://fs-readme` works from the real registry (with
-   an Ed25519-less dev bypass).
-3. **T5 → T10** — signatures + trust propagation.
-4. **T8 → T9 → T21** — revocation infra shipped even before UI
-   migrates, so it protects existing users first.
-5. **T18 → T19 → T20** — Flutter migration. At this point the
+3. **T4 → T6** — HTTPS install path wired. At this point
+   `marketplace://opendray-examples/fs-readme@1.0.0` works from
+   the real registry (Ed25519 dev-bypass until T5).
+4. **T5 → T10** — signatures + trust propagation.
+5. **T8 → T9 → T21** — revocation infra shipped even before UI
+   migrates so it protects existing users first.
+6. **T18 → T19 → T20** — Flutter migration. At this point the
    Hub is live against the real registry.
-6. **T12** — Settings → Marketplace admin knobs.
-7. **T13 → T17** — publisher CLI independent of the above.
-8. **T22 → T24** — marketplace repo bootstrapped. Parallel track
-   that doesn't gate code shipping.
-9. **T25 → T27** — tests fill in as each slice lands; T27 is the
-   highest-value acceptance test for M4.
+7. **T12** — Settings → Marketplace admin subpage.
+8. **T24** — marketplace repo PR-validation job (SHA check,
+   schema validation, capability diff).
+9. **T25 → T27** — tests fill in as each slice lands; T27
+   (revocation E2E) is the highest-value acceptance test.
 10. **T28 → T29** — docs + release notes.
 
-## 6. Acceptance criteria for "M4 done"
+**M4.2 (after v1 launch):** T13 → T17 in order.
 
-- End-to-end: `opendray plugin publish` from a dev machine → PR
-  opens on `github.com/opendray/marketplace` → CI passes → human
-  merges → Hub on a second device shows the plugin within 10
-  minutes and installs it via one tap with signature verified.
+## 6. Acceptance criteria for "M4.1 done"
+
+- End-to-end: Kev hand-edits a PR on `github.com/opendray/marketplace`
+  adding `plugins/opendray-examples/fs-readme/1.0.0.json` with a
+  real signed artifact URL → CI (T23/T24) validates + regenerates
+  `index.json` on merge → Hub on a second device shows the
+  plugin within 10 minutes and installs it via one tap with
+  SHA-256 + Ed25519 signature verified.
 - Revocation: mark an installed plugin as `uninstall` in
   `revocations.json` → within the poll window the client
   auto-uninstalls with a banner.
 - Trust badges render on every Hub card. `sideloaded` label
   appears when installing from `local:` or bare absolute path.
+- Settings → Marketplace shows Registry URL, mirror list,
+  auto-update toggle, Refresh button, and a revocation log.
 - Gateway `/api/marketplace/registry` responses carry the same
   Entry shape the M3 local catalog used (Flutter stays
-  back-compatible).
+  back-compatible on the wire).
+- No P0/P1 bugs against the marketplace wire format.
+
+## 6.2 Acceptance criteria for "M4.2 done" (future)
+
+- `opendray plugin scaffold` generates a working manifest.
 - `opendray plugin validate` exits 0 on every example in
   `plugins/examples/*`.
-- No P0/P1 bugs against the marketplace wire format.
+- `opendray plugin publish` from a third-party dev machine →
+  forks repo + opens PR → CI passes → maintainer merges → Hub
+  shows the plugin.
+- DNS TXT verification flow documented + tested.
 
 ## 7. Security notes (carry-over from §6 of 10-security.md)
 
