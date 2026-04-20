@@ -80,9 +80,13 @@ type Server struct {
 	// Build-time identity surfaced by /api/health so the Flutter About
 	// page can render a backend version. Empty strings degrade to "dev"
 	// / "unknown" in the response so the UI never crashes on missing
-	// fields.
-	version  string
-	buildSha string
+	// fields. buildTime (UTC ISO8601 basic: 20060102T150405Z) changes on
+	// every build even when version+SHA don't — use it to tell two
+	// binaries from the same commit apart (e.g. "did my deploy actually
+	// recompile?").
+	version   string
+	buildSha  string
+	buildTime string
 
 	// marketplace is the loaded catalog that backs
 	// GET /api/marketplace/plugins and the marketplace:// install
@@ -139,12 +143,15 @@ type Config struct {
 	// T14 — SSE workbench stream. Nil disables the endpoint (returns 503 EBUS).
 	WorkbenchBus *WorkbenchBus
 
-	// Version / BuildSha are the build-stamped identifiers injected into
-	// cmd/opendray/main.go via -ldflags. They flow through /api/health so
-	// the Flutter About screen can show the running backend's version.
-	// Both are optional; defaults kick in when empty.
-	Version  string
-	BuildSha string
+	// Version / BuildSha / BuildTime are the build-stamped identifiers
+	// injected into cmd/opendray/main.go via -ldflags. They flow through
+	// /api/health so the Flutter About screen can show the running
+	// backend's version + distinguish two binaries built from the same
+	// commit (BuildTime changes on every `make release-linux`).
+	// All three are optional; defaults kick in when empty.
+	Version   string
+	BuildSha  string
+	BuildTime string
 
 	// Marketplace is the preloaded plugin catalog. Nil disables the
 	// GET /api/marketplace/plugins endpoint (returns empty list) and
@@ -211,6 +218,7 @@ func New(cfg Config) *Server {
 		workbenchBus:    cfg.WorkbenchBus,
 		version:         cfg.Version,
 		buildSha:        cfg.BuildSha,
+		buildTime:       cfg.BuildTime,
 		marketplace:         cfg.Marketplace,
 		marketplaceSettings: cfg.MarketplaceSettings,
 		secretAPI:       cfg.SecretAPI,
@@ -535,13 +543,18 @@ func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 	if buildSha == "" {
 		buildSha = "unknown"
 	}
+	buildTime := s.buildTime
+	if buildTime == "" {
+		buildTime = "unknown"
+	}
 	respondJSON(w, http.StatusOK, map[string]any{
-		"status":   "ok",
-		"service":  "opendray",
-		"version":  version,
-		"buildSha": buildSha,
-		"sessions": s.hub.RunningCount(),
-		"plugins":  len(s.plugins.List()),
+		"status":    "ok",
+		"service":   "opendray",
+		"version":   version,
+		"buildSha":  buildSha,
+		"buildTime": buildTime,
+		"sessions":  s.hub.RunningCount(),
+		"plugins":   len(s.plugins.List()),
 	})
 }
 

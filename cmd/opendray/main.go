@@ -44,11 +44,18 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// version is injected at build time via -ldflags. Defaults to "dev" for
-// `go run` without a release.
+// version / buildSha / buildTime are injected at build time via -ldflags
+// (see Makefile). Defaults land for `go run` so the binary still boots
+// cleanly without a release.
+//
+// buildTime is the UTC clock at build time formatted as 20060102T150405Z.
+// Pair it with `version` when you suspect a deploy didn't actually
+// recompile — two builds from the same commit still have different
+// buildTime stamps.
 var (
-	version  = "dev"
-	buildSha = "unknown"
+	version   = "dev"
+	buildSha  = "unknown"
+	buildTime = "unknown"
 )
 
 // printHelp is the output of `opendray help` / `-h`. Keep it short —
@@ -84,7 +91,13 @@ func main() {
 		case "setup":
 			os.Exit(runSetupCLI())
 		case "version", "-v", "--version":
-			fmt.Println(version)
+			// One line per field so `opendray version | tr ' ' '\n'` or
+			// `grep` can pick them out easily. Deploy verification
+			// scripts compare buildTime between runs to prove the
+			// binary was actually recompiled.
+			fmt.Printf("version:   %s\n", version)
+			fmt.Printf("buildSha:  %s\n", buildSha)
+			fmt.Printf("buildTime: %s\n", buildTime)
 			return
 		case "-h", "--help", "help":
 			printHelp()
@@ -520,8 +533,9 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 		BridgeManager: bridgeMgr,
 		WorkbenchBus:  workbenchBus,
 		// Build identity surfaced via /api/health for the Flutter About page.
-		Version:  version,
-		BuildSha: buildSha,
+		Version:   version,
+		BuildSha:  buildSha,
+		BuildTime: buildTime,
 		// Marketplace catalog backing /api/marketplace/plugins + marketplace://.
 		Marketplace:         marketplaceCatalog,
 		MarketplaceSettings: buildMarketplaceSettings(cfg),

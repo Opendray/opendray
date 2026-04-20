@@ -12,6 +12,13 @@ import '../../shared/theme/app_theme.dart';
 
 const String _kBuildDate =
     String.fromEnvironment('BUILD_DATE', defaultValue: '');
+// UTC ISO8601-basic timestamp stamped by app/build_release.sh. Sits
+// alongside BUILD_DATE so ops can tell two APKs/IPAs built on the same
+// calendar day apart — the APK you just pushed to the phone vs the one
+// that was there before. Empty when dev-run (`flutter run`) or when
+// the build didn't set the --dart-define.
+const String _kBuildTimestamp =
+    String.fromEnvironment('BUILD_TIMESTAMP', defaultValue: '');
 const String _kRepoUrl = 'https://github.com/Opendray/opendray';
 
 class SettingsPage extends StatefulWidget {
@@ -32,6 +39,7 @@ class _SettingsPageState extends State<SettingsPage> {
   /// too old to report them.
   String? _backendVersion;
   String? _backendSha;
+  String? _backendBuildTime;
 
   @override
   void initState() {
@@ -52,12 +60,15 @@ class _SettingsPageState extends State<SettingsPage> {
         final sha = (health['buildSha'] as String?) ?? '';
         // Short-SHA for display — full SHA is rarely useful in a UI.
         _backendSha = sha.isEmpty ? '—' : sha.substring(0, sha.length.clamp(0, 7));
+        final bt = (health['buildTime'] as String?) ?? '';
+        _backendBuildTime = bt.isEmpty ? '—' : bt;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _backendVersion = '—';
         _backendSha = '—';
+        _backendBuildTime = '—';
       });
     }
   }
@@ -308,9 +319,16 @@ class _SettingsPageState extends State<SettingsPage> {
                     future: PackageInfo.fromPlatform(),
                     builder: (context, snap) {
                       final info = snap.data;
-                      final version = info == null
+                      // Compose the app version line as
+                      // "1.0.0+30 · 20260420T193412Z" so two APKs from
+                      // the same pubspec version still render distinct
+                      // labels — ops uses this to spot a stale install.
+                      final base = info == null
                           ? '—'
                           : '${info.version} (${info.buildNumber})';
+                      final version = _kBuildTimestamp.isEmpty
+                          ? base
+                          : '$base · $_kBuildTimestamp';
                       final buildDate =
                           _kBuildDate.isEmpty ? '—' : _kBuildDate;
                       return Column(
@@ -327,6 +345,9 @@ class _SettingsPageState extends State<SettingsPage> {
                           _InfoRow(
                               label: context.tr('Backend build'),
                               value: _backendSha ?? '…'),
+                          _InfoRow(
+                              label: context.tr('Backend built at'),
+                              value: _backendBuildTime ?? '…'),
                         ],
                       );
                     },

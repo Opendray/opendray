@@ -43,18 +43,26 @@ else
 fi
 
 BUILD_DATE=$(date +%Y-%m-%d)
+# UTC ISO8601-basic timestamp — stamped alongside BUILD_DATE so two APKs
+# built on the same day (same pubspec version, same build number) still
+# render distinct labels in Settings → About. Compare timestamps to tell
+# "the APK I pushed 5 minutes ago" from "the APK that was there before".
+BUILD_TIMESTAMP=$(date -u '+%Y%m%dT%H%M%SZ')
 echo "build date: ${BUILD_DATE}"
+echo "build timestamp: ${BUILD_TIMESTAMP}"
 
 flutter pub get
 
 echo "→ building APK (release)"
 flutter build apk --release \
-  --dart-define=BUILD_DATE="${BUILD_DATE}"
+  --dart-define=BUILD_DATE="${BUILD_DATE}" \
+  --dart-define=BUILD_TIMESTAMP="${BUILD_TIMESTAMP}"
 
 if [[ "$APK_ONLY" == "0" ]]; then
   echo "→ building IPA (release, no codesign)"
   flutter build ipa --release --no-codesign \
-    --dart-define=BUILD_DATE="${BUILD_DATE}"
+    --dart-define=BUILD_DATE="${BUILD_DATE}" \
+    --dart-define=BUILD_TIMESTAMP="${BUILD_TIMESTAMP}"
 fi
 
-echo "done: ${NEXT}"
+echo "done: ${NEXT} @ ${BUILD_TIMESTAMP}"
