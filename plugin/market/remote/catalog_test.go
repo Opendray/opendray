@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/opendray/opendray/plugin/market"
 )
@@ -553,6 +554,107 @@ func TestMirror_CtxCancelStopsRetry(t *testing.T) {
 	}
 	if mirrorHit != 0 {
 		t.Errorf("mirror hit %d times; want 0 under cancel", mirrorHit)
+	}
+}
+
+// ─── Cache ────────────────────────────────────────────────────────────────
+
+func TestCache_HitsAvoidSecondNetwork(t *testing.T) {
+	hits := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/index.json" {
+			http.NotFound(w, r)
+			return
+		}
+		hits++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, `{"version":1,"plugins":[]}`)
+	}))
+	t.Cleanup(srv.Close)
+
+	c, err := New(Config{
+		RegistryURL: srv.URL,
+		HTTPClient:  srv.Client(),
+		CacheTTL:    time.Minute, // long enough that both calls hit cache
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := c.List(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.List(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if hits != 1 {
+		t.Errorf("upstream hit %d times; want 1 (second call served from cache)", hits)
+	}
+}
+
+func TestCache_DisabledForcesEveryCall(t *testing.T) {
+	hits := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		hits++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, `{"version":1,"plugins":[]}`)
+	}))
+	t.Cleanup(srv.Close)
+
+	c, _ := New(Config{
+		RegistryURL: srv.URL,
+		HTTPClient:  srv.Client(),
+		CacheTTL:    -1, // disable
+	})
+	_, _ = c.List(context.Background())
+	_, _ = c.List(context.Background())
+	if hits != 2 {
+		t.Errorf("upstream hit %d times; want 2 with cache disabled", hits)
+	}
+}
+
+func TestCache_Invalidate(t *testing.T) {
+	hits := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		hits++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, `{"version":1,"plugins":[]}`)
+	}))
+	t.Cleanup(srv.Close)
+
+	c, _ := New(Config{
+		RegistryURL: srv.URL,
+		HTTPClient:  srv.Client(),
+		CacheTTL:    time.Minute,
+	})
+	_, _ = c.List(context.Background())
+	_, _ = c.List(context.Background())
+	c.InvalidateCache()
+	_, _ = c.List(context.Background())
+	if hits != 2 {
+		t.Errorf("upstream hit %d times; want 2 (first hit + post-invalidate)", hits)
+	}
+}
+
+func TestCache_ErrorsNotCached(t *testing.T) {
+	// 503 response; next call should retry the network rather than
+	// serving a poisoned cache entry.
+	hits := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		hits++
+		http.Error(w, "down", http.StatusServiceUnavailable)
+	}))
+	t.Cleanup(srv.Close)
+
+	c, _ := New(Config{
+		RegistryURL: srv.URL,
+		HTTPClient:  srv.Client(),
+		CacheTTL:    time.Minute,
+	})
+	_, _ = c.List(context.Background())
+	_, _ = c.List(context.Background())
+	if hits != 2 {
+		t.Errorf("upstream hit %d times on repeated 503; want 2", hits)
 	}
 }
 

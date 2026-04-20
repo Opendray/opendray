@@ -27,6 +27,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/opendray/opendray/plugin"
@@ -81,11 +82,23 @@ type Config struct {
 	// timeout. Tests inject a client that hits a httptest.Server.
 	HTTPClient *http.Client
 
-	// CacheDir is where fetched index + per-version JSON live on
-	// disk for stale-while-revalidate. Zero disables disk caching.
-	// Filled by T7.
+	// CacheDir is where fetched index + per-version JSON will live
+	// on disk once the post-v1 stale-while-revalidate layer lands.
+	// Zero disables disk caching. Memory-only TTL cache is always on.
 	CacheDir string
+
+	// CacheTTL controls the in-memory response cache. Zero uses
+	// defaultCacheTTL (5 min). Set to -1 to disable caching (tests
+	// that need every call to hit the network).
+	CacheTTL time.Duration
 }
+
+// defaultCacheTTL bounds how long a fetched registry JSON stays
+// warm in memory before we re-fetch. Short enough that a revoked
+// plugin's revocations.json update propagates within a few
+// minutes; long enough to spare GitHub raw from per-app-launch
+// traffic.
+const defaultCacheTTL = 5 * time.Minute
 
 // HTTPStatusError is returned by fetch for any non-2xx response.
 // The status code lets the retry loop decide whether to try the
@@ -116,6 +129,20 @@ type Catalog struct {
 	// mirrors, all normalised to a trailing slash. The fetch
 	// helper iterates this in order on retryable failures.
 	bases []*url.URL
+
+	// ttl is the cache window; 0 = use defaultCacheTTL; <0 disables.
+	ttl time.Duration
+	// cache is keyed on the relative path (e.g. "index.json",
+	// "publishers/acme.json") — no base URL differentiation, since
+	// mirror fallback surfaces through fetch and the cached bytes
+	// are identical across mirrors.
+	cacheMu sync.RWMutex
+	cache   map[string]cacheEntry
+}
+
+type cacheEntry struct {
+	body    []byte
+	expires time.Time
 }
 
 // New constructs a remote Catalog from cfg. A zero Config is
@@ -141,7 +168,59 @@ func New(cfg Config) (*Catalog, error) {
 	if client == nil {
 		client = &http.Client{Timeout: defaultHTTPTimeout}
 	}
-	return &Catalog{cfg: cfg, client: client, bases: bases}, nil
+	ttl := cfg.CacheTTL
+	if ttl == 0 {
+		ttl = defaultCacheTTL
+	}
+	return &Catalog{
+		cfg:    cfg,
+		client: client,
+		bases:  bases,
+		ttl:    ttl,
+		cache:  make(map[string]cacheEntry),
+	}, nil
+}
+
+// cacheLookup returns cached bytes if the entry is still fresh.
+// Returns (nil, false) when the cache is disabled (ttl < 0), the
+// key is absent, or the entry has expired.
+func (c *Catalog) cacheLookup(rel string) ([]byte, bool) {
+	if c.ttl < 0 {
+		return nil, false
+	}
+	c.cacheMu.RLock()
+	defer c.cacheMu.RUnlock()
+	e, ok := c.cache[rel]
+	if !ok {
+		return nil, false
+	}
+	if time.Now().After(e.expires) {
+		return nil, false
+	}
+	return e.body, true
+}
+
+// cacheStore records a freshly-fetched body. No-op when caching is
+// disabled. Expired entries are evicted lazily on cacheLookup.
+func (c *Catalog) cacheStore(rel string, body []byte) {
+	if c.ttl < 0 {
+		return
+	}
+	c.cacheMu.Lock()
+	defer c.cacheMu.Unlock()
+	c.cache[rel] = cacheEntry{
+		body:    append([]byte(nil), body...),
+		expires: time.Now().Add(c.ttl),
+	}
+}
+
+// InvalidateCache drops every cached entry. Used by the revocation
+// poller (T8) and the "Refresh cache now" button (T12) so a fresh
+// network fetch runs on the next List / Resolve.
+func (c *Catalog) InvalidateCache() {
+	c.cacheMu.Lock()
+	defer c.cacheMu.Unlock()
+	c.cache = make(map[string]cacheEntry)
 }
 
 // parseBase parses one base URL and guarantees a trailing slash
@@ -443,7 +522,16 @@ func resolveAt(base *url.URL, rel string) (*url.URL, error) {
 // network errors, timeouts). 4xx errors — especially 404 — are
 // definitive and short-circuit the loop so the caller surfaces
 // "not found" rather than trying mirrors that will all 404 too.
+//
+// Cache-first: serves recent hits straight from memory so repeated
+// List / Resolve / FetchPublisher calls within the CacheTTL window
+// don't retouch the network. Cache is populated only by a
+// successful full-size response; 4xx / 5xx never poison the cache.
 func (c *Catalog) fetch(ctx context.Context, rel string, maxBytes int64) ([]byte, error) {
+	if body, ok := c.cacheLookup(rel); ok {
+		return body, nil
+	}
+
 	var lastErr error
 	for i, base := range c.bases {
 		u, err := resolveAt(base, rel)
@@ -452,6 +540,7 @@ func (c *Catalog) fetch(ctx context.Context, rel string, maxBytes int64) ([]byte
 		}
 		body, err := c.fetchOne(ctx, u, maxBytes)
 		if err == nil {
+			c.cacheStore(rel, body)
 			return body, nil
 		}
 		lastErr = err
@@ -468,9 +557,7 @@ func (c *Catalog) fetch(ctx context.Context, rel string, maxBytes int64) ([]byte
 		if errors.As(err, &hs) && !hs.Retryable() {
 			return nil, err
 		}
-		// Retryable — advance to next mirror if one exists. The
-		// retry log line helps operators understand which mirror
-		// took over when debugging.
+		// Retryable — advance to next mirror if one exists.
 		if i+1 < len(c.bases) {
 			continue
 		}
