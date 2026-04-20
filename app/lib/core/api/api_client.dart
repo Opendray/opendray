@@ -663,6 +663,33 @@ class ApiClient {
     return (res.data as List).cast<Map<String, dynamic>>();
   }
 
+  /// Reviews submitted on a PR — approved / changes_requested /
+  /// commented / dismissed, with body + timestamps. GitLab returns
+  /// approvals-only (always state="approved").
+  Future<List<Map<String, dynamic>>> forgePullReviews(
+      String plugin, int number) async {
+    final res = await _dio.get('/api/git-forge/$plugin/pulls/$number/reviews');
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  /// Inline review comments (per-file, per-line). Distinct from
+  /// forgePullComments which returns only the top-level discussion.
+  Future<List<Map<String, dynamic>>> forgePullReviewComments(
+      String plugin, int number) async {
+    final res = await _dio.get(
+        '/api/git-forge/$plugin/pulls/$number/review-comments');
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  /// CI checks at the PR's head commit. Each entry has a normalised
+  /// status (success / failure / pending / skipped) so the UI can
+  /// render a traffic-light badge without per-forge branching.
+  Future<List<Map<String, dynamic>>> forgePullChecks(
+      String plugin, int number) async {
+    final res = await _dio.get('/api/git-forge/$plugin/pulls/$number/checks');
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
   // ── PostgreSQL (pg-browser plugin) ───────────────────────
 
   Future<Map<String, dynamic>> pgQuery(String plugin, String sql) async {
@@ -1206,6 +1233,9 @@ class MarketplaceEntry {
   /// defaults to "community" per spec. Rendered as a badge on the
   /// Hub card.
   final String trust;
+  // i18n overlays — see provider.dart ConfigField.labelZh.
+  final String displayNameZh;
+  final String descriptionZh;
 
   const MarketplaceEntry({
     required this.name,
@@ -1218,6 +1248,8 @@ class MarketplaceEntry {
     this.tags = const [],
     this.permissions = const {},
     this.trust = 'community',
+    this.displayNameZh = '',
+    this.descriptionZh = '',
     List<PluginConfigField>? configSchema,
   }) : _rawConfigSchema = configSchema;
 
@@ -1240,6 +1272,8 @@ class MarketplaceEntry {
           ? Map<String, dynamic>.from(rawPerms)
           : const {},
       trust: (json['trust'] as String?) ?? 'community',
+      displayNameZh: (json['displayName_zh'] as String?) ?? '',
+      descriptionZh: (json['description_zh'] as String?) ?? '',
       configSchema: rawSchema is List
           ? [
               for (final f in rawSchema)
@@ -1283,6 +1317,10 @@ class PluginConfigField {
   final List<String> options;
   final bool required;
   final String group;
+  // i18n overlays — see provider.dart ConfigField.labelZh.
+  final String labelZh;
+  final String descriptionZh;
+  final String placeholderZh;
 
   const PluginConfigField({
     required this.key,
@@ -1294,6 +1332,9 @@ class PluginConfigField {
     this.options = const [],
     this.required = false,
     this.group = '',
+    this.labelZh = '',
+    this.descriptionZh = '',
+    this.placeholderZh = '',
   });
 
   factory PluginConfigField.fromJson(Map<String, dynamic> json) {
@@ -1310,6 +1351,9 @@ class PluginConfigField {
           : const [],
       required: (json['required'] as bool?) ?? false,
       group: (json['group'] as String?) ?? '',
+      labelZh: (json['label_zh'] as String?) ?? '',
+      descriptionZh: (json['description_zh'] as String?) ?? '',
+      placeholderZh: (json['placeholder_zh'] as String?) ?? '',
     );
   }
 

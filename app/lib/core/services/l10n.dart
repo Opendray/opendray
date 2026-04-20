@@ -57,6 +57,22 @@ class L10n extends ChangeNotifier {
     return catalog[key] ?? key;
   }
 
+  /// Picks a per-field i18n overlay shipped by a plugin manifest.
+  ///
+  /// Companion to [t]: `t` looks up keys in the app's own catalogs
+  /// (for shell chrome we translate ourselves). `pick` consumes
+  /// overlays the plugin author wrote into its manifest
+  /// (`displayName_zh`, `label_zh`, etc.). The two can't share a
+  /// single entry point — manifest strings aren't guessable keys;
+  /// they're free-form text owned by the plugin.
+  ///
+  /// Fallback: when [zh] is null/empty, or the current locale isn't
+  /// zh, the caller gets [en] unchanged.
+  String pick(String en, String? zh) {
+    if (_code == 'zh' && zh != null && zh.isNotEmpty) return zh;
+    return en;
+  }
+
   // ── Catalogs ────────────────────────────────────────────────────
 
   static final Map<String, Map<String, String>> _catalogs = {
@@ -162,6 +178,14 @@ class L10n extends ChangeNotifier {
     'No diff':                        '无 diff',
     'No comments':                    '暂无评论',
     'Open in browser':                '在浏览器打开',
+    'Explain this PR':                '让 Claude 总结这个 PR',
+    'Review this diff':               '让 Claude Review 这份 diff',
+    'Diff copied — start a Claude session on the dashboard and paste.':
+        'Diff 已复制到剪贴板,请回首页创建 Claude session 后粘贴。',
+    'approved':                       '已批准',
+    'changes':                        '待改',
+    'commented':                      '已评论',
+    'Context comment':                '上下文评论',
     'Diff':                           'Diff',
     'Comments':                       '评论',
     'comments':                       '条评论',
@@ -708,4 +732,12 @@ extension L10nContext on BuildContext {
   /// Non-watching variant for use in callbacks / builders where you don't
   /// want to subscribe to rebuilds.
   String trOnce(String key) => read<L10n>().t(key);
+
+  /// Ergonomic wrapper over [L10n.pick] for manifest i18n overlays.
+  /// Use when rendering plugin-owned text (displayName, config labels,
+  /// descriptions) that ships with optional `*_zh` overrides.
+  String pickL10n(String en, String? zh) => watch<L10n>().pick(en, zh);
+
+  /// Non-watching variant — safe inside SnackBar / dialog builders.
+  String pickL10nOnce(String en, String? zh) => read<L10n>().pick(en, zh);
 }

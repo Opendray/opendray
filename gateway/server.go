@@ -382,7 +382,10 @@ func New(cfg Config) *Server {
 		r.Get("/api/git-forge/{plugin}/pulls",                    s.forgePullsList)
 		r.Get("/api/git-forge/{plugin}/pulls/{number}",           s.forgePullDetail)
 		r.Get("/api/git-forge/{plugin}/pulls/{number}/diff",      s.forgePullDiff)
-		r.Get("/api/git-forge/{plugin}/pulls/{number}/comments",  s.forgePullComments)
+		r.Get("/api/git-forge/{plugin}/pulls/{number}/comments",         s.forgePullComments)
+		r.Get("/api/git-forge/{plugin}/pulls/{number}/reviews",          s.forgePullReviews)
+		r.Get("/api/git-forge/{plugin}/pulls/{number}/review-comments",  s.forgePullReviewComments)
+		r.Get("/api/git-forge/{plugin}/pulls/{number}/checks",           s.forgePullChecks)
 
 		// pg-browser panel — SQL editor + schema browser backed by pgx.
 		// Read-only is enforced server-side via BEGIN READ ONLY + verb

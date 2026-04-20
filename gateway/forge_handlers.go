@@ -148,3 +148,63 @@ func (s *Server) forgePullComments(w http.ResponseWriter, r *http.Request) {
 	}
 	respondJSON(w, http.StatusOK, cs)
 }
+
+func (s *Server) forgePullReviews(w http.ResponseWriter, r *http.Request) {
+	cfg, err := s.getForgeConfig(r, chi.URLParam(r, "plugin"))
+	if err != nil {
+		respondError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	n, err := parseForgeNumber(r)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	rs, err := forge.Reviews(r.Context(), cfg, n)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusOK, rs)
+}
+
+func (s *Server) forgePullReviewComments(w http.ResponseWriter, r *http.Request) {
+	cfg, err := s.getForgeConfig(r, chi.URLParam(r, "plugin"))
+	if err != nil {
+		respondError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	n, err := parseForgeNumber(r)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	rcs, err := forge.ReviewComments(r.Context(), cfg, n)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusOK, rcs)
+}
+
+func (s *Server) forgePullChecks(w http.ResponseWriter, r *http.Request) {
+	cfg, err := s.getForgeConfig(r, chi.URLParam(r, "plugin"))
+	if err != nil {
+		respondError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	n, err := parseForgeNumber(r)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	// Empty headSHA lets forge.Checks resolve it via Detail() —
+	// saves callers an explicit round-trip on the hot PR-detail
+	// page flow.
+	crs, err := forge.Checks(r.Context(), cfg, n, "")
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusOK, crs)
+}

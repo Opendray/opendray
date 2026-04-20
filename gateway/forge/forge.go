@@ -78,6 +78,7 @@ type PullRequest struct {
 	Author       string    `json:"author"`
 	AuthorAvatar string    `json:"authorAvatar,omitempty"`
 	HeadRef      string    `json:"headRef"`
+	HeadSHA      string    `json:"headSha,omitempty"` // commit SHA for checks lookup
 	BaseRef      string    `json:"baseRef"`
 	URL          string    `json:"url"`
 	Body         string    `json:"body,omitempty"`
@@ -100,15 +101,75 @@ type DiffFile struct {
 	Patch     string `json:"patch"`
 }
 
-// Comment is a top-level PR / issue comment. Inline file comments
-// are deferred to a later phase — forges disagree on threading
-// semantics and the UI cost is high.
+// Comment is a top-level PR / issue comment.
 type Comment struct {
 	ID        int64     `json:"id"`
 	Author    string    `json:"author"`
 	Body      string    `json:"body"`
 	CreatedAt time.Time `json:"createdAt"`
 	URL       string    `json:"url,omitempty"`
+}
+
+// Review is one reviewer's verdict on a PR. Each forge has a slightly
+// different state machine; we normalise to four values the UI can
+// colour consistently:
+//
+//	"approved"          — explicit LGTM
+//	"changes_requested" — blocks merge
+//	"commented"         — left remarks without approving/blocking
+//	"dismissed"         — review was dismissed by an admin
+//
+// Author + SubmittedAt identify the entry; Body is optional summary
+// text the reviewer typed. For GitLab's approvals API (which doesn't
+// carry commentary), Body will be empty and State will be "approved".
+type Review struct {
+	Author       string    `json:"author"`
+	AuthorAvatar string    `json:"authorAvatar,omitempty"`
+	State        string    `json:"state"`
+	Body         string    `json:"body,omitempty"`
+	SubmittedAt  time.Time `json:"submittedAt"`
+}
+
+// ReviewComment is one inline comment attached to a specific file
+// and line inside a PR's diff. Kept separate from the top-level
+// Comment type so callers can colocate it with the matching diff hunk
+// rather than threading it into a chronological timeline.
+//
+// Line is the line number in the NEW file (post-change) that the
+// comment targets. When a comment is on a deleted line the adapter
+// may report the old-file line instead — forges differ; we accept
+// whichever number the forge gives and trust the client to match.
+// ReplyToID allows threading; zero means the comment starts a thread.
+type ReviewComment struct {
+	ID        int64     `json:"id"`
+	Author    string    `json:"author"`
+	Body      string    `json:"body"`
+	CreatedAt time.Time `json:"createdAt"`
+	Path      string    `json:"path"`
+	Line      int       `json:"line"`
+	ReplyToID int64     `json:"replyToId,omitempty"`
+	URL       string    `json:"url,omitempty"`
+}
+
+// CheckRun summarises one CI check at the PR's head commit. The
+// forge-native statuses collapse to five buckets so the UI can render
+// a single traffic-light badge:
+//
+//	"success" — all assertions green
+//	"failure" — at least one failed assertion
+//	"error"   — CI system itself errored (config / infrastructure)
+//	"pending" — still running or queued
+//	"skipped" — check was skipped (often branch-filter)
+//
+// Context is the CI system + pipeline name ("ci/jenkins",
+// "GitHub Actions / build", etc) so the user can distinguish multiple
+// checks at a glance. TargetURL goes to the check's UI when present.
+type CheckRun struct {
+	Name        string     `json:"name"`
+	Status      string     `json:"status"`
+	Context     string     `json:"context,omitempty"`
+	TargetURL   string     `json:"targetUrl,omitempty"`
+	CompletedAt *time.Time `json:"completedAt,omitempty"`
 }
 
 // ─── Adapter interface + dispatch ────────────────────────────────
@@ -121,6 +182,12 @@ type adapter interface {
 	detail(ctx context.Context, number int) (PullRequest, error)
 	diff(ctx context.Context, number int) ([]DiffFile, error)
 	comments(ctx context.Context, number int) ([]Comment, error)
+	reviews(ctx context.Context, number int) ([]Review, error)
+	reviewComments(ctx context.Context, number int) ([]ReviewComment, error)
+	// checks takes headSHA — adapter may hit a /statuses or
+	// /check-runs endpoint that needs the commit hash directly
+	// instead of the PR number.
+	checks(ctx context.Context, number int, headSHA string) ([]CheckRun, error)
 }
 
 // pick returns the adapter matching cfg.ForgeType, or an error if
@@ -225,6 +292,85 @@ func Comments(ctx context.Context, cfg Config, number int) ([]Comment, error) {
 	return cs, nil
 }
 
+// Reviews returns one row per reviewer verdict (approved / changes
+// requested / commented / dismissed). GitLab's approvals API lacks a
+// body field — those rows come back with State="approved" and Body="".
+func Reviews(ctx context.Context, cfg Config, number int) ([]Review, error) {
+	if number <= 0 {
+		return nil, errors.New("forge: pull number must be positive")
+	}
+	a, err := pick(cfg)
+	if err != nil {
+		return nil, err
+	}
+	rs, err := a.reviews(ctx, number)
+	if err != nil {
+		return nil, err
+	}
+	if rs == nil {
+		rs = []Review{}
+	}
+	return rs, nil
+}
+
+// ReviewComments returns inline (per-file, per-line) review comments.
+// Distinct from [Comments] which returns only the PR's top-level
+// discussion thread.
+func ReviewComments(ctx context.Context, cfg Config, number int) ([]ReviewComment, error) {
+	if number <= 0 {
+		return nil, errors.New("forge: pull number must be positive")
+	}
+	a, err := pick(cfg)
+	if err != nil {
+		return nil, err
+	}
+	rcs, err := a.reviewComments(ctx, number)
+	if err != nil {
+		return nil, err
+	}
+	if rcs == nil {
+		rcs = []ReviewComment{}
+	}
+	return rcs, nil
+}
+
+// Checks returns CI run statuses for the PR's head commit. headSHA is
+// looked up via Detail() internally when empty, so callers usually just
+// pass the PR number.
+func Checks(ctx context.Context, cfg Config, number int, headSHA string) ([]CheckRun, error) {
+	if number <= 0 {
+		return nil, errors.New("forge: pull number must be positive")
+	}
+	a, err := pick(cfg)
+	if err != nil {
+		return nil, err
+	}
+	// Resolve the head SHA if the caller didn't pre-fetch it. Saves
+	// an HTTP round-trip on the common "just tapped into PR detail"
+	// flow — callers that already hold the SHA pass it through.
+	if headSHA == "" {
+		pr, err := a.detail(ctx, number)
+		if err != nil {
+			return nil, fmt.Errorf("forge: resolve head sha: %w", err)
+		}
+		headSHA = pr.HeadSHA
+	}
+	if headSHA == "" {
+		// Some forges (e.g. GitLab without diff_refs) don't surface
+		// a head SHA; return an empty list rather than erroring so
+		// the client can display "no checks reported" cleanly.
+		return []CheckRun{}, nil
+	}
+	crs, err := a.checks(ctx, number, headSHA)
+	if err != nil {
+		return nil, err
+	}
+	if crs == nil {
+		crs = []CheckRun{}
+	}
+	return crs, nil
+}
+
 // ─── HTTP plumbing shared by all adapters ────────────────────────
 
 // httpClient returns a client with the caller-supplied timeout. A
@@ -322,4 +468,58 @@ func splitRepo(repo string) (string, string, error) {
 // can concat `/path` without doubling up.
 func trimSlash(s string) string {
 	return strings.TrimRight(s, "/")
+}
+
+// normaliseReviewState folds each forge's review vocabulary into the
+// four buckets [Review.State] documents. Unknown strings fall through
+// to "commented" so a forthcoming forge schema change doesn't crash
+// the merge panel.
+func normaliseReviewState(raw string) string {
+	switch strings.ToUpper(raw) {
+	case "APPROVED", "APPROVE", "APPROVAL":
+		return "approved"
+	case "CHANGES_REQUESTED", "REQUEST_CHANGES", "REJECTED":
+		return "changes_requested"
+	case "DISMISSED":
+		return "dismissed"
+	case "COMMENTED", "COMMENT", "":
+		return "commented"
+	default:
+		return "commented"
+	}
+}
+
+// normaliseCheckStatus collapses every forge's CI status enum into
+// the five buckets [CheckRun.Status] documents. Behaviour for
+// unrecognised strings is "pending" — conservative; running checks
+// ought not be classified as success/failure without evidence.
+func normaliseCheckStatus(raw string) string {
+	switch strings.ToLower(raw) {
+	case "success", "passed", "completed":
+		return "success"
+	case "failure", "failed", "error":
+		return "failure"
+	case "skipped", "neutral", "cancelled", "canceled":
+		return "skipped"
+	case "pending", "running", "queued", "in_progress", "":
+		return "pending"
+	case "warning":
+		// Gitea reports CI style-lint etc. as "warning" — closer to
+		// a soft failure than a pass.
+		return "failure"
+	default:
+		return "pending"
+	}
+}
+
+// firstNonEmpty returns the first argument that's a non-empty string,
+// or "" if all are empty. Useful for picking a display name from
+// forge fields that are often redundant (description vs context).
+func firstNonEmpty(ss ...string) string {
+	for _, s := range ss {
+		if strings.TrimSpace(s) != "" {
+			return s
+		}
+	}
+	return ""
 }

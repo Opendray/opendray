@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -339,6 +341,11 @@ class _ForgeDetailPageState extends State<_ForgeDetailPage>
   bool _commentsLoading = false;
   String? _commentsError;
 
+  // Tier A extras — loaded once alongside the detail fetch.
+  List<Map<String, dynamic>> _reviews = const [];
+  List<Map<String, dynamic>> _checks = const [];
+  List<Map<String, dynamic>> _reviewComments = const [];
+
   ApiClient get _api => context.read<ApiClient>();
 
   int get _number => (_pr['number'] as num?)?.toInt() ?? 0;
@@ -376,7 +383,46 @@ class _ForgeDetailPageState extends State<_ForgeDetailPage>
       // Keep the list-view seed row rather than clobber with an
       // empty shell; the tabs below still load independently.
     }
-    if (mounted) _loadDiff();
+    if (!mounted) return;
+    // Fire reviews + checks + review-comments + diff in parallel.
+    // Any of them can fail silently without blocking the others —
+    // reviews/checks on forges that don't support the endpoint are
+    // a common case (GitLab CE without approvals plugin) so a
+    // whole-page-error UX would be wrong.
+    unawaited(_loadReviews());
+    unawaited(_loadChecks());
+    unawaited(_loadReviewComments());
+    _loadDiff();
+  }
+
+  Future<void> _loadReviews() async {
+    try {
+      final r = await ApiClient.describeErrors(
+          () => _api.forgePullReviews(widget.pluginName, _number));
+      if (mounted) setState(() => _reviews = r);
+    } on ApiException catch (_) {
+      // Silent: some forges / editions don't expose reviews.
+    }
+  }
+
+  Future<void> _loadChecks() async {
+    try {
+      final c = await ApiClient.describeErrors(
+          () => _api.forgePullChecks(widget.pluginName, _number));
+      if (mounted) setState(() => _checks = c);
+    } on ApiException catch (_) {
+      // Silent.
+    }
+  }
+
+  Future<void> _loadReviewComments() async {
+    try {
+      final rc = await ApiClient.describeErrors(
+          () => _api.forgePullReviewComments(widget.pluginName, _number));
+      if (mounted) setState(() => _reviewComments = rc);
+    } on ApiException catch (_) {
+      // Silent.
+    }
   }
 
   Future<void> _loadDiff() async {
@@ -434,6 +480,16 @@ class _ForgeDetailPageState extends State<_ForgeDetailPage>
         title: Text('#$_number · ${title.isEmpty ? "—" : title}',
             overflow: TextOverflow.ellipsis),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.auto_awesome, size: 20),
+            tooltip: context.tr('Explain this PR'),
+            onPressed: () => _aiHandoff(reviewMode: false),
+          ),
+          IconButton(
+            icon: const Icon(Icons.rate_review_outlined, size: 20),
+            tooltip: context.tr('Review this diff'),
+            onPressed: () => _aiHandoff(reviewMode: true),
+          ),
           if (url.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.open_in_browser, size: 20),
@@ -490,6 +546,14 @@ class _ForgeDetailPageState extends State<_ForgeDetailPage>
                     style: const TextStyle(
                         color: AppColors.textMuted, fontSize: 12))),
           ]),
+          if (_reviews.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _reviewsStrip(),
+          ],
+          if (_checks.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _checksStrip(),
+          ],
           if (body.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(body,
@@ -499,6 +563,99 @@ class _ForgeDetailPageState extends State<_ForgeDetailPage>
           ],
         ],
       ),
+    );
+  }
+
+  /// Reviews strip aggregates per-reviewer verdicts into three
+  /// counters so the user can tell at a glance whether a PR is
+  /// ready-to-merge. We group by reviewer and keep their latest
+  /// state — someone who commented then approved should show as
+  /// approved, not both.
+  Widget _reviewsStrip() {
+    final latest = <String, String>{};
+    for (final r in _reviews) {
+      final author = (r['author'] as String?) ?? '';
+      final state = (r['state'] as String?) ?? 'commented';
+      if (author.isEmpty) continue;
+      latest[author] = state; // submittedAt is sorted ascending by server
+    }
+    var approved = 0, changes = 0, commented = 0;
+    for (final state in latest.values) {
+      switch (state) {
+        case 'approved':
+          approved++;
+          break;
+        case 'changes_requested':
+          changes++;
+          break;
+        case 'commented':
+          commented++;
+          break;
+      }
+    }
+    return Wrap(spacing: 6, runSpacing: 4, children: [
+      if (approved > 0)
+        _badge(
+            '✓ $approved ${context.tr('approved')}', AppColors.success),
+      if (changes > 0)
+        _badge('✗ $changes ${context.tr('changes')}', AppColors.error),
+      if (commented > 0)
+        _badge(
+            '💬 $commented ${context.tr('commented')}', AppColors.textMuted),
+    ]);
+  }
+
+  /// Checks strip = traffic-light badges, one per CI run. The
+  /// server pre-normalises every forge's status vocabulary to
+  /// success / failure / pending / skipped so the switch here
+  /// stays tiny.
+  Widget _checksStrip() {
+    return Wrap(spacing: 6, runSpacing: 4, children: [
+      for (final c in _checks) _checkBadge(c),
+    ]);
+  }
+
+  Widget _checkBadge(Map<String, dynamic> c) {
+    final status = (c['status'] as String?) ?? 'pending';
+    final name = (c['name'] as String?) ?? '';
+    final url = (c['targetUrl'] as String?) ?? '';
+    final (icon, color) = switch (status) {
+      'success' => (Icons.check_circle, AppColors.success),
+      'failure' => (Icons.cancel, AppColors.error),
+      'skipped' => (Icons.remove_circle_outline, AppColors.textMuted),
+      _         => (Icons.access_time, AppColors.warning),
+    };
+    final badge = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 12, color: color),
+        const SizedBox(width: 4),
+        Text(name.isEmpty ? status : name,
+            style: TextStyle(color: color, fontSize: 10)),
+      ]),
+    );
+    if (url.isEmpty) return badge;
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () =>
+          launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+      child: badge,
+    );
+  }
+
+  Widget _badge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(text,
+          style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600)),
     );
   }
 
@@ -555,6 +712,9 @@ class _ForgeDetailPageState extends State<_ForgeDetailPage>
     final adds = (f['additions'] as num?)?.toInt() ?? 0;
     final dels = (f['deletions'] as num?)?.toInt() ?? 0;
     final patch = (f['patch'] as String?) ?? '';
+    final inlineComments = _reviewComments
+        .where((c) => (c['path'] as String?) == path)
+        .toList();
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       child: ExpansionTile(
@@ -570,6 +730,18 @@ class _ForgeDetailPageState extends State<_ForgeDetailPage>
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                       fontFamily: 'monospace', fontSize: 12))),
+          if (inlineComments.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 6),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.chat_bubble_outline,
+                    size: 12, color: AppColors.accent),
+                const SizedBox(width: 2),
+                Text('${inlineComments.length}',
+                    style: const TextStyle(
+                        color: AppColors.accent, fontSize: 10)),
+              ]),
+            ),
           if (adds > 0)
             Padding(
               padding: const EdgeInsets.only(left: 6),
@@ -595,6 +767,70 @@ class _ForgeDetailPageState extends State<_ForgeDetailPage>
                   fontFamily: 'monospace', fontSize: 11, height: 1.35),
             ),
           ),
+          if (inlineComments.isNotEmpty) _inlineCommentsBlock(inlineComments),
+        ],
+      ),
+    );
+  }
+
+  /// Collapsible block under a diff file that lists its inline review
+  /// comments, grouped by line. Each group shows the line number +
+  /// stacked comments by author. Threaded replies stay with their
+  /// root — we don't try to render nested indentation on mobile width.
+  Widget _inlineCommentsBlock(List<Map<String, dynamic>> cs) {
+    // Group by line; preserve insertion order.
+    final byLine = <int, List<Map<String, dynamic>>>{};
+    for (final c in cs) {
+      final line = (c['line'] as num?)?.toInt() ?? 0;
+      byLine.putIfAbsent(line, () => []).add(c);
+    }
+    final sortedLines = byLine.keys.toList()..sort();
+    return Container(
+      margin: const EdgeInsets.only(top: 4, bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.accent.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+            color: AppColors.accent.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final line in sortedLines) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 6, bottom: 2),
+              child: Text(
+                line > 0
+                    ? 'Line $line'
+                    : context.tr('Context comment'),
+                style: const TextStyle(
+                    color: AppColors.accent,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600),
+              ),
+            ),
+            for (final c in byLine[line]!) _inlineCommentRow(c),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _inlineCommentRow(Map<String, dynamic> c) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, top: 2, bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text((c['author'] as String?) ?? '',
+              style: const TextStyle(
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11)),
+          const SizedBox(height: 2),
+          SelectableText((c['body'] as String?) ?? '',
+              style: const TextStyle(fontSize: 12, height: 1.35)),
         ],
       ),
     );
@@ -617,6 +853,55 @@ class _ForgeDetailPageState extends State<_ForgeDetailPage>
           style: TextStyle(
               color: color, fontSize: 10, fontWeight: FontWeight.w600)),
     );
+  }
+
+  // ── AI handoff (Tier C) ─────────────────────────────────
+
+  /// Copies the PR's diff plus a preset Claude prompt to the
+  /// clipboard, navigates to the Sessions tab, and shows a SnackBar
+  /// telling the user to open a new Claude session and paste.
+  ///
+  /// Deliberately dumb: no bridge RPC, no session-creation API
+  /// extension, no auto-open. The clipboard is the universal hand-off
+  /// — works from any session flow (claude / codex / opencode /
+  /// terminal), no per-agent wiring.
+  Future<void> _aiHandoff({required bool reviewMode}) async {
+    final title = (_pr['title'] as String?) ?? '';
+    final number = _number;
+    final body = ((_pr['body'] as String?) ?? '').trim();
+    final diffFiles = _diff ?? const [];
+    final buf = StringBuffer();
+    final instruction = reviewMode
+        ? 'Code review this diff. Flag anything risky, confusing, or '
+            'missing. Be specific — cite file paths and line numbers. '
+            'Note security / performance / correctness concerns. If '
+            'the change looks fine, say so briefly.'
+        : 'Summarise this pull request. Lead with what it changes '
+            'and why. Call out the parts that most need reviewer '
+            'attention. Stay concise — two short paragraphs.';
+    buf.writeln(instruction);
+    buf.writeln();
+    buf.writeln('--- PR #$number: $title ---');
+    if (body.isNotEmpty) {
+      buf.writeln();
+      buf.writeln('Description:');
+      buf.writeln(body);
+    }
+    buf.writeln();
+    buf.writeln('Diff:');
+    for (final f in diffFiles) {
+      final patch = (f['patch'] as String?) ?? '';
+      if (patch.isEmpty) continue;
+      buf.writeln(patch);
+    }
+    await Clipboard.setData(ClipboardData(text: buf.toString()));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(context.tr(
+          'Diff copied — start a Claude session on the dashboard and paste.')),
+      duration: const Duration(seconds: 4),
+    ));
+    GoRouter.of(context).go('/');
   }
 
   // ── Comments tab ─────────────────────────────────────────

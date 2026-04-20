@@ -370,3 +370,190 @@ index aaaaaaa..bbbbbbb 100644
 +new line
 +added line
 `
+
+// ─── Tier A: reviews / review-comments / checks ──────────────────
+
+func TestNormaliseReviewState_CoversEveryForgeVocab(t *testing.T) {
+	cases := []struct {
+		in, want string
+	}{
+		{"APPROVED", "approved"},
+		{"APPROVE", "approved"},
+		{"CHANGES_REQUESTED", "changes_requested"},
+		{"REQUEST_CHANGES", "changes_requested"},
+		{"REJECTED", "changes_requested"},
+		{"COMMENTED", "commented"},
+		{"COMMENT", "commented"},
+		{"", "commented"},
+		{"DISMISSED", "dismissed"},
+		{"something_new_from_future_forge", "commented"},
+	}
+	for _, tc := range cases {
+		if got := normaliseReviewState(tc.in); got != tc.want {
+			t.Errorf("normaliseReviewState(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
+func TestNormaliseCheckStatus_CoversEveryForgeVocab(t *testing.T) {
+	cases := []struct {
+		in, want string
+	}{
+		{"success", "success"},
+		{"passed", "success"},
+		{"completed", "success"},
+		{"failure", "failure"},
+		{"failed", "failure"},
+		{"error", "failure"},
+		{"warning", "failure"},
+		{"pending", "pending"},
+		{"running", "pending"},
+		{"queued", "pending"},
+		{"in_progress", "pending"},
+		{"", "pending"},
+		{"skipped", "skipped"},
+		{"neutral", "skipped"},
+		{"cancelled", "skipped"},
+		{"unknown_status", "pending"},
+	}
+	for _, tc := range cases {
+		if got := normaliseCheckStatus(tc.in); got != tc.want {
+			t.Errorf("normaliseCheckStatus(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
+func TestGitea_Reviews_FiltersPending(t *testing.T) {
+	// JSON-literal bodies avoid redeclaring the adapter's anonymous
+	// tagged structs (Go rejects literal-with-different-tags).
+	const body = `[
+		{"id":1, "state":"APPROVED", "body":"lgtm", "user":{"login":"kev","avatar_url":"https://x/a"}, "submitted_at":"2026-04-01T00:00:00Z"},
+		{"id":2, "state":"PENDING", "user":{"login":"kev"}},
+		{"id":3, "state":"REQUEST_CHANGES", "body":"nit", "user":{"login":"bot"}, "submitted_at":"2026-04-02T00:00:00Z"}
+	]`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasSuffix(r.URL.Path, "/reviews") {
+			t.Errorf("unexpected path %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(body))
+	}))
+	defer srv.Close()
+	got, err := Reviews(context.Background(), newTestConfig("gitea", srv.URL), 42)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("expected 2 reviews (PENDING filtered), got %+v", got)
+	}
+	if got[0].State != "approved" || got[1].State != "changes_requested" {
+		t.Errorf("state normalisation regressed: %+v", got)
+	}
+}
+
+func TestGitHub_Checks_CollapsesStatusAndConclusion(t *testing.T) {
+	const body = `{"check_runs":[
+		{"name":"build","status":"completed","conclusion":"success","app":{"name":"GitHub Actions"},"completed_at":"2026-04-01T00:00:00Z","html_url":"https://x/1"},
+		{"name":"lint","status":"in_progress","conclusion":""},
+		{"name":"e2e","status":"completed","conclusion":"failure"},
+		{"name":"coverage","status":"completed","conclusion":"neutral"}
+	]}`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasSuffix(r.URL.Path, "/check-runs") {
+			t.Errorf("unexpected path %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(body))
+	}))
+	defer srv.Close()
+	got, err := (&githubAdapter{
+		cfg:  newTestConfig("github", srv.URL),
+		http: httpClient(time.Second),
+	}).checks(context.Background(), 1, "abc123")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"success", "pending", "failure", "skipped"}
+	if len(got) != len(want) {
+		t.Fatalf("check count = %d, want %d", len(got), len(want))
+	}
+	for i, w := range want {
+		if got[i].Status != w {
+			t.Errorf("check %d status = %q, want %q", i, got[i].Status, w)
+		}
+	}
+}
+
+func TestGitLab_Reviews_ApprovalsToReviewList(t *testing.T) {
+	const body = `{"updated_at":"2026-04-01T00:00:00Z","approved_by":[
+		{"user":{"username":"kev"}},
+		{"user":{"username":"claude"}}
+	]}`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasSuffix(r.URL.Path, "/approvals") {
+			t.Errorf("unexpected path %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(body))
+	}))
+	defer srv.Close()
+	got, err := (&gitlabAdapter{
+		cfg:  newTestConfig("gitlab", srv.URL),
+		http: httpClient(time.Second),
+	}).reviews(context.Background(), 9)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("expected 2 approvals, got %+v", got)
+	}
+	for _, r := range got {
+		if r.State != "approved" {
+			t.Errorf("GitLab approval → Review.State should always be 'approved', got %q", r.State)
+		}
+	}
+}
+
+func TestGitLab_ReviewComments_KeepsOnlyPositionNotes(t *testing.T) {
+	const body = `[
+		{"id":1, "body":"nit", "author":{"username":"kev"}, "position":{"new_path":"app/main.go","new_line":42}},
+		{"id":2, "body":"top-level", "author":{"username":"kev"}, "position":null},
+		{"id":3, "body":"system", "system":true, "author":{"username":"kev"}, "position":{"new_path":"app/main.go","new_line":42}}
+	]`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasSuffix(r.URL.Path, "/notes") {
+			t.Errorf("unexpected path %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(body))
+	}))
+	defer srv.Close()
+	got, err := (&gitlabAdapter{
+		cfg:  newTestConfig("gitlab", srv.URL),
+		http: httpClient(time.Second),
+	}).reviewComments(context.Background(), 9)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].Path != "app/main.go" || got[0].Line != 42 {
+		t.Fatalf("expected 1 inline comment at app/main.go:42, got %+v", got)
+	}
+}
+
+func TestChecks_EmptyHeadSHAReturnsEmptyRatherThanError(t *testing.T) {
+	// Some GitLab instances don't surface diff_refs; forge.Checks
+	// must tolerate that without tripping a 500.
+	const body = `{"iid":9,"title":"t","state":"opened","source_branch":"feat/x","target_branch":"main"}`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(body))
+	}))
+	defer srv.Close()
+	got, err := Checks(context.Background(), newTestConfig("gitlab", srv.URL), 9, "")
+	if err != nil {
+		t.Fatalf("expected nil error when head SHA unknown, got %v", err)
+	}
+	if got == nil || len(got) != 0 {
+		t.Errorf("expected empty slice, got %+v", got)
+	}
+}
