@@ -21,6 +21,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -357,22 +358,29 @@ func TestPluginsInstall_BadScheme(t *testing.T) {
 	}
 }
 
-// TestPluginsInstall_HTTPSNotImplemented verifies that https:// sources
-// return 501 ENOTIMPL in M1.
-// https:// is not a local scheme so the AllowLocal gate does not fire.
-func TestPluginsInstall_HTTPSNotImplemented(t *testing.T) {
-	// A nil installer here; gate only fires for local sources. We supply a
-	// minimal installer with AllowLocal=true to let https:// reach Stage.
+// TestPluginsInstall_HTTPSRawURLFailsWithoutSHA verifies that a
+// raw https:// source (without the marketplace layer supplying a
+// SHA256) surfaces a clean ESTAGEFAIL rather than succeeding.
+// HTTPSSource is fully implemented since M4.1 T4 but requires
+// ExpectedSHA256; raw user-supplied URLs can't provide that, so
+// this path stays effectively unusable until the marketplace
+// install flow wires it in T11.
+func TestPluginsInstall_HTTPSRawURLFailsWithoutSHA(t *testing.T) {
 	inst := buildGateInstaller(t, true)
 	s := buildTestServer(t, inst, nil)
 
 	rr := postJSON(t, s.pluginsInstall, map[string]any{"src": "https://example.com/plugin.zip"})
-	if rr.Code != http.StatusNotImplemented {
-		t.Fatalf("want 501, got %d; body=%s", rr.Code, rr.Body)
+	if rr.Code != http.StatusInternalServerError {
+		t.Fatalf("want 500, got %d; body=%s", rr.Code, rr.Body)
 	}
 	m := decodeBody(t, rr)
-	if code, _ := m["code"].(string); code != "ENOTIMPL" {
-		t.Fatalf("want code=ENOTIMPL, got %q", code)
+	if code, _ := m["code"].(string); code != "ESTAGEFAIL" {
+		t.Fatalf("want code=ESTAGEFAIL, got %q", code)
+	}
+	// Sanity: the error message should namespace to SHA expectation
+	// so a plugin author can act on it.
+	if msg, _ := m["msg"].(string); !strings.Contains(msg, "ExpectedSHA256") {
+		t.Fatalf("want msg to mention ExpectedSHA256, got %q", msg)
 	}
 }
 

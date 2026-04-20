@@ -240,16 +240,13 @@ func TestParseSource(t *testing.T) {
 	}
 }
 
-// TestHTTPS_Marketplace_ReturnErrNotImplemented ensures the M4-bound
-// sources fail loudly rather than silently.
-func TestHTTPS_Marketplace_ReturnErrNotImplemented(t *testing.T) {
+// TestMarketplace_ReturnErrNotImplemented ensures the one remaining
+// M4-bound source fails loudly rather than silently. HTTPSSource is
+// fully implemented from M4.1 T4 onward — its live behaviour is
+// covered by https_source_test.go.
+func TestMarketplace_ReturnErrNotImplemented(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-
-	https := HTTPSSource{URL: "https://example.com/foo.zip"}
-	if _, _, err := https.Fetch(ctx); !errors.Is(err, ErrNotImplemented) {
-		t.Errorf("HTTPSSource.Fetch: want ErrNotImplemented, got %v", err)
-	}
 
 	mp := MarketplaceSource{Raw: "marketplace://foo"}
 	if _, _, err := mp.Fetch(ctx); !errors.Is(err, ErrNotImplemented) {
@@ -1026,12 +1023,16 @@ func TestInstaller_LocalSourceGatedByConfig_HTTPSUnaffected(t *testing.T) {
 		Log:        slog.Default(),
 	}
 
+	// T4 wired HTTPSSource for real; constructing one without
+	// ExpectedSHA256 should fail at fetch with a clear message
+	// rather than trip the AllowLocal gate. The gate is the point
+	// this test is asserting.
 	_, err := inst.Stage(ctx, HTTPSSource{URL: "https://example.com/x.zip"})
 	if errors.Is(err, ErrLocalDisabled) {
 		t.Errorf("HTTPS source should not be blocked by AllowLocal gate; got ErrLocalDisabled")
 	}
-	if !errors.Is(err, ErrNotImplemented) {
-		t.Errorf("HTTPS source with AllowLocal=false: want ErrNotImplemented, got %v", err)
+	if err == nil {
+		t.Errorf("HTTPS source with AllowLocal=false: want a fetch-side error (missing SHA), got nil")
 	}
 }
 
