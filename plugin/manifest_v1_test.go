@@ -9,6 +9,20 @@ import (
 	bundled "github.com/opendray/opendray/plugins"
 )
 
+// v1MigratedTier1 is the canonical set of bundled plugin names that
+// have landed their Phase 5 migration (M5 A1/A2/A3). Used by multiple
+// tests to assert (a) these never regress to legacy, and (b) the
+// legacy-compat path is only asked to handle the remaining set.
+//
+// Extend as Phase 5 progresses. Tier-2 plugins (codex/gemini/opencode
+// etc.) migrate post-v1 — they stay in the default (non-v1) branch
+// here until their own PRs land.
+var v1MigratedTier1 = map[string]bool{
+	"terminal":     true, // M5 A1
+	"file-browser": true, // M5 A2
+	"claude":       true, // M5 A3.1
+}
+
 func TestProvider_IsV1(t *testing.T) {
 	cases := []struct {
 		name string
@@ -77,11 +91,7 @@ func TestLoadManifest_LegacyCompat(t *testing.T) {
 
 	// v1Migrated is the set of bundled manifests that intentionally opted
 	// into the v1 contract. Extend as each Phase 5 task lands.
-	v1Migrated := map[string]bool{
-		"terminal":     true, // M5 A1
-		"file-browser": true, // M5 A2
-		"claude":       true, // M5 A3.1
-	}
+	v1Migrated := v1MigratedTier1
 
 	for _, p := range providers {
 		p := p
@@ -346,5 +356,44 @@ func TestLoadManifest_V1WebviewOmittedDefaultsEmpty(t *testing.T) {
 	}
 	if p.Contributes.Panels != nil {
 		t.Errorf("Panels should be nil when absent, got %v", p.Contributes.Panels)
+	}
+}
+
+// TestTier1Migrated_Tier1PluginsRemainV1 is the M5 A4 regression guard.
+// Every bundled plugin in the v1MigratedTier1 set must continue to load
+// as a fully-v1 manifest: IsV1() true, publisher non-empty, engines.opendray
+// set, and the embedded contributes block honoured (not synthesised). A
+// drift here means someone stripped required fields off a migrated manifest.
+func TestTier1Migrated_Tier1PluginsRemainV1(t *testing.T) {
+	roots := []string{"agents", "panels"}
+	found := make(map[string]bool)
+	for _, root := range roots {
+		ps, err := ScanFS(bundled.FS, root)
+		if err != nil {
+			t.Fatalf("ScanFS %s: %v", root, err)
+		}
+		for _, p := range ps {
+			if !v1MigratedTier1[p.Name] {
+				continue
+			}
+			found[p.Name] = true
+			if !p.IsV1() {
+				t.Errorf("%s: IsV1() = false after Phase 5 migration", p.Name)
+			}
+			if p.Publisher == "" {
+				t.Errorf("%s: Publisher empty", p.Name)
+			}
+			if p.Engines == nil || p.Engines.Opendray == "" {
+				t.Errorf("%s: engines.opendray empty", p.Name)
+			}
+			if p.Contributes == nil {
+				t.Errorf("%s: contributes block missing", p.Name)
+			}
+		}
+	}
+	for name := range v1MigratedTier1 {
+		if !found[name] {
+			t.Errorf("tier-1 plugin %q vanished from bundled FS", name)
+		}
 	}
 }

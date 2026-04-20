@@ -167,8 +167,8 @@ to degrade gracefully when the route 404s).
 | A1 | Migrate `terminal` manifest → v1 (publisher, engines) | S | ✅ form:"declarative" + contributes.activityBar/views declared inline so Flutter gets the same icon+view Synthesize used to generate. |
 | A2 | Migrate `file-browser` manifest → v1 | S | ✅ same shape as A1. /api/files/{plugin} endpoints stay as the I/O path for now; bridge-native rewrite is post-v1. |
 | A3 | Migrate `claude` → v1 + unify accounts UI into the plugin card | M | 🟡 A3.1 (manifest → v1) ✅ · A3.2 (ClaudeAccounts inlined into Settings → Plugins → Claude) ✅ · A3.3 (claude_accounts table → plugin_kv) ⏸ pending — rolled into A4 cleanup. |
-| A4 | Retire compat synthesizer path for migrated plugins | S | ⏸ pending (after A3) |
-| A5 | Doc update + examples README | S | ⏸ pending |
+| A4 | Retire compat synthesizer path for migrated plugins | S | ✅ Synthesize v1-passthrough warn → Debug (no log noise); TestTier1Migrated_Tier1PluginsRemainV1 regression guard. Full compat package retained for tier-2 legacy plugins. |
+| A5 | Doc update + examples README | S | ✅ 07-lifecycle.md §Compat mode now tracks tier-1 migration status; M5-RELEASE.md reflects A1–A5 closed. examples README not created (no dedicated repo yet — deferred with Phase 2). |
 
 ### Track B — Platform completeness
 

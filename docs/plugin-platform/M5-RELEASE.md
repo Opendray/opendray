@@ -56,12 +56,13 @@ rewritten.
 
 ### Phase 5 — Legacy migration (Track A)
 
-| ID | Title | Status |
-|---|---|---|
-| A1 | Terminal plugin → v1                                   | ✅ |
-| A2 | File-browser plugin → v1                               | ✅ |
-| A3 | Claude plugin → v1 + accounts UI unified               | 🟡 manifest + UI done; data layer (claude_accounts→plugin_kv) folded into A4 |
-| A4 | Retire compat synthesizer path                         | ⏸ |
+| ID | Title | Status | Commit |
+|---|---|---|---|
+| A1 | Terminal plugin → v1                                   | ✅       | `e06eaf8` |
+| A2 | File-browser plugin → v1                               | ✅       | `e06eaf8` |
+| A3 | Claude plugin → v1 + accounts UI unified               | 🟡       | `c6f8177` (A3.1 + A3.2); A3.3 deferred |
+| A4 | Retire compat synthesizer path (migrated plugins only) | ✅       | this commit |
+| A5 | Doc update                                             | ✅       | this commit |
 
 **Summary:** 12 ✅ / 10 ⏸ (Phase 2 + Phase 5 + B3).
 
@@ -154,10 +155,23 @@ These were explicitly dropped from M5 scope with Kev's sign-off
   The self-sign guide lives in the `docs/building/` tree (deferred
   with the rest of Phase 2).
 
-- **Phase 5 legacy migration (A1–A4)** — each of terminal /
-  file-browser / claude migrates in its own PR, possibly reworking
-  the plugin's functionality along the way. A4 (retiring the compat
-  synthesizer) runs only after A1–A3 all land.
+- **A3.3 (claude_accounts table → plugin_kv)** — evaluated and
+  explicitly skipped. Rationale: migration 005 already states
+  tokens never enter Postgres (they stay chmod 600 on the host),
+  and migration 006 keeps `api_key_env` as a *variable name*, not
+  the key itself. The table therefore holds only metadata
+  (name / config_dir / token_path / backend_type / provider / model
+  flags). Moving that into `plugin_kv` would be pure internal
+  refactor with zero user-visible benefit + non-trivial rollback
+  risk. UI unification (A3.2) already met the "manage accounts in
+  one place" user-facing goal. A post-v1 cleanup can revisit if the
+  architectural parity becomes load-bearing.
+
+- **Tier-2 built-ins** (codex / gemini / opencode / qwen-code / git
+  / llm-providers / log-viewer / mcp / obsidian-reader /
+  simulator-preview / task-runner / telegram / web-preview) — still
+  served by the compat synthesizer. They migrate individually
+  post-v1 in their own PRs.
 
 ## 4. Acceptance criteria (what "Phase 1+3+4 done" means)
 

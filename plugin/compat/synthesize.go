@@ -32,7 +32,14 @@ import (
 // "is this legacy" check is wrong, not the data itself.
 func Synthesize(p plugin.Provider) plugin.Provider {
 	if p.IsV1() {
-		slog.Warn("compat.Synthesize called on a v1 manifest; returning copy unchanged",
+		// Pre-M5 this was a Warn — the assumption was that v1 manifests
+		// should never reach Synthesize because Runtime.Register routes
+		// them through `p.Contributes` directly. After A1/A2/A3 that's
+		// still true in prod, but tests + telegram + any future caller
+		// that iterates bundled manifests can legitimately hit this
+		// path. Debug-level keeps the forensic record without flooding
+		// logs on every boot of a legacy-free deployment.
+		slog.Debug("compat.Synthesize passthrough on v1 manifest",
 			"plugin", p.Name)
 		// Return a copy (new value) but leave all fields as-is.
 		return copyProvider(p)

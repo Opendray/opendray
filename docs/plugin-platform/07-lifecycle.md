@@ -135,7 +135,7 @@ If the sidecar has received no requests for `host.idleTimeoutSec` (default 300 s
 
 ## Compatibility mode for current manifests
 
-Current manifests under `plugins/agents/*` and `plugins/panels/*` do NOT have:
+Some bundled manifests under `plugins/agents/*` and `plugins/panels/*` still do NOT have:
 - `form`, `publisher`, `engines`, `contributes`, `permissions`.
 
 At load, the Host synthesises a compat manifest:
@@ -149,7 +149,25 @@ permissions = {} // host trusts builtins
 ```
 These synthesised manifests are held in memory only; the on-disk file is never rewritten. Builtins are treated as "trusted publisher" and skip the consent screen.
 
-> **Locked:** Compat mode is permanent for v1. When v2 ships, builtins will be migrated one by one to native v1 manifests without breaking.
+### Migration status (M5 Phase 5)
+
+Tier-1 built-ins have been migrated to native v1 manifests; the compat
+shim passes them through unchanged. The full list is authoritative at
+`plugin.v1MigratedTier1` and currently holds:
+
+| Plugin | Landed | Commit |
+|---|---|---|
+| `terminal`     | M5 A1   | `e06eaf8` |
+| `file-browser` | M5 A2   | `e06eaf8` |
+| `claude`       | M5 A3.1 | `c6f8177` |
+
+Tier-2 built-ins (codex / gemini / opencode / qwen-code / git /
+llm-providers / log-viewer / mcp / obsidian-reader /
+simulator-preview / task-runner / telegram / web-preview) still
+rely on the synthesiser; their migrations are post-v1 polish.
+
+> **Locked:** Compat mode is permanent for v1. Each tier-2 built-in
+> migrates in its own PR without any coordinated cutover.
 
 ## Owner packages
 
