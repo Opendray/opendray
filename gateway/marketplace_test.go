@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/opendray/opendray/plugin/marketplace"
+	marketlocal "github.com/opendray/opendray/plugin/market/local"
 )
 
 func writeTestCatalog(t *testing.T, body string) string {
@@ -60,7 +60,7 @@ func TestMarketplaceList_Happy(t *testing.T) {
 			}
 		]
 	}`)
-	cat, err := marketplace.Load(dir)
+	cat, err := marketlocal.Load(dir)
 	if err != nil {
 		t.Fatal(err)
 	}

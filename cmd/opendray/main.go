@@ -35,7 +35,8 @@ import (
 	"github.com/opendray/opendray/plugin/contributions"
 	"github.com/opendray/opendray/plugin/host"
 	"github.com/opendray/opendray/plugin/install"
-	"github.com/opendray/opendray/plugin/marketplace"
+	"github.com/opendray/opendray/plugin/market"
+	marketlocal "github.com/opendray/opendray/plugin/market/local"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -361,16 +362,22 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 	// Marketplace catalog — loaded once at boot. Dir defaults to
 	// $REPO/plugins/marketplace when unset; a missing catalog.json
 	// leaves the Hub empty rather than failing boot.
+	//
+	// M3 / M4-startup ships only the local backend. M4.1 T1+T2
+	// plugs market/remote in alongside, picked by scheme on
+	// cfg.MarketplaceURL.
 	marketplaceDir := cfg.MarketplaceDir
-	marketplaceCatalog, merr := marketplace.Load(marketplaceDir)
+	localCatalog, merr := marketlocal.Load(marketplaceDir)
 	if merr != nil {
 		logger.Warn("marketplace: catalog load failed; Hub will be empty",
 			"dir", marketplaceDir, "err", merr)
-		marketplaceCatalog, _ = marketplace.Load("") // guaranteed nil-safe empty catalog
+		localCatalog, _ = marketlocal.Load("") // guaranteed nil-safe empty catalog
 	} else {
+		entries, _ := localCatalog.List(context.Background())
 		logger.Info("marketplace: catalog loaded",
-			"dir", marketplaceDir, "entries", len(marketplaceCatalog.List()))
+			"dir", marketplaceDir, "entries", len(entries))
 	}
+	var marketplaceCatalog market.Catalog = localCatalog
 	// hostSupervisor is constructed below once the namespace APIs exist;
 	// declared here so the dispatcher's HostCaller closure can reference
 	// it by name. The closure is safe as long as a sidecar isn't invoked

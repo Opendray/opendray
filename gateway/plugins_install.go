@@ -30,7 +30,7 @@ import (
 
 	"github.com/opendray/opendray/plugin"
 	"github.com/opendray/opendray/plugin/install"
-	"github.com/opendray/opendray/plugin/marketplace"
+	"github.com/opendray/opendray/plugin/market"
 )
 
 // ─── Request / Response shapes ───────────────────────────────────────────────
@@ -136,8 +136,13 @@ func (s *Server) pluginsInstall(w http.ResponseWriter, r *http.Request) {
 				"marketplace catalog not configured on this server")
 			return
 		}
-		entry, bundleDir, rerr := s.marketplace.Resolve(req.Src)
-		if errors.Is(rerr, marketplace.ErrNotFound) {
+		ref, rerr := market.ParseRef(req.Src)
+		if rerr != nil {
+			writeJSONError(w, http.StatusBadRequest, "EBADSRC", rerr.Error())
+			return
+		}
+		entry, rerr := s.marketplace.Resolve(r.Context(), ref)
+		if errors.Is(rerr, market.ErrNotFound) {
 			writeJSONError(w, http.StatusNotFound, "ENOENT",
 				"marketplace entry not found: "+req.Src)
 			return
@@ -146,9 +151,22 @@ func (s *Server) pluginsInstall(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, http.StatusBadRequest, "EBADSRC", rerr.Error())
 			return
 		}
+		bundleDir, haveLocal, berr := s.marketplace.BundlePath(r.Context(), ref)
+		if berr != nil {
+			writeJSONError(w, http.StatusInternalServerError, "EMARKET", berr.Error())
+			return
+		}
+		if !haveLocal {
+			// Remote-only entry: the install layer will fetch via
+			// HTTPSSource in T4. Until then the legacy local path
+			// stays the only wired install route.
+			writeJSONError(w, http.StatusNotImplemented, "ENOTIMPL",
+				"remote-artifact install lands in M4.1 T4; entry has no local bundle")
+			return
+		}
 		src = install.TrustedSource{
 			Path:  bundleDir,
-			Label: "marketplace://" + entry.Name + "@" + entry.Version,
+			Label: "marketplace://" + entry.Publisher + "/" + entry.Name + "@" + entry.Version,
 		}
 	} else {
 		var perr error

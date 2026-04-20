@@ -30,7 +30,7 @@ import (
 	"github.com/opendray/opendray/plugin/contributions"
 	"github.com/opendray/opendray/plugin/host"
 	"github.com/opendray/opendray/plugin/install"
-	"github.com/opendray/opendray/plugin/marketplace"
+	"github.com/opendray/opendray/plugin/market"
 )
 
 // Server is the main HTTP server for OpenDray.
@@ -87,8 +87,10 @@ type Server struct {
 	// marketplace is the loaded catalog that backs
 	// GET /api/marketplace/plugins and the marketplace:// install
 	// source. Nil when no catalog dir is configured — endpoints then
-	// degrade to empty lists and EBADSRC respectively.
-	marketplace *marketplace.Catalog
+	// degrade to empty lists and EBADSRC respectively. The concrete
+	// implementation is market/local in M3 and market/remote once
+	// M4.1 lands; the handler code only depends on the interface.
+	marketplace market.Catalog
 
 	// secretAPI + hostSupervisor back the platform-managed config
 	// endpoints (GET/PUT /api/plugins/{name}/config). secretAPI is
@@ -139,8 +141,10 @@ type Config struct {
 
 	// Marketplace is the preloaded plugin catalog. Nil disables the
 	// GET /api/marketplace/plugins endpoint (returns empty list) and
-	// rejects marketplace:// install sources with EBADSRC.
-	Marketplace *marketplace.Catalog
+	// rejects marketplace:// install sources with EBADSRC. Accepts
+	// any market.Catalog implementation; main.go wires local during
+	// M3 bootstrap, remote once M4.1 T1–T7 lands.
+	Marketplace market.Catalog
 
 	// SecretAPI + HostSupervisor wire the platform-managed config
 	// endpoints. Both nil = /api/plugins/{name}/config returns 503.
