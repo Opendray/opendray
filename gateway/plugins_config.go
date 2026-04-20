@@ -98,6 +98,62 @@ func (s *Server) configSupervisor() sidecarKiller {
 	return s.hostSupervisor
 }
 
+// effectiveConfig overlays the plugin's v1 Configure values (stored in
+// plugin_kv under the __config.<key> prefix) on top of the legacy
+// in-memory ProviderConfig (backed by the plugins.config JSONB column).
+//
+// Why both stores exist:
+//   - The v1 Configure form (PUT /api/plugins/{name}/config) writes every
+//     non-secret field to plugin_kv. This is the canonical shape going
+//     forward.
+//   - Legacy handlers (git / tasks / logs / forge / files / ...) still
+//     read pi.Config, which is populated from the pre-v1 plugins.config
+//     JSONB column and is never refreshed after a v1 Configure PUT.
+//
+// Without this overlay, values the user saves via the new form appear
+// in the GET response ("everything persisted") but never reach the
+// handler that actually uses them — which is what caused the git-viewer
+// "path outside allowed roots" bug (empty allowedRoots read from an
+// empty plugins.config even though plugin_kv held "/").
+//
+// Secret fields are skipped here — handlers that need secrets must
+// still go through s.configSecrets().PlatformGet so the bridge audit
+// trail and crypto wrapping are preserved.
+func (s *Server) effectiveConfig(ctx context.Context, pluginName string, base plugin.ProviderConfig) plugin.ProviderConfig {
+	merged := make(plugin.ProviderConfig, len(base)+8)
+	for k, v := range base {
+		merged[k] = v
+	}
+	schema, ok := s.resolveConfigSchema(pluginName)
+	if !ok {
+		return merged
+	}
+	kv := s.configKVStore()
+	if kv == nil {
+		return merged
+	}
+	for _, f := range schema {
+		if f.Type == "secret" {
+			continue
+		}
+		raw, found, err := kv.KVGet(ctx, pluginName, configKeyPrefix+f.Key)
+		if err != nil || !found {
+			continue
+		}
+		// pluginsConfigPut canonicalises every non-secret value to a
+		// JSON-encoded string (booleans → "true"/"false", numbers →
+		// "123"). Deserialise back to a string; the consumers
+		// (stringVal/intVal/boolVal) all accept strings.
+		var str string
+		if json.Unmarshal(raw, &str) == nil {
+			merged[f.Key] = str
+		} else {
+			merged[f.Key] = string(raw)
+		}
+	}
+	return merged
+}
+
 // resolveConfigSchema loads the manifest's ConfigSchema for the named
 // plugin. Returns (nil, false) when the plugin isn't registered — the
 // caller returns 404. An empty schema is returned as (schema, true)

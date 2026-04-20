@@ -278,13 +278,51 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 16),
 
-          // M5 A3.2 — "Claude Accounts" was a top-level entry here that
-          // jumped to /settings/claude-accounts. Account management is now
-          // inlined into Settings → Plugins → Claude (accounts render
-          // inside the plugin card alongside configSchema fields) so users
-          // manage everything Claude-related from one place. The
-          // /settings/claude-accounts route still exists as a deep-link
-          // fallback.
+          // Claude Accounts lives on the Plugin tab now: Plugins → Claude
+          // card's "Accounts" popup menu entry (or tap-to-open) routes to
+          // /settings/claude-accounts, the same page this card used to
+          // link to. The deep-link URL is preserved.
+
+          // LLM Endpoints — the address book of OpenAI-compatible model
+          // endpoints (Ollama / LM Studio / Groq / Gemini / custom). It
+          // used to be a `llm-providers` panel plugin, but the data and
+          // spawn-time injection are kernel-level — shared by any agent,
+          // not owned by a single plugin — so it lives here in Settings
+          // alongside Claude Accounts.
+          Card(
+            child: InkWell(
+              onTap: () => context.push('/settings/llm-endpoints'),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(children: [
+                  const Icon(Icons.satellite_alt_outlined,
+                      color: AppColors.accent, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(context.tr('LLM Endpoints'),
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 2),
+                        Text(
+                          context.tr(
+                              'Address book of OpenAI-compatible model endpoints (Ollama, LM Studio, Groq, Gemini, custom). Shared by every agent.'),
+                          style: const TextStyle(
+                              fontSize: 12, color: AppColors.textMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right,
+                      color: AppColors.textMuted, size: 20),
+                ]),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
 
           // Account — only shown when the server has auth enabled and we
           // actually hold a token; otherwise there's nothing to sign out of.

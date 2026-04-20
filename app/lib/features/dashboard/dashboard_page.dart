@@ -9,8 +9,8 @@ import '../../shared/session_launcher.dart';
 import '../../shared/theme/app_theme.dart';
 import '../browser/preview_page.dart';
 import '../docs/docs_page.dart';
-import '../endpoints/endpoints_page.dart';
 import '../files/files_page.dart';
+import '../forge/forge_page.dart';
 import '../git/git_page.dart';
 import '../logs/logs_page.dart';
 import '../mcp/mcp_page.dart';
@@ -36,8 +36,8 @@ Map<String, WidgetBuilder> get _legacyPanelBuilders => <String, WidgetBuilder>{
       // 'database' retired — replaced by pg-browser v1 plugin installed
       // from the Hub (plugin/marketplace/packages/pg-browser/).
       'file-browser': (_) => const FilesPage(),
-      'git': (_) => const GitPage(),
-      'llm-providers': (_) => const EndpointsPage(),
+      'git-viewer': (_) => const GitPage(),
+      'git-forge': (_) => const ForgePage(),
       'log-viewer': (_) => const LogsPage(),
       'mcp': (_) => const MCPPage(),
       'obsidian-reader': (_) => const DocsPage(),
@@ -45,7 +45,7 @@ Map<String, WidgetBuilder> get _legacyPanelBuilders => <String, WidgetBuilder>{
           const PreviewPage(categoryFilter: 'simulator'),
       'task-runner': (_) => const TasksPage(),
       'telegram': (_) => const TelegramPage(),
-      'web-preview': (_) => const PreviewPage(categoryFilter: 'preview'),
+      'web-browser': (_) => const PreviewPage(categoryFilter: 'preview'),
     };
 
 class DashboardPage extends StatefulWidget {

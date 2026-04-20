@@ -229,7 +229,10 @@ func New(cfg Config) *Server {
 	}
 	// Telegram bridge — watches the "telegram" plugin and starts/stops
 	// the bot to match. Safe to construct even if the plugin is disabled.
+	// Install the config resolver so the reconcile loop sees values
+	// the user wrote through the v1 Configure form (plugin_kv.__config.*).
 	s.telegram = telegram.NewManager(cfg.Plugins, cfg.Hub, cfg.Plugins.HookBus(), cfg.Logger)
+	s.telegram.SetConfigResolver(s.effectiveConfig)
 	s.telegram.Start(context.Background())
 
 	r := chi.NewRouter()
@@ -358,19 +361,25 @@ func New(cfg Config) *Server {
 		r.Post("/api/tasks/{plugin}/run/{runId}/stop", s.tasksRunStop)
 		r.Get("/api/tasks/{plugin}/run/{runId}/ws", s.tasksRunWS)
 
-		// Git panel — per-repo status, diff, log, branches, commit; plus
-		// a per-session baseline so the UI can show only what changed
-		// during the current session (SnapshotHEAD → SessionDiff).
+		// Git-viewer panel — read-only per-repo status, diff, log, branches,
+		// plus a per-session baseline so the UI can show only what changed
+		// during the current session (SnapshotHEAD → SessionDiff). Write
+		// paths (stage/commit/push/etc) live in the Claude session flow.
 		r.Get("/api/git/{plugin}/status",   s.gitStatus)
 		r.Get("/api/git/{plugin}/diff",     s.gitDiff)
 		r.Get("/api/git/{plugin}/log",      s.gitLog)
 		r.Get("/api/git/{plugin}/branches", s.gitBranches)
-		r.Post("/api/git/{plugin}/stage",   s.gitStage)
-		r.Post("/api/git/{plugin}/unstage", s.gitUnstage)
-		r.Post("/api/git/{plugin}/discard", s.gitDiscard)
-		r.Post("/api/git/{plugin}/commit",  s.gitCommit)
 		r.Post("/api/git/{plugin}/session/snapshot", s.gitSessionSnapshot)
 		r.Get("/api/git/{plugin}/session/diff",      s.gitSessionDiff)
+
+		// Git-forge panel — read-only PR viewer against Gitea / GitHub /
+		// GitLab. The adapter dispatch (gateway/forge) picks one based on
+		// the plugin's forgeType configSchema field. PR creation / merge
+		// / approve / comment flow through the Claude session, not here.
+		r.Get("/api/git-forge/{plugin}/pulls",                    s.forgePullsList)
+		r.Get("/api/git-forge/{plugin}/pulls/{number}",           s.forgePullDetail)
+		r.Get("/api/git-forge/{plugin}/pulls/{number}/diff",      s.forgePullDiff)
+		r.Get("/api/git-forge/{plugin}/pulls/{number}/comments",  s.forgePullComments)
 
 
 		// Hook subscriptions

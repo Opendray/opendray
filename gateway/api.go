@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -226,11 +227,17 @@ func (s *Server) detectModels(w http.ResponseWriter, r *http.Request) {
 
 // ── Docs handlers (panel plugins) ───────────────────────────────
 
-func (s *Server) getDocsConfig(pluginName string) (docs.ForgeConfig, error) {
+func (s *Server) getDocsConfig(ctx context.Context, pluginName string) (docs.ForgeConfig, error) {
 	info := s.plugins.ListInfo()
 	for _, pi := range info {
 		if pi.Provider.Name == pluginName && pi.Provider.Type == plugin.ProviderTypePanel && pi.Enabled {
-			cfg := pi.Config
+			cfg := s.effectiveConfig(ctx, pluginName, pi.Config)
+			// NOTE: token should migrate to s.configSecrets().PlatformGet
+			// to match the git-forge pattern (secrets never in plugin_kv).
+			// For now the effectiveConfig overlay skips secret fields so
+			// the inline token here still works but reads from pi.Config
+			// only. Left as-is to preserve the existing Configure UX
+			// until obsidian-reader's next iteration.
 			return docs.ForgeConfig{
 				ForgeType:      stringVal(cfg, "forgeType", "gitea"),
 				BaseURL:        stringVal(cfg, "baseUrl", ""),
@@ -246,7 +253,7 @@ func (s *Server) getDocsConfig(pluginName string) (docs.ForgeConfig, error) {
 }
 
 func (s *Server) docsTree(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getDocsConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getDocsConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
@@ -268,7 +275,7 @@ func (s *Server) docsTree(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) docsFile(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getDocsConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getDocsConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
@@ -287,7 +294,7 @@ func (s *Server) docsFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) docsSearch(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getDocsConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getDocsConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
@@ -310,11 +317,11 @@ func (s *Server) docsSearch(w http.ResponseWriter, r *http.Request) {
 
 // ── File browser handlers (panel plugins) ───────────────────────
 
-func (s *Server) getFilesConfig(pluginName string) (files.BrowserConfig, error) {
+func (s *Server) getFilesConfig(ctx context.Context, pluginName string) (files.BrowserConfig, error) {
 	info := s.plugins.ListInfo()
 	for _, pi := range info {
 		if pi.Provider.Name == pluginName && pi.Provider.Type == plugin.ProviderTypePanel && pi.Enabled {
-			cfg := pi.Config
+			cfg := s.effectiveConfig(ctx, pluginName, pi.Config)
 			roots := strings.Split(stringVal(cfg, "allowedRoots", ""), ",")
 			var cleanRoots []string
 			for _, r := range roots {
@@ -323,22 +330,13 @@ func (s *Server) getFilesConfig(pluginName string) (files.BrowserConfig, error) 
 					cleanRoots = append(cleanRoots, r)
 				}
 			}
-			maxSize := int64(512 * 1024) // 512KB default
-			if v, ok := cfg["maxFileSize"]; ok {
-				switch n := v.(type) {
-				case float64:
-					maxSize = int64(n) * 1024
-				case int:
-					maxSize = int64(n) * 1024
-				}
-			}
-			showHidden := false
-			if v, ok := cfg["showHidden"].(bool); ok {
-				showHidden = v
-			}
+			// maxFileSize is expressed in KB; intVal handles both the
+			// legacy float64/int shapes and the JSON-string shape that
+			// effectiveConfig overlays from plugin_kv.
+			maxSize := int64(intVal(cfg, "maxFileSize", 512)) * 1024
 			return files.BrowserConfig{
 				AllowedRoots: cleanRoots,
-				ShowHidden:   showHidden,
+				ShowHidden:   boolVal(cfg, "showHidden", false),
 				MaxFileSize:  maxSize,
 				DefaultPath:  stringVal(cfg, "defaultPath", ""),
 			}, nil
@@ -348,7 +346,7 @@ func (s *Server) getFilesConfig(pluginName string) (files.BrowserConfig, error) 
 }
 
 func (s *Server) filesTree(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getFilesConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getFilesConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
@@ -372,7 +370,7 @@ func (s *Server) filesTree(w http.ResponseWriter, r *http.Request) {
 // filesMkdir creates a new directory under the given parent, inside the
 // plugin's allowed roots. Body: { "parent": "<path>", "name": "<new folder>" }.
 func (s *Server) filesMkdir(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getFilesConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getFilesConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
@@ -394,7 +392,7 @@ func (s *Server) filesMkdir(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) filesFile(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getFilesConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getFilesConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
@@ -413,7 +411,7 @@ func (s *Server) filesFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) filesSearch(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getFilesConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getFilesConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return

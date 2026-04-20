@@ -448,6 +448,17 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 		Log:   logger,
 	})
 
+	// LLM Endpoints — platform capability exposing the kernel's
+	// llm_providers table to any agent plugin that declares
+	// `"permissions": {"llm": true}`. Metadata-only; API keys stay in
+	// the kernel (bridge never surfaces them). Writes still flow
+	// through /api/llm-providers HTTP endpoints — the bridge surface
+	// is intentionally read-only.
+	llmAPI := bridge.NewLLMAPI(bridge.LLMConfig{
+		Source: &llmEndpointSourceAdapter{db: db},
+		Gate:   pluginGate,
+	})
+
 	// Supervisor handler factory — each sidecar gets an RPCHandler
 	// bound to its plugin name so sidecar→host JSON-RPC calls route
 	// through the same bridge.Namespace surface webview plugins use.
@@ -463,6 +474,7 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 		"workbench": host.NamespaceAdapter{Inner: workbenchAPI.Dispatch},
 		"storage":   host.NamespaceAdapter{Inner: storageAPI.Dispatch},
 		"events":    host.NamespaceAdapter{Inner: eventsAPI.Dispatch},
+		"llm":       host.NamespaceAdapter{Inner: llmAPI.Dispatch},
 	}
 
 	hostSupervisor = host.NewSupervisor(host.Config{
@@ -551,6 +563,7 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 	gw.RegisterNamespace("exec", execAPI)
 	gw.RegisterNamespace("http", httpAPI)
 	gw.RegisterNamespace("secret", secretAPI)
+	gw.RegisterNamespace("llm", llmAPI)
 
 	// Marketplace revocation poller. Only starts when the
 	// marketplace has something to fetch revocations from —
@@ -937,6 +950,32 @@ func (a *secretStoreAdapter) GetWrappedDEK(ctx context.Context, plugin string) (
 		return nil, "", bridge.WrappedDEKNotFound
 	}
 	return wrapped, kid, err
+}
+
+// llmEndpointSourceAdapter wraps *store.DB to satisfy
+// bridge.LLMSource. The adapter projects the kernel's LLMProvider
+// rows into the bridge-facing LLMEndpoint shape (metadata only —
+// APIKeyEnv is dropped so plugins can't even see the env-var name).
+type llmEndpointSourceAdapter struct{ db *store.DB }
+
+func (a *llmEndpointSourceAdapter) ListLLMEndpoints(ctx context.Context) ([]bridge.LLMEndpoint, error) {
+	rows, err := a.db.ListLLMProviders(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]bridge.LLMEndpoint, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, bridge.LLMEndpoint{
+			ID:           r.ID,
+			Name:         r.Name,
+			DisplayName:  r.DisplayName,
+			ProviderType: r.ProviderType,
+			BaseURL:      r.BaseURL,
+			Description:  r.Description,
+			Enabled:      r.Enabled,
+		})
+	}
+	return out, nil
 }
 
 // hostStateAdapter implements host.StateWriter with best-effort

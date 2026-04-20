@@ -870,7 +870,7 @@ class _PreviewPageState extends State<PreviewPage> with WidgetsBindingObserver {
     final showWeb = filter == null || filter == 'preview';
     final icon = filter == 'preview' ? Icons.web : Icons.phone_iphone;
     final title = filter == 'preview'
-        ? context.tr('No web preview plugin configured')
+        ? context.tr('No web browser plugin configured')
         : filter == 'simulator'
             ? context.tr('No simulator plugin configured')
             : context.tr('No preview plugins configured');
@@ -895,8 +895,8 @@ class _PreviewPageState extends State<PreviewPage> with WidgetsBindingObserver {
           if (showWeb)
             _HintCard(
               icon: Icons.web,
-              title: 'Web Preview (🌐)',
-              body: 'Register web-preview → open multiple tabs, type any URL into the address bar.',
+              title: 'Web Browser (🌐)',
+              body: 'Install web-browser → open multiple tabs, type any URL into the address bar.',
             ),
         ]),
       ),

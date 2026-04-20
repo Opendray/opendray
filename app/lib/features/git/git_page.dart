@@ -11,10 +11,12 @@ import '../../shared/directory_picker.dart';
 import '../../shared/providers_bus.dart';
 import '../../shared/theme/app_theme.dart';
 
-/// Git panel — per-repo status, diff, log, and commit.
+/// Git panel — read-only per-repo status, diff, log, and branches.
 ///
-/// Three states, matching the pattern used by the Tasks panel:
-///   1. No git plugin enabled → setup CTA.
+/// Observer role only: commits and pushes flow through the Claude
+/// session, not this panel. Three states, matching the pattern used by
+/// the Tasks panel:
+///   1. No git-viewer plugin enabled → setup CTA.
 ///   2. Plugin enabled, no repo path yet → big "pick folder" CTA.
 ///   3. Path chosen → tabbed view: Changes / History.
 class GitPage extends StatefulWidget {
@@ -46,7 +48,6 @@ class _GitPageState extends State<GitPage> with SingleTickerProviderStateMixin {
   String _sessionBaselineHead = '';
 
   late final TabController _tabs;
-  final _commitCtrl = TextEditingController();
 
   ApiClient get _api => context.read<ApiClient>();
   String? get _pluginName => _plugin?.provider.name;
@@ -62,7 +63,6 @@ class _GitPageState extends State<GitPage> with SingleTickerProviderStateMixin {
   @override
   void dispose() {
     _tabs.dispose();
-    _commitCtrl.dispose();
     _providersSub?.cancel();
     super.dispose();
   }
@@ -74,7 +74,7 @@ class _GitPageState extends State<GitPage> with SingleTickerProviderStateMixin {
       final all = await _api.listProviders();
       final match = all.where((p) =>
           p.provider.type == 'panel' &&
-          p.provider.name == 'git' &&
+          p.provider.name == 'git-viewer' &&
           p.enabled).toList();
       if (!mounted) return;
       if (match.isEmpty) {
@@ -172,42 +172,6 @@ class _GitPageState extends State<GitPage> with SingleTickerProviderStateMixin {
     }
   }
 
-  Future<void> _runFileAction(String action) async {
-    if (_selectedFile == null || _pluginName == null) return;
-    final fn = switch (action) {
-      'stage'   => _api.gitStage,
-      'unstage' => _api.gitUnstage,
-      'discard' => _api.gitDiscard,
-      _ => null,
-    };
-    if (fn == null) return;
-    if (action == 'discard') {
-      final ok = await _confirm(
-        title: context.tr('Discard changes?'),
-        body: context.tr('This overwrites unstaged changes with the committed version. Cannot be undone.'),
-      );
-      if (!ok) return;
-    }
-    try {
-      await ApiClient.describeErrors(() => fn(_pluginName!, _path, [_selectedFile!]));
-      await _refresh();
-    } on ApiException catch (e) {
-      _toast(e.message);
-    }
-  }
-
-  Future<void> _runCommit() async {
-    final msg = _commitCtrl.text.trim();
-    if (msg.isEmpty || _pluginName == null) return;
-    try {
-      await ApiClient.describeErrors(() => _api.gitCommit(_pluginName!, _path, msg));
-      _commitCtrl.clear();
-      await _refresh();
-      if (mounted) _toast(context.tr('Commit created'));
-    } on ApiException catch (e) {
-      if (mounted) _toast(e.message);
-    }
-  }
 
   // ─── UI ────────────────────────────────────────────────────
 
@@ -420,9 +384,8 @@ class _GitPageState extends State<GitPage> with SingleTickerProviderStateMixin {
                 ),
         ),
       if (files.isNotEmpty) const Divider(height: 1, color: AppColors.border),
-      if (files.isNotEmpty) _fileActionBar(),
+      if (files.isNotEmpty) _selectionFooter(),
       Expanded(child: _diffView()),
-      if (files.any((f) => f['staged'] == true)) _commitBar(),
     ]);
   }
 
@@ -481,35 +444,22 @@ class _GitPageState extends State<GitPage> with SingleTickerProviderStateMixin {
     );
   }
 
-  Widget _fileActionBar() {
-    final canAct = _selectedFile != null;
+  /// Thin footer that tells the user which side of the diff they are
+  /// looking at (staged vs unstaged) once a file is selected. The panel
+  /// is read-only, so there are no actions here — write ops live in the
+  /// Claude session.
+  Widget _selectionFooter() {
+    if (_selectedFile == null) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       color: AppColors.surface,
-      child: Row(children: [
-        TextButton.icon(
-          onPressed: canAct ? () => _runFileAction('stage') : null,
-          icon: const Icon(Icons.add, size: 16),
-          label: Text(context.tr('Stage')),
-        ),
-        TextButton.icon(
-          onPressed: canAct ? () => _runFileAction('unstage') : null,
-          icon: const Icon(Icons.remove, size: 16),
-          label: Text(context.tr('Unstage')),
-        ),
-        TextButton.icon(
-          onPressed: canAct ? () => _runFileAction('discard') : null,
-          icon: const Icon(Icons.undo, size: 16, color: AppColors.error),
-          label: Text(context.tr('Discard'),
-              style: const TextStyle(color: AppColors.error)),
-        ),
-        const Spacer(),
-        if (_selectedFile != null)
-          Text(_selectedStaged
-                  ? context.tr('staged diff')
-                  : context.tr('unstaged diff'),
-              style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
-      ]),
+      alignment: Alignment.centerRight,
+      child: Text(
+        _selectedStaged
+            ? context.tr('staged diff')
+            : context.tr('unstaged diff'),
+        style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+      ),
     );
   }
 
@@ -556,35 +506,6 @@ class _GitPageState extends State<GitPage> with SingleTickerProviderStateMixin {
     if (line.startsWith('-')) return AppColors.error;
     if (line.startsWith('diff ')) return AppColors.accent;
     return AppColors.text;
-  }
-
-  Widget _commitBar() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border)),
-      ),
-      child: Row(children: [
-        Expanded(
-          child: TextField(
-            controller: _commitCtrl,
-            maxLines: 1,
-            decoration: InputDecoration(
-              hintText: context.tr('Commit message'),
-              isDense: true,
-              border: const OutlineInputBorder(),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        FilledButton.icon(
-          onPressed: _runCommit,
-          icon: const Icon(Icons.check, size: 16),
-          label: Text(context.tr('Commit')),
-        ),
-      ]),
-    );
   }
 
   // ─── History tab ──────────────────────────────────────────
@@ -653,20 +574,4 @@ class _GitPageState extends State<GitPage> with SingleTickerProviderStateMixin {
     );
   }
 
-  Future<bool> _confirm({required String title, required String body}) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: Text(body),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false),
-              child: Text(context.tr('Cancel'))),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true),
-              child: Text(context.tr('Confirm'))),
-        ],
-      ),
-    );
-    return ok ?? false;
-  }
 }

@@ -343,7 +343,7 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                           border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
                         ),
                         child: const Text(
-                          'No LLM providers configured yet. Open Browser → LLM Providers to add one before starting this session.',
+                          'No LLM endpoints configured yet. Open Settings → LLM Endpoints to add one before starting this session.',
                           style: TextStyle(fontSize: 12, color: AppColors.warning),
                         ),
                       )

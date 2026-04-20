@@ -15,6 +15,7 @@ import 'features/browser/preview_page.dart';
 import 'features/claude_accounts/claude_accounts_page.dart';
 import 'features/docs/docs_page.dart';
 import 'features/endpoints/endpoints_page.dart';
+import 'features/forge/forge_page.dart';
 import 'features/files/files_page.dart';
 import 'features/git/git_page.dart';
 import 'features/logs/logs_page.dart';
@@ -100,10 +101,22 @@ class _NtcAppState extends State<NtcApp> {
             // context.read it; rebuilt whenever ApiClient identity changes.
             child: ChangeNotifierProvider<WorkbenchService>(
               key: ValueKey(apiClient),
-              create: (_) =>
-                  WorkbenchService(api: apiClient, showMessage: _toast)
+              create: (_) {
+                final svc =
+                    WorkbenchService(api: apiClient, showMessage: _toast);
+                // Only reach out to the server when auth is usable. In
+                // unknown/unauthed/setupRequired states the workbench
+                // endpoints 401, which triggers auth.logout → Consumer2
+                // rebuild → new ApiClient → new WorkbenchService → retry,
+                // producing an infinite loop at startup.
+                if (auth.state == AuthState.authed ||
+                    auth.state == AuthState.disabled) {
+                  svc
                     ..refresh()
-                    ..startListening(),
+                    ..startListening();
+                }
+                return svc;
+              },
               child: MaterialApp.router(
                 title: 'OpenDray',
                 theme: buildAppTheme(),
@@ -234,6 +247,11 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
             builder: (ctx, _) => _panelShell(ctx, 'Git', const GitPage()),
           ),
           GoRoute(
+            path: '/browser/forge',
+            builder: (ctx, _) =>
+                _panelShell(ctx, 'Pull Requests', const ForgePage()),
+          ),
+          GoRoute(
             path: '/browser/logs',
             builder: (ctx, _) => _panelShell(ctx, 'Logs', const LogsPage()),
           ),
@@ -255,10 +273,6 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
             builder: (ctx, _) => _panelShell(ctx, 'Simulator',
                 const PreviewPage(categoryFilter: 'simulator')),
           ),
-          GoRoute(
-            path: '/browser/endpoints',
-            builder: (ctx, _) => _panelShell(ctx, 'LLM Providers', const EndpointsPage()),
-          ),
           // Generic v1 webview plugin route. Resolves the first
           // activityBar view owned by the plugin and hosts it in a
           // PluginWebView. Legacy panels still have their dedicated
@@ -275,6 +289,11 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
           GoRoute(
             path: '/settings/claude-accounts',
             builder: (ctx, _) => _panelShell(ctx, 'Claude Accounts', const ClaudeAccountsPage()),
+          ),
+          GoRoute(
+            path: '/settings/llm-endpoints',
+            builder: (ctx, _) => _panelShell(
+                ctx, 'LLM Endpoints', const EndpointsPage()),
           ),
         ],
       ),

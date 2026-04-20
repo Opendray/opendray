@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/models/provider.dart' as provider_model;
+import '../../core/services/l10n.dart';
 import '../../shared/providers_bus.dart';
 import '../../shared/theme/app_theme.dart';
 import '../settings/plugin_consents_page.dart';
@@ -189,31 +190,46 @@ class _PluginsPageState extends State<PluginsPage> {
     Navigator.of(context).push(MaterialPageRoute(builder: builder));
   }
 
-  /// Legacy panel plugins don't map 1:1 to their /browser/* route —
-  /// compat rewrote most names (log-viewer → logs, llm-providers →
-  /// endpoints, simulator-preview → simulator, etc). Keep a single
-  /// source-of-truth mapping here so the Open action lines up with
-  /// the Browser tab's existing panel routes.
-  static const Map<String, String> _legacyPanelRoute = {
+  /// Hand-routes for plugins whose Open action has a bespoke Flutter
+  /// destination instead of the generic workbench host. Covers both
+  /// pre-v1 panels (compat rewrote most names — log-viewer → logs,
+  /// log-viewer → logs, etc) AND v1-declarative plugins whose
+  /// runtime surface lives outside the workbench (claude → accounts
+  /// manager). Consulted before the v1-webview branch so a v1 migration
+  /// doesn't accidentally shadow an existing destination.
+  static const Map<String, String> _handOpenRoute = {
+    'claude': '/settings/claude-accounts',
     'file-browser': '/browser/files',
-    'git': '/browser/git',
+    'git-viewer': '/browser/git',
+    'git-forge': '/browser/forge',
     'log-viewer': '/browser/logs',
     'mcp': '/browser/mcp',
     'obsidian-reader': '/browser/docs',
     'simulator-preview': '/browser/simulator',
     'task-runner': '/browser/tasks',
     'telegram': '/browser/messaging',
-    'web-preview': '/browser/preview',
-    'llm-providers': '/browser/endpoints',
+    'web-browser': '/browser/preview',
   };
 
   /// Routes the Open action per plugin kind:
-  ///   - legacy panel plugin → its existing /browser/* route
+  ///   - name in [_handOpenRoute] → bespoke page (legacy panel or the
+  ///     claude accounts manager)
   ///   - v1 host plugin → PluginRunPage (command list + result viewer)
-  ///   - v1 webview / declarative → the generic /browser/plugin/:name
-  ///   - otherwise a friendly message
+  ///   - v1 webview plugin → generic /browser/plugin/:name
+  ///   - v1 declarative without a hand-route → friendly notice; the
+  ///     generic declarative renderer is later M-work, so jumping to
+  ///     the stub page would be misleading
   void _openPlugin(provider_model.ProviderInfo p) {
     final name = p.provider.name;
+
+    // Hand-routed plugin — legacy panel page or claude accounts.
+    // Checked first so a v1 manifest migration can't shadow an
+    // existing bespoke destination.
+    final hand = _handOpenRoute[name];
+    if (hand != null) {
+      GoRouter.of(context).go(hand);
+      return;
+    }
 
     // v1 host-form plugins — command runner.
     if (p.provider.isV1 && p.provider.form == 'host') {
@@ -226,18 +242,9 @@ class _PluginsPageState extends State<PluginsPage> {
       return;
     }
 
-    // v1 webview / declarative — generic workbench route already
-    // resolves the first contributed view.
-    if (p.provider.isV1 &&
-        (p.provider.form == 'webview' || p.provider.form == 'declarative')) {
+    // v1 webview — generic workbench route resolves the first view.
+    if (p.provider.isV1 && p.provider.form == 'webview') {
       GoRouter.of(context).go('/browser/plugin/$name');
-      return;
-    }
-
-    // Legacy panel plugin — hand off to the existing bespoke page.
-    final legacy = _legacyPanelRoute[name];
-    if (legacy != null) {
-      GoRouter.of(context).go(legacy);
       return;
     }
 
@@ -350,18 +357,36 @@ class _PluginsPageState extends State<PluginsPage> {
     );
   }
 
+  /// CLI / shell agents don't have a useful "Open" panel — the way a
+  /// user launches them is the New Session dialog on the dashboard.
+  /// The Plugin page therefore hides the Open affordance for those
+  /// kinds and, when the user taps the card body anyway, nudges them
+  /// toward the right entry point instead of surfacing a confusing
+  /// "No open target" error.
+  bool _hasOpenTarget(provider_model.Provider prov) {
+    return prov.type != 'cli' && prov.type != 'shell';
+  }
+
   Widget _pluginCard(provider_model.ProviderInfo p) {
     final prov = p.provider;
     final required = prov.required;
     final kindLabel = _kindLabel(prov);
+    final hasOpen = _hasOpenTarget(prov);
     // Tapping the card body opens the plugin's runtime surface (legacy
-    // panel page, command runner, or webview). The switch + menu on
-    // the right trail have their own tap handlers and don't bubble.
+    // panel page, command runner, or webview). CLI/shell agents route
+    // through the dashboard's New Session dialog instead — the switch
+    // + menu on the right trail have their own tap handlers and don't
+    // bubble.
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
-        onTap: p.enabled ? () => _openPlugin(p) : null,
+        onTap: !p.enabled
+            ? null
+            : hasOpen
+                ? () => _openPlugin(p)
+                : () => _notify(context.tr(
+                    'Launch this agent from the New Session dialog on the dashboard.')),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
           child: Row(
@@ -471,6 +496,9 @@ class _PluginsPageState extends State<PluginsPage> {
           case 'configure':
             _openConfig(p);
             break;
+          case 'accounts':
+            GoRouter.of(context).go('/settings/claude-accounts');
+            break;
           case 'consents':
             _openConsents(p);
             break;
@@ -480,7 +508,12 @@ class _PluginsPageState extends State<PluginsPage> {
         }
       },
       itemBuilder: (ctx) => [
-        if (p.enabled)
+        // Open is only useful when the plugin has a real runtime
+        // surface in the Flutter app — panels, webviews, host
+        // sidecars. CLI/shell agents are launched from the dashboard,
+        // so we drop the entry entirely instead of offering a dead
+        // button.
+        if (p.enabled && _hasOpenTarget(p.provider))
           const PopupMenuItem(
             value: 'open',
             child: ListTile(
@@ -488,6 +521,20 @@ class _PluginsPageState extends State<PluginsPage> {
               contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.open_in_new, size: 18),
               title: Text('Open'),
+            ),
+          ),
+        // Dedicated surface for Claude's multi-account manager. Also
+        // reachable via Open (hand-route map), but the explicit menu
+        // entry keeps discovery cheap when the user is scanning for
+        // "where do I add another token".
+        if (p.provider.name == 'claude')
+          const PopupMenuItem(
+            value: 'accounts',
+            child: ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.people_outline, size: 18),
+              title: Text('Accounts'),
             ),
           ),
         if (p.provider.configSchema.isNotEmpty)

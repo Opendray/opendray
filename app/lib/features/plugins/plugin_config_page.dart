@@ -80,8 +80,7 @@ class _PluginConfigPageState extends State<PluginConfigPage> {
 
   /// True when `field.dependsOn` is empty OR the current value of that
   /// parent key matches `field.dependsVal`. Fields whose dependency
-  /// isn't satisfied render disabled but visible (matches the original
-  /// PluginsSection behaviour the user had).
+  /// isn't satisfied render disabled but visible.
   bool _isEnabled(ConfigField f) {
     if (f.dependsOn == null || f.dependsOn!.isEmpty) return true;
     final parent = _values[f.dependsOn];

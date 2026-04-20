@@ -16,8 +16,10 @@ import (
 )
 
 // getLogsConfig resolves the plugin config for the log-viewer plugin.
-// Same lookup pattern as getFilesConfig / getTasksConfig.
-func (s *Server) getLogsConfig(pluginName string) (logs.Config, error) {
+// Pulls through s.effectiveConfig so values written through the v1
+// Configure form (plugin_kv.__config.*) are seen even when the legacy
+// plugins.config JSONB column is stale.
+func (s *Server) getLogsConfig(ctx context.Context, pluginName string) (logs.Config, error) {
 	info := s.plugins.ListInfo()
 	for _, pi := range info {
 		if pi.Provider.Name != pluginName {
@@ -26,24 +28,15 @@ func (s *Server) getLogsConfig(pluginName string) (logs.Config, error) {
 		if pi.Provider.Type != plugin.ProviderTypePanel || !pi.Enabled {
 			break
 		}
-		cfg := pi.Config
+		cfg := s.effectiveConfig(ctx, pluginName, pi.Config)
 		cleanRoots := splitCSV(stringVal(cfg, "allowedRoots", ""))
 		exts := splitCSV(stringVal(cfg, "extensions", ".log,.txt,.out,.err"))
 
 		// backlogBytes is expressed in KB in the manifest — convert.
-		var backlogBytes int64 = 64 * 1024
-		if v, ok := cfg["backlogBytes"]; ok {
-			switch n := v.(type) {
-			case float64:
-				backlogBytes = int64(n) * 1024
-			case int:
-				backlogBytes = int64(n) * 1024
-			}
-		}
-		showHidden := false
-		if v, ok := cfg["showHidden"].(bool); ok {
-			showHidden = v
-		}
+		// intVal accepts both numeric types (legacy JSONB) and JSON
+		// strings (v1 Configure overlay), so one helper handles both.
+		backlogBytes := int64(intVal(cfg, "backlogBytes", 64)) * 1024
+		showHidden := boolVal(cfg, "showHidden", false)
 		return logs.Config{
 			AllowedRoots: cleanRoots,
 			Extensions:   exts,
@@ -57,7 +50,7 @@ func (s *Server) getLogsConfig(pluginName string) (logs.Config, error) {
 // logsList returns the directory listing for the Log Viewer plugin.
 // GET /api/logs/{plugin}/list?path=...
 func (s *Server) logsList(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getLogsConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getLogsConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
@@ -81,7 +74,7 @@ func (s *Server) logsList(w http.ResponseWriter, r *http.Request) {
 // optional ?grep= regex filter. Closing the socket (or sending any message)
 // cancels the tail.
 func (s *Server) logsTailWS(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getLogsConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getLogsConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return

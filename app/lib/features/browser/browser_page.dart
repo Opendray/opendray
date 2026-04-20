@@ -90,10 +90,15 @@ class _BrowserPageState extends State<BrowserPage> {
             route: 'tasks', titleKey: 'Tasks', icon: Icons.play_circle_outline,
             descKey: 'Run Makefile / npm / shell tasks',
           ),
-        if (has((p) => p.provider.name == 'git'))
+        if (has((p) => p.provider.name == 'git-viewer'))
           const _PanelEntry(
             route: 'git', titleKey: 'Git', icon: Icons.park_outlined,
-            descKey: 'Track and commit per-session changes',
+            descKey: 'Read-only observer for per-session changes',
+          ),
+        if (has((p) => p.provider.category == 'forge'))
+          const _PanelEntry(
+            route: 'forge', titleKey: 'Pull Requests', icon: Icons.merge_type,
+            descKey: 'Review PRs from Gitea, GitHub, or GitLab',
           ),
         if (has((p) => p.provider.category == 'logs'))
           const _PanelEntry(
@@ -112,18 +117,13 @@ class _BrowserPageState extends State<BrowserPage> {
           ),
         if (has((p) => p.provider.category == 'preview'))
           const _PanelEntry(
-            route: 'preview', titleKey: 'Preview', icon: Icons.web,
-            descKey: 'In-app browser with multi-tab URL preview',
+            route: 'preview', titleKey: 'Web Browser', icon: Icons.web,
+            descKey: 'Full in-app browser with multi-tab URLs',
           ),
         if (has((p) => p.provider.category == 'simulator'))
           const _PanelEntry(
             route: 'simulator', titleKey: 'Simulator', icon: Icons.phone_iphone,
             descKey: 'Live iOS / Android device screen with touch & key input',
-          ),
-        if (has((p) => p.provider.category == 'endpoints'))
-          const _PanelEntry(
-            route: 'endpoints', titleKey: 'LLM Providers', icon: Icons.satellite_alt_outlined,
-            descKey: 'Local & free model endpoints routed at spawn time',
           ),
       ];
       if (!mounted) return;

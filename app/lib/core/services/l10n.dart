@@ -120,15 +120,6 @@ class L10n extends ChangeNotifier {
     'Idle':              '空闲',
     'Loading history...': '加载历史...',
     'Attach image':      '附加图片',
-    'Voice input':       '语音输入',
-    'Voice / Dictation': '语音 / 听写',
-    'Tap the mic on your keyboard and speak…':
-        '点击键盘上的麦克风图标,然后开始说话…',
-    'Dictation uses your phone\'s built-in speech recognition. Review the text before sending.':
-        '使用手机内置的语音识别。发送前请确认文本无误。',
-    'Append Enter':      '附加回车',
-    'Sends as a command — a newline is added after the text.':
-        '作为命令发送 —— 在文本末尾附加换行符。',
     'Toggle quick keys': '切换快捷键',
 
     // Browser
@@ -139,12 +130,36 @@ class L10n extends ChangeNotifier {
     'Preview':                        '预览',
     'MCP Servers':                    'MCP 服务器',
     'Simulator':                      '模拟器',
+    'Launch this agent from the New Session dialog on the dashboard.':
+        '请在首页顶部点击 New 按钮,通过会话弹框启动这个 agent。',
+    'LLM Endpoints':                  'LLM 端点',
+    'Address book of OpenAI-compatible model endpoints (Ollama, LM Studio, Groq, Gemini, custom). Shared by every agent.':
+        'OpenAI 兼容模型端点地址簿(Ollama / LM Studio / Groq / Gemini / 自定义),所有 agent 共享。',
+    'Pull Requests':                  'Pull Request 列表',
+    'Review PRs from Gitea, GitHub, or GitLab':
+        '浏览 Gitea / GitHub / GitLab 上的 Pull Request',
+    'Git Forge plugin not enabled':   'Git Forge 插件未启用',
+    'Install git-forge from the Hub and configure forgeType + baseUrl + repo in Plugins → Configure.':
+        '在 Hub 里安装 git-forge,并在 Plugins → Configure 里设置 forgeType / baseUrl / repo。',
+    'No pull requests':               '暂无 Pull Request',
+    'Change the state filter above or confirm the repo has PRs.':
+        '切换上方状态过滤器,或确认仓库是否有 PR。',
+    'No diff':                        '无 diff',
+    'No comments':                    '暂无评论',
+    'Open in browser':                '在浏览器打开',
+    'Diff':                           'Diff',
+    'Comments':                       '评论',
+    'comments':                       '条评论',
+    'State':                          '状态',
+    'open':                           'open',
+    'closed':                         'closed',
+    'all':                            'all',
     'In-app browser with multi-tab URL preview':
         '内置浏览器,支持多标签页 URL 预览',
     'Live iOS / Android device screen with touch & key input':
         '实时 iOS / Android 设备屏幕,支持触控与按键输入',
-    'No web preview plugin configured':
-        '未配置网页预览插件',
+    'No web browser plugin configured':
+        '未配置网页浏览器插件',
     'No simulator plugin configured':
         '未配置模拟器插件',
     'No preview plugins configured':
@@ -452,9 +467,11 @@ class L10n extends ChangeNotifier {
     'Task Runner':                '任务运行器',
     'Discover Makefile targets, package.json scripts, and shell scripts in a project, then run them with live streaming output.':
         '发现项目中的 Makefile 目标、package.json 脚本和 shell 脚本,并实时流式输出运行结果。',
-    'Web Preview':                '网页预览',
-    'In-app browser panel. Works with any web framework — React, Vue, Next.js, FastAPI, Go, Rails, etc.':
-        '内置浏览器面板,兼容任意 Web 框架 — React、Vue、Next.js、FastAPI、Go、Rails 等。',
+    'Web Browser':                '网页浏览器',
+    'Full in-app browser with multi-tab URLs, forward/back navigation, and port-on-host shortcuts. Works against any web framework — React, Vue, Next.js, FastAPI, Go, Rails, etc.':
+        '完整的内置浏览器,支持多标签页 URL、前进/后退导航,以及端口快捷方式。兼容任意 Web 框架 — React、Vue、Next.js、FastAPI、Go、Rails 等。',
+    'Full in-app browser with multi-tab URLs':
+        '完整的内置浏览器,支持多标签页 URL',
     'Simulator Preview':          '模拟器预览',
     'Real-time WebSocket stream of iOS Simulator or Android Emulator. Adaptive FPS (8 fps during interaction, 1 fps idle). JPEG compression for fast mobile delivery. Touch, swipe, and key input forwarded over the same WebSocket.':
         'iOS 模拟器或 Android 模拟器的实时 WebSocket 流。自适应帧率(交互时 8fps, 空闲 1fps)。JPEG 压缩加速移动端传输。触摸、滑动和按键输入通过同一 WebSocket 转发。',

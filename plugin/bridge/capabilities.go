@@ -224,7 +224,8 @@ type permissionsV1Wire struct {
 	Session string          `json:"session,omitempty"`
 	Storage bool            `json:"storage,omitempty"`
 	Secret  bool            `json:"secret,omitempty"`
-	// Other caps (clipboard, telegram, git, llm, events) are not matched
+	LLM     bool            `json:"llm,omitempty"`
+	// Other caps (clipboard, telegram, git, events) are not matched
 	// by the matchers in T5 — they are simple bool/string comparisons
 	// handled in the evaluate switch below.
 }
@@ -359,6 +360,16 @@ func evaluate(need Need, perms permissionsV1Wire) (allowed bool, denyMsg string)
 			return true, ""
 		}
 		return false, "secret not granted"
+
+	case "llm":
+		// Platform capability — read-only list of LLM endpoints shared
+		// across agents. Granted via `"permissions": {"llm": true}` in
+		// the manifest. Secrets never leave the kernel — only endpoint
+		// metadata flows to plugins.
+		if perms.LLM {
+			return true, ""
+		}
+		return false, "llm not granted"
 
 	default:
 		// Conservative: unknown / future capabilities are denied.

@@ -223,7 +223,7 @@ Every agent and panel is a plugin. OpenDray ships with 17.
 | **Claude Code** | 🟣 | Sonnet, Opus, Haiku | Session resume (`--resume`), MCP injection, image input, multi-account OAuth, bypass-permissions mode |
 | **Codex CLI** | 🤖 | o4-mini, o3, GPT-4.1, GPT-4.1-mini | Approval modes (suggest / auto-edit / full-auto), MCP injection |
 | **Gemini CLI** | ✨ | Gemini 2.5 Pro, Gemini 2.5 Flash | Sandbox mode, yolo mode, multimodal input |
-| **OpenCode** | 🤖 | Dynamic (via LLM Providers) | Provider-agnostic routing to any OpenAI-compatible endpoint, session resume, MCP injection |
+| **OpenCode** | 🤖 | Dynamic (via LLM Endpoints) | Provider-agnostic routing to any OpenAI-compatible endpoint, session resume, MCP injection |
 | **Qwen Code** | 🐉 | Qwen3-Coder Plus/Flash/480B | DashScope, ModelScope, OpenRouter, dynamic model detection, MCP injection |
 | **Terminal** | ⬛ | &mdash; | System login shell (zsh/bash/sh), no AI |
 
@@ -238,9 +238,8 @@ Every agent and panel is a plugin. OpenDray ships with 17.
 | **Git** | tools | Per-repo status, per-session baseline (shows only changes made during the session), unified diff, commit log, branch listing |
 | **Telegram Bridge** | messaging | Bot token setup, link status, test messages, command reference |
 | **MCP Servers** | mcp | CRUD for stdio / SSE / HTTP MCP servers, per-agent filtering, enable/disable toggle |
-| **LLM Providers** | endpoints | Address book of OpenAI-compatible endpoints, model detection via `/v1/models`, API key stored as env-var name only |
 | **Obsidian Reader** | docs | Browse Obsidian vaults from Git repos (Gitea, GitHub, GitLab), branch selection, path filtering |
-| **Web Preview** | preview | In-app browser with URL or port input, HTML frame rendering |
+| **Web Browser** | preview | Full in-app browser with multi-tab URLs, forward/back navigation, and port-on-host shortcuts |
 | **Simulator Preview** | simulator | Real-time WebSocket stream of iOS Simulator or Android Emulator, adaptive FPS (8 active / 1 idle), touch/swipe/key input forwarding |
 
 ### Writing a Plugin
@@ -293,9 +292,11 @@ Full bidirectional control over Telegram &mdash; no app required:
 
 **Multi-select prompts** (e.g., Claude Code permission dialogs, tool approval lists) render as inline Telegram keyboards with checkboxes and a submit button.
 
-## LLM Provider Routing
+## LLM Endpoint Routing
 
-Register any OpenAI-compatible endpoint in the LLM Providers panel:
+Register any OpenAI-compatible endpoint under **Settings → LLM Endpoints**
+(previously the `llm-providers` panel plugin — now a platform capability
+shared by every agent, not owned by a single plugin):
 
 - **Local**: Ollama, LM Studio, llama.cpp, vLLM
 - **Cloud**: Groq, Gemini free tier, OpenRouter, Together AI, Fireworks

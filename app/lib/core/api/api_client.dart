@@ -625,27 +625,6 @@ class ApiClient {
     return (res.data as List).cast<Map<String, dynamic>>();
   }
 
-  Future<void> gitStage(String plugin, String path, List<String> files) async {
-    await _dio.post('/api/git/$plugin/stage',
-        data: {'path': path, 'files': files});
-  }
-
-  Future<void> gitUnstage(String plugin, String path, List<String> files) async {
-    await _dio.post('/api/git/$plugin/unstage',
-        data: {'path': path, 'files': files});
-  }
-
-  Future<void> gitDiscard(String plugin, String path, List<String> files) async {
-    await _dio.post('/api/git/$plugin/discard',
-        data: {'path': path, 'files': files});
-  }
-
-  Future<Map<String, dynamic>> gitCommit(String plugin, String path, String message) async {
-    final res = await _dio.post('/api/git/$plugin/commit',
-        data: {'path': path, 'message': message});
-    return Map<String, dynamic>.from(res.data as Map);
-  }
-
   Future<Map<String, dynamic>> gitSessionSnapshot(
       String plugin, String sessionId, {String path = ''}) async {
     final res = await _dio.post('/api/git/$plugin/session/snapshot',
@@ -657,6 +636,38 @@ class ApiClient {
     final res = await _dio.get('/api/git/$plugin/session/diff',
         queryParameters: {'sessionId': sessionId});
     return ((res.data as Map)['diff'] ?? '') as String;
+  }
+
+  // ── Git Forge (PR viewer, git-forge plugin) ──────────────
+
+  /// Lists pull requests. [state] is one of open|closed|all; empty
+  /// falls back to the plugin's configured default.
+  Future<List<Map<String, dynamic>>> forgePulls(String plugin,
+      {String state = '', int limit = 0}) async {
+    final res = await _dio.get('/api/git-forge/$plugin/pulls',
+        queryParameters: {
+          if (state.isNotEmpty) 'state': state,
+          if (limit > 0) 'limit': limit,
+        });
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, dynamic>> forgePullDetail(
+      String plugin, int number) async {
+    final res = await _dio.get('/api/git-forge/$plugin/pulls/$number');
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  Future<List<Map<String, dynamic>>> forgePullDiff(
+      String plugin, int number) async {
+    final res = await _dio.get('/api/git-forge/$plugin/pulls/$number/diff');
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<List<Map<String, dynamic>>> forgePullComments(
+      String plugin, int number) async {
+    final res = await _dio.get('/api/git-forge/$plugin/pulls/$number/comments');
+    return (res.data as List).cast<Map<String, dynamic>>();
   }
 
   // ── Claude Multi-Account ─────────────────────────────────
