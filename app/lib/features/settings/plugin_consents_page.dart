@@ -2,19 +2,21 @@ import 'package:flutter/material.dart';
 import '../../core/api/api_client.dart';
 import '../../shared/theme/app_theme.dart';
 
-/// Runtime consent toggles for a single plugin (M2 T21).
+/// Runtime consent toggles for a single plugin.
 ///
 /// Lists the 11 PermissionsV1 capabilities and lets the user flip any
-/// currently-granted cap OFF — driven by DELETE
-/// /api/plugins/{name}/consents/{cap}. Re-granting requires
-/// reinstalling the plugin in M2 (the install-time consent flow owns
-/// the grant path), so ungranted switches render disabled with a helper
-/// note rather than as actionable toggles.
+/// capability the plugin's manifest declared ON or OFF at runtime:
 ///
-/// The "Revoke all" action in the AppBar nukes the consent row
-/// entirely via DELETE /api/plugins/{name}/consents and lands the page
-/// in its empty state (the same one that renders when there was never
-/// a consent row on file).
+///   - Flip OFF → DELETE /api/plugins/{name}/consents/{cap}
+///   - Flip ON  → PATCH  /api/plugins/{name}/consents with the cap's
+///                       original value pulled from the manifest
+///
+/// Caps the manifest didn't declare stay disabled — the UI has no
+/// value to PATCH back in.
+///
+/// The "Revoke all" AppBar action zeroes every cap via a PATCH that
+/// preserves the consent row, so the user can re-grant caps individually
+/// afterward without reinstalling the plugin.
 class PluginConsentsPage extends StatefulWidget {
   final String pluginName;
   final ApiClient api;
@@ -159,8 +161,10 @@ class _PluginConsentsPageState extends State<PluginConsentsPage> {
       builder: (ctx) => AlertDialog(
         title: const Text('Revoke all permissions?'),
         content: Text(
-          'This removes every granted capability for "${widget.pluginName}". '
-          'The plugin will stop working until it is reinstalled.',
+          'This zeroes every granted capability for "${widget.pluginName}". '
+          'The plugin will stop working until you re-grant the capabilities '
+          'it needs — each one remains listed below so you can flip them '
+          'back on individually.',
         ),
         actions: [
           TextButton(
@@ -179,9 +183,30 @@ class _PluginConsentsPageState extends State<PluginConsentsPage> {
     if (!mounted) return;
     setState(() => _busy = true);
     try {
-      await widget.api.revokeAllPluginConsents(widget.pluginName);
+      // PATCH every cap to its zero value. Keeps the consent row so the
+      // user can re-grant caps individually via the row-level toggles —
+      // previously a DELETE dropped the row entirely and forced a
+      // reinstall to recover (the bug Kev hit in M3 review).
+      await widget.api.patchPluginConsents(
+        widget.pluginName,
+        const <String, dynamic>{
+          'fs': null,
+          'exec': null,
+          'http': null,
+          'session': '',
+          'storage': false,
+          'secret': false,
+          'clipboard': '',
+          'telegram': false,
+          'git': '',
+          'llm': false,
+          'events': null,
+        },
+      );
       _notify('Revoked all permissions for ${widget.pluginName}');
       await _refresh();
+    } on PluginConsentNotFoundException {
+      _notify('Consent row disappeared', isError: true);
     } catch (e) {
       _notify('Failed to revoke all: $e', isError: true);
     } finally {
@@ -329,8 +354,9 @@ class _PluginConsentsPageState extends State<PluginConsentsPage> {
             ]),
             const SizedBox(height: 8),
             Text(
-              'Flip a granted capability off to revoke it at runtime. '
-              'Re-grant requires reinstalling the plugin.',
+              'Flip any capability the manifest declared on or off at '
+              'runtime. Re-granting uses the plugin\'s install-time '
+              'declaration — no reinstall required.',
               style: TextStyle(
                   fontSize: 12, color: AppColors.textMuted),
             ),
@@ -387,6 +413,8 @@ class _PluginConsentsPageState extends State<PluginConsentsPage> {
         ],
       );
     }
+    final declared = c.isCapDeclared(spec.key);
+    final canToggle = !_busy && (granted || declared);
     return ListTile(
       leading: Icon(
         spec.icon,
@@ -407,15 +435,41 @@ class _PluginConsentsPageState extends State<PluginConsentsPage> {
       trailing: Switch(
         value: granted,
         activeTrackColor: AppColors.accent,
-        // Flipping ON is intentionally disabled in M2 — the grant path
-        // is tied to install-time consent. Only granted caps can be
-        // flipped (to off). Everything else renders greyed out with a
-        // helper subtitle explaining the re-install path.
-        onChanged: (granted && !_busy)
-            ? (_) => _revokeCap(spec.key, spec.label)
+        onChanged: canToggle
+            ? (on) => on
+                ? _grantCap(spec.key, spec.label)
+                : _revokeCap(spec.key, spec.label)
             : null,
       ),
     );
+  }
+
+  /// Re-grants a single capability by PATCHing the plugin's install-time
+  /// manifest value back into the consent row. Used when the user flips
+  /// a previously-revoked cap ON. Silently no-ops when the manifest
+  /// didn't declare this cap (the caller should gate via isCapDeclared).
+  Future<void> _grantCap(String cap, String label) async {
+    if (_busy || _consents == null) return;
+    final manifestValue = _consents!.manifestPerms[cap];
+    if (manifestValue == null) {
+      _notify('Cannot grant $label: not declared in manifest', isError: true);
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await widget.api.patchPluginConsents(
+        widget.pluginName,
+        {cap: manifestValue},
+      );
+      _notify('Granted $label');
+      await _refresh();
+    } on PluginConsentNotFoundException {
+      _notify('Consent row disappeared', isError: true);
+    } catch (e) {
+      _notify('Failed to grant $label: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   /// Extracts the list of sub-entries (fs globs, exec patterns, http
@@ -532,7 +586,9 @@ class _PluginConsentsPageState extends State<PluginConsentsPage> {
 
   String _subtitleFor(String cap, PluginConsents c) {
     if (!c.isCapGranted(cap)) {
-      return 'Not granted · reinstall to re-grant';
+      return c.isCapDeclared(cap)
+          ? 'Revoked · tap to re-grant'
+          : 'Not declared by this plugin';
     }
     final v = c.perms[cap];
     // Render a short shape hint so the user sees what was actually

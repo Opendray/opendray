@@ -184,6 +184,31 @@ func (s *Server) consentBridge() consentInvalidator {
 	return s.bridgeMgr
 }
 
+// consentManifestPerms returns the install-time PermissionsV1 declared by the
+// plugin's manifest, or nil when the plugin isn't registered (or declared no
+// perms at all). The GET handler surfaces this so the UI can offer a
+// re-grant toggle on a previously-revoked cap without a reinstall.
+//
+// Lookup precedence matches bridgePluginExists: test override first, then the
+// real *plugin.Runtime. A nil runtime (test-only) yields (nil, false).
+func (s *Server) consentManifestPerms(name string) (*plugin.PermissionsV1, bool) {
+	if s.bridgePluginsOverride != nil {
+		p, ok := s.bridgePluginsOverride(name)
+		if !ok {
+			return nil, false
+		}
+		return p.Permissions, true
+	}
+	if s.plugins == nil {
+		return nil, false
+	}
+	p, ok := s.plugins.Get(name)
+	if !ok {
+		return nil, false
+	}
+	return p.Permissions, true
+}
+
 // ─── Handlers ────────────────────────────────────────────────────────────────
 
 // pluginsConsentsGet handles GET /api/plugins/{name}/consents.
@@ -211,12 +236,22 @@ func (s *Server) pluginsConsentsGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Surface the manifest-declared permissions so the UI can offer a
+	// re-grant toggle on revoked caps without a reinstall. Absent when
+	// the plugin isn't registered (e.g. uninstalled while the consent
+	// row still lingers) or the manifest declared no permissions block.
+	var manifestPerms *plugin.PermissionsV1
+	if mp, ok := s.consentManifestPerms(name); ok {
+		manifestPerms = mp
+	}
+
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]any{
-		"perms":     row.PermsJSON,
-		"grantedAt": row.GrantedAt,
-		"updatedAt": row.UpdatedAt,
+		"perms":         row.PermsJSON,
+		"manifestPerms": manifestPerms,
+		"grantedAt":     row.GrantedAt,
+		"updatedAt":     row.UpdatedAt,
 	})
 }
 

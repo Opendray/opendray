@@ -43,12 +43,19 @@ class PluginConsentNotFoundException implements Exception {
 class PluginConsents {
   final String pluginName;
   final Map<String, dynamic> perms;
+  /// The install-time PermissionsV1 block from the plugin's manifest.
+  /// Empty when the plugin declared none or isn't installed. Used by
+  /// the consent settings page to offer a re-grant toggle on any cap
+  /// that was revoked — without this, the UI would have to force a
+  /// reinstall.
+  final Map<String, dynamic> manifestPerms;
   final DateTime? grantedAt;
   final DateTime? updatedAt;
 
   const PluginConsents({
     required this.pluginName,
     required this.perms,
+    this.manifestPerms = const <String, dynamic>{},
     this.grantedAt,
     this.updatedAt,
   });
@@ -61,9 +68,14 @@ class PluginConsents {
     final perms = rawPerms is Map
         ? Map<String, dynamic>.from(rawPerms)
         : const <String, dynamic>{};
+    final rawManifest = json['manifestPerms'];
+    final manifestPerms = rawManifest is Map
+        ? Map<String, dynamic>.from(rawManifest)
+        : const <String, dynamic>{};
     return PluginConsents(
       pluginName: pluginName,
       perms: perms,
+      manifestPerms: manifestPerms,
       grantedAt: _parseTs(json['grantedAt']),
       updatedAt: _parseTs(json['updatedAt']),
     );
@@ -87,6 +99,38 @@ class PluginConsents {
   /// in `gateway/plugins_consents.go`.
   bool isCapGranted(String cap) {
     final v = perms[cap];
+    switch (cap) {
+      case 'storage':
+      case 'secret':
+      case 'telegram':
+      case 'llm':
+        return v == true;
+      case 'session':
+      case 'clipboard':
+      case 'git':
+        return v is String && v.isNotEmpty;
+      case 'fs':
+      case 'exec':
+      case 'http':
+        if (v == null) return false;
+        if (v is bool) return v;
+        if (v is List) return v.isNotEmpty;
+        if (v is Map) return v.isNotEmpty;
+        if (v is String) return v.isNotEmpty;
+        return true;
+      case 'events':
+        return v is List && v.isNotEmpty;
+      default:
+        return false;
+    }
+  }
+
+  /// Returns true when the plugin manifest declared a non-zero value for
+  /// [cap]. Caps that aren't declared can't be re-granted from the UI
+  /// because we'd have nothing to PATCH back in — the switch renders
+  /// disabled.
+  bool isCapDeclared(String cap) {
+    final v = manifestPerms[cap];
     switch (cap) {
       case 'storage':
       case 'secret':

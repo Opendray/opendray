@@ -21,6 +21,8 @@ class _FakeApi extends ApiClient {
   int getCalls = 0;
   final List<List<String>> revokeCapCalls = [];
   final List<String> revokeAllCalls = [];
+  final List<List<Object>> patchCalls = []; // [pluginName, patchMap]
+  Exception? patchThrow;
 
   @override
   Future<PluginConsents> getPluginConsents(String pluginName) async {
@@ -41,6 +43,16 @@ class _FakeApi extends ApiClient {
   Future<void> revokeAllPluginConsents(String pluginName) async {
     revokeAllCalls.add(pluginName);
     final err = revokeAllThrow;
+    if (err != null) throw err;
+  }
+
+  @override
+  Future<void> patchPluginConsents(
+    String pluginName,
+    Map<String, dynamic> patch,
+  ) async {
+    patchCalls.add([pluginName, patch]);
+    final err = patchThrow;
     if (err != null) throw err;
   }
 }
@@ -171,7 +183,7 @@ void main() {
       expect(messages.any((m) => m.toLowerCase().contains('storage')), isTrue);
     });
 
-    testWidgets('Revoke all opens confirm dialog then calls API',
+    testWidgets('Revoke all opens confirm dialog then PATCHes zeros',
         (tester) async {
       final messages = <String>[];
       final api = _FakeApi()
@@ -186,15 +198,71 @@ void main() {
       // Dialog is up.
       expect(find.byType(AlertDialog), findsOneWidget);
 
-      // After confirming we script a 404 on refetch to prove the page
-      // lands in the empty state rather than crashing.
-      api.getThrow = PluginConsentNotFoundException('kanban');
+      // After confirming we return an all-zero consent row so the page
+      // stays in the loaded state with every switch off — the whole
+      // point of PATCH semantics (v. the legacy DELETE).
+      api.getReturn = _consents(const {});
 
       await tester.tap(find.widgetWithText(FilledButton, 'Revoke all'));
       await tester.pumpAndSettle();
 
-      expect(api.revokeAllCalls, ['kanban']);
-      expect(find.text('No consent on record'), findsOneWidget);
+      // The handler no longer calls DELETE /consents (revokeAll).
+      expect(api.revokeAllCalls, isEmpty);
+      // Instead it PATCHes every cap to its zero value.
+      expect(api.patchCalls.length, 1);
+      final (plugin, patch) = (
+        api.patchCalls.first[0] as String,
+        api.patchCalls.first[1] as Map<String, dynamic>,
+      );
+      expect(plugin, 'kanban');
+      expect(patch['storage'], false);
+      expect(patch['secret'], false);
+      expect(patch['fs'], isNull);
+      expect(patch['events'], isNull);
+      // Row preserved — page still renders 11 switches, all off.
+      expect(find.byType(Switch), findsNWidgets(11));
+    });
+
+    testWidgets('re-granting a revoked cap PATCHes the manifest value',
+        (tester) async {
+      // storage was declared by the manifest but currently revoked — the
+      // user flips the switch back on and we expect a PATCH with the
+      // original manifest value merged in.
+      final api = _FakeApi()
+        ..getReturn = const PluginConsents(
+          pluginName: 'kanban',
+          perms: <String, dynamic>{'storage': false},
+          manifestPerms: <String, dynamic>{'storage': true, 'events': ['session.*']},
+        );
+      await tester.pumpWidget(_host(api));
+      await tester.pumpAndSettle();
+
+      // After the PATCH lands we script a granted snapshot for the refresh.
+      api.getReturn = const PluginConsents(
+        pluginName: 'kanban',
+        perms: <String, dynamic>{'storage': true},
+        manifestPerms: <String, dynamic>{'storage': true, 'events': ['session.*']},
+      );
+
+      // Find the storage switch — it's declared (manifest has it) so
+      // onChanged should be non-null even though granted == false.
+      final switches = tester.widgetList<Switch>(find.byType(Switch)).toList();
+      final enabledOff = switches.where((s) =>
+          s.onChanged != null && s.value == false).toList();
+      // storage + events are declared but revoked → both enabled+off.
+      expect(enabledOff.length, 2);
+
+      // Tap the first enabled-off switch (storage, in _caps order).
+      final firstEnabledOff = find.byWidgetPredicate((w) {
+        if (w is! Switch) return false;
+        return w.onChanged != null && w.value == false;
+      }).first;
+      await tester.tap(firstEnabledOff);
+      await tester.pumpAndSettle();
+
+      expect(api.patchCalls.length, 1);
+      final patch = api.patchCalls.first[1] as Map<String, dynamic>;
+      expect(patch['storage'], true);
     });
 
     testWidgets('Revoke all cancel closes dialog without calling API',
