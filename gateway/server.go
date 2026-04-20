@@ -653,8 +653,12 @@ func (s *Server) changeCredentials(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.creds.Save(r.Context(), newUser, req.NewPassword); err != nil {
-		s.logger.Error("auth: save credentials", "error", err)
+	// M5 D3 — changing the password rotates the KEK. The rewrap walk of
+	// every plugin_secret_kek row must happen in the SAME tx as the
+	// admin_auth update, otherwise a crash between Save() and the
+	// rewrap would strand every wrapped DEK with no recoverable key.
+	if err := s.creds.RotateCredentialsAndKEK(r.Context(), newUser, req.NewPassword); err != nil {
+		s.logger.Error("auth: rotate credentials+KEK", "error", err)
 		respondError(w, http.StatusInternalServerError, "failed to save credentials")
 		return
 	}
