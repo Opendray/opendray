@@ -447,8 +447,7 @@ func intVal(m map[string]any, key string, fallback int) int {
 	return fallback
 }
 
-// Legacy database handlers removed — replaced by pg-browser v1
-// marketplace plugin (plugins/marketplace/packages/pg-browser/). The
-// plugin runs in its own sidecar and exposes list/query commands
-// through the standard plugin command pipeline, so nothing here needs
-// a per-plugin HTTP surface anymore.
+// Legacy database handlers removed — replaced by the pg-browser panel
+// plugin (plugins/panels/pg-browser/), which exposes list/query/execute
+// via the /api/pg/{plugin}/* routes in pg_handlers.go. Nothing here
+// needs a per-plugin HTTP surface anymore.

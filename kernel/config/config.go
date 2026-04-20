@@ -181,15 +181,11 @@ const (
 func Defaults() Config {
 	home, _ := os.UserHomeDir()
 	defaultPluginsDataDir := filepath.Join(home, ".opendray", "plugins")
-	// Marketplace catalog root. Prefer $REPO/plugins/marketplace during
-	// development (picked up automatically when the working dir is the
-	// repo root) and fall back to ~/.opendray/marketplace in prod.
+	// Marketplace catalog root. Defaults to ~/.opendray/marketplace;
+	// developers testing against a local catalog point OPENDRAY_MARKETPLACE_DIR
+	// at the syz mock (or a checkout of opendray-marketplace), and prod uses
+	// OPENDRAY_MARKETPLACE_URL against marketplace.opendray.dev.
 	defaultMarketplaceDir := filepath.Join(home, ".opendray", "marketplace")
-	if _, err := os.Stat("plugins/marketplace/catalog.json"); err == nil {
-		if abs, aerr := filepath.Abs("plugins/marketplace"); aerr == nil {
-			defaultMarketplaceDir = abs
-		}
-	}
 
 	return Config{
 		SchemaVersion: SchemaVersion,
