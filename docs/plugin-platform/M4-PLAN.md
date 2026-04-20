@@ -24,7 +24,7 @@ fit inside the remaining window.
 - Flutter: Hub migrates from reading the local catalog to calling
   a new `/api/marketplace/registry/*` endpoint backed by the
   remote fetch; trust badges + auto-update indicator surface.
-- Marketplace repo template (`github.com/opendray/marketplace`)
+- Marketplace repo template (`github.com/Opendray/opendray-marketplace`)
   with a CI workflow that regenerates `index.json` on every merge
   to `main`. Needed even in sole-publisher mode so Kev's hand-
   edited PRs get validated + published consistently.
@@ -133,7 +133,7 @@ Settings → "App Store" preferences.
 
 ### 3.2 Publisher verification flow (for reference; implemented in M4.2)
 
-1. Third-party dev forks `github.com/opendray/marketplace`.
+1. Third-party dev forks `github.com/Opendray/opendray-marketplace`.
 2. Adds `publishers/<name>.json` with `keys: [ed25519 pubkey]` +
    `domainVerification.record: "opendray-verify=<token>"`.
 3. Adds DNS TXT `opendray-verify=<token>` to the claimed domain.
@@ -209,13 +209,13 @@ Tracked in memory `m4_2_publisher_cli.md` so it's not forgotten.
 
 ### Marketplace repo infra (T22–T24)
 
-These land on `github.com/opendray/marketplace`, not the main repo.
+These land on `github.com/Opendray/opendray-marketplace`, not the main repo.
 
 | ID | Title | Depends on | Effort |
 |----|-------|------------|--------|
-| T22 | Template repo layout (plugins/ / publishers/ / CODEOWNERS / revocations.json) | — | S |
-| T23 | GitHub Actions: regenerate index.json on push to main + upload to CDN mirror | T22 | S |
-| T24 | CI validation: manifest schema + SHA matches artifact URL + sandbox scan (forbidden file types) + capability-diff comment on PR | T23 | M |
+| T22 | Template repo layout (plugins/ / publishers/ / CODEOWNERS / revocations.json) | — | ✅ `opendray-marketplace@5d10d36` |
+| T23 | GitHub Actions: regenerate index.json on push to main + upload to CDN mirror | T22 | ✅ `opendray-marketplace@5d10d36` |
+| T24 | CI validation: manifest schema + SHA matches artifact URL + sandbox scan (forbidden file types) + capability-diff comment on PR | T23 | ✅ `opendray-marketplace@5d10d36` (shipped together with T22/T23) |
 
 ### Tests (T25–T27)
 
@@ -286,7 +286,7 @@ Tests/docs depend on everything above; rollout order below.
 
 ## 6. Acceptance criteria for "M4.1 done"
 
-- End-to-end: Kev hand-edits a PR on `github.com/opendray/marketplace`
+- End-to-end: Kev hand-edits a PR on `github.com/Opendray/opendray-marketplace`
   adding `plugins/opendray-examples/fs-readme/1.0.0.json` with a
   real signed artifact URL → CI (T23/T24) validates + regenerates
   `index.json` on merge → Hub on a second device shows the
