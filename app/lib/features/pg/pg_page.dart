@@ -11,23 +11,22 @@ import '../../shared/providers_bus.dart';
 import '../../shared/theme/app_theme.dart';
 
 /// PostgreSQL SQL editor + schema browser for the pg-browser@2.0.0
-/// plugin. Three-column mobile-adapting layout:
+/// plugin.
 ///
-///   - Sidebar (left, collapses to drawer on narrow screens):
-///     schema picker + tables list. Tap a table to insert a
-///     `SELECT * FROM <schema>.<table> LIMIT 100` template into the
-///     editor.
-///   - Editor (centre, monospace multi-line TextField): the SQL the
-///     user types. A run button in the top bar submits either
-///     `/query` (read-only) or `/execute` (write verbs), picking by
-///     first-verb inspection that mirrors the server-side
-///     pg.IsWriteVerb.
-///   - Results (bottom): DataTable with columns + rows from the
-///     last query, plus a metadata line (rows / duration / truncated).
+/// Toolbar exposes a **database** picker (lists every non-template
+/// database the configured user can connect to) and a schema picker.
+/// The selected database threads through every downstream API call
+/// as the `database` override — the server's overrideDatabase helper
+/// swaps cfg.Database per-request, so switching DBs is a pure client
+/// concern and doesn't require re-configuring the plugin.
 ///
-/// A Cmd/Ctrl+Enter keyboard shortcut runs the current query.
-/// Destructive statements (DROP / TRUNCATE / DELETE without WHERE)
-/// pop a confirmation dialog before going to the server.
+/// Tapping a table **immediately** runs a preview (SELECT * LIMIT N)
+/// against the active schema.database.table and renders rows — the
+/// SQL editor is reserved for custom power-user queries, not the
+/// required path to viewing data.
+///
+/// Cmd/Ctrl+Enter runs the editor query. Destructive statements
+/// (DROP / TRUNCATE / DELETE without WHERE) pop a confirmation.
 class PGPage extends StatefulWidget {
   const PGPage({super.key});
 
@@ -41,6 +40,9 @@ class _PGPageState extends State<PGPage> {
 
   final _sqlCtrl = TextEditingController(text: 'SELECT 1;');
   final _sqlFocus = FocusNode();
+
+  List<String> _databases = [];
+  String? _activeDatabase;
 
   List<String> _schemas = [];
   String? _activeSchema;
@@ -92,21 +94,47 @@ class _PGPageState extends State<PGPage> {
         return;
       }
       setState(() => _plugin = match.first);
+      await _loadDatabases();
       await _loadSchemas();
     } catch (_) {}
+  }
+
+  /// Fetches the list of user-visible databases on the server. Seeds
+  /// `_activeDatabase` from the plugin config's default DB if present,
+  /// else from the first DB returned. Empty lists leave `_activeDatabase`
+  /// null, which causes API calls to fall through to the server default.
+  Future<void> _loadDatabases() async {
+    final name = _pluginName;
+    if (name == null) return;
+    try {
+      final dbs = await _api.pgDatabases(name);
+      if (!mounted) return;
+      final configured = _plugin?.config['database'] as String?;
+      setState(() {
+        _databases = dbs;
+        _activeDatabase ??= (configured != null && dbs.contains(configured))
+            ? configured
+            : (dbs.isNotEmpty ? dbs.first : null);
+      });
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    }
   }
 
   Future<void> _loadSchemas() async {
     final name = _pluginName;
     if (name == null) return;
     try {
-      final schemas = await _api.pgSchemas(name);
+      final schemas =
+          await _api.pgSchemas(name, database: _activeDatabase ?? '');
       if (!mounted) return;
       setState(() {
         _schemas = schemas;
-        _activeSchema ??= schemas.contains('public')
-            ? 'public'
-            : (schemas.isNotEmpty ? schemas.first : null);
+        if (_activeSchema == null || !schemas.contains(_activeSchema)) {
+          _activeSchema = schemas.contains('public')
+              ? 'public'
+              : (schemas.isNotEmpty ? schemas.first : null);
+        }
       });
       await _loadTables();
     } on ApiException catch (e) {
@@ -119,7 +147,8 @@ class _PGPageState extends State<PGPage> {
     final schema = _activeSchema;
     if (name == null || schema == null) return;
     try {
-      final tables = await _api.pgTables(name, schema: schema);
+      final tables = await _api.pgTables(name,
+          schema: schema, database: _activeDatabase ?? '');
       if (!mounted) return;
       setState(() => _tables = tables);
     } on ApiException catch (e) {
@@ -198,8 +227,9 @@ class _PGPageState extends State<PGPage> {
     });
     try {
       if (write) {
-        final res = await ApiClient.describeErrors(
-            () => _api.pgExecute(name, sql));
+        final res = await ApiClient.describeErrors(() => _api.pgExecute(
+            name, sql,
+            database: _activeDatabase ?? ''));
         if (!mounted) return;
         setState(() => _executeResult = res);
         // If the write was a DDL (CREATE / ALTER / DROP), refresh
@@ -207,7 +237,8 @@ class _PGPageState extends State<PGPage> {
         // without a manual refresh.
         if (_ddlVerbs.contains(_firstVerb(sql))) await _loadTables();
       } else {
-        final res = await ApiClient.describeErrors(() => _api.pgQuery(name, sql));
+        final res = await ApiClient.describeErrors(
+            () => _api.pgQuery(name, sql, database: _activeDatabase ?? ''));
         if (!mounted) return;
         setState(() => _queryResult = res);
       }
@@ -291,8 +322,39 @@ class _PGPageState extends State<PGPage> {
         border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Row(children: [
+        // Database selector — swaps cfg.Database per-request via the
+        // gateway's overrideDatabase helper. Changing DB triggers a
+        // full schema reload (and tables reload through the chain).
+        if (_databases.isNotEmpty) ...[
+          const Icon(Icons.storage, size: 14, color: AppColors.textMuted),
+          const SizedBox(width: 4),
+          DropdownButton<String>(
+            value: _activeDatabase,
+            items: [
+              for (final d in _databases)
+                DropdownMenuItem(value: d, child: Text(d)),
+            ],
+            onChanged: (v) {
+              if (v != null && v != _activeDatabase) {
+                setState(() {
+                  _activeDatabase = v;
+                  _activeSchema = null;
+                  _schemas = [];
+                  _tables = [];
+                });
+                _loadSchemas();
+              }
+            },
+            underline: const SizedBox.shrink(),
+            isDense: true,
+          ),
+          const SizedBox(width: 10),
+        ],
         // Schema selector
         if (_schemas.isNotEmpty) ...[
+          const Icon(Icons.folder_outlined,
+              size: 14, color: AppColors.textMuted),
+          const SizedBox(width: 4),
           DropdownButton<String>(
             value: _activeSchema,
             items: [
@@ -407,7 +469,7 @@ class _PGPageState extends State<PGPage> {
           return ActionChip(
             label: Text(t['name'] as String? ?? '',
                 style: const TextStyle(fontSize: 11)),
-            onPressed: () => _insertTableSelect(t),
+            onPressed: () => _previewTable(t),
           );
         },
       ),
@@ -418,7 +480,8 @@ class _PGPageState extends State<PGPage> {
     final name = t['name'] as String? ?? '';
     final kind = t['kind'] as String? ?? 'table';
     return InkWell(
-      onTap: () => _insertTableSelect(t),
+      onTap: () => _previewTable(t),
+      onLongPress: () => _insertTableSelect(t),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: Row(children: [
@@ -442,11 +505,61 @@ class _PGPageState extends State<PGPage> {
     );
   }
 
+  /// Fires a SELECT * LIMIT N against the tapped table and renders
+  /// the rows in the results pane — no manual Run step. This is the
+  /// primary way to view data; the SQL editor is for custom queries.
+  /// The SELECT is also written into the editor so the user can
+  /// tweak-and-re-run without retyping.
+  Future<void> _previewTable(Map<String, dynamic> t) async {
+    final pname = _pluginName;
+    if (pname == null) return;
+    final schema = t['schema'] as String? ?? 'public';
+    final tname = t['name'] as String? ?? '';
+    if (tname.isEmpty) return;
+
+    final limit = _previewLimit();
+    final sql = 'SELECT * FROM "$schema"."$tname" LIMIT $limit;';
+    _sqlCtrl.text = sql;
+    _sqlCtrl.selection = TextSelection.collapsed(offset: sql.length);
+
+    setState(() {
+      _running = true;
+      _error = null;
+      _queryResult = null;
+      _executeResult = null;
+    });
+    try {
+      final res = await ApiClient.describeErrors(
+          () => _api.pgQuery(pname, sql, database: _activeDatabase ?? ''));
+      if (!mounted) return;
+      setState(() => _queryResult = res);
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _running = false);
+    }
+  }
+
+  /// Reads the configured maxRows cap (server enforces too). Falls
+  /// back to 100 which matches the plugin's configSchema default.
+  int _previewLimit() {
+    final v = _plugin?.config['maxRows'];
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    if (v is String) {
+      final parsed = int.tryParse(v);
+      if (parsed != null) return parsed;
+    }
+    return 100;
+  }
+
+  /// Long-press fallback: drop the SELECT into the editor without
+  /// executing, for users who want to tweak the query before running.
   void _insertTableSelect(Map<String, dynamic> t) {
     final schema = t['schema'] as String? ?? 'public';
     final name = t['name'] as String? ?? '';
     if (name.isEmpty) return;
-    final snippet = 'SELECT * FROM "$schema"."$name" LIMIT 100;';
+    final snippet = 'SELECT * FROM "$schema"."$name" LIMIT ${_previewLimit()};';
     _sqlCtrl.text = snippet;
     _sqlCtrl.selection = TextSelection.collapsed(offset: snippet.length);
     _sqlFocus.requestFocus();

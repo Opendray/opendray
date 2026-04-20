@@ -1,18 +1,22 @@
 package gateway
 
-// HTTP handlers for the pg-browser@2.0.0 panel plugin. See
-// gateway/pg/ for the pgxpool-backed execution engine + schema
-// introspection.
+// HTTP handlers for the pg-browser panel plugin. See gateway/pg/ for
+// the pgxpool-backed execution engine + schema introspection.
 //
-//   POST /api/pg/{plugin}/query    { sql } → { columns, rows, rowCount, truncated, durationMs }
-//   POST /api/pg/{plugin}/execute  { sql } → { rowsAffected, verb, durationMs }
-//   GET  /api/pg/{plugin}/schemas              → [schema, ...]
-//   GET  /api/pg/{plugin}/tables?schema=public → [{schema, name, kind}, ...]
-//   GET  /api/pg/{plugin}/columns?schema=&table= → [{name, type, nullable, default}, ...]
+//   GET  /api/pg/{plugin}/databases                        → [name, ...]
+//   GET  /api/pg/{plugin}/schemas?database=                → [schema, ...]
+//   GET  /api/pg/{plugin}/tables?schema=&database=         → [{schema, name, kind}, ...]
+//   GET  /api/pg/{plugin}/columns?schema=&table=&database= → [{name, type, nullable, default}, ...]
+//   POST /api/pg/{plugin}/query    { sql, database? }      → { columns, rows, rowCount, truncated, durationMs }
+//   POST /api/pg/{plugin}/execute  { sql, database? }      → { rowsAffected, verb, durationMs }
 //
 // Config flows through Server.effectiveConfig, so host/port/user/
 // database come from plugin_kv.__config.* and the password (secret
 // field) is decrypted from plugin_secret before reaching the pool.
+// Every route accepts an optional `database` override (query param on
+// GETs, body field on POSTs) so the client can switch databases
+// without re-configuring — Manager.pool() keys by cfg.Database so the
+// override naturally produces an independent connection pool.
 
 import (
 	"encoding/json"
@@ -72,6 +76,37 @@ func (s *Server) getPGConfig(r *http.Request, pluginName string) (pg.Config, err
 	}, nil
 }
 
+// overrideDatabase patches cfg.Database to db when db is non-empty.
+// Kept as a helper (rather than inlined four times) so the semantics
+// stay in one place: empty = use cfg default, non-empty = switch DB
+// (produces a fresh pool via Manager.pool's cacheKey).
+func overrideDatabase(cfg pg.Config, db string) pg.Config {
+	if db != "" {
+		cfg.Database = db
+	}
+	return cfg
+}
+
+// pgDatabases handles GET /api/pg/{plugin}/databases. Lists every
+// user-visible database on the server (minus templates). Used by the
+// Flutter database picker on first load.
+func (s *Server) pgDatabases(w http.ResponseWriter, r *http.Request) {
+	cfg, err := s.getPGConfig(r, chi.URLParam(r, "plugin"))
+	if err != nil {
+		respondError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	dbs, err := s.pg.ListDatabases(r.Context(), chi.URLParam(r, "plugin"), cfg)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if dbs == nil {
+		dbs = []string{}
+	}
+	respondJSON(w, http.StatusOK, dbs)
+}
+
 // pgQuery handles POST /api/pg/{plugin}/query. Returns columns +
 // rows + metadata. Destructive verbs (DROP / TRUNCATE / DELETE
 // without WHERE) are rejected on the Query path regardless of
@@ -83,13 +118,15 @@ func (s *Server) pgQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req struct {
-		SQL string `json:"sql"`
+		SQL      string `json:"sql"`
+		Database string `json:"database"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	res, err := s.pg.Query(r.Context(), chi.URLParam(r, "plugin"), cfg, req.SQL)
+	res, err := s.pg.Query(r.Context(), chi.URLParam(r, "plugin"),
+		overrideDatabase(cfg, req.Database), req.SQL)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return
@@ -111,13 +148,15 @@ func (s *Server) pgExecute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req struct {
-		SQL string `json:"sql"`
+		SQL      string `json:"sql"`
+		Database string `json:"database"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	res, err := s.pg.Execute(r.Context(), chi.URLParam(r, "plugin"), cfg, req.SQL)
+	res, err := s.pg.Execute(r.Context(), chi.URLParam(r, "plugin"),
+		overrideDatabase(cfg, req.Database), req.SQL)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return
@@ -131,7 +170,8 @@ func (s *Server) pgSchemas(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
 	}
-	schemas, err := s.pg.ListSchemas(r.Context(), chi.URLParam(r, "plugin"), cfg)
+	schemas, err := s.pg.ListSchemas(r.Context(), chi.URLParam(r, "plugin"),
+		overrideDatabase(cfg, r.URL.Query().Get("database")))
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return
@@ -148,8 +188,9 @@ func (s *Server) pgTables(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
 	}
-	schema := r.URL.Query().Get("schema")
-	tables, err := s.pg.ListTables(r.Context(), chi.URLParam(r, "plugin"), cfg, schema)
+	q := r.URL.Query()
+	tables, err := s.pg.ListTables(r.Context(), chi.URLParam(r, "plugin"),
+		overrideDatabase(cfg, q.Get("database")), q.Get("schema"))
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return
@@ -166,13 +207,15 @@ func (s *Server) pgColumns(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
 	}
-	schema := r.URL.Query().Get("schema")
-	table := r.URL.Query().Get("table")
+	q := r.URL.Query()
+	schema := q.Get("schema")
+	table := q.Get("table")
 	if table == "" {
 		respondError(w, http.StatusBadRequest, "table query param is required")
 		return
 	}
-	cols, err := s.pg.DescribeColumns(r.Context(), chi.URLParam(r, "plugin"), cfg, schema, table)
+	cols, err := s.pg.DescribeColumns(r.Context(), chi.URLParam(r, "plugin"),
+		overrideDatabase(cfg, q.Get("database")), schema, table)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return

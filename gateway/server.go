@@ -392,11 +392,12 @@ func New(cfg Config) *Server {
 		// guard; statement timeout + max rows gated from configSchema.
 		// Write statements go through the separate /execute route so
 		// the Flutter client can prompt for confirmation first.
-		r.Post("/api/pg/{plugin}/query",   s.pgQuery)
-		r.Post("/api/pg/{plugin}/execute", s.pgExecute)
-		r.Get("/api/pg/{plugin}/schemas",  s.pgSchemas)
-		r.Get("/api/pg/{plugin}/tables",   s.pgTables)
-		r.Get("/api/pg/{plugin}/columns",  s.pgColumns)
+		r.Post("/api/pg/{plugin}/query",     s.pgQuery)
+		r.Post("/api/pg/{plugin}/execute",   s.pgExecute)
+		r.Get("/api/pg/{plugin}/databases",  s.pgDatabases)
+		r.Get("/api/pg/{plugin}/schemas",    s.pgSchemas)
+		r.Get("/api/pg/{plugin}/tables",     s.pgTables)
+		r.Get("/api/pg/{plugin}/columns",    s.pgColumns)
 
 
 		// Hook subscriptions

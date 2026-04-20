@@ -432,6 +432,36 @@ func (m *Manager) Execute(ctx context.Context, plugin string, cfg Config, sql st
 
 // ─── Schema inspection ───────────────────────────────────────────
 
+// ListDatabases returns every user-visible database on the server
+// (excludes `template0`, `template1`, and any DB marked
+// `datistemplate = true`). The query runs against whichever database
+// cfg points at — pg_database is a cluster-wide catalog, so the
+// listing is the same from any starting DB.
+//
+// The Flutter client uses this to populate the database picker, so
+// switching databases doesn't require returning to Configure and
+// editing the `database` config field.
+func (m *Manager) ListDatabases(ctx context.Context, plugin string, cfg Config) ([]string, error) {
+	const q = `
+		SELECT datname
+		  FROM pg_database
+		 WHERE NOT datistemplate
+		   AND datallowconn
+		 ORDER BY datname
+	`
+	res, err := m.Query(ctx, plugin, cfg, q)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]string, 0, len(res.Rows))
+	for _, row := range res.Rows {
+		if s, ok := row[0].(string); ok {
+			out = append(out, s)
+		}
+	}
+	return out, nil
+}
+
 // ListSchemas returns every user-visible schema name (skips
 // pg_catalog / pg_toast / information_schema).
 func (m *Manager) ListSchemas(ctx context.Context, plugin string, cfg Config) ([]string, error) {

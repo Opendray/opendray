@@ -691,34 +691,61 @@ class ApiClient {
   }
 
   // ── PostgreSQL (pg-browser plugin) ───────────────────────
+  //
+  // Every call accepts an optional `database` to override the
+  // plugin's configured default without forcing a trip back to
+  // Configure. The gateway swaps cfg.Database before the pool lookup;
+  // Manager.pool() already keys by database so the override
+  // transparently produces an independent connection.
 
-  Future<Map<String, dynamic>> pgQuery(String plugin, String sql) async {
-    final res = await _dio.post('/api/pg/$plugin/query', data: {'sql': sql});
+  Future<Map<String, dynamic>> pgQuery(String plugin, String sql,
+      {String database = ''}) async {
+    final res = await _dio.post('/api/pg/$plugin/query', data: {
+      'sql': sql,
+      if (database.isNotEmpty) 'database': database,
+    });
     return Map<String, dynamic>.from(res.data as Map);
   }
 
-  Future<Map<String, dynamic>> pgExecute(String plugin, String sql) async {
-    final res = await _dio.post('/api/pg/$plugin/execute', data: {'sql': sql});
+  Future<Map<String, dynamic>> pgExecute(String plugin, String sql,
+      {String database = ''}) async {
+    final res = await _dio.post('/api/pg/$plugin/execute', data: {
+      'sql': sql,
+      if (database.isNotEmpty) 'database': database,
+    });
     return Map<String, dynamic>.from(res.data as Map);
   }
 
-  Future<List<String>> pgSchemas(String plugin) async {
-    final res = await _dio.get('/api/pg/$plugin/schemas');
+  /// Every database the PG server hosts (minus templates). Used to
+  /// populate the plugin's database picker on first load.
+  Future<List<String>> pgDatabases(String plugin) async {
+    final res = await _dio.get('/api/pg/$plugin/databases');
+    return (res.data as List).cast<String>();
+  }
+
+  Future<List<String>> pgSchemas(String plugin, {String database = ''}) async {
+    final res = await _dio.get('/api/pg/$plugin/schemas',
+        queryParameters: {if (database.isNotEmpty) 'database': database});
     return (res.data as List).cast<String>();
   }
 
   Future<List<Map<String, dynamic>>> pgTables(String plugin,
-      {String schema = ''}) async {
-    final res = await _dio.get('/api/pg/$plugin/tables',
-        queryParameters: {if (schema.isNotEmpty) 'schema': schema});
+      {String schema = '', String database = ''}) async {
+    final res = await _dio.get('/api/pg/$plugin/tables', queryParameters: {
+      if (schema.isNotEmpty) 'schema': schema,
+      if (database.isNotEmpty) 'database': database,
+    });
     return (res.data as List).cast<Map<String, dynamic>>();
   }
 
   Future<List<Map<String, dynamic>>> pgColumns(String plugin,
-      {String schema = '', required String table}) async {
+      {String schema = '',
+      required String table,
+      String database = ''}) async {
     final res = await _dio.get('/api/pg/$plugin/columns', queryParameters: {
       if (schema.isNotEmpty) 'schema': schema,
       'table': table,
+      if (database.isNotEmpty) 'database': database,
     });
     return (res.data as List).cast<Map<String, dynamic>>();
   }
