@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write  # for cosign OIDC
 
 jobs:
   release:
@@ -26,5 +27,22 @@ jobs:
         with:
           version: latest
           args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: sigstore/cosign-installer@v3
+      - name: Sign checksums
+        run: cosign sign-blob --yes dist/checksums.txt --output-signature dist/checksums.txt.sig --output-certificate dist/checksums.txt.pem
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          artifact-name: sbom-opendray.spdx.json
+          output-file: dist/sbom-opendray.spdx.json
+
+      - name: Upload SBOM to release
+        run: gh release upload ${{ github.ref_name }} dist/sbom-opendray.spdx.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

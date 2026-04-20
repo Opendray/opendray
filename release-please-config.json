@@ -1,0 +1,11 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "go",
+      "package-name": "opendray",
+      "changelog-path": "CHANGELOG.md",
+      "bump-minor-pre-major": true,
+      "draft": false
+    }
+  }
+}

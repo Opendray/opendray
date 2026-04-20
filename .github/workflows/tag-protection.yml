@@ -1,0 +1,19 @@
+name: Verify tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify tag creator
+        run: |
+          ACTOR="${{ github.actor }}"
+          if [[ "$ACTOR" != "navidrast" && "$ACTOR" != "linivek" && "$ACTOR" != "github-actions[bot]" ]]; then
+            echo "Unauthorized tag push by $ACTOR"
+            exit 1
+          fi
+          echo "Tag created by authorized user: $ACTOR"
