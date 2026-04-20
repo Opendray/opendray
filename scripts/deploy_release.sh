@@ -199,14 +199,18 @@ BIN_OUT="$REPO_ROOT/bin/opendray-linux-amd64"
 mkdir -p "$(dirname "$BIN_OUT")"
 VERSION_YAML="$(cd app && grep -E '^version:' pubspec.yaml | awk '{print $2}')"
 BUILD_SHA="$(git rev-parse --short HEAD 2>/dev/null || echo dev)"
+# UTC ISO8601-basic — M5 buildTime stamp (see cmd/opendray/main.go + /api/health).
+# Changes every run so `scripts/verify-deploy.sh` can prove the
+# new binary is actually live after the opendray-deployer restart.
+BUILD_TIME_STAMP="$(date -u '+%Y%m%dT%H%M%SZ')"
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 "$GO_BIN" build \
   -trimpath \
-  -ldflags "-s -w -X main.version=${VERSION_YAML} -X main.buildSha=${BUILD_SHA}" \
+  -ldflags "-s -w -X main.version=${VERSION_YAML} -X main.buildSha=${BUILD_SHA} -X main.buildTime=${BUILD_TIME_STAMP}" \
   -o "$BIN_OUT" \
   ./cmd/opendray \
   || fail "go build failed" 3
 BIN_SIZE="$(du -h "$BIN_OUT" | cut -f1)"
-ok "built $BIN_OUT ($BIN_SIZE, $VERSION_YAML@$BUILD_SHA)"
+ok "built $BIN_OUT ($BIN_SIZE, $VERSION_YAML@$BUILD_SHA @$BUILD_TIME_STAMP)"
 
 # ── 4. Flutter APK (bump build number, release) ──────────────────────
 phase "Flutter APK (release)"
@@ -279,6 +283,7 @@ EOF
 
 "$FLUTTER_HOME/bin/flutter" build apk --release \
   --dart-define=BUILD_DATE="$BUILD_DATE" \
+  --dart-define=BUILD_TIMESTAMP="$BUILD_TIME_STAMP" \
   || { cd "$REPO_ROOT"; fail "flutter build apk failed (Android SDK configured?)" 3; }
 
 SRC_APK="build/app/outputs/flutter-apk/app-release.apk"

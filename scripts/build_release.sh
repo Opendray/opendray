@@ -180,6 +180,10 @@ rm -f android/local.properties
 "$FLUTTER_HOME/bin/flutter" pub get >/dev/null
 
 BUILD_DATE="$(date +%Y%m%d)"
+# UTC ISO8601-basic — M5 visibility stamp. Differs per invocation even
+# when pubspec version + BUILD_DATE match, so Settings → About can tell
+# two APKs built on the same day apart.
+BUILD_TIME_STAMP="$(date -u '+%Y%m%dT%H%M%SZ')"
 
 # Write local.properties AFTER pub get and right before the build, so
 # any mutagen re-sync racing in the background doesn't stomp on us
@@ -194,6 +198,7 @@ EOF
 
 "$FLUTTER_HOME/bin/flutter" build apk --release \
   --dart-define=BUILD_DATE="$BUILD_DATE" \
+  --dart-define=BUILD_TIMESTAMP="$BUILD_TIME_STAMP" \
   || { cd "$REPO_ROOT"; fail "flutter build apk failed (Android SDK configured?)" 3; }
 
 SRC_APK="build/app/outputs/flutter-apk/app-release.apk"
