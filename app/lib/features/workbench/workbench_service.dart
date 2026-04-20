@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../core/api/api_client.dart';
+import '../../shared/providers_bus.dart';
 import 'workbench_models.dart';
 
 /// Single source of truth for the workbench contribution registry.
@@ -192,6 +193,14 @@ class WorkbenchService extends ChangeNotifier {
         if (payload is String && payload.isNotEmpty) {
           openView(payload);
         }
+        break;
+      case 'revocation':
+        // Kill-switch fired. The showMessage event (emitted
+        // alongside) already rendered a snackbar; we publish to
+        // the ProvidersBus so the Plugin page's provider list
+        // refreshes immediately — uninstalled plugins disappear
+        // without waiting for the user to hit pull-to-refresh.
+        ProvidersBus.instance.notify();
         break;
       // updateStatusBar / theme — covered by status bar source + theme
       // hook in later tasks.

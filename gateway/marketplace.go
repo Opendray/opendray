@@ -28,6 +28,37 @@ type marketplaceListResponse struct {
 	Entries []market.Entry `json:"entries"`
 }
 
+// MarketplaceSettings is the read-only snapshot of the gateway's
+// marketplace configuration, surfaced at boot via the gateway
+// Config. The Flutter Settings → Marketplace admin subpage renders
+// these fields so the operator sees exactly which URL + mirrors +
+// cadence the running server decided on.
+type MarketplaceSettings struct {
+	// Source is "remote" | "local" | "empty" — matches main.go's
+	// buildMarketplaceCatalog decision tree.
+	Source string `json:"source"`
+
+	// RegistryURL is the primary URL the remote backend fetches
+	// from. Empty when Source != "remote".
+	RegistryURL string `json:"registryUrl,omitempty"`
+
+	// RegistryDir is the local-disk catalog root. Empty when
+	// Source != "local".
+	RegistryDir string `json:"registryDir,omitempty"`
+
+	// Mirrors lists the fallback URLs the remote backend tries on
+	// 5xx / timeout. Empty on local / empty backends.
+	Mirrors []string `json:"mirrors,omitempty"`
+
+	// PollHours is the revocation poll cadence in hours, post-clamp
+	// to [1, 168]. Zero = poller not started (empty catalog).
+	PollHours int `json:"pollHours"`
+
+	// AllowLocalPlugins mirrors OPENDRAY_ALLOW_LOCAL_PLUGINS so
+	// the UI can warn when sideload installs are enabled.
+	AllowLocalPlugins bool `json:"allowLocalPlugins"`
+}
+
 // marketplaceList handles GET /api/marketplace/plugins.
 //
 // Returns every Entry the catalog knows about in a stable order
@@ -62,6 +93,17 @@ func (s *Server) marketplaceList(w http.ResponseWriter, r *http.Request) {
 // type assertion.
 type cacheInvalidator interface {
 	InvalidateCache()
+}
+
+// marketplaceSettingsGet handles GET /api/marketplace/settings.
+//
+// Returns the read-only config snapshot the server booted with.
+// Writable settings (change registry URL, toggle auto-update)
+// ship in M4.2 backed by a per-user preferences table.
+func (s *Server) marketplaceSettingsGet(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(s.marketplaceSettings)
 }
 
 // marketplaceRefresh handles POST /api/marketplace/refresh.

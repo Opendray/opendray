@@ -31,6 +31,10 @@ class PluginsPage extends StatefulWidget {
 
 class _PluginsPageState extends State<PluginsPage> {
   List<provider_model.ProviderInfo> _providers = [];
+  /// Map of "publisher/name" → latest version from the marketplace.
+  /// Populated by _load; used by _updateAvailable to decide whether
+  /// to render the "Update → vX" chip on each card.
+  Map<String, String> _latestVersions = const {};
   bool _loading = true;
   String? _error;
   StreamSubscription<void>? _providersSub;
@@ -54,10 +58,23 @@ class _PluginsPageState extends State<PluginsPage> {
 
   Future<void> _load() async {
     try {
-      final providers = await _api.listProviders();
+      // Fetch installed + marketplace in parallel. Marketplace
+      // failures are non-fatal — we drop the update-available
+      // chip if the registry's unreachable, but the installed
+      // list still renders.
+      final results = await Future.wait([
+        _api.listProviders(),
+        _api.listMarketplace().catchError((_) => <MarketplaceEntry>[]),
+      ]);
+      final providers = results[0] as List<provider_model.ProviderInfo>;
+      final market = results[1] as List<MarketplaceEntry>;
+      final latest = <String, String>{
+        for (final e in market) '${e.publisher}/${e.name}': e.version,
+      };
       if (!mounted) return;
       setState(() {
         _providers = providers;
+        _latestVersions = latest;
         _loading = false;
         _error = null;
       });
@@ -68,6 +85,35 @@ class _PluginsPageState extends State<PluginsPage> {
         _error = e.toString();
       });
     }
+  }
+
+  /// Returns the newer version string if the marketplace has one
+  /// above what's installed; empty string means up-to-date (or no
+  /// marketplace record). v1-only plugins get checked; legacy
+  /// plugins never appear in the marketplace so they stay null.
+  String _updateAvailable(provider_model.ProviderInfo p) {
+    if (!p.provider.isV1) return '';
+    final key = '${p.provider.publisher}/${p.provider.name}';
+    final latest = _latestVersions[key];
+    if (latest == null || latest.isEmpty) return '';
+    if (_compareSemver(p.provider.version, latest) < 0) return latest;
+    return '';
+  }
+
+  /// Very small semver comparator. Handles dotted-int triples
+  /// (1.0.0, 2.10.3); falls back to lexical compare for anything
+  /// weirder. Sufficient for the "update available" heuristic —
+  /// pub_semver would be better but isn't worth a new dep.
+  int _compareSemver(String a, String b) {
+    final pa = a.split('.').map((x) => int.tryParse(x) ?? 0).toList();
+    final pb = b.split('.').map((x) => int.tryParse(x) ?? 0).toList();
+    final len = pa.length > pb.length ? pa.length : pb.length;
+    for (int i = 0; i < len; i++) {
+      final ai = i < pa.length ? pa[i] : 0;
+      final bi = i < pb.length ? pb[i] : 0;
+      if (ai != bi) return ai - bi;
+    }
+    return a.compareTo(b);
   }
 
   void _notify(String msg, {bool isError = false}) {
@@ -343,6 +389,11 @@ class _PluginsPageState extends State<PluginsPage> {
                           _chip('required', AppColors.accent)
                         else
                           _chip(kindLabel, AppColors.textMuted),
+                        if (_updateAvailable(p) != '') ...[
+                          const SizedBox(width: 4),
+                          _chip('update → v${_updateAvailable(p)}',
+                              AppColors.accent),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 2),

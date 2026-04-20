@@ -366,9 +366,10 @@ class _HubPageState extends State<HubPage> {
                     ],
                   ),
                 ),
+                _trustBadge(entry.trust),
                 if (entry.form.isNotEmpty)
                   Container(
-                    margin: const EdgeInsets.only(right: 8),
+                    margin: const EdgeInsets.only(left: 4, right: 8),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 6, vertical: 1),
                     decoration: BoxDecoration(
@@ -405,6 +406,57 @@ class _HubPageState extends State<HubPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Trust badge for the Hub card. Renders:
+  ///   official  → green "OFFICIAL" chip with shield icon
+  ///   verified  → blue "VERIFIED" chip with checkmark
+  ///   community → grey "COMMUNITY" chip
+  /// Keeps sideload labelling to the post-install path since
+  /// marketplace entries aren't sideloaded by definition.
+  Widget _trustBadge(String trust) {
+    Color color;
+    IconData? icon;
+    String label;
+    switch (trust) {
+      case 'official':
+        color = const Color(0xFF16A34A); // green-600
+        icon = Icons.shield;
+        label = 'OFFICIAL';
+        break;
+      case 'verified':
+        color = const Color(0xFF2563EB); // blue-600
+        icon = Icons.verified;
+        label = 'VERIFIED';
+        break;
+      default:
+        color = AppColors.textMuted;
+        icon = null;
+        label = 'COMMUNITY';
+    }
+    return Container(
+      margin: const EdgeInsets.only(right: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 10, color: color),
+            const SizedBox(width: 3),
+          ],
+          Text(label,
+              style: TextStyle(
+                  fontSize: 10,
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.4)),
+        ],
       ),
     );
   }

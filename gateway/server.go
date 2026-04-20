@@ -92,6 +92,13 @@ type Server struct {
 	// M4.1 lands; the handler code only depends on the interface.
 	marketplace market.Catalog
 
+	// marketplaceSettings carries the boot-time config values
+	// surfaced via GET /api/marketplace/settings so the Settings →
+	// Marketplace admin subpage can show what the server is
+	// actually using. Read-only in M4.1; editable via per-user
+	// preferences is M4.2.
+	marketplaceSettings MarketplaceSettings
+
 	// secretAPI + hostSupervisor back the platform-managed config
 	// endpoints (GET/PUT /api/plugins/{name}/config). secretAPI is
 	// used for PlatformSet/Get/Delete bypassing the bridge gate;
@@ -146,6 +153,12 @@ type Config struct {
 	// M3 bootstrap, remote once M4.1 T1–T7 lands.
 	Marketplace market.Catalog
 
+	// MarketplaceSettings carries the read-only config snapshot
+	// returned by GET /api/marketplace/settings. Kev's Settings →
+	// Marketplace admin subpage reads this to show which URL +
+	// mirrors + poll cadence the gateway actually booted with.
+	MarketplaceSettings MarketplaceSettings
+
 	// SecretAPI + HostSupervisor wire the platform-managed config
 	// endpoints. Both nil = /api/plugins/{name}/config returns 503.
 	SecretAPI      *bridge.SecretAPI
@@ -198,7 +211,8 @@ func New(cfg Config) *Server {
 		workbenchBus:    cfg.WorkbenchBus,
 		version:         cfg.Version,
 		buildSha:        cfg.BuildSha,
-		marketplace:     cfg.Marketplace,
+		marketplace:         cfg.Marketplace,
+		marketplaceSettings: cfg.MarketplaceSettings,
 		secretAPI:       cfg.SecretAPI,
 		hostSupervisor:  cfg.HostSupervisor,
 	}
@@ -366,6 +380,7 @@ func New(cfg Config) *Server {
 		// page. Install still flows through /api/plugins/install with
 		// src="marketplace://<name>".
 		r.Get("/api/marketplace/plugins", s.marketplaceList)
+		r.Get("/api/marketplace/settings", s.marketplaceSettingsGet)
 		r.Post("/api/marketplace/refresh", s.marketplaceRefresh)
 
 		// Consent management (T12) — read current perms + hot-revoke.

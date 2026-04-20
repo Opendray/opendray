@@ -1,6 +1,6 @@
 # OpenDray Plugin Platform M4 — Marketplace (consumer side)
 
-**Status:** Ready to start
+**Status:** ✅ M4.1 CLOSED — see `M4-RELEASE.md` for details.
 **Depends on:** M3 closed at commit `208bcb3` (`kevlab`)
 **Scope:** M4.1 only — consumer-side marketplace. Third-party
 publisher CLI (M4.2) deferred until after v1 launch; Kev is the

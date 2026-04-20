@@ -523,7 +523,8 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 		Version:  version,
 		BuildSha: buildSha,
 		// Marketplace catalog backing /api/marketplace/plugins + marketplace://.
-		Marketplace: marketplaceCatalog,
+		Marketplace:         marketplaceCatalog,
+		MarketplaceSettings: buildMarketplaceSettings(cfg),
 		// User-config endpoints — SecretAPI for encrypted fields,
 		// hostSupervisor.Kill for post-write sidecar restart.
 		SecretAPI:      secretAPI,
@@ -612,6 +613,38 @@ func buildMarketplaceCatalog(cfg config.Config, logger *slog.Logger) market.Cata
 	return local
 }
 
+// buildMarketplaceSettings returns the read-only snapshot surfaced
+// via GET /api/marketplace/settings. Decision logic mirrors
+// buildMarketplaceCatalog so the two can't drift — whichever
+// backend the gateway actually uses is the one Settings reports.
+func buildMarketplaceSettings(cfg config.Config) gateway.MarketplaceSettings {
+	source := "empty"
+	switch {
+	case cfg.MarketplaceURL != "":
+		source = "remote"
+	case cfg.MarketplaceDir != "":
+		source = "local"
+	}
+	pollHours := cfg.RevocationPollHours
+	if pollHours == 0 && source != "empty" {
+		pollHours = 6 // defaultPollInterval / time.Hour
+	}
+	if pollHours < 1 {
+		pollHours = 1
+	}
+	if pollHours > 168 {
+		pollHours = 168
+	}
+	return gateway.MarketplaceSettings{
+		Source:            source,
+		RegistryURL:       cfg.MarketplaceURL,
+		RegistryDir:       cfg.MarketplaceDir,
+		Mirrors:           append([]string(nil), cfg.MarketplaceMirrors...),
+		PollHours:         pollHours,
+		AllowLocalPlugins: cfg.AllowLocalPlugins,
+	}
+}
+
 func emptyCatalog() market.Catalog {
 	// Load("") constructs a nil-safe empty local catalog; guaranteed
 	// not to error per market/local.Load's contract.
@@ -652,29 +685,47 @@ func startRevocationPoller(
 	}
 
 	notify := func(kind, pluginName, reason string) {
-		// Surface via workbench bus as a showMessage event so
-		// existing Flutter listeners render a banner without a new
-		// wire format. Severity maps kind → colour (error for
-		// uninstall / disable, warn for warn).
-		severity := "error"
+		// Emit TWO events — one in the existing showMessage shape
+		// so the current Flutter snackbar renders immediately
+		// (payload.text + payload.kind=="error"/"info"), and a
+		// dedicated "revocation" kind carrying the full record
+		// for the future persistent banner UI. Clients that only
+		// know showMessage degrade gracefully; the revocation
+		// kind is purely additive.
+		var (
+			msgKind = "error"
+			verb    = "revoked"
+		)
 		if kind == revocation.ActionWarn {
-			severity = "warn"
+			msgKind = "warn"
+			verb = "flagged"
 		}
-		payload, _ := json.Marshal(map[string]any{
-			"severity": severity,
-			"message":  fmt.Sprintf("Plugin %s revoked: %s", pluginName, reason),
-			"kind":     "revocation",
-			"plugin":   pluginName,
-			"action":   kind,
-			"reason":   reason,
+		text := fmt.Sprintf("Plugin %s %s: %s", pluginName, verb, reason)
+
+		showMsg, _ := json.Marshal(map[string]any{
+			"text": text,
+			"kind": msgKind,
 		})
-		if bus != nil {
-			bus.Publish(gateway.WorkbenchEvent{
-				Kind:    "showMessage",
-				Plugin:  "",
-				Payload: payload,
-			})
+		revocationEvt, _ := json.Marshal(map[string]any{
+			"plugin": pluginName,
+			"action": kind,
+			"reason": reason,
+			"text":   text,
+		})
+
+		if bus == nil {
+			return
 		}
+		bus.Publish(gateway.WorkbenchEvent{
+			Kind:    "showMessage",
+			Plugin:  "",
+			Payload: showMsg,
+		})
+		bus.Publish(gateway.WorkbenchEvent{
+			Kind:    "revocation",
+			Plugin:  pluginName,
+			Payload: revocationEvt,
+		})
 	}
 
 	handler, err := actions.New(actions.Config{

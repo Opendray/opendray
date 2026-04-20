@@ -1165,6 +1165,10 @@ class MarketplaceEntry {
   final String form;
   final List<String> tags;
   final Map<String, dynamic> permissions;
+  /// Trust level: "official" / "verified" / "community". Empty
+  /// defaults to "community" per spec. Rendered as a badge on the
+  /// Hub card.
+  final String trust;
 
   const MarketplaceEntry({
     required this.name,
@@ -1176,6 +1180,7 @@ class MarketplaceEntry {
     this.form = '',
     this.tags = const [],
     this.permissions = const {},
+    this.trust = 'community',
     List<PluginConfigField>? configSchema,
   }) : _rawConfigSchema = configSchema;
 
@@ -1197,6 +1202,7 @@ class MarketplaceEntry {
       permissions: rawPerms is Map
           ? Map<String, dynamic>.from(rawPerms)
           : const {},
+      trust: (json['trust'] as String?) ?? 'community',
       configSchema: rawSchema is List
           ? [
               for (final f in rawSchema)
