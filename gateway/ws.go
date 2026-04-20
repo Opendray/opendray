@@ -12,13 +12,6 @@ import (
 	"github.com/opendray/opendray/plugin"
 )
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin:       func(r *http.Request) bool { return true },
-	ReadBufferSize:    4096,
-	WriteBufferSize:   4096,
-	EnableCompression: false,
-}
-
 // controlMsg is a JSON message sent over the WebSocket text channel.
 type controlMsg struct {
 	Type string `json:"type"`
@@ -59,7 +52,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	raw, err := upgrader.Upgrade(w, r, nil)
+	raw, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		s.logger.Error("ws: upgrade failed", "error", err)
 		return

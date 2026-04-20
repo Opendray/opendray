@@ -572,14 +572,21 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 		}
 	}
 
+	// ALLOWED_ORIGINS gates cross-origin API calls and WebSocket upgrades.
+	// Empty = same-origin only (safe default). "*" = any origin (logged
+	// as a warning). Otherwise a comma-separated allowlist of exact
+	// origins like "https://opendray.example,https://admin.example".
+	allowedOrigins := parseAllowedOriginsEnv(os.Getenv("ALLOWED_ORIGINS"))
+
 	gw := gateway.New(gateway.Config{
 		Hub: sessionHub, Plugins: providerRuntime,
-		MCP:           mcpRuntime,
-		Auth:          jwtAuth,
-		Credentials:   credStore,
-		AdminUsername: cfg.Auth.AdminBootstrapUsername,
-		AdminPassword: cfg.Auth.AdminBootstrapPassword,
-		Logger:        logger, FrontendFS: frontendFS,
+		MCP:            mcpRuntime,
+		Auth:           jwtAuth,
+		Credentials:    credStore,
+		AdminUsername:  cfg.Auth.AdminBootstrapUsername,
+		AdminPassword:  cfg.Auth.AdminBootstrapPassword,
+		AllowedOrigins: allowedOrigins,
+		Logger:         logger, FrontendFS: frontendFS,
 		// Plugin platform (M1)
 		Installer:      installer,
 		Contributions:  contribRegistry,
@@ -1175,6 +1182,23 @@ func (a *hookBusAdapter) dispatch(name string, data any) {
 			s.handler(name, data)
 		}()
 	}
+}
+
+// parseAllowedOriginsEnv splits a comma-separated env value into a clean
+// slice, trimming whitespace and dropping empties. Mirrors the gateway's
+// internal parser but lives here so main.go can populate gateway.Config
+// without cross-package coupling.
+func parseAllowedOriginsEnv(raw string) []string {
+	if raw == "" {
+		return nil
+	}
+	var out []string
+	for _, p := range strings.Split(raw, ",") {
+		if v := strings.TrimSpace(p); v != "" {
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 // isLoopback returns true if the listen address binds only to a loopback

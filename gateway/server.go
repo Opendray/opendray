@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gorilla/websocket"
 
 	"context"
 
@@ -122,6 +123,13 @@ type Server struct {
 	configKVTestOverride      configStore
 	configSecretsTestOverride platformSecrets
 	configKillerTestOverride  sidecarKiller
+
+	// origins + upgrader drive cross-origin policy for every HTTP and
+	// WebSocket entry. Policy is shared across ws/logs/tasks/simulator
+	// upgraders so the allowlist is enforced consistently. See
+	// gateway/origins.go.
+	origins  *originPolicy
+	upgrader websocket.Upgrader
 }
 
 // Config holds gateway configuration.
@@ -134,10 +142,16 @@ type Config struct {
 	AdminUsername string
 	AdminPassword string
 	Logger        *slog.Logger
-	FrontendFS    fs.FS             // embedded frontend dist (optional)
-	Installer     *install.Installer         // plugin install/uninstall orchestrator (T7)
-	Contributions *contributions.Registry    // workbench contribution registry (T9)
-	CommandInvoker commandInvoker            // command dispatcher (T11)
+	FrontendFS    fs.FS // embedded frontend dist (optional)
+
+	// AllowedOrigins is the cross-origin policy for CORS + WebSocket
+	// upgrades. Empty = same-origin only. ["*"] = wildcard (warned).
+	// Populated from the ALLOWED_ORIGINS env var in cmd/opendray/main.go.
+	AllowedOrigins []string
+
+	Installer      *install.Installer      // plugin install/uninstall orchestrator (T7)
+	Contributions  *contributions.Registry // workbench contribution registry (T9)
+	CommandInvoker commandInvoker          // command dispatcher (T11)
 
 	// M2 T7 — plugin bridge WS.
 	BridgeManager *bridge.Manager // shared bridge.Manager instance; nil disables
@@ -203,31 +217,39 @@ func New(cfg Config) *Server {
 	}
 
 	s := &Server{
-		hub:             cfg.Hub,
-		plugins:         cfg.Plugins,
-		auth:            cfg.Auth,
-		creds:           cfg.Credentials,
-		adminUsername:   cfg.AdminUsername,
-		adminPassword:   cfg.AdminPassword,
-		logger:          cfg.Logger,
-		tasks:           tasks.NewRunner(),
-		git:             gitpkg.NewManager(),
-		pg:              pgpkg.NewManager(),
-		installer:       cfg.Installer,
-		contribReg:      cfg.Contributions,
-		cmdInvoker:      cfg.CommandInvoker,
-		bridgeMgr:       cfg.BridgeManager,
-		bridgeCfg:       bridgeCfg,
-		bridgeNamespace: newNamespaceRegistry(),
-		workbenchBus:    cfg.WorkbenchBus,
-		version:         cfg.Version,
-		buildSha:        cfg.BuildSha,
-		buildTime:       cfg.BuildTime,
+		hub:                 cfg.Hub,
+		plugins:             cfg.Plugins,
+		auth:                cfg.Auth,
+		creds:               cfg.Credentials,
+		adminUsername:       cfg.AdminUsername,
+		adminPassword:       cfg.AdminPassword,
+		logger:              cfg.Logger,
+		tasks:               tasks.NewRunner(),
+		git:                 gitpkg.NewManager(),
+		pg:                  pgpkg.NewManager(),
+		installer:           cfg.Installer,
+		contribReg:          cfg.Contributions,
+		cmdInvoker:          cfg.CommandInvoker,
+		bridgeMgr:           cfg.BridgeManager,
+		bridgeCfg:           bridgeCfg,
+		bridgeNamespace:     newNamespaceRegistry(),
+		workbenchBus:        cfg.WorkbenchBus,
+		version:             cfg.Version,
+		buildSha:            cfg.BuildSha,
+		buildTime:           cfg.BuildTime,
 		marketplace:         cfg.Marketplace,
 		marketplaceSettings: cfg.MarketplaceSettings,
-		secretAPI:       cfg.SecretAPI,
-		hostSupervisor:  cfg.HostSupervisor,
+		secretAPI:           cfg.SecretAPI,
+		hostSupervisor:      cfg.HostSupervisor,
+		origins:             newOriginPolicy(cfg.AllowedOrigins),
 	}
+	s.upgrader = websocket.Upgrader{
+		ReadBufferSize:    4096,
+		WriteBufferSize:   4096,
+		EnableCompression: false,
+		CheckOrigin:       s.origins.allowWS,
+	}
+	s.origins.logStartup(cfg.Logger)
 	if cfg.MCP != nil {
 		s.mcp = mcp.NewHandlers(cfg.MCP)
 	}
@@ -242,7 +264,7 @@ func New(cfg Config) *Server {
 	r := chi.NewRouter()
 
 	// Global middleware
-	r.Use(corsMiddleware)
+	r.Use(s.origins.corsMiddleware())
 	r.Use(middleware.Recoverer)
 	r.Use(loggingMiddleware(cfg.Logger))
 	r.Use(bodySizeLimiter(1 << 20)) // 1 MB cap on request bodies
@@ -493,8 +515,13 @@ func NewSetup(mgr *setup.Manager, frontendFS fs.FS, logger *slog.Logger) http.Ha
 	}
 	h := newSetupHandlers(mgr)
 
+	// Setup mode serves the wizard same-origin from the embedded Flutter
+	// dist, so the default (empty allowlist) is fine — no cross-origin
+	// traffic is expected before the full server is up.
+	setupOrigins := newOriginPolicy(nil)
+
 	r := chi.NewRouter()
-	r.Use(corsMiddleware)
+	r.Use(setupOrigins.corsMiddleware())
 	r.Use(middleware.Recoverer)
 	r.Use(loggingMiddleware(logger))
 	r.Use(bodySizeLimiter(1 << 20))
@@ -737,19 +764,6 @@ func respondJSON(w http.ResponseWriter, status int, v any) {
 
 func respondError(w http.ResponseWriter, status int, msg string) {
 	respondJSON(w, status, map[string]string{"error": msg})
-}
-
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
 }
 
 func loggingMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {

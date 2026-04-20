@@ -193,7 +193,7 @@ func (s *Server) tasksRunWS(w http.ResponseWriter, r *http.Request) {
 	}
 	defer unsubscribe()
 
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		s.logger.Error("tasks ws: upgrade failed", "error", err)
 		return
