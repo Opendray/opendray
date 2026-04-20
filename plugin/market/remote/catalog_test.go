@@ -2,6 +2,7 @@ package remote
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -212,15 +213,182 @@ func TestList_BodySizeCap(t *testing.T) {
 	}
 }
 
-// ─── Resolve / BundlePath — still stubs ────────────────────────────────────
+// ─── Resolve ───────────────────────────────────────────────────────────────
 
-func TestResolve_StillStub(t *testing.T) {
-	c := newTestCatalog(t, indexHandler(`{"version":1,"plugins":[]}`))
-	_, err := c.Resolve(context.Background(), market.Ref{Name: "x"})
-	if err == nil {
-		t.Fatal("Resolve should still return ErrNotImplemented until T3")
+// indexAndVersionHandler serves the minimal set of URLs T3 + T2
+// exercise: /index.json → indexBody, and
+// /plugins/{pub}/{name}/{ver}.json → versionBody (verbatim).
+func indexAndVersionHandler(indexBody, versionBody string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.URL.Path == "/index.json":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = fmt.Fprint(w, indexBody)
+		case strings.HasPrefix(r.URL.Path, "/plugins/") && strings.HasSuffix(r.URL.Path, ".json"):
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = fmt.Fprint(w, versionBody)
+		default:
+			http.NotFound(w, r)
+		}
 	}
 }
+
+const fakeSHA256 = "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+
+func versionBody(pub, name, ver, sha, artifactURL string) string {
+	return fmt.Sprintf(`{
+		"name": %q,
+		"publisher": %q,
+		"version": %q,
+		"artifact": {"url": %q, "size": 1024},
+		"sha256": %q,
+		"manifest": {
+			"name": %q,
+			"version": %q,
+			"publisher": %q,
+			"displayName": "FS Readme",
+			"description": "reads README",
+			"icon": "📖",
+			"form": "host",
+			"permissions": {"fs": {"read": ["${home}/**"]}}
+		}
+	}`, name, pub, ver, artifactURL, sha, name, ver, pub)
+}
+
+func TestResolve_HappyPath_ExplicitVersion(t *testing.T) {
+	c := newTestCatalog(t, indexAndVersionHandler("",
+		versionBody("opendray-examples", "fs-readme", "1.0.0", fakeSHA256,
+			"https://example.com/fs-readme-1.0.0.zip")))
+
+	entry, err := c.Resolve(context.Background(), market.Ref{
+		Publisher: "opendray-examples", Name: "fs-readme", Version: "1.0.0",
+	})
+	if err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+	if entry.ArtifactURL != "https://example.com/fs-readme-1.0.0.zip" {
+		t.Errorf("ArtifactURL = %q", entry.ArtifactURL)
+	}
+	if entry.SHA256 != fakeSHA256 {
+		t.Errorf("SHA256 = %q", entry.SHA256)
+	}
+	if entry.Form != "host" {
+		t.Errorf("Form = %q, want host (from manifest)", entry.Form)
+	}
+	if len(entry.Permissions) == 0 {
+		t.Errorf("Permissions empty; want raw JSON from manifest")
+	}
+	if entry.Trust != "community" {
+		t.Errorf("Trust default = %q, want community (T10 fills from publisher record)", entry.Trust)
+	}
+}
+
+func TestResolve_LatestFromIndex(t *testing.T) {
+	// When Version is empty, Resolve looks up the latest from the
+	// index and then fetches that version's JSON.
+	c := newTestCatalog(t, indexAndVersionHandler(`{
+		"version": 1,
+		"generatedAt": "",
+		"plugins": [
+			{"name": "fs-readme", "publisher": "opendray-examples", "latest": "2.3.0"}
+		]
+	}`,
+		versionBody("opendray-examples", "fs-readme", "2.3.0", fakeSHA256,
+			"https://example.com/fs-readme-2.3.0.zip")))
+
+	entry, err := c.Resolve(context.Background(), market.Ref{
+		Publisher: "opendray-examples", Name: "fs-readme", // no version
+	})
+	if err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+	if entry.Version != "2.3.0" {
+		t.Errorf("Version = %q, want 2.3.0 (from index latest)", entry.Version)
+	}
+}
+
+func TestResolve_DefaultPublisher(t *testing.T) {
+	// Bare-name ref (M3 back-compat): Publisher defaults to
+	// opendray-examples before any HTTP call.
+	c := newTestCatalog(t, indexAndVersionHandler(`{
+		"version": 1,
+		"generatedAt": "",
+		"plugins": [
+			{"name": "fs-readme", "publisher": "opendray-examples", "latest": "1.0.0"}
+		]
+	}`,
+		versionBody("opendray-examples", "fs-readme", "1.0.0", fakeSHA256,
+			"https://example.com/fs-readme-1.0.0.zip")))
+
+	entry, err := c.Resolve(context.Background(), market.Ref{Name: "fs-readme"})
+	if err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+	if entry.Publisher != "opendray-examples" {
+		t.Errorf("Publisher = %q, want opendray-examples default", entry.Publisher)
+	}
+}
+
+func TestResolve_NotFound(t *testing.T) {
+	// 404 on the version JSON maps to market.ErrNotFound.
+	c := newTestCatalog(t, func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	})
+	_, err := c.Resolve(context.Background(), market.Ref{
+		Publisher: "acme", Name: "missing", Version: "1.0.0",
+	})
+	if err == nil || !errors.Is(err, market.ErrNotFound) {
+		t.Errorf("err = %v; want ErrNotFound", err)
+	}
+}
+
+func TestResolve_BodyMismatchesURL(t *testing.T) {
+	// Registry-side typo: the version body claims "evil" but the
+	// URL asked for "fs-readme". Must reject rather than silently
+	// ship the wrong manifest.
+	c := newTestCatalog(t, indexAndVersionHandler("",
+		versionBody("opendray-examples", "evil", "1.0.0", fakeSHA256,
+			"https://example.com/x.zip")))
+
+	_, err := c.Resolve(context.Background(), market.Ref{
+		Publisher: "opendray-examples", Name: "fs-readme", Version: "1.0.0",
+	})
+	if err == nil || !strings.Contains(err.Error(), "doesn't match URL") {
+		t.Errorf("err = %v; want mismatch rejection", err)
+	}
+}
+
+func TestResolve_BadSHA256(t *testing.T) {
+	c := newTestCatalog(t, indexAndVersionHandler("",
+		versionBody("acme", "plugin", "1.0.0", "not-a-valid-sha",
+			"https://example.com/x.zip")))
+
+	_, err := c.Resolve(context.Background(), market.Ref{
+		Publisher: "acme", Name: "plugin", Version: "1.0.0",
+	})
+	if err == nil || !strings.Contains(err.Error(), "sha256 malformed") {
+		t.Errorf("err = %v; want sha256 malformed", err)
+	}
+}
+
+func TestResolve_MissingArtifact(t *testing.T) {
+	// artifact.url empty = broken registry entry.
+	body := `{
+		"name": "x", "publisher": "acme", "version": "1.0.0",
+		"artifact": {"url": "", "size": 0},
+		"sha256": "` + fakeSHA256 + `",
+		"manifest": {"name":"x","version":"1.0.0","publisher":"acme"}
+	}`
+	c := newTestCatalog(t, indexAndVersionHandler("", body))
+	_, err := c.Resolve(context.Background(), market.Ref{
+		Publisher: "acme", Name: "x", Version: "1.0.0",
+	})
+	if err == nil || !strings.Contains(err.Error(), "missing artifact") {
+		t.Errorf("err = %v; want missing artifact", err)
+	}
+}
+
+// ─── BundlePath stays a no-op for remote ───────────────────────────────────
 
 func TestBundlePath_RemoteOnlyReturnsFalse(t *testing.T) {
 	c := newTestCatalog(t, indexHandler(`{"version":1,"plugins":[]}`))

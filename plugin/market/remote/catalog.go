@@ -25,9 +25,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
+	"github.com/opendray/opendray/plugin"
 	"github.com/opendray/opendray/plugin/market"
 )
 
@@ -38,6 +40,23 @@ var ErrNotImplemented = errors.New("market/remote: not implemented yet")
 // registry can't eat unbounded memory. 8 MiB fits thousands of
 // summary entries with room to spare.
 const maxIndexBytes = 8 << 20
+
+// maxVersionBytes caps per-version JSON downloads. These carry a
+// full manifest copy but no binary; 2 MiB is plenty and catches
+// obvious padding attacks.
+const maxVersionBytes = 2 << 20
+
+// defaultPublisher fills in the Publisher field when callers pass
+// a bare-name ref like `marketplace://fs-readme`. Keeps the M3
+// install URLs working during the M4 transition without forcing
+// every client to adopt publisher/name notation up front.
+const defaultPublisher = "opendray-examples"
+
+// sha256HexRE is the lowercase-hex-64-char shape the registry
+// schema enforces on `sha256` fields. Validated before we hand
+// the value to the install layer so a malformed registry entry
+// trips here rather than inside the HTTPSSource verifier.
+var sha256HexRE = regexp.MustCompile(`^[a-f0-9]{64}$`)
 
 // defaultHTTPTimeout is the per-request ceiling. Applied to the
 // http.Client when the caller doesn't supply their own.
@@ -210,10 +229,129 @@ func mergeTags(a, b []string) []string {
 	return out
 }
 
-// Resolve implements market.Catalog. Placeholder until T3 lands
-// FetchVersion + Ed25519 verification.
-func (c *Catalog) Resolve(_ context.Context, _ market.Ref) (market.Entry, error) {
-	return market.Entry{}, ErrNotImplemented
+// versionResponse mirrors the marketplace version-JSON wire shape
+// (schemas/version.schema.json in the marketplace repo).
+type versionResponse struct {
+	Name         string           `json:"name"`
+	Publisher    string           `json:"publisher"`
+	Version      string           `json:"version"`
+	ReleaseNotes string           `json:"releaseNotes,omitempty"`
+	Artifact     versionArtifact  `json:"artifact"`
+	SHA256       string           `json:"sha256"`
+	Signature    *market.Signature `json:"signature,omitempty"`
+	Manifest     versionManifest  `json:"manifest"`
+	Engines      map[string]any   `json:"engines,omitempty"`
+	Platforms    []string         `json:"platforms,omitempty"`
+}
+
+type versionArtifact struct {
+	URL     string   `json:"url"`
+	Size    int64    `json:"size"`
+	Mirrors []string `json:"mirrors,omitempty"`
+}
+
+// versionManifest is the subset of the full plugin manifest that
+// Resolve needs to surface to the Hub (for consent + config
+// dialogs). The manifest is accepted as a `map` first so we don't
+// tightly couple every manifest-schema addition to this package;
+// the fields we render are pulled explicitly.
+type versionManifest struct {
+	DisplayName  string          `json:"displayName,omitempty"`
+	Description  string          `json:"description,omitempty"`
+	Icon         string          `json:"icon,omitempty"`
+	Form         string          `json:"form,omitempty"`
+	Permissions  json.RawMessage `json:"permissions,omitempty"`
+	ConfigSchema []plugin.ConfigField `json:"configSchema,omitempty"`
+}
+
+// Resolve implements market.Catalog. Fetches the per-version JSON
+// for the ref (discovering `latest` via index.json when the ref
+// doesn't pin a version), validates wire-level invariants, and
+// returns a fully-populated Entry.
+//
+// SHA-256 verification against the actual artifact bytes happens
+// in the install layer (T4), not here — Resolve only validates
+// that `sha256` is 64-char lowercase hex so a malformed registry
+// entry fails at the registry boundary.
+//
+// Signatures (T5) are returned verbatim; the verifier sits in
+// the install layer too so policy ("official/verified must sign")
+// applies at the one decision point.
+func (c *Catalog) Resolve(ctx context.Context, ref market.Ref) (market.Entry, error) {
+	if ref.Publisher == "" {
+		ref.Publisher = defaultPublisher
+	}
+	if ref.Name == "" {
+		return market.Entry{}, fmt.Errorf("%w: empty name", market.ErrBadRef)
+	}
+
+	// If no version pinned, discover latest via the index. List()
+	// is cheap — one extra HTTP call — and keeps the state
+	// centralised in the generated index rather than requiring a
+	// second meta.json endpoint.
+	if ref.Version == "" {
+		entries, err := c.List(ctx)
+		if err != nil {
+			return market.Entry{}, fmt.Errorf("market/remote: resolve latest: %w", err)
+		}
+		for _, e := range entries {
+			if e.Publisher == ref.Publisher && e.Name == ref.Name {
+				ref.Version = e.Version
+				break
+			}
+		}
+		if ref.Version == "" {
+			return market.Entry{}, fmt.Errorf("%w: %s/%s", market.ErrNotFound, ref.Publisher, ref.Name)
+		}
+	}
+
+	rel := fmt.Sprintf("plugins/%s/%s/%s.json", ref.Publisher, ref.Name, ref.Version)
+	u, err := c.resolveRelative(rel)
+	if err != nil {
+		return market.Entry{}, err
+	}
+	body, err := c.fetch(ctx, u, maxVersionBytes)
+	if err != nil {
+		if strings.Contains(err.Error(), "HTTP 404") {
+			return market.Entry{}, fmt.Errorf("%w: %s", market.ErrNotFound, ref)
+		}
+		return market.Entry{}, fmt.Errorf("market/remote: fetch version: %w", err)
+	}
+	var v versionResponse
+	if err := json.Unmarshal(body, &v); err != nil {
+		return market.Entry{}, fmt.Errorf("market/remote: parse version: %w", err)
+	}
+
+	// Cross-check: the filename path MUST match the body's
+	// (publisher, name, version). Catches registry-side typos or
+	// copy-paste errors that otherwise silently ship the wrong
+	// manifest to clients.
+	if v.Name != ref.Name || v.Publisher != ref.Publisher || v.Version != ref.Version {
+		return market.Entry{}, fmt.Errorf("market/remote: version body %s/%s@%s doesn't match URL %s/%s@%s",
+			v.Publisher, v.Name, v.Version, ref.Publisher, ref.Name, ref.Version)
+	}
+	if v.Artifact.URL == "" || v.Artifact.Size <= 0 {
+		return market.Entry{}, fmt.Errorf("market/remote: %s missing artifact url or size", ref)
+	}
+	if !sha256HexRE.MatchString(v.SHA256) {
+		return market.Entry{}, fmt.Errorf("market/remote: %s sha256 malformed %q", ref, v.SHA256)
+	}
+
+	return market.Entry{
+		Name:         v.Name,
+		Publisher:    v.Publisher,
+		Version:      v.Version,
+		DisplayName:  v.Manifest.DisplayName,
+		Description:  v.Manifest.Description,
+		Icon:         v.Manifest.Icon,
+		Form:         v.Manifest.Form,
+		Permissions:  v.Manifest.Permissions,
+		ConfigSchema: v.Manifest.ConfigSchema,
+		Trust:        "community", // T10 fills from publisher record
+		ArtifactURL:  v.Artifact.URL,
+		SHA256:       v.SHA256,
+		Signature:    v.Signature,
+	}, nil
 }
 
 // BundlePath implements market.Catalog. Remote-backed catalogs
