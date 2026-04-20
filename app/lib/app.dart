@@ -21,6 +21,7 @@ import 'features/git/git_page.dart';
 import 'features/logs/logs_page.dart';
 import 'features/mcp/mcp_page.dart';
 import 'features/messaging/telegram_page.dart';
+import 'features/hub/hub_page.dart';
 import 'features/plugins/plugins_page.dart';
 import 'features/settings/settings_page.dart';
 import 'features/settings/setup_page.dart';
@@ -274,6 +275,7 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
             ),
           ),
           GoRoute(path: '/plugins', builder: (_, _) => const PluginsPage()),
+          GoRoute(path: '/hub', builder: (_, _) => const HubPage()),
           GoRoute(path: '/settings', builder: (_, _) => const SettingsPage()),
           GoRoute(
             path: '/settings/claude-accounts',
@@ -370,11 +372,14 @@ class _Shell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
-    // /browser* (runtime launcher + every sub-panel) lights tab 1.
-    // /plugins (install / manage / configure) lights tab 2.
-    // /settings → tab 3. Everything else (sessions) → tab 0.
+    // Tab layout: Sessions | Browser | Plugin | Hub | Settings.
+    // Plugin = installed CRUD (/plugins). Hub = marketplace (/hub) —
+    // keeping them on separate tabs removes the old "Hub label pointed
+    // at installed plugins" confusion.
     final int index;
     if (location == '/settings' || location.startsWith('/settings/')) {
+      index = 4;
+    } else if (location == '/hub' || location.startsWith('/hub/')) {
       index = 3;
     } else if (location == '/plugins' || location.startsWith('/plugins/')) {
       index = 2;
@@ -393,7 +398,8 @@ class _Shell extends StatelessWidget {
           final path = switch (i) {
             1 => '/browser',
             2 => '/plugins',
-            3 => '/settings',
+            3 => '/hub',
+            4 => '/settings',
             _ => '/',
           };
           context.go(path);
@@ -402,10 +408,12 @@ class _Shell extends StatelessWidget {
           BottomNavigationBarItem(
               icon: const Icon(Icons.terminal), label: context.tr('Sessions')),
           BottomNavigationBarItem(
-              icon: const Icon(Icons.folder_copy), label: context.tr('Plugin')),
+              icon: const Icon(Icons.folder_copy), label: context.tr('Browser')),
           BottomNavigationBarItem(
               icon: const Icon(Icons.extension_outlined),
-              label: context.tr('Hub')),
+              label: context.tr('Plugin')),
+          BottomNavigationBarItem(
+              icon: const Icon(Icons.storefront), label: context.tr('Hub')),
           BottomNavigationBarItem(
               icon: const Icon(Icons.settings), label: context.tr('Settings')),
         ],

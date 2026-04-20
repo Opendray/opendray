@@ -1037,4 +1037,148 @@ class ApiClient {
       throw apiExceptionFrom(e);
     }
   }
+
+  // ── Marketplace / install flow ────────────────────────────
+
+  /// Fetches the plugin marketplace catalog. Empty list when the
+  /// server has no catalog configured — the Hub page renders a
+  /// "nothing here yet" state rather than an error banner.
+  Future<List<MarketplaceEntry>> listMarketplace() async {
+    try {
+      final res = await _dio.get('/api/marketplace/plugins');
+      final data = res.data;
+      if (data is Map && data['entries'] is List) {
+        return [
+          for (final raw in (data['entries'] as List))
+            if (raw is Map) MarketplaceEntry.fromJson(Map<String, dynamic>.from(raw)),
+        ];
+      }
+      return const [];
+    } on DioException catch (e) {
+      throw apiExceptionFrom(e);
+    }
+  }
+
+  /// Stages an install from a marketplace ref. Returns the pending
+  /// install token + the permissions block the user is about to grant
+  /// — the caller shows that in a consent dialog before calling
+  /// [confirmPluginInstall].
+  Future<PendingInstall> installPluginFromMarketplace(String ref) async {
+    try {
+      final res = await _dio.post(
+        '/api/plugins/install',
+        data: {'src': 'marketplace://$ref'},
+      );
+      final data = Map<String, dynamic>.from(res.data as Map);
+      return PendingInstall.fromJson(data);
+    } on DioException catch (e) {
+      throw apiExceptionFrom(e);
+    }
+  }
+
+  /// Confirms a staged install by echoing the token. Returns the
+  /// installed plugin's canonical name.
+  Future<String> confirmPluginInstall(String token) async {
+    try {
+      final res = await _dio.post(
+        '/api/plugins/install/confirm',
+        data: {'token': token},
+      );
+      final data = Map<String, dynamic>.from(res.data as Map);
+      return (data['name'] as String?) ?? '';
+    } on DioException catch (e) {
+      throw apiExceptionFrom(e);
+    }
+  }
+}
+
+// ─── Marketplace models ──────────────────────────────────────────────
+
+/// One installable plugin returned by GET /api/marketplace/plugins.
+/// Keep this as a plain value type — the Hub card reads fields directly
+/// and the consent preview dialog reads [permissions] verbatim.
+class MarketplaceEntry {
+  final String name;
+  final String version;
+  final String publisher;
+  final String displayName;
+  final String description;
+  final String icon;
+  final String form;
+  final List<String> tags;
+  final Map<String, dynamic> permissions;
+
+  const MarketplaceEntry({
+    required this.name,
+    required this.version,
+    required this.publisher,
+    this.displayName = '',
+    this.description = '',
+    this.icon = '',
+    this.form = '',
+    this.tags = const [],
+    this.permissions = const {},
+  });
+
+  factory MarketplaceEntry.fromJson(Map<String, dynamic> json) {
+    final rawTags = json['tags'];
+    final rawPerms = json['permissions'];
+    return MarketplaceEntry(
+      name: (json['name'] as String?) ?? '',
+      version: (json['version'] as String?) ?? '',
+      publisher: (json['publisher'] as String?) ?? '',
+      displayName: (json['displayName'] as String?) ?? '',
+      description: (json['description'] as String?) ?? '',
+      icon: (json['icon'] as String?) ?? '',
+      form: (json['form'] as String?) ?? '',
+      tags: rawTags is List
+          ? [for (final t in rawTags) t.toString()]
+          : const [],
+      permissions: rawPerms is Map
+          ? Map<String, dynamic>.from(rawPerms)
+          : const {},
+    );
+  }
+
+  /// `NAME@VERSION` — used both as the marketplace ref and as a
+  /// stable display key when name collisions with installed plugins
+  /// need disambiguation.
+  String get ref => '$name@$version';
+}
+
+/// Response of POST /api/plugins/install — a staged install waiting
+/// for user confirmation. [permissions] mirrors the PermissionsV1 shape
+/// so the consent dialog can reuse the same renderer as
+/// [PluginConsents.perms].
+class PendingInstall {
+  final String token;
+  final String name;
+  final String version;
+  final Map<String, dynamic> permissions;
+  final String manifestHash;
+  final DateTime? expiresAt;
+
+  const PendingInstall({
+    required this.token,
+    required this.name,
+    required this.version,
+    this.permissions = const {},
+    this.manifestHash = '',
+    this.expiresAt,
+  });
+
+  factory PendingInstall.fromJson(Map<String, dynamic> json) {
+    final rawPerms = json['perms'];
+    final rawExp = json['expiresAt'];
+    return PendingInstall(
+      token: (json['token'] as String?) ?? '',
+      name: (json['name'] as String?) ?? '',
+      version: (json['version'] as String?) ?? '',
+      permissions: rawPerms is Map
+          ? Map<String, dynamic>.from(rawPerms)
+          : const {},
+      manifestHash: (json['manifestHash'] as String?) ?? '',
+      expiresAt: rawExp is String ? DateTime.tryParse(rawExp) : null,
+    );
+  }
 }

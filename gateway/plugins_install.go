@@ -23,12 +23,14 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 
 	"github.com/opendray/opendray/plugin"
 	"github.com/opendray/opendray/plugin/install"
+	"github.com/opendray/opendray/plugin/marketplace"
 )
 
 // ─── Request / Response shapes ───────────────────────────────────────────────
@@ -123,10 +125,38 @@ func (s *Server) pluginsInstall(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	src, err := install.ParseSource(req.Src)
-	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "EBADSRC", err.Error())
-		return
+	// Marketplace refs are resolved HERE — not by ParseSource — so the
+	// gateway can translate them into a TrustedSource that bypasses the
+	// AllowLocal gate. Client-supplied local: / absolute-path sources
+	// still go through the LocalSource path and keep getting gated.
+	var src install.Source
+	if strings.HasPrefix(req.Src, "marketplace://") {
+		if s.marketplace == nil {
+			writeJSONError(w, http.StatusServiceUnavailable, "EBADSRC",
+				"marketplace catalog not configured on this server")
+			return
+		}
+		entry, bundleDir, rerr := s.marketplace.Resolve(req.Src)
+		if errors.Is(rerr, marketplace.ErrNotFound) {
+			writeJSONError(w, http.StatusNotFound, "ENOENT",
+				"marketplace entry not found: "+req.Src)
+			return
+		}
+		if rerr != nil {
+			writeJSONError(w, http.StatusBadRequest, "EBADSRC", rerr.Error())
+			return
+		}
+		src = install.TrustedSource{
+			Path:  bundleDir,
+			Label: "marketplace://" + entry.Name + "@" + entry.Version,
+		}
+	} else {
+		var perr error
+		src, perr = install.ParseSource(req.Src)
+		if perr != nil {
+			writeJSONError(w, http.StatusBadRequest, "EBADSRC", perr.Error())
+			return
+		}
 	}
 
 	pending, err := s.installer.Stage(r.Context(), src)

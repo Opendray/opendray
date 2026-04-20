@@ -10,19 +10,15 @@ import '../../shared/theme/app_theme.dart';
 import '../settings/plugin_consents_page.dart';
 import 'plugin_config_page.dart';
 
-/// Full-surface plugin management page at `/plugins`.
+/// Installed-plugins management at `/plugins`.
 ///
-/// One screen, three sections:
-///   1. **Installed** — real data from `/api/providers`. Per-plugin
-///      enable/disable, permission detail, and uninstall (unless
-///      marked required in the manifest).
-///   2. **Marketplace** — stub with the bundled `plugins/examples/*`
-///      as installable examples. A real remote marketplace lands in
-///      M3.
+/// One screen, one job: CRUD over whatever `/api/providers` says is
+/// currently installed — enable/disable, configure, view permissions,
+/// uninstall (unless the manifest marks the plugin required).
 ///
-/// Replaces the per-plugin consent page in Settings — Settings keeps
-/// a "Plugins →" link that routes here. The decluttered Settings
-/// surface was the motivation Kev called out.
+/// Discovery/install of new plugins lives at `/hub`. Keeping the two
+/// surfaces apart avoids the redundancy the previous two-section
+/// layout created.
 class PluginsPage extends StatefulWidget {
   const PluginsPage({super.key});
 
@@ -140,7 +136,7 @@ class _PluginsPageState extends State<PluginsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Plugins')),
+      appBar: AppBar(title: const Text('Installed plugins')),
       body: _loading
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.accent))
@@ -153,13 +149,30 @@ class _PluginsPageState extends State<PluginsPage> {
                   _sectionHeader('Installed', '${_providers.length}'),
                   const SizedBox(height: 8),
                   for (final p in _sortProviders(_providers)) _pluginCard(p),
-                  const SizedBox(height: 24),
-                  _sectionHeader('Marketplace', 'preview'),
-                  const SizedBox(height: 8),
-                  _marketplaceStub(),
+                  if (_providers.isEmpty && _error == null) _emptyState(),
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _emptyState() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 8),
+      child: Column(
+        children: const [
+          Icon(Icons.extension_off, size: 40, color: AppColors.textMuted),
+          SizedBox(height: 10),
+          Text('No plugins installed',
+              style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                  color: AppColors.text)),
+          SizedBox(height: 4),
+          Text('Browse the Hub tab to install one.',
+              style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+        ],
+      ),
     );
   }
 
@@ -376,47 +389,4 @@ class _PluginsPageState extends State<PluginsPage> {
     );
   }
 
-  Widget _marketplaceStub() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: const [
-              Icon(Icons.storefront, color: AppColors.accent, size: 20),
-              SizedBox(width: 8),
-              Text('Remote marketplace',
-                  style:
-                      TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-            ]),
-            const SizedBox(height: 8),
-            const Text(
-              'Landing in M3: browse, pull, and update third-party plugins '
-              'from a signed registry. Until then, install bundled examples '
-              'via the CLI:',
-              style: TextStyle(color: AppColors.textMuted, fontSize: 12, height: 1.4),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const SelectableText(
-                'OPENDRAY_TOKEN=<token> opendray plugin install \\\n'
-                '    --yes ./plugins/examples/kanban',
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 11,
-                  color: AppColors.text,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

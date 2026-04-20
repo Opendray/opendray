@@ -54,6 +54,14 @@ type Config struct {
 	// AllowLocalPlugins gates local-scheme plugin installs.
 	// Default: false. Env: OPENDRAY_ALLOW_LOCAL_PLUGINS (truthy: 1|true|yes|on).
 	AllowLocalPlugins bool `toml:"-"` // computed; not round-tripped in TOML
+
+	// MarketplaceDir is the root of the on-disk plugin catalog that
+	// backs /api/marketplace/plugins and marketplace:// install refs.
+	// Default: $REPO/plugins/marketplace when running from source,
+	// ${HOME}/.opendray/marketplace when OPENDRAY_MARKETPLACE_DIR is unset
+	// in a production install. A missing directory leaves the Hub
+	// empty rather than failing boot. Env: OPENDRAY_MARKETPLACE_DIR.
+	MarketplaceDir string `toml:"-"` // computed; not round-tripped in TOML
 }
 
 // Server holds HTTP listener configuration.
@@ -153,6 +161,15 @@ const (
 func Defaults() Config {
 	home, _ := os.UserHomeDir()
 	defaultPluginsDataDir := filepath.Join(home, ".opendray", "plugins")
+	// Marketplace catalog root. Prefer $REPO/plugins/marketplace during
+	// development (picked up automatically when the working dir is the
+	// repo root) and fall back to ~/.opendray/marketplace in prod.
+	defaultMarketplaceDir := filepath.Join(home, ".opendray", "marketplace")
+	if _, err := os.Stat("plugins/marketplace/catalog.json"); err == nil {
+		if abs, aerr := filepath.Abs("plugins/marketplace"); aerr == nil {
+			defaultMarketplaceDir = abs
+		}
+	}
 
 	return Config{
 		SchemaVersion: SchemaVersion,
@@ -179,6 +196,7 @@ func Defaults() Config {
 		},
 		PluginsDataDir:    defaultPluginsDataDir,
 		AllowLocalPlugins: false,
+		MarketplaceDir:    defaultMarketplaceDir,
 	}
 }
 
@@ -423,6 +441,12 @@ func applyEnvOverrides(cfg *Config) bool {
 		cfg.AllowLocalPlugins = isTruthy(v)
 		changed = true
 	}
+
+	// OPENDRAY_MARKETPLACE_DIR overrides the on-disk catalog root. A
+	// missing directory is tolerated — the server boots with an empty
+	// Hub — so operators can point this at a not-yet-populated location
+	// during initial rollout.
+	setStr(&cfg.MarketplaceDir, "OPENDRAY_MARKETPLACE_DIR")
 
 	return changed
 }

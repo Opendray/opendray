@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "name": "fs-readme",
+      "version": "1.0.0",
+      "publisher": "opendray-examples",
+      "displayName": "FS Readme",
+      "description": "Reference host plugin — reads the workspace README and returns a preview via a Node JSON-RPC sidecar.",
+      "icon": "📖",
+      "form": "host",
+      "tags": ["reference", "example"],
+      "permissions": {
+        "fs": { "read": ["${home}/**"] }
+      }
+    }
+  ]
+}

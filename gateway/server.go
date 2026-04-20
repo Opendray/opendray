@@ -29,6 +29,7 @@ import (
 	"github.com/opendray/opendray/plugin/bridge"
 	"github.com/opendray/opendray/plugin/contributions"
 	"github.com/opendray/opendray/plugin/install"
+	"github.com/opendray/opendray/plugin/marketplace"
 )
 
 // Server is the main HTTP server for OpenDray.
@@ -74,6 +75,19 @@ type Server struct {
 	// heartbeatInterval overrides the 20 s production heartbeat in tests.
 	// Zero means use defaultHeartbeatInterval (20 s).
 	heartbeatInterval time.Duration
+
+	// Build-time identity surfaced by /api/health so the Flutter About
+	// page can render a backend version. Empty strings degrade to "dev"
+	// / "unknown" in the response so the UI never crashes on missing
+	// fields.
+	version  string
+	buildSha string
+
+	// marketplace is the loaded catalog that backs
+	// GET /api/marketplace/plugins and the marketplace:// install
+	// source. Nil when no catalog dir is configured — endpoints then
+	// degrade to empty lists and EBADSRC respectively.
+	marketplace *marketplace.Catalog
 }
 
 // Config holds gateway configuration.
@@ -97,6 +111,18 @@ type Config struct {
 
 	// T14 — SSE workbench stream. Nil disables the endpoint (returns 503 EBUS).
 	WorkbenchBus *WorkbenchBus
+
+	// Version / BuildSha are the build-stamped identifiers injected into
+	// cmd/opendray/main.go via -ldflags. They flow through /api/health so
+	// the Flutter About screen can show the running backend's version.
+	// Both are optional; defaults kick in when empty.
+	Version  string
+	BuildSha string
+
+	// Marketplace is the preloaded plugin catalog. Nil disables the
+	// GET /api/marketplace/plugins endpoint (returns empty list) and
+	// rejects marketplace:// install sources with EBADSRC.
+	Marketplace *marketplace.Catalog
 }
 
 // PluginsConfig holds runtime-tunable knobs for the bridge handler.
@@ -143,6 +169,9 @@ func New(cfg Config) *Server {
 		bridgeCfg:       bridgeCfg,
 		bridgeNamespace: newNamespaceRegistry(),
 		workbenchBus:    cfg.WorkbenchBus,
+		version:         cfg.Version,
+		buildSha:        cfg.BuildSha,
+		marketplace:     cfg.Marketplace,
 	}
 	if cfg.MCP != nil {
 		s.mcp = mcp.NewHandlers(cfg.MCP)
@@ -311,6 +340,11 @@ func New(cfg Config) *Server {
 		r.Delete("/api/plugins/{name}", s.pluginsUninstall)
 		r.Get("/api/plugins/{name}/audit", s.pluginsAudit)
 
+		// Marketplace catalog — lists installable plugins for the Hub
+		// page. Install still flows through /api/plugins/install with
+		// src="marketplace://<name>".
+		r.Get("/api/marketplace/plugins", s.marketplaceList)
+
 		// Consent management (T12) — read current perms + hot-revoke.
 		// DELETE /consents/{cap} fires bridgeMgr.InvalidateConsent synchronously
 		// so in-flight WS subs terminate within the 200 ms SLO.
@@ -449,9 +483,19 @@ func (s *Server) serveTerminalHTML(w http.ResponseWriter, r *http.Request) {
 // ── Health ──────────────────────────────────────────────────────
 
 func (s *Server) health(w http.ResponseWriter, r *http.Request) {
+	version := s.version
+	if version == "" {
+		version = "dev"
+	}
+	buildSha := s.buildSha
+	if buildSha == "" {
+		buildSha = "unknown"
+	}
 	respondJSON(w, http.StatusOK, map[string]any{
 		"status":   "ok",
 		"service":  "opendray",
+		"version":  version,
+		"buildSha": buildSha,
 		"sessions": s.hub.RunningCount(),
 		"plugins":  len(s.plugins.List()),
 	})

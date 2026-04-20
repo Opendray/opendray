@@ -26,6 +26,12 @@ class _SettingsPageState extends State<SettingsPage> {
   late TextEditingController _cfSecretController;
   String? _testResult;
   bool _testing = false;
+  /// Backend identity pulled from /api/health — version + short git SHA.
+  /// Both start null while the request is in flight, then settle to
+  /// either a real value or "—" when the call fails or the server is
+  /// too old to report them.
+  String? _backendVersion;
+  String? _backendSha;
 
   @override
   void initState() {
@@ -34,6 +40,26 @@ class _SettingsPageState extends State<SettingsPage> {
     _urlController = TextEditingController(text: config.url);
     _cfIdController = TextEditingController(text: config.cfAccessId);
     _cfSecretController = TextEditingController(text: config.cfAccessSecret);
+    _loadBackendInfo();
+  }
+
+  Future<void> _loadBackendInfo() async {
+    try {
+      final health = await context.read<ApiClient>().health();
+      if (!mounted) return;
+      setState(() {
+        _backendVersion = (health['version'] as String?) ?? '—';
+        final sha = (health['buildSha'] as String?) ?? '';
+        // Short-SHA for display — full SHA is rarely useful in a UI.
+        _backendSha = sha.isEmpty ? '—' : sha.substring(0, sha.length.clamp(0, 7));
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _backendVersion = '—';
+        _backendSha = '—';
+      });
+    }
   }
 
   @override
@@ -320,10 +346,16 @@ class _SettingsPageState extends State<SettingsPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _InfoRow(
-                              label: context.tr('Version'), value: version),
+                              label: context.tr('App version'), value: version),
                           _InfoRow(
-                              label: context.tr('Build Date'),
+                              label: context.tr('Build date'),
                               value: buildDate),
+                          _InfoRow(
+                              label: context.tr('Backend version'),
+                              value: _backendVersion ?? '…'),
+                          _InfoRow(
+                              label: context.tr('Backend build'),
+                              value: _backendSha ?? '…'),
                         ],
                       );
                     },

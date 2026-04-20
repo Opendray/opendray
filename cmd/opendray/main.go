@@ -35,6 +35,7 @@ import (
 	"github.com/opendray/opendray/plugin/contributions"
 	"github.com/opendray/opendray/plugin/host"
 	"github.com/opendray/opendray/plugin/install"
+	"github.com/opendray/opendray/plugin/marketplace"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -356,6 +357,20 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 	pluginGate := bridge.NewGate(&dbConsentReader{db: db}, &dbAuditSink{db: db}, logger)
 	installer := install.NewInstaller(cfg.PluginsDataDir, db, providerRuntime, pluginGate, logger)
 	installer.AllowLocal = cfg.AllowLocalPlugins
+
+	// Marketplace catalog — loaded once at boot. Dir defaults to
+	// $REPO/plugins/marketplace when unset; a missing catalog.json
+	// leaves the Hub empty rather than failing boot.
+	marketplaceDir := cfg.MarketplaceDir
+	marketplaceCatalog, merr := marketplace.Load(marketplaceDir)
+	if merr != nil {
+		logger.Warn("marketplace: catalog load failed; Hub will be empty",
+			"dir", marketplaceDir, "err", merr)
+		marketplaceCatalog, _ = marketplace.Load("") // guaranteed nil-safe empty catalog
+	} else {
+		logger.Info("marketplace: catalog loaded",
+			"dir", marketplaceDir, "entries", len(marketplaceCatalog.List()))
+	}
 	// hostSupervisor is constructed below once the namespace APIs exist;
 	// declared here so the dispatcher's HostCaller closure can reference
 	// it by name. The closure is safe as long as a sidecar isn't invoked
@@ -502,6 +517,11 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 		// M2 bridge
 		BridgeManager: bridgeMgr,
 		WorkbenchBus:  workbenchBus,
+		// Build identity surfaced via /api/health for the Flutter About page.
+		Version:  version,
+		BuildSha: buildSha,
+		// Marketplace catalog backing /api/marketplace/plugins + marketplace://.
+		Marketplace: marketplaceCatalog,
 	})
 	gw.RegisterNamespace("workbench", workbenchAPI)
 	gw.RegisterNamespace("storage", storageAPI)
