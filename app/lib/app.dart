@@ -49,12 +49,12 @@ import 'features/workbench/workbench_service.dart';
 /// entry + tab-index math.
 const bool kHubEnabled = false;
 
-class NtcApp extends StatefulWidget {
+class OpendrayApp extends StatefulWidget {
   final ServerConfig serverConfig;
   final L10n l10n;
   final AuthService authService;
 
-  const NtcApp({
+  const OpendrayApp({
     super.key,
     required this.serverConfig,
     required this.l10n,
@@ -62,10 +62,10 @@ class NtcApp extends StatefulWidget {
   });
 
   @override
-  State<NtcApp> createState() => _NtcAppState();
+  State<OpendrayApp> createState() => _OpendrayAppState();
 }
 
-class _NtcAppState extends State<NtcApp> {
+class _OpendrayAppState extends State<OpendrayApp> {
   late final GoRouter _router;
   // Shared messenger key so WorkbenchService can surface SnackBars
   // from anywhere (command palette invocations, plugin install errors)

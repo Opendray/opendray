@@ -277,8 +277,8 @@ class _PreviewPageState extends State<PreviewPage> with WidgetsBindingObserver {
   Future<void> _injectFontFix(_BrowserTab tab) async {
     const js = r'''
       (function(){
-        if (window.__ntcFontInstalled) return;
-        window.__ntcFontInstalled = true;
+        if (window.__opendrayFontInstalled) return;
+        window.__opendrayFontInstalled = true;
         var FONT = "-apple-system,BlinkMacSystemFont,system-ui,'Segoe UI',Roboto,"
                  + "'PingFang SC','PingFang TC','Hiragino Sans GB','Hiragino Sans',"
                  + "'Noto Sans CJK SC','Noto Sans CJK TC','Microsoft YaHei',"

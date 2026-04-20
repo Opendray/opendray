@@ -3,7 +3,7 @@ import 'package:xterm/xterm.dart';
 
 /// OpenDray custom terminal theme — dark, high-contrast, inspired by iTerm2/Warp.
 /// Colors tuned for readability on the app's #0B0D11 background.
-const ntcTerminalTheme = TerminalTheme(
+const opendrayTerminalTheme = TerminalTheme(
   cursor: Color(0xFFA0A4B8),
   selection: Color(0x406366F1), // accent with transparency
   foreground: Color(0xFFD4D7E0),
