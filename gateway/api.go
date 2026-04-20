@@ -5,13 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/opendray/opendray/gateway/database"
 	"github.com/opendray/opendray/gateway/docs"
 	"github.com/opendray/opendray/gateway/files"
 	"github.com/opendray/opendray/kernel/store"
@@ -467,177 +464,8 @@ func intVal(m map[string]any, key string, fallback int) int {
 	return fallback
 }
 
-// ── Database handlers (panel plugins, PostgreSQL only) ──────────
-
-// resolveDBConfig returns the base config plus an optional database override.
-// The `db` query parameter (if present and non-empty) replaces cfg.Database,
-// letting a single plugin instance browse any database on the server.
-func (s *Server) resolveDBConfig(r *http.Request) (database.PGConfig, error) {
-	cfg, err := s.getDatabaseConfig(chi.URLParam(r, "plugin"))
-	if err != nil {
-		return cfg, err
-	}
-	if override := r.URL.Query().Get("db"); override != "" {
-		cfg.Database = override
-	}
-	return cfg, nil
-}
-
-func (s *Server) getDatabaseConfig(pluginName string) (database.PGConfig, error) {
-	info := s.plugins.ListInfo()
-	for _, pi := range info {
-		if pi.Provider.Name != pluginName {
-			continue
-		}
-		if pi.Provider.Type != plugin.ProviderTypePanel || !pi.Enabled {
-			return database.PGConfig{}, fmt.Errorf("database plugin %q not enabled", pluginName)
-		}
-		cfg := pi.Config
-
-		// Password: prefer secret field, fall back to env var named after plugin.
-		password := stringVal(cfg, "password", "")
-		if password == "" {
-			envKey := "OPENDRAY_DB_PASSWORD_" + strings.ToUpper(strings.ReplaceAll(pluginName, "-", "_"))
-			password = os.Getenv(envKey)
-		}
-
-		// `database` acts as the bootstrap DB — the one used to list all
-		// other databases. Defaults to "postgres" which is present on
-		// every PG server.
-		dbName := stringVal(cfg, "database", "")
-		if dbName == "" {
-			dbName = "postgres"
-		}
-
-		return database.PGConfig{
-			Host:         stringVal(cfg, "host", "localhost"),
-			Port:         intVal(cfg, "port", 5432),
-			Database:     dbName,
-			Username:     stringVal(cfg, "username", ""),
-			Password:     password,
-			SSLMode:      stringVal(cfg, "sslMode", "disable"),
-			QueryTimeout: time.Duration(intVal(cfg, "queryTimeoutSec", 30)) * time.Second,
-			MaxRows:      intVal(cfg, "maxRows", 500),
-		}, nil
-	}
-	return database.PGConfig{}, fmt.Errorf("database plugin %q not found", pluginName)
-}
-
-func (s *Server) dbDatabases(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.resolveDBConfig(r)
-	if err != nil {
-		respondError(w, http.StatusNotFound, err.Error())
-		return
-	}
-	dbs, err := database.ListDatabases(r.Context(), cfg)
-	if err != nil {
-		respondError(w, http.StatusBadGateway, err.Error())
-		return
-	}
-	if dbs == nil {
-		dbs = []database.DatabaseEntry{}
-	}
-	respondJSON(w, http.StatusOK, dbs)
-}
-
-func (s *Server) dbSchemas(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.resolveDBConfig(r)
-	if err != nil {
-		respondError(w, http.StatusNotFound, err.Error())
-		return
-	}
-	schemas, err := database.ListSchemas(r.Context(), cfg)
-	if err != nil {
-		respondError(w, http.StatusBadGateway, err.Error())
-		return
-	}
-	if schemas == nil {
-		schemas = []database.SchemaEntry{}
-	}
-	respondJSON(w, http.StatusOK, schemas)
-}
-
-func (s *Server) dbTables(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.resolveDBConfig(r)
-	if err != nil {
-		respondError(w, http.StatusNotFound, err.Error())
-		return
-	}
-	schema := r.URL.Query().Get("schema")
-	tables, err := database.ListTables(r.Context(), cfg, schema)
-	if err != nil {
-		respondError(w, http.StatusBadGateway, err.Error())
-		return
-	}
-	if tables == nil {
-		tables = []database.TableEntry{}
-	}
-	respondJSON(w, http.StatusOK, tables)
-}
-
-func (s *Server) dbColumns(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.resolveDBConfig(r)
-	if err != nil {
-		respondError(w, http.StatusNotFound, err.Error())
-		return
-	}
-	schema := r.URL.Query().Get("schema")
-	table := r.URL.Query().Get("table")
-	columns, err := database.ListColumns(r.Context(), cfg, schema, table)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	if columns == nil {
-		columns = []database.ColumnEntry{}
-	}
-	respondJSON(w, http.StatusOK, columns)
-}
-
-func (s *Server) dbPreview(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.resolveDBConfig(r)
-	if err != nil {
-		respondError(w, http.StatusNotFound, err.Error())
-		return
-	}
-	schema := r.URL.Query().Get("schema")
-	table := r.URL.Query().Get("table")
-	limit := 100
-	if v := r.URL.Query().Get("limit"); v != "" {
-		if _, err := fmt.Sscanf(v, "%d", &limit); err != nil {
-			respondError(w, http.StatusBadRequest, "invalid limit")
-			return
-		}
-	}
-	result, err := database.PreviewTable(r.Context(), cfg, schema, table, limit)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	respondJSON(w, http.StatusOK, result)
-}
-
-func (s *Server) dbQuery(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.resolveDBConfig(r)
-	if err != nil {
-		respondError(w, http.StatusNotFound, err.Error())
-		return
-	}
-	var req struct {
-		SQL string `json:"sql"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-	if strings.TrimSpace(req.SQL) == "" {
-		respondError(w, http.StatusBadRequest, "sql is required")
-		return
-	}
-	result, err := database.RunQuery(r.Context(), cfg, req.SQL)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	respondJSON(w, http.StatusOK, result)
-}
+// Legacy database handlers removed — replaced by pg-browser v1
+// marketplace plugin (plugins/marketplace/packages/pg-browser/). The
+// plugin runs in its own sidecar and exposes list/query commands
+// through the standard plugin command pipeline, so nothing here needs
+// a per-plugin HTTP surface anymore.

@@ -8,7 +8,6 @@ import '../../core/services/auth_service.dart';
 import '../../shared/session_launcher.dart';
 import '../../shared/theme/app_theme.dart';
 import '../browser/preview_page.dart';
-import '../database/database_page.dart';
 import '../docs/docs_page.dart';
 import '../endpoints/endpoints_page.dart';
 import '../files/files_page.dart';
@@ -34,7 +33,8 @@ import 'widgets/session_card.dart';
 /// manifest.json` one-to-one — compat uses the manifest name as both the
 /// view id AND the activityBar item id.
 Map<String, WidgetBuilder> get _legacyPanelBuilders => <String, WidgetBuilder>{
-      'database': (_) => const DatabasePage(),
+      // 'database' retired — replaced by pg-browser v1 plugin installed
+      // from the Hub (plugin/marketplace/packages/pg-browser/).
       'file-browser': (_) => const FilesPage(),
       'git': (_) => const GitPage(),
       'llm-providers': (_) => const EndpointsPage(),

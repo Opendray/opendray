@@ -445,46 +445,9 @@ class ApiClient {
     return (res.data as Map)['path'] as String;
   }
 
-  // ── Database ──────────────────────────────────────────────
-
-  Future<List<Map<String, dynamic>>> dbDatabases(String plugin) async {
-    final res = await _dio.get('/api/database/$plugin/databases');
-    return (res.data as List).cast<Map<String, dynamic>>();
-  }
-
-  Future<List<Map<String, dynamic>>> dbSchemas(String plugin, {String? db}) async {
-    final res = await _dio.get('/api/database/$plugin/schemas',
-      queryParameters: db != null && db.isNotEmpty ? {'db': db} : null);
-    return (res.data as List).cast<Map<String, dynamic>>();
-  }
-
-  Future<List<Map<String, dynamic>>> dbTables(String plugin, {String schema = '', String? db}) async {
-    final params = <String, dynamic>{'schema': schema};
-    if (db != null && db.isNotEmpty) params['db'] = db;
-    final res = await _dio.get('/api/database/$plugin/tables', queryParameters: params);
-    return (res.data as List).cast<Map<String, dynamic>>();
-  }
-
-  Future<List<Map<String, dynamic>>> dbColumns(String plugin, String schema, String table, {String? db}) async {
-    final params = <String, dynamic>{'schema': schema, 'table': table};
-    if (db != null && db.isNotEmpty) params['db'] = db;
-    final res = await _dio.get('/api/database/$plugin/columns', queryParameters: params);
-    return (res.data as List).cast<Map<String, dynamic>>();
-  }
-
-  Future<Map<String, dynamic>> dbPreview(String plugin, String schema, String table, {int limit = 100, String? db}) async {
-    final params = <String, dynamic>{'schema': schema, 'table': table, 'limit': limit};
-    if (db != null && db.isNotEmpty) params['db'] = db;
-    final res = await _dio.get('/api/database/$plugin/preview', queryParameters: params);
-    return res.data;
-  }
-
-  Future<Map<String, dynamic>> dbQuery(String plugin, String sql, {String? db}) async {
-    final res = await _dio.post('/api/database/$plugin/query',
-      queryParameters: db != null && db.isNotEmpty ? {'db': db} : null,
-      data: {'sql': sql});
-    return res.data;
-  }
+  // Legacy database endpoints removed — the pg-browser v1 plugin
+  // installed from the marketplace exposes list/query via the
+  // standard plugin command pipeline (invokePluginCommand).
 
   // ── Tasks ─────────────────────────────────────────────────
 

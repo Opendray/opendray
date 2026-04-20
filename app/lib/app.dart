@@ -13,7 +13,6 @@ import 'features/session/session_page.dart';
 import 'features/browser/browser_page.dart';
 import 'features/browser/preview_page.dart';
 import 'features/claude_accounts/claude_accounts_page.dart';
-import 'features/database/database_page.dart';
 import 'features/docs/docs_page.dart';
 import 'features/endpoints/endpoints_page.dart';
 import 'features/files/files_page.dart';
@@ -225,10 +224,6 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
           GoRoute(
             path: '/browser/files',
             builder: (ctx, _) => _panelShell(ctx, 'Files', const FilesPage()),
-          ),
-          GoRoute(
-            path: '/browser/database',
-            builder: (ctx, _) => _panelShell(ctx, 'Database', const DatabasePage()),
           ),
           GoRoute(
             path: '/browser/tasks',

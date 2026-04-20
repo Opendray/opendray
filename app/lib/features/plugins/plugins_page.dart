@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api/api_client.dart';
@@ -10,6 +11,7 @@ import '../../shared/theme/app_theme.dart';
 import '../settings/plugin_consents_page.dart';
 import 'plugin_config_page.dart';
 import 'plugin_configure_page.dart';
+import 'plugin_run_page.dart';
 
 /// Installed-plugins management at `/plugins`.
 ///
@@ -141,6 +143,61 @@ class _PluginsPageState extends State<PluginsPage> {
     Navigator.of(context).push(MaterialPageRoute(builder: builder));
   }
 
+  /// Legacy panel plugins don't map 1:1 to their /browser/* route —
+  /// compat rewrote most names (log-viewer → logs, llm-providers →
+  /// endpoints, simulator-preview → simulator, etc). Keep a single
+  /// source-of-truth mapping here so the Open action lines up with
+  /// the Browser tab's existing panel routes.
+  static const Map<String, String> _legacyPanelRoute = {
+    'file-browser': '/browser/files',
+    'git': '/browser/git',
+    'log-viewer': '/browser/logs',
+    'mcp': '/browser/mcp',
+    'obsidian-reader': '/browser/docs',
+    'simulator-preview': '/browser/simulator',
+    'task-runner': '/browser/tasks',
+    'telegram': '/browser/messaging',
+    'web-preview': '/browser/preview',
+    'llm-providers': '/browser/endpoints',
+  };
+
+  /// Routes the Open action per plugin kind:
+  ///   - legacy panel plugin → its existing /browser/* route
+  ///   - v1 host plugin → PluginRunPage (command list + result viewer)
+  ///   - v1 webview / declarative → the generic /browser/plugin/:name
+  ///   - otherwise a friendly message
+  void _openPlugin(provider_model.ProviderInfo p) {
+    final name = p.provider.name;
+
+    // v1 host-form plugins — command runner.
+    if (p.provider.isV1 && p.provider.form == 'host') {
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => PluginRunPage(
+          pluginName: name,
+          displayName: p.provider.displayName,
+        ),
+      ));
+      return;
+    }
+
+    // v1 webview / declarative — generic workbench route already
+    // resolves the first contributed view.
+    if (p.provider.isV1 &&
+        (p.provider.form == 'webview' || p.provider.form == 'declarative')) {
+      GoRouter.of(context).go('/browser/plugin/$name');
+      return;
+    }
+
+    // Legacy panel plugin — hand off to the existing bespoke page.
+    final legacy = _legacyPanelRoute[name];
+    if (legacy != null) {
+      GoRouter.of(context).go(legacy);
+      return;
+    }
+
+    _notify('No open target for $name', isError: true);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -251,57 +308,64 @@ class _PluginsPageState extends State<PluginsPage> {
     final prov = p.provider;
     final required = prov.required;
     final kindLabel = _kindLabel(prov);
+    // Tapping the card body opens the plugin's runtime surface (legacy
+    // panel page, command runner, or webview). The switch + menu on
+    // the right trail have their own tap handlers and don't bubble.
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            _iconBadge(prov.icon),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          prov.displayName,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 14),
-                          overflow: TextOverflow.ellipsis,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: p.enabled ? () => _openPlugin(p) : null,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _iconBadge(prov.icon),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            prov.displayName,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 14),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      if (required)
-                        _chip('required', AppColors.accent)
-                      else
-                        _chip(kindLabel, AppColors.textMuted),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    prov.description.isEmpty
-                        ? 'v${prov.version}'
-                        : '${prov.description} · v${prov.version}',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        color: AppColors.textMuted, fontSize: 11, height: 1.3),
-                  ),
-                ],
+                        const SizedBox(width: 6),
+                        if (required)
+                          _chip('required', AppColors.accent)
+                        else
+                          _chip(kindLabel, AppColors.textMuted),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      prov.description.isEmpty
+                          ? 'v${prov.version}'
+                          : '${prov.description} · v${prov.version}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          color: AppColors.textMuted, fontSize: 11, height: 1.3),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            _actionsMenu(p),
-            Switch(
-              value: p.enabled,
-              activeTrackColor: AppColors.accent,
-              onChanged: required ? null : (v) => _toggleProvider(p, v),
-            ),
-          ],
+              _actionsMenu(p),
+              Switch(
+                value: p.enabled,
+                activeTrackColor: AppColors.accent,
+                onChanged: required ? null : (v) => _toggleProvider(p, v),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -350,6 +414,9 @@ class _PluginsPageState extends State<PluginsPage> {
       icon: const Icon(Icons.more_vert, color: AppColors.textMuted, size: 20),
       onSelected: (value) {
         switch (value) {
+          case 'open':
+            _openPlugin(p);
+            break;
           case 'configure':
             _openConfig(p);
             break;
@@ -362,6 +429,16 @@ class _PluginsPageState extends State<PluginsPage> {
         }
       },
       itemBuilder: (ctx) => [
+        if (p.enabled)
+          const PopupMenuItem(
+            value: 'open',
+            child: ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.open_in_new, size: 18),
+              title: Text('Open'),
+            ),
+          ),
         if (p.provider.configSchema.isNotEmpty)
           const PopupMenuItem(
             value: 'configure',

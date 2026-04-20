@@ -346,13 +346,6 @@ func New(cfg Config) *Server {
 		r.Post("/api/git/{plugin}/session/snapshot", s.gitSessionSnapshot)
 		r.Get("/api/git/{plugin}/session/diff",      s.gitSessionDiff)
 
-		// Database browsing (panel plugins, PostgreSQL read-only)
-		r.Get("/api/database/{plugin}/databases", s.dbDatabases)
-		r.Get("/api/database/{plugin}/schemas", s.dbSchemas)
-		r.Get("/api/database/{plugin}/tables", s.dbTables)
-		r.Get("/api/database/{plugin}/columns", s.dbColumns)
-		r.Get("/api/database/{plugin}/preview", s.dbPreview)
-		r.Post("/api/database/{plugin}/query", s.dbQuery)
 
 		// Hook subscriptions
 		r.Get("/api/hooks", s.listHooks)
