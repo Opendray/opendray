@@ -195,7 +195,7 @@ to degrade gracefully when the route 404s).
 | ID | Task | Effort | Notes |
 |---|---|---|---|
 | D1.write | `fs.writeFile` + `fs.mkdir` + `fs.remove` | S | ✅ parent-symlink TOCTOU guard + 10 MiB write cap + mode bits |
-| D1.watch | `fs.watch(glob, cb)` — streaming namespace method | M | Pending — needs stream-capable Conn + subscription lifecycle |
+| D1.watch | `fs.watch(glob, cb)` — streaming namespace method | M | ✅ fsnotify-backed pump + glob expansion (`/**` recursive vs non-recursive) + per-event TOCTOU EvalSymlinks recheck + hot-revoke via `fs` cap subscription + `fs.unwatch(subId)` + caps (256 subs, 256 dirs, 4096 walk entries). WS-only; host sidecars return EUNAVAIL. |
 | D2 | CSP golden-file test + kanban E2E (T27 M3 deferral) | S | ✅ CSP golden was already in plugins_assets_test.go; added TestE2E_KanbanFullLifecycle with 200 ms hot-revoke SLO + persistence-across-restart + asset 404 post-uninstall |
 | D3 | KEK auto-rotation on admin password change | M | ✅ RotateCredentialsAndKEK — atomic tx: rewrap every plugin_secret_kek row with new KEK + bump kid, then upsert admin_auth. Gateway password-change path now uses it. Tests cover fresh install, rewrap-preserves-plaintext, and failure rollback. |
 | D4 | DB upgrade-path smoke test in CI | S | ✅ TestMigrate_UpgradeFromPrePluginSchema — 001–009 → seed legacy data → full Migrate → idempotent re-run w/ plugin rows |

@@ -32,6 +32,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
@@ -66,12 +67,18 @@ type FSConfig struct {
 	Log      *slog.Logger
 }
 
-// FSAPI implements the fs.* bridge namespace's read-path. Construct via
-// NewFSAPI. Safe for concurrent use by many bridge connections.
+// FSAPI implements the fs.* bridge namespace. Construct via NewFSAPI.
+// Safe for concurrent use by many bridge connections.
 type FSAPI struct {
 	gate     *Gate
 	resolver PathVarResolver
 	log      *slog.Logger
+
+	// M5 D1-watch — live streaming subscriptions. Keyed by
+	// watchKey(plugin, subID) so subID collisions across plugins are
+	// safe. Protected by watchMu.
+	watchMu sync.Mutex
+	watches map[string]*watchSub
 }
 
 // NewFSAPI constructs an FSAPI. Panics if cfg.Gate or cfg.Resolver is nil
@@ -87,7 +94,12 @@ func NewFSAPI(cfg FSConfig) *FSAPI {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &FSAPI{gate: cfg.Gate, resolver: cfg.Resolver, log: log}
+	return &FSAPI{
+		gate:     cfg.Gate,
+		resolver: cfg.Resolver,
+		log:      log,
+		watches:  make(map[string]*watchSub),
+	}
 }
 
 // Dispatch implements gateway.Namespace. envID + conn are unused for
@@ -112,6 +124,10 @@ func (a *FSAPI) Dispatch(ctx context.Context, plugin, method string, args json.R
 		return a.handleMkdir(ctx, plugin, args)
 	case "remove":
 		return a.handleRemove(ctx, plugin, args)
+	case "watch":
+		return a.handleWatch(ctx, plugin, args, envID, conn)
+	case "unwatch":
+		return a.handleUnwatch(plugin, args)
 	default:
 		we := &WireError{Code: "EUNAVAIL", Message: fmt.Sprintf("fs: method %q not available", method)}
 		return nil, fmt.Errorf("fs %s: %w", method, we)
