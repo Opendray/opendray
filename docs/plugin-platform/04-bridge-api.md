@@ -1,5 +1,14 @@
 # 04 — Bridge API (`opendray.*`)
 
+> **v1 frozen — 2026-04-20 (M5 Phase 4 / E2).**
+> Every namespace + method signature on this page is locked. Adding,
+> renaming, or removing a method, or changing an existing arg/return
+> shape, requires bumping the plugin protocol version (see the `v:` field
+> in the wire envelopes) and a coordinated SDK release. The
+> `v2Reserved` top-level manifest field is the only forward-compat escape
+> hatch; anything else is rejected at install time by the strict
+> unknown-field validator (M5 E1).
+
 The Bridge API is the single surface through which plugin code (webview JS or sidecar JSON-RPC) talks to the OpenDray host. Every call is capability-gated, rate-limited, and audited.
 
 The TypeScript declarations below are authoritative — they ship verbatim as `@opendray/plugin-sdk/index.d.ts`.

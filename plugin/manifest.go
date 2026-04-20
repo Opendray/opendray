@@ -437,22 +437,31 @@ type ConfigField struct {
 
 // LoadManifest reads a manifest.json from the given plugin directory.
 func LoadManifest(pluginDir string) (Provider, error) {
+	p, _, err := LoadManifestWithRaw(pluginDir)
+	return p, err
+}
+
+// LoadManifestWithRaw is LoadManifest plus the raw file bytes. Callers
+// that need to run [ValidateV1Strict] (M5 E1 — unknown-field rejection
+// at install time) use this variant so the struct-less field scan sees
+// the exact bytes that were parsed.
+func LoadManifestWithRaw(pluginDir string) (Provider, []byte, error) {
 	path := filepath.Join(pluginDir, "manifest.json")
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return Provider{}, fmt.Errorf("plugin: read manifest %s: %w", path, err)
+		return Provider{}, nil, fmt.Errorf("plugin: read manifest %s: %w", path, err)
 	}
 	var p Provider
 	if err := json.Unmarshal(data, &p); err != nil {
-		return Provider{}, fmt.Errorf("plugin: parse manifest %s: %w", path, err)
+		return Provider{}, data, fmt.Errorf("plugin: parse manifest %s: %w", path, err)
 	}
 	if p.Name == "" {
-		return Provider{}, fmt.Errorf("plugin: manifest %s: name is required", path)
+		return Provider{}, data, fmt.Errorf("plugin: manifest %s: name is required", path)
 	}
 	if p.DisplayName == "" {
 		p.DisplayName = p.Name
 	}
-	return p, nil
+	return p, data, nil
 }
 
 // ScanFS walks fsys under root recursively, mirroring [ScanPluginDir]

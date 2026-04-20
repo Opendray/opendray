@@ -1,5 +1,14 @@
 # 02 — manifest.json (v1)
 
+> **v1 frozen — 2026-04-20 (M5 Phase 4 / E1).**
+> The top-level field set + `contributes.*` field set are now
+> allow-listed by the installer. Any manifest key the host doesn't
+> recognise is rejected at install with a `manifest is not valid`
+> error. Future additions must ship as a v2 schema change (new
+> `engines.opendray` range). Plugins that need to stage forward-compat
+> data without waiting for v2 can stash it under the `v2Reserved`
+> top-level field, which is deliberately free-form.
+
 Every plugin bundle contains exactly one `manifest.json` at its root. This file is the entire source of truth for identity, entrypoints, UI contributions, and required capabilities.
 
 ## JSON Schema

@@ -152,8 +152,10 @@ func (i *Installer) Stage(ctx context.Context, src Source) (*PendingInstall, err
 		}
 	}()
 
-	// 2) Parse + validate the manifest.
-	prov, err := plugin.LoadManifest(fetchedPath)
+	// 2) Parse + validate the manifest. LoadManifestWithRaw returns the
+	//    original bytes so the M5 E1 strict-field validator can reject
+	//    manifests that carry fields the v1 schema doesn't know about.
+	prov, rawManifest, err := plugin.LoadManifestWithRaw(fetchedPath)
 	if err != nil {
 		return nil, fmt.Errorf("install: load manifest: %w", err)
 	}
@@ -165,7 +167,7 @@ func (i *Installer) Stage(ctx context.Context, src Source) (*PendingInstall, err
 		// §Compat mode).
 		return nil, fmt.Errorf("%w: manifest is not v1 (missing publisher or engines.opendray)", ErrInvalidManifest)
 	}
-	if ve := plugin.ValidateV1(prov); len(ve) > 0 {
+	if ve := plugin.ValidateV1Strict(prov, rawManifest); len(ve) > 0 {
 		msgs := make([]string, 0, len(ve))
 		for _, e := range ve {
 			msgs = append(msgs, e.Error())

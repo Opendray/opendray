@@ -202,11 +202,11 @@ to degrade gracefully when the route 404s).
 
 ### Track E — Contract freeze
 
-| ID | Task | Effort |
-|---|---|---|
-| E1 | Manifest schema version lock + validator error on unknown fields post-freeze | S |
-| E2 | Bridge API signature lock — finalise `04-bridge-api.md`, any post-freeze change needs major bump | S |
-| E3 | M5-RELEASE.md | S |
+| ID | Task | Effort | Notes |
+|---|---|---|---|
+| E1 | Manifest schema version lock + validator error on unknown fields post-freeze | S | ✅ `ValidateV1Strict` + `LoadManifestWithRaw` — installer rejects any top-level or `contributes.*` field outside the v1 whitelist. `$schema` + `v2Reserved` explicitly allowed. |
+| E2 | Bridge API signature lock — finalise `04-bridge-api.md`, any post-freeze change needs major bump | S | ✅ v1-frozen banner on 02-manifest.md + 04-bridge-api.md (2026-04-20). |
+| E3 | M5-RELEASE.md | S | ✅ covers Phases 1/3/4 shipped; Phase 2/5 explicitly deferred. |
 
 **Totals:** 18 tasks (5 tracks). Track A (legacy) = 4 of those,
 run LAST and each may also rework plugin functionality.
