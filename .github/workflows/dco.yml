@@ -8,6 +8,11 @@ jobs:
   dco:
     runs-on: ubuntu-latest
     steps:
-      - uses: tim-actions/dco@v1.1.0
+      # Pinned to current master SHA — the v1.1.0 tag ships an
+      # incompatible input schema (requires `commits:`, no `token:`),
+      # whereas master still accepts `token:` which is how this
+      # workflow was authored. SHA pin gives us reproducibility
+      # without the tag-swap footgun.
+      - uses: tim-actions/dco@f2279e6e62d5a7d9115b0cb8e837b777b1b02e21 # master 2026-04
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
