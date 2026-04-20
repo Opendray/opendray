@@ -87,13 +87,35 @@ type Config struct {
 	CacheDir string
 }
 
+// HTTPStatusError is returned by fetch for any non-2xx response.
+// The status code lets the retry loop decide whether to try the
+// next mirror (5xx = yes; 4xx = no, it's definitive).
+type HTTPStatusError struct {
+	Status int
+	URL    string
+}
+
+func (e *HTTPStatusError) Error() string {
+	return fmt.Sprintf("registry GET %s: HTTP %d", e.URL, e.Status)
+}
+
+// Retryable returns true for server-side failures (5xx). 4xx are
+// definitive — 404 means the resource genuinely isn't there, and
+// retrying against mirrors won't change that.
+func (e *HTTPStatusError) Retryable() bool {
+	return e.Status >= 500 && e.Status <= 599
+}
+
 // Catalog is the remote-backed implementation of [market.Catalog].
 // It is safe to construct without network access; network calls
 // happen on List / Resolve / BundlePath as needed.
 type Catalog struct {
 	cfg    Config
 	client *http.Client
-	base   *url.URL
+	// bases is the primary RegistryURL followed by the configured
+	// mirrors, all normalised to a trailing slash. The fetch
+	// helper iterates this in order on retryable failures.
+	bases []*url.URL
 }
 
 // New constructs a remote Catalog from cfg. A zero Config is
@@ -103,21 +125,39 @@ func New(cfg Config) (*Catalog, error) {
 	if cfg.RegistryURL == "" {
 		return nil, errors.New("market/remote: RegistryURL is required")
 	}
-	base, err := url.Parse(cfg.RegistryURL)
+	primary, err := parseBase(cfg.RegistryURL)
 	if err != nil {
 		return nil, fmt.Errorf("market/remote: parse RegistryURL: %w", err)
 	}
-	if base.Scheme != "http" && base.Scheme != "https" {
-		return nil, fmt.Errorf("market/remote: RegistryURL scheme must be http(s), got %q", base.Scheme)
-	}
-	if !strings.HasSuffix(base.Path, "/") {
-		base.Path += "/"
+	bases := []*url.URL{primary}
+	for i, m := range cfg.Mirrors {
+		b, err := parseBase(m)
+		if err != nil {
+			return nil, fmt.Errorf("market/remote: parse Mirrors[%d]: %w", i, err)
+		}
+		bases = append(bases, b)
 	}
 	client := cfg.HTTPClient
 	if client == nil {
 		client = &http.Client{Timeout: defaultHTTPTimeout}
 	}
-	return &Catalog{cfg: cfg, client: client, base: base}, nil
+	return &Catalog{cfg: cfg, client: client, bases: bases}, nil
+}
+
+// parseBase parses one base URL and guarantees a trailing slash
+// for clean url.ResolveReference semantics.
+func parseBase(raw string) (*url.URL, error) {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return nil, err
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return nil, fmt.Errorf("scheme must be http(s), got %q", u.Scheme)
+	}
+	if !strings.HasSuffix(u.Path, "/") {
+		u.Path += "/"
+	}
+	return u, nil
 }
 
 // indexResponse mirrors the wire shape the marketplace repo's
@@ -155,12 +195,7 @@ type indexPluginRow struct {
 // summary entries — those are filled when the install flow calls
 // Resolve (T3).
 func (c *Catalog) List(ctx context.Context) ([]market.Entry, error) {
-	u, err := c.resolveRelative("index.json")
-	if err != nil {
-		return nil, err
-	}
-
-	body, err := c.fetch(ctx, u, maxIndexBytes)
+	body, err := c.fetch(ctx, "index.json", maxIndexBytes)
 	if err != nil {
 		return nil, fmt.Errorf("market/remote: fetch index: %w", err)
 	}
@@ -306,13 +341,10 @@ func (c *Catalog) Resolve(ctx context.Context, ref market.Ref) (market.Entry, er
 	}
 
 	rel := fmt.Sprintf("plugins/%s/%s/%s.json", ref.Publisher, ref.Name, ref.Version)
-	u, err := c.resolveRelative(rel)
+	body, err := c.fetch(ctx, rel, maxVersionBytes)
 	if err != nil {
-		return market.Entry{}, err
-	}
-	body, err := c.fetch(ctx, u, maxVersionBytes)
-	if err != nil {
-		if strings.Contains(err.Error(), "HTTP 404") {
+		var hs *HTTPStatusError
+		if errors.As(err, &hs) && hs.Status == http.StatusNotFound {
 			return market.Entry{}, fmt.Errorf("%w: %s", market.ErrNotFound, ref)
 		}
 		return market.Entry{}, fmt.Errorf("market/remote: fetch version: %w", err)
@@ -369,13 +401,10 @@ func (c *Catalog) FetchPublisher(ctx context.Context, publisher string) (market.
 	if publisher == "" {
 		return market.PublisherRecord{}, fmt.Errorf("%w: empty publisher", market.ErrBadRef)
 	}
-	u, err := c.resolveRelative("publishers/" + publisher + ".json")
+	body, err := c.fetch(ctx, "publishers/"+publisher+".json", maxVersionBytes)
 	if err != nil {
-		return market.PublisherRecord{}, err
-	}
-	body, err := c.fetch(ctx, u, maxVersionBytes)
-	if err != nil {
-		if strings.Contains(err.Error(), "HTTP 404") {
+		var hs *HTTPStatusError
+		if errors.As(err, &hs) && hs.Status == http.StatusNotFound {
 			return market.PublisherRecord{}, fmt.Errorf("%w: publisher %q", market.ErrNotFound, publisher)
 		}
 		return market.PublisherRecord{}, fmt.Errorf("market/remote: fetch publisher: %w", err)
@@ -395,10 +424,10 @@ func (c *Catalog) FetchPublisher(ctx context.Context, publisher string) (market.
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
-// resolveRelative joins a relative path onto the configured base
-// URL without losing its trailing slash semantics. Rejects absolute
-// paths so callers can't escape the registry root.
-func (c *Catalog) resolveRelative(rel string) (*url.URL, error) {
+// resolveAt joins rel onto the given base, preserving trailing
+// slash semantics. Rejects absolute paths so callers can't escape
+// the registry root.
+func resolveAt(base *url.URL, rel string) (*url.URL, error) {
 	if strings.HasPrefix(rel, "/") {
 		return nil, fmt.Errorf("market/remote: relative path must not start with /, got %q", rel)
 	}
@@ -406,14 +435,54 @@ func (c *Catalog) resolveRelative(rel string) (*url.URL, error) {
 	if err != nil {
 		return nil, fmt.Errorf("market/remote: parse relative %q: %w", rel, err)
 	}
-	return c.base.ResolveReference(ref), nil
+	return base.ResolveReference(ref), nil
 }
 
-// fetch performs a bounded GET. Caps the downloaded size at maxBytes
-// and requires an application/json-ish Content-Type. Returns the
-// body bytes verbatim so callers can json.Unmarshal into their own
-// type.
-func (c *Catalog) fetch(ctx context.Context, u *url.URL, maxBytes int64) ([]byte, error) {
+// fetch performs a bounded GET of the given relative path, falling
+// back through the configured mirrors on retryable failures (5xx,
+// network errors, timeouts). 4xx errors — especially 404 — are
+// definitive and short-circuit the loop so the caller surfaces
+// "not found" rather than trying mirrors that will all 404 too.
+func (c *Catalog) fetch(ctx context.Context, rel string, maxBytes int64) ([]byte, error) {
+	var lastErr error
+	for i, base := range c.bases {
+		u, err := resolveAt(base, rel)
+		if err != nil {
+			return nil, err
+		}
+		body, err := c.fetchOne(ctx, u, maxBytes)
+		if err == nil {
+			return body, nil
+		}
+		lastErr = err
+
+		// Don't burn through the mirror list on caller-initiated
+		// cancellation.
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return nil, err
+		}
+		// Definitive 4xx — the path genuinely isn't there. Surface
+		// it directly so callers (Resolve / FetchPublisher) can
+		// map to ErrNotFound.
+		var hs *HTTPStatusError
+		if errors.As(err, &hs) && !hs.Retryable() {
+			return nil, err
+		}
+		// Retryable — advance to next mirror if one exists. The
+		// retry log line helps operators understand which mirror
+		// took over when debugging.
+		if i+1 < len(c.bases) {
+			continue
+		}
+	}
+	return nil, lastErr
+}
+
+// fetchOne performs a single bounded GET. Caps the downloaded size
+// at maxBytes, rejects HTML responses (GitHub raw's rate-limit /
+// auth pages return HTML on .json paths), and returns bytes
+// verbatim so callers json.Unmarshal into their own type.
+func (c *Catalog) fetchOne(ctx context.Context, u *url.URL, maxBytes int64) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
 		return nil, err
@@ -428,7 +497,7 @@ func (c *Catalog) fetch(ctx context.Context, u *url.URL, maxBytes int64) ([]byte
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("registry GET %s: HTTP %d", u.String(), resp.StatusCode)
+		return nil, &HTTPStatusError{Status: resp.StatusCode, URL: u.String()}
 	}
 
 	// Accept "application/json", "text/plain" (GitHub raw serves

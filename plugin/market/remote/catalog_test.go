@@ -71,8 +71,8 @@ func TestNew_NormalisesTrailingSlash(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.HasSuffix(c.base.Path, "/") {
-		t.Errorf("base.Path = %q, want trailing slash", c.base.Path)
+	if !strings.HasSuffix(c.bases[0].Path, "/") {
+		t.Errorf("base.Path = %q, want trailing slash", c.bases[0].Path)
 	}
 }
 
@@ -419,6 +419,140 @@ func TestFetchPublisher_NotFound(t *testing.T) {
 	_, err := c.FetchPublisher(context.Background(), "missing")
 	if !errors.Is(err, market.ErrNotFound) {
 		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+// ─── Mirror fallback ──────────────────────────────────────────────────────
+
+// mirrorCatalog wires a Catalog against a primary URL + one or more
+// mirror URLs (each served by its own httptest server). Keeps the
+// call-site clean for multi-server tests.
+func mirrorCatalog(t *testing.T, primary string, mirrors ...string) *Catalog {
+	t.Helper()
+	c, err := New(Config{
+		RegistryURL: primary,
+		Mirrors:     mirrors,
+		HTTPClient:  &http.Client{}, // no global timeout — lets tests control
+	})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	return c
+}
+
+// TestMirror_PrimaryFailsMirrorSucceeds — primary returns 503
+// (retryable), first mirror 200. Expect mirror body returned.
+func TestMirror_PrimaryFailsMirrorSucceeds(t *testing.T) {
+	primarySrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "down", http.StatusServiceUnavailable)
+	}))
+	t.Cleanup(primarySrv.Close)
+
+	mirrorSrv := httptest.NewServer(indexHandler(`{
+		"version": 1,
+		"generatedAt": "",
+		"plugins": [{"name":"a","publisher":"b","latest":"1.0.0"}]
+	}`))
+	t.Cleanup(mirrorSrv.Close)
+
+	c := mirrorCatalog(t, primarySrv.URL, mirrorSrv.URL)
+	entries, err := c.List(context.Background())
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(entries) != 1 {
+		t.Errorf("want 1 entry from mirror, got %d", len(entries))
+	}
+}
+
+// TestMirror_4xxDoesNotFallback — 404 on the primary is
+// definitive. Mirrors aren't tried; Resolve surfaces ErrNotFound
+// straight away. Otherwise every missing plugin would hit every
+// mirror, multiplying load on a normal miss.
+func TestMirror_4xxDoesNotFallback(t *testing.T) {
+	// Mirror would succeed if reached. Shouldn't be.
+	mirrorHit := 0
+	mirrorSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		mirrorHit++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, versionBody("acme", "plug", "1.0.0", fakeSHA256, "https://x/y.zip"))
+	}))
+	t.Cleanup(mirrorSrv.Close)
+
+	primarySrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "not found", http.StatusNotFound)
+	}))
+	t.Cleanup(primarySrv.Close)
+
+	c := mirrorCatalog(t, primarySrv.URL, mirrorSrv.URL)
+	_, err := c.Resolve(context.Background(), market.Ref{
+		Publisher: "acme", Name: "plug", Version: "1.0.0",
+	})
+	if err == nil || !errors.Is(err, market.ErrNotFound) {
+		t.Errorf("err = %v; want ErrNotFound", err)
+	}
+	if mirrorHit != 0 {
+		t.Errorf("mirror hit %d times; want 0 (4xx should be definitive)", mirrorHit)
+	}
+}
+
+// TestMirror_AllFailReturnsLastError — every base returns 503.
+// Expect the last base's error surfaced to the caller.
+func TestMirror_AllFailReturnsLastError(t *testing.T) {
+	p := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "p", http.StatusServiceUnavailable)
+	}))
+	t.Cleanup(p.Close)
+	m := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "m", http.StatusBadGateway)
+	}))
+	t.Cleanup(m.Close)
+
+	c := mirrorCatalog(t, p.URL, m.URL)
+	_, err := c.List(context.Background())
+	if err == nil {
+		t.Fatal("want error when all bases fail")
+	}
+	var hs *HTTPStatusError
+	if !errors.As(err, &hs) || hs.Status != http.StatusBadGateway {
+		t.Errorf("err = %v; want HTTPStatusError 502 from last base", err)
+	}
+}
+
+// TestMirror_CtxCancelStopsRetry — caller cancel aborts the loop
+// immediately; further mirrors are not tried.
+func TestMirror_CtxCancelStopsRetry(t *testing.T) {
+	mirrorHit := 0
+	m := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		mirrorHit++
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, `{"version":1,"plugins":[]}`)
+	}))
+	t.Cleanup(m.Close)
+
+	// Primary server never responds — client's ctx kills the request.
+	primary := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+	}))
+	t.Cleanup(primary.Close)
+
+	c, err := New(Config{
+		RegistryURL: primary.URL,
+		Mirrors:     []string{m.URL},
+		HTTPClient:  &http.Client{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // cancel immediately; primary will see ctx.Done.
+
+	_, err = c.List(ctx)
+	if err == nil || !errors.Is(err, context.Canceled) {
+		t.Errorf("err = %v; want context.Canceled", err)
+	}
+	if mirrorHit != 0 {
+		t.Errorf("mirror hit %d times; want 0 under cancel", mirrorHit)
 	}
 }
 
