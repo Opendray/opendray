@@ -296,6 +296,17 @@ func (i *Installer) Confirm(ctx context.Context, token string) error {
 		}
 	}()
 
+	// Clear any tombstone from a prior uninstall — the user has
+	// explicitly chosen to re-install, so the "don't re-seed" marker
+	// must go away or the next gateway restart will still skip seeding
+	// the newly-installed plugin.
+	if _, err := tx.Exec(ctx,
+		`DELETE FROM plugin_tombstone WHERE name = $1`, pend.Name,
+	); err != nil {
+		i.pending.put(pend)
+		return fmt.Errorf("install: clear tombstone: %w", err)
+	}
+
 	// Write plugins row.
 	if _, err := tx.Exec(ctx,
 		`INSERT INTO plugins (name, version, manifest, enabled)
@@ -423,6 +434,14 @@ func (i *Installer) Uninstall(ctx context.Context, name string) error {
 	// (the row is already gone, but the cascade costs nothing).
 	if err := i.DB.DeletePlugin(ctx, name); err != nil {
 		return fmt.Errorf("install: delete plugin: %w", err)
+	}
+
+	// Tombstone the name so Runtime.LoadAll doesn't silently re-seed
+	// this plugin from the embedded bundle on the next gateway restart.
+	// Without this, built-in declarative plugins are un-uninstallable —
+	// the user removes them, deploys a new binary, and they come back.
+	if err := i.DB.AddPluginTombstone(ctx, name); err != nil {
+		return fmt.Errorf("install: add tombstone: %w", err)
 	}
 
 	// Remove the filesystem tree for every version of this plugin. We

@@ -76,6 +76,8 @@ func (d *DB) Migrate(ctx context.Context) error {
 		"migrations/014_plugin_secret_kek.sql",
 		"migrations/015_plugin_host_state.sql",
 		"migrations/016_plugin_secret_nonce.sql",
+		"migrations/017_drop_legacy_plugin_config.sql",
+		"migrations/018_plugin_tombstone.sql",
 	}
 	for _, path := range files {
 		sql, err := migrationsFS.ReadFile(path)

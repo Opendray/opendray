@@ -203,6 +203,52 @@ func (d *DB) DeletePlugin(ctx context.Context, name string) error {
 	return nil
 }
 
+// AddPluginTombstone records that `name` has been explicitly
+// uninstalled, so Runtime.LoadAll can skip re-seeding it. Idempotent:
+// a second uninstall just refreshes the uninstalled_at timestamp.
+func (d *DB) AddPluginTombstone(ctx context.Context, name string) error {
+	_, err := d.Pool.Exec(ctx, `
+		INSERT INTO plugin_tombstone (name, uninstalled_at)
+		VALUES ($1, now())
+		ON CONFLICT (name) DO UPDATE SET uninstalled_at = now()
+	`, name)
+	if err != nil {
+		return fmt.Errorf("store: add plugin tombstone: %w", err)
+	}
+	return nil
+}
+
+// RemovePluginTombstone clears the tombstone for `name`. Called by
+// Installer.Confirm so a user explicitly re-installing via the Hub
+// sees the plugin seeded again on the next restart.
+func (d *DB) RemovePluginTombstone(ctx context.Context, name string) error {
+	_, err := d.Pool.Exec(ctx, `DELETE FROM plugin_tombstone WHERE name = $1`, name)
+	if err != nil {
+		return fmt.Errorf("store: remove plugin tombstone: %w", err)
+	}
+	return nil
+}
+
+// ListPluginTombstones returns every tombstoned plugin name. The
+// caller (Runtime.LoadAll) turns this into a set lookup to skip
+// re-seeding embedded plugins the user has removed.
+func (d *DB) ListPluginTombstones(ctx context.Context) ([]string, error) {
+	rows, err := d.Pool.Query(ctx, `SELECT name FROM plugin_tombstone`)
+	if err != nil {
+		return nil, fmt.Errorf("store: list plugin tombstones: %w", err)
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var n string
+		if err := rows.Scan(&n); err != nil {
+			return nil, err
+		}
+		out = append(out, n)
+	}
+	return out, rows.Err()
+}
+
 func (d *DB) UpdatePluginEnabled(ctx context.Context, name string, enabled bool) error {
 	_, err := d.Pool.Exec(ctx,
 		`UPDATE plugins SET enabled = $2, updated_at = now() WHERE name = $1`,

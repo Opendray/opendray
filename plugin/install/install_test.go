@@ -721,9 +721,83 @@ func TestInstaller_UninstallRemovesAllTraces(t *testing.T) {
 		t.Errorf("audit trail empty after Uninstall; expected historical rows")
 	}
 
+	// Tombstone recorded — this is the guardrail that stops the
+	// embedded-plugin re-seed-after-restart bug. Without it,
+	// Runtime.LoadAll would re-install this plugin from the
+	// embedded manifests on the next gateway restart.
+	tombs, err := db.ListPluginTombstones(ctx)
+	if err != nil {
+		t.Fatalf("ListPluginTombstones: %v", err)
+	}
+	found := false
+	for _, n := range tombs {
+		if n == "un-plugin" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("tombstone for un-plugin missing after Uninstall; got %v", tombs)
+	}
+
 	// Idempotent second call.
 	if err := inst.Uninstall(ctx, "un-plugin"); err != nil {
 		t.Errorf("second Uninstall not idempotent: %v", err)
+	}
+}
+
+// Re-installing a previously uninstalled plugin must clear its
+// tombstone. Otherwise the plugin row would be written by Confirm,
+// but the next gateway restart (seeing name∉dbPlugins is false) would
+// skip the seed path — fine — however a subsequent Uninstall → old
+// tombstone refreshed is also fine. The failure mode we care about:
+// if the user installs via Hub and *the plugin isn't yet in the DB*
+// somehow (e.g., install succeeds but enabled flag is toggled via a
+// separate code path), then LoadAll must not skip seeding it.
+func TestInstaller_ConfirmClearsTombstone(t *testing.T) {
+	db := bootDB(t)
+	ctx := context.Background()
+
+	src := writeValidBundle(t, t.TempDir(), "ri-plugin", "1.0.0")
+	dataDir := t.TempDir()
+
+	rt := mustRuntime(db)
+	inst := NewInstaller(dataDir, db, rt, bridge.NewGate(nil, nil, slog.Default()), slog.Default())
+	t.Cleanup(inst.Stop)
+	inst.AllowLocal = true
+
+	// Install → Uninstall so a tombstone exists.
+	pend, err := inst.Stage(ctx, LocalSource{Path: src})
+	if err != nil {
+		t.Fatalf("Stage: %v", err)
+	}
+	if err := inst.Confirm(ctx, pend.Token); err != nil {
+		t.Fatalf("Confirm: %v", err)
+	}
+	if err := inst.Uninstall(ctx, "ri-plugin"); err != nil {
+		t.Fatalf("Uninstall: %v", err)
+	}
+
+	// Tombstone must be present.
+	var cnt int
+	_ = db.Pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM plugin_tombstone WHERE name=$1`, "ri-plugin").Scan(&cnt)
+	if cnt != 1 {
+		t.Fatalf("precondition: tombstone not present after Uninstall: %d", cnt)
+	}
+
+	// Re-install via a fresh Stage+Confirm. Tombstone must be gone.
+	pend2, err := inst.Stage(ctx, LocalSource{Path: src})
+	if err != nil {
+		t.Fatalf("Stage (reinstall): %v", err)
+	}
+	if err := inst.Confirm(ctx, pend2.Token); err != nil {
+		t.Fatalf("Confirm (reinstall): %v", err)
+	}
+	_ = db.Pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM plugin_tombstone WHERE name=$1`, "ri-plugin").Scan(&cnt)
+	if cnt != 0 {
+		t.Errorf("tombstone not cleared on reinstall: %d", cnt)
 	}
 }
 

@@ -118,6 +118,22 @@ func (rt *Runtime) LoadAll(ctx context.Context) error {
 		return fmt.Errorf("plugin runtime: load from db: %w", err)
 	}
 
+	// Load tombstones — names the user has explicitly uninstalled.
+	// We skip seeding these even if they reappear in embeddedProviders,
+	// so an uninstall survives gateway restarts. A tombstone-read
+	// failure is non-fatal: we log and proceed with an empty set,
+	// preserving the pre-M5 re-seed behaviour rather than blocking
+	// startup on a schema issue.
+	tombstoneList, err := rt.db.ListPluginTombstones(ctx)
+	if err != nil {
+		rt.logger.Warn("plugin tombstone list failed, skipping tombstone check", "error", err)
+		tombstoneList = nil
+	}
+	tombstones := make(map[string]bool, len(tombstoneList))
+	for _, n := range tombstoneList {
+		tombstones[n] = true
+	}
+
 	loaded := make(map[string]bool)
 	for _, dbp := range dbPlugins {
 		var p Provider
@@ -167,6 +183,12 @@ func (rt *Runtime) LoadAll(ctx context.Context) error {
 				lp.provider = p
 			}
 			rt.mu.Unlock()
+			continue
+		}
+		if tombstones[p.Name] {
+			// User explicitly uninstalled this plugin. Respect that —
+			// re-seeding here is exactly the bug the tombstone fixes.
+			rt.logger.Info("provider seed skipped (tombstoned)", "name", p.Name)
 			continue
 		}
 		if err := rt.seed(ctx, p); err != nil {
