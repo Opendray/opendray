@@ -50,12 +50,29 @@ class L10n extends ChangeNotifier {
   /// Translate [key] to the current language. Returns the key itself (the
   /// English source) when no translation is available — so any untranslated
   /// string degrades to readable English instead of a blank or error token.
+  ///
+  /// In debug builds, a missing key is logged once via [debugPrint] so we
+  /// notice a typo or a forgotten translation when adding new UI. The
+  /// release build stays silent — degrading to English is intentional,
+  /// not an error.
   String t(String key) {
     if (_code == 'en') return key;
     final catalog = _catalogs[_code];
     if (catalog == null) return key;
-    return catalog[key] ?? key;
+    final v = catalog[key];
+    if (v == null) {
+      assert(() {
+        if (_reportedMissing.add('$_code::$key')) {
+          debugPrint('[l10n] missing $_code translation: "$key"');
+        }
+        return true;
+      }());
+      return key;
+    }
+    return v;
   }
+
+  static final Set<String> _reportedMissing = <String>{};
 
   /// Picks a per-field i18n overlay shipped by a plugin manifest.
   ///
@@ -79,10 +96,20 @@ class L10n extends ChangeNotifier {
     'zh': _zh,
   };
 
+  // ── Catalog contents ────────────────────────────────────────────
+  //
+  // Keys are English source strings rendered by the Flutter app itself
+  // (nav chrome, dashboard, built-in panel pages). Plugin-owned text —
+  // displayName, description, configSchema labels/descriptions — no
+  // longer lives here: every plugin manifest ships optional `*_zh`
+  // overlays which the UI resolves via `context.pickL10n`. See
+  // `plugin/manifest.go` Provider.DisplayNameZh and ConfigField.LabelZh.
+  //
+  // If a plugin-facing string shows up only in English, fix it in
+  // THAT plugin's manifest.json — not here.
   static const Map<String, String> _zh = {
     // Bottom navigation
     'Sessions': '会话',
-    'Browser':  '浏览器',
     'Settings': '设置',
 
     // Dashboard / sessions
@@ -208,15 +235,6 @@ class L10n extends ChangeNotifier {
         '请在 设置 → 插件 中启用文件浏览器、Obsidian Reader、数据库、任务或预览插件。',
     'Enable a File Browser, Database, Tasks, Preview or other panel plugin in Settings → Plugins.':
         '请在 设置 → 插件 中启用文件浏览器、数据库、任务、预览或其他面板插件。',
-    // Launcher card descriptions
-    'Read markdown and Git-forge sources':        '阅读 Markdown 与 Git 仓库文档',
-    'Browse & edit server files':                 '浏览并编辑服务器文件',
-    'Read-only Postgres browsing & SQL':          '只读浏览 Postgres 与执行 SQL',
-    'Run Makefile / npm / shell tasks':           '运行 Makefile / npm / shell 任务',
-    'Tail and grep log files live':               '实时 tail 与 grep 日志文件',
-    'Telegram bridge & session links':            'Telegram 桥与会话链接',
-    'Manage MCP servers injected into agents':    '管理注入到 agent 的 MCP 服务器',
-    'Web preview & device simulator':             '网页预览与设备模拟器',
     'No file browser configured':     '未配置文件浏览器',
     'Enable File Browser in Settings → Plugins and configure the allowed directories.':
         '请在 设置 → 插件 中启用 File Browser 并配置允许访问的目录。',
@@ -324,29 +342,6 @@ class L10n extends ChangeNotifier {
     'Answer yes/no + Enter':                '回答 yes/no + 回车',
     'Plain text in a linked chat → session input. Output is polled every 5 s (only sent when content changes). Reply directly to any idle notification → routed automatically.':
         '已链接聊天中的普通文字 → 会话输入。输出每 5 秒轮询一次(仅当内容变化时发送)。直接回复任何空闲通知 → 自动路由到该会话。',
-
-    // ── Telegram Bridge — config field labels ────────────────
-    'Bot Token':                            '机器人 Token',
-    'Allowed Chat IDs':                     '允许的 Chat ID',
-    'Notifications Chat ID':                '通知的 Chat ID',
-    'Notify on Idle':                       '空闲时通知',
-    'Notify on Exit':                       '退出时通知',
-    'Notification Tail Lines':              '通知中包含的末尾行数',
-    'Poll Interval (seconds)':              '轮询间隔(秒)',
-    'Token from @BotFather. Send /newbot in Telegram, follow the prompts, copy the token here. Or leave blank and set the OPENDRAY_TELEGRAM_BOT_TOKEN env var on the server.':
-        '来自 @BotFather 的 Token。在 Telegram 中发送 /newbot, 按提示操作并将 Token 复制到这里。也可以留空并在服务器上设置 OPENDRAY_TELEGRAM_BOT_TOKEN 环境变量。',
-    'Comma-separated Telegram chat / user IDs allowed to talk to the bot. Anything from a chat NOT in this list is silently dropped. Use @userinfobot to find your own ID.':
-        '允许与机器人对话的 Telegram chat / user ID, 用逗号分隔。不在列表中的聊天会被静默丢弃。可用 @userinfobot 查看自己的 ID。',
-    'Default chat that receives idle / exit / task-finish notifications. Defaults to the first allowed chat ID.':
-        '接收空闲 / 退出 / 任务完成通知的默认聊天。留空则使用第一个允许的 Chat ID。',
-    'Send a Telegram message when a session goes idle (CLI waiting for input).':
-        '当会话进入空闲(CLI 等待输入)时发送 Telegram 消息。',
-    'Send a Telegram message when a session exits.':
-        '当会话退出时发送 Telegram 消息。',
-    'How many lines from the terminal buffer to include in idle / exit notification messages.':
-        '空闲 / 退出通知消息中包含的终端缓冲区末尾行数。',
-    'Telegram getUpdates long-poll timeout in seconds. The bot holds a connection open for this duration — if a message arrives during this window it is delivered instantly (not delayed). 25 is the recommended value. Values below 5 increase API call frequency without improving responsiveness.':
-        'Telegram getUpdates 长轮询超时(秒)。机器人会保持连接到此时长 — 如有消息在此期间到达会立即下发(无延迟)。建议 25 秒。低于 5 秒只会增加 API 调用频率,不会提升响应速度。',
 
     // ── Claude Multi-Account ─────────────────────────────────
     'Claude Accounts':                         'Claude 账号',
@@ -466,198 +461,8 @@ class L10n extends ChangeNotifier {
     'MCP':                        'MCP',
     'Dynamic Models':             '动态模型',
 
-    // ── Plugin config — group headers ────────────────────────
-    'Connection':                 '连接',
-    'Authentication':             '认证',
-    'Runtime':                    '运行时',
-    'Advanced':                   '高级',
-
-    // ── Plugin displayName + description ─────────────────────
-    'Claude Code':                'Claude Code',
-    'Anthropic Claude Code CLI — agentic coding with tool use, MCP, and session resume':
-        'Anthropic Claude Code CLI — 支持工具调用、MCP 以及会话恢复的智能编码助手',
-    'Codex CLI':                  'Codex CLI',
-    'OpenAI Codex CLI — agentic coding with sandboxed execution':
-        'OpenAI Codex CLI — 在沙箱中执行的智能编码助手',
-    'Gemini CLI':                 'Gemini CLI',
-    'Google Gemini CLI — agentic coding with sandbox, multimodal, and Google Search':
-        'Google Gemini CLI — 支持沙箱、多模态与 Google 搜索的智能编码助手',
-    'Qwen Code':                  '通义千问 Qwen Code',
-    'Alibaba Qwen Code CLI — open-source agentic coding based on Qwen3-Coder, forked from Gemini CLI':
-        '阿里巴巴 Qwen Code CLI —— 基于 Qwen3-Coder 的开源智能编码助手(由 Gemini CLI 派生)',
-    'Ollama':                     'Ollama',
-    'Ollama — run open-source LLMs locally (Llama, Mistral, DeepSeek, Qwen)':
-        'Ollama — 在本地运行开源大模型(Llama、Mistral、DeepSeek、Qwen 等)',
-    'LM Studio':                  'LM Studio',
-    'LM Studio — run local models with hardware acceleration (MLX, CUDA, Metal)':
-        'LM Studio — 使用硬件加速运行本地模型(MLX、CUDA、Metal)',
-    'Terminal':                   '终端',
-    'System login shell — zsh, bash, or configured shell':
-        '系统登录 shell —— zsh、bash 或已配置的 shell',
-    'File Browser':               '文件浏览器',
-    'Browse and view project files on the server with syntax highlighting':
-        '浏览并查看服务器上的项目文件,支持语法高亮',
-    'Obsidian Reader':            'Obsidian 阅读器',
-    'Browse and read Obsidian vault documents from a Git repository (Gitea, GitHub, etc.)':
-        '从 Git 仓库(Gitea、GitHub 等)浏览和阅读 Obsidian 知识库文档',
-    'PostgreSQL Browser':         'PostgreSQL 浏览器',
-    'Browse PostgreSQL schemas, tables, and columns. Run read-only SELECT queries with row/time limits.':
-        '浏览 PostgreSQL 的模式、表和列。可执行只读 SELECT 查询并支持行数/耗时限制。',
-    'Task Runner':                '任务运行器',
-    'Discover Makefile targets, package.json scripts, and shell scripts in a project, then run them with live streaming output.':
-        '发现项目中的 Makefile 目标、package.json 脚本和 shell 脚本,并实时流式输出运行结果。',
-    'Web Browser':                '网页浏览器',
-    'Full in-app browser with multi-tab URLs, forward/back navigation, and port-on-host shortcuts. Works against any web framework — React, Vue, Next.js, FastAPI, Go, Rails, etc.':
-        '完整的内置浏览器,支持多标签页 URL、前进/后退导航,以及端口快捷方式。兼容任意 Web 框架 — React、Vue、Next.js、FastAPI、Go、Rails 等。',
-    'Full in-app browser with multi-tab URLs':
-        '完整的内置浏览器,支持多标签页 URL',
-    'Simulator Preview':          '模拟器预览',
-    'Real-time WebSocket stream of iOS Simulator or Android Emulator. Adaptive FPS (8 fps during interaction, 1 fps idle). JPEG compression for fast mobile delivery. Touch, swipe, and key input forwarded over the same WebSocket.':
-        'iOS 模拟器或 Android 模拟器的实时 WebSocket 流。自适应帧率(交互时 8fps, 空闲 1fps)。JPEG 压缩加速移动端传输。触摸、滑动和按键输入通过同一 WebSocket 转发。',
-    'JPEG Quality':               'JPEG 质量',
-    'JPEG compression quality (10–95). Lower = smaller frames + faster, higher = sharper. 50 is a good balance for mobile.':
-        'JPEG 压缩质量(10–95)。越低 = 帧越小越快, 越高 = 越清晰。50 是移动端的良好平衡点。',
-    'Max Width (px)':             '最大宽度(px)',
-    'Scale screenshots down to this width before streaming. Reduces bandwidth. Set to 0 to send at native resolution.':
-        '流式传输前将截图缩放到此宽度。减少带宽。设为 0 则按原始分辨率发送。',
-    'Active FPS':                 '交互帧率',
-    'Frames per second during active interaction (touch/key). Max 15.':
-        '交互时(触摸/按键)的每秒帧数。最大 15。',
-    'Idle FPS':                   '空闲帧率',
-    'Frames per second when no interaction for 5 seconds. Set to 0 to stop streaming when idle.':
-        '5 秒无交互后的每秒帧数。设为 0 则空闲时停止流式传输。',
-    'Android Emulator (adb) or iOS Simulator (xcrun simctl). Android supports full touch input; iOS supports key events only.':
-        'Android 模拟器(adb)或 iOS 模拟器(xcrun simctl)。Android 支持完整触摸输入; iOS 仅支持按键事件。',
-
-    // ── Plugin config — common field labels ──────────────────
-    'Command Path':               '命令路径',
-    'API Key':                    'API 密钥',
-    'Base URL':                   '基础 URL',
-    'Host':                       '主机',
-    'Username':                   '用户名',
-    'Password':                   '密码',
-    'Branch':                     '分支',
-    'Repository':                 '仓库',
-    'Git Forge':                  'Git 平台',
-    'Default Model':              '默认模型',
-    'Context Window':             '上下文窗口',
-    'Extra Args':                 '额外参数',
-    'Extra CLI Args':             '额外 CLI 参数',
-    'Approval Mode':              '审批模式',
-    'Bypass Permissions':         '跳过权限检查',
-    'YOLO Mode':                  'YOLO 模式',
-    'Sandbox':                    '沙箱',
-    'Max Turns':                  '最大轮次',
-    'Max Rows':                   '最大行数',
-    'Max Concurrent Runs':        '最大并发运行',
-    'Max File Size (KB)':         '最大文件大小 (KB)',
-    'File Extensions':            '文件扩展名',
-    'Show Hidden Files':          '显示隐藏文件',
-    'Default Path':               '默认路径',
-    'Default Schema':             '默认模式',
-    'Bootstrap Database':         '引导数据库',
-    'SSL Mode':                   'SSL 模式',
-    'Query Timeout (seconds)':    '查询超时(秒)',
-    'Task Timeout (seconds)':     '任务超时(秒)',
-    'Output Buffer (KB)':         '输出缓冲区 (KB)',
-    'Include Makefile Targets':   '包含 Makefile 目标',
-    'Include package.json Scripts':'包含 package.json 脚本',
-    'Include Shell Scripts (*.sh)':'包含 shell 脚本 (*.sh)',
-    'Allowed Directories':        '允许的目录',
-    'Base Paths':                 '根路径',
-    'Platform':                   '平台',
-    'Device ID':                  '设备 ID',
-    'Auto-refresh (seconds)':     '自动刷新(秒)',
-    'GPU Offload Layers':         'GPU 卸载层数',
-    'Ollama Host':                'Ollama 主机',
-    'LMS Binary Path':            'LMS 可执行路径',
-    'Shell':                      'Shell',
-    'Shell Args':                 'Shell 参数',
-    'DashScope API Key':          'DashScope API 密钥',
-
-    // ── Plugin config — common descriptions ──────────────────
-    'Type of Git hosting service':'Git 托管服务类型',
-    'Git forge base URL (no trailing slash)':
-        'Git 平台基础 URL(不含末尾斜杠)',
-    'owner/repo format':          'owner/repo 格式',
-    'API token for private repositories. Leave empty for public repos.':
-        '用于访问私有仓库的 API 令牌。公开仓库可留空。',
-    'Branch to read from':        '要读取的分支',
-    'Directories to show (comma-separated for multiple, e.g. \'Projects/,Infrastructure/\'). Leave empty to show entire repo.':
-        '要显示的目录(多个用逗号分隔,如 \'Projects/,Infrastructure/\')。留空表示显示整个仓库。',
-    'Comma-separated file extensions to show (e.g. .md,.txt)':
-        '要显示的文件扩展名,用逗号分隔(如 .md,.txt)',
-    'Comma-separated root directories that can be browsed. All paths must be under these roots.':
-        '允许浏览的根目录,用逗号分隔。所有路径必须位于这些根目录之下。',
-    'Comma-separated root directories. Tasks can only be discovered and executed inside these roots.':
-        '根目录,用逗号分隔。任务只能在这些根目录内发现和执行。',
-    'Initial directory shown when the panel opens.':
-        '打开面板时显示的初始目录。',
-    'Starting directory when opening the file browser':
-        '打开文件浏览器时的起始目录',
-    'Show files and directories starting with .':
-        '显示以 . 开头的文件和目录',
-    'Maximum file size to read. Larger files will show metadata only.':
-        '读取的最大文件大小。超过此大小的文件仅显示元数据。',
-    'Leave blank to read from the env var OPENDRAY_DB_PASSWORD_<PLUGIN_NAME>.':
-        '留空则从环境变量 OPENDRAY_DB_PASSWORD_<插件名> 中读取。',
-    'Use a role that only has SELECT on the objects you want to browse.':
-        '建议使用只对要浏览的对象具有 SELECT 权限的角色。',
-    'The database to connect to for listing all other databases. Usually \'postgres\'. The UI will let you switch databases at runtime.':
-        '用于列出所有其他数据库的连接目标数据库,通常为 \'postgres\'。界面允许在运行时切换数据库。',
-    'Hard cap on rows returned per query. Results past this cap are marked truncated.':
-        '每次查询返回的行数上限,超出上限的结果将被标记为已截断。',
-    'Hard kill after this many seconds. Set 0 to disable.':
-        '达到此秒数后强制终止。设为 0 表示不限制。',
-    'Reject new runs once this many tasks are already running.':
-        '当正在运行的任务达到此数量时,拒绝新的运行请求。',
-    'Per-run rolling output snapshot kept in memory for late subscribers.':
-        '为后续订阅者保留的每次运行的滚动输出快照(内存中)。',
-    'Discover *.sh files in the project root and ./scripts/.':
-        '发现项目根目录和 ./scripts/ 下的 *.sh 文件。',
-    'iOS Simulator (xcrun simctl) or Android Emulator (adb)':
-        'iOS 模拟器(xcrun simctl)或 Android 模拟器(adb)',
-    'Android: adb device ID (e.g. emulator-5554). iOS: leave empty to use the booted simulator.':
-        'Android: adb 设备 ID(如 emulator-5554)。iOS: 留空则使用已启动的模拟器。',
-    'Screenshot refresh interval. Set to 0 to disable auto-refresh.':
-        '截图刷新间隔。设为 0 可禁用自动刷新。',
-    'Full URL to open (any framework, any host). Takes priority over the Port field.':
-        '要打开的完整 URL(任意框架、任意主机)。优先于端口字段。',
-    'Port on the OpenDray server — host is auto-filled from your connection. Used only when URL above is empty.':
-        'OpenDray 服务器上的端口 —— 主机自动从连接中填充。仅当 URL 为空时使用。',
-    'Appended to \'ollama run <model>\'. Detect available models in Providers page.':
-        '附加到 \'ollama run <模型>\' 后。可在 Providers 页面检测可用模型。',
-    'Model to load. Use Providers page to detect available models.':
-        '要加载的模型。可在 Providers 页面检测可用模型。',
-    'Remote Ollama server address':'远程 Ollama 服务器地址',
-    'Context window size in tokens':'上下文窗口大小(tokens)',
-    'Limit autonomous agentic turns (0 = unlimited)':
-        '限制自主智能体的轮次(0 = 不限制)',
-    'Auto-approve all tool calls — no confirmation prompts':
-        '自动批准所有工具调用 —— 无确认提示',
-    'Skip all permission prompts — full autonomous mode':
-        '跳过所有权限提示 —— 完全自主模式',
-    'Empty = default sandbox; none = no sandbox':
-        '留空 = 默认沙箱; none = 不使用沙箱',
-    'default = confirm each tool call; auto-edit = auto-apply edits; yolo = no confirmations':
-        'default = 每次工具调用都确认; auto-edit = 自动应用编辑; yolo = 不确认',
-    'suggest = ask before changes; auto-edit = auto-apply file edits; full-auto = YOLO mode':
-        'suggest = 变更前询问; auto-edit = 自动应用文件编辑; full-auto = YOLO 模式',
-    'env = read ANTHROPIC_API_KEY from system; custom = use key below; oauth = browser login':
-        'env = 从系统读取 ANTHROPIC_API_KEY; custom = 使用下方密钥; oauth = 浏览器登录',
-    'env = read OPENAI_API_KEY from system; custom = use key below':
-        'env = 从系统读取 OPENAI_API_KEY; custom = 使用下方密钥',
-    'env = read GOOGLE_API_KEY from system; custom = use key below; oauth = gcloud auth':
-        'env = 从系统读取 GOOGLE_API_KEY; custom = 使用下方密钥; oauth = gcloud 授权',
-    'qwen-oauth = browser login (2000 req/day free); dashscope = Alibaba DashScope API; openai-compatible = ModelScope / OpenRouter / custom':
-        'qwen-oauth = 浏览器登录(每日 2000 次免费); dashscope = 阿里 DashScope API; openai-compatible = ModelScope / OpenRouter / 自定义',
-    'e.g. ModelScope: https://api-inference.modelscope.cn/v1 · OpenRouter: https://openrouter.ai/api/v1':
-        '例如 ModelScope: https://api-inference.modelscope.cn/v1 · OpenRouter: https://openrouter.ai/api/v1',
-    '-1 = all layers to GPU':     '-1 = 全部层放到 GPU',
-
     // ── Git panel ────────────────────────────────────────────
     'Git':                                        'Git',
-    'Track and commit per-session changes':       '追踪并提交本次会话的变更',
     'Git panel not enabled':                      '未启用 Git 面板',
     'Enable the "git" panel plugin in Settings → Plugins first.':
         '请先在 设置 → 插件 中启用 "git" 面板插件。',
@@ -692,34 +497,6 @@ class L10n extends ChangeNotifier {
     'Snapshot HEAD to track session-only changes.':
         '对 HEAD 建立快照以仅追踪本次会话的变更。',
     'Showing changes since session start @ ':     '显示自会话开始 @ 之后的变更 ',
-
-    // ── Git plugin — manifest displayName + description ──────
-    'Track and manage Git changes per working directory. Shows status, unified diff, log, branches, and a per-session baseline snapshot so you can see only what changed during the current session.':
-        '按工作目录追踪和管理 Git 变更。展示状态、统一差异、日志、分支,并支持每次会话的基线快照,让你只看到本次会话产生的变更。',
-
-    // ── Git plugin — config field labels ─────────────────────
-    'Default Repository':                         '默认仓库',
-    'Git Binary':                                 'Git 可执行文件',
-    'Log Entries':                                '日志条数',
-    'Diff Context Lines':                         '差异上下文行数',
-    'Command Timeout (seconds)':                  '命令超时(秒)',
-    'Allow Commit':                               '允许提交',
-
-    // ── Git plugin — config descriptions ─────────────────────
-    'Comma-separated root directories. Git operations can only run inside these roots.':
-        '根目录,用逗号分隔。Git 操作仅能在这些根目录内执行。',
-    'Repository path opened when the panel first loads.':
-        '面板首次加载时打开的仓库路径。',
-    'Path to the git executable. Leave as \'git\' to use PATH.':
-        'git 可执行文件的路径。保留为 \'git\' 则使用 PATH 中的版本。',
-    'Maximum commits returned by the log endpoint.':
-        '日志接口返回的提交数量上限。',
-    'Number of context lines around each hunk in the unified diff.':
-        '统一差异中每个 hunk 周围的上下文行数。',
-    'Hard kill any git subprocess that runs longer than this.':
-        '运行超过此时长的 git 子进程会被强制终止。',
-    'Disable to make the panel strictly read-only (no stage, commit, or discard).':
-        '关闭后面板严格只读(禁用暂存、提交、放弃)。',
   };
 }
 

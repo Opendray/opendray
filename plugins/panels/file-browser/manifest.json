@@ -2,7 +2,9 @@
   "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
   "name": "file-browser",
   "displayName": "File Browser",
+  "displayName_zh": "文件浏览器",
   "description": "Browse and view project files on the server with syntax highlighting",
+  "description_zh": "浏览并查看服务器上的项目文件,支持语法高亮",
   "icon": "📁",
   "version": "1.0.0",
   "publisher": "opendray-builtin",
@@ -23,35 +25,43 @@
     {
       "key": "allowedRoots",
       "label": "Allowed Directories",
+      "label_zh": "允许的目录",
       "type": "string",
       "group": "connection",
       "placeholder": "$HOME/projects",
       "required": true,
-      "description": "Comma-separated root directories that can be browsed. All paths must be under these roots."
+      "description": "Comma-separated root directories that can be browsed. All paths must be under these roots.",
+      "description_zh": "允许浏览的根目录,用逗号分隔。所有路径必须位于这些根目录之下。"
     },
     {
       "key": "showHidden",
       "label": "Show Hidden Files",
+      "label_zh": "显示隐藏文件",
       "type": "boolean",
       "group": "runtime",
       "default": false,
-      "description": "Show files and directories starting with ."
+      "description": "Show files and directories starting with .",
+      "description_zh": "显示以 . 开头的文件和目录"
     },
     {
       "key": "maxFileSize",
       "label": "Max File Size (KB)",
+      "label_zh": "最大文件大小 (KB)",
       "type": "number",
       "group": "runtime",
       "default": 512,
-      "description": "Maximum file size to read. Larger files will show metadata only."
+      "description": "Maximum file size to read. Larger files will show metadata only.",
+      "description_zh": "读取的最大文件大小。超过此大小的文件仅显示元数据。"
     },
     {
       "key": "defaultPath",
       "label": "Default Path",
+      "label_zh": "默认路径",
       "type": "string",
       "group": "runtime",
       "placeholder": "$HOME/projects",
-      "description": "Starting directory when opening the file browser"
+      "description": "Starting directory when opening the file browser",
+      "description_zh": "打开文件浏览器时的起始目录"
     }
   ],
   "contributes": {

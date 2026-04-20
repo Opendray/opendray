@@ -74,6 +74,7 @@ class WorkbenchService extends ChangeNotifier {
   /// previous snapshot intact (so an install flicker doesn't wipe the
   /// palette) and surfaces the error via [showMessage].
   Future<void> refresh() async {
+    if (_disposed) return;
     _loading = true;
     _lastError = null;
     notifyListeners();
@@ -81,10 +82,12 @@ class WorkbenchService extends ChangeNotifier {
       _contribs = await _api.getContributions();
     } catch (e) {
       _lastError = e;
-      _showMessage(_describeError(e), isError: true);
+      if (!_disposed) _showMessage(_describeError(e), isError: true);
     } finally {
       _loading = false;
-      notifyListeners();
+      // Guard against dispose() racing with an in-flight request —
+      // without this, the finally block crashes with "used after disposed".
+      if (!_disposed) notifyListeners();
     }
   }
 

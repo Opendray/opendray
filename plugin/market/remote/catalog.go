@@ -252,19 +252,21 @@ type indexResponse struct {
 // signature) lives in the per-version JSON fetched by Resolve
 // (T3), not here.
 type indexPluginRow struct {
-	Name        string   `json:"name"`
-	Publisher   string   `json:"publisher"`
-	DisplayName string   `json:"displayName,omitempty"`
-	Description string   `json:"description,omitempty"`
-	Icon        string   `json:"icon,omitempty"`
-	Form        string   `json:"form,omitempty"`
-	Categories  []string `json:"categories,omitempty"`
-	Keywords    []string `json:"keywords,omitempty"`
-	Latest      string   `json:"latest"`
-	Path        string   `json:"path,omitempty"`
-	Trust       string   `json:"trust,omitempty"`
-	Downloads   int      `json:"downloads,omitempty"`
-	Stars       int      `json:"stars,omitempty"`
+	Name          string   `json:"name"`
+	Publisher     string   `json:"publisher"`
+	DisplayName   string   `json:"displayName,omitempty"`
+	DisplayNameZh string   `json:"displayName_zh,omitempty"` // i18n overlay; future registry schema may surface this
+	Description   string   `json:"description,omitempty"`
+	DescriptionZh string   `json:"description_zh,omitempty"`
+	Icon          string   `json:"icon,omitempty"`
+	Form          string   `json:"form,omitempty"`
+	Categories    []string `json:"categories,omitempty"`
+	Keywords      []string `json:"keywords,omitempty"`
+	Latest        string   `json:"latest"`
+	Path          string   `json:"path,omitempty"`
+	Trust         string   `json:"trust,omitempty"`
+	Downloads     int      `json:"downloads,omitempty"`
+	Stars         int      `json:"stars,omitempty"`
 }
 
 // List implements market.Catalog. Performs a GET against
@@ -300,15 +302,17 @@ func (c *Catalog) List(ctx context.Context) ([]market.Entry, error) {
 			trust = "community"
 		}
 		out = append(out, market.Entry{
-			Name:        p.Name,
-			Publisher:   p.Publisher,
-			Version:     p.Latest,
-			DisplayName: p.DisplayName,
-			Description: p.Description,
-			Icon:        p.Icon,
-			Form:        p.Form,
-			Tags:        mergeTags(p.Categories, p.Keywords),
-			Trust:       trust,
+			Name:          p.Name,
+			Publisher:     p.Publisher,
+			Version:       p.Latest,
+			DisplayName:   p.DisplayName,
+			Description:   p.Description,
+			DisplayNameZh: p.DisplayNameZh,
+			DescriptionZh: p.DescriptionZh,
+			Icon:          p.Icon,
+			Form:          p.Form,
+			Tags:          mergeTags(p.Categories, p.Keywords),
+			Trust:         trust,
 			// Permissions / ConfigSchema / ArtifactURL / SHA256 /
 			// Signature intentionally unset on summary entries.
 			// Resolve (T3) fills them by fetching the per-version
@@ -370,12 +374,14 @@ type versionArtifact struct {
 // tightly couple every manifest-schema addition to this package;
 // the fields we render are pulled explicitly.
 type versionManifest struct {
-	DisplayName  string          `json:"displayName,omitempty"`
-	Description  string          `json:"description,omitempty"`
-	Icon         string          `json:"icon,omitempty"`
-	Form         string          `json:"form,omitempty"`
-	Permissions  json.RawMessage `json:"permissions,omitempty"`
-	ConfigSchema []plugin.ConfigField `json:"configSchema,omitempty"`
+	DisplayName   string               `json:"displayName,omitempty"`
+	DisplayNameZh string               `json:"displayName_zh,omitempty"`
+	Description   string               `json:"description,omitempty"`
+	DescriptionZh string               `json:"description_zh,omitempty"`
+	Icon          string               `json:"icon,omitempty"`
+	Form          string               `json:"form,omitempty"`
+	Permissions   json.RawMessage      `json:"permissions,omitempty"`
+	ConfigSchema  []plugin.ConfigField `json:"configSchema,omitempty"`
 }
 
 // Resolve implements market.Catalog. Fetches the per-version JSON
@@ -449,19 +455,21 @@ func (c *Catalog) Resolve(ctx context.Context, ref market.Ref) (market.Entry, er
 	}
 
 	return market.Entry{
-		Name:         v.Name,
-		Publisher:    v.Publisher,
-		Version:      v.Version,
-		DisplayName:  v.Manifest.DisplayName,
-		Description:  v.Manifest.Description,
-		Icon:         v.Manifest.Icon,
-		Form:         v.Manifest.Form,
-		Permissions:  v.Manifest.Permissions,
-		ConfigSchema: v.Manifest.ConfigSchema,
-		Trust:        "community", // T10 fills from publisher record
-		ArtifactURL:  v.Artifact.URL,
-		SHA256:       v.SHA256,
-		Signature:    v.Signature,
+		Name:          v.Name,
+		Publisher:     v.Publisher,
+		Version:       v.Version,
+		DisplayName:   v.Manifest.DisplayName,
+		Description:   v.Manifest.Description,
+		DisplayNameZh: v.Manifest.DisplayNameZh,
+		DescriptionZh: v.Manifest.DescriptionZh,
+		Icon:          v.Manifest.Icon,
+		Form:          v.Manifest.Form,
+		Permissions:   v.Manifest.Permissions,
+		ConfigSchema:  v.Manifest.ConfigSchema,
+		Trust:         "community", // T10 fills from publisher record
+		ArtifactURL:   v.Artifact.URL,
+		SHA256:        v.SHA256,
+		Signature:     v.Signature,
 	}, nil
 }
 

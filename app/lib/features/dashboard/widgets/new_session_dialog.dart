@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/models/provider.dart';
+import '../../../core/services/l10n.dart';
 import '../../../shared/directory_picker.dart';
 import '../../../shared/theme/app_theme.dart';
 
@@ -233,7 +234,9 @@ class _NewSessionDialogState extends State<NewSessionDialog> {
                             Text(pi.provider.icon,
                                 style: const TextStyle(fontSize: 18)),
                             const SizedBox(width: 6),
-                            Text(pi.provider.displayName,
+                            Text(
+                                context.pickL10n(pi.provider.displayName,
+                                    pi.provider.displayNameZh),
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: selected

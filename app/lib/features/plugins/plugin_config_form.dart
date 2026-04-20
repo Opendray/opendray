@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/services/l10n.dart';
 import '../../shared/theme/app_theme.dart';
 
 /// Renders a form from a [PluginConfigField] schema + initial values.
@@ -192,6 +193,13 @@ class _PluginConfigFormState extends State<PluginConfigForm> {
   }
 
   Widget _fieldWidget(PluginConfigField f) {
+    // Manifest-owned text uses context.pickL10n; the widget rebuilds
+    // on locale switch because pickL10n subscribes via watch<L10n>.
+    final label = context.pickL10n(f.label, f.labelZh);
+    final description = context.pickL10n(f.description, f.descriptionZh);
+    final placeholder = context.pickL10n(f.placeholder, f.placeholderZh);
+    final requiredLabel = label + (f.required ? ' *' : '');
+    String requiredError() => '$label is required';
     switch (f.type) {
       case 'bool':
       case 'boolean':
@@ -203,10 +211,10 @@ class _PluginConfigFormState extends State<PluginConfigForm> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(f.label,
+                    Text(label,
                         style: const TextStyle(fontSize: 13)),
-                    if (f.description.isNotEmpty)
-                      Text(f.description,
+                    if (description.isNotEmpty)
+                      Text(description,
                           style: const TextStyle(
                               fontSize: 11, color: AppColors.textMuted)),
                   ],
@@ -228,8 +236,8 @@ class _PluginConfigFormState extends State<PluginConfigForm> {
           child: DropdownButtonFormField<String>(
             initialValue: _selects[f.key],
             decoration: InputDecoration(
-              labelText: f.label + (f.required ? ' *' : ''),
-              helperText: f.description.isEmpty ? null : f.description,
+              labelText: requiredLabel,
+              helperText: description.isEmpty ? null : description,
               isDense: true,
             ),
             items: [
@@ -238,7 +246,7 @@ class _PluginConfigFormState extends State<PluginConfigForm> {
             ],
             validator: (v) {
               if (f.required && (v == null || v.isEmpty)) {
-                return '${f.label} is required';
+                return requiredError();
               }
               return null;
             },
@@ -256,9 +264,10 @@ class _PluginConfigFormState extends State<PluginConfigForm> {
             obscureText: true,
             enabled: !_busy,
             decoration: InputDecoration(
-              labelText: f.label + (f.required ? ' *' : ''),
-              hintText: stored ? '(stored — leave blank to keep)' : f.placeholder,
-              helperText: f.description.isEmpty ? null : f.description,
+              labelText: requiredLabel,
+              hintText:
+                  stored ? '(stored — leave blank to keep)' : placeholder,
+              helperText: description.isEmpty ? null : description,
               isDense: true,
             ),
             onChanged: (_) {
@@ -267,7 +276,7 @@ class _PluginConfigFormState extends State<PluginConfigForm> {
             validator: (v) {
               // Required + no value + no stored value → error.
               if (f.required && (v == null || v.isEmpty) && !_hasStoredSecret(f)) {
-                return '${f.label} is required';
+                return requiredError();
               }
               return null;
             },
@@ -281,17 +290,17 @@ class _PluginConfigFormState extends State<PluginConfigForm> {
             keyboardType: TextInputType.number,
             enabled: !_busy,
             decoration: InputDecoration(
-              labelText: f.label + (f.required ? ' *' : ''),
-              hintText: f.placeholder,
-              helperText: f.description.isEmpty ? null : f.description,
+              labelText: requiredLabel,
+              hintText: placeholder,
+              helperText: description.isEmpty ? null : description,
               isDense: true,
             ),
             validator: (v) {
               if (f.required && (v == null || v.isEmpty)) {
-                return '${f.label} is required';
+                return requiredError();
               }
               if (v != null && v.isNotEmpty && num.tryParse(v) == null) {
-                return '${f.label} must be numeric';
+                return '$label must be numeric';
               }
               return null;
             },
@@ -305,14 +314,14 @@ class _PluginConfigFormState extends State<PluginConfigForm> {
             controller: _ctrls[f.key],
             enabled: !_busy,
             decoration: InputDecoration(
-              labelText: f.label + (f.required ? ' *' : ''),
-              hintText: f.placeholder,
-              helperText: f.description.isEmpty ? null : f.description,
+              labelText: requiredLabel,
+              hintText: placeholder,
+              helperText: description.isEmpty ? null : description,
               isDense: true,
             ),
             validator: (v) {
               if (f.required && (v == null || v.isEmpty)) {
-                return '${f.label} is required';
+                return requiredError();
               }
               return null;
             },

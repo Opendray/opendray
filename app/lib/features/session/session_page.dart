@@ -15,7 +15,6 @@ import '../../core/services/server_config.dart';
 import '../../core/services/ws_client.dart';
 import '../../shared/app_modals.dart';
 import '../../shared/image_attach.dart';
-import '../../shared/voice_composer.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/theme/terminal_theme.dart';
 import '../workbench/panel_slot.dart';
@@ -76,7 +75,6 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
     final auth = context.read<AuthService>();
     _ws = WsClient(
       baseUrl: config.effectiveUrl,
-      extraHeaders: config.cfAccessHeaders,
       tokenProvider: () => auth.token,
     );
 
@@ -808,18 +806,6 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               tooltip: context.tr('Attach image'),
-            ),
-          // Voice dictation — opens a composer; the phone's IME handles STT
-          if (_session?.isRunning == true)
-            IconButton(
-              icon: const Icon(Icons.mic_none, size: 20, color: AppColors.accent),
-              onPressed: () => showVoiceComposer(
-                context,
-                onSend: (text) => _sendToTerminal(text),
-              ),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              tooltip: context.tr('Voice input'),
             ),
           // Clipboard — copy terminal selection / paste into the session.
           // Essential for headless-server workflows where the user needs

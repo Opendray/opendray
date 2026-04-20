@@ -75,7 +75,6 @@ class _LoginPageState extends State<LoginPage> {
       serverUrl: cfg.effectiveUrl,
       username: user,
       password: pass,
-      extraHeaders: cfg.cfAccessHeaders,
     );
     if (!mounted) return;
     setState(() {

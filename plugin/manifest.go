@@ -39,6 +39,16 @@ type Provider struct {
 	Type        string `json:"type"`               // cli | local | shell | panel
 	Category    string `json:"category,omitempty"` // for panels: docs | files | custom
 
+	// ── i18n overlays ─────────────────────────────────────────────────
+	// Optional per-locale overrides. The host round-trips whatever the
+	// manifest provides; the client picks `*_<locale>` when its current
+	// L10n code matches and the field is non-empty, else falls back to
+	// the English source above. Convention: <field>_<IETF-ish code>.
+	// Today only `_zh` is consumed by the Flutter app; additional codes
+	// require no server change beyond adding them here.
+	DisplayNameZh string `json:"displayName_zh,omitempty"`
+	DescriptionZh string `json:"description_zh,omitempty"`
+
 	// CLI specification
 	CLI *CLISpec `json:"cli,omitempty"`
 
@@ -433,6 +443,13 @@ type ConfigField struct {
 	Group       string `json:"group,omitempty"`     // visual grouping: "auth" | "runtime" | "advanced"
 	DependsOn   string `json:"dependsOn,omitempty"` // legacy: show-when gate
 	DependsVal  string `json:"dependsVal,omitempty"`
+
+	// i18n overlays — see Provider.DisplayNameZh. Strict validator
+	// doesn't descend into configSchema items so no whitelist entry
+	// is required; the struct tags are the contract.
+	LabelZh       string `json:"label_zh,omitempty"`
+	DescriptionZh string `json:"description_zh,omitempty"`
+	PlaceholderZh string `json:"placeholder_zh,omitempty"`
 }
 
 // LoadManifest reads a manifest.json from the given plugin directory.

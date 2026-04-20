@@ -25,19 +25,13 @@ void main() async {
     // Fire-and-forget: if the probe finishes before the first frame the
     // app opens straight to the right page; if it takes longer the router
     // stays on '/' until probe() notifies and redirect() re-runs.
-    unawaited(authService.probe(
-      serverConfig.effectiveUrl,
-      extraHeaders: serverConfig.cfAccessHeaders,
-    ));
+    unawaited(authService.probe(serverConfig.effectiveUrl));
   }
   // Re-probe whenever the user changes the server URL (setup wizard) so
   // the login prompt tracks the actual server's auth state.
   serverConfig.addListener(() {
     if (serverConfig.isConfigured) {
-      unawaited(authService.probe(
-        serverConfig.effectiveUrl,
-        extraHeaders: serverConfig.cfAccessHeaders,
-      ));
+      unawaited(authService.probe(serverConfig.effectiveUrl));
     }
   });
 

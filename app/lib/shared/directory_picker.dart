@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../core/api/api_client.dart';
 import '../core/models/provider.dart';
 import '../core/services/cwd_prefs.dart';
+import '../core/services/l10n.dart';
 import 'app_modals.dart';
 import 'theme/app_theme.dart';
 
@@ -331,8 +332,10 @@ class _DirectoryPickerSheetState extends State<_DirectoryPickerSheet> {
             dropdownColor: AppColors.surfaceAlt,
             items: _plugins.map((p) => DropdownMenuItem(
               value: p.provider.name,
-              child: Text(p.provider.displayName,
-                  style: const TextStyle(fontSize: 13)),
+              child: Text(
+                context.pickL10n(p.provider.displayName, p.provider.displayNameZh),
+                style: const TextStyle(fontSize: 13),
+              ),
             )).toList(),
             onChanged: (v) {
               if (v == null) return;

@@ -29,8 +29,6 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   late TextEditingController _urlController;
-  late TextEditingController _cfIdController;
-  late TextEditingController _cfSecretController;
   String? _testResult;
   bool _testing = false;
   /// Backend identity pulled from /api/health — version + short git SHA.
@@ -46,8 +44,6 @@ class _SettingsPageState extends State<SettingsPage> {
     super.initState();
     final config = context.read<ServerConfig>();
     _urlController = TextEditingController(text: config.url);
-    _cfIdController = TextEditingController(text: config.cfAccessId);
-    _cfSecretController = TextEditingController(text: config.cfAccessSecret);
     _loadBackendInfo();
   }
 
@@ -76,25 +72,13 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void dispose() {
     _urlController.dispose();
-    _cfIdController.dispose();
-    _cfSecretController.dispose();
     super.dispose();
-  }
-
-  Map<String, String> _pendingCfHeaders() {
-    final id = _cfIdController.text.trim();
-    final secret = _cfSecretController.text.trim();
-    if (id.isEmpty || secret.isEmpty) return const {};
-    return {'CF-Access-Client-Id': id, 'CF-Access-Client-Secret': secret};
   }
 
   Future<void> _testConnection() async {
     setState(() { _testing = true; _testResult = null; });
     try {
-      final api = ApiClient(
-        baseUrl: _urlController.text.trim(),
-        extraHeaders: _pendingCfHeaders(),
-      );
+      final api = ApiClient(baseUrl: _urlController.text.trim());
       final health = await api.health();
       setState(() {
         _testResult = '✅ Connected — ${health['sessions']} sessions, ${health['plugins']} plugins';
@@ -111,8 +95,6 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _save() async {
     final config = context.read<ServerConfig>();
     await config.setUrl(_urlController.text.trim());
-    await config.setCfAccess(
-        _cfIdController.text.trim(), _cfSecretController.text.trim());
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Settings saved'), backgroundColor: AppColors.success),
@@ -156,35 +138,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       prefixIcon: Icon(Icons.link, size: 18),
                     ),
                     style: const TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 14),
-                  const Text('Cloudflare Access',
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textMuted,
-                          fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: _cfIdController,
-                    decoration: const InputDecoration(
-                      labelText: 'CF-Access-Client-Id',
-                      hintText: 'Leave empty if not using CF Access',
-                      prefixIcon: Icon(Icons.vpn_key, size: 16),
-                      isDense: true,
-                    ),
-                    style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _cfSecretController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'CF-Access-Client-Secret',
-                      hintText: 'Service token secret',
-                      prefixIcon: Icon(Icons.lock, size: 16),
-                      isDense: true,
-                    ),
-                    style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -241,42 +194,10 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 16),
 
-          // Plugins — moved to the dedicated /plugins page to keep the
-          // Settings surface lean as the plugin count grows. The link
-          // card here replaces the 700+ line embedded PluginsSection.
-          Card(
-            child: InkWell(
-              onTap: () => context.push('/plugins'),
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(children: [
-                  const Icon(Icons.extension_outlined,
-                      color: AppColors.accent, size: 20),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Plugins',
-                            style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w600)),
-                        SizedBox(height: 2),
-                        Text(
-                          'Install, manage, and revoke permissions',
-                          style: TextStyle(
-                              fontSize: 12, color: AppColors.textMuted),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.chevron_right,
-                      color: AppColors.textMuted, size: 20),
-                ]),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
+          // Plugins management lives in the dedicated bottom-nav tabs:
+          //   • /plugins — installed CRUD
+          //   • /hub     — marketplace
+          // Settings no longer carries a link card — redundant surface.
 
           // Claude Accounts lives on the Plugin tab now: Plugins → Claude
           // card's "Accounts" popup menu entry (or tap-to-open) routes to

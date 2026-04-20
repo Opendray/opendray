@@ -27,6 +27,12 @@ class ConfigField {
   final String? group;
   final String? dependsOn;
   final String? dependsVal;
+  // i18n overlays — optional per-locale overrides shipped by the
+  // plugin manifest. Consumers resolve via [L10n.pick]; empty = use
+  // the English source above.
+  final String? labelZh;
+  final String? descriptionZh;
+  final String? placeholderZh;
 
   const ConfigField({
     required this.key,
@@ -43,6 +49,9 @@ class ConfigField {
     this.group,
     this.dependsOn,
     this.dependsVal,
+    this.labelZh,
+    this.descriptionZh,
+    this.placeholderZh,
   });
 
   factory ConfigField.fromJson(Map<String, dynamic> json) => ConfigField(
@@ -60,6 +69,9 @@ class ConfigField {
         group: json['group'] as String?,
         dependsOn: json['dependsOn'] as String?,
         dependsVal: json['dependsVal'] as String?,
+        labelZh: json['label_zh'] as String?,
+        descriptionZh: json['description_zh'] as String?,
+        placeholderZh: json['placeholder_zh'] as String?,
       );
 }
 
@@ -110,6 +122,9 @@ class Provider {
   /// route config edits to the legacy `providers.config` column
   /// instead of the new plugin_kv + plugin_secret path.
   final String publisher;
+  // i18n overlays — see ConfigField.labelZh. Empty = use English above.
+  final String? displayNameZh;
+  final String? descriptionZh;
 
   const Provider({
     required this.name,
@@ -124,6 +139,8 @@ class Provider {
     required this.capabilities,
     this.configSchema = const [],
     this.publisher = '',
+    this.displayNameZh,
+    this.descriptionZh,
   });
 
   factory Provider.fromJson(Map<String, dynamic> json) => Provider(
@@ -143,6 +160,8 @@ class Provider {
                 .toList() ??
             [],
         publisher: json['publisher'] as String? ?? '',
+        displayNameZh: json['displayName_zh'] as String?,
+        descriptionZh: json['description_zh'] as String?,
       );
 
   /// True when this manifest opted into the v1 plugin contract.

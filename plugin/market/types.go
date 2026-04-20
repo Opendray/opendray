@@ -51,6 +51,13 @@ type Entry struct {
 	Form        string   `json:"form,omitempty"`
 	Tags        []string `json:"tags,omitempty"`
 
+	// i18n overlays — see plugin/manifest.go Provider.DisplayNameZh.
+	// The marketplace catalog parsers (local + remote) lift these from
+	// the bundled manifest so the Hub can render localized cards without
+	// touching the bundle directory.
+	DisplayNameZh string `json:"displayName_zh,omitempty"`
+	DescriptionZh string `json:"description_zh,omitempty"`
+
 	// Permissions + config schema pulled from the bundled manifest so
 	// the Hub can render consent + config dialogs without a second
 	// fetch.

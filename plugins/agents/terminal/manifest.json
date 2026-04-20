@@ -2,7 +2,9 @@
   "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
   "name": "terminal",
   "displayName": "Terminal",
+  "displayName_zh": "终端",
   "description": "System login shell — zsh, bash, or configured shell",
+  "description_zh": "系统登录 shell —— zsh、bash 或已配置的 shell",
   "icon": "⬛",
   "version": "1.0.0",
   "publisher": "opendray-builtin",
@@ -27,6 +29,7 @@
     {
       "key": "command",
       "label": "Shell",
+      "label_zh": "Shell",
       "type": "select",
       "group": "runtime",
       "options": ["/bin/zsh", "/bin/bash", "/bin/sh"],
@@ -35,6 +38,7 @@
     {
       "key": "extraArgs",
       "label": "Shell Args",
+      "label_zh": "Shell 参数",
       "type": "args",
       "group": "advanced",
       "default": "-l"

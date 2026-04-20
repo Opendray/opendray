@@ -523,7 +523,9 @@ class _PreviewPageState extends State<PreviewPage> with WidgetsBindingObserver {
                 padding: const EdgeInsets.only(right: 6, top: 6, bottom: 6),
                 child: ChoiceChip(
                   avatar: Text(isSim ? '📱' : '🌐', style: const TextStyle(fontSize: 12)),
-                  label: Text(p.provider.displayName, style: const TextStyle(fontSize: 11)),
+                  label: Text(
+                      context.pickL10n(p.provider.displayName, p.provider.displayNameZh),
+                      style: const TextStyle(fontSize: 11)),
                   selected: _activePlugin == p.provider.name,
                   onSelected: (_) => _activate(p),
                   selectedColor: AppColors.accentSoft,

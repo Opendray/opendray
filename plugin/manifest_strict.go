@@ -22,26 +22,28 @@ import (
 // top level. Update in lockstep with Provider struct changes.
 // $schema is allowed because JSON Schema tooling writes it automatically.
 var v1TopLevelFields = map[string]bool{
-	"$schema":      true,
-	"name":         true,
-	"displayName":  true,
-	"description":  true,
-	"icon":         true,
-	"version":      true,
-	"type":         true, // legacy field; still accepted under v1 for back-compat
-	"category":     true,
-	"cli":          true,
-	"capabilities": true,
-	"configSchema": true,
-	"required":     true,
-	"publisher":    true,
-	"engines":      true,
-	"form":         true,
-	"activation":   true,
-	"contributes":  true,
-	"permissions":  true,
-	"host":         true,
-	"v2Reserved":   true, // explicit escape hatch for forward compat
+	"$schema":         true,
+	"name":            true,
+	"displayName":     true,
+	"displayName_zh":  true, // i18n overlay; see Provider.DisplayNameZh
+	"description":     true,
+	"description_zh":  true, // i18n overlay; see Provider.DescriptionZh
+	"icon":            true,
+	"version":         true,
+	"type":            true, // legacy field; still accepted under v1 for back-compat
+	"category":        true,
+	"cli":             true,
+	"capabilities":    true,
+	"configSchema":    true,
+	"required":        true,
+	"publisher":       true,
+	"engines":         true,
+	"form":            true,
+	"activation":      true,
+	"contributes":     true,
+	"permissions":     true,
+	"host":            true,
+	"v2Reserved":      true, // explicit escape hatch for forward compat
 }
 
 // v1ContributesFields lists every key permitted under `contributes`.
