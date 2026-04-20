@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gorilla/websocket"
 
 	"context"
 
@@ -42,6 +43,8 @@ type Server struct {
 	telegram      *telegram.Manager
 	mcp           *mcp.Handlers
 	git           *gitpkg.Manager
+	origins       *originPolicy
+	upgrader      websocket.Upgrader
 }
 
 // Config holds gateway configuration.
@@ -55,6 +58,11 @@ type Config struct {
 	AdminPassword string
 	Logger        *slog.Logger
 	FrontendFS    fs.FS // embedded frontend dist (optional)
+
+	// AllowedOrigins is the cross-origin policy for CORS + WebSocket
+	// upgrades. Empty = same-origin only. ["*"] = wildcard (warned).
+	// Populated from the ALLOWED_ORIGINS env var in cmd/opendray/main.go.
+	AllowedOrigins []string
 }
 
 // New creates a gateway server with all routes configured.
@@ -73,7 +81,15 @@ func New(cfg Config) *Server {
 		logger:        cfg.Logger,
 		tasks:         tasks.NewRunner(),
 		git:           gitpkg.NewManager(),
+		origins:       newOriginPolicy(cfg.AllowedOrigins),
 	}
+	s.upgrader = websocket.Upgrader{
+		ReadBufferSize:    4096,
+		WriteBufferSize:   4096,
+		EnableCompression: false,
+		CheckOrigin:       s.origins.allowWS,
+	}
+	s.origins.logStartup(cfg.Logger)
 	if cfg.MCP != nil {
 		s.mcp = mcp.NewHandlers(cfg.MCP)
 	}
@@ -85,7 +101,7 @@ func New(cfg Config) *Server {
 	r := chi.NewRouter()
 
 	// Global middleware
-	r.Use(corsMiddleware)
+	r.Use(s.origins.corsMiddleware())
 	r.Use(middleware.Recoverer)
 	r.Use(loggingMiddleware(cfg.Logger))
 	r.Use(bodySizeLimiter(1 << 20)) // 1 MB cap on request bodies
@@ -277,8 +293,13 @@ func NewSetup(mgr *setup.Manager, frontendFS fs.FS, logger *slog.Logger) http.Ha
 	}
 	h := newSetupHandlers(mgr)
 
+	// Setup mode serves the wizard same-origin from the embedded Flutter
+	// dist, so the default (empty allowlist) is fine — no cross-origin
+	// traffic is expected before the full server is up.
+	setupOrigins := newOriginPolicy(nil)
+
 	r := chi.NewRouter()
-	r.Use(corsMiddleware)
+	r.Use(setupOrigins.corsMiddleware())
 	r.Use(middleware.Recoverer)
 	r.Use(loggingMiddleware(logger))
 	r.Use(bodySizeLimiter(1 << 20))
@@ -502,19 +523,6 @@ func respondJSON(w http.ResponseWriter, status int, v any) {
 
 func respondError(w http.ResponseWriter, status int, msg string) {
 	respondJSON(w, status, map[string]string{"error": msg})
-}
-
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
 }
 
 func loggingMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
