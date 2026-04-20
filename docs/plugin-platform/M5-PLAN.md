@@ -198,7 +198,7 @@ to degrade gracefully when the route 404s).
 | D1.watch | `fs.watch(glob, cb)` — streaming namespace method | M | Pending — needs stream-capable Conn + subscription lifecycle |
 | D2 | CSP golden-file test + kanban E2E (T27 M3 deferral) | S | ✅ CSP golden was already in plugins_assets_test.go; added TestE2E_KanbanFullLifecycle with 200 ms hot-revoke SLO + persistence-across-restart + asset 404 post-uninstall |
 | D3 | KEK auto-rotation on admin password change | M | |
-| D4 | DB upgrade-path smoke test in CI | S | |
+| D4 | DB upgrade-path smoke test in CI | S | ✅ TestMigrate_UpgradeFromPrePluginSchema — 001–009 → seed legacy data → full Migrate → idempotent re-run w/ plugin rows |
 
 ### Track E — Contract freeze
 
