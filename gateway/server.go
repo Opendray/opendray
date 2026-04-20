@@ -366,6 +366,7 @@ func New(cfg Config) *Server {
 		// page. Install still flows through /api/plugins/install with
 		// src="marketplace://<name>".
 		r.Get("/api/marketplace/plugins", s.marketplaceList)
+		r.Post("/api/marketplace/refresh", s.marketplaceRefresh)
 
 		// Consent management (T12) — read current perms + hot-revoke.
 		// DELETE /consents/{cap} fires bridgeMgr.InvalidateConsent synchronously

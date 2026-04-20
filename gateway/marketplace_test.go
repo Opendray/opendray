@@ -8,8 +8,35 @@ import (
 	"path/filepath"
 	"testing"
 
+	"context"
+
+	"github.com/opendray/opendray/plugin/market"
 	marketlocal "github.com/opendray/opendray/plugin/market/local"
 )
+
+// cachingStub is a Catalog fake that records InvalidateCache calls,
+// used to assert the refresh endpoint actually invalidates a
+// remote-backed catalog. All other methods are zero-valued.
+type cachingStub struct {
+	invalidated int
+}
+
+func (c *cachingStub) List(_ context.Context) ([]market.Entry, error) {
+	return nil, nil
+}
+func (c *cachingStub) Resolve(_ context.Context, _ market.Ref) (market.Entry, error) {
+	return market.Entry{}, nil
+}
+func (c *cachingStub) BundlePath(_ context.Context, _ market.Ref) (string, bool, error) {
+	return "", false, nil
+}
+func (c *cachingStub) FetchPublisher(_ context.Context, _ string) (market.PublisherRecord, error) {
+	return market.PublisherRecord{}, nil
+}
+func (c *cachingStub) FetchRevocations(_ context.Context) ([]byte, error) {
+	return nil, nil
+}
+func (c *cachingStub) InvalidateCache() { c.invalidated++ }
 
 func writeTestCatalog(t *testing.T, body string) string {
 	t.Helper()
@@ -38,6 +65,36 @@ func TestMarketplaceList_Empty(t *testing.T) {
 	}
 	if len(resp.Entries) != 0 {
 		t.Errorf("want empty entries, got %d", len(resp.Entries))
+	}
+}
+
+// TestMarketplaceRefresh_InvalidatesCache — POST /refresh calls
+// InvalidateCache on catalogs that support it. Fires Settings →
+// Marketplace "Refresh cache now" + the revocation poller's
+// post-action invalidation.
+func TestMarketplaceRefresh_InvalidatesCache(t *testing.T) {
+	stub := &cachingStub{}
+	s := &Server{marketplace: stub}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/api/marketplace/refresh", nil)
+	s.marketplaceRefresh(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("want 200, got %d", rr.Code)
+	}
+	if stub.invalidated != 1 {
+		t.Errorf("InvalidateCache called %d times, want 1", stub.invalidated)
+	}
+}
+
+// TestMarketplaceRefresh_NoCatalogNoop — a nil catalog still
+// returns 200 so clients don't have to branch.
+func TestMarketplaceRefresh_NoCatalogNoop(t *testing.T) {
+	s := &Server{}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/api/marketplace/refresh", nil)
+	s.marketplaceRefresh(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("want 200 on nil catalog, got %d", rr.Code)
 	}
 }
 

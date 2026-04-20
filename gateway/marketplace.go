@@ -55,3 +55,29 @@ func (s *Server) marketplaceList(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(marketplaceListResponse{Entries: entries})
 }
+
+// cacheInvalidator is any catalog that exposes an explicit cache
+// drop — market/remote.Catalog satisfies this via InvalidateCache.
+// local.Catalog doesn't need to (no cache) and returns nil for the
+// type assertion.
+type cacheInvalidator interface {
+	InvalidateCache()
+}
+
+// marketplaceRefresh handles POST /api/marketplace/refresh.
+//
+// Drops the in-memory catalog cache so the next List / Resolve
+// re-fetches from the registry. Fires the Settings → Marketplace
+// "Refresh cache now" button; also called by the revocation
+// poller when it wants a fresh sweep outside the tick window.
+//
+// Always returns 200 — even when the catalog is nil or has no
+// cache — so clients don't have to branch on "nothing to refresh".
+func (s *Server) marketplaceRefresh(w http.ResponseWriter, _ *http.Request) {
+	if ci, ok := s.marketplace.(cacheInvalidator); ok {
+		ci.InvalidateCache()
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]any{"refreshed": true})
+}

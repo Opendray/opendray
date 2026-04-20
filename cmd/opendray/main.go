@@ -36,7 +36,10 @@ import (
 	"github.com/opendray/opendray/plugin/host"
 	"github.com/opendray/opendray/plugin/install"
 	"github.com/opendray/opendray/plugin/market"
+	"github.com/opendray/opendray/plugin/market/actions"
 	marketlocal "github.com/opendray/opendray/plugin/market/local"
+	marketremote "github.com/opendray/opendray/plugin/market/remote"
+	"github.com/opendray/opendray/plugin/market/revocation"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -359,25 +362,17 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 	installer := install.NewInstaller(cfg.PluginsDataDir, db, providerRuntime, pluginGate, logger)
 	installer.AllowLocal = cfg.AllowLocalPlugins
 
-	// Marketplace catalog — loaded once at boot. Dir defaults to
-	// $REPO/plugins/marketplace when unset; a missing catalog.json
-	// leaves the Hub empty rather than failing boot.
+	// Marketplace catalog. Picks local-disk or remote-HTTPS based
+	// on config — remote wins when both are set.
 	//
-	// M3 / M4-startup ships only the local backend. M4.1 T1+T2
-	// plugs market/remote in alongside, picked by scheme on
-	// cfg.MarketplaceURL.
-	marketplaceDir := cfg.MarketplaceDir
-	localCatalog, merr := marketlocal.Load(marketplaceDir)
-	if merr != nil {
-		logger.Warn("marketplace: catalog load failed; Hub will be empty",
-			"dir", marketplaceDir, "err", merr)
-		localCatalog, _ = marketlocal.Load("") // guaranteed nil-safe empty catalog
-	} else {
-		entries, _ := localCatalog.List(context.Background())
-		logger.Info("marketplace: catalog loaded",
-			"dir", marketplaceDir, "entries", len(entries))
-	}
-	var marketplaceCatalog market.Catalog = localCatalog
+	//   MarketplaceURL set → market/remote hits the registry URL
+	//                        (+ mirrors, + in-memory TTL cache,
+	//                        + signature verification at install).
+	//   MarketplaceDir set → market/local reads catalog.json off disk.
+	//                        M3 behaviour; preserved for airgapped
+	//                        deployments and for syz's mock registry.
+	//   neither set         → empty local catalog; Hub shows nothing.
+	marketplaceCatalog := buildMarketplaceCatalog(cfg, logger)
 	// hostSupervisor is constructed below once the namespace APIs exist;
 	// declared here so the dispatcher's HostCaller closure can reference
 	// it by name. The closure is safe as long as a sidecar isn't invoked
@@ -542,6 +537,22 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 	gw.RegisterNamespace("http", httpAPI)
 	gw.RegisterNamespace("secret", secretAPI)
 
+	// Marketplace revocation poller. Only starts when the
+	// marketplace has something to fetch revocations from —
+	// empty-catalog deployments skip it to avoid endless "fetch
+	// revocations.json: not found" log spam.
+	if cfg.MarketplaceURL != "" || cfg.MarketplaceDir != "" {
+		startRevocationPoller(
+			ctx,
+			logger,
+			marketplaceCatalog,
+			installer,
+			providerRuntime,
+			workbenchBus,
+			cfg.RevocationPollHours,
+		)
+	}
+
 	server := &http.Server{Addr: cfg.Server.ListenAddr, Handler: gw.Handler()}
 
 	sigCh := make(chan os.Signal, 1)
@@ -565,6 +576,132 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 	// the gateway's HTTP routes during their own shutdown requests.
 	_ = hostSupervisor.Stop(shutdownCtx)
 	server.Shutdown(shutdownCtx)
+}
+
+// buildMarketplaceCatalog picks the concrete market.Catalog
+// backend based on config. Remote wins when both RegistryURL and
+// MarketplaceDir are set. A construction failure falls back to
+// an empty local catalog so the server always boots — missing
+// marketplace is not a hard error.
+func buildMarketplaceCatalog(cfg config.Config, logger *slog.Logger) market.Catalog {
+	if cfg.MarketplaceURL != "" {
+		remote, err := marketremote.New(marketremote.Config{
+			RegistryURL: cfg.MarketplaceURL,
+			Mirrors:     cfg.MarketplaceMirrors,
+		})
+		if err != nil {
+			logger.Warn("marketplace: remote init failed; Hub will be empty",
+				"url", cfg.MarketplaceURL, "err", err)
+			return emptyCatalog()
+		}
+		logger.Info("marketplace: remote catalog",
+			"url", cfg.MarketplaceURL,
+			"mirrors", len(cfg.MarketplaceMirrors))
+		return remote
+	}
+
+	dir := cfg.MarketplaceDir
+	local, err := marketlocal.Load(dir)
+	if err != nil {
+		logger.Warn("marketplace: local load failed; Hub will be empty",
+			"dir", dir, "err", err)
+		return emptyCatalog()
+	}
+	entries, _ := local.List(context.Background())
+	logger.Info("marketplace: local catalog", "dir", dir, "entries", len(entries))
+	return local
+}
+
+func emptyCatalog() market.Catalog {
+	// Load("") constructs a nil-safe empty local catalog; guaranteed
+	// not to error per market/local.Load's contract.
+	c, _ := marketlocal.Load("")
+	return c
+}
+
+// startRevocationPoller wires the market kill-switch. Install
+// Handler's Uninstall method + Runtime.SetEnabled feed into
+// actions.Handler; a WorkbenchBus.Publish closure routes banners
+// to every connected Flutter client. The poller runs for the
+// lifetime of runNormalMode's context.
+func startRevocationPoller(
+	ctx context.Context,
+	logger *slog.Logger,
+	cat market.Catalog,
+	installer *install.Installer,
+	runtime *plugin.Runtime,
+	bus *gateway.WorkbenchBus,
+	pollHours int,
+) {
+	// Filter installed plugins to v1 only. Legacy compat-synthesized
+	// plugins are baked into the binary and can't be uninstalled;
+	// applying a revocation action to them would just churn logs.
+	installedSnapshot := func() []revocation.InstalledPlugin {
+		out := make([]revocation.InstalledPlugin, 0)
+		for _, pi := range runtime.ListInfo() {
+			if !pi.Provider.IsV1() {
+				continue
+			}
+			out = append(out, revocation.InstalledPlugin{
+				Publisher: pi.Provider.Publisher,
+				Name:      pi.Provider.Name,
+				Version:   pi.Provider.Version,
+			})
+		}
+		return out
+	}
+
+	notify := func(kind, pluginName, reason string) {
+		// Surface via workbench bus as a showMessage event so
+		// existing Flutter listeners render a banner without a new
+		// wire format. Severity maps kind → colour (error for
+		// uninstall / disable, warn for warn).
+		severity := "error"
+		if kind == revocation.ActionWarn {
+			severity = "warn"
+		}
+		payload, _ := json.Marshal(map[string]any{
+			"severity": severity,
+			"message":  fmt.Sprintf("Plugin %s revoked: %s", pluginName, reason),
+			"kind":     "revocation",
+			"plugin":   pluginName,
+			"action":   kind,
+			"reason":   reason,
+		})
+		if bus != nil {
+			bus.Publish(gateway.WorkbenchEvent{
+				Kind:    "showMessage",
+				Plugin:  "",
+				Payload: payload,
+			})
+		}
+	}
+
+	handler, err := actions.New(actions.Config{
+		Uninstall:  installer.Uninstall,
+		SetEnabled: runtime.SetEnabled,
+		Notify:     notify,
+		Logger:     logger.With("mod", "revocation"),
+	})
+	if err != nil {
+		logger.Error("revocation: handler init failed", "err", err)
+		return
+	}
+
+	interval := time.Duration(pollHours) * time.Hour
+	poller, err := revocation.New(revocation.Config{
+		Catalog:   cat,
+		Interval:  interval,
+		Installed: installedSnapshot,
+		OnAction:  handler.Dispatch,
+		Logger:    logger.With("mod", "revocation"),
+	})
+	if err != nil {
+		logger.Error("revocation: poller init failed", "err", err)
+		return
+	}
+	go poller.Run(ctx)
+	logger.Info("revocation: poller started", "interval", interval)
 }
 
 // writeBootstrapToken persists the token to ~/.opendray/setup-token so the

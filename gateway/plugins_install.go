@@ -31,6 +31,7 @@ import (
 	"github.com/opendray/opendray/plugin"
 	"github.com/opendray/opendray/plugin/install"
 	"github.com/opendray/opendray/plugin/market"
+	"github.com/opendray/opendray/plugin/market/signing"
 )
 
 // ─── Request / Response shapes ───────────────────────────────────────────────
@@ -151,22 +152,57 @@ func (s *Server) pluginsInstall(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, http.StatusBadRequest, "EBADSRC", rerr.Error())
 			return
 		}
+
+		// Signature policy gate. Fetch the publisher record (for
+		// registered keys + trust level) and enforce. Community
+		// plugins without a signature still install; official /
+		// verified must verify. See signing.EnforcePolicy docstring.
+		publisher, perr := s.marketplace.FetchPublisher(r.Context(), entry.Publisher)
+		if perr != nil && !errors.Is(perr, market.ErrNotFound) {
+			writeJSONError(w, http.StatusInternalServerError, "EMARKET",
+				"fetch publisher: "+perr.Error())
+			return
+		}
+		// Empty PublisherRecord (ErrNotFound) falls through to the
+		// default-deny branch of EnforcePolicy; attackers can't
+		// install a "community" plugin by deleting their record.
+		if err := signing.EnforcePolicy(entry, publisher, time.Now()); err != nil {
+			if errors.Is(err, signing.ErrSignatureRequired) {
+				writeJSONError(w, http.StatusForbidden, "ESIGNREQ",
+					"signature required for this trust level: "+err.Error())
+				return
+			}
+			writeJSONError(w, http.StatusForbidden, "ESIGNFAIL",
+				"signature verification failed: "+err.Error())
+			return
+		}
+
 		bundleDir, haveLocal, berr := s.marketplace.BundlePath(r.Context(), ref)
 		if berr != nil {
 			writeJSONError(w, http.StatusInternalServerError, "EMARKET", berr.Error())
 			return
 		}
-		if !haveLocal {
-			// Remote-only entry: the install layer will fetch via
-			// HTTPSSource in T4. Until then the legacy local path
-			// stays the only wired install route.
-			writeJSONError(w, http.StatusNotImplemented, "ENOTIMPL",
-				"remote-artifact install lands in M4.1 T4; entry has no local bundle")
-			return
-		}
-		src = install.TrustedSource{
-			Path:  bundleDir,
-			Label: "marketplace://" + entry.Publisher + "/" + entry.Name + "@" + entry.Version,
+		if haveLocal {
+			// Local-backed catalog (M3 mock + airgapped). The bundle
+			// is already on disk; TrustedSource skips HTTPS + sha256
+			// (those guarantees come from the filesystem itself).
+			src = install.TrustedSource{
+				Path:  bundleDir,
+				Label: "marketplace://" + entry.Publisher + "/" + entry.Name + "@" + entry.Version,
+			}
+		} else {
+			// Remote-backed entry. HTTPSSource downloads the zip,
+			// verifies SHA-256, extracts to staging — all gated by
+			// the same signature policy as local installs.
+			if entry.ArtifactURL == "" {
+				writeJSONError(w, http.StatusBadRequest, "EBADSRC",
+					"marketplace entry has no artifact URL")
+				return
+			}
+			src = install.HTTPSSource{
+				URL:            entry.ArtifactURL,
+				ExpectedSHA256: entry.SHA256,
+			}
 		}
 	} else {
 		var perr error

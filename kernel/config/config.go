@@ -56,12 +56,32 @@ type Config struct {
 	AllowLocalPlugins bool `toml:"-"` // computed; not round-tripped in TOML
 
 	// MarketplaceDir is the root of the on-disk plugin catalog that
-	// backs /api/marketplace/plugins and marketplace:// install refs.
-	// Default: $REPO/plugins/marketplace when running from source,
-	// ${HOME}/.opendray/marketplace when OPENDRAY_MARKETPLACE_DIR is unset
-	// in a production install. A missing directory leaves the Hub
-	// empty rather than failing boot. Env: OPENDRAY_MARKETPLACE_DIR.
+	// backs /api/marketplace/plugins and marketplace:// install refs
+	// when no remote URL is configured. A missing directory leaves
+	// the Hub empty rather than failing boot.
+	// Env: OPENDRAY_MARKETPLACE_DIR.
 	MarketplaceDir string `toml:"-"` // computed; not round-tripped in TOML
+
+	// MarketplaceURL — when set — switches the Hub from the on-disk
+	// catalog at MarketplaceDir to a live HTTPS registry. Points at
+	// marketplace.opendray.dev in production; GitHub raw
+	// (https://raw.githubusercontent.com/Opendray/opendray-marketplace/main/)
+	// is the pre-CDN fallback. Empty = use MarketplaceDir (M3
+	// behaviour).
+	// Env: OPENDRAY_MARKETPLACE_URL.
+	MarketplaceURL string `toml:"-"` // computed; not round-tripped in TOML
+
+	// MarketplaceMirrors is a comma-separated list of fallback base
+	// URLs tried in order when the primary returns 5xx or times
+	// out. Empty = primary only.
+	// Env: OPENDRAY_MARKETPLACE_MIRRORS.
+	MarketplaceMirrors []string `toml:"-"` // computed
+
+	// RevocationPollHours controls the kill-switch poll cadence.
+	// Clamped to [1, 168] by the poller; zero means use the spec
+	// default (6 h).
+	// Env: OPENDRAY_REVOCATION_POLL_HOURS.
+	RevocationPollHours int `toml:"-"` // computed
 }
 
 // Server holds HTTP listener configuration.
@@ -447,6 +467,34 @@ func applyEnvOverrides(cfg *Config) bool {
 	// Hub — so operators can point this at a not-yet-populated location
 	// during initial rollout.
 	setStr(&cfg.MarketplaceDir, "OPENDRAY_MARKETPLACE_DIR")
+
+	// OPENDRAY_MARKETPLACE_URL — when set, switches Hub to a remote
+	// HTTPS registry.
+	setStr(&cfg.MarketplaceURL, "OPENDRAY_MARKETPLACE_URL")
+
+	// OPENDRAY_MARKETPLACE_MIRRORS — comma-separated list of fallback
+	// URLs. Entries are trimmed; empty entries are dropped.
+	if v, ok := os.LookupEnv("OPENDRAY_MARKETPLACE_MIRRORS"); ok {
+		out := []string{}
+		for _, part := range strings.Split(v, ",") {
+			p := strings.TrimSpace(part)
+			if p != "" {
+				out = append(out, p)
+			}
+		}
+		cfg.MarketplaceMirrors = out
+		changed = true
+	}
+
+	// OPENDRAY_REVOCATION_POLL_HOURS — integer hours. Validation
+	// (clamp to [1, 168]) happens in the revocation poller, not
+	// here — config is just the passthrough.
+	if v, ok := os.LookupEnv("OPENDRAY_REVOCATION_POLL_HOURS"); ok {
+		if n, err := strconv.Atoi(strings.TrimSpace(v)); err == nil && n > 0 {
+			cfg.RevocationPollHours = n
+			changed = true
+		}
+	}
 
 	return changed
 }
