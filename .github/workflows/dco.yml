@@ -8,6 +8,6 @@ jobs:
   dco:
     runs-on: ubuntu-latest
     steps:
-      - uses: tim-actions/dco@master
+      - uses: tim-actions/dco@v1.1.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
