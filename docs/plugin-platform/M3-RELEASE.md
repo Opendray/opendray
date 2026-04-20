@@ -1,8 +1,10 @@
-# OpenDray Plugin Platform M3 — Ship Readiness
+# OpenDray Plugin Platform M3 — Closed
 
 **Last Updated:** 2026-04-20
-**Branch:** `kevlab` (not merged to main)
+**Status:** ✅ CLOSED — core acceptance passed, bonus features shipped, ready to open M4.
+**Branch:** `kevlab` (not yet merged to main)
 **Base:** M2 complete at commit `12a3ef6`
+**M3 head:** `208bcb3`
 
 ## 1. Status by task
 
@@ -27,20 +29,20 @@
 | T17 | Supervisor ↔ namespaces wiring                                   | ✅ | `a88f8b1` + `34b3a71` (factory wire) |
 | T18 | `contributes.languageServers` + Flatten                          | 🟡 Deferred |
 | T19 | LSP proxy gateway route                                          | 🟡 Deferred |
-| T20 | Consent patch endpoint + granular UI plumbing                    | 🟡 Deferred |
-| T21 | Flutter Settings UI: granular caps                               | 🟡 Deferred |
-| T22 | Flutter bridge SDK: fs/exec/http/secret TS types                 | 🟡 Partial (shim from M2 routes raw envelopes; JS helpers deferred) |
+| T20 | Consent patch endpoint + granular UI plumbing                    | ✅ | `5397467` |
+| T21 | Flutter Settings UI: granular caps                               | ✅ | `5397467` + `315ba78` (bidirectional toggle + revoke-all PATCH) |
+| T22 | Flutter bridge SDK: fs/exec/http/secret TS types                 | 🟡 Partial (shim from M2 routes raw envelopes; JS helpers deferred to M5) |
 | T23 | Main wiring                                                      | ✅ | `3595999` |
 | T24 | PathVarResolver implementation (gateway)                         | ✅ | `3595999` |
-| T25 | Reference plugin `plugins/examples/fs-readme/`                   | 🟡 In flight |
-| T26 | E2E test: fs-readme full lifecycle                               | 🟡 Deferred |
-| T27 | Carry-on: CSP test + desktop webview + kanban E2E                | 🟡 Deferred |
+| T25 | Reference plugin `plugins/examples/fs-readme/`                   | ✅ | `00e8d78` |
+| T26 | E2E test: fs-readme full lifecycle                               | ✅ | `53b401a` |
+| T27 | Carry-on: CSP test + desktop webview + kanban E2E                | 🟡 Deferred to M5 polish |
 | T28 | Documentation update                                             | 🟡 Partial (M3-RELEASE.md here; 10-security.md + 11-dx update pending) |
 | T29 | First-PR seam                                                     | ✅ | `b98d016` |
 
-**Summary:** 16 Done / 1 In flight / 10 Deferred / 0 Skipped
+**Summary:** 19 Done / 0 In flight / 7 Deferred / 0 Skipped
 
-Core claim: **all four privileged namespaces + supervisor + bidirectional sidecar mux** ship. The deferred items are either test harness (T26), UX polish (T20/T21), or scope cuts explicitly called out in the plan (T10 watch, T19 LSP proxy, T27 M2 carry-ons).
+Core claim: **all four privileged namespaces + supervisor + bidirectional sidecar mux** ship. The deferred items are either doc polish (T28), M2 carry-ons (T27), or intentionally scope-cut (T10 watch, T18/T19 LSP proxy). No deferral is load-bearing for M3's acceptance criteria.
 
 ---
 
@@ -66,19 +68,81 @@ Core claim: **all four privileged namespaces + supervisor + bidirectional sideca
 
 ---
 
+## 2.5. Bonus features shipped on kevlab (beyond M3 scope)
+
+Work that lands on `kevlab` but wasn't in the M3 task list — collected
+here so M4 planning has full context.
+
+- **User-editable configSchema pipeline** (`f0fc6f6`) — v1 plugins can
+  declare `configSchema: [...]` in the manifest. Platform renders a
+  form, writes values to `plugin_kv` (non-secret) + `plugin_secret`
+  (secret, AES-GCM) with a reserved `__config.` key prefix, and
+  restarts the sidecar on save so config changes take effect on next
+  invoke. New endpoints: `GET/PUT /api/plugins/{name}/config`.
+  Flutter: `PluginConfigForm` generic widget + `PluginConfigurePage`.
+  Reconfigure works anytime from Plugin → Configure — install-time
+  input is not permanent.
+
+- **Hub + local marketplace + Bottom-nav split** (`b151d0e`) —
+  `plugin/marketplace` package loads an on-disk catalog from
+  `$OPENDRAY_MARKETPLACE_DIR`. `GET /api/marketplace/plugins` serves
+  it. New `install.TrustedSource` bypasses `AllowLocal` for catalog-
+  resolved paths. Bottom nav split into 5 tabs so Hub (marketplace
+  install) and Plugin (installed CRUD) are separate surfaces.
+
+- **pg-browser as first real marketplace plugin** (`bc0a80b`,
+  `f0fc6f6`) — v1 rewrite of the legacy in-process database panel.
+  Node sidecar with `pg@8.20.0` bundled, 5 commands (info /
+  listDatabases / listSchemas / listTables / sampleQuery),
+  configSchema for host/port/user/password/database/sslMode, reads
+  config from `opendray.storage.get` + `opendray.secret.get`.
+
+- **Legacy database plugin retired** (`208bcb3`) — removed
+  `plugins/panels/database/` (embed), `gateway/database/` package
+  (479 LOC), `/api/database/*` routes, `app/lib/features/database/`
+  page (812 LOC), and the stale `plugins.name='database'` DB row.
+  Fully replaced by pg-browser in the marketplace.
+
+- **Plugin page "Open" action + PluginRunPage** (`208bcb3`) — tapping
+  an installed plugin routes by kind: legacy panel → existing
+  `/browser/*` route; v1 host plugin → new `PluginRunPage` showing
+  contributed commands + a Run button + pretty-printed JSON result
+  viewer; v1 webview/declarative → generic `/browser/plugin/:name`.
+
+- **Backend version in /api/health + Settings About** (`b151d0e`) —
+  `version` + `buildSha` stamped in at build-time via ldflags now
+  flow through `/api/health` and render in the Flutter Settings
+  About card.
+
+- **APK-only release script** (`730fd33`) — `scripts/build_release.sh`
+  splits APK packaging + UNAS upload out of the all-in-one
+  `deploy_release.sh`, so a mobile-only ship doesn't have to rebuild
+  the Go binary.
+
+- **Consent UX hardening** (`315ba78`) — bidirectional Switch on the
+  consent page (flip revoked caps back on via PATCH with
+  manifest-declared value), "Revoke all" now PATCHes every cap to
+  zero (preserves the consent row so the user can re-grant
+  individually) instead of DELETEing the row.
+
+---
+
 ## 3. What's deferred to M4+
 
 - **T10 — `fs.watch` + write-path (`writeFile`, `mkdir`, `remove`)** — write path needs the TOCTOU story re-verified for creation vs read. fsnotify's inotify cap (Linux) needs doc in the authoring tutorial. Scope cut to keep M3 focused on the read-path + exec/http/secret.
 
 - **T18 + T19 — `contributes.languageServers` + LSP proxy route** — The machinery is in place (Mux is bidirectional, HostRPCHandler routes any method), but the `/api/plugins/lsp/{language}/proxy` WS route + the Registry lookup by language aren't wired. LSPs still work as bespoke sidecars via direct `host.Sidecar.Call`; the proxy route would only add convenience.
 
-- **T20 + T21 — Granular consent UI** — The M2 all-or-nothing revoke (`DELETE /consents/{cap}`) still works; per-glob / per-command toggles are polish, not a correctness gap.
+- **T22 — Flutter SDK helpers for new namespaces** — The bridge channel routes every namespace generically; the JS shim's `opendray.fs / exec / http / secret` convenience proxies are the one missing piece for webview plugins. Plugins can fall back to `window.OpenDrayBridge.postMessage({ns:"fs",method:"readFile",args:[path]})` until then. Move to M5 JS SDK polish.
 
-- **T22 — Flutter SDK helpers for new namespaces** — The bridge channel routes every namespace generically; the JS shim's `opendray.fs / exec / http / secret` convenience proxies are the one missing piece for webview plugins. Plugins can fall back to `window.OpenDrayBridge.postMessage({ns:"fs",method:"readFile",args:[path]})` until then.
+- **T27 — M2 carry-ons** — CSP golden-file test, desktop WebView fallback, kanban E2E. Still 🟡 on M2-RELEASE.md. Move to M5.
 
-- **T26 — E2E test** — `fs-readme` lifecycle under `-tags=e2e`. Needed for CI confidence; blocked by Node availability on the test host.
+- **T28 — Documentation** — `10-security.md` §6 threat matrix + `11-developer-experience.md` host-runtime section still pending. Partial update shipped with this release note. Move to M5 doc pass.
 
-- **T27 — M2 carry-ons** — CSP golden-file test, desktop WebView fallback, kanban E2E. Still 🟡 on M2-RELEASE.md. Low risk to defer.
+- **Webview + sidecar combined form** — not in any M-milestone yet;
+  platform today only supports `form: webview` OR `form: host`, not
+  both on the same plugin. Legacy plugin migration to v1 in M5 will
+  need this. New work item for M5 scoping.
 
 ---
 
@@ -175,22 +239,38 @@ opendray plugin install --yes ./plugins/examples/fs-readme
 
 ## 7. Commit history (M3 on kevlab)
 
+Core M3 (tasks T1–T29):
 ```
-34b3a71 feat(plugin-platform): M3 — wire supervisor ↔ HostRPCHandler
-3595999 feat(plugin-platform): M3 T23+T24 — wire fs/exec/http/secret + supervisor
-a88f8b1 feat(plugin-platform): M3 T17 — sidecar ↔ namespace routing
-fd2cd93 fix(plugin-platform): clamp HTTP TLS MinVersion and silence gosec
-5cc7c00 feat(plugin-platform): M3 T13 — opendray.secret.* namespace
-831f426 feat(plugin-platform): M3 T11 — opendray.exec.* namespace
-26b4a04 feat(plugin-platform): M3 T7 — KEK/DEK crypto primitives
-5f4a914 feat(plugin-platform): M3 T12 — opendray.http.* namespace
-2480bac feat(plugin-platform): M3 T14+T16 — supervisor + JSON-RPC mux
-bb6b64a feat(plugin-platform): M3 T9 — opendray.fs.* read-path namespace
-b98d016 feat(plugin-platform): M3 T29 seam — migrations + HostV1 + framing codec
 a93e5cf docs(plugin-platform): M3-PLAN — host sidecar runtime
+b98d016 feat(plugin-platform): M3 T29 seam — migrations + HostV1 + framing codec
+bb6b64a feat(plugin-platform): M3 T9 — opendray.fs.* read-path namespace
+2480bac feat(plugin-platform): M3 T14+T16 — supervisor + JSON-RPC mux
+5f4a914 feat(plugin-platform): M3 T12 — opendray.http.* namespace
+26b4a04 feat(plugin-platform): M3 T7 — KEK/DEK crypto primitives
+831f426 feat(plugin-platform): M3 T11 — opendray.exec.* namespace
+5cc7c00 feat(plugin-platform): M3 T13 — opendray.secret.* namespace
+fd2cd93 fix(plugin-platform): clamp HTTP TLS MinVersion and silence gosec
+a88f8b1 feat(plugin-platform): M3 T17 — sidecar ↔ namespace routing
+3595999 feat(plugin-platform): M3 T23+T24 — wire fs/exec/http/secret + supervisor
+34b3a71 feat(plugin-platform): M3 — wire supervisor ↔ HostRPCHandler
+320f364 docs(plugin-platform): M3 release checklist
+00e8d78 feat(plugin-platform): M3 T25 — fs-readme reference host plugin
+9579278 feat(plugin-platform): M3 — wire host run kind into command dispatcher
+53b401a feat(plugin-platform): M3 T26 — fs-readme E2E test + sidecar env fix
+5397467 feat(plugin-platform): M3 T20+T21 — granular consent patch endpoint + UI
 ```
 
-Followed soon by `T25 fs-readme` + this `M3-RELEASE.md` commit.
+Bonus features shipped beyond M3 scope (see §2.5):
+```
+315ba78 fix(plugin-platform): bidirectional consent toggle + preserve row on revoke-all
+b151d0e feat(plugin-platform): Hub marketplace + backend version + Plugin page cleanup
+730fd33 chore(scripts): APK-only build + UNAS upload script
+bc0a80b feat(marketplace): pg-browser — v1 rewrite of legacy database panel
+f0fc6f6 feat(plugin-platform): user-editable configSchema end-to-end
+208bcb3 refactor(plugin-platform): retire legacy database plugin + Plugin-page Open action
+```
+
+**M3 head:** `208bcb3`. Next work opens on M4.
 
 ---
 
