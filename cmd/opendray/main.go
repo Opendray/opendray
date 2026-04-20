@@ -522,6 +522,10 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 		BuildSha: buildSha,
 		// Marketplace catalog backing /api/marketplace/plugins + marketplace://.
 		Marketplace: marketplaceCatalog,
+		// User-config endpoints — SecretAPI for encrypted fields,
+		// hostSupervisor.Kill for post-write sidecar restart.
+		SecretAPI:      secretAPI,
+		HostSupervisor: hostSupervisor,
 	})
 	gw.RegisterNamespace("workbench", workbenchAPI)
 	gw.RegisterNamespace("storage", storageAPI)

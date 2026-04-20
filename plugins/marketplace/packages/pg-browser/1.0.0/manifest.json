@@ -14,16 +14,60 @@
     "runtime": "node",
     "protocol": "jsonrpc-stdio",
     "restart": "on-failure",
-    "idleShutdownMinutes": 10,
-    "env": {
-      "PG_HOST": "__REPLACE_ME__",
-      "PG_PORT": "5432",
-      "PG_USER": "__REPLACE_ME__",
-      "PG_PASSWORD": "__REPLACE_ME__",
-      "PG_DATABASE": "postgres",
-      "PG_SSLMODE": "disable"
-    }
+    "idleShutdownMinutes": 10
   },
+  "configSchema": [
+    {
+      "key": "host",
+      "label": "Host",
+      "type": "string",
+      "required": true,
+      "group": "connection",
+      "placeholder": "db.example.com",
+      "default": "127.0.0.1"
+    },
+    {
+      "key": "port",
+      "label": "Port",
+      "type": "number",
+      "required": true,
+      "group": "connection",
+      "default": 5432
+    },
+    {
+      "key": "user",
+      "label": "User",
+      "type": "string",
+      "required": true,
+      "group": "connection",
+      "placeholder": "readonly_user"
+    },
+    {
+      "key": "password",
+      "label": "Password",
+      "type": "secret",
+      "required": true,
+      "group": "connection",
+      "description": "Stored encrypted via the plugin secret cap (AES-GCM)."
+    },
+    {
+      "key": "database",
+      "label": "Bootstrap database",
+      "type": "string",
+      "required": true,
+      "group": "connection",
+      "default": "postgres",
+      "description": "Default database to connect to. list-databases works regardless."
+    },
+    {
+      "key": "sslMode",
+      "label": "SSL mode",
+      "type": "select",
+      "group": "connection",
+      "options": ["disable", "require", "verify-full"],
+      "default": "disable"
+    }
+  ],
   "contributes": {
     "commands": [
       {
@@ -59,6 +103,7 @@
     ]
   },
   "permissions": {
+    "storage": true,
     "secret": true
   }
 }

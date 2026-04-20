@@ -19,13 +19,22 @@
       "version": "1.0.0",
       "publisher": "opendray-examples",
       "displayName": "PostgreSQL Browser",
-      "description": "v1 rewrite of the legacy in-process database panel. A Node sidecar connects to PostgreSQL and exposes list/query commands — now installable, permission-gated, and sandboxed like any third-party plugin.",
+      "description": "v1 rewrite of the legacy in-process database panel. A Node sidecar connects to PostgreSQL and exposes list/query commands — installable, permission-gated, and reconfigurable without a reinstall.",
       "icon": "🐘",
       "form": "host",
       "tags": ["database", "example", "host"],
       "permissions": {
+        "storage": true,
         "secret": true
-      }
+      },
+      "configSchema": [
+        {"key": "host", "label": "Host", "type": "string", "required": true, "group": "connection", "placeholder": "db.example.com", "default": "127.0.0.1"},
+        {"key": "port", "label": "Port", "type": "number", "required": true, "group": "connection", "default": 5432},
+        {"key": "user", "label": "User", "type": "string", "required": true, "group": "connection", "placeholder": "readonly_user"},
+        {"key": "password", "label": "Password", "type": "secret", "required": true, "group": "connection", "description": "Stored encrypted via the plugin secret cap (AES-GCM)."},
+        {"key": "database", "label": "Bootstrap database", "type": "string", "required": true, "group": "connection", "default": "postgres", "description": "Default database to connect to. list-databases works regardless."},
+        {"key": "sslMode", "label": "SSL mode", "type": "select", "group": "connection", "options": ["disable", "require", "verify-full"], "default": "disable"}
+      ]
     }
   ]
 }

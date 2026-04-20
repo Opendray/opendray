@@ -105,6 +105,11 @@ class Provider {
   final bool required;
   final Capabilities capabilities;
   final List<ConfigField> configSchema;
+  /// Only set on v1 manifests (IsV1 requires publisher + engines).
+  /// Legacy in-tree plugins leave this empty, which the UI uses to
+  /// route config edits to the legacy `providers.config` column
+  /// instead of the new plugin_kv + plugin_secret path.
+  final String publisher;
 
   const Provider({
     required this.name,
@@ -118,6 +123,7 @@ class Provider {
     this.required = false,
     required this.capabilities,
     this.configSchema = const [],
+    this.publisher = '',
   });
 
   factory Provider.fromJson(Map<String, dynamic> json) => Provider(
@@ -136,7 +142,13 @@ class Provider {
                 ?.map((e) => ConfigField.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             [],
+        publisher: json['publisher'] as String? ?? '',
       );
+
+  /// True when this manifest opted into the v1 plugin contract.
+  /// Mirrors the Go-side `Provider.IsV1()` — `publisher` is required
+  /// on v1; its absence marks a legacy bundled plugin.
+  bool get isV1 => publisher.isNotEmpty;
 }
 
 class ProviderInfo {

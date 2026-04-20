@@ -391,6 +391,74 @@ func zeroKeyBytes(b []byte) {
 // and ".." implicitly; we add an explicit ".." guard for defence-in-depth.
 var secretKeyRegex = regexp.MustCompile(`^[a-zA-Z0-9._-]{1,128}$`)
 
+// PlatformSet writes an encrypted secret on behalf of the platform
+// (not the plugin). Used by the gateway config endpoints — the
+// capability gate's plugin→host direction does not apply because the
+// write is initiated by an authenticated admin request, not a
+// sidecar RPC. The encryption path is identical to handleSet: DEK is
+// loaded or generated, AES-GCM seals the value with a fresh nonce,
+// ciphertext + nonce land in plugin_secret.
+//
+// Returns nil on success. Callers should surface errors as 500 in
+// HTTP responses — the underlying store / crypto failures aren't
+// recoverable by retry.
+func (a *SecretAPI) PlatformSet(ctx context.Context, plugin, key, value string) error {
+	if err := validateKey(key); err != nil {
+		return err
+	}
+	dek, _, err := a.loadOrGenerateDEK(ctx, plugin)
+	if err != nil {
+		return fmt.Errorf("secret: load DEK: %w", err)
+	}
+	defer zeroKeyBytes(dek)
+	ct, nonce, err := aesGCMSeal(dek, []byte(value))
+	if err != nil {
+		return fmt.Errorf("secret: encrypt: %w", err)
+	}
+	if err := a.store.SecretSet(ctx, plugin, key, ct, nonce); err != nil {
+		return fmt.Errorf("secret: persist: %w", err)
+	}
+	return nil
+}
+
+// PlatformGet reads and decrypts a secret on behalf of the platform.
+// Returns ("", false, nil) when the key is absent. Errors indicate a
+// store or crypto failure, not "not found".
+func (a *SecretAPI) PlatformGet(ctx context.Context, plugin, key string) (string, bool, error) {
+	if err := validateKey(key); err != nil {
+		return "", false, err
+	}
+	ct, nonce, found, err := a.store.SecretGet(ctx, plugin, key)
+	if err != nil {
+		return "", false, fmt.Errorf("secret: load: %w", err)
+	}
+	if !found {
+		return "", false, nil
+	}
+	dek, _, err := a.loadDEK(ctx, plugin)
+	if err != nil {
+		return "", false, fmt.Errorf("secret: load DEK: %w", err)
+	}
+	defer zeroKeyBytes(dek)
+	plaintext, err := aesGCMOpen(dek, nonce, ct)
+	if err != nil {
+		return "", false, fmt.Errorf("secret: decrypt: %w", err)
+	}
+	return string(plaintext), true, nil
+}
+
+// PlatformDelete removes a secret on behalf of the platform.
+// Idempotent — missing key returns nil.
+func (a *SecretAPI) PlatformDelete(ctx context.Context, plugin, key string) error {
+	if err := validateKey(key); err != nil {
+		return err
+	}
+	if err := a.store.SecretDelete(ctx, plugin, key); err != nil {
+		return fmt.Errorf("secret: delete: %w", err)
+	}
+	return nil
+}
+
 // MatchSecretNamespace returns true if key is a syntactically valid secret
 // key: 1–128 chars of [a-zA-Z0-9._-] with no "/" and no "..". Exposed so
 // the gateway/admin surface can share validation.

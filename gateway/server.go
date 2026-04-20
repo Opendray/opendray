@@ -28,6 +28,7 @@ import (
 	"github.com/opendray/opendray/plugin"
 	"github.com/opendray/opendray/plugin/bridge"
 	"github.com/opendray/opendray/plugin/contributions"
+	"github.com/opendray/opendray/plugin/host"
 	"github.com/opendray/opendray/plugin/install"
 	"github.com/opendray/opendray/plugin/marketplace"
 )
@@ -88,6 +89,23 @@ type Server struct {
 	// source. Nil when no catalog dir is configured — endpoints then
 	// degrade to empty lists and EBADSRC respectively.
 	marketplace *marketplace.Catalog
+
+	// secretAPI + hostSupervisor back the platform-managed config
+	// endpoints (GET/PUT /api/plugins/{name}/config). secretAPI is
+	// used for PlatformSet/Get/Delete bypassing the bridge gate;
+	// hostSupervisor.Kill restarts the sidecar after a config write
+	// so the new values take effect on the next invoke.
+	secretAPI      *bridge.SecretAPI
+	hostSupervisor *host.Supervisor
+
+	// Test-only overrides for the config handlers. When non-nil they
+	// short-circuit the resolver chain so tests can inject fakes for
+	// the KV store, secret store, and sidecar killer without booting
+	// embedded Postgres or a real supervisor. Production leaves
+	// these nil.
+	configKVTestOverride      configStore
+	configSecretsTestOverride platformSecrets
+	configKillerTestOverride  sidecarKiller
 }
 
 // Config holds gateway configuration.
@@ -123,6 +141,11 @@ type Config struct {
 	// GET /api/marketplace/plugins endpoint (returns empty list) and
 	// rejects marketplace:// install sources with EBADSRC.
 	Marketplace *marketplace.Catalog
+
+	// SecretAPI + HostSupervisor wire the platform-managed config
+	// endpoints. Both nil = /api/plugins/{name}/config returns 503.
+	SecretAPI      *bridge.SecretAPI
+	HostSupervisor *host.Supervisor
 }
 
 // PluginsConfig holds runtime-tunable knobs for the bridge handler.
@@ -172,6 +195,8 @@ func New(cfg Config) *Server {
 		version:         cfg.Version,
 		buildSha:        cfg.BuildSha,
 		marketplace:     cfg.Marketplace,
+		secretAPI:       cfg.SecretAPI,
+		hostSupervisor:  cfg.HostSupervisor,
 	}
 	if cfg.MCP != nil {
 		s.mcp = mcp.NewHandlers(cfg.MCP)
@@ -352,6 +377,12 @@ func New(cfg Config) *Server {
 		r.Patch("/api/plugins/{name}/consents", s.pluginsConsentsPatch)
 		r.Delete("/api/plugins/{name}/consents/{cap}", s.pluginsConsentsRevokeCap)
 		r.Delete("/api/plugins/{name}/consents", s.pluginsConsentsRevokeAll)
+
+		// User-editable config (configSchema-driven form). GET returns
+		// schema + masked values; PUT writes to plugin_kv + plugin_secret
+		// and restarts the sidecar.
+		r.Get("/api/plugins/{name}/config", s.pluginsConfigGet)
+		r.Put("/api/plugins/{name}/config", s.pluginsConfigPut)
 
 		// Plugin asset server — serves plugin ui/ bundles (T8).
 		r.Get("/api/plugins/{name}/assets/*", s.pluginsAssets)

@@ -28,6 +28,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/opendray/opendray/plugin"
 )
 
 // ErrNotFound is returned by Resolve when the ref doesn't match any
@@ -58,6 +60,12 @@ type Entry struct {
 	// ask for before the user hits install. Opaque JSON — the Hub card
 	// renders it the same way the install-consent dialog does.
 	Permissions json.RawMessage `json:"permissions,omitempty"`
+
+	// ConfigSchema carries the plugin's user-editable config fields
+	// verbatim from the manifest. Surfaced in the catalog listing so
+	// the Hub can render the post-consent config dialog without
+	// fetching the manifest a second time. Empty = no config form.
+	ConfigSchema []plugin.ConfigField `json:"configSchema,omitempty"`
 }
 
 // Catalog is the loaded, immutable snapshot of the on-disk catalog.

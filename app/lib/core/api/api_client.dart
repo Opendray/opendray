@@ -1090,6 +1090,101 @@ class ApiClient {
       throw apiExceptionFrom(e);
     }
   }
+
+  // ── Plugin user-config (configSchema-backed) ──────────────
+
+  /// Fetches schema + current values for the named plugin. Secret
+  /// fields render as `__set__` when stored and `""` otherwise — the
+  /// form widget renders accordingly.
+  Future<PluginConfig> getPluginConfig(String pluginName) async {
+    try {
+      final res = await _dio.get('/api/plugins/$pluginName/config');
+      final data = Map<String, dynamic>.from(res.data as Map);
+      return PluginConfig.fromJson(data);
+    } on DioException catch (e) {
+      throw apiExceptionFrom(e);
+    }
+  }
+
+  /// Persists user-edited config values for the named plugin. The
+  /// server rewrites plugin_kv / plugin_secret rows and restarts the
+  /// sidecar so the new values take effect on the next invoke.
+  Future<void> putPluginConfig(
+    String pluginName,
+    Map<String, dynamic> values,
+  ) async {
+    try {
+      await _dio.put(
+        '/api/plugins/$pluginName/config',
+        data: {'values': values},
+      );
+    } on DioException catch (e) {
+      throw apiExceptionFrom(e);
+    }
+  }
+}
+
+/// Response shape of GET /api/plugins/{name}/config.
+///
+/// [values] is always a flat string map — numbers and booleans come
+/// back encoded as strings the form widget parses per field type. The
+/// secret-field sentinel [kSecretSet] stands in for a stored password
+/// the user has not chosen to retype.
+class PluginConfig {
+  static const String kSecretSet = '__set__';
+
+  final List<PluginConfigField> schema;
+  final Map<String, String> values;
+
+  const PluginConfig({required this.schema, required this.values});
+
+  factory PluginConfig.fromJson(Map<String, dynamic> json) {
+    final rawSchema = json['schema'];
+    final rawValues = json['values'];
+    return PluginConfig(
+      schema: rawSchema is List
+          ? [
+              for (final f in rawSchema)
+                if (f is Map)
+                  PluginConfigField.fromJson(Map<String, dynamic>.from(f)),
+            ]
+          : const [],
+      values: rawValues is Map
+          ? {
+              for (final e in rawValues.entries)
+                e.key.toString(): e.value?.toString() ?? '',
+            }
+          : const {},
+    );
+  }
+
+  /// Returns a value map suitable for PUT: string fields verbatim,
+  /// numbers parsed, booleans parsed, secret sentinel preserved so
+  /// the server knows "don't overwrite".
+  Map<String, dynamic> toPutBody(Map<String, String> drafts) {
+    final out = <String, dynamic>{};
+    for (final f in schema) {
+      final raw = drafts[f.key] ?? '';
+      switch (f.type) {
+        case 'number':
+          final n = num.tryParse(raw);
+          if (n != null) out[f.key] = n;
+          break;
+        case 'bool':
+        case 'boolean':
+          out[f.key] = raw == 'true';
+          break;
+        case 'secret':
+          // Empty input → leave existing value alone by sending the
+          // sentinel; non-empty → real new value.
+          out[f.key] = raw.isEmpty ? kSecretSet : raw;
+          break;
+        default:
+          out[f.key] = raw;
+      }
+    }
+    return out;
+  }
 }
 
 // ─── Marketplace models ──────────────────────────────────────────────
@@ -1118,11 +1213,13 @@ class MarketplaceEntry {
     this.form = '',
     this.tags = const [],
     this.permissions = const {},
-  });
+    List<PluginConfigField>? configSchema,
+  }) : _rawConfigSchema = configSchema;
 
   factory MarketplaceEntry.fromJson(Map<String, dynamic> json) {
     final rawTags = json['tags'];
     final rawPerms = json['permissions'];
+    final rawSchema = json['configSchema'];
     return MarketplaceEntry(
       name: (json['name'] as String?) ?? '',
       version: (json['version'] as String?) ?? '',
@@ -1137,6 +1234,13 @@ class MarketplaceEntry {
       permissions: rawPerms is Map
           ? Map<String, dynamic>.from(rawPerms)
           : const {},
+      configSchema: rawSchema is List
+          ? [
+              for (final f in rawSchema)
+                if (f is Map)
+                  PluginConfigField.fromJson(Map<String, dynamic>.from(f)),
+            ]
+          : null,
     );
   }
 
@@ -1144,6 +1248,70 @@ class MarketplaceEntry {
   /// stable display key when name collisions with installed plugins
   /// need disambiguation.
   String get ref => '$name@$version';
+
+  /// Parsed ConfigSchema carried on the marketplace catalog row so the
+  /// Hub can render the install-time config form without a second
+  /// manifest fetch. Empty list = no user-facing config.
+  List<PluginConfigField> get configSchema {
+    final raw = _rawConfigSchema;
+    if (raw == null) return const [];
+    return raw;
+  }
+
+  /// Raw config schema stashed at construction time. Null when the
+  /// catalog row omitted configSchema, which is treated as "no form"
+  /// upstream.
+  final List<PluginConfigField>? _rawConfigSchema;
+}
+
+/// One user-editable field in a plugin's configSchema. Shape mirrors
+/// [plugin.ConfigField] on the server so the Hub form and the Plugin-
+/// page re-configure flow share a single renderer.
+class PluginConfigField {
+  final String key;
+  final String label;
+  final String type; // string | number | bool | select | secret
+  final String description;
+  final String placeholder;
+  final dynamic defaultValue;
+  final List<String> options;
+  final bool required;
+  final String group;
+
+  const PluginConfigField({
+    required this.key,
+    required this.label,
+    required this.type,
+    this.description = '',
+    this.placeholder = '',
+    this.defaultValue,
+    this.options = const [],
+    this.required = false,
+    this.group = '',
+  });
+
+  factory PluginConfigField.fromJson(Map<String, dynamic> json) {
+    final rawOpts = json['options'];
+    return PluginConfigField(
+      key: (json['key'] as String?) ?? '',
+      label: (json['label'] as String?) ?? '',
+      type: (json['type'] as String?) ?? 'string',
+      description: (json['description'] as String?) ?? '',
+      placeholder: (json['placeholder'] as String?) ?? '',
+      defaultValue: json['default'],
+      options: rawOpts is List
+          ? [for (final o in rawOpts) o.toString()]
+          : const [],
+      required: (json['required'] as bool?) ?? false,
+      group: (json['group'] as String?) ?? '',
+    );
+  }
+
+  /// True for password-style fields. The GET /config response
+  /// returns `__set__` for these when a value is already stored; the
+  /// form widget treats that sentinel as "keep existing — leave blank
+  /// to change".
+  bool get isSecret => type == 'secret';
 }
 
 /// Response of POST /api/plugins/install — a staged install waiting

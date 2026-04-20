@@ -123,6 +123,77 @@ func ValidateV1(p Provider) []ValidationError {
 		errs = append(errs, validateHostV1(p.Host)...)
 	}
 
+	// configSchema.*
+	errs = append(errs, validateConfigSchema(p.ConfigSchema)...)
+
+	return errs
+}
+
+// configFieldKeyPattern caps the identifier shape so sidecar code can
+// read each field back as a plain JSON property. Matches common env-
+// var / JS-identifier conventions.
+var configFieldKeyPattern = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*$`)
+
+// configFieldTypes is the closed set of widget types the v1 Hub knows
+// how to render. "boolean" is accepted as a legacy alias for "bool";
+// "text" / "args" are also kept for legacy-provider manifests that
+// pre-date the v1 form schema — they render as plain string inputs.
+var configFieldTypes = map[string]struct{}{
+	"string":  {},
+	"text":    {}, // legacy alias of string (multi-line hint only)
+	"number":  {},
+	"bool":    {},
+	"boolean": {}, // legacy alias of bool
+	"select":  {},
+	"secret":  {},
+	"args":    {}, // legacy CLI-args editor; ignored by v1 pipeline
+}
+
+// validateConfigSchema enforces key uniqueness, a stable Key shape, a
+// closed type enum, and Options presence for type=="select". Missing
+// or empty schemas are valid (no config surface = no form).
+func validateConfigSchema(schema []ConfigField) []ValidationError {
+	if len(schema) == 0 {
+		return nil
+	}
+	var errs []ValidationError
+	seen := make(map[string]struct{}, len(schema))
+	for i, f := range schema {
+		path := fmt.Sprintf("configSchema[%d]", i)
+		if f.Key == "" {
+			errs = append(errs, ValidationError{Path: path + ".key", Msg: "required"})
+		} else if !configFieldKeyPattern.MatchString(f.Key) {
+			errs = append(errs, ValidationError{
+				Path: path + ".key",
+				Msg:  fmt.Sprintf("must match %s, got %q", configFieldKeyPattern.String(), f.Key),
+			})
+		} else if _, dup := seen[f.Key]; dup {
+			errs = append(errs, ValidationError{
+				Path: path + ".key",
+				Msg:  fmt.Sprintf("duplicate key %q", f.Key),
+			})
+		} else {
+			seen[f.Key] = struct{}{}
+		}
+
+		if f.Label == "" {
+			errs = append(errs, ValidationError{Path: path + ".label", Msg: "required"})
+		}
+
+		if _, ok := configFieldTypes[f.Type]; !ok {
+			errs = append(errs, ValidationError{
+				Path: path + ".type",
+				Msg:  fmt.Sprintf("must be one of string|number|bool|select|secret, got %q", f.Type),
+			})
+		}
+
+		if f.Type == "select" && len(f.Options) == 0 {
+			errs = append(errs, ValidationError{
+				Path: path + ".options",
+				Msg:  "required when type is select",
+			})
+		}
+	}
 	return errs
 }
 

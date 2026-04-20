@@ -2,34 +2,41 @@
 // pg-browser — v1 host-form sidecar. Speaks JSON-RPC 2.0 over stdio
 // with LSP Content-Length framing (see plugin/host/jsonrpc.go).
 //
-// Connection parameters come from the PG_* env vars declared in
-// manifest.host.env. The host platform's supervisor filters env
-// aggressively (PATH/HOME/USER/LANG/TMPDIR + manifest's own env);
-// arbitrary host env doesn't leak into the sidecar.
+// Configuration flow:
 //
-// Queries are read-only by convention. listDatabases / listSchemas /
-// listTables hit pg_catalog views; sampleQuery runs a single
-// SELECT COUNT(*). Nothing here writes, so the plugin is safe to
-// expose even with a privileged role (though a dedicated read-only
-// role is still recommended).
+//   - The platform writes user-entered config into plugin_kv (non-
+//     secret fields) and plugin_secret (secret fields) at install
+//     time + every "Configure" save. Keys are prefixed with
+//     "__config." so they don't collide with the plugin's own
+//     runtime storage.
+//
+//   - This sidecar reads those values on startup via outbound JSON-
+//     RPC calls to storage/get and secret/get. When the user saves
+//     new config, the gateway kills the sidecar; the supervisor
+//     respawns it on the next invoke and we re-read everything fresh.
+//
+//   - If any required field is missing (user skipped configure or
+//     PUT-cleared it) every method returns a friendly error pointing
+//     to the Configure action.
+//
+// stdout is reserved for the RPC channel; diagnostics go to stderr.
 
 'use strict';
 
 const { stdin, stdout, stderr } = process;
 
 // ─── JSON-RPC framing ────────────────────────────────────────────────
-// LSP-style Content-Length framing. The host supervisor uses the same
-// format in both directions, so we only need one parser + one writer.
 
-function writeMessage(msg) {
+const pending = new Map();
+let nextId = 1;
+
+function send(msg) {
   const body = Buffer.from(JSON.stringify(msg), 'utf8');
   stdout.write(`Content-Length: ${body.length}\r\n\r\n`);
   stdout.write(body);
 }
 
 function log(...args) {
-  // stderr is drained by the supervisor at Info level — stdout is
-  // reserved for the JSON-RPC channel.
   stderr.write(args.join(' ') + '\n');
 }
 
@@ -41,71 +48,99 @@ function startReader(onMessage) {
       const headerEnd = buf.indexOf('\r\n\r\n');
       if (headerEnd < 0) return;
       const header = buf.slice(0, headerEnd).toString('utf8');
-      const match = /Content-Length:\s*(\d+)/i.exec(header);
-      if (!match) {
-        log('pg-browser: malformed header; dropping buffer');
-        buf = Buffer.alloc(0);
-        return;
-      }
-      const bodyLen = parseInt(match[1], 10);
-      const bodyStart = headerEnd + 4;
-      if (buf.length < bodyStart + bodyLen) return;
-      const body = buf.slice(bodyStart, bodyStart + bodyLen).toString('utf8');
-      buf = buf.slice(bodyStart + bodyLen);
-      try {
-        onMessage(JSON.parse(body));
-      } catch (err) {
-        log('pg-browser: JSON parse error:', err.message);
-      }
+      const m = header.match(/Content-Length:\s*(\d+)/i);
+      if (!m) { buf = buf.slice(headerEnd + 4); continue; }
+      const len = parseInt(m[1], 10);
+      if (buf.length < headerEnd + 4 + len) return;
+      const body = buf.slice(headerEnd + 4, headerEnd + 4 + len).toString('utf8');
+      buf = buf.slice(headerEnd + 4 + len);
+      try { onMessage(JSON.parse(body)); }
+      catch (e) { log(`pg-browser: parse error: ${e}`); }
     }
   });
   stdin.on('end', () => process.exit(0));
 }
 
+// call makes an outbound JSON-RPC request and returns a Promise that
+// resolves with result / rejects with {code,message}. The Go host side
+// dispatches to the right namespace based on the "ns/method" prefix.
+function call(method, params) {
+  return new Promise((resolve, reject) => {
+    const id = String(nextId++);
+    pending.set(id, { resolve, reject });
+    send({ jsonrpc: '2.0', id, method, params });
+  });
+}
+
+// ─── Config reader ───────────────────────────────────────────────────
+// Both storage.get and secret.get return null when the key is absent.
+// The platform's config PUT stores non-secret values as JSON strings
+// (e.g. "\"5432\"" for the port), so we always get back a string here;
+// the caller does any int/bool coercion.
+
+const CONFIG_PREFIX = '__config.';
+
+async function readConfig() {
+  const [host, port, user, db, sslMode, password] = await Promise.all([
+    call('storage/get', [CONFIG_PREFIX + 'host']),
+    call('storage/get', [CONFIG_PREFIX + 'port']),
+    call('storage/get', [CONFIG_PREFIX + 'user']),
+    call('storage/get', [CONFIG_PREFIX + 'database']),
+    call('storage/get', [CONFIG_PREFIX + 'sslMode']),
+    call('secret/get',  [CONFIG_PREFIX + 'password']),
+  ]);
+  return {
+    host: host || '',
+    port: port ? parseInt(port, 10) : 5432,
+    user: user || '',
+    database: db || 'postgres',
+    sslMode: sslMode || 'disable',
+    password: password || '',
+  };
+}
+
+function assertConfigured(cfg) {
+  const missing = [];
+  for (const k of ['host', 'user', 'password']) {
+    if (!cfg[k]) missing.push(k);
+  }
+  if (missing.length) {
+    throw new Error(
+      `pg-browser is not configured — ${missing.join(', ')} missing. ` +
+      `Open Plugin → pg-browser → Configure to set connection details.`,
+    );
+  }
+}
+
 // ─── pg client (lazy singleton) ──────────────────────────────────────
-// One long-lived Client per sidecar lifetime. idleShutdownMinutes in
-// the manifest kills the whole process when there's no traffic, so
-// connection leaks are bounded by that timer.
 
 let pg;
 try {
   pg = require('pg');
 } catch (err) {
   log('pg-browser: FATAL — node-postgres (pg) not bundled with plugin:', err.message);
-  // Don't exit — let method calls surface the error so the user sees
-  // it in the command result instead of a silent crash.
 }
 
 let client = null;
-let clientError = null;
 
 async function getClient() {
   if (client) return client;
-  if (!pg) {
-    throw new Error('node-postgres not installed in plugin bundle');
-  }
+  if (!pg) throw new Error('node-postgres not installed in plugin bundle');
+  const cfg = await readConfig();
+  assertConfigured(cfg);
   const { Client } = pg;
-  const cfg = {
-    host: process.env.PG_HOST,
-    port: parseInt(process.env.PG_PORT || '5432', 10),
-    user: process.env.PG_USER,
-    password: process.env.PG_PASSWORD,
-    database: process.env.PG_DATABASE || 'postgres',
-    ssl: process.env.PG_SSLMODE && process.env.PG_SSLMODE !== 'disable'
-      ? { rejectUnauthorized: process.env.PG_SSLMODE === 'verify-full' }
+  const c = new Client({
+    host: cfg.host,
+    port: cfg.port,
+    user: cfg.user,
+    password: cfg.password,
+    database: cfg.database,
+    ssl: cfg.sslMode && cfg.sslMode !== 'disable'
+      ? { rejectUnauthorized: cfg.sslMode === 'verify-full' }
       : false,
     connectionTimeoutMillis: 8000,
     statement_timeout: 15000,
-  };
-  for (const key of ['host', 'user', 'password']) {
-    if (!cfg[key] || cfg[key] === '__REPLACE_ME__') {
-      throw new Error(
-        `PG_${key.toUpperCase()} is not configured — the plugin operator ` +
-        `must set manifest.host.env.PG_${key.toUpperCase()} before publishing.`,
-      );
-    }
-  }
-  const c = new Client(cfg);
+  });
   await c.connect();
   client = c;
   log(`pg-browser: connected to ${cfg.user}@${cfg.host}:${cfg.port}/${cfg.database}`);
@@ -115,16 +150,19 @@ async function getClient() {
 // ─── Method implementations ──────────────────────────────────────────
 
 async function methodInfo() {
-  const cfg = {
-    host: process.env.PG_HOST,
-    port: parseInt(process.env.PG_PORT || '5432', 10),
-    user: process.env.PG_USER,
-    database: process.env.PG_DATABASE,
-    sslmode: process.env.PG_SSLMODE || 'disable',
-  };
   let status = 'disconnected';
   let serverVersion = null;
+  let config = null;
   try {
+    const cfg = await readConfig();
+    config = {
+      host: cfg.host || '(unset)',
+      port: cfg.port,
+      user: cfg.user || '(unset)',
+      database: cfg.database,
+      sslMode: cfg.sslMode,
+      passwordSet: Boolean(cfg.password),
+    };
     const c = await getClient();
     const { rows } = await c.query('SELECT version() AS v');
     serverVersion = rows[0] && rows[0].v;
@@ -132,7 +170,7 @@ async function methodInfo() {
   } catch (err) {
     status = `error: ${err.message}`;
   }
-  return { status, config: cfg, serverVersion };
+  return { status, config, serverVersion };
 }
 
 async function methodListDatabases() {
@@ -201,32 +239,41 @@ async function handleRequest(msg) {
   const { id, method, params } = msg;
   const fn = methods[method];
   if (typeof fn !== 'function') {
-    writeMessage({
-      jsonrpc: '2.0',
-      id,
+    send({
+      jsonrpc: '2.0', id,
       error: { code: -32601, message: `unknown method: ${method}` },
     });
     return;
   }
   try {
     const result = await fn(params || {});
-    writeMessage({ jsonrpc: '2.0', id, result });
+    send({ jsonrpc: '2.0', id, result });
   } catch (err) {
     log(`pg-browser: method ${method} failed:`, err.message);
-    writeMessage({
-      jsonrpc: '2.0',
-      id,
+    send({
+      jsonrpc: '2.0', id,
       error: { code: -32000, message: err.message || String(err) },
     });
   }
 }
 
 startReader((msg) => {
-  // Only requests (those with an id) get replies. Notifications
-  // without an id are silently dropped — the platform doesn't push
-  // any today, but keeping the branch makes the wire contract explicit.
-  if (msg && typeof msg.id !== 'undefined') {
+  // Inbound request: method present, id present → dispatch.
+  if (msg && typeof msg.method === 'string' && typeof msg.id !== 'undefined') {
     handleRequest(msg);
+    return;
+  }
+  // Inbound response to an outbound call we made.
+  if (msg && typeof msg.id !== 'undefined'
+    && (msg.result !== undefined || msg.error)) {
+    const p = pending.get(msg.id);
+    if (!p) return;
+    pending.delete(msg.id);
+    if (msg.error) {
+      p.reject(new Error(`${msg.error.code}: ${msg.error.message}`));
+    } else {
+      p.resolve(msg.result);
+    }
   }
 });
 

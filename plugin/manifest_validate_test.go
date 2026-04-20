@@ -1044,3 +1044,90 @@ func TestValidate_Webview_PanelRenderEnum(t *testing.T) {
 		t.Errorf("expected panels[0].render error, got: %v", errs)
 	}
 }
+
+// ─── configSchema ───────────────────────────────────────────────────────────
+
+// TestValidate_ConfigSchema_Accepts covers every v1 type + legacy aliases.
+// Each field has a unique key because the validator also rejects duplicates.
+func TestValidate_ConfigSchema_Accepts(t *testing.T) {
+	cases := []ConfigField{
+		{Key: "host", Label: "Host", Type: "string"},
+		{Key: "port", Label: "Port", Type: "number"},
+		{Key: "enabled", Label: "Enabled", Type: "bool"},
+		{Key: "flag", Label: "Flag", Type: "boolean"}, // legacy alias
+		{Key: "mode", Label: "Mode", Type: "select",
+			Options: []any{"a", "b"}},
+		{Key: "password", Label: "Password", Type: "secret"},
+		{Key: "bio", Label: "Bio", Type: "text"}, // legacy alias
+	}
+	p := baseV1Provider()
+	p.ConfigSchema = cases
+	errs := ValidateV1(p)
+	if hasError(errs, "configSchema") {
+		t.Errorf("unexpected configSchema errors: %v", errs)
+	}
+}
+
+func TestValidate_ConfigSchema_Rejects(t *testing.T) {
+	tests := []struct {
+		name   string
+		schema []ConfigField
+		want   string
+	}{
+		{
+			name:   "missing key",
+			schema: []ConfigField{{Label: "X", Type: "string"}},
+			want:   "configSchema[0].key",
+		},
+		{
+			name:   "bad key pattern",
+			schema: []ConfigField{{Key: "has-dash", Label: "X", Type: "string"}},
+			want:   "configSchema[0].key",
+		},
+		{
+			name: "duplicate key",
+			schema: []ConfigField{
+				{Key: "host", Label: "A", Type: "string"},
+				{Key: "host", Label: "B", Type: "string"},
+			},
+			want: "configSchema[1].key",
+		},
+		{
+			name:   "missing label",
+			schema: []ConfigField{{Key: "host", Type: "string"}},
+			want:   "configSchema[0].label",
+		},
+		{
+			name:   "unknown type",
+			schema: []ConfigField{{Key: "x", Label: "X", Type: "widget"}},
+			want:   "configSchema[0].type",
+		},
+		{
+			name:   "select without options",
+			schema: []ConfigField{{Key: "mode", Label: "Mode", Type: "select"}},
+			want:   "configSchema[0].options",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			p := baseV1Provider()
+			p.ConfigSchema = tc.schema
+			errs := ValidateV1(p)
+			if !hasError(errs, tc.want) {
+				t.Errorf("want error at %s, got: %v", tc.want, errs)
+			}
+		})
+	}
+}
+
+// baseV1Provider returns the minimum valid v1 manifest for tests that
+// only want to exercise one sub-validator. Kept local to keep the
+// fixture light.
+func baseV1Provider() Provider {
+	return Provider{
+		Name:      "test",
+		Version:   "1.0.0",
+		Publisher: "opendray-examples",
+		Engines:   &EnginesV1{Opendray: "^1.0.0"},
+	}
+}

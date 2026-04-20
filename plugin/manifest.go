@@ -346,22 +346,37 @@ type ModelDef struct {
 	Description string `json:"description,omitempty"`
 }
 
-// ConfigField defines one configurable parameter.
-// The frontend renders a form based on these fields.
+// ConfigField defines one configurable parameter. The frontend
+// renders a form based on these fields; v1 plugins consume the
+// saved values at runtime through the storage / secret bridge
+// namespaces with the reserved key prefix "__config.<key>".
+//
+// v1 Type values:
+//
+//	string  → text input               → plugin_kv
+//	number  → numeric input             → plugin_kv (stored as JSON string)
+//	bool    → switch                    → plugin_kv ("true" / "false")
+//	select  → dropdown                  → plugin_kv (must be in Options)
+//	secret  → password input            → plugin_secret (AES-GCM)
+//
+// Legacy Type values ("boolean", "text", "args") remain accepted for
+// pre-v1 plugins but are not rendered by the v1 Hub config form. Use
+// "bool" on new manifests. EnvVar / CLIFlag / CLIValue / DependsOn
+// are legacy-only and ignored by the v1 config pipeline.
 type ConfigField struct {
 	Key         string `json:"key"`
 	Label       string `json:"label"`
-	Type        string `json:"type"` // string | secret | select | number | boolean | text | args
+	Type        string `json:"type"`
 	Description string `json:"description,omitempty"`
 	Placeholder string `json:"placeholder,omitempty"`
 	Default     any    `json:"default,omitempty"`
 	Options     []any  `json:"options,omitempty"` // for select type
 	Required    bool   `json:"required,omitempty"`
-	EnvVar      string `json:"envVar,omitempty"`    // maps to env var when launching
-	CLIFlag     string `json:"cliFlag,omitempty"`   // when boolean=true or select value set, append this flag
-	CLIValue    bool   `json:"cliValue,omitempty"`  // if true, append flag + value (--flag value); if false, flag only (--flag)
+	EnvVar      string `json:"envVar,omitempty"`    // legacy: maps to env var when launching
+	CLIFlag     string `json:"cliFlag,omitempty"`   // legacy: CLI flag append
+	CLIValue    bool   `json:"cliValue,omitempty"`  // legacy: append value after flag
 	Group       string `json:"group,omitempty"`     // visual grouping: "auth" | "runtime" | "advanced"
-	DependsOn   string `json:"dependsOn,omitempty"` // only show when this key has a specific value
+	DependsOn   string `json:"dependsOn,omitempty"` // legacy: show-when gate
 	DependsVal  string `json:"dependsVal,omitempty"`
 }
 

@@ -9,6 +9,7 @@ import '../../shared/providers_bus.dart';
 import '../../shared/theme/app_theme.dart';
 import '../settings/plugin_consents_page.dart';
 import 'plugin_config_page.dart';
+import 'plugin_configure_page.dart';
 
 /// Installed-plugins management at `/plugins`.
 ///
@@ -128,9 +129,16 @@ class _PluginsPageState extends State<PluginsPage> {
   }
 
   void _openConfig(provider_model.ProviderInfo p) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => PluginConfigPage(info: p),
-    ));
+    // v1 plugins use the new configSchema pipeline (plugin_kv +
+    // plugin_secret + sidecar restart). Legacy providers still edit
+    // the old `providers.config` column via PluginConfigPage.
+    final builder = p.provider.isV1
+        ? (BuildContext _) => PluginConfigurePage(
+              pluginName: p.provider.name,
+              displayName: p.provider.displayName,
+            )
+        : (BuildContext _) => PluginConfigPage(info: p);
+    Navigator.of(context).push(MaterialPageRoute(builder: builder));
   }
 
   @override

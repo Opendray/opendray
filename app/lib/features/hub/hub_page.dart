@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/api/api_client.dart';
 import '../../shared/providers_bus.dart';
 import '../../shared/theme/app_theme.dart';
+import '../plugins/plugin_config_form.dart';
 
 /// Marketplace entry point at `/hub`.
 ///
@@ -88,6 +89,16 @@ class _HubPageState extends State<HubPage> {
         return;
       }
       final installedName = await _api.confirmPluginInstall(pending.token);
+
+      // Plugins that declare a configSchema land in the Hub with
+      // blank values. We open the configure form right after confirm
+      // so the user doesn't have to dig for it — skip is allowed and
+      // the plugin will just surface a "not configured" error until
+      // the user comes back to Plugin → Configure.
+      if (mounted && entry.configSchema.isNotEmpty) {
+        await _promptConfigureAfterInstall(entry, installedName);
+      }
+
       _notify('Installed $installedName');
       ProvidersBus.instance.notify();
       await _load();
@@ -96,6 +107,49 @@ class _HubPageState extends State<HubPage> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// Post-install configuration dialog. Runs AFTER the install has
+  /// been confirmed server-side so the plugin exists in /api/providers
+  /// and has a consent row — the config PUT needs both. Cancelling
+  /// is fine; the user can re-open the form from Plugin → Configure.
+  Future<void> _promptConfigureAfterInstall(
+      MarketplaceEntry entry, String installedName) async {
+    final displayName =
+        entry.displayName.isEmpty ? entry.name : entry.displayName;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          title: Text('Configure $displayName'),
+          content: SingleChildScrollView(
+            child: SizedBox(
+              width: 380,
+              child: PluginConfigForm(
+                schema: entry.configSchema,
+                initialValues: const {},
+                submitLabel: 'Save',
+                onCancel: () => Navigator.pop(dialogCtx),
+                onSave: (drafts) async {
+                  final body = PluginConfig(
+                    schema: entry.configSchema,
+                    values: const {},
+                  ).toPutBody(drafts);
+                  try {
+                    await _api.putPluginConfig(installedName, body);
+                    if (!dialogCtx.mounted) return;
+                    Navigator.pop(dialogCtx);
+                    _notify('Saved config for $installedName');
+                  } catch (e) {
+                    _notify('Save failed: $e', isError: true);
+                  }
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<bool?> _showConsentDialog(
