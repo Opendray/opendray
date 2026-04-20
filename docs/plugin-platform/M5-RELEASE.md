@@ -54,12 +54,12 @@ rewritten.
 | E2 | Bridge API signature lock — frozen banner on 04-bridge-api.md | ✅ | this commit |
 | E3 | M5-RELEASE.md                                          | ✅ | this commit |
 
-### Phase 5 — Legacy migration (Track A) — PENDING
+### Phase 5 — Legacy migration (Track A)
 
 | ID | Title | Status |
 |---|---|---|
-| A1 | Terminal plugin → v1                                   | ⏸ |
-| A2 | File-browser plugin → v1                               | ⏸ |
+| A1 | Terminal plugin → v1                                   | ✅ |
+| A2 | File-browser plugin → v1                               | ✅ |
 | A3 | Claude plugin → v1                                     | ⏸ |
 | A4 | Retire compat synthesizer path                         | ⏸ |
 

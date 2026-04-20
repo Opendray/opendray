@@ -57,9 +57,12 @@ func TestProvider_EffectiveForm(t *testing.T) {
 }
 
 func TestLoadManifest_LegacyCompat(t *testing.T) {
-	// Every bundled plugin manifest under plugins/agents and plugins/panels
-	// must continue to load unchanged: IsV1()==false, and Name/Version/Type
-	// populated exactly like they are on main.
+	// Bundled plugin manifests under plugins/agents and plugins/panels must
+	// continue to load without losing identity fields. Mixed shape is
+	// expected: some are still legacy (no publisher/engines), others
+	// migrated to v1 under M5 Phase 5 (A1+A2 so far — terminal,
+	// file-browser). Both must retain Name/Version/Type; only the
+	// *legacy* set is asserted to report IsV1()==false.
 	var providers []Provider
 	for _, root := range []string{"agents", "panels"} {
 		ps, err := ScanFS(bundled.FS, root)
@@ -72,20 +75,31 @@ func TestLoadManifest_LegacyCompat(t *testing.T) {
 		t.Fatal("no bundled plugins found — ScanFS regression")
 	}
 
+	// v1Migrated is the set of bundled manifests that intentionally opted
+	// into the v1 contract. Extend as each Phase 5 task lands.
+	v1Migrated := map[string]bool{
+		"terminal":     true, // M5 A1
+		"file-browser": true, // M5 A2
+	}
+
 	for _, p := range providers {
 		p := p
 		t.Run(p.Name, func(t *testing.T) {
-			if p.IsV1() {
-				t.Errorf("legacy manifest reports IsV1()=true; v1 opt-in should require publisher+engines")
+			if v1Migrated[p.Name] {
+				if !p.IsV1() {
+					t.Errorf("migrated manifest %q must report IsV1()=true", p.Name)
+				}
+			} else if p.IsV1() {
+				t.Errorf("legacy manifest %q reports IsV1()=true; v1 opt-in should require publisher+engines", p.Name)
 			}
 			if p.Name == "" {
-				t.Errorf("legacy manifest lost Name field")
+				t.Errorf("manifest lost Name field")
 			}
 			if p.Version == "" {
-				t.Errorf("legacy manifest lost Version field")
+				t.Errorf("manifest lost Version field")
 			}
 			if p.Type == "" {
-				t.Errorf("legacy manifest lost Type field")
+				t.Errorf("manifest lost Type field")
 			}
 		})
 	}

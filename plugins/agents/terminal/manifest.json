@@ -1,15 +1,18 @@
 {
+  "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
   "name": "terminal",
   "displayName": "Terminal",
   "description": "System login shell — zsh, bash, or configured shell",
   "icon": "⬛",
   "version": "1.0.0",
+  "publisher": "opendray-builtin",
+  "engines": { "opendray": "^1.0.0" },
+  "form": "declarative",
+  "activation": ["onStartup"],
   "type": "shell",
   "cli": {
     "command": "/bin/zsh",
-    "defaultArgs": [
-      "-l"
-    ],
+    "defaultArgs": ["-l"],
     "detectCmd": "true"
   },
   "capabilities": {
@@ -26,11 +29,7 @@
       "label": "Shell",
       "type": "select",
       "group": "runtime",
-      "options": [
-        "/bin/zsh",
-        "/bin/bash",
-        "/bin/sh"
-      ],
+      "options": ["/bin/zsh", "/bin/bash", "/bin/sh"],
       "default": "/bin/zsh"
     },
     {
@@ -41,5 +40,13 @@
       "default": "-l"
     }
   ],
+  "contributes": {
+    "activityBar": [
+      { "id": "terminal", "icon": "⬛", "title": "Terminal", "viewId": "terminal" }
+    ],
+    "views": [
+      { "id": "terminal", "title": "Terminal", "container": "activityBar", "render": "declarative" }
+    ]
+  },
   "required": true
 }

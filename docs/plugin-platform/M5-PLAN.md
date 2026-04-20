@@ -162,13 +162,13 @@ to degrade gracefully when the route 404s).
 
 ### Track A — Legacy migration (tier 1 only)
 
-| ID | Task | Effort |
-|---|---|---|
-| A1 | Migrate `terminal` manifest → v1 (publisher, engines) | S |
-| A2 | Migrate `file-browser` manifest → v1 | S |
-| A3 | Migrate `claude` → v1 host plugin (Node sidecar wrapping CLI, activation=onSession, permissions.exec) | M |
-| A4 | Retire compat synthesizer path for migrated plugins | S |
-| A5 | Doc update + examples README | S |
+| ID | Task | Effort | Notes |
+|---|---|---|---|
+| A1 | Migrate `terminal` manifest → v1 (publisher, engines) | S | ✅ form:"declarative" + contributes.activityBar/views declared inline so Flutter gets the same icon+view Synthesize used to generate. |
+| A2 | Migrate `file-browser` manifest → v1 | S | ✅ same shape as A1. /api/files/{plugin} endpoints stay as the I/O path for now; bridge-native rewrite is post-v1. |
+| A3 | Migrate `claude` → v1 host plugin (Node sidecar wrapping CLI, activation=onSession, permissions.exec) | M | ⏸ pending |
+| A4 | Retire compat synthesizer path for migrated plugins | S | ⏸ pending (after A3) |
+| A5 | Doc update + examples README | S | ⏸ pending |
 
 ### Track B — Platform completeness
 

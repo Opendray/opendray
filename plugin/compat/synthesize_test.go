@@ -136,18 +136,29 @@ func TestSynthesize_BundledManifests(t *testing.T) {
 	for _, p := range providers {
 		p := p // capture
 		t.Run(p.Name, func(t *testing.T) {
-			// Pre-condition: bundled manifests are legacy.
-			if p.IsV1() {
-				t.Fatalf("bundled manifest %q unexpectedly has IsV1()=true before synthesis", p.Name)
-			}
+			wasV1 := p.IsV1()
 
 			got := compat.Synthesize(p)
 
-			if got.Publisher != "opendray-builtin" {
-				t.Errorf("Publisher = %q; want opendray-builtin", got.Publisher)
-			}
+			// IsV1() must always be true after Synthesize (either the
+			// input was already v1 — pass-through — or the synthesiser
+			// promoted a legacy manifest).
 			if !got.IsV1() {
 				t.Errorf("IsV1() = false after Synthesize")
+			}
+			// Publisher: legacy inputs get the "opendray-builtin" default;
+			// pre-migrated v1 manifests keep whatever they declared (M5 A1/A2
+			// — terminal + file-browser are now v1 with publisher set
+			// directly, so pass-through preserves their value).
+			if !wasV1 {
+				if got.Publisher != "opendray-builtin" {
+					t.Errorf("legacy %q: Publisher = %q; want opendray-builtin",
+						p.Name, got.Publisher)
+				}
+			} else {
+				if got.Publisher == "" {
+					t.Errorf("v1 %q: Publisher cleared by pass-through", p.Name)
+				}
 			}
 			if got.Name != p.Name {
 				t.Errorf("Name changed: got %q, want %q", got.Name, p.Name)

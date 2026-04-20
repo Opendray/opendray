@@ -1,9 +1,14 @@
 {
+  "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
   "name": "file-browser",
   "displayName": "File Browser",
   "description": "Browse and view project files on the server with syntax highlighting",
   "icon": "📁",
   "version": "1.0.0",
+  "publisher": "opendray-builtin",
+  "engines": { "opendray": "^1.0.0" },
+  "form": "declarative",
+  "activation": ["onStartup"],
   "type": "panel",
   "category": "files",
   "capabilities": {
@@ -49,5 +54,13 @@
       "description": "Starting directory when opening the file browser"
     }
   ],
+  "contributes": {
+    "activityBar": [
+      { "id": "file-browser", "icon": "📁", "title": "File Browser", "viewId": "file-browser" }
+    ],
+    "views": [
+      { "id": "file-browser", "title": "File Browser", "container": "activityBar", "render": "declarative" }
+    ]
+  },
   "required": true
 }
