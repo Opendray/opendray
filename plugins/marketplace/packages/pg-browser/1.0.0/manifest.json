@@ -1,0 +1,64 @@
+{
+  "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
+  "name": "pg-browser",
+  "version": "1.0.0",
+  "publisher": "opendray-examples",
+  "displayName": "PostgreSQL Browser",
+  "description": "Browse PostgreSQL databases, schemas, tables, and run a sample SELECT. v1 rewrite of the legacy in-process database panel — now a sidecar that the host platform can install, permission-gate, and sandbox like any third-party plugin.",
+  "icon": "🐘",
+  "engines": { "opendray": "^1.0.0" },
+  "form": "host",
+  "activation": ["onStartup"],
+  "host": {
+    "entry": "sidecar.js",
+    "runtime": "node",
+    "protocol": "jsonrpc-stdio",
+    "restart": "on-failure",
+    "idleShutdownMinutes": 10,
+    "env": {
+      "PG_HOST": "__REPLACE_ME__",
+      "PG_PORT": "5432",
+      "PG_USER": "__REPLACE_ME__",
+      "PG_PASSWORD": "__REPLACE_ME__",
+      "PG_DATABASE": "postgres",
+      "PG_SSLMODE": "disable"
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "id": "pg-browser.info",
+        "title": "Postgres: Connection info",
+        "icon": "🐘",
+        "run": { "kind": "host", "method": "info" }
+      },
+      {
+        "id": "pg-browser.list-databases",
+        "title": "Postgres: List databases",
+        "icon": "🐘",
+        "run": { "kind": "host", "method": "listDatabases" }
+      },
+      {
+        "id": "pg-browser.list-schemas",
+        "title": "Postgres: List schemas",
+        "icon": "🐘",
+        "run": { "kind": "host", "method": "listSchemas" }
+      },
+      {
+        "id": "pg-browser.list-tables",
+        "title": "Postgres: List tables (public schema)",
+        "icon": "🐘",
+        "run": { "kind": "host", "method": "listTables" }
+      },
+      {
+        "id": "pg-browser.sample-query",
+        "title": "Postgres: Sample SELECT",
+        "icon": "🐘",
+        "run": { "kind": "host", "method": "sampleQuery" }
+      }
+    ]
+  },
+  "permissions": {
+    "secret": true
+  }
+}

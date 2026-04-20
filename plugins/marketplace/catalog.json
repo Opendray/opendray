@@ -13,6 +13,19 @@
       "permissions": {
         "fs": { "read": ["${home}/**"] }
       }
+    },
+    {
+      "name": "pg-browser",
+      "version": "1.0.0",
+      "publisher": "opendray-examples",
+      "displayName": "PostgreSQL Browser",
+      "description": "v1 rewrite of the legacy in-process database panel. A Node sidecar connects to PostgreSQL and exposes list/query commands — now installable, permission-gated, and sandboxed like any third-party plugin.",
+      "icon": "🐘",
+      "form": "host",
+      "tags": ["database", "example", "host"],
+      "permissions": {
+        "secret": true
+      }
     }
   ]
 }
