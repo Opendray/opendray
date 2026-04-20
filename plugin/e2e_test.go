@@ -31,10 +31,12 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
 	embeddedpostgres "github.com/fergusstrange/embedded-postgres"
+	"github.com/gorilla/websocket"
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/opendray/opendray/gateway"
@@ -122,6 +124,11 @@ type testHarness struct {
 	httpServer *httptest.Server
 	client     *http.Client
 	baseURL    string
+
+	// M5 D2 — bridge wiring so the kanban E2E can open a real
+	// /api/plugins/kanban/bridge/ws connection and exercise storage.
+	bridgeMgr  *bridge.Manager
+	storageAPI *bridge.StorageAPI
 }
 
 // newHarness brings up embedded Postgres, migrates, and constructs the
@@ -246,6 +253,14 @@ func (h *testHarness) startServer(ctx context.Context) {
 		Logger: slog.Default(),
 	})
 
+	// M5 D2 — bridge manager + storage namespace so the kanban E2E
+	// can open a WS and exercise storage.set/get end-to-end. The
+	// other M3 namespaces (fs/exec/http/secret/workbench/events) are
+	// unit-tested in plugin/bridge; this harness keeps scope to what
+	// the kanban E2E actually exercises.
+	h.bridgeMgr = bridge.NewManager(slog.Default())
+	h.storageAPI = bridge.NewStorageAPI(h.db, h.gate)
+
 	// Construct the real gateway.Server via gateway.New. Auth=nil means the
 	// protected route group runs without JWT middleware — fine for an
 	// E2E test of business logic. Telegram watch loop spins harmlessly
@@ -260,7 +275,9 @@ func (h *testHarness) startServer(ctx context.Context) {
 		Installer:     h.installer,
 		Contributions: h.registry,
 		CommandInvoker: dispatcherInvoker{d: h.dispatcher},
+		BridgeManager: h.bridgeMgr,
 	})
+	h.gwServer.RegisterNamespace("storage", h.storageAPI)
 
 	h.httpServer = httptest.NewServer(h.gwServer.Handler())
 	h.client = h.httpServer.Client()
@@ -731,3 +748,343 @@ func assertTimeNinjaContributions(t *testing.T, h *testHarness, label string) {
 // stdlib driver embedded-postgres needs. (Blank import above pulls it in,
 // this just keeps the unused-import linter quiet across Go versions.)
 var _ = sql.Drivers
+
+// ─── M5 D2 — kanban E2E ──────────────────────────────────────────────────────
+
+// kanbanPath mirrors timeNinjaPath but returns the kanban example bundle.
+func kanbanPath(t *testing.T) string {
+	t.Helper()
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed")
+	}
+	dir := filepath.Dir(file)
+	for i := 0; i < 10; i++ {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			p := filepath.Join(dir, "plugins", "examples", "kanban")
+			if _, err := os.Stat(filepath.Join(p, "manifest.json")); err != nil {
+				t.Fatalf("kanban manifest missing at %s: %v", p, err)
+			}
+			return p
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	t.Fatal("could not locate repo root (no go.mod in any ancestor)")
+	return ""
+}
+
+// cspGoldenE2E is the Content-Security-Policy value the M3 plugins_assets
+// golden-file test pins in gateway/plugins_assets_test.go. Re-stated here
+// byte-for-byte — if it drifts, the E2E catches it too.
+const cspGoldenE2E = "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:; img-src 'self' data: blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'"
+
+// TestE2E_KanbanFullLifecycle — M5 D2 (the M3 T27 carry-on from M2 T23).
+//
+// Exercises the webview + storage-capable plugin path end-to-end:
+//
+//  1. Install kanban via POST /api/plugins/install (local:).
+//  2. Confirm token → plugins + plugin_consents rows present.
+//  3. /api/workbench/contributions exposes kanban's activityBar + view.
+//  4. /api/plugins/kanban/assets/index.html serves with byte-exact CSP.
+//  5. WS /api/plugins/kanban/bridge/ws: storage.set then storage.get.
+//  6. DELETE /consents/storage → next storage.set returns EPERM within
+//     the 200 ms hot-revoke SLO.
+//  7. Restart the gateway; the kv row persists across the reboot.
+//  8. Uninstall → assets 404 + plugin_kv cascade-deletes.
+//
+// Build tag `e2e` + testing.Short() skip guard match the time-ninja
+// sibling test.
+func TestE2E_KanbanFullLifecycle(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping full E2E under -short")
+	}
+
+	t.Setenv("OPENDRAY_ALLOW_LOCAL_PLUGINS", "1")
+
+	h := newHarness(t)
+
+	var installToken string
+	kbDir := kanbanPath(t)
+
+	t.Run("Install", func(t *testing.T) {
+		req := map[string]string{"src": "local:" + kbDir}
+		var got struct {
+			Token   string `json:"token"`
+			Name    string `json:"name"`
+			Version string `json:"version"`
+		}
+		code := h.doJSON(http.MethodPost, "/api/plugins/install", req, &got)
+		if code != http.StatusAccepted {
+			t.Fatalf("install: status %d", code)
+		}
+		if got.Name != "kanban" {
+			t.Errorf("install: name=%q, want kanban", got.Name)
+		}
+		installToken = got.Token
+	})
+
+	t.Run("Confirm", func(t *testing.T) {
+		if installToken == "" {
+			t.Skip("install failed; skipping confirm")
+		}
+		var got struct {
+			Installed bool `json:"installed"`
+		}
+		code := h.doJSON(http.MethodPost, "/api/plugins/install/confirm",
+			map[string]string{"token": installToken}, &got)
+		if code != http.StatusOK || !got.Installed {
+			t.Fatalf("confirm: status=%d installed=%v", code, got.Installed)
+		}
+		if n := countRows(t, h.db,
+			`SELECT count(*) FROM plugin_consents WHERE plugin_name=$1`,
+			"kanban"); n != 1 {
+			t.Errorf("plugin_consents count=%d, want 1", n)
+		}
+	})
+
+	t.Run("Contributions", func(t *testing.T) {
+		var flat struct {
+			ActivityBar []struct {
+				PluginName string `json:"pluginName"`
+				ID         string `json:"id"`
+				ViewID     string `json:"viewId"`
+			} `json:"activityBar"`
+			Views []struct {
+				PluginName string `json:"pluginName"`
+				ID         string `json:"id"`
+				Render     string `json:"render"`
+				Entry      string `json:"entry"`
+			} `json:"views"`
+		}
+		code := h.doJSON(http.MethodGet, "/api/workbench/contributions", nil, &flat)
+		if code != http.StatusOK {
+			t.Fatalf("contributions: status %d", code)
+		}
+		foundAB := false
+		for _, a := range flat.ActivityBar {
+			if a.PluginName == "kanban" && a.ID == "kanban.activity" && a.ViewID == "kanban.board" {
+				foundAB = true
+			}
+		}
+		if !foundAB {
+			t.Errorf("activityBar missing kanban.activity: %+v", flat.ActivityBar)
+		}
+		foundView := false
+		for _, v := range flat.Views {
+			if v.PluginName == "kanban" && v.ID == "kanban.board" && v.Render == "webview" && v.Entry == "index.html" {
+				foundView = true
+			}
+		}
+		if !foundView {
+			t.Errorf("views[] missing kanban.board webview: %+v", flat.Views)
+		}
+	})
+
+	t.Run("AssetCSP", func(t *testing.T) {
+		resp, err := h.client.Get(h.baseURL + "/api/plugins/kanban/assets/index.html")
+		if err != nil {
+			t.Fatalf("asset get: %v", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("asset status=%d", resp.StatusCode)
+		}
+		if got := resp.Header.Get("Content-Security-Policy"); got != cspGoldenE2E {
+			t.Errorf("CSP mismatch:\nwant: %q\ngot:  %q", cspGoldenE2E, got)
+		}
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("read asset: %v", err)
+		}
+		if len(body) == 0 {
+			t.Error("asset body empty")
+		}
+		if resp.Header.Get("X-Content-Type-Options") != "nosniff" {
+			t.Error("missing X-Content-Type-Options: nosniff")
+		}
+	})
+
+	// WS storage round-trip. Shares a single conn across set → get → revoke → EPERM.
+	const storageKey = "board:test"
+	const storageValue = `{"columns":["todo","doing","done"]}`
+
+	t.Run("WSStorageSetGet", func(t *testing.T) {
+		c := dialBridgeWS(t, h.baseURL, "kanban")
+		defer c.Close()
+
+		// set
+		sendBridge(t, c, bridge.Envelope{
+			V: bridge.ProtocolVersion, ID: "1", NS: "storage", Method: "set",
+			Args: json.RawMessage(`["` + storageKey + `", ` + storageValue + `]`),
+		})
+		env := readBridge(t, c)
+		if env.Error != nil {
+			t.Fatalf("set error: %+v", env.Error)
+		}
+
+		// get
+		sendBridge(t, c, bridge.Envelope{
+			V: bridge.ProtocolVersion, ID: "2", NS: "storage", Method: "get",
+			Args: json.RawMessage(`["` + storageKey + `"]`),
+		})
+		env = readBridge(t, c)
+		if env.Error != nil {
+			t.Fatalf("get error: %+v", env.Error)
+		}
+		// The storage API returns the raw JSON — compare byte-wise ignoring
+		// whitespace by re-marshalling.
+		var got any
+		if err := json.Unmarshal(env.Result, &got); err != nil {
+			t.Fatalf("unmarshal result: %v", err)
+		}
+		var want any
+		_ = json.Unmarshal([]byte(storageValue), &want)
+		if !jsonEqual(got, want) {
+			t.Errorf("get result: got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("HotRevokeWithin200ms", func(t *testing.T) {
+		c := dialBridgeWS(t, h.baseURL, "kanban")
+		defer c.Close()
+
+		// Revoke storage capability. bridgeMgr.InvalidateConsent runs
+		// synchronously inside the handler so by the time DELETE returns,
+		// the next call on this conn must hit the updated perms.
+		before := time.Now()
+		code := h.doJSON(http.MethodDelete,
+			"/api/plugins/kanban/consents/storage", nil, nil)
+		if code != http.StatusOK && code != http.StatusNoContent {
+			t.Fatalf("DELETE /consents/storage: status %d", code)
+		}
+
+		sendBridge(t, c, bridge.Envelope{
+			V: bridge.ProtocolVersion, ID: "3", NS: "storage", Method: "set",
+			Args: json.RawMessage(`["` + storageKey + `", ` + storageValue + `]`),
+		})
+		env := readBridge(t, c)
+		elapsed := time.Since(before)
+		if env.Error == nil {
+			t.Fatalf("set after revoke: expected Error, got result=%s", string(env.Result))
+		}
+		if env.Error.Code != "EPERM" {
+			t.Errorf("error code = %q, want EPERM", env.Error.Code)
+		}
+		// Hard SLO assertion from M2 T23 — DELETE → EPERM round-trip in 200 ms.
+		if elapsed > 200*time.Millisecond {
+			t.Errorf("hot-revoke SLO: elapsed %v > 200 ms", elapsed)
+		}
+	})
+
+	t.Run("PersistenceAcrossRestart", func(t *testing.T) {
+		// Verify plugin_kv row is intact at the DB layer (independent of
+		// the bridge — consent is revoked, so a WS call would EPERM).
+		var got []byte
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		err := h.db.Pool.QueryRow(ctx,
+			`SELECT value FROM plugin_kv WHERE plugin_name=$1 AND key=$2`,
+			"kanban", storageKey).Scan(&got)
+		if err != nil {
+			t.Fatalf("pre-restart select: %v", err)
+		}
+
+		h.restartServer()
+
+		err = h.db.Pool.QueryRow(ctx,
+			`SELECT value FROM plugin_kv WHERE plugin_name=$1 AND key=$2`,
+			"kanban", storageKey).Scan(&got)
+		if err != nil {
+			t.Fatalf("post-restart select: %v", err)
+		}
+		// Sanity: the persisted value still parses.
+		var v any
+		if jErr := json.Unmarshal(got, &v); jErr != nil {
+			t.Errorf("post-restart value invalid JSON: %v (raw=%q)", jErr, got)
+		}
+	})
+
+	t.Run("UninstallClearsAssetsAndKV", func(t *testing.T) {
+		var got struct {
+			Status string `json:"status"`
+		}
+		code := h.doJSON(http.MethodDelete, "/api/plugins/kanban", nil, &got)
+		if code != http.StatusOK {
+			t.Fatalf("uninstall: status %d", code)
+		}
+		// Assets 404 post-uninstall.
+		resp, err := h.client.Get(h.baseURL + "/api/plugins/kanban/assets/index.html")
+		if err != nil {
+			t.Fatalf("post-uninstall asset get: %v", err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusNotFound {
+			t.Errorf("post-uninstall asset status=%d, want 404", resp.StatusCode)
+		}
+		// plugin_kv rows cascade-deleted.
+		if n := countRows(t, h.db,
+			`SELECT count(*) FROM plugin_kv WHERE plugin_name=$1`,
+			"kanban"); n != 0 {
+			t.Errorf("plugin_kv rows after uninstall = %d, want 0", n)
+		}
+		// plugin_consents rows cleared too.
+		if n := countRows(t, h.db,
+			`SELECT count(*) FROM plugin_consents WHERE plugin_name=$1`,
+			"kanban"); n != 0 {
+			t.Errorf("plugin_consents rows after uninstall = %d, want 0", n)
+		}
+	})
+}
+
+// ─── WS helpers ──────────────────────────────────────────────────────────────
+
+// dialBridgeWS opens a WS connection against the harness's /bridge/ws
+// route for the named plugin. The deadline is the same 5s upper bound
+// the gateway's own tests use.
+func dialBridgeWS(t *testing.T, baseURL, pluginName string) *websocket.Conn {
+	t.Helper()
+	u := strings.Replace(baseURL, "http://", "ws://", 1)
+	rawURL := u + "/api/plugins/" + pluginName + "/bridge/ws"
+	d := websocket.Dialer{HandshakeTimeout: 5 * time.Second}
+	c, _, err := d.Dial(rawURL, nil)
+	if err != nil {
+		t.Fatalf("dial %s: %v", rawURL, err)
+	}
+	return c
+}
+
+func sendBridge(t *testing.T, c *websocket.Conn, env bridge.Envelope) {
+	t.Helper()
+	raw, err := json.Marshal(env)
+	if err != nil {
+		t.Fatalf("marshal envelope: %v", err)
+	}
+	if err := c.WriteMessage(websocket.TextMessage, raw); err != nil {
+		t.Fatalf("write envelope: %v", err)
+	}
+}
+
+func readBridge(t *testing.T, c *websocket.Conn) bridge.Envelope {
+	t.Helper()
+	c.SetReadDeadline(time.Now().Add(2 * time.Second))
+	_, data, err := c.ReadMessage()
+	if err != nil {
+		t.Fatalf("read envelope: %v", err)
+	}
+	var env bridge.Envelope
+	if err := json.Unmarshal(data, &env); err != nil {
+		t.Fatalf("unmarshal envelope %q: %v", data, err)
+	}
+	return env
+}
+
+// jsonEqual compares two decoded JSON values for deep equality.
+func jsonEqual(a, b any) bool {
+	ab, _ := json.Marshal(a)
+	bb, _ := json.Marshal(b)
+	return string(ab) == string(bb)
+}
