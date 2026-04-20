@@ -473,6 +473,23 @@ func (c *Catalog) BundlePath(_ context.Context, _ market.Ref) (string, bool, err
 	return "", false, nil
 }
 
+// FetchRevocations implements market.Catalog. Pulls the
+// revocations.json file from the registry. A 404 surfaces as
+// (nil, nil) — an empty revocations list is the normal case; the
+// marketplace repo ships revocations.json from day one but a
+// mirror without it shouldn't cause a hard error.
+func (c *Catalog) FetchRevocations(ctx context.Context) ([]byte, error) {
+	body, err := c.fetch(ctx, "revocations.json", maxVersionBytes)
+	if err != nil {
+		var hs *HTTPStatusError
+		if errors.As(err, &hs) && hs.Status == http.StatusNotFound {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("market/remote: fetch revocations: %w", err)
+	}
+	return body, nil
+}
+
 // FetchPublisher implements market.Catalog. Pulls
 // publishers/<publisher>.json from the registry. A 404 surfaces
 // as market.ErrNotFound so callers can branch cleanly.

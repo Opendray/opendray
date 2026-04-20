@@ -164,6 +164,14 @@ type Catalog interface {
 	// publishers/<name>.json; local backends read the on-disk copy.
 	// ErrNotFound when the publisher isn't known.
 	FetchPublisher(ctx context.Context, publisher string) (PublisherRecord, error)
+
+	// FetchRevocations returns the raw bytes of revocations.json.
+	// The caller (market/revocation.Poller) parses them. Kept as
+	// raw bytes here because revocation.Response lives in a
+	// separate package to avoid an import cycle back into market.
+	// Returns (nil, nil) when the file is absent — an empty
+	// revocation list is the normal case.
+	FetchRevocations(ctx context.Context) ([]byte, error)
 }
 
 // ParseRef splits a marketplace reference into a Ref.

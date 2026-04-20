@@ -148,6 +148,24 @@ func (c *Catalog) FetchPublisher(_ context.Context, publisher string) (market.Pu
 	return rec, nil
 }
 
+// FetchRevocations implements market.Catalog. Reads revocations.json
+// from the catalog root. A missing file is a normal empty-state
+// (returns nil bytes, nil error) so the server can boot without a
+// revocations file seeded.
+func (c *Catalog) FetchRevocations(_ context.Context) ([]byte, error) {
+	if c.Dir == "" {
+		return nil, nil
+	}
+	data, err := os.ReadFile(filepath.Join(c.Dir, "revocations.json"))
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("market/local: read revocations: %w", err)
+	}
+	return data, nil
+}
+
 // BundlePath implements market.Catalog. The local backend always has
 // the bundle on disk, so returns (path, true, nil) when the ref
 // resolves.

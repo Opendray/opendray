@@ -557,6 +557,42 @@ func TestMirror_CtxCancelStopsRetry(t *testing.T) {
 	}
 }
 
+// ─── Revocations ──────────────────────────────────────────────────────────
+
+func TestFetchRevocations_HappyPath(t *testing.T) {
+	body := `{"version":1,"entries":[
+		{"name":"acme/evil","versions":"<=1.0.0","reason":"bad","recordedAt":"2025-01-01T00:00:00Z","action":"uninstall"}
+	]}`
+	c := newTestCatalog(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/revocations.json" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, body)
+	})
+	got, err := c.FetchRevocations(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != body {
+		t.Errorf("body mismatch")
+	}
+}
+
+func TestFetchRevocations_404IsEmpty(t *testing.T) {
+	c := newTestCatalog(t, func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	})
+	got, err := c.FetchRevocations(context.Background())
+	if err != nil {
+		t.Fatalf("want nil err on 404, got %v", err)
+	}
+	if got != nil {
+		t.Errorf("want nil bytes on 404, got %d bytes", len(got))
+	}
+}
+
 // ─── Cache ────────────────────────────────────────────────────────────────
 
 func TestCache_HitsAvoidSecondNetwork(t *testing.T) {

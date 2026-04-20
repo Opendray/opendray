@@ -180,6 +180,40 @@ func TestFetchPublisher_NotFound(t *testing.T) {
 	}
 }
 
+func TestFetchRevocations_HappyPath(t *testing.T) {
+	dir := t.TempDir()
+	writeCatalog(t, dir, `{"entries":[]}`)
+	body := `{"version":1,"entries":[
+		{"name":"acme/evil","versions":"<=1.2.3","reason":"bad","recordedAt":"2025-01-01T00:00:00Z","action":"uninstall"}
+	]}`
+	if err := os.WriteFile(filepath.Join(dir, "revocations.json"), []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	c, _ := Load(dir)
+
+	got, err := c.FetchRevocations(context.Background())
+	if err != nil {
+		t.Fatalf("FetchRevocations: %v", err)
+	}
+	if string(got) != body {
+		t.Errorf("body mismatch")
+	}
+}
+
+func TestFetchRevocations_MissingFileIsEmpty(t *testing.T) {
+	dir := t.TempDir()
+	writeCatalog(t, dir, `{"entries":[]}`)
+	c, _ := Load(dir)
+
+	got, err := c.FetchRevocations(context.Background())
+	if err != nil {
+		t.Fatalf("FetchRevocations: %v", err)
+	}
+	if got != nil {
+		t.Errorf("want nil bytes for missing file, got %d bytes", len(got))
+	}
+}
+
 func TestFetchPublisher_DefaultsTrust(t *testing.T) {
 	dir := t.TempDir()
 	writeCatalog(t, dir, `{"entries":[]}`)
