@@ -20,6 +20,7 @@ import '../../shared/theme/app_theme.dart';
 import '../../shared/theme/terminal_theme.dart';
 import '../workbench/panel_slot.dart';
 import '../workbench/status_bar_strip.dart';
+import '../workbench/workbench_models.dart';
 import '../workbench/workbench_service.dart';
 import '../workbench/workbench_sources.dart';
 import 'widgets/quick_keys_bar.dart';
@@ -845,6 +846,8 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               tooltip: 'Toggle quick keys',
             ),
+          // M5 B5 — plugin-contributed session toolbar actions.
+          const _SessionActionStrip(),
           const SizedBox(width: 4),
           if (_session?.isRunning != true)
             _SmallButton(
@@ -1307,4 +1310,42 @@ class _SessionStatusBarState extends State<_SessionStatusBar> {
 
   @override
   Widget build(BuildContext context) => StatusBarStrip(source: _source);
+}
+
+/// Renders plugin-contributed session toolbar actions (M5 B5).
+///
+/// Stays collapsed when no plugin contributes actions. Server caps the
+/// list at 4 per plugin; multi-plugin totals can exceed that but the
+/// host row already side-scrolls through overflow. Tap invokes the
+/// action's effective command — `command` when set, otherwise `id`.
+class _SessionActionStrip extends StatelessWidget {
+  const _SessionActionStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    final service = context.watch<WorkbenchService>();
+    final actions = service.sessionActions;
+    if (actions.isEmpty) return const SizedBox.shrink();
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final a in actions)
+          IconButton(
+            icon: Text(
+              a.icon.isNotEmpty ? a.icon : '•',
+              style: const TextStyle(fontSize: 16),
+            ),
+            tooltip: a.title,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            onPressed: () => _invoke(service, a),
+          ),
+      ],
+    );
+  }
+
+  void _invoke(WorkbenchService service, WorkbenchSessionAction a) {
+    unawaited(service.invoke(a.pluginName, a.effectiveCommand));
+  }
 }

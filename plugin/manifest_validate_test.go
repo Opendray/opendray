@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -1130,4 +1131,108 @@ func baseV1Provider() Provider {
 		Publisher: "opendray-examples",
 		Engines:   &EnginesV1{Opendray: "^1.0.0"},
 	}
+}
+
+// ─── M5 B4: editorActions ─────────────────────────────────────────────────────
+
+// TestValidateV1_EditorActions covers valid + invalid editorActions cases.
+func TestValidateV1_EditorActions(t *testing.T) {
+	t.Run("valid single action", func(t *testing.T) {
+		p := baseV1Provider()
+		p.Contributes = &ContributesV1{
+			EditorActions: []EditorActionV1{
+				{ID: "my-plugin.format", Title: "Format", Icon: "⚡", Group: "edit@1"},
+			},
+		}
+		if errs := ValidateV1(p); len(errs) != 0 {
+			t.Errorf("expected no errors, got: %v", errs)
+		}
+	})
+
+	t.Run("missing id", func(t *testing.T) {
+		p := baseV1Provider()
+		p.Contributes = &ContributesV1{
+			EditorActions: []EditorActionV1{{Title: "Format"}},
+		}
+		errs := ValidateV1(p)
+		if !hasError(errs, "contributes.editorActions[0]") {
+			t.Errorf("expected missing-id error, got: %v", errs)
+		}
+	})
+
+	t.Run("missing title", func(t *testing.T) {
+		p := baseV1Provider()
+		p.Contributes = &ContributesV1{
+			EditorActions: []EditorActionV1{{ID: "my.fmt"}},
+		}
+		errs := ValidateV1(p)
+		if !hasError(errs, "contributes.editorActions[0]") {
+			t.Errorf("expected missing-title error, got: %v", errs)
+		}
+	})
+
+	t.Run("invalid id pattern", func(t *testing.T) {
+		p := baseV1Provider()
+		p.Contributes = &ContributesV1{
+			EditorActions: []EditorActionV1{{ID: "Bad.ID", Title: "X"}},
+		}
+		errs := ValidateV1(p)
+		if !hasError(errs, "contributes.editorActions[0].id") {
+			t.Errorf("expected id-pattern error, got: %v", errs)
+		}
+	})
+}
+
+// ─── M5 B5: sessionActions ────────────────────────────────────────────────────
+
+// TestValidateV1_SessionActions covers valid + invalid sessionActions cases.
+func TestValidateV1_SessionActions(t *testing.T) {
+	t.Run("valid action with command", func(t *testing.T) {
+		p := baseV1Provider()
+		p.Contributes = &ContributesV1{
+			SessionActions: []SessionActionV1{
+				{ID: "my-plugin.restart", Title: "Restart", Command: "my-plugin.restart-session"},
+			},
+		}
+		if errs := ValidateV1(p); len(errs) != 0 {
+			t.Errorf("expected no errors, got: %v", errs)
+		}
+	})
+
+	t.Run("missing id and title", func(t *testing.T) {
+		p := baseV1Provider()
+		p.Contributes = &ContributesV1{
+			SessionActions: []SessionActionV1{{}},
+		}
+		errs := ValidateV1(p)
+		if !hasError(errs, "contributes.sessionActions[0]") {
+			t.Errorf("expected missing fields error, got: %v", errs)
+		}
+	})
+
+	t.Run("max 4 limit", func(t *testing.T) {
+		p := baseV1Provider()
+		actions := make([]SessionActionV1, 5)
+		for i := range actions {
+			actions[i] = SessionActionV1{ID: fmt.Sprintf("a.b%d", i), Title: "X"}
+		}
+		p.Contributes = &ContributesV1{SessionActions: actions}
+		errs := ValidateV1(p)
+		if !hasError(errs, "contributes.sessionActions") {
+			t.Errorf("expected max-4 error, got: %v", errs)
+		}
+	})
+
+	t.Run("invalid command pattern", func(t *testing.T) {
+		p := baseV1Provider()
+		p.Contributes = &ContributesV1{
+			SessionActions: []SessionActionV1{
+				{ID: "x.y", Title: "X", Command: "Bad Cmd"},
+			},
+		}
+		errs := ValidateV1(p)
+		if !hasError(errs, "contributes.sessionActions[0].command") {
+			t.Errorf("expected command-pattern error, got: %v", errs)
+		}
+	})
 }

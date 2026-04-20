@@ -171,8 +171,9 @@ type EnginesV1 struct {
 
 // ContributesV1 holds every workbench-slot contribution.
 // M1 honours commands/statusBar/keybindings/menus; M2 adds
-// activityBar/views/panels (parsed here from day one, rendered
-// by the Flutter shell once the workbench webview host lands).
+// activityBar/views/panels; M5 B4+B5 adds editorActions +
+// sessionActions (title-bar buttons for the currently-open file
+// and the current session card respectively).
 type ContributesV1 struct {
 	Commands    []CommandV1              `json:"commands,omitempty"`
 	StatusBar   []StatusBarItemV1        `json:"statusBar,omitempty"`
@@ -183,6 +184,43 @@ type ContributesV1 struct {
 	ActivityBar []ActivityBarItemV1 `json:"activityBar,omitempty"`
 	Views       []ViewV1            `json:"views,omitempty"`
 	Panels      []PanelV1           `json:"panels,omitempty"`
+
+	// ── M5 action slots ────────────────────────────────────────────
+	EditorActions  []EditorActionV1  `json:"editorActions,omitempty"`
+	SessionActions []SessionActionV1 `json:"sessionActions,omitempty"`
+}
+
+// EditorActionV1 declares a button in the file-viewer title bar /
+// gutter. Spec: 03-contribution-points.md §9. Bound to a command
+// of the same ID so the click-through goes through the normal
+// invoke + gate pipeline.
+type EditorActionV1 struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+	Icon  string `json:"icon,omitempty"`
+	// When is a context expression — typical values:
+	//   "resourceLangId == 'go'"
+	//   "resourceExt == '.md'"
+	When string `json:"when,omitempty"`
+	// Group determines placement; see menus context groups.
+	// Most plugins use "navigation" (leading edge) or blank
+	// (overflow menu).
+	Group string `json:"group,omitempty"`
+}
+
+// SessionActionV1 declares a button on a terminal / agent session
+// card (dashboard) AND in the session detail page's toolbar.
+// Spec: 03-contribution-points.md §10. Max 4 per plugin enforced
+// by the validator.
+type SessionActionV1 struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+	Icon  string `json:"icon,omitempty"`
+	// Command is the target command ID — unlike editor actions
+	// this is an explicit pointer rather than ID-equality so the
+	// same button can fire a shared command across sessions.
+	Command string `json:"command,omitempty"`
+	When    string `json:"when,omitempty"`
 }
 
 // CommandV1 registers a runnable command with the workbench.

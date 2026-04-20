@@ -545,6 +545,66 @@ func validateContributes(c *ContributesV1) []ValidationError {
 		}
 	}
 
+	// ── M5: editorActions ─────────────────────────────────────────────────────
+	// Spec: 03-contribution-points.md §9. Buttons in the file viewer
+	// title bar — each action ID is also the target command ID.
+	for i, a := range c.EditorActions {
+		base := fmt.Sprintf("contributes.editorActions[%d]", i)
+		if a.ID == "" || a.Title == "" {
+			var missing []string
+			if a.ID == "" {
+				missing = append(missing, "id")
+			}
+			if a.Title == "" {
+				missing = append(missing, "title")
+			}
+			errs = append(errs, ValidationError{
+				Path: base,
+				Msg:  fmt.Sprintf("required fields missing: %v", missing),
+			})
+			continue
+		}
+		if err := validateCommandID(a.ID); err != nil {
+			errs = append(errs, ValidationError{Path: base + ".id", Msg: err.Error()})
+		}
+	}
+
+	// ── M5: sessionActions ───────────────────────────────────────────────────
+	// Spec: 03-contribution-points.md §10. Max 4 per plugin so the
+	// session card's action strip doesn't overflow on mobile.
+	if len(c.SessionActions) > 4 {
+		errs = append(errs, ValidationError{
+			Path: "contributes.sessionActions",
+			Msg:  fmt.Sprintf("max 4 session actions per plugin, got %d", len(c.SessionActions)),
+		})
+	}
+	for i, a := range c.SessionActions {
+		base := fmt.Sprintf("contributes.sessionActions[%d]", i)
+		if a.ID == "" || a.Title == "" {
+			var missing []string
+			if a.ID == "" {
+				missing = append(missing, "id")
+			}
+			if a.Title == "" {
+				missing = append(missing, "title")
+			}
+			errs = append(errs, ValidationError{
+				Path: base,
+				Msg:  fmt.Sprintf("required fields missing: %v", missing),
+			})
+			continue
+		}
+		if err := validateCommandID(a.ID); err != nil {
+			errs = append(errs, ValidationError{Path: base + ".id", Msg: err.Error()})
+		}
+		// Command (when set) must also be a valid command id.
+		if a.Command != "" {
+			if err := validateCommandID(a.Command); err != nil {
+				errs = append(errs, ValidationError{Path: base + ".command", Msg: err.Error()})
+			}
+		}
+	}
+
 	return errs
 }
 

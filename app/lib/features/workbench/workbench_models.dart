@@ -228,6 +228,70 @@ class WorkbenchMenuEntry {
       );
 }
 
+/// An editor title-bar action (M5). Tapping invokes the command named
+/// by [id]. `group` lets the server + client render a consistent order
+/// across plugins (empty group sorts last).
+class WorkbenchEditorAction {
+  final String pluginName;
+  final String id;
+  final String title;
+  final String icon;
+  final String when;
+  final String group;
+
+  const WorkbenchEditorAction({
+    required this.pluginName,
+    required this.id,
+    required this.title,
+    this.icon = '',
+    this.when = '',
+    this.group = '',
+  });
+
+  factory WorkbenchEditorAction.fromJson(Map<String, dynamic> json) =>
+      WorkbenchEditorAction(
+        pluginName: json['pluginName'] as String? ?? '',
+        id: json['id'] as String? ?? '',
+        title: json['title'] as String? ?? '',
+        icon: json['icon'] as String? ?? '',
+        when: json['when'] as String? ?? '',
+        group: json['group'] as String? ?? '',
+      );
+}
+
+/// A session toolbar action (M5). `command` defaults to `id` when
+/// empty, matching the server fallback.
+class WorkbenchSessionAction {
+  final String pluginName;
+  final String id;
+  final String title;
+  final String icon;
+  final String command;
+  final String when;
+
+  const WorkbenchSessionAction({
+    required this.pluginName,
+    required this.id,
+    required this.title,
+    this.icon = '',
+    this.command = '',
+    this.when = '',
+  });
+
+  /// Effective command id: explicit [command] override, or [id] when blank.
+  String get effectiveCommand => command.isNotEmpty ? command : id;
+
+  factory WorkbenchSessionAction.fromJson(Map<String, dynamic> json) =>
+      WorkbenchSessionAction(
+        pluginName: json['pluginName'] as String? ?? '',
+        id: json['id'] as String? ?? '',
+        title: json['title'] as String? ?? '',
+        icon: json['icon'] as String? ?? '',
+        command: json['command'] as String? ?? '',
+        when: json['when'] as String? ?? '',
+      );
+}
+
 /// The flat view returned by `GET /api/workbench/contributions`.
 ///
 /// Slot ordering mirrors the server's stable sort, so two identical
@@ -240,6 +304,8 @@ class FlatContributions {
   final List<WorkbenchActivityBarItem> activityBar;
   final List<WorkbenchView> views;
   final List<WorkbenchPanel> panels;
+  final List<WorkbenchEditorAction> editorActions;
+  final List<WorkbenchSessionAction> sessionActions;
 
   const FlatContributions({
     this.commands = const [],
@@ -249,6 +315,8 @@ class FlatContributions {
     this.activityBar = const [],
     this.views = const [],
     this.panels = const [],
+    this.editorActions = const [],
+    this.sessionActions = const [],
   });
 
   static const empty = FlatContributions();
@@ -288,6 +356,9 @@ class FlatContributions {
       activityBar: readList('activityBar', WorkbenchActivityBarItem.fromJson),
       views: readList('views', WorkbenchView.fromJson),
       panels: readList('panels', WorkbenchPanel.fromJson),
+      editorActions: readList('editorActions', WorkbenchEditorAction.fromJson),
+      sessionActions: readList(
+          'sessionActions', WorkbenchSessionAction.fromJson),
     );
   }
 }

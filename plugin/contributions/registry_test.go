@@ -556,3 +556,108 @@ func TestIsZero_OnlyWebviewFieldsPresent(t *testing.T) {
 		t.Error("view not reflected in Flatten")
 	}
 }
+
+// ─── M5 B4+B5: editorActions / sessionActions slots ────────────────────────
+
+// TestFlatten_EditorActions_GroupSort asserts editor actions sort first by
+// group (empty group last), then PluginName, then ID.
+func TestFlatten_EditorActions_GroupSort(t *testing.T) {
+	r := contributions.NewRegistry()
+
+	r.Set("zebra", plugin.ContributesV1{
+		EditorActions: []plugin.EditorActionV1{
+			{ID: "zebra.ungrouped", Title: "Z no group"},
+			{ID: "zebra.a", Title: "Za", Group: "edit@1"},
+		},
+	})
+	r.Set("antelope", plugin.ContributesV1{
+		EditorActions: []plugin.EditorActionV1{
+			{ID: "antelope.b", Title: "Ab", Group: "edit@1"},
+		},
+	})
+
+	flat := r.Flatten()
+	if len(flat.EditorActions) != 3 {
+		t.Fatalf("EditorActions len = %d, want 3: %+v", len(flat.EditorActions), flat.EditorActions)
+	}
+
+	// Order:
+	//   1. antelope.b (group="edit@1", plugin "antelope" < "zebra")
+	//   2. zebra.a    (group="edit@1", plugin "zebra")
+	//   3. zebra.ungrouped (empty group last)
+	wantIDs := []string{"antelope.b", "zebra.a", "zebra.ungrouped"}
+	for i, id := range wantIDs {
+		if flat.EditorActions[i].ID != id {
+			t.Errorf("EditorActions[%d].ID = %q, want %q (full: %+v)",
+				i, flat.EditorActions[i].ID, id, flat.EditorActions)
+		}
+	}
+}
+
+// TestFlatten_SessionActions_Sorted asserts session actions sort by
+// PluginName then ID, and carry the PluginName annotation.
+func TestFlatten_SessionActions_Sorted(t *testing.T) {
+	r := contributions.NewRegistry()
+
+	r.Set("beta", plugin.ContributesV1{
+		SessionActions: []plugin.SessionActionV1{
+			{ID: "beta.kill", Title: "Kill", Command: "beta.kill-cmd"},
+		},
+	})
+	r.Set("alpha", plugin.ContributesV1{
+		SessionActions: []plugin.SessionActionV1{
+			{ID: "alpha.b", Title: "B"},
+			{ID: "alpha.a", Title: "A"},
+		},
+	})
+
+	flat := r.Flatten()
+	if len(flat.SessionActions) != 3 {
+		t.Fatalf("SessionActions len = %d, want 3", len(flat.SessionActions))
+	}
+	wantIDs := []string{"alpha.a", "alpha.b", "beta.kill"}
+	for i, id := range wantIDs {
+		if flat.SessionActions[i].ID != id {
+			t.Errorf("SessionActions[%d].ID = %q, want %q", i, flat.SessionActions[i].ID, id)
+		}
+	}
+	if flat.SessionActions[0].PluginName != "alpha" {
+		t.Errorf("PluginName annotation = %q, want alpha", flat.SessionActions[0].PluginName)
+	}
+}
+
+// TestFlatten_EmptyActionSlots ensures the registry emits [] not null for the
+// new action fields even when no plugin contributes them.
+func TestFlatten_EmptyActionSlots(t *testing.T) {
+	r := contributions.NewRegistry()
+	r.Set("cmd-only", plugin.ContributesV1{
+		Commands: []plugin.CommandV1{{ID: "m.hi", Title: "Hi"}},
+	})
+
+	flat := r.Flatten()
+	if flat.EditorActions == nil || flat.SessionActions == nil {
+		t.Errorf("expected non-nil slices for M5 action slots: %+v", flat)
+	}
+	if len(flat.EditorActions) != 0 || len(flat.SessionActions) != 0 {
+		t.Errorf("expected empty slices, got: %+v", flat)
+	}
+}
+
+// TestIsZero_OnlyActionsPresent: a plugin contributing ONLY editorActions (or
+// only sessionActions) is legitimate — isZero must not drop it.
+func TestIsZero_OnlyActionsPresent(t *testing.T) {
+	r := contributions.NewRegistry()
+	r.Set("editor-only", plugin.ContributesV1{
+		EditorActions: []plugin.EditorActionV1{{ID: "a.b", Title: "B"}},
+	})
+	r.Set("session-only", plugin.ContributesV1{
+		SessionActions: []plugin.SessionActionV1{{ID: "c.d", Title: "D"}},
+	})
+	if !r.Has("editor-only") || !r.Has("session-only") {
+		t.Fatal("action-only plugins were dropped by isZero")
+	}
+	flat := r.Flatten()
+	if len(flat.EditorActions) != 1 || len(flat.SessionActions) != 1 {
+		t.Errorf("expected 1 editor + 1 session action, got: %+v", flat)
+	}
+}

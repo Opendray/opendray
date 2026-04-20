@@ -38,7 +38,9 @@ func isZero(c plugin.ContributesV1) bool {
 		len(c.Menus) == 0 &&
 		len(c.ActivityBar) == 0 &&
 		len(c.Views) == 0 &&
-		len(c.Panels) == 0
+		len(c.Panels) == 0 &&
+		len(c.EditorActions) == 0 &&
+		len(c.SessionActions) == 0
 }
 
 // Set replaces the contribution set for the given plugin name.
@@ -117,6 +119,20 @@ type OwnedPanel struct {
 	plugin.PanelV1
 }
 
+// OwnedEditorAction is an EditorActionV1 annotated with its contributing
+// plugin name (M5 editor title-bar slot).
+type OwnedEditorAction struct {
+	PluginName string `json:"pluginName"`
+	plugin.EditorActionV1
+}
+
+// OwnedSessionAction is a SessionActionV1 annotated with its contributing
+// plugin name (M5 session toolbar slot).
+type OwnedSessionAction struct {
+	PluginName string `json:"pluginName"`
+	plugin.SessionActionV1
+}
+
 // FlatContributions is the materialised registry view returned to the workbench.
 // Ordering within each slice is deterministic — sorted by (PluginName, ID/Key/etc)
 // so the Flutter UI doesn't reshuffle between polls. StatusBar honours the
@@ -131,6 +147,10 @@ type FlatContributions struct {
 	ActivityBar []OwnedActivityBarItem `json:"activityBar"`
 	Views       []OwnedView            `json:"views"`
 	Panels      []OwnedPanel           `json:"panels"`
+
+	// ── M5 action slots ────────────────────────────────────────────
+	EditorActions  []OwnedEditorAction  `json:"editorActions"`
+	SessionActions []OwnedSessionAction `json:"sessionActions"`
 }
 
 // Flatten materialises the registry into a stable, sorted view.
@@ -155,13 +175,15 @@ func (r *Registry) Flatten() FlatContributions {
 	})
 
 	flat := FlatContributions{
-		Commands:    make([]OwnedCommand, 0),
-		StatusBar:   make([]OwnedStatusBarItem, 0),
-		Keybindings: make([]OwnedKeybinding, 0),
-		Menus:       make(map[string][]OwnedMenuEntry),
-		ActivityBar: make([]OwnedActivityBarItem, 0),
-		Views:       make([]OwnedView, 0),
-		Panels:      make([]OwnedPanel, 0),
+		Commands:       make([]OwnedCommand, 0),
+		StatusBar:      make([]OwnedStatusBarItem, 0),
+		Keybindings:    make([]OwnedKeybinding, 0),
+		Menus:          make(map[string][]OwnedMenuEntry),
+		ActivityBar:    make([]OwnedActivityBarItem, 0),
+		Views:          make([]OwnedView, 0),
+		Panels:         make([]OwnedPanel, 0),
+		EditorActions:  make([]OwnedEditorAction, 0),
+		SessionActions: make([]OwnedSessionAction, 0),
 	}
 
 	for _, e := range entries {
@@ -207,6 +229,18 @@ func (r *Registry) Flatten() FlatContributions {
 			flat.Panels = append(flat.Panels, OwnedPanel{
 				PluginName: e.name,
 				PanelV1:    pn,
+			})
+		}
+		for _, ea := range e.c.EditorActions {
+			flat.EditorActions = append(flat.EditorActions, OwnedEditorAction{
+				PluginName:     e.name,
+				EditorActionV1: ea,
+			})
+		}
+		for _, sa := range e.c.SessionActions {
+			flat.SessionActions = append(flat.SessionActions, OwnedSessionAction{
+				PluginName:      e.name,
+				SessionActionV1: sa,
 			})
 		}
 	}
@@ -269,6 +303,33 @@ func (r *Registry) Flatten() FlatContributions {
 			return flat.Panels[i].PluginName < flat.Panels[j].PluginName
 		}
 		return flat.Panels[i].ID < flat.Panels[j].ID
+	})
+
+	// ── Sort EditorActions: primary Group asc (empty last), secondary
+	//    PluginName asc, tertiary ID asc ─────────────────────────────────
+	sort.Slice(flat.EditorActions, func(i, j int) bool {
+		gi, gj := flat.EditorActions[i].Group, flat.EditorActions[j].Group
+		if gi == "" && gj != "" {
+			return false
+		}
+		if gi != "" && gj == "" {
+			return true
+		}
+		if gi != gj {
+			return gi < gj
+		}
+		if flat.EditorActions[i].PluginName != flat.EditorActions[j].PluginName {
+			return flat.EditorActions[i].PluginName < flat.EditorActions[j].PluginName
+		}
+		return flat.EditorActions[i].ID < flat.EditorActions[j].ID
+	})
+
+	// ── Sort SessionActions: primary PluginName asc, secondary ID asc ───
+	sort.Slice(flat.SessionActions, func(i, j int) bool {
+		if flat.SessionActions[i].PluginName != flat.SessionActions[j].PluginName {
+			return flat.SessionActions[i].PluginName < flat.SessionActions[j].PluginName
+		}
+		return flat.SessionActions[i].ID < flat.SessionActions[j].ID
 	})
 
 	// ── Sort each menu path: primary Group asc (empty group last),

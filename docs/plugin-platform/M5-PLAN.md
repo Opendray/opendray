@@ -172,13 +172,13 @@ to degrade gracefully when the route 404s).
 
 ### Track B — Platform completeness
 
-| ID | Task | Effort |
-|---|---|---|
-| B1 | Webview+host combined form: manifest schema + validator | S |
-| B2 | Webview+host: bridge proxy `opendray.commands.execute` routes to owning sidecar | M |
-| B3 | Webview+host: pg-browser rich UI (real DB browser bundle) | M |
-| B4 | editorActions render | S |
-| B5 | sessionActions render | S |
+| ID | Task | Effort | Notes |
+|---|---|---|---|
+| B1 | Webview+host combined form: manifest schema + validator | S | ✅ `a90322c` |
+| B2 | Webview+host: webview → own sidecar method proxy | — | Already ships via `opendray.workbench.runCommand` (M2/M3) — verified with B1 |
+| B3 | Webview+host: pg-browser rich UI bundle | M | **Moved to Phase 5** — pg-browser's v1 migration PR will also rework its UI (confirmed 2026-04-20) |
+| B4 | editorActions render | S | ✅ contract + registry + Flutter editor title-bar slot |
+| B5 | sessionActions render | S | ✅ contract + registry + Flutter session toolbar slot |
 
 ### Track C — Distribution + docs (replaces original iOS track)
 

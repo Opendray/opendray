@@ -42,6 +42,8 @@ class WorkbenchService extends ChangeNotifier {
   List<WorkbenchActivityBarItem> get activityBarItems => _contribs.activityBar;
   List<WorkbenchView> get views => _contribs.views;
   List<WorkbenchPanel> get panels => _contribs.panels;
+  List<WorkbenchEditorAction> get editorActions => _contribs.editorActions;
+  List<WorkbenchSessionAction> get sessionActions => _contribs.sessionActions;
   bool get isLoading => _loading;
   Object? get lastError => _lastError;
 
