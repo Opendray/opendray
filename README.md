@@ -193,6 +193,57 @@ make release-linux                    # cross-compile linux/amd64 with embedded 
 
 </details>
 
+## Run as a background service
+
+The default `opendray` invocation runs in the foreground — great for
+testing, not so great for "always-on server tied to a specific user
+session". Install the service wrapper so it:
+
+- starts on boot
+- restarts on crash
+- logs to a sensible place (journald on Linux, `/var/log/opendray/` on macOS)
+- runs as your non-root setup user (bundled PG won't start as uid 0)
+
+```bash
+sudo opendray service install
+```
+
+Auto-detects the target user from `$SUDO_USER` (the account you ran
+`sudo` from). Override with `--user` if that's wrong:
+
+```bash
+sudo opendray service install --user opendray
+```
+
+Other lifecycle commands:
+
+```bash
+opendray service status      # current state
+opendray service logs        # tail (journalctl -fu on Linux, tail -f on mac)
+sudo opendray service start  # / stop / restart
+sudo opendray service uninstall
+opendray service help        # full reference
+```
+
+### What it writes
+
+| Platform | File | What it does |
+|---|---|---|
+| Linux | `/etc/systemd/system/opendray.service` | systemd unit, `Restart=on-failure`, journald output, `ProtectSystem=full` |
+| macOS | `/Library/LaunchDaemons/com.opendray.opendray.plist` | launchd daemon, `KeepAlive=SuccessfulExit:false`, logs to `/var/log/opendray/` |
+
+Both run the binary as the `--user` account (never root) and inherit
+`HOME=$user` so the existing config under `~/.opendray/` is loaded as-is.
+
+### Preview without writing
+
+```bash
+opendray service install --user linivek --dry-run
+```
+
+prints the unit / plist that would be written. No system changes. Good
+for reviewing before committing.
+
 ## Uninstall
 
 Mirrors the install flow. Two paths depending on whether your `opendray`

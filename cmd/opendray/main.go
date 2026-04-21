@@ -55,29 +55,47 @@ var (
 	buildTime = "unknown"
 )
 
-// printHelp is the output of `opendray help` / `-h`. Keep it short —
-// full docs live in the README.
+// printHelp is the output of `opendray help` / `-h`. Grouped by
+// domain (server / service / plugins / misc) so it stays scannable
+// as more subcommands land.
 func printHelp() {
 	fmt.Println(`OpenDray — pilot AI coding agents from anywhere.
 
 Usage:
-  opendray [command]
+  opendray [command] [flags]
 
-Commands:
-  (no args)   Start the server. Requires a completed setup.
-  setup       Interactive terminal wizard (database, listen
-              address, admin account, JWT). Run this first on a
-              fresh install. Use --yes with flags for scripted setup.
-  uninstall   Stop the server, remove data + config, delete this
-              binary. External databases are not touched; a helper
-              drop-schema SQL is written for manual cleanup.
-              Flags: --yes / --dry-run / --keep-data.
-  plugin      Plugin subcommands — see: opendray plugin help
-  version     Print version info
-  help        Show this help
+Server lifecycle
+  (no args)             Start the server. Requires a completed setup.
+                        Refuses to start without config — run setup first.
+  setup                 Interactive terminal wizard (database, listen
+                        address, admin account, JWT). --yes + flags
+                        for scripted installs (CI / cloud-init).
+  uninstall             Stop, remove data + config, delete this binary.
+                        --yes / --dry-run / --keep-data
 
-Env vars:
-  OPENDRAY_CONFIG        override path to config.toml
+Background service
+  service install       Install as a systemd (Linux) or launchd (macOS)
+                        service that auto-starts on boot. Needs sudo.
+                        --user / --binary / --force / --dry-run
+  service uninstall     Remove the service definition + stop it.
+  service start         Start the service now.
+  service stop          Stop the running service.
+  service restart       Stop then start.
+  service status        Show what the service is doing right now.
+  service logs          Tail service logs. -f / --follow (default on),
+                        -n / --lines N.
+  service help          Full service-command reference.
+
+Plugins
+  plugin                Plugin lifecycle subcommands — see:
+                          opendray plugin help
+
+Diagnostics
+  version               Print version / buildSha / buildTime.
+  help                  Show this help.
+
+Environment
+  OPENDRAY_CONFIG       Override the config.toml path.
 
 Docs: https://github.com/Opendray/opendray`)
 }
@@ -95,6 +113,8 @@ func main() {
 			os.Exit(runSetupCLI())
 		case "uninstall":
 			os.Exit(runUninstallCLI())
+		case "service":
+			os.Exit(runServiceCLI(os.Args[2:]))
 		case "version", "-v", "--version":
 			// One line per field so `opendray version | tr ' ' '\n'` or
 			// `grep` can pick them out easily. Deploy verification

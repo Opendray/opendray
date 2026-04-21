@@ -40,6 +40,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -1058,6 +1059,19 @@ func apply(cfg config.Config) int {
 	prf("       %s", styleBrightCyan(binaryInvocation()))
 	prn("")
 	prn("")
+	// Service-install hint. Keep it terse — users who want auto-start
+	// can follow the cue; users running one-shot / dev installs ignore
+	// it harmlessly. Windows is silently skipped until the ConPTY port
+	// lands (service support is macOS/Linux only for now).
+	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
+		prn(styleTitle("   Auto-start on boot (runs as a background service):"))
+		prn("")
+		prf("       %s", styleBrightCyan(fmt.Sprintf("sudo %s service install",
+			binaryInvocation())))
+		prn("")
+		prn(styleDim("   More service commands: opendray service help"))
+		prn("")
+	}
 	return 0
 }
 
