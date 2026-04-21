@@ -10,9 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"os/signal"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -26,7 +24,6 @@ import (
 	"github.com/opendray/opendray/kernel/config"
 	"github.com/opendray/opendray/kernel/hub"
 	opg "github.com/opendray/opendray/kernel/pg"
-	"github.com/opendray/opendray/kernel/setup"
 	"github.com/opendray/opendray/kernel/store"
 	"github.com/opendray/opendray/plugin"
 	"github.com/opendray/opendray/plugin/bridge"
@@ -61,20 +58,26 @@ var (
 // printHelp is the output of `opendray help` / `-h`. Keep it short —
 // full docs live in the README.
 func printHelp() {
-	fmt.Println(`OpenDray — pilot AI coding agents from your phone.
+	fmt.Println(`OpenDray — pilot AI coding agents from anywhere.
 
 Usage:
   opendray [command]
 
 Commands:
-  (no args)   Start the server (first run triggers the setup wizard)
-  setup       Interactive CLI wizard for headless / no-browser installs
+  (no args)   Start the server. Requires a completed setup.
+  setup       Interactive terminal wizard (database, listen
+              address, admin account, JWT). Run this first on a
+              fresh install. Use --yes with flags for scripted setup.
+  uninstall   Stop the server, remove data + config, delete this
+              binary. External databases are not touched; a helper
+              drop-schema SQL is written for manual cleanup.
+              Flags: --yes / --dry-run / --keep-data.
+  plugin      Plugin subcommands — see: opendray plugin help
   version     Print version info
   help        Show this help
 
 Env vars:
-  OPENDRAY_CONFIG        path to config.toml
-  OPENDRAY_NO_BROWSER    don't auto-open the browser in first-run setup
+  OPENDRAY_CONFIG        override path to config.toml
 
 Docs: https://github.com/Opendray/opendray`)
 }
@@ -90,6 +93,8 @@ func main() {
 			os.Exit(runPluginCLI(os.Args[2:]))
 		case "setup":
 			os.Exit(runSetupCLI())
+		case "uninstall":
+			os.Exit(runUninstallCLI())
 		case "version", "-v", "--version":
 			// One line per field so `opendray version | tr ' ' '\n'` or
 			// `grep` can pick them out easily. Deploy verification
@@ -108,150 +113,46 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	slog.SetDefault(logger)
 
-	// Outer loop: runs setup mode on a fresh install, then transitions
-	// into normal mode once /api/setup/finalize writes config.toml. On a
-	// fully-configured install, setup mode is skipped entirely.
-	for {
-		cfg, source, err := config.Load()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "FATAL: %v\n", err)
-			os.Exit(1)
-		}
-		logger.Info("config loaded", "source", source, "db_mode", cfg.DB.Mode,
-			"complete", cfg.IsComplete())
-
-		if !cfg.IsComplete() {
-			if !runSetupMode(logger, cfg) {
-				// Setup was interrupted (SIGTERM before finalize) — exit.
-				return
-			}
-			// Setup finished — loop around to load the freshly-written
-			// config and boot normally.
-			continue
-		}
-
-		if err := cfg.Validate(); err != nil {
-			fmt.Fprintf(os.Stderr, "FATAL: %v\n", err)
-			os.Exit(1)
-		}
-		runNormalMode(logger, cfg)
-		return
-	}
-}
-
-// runSetupMode boots the minimal setup-only gateway until finalize is
-// called or SIGTERM arrives. Returns true when finalize succeeded (so
-// main can loop into normal mode), false on signal-driven shutdown.
-func runSetupMode(logger *slog.Logger, cfg config.Config) bool {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	mgr, err := setup.New(func() {
-		// onFinish: /api/setup/finalize has written config. Cancel the
-		// listen loop so the main loop reloads config and enters normal
-		// mode. We deliberately delay a beat so the 200 reply flushes.
-		go func() {
-			time.Sleep(250 * time.Millisecond)
-			cancel()
-		}()
-	})
+	// Load config and demand it be complete. The browser-based setup
+	// wizard was removed — the ONLY supported first-run path is now
+	// `opendray setup` in a terminal (see cmd/opendray/setup_cli.go).
+	//
+	// If the config is missing or incomplete, we exit with a clear
+	// stderr message rather than starting some half-mode that confuses
+	// the user. No automatic fallback, no auto-launch of the wizard —
+	// a bare `opendray` invocation either boots the full server or
+	// tells the user to run `opendray setup` first.
+	cfg, source, err := config.Load()
 	if err != nil {
-		logger.Error("setup: init manager", "error", err)
+		fmt.Fprintf(os.Stderr, "FATAL: %v\n", err)
+		os.Exit(1)
+	}
+	logger.Info("config loaded", "source", source, "db_mode", cfg.DB.Mode,
+		"complete", cfg.IsComplete())
+
+	if !cfg.IsComplete() {
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "✗ OpenDray is not configured.")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "  Run the setup wizard first:")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "      opendray setup")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "  For scripted installs:")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "      opendray setup --yes --db=bundled \\")
+		fmt.Fprintln(os.Stderr, "          --admin-user=admin --admin-password-file=/path/to/pw")
+		fmt.Fprintln(os.Stderr, "")
 		os.Exit(1)
 	}
 
-	// Persist the token so the Flutter wizard can fetch it over same-origin
-	// when the user opens /setup without the ?token= query. Mode 0600 —
-	// it's a short-lived shared secret.
-	tokenPath, err := writeBootstrapToken(mgr.BootstrapToken())
-	if err != nil {
-		logger.Warn("setup: could not persist token file; wizard needs ?token= in URL", "error", err)
+	if err := cfg.Validate(); err != nil {
+		fmt.Fprintf(os.Stderr, "FATAL: %v\n", err)
+		os.Exit(1)
 	}
-
-	listen := cfg.Server.ListenAddr
-	if listen == "" {
-		listen = "127.0.0.1:8640"
-	}
-	setupURL := fmt.Sprintf("http://%s/setup?token=%s",
-		displayAddr(listen), mgr.BootstrapToken())
-	fmt.Fprintln(os.Stderr, "")
-	fmt.Fprintln(os.Stderr, "╭───────────────────────────────────────────────────────────────╮")
-	fmt.Fprintln(os.Stderr, "│                                                               │")
-	fmt.Fprintln(os.Stderr, "│   🚀  OpenDray — first-run setup                              │")
-	fmt.Fprintln(os.Stderr, "│                                                               │")
-	fmt.Fprintln(os.Stderr, "│   Your browser should open automatically. If not, visit:      │")
-	fmt.Fprintln(os.Stderr, "│                                                               │")
-	fmt.Fprintf (os.Stderr, "│   %s\n", padRight(setupURL, 60))
-	fmt.Fprintln(os.Stderr, "│                                                               │")
-	fmt.Fprintln(os.Stderr, "│   Headless server (no browser)?                               │")
-	fmt.Fprintln(os.Stderr, "│   Stop this (Ctrl-C) and run: opendray setup                  │")
-	if tokenPath != "" {
-		fmt.Fprintln(os.Stderr, "│                                                               │")
-		fmt.Fprintf (os.Stderr, "│   Token: %s\n", padRight(tokenPath, 55))
-	}
-	fmt.Fprintln(os.Stderr, "│                                                               │")
-	fmt.Fprintln(os.Stderr, "╰───────────────────────────────────────────────────────────────╯")
-	fmt.Fprintln(os.Stderr, "")
-
-	// Fire-and-forget browser launch. Suppressed when OPENDRAY_NO_BROWSER
-	// is set (for CI / headless server deploys).
-	if os.Getenv("OPENDRAY_NO_BROWSER") == "" {
-		// Give the server ~250ms to start listening before we open the
-		// URL, otherwise the browser races the TCP listener on slow boxes.
-		go func() {
-			time.Sleep(250 * time.Millisecond)
-			_ = openBrowser(setupURL)
-		}()
-	}
-
-	// Frontend FS — setup mode still serves the Flutter web wizard from
-	// the embedded dist. If the binary was built without dist (dev mode),
-	// a bare HTML stub would be nicer; left for Phase 4.
-	var frontendFS fs.FS
-	if distFS, err := fs.Sub(app.DistFS, "build/web"); err == nil {
-		if entries, err := fs.ReadDir(distFS, "."); err == nil && len(entries) > 0 {
-			frontendFS = distFS
-		}
-	}
-
-	handler := gateway.NewSetup(mgr, frontendFS, logger)
-	server := &http.Server{Addr: listen, Handler: handler}
-
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-
-	errCh := make(chan error, 1)
-	go func() {
-		logger.Info("setup server listening", "addr", listen)
-		errCh <- server.ListenAndServe()
-	}()
-
-	select {
-	case <-ctx.Done():
-		// finalize() invoked our cancel.
-		logger.Info("setup complete — transitioning to normal mode")
-	case sig := <-sigCh:
-		logger.Info("setup mode: signal received; exiting", "signal", sig)
-		cancel()
-	case err := <-errCh:
-		if err != nil && err != http.ErrServerClosed {
-			logger.Error("setup server error", "error", err)
-			os.Exit(1)
-		}
-	}
-
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer shutdownCancel()
-	_ = server.Shutdown(shutdownCtx)
-
-	// Clean up the one-shot bootstrap token file — it's no longer valid
-	// once the manager has flipped inactive.
-	if tokenPath != "" {
-		_ = os.Remove(tokenPath)
-	}
-
-	return !mgr.Active()
+	runNormalMode(logger, cfg)
 }
+
 
 // runNormalMode is the original boot path, now cleanly factored out of
 // main so the setup→normal transition is just a function call.
@@ -825,69 +726,6 @@ func startRevocationPoller(
 	logger.Info("revocation: poller started", "interval", interval)
 }
 
-// writeBootstrapToken persists the token to ~/.opendray/setup-token so the
-// Flutter wizard can fetch it same-origin if the user opens /setup without
-// ?token= in the URL. Returns the path on success.
-func writeBootstrapToken(token string) (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	dir := home + "/.opendray"
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return "", err
-	}
-	path := dir + "/setup-token"
-	if err := os.WriteFile(path, []byte(token), 0o600); err != nil {
-		return "", err
-	}
-	return path, nil
-}
-
-// displayAddr converts a listen addr like ":8640" into something
-// click-usable in the stderr hint ("127.0.0.1:8640"). Non-wildcard
-// addrs pass through unchanged.
-func displayAddr(addr string) string {
-	if strings.HasPrefix(addr, ":") {
-		return "127.0.0.1" + addr
-	}
-	return addr
-}
-
-// openBrowser fires the OS-native "open a URL" handler. Best-effort:
-// failures are silent — the stderr banner already tells the user how to
-// proceed if no browser opens.
-func openBrowser(url string) error {
-	var cmd *exec.Cmd
-	switch runtime.GOOS {
-	case "darwin":
-		cmd = exec.Command("open", url)
-	case "windows":
-		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
-	default: // linux, freebsd, openbsd, etc.
-		// Try xdg-open first, fall back to common alternatives.
-		for _, candidate := range []string{"xdg-open", "sensible-browser", "gnome-open", "kfmclient"} {
-			if _, err := exec.LookPath(candidate); err == nil {
-				cmd = exec.Command(candidate, url)
-				break
-			}
-		}
-		if cmd == nil {
-			return fmt.Errorf("no known browser launcher found")
-		}
-	}
-	return cmd.Start()
-}
-
-// padRight right-pads a string with spaces up to n runes. Used to align
-// the ASCII border in the setup banner.
-func padRight(s string, n int) string {
-	diff := n - len(s)
-	if diff <= 0 {
-		return s + " │"
-	}
-	return s + strings.Repeat(" ", diff) + "│"
-}
 
 // providerResolver adapts plugin.Runtime to hub.ProviderResolver.
 type providerResolver struct {

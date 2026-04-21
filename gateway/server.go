@@ -26,7 +26,6 @@ import (
 	"github.com/opendray/opendray/gateway/telegram"
 	"github.com/opendray/opendray/kernel/auth"
 	"github.com/opendray/opendray/kernel/hub"
-	"github.com/opendray/opendray/kernel/setup"
 	"github.com/opendray/opendray/plugin"
 	"github.com/opendray/opendray/plugin/bridge"
 	"github.com/opendray/opendray/plugin/contributions"
@@ -486,77 +485,6 @@ func (s *Server) Handler() http.Handler {
 	return s.router
 }
 
-// NewSetup returns a bare-bones http.Handler for first-run setup mode.
-// It exposes only /api/setup/* (gated by the bootstrap token) and the
-// embedded frontend; every other /api/* path returns 503 so the UI
-// knows setup is still pending.
-//
-// The handler has no DB, hub, or auth wired — main.go boots those only
-// after setup completes.
-func NewSetup(mgr *setup.Manager, frontendFS fs.FS, logger *slog.Logger) http.Handler {
-	if logger == nil {
-		logger = slog.Default()
-	}
-	h := newSetupHandlers(mgr)
-
-	r := chi.NewRouter()
-	r.Use(corsMiddleware)
-	r.Use(middleware.Recoverer)
-	r.Use(loggingMiddleware(logger))
-	r.Use(bodySizeLimiter(1 << 20))
-
-	// Always-public — the wizard needs these before it has a token.
-	r.Get("/api/health", func(w http.ResponseWriter, r *http.Request) {
-		respondJSON(w, http.StatusOK, map[string]any{
-			"status":  "setup",
-			"service": "opendray",
-		})
-	})
-	// Status is public too — lets the client render the correct step
-	// without authenticating.
-	r.Get("/api/setup/status", h.status)
-	// Token endpoint — loopback-only; handler enforces that.
-	r.Get("/api/setup/token", h.loopbackToken)
-
-	// Token-gated setup endpoints. Scope is strictly OpenDray's own
-	// first-run config — DB choice, admin credentials, JWT. Installing
-	// agent CLIs (claude/codex/gemini) is out of scope; users handle
-	// their own package installs.
-	r.Post("/api/setup/db/test", h.tokenGate(h.dbTest))
-	r.Post("/api/setup/db/commit", h.tokenGate(h.dbCommit))
-	r.Post("/api/setup/admin", h.tokenGate(h.adminSet))
-	r.Post("/api/setup/jwt", h.tokenGate(h.jwtSet))
-	r.Post("/api/setup/finalize", h.tokenGate(h.finalize))
-
-	// Catch-all /api/* → 503 so callers realise setup is in progress.
-	r.Route("/api", func(r chi.Router) {
-		r.HandleFunc("/*", func(w http.ResponseWriter, r *http.Request) {
-			// Only fire for API paths not matched above.
-			respondError(w, http.StatusServiceUnavailable, setupStatusString())
-		})
-	})
-
-	// Static frontend (Flutter web). Same SPA fallback as the full server
-	// so refreshes on /setup, /login, etc. land on index.html.
-	if frontendFS != nil {
-		fileServer := http.FileServer(http.FS(frontendFS))
-		r.NotFound(func(w http.ResponseWriter, rq *http.Request) {
-			if strings.HasPrefix(rq.URL.Path, "/api/") {
-				respondError(w, http.StatusNotFound, "not found")
-				return
-			}
-			if f, err := frontendFS.Open(strings.TrimPrefix(rq.URL.Path, "/")); err == nil {
-				f.Close()
-				fileServer.ServeHTTP(w, rq)
-				return
-			}
-			rq.URL.Path = "/"
-			fileServer.ServeHTTP(w, rq)
-		})
-	}
-
-	return r
-}
 
 // ── Terminal HTML (xterm.js for web) ────────────────────────────
 

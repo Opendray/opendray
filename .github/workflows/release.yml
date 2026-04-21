@@ -32,9 +32,15 @@ jobs:
 
       - uses: sigstore/cosign-installer@v3
       - name: Sign checksums
-        run: cosign sign-blob --yes dist/checksums.txt --output-signature dist/checksums.txt.sig --output-certificate dist/checksums.txt.pem
+        run: cosign sign-blob --yes dist/SHA256SUMS --output-signature dist/SHA256SUMS.sig --output-certificate dist/SHA256SUMS.pem
         env:
           COSIGN_EXPERIMENTAL: "1"
+
+      - name: Upload cosign artifacts to release
+        run: |
+          gh release upload ${{ github.ref_name }} dist/SHA256SUMS.sig dist/SHA256SUMS.pem
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate SBOM
         uses: anchore/sbom-action@v0

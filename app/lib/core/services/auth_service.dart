@@ -9,12 +9,16 @@ import '../api/api_client.dart';
 /// Authentication lifecycle: probes the server for whether auth is required,
 /// stores the JWT across launches, and surfaces the states the router cares
 /// about:
-///   • [AuthState.unknown]       — first frame, before probe completes
-///   • [AuthState.setupRequired] — server is in first-run setup mode
-///   • [AuthState.disabled]      — server has no JWT_SECRET set
-///   • [AuthState.unauthed]      — auth required, no token / bad token
-///   • [AuthState.authed]        — token present and accepted
-enum AuthState { unknown, setupRequired, disabled, unauthed, authed }
+///   • [AuthState.unknown]  — first frame, before probe completes
+///   • [AuthState.disabled] — server has no JWT_SECRET set
+///   • [AuthState.unauthed] — auth required, no token / bad token
+///   • [AuthState.authed]   — token present and accepted
+///
+/// Setup-required is deliberately NOT a state. OpenDray's server binary
+/// refuses to start without a complete config (see cmd/opendray/main.go),
+/// so the Flutter app only ever talks to a fully-configured server —
+/// there's no in-browser setup wizard to route to.
+enum AuthState { unknown, disabled, unauthed, authed }
 
 class AuthService extends ChangeNotifier {
   // Tokens are scoped by server URL so pointing the app at a different
@@ -59,32 +63,9 @@ class AuthService extends ChangeNotifier {
       validateStatus: (s) => s != null && s < 600,
     ));
 
-    // First, ask /api/setup/status — it's public and answered in both setup
-    // and normal mode. A "needsSetup: true" answer short-circuits the
-    // regular auth probe and routes the user into the wizard.
-    try {
-      final s = await probeDio.get('/api/setup/status');
-      if (s.statusCode == 200 && s.data is Map && s.data['needsSetup'] == true) {
-        _state = AuthState.setupRequired;
-        notifyListeners();
-        return;
-      }
-    } catch (_) {
-      // Fall through to the auth-status probe below — older servers don't
-      // have /api/setup/status at all.
-    }
-
     bool authRequired;
     try {
       final res = await probeDio.get('/api/auth/status');
-      if (res.statusCode == 503) {
-        // Server is still in setup mode but /api/setup/status gave us a
-        // transient error above. Treat it as setupRequired rather than
-        // trapping the user in "unknown".
-        _state = AuthState.setupRequired;
-        notifyListeners();
-        return;
-      }
       authRequired = (res.data is Map && res.data['authRequired'] == true);
     } catch (_) {
       // Server unreachable. If we already hold a token from a previous

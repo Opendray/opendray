@@ -1,4 +1,7 @@
+version: 2
+
 project_name: opendray
+
 before:
   hooks:
     - cd app && flutter pub get && flutter build web --release
@@ -12,21 +15,40 @@ builds:
     goos:
       - linux
       - darwin
+      - windows
     goarch:
       - amd64
       - arm64
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.buildSha={{.ShortCommit}}
+      - -s
+      - -w
+      - -X main.version={{.Version}}
+      - -X main.buildSha={{.ShortCommit}}
+      - -X main.buildTime={{.Date}}
 
+# Ship raw binaries — no tar.gz / .zip wrapper. The install.sh /
+# install.ps1 scripts curl the binary directly, verify SHA256 against
+# checksums.txt, and drop it in place. One less pair of tools the
+# installer needs (tar / Expand-Archive).
 archives:
   - id: opendray
-    format: tar.gz
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format: binary
+    name_template: >-
+      {{ .ProjectName }}-
+      {{- .Os }}-
+      {{- .Arch }}
+      {{- if eq .Os "windows" }}.exe{{ end }}
+
+checksum:
+  name_template: "SHA256SUMS"
+  algorithm: sha256
 
 release:
   github:
-    owner: opendray
+    owner: Opendray
     name: opendray
+  draft: false
+  prerelease: auto
 
 changelog:
   sort: asc
@@ -34,3 +56,5 @@ changelog:
     exclude:
       - '^docs:'
       - '^chore:'
+      - '^test:'
+      - '^ci:'

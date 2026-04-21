@@ -27,7 +27,6 @@ import 'features/plugins/plugins_page.dart';
 import 'features/settings/builtin_restore_page.dart';
 import 'features/settings/settings_page.dart';
 import 'features/settings/setup_page.dart';
-import 'features/setup/setup_wizard.dart';
 import 'features/tasks/tasks_page.dart';
 import 'features/workbench/command_palette.dart';
 import 'features/workbench/keybindings.dart';
@@ -122,9 +121,9 @@ class _NtcAppState extends State<NtcApp> {
                 final svc =
                     WorkbenchService(api: apiClient, showMessage: _toast);
                 // Only reach out to the server when auth is usable. In
-                // unknown/unauthed/setupRequired states the workbench
-                // endpoints 401, which triggers auth.logout → Consumer2
-                // rebuild → new ApiClient → new WorkbenchService → retry,
+                // unknown/unauthed states the workbench endpoints 401,
+                // which triggers auth.logout → Consumer2 rebuild →
+                // new ApiClient → new WorkbenchService → retry,
                 // producing an infinite loop at startup.
                 if (auth.state == AuthState.authed ||
                     auth.state == AuthState.disabled) {
@@ -225,24 +224,20 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
       //    the refreshListenable re-enters this function.
       if (s == AuthState.unknown) return null;
 
-      // 3. The server itself hasn't been set up yet → first-run wizard.
-      if (s == AuthState.setupRequired) {
-        return loc == '/setup' ? null : '/setup';
-      }
-
-      // 4. Auth required but not logged in → /login.
+      // 3. Auth required but not logged in → /login.
       if (s == AuthState.unauthed) {
         return loc == '/login' ? null : '/login';
       }
 
-      // 5. Authed (or auth disabled on server): bounce away from any
-      //    gate route if we somehow land there.
-      if (loc == '/login' || loc == '/setup' || loc == '/connect') return '/';
+      // 4. Authed (or auth disabled on server): bounce away from any
+      //    gate route if we somehow land there. Setup is a terminal-
+      //    only flow now (`opendray setup`), so the Flutter app never
+      //    routes to /setup.
+      if (loc == '/login' || loc == '/connect') return '/';
       return null;
     },
     routes: [
       GoRoute(path: '/connect', builder: (_, _) => const SetupPage()),
-      GoRoute(path: '/setup',   builder: (_, _) => const SetupWizardPage()),
       GoRoute(path: '/login',   builder: (_, _) => const LoginPage()),
       ShellRoute(
         builder: (context, state, child) => _Shell(child: child),

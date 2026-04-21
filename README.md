@@ -52,37 +52,78 @@ No other tool does this.
 
 ## Quick Start
 
-### One-line install (macOS / Linux)
+OpenDray ships as a single self-contained binary. Install, run the terminal
+wizard, start the server. **Setup is terminal-only** — there is no web-based
+first-run wizard, so the install flow works identically over SSH, in a VPS,
+or on your laptop.
+
+### macOS / Linux
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/install.sh | sh
-opendray
 ```
 
-The installer detects your OS and architecture, downloads the matching binary from [Releases](https://github.com/Opendray/opendray/releases), verifies the SHA256, strips the macOS quarantine flag, and drops it into `~/.local/bin/`.
+The installer:
+1. detects your OS (`darwin` / `linux`) and architecture (`amd64` / `arm64`)
+2. downloads the matching binary from [Releases](https://github.com/Opendray/opendray/releases)
+3. verifies its SHA256 against the signed `SHA256SUMS` file
+4. installs it to `~/.local/bin/opendray`
+5. hands control to `opendray setup` — an interactive wizard in the same terminal
 
-Pin a version with `OPENDRAY_VERSION=v0.5.0` or change the install dir with `OPENDRAY_INSTALL_DIR=/usr/local/bin`.
+Override with env vars: `OPENDRAY_VERSION=v0.5.0`, `OPENDRAY_INSTALL_DIR=/usr/local/bin`, `OPENDRAY_NO_SETUP=1` (skip auto-wizard).
 
-### Headless / SSH server?
+### Windows (PowerShell)
 
-Running on a VPS or LXC with no browser? Use the interactive CLI wizard instead:
+```powershell
+irm https://raw.githubusercontent.com/Opendray/opendray/main/install.ps1 | iex
+```
+
+Same flow: downloads to `$env:LOCALAPPDATA\Programs\OpenDray\opendray.exe`,
+adds it to your user PATH, removes the SmartScreen zone-identifier, and
+launches the wizard.
+
+### What the wizard asks
+
+```
+1 / 4   DATABASE        bundled PostgreSQL (managed by OpenDray)
+                        or external (bring your own PG 14+)
+2 / 4   LISTEN ADDRESS  loopback (127.0.0.1:8640, local only)
+                        or all interfaces (0.0.0.0:8640, LAN-exposed)
+                        or custom host:port
+3 / 4   ADMIN ACCOUNT   username + password (min 8 chars)
+4 / 4   JWT SECRET      auto-generate or paste your own
+```
+
+Config persists to `~/.opendray/config.toml` (Unix) /
+`$env:LOCALAPPDATA\OpenDray\config.toml` (Windows). Re-running `opendray setup`
+resumes with existing values as defaults, so you can rotate any single field
+without re-entering the rest.
+
+### Scripted install (CI / cloud-init)
 
 ```bash
-opendray setup      # prompts for DB, admin creds, JWT — no browser needed
-opendray            # starts the server normally
+opendray setup --yes \
+    --db=bundled \
+    --listen=loopback \
+    --admin-user=admin \
+    --admin-password-file=/run/secrets/admin_pw
 ```
 
-Or, if your server's `:8640` is reachable from your laptop on the LAN, just run `opendray` and open the URL printed to stderr from your laptop's browser — the bootstrap token protects the session so LAN exposure is safe.
+All prompts have matching flags: `--db-host`, `--db-port`, `--db-user`,
+`--db-name`, `--db-password-file`, `--db-sslmode`, `--jwt-secret-file`.
+See `opendray setup --help`.
 
 ### Manual download
 
-Grab a binary from the [Releases page](https://github.com/Opendray/opendray/releases) for your platform:
+Grab a binary from the [Releases page](https://github.com/Opendray/opendray/releases):
 - `opendray-darwin-arm64` — Apple Silicon Mac
 - `opendray-darwin-amd64` — Intel Mac
 - `opendray-linux-amd64` / `opendray-linux-arm64`
+- `opendray-windows-amd64.exe` / `opendray-windows-arm64.exe`
 
 ```bash
 chmod +x opendray-darwin-arm64
+./opendray-darwin-arm64 setup
 ./opendray-darwin-arm64
 ```
 
@@ -91,27 +132,21 @@ chmod +x opendray-darwin-arm64
 ```bash
 git clone https://github.com/opendray/opendray.git
 cd opendray
-make release-all         # darwin/linux × amd64/arm64 binaries in bin/
-./bin/opendray-darwin-arm64
+make build
+./bin/opendray setup
+./bin/opendray
 ```
-
-The binary drops into **setup mode** on first run, prints a URL to stderr with a bootstrap token, and serves a browser wizard at that URL. The wizard walks you through:
-
-1. **Database** — embedded PostgreSQL (managed by OpenDray, ~50 MB one-time download) or connect to an existing PG with a Test Connection button
-2. **Admin account** — pick a username + password
-3. **Agent CLIs** — optionally install `claude` / `codex` / `gemini` via `npm install -g` with live streaming output
-
-Everything persists to `~/.opendray/config.toml` (or `$XDG_CONFIG_HOME/opendray/config.toml`). On subsequent launches it boots straight into normal mode.
 
 <details>
 <summary><b>Dev mode (hot-reload)</b></summary>
 
 ```bash
 cp .env.example .env     # point at your own PostgreSQL
-make dev                  # Go backend + Flutter web client
+make dev                 # Go backend + Flutter web client
 ```
 
-With `.env` set the wizard is skipped — env vars win over the config file, which preserves existing LXC/Docker deployments.
+With `.env` set the wizard is skipped — env vars win over the config file,
+which preserves existing LXC/Docker deployments.
 
 </details>
 
@@ -124,7 +159,25 @@ CREATE USER opendray WITH PASSWORD 'changeme';
 GRANT ALL PRIVILEGES ON DATABASE opendray TO opendray;
 ```
 
-Enter those credentials in the wizard's "External PostgreSQL" option, or set `DB_HOST` / `DB_USER` / `DB_PASSWORD` / `DB_NAME` env vars to skip the wizard entirely.
+Pick `external` in the wizard, or set `DB_HOST` / `DB_USER` / `DB_PASSWORD` /
+`DB_NAME` env vars — either path triggers automatic migration (schema is
+created in your database on first connection).
+
+</details>
+
+<details>
+<summary><b>Bundled PostgreSQL and root</b></summary>
+
+The `bundled` database mode refuses to run as `root` — upstream PostgreSQL's
+`initdb` hard-fails on `uid == 0`. Create an unprivileged user first:
+
+```bash
+useradd -r -m -s /bin/bash -d /home/opendray opendray
+su - opendray
+opendray setup
+```
+
+Or pick `external` and connect to an existing PG instance.
 
 </details>
 
@@ -139,6 +192,77 @@ make release-linux                    # cross-compile linux/amd64 with embedded 
 `JWT_SECRET` is required when binding to a non-loopback address. The wizard auto-generates one; for env-var deploys, set it yourself.
 
 </details>
+
+## Uninstall
+
+Mirrors the install flow. Two paths depending on whether your `opendray`
+binary can still run.
+
+### Built-in command (preferred)
+
+```bash
+opendray uninstall               # interactive: show plan, confirm, remove
+opendray uninstall --yes         # no prompt
+opendray uninstall --dry-run     # preview only
+opendray uninstall --keep-data   # binary + config gone, ~/.opendray/ stays
+```
+
+Output:
+1. stops any running OpenDray server + bundled PostgreSQL
+2. removes `~/.opendray/` (PG cluster, plugins, cache, marketplace)
+3. removes `~/.config/opendray/config.toml` if present
+4. removes the binary itself (self-delete on Unix; scheduled via a helper
+   `cmd.exe` on Windows since the running `.exe` can't be unlinked directly)
+
+### One-line nuclear option (binary can't run)
+
+When the binary is corrupt or the config is so broken the wizard won't
+start, use the shell / PowerShell scripts instead. These know nothing
+about config; they just `rm -rf` the well-known paths.
+
+```bash
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/uninstall.sh | sh
+
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/Opendray/opendray/main/uninstall.ps1 | iex
+```
+
+Environment overrides (either platform):
+- `OPENDRAY_YES=1` — skip confirmation
+- `OPENDRAY_DRY_RUN=1` — preview only
+- `OPENDRAY_INSTALL_DIR` — non-default binary location
+
+### External PostgreSQL
+
+OpenDray **never drops tables from an external database you provided** —
+table names (`sessions`, `plugins`, `admin_auth`, …) are generic enough
+to collide with other applications sharing the DB, and automated drops
+are unrecoverable.
+
+Instead, `opendray uninstall` writes a `drop_opendray_schema.sql` file
+to your current directory with wrapped `DROP TABLE IF EXISTS … CASCADE`
+statements. Review it, then apply manually:
+
+```bash
+psql -h <host> -U <user> -d <db> -f drop_opendray_schema.sql
+```
+
+The nuclear scripts skip this helper; if you went nuclear, you're
+expected to know which tables to drop.
+
+### Manual removal (last resort)
+
+If both paths above fail, these are the locations to nuke by hand:
+
+| Platform | Path |
+|---|---|
+| macOS / Linux | `~/.local/bin/opendray` |
+| macOS / Linux | `~/.opendray/` |
+| macOS / Linux | `~/.config/opendray/` (XDG fallback) |
+| Windows | `%LOCALAPPDATA%\Programs\OpenDray\opendray.exe` |
+| Windows | `%LOCALAPPDATA%\OpenDray\` |
+| Windows | `HKCU\Environment` PATH entry pointing at the install dir |
 
 ## Architecture
 
