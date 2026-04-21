@@ -11,7 +11,7 @@ jobs:
   assign:
     runs-on: ubuntu-latest
     steps:
-      - uses: pozil/auto-assign-issue@v2
+      - uses: pozil/auto-assign-issue@v2.2.0
         with:
           assignees: navidrast
           numOfAssignee: 1
