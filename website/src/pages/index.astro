@@ -1,0 +1,1403 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const features = [
+  {
+    icon: '📱',
+    title: 'Persistent Cloud Sessions',
+    description: 'Sessions run on your server as PTY processes. Close the app, leave for hours — when you come back, the full history replays instantly via a 4 MB ring buffer. Claude sessions resume exactly where they left off.',
+  },
+  {
+    icon: '💬',
+    title: 'Telegram Bridge',
+    description: 'Not just notifications — a true two-way terminal over Telegram. When Claude goes idle, it reads the structured JSONL output and renders multi-select prompts as inline keyboards. Reply to approve, reject, or type a response.',
+  },
+  {
+    icon: '🧩',
+    title: 'Open Plugin Standard',
+    description: 'An open manifest.json spec for wrapping any CLI tool. Declare the command, config schema with typed fields, capabilities — OpenDray generates the UI form, maps config to CLI flags and env vars automatically.',
+  },
+  {
+    icon: '🔀',
+    title: 'LLM Provider Routing',
+    description: 'Register Ollama, Groq, LM Studio, or any OpenAI-compatible endpoint. When spawning an OpenCode session, pick a provider — OpenDray generates a per-session config and injects it at launch time.',
+  },
+  {
+    icon: '🔌',
+    title: 'MCP Injection',
+    description: 'Register MCP servers once in the UI. At session spawn, OpenDray renders per-session temp config files and injects them via CLI args. No global config pollution. Temp files cleaned on session exit.',
+  },
+  {
+    icon: '🏠',
+    title: 'Single Binary, Self-Hosted',
+    description: 'Go backend with the Flutter web build embedded via go:embed. One binary + PostgreSQL. All config lives in the database — editable from the app. Your code and credentials never leave your infrastructure.',
+  },
+];
+
+const agents = [
+  { name: 'Claude Code', emoji: '🟣', color: '#a78bfa' },
+  { name: 'Codex', emoji: '🤖', color: '#22c55e' },
+  { name: 'Gemini CLI', emoji: '✨', color: '#facc15' },
+  { name: 'OpenCode', emoji: '🤖', color: '#0ea5e9' },
+  { name: 'Qwen Code', emoji: '🐉', color: '#f97316' },
+  { name: 'Terminal', emoji: '⬛', color: '#94a3b8' },
+];
+
+const steps = [
+  {
+    num: '01',
+    title: 'Pick an agent, set a working directory, launch',
+    description: 'Choose from Claude Code, Codex, Gemini, OpenCode, Qwen, or a plain shell. Select a project directory and model. If using Claude, pick which OAuth account. For OpenCode, pick an LLM provider endpoint. Hit Create & Start.',
+  },
+  {
+    num: '02',
+    title: 'The agent runs as a real PTY process on your server',
+    description: 'OpenDray spawns the CLI in a pseudo-terminal, injects MCP server configs and LLM provider credentials as temp files, and starts capturing output in a ring buffer. Idle detection fires after 8 seconds of silence — triggering Telegram notifications.',
+  },
+  {
+    num: '03',
+    title: 'Come back any time — or control it from Telegram',
+    description: 'Reopen the app and the WebSocket reconnects, replaying full session history. Or stay away and let the Telegram bridge handle it: idle notifications arrive with the latest output, structured prompts render as inline keyboards, your replies go straight to the agent.',
+  },
+];
+
+const techStack = ['Go', 'Flutter', 'PostgreSQL', 'WebSocket', 'xterm.js'];
+
+const manifestExample = `{
+  "name": "my-agent",
+  "displayName": "My Custom Agent",
+  "type": "cli",
+  "icon": "🤖",
+  "cli": {
+    "command": "my-agent-cli",
+    "defaultArgs": ["--no-color"],
+    "detectCmd": "which my-agent-cli"
+  },
+  "capabilities": {
+    "models": [
+      { "id": "fast", "name": "Fast Mode" },
+      { "id": "deep", "name": "Deep Analysis" }
+    ],
+    "supportsResume": false,
+    "supportsStream": true,
+    "supportsMcp": true,
+    "supportsImages": false,
+    "dynamicModels": false
+  },
+  "configSchema": [
+    {
+      "key": "apiKey",
+      "label": "API Key",
+      "type": "secret",
+      "envVar": "MY_AGENT_API_KEY",
+      "required": true,
+      "group": "auth"
+    },
+    {
+      "key": "model",
+      "label": "Model",
+      "type": "select",
+      "options": ["fast", "deep"],
+      "cliFlag": "--model",
+      "cliValue": true,
+      "default": "fast"
+    },
+    {
+      "key": "verbose",
+      "label": "Verbose output",
+      "type": "boolean",
+      "cliFlag": "--verbose"
+    }
+  ]
+}`;
+---
+
+<Layout
+  title="OpenDray — Pilot AI Coding Agents from Your Phone"
+  description="A self-hosted terminal cockpit for piloting AI coding agents from a Flutter app. Go backend, plugin architecture, Telegram bridge, MCP server management."
+>
+  <!-- ===== NAV ===== -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand">
+        <img src="/logo.png" alt="OpenDray" class="nav-logo" width="32" height="32" />
+        <span class="nav-name">OpenDray</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#plugins">Plugins</a>
+        <a href="#telegram">Telegram</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="https://github.com/opendray/opendray" target="_blank" rel="noopener" class="nav-github">
+          GitHub
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M3.75 2h3.5a.75.75 0 0 1 0 1.5H4.56l7.22 7.22a.75.75 0 1 1-1.06 1.06L3.5 4.56v2.69a.75.75 0 0 1-1.5 0v-3.5A1.75 1.75 0 0 1 3.75 2z"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero">
+    <div class="hero-gradient"></div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        Open Source &middot; MIT Licensed
+      </div>
+      <img src="/logo.png" alt="OpenDray Logo" class="hero-logo" width="80" height="80" />
+      <h1 class="hero-title">
+        Open<span class="hero-title-accent">Dray</span>
+      </h1>
+      <p class="hero-tagline">
+        Run AI coding agents on your server.<br />
+        Control them from your phone, browser, or Telegram.
+      </p>
+      <div class="hero-actions">
+        <a href="https://github.com/opendray/opendray" target="_blank" rel="noopener" class="btn btn-primary">
+          Get Started
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+        </a>
+        <a href="#features" class="btn btn-secondary">
+          View Features
+        </a>
+      </div>
+      <div class="hero-terminal">
+        <div class="terminal-bar">
+          <span class="terminal-dot terminal-dot--red"></span>
+          <span class="terminal-dot terminal-dot--yellow"></span>
+          <span class="terminal-dot terminal-dot--green"></span>
+          <span class="terminal-title">opendray</span>
+        </div>
+        <div class="terminal-body">
+          <div class="terminal-line">
+            <span class="terminal-prompt">$</span>
+            <span class="terminal-cmd">./opendray</span>
+          </div>
+          <div class="terminal-line terminal-output">
+            <span class="terminal-info">INFO</span> database connected and migrated
+          </div>
+          <div class="terminal-line terminal-output">
+            <span class="terminal-info">INFO</span> providers loaded count=17
+          </div>
+          <div class="terminal-line terminal-output">
+            <span class="terminal-info">INFO</span> telegram bot online @your_bot
+          </div>
+          <div class="terminal-line terminal-output">
+            <span class="terminal-success">INFO</span> OpenDray starting addr=127.0.0.1:8640
+          </div>
+          <div class="terminal-line">
+            <span class="terminal-cursor"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== THE PROBLEM ===== -->
+  <section class="problem">
+    <div class="container">
+      <div class="problem-card">
+        <h2 class="problem-title">Sound familiar?</h2>
+        <div class="problem-terminal">
+          <div class="terminal-bar">
+            <span class="terminal-dot terminal-dot--red"></span>
+            <span class="terminal-dot terminal-dot--yellow"></span>
+            <span class="terminal-dot terminal-dot--green"></span>
+            <span class="terminal-title">frustration.sh</span>
+          </div>
+          <div class="terminal-body">
+            <div class="terminal-line terminal-output terminal-dim">You SSH into your server to check on Claude.</div>
+            <div class="terminal-line terminal-output terminal-dim">You attach to tmux. Wrong pane.</div>
+            <div class="terminal-line terminal-output terminal-dim">Claude asked a question 20 minutes ago. It's been waiting.</div>
+            <div class="terminal-line terminal-output terminal-dim">You wanted to approve it from the bus. But there was no way to.</div>
+            <div class="terminal-line terminal-output terminal-dim">You close the laptop. The session dies.</div>
+            <div class="terminal-line terminal-output" style="margin-top: 0.75rem;">
+              <span class="terminal-accent">There has to be a better way.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FEATURES ===== -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">Features</span>
+        <h2 class="section-title">What OpenDray actually does</h2>
+        <p class="section-subtitle">
+          Manages persistent terminal sessions for AI coding agents. Controls them from a mobile app, web browser, or Telegram.
+        </p>
+      </div>
+      <div class="features-grid">
+        {features.map((f) => (
+          <div class="feature-card">
+            <span class="feature-icon">{f.icon}</span>
+            <h3 class="feature-title">{f.title}</h3>
+            <p class="feature-description">{f.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SUPPORTED AGENTS ===== -->
+  <section class="agents" id="agents">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">Agents</span>
+        <h2 class="section-title">Ships with six. Add more via manifest.</h2>
+        <p class="section-subtitle">
+          Each agent is a plugin with a manifest.json declaring its CLI command, available models,
+          and capabilities. The UI adapts: resume buttons for Claude, model pickers for OpenCode,
+          approval-mode selectors for Codex.
+        </p>
+      </div>
+      <div class="agents-track">
+        {agents.map((a) => (
+          <div class="agent-pill" style={`--agent-color: ${a.color}`}>
+            <span class="agent-emoji">{a.emoji}</span>
+            <span class="agent-name">{a.name}</span>
+          </div>
+        ))}
+        <div class="agent-pill agent-pill--add">
+          <span class="agent-emoji">+</span>
+          <span class="agent-name">Add yours</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== HOW IT WORKS ===== -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">How It Works</span>
+        <h2 class="section-title">Three steps. Zero friction.</h2>
+      </div>
+      <div class="steps">
+        {steps.map((s) => (
+          <div class="step">
+            <div class="step-num">{s.num}</div>
+            <div class="step-content">
+              <h3 class="step-title">{s.title}</h3>
+              <p class="step-description">{s.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PLUGIN STANDARD ===== -->
+  <section class="plugin-system" id="plugins">
+    <div class="container">
+      <div class="plugin-grid">
+        <div class="plugin-text">
+          <span class="section-label">Open Plugin Standard</span>
+          <h2 class="section-title">Declarative, not imperative.</h2>
+          <p class="plugin-description">
+            Every provider in OpenDray &mdash; agents, panels, tools &mdash; is defined by a
+            <code>manifest.json</code>. The manifest declares the CLI command, available models,
+            and a <code>configSchema</code> that drives the settings form in the app.
+          </p>
+          <p class="plugin-description">
+            <strong>Config &rarr; CLI args + env vars</strong> &mdash; each config field has a
+            <code>type</code> (string, secret, select, number, boolean, args) and optional
+            <code>cliFlag</code> or <code>envVar</code>. When a session launches, OpenDray
+            reads the user's config and builds the final command line and environment automatically.
+            Boolean fields append flags. Select fields append flag + value. Secrets inject as env vars.
+          </p>
+          <p class="plugin-description">
+            <strong>Conditional fields</strong> &mdash; <code>dependsOn</code> and
+            <code>dependsVal</code> let fields appear only when relevant. For example,
+            an API key field only shows when the auth type is set to "custom" instead of "env" or "oauth".
+          </p>
+          <p class="plugin-description plugin-description--muted">
+            Two plugin types: <code>cli</code> spawns a PTY process and manages its lifecycle.
+            <code>panel</code> is a stateless HTTP API backed by config (file browser, database viewer, log tailer).
+            Both are stored in PostgreSQL, toggleable at runtime, and health-checked in the background.
+          </p>
+        </div>
+        <div class="plugin-code">
+          <div class="terminal-bar">
+            <span class="terminal-dot terminal-dot--red"></span>
+            <span class="terminal-dot terminal-dot--yellow"></span>
+            <span class="terminal-dot terminal-dot--green"></span>
+            <span class="terminal-title">plugins/agents/my-agent/manifest.json</span>
+          </div>
+          <pre class="code-block"><code>{manifestExample}</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TELEGRAM BRIDGE ===== -->
+  <section class="telegram-bridge" id="telegram">
+    <div class="container">
+      <div class="plugin-grid">
+        <div class="plugin-text">
+          <span class="section-label">Telegram Bridge</span>
+          <h2 class="section-title">A real two-way terminal over Telegram.</h2>
+          <p class="plugin-description">
+            When a session goes idle (agent waiting for input), OpenDray reads the
+            structured output &mdash; for Claude, it parses the JSONL response log directly &mdash;
+            and sends the latest content to linked Telegram chats.
+            Reply to the notification and your text goes straight to the agent's stdin.
+          </p>
+          <p class="plugin-description">
+            <strong>Structured prompts</strong> &mdash; if Claude shows a permission dialog
+            or multi-choice question, the bridge parses the prompt type and renders it as
+            inline Telegram keyboards. Tap a button to approve, or check multiple boxes and
+            hit Submit. The response is formatted exactly as the CLI expects it.
+          </p>
+          <p class="plugin-description">
+            <strong>Event-driven, not polling</strong> &mdash; the bridge hooks into the
+            session idle detector. No busy loops. Notifications fire within seconds of the
+            agent going quiet. Output is diffed against the last sent snapshot so you only
+            see genuinely new content.
+          </p>
+          <p class="plugin-description plugin-description--muted">
+            Works on any device with Telegram. Set up with a BotFather token and
+            an allowed chat ID list. Multiple chats can link to the same session.
+          </p>
+        </div>
+        <div class="plugin-code">
+          <div class="terminal-bar">
+            <span class="terminal-dot terminal-dot--red"></span>
+            <span class="terminal-dot terminal-dot--yellow"></span>
+            <span class="terminal-dot terminal-dot--green"></span>
+            <span class="terminal-title">OpenDray Telegram Bridge</span>
+          </div>
+          <pre class="code-block"><code><span style="color:#94A3B8">Read</span>
+/sessions        &mdash; list running sessions
+/screen [1]      &mdash; current screen snapshot
+/tail 1 [n]      &mdash; last N lines of output
+/whoami          &mdash; show your chat ID
+
+<span style="color:#94A3B8">Control</span>
+/link 1          &mdash; bind this chat to session #1
+/unlink          &mdash; remove the binding
+/links           &mdash; list all active bindings
+/send 1 &lt;text&gt;   &mdash; one-shot send without /link
+/stop 1          &mdash; stop a running session
+
+<span style="color:#94A3B8">Quick keys</span> <span style="color:#64748B">(sent to linked session)</span>
+/cc  /cd  /tab  /enter  /yes  /no</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ARCHITECTURE ===== -->
+  <section class="architecture" id="architecture">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">Architecture</span>
+        <h2 class="section-title">One binary. One database.</h2>
+        <p class="section-subtitle">
+          Go backend embeds the Flutter web build via go:embed. PostgreSQL stores sessions,
+          plugin configs, Claude accounts, and LLM provider endpoints. Agents are spawned as
+          real PTY subprocesses with injected credentials and MCP configs.
+        </p>
+      </div>
+      <div class="arch-diagram">
+        <div class="arch-col">
+          <div class="arch-box arch-box--client">
+            <div class="arch-box-label">Clients</div>
+            <div class="arch-item">Flutter App</div>
+            <div class="arch-item">Telegram Bot</div>
+            <div class="arch-item">Web UI</div>
+          </div>
+        </div>
+        <div class="arch-arrow">
+          <svg width="40" height="24" viewBox="0 0 40 24" fill="none">
+            <path d="M0 12h32M26 6l6 6-6 6" stroke="var(--accent-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="arch-arrow-label">WebSocket / HTTP</span>
+        </div>
+        <div class="arch-col">
+          <div class="arch-box arch-box--server">
+            <div class="arch-box-label">OpenDray Server</div>
+            <div class="arch-item">Session Manager</div>
+            <div class="arch-item">Plugin Loader</div>
+            <div class="arch-item">LLM Router</div>
+            <div class="arch-item">MCP Gateway</div>
+          </div>
+        </div>
+        <div class="arch-arrow">
+          <svg width="40" height="24" viewBox="0 0 40 24" fill="none">
+            <path d="M0 12h32M26 6l6 6-6 6" stroke="var(--accent-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="arch-arrow-label">PTY / Subprocess</span>
+        </div>
+        <div class="arch-col">
+          <div class="arch-box arch-box--agents">
+            <div class="arch-box-label">Agents</div>
+            <div class="arch-item">Claude Code</div>
+            <div class="arch-item">Codex CLI</div>
+            <div class="arch-item">Gemini CLI</div>
+            <div class="arch-item">+ Plugins</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== QUICK START ===== -->
+  <section class="quick-start" id="quick-start">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">Quick Start</span>
+        <h2 class="section-title">Up and running in 60 seconds</h2>
+      </div>
+      <div class="quickstart-code">
+        <div class="terminal-bar">
+          <span class="terminal-dot terminal-dot--red"></span>
+          <span class="terminal-dot terminal-dot--yellow"></span>
+          <span class="terminal-dot terminal-dot--green"></span>
+          <span class="terminal-title">terminal</span>
+        </div>
+        <pre class="code-block"><code><span class="terminal-prompt">$</span> git clone https://github.com/opendray/opendray.git
+<span class="terminal-prompt">$</span> cd opendray && cp .env.example .env
+<span class="terminal-prompt">$</span> make dev</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TECH STACK ===== -->
+  <section class="tech-stack">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">Built With</span>
+        <h2 class="section-title">Boring technology, exciting product</h2>
+      </div>
+      <div class="tech-pills">
+        {techStack.map((t) => (
+          <span class="tech-pill">{t}</span>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CTA ===== -->
+  <section class="cta">
+    <div class="container">
+      <div class="cta-card">
+        <h2 class="cta-title">Ready to take control?</h2>
+        <p class="cta-subtitle">
+          Stop SSH-ing into tmux sessions. Start piloting your AI agents from
+          anywhere.
+        </p>
+        <div class="cta-actions">
+          <a href="https://github.com/opendray/opendray" target="_blank" rel="noopener" class="btn btn-primary btn-lg">
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+            </svg>
+            Star on GitHub
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <img src="/logo.png" alt="OpenDray" width="24" height="24" />
+          <span>OpenDray</span>
+        </div>
+        <div class="footer-links">
+          <a href="https://github.com/opendray/opendray" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://github.com/opendray/opendray/discussions" target="_blank" rel="noopener">Discussions</a>
+          <a href="https://github.com/opendray/opendray/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
+          <a href="https://github.com/opendray/opendray/blob/main/SECURITY.md" target="_blank" rel="noopener">Security</a>
+          <a href="https://github.com/opendray/opendray/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+        </div>
+        <p class="footer-note">
+          Built with care. Not affiliated with any AI provider.
+        </p>
+      </div>
+    </div>
+  </footer>
+</Layout>
+
+<style>
+  /* ===== NAV ===== */
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 0 1.5rem;
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    background: rgba(11, 17, 32, 0.8);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .nav-inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.125rem;
+  }
+
+  .nav-brand:hover {
+    color: var(--text-primary);
+  }
+
+  .nav-logo {
+    border-radius: 8px;
+  }
+
+  .nav-name {
+    letter-spacing: -0.02em;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .nav-links a {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+
+  .nav-links a:hover {
+    color: var(--text-primary);
+  }
+
+  .nav-github {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  @media (max-width: 640px) {
+    .nav-links a:not(.nav-github) {
+      display: none;
+    }
+  }
+
+  /* ===== CONTAINER ===== */
+  .container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  /* ===== SECTION HEADERS ===== */
+  .section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .section-label {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--accent-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+    padding: 0.25rem 0.75rem;
+    background: rgba(14, 165, 233, 0.1);
+    border: 1px solid rgba(14, 165, 233, 0.2);
+    border-radius: 100px;
+  }
+
+  .section-title {
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+  }
+
+  .section-subtitle {
+    margin-top: 1rem;
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: var(--accent-primary);
+    color: #fff;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 24px rgba(14, 165, 233, 0.25);
+  }
+
+  .btn-primary:hover {
+    background: #38bdf8;
+    border-color: #38bdf8;
+    color: #fff;
+    box-shadow: 0 0 32px rgba(14, 165, 233, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-secondary);
+    border-color: var(--border-subtle);
+  }
+
+  .btn-secondary:hover {
+    color: var(--text-primary);
+    border-color: rgba(148, 163, 184, 0.3);
+    background: rgba(148, 163, 184, 0.05);
+  }
+
+  .btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1.0625rem;
+  }
+
+  /* ===== HERO ===== */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 1.5rem 4rem;
+    overflow: hidden;
+  }
+
+  .hero-gradient {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(14, 165, 233, 0.15), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 60%, rgba(99, 102, 241, 0.1), transparent),
+      radial-gradient(ellipse 60% 40% at 20% 80%, rgba(14, 165, 233, 0.06), transparent);
+    animation: hero-glow 8s ease-in-out infinite alternate;
+  }
+
+  @keyframes hero-glow {
+    0% {
+      opacity: 0.8;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  .hero-content {
+    position: relative;
+    text-align: center;
+    max-width: 720px;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    padding: 0.375rem 1rem;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid var(--border-subtle);
+    border-radius: 100px;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(8px);
+  }
+
+  .hero-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .hero-logo {
+    margin-bottom: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 0 48px rgba(14, 165, 233, 0.15);
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .hero-title {
+    font-size: clamp(3rem, 8vw, 5rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-title-accent {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-tagline {
+    font-size: clamp(1.125rem, 2.5vw, 1.375rem);
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 4rem;
+  }
+
+  .hero-terminal {
+    max-width: 520px;
+    margin: 0 auto;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+    background: rgba(17, 24, 39, 0.8);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+    text-align: left;
+  }
+
+  /* ===== TERMINAL COMPONENTS ===== */
+  .terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.75rem 1rem;
+    background: rgba(30, 41, 59, 0.6);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .terminal-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .terminal-dot--red { background: #ef4444; }
+  .terminal-dot--yellow { background: #eab308; }
+  .terminal-dot--green { background: #22c55e; }
+
+  .terminal-title {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .terminal-body {
+    padding: 1rem 1.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.8;
+  }
+
+  .terminal-line {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .terminal-prompt {
+    color: var(--accent-green);
+    font-weight: 500;
+  }
+
+  .terminal-cmd {
+    color: var(--text-primary);
+  }
+
+  .terminal-output {
+    color: var(--text-secondary);
+  }
+
+  .terminal-dim {
+    color: var(--text-muted);
+  }
+
+  .terminal-accent {
+    color: var(--accent-primary);
+    font-weight: 500;
+  }
+
+  .terminal-info {
+    color: var(--accent-primary);
+    font-weight: 500;
+    font-size: 0.6875rem;
+    padding: 0.1rem 0.4rem;
+    background: rgba(14, 165, 233, 0.1);
+    border-radius: 3px;
+  }
+
+  .terminal-success {
+    color: var(--accent-green);
+    font-weight: 500;
+    font-size: 0.6875rem;
+    padding: 0.1rem 0.4rem;
+    background: rgba(34, 197, 94, 0.1);
+    border-radius: 3px;
+  }
+
+  .terminal-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background: var(--accent-primary);
+    animation: blink 1.2s step-end infinite;
+    border-radius: 1px;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* ===== PROBLEM ===== */
+  .problem {
+    padding: var(--section-padding) 0;
+  }
+
+  .problem-card {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .problem-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .problem-terminal {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+    background: rgba(17, 24, 39, 0.8);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  /* ===== FEATURES ===== */
+  .features {
+    padding: var(--section-padding) 0;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 900px) {
+    .features-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 580px) {
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .feature-card {
+    padding: 2rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+  }
+
+  .feature-card:hover {
+    border-color: rgba(14, 165, 233, 0.25);
+    background: rgba(30, 41, 59, 0.7);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  }
+
+  .feature-icon {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .feature-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .feature-description {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+
+  /* ===== AGENTS ===== */
+  .agents {
+    padding: var(--section-padding) 0;
+  }
+
+  .agents-track {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .agent-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.875rem 1.5rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 100px;
+    backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+  }
+
+  .agent-pill:hover {
+    border-color: var(--agent-color, var(--accent-primary));
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .agent-emoji {
+    font-size: 1.25rem;
+  }
+
+  .agent-name {
+    font-weight: 600;
+    font-size: 0.9375rem;
+    white-space: nowrap;
+  }
+
+  .agent-pill--add {
+    border-style: dashed;
+    color: var(--text-muted);
+  }
+
+  .agent-pill--add:hover {
+    color: var(--text-primary);
+    border-color: var(--accent-primary);
+  }
+
+  /* ===== HOW IT WORKS ===== */
+  .how-it-works {
+    padding: var(--section-padding) 0;
+  }
+
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: 640px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .steps::before {
+    content: '';
+    position: absolute;
+    left: 28px;
+    top: 40px;
+    bottom: 40px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent-primary), var(--accent-secondary));
+    border-radius: 1px;
+    opacity: 0.3;
+  }
+
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+    padding: 2rem 0;
+    position: relative;
+  }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+    background: rgba(14, 165, 233, 0.1);
+    border: 1px solid rgba(14, 165, 233, 0.2);
+    border-radius: 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .step-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.375rem;
+    letter-spacing: -0.01em;
+  }
+
+  .step-description {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+
+  /* ===== PLUGIN SYSTEM ===== */
+  .plugin-system {
+    padding: var(--section-padding) 0;
+  }
+
+  .plugin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+
+  @media (max-width: 768px) {
+    .plugin-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .plugin-text .section-label {
+    margin-bottom: 1rem;
+  }
+
+  .plugin-text .section-title {
+    text-align: left;
+    margin-bottom: 1.5rem;
+  }
+
+  .plugin-description {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+  }
+
+  .plugin-description--muted {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+  }
+
+  .plugin-description code {
+    color: var(--accent-primary);
+    font-size: 0.875rem;
+    padding: 0.15rem 0.4rem;
+    background: rgba(14, 165, 233, 0.1);
+    border-radius: 4px;
+  }
+
+  .plugin-code {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+    background: rgba(17, 24, 39, 0.8);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .code-block {
+    padding: 1.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    overflow-x: auto;
+    margin: 0;
+  }
+
+  .code-block code {
+    color: var(--text-secondary);
+  }
+
+  /* ===== TELEGRAM BRIDGE ===== */
+  .telegram-bridge {
+    padding: var(--section-padding) 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(14, 165, 233, 0.03) 50%, transparent 100%);
+  }
+
+  /* ===== ARCHITECTURE ===== */
+  .architecture {
+    padding: var(--section-padding) 0;
+  }
+
+  .arch-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    overflow-x: auto;
+    padding: 2rem 0;
+  }
+
+  @media (max-width: 768px) {
+    .arch-diagram {
+      flex-direction: column;
+    }
+
+    .arch-arrow {
+      transform: rotate(90deg);
+    }
+  }
+
+  .arch-box {
+    padding: 1.5rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    backdrop-filter: blur(8px);
+    min-width: 200px;
+  }
+
+  .arch-box--client { border-color: rgba(14, 165, 233, 0.25); }
+  .arch-box--server { border-color: rgba(99, 102, 241, 0.25); }
+  .arch-box--agents { border-color: rgba(34, 197, 94, 0.25); }
+
+  .arch-box-label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .arch-item {
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.375rem 0;
+    color: var(--text-primary);
+  }
+
+  .arch-item + .arch-item {
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .arch-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+    flex-shrink: 0;
+  }
+
+  .arch-arrow-label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  /* ===== QUICK START ===== */
+  .quick-start {
+    padding: var(--section-padding) 0;
+  }
+
+  .quickstart-code {
+    max-width: 600px;
+    margin: 0 auto;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+    background: rgba(17, 24, 39, 0.8);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .quickstart-code .code-block {
+    font-size: 0.875rem;
+    line-height: 2;
+  }
+
+  .quickstart-code .terminal-prompt {
+    color: var(--accent-green);
+    user-select: none;
+    margin-right: 0.5rem;
+  }
+
+  /* ===== TECH STACK ===== */
+  .tech-stack {
+    padding: var(--section-padding) 0;
+  }
+
+  .tech-pills {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  .tech-pill {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.625rem 1.25rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+  }
+
+  .tech-pill:hover {
+    color: var(--text-primary);
+    border-color: rgba(148, 163, 184, 0.25);
+  }
+
+  /* ===== CTA ===== */
+  .cta {
+    padding: var(--section-padding) 0;
+  }
+
+  .cta-card {
+    text-align: center;
+    padding: 4rem 2rem;
+    background:
+      linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(99, 102, 241, 0.08));
+    border: 1px solid rgba(14, 165, 233, 0.15);
+    border-radius: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(14, 165, 233, 0.06), transparent 70%);
+    pointer-events: none;
+  }
+
+  .cta-title {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    position: relative;
+  }
+
+  .cta-subtitle {
+    color: var(--text-secondary);
+    font-size: 1.125rem;
+    margin-bottom: 2rem;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+  }
+
+  .cta-actions {
+    position: relative;
+  }
+
+  /* ===== FOOTER ===== */
+  .footer {
+    padding: 3rem 0;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .footer-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-primary);
+  }
+
+  .footer-brand img {
+    border-radius: 6px;
+  }
+
+  .footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+  }
+
+  .footer-links a {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    transition: color 0.2s ease;
+  }
+
+  .footer-links a:hover {
+    color: var(--text-secondary);
+  }
+
+  .footer-note {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+  }
+</style>
