@@ -1375,6 +1375,24 @@ func handleRootBundled(in *bufio.Reader) stepResult {
 		return srBack
 	}
 
+	// Belt-and-suspenders: some distros (or pre-existing state from
+	// previous failed runs) leave parts of the home dir owned by root.
+	// Force the entire home subtree to the new user so the child
+	// wizard's first config write doesn't hit EACCES on a stray
+	// root-owned `.opendray/` or `.config/` directory.
+	_ = progress(
+		fmt.Sprintf("chown -R %s:%s %s", username, username, u.HomeDir),
+		func() error {
+			cmd := exec.Command("chown", "-R",
+				fmt.Sprintf("%s:%s", username, username), u.HomeDir)
+			if out, err := cmd.CombinedOutput(); err != nil {
+				return fmt.Errorf("chown: %w — %s", err,
+					strings.TrimSpace(string(out)))
+			}
+			return nil
+		},
+	)
+
 	// Step 3: re-launch setup as the new user. We use `su -l` so the
 	// child gets a proper login shell environment (PATH, HOME, etc.)
 	// before exec'ing `opendray setup`. Stdin/Stdout/Stderr are shared
