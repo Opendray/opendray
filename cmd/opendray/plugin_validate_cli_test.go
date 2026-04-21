@@ -338,24 +338,27 @@ func TestRunValidate_HelpFlag(t *testing.T) {
 	}
 }
 
-// TestRunValidate_PassesTimeNinja validates the actual repo fixture at
-// plugins/examples/time-ninja/ and asserts it is spec-compliant (exit 0).
-func TestRunValidate_PassesTimeNinja(t *testing.T) {
+// TestRunValidate_PassesBuiltin validates an actual on-disk repo
+// manifest (the `claude` builtin — one of the M5 tier-1 v1 migrations)
+// and asserts it is spec-compliant (exit 0). Replaces the earlier
+// time-ninja fixture which lived under plugins/examples/ before
+// that tree was retired.
+func TestRunValidate_PassesBuiltin(t *testing.T) {
 	root := repoRoot(t)
-	timeNinjaDir := filepath.Join(root, "plugins", "examples", "time-ninja")
+	builtinDir := filepath.Join(root, "plugins", "builtin", "claude")
 
-	if _, err := os.Stat(filepath.Join(timeNinjaDir, "manifest.json")); err != nil {
-		t.Skipf("time-ninja fixture not found at %s: %v", timeNinjaDir, err)
+	if _, err := os.Stat(filepath.Join(builtinDir, "manifest.json")); err != nil {
+		t.Skipf("claude builtin fixture not found at %s: %v", builtinDir, err)
 	}
 
 	var stdout, stderr bytes.Buffer
-	code := runValidate([]string{timeNinjaDir}, &stdout, &stderr)
+	code := runValidate([]string{builtinDir}, &stdout, &stderr)
 
 	if code != 0 {
-		t.Errorf("expected exit code 0 for time-ninja fixture, got %d; stderr=%q stderr", code, stderr.String())
+		t.Errorf("expected exit code 0 for claude builtin, got %d; stderr=%q", code, stderr.String())
 	}
 	if !strings.Contains(stdout.String(), "ok") {
-		t.Errorf("expected stdout to contain \"ok\" for time-ninja, got %q", stdout.String())
+		t.Errorf("expected stdout to contain \"ok\" for claude builtin, got %q", stdout.String())
 	}
 }
 
