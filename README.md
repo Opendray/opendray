@@ -6,11 +6,30 @@
 
 <p><strong>Pilot AI coding agents from your phone. Self-hosted. Multi-agent. Plugin-driven.</strong></p>
 
+<!-- Build & release -->
 <p>
-<a href="https://github.com/opendray/opendray/actions/workflows/ci.yml"><img src="https://github.com/opendray/opendray/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-<a href="https://github.com/opendray/opendray/releases"><img src="https://img.shields.io/github/v/release/opendray/opendray?color=blue" alt="Release"></a>
+<a href="https://github.com/Opendray/opendray/actions/workflows/ci.yml"><img src="https://github.com/Opendray/opendray/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+<a href="https://github.com/Opendray/opendray/actions/workflows/codeql.yml"><img src="https://github.com/Opendray/opendray/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"></a>
+<a href="https://codecov.io/gh/Opendray/opendray"><img src="https://codecov.io/gh/Opendray/opendray/branch/main/graph/badge.svg" alt="Coverage"></a>
+<a href="https://github.com/Opendray/opendray/releases"><img src="https://img.shields.io/github/v/release/Opendray/opendray?color=blue" alt="Release"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
-<a href="https://github.com/opendray/opendray/stargazers"><img src="https://img.shields.io/github/stars/opendray/opendray?style=social" alt="Stars"></a>
+</p>
+
+<!-- Community -->
+<p>
+<a href="https://github.com/Opendray/opendray/stargazers"><img src="https://img.shields.io/github/stars/Opendray/opendray?style=social" alt="Stars"></a>
+<a href="https://github.com/Opendray/opendray/network/members"><img src="https://img.shields.io/github/forks/Opendray/opendray?style=social" alt="Forks"></a>
+<a href="https://github.com/Opendray/opendray/watchers"><img src="https://img.shields.io/github/watchers/Opendray/opendray?style=social" alt="Watchers"></a>
+</p>
+
+<!-- Project health -->
+<p>
+<a href="https://github.com/Opendray/opendray/releases"><img src="https://img.shields.io/github/downloads/Opendray/opendray/total?label=downloads&color=blueviolet" alt="Downloads"></a>
+<a href="https://github.com/Opendray/opendray/graphs/contributors"><img src="https://img.shields.io/github/contributors/Opendray/opendray?color=orange" alt="Contributors"></a>
+<img src="https://img.shields.io/github/last-commit/Opendray/opendray?color=teal" alt="Last commit">
+<a href="https://github.com/Opendray/opendray/issues"><img src="https://img.shields.io/github/issues/Opendray/opendray?color=red" alt="Open issues"></a>
+<a href="https://github.com/Opendray/opendray/pulls"><img src="https://img.shields.io/github/issues-pr/Opendray/opendray?color=yellow" alt="Open PRs"></a>
+<a href="https://github.com/Opendray/opendray/discussions"><img src="https://img.shields.io/github/discussions/Opendray/opendray?color=blue" alt="Discussions"></a>
 </p>
 
 <p>
@@ -18,7 +37,7 @@
 <a href="#features"><b>Features</b></a> &middot;
 <a href="#architecture"><b>Architecture</b></a> &middot;
 <a href="#plugins"><b>Plugins</b></a> &middot;
-<a href="https://github.com/opendray/opendray/discussions"><b>Discussions</b></a>
+<a href="https://github.com/Opendray/opendray/discussions"><b>Discussions</b></a>
 </p>
 
 <!-- TODO: Replace with actual screenshot/screencast -->
@@ -89,7 +108,7 @@ chmod +x opendray-darwin-arm64
 ### Build from source
 
 ```bash
-git clone https://github.com/opendray/opendray.git
+git clone https://github.com/Opendray/opendray.git
 cd opendray
 make release-all         # darwin/linux × amd64/arm64 binaries in bin/
 ./bin/opendray-darwin-arm64
@@ -353,6 +372,7 @@ All configuration via environment variables. See [`.env.example`](.env.example) 
 | Variable | Default | Description |
 |---|---|---|
 | `LISTEN_ADDR` | `127.0.0.1:8640` | Bind address |
+| `ALLOWED_ORIGINS` | *(empty = same-origin)* | Comma-separated cross-origin allowlist for browser CORS + WebSocket upgrades. Use `*` to permit any origin (warned at startup). |
 | `DB_HOST` | *(required)* | PostgreSQL host |
 | `DB_PASSWORD` | *(required)* | PostgreSQL password |
 | `DB_NAME` | `opendray` | Database name |
@@ -380,6 +400,12 @@ All configuration via environment variables. See [`.env.example`](.env.example) 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, plugin authoring, and PR process.
 
 The fastest way to contribute: write a `manifest.json` for your favorite AI coding CLI and submit a PR.
+
+## Star History
+
+<a href="https://star-history.com/#Opendray/opendray&Date">
+  <img alt="Star history of Opendray/opendray" src="https://api.star-history.com/svg?repos=Opendray/opendray&type=Date" />
+</a>
 
 ## License
 

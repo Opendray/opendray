@@ -405,7 +405,7 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
                       child: TerminalView(
                         _terminal,
                         controller: _termController,
-                        theme: ntcTerminalTheme,
+                        theme: opendrayTerminalTheme,
                         textStyle: TerminalStyle(
                           fontSize: 13,
                           fontFamily: GoogleFonts.jetBrainsMono().fontFamily ?? 'monospace',

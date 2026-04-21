@@ -36,7 +36,7 @@ func (s *Server) simulatorStreamWS(w http.ResponseWriter, r *http.Request) {
 	}
 	device := r.URL.Query().Get("device")
 
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
 	}

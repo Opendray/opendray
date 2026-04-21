@@ -35,7 +35,7 @@ void main() async {
     }
   });
 
-  runApp(NtcApp(
+  runApp(OpendrayApp(
     serverConfig: serverConfig,
     l10n: l10n,
     authService: authService,

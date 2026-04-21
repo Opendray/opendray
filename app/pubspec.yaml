@@ -1,5 +1,5 @@
 name: opendray
-description: "A new Flutter project."
+description: "OpenDray — pilot AI coding agents (Claude Code, Codex, Gemini, OpenCode, Qwen) from your phone, tablet, or browser. Self-hosted, multi-agent, plugin-driven."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
