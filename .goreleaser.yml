@@ -12,10 +12,14 @@ builds:
     binary: opendray
     env:
       - CGO_ENABLED=0
+    # Windows is intentionally omitted until ConPTY support lands.
+    # The core feature (spawning agent CLIs in a pseudo-terminal)
+    # requires UNIX PTY via github.com/creack/pty, and the current
+    # codebase has no Windows equivalent. Cross-compiling to Windows
+    # would produce a binary that can't spawn sessions.
     goos:
       - linux
       - darwin
-      - windows
     goarch:
       - amd64
       - arm64
@@ -32,12 +36,12 @@ builds:
 # installer needs (tar / Expand-Archive).
 archives:
   - id: opendray
-    format: binary
+    formats:
+      - binary
     name_template: >-
       {{ .ProjectName }}-
       {{- .Os }}-
       {{- .Arch }}
-      {{- if eq .Os "windows" }}.exe{{ end }}
 
 checksum:
   name_template: "SHA256SUMS"
