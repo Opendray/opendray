@@ -38,8 +38,34 @@ plugins/*/data/
 # Deploy script config (hosts + SMB password)
 scripts/deploy.env
 
-# Local-only — not pushed to Gitea
+# ── Public-repo slim-down ────────────────────────────────
+# Local-only files kept out of the public mirror. Working tree stays
+# intact; these just don't ship to GitHub.
+
 CLAUDE.md
 deploy/
+
+# Docs — only the logo survives (README references it)
 /docs/*
-!/docs/plugin-platform/
+!/docs/logo.png
+!/docs/logo.svg
+
+# Marketing / docs site — hosted separately
+/website/
+
+# Gitea-specific CI (self-hosted only)
+/.gitea/
+
+# Flutter mobile scaffolding — web build target still has everything it
+# needs (app/lib, app/web, app/assets, app/pubspec.*, app/test). Mobile
+# platforms don't ship publicly until they're actually supported.
+app/android/
+app/ios/
+app/build_release.sh
+
+# Internal deployment / release tooling (UNAS, LXC, sudoers bootstrap)
+scripts/bootstrap_sudoers.sh
+scripts/build_release.sh
+scripts/deploy_release.sh
+scripts/unas_upload.py
+scripts/verify-deploy.sh

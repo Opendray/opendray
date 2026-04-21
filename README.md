@@ -72,15 +72,9 @@ The installer:
 
 Override with env vars: `OPENDRAY_VERSION=v0.5.0`, `OPENDRAY_INSTALL_DIR=/usr/local/bin`, `OPENDRAY_NO_SETUP=1` (skip auto-wizard).
 
-### Windows (PowerShell)
-
-```powershell
-irm https://raw.githubusercontent.com/Opendray/opendray/main/install.ps1 | iex
-```
-
-Same flow: downloads to `$env:LOCALAPPDATA\Programs\OpenDray\opendray.exe`,
-adds it to your user PATH, removes the SmartScreen zone-identifier, and
-launches the wizard.
+> **Windows:** not yet supported. The core feature (spawning agent CLIs
+> in a pseudo-terminal) requires UNIX PTY via `creack/pty`; the Windows
+> ConPTY equivalent is on the roadmap.
 
 ### What the wizard asks
 
@@ -94,8 +88,7 @@ launches the wizard.
 4 / 4   JWT SECRET      auto-generate or paste your own
 ```
 
-Config persists to `~/.opendray/config.toml` (Unix) /
-`$env:LOCALAPPDATA\OpenDray\config.toml` (Windows). Re-running `opendray setup`
+Config persists to `~/.opendray/config.toml`. Re-running `opendray setup`
 resumes with existing values as defaults, so you can rotate any single field
 without re-entering the rest.
 
@@ -119,7 +112,6 @@ Grab a binary from the [Releases page](https://github.com/Opendray/opendray/rele
 - `opendray-darwin-arm64` — Apple Silicon Mac
 - `opendray-darwin-amd64` — Intel Mac
 - `opendray-linux-amd64` / `opendray-linux-arm64`
-- `opendray-windows-amd64.exe` / `opendray-windows-arm64.exe`
 
 ```bash
 chmod +x opendray-darwin-arm64
@@ -262,24 +254,19 @@ Output:
 1. stops any running OpenDray server + bundled PostgreSQL
 2. removes `~/.opendray/` (PG cluster, plugins, cache, marketplace)
 3. removes `~/.config/opendray/config.toml` if present
-4. removes the binary itself (self-delete on Unix; scheduled via a helper
-   `cmd.exe` on Windows since the running `.exe` can't be unlinked directly)
+4. removes the binary itself (self-delete)
 
 ### One-line nuclear option (binary can't run)
 
 When the binary is corrupt or the config is so broken the wizard won't
-start, use the shell / PowerShell scripts instead. These know nothing
-about config; they just `rm -rf` the well-known paths.
+start, use the shell script instead. It knows nothing about config; it
+just `rm -rf`s the well-known paths.
 
 ```bash
-# macOS / Linux
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/uninstall.sh | sh
-
-# Windows (PowerShell)
-irm https://raw.githubusercontent.com/Opendray/opendray/main/uninstall.ps1 | iex
 ```
 
-Environment overrides (either platform):
+Environment overrides:
 - `OPENDRAY_YES=1` — skip confirmation
 - `OPENDRAY_DRY_RUN=1` — preview only
 - `OPENDRAY_INSTALL_DIR` — non-default binary location
@@ -311,9 +298,6 @@ If both paths above fail, these are the locations to nuke by hand:
 | macOS / Linux | `~/.local/bin/opendray` |
 | macOS / Linux | `~/.opendray/` |
 | macOS / Linux | `~/.config/opendray/` (XDG fallback) |
-| Windows | `%LOCALAPPDATA%\Programs\OpenDray\opendray.exe` |
-| Windows | `%LOCALAPPDATA%\OpenDray\` |
-| Windows | `HKCU\Environment` PATH entry pointing at the install dir |
 
 ## Architecture
 

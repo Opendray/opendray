@@ -45,12 +45,9 @@ OS=$(printf '%s' "$OS_RAW" | tr '[:upper:]' '[:lower:]')
 case "$OS" in
     darwin|linux) ;;
     mingw*|msys*|cygwin*)
-        die "This shell looks like Git Bash / MSYS on Windows.
-    OpenDray's Windows installer is a PowerShell script:
-
-        irm https://raw.githubusercontent.com/${REPO}/main/install.ps1 | iex" ;;
+        die "Windows is not yet supported. OpenDray's core (agent CLI in a pseudo-terminal) needs ConPTY support, which is on the roadmap." ;;
     *)
-        die "Unsupported OS: ${OS_RAW}. OpenDray supports macOS, Linux, and Windows." ;;
+        die "Unsupported OS: ${OS_RAW}. OpenDray supports macOS and Linux." ;;
 esac
 
 ARCH_RAW=$(uname -m)

@@ -55,10 +55,7 @@ OS=$(printf '%s' "$OS_RAW" | tr '[:upper:]' '[:lower:]')
 case "$OS" in
     darwin|linux) ;;
     mingw*|msys*|cygwin*)
-        err "This shell looks like Git Bash / MSYS on Windows.
-    OpenDray's Windows uninstaller is a PowerShell script:
-
-        irm https://raw.githubusercontent.com/Opendray/opendray/main/uninstall.ps1 | iex"
+        err "Windows is not yet supported."
         exit 1 ;;
     *)
         err "Unsupported OS: ${OS_RAW}"
