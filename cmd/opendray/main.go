@@ -150,6 +150,30 @@ func main() {
 		fmt.Fprintf(os.Stderr, "FATAL: %v\n", err)
 		os.Exit(1)
 	}
+
+	// Fail fast on the root + embedded-PG combo. PostgreSQL's initdb
+	// rejects uid 0 and downstream errors are cryptic — surface the
+	// same friendly message the setup wizard gives before we even try
+	// to boot the DB.
+	if cfg.DB.Mode == "embedded" && os.Geteuid() == 0 {
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "✗ Bundled PostgreSQL cannot run as root.")
+		fmt.Fprintln(os.Stderr, "  PostgreSQL's initdb refuses uid 0 for security reasons.")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "  Fix — create an unprivileged user and re-run as that user:")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "      useradd -r -m -s /bin/bash -d /home/opendray opendray")
+		fmt.Fprintln(os.Stderr, "      su - opendray")
+		fmt.Fprintln(os.Stderr, "      opendray setup")
+		fmt.Fprintln(os.Stderr, "      opendray")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "  Or reconfigure to use an external PostgreSQL:")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "      opendray setup")
+		fmt.Fprintln(os.Stderr, "")
+		os.Exit(1)
+	}
+
 	runNormalMode(logger, cfg)
 }
 

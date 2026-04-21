@@ -468,23 +468,49 @@ func runScripted(flags *setupFlags) int {
 // ── step: database ──────────────────────────────────────────────────
 
 func stepDatabase(in *bufio.Reader, cfg *config.Config) stepResult {
+	isRoot := os.Geteuid() == 0
+
 	defaultChoice := "bundled"
-	if cfg.DB.Mode == "external" {
+	if cfg.DB.Mode == "external" || isRoot {
 		defaultChoice = "external"
 	}
 
-	items := []menuItem{
-		{
-			Key:   "bundled",
-			Label: "bundled",
-			Desc:  "Self-contained. OpenDray manages its own loopback-only\nPostgres child process. First run downloads ~50 MB.\nRecommended for single-host installs.",
-		},
-		{
-			Key:   "external",
-			Label: "external",
-			Desc:  "Bring your own PostgreSQL 14+. Requires a database,\na role with CRUD privileges, and network reach from\nthis host.",
-		},
+	bundledItem := menuItem{
+		Key:   "bundled",
+		Label: "bundled",
+		Desc:  "Self-contained. OpenDray manages its own loopback-only\nPostgres child process. First run downloads ~50 MB.\nRecommended for single-host installs.",
 	}
+	externalItem := menuItem{
+		Key:   "external",
+		Label: "external",
+		Desc:  "Bring your own PostgreSQL 14+. Requires a database,\na role with CRUD privileges, and network reach from\nthis host.",
+	}
+
+	var items []menuItem
+	if isRoot {
+		// PostgreSQL's initdb hard-rejects uid 0 as a safety measure.
+		// Rather than let the user pick bundled and bounce them with
+		// an error loop, surface the constraint up front and show
+		// external as the only viable path.
+		prf(" %s  %s",
+			warnMark(),
+			styleYellow("You are running as root — bundled PostgreSQL is unavailable."))
+		prn("")
+		prn(styleDim("   PostgreSQL's initdb refuses uid 0 for security reasons."))
+		prn(styleDim("   Two ways forward:"))
+		prn("")
+		prn(styleDim("     a. Pick ") + styleCyan("external") + styleDim(" below and point at an existing PostgreSQL."))
+		prn(styleDim("     b. Quit (Ctrl-C), create an unprivileged user, and re-run."))
+		prn("")
+		prn(styleDim("        useradd -r -m -s /bin/bash -d /home/opendray opendray"))
+		prn(styleDim("        su - opendray"))
+		prn(styleDim("        opendray setup"))
+		prn("")
+		items = []menuItem{externalItem}
+	} else {
+		items = []menuItem{bundledItem, externalItem}
+	}
+
 	choice, r := pickMenu("How should OpenDray get its database?", items, defaultChoice)
 	if r != srNext {
 		return r
