@@ -68,6 +68,27 @@ func WithSynthesizer(fn SynthesizerFn) RuntimeOption {
 	return func(rt *Runtime) { rt.synthesizer = fn }
 }
 
+// ConfigOverlayFn returns the plugin's effective config — the legacy
+// ProviderConfig (backed by the plugins.config JSONB column) merged
+// with live values from plugin_kv / plugin_secret (where the v1
+// Configure form writes). Without an overlay, ResolveCLI only sees
+// the legacy cache — values saved via PUT /api/plugins/{name}/config
+// never reach session spawn, so booleans like Claude's
+// bypassPermissions and Gemini's yolo silently no-op.
+//
+// The overlay is called once per ResolveCLI invocation; implementations
+// should keep it cheap (indexed KV reads, short DB round-trips).
+type ConfigOverlayFn func(ctx context.Context, pluginName string, base ProviderConfig) ProviderConfig
+
+// WithConfigOverlay wires a ConfigOverlayFn into the Runtime at
+// construction time. Callers that can only build the overlay after
+// NewRuntime (because it depends on services built later in the
+// startup sequence — e.g. the gateway's secret store) should use
+// SetConfigOverlay instead.
+func WithConfigOverlay(fn ConfigOverlayFn) RuntimeOption {
+	return func(rt *Runtime) { rt.configOverlay = fn }
+}
+
 // Runtime manages provider lifecycle and configuration.
 type Runtime struct {
 	db        *store.DB
@@ -87,6 +108,10 @@ type Runtime struct {
 	// compat.Synthesize here so legacy panels/agents surface as
 	// synthesized v1 contributions in the workbench.
 	synthesizer SynthesizerFn
+
+	// configOverlay is optional. Nil means ResolveCLI only sees the
+	// legacy ProviderConfig cache. See ConfigOverlayFn for context.
+	configOverlay ConfigOverlayFn
 }
 
 // NewRuntime creates a provider runtime. Accepts zero or more RuntimeOption
@@ -201,19 +226,19 @@ func (rt *Runtime) LoadAll(ctx context.Context) error {
 }
 
 // embeddedProviders returns the manifests bundled inside the binary.
-// Fails gracefully if the embed can't be walked — logs a warning and
-// returns nil so the runtime can still limp along on filesystem plugins.
+// All built-in plugins live under `plugins/builtin/` (flattened — the
+// old agents/panels split at directory level became redundant once
+// the bundle-ships-code question was settled at the manifest's `form`
+// field). Fails gracefully if the embed can't be walked — logs a
+// warning and returns nil so the runtime can still limp along on
+// filesystem plugins.
 func embeddedProviders(logger *slog.Logger) []Provider {
-	var out []Provider
-	for _, root := range []string{"agents", "panels"} {
-		ps, err := ScanFS(bundled.FS, root)
-		if err != nil {
-			logger.Warn("embedded plugin scan failed", "root", root, "error", err)
-			continue
-		}
-		out = append(out, ps...)
+	ps, err := ScanFS(bundled.FS, "builtin")
+	if err != nil {
+		logger.Warn("embedded plugin scan failed", "root", "builtin", "error", err)
+		return nil
 	}
-	return out
+	return ps
 }
 
 // filesystemProviders walks the (optional) user-managed plugin dir.
@@ -420,6 +445,18 @@ func (rt *Runtime) Remove(ctx context.Context, name string) error {
 	return nil
 }
 
+// SetConfigOverlay registers (or clears, when fn is nil) a ConfigOverlayFn
+// after Runtime construction. Needed because the gateway-side merge
+// helper — which has access to both plugin_kv and plugin_secret — is
+// built later in the startup sequence than the Runtime itself. Must be
+// called before any session spawns so RecoverOnStartup and the first
+// user-driven session both see the overlaid config.
+func (rt *Runtime) SetConfigOverlay(fn ConfigOverlayFn) {
+	rt.mu.Lock()
+	rt.configOverlay = fn
+	rt.mu.Unlock()
+}
+
 // ── CLI Tool Resolution (used by Hub) ───────────────────────────
 
 // ResolvedCLI is the final CLI specification with config overrides applied.
@@ -431,17 +468,32 @@ type ResolvedCLI struct {
 
 // ResolveCLI returns the CLI launch spec for a provider, with config overrides applied.
 // Handles: command override, auth type, boolean→cliFlag, select→cliFlag, env var injection.
+//
+// When a ConfigOverlayFn is wired, the legacy in-memory ProviderConfig is
+// merged with live plugin_kv / plugin_secret values before args are built.
+// This is how values saved via PUT /api/plugins/{name}/config (Configure
+// form) actually reach `claude --dangerously-skip-permissions`, `gemini
+// --yolo`, etc. — the legacy cache alone is empty for every v1-form write.
 func (rt *Runtime) ResolveCLI(name string) (ResolvedCLI, bool) {
 	rt.mu.RLock()
-	defer rt.mu.RUnlock()
-
 	lp, ok := rt.providers[name]
+	overlay := rt.configOverlay
+	rt.mu.RUnlock()
+
 	if !ok || lp.provider.CLI == nil || !lp.enabled {
 		return ResolvedCLI{}, false
 	}
 
 	p := lp.provider
 	cfg := lp.config
+	if overlay != nil {
+		// Short bound so a stuck DB can't hold up session spawn —
+		// the user would rather launch with stale config than see
+		// the Start button freeze.
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		cfg = overlay(ctx, name, cfg)
+		cancel()
+	}
 
 	// 1. Command override
 	command := p.CLI.Command
@@ -471,9 +523,13 @@ func (rt *Runtime) ResolveCLI(name string) (ResolvedCLI, bool) {
 			continue
 		}
 
-		// Boolean with cliFlag → append flag when true
+		// Boolean with cliFlag → append flag when true.
+		// The overlay canonicalises every non-secret value to a
+		// string ("true"/"false"), while the legacy in-memory cache
+		// may deliver a real bool — accept both so either source
+		// still triggers the flag.
 		if field.Type == "boolean" && field.CLIFlag != "" && hasVal {
-			if b, ok := val.(bool); ok && b {
+			if boolVal(val) {
 				args = append(args, field.CLIFlag)
 			}
 			continue
@@ -505,6 +561,21 @@ func (rt *Runtime) ResolveCLI(name string) (ResolvedCLI, bool) {
 	}
 
 	return ResolvedCLI{Command: command, Args: args, Env: env}, true
+}
+
+// boolVal coerces a ProviderConfig entry to a bool. Accepts real
+// bools (legacy JSONB cache) and canonical string forms emitted by
+// the gateway's kv overlay ("true" / "false" / "1" / "0"). Anything
+// else is false — intentionally conservative; unexpected shapes
+// shouldn't flip a CLI flag the user didn't ask for.
+func boolVal(v any) bool {
+	switch x := v.(type) {
+	case bool:
+		return x
+	case string:
+		return x == "true" || x == "1"
+	}
+	return false
 }
 
 // ── Model Detection ─────────────────────────────────────────────

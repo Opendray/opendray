@@ -35,17 +35,13 @@ func hasError(errs []ValidationError, pathSubstr string) bool {
 // ─── T1: Legacy short-circuit ────────────────────────────────────────────────
 
 // TestValidateV1_LegacyShortCircuit verifies that ValidateV1 returns nil for
-// every bundled legacy manifest (agents + panels). These manifests have
+// every bundled legacy manifest under plugins/builtin/. These manifests have
 // IsV1()==false so the validator must short-circuit immediately — even if the
 // legacy manifest would fail v1 rules (e.g. missing publisher).
 func TestValidateV1_LegacyShortCircuit(t *testing.T) {
-	var providers []Provider
-	for _, root := range []string{"agents", "panels"} {
-		ps, err := ScanFS(bundled.FS, root)
-		if err != nil {
-			t.Fatalf("ScanFS %s: %v", root, err)
-		}
-		providers = append(providers, ps...)
+	providers, err := ScanFS(bundled.FS, "builtin")
+	if err != nil {
+		t.Fatalf("ScanFS builtin: %v", err)
 	}
 	if len(providers) == 0 {
 		t.Fatal("no bundled plugins found — ScanFS regression")

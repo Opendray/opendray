@@ -9,18 +9,45 @@ import (
 	bundled "github.com/opendray/opendray/plugins"
 )
 
-// v1MigratedTier1 is the canonical set of bundled plugin names that
-// have landed their Phase 5 migration (M5 A1/A2/A3). Used by multiple
-// tests to assert (a) these never regress to legacy, and (b) the
-// legacy-compat path is only asked to handle the remaining set.
+// v1MigratedTier1 is the strict subset of bundled plugins that went
+// through the M5 Phase 5 legacy → v1 migration. These three are
+// guarded by a regression test that asserts the migration preserved
+// their contributes block — i.e. someone can't strip contributes off
+// claude/file-browser/terminal and still ship.
 //
-// Extend as Phase 5 progresses. Tier-2 plugins (codex/gemini/opencode
-// etc.) migrate post-v1 — they stay in the default (non-v1) branch
-// here until their own PRs land.
+// Don't conflate with v1BundledAll: the other 14 bundled plugins
+// (codex/gemini/pg-browser/etc.) were authored as v1 from the start
+// inside the marketplace fixture, never had a legacy shape, and
+// therefore have no "migration preserved contributes" invariant to
+// guard — Flutter hand-routes them anyway.
 var v1MigratedTier1 = map[string]bool{
 	"terminal":     true, // M5 A1
 	"file-browser": true, // M5 A2
 	"claude":       true, // M5 A3.1
+}
+
+// v1BundledAll enumerates every plugin shipped under plugins/builtin/.
+// Used to assert the universal "all bundled builtins report IsV1() ==
+// true" invariant — if a new builtin lands, add it here so the
+// bundled-scan test counts it.
+var v1BundledAll = map[string]bool{
+	"claude":            true,
+	"codex":             true,
+	"file-browser":      true,
+	"gemini":            true,
+	"git-forge":         true,
+	"git-viewer":        true,
+	"log-viewer":        true,
+	"mcp":               true,
+	"obsidian-reader":   true,
+	"opencode":          true,
+	"pg-browser":        true,
+	"qwen-code":         true,
+	"simulator-preview": true,
+	"task-runner":       true,
+	"telegram":          true,
+	"terminal":          true,
+	"web-browser":       true,
 }
 
 func TestProvider_IsV1(t *testing.T) {
@@ -71,37 +98,28 @@ func TestProvider_EffectiveForm(t *testing.T) {
 }
 
 func TestLoadManifest_LegacyCompat(t *testing.T) {
-	// Bundled plugin manifests under plugins/agents and plugins/panels must
-	// continue to load without losing identity fields. Mixed shape is
-	// expected: some are still legacy (no publisher/engines), others
-	// migrated to v1 under M5 Phase 5 (A1+A2 so far — terminal,
-	// file-browser). Both must retain Name/Version/Type; only the
-	// *legacy* set is asserted to report IsV1()==false.
-	var providers []Provider
-	for _, root := range []string{"agents", "panels"} {
-		ps, err := ScanFS(bundled.FS, root)
-		if err != nil {
-			t.Fatalf("ScanFS %s: %v", root, err)
-		}
-		providers = append(providers, ps...)
+	// Every bundled manifest under plugins/builtin/ must load with its
+	// identity fields intact AND report IsV1() == true. Post-plugin
+	// consolidation (see v1BundledAll) there are no legacy-shaped
+	// bundled manifests left; any new builtin that lands without
+	// publisher+engines should fail this guard loudly so the PR author
+	// knows to add them.
+	providers, err := ScanFS(bundled.FS, "builtin")
+	if err != nil {
+		t.Fatalf("ScanFS builtin: %v", err)
 	}
 	if len(providers) == 0 {
 		t.Fatal("no bundled plugins found — ScanFS regression")
 	}
 
-	// v1Migrated is the set of bundled manifests that intentionally opted
-	// into the v1 contract. Extend as each Phase 5 task lands.
-	v1Migrated := v1MigratedTier1
-
 	for _, p := range providers {
 		p := p
 		t.Run(p.Name, func(t *testing.T) {
-			if v1Migrated[p.Name] {
-				if !p.IsV1() {
-					t.Errorf("migrated manifest %q must report IsV1()=true", p.Name)
-				}
-			} else if p.IsV1() {
-				t.Errorf("legacy manifest %q reports IsV1()=true; v1 opt-in should require publisher+engines", p.Name)
+			if !v1BundledAll[p.Name] {
+				t.Fatalf("bundled plugin %q is not in v1BundledAll — add it to the whitelist or remove the manifest", p.Name)
+			}
+			if !p.IsV1() {
+				t.Errorf("bundled manifest %q must report IsV1()=true (needs publisher + engines.opendray)", p.Name)
 			}
 			if p.Name == "" {
 				t.Errorf("manifest lost Name field")
@@ -365,30 +383,27 @@ func TestLoadManifest_V1WebviewOmittedDefaultsEmpty(t *testing.T) {
 // set, and the embedded contributes block honoured (not synthesised). A
 // drift here means someone stripped required fields off a migrated manifest.
 func TestTier1Migrated_Tier1PluginsRemainV1(t *testing.T) {
-	roots := []string{"agents", "panels"}
+	ps, err := ScanFS(bundled.FS, "builtin")
+	if err != nil {
+		t.Fatalf("ScanFS builtin: %v", err)
+	}
 	found := make(map[string]bool)
-	for _, root := range roots {
-		ps, err := ScanFS(bundled.FS, root)
-		if err != nil {
-			t.Fatalf("ScanFS %s: %v", root, err)
+	for _, p := range ps {
+		if !v1MigratedTier1[p.Name] {
+			continue
 		}
-		for _, p := range ps {
-			if !v1MigratedTier1[p.Name] {
-				continue
-			}
-			found[p.Name] = true
-			if !p.IsV1() {
-				t.Errorf("%s: IsV1() = false after Phase 5 migration", p.Name)
-			}
-			if p.Publisher == "" {
-				t.Errorf("%s: Publisher empty", p.Name)
-			}
-			if p.Engines == nil || p.Engines.Opendray == "" {
-				t.Errorf("%s: engines.opendray empty", p.Name)
-			}
-			if p.Contributes == nil {
-				t.Errorf("%s: contributes block missing", p.Name)
-			}
+		found[p.Name] = true
+		if !p.IsV1() {
+			t.Errorf("%s: IsV1() = false after Phase 5 migration", p.Name)
+		}
+		if p.Publisher == "" {
+			t.Errorf("%s: Publisher empty", p.Name)
+		}
+		if p.Engines == nil || p.Engines.Opendray == "" {
+			t.Errorf("%s: engines.opendray empty", p.Name)
+		}
+		if p.Contributes == nil {
+			t.Errorf("%s: contributes block missing", p.Name)
 		}
 	}
 	for name := range v1MigratedTier1 {

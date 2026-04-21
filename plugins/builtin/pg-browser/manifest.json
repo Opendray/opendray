@@ -1,0 +1,98 @@
+{
+  "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
+  "name": "pg-browser",
+  "displayName": "PostgreSQL Browser",
+  "description": "Full PostgreSQL SQL editor and schema browser — run arbitrary queries, browse schemas/tables/columns, and execute write statements when the plugin is configured out of read-only mode. Connection password is stored encrypted via the platform secret store; statement timeout and row caps gate runaway queries.",
+  "icon": "🐘",
+  "version": "2.0.0",
+  "publisher": "opendray-builtin",
+  "engines": { "opendray": "^1.0.0" },
+  "form": "declarative",
+  "activation": ["onStartup"],
+  "type": "panel",
+  "category": "database",
+  "capabilities": {
+    "models": [],
+    "supportsResume": false,
+    "supportsStream": false,
+    "supportsImages": false,
+    "supportsMcp": false,
+    "dynamicModels": false
+  },
+  "configSchema": [
+    {
+      "key": "host",
+      "label": "Host",
+      "type": "string",
+      "group": "connection",
+      "required": true,
+      "placeholder": "db.example.com",
+      "default": "127.0.0.1"
+    },
+    {
+      "key": "port",
+      "label": "Port",
+      "type": "number",
+      "group": "connection",
+      "required": true,
+      "default": 5432
+    },
+    {
+      "key": "user",
+      "label": "User",
+      "type": "string",
+      "group": "connection",
+      "required": true,
+      "placeholder": "readonly_user"
+    },
+    {
+      "key": "password",
+      "label": "Password",
+      "type": "secret",
+      "group": "connection",
+      "required": true,
+      "description": "Stored encrypted via the plugin secret cap (AES-GCM). Never echoed back to the client."
+    },
+    {
+      "key": "database",
+      "label": "Database",
+      "type": "string",
+      "group": "connection",
+      "required": true,
+      "default": "postgres",
+      "description": "Default database to connect to. Switch via `\\c other_db` or the schema picker in the UI."
+    },
+    {
+      "key": "sslMode",
+      "label": "SSL mode",
+      "type": "select",
+      "group": "connection",
+      "options": ["disable", "require", "verify-full"],
+      "default": "disable"
+    },
+    {
+      "key": "readOnly",
+      "label": "Read-only mode",
+      "type": "boolean",
+      "group": "runtime",
+      "default": true,
+      "description": "When on, every query runs inside BEGIN READ ONLY and write verbs (INSERT/UPDATE/DELETE/DROP/CREATE/ALTER/TRUNCATE) are rejected client-side before they hit the wire. Turn off for development databases where you need to CREATE TABLE etc."
+    },
+    {
+      "key": "statementTimeoutSec",
+      "label": "Statement timeout (seconds)",
+      "type": "number",
+      "group": "runtime",
+      "default": 30,
+      "description": "Hard kill any statement running longer than this. SET LOCAL statement_timeout is applied inside every transaction so concurrent sessions keep their own defaults."
+    },
+    {
+      "key": "maxRows",
+      "label": "Max rows per query",
+      "type": "number",
+      "group": "runtime",
+      "default": 1000,
+      "description": "Cap on the result rows returned to the UI. Excess rows are dropped and the response is marked truncated:true so the UI can hint at pagination or stricter WHERE clauses."
+    }
+  ]
+}

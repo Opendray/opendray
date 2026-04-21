@@ -1,0 +1,40 @@
+{
+  "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
+  "name": "web-browser",
+  "displayName": "Web Browser",
+  "description": "Full in-app browser with multi-tab URLs, forward/back navigation, and port-on-host shortcuts. Works against any web framework — React, Vue, Next.js, FastAPI, Go, Rails, etc.",
+  "icon": "🌐",
+  "version": "1.1.0",
+  "publisher": "opendray-builtin",
+  "engines": { "opendray": "^1.0.0" },
+  "form": "declarative",
+  "activation": ["onStartup"],
+  "type": "panel",
+  "category": "preview",
+  "capabilities": {
+    "models": [],
+    "supportsResume": false,
+    "supportsStream": false,
+    "supportsImages": false,
+    "supportsMcp": false,
+    "dynamicModels": false
+  },
+  "configSchema": [
+    {
+      "key": "url",
+      "label": "URL",
+      "type": "string",
+      "group": "connection",
+      "placeholder": "http://localhost:5173",
+      "description": "Full URL to open (any framework, any host). Takes priority over the Port field."
+    },
+    {
+      "key": "port",
+      "label": "Port",
+      "type": "number",
+      "group": "connection",
+      "placeholder": "3000",
+      "description": "Port on the OpenDray server — host is auto-filled from your connection. Used only when URL above is empty."
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
+  "name": "gemini",
+  "displayName": "Gemini CLI",
+  "description": "Google Gemini CLI — agentic coding with sandbox, multimodal, and Google Search",
+  "icon": "✨",
+  "version": "1.1.2",
+  "publisher": "opendray-builtin",
+  "engines": { "opendray": "^1.0.0" },
+  "form": "declarative",
+  "activation": ["onStartup"],
+  "type": "cli",
+  "cli": {
+    "command": "gemini",
+    "defaultArgs": [],
+    "detectCmd": "which gemini"
+  },
+  "capabilities": {
+    "models": [],
+    "supportsResume": false,
+    "supportsStream": true,
+    "supportsImages": true,
+    "supportsMcp": false,
+    "dynamicModels": false
+  },
+  "configSchema": [
+    {
+      "key": "authType",
+      "label": "Authentication",
+      "type": "select",
+      "group": "auth",
+      "options": ["env", "custom"],
+      "default": "env",
+      "description": "env = read GOOGLE_API_KEY from system; falls back to the Gemini CLI's own cached OAuth token when unset (the CLI will prompt for /auth on first run) · custom = use the key below"
+    },
+    {
+      "key": "apiKey",
+      "label": "API Key",
+      "type": "secret",
+      "group": "auth",
+      "envVar": "GOOGLE_API_KEY",
+      "placeholder": "AIza...",
+      "dependsOn": "authType",
+      "dependsVal": "custom"
+    },
+    {
+      "key": "yolo",
+      "label": "YOLO Mode",
+      "type": "boolean",
+      "group": "runtime",
+      "default": false,
+      "cliFlag": "--yolo",
+      "description": "Auto-approve all tool calls — no confirmation prompts"
+    },
+    {
+      "key": "sandbox",
+      "label": "Sandbox",
+      "type": "select",
+      "group": "runtime",
+      "options": ["", "none"],
+      "default": "",
+      "cliFlag": "-s",
+      "cliValue": true,
+      "description": "Empty = default sandbox · none = no sandbox"
+    },
+    {
+      "key": "command",
+      "label": "Command Path",
+      "type": "string",
+      "group": "advanced",
+      "placeholder": "gemini"
+    },
+    {
+      "key": "extraArgs",
+      "label": "Extra CLI Args",
+      "type": "args",
+      "group": "advanced"
+    }
+  ]
+}

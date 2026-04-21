@@ -256,7 +256,7 @@ class _PluginsPageState extends State<PluginsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Installed plugins')),
+      appBar: AppBar(title: const Text('Plugins')),
       body: _loading
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.accent))
@@ -267,7 +267,7 @@ class _PluginsPageState extends State<PluginsPage> {
                 children: [
                   if (_error != null) _errorBanner(),
                   _sectionHeader('Installed', '${_providers.length}'),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   for (final p in _sortProviders(_providers)) _pluginCard(p),
                   if (_providers.isEmpty && _error == null) _emptyState(),
                 ],
@@ -277,19 +277,21 @@ class _PluginsPageState extends State<PluginsPage> {
   }
 
   Widget _emptyState() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 8),
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 40, horizontal: 8),
       child: Column(
-        children: const [
+        children: [
           Icon(Icons.extension_off, size: 40, color: AppColors.textMuted),
           SizedBox(height: 10),
-          Text('No plugins installed',
+          Text('No plugins registered',
               style: TextStyle(
                   fontWeight: FontWeight.w500,
                   fontSize: 14,
                   color: AppColors.text)),
           SizedBox(height: 4),
-          Text('Browse the Hub tab to install one.',
+          Text('The kernel should seed built-in panels on boot. '
+              'Pull-to-refresh to retry.',
+              textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
         ],
       ),
@@ -377,120 +379,162 @@ class _PluginsPageState extends State<PluginsPage> {
     return _EntryKind.none;
   }
 
+  /// Hub-style card: stacked header → chip row → description → action
+  /// bar. Same logic as the old compact row (_entryKind, _openPlugin,
+  /// toggle, uninstall) — just laid out with the same breathing room
+  /// the Hub marketplace cards use so built-in panels get the same
+  /// visual weight as third-party installs will in v1.1.
   Widget _pluginCard(provider_model.ProviderInfo p) {
     final prov = p.provider;
     final required = prov.required;
     final kindLabel = _kindLabel(prov);
     final entry = _entryKind(prov);
-    // Body is tappable only when the plugin is enabled AND has a
-    // runtime surface reachable from this page. Config-only plugins
-    // render dimmed with no tap — the `…` menu (Configure / Perms /
-    // Uninstall) and the Enable switch on the trailing side still
-    // work because they're separate widgets outside the InkWell.
-    final bodyTappable = p.enabled && entry != _EntryKind.none;
-    final VoidCallback? onBodyTap = !bodyTappable
-        ? null
-        : entry == _EntryKind.inApp
-            ? () => _openPlugin(p)
-            : () => _notify(context.tr(
-                'Launch this agent from the New Session dialog on the dashboard.'));
-    final bodyOpacity = bodyTappable ? 1.0 : 0.5;
+    final displayName = context.pickL10n(prov.displayName, prov.displayNameZh);
+    final description = context.pickL10n(prov.description, prov.descriptionZh);
+    final updateVer = _updateAvailable(p);
+    final publisher = prov.publisher.isEmpty ? '' : prov.publisher;
+    // Whole body dimmed when the plugin is disabled OR has no
+    // reachable surface — the action row still renders at full opacity
+    // so Enable / overflow stay obvious.
+    final bodyOpacity =
+        p.enabled && entry != _EntryKind.none ? 1.0 : 0.55;
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Opacity(
-              opacity: bodyOpacity,
-              child: InkWell(
-                borderRadius: const BorderRadius.horizontal(
-                    left: Radius.circular(8)),
-                onTap: onBodyTap,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      _iconBadge(prov.icon),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    context.pickL10n(prov.displayName,
-                                        prov.displayNameZh),
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                if (required)
-                                  _chip('required', AppColors.accent)
-                                else
-                                  _chip(kindLabel, AppColors.textMuted),
-                                if (_isBuiltin(prov)) ...[
-                                  const SizedBox(width: 4),
-                                  Tooltip(
-                                    message:
-                                        'Ships with OpenDray. Upgrades arrive with OpenDray releases, not through the Hub.',
-                                    child: _chip('built-in',
-                                        const Color(0xFF7C3AED)),
-                                  ),
-                                ],
-                                if (entry == _EntryKind.none) ...[
-                                  const SizedBox(width: 4),
-                                  _chip(context.tr('config only'),
-                                      AppColors.textMuted),
-                                ],
-                                if (_updateAvailable(p) != '') ...[
-                                  const SizedBox(width: 4),
-                                  _chip('update → v${_updateAvailable(p)}',
-                                      AppColors.accent),
-                                ],
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Builder(builder: (ctx) {
-                              final desc = ctx.pickL10n(
-                                  prov.description, prov.descriptionZh);
-                              return Text(
-                                desc.isEmpty
-                                    ? 'v${prov.version}'
-                                    : '$desc · v${prov.version}',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    color: AppColors.textMuted,
-                                    fontSize: 11,
-                                    height: 1.3),
-                              );
-                            }),
-                          ],
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 14, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Opacity(
+                    opacity: bodyOpacity, child: _iconBadge(prov.icon)),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Opacity(
+                    opacity: bodyOpacity,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          displayName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Text(
+                          publisher.isEmpty
+                              ? 'v${prov.version}'
+                              : 'v${prov.version} · $publisher',
+                          style: const TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Switch(
+                  value: p.enabled,
+                  activeTrackColor: AppColors.accent,
+                  onChanged: required ? null : (v) => _toggleProvider(p, v),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                if (required)
+                  _chip('required', AppColors.accent)
+                else
+                  _chip(kindLabel, AppColors.textMuted),
+                if (_isBuiltin(prov))
+                  Tooltip(
+                    message: 'Ships with OpenDray. Upgrades arrive with '
+                        'OpenDray releases, not through the Hub.',
+                    child:
+                        _chip('built-in', const Color(0xFF7C3AED)),
+                  ),
+                if (entry == _EntryKind.none)
+                  _chip(context.tr('config only'), AppColors.textMuted),
+                if (updateVer.isNotEmpty)
+                  _chip('update → v$updateVer', AppColors.accent),
+              ],
+            ),
+            if (description.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Opacity(
+                opacity: bodyOpacity,
+                child: Text(
+                  description,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.text,
+                    height: 1.4,
                   ),
                 ),
               ),
+            ],
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: _primaryAction(p, entry)),
+                const SizedBox(width: 8),
+                _actionsMenu(p),
+              ],
             ),
-          ),
-          _actionsMenu(p),
-          Switch(
-            value: p.enabled,
-            activeTrackColor: AppColors.accent,
-            onChanged: required ? null : (v) => _toggleProvider(p, v),
-          ),
-          const SizedBox(width: 4),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  /// The main call-to-action button on each card. Its label and handler
+  /// depend on whether the plugin has a reachable runtime surface:
+  ///   - enabled + inApp         → "Open"        (navigates to the panel/webview)
+  ///   - enabled + launchFromSession → "Launch from session" (toast explainer)
+  ///   - enabled + none          → "Configure"   (only if configSchema exists) else disabled
+  ///   - disabled                → "Disabled"    (greyed out)
+  /// Keeps action intent visible without making the user hunt through
+  /// the `…` menu.
+  Widget _primaryAction(provider_model.ProviderInfo p, _EntryKind entry) {
+    if (!p.enabled) {
+      return OutlinedButton.icon(
+        onPressed: null,
+        icon: const Icon(Icons.power_settings_new, size: 16),
+        label: Text(context.tr('Disabled')),
+      );
+    }
+    if (entry == _EntryKind.inApp) {
+      return FilledButton.icon(
+        onPressed: () => _openPlugin(p),
+        icon: const Icon(Icons.open_in_new, size: 16),
+        label: Text(context.tr('Open')),
+        style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+      );
+    }
+    if (entry == _EntryKind.launchFromSession) {
+      return OutlinedButton.icon(
+        onPressed: () => _notify(context.tr(
+            'Launch this agent from the New Session dialog on the dashboard.')),
+        icon: const Icon(Icons.play_arrow, size: 16),
+        label: Text(context.tr('Launch from session')),
+      );
+    }
+    // _EntryKind.none — config-only plugin. Open Configure directly
+    // if the plugin declares a schema; otherwise render the button
+    // disabled so users see the card is intentional, not broken.
+    return OutlinedButton.icon(
+      onPressed: p.provider.configSchema.isNotEmpty ? () => _openConfig(p) : null,
+      icon: const Icon(Icons.tune, size: 16),
+      label: Text(context.tr('Configure')),
     );
   }
 
@@ -531,27 +575,29 @@ class _PluginsPageState extends State<PluginsPage> {
   Widget _iconBadge(String icon) {
     final isEmoji = icon.length <= 4 && !icon.contains('/');
     return Container(
-      width: 36,
-      height: 36,
+      width: 44,
+      height: 44,
       decoration: BoxDecoration(
         color: AppColors.accent.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
       ),
       alignment: Alignment.center,
       child: isEmoji
-          ? Text(icon, style: const TextStyle(fontSize: 18))
-          : const Icon(Icons.extension, color: AppColors.accent, size: 20),
+          ? Text(icon, style: const TextStyle(fontSize: 22))
+          : const Icon(Icons.extension, color: AppColors.accent, size: 24),
     );
   }
 
   Widget _actionsMenu(provider_model.ProviderInfo p) {
+    final entry = _entryKind(p.provider);
+    // Configure is already the primary button for config-only plugins
+    // (entry == none); duplicating it in the overflow adds noise.
+    final showConfigureInMenu =
+        p.provider.configSchema.isNotEmpty && entry != _EntryKind.none;
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert, color: AppColors.textMuted, size: 20),
       onSelected: (value) {
         switch (value) {
-          case 'open':
-            _openPlugin(p);
-            break;
           case 'configure':
             _openConfig(p);
             break;
@@ -567,21 +613,10 @@ class _PluginsPageState extends State<PluginsPage> {
         }
       },
       itemBuilder: (ctx) => [
-        // Open is only useful when the plugin has a real runtime
-        // surface in the Flutter app — panels, webviews, host
-        // sidecars. CLI/shell agents are launched from the dashboard;
-        // config-only plugins have nothing to open. Both drop the
-        // menu entry instead of offering a dead button.
-        if (p.enabled && _entryKind(p.provider) == _EntryKind.inApp)
-          const PopupMenuItem(
-            value: 'open',
-            child: ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.open_in_new, size: 18),
-              title: Text('Open'),
-            ),
-          ),
+        // Open/Launch/Configure already live on the primary action
+        // button in the card footer — the overflow menu stays focused
+        // on secondary actions (Accounts, Configure-when-not-primary,
+        // Permissions, Uninstall) so it doesn't duplicate CTAs.
         // Dedicated surface for Claude's multi-account manager. Also
         // reachable via Open (hand-route map), but the explicit menu
         // entry keeps discovery cheap when the user is scanning for
@@ -596,7 +631,7 @@ class _PluginsPageState extends State<PluginsPage> {
               title: Text('Accounts'),
             ),
           ),
-        if (p.provider.configSchema.isNotEmpty)
+        if (showConfigureInMenu)
           const PopupMenuItem(
             value: 'configure',
             child: ListTile(
@@ -632,7 +667,9 @@ class _PluginsPageState extends State<PluginsPage> {
   }
 }
 
-/// How the Plugin page lets the user enter a plugin. Drives both the
-/// card-body tap handler and the Open menu item visibility — keep the
-/// two in sync via [_PluginsPageState._entryKind].
+/// How the Plugin page lets the user enter a plugin. Drives the
+/// card's primary-action button label + handler (see
+/// [_PluginsPageState._primaryAction]) and whether Configure appears
+/// in the overflow menu (it's promoted to the primary button for
+/// `none`-kind entries).
 enum _EntryKind { inApp, launchFromSession, none }

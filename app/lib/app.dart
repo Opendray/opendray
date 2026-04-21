@@ -33,6 +33,22 @@ import 'features/workbench/webview_host.dart';
 import 'features/workbench/workbench_models.dart';
 import 'features/workbench/workbench_service.dart';
 
+/// Feature flag: show the Hub (third-party marketplace) tab.
+///
+/// Kept `false` through v1 — the catalog is intentionally empty at
+/// launch (see `docs/plugin-platform/M5-RELEASE.md`), so exposing the
+/// tab would train users to check a page that never has anything.
+/// Flip to `true` once:
+///   1. marketplace.opendray.dev DNS is live (or the syz mock has at
+///      least one genuinely third-party bundle),
+///   2. the publisher CLI (M4.2) is unparked so the ecosystem can
+///      actually accept submissions.
+///
+/// The `/hub` route itself stays registered so devs can still reach
+/// the page via a typed URL — this flag only controls the bottom-nav
+/// entry + tab-index math.
+const bool kHubEnabled = false;
+
 class NtcApp extends StatefulWidget {
   final ServerConfig serverConfig;
   final L10n l10n;
@@ -392,15 +408,21 @@ class _Shell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
-    // Tab layout: Sessions | Plugin | Hub | Settings.
-    // Plugin = installed CRUD (/plugins) and the surface from which
-    // every plugin is opened. Hub = marketplace (/hub). /browser/*
-    // are plugin-owned pages opened from /plugins — they highlight
-    // the Plugin tab so the nav bar matches the user's mental path.
+    // Tab layout:
+    //   Hub enabled  → Sessions | Plugin | Hub | Settings  (indices 0..3)
+    //   Hub hidden   → Sessions | Plugin | Settings        (indices 0..2)
+    //
+    // `/browser/*` highlights the Plugin tab because those pages are
+    // plugin-owned surfaces opened from /plugins. The /hub route is
+    // still registered even when kHubEnabled is false — a dev can
+    // reach it by typing the URL; regular users just don't see the
+    // entry point.
+    final int settingsIndex = kHubEnabled ? 3 : 2;
     final int index;
     if (location == '/settings' || location.startsWith('/settings/')) {
-      index = 3;
-    } else if (location == '/hub' || location.startsWith('/hub/')) {
+      index = settingsIndex;
+    } else if (kHubEnabled &&
+        (location == '/hub' || location.startsWith('/hub/'))) {
       index = 2;
     } else if (location == '/plugins' ||
         location.startsWith('/plugins/') ||
@@ -416,12 +438,18 @@ class _Shell extends StatelessWidget {
         type: BottomNavigationBarType.fixed,
         currentIndex: index,
         onTap: (i) {
-          final path = switch (i) {
-            1 => '/plugins',
-            2 => '/hub',
-            3 => '/settings',
-            _ => '/',
-          };
+          final path = kHubEnabled
+              ? switch (i) {
+                  1 => '/plugins',
+                  2 => '/hub',
+                  3 => '/settings',
+                  _ => '/',
+                }
+              : switch (i) {
+                  1 => '/plugins',
+                  2 => '/settings',
+                  _ => '/',
+                };
           context.go(path);
         },
         items: [
@@ -430,8 +458,9 @@ class _Shell extends StatelessWidget {
           BottomNavigationBarItem(
               icon: const Icon(Icons.extension_outlined),
               label: context.tr('Plugin')),
-          BottomNavigationBarItem(
-              icon: const Icon(Icons.storefront), label: context.tr('Hub')),
+          if (kHubEnabled)
+            BottomNavigationBarItem(
+                icon: const Icon(Icons.storefront), label: context.tr('Hub')),
           BottomNavigationBarItem(
               icon: const Icon(Icons.settings), label: context.tr('Settings')),
         ],

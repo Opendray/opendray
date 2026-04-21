@@ -501,6 +501,49 @@ func runNormalMode(logger *slog.Logger, cfg config.Config) {
 		},
 	})
 
+	// CLI config overlay — mirrors gateway.effectiveConfig but lives
+	// here because plugin.Runtime.ResolveCLI runs before the gateway
+	// Server exists (session recovery on startup). Without this,
+	// values saved via PUT /api/plugins/{name}/config land in
+	// plugin_kv / plugin_secret but never reach session spawn — so
+	// Claude's bypassPermissions, Gemini's yolo, etc. silently drop.
+	// The shared store key prefix is "__config." (see
+	// gateway/plugins_config.go). Kept as a literal rather than a
+	// cross-package import to keep the plugin runtime store-agnostic.
+	providerRuntime.SetConfigOverlay(func(ctx context.Context, pluginName string, base plugin.ProviderConfig) plugin.ProviderConfig {
+		merged := make(plugin.ProviderConfig, len(base)+8)
+		for k, v := range base {
+			merged[k] = v
+		}
+		prov, ok := providerRuntime.Get(pluginName)
+		if !ok {
+			return merged
+		}
+		const cfgPrefix = "__config."
+		for _, f := range prov.ConfigSchema {
+			storeKey := cfgPrefix + f.Key
+			if f.Type == "secret" {
+				val, found, err := secretAPI.PlatformGet(ctx, pluginName, storeKey)
+				if err != nil || !found {
+					continue
+				}
+				merged[f.Key] = val
+				continue
+			}
+			raw, found, err := db.KVGet(ctx, pluginName, storeKey)
+			if err != nil || !found {
+				continue
+			}
+			var str string
+			if json.Unmarshal(raw, &str) == nil {
+				merged[f.Key] = str
+			} else {
+				merged[f.Key] = string(raw)
+			}
+		}
+		return merged
+	})
+
 	// Session Hub
 	idleThreshold := 8 * time.Second
 	if cfg.Plugins.IdleThresholdSeconds > 0 {

@@ -461,6 +461,17 @@ class L10n extends ChangeNotifier {
     'MCP':                        'MCP',
     'Dynamic Models':             '动态模型',
 
+    // ── Plugin configure page / form ─────────────────────────
+    'Configure':                                '配置',
+    'Failed to load config':                    '加载配置失败',
+    'This plugin has no configurable fields.':  '此插件没有可配置项。',
+    'Saved':                                    '已保存',
+    'Save failed':                              '保存失败',
+    'General':                                  '通用',
+    'is required':                              '为必填项',
+    'must be numeric':                          '必须为数字',
+    '(stored — leave blank to keep)':           '（已保存 — 留空以保留原值）',
+
     // ── Git panel ────────────────────────────────────────────
     'Git':                                        'Git',
     'Git panel not enabled':                      '未启用 Git 面板',

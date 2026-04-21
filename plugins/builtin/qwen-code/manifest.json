@@ -1,0 +1,106 @@
+{
+  "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
+  "name": "qwen-code",
+  "displayName": "Qwen Code",
+  "description": "Alibaba Qwen Code CLI — open-source agentic coding based on Qwen3-Coder, forked from Gemini CLI",
+  "icon": "🐉",
+  "version": "1.0.0",
+  "publisher": "opendray-builtin",
+  "engines": { "opendray": "^1.0.0" },
+  "form": "declarative",
+  "activation": ["onStartup"],
+  "type": "cli",
+  "cli": {
+    "command": "qwen",
+    "defaultArgs": [],
+    "detectCmd": "which qwen"
+  },
+  "capabilities": {
+    "models": [
+      { "id": "qwen3-coder-plus", "name": "Qwen3-Coder Plus", "description": "Most capable Qwen coding model (DashScope)" },
+      { "id": "qwen3-coder-flash", "name": "Qwen3-Coder Flash", "description": "Fast, cost-effective" },
+      { "id": "qwen3-coder-480b-a35b-instruct", "name": "Qwen3-Coder 480B A35B", "description": "Open-weight flagship via ModelScope / OpenRouter" }
+    ],
+    "supportsResume": false,
+    "supportsStream": true,
+    "supportsImages": false,
+    "supportsMcp": true,
+    "dynamicModels": true
+  },
+  "configSchema": [
+    {
+      "key": "authType",
+      "label": "Authentication",
+      "type": "select",
+      "group": "auth",
+      "options": ["qwen-oauth", "dashscope", "openai-compatible"],
+      "default": "qwen-oauth",
+      "description": "qwen-oauth = browser login (2000 req/day free); dashscope = Alibaba DashScope API; openai-compatible = ModelScope / OpenRouter / custom"
+    },
+    {
+      "key": "apiKey",
+      "label": "API Key",
+      "type": "secret",
+      "group": "auth",
+      "envVar": "OPENAI_API_KEY",
+      "placeholder": "sk-... or ms-...",
+      "dependsOn": "authType",
+      "dependsVal": "openai-compatible"
+    },
+    {
+      "key": "dashscopeKey",
+      "label": "DashScope API Key",
+      "type": "secret",
+      "group": "auth",
+      "envVar": "DASHSCOPE_API_KEY",
+      "placeholder": "sk-...",
+      "dependsOn": "authType",
+      "dependsVal": "dashscope"
+    },
+    {
+      "key": "baseUrl",
+      "label": "Base URL",
+      "type": "string",
+      "group": "auth",
+      "envVar": "OPENAI_BASE_URL",
+      "placeholder": "https://api-inference.modelscope.cn/v1",
+      "dependsOn": "authType",
+      "dependsVal": "openai-compatible",
+      "description": "e.g. ModelScope: https://api-inference.modelscope.cn/v1 · OpenRouter: https://openrouter.ai/api/v1"
+    },
+    {
+      "key": "model",
+      "label": "Default Model",
+      "type": "select",
+      "group": "runtime",
+      "options": ["qwen3-coder-plus", "qwen3-coder-flash", "qwen3-coder-480b-a35b-instruct"],
+      "default": "qwen3-coder-plus",
+      "cliFlag": "--model",
+      "cliValue": true
+    },
+    {
+      "key": "approval",
+      "label": "Approval Mode",
+      "type": "select",
+      "group": "runtime",
+      "options": ["default", "auto-edit", "yolo"],
+      "default": "default",
+      "cliFlag": "--approval-mode",
+      "cliValue": true,
+      "description": "default = confirm each tool call; auto-edit = auto-apply edits; yolo = no confirmations"
+    },
+    {
+      "key": "command",
+      "label": "Command Path",
+      "type": "string",
+      "group": "advanced",
+      "placeholder": "qwen"
+    },
+    {
+      "key": "extraArgs",
+      "label": "Extra CLI Args",
+      "type": "args",
+      "group": "advanced"
+    }
+  ]
+}

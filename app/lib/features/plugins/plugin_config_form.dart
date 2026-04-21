@@ -153,7 +153,9 @@ class _PluginConfigFormState extends State<PluginConfigForm> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 6, top: 6),
                 child: Text(
-                  entry.key[0].toUpperCase() + entry.key.substring(1),
+                  entry.key == 'General'
+                      ? context.tr('General')
+                      : entry.key[0].toUpperCase() + entry.key.substring(1),
                   style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -169,7 +171,7 @@ class _PluginConfigFormState extends State<PluginConfigForm> {
               if (widget.onCancel != null)
                 TextButton(
                   onPressed: _busy ? null : widget.onCancel,
-                  child: const Text('Cancel'),
+                  child: Text(context.tr('Cancel')),
                 ),
               const SizedBox(width: 6),
               FilledButton(
@@ -199,7 +201,7 @@ class _PluginConfigFormState extends State<PluginConfigForm> {
     final description = context.pickL10n(f.description, f.descriptionZh);
     final placeholder = context.pickL10n(f.placeholder, f.placeholderZh);
     final requiredLabel = label + (f.required ? ' *' : '');
-    String requiredError() => '$label is required';
+    String requiredError() => '$label ${context.trOnce('is required')}';
     switch (f.type) {
       case 'bool':
       case 'boolean':
@@ -265,8 +267,9 @@ class _PluginConfigFormState extends State<PluginConfigForm> {
             enabled: !_busy,
             decoration: InputDecoration(
               labelText: requiredLabel,
-              hintText:
-                  stored ? '(stored — leave blank to keep)' : placeholder,
+              hintText: stored
+                  ? context.tr('(stored — leave blank to keep)')
+                  : placeholder,
               helperText: description.isEmpty ? null : description,
               isDense: true,
             ),
@@ -300,7 +303,7 @@ class _PluginConfigFormState extends State<PluginConfigForm> {
                 return requiredError();
               }
               if (v != null && v.isNotEmpty && num.tryParse(v) == null) {
-                return '$label must be numeric';
+                return '$label ${context.trOnce('must be numeric')}';
               }
               return null;
             },

@@ -119,15 +119,10 @@ func TestSynthesize_Panel(t *testing.T) {
 // ── T3: All 17 bundled manifests ────────────────────────────────────────────
 
 func TestSynthesize_BundledManifests(t *testing.T) {
-	var providers []plugin.Provider
-	for _, root := range []string{"agents", "panels"} {
-		ps, err := plugin.ScanFS(bundled.FS, root)
-		if err != nil {
-			t.Fatalf("ScanFS(%q): %v", root, err)
-		}
-		providers = append(providers, ps...)
+	providers, err := plugin.ScanFS(bundled.FS, "builtin")
+	if err != nil {
+		t.Fatalf("ScanFS(builtin): %v", err)
 	}
-
 	if len(providers) == 0 {
 		t.Fatal("no bundled providers found; check plugins.FS")
 	}
@@ -307,14 +302,14 @@ func TestSynthesize_V1WithFullContribs(t *testing.T) {
 
 func TestCompat_NoDiskRewrite(t *testing.T) {
 	// Read the raw bytes for one bundled manifest directly from the FS.
-	manifestPath := "agents/claude/manifest.json"
+	manifestPath := "builtin/claude/manifest.json"
 	before, err := fs.ReadFile(bundled.FS, manifestPath)
 	if err != nil {
 		t.Fatalf("read bundled manifest: %v", err)
 	}
 
 	// Parse and synthesize.
-	providers, err := plugin.ScanFS(bundled.FS, "agents")
+	providers, err := plugin.ScanFS(bundled.FS, "builtin")
 	if err != nil {
 		t.Fatalf("ScanFS: %v", err)
 	}
@@ -326,7 +321,7 @@ func TestCompat_NoDiskRewrite(t *testing.T) {
 		}
 	}
 	if claude.Name == "" {
-		t.Fatal("claude provider not found in bundled agents")
+		t.Fatal("claude provider not found in bundled plugins")
 	}
 
 	_ = compat.Synthesize(claude)
@@ -442,52 +437,17 @@ func TestSynthesize_LocalShellDoNotGetViews(t *testing.T) {
 	}
 }
 
-// TestSynthesize_AllBundledPanelsGetOneView iterates all bundled panel manifests
-// via ScanFS and verifies each gets exactly one synthesized view whose title
-// matches the manifest's DisplayName.
-func TestSynthesize_AllBundledPanelsGetOneView(t *testing.T) {
-	panels, err := plugin.ScanFS(bundled.FS, "panels")
-	if err != nil {
-		t.Fatalf("ScanFS(panels): %v", err)
-	}
-	if len(panels) == 0 {
-		t.Fatal("no bundled panels found; check plugins.FS")
-	}
-	t.Logf("testing view synthesis on %d bundled panel manifests", len(panels))
-
-	for _, p := range panels {
-		p := p
-		t.Run(p.Name, func(t *testing.T) {
-			got := compat.Synthesize(p)
-
-			if got.Contributes == nil {
-				t.Fatal("Contributes is nil")
-			}
-			if len(got.Contributes.Views) != 1 {
-				t.Fatalf("Views length = %d; want 1", len(got.Contributes.Views))
-			}
-
-			v := got.Contributes.Views[0]
-			if v.ID != p.Name {
-				t.Errorf("Views[0].ID = %q; want %q", v.ID, p.Name)
-			}
-			// DisplayName is always set (ScanFS falls back to Name if empty).
-			wantTitle := p.DisplayName
-			if wantTitle == "" {
-				wantTitle = p.Name
-			}
-			if v.Title != wantTitle {
-				t.Errorf("Views[0].Title = %q; want %q", v.Title, wantTitle)
-			}
-			if v.Container != "activityBar" {
-				t.Errorf("Views[0].Container = %q; want activityBar", v.Container)
-			}
-			if v.Render != "declarative" {
-				t.Errorf("Views[0].Render = %q; want declarative", v.Render)
-			}
-		})
-	}
-}
+// TestSynthesize_AllBundledPanelsGetOneView was a belt-and-suspenders
+// integration guard for the compat synthesizer's legacy-panel view
+// injection: it iterated every bundled panel and asserted Synthesize
+// filled in one view. The test premise expired once plugins/builtin/
+// was populated exclusively with v1 manifests — Synthesize is a
+// pass-through on v1, so there's no work left to guard against
+// regression at the bundled level. TestSynthesize_Panel still covers
+// the unit-level contract; TestSynthesize_BundledManifests still
+// asserts identity preservation across every bundled manifest. If a
+// future legacy panel gets added, bring this back filtered to
+// `!p.IsV1() && p.Type == "panel"`.
 
 // TestCompat_NoDiskRewrite_Panel previously pinned a specific bundled
 // legacy panel (`llm-providers`) and asserted that calling Synthesize

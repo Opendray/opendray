@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/services/l10n.dart';
 import '../../shared/theme/app_theme.dart';
 import 'plugin_config_form.dart';
 
@@ -68,14 +69,14 @@ class _PluginConfigurePageState extends State<PluginConfigurePage> {
       await _api.putPluginConfig(widget.pluginName, body);
       if (!mounted) return;
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text('Saved ${widget.pluginName}')),
+        SnackBar(content: Text('${context.trOnce('Saved')} ${widget.pluginName}')),
       );
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
         SnackBar(
-          content: Text('Save failed: $e'),
+          content: Text('${context.trOnce('Save failed')}: $e'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -88,7 +89,7 @@ class _PluginConfigurePageState extends State<PluginConfigurePage> {
         ? widget.pluginName
         : widget.displayName;
     return Scaffold(
-      appBar: AppBar(title: Text('Configure $title')),
+      appBar: AppBar(title: Text('${context.tr('Configure')} $title')),
       body: _buildBody(),
     );
   }
@@ -104,7 +105,7 @@ class _PluginConfigurePageState extends State<PluginConfigurePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Failed to load config',
+            Text(context.tr('Failed to load config'),
                 style: const TextStyle(
                     color: AppColors.error, fontWeight: FontWeight.w500)),
             const SizedBox(height: 6),
@@ -114,7 +115,7 @@ class _PluginConfigurePageState extends State<PluginConfigurePage> {
             FilledButton(
               onPressed: _load,
               style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
-              child: const Text('Retry'),
+              child: Text(context.tr('Retry')),
             ),
           ],
         ),
@@ -122,12 +123,12 @@ class _PluginConfigurePageState extends State<PluginConfigurePage> {
     }
     final cfg = _config!;
     if (cfg.schema.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Text(
-            'This plugin has no configurable fields.',
-            style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+            context.tr('This plugin has no configurable fields.'),
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
             textAlign: TextAlign.center,
           ),
         ),
@@ -141,7 +142,7 @@ class _PluginConfigurePageState extends State<PluginConfigurePage> {
           child: PluginConfigForm(
             schema: cfg.schema,
             initialValues: cfg.values,
-            submitLabel: 'Save',
+            submitLabel: context.tr('Save'),
             onCancel: () => Navigator.of(context).pop(false),
             onSave: _save,
           ),

@@ -132,14 +132,14 @@ class _HubPageState extends State<HubPage> {
       context: context,
       builder: (dialogCtx) {
         return AlertDialog(
-          title: Text('Configure $displayName'),
+          title: Text('${dialogCtx.tr('Configure')} $displayName'),
           content: SingleChildScrollView(
             child: SizedBox(
               width: 380,
               child: PluginConfigForm(
                 schema: entry.configSchema,
                 initialValues: const {},
-                submitLabel: 'Save',
+                submitLabel: dialogCtx.tr('Save'),
                 onCancel: () => Navigator.pop(dialogCtx),
                 onSave: (drafts) async {
                   final body = PluginConfig(
@@ -150,9 +150,11 @@ class _HubPageState extends State<HubPage> {
                     await _api.putPluginConfig(installedName, body);
                     if (!dialogCtx.mounted) return;
                     Navigator.pop(dialogCtx);
-                    _notify('Saved config for $installedName');
+                    _notify(
+                        '${dialogCtx.trOnce('Saved')} · $installedName');
                   } catch (e) {
-                    _notify('Save failed: $e', isError: true);
+                    _notify('${dialogCtx.trOnce('Save failed')}: $e',
+                        isError: true);
                   }
                 },
               ),
