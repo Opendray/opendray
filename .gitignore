@@ -18,6 +18,11 @@ web/dist/
 # OS
 .DS_Store
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
 # Environment (never commit — DB passwords etc.)
 .env
 .env.*
