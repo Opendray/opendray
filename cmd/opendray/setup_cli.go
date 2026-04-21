@@ -37,6 +37,8 @@ import (
 	"io"
 	"net"
 	"os"
+	"os/exec"
+	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -468,47 +470,22 @@ func runScripted(flags *setupFlags) int {
 // ── step: database ──────────────────────────────────────────────────
 
 func stepDatabase(in *bufio.Reader, cfg *config.Config) stepResult {
-	isRoot := os.Geteuid() == 0
-
 	defaultChoice := "bundled"
-	if cfg.DB.Mode == "external" || isRoot {
+	if cfg.DB.Mode == "external" {
 		defaultChoice = "external"
 	}
 
-	bundledItem := menuItem{
-		Key:   "bundled",
-		Label: "bundled",
-		Desc:  "Self-contained. OpenDray manages its own loopback-only\nPostgres child process. First run downloads ~50 MB.\nRecommended for single-host installs.",
-	}
-	externalItem := menuItem{
-		Key:   "external",
-		Label: "external",
-		Desc:  "Bring your own PostgreSQL 14+. Requires a database,\na role with CRUD privileges, and network reach from\nthis host.",
-	}
-
-	var items []menuItem
-	if isRoot {
-		// PostgreSQL's initdb hard-rejects uid 0 as a safety measure.
-		// Rather than let the user pick bundled and bounce them with
-		// an error loop, surface the constraint up front and show
-		// external as the only viable path.
-		prf(" %s  %s",
-			warnMark(),
-			styleYellow("You are running as root — bundled PostgreSQL is unavailable."))
-		prn("")
-		prn(styleDim("   PostgreSQL's initdb refuses uid 0 for security reasons."))
-		prn(styleDim("   Two ways forward:"))
-		prn("")
-		prn(styleDim("     a. Pick ") + styleCyan("external") + styleDim(" below and point at an existing PostgreSQL."))
-		prn(styleDim("     b. Quit (Ctrl-C), create an unprivileged user, and re-run."))
-		prn("")
-		prn(styleDim("        useradd -r -m -s /bin/bash -d /home/opendray opendray"))
-		prn(styleDim("        su - opendray"))
-		prn(styleDim("        opendray setup"))
-		prn("")
-		items = []menuItem{externalItem}
-	} else {
-		items = []menuItem{bundledItem, externalItem}
+	items := []menuItem{
+		{
+			Key:   "bundled",
+			Label: "bundled",
+			Desc:  "Self-contained. OpenDray manages its own loopback-only\nPostgres child process. First run downloads ~50 MB.\nRecommended for single-host installs.",
+		},
+		{
+			Key:   "external",
+			Label: "external",
+			Desc:  "Bring your own PostgreSQL 14+. Requires a database,\na role with CRUD privileges, and network reach from\nthis host.",
+		},
 	}
 
 	choice, r := pickMenu("How should OpenDray get its database?", items, defaultChoice)
@@ -523,17 +500,10 @@ func stepDatabase(in *bufio.Reader, cfg *config.Config) stepResult {
 
 func stepDatabaseBundled(in *bufio.Reader, cfg *config.Config) stepResult {
 	if err := guardRootForEmbedded(); err != nil {
-		prn("")
-		prf(" %s %v", failMark(), err)
-		prn("")
-		prn(styleTitle(" Fix — create an unprivileged user and re-run as that user:"))
-		prn("")
-		prn(styleBrightCyan("     useradd -r -m -s /bin/bash -d /home/opendray opendray"))
-		prn(styleBrightCyan("     su - opendray"))
-		prn(styleBrightCyan("     opendray setup"))
-		prn("")
-		prn(styleDim(" Or choose `external` to use an existing PostgreSQL."))
-		return srBack
+		// Root + bundled is a blocker (initdb refuses uid 0). Rather
+		// than dead-end them with a copy-paste command list, offer to
+		// create the user + hand off setup to it in one keystroke.
+		return handleRootBundled(in)
 	}
 
 	cfg.DB.Mode = "embedded"
@@ -1304,6 +1274,255 @@ func expandHomeCLI(p string) string {
 		return p
 	}
 	return filepath.Join(home, strings.TrimPrefix(p, "~/"))
+}
+
+// handleRootBundled is reached when the user picks `bundled` while
+// running as uid 0. Rather than force them back to the menu with a
+// copy-paste tutorial, the wizard offers to create an unprivileged
+// system user, copy the binary into that user's home, and re-launch
+// `opendray setup` as them. A non-root user is the ONE prerequisite
+// postgres's initdb cares about; everything else the user would do
+// manually (useradd flags, binary path, su) is canned here.
+//
+// Returns a step result. srQuit means we've already exec'd the child
+// process (success path); srBack means the user declined or creation
+// failed — either way the wizard loop bounces back to the db-mode
+// menu so they can try `external` instead.
+func handleRootBundled(in *bufio.Reader) stepResult {
+	prn("")
+	prf(" %s  %s", warnMark(),
+		styleYellow("Bundled PostgreSQL cannot run as root (initdb refuses uid 0)."))
+	prn("")
+	prn(styleDim("   OpenDray can set this up for you automatically:"))
+	prn(styleDim("     1. create an unprivileged system user"))
+	prn(styleDim("     2. copy the opendray binary into that user's home"))
+	prn(styleDim("     3. hand control over to ") + styleCyan("opendray setup") +
+		styleDim(" running as that user"))
+	prn("")
+
+	if !askYN(in, "Create the user and continue?", true) {
+		prn("")
+		prn(styleDim("   No user created. Use the `external` option below,"))
+		prn(styleDim("   or Ctrl-C and re-run setup from a non-root account."))
+		prn("")
+		return srBack
+	}
+
+	prn("")
+	username, r := readLine(in, "username", "opendray")
+	if r != srNext {
+		return r
+	}
+	username = strings.TrimSpace(username)
+	if username == "" {
+		username = "opendray"
+	}
+	if err := validateUnixUsername(username); err != nil {
+		prf("    %s %v", failMark(), err)
+		return srBack
+	}
+
+	// Step 1: create (or locate) the system user.
+	userCreated := false
+	if _, lookupErr := user.Lookup(username); lookupErr == nil {
+		prf(" %s  user %q already exists — reusing it", okMark(),
+			username)
+	} else {
+		if err := progress(fmt.Sprintf("creating user %q", username), func() error {
+			return createUnprivilegedUser(username)
+		}); err != nil {
+			prf("    %s %v", failMark(), err)
+			prn("")
+			prn(styleDim("   You can create the user manually, then re-run:"))
+			prn(styleBrightCyan(fmt.Sprintf("       useradd -r -m -s /bin/bash -d /home/%s %s",
+				username, username)))
+			prn(styleBrightCyan(fmt.Sprintf("       su - %s -c '%s setup'",
+				username, binaryInvocation())))
+			prn("")
+			return srBack
+		}
+		userCreated = true
+	}
+
+	// Resolve the newly-created user's account info so we can chown.
+	u, err := user.Lookup(username)
+	if err != nil {
+		prf("    %s cannot look up created user %q: %v", failMark(), username, err)
+		return srBack
+	}
+	uid, err1 := strconv.Atoi(u.Uid)
+	gid, err2 := strconv.Atoi(u.Gid)
+	if err1 != nil || err2 != nil {
+		prf("    %s bad uid/gid on user %q (%s, %s)", failMark(), username, u.Uid, u.Gid)
+		return srBack
+	}
+
+	// Step 2: install the binary into the new user's ~/.local/bin.
+	srcBin, err := os.Executable()
+	if err != nil {
+		prf("    %s cannot locate current binary: %v", failMark(), err)
+		return srBack
+	}
+	destDir := filepath.Join(u.HomeDir, ".local", "bin")
+	destBin := filepath.Join(destDir, "opendray")
+	if err := progress(
+		fmt.Sprintf("installing opendray → %s", destBin),
+		func() error {
+			return installBinaryForUser(srcBin, destBin, uid, gid)
+		},
+	); err != nil {
+		prf("    %s %v", failMark(), err)
+		return srBack
+	}
+
+	// Step 3: re-launch setup as the new user. We use `su -l` so the
+	// child gets a proper login shell environment (PATH, HOME, etc.)
+	// before exec'ing `opendray setup`. Stdin/Stdout/Stderr are shared
+	// with the current process so the new wizard draws inline on the
+	// same TTY.
+	prn("")
+	prf(" %s  handing off to %s…", styleAccent("→"), styleBrightCyan(username))
+	prn("")
+
+	cmd := exec.Command("su", "-l", username, "-c",
+		fmt.Sprintf("%q setup", destBin))
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	runErr := cmd.Run()
+
+	// Forward the child's exit code. Whether the wizard-as-new-user
+	// succeeded or was Ctrl-C'd, we don't want root's outer shell to
+	// see a stale "failed" status from the outer process.
+	exitCode := 0
+	if runErr != nil {
+		exitCode = 1
+		if cmd.ProcessState != nil {
+			exitCode = cmd.ProcessState.ExitCode()
+		}
+	}
+
+	if exitCode == 0 {
+		// Successful completion — leave the root operator with an
+		// unambiguous "from now on, use this user" hint. `opendray`
+		// started as root would fail with our root+embedded guard
+		// anyway (see main.go); telling them up front beats letting
+		// them discover that.
+		prn("")
+		prf("   %s", styleDim(
+			fmt.Sprintf("OpenDray is configured under user %q.", username)))
+		prf("   %s", styleDim("Start the server as that user, not as root:"))
+		prn("")
+		prf("       %s", styleBrightCyan(
+			fmt.Sprintf("su - %s -c 'opendray'", username)))
+		prn("")
+	}
+
+	// Suppress unused-var warning if userCreated is only referenced
+	// in the comment above — future branches may want it (e.g. rollback
+	// the useradd on abort). Keep the binding explicit.
+	_ = userCreated
+
+	os.Exit(exitCode)
+	return srQuit // unreachable
+}
+
+// validateUnixUsername is a conservative subset of POSIX useradd
+// accepts — lowercase letters, digits, hyphen, underscore; must start
+// with a letter or underscore; length 1-32.
+func validateUnixUsername(s string) error {
+	if s == "" {
+		return errors.New("username cannot be empty")
+	}
+	if len(s) > 32 {
+		return errors.New("username too long (max 32 characters)")
+	}
+	for i, r := range s {
+		switch {
+		case r >= 'a' && r <= 'z':
+		case r >= '0' && r <= '9' && i > 0:
+		case r == '_':
+		case r == '-' && i > 0:
+		default:
+			return fmt.Errorf("invalid character %q in username — use [a-z0-9_-] only, starting with a letter or underscore", r)
+		}
+	}
+	return nil
+}
+
+// createUnprivilegedUser runs `useradd -r -m -s /bin/bash` (system
+// account, make home dir, sane shell). Falls back to `adduser` in
+// Alpine's busybox syntax if useradd isn't on PATH.
+func createUnprivilegedUser(username string) error {
+	if _, err := exec.LookPath("useradd"); err == nil {
+		homedir := filepath.Join("/home", username)
+		cmd := exec.Command("useradd", "-r", "-m",
+			"-s", "/bin/bash",
+			"-d", homedir,
+			username)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			return fmt.Errorf("useradd: %w — %s", err, strings.TrimSpace(string(out)))
+		}
+		return nil
+	}
+	if _, err := exec.LookPath("adduser"); err == nil {
+		// Alpine / BusyBox. `-D` disables password, `-s` sets shell.
+		cmd := exec.Command("adduser", "-D", "-s", "/bin/sh", username)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			return fmt.Errorf("adduser: %w — %s", err, strings.TrimSpace(string(out)))
+		}
+		return nil
+	}
+	return errors.New("neither useradd nor adduser found on PATH — cannot create user automatically")
+}
+
+// installBinaryForUser copies src to dst, ensuring dst's parent dirs
+// exist and every newly-created path is owned by uid/gid so the user
+// can actually read and execute it.
+func installBinaryForUser(src, dst string, uid, gid int) error {
+	destDir := filepath.Dir(dst)
+
+	// Walk up to ensure each created path is chowned correctly. A blind
+	// MkdirAll would leave the new directories owned by root.
+	homeDir := filepath.Dir(filepath.Dir(destDir)) // e.g. /home/opendray
+	toChown := []string{}
+	for _, p := range []string{
+		filepath.Join(homeDir, ".local"),
+		filepath.Join(homeDir, ".local", "bin"),
+	} {
+		if _, err := os.Stat(p); os.IsNotExist(err) {
+			if err := os.Mkdir(p, 0o755); err != nil {
+				return fmt.Errorf("mkdir %s: %w", p, err)
+			}
+			toChown = append(toChown, p)
+		}
+	}
+
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("open src: %w", err)
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.OpenFile(dst,
+		os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o755)
+	if err != nil {
+		return fmt.Errorf("open dst: %w", err)
+	}
+	if _, err := io.Copy(dstFile, srcFile); err != nil {
+		dstFile.Close()
+		return fmt.Errorf("copy: %w", err)
+	}
+	if err := dstFile.Close(); err != nil {
+		return fmt.Errorf("close dst: %w", err)
+	}
+
+	for _, p := range append(toChown, dst) {
+		if err := os.Chown(p, uid, gid); err != nil {
+			return fmt.Errorf("chown %s: %w", p, err)
+		}
+	}
+	return nil
 }
 
 // loadSecretFromFlags resolves a secret from either an inline flag or
