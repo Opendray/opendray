@@ -7,7 +7,8 @@ on:
 
 permissions:
   contents: write
-  id-token: write  # for cosign OIDC
+  id-token: write      # for cosign OIDC + SLSA provenance attestation
+  attestations: write  # for actions/attest-build-provenance
 
 jobs:
   release:
@@ -35,6 +36,15 @@ jobs:
         run: cosign sign-blob --yes dist/checksums.txt --output-signature dist/checksums.txt.sig --output-certificate dist/checksums.txt.pem
         env:
           COSIGN_EXPERIMENTAL: "1"
+
+      # SLSA L3 build provenance — one attestation per release artifact
+      # under dist/ matching the goreleaser archive pattern. Lets
+      # downstream verifiers (Scorecard, sigstore-verify, Dependency-Track)
+      # cryptographically trace binary ← commit ← workflow run.
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4.1.0
+        with:
+          subject-path: 'dist/opendray_*.tar.gz'
 
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
