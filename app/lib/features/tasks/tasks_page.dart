@@ -12,7 +12,6 @@ import '../../core/services/ws_connect.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/models/provider.dart';
-import '../../core/services/server_config.dart';
 import '../../shared/directory_picker.dart';
 import '../../shared/providers_bus.dart';
 import '../../shared/theme/app_theme.dart';
@@ -241,7 +240,6 @@ class _TasksPageState extends State<TasksPage> {
         plugin: plugin,
         runId: meta['id'] as String,
         meta: meta,
-        extraHeaders: context.read<ServerConfig>().cfAccessHeaders,
       );
       session.addListener(_onRunTick);
       setState(() => _run = session);
@@ -918,7 +916,6 @@ class _RunSession extends ChangeNotifier {
   final ApiClient api;
   final String plugin;
   final String runId;
-  final Map<String, String> extraHeaders;
 
   Map<String, dynamic> meta;
   final List<int> _raw = [];
@@ -935,13 +932,11 @@ class _RunSession extends ChangeNotifier {
     required this.plugin,
     required this.runId,
     required this.meta,
-    this.extraHeaders = const {},
   });
 
   void start() {
     final uri = api.tasksRunWsUri(plugin, runId);
-    final ch = connectWs(uri,
-        headers: extraHeaders.isNotEmpty ? extraHeaders : null);
+    final ch = connectWs(uri);
     _channel = ch;
     _sub = ch.stream.listen(_onData, onDone: _refresh, onError: (e) {
       exitMsg = 'Stream error: $e';

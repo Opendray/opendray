@@ -11,6 +11,8 @@ import '../../core/services/l10n.dart';
 import '../../shared/providers_bus.dart';
 import '../../shared/session_launcher.dart';
 import '../../shared/theme/app_theme.dart';
+import '../workbench/workbench_models.dart';
+import '../workbench/workbench_service.dart';
 
 class FilesPage extends StatefulWidget {
   const FilesPage({super.key});
@@ -399,6 +401,7 @@ class _FilesPageState extends State<FilesPage> {
               const SizedBox(width: 8),
               Text(_formatSize(size), style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
               const SizedBox(width: 8),
+              const _EditorActionStrip(),
               IconButton(
                 icon: const Icon(Icons.copy, size: 16, color: AppColors.textMuted),
                 onPressed: () {
@@ -451,5 +454,48 @@ class _FilesPageState extends State<FilesPage> {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+}
+
+/// Renders plugin-contributed editor title-bar actions (M5 B4).
+///
+/// Stays collapsed when no plugin contributes actions. `when` clauses
+/// are not yet evaluated (M5 ships without a context engine); every
+/// contributed action is rendered for any open file. Tapping invokes
+/// `WorkbenchService.invoke(pluginName, action.id)` fire-and-forget —
+/// errors surface via the service's own SnackBar channel.
+class _EditorActionStrip extends StatelessWidget {
+  const _EditorActionStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    final service = context.watch<WorkbenchService>();
+    final actions = service.editorActions;
+    if (actions.isEmpty) return const SizedBox.shrink();
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final a in actions)
+          Padding(
+            padding: const EdgeInsets.only(right: 2),
+            child: IconButton(
+              icon: Text(
+                a.icon.isNotEmpty ? a.icon : '•',
+                style: const TextStyle(fontSize: 14),
+              ),
+              tooltip: a.title,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              onPressed: () => _invoke(service, a),
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _invoke(WorkbenchService service, WorkbenchEditorAction a) {
+    // Fire-and-forget; service surfaces its own errors.
+    unawaited(service.invoke(a.pluginName, a.id));
   }
 }

@@ -45,21 +45,26 @@ func (s *Server) simulatorStreamWS(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	// Read plugin config for quality/FPS settings
+	// Read plugin config for quality/FPS settings via effectiveConfig
+	// so values saved through the v1 Configure form (plugin_kv.__config.*)
+	// override any stale values in the legacy plugins.config JSONB column.
+	// intVal tolerates both numeric types and the JSON-string shape the
+	// overlay uses, so all four fields are clamped in-band.
 	activeFPS, idleFPS, jpegQ, maxWidth := 8, 1, 50, 720
 	for _, pi := range s.plugins.ListInfo() {
 		if pi.Provider.Name == "simulator-preview" && pi.Enabled {
-			if v, ok := pi.Config["activeFps"].(float64); ok && v > 0 && v <= 15 {
-				activeFPS = int(v)
+			cfg := s.effectiveConfig(r.Context(), pi.Provider.Name, pi.Config)
+			if v := intVal(cfg, "activeFps", activeFPS); v > 0 && v <= 15 {
+				activeFPS = v
 			}
-			if v, ok := pi.Config["idleFps"].(float64); ok && v >= 0 {
-				idleFPS = int(v)
+			if v := intVal(cfg, "idleFps", idleFPS); v >= 0 {
+				idleFPS = v
 			}
-			if v, ok := pi.Config["quality"].(float64); ok && v >= 10 && v <= 95 {
-				jpegQ = int(v)
+			if v := intVal(cfg, "quality", jpegQ); v >= 10 && v <= 95 {
+				jpegQ = v
 			}
-			if v, ok := pi.Config["maxWidth"].(float64); ok {
-				maxWidth = int(v)
+			if v := intVal(cfg, "maxWidth", maxWidth); v >= 0 {
+				maxWidth = v
 			}
 			break
 		}

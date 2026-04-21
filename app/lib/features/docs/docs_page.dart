@@ -167,7 +167,8 @@ class _DocsPageState extends State<DocsPage> {
               children: _docPlugins.map((p) => Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: ChoiceChip(
-                  label: Text('${p.provider.icon} ${p.provider.displayName}'),
+                  label: Text('${p.provider.icon} '
+                      '${context.pickL10n(p.provider.displayName, p.provider.displayNameZh)}'),
                   selected: _activePlugin == p.provider.name,
                   onSelected: (_) {
                     setState(() { _activePlugin = p.provider.name; _pathStack.clear(); });

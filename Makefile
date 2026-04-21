@@ -6,7 +6,13 @@ LINUX_GOOS   ?= linux
 LINUX_GOARCH ?= amd64
 VERSION      ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 BUILD_SHA    := $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
-LDFLAGS      := -s -w -X main.version=$(VERSION) -X main.buildSha=$(BUILD_SHA)
+# UTC ISO8601-basic timestamp (e.g. 20260420T193412Z). Changes every
+# build even when VERSION + BUILD_SHA don't, so operators can tell two
+# binaries from the same commit apart — the question "did my deploy
+# actually recompile?" becomes a simple string-compare against the
+# previous /api/health response.
+BUILD_TIME   := $(shell date -u '+%Y%m%dT%H%M%SZ')
+LDFLAGS      := -s -w -X main.version=$(VERSION) -X main.buildSha=$(BUILD_SHA) -X main.buildTime=$(BUILD_TIME)
 
 # Deployment target — operator must override via .env or shell env.
 # Example: OPENDRAY_DEPLOY_HOST=root@10.0.0.42 make deploy
@@ -33,7 +39,7 @@ build-web:
 	cd app && flutter build web --release
 
 build: build-web
-	go build -o bin/opendray ./cmd/opendray
+	go build -ldflags='$(LDFLAGS)' -o bin/opendray ./cmd/opendray
 
 build-apk:
 	cd app && flutter build apk --release

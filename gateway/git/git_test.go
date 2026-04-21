@@ -57,7 +57,18 @@ func baseConfig(repo string) Config {
 		AllowedRoots: []string{repo},
 		DefaultPath:  repo,
 		Timeout:      10 * time.Second,
-		AllowCommit:  true,
+	}
+}
+
+// gitCmd runs `git -C repo <args>` for test setup that needs to mutate
+// the working tree. Production code paths are read-only — write ops go
+// through the Claude session — but tests still need to create commits,
+// stage files, etc., to exercise the observers.
+func gitCmd(t *testing.T, repo string, args ...string) {
+	t.Helper()
+	cmd := exec.Command("git", append([]string{"-C", repo}, args...)...)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("git %v: %v\n%s", args, err, out)
 	}
 }
 
@@ -129,7 +140,7 @@ func TestDiffIncludesUnstagedChanges(t *testing.T) {
 	}
 }
 
-func TestStageUnstageRoundTrip(t *testing.T) {
+func TestStatusReportsStagedAndUnstaged(t *testing.T) {
 	repo := makeRepo(t)
 	cfg := baseConfig(repo)
 	ctx := context.Background()
@@ -138,24 +149,22 @@ func TestStageUnstageRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := Stage(ctx, cfg, repo, []string{"README.md"}); err != nil {
-		t.Fatalf("Stage: %v", err)
-	}
+	// Staged observation
+	gitCmd(t, repo, "add", "README.md")
 	status, _ := Status(ctx, cfg, repo)
 	if len(status.Files) != 1 || !status.Files[0].Staged {
 		t.Fatalf("expected staged README.md, got %+v", status.Files)
 	}
 
-	if err := Unstage(ctx, cfg, repo, []string{"README.md"}); err != nil {
-		t.Fatalf("Unstage: %v", err)
-	}
+	// Unstaged observation after reset
+	gitCmd(t, repo, "reset", "HEAD", "README.md")
 	status, _ = Status(ctx, cfg, repo)
 	if len(status.Files) != 1 || status.Files[0].Staged {
 		t.Fatalf("expected unstaged README.md, got %+v", status.Files)
 	}
 }
 
-func TestCommitCreatesNewCommit(t *testing.T) {
+func TestLogReportsCommits(t *testing.T) {
 	repo := makeRepo(t)
 	cfg := baseConfig(repo)
 	ctx := context.Background()
@@ -163,23 +172,14 @@ func TestCommitCreatesNewCommit(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(repo, "README.md"), []byte("v2\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := Stage(ctx, cfg, repo, []string{"README.md"}); err != nil {
-		t.Fatalf("Stage: %v", err)
-	}
-
-	c, err := CreateCommit(ctx, cfg, repo, "second commit")
-	if err != nil {
-		t.Fatalf("Commit: %v", err)
-	}
-	if c.Subject != "second commit" {
-		t.Errorf("subject=%q", c.Subject)
-	}
+	gitCmd(t, repo, "add", "README.md")
+	gitCmd(t, repo, "commit", "-q", "-m", "second commit")
 
 	log, err := Log(ctx, cfg, repo, 5)
 	if err != nil {
 		t.Fatalf("Log: %v", err)
 	}
-	if len(log) != 2 || log[0].SHA != c.SHA {
+	if len(log) != 2 || log[0].Subject != "second commit" {
 		t.Errorf("log mismatch: %+v", log)
 	}
 }
@@ -191,16 +191,6 @@ func TestSecurePathRejectsOutsideRoots(t *testing.T) {
 	outside := t.TempDir()
 	if _, err := SecurePath(cfg, outside); err == nil {
 		t.Error("expected rejection for path outside allowed roots")
-	}
-}
-
-func TestReadOnlyRejectsMutations(t *testing.T) {
-	repo := makeRepo(t)
-	cfg := baseConfig(repo)
-	cfg.AllowCommit = false
-
-	if err := Stage(context.Background(), cfg, repo, []string{"README.md"}); err == nil {
-		t.Error("expected Stage to be rejected in read-only mode")
 	}
 }
 
@@ -222,12 +212,8 @@ func TestSessionDiffFiltersToChangesSinceBaseline(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(repo, "added.go"), []byte("package x\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := Stage(ctx, cfg, repo, []string{"added.go"}); err != nil {
-		t.Fatalf("Stage: %v", err)
-	}
-	if _, err := CreateCommit(ctx, cfg, repo, "in-session commit"); err != nil {
-		t.Fatalf("Commit: %v", err)
-	}
+	gitCmd(t, repo, "add", "added.go")
+	gitCmd(t, repo, "commit", "-q", "-m", "in-session commit")
 
 	// Also modify a file but leave it unstaged — SessionDiff should still
 	// show it because Diff with --since walks to the working tree.

@@ -20,12 +20,19 @@ import (
 
 	gitpkg "github.com/opendray/opendray/gateway/git"
 	"github.com/opendray/opendray/gateway/mcp"
+	pgpkg "github.com/opendray/opendray/gateway/pg"
 	"github.com/opendray/opendray/gateway/tasks"
+
 	"github.com/opendray/opendray/gateway/telegram"
 	"github.com/opendray/opendray/kernel/auth"
 	"github.com/opendray/opendray/kernel/hub"
 	"github.com/opendray/opendray/kernel/setup"
 	"github.com/opendray/opendray/plugin"
+	"github.com/opendray/opendray/plugin/bridge"
+	"github.com/opendray/opendray/plugin/contributions"
+	"github.com/opendray/opendray/plugin/host"
+	"github.com/opendray/opendray/plugin/install"
+	"github.com/opendray/opendray/plugin/market"
 )
 
 // Server is the main HTTP server for OpenDray.
@@ -42,6 +49,79 @@ type Server struct {
 	telegram      *telegram.Manager
 	mcp           *mcp.Handlers
 	git           *gitpkg.Manager
+	pg            *pgpkg.Manager
+	installer     *install.Installer
+	contribReg    *contributions.Registry
+	cmdInvoker    commandInvoker
+
+	// Bridge (M2 T7): plugin WebSocket API.
+	bridgeMgr       *bridge.Manager
+	bridgeCfg       PluginsConfig
+	bridgeNamespace *namespaceRegistry
+	// bridgePluginsOverride lets tests inject a plugin-lookup function without
+	// standing up a real Runtime with filesystem manifests. Production leaves
+	// this nil and the handler falls back to s.plugins.Get.
+	bridgePluginsOverride func(name string) (plugin.Provider, bool)
+
+	// consentStoreOverride / consentBridgeOverride let tests inject fakes for
+	// the T12 revoke endpoints without wiring embedded-pg or a real bridge
+	// Manager. Production leaves both nil and the handlers resolve via
+	// s.hub.DB() and s.bridgeMgr.
+	consentStoreOverride  consentStore
+	consentBridgeOverride consentInvalidator
+
+	// T14 — SSE workbench stream.
+	// workbenchBus is the fan-out channel for host → Flutter out-of-band
+	// events (showMessage, openView, updateStatusBar, contributionsChanged).
+	// Nil disables the stream endpoint (returns 503 EBUS).
+	workbenchBus *WorkbenchBus
+
+	// heartbeatInterval overrides the 20 s production heartbeat in tests.
+	// Zero means use defaultHeartbeatInterval (20 s).
+	heartbeatInterval time.Duration
+
+	// Build-time identity surfaced by /api/health so the Flutter About
+	// page can render a backend version. Empty strings degrade to "dev"
+	// / "unknown" in the response so the UI never crashes on missing
+	// fields. buildTime (UTC ISO8601 basic: 20060102T150405Z) changes on
+	// every build even when version+SHA don't — use it to tell two
+	// binaries from the same commit apart (e.g. "did my deploy actually
+	// recompile?").
+	version   string
+	buildSha  string
+	buildTime string
+
+	// marketplace is the loaded catalog that backs
+	// GET /api/marketplace/plugins and the marketplace:// install
+	// source. Nil when no catalog dir is configured — endpoints then
+	// degrade to empty lists and EBADSRC respectively. The concrete
+	// implementation is market/local in M3 and market/remote once
+	// M4.1 lands; the handler code only depends on the interface.
+	marketplace market.Catalog
+
+	// marketplaceSettings carries the boot-time config values
+	// surfaced via GET /api/marketplace/settings so the Settings →
+	// Marketplace admin subpage can show what the server is
+	// actually using. Read-only in M4.1; editable via per-user
+	// preferences is M4.2.
+	marketplaceSettings MarketplaceSettings
+
+	// secretAPI + hostSupervisor back the platform-managed config
+	// endpoints (GET/PUT /api/plugins/{name}/config). secretAPI is
+	// used for PlatformSet/Get/Delete bypassing the bridge gate;
+	// hostSupervisor.Kill restarts the sidecar after a config write
+	// so the new values take effect on the next invoke.
+	secretAPI      *bridge.SecretAPI
+	hostSupervisor *host.Supervisor
+
+	// Test-only overrides for the config handlers. When non-nil they
+	// short-circuit the resolver chain so tests can inject fakes for
+	// the KV store, secret store, and sidecar killer without booting
+	// embedded Postgres or a real supervisor. Production leaves
+	// these nil.
+	configKVTestOverride      configStore
+	configSecretsTestOverride platformSecrets
+	configKillerTestOverride  sidecarKiller
 }
 
 // Config holds gateway configuration.
@@ -54,7 +134,57 @@ type Config struct {
 	AdminUsername string
 	AdminPassword string
 	Logger        *slog.Logger
-	FrontendFS    fs.FS // embedded frontend dist (optional)
+	FrontendFS    fs.FS             // embedded frontend dist (optional)
+	Installer     *install.Installer         // plugin install/uninstall orchestrator (T7)
+	Contributions *contributions.Registry    // workbench contribution registry (T9)
+	CommandInvoker commandInvoker            // command dispatcher (T11)
+
+	// M2 T7 — plugin bridge WS.
+	BridgeManager *bridge.Manager // shared bridge.Manager instance; nil disables
+	Plugins2      PluginsConfig   // plugin-bridge-tunable knobs
+
+	// T14 — SSE workbench stream. Nil disables the endpoint (returns 503 EBUS).
+	WorkbenchBus *WorkbenchBus
+
+	// Version / BuildSha / BuildTime are the build-stamped identifiers
+	// injected into cmd/opendray/main.go via -ldflags. They flow through
+	// /api/health so the Flutter About screen can show the running
+	// backend's version + distinguish two binaries built from the same
+	// commit (BuildTime changes on every `make release-linux`).
+	// All three are optional; defaults kick in when empty.
+	Version   string
+	BuildSha  string
+	BuildTime string
+
+	// Marketplace is the preloaded plugin catalog. Nil disables the
+	// GET /api/marketplace/plugins endpoint (returns empty list) and
+	// rejects marketplace:// install sources with EBADSRC. Accepts
+	// any market.Catalog implementation; main.go wires local during
+	// M3 bootstrap, remote once M4.1 T1–T7 lands.
+	Marketplace market.Catalog
+
+	// MarketplaceSettings carries the read-only config snapshot
+	// returned by GET /api/marketplace/settings. Kev's Settings →
+	// Marketplace admin subpage reads this to show which URL +
+	// mirrors + poll cadence the gateway actually booted with.
+	MarketplaceSettings MarketplaceSettings
+
+	// SecretAPI + HostSupervisor wire the platform-managed config
+	// endpoints. Both nil = /api/plugins/{name}/config returns 503.
+	SecretAPI      *bridge.SecretAPI
+	HostSupervisor *host.Supervisor
+}
+
+// PluginsConfig holds runtime-tunable knobs for the bridge handler.
+type PluginsConfig struct {
+	// BridgeRatePerMinute caps inbound requests per plugin connection (default 60).
+	BridgeRatePerMinute int
+	// BridgeReadTimeout is the idle read deadline on each bridge WS (default 60s).
+	BridgeReadTimeout time.Duration
+	// FrontendOrigin, when set, is an additional Origin allowed by the bridge
+	// handshake (for production deployments where the UI is served from a
+	// different host than the gateway).
+	FrontendOrigin string
 }
 
 // New creates a gateway server with all routes configured.
@@ -63,23 +193,50 @@ func New(cfg Config) *Server {
 		cfg.Logger = slog.Default()
 	}
 
+	// Fill in bridge config defaults.
+	bridgeCfg := cfg.Plugins2
+	if bridgeCfg.BridgeRatePerMinute <= 0 {
+		bridgeCfg.BridgeRatePerMinute = 60
+	}
+	if bridgeCfg.BridgeReadTimeout <= 0 {
+		bridgeCfg.BridgeReadTimeout = 60 * time.Second
+	}
+
 	s := &Server{
-		hub:           cfg.Hub,
-		plugins:       cfg.Plugins,
-		auth:          cfg.Auth,
-		creds:         cfg.Credentials,
-		adminUsername: cfg.AdminUsername,
-		adminPassword: cfg.AdminPassword,
-		logger:        cfg.Logger,
-		tasks:         tasks.NewRunner(),
-		git:           gitpkg.NewManager(),
+		hub:             cfg.Hub,
+		plugins:         cfg.Plugins,
+		auth:            cfg.Auth,
+		creds:           cfg.Credentials,
+		adminUsername:   cfg.AdminUsername,
+		adminPassword:   cfg.AdminPassword,
+		logger:          cfg.Logger,
+		tasks:           tasks.NewRunner(),
+		git:             gitpkg.NewManager(),
+		pg:              pgpkg.NewManager(),
+		installer:       cfg.Installer,
+		contribReg:      cfg.Contributions,
+		cmdInvoker:      cfg.CommandInvoker,
+		bridgeMgr:       cfg.BridgeManager,
+		bridgeCfg:       bridgeCfg,
+		bridgeNamespace: newNamespaceRegistry(),
+		workbenchBus:    cfg.WorkbenchBus,
+		version:         cfg.Version,
+		buildSha:        cfg.BuildSha,
+		buildTime:       cfg.BuildTime,
+		marketplace:         cfg.Marketplace,
+		marketplaceSettings: cfg.MarketplaceSettings,
+		secretAPI:       cfg.SecretAPI,
+		hostSupervisor:  cfg.HostSupervisor,
 	}
 	if cfg.MCP != nil {
 		s.mcp = mcp.NewHandlers(cfg.MCP)
 	}
 	// Telegram bridge — watches the "telegram" plugin and starts/stops
 	// the bot to match. Safe to construct even if the plugin is disabled.
+	// Install the config resolver so the reconcile loop sees values
+	// the user wrote through the v1 Configure form (plugin_kv.__config.*).
 	s.telegram = telegram.NewManager(cfg.Plugins, cfg.Hub, cfg.Plugins.HookBus(), cfg.Logger)
+	s.telegram.SetConfigResolver(s.effectiveConfig)
 	s.telegram.Start(context.Background())
 
 	r := chi.NewRouter()
@@ -127,7 +284,6 @@ func New(cfg Config) *Server {
 		r.Post("/api/providers", s.registerProvider)
 		r.Get("/api/providers/{name}", s.getProvider)
 		r.Patch("/api/providers/{name}/toggle", s.toggleProvider)
-		r.Put("/api/providers/{name}/config", s.updateProviderConfig)
 		r.Delete("/api/providers/{name}", s.deleteProvider)
 		r.Get("/api/providers/{name}/models", s.detectModels)
 
@@ -208,30 +364,90 @@ func New(cfg Config) *Server {
 		r.Post("/api/tasks/{plugin}/run/{runId}/stop", s.tasksRunStop)
 		r.Get("/api/tasks/{plugin}/run/{runId}/ws", s.tasksRunWS)
 
-		// Git panel — per-repo status, diff, log, branches, commit; plus
-		// a per-session baseline so the UI can show only what changed
-		// during the current session (SnapshotHEAD → SessionDiff).
+		// Git-viewer panel — read-only per-repo status, diff, log, branches,
+		// plus a per-session baseline so the UI can show only what changed
+		// during the current session (SnapshotHEAD → SessionDiff). Write
+		// paths (stage/commit/push/etc) live in the Claude session flow.
 		r.Get("/api/git/{plugin}/status",   s.gitStatus)
 		r.Get("/api/git/{plugin}/diff",     s.gitDiff)
 		r.Get("/api/git/{plugin}/log",      s.gitLog)
 		r.Get("/api/git/{plugin}/branches", s.gitBranches)
-		r.Post("/api/git/{plugin}/stage",   s.gitStage)
-		r.Post("/api/git/{plugin}/unstage", s.gitUnstage)
-		r.Post("/api/git/{plugin}/discard", s.gitDiscard)
-		r.Post("/api/git/{plugin}/commit",  s.gitCommit)
 		r.Post("/api/git/{plugin}/session/snapshot", s.gitSessionSnapshot)
 		r.Get("/api/git/{plugin}/session/diff",      s.gitSessionDiff)
 
-		// Database browsing (panel plugins, PostgreSQL read-only)
-		r.Get("/api/database/{plugin}/databases", s.dbDatabases)
-		r.Get("/api/database/{plugin}/schemas", s.dbSchemas)
-		r.Get("/api/database/{plugin}/tables", s.dbTables)
-		r.Get("/api/database/{plugin}/columns", s.dbColumns)
-		r.Get("/api/database/{plugin}/preview", s.dbPreview)
-		r.Post("/api/database/{plugin}/query", s.dbQuery)
+		// Git-forge panel — read-only PR viewer against Gitea / GitHub /
+		// GitLab. The adapter dispatch (gateway/forge) picks one based on
+		// the plugin's forgeType configSchema field. PR creation / merge
+		// / approve / comment flow through the Claude session, not here.
+		r.Get("/api/git-forge/{plugin}/pulls",                    s.forgePullsList)
+		r.Get("/api/git-forge/{plugin}/pulls/{number}",           s.forgePullDetail)
+		r.Get("/api/git-forge/{plugin}/pulls/{number}/diff",      s.forgePullDiff)
+		r.Get("/api/git-forge/{plugin}/pulls/{number}/comments",         s.forgePullComments)
+		r.Get("/api/git-forge/{plugin}/pulls/{number}/reviews",          s.forgePullReviews)
+		r.Get("/api/git-forge/{plugin}/pulls/{number}/review-comments",  s.forgePullReviewComments)
+		r.Get("/api/git-forge/{plugin}/pulls/{number}/checks",           s.forgePullChecks)
+
+		// pg-browser panel — SQL editor + schema browser backed by pgx.
+		// Read-only is enforced server-side via BEGIN READ ONLY + verb
+		// guard; statement timeout + max rows gated from configSchema.
+		// Write statements go through the separate /execute route so
+		// the Flutter client can prompt for confirmation first.
+		r.Post("/api/pg/{plugin}/query",     s.pgQuery)
+		r.Post("/api/pg/{plugin}/execute",   s.pgExecute)
+		r.Get("/api/pg/{plugin}/databases",  s.pgDatabases)
+		r.Get("/api/pg/{plugin}/schemas",    s.pgSchemas)
+		r.Get("/api/pg/{plugin}/tables",     s.pgTables)
+		r.Get("/api/pg/{plugin}/columns",    s.pgColumns)
+
 
 		// Hook subscriptions
 		r.Get("/api/hooks", s.listHooks)
+
+		// Plugin install / uninstall / audit (T7).
+		// DELETE /api/providers/{name} stays for legacy compat (see api.go).
+		// These new routes provide the full install lifecycle via Installer.
+		r.Post("/api/plugins/install", s.pluginsInstall)
+		r.Post("/api/plugins/install/confirm", s.pluginsInstallConfirm)
+		r.Delete("/api/plugins/{name}", s.pluginsUninstall)
+		r.Get("/api/plugins/{name}/audit", s.pluginsAudit)
+
+		// Marketplace catalog — lists installable plugins for the Hub
+		// page. Install still flows through /api/plugins/install with
+		// src="marketplace://<name>".
+		r.Get("/api/marketplace/plugins", s.marketplaceList)
+		r.Get("/api/marketplace/settings", s.marketplaceSettingsGet)
+		r.Post("/api/marketplace/refresh", s.marketplaceRefresh)
+
+		// Consent management (T12) — read current perms + hot-revoke.
+		// DELETE /consents/{cap} fires bridgeMgr.InvalidateConsent synchronously
+		// so in-flight WS subs terminate within the 200 ms SLO.
+		r.Get("/api/plugins/{name}/consents", s.pluginsConsentsGet)
+		r.Patch("/api/plugins/{name}/consents", s.pluginsConsentsPatch)
+		r.Delete("/api/plugins/{name}/consents/{cap}", s.pluginsConsentsRevokeCap)
+		r.Delete("/api/plugins/{name}/consents", s.pluginsConsentsRevokeAll)
+
+		// User-editable config (configSchema-driven form). GET returns
+		// schema + masked values; PUT writes to plugin_kv + plugin_secret
+		// and restarts the sidecar.
+		r.Get("/api/plugins/{name}/config", s.pluginsConfigGet)
+		r.Put("/api/plugins/{name}/config", s.pluginsConfigPut)
+
+		// Plugin asset server — serves plugin ui/ bundles (T8).
+		r.Get("/api/plugins/{name}/assets/*", s.pluginsAssets)
+
+		// Plugin bridge WebSocket (T7) — per-plugin JSON envelope protocol.
+		r.Get("/api/plugins/{name}/bridge/ws", s.pluginsBridgeWS)
+
+		// Workbench contributions — flat view of all installed plugin contribution
+		// points (commands, statusBar, keybindings, menus). Pure read; no DB (T9).
+		r.Get("/api/workbench/contributions", s.workbenchContributions)
+
+		// Workbench SSE stream — host → Flutter out-of-band events (T14).
+		// Streams showMessage, openView, updateStatusBar, contributionsChanged.
+		r.Get("/api/workbench/stream", s.workbenchStream)
+
+		// Command invoke — dispatches a named command on a named plugin (T11).
+		r.Post("/api/plugins/{name}/commands/{id}/invoke", s.commandInvoke)
 	})
 
 	// SPA frontend (serve embedded dist or fallback)
@@ -346,11 +562,26 @@ func (s *Server) serveTerminalHTML(w http.ResponseWriter, r *http.Request) {
 // ── Health ──────────────────────────────────────────────────────
 
 func (s *Server) health(w http.ResponseWriter, r *http.Request) {
+	version := s.version
+	if version == "" {
+		version = "dev"
+	}
+	buildSha := s.buildSha
+	if buildSha == "" {
+		buildSha = "unknown"
+	}
+	buildTime := s.buildTime
+	if buildTime == "" {
+		buildTime = "unknown"
+	}
 	respondJSON(w, http.StatusOK, map[string]any{
-		"status":   "ok",
-		"service":  "opendray",
-		"sessions": s.hub.RunningCount(),
-		"plugins":  len(s.plugins.List()),
+		"status":    "ok",
+		"service":   "opendray",
+		"version":   version,
+		"buildSha":  buildSha,
+		"buildTime": buildTime,
+		"sessions":  s.hub.RunningCount(),
+		"plugins":   len(s.plugins.List()),
 	})
 }
 
@@ -462,8 +693,12 @@ func (s *Server) changeCredentials(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.creds.Save(r.Context(), newUser, req.NewPassword); err != nil {
-		s.logger.Error("auth: save credentials", "error", err)
+	// M5 D3 — changing the password rotates the KEK. The rewrap walk of
+	// every plugin_secret_kek row must happen in the SAME tx as the
+	// admin_auth update, otherwise a crash between Save() and the
+	// rewrap would strand every wrapped DEK with no recoverable key.
+	if err := s.creds.RotateCredentialsAndKEK(r.Context(), newUser, req.NewPassword); err != nil {
+		s.logger.Error("auth: rotate credentials+KEK", "error", err)
 		respondError(w, http.StatusInternalServerError, "failed to save credentials")
 		return
 	}

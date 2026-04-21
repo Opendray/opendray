@@ -82,9 +82,8 @@ class _SetupWizardPageState extends State<SetupWizardPage> {
   String get _baseUrl => context.read<ServerConfig>().effectiveUrl;
 
   Future<void> _bootstrap() async {
-    final extras = context.read<ServerConfig>().cfAccessHeaders;
     try {
-      final status = await SetupApi.status(_baseUrl, extraHeaders: extras);
+      final status = await SetupApi.status(_baseUrl);
       if (!status.needsSetup) {
         if (!mounted) return;
         setState(() => _step = _Step.noNeed);
@@ -108,7 +107,7 @@ class _SetupWizardPageState extends State<SetupWizardPage> {
     final uri = Uri.base;
     final qpToken = uri.queryParameters['token'];
     String? tok = (qpToken != null && qpToken.isNotEmpty) ? qpToken : null;
-    tok ??= await SetupApi.loopbackToken(_baseUrl, extraHeaders: extras);
+    tok ??= await SetupApi.loopbackToken(_baseUrl);
 
     if (!mounted) return;
     if (tok == null) {
@@ -116,7 +115,7 @@ class _SetupWizardPageState extends State<SetupWizardPage> {
       return;
     }
     setState(() {
-      _api = SetupApi(baseUrl: _baseUrl, bootstrapToken: tok!, extraHeaders: extras);
+      _api = SetupApi(baseUrl: _baseUrl, bootstrapToken: tok!);
       _step = _Step.welcome;
     });
   }
@@ -124,9 +123,8 @@ class _SetupWizardPageState extends State<SetupWizardPage> {
   void _acceptManualToken(String pasted) {
     final t = pasted.trim();
     if (t.isEmpty) return;
-    final extras = context.read<ServerConfig>().cfAccessHeaders;
     setState(() {
-      _api = SetupApi(baseUrl: _baseUrl, bootstrapToken: t, extraHeaders: extras);
+      _api = SetupApi(baseUrl: _baseUrl, bootstrapToken: t);
       _step = _Step.welcome;
     });
   }
@@ -201,10 +199,9 @@ class _SetupWizardPageState extends State<SetupWizardPage> {
       // 5. Wait for the server to transition into normal mode. We poll
       // /api/auth/status — it's 503 during setup and 200 once normal.
       await step('Waiting for server to restart', () async {
-        final extras = context.read<ServerConfig>().cfAccessHeaders;
         for (int i = 0; i < 60; i++) {
           try {
-            final s = await SetupApi.status(_baseUrl, extraHeaders: extras);
+            final s = await SetupApi.status(_baseUrl);
             if (!s.needsSetup) return;
           } catch (_) {
             // Expected while the server is mid-transition
@@ -222,10 +219,7 @@ class _SetupWizardPageState extends State<SetupWizardPage> {
 
       // Finally, clear the auth cache so the router redirect picks up the
       // new authRequired=true and the user lands on /login.
-      await context.read<AuthService>().probe(
-        _baseUrl,
-        extraHeaders: context.read<ServerConfig>().cfAccessHeaders,
-      );
+      await context.read<AuthService>().probe(_baseUrl);
     } catch (e) {
       if (!mounted) return;
       setState(() {

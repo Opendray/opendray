@@ -1,0 +1,96 @@
+{
+  "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
+  "name": "claude",
+  "displayName": "Claude Code",
+  "displayName_zh": "Claude Code",
+  "description": "Anthropic Claude Code CLI — agentic coding with tool use, MCP, and session resume",
+  "description_zh": "Anthropic Claude Code CLI —— 支持工具调用、MCP 以及会话恢复的智能编码助手",
+  "icon": "🟣",
+  "version": "1.1.2",
+  "publisher": "opendray-builtin",
+  "engines": { "opendray": "^1.0.0" },
+  "form": "declarative",
+  "activation": ["onStartup"],
+  "type": "cli",
+  "cli": {
+    "command": "claude",
+    "defaultArgs": [],
+    "detectCmd": "which claude"
+  },
+  "capabilities": {
+    "models": [],
+    "supportsResume": true,
+    "supportsStream": true,
+    "supportsImages": true,
+    "supportsMcp": true,
+    "dynamicModels": false
+  },
+  "configSchema": [
+    {
+      "key": "authType",
+      "label": "Authentication",
+      "label_zh": "认证",
+      "type": "select",
+      "group": "auth",
+      "options": ["env", "custom"],
+      "default": "env",
+      "description": "env = read ANTHROPIC_API_KEY from system; falls back to the Claude CLI's own login when unset (use the Accounts section below to manage multiple tokens) · custom = use the key below",
+      "description_zh": "env = 从系统读取 ANTHROPIC_API_KEY;未设置时回退到 Claude CLI 自己的登录(通过下方 Accounts 管理多 token) · custom = 使用下方自定义密钥"
+    },
+    {
+      "key": "apiKey",
+      "label": "API Key",
+      "label_zh": "API 密钥",
+      "type": "secret",
+      "group": "auth",
+      "envVar": "ANTHROPIC_API_KEY",
+      "placeholder": "sk-ant-...",
+      "dependsOn": "authType",
+      "dependsVal": "custom"
+    },
+    {
+      "key": "bypassPermissions",
+      "label": "Bypass Permissions",
+      "label_zh": "跳过权限检查",
+      "type": "boolean",
+      "group": "runtime",
+      "default": false,
+      "cliFlag": "--dangerously-skip-permissions",
+      "description": "Skip all permission prompts — full autonomous mode",
+      "description_zh": "跳过所有权限提示 —— 完全自主模式"
+    },
+    {
+      "key": "maxTurns",
+      "label": "Max Turns",
+      "label_zh": "最大轮次",
+      "type": "number",
+      "group": "runtime",
+      "description": "Limit autonomous agentic turns (0 = unlimited)",
+      "description_zh": "限制自主智能体的轮次(0 = 不限制)"
+    },
+    {
+      "key": "command",
+      "label": "Command Path",
+      "label_zh": "命令路径",
+      "type": "string",
+      "group": "advanced",
+      "placeholder": "claude"
+    },
+    {
+      "key": "extraArgs",
+      "label": "Extra CLI Args",
+      "label_zh": "额外 CLI 参数",
+      "type": "args",
+      "group": "advanced"
+    }
+  ],
+  "contributes": {
+    "activityBar": [
+      { "id": "claude", "icon": "🟣", "title": "Claude Code", "viewId": "claude" }
+    ],
+    "views": [
+      { "id": "claude", "title": "Claude Code", "container": "activityBar", "render": "declarative" }
+    ]
+  },
+  "required": true
+}

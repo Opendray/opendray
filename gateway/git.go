@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,9 +14,12 @@ import (
 	"github.com/opendray/opendray/plugin"
 )
 
-// getGitConfig resolves the "git" panel plugin's saved config into the
-// typed gitpkg.Config the backend uses.
-func (s *Server) getGitConfig(pluginName string) (gitpkg.Config, error) {
+// getGitConfig resolves the "git-viewer" panel plugin's saved config into
+// the typed gitpkg.Config the backend uses. The config is pulled via
+// s.effectiveConfig so values written through the v1 Configure form
+// (plugin_kv.__config.*) override any stale values in the legacy
+// plugins.config JSONB column.
+func (s *Server) getGitConfig(ctx context.Context, pluginName string) (gitpkg.Config, error) {
 	info := s.plugins.ListInfo()
 	for _, pi := range info {
 		if pi.Provider.Name != pluginName {
@@ -24,17 +28,13 @@ func (s *Server) getGitConfig(pluginName string) (gitpkg.Config, error) {
 		if pi.Provider.Type != plugin.ProviderTypePanel || !pi.Enabled {
 			return gitpkg.Config{}, fmt.Errorf("git plugin %q not enabled", pluginName)
 		}
-		cfg := pi.Config
+		cfg := s.effectiveConfig(ctx, pluginName, pi.Config)
 
 		var roots []string
 		for _, r := range strings.Split(stringVal(cfg, "allowedRoots", ""), ",") {
 			if r = strings.TrimSpace(r); r != "" {
 				roots = append(roots, r)
 			}
-		}
-		allowCommit := true
-		if v, ok := cfg["allowCommit"].(bool); ok {
-			allowCommit = v
 		}
 		return gitpkg.Config{
 			AllowedRoots: roots,
@@ -43,14 +43,13 @@ func (s *Server) getGitConfig(pluginName string) (gitpkg.Config, error) {
 			LogLimit:     intVal(cfg, "logLimit", 50),
 			DiffContext:  intVal(cfg, "diffContext", 3),
 			Timeout:      time.Duration(intVal(cfg, "commandTimeoutSec", 20)) * time.Second,
-			AllowCommit:  allowCommit,
 		}, nil
 	}
 	return gitpkg.Config{}, fmt.Errorf("git plugin %q not found", pluginName)
 }
 
 func (s *Server) gitStatus(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getGitConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getGitConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
@@ -64,7 +63,7 @@ func (s *Server) gitStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) gitDiff(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getGitConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getGitConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
@@ -84,7 +83,7 @@ func (s *Server) gitDiff(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) gitLog(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getGitConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getGitConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
@@ -105,7 +104,7 @@ func (s *Server) gitLog(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) gitBranches(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getGitConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getGitConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
@@ -121,99 +120,10 @@ func (s *Server) gitBranches(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, branches)
 }
 
-type gitPathMutation struct {
-	Path  string   `json:"path"`
-	Files []string `json:"files"`
-}
-
-func decodeMutation(r *http.Request) (gitPathMutation, error) {
-	var req gitPathMutation
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return req, fmt.Errorf("invalid request body: %w", err)
-	}
-	return req, nil
-}
-
-func (s *Server) gitStage(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getGitConfig(chi.URLParam(r, "plugin"))
-	if err != nil {
-		respondError(w, http.StatusNotFound, err.Error())
-		return
-	}
-	req, err := decodeMutation(r)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	if err := gitpkg.Stage(r.Context(), cfg, req.Path, req.Files); err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	respondJSON(w, http.StatusOK, map[string]string{"status": "ok"})
-}
-
-func (s *Server) gitUnstage(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getGitConfig(chi.URLParam(r, "plugin"))
-	if err != nil {
-		respondError(w, http.StatusNotFound, err.Error())
-		return
-	}
-	req, err := decodeMutation(r)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	if err := gitpkg.Unstage(r.Context(), cfg, req.Path, req.Files); err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	respondJSON(w, http.StatusOK, map[string]string{"status": "ok"})
-}
-
-func (s *Server) gitDiscard(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getGitConfig(chi.URLParam(r, "plugin"))
-	if err != nil {
-		respondError(w, http.StatusNotFound, err.Error())
-		return
-	}
-	req, err := decodeMutation(r)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	if err := gitpkg.Discard(r.Context(), cfg, req.Path, req.Files); err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	respondJSON(w, http.StatusOK, map[string]string{"status": "ok"})
-}
-
-func (s *Server) gitCommit(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getGitConfig(chi.URLParam(r, "plugin"))
-	if err != nil {
-		respondError(w, http.StatusNotFound, err.Error())
-		return
-	}
-	var req struct {
-		Path    string `json:"path"`
-		Message string `json:"message"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-	c, err := gitpkg.CreateCommit(r.Context(), cfg, req.Path, req.Message)
-	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	respondJSON(w, http.StatusOK, c)
-}
-
 // ── Session baselines ───────────────────────────────────────────
 
 func (s *Server) gitSessionSnapshot(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getGitConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getGitConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
@@ -240,7 +150,7 @@ func (s *Server) gitSessionSnapshot(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) gitSessionDiff(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getGitConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getGitConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return

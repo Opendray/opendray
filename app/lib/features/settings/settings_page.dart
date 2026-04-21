@@ -9,10 +9,16 @@ import '../../core/services/l10n.dart';
 import '../../core/services/server_config.dart';
 import '../../shared/app_modals.dart';
 import '../../shared/theme/app_theme.dart';
-import 'widgets/plugins_section.dart';
 
 const String _kBuildDate =
     String.fromEnvironment('BUILD_DATE', defaultValue: '');
+// UTC ISO8601-basic timestamp stamped by app/build_release.sh. Sits
+// alongside BUILD_DATE so ops can tell two APKs/IPAs built on the same
+// calendar day apart — the APK you just pushed to the phone vs the one
+// that was there before. Empty when dev-run (`flutter run`) or when
+// the build didn't set the --dart-define.
+const String _kBuildTimestamp =
+    String.fromEnvironment('BUILD_TIMESTAMP', defaultValue: '');
 const String _kRepoUrl = 'https://github.com/Opendray/opendray';
 
 class SettingsPage extends StatefulWidget {
@@ -23,42 +29,56 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   late TextEditingController _urlController;
-  late TextEditingController _cfIdController;
-  late TextEditingController _cfSecretController;
   String? _testResult;
   bool _testing = false;
+  /// Backend identity pulled from /api/health — version + short git SHA.
+  /// Both start null while the request is in flight, then settle to
+  /// either a real value or "—" when the call fails or the server is
+  /// too old to report them.
+  String? _backendVersion;
+  String? _backendSha;
+  String? _backendBuildTime;
 
   @override
   void initState() {
     super.initState();
     final config = context.read<ServerConfig>();
     _urlController = TextEditingController(text: config.url);
-    _cfIdController = TextEditingController(text: config.cfAccessId);
-    _cfSecretController = TextEditingController(text: config.cfAccessSecret);
+    _loadBackendInfo();
+  }
+
+  Future<void> _loadBackendInfo() async {
+    try {
+      final health = await context.read<ApiClient>().health();
+      if (!mounted) return;
+      setState(() {
+        _backendVersion = (health['version'] as String?) ?? '—';
+        final sha = (health['buildSha'] as String?) ?? '';
+        // Short-SHA for display — full SHA is rarely useful in a UI.
+        _backendSha = sha.isEmpty ? '—' : sha.substring(0, sha.length.clamp(0, 7));
+        final bt = (health['buildTime'] as String?) ?? '';
+        _backendBuildTime = bt.isEmpty ? '—' : bt;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _backendVersion = '—';
+        _backendSha = '—';
+        _backendBuildTime = '—';
+      });
+    }
   }
 
   @override
   void dispose() {
     _urlController.dispose();
-    _cfIdController.dispose();
-    _cfSecretController.dispose();
     super.dispose();
-  }
-
-  Map<String, String> _pendingCfHeaders() {
-    final id = _cfIdController.text.trim();
-    final secret = _cfSecretController.text.trim();
-    if (id.isEmpty || secret.isEmpty) return const {};
-    return {'CF-Access-Client-Id': id, 'CF-Access-Client-Secret': secret};
   }
 
   Future<void> _testConnection() async {
     setState(() { _testing = true; _testResult = null; });
     try {
-      final api = ApiClient(
-        baseUrl: _urlController.text.trim(),
-        extraHeaders: _pendingCfHeaders(),
-      );
+      final api = ApiClient(baseUrl: _urlController.text.trim());
       final health = await api.health();
       setState(() {
         _testResult = '✅ Connected — ${health['sessions']} sessions, ${health['plugins']} plugins';
@@ -75,8 +95,6 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _save() async {
     final config = context.read<ServerConfig>();
     await config.setUrl(_urlController.text.trim());
-    await config.setCfAccess(
-        _cfIdController.text.trim(), _cfSecretController.text.trim());
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Settings saved'), backgroundColor: AppColors.success),
@@ -120,35 +138,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       prefixIcon: Icon(Icons.link, size: 18),
                     ),
                     style: const TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 14),
-                  const Text('Cloudflare Access',
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textMuted,
-                          fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: _cfIdController,
-                    decoration: const InputDecoration(
-                      labelText: 'CF-Access-Client-Id',
-                      hintText: 'Leave empty if not using CF Access',
-                      prefixIcon: Icon(Icons.vpn_key, size: 16),
-                      isDense: true,
-                    ),
-                    style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _cfSecretController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'CF-Access-Client-Secret',
-                      hintText: 'Service token secret',
-                      prefixIcon: Icon(Icons.lock, size: 16),
-                      isDense: true,
-                    ),
-                    style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -205,33 +194,43 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 16),
 
-          // Plugins
-          const PluginsSection(),
-          const SizedBox(height: 16),
+          // Plugins management lives in the dedicated bottom-nav tabs:
+          //   • /plugins — installed CRUD
+          //   • /hub     — marketplace
+          // Settings no longer carries a link card — redundant surface.
 
-          // Claude accounts entry — opens the dedicated management page.
-          // Kept out of the Plugins section because accounts are a kernel-level
-          // resource (they drive env injection in the hub), not a plugin.
+          // Claude Accounts lives on the Plugin tab now: Plugins → Claude
+          // card's "Accounts" popup menu entry (or tap-to-open) routes to
+          // /settings/claude-accounts, the same page this card used to
+          // link to. The deep-link URL is preserved.
+
+          // LLM Endpoints — the address book of OpenAI-compatible model
+          // endpoints (Ollama / LM Studio / Groq / Gemini / custom). It
+          // used to be a `llm-providers` panel plugin, but the data and
+          // spawn-time injection are kernel-level — shared by any agent,
+          // not owned by a single plugin — so it lives here in Settings
+          // alongside Claude Accounts.
           Card(
             child: InkWell(
-              onTap: () => context.push('/settings/claude-accounts'),
+              onTap: () => context.push('/settings/llm-endpoints'),
               borderRadius: BorderRadius.circular(12),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(children: [
-                  const Icon(Icons.people_outline,
+                  const Icon(Icons.satellite_alt_outlined,
                       color: AppColors.accent, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(context.tr('Claude Accounts'),
+                        Text(context.tr('LLM Endpoints'),
                             style: const TextStyle(
-                                fontWeight: FontWeight.w600, fontSize: 15)),
-                        const SizedBox(height: 4),
+                                fontSize: 14, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 2),
                         Text(
-                          context.tr('Manage multiple Claude subscriptions (OAuth tokens). Each session picks an account at creation time.'),
+                          context.tr(
+                              'Address book of OpenAI-compatible model endpoints (Ollama, LM Studio, Groq, Gemini, custom). Shared by every agent.'),
                           style: const TextStyle(
                               fontSize: 12, color: AppColors.textMuted),
                         ),
@@ -279,19 +278,35 @@ class _SettingsPageState extends State<SettingsPage> {
                     future: PackageInfo.fromPlatform(),
                     builder: (context, snap) {
                       final info = snap.data;
-                      final version = info == null
+                      // Compose the app version line as
+                      // "1.0.0+30 · 20260420T193412Z" so two APKs from
+                      // the same pubspec version still render distinct
+                      // labels — ops uses this to spot a stale install.
+                      final base = info == null
                           ? '—'
                           : '${info.version} (${info.buildNumber})';
+                      final version = _kBuildTimestamp.isEmpty
+                          ? base
+                          : '$base · $_kBuildTimestamp';
                       final buildDate =
                           _kBuildDate.isEmpty ? '—' : _kBuildDate;
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _InfoRow(
-                              label: context.tr('Version'), value: version),
+                              label: context.tr('App version'), value: version),
                           _InfoRow(
-                              label: context.tr('Build Date'),
+                              label: context.tr('Build date'),
                               value: buildDate),
+                          _InfoRow(
+                              label: context.tr('Backend version'),
+                              value: _backendVersion ?? '…'),
+                          _InfoRow(
+                              label: context.tr('Backend build'),
+                              value: _backendSha ?? '…'),
+                          _InfoRow(
+                              label: context.tr('Backend built at'),
+                              value: _backendBuildTime ?? '…'),
                         ],
                       );
                     },

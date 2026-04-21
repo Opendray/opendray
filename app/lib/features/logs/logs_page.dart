@@ -10,7 +10,6 @@ import '../../core/services/ws_connect.dart';
 import '../../core/api/api_client.dart';
 import '../../core/models/provider.dart';
 import '../../core/services/l10n.dart';
-import '../../core/services/server_config.dart';
 import '../../shared/providers_bus.dart';
 import '../../shared/theme/app_theme.dart';
 
@@ -161,9 +160,7 @@ class _LogsPageState extends State<LogsPage> {
       _connecting = true;
     });
     final uri = _api.logsTailWsUri(_activePlugin!, path, grep: _grep);
-    final cfHeaders = context.read<ServerConfig>().cfAccessHeaders;
-    final ch = connectWs(uri,
-        headers: cfHeaders.isNotEmpty ? cfHeaders : null);
+    final ch = connectWs(uri);
     _ws = ch;
     _wsSub = ch.stream.listen(
       (data) {

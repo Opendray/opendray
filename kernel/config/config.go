@@ -33,14 +33,55 @@ const SchemaVersion = 1
 
 // Config is the fully-merged runtime configuration.
 type Config struct {
-	SchemaVersion    int       `toml:"schema_version"`
-	SetupCompletedAt string    `toml:"setup_completed_at,omitempty"`
-	Server           Server    `toml:"server"`
-	Auth             Auth      `toml:"auth"`
-	DB               DB        `toml:"db"`
-	Plugins          Plugins   `toml:"plugins"`
-	Telegram         Telegram  `toml:"telegram"`
-	CFAccess         CFAccess  `toml:"cf_access,omitempty"`
+	SchemaVersion    int            `toml:"schema_version"`
+	SetupCompletedAt string         `toml:"setup_completed_at,omitempty"`
+	Server           Server         `toml:"server"`
+	Auth             Auth           `toml:"auth"`
+	DB               DB             `toml:"db"`
+	Plugins          Plugins        `toml:"plugins"`
+	Telegram         Telegram       `toml:"telegram"`
+	CFAccess         CFAccess       `toml:"cf_access,omitempty"`
+	PluginPlatform   PluginPlatform `toml:"plugin_platform,omitempty"`
+
+	// Plugin platform top-level convenience fields (M1/T25).
+	// These shadow PluginPlatform fields for direct access throughout the
+	// codebase without chaining through the nested struct.
+	//
+	// PluginsDataDir is the root directory for installed plugin bundles.
+	// Default: ${HOME}/.opendray/plugins. Env: OPENDRAY_PLUGINS_DATA_DIR.
+	PluginsDataDir string `toml:"-"` // computed; not round-tripped in TOML
+
+	// AllowLocalPlugins gates local-scheme plugin installs.
+	// Default: false. Env: OPENDRAY_ALLOW_LOCAL_PLUGINS (truthy: 1|true|yes|on).
+	AllowLocalPlugins bool `toml:"-"` // computed; not round-tripped in TOML
+
+	// MarketplaceDir is the root of the on-disk plugin catalog that
+	// backs /api/marketplace/plugins and marketplace:// install refs
+	// when no remote URL is configured. A missing directory leaves
+	// the Hub empty rather than failing boot.
+	// Env: OPENDRAY_MARKETPLACE_DIR.
+	MarketplaceDir string `toml:"-"` // computed; not round-tripped in TOML
+
+	// MarketplaceURL — when set — switches the Hub from the on-disk
+	// catalog at MarketplaceDir to a live HTTPS registry. Points at
+	// marketplace.opendray.dev in production; GitHub raw
+	// (https://raw.githubusercontent.com/Opendray/opendray-marketplace/main/)
+	// is the pre-CDN fallback. Empty = use MarketplaceDir (M3
+	// behaviour).
+	// Env: OPENDRAY_MARKETPLACE_URL.
+	MarketplaceURL string `toml:"-"` // computed; not round-tripped in TOML
+
+	// MarketplaceMirrors is a comma-separated list of fallback base
+	// URLs tried in order when the primary returns 5xx or times
+	// out. Empty = primary only.
+	// Env: OPENDRAY_MARKETPLACE_MIRRORS.
+	MarketplaceMirrors []string `toml:"-"` // computed
+
+	// RevocationPollHours controls the kill-switch poll cadence.
+	// Clamped to [1, 168] by the poller; zero means use the spec
+	// default (6 h).
+	// Env: OPENDRAY_REVOCATION_POLL_HOURS.
+	RevocationPollHours int `toml:"-"` // computed
 }
 
 // Server holds HTTP listener configuration.
@@ -106,6 +147,24 @@ type CFAccess struct {
 	ClientSecret string `toml:"client_secret"`
 }
 
+// PluginPlatform holds the M1 plugin-platform configuration knobs.
+// These fields are intentionally separate from the legacy Plugins struct so
+// they don't conflict with the provider-runtime settings.
+type PluginPlatform struct {
+	// DataDir is the root directory where installed plugin bundles are
+	// written. Defaults to ${HOME}/.opendray/plugins. Override via
+	// OPENDRAY_PLUGINS_DATA_DIR.
+	DataDir string `toml:"data_dir"`
+
+	// AllowLocalPlugins controls whether POST /api/plugins/install accepts
+	// local-scheme sources ("local:<abs>" or bare absolute paths). Defaults
+	// to false (deny). Override via OPENDRAY_ALLOW_LOCAL_PLUGINS.
+	//
+	// Truthy values (case-insensitive): "1", "true", "yes", "on"
+	// Falsy / unset: everything else → false
+	AllowLocalPlugins bool `toml:"allow_local_plugins"`
+}
+
 // Source describes where the effective config came from. Useful for log
 // lines ("config loaded source=…") and the setup wizard.
 type Source string
@@ -120,6 +179,14 @@ const (
 // Defaults returns a config with the hard-coded defaults applied. Env
 // and file layers merge on top of this.
 func Defaults() Config {
+	home, _ := os.UserHomeDir()
+	defaultPluginsDataDir := filepath.Join(home, ".opendray", "plugins")
+	// Marketplace catalog root. Defaults to ~/.opendray/marketplace;
+	// developers testing against a local catalog point OPENDRAY_MARKETPLACE_DIR
+	// at the syz mock (or a checkout of opendray-marketplace), and prod uses
+	// OPENDRAY_MARKETPLACE_URL against marketplace.opendray.dev.
+	defaultMarketplaceDir := filepath.Join(home, ".opendray", "marketplace")
+
 	return Config{
 		SchemaVersion: SchemaVersion,
 		Server: Server{
@@ -143,6 +210,9 @@ func Defaults() Config {
 			Dir:                  "./plugins",
 			IdleThresholdSeconds: 8,
 		},
+		PluginsDataDir:    defaultPluginsDataDir,
+		AllowLocalPlugins: false,
+		MarketplaceDir:    defaultMarketplaceDir,
 	}
 }
 
@@ -373,7 +443,67 @@ func applyEnvOverrides(cfg *Config) bool {
 	// Telegram
 	setStr(&cfg.Telegram.BotToken, "OPENDRAY_TELEGRAM_BOT_TOKEN")
 
+	// Plugin platform (M1/T25).
+	//
+	// OPENDRAY_PLUGINS_DATA_DIR overrides the root directory for installed
+	// plugin bundles. An empty value is ignored — callers who want to clear
+	// the default must use the TOML file.
+	setStr(&cfg.PluginsDataDir, "OPENDRAY_PLUGINS_DATA_DIR")
+
+	// OPENDRAY_ALLOW_LOCAL_PLUGINS gates local-scheme install sources.
+	// Truthy (case-insensitive): "1", "true", "yes", "on" → true.
+	// All other values, including unset or empty string → false.
+	if v, ok := os.LookupEnv("OPENDRAY_ALLOW_LOCAL_PLUGINS"); ok {
+		cfg.AllowLocalPlugins = isTruthy(v)
+		changed = true
+	}
+
+	// OPENDRAY_MARKETPLACE_DIR overrides the on-disk catalog root. A
+	// missing directory is tolerated — the server boots with an empty
+	// Hub — so operators can point this at a not-yet-populated location
+	// during initial rollout.
+	setStr(&cfg.MarketplaceDir, "OPENDRAY_MARKETPLACE_DIR")
+
+	// OPENDRAY_MARKETPLACE_URL — when set, switches Hub to a remote
+	// HTTPS registry.
+	setStr(&cfg.MarketplaceURL, "OPENDRAY_MARKETPLACE_URL")
+
+	// OPENDRAY_MARKETPLACE_MIRRORS — comma-separated list of fallback
+	// URLs. Entries are trimmed; empty entries are dropped.
+	if v, ok := os.LookupEnv("OPENDRAY_MARKETPLACE_MIRRORS"); ok {
+		out := []string{}
+		for _, part := range strings.Split(v, ",") {
+			p := strings.TrimSpace(part)
+			if p != "" {
+				out = append(out, p)
+			}
+		}
+		cfg.MarketplaceMirrors = out
+		changed = true
+	}
+
+	// OPENDRAY_REVOCATION_POLL_HOURS — integer hours. Validation
+	// (clamp to [1, 168]) happens in the revocation poller, not
+	// here — config is just the passthrough.
+	if v, ok := os.LookupEnv("OPENDRAY_REVOCATION_POLL_HOURS"); ok {
+		if n, err := strconv.Atoi(strings.TrimSpace(v)); err == nil && n > 0 {
+			cfg.RevocationPollHours = n
+			changed = true
+		}
+	}
+
 	return changed
+}
+
+// isTruthy returns true when s is one of the canonical truthy strings
+// (case-insensitive): "1", "true", "yes", "on". All other values → false.
+// This is the single source of truth for AllowLocalPlugins parsing.
+func isTruthy(s string) bool {
+	switch strings.ToLower(s) {
+	case "1", "true", "yes", "on":
+		return true
+	}
+	return false
 }
 
 // expandHome turns a leading "~/" into the user's home directory. No-op

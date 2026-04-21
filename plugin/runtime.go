@@ -35,6 +35,60 @@ type liveProvider struct {
 	enabled   bool
 }
 
+// RuntimeOption is a functional option for configuring a Runtime.
+type RuntimeOption func(*Runtime)
+
+// ContribRegistry is the minimal interface the Runtime requires to keep a
+// contributions registry in sync. *contributions.Registry satisfies it.
+// Defined here to avoid an import cycle (plugin ↛ plugin/contributions).
+type ContribRegistry interface {
+	Set(pluginName string, c ContributesV1)
+	Remove(pluginName string)
+}
+
+// WithContributions wires a ContribRegistry into the Runtime.
+// When set, Register and Remove automatically sync the registry after each
+// successful DB write. Callers that omit this option get zero behaviour change.
+func WithContributions(r ContribRegistry) RuntimeOption {
+	return func(rt *Runtime) { rt.contributionsReg = r }
+}
+
+// SynthesizerFn projects a legacy (pre-v1) Provider into a v1 ContributesV1
+// shape in-memory. main.go wires compat.Synthesize here. Keeping this a
+// function rather than a direct compat import avoids a cycle
+// (plugin/compat already imports plugin).
+type SynthesizerFn func(Provider) ContributesV1
+
+// WithSynthesizer wires a legacy→v1 contribution synthesizer into the
+// Runtime. When a provider is loaded without a v1 `contributes` block,
+// the synthesizer derives one so legacy panel / agent plugins still show
+// up in the workbench. Omitting this option reverts to the previous
+// behaviour (empty contributions for legacy manifests).
+func WithSynthesizer(fn SynthesizerFn) RuntimeOption {
+	return func(rt *Runtime) { rt.synthesizer = fn }
+}
+
+// ConfigOverlayFn returns the plugin's effective config — the legacy
+// ProviderConfig (backed by the plugins.config JSONB column) merged
+// with live values from plugin_kv / plugin_secret (where the v1
+// Configure form writes). Without an overlay, ResolveCLI only sees
+// the legacy cache — values saved via PUT /api/plugins/{name}/config
+// never reach session spawn, so booleans like Claude's
+// bypassPermissions and Gemini's yolo silently no-op.
+//
+// The overlay is called once per ResolveCLI invocation; implementations
+// should keep it cheap (indexed KV reads, short DB round-trips).
+type ConfigOverlayFn func(ctx context.Context, pluginName string, base ProviderConfig) ProviderConfig
+
+// WithConfigOverlay wires a ConfigOverlayFn into the Runtime at
+// construction time. Callers that can only build the overlay after
+// NewRuntime (because it depends on services built later in the
+// startup sequence — e.g. the gateway's secret store) should use
+// SetConfigOverlay instead.
+func WithConfigOverlay(fn ConfigOverlayFn) RuntimeOption {
+	return func(rt *Runtime) { rt.configOverlay = fn }
+}
+
 // Runtime manages provider lifecycle and configuration.
 type Runtime struct {
 	db        *store.DB
@@ -44,20 +98,40 @@ type Runtime struct {
 
 	mu        sync.RWMutex
 	providers map[string]*liveProvider // name → live state
+
+	// contributionsReg is optional. Nil means no contribution tracking —
+	// all existing callers that omit WithContributions are unaffected.
+	contributionsReg ContribRegistry
+
+	// synthesizer is optional. Nil means legacy manifests get an empty
+	// ContributesV1 — matches pre-M2 behaviour. main.go wires
+	// compat.Synthesize here so legacy panels/agents surface as
+	// synthesized v1 contributions in the workbench.
+	synthesizer SynthesizerFn
+
+	// configOverlay is optional. Nil means ResolveCLI only sees the
+	// legacy ProviderConfig cache. See ConfigOverlayFn for context.
+	configOverlay ConfigOverlayFn
 }
 
-// NewRuntime creates a provider runtime.
-func NewRuntime(db *store.DB, hookBus *HookBus, pluginDir string, logger *slog.Logger) *Runtime {
+// NewRuntime creates a provider runtime. Accepts zero or more RuntimeOption
+// values; callers that pass no options get identical behaviour to before
+// this parameter was added.
+func NewRuntime(db *store.DB, hookBus *HookBus, pluginDir string, logger *slog.Logger, opts ...RuntimeOption) *Runtime {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Runtime{
+	rt := &Runtime{
 		db:        db,
 		hookBus:   hookBus,
 		logger:    logger,
 		pluginDir: pluginDir,
 		providers: make(map[string]*liveProvider),
 	}
+	for _, opt := range opts {
+		opt(rt)
+	}
+	return rt
 }
 
 // ── Loading ─────────────────────────────────────────────────────
@@ -69,6 +143,22 @@ func (rt *Runtime) LoadAll(ctx context.Context) error {
 		return fmt.Errorf("plugin runtime: load from db: %w", err)
 	}
 
+	// Load tombstones — names the user has explicitly uninstalled.
+	// We skip seeding these even if they reappear in embeddedProviders,
+	// so an uninstall survives gateway restarts. A tombstone-read
+	// failure is non-fatal: we log and proceed with an empty set,
+	// preserving the pre-M5 re-seed behaviour rather than blocking
+	// startup on a schema issue.
+	tombstoneList, err := rt.db.ListPluginTombstones(ctx)
+	if err != nil {
+		rt.logger.Warn("plugin tombstone list failed, skipping tombstone check", "error", err)
+		tombstoneList = nil
+	}
+	tombstones := make(map[string]bool, len(tombstoneList))
+	for _, n := range tombstoneList {
+		tombstones[n] = true
+	}
+
 	loaded := make(map[string]bool)
 	for _, dbp := range dbPlugins {
 		var p Provider
@@ -76,11 +166,13 @@ func (rt *Runtime) LoadAll(ctx context.Context) error {
 			rt.logger.Warn("invalid manifest in DB", "plugin", dbp.Name, "error", err)
 			continue
 		}
-		var cfg ProviderConfig
-		if len(dbp.Config) > 2 {
-			_ = json.Unmarshal(dbp.Config, &cfg)
-		}
-		rt.loadIntoMemory(p, cfg, dbp.Enabled)
+		// The in-memory ProviderConfig starts empty and stays that
+		// way — live config values come from plugin_kv via gateway's
+		// Server.effectiveConfig on every HTTP handler call, so the
+		// runtime never needs to cache them. This also means a user
+		// saving through Configure sees their new value on the next
+		// request, no restart required.
+		rt.loadIntoMemory(p, ProviderConfig{}, dbp.Enabled)
 		loaded[p.Name] = true
 		rt.logger.Info("provider loaded from DB", "name", p.Name, "enabled", dbp.Enabled)
 	}
@@ -118,6 +210,12 @@ func (rt *Runtime) LoadAll(ctx context.Context) error {
 			rt.mu.Unlock()
 			continue
 		}
+		if tombstones[p.Name] {
+			// User explicitly uninstalled this plugin. Respect that —
+			// re-seeding here is exactly the bug the tombstone fixes.
+			rt.logger.Info("provider seed skipped (tombstoned)", "name", p.Name)
+			continue
+		}
 		if err := rt.seed(ctx, p); err != nil {
 			rt.logger.Warn("seed failed", "name", p.Name, "error", err)
 			continue
@@ -128,19 +226,19 @@ func (rt *Runtime) LoadAll(ctx context.Context) error {
 }
 
 // embeddedProviders returns the manifests bundled inside the binary.
-// Fails gracefully if the embed can't be walked — logs a warning and
-// returns nil so the runtime can still limp along on filesystem plugins.
+// All built-in plugins live under `plugins/builtin/` (flattened — the
+// old agents/panels split at directory level became redundant once
+// the bundle-ships-code question was settled at the manifest's `form`
+// field). Fails gracefully if the embed can't be walked — logs a
+// warning and returns nil so the runtime can still limp along on
+// filesystem plugins.
 func embeddedProviders(logger *slog.Logger) []Provider {
-	var out []Provider
-	for _, root := range []string{"agents", "panels"} {
-		ps, err := ScanFS(bundled.FS, root)
-		if err != nil {
-			logger.Warn("embedded plugin scan failed", "root", root, "error", err)
-			continue
-		}
-		out = append(out, ps...)
+	ps, err := ScanFS(bundled.FS, "builtin")
+	if err != nil {
+		logger.Warn("embedded plugin scan failed", "root", "builtin", "error", err)
+		return nil
 	}
-	return out
+	return ps
 }
 
 // filesystemProviders walks the (optional) user-managed plugin dir.
@@ -198,6 +296,23 @@ func (rt *Runtime) loadIntoMemory(p Provider, cfg ProviderConfig, enabled bool) 
 		provider: p, config: cfg, installed: installed, enabled: enabled,
 	}
 	rt.mu.Unlock()
+
+	// Push contributions. v1 manifests declare their own block; legacy
+	// manifests fall back to the synthesizer (M2 T4) so panels/agents
+	// appear in the workbench as synthesized views. When no synthesizer
+	// is wired, legacy plugins get an empty ContributesV1 (pre-M2
+	// behaviour). Overlay is in-memory; disk is never rewritten.
+	if rt.contributionsReg == nil {
+		return
+	}
+	var c ContributesV1
+	switch {
+	case p.Contributes != nil:
+		c = *p.Contributes
+	case rt.synthesizer != nil:
+		c = rt.synthesizer(p)
+	}
+	rt.contributionsReg.Set(p.Name, c)
 }
 
 func detectInstalled(p Provider, cfg ProviderConfig) bool {
@@ -261,7 +376,16 @@ func (rt *Runtime) ListInfo() []ProviderInfo {
 
 // ── Mutation ────────────────────────────────────────────────────
 
+// ErrRequiredPlugin is returned when a caller tries to disable or
+// remove a plugin that has `required:true` in its manifest. The three
+// built-ins (claude / terminal / file-browser) rely on this so the
+// mobile shell can't be broken by an accidental tap.
+var ErrRequiredPlugin = fmt.Errorf("required plugin cannot be modified")
+
 // SetEnabled toggles a provider's enabled state.
+//
+// Returns ErrRequiredPlugin (wrapped) when the caller tries to disable
+// a required plugin — re-enabling is always allowed.
 func (rt *Runtime) SetEnabled(ctx context.Context, name string, enabled bool) error {
 	rt.mu.Lock()
 	lp, ok := rt.providers[name]
@@ -269,25 +393,13 @@ func (rt *Runtime) SetEnabled(ctx context.Context, name string, enabled bool) er
 		rt.mu.Unlock()
 		return fmt.Errorf("provider %q not found", name)
 	}
+	if !enabled && lp.provider.Required {
+		rt.mu.Unlock()
+		return fmt.Errorf("disable %q: %w", name, ErrRequiredPlugin)
+	}
 	lp.enabled = enabled
 	rt.mu.Unlock()
 	return rt.db.UpdatePluginEnabled(ctx, name, enabled)
-}
-
-// UpdateConfig saves provider configuration and re-detects installation.
-func (rt *Runtime) UpdateConfig(ctx context.Context, name string, cfg ProviderConfig) error {
-	rt.mu.Lock()
-	lp, ok := rt.providers[name]
-	if !ok {
-		rt.mu.Unlock()
-		return fmt.Errorf("provider %q not found", name)
-	}
-	lp.config = cfg
-	lp.installed = detectInstalled(lp.provider, cfg)
-	rt.mu.Unlock()
-
-	cfgJSON, _ := json.Marshal(cfg)
-	return rt.db.UpdatePluginConfig(ctx, name, cfgJSON)
 }
 
 // Register adds a new provider at runtime (no filesystem needed).
@@ -307,16 +419,42 @@ func (rt *Runtime) Register(ctx context.Context, p Provider) error {
 }
 
 // Remove deletes a provider from runtime and DB.
+//
+// Returns ErrRequiredPlugin (wrapped) when the caller tries to remove a
+// required plugin.
 func (rt *Runtime) Remove(ctx context.Context, name string) error {
 	rt.mu.Lock()
-	if _, ok := rt.providers[name]; !ok {
+	lp, ok := rt.providers[name]
+	if !ok {
 		rt.mu.Unlock()
 		return fmt.Errorf("provider %q not found", name)
+	}
+	if lp.provider.Required {
+		rt.mu.Unlock()
+		return fmt.Errorf("remove %q: %w", name, ErrRequiredPlugin)
 	}
 	delete(rt.providers, name)
 	rt.mu.Unlock()
 	rt.hookBus.Unregister(name)
-	return rt.db.DeletePlugin(ctx, name)
+	if err := rt.db.DeletePlugin(ctx, name); err != nil {
+		return err
+	}
+	if rt.contributionsReg != nil {
+		rt.contributionsReg.Remove(name)
+	}
+	return nil
+}
+
+// SetConfigOverlay registers (or clears, when fn is nil) a ConfigOverlayFn
+// after Runtime construction. Needed because the gateway-side merge
+// helper — which has access to both plugin_kv and plugin_secret — is
+// built later in the startup sequence than the Runtime itself. Must be
+// called before any session spawns so RecoverOnStartup and the first
+// user-driven session both see the overlaid config.
+func (rt *Runtime) SetConfigOverlay(fn ConfigOverlayFn) {
+	rt.mu.Lock()
+	rt.configOverlay = fn
+	rt.mu.Unlock()
 }
 
 // ── CLI Tool Resolution (used by Hub) ───────────────────────────
@@ -330,17 +468,32 @@ type ResolvedCLI struct {
 
 // ResolveCLI returns the CLI launch spec for a provider, with config overrides applied.
 // Handles: command override, auth type, boolean→cliFlag, select→cliFlag, env var injection.
+//
+// When a ConfigOverlayFn is wired, the legacy in-memory ProviderConfig is
+// merged with live plugin_kv / plugin_secret values before args are built.
+// This is how values saved via PUT /api/plugins/{name}/config (Configure
+// form) actually reach `claude --dangerously-skip-permissions`, `gemini
+// --yolo`, etc. — the legacy cache alone is empty for every v1-form write.
 func (rt *Runtime) ResolveCLI(name string) (ResolvedCLI, bool) {
 	rt.mu.RLock()
-	defer rt.mu.RUnlock()
-
 	lp, ok := rt.providers[name]
+	overlay := rt.configOverlay
+	rt.mu.RUnlock()
+
 	if !ok || lp.provider.CLI == nil || !lp.enabled {
 		return ResolvedCLI{}, false
 	}
 
 	p := lp.provider
 	cfg := lp.config
+	if overlay != nil {
+		// Short bound so a stuck DB can't hold up session spawn —
+		// the user would rather launch with stale config than see
+		// the Start button freeze.
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		cfg = overlay(ctx, name, cfg)
+		cancel()
+	}
 
 	// 1. Command override
 	command := p.CLI.Command
@@ -370,9 +523,13 @@ func (rt *Runtime) ResolveCLI(name string) (ResolvedCLI, bool) {
 			continue
 		}
 
-		// Boolean with cliFlag → append flag when true
+		// Boolean with cliFlag → append flag when true.
+		// The overlay canonicalises every non-secret value to a
+		// string ("true"/"false"), while the legacy in-memory cache
+		// may deliver a real bool — accept both so either source
+		// still triggers the flag.
 		if field.Type == "boolean" && field.CLIFlag != "" && hasVal {
-			if b, ok := val.(bool); ok && b {
+			if boolVal(val) {
 				args = append(args, field.CLIFlag)
 			}
 			continue
@@ -404,6 +561,21 @@ func (rt *Runtime) ResolveCLI(name string) (ResolvedCLI, bool) {
 	}
 
 	return ResolvedCLI{Command: command, Args: args, Env: env}, true
+}
+
+// boolVal coerces a ProviderConfig entry to a bool. Accepts real
+// bools (legacy JSONB cache) and canonical string forms emitted by
+// the gateway's kv overlay ("true" / "false" / "1" / "0"). Anything
+// else is false — intentionally conservative; unexpected shapes
+// shouldn't flip a CLI flag the user didn't ask for.
+func boolVal(v any) bool {
+	switch x := v.(type) {
+	case bool:
+		return x
+	case string:
+		return x == "true" || x == "1"
+	}
+	return false
 }
 
 // ── Model Detection ─────────────────────────────────────────────

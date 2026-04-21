@@ -1,0 +1,87 @@
+{
+  "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
+  "name": "task-runner",
+  "displayName": "Task Runner",
+  "description": "Discover Makefile targets, package.json scripts, and shell scripts in a project, then run them with live streaming output.",
+  "icon": "▶️",
+  "version": "1.0.0",
+  "publisher": "opendray-builtin",
+  "engines": { "opendray": "^1.0.0" },
+  "form": "declarative",
+  "activation": ["onStartup"],
+  "type": "panel",
+  "category": "tools",
+  "capabilities": {
+    "models": [],
+    "supportsResume": false,
+    "supportsStream": true,
+    "supportsImages": false,
+    "supportsMcp": false,
+    "dynamicModels": false
+  },
+  "configSchema": [
+    {
+      "key": "allowedRoots",
+      "label": "Allowed Directories",
+      "type": "string",
+      "group": "connection",
+      "placeholder": "$HOME/projects",
+      "required": true,
+      "description": "Comma-separated root directories. Tasks can only be discovered and executed inside these roots."
+    },
+    {
+      "key": "defaultPath",
+      "label": "Default Path",
+      "type": "string",
+      "group": "runtime",
+      "placeholder": "$HOME/projects",
+      "description": "Initial directory shown when the panel opens."
+    },
+    {
+      "key": "includeMakefile",
+      "label": "Include Makefile Targets",
+      "type": "boolean",
+      "group": "runtime",
+      "default": true
+    },
+    {
+      "key": "includePackageJson",
+      "label": "Include package.json Scripts",
+      "type": "boolean",
+      "group": "runtime",
+      "default": true
+    },
+    {
+      "key": "includeShellScripts",
+      "label": "Include Shell Scripts (*.sh)",
+      "type": "boolean",
+      "group": "runtime",
+      "default": true,
+      "description": "Discover *.sh files in the project root and ./scripts/."
+    },
+    {
+      "key": "shellTimeoutSec",
+      "label": "Task Timeout (seconds)",
+      "type": "number",
+      "group": "runtime",
+      "default": 600,
+      "description": "Hard kill after this many seconds. Set 0 to disable."
+    },
+    {
+      "key": "maxConcurrent",
+      "label": "Max Concurrent Runs",
+      "type": "number",
+      "group": "runtime",
+      "default": 4,
+      "description": "Reject new runs once this many tasks are already running."
+    },
+    {
+      "key": "outputBufferKB",
+      "label": "Output Buffer (KB)",
+      "type": "number",
+      "group": "advanced",
+      "default": 256,
+      "description": "Per-run rolling output snapshot kept in memory for late subscribers."
+    }
+  ]
+}

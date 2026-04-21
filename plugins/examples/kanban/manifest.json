@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
+  "name": "kanban",
+  "version": "1.0.0",
+  "publisher": "opendray-examples",
+  "displayName": "Kanban",
+  "description": "A minimal kanban board. M2 reference plugin — exercises activityBar, views, storage, workbench.showMessage, events.subscribe.",
+  "icon": "📋",
+  "engines": { "opendray": "^1.0.0" },
+  "form": "webview",
+  "activation": ["onView:kanban.board"],
+  "contributes": {
+    "activityBar": [
+      { "id": "kanban.activity", "icon": "📋", "title": "Kanban", "viewId": "kanban.board" }
+    ],
+    "views": [
+      { "id": "kanban.board", "title": "Kanban Board",
+        "container": "activityBar", "render": "webview", "entry": "index.html" }
+    ]
+  },
+  "permissions": {
+    "storage": true,
+    "events": ["session.idle", "session.start", "session.stop"]
+  }
+}

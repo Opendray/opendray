@@ -30,14 +30,15 @@ type Session struct {
 	LastActiveAt    time.Time         `json:"lastActiveAt"`
 }
 
-// Plugin represents a registered plugin row.
+// Plugin represents a registered plugin row. Configuration for v1
+// plugins lives in plugin_kv (non-secret) and plugin_secret (secret);
+// the legacy plugins.config JSONB column was dropped in migration 017.
 type Plugin struct {
 	ID              string          `json:"id"`
 	Name            string          `json:"name"`
 	Version         string          `json:"version"`
 	Enabled         bool            `json:"enabled"`
 	Manifest        json.RawMessage `json:"manifest"`
-	Config          json.RawMessage `json:"config"`
 	HealthStatus    string          `json:"healthStatus"`
 	HealthCheckedAt *time.Time      `json:"healthCheckedAt,omitempty"`
 	CreatedAt       time.Time       `json:"createdAt"`
@@ -147,7 +148,7 @@ func (d *DB) UpsertPlugin(ctx context.Context, p Plugin) (Plugin, error) {
 		`INSERT INTO plugins (name, version, manifest, enabled)
 		 VALUES ($1, $2, $3, $4)
 		 ON CONFLICT (name) DO UPDATE SET version = $2, manifest = $3, enabled = $4, updated_at = now()
-		 RETURNING id, name, version, enabled, manifest, config, health_status, health_checked_at, created_at, updated_at`,
+		 RETURNING id, name, version, enabled, manifest, health_status, health_checked_at, created_at, updated_at`,
 		p.Name, p.Version, p.Manifest, p.Enabled,
 	)
 	return scanPlugin(row)
@@ -171,7 +172,7 @@ func (d *DB) SyncManifest(ctx context.Context, name, version string, manifest js
 }
 
 func (d *DB) ListPlugins(ctx context.Context, enabledOnly bool) ([]Plugin, error) {
-	q := `SELECT id, name, version, enabled, manifest, config, health_status, health_checked_at, created_at, updated_at
+	q := `SELECT id, name, version, enabled, manifest, health_status, health_checked_at, created_at, updated_at
 	      FROM plugins`
 	if enabledOnly {
 		q += ` WHERE enabled = true`
@@ -202,13 +203,50 @@ func (d *DB) DeletePlugin(ctx context.Context, name string) error {
 	return nil
 }
 
-func (d *DB) GetPluginConfig(ctx context.Context, name string) (json.RawMessage, error) {
-	var cfg json.RawMessage
-	err := d.Pool.QueryRow(ctx, `SELECT config FROM plugins WHERE name = $1`, name).Scan(&cfg)
+// AddPluginTombstone records that `name` has been explicitly
+// uninstalled, so Runtime.LoadAll can skip re-seeding it. Idempotent:
+// a second uninstall just refreshes the uninstalled_at timestamp.
+func (d *DB) AddPluginTombstone(ctx context.Context, name string) error {
+	_, err := d.Pool.Exec(ctx, `
+		INSERT INTO plugin_tombstone (name, uninstalled_at)
+		VALUES ($1, now())
+		ON CONFLICT (name) DO UPDATE SET uninstalled_at = now()
+	`, name)
 	if err != nil {
-		return nil, fmt.Errorf("store: get plugin config: %w", err)
+		return fmt.Errorf("store: add plugin tombstone: %w", err)
 	}
-	return cfg, nil
+	return nil
+}
+
+// RemovePluginTombstone clears the tombstone for `name`. Called by
+// Installer.Confirm so a user explicitly re-installing via the Hub
+// sees the plugin seeded again on the next restart.
+func (d *DB) RemovePluginTombstone(ctx context.Context, name string) error {
+	_, err := d.Pool.Exec(ctx, `DELETE FROM plugin_tombstone WHERE name = $1`, name)
+	if err != nil {
+		return fmt.Errorf("store: remove plugin tombstone: %w", err)
+	}
+	return nil
+}
+
+// ListPluginTombstones returns every tombstoned plugin name. The
+// caller (Runtime.LoadAll) turns this into a set lookup to skip
+// re-seeding embedded plugins the user has removed.
+func (d *DB) ListPluginTombstones(ctx context.Context) ([]string, error) {
+	rows, err := d.Pool.Query(ctx, `SELECT name FROM plugin_tombstone`)
+	if err != nil {
+		return nil, fmt.Errorf("store: list plugin tombstones: %w", err)
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var n string
+		if err := rows.Scan(&n); err != nil {
+			return nil, err
+		}
+		out = append(out, n)
+	}
+	return out, rows.Err()
 }
 
 func (d *DB) UpdatePluginEnabled(ctx context.Context, name string, enabled bool) error {
@@ -217,16 +255,6 @@ func (d *DB) UpdatePluginEnabled(ctx context.Context, name string, enabled bool)
 		name, enabled)
 	if err != nil {
 		return fmt.Errorf("store: update plugin enabled: %w", err)
-	}
-	return nil
-}
-
-func (d *DB) UpdatePluginConfig(ctx context.Context, name string, config json.RawMessage) error {
-	_, err := d.Pool.Exec(ctx,
-		`UPDATE plugins SET config = $2, updated_at = now() WHERE name = $1`,
-		name, config)
-	if err != nil {
-		return fmt.Errorf("store: update plugin config: %w", err)
 	}
 	return nil
 }
@@ -288,7 +316,7 @@ func scanSession(s scannable) (Session, error) {
 
 func scanPlugin(s scannable) (Plugin, error) {
 	var p Plugin
-	err := s.Scan(&p.ID, &p.Name, &p.Version, &p.Enabled, &p.Manifest, &p.Config,
+	err := s.Scan(&p.ID, &p.Name, &p.Version, &p.Enabled, &p.Manifest,
 		&p.HealthStatus, &p.HealthCheckedAt, &p.CreatedAt, &p.UpdatedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {

@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../models/session.dart';
 import '../models/provider.dart';
+import '../../features/workbench/workbench_models.dart';
 
 /// Thrown when a server endpoint returns 4xx/5xx. Carries the server's own
 /// error message (from `{"error": "..."}`) so UI can show a useful reason
@@ -13,6 +15,147 @@ class ApiException implements Exception {
   ApiException(this.statusCode, this.message, this.path);
   @override
   String toString() => message.isNotEmpty ? message : 'HTTP $statusCode';
+}
+
+/// Thrown when a consent-lookup endpoint returns 404 — the plugin has no
+/// consent row on file (never installed, or already fully revoked). Callers
+/// render an empty state rather than surfacing this as an error banner.
+class PluginConsentNotFoundException implements Exception {
+  final String pluginName;
+  PluginConsentNotFoundException(this.pluginName);
+  @override
+  String toString() => 'No consent for plugin $pluginName';
+}
+
+/// Snapshot of a plugin's install-time consent grant as returned by
+/// `GET /api/plugins/{name}/consents`.
+///
+/// [perms] mirrors the raw PermissionsV1 shape (see
+/// `plugin/manifest.go`) — heterogeneous per-capability values:
+///   • `storage` / `secret` / `telegram` / `llm` → bool
+///   • `session` / `clipboard` / `git`           → string ("" = none)
+///   • `fs` / `exec` / `http`                    → bool | list | object
+///   • `events`                                  → `List<String>`
+///
+/// Kept as a raw map (rather than a typed 11-field struct) so additions
+/// to PermissionsV1 don't require a client release — the UI reads via
+/// [isCapGranted], which encodes the rule matrix in one place.
+class PluginConsents {
+  final String pluginName;
+  final Map<String, dynamic> perms;
+  /// The install-time PermissionsV1 block from the plugin's manifest.
+  /// Empty when the plugin declared none or isn't installed. Used by
+  /// the consent settings page to offer a re-grant toggle on any cap
+  /// that was revoked — without this, the UI would have to force a
+  /// reinstall.
+  final Map<String, dynamic> manifestPerms;
+  final DateTime? grantedAt;
+  final DateTime? updatedAt;
+
+  const PluginConsents({
+    required this.pluginName,
+    required this.perms,
+    this.manifestPerms = const <String, dynamic>{},
+    this.grantedAt,
+    this.updatedAt,
+  });
+
+  factory PluginConsents.fromJson(
+    Map<String, dynamic> json, {
+    required String pluginName,
+  }) {
+    final rawPerms = json['perms'];
+    final perms = rawPerms is Map
+        ? Map<String, dynamic>.from(rawPerms)
+        : const <String, dynamic>{};
+    final rawManifest = json['manifestPerms'];
+    final manifestPerms = rawManifest is Map
+        ? Map<String, dynamic>.from(rawManifest)
+        : const <String, dynamic>{};
+    return PluginConsents(
+      pluginName: pluginName,
+      perms: perms,
+      manifestPerms: manifestPerms,
+      grantedAt: _parseTs(json['grantedAt']),
+      updatedAt: _parseTs(json['updatedAt']),
+    );
+  }
+
+  static DateTime? _parseTs(Object? v) {
+    if (v is String && v.isNotEmpty) return DateTime.tryParse(v);
+    return null;
+  }
+
+  /// Returns true if the named capability is currently granted.
+  /// Rule matrix:
+  ///
+  ///   storage / secret / telegram / llm   → bool
+  ///   session / clipboard / git           → non-empty string
+  ///   fs / exec / http                    → any non-null/non-empty value
+  ///   events                              → non-empty array
+  ///
+  /// Unknown cap keys return false (defensive). Keep this in lock-step
+  /// with `plugin/manifest.go` PermissionsV1 and the revoke-cap allowlist
+  /// in `gateway/plugins_consents.go`.
+  bool isCapGranted(String cap) {
+    final v = perms[cap];
+    switch (cap) {
+      case 'storage':
+      case 'secret':
+      case 'telegram':
+      case 'llm':
+        return v == true;
+      case 'session':
+      case 'clipboard':
+      case 'git':
+        return v is String && v.isNotEmpty;
+      case 'fs':
+      case 'exec':
+      case 'http':
+        if (v == null) return false;
+        if (v is bool) return v;
+        if (v is List) return v.isNotEmpty;
+        if (v is Map) return v.isNotEmpty;
+        if (v is String) return v.isNotEmpty;
+        return true;
+      case 'events':
+        return v is List && v.isNotEmpty;
+      default:
+        return false;
+    }
+  }
+
+  /// Returns true when the plugin manifest declared a non-zero value for
+  /// [cap]. Caps that aren't declared can't be re-granted from the UI
+  /// because we'd have nothing to PATCH back in — the switch renders
+  /// disabled.
+  bool isCapDeclared(String cap) {
+    final v = manifestPerms[cap];
+    switch (cap) {
+      case 'storage':
+      case 'secret':
+      case 'telegram':
+      case 'llm':
+        return v == true;
+      case 'session':
+      case 'clipboard':
+      case 'git':
+        return v is String && v.isNotEmpty;
+      case 'fs':
+      case 'exec':
+      case 'http':
+        if (v == null) return false;
+        if (v is bool) return v;
+        if (v is List) return v.isNotEmpty;
+        if (v is Map) return v.isNotEmpty;
+        if (v is String) return v.isNotEmpty;
+        return true;
+      case 'events':
+        return v is List && v.isNotEmpty;
+      default:
+        return false;
+    }
+  }
 }
 
 /// Extracts the server's error message from a DioException, falling back
@@ -41,13 +184,11 @@ ApiException apiExceptionFrom(DioException e) {
 class ApiClient {
   final Dio _dio;
   final String baseUrl;
-  final Map<String, String> extraHeaders;
   final String Function()? _tokenProvider;
   final void Function()? _onUnauthorized;
 
   ApiClient({
     required this.baseUrl,
-    this.extraHeaders = const {},
     String Function()? tokenProvider,
     void Function()? onUnauthorized,
   })  : _tokenProvider = tokenProvider,
@@ -56,7 +197,6 @@ class ApiClient {
           baseUrl: baseUrl,
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 10),
-          headers: extraHeaders,
         )) {
     // Inject Authorization header on every request when a token is available,
     // and trap 401 responses so AuthService can tear down state and route
@@ -189,10 +329,6 @@ class ApiClient {
     await _dio.patch('/api/providers/$name/toggle', data: {'enabled': enabled});
   }
 
-  Future<void> updateProviderConfig(String name, Map<String, dynamic> config) async {
-    await _dio.put('/api/providers/$name/config', data: config);
-  }
-
   Future<void> deleteProvider(String name) async {
     await _dio.delete('/api/providers/$name');
   }
@@ -302,46 +438,9 @@ class ApiClient {
     return (res.data as Map)['path'] as String;
   }
 
-  // ── Database ──────────────────────────────────────────────
-
-  Future<List<Map<String, dynamic>>> dbDatabases(String plugin) async {
-    final res = await _dio.get('/api/database/$plugin/databases');
-    return (res.data as List).cast<Map<String, dynamic>>();
-  }
-
-  Future<List<Map<String, dynamic>>> dbSchemas(String plugin, {String? db}) async {
-    final res = await _dio.get('/api/database/$plugin/schemas',
-      queryParameters: db != null && db.isNotEmpty ? {'db': db} : null);
-    return (res.data as List).cast<Map<String, dynamic>>();
-  }
-
-  Future<List<Map<String, dynamic>>> dbTables(String plugin, {String schema = '', String? db}) async {
-    final params = <String, dynamic>{'schema': schema};
-    if (db != null && db.isNotEmpty) params['db'] = db;
-    final res = await _dio.get('/api/database/$plugin/tables', queryParameters: params);
-    return (res.data as List).cast<Map<String, dynamic>>();
-  }
-
-  Future<List<Map<String, dynamic>>> dbColumns(String plugin, String schema, String table, {String? db}) async {
-    final params = <String, dynamic>{'schema': schema, 'table': table};
-    if (db != null && db.isNotEmpty) params['db'] = db;
-    final res = await _dio.get('/api/database/$plugin/columns', queryParameters: params);
-    return (res.data as List).cast<Map<String, dynamic>>();
-  }
-
-  Future<Map<String, dynamic>> dbPreview(String plugin, String schema, String table, {int limit = 100, String? db}) async {
-    final params = <String, dynamic>{'schema': schema, 'table': table, 'limit': limit};
-    if (db != null && db.isNotEmpty) params['db'] = db;
-    final res = await _dio.get('/api/database/$plugin/preview', queryParameters: params);
-    return res.data;
-  }
-
-  Future<Map<String, dynamic>> dbQuery(String plugin, String sql, {String? db}) async {
-    final res = await _dio.post('/api/database/$plugin/query',
-      queryParameters: db != null && db.isNotEmpty ? {'db': db} : null,
-      data: {'sql': sql});
-    return res.data;
-  }
+  // Legacy database endpoints removed — the pg-browser v1 plugin
+  // installed from the marketplace exposes list/query via the
+  // standard plugin command pipeline (invokePluginCommand).
 
   // ── Tasks ─────────────────────────────────────────────────
 
@@ -519,27 +618,6 @@ class ApiClient {
     return (res.data as List).cast<Map<String, dynamic>>();
   }
 
-  Future<void> gitStage(String plugin, String path, List<String> files) async {
-    await _dio.post('/api/git/$plugin/stage',
-        data: {'path': path, 'files': files});
-  }
-
-  Future<void> gitUnstage(String plugin, String path, List<String> files) async {
-    await _dio.post('/api/git/$plugin/unstage',
-        data: {'path': path, 'files': files});
-  }
-
-  Future<void> gitDiscard(String plugin, String path, List<String> files) async {
-    await _dio.post('/api/git/$plugin/discard',
-        data: {'path': path, 'files': files});
-  }
-
-  Future<Map<String, dynamic>> gitCommit(String plugin, String path, String message) async {
-    final res = await _dio.post('/api/git/$plugin/commit',
-        data: {'path': path, 'message': message});
-    return Map<String, dynamic>.from(res.data as Map);
-  }
-
   Future<Map<String, dynamic>> gitSessionSnapshot(
       String plugin, String sessionId, {String path = ''}) async {
     final res = await _dio.post('/api/git/$plugin/session/snapshot',
@@ -551,6 +629,125 @@ class ApiClient {
     final res = await _dio.get('/api/git/$plugin/session/diff',
         queryParameters: {'sessionId': sessionId});
     return ((res.data as Map)['diff'] ?? '') as String;
+  }
+
+  // ── Git Forge (PR viewer, git-forge plugin) ──────────────
+
+  /// Lists pull requests. [state] is one of open|closed|all; empty
+  /// falls back to the plugin's configured default.
+  Future<List<Map<String, dynamic>>> forgePulls(String plugin,
+      {String state = '', int limit = 0}) async {
+    final res = await _dio.get('/api/git-forge/$plugin/pulls',
+        queryParameters: {
+          if (state.isNotEmpty) 'state': state,
+          if (limit > 0) 'limit': limit,
+        });
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, dynamic>> forgePullDetail(
+      String plugin, int number) async {
+    final res = await _dio.get('/api/git-forge/$plugin/pulls/$number');
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  Future<List<Map<String, dynamic>>> forgePullDiff(
+      String plugin, int number) async {
+    final res = await _dio.get('/api/git-forge/$plugin/pulls/$number/diff');
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<List<Map<String, dynamic>>> forgePullComments(
+      String plugin, int number) async {
+    final res = await _dio.get('/api/git-forge/$plugin/pulls/$number/comments');
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  /// Reviews submitted on a PR — approved / changes_requested /
+  /// commented / dismissed, with body + timestamps. GitLab returns
+  /// approvals-only (always state="approved").
+  Future<List<Map<String, dynamic>>> forgePullReviews(
+      String plugin, int number) async {
+    final res = await _dio.get('/api/git-forge/$plugin/pulls/$number/reviews');
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  /// Inline review comments (per-file, per-line). Distinct from
+  /// forgePullComments which returns only the top-level discussion.
+  Future<List<Map<String, dynamic>>> forgePullReviewComments(
+      String plugin, int number) async {
+    final res = await _dio.get(
+        '/api/git-forge/$plugin/pulls/$number/review-comments');
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  /// CI checks at the PR's head commit. Each entry has a normalised
+  /// status (success / failure / pending / skipped) so the UI can
+  /// render a traffic-light badge without per-forge branching.
+  Future<List<Map<String, dynamic>>> forgePullChecks(
+      String plugin, int number) async {
+    final res = await _dio.get('/api/git-forge/$plugin/pulls/$number/checks');
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  // ── PostgreSQL (pg-browser plugin) ───────────────────────
+  //
+  // Every call accepts an optional `database` to override the
+  // plugin's configured default without forcing a trip back to
+  // Configure. The gateway swaps cfg.Database before the pool lookup;
+  // Manager.pool() already keys by database so the override
+  // transparently produces an independent connection.
+
+  Future<Map<String, dynamic>> pgQuery(String plugin, String sql,
+      {String database = ''}) async {
+    final res = await _dio.post('/api/pg/$plugin/query', data: {
+      'sql': sql,
+      if (database.isNotEmpty) 'database': database,
+    });
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  Future<Map<String, dynamic>> pgExecute(String plugin, String sql,
+      {String database = ''}) async {
+    final res = await _dio.post('/api/pg/$plugin/execute', data: {
+      'sql': sql,
+      if (database.isNotEmpty) 'database': database,
+    });
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  /// Every database the PG server hosts (minus templates). Used to
+  /// populate the plugin's database picker on first load.
+  Future<List<String>> pgDatabases(String plugin) async {
+    final res = await _dio.get('/api/pg/$plugin/databases');
+    return (res.data as List).cast<String>();
+  }
+
+  Future<List<String>> pgSchemas(String plugin, {String database = ''}) async {
+    final res = await _dio.get('/api/pg/$plugin/schemas',
+        queryParameters: {if (database.isNotEmpty) 'database': database});
+    return (res.data as List).cast<String>();
+  }
+
+  Future<List<Map<String, dynamic>>> pgTables(String plugin,
+      {String schema = '', String database = ''}) async {
+    final res = await _dio.get('/api/pg/$plugin/tables', queryParameters: {
+      if (schema.isNotEmpty) 'schema': schema,
+      if (database.isNotEmpty) 'database': database,
+    });
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<List<Map<String, dynamic>>> pgColumns(String plugin,
+      {String schema = '',
+      required String table,
+      String database = ''}) async {
+    final res = await _dio.get('/api/pg/$plugin/columns', queryParameters: {
+      if (schema.isNotEmpty) 'schema': schema,
+      'table': table,
+      if (database.isNotEmpty) 'database': database,
+    });
+    return (res.data as List).cast<Map<String, dynamic>>();
   }
 
   // ── Claude Multi-Account ─────────────────────────────────
@@ -699,5 +896,534 @@ class ApiClient {
   Future<Map<String, dynamic>> health() async {
     final res = await _dio.get('/api/health');
     return res.data;
+  }
+
+  // ── Workbench (plugin platform, M1) ───────────────────────
+
+  /// Pulls the current [FlatContributions] snapshot. Safe to call at
+  /// app start + after plugin install/uninstall events.
+  Future<FlatContributions> getContributions() async {
+    final res = await _dio.get('/api/workbench/contributions');
+    final data = res.data;
+    if (data is Map) {
+      return FlatContributions.fromJson(Map<String, dynamic>.from(data));
+    }
+    return FlatContributions.empty;
+  }
+
+  /// Subscribes to `GET /api/workbench/stream` (SSE) and yields each
+  /// decoded event envelope (`{kind, plugin?, payload}`). The stream
+  /// stays open until cancel; caller handles retry on error/onDone.
+  ///
+  /// Heartbeat lines (`:`) are silently consumed. Malformed `data:`
+  /// frames are dropped without killing the stream.
+  Stream<Map<String, dynamic>> workbenchEvents() async* {
+    final response = await _dio.get<ResponseBody>(
+      '/api/workbench/stream',
+      options: Options(
+        responseType: ResponseType.stream,
+        headers: {'Accept': 'text/event-stream'},
+        // No receive timeout — SSE streams are long-lived by design.
+        receiveTimeout: Duration.zero,
+      ),
+    );
+    final body = response.data;
+    if (body == null) return;
+
+    final buffer = StringBuffer();
+    await for (final chunk in body.stream) {
+      buffer.write(utf8.decode(chunk, allowMalformed: true));
+      while (true) {
+        final text = buffer.toString();
+        final idx = text.indexOf('\n\n');
+        if (idx < 0) break;
+        final frame = text.substring(0, idx);
+        buffer
+          ..clear()
+          ..write(text.substring(idx + 2));
+
+        for (final line in frame.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          final jsonStr = line.substring(6);
+          try {
+            final decoded = jsonDecode(jsonStr);
+            if (decoded is Map) {
+              yield Map<String, dynamic>.from(decoded);
+            }
+          } catch (_) {
+            // Malformed frame — skip but keep the stream alive.
+          }
+        }
+      }
+    }
+  }
+
+  /// Invokes a plugin command via the T11 HTTP endpoint. Maps server
+  /// error codes to typed exceptions so UI code can branch without
+  /// string-matching.
+  ///
+  /// Throws:
+  ///   - [PluginPermissionDeniedException] on 403 EPERM
+  ///   - [PluginCommandUnavailableException] on 404 ENOTFOUND (not found)
+  ///     or 501 ENOTIMPL (run kind deferred to M2/M3)
+  ///   - [ApiException] for anything else (malformed body, 5xx, network)
+  Future<InvokeResult> invokePluginCommand(
+    String pluginName,
+    String commandId, {
+    Map<String, dynamic>? args,
+  }) async {
+    try {
+      final res = await _dio.post(
+        '/api/plugins/$pluginName/commands/$commandId/invoke',
+        data: {'args': args ?? const <String, dynamic>{}},
+      );
+      final data = res.data;
+      if (data is Map) {
+        return InvokeResult.fromJson(Map<String, dynamic>.from(data));
+      }
+      return const InvokeResult(kind: '');
+    } on DioException catch (e) {
+      final status = e.response?.statusCode ?? 0;
+      final body = e.response?.data;
+      final code = body is Map ? body['code']?.toString() ?? '' : '';
+      final msg = body is Map ? body['msg']?.toString() ?? '' : '';
+      if (status == 403 && code == 'EPERM') {
+        throw PluginPermissionDeniedException(pluginName, commandId,
+            msg.isEmpty ? 'permission denied' : msg);
+      }
+      if (status == 404 && code == 'ENOTFOUND') {
+        throw PluginCommandUnavailableException(pluginName, commandId,
+            msg.isEmpty ? 'command not found' : msg);
+      }
+      if (status == 501 && code == 'ENOTIMPL') {
+        throw PluginCommandUnavailableException(pluginName, commandId,
+            msg.isEmpty ? 'run kind deferred to M2/M3' : msg,
+            deferred: true);
+      }
+      throw apiExceptionFrom(e);
+    }
+  }
+
+  // ── Plugin consents (T12/T21) ─────────────────────────────
+  //
+  // Runtime consent surface. GET returns the raw PermissionsV1 shape;
+  // the two DELETE endpoints drive hot-revoke — the server fires
+  // InvalidateConsent synchronously so WS subs terminate before the
+  // HTTP response flushes (the 200 ms SLO asserted in T12).
+
+  /// Fetches the current consent grant for [pluginName]. Throws
+  /// [PluginConsentNotFoundException] when the server has no row on
+  /// file (treated as an empty state rather than an error banner in
+  /// the settings UI).
+  Future<PluginConsents> getPluginConsents(String pluginName) async {
+    try {
+      final res = await _dio.get('/api/plugins/$pluginName/consents');
+      final data = res.data;
+      if (data is Map) {
+        return PluginConsents.fromJson(
+          Map<String, dynamic>.from(data),
+          pluginName: pluginName,
+        );
+      }
+      return PluginConsents(pluginName: pluginName, perms: const {});
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw PluginConsentNotFoundException(pluginName);
+      }
+      throw apiExceptionFrom(e);
+    }
+  }
+
+  /// Revokes a single capability on the plugin's install-time grant.
+  /// Fires server-side InvalidateConsent so live WS subs get their
+  /// EPERM terminal envelope before this future completes.
+  ///
+  /// Throws:
+  ///   - [PluginConsentNotFoundException] on 404 ENOCONSENT
+  ///   - [ApiException] on 400 EINVAL (unknown cap) and 5xx
+  Future<void> revokePluginCapability(String pluginName, String cap) async {
+    try {
+      await _dio.delete('/api/plugins/$pluginName/consents/$cap');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw PluginConsentNotFoundException(pluginName);
+      }
+      throw apiExceptionFrom(e);
+    }
+  }
+
+  /// Revokes every capability on the plugin and deletes the consent
+  /// row. Idempotent — a missing row also returns 200. The server
+  /// fires one InvalidateConsent broadcast per previously-granted cap.
+  Future<void> revokeAllPluginConsents(String pluginName) async {
+    try {
+      await _dio.delete('/api/plugins/$pluginName/consents');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw PluginConsentNotFoundException(pluginName);
+      }
+      throw apiExceptionFrom(e);
+    }
+  }
+
+  /// Patches a subset of capability grants (M3 T20). `patch` is a
+  /// partial PermissionsV1 — only keys present in the map replace
+  /// the stored value. Typical use from the Flutter UI: shrink
+  /// `fs.read` by one glob, or toggle `storage` off without touching
+  /// `events`.
+  ///
+  /// Fires InvalidateConsent server-side for every touched cap so
+  /// active bridge WS subs terminate with EPERM within the 200 ms SLO.
+  ///
+  /// Throws:
+  ///   - [PluginConsentNotFoundException] on 404 ENOENT
+  ///   - [ApiException] on 400 EINVAL (unknown cap, bad body) and 5xx
+  Future<void> patchPluginConsents(
+    String pluginName,
+    Map<String, dynamic> patch,
+  ) async {
+    try {
+      await _dio.patch('/api/plugins/$pluginName/consents', data: patch);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw PluginConsentNotFoundException(pluginName);
+      }
+      throw apiExceptionFrom(e);
+    }
+  }
+
+  // ── Marketplace / install flow ────────────────────────────
+
+  /// Fetches the plugin marketplace catalog. Empty list when the
+  /// server has no catalog configured — the Hub page renders a
+  /// "nothing here yet" state rather than an error banner.
+  Future<List<MarketplaceEntry>> listMarketplace() async {
+    try {
+      final res = await _dio.get('/api/marketplace/plugins');
+      final data = res.data;
+      if (data is Map && data['entries'] is List) {
+        return [
+          for (final raw in (data['entries'] as List))
+            if (raw is Map) MarketplaceEntry.fromJson(Map<String, dynamic>.from(raw)),
+        ];
+      }
+      return const [];
+    } on DioException catch (e) {
+      throw apiExceptionFrom(e);
+    }
+  }
+
+  /// Stages an install from a marketplace ref. Returns the pending
+  /// install token + the permissions block the user is about to grant
+  /// — the caller shows that in a consent dialog before calling
+  /// [confirmPluginInstall].
+  Future<PendingInstall> installPluginFromMarketplace(String ref) async {
+    try {
+      final res = await _dio.post(
+        '/api/plugins/install',
+        data: {'src': 'marketplace://$ref'},
+      );
+      final data = Map<String, dynamic>.from(res.data as Map);
+      return PendingInstall.fromJson(data);
+    } on DioException catch (e) {
+      throw apiExceptionFrom(e);
+    }
+  }
+
+  /// Confirms a staged install by echoing the token. Returns the
+  /// installed plugin's canonical name.
+  Future<String> confirmPluginInstall(String token) async {
+    try {
+      final res = await _dio.post(
+        '/api/plugins/install/confirm',
+        data: {'token': token},
+      );
+      final data = Map<String, dynamic>.from(res.data as Map);
+      return (data['name'] as String?) ?? '';
+    } on DioException catch (e) {
+      throw apiExceptionFrom(e);
+    }
+  }
+
+  // ── Plugin user-config (configSchema-backed) ──────────────
+
+  /// Fetches schema + current values for the named plugin. Secret
+  /// fields render as `__set__` when stored and `""` otherwise — the
+  /// form widget renders accordingly.
+  Future<PluginConfig> getPluginConfig(String pluginName) async {
+    try {
+      final res = await _dio.get('/api/plugins/$pluginName/config');
+      final data = Map<String, dynamic>.from(res.data as Map);
+      return PluginConfig.fromJson(data);
+    } on DioException catch (e) {
+      throw apiExceptionFrom(e);
+    }
+  }
+
+  /// Persists user-edited config values for the named plugin. The
+  /// server rewrites plugin_kv / plugin_secret rows and restarts the
+  /// sidecar so the new values take effect on the next invoke.
+  Future<void> putPluginConfig(
+    String pluginName,
+    Map<String, dynamic> values,
+  ) async {
+    try {
+      await _dio.put(
+        '/api/plugins/$pluginName/config',
+        data: {'values': values},
+      );
+    } on DioException catch (e) {
+      throw apiExceptionFrom(e);
+    }
+  }
+}
+
+/// Response shape of GET /api/plugins/{name}/config.
+///
+/// [values] is always a flat string map — numbers and booleans come
+/// back encoded as strings the form widget parses per field type. The
+/// secret-field sentinel [kSecretSet] stands in for a stored password
+/// the user has not chosen to retype.
+class PluginConfig {
+  static const String kSecretSet = '__set__';
+
+  final List<PluginConfigField> schema;
+  final Map<String, String> values;
+
+  const PluginConfig({required this.schema, required this.values});
+
+  factory PluginConfig.fromJson(Map<String, dynamic> json) {
+    final rawSchema = json['schema'];
+    final rawValues = json['values'];
+    return PluginConfig(
+      schema: rawSchema is List
+          ? [
+              for (final f in rawSchema)
+                if (f is Map)
+                  PluginConfigField.fromJson(Map<String, dynamic>.from(f)),
+            ]
+          : const [],
+      values: rawValues is Map
+          ? {
+              for (final e in rawValues.entries)
+                e.key.toString(): e.value?.toString() ?? '',
+            }
+          : const {},
+    );
+  }
+
+  /// Returns a value map suitable for PUT: string fields verbatim,
+  /// numbers parsed, booleans parsed, secret sentinel preserved so
+  /// the server knows "don't overwrite".
+  Map<String, dynamic> toPutBody(Map<String, String> drafts) {
+    final out = <String, dynamic>{};
+    for (final f in schema) {
+      final raw = drafts[f.key] ?? '';
+      switch (f.type) {
+        case 'number':
+          final n = num.tryParse(raw);
+          if (n != null) out[f.key] = n;
+          break;
+        case 'bool':
+        case 'boolean':
+          out[f.key] = raw == 'true';
+          break;
+        case 'secret':
+          // Empty input → leave existing value alone by sending the
+          // sentinel; non-empty → real new value.
+          out[f.key] = raw.isEmpty ? kSecretSet : raw;
+          break;
+        default:
+          out[f.key] = raw;
+      }
+    }
+    return out;
+  }
+}
+
+// ─── Marketplace models ──────────────────────────────────────────────
+
+/// One installable plugin returned by GET /api/marketplace/plugins.
+/// Keep this as a plain value type — the Hub card reads fields directly
+/// and the consent preview dialog reads [permissions] verbatim.
+class MarketplaceEntry {
+  final String name;
+  final String version;
+  final String publisher;
+  final String displayName;
+  final String description;
+  final String icon;
+  final String form;
+  final List<String> tags;
+  final Map<String, dynamic> permissions;
+  /// Trust level: "official" / "verified" / "community". Empty
+  /// defaults to "community" per spec. Rendered as a badge on the
+  /// Hub card.
+  final String trust;
+  // i18n overlays — see provider.dart ConfigField.labelZh.
+  final String displayNameZh;
+  final String descriptionZh;
+
+  const MarketplaceEntry({
+    required this.name,
+    required this.version,
+    required this.publisher,
+    this.displayName = '',
+    this.description = '',
+    this.icon = '',
+    this.form = '',
+    this.tags = const [],
+    this.permissions = const {},
+    this.trust = 'community',
+    this.displayNameZh = '',
+    this.descriptionZh = '',
+    List<PluginConfigField>? configSchema,
+  }) : _rawConfigSchema = configSchema;
+
+  factory MarketplaceEntry.fromJson(Map<String, dynamic> json) {
+    final rawTags = json['tags'];
+    final rawPerms = json['permissions'];
+    final rawSchema = json['configSchema'];
+    return MarketplaceEntry(
+      name: (json['name'] as String?) ?? '',
+      version: (json['version'] as String?) ?? '',
+      publisher: (json['publisher'] as String?) ?? '',
+      displayName: (json['displayName'] as String?) ?? '',
+      description: (json['description'] as String?) ?? '',
+      icon: (json['icon'] as String?) ?? '',
+      form: (json['form'] as String?) ?? '',
+      tags: rawTags is List
+          ? [for (final t in rawTags) t.toString()]
+          : const [],
+      permissions: rawPerms is Map
+          ? Map<String, dynamic>.from(rawPerms)
+          : const {},
+      trust: (json['trust'] as String?) ?? 'community',
+      displayNameZh: (json['displayName_zh'] as String?) ?? '',
+      descriptionZh: (json['description_zh'] as String?) ?? '',
+      configSchema: rawSchema is List
+          ? [
+              for (final f in rawSchema)
+                if (f is Map)
+                  PluginConfigField.fromJson(Map<String, dynamic>.from(f)),
+            ]
+          : null,
+    );
+  }
+
+  /// `NAME@VERSION` — used both as the marketplace ref and as a
+  /// stable display key when name collisions with installed plugins
+  /// need disambiguation.
+  String get ref => '$name@$version';
+
+  /// Parsed ConfigSchema carried on the marketplace catalog row so the
+  /// Hub can render the install-time config form without a second
+  /// manifest fetch. Empty list = no user-facing config.
+  List<PluginConfigField> get configSchema {
+    final raw = _rawConfigSchema;
+    if (raw == null) return const [];
+    return raw;
+  }
+
+  /// Raw config schema stashed at construction time. Null when the
+  /// catalog row omitted configSchema, which is treated as "no form"
+  /// upstream.
+  final List<PluginConfigField>? _rawConfigSchema;
+}
+
+/// One user-editable field in a plugin's configSchema. Shape mirrors
+/// [plugin.ConfigField] on the server so the Hub form and the Plugin-
+/// page re-configure flow share a single renderer.
+class PluginConfigField {
+  final String key;
+  final String label;
+  final String type; // string | number | bool | select | secret
+  final String description;
+  final String placeholder;
+  final dynamic defaultValue;
+  final List<String> options;
+  final bool required;
+  final String group;
+  // i18n overlays — see provider.dart ConfigField.labelZh.
+  final String labelZh;
+  final String descriptionZh;
+  final String placeholderZh;
+
+  const PluginConfigField({
+    required this.key,
+    required this.label,
+    required this.type,
+    this.description = '',
+    this.placeholder = '',
+    this.defaultValue,
+    this.options = const [],
+    this.required = false,
+    this.group = '',
+    this.labelZh = '',
+    this.descriptionZh = '',
+    this.placeholderZh = '',
+  });
+
+  factory PluginConfigField.fromJson(Map<String, dynamic> json) {
+    final rawOpts = json['options'];
+    return PluginConfigField(
+      key: (json['key'] as String?) ?? '',
+      label: (json['label'] as String?) ?? '',
+      type: (json['type'] as String?) ?? 'string',
+      description: (json['description'] as String?) ?? '',
+      placeholder: (json['placeholder'] as String?) ?? '',
+      defaultValue: json['default'],
+      options: rawOpts is List
+          ? [for (final o in rawOpts) o.toString()]
+          : const [],
+      required: (json['required'] as bool?) ?? false,
+      group: (json['group'] as String?) ?? '',
+      labelZh: (json['label_zh'] as String?) ?? '',
+      descriptionZh: (json['description_zh'] as String?) ?? '',
+      placeholderZh: (json['placeholder_zh'] as String?) ?? '',
+    );
+  }
+
+  /// True for password-style fields. The GET /config response
+  /// returns `__set__` for these when a value is already stored; the
+  /// form widget treats that sentinel as "keep existing — leave blank
+  /// to change".
+  bool get isSecret => type == 'secret';
+}
+
+/// Response of POST /api/plugins/install — a staged install waiting
+/// for user confirmation. [permissions] mirrors the PermissionsV1 shape
+/// so the consent dialog can reuse the same renderer as
+/// [PluginConsents.perms].
+class PendingInstall {
+  final String token;
+  final String name;
+  final String version;
+  final Map<String, dynamic> permissions;
+  final String manifestHash;
+  final DateTime? expiresAt;
+
+  const PendingInstall({
+    required this.token,
+    required this.name,
+    required this.version,
+    this.permissions = const {},
+    this.manifestHash = '',
+    this.expiresAt,
+  });
+
+  factory PendingInstall.fromJson(Map<String, dynamic> json) {
+    final rawPerms = json['perms'];
+    final rawExp = json['expiresAt'];
+    return PendingInstall(
+      token: (json['token'] as String?) ?? '',
+      name: (json['name'] as String?) ?? '',
+      version: (json['version'] as String?) ?? '',
+      permissions: rawPerms is Map
+          ? Map<String, dynamic>.from(rawPerms)
+          : const {},
+      manifestHash: (json['manifestHash'] as String?) ?? '',
+      expiresAt: rawExp is String ? DateTime.tryParse(rawExp) : null,
+    );
   }
 }

@@ -4,12 +4,15 @@ import '../api/api_client.dart';
 
 class ServerConfig extends ChangeNotifier {
   static const _keyUrl = 'server_url';
-  static const _keyCfId = 'cf_access_client_id';
-  static const _keyCfSecret = 'cf_access_client_secret';
+
+  // Legacy prefs keys kept only for one-time cleanup on load(). Remove
+  // once enough versions have shipped that nobody's device still has
+  // these stored. Safe to delete today if you don't care about leaving
+  // orphan entries on a few devices.
+  static const _legacyKeyCfId = 'cf_access_client_id';
+  static const _legacyKeyCfSecret = 'cf_access_client_secret';
 
   String _url = '';
-  String _cfAccessId = '';
-  String _cfAccessSecret = '';
   bool _configured = false;
 
   String get url => _url;
@@ -19,23 +22,17 @@ class ServerConfig extends ChangeNotifier {
   String get effectiveUrl => _url;
   String get wsBaseUrl => _url;
 
-  String get cfAccessId => _cfAccessId;
-  String get cfAccessSecret => _cfAccessSecret;
-  bool get hasCfAccess => _cfAccessId.isNotEmpty && _cfAccessSecret.isNotEmpty;
-
-  /// Extra headers injected into every HTTP request and WS handshake.
-  Map<String, String> get cfAccessHeaders => hasCfAccess
-      ? {
-          'CF-Access-Client-Id': _cfAccessId,
-          'CF-Access-Client-Secret': _cfAccessSecret,
-        }
-      : const {};
-
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_keyUrl) ?? '';
-    _cfAccessId = prefs.getString(_keyCfId) ?? '';
-    _cfAccessSecret = prefs.getString(_keyCfSecret) ?? '';
+
+    // One-time cleanup of the old Cloudflare Access keys. Cheap to keep.
+    if (prefs.containsKey(_legacyKeyCfId)) {
+      await prefs.remove(_legacyKeyCfId);
+    }
+    if (prefs.containsKey(_legacyKeyCfSecret)) {
+      await prefs.remove(_legacyKeyCfSecret);
+    }
 
     if (saved.isNotEmpty) {
       _url = saved;
@@ -65,24 +62,6 @@ class ServerConfig extends ChangeNotifier {
     _configured = _url.isNotEmpty;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyUrl, _url);
-    notifyListeners();
-  }
-
-  Future<void> setCfAccess(String clientId, String clientSecret) async {
-    _cfAccessId = clientId.trim();
-    _cfAccessSecret = clientSecret.trim();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyCfId, _cfAccessId);
-    await prefs.setString(_keyCfSecret, _cfAccessSecret);
-    notifyListeners();
-  }
-
-  Future<void> clearCfAccess() async {
-    _cfAccessId = '';
-    _cfAccessSecret = '';
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_keyCfId);
-    await prefs.remove(_keyCfSecret);
     notifyListeners();
   }
 }

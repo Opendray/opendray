@@ -10,7 +10,6 @@ typedef VoidCallback = void Function();
 
 class WsClient {
   final String baseUrl;
-  final Map<String, String> extraHeaders;
   final String? Function()? tokenProvider;
   WebSocketChannel? _channel;
   StreamSubscription? _subscription;
@@ -34,7 +33,6 @@ class WsClient {
 
   WsClient({
     required this.baseUrl,
-    this.extraHeaders = const {},
     this.tokenProvider,
   });
 
@@ -56,8 +54,7 @@ class WsClient {
       if (token != null && token.isNotEmpty) 'token': token,
     });
 
-    _channel = connectWs(uri,
-        headers: extraHeaders.isNotEmpty ? extraHeaders : null);
+    _channel = connectWs(uri);
 
     _channel!.ready.then((_) {
       isConnected = true;

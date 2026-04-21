@@ -30,8 +30,32 @@ app/logs/
 # Plugin data
 plugins/*/data/
 
-# Local-only — not pushed to Gitea
+# Deploy script config (hosts + SMB password)
+scripts/deploy.env
+
+# Python bytecode cache (unas_upload etc. when present locally)
+__pycache__/
+*.pyc
+
+# Personal release / deploy scripts kept only on the publisher's
+# own machines — not part of the public tree:
+#   - build_release.sh / unas_upload.py  → Mac Keychain + home-LAN UNAS
+#   - bootstrap_sudoers.sh / deploy_release.sh / verify-deploy.sh
+#                                        → syz LXC deploy pipeline
+# Listed here so re-adding them from a Kev checkout doesn't sneak
+# them back onto main.
+scripts/bootstrap_sudoers.sh
+scripts/build_release.sh
+scripts/deploy_release.sh
+scripts/unas_upload.py
+scripts/verify-deploy.sh
+
+# Local-only — not pushed to remotes
 CLAUDE.md
 deploy/
-/docs/
+/docs/*
+!/docs/plugin-platform/
+
+# Marketing site moved to its own repo (see 233ea28 on origin/main).
+# Keep ignored so a local checkout of the old tree doesn't re-add it.
 website/

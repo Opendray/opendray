@@ -14,7 +14,6 @@ class SetupApi {
   SetupApi({
     required String baseUrl,
     required this.bootstrapToken,
-    Map<String, String> extraHeaders = const {},
   }) : _dio = Dio(BaseOptions(
           baseUrl: baseUrl,
           connectTimeout: const Duration(seconds: 10),
@@ -22,7 +21,6 @@ class SetupApi {
           // keep the receive timeout generous.
           receiveTimeout: const Duration(seconds: 15),
           headers: {
-            ...extraHeaders,
             'X-Setup-Token': bootstrapToken,
           },
           // Accept 4xx so callers can read the server's error body instead
@@ -32,14 +30,11 @@ class SetupApi {
 
   /// Status is the only unauthenticated endpoint — callers use it before
   /// they have a token.
-  static Future<SetupStatus> status(String baseUrl, {
-    Map<String, String> extraHeaders = const {},
-  }) async {
+  static Future<SetupStatus> status(String baseUrl) async {
     final dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 8),
       receiveTimeout: const Duration(seconds: 8),
-      headers: extraHeaders,
       validateStatus: (s) => s != null && s < 500,
     ));
     final res = await dio.get('/api/setup/status');
@@ -51,15 +46,12 @@ class SetupApi {
 
   /// Tries the loopback-only /api/setup/token. Returns null on 403 (not
   /// loopback) or any error — caller then falls back to URL query param.
-  static Future<String?> loopbackToken(String baseUrl, {
-    Map<String, String> extraHeaders = const {},
-  }) async {
+  static Future<String?> loopbackToken(String baseUrl) async {
     try {
       final dio = Dio(BaseOptions(
         baseUrl: baseUrl,
         connectTimeout: const Duration(seconds: 3),
         receiveTimeout: const Duration(seconds: 3),
-        headers: extraHeaders,
         validateStatus: (s) => s != null && s < 500,
       ));
       final res = await dio.get('/api/setup/token');

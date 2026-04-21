@@ -523,7 +523,9 @@ class _PreviewPageState extends State<PreviewPage> with WidgetsBindingObserver {
                 padding: const EdgeInsets.only(right: 6, top: 6, bottom: 6),
                 child: ChoiceChip(
                   avatar: Text(isSim ? '📱' : '🌐', style: const TextStyle(fontSize: 12)),
-                  label: Text(p.provider.displayName, style: const TextStyle(fontSize: 11)),
+                  label: Text(
+                      context.pickL10n(p.provider.displayName, p.provider.displayNameZh),
+                      style: const TextStyle(fontSize: 11)),
                   selected: _activePlugin == p.provider.name,
                   onSelected: (_) => _activate(p),
                   selectedColor: AppColors.accentSoft,
@@ -870,7 +872,7 @@ class _PreviewPageState extends State<PreviewPage> with WidgetsBindingObserver {
     final showWeb = filter == null || filter == 'preview';
     final icon = filter == 'preview' ? Icons.web : Icons.phone_iphone;
     final title = filter == 'preview'
-        ? context.tr('No web preview plugin configured')
+        ? context.tr('No web browser plugin configured')
         : filter == 'simulator'
             ? context.tr('No simulator plugin configured')
             : context.tr('No preview plugins configured');
@@ -895,8 +897,8 @@ class _PreviewPageState extends State<PreviewPage> with WidgetsBindingObserver {
           if (showWeb)
             _HintCard(
               icon: Icons.web,
-              title: 'Web Preview (🌐)',
-              body: 'Register web-preview → open multiple tabs, type any URL into the address bar.',
+              title: 'Web Browser (🌐)',
+              body: 'Install web-browser → open multiple tabs, type any URL into the address bar.',
             ),
         ]),
       ),

@@ -1,0 +1,610 @@
+import 'package:flutter/material.dart';
+import '../../core/api/api_client.dart';
+import '../../shared/theme/app_theme.dart';
+
+/// Runtime consent toggles for a single plugin.
+///
+/// Lists the 11 PermissionsV1 capabilities and lets the user flip any
+/// capability the plugin's manifest declared ON or OFF at runtime:
+///
+///   - Flip OFF → DELETE /api/plugins/{name}/consents/{cap}
+///   - Flip ON  → PATCH  /api/plugins/{name}/consents with the cap's
+///                       original value pulled from the manifest
+///
+/// Caps the manifest didn't declare stay disabled — the UI has no
+/// value to PATCH back in.
+///
+/// The "Revoke all" AppBar action zeroes every cap via a PATCH that
+/// preserves the consent row, so the user can re-grant caps individually
+/// afterward without reinstalling the plugin.
+class PluginConsentsPage extends StatefulWidget {
+  final String pluginName;
+  final ApiClient api;
+
+  /// Optional message sink — the caller (usually the settings host)
+  /// pipes this through `ScaffoldMessenger.of(context).showSnackBar`.
+  /// When null, messages are still shown inline via SnackBar on the
+  /// page's own Scaffold so the page is self-contained.
+  final void Function(String msg, {bool isError})? onMessage;
+
+  const PluginConsentsPage({
+    required this.pluginName,
+    required this.api,
+    this.onMessage,
+    super.key,
+  });
+
+  @override
+  State<PluginConsentsPage> createState() => _PluginConsentsPageState();
+}
+
+/// Per-cap render metadata. Kept as a static table because the set of
+/// capabilities is closed at manifest-schema level — new caps require a
+/// plugin/manifest.go change + a new entry here.
+class _CapSpec {
+  final String key;
+  final String label;
+  final IconData icon;
+  const _CapSpec(this.key, this.label, this.icon);
+}
+
+/// One entry inside a structured grant (e.g. one fs.read glob, one
+/// exec pattern, one http URL glob). `side` identifies the sub-map
+/// key for fs ("read" / "write"); empty for flat list caps.
+class _SubEntry {
+  final String side;
+  final String value;
+  const _SubEntry({required this.side, required this.value});
+}
+
+const List<_CapSpec> _caps = [
+  _CapSpec('fs', 'File access', Icons.folder_open),
+  _CapSpec('exec', 'Run commands', Icons.terminal),
+  _CapSpec('http', 'Network (HTTP)', Icons.public),
+  _CapSpec('session', 'Sessions', Icons.sensors),
+  _CapSpec('storage', 'Plugin storage', Icons.storage),
+  _CapSpec('secret', 'Secrets', Icons.vpn_key),
+  _CapSpec('clipboard', 'Clipboard', Icons.content_copy),
+  _CapSpec('telegram', 'Telegram', Icons.send),
+  _CapSpec('git', 'Git', Icons.commit),
+  _CapSpec('llm', 'LLM providers', Icons.auto_awesome),
+  _CapSpec('events', 'Events', Icons.bolt),
+];
+
+enum _LoadState { loading, loaded, empty, error }
+
+class _PluginConsentsPageState extends State<PluginConsentsPage> {
+  _LoadState _state = _LoadState.loading;
+  PluginConsents? _consents;
+  String? _error;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    if (!mounted) return;
+    setState(() {
+      _state = _LoadState.loading;
+      _error = null;
+    });
+    try {
+      final c = await widget.api.getPluginConsents(widget.pluginName);
+      if (!mounted) return;
+      setState(() {
+        _consents = c;
+        _state = _LoadState.loaded;
+      });
+    } on PluginConsentNotFoundException {
+      if (!mounted) return;
+      setState(() {
+        _consents = null;
+        _state = _LoadState.empty;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _state = _LoadState.error;
+      });
+    }
+  }
+
+  void _notify(String msg, {bool isError = false}) {
+    final cb = widget.onMessage;
+    if (cb != null) {
+      cb(msg, isError: isError);
+      return;
+    }
+    // Self-contained fallback so the page stays useful when embedded
+    // without a message sink (e.g. during widget tests that don't
+    // wire onMessage or in a one-off preview route).
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger != null) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(msg),
+        backgroundColor: isError ? AppColors.error : null,
+      ));
+    }
+  }
+
+  Future<void> _revokeCap(String cap, String label) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await widget.api.revokePluginCapability(widget.pluginName, cap);
+      _notify('Revoked $label');
+      await _refresh();
+    } on PluginConsentNotFoundException {
+      // Race: consent row disappeared between load and revoke. Treat as
+      // success and land in the empty state — the user's intent was
+      // "take this away", and it's already gone.
+      _notify('Revoked $label');
+      if (!mounted) return;
+      setState(() {
+        _consents = null;
+        _state = _LoadState.empty;
+      });
+    } catch (e) {
+      _notify('Failed to revoke $label: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _confirmRevokeAll() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Revoke all permissions?'),
+        content: Text(
+          'This zeroes every granted capability for "${widget.pluginName}". '
+          'The plugin will stop working until you re-grant the capabilities '
+          'it needs — each one remains listed below so you can flip them '
+          'back on individually.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Revoke all'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    if (!mounted) return;
+    setState(() => _busy = true);
+    try {
+      // PATCH every cap to its zero value. Keeps the consent row so the
+      // user can re-grant caps individually via the row-level toggles —
+      // previously a DELETE dropped the row entirely and forced a
+      // reinstall to recover (the bug Kev hit in M3 review).
+      await widget.api.patchPluginConsents(
+        widget.pluginName,
+        const <String, dynamic>{
+          'fs': null,
+          'exec': null,
+          'http': null,
+          'session': '',
+          'storage': false,
+          'secret': false,
+          'clipboard': '',
+          'telegram': false,
+          'git': '',
+          'llm': false,
+          'events': null,
+        },
+      );
+      _notify('Revoked all permissions for ${widget.pluginName}');
+      await _refresh();
+    } on PluginConsentNotFoundException {
+      _notify('Consent row disappeared', isError: true);
+    } catch (e) {
+      _notify('Failed to revoke all: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.pluginName),
+        actions: [
+          if (_state == _LoadState.loaded)
+            TextButton.icon(
+              onPressed: _busy ? null : _confirmRevokeAll,
+              icon: const Icon(Icons.block, size: 16, color: AppColors.error),
+              label: const Text(
+                'Revoke all',
+                style: TextStyle(color: AppColors.error),
+              ),
+            ),
+        ],
+      ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    switch (_state) {
+      case _LoadState.loading:
+        return const Center(
+          child: CircularProgressIndicator(color: AppColors.accent),
+        );
+      case _LoadState.empty:
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.shield_outlined,
+                    size: 48, color: AppColors.textMuted),
+                SizedBox(height: 12),
+                Text(
+                  'No consent on record',
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.text),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  'This plugin has no granted capabilities. '
+                  'Reinstall it to re-consent.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 12, color: AppColors.textMuted),
+                ),
+              ],
+            ),
+          ),
+        );
+      case _LoadState.error:
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.errorSoft,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Failed to load consents',
+                      style: TextStyle(
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _error ?? '',
+                      style: const TextStyle(
+                          color: AppColors.error, fontSize: 12),
+                    ),
+                    const SizedBox(height: 10),
+                    FilledButton(
+                      onPressed: _refresh,
+                      style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.accent),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      case _LoadState.loaded:
+        return _buildLoaded(_consents!);
+    }
+  }
+
+  Widget _buildLoaded(PluginConsents c) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _header(c),
+        const SizedBox(height: 12),
+        Card(
+          child: Column(
+            children: [
+              for (int i = 0; i < _caps.length; i++) ...[
+                _capRow(_caps[i], c),
+                if (i < _caps.length - 1)
+                  const Divider(height: 1, indent: 56),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _header(PluginConsents c) {
+    String fmt(DateTime? t) =>
+        t == null ? '—' : t.toLocal().toString().split('.').first;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: const [
+              Icon(Icons.shield, color: AppColors.accent, size: 18),
+              SizedBox(width: 8),
+              Text('Runtime permissions',
+                  style:
+                      TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+            ]),
+            const SizedBox(height: 8),
+            Text(
+              'Flip any capability the manifest declared on or off at '
+              'runtime. Re-granting uses the plugin\'s install-time '
+              'declaration — no reinstall required.',
+              style: TextStyle(
+                  fontSize: 12, color: AppColors.textMuted),
+            ),
+            const SizedBox(height: 10),
+            _kv('Granted', fmt(c.grantedAt)),
+            _kv('Updated', fmt(c.updatedAt)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _kv(String k, String v) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          children: [
+            SizedBox(
+                width: 80,
+                child: Text(k,
+                    style: const TextStyle(
+                        color: AppColors.textMuted, fontSize: 11))),
+            Expanded(
+                child: Text(v, style: const TextStyle(fontSize: 11))),
+          ],
+        ),
+      );
+
+  Widget _capRow(_CapSpec spec, PluginConsents c) {
+    final granted = c.isCapGranted(spec.key);
+    final subtitle = _subtitleFor(spec.key, c);
+    // Fs / exec / http grant structured lists that the user may want
+    // to prune one at a time. When the cap is granted AND carries
+    // sub-entries, render an ExpansionTile instead of a plain ListTile
+    // so per-entry toggles become reachable. M3 T21.
+    final sub = _subEntries(spec.key, c);
+    if (granted && sub.isNotEmpty) {
+      return ExpansionTile(
+        shape: const Border(),
+        collapsedShape: const Border(),
+        leading: Icon(spec.icon, color: AppColors.accent, size: 22),
+        title: Text(spec.label,
+            style: const TextStyle(fontSize: 14, color: AppColors.text)),
+        subtitle: Text(subtitle,
+            style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+        trailing: Switch(
+          value: true,
+          activeTrackColor: AppColors.accent,
+          onChanged: _busy ? null : (_) => _revokeCap(spec.key, spec.label),
+        ),
+        childrenPadding: const EdgeInsets.only(left: 56, right: 16, bottom: 8),
+        children: [
+          for (final entry in sub)
+            _subEntryTile(spec.key, entry),
+        ],
+      );
+    }
+    final declared = c.isCapDeclared(spec.key);
+    final canToggle = !_busy && (granted || declared);
+    return ListTile(
+      leading: Icon(
+        spec.icon,
+        color: granted ? AppColors.accent : AppColors.textMuted,
+        size: 22,
+      ),
+      title: Text(
+        spec.label,
+        style: TextStyle(
+          fontSize: 14,
+          color: granted ? AppColors.text : AppColors.textMuted,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+      ),
+      trailing: Switch(
+        value: granted,
+        activeTrackColor: AppColors.accent,
+        onChanged: canToggle
+            ? (on) => on
+                ? _grantCap(spec.key, spec.label)
+                : _revokeCap(spec.key, spec.label)
+            : null,
+      ),
+    );
+  }
+
+  /// Re-grants a single capability by PATCHing the plugin's install-time
+  /// manifest value back into the consent row. Used when the user flips
+  /// a previously-revoked cap ON. Silently no-ops when the manifest
+  /// didn't declare this cap (the caller should gate via isCapDeclared).
+  Future<void> _grantCap(String cap, String label) async {
+    if (_busy || _consents == null) return;
+    final manifestValue = _consents!.manifestPerms[cap];
+    if (manifestValue == null) {
+      _notify('Cannot grant $label: not declared in manifest', isError: true);
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await widget.api.patchPluginConsents(
+        widget.pluginName,
+        {cap: manifestValue},
+      );
+      _notify('Granted $label');
+      await _refresh();
+    } on PluginConsentNotFoundException {
+      _notify('Consent row disappeared', isError: true);
+    } catch (e) {
+      _notify('Failed to grant $label: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// Extracts the list of sub-entries (fs globs, exec patterns, http
+  /// URL globs, events patterns) the user can toggle individually.
+  /// Each entry is a ("sub-key", "value") pair — the sub-key is the
+  /// wire-shape marker for fs ("read"/"write") and empty otherwise.
+  ///
+  /// Returns an empty list for scalar caps (bool/string) — the caller
+  /// falls back to the plain ListTile with a single top-level toggle.
+  List<_SubEntry> _subEntries(String cap, PluginConsents c) {
+    final v = c.perms[cap];
+    switch (cap) {
+      case 'fs':
+        if (v is Map) {
+          final out = <_SubEntry>[];
+          for (final side in const ['read', 'write']) {
+            final list = v[side];
+            if (list is List) {
+              for (final g in list) {
+                out.add(_SubEntry(side: side, value: g.toString()));
+              }
+            }
+          }
+          return out;
+        }
+        return const [];
+      case 'exec':
+      case 'http':
+      case 'events':
+        if (v is List) {
+          return [
+            for (final p in v)
+              _SubEntry(side: '', value: p.toString()),
+          ];
+        }
+        return const [];
+      default:
+        return const [];
+    }
+  }
+
+  Widget _subEntryTile(String cap, _SubEntry entry) {
+    final label = entry.side.isEmpty
+        ? entry.value
+        : '${entry.side}: ${entry.value}';
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      title: Text(label,
+          style: const TextStyle(fontSize: 12, fontFamily: 'monospace')),
+      trailing: Switch.adaptive(
+        value: true,
+        activeTrackColor: AppColors.accent,
+        onChanged: _busy ? null : (_) => _removeSubEntry(cap, entry),
+      ),
+    );
+  }
+
+  /// Removes one sub-entry from a grant list and PATCHes the server.
+  /// For fs, the remaining list is nested under its side ("read" or
+  /// "write"). For exec/http/events, the remaining list is top-level.
+  Future<void> _removeSubEntry(String cap, _SubEntry toRemove) async {
+    if (_busy || _consents == null) return;
+    setState(() => _busy = true);
+    try {
+      final perms = _consents!.perms;
+      final patch = <String, dynamic>{};
+      switch (cap) {
+        case 'fs':
+          final raw = perms['fs'];
+          if (raw is Map) {
+            final next = <String, dynamic>{};
+            for (final side in const ['read', 'write']) {
+              final list = raw[side];
+              if (list is List) {
+                final keep = [
+                  for (final g in list)
+                    if (!(side == toRemove.side && g.toString() == toRemove.value))
+                      g.toString(),
+                ];
+                if (keep.isNotEmpty) {
+                  next[side] = keep;
+                }
+              }
+            }
+            patch['fs'] = next;
+          }
+          break;
+        case 'exec':
+        case 'http':
+        case 'events':
+          final raw = perms[cap];
+          if (raw is List) {
+            patch[cap] = [
+              for (final p in raw)
+                if (p.toString() != toRemove.value) p.toString(),
+            ];
+          }
+          break;
+        default:
+          return;
+      }
+      await widget.api.patchPluginConsents(widget.pluginName, patch);
+      _notify('Removed ${toRemove.value} from $cap');
+      await _refresh();
+    } on PluginConsentNotFoundException {
+      _notify('Consent row disappeared', isError: true);
+    } catch (e) {
+      _notify('Failed: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  String _subtitleFor(String cap, PluginConsents c) {
+    if (!c.isCapGranted(cap)) {
+      return c.isCapDeclared(cap)
+          ? 'Revoked · tap to re-grant'
+          : 'Not declared by this plugin';
+    }
+    final v = c.perms[cap];
+    // Render a short shape hint so the user sees what was actually
+    // granted, not just a binary on/off. Matches the sketch in the
+    // T21 spec ("exec: git *, npm *" / "storage: granted" / etc.).
+    if (v is bool) return 'Granted';
+    if (v is String) return v;
+    if (v is List) {
+      final parts = v.map((e) => e.toString()).toList();
+      if (parts.length <= 3) return parts.join(', ');
+      return '${parts.take(3).join(', ')} (+${parts.length - 3} more)';
+    }
+    if (v is Map) {
+      final keys = v.keys.map((e) => e.toString()).toList();
+      return keys.isEmpty ? 'Granted' : keys.join(', ');
+    }
+    return 'Granted';
+  }
+}

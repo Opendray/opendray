@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Kanban</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header id="topbar">
+    <h1>Kanban</h1>
+    <button id="addCard">+ Add card</button>
+    <span id="sessionStatus" hidden></span>
+  </header>
+  <main>
+    <section class="column" data-status="todo"><h2>To do</h2><ul></ul></section>
+    <section class="column" data-status="doing"><h2>Doing</h2><ul></ul></section>
+    <section class="column" data-status="done"><h2>Done</h2><ul></ul></section>
+  </main>
+  <script src="main.js" type="module"></script>
+</body>
+</html>

@@ -27,6 +27,12 @@ class ConfigField {
   final String? group;
   final String? dependsOn;
   final String? dependsVal;
+  // i18n overlays — optional per-locale overrides shipped by the
+  // plugin manifest. Consumers resolve via [L10n.pick]; empty = use
+  // the English source above.
+  final String? labelZh;
+  final String? descriptionZh;
+  final String? placeholderZh;
 
   const ConfigField({
     required this.key,
@@ -43,6 +49,9 @@ class ConfigField {
     this.group,
     this.dependsOn,
     this.dependsVal,
+    this.labelZh,
+    this.descriptionZh,
+    this.placeholderZh,
   });
 
   factory ConfigField.fromJson(Map<String, dynamic> json) => ConfigField(
@@ -60,6 +69,9 @@ class ConfigField {
         group: json['group'] as String?,
         dependsOn: json['dependsOn'] as String?,
         dependsVal: json['dependsVal'] as String?,
+        labelZh: json['label_zh'] as String?,
+        descriptionZh: json['description_zh'] as String?,
+        placeholderZh: json['placeholder_zh'] as String?,
       );
 }
 
@@ -99,10 +111,20 @@ class Provider {
   final String description;
   final String icon;
   final String version;
-  final String type; // cli | local | shell | panel
+  final String type; // cli | local | shell | panel (legacy) | '' (v1)
   final String category; // for panels: docs | files | custom
+  final String form; // v1: declarative | webview | host
+  final bool required;
   final Capabilities capabilities;
   final List<ConfigField> configSchema;
+  /// Only set on v1 manifests (IsV1 requires publisher + engines).
+  /// Legacy in-tree plugins leave this empty, which the UI uses to
+  /// route config edits to the legacy `providers.config` column
+  /// instead of the new plugin_kv + plugin_secret path.
+  final String publisher;
+  // i18n overlays — see ConfigField.labelZh. Empty = use English above.
+  final String? displayNameZh;
+  final String? descriptionZh;
 
   const Provider({
     required this.name,
@@ -112,8 +134,13 @@ class Provider {
     required this.version,
     required this.type,
     this.category = '',
+    this.form = '',
+    this.required = false,
     required this.capabilities,
     this.configSchema = const [],
+    this.publisher = '',
+    this.displayNameZh,
+    this.descriptionZh,
   });
 
   factory Provider.fromJson(Map<String, dynamic> json) => Provider(
@@ -124,13 +151,23 @@ class Provider {
         version: json['version'] as String? ?? '0.0.0',
         type: json['type'] as String? ?? 'cli',
         category: json['category'] as String? ?? '',
+        form: json['form'] as String? ?? '',
+        required: json['required'] as bool? ?? false,
         capabilities: Capabilities.fromJson(
             json['capabilities'] as Map<String, dynamic>? ?? {}),
         configSchema: (json['configSchema'] as List<dynamic>?)
                 ?.map((e) => ConfigField.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             [],
+        publisher: json['publisher'] as String? ?? '',
+        displayNameZh: json['displayName_zh'] as String?,
+        descriptionZh: json['description_zh'] as String?,
       );
+
+  /// True when this manifest opted into the v1 plugin contract.
+  /// Mirrors the Go-side `Provider.IsV1()` — `publisher` is required
+  /// on v1; its absence marks a legacy bundled plugin.
+  bool get isV1 => publisher.isNotEmpty;
 }
 
 class ProviderInfo {

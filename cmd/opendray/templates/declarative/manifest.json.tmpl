@@ -1,0 +1,40 @@
+{
+  "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
+  "name": "{{.Name}}",
+  "version": "0.1.0",
+  "publisher": "{{.Publisher}}",
+  "displayName": "{{.DisplayName}}",
+  "description": "A new OpenDray plugin.",
+  "icon": "🔌",
+  "engines": { "opendray": "^1.0.0" },
+  "form": "declarative",
+  "activation": ["onStartup"],
+  "contributes": {
+    "commands": [
+      {
+        "id": "{{.Name}}.hello",
+        "title": "{{.DisplayName}}: Hello",
+        "run": { "kind": "notify", "message": "Hello from {{.DisplayName}}!" }
+      }
+    ],
+    "statusBar": [
+      {
+        "id": "{{.Name}}.bar",
+        "text": "🔌 {{.DisplayName}}",
+        "tooltip": "Click to say hello",
+        "command": "{{.Name}}.hello",
+        "alignment": "right",
+        "priority": 10
+      }
+    ],
+    "keybindings": [
+      { "command": "{{.Name}}.hello", "key": "ctrl+alt+h", "mac": "cmd+alt+h" }
+    ],
+    "menus": {
+      "appBar/right": [
+        { "command": "{{.Name}}.hello", "group": "hello@1" }
+      ]
+    }
+  },
+  "permissions": {}
+}

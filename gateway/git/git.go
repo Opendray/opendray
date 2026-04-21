@@ -1,8 +1,9 @@
-// Package git provides safe git repository inspection and mutation for the
-// "git" panel plugin. Every operation is pinned to a caller-provided
+// Package git provides safe, read-only git repository inspection for the
+// "git-viewer" panel plugin. Every operation is pinned to a caller-provided
 // repository path that must resolve inside the plugin's allowedRoots, and
 // every subprocess runs under a context timeout to guard the gateway from
-// runaway git invocations.
+// runaway git invocations. Write paths (stage/unstage/discard/commit) live
+// in the Claude session workflow, not here — the panel observes only.
 package git
 
 import (
@@ -27,7 +28,6 @@ type Config struct {
 	LogLimit     int
 	DiffContext  int
 	Timeout      time.Duration
-	AllowCommit  bool
 }
 
 // FileStatus describes one entry in `git status --porcelain=v1`.
@@ -427,79 +427,6 @@ func Branches(ctx context.Context, cfg Config, repoPath string) ([]Branch, error
 		})
 	}
 	return result, nil
-}
-
-// ── Mutations ───────────────────────────────────────────────────
-
-// Stage runs `git add -- <paths>`.
-func Stage(ctx context.Context, cfg Config, repoPath string, paths []string) error {
-	return mutatePaths(ctx, cfg, repoPath, paths, []string{"add"})
-}
-
-// Unstage runs `git reset HEAD -- <paths>`.
-func Unstage(ctx context.Context, cfg Config, repoPath string, paths []string) error {
-	return mutatePaths(ctx, cfg, repoPath, paths, []string{"reset", "HEAD"})
-}
-
-// Discard reverts unstaged changes to the given paths via
-// `git checkout -- <paths>`. Use with care — this is destructive.
-func Discard(ctx context.Context, cfg Config, repoPath string, paths []string) error {
-	return mutatePaths(ctx, cfg, repoPath, paths, []string{"checkout"})
-}
-
-func mutatePaths(ctx context.Context, cfg Config, repoPath string, paths []string, prefix []string) error {
-	if !cfg.AllowCommit {
-		return errors.New("git: plugin is read-only (set allowCommit=true to enable)")
-	}
-	if len(paths) == 0 {
-		return errors.New("git: at least one path is required")
-	}
-	repo, err := SecurePath(cfg, repoPath)
-	if err != nil {
-		return err
-	}
-	args := append([]string{}, prefix...)
-	args = append(args, "--")
-	for _, p := range paths {
-		if err := validateRelPath(p); err != nil {
-			return err
-		}
-		args = append(args, p)
-	}
-	_, err = run(ctx, cfg, repo, nil, args...)
-	return err
-}
-
-// CreateCommit creates a commit with the provided message. Message is
-// passed via stdin so it can contain any characters, including newlines,
-// without quoting concerns.
-func CreateCommit(ctx context.Context, cfg Config, repoPath, message string) (Commit, error) {
-	if !cfg.AllowCommit {
-		return Commit{}, errors.New("git: plugin is read-only (set allowCommit=true to enable)")
-	}
-	if strings.TrimSpace(message) == "" {
-		return Commit{}, errors.New("git: commit message is required")
-	}
-	repo, err := SecurePath(cfg, repoPath)
-	if err != nil {
-		return Commit{}, err
-	}
-	if _, err := run(ctx, cfg, repo, []byte(message), "commit", "--file=-"); err != nil {
-		return Commit{}, err
-	}
-	out, err := run(ctx, cfg, repo, nil, "log", "-1", "--pretty=format:"+logFormat)
-	if err != nil {
-		return Commit{}, err
-	}
-	parts := strings.Split(strings.TrimSpace(string(out)), "\x1f")
-	if len(parts) < 6 {
-		return Commit{}, errors.New("git: failed to read new commit")
-	}
-	ts, _ := strconv.ParseInt(parts[4], 10, 64)
-	return Commit{
-		SHA: parts[0], Short: parts[1], Author: parts[2],
-		Email: parts[3], Date: ts, Subject: parts[5],
-	}, nil
 }
 
 // ── Session baselines ───────────────────────────────────────────

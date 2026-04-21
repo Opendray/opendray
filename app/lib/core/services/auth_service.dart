@@ -46,7 +46,7 @@ class AuthService extends ChangeNotifier {
   /// auth-required mode. Loads any stored token from disk and, if present,
   /// verifies it with a cheap authenticated call. Call whenever the server
   /// URL changes or the app starts up.
-  Future<void> probe(String serverUrl, {Map<String, String> extraHeaders = const {}}) async {
+  Future<void> probe(String serverUrl) async {
     _lastServerUrl = serverUrl;
     await _loadStoredFor(serverUrl);
 
@@ -54,7 +54,6 @@ class AuthService extends ChangeNotifier {
       baseUrl: serverUrl,
       connectTimeout: const Duration(seconds: 6),
       receiveTimeout: const Duration(seconds: 6),
-      headers: extraHeaders,
       // Accept 4xx AND 5xx so we can distinguish "setup mode" (503 from
       // the catch-all in setup mode) from transport errors.
       validateStatus: (s) => s != null && s < 600,
@@ -143,13 +142,11 @@ class AuthService extends ChangeNotifier {
     required String serverUrl,
     required String username,
     required String password,
-    Map<String, String> extraHeaders = const {},
   }) async {
     final dio = Dio(BaseOptions(
       baseUrl: serverUrl,
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
-      headers: extraHeaders,
       validateStatus: (s) => s != null && s < 500,
     ));
     try {

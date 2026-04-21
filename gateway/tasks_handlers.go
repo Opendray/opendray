@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -15,8 +16,10 @@ import (
 )
 
 // getTasksConfig resolves a task-runner panel plugin's config into a
-// tasks.Config. The plugin must be enabled and have allowedRoots set.
-func (s *Server) getTasksConfig(pluginName string) (tasks.Config, error) {
+// tasks.Config. Reads through s.effectiveConfig so values saved by the
+// v1 Configure form (plugin_kv.__config.*) override any stale values
+// in the legacy plugins.config JSONB column.
+func (s *Server) getTasksConfig(ctx context.Context, pluginName string) (tasks.Config, error) {
 	info := s.plugins.ListInfo()
 	for _, pi := range info {
 		if pi.Provider.Name != pluginName {
@@ -25,7 +28,7 @@ func (s *Server) getTasksConfig(pluginName string) (tasks.Config, error) {
 		if pi.Provider.Type != plugin.ProviderTypePanel || !pi.Enabled {
 			return tasks.Config{}, fmt.Errorf("task-runner plugin %q not enabled", pluginName)
 		}
-		cfg := pi.Config
+		cfg := s.effectiveConfig(ctx, pluginName, pi.Config)
 
 		var roots []string
 		for _, r := range strings.Split(stringVal(cfg, "allowedRoots", ""), ",") {
@@ -49,15 +52,32 @@ func (s *Server) getTasksConfig(pluginName string) (tasks.Config, error) {
 }
 
 func boolVal(m map[string]any, key string, fallback bool) bool {
-	if v, ok := m[key].(bool); ok {
-		return v
+	v, present := m[key]
+	if !present {
+		return fallback
+	}
+	switch x := v.(type) {
+	case bool:
+		return x
+	case string:
+		// The v1 Configure PUT serialises booleans to strings ("true"
+		// / "false") so the sidecar contract is uniform across field
+		// types. Legacy plugins.config JSONB had native bools; both
+		// shapes show up after the plugin_kv overlay merges. Accept
+		// either.
+		switch x {
+		case "true", "1", "yes":
+			return true
+		case "false", "0", "no", "":
+			return false
+		}
 	}
 	return fallback
 }
 
 // tasksList: GET /api/tasks/{plugin}/list?path=
 func (s *Server) tasksList(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getTasksConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getTasksConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
@@ -80,7 +100,7 @@ func (s *Server) tasksList(w http.ResponseWriter, r *http.Request) {
 // tasksRun: POST /api/tasks/{plugin}/run  body: { taskId, path }
 // path is the directory to discover the task from (must match the listing call).
 func (s *Server) tasksRun(w http.ResponseWriter, r *http.Request) {
-	cfg, err := s.getTasksConfig(chi.URLParam(r, "plugin"))
+	cfg, err := s.getTasksConfig(r.Context(), chi.URLParam(r, "plugin"))
 	if err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
@@ -123,7 +143,7 @@ func (s *Server) tasksRun(w http.ResponseWriter, r *http.Request) {
 
 // tasksRuns: GET /api/tasks/{plugin}/runs
 func (s *Server) tasksRuns(w http.ResponseWriter, r *http.Request) {
-	if _, err := s.getTasksConfig(chi.URLParam(r, "plugin")); err != nil {
+	if _, err := s.getTasksConfig(r.Context(), chi.URLParam(r, "plugin")); err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
 	}
@@ -132,7 +152,7 @@ func (s *Server) tasksRuns(w http.ResponseWriter, r *http.Request) {
 
 // tasksRunGet: GET /api/tasks/{plugin}/run/{runId}
 func (s *Server) tasksRunGet(w http.ResponseWriter, r *http.Request) {
-	if _, err := s.getTasksConfig(chi.URLParam(r, "plugin")); err != nil {
+	if _, err := s.getTasksConfig(r.Context(), chi.URLParam(r, "plugin")); err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
 	}
@@ -146,7 +166,7 @@ func (s *Server) tasksRunGet(w http.ResponseWriter, r *http.Request) {
 
 // tasksRunStop: POST /api/tasks/{plugin}/run/{runId}/stop
 func (s *Server) tasksRunStop(w http.ResponseWriter, r *http.Request) {
-	if _, err := s.getTasksConfig(chi.URLParam(r, "plugin")); err != nil {
+	if _, err := s.getTasksConfig(r.Context(), chi.URLParam(r, "plugin")); err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
 	}
@@ -161,7 +181,7 @@ func (s *Server) tasksRunStop(w http.ResponseWriter, r *http.Request) {
 // Streams the historical snapshot followed by live output. Closes when the run
 // finishes; clients should then GET the run to read the final status/exit code.
 func (s *Server) tasksRunWS(w http.ResponseWriter, r *http.Request) {
-	if _, err := s.getTasksConfig(chi.URLParam(r, "plugin")); err != nil {
+	if _, err := s.getTasksConfig(r.Context(), chi.URLParam(r, "plugin")); err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
 	}

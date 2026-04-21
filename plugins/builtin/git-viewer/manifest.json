@@ -1,0 +1,73 @@
+{
+  "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
+  "name": "git-viewer",
+  "displayName": "Git Viewer",
+  "description": "Read-only Git observability — status, diff, log, branches, and a per-session baseline that highlights only what changed during the current Claude session. Commits and pushes happen through the Claude session workflow, not here.",
+  "icon": "🌿",
+  "version": "1.0.0",
+  "publisher": "opendray-builtin",
+  "engines": { "opendray": "^1.0.0" },
+  "form": "declarative",
+  "activation": ["onStartup"],
+  "type": "panel",
+  "category": "tools",
+  "capabilities": {
+    "models": [],
+    "supportsResume": false,
+    "supportsStream": false,
+    "supportsImages": false,
+    "supportsMcp": false,
+    "dynamicModels": false
+  },
+  "configSchema": [
+    {
+      "key": "allowedRoots",
+      "label": "Allowed Directories",
+      "type": "string",
+      "group": "connection",
+      "placeholder": "$HOME/projects",
+      "required": true,
+      "description": "Comma-separated root directories. Git operations can only observe inside these roots."
+    },
+    {
+      "key": "defaultPath",
+      "label": "Default Repository",
+      "type": "string",
+      "group": "runtime",
+      "placeholder": "$HOME/projects/my-repo",
+      "description": "Repository path opened when the panel first loads."
+    },
+    {
+      "key": "gitBinary",
+      "label": "Git Binary",
+      "type": "string",
+      "group": "runtime",
+      "default": "git",
+      "description": "Path to the git executable. Leave as 'git' to use PATH."
+    },
+    {
+      "key": "logLimit",
+      "label": "Log Entries",
+      "type": "number",
+      "group": "runtime",
+      "default": 50,
+      "description": "Maximum commits returned by the log endpoint."
+    },
+    {
+      "key": "diffContext",
+      "label": "Diff Context Lines",
+      "type": "number",
+      "group": "runtime",
+      "default": 3,
+      "description": "Number of context lines around each hunk in the unified diff."
+    },
+    {
+      "key": "commandTimeoutSec",
+      "label": "Command Timeout (seconds)",
+      "type": "number",
+      "group": "advanced",
+      "default": 20,
+      "description": "Hard kill any git subprocess that runs longer than this."
+    }
+  ]
+}

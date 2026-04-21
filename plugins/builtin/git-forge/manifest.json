@@ -1,0 +1,77 @@
+{
+  "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
+  "name": "git-forge",
+  "displayName": "Git Forge",
+  "description": "Read-only pull-request viewer for Gitea, GitHub, and GitLab — list PRs, read details, view diffs, read top-level comments. Pick your forge in Configure; the adapter dispatches per request. PR creation and merge happen through the Claude session, not the panel.",
+  "icon": "🔀",
+  "version": "1.0.0",
+  "publisher": "opendray-builtin",
+  "engines": { "opendray": "^1.0.0" },
+  "form": "declarative",
+  "activation": ["onStartup"],
+  "type": "panel",
+  "category": "forge",
+  "capabilities": {
+    "models": [],
+    "supportsResume": false,
+    "supportsStream": false,
+    "supportsImages": false,
+    "supportsMcp": false,
+    "dynamicModels": false
+  },
+  "configSchema": [
+    {
+      "key": "forgeType",
+      "label": "Forge",
+      "type": "select",
+      "group": "connection",
+      "options": ["gitea", "github", "gitlab"],
+      "default": "gitea",
+      "required": true,
+      "description": "Which hosted git forge to query. Each forge has its own API shape — the adapter dispatches per request."
+    },
+    {
+      "key": "baseUrl",
+      "label": "Server URL",
+      "type": "string",
+      "group": "connection",
+      "required": true,
+      "placeholder": "https://gitea.example.com",
+      "description": "Forge API root. For public GitHub use https://api.github.com (or https://github.com — the adapter coerces). GitLab / Gitea / GHE pass through verbatim."
+    },
+    {
+      "key": "repo",
+      "label": "Repository",
+      "type": "string",
+      "group": "connection",
+      "required": true,
+      "placeholder": "owner/name",
+      "description": "owner/name format (GitLab also accepts group/sub/name). The adapter URL-encodes for GitLab."
+    },
+    {
+      "key": "token",
+      "label": "API Token",
+      "type": "secret",
+      "group": "auth",
+      "placeholder": "ghp_... / glpat-... / gitea token",
+      "description": "Personal access token with read access to pull requests. Leave empty for public repos on GitHub. Stored encrypted via the plugin secret cap (AES-GCM)."
+    },
+    {
+      "key": "defaultState",
+      "label": "Default State Filter",
+      "type": "select",
+      "group": "runtime",
+      "options": ["open", "closed", "all"],
+      "default": "open",
+      "description": "Which PR state the list view loads first. Override per-query in the UI."
+    },
+    {
+      "key": "commandTimeoutSec",
+      "label": "Request Timeout (seconds)",
+      "type": "number",
+      "group": "advanced",
+      "default": 20,
+      "description": "Cap on each forge HTTP call so a slow / unreachable forge can't hang the gateway."
+    }
+  ]
+}

@@ -13,17 +13,26 @@ import (
 	"github.com/opendray/opendray/plugin"
 )
 
+// ConfigResolver overlays the v1 Configure form's plugin_kv values on top
+// of the legacy plugins.config map. Gateway supplies one via
+// [Manager.SetConfigResolver] so the telegram reconcile loop sees fresh
+// botToken / allowedChatIds after the user clicks Save, without forcing
+// this package to import store/bridge directly. Nil = fall back to the
+// raw pi.Config map (pre-v1 behaviour).
+type ConfigResolver func(ctx context.Context, pluginName string, base plugin.ProviderConfig) plugin.ProviderConfig
+
 // Manager is the top-level entry point used by the gateway. It watches the
 // "telegram" plugin's enabled flag + config in a loop and starts / stops /
 // reloads the underlying Bot + Notifier + Forwarder accordingly.
 //
 // Single canonical instance per server. Safe for concurrent Snapshot calls.
 type Manager struct {
-	plugins *plugin.Runtime
-	hub     *hub.Hub
-	bus     *plugin.HookBus
-	logger  *slog.Logger
-	links   *LinkStore // shared across bot lifecycles — survives reloads
+	plugins  *plugin.Runtime
+	hub      *hub.Hub
+	bus      *plugin.HookBus
+	logger   *slog.Logger
+	links    *LinkStore // shared across bot lifecycles — survives reloads
+	resolver ConfigResolver
 
 	mu        sync.Mutex
 	bot       *Bot
@@ -50,6 +59,17 @@ func NewManager(plugins *plugin.Runtime, h *hub.Hub, bus *plugin.HookBus, logger
 
 // Links exposes the link store for the HTTP layer (panel "active links" view).
 func (m *Manager) Links() *LinkStore { return m.links }
+
+// SetConfigResolver installs a resolver that merges plugin_kv.__config.*
+// onto the raw pi.Config map. Called once by the gateway after Manager
+// construction so the reconcile loop sees values written through the
+// v1 Configure form. Safe to leave nil — the manager falls back to the
+// pre-v1 behaviour.
+func (m *Manager) SetConfigResolver(r ConfigResolver) {
+	m.mu.Lock()
+	m.resolver = r
+	m.mu.Unlock()
+}
 
 // Start launches the watch loop. Returns immediately.
 func (m *Manager) Start(ctx context.Context) {
@@ -181,6 +201,19 @@ func (m *Manager) findPluginConfig() (Config, bool, bool) {
 			continue
 		}
 		raw := pi.Config
+		// Overlay plugin_kv.__config.* (values the user saved through
+		// the v1 Configure form) on top of the legacy pi.Config shape.
+		// Falls back to the raw map when no resolver was installed.
+		m.mu.Lock()
+		resolver := m.resolver
+		m.mu.Unlock()
+		if resolver != nil {
+			ctx := m.rootCtx
+			if ctx == nil {
+				ctx = context.Background()
+			}
+			raw = resolver(ctx, "telegram", pi.Config)
+		}
 		token := stringFrom(raw, "botToken")
 		if token == "" {
 			token = os.Getenv("OPENDRAY_TELEGRAM_BOT_TOKEN")
