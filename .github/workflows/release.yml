@@ -22,7 +22,13 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.25'
-      - run: cd app && flutter pub get && flutter build web --release
+      # Inject the git tag into the Flutter build so package_info_plus
+      # returns e.g. "0.3.1" on both web + mobile, matching the Go
+      # binary's -X main.version=${{ .Version }} from goreleaser.
+      - run: |
+          V="${GITHUB_REF_NAME#v}"
+          cd app && flutter pub get && flutter build web --release \
+            --build-name="$V" --build-number="$GITHUB_RUN_NUMBER"
       # `flutter pub get` refreshes pubspec.lock against the live
       # pub.dev index; restore the committed version so goreleaser's
       # "no dirty tree" guard passes. The build itself is already

@@ -5,7 +5,13 @@
       "package-name": "opendray",
       "changelog-path": "CHANGELOG.md",
       "bump-minor-pre-major": true,
-      "draft": false
+      "draft": false,
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "app/pubspec.yaml"
+        }
+      ]
     }
   }
 }
