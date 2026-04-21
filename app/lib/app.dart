@@ -7,6 +7,7 @@ import 'core/services/auth_service.dart';
 import 'core/services/l10n.dart';
 import 'core/services/server_config.dart';
 import 'shared/theme/app_theme.dart';
+import 'shared/theme/responsive.dart';
 import 'features/auth/login_page.dart';
 import 'features/dashboard/dashboard_page.dart';
 import 'features/session/session_page.dart';
@@ -139,9 +140,11 @@ class _NtcAppState extends State<NtcApp> {
                 debugShowCheckedModeBanner: false,
                 scaffoldMessengerKey: _scaffoldMessengerKey,
                 routerConfig: _router,
-                builder: (ctx, child) => _WorkbenchRoot(
-                  service: ctx.read<WorkbenchService>(),
-                  child: child ?? const SizedBox.shrink(),
+                builder: (ctx, child) => _WebDesktopThemeScope(
+                  child: _WorkbenchRoot(
+                    service: ctx.read<WorkbenchService>(),
+                    child: child ?? const SizedBox.shrink(),
+                  ),
                 ),
               ),
             ),
@@ -406,9 +409,23 @@ class _PluginWebRoute extends StatelessWidget {
   }
 }
 
+/// Shell wrapper around every routed page. On narrow viewports (phones,
+/// skinny browser windows) it keeps the bottom-nav layout the mobile app
+/// has always used. On wide viewports (desktop web) it swaps in a left
+/// [NavigationRail] so the UI stops feeling like a blown-up phone screen.
+///
+/// No top AppBar is added here — every routed page owns its own AppBar
+/// and would clash with a shell-level one.
 class _Shell extends StatelessWidget {
   final Widget child;
   const _Shell({required this.child});
+
+  /// Below this width we render BottomNavigationBar (phone layout).
+  /// Above it we render NavigationRail (desktop layout).
+  static const double _railBreakpoint = 900;
+
+  /// Above this width the rail expands to show labels next to icons.
+  static const double _extendedRailBreakpoint = 1280;
 
   @override
   Widget build(BuildContext context) {
@@ -437,39 +454,141 @@ class _Shell extends StatelessWidget {
       index = 0;
     }
 
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: index,
-        onTap: (i) {
-          final path = kHubEnabled
-              ? switch (i) {
-                  1 => '/plugins',
-                  2 => '/hub',
-                  3 => '/settings',
-                  _ => '/',
-                }
-              : switch (i) {
-                  1 => '/plugins',
-                  2 => '/settings',
-                  _ => '/',
-                };
-          context.go(path);
-        },
-        items: [
-          BottomNavigationBarItem(
-              icon: const Icon(Icons.terminal), label: context.tr('Sessions')),
-          BottomNavigationBarItem(
-              icon: const Icon(Icons.extension_outlined),
-              label: context.tr('Plugin')),
-          if (kHubEnabled)
-            BottomNavigationBarItem(
-                icon: const Icon(Icons.storefront), label: context.tr('Hub')),
-          BottomNavigationBarItem(
-              icon: const Icon(Icons.settings), label: context.tr('Settings')),
-        ],
-      ),
+    String pathForIndex(int i) {
+      return kHubEnabled
+          ? switch (i) {
+              1 => '/plugins',
+              2 => '/hub',
+              3 => '/settings',
+              _ => '/',
+            }
+          : switch (i) {
+              1 => '/plugins',
+              2 => '/settings',
+              _ => '/',
+            };
+    }
+
+    final destinations = <_NavDest>[
+      _NavDest(icon: Icons.terminal, label: context.tr('Sessions')),
+      _NavDest(icon: Icons.extension_outlined, label: context.tr('Plugin')),
+      if (kHubEnabled)
+        _NavDest(icon: Icons.storefront, label: context.tr('Hub')),
+      _NavDest(icon: Icons.settings, label: context.tr('Settings')),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= _railBreakpoint;
+        if (!isWide) {
+          return Scaffold(
+            body: child,
+            bottomNavigationBar: BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
+              currentIndex: index,
+              onTap: (i) => context.go(pathForIndex(i)),
+              items: [
+                for (final d in destinations)
+                  BottomNavigationBarItem(
+                    icon: Icon(d.icon),
+                    label: d.label,
+                  ),
+              ],
+            ),
+          );
+        }
+
+        final extended = constraints.maxWidth >= _extendedRailBreakpoint;
+        // Keep the desktop Shell deliberately plain: a bare NavigationRail
+        // inside a Material, a 1-px divider, and the routed page filling
+        // the rest. Any "fancy" wrapper (SingleChildScrollView, Align +
+        // ConstrainedBox, LayoutBuilder + Padding) has at least once
+        // produced "RenderBox has never been laid out" assertions when
+        // the child of Expanded is a full Scaffold — so we stay out of
+        // that territory.
+        return Scaffold(
+          body: Row(
+            children: [
+              Material(
+                color: AppColors.surface,
+                elevation: 0,
+                child: NavigationRail(
+                  extended: extended,
+                  minWidth: 72,
+                  minExtendedWidth: 220,
+                  backgroundColor: AppColors.surface,
+                  indicatorColor: AppColors.accentSoft,
+                  selectedIndex: index,
+                  onDestinationSelected: (i) =>
+                      context.go(pathForIndex(i)),
+                  labelType: extended
+                      ? NavigationRailLabelType.none
+                      : NavigationRailLabelType.all,
+                  selectedIconTheme:
+                      const IconThemeData(color: AppColors.accent),
+                  unselectedIconTheme:
+                      const IconThemeData(color: AppColors.textMuted),
+                  selectedLabelTextStyle: const TextStyle(
+                    color: AppColors.accent,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  unselectedLabelTextStyle:
+                      const TextStyle(color: AppColors.textMuted),
+                  destinations: [
+                    for (final d in destinations)
+                      NavigationRailDestination(
+                        icon: Icon(d.icon),
+                        label: Text(d.label),
+                      ),
+                  ],
+                ),
+              ),
+              const VerticalDivider(
+                width: 1,
+                thickness: 1,
+                color: AppColors.border,
+              ),
+              Expanded(child: child),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _NavDest {
+  final IconData icon;
+  final String label;
+  const _NavDest({required this.icon, required this.label});
+}
+
+/// Bumps [MediaQueryData.textScaler] on desktop web so every `Text`
+/// widget — including the ones that hard-code `fontSize: 11/12/13`
+/// constants and don't inherit from [TextTheme] — reads at a size
+/// that's comfortable from a normal desk distance.
+///
+/// This is the **correct** knob for "make text readable on a 27"
+/// monitor": `Theme.textTheme` only reaches widgets that read it
+/// (which misses ~60 hard-coded Text sites in this codebase), whereas
+/// the textScaler is applied by every `RichText` / `Text` layout pass
+/// regardless of whether the style came from the theme or a literal.
+///
+/// On mobile (iOS/Android) this widget is a pass-through — phone
+/// builds are unchanged.
+class _WebDesktopThemeScope extends StatelessWidget {
+  final Widget child;
+  const _WebDesktopThemeScope({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!Responsive.isDesktopWeb(context)) return child;
+
+    final scale = Responsive.fontScale(context);
+    final current = MediaQuery.of(context);
+    return MediaQuery(
+      data: current.copyWith(textScaler: TextScaler.linear(scale)),
+      child: child,
     );
   }
 }

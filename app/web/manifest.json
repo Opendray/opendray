@@ -1,12 +1,12 @@
 {
-    "name": "ntc",
-    "short_name": "ntc",
+    "name": "OpenDray",
+    "short_name": "OpenDray",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#0B0D11",
+    "theme_color": "#0B0D11",
+    "description": "OpenDray — self-hosted AI workbench.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {

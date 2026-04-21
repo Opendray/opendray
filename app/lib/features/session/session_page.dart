@@ -16,6 +16,7 @@ import '../../core/services/ws_client.dart';
 import '../../shared/app_modals.dart';
 import '../../shared/image_attach.dart';
 import '../../shared/theme/app_theme.dart';
+import '../../shared/theme/responsive.dart';
 import '../../shared/theme/terminal_theme.dart';
 import '../workbench/panel_slot.dart';
 import '../workbench/status_bar_strip.dart';
@@ -715,14 +716,44 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
   }
 
   Widget _buildToolbar() {
+    // On desktop web the /session/:id route lives outside the Shell
+    // (no NavigationRail / bottom nav), so without a dedicated back
+    // affordance users get stranded in the terminal unless they reach
+    // for the browser back button. Phones keep the existing layout —
+    // their system back gesture already covers the same need.
+    final isDesktopWeb = Responsive.isDesktopWeb(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktopWeb ? 12 : 8,
+        vertical: isDesktopWeb ? 10 : 6,
+      ),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Row(
         children: [
+          if (isDesktopWeb) ...[
+            IconButton(
+              icon: const Icon(Icons.arrow_back, size: 20,
+                  color: AppColors.textMuted),
+              onPressed: () {
+                // Prefer an in-app pop so WS state under the session
+                // isn't thrown away, but fall back to routing home when
+                // this is the first route in the browser history stack.
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/');
+                }
+              },
+              padding: EdgeInsets.zero,
+              constraints:
+                  const BoxConstraints(minWidth: 36, minHeight: 36),
+              tooltip: context.tr('Back'),
+            ),
+            const SizedBox(width: 8),
+          ],
           IconButton(
             icon: const Icon(Icons.layers_outlined, size: 20,
                 color: AppColors.textMuted),
