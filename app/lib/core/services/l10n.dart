@@ -472,6 +472,30 @@ class L10n extends ChangeNotifier {
     'must be numeric':                          '必须为数字',
     '(stored — leave blank to keep)':           '（已保存 — 留空以保留原值）',
 
+    // ── Settings → Built-in plugins ──────────────────────────
+    'Built-in plugins':                         '内置插件',
+    'Browse the plugins bundled with OpenDray and restore anything you previously uninstalled.':
+        '浏览随 OpenDray 附带的插件，恢复任何之前卸载过的。',
+    'These plugins ship with OpenDray. Uninstalling one removes it from the Plugins page; restore it here.':
+        '这些插件随 OpenDray 一同发布。卸载后会从插件页面消失；在此处恢复。',
+    'All built-in plugins are currently installed.':
+        '所有内置插件都已安装。',
+    'built-in plugin(s) uninstalled — tap Restore to bring them back.':
+        '个内置插件已卸载 —— 点击"恢复"把它们装回来。',
+    'No built-in plugins':                      '没有内置插件',
+    'The server reported zero bundled manifests — this usually means the binary was built without the plugins/builtin tree.':
+        '服务端没有返回任何内置清单 —— 通常说明二进制构建时漏了 plugins/builtin 目录。',
+    'Failed to load built-in plugins':          '加载内置插件失败',
+    'Installed':                                '已安装',
+    'Disabled':                                 '已禁用',
+    'Uninstalled':                              '已卸载',
+    'Restore':                                  '恢复',
+    'Restoring…':                               '恢复中…',
+    'Restored':                                 '已恢复',
+    'Restore failed':                           '恢复失败',
+    'Toggle from Plugins page to enable.':      '请到插件页面打开开关启用。',
+    'Already active. Manage from Plugins page.':'已激活。在插件页面管理。',
+
     // ── Git panel ────────────────────────────────────────────
     'Git':                                        'Git',
     'Git panel not enabled':                      '未启用 Git 面板',

@@ -243,6 +243,48 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+
+          // Built-in plugins — the "I uninstalled something bundled
+          // with OpenDray and now I can't get it back" escape hatch.
+          // The Plugins page lets users Uninstall any non-required
+          // built-in, which tombstones the row so LoadAll stops
+          // re-seeding. Hub is hidden during v1 (and won't ever list
+          // built-ins anyway), so without this entry there's no
+          // recovery path — hence a dedicated page under Settings.
+          Card(
+            child: InkWell(
+              onTap: () => context.push('/settings/builtin-plugins'),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(children: [
+                  const Icon(Icons.restore,
+                      color: AppColors.accent, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(context.tr('Built-in plugins'),
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 2),
+                        Text(
+                          context.tr(
+                              'Browse the plugins bundled with OpenDray and restore anything you previously uninstalled.'),
+                          style: const TextStyle(
+                              fontSize: 12, color: AppColors.textMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right,
+                      color: AppColors.textMuted, size: 20),
+                ]),
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
 
           // Account — only shown when the server has auth enabled and we

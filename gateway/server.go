@@ -411,6 +411,12 @@ func New(cfg Config) *Server {
 		r.Delete("/api/plugins/{name}", s.pluginsUninstall)
 		r.Get("/api/plugins/{name}/audit", s.pluginsAudit)
 
+		// Built-in plugin restore — undo an Uninstall on a bundled
+		// plugin. Clears the tombstone + re-seeds from embed.FS.
+		// Drives the Settings → Built-in Plugins page in the app.
+		r.Get("/api/plugins/builtins", s.pluginsBuiltinsList)
+		r.Post("/api/plugins/builtins/{name}/restore", s.pluginsBuiltinRestore)
+
 		// Marketplace catalog — lists installable plugins for the Hub
 		// page. Install still flows through /api/plugins/install with
 		// src="marketplace://<name>".

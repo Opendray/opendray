@@ -23,6 +23,7 @@ import 'features/mcp/mcp_page.dart';
 import 'features/messaging/telegram_page.dart';
 import 'features/hub/hub_page.dart';
 import 'features/plugins/plugins_page.dart';
+import 'features/settings/builtin_restore_page.dart';
 import 'features/settings/settings_page.dart';
 import 'features/settings/setup_page.dart';
 import 'features/setup/setup_wizard.dart';
@@ -316,6 +317,10 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
             path: '/settings/llm-endpoints',
             builder: (ctx, _) => _panelShell(
                 ctx, 'LLM Endpoints', const EndpointsPage()),
+          ),
+          GoRoute(
+            path: '/settings/builtin-plugins',
+            builder: (_, _) => const BuiltinRestorePage(),
           ),
         ],
       ),
