@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [main]
 
+# Least-privilege GITHUB_TOKEN for the whole workflow. The backend job
+# needs `id-token: write` to upload coverage to Codecov via OIDC; both
+# jobs otherwise only read source.
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   frontend:
     name: Frontend (Flutter)

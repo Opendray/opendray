@@ -4,6 +4,12 @@ on:
   pull_request:
     branches: [main]
 
+# tim-actions/dco reads commit list and writes a check-run; nothing else.
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
 jobs:
   dco:
     runs-on: ubuntu-latest

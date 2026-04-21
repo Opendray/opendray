@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*'
 
+# Read-only — only checks github.actor against an allowlist.
+permissions:
+  contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest
