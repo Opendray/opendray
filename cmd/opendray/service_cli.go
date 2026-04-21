@@ -76,6 +76,10 @@ type installFlags struct {
 	dryRun   bool
 }
 
+// serviceInstall is the CLI wrapper: parses flags and routes to the
+// inner serviceInstallCore. Kept separate so other wizard flows (the
+// root→user handoff in handleRootBundled) can invoke the same install
+// logic directly without going through flag parsing.
 func serviceInstall(args []string) int {
 	fs := flag.NewFlagSet("service install", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -87,12 +91,6 @@ func serviceInstall(args []string) int {
 	if err := fs.Parse(args); err != nil {
 		prf("service install: %v", err)
 		return 2
-	}
-
-	if runtime.GOOS != "linux" && runtime.GOOS != "darwin" {
-		prf("%s service install: unsupported OS %q (only linux + macOS are wired today)",
-			failMark(), runtime.GOOS)
-		return 1
 	}
 
 	// Figure out which user will run the service. If invoked via sudo,
@@ -121,23 +119,7 @@ func serviceInstall(args []string) int {
 			runUser = u.Username
 		}
 	}
-	if runUser == "root" {
-		prf("%s service install: refusing to run as root (bundled PG won't start as uid 0)", failMark())
-		prf("  Choose a different user with --user.")
-		return 2
-	}
 
-	// Verify the user exists + resolve their home dir (WorkingDirectory).
-	u, err := user.Lookup(runUser)
-	if err != nil {
-		prf("%s service install: user %q not found on this system: %v", failMark(), runUser, err)
-		return 1
-	}
-
-	// Binary path. Must be an absolute file readable by the target
-	// user. Usually auto-detected from os.Executable() which resolves
-	// the current binary (whoever ran this command is installing the
-	// very file they ran).
 	binPath := flags.binary
 	if binPath == "" {
 		exe, err := os.Executable()
@@ -145,13 +127,39 @@ func serviceInstall(args []string) int {
 			prf("%s cannot detect current binary path: %v", failMark(), err)
 			return 1
 		}
-		abs, err := filepath.Abs(exe)
-		if err != nil {
-			binPath = exe
-		} else {
+		if abs, err := filepath.Abs(exe); err == nil {
 			binPath = abs
+		} else {
+			binPath = exe
 		}
 	}
+
+	return serviceInstallCore(runUser, binPath, flags.force, flags.dryRun, true)
+}
+
+// serviceInstallCore writes the service definition, reloads the
+// service manager, and enables + starts the service. Returns the
+// intended exit code. The `verbose` flag controls whether we print
+// the post-install "view status / tail logs" footer — suppressed
+// when called from within another wizard that wants to print its own
+// parting summary.
+func serviceInstallCore(runUser, binPath string, force, dryRun, verbose bool) int {
+	if runtime.GOOS != "linux" && runtime.GOOS != "darwin" {
+		prf("%s service install: unsupported OS %q (only linux + macOS are wired today)",
+			failMark(), runtime.GOOS)
+		return 1
+	}
+	if runUser == "root" {
+		prf("%s service install: refusing to run as root (bundled PG won't start as uid 0)", failMark())
+		return 2
+	}
+
+	u, err := user.Lookup(runUser)
+	if err != nil {
+		prf("%s service install: user %q not found on this system: %v", failMark(), runUser, err)
+		return 1
+	}
+
 	if info, err := os.Stat(binPath); err != nil {
 		prf("%s binary not found at %s: %v", failMark(), binPath, err)
 		return 1
@@ -160,7 +168,6 @@ func serviceInstall(args []string) int {
 		return 1
 	}
 
-	// Render the unit/plist contents.
 	var unit, unitPath string
 	if runtime.GOOS == "linux" {
 		unit = renderSystemdUnit(runUser, u.HomeDir, binPath)
@@ -170,7 +177,7 @@ func serviceInstall(args []string) int {
 		unitPath = launchdPlistPath
 	}
 
-	if flags.dryRun {
+	if dryRun {
 		prn("")
 		prf("# Would write to %s:", unitPath)
 		prn(styleDim(strings.Repeat("─", 60)))
@@ -180,18 +187,15 @@ func serviceInstall(args []string) int {
 		return 0
 	}
 
-	// All write operations need root.
 	if os.Geteuid() != 0 {
-		prf("%s service install needs root — run with sudo:", failMark())
+		prf("%s service install needs root.", failMark())
 		prn("")
-		prf("    sudo %s service install %s", binPath,
-			strings.Join(os.Args[2:], " "))
+		prf("    sudo %s service install --user %s", binPath, runUser)
 		prn("")
 		return 1
 	}
 
-	// Overwrite check.
-	if _, err := os.Stat(unitPath); err == nil && !flags.force {
+	if _, err := os.Stat(unitPath); err == nil && !force {
 		prf("%s %s already exists — pass --force to overwrite.", warnMark(), unitPath)
 		return 1
 	}
@@ -202,7 +206,6 @@ func serviceInstall(args []string) int {
 	}
 	prf("%s wrote %s", okMark(), unitPath)
 
-	// Platform-specific enable + start.
 	if runtime.GOOS == "linux" {
 		if err := runSilent("systemctl", "daemon-reload"); err != nil {
 			prf("%s systemctl daemon-reload failed: %v", failMark(), err)
@@ -215,9 +218,6 @@ func serviceInstall(args []string) int {
 		}
 		prf("%s enabled + started via systemctl", okMark())
 	} else {
-		// Ensure the log dir exists with permissions the service user
-		// can write to. launchd runs the binary as `runUser` but the
-		// log paths live under /var/log which is root-owned by default.
 		if err := os.MkdirAll(launchdLogDir, 0o755); err == nil {
 			_ = chownToUser(launchdLogDir, u)
 		}
@@ -229,20 +229,22 @@ func serviceInstall(args []string) int {
 		prf("%s loaded via launchctl", okMark())
 	}
 
-	prn("")
-	prn(styleTitle("   OpenDray is now running as a background service."))
-	prn("")
-	prn(styleDim("   View status:"))
-	if runtime.GOOS == "linux" {
-		prf("       %s", styleBrightCyan("systemctl status opendray"))
-		prn(styleDim("   Tail logs:"))
-		prf("       %s", styleBrightCyan("journalctl -fu opendray"))
-	} else {
-		prf("       %s", styleBrightCyan("sudo launchctl print system/"+launchdLabel))
-		prn(styleDim("   Tail logs:"))
-		prf("       %s", styleBrightCyan("tail -f "+launchdLogDir+"/opendray.out.log "+launchdLogDir+"/opendray.err.log"))
+	if verbose {
+		prn("")
+		prn(styleTitle("   OpenDray is now running as a background service."))
+		prn("")
+		prn(styleDim("   View status:"))
+		if runtime.GOOS == "linux" {
+			prf("       %s", styleBrightCyan("systemctl status opendray"))
+			prn(styleDim("   Tail logs:"))
+			prf("       %s", styleBrightCyan("journalctl -fu opendray"))
+		} else {
+			prf("       %s", styleBrightCyan("sudo launchctl print system/"+launchdLabel))
+			prn(styleDim("   Tail logs:"))
+			prf("       %s", styleBrightCyan("tail -f "+launchdLogDir+"/opendray.out.log "+launchdLogDir+"/opendray.err.log"))
+		}
+		prn("")
 	}
-	prn("")
 	return 0
 }
 

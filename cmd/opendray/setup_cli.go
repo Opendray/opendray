@@ -1059,11 +1059,13 @@ func apply(cfg config.Config) int {
 	prf("       %s", styleBrightCyan(binaryInvocation()))
 	prn("")
 	prn("")
-	// Service-install hint. Keep it terse — users who want auto-start
-	// can follow the cue; users running one-shot / dev installs ignore
-	// it harmlessly. Windows is silently skipped until the ConPTY port
-	// lands (service support is macOS/Linux only for now).
-	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
+	// Service-install hint. Users invoked by the root→user handoff
+	// (OPENDRAY_WIZARD_CHILD=1) don't see this — the root parent will
+	// run `service install` for them right after this process exits,
+	// since the newly-created system user generally has no sudo.
+	// Windows is skipped until the ConPTY port lands.
+	if os.Getenv("OPENDRAY_WIZARD_CHILD") == "" &&
+		(runtime.GOOS == "linux" || runtime.GOOS == "darwin") {
 		prn(styleTitle("   Auto-start on boot (runs as a background service):"))
 		prn("")
 		prf("       %s", styleBrightCyan(fmt.Sprintf("sudo %s service install",
@@ -1409,23 +1411,22 @@ func handleRootBundled(in *bufio.Reader) stepResult {
 
 	// Step 3: re-launch setup as the new user. We use `su -l` so the
 	// child gets a proper login shell environment (PATH, HOME, etc.)
-	// before exec'ing `opendray setup`. Stdin/Stdout/Stderr are shared
-	// with the current process so the new wizard draws inline on the
-	// same TTY.
+	// before exec'ing `opendray setup`. OPENDRAY_WIZARD_CHILD tells
+	// the child it was handed off from a root parent — the child uses
+	// this to skip its own "enable auto-start" hint, since the parent
+	// (still root, still elevated) will handle service install right
+	// after it returns.
 	prn("")
 	prf(" %s  handing off to %s…", styleAccent("→"), styleBrightCyan(username))
 	prn("")
 
 	cmd := exec.Command("su", "-l", username, "-c",
-		fmt.Sprintf("%q setup", destBin))
+		fmt.Sprintf("OPENDRAY_WIZARD_CHILD=1 %q setup", destBin))
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	runErr := cmd.Run()
 
-	// Forward the child's exit code. Whether the wizard-as-new-user
-	// succeeded or was Ctrl-C'd, we don't want root's outer shell to
-	// see a stale "failed" status from the outer process.
 	exitCode := 0
 	if runErr != nil {
 		exitCode = 1
@@ -1434,28 +1435,67 @@ func handleRootBundled(in *bufio.Reader) stepResult {
 		}
 	}
 
-	if exitCode == 0 {
-		// Successful completion — leave the root operator with an
-		// unambiguous "from now on, use this user" hint. `opendray`
-		// started as root would fail with our root+embedded guard
-		// anyway (see main.go); telling them up front beats letting
-		// them discover that.
-		prn("")
-		prf("   %s", styleDim(
-			fmt.Sprintf("OpenDray is configured under user %q.", username)))
-		prf("   %s", styleDim("Start the server as that user, not as root:"))
-		prn("")
-		prf("       %s", styleBrightCyan(
-			fmt.Sprintf("su - %s -c 'opendray'", username)))
-		prn("")
+	if exitCode != 0 {
+		// Child was aborted / failed. Forward the exit code; the
+		// user saw the child's error message already.
+		_ = userCreated
+		os.Exit(exitCode)
+		return srQuit
 	}
 
-	// Suppress unused-var warning if userCreated is only referenced
-	// in the comment above — future branches may want it (e.g. rollback
-	// the useradd on abort). Keep the binding explicit.
-	_ = userCreated
+	// Step 4: service install. We're still root here (handleRootBundled
+	// only runs when uid 0), so we can `systemctl enable --now` without
+	// a second sudo prompt. The newly-created user almost always lacks
+	// sudo access anyway, so asking them to run it themselves would
+	// strand the install. Skip cleanly when the OS doesn't support
+	// `opendray service install` (anything other than linux/darwin).
+	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
+		prn("")
+		if askYN(in, "Install as a background service so OpenDray auto-starts on boot?", true) {
+			prn("")
+			rc := serviceInstallCore(username, destBin, false, false, false)
+			if rc != 0 {
+				prf("   %s service install returned exit %d — you can re-run it manually:",
+					warnMark(), rc)
+				prf("       %s service install --user %s",
+					styleBrightCyan(destBin), username)
+			}
+		}
+	}
 
-	os.Exit(exitCode)
+	// Parting summary. Points at the service commands (if installed)
+	// or the direct-run command as a fallback.
+	prn("")
+	prn(styleGreen(divider))
+	prn("")
+	prf("     %s   %s", okMark(), styleTitle("ALL DONE"))
+	prn("")
+	prn(styleGreen(divider))
+	prn("")
+	prn("")
+	prf("   %s", styleDim(
+		fmt.Sprintf("OpenDray is configured under user %q.", username)))
+	prn("")
+	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
+		prn(styleTitle("   Useful commands (run as root):"))
+		prn("")
+		if runtime.GOOS == "linux" {
+			prf("       %s", styleBrightCyan("systemctl status opendray"))
+			prf("       %s", styleBrightCyan("journalctl -fu opendray"))
+		} else {
+			prf("       %s", styleBrightCyan("sudo launchctl print system/"+launchdLabel))
+			prf("       %s", styleBrightCyan(
+				"tail -f "+launchdLogDir+"/opendray.out.log"))
+		}
+		prn("")
+	}
+	prn(styleDim("   Run ad-hoc (without the service):"))
+	prn("")
+	prf("       %s", styleBrightCyan(
+		fmt.Sprintf("su - %s -c 'opendray'", username)))
+	prn("")
+
+	os.Exit(0)
 	return srQuit // unreachable
 }
 
