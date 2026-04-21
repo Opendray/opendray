@@ -22,12 +22,19 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.25'
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: beta
-      - run: cd app && flutter pub get && flutter build web --release
-      - uses: github/codeql-action/init@v3
+
+      # CodeQL scans Go only; the Flutter build is irrelevant to SAST. But
+      # app/embed.go has `//go:embed all:build/web`, which fails to compile
+      # if the target is empty. A single placeholder lets Go compile while
+      # keeping the workflow fast (Flutter build takes 2–3 minutes and was
+      # the root cause of the earlier CodeQL autobuild timeouts).
+      - name: Stub Flutter web dist for go:embed
+        run: |
+          mkdir -p app/build/web
+          echo '<!-- placeholder for CodeQL go:embed resolution -->' > app/build/web/index.html
+
+      - uses: github/codeql-action/init@v3.35.2
         with:
           languages: go
-      - uses: github/codeql-action/autobuild@v3
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/autobuild@v3.35.2
+      - uses: github/codeql-action/analyze@v3.35.2

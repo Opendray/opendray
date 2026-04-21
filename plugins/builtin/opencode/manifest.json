@@ -30,7 +30,7 @@
       "type": "string",
       "group": "advanced",
       "placeholder": "opencode",
-      "description": "Path to the opencode binary on the NTC host."
+      "description": "Path to the opencode binary on the OpenDray host."
     },
     {
       "key": "extraArgs",

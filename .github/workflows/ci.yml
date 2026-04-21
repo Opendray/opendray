@@ -6,13 +6,20 @@ on:
   pull_request:
     branches: [main]
 
+# Least-privilege GITHUB_TOKEN for the whole workflow. The backend job
+# needs `id-token: write` to upload coverage to Codecov via OIDC; both
+# jobs otherwise only read source.
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   frontend:
     name: Frontend (Flutter)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2.23.0
         with:
           channel: beta
       - run: cd app && flutter pub get
@@ -40,7 +47,7 @@ jobs:
       - run: go vet ./...
       - run: go test -race -coverprofile=coverage.out ./...
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v4.6.0
         with:
           files: coverage.out
           fail_ci_if_error: false

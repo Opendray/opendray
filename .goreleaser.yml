@@ -23,6 +23,13 @@ archives:
     format: tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
+# Generate SHA256SUMS alongside archives so install.sh can verify
+# download integrity. Cosign-signed in the Release workflow via
+# `cosign sign-blob --yes dist/checksums.txt`.
+checksum:
+  name_template: 'SHA256SUMS'
+  algorithm: sha256
+
 release:
   github:
     owner: opendray
