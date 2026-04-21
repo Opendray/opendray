@@ -23,6 +23,11 @@ jobs:
         with:
           go-version: '1.25'
       - run: cd app && flutter pub get && flutter build web --release
+      # `flutter pub get` refreshes pubspec.lock against the live
+      # pub.dev index; restore the committed version so goreleaser's
+      # "no dirty tree" guard passes. The build itself is already
+      # complete and lives in app/build/web/.
+      - run: git checkout -- app/pubspec.lock
       - uses: goreleaser/goreleaser-action@v6
         with:
           version: latest

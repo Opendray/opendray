@@ -2,9 +2,11 @@ version: 2
 
 project_name: opendray
 
-before:
-  hooks:
-    - cd app && flutter pub get && flutter build web --release
+# No `before.hooks` — Flutter's pub get + web build runs in the
+# GitHub Actions workflow (.github/workflows/release.yml) before
+# goreleaser starts. Doing it here too caused goreleaser to see
+# pubspec.lock updates (floating minor versions on pub.dev) and
+# abort with "git is in a dirty state".
 
 builds:
   - id: opendray
