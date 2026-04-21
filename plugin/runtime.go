@@ -445,6 +445,120 @@ func (rt *Runtime) Remove(ctx context.Context, name string) error {
 	return nil
 }
 
+// ── Built-in restore ────────────────────────────────────────────
+
+// BuiltinState labels a bundled plugin's relationship to the current
+// runtime: present and running, present but disabled, or wholly
+// uninstalled (user-initiated Uninstall + tombstoned so LoadAll
+// doesn't re-seed on boot).
+type BuiltinState string
+
+const (
+	BuiltinInstalled   BuiltinState = "installed"
+	BuiltinDisabled    BuiltinState = "disabled"
+	BuiltinUninstalled BuiltinState = "uninstalled"
+)
+
+// BuiltinInfo is the wire shape returned by ListBuiltins — a bundled
+// manifest paired with its current state. Enough for the Settings
+// → Built-in Plugins page to render the row + pick the right action
+// (none / Enable / Restore).
+type BuiltinInfo struct {
+	Provider Provider     `json:"provider"`
+	State    BuiltinState `json:"state"`
+}
+
+// ErrNotBuiltin is returned when RestoreBuiltin gets a name that
+// doesn't match any manifest under plugins/builtin/. Callers should
+// map this to HTTP 404.
+var ErrNotBuiltin = fmt.Errorf("plugin: not a built-in")
+
+// ErrAlreadyInstalled is returned when RestoreBuiltin is called on a
+// plugin that already exists in the runtime map — the caller should
+// use the regular /toggle endpoint instead. Maps to HTTP 409.
+var ErrAlreadyInstalled = fmt.Errorf("plugin: already installed")
+
+// ListBuiltins returns every manifest bundled in the binary's embed.FS
+// paired with its current state (installed / disabled / uninstalled).
+// Drives the Settings → Built-in Plugins page so users can re-enable
+// or restore anything they removed.
+//
+// State derivation mirrors LoadAll: anything present in rt.providers
+// is either installed or disabled depending on its enabled flag;
+// anything absent is reported as uninstalled. Tombstone presence is
+// NOT consulted — for UI purposes "not in the runtime map" is the
+// definition of uninstalled, tombstone or not.
+func (rt *Runtime) ListBuiltins() []BuiltinInfo {
+	providers := embeddedProviders(rt.logger)
+	out := make([]BuiltinInfo, 0, len(providers))
+	rt.mu.RLock()
+	defer rt.mu.RUnlock()
+	for _, p := range providers {
+		state := BuiltinUninstalled
+		if lp, ok := rt.providers[p.Name]; ok {
+			state = BuiltinInstalled
+			if !lp.enabled {
+				state = BuiltinDisabled
+			}
+		}
+		out = append(out, BuiltinInfo{Provider: p, State: state})
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Provider.Name < out[j].Provider.Name
+	})
+	return out
+}
+
+// RestoreBuiltin brings a previously-uninstalled built-in plugin back
+// online: clears its tombstone (idempotent) and re-seeds the manifest
+// from embed.FS. The caller must route this only from the Settings
+// → Built-in Plugins page; user-facing semantics are "undo the
+// Uninstall I did earlier".
+//
+// Returns:
+//   - ErrNotBuiltin — the name isn't bundled in embed.FS (404)
+//   - ErrAlreadyInstalled — the plugin is already in the runtime;
+//     use /toggle instead (409)
+//   - generic error — tombstone delete or seed failed (500)
+//
+// On success the reinstated Provider is returned so the handler can
+// surface the canonical manifest (icon, version, contributes block)
+// back to the UI without an extra round-trip.
+func (rt *Runtime) RestoreBuiltin(ctx context.Context, name string) (Provider, error) {
+	var target Provider
+	found := false
+	for _, p := range embeddedProviders(rt.logger) {
+		if p.Name == name {
+			target = p
+			found = true
+			break
+		}
+	}
+	if !found {
+		return Provider{}, fmt.Errorf("%w: %s", ErrNotBuiltin, name)
+	}
+
+	rt.mu.RLock()
+	_, exists := rt.providers[name]
+	rt.mu.RUnlock()
+	if exists {
+		return Provider{}, fmt.Errorf("%w: %s", ErrAlreadyInstalled, name)
+	}
+
+	// Tombstone cleared before seed so a crash between the two leaves
+	// the system in a consistent "will re-seed on next boot" state
+	// rather than "tombstoned + half-seeded".
+	if err := rt.db.RemovePluginTombstone(ctx, name); err != nil {
+		return Provider{}, fmt.Errorf("remove tombstone: %w", err)
+	}
+
+	if err := rt.seed(ctx, target); err != nil {
+		return Provider{}, fmt.Errorf("seed: %w", err)
+	}
+
+	return target, nil
+}
+
 // SetConfigOverlay registers (or clears, when fn is nil) a ConfigOverlayFn
 // after Runtime construction. Needed because the gateway-side merge
 // helper — which has access to both plugin_kv and plugin_secret — is

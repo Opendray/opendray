@@ -7,15 +7,16 @@ import (
 	"testing"
 )
 
-// TestStrict_OnDiskExamplesPass asserts every on-disk example manifest
-// in plugins/examples/ that is v1 passes ValidateV1Strict — no unknown
-// fields slipped in. Examples live on disk (not embedded); walking them
-// catches drift between the schema and the reference plugins.
-func TestStrict_OnDiskExamplesPass(t *testing.T) {
-	root := examplesDir(t)
+// TestStrict_OnDiskBuiltinsPass asserts every on-disk bundled manifest
+// under plugins/builtin/ that is v1 passes ValidateV1Strict — no
+// unknown fields slipped in. Builtins are the canonical tree now that
+// plugins/examples/ is gone; walking them catches drift between the
+// schema and every shipped plugin on every CI run.
+func TestStrict_OnDiskBuiltinsPass(t *testing.T) {
+	root := builtinDir(t)
 	entries, err := os.ReadDir(root)
 	if err != nil {
-		t.Fatalf("read examples dir %s: %v", root, err)
+		t.Fatalf("read builtin dir %s: %v", root, err)
 	}
 	seen := 0
 	for _, e := range entries {
@@ -36,12 +37,12 @@ func TestStrict_OnDiskExamplesPass(t *testing.T) {
 		}
 	}
 	if seen == 0 {
-		t.Fatal("no v1 example plugins found — regression")
+		t.Fatal("no v1 builtin plugins found — regression")
 	}
 }
 
-// examplesDir walks up from this file to locate plugins/examples/.
-func examplesDir(t *testing.T) string {
+// builtinDir walks up from this file to locate plugins/builtin/.
+func builtinDir(t *testing.T) string {
 	t.Helper()
 	_, file, _, ok := runtime.Caller(0)
 	if !ok {
@@ -49,7 +50,7 @@ func examplesDir(t *testing.T) string {
 	}
 	dir := filepath.Dir(file)
 	for i := 0; i < 10; i++ {
-		candidate := filepath.Join(dir, "plugins", "examples")
+		candidate := filepath.Join(dir, "plugins", "builtin")
 		if info, err := os.Stat(candidate); err == nil && info.IsDir() {
 			return candidate
 		}
@@ -59,7 +60,7 @@ func examplesDir(t *testing.T) string {
 		}
 		dir = parent
 	}
-	t.Fatal("could not locate plugins/examples/")
+	t.Fatal("could not locate plugins/builtin/")
 	return ""
 }
 

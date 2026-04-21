@@ -1145,6 +1145,44 @@ class ApiClient {
     }
   }
 
+  // ── Built-in plugin restore ───────────────────────────────
+
+  /// Lists every manifest bundled in the server binary + its current
+  /// state (installed / disabled / uninstalled). Drives the
+  /// Settings → Built-in Plugins page.
+  Future<List<BuiltinInfo>> listBuiltins() async {
+    try {
+      final res = await _dio.get('/api/plugins/builtins');
+      final data = res.data;
+      if (data is Map && data['builtins'] is List) {
+        return [
+          for (final raw in (data['builtins'] as List))
+            if (raw is Map)
+              BuiltinInfo.fromJson(Map<String, dynamic>.from(raw)),
+        ];
+      }
+      return const [];
+    } on DioException catch (e) {
+      throw apiExceptionFrom(e);
+    }
+  }
+
+  /// Restores a previously-uninstalled built-in plugin by clearing its
+  /// tombstone and re-seeding the manifest from embed.FS. Returns the
+  /// reinstated Provider so the caller can update its local cache
+  /// without re-fetching the full list. Throws on 404 (not a builtin)
+  /// or 409 (already installed).
+  Future<Provider> restoreBuiltin(String name) async {
+    try {
+      final res = await _dio.post('/api/plugins/builtins/$name/restore');
+      final data = Map<String, dynamic>.from(res.data as Map);
+      final provJson = Map<String, dynamic>.from(data['provider'] as Map);
+      return Provider.fromJson(provJson);
+    } on DioException catch (e) {
+      throw apiExceptionFrom(e);
+    }
+  }
+
   // ── Plugin user-config (configSchema-backed) ──────────────
 
   /// Fetches schema + current values for the named plugin. Secret
@@ -1239,6 +1277,48 @@ class PluginConfig {
     }
     return out;
   }
+}
+
+// ─── Built-in plugins (Settings → Built-in Plugins) ──────────────────
+
+/// One bundled manifest returned by GET /api/plugins/builtins, paired
+/// with its current state. Drives the Settings → Built-in Plugins
+/// page so users can see what ships with OpenDray and restore
+/// anything they previously uninstalled.
+class BuiltinInfo {
+  /// Full manifest — same shape the /api/providers endpoint returns
+  /// for installed plugins, so the card can reuse existing rendering.
+  final Provider provider;
+
+  /// One of "installed" | "disabled" | "uninstalled". "disabled" means
+  /// present in the runtime but toggled off by the user (Switch off);
+  /// "uninstalled" means it was removed entirely via Uninstall and is
+  /// a candidate for the Restore action.
+  final String state;
+
+  const BuiltinInfo({required this.provider, required this.state});
+
+  factory BuiltinInfo.fromJson(Map<String, dynamic> json) {
+    final provRaw = json['provider'];
+    return BuiltinInfo(
+      provider: provRaw is Map
+          ? Provider.fromJson(Map<String, dynamic>.from(provRaw))
+          : const Provider(
+              name: '',
+              displayName: '',
+              description: '',
+              icon: '',
+              version: '',
+              type: '',
+              capabilities: Capabilities(),
+            ),
+      state: (json['state'] as String?) ?? 'uninstalled',
+    );
+  }
+
+  bool get isInstalled => state == 'installed';
+  bool get isDisabled => state == 'disabled';
+  bool get isUninstalled => state == 'uninstalled';
 }
 
 // ─── Marketplace models ──────────────────────────────────────────────
