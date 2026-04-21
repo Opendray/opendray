@@ -1,11 +1,11 @@
 {
-    "name": "ntc",
-    "short_name": "ntc",
+    "name": "OpenDray",
+    "short_name": "OpenDray",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0B1120",
+    "theme_color": "#0EA5E9",
+    "description": "Pilot AI coding agents (Claude Code, Codex, Gemini, OpenCode, Qwen) from your phone, tablet, or browser. Self-hosted, multi-agent, plugin-driven.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

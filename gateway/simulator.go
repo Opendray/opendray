@@ -81,7 +81,7 @@ func captureScreenshot(ctx context.Context, platform, device string) ([]byte, er
 		if device == "" {
 			device = "booted"
 		}
-		tmpPath := fmt.Sprintf("/tmp/ntc_sim_%d.png", time.Now().UnixNano())
+		tmpPath := fmt.Sprintf("/tmp/opendray_sim_%d.png", time.Now().UnixNano())
 		defer os.Remove(tmpPath)
 		if err := exec.CommandContext(ctx, "xcrun", "simctl", "io", device, "screenshot", tmpPath).Run(); err != nil {
 			return nil, fmt.Errorf("xcrun simctl screenshot: %w", err)

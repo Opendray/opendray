@@ -27,8 +27,8 @@
       "group": "auth",
       "required": true,
       "placeholder": "123456:AAH...",
-      "envVar": "NTC_TELEGRAM_BOT_TOKEN",
-      "description": "Token from @BotFather. Send /newbot in Telegram, follow the prompts, copy the token here. Or leave blank and set the NTC_TELEGRAM_BOT_TOKEN env var on the server."
+      "envVar": "OPENDRAY_TELEGRAM_BOT_TOKEN",
+      "description": "Token from @BotFather. Send /newbot in Telegram, follow the prompts, copy the token here. Or leave blank and set the OPENDRAY_TELEGRAM_BOT_TOKEN env var on the server."
     },
     {
       "key": "allowedChatIds",
