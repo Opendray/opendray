@@ -39,6 +39,12 @@ jobs:
         id: meta
         with:
           images: ghcr.io/opendray/opendray
+          # latest=true forces a `:latest` tag on every push to the
+          # default branch AND every semver tag — without this, the
+          # default `latest=auto` only produces `:latest` on v* tags,
+          # so main pushes leave users with no rolling tag to pull.
+          flavor: |
+            latest=true
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -95,7 +101,11 @@ jobs:
         id: meta
         with:
           images: ghcr.io/opendray/opendray
+          # latest=true ensures `:latest` is generated; onlatest=true
+          # then applies the -full suffix to it, giving us `:latest-full`
+          # alongside per-tag `:v1.2.3-full` and per-commit `:sha-X-full`.
           flavor: |
+            latest=true
             suffix=-full,onlatest=true
           tags: |
             type=semver,pattern={{version}}
