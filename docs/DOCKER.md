@@ -98,6 +98,13 @@ Upgrading the image preserves every named volume — your agent logins
 survive a `pull + recreate`. The workspace is a bind mount so your
 project code lives on the host, not inside Docker.
 
+## Architectures
+
+Published images are multi-arch manifests for `linux/amd64` and
+`linux/arm64`, so the same tag works on x86 servers, Apple Silicon,
+Raspberry Pi 4+, and AWS Graviton. Docker auto-picks the right variant
+at pull time.
+
 ## Choosing an image
 
 The compose file reads `OPENDRAY_IMAGE` to pick the tag:

@@ -1,15 +1,18 @@
-# Stage 1: Build Flutter web bundle
-FROM ghcr.io/cirruslabs/flutter:beta AS flutter-build
+# Stage 1: Build Flutter web bundle (platform-neutral output)
+FROM --platform=$BUILDPLATFORM ghcr.io/cirruslabs/flutter:beta AS flutter-build
 WORKDIR /src
 COPY app/ app/
 RUN cd app && flutter pub get && flutter build web --release
 
-# Stage 2: Build Go binary
-FROM golang:1.25-bookworm AS go-build
+# Stage 2: Build Go binary (cross-compile for $TARGETOS/$TARGETARCH)
+FROM --platform=$BUILDPLATFORM golang:1.25-bookworm AS go-build
+ARG TARGETOS
+ARG TARGETARCH
 WORKDIR /src
 COPY . .
 COPY --from=flutter-build /src/app/build/web/ app/build/web/
-RUN CGO_ENABLED=0 go build -ldflags='-s -w' -trimpath -o /opendray ./cmd/opendray
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
+      -ldflags='-s -w' -trimpath -o /opendray ./cmd/opendray
 
 # Stage 3: Minimal runtime
 FROM debian:bookworm-slim

@@ -19,13 +19,21 @@ ARG GEMINI_CLI_VERSION=latest
 ARG OPENCODE_VERSION=latest
 
 # ── Stage 1: Flutter web bundle ───────────────────────────────────
-FROM ${FLUTTER_IMAGE} AS flutter-build
+# Pinned to the runner's native arch — `flutter build web` emits
+# platform-neutral JS/WASM, so running the toolchain under QEMU for
+# multi-arch builds would only waste time without changing output.
+FROM --platform=$BUILDPLATFORM ${FLUTTER_IMAGE} AS flutter-build
 WORKDIR /src
 COPY app/ app/
 RUN cd app && flutter pub get && flutter build web --release
 
 # ── Stage 2: Go binary (with embedded web dist) ───────────────────
-FROM golang:${GO_VERSION}-bookworm AS go-build
+# Also pinned to $BUILDPLATFORM; we cross-compile via $TARGETOS /
+# $TARGETARCH that buildx injects per target. Much faster than
+# emulating the Go toolchain under QEMU for each arch.
+FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-bookworm AS go-build
+ARG TARGETOS
+ARG TARGETARCH
 WORKDIR /src
 COPY . .
 COPY --from=flutter-build /src/app/build/web/ app/build/web/
@@ -33,7 +41,7 @@ COPY --from=flutter-build /src/app/build/web/ app/build/web/
 ARG VERSION=dev
 ARG BUILD_SHA=unknown
 ARG BUILD_TIME=unknown
-RUN CGO_ENABLED=0 go build \
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
       -ldflags="-s -w -X main.version=${VERSION} -X main.buildSha=${BUILD_SHA} -X main.buildTime=${BUILD_TIME}" \
       -trimpath \
       -o /opendray ./cmd/opendray

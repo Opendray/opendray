@@ -24,13 +24,23 @@ permissions:
   packages: write
   security-events: write
 
+env:
+  # Linux-only targets (darwin/windows containers are a separate concern).
+  # arm64 covers Apple Silicon, Raspberry Pi 4+, AWS Graviton, etc.
+  PLATFORMS: linux/amd64,linux/arm64
+
 jobs:
   # Slim image — opendray binary only, no bundled agent CLIs.
-  # Tag: ghcr.io/opendray/opendray:<version> (and :latest on main)
   publish-slim:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - uses: docker/setup-buildx-action@v3
 
       - uses: docker/login-action@v3
         with:
@@ -53,8 +63,13 @@ jobs:
           context: .
           file: Dockerfile
           push: true
+          platforms: ${{ env.PLATFORMS }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=slim
+          cache-to: type=gha,scope=slim,mode=max
+          provenance: true
+          sbom: true
 
       - name: Run Trivy vulnerability scanner
         if: startsWith(github.ref, 'refs/tags/')
@@ -72,11 +87,16 @@ jobs:
           sarif_file: 'trivy-results.sarif'
 
   # Full image — opendray + bundled Claude Code, Codex, Gemini CLI, OpenCode.
-  # Tag: ghcr.io/opendray/opendray:<version>-full (and :latest-full on main)
   publish-full:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - uses: docker/setup-buildx-action@v3
 
       - uses: docker/login-action@v3
         with:
@@ -101,8 +121,13 @@ jobs:
           context: .
           file: Dockerfile.full
           push: true
+          platforms: ${{ env.PLATFORMS }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=full
+          cache-to: type=gha,scope=full,mode=max
+          provenance: true
+          sbom: true
 
       - name: Run Trivy vulnerability scanner
         if: startsWith(github.ref, 'refs/tags/')
