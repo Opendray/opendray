@@ -489,14 +489,10 @@ class L10n extends ChangeNotifier {
     'Toggle from Plugins page to enable.':      '请到插件页面打开开关启用。',
     'Already active. Manage from Plugins page.':'已激活。在插件页面管理。',
 
-    // ── Git panel ────────────────────────────────────────────
-    'Git':                                        'Git',
-    'Git panel not enabled':                      '未启用 Git 面板',
-    'Enable the "git" panel plugin in Settings → Plugins first.':
-        '请先在 设置 → 插件 中启用 "git" 面板插件。',
-    'Pick a repository':                          '选择仓库',
-    'Choose a directory containing a .git folder.':
-        '请选择包含 .git 文件夹的目录。',
+    // ── Source Control panel ─────────────────────────────────
+    // Retired git-viewer + git-forge strings went with those plugins;
+    // the remaining keys are shared with source-control's Changes /
+    // History / PRs / Branches tabs.
     'Pick folder':                                '选择文件夹',
     'Refresh':                                    '刷新',
     'Clean':                                      '干净',
