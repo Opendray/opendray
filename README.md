@@ -9,6 +9,7 @@
 <p>
 <a href="https://github.com/opendray/opendray/actions/workflows/ci.yml"><img src="https://github.com/opendray/opendray/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 <a href="https://github.com/opendray/opendray/releases"><img src="https://img.shields.io/github/v/release/opendray/opendray?color=blue" alt="Release"></a>
+<a href="https://github.com/Opendray/opendray/pkgs/container/opendray"><img src="https://img.shields.io/badge/ghcr-opendray%2Fopendray-blue?logo=docker&logoColor=white" alt="Docker image"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
 <a href="https://github.com/opendray/opendray/stargazers"><img src="https://img.shields.io/github/stars/opendray/opendray?style=social" alt="Stars"></a>
 </p>
@@ -57,12 +58,42 @@ No other tool does this.
 
 ## Quick Start
 
-OpenDray ships as a single self-contained binary. Install, run the terminal
-wizard, start the server. **Setup is terminal-only** — there is no web-based
-first-run wizard, so the install flow works identically over SSH, in a VPS,
-or on your laptop.
+Pick your path. **Docker** is the shortest route — one image with every
+agent CLI bundled. **Native binary** is the right pick when you want
+OpenDray on bare metal without Docker in the stack.
 
-### macOS / Linux
+### Docker (recommended — all agent CLIs bundled)
+
+```bash
+git clone https://github.com/Opendray/opendray.git
+cd opendray
+cp .env.docker.example .env && $EDITOR .env   # set DB_PASSWORD at minimum
+./scripts/opendray-docker up                  # starts opendray + postgres
+./scripts/opendray-docker login claude        # one-time OAuth per agent
+# open http://localhost:8640
+```
+
+The `*-full` image ships Claude Code, Codex, Gemini CLI, and OpenCode
+on PATH, so every builtin plugin works with zero host setup. Published
+as a multi-arch manifest (`linux/amd64` + `linux/arm64`) — same tag on
+x86 servers, Apple Silicon, Raspberry Pi 4+, and AWS Graviton.
+
+Already have Docker running? Skip the clone and pull directly:
+
+```bash
+docker pull ghcr.io/Opendray/opendray:latest-full
+```
+
+The `opendray-docker` wrapper exposes `up / down / logs / doctor / login
+/ update / backup` verbs over the compose stack. Full reference:
+[docs/DOCKER.md](docs/DOCKER.md).
+
+### Native binary (macOS / Linux)
+
+OpenDray also ships as a single self-contained binary. Install, run the
+terminal wizard, start the server. **Setup is terminal-only** — there
+is no web-based first-run wizard, so the install flow works identically
+over SSH, in a VPS, or on your laptop.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/install.sh | sh
@@ -133,22 +164,6 @@ make build
 ./bin/opendray setup
 ./bin/opendray
 ```
-
-### Docker (all-in-one, with bundled agent CLIs)
-
-```bash
-git clone https://github.com/opendray/opendray.git
-cd opendray
-cp .env.docker.example .env && $EDITOR .env   # set DB_PASSWORD
-./scripts/opendray-docker up                  # starts opendray + postgres
-./scripts/opendray-docker login claude        # one-time OAuth per agent
-```
-
-The `*-full` image bundles **Claude Code**, **Codex**, **Gemini CLI**,
-and **OpenCode** on PATH, so every builtin plugin works with zero host
-setup. The `opendray-docker` wrapper gives you `up / down / logs /
-doctor / login / update / backup` verbs over the compose stack.
-Full reference: [docs/DOCKER.md](docs/DOCKER.md).
 
 <details>
 <summary><b>Dev mode (hot-reload)</b></summary>

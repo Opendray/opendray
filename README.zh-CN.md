@@ -9,6 +9,7 @@
 <p>
 <a href="https://github.com/opendray/opendray/actions/workflows/ci.yml"><img src="https://github.com/opendray/opendray/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 <a href="https://github.com/opendray/opendray/releases"><img src="https://img.shields.io/github/v/release/opendray/opendray?color=blue" alt="Release"></a>
+<a href="https://github.com/Opendray/opendray/pkgs/container/opendray"><img src="https://img.shields.io/badge/ghcr-opendray%2Fopendray-blue?logo=docker&logoColor=white" alt="Docker 镜像"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
 <a href="https://github.com/opendray/opendray/stargazers"><img src="https://img.shields.io/github/stars/opendray/opendray?style=social" alt="Stars"></a>
 </p>
@@ -57,9 +58,32 @@
 
 ## 快速开始
 
-OpenDray 是一个自包含的二进制文件。安装、跑终端向导、启动服务,三步搞定。**setup 只有终端版本** —— 没有基于 Web 的首次运行向导,所以 SSH、VPS、本地笔记本的安装流程完全一致。
+两种安装路径,按需挑选。**Docker** 最短 —— 一个镜像内置所有 agent CLI,开箱即用。**原生二进制** 适合不想在技术栈里引入 Docker、想把 OpenDray 直接跑在裸机上的场景。
 
-### macOS / Linux
+### Docker(推荐 —— 内置所有 agent CLI)
+
+```bash
+git clone https://github.com/Opendray/opendray.git
+cd opendray
+cp .env.docker.example .env && $EDITOR .env   # 至少要填 DB_PASSWORD
+./scripts/opendray-docker up                  # 启动 opendray + postgres
+./scripts/opendray-docker login claude        # 每个 agent 首次登录一次
+# 打开 http://localhost:8640
+```
+
+`*-full` 镜像把 Claude Code、Codex、Gemini CLI、OpenCode 都装在 PATH 上,所有内置插件零宿主配置即可用。镜像以多架构 manifest 发布(`linux/amd64` + `linux/arm64`)—— 同一个 tag 通吃 x86 服务器、Apple Silicon、Raspberry Pi 4+、AWS Graviton。
+
+已经有 Docker?跳过 clone 直接拉镜像:
+
+```bash
+docker pull ghcr.io/Opendray/opendray:latest-full
+```
+
+`opendray-docker` 包装脚本在 compose stack 之上暴露 `up / down / logs / doctor / login / update / backup` 等动作。完整文档见 [docs/DOCKER.md](docs/DOCKER.md)。
+
+### 原生二进制(macOS / Linux)
+
+OpenDray 也以单个自包含的二进制文件发布。安装、跑终端向导、启动服务,三步搞定。**setup 只有终端版本** —— 没有基于 Web 的首次运行向导,所以 SSH、VPS、本地笔记本的安装流程完全一致。
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/install.sh | sh
@@ -124,22 +148,6 @@ make build
 ./bin/opendray setup
 ./bin/opendray
 ```
-
-### Docker(一体化镜像,内置所有 agent CLI)
-
-```bash
-git clone https://github.com/opendray/opendray.git
-cd opendray
-cp .env.docker.example .env && $EDITOR .env   # 至少要填 DB_PASSWORD
-./scripts/opendray-docker up                  # 启动 opendray + postgres
-./scripts/opendray-docker login claude        # 每个 agent 首次登录一次
-```
-
-`*-full` 镜像内置 **Claude Code**、**Codex**、**Gemini CLI**、**OpenCode**,
-四个 agent CLI 直接在 PATH 里 —— 宿主机零配置,所有内置插件开箱即用。
-`opendray-docker` 包装脚本提供 `up / down / logs / doctor / login /
-update / backup` 等人性化动作,屏蔽 compose 细节。详细文档见
-[docs/DOCKER.md](docs/DOCKER.md)。
 
 <details>
 <summary><b>开发模式(热重载)</b></summary>
