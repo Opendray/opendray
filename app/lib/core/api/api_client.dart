@@ -579,114 +579,212 @@ class ApiClient {
     return ((res.data as Map)['agents'] as List? ?? []).cast<String>();
   }
 
-  // ── Git panel ─────────────────────────────────────────────
+  // ── Source Control (unified SCM plugin) ─────────────────
+  //
+  // Wraps /api/source-control/{plugin}/* — the merged successor to the
+  // git-viewer + git-forge surfaces. Local-git calls take ?repo=<path>;
+  // forge calls take {id} + ?repo=owner/name so one forge instance can
+  // answer for many repositories.
 
-  Future<Map<String, dynamic>> gitStatus(String plugin, {String path = ''}) async {
-    final res = await _dio.get('/api/git/$plugin/status',
-        queryParameters: {'path': path});
-    return Map<String, dynamic>.from(res.data as Map);
-  }
-
-  Future<String> gitDiff(String plugin, {
-    String path = '',
-    bool staged = false,
-    String since = '',
-    String file = '',
-  }) async {
-    final res = await _dio.get('/api/git/$plugin/diff', queryParameters: {
-      'path': path,
-      if (staged) 'staged': 'true',
-      if (since.isNotEmpty) 'since': since,
-      if (file.isNotEmpty) 'file': file,
-    });
-    return ((res.data as Map)['diff'] ?? '') as String;
-  }
-
-  Future<List<Map<String, dynamic>>> gitLog(String plugin,
-      {String path = '', int limit = 0}) async {
-    final res = await _dio.get('/api/git/$plugin/log', queryParameters: {
-      'path': path,
-      if (limit > 0) 'limit': limit,
-    });
+  Future<List<Map<String, dynamic>>> scRepos(String plugin) async {
+    final res = await _dio.get('/api/source-control/$plugin/repos');
     return (res.data as List).cast<Map<String, dynamic>>();
   }
 
-  Future<List<Map<String, dynamic>>> gitBranches(String plugin,
-      {String path = ''}) async {
-    final res = await _dio.get('/api/git/$plugin/branches',
-        queryParameters: {'path': path});
-    return (res.data as List).cast<Map<String, dynamic>>();
-  }
-
-  Future<Map<String, dynamic>> gitSessionSnapshot(
-      String plugin, String sessionId, {String path = ''}) async {
-    final res = await _dio.post('/api/git/$plugin/session/snapshot',
-        data: {'sessionId': sessionId, if (path.isNotEmpty) 'path': path});
+  Future<Map<String, dynamic>> scBookmarkAdd(String plugin, String path) async {
+    final res = await _dio.post('/api/source-control/$plugin/bookmarks',
+        data: {'path': path});
     return Map<String, dynamic>.from(res.data as Map);
   }
 
-  Future<String> gitSessionDiff(String plugin, String sessionId) async {
-    final res = await _dio.get('/api/git/$plugin/session/diff',
-        queryParameters: {'sessionId': sessionId});
-    return ((res.data as Map)['diff'] ?? '') as String;
+  Future<Map<String, dynamic>> scBookmarkRemove(
+      String plugin, String path) async {
+    final res = await _dio.delete('/api/source-control/$plugin/bookmarks',
+        data: {'path': path});
+    return Map<String, dynamic>.from(res.data as Map);
   }
 
-  // ── Git Forge (PR viewer, git-forge plugin) ──────────────
+  Future<Map<String, dynamic>> scStatus(String plugin, {String repo = ''}) async {
+    final res = await _dio.get('/api/source-control/$plugin/status',
+        queryParameters: {if (repo.isNotEmpty) 'repo': repo});
+    return Map<String, dynamic>.from(res.data as Map);
+  }
 
-  /// Lists pull requests. [state] is one of open|closed|all; empty
-  /// falls back to the plugin's configured default.
-  Future<List<Map<String, dynamic>>> forgePulls(String plugin,
-      {String state = '', int limit = 0}) async {
-    final res = await _dio.get('/api/git-forge/$plugin/pulls',
+  Future<List<Map<String, dynamic>>> scLog(String plugin,
+      {String repo = '', int limit = 0}) async {
+    final res = await _dio.get('/api/source-control/$plugin/log',
         queryParameters: {
+          if (repo.isNotEmpty) 'repo': repo,
+          if (limit > 0) 'limit': limit,
+        });
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<List<Map<String, dynamic>>> scBranches(String plugin,
+      {String repo = ''}) async {
+    final res = await _dio.get('/api/source-control/$plugin/branches',
+        queryParameters: {if (repo.isNotEmpty) 'repo': repo});
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  /// Multi-file diff. [mode] is "unstaged" | "staged" | "baseline".
+  /// [sessionId] is only consulted in baseline mode when [since] is empty.
+  /// Returns {repo, mode, files[]} where each file carries path, oldPath,
+  /// status, add, del, isBinary, patch, and previewHtml (.md only).
+  Future<Map<String, dynamic>> scDiff(String plugin, {
+    required String repo,
+    String mode = 'unstaged',
+    String since = '',
+    bool full = false,
+    String sessionId = '',
+  }) async {
+    final res = await _dio.get('/api/source-control/$plugin/diff',
+        queryParameters: {
+          'repo': repo,
+          'mode': mode,
+          if (since.isNotEmpty) 'since': since,
+          if (full) 'full': '1',
+          if (sessionId.isNotEmpty) 'sessionId': sessionId,
+        });
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  Future<Map<String, dynamic>> scBaselineSet(String plugin,
+      {required String sessionId, required String repo}) async {
+    final res = await _dio.post('/api/source-control/$plugin/baseline',
+        data: {'sessionId': sessionId, 'repo': repo});
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  Future<Map<String, dynamic>?> scBaselineGet(String plugin,
+      {required String sessionId, String repo = ''}) async {
+    final res = await _dio.get('/api/source-control/$plugin/baseline',
+        queryParameters: {
+          'sessionId': sessionId,
+          if (repo.isNotEmpty) 'repo': repo,
+        });
+    if (res.data == null) return null;
+    if (res.data is Map) return Map<String, dynamic>.from(res.data as Map);
+    return null;
+  }
+
+  Future<void> scBaselineDelete(String plugin,
+      {required String sessionId, required String repo}) async {
+    await _dio.delete('/api/source-control/$plugin/baseline', queryParameters: {
+      'sessionId': sessionId,
+      'repo': repo,
+    });
+  }
+
+  // ── Source Control: forge instances ─────────────────────
+
+  Future<List<Map<String, dynamic>>> scForgesList(String plugin) async {
+    final res = await _dio.get('/api/source-control/$plugin/forges');
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, dynamic>> scForgeCreate(String plugin, {
+    required String name,
+    required String type,
+    required String baseUrl,
+    String token = '',
+  }) async {
+    final res = await _dio.post('/api/source-control/$plugin/forges', data: {
+      'name': name,
+      'type': type,
+      'baseUrl': baseUrl,
+      if (token.isNotEmpty) 'token': token,
+    });
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  Future<void> scForgeUpdate(String plugin, String id, {
+    String name = '',
+    String type = '',
+    String baseUrl = '',
+    String token = '',
+  }) async {
+    await _dio.put('/api/source-control/$plugin/forges/$id', data: {
+      if (name.isNotEmpty) 'name': name,
+      if (type.isNotEmpty) 'type': type,
+      if (baseUrl.isNotEmpty) 'baseUrl': baseUrl,
+      if (token.isNotEmpty) 'token': token,
+    });
+  }
+
+  Future<void> scForgeDelete(String plugin, String id) async {
+    await _dio.delete('/api/source-control/$plugin/forges/$id');
+  }
+
+  Future<List<Map<String, dynamic>>> scForgeRepos(
+      String plugin, String id, {int limit = 0}) async {
+    final res = await _dio.get('/api/source-control/$plugin/forges/$id/repos',
+        queryParameters: {if (limit > 0) 'limit': limit});
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  // ── Source Control: pull requests under a forge instance ────
+
+  Future<List<Map<String, dynamic>>> scPulls(String plugin, String forgeId, {
+    required String repo,
+    String state = '',
+    int limit = 0,
+  }) async {
+    final res = await _dio.get(
+        '/api/source-control/$plugin/forges/$forgeId/pulls',
+        queryParameters: {
+          'repo': repo,
           if (state.isNotEmpty) 'state': state,
           if (limit > 0) 'limit': limit,
         });
     return (res.data as List).cast<Map<String, dynamic>>();
   }
 
-  Future<Map<String, dynamic>> forgePullDetail(
-      String plugin, int number) async {
-    final res = await _dio.get('/api/git-forge/$plugin/pulls/$number');
+  Future<Map<String, dynamic>> scPullDetail(
+      String plugin, String forgeId, int number, {required String repo}) async {
+    final res = await _dio.get(
+        '/api/source-control/$plugin/forges/$forgeId/pulls/$number',
+        queryParameters: {'repo': repo});
     return Map<String, dynamic>.from(res.data as Map);
   }
 
-  Future<List<Map<String, dynamic>>> forgePullDiff(
-      String plugin, int number) async {
-    final res = await _dio.get('/api/git-forge/$plugin/pulls/$number/diff');
-    return (res.data as List).cast<Map<String, dynamic>>();
-  }
-
-  Future<List<Map<String, dynamic>>> forgePullComments(
-      String plugin, int number) async {
-    final res = await _dio.get('/api/git-forge/$plugin/pulls/$number/comments');
-    return (res.data as List).cast<Map<String, dynamic>>();
-  }
-
-  /// Reviews submitted on a PR — approved / changes_requested /
-  /// commented / dismissed, with body + timestamps. GitLab returns
-  /// approvals-only (always state="approved").
-  Future<List<Map<String, dynamic>>> forgePullReviews(
-      String plugin, int number) async {
-    final res = await _dio.get('/api/git-forge/$plugin/pulls/$number/reviews');
-    return (res.data as List).cast<Map<String, dynamic>>();
-  }
-
-  /// Inline review comments (per-file, per-line). Distinct from
-  /// forgePullComments which returns only the top-level discussion.
-  Future<List<Map<String, dynamic>>> forgePullReviewComments(
-      String plugin, int number) async {
+  Future<List<Map<String, dynamic>>> scPullDiff(
+      String plugin, String forgeId, int number, {required String repo}) async {
     final res = await _dio.get(
-        '/api/git-forge/$plugin/pulls/$number/review-comments');
+        '/api/source-control/$plugin/forges/$forgeId/pulls/$number/diff',
+        queryParameters: {'repo': repo});
     return (res.data as List).cast<Map<String, dynamic>>();
   }
 
-  /// CI checks at the PR's head commit. Each entry has a normalised
-  /// status (success / failure / pending / skipped) so the UI can
-  /// render a traffic-light badge without per-forge branching.
-  Future<List<Map<String, dynamic>>> forgePullChecks(
-      String plugin, int number) async {
-    final res = await _dio.get('/api/git-forge/$plugin/pulls/$number/checks');
+  Future<List<Map<String, dynamic>>> scPullComments(
+      String plugin, String forgeId, int number, {required String repo}) async {
+    final res = await _dio.get(
+        '/api/source-control/$plugin/forges/$forgeId/pulls/$number/comments',
+        queryParameters: {'repo': repo});
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<List<Map<String, dynamic>>> scPullReviews(
+      String plugin, String forgeId, int number, {required String repo}) async {
+    final res = await _dio.get(
+        '/api/source-control/$plugin/forges/$forgeId/pulls/$number/reviews',
+        queryParameters: {'repo': repo});
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<List<Map<String, dynamic>>> scPullReviewComments(
+      String plugin, String forgeId, int number, {required String repo}) async {
+    final res = await _dio.get(
+        '/api/source-control/$plugin/forges/$forgeId/pulls/$number/review-comments',
+        queryParameters: {'repo': repo});
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<List<Map<String, dynamic>>> scPullChecks(
+      String plugin, String forgeId, int number, {required String repo}) async {
+    final res = await _dio.get(
+        '/api/source-control/$plugin/forges/$forgeId/pulls/$number/checks',
+        queryParameters: {'repo': repo});
     return (res.data as List).cast<Map<String, dynamic>>();
   }
 

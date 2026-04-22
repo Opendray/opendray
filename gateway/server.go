@@ -363,33 +363,12 @@ func New(cfg Config) *Server {
 		r.Post("/api/tasks/{plugin}/run/{runId}/stop", s.tasksRunStop)
 		r.Get("/api/tasks/{plugin}/run/{runId}/ws", s.tasksRunWS)
 
-		// Git-viewer panel — read-only per-repo status, diff, log, branches,
-		// plus a per-session baseline so the UI can show only what changed
-		// during the current session (SnapshotHEAD → SessionDiff). Write
-		// paths (stage/commit/push/etc) live in the Claude session flow.
-		r.Get("/api/git/{plugin}/status",   s.gitStatus)
-		r.Get("/api/git/{plugin}/diff",     s.gitDiff)
-		r.Get("/api/git/{plugin}/log",      s.gitLog)
-		r.Get("/api/git/{plugin}/branches", s.gitBranches)
-		r.Post("/api/git/{plugin}/session/snapshot", s.gitSessionSnapshot)
-		r.Get("/api/git/{plugin}/session/diff",      s.gitSessionDiff)
-
-		// Git-forge panel — read-only PR viewer against Gitea / GitHub /
-		// GitLab. The adapter dispatch (gateway/forge) picks one based on
-		// the plugin's forgeType configSchema field. PR creation / merge
-		// / approve / comment flow through the Claude session, not here.
-		r.Get("/api/git-forge/{plugin}/pulls",                    s.forgePullsList)
-		r.Get("/api/git-forge/{plugin}/pulls/{number}",           s.forgePullDetail)
-		r.Get("/api/git-forge/{plugin}/pulls/{number}/diff",      s.forgePullDiff)
-		r.Get("/api/git-forge/{plugin}/pulls/{number}/comments",         s.forgePullComments)
-		r.Get("/api/git-forge/{plugin}/pulls/{number}/reviews",          s.forgePullReviews)
-		r.Get("/api/git-forge/{plugin}/pulls/{number}/review-comments",  s.forgePullReviewComments)
-		r.Get("/api/git-forge/{plugin}/pulls/{number}/checks",           s.forgePullChecks)
-
-		// Source Control panel — the consolidated replacement for git-
-		// viewer + git-forge (git-forge forge surface merges in Phase 2).
-		// Adds repo auto-discovery across allowedRoots, user bookmarks,
-		// multi-file diff, and DB-backed per-session baselines.
+		// Source Control panel — read-only Git surface. Covers repo
+		// auto-discovery across allowedRoots, user bookmarks, multi-file
+		// diff, DB-backed per-session baselines, and PR review against
+		// Gitea / GitHub / GitLab forge instances. Write paths
+		// (stage/commit/push/merge/approve/comment) flow through the
+		// Claude session, not here.
 		r.Get("/api/source-control/{plugin}/repos",         s.scRepos)
 		r.Post("/api/source-control/{plugin}/bookmarks",    s.scBookmarksAdd)
 		r.Delete("/api/source-control/{plugin}/bookmarks",  s.scBookmarksRemove)

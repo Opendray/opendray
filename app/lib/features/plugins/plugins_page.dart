@@ -201,8 +201,7 @@ class _PluginsPageState extends State<PluginsPage> {
   static const Map<String, String> _handOpenRoute = {
     'claude': '/settings/claude-accounts',
     'file-browser': '/browser/files',
-    'git-viewer': '/browser/git',
-    'git-forge': '/browser/forge',
+    'source-control': '/browser/source-control',
     'pg-browser': '/browser/database',
     'log-viewer': '/browser/logs',
     'mcp': '/browser/mcp',

@@ -10,9 +10,8 @@ import '../../shared/theme/app_theme.dart';
 import '../browser/preview_page.dart';
 import '../docs/docs_page.dart';
 import '../files/files_page.dart';
-import '../forge/forge_page.dart';
-import '../git/git_page.dart';
 import '../pg/pg_page.dart';
+import '../source_control/source_control_page.dart';
 import '../logs/logs_page.dart';
 import '../mcp/mcp_page.dart';
 import '../messaging/telegram_page.dart';
@@ -37,8 +36,7 @@ Map<String, WidgetBuilder> get _legacyPanelBuilders => <String, WidgetBuilder>{
       // 'database' retired — replaced by pg-browser v1 plugin installed
       // from the Hub (plugin/marketplace/packages/pg-browser/).
       'file-browser': (_) => const FilesPage(),
-      'git-viewer': (_) => const GitPage(),
-      'git-forge': (_) => const ForgePage(),
+      'source-control': (_) => const SourceControlPage(),
       'pg-browser': (_) => const PGPage(),
       'log-viewer': (_) => const LogsPage(),
       'mcp': (_) => const MCPPage(),

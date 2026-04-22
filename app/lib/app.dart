@@ -15,11 +15,10 @@ import 'features/browser/preview_page.dart';
 import 'features/claude_accounts/claude_accounts_page.dart';
 import 'features/docs/docs_page.dart';
 import 'features/endpoints/endpoints_page.dart';
-import 'features/forge/forge_page.dart';
 import 'features/pg/pg_page.dart';
 import 'features/files/files_page.dart';
-import 'features/git/git_page.dart';
 import 'features/logs/logs_page.dart';
+import 'features/source_control/source_control_page.dart';
 import 'features/mcp/mcp_page.dart';
 import 'features/messaging/telegram_page.dart';
 import 'features/hub/hub_page.dart';
@@ -259,13 +258,9 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
             builder: (ctx, _) => _panelShell(ctx, 'Tasks', const TasksPage()),
           ),
           GoRoute(
-            path: '/browser/git',
-            builder: (ctx, _) => _panelShell(ctx, 'Git', const GitPage()),
-          ),
-          GoRoute(
-            path: '/browser/forge',
-            builder: (ctx, _) =>
-                _panelShell(ctx, 'Pull Requests', const ForgePage()),
+            path: '/browser/source-control',
+            builder: (ctx, _) => _panelShell(
+                ctx, 'Source Control', const SourceControlPage()),
           ),
           GoRoute(
             path: '/browser/database',

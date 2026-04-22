@@ -1,5 +1,5 @@
 // Package git provides safe, read-only git repository inspection for the
-// "git-viewer" panel plugin. Every operation is pinned to a caller-provided
+// source-control panel plugin. Every operation is pinned to a caller-provided
 // repository path that must resolve inside the plugin's allowedRoots, and
 // every subprocess runs under a context timeout to guard the gateway from
 // runaway git invocations. Write paths (stage/unstage/discard/commit) live

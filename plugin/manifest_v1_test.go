@@ -35,8 +35,6 @@ var v1BundledAll = map[string]bool{
 	"codex":             true,
 	"file-browser":      true,
 	"gemini":            true,
-	"git-forge":         true,
-	"git-viewer":        true,
 	"log-viewer":        true,
 	"mcp":               true,
 	"obsidian-reader":   true,

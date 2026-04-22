@@ -196,13 +196,6 @@ class L10n extends ChangeNotifier {
         '运行一条查询以在此显示结果。',
     'Review PRs from Gitea, GitHub, or GitLab':
         '浏览 Gitea / GitHub / GitLab 上的 Pull Request',
-    'Git Forge plugin not enabled':   'Git Forge 插件未启用',
-    'Install git-forge from the Hub and configure forgeType + baseUrl + repo in Plugins → Configure.':
-        '在 Hub 里安装 git-forge,并在 Plugins → Configure 里设置 forgeType / baseUrl / repo。',
-    'No pull requests':               '暂无 Pull Request',
-    'Change the state filter above or confirm the repo has PRs.':
-        '切换上方状态过滤器,或确认仓库是否有 PR。',
-    'No diff':                        '无 diff',
     'No comments':                    '暂无评论',
     'Open in browser':                '在浏览器打开',
     'Explain this PR':                '让 Claude 总结这个 PR',
