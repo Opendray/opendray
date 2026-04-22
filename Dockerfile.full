@@ -1,0 +1,119 @@
+# syntax=docker/dockerfile:1.7
+#
+# OpenDray "full" image — OpenDray server + four bundled agent CLIs.
+#
+# Ships: claude, codex, gemini, opencode (all on PATH, invokable by
+# the builtin plugins out of the box). Use this when you want a single
+# docker pull to get a working multi-agent launcher. For a minimal
+# image without the CLIs, use the root Dockerfile instead.
+
+ARG GO_VERSION=1.25
+ARG NODE_VERSION=22
+ARG FLUTTER_IMAGE=ghcr.io/cirruslabs/flutter:beta
+
+# Pinnable versions for each bundled CLI. Override at build time, e.g.
+#   docker build --build-arg CLAUDE_CODE_VERSION=2.1.117 -f Dockerfile.full .
+ARG CLAUDE_CODE_VERSION=latest
+ARG CODEX_VERSION=latest
+ARG GEMINI_CLI_VERSION=latest
+ARG OPENCODE_VERSION=latest
+
+# ── Stage 1: Flutter web bundle ───────────────────────────────────
+FROM ${FLUTTER_IMAGE} AS flutter-build
+WORKDIR /src
+COPY app/ app/
+RUN cd app && flutter pub get && flutter build web --release
+
+# ── Stage 2: Go binary (with embedded web dist) ───────────────────
+FROM golang:${GO_VERSION}-bookworm AS go-build
+WORKDIR /src
+COPY . .
+COPY --from=flutter-build /src/app/build/web/ app/build/web/
+
+ARG VERSION=dev
+ARG BUILD_SHA=unknown
+ARG BUILD_TIME=unknown
+RUN CGO_ENABLED=0 go build \
+      -ldflags="-s -w -X main.version=${VERSION} -X main.buildSha=${BUILD_SHA} -X main.buildTime=${BUILD_TIME}" \
+      -trimpath \
+      -o /opendray ./cmd/opendray
+
+# ── Stage 3: Runtime — Node 22 + agent CLIs + opendray binary ─────
+FROM node:${NODE_VERSION}-bookworm-slim AS runtime
+
+ARG CLAUDE_CODE_VERSION
+ARG CODEX_VERSION
+ARG GEMINI_CLI_VERSION
+ARG OPENCODE_VERSION
+ARG OPENDRAY_UID=1000
+ARG OPENDRAY_GID=1000
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates \
+      curl \
+      git \
+      openssh-client \
+      dumb-init \
+      tzdata \
+      locales \
+      libsecret-1-0 && \
+    sed -i 's/^# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    locale-gen && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8
+
+# Bundle the four agent CLIs. All four rely on optionalDependencies for
+# platform-specific binary payloads (Rust binaries for codex, native
+# ptys / prebuilt addons for gemini, platform binaries for opencode),
+# so a single `npm install -g` with optional deps intact is correct —
+# never pass --omit=optional here. libsecret-1-0 above satisfies the
+# keytar runtime requirement gemini-cli pulls in.
+RUN npm install -g --no-audit --no-fund \
+        "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
+        "@openai/codex@${CODEX_VERSION}" \
+        "@google/gemini-cli@${GEMINI_CLI_VERSION}" \
+        "opencode-ai@${OPENCODE_VERSION}" && \
+    npm cache clean --force
+
+# Non-root user. Matching 1000:1000 keeps bind-mount permissions sane on
+# most Linux hosts; override via --build-arg OPENDRAY_UID=... if needed.
+# node:*-slim images ship a pre-existing `node` user at UID/GID 1000,
+# so we drop it before claiming the same ID for `opendray`.
+RUN if getent passwd node >/dev/null; then userdel -r node 2>/dev/null || userdel node; fi && \
+    if getent group  node >/dev/null; then groupdel node 2>/dev/null || true; fi && \
+    groupadd -g ${OPENDRAY_GID} opendray && \
+    useradd  -u ${OPENDRAY_UID} -g ${OPENDRAY_GID} -m -s /bin/bash opendray && \
+    install -d -o opendray -g opendray \
+        /home/opendray/.opendray \
+        /home/opendray/.claude \
+        /home/opendray/.codex \
+        /home/opendray/.gemini \
+        /home/opendray/.config \
+        /home/opendray/.config/opencode \
+        /home/opendray/.qwen \
+        /workspace && \
+    chown opendray:opendray /workspace
+
+COPY --from=go-build /opendray /usr/local/bin/opendray
+
+USER opendray
+WORKDIR /workspace
+
+ENV HOME=/home/opendray \
+    LISTEN_ADDR=:8640 \
+    PLUGIN_DIR=/home/opendray/.opendray/plugins \
+    OPENDRAY_PLUGINS_DATA_DIR=/home/opendray/.opendray/plugins
+
+EXPOSE 8640
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD curl -fsSL http://127.0.0.1:8640/api/health >/dev/null || exit 1
+
+# dumb-init forwards signals + reaps zombies from child PTYs spawned by
+# the agent CLIs. Without it, Ctrl-C in `docker stop` can leave defunct
+# processes.
+ENTRYPOINT ["/usr/bin/dumb-init", "--", "/usr/local/bin/opendray"]

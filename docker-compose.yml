@@ -1,0 +1,91 @@
+# OpenDray all-in-one compose stack.
+#
+# Launches the OpenDray server (with bundled Claude Code / Codex / Gemini
+# / OpenCode CLIs) alongside a dedicated Postgres instance. State for
+# OpenDray itself, each agent's auth tokens, and the user workspace is
+# held in named volumes + one bind mount so containers stay disposable.
+#
+# Quick start:
+#   cp .env.docker.example .env
+#   ./scripts/opendray-docker up
+# Open http://localhost:8640 and follow the setup wizard.
+
+name: opendray
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-opendray}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
+      POSTGRES_DB: ${DB_NAME:-opendray}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-opendray} -d ${DB_NAME:-opendray}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - opendray
+
+  opendray:
+    image: ${OPENDRAY_IMAGE:-ghcr.io/opendray/opendray:latest-full}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      LISTEN_ADDR: ":8640"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: ${DB_USER:-opendray}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-opendray}
+      JWT_SECRET: ${JWT_SECRET:-}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      AUTO_RESUME: ${AUTO_RESUME:-true}
+      IDLE_THRESHOLD_SECONDS: ${IDLE_THRESHOLD_SECONDS:-8}
+      # Agent API keys — plugins read these via env. All optional; leave
+      # blank to use each CLI's cached OAuth login instead.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENDRAY_TELEGRAM_BOT_TOKEN: ${OPENDRAY_TELEGRAM_BOT_TOKEN:-}
+    ports:
+      - "${OPENDRAY_HTTP_PORT:-8640}:8640"
+    volumes:
+      # Server state + embedded plugin data.
+      - opendray-home:/home/opendray/.opendray
+      # Agent auth caches — one volume per CLI so `opendray-docker login`
+      # survives image upgrades.
+      - claude-auth:/home/opendray/.claude
+      - codex-auth:/home/opendray/.codex
+      - gemini-auth:/home/opendray/.gemini
+      - opencode-auth:/home/opendray/.config/opencode
+      - qwen-auth:/home/opendray/.qwen
+      # User workspace: where agents read & write code. Bind-mount so
+      # the host filesystem is the source of truth.
+      - ${OPENDRAY_WORKSPACE:-./workspace}:/workspace
+      # Optional: drop custom plugin folders here (auto-scanned).
+      - ./plugins-custom:/home/opendray/plugins-custom:ro
+    networks:
+      - opendray
+
+volumes:
+  pgdata:
+  opendray-home:
+  claude-auth:
+  codex-auth:
+  gemini-auth:
+  opencode-auth:
+  qwen-auth:
+
+networks:
+  opendray:
+    driver: bridge

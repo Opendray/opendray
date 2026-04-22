@@ -1,0 +1,301 @@
+#!/usr/bin/env bash
+# opendray-docker — human-friendly wrapper around the OpenDray compose stack.
+#
+# Designed to be the ONE command operators need to know:
+#   ./scripts/opendray-docker up          → start everything
+#   ./scripts/opendray-docker login claude → authenticate an agent CLI
+#   ./scripts/opendray-docker doctor      → tell me what's broken
+#
+# Everything is thin sugar around `docker compose` + `docker exec`; the
+# compose file is still the source of truth.
+
+set -euo pipefail
+
+# ── Resolve repo root ────────────────────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+cd "${REPO_ROOT}"
+
+COMPOSE_FILE="${OPENDRAY_COMPOSE_FILE:-docker-compose.yml}"
+ENV_FILE="${OPENDRAY_ENV_FILE:-.env}"
+SERVICE="${OPENDRAY_SERVICE:-opendray}"
+DB_SERVICE="${OPENDRAY_DB_SERVICE:-postgres}"
+
+# ── Colors (disabled when not a TTY) ─────────────────────────────
+if [[ -t 1 ]]; then
+  BOLD=$'\e[1m'; RED=$'\e[31m'; GRN=$'\e[32m'; YLW=$'\e[33m'; CYN=$'\e[36m'; RST=$'\e[0m'
+else
+  BOLD=''; RED=''; GRN=''; YLW=''; CYN=''; RST=''
+fi
+
+log()  { printf '%s→%s %s\n'   "${CYN}" "${RST}" "$*"; }
+warn() { printf '%s!%s %s\n'   "${YLW}" "${RST}" "$*" >&2; }
+err()  { printf '%sx%s %s\n'   "${RED}" "${RST}" "$*" >&2; }
+ok()   { printf '%s✓%s %s\n'   "${GRN}" "${RST}" "$*"; }
+
+# ── Pre-flight ───────────────────────────────────────────────────
+compose() {
+  # `docker compose` (v2) is the only supported form. We do NOT fall
+  # back to legacy `docker-compose` — that plugin is EOL and handles
+  # healthcheck-gated depends_on differently.
+  docker compose --file "${COMPOSE_FILE}" "$@"
+}
+
+require_docker() {
+  if ! command -v docker >/dev/null 2>&1; then
+    err "docker is not installed or not on PATH"
+    exit 1
+  fi
+  if ! docker compose version >/dev/null 2>&1; then
+    err "docker compose v2 is required (got: $(docker --version))"
+    exit 1
+  fi
+}
+
+require_env() {
+  if [[ ! -f "${ENV_FILE}" ]]; then
+    warn "${ENV_FILE} missing — bootstrapping from .env.docker.example"
+    if [[ ! -f .env.docker.example ]]; then
+      err ".env.docker.example not found — cannot bootstrap"
+      exit 1
+    fi
+    cp .env.docker.example "${ENV_FILE}"
+    ok "created ${ENV_FILE}"
+    warn "edit it and set DB_PASSWORD before continuing"
+    exit 0
+  fi
+}
+
+# ── Commands ─────────────────────────────────────────────────────
+
+cmd_up() {
+  require_env
+  log "starting opendray stack (pulling any missing images)…"
+  compose up --detach --remove-orphans "$@"
+  ok "opendray is up"
+  local port
+  port="$(grep -E '^OPENDRAY_HTTP_PORT=' "${ENV_FILE}" | tail -1 | cut -d= -f2)"
+  port="${port:-8640}"
+  printf '  open %shttp://localhost:%s%s\n' "${BOLD}" "${port}" "${RST}"
+}
+
+cmd_down() {
+  log "stopping opendray stack (data volumes preserved)…"
+  compose down "$@"
+  ok "stopped"
+}
+
+cmd_destroy() {
+  warn "this will DELETE all opendray volumes (db, auth, state)"
+  read -rp "type 'DELETE' to confirm: " confirm
+  if [[ "${confirm}" != "DELETE" ]]; then
+    log "aborted"
+    exit 1
+  fi
+  compose down --volumes --remove-orphans
+  ok "stack removed and volumes purged"
+}
+
+cmd_restart() {
+  log "restarting ${SERVICE}…"
+  compose restart "${SERVICE}"
+  ok "restarted"
+}
+
+cmd_logs() {
+  # Default to following opendray only; pass another service as an arg to
+  # tail postgres etc. `--tail 200` keeps the initial dump manageable.
+  local svc="${1:-${SERVICE}}"
+  shift || true
+  compose logs --follow --tail 200 "${svc}" "$@"
+}
+
+cmd_status() {
+  compose ps
+}
+
+cmd_ps() { cmd_status "$@"; }
+
+cmd_shell() {
+  local svc="${1:-${SERVICE}}"
+  log "opening shell in ${svc}…"
+  compose exec "${svc}" bash || compose exec "${svc}" sh
+}
+
+cmd_pull() {
+  log "pulling latest images…"
+  compose pull
+  ok "images refreshed — run \`opendray-docker up\` to recreate containers"
+}
+
+cmd_update() {
+  cmd_pull
+  log "recreating containers with new images…"
+  compose up --detach --remove-orphans
+  ok "update complete"
+}
+
+# `login <agent>` — run the CLI's interactive login inside the container
+# so its credentials land in the named volume and survive restarts.
+cmd_login() {
+  local agent="${1:-}"
+  if [[ -z "${agent}" ]]; then
+    err "usage: opendray-docker login <claude|codex|gemini|opencode|qwen>"
+    exit 1
+  fi
+  local cmd
+  case "${agent}" in
+    claude)   cmd=(claude  /login) ;;
+    codex)    cmd=(codex   login)  ;;
+    gemini)   cmd=(gemini  /auth)  ;;
+    opencode) cmd=(opencode auth login) ;;
+    qwen)     cmd=(qwen    /auth)  ;;
+    *) err "unknown agent: ${agent}"; exit 1 ;;
+  esac
+  log "launching ${agent} login inside ${SERVICE}…"
+  compose exec "${SERVICE}" "${cmd[@]}"
+}
+
+cmd_versions() {
+  log "CLI versions inside ${SERVICE}:"
+  compose exec "${SERVICE}" bash -lc '
+    for bin in claude codex gemini opencode; do
+      if command -v "$bin" >/dev/null 2>&1; then
+        printf "  %-10s %s\n" "$bin" "$("$bin" --version 2>&1 | head -1)"
+      else
+        printf "  %-10s %s\n" "$bin" "(not installed)"
+      fi
+    done
+    printf "  %-10s %s\n" opendray "$(opendray --version 2>&1 | head -1 || echo unknown)"
+  '
+}
+
+cmd_doctor() {
+  local fail=0
+  log "${BOLD}opendray-docker doctor${RST}"
+
+  printf '  docker daemon         … '
+  if docker info >/dev/null 2>&1; then ok "ok"; else err "unreachable"; fail=1; fi
+
+  printf '  %s              … ' "${ENV_FILE}"
+  if [[ -f "${ENV_FILE}" ]]; then ok "present"; else err "missing"; fail=1; fi
+
+  printf '  %s  … ' "${COMPOSE_FILE}"
+  if [[ -f "${COMPOSE_FILE}" ]]; then ok "present"; else err "missing"; fail=1; fi
+
+  printf '  stack running         … '
+  if compose ps --status running --services 2>/dev/null | grep -q "${SERVICE}"; then
+    ok "yes"
+  else
+    warn "no — run 'opendray-docker up'"
+  fi
+
+  if compose ps --status running --services 2>/dev/null | grep -q "${SERVICE}"; then
+    printf '  http health           … '
+    if compose exec -T "${SERVICE}" curl -fsSL http://127.0.0.1:8640/api/health >/dev/null 2>&1; then
+      ok "ok"
+    else
+      err "not responding"; fail=1
+    fi
+
+    printf '  postgres ping         … '
+    if compose exec -T "${DB_SERVICE}" pg_isready -U "${DB_USER:-opendray}" >/dev/null 2>&1; then
+      ok "ok"
+    else
+      err "not ready"; fail=1
+    fi
+
+    cmd_versions
+  fi
+
+  if [[ "${fail}" -ne 0 ]]; then
+    err "doctor found problems"
+    exit 1
+  fi
+  ok "all checks passed"
+}
+
+cmd_backup() {
+  local out="${1:-opendray-backup-$(date -u +%Y%m%dT%H%M%SZ).sql.gz}"
+  log "dumping postgres → ${out}"
+  compose exec -T "${DB_SERVICE}" \
+    pg_dump -U "${DB_USER:-opendray}" -d "${DB_NAME:-opendray}" --clean --if-exists \
+    | gzip > "${out}"
+  ok "backup written: ${out}"
+  log "tip: opendray state (auth tokens, plugin data) lives in docker volumes;"
+  log "     use 'docker volume inspect opendray_opendray-home' to find them."
+}
+
+cmd_build() {
+  log "building local image from Dockerfile.full…"
+  docker build \
+    --file Dockerfile.full \
+    --tag "${OPENDRAY_IMAGE:-opendray/opendray:local-full}" \
+    "$@" \
+    .
+  ok "built: ${OPENDRAY_IMAGE:-opendray/opendray:local-full}"
+}
+
+cmd_help() {
+  cat <<EOF
+${BOLD}opendray-docker${RST} — manage the OpenDray all-in-one compose stack.
+
+${BOLD}Lifecycle${RST}
+  up                 start the stack (postgres + opendray)
+  down               stop the stack (volumes preserved)
+  restart            restart the opendray container only
+  destroy            stop + delete ALL volumes (requires typing 'DELETE')
+
+${BOLD}Observe${RST}
+  status | ps        show container state
+  logs [service]     tail logs (default: opendray; try 'logs postgres')
+  doctor             run connectivity + health checks
+  versions           print bundled CLI versions
+
+${BOLD}Operate${RST}
+  shell [service]    open a bash shell inside a container
+  login <agent>      interactive login for an agent CLI
+                     agents: claude | codex | gemini | opencode | qwen
+  pull               pull newer images without recreating containers
+  update             pull + recreate (one-shot upgrade)
+  backup [file]      pg_dump into a gzipped SQL file
+  build              build Dockerfile.full locally (tags OPENDRAY_IMAGE)
+
+${BOLD}Environment${RST}
+  OPENDRAY_COMPOSE_FILE   compose file to use (default: docker-compose.yml)
+  OPENDRAY_ENV_FILE       env file to check/bootstrap (default: .env)
+  OPENDRAY_IMAGE          image tag for 'build' (default: opendray/opendray:local-full)
+
+Run 'opendray-docker <cmd> --help' on any docker-compose-native command to
+see the full flag set from docker compose.
+EOF
+}
+
+# ── Dispatch ─────────────────────────────────────────────────────
+require_docker
+
+cmd="${1:-help}"
+shift || true
+
+case "${cmd}" in
+  up)        cmd_up        "$@" ;;
+  down)      cmd_down      "$@" ;;
+  destroy)   cmd_destroy   "$@" ;;
+  restart)   cmd_restart   "$@" ;;
+  logs|log)  cmd_logs      "$@" ;;
+  status|ps) cmd_status    "$@" ;;
+  shell|sh|exec) cmd_shell "$@" ;;
+  pull)      cmd_pull      "$@" ;;
+  update|upgrade) cmd_update "$@" ;;
+  login|auth) cmd_login    "$@" ;;
+  versions|version) cmd_versions "$@" ;;
+  doctor|check) cmd_doctor "$@" ;;
+  backup|dump) cmd_backup  "$@" ;;
+  build)     cmd_build     "$@" ;;
+  help|-h|--help) cmd_help ;;
+  *)
+    err "unknown command: ${cmd}"
+    cmd_help
+    exit 1
+    ;;
+esac

@@ -5,7 +5,7 @@ COPY app/ app/
 RUN cd app && flutter pub get && flutter build web --release
 
 # Stage 2: Build Go binary
-FROM golang:1.24-bookworm AS go-build
+FROM golang:1.25-bookworm AS go-build
 WORKDIR /src
 COPY . .
 COPY --from=flutter-build /src/app/build/web/ app/build/web/

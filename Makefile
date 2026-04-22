@@ -1,5 +1,6 @@
 .PHONY: dev dev-backend dev-app build build-web build-apk run test vet clean \
-        release-linux release-all release package deploy ssh logs status
+        release-linux release-all release package deploy ssh logs status \
+        docker-build docker-up docker-down docker-logs docker-doctor docker-update
 
 # Linux target for the LXC deployment.
 LINUX_GOOS   ?= linux
@@ -110,3 +111,26 @@ logs:
 
 status:
 	ssh -i $(DEPLOY_KEY) $(DEPLOY_HOST) systemctl status opendray --no-pager
+
+# ── Docker (all-in-one image + compose stack) ──────────────
+# Thin aliases over scripts/opendray-docker so `make docker-up` works
+# for operators who already live in Makefile land. The wrapper script
+# is the canonical entry point — see docs/DOCKER.md.
+
+docker-build:
+	./scripts/opendray-docker build
+
+docker-up:
+	./scripts/opendray-docker up
+
+docker-down:
+	./scripts/opendray-docker down
+
+docker-logs:
+	./scripts/opendray-docker logs
+
+docker-doctor:
+	./scripts/opendray-docker doctor
+
+docker-update:
+	./scripts/opendray-docker update

@@ -134,6 +134,22 @@ make build
 ./bin/opendray
 ```
 
+### Docker (all-in-one, with bundled agent CLIs)
+
+```bash
+git clone https://github.com/opendray/opendray.git
+cd opendray
+cp .env.docker.example .env && $EDITOR .env   # set DB_PASSWORD
+./scripts/opendray-docker up                  # starts opendray + postgres
+./scripts/opendray-docker login claude        # one-time OAuth per agent
+```
+
+The `*-full` image bundles **Claude Code**, **Codex**, **Gemini CLI**,
+and **OpenCode** on PATH, so every builtin plugin works with zero host
+setup. The `opendray-docker` wrapper gives you `up / down / logs /
+doctor / login / update / backup` verbs over the compose stack.
+Full reference: [docs/DOCKER.md](docs/DOCKER.md).
+
 <details>
 <summary><b>Dev mode (hot-reload)</b></summary>
 

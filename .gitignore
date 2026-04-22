@@ -27,6 +27,7 @@ __pycache__/
 .env
 .env.*
 !.env.example
+!.env.docker.example
 
 # Runtime logs (not the gateway/logs package or plugins/panels/log-viewer)
 /logs/
@@ -45,10 +46,11 @@ scripts/deploy.env
 CLAUDE.md
 deploy/
 
-# Docs — only the logo survives (README references it)
+# Docs — only the logo + Docker guide survive (README references them)
 /docs/*
 !/docs/logo.png
 !/docs/logo.svg
+!/docs/DOCKER.md
 
 # Marketing / docs site — hosted separately
 /website/
