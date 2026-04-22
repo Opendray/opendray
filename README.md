@@ -21,6 +21,11 @@
 <a href="https://github.com/opendray/opendray/discussions"><b>Discussions</b></a>
 </p>
 
+<p>
+<b>English</b> &middot;
+<a href="README.zh-CN.md"><b>简体中文</b></a>
+</p>
+
 <!-- TODO: Replace with actual screenshot/screencast -->
 <!-- <img src="docs/screenshots/demo.svg" alt="OpenDray demo" width="720"> -->
 
@@ -348,27 +353,30 @@ graph TB
 ### Source Layout
 
 ```
-cmd/opendray/       Entry point — loads env, boots kernel, starts HTTP server
+cmd/opendray/       Entry point — setup, service, uninstall, plugin, version subcommands
 kernel/
   terminal/         PTY engine: spawn, 4 MB ring buffer, idle detection
   hub/              Multi-session lifecycle: create, attach, resume, stop (max 20)
-  store/            PostgreSQL: connection pool, 8 migrations, queries
+  store/            PostgreSQL: connection pool, 18 migrations, queries
   auth/             JWT issuing and middleware (HS256, 7-day TTL)
+  pg/               Bundled PostgreSQL launcher (embedded PG 15.4 child process)
+  config/           config.toml parser + env overlay
 gateway/            HTTP + WebSocket handlers
-  telegram/         Telegram bot: 15 commands, links, notifications, multi-select keyboards
+  telegram/         Telegram bot: commands, links, notifications, inline keyboards
   mcp/              MCP server registry, per-session config renderer + cleanup
   llm_proxy/        Anthropic-to-OpenAI request/response translation
   files/            Sandboxed file browser (allowed-roots, symlink resolution)
-  database/         Read-only PostgreSQL browser (DDL/DML blocked, row/time caps)
+  pg/               Read-only PostgreSQL browser (DDL/DML blocked, row/time caps)
+  forge/            Git-forge clients (Gitea, GitHub, GitLab) for Obsidian reader
   git/              Per-repo status, per-session baseline diffs, branch listing
   logs/             Tail-follow with rotation detection, regex grep, extension filter
   tasks/            Makefile / npm / shell discovery, concurrent runner with timeouts
-  docs/             Git-forge markdown reader (Gitea, GitHub, GitLab)
-plugin/             Manifest scanner, runtime, hook bus
+  docs/             Markdown reader (used by the Obsidian plugin)
+plugin/             Manifest scanner, runtime, hook bus, marketplace, consents
 plugins/
-  agents/           6 agents: claude, codex, gemini, opencode, qwen, terminal
-  panels/           11 panels: files, database, logs, tasks, git, telegram, mcp, ...
-app/                Flutter client (iOS, Android, Web) — 16 screens
+  builtin/          17 built-in plugins (6 agents + 11 panels, embedded in binary)
+  examples/         Reference external plugins (time-ninja, kanban, fs-readme)
+app/                Flutter client (iOS, Android, Web) — 19 feature modules
 ```
 
 ## Plugins
@@ -394,7 +402,8 @@ Every agent and panel is a plugin. OpenDray ships with 17.
 | **PostgreSQL Browser** | database | Read-only schema introspection (databases, schemas, tables, columns) + filtered SELECT execution, query history, 8 SSL modes |
 | **Log Viewer** | logs | Tail-follow with backlog, rotation detection, regex grep, extension filtering |
 | **Task Runner** | tools | Discover Makefile targets, package.json scripts, shell scripts; concurrent execution with timeouts and live output |
-| **Git** | tools | Per-repo status, per-session baseline (shows only changes made during the session), unified diff, commit log, branch listing |
+| **Git Viewer** | tools | Per-repo status, per-session baseline (shows only changes made during the session), unified diff, commit log, branch listing |
+| **Git Forge** | tools | Gitea / GitHub / GitLab integration — browse repos, clone, inspect PRs/issues |
 | **Telegram Bridge** | messaging | Bot token setup, link status, test messages, command reference |
 | **MCP Servers** | mcp | CRUD for stdio / SSE / HTTP MCP servers, per-agent filtering, enable/disable toggle |
 | **Obsidian Reader** | docs | Browse Obsidian vaults from Git repos (Gitea, GitHub, GitLab), branch selection, path filtering |
@@ -529,7 +538,7 @@ All configuration via environment variables. See [`.env.example`](.env.example) 
 |---|---|
 | Backend | Go 1.25+, chi, gorilla/websocket, creack/pty, pgx/v5 |
 | Frontend | Flutter 3.41+ (Dart 3), xterm.js via WebView, go_router, provider |
-| Database | PostgreSQL 14+ (8 auto-applied migrations, max 20 connections) |
+| Database | PostgreSQL 14+ (18 auto-applied migrations, max 20 connections) |
 | Auth | JWT (HS256, 7-day TTL) + optional Cloudflare Access service-token support |
 | Packaging | Single binary with Flutter web build embedded via `go:embed` |
 | CI | GitHub Actions (Go vet + test + build, Flutter analyze + build) |
