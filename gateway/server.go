@@ -386,6 +386,21 @@ func New(cfg Config) *Server {
 		r.Get("/api/git-forge/{plugin}/pulls/{number}/review-comments",  s.forgePullReviewComments)
 		r.Get("/api/git-forge/{plugin}/pulls/{number}/checks",           s.forgePullChecks)
 
+		// Source Control panel — the consolidated replacement for git-
+		// viewer + git-forge (git-forge forge surface merges in Phase 2).
+		// Adds repo auto-discovery across allowedRoots, user bookmarks,
+		// multi-file diff, and DB-backed per-session baselines.
+		r.Get("/api/source-control/{plugin}/repos",         s.scRepos)
+		r.Post("/api/source-control/{plugin}/bookmarks",    s.scBookmarksAdd)
+		r.Delete("/api/source-control/{plugin}/bookmarks",  s.scBookmarksRemove)
+		r.Get("/api/source-control/{plugin}/status",        s.scStatus)
+		r.Get("/api/source-control/{plugin}/log",           s.scLog)
+		r.Get("/api/source-control/{plugin}/branches",      s.scBranches)
+		r.Get("/api/source-control/{plugin}/diff",          s.scDiff)
+		r.Post("/api/source-control/{plugin}/baseline",     s.scBaselinePut)
+		r.Get("/api/source-control/{plugin}/baseline",      s.scBaselineGet)
+		r.Delete("/api/source-control/{plugin}/baseline",   s.scBaselineDelete)
+
 		// pg-browser panel — SQL editor + schema browser backed by pgx.
 		// Read-only is enforced server-side via BEGIN READ ONLY + verb
 		// guard; statement timeout + max rows gated from configSchema.

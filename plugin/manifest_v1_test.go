@@ -44,6 +44,7 @@ var v1BundledAll = map[string]bool{
 	"pg-browser":        true,
 	"qwen-code":         true,
 	"simulator-preview": true,
+	"source-control":    true,
 	"task-runner":       true,
 	"telegram":          true,
 	"terminal":          true,

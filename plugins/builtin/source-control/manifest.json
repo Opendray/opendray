@@ -1,0 +1,97 @@
+{
+  "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
+  "name": "source-control",
+  "displayName": "Source Control",
+  "displayName_zh": "源代码管理",
+  "description": "Unified Git source control — status, diff across all changed files, commit history, branches, bookmarks, and pull requests (when a forge is configured).",
+  "description_zh": "统一的 Git 源代码管理 —— 状态查看、所有修改文件的 diff、提交历史、分支、仓库书签,以及(配置远程 forge 后)的 PR 审查。",
+  "icon": "🔀",
+  "version": "0.1.0",
+  "publisher": "opendray-builtin",
+  "engines": { "opendray": "^1.0.0" },
+  "form": "declarative",
+  "activation": ["onStartup"],
+  "type": "panel",
+  "category": "source-control",
+  "capabilities": {
+    "models": [],
+    "supportsResume": false,
+    "supportsStream": false,
+    "supportsImages": false,
+    "supportsMcp": false,
+    "dynamicModels": false
+  },
+  "configSchema": [
+    {
+      "key": "allowedRoots",
+      "label": "Allowed Directories",
+      "label_zh": "允许的目录",
+      "type": "string",
+      "group": "connection",
+      "placeholder": "$HOME/projects",
+      "default": "$HOME",
+      "description": "Comma-separated roots the panel may scan for Git repositories. All repo paths must resolve inside these roots.",
+      "description_zh": "用逗号分隔的根目录,Source Control 会在其下扫描 .git 仓库。所有仓库路径必须位于这些根目录内。"
+    },
+    {
+      "key": "gitBinary",
+      "label": "Git Binary",
+      "label_zh": "Git 可执行文件",
+      "type": "string",
+      "group": "advanced",
+      "default": "git",
+      "placeholder": "git",
+      "description": "Path or name of the git executable. Leave as 'git' to use the first on $PATH.",
+      "description_zh": "git 可执行文件路径或名称。留空或填 'git' 走 $PATH 首个命中。"
+    },
+    {
+      "key": "diffContext",
+      "label": "Diff Context Lines",
+      "label_zh": "Diff 上下文行数",
+      "type": "number",
+      "group": "runtime",
+      "default": 3,
+      "description": "Unified diff context for the compact (default) view. Full-file context is available per-diff on demand.",
+      "description_zh": "紧凑 diff 视图的上下文行数。按需可切换完整文件上下文。"
+    },
+    {
+      "key": "logLimit",
+      "label": "Commit Log Limit",
+      "label_zh": "提交日志数量上限",
+      "type": "number",
+      "group": "runtime",
+      "default": 50,
+      "description": "Maximum commits returned by History tab per request.",
+      "description_zh": "History 选项卡每次请求返回的最大提交数。"
+    },
+    {
+      "key": "commandTimeoutSec",
+      "label": "Git Command Timeout (sec)",
+      "label_zh": "Git 命令超时(秒)",
+      "type": "number",
+      "group": "advanced",
+      "default": 20,
+      "description": "Hard kill for each git subprocess. Large repos may need more.",
+      "description_zh": "每个 git 子进程的硬超时时间。大型仓库可能需要调大。"
+    },
+    {
+      "key": "markdownPreview",
+      "label": "Render Markdown Preview",
+      "label_zh": "渲染 Markdown 预览",
+      "type": "bool",
+      "group": "runtime",
+      "default": true,
+      "description": "For *.md files, also render HTML preview alongside the diff so documentation changes are easy to eyeball.",
+      "description_zh": "针对 *.md 文件,在 diff 旁额外渲染 HTML 预览,便于快速查看文档变更。"
+    }
+  ],
+  "contributes": {
+    "activityBar": [
+      { "id": "source-control", "icon": "🔀", "title": "Source Control", "viewId": "source-control" }
+    ],
+    "views": [
+      { "id": "source-control", "title": "Source Control", "container": "activityBar", "render": "declarative" }
+    ]
+  },
+  "required": false
+}
