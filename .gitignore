@@ -71,3 +71,6 @@ scripts/build_release.sh
 scripts/deploy_release.sh
 scripts/unas_upload.py
 scripts/verify-deploy.sh
+design/
+.claude
+.gitignore

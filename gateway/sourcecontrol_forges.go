@@ -143,6 +143,20 @@ func (s *Server) deleteForgeToken(ctx context.Context, pluginName, forgeID strin
 
 var forgeTypes = map[string]bool{"gitea": true, "github": true, "gitlab": true}
 
+// forgeDefaultBaseURL returns the canonical public-instance URL for
+// hosted forges (GitHub, GitLab SaaS). Gitea returns empty because
+// it's typically self-hosted — there is no universal default.
+func forgeDefaultBaseURL(forgeType string) string {
+	switch forgeType {
+	case "github":
+		return "https://api.github.com"
+	case "gitlab":
+		return "https://gitlab.com"
+	default:
+		return ""
+	}
+}
+
 func validateForgeInput(f forgeStored) error {
 	if strings.TrimSpace(f.Name) == "" {
 		return errors.New("name is required")
@@ -215,6 +229,13 @@ func (s *Server) scForgesCreate(w http.ResponseWriter, r *http.Request) {
 		Name:    strings.TrimSpace(req.Name),
 		Type:    req.Type,
 		BaseURL: strings.TrimRight(strings.TrimSpace(req.BaseURL), "/"),
+	}
+	// Substitute a sane default for hosted forges so the user isn't
+	// forced to paste "https://api.github.com" every time. Self-
+	// hosted Gitea still requires an explicit URL because there is
+	// no universal default.
+	if stored.BaseURL == "" {
+		stored.BaseURL = forgeDefaultBaseURL(stored.Type)
 	}
 	if err := validateForgeInput(stored); err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
@@ -351,6 +372,9 @@ func (s *Server) scForgesDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.deleteForgeToken(r.Context(), pluginName, id)
+	// Cascade: drop the per-forge saved-repos list too so orphan
+	// rows don't linger when the user deletes the forge.
+	s.deleteSavedReposFor(r.Context(), pluginName, id)
 	respondJSON(w, http.StatusOK, map[string]any{"removed": true})
 }
 

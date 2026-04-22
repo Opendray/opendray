@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 )
 
@@ -214,6 +215,83 @@ func TestParseNumstat(t *testing.T) {
 	if got["cmd/main.go"].add != 7 {
 		t.Errorf("main.go add wrong: %+v", got["cmd/main.go"])
 	}
+}
+
+func TestMultiDiff_CommitModeShowsCommitFiles(t *testing.T) {
+	dir, cfg := newFixtureRepo(t)
+
+	// Add a second file in a second commit so we can ask git for
+	// that specific commit's diff.
+	if err := os.WriteFile(filepath.Join(dir, "commit2.txt"), []byte("line1\nline2\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runGitTest(t, dir, "add", "commit2.txt")
+	runGitTest(t, dir, "commit", "-q", "-m", "add commit2")
+
+	// Ask log for the SHA of HEAD (the commit we just made).
+	sha := getSha(t, dir, "HEAD")
+	got, err := MultiDiff(context.Background(), cfg, dir,
+		MultiDiffOptions{Mode: ModeCommit, Commit: sha})
+	if err != nil {
+		t.Fatalf("MultiDiff commit: %v", err)
+	}
+	if got.Mode != ModeCommit {
+		t.Errorf("mode = %q, want commit", got.Mode)
+	}
+	if len(got.Files) != 1 || got.Files[0].Path != "commit2.txt" {
+		t.Fatalf("expected 1 file (commit2.txt); got %+v", got.Files)
+	}
+	if got.Files[0].Status != "added" {
+		t.Errorf("expected status=added for new file; got %q", got.Files[0].Status)
+	}
+	if got.Files[0].Add != 2 {
+		t.Errorf("expected 2 lines added; got %d", got.Files[0].Add)
+	}
+}
+
+func TestMultiDiff_CommitModeRejectsMissingSHA(t *testing.T) {
+	dir, cfg := newFixtureRepo(t)
+	_, err := MultiDiff(context.Background(), cfg, dir,
+		MultiDiffOptions{Mode: ModeCommit})
+	if err == nil {
+		t.Fatal("expected error when Commit is empty")
+	}
+}
+
+func TestMultiDiff_CommitModeRejectsBadRef(t *testing.T) {
+	dir, cfg := newFixtureRepo(t)
+	for _, bad := range []string{"-bad", "../evil", "evil;rm -rf /"} {
+		if _, err := MultiDiff(context.Background(), cfg, dir,
+			MultiDiffOptions{Mode: ModeCommit, Commit: bad}); err == nil {
+			t.Errorf("bad commit %q: expected error", bad)
+		}
+	}
+}
+
+// runGitTest is a small helper for tests that need to issue extra git
+// commands beyond the fixture's initial commit.
+func runGitTest(t *testing.T, dir string, args ...string) {
+	t.Helper()
+	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
+	cmd.Env = append(os.Environ(),
+		"GIT_CONFIG_GLOBAL=/dev/null",
+		"GIT_CONFIG_SYSTEM=/dev/null",
+		"GIT_AUTHOR_NAME=test", "GIT_AUTHOR_EMAIL=t@example.com",
+		"GIT_COMMITTER_NAME=test", "GIT_COMMITTER_EMAIL=t@example.com",
+	)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("git %v: %s / %v", args, string(out), err)
+	}
+}
+
+func getSha(t *testing.T, dir, ref string) string {
+	t.Helper()
+	cmd := exec.Command("git", "-C", dir, "rev-parse", ref)
+	out, err := cmd.Output()
+	if err != nil {
+		t.Fatalf("rev-parse %s: %v", ref, err)
+	}
+	return strings.TrimSpace(string(out))
 }
 
 func TestParsePatchBlocks_DetectsStatus(t *testing.T) {

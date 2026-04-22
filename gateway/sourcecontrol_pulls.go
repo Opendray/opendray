@@ -7,10 +7,12 @@ package gateway
 // was the core "one repo at a time" complaint driving the merge.
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -21,6 +23,11 @@ import (
 // read PR number" preamble every PR handler repeats. Writes the
 // error response directly and returns ok=false so callers can early-
 // return without touching `err`.
+//
+// Side effect: every successful resolve bumps lastUsedAt on the
+// matching saved-repo entry (no-op when the repo isn't saved). Fired
+// in a detached goroutine so the PR request isn't penalised on kv
+// write latency; the handler doesn't depend on the write succeeding.
 func (s *Server) scPullsResolve(w http.ResponseWriter, r *http.Request, needNumber bool) (cfg forge.Config, number int, ok bool) {
 	pluginName := chi.URLParam(r, "plugin")
 	forgeID := chi.URLParam(r, "id")
@@ -42,8 +49,21 @@ func (s *Server) scPullsResolve(w http.ResponseWriter, r *http.Request, needNumb
 				fmt.Sprintf("pull number must be a positive integer (got %q)", raw))
 			return forge.Config{}, 0, false
 		}
+		// fire-and-forget; use a fresh background ctx so the bump
+		// survives the request's cancellation after we write the
+		// response. 3-second budget is plenty for a tiny kv update.
+		go func(pn, fid, rp string) {
+			bgCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			s.bumpSavedRepoLastUsed(bgCtx, pn, fid, rp)
+		}(pluginName, forgeID, repo)
 		return c, n, true
 	}
+	go func(pn, fid, rp string) {
+		bgCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		s.bumpSavedRepoLastUsed(bgCtx, pn, fid, rp)
+	}(pluginName, forgeID, repo)
 	return c, 0, true
 }
 

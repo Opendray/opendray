@@ -242,9 +242,10 @@ func (s *Server) scDiff(w http.ResponseWriter, r *http.Request) {
 		mode = sc.ModeUnstaged
 	}
 	opts := sc.MultiDiffOptions{
-		Mode:  mode,
-		Since: q.Get("since"),
-		Full:  q.Get("full") == "1" || q.Get("full") == "true",
+		Mode:   mode,
+		Since:  q.Get("since"),
+		Commit: q.Get("commit"),
+		Full:   q.Get("full") == "1" || q.Get("full") == "true",
 	}
 	// Baseline mode can resolve Since from DB when caller supplies
 	// sessionId instead of an explicit SHA — matches the UI flow

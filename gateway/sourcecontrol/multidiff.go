@@ -5,12 +5,20 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/opendray/opendray/gateway/git"
 )
+
+// looksLikeRef mirrors the refname regex gateway/git enforces on
+// untrusted refs so the commit parameter can't sneak shell
+// metacharacters into `git show`.
+var refRegex = regexp.MustCompile(`^[A-Za-z0-9._/\-]{1,200}$`)
+
+func looksLikeRef(s string) bool { return refRegex.MatchString(s) }
 
 // FileDiff is one changed file rendered whole — rather than the
 // single-file-at-a-time model the old git-viewer used, the panel gets
@@ -33,14 +41,21 @@ const (
 	ModeUnstaged MultiDiffMode = "unstaged" // working tree vs index
 	ModeStaged   MultiDiffMode = "staged"   // index vs HEAD
 	ModeBaseline MultiDiffMode = "baseline" // HEAD vs a prior session-start SHA
+	ModeCommit   MultiDiffMode = "commit"   // single commit — git show <sha>
 )
 
-// MultiDiffOptions parameterises MultiDiff. Since is only consulted
-// when Mode == ModeBaseline.
+// MultiDiffOptions parameterises MultiDiff.
+//
+// Field usage by mode:
+//
+//	ModeUnstaged / ModeStaged → nothing else
+//	ModeBaseline              → Since (commit-ish; older tree)
+//	ModeCommit                → Commit (single SHA to inspect)
 type MultiDiffOptions struct {
-	Mode  MultiDiffMode
-	Since string // baseline commit SHA, validated by git.Diff via validateRef
-	Full  bool   // true ⇒ render with maximum context (0x u flag)
+	Mode   MultiDiffMode
+	Since  string // baseline commit SHA, validated by git.Diff via validateRef
+	Commit string // SHA for ModeCommit — "git show <commit>"
+	Full   bool   // true ⇒ render with maximum context (0x u flag)
 }
 
 // MultiDiffResult is what the handler returns. Files is sorted by
@@ -87,6 +102,20 @@ func MultiDiff(ctx context.Context, cfg Config, repoPath string, opts MultiDiffO
 		// underlying args shape and letting runGit parse output. But
 		// we also want numstat for counts, so run both here.
 		baseArgs = []string{"diff", opts.Since, contextArg, "--no-color"}
+	case ModeCommit:
+		if opts.Commit == "" {
+			return MultiDiffResult{}, fmt.Errorf("sourcecontrol: commit mode requires Commit")
+		}
+		if !looksLikeRef(opts.Commit) {
+			return MultiDiffResult{}, fmt.Errorf("sourcecontrol: invalid commit ref %q", opts.Commit)
+		}
+		// `git show <sha>` emits the commit metadata followed by the
+		// diff. --first-parent collapses merge commits to their
+		// mainline diff, which is what History-tab users expect when
+		// clicking a commit. --no-patch-with-stat would lose patches;
+		// stick with default patch + numstat via the second invocation.
+		baseArgs = []string{"show", opts.Commit, contextArg, "--no-color",
+			"--first-parent", "--format="}
 	default:
 		return MultiDiffResult{}, fmt.Errorf("sourcecontrol: unknown mode %q", mode)
 	}
@@ -96,10 +125,11 @@ func MultiDiff(ctx context.Context, cfg Config, repoPath string, opts MultiDiffO
 		return MultiDiffResult{}, err
 	}
 
+	// numstat shares the ref / --cached / --first-parent / --format=
+	// flags but strips -U<n> + --no-color and appends --numstat. Works
+	// for both `git diff` and `git show` base commands.
 	numstatArgs := make([]string, 0, len(baseArgs)+1)
 	numstatArgs = append(numstatArgs, baseArgs[0])
-	// Keep --cached / <since> flags, drop -U<n> + --no-color; replace
-	// with --numstat. Filtering by prefix keeps this robust.
 	for _, a := range baseArgs[1:] {
 		if strings.HasPrefix(a, "-U") || a == "--no-color" {
 			continue

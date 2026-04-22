@@ -388,6 +388,13 @@ func New(cfg Config) *Server {
 		r.Delete("/api/source-control/{plugin}/forges/{id}",    s.scForgesDelete)
 		r.Get("/api/source-control/{plugin}/forges/{id}/repos", s.scForgesRepos)
 
+		// Saved repos per forge — curated bookmarks that sidestep the
+		// upstream /repos API and give the picker stable entries with
+		// recency-based ordering (Phase 2.5.C/D).
+		r.Get("/api/source-control/{plugin}/forges/{id}/saved-repos",     s.scSavedReposList)
+		r.Post("/api/source-control/{plugin}/forges/{id}/saved-repos",    s.scSavedReposAdd)
+		r.Delete("/api/source-control/{plugin}/forges/{id}/saved-repos",  s.scSavedReposRemove)
+
 		// PR routes (Phase 2.C). `?repo=owner/name` picks the repo per
 		// request, so one forge instance covers any number of repos —
 		// no more "one repo locked in config" as the old git-forge had.
