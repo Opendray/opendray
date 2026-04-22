@@ -26,8 +26,8 @@
       "type": "string",
       "group": "connection",
       "placeholder": "$HOME/projects",
-      "required": true,
-      "description": "Comma-separated root directories. Tasks can only be discovered and executed inside these roots."
+      "default": "$HOME",
+      "description": "Comma-separated root directories. Tasks can only be discovered and executed inside these roots. Defaults to your home directory; lock it down to specific project folders for tighter sandboxing."
     },
     {
       "key": "defaultPath",
@@ -35,7 +35,8 @@
       "type": "string",
       "group": "runtime",
       "placeholder": "$HOME/projects",
-      "description": "Initial directory shown when the panel opens."
+      "default": "$HOME",
+      "description": "Initial directory shown when the panel opens. Must be inside one of the allowed directories."
     },
     {
       "key": "includeMakefile",

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -307,14 +306,10 @@ func (s *Server) getFilesConfig(ctx context.Context, pluginName string) (files.B
 	for _, pi := range info {
 		if pi.Provider.Name == pluginName && pi.Provider.Type == plugin.ProviderTypePanel && pi.Enabled {
 			cfg := s.effectiveConfig(ctx, pluginName, pi.Config)
-			roots := strings.Split(stringVal(cfg, "allowedRoots", ""), ",")
-			var cleanRoots []string
-			for _, r := range roots {
-				r = strings.TrimSpace(r)
-				if r != "" {
-					cleanRoots = append(cleanRoots, r)
-				}
-			}
+			// Resolve allowedRoots / defaultPath with manifest-default
+			// fallback and $HOME / ~ expansion so a just-installed plugin
+			// works without the user first visiting Providers → Configure.
+			cleanRoots := resolveRoots(cfg, pi.Provider.ConfigSchema, "allowedRoots")
 			// maxFileSize is expressed in KB; intVal handles both the
 			// legacy float64/int shapes and the JSON-string shape that
 			// effectiveConfig overlays from plugin_kv.
@@ -323,7 +318,7 @@ func (s *Server) getFilesConfig(ctx context.Context, pluginName string) (files.B
 				AllowedRoots: cleanRoots,
 				ShowHidden:   boolVal(cfg, "showHidden", false),
 				MaxFileSize:  maxSize,
-				DefaultPath:  stringVal(cfg, "defaultPath", ""),
+				DefaultPath:  resolveDefaultPath(cfg, pi.Provider.ConfigSchema, "defaultPath"),
 			}, nil
 		}
 	}

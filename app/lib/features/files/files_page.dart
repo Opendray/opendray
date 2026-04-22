@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../core/api/api_client.dart';
 import '../../core/models/provider.dart';
 import '../../core/services/l10n.dart';
+import '../../shared/default_path_banner.dart';
 import '../../shared/providers_bus.dart';
 import '../../shared/session_launcher.dart';
 import '../../shared/theme/app_theme.dart';
@@ -209,8 +210,20 @@ class _FilesPageState extends State<FilesPage> {
   }
 
   Widget _buildBrowser() {
+    final active = _activePlugin;
+    final activeInfo = active == null
+        ? null
+        : _filePlugins.where((p) => p.provider.name == active).firstOrNull;
     return Column(
       children: [
+        // First-run helper: when allowedRoots is blank (manifest default
+        // is in effect) show a banner so the user knows where they are
+        // and has one-tap access to narrow the scope.
+        if (activeInfo != null)
+          DefaultPathBanner(
+            pluginName: activeInfo.provider.name,
+            displayName: activeInfo.provider.displayName,
+          ),
         // Search
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),

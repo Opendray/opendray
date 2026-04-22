@@ -25,9 +25,9 @@
       "label": "Allowed Directories",
       "type": "string",
       "group": "connection",
-      "required": true,
       "placeholder": "/var/log,/tmp",
-      "description": "Comma-separated root directories that can be browsed for log files. All tailed paths must live under one of these roots."
+      "default": "$HOME",
+      "description": "Comma-separated root directories that can be browsed for log files. All tailed paths must live under one of these roots. Defaults to your home directory; add /var/log, /tmp, or specific service log paths as needed."
     },
     {
       "key": "extensions",

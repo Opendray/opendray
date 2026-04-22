@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -30,16 +29,13 @@ func (s *Server) getTasksConfig(ctx context.Context, pluginName string) (tasks.C
 		}
 		cfg := s.effectiveConfig(ctx, pluginName, pi.Config)
 
-		var roots []string
-		for _, r := range strings.Split(stringVal(cfg, "allowedRoots", ""), ",") {
-			if r = strings.TrimSpace(r); r != "" {
-				roots = append(roots, r)
-			}
-		}
+		// Manifest-default + $HOME expansion so "Run Tasks" panel opens
+		// out of the box on a fresh install.
+		roots := resolveRoots(cfg, pi.Provider.ConfigSchema, "allowedRoots")
 
 		return tasks.Config{
 			AllowedRoots:        roots,
-			DefaultPath:         stringVal(cfg, "defaultPath", ""),
+			DefaultPath:         resolveDefaultPath(cfg, pi.Provider.ConfigSchema, "defaultPath"),
 			IncludeMakefile:     boolVal(cfg, "includeMakefile", true),
 			IncludePackageJSON:  boolVal(cfg, "includePackageJson", true),
 			IncludeShellScripts: boolVal(cfg, "includeShellScripts", true),

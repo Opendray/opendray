@@ -29,9 +29,9 @@
       "type": "string",
       "group": "connection",
       "placeholder": "$HOME/projects",
-      "required": true,
-      "description": "Comma-separated root directories that can be browsed. All paths must be under these roots.",
-      "description_zh": "允许浏览的根目录,用逗号分隔。所有路径必须位于这些根目录之下。"
+      "default": "$HOME",
+      "description": "Comma-separated root directories that can be browsed. All paths must be under these roots. Defaults to your home directory; change it to lock the browser into a specific project root.",
+      "description_zh": "允许浏览的根目录,用逗号分隔。所有路径必须位于这些根目录之下。默认为用户 Home 目录;改成具体项目根目录可锁定范围。"
     },
     {
       "key": "showHidden",
@@ -60,8 +60,9 @@
       "type": "string",
       "group": "runtime",
       "placeholder": "$HOME/projects",
-      "description": "Starting directory when opening the file browser",
-      "description_zh": "打开文件浏览器时的起始目录"
+      "default": "$HOME",
+      "description": "Starting directory when opening the file browser. Must be inside one of the allowed directories.",
+      "description_zh": "打开文件浏览器时的起始目录,必须位于允许的目录之内。"
     }
   ],
   "contributes": {

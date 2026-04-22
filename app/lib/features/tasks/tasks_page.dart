@@ -12,6 +12,7 @@ import '../../core/services/ws_connect.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/models/provider.dart';
+import '../../shared/default_path_banner.dart';
 import '../../shared/directory_picker.dart';
 import '../../shared/providers_bus.dart';
 import '../../shared/theme/app_theme.dart';
@@ -287,8 +288,20 @@ class _TasksPageState extends State<TasksPage> {
       _ when _path.isEmpty => _pickPathState(),
       _ => _taskListState(),
     };
+    final pluginInfo = _plugin;
+    final content = pluginInfo == null
+        ? body
+        : Column(children: [
+            // First-run helper: banner shows where task discovery is
+            // pointed when the user hasn't configured allowedRoots yet.
+            DefaultPathBanner(
+              pluginName: pluginInfo.provider.name,
+              displayName: pluginInfo.provider.displayName,
+            ),
+            Expanded(child: body),
+          ]);
     return Stack(children: [
-      Positioned.fill(child: body),
+      Positioned.fill(child: content),
       if (_run != null)
         Positioned(
           left: 12,

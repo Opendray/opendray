@@ -10,6 +10,7 @@ import '../../core/services/ws_connect.dart';
 import '../../core/api/api_client.dart';
 import '../../core/models/provider.dart';
 import '../../core/services/l10n.dart';
+import '../../shared/default_path_banner.dart';
 import '../../shared/providers_bus.dart';
 import '../../shared/theme/app_theme.dart';
 
@@ -265,7 +266,18 @@ class _LogsPageState extends State<LogsPage> {
   }
 
   Widget _buildBrowseView() {
+    final active = _activePlugin;
+    final activeInfo = active == null
+        ? null
+        : _plugins.where((p) => p.provider.name == active).firstOrNull;
     return Column(children: [
+      // First-run helper: manifest-default allowedRoots ⇒ show banner
+      // so the user sees *where* we're tailing from and can narrow it.
+      if (activeInfo != null)
+        DefaultPathBanner(
+          pluginName: activeInfo.provider.name,
+          displayName: activeInfo.provider.displayName,
+        ),
       // Breadcrumb + up
       if (_currentPath.isNotEmpty)
         Container(

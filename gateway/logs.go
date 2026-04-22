@@ -29,7 +29,10 @@ func (s *Server) getLogsConfig(ctx context.Context, pluginName string) (logs.Con
 			break
 		}
 		cfg := s.effectiveConfig(ctx, pluginName, pi.Config)
-		cleanRoots := splitCSV(stringVal(cfg, "allowedRoots", ""))
+		// allowedRoots resolves through manifest Default + $HOME expansion
+		// so the panel opens successfully right after install, before the
+		// user has visited Providers → Configure.
+		cleanRoots := resolveRoots(cfg, pi.Provider.ConfigSchema, "allowedRoots")
 		exts := splitCSV(stringVal(cfg, "extensions", ".log,.txt,.out,.err"))
 
 		// backlogBytes is expressed in KB in the manifest — convert.
