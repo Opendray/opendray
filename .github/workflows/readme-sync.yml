@@ -1,0 +1,57 @@
+name: README sync
+
+# CI backstop for the local .githooks/pre-commit check. Runs whenever
+# one of the two README files changes in a push or PR; fails the job
+# if the other file wasn't updated in the same set of commits, so
+# drift can't sneak in via --no-verify.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - 'README.zh-CN.md'
+  pull_request:
+    paths:
+      - 'README.md'
+      - 'README.zh-CN.md'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify both READMEs move together
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+            head="${{ github.event.pull_request.head.sha }}"
+          else
+            base="${{ github.event.before }}"
+            head="${{ github.event.after }}"
+            # First push of a branch has before=0000…; fall back to parent.
+            if [ "$base" = "0000000000000000000000000000000000000000" ]; then
+              base="$(git rev-parse "$head^")"
+            fi
+          fi
+
+          changed=$(git diff --name-only "$base" "$head")
+          en=0; zh=0
+          echo "$changed" | grep -qx "README.md"       && en=1 || true
+          echo "$changed" | grep -qx "README.zh-CN.md" && zh=1 || true
+
+          if [ "$en" = "1" ] && [ "$zh" = "0" ]; then
+            echo "::error file=README.zh-CN.md::README.md changed but the Chinese translation did not. Keep them in sync."
+            exit 1
+          fi
+          if [ "$zh" = "1" ] && [ "$en" = "0" ]; then
+            echo "::error file=README.md::README.zh-CN.md changed but the English source did not."
+            exit 1
+          fi
+          echo "✓ Both READMEs were updated together (or neither was touched)."

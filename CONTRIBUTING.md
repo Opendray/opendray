@@ -19,6 +19,9 @@ everything you need to get started.
 git clone https://github.com/opendray/opendray.git
 cd opendray
 
+# Enable repo-local git hooks (README sync check, etc.)
+git config core.hooksPath .githooks
+
 # Copy environment template and fill in DB credentials
 cp .env.example .env
 # Edit .env: set DB_HOST, DB_PASSWORD at minimum
@@ -30,23 +33,30 @@ make dev
 The backend listens on `127.0.0.1:8640` by default. The Flutter dev server
 proxies API calls to it.
 
+The `core.hooksPath` step wires up the pre-commit hooks under `.githooks/`.
+Today that's just a README translation-sync check — if you edit `README.md`
+without touching `README.zh-CN.md` (or the reverse), the commit is blocked
+until you update the other file. CI runs the same check on push/PR, so
+bypassing the local hook with `--no-verify` just moves the failure into
+the pipeline.
+
 ## Project Structure
 
 ```
-cmd/opendray/     # Entrypoint
+cmd/opendray/     # Entrypoint — setup, service, uninstall, plugin subcommands
 gateway/          # HTTP/WebSocket API (chi router)
-kernel/           # Core domain: auth, hub (session manager), store (DB)
-plugin/           # Plugin runtime + manifest loader
+kernel/           # Core domain: auth, hub (session manager), store (DB), pg, config
+plugin/           # Plugin runtime + manifest loader + marketplace
 plugins/
-  agents/         # Agent plugins (claude, codex, terminal, ...)
-  panels/         # Panel plugins (docs viewer, file browser, ...)
-app/              # Flutter frontend
+  builtin/        # 17 built-in plugins (6 agents + 11 panels, embedded in binary)
+  examples/       # Reference external plugins (time-ninja, kanban, fs-readme)
+app/              # Flutter frontend (iOS, Android, Web)
 ```
 
 ## Adding a New Agent Plugin
 
-1. Create a directory under `plugins/agents/<your-agent>/`.
-2. Copy an existing `manifest.json` (e.g., `plugins/agents/terminal/manifest.json`)
+1. Create a directory under `plugins/builtin/<your-agent>/`.
+2. Copy an existing `manifest.json` (e.g., `plugins/builtin/terminal/manifest.json`)
    as a starting point.
 3. Fill in the required fields:
 
