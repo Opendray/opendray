@@ -41,6 +41,18 @@ class PluginWebView extends StatefulWidget {
   })  : _bridgeFactory = bridgeFactory,
         _skipControllerForTests = skipControllerForTests;
 
+  /// Live [WebViewController] registry, keyed by `pluginName`.
+  /// Populated by each [_PluginWebViewState] on init and cleared on
+  /// dispose. Callers that need to execute JS against a running
+  /// webview plugin — notably the thumbnail-capture fallback used by
+  /// the running-plugins switcher — look up the controller here
+  /// instead of plumbing it through a handle on every constructor.
+  ///
+  /// Only one [PluginWebView] instance per plugin name is expected to
+  /// be alive at a time (the running-plugins host enforces uniqueness
+  /// by entry id). The last-registered instance wins.
+  static final Map<String, WebViewController> controllers = {};
+
   /// Plugin name — e.g. `"kanban"`. Drives both the asset path and the
   /// bridge WebSocket URL.
   final String pluginName;
@@ -101,6 +113,9 @@ class _PluginWebViewState extends State<PluginWebView> {
 
     final controller = _buildController();
     _controller = controller;
+    // Register for lookup by thumbnail-capture + any other host-side
+    // callers that need to evaluate JS against this webview.
+    PluginWebView.controllers[widget.pluginName] = controller;
 
     final assetUrl = _buildAssetUrl(
       widget.baseUrl,
@@ -238,7 +253,12 @@ class _PluginWebViewState extends State<PluginWebView> {
   void dispose() {
     final bridge = _bridge;
     _bridge = null;
+    final controller = _controller;
     _controller = null;
+    if (controller != null &&
+        PluginWebView.controllers[widget.pluginName] == controller) {
+      PluginWebView.controllers.remove(widget.pluginName);
+    }
     if (bridge != null) {
       // Fire-and-forget — dispose never throws.
       unawaited(bridge.dispose());

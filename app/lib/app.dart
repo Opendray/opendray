@@ -11,25 +11,22 @@ import 'shared/theme/responsive.dart';
 import 'features/auth/login_page.dart';
 import 'features/dashboard/dashboard_page.dart';
 import 'features/session/session_page.dart';
-import 'features/browser/preview_page.dart';
 import 'features/claude_accounts/claude_accounts_page.dart';
-import 'features/docs/docs_page.dart';
 import 'features/endpoints/endpoints_page.dart';
-import 'features/pg/pg_page.dart';
-import 'features/files/files_page.dart';
-import 'features/logs/logs_page.dart';
-import 'features/source_control/source_control_page.dart';
-import 'features/mcp/mcp_page.dart';
-import 'features/messaging/telegram_page.dart';
 import 'features/hub/hub_page.dart';
 import 'features/plugins/plugins_page.dart';
 import 'features/settings/builtin_restore_page.dart';
 import 'features/settings/settings_page.dart';
 import 'features/settings/setup_page.dart';
-import 'features/tasks/tasks_page.dart';
 import 'features/workbench/command_palette.dart';
 import 'features/workbench/keybindings.dart';
-import 'features/workbench/webview_host.dart';
+import 'features/workbench/running/plugin_registry.dart';
+import 'features/workbench/running/plugin_thumbnail_capture.dart';
+import 'features/workbench/running/plugin_thumbnail_js_fallback.dart';
+import 'features/workbench/running/running_plugin_reveal_shell.dart';
+import 'features/workbench/running/running_plugins_host.dart';
+import 'features/workbench/running/running_plugins_service.dart';
+import 'features/workbench/running/running_plugins_switcher_page.dart';
 import 'features/workbench/workbench_models.dart';
 import 'features/workbench/workbench_service.dart';
 
@@ -77,6 +74,11 @@ class _NtcAppState extends State<NtcApp> {
   void initState() {
     super.initState();
     _router = _buildRouter(widget.serverConfig, widget.authService);
+    // Wire the webview JS snapshot path so the running-plugins host
+    // can fall back to an in-page capture when RepaintBoundary produces
+    // a blank frame over an iOS WKWebView. One-time install; the
+    // capture module holds it as a static field.
+    PluginThumbnailCapture.webviewJsFallback = webviewJsThumbnailFallback;
   }
 
   void _toast(String text, {bool isError = false}) {
@@ -132,16 +134,19 @@ class _NtcAppState extends State<NtcApp> {
                 }
                 return svc;
               },
-              child: MaterialApp.router(
-                title: 'OpenDray',
-                theme: buildAppTheme(),
-                debugShowCheckedModeBanner: false,
-                scaffoldMessengerKey: _scaffoldMessengerKey,
-                routerConfig: _router,
-                builder: (ctx, child) => _WebDesktopThemeScope(
-                  child: _WorkbenchRoot(
-                    service: ctx.read<WorkbenchService>(),
-                    child: child ?? const SizedBox.shrink(),
+              child: ChangeNotifierProvider<RunningPluginsService>(
+                create: (_) => RunningPluginsService(),
+                child: MaterialApp.router(
+                  title: 'OpenDray',
+                  theme: buildAppTheme(),
+                  debugShowCheckedModeBanner: false,
+                  scaffoldMessengerKey: _scaffoldMessengerKey,
+                  routerConfig: _router,
+                  builder: (ctx, child) => _WebDesktopThemeScope(
+                    child: _WorkbenchRoot(
+                      service: ctx.read<WorkbenchService>(),
+                      child: child ?? const SizedBox.shrink(),
+                    ),
                   ),
                 ),
               ),
@@ -245,49 +250,81 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
           // /browser parent grid is gone — per-plugin surfaces are now
           // opened from /plugins. The /browser/<panel> children below
           // stay because plugins_page._handOpenRoute pushes to them.
+          //
+          // Each route wraps its page in a RunningPluginRevealShell so
+          // opening it registers an entry in RunningPluginsService (the
+          // "Running" tab). Step 1 still renders inline via the seed's
+          // builder; Step 2 hoists widget ownership to the host so
+          // state survives navigation away.
           GoRoute(
             path: '/browser/docs',
-            builder: (ctx, _) => _panelShell(ctx, 'Docs', const DocsPage()),
+            builder: (_, _) => RunningPluginRevealShell(
+              seed: () =>
+                  PluginRegistry.builtinSeed(PluginRegistry.builtinDocs)!,
+            ),
           ),
           GoRoute(
             path: '/browser/files',
-            builder: (ctx, _) => _panelShell(ctx, 'Files', const FilesPage()),
+            builder: (_, _) => RunningPluginRevealShell(
+              seed: () =>
+                  PluginRegistry.builtinSeed(PluginRegistry.builtinFiles)!,
+            ),
           ),
           GoRoute(
             path: '/browser/tasks',
-            builder: (ctx, _) => _panelShell(ctx, 'Tasks', const TasksPage()),
+            builder: (_, _) => RunningPluginRevealShell(
+              seed: () =>
+                  PluginRegistry.builtinSeed(PluginRegistry.builtinTasks)!,
+            ),
           ),
           GoRoute(
             path: '/browser/source-control',
-            builder: (ctx, _) => _panelShell(
-                ctx, 'Source Control', const SourceControlPage()),
+            builder: (_, _) => RunningPluginRevealShell(
+              seed: () => PluginRegistry
+                  .builtinSeed(PluginRegistry.builtinSourceControl)!,
+            ),
           ),
           GoRoute(
             path: '/browser/database',
-            builder: (ctx, _) =>
-                _panelShell(ctx, 'PostgreSQL', const PGPage()),
+            builder: (_, _) => RunningPluginRevealShell(
+              seed: () =>
+                  PluginRegistry.builtinSeed(PluginRegistry.builtinDatabase)!,
+            ),
           ),
           GoRoute(
             path: '/browser/logs',
-            builder: (ctx, _) => _panelShell(ctx, 'Logs', const LogsPage()),
+            builder: (_, _) => RunningPluginRevealShell(
+              seed: () =>
+                  PluginRegistry.builtinSeed(PluginRegistry.builtinLogs)!,
+            ),
           ),
           GoRoute(
             path: '/browser/messaging',
-            builder: (ctx, _) => _panelShell(ctx, 'Messaging', const TelegramPage()),
+            builder: (_, _) => RunningPluginRevealShell(
+              seed: () => PluginRegistry
+                  .builtinSeed(PluginRegistry.builtinMessaging)!,
+            ),
           ),
           GoRoute(
             path: '/browser/mcp',
-            builder: (ctx, _) => _panelShell(ctx, 'MCP Servers', const MCPPage()),
+            builder: (_, _) => RunningPluginRevealShell(
+              seed: () =>
+                  PluginRegistry.builtinSeed(PluginRegistry.builtinMcp)!,
+            ),
           ),
           GoRoute(
             path: '/browser/preview',
-            builder: (ctx, _) => _panelShell(ctx, 'Preview',
-                const PreviewPage(categoryFilter: 'preview')),
+            builder: (_, _) => RunningPluginRevealShell(
+              seed: () =>
+                  PluginRegistry.builtinSeed(PluginRegistry.builtinPreview)!,
+            ),
           ),
           GoRoute(
             path: '/browser/simulator',
-            builder: (ctx, _) => _panelShell(ctx, 'Simulator',
-                const PreviewPage(categoryFilter: 'simulator')),
+            builder: (_, _) => RunningPluginRevealShell(
+              seed: () => PluginRegistry
+                  .builtinSeed(PluginRegistry.builtinSimulator)!,
+            ),
           ),
           // Generic v1 webview plugin route. Resolves the first
           // activityBar view owned by the plugin and hosts it in a
@@ -301,6 +338,10 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
           ),
           GoRoute(path: '/plugins', builder: (_, _) => const PluginsPage()),
           GoRoute(path: '/hub', builder: (_, _) => const HubPage()),
+          GoRoute(
+            path: '/running',
+            builder: (_, _) => const RunningPluginsSwitcherPage(),
+          ),
           GoRoute(path: '/settings', builder: (_, _) => const SettingsPage()),
           GoRoute(
             path: '/settings/claude-accounts',
@@ -372,15 +413,12 @@ class _PluginWebRoute extends StatelessWidget {
     }
     final title = view.title.isEmpty ? pluginName : view.title;
     if (view.render == 'webview') {
-      return Scaffold(
-        appBar: AppBar(title: Text(title)),
-        body: PluginWebView(
-          pluginName: view.pluginName,
-          viewId: view.id,
-          entryPath: view.entry,
-          baseUrl: api.baseUrl,
-          bearerToken: api.token ?? '',
-        ),
+      // Bare reveal shell — the Running plugins host provides the
+      // Scaffold + AppBar for every running plugin, including webview
+      // ones.
+      final resolvedView = view;
+      return RunningPluginRevealShell(
+        seed: () => PluginRegistry.webviewSeed(view: resolvedView, api: api),
       );
     }
     // Declarative renderer is M5 work. Show a pointer until then.
@@ -429,10 +467,16 @@ class _Shell extends StatelessWidget {
     // still registered even when kHubEnabled is false — a dev can
     // reach it by typing the URL; regular users just don't see the
     // entry point.
-    final int settingsIndex = kHubEnabled ? 3 : 2;
+    // Tab layout (Running slot added after Plugin):
+    //   Hub hidden   → Sessions | Plugin | Running | Settings           (0..3)
+    //   Hub enabled  → Sessions | Plugin | Hub | Running | Settings     (0..4)
+    final int runningIndex = kHubEnabled ? 3 : 2;
+    final int settingsIndex = kHubEnabled ? 4 : 3;
     final int index;
     if (location == '/settings' || location.startsWith('/settings/')) {
       index = settingsIndex;
+    } else if (location == '/running') {
+      index = runningIndex;
     } else if (kHubEnabled &&
         (location == '/hub' || location.startsWith('/hub/'))) {
       index = 2;
@@ -449,30 +493,53 @@ class _Shell extends StatelessWidget {
           ? switch (i) {
               1 => '/plugins',
               2 => '/hub',
-              3 => '/settings',
+              3 => '/running',
+              4 => '/settings',
               _ => '/',
             }
           : switch (i) {
               1 => '/plugins',
-              2 => '/settings',
+              2 => '/running',
+              3 => '/settings',
               _ => '/',
             };
     }
+
+    final runningCount =
+        context.watch<RunningPluginsService>().entries.length;
+    final runningLabel = runningCount > 0
+        ? '${context.tr('Running')} ($runningCount)'
+        : context.tr('Running');
 
     final destinations = <_NavDest>[
       _NavDest(icon: Icons.terminal, label: context.tr('Sessions')),
       _NavDest(icon: Icons.extension_outlined, label: context.tr('Plugin')),
       if (kHubEnabled)
         _NavDest(icon: Icons.storefront, label: context.tr('Hub')),
+      _NavDest(icon: Icons.layers_outlined, label: runningLabel),
       _NavDest(icon: Icons.settings, label: context.tr('Settings')),
     ];
+
+    // Clear the active running plugin whenever the user navigates to a
+    // non-plugin route (Sessions, the launcher, switcher, settings).
+    // The reveal shell on plugin routes will set it again. Post-frame
+    // so we don't call notifyListeners from inside build.
+    final bool isPluginRoute = location.startsWith('/browser/');
+    if (!isPluginRoute) {
+      final runningService = context.read<RunningPluginsService>();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        runningService.clearActive();
+      });
+    }
+
+    final Widget bodyWithHost = RunningPluginsHost(routerChild: child);
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= _railBreakpoint;
         if (!isWide) {
           return Scaffold(
-            body: child,
+            body: bodyWithHost,
             bottomNavigationBar: BottomNavigationBar(
               type: BottomNavigationBarType.fixed,
               currentIndex: index,
@@ -538,7 +605,7 @@ class _Shell extends StatelessWidget {
                 thickness: 1,
                 color: AppColors.border,
               ),
-              Expanded(child: child),
+              Expanded(child: bodyWithHost),
             ],
           ),
         );
