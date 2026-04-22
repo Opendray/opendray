@@ -16,13 +16,14 @@ import (
 // single-file-at-a-time model the old git-viewer used, the panel gets
 // every file in one response and can render them as a stacked list.
 type FileDiff struct {
-	Path     string `json:"path"`
-	OldPath  string `json:"oldPath,omitempty"`
-	Status   string `json:"status"`   // "modified" | "added" | "deleted" | "renamed" | "untracked"
-	Add      int    `json:"add"`      // lines added
-	Del      int    `json:"del"`      // lines deleted
-	IsBinary bool   `json:"isBinary"` // numstat reported "-"; Patch is empty
-	Patch    string `json:"patch"`    // full unified diff hunk for this file
+	Path        string `json:"path"`
+	OldPath     string `json:"oldPath,omitempty"`
+	Status      string `json:"status"`   // "modified" | "added" | "deleted" | "renamed" | "untracked"
+	Add         int    `json:"add"`      // lines added
+	Del         int    `json:"del"`      // lines deleted
+	IsBinary    bool   `json:"isBinary"` // numstat reported "-"; Patch is empty
+	Patch       string `json:"patch"`    // full unified diff hunk for this file
+	PreviewHTML string `json:"previewHtml,omitempty"` // sanitised markdown render; only populated for .md/.markdown when MarkdownPreview=true
 }
 
 // MultiDiffMode selects which slice of the working tree to diff.
@@ -126,6 +127,10 @@ func MultiDiff(ctx context.Context, cfg Config, repoPath string, opts MultiDiffO
 				files[i].IsBinary = c.binary
 			}
 		}
+	}
+
+	if cfg.MarkdownPreview {
+		files = attachMarkdownPreviews(ctx, repo, files, 0)
 	}
 
 	return MultiDiffResult{

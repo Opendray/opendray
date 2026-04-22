@@ -188,6 +188,22 @@ type adapter interface {
 	// /check-runs endpoint that needs the commit hash directly
 	// instead of the PR number.
 	checks(ctx context.Context, number int, headSHA string) ([]CheckRun, error)
+	// listRepos returns the repositories the authenticated user can
+	// access on this forge instance — used by the Source Control
+	// plugin's repo picker so one forge login surfaces all available
+	// repos instead of locking in a single one at config time.
+	listRepos(ctx context.Context, limit int) ([]RepoSummary, error)
+}
+
+// RepoSummary is the cross-forge repository shape returned by the
+// repo picker. Empty fields are left zero-valued rather than omitted
+// so the UI can render "—" consistently.
+type RepoSummary struct {
+	FullName      string `json:"fullName"`      // "owner/name" — dispatch key for PR routes
+	Description   string `json:"description,omitempty"`
+	Private       bool   `json:"private"`
+	DefaultBranch string `json:"defaultBranch,omitempty"`
+	HTMLURL       string `json:"htmlUrl,omitempty"`
 }
 
 // pick returns the adapter matching cfg.ForgeType, or an error if
@@ -198,6 +214,16 @@ func pick(cfg Config) (adapter, error) {
 	}
 	if cfg.Repo == "" {
 		return nil, errors.New("forge: repo is required")
+	}
+	return pickAdapter(cfg)
+}
+
+// pickAdapter is pick without the repo requirement — used by ListRepos
+// where the whole point is to surface repos the user can pick between,
+// so requiring a repo up front would be circular.
+func pickAdapter(cfg Config) (adapter, error) {
+	if cfg.BaseURL == "" {
+		return nil, errors.New("forge: baseUrl is required")
 	}
 	switch strings.ToLower(cfg.ForgeType) {
 	case "gitea":
@@ -211,6 +237,31 @@ func pick(cfg Config) (adapter, error) {
 	default:
 		return nil, fmt.Errorf("forge: unknown forgeType %q", cfg.ForgeType)
 	}
+}
+
+// ListRepos returns repositories accessible to the token on this
+// forge instance. Limit is clamped to [1, 200] because forges
+// disagree on max page size and the panel only needs enough to fill
+// a picker.
+func ListRepos(ctx context.Context, cfg Config, limit int) ([]RepoSummary, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	if limit > 200 {
+		limit = 200
+	}
+	a, err := pickAdapter(cfg)
+	if err != nil {
+		return nil, err
+	}
+	repos, err := a.listRepos(ctx, limit)
+	if err != nil {
+		return nil, err
+	}
+	if repos == nil {
+		repos = []RepoSummary{}
+	}
+	return repos, nil
 }
 
 // List returns PRs matching the state filter. limit is clamped to

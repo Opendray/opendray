@@ -401,6 +401,25 @@ func New(cfg Config) *Server {
 		r.Get("/api/source-control/{plugin}/baseline",      s.scBaselineGet)
 		r.Delete("/api/source-control/{plugin}/baseline",   s.scBaselineDelete)
 
+		// Forge instances (Phase 2.A). One source-control install may
+		// track many forges; tokens are held in plugin_secret per id.
+		r.Get("/api/source-control/{plugin}/forges",            s.scForgesList)
+		r.Post("/api/source-control/{plugin}/forges",           s.scForgesCreate)
+		r.Put("/api/source-control/{plugin}/forges/{id}",       s.scForgesUpdate)
+		r.Delete("/api/source-control/{plugin}/forges/{id}",    s.scForgesDelete)
+		r.Get("/api/source-control/{plugin}/forges/{id}/repos", s.scForgesRepos)
+
+		// PR routes (Phase 2.C). `?repo=owner/name` picks the repo per
+		// request, so one forge instance covers any number of repos —
+		// no more "one repo locked in config" as the old git-forge had.
+		r.Get("/api/source-control/{plugin}/forges/{id}/pulls",                          s.scPullsList)
+		r.Get("/api/source-control/{plugin}/forges/{id}/pulls/{number}",                 s.scPullDetail)
+		r.Get("/api/source-control/{plugin}/forges/{id}/pulls/{number}/diff",            s.scPullDiff)
+		r.Get("/api/source-control/{plugin}/forges/{id}/pulls/{number}/comments",        s.scPullComments)
+		r.Get("/api/source-control/{plugin}/forges/{id}/pulls/{number}/reviews",         s.scPullReviews)
+		r.Get("/api/source-control/{plugin}/forges/{id}/pulls/{number}/review-comments", s.scPullReviewComments)
+		r.Get("/api/source-control/{plugin}/forges/{id}/pulls/{number}/checks",          s.scPullChecks)
+
 		// pg-browser panel — SQL editor + schema browser backed by pgx.
 		// Read-only is enforced server-side via BEGIN READ ONLY + verb
 		// guard; statement timeout + max rows gated from configSchema.
