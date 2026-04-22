@@ -111,9 +111,6 @@ class L10n extends ChangeNotifier {
     // Bottom navigation
     'Sessions': '会话',
     'Settings': '设置',
-    'Running': '运行中',
-    'No running plugins': '暂无运行中插件',
-    'Open a plugin to see it here.': '打开一个插件后会显示在这里。',
 
     // Dashboard / sessions
     'New':              '新建',
