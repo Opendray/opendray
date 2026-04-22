@@ -11,26 +11,22 @@ import 'shared/theme/responsive.dart';
 import 'features/auth/login_page.dart';
 import 'features/dashboard/dashboard_page.dart';
 import 'features/session/session_page.dart';
-import 'features/browser/preview_page.dart';
 import 'features/claude_accounts/claude_accounts_page.dart';
-import 'features/docs/docs_page.dart';
 import 'features/endpoints/endpoints_page.dart';
-import 'features/pg/pg_page.dart';
-import 'features/files/files_page.dart';
-import 'features/logs/logs_page.dart';
-import 'features/source_control/source_control_page.dart';
-import 'features/mcp/mcp_page.dart';
-import 'features/messaging/telegram_page.dart';
 import 'features/hub/hub_page.dart';
 import 'features/plugins/plugins_page.dart';
 import 'features/settings/builtin_restore_page.dart';
 import 'features/settings/settings_page.dart';
 import 'features/settings/setup_page.dart';
-import 'features/tasks/tasks_page.dart';
 import 'features/workbench/command_palette.dart';
 import 'features/workbench/keybindings.dart';
-import 'features/workbench/webview_host.dart';
-import 'features/workbench/workbench_models.dart';
+import 'features/workbench/running/plugin_registry.dart';
+import 'features/workbench/running/plugin_thumbnail_capture.dart';
+import 'features/workbench/running/plugin_thumbnail_js_fallback.dart';
+import 'features/workbench/running/running_plugins_host.dart';
+import 'features/workbench/running/running_plugins_models.dart';
+import 'features/workbench/running/running_plugins_service.dart';
+import 'features/workbench/running/running_plugins_switcher_page.dart';
 import 'features/workbench/workbench_service.dart';
 
 /// Feature flag: show the Hub (third-party marketplace) tab.
@@ -77,6 +73,11 @@ class _NtcAppState extends State<NtcApp> {
   void initState() {
     super.initState();
     _router = _buildRouter(widget.serverConfig, widget.authService);
+    // Wire the webview JS snapshot path so the running-plugins host
+    // can fall back to an in-page capture when RepaintBoundary produces
+    // a blank frame over an iOS WKWebView. One-time install; the
+    // capture module holds it as a static field.
+    PluginThumbnailCapture.webviewJsFallback = webviewJsThumbnailFallback;
   }
 
   void _toast(String text, {bool isError = false}) {
@@ -132,16 +133,19 @@ class _NtcAppState extends State<NtcApp> {
                 }
                 return svc;
               },
-              child: MaterialApp.router(
-                title: 'OpenDray',
-                theme: buildAppTheme(),
-                debugShowCheckedModeBanner: false,
-                scaffoldMessengerKey: _scaffoldMessengerKey,
-                routerConfig: _router,
-                builder: (ctx, child) => _WebDesktopThemeScope(
-                  child: _WorkbenchRoot(
-                    service: ctx.read<WorkbenchService>(),
-                    child: child ?? const SizedBox.shrink(),
+              child: ChangeNotifierProvider<RunningPluginsService>(
+                create: (_) => RunningPluginsService(),
+                child: MaterialApp.router(
+                  title: 'OpenDray',
+                  theme: buildAppTheme(),
+                  debugShowCheckedModeBanner: false,
+                  scaffoldMessengerKey: _scaffoldMessengerKey,
+                  routerConfig: _router,
+                  builder: (ctx, child) => _WebDesktopThemeScope(
+                    child: _WorkbenchRoot(
+                      service: ctx.read<WorkbenchService>(),
+                      child: child ?? const SizedBox.shrink(),
+                    ),
                   ),
                 ),
               ),
@@ -242,65 +246,30 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
         builder: (context, state, child) => _Shell(child: child),
         routes: [
           GoRoute(path: '/',        builder: (_, _) => const DashboardPage()),
-          // /browser parent grid is gone — per-plugin surfaces are now
-          // opened from /plugins. The /browser/<panel> children below
-          // stay because plugins_page._handOpenRoute pushes to them.
-          GoRoute(
-            path: '/browser/docs',
-            builder: (ctx, _) => _panelShell(ctx, 'Docs', const DocsPage()),
-          ),
-          GoRoute(
-            path: '/browser/files',
-            builder: (ctx, _) => _panelShell(ctx, 'Files', const FilesPage()),
-          ),
-          GoRoute(
-            path: '/browser/tasks',
-            builder: (ctx, _) => _panelShell(ctx, 'Tasks', const TasksPage()),
-          ),
-          GoRoute(
-            path: '/browser/source-control',
-            builder: (ctx, _) => _panelShell(
-                ctx, 'Source Control', const SourceControlPage()),
-          ),
-          GoRoute(
-            path: '/browser/database',
-            builder: (ctx, _) =>
-                _panelShell(ctx, 'PostgreSQL', const PGPage()),
-          ),
-          GoRoute(
-            path: '/browser/logs',
-            builder: (ctx, _) => _panelShell(ctx, 'Logs', const LogsPage()),
-          ),
-          GoRoute(
-            path: '/browser/messaging',
-            builder: (ctx, _) => _panelShell(ctx, 'Messaging', const TelegramPage()),
-          ),
-          GoRoute(
-            path: '/browser/mcp',
-            builder: (ctx, _) => _panelShell(ctx, 'MCP Servers', const MCPPage()),
-          ),
-          GoRoute(
-            path: '/browser/preview',
-            builder: (ctx, _) => _panelShell(ctx, 'Preview',
-                const PreviewPage(categoryFilter: 'preview')),
-          ),
-          GoRoute(
-            path: '/browser/simulator',
-            builder: (ctx, _) => _panelShell(ctx, 'Simulator',
-                const PreviewPage(categoryFilter: 'simulator')),
-          ),
-          // Generic v1 webview plugin route. Resolves the first
-          // activityBar view owned by the plugin and hosts it in a
-          // PluginWebView. Legacy panels still have their dedicated
-          // routes above and never hit this path.
-          GoRoute(
-            path: '/browser/plugin/:name',
-            builder: (ctx, state) => _PluginWebRoute(
-              pluginName: state.pathParameters['name']!,
-            ),
-          ),
+          // All `/browser/*` routes return a sentinel — the real
+          // rendering happens in `_Shell` via [RunningPluginsHost]'s
+          // IndexedStack, which keeps every opened plugin mounted
+          // across navigation. Route builders exist only so GoRouter
+          // matches the path; [_Shell] picks up `location` and drives
+          // mount / activation from there.
+          GoRoute(path: '/browser/docs', builder: _sentinel),
+          GoRoute(path: '/browser/files', builder: _sentinel),
+          GoRoute(path: '/browser/tasks', builder: _sentinel),
+          GoRoute(path: '/browser/source-control', builder: _sentinel),
+          GoRoute(path: '/browser/database', builder: _sentinel),
+          GoRoute(path: '/browser/logs', builder: _sentinel),
+          GoRoute(path: '/browser/messaging', builder: _sentinel),
+          GoRoute(path: '/browser/mcp', builder: _sentinel),
+          GoRoute(path: '/browser/preview', builder: _sentinel),
+          GoRoute(path: '/browser/simulator', builder: _sentinel),
+          // Generic v1 webview plugin route — same sentinel pattern.
+          GoRoute(path: '/browser/plugin/:name', builder: _sentinel),
           GoRoute(path: '/plugins', builder: (_, _) => const PluginsPage()),
           GoRoute(path: '/hub', builder: (_, _) => const HubPage()),
+          GoRoute(
+            path: '/running',
+            builder: (_, _) => const RunningPluginsSwitcherPage(),
+          ),
           GoRoute(path: '/settings', builder: (_, _) => const SettingsPage()),
           GoRoute(
             path: '/settings/claude-accounts',
@@ -325,78 +294,22 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
   );
 }
 
-// Panels opened from the launcher. Titles look up via L10n, so the same
-// key ("Docs", "Files", …) already used on the launcher card is reused.
+/// Sentinel builder for plugin routes — the actual page renders from
+/// `_Shell.body` via RunningPluginsHost. The SizedBox is never
+/// visible: `_Shell` detects the plugin route, shows the IndexedStack
+/// directly, and ignores this child. Keeping the route registered
+/// is what lets GoRouter navigate to the path; the widget returned is
+/// just placeholder tissue.
+Widget _sentinel(BuildContext context, GoRouterState state) =>
+    const SizedBox.shrink();
+
+// Panels opened from Settings — plain wrapper. Source-of-truth for
+// plugin-owned panels is PluginRegistry.
 Widget _panelShell(BuildContext ctx, String titleKey, Widget child) {
   return Scaffold(
     appBar: AppBar(title: Text(ctx.tr(titleKey))),
     body: child,
   );
-}
-
-/// Route shell for `/browser/plugin/:name`. Finds the plugin's first
-/// contributed view in the workbench registry and renders it via the
-/// right backend — [PluginWebView] for `render:"webview"`. Works for
-/// every webview plugin the server exposes without per-plugin routing
-/// glue.
-class _PluginWebRoute extends StatelessWidget {
-  const _PluginWebRoute({required this.pluginName});
-  final String pluginName;
-
-  @override
-  Widget build(BuildContext context) {
-    final service = context.watch<WorkbenchService>();
-    final api = context.read<ApiClient>();
-
-    WorkbenchView? view;
-    for (final v in service.views) {
-      if (v.pluginName == pluginName) {
-        view = v;
-        break;
-      }
-    }
-    if (view == null) {
-      return Scaffold(
-        appBar: AppBar(title: Text(pluginName)),
-        body: const Center(
-          child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Text(
-              'Plugin view not found. The plugin may have been '
-              'uninstalled or disabled.',
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      );
-    }
-    final title = view.title.isEmpty ? pluginName : view.title;
-    if (view.render == 'webview') {
-      return Scaffold(
-        appBar: AppBar(title: Text(title)),
-        body: PluginWebView(
-          pluginName: view.pluginName,
-          viewId: view.id,
-          entryPath: view.entry,
-          baseUrl: api.baseUrl,
-          bearerToken: api.token ?? '',
-        ),
-      );
-    }
-    // Declarative renderer is M5 work. Show a pointer until then.
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'Declarative views arrive in M5.',
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 /// Shell wrapper around every routed page. On narrow viewports (phones,
@@ -420,19 +333,16 @@ class _Shell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
-    // Tab layout:
-    //   Hub enabled  → Sessions | Plugin | Hub | Settings  (indices 0..3)
-    //   Hub hidden   → Sessions | Plugin | Settings        (indices 0..2)
-    //
-    // `/browser/*` highlights the Plugin tab because those pages are
-    // plugin-owned surfaces opened from /plugins. The /hub route is
-    // still registered even when kHubEnabled is false — a dev can
-    // reach it by typing the URL; regular users just don't see the
-    // entry point.
-    final int settingsIndex = kHubEnabled ? 3 : 2;
+    // Tab layout (Running slot lives after Plugin):
+    //   Hub hidden   → Sessions | Plugin | Running | Settings           (0..3)
+    //   Hub enabled  → Sessions | Plugin | Hub | Running | Settings     (0..4)
+    final int runningIndex = kHubEnabled ? 3 : 2;
+    final int settingsIndex = kHubEnabled ? 4 : 3;
     final int index;
     if (location == '/settings' || location.startsWith('/settings/')) {
       index = settingsIndex;
+    } else if (location == '/running') {
+      index = runningIndex;
     } else if (kHubEnabled &&
         (location == '/hub' || location.startsWith('/hub/'))) {
       index = 2;
@@ -449,30 +359,94 @@ class _Shell extends StatelessWidget {
           ? switch (i) {
               1 => '/plugins',
               2 => '/hub',
-              3 => '/settings',
+              3 => '/running',
+              4 => '/settings',
               _ => '/',
             }
           : switch (i) {
               1 => '/plugins',
-              2 => '/settings',
+              2 => '/running',
+              3 => '/settings',
               _ => '/',
             };
     }
+
+    final runningCount =
+        context.watch<RunningPluginsService>().entries.length;
+    final runningLabel = runningCount > 0
+        ? '${context.tr('Running')} ($runningCount)'
+        : context.tr('Running');
 
     final destinations = <_NavDest>[
       _NavDest(icon: Icons.terminal, label: context.tr('Sessions')),
       _NavDest(icon: Icons.extension_outlined, label: context.tr('Plugin')),
       if (kHubEnabled)
         _NavDest(icon: Icons.storefront, label: context.tr('Hub')),
+      _NavDest(icon: Icons.layers_outlined, label: runningLabel),
       _NavDest(icon: Icons.settings, label: context.tr('Settings')),
     ];
+
+    // Compute what the running host needs: whether we're on a plugin
+    // route, and — if so — which plugin id to focus. Mount and active
+    // updates are scheduled post-frame so we don't call
+    // notifyListeners during build.
+    final bool isPluginRoute = location.startsWith('/browser/');
+    String? targetPluginId;
+    RunningPluginEntry? seed;
+    if (isPluginRoute) {
+      // Built-in panel: resolve directly from route → id.
+      final builtinId = PluginRegistry.builtinIdForRoute(location);
+      if (builtinId != null) {
+        targetPluginId = builtinId;
+        seed = PluginRegistry.builtinSeed(builtinId);
+      } else {
+        // Webview plugin: /browser/plugin/<name>. Resolve against the
+        // live WorkbenchService view catalog so the seed carries the
+        // entry path for PluginWebView.
+        const prefix = '/browser/plugin/';
+        if (location.startsWith(prefix)) {
+          final name = location.substring(prefix.length);
+          if (name.isNotEmpty) {
+            targetPluginId = 'webview:$name';
+            final workbench = context.read<WorkbenchService>();
+            final api = context.read<ApiClient>();
+            for (final v in workbench.views) {
+              if (v.pluginName == name && v.render == 'webview') {
+                seed = PluginRegistry.webviewSeed(view: v, api: api);
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    final runningService = context.read<RunningPluginsService>();
+    if (isPluginRoute && seed != null && targetPluginId != null) {
+      final sid = targetPluginId;
+      final sseed = seed;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        runningService.ensureOpened(sseed);
+        runningService.setActive(sid);
+      });
+    } else if (!isPluginRoute) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        runningService.clearActive();
+      });
+    }
+
+    final Widget bodyWithHost = RunningPluginsHost(
+      isPluginRoute: isPluginRoute,
+      targetPluginId: targetPluginId,
+      nonPluginChild: child,
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= _railBreakpoint;
         if (!isWide) {
           return Scaffold(
-            body: child,
+            body: bodyWithHost,
             bottomNavigationBar: BottomNavigationBar(
               type: BottomNavigationBarType.fixed,
               currentIndex: index,
@@ -538,7 +512,7 @@ class _Shell extends StatelessWidget {
                 thickness: 1,
                 color: AppColors.border,
               ),
-              Expanded(child: child),
+              Expanded(child: bodyWithHost),
             ],
           ),
         );
