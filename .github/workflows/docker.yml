@@ -3,21 +3,8 @@ name: Docker
 on:
   push:
     branches: [main]
-    paths:
-      - 'Dockerfile'
-      - 'Dockerfile.full'
-      - 'docker-compose.yml'
-      - 'app/**'
-      - 'cmd/**'
-      - 'gateway/**'
-      - 'kernel/**'
-      - 'plugin/**'
-      - 'plugins/**'
-      - 'go.mod'
-      - 'go.sum'
-      - '.github/workflows/docker.yml'
-  tags:
-    - 'v*'
+    tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: read
