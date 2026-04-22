@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
   id-token: write  # for cosign OIDC
+  actions: read    # anchore/sbom-action re-downloads its own workflow
+                   # artifact before attaching to the release. Without
+                   # this the "Attaching SBOMs to release" call 403s
+                   # and the downstream manual upload gets skipped.
 
 jobs:
   release:
@@ -53,13 +57,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Belt-and-braces: even with `actions: read` granted, if anchore's
+      # attach-to-release logic ever regresses we don't want the SBOM
+      # upload to vanish silently. The output-file is written *before*
+      # the attach attempt, so the next step can always upload it.
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
+        continue-on-error: true
         with:
           artifact-name: sbom-opendray.spdx.json
           output-file: dist/sbom-opendray.spdx.json
 
       - name: Upload SBOM to release
-        run: gh release upload ${{ github.ref_name }} dist/sbom-opendray.spdx.json
+        if: always() && hashFiles('dist/sbom-opendray.spdx.json') != ''
+        run: gh release upload ${{ github.ref_name }} dist/sbom-opendray.spdx.json --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
