@@ -157,13 +157,25 @@ chmod +x opendray-darwin-arm64
 
 ### Build from source
 
+Prerequisites: Go 1.25+ and Flutter (stable channel). No `make`
+required — the two direct commands are all you need.
+
 ```bash
-git clone https://github.com/opendray/opendray.git
+git clone https://github.com/Opendray/opendray.git
 cd opendray
-make build
+
+# 1. Build the Flutter web bundle (gets embedded into the Go binary)
+cd app && flutter pub get && flutter build web --release && cd ..
+
+# 2. Build the Go binary
+go build -o bin/opendray ./cmd/opendray
+
 ./bin/opendray setup
 ./bin/opendray
 ```
+
+If you already have GNU `make` installed, `make build` is a one-liner
+shortcut for the two commands above.
 
 <details>
 <summary><b>Dev mode (hot-reload)</b></summary>

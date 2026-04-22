@@ -141,13 +141,23 @@ chmod +x opendray-darwin-arm64
 
 ### 从源码构建
 
+依赖:Go 1.25+ 和 Flutter(stable channel)。**不需要 `make`** —— 下面两条命令就是全部。
+
 ```bash
-git clone https://github.com/opendray/opendray.git
+git clone https://github.com/Opendray/opendray.git
 cd opendray
-make build
+
+# 1. 构建 Flutter web 资产(会被嵌入 Go 二进制)
+cd app && flutter pub get && flutter build web --release && cd ..
+
+# 2. 构建 Go 二进制
+go build -o bin/opendray ./cmd/opendray
+
 ./bin/opendray setup
 ./bin/opendray
 ```
+
+如果本地已装 GNU `make`,`make build` 就是上面两条命令的快捷方式。
 
 <details>
 <summary><b>开发模式(热重载)</b></summary>
