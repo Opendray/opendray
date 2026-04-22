@@ -8,6 +8,11 @@ import '../../../shared/theme/app_theme.dart';
 /// to query for pull requests. The unified source-control backend
 /// stores forges via /forges CRUD, not via plugin Configure, so this
 /// widget also opens a compact "Manage forges" dialog.
+///
+/// Saved repos: the backend persists a curated list per forge under
+/// /forges/{id}/saved-repos. The parent page loads that list and
+/// passes it down via [savedRepos]; a bookmark button next to the
+/// repo field toggles save state via [onToggleSaved].
 class ForgeSelector extends StatelessWidget {
   const ForgeSelector({
     super.key,
@@ -18,8 +23,10 @@ class ForgeSelector extends StatelessWidget {
     required this.repo,
     required this.repoHistory,
     required this.remoteRepos,
+    required this.savedRepos,
     required this.onSelectForge,
     required this.onSelectRepo,
+    required this.onToggleSaved,
     required this.onForgesChanged,
     required this.onRefresh,
     this.busy = false,
@@ -32,11 +39,17 @@ class ForgeSelector extends StatelessWidget {
   final String repo;
   final List<String> repoHistory;
   final List<String> remoteRepos;
+  final List<Map<String, dynamic>> savedRepos;
   final ValueChanged<String> onSelectForge;
   final ValueChanged<String> onSelectRepo;
+  final void Function(String repo, bool currentlySaved) onToggleSaved;
   final VoidCallback onForgesChanged;
   final VoidCallback onRefresh;
   final bool busy;
+
+  bool get _isCurrentRepoSaved =>
+      repo.isNotEmpty &&
+      savedRepos.any((r) => (r['fullName'] as String?) == repo);
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +66,19 @@ class ForgeSelector extends StatelessWidget {
           Expanded(flex: 2, child: _forgeDropdown(context)),
           const SizedBox(width: 8),
           Expanded(flex: 3, child: _repoField(context)),
+          IconButton(
+            tooltip: _isCurrentRepoSaved
+                ? context.tr('Remove from saved')
+                : context.tr('Save repo'),
+            icon: Icon(
+              _isCurrentRepoSaved ? Icons.bookmark : Icons.bookmark_border,
+              size: 18,
+              color: _isCurrentRepoSaved ? AppColors.accent : null,
+            ),
+            onPressed: (selectedId == null || repo.isEmpty)
+                ? null
+                : () => onToggleSaved(repo, _isCurrentRepoSaved),
+          ),
           IconButton(
             tooltip: context.tr('Manage forges'),
             icon: const Icon(Icons.settings, size: 18),
@@ -104,8 +130,19 @@ class ForgeSelector extends StatelessWidget {
   }
 
   Widget _repoField(BuildContext context) {
+    // Build options in priority order: saved repos first (backend
+    // sorts by lastUsedAt DESC so recents come first), then live
+    // remote repos, then session-local history. Dedup by fullName.
     final seen = <String>{};
     final opts = <String>[];
+    final saved = <String>{};
+    for (final r in savedRepos) {
+      final n = (r['fullName'] as String?) ?? '';
+      if (n.isNotEmpty && seen.add(n)) {
+        opts.add(n);
+        saved.add(n);
+      }
+    }
     for (final r in remoteRepos) {
       if (seen.add(r)) opts.add(r);
     }
@@ -122,6 +159,49 @@ class ForgeSelector extends StatelessWidget {
         return opts.where((o) => o.toLowerCase().contains(q.toLowerCase()));
       },
       onSelected: onSelectRepo,
+      optionsViewBuilder: (ctx, onSelected, options) {
+        final list = options.toList();
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 4,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 240, maxWidth: 360),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: list.length,
+                itemBuilder: (_, i) {
+                  final o = list[i];
+                  final isSaved = saved.contains(o);
+                  return InkWell(
+                    onTap: () => onSelected(o),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      child: Row(children: [
+                        Icon(
+                          isSaved ? Icons.bookmark : Icons.history,
+                          size: 14,
+                          color: isSaved
+                              ? AppColors.accent
+                              : AppColors.textMuted,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(o,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12)),
+                        ),
+                      ]),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
       fieldViewBuilder: (ctx, controller, focusNode, onSubmit) {
         return TextField(
           controller: controller,
@@ -180,7 +260,15 @@ class _ManageForgesDialogState extends State<_ManageForgesDialog> {
   final _nameCtl = TextEditingController();
   final _baseUrlCtl = TextEditingController();
   final _tokenCtl = TextEditingController();
-  String _type = 'gitea';
+  String _type = 'github';
+
+  // Backend defaults (mirror gateway/sourcecontrol_forges.go). github and
+  // gitlab accept an empty baseUrl and fill these in server-side; gitea
+  // is self-hosted so a baseUrl is mandatory.
+  static const _defaultBaseUrls = <String, String>{
+    'github': 'https://api.github.com',
+    'gitlab': 'https://gitlab.com',
+  };
 
   @override
   void initState() {
@@ -212,8 +300,16 @@ class _ManageForgesDialogState extends State<_ManageForgesDialog> {
     final name = _nameCtl.text.trim();
     final baseUrl = _baseUrlCtl.text.trim();
     final token = _tokenCtl.text.trim();
-    if (name.isEmpty || baseUrl.isEmpty) {
-      setState(() => _error = 'name and baseUrl are required');
+    if (name.isEmpty) {
+      setState(() => _error = context.tr('Name is required'));
+      return;
+    }
+    // Gitea is self-hosted; the server can't guess the URL. github
+    // and gitlab have well-known defaults the backend fills in for
+    // us, so we let baseUrl through empty.
+    if (baseUrl.isEmpty && _type == 'gitea') {
+      setState(() => _error =
+          context.tr('Base URL is required for self-hosted Gitea'));
       return;
     }
     setState(() { _busy = true; _error = null; });
@@ -251,6 +347,12 @@ class _ManageForgesDialogState extends State<_ManageForgesDialog> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  String? _baseUrlHelper() {
+    final fallback = _defaultBaseUrls[_type];
+    if (fallback == null) return null;
+    return '${context.tr('Leave empty to use')} $fallback';
   }
 
   @override
@@ -313,18 +415,23 @@ class _ManageForgesDialogState extends State<_ManageForgesDialog> {
             DropdownButton<String>(
               value: _type,
               items: const [
-                DropdownMenuItem(value: 'gitea', child: Text('gitea')),
                 DropdownMenuItem(value: 'github', child: Text('github')),
                 DropdownMenuItem(value: 'gitlab', child: Text('gitlab')),
+                DropdownMenuItem(value: 'gitea', child: Text('gitea')),
               ],
-              onChanged: (v) => setState(() => _type = v ?? 'gitea'),
+              onChanged: (v) => setState(() => _type = v ?? 'github'),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: TextField(
                 controller: _baseUrlCtl,
-                decoration: const InputDecoration(
-                    isDense: true, labelText: 'Base URL'),
+                decoration: InputDecoration(
+                  isDense: true,
+                  labelText: 'Base URL',
+                  helperText: _baseUrlHelper(),
+                  helperStyle: const TextStyle(
+                      fontSize: 10, color: AppColors.textMuted),
+                ),
               ),
             ),
           ]),

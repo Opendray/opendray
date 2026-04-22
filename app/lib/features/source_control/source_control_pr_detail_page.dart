@@ -1,8 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -161,16 +159,6 @@ class _SourceControlPrDetailPageState extends State<SourceControlPrDetailPage>
         title: Text('#$_number · ${title.isEmpty ? "—" : title}',
             overflow: TextOverflow.ellipsis),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.auto_awesome, size: 20),
-            tooltip: context.tr('Explain this PR'),
-            onPressed: () => _aiHandoff(reviewMode: false),
-          ),
-          IconButton(
-            icon: const Icon(Icons.rate_review_outlined, size: 20),
-            tooltip: context.tr('Review this diff'),
-            onPressed: () => _aiHandoff(reviewMode: true),
-          ),
           if (url.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.open_in_browser, size: 20),
@@ -516,46 +504,4 @@ class _SourceControlPrDetailPageState extends State<SourceControlPrDetailPage>
     );
   }
 
-  /// Copies the PR's diff plus a preset Claude prompt to the clipboard
-  /// and navigates to the dashboard so the user can paste into a fresh
-  /// Claude session. Deliberately dumb: no bridge RPC, no auto-open —
-  /// the clipboard is the universal hand-off.
-  Future<void> _aiHandoff({required bool reviewMode}) async {
-    final title = (_pr['title'] as String?) ?? '';
-    final number = _number;
-    final body = ((_pr['body'] as String?) ?? '').trim();
-    final files = _diff ?? const [];
-    final buf = StringBuffer();
-    final instruction = reviewMode
-        ? 'Code review this diff. Flag anything risky, confusing, or '
-            'missing. Be specific — cite file paths and line numbers. '
-            'Note security / performance / correctness concerns. If '
-            'the change looks fine, say so briefly.'
-        : 'Summarise this pull request. Lead with what it changes '
-            'and why. Call out the parts that most need reviewer '
-            'attention. Stay concise — two short paragraphs.';
-    buf.writeln(instruction);
-    buf.writeln();
-    buf.writeln('--- PR #$number: $title ---');
-    if (body.isNotEmpty) {
-      buf.writeln();
-      buf.writeln('Description:');
-      buf.writeln(body);
-    }
-    buf.writeln();
-    buf.writeln('Diff:');
-    for (final f in files) {
-      final patch = (f['patch'] as String?) ?? '';
-      if (patch.isEmpty) continue;
-      buf.writeln(patch);
-    }
-    await Clipboard.setData(ClipboardData(text: buf.toString()));
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(context.tr(
-          'Diff copied — start a Claude session on the dashboard and paste.')),
-      duration: const Duration(seconds: 4),
-    ));
-    GoRouter.of(context).go('/');
-  }
 }

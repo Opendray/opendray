@@ -627,14 +627,16 @@ class ApiClient {
     return (res.data as List).cast<Map<String, dynamic>>();
   }
 
-  /// Multi-file diff. [mode] is "unstaged" | "staged" | "baseline".
+  /// Multi-file diff. [mode] is "unstaged" | "staged" | "baseline" | "commit".
   /// [sessionId] is only consulted in baseline mode when [since] is empty.
+  /// [commit] is required when mode is "commit" — the SHA to inspect.
   /// Returns {repo, mode, files[]} where each file carries path, oldPath,
   /// status, add, del, isBinary, patch, and previewHtml (.md only).
   Future<Map<String, dynamic>> scDiff(String plugin, {
     required String repo,
     String mode = 'unstaged',
     String since = '',
+    String commit = '',
     bool full = false,
     String sessionId = '',
   }) async {
@@ -643,6 +645,7 @@ class ApiClient {
           'repo': repo,
           'mode': mode,
           if (since.isNotEmpty) 'since': since,
+          if (commit.isNotEmpty) 'commit': commit,
           if (full) 'full': '1',
           if (sessionId.isNotEmpty) 'sessionId': sessionId,
         });
@@ -721,6 +724,42 @@ class ApiClient {
     final res = await _dio.get('/api/source-control/$plugin/forges/$id/repos',
         queryParameters: {if (limit > 0) 'limit': limit});
     return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  // ── Source Control: saved (bookmarked) repos per forge ─────────
+  //
+  // Backed by /forges/{id}/saved-repos — plugin_kv persistence. The
+  // Flutter picker uses this so the user doesn't re-type owner/name
+  // on every session, and server-side lastUsedAt bumps surface recents
+  // on top automatically.
+
+  Future<List<Map<String, dynamic>>> scSavedReposList(
+      String plugin, String forgeId) async {
+    final res = await _dio.get(
+        '/api/source-control/$plugin/forges/$forgeId/saved-repos');
+    return (res.data as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, dynamic>> scSavedReposAdd(
+      String plugin, String forgeId, {
+    required String fullName,
+    String description = '',
+  }) async {
+    final res = await _dio.post(
+        '/api/source-control/$plugin/forges/$forgeId/saved-repos',
+        data: {
+          'fullName': fullName,
+          if (description.isNotEmpty) 'description': description,
+        });
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  Future<Map<String, dynamic>> scSavedReposRemove(
+      String plugin, String forgeId, {required String fullName}) async {
+    final res = await _dio.delete(
+        '/api/source-control/$plugin/forges/$forgeId/saved-repos',
+        data: {'fullName': fullName});
+    return Map<String, dynamic>.from(res.data as Map);
   }
 
   // ── Source Control: pull requests under a forge instance ────

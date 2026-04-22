@@ -8,6 +8,7 @@ import '../../core/models/provider.dart';
 import '../../core/services/l10n.dart';
 import '../../shared/providers_bus.dart';
 import '../../shared/theme/app_theme.dart';
+import 'source_control_commit_diff_page.dart';
 import 'source_control_pr_detail_page.dart';
 import 'widgets/forge_selector.dart';
 import 'widgets/multi_file_diff_view.dart';
@@ -64,6 +65,11 @@ class _SourceControlPageState extends State<SourceControlPage>
   String? _selectedForgeId;
   String _forgeRepo = '';
   final List<String> _forgeRepoHistory = <String>[];
+  // Saved repos per forge id — persisted server-side via
+  // /forges/{id}/saved-repos. Cached by forge id so switching
+  // forges doesn't blank the picker while the reload is in flight.
+  final Map<String, List<Map<String, dynamic>>> _savedReposByForge =
+      <String, List<Map<String, dynamic>>>{};
   List<Map<String, dynamic>> _prs = const [];
   String _prState = 'open';
   bool _prLoading = false;
@@ -277,11 +283,47 @@ class _SourceControlPageState extends State<SourceControlPage>
           _selectedForgeId = list.first['id'] as String?;
         }
       });
-      if (_selectedForgeId != null) await _loadRemoteRepos();
+      if (_selectedForgeId != null) {
+        await _loadRemoteRepos();
+        await _loadSavedRepos();
+      }
       if (_forgeRepo.isNotEmpty) await _loadPRs();
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _prError = e.message);
+    }
+  }
+
+  Future<void> _loadSavedRepos() async {
+    final name = _pluginName;
+    final fid = _selectedForgeId;
+    if (name == null || fid == null) return;
+    try {
+      final list = await ApiClient.describeErrors(
+          () => _api.scSavedReposList(name, fid));
+      if (!mounted) return;
+      setState(() => _savedReposByForge[fid] = list);
+    } on ApiException catch (_) {
+      // Silent — an empty saved list just leaves the picker driven
+      // by remote + history, which is still useful.
+    }
+  }
+
+  Future<void> _toggleSavedRepo(String repo, bool currentlySaved) async {
+    final name = _pluginName;
+    final fid = _selectedForgeId;
+    if (name == null || fid == null || repo.isEmpty) return;
+    try {
+      if (currentlySaved) {
+        await ApiClient.describeErrors(() =>
+            _api.scSavedReposRemove(name, fid, fullName: repo));
+      } else {
+        await ApiClient.describeErrors(() =>
+            _api.scSavedReposAdd(name, fid, fullName: repo));
+      }
+      await _loadSavedRepos();
+    } on ApiException catch (e) {
+      _toast(e.message);
     }
   }
 
@@ -573,11 +615,14 @@ class _SourceControlPageState extends State<SourceControlPage>
       itemBuilder: (_, i) {
         final c = _log[i];
         final short = (c['short'] as String?) ?? '';
+        final sha = (c['sha'] as String?) ?? (c['hash'] as String?) ?? '';
         final subject = (c['subject'] as String?) ?? '';
         final author = (c['author'] as String?) ?? '';
         final date = (c['date'] as num?)?.toInt() ?? 0;
+        final ref = sha.isNotEmpty ? sha : short;
         return ListTile(
           dense: true,
+          onTap: ref.isEmpty ? null : () => _openCommitDiff(ref, subject),
           leading: Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
@@ -597,9 +642,24 @@ class _SourceControlPageState extends State<SourceControlPage>
           subtitle: Text('$author · ${_relTime(date)}',
               style: const TextStyle(
                   fontSize: 11, color: AppColors.textMuted)),
+          trailing: const Icon(Icons.chevron_right,
+              size: 18, color: AppColors.textMuted),
         );
       },
     );
+  }
+
+  void _openCommitDiff(String sha, String subject) {
+    final name = _pluginName;
+    if (name == null || _repoPath.isEmpty || sha.isEmpty) return;
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => SourceControlCommitDiffPage(
+        pluginName: name,
+        repo: _repoPath,
+        sha: sha,
+        subject: subject,
+      ),
+    ));
   }
 
   // ── PRs tab ─────────────────────────────────────────────────
@@ -616,18 +676,21 @@ class _SourceControlPageState extends State<SourceControlPage>
         repo: _forgeRepo,
         repoHistory: _forgeRepoHistory,
         remoteRepos: _remoteRepoNames,
+        savedRepos: _savedReposByForge[_selectedForgeId ?? ''] ?? const [],
         onSelectForge: (id) {
           setState(() {
             _selectedForgeId = id;
             _remoteRepoNames = const [];
           });
           _loadRemoteRepos();
+          _loadSavedRepos();
           if (_forgeRepo.isNotEmpty) _loadPRs();
         },
         onSelectRepo: (r) {
           setState(() => _forgeRepo = r);
           _loadPRs();
         },
+        onToggleSaved: _toggleSavedRepo,
         onForgesChanged: _loadForges,
         onRefresh: _loadPRs,
         busy: _prLoading,

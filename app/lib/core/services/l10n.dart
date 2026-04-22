@@ -201,10 +201,13 @@ class L10n extends ChangeNotifier {
         '浏览 Gitea / GitHub / GitLab 上的 Pull Request',
     'No comments':                    '暂无评论',
     'Open in browser':                '在浏览器打开',
-    'Explain this PR':                '让 Claude 总结这个 PR',
-    'Review this diff':               '让 Claude Review 这份 diff',
-    'Diff copied — start a Claude session on the dashboard and paste.':
-        'Diff 已复制到剪贴板,请回首页创建 Claude session 后粘贴。',
+    'Save repo':                      '保存仓库',
+    'Remove from saved':              '从保存中移除',
+    'Base URL is required for self-hosted Gitea':
+                                      'Gitea 自建实例必须填写 Base URL',
+    'Leave empty to use':             '留空则使用',
+    'No file changes in this commit.':
+                                      '该提交未包含文件变更。',
     'approved':                       '已批准',
     'changes':                        '待改',
     'commented':                      '已评论',
