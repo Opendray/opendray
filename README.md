@@ -417,8 +417,7 @@ gateway/            HTTP + WebSocket handlers
   docs/             Markdown reader (used by the Obsidian plugin)
 plugin/             Manifest scanner, runtime, hook bus, marketplace, consents
 plugins/
-  builtin/          17 built-in plugins (6 agents + 11 panels, embedded in binary)
-  examples/         Reference external plugins (time-ninja, kanban, fs-readme)
+  builtin/          Built-in plugins (agents + panels, embedded in binary)
 app/                Flutter client (iOS, Android, Web) — 19 feature modules
 ```
 

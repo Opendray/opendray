@@ -7,9 +7,7 @@
 // The `builtin/` subdir is the single home for everything that ships
 // with OpenDray — agents (CLI-style) and panels (GUI-style) live
 // side-by-side. Third-party plugins don't land here; they flow through
-// the install pipeline into the runtime data dir. plugins/examples/
-// stays outside the embed and is a reference-only tree for publisher
-// CLI work.
+// the install pipeline into the runtime data dir.
 //
 // Users can still drop extra plugins into a filesystem pluginDir —
 // plugin.Runtime.LoadAll merges both sources with filesystem taking

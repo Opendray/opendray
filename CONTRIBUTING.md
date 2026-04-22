@@ -48,8 +48,7 @@ gateway/          # HTTP/WebSocket API (chi router)
 kernel/           # Core domain: auth, hub (session manager), store (DB), pg, config
 plugin/           # Plugin runtime + manifest loader + marketplace
 plugins/
-  builtin/        # 17 built-in plugins (6 agents + 11 panels, embedded in binary)
-  examples/       # Reference external plugins (time-ninja, kanban, fs-readme)
+  builtin/        # Built-in plugins (agents + panels, embedded in binary)
 app/              # Flutter frontend (iOS, Android, Web)
 ```
 

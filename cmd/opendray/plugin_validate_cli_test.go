@@ -8,8 +8,8 @@ import (
 	"testing"
 )
 
-// validV1ManifestJSON is the time-ninja manifest verbatim, used as a
-// known-valid v1 fixture. Content is from plugins/examples/time-ninja/manifest.json.
+// validV1ManifestJSON is an inline known-valid v1 fixture used to
+// exercise the CLI validator without touching disk.
 const validV1ManifestJSON = `{
   "$schema": "https://opendray.dev/schemas/plugin-manifest-v1.json",
   "name": "time-ninja",
@@ -66,8 +66,8 @@ func writeManifest(t *testing.T, dir, content string) {
 }
 
 // repoRoot walks up from the test's source directory to find the repo root
-// (identified by the presence of go.mod). Used to locate the real
-// plugins/examples/time-ninja/ fixture.
+// (identified by the presence of go.mod). Used to locate on-disk builtin
+// manifests for end-to-end validator tests.
 func repoRoot(t *testing.T) string {
 	t.Helper()
 	// Start from the test binary working directory.

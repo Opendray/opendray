@@ -381,8 +381,7 @@ gateway/            HTTP + WebSocket handler
   docs/             Markdown reader(Obsidian 插件用)
 plugin/             manifest 扫描器、运行时、hook 总线、marketplace、consent
 plugins/
-  builtin/          17 个内置插件(6 个 agent + 11 个面板,嵌入二进制)
-  examples/         示例外部插件(time-ninja、kanban、fs-readme)
+  builtin/          内置插件(agent + 面板,嵌入二进制)
 app/                Flutter 客户端(iOS、Android、Web)— 19 个 feature 模块
 ```
 
