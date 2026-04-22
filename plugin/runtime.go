@@ -609,10 +609,40 @@ func (rt *Runtime) ResolveCLI(name string) (ResolvedCLI, bool) {
 		cancel()
 	}
 
-	// 1. Command override
+	// 1. Command override + shell auto-detect.
+	//
+	// Terminal's manifest ships cli.command:"auto" so a fresh user gets
+	// a working shell regardless of distro (/bin/zsh vs /usr/bin/zsh,
+	// Alpine without zsh, etc.). A user-saved explicit path wins over
+	// the manifest default, and if that explicit path has gone missing
+	// (zsh uninstalled, Homebrew prefix changed) we fall back to
+	// DetectLoginShell rather than let the PTY spawn fail. The warning
+	// log surfaces the downgrade so operators can clean up stale config.
 	command := p.CLI.Command
-	if v, ok := cfg["command"].(string); ok && v != "" {
+	if v, ok := cfg["command"].(string); ok && strings.TrimSpace(v) != "" {
 		command = v
+	}
+	if isAutoCommand(command) {
+		if resolved, err := DetectLoginShell(); err == nil {
+			command = resolved
+		} else if rt.logger != nil {
+			rt.logger.Warn("plugin: shell auto-detect failed",
+				"plugin", name, "err", err)
+		}
+	} else if p.Type == ProviderTypeShell {
+		// Only shell-type plugins get the "path-missing → auto" rescue.
+		// Applying this to CLI providers (claude, codex) would silently
+		// launch a shell in place of the missing agent binary and mask
+		// real installation problems.
+		if _, err := exec.LookPath(command); err != nil {
+			if resolved, autoErr := DetectLoginShell(); autoErr == nil {
+				if rt.logger != nil {
+					rt.logger.Warn("plugin: configured shell not found, falling back to detected shell",
+						"plugin", name, "configured", command, "resolved", resolved)
+				}
+				command = resolved
+			}
+		}
 	}
 
 	// 2. Base args

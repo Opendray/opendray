@@ -13,7 +13,7 @@
   "activation": ["onStartup"],
   "type": "shell",
   "cli": {
-    "command": "/bin/zsh",
+    "command": "auto",
     "defaultArgs": ["-l"],
     "detectCmd": "true"
   },
@@ -32,8 +32,21 @@
       "label_zh": "Shell",
       "type": "select",
       "group": "runtime",
-      "options": ["/bin/zsh", "/bin/bash", "/bin/sh"],
-      "default": "/bin/zsh"
+      "options": [
+        "auto",
+        "/bin/zsh",
+        "/bin/bash",
+        "/bin/sh",
+        "/usr/bin/zsh",
+        "/usr/bin/bash",
+        "/usr/local/bin/zsh",
+        "/usr/local/bin/bash",
+        "/opt/homebrew/bin/zsh",
+        "/opt/homebrew/bin/bash"
+      ],
+      "default": "auto",
+      "description": "Login shell. 'auto' detects zsh → bash → sh from $SHELL or $PATH, falling back gracefully across macOS, Linux distros, and minimal containers.",
+      "description_zh": "登录 shell。选 'auto' 会从 $SHELL 或 $PATH 依次尝试 zsh → bash → sh,兼容 macOS、各 Linux 发行版和精简容器镜像。"
     },
     {
       "key": "extraArgs",

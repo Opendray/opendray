@@ -165,6 +165,97 @@ func TestResolveCLI_NoOverlay_UsesBaseConfig(t *testing.T) {
 	}
 }
 
+// TestResolveCLI_ShellAutoDetect covers the Terminal plugin's "auto"
+// command path + the missing-path rescue for type=shell providers.
+// Locked to type=shell so CLI providers (claude, codex) still fail
+// loudly when their binary is absent — masking that with a shell would
+// hide real installation problems.
+func TestResolveCLI_ShellAutoDetect(t *testing.T) {
+	dir := t.TempDir()
+	zsh := fakeShell(t, dir, "zsh")
+
+	cases := []struct {
+		name        string
+		provType    string
+		manifestCmd string
+		userCmd     string // cfg["command"] — empty means absent
+		want        string
+	}{
+		{
+			name:        "shell + manifest auto → detected",
+			provType:    ProviderTypeShell,
+			manifestCmd: "auto",
+			want:        zsh,
+		},
+		{
+			name:        "shell + manifest empty → detected",
+			provType:    ProviderTypeShell,
+			manifestCmd: "",
+			want:        zsh,
+		},
+		{
+			name:        "shell + user auto overrides manifest absolute → detected",
+			provType:    ProviderTypeShell,
+			manifestCmd: "/bin/zsh",
+			userCmd:     "auto",
+			want:        zsh,
+		},
+		{
+			name:        "shell + user-saved missing path → detected fallback",
+			provType:    ProviderTypeShell,
+			manifestCmd: "/bin/zsh",
+			userCmd:     "/nonexistent/shell/xyz",
+			want:        zsh,
+		},
+		{
+			name:        "shell + user-saved real path → kept untouched",
+			provType:    ProviderTypeShell,
+			manifestCmd: "auto",
+			userCmd:     zsh,
+			want:        zsh,
+		},
+		{
+			name:        "cli + user missing path → NOT replaced (surface the error)",
+			provType:    ProviderTypeCLI,
+			manifestCmd: "claude",
+			userCmd:     "/nonexistent/claude/binary",
+			want:        "/nonexistent/claude/binary",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Deterministic detection: empty SHELL + synthetic PATH
+			// means DetectLoginShell must resolve to our fake zsh.
+			t.Setenv("SHELL", "")
+			t.Setenv("PATH", dir)
+
+			rt := newRuntimeForOverlay(t)
+			cfg := ProviderConfig{}
+			if tc.userCmd != "" {
+				cfg["command"] = tc.userCmd
+			}
+			rt.providers["p"] = &liveProvider{
+				provider: Provider{
+					Name: "p",
+					Type: tc.provType,
+					CLI:  &CLISpec{Command: tc.manifestCmd},
+				},
+				config:    cfg,
+				installed: true,
+				enabled:   true,
+			}
+
+			got, ok := rt.ResolveCLI("p")
+			if !ok {
+				t.Fatalf("ResolveCLI: not ok")
+			}
+			if got.Command != tc.want {
+				t.Errorf("Command = %q, want %q", got.Command, tc.want)
+			}
+		})
+	}
+}
+
 // TestBoolVal exercises the coercion helper directly — the overlay
 // path depends on it accepting the kv store's canonical string form.
 func TestBoolVal(t *testing.T) {
