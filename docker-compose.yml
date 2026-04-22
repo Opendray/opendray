@@ -48,14 +48,12 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       AUTO_RESUME: ${AUTO_RESUME:-true}
       IDLE_THRESHOLD_SECONDS: ${IDLE_THRESHOLD_SECONDS:-8}
-      # Agent API keys — plugins read these via env. All optional; leave
+      # Agent CLI keys — inherited by spawned sessions per each
+      # plugin manifest's envVar declaration. All optional; leave
       # blank to use each CLI's cached OAuth login instead.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
-      GROQ_API_KEY: ${GROQ_API_KEY:-}
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       OPENDRAY_TELEGRAM_BOT_TOKEN: ${OPENDRAY_TELEGRAM_BOT_TOKEN:-}
     ports:
       - "${OPENDRAY_HTTP_PORT:-8640}:8640"
