@@ -121,6 +121,7 @@ func (n *Notifier) handle(ev plugin.HookEvent) {
 			isPending = false
 			delete(n.pendingInput, ev.SessionID)
 		}
+		_, hadPriorNotify := n.lastNotify[ev.SessionID]
 		n.mu.Unlock()
 
 		// 1. Push new content to every LINKED chat (diff-based).
@@ -137,7 +138,20 @@ func (n *Notifier) handle(ev plugin.HookEvent) {
 			return
 		}
 
-		// Real content was forwarded (or no pending input). Commit the
+		// Suppress duplicate 🟡 bubbles. When a TUI (Claude Code, Codex,
+		// …) is waiting for input it still paints cursor-blinks / spinner
+		// frames, which flip state Active → Waiting every idleThreshold
+		// and re-arm the hook. Without this guard the user would receive
+		// the same "session idle" prompt every 10-20 s. Once the session
+		// actually produces new output, sent > 0 and we fall through.
+		if hadPriorNotify && sent == 0 {
+			n.mu.Lock()
+			n.lastNotify[ev.SessionID] = time.Now()
+			n.mu.Unlock()
+			return
+		}
+
+		// Real content was forwarded (or first notification). Commit the
 		// cooldown + clear pending.
 		n.mu.Lock()
 		n.lastNotify[ev.SessionID] = time.Now()

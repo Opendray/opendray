@@ -157,6 +157,15 @@ func (f *Forwarder) SendIfChanged(ctx context.Context, sessionID string) int {
 				continue
 			}
 			sent++
+			// Register this push so "reply to this message" in Telegram
+			// routes the user's text back to the correct session — even
+			// when multiple sessions have active notifications in the
+			// same chat. Without this, replies to a forwarder-pushed
+			// message fall through to the chat-level link (possibly a
+			// different session) and land in the wrong session.
+			if f.store != nil && msgID > 0 {
+				f.store.RememberNotification(msgID, sessionID)
+			}
 			// Register checkbox state only on the final chunk (where the
 			// keyboard was attached) and only for multi-select prompts.
 			if i == len(chunks)-1 &&

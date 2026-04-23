@@ -610,6 +610,16 @@ func (d *Dispatcher) writeTextThenEnter(sessionID, text string) error {
 // reply-marker message (Telegram doesn't have a "delivery receipt" but
 // the bot should at least confirm receipt — silent send is confusing on
 // mobile when the user can't see the cursor land in the terminal).
+//
+// Reply-to-notification updates the chat's implicit link to the session
+// that was just replied-to so follow-up plain text stays in the same
+// conversation. Previously we only set the link when the chat was
+// unlinked, which made the FIRST reply sticky: in a multi-session chat
+// a user replying to session A, then later replying to session B via
+// the proper reply gesture (routed correctly by pendingMsgs), would
+// still see subsequent plain messages flow to A — because the implicit
+// link from the A reply never moved. Always updating it makes the
+// binding follow the user's most recent focus instead.
 func (d *Dispatcher) forwardToSession(ctx context.Context, chatID, replyTo int64, sessionID, text string) {
 	if err := d.writeTextThenEnter(sessionID, text); err != nil {
 		d.reply(ctx, chatID, replyTo, "Send failed: "+err.Error())
@@ -619,15 +629,29 @@ func (d *Dispatcher) forwardToSession(ctx context.Context, chatID, replyTo int64
 	// this chat (covers the reply-to-notification case where no /link
 	// was previously set up).
 	d.forwarder.EnsureForSession(ctx, sessionID)
-	if d.links.Get(chatID) == "" {
-		// Reply-to-notification path with no /link: keep the answer
-		// flowing into THIS chat for at least the next coalescing
-		// window by binding implicitly. User can /unlink at any time.
-		d.links.Set(chatID, sessionID)
+	prior := d.links.Set(chatID, sessionID)
+	// Tear down the forwarder for the prior session if this chat was the
+	// last listener — matches the cleanup path in cmdLink / cmdUnlink.
+	if prior != "" && prior != sessionID && !d.forwarder.HasListeners(prior) {
+		d.forwarder.StopForSession(prior)
 	}
-	// React with a tiny acknowledgement so the user knows it landed.
-	_, _ = d.bot.Send(ctx, chatID,
-		"✓ "+fmt.Sprintf("%d", len(text)+1)+" bytes → `"+sessionID+"`",
+	// React with a tiny acknowledgement so the user knows it landed. When
+	// the chat's link just moved (e.g. replying to session B while the
+	// chat was linked to A), call it out so the user isn't surprised
+	// their next plain message now flows to B instead of A.
+	shortID := sessionID
+	if len(shortID) > 8 {
+		shortID = shortID[:8]
+	}
+	ack := "✓ " + fmt.Sprintf("%d", len(text)+1) + " bytes → `" + shortID + "`"
+	if prior != "" && prior != sessionID {
+		shortPrior := prior
+		if len(shortPrior) > 8 {
+			shortPrior = shortPrior[:8]
+		}
+		ack += "\n🔗 chat now linked → `" + shortID + "` (was `" + shortPrior + "`)"
+	}
+	_, _ = d.bot.Send(ctx, chatID, ack,
 		&SendOpts{ParseMode: "Markdown", ReplyToMessageID: replyTo, DisablePreview: true},
 	)
 }
