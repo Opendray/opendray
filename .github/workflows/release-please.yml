@@ -14,5 +14,11 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         with:
+          # Use a PAT so the tag push from this job triggers release.yml.
+          # GitHub intentionally does NOT fire downstream workflows for
+          # refs created by the default GITHUB_TOKEN (loop-prevention),
+          # which silently skipped the goreleaser + APK + cosign pipeline
+          # for v0.3.3.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           release-type: go
           package-name: opendray
