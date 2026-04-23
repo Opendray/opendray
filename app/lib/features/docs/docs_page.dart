@@ -258,7 +258,27 @@ class _DocsPageState extends State<DocsPage> {
 
   Widget _buildEntryList() {
     if (_entries.isEmpty) {
-      return const Center(child: Text('Empty directory', style: TextStyle(color: AppColors.textMuted)));
+      return RefreshIndicator(
+        onRefresh: _loadTree,
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            if (_pathStack.isNotEmpty)
+              ListTile(
+                dense: true,
+                leading: const Icon(Icons.arrow_upward, size: 18, color: AppColors.textMuted),
+                title: const Text('..', style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
+                onTap: _navigateUp,
+              ),
+            const SizedBox(height: 120),
+            const Center(
+              child: Text('Empty directory',
+                  style: TextStyle(color: AppColors.textMuted)),
+            ),
+          ],
+        ),
+      );
     }
     return RefreshIndicator(
       onRefresh: _loadTree,
