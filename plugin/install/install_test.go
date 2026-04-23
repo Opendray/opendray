@@ -61,6 +61,11 @@ func bootDB(t *testing.T) *store.DB {
 	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
 		t.Fatalf("mkdir cache: %v", err)
 	}
+	// Unique runtime dir per test so the pwfile / postmaster.pid aren't
+	// shared across parallel test binaries (which caused CI-wide flakes:
+	// "pg start: unable to remove password file '/tmp/opendray-pg-cache/
+	// runtime/pwfile'"). Binary cache stays shared to keep downloads cheap.
+	runtimeDir := t.TempDir()
 
 	pg := embeddedpostgres.NewDatabase(
 		embeddedpostgres.DefaultConfig().
@@ -69,7 +74,7 @@ func bootDB(t *testing.T) *store.DB {
 			Database("opendray").
 			Port(uint32(port)).
 			DataPath(dataDir).
-			RuntimePath(filepath.Join(cacheDir, "runtime")).
+			RuntimePath(runtimeDir).
 			BinariesPath(cacheDir).
 			StartTimeout(2 * time.Minute),
 	)

@@ -42,6 +42,9 @@ func TestMigrate_PluginTables(t *testing.T) {
 	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
 		t.Fatalf("mkdir cache: %v", err)
 	}
+	// Unique runtime dir per test so parallel test binaries don't race
+	// on the shared pwfile / postmaster.pid.
+	runtimeDir := t.TempDir()
 
 	pg := embeddedpostgres.NewDatabase(
 		embeddedpostgres.DefaultConfig().
@@ -50,7 +53,7 @@ func TestMigrate_PluginTables(t *testing.T) {
 			Database("opendray").
 			Port(uint32(port)).
 			DataPath(dataDir).
-			RuntimePath(filepath.Join(cacheDir, "runtime")).
+			RuntimePath(runtimeDir).
 			BinariesPath(cacheDir).
 			StartTimeout(2 * time.Minute),
 	)
@@ -117,12 +120,15 @@ func TestMigrate_PluginConsentsFK(t *testing.T) {
 	dataDir := t.TempDir()
 	cacheDir := filepath.Join(os.TempDir(), "opendray-pg-cache")
 	_ = os.MkdirAll(cacheDir, 0o700)
+	// Unique runtime dir per test so parallel test binaries don't race
+	// on the shared pwfile / postmaster.pid.
+	runtimeDir := t.TempDir()
 
 	pg := embeddedpostgres.NewDatabase(
 		embeddedpostgres.DefaultConfig().
 			Username("opendray").Password("testpw").Database("opendray").
 			Port(uint32(port)).DataPath(dataDir).
-			RuntimePath(filepath.Join(cacheDir, "runtime")).
+			RuntimePath(runtimeDir).
 			BinariesPath(cacheDir).
 			StartTimeout(2 * time.Minute),
 	)
