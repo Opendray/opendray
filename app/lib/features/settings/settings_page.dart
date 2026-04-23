@@ -9,6 +9,7 @@ import '../../core/services/l10n.dart';
 import '../../core/services/server_config.dart';
 import '../../shared/app_modals.dart';
 import '../../shared/theme/app_theme.dart';
+import 'servers_card.dart';
 
 const String _kBuildDate =
     String.fromEnvironment('BUILD_DATE', defaultValue: '');
@@ -28,9 +29,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  late TextEditingController _urlController;
-  String? _testResult;
-  bool _testing = false;
   /// Backend identity pulled from /api/health — version + short git SHA.
   /// Both start null while the request is in flight, then settle to
   /// either a real value or "—" when the call fails or the server is
@@ -42,8 +40,6 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    final config = context.read<ServerConfig>();
-    _urlController = TextEditingController(text: config.url);
     _loadBackendInfo();
   }
 
@@ -70,39 +66,6 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   @override
-  void dispose() {
-    _urlController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _testConnection() async {
-    setState(() { _testing = true; _testResult = null; });
-    try {
-      final api = ApiClient(baseUrl: _urlController.text.trim());
-      final health = await api.health();
-      setState(() {
-        _testResult = '✅ Connected — ${health['sessions']} sessions, ${health['plugins']} plugins';
-        _testing = false;
-      });
-    } catch (e) {
-      setState(() {
-        _testResult = '❌ Failed: $e';
-        _testing = false;
-      });
-    }
-  }
-
-  Future<void> _save() async {
-    final config = context.read<ServerConfig>();
-    await config.setUrl(_urlController.text.trim());
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Settings saved'), backgroundColor: AppColors.success),
-      );
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     context.watch<ServerConfig>();
 
@@ -115,83 +78,10 @@ class _SettingsPageState extends State<SettingsPage> {
           const _LanguageCard(),
           const SizedBox(height: 16),
 
-          // Server URL
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.dns, color: AppColors.accent, size: 20),
-                      const SizedBox(width: 10),
-                      const Text('Server Connection', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  TextField(
-                    controller: _urlController,
-                    decoration: const InputDecoration(
-                      labelText: 'Server URL',
-                      hintText: 'https://opendray.example.com',
-                      prefixIcon: Icon(Icons.link, size: 18),
-                    ),
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _testing ? null : _testConnection,
-                          icon: _testing
-                              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent))
-                              : const Icon(Icons.wifi_tethering, size: 16),
-                          label: const Text('Test', style: TextStyle(fontSize: 13)),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.accent,
-                            side: const BorderSide(color: AppColors.border),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: FilledButton.icon(
-                          onPressed: _save,
-                          icon: const Icon(Icons.save, size: 16),
-                          label: const Text('Save', style: TextStyle(fontSize: 13)),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.accent,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (_testResult != null) ...[
-                    const SizedBox(height: 10),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: _testResult!.startsWith('✅') ? AppColors.successSoft : AppColors.errorSoft,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        _testResult!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: _testResult!.startsWith('✅') ? AppColors.success : AppColors.error,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
+          // Servers (multi-URL address book). Replaces the old single
+          // "Server URL" card — users now manage the full list of
+          // deployments plus per-entry saved credentials in one place.
+          const ServersCard(),
           const SizedBox(height: 16),
 
           // Plugins management lives in the dedicated bottom-nav tabs:

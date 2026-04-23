@@ -20,6 +20,21 @@ import '../api/api_client.dart';
 /// there's no in-browser setup wizard to route to.
 enum AuthState { unknown, disabled, unauthed, authed }
 
+/// Returned by [AutoLoginProvider] when the active profile has saved
+/// credentials. Auth service calls the probe-time hook, and on an
+/// otherwise-unauthed probe silently POSTs /api/auth/login with these.
+class AutoLoginCreds {
+  final String username;
+  final String password;
+  const AutoLoginCreds({required this.username, required this.password});
+}
+
+/// Given a server URL, returns saved credentials (or null). Wired from
+/// main.dart so AuthService doesn't depend on ServerConfig /
+/// SecureCredentialStore directly — that circular import would be a
+/// maintenance trap.
+typedef AutoLoginProvider = Future<AutoLoginCreds?> Function(String url);
+
 class AuthService extends ChangeNotifier {
   // Tokens are scoped by server URL so pointing the app at a different
   // backend (e.g. dev LXC vs. production) doesn't send a foreign JWT to
@@ -37,9 +52,18 @@ class AuthService extends ChangeNotifier {
   String? _token;
   AuthState _state = AuthState.unknown;
   String? _lastServerUrl;
+  AutoLoginProvider? _autoLoginProvider;
 
   String? get token => _token;
   AuthState get state => _state;
+
+  /// Installs a hook that [probe] calls when it would otherwise settle
+  /// on [AuthState.unauthed]. If the hook returns saved credentials,
+  /// AuthService attempts a silent login before publishing the state.
+  /// Safe to call more than once — the latest hook wins.
+  void setAutoLoginProvider(AutoLoginProvider? provider) {
+    _autoLoginProvider = provider;
+  }
 
   /// True iff a token is persisted locally AND it was issued by the URL
   /// we are currently pointed at. Used by the Settings page to decide
@@ -51,6 +75,12 @@ class AuthService extends ChangeNotifier {
   /// verifies it with a cheap authenticated call. Call whenever the server
   /// URL changes or the app starts up.
   Future<void> probe(String serverUrl) async {
+    // Zero out in-memory token before the async load so the ApiClient
+    // (rebuilt whenever ServerConfig notifies) can't briefly send
+    // server-A's token to server-B during a switch. The correct token
+    // for `serverUrl` is loaded from disk a few lines down.
+    final urlChanged = _lastServerUrl != serverUrl;
+    if (urlChanged) _token = null;
     _lastServerUrl = serverUrl;
     await _loadStoredFor(serverUrl);
 
@@ -91,7 +121,11 @@ class AuthService extends ChangeNotifier {
     // Auth required — verify any stored token by hitting a cheap protected
     // endpoint. /api/sessions is always mounted and returns JSON quickly.
     if (_token == null || _token!.isEmpty) {
-      _state = AuthState.unauthed;
+      // No token on disk — try silent auto-login if the active profile
+      // has "remember password" enabled. A success gets us straight to
+      // authed without ever flashing the login page.
+      final ok = await _tryAutoLogin(serverUrl);
+      _state = ok ? AuthState.authed : AuthState.unauthed;
       notifyListeners();
       return;
     }
@@ -101,9 +135,12 @@ class AuthService extends ChangeNotifier {
       if (res.statusCode == 200) {
         _state = AuthState.authed;
       } else if (res.statusCode == 401) {
-        // Token no longer valid — wipe and force re-login.
+        // Token no longer valid — wipe and try silent auto-login
+        // before surfacing the login page. Saves the user a retype
+        // after server restarts / JWT_SECRET rotations.
         await _clearStoredToken();
-        _state = AuthState.unauthed;
+        final ok = await _tryAutoLogin(serverUrl);
+        _state = ok ? AuthState.authed : AuthState.unauthed;
       } else {
         // 4xx/5xx other than 401 usually means a transient server issue,
         // not a bad token. Keep the token and stay authed so the user
@@ -179,6 +216,30 @@ class AuthService extends ChangeNotifier {
       _state = AuthState.unknown;
     }
     notifyListeners();
+  }
+
+  /// Attempts a silent login using saved credentials the
+  /// [AutoLoginProvider] hands back for [serverUrl]. Returns true on
+  /// success — the token was stored and state should be authed.
+  /// Returns false on any other outcome (no provider installed, no
+  /// saved credentials, login endpoint rejects them, network error).
+  Future<bool> _tryAutoLogin(String serverUrl) async {
+    final provider = _autoLoginProvider;
+    if (provider == null) return false;
+    AutoLoginCreds? creds;
+    try {
+      creds = await provider(serverUrl);
+    } catch (_) {
+      creds = null;
+    }
+    if (creds == null) return false;
+    if (creds.username.isEmpty || creds.password.isEmpty) return false;
+    final err = await login(
+      serverUrl: serverUrl,
+      username: creds.username,
+      password: creds.password,
+    );
+    return err == null && _state == AuthState.authed;
   }
 
   /// Reads the persisted token for [currentUrl] from the URL→token map.

@@ -21,6 +21,18 @@ void main() async {
   final l10n = await L10n.load();
 
   final authService = AuthService();
+  // Wire the probe-time auto-login hook: when the active profile has
+  // "remember password" enabled and a matching entry in the keychain,
+  // AuthService posts /api/auth/login silently instead of bouncing
+  // the user to the login screen.
+  authService.setAutoLoginProvider((url) async {
+    final p = serverConfig.activeProfile;
+    if (p == null || p.url != url) return null;
+    if (!p.rememberPassword || p.username.isEmpty) return null;
+    final pwd = await serverConfig.credentialStore.readPassword(p.id);
+    if (pwd == null || pwd.isEmpty) return null;
+    return AutoLoginCreds(username: p.username, password: pwd);
+  });
   if (serverConfig.isConfigured) {
     // Fire-and-forget: if the probe finishes before the first frame the
     // app opens straight to the right page; if it takes longer the router

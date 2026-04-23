@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -13,12 +15,32 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _userCtrl = TextEditingController(text: 'admin');
+  // Seeded empty — we populate from the active profile in initState so
+  // users who save a username per server never retype it. Falls back to
+  // 'admin' when the active profile has no saved username (fresh
+  // install flow that goes /connect → /login without editing the
+  // profile first).
+  final _userCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _passFocus = FocusNode();
   bool _submitting = false;
   String? _error;
   bool _obscure = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Defer one frame so context.read is legal and the ServerConfig
+    // value listen-less read is safe.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final p = context.read<ServerConfig>().activeProfile;
+      final defaultUser = (p?.username ?? '').isNotEmpty
+          ? p!.username
+          : 'admin';
+      _userCtrl.text = defaultUser;
+    });
+  }
 
   @override
   void dispose() {
@@ -81,6 +103,16 @@ class _LoginPageState extends State<LoginPage> {
       _submitting = false;
       _error = err;
     });
+    // On success, persist the username into the active profile so the
+    // next login prompt is one field lighter. Password is NOT saved
+    // here — "Remember password" is an explicit opt-in from the
+    // profile editor, not a side-effect of a successful login.
+    if (err == null) {
+      final active = cfg.activeProfile;
+      if (active != null && active.username != user) {
+        unawaited(cfg.updateProfile(active.id, username: user));
+      }
+    }
     // On success the router's redirect picks up the AuthService change and
     // moves us to '/'. No manual navigation needed.
   }

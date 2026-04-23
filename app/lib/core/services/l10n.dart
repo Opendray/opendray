@@ -268,6 +268,29 @@ class L10n extends ChangeNotifier {
     'Build Date':         '构建日期',
     'GitHub':             'GitHub 仓库',
 
+    // Settings → Servers (multi-URL address book)
+    'Servers':                                          '服务器列表',
+    'Add server':                                       '添加服务器',
+    'Edit server':                                      '编辑服务器',
+    'Delete server?':                                   '删除此服务器?',
+    'Remove this server, its saved credentials, and its login token from this device.':
+        '从本机移除该服务器及其保存的账号密码和登录 token。',
+    'No servers yet. Add one to connect.':              '还没有服务器,添加一个开始使用。',
+    '(unnamed)':                                        '(未命名)',
+    'Alias':                                            '别名',
+    'e.g. Home NAS, Office':                            '例如 家里 NAS、办公室',
+    'Username (optional)':                              '用户名 (可选)',
+    'Password (optional)':                              '密码 (可选)',
+    'URL is required':                                  '请输入 URL',
+    'Alias is required':                                '请输入别名',
+    'Test':                                             '测试',
+    'Connected':                                        '已连接',
+    'Remember password on this device (encrypted in OS keychain)':
+        '在本机记住密码 (存入系统钥匙串,加密保护)',
+    'Remember password is unavailable on web — password is never saved.':
+        'Web 版不支持记住密码 —— 密码不会保存在浏览器里。',
+    'Switched to':                                      '已切换到',
+
     // Image attach
     'Send to session':          '发送到会话',
     'Image uploaded':           '图片已上传',
