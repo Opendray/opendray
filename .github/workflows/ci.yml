@@ -18,7 +18,7 @@ jobs:
       - run: cd app && flutter pub get
       - run: cd app && flutter analyze --no-fatal-infos --no-fatal-warnings
       - run: cd app && flutter build web --release
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: web-build
           path: app/build/web
