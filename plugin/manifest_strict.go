@@ -48,6 +48,11 @@ var v1TopLevelFields = map[string]bool{
 
 // v1ContributesFields lists every key permitted under `contributes`.
 // Keep in lockstep with ContributesV1 struct.
+//
+// M6 additions (capability declarations): providers, channels, forges,
+// mcpServers. These are additive, backwards-compatible — manifests
+// without them continue to load unchanged. See
+// docs/architecture/plugin-driven-refactor.md for design rationale.
 var v1ContributesFields = map[string]bool{
 	"commands":       true,
 	"statusBar":      true,
@@ -58,6 +63,11 @@ var v1ContributesFields = map[string]bool{
 	"panels":         true,
 	"editorActions":  true,
 	"sessionActions": true,
+	// ── M6 capability declarations ────────────────────────────────
+	"providers":  true,
+	"channels":   true,
+	"forges":     true,
+	"mcpServers": true,
 }
 
 // ValidateV1Strict verifies a v1 manifest against both the rule-based

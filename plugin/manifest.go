@@ -184,6 +184,17 @@ type EnginesV1 struct {
 // activityBar/views/panels; M5 B4+B5 adds editorActions +
 // sessionActions (title-bar buttons for the currently-open file
 // and the current session card respectively).
+//
+// M6 (plugin-driven refactor) adds the capability slots —
+// providers/channels/forges/mcpServers — which are static,
+// declarative claims of which runtime capability ids this plugin
+// will register. The runtime entries themselves come from the
+// plugin's Register(api.PluginAPI) function (in-process builtins)
+// or from bridge messages (host-form externals); the host validates
+// that every runtime registration matches one of the static
+// declarations here. See plugin/manifest_capabilities.go for the
+// shapes and docs/architecture/plugin-driven-refactor.md for the
+// design rationale.
 type ContributesV1 struct {
 	Commands    []CommandV1              `json:"commands,omitempty"`
 	StatusBar   []StatusBarItemV1        `json:"statusBar,omitempty"`
@@ -198,6 +209,12 @@ type ContributesV1 struct {
 	// ── M5 action slots ────────────────────────────────────────────
 	EditorActions  []EditorActionV1  `json:"editorActions,omitempty"`
 	SessionActions []SessionActionV1 `json:"sessionActions,omitempty"`
+
+	// ── M6 capability declarations ─────────────────────────────────
+	Providers  []ProviderContributionV1  `json:"providers,omitempty"`
+	Channels   []ChannelContributionV1   `json:"channels,omitempty"`
+	Forges     []ForgeContributionV1     `json:"forges,omitempty"`
+	McpServers []McpServerContributionV1 `json:"mcpServers,omitempty"`
 }
 
 // EditorActionV1 declares a button in the file-viewer title bar /

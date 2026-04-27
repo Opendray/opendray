@@ -51,6 +51,9 @@ deploy/
 !/docs/logo.png
 !/docs/logo.svg
 !/docs/DOCKER.md
+# Architecture decision records ship with code; Obsidian holds the rest.
+!/docs/architecture/
+!/docs/architecture/*.md
 
 # Marketing / docs site — hosted separately
 /website/
