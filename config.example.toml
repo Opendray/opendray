@@ -1,0 +1,20 @@
+# opendray-v2 example configuration. Copy to config.toml and edit.
+#
+# Any field can be overridden by an OPENDRAY_-prefixed env variable —
+# OPENDRAY_LISTEN, OPENDRAY_DATABASE_URL, OPENDRAY_ADMIN_USER,
+# OPENDRAY_ADMIN_PASSWORD, OPENDRAY_LOG_LEVEL, OPENDRAY_LOG_FORMAT.
+
+listen = "127.0.0.1:8770"
+
+[database]
+# Use a project-scoped postgres role per home-lab DB conventions.
+url = "postgres://opendray_user:CHANGEME@192.168.3.88:5432/opendray?sslmode=disable"
+
+[admin]
+# Admin auth (single human). Prefer env vars in production.
+user     = "admin"
+password = "CHANGEME"
+
+[log]
+level  = "info"   # debug | info | warn | error
+format = "text"   # text | json
