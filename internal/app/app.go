@@ -24,20 +24,23 @@ import (
 	"github.com/opendray/opendray-v2/internal/config"
 	"github.com/opendray/opendray-v2/internal/eventbus"
 	"github.com/opendray/opendray-v2/internal/gateway"
+	"github.com/opendray/opendray-v2/internal/integration"
 	"github.com/opendray/opendray-v2/internal/session"
 	"github.com/opendray/opendray-v2/internal/store"
 	"github.com/opendray/opendray-v2/internal/version"
 )
 
 type App struct {
-	cfg      config.Config
-	log      *slog.Logger
-	store    *store.Store
-	bus      *eventbus.Hub
-	sessions *session.Manager
-	channels *channel.Hub
-	audit    *audit.Sink
-	server   *http.Server
+	cfg          config.Config
+	log          *slog.Logger
+	store        *store.Store
+	bus          *eventbus.Hub
+	sessions     *session.Manager
+	channels     *channel.Hub
+	integrations *integration.Service
+	healthCheck  *integration.HealthChecker
+	audit        *audit.Sink
+	server       *http.Server
 }
 
 // New wires the runtime dependencies but does not start any goroutines.
@@ -84,6 +87,12 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	channelHub := channel.NewHub(st.Pool(), bus, log)
 	channelHandlers := channel.NewHandlers(channelHub, log)
 
+	intgrSvc := integration.NewService(st.Pool(), bus, log)
+	intgrHandlers := integration.NewHandlers(intgrSvc, log)
+	proxyHandlers := integration.NewProxyHandlers(intgrSvc, log)
+	eventsHandler := integration.NewEventsHandler(bus, log)
+	healthCheck := integration.NewHealthChecker(intgrSvc, bus, log)
+
 	auditSink := audit.NewSink(st.Pool(), bus, log)
 
 	gw := gateway.NewServer(gateway.Deps{
@@ -94,13 +103,28 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		V1Routes: func(r chi.Router) {
 			// Public: only login. /health stays handled by gateway itself.
 			authHandlers.MountPublic(r)
-			// Protected: bearer token required for everything else.
+
+			// Admin-only: integration CRUD + reverse proxy.
 			r.Group(func(r chi.Router) {
 				r.Use(authSvc.Middleware)
+				intgrHandlers.MountAdmin(r)
+				proxyHandlers.Mount(r)
+			})
+
+			// Dual-auth (admin OR integration API key): all business
+			// endpoints. ADR 0006 §1.
+			r.Group(func(r chi.Router) {
+				r.Use(integration.CombinedMiddleware(authSvc, intgrSvc))
 				authHandlers.MountProtected(r)
 				sessionHandlers.Mount(r)
 				catalogHandlers.Mount(r)
 				channelHandlers.Mount(r)
+			})
+
+			// Integration-only: event subscription WS.
+			r.Group(func(r chi.Router) {
+				r.Use(integration.IntegrationOnlyMiddleware(intgrSvc))
+				r.Get("/integrations/_events", eventsHandler.Serve)
 			})
 		},
 	})
@@ -112,14 +136,16 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}
 
 	return &App{
-		cfg:      cfg,
-		log:      log,
-		store:    st,
-		bus:      bus,
-		sessions: sessionMgr,
-		channels: channelHub,
-		audit:    auditSink,
-		server:   srv,
+		cfg:          cfg,
+		log:          log,
+		store:        st,
+		bus:          bus,
+		sessions:     sessionMgr,
+		channels:     channelHub,
+		integrations: intgrSvc,
+		healthCheck:  healthCheck,
+		audit:        auditSink,
+		server:       srv,
 	}, nil
 }
 
@@ -141,6 +167,12 @@ func (a *App) Run(ctx context.Context) error {
 	if err := a.channels.Start(ctx); err != nil {
 		a.log.Error("channel hub start", "err", err)
 	}
+
+	healthDone := make(chan struct{})
+	go func() {
+		a.healthCheck.Run(ctx)
+		close(healthDone)
+	}()
 
 	auditDone := make(chan struct{})
 	go func() {
@@ -175,6 +207,12 @@ func (a *App) Run(ctx context.Context) error {
 	}
 	if err := a.channels.Shutdown(shutdownCtx); err != nil {
 		a.log.Error("channel shutdown", "err", err)
+	}
+
+	select {
+	case <-healthDone:
+	case <-time.After(2 * time.Second):
+		a.log.Warn("health checker shutdown timed out")
 	}
 
 	select {

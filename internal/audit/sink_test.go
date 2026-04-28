@@ -40,7 +40,9 @@ func TestSubscribedPatterns_Allowlist(t *testing.T) {
 		switch p {
 		case "session.started", "session.ended", "session.idle",
 			"admin.login_success", "admin.login_failed", "admin.logout",
-			"channel.message_sent", "channel.message_received":
+			"channel.message_sent", "channel.message_received",
+			"integration.registered", "integration.deregistered",
+			"integration.key_rotated", "integration.health_changed":
 		default:
 			t.Errorf("audit subscribes to %q — confirm it is PII-free and update this test", p)
 		}

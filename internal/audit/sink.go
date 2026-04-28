@@ -21,7 +21,6 @@ import (
 )
 
 // subscribedPatterns is the audit-safe topic allowlist.
-// M3 adds "integration.*".
 var subscribedPatterns = []string{
 	"session.started",
 	"session.ended",
@@ -31,6 +30,10 @@ var subscribedPatterns = []string{
 	"admin.logout",
 	"channel.message_sent",
 	"channel.message_received",
+	"integration.registered",
+	"integration.deregistered",
+	"integration.key_rotated",
+	"integration.health_changed",
 }
 
 const subscriberBuffer = 256
@@ -122,6 +125,9 @@ func extractSubject(data any) (kind, id string) {
 	}
 	if v, ok := m["user"].(string); ok {
 		return "admin", v
+	}
+	if v, ok := m["integration_id"].(string); ok {
+		return "integration", v
 	}
 	return "", ""
 }

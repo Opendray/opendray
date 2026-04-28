@@ -1,0 +1,154 @@
+package integration
+
+import (
+	"encoding/json"
+	"errors"
+	"log/slog"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+)
+
+// Handlers serves /api/v1/integrations admin REST.
+type Handlers struct {
+	svc *Service
+	log *slog.Logger
+}
+
+func NewHandlers(svc *Service, log *slog.Logger) *Handlers {
+	if log == nil {
+		log = slog.Default()
+	}
+	return &Handlers{svc: svc, log: log.With("component", "integration.http")}
+}
+
+// MountAdmin mounts the admin-only CRUD endpoints. Caller wraps with
+// admin middleware before calling.
+//
+// Uses direct paths instead of r.Route so the integration-only events
+// route in a sibling chi.Group can also live under /integrations
+// without panicking on duplicate Mount.
+func (h *Handlers) MountAdmin(r chi.Router) {
+	r.Get("/integrations", h.list)
+	r.Post("/integrations", h.register)
+	r.Get("/integrations/{id}", h.get)
+	r.Patch("/integrations/{id}", h.update)
+	r.Delete("/integrations/{id}", h.delete)
+	r.Post("/integrations/{id}/rotate-key", h.rotateKey)
+}
+
+func (h *Handlers) register(w http.ResponseWriter, r *http.Request) {
+	var req RegisterRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	res, err := h.svc.Register(r.Context(), req)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrPrefixTaken),
+			errors.Is(err, ErrNameTaken),
+			errors.Is(err, ErrReservedPrefix):
+			writeError(w, http.StatusConflict, err)
+		default:
+			writeError(w, http.StatusBadRequest, err)
+		}
+		return
+	}
+	writeJSON(w, http.StatusCreated, res)
+}
+
+func (h *Handlers) list(w http.ResponseWriter, r *http.Request) {
+	list, err := h.svc.List(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if list == nil {
+		list = []Integration{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"integrations": list})
+}
+
+func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	i, err := h.svc.Get(r.Context(), id)
+	if errors.Is(err, ErrNotFound) {
+		writeError(w, http.StatusNotFound, err)
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, i)
+}
+
+func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var req struct {
+		BaseURL *string   `json:"base_url,omitempty"`
+		Scopes  *[]string `json:"scopes,omitempty"`
+		Version *string   `json:"version,omitempty"`
+		Enabled *bool     `json:"enabled,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	patch := UpdatePatch{
+		BaseURL: req.BaseURL,
+		Scopes:  req.Scopes,
+		Version: req.Version,
+		Enabled: req.Enabled,
+	}
+	i, err := h.svc.Update(r.Context(), id, patch)
+	if errors.Is(err, ErrNotFound) {
+		writeError(w, http.StatusNotFound, err)
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, i)
+}
+
+func (h *Handlers) delete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if err := h.svc.Delete(r.Context(), id); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handlers) rotateKey(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	res, err := h.svc.RotateKey(r.Context(), id)
+	if errors.Is(err, ErrNotFound) {
+		writeError(w, http.StatusNotFound, err)
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+func writeJSON(w http.ResponseWriter, code int, body any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	_ = json.NewEncoder(w).Encode(body)
+}
+
+func writeError(w http.ResponseWriter, code int, err error) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+}

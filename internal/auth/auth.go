@@ -153,6 +153,22 @@ func (s *Service) Middleware(next http.Handler) http.Handler {
 	})
 }
 
+// AttachContext sets the auth-related context keys if `token` is a
+// valid admin bearer; returns (newCtx, true) on success, or
+// (origCtx, false) otherwise. Used by combined middleware that
+// supports both admin and integration auth on the same route — the
+// integration package can attach admin context without poking at
+// auth's private keys.
+func (s *Service) AttachContext(ctx context.Context, token string) (context.Context, bool) {
+	info, ok := s.Validate(token)
+	if !ok {
+		return ctx, false
+	}
+	ctx = context.WithValue(ctx, userCtxKey{}, info.Username)
+	ctx = context.WithValue(ctx, tokenCtxKey{}, token)
+	return ctx, true
+}
+
 // Username retrieves the authenticated username from a request context.
 func Username(ctx context.Context) string {
 	if v, ok := ctx.Value(userCtxKey{}).(string); ok {
