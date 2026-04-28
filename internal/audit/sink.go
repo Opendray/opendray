@@ -21,7 +21,7 @@ import (
 )
 
 // subscribedPatterns is the audit-safe topic allowlist.
-// M3 adds "integration.*"; M4 adds "channel.*".
+// M3 adds "integration.*".
 var subscribedPatterns = []string{
 	"session.started",
 	"session.ended",
@@ -29,6 +29,8 @@ var subscribedPatterns = []string{
 	"admin.login_success",
 	"admin.login_failed",
 	"admin.logout",
+	"channel.message_sent",
+	"channel.message_received",
 }
 
 const subscriberBuffer = 256

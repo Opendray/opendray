@@ -19,6 +19,8 @@ import (
 	"github.com/opendray/opendray-v2/internal/audit"
 	"github.com/opendray/opendray-v2/internal/auth"
 	"github.com/opendray/opendray-v2/internal/catalog"
+	"github.com/opendray/opendray-v2/internal/channel"
+	_ "github.com/opendray/opendray-v2/internal/channel/telegram" // register kind=telegram
 	"github.com/opendray/opendray-v2/internal/config"
 	"github.com/opendray/opendray-v2/internal/eventbus"
 	"github.com/opendray/opendray-v2/internal/gateway"
@@ -33,6 +35,7 @@ type App struct {
 	store    *store.Store
 	bus      *eventbus.Hub
 	sessions *session.Manager
+	channels *channel.Hub
 	audit    *audit.Sink
 	server   *http.Server
 }
@@ -77,6 +80,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		sessionOpts...,
 	)
 	sessionHandlers := session.NewHandlers(sessionMgr, log)
+
+	channelHub := channel.NewHub(st.Pool(), bus, log)
+	channelHandlers := channel.NewHandlers(channelHub, log)
+
 	auditSink := audit.NewSink(st.Pool(), bus, log)
 
 	gw := gateway.NewServer(gateway.Deps{
@@ -93,6 +100,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				authHandlers.MountProtected(r)
 				sessionHandlers.Mount(r)
 				catalogHandlers.Mount(r)
+				channelHandlers.Mount(r)
 			})
 		},
 	})
@@ -109,6 +117,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		store:    st,
 		bus:      bus,
 		sessions: sessionMgr,
+		channels: channelHub,
 		audit:    auditSink,
 		server:   srv,
 	}, nil
@@ -119,15 +128,19 @@ func (a *App) Migrate(ctx context.Context) error {
 	return a.store.Migrate(ctx, a.log)
 }
 
-// Run starts the HTTP server + audit sink and blocks until ctx is
-// cancelled, then performs graceful shutdown in this order:
+// Run starts the HTTP server, channel hub, and audit sink, then blocks
+// until ctx is cancelled. Graceful shutdown order:
 //
-//	HTTP server -> session manager -> audit sink -> event bus -> store
+//	HTTP server -> session manager -> channel hub -> audit sink -> event bus -> store
 func (a *App) Run(ctx context.Context) error {
 	a.log.Info("opendray starting",
 		"listen", a.cfg.Listen,
 		"version", version.Version,
 		"commit", version.Commit)
+
+	if err := a.channels.Start(ctx); err != nil {
+		a.log.Error("channel hub start", "err", err)
+	}
 
 	auditDone := make(chan struct{})
 	go func() {
@@ -160,6 +173,9 @@ func (a *App) Run(ctx context.Context) error {
 	if err := a.sessions.Shutdown(shutdownCtx); err != nil {
 		a.log.Error("session shutdown", "err", err)
 	}
+	if err := a.channels.Shutdown(shutdownCtx); err != nil {
+		a.log.Error("channel shutdown", "err", err)
+	}
 
 	select {
 	case <-auditDone:
@@ -180,6 +196,9 @@ func (a *App) Logger() *slog.Logger { return a.log }
 func (a *App) Close() {
 	if a.sessions != nil {
 		_ = a.sessions.Shutdown(context.Background())
+	}
+	if a.channels != nil {
+		_ = a.channels.Shutdown(context.Background())
 	}
 	if a.bus != nil {
 		a.bus.Close()
