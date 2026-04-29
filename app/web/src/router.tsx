@@ -5,16 +5,14 @@ import {
   redirect,
   Outlet,
 } from '@tanstack/react-router'
-import { Activity } from 'lucide-react'
-
 import { AppShell } from '@/components/AppShell'
 import { LoginPage } from '@/pages/Login'
 import { SessionsPage } from '@/pages/Sessions'
 import { ProvidersPage } from '@/pages/Providers'
 import { ChannelsPage } from '@/pages/Channels'
 import { IntegrationsPage } from '@/pages/Integrations'
+import { ActivityPage } from '@/pages/Activity'
 import { SettingsPage } from '@/pages/Settings'
-import { Placeholder } from '@/pages/Placeholder'
 import { useAuth } from '@/stores/auth'
 
 const rootRoute = createRootRoute({ component: () => <Outlet /> })
@@ -72,13 +70,7 @@ const integrationsRoute = createRoute({
 const activityRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/activity',
-  component: () => (
-    <Placeholder
-      icon={Activity}
-      title="Activity"
-      body="Audit log + live event stream viewer arrive in W4."
-    />
-  ),
+  component: ActivityPage,
 })
 
 const settingsRoute = createRoute({

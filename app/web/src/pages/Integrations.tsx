@@ -25,7 +25,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { APIKeyRevealDialog } from '@/components/integrations/APIKeyRevealDialog'
+import { ProxyConsole } from '@/components/integrations/ProxyConsole'
 import {
   listIntegrations,
   registerIntegration,
@@ -90,14 +92,26 @@ export function IntegrationsPage() {
         </Button>
       </header>
 
-      <ScrollArea className="flex-1">
-        <div className="p-6 max-w-[960px] flex flex-col gap-3">
-          {isLoading && (
-            <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
-              <Loader2 className="size-3.5 animate-spin" />
-              Loading…
-            </div>
-          )}
+      <Tabs defaultValue="registered" className="flex-1 flex flex-col min-h-0">
+        <div className="border-b border-border px-6 py-2">
+          <TabsList>
+            <TabsTrigger value="registered">Registered</TabsTrigger>
+            <TabsTrigger value="console">Reverse proxy</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent
+          value="registered"
+          className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden"
+        >
+          <ScrollArea className="h-full">
+            <div className="p-6 max-w-[960px] flex flex-col gap-3">
+              {isLoading && (
+                <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
+                  <Loader2 className="size-3.5 animate-spin" />
+                  Loading…
+                </div>
+              )}
           {!isLoading && (integrations?.length ?? 0) === 0 && (
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
               <Plug className="size-10 text-muted-foreground/40" strokeWidth={1.5} />
@@ -115,38 +129,49 @@ export function IntegrationsPage() {
               </Button>
             </div>
           )}
-          {(integrations ?? []).map((i) => (
-            <IntegrationCard
-              key={i.id}
-              integration={i}
-              onRotate={() =>
-                rotateIntegrationKey(i.id)
-                  .then((res) => {
-                    qc.invalidateQueries({ queryKey: ['integrations'] })
-                    onRotated(res.api_key)
-                  })
-                  .catch((err: Error) => toast.error(err.message))
-              }
-              onToggle={(enabled) =>
-                updateIntegration(i.id, { enabled })
-                  .then(() =>
-                    qc.invalidateQueries({ queryKey: ['integrations'] }),
-                  )
-                  .catch((err: Error) => toast.error(err.message))
-              }
-              onDelete={() => {
-                if (!confirm(`Delete integration ${i.name}?`)) return
-                deleteIntegration(i.id)
-                  .then(() => {
-                    qc.invalidateQueries({ queryKey: ['integrations'] })
-                    toast.success('Integration removed')
-                  })
-                  .catch((err: Error) => toast.error(err.message))
-              }}
-            />
-          ))}
-        </div>
-      </ScrollArea>
+              {(integrations ?? []).map((i) => (
+                <IntegrationCard
+                  key={i.id}
+                  integration={i}
+                  onRotate={() =>
+                    rotateIntegrationKey(i.id)
+                      .then((res) => {
+                        qc.invalidateQueries({ queryKey: ['integrations'] })
+                        onRotated(res.api_key)
+                      })
+                      .catch((err: Error) => toast.error(err.message))
+                  }
+                  onToggle={(enabled) =>
+                    updateIntegration(i.id, { enabled })
+                      .then(() =>
+                        qc.invalidateQueries({ queryKey: ['integrations'] }),
+                      )
+                      .catch((err: Error) => toast.error(err.message))
+                  }
+                  onDelete={() => {
+                    if (!confirm(`Delete integration ${i.name}?`)) return
+                    deleteIntegration(i.id)
+                      .then(() => {
+                        qc.invalidateQueries({ queryKey: ['integrations'] })
+                        toast.success('Integration removed')
+                      })
+                      .catch((err: Error) => toast.error(err.message))
+                  }}
+                />
+              ))}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
+        <TabsContent
+          value="console"
+          className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden"
+        >
+          <div className="px-6 py-4 h-full">
+            <ProxyConsole />
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <RegisterDialog
         open={createOpen}

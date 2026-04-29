@@ -112,18 +112,15 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			})
 
 			// Dual-auth (admin OR integration API key): all business
-			// endpoints. ADR 0006 §1.
+			// endpoints. ADR 0006 §1 + ADR 0009 (events WS extended
+			// to admin so the web Activity viewer rides the same
+			// admin token).
 			r.Group(func(r chi.Router) {
 				r.Use(integration.CombinedMiddleware(authSvc, intgrSvc))
 				authHandlers.MountProtected(r)
 				sessionHandlers.Mount(r)
 				catalogHandlers.Mount(r)
 				channelHandlers.Mount(r)
-			})
-
-			// Integration-only: event subscription WS.
-			r.Group(func(r chi.Router) {
-				r.Use(integration.IntegrationOnlyMiddleware(intgrSvc))
 				r.Get("/integrations/_events", eventsHandler.Serve)
 			})
 		},

@@ -38,11 +38,20 @@ func NewEventsHandler(bus *eventbus.Hub, log *slog.Logger) *EventsHandler {
 }
 
 // Serve handles GET /integrations/_events?topics=foo,bar.* — caller
-// must already be auth'd as an integration via IntegrationOnlyMiddleware.
+// must already be auth'd as either an admin or an integration via the
+// combined middleware. Per ADR 0009 admin principals subscribe without
+// per-topic scope checks; integrations are still gated by
+// event:subscribe:<topic>.
 func (h *EventsHandler) Serve(w http.ResponseWriter, r *http.Request) {
 	p, ok := CurrentPrincipal(r.Context())
-	if !ok || p.Kind != KindIntegration {
-		http.Error(w, "integration token required", http.StatusUnauthorized)
+	if !ok {
+		http.Error(w, "auth required", http.StatusUnauthorized)
+		return
+	}
+	isAdmin := p.Kind == KindAdmin
+	isIntegration := p.Kind == KindIntegration
+	if !isAdmin && !isIntegration {
+		http.Error(w, "auth required", http.StatusUnauthorized)
 		return
 	}
 
@@ -57,7 +66,7 @@ func (h *EventsHandler) Serve(w http.ResponseWriter, r *http.Request) {
 		if t == "" {
 			continue
 		}
-		if !HasScope(p.Scopes, "event:subscribe:"+t) {
+		if !isAdmin && !HasScope(p.Scopes, "event:subscribe:"+t) {
 			http.Error(w, "missing scope: event:subscribe:"+t, http.StatusForbidden)
 			return
 		}
