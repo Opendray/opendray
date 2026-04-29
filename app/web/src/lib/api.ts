@@ -1,0 +1,67 @@
+import { useAuth } from '@/stores/auth'
+
+export class APIError extends Error {
+  status: number
+  body: unknown
+  constructor(status: number, body: unknown, message: string) {
+    super(message)
+    this.status = status
+    this.body = body
+  }
+}
+
+interface APIOptions extends Omit<RequestInit, 'body'> {
+  body?: unknown
+  raw?: boolean // when true, return raw Response (used by /buffer)
+  skipAuthRedirect?: boolean
+}
+
+export async function api<T = unknown>(
+  path: string,
+  options: APIOptions = {},
+): Promise<T> {
+  const token = useAuth.getState().token
+  const headers = new Headers(options.headers)
+
+  let body: BodyInit | undefined
+  if (options.body !== undefined) {
+    if (options.body instanceof FormData) {
+      body = options.body
+    } else if (typeof options.body === 'string') {
+      body = options.body
+    } else {
+      headers.set('Content-Type', 'application/json')
+      body = JSON.stringify(options.body)
+    }
+  }
+  if (token) headers.set('Authorization', `Bearer ${token}`)
+
+  const res = await fetch(path, { ...options, headers, body })
+
+  if (res.status === 401 && !options.skipAuthRedirect) {
+    useAuth.getState().clear()
+    if (typeof window !== 'undefined' && !path.endsWith('/auth/login')) {
+      const next = encodeURIComponent(window.location.pathname + window.location.search)
+      window.location.assign(`/login?next=${next}`)
+    }
+  }
+
+  if (options.raw) {
+    if (!res.ok) throw new APIError(res.status, null, `HTTP ${res.status}`)
+    return res as unknown as T
+  }
+
+  let parsed: unknown = null
+  const ct = res.headers.get('Content-Type') || ''
+  if (ct.includes('application/json')) parsed = await res.json()
+  else if (res.status !== 204) parsed = await res.text()
+
+  if (!res.ok) {
+    const msg =
+      parsed && typeof parsed === 'object' && 'error' in parsed
+        ? String((parsed as { error: unknown }).error)
+        : `HTTP ${res.status}`
+    throw new APIError(res.status, parsed, msg)
+  }
+  return parsed as T
+}
