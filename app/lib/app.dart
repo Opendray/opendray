@@ -14,6 +14,8 @@ import 'features/session/session_page.dart';
 import 'features/claude_accounts/claude_accounts_page.dart';
 import 'features/endpoints/endpoints_page.dart';
 import 'features/hub/hub_page.dart';
+import 'features/hub_v1/hub_v1_page.dart';
+import 'shared/v1_app_shell.dart';
 import 'features/plugins/plugins_page.dart';
 import 'features/settings/builtin_restore_page.dart';
 import 'features/settings/settings_page.dart';
@@ -245,7 +247,8 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
       ShellRoute(
         builder: (context, state, child) => _Shell(child: child),
         routes: [
-          GoRoute(path: '/',        builder: (_, _) => const DashboardPage()),
+          GoRoute(path: '/',                  builder: (_, _) => const HubV1Page()),
+          GoRoute(path: '/dashboard-classic', builder: (_, _) => const DashboardPage()),
           // All `/browser/*` routes return a sentinel — the real
           // rendering happens in `_Shell` via [RunningPluginsHost]'s
           // IndexedStack, which keeps every opened plugin mounted
@@ -266,6 +269,7 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
           GoRoute(path: '/browser/plugin/:name', builder: _sentinel),
           GoRoute(path: '/plugins', builder: (_, _) => const PluginsPage()),
           GoRoute(path: '/hub', builder: (_, _) => const HubPage()),
+          GoRoute(path: '/hub-v1', builder: (_, _) => const HubV1Page()),
           GoRoute(
             path: '/running',
             builder: (_, _) => const RunningPluginsSwitcherPage(),
@@ -326,9 +330,6 @@ class _Shell extends StatelessWidget {
   /// Below this width we render BottomNavigationBar (phone layout).
   /// Above it we render NavigationRail (desktop layout).
   static const double _railBreakpoint = 900;
-
-  /// Above this width the rail expands to show labels next to icons.
-  static const double _extendedRailBreakpoint = 1280;
 
   @override
   Widget build(BuildContext context) {
@@ -462,59 +463,20 @@ class _Shell extends StatelessWidget {
           );
         }
 
-        final extended = constraints.maxWidth >= _extendedRailBreakpoint;
-        // Keep the desktop Shell deliberately plain: a bare NavigationRail
-        // inside a Material, a 1-px divider, and the routed page filling
-        // the rest. Any "fancy" wrapper (SingleChildScrollView, Align +
-        // ConstrainedBox, LayoutBuilder + Padding) has at least once
-        // produced "RenderBox has never been laid out" assertions when
-        // the child of Expanded is a full Scaffold — so we stay out of
-        // that territory.
-        return Scaffold(
-          body: Row(
-            children: [
-              Material(
-                color: AppColors.surface,
-                elevation: 0,
-                child: NavigationRail(
-                  extended: extended,
-                  minWidth: 72,
-                  minExtendedWidth: 220,
-                  backgroundColor: AppColors.surface,
-                  indicatorColor: AppColors.accentSoft,
-                  selectedIndex: index,
-                  onDestinationSelected: (i) =>
-                      context.go(pathForIndex(i)),
-                  labelType: extended
-                      ? NavigationRailLabelType.none
-                      : NavigationRailLabelType.all,
-                  selectedIconTheme:
-                      const IconThemeData(color: AppColors.accent),
-                  unselectedIconTheme:
-                      const IconThemeData(color: AppColors.textMuted),
-                  selectedLabelTextStyle: const TextStyle(
-                    color: AppColors.accent,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  unselectedLabelTextStyle:
-                      const TextStyle(color: AppColors.textMuted),
-                  destinations: [
-                    for (final d in destinations)
-                      NavigationRailDestination(
-                        icon: Icon(d.icon),
-                        label: Text(d.label),
-                      ),
-                  ],
-                ),
-              ),
-              const VerticalDivider(
-                width: 1,
-                thickness: 1,
-                color: AppColors.border,
-              ),
-              Expanded(child: bodyWithHost),
-            ],
-          ),
+        // V1 app shell — sidebar + top bar from the prototype design.
+        // Wraps every routed page so the whole app feels cohesive even
+        // before each inner page is rebuilt against the prototype layout.
+        final sections = _v1NavSections(runningCount: runningCount);
+        final crumb = _crumbForRoute(location);
+        return V1AppShell(
+          sections: sections,
+          currentRoute: location,
+          breadcrumbTitle: crumb,
+          workspaceName: 'Workspace',
+          userInitials: 'OD',
+          userName: 'Signed in',
+          userEmail: '',
+          child: bodyWithHost,
         );
       },
     );
@@ -525,6 +487,84 @@ class _NavDest {
   final IconData icon;
   final String label;
   const _NavDest({required this.icon, required this.label});
+}
+
+/// V1 sidebar nav sections. Maps the prototype's nav items to existing
+/// routes; surfaces we haven't built yet are flagged comingSoon=true so
+/// they show a "coming soon" toast instead of routing into a 404.
+List<V1NavSection> _v1NavSections({required int runningCount}) {
+  return [
+    V1NavSection(label: 'Workspace', items: [
+      const V1NavItem(icon: Icons.dashboard_outlined, label: 'Hub', route: '/'),
+      V1NavItem(
+        icon: Icons.terminal,
+        label: 'Workbench',
+        route: '/running',
+        badgeCount: runningCount > 0 ? runningCount : null,
+      ),
+      const V1NavItem(
+        icon: Icons.extension_outlined,
+        label: 'Agents',
+        route: '/plugins',
+      ),
+      const V1NavItem(
+        icon: Icons.link,
+        label: 'Connections',
+        route: '/settings/llm-endpoints',
+      ),
+      const V1NavItem(
+        icon: Icons.folder_outlined,
+        label: 'Files',
+        route: '/browser/files',
+      ),
+      const V1NavItem(
+        icon: Icons.notes_outlined,
+        label: 'Logs',
+        route: '/browser/logs',
+      ),
+    ]),
+    const V1NavSection(label: 'Admin', items: [
+      V1NavItem(
+        icon: Icons.group_outlined,
+        label: 'Team & roles',
+        route: '/settings',
+        comingSoon: true,
+      ),
+      V1NavItem(
+        icon: Icons.fact_check_outlined,
+        label: 'Audit log',
+        route: '/settings',
+        comingSoon: true,
+      ),
+      V1NavItem(
+        icon: Icons.settings_outlined,
+        label: 'Settings',
+        route: '/settings',
+      ),
+    ]),
+  ];
+}
+
+String _crumbForRoute(String loc) {
+  if (loc == '/') return 'Hub';
+  if (loc == '/dashboard-classic') return 'Dashboard (classic)';
+  if (loc == '/hub-v1') return 'Hub';
+  if (loc == '/hub') return 'Hub (legacy)';
+  if (loc == '/plugins' || loc.startsWith('/plugins/')) return 'Agents';
+  if (loc == '/running') return 'Workbench';
+  if (loc == '/settings/claude-accounts') return 'Connections · Accounts';
+  if (loc == '/settings/llm-endpoints') return 'Connections · Endpoints';
+  if (loc == '/settings/builtin-plugins') return 'Settings · Built-in plugins';
+  if (loc.startsWith('/settings')) return 'Settings';
+  if (loc == '/browser/files') return 'Files';
+  if (loc == '/browser/logs') return 'Logs';
+  if (loc == '/browser/messaging') return 'Connections · Telegram';
+  if (loc == '/browser/mcp') return 'Connections · MCP';
+  if (loc.startsWith('/browser/')) {
+    final tail = loc.substring('/browser/'.length);
+    return tail.isEmpty ? 'Browser' : tail;
+  }
+  return loc;
 }
 
 /// Bumps [MediaQueryData.textScaler] on desktop web so every `Text`

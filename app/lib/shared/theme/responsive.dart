@@ -42,11 +42,13 @@ class Responsive {
   /// so a theme-level copyWith can't reach them). Keep the multiplier
   /// modest so buttons, chips, and AppBar actions don't explode.
   static double fontScale(BuildContext context) {
-    if (!isDesktopWeb(context)) return 1.0;
-    final width = MediaQuery.of(context).size.width;
-    if (width >= 1600) return 1.35;
-    if (width >= 1200) return 1.30;
-    return 1.25;
+    // The v1 design tokens (lib/shared/theme/app_theme.dart) already
+    // target desktop sizes (16/18/22/28/36 base via Inter), so the
+    // 1.25–1.35x multiplier needed for the old SF-Pro-at-11px theme
+    // double-counts and produces oversized chrome. Scale 1.0 is the
+    // right default; remaining hardcoded fontSize:11/12/13 sites
+    // should migrate to OpendrayTokens text styles (tracked separately).
+    return 1.0;
   }
 
   /// Max width for centered dialogs on desktop web. Mobile keeps the
