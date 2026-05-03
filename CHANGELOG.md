@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0](https://github.com/Opendray/opendray/compare/v0.3.3...v0.4.0) (2026-05-03)
+
+
+### Features
+
+* **theme:** adopt Opendray UI v1 design tokens ([#20](https://github.com/Opendray/opendray/issues/20)) ([3da2ee4](https://github.com/Opendray/opendray/commit/3da2ee4a394a45d4ba4107e0fd034c13ba08434c))
+
+
+### Bug Fixes
+
+* **claude-accounts:** EXDEV rename fallback + parse OAuth token from credentials.json ([#19](https://github.com/Opendray/opendray/issues/19)) ([e1a60ba](https://github.com/Opendray/opendray/commit/e1a60baa8bdd665cc6afd8405f7c42dcbd192596))
+* **claude-accounts:** switch oauthURLPattern callers to FindStringSubmatch ([#16](https://github.com/Opendray/opendray/issues/16)) ([7bf1b7e](https://github.com/Opendray/opendray/commit/7bf1b7e6a744831d56e447167a4d4d8dcf2cf708))
+
 ## [0.3.3](https://github.com/Opendray/opendray/compare/v0.3.2...v0.3.3) (2026-04-23)
 
 
