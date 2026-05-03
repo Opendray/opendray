@@ -113,9 +113,18 @@ class _HubV1PageState extends State<HubV1Page> {
                           subtitle: _subtitle(),
                           onNewSession: _onNewSession,
                         ),
-                        SizedBox(height: t.sp5),
-                        _KpiGrid(activeSessions: _activeCount),
-                        SizedBox(height: t.sp5),
+                        SizedBox(height: t.sp4),
+                        _SummaryStrip(
+                          active: _activeCount,
+                          waiting: _waitingCount,
+                          total: _sessions.length,
+                        ),
+                        SizedBox(height: t.sp4),
+                        _QuickActionBar(
+                          onNewSession: _onNewSession,
+                          onAttachRepo: _onAttachRepo,
+                        ),
+                        SizedBox(height: t.sp4),
                         _SessionsCard(
                           sessions: _filteredSessions,
                           totalCount: _sessions.length,
@@ -129,11 +138,6 @@ class _HubV1PageState extends State<HubV1Page> {
                           onSessionDelete: _onDeleteSession,
                           loading: _loading,
                           error: _error,
-                        ),
-                        SizedBox(height: t.sp5),
-                        _ActivityAndQuickActions(
-                          onNewSession: _onNewSession,
-                          onAttachRepo: _onAttachRepo,
                         ),
                         SizedBox(height: t.sp5),
                       ],
@@ -299,89 +303,54 @@ class _PageHeader extends StatelessWidget {
 // KPI grid
 // -----------------------------------------------------------------------------
 
-class _KpiGrid extends StatelessWidget {
-  final int activeSessions;
-  const _KpiGrid({required this.activeSessions});
-
-  @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<OpendrayTokens>()!;
-    final items = [
-      _KpiData(label: 'Active sessions', value: '$activeSessions', accent: t.accent),
-      _KpiData(label: 'Tokens (24h)', value: '—', accent: t.success),
-      _KpiData(label: 'PRs this week', value: '—', accent: t.info),
-      _KpiData(label: 'Avg session length', value: '—', accent: t.warning),
-    ];
-    return LayoutBuilder(builder: (ctx, c) {
-      final cols = c.maxWidth > 1100 ? 4 : c.maxWidth > 700 ? 2 : 1;
-      return GridView.count(
-        crossAxisCount: cols,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisSpacing: t.sp4,
-        mainAxisSpacing: t.sp4,
-        childAspectRatio: cols == 1 ? 4.5 : (cols == 2 ? 3.5 : 2.8),
-        children: items.map((d) => _KpiCard(data: d)).toList(),
-      );
-    });
-  }
-}
-
-class _KpiData {
-  final String label;
-  final String value;
-  final Color accent;
-  const _KpiData({required this.label, required this.value, required this.accent});
-}
-
-class _KpiCard extends StatelessWidget {
-  final _KpiData data;
-  const _KpiCard({required this.data});
+/// Compact one-line summary bar that replaces the 4-up KPI grid. Three
+/// of those cards rendered "—" placeholders today; once we have real
+/// metrics the cards can come back. For now: a single subtle strip
+/// avoids the "lying-by-omission" look of empty KPI placeholders.
+class _SummaryStrip extends StatelessWidget {
+  final int active;
+  final int waiting;
+  final int total;
+  const _SummaryStrip(
+      {required this.active, required this.waiting, required this.total});
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).extension<OpendrayTokens>()!;
     final theme = Theme.of(context);
-    return Container(
-      padding: EdgeInsets.all(t.sp4),
-      decoration: BoxDecoration(
-        color: t.surface,
-        borderRadius: BorderRadius.circular(t.rLg),
-        border: Border.all(color: t.border),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(data.label,
-              style: theme.textTheme.labelSmall?.copyWith(
-                  color: t.textSubtle, letterSpacing: 0.6)),
-          SizedBox(height: t.sp1),
-          Text(data.value,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  fontFeatures: const [FontFeature.tabularFigures()])),
-          SizedBox(height: t.sp3),
-          Container(
-            height: 3,
-            decoration: BoxDecoration(
-              color: data.accent.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(2),
-            ),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              widthFactor: data.value == '—' ? 0 : 0.55,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: data.accent,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
+    Widget chip(String label, int value, Color color) => Container(
+          padding: EdgeInsets.symmetric(horizontal: t.sp3, vertical: t.sp2),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(t.rMd),
+            border: Border.all(color: color.withValues(alpha: 0.25)),
           ),
-        ],
-      ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8, height: 8,
+                decoration:
+                    BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+              SizedBox(width: t.sp2),
+              Text('$value $label',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                      color: t.text,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13)),
+            ],
+          ),
+        );
+    return Wrap(
+      spacing: t.sp3,
+      runSpacing: t.sp2,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        chip('active', active, t.success),
+        chip('waiting', waiting, t.warning),
+        chip('total', total, t.accent),
+      ],
     );
   }
 }
@@ -467,16 +436,18 @@ class _SessionsCard extends StatelessWidget {
                           style: theme.textTheme.bodyMedium)),
                 )
               : LayoutBuilder(builder: (ctx, c) {
-                  final cols =
-                      c.maxWidth > 1100 ? 3 : c.maxWidth > 700 ? 2 : 1;
+                  // Cap at 2 columns so single-session views don't render
+                  // a tile at 1/3 width with 2/3 of the band sitting empty.
+                  // 1-col on narrow viewports keeps tiles legible.
+                  final cols = c.maxWidth > 720 ? 2 : 1;
                   return GridView.count(
                     crossAxisCount: cols,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisSpacing: t.sp4,
                     mainAxisSpacing: t.sp4,
-                    childAspectRatio: cols == 1 ? 5.0 : 3.2,
-                    padding: EdgeInsets.all(t.sp5),
+                    childAspectRatio: cols == 1 ? 5.0 : 3.5,
+                    padding: EdgeInsets.all(t.sp4),
                     children: sessions
                         .map((s) => _SessionTile(
                               session: s,
@@ -488,22 +459,6 @@ class _SessionsCard extends StatelessWidget {
                         .toList(),
                   );
                 }),
-      footer: Padding(
-        padding: EdgeInsets.symmetric(horizontal: t.sp5, vertical: t.sp3),
-        child: Row(
-          children: [
-            Text(
-              '${sessions.length} of $totalCount session${totalCount == 1 ? '' : 's'} shown · max 20 per workspace',
-              style: theme.textTheme.bodySmall,
-            ),
-            const Spacer(),
-            TextButton(
-              onPressed: () => GoRouter.of(context).go('/dashboard-classic'),
-              child: const Text('View classic dashboard →'),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -726,142 +681,64 @@ class _StatusPill extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------------------
-// Activity rail + Quick actions row
+// Quick actions — inline horizontal bar (was a right-column card).
+// Activity card is dropped until /api/audit-log exists; reinstate it
+// once the wizard PR lands the endpoint.
 // -----------------------------------------------------------------------------
 
-class _ActivityAndQuickActions extends StatelessWidget {
+class _QuickActionBar extends StatelessWidget {
   final VoidCallback onNewSession;
   final VoidCallback onAttachRepo;
-  const _ActivityAndQuickActions({
-    required this.onNewSession,
-    required this.onAttachRepo,
-  });
+  const _QuickActionBar(
+      {required this.onNewSession, required this.onAttachRepo});
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).extension<OpendrayTokens>()!;
-    return LayoutBuilder(builder: (ctx, c) {
-      final wide = c.maxWidth > 900;
-      final activity = _Card(
-        header: _CardHeader(
-            title: 'Activity',
-            subtitle: 'Last 24 hours across this workspace'),
-        body: Padding(
-          padding: EdgeInsets.all(t.sp5),
-          child: Text(
-            'Activity timeline ships next iteration — needs the audit-log endpoint.',
-            style:
-                Theme.of(context).textTheme.bodyMedium?.copyWith(color: t.textMuted),
-          ),
+    return Wrap(
+      spacing: t.sp2,
+      runSpacing: t.sp2,
+      children: [
+        _QuickActionPill(
+          icon: Icons.account_tree_outlined,
+          label: 'Attach GitHub repo',
+          onTap: onAttachRepo,
         ),
-      );
-      final quick = _Card(
-        header: _CardHeader(title: 'Quick actions'),
-        body: Padding(
-          padding: EdgeInsets.all(t.sp4),
-          child: Column(
-            children: [
-              _QuickAction(
-                icon: Icons.add_circle_outline,
-                label: 'Start new session',
-                shortcut: '⌘N',
-                onTap: onNewSession,
-              ),
-              SizedBox(height: t.sp2),
-              _QuickAction(
-                icon: Icons.account_tree_outlined,
-                label: 'Attach to GitHub repo',
-                onTap: onAttachRepo,
-              ),
-              SizedBox(height: t.sp2),
-              _QuickAction(
-                icon: Icons.link,
-                label: 'Connect MCP server',
-                onTap: () => GoRouter.of(context).go('/'),
-              ),
-              SizedBox(height: t.sp2),
-              _QuickAction(
-                icon: Icons.terminal,
-                label: 'Open playground terminal',
-                onTap: onNewSession,
-              ),
-            ],
-          ),
+        _QuickActionPill(
+          icon: Icons.link,
+          label: 'Connect MCP server',
+          onTap: () => GoRouter.of(context).go('/settings/llm-endpoints'),
         ),
-        footer: Padding(
-          padding: EdgeInsets.symmetric(
-              horizontal: t.sp5, vertical: t.sp3),
-          child: Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                    color: t.success, shape: BoxShape.circle),
-              ),
-              SizedBox(width: t.sp2),
-              Text('All systems operational',
-                  style: Theme.of(context).textTheme.bodySmall),
-            ],
-          ),
+        _QuickActionPill(
+          icon: Icons.terminal,
+          label: 'Playground terminal',
+          onTap: onNewSession,
         ),
-      );
-      if (wide) {
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(flex: 2, child: activity),
-            SizedBox(width: t.sp4),
-            Expanded(flex: 1, child: quick),
-          ],
-        );
-      }
-      return Column(children: [activity, SizedBox(height: t.sp4), quick]);
-    });
+      ],
+    );
   }
 }
 
-class _QuickAction extends StatelessWidget {
+class _QuickActionPill extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String? shortcut;
   final VoidCallback onTap;
-  const _QuickAction(
-      {required this.icon,
-      required this.label,
-      this.shortcut,
-      required this.onTap});
-
+  const _QuickActionPill(
+      {required this.icon, required this.label, required this.onTap});
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).extension<OpendrayTokens>()!;
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: onTap,
-        icon: Icon(icon, size: 16),
-        label: Row(
-          children: [
-            Expanded(
-                child: Text(label, style: const TextStyle(fontSize: 13))),
-            if (shortcut != null)
-              Container(
-                padding: EdgeInsets.symmetric(
-                    horizontal: t.sp2, vertical: 2),
-                decoration: BoxDecoration(
-                  color: t.surface3,
-                  borderRadius: BorderRadius.circular(t.rXs),
-                  border: Border.all(color: t.border),
-                ),
-                child: Text(shortcut!,
-                    style: mono(size: 11, color: t.textSubtle)),
-              ),
-          ],
-        ),
-        style: OutlinedButton.styleFrom(
-          alignment: Alignment.centerLeft,
-          minimumSize: const Size(0, 40),
-        ),
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 14),
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      style: OutlinedButton.styleFrom(
+        backgroundColor: t.surface,
+        side: BorderSide(color: t.border),
+        padding: EdgeInsets.symmetric(horizontal: t.sp3, vertical: 6),
+        minimumSize: const Size(0, 32),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(t.rXl)),
       ),
     );
   }
