@@ -554,12 +554,18 @@ func deriveAccountName(email, fallback string) string {
 	return "claude-" + time.Now().Format("20060102-150405")
 }
 
-// sanitizeFsName keeps only [a-zA-Z0-9._-] and lowercases the result.
-// Mirrors the existing claude_accounts.go validation rule.
-var fsSafeName = regexp.MustCompile(`[^a-zA-Z0-9._-]+`)
+// sanitizeFsName keeps only [a-zA-Z0-9._-], lowercases, and collapses
+// runs of separators so e.g. "emoji-🚀-strip" → "emoji-strip" rather
+// than the ugly "emoji---strip". Mirrors the validation rule used by
+// the existing claude_accounts.go createClaudeAccount handler.
+var (
+	fsSafeName     = regexp.MustCompile(`[^a-zA-Z0-9._-]+`)
+	fsRepeatedSep  = regexp.MustCompile(`[-_.]{2,}`)
+)
 
 func sanitizeFsName(s string) string {
 	s = fsSafeName.ReplaceAllString(s, "-")
+	s = fsRepeatedSep.ReplaceAllString(s, "-")
 	s = strings.Trim(s, ".-_")
 	return strings.ToLower(s)
 }
