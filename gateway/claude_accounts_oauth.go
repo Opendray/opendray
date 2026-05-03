@@ -251,8 +251,8 @@ func (s *Server) startClaudeOAuth(w http.ResponseWriter, r *http.Request) {
 			flow.buf.WriteString(line + "\n")
 			flow.mu.Unlock()
 
-			if m := oauthURLPattern.FindString(line); m != "" {
-				urlCh <- m
+			if sm := oauthURLPattern.FindStringSubmatch(line); len(sm) >= 2 {
+				urlCh <- sm[1]
 				// Keep draining stdout in this goroutine so the PTY
 				// doesn't fill its buffer and stall the CLI; once URL
 				// is sent we just accumulate output.

@@ -46,9 +46,12 @@ func TestOAuthURLPattern(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := oauthURLPattern.FindString(tc.in)
+			var got string
+			if sm := oauthURLPattern.FindStringSubmatch(tc.in); len(sm) >= 2 {
+				got = sm[1]
+			}
 			if got != tc.want {
-				t.Errorf("FindString:\n got: %q\nwant: %q", got, tc.want)
+				t.Errorf("FindStringSubmatch[1]:\n got: %q\nwant: %q", got, tc.want)
 			}
 		})
 	}
