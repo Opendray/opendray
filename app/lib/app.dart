@@ -17,6 +17,7 @@ import 'features/hub/hub_page.dart';
 import 'features/hub_v1/hub_v1_page.dart';
 import 'shared/v1_app_shell.dart';
 import 'features/plugins/plugins_page.dart';
+import 'features/plugins/plugins_v1_page.dart';
 import 'features/settings/builtin_restore_page.dart';
 import 'features/settings/settings_page.dart';
 import 'features/settings/setup_page.dart';
@@ -267,7 +268,8 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
           GoRoute(path: '/browser/simulator', builder: _sentinel),
           // Generic v1 webview plugin route — same sentinel pattern.
           GoRoute(path: '/browser/plugin/:name', builder: _sentinel),
-          GoRoute(path: '/plugins', builder: (_, _) => const PluginsPage()),
+          GoRoute(path: '/plugins',         builder: (_, _) => const PluginsV1Page()),
+          GoRoute(path: '/plugins-classic', builder: (_, _) => const PluginsPage()),
           GoRoute(path: '/hub', builder: (_, _) => const HubPage()),
           GoRoute(path: '/hub-v1', builder: (_, _) => const HubV1Page()),
           GoRoute(
@@ -504,7 +506,7 @@ List<V1NavSection> _v1NavSections({required int runningCount}) {
       ),
       const V1NavItem(
         icon: Icons.extension_outlined,
-        label: 'Agents',
+        label: 'Plugins',
         route: '/plugins',
       ),
       const V1NavItem(
@@ -550,7 +552,8 @@ String _crumbForRoute(String loc) {
   if (loc == '/dashboard-classic') return 'Dashboard (classic)';
   if (loc == '/hub-v1') return 'Hub';
   if (loc == '/hub') return 'Hub (legacy)';
-  if (loc == '/plugins' || loc.startsWith('/plugins/')) return 'Agents';
+  if (loc == '/plugins' || loc.startsWith('/plugins/')) return 'Plugins';
+  if (loc == '/plugins-classic') return 'Plugins (classic)';
   if (loc == '/running') return 'Workbench';
   if (loc == '/settings/claude-accounts') return 'Connections · Accounts';
   if (loc == '/settings/llm-endpoints') return 'Connections · Endpoints';
