@@ -122,7 +122,11 @@ class _HubV1PageState extends State<HubV1Page> {
                           filter: _filter,
                           waitingCount: _waitingCount,
                           onFilterChanged: (f) => setState(() => _filter = f),
-                          onSessionTap: (s) => context.go('/?sid=${s.id}'),
+                          onSessionTap: (s) =>
+                              context.push('/session/${s.id}'),
+                          onSessionStart: _onStartSession,
+                          onSessionStop: _onStopSession,
+                          onSessionDelete: _onDeleteSession,
                           loading: _loading,
                           error: _error,
                         ),
@@ -168,6 +172,66 @@ class _HubV1PageState extends State<HubV1Page> {
 
   void _onAttachRepo() {
     context.go('/source-control');
+  }
+
+  Future<void> _onStartSession(Session s) async {
+    try {
+      await _api.startSession(s.id);
+      if (mounted) _toast('Started ${_displayName(s)}');
+      _load();
+    } catch (e) {
+      if (mounted) _toast('Start failed: $e', isError: true);
+    }
+  }
+
+  Future<void> _onStopSession(Session s) async {
+    try {
+      await _api.stopSession(s.id);
+      if (mounted) _toast('Stopped ${_displayName(s)}');
+      _load();
+    } catch (e) {
+      if (mounted) _toast('Stop failed: $e', isError: true);
+    }
+  }
+
+  Future<void> _onDeleteSession(Session s) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete this session?'),
+        content: Text(
+            'This removes "${_displayName(s)}" and its history. The agent CLI is stopped if running.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Delete')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _api.deleteSession(s.id);
+      if (mounted) _toast('Deleted ${_displayName(s)}');
+      _load();
+    } catch (e) {
+      if (mounted) _toast('Delete failed: $e', isError: true);
+    }
+  }
+
+  String _displayName(Session s) =>
+      s.name.isNotEmpty ? s.name : 'session ${s.id.substring(0, 8)}';
+
+  void _toast(String msg, {bool isError = false}) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      backgroundColor: isError ? t.danger : null,
+      duration: const Duration(seconds: 3),
+    ));
   }
 }
 
@@ -333,6 +397,9 @@ class _SessionsCard extends StatelessWidget {
   final int waitingCount;
   final ValueChanged<_SessionFilter> onFilterChanged;
   final ValueChanged<Session> onSessionTap;
+  final ValueChanged<Session> onSessionStart;
+  final ValueChanged<Session> onSessionStop;
+  final ValueChanged<Session> onSessionDelete;
   final bool loading;
   final String? error;
   const _SessionsCard({
@@ -342,6 +409,9 @@ class _SessionsCard extends StatelessWidget {
     required this.waitingCount,
     required this.onFilterChanged,
     required this.onSessionTap,
+    required this.onSessionStart,
+    required this.onSessionStop,
+    required this.onSessionDelete,
     required this.loading,
     required this.error,
   });
@@ -354,7 +424,7 @@ class _SessionsCard extends StatelessWidget {
       header: _CardHeader(
         title: 'Active sessions',
         subtitle:
-            'Tap a session to attach a terminal, or send a command from Telegram',
+            'Tap a card to open the terminal · use the menu to start, stop, or delete',
         actions: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -405,11 +475,16 @@ class _SessionsCard extends StatelessWidget {
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisSpacing: t.sp4,
                     mainAxisSpacing: t.sp4,
-                    childAspectRatio: cols == 1 ? 2.4 : 1.55,
+                    childAspectRatio: cols == 1 ? 5.0 : 3.2,
                     padding: EdgeInsets.all(t.sp5),
                     children: sessions
-                        .map((s) =>
-                            _SessionTile(session: s, onTap: () => onSessionTap(s)))
+                        .map((s) => _SessionTile(
+                              session: s,
+                              onTap: () => onSessionTap(s),
+                              onStart: () => onSessionStart(s),
+                              onStop: () => onSessionStop(s),
+                              onDelete: () => onSessionDelete(s),
+                            ))
                         .toList(),
                   );
                 }),
@@ -436,7 +511,18 @@ class _SessionsCard extends StatelessWidget {
 class _SessionTile extends StatelessWidget {
   final Session session;
   final VoidCallback onTap;
-  const _SessionTile({required this.session, required this.onTap});
+  final VoidCallback onStart;
+  final VoidCallback onStop;
+  final VoidCallback onDelete;
+  const _SessionTile({
+    required this.session,
+    required this.onTap,
+    required this.onStart,
+    required this.onStop,
+    required this.onDelete,
+  });
+
+  bool get _isRunning => session.status == 'running' || session.status == 'idle' || session.status == 'waiting';
 
   Color _statusColor(OpendrayTokens t) => switch (session.status) {
         'running' => t.success,
@@ -477,121 +563,163 @@ class _SessionTile extends StatelessWidget {
     final t = Theme.of(context).extension<OpendrayTokens>()!;
     final theme = Theme.of(context);
     final statusC = _statusColor(t);
-    return InkWell(
-      onTap: onTap,
+    return Material(
+      color: t.surface,
       borderRadius: BorderRadius.circular(t.rLg),
-      child: Container(
-        decoration: BoxDecoration(
-          color: t.surface,
-          borderRadius: BorderRadius.circular(t.rLg),
-          border: Border.all(color: t.border),
-        ),
-        padding: EdgeInsets.all(t.sp4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: t.accentSoft,
-                    borderRadius: BorderRadius.circular(t.rSm),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(_agentInitial(),
-                      style: TextStyle(
-                          color: t.accentText,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12)),
-                ),
-                SizedBox(width: t.sp3),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        session.name.isEmpty ? '(unnamed)' : session.name,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(_shortPath(session.cwd),
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: t.textSubtle),
-                          overflow: TextOverflow.ellipsis),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: t.sp2, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: statusC.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(t.rXl),
-                    border: Border.all(color: statusC.withValues(alpha: 0.35)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: statusC,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      SizedBox(width: t.sp1),
-                      Text(_statusLabel(),
-                          style: TextStyle(
-                              fontSize: 11,
-                              color: statusC,
-                              fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: t.sp3),
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(t.sp3),
-                decoration: BoxDecoration(
-                  color: t.bgRaised,
-                  borderRadius: BorderRadius.circular(t.rMd),
-                  border: Border.all(color: t.border),
-                ),
-                child: Text(
-                  session.status == 'running'
-                      ? '▸ session active · pid ${session.pid ?? '—'}'
-                      : session.status == 'stopped'
-                          ? '◼ stopped'
-                          : '… ${_statusLabel().toLowerCase()}',
-                  maxLines: 4,
-                  overflow: TextOverflow.fade,
-                  style: mono(size: 11, color: t.textMuted),
-                ),
-              ),
-            ),
-            SizedBox(height: t.sp2),
-            DefaultTextStyle(
-              style: theme.textTheme.bodySmall!.copyWith(color: t.textSubtle),
-              child: Row(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(t.rLg),
+        child: Container(
+          decoration: BoxDecoration(
+            color: t.surface,
+            borderRadius: BorderRadius.circular(t.rLg),
+            border: Border.all(color: t.border),
+          ),
+          padding: EdgeInsets.fromLTRB(t.sp4, t.sp3, t.sp2, t.sp3),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
                 children: [
-                  Text(session.sessionType),
-                  Text('  ·  '),
-                  Text(session.model.isEmpty ? '—' : session.model,
-                      overflow: TextOverflow.ellipsis),
-                  const Spacer(),
-                  Text(_ago(session.lastActiveAt)),
+                  Container(
+                    width: 26, height: 26,
+                    decoration: BoxDecoration(
+                      color: t.accentSoft,
+                      borderRadius: BorderRadius.circular(t.rSm),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(_agentInitial(),
+                        style: TextStyle(
+                            color: t.accentText,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11)),
+                  ),
+                  SizedBox(width: t.sp3),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          session.name.isEmpty ? '(unnamed)' : session.name,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600, fontSize: 13),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        Text(_shortPath(session.cwd),
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: t.textSubtle, fontSize: 11),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1),
+                      ],
+                    ),
+                  ),
+                  _StatusPill(color: statusC, label: _statusLabel(), pulsing: session.status == 'running'),
+                  // Kebab menu — start/stop/delete. Stop click propagation
+                  // so the underlying card-tap doesn't navigate too.
+                  PopupMenuButton<String>(
+                    tooltip: 'Actions',
+                    icon: Icon(Icons.more_vert, size: 16, color: t.textMuted),
+                    splashRadius: 16,
+                    padding: EdgeInsets.zero,
+                    iconSize: 16,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    onSelected: (v) {
+                      switch (v) {
+                        case 'start': onStart(); break;
+                        case 'stop':  onStop();  break;
+                        case 'open':  onTap();   break;
+                        case 'delete': onDelete(); break;
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(
+                          value: 'open',
+                          child: ListTile(
+                              dense: true,
+                              leading: Icon(Icons.open_in_new, size: 16),
+                              title: Text('Open terminal'))),
+                      if (_isRunning)
+                        const PopupMenuItem(
+                            value: 'stop',
+                            child: ListTile(
+                                dense: true,
+                                leading: Icon(Icons.stop_circle_outlined, size: 16),
+                                title: Text('Stop')))
+                      else
+                        const PopupMenuItem(
+                            value: 'start',
+                            child: ListTile(
+                                dense: true,
+                                leading: Icon(Icons.play_circle_outline, size: 16),
+                                title: Text('Start'))),
+                      const PopupMenuDivider(),
+                      const PopupMenuItem(
+                          value: 'delete',
+                          child: ListTile(
+                              dense: true,
+                              leading: Icon(Icons.delete_outline, size: 16, color: Colors.redAccent),
+                              title: Text('Delete', style: TextStyle(color: Colors.redAccent)))),
+                    ],
+                  ),
                 ],
               ),
-            ),
-          ],
+              SizedBox(height: t.sp2),
+              DefaultTextStyle(
+                style: theme.textTheme.bodySmall!.copyWith(color: t.textSubtle, fontSize: 11),
+                child: Row(
+                  children: [
+                    Text(session.sessionType),
+                    if (session.model.isNotEmpty) ...[
+                      const Text('  ·  '),
+                      Flexible(
+                        child: Text(session.model, overflow: TextOverflow.ellipsis),
+                      ),
+                    ],
+                    const Spacer(),
+                    Text(_ago(session.lastActiveAt)),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final Color color;
+  final String label;
+  final bool pulsing;
+  const _StatusPill({required this.color, required this.label, required this.pulsing});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: t.sp2, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(t.rXl),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6, height: 6,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          SizedBox(width: t.sp1),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 10,
+                  color: color,
+                  fontWeight: FontWeight.w600)),
+        ],
       ),
     );
   }
