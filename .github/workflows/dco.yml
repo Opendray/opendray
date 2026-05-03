@@ -8,6 +8,11 @@ jobs:
   dco:
     runs-on: ubuntu-latest
     steps:
-      - uses: tim-actions/dco@master
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: tim-actions/get-pr-commits@198af03565609bb4ed924d1260247b4881c09e7d # master @ 2024-01-12
+        id: get-pr-commits
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: tim-actions/dco@2fd0504dc0d27b33f542867c300c60840c6dcb20 # master @ 2024-01-12
+        with:
+          commits: ${{ steps.get-pr-commits.outputs.commits }}
