@@ -439,6 +439,16 @@ func (s *Server) completeClaudeOAuth(w http.ResponseWriter, r *http.Request) {
 	flow.configDir = ""
 	credPathPerm := filepath.Join(permDir, ".credentials.json")
 
+	// Pre-seed Claude CLI onboarding state so the user lands on the
+	// trust-folder prompt instead of the welcome / theme picker / login
+	// method picker chain. Without this, every new account hits the
+	// "Select login method" screen on first interactive launch even
+	// though valid OAuth credentials are already in place.
+	if err := seedClaudeOnboardingState(permDir); err != nil {
+		s.logger.Warn("seed claude onboarding state failed",
+			"err", err, "configDir", permDir)
+	}
+
 	// Insert claude_accounts row.
 	acc := store.ClaudeAccount{
 		Name:        name,
@@ -541,6 +551,82 @@ func (s *Server) cleanupFlowOAuthOnly(flow *oauthFlow) {
 	if flow.cmd != nil && flow.cmd.Process != nil {
 		_, _ = flow.cmd.Process.Wait()
 	}
+}
+
+// seedClaudeOnboardingState writes the keys Claude CLI checks before
+// showing its welcome wizard / theme picker / "Select login method"
+// picker on first interactive launch. Without this, every newly-
+// registered Claude account drops the user into a 3-screen onboarding
+// chain even though their OAuth credentials are already valid.
+//
+// What it writes:
+//   - settings.json: {"theme":"dark","forceLoginMethod":"claudeai"}
+//     (theme is harmless even when correct; forceLoginMethod is what
+//     skips the login method picker per the decompiled CLI source).
+//   - .claude.json: hasCompletedOnboarding=true + lastOnboardingVersion
+//     (the resolved Claude CLI version, so the wizard's "we updated,
+//     please re-onboard" trigger doesn't fire either).
+//
+// Both files are merged with whatever the OAuth flow has already
+// written (the CLI itself populates .claude.json with userID,
+// oauthAccount, etc. during `claude auth login --claudeai`). Failure
+// to write is non-fatal — the user just sees the wizard once.
+func seedClaudeOnboardingState(configDir string) error {
+	// settings.json — small, easy to write whole.
+	settings := map[string]any{
+		"theme":             "dark",
+		"forceLoginMethod":  "claudeai",
+	}
+	settingsBytes, err := json.MarshalIndent(settings, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal settings: %w", err)
+	}
+	if err := os.WriteFile(filepath.Join(configDir, "settings.json"),
+		settingsBytes, 0o600); err != nil {
+		return fmt.Errorf("write settings.json: %w", err)
+	}
+
+	// .claude.json — read-modify-write so we don't clobber the CLI's
+	// own state (userID, oauthAccount, migrationVersion, cached*).
+	clauPath := filepath.Join(configDir, ".claude.json")
+	var clau map[string]any
+	if data, err := os.ReadFile(clauPath); err == nil {
+		_ = json.Unmarshal(data, &clau)
+	}
+	if clau == nil {
+		clau = map[string]any{}
+	}
+	clau["hasCompletedOnboarding"] = true
+	clau["lastOnboardingVersion"] = claudeCLIVersion()
+	out, err := json.MarshalIndent(clau, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal .claude.json: %w", err)
+	}
+	if err := os.WriteFile(clauPath, out, 0o600); err != nil {
+		return fmt.Errorf("write .claude.json: %w", err)
+	}
+	return nil
+}
+
+// claudeCLIVersion returns the version string from `claude --version`
+// (e.g. "2.1.126 (Claude Code)"), parsed down to the SemVer prefix.
+// Falls back to "0.0.0" so the field is always present — the value
+// only matters as a "we've onboarded for at least this version" mark.
+func claudeCLIVersion() string {
+	cli, ok := claudeCLIBinary()
+	if !ok {
+		return "0.0.0"
+	}
+	out, err := exec.Command(cli, "--version").Output()
+	if err != nil {
+		return "0.0.0"
+	}
+	s := strings.TrimSpace(string(out))
+	// "2.1.126 (Claude Code)" → "2.1.126"
+	if i := strings.Index(s, " "); i > 0 {
+		s = s[:i]
+	}
+	return s
 }
 
 // copyDir copies src to dst preserving file modes. Used as a fallback
