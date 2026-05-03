@@ -425,9 +425,14 @@ func (s *Server) completeClaudeOAuth(w http.ResponseWriter, r *http.Request) {
 		_ = os.Rename(permDir, permDir+".old."+time.Now().Format("20060102-150405"))
 	}
 	if err := os.Rename(flow.configDir, permDir); err != nil {
-		s.cleanupFlow(flow, "rename config dir to permanent location failed")
-		respondError(w, http.StatusInternalServerError, "rename config dir: "+err.Error())
-		return
+		// Cross-device rename (EXDEV) can happen if /tmp and $HOME are on
+		// different filesystems (e.g. tmpfs /tmp). Fall back to copy+remove.
+		if cpErr := copyDir(flow.configDir, permDir); cpErr != nil {
+			s.cleanupFlow(flow, "rename config dir failed: "+err.Error()+"; copy fallback failed: "+cpErr.Error())
+			respondError(w, http.StatusInternalServerError, "rename config dir: "+err.Error()+"; copy fallback: "+cpErr.Error())
+			return
+		}
+		_ = os.RemoveAll(flow.configDir)
 	}
 	// configDir is now permDir; clear flow.configDir so cleanup doesn't
 	// nuke the credentials we just registered.
@@ -536,6 +541,57 @@ func (s *Server) cleanupFlowOAuthOnly(flow *oauthFlow) {
 	if flow.cmd != nil && flow.cmd.Process != nil {
 		_, _ = flow.cmd.Process.Wait()
 	}
+}
+
+// copyDir copies src to dst preserving file modes. Used as a fallback
+// when os.Rename fails with EXDEV (cross-filesystem move — common when
+// /tmp is tmpfs and the destination is on a real disk).
+func copyDir(src, dst string) error {
+	srcInfo, err := os.Stat(src)
+	if err != nil {
+		return fmt.Errorf("stat src: %w", err)
+	}
+	if err := os.MkdirAll(dst, srcInfo.Mode()); err != nil {
+		return fmt.Errorf("mkdir dst: %w", err)
+	}
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		return fmt.Errorf("read src: %w", err)
+	}
+	for _, e := range entries {
+		sp := filepath.Join(src, e.Name())
+		dp := filepath.Join(dst, e.Name())
+		if e.IsDir() {
+			if err := copyDir(sp, dp); err != nil {
+				return err
+			}
+			continue
+		}
+		sf, err := os.Open(sp)
+		if err != nil {
+			return fmt.Errorf("open %s: %w", sp, err)
+		}
+		info, err := e.Info()
+		if err != nil {
+			sf.Close()
+			return fmt.Errorf("stat %s: %w", sp, err)
+		}
+		df, err := os.OpenFile(dp, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, info.Mode())
+		if err != nil {
+			sf.Close()
+			return fmt.Errorf("create %s: %w", dp, err)
+		}
+		if _, err := io.Copy(df, sf); err != nil {
+			sf.Close()
+			df.Close()
+			return fmt.Errorf("copy %s -> %s: %w", sp, dp, err)
+		}
+		sf.Close()
+		if err := df.Close(); err != nil {
+			return fmt.Errorf("close %s: %w", dp, err)
+		}
+	}
+	return nil
 }
 
 // deriveAccountName picks a sensible default account name from the

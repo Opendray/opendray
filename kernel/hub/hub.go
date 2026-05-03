@@ -3,6 +3,7 @@ package hub
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -551,6 +552,20 @@ func readClaudeToken(path string) (string, error) {
 	tok := strings.TrimSpace(string(data))
 	if tok == "" {
 		return "", fmt.Errorf("token file is empty: %s", path)
+	}
+	// In-app OAuth writes the Claude CLI's structured .credentials.json,
+	// not a bare token string. Detect that shape and extract accessToken.
+	// Fall back to the raw value for legacy manual-setup files that hold
+	// a plain `sk-ant-oat01-...` string.
+	if strings.HasPrefix(tok, "{") {
+		var creds struct {
+			ClaudeAiOauth struct {
+				AccessToken string `json:"accessToken"`
+			} `json:"claudeAiOauth"`
+		}
+		if err := json.Unmarshal([]byte(tok), &creds); err == nil && creds.ClaudeAiOauth.AccessToken != "" {
+			return creds.ClaudeAiOauth.AccessToken, nil
+		}
 	}
 	return tok, nil
 }
