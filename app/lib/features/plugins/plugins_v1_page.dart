@@ -82,7 +82,7 @@ class _PluginsV1PageState extends State<PluginsV1Page> {
   Future<void> _toggle(provider_model.ProviderInfo p, bool v) async {
     try {
       await _api.toggleProvider(p.provider.name, v);
-      ProvidersBus.instance.fire();
+      ProvidersBus.instance.notify();
     } catch (e) {
       _toast('Toggle failed: $e', isError: true);
     }
