@@ -72,6 +72,16 @@
       "label_zh": "额外 CLI 参数",
       "type": "args",
       "group": "advanced"
+    },
+    {
+      "key": "skills_disabled",
+      "label": "Disable opendray skills",
+      "label_zh": "禁用 opendray skills",
+      "type": "boolean",
+      "group": "advanced",
+      "default": false,
+      "description": "Skip injecting the opendray skill index into the session's system prompt. Useful if you want a clean Claude Code experience without our additions.",
+      "description_zh": "不向 session 系统提示词注入 opendray skill 索引。想要纯净的 Claude Code 体验时可关闭。"
     }
   ],
   "ui": {

@@ -142,24 +142,32 @@ function renderInput(
           </span>
         </div>
       )
-    case 'select':
+    case 'select': {
+      // Radix Select forbids `value=""` on Item (it reserves "" to mean
+      // "cleared / show placeholder"). Some manifests (e.g. gemini's
+      // `sandbox`) legitimately use the empty string as an option, so
+      // map it to a sentinel inside the widget and translate back at
+      // the boundary.
+      const EMPTY = '__empty__'
+      const cur = typeof value === 'string' ? value : ''
       return (
         <Select
-          value={typeof value === 'string' ? value : ''}
-          onValueChange={(v) => onChange(v)}
+          value={cur === '' ? EMPTY : cur}
+          onValueChange={(v) => onChange(v === EMPTY ? '' : v)}
         >
           <SelectTrigger id={field.key}>
             <SelectValue placeholder={field.placeholder ?? 'Select…'} />
           </SelectTrigger>
           <SelectContent>
             {(field.options ?? []).map((opt) => (
-              <SelectItem key={opt} value={opt}>
+              <SelectItem key={opt} value={opt === '' ? EMPTY : opt}>
                 {opt || '(default)'}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       )
+    }
     case 'secret':
       return (
         <SecretInput

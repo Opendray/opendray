@@ -12,6 +12,8 @@ import { ProvidersPage } from '@/pages/Providers'
 import { ChannelsPage } from '@/pages/Channels'
 import { IntegrationsPage } from '@/pages/Integrations'
 import { ActivityPage } from '@/pages/Activity'
+import { NotesPage } from '@/pages/Notes'
+import { PluginsPage } from '@/pages/Plugins'
 import { SettingsPage } from '@/pages/Settings'
 import { useAuth } from '@/stores/auth'
 
@@ -73,6 +75,18 @@ const activityRoute = createRoute({
   component: ActivityPage,
 })
 
+const notesRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/notes',
+  component: NotesPage,
+})
+
+const pluginsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/plugins',
+  component: PluginsPage,
+})
+
 const settingsRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/settings',
@@ -88,6 +102,8 @@ const routeTree = rootRoute.addChildren([
     channelsRoute,
     integrationsRoute,
     activityRoute,
+    notesRoute,
+    pluginsRoute,
     settingsRoute,
   ]),
 ])

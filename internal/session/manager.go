@@ -61,6 +61,36 @@ type Manager struct {
 	closed   bool
 	sessions map[string]*runningSession
 	wg       sync.WaitGroup
+
+	// stopRequested tracks session ids the user has explicitly asked
+	// to stop. waitExit consumes this to decide between StateStopped
+	// (user) vs StateEnded (process exited on its own). Mirrors v1
+	// hub.go's stopRequested map.
+	stopMu        sync.Mutex
+	stopRequested map[string]bool
+}
+
+// markStopRequested records that the user asked for a stop. Idempotent.
+func (m *Manager) markStopRequested(id string) {
+	m.stopMu.Lock()
+	if m.stopRequested == nil {
+		m.stopRequested = make(map[string]bool)
+	}
+	m.stopRequested[id] = true
+	m.stopMu.Unlock()
+}
+
+// consumeStopRequest returns true (and clears) if the session was
+// stopped by an explicit user request.
+func (m *Manager) consumeStopRequest(id string) bool {
+	m.stopMu.Lock()
+	defer m.stopMu.Unlock()
+	if m.stopRequested == nil {
+		return false
+	}
+	v := m.stopRequested[id]
+	delete(m.stopRequested, id)
+	return v
 }
 
 // runningSession holds the runtime state for one active PTY-backed
@@ -133,6 +163,23 @@ func NewManager(pool *pgxpool.Pool, bus *eventbus.Hub, providers ProviderResolve
 	return m
 }
 
+// ReconcileStartup marks any DB rows in non-terminal states as
+// 'ended' (exit_code=-1). Call once after NewManager and before
+// serving traffic — otherwise WS clients reconnect forever to
+// sessions whose PTYs died with the old gateway process.
+func (m *Manager) ReconcileStartup(ctx context.Context) error {
+	n, err := m.store.MarkAllRunningAsEnded(ctx)
+	if err != nil {
+		return err
+	}
+	if n > 0 {
+		m.log.Info("reconciled stale sessions on startup",
+			"count", n,
+			"reason", "previous gateway process exited; PTYs gone")
+	}
+	return nil
+}
+
 // Create resolves the provider, spawns a PTY, persists the row, and
 // starts the stdout pump + exit detector goroutines. Returns the
 // persisted Session view.
@@ -148,21 +195,109 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 	}
 	m.mu.RUnlock()
 
-	if info, err := os.Stat(req.Cwd); err != nil {
-		return Session{}, fmt.Errorf("cwd: %w", err)
-	} else if !info.IsDir() {
-		return Session{}, fmt.Errorf("cwd is not a directory: %s", req.Cwd)
+	sessID := newID()
+	sess := Session{
+		ID:              sessID,
+		Name:            req.Name,
+		ProviderID:      req.ProviderID,
+		Cwd:             req.Cwd,
+		Args:            req.Args,
+		State:           StateRunning,
+		ClaudeAccountID: req.ClaudeAccountID,
+		ParentSessionID: req.ParentSessionID,
+		StartedAt:       time.Now().UTC(),
+	}
+	if sess.Args == nil {
+		sess.Args = []string{}
 	}
 
-	p, err := m.providers.Resolve(ctx, req.ProviderID)
+	rs, err := m.spawn(ctx, sess, false)
 	if err != nil {
 		return Session{}, err
 	}
 
-	sessID := newID()
-	tempDir := filepath.Join(os.TempDir(), "opendray-sess-"+sessID)
+	m.bus.Publish(eventbus.Event{
+		Topic: "session.started",
+		Data: map[string]any{
+			"session_id":  rs.sess.ID,
+			"provider_id": rs.sess.ProviderID,
+			"name":        rs.sess.Name,
+		},
+	})
+	return rs.sess, nil
+}
+
+// Start re-spawns a previously-stopped/ended session row. The row
+// must exist and be in a terminal state. The new process inherits
+// the original provider/cwd/args/claude_account_id; only the PID
+// and started_at change in the DB.
+func (m *Manager) Start(ctx context.Context, id string) (Session, error) {
+	m.mu.RLock()
+	if m.closed {
+		m.mu.RUnlock()
+		return Session{}, errors.New("session manager closed")
+	}
+	m.mu.RUnlock()
+
+	if rs := m.lookup(id); rs != nil {
+		rs.sessMu.RLock()
+		state := rs.sess.State
+		out := rs.sess
+		rs.sessMu.RUnlock()
+		if !state.IsTerminal() {
+			return out, fmt.Errorf("session %s is %s — already running", id, state)
+		}
+	}
+
+	sess, err := m.store.Get(ctx, id)
+	if err != nil {
+		return Session{}, err
+	}
+	if !sess.State.IsTerminal() {
+		// Row says running but not in our map — likely a stale row
+		// surviving a gateway restart. Fall through and respawn.
+	}
+
+	sess.State = StateRunning
+	sess.EndedAt = nil
+	sess.ExitCode = nil
+	sess.StartedAt = time.Now().UTC()
+
+	rs, err := m.spawn(ctx, sess, true)
+	if err != nil {
+		return Session{}, err
+	}
+
+	m.bus.Publish(eventbus.Event{
+		Topic: "session.restarted",
+		Data: map[string]any{
+			"session_id":  rs.sess.ID,
+			"provider_id": rs.sess.ProviderID,
+		},
+	})
+	return rs.sess, nil
+}
+
+// spawn does the shared "PTY launch + bookkeeping" work for both
+// Create (insert row) and Start (reactivate row). When reactivate is
+// true, the session row is expected to already exist and is updated
+// via Reactivate; otherwise a fresh row is inserted.
+func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*runningSession, error) {
+	if info, err := os.Stat(sess.Cwd); err != nil {
+		return nil, fmt.Errorf("cwd: %w", err)
+	} else if !info.IsDir() {
+		return nil, fmt.Errorf("cwd is not a directory: %s", sess.Cwd)
+	}
+
+	resolveCtx := WithAccountID(ctx, sess.ClaudeAccountID)
+	p, err := m.providers.Resolve(resolveCtx, sess.ProviderID)
+	if err != nil {
+		return nil, err
+	}
+
+	tempDir := filepath.Join(os.TempDir(), "opendray-sess-"+sess.ID)
 	if err := os.MkdirAll(tempDir, 0o700); err != nil {
-		return Session{}, fmt.Errorf("session tempdir: %w", err)
+		return nil, fmt.Errorf("session tempdir: %w", err)
 	}
 
 	var (
@@ -170,10 +305,10 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		extraEnv  map[string]string
 	)
 	if p.Prepare != nil {
-		out, err := p.Prepare(ctx, sessID, tempDir)
+		out, err := p.Prepare(ctx, sess.ID, tempDir)
 		if err != nil {
 			_ = os.RemoveAll(tempDir)
-			return Session{}, fmt.Errorf("provider prepare: %w", err)
+			return nil, fmt.Errorf("provider prepare: %w", err)
 		}
 		extraArgs = out.Args
 		extraEnv = out.Env
@@ -181,37 +316,35 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 
 	args := append([]string(nil), p.Args...)
 	args = append(args, extraArgs...)
-	args = append(args, req.Args...)
+	args = append(args, sess.Args...)
 
 	cmd := exec.Command(p.Executable, args...)
-	cmd.Dir = req.Cwd
+	cmd.Dir = sess.Cwd
 	cmd.Env = mergeEnv(os.Environ(), extraEnv)
 
 	ptmx, err := pty.Start(cmd)
 	if err != nil {
 		_ = os.RemoveAll(tempDir)
-		return Session{}, fmt.Errorf("pty.Start: %w", err)
+		return nil, fmt.Errorf("pty.Start: %w", err)
 	}
 
-	sess := Session{
-		ID:         sessID,
-		Name:       req.Name,
-		ProviderID: req.ProviderID,
-		Cwd:        req.Cwd,
-		Args:       req.Args,
-		State:      StateRunning,
-		PID:        cmd.Process.Pid,
-		StartedAt:  time.Now().UTC(),
-	}
-	if sess.Args == nil {
-		sess.Args = []string{}
-	}
+	sess.PID = cmd.Process.Pid
+	sess.State = StateRunning
 
-	if err := m.store.Insert(ctx, sess); err != nil {
-		_ = cmd.Process.Kill()
-		_ = ptmx.Close()
-		_ = os.RemoveAll(tempDir)
-		return Session{}, err
+	if reactivate {
+		if err := m.store.Reactivate(ctx, sess.ID, sess.PID); err != nil {
+			_ = cmd.Process.Kill()
+			_ = ptmx.Close()
+			_ = os.RemoveAll(tempDir)
+			return nil, err
+		}
+	} else {
+		if err := m.store.Insert(ctx, sess); err != nil {
+			_ = cmd.Process.Kill()
+			_ = ptmx.Close()
+			_ = os.RemoveAll(tempDir)
+			return nil, err
+		}
 	}
 
 	rs := &runningSession{
@@ -237,15 +370,7 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		go m.idleWatcher(rs)
 	}
 
-	m.bus.Publish(eventbus.Event{
-		Topic: "session.started",
-		Data: map[string]any{
-			"session_id":  sess.ID,
-			"provider_id": sess.ProviderID,
-			"name":        sess.Name,
-		},
-	})
-	return sess, nil
+	return rs, nil
 }
 
 func (m *Manager) lookup(id string) *runningSession {
@@ -316,31 +441,33 @@ func (m *Manager) List(ctx context.Context) ([]Session, error) {
 	return list, nil
 }
 
-// Terminate sends SIGTERM and waits up to terminateGrace for the
-// process to exit; if it doesn't, SIGKILL. For an already-ended
-// session it succeeds as a no-op so callers (e.g. handler.terminate)
-// can chain Delete.
-func (m *Manager) Terminate(ctx context.Context, id string) error {
+// Stop terminates the running process for a session but preserves
+// the DB row. The user can subsequently call Start to re-spawn.
+// For an already-terminal session it succeeds as a no-op.
+func (m *Manager) Stop(ctx context.Context, id string) error {
 	rs := m.lookup(id)
 	if rs == nil {
 		sess, err := m.store.Get(ctx, id)
 		if err != nil {
 			return err
 		}
-		if sess.State == StateEnded {
-			return nil // already ended; nothing to terminate
+		if sess.State.IsTerminal() {
+			return nil
 		}
-		return fmt.Errorf("session %s not in manager", id)
+		// Row says running but not in our map — likely a stale row
+		// surviving a gateway restart. Mark it stopped directly.
+		return m.store.MarkTerminal(ctx, id, StateStopped, 0)
 	}
 
 	rs.sessMu.RLock()
 	state := rs.sess.State
 	pid := rs.sess.PID
 	rs.sessMu.RUnlock()
-	if state == StateEnded {
+	if state.IsTerminal() {
 		return nil
 	}
 
+	m.markStopRequested(id)
 	if err := syscall.Kill(pid, syscall.SIGTERM); err != nil && !errors.Is(err, syscall.ESRCH) {
 		return fmt.Errorf("sigterm: %w", err)
 	}
@@ -362,20 +489,85 @@ func (m *Manager) Terminate(ctx context.Context, id string) error {
 	}
 }
 
-// Delete permanently removes a session row from the database and the
-// in-memory map. The caller must ensure the process is no longer
-// running (Terminate first); Delete on a live session refuses.
-func (m *Manager) Delete(ctx context.Context, id string) error {
-	if rs := m.lookup(id); rs != nil {
-		rs.sessMu.RLock()
-		ended := rs.sess.State == StateEnded
-		rs.sessMu.RUnlock()
-		if !ended {
-			return fmt.Errorf("cannot delete a running session — terminate first")
-		}
-		m.mu.Lock()
-		delete(m.sessions, id)
-		m.mu.Unlock()
+// SwitchClaudeAccount terminates the running CLI process and respawns
+// it under a different Claude account binding, reusing the same row id
+// (so the UI tab and history stay intact). The CLI's in-memory
+// conversation state is lost — the underlying child process is
+// replaced. newAccountID == "" clears the binding (CLI uses its
+// system-keychain default).
+//
+// Rollback: if the respawn fails the row is left in 'stopped' state
+// with the *original* account_id preserved, so the user can manually
+// Restart with the previous credential.
+func (m *Manager) SwitchClaudeAccount(ctx context.Context, id, newAccountID string) (Session, error) {
+	m.mu.RLock()
+	if m.closed {
+		m.mu.RUnlock()
+		return Session{}, errors.New("session manager closed")
+	}
+	m.mu.RUnlock()
+
+	current, err := m.Get(ctx, id)
+	if err != nil {
+		return Session{}, err
+	}
+	if current.ProviderID != "claude" {
+		return Session{}, ErrAccountSwitchUnsupported
+	}
+	if current.ClaudeAccountID == newAccountID {
+		// No-op: caller picked the binding already in place. Return
+		// the current view so the UI can refresh idempotently.
+		return current, nil
+	}
+
+	if err := m.Stop(ctx, id); err != nil {
+		return Session{}, fmt.Errorf("stop before switch: %w", err)
+	}
+
+	sess, err := m.store.Get(ctx, id)
+	if err != nil {
+		return Session{}, err
+	}
+	sess.ClaudeAccountID = newAccountID
+	sess.State = StateRunning
+	sess.EndedAt = nil
+	sess.ExitCode = nil
+	sess.StartedAt = time.Now().UTC()
+
+	rs, err := m.spawn(ctx, sess, true)
+	if err != nil {
+		// spawn failed; row is still 'stopped' with the original
+		// claude_account_id (we never persisted the new value), so
+		// the user can Restart back to the previous credential.
+		return Session{}, fmt.Errorf("respawn under new account: %w", err)
+	}
+
+	if err := m.store.UpdateClaudeAccount(ctx, id, newAccountID); err != nil {
+		// In-memory state is correct but the DB row still has the old
+		// account_id. Log and continue rather than killing the freshly
+		// spawned process — gateway restarts are rare and the user can
+		// re-issue the switch if necessary.
+		m.log.Error("persist new claude account failed",
+			"session", id, "account", newAccountID, "err", err)
+	}
+
+	m.bus.Publish(eventbus.Event{
+		Topic: "session.account_switched",
+		Data: map[string]any{
+			"session_id":  rs.sess.ID,
+			"provider_id": rs.sess.ProviderID,
+			"account_id":  newAccountID,
+		},
+	})
+	return rs.sess, nil
+}
+
+// Remove tears down a session permanently — running processes are
+// stopped first, then the DB row is deleted. This is the destructive
+// counterpart to Stop (which leaves the row behind for restart).
+func (m *Manager) Remove(ctx context.Context, id string) error {
+	if err := m.Stop(ctx, id); err != nil {
+		return err
 	}
 	return m.store.Delete(ctx, id)
 }
@@ -386,9 +578,9 @@ func (m *Manager) Input(_ context.Context, id string, data []byte) error {
 		return ErrNotFound
 	}
 	rs.sessMu.RLock()
-	ended := rs.sess.State == StateEnded
+	terminal := rs.sess.State.IsTerminal()
 	rs.sessMu.RUnlock()
-	if ended {
+	if terminal {
 		return ErrAlreadyEnded
 	}
 	if _, err := rs.pty.Write(data); err != nil {
@@ -426,7 +618,7 @@ func (m *Manager) Subscribe(_ context.Context, id string) (<-chan []byte, func()
 	default:
 	}
 	rs.sessMu.RLock()
-	if rs.sess.State == StateEnded {
+	if rs.sess.State.IsTerminal() {
 		rs.sessMu.RUnlock()
 		return nil, nil, ErrAlreadyEnded
 	}
@@ -475,9 +667,9 @@ func (m *Manager) Shutdown(ctx context.Context) error {
 	for _, rs := range rss {
 		rs.sessMu.RLock()
 		pid := rs.sess.PID
-		ended := rs.sess.State == StateEnded
+		terminal := rs.sess.State.IsTerminal()
 		rs.sessMu.RUnlock()
-		if !ended {
+		if !terminal {
 			_ = syscall.Kill(pid, syscall.SIGTERM)
 		}
 	}

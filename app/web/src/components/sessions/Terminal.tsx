@@ -171,7 +171,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
 
   return (
     <div className="h-full w-full bg-background">
-      <div ref={containerRef} className="h-full w-full p-2" />
+      <div ref={containerRef} className="h-full w-full p-3" />
     </div>
   )
 })

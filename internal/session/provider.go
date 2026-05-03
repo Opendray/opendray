@@ -32,3 +32,27 @@ type PrepareOutput struct {
 type ProviderResolver interface {
 	Resolve(ctx context.Context, id string) (ProviderInfo, error)
 }
+
+// ── Account selection (multi-account providers like claude) ────────
+
+type accountIDCtxKey struct{}
+
+// WithAccountID attaches the spawn-time account selection to ctx so
+// the ProviderResolver can look up the right credential without
+// adding a parameter to Resolve(). Empty id is a no-op (resolver
+// uses the provider's default).
+func WithAccountID(ctx context.Context, id string) context.Context {
+	if id == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, accountIDCtxKey{}, id)
+}
+
+// AccountID retrieves the account selection set by WithAccountID, or
+// "" if none.
+func AccountID(ctx context.Context) string {
+	if v, ok := ctx.Value(accountIDCtxKey{}).(string); ok {
+		return v
+	}
+	return ""
+}

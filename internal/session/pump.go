@@ -54,12 +54,12 @@ func (m *Manager) idleWatcher(rs *runningSession) {
 				continue
 			}
 			rs.sessMu.Lock()
-			ended := rs.sess.State == StateEnded
-			if !ended {
+			terminal := rs.sess.State.IsTerminal()
+			if !terminal {
 				rs.sess.State = StateIdle
 			}
 			rs.sessMu.Unlock()
-			if ended {
+			if terminal {
 				return
 			}
 			m.bus.Publish(eventbus.Event{
@@ -98,16 +98,24 @@ func (m *Manager) waitExit(rs *runningSession) {
 	}
 
 	rs.endOnce.Do(func() {
+		// Distinguish user-initiated stops (Manager.Stop set
+		// stopRequested) from spontaneous exits. The DB row
+		// persists either way so the user can Restart.
+		state := StateEnded
+		if m.consumeStopRequest(rs.sess.ID) {
+			state = StateStopped
+		}
+
 		dbCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		if err := m.store.MarkEnded(dbCtx, rs.sess.ID, exitCode); err != nil {
-			m.log.Error("mark session ended", "session", rs.sess.ID, "err", err)
+		if err := m.store.MarkTerminal(dbCtx, rs.sess.ID, state, exitCode); err != nil {
+			m.log.Error("mark session terminal", "session", rs.sess.ID, "err", err)
 		}
 
 		now := time.Now().UTC()
 		ec := exitCode
 		rs.sessMu.Lock()
-		rs.sess.State = StateEnded
+		rs.sess.State = state
 		rs.sess.EndedAt = &now
 		rs.sess.ExitCode = &ec
 		rs.sessMu.Unlock()
@@ -119,12 +127,25 @@ func (m *Manager) waitExit(rs *runningSession) {
 		}
 		close(rs.endedCh)
 
+		// Drop from the live map so a subsequent Start() can
+		// install a fresh runningSession under the same id.
+		m.mu.Lock()
+		if cur, ok := m.sessions[rs.sess.ID]; ok && cur == rs {
+			delete(m.sessions, rs.sess.ID)
+		}
+		m.mu.Unlock()
+
+		topic := "session.ended"
+		if state == StateStopped {
+			topic = "session.stopped"
+		}
 		m.bus.Publish(eventbus.Event{
-			Topic: "session.ended",
+			Topic: topic,
 			Data: map[string]any{
 				"session_id": rs.sess.ID,
 				"exit_code":  exitCode,
 				"ended_at":   now,
+				"state":      string(state),
 			},
 		})
 	})

@@ -12,6 +12,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -20,9 +23,19 @@ import (
 	"github.com/opendray/opendray-v2/internal/auth"
 	"github.com/opendray/opendray-v2/internal/catalog"
 	"github.com/opendray/opendray-v2/internal/channel"
+	"github.com/opendray/opendray-v2/internal/cliacct"
 	_ "github.com/opendray/opendray-v2/internal/channel/telegram" // register kind=telegram
 	"github.com/opendray/opendray-v2/internal/config"
 	"github.com/opendray/opendray-v2/internal/eventbus"
+	fsapi "github.com/opendray/opendray-v2/internal/fs"
+	gitapi "github.com/opendray/opendray-v2/internal/git"
+	githost "github.com/opendray/opendray-v2/internal/githost"
+	customtask "github.com/opendray/opendray-v2/internal/customtask"
+	mcpapi "github.com/opendray/opendray-v2/internal/mcp"
+	notesapi "github.com/opendray/opendray-v2/internal/notes"
+	searchapi "github.com/opendray/opendray-v2/internal/search"
+	"github.com/opendray/opendray-v2/internal/skills"
+	vaultgit "github.com/opendray/opendray-v2/internal/vaultgit"
 	"github.com/opendray/opendray-v2/internal/gateway"
 	"github.com/opendray/opendray-v2/internal/integration"
 	"github.com/opendray/opendray-v2/internal/session"
@@ -31,16 +44,18 @@ import (
 )
 
 type App struct {
-	cfg          config.Config
-	log          *slog.Logger
-	store        *store.Store
-	bus          *eventbus.Hub
-	sessions     *session.Manager
-	channels     *channel.Hub
-	integrations *integration.Service
-	healthCheck  *integration.HealthChecker
-	audit        *audit.Sink
-	server       *http.Server
+	cfg             config.Config
+	log             *slog.Logger
+	store           *store.Store
+	bus             *eventbus.Hub
+	sessions        *session.Manager
+	channels        *channel.Hub
+	integrations    *integration.Service
+	healthCheck     *integration.HealthChecker
+	audit           *audit.Sink
+	intgrCallLogger *integration.CallLogger
+	vaultSync       *vaultgit.Syncer
+	server          *http.Server
 }
 
 // New wires the runtime dependencies but does not start any goroutines.
@@ -68,6 +83,36 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}
 	catalogHandlers := catalog.NewHandlers(cat, log)
 
+	cliacctSvc := cliacct.NewService(st.Pool(), bus, log)
+	cliacctHandlers := cliacct.NewHandlers(cliacctSvc, log)
+
+	// Vault + skills are needed by the SessionProvider so spawn-time
+	// injection has them available. Constructed here (before the
+	// session manager) so the manager's first Resolve call sees them.
+	notesRoot, skillsRoot, gitRoot := resolveVaultPaths(cfg.Vault)
+	vault, err := notesapi.New(notesRoot, notesapi.Options{
+		PersonalPrefix: cfg.Vault.PersonalPrefix,
+		ProjectsPrefix: cfg.Vault.ProjectsPrefix,
+	})
+	if err != nil {
+		st.Close()
+		return nil, fmt.Errorf("init notes vault: %w", err)
+	}
+	log.Info("notes vault ready", "root", vault.Root())
+	notesHandlers := notesapi.NewHandlers(vault, log)
+	skillsLoader := skills.NewLoader(skillsRoot)
+	if list, _ := skillsLoader.List(); len(list) > 0 {
+		log.Info("agent skills loaded", "count", len(list),
+			"vault", skillsLoader.VaultRoot())
+	}
+
+	mcpRoot, secretsFile := resolveMCPPaths(cfg.MCP, notesRoot, skillsRoot)
+	mcpLoader := mcpapi.NewLoader(mcpRoot)
+	if list, _ := mcpLoader.List(); len(list) > 0 {
+		log.Info("mcp registry loaded", "count", len(list),
+			"vault", mcpLoader.VaultRoot(), "secrets", secretsFile)
+	}
+
 	var sessionOpts []session.ManagerOption
 	if d := cfg.Session.Threshold(); d > 0 {
 		sessionOpts = append(sessionOpts, session.WithIdleThreshold(d))
@@ -78,10 +123,16 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	sessionMgr := session.NewManager(
 		st.Pool(),
 		bus,
-		catalog.NewSessionProvider(cat),
+		catalog.NewSessionProvider(cat, cliacctSvc, skillsLoader, mcpLoader, secretsFile, log),
 		log,
 		sessionOpts...,
 	)
+	// Best-effort reconcile of leftover rows from a prior gateway
+	// process — their PTYs are gone, so flip them to 'ended' so the
+	// web UI can stop the WS reconnect loop and show EndedSessionView.
+	if err := sessionMgr.ReconcileStartup(ctx); err != nil {
+		log.Warn("session reconcile on startup failed", "err", err)
+	}
 	sessionHandlers := session.NewHandlers(sessionMgr, log)
 
 	channelHub := channel.NewHub(st.Pool(), bus, log)
@@ -89,11 +140,36 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 
 	intgrSvc := integration.NewService(st.Pool(), bus, log)
 	intgrHandlers := integration.NewHandlers(intgrSvc, log)
-	proxyHandlers := integration.NewProxyHandlers(intgrSvc, log)
+	intgrCallLogger := integration.NewCallLogger(st.Pool(), log)
+	intgrCallLogHandlers := integration.NewCallLogHandlers(intgrCallLogger, log)
+	proxyHandlers := integration.NewProxyHandlers(intgrSvc, intgrCallLogger, log)
 	eventsHandler := integration.NewEventsHandler(bus, log)
 	healthCheck := integration.NewHealthChecker(intgrSvc, bus, log)
 
 	auditSink := audit.NewSink(st.Pool(), bus, log)
+	auditSvc := audit.NewService(st.Pool())
+	auditHandlers := audit.NewHandlers(auditSvc, log)
+	fsHandlers := fsapi.NewHandlers(log)
+	gitHandlers := gitapi.NewHandlers(log)
+	gitHostSvc := githost.NewService(st.Pool(), log)
+	gitHostHandlers := githost.NewHandlers(gitHostSvc, log)
+	customTaskSvc := customtask.NewService(st.Pool(), log)
+	customTaskHandlers := customtask.NewHandlers(customTaskSvc, log)
+	searchHandlers := searchapi.NewHandlers(log)
+	skillsHandlers := skills.NewHandlers(skillsLoader, log)
+	mcpHandlers := mcpapi.NewHandlers(mcpLoader, secretsFile, log)
+	// Vault git ops are scoped to whatever the user told us is the
+	// repo root (defaults: notes root if user pinned `notes` directly,
+	// otherwise the parent that contains both notes/ and skills/).
+	// The githost service is passed so private-repo HTTPS push/pull
+	// picks up tokens stored in Plugins → Git hosts.
+	vaultGitHandlers, err := vaultgit.NewHandlers(gitRoot, gitHostSvc, log)
+	if err != nil {
+		st.Close()
+		return nil, fmt.Errorf("init vault git handlers: %w", err)
+	}
+	log.Info("vault git ready", "root", gitRoot)
+	vaultSyncer := vaultgit.NewSyncer(st.Pool(), bus, vaultGitHandlers, log)
 
 	gw := gateway.NewServer(gateway.Deps{
 		Logger:    log,
@@ -109,17 +185,34 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				r.Use(authSvc.Middleware)
 				intgrHandlers.MountAdmin(r)
 				proxyHandlers.Mount(r)
+				fsHandlers.Mount(r)
+				gitHandlers.Mount(r)
+				gitHostHandlers.Mount(r)
+				customTaskHandlers.Mount(r)
+				searchHandlers.Mount(r)
+				notesHandlers.Mount(r)
+				skillsHandlers.Mount(r)
+				mcpHandlers.Mount(r)
+				vaultGitHandlers.Mount(r)
+				vaultSyncer.Mount(r)
+				auditHandlers.Mount(r)
+				intgrCallLogHandlers.Mount(r)
 			})
 
 			// Dual-auth (admin OR integration API key): all business
 			// endpoints. ADR 0006 §1 + ADR 0009 (events WS extended
 			// to admin so the web Activity viewer rides the same
-			// admin token).
+			// admin token). The integration call logger middleware
+			// runs after auth so it can attribute requests to the
+			// integration principal (admin requests are skipped
+			// inside the middleware).
 			r.Group(func(r chi.Router) {
 				r.Use(integration.CombinedMiddleware(authSvc, intgrSvc))
+				r.Use(intgrCallLogger.Middleware)
 				authHandlers.MountProtected(r)
 				sessionHandlers.Mount(r)
 				catalogHandlers.Mount(r)
+				cliacctHandlers.Mount(r)
 				channelHandlers.Mount(r)
 				r.Get("/integrations/_events", eventsHandler.Serve)
 			})
@@ -133,16 +226,18 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}
 
 	return &App{
-		cfg:          cfg,
-		log:          log,
-		store:        st,
-		bus:          bus,
-		sessions:     sessionMgr,
-		channels:     channelHub,
-		integrations: intgrSvc,
-		healthCheck:  healthCheck,
-		audit:        auditSink,
-		server:       srv,
+		cfg:             cfg,
+		log:             log,
+		store:           st,
+		bus:             bus,
+		sessions:        sessionMgr,
+		channels:        channelHub,
+		integrations:    intgrSvc,
+		healthCheck:     healthCheck,
+		audit:           auditSink,
+		intgrCallLogger: intgrCallLogger,
+		vaultSync:       vaultSyncer,
+		server:          srv,
 	}, nil
 }
 
@@ -177,6 +272,12 @@ func (a *App) Run(ctx context.Context) error {
 		close(auditDone)
 	}()
 
+	vaultSyncDone := make(chan struct{})
+	go func() {
+		a.vaultSync.Run(ctx)
+		close(vaultSyncDone)
+	}()
+
 	errCh := make(chan error, 1)
 	go func() {
 		if err := a.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -205,6 +306,10 @@ func (a *App) Run(ctx context.Context) error {
 	if err := a.channels.Shutdown(shutdownCtx); err != nil {
 		a.log.Error("channel shutdown", "err", err)
 	}
+	// Drain the call log queue after the server stops accepting new
+	// requests. Bounded by the queue size + per-row write timeout
+	// (5s), so this returns quickly.
+	a.intgrCallLogger.Close()
 
 	select {
 	case <-healthDone:
@@ -216,6 +321,12 @@ func (a *App) Run(ctx context.Context) error {
 	case <-auditDone:
 	case <-time.After(5 * time.Second):
 		a.log.Warn("audit shutdown timed out")
+	}
+
+	select {
+	case <-vaultSyncDone:
+	case <-time.After(5 * time.Second):
+		a.log.Warn("vault auto-sync shutdown timed out")
 	}
 
 	a.bus.Close()
@@ -241,4 +352,124 @@ func (a *App) Close() {
 	if a.store != nil {
 		a.store.Close()
 	}
+}
+
+// parentOf returns the parent directory of an absolute path. Used to
+// derive the vault base from <vault>/notes — skills live next to it
+// at <vault>/skills, so both share one git-able root.
+func parentOf(p string) string {
+	for i := len(p) - 1; i >= 0; i-- {
+		if p[i] == '/' {
+			return p[:i]
+		}
+	}
+	return p
+}
+
+// resolveVaultPaths derives the three vault-related paths (notes root,
+// skills root, git working tree) from VaultConfig. Each can be set
+// explicitly; otherwise we fall back to the legacy layout under the
+// shared root. Returns absolute paths suitable for filesystem ops.
+//
+// The defaults preserve opendray's original `<root>/notes` +
+// `<root>/skills` layout. Users coming in with an existing Obsidian
+// vault can pin `vault.notes = "~/Documents/MyVault"` (or similar)
+// and opendray's notes API will read straight from that directory.
+func resolveVaultPaths(c config.VaultConfig) (notes, skills, git string) {
+	root := c.Root
+	if root == "" {
+		root = "~/.opendray/vault"
+	}
+	root = expandPath(root)
+
+	notes = c.Notes
+	if notes == "" {
+		notes = filepath.Join(root, "notes")
+	} else {
+		notes = expandPath(notes)
+	}
+
+	skills = c.Skills
+	if skills == "" {
+		skills = filepath.Join(root, "skills")
+	} else {
+		skills = expandPath(skills)
+	}
+
+	git = c.GitRoot
+	if git == "" {
+		// Pick the most natural git working tree: if the user pinned a
+		// custom notes path, that IS their vault repo (Obsidian-style);
+		// otherwise the legacy combined root holds both notes + skills
+		// under one repo.
+		if c.Notes != "" {
+			git = notes
+		} else {
+			git = root
+		}
+	} else {
+		git = expandPath(git)
+	}
+	return notes, skills, git
+}
+
+// resolveMCPPaths picks the registry root + secrets file with the
+// same precedence story as the vault paths above. Defaults:
+//
+//	root         = <vault root>/mcp        (next to notes/, skills/)
+//	secrets_file = ~/.opendray/secrets.env (intentionally OUTSIDE the
+//	               vault so a `git add .` in vault never picks it up)
+//
+// notesRoot / skillsRoot are passed only to derive `<vault root>` —
+// we use parentOf(notes) which is the same dir all the other vault
+// children live under in the default layout.
+func resolveMCPPaths(c config.MCPConfig, notesRoot, skillsRoot string) (root, secrets string) {
+	root = c.Root
+	if root == "" {
+		// Pick the same parent the vault siblings share. notes/ and
+		// skills/ are always under <vault root>; using parentOf(notes)
+		// works regardless of which the user pinned explicitly.
+		base := parentOf(notesRoot)
+		if base == "" || base == "/" {
+			base = parentOf(skillsRoot)
+		}
+		if base == "" || base == "/" {
+			base = expandPath("~/.opendray/vault")
+		}
+		root = filepath.Join(base, "mcp")
+	} else {
+		root = expandPath(root)
+	}
+
+	secrets = c.SecretsFile
+	if secrets == "" {
+		secrets = expandPath("~/.opendray/secrets.env")
+	} else {
+		secrets = expandPath(secrets)
+	}
+	return root, secrets
+}
+
+// expandPath resolves ~/ prefixes against the calling user's home
+// dir, then makes the path absolute. Mirrors what notes.expand does
+// internally — kept here so app-level path resolution doesn't reach
+// into the notes package's privates.
+func expandPath(p string) string {
+	p = strings.TrimSpace(p)
+	if p == "" {
+		return p
+	}
+	if p == "~" || strings.HasPrefix(p, "~/") {
+		if home, err := os.UserHomeDir(); err == nil {
+			if p == "~" {
+				p = home
+			} else {
+				p = filepath.Join(home, p[2:])
+			}
+		}
+	}
+	if abs, err := filepath.Abs(p); err == nil {
+		return abs
+	}
+	return p
 }

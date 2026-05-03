@@ -65,6 +65,16 @@
       "label_zh": "额外 CLI 参数",
       "type": "args",
       "group": "advanced"
+    },
+    {
+      "key": "skills_enabled",
+      "label": "Enable opendray skills",
+      "label_zh": "启用 opendray skills",
+      "type": "boolean",
+      "group": "advanced",
+      "default": false,
+      "description": "WARNING: enabling skills overrides CODEX_HOME to a per-session scratch dir. ChatGPT-OAuth login state in ~/.codex/ will not be visible inside the session — only safe for OPENAI_API_KEY env auth.",
+      "description_zh": "警告：启用后会把 CODEX_HOME 指向 per-session 临时目录，~/.codex/ 里的 ChatGPT-OAuth 登录将不可用 — 仅适用 OPENAI_API_KEY 环境变量认证的场景。"
     }
   ],
   "ui": {

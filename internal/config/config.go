@@ -18,6 +18,58 @@ type Config struct {
 	Admin    AdminConfig    `toml:"admin"`
 	Log      LogConfig      `toml:"log"`
 	Session  SessionConfig  `toml:"session"`
+	Vault    VaultConfig    `toml:"vault"`
+	MCP      MCPConfig      `toml:"mcp"`
+}
+
+// MCPConfig points at the MCP server registry directory and the
+// secrets file used to substitute ${KEY} placeholders at spawn time.
+//
+// Defaults (when unset, see resolveMCPPaths in package app):
+//
+//	root         = <vault.root>/mcp
+//	secrets_file = ~/.opendray/secrets.env  (intentionally OUTSIDE the
+//	               vault so it never git-syncs along with notes/skills)
+//
+// Override either via env (OPENDRAY_MCP_ROOT, OPENDRAY_MCP_SECRETS_FILE)
+// or by setting the field explicitly.
+type MCPConfig struct {
+	Root        string `toml:"root"`
+	SecretsFile string `toml:"secrets_file"`
+}
+
+// VaultConfig points at the on-disk roots that hold notes + skills.
+// The whole tree is meant to be a self-contained, git-versionable
+// directory the user owns — no DB lock-in.
+//
+// Default layout when only `root` is set:
+//
+//	<root>/notes/           ← opendray-managed notes
+//	<root>/skills/          ← agent skills (built-in overlays)
+//
+// When `notes` is set explicitly it OVERRIDES the `<root>/notes`
+// computation, so users can point opendray at an existing Obsidian
+// vault (or any flat folder of .md files) without restructuring.
+// `skills` works the same way independently.
+//
+// `git_root` controls which directory the Vault Sync feature operates
+// on. Defaults to whichever is the most natural git working tree:
+//
+//	if `notes` is set explicitly → git_root defaults to `notes`
+//	otherwise                    → git_root defaults to `root`
+type VaultConfig struct {
+	Root    string `toml:"root"`     // e.g. "~/.opendray/vault"
+	Notes   string `toml:"notes"`    // override notes root (default <root>/notes)
+	Skills  string `toml:"skills"`   // override skills root (default <root>/skills)
+	GitRoot string `toml:"git_root"` // override repo root for vault sync
+
+	// Default prefixes for auto-derived note paths. Useful when the
+	// user pulled an existing Obsidian vault with capital-first
+	// folder names (Projects/, Personal/) instead of opendray's
+	// default lowercase. Per-cwd overrides live in an in-vault JSON
+	// file managed via the API; these are just the templates.
+	PersonalPrefix string `toml:"personal_prefix"` // default "personal"
+	ProjectsPrefix string `toml:"projects_prefix"` // default "projects"
 }
 
 type DatabaseConfig struct {
@@ -111,6 +163,24 @@ func applyEnv(cfg *Config) {
 	}
 	if v := os.Getenv("OPENDRAY_SESSION_IDLE_INTERVAL"); v != "" {
 		cfg.Session.IdleInterval = v
+	}
+	if v := os.Getenv("OPENDRAY_VAULT_ROOT"); v != "" {
+		cfg.Vault.Root = v
+	}
+	if v := os.Getenv("OPENDRAY_VAULT_NOTES"); v != "" {
+		cfg.Vault.Notes = v
+	}
+	if v := os.Getenv("OPENDRAY_VAULT_SKILLS"); v != "" {
+		cfg.Vault.Skills = v
+	}
+	if v := os.Getenv("OPENDRAY_VAULT_GIT_ROOT"); v != "" {
+		cfg.Vault.GitRoot = v
+	}
+	if v := os.Getenv("OPENDRAY_MCP_ROOT"); v != "" {
+		cfg.MCP.Root = v
+	}
+	if v := os.Getenv("OPENDRAY_MCP_SECRETS_FILE"); v != "" {
+		cfg.MCP.SecretsFile = v
 	}
 }
 

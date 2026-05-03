@@ -18,14 +18,16 @@ import (
 // real PTYs.
 type Service interface {
 	Create(ctx context.Context, req CreateRequest) (Session, error)
+	Start(ctx context.Context, id string) (Session, error)
 	Get(ctx context.Context, id string) (Session, error)
 	List(ctx context.Context) ([]Session, error)
-	Terminate(ctx context.Context, id string) error
-	Delete(ctx context.Context, id string) error
+	Stop(ctx context.Context, id string) error
+	Remove(ctx context.Context, id string) error
 	Input(ctx context.Context, id string, data []byte) error
 	Resize(ctx context.Context, id string, cols, rows uint16) error
 	Subscribe(ctx context.Context, id string) (<-chan []byte, func(), error)
 	Buffer(ctx context.Context, id string, since int64) (Replay, error)
+	SwitchClaudeAccount(ctx context.Context, id, accountID string) (Session, error)
 }
 
 type Handlers struct {
@@ -51,17 +53,24 @@ func NewHandlers(svc Service, log *slog.Logger) *Handlers {
 
 // Mount adds the session routes to the given chi.Router. Caller mounts
 // this under /api/v1.
+//
+// Lifecycle: POST / creates+spawns; POST /{id}/start re-spawns a
+// terminal row; POST /{id}/stop terminates the process but keeps the
+// row; DELETE /{id} terminates and removes.
 func (h *Handlers) Mount(r chi.Router) {
 	r.Route("/sessions", func(r chi.Router) {
 		r.Get("/", h.list)
 		r.Post("/", h.create)
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", h.get)
-			r.Delete("/", h.terminate)
+			r.Delete("/", h.remove)
+			r.Post("/start", h.start)
+			r.Post("/stop", h.stop)
 			r.Post("/input", h.input)
 			r.Post("/resize", h.resize)
 			r.Get("/buffer", h.buffer)
 			r.Get("/stream", h.stream)
+			r.Patch("/claude-account", h.switchClaudeAccount)
 		})
 	})
 }
@@ -102,20 +111,43 @@ func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, sess)
 }
 
-// terminate handles DELETE /sessions/{id}. The semantics are
-// "remove this row entirely" — running sessions are SIGTERMed first,
-// then the DB row is dropped. Already-ended rows are just deleted.
-func (h *Handlers) terminate(w http.ResponseWriter, r *http.Request) {
+// remove handles DELETE /sessions/{id}. Running sessions are SIGTERMed
+// first; then the DB row is dropped.
+func (h *Handlers) remove(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	if err := h.svc.Terminate(r.Context(), id); err != nil {
-		h.respondError(w, err)
-		return
-	}
-	if err := h.svc.Delete(r.Context(), id); err != nil {
+	if err := h.svc.Remove(r.Context(), id); err != nil {
 		h.respondError(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// stop handles POST /sessions/{id}/stop. Process is terminated; the
+// DB row remains so the user can Start it again.
+func (h *Handlers) stop(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if err := h.svc.Stop(r.Context(), id); err != nil {
+		h.respondError(w, err)
+		return
+	}
+	sess, err := h.svc.Get(r.Context(), id)
+	if err != nil {
+		h.respondError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, sess)
+}
+
+// start handles POST /sessions/{id}/start. Re-spawns a previously
+// stopped or ended session under the original provider/cwd/args/account.
+func (h *Handlers) start(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	sess, err := h.svc.Start(r.Context(), id)
+	if err != nil {
+		h.respondError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, sess)
 }
 
 func (h *Handlers) input(w http.ResponseWriter, r *http.Request) {
@@ -227,11 +259,32 @@ func (h *Handlers) stream(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// switchClaudeAccount handles PATCH /sessions/{id}/claude-account.
+// Body: {"account_id": "<id>"} ("" clears the binding). The session
+// process is terminated and respawned in-place under the new credential;
+// the row id (and therefore the UI tab) survives.
+func (h *Handlers) switchClaudeAccount(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var req SwitchAccountRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	sess, err := h.svc.SwitchClaudeAccount(r.Context(), id, req.AccountID)
+	if err != nil {
+		h.respondError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, sess)
+}
+
 func (h *Handlers) respondError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, ErrNotFound):
 		writeError(w, http.StatusNotFound, err)
 	case errors.Is(err, ErrUnknownProvider):
+		writeError(w, http.StatusBadRequest, err)
+	case errors.Is(err, ErrAccountSwitchUnsupported):
 		writeError(w, http.StatusBadRequest, err)
 	case errors.Is(err, ErrProviderUnavailable):
 		writeError(w, http.StatusConflict, err)

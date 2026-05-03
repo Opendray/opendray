@@ -2,9 +2,12 @@
 //
 // Subcommands:
 //
-//	opendray serve [-config FILE]   start the gateway
-//	opendray migrate [-config FILE] apply pending DB migrations and exit
-//	opendray version                print build info and exit
+//	opendray serve   [-config FILE]   start the gateway
+//	opendray migrate [-config FILE]   apply pending DB migrations and exit
+//	opendray notes   <subcommand> ... operate on the file-system notes vault (no gateway needed)
+//	opendray skill   <subcommand> ... inspect / load agent skills (no gateway needed)
+//	opendray mcp     <subcommand> ... inspect MCP server registry (no gateway needed)
+//	opendray version                  print build info and exit
 package main
 
 import (
@@ -35,6 +38,12 @@ func main() {
 			defer a.Close()
 			return a.Migrate(ctx)
 		}))
+	case "notes":
+		os.Exit(runNotes(args))
+	case "skill":
+		os.Exit(runSkill(args))
+	case "mcp":
+		os.Exit(runMcp(args))
 	case "version":
 		fmt.Printf("opendray %s (%s, %s)\n", version.Version, version.Commit, version.Date)
 	case "-h", "--help", "help":
@@ -78,5 +87,8 @@ func usage() {
 usage:
   opendray serve   [-config FILE]
   opendray migrate [-config FILE]
+  opendray notes   <subcommand> [args]   (run "opendray notes --help" for details)
+  opendray skill   <subcommand> [args]   (run "opendray skill --help" for details)
+  opendray mcp     <subcommand> [args]   (run "opendray mcp --help" for details)
   opendray version`)
 }

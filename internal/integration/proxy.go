@@ -9,21 +9,30 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 // ProxyHandlers serves /api/v1/proxy/{prefix}/* — admin-only.
 type ProxyHandlers struct {
 	svc *Service
+	cl  *CallLogger
 	log *slog.Logger
 }
 
-func NewProxyHandlers(svc *Service, log *slog.Logger) *ProxyHandlers {
+// NewProxyHandlers — cl may be nil (call logging disabled), in which
+// case proxied calls won't be recorded. The proxy still serves traffic.
+func NewProxyHandlers(svc *Service, cl *CallLogger, log *slog.Logger) *ProxyHandlers {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &ProxyHandlers{svc: svc, log: log.With("component", "integration.proxy")}
+	return &ProxyHandlers{
+		svc: svc,
+		cl:  cl,
+		log: log.With("component", "integration.proxy"),
+	}
 }
 
 // Mount registers the proxy routes. Caller wraps with admin middleware.
@@ -62,18 +71,20 @@ func (h *ProxyHandlers) serve(w http.ResponseWriter, r *http.Request) {
 	intgrID := intgr.ID
 	logger := h.log
 
+	// Compute the upstream path once so both Director and the call
+	// logger see the same value.
+	upstreamPath := strings.TrimPrefix(r.URL.Path, stripPrefix)
+	if upstreamPath == "" {
+		upstreamPath = "/"
+	} else if !strings.HasPrefix(upstreamPath, "/") {
+		upstreamPath = "/" + upstreamPath
+	}
+
 	proxy := httputil.NewSingleHostReverseProxy(target)
 	origDirector := proxy.Director
 	proxy.Director = func(pr *http.Request) {
 		origDirector(pr)
-		// Rewrite the upstream path: drop our /api/v1/proxy/{prefix}.
-		path := strings.TrimPrefix(pr.URL.Path, stripPrefix)
-		if path == "" {
-			path = "/"
-		} else if !strings.HasPrefix(path, "/") {
-			path = "/" + path
-		}
-		pr.URL.Path = path
+		pr.URL.Path = upstreamPath
 		pr.URL.RawPath = ""
 
 		// opendray-supplied headers; strip caller's bearer.
@@ -91,5 +102,23 @@ func (h *ProxyHandlers) serve(w http.ResponseWriter, r *http.Request) {
 		logger.Warn("proxy error", "id", intgrID, "err", err)
 		writeError(w, http.StatusBadGateway, fmt.Errorf("upstream: %w", err))
 	}
-	proxy.ServeHTTP(w, r)
+
+	// Wrap the writer so we can capture status + bytes for the audit
+	// row. Without this we'd record status=0 for every call.
+	start := time.Now()
+	ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+	proxy.ServeHTTP(ww, r)
+
+	if h.cl != nil {
+		h.cl.LogOutbound(
+			r.Context(),
+			intgrID,
+			r.Method,
+			upstreamPath,
+			ww.Status(),
+			int(time.Since(start).Milliseconds()),
+			int64(ww.BytesWritten()),
+			middleware.GetReqID(r.Context()),
+		)
+	}
 }

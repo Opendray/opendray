@@ -13,10 +13,12 @@ import (
 )
 
 type fakeSvc struct {
-	sessions     map[string]Session
-	createErr    error
-	terminateErr error
-	subCh        chan []byte
+	sessions  map[string]Session
+	createErr error
+	stopErr   error
+	startErr  error
+	switchErr error
+	subCh     chan []byte
 }
 
 func newFakeSvc() *fakeSvc { return &fakeSvc{sessions: map[string]Session{}} }
@@ -49,7 +51,10 @@ func (f *fakeSvc) List(_ context.Context) ([]Session, error) {
 	return out, nil
 }
 
-func (f *fakeSvc) Delete(_ context.Context, id string) error {
+func (f *fakeSvc) Remove(_ context.Context, id string) error {
+	if f.stopErr != nil {
+		return f.stopErr
+	}
 	if _, ok := f.sessions[id]; !ok {
 		return ErrNotFound
 	}
@@ -57,20 +62,30 @@ func (f *fakeSvc) Delete(_ context.Context, id string) error {
 	return nil
 }
 
-func (f *fakeSvc) Terminate(_ context.Context, id string) error {
-	if f.terminateErr != nil {
-		return f.terminateErr
+func (f *fakeSvc) Stop(_ context.Context, id string) error {
+	if f.stopErr != nil {
+		return f.stopErr
 	}
 	if _, ok := f.sessions[id]; !ok {
 		return ErrNotFound
 	}
-	// Real Terminate stops the process; Delete does the row removal.
-	// Mark this row as ended so the Service.Delete path that follows
-	// finds it.
 	s := f.sessions[id]
-	s.State = StateEnded
+	s.State = StateStopped
 	f.sessions[id] = s
 	return nil
+}
+
+func (f *fakeSvc) Start(_ context.Context, id string) (Session, error) {
+	if f.startErr != nil {
+		return Session{}, f.startErr
+	}
+	s, ok := f.sessions[id]
+	if !ok {
+		return Session{}, ErrNotFound
+	}
+	s.State = StateRunning
+	f.sessions[id] = s
+	return s, nil
 }
 
 func (f *fakeSvc) Input(_ context.Context, id string, _ []byte) error {
@@ -95,6 +110,23 @@ func (f *fakeSvc) Subscribe(_ context.Context, id string) (<-chan []byte, func()
 		f.subCh = make(chan []byte)
 	}
 	return f.subCh, func() {}, nil
+}
+
+func (f *fakeSvc) SwitchClaudeAccount(_ context.Context, id, accountID string) (Session, error) {
+	if f.switchErr != nil {
+		return Session{}, f.switchErr
+	}
+	s, ok := f.sessions[id]
+	if !ok {
+		return Session{}, ErrNotFound
+	}
+	if s.ProviderID != "claude" {
+		return Session{}, ErrAccountSwitchUnsupported
+	}
+	s.ClaudeAccountID = accountID
+	s.State = StateRunning
+	f.sessions[id] = s
+	return s, nil
 }
 
 func (f *fakeSvc) Buffer(_ context.Context, id string, since int64) (Replay, error) {
@@ -197,14 +229,36 @@ func TestTerminate_NoContent(t *testing.T) {
 	}
 }
 
-func TestTerminate_AlreadyEnded(t *testing.T) {
+func TestRemove_AlreadyTerminal(t *testing.T) {
 	svc := newFakeSvc()
 	svc.sessions["s1"] = Session{ID: "s1"}
-	svc.terminateErr = ErrAlreadyEnded
+	svc.stopErr = ErrAlreadyEnded
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodDelete, "/sessions/s1", nil)
 	newRouter(svc).ServeHTTP(rr, req)
 	if rr.Code != http.StatusConflict {
+		t.Fatalf("status=%d", rr.Code)
+	}
+}
+
+func TestStart_OK(t *testing.T) {
+	svc := newFakeSvc()
+	svc.sessions["s1"] = Session{ID: "s1", State: StateStopped}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/sessions/s1/start", nil)
+	newRouter(svc).ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
+}
+
+func TestStop_OK(t *testing.T) {
+	svc := newFakeSvc()
+	svc.sessions["s1"] = Session{ID: "s1", State: StateRunning}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/sessions/s1/stop", nil)
+	newRouter(svc).ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
 }
@@ -275,6 +329,74 @@ func TestBuffer_InvalidSince(t *testing.T) {
 	svc.sessions["s1"] = Session{ID: "s1"}
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/sessions/s1/buffer?since=-3", nil)
+	newRouter(svc).ServeHTTP(rr, req)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("status=%d", rr.Code)
+	}
+}
+
+func TestSwitchClaudeAccount_OK(t *testing.T) {
+	svc := newFakeSvc()
+	svc.sessions["s1"] = Session{ID: "s1", ProviderID: "claude", State: StateRunning}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPatch, "/sessions/s1/claude-account",
+		bytes.NewBufferString(`{"account_id":"cla_new"}`))
+	newRouter(svc).ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d body=%s", rr.Code, rr.Body)
+	}
+	var s Session
+	if err := json.Unmarshal(rr.Body.Bytes(), &s); err != nil {
+		t.Fatal(err)
+	}
+	if s.ClaudeAccountID != "cla_new" {
+		t.Errorf("account_id=%q", s.ClaudeAccountID)
+	}
+}
+
+func TestSwitchClaudeAccount_ClearBinding(t *testing.T) {
+	svc := newFakeSvc()
+	svc.sessions["s1"] = Session{
+		ID: "s1", ProviderID: "claude", ClaudeAccountID: "cla_old", State: StateRunning,
+	}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPatch, "/sessions/s1/claude-account",
+		bytes.NewBufferString(`{"account_id":""}`))
+	newRouter(svc).ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status=%d", rr.Code)
+	}
+}
+
+func TestSwitchClaudeAccount_NotClaude(t *testing.T) {
+	svc := newFakeSvc()
+	svc.sessions["s1"] = Session{ID: "s1", ProviderID: "shell", State: StateRunning}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPatch, "/sessions/s1/claude-account",
+		bytes.NewBufferString(`{"account_id":"cla_x"}`))
+	newRouter(svc).ServeHTTP(rr, req)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("status=%d", rr.Code)
+	}
+}
+
+func TestSwitchClaudeAccount_NotFound(t *testing.T) {
+	svc := newFakeSvc()
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPatch, "/sessions/missing/claude-account",
+		bytes.NewBufferString(`{"account_id":"cla_x"}`))
+	newRouter(svc).ServeHTTP(rr, req)
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("status=%d", rr.Code)
+	}
+}
+
+func TestSwitchClaudeAccount_BadJSON(t *testing.T) {
+	svc := newFakeSvc()
+	svc.sessions["s1"] = Session{ID: "s1", ProviderID: "claude"}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPatch, "/sessions/s1/claude-account",
+		bytes.NewBufferString(`not json`))
 	newRouter(svc).ServeHTTP(rr, req)
 	if rr.Code != http.StatusBadRequest {
 		t.Fatalf("status=%d", rr.Code)

@@ -17,6 +17,14 @@ type sessionStore struct{ pool *pgxpool.Pool }
 
 func newStore(pool *pgxpool.Pool) *sessionStore { return &sessionStore{pool: pool} }
 
+const sessionSelect = `
+    SELECT id, COALESCE(name, ''), provider_id, cwd, args, state,
+           COALESCE(pid, 0),
+           COALESCE(claude_account_id, ''), COALESCE(claude_session_id, ''),
+           COALESCE(parent_session_id, ''),
+           started_at, ended_at, exit_code
+    FROM sessions`
+
 func (s *sessionStore) Insert(ctx context.Context, sess Session) error {
 	argsJSON, err := json.Marshal(sess.Args)
 	if err != nil {
@@ -26,10 +34,16 @@ func (s *sessionStore) Insert(ctx context.Context, sess Session) error {
 		argsJSON = []byte("[]")
 	}
 	_, err = s.pool.Exec(ctx, `
-        INSERT INTO sessions (id, name, provider_id, cwd, args, state, pid, started_at)
-        VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8)`,
+        INSERT INTO sessions
+            (id, name, provider_id, cwd, args, state, pid,
+             claude_account_id, claude_session_id, parent_session_id,
+             started_at)
+        VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9, $10, $11)`,
 		sess.ID, nullableString(sess.Name), sess.ProviderID, sess.Cwd,
-		argsJSON, string(sess.State), nullableInt(sess.PID), sess.StartedAt)
+		argsJSON, string(sess.State), nullableInt(sess.PID),
+		nullableString(sess.ClaudeAccountID), nullableString(sess.ClaudeSessionID),
+		nullableString(sess.ParentSessionID),
+		sess.StartedAt)
 	if err != nil {
 		return fmt.Errorf("insert session: %w", err)
 	}
@@ -37,18 +51,12 @@ func (s *sessionStore) Insert(ctx context.Context, sess Session) error {
 }
 
 func (s *sessionStore) Get(ctx context.Context, id string) (Session, error) {
-	row := s.pool.QueryRow(ctx, `
-        SELECT id, COALESCE(name, ''), provider_id, cwd, args, state,
-               COALESCE(pid, 0), started_at, ended_at, exit_code
-        FROM sessions WHERE id=$1`, id)
+	row := s.pool.QueryRow(ctx, sessionSelect+` WHERE id=$1`, id)
 	return scanSession(row)
 }
 
 func (s *sessionStore) List(ctx context.Context) ([]Session, error) {
-	rows, err := s.pool.Query(ctx, `
-        SELECT id, COALESCE(name, ''), provider_id, cwd, args, state,
-               COALESCE(pid, 0), started_at, ended_at, exit_code
-        FROM sessions ORDER BY started_at DESC`)
+	rows, err := s.pool.Query(ctx, sessionSelect+` ORDER BY started_at DESC`)
 	if err != nil {
 		return nil, fmt.Errorf("list sessions: %w", err)
 	}
@@ -64,21 +72,71 @@ func (s *sessionStore) List(ctx context.Context) ([]Session, error) {
 	return out, rows.Err()
 }
 
-// MarkEnded sets state=ended + ended_at + exit_code, but only if the row
-// is not already ended. Idempotent against repeat exit-detector wakeups.
-func (s *sessionStore) MarkEnded(ctx context.Context, id string, exitCode int) error {
+// MarkTerminal sets state + ended_at + exit_code, but only if the row
+// is not already terminal. Idempotent against repeat exit-detector
+// wakeups. Used for both 'stopped' (user-initiated) and 'ended'
+// (process exited on its own) transitions.
+func (s *sessionStore) MarkTerminal(ctx context.Context, id string, state State, exitCode int) error {
 	_, err := s.pool.Exec(ctx, `
         UPDATE sessions
-        SET state='ended', ended_at=NOW(), exit_code=$1
-        WHERE id=$2 AND state != 'ended'`, exitCode, id)
+        SET state=$1, ended_at=NOW(), exit_code=$2
+        WHERE id=$3 AND state NOT IN ('stopped', 'ended')`,
+		string(state), exitCode, id)
 	if err != nil {
-		return fmt.Errorf("mark ended: %w", err)
+		return fmt.Errorf("mark terminal: %w", err)
+	}
+	return nil
+}
+
+// Reactivate transitions a terminal row back into running with a fresh
+// PID and started_at. Used by Manager.Start.
+func (s *sessionStore) Reactivate(ctx context.Context, id string, pid int) error {
+	_, err := s.pool.Exec(ctx, `
+        UPDATE sessions
+        SET state='running', pid=$1, started_at=NOW(),
+            ended_at=NULL, exit_code=NULL
+        WHERE id=$2`, pid, id)
+	if err != nil {
+		return fmt.Errorf("reactivate session: %w", err)
+	}
+	return nil
+}
+
+// MarkAllRunningAsEnded flips every non-terminal session row to
+// 'ended' with exit_code=-1. Called once at gateway startup: a fresh
+// Manager has an empty in-memory map, so any row claiming to be
+// running/idle/pending is a leftover whose PTY exited with the old
+// gateway process. Without this, the web UI keeps trying to attach
+// WS streams to dead sessions and hangs on "reconnecting…" forever.
+func (s *sessionStore) MarkAllRunningAsEnded(ctx context.Context) (int64, error) {
+	res, err := s.pool.Exec(ctx, `
+        UPDATE sessions
+        SET state='ended', ended_at=NOW(), exit_code=-1
+        WHERE state IN ('pending', 'running', 'idle')`)
+	if err != nil {
+		return 0, fmt.Errorf("reconcile stale sessions: %w", err)
+	}
+	return res.RowsAffected(), nil
+}
+
+// UpdateClaudeAccount rebinds the session's claude_account_id without
+// touching state/pid/etc. Used by Manager.SwitchClaudeAccount after a
+// successful respawn under a new credential.
+func (s *sessionStore) UpdateClaudeAccount(ctx context.Context, id, accountID string) error {
+	res, err := s.pool.Exec(ctx, `
+        UPDATE sessions SET claude_account_id=$1 WHERE id=$2`,
+		nullableString(accountID), id)
+	if err != nil {
+		return fmt.Errorf("update claude account: %w", err)
+	}
+	if res.RowsAffected() == 0 {
+		return ErrNotFound
 	}
 	return nil
 }
 
 // Delete permanently removes the row. Caller must ensure the session
-// is no longer running (Manager.Terminate first).
+// is no longer running (Manager.Stop first).
 func (s *sessionStore) Delete(ctx context.Context, id string) error {
 	res, err := s.pool.Exec(ctx, `DELETE FROM sessions WHERE id=$1`, id)
 	if err != nil {
@@ -103,7 +161,9 @@ func scanSession(row rowScanner) (Session, error) {
 		stateStr string
 	)
 	err := row.Scan(&s.ID, &s.Name, &s.ProviderID, &s.Cwd, &argsJSON,
-		&stateStr, &s.PID, &s.StartedAt, &endedAt, &exitCode)
+		&stateStr, &s.PID, &s.ClaudeAccountID, &s.ClaudeSessionID,
+		&s.ParentSessionID,
+		&s.StartedAt, &endedAt, &exitCode)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Session{}, ErrNotFound
 	}

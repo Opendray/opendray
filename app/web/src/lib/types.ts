@@ -1,6 +1,17 @@
 // ── Sessions ────────────────────────────────────────────────
 
-export type SessionState = 'pending' | 'running' | 'idle' | 'ended'
+export type SessionState =
+  | 'pending'
+  | 'running'
+  | 'idle'
+  | 'stopped'
+  | 'ended'
+
+export const TERMINAL_SESSION_STATES: SessionState[] = ['stopped', 'ended']
+
+export function isTerminalSessionState(s: SessionState): boolean {
+  return s === 'stopped' || s === 'ended'
+}
 
 export interface Session {
   id: string
@@ -10,6 +21,10 @@ export interface Session {
   args: string[]
   state: SessionState
   pid?: number
+  claude_account_id?: string
+  claude_session_id?: string
+  /** Set when this session was spawned on behalf of another (e.g. a Task). */
+  parent_session_id?: string
   started_at: string
   ended_at?: string
   exit_code?: number
@@ -20,6 +35,42 @@ export interface CreateSessionRequest {
   cwd: string
   name?: string
   args?: string[]
+  claude_account_id?: string
+  parent_session_id?: string
+}
+
+// ── Claude accounts (OAuth-token-on-disk model, mirrors v1) ─
+
+export interface ClaudeAccount {
+  id: string
+  name: string
+  display_name: string
+  config_dir: string
+  token_path: string
+  description: string
+  enabled: boolean
+  token_filled: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateClaudeAccountRequest {
+  name: string
+  display_name?: string
+  config_dir?: string
+  token_path?: string
+  description?: string
+  enabled?: boolean
+  token?: string
+}
+
+export interface UpdateClaudeAccountRequest {
+  name?: string
+  display_name?: string
+  config_dir?: string
+  token_path?: string
+  description?: string
+  enabled?: boolean
 }
 
 // ── Catalog (providers) ─────────────────────────────────────

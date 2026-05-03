@@ -48,6 +48,17 @@ export default defineConfig(({ command }) => ({
         // further splits xterm.js into its own branch.
         manualChunks(id: string) {
           if (id.includes('node_modules/@xterm/')) return 'xterm'
+          if (id.includes('node_modules/highlight.js/')) return 'hljs'
+          if (
+            id.includes('node_modules/react-markdown/') ||
+            id.includes('node_modules/remark-') ||
+            id.includes('node_modules/rehype-') ||
+            id.includes('node_modules/micromark') ||
+            id.includes('node_modules/mdast-util') ||
+            id.includes('node_modules/unist-util')
+          ) {
+            return 'markdown'
+          }
           if (id.includes('node_modules/@tanstack/')) return 'tanstack'
           if (
             id.includes('node_modules/react/') ||

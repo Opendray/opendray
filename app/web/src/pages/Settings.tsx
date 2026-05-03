@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { Sun, Moon, Monitor, Check } from 'lucide-react'
+import { Sun, Moon, Monitor, Check, Type } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import { api } from '@/lib/api'
 import { useTheme, type ThemeMode } from '@/stores/theme'
 import { useAuth } from '@/stores/auth'
+import { useLayout } from '@/stores/layout'
 import { cn } from '@/lib/utils'
 
 interface HealthResponse {
@@ -31,9 +32,18 @@ const themeOptions: {
   },
 ]
 
+const fontScaleOptions: { scale: number; label: string }[] = [
+  { scale: 0.85, label: 'Compact' },
+  { scale: 1, label: 'Default' },
+  { scale: 1.15, label: 'Comfy' },
+  { scale: 1.3, label: 'Large' },
+]
+
 export function SettingsPage() {
   const mode = useTheme((s) => s.mode)
   const setMode = useTheme((s) => s.setMode)
+  const fontScale = useLayout((s) => s.fontScale)
+  const setFontScale = useLayout((s) => s.setFontScale)
   const username = useAuth((s) => s.username)
   const expiresAt = useAuth((s) => s.expiresAt)
 
@@ -73,6 +83,41 @@ export function SettingsPage() {
                   <span className="text-[13px] font-medium">{label}</span>
                   <span className="text-[11px] text-muted-foreground leading-snug">
                     {description}
+                  </span>
+                </div>
+                {active && (
+                  <Check className="absolute right-2 top-2 size-3 text-accent" />
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </Section>
+
+      <Section
+        title="Font size"
+        description="Scales the entire interface (titles, body, icons, terminal). Persisted per browser."
+      >
+        <div className="grid grid-cols-4 gap-2">
+          {fontScaleOptions.map(({ scale, label }) => {
+            const active = Math.abs(fontScale - scale) < 0.001
+            return (
+              <button
+                key={scale}
+                type="button"
+                onClick={() => setFontScale(scale)}
+                className={cn(
+                  'relative flex flex-col gap-1 items-start text-left p-3 rounded-md border transition-colors',
+                  active
+                    ? 'border-foreground/30 bg-card'
+                    : 'border-border hover:bg-card hover:border-foreground/20',
+                )}
+              >
+                <Type className="size-4 text-muted-foreground" />
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[13px] font-medium">{label}</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {Math.round(scale * 100)}%
                   </span>
                 </div>
                 {active && (

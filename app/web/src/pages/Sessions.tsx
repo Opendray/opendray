@@ -4,9 +4,13 @@ import {
   Layers,
   Plus,
   Power,
+  RotateCcw,
+  Trash2,
   Loader2,
   PanelLeftClose,
   PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
   Keyboard,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -23,11 +27,19 @@ import { TerminalToolbar } from '@/components/sessions/TerminalToolbar'
 import { EndedSessionView } from '@/components/sessions/EndedSessionView'
 import { SpawnDialog } from '@/components/sessions/SpawnDialog'
 import { StatePill } from '@/components/sessions/StatePill'
-import { listSessions, terminateSession } from '@/lib/sessions'
+import { AccountSwitcher } from '@/components/sessions/AccountSwitcher'
+import { InspectorPanel } from '@/components/sessions/InspectorPanel'
+import { providerVisual, cwdTail } from '@/lib/providers'
+import {
+  listSessions,
+  removeSession,
+  startSession,
+  stopSession,
+} from '@/lib/sessions'
 import { useSessionTabs } from '@/stores/sessionTabs'
 import { useLayout } from '@/stores/layout'
 import { cn } from '@/lib/utils'
-import type { Session } from '@/lib/types'
+import { isTerminalSessionState, type Session } from '@/lib/types'
 
 export function SessionsPage() {
   const [spawnOpen, setSpawnOpen] = useState(false)
@@ -46,8 +58,8 @@ export function SessionsPage() {
 
   const currentSession = sessions?.find((s) => s.id === currentId)
 
-  const terminate = useMutation({
-    mutationFn: terminateSession,
+  const remove = useMutation({
+    mutationFn: removeSession,
     onSuccess: (_, id) => {
       qc.invalidateQueries({ queryKey: ['sessions'] })
       close(id)
@@ -55,6 +67,26 @@ export function SessionsPage() {
     },
     onError: (err: Error) =>
       toast.error('Remove failed', { description: err.message }),
+  })
+
+  const stop = useMutation({
+    mutationFn: stopSession,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sessions'] })
+      toast.success('Session stopped')
+    },
+    onError: (err: Error) =>
+      toast.error('Stop failed', { description: err.message }),
+  })
+
+  const start = useMutation({
+    mutationFn: startSession,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sessions'] })
+      toast.success('Session restarted')
+    },
+    onError: (err: Error) =>
+      toast.error('Restart failed', { description: err.message }),
   })
 
   // Reconcile: if a tab's session is gone from server, drop it.
@@ -81,7 +113,7 @@ export function SessionsPage() {
       if (e.key === 'w' || e.key === 'W') {
         if (currentId) {
           e.preventDefault()
-          close(currentId)
+          handleCloseTab(currentId)
         }
         return
       }
@@ -96,16 +128,40 @@ export function SessionsPage() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [tabs, currentId, close, setCurrent])
+    // handleCloseTab depends on `sessions` (refetched every 4s) so the
+    // listener rebinds at the same cadence — cheap and keeps the
+    // closure's `sessions` view current.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabs, currentId, setCurrent, sessions])
 
   const handleOpen = (s: Session) => {
     open({ id: s.id, name: s.name || s.provider_id })
+  }
+
+  // Tab ✕ = full destroy: terminate the CLI process if still running,
+  // then drop the DB row. Confirms for live sessions so users don't
+  // kill work by accident; ended/stopped rows go straight through.
+  const handleCloseTab = (id: string) => {
+    const target = sessions?.find((s) => s.id === id)
+    if (target && !isTerminalSessionState(target.state)) {
+      if (
+        !confirm(
+          `Stop and remove "${target.name || target.provider_id}"? ` +
+            'The CLI process will be terminated and the row deleted.',
+        )
+      ) {
+        return
+      }
+    }
+    remove.mutate(id)
   }
 
   const listCollapsed = useLayout((s) => s.sessionListCollapsed)
   const toggleList = useLayout((s) => s.toggleSessionList)
   const toolbarOpen = useLayout((s) => s.terminalToolbarOpen)
   const toggleToolbar = useLayout((s) => s.toggleTerminalToolbar)
+  const inspectorOpen = useLayout((s) => s.inspectorOpen)
+  const toggleInspector = useLayout((s) => s.toggleInspector)
 
   const termRef = useRef<TerminalHandle>(null)
 
@@ -116,7 +172,7 @@ export function SessionsPage() {
       )}
 
       <div className="flex-1 flex flex-col min-w-0">
-        <SessionTabs />
+        <SessionTabs onCloseTab={handleCloseTab} />
 
         {!currentId ? (
           <EmptyWorkbench onSpawn={() => setSpawnOpen(true)} />
@@ -124,25 +180,48 @@ export function SessionsPage() {
           <>
             <WorkbenchHeader
               session={currentSession}
-              onTerminate={() => currentId && terminate.mutate(currentId)}
-              terminating={terminate.isPending}
+              onStop={() => currentId && stop.mutate(currentId)}
+              onStart={() => currentId && start.mutate(currentId)}
+              onRemove={() => {
+                if (!currentId) return
+                if (
+                  !confirm(
+                    `Remove ${currentSession?.name || currentSession?.provider_id || 'session'}? This deletes the row.`,
+                  )
+                ) {
+                  return
+                }
+                remove.mutate(currentId)
+              }}
+              stopping={stop.isPending}
+              starting={start.isPending}
+              removing={remove.isPending}
               listCollapsed={listCollapsed}
               onToggleList={toggleList}
               toolbarOpen={toolbarOpen}
               onToggleToolbar={toggleToolbar}
+              inspectorOpen={inspectorOpen}
+              onToggleInspector={toggleInspector}
             />
             <div className="flex-1 min-h-0">
-              {currentSession?.state === 'ended' ? (
+              {currentSession &&
+              isTerminalSessionState(currentSession.state) ? (
                 <EndedSessionView key={currentId} sessionId={currentId} />
               ) : (
                 <Terminal
                   ref={termRef}
-                  key={currentId}
+                  // pid in the key forces a remount when the underlying
+                  // child process is replaced (e.g. account switch or
+                  // restart) — the prior WS subscribed to a now-dead
+                  // pump goroutine, so we must reconnect from scratch.
+                  key={`${currentId}:${currentSession?.pid ?? 0}`}
                   sessionId={currentId}
                 />
               )}
             </div>
-            {toolbarOpen && currentSession?.state !== 'ended' && (
+            {toolbarOpen &&
+              currentSession &&
+              !isTerminalSessionState(currentSession.state) && (
               <TerminalToolbar
                 onKey={(seq) => termRef.current?.sendInput(seq)}
               />
@@ -150,6 +229,10 @@ export function SessionsPage() {
           </>
         )}
       </div>
+
+      {inspectorOpen && currentSession && (
+        <InspectorPanel session={currentSession} />
+      )}
 
       <SpawnDialog
         open={spawnOpen}
@@ -181,31 +264,44 @@ function EmptyWorkbench({ onSpawn }: { onSpawn: () => void }) {
 
 function WorkbenchHeader({
   session,
-  onTerminate,
-  terminating,
+  onStop,
+  onStart,
+  onRemove,
+  stopping,
+  starting,
+  removing,
   listCollapsed,
   onToggleList,
   toolbarOpen,
   onToggleToolbar,
+  inspectorOpen,
+  onToggleInspector,
 }: {
   session?: Session
-  onTerminate: () => void
-  terminating: boolean
+  onStop: () => void
+  onStart: () => void
+  onRemove: () => void
+  stopping: boolean
+  starting: boolean
+  removing: boolean
   listCollapsed: boolean
   onToggleList: () => void
   toolbarOpen: boolean
   onToggleToolbar: () => void
+  inspectorOpen: boolean
+  onToggleInspector: () => void
 }) {
   if (!session) {
     return (
-      <div className="h-9 border-b border-border flex items-center px-3 text-[12px] text-muted-foreground">
+      <div className="h-14 border-b border-border flex items-center px-3 text-[12px] text-muted-foreground">
         <Loader2 className="size-3 animate-spin" />
         <span className="ml-2">Loading session…</span>
       </div>
     )
   }
+  const visual = providerVisual(session.provider_id)
   return (
-    <div className="h-9 border-b border-border flex items-center px-3 gap-2">
+    <div className="h-14 border-b border-border flex items-center px-3 gap-3">
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -213,7 +309,7 @@ function WorkbenchHeader({
             size="icon"
             onClick={onToggleList}
             aria-label={listCollapsed ? 'Show session list' : 'Hide session list'}
-            className="size-6"
+            className="size-7 shrink-0"
           >
             {listCollapsed ? (
               <PanelLeftOpen className="size-3.5" />
@@ -226,12 +322,34 @@ function WorkbenchHeader({
           {listCollapsed ? 'Show session list' : 'Hide session list'}
         </TooltipContent>
       </Tooltip>
-      <span className="text-[12px] font-medium truncate flex-1">
-        {session.name || session.provider_id}
-        <span className="text-muted-foreground/70 font-mono ml-2 text-[11px]">
-          {session.cwd}
-        </span>
-      </span>
+      <div
+        className={cn(
+          'shrink-0 size-9 rounded-full flex items-center justify-center text-[15px] font-semibold tracking-tight',
+          visual.bg,
+          visual.fg,
+        )}
+        aria-hidden
+      >
+        {visual.letter}
+      </div>
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+        <div className="text-[14px] font-semibold leading-tight truncate text-foreground">
+          {session.name || cwdTail(session.cwd)}
+        </div>
+        <div className="text-[11px] text-muted-foreground/80 font-mono truncate">
+          {visual.name} · {session.cwd}
+          {session.pid != null && (
+            <span className="ml-2 text-muted-foreground/60">
+              pid {session.pid}
+            </span>
+          )}
+        </div>
+      </div>
+      <StatePill state={session.state} exitCode={session.exit_code} />
+      {session.provider_id === 'claude' &&
+        !isTerminalSessionState(session.state) && (
+          <AccountSwitcher session={session} />
+        )}
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -241,7 +359,7 @@ function WorkbenchHeader({
             aria-label={
               toolbarOpen ? 'Hide on-screen keys' : 'Show on-screen keys'
             }
-            className={cn('size-6', toolbarOpen && 'text-foreground')}
+            className={cn('size-7 shrink-0', toolbarOpen && 'text-foreground')}
           >
             <Keyboard className="size-3.5" />
           </Button>
@@ -252,28 +370,73 @@ function WorkbenchHeader({
             : 'Show on-screen keys (ESC, TAB, ↑↓, ⌃C…)'}
         </TooltipContent>
       </Tooltip>
-      <StatePill state={session.state} exitCode={session.exit_code} />
-      {session.pid != null && (
-        <span className="text-[10px] text-muted-foreground font-mono">
-          pid {session.pid}
-        </span>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleInspector}
+            aria-label={
+              inspectorOpen ? 'Hide inspector' : 'Show inspector'
+            }
+            className={cn(
+              'size-7 shrink-0',
+              inspectorOpen && 'text-foreground',
+            )}
+          >
+            {inspectorOpen ? (
+              <PanelRightClose className="size-3.5" />
+            ) : (
+              <PanelRightOpen className="size-3.5" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {inspectorOpen ? 'Hide inspector' : 'Show inspector'}
+        </TooltipContent>
+      </Tooltip>
+      {isTerminalSessionState(session.state) ? (
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onStart}
+            disabled={starting}
+            className="text-[11px] gap-1 hover:text-foreground"
+          >
+            {starting ? (
+              <Loader2 className="size-3 animate-spin" />
+            ) : (
+              <RotateCcw className="size-3" />
+            )}
+            {starting ? 'Restarting…' : 'Restart'}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onRemove}
+            disabled={removing}
+            className="text-[11px] gap-1 text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="size-3" />
+            {removing ? 'Removing…' : 'Remove'}
+          </Button>
+        </>
+      ) : (
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onStop}
+            disabled={stopping}
+            className="text-[11px] gap-1 text-muted-foreground hover:text-destructive"
+          >
+            <Power className="size-3" />
+            {stopping ? 'Stopping…' : 'Stop'}
+          </Button>
+        </>
       )}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onTerminate}
-        disabled={terminating}
-        className="text-[11px] gap-1 text-muted-foreground hover:text-destructive"
-      >
-        <Power className="size-3" />
-        {terminating
-          ? session.state === 'ended'
-            ? 'Removing…'
-            : 'Terminating…'
-          : session.state === 'ended'
-            ? 'Remove'
-            : 'Terminate'}
-      </Button>
     </div>
   )
 }
+

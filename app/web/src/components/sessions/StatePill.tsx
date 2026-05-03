@@ -8,6 +8,8 @@ const styles: Record<SessionState, string> = {
     'bg-state-running/20 text-state-running border-state-running/30',
   idle:
     'bg-state-idle/20 text-state-idle border-state-idle/30',
+  stopped:
+    'bg-muted text-muted-foreground border-border',
   ended:
     'bg-muted text-muted-foreground border-border',
 }
@@ -16,6 +18,7 @@ const labels: Record<SessionState, string> = {
   pending: 'pending',
   running: 'running',
   idle: 'idle',
+  stopped: 'stopped',
   ended: 'ended',
 }
 
@@ -28,7 +31,8 @@ export function StatePill({
   exitCode?: number
   className?: string
 }) {
-  // Non-zero exit on an ended session reads as failed.
+  // Non-zero exit on an ended session reads as failed. Stopped is
+  // user-initiated so it never shows as failed regardless of code.
   const isFailed = state === 'ended' && exitCode != null && exitCode !== 0
 
   return (

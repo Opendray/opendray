@@ -137,3 +137,73 @@
     line-height: 1;
   }
 }
+
+/* highlight.js theme — a compact mapping that uses palette-friendly
+   colors for both light and dark modes. The Inspector's file viewer
+   wraps lines into our own gutter, so only inline class colors are
+   styled here (no block padding / borders). */
+.hljs-comment,
+.hljs-quote {
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-link {
+  color: #c084fc; /* purple */
+}
+.hljs-built_in,
+.hljs-class .hljs-title,
+.hljs-title.class_,
+.hljs-title.function_ {
+  color: #5b9eff; /* blue */
+}
+.hljs-string,
+.hljs-attr,
+.hljs-template-tag,
+.hljs-template-variable,
+.hljs-addition,
+.hljs-meta-string {
+  color: #4ad295; /* green */
+}
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-deletion {
+  color: #ff9b6b; /* warm orange */
+}
+.hljs-variable,
+.hljs-template-variable {
+  color: #ffd270; /* yellow */
+}
+.hljs-type,
+.hljs-name,
+.hljs-tag,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: #5be8d4; /* cyan */
+}
+.hljs-attribute,
+.hljs-meta {
+  color: var(--muted-foreground);
+}
+.hljs-regexp {
+  color: #ff7373;
+}
+.hljs-emphasis {
+  font-style: italic;
+}
+.hljs-strong {
+  font-weight: 600;
+}
+.hljs-doctag,
+.hljs-formula {
+  color: var(--muted-foreground);
+}
+.hljs-subst {
+  color: var(--foreground);
+}

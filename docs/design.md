@@ -551,7 +551,7 @@ CREATE TABLE channel_messages (
 );
 CREATE INDEX channel_messages_conv_ts_idx ON channel_messages(conversation_id, ts DESC);
 
--- Audit log (selected events)
+-- Audit log (selected lifecycle events)
 CREATE TABLE audit_log (
   id          BIGSERIAL PRIMARY KEY,
   ts          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -561,6 +561,24 @@ CREATE TABLE audit_log (
   subject_kind TEXT,
   subject_id  TEXT,
   metadata    JSONB
+);
+
+-- Integration call log — per-call API audit, separate from audit_log
+-- because traffic volume is potentially 1000x and the schema is
+-- different. See ADR 0010.
+CREATE TABLE integration_call_log (
+  id              BIGSERIAL PRIMARY KEY,
+  ts              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  integration_id  TEXT NOT NULL REFERENCES integrations(id) ON DELETE CASCADE,
+  direction       TEXT NOT NULL,        -- inbound/outbound
+  method          TEXT NOT NULL,
+  path            TEXT NOT NULL,
+  status_code     INT  NOT NULL,
+  duration_ms     INT  NOT NULL,
+  bytes_written   BIGINT,
+  request_id      TEXT,
+  resource_kind   TEXT,
+  resource_id     TEXT
 );
 ```
 
@@ -660,7 +678,10 @@ Both Go and TS SDKs must:
 - HSM-backed key storage (the API key hash in PG is acceptable).
 
 ### Logging / audit
-Every integration registration, scope grant, key rotation, and admin action goes to `audit_log`. PII / message bodies do **not** go to audit by default.
+Two separate tables, by design:
+
+- **`audit_log`** — *lifecycle* events. Every integration registration, scope grant, key rotation, and admin action goes here. PII / message bodies do **not** go to audit by default. Topic allowlist enforced in `internal/audit/sink.go`.
+- **`integration_call_log`** — *per-call* API audit for both inbound (third-party → opendray) and outbound (admin → proxy → integration) traffic attributable to an integration. Admin-attributed direct API calls are intentionally **not** logged here. See ADR 0010 for the full design and the deferred polish list.
 
 ---
 

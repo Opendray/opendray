@@ -76,6 +76,16 @@
       "label_zh": "额外 CLI 参数",
       "type": "args",
       "group": "advanced"
+    },
+    {
+      "key": "skills_disabled",
+      "label": "Disable opendray skills",
+      "label_zh": "禁用 opendray skills",
+      "type": "boolean",
+      "group": "advanced",
+      "default": false,
+      "description": "Skip injecting the opendray skill index. When enabled, opendray drops a GEMINI.md in a per-session scratch dir and adds it to the workspace via --include-directories.",
+      "description_zh": "不注入 opendray skill 索引。启用时 opendray 会在 per-session 临时目录里写一份 GEMINI.md 并通过 --include-directories 加入 workspace。"
     }
   ],
   "ui": {

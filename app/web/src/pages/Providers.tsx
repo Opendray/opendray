@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { ConfigForm } from '@/components/providers/ConfigForm'
+import { ClaudeAccountsPanel } from '@/components/providers/ClaudeAccountsPanel'
 import {
   listProviders,
   toggleProvider,
@@ -216,6 +217,12 @@ function ProviderDetail({
             <p className="text-[12px] text-muted-foreground italic">
               This provider has no user-configurable fields.
             </p>
+          )}
+          {m.id === 'claude' && (
+            <>
+              <Separator className="my-6" />
+              <ClaudeAccountsPanel />
+            </>
           )}
           <Separator className="my-6" />
           <div className="text-[10px] text-muted-foreground/70 font-mono">

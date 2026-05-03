@@ -3,11 +3,17 @@ import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSessionTabs } from '@/stores/sessionTabs'
 
-export function SessionTabs() {
+interface SessionTabsProps {
+  // Called when the user clicks a tab's ✕. Owner decides the full
+  // semantics (the page-level handler stops + removes the underlying
+  // session, with a confirm for live ones).
+  onCloseTab: (id: string) => void
+}
+
+export function SessionTabs({ onCloseTab }: SessionTabsProps) {
   const tabs = useSessionTabs((s) => s.tabs)
   const currentId = useSessionTabs((s) => s.currentId)
   const setCurrent = useSessionTabs((s) => s.setCurrent)
-  const close = useSessionTabs((s) => s.close)
 
   if (tabs.length === 0) return null
 
@@ -42,10 +48,11 @@ export function SessionTabs() {
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                close(tab.id)
+                onCloseTab(tab.id)
               }}
               className="opacity-0 group-hover:opacity-100 hover:bg-border rounded-sm p-0.5 transition-opacity"
-              aria-label="Close tab"
+              aria-label="Close tab and remove session"
+              title="Close tab and remove session"
             >
               <X className="size-3" />
             </button>
