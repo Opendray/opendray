@@ -320,6 +320,13 @@ func New(cfg Config) *Server {
 		r.Patch("/api/claude-accounts/{id}/toggle",    s.toggleClaudeAccount)
 		r.Put("/api/claude-accounts/{id}/token",       s.setClaudeAccountToken)
 		r.Delete("/api/claude-accounts/{id}",          s.deleteClaudeAccount)
+
+		// In-app OAuth flow — wraps `claude auth login --claudeai` so the
+		// user doesn't have to SSH to the host. See claude_accounts_oauth.go.
+		r.Get("/api/claude-accounts/oauth/preflight",         s.preflightClaudeOAuth)
+		r.Post("/api/claude-accounts/oauth/start",            s.startClaudeOAuth)
+		r.Post("/api/claude-accounts/oauth/{flowId}/complete", s.completeClaudeOAuth)
+		r.Post("/api/claude-accounts/oauth/{flowId}/cancel",   s.cancelClaudeOAuth)
 		r.Post("/api/sessions/{id}/switch-account",    s.switchSessionAccount)
 
 		// LLM Providers — address book of OpenAI-compatible model

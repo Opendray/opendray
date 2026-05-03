@@ -937,6 +937,56 @@ class ApiClient {
     await _dio.delete('/api/claude-accounts/$id');
   }
 
+  /// Reports whether the in-app OAuth flow is usable on this server.
+  /// Returns `{ available: bool, version?: string, path?: string,
+  /// installHint?: string }`. Call this before showing the "Sign in
+  /// with Claude" button so the UI can fall back to manual setup or
+  /// surface an install hint when the CLI is missing.
+  Future<Map<String, dynamic>> claudeOAuthPreflight() async {
+    final res = await _dio.get('/api/claude-accounts/oauth/preflight');
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  /// Starts an in-app OAuth flow. The server spawns the official Claude
+  /// CLI, captures its authorization URL, and returns it. The caller
+  /// then opens the URL in the user's browser, collects the auth code,
+  /// and POSTs it back via [claudeOAuthComplete].
+  ///
+  /// `name` and `displayName` are optional — both are auto-derived from
+  /// the OAuth profile (email) on completion if absent.
+  ///
+  /// Returns `{ flowId, authorizationUrl, expiresInSec }`.
+  Future<Map<String, dynamic>> claudeOAuthStart({
+    String name = '',
+    String displayName = '',
+  }) async {
+    final res = await _dio.post('/api/claude-accounts/oauth/start', data: {
+      if (name.isNotEmpty) 'name': name,
+      if (displayName.isNotEmpty) 'displayName': displayName,
+    });
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  /// Submits the auth code the user pasted from the Anthropic redirect.
+  /// On success returns `{ accountId, profile, name, displayName }` and
+  /// the new account is registered + enabled. On failure (invalid code,
+  /// timeout) returns a 4xx with an error message ready to show.
+  Future<Map<String, dynamic>> claudeOAuthComplete(
+      String flowId, String code) async {
+    final res = await _dio.post(
+      '/api/claude-accounts/oauth/$flowId/complete',
+      data: {'code': code},
+    );
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  /// Cancels an in-progress OAuth flow. Idempotent — returns 200 even
+  /// if the flow already expired or completed. Always called when the
+  /// user closes the modal without finishing.
+  Future<void> claudeOAuthCancel(String flowId) async {
+    await _dio.post('/api/claude-accounts/oauth/$flowId/cancel');
+  }
+
   /// Scans `~/.claude-accounts/tokens/` on the server host and creates
   /// account rows for any *.token files not already imported. Returns a
   /// `{imported: [...], skipped: [...]}` summary.

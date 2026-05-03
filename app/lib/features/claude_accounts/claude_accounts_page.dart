@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/services/l10n.dart';
@@ -90,6 +92,23 @@ class _ClaudeAccountsPageState extends State<ClaudeAccountsPage> {
       builder: (_) => _AccountEditorDialog(api: _api, initial: account),
     );
     if (changed == true) {
+      _refresh();
+      ProvidersBus.instance.notify();
+    }
+  }
+
+  /// Opens the in-app OAuth modal that wraps `claude auth login --claudeai`.
+  /// On success, the new account row appears in the list automatically.
+  /// Falls back gracefully when the host doesn't have the Claude CLI
+  /// installed (modal shows install instructions instead of stalling).
+  Future<void> _signInWithClaude() async {
+    final added = await showDialog<bool>(
+      context: context,
+      useRootNavigator: true,
+      barrierDismissible: false, // user must click Cancel — auto-cleanup runs there
+      builder: (_) => _OAuthDialog(api: _api),
+    );
+    if (added == true) {
       _refresh();
       ProvidersBus.instance.notify();
     }
@@ -190,6 +209,8 @@ class _ClaudeAccountsPageState extends State<ClaudeAccountsPage> {
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
           children: [
             _intro(),
+            const SizedBox(height: 12),
+            _signInButton(),
             const SizedBox(height: 8),
             _importButton(),
             const SizedBox(height: 12),
@@ -197,7 +218,7 @@ class _ClaudeAccountsPageState extends State<ClaudeAccountsPage> {
               _emptyState(
                 icon: Icons.person_outline,
                 title: context.tr('No Claude accounts yet'),
-                body: context.tr('Register a Claude subscription token so this server can launch sessions as that account. Tokens stay chmod 600 on the host — this UI only tracks metadata.'),
+                body: context.tr('Click "Sign in with Claude" above to add an account using your Claude subscription — no terminal, no file paths. Or use the "+" button below for manual setup.'),
               )
             else
               ..._accounts.map((a) => Padding(
@@ -222,15 +243,20 @@ class _ClaudeAccountsPageState extends State<ClaudeAccountsPage> {
       children: [
         _intro(),
         const SizedBox(height: 8),
+        _signInButton(),
+        const SizedBox(height: 8),
         Row(
           children: [
             Expanded(child: _importButton()),
             const SizedBox(width: 8),
-            FilledButton.icon(
+            OutlinedButton.icon(
               onPressed: () => _openEditor(),
-              style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
-              icon: const Icon(Icons.add, size: 16),
-              label: Text(context.tr('Add account'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.textMuted,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+              icon: const Icon(Icons.tune, size: 16),
+              label: Text(context.tr('Manual setup'),
                   style: const TextStyle(fontSize: 12)),
             ),
           ],
@@ -264,11 +290,31 @@ class _ClaudeAccountsPageState extends State<ClaudeAccountsPage> {
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            context.tr('Each account maps to one OAuth token managed by the claude-acc host tool. Sessions pick an account at creation time; tokens never enter Postgres or this UI.'),
+            context.tr('Sign in with your Claude subscription to add an account — no terminal, no file paths. Tokens stay on the host (chmod 600) and never enter Postgres or this UI.'),
             style: const TextStyle(fontSize: 11, color: AppColors.text),
           ),
         ),
       ]),
+    );
+  }
+
+  /// Primary CTA — opens the in-app OAuth modal. The widget below the
+  /// label uses the official Anthropic-orange accent so it stands out
+  /// from the secondary "Import" / "Manual setup" buttons.
+  Widget _signInButton() {
+    return FilledButton.icon(
+      onPressed: () => _signInWithClaude(),
+      style: FilledButton.styleFrom(
+        backgroundColor: const Color(0xFFCC785C), // Anthropic accent
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      icon: const Icon(Icons.login, size: 18),
+      label: Text(
+        context.tr('Sign in with Claude'),
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      ),
     );
   }
 
@@ -648,4 +694,453 @@ class _TokenDialogState extends State<_TokenDialog> {
       ],
     );
   }
+}
+
+// ── Sign in with Claude — in-app OAuth modal ─────────────────────────
+//
+// State machine for this dialog:
+//
+//   _phase = preflighting → calls /oauth/preflight
+//             ├─ CLI present → start
+//             └─ CLI missing → showInstallHint  (terminal state)
+//   _phase = starting     → calls /oauth/start
+//             ├─ ok → showCode (with authURL + code input)
+//             └─ err → showError  (terminal state)
+//   _phase = showCode     → user copies URL, opens browser, returns
+//             with auth code, types it in
+//             └─ user submits → calls /oauth/complete
+//   _phase = completing   → backend exchanges code for tokens
+//             ├─ ok  → showSuccess (terminal — caller refreshes list)
+//             └─ err → back to showCode with error banner
+//
+// Cancellation rule: any close path (Cancel button, system back, error
+// terminal "Close") MUST call /oauth/cancel for the active flowId, so
+// the server kills the PTY child + cleans the temp dir. We track this
+// via _flowId — non-empty means a server-side flow is active.
+
+enum _OAuthPhase {
+  preflighting,
+  showInstallHint,
+  starting,
+  showCode,
+  completing,
+  showSuccess,
+  showError,
+}
+
+class _OAuthDialog extends StatefulWidget {
+  const _OAuthDialog({required this.api});
+  final ApiClient api;
+
+  @override
+  State<_OAuthDialog> createState() => _OAuthDialogState();
+}
+
+class _OAuthDialogState extends State<_OAuthDialog> {
+  _OAuthPhase _phase = _OAuthPhase.preflighting;
+  String _authURL = '';
+  String _flowId = '';
+  String _installHint = '';
+  String _errorMessage = '';
+  String _successName = '';
+  String _successEmail = '';
+  final _codeController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _runPreflight();
+  }
+
+  @override
+  void dispose() {
+    _codeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _runPreflight() async {
+    try {
+      final res = await widget.api.claudeOAuthPreflight();
+      if (!mounted) return;
+      if (res['available'] == true) {
+        await _runStart();
+      } else {
+        setState(() {
+          _phase = _OAuthPhase.showInstallHint;
+          _installHint =
+              (res['installHint'] as String?) ?? 'Claude CLI not found on host.';
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _phase = _OAuthPhase.showError;
+        _errorMessage = 'Preflight failed: $e';
+      });
+    }
+  }
+
+  Future<void> _runStart() async {
+    setState(() => _phase = _OAuthPhase.starting);
+    try {
+      final res = await widget.api.claudeOAuthStart();
+      if (!mounted) return;
+      setState(() {
+        _phase = _OAuthPhase.showCode;
+        _authURL = (res['authorizationUrl'] as String?) ?? '';
+        _flowId = (res['flowId'] as String?) ?? '';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _phase = _OAuthPhase.showError;
+        _errorMessage = 'Could not start sign-in: $e';
+      });
+    }
+  }
+
+  Future<void> _runComplete() async {
+    final code = _codeController.text.trim();
+    if (code.isEmpty || _flowId.isEmpty) return;
+    setState(() => _phase = _OAuthPhase.completing);
+    try {
+      final res = await widget.api.claudeOAuthComplete(_flowId, code);
+      if (!mounted) return;
+      _flowId = ''; // server-side flow is now closed (success path)
+      setState(() {
+        _phase = _OAuthPhase.showSuccess;
+        _successName = (res['name'] as String?) ?? '';
+        final profile = res['profile'] as Map?;
+        _successEmail = (profile?['email'] as String?) ?? '';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      // Stay on the code screen so the user can retry / paste again.
+      setState(() {
+        _phase = _OAuthPhase.showCode;
+        _errorMessage = _firstLine('$e');
+      });
+    }
+  }
+
+  Future<void> _cancelFlowIfActive() async {
+    if (_flowId.isEmpty) return;
+    final id = _flowId;
+    _flowId = '';
+    try {
+      await widget.api.claudeOAuthCancel(id);
+    } catch (_) {
+      // Best-effort: server cleans up via timeout sweeper if cancel fails.
+    }
+  }
+
+  Future<void> _close({required bool added}) async {
+    await _cancelFlowIfActive();
+    if (!mounted) return;
+    Navigator.of(context, rootNavigator: true).pop(added);
+  }
+
+  Future<void> _openInBrowser() async {
+    if (_authURL.isEmpty) return;
+    try {
+      await launchUrl(Uri.parse(_authURL), mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open browser: $e')),
+      );
+    }
+  }
+
+  Future<void> _copyToClipboard(String value, String snackMessage) async {
+    await Clipboard.setData(ClipboardData(text: value));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(snackMessage), duration: const Duration(seconds: 1)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async {
+        await _cancelFlowIfActive();
+        return true;
+      },
+      child: AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.login, size: 18, color: Color(0xFFCC785C)),
+            const SizedBox(width: 8),
+            Text(context.tr('Sign in with Claude')),
+          ],
+        ),
+        content: SizedBox(
+          width: 480,
+          child: _buildContent(),
+        ),
+        actions: _buildActions(),
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    switch (_phase) {
+      case _OAuthPhase.preflighting:
+        return _busy(context.tr('Checking host setup…'));
+      case _OAuthPhase.starting:
+        return _busy(context.tr('Starting sign-in flow…'));
+      case _OAuthPhase.completing:
+        return _busy(context.tr('Verifying with Claude…'));
+      case _OAuthPhase.showInstallHint:
+        return _installHintView();
+      case _OAuthPhase.showCode:
+        return _codeView();
+      case _OAuthPhase.showSuccess:
+        return _successView();
+      case _OAuthPhase.showError:
+        return _errorView();
+    }
+  }
+
+  Widget _busy(String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const CircularProgressIndicator(color: Color(0xFFCC785C)),
+        const SizedBox(height: 16),
+        Text(label, style: const TextStyle(color: AppColors.textMuted)),
+      ]),
+    );
+  }
+
+  Widget _installHintView() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          context.tr('OpenDray needs the official Claude Code CLI on the server before it can sign you in.'),
+          style: const TextStyle(fontSize: 13),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceAlt,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: SelectableText(
+            _installHint,
+            style: const TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 11.5,
+                color: AppColors.text),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          context.tr('After installing, click "Try again" or use Manual setup as a fallback.'),
+          style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+        ),
+      ],
+    );
+  }
+
+  Widget _codeView() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          context.tr('1. Open the sign-in page on any device:'),
+          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceAlt,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: SelectableText(
+                  _truncateUrl(_authURL),
+                  style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 10.5,
+                      color: AppColors.text),
+                  maxLines: 2,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.copy, size: 16),
+                tooltip: context.tr('Copy URL'),
+                onPressed: () => _copyToClipboard(
+                    _authURL, context.trOnce('URL copied to clipboard')),
+              ),
+              IconButton(
+                icon: const Icon(Icons.open_in_new, size: 16),
+                tooltip: context.tr('Open in browser'),
+                onPressed: _openInBrowser,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          context.tr('2. After signing in, paste the code Anthropic shows you:'),
+          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: _codeController,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: context.tr('Paste auth code here'),
+            border: const OutlineInputBorder(),
+            isDense: true,
+          ),
+          style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+          onSubmitted: (_) => _runComplete(),
+        ),
+        if (_errorMessage.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.errorSoft,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+            ),
+            child: Row(children: [
+              const Icon(Icons.error_outline, size: 16, color: AppColors.error),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _errorMessage,
+                  style: const TextStyle(fontSize: 11.5, color: AppColors.text),
+                ),
+              ),
+            ]),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _successView() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Icon(Icons.check_circle, size: 48, color: AppColors.success),
+        const SizedBox(height: 12),
+        Text(
+          _successEmail.isNotEmpty
+              ? context.trOnce('Signed in as') + ' $_successEmail'
+              : context.tr('Signed in successfully'),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+        if (_successName.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            context.trOnce('Account name') + ': $_successName',
+            style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _errorView() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.error_outline, size: 36, color: AppColors.error),
+        const SizedBox(height: 12),
+        Text(
+          _errorMessage,
+          style: const TextStyle(fontSize: 13, color: AppColors.text),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildActions() {
+    switch (_phase) {
+      case _OAuthPhase.preflighting:
+      case _OAuthPhase.starting:
+      case _OAuthPhase.completing:
+        return [
+          TextButton(
+            onPressed: () => _close(added: false),
+            child: Text(context.tr('Cancel')),
+          ),
+        ];
+      case _OAuthPhase.showInstallHint:
+        return [
+          TextButton(
+            onPressed: () => _close(added: false),
+            child: Text(context.tr('Close')),
+          ),
+          FilledButton(
+            onPressed: _runPreflight,
+            style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFCC785C)),
+            child: Text(context.tr('Try again')),
+          ),
+        ];
+      case _OAuthPhase.showCode:
+        return [
+          TextButton(
+            onPressed: () => _close(added: false),
+            child: Text(context.tr('Cancel')),
+          ),
+          FilledButton(
+            onPressed: _codeController.text.trim().isEmpty ? null : _runComplete,
+            style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFCC785C)),
+            child: Text(context.tr('Submit code')),
+          ),
+        ];
+      case _OAuthPhase.showSuccess:
+        return [
+          FilledButton(
+            onPressed: () => _close(added: true),
+            style: FilledButton.styleFrom(
+                backgroundColor: AppColors.success),
+            child: Text(context.tr('Done')),
+          ),
+        ];
+      case _OAuthPhase.showError:
+        return [
+          TextButton(
+            onPressed: () => _close(added: false),
+            child: Text(context.tr('Close')),
+          ),
+        ];
+    }
+  }
+}
+
+// _truncateUrl shortens a URL for display while keeping the start +
+// query-recognisable middle. Only used in the OAuth modal where
+// authorization URLs are ~500 chars and would push the dialog wide.
+String _truncateUrl(String url, {int max = 110}) {
+  if (url.length <= max) return url;
+  final head = max ~/ 2 - 2;
+  final tail = max - head - 1;
+  return '${url.substring(0, head)}…${url.substring(url.length - tail)}';
+}
+
+String _firstLine(String s) {
+  final i = s.indexOf('\n');
+  if (i < 0) return s;
+  return s.substring(0, i);
 }
