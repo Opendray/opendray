@@ -102,7 +102,7 @@ class _HubV1PageState extends State<HubV1Page> {
               child: Scrollbar(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.symmetric(
-                      horizontal: t.sp8, vertical: t.sp6),
+                      horizontal: t.sp5, vertical: t.sp4),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 1400),
                     child: Column(
@@ -113,9 +113,9 @@ class _HubV1PageState extends State<HubV1Page> {
                           subtitle: _subtitle(),
                           onNewSession: _onNewSession,
                         ),
-                        SizedBox(height: t.sp8),
+                        SizedBox(height: t.sp5),
                         _KpiGrid(activeSessions: _activeCount),
-                        SizedBox(height: t.sp8),
+                        SizedBox(height: t.sp5),
                         _SessionsCard(
                           sessions: _filteredSessions,
                           totalCount: _sessions.length,
@@ -126,12 +126,12 @@ class _HubV1PageState extends State<HubV1Page> {
                           loading: _loading,
                           error: _error,
                         ),
-                        SizedBox(height: t.sp8),
+                        SizedBox(height: t.sp5),
                         _ActivityAndQuickActions(
                           onNewSession: _onNewSession,
                           onAttachRepo: _onAttachRepo,
                         ),
-                        SizedBox(height: t.sp8),
+                        SizedBox(height: t.sp5),
                       ],
                     ),
                   ),
@@ -256,7 +256,7 @@ class _KpiGrid extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         crossAxisSpacing: t.sp4,
         mainAxisSpacing: t.sp4,
-        childAspectRatio: cols == 1 ? 4 : (cols == 2 ? 2.5 : 1.9),
+        childAspectRatio: cols == 1 ? 4.5 : (cols == 2 ? 3.5 : 2.8),
         children: items.map((d) => _KpiCard(data: d)).toList(),
       );
     });
@@ -279,25 +279,28 @@ class _KpiCard extends StatelessWidget {
     final t = Theme.of(context).extension<OpendrayTokens>()!;
     final theme = Theme.of(context);
     return Container(
-      padding: EdgeInsets.all(t.sp5),
+      padding: EdgeInsets.all(t.sp4),
       decoration: BoxDecoration(
         color: t.surface,
         borderRadius: BorderRadius.circular(t.rLg),
         border: Border.all(color: t.border),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(data.label,
               style: theme.textTheme.labelSmall?.copyWith(
                   color: t.textSubtle, letterSpacing: 0.6)),
-          SizedBox(height: t.sp2),
+          SizedBox(height: t.sp1),
           Text(data.value,
-              style: theme.textTheme.displayMedium
-                  ?.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
-          const Spacer(),
+              style: theme.textTheme.headlineSmall?.copyWith(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  fontFeatures: const [FontFeature.tabularFigures()])),
+          SizedBox(height: t.sp3),
           Container(
-            height: 4,
+            height: 3,
             decoration: BoxDecoration(
               color: data.accent.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(2),
