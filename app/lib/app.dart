@@ -18,6 +18,7 @@ import 'features/plugins/plugins_page.dart';
 import 'features/settings/builtin_restore_page.dart';
 import 'features/settings/settings_page.dart';
 import 'features/settings/setup_page.dart';
+import 'features/setup_wizard/setup_wizard_page.dart';
 import 'features/workbench/command_palette.dart';
 import 'features/workbench/keybindings.dart';
 import 'features/workbench/running/plugin_registry.dart';
@@ -242,6 +243,7 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
     routes: [
       GoRoute(path: '/connect', builder: (_, _) => const SetupPage()),
       GoRoute(path: '/login',   builder: (_, _) => const LoginPage()),
+      GoRoute(path: '/setup',   builder: (_, _) => const SetupWizardPage()),
       ShellRoute(
         builder: (context, state, child) => _Shell(child: child),
         routes: [

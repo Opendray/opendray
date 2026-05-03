@@ -329,6 +329,13 @@ func New(cfg Config) *Server {
 		r.Post("/api/claude-accounts/oauth/{flowId}/cancel",   s.cancelClaudeOAuth)
 		r.Post("/api/sessions/{id}/switch-account",    s.switchSessionAccount)
 
+		// Host introspection — drives the first-run wizard so a non-
+		// technical user can detect/install/import everything from the UI
+		// without SSH. See gateway/host_facts.go.
+		r.Get("/api/host/facts",                       s.hostFactsHandler)
+		r.Post("/api/host/install-claude-cli",         s.hostInstallClaudeCLIHandler)
+		r.Post("/api/host/import-claude-creds",        s.hostImportClaudeCredsHandler)
+
 		// LLM Providers — address book of OpenAI-compatible model
 		// endpoints (Mac Ollama, LM Studio, Groq, Gemini, custom).
 		// Sessions bind to a provider via llm_provider_id; at spawn
