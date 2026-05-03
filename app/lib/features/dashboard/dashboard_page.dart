@@ -111,9 +111,9 @@ class _DashboardPageState extends State<DashboardPage> {
           Padding(
             padding: const EdgeInsets.only(right: 4),
             child: TextButton.icon(
-              onPressed: () => context.go('/hub-v1'),
-              icon: const Icon(Icons.auto_awesome_outlined, size: 14),
-              label: const Text('Try new Hub', style: TextStyle(fontSize: 12)),
+              onPressed: () => context.go('/'),
+              icon: const Icon(Icons.arrow_back, size: 14),
+              label: const Text('Back to new Hub', style: TextStyle(fontSize: 12)),
             ),
           ),
           Padding(

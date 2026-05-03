@@ -420,7 +420,7 @@ class _SessionsCard extends StatelessWidget {
             ),
             const Spacer(),
             TextButton(
-              onPressed: () => GoRouter.of(context).go('/'),
+              onPressed: () => GoRouter.of(context).go('/dashboard-classic'),
               child: const Text('View classic dashboard →'),
             ),
           ],
