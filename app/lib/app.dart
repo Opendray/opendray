@@ -14,6 +14,7 @@ import 'features/session/session_page.dart';
 import 'features/claude_accounts/claude_accounts_page.dart';
 import 'features/endpoints/endpoints_page.dart';
 import 'features/hub/hub_page.dart';
+import 'features/hub_v1/hub_v1_page.dart';
 import 'features/plugins/plugins_page.dart';
 import 'features/settings/builtin_restore_page.dart';
 import 'features/settings/settings_page.dart';
@@ -266,6 +267,7 @@ GoRouter _buildRouter(ServerConfig serverConfig, AuthService authService) {
           GoRoute(path: '/browser/plugin/:name', builder: _sentinel),
           GoRoute(path: '/plugins', builder: (_, _) => const PluginsPage()),
           GoRoute(path: '/hub', builder: (_, _) => const HubPage()),
+          GoRoute(path: '/hub-v1', builder: (_, _) => const HubV1Page()),
           GoRoute(
             path: '/running',
             builder: (_, _) => const RunningPluginsSwitcherPage(),
