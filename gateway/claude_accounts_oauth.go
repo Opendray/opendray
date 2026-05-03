@@ -69,7 +69,7 @@ const (
 //
 // The capture group is the URL.
 var oauthURLPattern = regexp.MustCompile(
-	`https://claude\.com/cai/oauth/authorize\?\S+`)
+	`(?:^|\s)(https://claude\.com/cai/oauth/authorize\?\S+)(?:\s|$)`)
 
 // oauthFlow holds the state for a single in-flight OAuth attempt.
 type oauthFlow struct {
