@@ -1,0 +1,22 @@
+{
+  "name": "@opendray/demo-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reference TypeScript client showing how a third-party app consumes opendray.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "demo": "tsx src/index.ts",
+    "reset": "tsx src/reset.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.13",
+    "tsx": "^4.20.0",
+    "typescript": "^5.6.0"
+  }
+}

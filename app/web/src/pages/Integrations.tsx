@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Plus,
   Loader2,
+  Pencil,
   Trash2,
   RotateCw,
   Plug,
@@ -27,7 +28,9 @@ import {
 } from '@/components/ui/dialog'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { APIKeyRevealDialog } from '@/components/integrations/APIKeyRevealDialog'
+import { EditIntegrationDialog } from '@/components/integrations/EditIntegrationDialog'
 import { ProxyConsole } from '@/components/integrations/ProxyConsole'
+import { ScopePicker } from '@/components/integrations/ScopePicker'
 import {
   listIntegrations,
   registerIntegration,
@@ -35,7 +38,6 @@ import {
   updateIntegration,
   deleteIntegration,
 } from '@/lib/integrations'
-import { ALL_SCOPES } from '@/lib/types'
 import type { Integration, IntegrationHealth } from '@/lib/types'
 
 const HEALTH_VARIANT: Record<
@@ -51,6 +53,7 @@ const HEALTH_VARIANT: Record<
 export function IntegrationsPage() {
   const qc = useQueryClient()
   const [createOpen, setCreateOpen] = useState(false)
+  const [editing, setEditing] = useState<Integration | null>(null)
   const [revealKey, setRevealKey] = useState<string | null>(null)
   const [revealTitle, setRevealTitle] = useState<string>('API key issued')
 
@@ -133,14 +136,21 @@ export function IntegrationsPage() {
                 <IntegrationCard
                   key={i.id}
                   integration={i}
-                  onRotate={() =>
+                  onEdit={() => setEditing(i)}
+                  onRotate={() => {
+                    if (
+                      !window.confirm(
+                        `Rotate the API key for "${i.name}"? The current key will stop working immediately.`,
+                      )
+                    )
+                      return
                     rotateIntegrationKey(i.id)
                       .then((res) => {
                         qc.invalidateQueries({ queryKey: ['integrations'] })
                         onRotated(res.api_key)
                       })
                       .catch((err: Error) => toast.error(err.message))
-                  }
+                  }}
                   onToggle={(enabled) =>
                     updateIntegration(i.id, { enabled })
                       .then(() =>
@@ -187,17 +197,27 @@ export function IntegrationsPage() {
         title={revealTitle}
         onClose={() => setRevealKey(null)}
       />
+
+      <EditIntegrationDialog
+        open={editing !== null}
+        integration={editing}
+        onOpenChange={(v) => {
+          if (!v) setEditing(null)
+        }}
+      />
     </div>
   )
 }
 
 function IntegrationCard({
   integration: i,
+  onEdit,
   onRotate,
   onToggle,
   onDelete,
 }: {
   integration: Integration
+  onEdit: () => void
   onRotate: () => void
   onToggle: (enabled: boolean) => void
   onDelete: () => void
@@ -212,17 +232,32 @@ function IntegrationCard({
             <Badge variant="outline" className="font-mono normal-case">
               {i.id}
             </Badge>
-            <Badge variant={HEALTH_VARIANT[i.health_status]}>
-              {i.health_status}
-            </Badge>
+            {i.base_url ? (
+              <Badge variant={HEALTH_VARIANT[i.health_status]}>
+                {i.health_status}
+              </Badge>
+            ) : (
+              <Badge
+                variant="muted"
+                title="Consumer-only integration — no HTTP service to probe"
+              >
+                consumer
+              </Badge>
+            )}
             {!i.enabled && <Badge variant="muted">disabled</Badge>}
           </div>
-          <div className="text-[11px] text-muted-foreground/80 font-mono mt-1 flex items-center gap-1.5 flex-wrap">
-            <ExternalLink className="size-3 shrink-0" />
-            <span className="truncate">{i.base_url}</span>
-            <span>·</span>
-            <span>/proxy/{i.route_prefix}/*</span>
-          </div>
+          {i.base_url ? (
+            <div className="text-[11px] text-muted-foreground/80 font-mono mt-1 flex items-center gap-1.5 flex-wrap">
+              <ExternalLink className="size-3 shrink-0" />
+              <span className="truncate">{i.base_url}</span>
+              <span>·</span>
+              <span>/proxy/{i.route_prefix}/*</span>
+            </div>
+          ) : (
+            <div className="text-[11px] text-muted-foreground/60 mt-1">
+              Consumes opendray's API. No reverse proxy mounted.
+            </div>
+          )}
           <div className="text-[11px] text-muted-foreground/70 mt-1.5 flex flex-wrap gap-1">
             {i.scopes.map((s) => (
               <Badge key={s} variant="outline" className="normal-case font-mono">
@@ -230,19 +265,30 @@ function IntegrationCard({
               </Badge>
             ))}
           </div>
-          {i.health_last_seen && (
+          {(i.health_last_seen || i.rotated_at) && (
             <div className="text-[10px] text-muted-foreground/60 font-mono mt-1.5">
-              last probed {formatDistanceToNow(new Date(i.health_last_seen), { addSuffix: true })}
+              {i.health_last_seen && i.base_url && (
+                <>last probed {formatDistanceToNow(new Date(i.health_last_seen), { addSuffix: true })}</>
+              )}
+              {i.health_last_seen && i.base_url && i.rotated_at && ' · '}
               {i.rotated_at && (
-                <>
-                  {' '}· rotated {formatDistanceToNow(new Date(i.rotated_at), { addSuffix: true })}
-                </>
+                <>rotated {formatDistanceToNow(new Date(i.rotated_at), { addSuffix: true })}</>
               )}
             </div>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Switch checked={i.enabled} onCheckedChange={onToggle} />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onEdit}
+            aria-label="Edit integration"
+            title="Edit scopes / base URL / version"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Pencil className="size-3.5" />
+          </Button>
           <Button variant="outline" size="sm" onClick={onRotate}>
             <RotateCw className="size-3.5" />
             Rotate key
@@ -305,23 +351,23 @@ function RegisterDialog({
   const submit = (e: FormEvent) => {
     e.preventDefault()
     setError(null)
-    if (!name.trim() || !baseURL.trim() || !routePrefix.trim()) {
-      setError('name, base_url, and route_prefix are required.')
+    if (!name.trim()) {
+      setError('Name is required.')
+      return
+    }
+    const url = baseURL.trim()
+    const prefix = routePrefix.trim()
+    if ((url && !prefix) || (!url && prefix)) {
+      setError('base_url and route_prefix go together. Set both for a reverse-proxy integration, leave both blank for a consumer-only integration.')
       return
     }
     register.mutate({
       name: name.trim(),
-      base_url: baseURL.trim(),
-      route_prefix: routePrefix.trim(),
+      base_url: url,
+      route_prefix: prefix,
       scopes,
       version: version.trim() || undefined,
     })
-  }
-
-  const toggleScope = (s: string) => {
-    setScopes((prev) =>
-      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
-    )
   }
 
   return (
@@ -352,25 +398,33 @@ function RegisterDialog({
               autoFocus
             />
           </div>
+          <div className="rounded-md border border-border/60 bg-muted/10 p-3 text-[11px] text-muted-foreground leading-snug">
+            Leave the next two fields blank for a <strong>consumer-only</strong>
+            {' '}integration (third-party app that calls opendray's API but
+            doesn't expose its own service). Fill both for a
+            <strong> reverse-proxy</strong> integration.
+          </div>
           <div className="space-y-1.5">
-            <Label htmlFor="base_url">Base URL</Label>
+            <Label htmlFor="base_url">
+              Base URL <span className="text-muted-foreground/60">(optional)</span>
+            </Label>
             <Input
               id="base_url"
               value={baseURL}
               onChange={(e) => setBaseURL(e.target.value)}
               placeholder="http://192.168.3.42:8080"
-              required
               className="font-mono"
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="route_prefix">Route prefix</Label>
+            <Label htmlFor="route_prefix">
+              Route prefix <span className="text-muted-foreground/60">(optional)</span>
+            </Label>
             <Input
               id="route_prefix"
               value={routePrefix}
               onChange={(e) => setRoutePrefix(e.target.value)}
               placeholder="pet-tracker"
-              required
               className="font-mono"
             />
             <p className="text-[11px] text-muted-foreground/80">
@@ -389,22 +443,11 @@ function RegisterDialog({
           </div>
           <div className="space-y-1.5">
             <Label>Scopes</Label>
-            <div className="flex flex-wrap gap-1.5">
-              {ALL_SCOPES.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => toggleScope(s)}
-                  className={`px-2 py-0.5 rounded-md border text-[11px] font-mono transition-colors ${
-                    scopes.includes(s)
-                      ? 'border-accent bg-accent/15 text-foreground'
-                      : 'border-border bg-transparent text-muted-foreground hover:bg-card'
-                  }`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            <ScopePicker
+              selected={scopes}
+              onChange={setScopes}
+              intro="Pick the API surface this integration is allowed to call. Each toggle maps to a Bearer-token claim — opendray rejects requests that touch endpoints outside the granted set."
+            />
           </div>
 
           {error && (

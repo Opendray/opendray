@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -201,6 +202,13 @@ func (s *store) scanRow(row rowScanner) (Integration, error) {
 	_ = json.Unmarshal(scopesRaw, &i.Scopes)
 	if i.Scopes == nil {
 		i.Scopes = []string{}
+	}
+	// Consumer-only integrations were stored with a synthetic
+	// "_consumer_<id>" route prefix to satisfy the UNIQUE NOT NULL
+	// constraint. Blank it on read so callers (UI, demo client)
+	// see "no proxy" cleanly.
+	if strings.HasPrefix(i.RoutePrefix, "_consumer_") {
+		i.RoutePrefix = ""
 	}
 	i.HealthStatus = HealthStatus(healthStatus)
 	if len(healthRaw) > 0 && string(healthRaw) != "null" {

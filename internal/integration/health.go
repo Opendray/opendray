@@ -90,6 +90,10 @@ func (h *HealthChecker) probeFromEvent(ctx context.Context, ev eventbus.Event) {
 	if err != nil {
 		return
 	}
+	// Consumer-only integrations have no HTTP service to probe.
+	if i.BaseURL == "" {
+		return
+	}
 	h.probe(ctx, i)
 }
 
@@ -101,6 +105,12 @@ func (h *HealthChecker) tick(ctx context.Context) {
 	}
 	for _, i := range list {
 		if !i.Enabled {
+			continue
+		}
+		// Consumer-only integrations don't expose an HTTP service
+		// to probe — just keep their existing status (typically
+		// HealthUnknown) and move on.
+		if i.BaseURL == "" {
 			continue
 		}
 		h.probe(ctx, i)

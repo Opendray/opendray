@@ -120,6 +120,7 @@ const GROUP_LABELS: Record<string, string> = {
 	notes: 'Notes',
 	plugins: 'Plugins',
 	settings: 'Settings',
+	consuming: 'Consuming opendray',
 }
 
 export const groups: TutorialGroup[] = (() => {

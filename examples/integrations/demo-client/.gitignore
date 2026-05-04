@@ -1,0 +1,10 @@
+# Local secrets — never commit.
+.env
+.env.local
+.env.*.local
+
+# Persistent demo state (api_key, integration_id). mode 0600.
+.demo-state.json
+
+# Node
+node_modules/

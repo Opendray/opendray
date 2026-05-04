@@ -61,17 +61,27 @@ type RegisterResult struct {
 var defaultScopes = []string{"session:read", "event:subscribe:session.*"}
 
 // Register provisions a new integration row + a one-time API key.
+//
+// Consumer-only integrations (empty base_url + empty route_prefix)
+// are stored with a synthesized internal prefix derived from the
+// new ID — needed because the DB has UNIQUE NOT NULL on
+// route_prefix. This synthetic value never appears in JSON
+// responses (we re-blank it before serialising) so the UI sees a
+// clean "no proxy" state.
 func (s *Service) Register(ctx context.Context, req RegisterRequest) (RegisterResult, error) {
 	if err := validateRegister(req); err != nil {
 		return RegisterResult{}, err
 	}
-	if isReservedPrefix(req.RoutePrefix) {
-		return RegisterResult{}, ErrReservedPrefix
-	}
-	if _, err := s.store.GetByPrefix(ctx, req.RoutePrefix); err == nil {
-		return RegisterResult{}, ErrPrefixTaken
-	} else if !errors.Is(err, ErrNotFound) {
-		return RegisterResult{}, err
+	consumerOnly := req.BaseURL == "" && req.RoutePrefix == ""
+	if !consumerOnly {
+		if isReservedPrefix(req.RoutePrefix) {
+			return RegisterResult{}, ErrReservedPrefix
+		}
+		if _, err := s.store.GetByPrefix(ctx, req.RoutePrefix); err == nil {
+			return RegisterResult{}, ErrPrefixTaken
+		} else if !errors.Is(err, ErrNotFound) {
+			return RegisterResult{}, err
+		}
 	}
 
 	token, hash, err := generateAPIKey()
@@ -79,11 +89,18 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (RegisterRe
 		return RegisterResult{}, err
 	}
 
+	id := newID()
+	storedPrefix := req.RoutePrefix
+	if consumerOnly {
+		// Synthesize a non-collidable prefix; the consumer-only
+		// status is tracked by `BaseURL == ""` everywhere else.
+		storedPrefix = "_consumer_" + id
+	}
 	i := Integration{
-		ID:           newID(),
+		ID:           id,
 		Name:         req.Name,
 		BaseURL:      strings.TrimRight(req.BaseURL, "/"),
-		RoutePrefix:  req.RoutePrefix,
+		RoutePrefix:  storedPrefix,
 		Scopes:       req.Scopes,
 		Version:      req.Version,
 		Enabled:      true,
@@ -257,17 +274,22 @@ func validateRegister(req RegisterRequest) error {
 	if req.Name == "" {
 		return errors.New("name is required")
 	}
-	if req.BaseURL == "" {
-		return errors.New("base_url is required")
+	// base_url + route_prefix are now optional but go together:
+	// either both set (reverse-proxy integration) or both empty
+	// (consumer-only — third-party app that calls opendray's API
+	// but doesn't expose its own service to be proxied).
+	hasURL := req.BaseURL != ""
+	hasPrefix := req.RoutePrefix != ""
+	if hasURL != hasPrefix {
+		return errors.New("base_url and route_prefix must be set together (or both empty for a consumer-only integration)")
 	}
-	if u, err := url.Parse(req.BaseURL); err != nil || u.Scheme == "" || u.Host == "" {
-		return fmt.Errorf("base_url is invalid: %s", req.BaseURL)
-	}
-	if req.RoutePrefix == "" {
-		return errors.New("route_prefix is required")
-	}
-	if strings.ContainsAny(req.RoutePrefix, "/?#") {
-		return fmt.Errorf("route_prefix may not contain /?#")
+	if hasURL {
+		if u, err := url.Parse(req.BaseURL); err != nil || u.Scheme == "" || u.Host == "" {
+			return fmt.Errorf("base_url is invalid: %s", req.BaseURL)
+		}
+		if strings.ContainsAny(req.RoutePrefix, "/?#") {
+			return fmt.Errorf("route_prefix may not contain /?#")
+		}
 	}
 	return nil
 }
