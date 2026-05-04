@@ -404,6 +404,16 @@ func renderSystemdUnit(runUser, homeDir, binPath string) string {
 	//   shutdowns, but recover from crashes.
 	// Environment=HOME/LOGNAME — some subcommands (gh CLI, ssh) look up
 	//   the user via these vars; systemd doesn't set them by default.
+	// Environment=PATH — explicitly include $HOME/.npm-global/bin so the
+	//   in-app OAuth flow (gateway/claude_accounts_oauth.go) and any
+	//   spawned Claude / Codex / Gemini sessions can find the CLI that
+	//   `npm install -g @anthropic-ai/claude-code` puts there. systemd
+	//   defaults PATH to /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/
+	//   bin:/sbin:/bin which DOES NOT include npm-global, so without
+	//   this line every fresh install hits "claude CLI not on PATH" the
+	//   first time the user clicks "Sign in with Claude". The other
+	//   common per-user bin (~/.local/bin) is included for general
+	//   user-installed binaries (pipx, poetry, etc.).
 	// ProtectSystem=full + NoNewPrivileges=true — tighten what a
 	//   compromised opendray process can touch on the host. We still
 	//   need write access to the home dir so config + PG data + logs
@@ -422,6 +432,7 @@ WorkingDirectory=%s
 ExecStart=%s
 Environment=HOME=%s
 Environment=LOGNAME=%s
+Environment=PATH=%s/.npm-global/bin:%s/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
@@ -433,7 +444,7 @@ ReadWritePaths=%s
 
 [Install]
 WantedBy=multi-user.target
-`, runUser, runUser, homeDir, binPath, homeDir, runUser, homeDir)
+`, runUser, runUser, homeDir, binPath, homeDir, runUser, homeDir, homeDir, homeDir)
 }
 
 func renderLaunchdPlist(runUser, homeDir, binPath string) string {
