@@ -102,7 +102,7 @@ class _PluginsV1PageState extends State<PluginsV1Page> {
 
   void _permissions(provider_model.ProviderInfo p) {
     Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => PluginConsentsPage(pluginName: p.provider.name),
+      builder: (_) => PluginConsentsPage(pluginName: p.provider.name, api: _api),
     ));
   }
 
