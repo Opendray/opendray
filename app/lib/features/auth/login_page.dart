@@ -1,3 +1,21 @@
+// V1 login page — two-panel split design from the prototype.
+//
+// Wide viewport (>= 960 px) renders a 50/50 split:
+//   left  — accent-tinted brand panel with OD mark, wordmark, tagline.
+//   right — sign-in form (server URL + username + password + button).
+// Narrow viewport collapses to form-only fullscreen with a small brand
+// strip on top so phone users still see who they're signing in to.
+//
+// Behaviour preserved from the previous LoginPage:
+//   • Username pre-filled from the active server profile.
+//   • Server URL shown with Change action (clears stored URL → router
+//     bounces to /connect).
+//   • Submit hits AuthService.login; on success the router redirect
+//     lands the user at /.
+//
+// Visual: OpendrayTokens for colors / spacing / radii. Inter typography
+// inherits from the global theme.
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -15,11 +33,6 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // Seeded empty — we populate from the active profile in initState so
-  // users who save a username per server never retype it. Falls back to
-  // 'admin' when the active profile has no saved username (fresh
-  // install flow that goes /connect → /login without editing the
-  // profile first).
   final _userCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _passFocus = FocusNode();
@@ -30,14 +43,10 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    // Defer one frame so context.read is legal and the ServerConfig
-    // value listen-less read is safe.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final p = context.read<ServerConfig>().activeProfile;
-      final defaultUser = (p?.username ?? '').isNotEmpty
-          ? p!.username
-          : 'admin';
+      final defaultUser = (p?.username ?? '').isNotEmpty ? p!.username : 'admin';
       _userCtrl.text = defaultUser;
     });
   }
@@ -50,35 +59,24 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  /// Clears the saved server URL so the router redirect sends us to
-  /// /connect. Used for switching between multiple OpenDray instances —
-  /// previously the URL was locked in read-only display and the only
-  /// out was uninstalling the app.
   Future<void> _changeServer() async {
-    // Confirm before discarding — users who tapped the label by mistake
-    // shouldn't lose their config just for that.
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(context.tr('Change server?')),
         content: Text(context.tr(
-            'You\'ll be asked for a new server URL. Your saved token for this server stays on device — switching back restores it.')),
+            "You'll be asked for a new server URL. Your saved token for this server stays on device — switching back restores it.")),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: Text(context.tr('Cancel'))),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
               child: Text(context.tr('Change'))),
         ],
       ),
     );
     if (ok != true || !mounted) return;
-
-    // Drop the URL — ServerConfig.setUrl('') flips isConfigured to false
-    // and fires notifyListeners. The router's refreshListenable re-runs
-    // redirect, sees !isConfigured, sends us to /connect.
     await context.read<ServerConfig>().setUrl('');
   }
 
@@ -90,7 +88,10 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _error = context.tr('Enter username and password'));
       return;
     }
-    setState(() { _submitting = true; _error = null; });
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
     final cfg = context.read<ServerConfig>();
     final auth = context.read<AuthService>();
     final err = await auth.login(
@@ -103,188 +104,369 @@ class _LoginPageState extends State<LoginPage> {
       _submitting = false;
       _error = err;
     });
-    // On success, persist the username into the active profile so the
-    // next login prompt is one field lighter. Password is NOT saved
-    // here — "Remember password" is an explicit opt-in from the
-    // profile editor, not a side-effect of a successful login.
     if (err == null) {
       final active = cfg.activeProfile;
       if (active != null && active.username != user) {
         unawaited(cfg.updateProfile(active.id, username: user));
       }
     }
-    // On success the router's redirect picks up the AuthService change and
-    // moves us to '/'. No manual navigation needed.
   }
 
   @override
   Widget build(BuildContext context) {
-    final cfg = context.watch<ServerConfig>();
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
     return Scaffold(
-      body: SafeArea(
-        child: Center(
+      backgroundColor: t.bg,
+      body: LayoutBuilder(builder: (ctx, c) {
+        final wide = c.maxWidth >= 960;
+        if (wide) {
+          return Row(
+            children: [
+              Expanded(child: _BrandPanel()),
+              Container(width: 1, color: t.border),
+              Expanded(child: _FormPanel(state: this)),
+            ],
+          );
+        }
+        // Narrow — single column. Small brand strip above the form.
+        return SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(32),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 380),
+              constraints: const BoxConstraints(maxWidth: 480),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo
-                  Center(
-                    child: Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: AppColors.accent,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(Icons.lock_outline,
-                          color: Colors.white, size: 34),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(context.tr('Sign in to OpenDray'),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 10),
-                  // Server URL row — tapping "Change" clears the stored URL
-                  // so the router kicks us back to /connect. This is the
-                  // only way to switch between multiple OpenDray instances
-                  // once a URL has been saved; see also the router redirect
-                  // which otherwise force-bounces /connect → / when a URL
-                  // is set.
-                  _ServerUrlRow(
-                    url: cfg.effectiveUrl,
-                    onChange: _submitting ? null : _changeServer,
-                  ),
-                  const SizedBox(height: 20),
-
-                  TextField(
-                    controller: _userCtrl,
-                    enabled: !_submitting,
-                    textInputAction: TextInputAction.next,
-                    onSubmitted: (_) => _passFocus.requestFocus(),
-                    decoration: InputDecoration(
-                      labelText: context.tr('Username'),
-                      prefixIcon: const Icon(Icons.person_outline, size: 20),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _passCtrl,
-                    focusNode: _passFocus,
-                    enabled: !_submitting,
-                    obscureText: _obscure,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => _submit(),
-                    decoration: InputDecoration(
-                      labelText: context.tr('Password'),
-                      prefixIcon: const Icon(Icons.key_outlined, size: 20),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscure
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          size: 18,
-                        ),
-                        onPressed: () => setState(() => _obscure = !_obscure),
-                      ),
-                    ),
-                  ),
-
-                  if (_error != null) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.errorSoft,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(children: [
-                        const Icon(Icons.error_outline,
-                            size: 16, color: AppColors.error),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(_error!,
-                              style: const TextStyle(
-                                  color: AppColors.error, fontSize: 12)),
-                        ),
-                      ]),
-                    ),
-                  ],
-
-                  const SizedBox(height: 18),
-                  FilledButton(
-                    onPressed: _submitting ? null : _submit,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.accent,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: _submitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(context.tr('Sign in')),
-                  ),
+                  _BrandStripCompact(),
+                  _FormPanel(state: this),
                 ],
               ),
             ),
           ),
+        );
+      }),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Left panel — brand
+// -----------------------------------------------------------------------------
+
+class _BrandPanel extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
+    final theme = Theme.of(context);
+    return Container(
+      color: t.surface,
+      padding: EdgeInsets.all(t.sp10),
+      child: Stack(
+        children: [
+          // Subtle radial accent in the background to give the panel
+          // a sense of depth without adding an asset dependency.
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(-0.4, -0.6),
+                  radius: 1.2,
+                  colors: [
+                    t.accent.withValues(alpha: 0.18),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: t.accent,
+                      borderRadius: BorderRadius.circular(t.rSm),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text('OD',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                            letterSpacing: 0.5)),
+                  ),
+                  SizedBox(width: t.sp3),
+                  Text('Opendray',
+                      style: theme.textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w700, fontSize: 18)),
+                ],
+              ),
+              const Spacer(),
+              Text(
+                  'Run AI coding agents on your hardware.\nReach them from any device.',
+                  style: theme.textTheme.displaySmall
+                      ?.copyWith(fontSize: 26, height: 1.3)),
+              SizedBox(height: t.sp4),
+              Text(
+                  'Self-hosted cockpit for Claude Code, Codex, Gemini and OpenCode. Pair sessions with Telegram for control on the go. Plugin platform extends every workspace.',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                      color: t.textMuted, height: 1.55, fontSize: 14)),
+              SizedBox(height: t.sp6),
+              Container(
+                padding: EdgeInsets.all(t.sp4),
+                decoration: BoxDecoration(
+                  color: t.surface2,
+                  borderRadius: BorderRadius.circular(t.rLg),
+                  border: Border.all(color: t.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                        '"Our staff engineers don\'t sit at their desks anymore — they ship from their phones. Opendray became the way we run Claude Code."',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                            color: t.text,
+                            fontStyle: FontStyle.italic,
+                            height: 1.5)),
+                    SizedBox(height: t.sp3),
+                    Text('— Platform team, early access',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: t.textSubtle, fontSize: 11)),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              Row(
+                children: [
+                  Container(
+                    width: 6, height: 6,
+                    decoration: BoxDecoration(
+                        color: t.success, shape: BoxShape.circle),
+                  ),
+                  SizedBox(width: t.sp2),
+                  Text('All systems operational',
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: t.textMuted, fontSize: 11)),
+                  const Spacer(),
+                  Text('opendray.com',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: t.textSubtle, fontSize: 11)),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Compact brand strip for narrow viewports — header above the form.
+class _BrandStripCompact extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(t.sp5, t.sp6, t.sp5, t.sp4),
+      child: Row(
+        children: [
+          Container(
+            width: 32, height: 32,
+            decoration: BoxDecoration(
+              color: t.accent,
+              borderRadius: BorderRadius.circular(t.rSm),
+            ),
+            alignment: Alignment.center,
+            child: const Text('OD',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12)),
+          ),
+          SizedBox(width: t.sp3),
+          Text('Opendray',
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w700, fontSize: 16)),
+        ],
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Right panel — sign-in form
+// -----------------------------------------------------------------------------
+
+class _FormPanel extends StatelessWidget {
+  final _LoginPageState state;
+  const _FormPanel({required this.state});
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
+    final theme = Theme.of(context);
+    final cfg = context.watch<ServerConfig>();
+    return Container(
+      color: t.bg,
+      padding: EdgeInsets.all(t.sp8),
+      alignment: Alignment.center,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 380),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Sign in to Opendray',
+                style: theme.textTheme.displaySmall?.copyWith(fontSize: 24)),
+            SizedBox(height: t.sp2),
+            Text(
+                'Use the admin account that was set up when this server was first installed.',
+                style: theme.textTheme.bodyMedium?.copyWith(color: t.textMuted)),
+            SizedBox(height: t.sp5),
+            _ServerUrlRow(
+              url: cfg.effectiveUrl,
+              onChange: state._submitting ? null : state._changeServer,
+            ),
+            SizedBox(height: t.sp4),
+            _Label(text: 'Username'),
+            SizedBox(height: t.sp1),
+            TextField(
+              controller: state._userCtrl,
+              enabled: !state._submitting,
+              textInputAction: TextInputAction.next,
+              autofocus: false,
+              onSubmitted: (_) => state._passFocus.requestFocus(),
+              decoration: const InputDecoration(
+                hintText: 'admin',
+                prefixIcon: Icon(Icons.person_outline, size: 16),
+              ),
+            ),
+            SizedBox(height: t.sp3),
+            _Label(text: 'Password'),
+            SizedBox(height: t.sp1),
+            TextField(
+              controller: state._passCtrl,
+              focusNode: state._passFocus,
+              enabled: !state._submitting,
+              obscureText: state._obscure,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => state._submit(),
+              decoration: InputDecoration(
+                hintText: '••••••••',
+                prefixIcon: const Icon(Icons.lock_outline, size: 16),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                      state._obscure
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      size: 16),
+                  onPressed: () => state.setState(() => state._obscure = !state._obscure),
+                ),
+              ),
+            ),
+            if (state._error != null) ...[
+              SizedBox(height: t.sp3),
+              Container(
+                padding: EdgeInsets.all(t.sp3),
+                decoration: BoxDecoration(
+                  color: t.dangerSoft,
+                  borderRadius: BorderRadius.circular(t.rMd),
+                  border: Border.all(color: t.danger.withValues(alpha: 0.4)),
+                ),
+                child: Row(children: [
+                  Icon(Icons.error_outline, size: 14, color: t.danger),
+                  SizedBox(width: t.sp2),
+                  Expanded(
+                      child: Text(state._error!,
+                          style: TextStyle(color: t.danger, fontSize: 12))),
+                ]),
+              ),
+            ],
+            SizedBox(height: t.sp4),
+            SizedBox(
+              height: 44,
+              child: FilledButton(
+                onPressed: state._submitting ? null : state._submit,
+                style: FilledButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(t.rMd)),
+                ),
+                child: state._submitting
+                    ? const SizedBox(
+                        width: 16, height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Text('Sign in',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
+              ),
+            ),
+            SizedBox(height: t.sp4),
+            Center(
+              child: Text(
+                'Don\'t have a server yet? Run install.sh on your VPS or LXC.',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: t.textSubtle, fontSize: 11),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// Compact display of the current server URL with a "Change" action.
-/// Shown on the login page so users can switch between multiple
-/// OpenDray deployments without reinstalling the app.
+class _Label extends StatelessWidget {
+  final String text;
+  const _Label({required this.text});
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
+    return Text(text,
+        style: TextStyle(
+            fontSize: 11,
+            color: t.textMuted,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.4));
+  }
+}
+
 class _ServerUrlRow extends StatelessWidget {
   final String url;
   final VoidCallback? onChange;
   const _ServerUrlRow({required this.url, required this.onChange});
-
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: t.sp3, vertical: t.sp2),
       decoration: BoxDecoration(
-        color: AppColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border),
+        color: t.surface,
+        borderRadius: BorderRadius.circular(t.rMd),
+        border: Border.all(color: t.border),
       ),
       child: Row(
         children: [
-          const Icon(Icons.dns_outlined, size: 16, color: AppColors.textMuted),
-          const SizedBox(width: 8),
+          Icon(Icons.dns_outlined, size: 14, color: t.textMuted),
+          SizedBox(width: t.sp2),
           Expanded(
             child: Text(
               url.isEmpty ? context.tr('No server configured') : url,
-              style: const TextStyle(
-                fontSize: 12,
-                fontFamily: 'monospace',
-                color: AppColors.text,
-              ),
+              style: TextStyle(
+                  fontSize: 11, fontFamily: 'monospace', color: t.text),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
           TextButton.icon(
             onPressed: onChange,
-            icon: const Icon(Icons.swap_horiz, size: 16),
-            label: Text(context.tr('Change')),
+            icon: const Icon(Icons.swap_horiz, size: 14),
+            label: Text(context.tr('Change'),
+                style: const TextStyle(fontSize: 11)),
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.accent,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              minimumSize: const Size(0, 32),
+              padding: EdgeInsets.symmetric(horizontal: t.sp2),
+              minimumSize: const Size(0, 28),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
           ),
