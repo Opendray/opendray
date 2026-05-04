@@ -32,6 +32,8 @@ import '../../core/models/provider.dart' as provider_model;
 import '../../core/services/l10n.dart';
 import '../../shared/providers_bus.dart';
 import '../../shared/theme/app_theme.dart';
+import '../settings/plugin_consents_page.dart';
+import 'plugin_configure_page.dart';
 import 'plugin_run_page.dart';
 
 class PluginsV1Page extends StatefulWidget {
@@ -85,6 +87,55 @@ class _PluginsV1PageState extends State<PluginsV1Page> {
       ProvidersBus.instance.notify();
     } catch (e) {
       _toast('Toggle failed: $e', isError: true);
+    }
+  }
+
+  void _configure(provider_model.ProviderInfo p) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => PluginConfigurePage(
+        pluginName: p.provider.name,
+        displayName: context.pickL10n(
+            p.provider.displayName, p.provider.displayNameZh),
+      ),
+    ));
+  }
+
+  void _permissions(provider_model.ProviderInfo p) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => PluginConsentsPage(pluginName: p.provider.name),
+    ));
+  }
+
+  Future<void> _uninstall(provider_model.ProviderInfo p) async {
+    if (p.provider.required) {
+      _toast('${p.provider.displayName} is required and cannot be uninstalled.',
+          isError: true);
+      return;
+    }
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Uninstall ${p.provider.displayName}?'),
+        content: const Text(
+            'Removes the plugin and its stored configuration. You can reinstall it later from the marketplace.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Uninstall')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _api.deleteProvider(p.provider.name);
+      ProvidersBus.instance.notify();
+      _toast('${p.provider.displayName} uninstalled');
+    } catch (e) {
+      _toast('Uninstall failed: $e', isError: true);
     }
   }
 
@@ -206,6 +257,9 @@ class _PluginsV1PageState extends State<PluginsV1Page> {
                   items: panels,
                   onOpen: _open,
                   onToggle: _toggle,
+                  onConfigure: _configure,
+                  onPermissions: _permissions,
+                  onUninstall: _uninstall,
                 ),
                 SizedBox(height: t.sp6),
               ],
@@ -222,6 +276,9 @@ class _PluginsV1PageState extends State<PluginsV1Page> {
                   items: background,
                   onOpen: _open,
                   onToggle: _toggle,
+                  onConfigure: _configure,
+                  onPermissions: _permissions,
+                  onUninstall: _uninstall,
                 ),
                 SizedBox(height: t.sp6),
               ],
@@ -433,8 +490,17 @@ class _PluginGrid extends StatelessWidget {
   final List<provider_model.ProviderInfo> items;
   final void Function(provider_model.ProviderInfo) onOpen;
   final void Function(provider_model.ProviderInfo, bool) onToggle;
-  const _PluginGrid(
-      {required this.items, required this.onOpen, required this.onToggle});
+  final void Function(provider_model.ProviderInfo) onConfigure;
+  final void Function(provider_model.ProviderInfo) onPermissions;
+  final void Function(provider_model.ProviderInfo) onUninstall;
+  const _PluginGrid({
+    required this.items,
+    required this.onOpen,
+    required this.onToggle,
+    required this.onConfigure,
+    required this.onPermissions,
+    required this.onUninstall,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -449,7 +515,16 @@ class _PluginGrid extends StatelessWidget {
         crossAxisSpacing: t.sp3,
         mainAxisSpacing: t.sp3,
         childAspectRatio: cols == 1 ? 4.5 : 2.4,
-        children: items.map((p) => _PluginCard(item: p, onOpen: onOpen, onToggle: onToggle)).toList(),
+        children: items
+            .map((p) => _PluginCard(
+                  item: p,
+                  onOpen: onOpen,
+                  onToggle: onToggle,
+                  onConfigure: onConfigure,
+                  onPermissions: onPermissions,
+                  onUninstall: onUninstall,
+                ))
+            .toList(),
       );
     });
   }
@@ -459,8 +534,17 @@ class _PluginCard extends StatelessWidget {
   final provider_model.ProviderInfo item;
   final void Function(provider_model.ProviderInfo) onOpen;
   final void Function(provider_model.ProviderInfo, bool) onToggle;
-  const _PluginCard(
-      {required this.item, required this.onOpen, required this.onToggle});
+  final void Function(provider_model.ProviderInfo) onConfigure;
+  final void Function(provider_model.ProviderInfo) onPermissions;
+  final void Function(provider_model.ProviderInfo) onUninstall;
+  const _PluginCard({
+    required this.item,
+    required this.onOpen,
+    required this.onToggle,
+    required this.onConfigure,
+    required this.onPermissions,
+    required this.onUninstall,
+  });
 
   bool get _isOpenable {
     final p = item.provider;
@@ -534,8 +618,60 @@ class _PluginCard extends StatelessWidget {
                     scale: 0.7,
                     child: Switch(
                       value: item.enabled,
-                      onChanged: (v) => onToggle(item, v),
+                      onChanged:
+                          item.provider.required ? null : (v) => onToggle(item, v),
                     ),
+                  ),
+                  PopupMenuButton<String>(
+                    tooltip: 'Plugin actions',
+                    icon: Icon(Icons.more_vert, size: 16, color: t.textMuted),
+                    splashRadius: 16,
+                    padding: EdgeInsets.zero,
+                    iconSize: 16,
+                    constraints:
+                        const BoxConstraints(minWidth: 32, minHeight: 32),
+                    onSelected: (v) {
+                      switch (v) {
+                        case 'configure':
+                          onConfigure(item);
+                          break;
+                        case 'permissions':
+                          onPermissions(item);
+                          break;
+                        case 'uninstall':
+                          onUninstall(item);
+                          break;
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      if (item.provider.configSchema.isNotEmpty)
+                        const PopupMenuItem(
+                            value: 'configure',
+                            child: ListTile(
+                                dense: true,
+                                contentPadding: EdgeInsets.zero,
+                                leading: Icon(Icons.tune, size: 16),
+                                title: Text('Configure'))),
+                      const PopupMenuItem(
+                          value: 'permissions',
+                          child: ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              leading: Icon(Icons.lock_outline, size: 16),
+                              title: Text('Permissions'))),
+                      if (!item.provider.required) const PopupMenuDivider(),
+                      if (!item.provider.required)
+                        const PopupMenuItem(
+                            value: 'uninstall',
+                            child: ListTile(
+                                dense: true,
+                                contentPadding: EdgeInsets.zero,
+                                leading: Icon(Icons.delete_outline,
+                                    size: 16, color: Colors.redAccent),
+                                title: Text('Uninstall',
+                                    style:
+                                        TextStyle(color: Colors.redAccent)))),
+                    ],
                   ),
                 ],
               ),
