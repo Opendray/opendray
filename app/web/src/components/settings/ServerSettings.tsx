@@ -674,7 +674,7 @@ function SectionForm({
             {visible('Store', 'Vector store backend') && (
               <FieldRow
                 label="Store"
-                hint='"pgvector" reuses opendray\'s existing PG with the vector extension; only option in v1.'
+                hint={`"pgvector" reuses opendray's existing PG with the vector extension; only option in v1.`}
                 tomlKey="memory.store"
               >
                 <SegmentedSelect
@@ -738,7 +738,7 @@ function SectionForm({
             {visible('Default scope', 'Where new memories land') && (
               <FieldRow
                 label="Default scope"
-                hint='What memory_store uses when the agent doesn\'t specify. "project" (recommended) groups by cwd; "session" isolates per session; "global" shares across cwds.'
+                hint={`What memory_store uses when the agent doesn't specify. "project" (recommended) groups by cwd; "session" isolates per session; "global" shares across cwds.`}
                 tomlKey="memory.scope.default"
               >
                 <SegmentedSelect
