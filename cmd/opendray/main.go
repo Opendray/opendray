@@ -7,6 +7,7 @@
 //	opendray notes   <subcommand> ... operate on the file-system notes vault (no gateway needed)
 //	opendray skill   <subcommand> ... inspect / load agent skills (no gateway needed)
 //	opendray mcp     <subcommand> ... inspect MCP server registry (no gateway needed)
+//	opendray mcp-memory               stdio MCP server bridging agents to opendray memory (run by Claude/Codex/etc.)
 //	opendray version                  print build info and exit
 package main
 
@@ -44,6 +45,8 @@ func main() {
 		os.Exit(runSkill(args))
 	case "mcp":
 		os.Exit(runMcp(args))
+	case "mcp-memory":
+		os.Exit(runMcpMemory(args))
 	case "version":
 		fmt.Printf("opendray %s (%s, %s)\n", version.Version, version.Commit, version.Date)
 	case "-h", "--help", "help":
@@ -90,5 +93,6 @@ usage:
   opendray notes   <subcommand> [args]   (run "opendray notes --help" for details)
   opendray skill   <subcommand> [args]   (run "opendray skill --help" for details)
   opendray mcp     <subcommand> [args]   (run "opendray mcp --help" for details)
+  opendray mcp-memory                     (stdio MCP server — invoked by an agent CLI, not by humans)
   opendray version`)
 }
