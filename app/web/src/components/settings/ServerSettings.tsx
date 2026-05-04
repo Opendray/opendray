@@ -26,6 +26,7 @@ import {
 import { cn } from '@/lib/utils'
 
 import { LogViewer } from './LogViewer'
+import { MemoryInspector } from './MemoryInspector'
 import { PathInput } from './PathInput'
 
 // SECTIONS describe every server-settings panel rendered to the right
@@ -37,6 +38,7 @@ export const SERVER_SECTIONS = [
   { id: 'sessions', title: 'Sessions', desc: 'Idle detection thresholds.' },
   { id: 'vault', title: 'Vault', desc: 'Notes, skills, and git-versioned root.' },
   { id: 'mcp', title: 'MCP registry', desc: 'Server registry + secrets.' },
+  { id: 'memory', title: 'Memory', desc: 'Cross-CLI persistent memory subsystem.' },
   { id: 'claude', title: 'Storage · Claude', desc: 'Where Claude transcripts live on disk.' },
   { id: 'codex', title: 'Storage · Codex', desc: 'Codex sessions root.' },
   { id: 'gemini', title: 'Storage · Gemini', desc: 'Gemini per-project tmp + projects.json.' },
@@ -52,6 +54,7 @@ const RESTART_REQUIRED_SECTIONS: Record<ServerSectionId, boolean> = {
   sessions: true,
   vault: true,
   mcp: true,
+  memory: true, // backend / store wiring is read once at app.New
   claude: false, // history paths are read on each request, no restart needed
   codex: false,
   gemini: false,
@@ -638,6 +641,202 @@ function SectionForm({
         </FormGrid>
       )
 
+    case 'memory':
+      return (
+        <div className="flex flex-col gap-8">
+          <FormGroup heading="Configuration">
+            {visible('Backend', 'Embedder choice') && (
+              <FieldRow
+                label="Embedder backend"
+                hint='"auto" picks BM25 today, swaps to ONNX (bge-m3) once that ships in phase 2. "bm25" = pure-Go keyword-only fallback. "http" = OpenAI-compatible /v1/embeddings endpoint.'
+                tomlKey="memory.backend"
+              >
+                <SegmentedSelect
+                  value={c.memory.backend || 'auto'}
+                  options={[
+                    { value: 'auto', label: 'auto' },
+                    { value: 'bm25', label: 'bm25' },
+                    { value: 'http', label: 'http' },
+                  ]}
+                  onChange={(v) =>
+                    setDraft({ ...draft, memory: { ...c.memory, backend: v } })
+                  }
+                />
+              </FieldRow>
+            )}
+            {visible('Store', 'Vector store backend') && (
+              <FieldRow
+                label="Store"
+                hint='"pgvector" reuses opendray\'s existing PG with the vector extension; only option in v1.'
+                tomlKey="memory.store"
+              >
+                <SegmentedSelect
+                  value={c.memory.store || 'pgvector'}
+                  options={[{ value: 'pgvector', label: 'pgvector' }]}
+                  onChange={(v) =>
+                    setDraft({ ...draft, memory: { ...c.memory, store: v } })
+                  }
+                />
+              </FieldRow>
+            )}
+            {visible('Top K', 'Default search result count') && (
+              <FieldRow
+                label="Default top-K"
+                hint="How many hits memory_search returns when the agent doesn't specify. Empty = 5."
+                tomlKey="memory.default_top_k"
+              >
+                <Input
+                  type="number"
+                  value={c.memory.default_top_k || ''}
+                  onChange={(e) =>
+                    setDraft({
+                      ...draft,
+                      memory: {
+                        ...c.memory,
+                        default_top_k: parseInt(e.target.value || '0', 10),
+                      },
+                    })
+                  }
+                  placeholder="5"
+                  className="h-9 font-mono w-24"
+                />
+              </FieldRow>
+            )}
+            {visible('Threshold', 'Cosine similarity floor') && (
+              <FieldRow
+                label="Similarity threshold"
+                hint="Hits below this score are dropped. Empty = 0.1 (permissive — BM25 sparse vectors rarely break 0.5)."
+                tomlKey="memory.similarity_threshold"
+              >
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="-1"
+                  max="1"
+                  value={c.memory.similarity_threshold || ''}
+                  onChange={(e) =>
+                    setDraft({
+                      ...draft,
+                      memory: {
+                        ...c.memory,
+                        similarity_threshold: parseFloat(e.target.value || '0'),
+                      },
+                    })
+                  }
+                  placeholder="0.1"
+                  className="h-9 font-mono w-28"
+                />
+              </FieldRow>
+            )}
+            {visible('Default scope', 'Where new memories land') && (
+              <FieldRow
+                label="Default scope"
+                hint='What memory_store uses when the agent doesn\'t specify. "project" (recommended) groups by cwd; "session" isolates per session; "global" shares across cwds.'
+                tomlKey="memory.scope.default"
+              >
+                <SegmentedSelect
+                  value={c.memory.scope.default || 'project'}
+                  options={[
+                    { value: 'project', label: 'project' },
+                    { value: 'session', label: 'session' },
+                    { value: 'global', label: 'global' },
+                  ]}
+                  onChange={(v) =>
+                    setDraft({
+                      ...draft,
+                      memory: {
+                        ...c.memory,
+                        scope: { ...c.memory.scope, default: v },
+                      },
+                    })
+                  }
+                />
+              </FieldRow>
+            )}
+          </FormGroup>
+
+          <FormGroup heading="HTTP backend (used when backend=http)">
+            {visible('Base URL', 'OpenAI-compatible /v1/embeddings') && (
+              <FieldRow
+                label="Base URL"
+                hint='e.g. "http://localhost:11434/v1" for ollama, "https://api.openai.com/v1" for OpenAI.'
+                tomlKey="memory.http.base_url"
+              >
+                <Input
+                  value={c.memory.http.base_url}
+                  onChange={(e) =>
+                    setDraft({
+                      ...draft,
+                      memory: {
+                        ...c.memory,
+                        http: { ...c.memory.http, base_url: e.target.value },
+                      },
+                    })
+                  }
+                  placeholder="http://localhost:11434/v1"
+                  className="h-9 font-mono"
+                />
+              </FieldRow>
+            )}
+            {visible('Model', 'Embedding model name') && (
+              <FieldRow
+                label="Model"
+                hint='e.g. "nomic-embed-text" for ollama, "text-embedding-3-small" for OpenAI.'
+                tomlKey="memory.http.model"
+              >
+                <Input
+                  value={c.memory.http.model}
+                  onChange={(e) =>
+                    setDraft({
+                      ...draft,
+                      memory: {
+                        ...c.memory,
+                        http: { ...c.memory.http, model: e.target.value },
+                      },
+                    })
+                  }
+                  placeholder="nomic-embed-text"
+                  className="h-9 font-mono"
+                />
+              </FieldRow>
+            )}
+            {visible('API key', 'Bearer for the HTTP backend') && (
+              <FieldRow
+                label="API key"
+                hint="Empty for ollama / local servers. Required for OpenAI / Voyage / hosted services."
+                tomlKey="memory.http.api_key"
+              >
+                <Input
+                  type="password"
+                  value={c.memory.http.api_key}
+                  onChange={(e) =>
+                    setDraft({
+                      ...draft,
+                      memory: {
+                        ...c.memory,
+                        http: { ...c.memory.http, api_key: e.target.value },
+                      },
+                    })
+                  }
+                  placeholder="sk-…"
+                  className="h-9 font-mono"
+                />
+              </FieldRow>
+            )}
+          </FormGroup>
+
+          <div>
+            <div className="flex items-baseline justify-between mb-2">
+              <h3 className="text-[12.5px] font-medium">Inspector</h3>
+              <p className="text-[10px] text-muted-foreground/70">
+                Live state of the memory store. Changes here don't require Save.
+              </p>
+            </div>
+            <MemoryInspector />
+          </div>
+        </div>
+      )
+
     case 'claude':
       return (
         <FormGrid>
@@ -1025,6 +1224,9 @@ function mergeSection(
       break
     case 'mcp':
       out.mcp = src.mcp
+      break
+    case 'memory':
+      out.memory = src.memory
       break
     case 'claude':
       out.providers = {

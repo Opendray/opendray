@@ -46,6 +46,24 @@ export interface ServerConfig {
       projects_file: string
     }
   }
+  memory: {
+    backend: string
+    store: string
+    default_top_k: number
+    similarity_threshold: number
+    chromem_path: string
+    local: { model: string }
+    http: {
+      base_url: string
+      model: string
+      api_key: string
+      dimensions: number
+    }
+    scope: {
+      default: string
+      global_readers: string
+    }
+  }
 }
 
 export interface SettingsResponse {
@@ -100,6 +118,16 @@ export function emptyConfig(): ServerConfig {
       claude: { history_roots: [], accounts_dir: '' },
       codex: { sessions_root: '' },
       gemini: { tmp_root: '', projects_file: '' },
+    },
+    memory: {
+      backend: '',
+      store: '',
+      default_top_k: 0,
+      similarity_threshold: 0,
+      chromem_path: '',
+      local: { model: '' },
+      http: { base_url: '', model: '', api_key: '', dimensions: 0 },
+      scope: { default: '', global_readers: '' },
     },
   }
 }
