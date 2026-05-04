@@ -3,6 +3,8 @@ package hub
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -182,8 +184,24 @@ func (h *Hub) Start(ctx context.Context, id string) error {
 
 	// Build final args: provider defaults + session-specific (model, resume, extra)
 	args := resolved.Args
-	if sess.ClaudeSessionID != "" && sess.SessionType == "claude" {
-		args = append(args, "--resume", sess.ClaudeSessionID)
+	if sess.SessionType == "claude" {
+		// Resume an existing conversation when we already have a Claude
+		// session id captured (set on first launch below — see
+		// --session-id branch). Otherwise mint a deterministic UUID,
+		// pass it via --session-id, and persist BEFORE spawn so a crash
+		// during launch still leaves a resumable id in the DB.
+		if sess.ClaudeSessionID != "" {
+			args = append(args, "--resume", sess.ClaudeSessionID)
+		} else {
+			newID := newUUIDv4()
+			args = append(args, "--session-id", newID)
+			if err := h.db.UpdateClaudeSessionID(ctx, sess.ID, newID); err != nil {
+				h.logger.Warn("hub: persist new claude session id failed",
+					"session", sess.ID, "err", err)
+			} else {
+				sess.ClaudeSessionID = newID
+			}
+		}
 	}
 	if sess.Model != "" && sess.SessionType != "terminal" {
 		args = append(args, "--model", sess.Model)
@@ -568,4 +586,27 @@ func readClaudeToken(path string) (string, error) {
 		}
 	}
 	return tok, nil
+}
+
+// newUUIDv4 generates an RFC 4122 v4 UUID using crypto/rand. Used to
+// pre-mint a Claude session id we hand to `claude --session-id <uuid>`
+// at spawn so the conversation can be resumed across restarts via
+// `--resume <uuid>`. Avoids adding a UUID dependency for one call site.
+func newUUIDv4() string {
+	var b [16]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		// crypto/rand on Linux only fails when the kernel's getrandom
+		// syscall is missing — fall back to a time-based fingerprint
+		// so Start doesn't refuse the spawn over an entropy hiccup.
+		t := time.Now().UnixNano()
+		for i := 0; i < 8; i++ {
+			b[i] = byte(t >> (8 * i))
+		}
+	}
+	// RFC 4122 §4.4: set version (4) and variant (10) bits.
+	b[6] = (b[6] & 0x0f) | 0x40
+	b[8] = (b[8] & 0x3f) | 0x80
+	hexs := hex.EncodeToString(b[:])
+	return fmt.Sprintf("%s-%s-%s-%s-%s",
+		hexs[0:8], hexs[8:12], hexs[12:16], hexs[16:20], hexs[20:32])
 }

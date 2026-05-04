@@ -209,6 +209,11 @@ func Defaults() Config {
 		Plugins: Plugins{
 			Dir:                  "./plugins",
 			IdleThresholdSeconds: 8,
+			// Auto-resume Claude sessions whose PID died but whose
+			// ClaudeSessionID was captured at spawn (see hub.Start +
+			// RecoverOnStartup). Without this, every server restart or
+			// Claude CLI crash drops the conversation.
+			AutoResume: true,
 		},
 		PluginsDataDir:    defaultPluginsDataDir,
 		AllowLocalPlugins: false,
