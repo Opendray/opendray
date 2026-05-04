@@ -1,18 +1,34 @@
+// Telegram bridge — guided setup + status panel.
+//
+// Replaces the previous read-only status view with a 3-step wizard for
+// non-technical users. Setup state is derived from the live status snapshot
+// + recent-chats probe, so we stay in sync with the bot reconcile loop:
+//
+//   • Step 1 (Create your bot): visible when no token is configured / bot
+//     can't reach Telegram. Inline BotFather walkthrough + deep link.
+//   • Step 2 (Pick your chat): visible when bot is connected but no
+//     allowedChatIds yet. "Detect" probes /api/telegram/recent-chats and
+//     lets the user copy each chat ID with one tap (paste back into the
+//     plugin config form).
+//   • Step 3 (Test + use): visible when fully configured. Status pill,
+//     send-test button, active links, command reference.
+//
+// Plugin config (botToken + allowedChatIds) still lives in Settings →
+// Plugins → Telegram → Configure. We surface the deep link prominently
+// so users don't have to hunt for it.
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/services/l10n.dart';
 import '../../shared/providers_bus.dart';
 import '../../shared/theme/app_theme.dart';
 
-/// Telegram Bridge panel (M1).
-///
-/// Read-only status view: bot connection, last poll, sent/received counters,
-/// allowed chat count, and a "Send test message" button. The bot itself
-/// runs in the Go process — this page just observes and pokes it.
 class TelegramPage extends StatefulWidget {
   const TelegramPage({super.key});
   @override
@@ -22,13 +38,15 @@ class TelegramPage extends StatefulWidget {
 class _TelegramPageState extends State<TelegramPage> {
   Map<String, dynamic>? _status;
   List<Map<String, dynamic>> _links = [];
-  String? _error;
+  List<Map<String, dynamic>> _recentChats = [];
   bool _loading = true;
-  bool _testing = false;
-  String? _testResult;
+  String? _error;
   Timer? _poll;
   StreamSubscription<void>? _providersSub;
   bool _hasPlugin = false;
+  bool _detecting = false;
+  bool _testing = false;
+  String? _testResult;
 
   ApiClient get _api => context.read<ApiClient>();
 
@@ -37,7 +55,6 @@ class _TelegramPageState extends State<TelegramPage> {
     super.initState();
     _checkPlugin();
     _refresh();
-    // Poll every 5 s so the connection dot stays live.
     _poll = Timer.periodic(const Duration(seconds: 5), (_) => _refresh());
     _providersSub = ProvidersBus.instance.changes.listen((_) {
       _checkPlugin();
@@ -85,16 +102,24 @@ class _TelegramPageState extends State<TelegramPage> {
     }
   }
 
-  Future<void> _unlink(int chatId) async {
+  Future<void> _detectChats() async {
+    setState(() => _detecting = true);
     try {
-      await _api.telegramUnlink(chatId);
-      await _refresh();
+      final res = await _api.telegramRecentChats();
+      if (!mounted) return;
+      final chats = (res['chats'] as List? ?? const [])
+          .cast<Map<String, dynamic>>();
+      setState(() {
+        _recentChats = chats;
+        _detecting = false;
+      });
+      if (chats.isEmpty) {
+        _toast('No messages yet. Send your bot a message in Telegram, then try again.');
+      }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Unlink failed: $e'),
-        backgroundColor: AppColors.error,
-      ));
+      setState(() => _detecting = false);
+      _toast('Detect failed: ${_friendlyError(e.toString())}', isError: true);
     }
   }
 
@@ -103,338 +128,693 @@ class _TelegramPageState extends State<TelegramPage> {
       _testing = true;
       _testResult = null;
     });
-    // read (not watch) — we're in an async callback, not build().
-    final l10n = context.read<L10n>();
     try {
       final res = await _api.telegramTest();
       if (!mounted) return;
       setState(() {
         _testing = false;
-        _testResult = '✓ ${l10n.t('Test message sent to chat')} ${res['chat']}';
+        _testResult = '✓ Test message sent to chat ${res['chat']}';
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _testing = false;
-        _testResult = '✗ $e';
+        _testResult = '✗ ${_friendlyError(e.toString())}';
       });
     }
   }
 
+  Future<void> _unlink(int chatId) async {
+    try {
+      await _api.telegramUnlink(chatId);
+      await _refresh();
+    } catch (e) {
+      _toast('Unlink failed: $e', isError: true);
+    }
+  }
+
+  String _friendlyError(String raw) {
+    final msg = raw.toLowerCase();
+    if (msg.contains('409') || msg.contains('another bot instance')) {
+      return 'Another OpenDray (or bot) is using this token. Stop the other one or wait 30s.';
+    }
+    if (msg.contains('401') || msg.contains('unauthorized')) {
+      return 'Token rejected by Telegram. Double-check the token in Settings → Plugins → Telegram.';
+    }
+    if (msg.contains('no notification chat') || msg.contains('errnonotifychat')) {
+      return 'No notification chat configured. Pick a chat in step 2 below.';
+    }
+    if (msg.contains('not running') || msg.contains('errbotnotrunning')) {
+      return 'Bot is not running. Make sure the plugin is enabled and a token is set.';
+    }
+    return raw.replaceAll('Exception: ', '').replaceAll('ApiException: ', '');
+  }
+
+  void _toast(String msg, {bool isError = false}) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      backgroundColor: isError ? t.danger : null,
+      duration: const Duration(seconds: 4),
+    ));
+  }
+
+  // -- Setup-state derivation -------------------------------------------
+
+  bool get _pluginEnabled => _hasPlugin;
+  bool get _botConnected => _status?['connected'] == true;
+  int get _allowedChats => (_status?['allowedChats'] as int?) ?? 0;
+  String get _botUsername =>
+      (_status?['username'] as String?)?.trim() ?? '';
+  String get _lastError => (_status?['lastError'] as String?)?.trim() ?? '';
+
+  /// Wizard step machine: figure out which step the user is currently
+  /// blocked on. Renders the matching guidance prominently while
+  /// keeping later steps visible (greyed) so users see the whole flow.
+  int get _currentStep {
+    if (!_pluginEnabled) return 0;
+    if (!_botConnected) return 1;
+    if (_allowedChats == 0) return 2;
+    return 3;
+  }
+
+  // -- Build ---------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
-    if (!_hasPlugin) return _buildNoPlugin();
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
     if (_loading && _status == null) {
-      return const Center(
-          child: CircularProgressIndicator(color: AppColors.accent));
+      return Center(child: CircularProgressIndicator(color: t.accent));
     }
-    return RefreshIndicator(
-      onRefresh: () async {
-        await _checkPlugin();
-        await _refresh();
-      },
-      child: ListView(
-        padding: const EdgeInsets.all(16),
+    return Scrollbar(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(horizontal: t.sp5, vertical: t.sp4),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _Header(
+                  connected: _botConnected,
+                  username: _botUsername,
+                  allowedChats: _allowedChats,
+                  step: _currentStep),
+              SizedBox(height: t.sp4),
+              if (_lastError.isNotEmpty && _pluginEnabled)
+                _ErrorBanner(message: _friendlyError(_lastError)),
+              if (_error != null) _ErrorBanner(message: _friendlyError(_error!)),
+              _Step(
+                index: 1,
+                title: 'Enable the plugin',
+                done: _pluginEnabled,
+                active: _currentStep == 0,
+                child: _Step1Content(enabled: _pluginEnabled),
+              ),
+              SizedBox(height: t.sp3),
+              _Step(
+                index: 2,
+                title: 'Create your bot in Telegram',
+                done: _botConnected,
+                active: _currentStep == 1,
+                child: _Step2Content(connected: _botConnected, username: _botUsername),
+              ),
+              SizedBox(height: t.sp3),
+              _Step(
+                index: 3,
+                title: 'Pick which chats to allow',
+                done: _allowedChats > 0,
+                active: _currentStep == 2,
+                child: _Step3Content(
+                  detecting: _detecting,
+                  recentChats: _recentChats,
+                  allowedCount: _allowedChats,
+                  onDetect: _detectChats,
+                ),
+              ),
+              SizedBox(height: t.sp3),
+              _Step(
+                index: 4,
+                title: 'Test + use',
+                done: _currentStep == 3 && _testResult?.startsWith('✓') == true,
+                active: _currentStep == 3,
+                child: _Step4Content(
+                  ready: _currentStep == 3,
+                  testing: _testing,
+                  testResult: _testResult,
+                  links: _links,
+                  onTest: _sendTest,
+                  onUnlink: _unlink,
+                ),
+              ),
+              SizedBox(height: t.sp5),
+              const _CommandsReference(),
+              SizedBox(height: t.sp5),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Header — bot identity + status pill
+// -----------------------------------------------------------------------------
+
+class _Header extends StatelessWidget {
+  final bool connected;
+  final String username;
+  final int allowedChats;
+  final int step;
+  const _Header({
+    required this.connected,
+    required this.username,
+    required this.allowedChats,
+    required this.step,
+  });
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
+    final theme = Theme.of(context);
+    final statusColor = connected ? t.success : (step == 0 ? t.textSubtle : t.warning);
+    final statusLabel = connected
+        ? '$username connected · $allowedChats allowed chat${allowedChats == 1 ? '' : 's'}'
+        : (step == 0 ? 'Plugin not enabled' : 'Bot offline');
+    return Container(
+      padding: EdgeInsets.all(t.sp4),
+      decoration: BoxDecoration(
+        color: t.surface,
+        borderRadius: BorderRadius.circular(t.rLg),
+        border: Border.all(color: t.border),
+      ),
+      child: Row(
         children: [
-          _buildStatusCard(),
-          const SizedBox(height: 12),
-          _buildLinksCard(),
-          const SizedBox(height: 12),
-          _buildTestCard(),
-          const SizedBox(height: 12),
-          _buildHelpCard(),
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFF229ED9), // Telegram blue
+              borderRadius: BorderRadius.circular(20),
+            ),
+            alignment: Alignment.center,
+            child: const Text('✈',
+                style: TextStyle(color: Colors.white, fontSize: 18)),
+          ),
+          SizedBox(width: t.sp3),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Telegram bridge', style: theme.textTheme.titleLarge),
+                SizedBox(height: 2),
+                Text(
+                    'Get notifications and run sessions remotely from your phone.',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: t.textMuted, fontSize: 12)),
+              ],
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: t.sp3, vertical: 6),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(t.rXl),
+              border: Border.all(color: statusColor.withValues(alpha: 0.35)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8, height: 8,
+                  decoration:
+                      BoxDecoration(color: statusColor, shape: BoxShape.circle),
+                ),
+                SizedBox(width: t.sp2),
+                Text(statusLabel,
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: statusColor,
+                        fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildLinksCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            const Icon(Icons.link, size: 16, color: AppColors.accent),
-            const SizedBox(width: 8),
-            Text(context.tr('Active Links'),
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-            const Spacer(),
-            Text('${_links.length}',
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
-          ]),
-          const SizedBox(height: 4),
-          Text(
-            context.tr(
-                'Each linked Telegram chat sends plain messages to its bound session, and receives the session\'s output (coalesced into 2-second chunks).'),
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
-          ),
-          if (_links.isEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              context.tr(
-                  'No active links yet. In Telegram, send the bot:  /link <session_id>'),
-              style: const TextStyle(
-                  fontStyle: FontStyle.italic, fontSize: 11, color: AppColors.textMuted),
+// -----------------------------------------------------------------------------
+// Step shell — numbered cards with done / active state
+// -----------------------------------------------------------------------------
+
+class _Step extends StatelessWidget {
+  final int index;
+  final String title;
+  final bool done;
+  final bool active;
+  final Widget child;
+  const _Step({
+    required this.index,
+    required this.title,
+    required this.done,
+    required this.active,
+    required this.child,
+  });
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
+    final theme = Theme.of(context);
+    final dim = !active && !done;
+    final accent = done
+        ? t.success
+        : (active ? t.accent : t.border);
+    return Opacity(
+      opacity: dim ? 0.6 : 1.0,
+      child: Container(
+        decoration: BoxDecoration(
+          color: t.surface,
+          borderRadius: BorderRadius.circular(t.rLg),
+          border: Border.all(
+              color: active ? t.accent.withValues(alpha: 0.5) : t.border),
+        ),
+        padding: EdgeInsets.all(t.sp4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 22, height: 22,
+                  decoration: BoxDecoration(
+                    color: done ? accent : Colors.transparent,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: accent, width: 1.5),
+                  ),
+                  alignment: Alignment.center,
+                  child: done
+                      ? const Icon(Icons.check, size: 12, color: Colors.white)
+                      : Text('$index',
+                          style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: active ? accent : t.textSubtle)),
+                ),
+                SizedBox(width: t.sp3),
+                Text(title,
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600, fontSize: 14)),
+              ],
             ),
-          ] else
-            ..._links.map(_buildLinkRow),
-        ]),
+            SizedBox(height: t.sp3),
+            child,
+          ],
+        ),
       ),
     );
   }
+}
 
-  Widget _buildLinkRow(Map<String, dynamic> link) {
-    final chatId = (link['chatId'] as num?)?.toInt() ?? 0;
-    final sessionId = (link['sessionId'] as String?) ?? '';
-    final linkedAt = (link['linkedAt'] as num?)?.toInt() ?? 0;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(children: [
+class _Step1Content extends StatelessWidget {
+  final bool enabled;
+  const _Step1Content({required this.enabled});
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
+    if (enabled) {
+      return Text('Telegram plugin is enabled.',
+          style: TextStyle(fontSize: 12, color: t.textMuted));
+    }
+    return Row(
+      children: [
         Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              const Icon(Icons.chat_outlined, size: 12, color: AppColors.accent),
-              const SizedBox(width: 4),
-              Text('$chatId',
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
-              const SizedBox(width: 6),
-              const Icon(Icons.arrow_forward, size: 12, color: AppColors.textMuted),
-              const SizedBox(width: 6),
-              const Icon(Icons.terminal, size: 12, color: AppColors.warning),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(sessionId,
-                    style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
-              ),
-            ]),
-            if (linkedAt > 0)
-              Text(_ago(linkedAt),
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 10)),
-          ]),
+          child: Text(
+              'Open Plugins → flip the Telegram switch. Then come back here.',
+              style: TextStyle(fontSize: 12, color: t.textMuted)),
         ),
-        IconButton(
-          icon: const Icon(Icons.link_off, size: 16, color: AppColors.error),
-          tooltip: context.tr('Unlink'),
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-          onPressed: () => _unlink(chatId),
+        SizedBox(width: t.sp3),
+        FilledButton.icon(
+          onPressed: () => context.go('/plugins'),
+          icon: const Icon(Icons.extension_outlined, size: 14),
+          label: const Text('Open Plugins'),
         ),
-      ]),
+      ],
     );
   }
+}
 
-  Widget _buildNoPlugin() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('✈️', style: TextStyle(fontSize: 48)),
-          const SizedBox(height: 12),
-          Text(context.tr('Telegram Bridge not enabled'),
-              style: const TextStyle(fontWeight: FontWeight.w500)),
-          const SizedBox(height: 8),
-          Text(
-            context.tr(
-                'Enable the Telegram plugin in Settings → Plugins, then add a Bot Token (from @BotFather) and Allowed Chat IDs.'),
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
-            textAlign: TextAlign.center,
-          ),
-        ]),
-      ),
-    );
-  }
-
-  Widget _buildStatusCard() {
-    final st = _status ?? const {};
-    final connected = st['connected'] == true;
-    final username = (st['username'] as String?) ?? '';
-    final lastPoll = (st['lastPollAt'] as num?)?.toInt() ?? 0;
-    final lastErr = (st['lastError'] as String?) ?? '';
-    final allowed = (st['allowedChats'] as num?)?.toInt() ?? 0;
-    final sent = (st['sent'] as num?)?.toInt() ?? 0;
-    final received = (st['received'] as num?)?.toInt() ?? 0;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Icon(connected ? Icons.circle : Icons.circle_outlined,
-                size: 12,
-                color: connected ? AppColors.success : AppColors.warning),
-            const SizedBox(width: 8),
-            Text(
-              connected
-                  ? '${context.tr('Connected as')} $username'
-                  : context.tr('Bot offline'),
-              style: const TextStyle(
-                  fontWeight: FontWeight.w600, fontSize: 14),
+class _Step2Content extends StatelessWidget {
+  final bool connected;
+  final String username;
+  const _Step2Content({required this.connected, required this.username});
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
+    if (connected) {
+      return Text('Bot is online: $username',
+          style: TextStyle(fontSize: 12, color: t.textMuted));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('1. Open Telegram and message @BotFather',
+            style: TextStyle(fontSize: 12, color: t.text)),
+        SizedBox(height: 4),
+        Text('2. Send /newbot, pick a name and a username (must end in "bot")',
+            style: TextStyle(fontSize: 12, color: t.text)),
+        SizedBox(height: 4),
+        Text('3. Copy the token (looks like 123456789:ABCdef...)',
+            style: TextStyle(fontSize: 12, color: t.text)),
+        SizedBox(height: 4),
+        Text('4. Paste it into Settings → Plugins → Telegram → Configure → "Bot Token"',
+            style: TextStyle(fontSize: 12, color: t.text)),
+        SizedBox(height: t.sp3),
+        Wrap(
+          spacing: t.sp2,
+          runSpacing: t.sp2,
+          children: [
+            OutlinedButton.icon(
+              onPressed: () => launchUrl(
+                  Uri.parse('https://t.me/BotFather'),
+                  mode: LaunchMode.externalApplication),
+              icon: const Icon(Icons.send, size: 14),
+              label: const Text('Open @BotFather'),
             ),
-          ]),
-          const SizedBox(height: 14),
-          _row(context.tr('Allowed chats'), '$allowed'),
-          _row(context.tr('Messages sent'), '$sent'),
-          _row(context.tr('Updates received'), '$received'),
-          if (lastPoll > 0)
-            _row(context.tr('Last poll'), _ago(lastPoll)),
-          if (lastErr.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                  color: AppColors.errorSoft,
-                  borderRadius: BorderRadius.circular(6)),
-              child: Text(lastErr,
-                  style: const TextStyle(
-                      color: AppColors.error, fontSize: 11, fontFamily: 'monospace')),
+            FilledButton.icon(
+              onPressed: () => context.go('/plugins'),
+              icon: const Icon(Icons.tune, size: 14),
+              label: const Text('Configure plugin'),
             ),
           ],
-          if (_error != null) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                  color: AppColors.errorSoft,
-                  borderRadius: BorderRadius.circular(6)),
-              child: Text(_error!,
-                  style: const TextStyle(color: AppColors.error, fontSize: 11)),
-            ),
-          ],
-        ]),
-      ),
+        ),
+      ],
     );
   }
+}
 
-  Widget _buildTestCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(context.tr('Send Test'),
-              style:
-                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-          const SizedBox(height: 4),
-          Text(
-            context.tr(
-                'Send a test message to the configured notifications chat — verifies the bot can reach Telegram and that your chat ID is correct.'),
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: _testing ? null : _sendTest,
-              style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
-              icon: _testing
+class _Step3Content extends StatelessWidget {
+  final bool detecting;
+  final List<Map<String, dynamic>> recentChats;
+  final int allowedCount;
+  final VoidCallback onDetect;
+  const _Step3Content({
+    required this.detecting,
+    required this.recentChats,
+    required this.allowedCount,
+    required this.onDetect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+            'Send any message to your bot in Telegram (e.g. /start), then click Detect. Copy each chat ID and paste it into "Allowed Chat IDs" in the plugin config.',
+            style: TextStyle(fontSize: 12, color: t.text, height: 1.5)),
+        SizedBox(height: t.sp3),
+        Row(
+          children: [
+            FilledButton.icon(
+              onPressed: detecting ? null : onDetect,
+              icon: detecting
                   ? const SizedBox(
-                      width: 14,
-                      height: 14,
+                      width: 12, height: 12,
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white))
-                  : const Icon(Icons.send_outlined, size: 16),
-              label: Text(context.tr('Send test message'),
-                  style: const TextStyle(fontSize: 13)),
+                  : const Icon(Icons.search, size: 14),
+              label: Text(detecting ? 'Detecting…' : 'Detect my chats'),
+            ),
+            SizedBox(width: t.sp3),
+            if (allowedCount > 0)
+              Text('$allowedCount chat${allowedCount == 1 ? '' : 's'} allowed',
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: t.success,
+                      fontWeight: FontWeight.w600)),
+          ],
+        ),
+        if (recentChats.isNotEmpty) ...[
+          SizedBox(height: t.sp3),
+          Container(
+            decoration: BoxDecoration(
+              color: t.bgRaised,
+              borderRadius: BorderRadius.circular(t.rMd),
+              border: Border.all(color: t.border),
+            ),
+            child: Column(
+              children: [
+                for (final c in recentChats) _ChatRow(chat: c),
+              ],
             ),
           ),
-          if (_testResult != null) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                  color: _testResult!.startsWith('✓')
-                      ? AppColors.successSoft
-                      : AppColors.errorSoft,
-                  borderRadius: BorderRadius.circular(6)),
-              child: Text(_testResult!,
-                  style: TextStyle(
-                      color: _testResult!.startsWith('✓')
-                          ? AppColors.success
-                          : AppColors.error,
-                      fontSize: 12)),
+        ],
+      ],
+    );
+  }
+}
+
+class _ChatRow extends StatelessWidget {
+  final Map<String, dynamic> chat;
+  const _ChatRow({required this.chat});
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
+    final id = chat['chatId'].toString();
+    final type = chat['type'] as String? ?? '';
+    final title = (chat['title'] as String?) ?? '';
+    final username = (chat['username'] as String?) ?? '';
+    final name = (chat['name'] as String?) ?? '';
+    final label = title.isNotEmpty
+        ? title
+        : (name.isNotEmpty ? name : (username.isNotEmpty ? '@$username' : 'Chat'));
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: t.sp3, vertical: t.sp2),
+      child: Row(
+        children: [
+          Icon(
+              type == 'private'
+                  ? Icons.person_outline
+                  : Icons.group_outlined,
+              size: 14,
+              color: t.textMuted),
+          SizedBox(width: t.sp2),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600),
+                    overflow: TextOverflow.ellipsis),
+                Text('$type · ID $id',
+                    style: TextStyle(
+                        fontSize: 10,
+                        color: t.textSubtle,
+                        fontFamily: 'monospace')),
+              ],
+            ),
+          ),
+          OutlinedButton.icon(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: id));
+              ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Copied ID $id')));
+            },
+            icon: const Icon(Icons.copy, size: 12),
+            label: Text('Copy ID', style: const TextStyle(fontSize: 11)),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(0, 28),
+              padding: EdgeInsets.symmetric(horizontal: t.sp2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Step4Content extends StatelessWidget {
+  final bool ready;
+  final bool testing;
+  final String? testResult;
+  final List<Map<String, dynamic>> links;
+  final VoidCallback onTest;
+  final void Function(int) onUnlink;
+  const _Step4Content({
+    required this.ready,
+    required this.testing,
+    required this.testResult,
+    required this.links,
+    required this.onTest,
+    required this.onUnlink,
+  });
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            FilledButton.icon(
+              onPressed: ready && !testing ? onTest : null,
+              icon: testing
+                  ? const SizedBox(
+                      width: 12, height: 12,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.send_outlined, size: 14),
+              label: Text(testing ? 'Sending…' : 'Send test message'),
             ),
           ],
-        ]),
-      ),
-    );
-  }
-
-  Widget _buildHelpCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(context.tr('Available Commands'),
-              style:
-                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-          const SizedBox(height: 8),
-          _cmd('/help', context.tr('Show command list')),
-          _cmd('/status', context.tr('List running sessions')),
-          _cmd('/tail <id> [n]', context.tr('Last N lines of a session')),
-          _cmd('/stop <id>', context.tr('Stop a running session')),
-          _cmd('/whoami', context.tr('Show your chat id')),
-          const SizedBox(height: 6),
-          Text(context.tr('Linked-chat commands'),
-              style: const TextStyle(
-                  fontWeight: FontWeight.w600, fontSize: 12)),
-          const SizedBox(height: 4),
-          _cmd('/link <id>', context.tr('Bind chat → session (two-way)')),
-          _cmd('/unlink', context.tr('Remove this chat\'s binding')),
-          _cmd('/links', context.tr('List all active links')),
-          _cmd('/send <id> ...', context.tr('One-shot send without /link')),
-          const SizedBox(height: 6),
-          Text(context.tr('Quick keys'),
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
-          const SizedBox(height: 4),
-          _cmd('/cc', 'Ctrl+C'),
-          _cmd('/cd', 'Ctrl+D'),
-          _cmd('/tab', 'Tab'),
-          _cmd('/enter', 'Enter'),
-          _cmd('/yes /no', context.tr('Answer yes/no + Enter')),
-          const SizedBox(height: 6),
+        ),
+        if (testResult != null) ...[
+          SizedBox(height: t.sp2),
+          Text(testResult!,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: testResult!.startsWith('✓') ? t.success : t.danger)),
+        ],
+        SizedBox(height: t.sp4),
+        Text('Active links',
+            style: TextStyle(
+                fontSize: 11,
+                color: t.textSubtle,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.6)),
+        SizedBox(height: t.sp2),
+        if (links.isEmpty)
           Text(
-              context.tr(
-                  'Plain text in a linked chat → session input. Output is polled every 5 s (only sent when content changes). Reply directly to any idle notification → routed automatically.'),
-              style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
-        ]),
+              'None yet. In Telegram send your bot: /link <session-id>. The chat will then be paired with that session.',
+              style: TextStyle(fontSize: 12, color: t.textMuted))
+        else
+          Container(
+            decoration: BoxDecoration(
+              color: t.bgRaised,
+              borderRadius: BorderRadius.circular(t.rMd),
+              border: Border.all(color: t.border),
+            ),
+            child: Column(
+              children: [
+                for (final l in links)
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: t.sp3, vertical: t.sp2),
+                    child: Row(
+                      children: [
+                        Icon(Icons.link, size: 14, color: t.textMuted),
+                        SizedBox(width: t.sp2),
+                        Expanded(
+                          child: Text(
+                              'chat ${l['chatId']} → session ${(l['sessionId'] as String).substring(0, 8)}',
+                              style: TextStyle(
+                                  fontSize: 12, fontFamily: 'monospace')),
+                        ),
+                        TextButton(
+                            onPressed: () => onUnlink(l['chatId'] as int),
+                            child: const Text('Unlink',
+                                style: TextStyle(fontSize: 11))),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Commands reference (always visible — useful before AND after setup)
+// -----------------------------------------------------------------------------
+
+class _CommandsReference extends StatelessWidget {
+  const _CommandsReference();
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
+    final theme = Theme.of(context);
+    const cmds = [
+      ('/sessions', 'List your running sessions'),
+      ('/link <id>', 'Link this chat to a session — messages forward both ways'),
+      ('/unlink', 'Stop forwarding to this chat'),
+      ('/screen', 'Snapshot the linked session\'s terminal'),
+      ('/tail [n]', 'Show the last n lines of the linked session'),
+      ('/send <text>', 'Send text to the linked session as input'),
+      ('/stop', 'Stop the linked session'),
+      ('/help', 'List all commands'),
+    ];
+    return Container(
+      decoration: BoxDecoration(
+        color: t.surface,
+        borderRadius: BorderRadius.circular(t.rLg),
+        border: Border.all(color: t.border),
+      ),
+      padding: EdgeInsets.all(t.sp4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Commands you can send to the bot',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600, fontSize: 13)),
+          SizedBox(height: t.sp3),
+          for (final c in cmds)
+            Padding(
+              padding: EdgeInsets.only(bottom: t.sp2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 110,
+                    child: Text(c.$1,
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontFamily: 'monospace',
+                            color: t.accent,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                  Expanded(
+                    child: Text(c.$2,
+                        style: TextStyle(fontSize: 12, color: t.textMuted)),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
+}
 
-  Widget _row(String k, String v) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
-        child: Row(children: [
-          SizedBox(
-              width: 130,
-              child: Text(k,
-                  style: const TextStyle(
-                      color: AppColors.textMuted, fontSize: 12))),
-          Expanded(child: Text(v, style: const TextStyle(fontSize: 12))),
-        ]),
-      );
+// -----------------------------------------------------------------------------
+// Error banner
+// -----------------------------------------------------------------------------
 
-  Widget _cmd(String cmd, String desc) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SizedBox(
-              width: 120,
-              child: Text(cmd,
-                  style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 11,
-                      color: AppColors.accent))),
+class _ErrorBanner extends StatelessWidget {
+  final String message;
+  const _ErrorBanner({required this.message});
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<OpendrayTokens>()!;
+    return Container(
+      margin: EdgeInsets.only(bottom: t.sp3),
+      padding: EdgeInsets.all(t.sp3),
+      decoration: BoxDecoration(
+        color: t.dangerSoft,
+        borderRadius: BorderRadius.circular(t.rMd),
+        border: Border.all(color: t.danger.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: t.danger, size: 16),
+          SizedBox(width: t.sp2),
           Expanded(
-              child: Text(desc,
-                  style:
-                      const TextStyle(fontSize: 11, color: AppColors.text))),
-        ]),
-      );
-
-  String _ago(int ms) {
-    final d = DateTime.fromMillisecondsSinceEpoch(ms);
-    final diff = DateTime.now().difference(d);
-    if (diff.inSeconds < 60) return '${diff.inSeconds}s ago';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    return '${diff.inHours}h ago';
+              child: Text(message,
+                  style: TextStyle(color: t.danger, fontSize: 12))),
+        ],
+      ),
+    );
   }
 }

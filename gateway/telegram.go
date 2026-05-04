@@ -47,6 +47,34 @@ func (s *Server) telegramTest(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// telegramRecentChats lists chats that have recently messaged the bot
+// — drives the "Detect chat" button in the setup wizard so a non-
+// technical user doesn't need @userinfobot.
+//
+// Workflow: user pastes bot token → bot starts polling → user sends
+// /start (or anything) to their bot in Telegram → that update flows
+// through the bot's pollLoop, which records the chat → UI calls this
+// endpoint, shows the chat picker.
+func (s *Server) telegramRecentChats(w http.ResponseWriter, r *http.Request) {
+	if s.telegram == nil {
+		respondError(w, http.StatusServiceUnavailable, "telegram manager not initialised")
+		return
+	}
+	chats := s.telegram.RecentChats()
+	out := make([]map[string]any, 0, len(chats))
+	for _, c := range chats {
+		out = append(out, map[string]any{
+			"chatId":   c.ID,
+			"type":     c.Type,
+			"title":    c.Title,
+			"username": c.Username,
+			"name":     c.Name,
+			"lastSeen": c.LastSeen.UnixMilli(),
+		})
+	}
+	respondJSON(w, http.StatusOK, map[string]any{"chats": out})
+}
+
 // telegramLinks lists active chat ↔ session bindings for the panel page.
 func (s *Server) telegramLinks(w http.ResponseWriter, r *http.Request) {
 	if s.telegram == nil {
