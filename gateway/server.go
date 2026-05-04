@@ -357,10 +357,11 @@ func New(cfg Config) *Server {
 
 		// Telegram bridge — admin endpoints (the bot itself talks
 		// directly to api.telegram.org, no inbound webhook for M1/M2)
-		r.Get("/api/telegram/status",  s.telegramStatus)
-		r.Post("/api/telegram/test",   s.telegramTest)
-		r.Get("/api/telegram/links",   s.telegramLinks)
-		r.Post("/api/telegram/unlink", s.telegramUnlink)
+		r.Get("/api/telegram/status",        s.telegramStatus)
+		r.Get("/api/telegram/recent-chats",  s.telegramRecentChats)
+		r.Post("/api/telegram/test",         s.telegramTest)
+		r.Get("/api/telegram/links",         s.telegramLinks)
+		r.Post("/api/telegram/unlink",       s.telegramUnlink)
 
 		// Task runner (panel plugins, Makefile / package.json / shell scripts)
 		r.Get("/api/tasks/{plugin}/list", s.tasksList)

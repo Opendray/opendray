@@ -387,6 +387,14 @@ class ApiClient {
     return Map<String, dynamic>.from(res.data as Map);
   }
 
+  /// Recent chats observed by the running Telegram bot — drives the
+  /// setup wizard's "Detect chat" picker. Empty until the user pastes
+  /// a token AND messages the bot at least once.
+  Future<Map<String, dynamic>> telegramRecentChats() async {
+    final res = await _dio.get('/api/telegram/recent-chats');
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
   Future<List<Map<String, dynamic>>> telegramLinks() async {
     final res = await _dio.get('/api/telegram/links');
     return (res.data as List).cast<Map<String, dynamic>>();

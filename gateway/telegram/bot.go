@@ -62,6 +62,26 @@ type Bot struct {
 	// Telemetry counters
 	sentCount     atomic.Int64
 	receivedCount atomic.Int64
+
+	// Ring buffer of chats that have recently sent us a message — used
+	// by the "Detect chat" UI affordance during first-time setup so a
+	// non-technical user doesn't have to hunt for their chat ID via
+	// @userinfobot. Updated unconditionally so the user can paste their
+	// token, send /start to the bot, and see their chat appear in the
+	// picker even before any allowlist exists.
+	recentMu    sync.Mutex
+	recentChats []ObservedChat
+}
+
+// ObservedChat captures the minimum a setup wizard needs to render a
+// pickable chat row (id, type, friendly label, last seen).
+type ObservedChat struct {
+	ID       int64
+	Type     string // "private" | "group" | "supergroup" | "channel"
+	Title    string // group title; empty for private chats
+	Username string // user @handle for private chats; empty for groups
+	Name     string // first/last name for private chats
+	LastSeen time.Time
 }
 
 // UpdateHandler dispatches a single Telegram update to whichever subsystem
@@ -236,6 +256,11 @@ func (b *Bot) pollLoop(ctx context.Context) {
 				b.lastUpdate = u.UpdateID
 			}
 			b.receivedCount.Add(1)
+			// Record observed chat for the setup wizard's "Detect chat"
+			// button — done before the auth check so a user setting up
+			// for the first time can pick their chat from the UI without
+			// it being on the allow-list yet.
+			b.recordObservedChat(u)
 			// Authorization check up-front. Anything from a non-allowed
 			// chat is dropped before the handler ever sees it.
 			chatID := u.chatID()
@@ -549,5 +574,60 @@ func splitForTelegram(text string, maxLen int) []string {
 	if len(remaining) > 0 {
 		out = append(out, remaining)
 	}
+	return out
+}
+
+// ── Recent-chats ring buffer ──────────────────────────────────────
+
+const recentChatsCap = 25
+
+// recordObservedChat upserts the chat from u into recentChats, keeping
+// the buffer capped + sorted-by-recency.
+func (b *Bot) recordObservedChat(u Update) {
+	var msg *Message
+	switch {
+	case u.Message != nil:
+		msg = u.Message
+	case u.CallbackQuery != nil && u.CallbackQuery.Message != nil:
+		msg = u.CallbackQuery.Message
+	default:
+		return
+	}
+	if msg.Chat.ID == 0 {
+		return
+	}
+	obs := ObservedChat{
+		ID:       msg.Chat.ID,
+		Type:     msg.Chat.Type,
+		Title:    msg.Chat.Title,
+		LastSeen: time.Unix(msg.Date, 0),
+	}
+	if msg.From != nil {
+		obs.Username = msg.From.Username
+		obs.Name = strings.TrimSpace(msg.From.FirstName)
+	}
+	b.recentMu.Lock()
+	defer b.recentMu.Unlock()
+	out := make([]ObservedChat, 0, len(b.recentChats)+1)
+	out = append(out, obs)
+	for _, c := range b.recentChats {
+		if c.ID == obs.ID {
+			continue
+		}
+		out = append(out, c)
+		if len(out) >= recentChatsCap {
+			break
+		}
+	}
+	b.recentChats = out
+}
+
+// RecentChats returns a snapshot of recently-seen chats in
+// most-recent-first order. Safe for concurrent callers.
+func (b *Bot) RecentChats() []ObservedChat {
+	b.recentMu.Lock()
+	defer b.recentMu.Unlock()
+	out := make([]ObservedChat, len(b.recentChats))
+	copy(out, b.recentChats)
 	return out
 }

@@ -95,6 +95,20 @@ func (m *Manager) Snapshot() Status {
 	return m.bot.Snapshot()
 }
 
+// RecentChats returns chats observed by the running bot's poll loop —
+// used by the setup wizard's "Detect chat" button so the user doesn't
+// have to find their chat ID via @userinfobot. Empty when no bot is
+// running or no message has reached us yet.
+func (m *Manager) RecentChats() []ObservedChat {
+	m.mu.Lock()
+	bot := m.bot
+	m.mu.Unlock()
+	if bot == nil {
+		return nil
+	}
+	return bot.RecentChats()
+}
+
 // SendTest sends a test message to the configured notification chat.
 // Returns the chat id used or an error when no bot is running / chat configured.
 func (m *Manager) SendTest(ctx context.Context, body string) (int64, error) {
