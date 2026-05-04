@@ -535,43 +535,122 @@ func resolveMCPPaths(c config.MCPConfig, notesRoot, skillsRoot string) (root, se
 	return root, secrets
 }
 
-// ensureMemoryIntegration guarantees an integration row exists
-// named "opendray-memory" with the right scope set, then rotates
-// its API key and returns the fresh plaintext for the SessionProvider
-// to forward into spawned MCP subprocesses.
+// memoryKeyPath is where we cache the plaintext API key for the
+// internal opendray-memory integration. mode 0600 + parent dir
+// 0700 — same convention as the existing secrets.env file.
+const memoryKeyFile = "~/.opendray/memory.key"
+
+// ensureMemoryIntegration guarantees an integration row named
+// "opendray-memory" exists and returns a working plaintext API key.
 //
-// Rotating on every startup is deliberate — the previous key (if
-// any) is left in agent CLI mcp.json files we just rendered, but
-// those are scratch files in /tmp that get garbage-collected with
-// their session. Fresh start = fresh key.
+// Why we DON'T rotate on every startup: rotating would invalidate
+// the api_key already baked into every running session's mcp.json
+// (the gateway auto-attaches it at spawn time). Instead we cache
+// the plaintext in ~/.opendray/memory.key (mode 0600, same threat
+// model as secrets.env) and reuse it across restarts.
+//
+// The cache and the DB hash can drift in a few edge cases:
+//   - Operator deletes the integration row from the UI / SQL
+//   - Operator restores PG from a backup that pre-dates the cache
+//   - Operator manually rotates via the Integrations UI
+//
+// All three surface as a 401 next time an agent calls a memory
+// tool. Recovery: delete ~/.opendray/memory.key and restart, or
+// hit the UI's "Reset opendray-memory" button (planned).
 func ensureMemoryIntegration(ctx context.Context, svc *integration.Service) (string, error) {
 	const name = "opendray-memory"
 	scopes := []string{
-		"session:read", // for cwd visibility down the road
+		"session:read", // session metadata visibility (future)
 	}
-	// Look for an existing row with this name.
+
+	// 1. Locate (or create) the integration row.
 	all, err := svc.List(ctx)
 	if err != nil {
 		return "", fmt.Errorf("list integrations: %w", err)
 	}
+	var id string
 	for _, i := range all {
 		if i.Name == name {
-			res, err := svc.RotateKey(ctx, i.ID)
-			if err != nil {
-				return "", fmt.Errorf("rotate %s: %w", name, err)
-			}
-			return res.APIKey, nil
+			id = i.ID
+			break
 		}
 	}
-	res, err := svc.Register(ctx, integration.RegisterRequest{
-		Name:    name,
-		Scopes:  scopes,
-		Version: "internal",
-	})
-	if err != nil {
-		return "", fmt.Errorf("register %s: %w", name, err)
+	if id == "" {
+		// Brand-new install or migrated DB. Register + cache the key
+		// — no rotate needed because Register itself returns a fresh
+		// plaintext.
+		res, err := svc.Register(ctx, integration.RegisterRequest{
+			Name:    name,
+			Scopes:  scopes,
+			Version: "internal",
+		})
+		if err != nil {
+			return "", fmt.Errorf("register %s: %w", name, err)
+		}
+		_ = writeMemoryKey(res.APIKey)
+		return res.APIKey, nil
 	}
+
+	// 2. Row exists. Reuse cache if present — the ONE thing we know
+	//    is the row's bcrypt hash hasn't changed since last write
+	//    (we never rotate from this code path), so the cached
+	//    plaintext is valid by construction unless the operator did
+	//    something to the row out of band.
+	if cached, ok := readMemoryKey(); ok {
+		return cached, nil
+	}
+
+	// 3. Cache missing (first run after upgrade, or operator nuked it).
+	//    We can't recover the previous plaintext, so rotate once to
+	//    get a fresh one, then cache it.
+	res, err := svc.RotateKey(ctx, id)
+	if err != nil {
+		return "", fmt.Errorf("rotate %s: %w", name, err)
+	}
+	_ = writeMemoryKey(res.APIKey)
 	return res.APIKey, nil
+}
+
+// readMemoryKey loads the cached plaintext key from
+// ~/.opendray/memory.key. Returns (key, true) on success; missing
+// or unreadable file → ("", false).
+func readMemoryKey() (string, bool) {
+	body, err := os.ReadFile(expandPath(memoryKeyFile))
+	if err != nil {
+		return "", false
+	}
+	key := strings.TrimSpace(string(body))
+	if key == "" {
+		return "", false
+	}
+	return key, true
+}
+
+// writeMemoryKey persists the plaintext key with mode 0600 inside
+// ~/.opendray/. Errors are non-fatal — a write failure means the
+// next startup will rotate again, which the operator notices via
+// existing mcp.json suddenly returning 401.
+func writeMemoryKey(key string) error {
+	path := expandPath(memoryKeyFile)
+	if err := os.MkdirAll(filepathDir(path), 0o700); err != nil {
+		return err
+	}
+	return os.WriteFile(path, []byte(key+"\n"), 0o600)
+}
+
+// filepathDir returns the parent directory of p, tolerating empty
+// input by returning ".". Same job as filepath.Dir but kept here
+// to avoid pulling the import into a non-fs hot path.
+func filepathDir(p string) string {
+	for i := len(p) - 1; i >= 0; i-- {
+		if p[i] == '/' {
+			if i == 0 {
+				return "/"
+			}
+			return p[:i]
+		}
+	}
+	return "."
 }
 
 // listenLoopback turns the gateway's bind address ("0.0.0.0:8770",
