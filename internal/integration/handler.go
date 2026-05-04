@@ -43,6 +43,10 @@ func (h *Handlers) register(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
+	// is_system is internal-only; the Register struct's `json:"-"`
+	// tag already drops it from the wire, but be defensive — never
+	// trust the client to bootstrap a system row.
+	req.IsSystem = false
 	res, err := h.svc.Register(r.Context(), req)
 	if err != nil {
 		switch {
@@ -116,6 +120,10 @@ func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	if err := h.guardSystemMutation(r, id); err != nil {
+		writeError(w, http.StatusForbidden, err)
+		return
+	}
 	if err := h.svc.Delete(r.Context(), id); err != nil {
 		if errors.Is(err, ErrNotFound) {
 			writeError(w, http.StatusNotFound, err)
@@ -129,6 +137,10 @@ func (h *Handlers) delete(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) rotateKey(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	if err := h.guardSystemMutation(r, id); err != nil {
+		writeError(w, http.StatusForbidden, err)
+		return
+	}
 	res, err := h.svc.RotateKey(r.Context(), id)
 	if errors.Is(err, ErrNotFound) {
 		writeError(w, http.StatusNotFound, err)
@@ -139,6 +151,20 @@ func (h *Handlers) rotateKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, res)
+}
+
+// guardSystemMutation rejects delete / rotate-key on rows opendray
+// manages itself. Returns nil when the row is operator-owned (or
+// missing — let the downstream handler emit the canonical 404).
+func (h *Handlers) guardSystemMutation(r *http.Request, id string) error {
+	i, err := h.svc.Get(r.Context(), id)
+	if err != nil {
+		return nil
+	}
+	if i.IsSystem {
+		return ErrSystemIntegration
+	}
+	return nil
 }
 
 func writeJSON(w http.ResponseWriter, code int, body any) {

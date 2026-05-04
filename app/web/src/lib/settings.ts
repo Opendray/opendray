@@ -67,7 +67,6 @@ export interface ServerConfig {
     }
     scope: {
       default: string
-      global_readers: string
     }
   }
 }
@@ -139,7 +138,7 @@ export function emptyConfig(): ServerConfig {
         max_seq_len: 0,
       },
       http: { base_url: '', model: '', api_key: '', dimensions: 0 },
-      scope: { default: '', global_readers: '' },
+      scope: { default: '' },
     },
   }
 }

@@ -204,7 +204,7 @@ function ContentRouter({
   fontScale: number
   setFontScale: (s: number) => void
   username: string | null
-  expiresAt: number | null
+  expiresAt: string | null
   health: HealthResponse | undefined
   search: string
 }) {
@@ -409,7 +409,7 @@ function AccountSection({
   expiresAt,
 }: {
   username: string | null
-  expiresAt: number | null
+  expiresAt: string | null
 }) {
   return (
     <div>

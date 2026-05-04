@@ -129,10 +129,6 @@ type MemoryScopeConfig struct {
 	// pass one explicitly. "session" / "project" / "global".
 	// Empty → "project".
 	Default string `toml:"default" json:"default"`
-
-	// Operators allowed to read "global" memories (CSV). Empty =
-	// global memories are private to whoever stored them.
-	GlobalReaders string `toml:"global_readers" json:"global_readers"`
 }
 
 type ProvidersConfig struct {

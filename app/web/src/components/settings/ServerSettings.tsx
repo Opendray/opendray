@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import {
   AlertTriangle,
   Eye,
@@ -32,7 +33,6 @@ import {
 } from '@/lib/memory'
 
 import { LogViewer } from './LogViewer'
-import { MemoryInspector } from './MemoryInspector'
 import { PathInput } from './PathInput'
 
 // SECTIONS describe every server-settings panel rendered to the right
@@ -968,14 +968,16 @@ function SectionForm({
             )}
           </FormGroup>
 
-          <div>
-            <div className="flex items-baseline justify-between mb-2">
+          <div className="rounded-md border border-border bg-card/30 px-3 py-2.5 flex items-center justify-between gap-3">
+            <div>
               <h3 className="text-[12.5px] font-medium">Inspector</h3>
-              <p className="text-[10px] text-muted-foreground/70">
-                Live state of the memory store. Changes here don't require Save.
+              <p className="text-[11px] text-muted-foreground/70 mt-0.5">
+                Browse, search and edit stored memories on the dedicated page.
               </p>
             </div>
-            <MemoryInspector />
+            <Button asChild variant="outline" size="sm" className="h-8 text-[11px]">
+              <Link to="/memory">Open Memory →</Link>
+            </Button>
           </div>
         </div>
       )

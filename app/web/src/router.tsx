@@ -12,6 +12,7 @@ import { ProvidersPage } from '@/pages/Providers'
 import { ChannelsPage } from '@/pages/Channels'
 import { IntegrationsPage } from '@/pages/Integrations'
 import { ActivityPage } from '@/pages/Activity'
+import { MemoryPage } from '@/pages/Memory'
 import { NotesPage } from '@/pages/Notes'
 import { PluginsPage } from '@/pages/Plugins'
 import { SettingsPage } from '@/pages/Settings'
@@ -82,6 +83,12 @@ const notesRoute = createRoute({
   component: NotesPage,
 })
 
+const memoryRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/memory',
+  component: MemoryPage,
+})
+
 const pluginsRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/plugins',
@@ -110,6 +117,7 @@ const routeTree = rootRoute.addChildren([
     integrationsRoute,
     activityRoute,
     notesRoute,
+    memoryRoute,
     pluginsRoute,
     settingsRoute,
     tutorialRoute,

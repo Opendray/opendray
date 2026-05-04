@@ -41,12 +41,18 @@ func NewService(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger) *Servic
 }
 
 // RegisterRequest is the body for POST /integrations.
+//
+// IsSystem is internal-only — never honoured for requests coming
+// from the admin HTTP handler (validateRegister rejects it). Set
+// it from inside the process when bootstrapping opendray-managed
+// integrations.
 type RegisterRequest struct {
 	Name        string   `json:"name"`
 	BaseURL     string   `json:"base_url"`
 	RoutePrefix string   `json:"route_prefix"`
 	Scopes      []string `json:"scopes,omitempty"`
 	Version     string   `json:"version,omitempty"`
+	IsSystem    bool     `json:"-"`
 }
 
 // RegisterResult bundles the persisted integration with the one-time
@@ -106,6 +112,7 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (RegisterRe
 		Enabled:      true,
 		HealthStatus: HealthUnknown,
 		CreatedAt:    time.Now().UTC(),
+		IsSystem:     req.IsSystem,
 		apiKeyHash:   hash,
 	}
 	if len(i.Scopes) == 0 {

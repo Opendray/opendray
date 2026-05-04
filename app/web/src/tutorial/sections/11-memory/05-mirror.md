@@ -64,8 +64,8 @@ The mirror runs on **every** session spawn. To avoid duplicate
 ingestion, it dedupes by `metadata.source_path + source_mtime`:
 
 - Same path, same mtime → already ingested, skip
-- Same path, newer mtime → ingest as new row (we don't update
-  in-place; phase 2 may add consolidation)
+- Same path, newer mtime → ingest as new row (we don't dedupe;
+  the inspector lets you delete obsoleted ones manually)
 - New path → ingest
 
 So if Claude writes 5 files today and you spawn 10 sessions today,
@@ -93,11 +93,28 @@ walks or embed calls. The agent might race ahead and call
 takes <100ms for the kinds of memory dirs Claude actually writes,
 and the agent's first tool call won't fire that fast anyway.
 
+## On-demand sync
+
+The Memory page (left sidebar 🧠 → `g m`) has a **Sync .md** button
+that runs the same ingestor on demand for the current scope_key.
+Use it when:
+
+- You edited a Claude memory file in your editor and don't want to
+  spawn a fresh session just to mirror.
+- An agent in an active session wrote a new `.md` (the in-flight
+  session won't see it until you sync).
+
+The button is gated to `scope = project` — that's the only scope
+mirror operates on. It's idempotent (same path+mtime is a no-op),
+so spamming it is harmless. The toast reports how many new files
+were ingested in this call.
+
 ## What it doesn't do
 
-- **No fsnotify**: mirror only runs on session spawn, not in
-  real-time. If Claude writes a memory mid-session, the next CLI
-  spawn picks it up — not the agent already running.
+- **No fsnotify**: mirror only runs on session spawn or when you
+  hit the manual Sync button — never in real-time. The in-flight
+  agent that wrote the file won't see its own change appear in
+  search until next sync.
 - **No reverse sync**: opendray-stored memories don't get written
   back to Claude's local files. Claude is a write-source; opendray
   is the unified read-source.
@@ -108,17 +125,18 @@ and the agent's first tool call won't fire that fast anyway.
 
 ## Disabling
 
-Right now there's no toggle — if memory is enabled, mirror runs.
-If you don't want it (e.g. you have Claude memories you'd rather
-keep private to Claude), the workaround is:
+There's no toggle — if memory is enabled, mirror runs at every
+spawn. If you don't want this, your options are:
 
-```toml
-[memory]
-backend = "bm25"
-# … but don't spawn sessions :)
-```
+- Don't enable memory at all (`[memory] backend = "off"` — TODO,
+  not exposed yet).
+- Delete mirrored rows from the inspector after each spawn (not
+  recommended; tedious).
+- Move the directory you don't want indexed out of Claude's project
+  tree.
 
-Phase 2 will add `[memory.mirror_enabled = false]`.
+In practice, mirror is the cross-CLI value prop — turning it off
+mostly defeats the point of opendray's memory layer.
 
 ## Storage cost
 
@@ -129,7 +147,7 @@ practical limit.
 
 ## Verifying
 
-Settings → Server → Memory → Inspector. Memories with `source =
+Memory page → expand any row. Memories with `source =
 claude_local_memory` were mirrored from a Claude `.md`. The
 metadata shows the original file path + mtime, useful when you
 want to know "where did this fact come from?".

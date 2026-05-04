@@ -8,10 +8,12 @@ import {
   RotateCw,
   Plug,
   ExternalLink,
+  Lock,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -132,43 +134,66 @@ export function IntegrationsPage() {
               </Button>
             </div>
           )}
-              {(integrations ?? []).map((i) => (
-                <IntegrationCard
-                  key={i.id}
-                  integration={i}
-                  onEdit={() => setEditing(i)}
-                  onRotate={() => {
-                    if (
-                      !window.confirm(
-                        `Rotate the API key for "${i.name}"? The current key will stop working immediately.`,
+              {(() => {
+                const all = integrations ?? []
+                const system = all.filter((i) => i.is_system)
+                const operator = all.filter((i) => !i.is_system)
+                const renderCard = (i: Integration) => (
+                  <IntegrationCard
+                    key={i.id}
+                    integration={i}
+                    onEdit={() => setEditing(i)}
+                    onRotate={() => {
+                      if (
+                        !window.confirm(
+                          `Rotate the API key for "${i.name}"? The current key will stop working immediately.`,
+                        )
                       )
-                    )
-                      return
-                    rotateIntegrationKey(i.id)
-                      .then((res) => {
-                        qc.invalidateQueries({ queryKey: ['integrations'] })
-                        onRotated(res.api_key)
-                      })
-                      .catch((err: Error) => toast.error(err.message))
-                  }}
-                  onToggle={(enabled) =>
-                    updateIntegration(i.id, { enabled })
-                      .then(() =>
-                        qc.invalidateQueries({ queryKey: ['integrations'] }),
-                      )
-                      .catch((err: Error) => toast.error(err.message))
-                  }
-                  onDelete={() => {
-                    if (!confirm(`Delete integration ${i.name}?`)) return
-                    deleteIntegration(i.id)
-                      .then(() => {
-                        qc.invalidateQueries({ queryKey: ['integrations'] })
-                        toast.success('Integration removed')
-                      })
-                      .catch((err: Error) => toast.error(err.message))
-                  }}
-                />
-              ))}
+                        return
+                      rotateIntegrationKey(i.id)
+                        .then((res) => {
+                          qc.invalidateQueries({ queryKey: ['integrations'] })
+                          onRotated(res.api_key)
+                        })
+                        .catch((err: Error) => toast.error(err.message))
+                    }}
+                    onToggle={(enabled) =>
+                      updateIntegration(i.id, { enabled })
+                        .then(() =>
+                          qc.invalidateQueries({ queryKey: ['integrations'] }),
+                        )
+                        .catch((err: Error) => toast.error(err.message))
+                    }
+                    onDelete={() => {
+                      if (!confirm(`Delete integration ${i.name}?`)) return
+                      deleteIntegration(i.id)
+                        .then(() => {
+                          qc.invalidateQueries({ queryKey: ['integrations'] })
+                          toast.success('Integration removed')
+                        })
+                        .catch((err: Error) => toast.error(err.message))
+                    }}
+                  />
+                )
+                return (
+                  <>
+                    {system.length > 0 && (
+                      <>
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium pt-1">
+                          System (managed by opendray)
+                        </div>
+                        {system.map(renderCard)}
+                      </>
+                    )}
+                    {system.length > 0 && operator.length > 0 && (
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium pt-3">
+                        Operator-registered
+                      </div>
+                    )}
+                    {operator.map(renderCard)}
+                  </>
+                )
+              })()}
             </div>
           </ScrollArea>
         </TabsContent>
@@ -222,16 +247,38 @@ function IntegrationCard({
   onToggle: (enabled: boolean) => void
   onDelete: () => void
 }) {
+  const managed = i.is_system
   return (
-    <div className="border border-border rounded-md p-4 bg-card/30 flex flex-col gap-3">
+    <div
+      className={cn(
+        'border rounded-md p-4 bg-card/30 flex flex-col gap-3',
+        managed
+          ? 'border-accent/30 bg-accent/[0.04]'
+          : 'border-border',
+      )}
+    >
       <div className="flex items-start gap-3">
-        <Plug className="size-4 text-accent mt-0.5" />
+        {managed ? (
+          <Lock className="size-4 text-accent mt-0.5" />
+        ) : (
+          <Plug className="size-4 text-accent mt-0.5" />
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[13px] font-semibold">{i.name}</span>
             <Badge variant="outline" className="font-mono normal-case">
               {i.id}
             </Badge>
+            {managed && (
+              <Badge
+                variant="outline"
+                className="border-accent/40 text-accent normal-case"
+                title="opendray manages this integration. Editing or rotating its key would orphan running sessions whose mcp.json holds the previous bearer."
+              >
+                <Lock className="size-2.5" />
+                managed
+              </Badge>
+            )}
             {i.base_url ? (
               <Badge variant={HEALTH_VARIANT[i.health_status]}>
                 {i.health_status}
@@ -278,30 +325,41 @@ function IntegrationCard({
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Switch checked={i.enabled} onCheckedChange={onToggle} />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onEdit}
-            aria-label="Edit integration"
-            title="Edit scopes / base URL / version"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <Pencil className="size-3.5" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={onRotate}>
-            <RotateCw className="size-3.5" />
-            Rotate key
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onDelete}
-            aria-label="Delete integration"
-            className="text-muted-foreground hover:text-destructive"
-          >
-            <Trash2 className="size-3.5" />
-          </Button>
+          {managed ? (
+            <span
+              className="text-[10px] text-muted-foreground/70 italic max-w-[180px] text-right leading-tight"
+              title="opendray manages this row. To reset: delete ~/.opendray/memory.key and restart, or delete this row directly via SQL — it'll be re-bootstrapped at next startup."
+            >
+              read-only — opendray bakes its key into every spawn's mcp.json
+            </span>
+          ) : (
+            <>
+              <Switch checked={i.enabled} onCheckedChange={onToggle} />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onEdit}
+                aria-label="Edit integration"
+                title="Edit scopes / base URL / version"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Pencil className="size-3.5" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={onRotate}>
+                <RotateCw className="size-3.5" />
+                Rotate key
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onDelete}
+                aria-label="Delete integration"
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 className="size-3.5" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

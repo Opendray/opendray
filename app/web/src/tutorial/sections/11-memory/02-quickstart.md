@@ -63,14 +63,27 @@ The agent does either:
 Either way, the fact lands in pgvector under
 `scope=project, scope_key=<your cwd>`.
 
-## Step 4 · Verify in the Settings UI
+## Step 4 · Verify in the UI
 
-Settings → Server → **Memory**. You should see:
+Two pages, deliberately split:
+
+- **Settings → Server → Memory** is the *configuration draft* —
+  embedder choice, ports, dim, restart-required fields. Click
+  **Test embedder** here; toast confirms the active backend is alive.
+- **Memory** (left sidebar 🧠, shortcut `g m`) is the *runtime
+  inspector* — browse, search, edit, delete the actual stored
+  memories.
+
+On the Memory page you should see:
 
 - Status badge: `bm25 · 384-dim · enabled`
-- Click **Test embedder** — toast appears with vector preview
-- Inspector pane shows the memory you just stored
+- Inspector lists the memory you just stored
 - Search "vue" or "react" returns the row with similarity > 0
+- Each row shows hit-count once searches have hit it
+
+When you switch embedder backends later (e.g. wire up ollama), a
+yellow Migrate banner appears on this page to reembed older
+memories — see [Maintenance](#memory-maintenance).
 
 ## Step 5 · Cross-CLI test
 

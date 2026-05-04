@@ -17,8 +17,8 @@
 // Operators run this either:
 //   - manually, by adding a server config to ~/.claude.json or per-
 //     session mcp.json (see Settings → Memory tutorial), or
-//   - via opendray's auto-attach (next phase 2 task) which renders
-//     an mcp.json into each session's scratch dir at spawn time.
+//   - via opendray's auto-attach (the catalog adapter renders an
+//     mcp.json into each session's scratch dir at spawn time).
 //
 // Required env vars:
 //

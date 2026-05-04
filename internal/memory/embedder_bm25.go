@@ -18,8 +18,8 @@ import (
 // anyway — code paths, file names, library names, decision
 // keywords. It loses to a transformer on paraphrase / semantic
 // similarity, but it's deterministic, allocation-light, and ships
-// with zero dependencies. Phase 2's LocalONNX picks up where this
-// gives out.
+// with zero dependencies. LocalONNX (bge-m3) picks up where this
+// gives out for operators who care about paraphrase recall.
 //
 // The hash-projection (FNV-1a → modulo `dim`) is a well-known
 // trick from large-scale ML: it's how scikit-learn's HashingVectorizer

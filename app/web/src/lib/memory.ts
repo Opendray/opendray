@@ -18,6 +18,10 @@ export interface MemoryRecord {
   metadata?: Record<string, unknown>
   created_at: string
   updated_at: string
+  /** Number of times this memory has been returned by a search (post-threshold). */
+  hit_count: number
+  /** Timestamp of the most recent hit, or null if never used. */
+  last_hit_at?: string | null
 }
 
 export interface SearchHit {
@@ -84,6 +88,63 @@ export async function searchMemories(req: SearchRequest): Promise<SearchHit[]> {
 
 export async function deleteMemory(id: string): Promise<void> {
   await api(`/api/v1/memory/${encodeURIComponent(id)}`, { method: 'DELETE' })
+}
+
+export async function updateMemory(
+  id: string,
+  text: string,
+  metadata?: Record<string, unknown>,
+): Promise<void> {
+  await api(`/api/v1/memory/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: { text, metadata },
+  })
+}
+
+export async function listScopeKeys(scope: Scope): Promise<string[]> {
+  const q = new URLSearchParams({ scope })
+  const res = await api<{ scope_keys: string[] }>(
+    `/api/v1/memory/scope-keys?${q.toString()}`,
+  )
+  return res.scope_keys ?? []
+}
+
+export interface EmbedderStats {
+  current: string
+  counts: Record<string, number>
+}
+
+export interface ReembedReport {
+  examined: number
+  reembed: number
+  skipped: number
+  failed: number
+  errors?: string[]
+  started_at: string
+  ended_at: string
+  from: string[]
+  to: string
+}
+
+export async function fetchEmbedderStats(): Promise<EmbedderStats> {
+  return api<EmbedderStats>('/api/v1/memory/embedder-stats')
+}
+
+export async function reembedAll(batch?: number): Promise<ReembedReport> {
+  const q = batch && batch > 0 ? `?batch=${batch}` : ''
+  return api<ReembedReport>(`/api/v1/memory/reembed${q}`, { method: 'POST' })
+}
+
+export interface MirrorResult {
+  ingested: number
+  cwd: string
+}
+
+export async function mirrorCwd(cwd: string): Promise<MirrorResult> {
+  return api<MirrorResult>('/api/v1/memory/mirror', {
+    method: 'POST',
+    body: { cwd },
+  })
 }
 
 export async function testEmbedder(text: string): Promise<TestEmbedResponse> {

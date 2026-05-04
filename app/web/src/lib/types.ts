@@ -167,6 +167,9 @@ export interface Integration {
   health_last_seen?: string
   created_at: string
   rotated_at?: string
+  /** True for rows opendray manages itself (e.g. opendray-memory).
+      Operators can't delete or rotate these from the UI. */
+  is_system: boolean
 }
 
 export interface RegisterIntegrationRequest {

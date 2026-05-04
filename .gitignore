@@ -21,6 +21,7 @@ internal/web/dist/
 # ── Editor / IDE ─────────────────────────────────────────────
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 .DS_Store

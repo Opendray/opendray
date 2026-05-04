@@ -28,10 +28,11 @@ func (s *store) Insert(ctx context.Context, i Integration) error {
 	_, err = s.pool.Exec(ctx, `
         INSERT INTO integrations
             (id, name, base_url, route_prefix, api_key_hash, scopes, version,
-             enabled, health_status, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10)`,
+             enabled, health_status, created_at, is_system)
+        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11)`,
 		i.ID, i.Name, i.BaseURL, i.RoutePrefix, i.apiKeyHash, scopesJSON,
-		nullIfEmpty(i.Version), i.Enabled, string(i.HealthStatus), i.CreatedAt)
+		nullIfEmpty(i.Version), i.Enabled, string(i.HealthStatus), i.CreatedAt,
+		i.IsSystem)
 	if err != nil {
 		return fmt.Errorf("insert integration: %w", err)
 	}
@@ -167,7 +168,8 @@ const selectStmt = `
     SELECT id, name, base_url, route_prefix, api_key_hash,
            COALESCE(scopes, '[]'::jsonb), COALESCE(version, ''),
            enabled, health_status, health_payload,
-           health_last_seen, created_at, rotated_at
+           health_last_seen, created_at, rotated_at,
+           COALESCE(is_system, FALSE)
     FROM integrations`
 
 type rowScanner interface {
@@ -194,7 +196,7 @@ func (s *store) scanRow(row rowScanner) (Integration, error) {
 	err := row.Scan(
 		&i.ID, &i.Name, &i.BaseURL, &i.RoutePrefix, &i.apiKeyHash,
 		&scopesRaw, &i.Version, &i.Enabled, &healthStatus, &healthRaw,
-		&healthLastSeen, &i.CreatedAt, &rotatedAt,
+		&healthLastSeen, &i.CreatedAt, &rotatedAt, &i.IsSystem,
 	)
 	if err != nil {
 		return Integration{}, err

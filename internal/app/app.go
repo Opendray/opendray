@@ -264,6 +264,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				// them up automatically.
 				mirror := memory.NewMirror(memorySvc, log)
 				sessionProvider.WithMemoryMirror(mirror.SyncCwd)
+				// Also expose the mirror through the Service so the
+				// "Sync now" HTTP endpoint + UI button can trigger an
+				// on-demand ingest without waiting for the next spawn.
+				memorySvc.SetMirror(mirror)
 			}
 		}
 	}
@@ -601,9 +605,10 @@ func ensureMemoryIntegration(ctx context.Context, svc *integration.Service) (str
 		// — no rotate needed because Register itself returns a fresh
 		// plaintext.
 		res, err := svc.Register(ctx, integration.RegisterRequest{
-			Name:    name,
-			Scopes:  scopes,
-			Version: "internal",
+			Name:     name,
+			Scopes:   scopes,
+			Version:  "internal",
+			IsSystem: true,
 		})
 		if err != nil {
 			return "", fmt.Errorf("register %s: %w", name, err)
@@ -735,7 +740,6 @@ func resolveMemoryService(
 		DefaultTopK:         cfg.DefaultTopK,
 		Scope: memory.ScopeDefaults{
 			Default: memory.Scope(cfg.Scope.Default),
-			GlobalReaders: splitCSV(cfg.Scope.GlobalReaders),
 		},
 		Logger: log,
 	}
@@ -778,21 +782,6 @@ func buildEmbedder(cfg config.MemoryConfig) (memory.Embedder, error) {
 	return nil, fmt.Errorf("unknown memory.backend=%q (valid: auto, bm25, http, local)", cfg.Backend)
 }
 
-// splitCSV splits on commas + trims whitespace; blank entries are
-// dropped. Empty input yields a nil slice.
-func splitCSV(s string) []string {
-	if strings.TrimSpace(s) == "" {
-		return nil
-	}
-	parts := strings.Split(s, ",")
-	out := make([]string, 0, len(parts))
-	for _, p := range parts {
-		if p = strings.TrimSpace(p); p != "" {
-			out = append(out, p)
-		}
-	}
-	return out
-}
 
 // resolveClaudeHistoryConfig translates the operator's
 // [providers.claude] TOML section into a session-package config,

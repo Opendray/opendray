@@ -6,13 +6,13 @@
 // runtime can mix and match without touching call sites:
 //
 //   - Embedder turns natural-language text into vectors.
-//     Implementations: BM25 (pure Go, no model, default in v1),
-//     OpenAICompatibleHTTP (covers ollama / OpenAI / LocalAI),
-//     and a planned LocalONNX (bge-m3, phase 2).
+//     Implementations: BM25 (pure Go, default), OpenAICompatibleHTTP
+//     (covers ollama / LM Studio / OpenAI / LocalAI / vLLM), and
+//     LocalONNX (bge-m3 via cgo, behind the `local_onnx` build tag).
 //
 //   - Store persists vectors and answers similarity queries.
 //     Implementations: pgvector (default, reuses opendray's
-//     existing PG), chromem-go (single-file, dependency-free).
+//     existing PG).
 //
 // Higher layers (the MCP server, the admin debug API) talk to a
 // memory.Service which wires one Embedder + one Store together.

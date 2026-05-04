@@ -25,8 +25,7 @@ api_key    = ""                    # blank for ollama; required for OpenAI etc.
 dimensions = 0                     # 0 = autodetect
 
 [memory.scope]
-default        = "project"         # session | project | global
-global_readers = ""                # CSV of operator names allowed to read global
+default = "project"                # session | project | global
 ```
 
 ## Backend choices
@@ -101,9 +100,6 @@ budget; agents rarely use more than the top 3.
 agent doesn't pass a scope explicitly. **Project is recommended** —
 it's the most useful sharing boundary in practice. Read more at
 [Scopes](#memory-scopes).
-
-`global_readers` is for future per-operator filtering. Empty in v1
-(single-operator).
 
 ## Restarts
 

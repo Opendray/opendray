@@ -184,7 +184,7 @@ func (s *PgvectorStore) Search(ctx context.Context, q SearchQuery) ([]SearchHit,
 	// minimum (default 0.5 since the BM25 fallback rarely scores high).
 	sql := fmt.Sprintf(`
 		SELECT id, scope, scope_key, text, embedder, metadata,
-		       created_at, updated_at,
+		       created_at, updated_at, hit_count, last_hit_at,
 		       1 - (embedding <=> $1::vector) AS similarity
 		FROM memories
 		WHERE embedder = $2 AND %s
@@ -207,7 +207,7 @@ func (s *PgvectorStore) Search(ctx context.Context, q SearchQuery) ([]SearchHit,
 		)
 		if err := rows.Scan(
 			&m.ID, &m.Scope, &m.ScopeKey, &m.Text, &m.Embedder, &meta,
-			&m.CreatedAt, &m.UpdatedAt, &sim,
+			&m.CreatedAt, &m.UpdatedAt, &m.HitCount, &m.LastHitAt, &sim,
 		); err != nil {
 			return nil, err
 		}
@@ -233,7 +233,8 @@ func (s *PgvectorStore) List(ctx context.Context, scope Scope, scopeKey string, 
 		args = []interface{}{string(scope), limit}
 	}
 	sql := fmt.Sprintf(`
-		SELECT id, scope, scope_key, text, embedder, metadata, created_at, updated_at
+		SELECT id, scope, scope_key, text, embedder, metadata,
+		       created_at, updated_at, hit_count, last_hit_at
 		FROM memories
 		WHERE %s
 		ORDER BY created_at DESC
@@ -252,13 +253,187 @@ func (s *PgvectorStore) List(ctx context.Context, scope Scope, scopeKey string, 
 			m    Memory
 			meta []byte
 		)
-		if err := rows.Scan(&m.ID, &m.Scope, &m.ScopeKey, &m.Text, &m.Embedder, &meta, &m.CreatedAt, &m.UpdatedAt); err != nil {
+		if err := rows.Scan(&m.ID, &m.Scope, &m.ScopeKey, &m.Text, &m.Embedder, &meta,
+			&m.CreatedAt, &m.UpdatedAt, &m.HitCount, &m.LastHitAt); err != nil {
 			return nil, err
 		}
 		if len(meta) > 0 {
 			_ = json.Unmarshal(meta, &m.Metadata)
 		}
 		out = append(out, m)
+	}
+	return out, rows.Err()
+}
+
+// Update overwrites text + embedding + metadata for one row. scope,
+// scope_key, embedder, created_at all stay as-is — only updated_at
+// bumps to NOW(). Returns ErrNotFound when the id is missing.
+func (s *PgvectorStore) Update(ctx context.Context, req UpdateRequest) error {
+	if strings.TrimSpace(req.ID) == "" {
+		return errors.New("memory: Update needs an id")
+	}
+	if strings.TrimSpace(req.Text) == "" {
+		return errors.New("memory: empty text")
+	}
+	if len(req.Embedding) == 0 {
+		return errors.New("memory: empty embedding")
+	}
+	meta := req.Metadata
+	if meta == nil {
+		meta = map[string]interface{}{}
+	}
+	metaJSON, err := json.Marshal(meta)
+	if err != nil {
+		return fmt.Errorf("memory: marshal metadata: %w", err)
+	}
+	var (
+		tag pgconn.CommandTag
+	)
+	if strings.TrimSpace(req.Embedder) == "" {
+		tag, err = s.pool.Exec(ctx, `
+			UPDATE memories
+			SET text = $1, embedding = $2::vector, metadata = $3::jsonb,
+			    updated_at = NOW()
+			WHERE id = $4
+		`, req.Text, vectorLiteral(req.Embedding), metaJSON, req.ID)
+	} else {
+		// Reembed path: also overwrite the embedder column. The new
+		// (embedder, dim) might warrant its own HNSW index — make sure
+		// it exists.
+		tag, err = s.pool.Exec(ctx, `
+			UPDATE memories
+			SET text = $1, embedding = $2::vector, metadata = $3::jsonb,
+			    embedder = $4, updated_at = NOW()
+			WHERE id = $5
+		`, req.Text, vectorLiteral(req.Embedding), metaJSON, req.Embedder, req.ID)
+		if err == nil && tag.RowsAffected() > 0 {
+			s.ensureIndex(ctx, req.Embedder, len(req.Embedding))
+		}
+	}
+	if err != nil {
+		return fmt.Errorf("memory: update: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// CountByEmbedder groups memories by their embedder column and
+// returns the row counts. Used by the reembed inspector to show
+// pre-migration stats.
+func (s *PgvectorStore) CountByEmbedder(ctx context.Context) (map[string]int, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT embedder, COUNT(*) FROM memories GROUP BY embedder ORDER BY embedder
+	`)
+	if err != nil {
+		// Tolerate "table doesn't exist yet" the same way loadIndexed
+		// does — gives the caller a clean empty map at first boot.
+		if isRelationDoesNotExist(err) {
+			return map[string]int{}, nil
+		}
+		return nil, fmt.Errorf("memory: count by embedder: %w", err)
+	}
+	defer rows.Close()
+	out := map[string]int{}
+	for rows.Next() {
+		var name string
+		var n int
+		if err := rows.Scan(&name, &n); err != nil {
+			return nil, err
+		}
+		out[name] = n
+	}
+	return out, rows.Err()
+}
+
+// ListNeedingReembed returns up to limit memories whose embedder
+// column differs from current, ordered by id ASC. afterID is a
+// cursor (last id from the previous page) — pass "" to start at
+// the beginning.
+func (s *PgvectorStore) ListNeedingReembed(ctx context.Context, current string, limit int, afterID string) ([]Memory, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	args := []interface{}{current, limit}
+	cursor := ""
+	if afterID != "" {
+		args = append(args, afterID)
+		cursor = " AND id > $3"
+	}
+	sql := fmt.Sprintf(`
+		SELECT id, scope, scope_key, text, embedder, metadata,
+		       created_at, updated_at, hit_count, last_hit_at
+		FROM memories
+		WHERE embedder <> $1%s
+		ORDER BY id ASC
+		LIMIT $2
+	`, cursor)
+	rows, err := s.pool.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, fmt.Errorf("memory: list needing reembed: %w", err)
+	}
+	defer rows.Close()
+	var out []Memory
+	for rows.Next() {
+		var (
+			m    Memory
+			meta []byte
+		)
+		if err := rows.Scan(&m.ID, &m.Scope, &m.ScopeKey, &m.Text, &m.Embedder, &meta,
+			&m.CreatedAt, &m.UpdatedAt, &m.HitCount, &m.LastHitAt); err != nil {
+			return nil, err
+		}
+		if len(meta) > 0 {
+			_ = json.Unmarshal(meta, &m.Metadata)
+		}
+		out = append(out, m)
+	}
+	return out, rows.Err()
+}
+
+// RecordHits bumps hit_count + last_hit_at for the given ids in a
+// single statement. We log-and-swallow errors: search results have
+// already been returned to the caller, so failing here would be
+// surprising and pointless. Empty input is a no-op.
+func (s *PgvectorStore) RecordHits(ctx context.Context, ids []string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	_, err := s.pool.Exec(ctx, `
+		UPDATE memories
+		SET hit_count = hit_count + 1, last_hit_at = NOW()
+		WHERE id = ANY($1::text[])
+	`, ids)
+	if err != nil {
+		return fmt.Errorf("memory: record hits: %w", err)
+	}
+	return nil
+}
+
+// ListScopeKeys returns distinct scope_key values seen under the
+// given scope, alphabetically sorted. Empty scope_key entries are
+// dropped. Used by the UI's scope-key picker.
+func (s *PgvectorStore) ListScopeKeys(ctx context.Context, scope Scope) ([]string, error) {
+	if err := scope.Validate(); err != nil {
+		return nil, err
+	}
+	rows, err := s.pool.Query(ctx, `
+		SELECT DISTINCT scope_key FROM memories
+		WHERE scope = $1 AND scope_key <> ''
+		ORDER BY scope_key
+	`, string(scope))
+	if err != nil {
+		return nil, fmt.Errorf("memory: list scope keys: %w", err)
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var k string
+		if err := rows.Scan(&k); err != nil {
+			return nil, err
+		}
+		out = append(out, k)
 	}
 	return out, rows.Err()
 }

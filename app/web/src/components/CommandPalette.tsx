@@ -11,6 +11,7 @@ import {
   Moon,
   Monitor,
   LogOut,
+  Brain,
 } from 'lucide-react'
 
 import {
@@ -73,6 +74,10 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           <CommandItem onSelect={go('/integrations')}>
             <Plug /> Integrations
             <CommandShortcut>g i</CommandShortcut>
+          </CommandItem>
+          <CommandItem onSelect={go('/memory')}>
+            <Brain /> Memory
+            <CommandShortcut>g m</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={go('/activity')}>
             <Activity /> Activity

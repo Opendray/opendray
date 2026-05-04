@@ -39,6 +39,9 @@ var (
 	// agree with the stored vector at insert time. Real-world cause:
 	// operator changed embedder without flushing memories.
 	ErrDimensionMismatch = errors.New("memory: vector dimension mismatch")
+	// ErrMirrorUnavailable means the operator hit the manual mirror
+	// sync endpoint but no Mirror was wired into the Service.
+	ErrMirrorUnavailable = errors.New("memory: mirror not configured")
 )
 
 // Memory is a stored fact the agent decided was worth remembering.
@@ -52,6 +55,15 @@ type Memory struct {
 	Metadata  map[string]interface{} `json:"metadata,omitempty"`
 	CreatedAt time.Time              `json:"created_at"`
 	UpdatedAt time.Time              `json:"updated_at"`
+
+	// HitCount tracks how many times this memory has been returned
+	// from a search (post-threshold filter). Bumped lazily by
+	// Store.RecordHits — best-effort, never blocks the caller.
+	HitCount int64 `json:"hit_count"`
+	// LastHitAt is the timestamp of the most recent hit, or nil
+	// when the memory has never been retrieved. Sortable in the
+	// inspector to surface stale memories.
+	LastHitAt *time.Time `json:"last_hit_at,omitempty"`
 
 	// Embedding is omitted from JSON by default — vectors are noisy
 	// and rarely useful in admin views. Inspector dumps include it
@@ -86,6 +98,24 @@ type InsertRequest struct {
 	Metadata  map[string]interface{}
 }
 
+// UpdateRequest carries the new text + (optional) metadata for an
+// in-place edit. The caller is expected to re-embed the text
+// before calling Update; Store implementations are dumb pipes for
+// the writeback. scope / scope_key are identity for the row and
+// never change.
+//
+// Embedder is normally identity too, but reembed migrations need
+// to bump it together with the new vector — so when Embedder is
+// non-empty, Store.Update overwrites that column too. Pass empty
+// to keep the existing embedder.
+type UpdateRequest struct {
+	ID        string
+	Text      string
+	Embedding []float32
+	Embedder  string
+	Metadata  map[string]interface{}
+}
+
 // Store persists memories and answers similarity queries. Both
 // pgvector and chromem-go implementations satisfy this interface;
 // callers (the MCP server, the admin debug handler) work against
@@ -93,12 +123,34 @@ type InsertRequest struct {
 type Store interface {
 	// Insert persists a new memory and returns the assigned id.
 	Insert(ctx context.Context, req InsertRequest) (string, error)
+	// Update overwrites the text + embedding of an existing memory
+	// in place. scope, scope_key, and embedder stay fixed.
+	Update(ctx context.Context, req UpdateRequest) error
 	// Search returns the top-K most similar memories, descending
 	// by cosine similarity, filtered by scope.
 	Search(ctx context.Context, q SearchQuery) ([]SearchHit, error)
 	// List returns memories for a scope without similarity
 	// ranking — used by the admin debug UI.
 	List(ctx context.Context, scope Scope, scopeKey string, limit int) ([]Memory, error)
+	// ListScopeKeys returns distinct scope_key values currently
+	// stored under a given scope. Powers the UI's "browse used
+	// scope keys" picker so operators don't have to type cwds.
+	ListScopeKeys(ctx context.Context, scope Scope) ([]string, error)
+	// CountByEmbedder returns a map[embedder]→row count across
+	// every scope. Used by the reembed migration tool to show
+	// "you have 1234 memories on bm25 that the current embedder
+	// will silently miss".
+	CountByEmbedder(ctx context.Context) (map[string]int, error)
+	// ListNeedingReembed paginates memories whose embedder != the
+	// supplied currentEmbedder, in id order. afterID="" starts at
+	// the beginning; pass the last seen id to get the next page.
+	// Used by the reembed migration loop.
+	ListNeedingReembed(ctx context.Context, currentEmbedder string, limit int, afterID string) ([]Memory, error)
+	// RecordHits bumps hit_count + last_hit_at for the given ids in
+	// one statement. Best-effort: implementations should swallow
+	// errors and log them — never propagate, since search results
+	// have already been handed to the caller.
+	RecordHits(ctx context.Context, ids []string) error
 	// Delete removes a memory by id; returns ErrNotFound when the
 	// id wasn't there.
 	Delete(ctx context.Context, id string) error

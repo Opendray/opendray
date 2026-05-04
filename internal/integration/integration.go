@@ -49,6 +49,14 @@ type Integration struct {
 	CreatedAt      time.Time      `json:"created_at"`
 	RotatedAt      *time.Time     `json:"rotated_at,omitempty"`
 
+	// IsSystem flags rows opendray manages itself (e.g. the
+	// auto-registered opendray-memory MCP integration). The UI
+	// renders system rows in a separate group and disables
+	// delete/rotate so operators don't break their own running
+	// sessions by destroying a key the gateway just baked into
+	// every spawn's mcp.json.
+	IsSystem bool `json:"is_system"`
+
 	apiKeyHash string // bcrypt; never serialised
 }
 
@@ -69,6 +77,12 @@ var (
 	ErrReservedPrefix    = errors.New("route prefix is reserved")
 	ErrInvalidAPIKey     = errors.New("invalid api key")
 	ErrInsufficientScope = errors.New("insufficient scope")
+	// ErrSystemIntegration is returned when an operator tries to
+	// delete or rotate the key on a row flagged is_system=true.
+	// These rows are owned by opendray itself; mutating them out
+	// of band would orphan running sessions whose mcp.json holds
+	// the previous key.
+	ErrSystemIntegration = errors.New("system integration: not operator-mutable")
 )
 
 // reservedPrefixes is the allowlist of prefixes that would collide

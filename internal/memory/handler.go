@@ -47,10 +47,93 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Post("/store", h.store)
 		r.Post("/search", h.search)
 		r.Get("/list", h.list)
+		r.Get("/scope-keys", h.scopeKeys)
+		r.Patch("/{id}", h.update)
 		r.Delete("/{id}", h.delete)
 		r.Post("/test", h.test)
 		r.Post("/probe", h.probe)
+		r.Get("/embedder-stats", h.embedderStats)
+		r.Post("/reembed", h.reembed)
+		r.Post("/mirror", h.mirror)
 	})
+}
+
+// mirror runs an on-demand sync of Claude's local <cwd>/.claude/
+// memory/*.md files into the pgvector store. Body shape:
+//
+//	{ "cwd": "/path/to/project" }
+//
+// Idempotent — files whose path+mtime were already ingested are
+// skipped. Returns 503 when the mirror isn't wired (BM25-only
+// builds or memory disabled).
+func (h *Handlers) mirror(w http.ResponseWriter, r *http.Request) {
+	if !h.ensure(w) {
+		return
+	}
+	var req struct {
+		Cwd string `json:"cwd"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	n, err := h.svc.MirrorCwd(r.Context(), req.Cwd)
+	if err != nil {
+		if errors.Is(err, ErrMirrorUnavailable) {
+			writeError(w, http.StatusServiceUnavailable, err)
+			return
+		}
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ingested": n, "cwd": req.Cwd})
+}
+
+// embedderStats reports how many memories live under each embedder
+// name (across every scope). The Settings → Memory → Migrate panel
+// uses this to warn "you have N memories on bm25 that the current
+// embedder will never match".
+func (h *Handlers) embedderStats(w http.ResponseWriter, r *http.Request) {
+	if !h.ensure(w) {
+		return
+	}
+	stats, err := h.svc.EmbedderStats(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if stats.Counts == nil {
+		stats.Counts = map[string]int{}
+	}
+	writeJSON(w, http.StatusOK, stats)
+}
+
+// reembed kicks off the migration: walk every memory whose embedder
+// column doesn't match the current one, recompute its vector, and
+// write it back. Synchronous (we expect kilos, not megas) — the
+// HTTP request blocks until done. Body is empty; optional
+// `?batch=NN` overrides the default batch size.
+func (h *Handlers) reembed(w http.ResponseWriter, r *http.Request) {
+	if !h.ensure(w) {
+		return
+	}
+	batch := 32
+	if v := r.URL.Query().Get("batch"); v != "" {
+		if x, err := strconv.Atoi(v); err == nil && x > 0 {
+			batch = x
+		}
+	}
+	report, err := h.svc.Reembed(r.Context(), batch)
+	if err != nil {
+		// Even on error we return what we accomplished so the UI can
+		// show partial progress; status code reflects the failure.
+		writeJSON(w, http.StatusInternalServerError, map[string]any{
+			"error":  err.Error(),
+			"report": report,
+		})
+		return
+	}
+	writeJSON(w, http.StatusOK, report)
 }
 
 func (h *Handlers) ensure(w http.ResponseWriter) bool {
@@ -154,6 +237,61 @@ func (h *Handlers) list(w http.ResponseWriter, r *http.Request) {
 		out = []Memory{}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"memories": out})
+}
+
+// scopeKeys returns distinct scope_key values stored under the given
+// scope. Powers the UI's "Recent" picker so operators don't have to
+// remember exact cwds.
+func (h *Handlers) scopeKeys(w http.ResponseWriter, r *http.Request) {
+	if !h.ensure(w) {
+		return
+	}
+	scope := Scope(r.URL.Query().Get("scope"))
+	if scope == "" {
+		scope = ScopeProject
+	}
+	keys, err := h.svc.ListScopeKeys(r.Context(), scope)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if keys == nil {
+		keys = []string{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"scope_keys": keys})
+}
+
+// update edits a memory in place. Body shape:
+//
+//	{ "text": "new content", "metadata": {...} }
+//
+// Re-embeds before persisting so the new vector matches the new text.
+func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
+	if !h.ensure(w) {
+		return
+	}
+	id := chi.URLParam(r, "id")
+	var body struct {
+		Text     string                 `json:"text"`
+		Metadata map[string]interface{} `json:"metadata,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if err := h.svc.Update(r.Context(), EditRequest{
+		ID:       id,
+		Text:     body.Text,
+		Metadata: body.Metadata,
+	}); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *Handlers) delete(w http.ResponseWriter, r *http.Request) {

@@ -1,12 +1,19 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Search as SearchIcon,
   Trash2,
+  Pencil,
+  Check,
+  X,
   Loader2,
   Brain,
   CheckCircle2,
-  XCircle,
+  ChevronDown,
+  AlertTriangle,
+  RefreshCw,
+  Activity,
+  FolderSync,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
@@ -14,25 +21,42 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import {
   deleteMemory,
+  fetchEmbedderStats,
   fetchMemoryStatus,
   listMemories,
+  listScopeKeys,
+  mirrorCwd,
+  reembedAll,
   searchMemories,
   testEmbedder,
+  updateMemory,
+  type EmbedderStats,
   type MemoryRecord,
+  type ReembedReport,
   type SearchHit,
   type Scope,
 } from '@/lib/memory'
+import { listSessions } from '@/lib/sessions'
 
 // MemoryInspector shows the live state of opendray's memory
 // subsystem: which embedder is active, how many dims it produces,
-// and a browse / search / delete pane over the stored memories.
+// and a browse / search / edit / delete pane over the stored
+// memories.
 //
 // Targeted scope is "project" by default (matches the system
-// behaviour for newly-stored memories). The operator types a
-// `scope_key` (a cwd) and we list memories under that scope.
+// behaviour for newly-stored memories). The operator types or picks
+// a `scope_key` (a cwd) and we list memories under that scope.
 export function MemoryInspector() {
   const qc = useQueryClient()
   const [scope, setScope] = useState<Scope>('project')
@@ -54,13 +78,11 @@ export function MemoryInspector() {
     enabled: browseEnabled,
   })
 
-  // Default scopeKey to a sensible candidate (the working directory
-  // of the most-recent claude session in active list) the first time
-  // the inspector mounts. Not destructive — operator can change.
+  // Default scopeKey to a sensible candidate (the cwd of the most-
+  // recent active session) the first time the inspector mounts. Not
+  // destructive — operator can change.
   useEffect(() => {
     if (scopeKey) return
-    // Lightly probe: pick the first session's cwd as a default.
-    // Failing silently is fine; the user can type something.
     fetch('/api/v1/sessions', { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : null))
       .then((d: { sessions?: { cwd?: string }[] } | null) => {
@@ -96,14 +118,84 @@ export function MemoryInspector() {
   }
 
   const del = useMutation({
-    mutationFn: (id: string) => deleteMemory(id),
-    onSuccess: () => {
+    mutationFn: (id: string) => deleteMemory(id).then(() => id),
+    onSuccess: (id) => {
       toast.success('Memory deleted')
       qc.invalidateQueries({ queryKey: ['memory-list'] })
-      // Also drop from local search results if present.
-      setSearchHits((cur) => cur?.filter((h) => h.memory.id !== arguments[0]) ?? null)
+      qc.invalidateQueries({ queryKey: ['memory-scope-keys'] })
+      setSearchHits((cur) => cur?.filter((h) => h.memory.id !== id) ?? null)
     },
     onError: (err: Error) => toast.error('Delete failed', { description: err.message }),
+  })
+
+  const edit = useMutation({
+    mutationFn: ({ id, text }: { id: string; text: string }) =>
+      updateMemory(id, text).then(() => ({ id, text })),
+    onSuccess: ({ id, text }) => {
+      toast.success('Memory updated')
+      qc.invalidateQueries({ queryKey: ['memory-list'] })
+      // Reflect the edit immediately in any open search results.
+      setSearchHits((cur) =>
+        cur?.map((h) =>
+          h.memory.id === id ? { ...h, memory: { ...h.memory, text } } : h,
+        ) ?? null,
+      )
+    },
+    onError: (err: Error) => toast.error('Update failed', { description: err.message }),
+  })
+
+  const stats = useQuery<EmbedderStats>({
+    queryKey: ['memory-embedder-stats'],
+    queryFn: fetchEmbedderStats,
+    refetchInterval: 60_000,
+  })
+
+  // Mismatched memories: anything stored under an embedder name
+  // that isn't the current one. They still exist in the DB but
+  // pgvector won't return them for searches by the new embedder
+  // until a reembed pass.
+  const mismatched = useMemo(() => {
+    if (!stats.data) return { total: 0, breakdown: [] as { name: string; count: number }[] }
+    const breakdown = Object.entries(stats.data.counts ?? {})
+      .filter(([name]) => name !== stats.data!.current)
+      .map(([name, count]) => ({ name, count }))
+    const total = breakdown.reduce((acc, b) => acc + b.count, 0)
+    return { total, breakdown }
+  }, [stats.data])
+
+  const [migrateOpen, setMigrateOpen] = useState(false)
+  const [migrateReport, setMigrateReport] = useState<ReembedReport | null>(null)
+  const reembed = useMutation({
+    mutationFn: () => reembedAll(),
+    onSuccess: (r) => {
+      setMigrateReport(r)
+      qc.invalidateQueries({ queryKey: ['memory-list'] })
+      qc.invalidateQueries({ queryKey: ['memory-embedder-stats'] })
+      qc.invalidateQueries({ queryKey: ['memory-scope-keys'] })
+      toast.success(`Migrated ${r.reembed}/${r.examined} memories to ${r.to}`)
+    },
+    onError: (err: Error) =>
+      toast.error('Migration failed', { description: err.message }),
+  })
+
+  const sync = useMutation({
+    mutationFn: () => mirrorCwd(scopeKey.trim()),
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ['memory-list'] })
+      qc.invalidateQueries({ queryKey: ['memory-embedder-stats'] })
+      qc.invalidateQueries({ queryKey: ['memory-scope-keys'] })
+      if (r.ingested > 0) {
+        toast.success(
+          `Ingested ${r.ingested} new memory file${r.ingested === 1 ? '' : 's'}`,
+        )
+      } else {
+        toast.message('No new .md files to sync', {
+          description: 'Already in sync, or no Claude memory dir for this cwd.',
+        })
+      }
+    },
+    onError: (err: Error) =>
+      toast.error('Sync failed', { description: err.message }),
   })
 
   const test = useMutation({
@@ -150,11 +242,12 @@ export function MemoryInspector() {
             )}
           </div>
           <p className="text-[10px] text-muted-foreground/70 leading-snug">
-            This is the embedder the gateway is currently using for every
+            {`This is the embedder the gateway is currently using for every
+            `}
             <code className="font-mono mx-1">memory_search</code> /
-            <code className="font-mono mx-1">memory_store</code> call. If this
-            doesn't match the configuration above, you have unsaved changes —
-            click Save then Restart server to apply.
+            <code className="font-mono mx-1">memory_store</code>
+            {` call. If this doesn't match the configuration above, you have
+            unsaved changes — click Save then Restart server to apply.`}
           </p>
         </div>
         <Button
@@ -168,6 +261,32 @@ export function MemoryInspector() {
           {test.isPending ? <Loader2 className="size-3 animate-spin" /> : 'Test embedder'}
         </Button>
       </div>
+
+      {/* Cross-embedder migration banner — only shown when there are
+          memories under an embedder that isn't the active one. */}
+      {mismatched.total > 0 && (
+        <MigrationBanner
+          mismatched={mismatched}
+          current={stats.data?.current ?? '?'}
+          onOpenDialog={() => {
+            setMigrateReport(null)
+            setMigrateOpen(true)
+          }}
+        />
+      )}
+
+      <ReembedDialog
+        open={migrateOpen}
+        onOpenChange={(v) => {
+          setMigrateOpen(v)
+          if (!v) setMigrateReport(null)
+        }}
+        current={stats.data?.current ?? '?'}
+        breakdown={mismatched.breakdown}
+        report={migrateReport}
+        running={reembed.isPending}
+        onRun={() => reembed.mutate()}
+      />
 
       {/* Scope selector */}
       <div className="flex items-end gap-2 flex-wrap">
@@ -190,18 +309,54 @@ export function MemoryInspector() {
         </div>
         <div className="flex-1 space-y-1 min-w-[280px]">
           <label className="text-[10px] text-muted-foreground/80 font-medium uppercase tracking-wider">
-            Scope key {scope === 'global' && <span className="opacity-60">(ignored for global)</span>}
+            Scope key{' '}
+            {scope === 'global' ? (
+              <span className="opacity-60">(ignored for global)</span>
+            ) : (
+              <span className="opacity-60">
+                ({scope === 'project' ? 'cwd of the project' : 'session id'})
+              </span>
+            )}
           </label>
-          <Input
-            value={scopeKey}
-            onChange={(e) => {
-              setScopeKey(e.target.value)
-              setSearchHits(null)
-            }}
-            placeholder={scope === 'project' ? '/path/to/project (cwd)' : 'session id'}
-            disabled={scope === 'global'}
-            className="h-8 font-mono text-xs"
-          />
+          <div className="flex gap-2">
+            <Input
+              value={scopeKey}
+              onChange={(e) => {
+                setScopeKey(e.target.value)
+                setSearchHits(null)
+              }}
+              placeholder={scope === 'project' ? '/path/to/project (cwd)' : 'session id'}
+              disabled={scope === 'global'}
+              className="h-8 font-mono text-xs flex-1"
+            />
+            {scope !== 'global' && (
+              <ScopeKeyPicker
+                scope={scope}
+                onPick={(k) => {
+                  setScopeKey(k)
+                  setSearchHits(null)
+                }}
+              />
+            )}
+            {scope === 'project' && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => sync.mutate()}
+                disabled={!scopeKey.trim() || sync.isPending}
+                className="h-8 text-[11px] gap-1"
+                title="Re-ingest Claude's <cwd>/.claude/memory/*.md files into pgvector"
+              >
+                {sync.isPending ? (
+                  <Loader2 className="size-3 animate-spin" />
+                ) : (
+                  <FolderSync className="size-3" />
+                )}
+                Sync .md
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -268,9 +423,181 @@ export function MemoryInspector() {
               if (!window.confirm(`Delete memory ${m.id}? This is permanent.`)) return
               del.mutate(m.id)
             }}
+            onSave={(text) =>
+              new Promise<void>((resolve, reject) => {
+                edit.mutate(
+                  { id: m.id, text },
+                  {
+                    onSuccess: () => resolve(),
+                    onError: (e) => reject(e),
+                  },
+                )
+              })
+            }
           />
         ))}
       </div>
+    </div>
+  )
+}
+
+function ScopeKeyPicker({
+  scope,
+  onPick,
+}: {
+  scope: Scope
+  onPick: (key: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  // Two data sources, both opt-in (only fire when picker is open):
+  //   1. Distinct scope_keys we've already stored memories under
+  //      (the "Saved" group — definitive but starts empty).
+  //   2. Active sessions — their cwd (for scope=project) or id
+  //      (for scope=session). Lets the operator pick a project they
+  //      *intend to* store memories for, even if none are saved yet.
+  const savedKeys = useQuery({
+    queryKey: ['memory-scope-keys', scope],
+    queryFn: () => listScopeKeys(scope),
+    enabled: open,
+  })
+  const sessions = useQuery({
+    queryKey: ['memory-picker-sessions'],
+    queryFn: listSessions,
+    enabled: open && scope !== 'global',
+  })
+
+  // Build the suggested-from-sessions list per scope. Dedupe against
+  // savedKeys so the same value doesn't appear in both groups.
+  const savedSet = new Set(savedKeys.data ?? [])
+  const sessionCandidates =
+    scope === 'project'
+      ? Array.from(
+          new Set(
+            (sessions.data ?? [])
+              .map((s) => (s.cwd ?? '').trim())
+              .filter((cwd) => !!cwd && !savedSet.has(cwd)),
+          ),
+        ).sort()
+      : scope === 'session'
+        ? (sessions.data ?? [])
+            .filter((s) => !savedSet.has(s.id))
+            .map((s) => ({
+              key: s.id,
+              hint: `${s.provider_id ?? '?'} · ${(s.cwd ?? '').replace(/.*\//, '') || '/'}`,
+            }))
+        : []
+
+  // Close on outside click.
+  useEffect(() => {
+    if (!open) return
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [open])
+
+  const isLoading = savedKeys.isLoading || sessions.isLoading
+  const hasAnything =
+    (savedKeys.data?.length ?? 0) > 0 || sessionCandidates.length > 0
+
+  return (
+    <div ref={ref} className="relative">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => setOpen((v) => !v)}
+        className="h-8 text-[11px] gap-1"
+        title="Pick from saved scope keys or active sessions"
+      >
+        Pick <ChevronDown className="size-3" />
+      </Button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-20 min-w-[320px] max-w-[480px] rounded-md border border-border bg-popover shadow-lg">
+          <div className="p-1 max-h-72 overflow-y-auto">
+            {isLoading && (
+              <p className="text-[11px] text-muted-foreground/70 italic px-2 py-1.5">
+                Loading…
+              </p>
+            )}
+            {!isLoading && !hasAnything && (
+              <p className="text-[11px] text-muted-foreground/70 italic px-2 py-1.5">
+                No saved keys or active sessions for {scope}.
+              </p>
+            )}
+
+            {(savedKeys.data?.length ?? 0) > 0 && (
+              <>
+                <div className="px-2 pt-1 pb-0.5 text-[10px] uppercase tracking-wider text-muted-foreground/60">
+                  Saved memories
+                </div>
+                {savedKeys.data?.map((k) => (
+                  <button
+                    key={`saved-${k}`}
+                    type="button"
+                    onClick={() => {
+                      onPick(k)
+                      setOpen(false)
+                    }}
+                    className="block w-full text-left px-2 py-1 rounded text-[11px] font-mono hover:bg-accent/30 truncate"
+                    title={k}
+                  >
+                    {k}
+                  </button>
+                ))}
+              </>
+            )}
+
+            {sessionCandidates.length > 0 && (
+              <>
+                <div className="px-2 pt-1.5 pb-0.5 text-[10px] uppercase tracking-wider text-muted-foreground/60">
+                  Active sessions
+                </div>
+                {scope === 'project' &&
+                  (sessionCandidates as string[]).map((cwd) => (
+                    <button
+                      key={`sess-${cwd}`}
+                      type="button"
+                      onClick={() => {
+                        onPick(cwd)
+                        setOpen(false)
+                      }}
+                      className="block w-full text-left px-2 py-1 rounded text-[11px] font-mono hover:bg-accent/30 truncate"
+                      title={cwd}
+                    >
+                      {cwd}
+                    </button>
+                  ))}
+                {scope === 'session' &&
+                  (sessionCandidates as { key: string; hint: string }[]).map(
+                    ({ key, hint }) => (
+                      <button
+                        key={`sess-${key}`}
+                        type="button"
+                        onClick={() => {
+                          onPick(key)
+                          setOpen(false)
+                        }}
+                        className="flex w-full text-left px-2 py-1 rounded text-[11px] hover:bg-accent/30 items-center gap-2"
+                        title={key}
+                      >
+                        <span className="font-mono truncate flex-1">{key}</span>
+                        <span className="text-muted-foreground/60 shrink-0">
+                          {hint}
+                        </span>
+                      </button>
+                    ),
+                  )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -279,23 +606,59 @@ function Row({
   mem,
   similarity,
   onDelete,
+  onSave,
 }: {
   mem: MemoryRecord
   similarity?: number
   onDelete: () => void
+  onSave: (text: string) => Promise<void>
 }) {
   const [expanded, setExpanded] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(mem.text)
+  const [saving, setSaving] = useState(false)
   const source = (mem.metadata?.source as string | undefined) ?? null
   const sourcePath = (mem.metadata?.source_path as string | undefined) ?? null
+
+  // Keep the textarea synced if the underlying record updates from
+  // a re-fetch while we're editing — rare, but avoids ghost state.
+  useEffect(() => {
+    if (!editing) setDraft(mem.text)
+  }, [mem.text, editing])
+
+  const startEdit = () => {
+    setDraft(mem.text)
+    setEditing(true)
+    setExpanded(true)
+  }
+  const cancelEdit = () => {
+    setEditing(false)
+    setDraft(mem.text)
+  }
+  const commitEdit = async () => {
+    if (draft.trim() === mem.text.trim()) {
+      setEditing(false)
+      return
+    }
+    if (!draft.trim()) {
+      toast.error('Memory text cannot be empty')
+      return
+    }
+    setSaving(true)
+    try {
+      await onSave(draft)
+      setEditing(false)
+    } catch {
+      // toast already shown by the mutation handler
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="rounded-md border border-border bg-card/30 px-3 py-2 group">
       <div className="flex items-start gap-2">
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          className="flex-1 text-left min-w-0"
-        >
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className="text-[10px] font-mono text-muted-foreground/60">{mem.id}</span>
             {similarity !== undefined && (
@@ -318,42 +681,286 @@ function Row({
                 {source}
               </span>
             )}
+            {mem.hit_count > 0 && (
+              <span
+                className="text-[10px] text-muted-foreground/70 inline-flex items-center gap-0.5"
+                title={
+                  mem.last_hit_at
+                    ? `Last hit ${formatDistanceToNow(new Date(mem.last_hit_at), { addSuffix: true })}`
+                    : ''
+                }
+              >
+                <Activity className="size-2.5" />
+                {mem.hit_count} {mem.hit_count === 1 ? 'hit' : 'hits'}
+              </span>
+            )}
             <span className="text-[10px] text-muted-foreground/50 ml-auto">
               {formatDistanceToNow(new Date(mem.created_at), { addSuffix: true })}
             </span>
           </div>
-          <pre
-            className={cn(
-              'text-xs whitespace-pre-wrap break-words leading-snug font-sans text-foreground',
-              !expanded && 'line-clamp-3',
-            )}
-          >
-            {mem.text}
-          </pre>
-          {sourcePath && expanded && (
+          {editing ? (
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.preventDefault()
+                  cancelEdit()
+                } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                  e.preventDefault()
+                  void commitEdit()
+                }
+              }}
+              rows={Math.min(12, Math.max(3, draft.split('\n').length + 1))}
+              autoFocus
+              className="w-full text-xs leading-snug font-sans rounded border border-accent/40 bg-background px-2 py-1.5 resize-y"
+              placeholder="Memory text — Cmd/Ctrl+Enter to save · Esc to cancel"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="text-left w-full"
+            >
+              <pre
+                className={cn(
+                  'text-xs whitespace-pre-wrap break-words leading-snug font-sans text-foreground',
+                  !expanded && 'line-clamp-3',
+                )}
+              >
+                {mem.text}
+              </pre>
+            </button>
+          )}
+          {sourcePath && expanded && !editing && (
             <p className="text-[10px] font-mono text-muted-foreground/50 mt-1.5 break-all">
               {sourcePath}
             </p>
           )}
-        </button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
-          onClick={onDelete}
-          title="Delete this memory"
-        >
-          <Trash2 className="size-3" />
-        </Button>
+        </div>
+        <div className="flex flex-col gap-1">
+          {editing ? (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7 text-emerald-400 hover:text-emerald-300"
+                onClick={() => void commitEdit()}
+                disabled={saving}
+                title="Save (Cmd/Ctrl+Enter)"
+              >
+                {saving ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7 text-muted-foreground hover:text-foreground"
+                onClick={cancelEdit}
+                disabled={saving}
+                title="Cancel (Esc)"
+              >
+                <X className="size-3" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-accent"
+                onClick={startEdit}
+                title="Edit this memory"
+              >
+                <Pencil className="size-3" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                onClick={onDelete}
+                title="Delete this memory"
+              >
+                <Trash2 className="size-3" />
+              </Button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
+function MigrationBanner({
+  mismatched,
+  current,
+  onOpenDialog,
+}: {
+  mismatched: { total: number; breakdown: { name: string; count: number }[] }
+  current: string
+  onOpenDialog: () => void
+}) {
+  const summary = mismatched.breakdown
+    .map((b) => `${b.count} on ${b.name}`)
+    .join(', ')
+  return (
+    <div className="flex items-start gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2.5">
+      <AlertTriangle className="size-4 text-amber-400 shrink-0 mt-0.5" />
+      <div className="flex-1 min-w-0">
+        <p className="text-[12px] font-medium text-amber-200">
+          {mismatched.total} {mismatched.total === 1 ? 'memory' : 'memories'} won't
+          appear in searches
+        </p>
+        <p className="text-[11px] text-muted-foreground mt-0.5">
+          {summary} — current embedder is{' '}
+          <code className="font-mono text-foreground">{current}</code>. pgvector
+          partitions its similarity index by embedder, so older entries are
+          silent until reembedded.
+        </p>
+      </div>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="h-7 text-[11px] border-amber-500/40 hover:bg-amber-500/20 shrink-0"
+        onClick={onOpenDialog}
+      >
+        <RefreshCw className="size-3" /> Migrate
+      </Button>
+    </div>
+  )
+}
+
+function ReembedDialog({
+  open,
+  onOpenChange,
+  current,
+  breakdown,
+  report,
+  running,
+  onRun,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  current: string
+  breakdown: { name: string; count: number }[]
+  report: ReembedReport | null
+  running: boolean
+  onRun: () => void
+}) {
+  const total = breakdown.reduce((acc, b) => acc + b.count, 0)
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-base">Reembed memories</DialogTitle>
+          <DialogDescription>
+            Recompute vectors for memories stored under a different embedder so
+            they become searchable again.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="text-[12px] flex flex-col gap-2 max-h-[50vh] overflow-y-auto pr-1">
+          <div className="rounded-md border border-border bg-card/30 p-3 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                Target embedder
+              </span>
+              <code className="font-mono text-[11px] text-foreground">{current}</code>
+            </div>
+            {breakdown.map((b) => (
+              <div key={b.name} className="flex items-center justify-between">
+                <span className="text-muted-foreground">
+                  on <code className="font-mono">{b.name}</code>
+                </span>
+                <span className="font-mono">{b.count}</span>
+              </div>
+            ))}
+            <div className="flex items-center justify-between border-t border-border/50 pt-1.5 mt-1.5">
+              <span className="font-medium">Total to reembed</span>
+              <span className="font-mono font-medium">{total}</span>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-muted-foreground">
+            Each memory's text gets re-sent to the current embedder; the new
+            vector replaces the old one in place. ID, scope, scope_key,
+            metadata and timestamps are preserved. Search results take effect
+            immediately — no restart needed.
+          </p>
+
+          {report && (
+            <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-1 text-[11px]">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Examined</span>
+                <span className="font-mono">{report.examined}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Reembedded</span>
+                <span className="font-mono text-emerald-300">{report.reembed}</span>
+              </div>
+              {report.failed > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Failed</span>
+                  <span className="font-mono text-rose-300">{report.failed}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">From</span>
+                <span className="font-mono">{report.from.join(', ') || '—'}</span>
+              </div>
+              {(report.errors?.length ?? 0) > 0 && (
+                <details className="mt-1.5">
+                  <summary className="cursor-pointer text-rose-300">
+                    {report.errors?.length} error{(report.errors?.length ?? 0) > 1 ? 's' : ''}
+                  </summary>
+                  <pre className="mt-1 text-[10px] font-mono whitespace-pre-wrap break-all bg-background/50 p-2 rounded max-h-32 overflow-y-auto">
+                    {report.errors?.join('\n')}
+                  </pre>
+                </details>
+              )}
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 text-[11px]"
+            onClick={() => onOpenChange(false)}
+            disabled={running}
+          >
+            {report ? 'Done' : 'Cancel'}
+          </Button>
+          {!report && (
+            <Button
+              type="button"
+              size="sm"
+              className="h-8 text-[11px]"
+              onClick={onRun}
+              disabled={running || total === 0}
+            >
+              {running ? (
+                <>
+                  <Loader2 className="size-3 animate-spin" /> Reembedding…
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="size-3" /> Reembed {total}
+                </>
+              )}
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 // Re-export ad-hoc types so the host page doesn't have to dual-import.
 export { type Scope } from '@/lib/memory'
-
-// Suppress unused — XCircle imported but only used conditionally.
-const _unused = XCircle
-void _unused
