@@ -52,7 +52,13 @@ export interface ServerConfig {
     default_top_k: number
     similarity_threshold: number
     chromem_path: string
-    local: { model: string }
+    local: {
+      model: string
+      library_path: string
+      model_path: string
+      tokenizer_path: string
+      max_seq_len: number
+    }
     http: {
       base_url: string
       model: string
@@ -125,7 +131,13 @@ export function emptyConfig(): ServerConfig {
       default_top_k: 0,
       similarity_threshold: 0,
       chromem_path: '',
-      local: { model: '' },
+      local: {
+        model: '',
+        library_path: '',
+        model_path: '',
+        tokenizer_path: '',
+        max_seq_len: 0,
+      },
       http: { base_url: '', model: '', api_key: '', dimensions: 0 },
       scope: { default: '', global_readers: '' },
     },

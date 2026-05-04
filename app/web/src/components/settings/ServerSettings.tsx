@@ -648,7 +648,7 @@ function SectionForm({
             {visible('Backend', 'Embedder choice') && (
               <FieldRow
                 label="Embedder backend"
-                hint='"auto" picks BM25 today, swaps to ONNX (bge-m3) once that ships in phase 2. "bm25" = pure-Go keyword-only fallback. "http" = OpenAI-compatible /v1/embeddings endpoint.'
+                hint='"auto" / "bm25" use the cgo-free pure-Go keyword path. "http" calls any OpenAI-compatible /v1/embeddings (ollama / OpenAI / LocalAI). "local" runs an ONNX sentence-transformer in-process — requires a binary built with `-tags local_onnx`.'
                 tomlKey="memory.backend"
               >
                 <SegmentedSelect
@@ -657,6 +657,7 @@ function SectionForm({
                     { value: 'auto', label: 'auto' },
                     { value: 'bm25', label: 'bm25' },
                     { value: 'http', label: 'http' },
+                    { value: 'local', label: 'local (onnx)' },
                   ]}
                   onChange={(v) =>
                     setDraft({ ...draft, memory: { ...c.memory, backend: v } })
@@ -820,6 +821,130 @@ function SectionForm({
                   }
                   placeholder="sk-…"
                   className="h-9 font-mono"
+                />
+              </FieldRow>
+            )}
+          </FormGroup>
+
+          <FormGroup heading="Local ONNX (used when backend=local)">
+            <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-[11px] text-amber-200/80 leading-snug">
+              Requires the binary to be compiled with{' '}
+              <code className="font-mono">-tags local_onnx</code>. The
+              standard build returns a clear stub error when this backend is
+              selected. See <strong>Memory → Local ONNX</strong> tutorial for
+              setup steps.
+            </div>
+            {visible('Model name', 'Cosmetic label') && (
+              <FieldRow
+                label="Model name"
+                hint='Cosmetic — appears in logs / Inspector. e.g. "bge-m3", "bge-small-en-v1.5".'
+                tomlKey="memory.local.model"
+              >
+                <Input
+                  value={c.memory.local.model}
+                  onChange={(e) =>
+                    setDraft({
+                      ...draft,
+                      memory: {
+                        ...c.memory,
+                        local: { ...c.memory.local, model: e.target.value },
+                      },
+                    })
+                  }
+                  placeholder="bge-m3"
+                  className="h-9 font-mono w-48"
+                />
+              </FieldRow>
+            )}
+            {visible('Library path', 'Where libonnxruntime lives') && (
+              <FieldRow
+                label="Library path"
+                hint="Directory holding libonnxruntime.dylib (macOS) / libonnxruntime.so (Linux). After `brew install onnxruntime`, that's /opt/homebrew/opt/onnxruntime/lib."
+                tomlKey="memory.local.library_path"
+              >
+                <PathInput
+                  value={c.memory.local.library_path}
+                  onChange={(v) =>
+                    setDraft({
+                      ...draft,
+                      memory: {
+                        ...c.memory,
+                        local: { ...c.memory.local, library_path: v },
+                      },
+                    })
+                  }
+                  placeholder="/opt/homebrew/opt/onnxruntime/lib"
+                  expectDir
+                />
+              </FieldRow>
+            )}
+            {visible('Model path', 'Path to model.onnx') && (
+              <FieldRow
+                label="Model path"
+                hint="Absolute path to the .onnx weights. Download from HuggingFace, e.g. Xenova/bge-m3 or Xenova/bge-small-en-v1.5."
+                tomlKey="memory.local.model_path"
+              >
+                <PathInput
+                  value={c.memory.local.model_path}
+                  onChange={(v) =>
+                    setDraft({
+                      ...draft,
+                      memory: {
+                        ...c.memory,
+                        local: { ...c.memory.local, model_path: v },
+                      },
+                    })
+                  }
+                  placeholder="~/.opendray/models/bge-m3/model.onnx"
+                />
+              </FieldRow>
+            )}
+            {visible('Tokenizer path', 'Path to tokenizer.json') && (
+              <FieldRow
+                label="Tokenizer path"
+                hint="Absolute path to tokenizer.json (HuggingFace standard format) — usually right next to the model."
+                tomlKey="memory.local.tokenizer_path"
+              >
+                <PathInput
+                  value={c.memory.local.tokenizer_path}
+                  onChange={(v) =>
+                    setDraft({
+                      ...draft,
+                      memory: {
+                        ...c.memory,
+                        local: { ...c.memory.local, tokenizer_path: v },
+                      },
+                    })
+                  }
+                  placeholder="~/.opendray/models/bge-m3/tokenizer.json"
+                />
+              </FieldRow>
+            )}
+            {visible('Max sequence length', 'Token cap per text') && (
+              <FieldRow
+                label="Max sequence length"
+                hint="Tokens beyond this are truncated. bge-m3 default is 512. Empty = 512."
+                tomlKey="memory.local.max_seq_len"
+              >
+                <Input
+                  type="number"
+                  min="32"
+                  max="8192"
+                  value={c.memory.local.max_seq_len || ''}
+                  onChange={(e) =>
+                    setDraft({
+                      ...draft,
+                      memory: {
+                        ...c.memory,
+                        local: {
+                          ...c.memory.local,
+                          max_seq_len: parseInt(e.target.value || '0', 10),
+                        },
+                      },
+                    })
+                  }
+                  placeholder="512"
+                  className="h-9 font-mono w-24"
                 />
               </FieldRow>
             )}
