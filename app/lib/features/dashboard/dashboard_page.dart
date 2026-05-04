@@ -110,6 +110,14 @@ class _DashboardPageState extends State<DashboardPage> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 4),
+            child: TextButton.icon(
+              onPressed: () => context.go('/'),
+              icon: const Icon(Icons.arrow_back, size: 14),
+              label: const Text('Back to new Hub', style: TextStyle(fontSize: 12)),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
             child: FilledButton.icon(
               onPressed: _showCreateDialog,
               icon: const Icon(Icons.add, size: 16),

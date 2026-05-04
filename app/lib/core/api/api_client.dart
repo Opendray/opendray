@@ -945,6 +945,36 @@ class ApiClient {
     await _dio.delete('/api/claude-accounts/$id');
   }
 
+  /// Probe the host: which CLIs are installed, where credentials live,
+  /// what's already imported. Backs the first-run wizard.
+  /// Returns the full HostFacts JSON shape from gateway/host_facts.go.
+  Future<Map<String, dynamic>> hostFacts() async {
+    final res = await _dio.get('/api/host/facts');
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  /// Server-side install of the Claude CLI via npm. Admin-gated implicitly
+  /// by the existing JWT-protected route group. Returns
+  /// `{ installed: bool, path?: string, version?: string, output: string }`.
+  Future<Map<String, dynamic>> hostInstallClaudeCLI() async {
+    final res = await _dio.post('/api/host/install-claude-cli');
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
+  /// Import an existing on-disk .credentials.json as a claude_accounts
+  /// row so the user doesn't have to re-OAuth what they already have.
+  /// Returns `{ accountId, name, profile }`.
+  Future<Map<String, dynamic>> hostImportClaudeCreds({
+    required String path,
+    String name = '',
+  }) async {
+    final res = await _dio.post('/api/host/import-claude-creds', data: {
+      'path': path,
+      if (name.isNotEmpty) 'name': name,
+    });
+    return Map<String, dynamic>.from(res.data as Map);
+  }
+
   /// Reports whether the in-app OAuth flow is usable on this server.
   /// Returns `{ available: bool, version?: string, path?: string,
   /// installHint?: string }`. Call this before showing the "Sign in
