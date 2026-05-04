@@ -28,6 +28,7 @@ type Service interface {
 	Subscribe(ctx context.Context, id string) (<-chan []byte, func(), error)
 	Buffer(ctx context.Context, id string, since int64) (Replay, error)
 	SwitchClaudeAccount(ctx context.Context, id, accountID string) (Session, error)
+	History(ctx context.Context, id string, limit int) (HistoryResponse, error)
 }
 
 type Handlers struct {
@@ -70,6 +71,7 @@ func (h *Handlers) Mount(r chi.Router) {
 			r.Post("/resize", h.resize)
 			r.Get("/buffer", h.buffer)
 			r.Get("/stream", h.stream)
+			r.Get("/history", h.history)
 			r.Patch("/claude-account", h.switchClaudeAccount)
 		})
 	})
@@ -292,6 +294,35 @@ func (h *Handlers) streamCloseEnded(w http.ResponseWriter, r *http.Request) {
 		closeMsg,
 		time.Now().Add(time.Second),
 	)
+}
+
+// history handles GET /sessions/{id}/history. Returns up to `limit`
+// (default 200, max 1000) of the user's past prompts in this project,
+// pulled from Claude's JSONL transcripts under ~/.claude/projects.
+//
+// Sessions whose provider isn't Claude (codex/gemini/shell) get
+// {entries: [], unsupported_provider: true} so the UI can render the
+// right empty state without a separate /providers lookup.
+func (h *Handlers) history(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	limit := 200
+	if v := r.URL.Query().Get("limit"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 0 {
+			writeError(w, http.StatusBadRequest, errors.New("invalid limit: must be non-negative integer"))
+			return
+		}
+		if n > 1000 {
+			n = 1000
+		}
+		limit = n
+	}
+	res, err := h.svc.History(r.Context(), id, limit)
+	if err != nil {
+		h.respondError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
 }
 
 // switchClaudeAccount handles PATCH /sessions/{id}/claude-account.

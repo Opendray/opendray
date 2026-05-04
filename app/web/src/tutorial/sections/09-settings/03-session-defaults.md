@@ -1,9 +1,10 @@
 # Session defaults
 
 Two knobs control session lifecycle behaviour at the global
-level. Both live under `[session]` in `config.toml` AND are
-editable in Settings → **Session defaults** (UI changes apply
-without a restart by patching the in-memory manager options).
+level. Both live under `[session]` in `config.toml` and are
+editable in **Settings → Server → Sessions**. UI changes write
+back to `config.toml` but require a **Restart** to take effect
+(the idle detector reads config once at startup).
 
 ## Idle threshold
 

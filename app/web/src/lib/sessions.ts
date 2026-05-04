@@ -56,3 +56,40 @@ export async function switchClaudeAccount(
   })
 }
 
+export interface HistoryEntry {
+  ts: string
+  text: string
+  session_id: string
+}
+
+export interface HistoryResponse {
+  entries: HistoryEntry[]
+  unsupported_provider?: boolean
+}
+
+// fetchSessionHistory pulls every user prompt the operator has sent
+// in this session's project (cwd), pooled across every Claude
+// session ever spawned in that directory. Non-Claude providers
+// return `unsupported_provider: true` with empty entries.
+export async function fetchSessionHistory(
+  id: string,
+  limit = 200,
+): Promise<HistoryResponse> {
+  return api<HistoryResponse>(
+    `/api/v1/sessions/${id}/history?limit=${limit}`,
+  )
+}
+
+// resendInput re-submits a prompt to the live session. Claude runs
+// the PTY in raw mode where Enter is `\r`, not `\n` — using `\n`
+// produces a literal newline in the prompt instead of submitting.
+export async function resendInput(
+  id: string,
+  text: string,
+): Promise<void> {
+  await api(`/api/v1/sessions/${id}/input`, {
+    method: 'POST',
+    body: { data: text + '\r' },
+  })
+}
+

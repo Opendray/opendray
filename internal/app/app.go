@@ -46,6 +46,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/gateway"
 	"github.com/opendray/opendray-v2/internal/integration"
 	"github.com/opendray/opendray-v2/internal/session"
+	"github.com/opendray/opendray-v2/internal/settings"
 	"github.com/opendray/opendray-v2/internal/store"
 	"github.com/opendray/opendray-v2/internal/version"
 )
@@ -68,7 +69,10 @@ type App struct {
 // New wires the runtime dependencies but does not start any goroutines.
 // Caller is responsible for calling Run or Close.
 func New(ctx context.Context, cfg config.Config) (*App, error) {
-	log := newLogger(cfg.Log)
+	log, logRing, err := newLogger(cfg.Log)
+	if err != nil {
+		return nil, err
+	}
 	st, err := store.Open(ctx, cfg.Database.URL)
 	if err != nil {
 		return nil, err
@@ -90,7 +94,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}
 	catalogHandlers := catalog.NewHandlers(cat, log)
 
-	cliacctSvc := cliacct.NewService(st.Pool(), bus, log)
+	var cliacctOpts []cliacct.Option
+	if d := strings.TrimSpace(cfg.Providers.Claude.AccountsDir); d != "" {
+		cliacctOpts = append(cliacctOpts, cliacct.WithAccountsDir(expandPath(d)))
+	}
+	cliacctSvc := cliacct.NewService(st.Pool(), bus, log, cliacctOpts...)
 	cliacctHandlers := cliacct.NewHandlers(cliacctSvc, log)
 
 	// Vault + skills are needed by the SessionProvider so spawn-time
@@ -127,6 +135,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	if d := cfg.Session.Interval(); d > 0 {
 		sessionOpts = append(sessionOpts, session.WithIdleInterval(d))
 	}
+	sessionOpts = append(sessionOpts,
+		session.WithClaudeHistoryConfig(resolveClaudeHistoryConfig(cfg.Providers.Claude)),
+		session.WithCodexHistoryConfig(resolveCodexHistoryConfig(cfg.Providers.Codex)),
+		session.WithGeminiHistoryConfig(resolveGeminiHistoryConfig(cfg.Providers.Gemini)),
+	)
 	sessionMgr := session.NewManager(
 		st.Pool(),
 		bus,
@@ -184,6 +197,12 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	log.Info("vault git ready", "root", gitRoot)
 	vaultSyncer := vaultgit.NewSyncer(st.Pool(), bus, vaultGitHandlers, log)
 
+	// Settings: read/write the same config.toml the gateway booted
+	// from. Empty FilePath (env-only mode) disables the API — Get
+	// returns "no config path" so the UI shows a read-only banner.
+	settingsSvc := settings.NewService(cfg.FilePath, log)
+	settingsHandlers := settings.NewHandler(settingsSvc, logRing, log)
+
 	gw := gateway.NewServer(gateway.Deps{
 		Logger:    log,
 		DB:        st,
@@ -216,6 +235,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				vaultSyncer.Mount(r)
 				auditHandlers.Mount(r)
 				intgrCallLogHandlers.Mount(r)
+				settingsHandlers.Mount(r)
 			})
 
 			// Dual-auth (admin OR integration API key): all business
@@ -467,6 +487,47 @@ func resolveMCPPaths(c config.MCPConfig, notesRoot, skillsRoot string) (root, se
 		secrets = expandPath(secrets)
 	}
 	return root, secrets
+}
+
+// resolveClaudeHistoryConfig translates the operator's
+// [providers.claude] TOML section into a session-package config,
+// expanding ~/ in any path. Empty fields stay empty so the
+// session package falls back to its built-in HOME defaults.
+func resolveClaudeHistoryConfig(c config.ClaudeProviderConfig) session.ClaudeHistoryConfig {
+	out := session.ClaudeHistoryConfig{}
+	if len(c.HistoryRoots) > 0 {
+		out.HistoryRoots = make([]string, 0, len(c.HistoryRoots))
+		for _, r := range c.HistoryRoots {
+			if r = strings.TrimSpace(r); r != "" {
+				out.HistoryRoots = append(out.HistoryRoots, expandPath(r))
+			}
+		}
+	}
+	if c.AccountsDir != "" {
+		out.AccountsDir = expandPath(c.AccountsDir)
+	}
+	return out
+}
+
+// resolveCodexHistoryConfig expands ~/ in [providers.codex].
+func resolveCodexHistoryConfig(c config.CodexProviderConfig) session.CodexHistoryConfig {
+	out := session.CodexHistoryConfig{}
+	if c.SessionsRoot != "" {
+		out.SessionsRoot = expandPath(c.SessionsRoot)
+	}
+	return out
+}
+
+// resolveGeminiHistoryConfig expands ~/ in [providers.gemini].
+func resolveGeminiHistoryConfig(c config.GeminiProviderConfig) session.GeminiHistoryConfig {
+	out := session.GeminiHistoryConfig{}
+	if c.TmpRoot != "" {
+		out.TmpRoot = expandPath(c.TmpRoot)
+	}
+	if c.ProjectsFile != "" {
+		out.ProjectsFile = expandPath(c.ProjectsFile)
+	}
+	return out
 }
 
 // expandPath resolves ~/ prefixes against the calling user's home

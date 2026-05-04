@@ -54,6 +54,24 @@ func WithIdleInterval(d time.Duration) ManagerOption {
 	return func(m *Manager) { m.idleInterval = d }
 }
 
+// WithClaudeHistoryConfig overrides the Claude transcript discovery
+// paths used by Manager.History. Empty config = built-in HOME defaults.
+func WithClaudeHistoryConfig(cfg ClaudeHistoryConfig) ManagerOption {
+	return func(m *Manager) { m.claudeHistoryCfg = cfg }
+}
+
+// WithCodexHistoryConfig overrides the Codex sessions root used by
+// Manager.History. Empty config = built-in ~/.codex/sessions default.
+func WithCodexHistoryConfig(cfg CodexHistoryConfig) ManagerOption {
+	return func(m *Manager) { m.codexHistoryCfg = cfg }
+}
+
+// WithGeminiHistoryConfig overrides the Gemini tmp + projects-file
+// paths used by Manager.History. Empty config = ~/.gemini defaults.
+func WithGeminiHistoryConfig(cfg GeminiHistoryConfig) ManagerOption {
+	return func(m *Manager) { m.geminiHistoryCfg = cfg }
+}
+
 // Manager owns the lifecycle of all live sessions in this process.
 // Sessions are persisted in postgres for visibility / audit, but the
 // authoritative state for a running session is the in-memory map here.
@@ -65,6 +83,10 @@ type Manager struct {
 
 	idleThreshold time.Duration
 	idleInterval  time.Duration
+
+	claudeHistoryCfg ClaudeHistoryConfig
+	codexHistoryCfg  CodexHistoryConfig
+	geminiHistoryCfg GeminiHistoryConfig
 
 	mu       sync.RWMutex
 	closed   bool
@@ -683,6 +705,42 @@ func (m *Manager) Buffer(_ context.Context, id string, since int64) (Replay, err
 		return Replay{}, ErrNotFound
 	}
 	return rs.ring.SnapshotSince(since), nil
+}
+
+// History returns the user prompts found in the agent's on-disk
+// transcripts under this session's project (cwd). Each provider
+// has its own storage shape:
+//
+//   - claude → ~/.claude/projects/<encoded-cwd>/*.jsonl
+//   - codex  → ~/.codex/sessions/.../rollout-*.jsonl filtered by session_meta.cwd
+//   - gemini → ~/.gemini/tmp/<sha256(cwd)>/logs.json
+//
+// Providers without a transcript on disk (shell, etc.) return
+// UnsupportedProvider=true with empty entries so the UI can render
+// a friendly empty state.
+//
+// Reads from the persisted Session row so an ended session still
+// returns its history.
+func (m *Manager) History(ctx context.Context, id string, limit int) (HistoryResponse, error) {
+	sess, err := m.Get(ctx, id)
+	if err != nil {
+		return HistoryResponse{}, err
+	}
+	var entries []ProjectInput
+	switch sess.ProviderID {
+	case "claude":
+		entries = ProjectInputHistory(m.claudeHistoryCfg, sess.Cwd, limit)
+	case "codex":
+		entries = CodexInputHistory(m.codexHistoryCfg, sess.Cwd, limit)
+	case "gemini":
+		entries = GeminiInputHistory(m.geminiHistoryCfg, sess.Cwd, limit)
+	default:
+		return HistoryResponse{Entries: []ProjectInput{}, UnsupportedProvider: true}, nil
+	}
+	if entries == nil {
+		entries = []ProjectInput{}
+	}
+	return HistoryResponse{Entries: entries}, nil
 }
 
 // Shutdown signals SIGTERM to all live sessions, waits up to 5s, then

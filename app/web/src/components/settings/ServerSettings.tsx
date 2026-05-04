@@ -1,0 +1,1075 @@
+import { useEffect, useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  Loader2,
+  Plus,
+  Power,
+  RotateCcw,
+  Save,
+  Search,
+  X,
+} from 'lucide-react'
+import { toast } from 'sonner'
+
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  emptyConfig,
+  fetchServerSettings,
+  restartServer,
+  updateServerSettings,
+  type ServerConfig,
+} from '@/lib/settings'
+import { cn } from '@/lib/utils'
+
+import { LogViewer } from './LogViewer'
+import { PathInput } from './PathInput'
+
+// SECTIONS describe every server-settings panel rendered to the right
+// of the sidebar. ID is used as the URL hash + active key. Title is
+// what the operator sees in the nav and toolbar.
+export const SERVER_SECTIONS = [
+  { id: 'general', title: 'General', desc: 'Listen address, operator account, token TTL.' },
+  { id: 'logging', title: 'Logging', desc: 'Verbosity, format, and live tail.' },
+  { id: 'sessions', title: 'Sessions', desc: 'Idle detection thresholds.' },
+  { id: 'vault', title: 'Vault', desc: 'Notes, skills, and git-versioned root.' },
+  { id: 'mcp', title: 'MCP registry', desc: 'Server registry + secrets.' },
+  { id: 'claude', title: 'Storage · Claude', desc: 'Where Claude transcripts live on disk.' },
+  { id: 'codex', title: 'Storage · Codex', desc: 'Codex sessions root.' },
+  { id: 'gemini', title: 'Storage · Gemini', desc: 'Gemini per-project tmp + projects.json.' },
+] as const
+
+export type ServerSectionId = (typeof SERVER_SECTIONS)[number]['id']
+
+// Sections whose values affect bound resources (listen/log/admin)
+// — flag them so we can show "Restart required" when changed.
+const RESTART_REQUIRED_SECTIONS: Record<ServerSectionId, boolean> = {
+  general: true,
+  logging: true,
+  sessions: true,
+  vault: true,
+  mcp: true,
+  claude: false, // history paths are read on each request, no restart needed
+  codex: false,
+  gemini: false,
+}
+
+interface ServerSettingsProps {
+  activeSection: ServerSectionId
+  searchQuery: string
+}
+
+// ServerSettings renders ONE section at a time (the one named by
+// `activeSection`). The sidebar in SettingsPage owns navigation.
+// Saving/restarting are exposed to the parent through events (toast)
+// so the sticky toolbar in the page can also trigger them.
+export function ServerSettings({
+  activeSection,
+  searchQuery,
+}: ServerSettingsProps) {
+  const qc = useQueryClient()
+
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['server-settings'],
+    queryFn: fetchServerSettings,
+  })
+
+  const [draft, setDraft] = useState<ServerConfig>(emptyConfig())
+  const [showPassword, setShowPassword] = useState(false)
+
+  useEffect(() => {
+    if (data?.config) setDraft(data.config)
+  }, [data])
+
+  const dirty = useMemo(() => {
+    if (!data?.config) return false
+    return JSON.stringify(data.config) !== JSON.stringify(draft)
+  }, [data, draft])
+
+  const dangerousChanged = useMemo(() => {
+    if (!data?.config) return false
+    return (
+      draft.listen !== data.config.listen ||
+      draft.admin.user !== data.config.admin.user ||
+      draft.admin.password.length > 0
+    )
+  }, [data, draft])
+
+  const save = useMutation({
+    mutationFn: (cfg: ServerConfig) => updateServerSettings(cfg),
+    onSuccess: () => {
+      toast.success('Settings saved', { description: 'Click Restart to apply.' })
+      qc.invalidateQueries({ queryKey: ['server-settings'] })
+    },
+    onError: (err: Error) =>
+      toast.error('Save failed', { description: err.message }),
+  })
+
+  const onSave = () => {
+    if (dangerousChanged) {
+      const ok = window.confirm(
+        'You changed listen address / admin user / admin password. After restart you may need to re-authenticate or use the new address. Continue?',
+      )
+      if (!ok) return
+    }
+    save.mutate(draft)
+  }
+
+  const onResetSection = () => {
+    if (!data?.config) return
+    if (
+      !window.confirm(
+        `Reset "${SERVER_SECTIONS.find((s) => s.id === activeSection)?.title}" to last-saved values?`,
+      )
+    )
+      return
+    const fresh = JSON.parse(JSON.stringify(data.config)) as ServerConfig
+    // Replace only the slice owned by this section.
+    setDraft((cur) => mergeSection(cur, fresh, activeSection))
+  }
+
+  // Loading + error states
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-[12px] text-muted-foreground p-6">
+        <Loader2 className="size-3 animate-spin" />
+        Loading server settings…
+      </div>
+    )
+  }
+  if (isError) {
+    return (
+      <div className="flex items-center gap-2 text-[12px] text-destructive p-6">
+        <AlertTriangle className="size-3" />
+        Failed to load: {(error as Error).message}
+      </div>
+    )
+  }
+  if (!data) return null
+
+  if (!data.config_path) {
+    return (
+      <div className="rounded-lg border border-yellow-700/40 bg-yellow-950/20 p-4 text-[12px] text-yellow-200/80">
+        opendray was started without a -config flag. Settings are loaded from
+        environment variables only and cannot be edited here.
+      </div>
+    )
+  }
+
+  const sectionMeta = SERVER_SECTIONS.find((s) => s.id === activeSection)!
+  const restartRequired = dirty && RESTART_REQUIRED_SECTIONS[activeSection]
+
+  return (
+    <div className="flex flex-col">
+      {/* Section header + per-section actions */}
+      <header className="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <h2 className="text-[15px] font-semibold tracking-tight">
+            {sectionMeta.title}
+          </h2>
+          <p className="text-[12px] text-muted-foreground mt-0.5">
+            {sectionMeta.desc}
+          </p>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 text-[11px] text-muted-foreground hover:text-foreground"
+            onClick={onResetSection}
+            title="Discard unsaved changes in this section"
+          >
+            <RotateCcw className="size-3 mr-1" />
+            Reset
+          </Button>
+        </div>
+      </header>
+
+      {/* Toolbar showing source path + dirty/restart badges */}
+      <div className="flex items-center justify-between gap-3 mb-5 pb-3 border-b border-border">
+        <p className="text-[10px] text-muted-foreground/70 font-mono truncate">
+          {data.config_path}
+        </p>
+        <div className="flex items-center gap-2 shrink-0">
+          {restartRequired && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              restart required
+            </span>
+          )}
+          {dirty && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-300 border border-blue-500/30">
+              unsaved
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Active section */}
+      <SectionForm
+        active={activeSection}
+        draft={draft}
+        setDraft={setDraft}
+        showPassword={showPassword}
+        toggleShowPassword={() => setShowPassword((v) => !v)}
+        searchQuery={searchQuery}
+      />
+
+      {/* Sticky bottom action bar */}
+      <div className="sticky bottom-0 -mx-6 px-6 pt-4 mt-8 pb-4 bg-gradient-to-t from-background via-background to-transparent">
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            onClick={onSave}
+            disabled={!dirty || save.isPending}
+            className="h-9 px-4"
+          >
+            {save.isPending ? (
+              <Loader2 className="size-3.5 mr-2 animate-spin" />
+            ) : (
+              <Save className="size-3.5 mr-2" />
+            )}
+            Save changes
+          </Button>
+          <RestartButton dirty={dirty} />
+          <div className="ml-auto text-[10px] text-muted-foreground">
+            {dirty ? 'You have unsaved changes' : 'All changes saved'}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// SectionForm is the body of the right column — exactly one of the
+// 9 sections, filtered by `searchQuery` (matching label or hint).
+function SectionForm({
+  active,
+  draft,
+  setDraft,
+  showPassword,
+  toggleShowPassword,
+  searchQuery,
+}: {
+  active: ServerSectionId
+  draft: ServerConfig
+  setDraft: React.Dispatch<React.SetStateAction<ServerConfig>>
+  showPassword: boolean
+  toggleShowPassword: () => void
+  searchQuery: string
+}) {
+  const c = draft
+  // Filter rows by search; case-insensitive match against label or hint.
+  const filter = searchQuery.trim().toLowerCase()
+  const visible = (label: string, hint?: string) => {
+    if (!filter) return true
+    return (
+      label.toLowerCase().includes(filter) ||
+      (hint?.toLowerCase().includes(filter) ?? false)
+    )
+  }
+
+  switch (active) {
+    case 'general':
+      return (
+        <div className="flex flex-col gap-8">
+          <FormGroup heading="Network">
+            {visible('Listen address', 'IP and port the gateway binds to') && (
+              <FieldRow
+                label="Listen address"
+                hint="The host:port the HTTP server binds to. Example: 0.0.0.0:8770."
+                tomlKey="listen"
+              >
+                <Input
+                  value={c.listen}
+                  onChange={(e) =>
+                    setDraft({ ...draft, listen: e.target.value })
+                  }
+                  placeholder="0.0.0.0:8770"
+                  className="h-9 font-mono"
+                />
+              </FieldRow>
+            )}
+          </FormGroup>
+
+          <FormGroup heading="Operator account">
+            {visible('Username', 'Login name for the admin') && (
+              <FieldRow
+                label="Username"
+                hint="Login name used in the sign-in form. Changing this forces a re-login on the next request."
+                tomlKey="admin.user"
+              >
+                <Input
+                  value={c.admin.user}
+                  onChange={(e) =>
+                    setDraft({
+                      ...draft,
+                      admin: { ...c.admin, user: e.target.value },
+                    })
+                  }
+                  className="h-9 font-mono"
+                  autoComplete="username"
+                />
+              </FieldRow>
+            )}
+            {visible('Password', 'Login password') && (
+              <FieldRow
+                label="Password"
+                hint="Leave blank to keep the current password. Sending a value overwrites it."
+                tomlKey="admin.password"
+              >
+                <div className="flex gap-1.5">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    value={c.admin.password}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        admin: { ...c.admin, password: e.target.value },
+                      })
+                    }
+                    placeholder="••••••••"
+                    className="h-9 font-mono flex-1"
+                    autoComplete="new-password"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 w-9 p-0"
+                    onClick={toggleShowPassword}
+                    title={showPassword ? 'Hide' : 'Reveal'}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="size-3.5" />
+                    ) : (
+                      <Eye className="size-3.5" />
+                    )}
+                  </Button>
+                </div>
+              </FieldRow>
+            )}
+            {visible('Token TTL', 'Bearer token lifetime') && (
+              <FieldRow
+                label="Token TTL"
+                hint='Bearer-token lifetime as a Go duration, e.g. "24h", "30m". Empty = never expire.'
+                tomlKey="admin.token_ttl"
+              >
+                <Input
+                  value={c.admin.token_ttl}
+                  onChange={(e) =>
+                    setDraft({
+                      ...draft,
+                      admin: { ...c.admin, token_ttl: e.target.value },
+                    })
+                  }
+                  placeholder="24h"
+                  className="h-9 font-mono w-32"
+                />
+              </FieldRow>
+            )}
+          </FormGroup>
+        </div>
+      )
+
+    case 'logging':
+      return (
+        <div className="flex flex-col gap-8">
+          <FormGrid>
+            {visible('Log level', 'Verbosity threshold') && (
+              <FieldRow
+                label="Log level"
+                hint="Lines below this level are dropped."
+                tomlKey="log.level"
+              >
+                <SegmentedSelect
+                  value={c.log.level || 'info'}
+                  options={[
+                    { value: 'debug', label: 'debug' },
+                    { value: 'info', label: 'info' },
+                    { value: 'warn', label: 'warn' },
+                    { value: 'error', label: 'error' },
+                  ]}
+                  onChange={(v) =>
+                    setDraft({ ...draft, log: { ...c.log, level: v } })
+                  }
+                />
+              </FieldRow>
+            )}
+            {visible('Format', 'Log encoding') && (
+              <FieldRow
+                label="Format"
+                hint='"text" is human-readable; "json" is machine-parsable.'
+                tomlKey="log.format"
+              >
+                <SegmentedSelect
+                  value={c.log.format || 'text'}
+                  options={[
+                    { value: 'text', label: 'text' },
+                    { value: 'json', label: 'json' },
+                  ]}
+                  onChange={(v) =>
+                    setDraft({ ...draft, log: { ...c.log, format: v } })
+                  }
+                />
+              </FieldRow>
+            )}
+            {visible('Log file', 'Persist log to disk') && (
+              <FieldRow
+                label="Log file"
+                hint="Optional file path. Auto-rotates at 10 MB, keeps 5 backups. Empty = stderr only."
+                tomlKey="log.file"
+              >
+                <PathInput
+                  value={c.log.file}
+                  onChange={(v) =>
+                    setDraft({ ...draft, log: { ...c.log, file: v } })
+                  }
+                  placeholder="~/.opendray/opendray.log"
+                />
+              </FieldRow>
+            )}
+          </FormGrid>
+
+          <div>
+            <div className="flex items-baseline justify-between mb-2">
+              <h3 className="text-[12.5px] font-medium">Live tail</h3>
+              <p className="text-[10px] text-muted-foreground/70">
+                In-memory ring buffer (last ~2,000 records). Resets on restart.
+              </p>
+            </div>
+            <LogViewer />
+          </div>
+        </div>
+      )
+
+    case 'sessions':
+      return (
+        <FormGrid>
+          {visible('Idle threshold', 'How long before idle fires') && (
+            <FieldRow
+              label="Idle threshold"
+              hint="A session is silent for this long before session.idle fires. Empty = 30s."
+              tomlKey="session.idle_threshold"
+            >
+              <Input
+                value={c.session.idle_threshold}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    session: { ...c.session, idle_threshold: e.target.value },
+                  })
+                }
+                placeholder="30s"
+                className="h-9 font-mono w-32"
+              />
+            </FieldRow>
+          )}
+          {visible('Idle poll interval', 'Idle detector cadence') && (
+            <FieldRow
+              label="Idle poll interval"
+              hint="How often the idle detector wakes up. Lower = lower latency, more wakeups. Empty = 5s."
+              tomlKey="session.idle_interval"
+            >
+              <Input
+                value={c.session.idle_interval}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    session: { ...c.session, idle_interval: e.target.value },
+                  })
+                }
+                placeholder="5s"
+                className="h-9 font-mono w-32"
+              />
+            </FieldRow>
+          )}
+        </FormGrid>
+      )
+
+    case 'vault':
+      return (
+        <FormGrid>
+          {visible('Vault root', 'Top-level directory') && (
+            <FieldRow
+              label="Vault root"
+              hint="Top-level directory for notes, skills, and MCP registry."
+              tomlKey="vault.root"
+            >
+              <PathInput
+                value={c.vault.root}
+                onChange={(v) =>
+                  setDraft({ ...draft, vault: { ...c.vault, root: v } })
+                }
+                placeholder="~/.opendray/vault"
+                expectDir
+              />
+            </FieldRow>
+          )}
+          {visible('Notes directory', 'Where notes are written') && (
+            <FieldRow
+              label="Notes directory"
+              hint="Override notes location. Defaults to <vault root>/notes."
+              tomlKey="vault.notes"
+            >
+              <PathInput
+                value={c.vault.notes}
+                onChange={(v) =>
+                  setDraft({ ...draft, vault: { ...c.vault, notes: v } })
+                }
+                placeholder="<vault>/notes"
+                expectDir
+              />
+            </FieldRow>
+          )}
+          {visible('Skills directory', 'Where skill files live') && (
+            <FieldRow
+              label="Skills directory"
+              hint="Override skills location. Defaults to <vault root>/skills."
+              tomlKey="vault.skills"
+            >
+              <PathInput
+                value={c.vault.skills}
+                onChange={(v) =>
+                  setDraft({ ...draft, vault: { ...c.vault, skills: v } })
+                }
+                placeholder="<vault>/skills"
+                expectDir
+              />
+            </FieldRow>
+          )}
+          {visible('Git root', 'Repo for vault sync') && (
+            <FieldRow
+              label="Git root"
+              hint="Working tree the Vault Sync feature commits to."
+              tomlKey="vault.git_root"
+            >
+              <PathInput
+                value={c.vault.git_root}
+                onChange={(v) =>
+                  setDraft({ ...draft, vault: { ...c.vault, git_root: v } })
+                }
+                placeholder="<vault root>"
+                expectDir
+              />
+            </FieldRow>
+          )}
+          {visible('Personal prefix', 'Default folder for personal notes') && (
+            <FieldRow
+              label="Personal prefix"
+              hint='Folder name used for personal notes when auto-deriving paths. Default "personal".'
+              tomlKey="vault.personal_prefix"
+            >
+              <Input
+                value={c.vault.personal_prefix}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    vault: { ...c.vault, personal_prefix: e.target.value },
+                  })
+                }
+                placeholder="personal"
+                className="h-9 font-mono w-48"
+              />
+            </FieldRow>
+          )}
+          {visible('Projects prefix', 'Default folder for project notes') && (
+            <FieldRow
+              label="Projects prefix"
+              hint='Folder name used for project notes. Default "projects".'
+              tomlKey="vault.projects_prefix"
+            >
+              <Input
+                value={c.vault.projects_prefix}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    vault: { ...c.vault, projects_prefix: e.target.value },
+                  })
+                }
+                placeholder="projects"
+                className="h-9 font-mono w-48"
+              />
+            </FieldRow>
+          )}
+        </FormGrid>
+      )
+
+    case 'mcp':
+      return (
+        <FormGrid>
+          {visible('Registry root', 'Where MCP server defs live') && (
+            <FieldRow
+              label="Registry root"
+              hint="Directory holding MCP server JSON definitions. Defaults to <vault>/mcp."
+              tomlKey="mcp.root"
+            >
+              <PathInput
+                value={c.mcp.root}
+                onChange={(v) =>
+                  setDraft({ ...draft, mcp: { ...c.mcp, root: v } })
+                }
+                placeholder="<vault>/mcp"
+                expectDir
+              />
+            </FieldRow>
+          )}
+          {visible('Secrets file', 'Substitution source for ${KEY}') && (
+            <FieldRow
+              label="Secrets file"
+              hint="key=value file substituted into MCP server commands at spawn time."
+              tomlKey="mcp.secrets_file"
+            >
+              <PathInput
+                value={c.mcp.secrets_file}
+                onChange={(v) =>
+                  setDraft({
+                    ...draft,
+                    mcp: { ...c.mcp, secrets_file: v },
+                  })
+                }
+                placeholder="~/.opendray/secrets.env"
+              />
+            </FieldRow>
+          )}
+        </FormGrid>
+      )
+
+    case 'claude':
+      return (
+        <FormGrid>
+          {visible('History roots', 'Where Claude transcripts live') && (
+            <FieldRow
+              label="History roots"
+              hint="Directories scanned for Claude per-project JSONL transcripts. Empty = scan ~/.claude/projects + every ~/.claude-accounts/*/projects."
+              tomlKey="providers.claude.history_roots"
+            >
+              <StringList
+                value={c.providers.claude.history_roots ?? []}
+                onChange={(arr) =>
+                  setDraft({
+                    ...draft,
+                    providers: {
+                      ...c.providers,
+                      claude: { ...c.providers.claude, history_roots: arr },
+                    },
+                  })
+                }
+                placeholder="~/.claude/projects"
+              />
+            </FieldRow>
+          )}
+          {visible('Accounts directory', 'Multi-account root') && (
+            <FieldRow
+              label="Accounts directory"
+              hint="Root used for opendray-managed Claude account ConfigDirs. Default ~/.claude-accounts."
+              tomlKey="providers.claude.accounts_dir"
+            >
+              <PathInput
+                value={c.providers.claude.accounts_dir}
+                onChange={(v) =>
+                  setDraft({
+                    ...draft,
+                    providers: {
+                      ...c.providers,
+                      claude: { ...c.providers.claude, accounts_dir: v },
+                    },
+                  })
+                }
+                placeholder="~/.claude-accounts"
+                expectDir
+              />
+            </FieldRow>
+          )}
+        </FormGrid>
+      )
+
+    case 'codex':
+      return (
+        <FormGrid>
+          {visible('Sessions root', 'Codex rollouts directory') && (
+            <FieldRow
+              label="Sessions root"
+              hint="Directory walked for Codex rollout JSONL files. Default ~/.codex/sessions."
+              tomlKey="providers.codex.sessions_root"
+            >
+              <PathInput
+                value={c.providers.codex.sessions_root}
+                onChange={(v) =>
+                  setDraft({
+                    ...draft,
+                    providers: {
+                      ...c.providers,
+                      codex: { sessions_root: v },
+                    },
+                  })
+                }
+                placeholder="~/.codex/sessions"
+                expectDir
+              />
+            </FieldRow>
+          )}
+        </FormGrid>
+      )
+
+    case 'gemini':
+      return (
+        <FormGrid>
+          {visible('tmp directory', 'Per-project Gemini logs') && (
+            <FieldRow
+              label="Tmp directory"
+              hint="Root holding Gemini per-project tmp folders. Default ~/.gemini/tmp."
+              tomlKey="providers.gemini.tmp_root"
+            >
+              <PathInput
+                value={c.providers.gemini.tmp_root}
+                onChange={(v) =>
+                  setDraft({
+                    ...draft,
+                    providers: {
+                      ...c.providers,
+                      gemini: { ...c.providers.gemini, tmp_root: v },
+                    },
+                  })
+                }
+                placeholder="~/.gemini/tmp"
+                expectDir
+              />
+            </FieldRow>
+          )}
+          {visible('projects.json', 'cwd → short-name map') && (
+            <FieldRow
+              label="projects.json"
+              hint="Path to Gemini's cwd→short-name mapping file. Default ~/.gemini/projects.json."
+              tomlKey="providers.gemini.projects_file"
+            >
+              <PathInput
+                value={c.providers.gemini.projects_file}
+                onChange={(v) =>
+                  setDraft({
+                    ...draft,
+                    providers: {
+                      ...c.providers,
+                      gemini: { ...c.providers.gemini, projects_file: v },
+                    },
+                  })
+                }
+                placeholder="~/.gemini/projects.json"
+              />
+            </FieldRow>
+          )}
+        </FormGrid>
+      )
+  }
+}
+
+// FormGrid stacks rows with consistent spacing. Each row is a
+// 220px-label + 1fr-control grid for crisp vertical alignment.
+function FormGrid({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-col gap-5">{children}</div>
+}
+
+// FormGroup wraps a sub-section of a section with a small uppercase
+// heading. Use when one section spans several semantic clusters
+// (e.g. General has both Network and Operator account groups).
+function FormGroup({
+  heading,
+  children,
+}: {
+  heading: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <h3 className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+        {heading}
+      </h3>
+      <FormGrid>{children}</FormGrid>
+    </div>
+  )
+}
+
+// FieldRow is the canonical row layout: label + description on the
+// left, control on the right. The toml key is shown in tiny text
+// under the label so power users can correlate to config.toml.
+function FieldRow({
+  label,
+  hint,
+  tomlKey,
+  children,
+}: {
+  label: string
+  hint?: string
+  tomlKey?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="grid grid-cols-[220px_1fr] gap-6 items-start">
+      <div className="pt-1.5 min-w-0">
+        <div className="text-[12.5px] font-medium text-foreground">
+          {label}
+        </div>
+        {hint && (
+          <p className="text-[11px] text-muted-foreground/80 leading-snug mt-1">
+            {hint}
+          </p>
+        )}
+        {tomlKey && (
+          <p className="text-[10px] font-mono text-muted-foreground/50 mt-1.5">
+            {tomlKey}
+          </p>
+        )}
+      </div>
+      <div className="min-w-0">{children}</div>
+    </div>
+  )
+}
+
+function SegmentedSelect({
+  value,
+  options,
+  onChange,
+}: {
+  value: string
+  options: { value: string; label: string }[]
+  onChange: (v: string) => void
+}) {
+  return (
+    <div className="inline-flex rounded-md border border-border overflow-hidden bg-background">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className={cn(
+            'px-3 py-1.5 text-[11px] font-medium transition-colors',
+            value === opt.value
+              ? 'bg-card text-foreground'
+              : 'text-muted-foreground hover:text-foreground hover:bg-card/40',
+          )}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// StringList renders a list-of-strings field as one numbered row per
+// entry plus an "Add" affordance at the bottom.
+function StringList({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string[]
+  onChange: (next: string[]) => void
+  placeholder?: string
+}) {
+  const list = value ?? []
+  return (
+    <div className="flex flex-col gap-2">
+      {list.length === 0 && (
+        <p className="text-[11px] text-muted-foreground/70 italic">
+          (none — using built-in defaults)
+        </p>
+      )}
+      {list.map((v, i) => (
+        <div key={i} className="flex gap-1.5 items-center">
+          <span className="text-[10px] font-mono text-muted-foreground/50 w-5 text-right">
+            {i + 1}
+          </span>
+          <Input
+            value={v}
+            onChange={(e) => {
+              const next = [...list]
+              next[i] = e.target.value
+              onChange(next)
+            }}
+            placeholder={placeholder}
+            className="h-9 font-mono flex-1"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-9 w-9 p-0 text-muted-foreground hover:text-destructive"
+            onClick={() => onChange(list.filter((_, j) => j !== i))}
+            title="Remove"
+          >
+            <X className="size-3.5" />
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-8 self-start text-[11px]"
+        onClick={() => onChange([...list, ''])}
+      >
+        <Plus className="size-3 mr-1" />
+        Add path
+      </Button>
+    </div>
+  )
+}
+
+// RestartButton triggers POST /admin/restart, then polls /health
+// every 1s until it returns 200 again. While waiting, blocks the UI
+// behind a fullscreen overlay so the operator doesn't try to use a
+// dead server.
+function RestartButton({ dirty }: { dirty: boolean }) {
+  const [waiting, setWaiting] = useState(false)
+  const [tick, setTick] = useState(0)
+
+  const restart = async () => {
+    if (dirty) {
+      const ok = window.confirm(
+        'You have unsaved changes. Restart will use the LAST SAVED config. Continue?',
+      )
+      if (!ok) return
+    }
+    if (
+      !window.confirm(
+        'Restart the opendray gateway? All open terminal sessions will reconnect automatically.',
+      )
+    )
+      return
+
+    setWaiting(true)
+    setTick(0)
+    try {
+      await restartServer()
+    } catch (err) {
+      console.warn('restart request error (expected):', err)
+    }
+
+    const start = Date.now()
+    const timer = setInterval(async () => {
+      setTick((t) => t + 1)
+      if (Date.now() - start > 30_000) {
+        clearInterval(timer)
+        setWaiting(false)
+        toast.error('Restart timed out', {
+          description: 'Health endpoint never came back. Check server logs.',
+        })
+        return
+      }
+      try {
+        const res = await fetch('/api/v1/health', { cache: 'no-store' })
+        if (res.ok) {
+          clearInterval(timer)
+          toast.success('Server restarted')
+          setTimeout(() => window.location.reload(), 400)
+        }
+      } catch {
+        // Still down; keep polling.
+      }
+    }, 1000)
+  }
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={restart}
+        disabled={waiting}
+        className="h-9 px-4"
+        title="Self-exec the gateway process"
+      >
+        <Power className="size-3.5 mr-2" />
+        Restart server
+      </Button>
+      {waiting && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+          <Loader2 className="size-8 animate-spin text-accent" />
+          <p className="text-[14px] font-semibold">Restarting server…</p>
+          <p className="text-[12px] text-muted-foreground">
+            Waiting for /health · {tick}s
+          </p>
+        </div>
+      )}
+    </>
+  )
+}
+
+// mergeSection replaces ONE slice of `dst` with the same slice from
+// `src`. Used by the Reset-section button so the operator can roll
+// back changes scoped to just the panel they're looking at.
+function mergeSection(
+  dst: ServerConfig,
+  src: ServerConfig,
+  section: ServerSectionId,
+): ServerConfig {
+  const out = { ...dst }
+  switch (section) {
+    case 'general':
+      out.listen = src.listen
+      // password always reset to empty so the masked input doesn't
+      // re-introduce the previous draft value.
+      out.admin = { ...src.admin, password: '' }
+      break
+    case 'logging':
+      out.log = src.log
+      break
+    case 'sessions':
+      out.session = src.session
+      break
+    case 'vault':
+      out.vault = src.vault
+      break
+    case 'mcp':
+      out.mcp = src.mcp
+      break
+    case 'claude':
+      out.providers = {
+        ...out.providers,
+        claude: src.providers.claude,
+      }
+      break
+    case 'codex':
+      out.providers = {
+        ...out.providers,
+        codex: src.providers.codex,
+      }
+      break
+    case 'gemini':
+      out.providers = {
+        ...out.providers,
+        gemini: src.providers.gemini,
+      }
+      break
+  }
+  return out
+}
+
+// SettingsSearch is exported so the parent SettingsPage can render
+// it in the sticky header (above the section title) without
+// duplicating layout state. State lives in the page; we only ship
+// the reusable input.
+export function SettingsSearchInput({
+  value,
+  onChange,
+  placeholder = 'Filter fields…',
+}: {
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+}) {
+  return (
+    <div className="relative">
+      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/60" />
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="h-8 pl-8 text-xs w-56"
+      />
+    </div>
+  )
+}

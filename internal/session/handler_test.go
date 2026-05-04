@@ -145,6 +145,13 @@ func (f *fakeSvc) Buffer(_ context.Context, id string, since int64) (Replay, err
 	return Replay{Bytes: full[start:], Start: start, Written: written}, nil
 }
 
+func (f *fakeSvc) History(_ context.Context, id string, _ int) (HistoryResponse, error) {
+	if _, ok := f.sessions[id]; !ok {
+		return HistoryResponse{}, ErrNotFound
+	}
+	return HistoryResponse{Entries: []ProjectInput{}}, nil
+}
+
 func newRouter(svc Service) http.Handler {
 	r := chi.NewRouter()
 	NewHandlers(svc, nil).Mount(r)

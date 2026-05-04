@@ -1,9 +1,14 @@
 # Activity — overview
 
-The Activity page is `tail -f` for opendray's internal event bus.
-Every session lifecycle event, every channel inbound, every
-notification fan-out, every integration call lands here in real
-time.
+The Activity page is `tail -f` for opendray's **system-wide**
+internal event bus. Every session lifecycle event, every channel
+inbound, every notification fan-out, every integration call
+lands here in real time.
+
+> **Not to be confused with:** the **History** tab on the
+> Sessions Inspector, which is a *per-project prompt log* sourced
+> from each CLI's transcript on disk. Activity = events;
+> History = user prompts.
 
 ## When to use
 

@@ -4,16 +4,16 @@ import {
   Search,
   Play,
   NotebookPen,
-  Activity as ActivityIcon,
+  History as HistoryIcon,
 } from 'lucide-react'
 
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import type { Session } from '@/lib/types'
 
-import { ActivityPanel } from './inspector/ActivityPanel'
 import { FilesPanel } from './inspector/FilesPanel'
 import { GitPanel } from './inspector/GitPanel'
+import { HistoryPanel } from './inspector/HistoryPanel'
 import { NotesPanel } from './inspector/NotesPanel'
 import { SearchPanel } from './inspector/SearchPanel'
 import { TaskRunnerPanel } from './inspector/TaskRunnerPanel'
@@ -30,7 +30,7 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
       <Tabs defaultValue="files" className="flex-1 flex flex-col min-h-0">
         <div className="px-2 py-2 border-b border-border shrink-0">
           {/* 6 tabs in a 4-col grid → row 1: Files / Git / Search / Tasks,
-              row 2: Activity + Notes each spanning 2 cols. */}
+              row 2: History + Notes each spanning 2 cols. */}
           <TabsList className="bg-transparent border-0 p-0 gap-0.5 w-full grid grid-cols-4 gap-y-0.5">
             <TabsTrigger
               value="files"
@@ -61,11 +61,11 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
               Tasks
             </TabsTrigger>
             <TabsTrigger
-              value="activity"
+              value="history"
               className="flex items-center justify-center gap-1.5 col-span-2 data-[state=active]:bg-card"
             >
-              <ActivityIcon className="size-3" />
-              Activity
+              <HistoryIcon className="size-3" />
+              History
             </TabsTrigger>
             <TabsTrigger
               value="notes"
@@ -90,8 +90,8 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
           <TabsContent value="tasks" className="m-0 p-3">
             <TaskRunnerPanel session={session} />
           </TabsContent>
-          <TabsContent value="activity" className="m-0 p-3">
-            <ActivityPanel session={session} />
+          <TabsContent value="history" className="m-0 p-3">
+            <HistoryPanel session={session} />
           </TabsContent>
           <TabsContent value="notes" className="m-0 p-3">
             <NotesPanel cwd={session.cwd} />

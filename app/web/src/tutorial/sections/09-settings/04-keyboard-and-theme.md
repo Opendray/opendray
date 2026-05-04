@@ -1,10 +1,13 @@
 # Keyboard & theme
 
-Two pure-cosmetic settings panels.
+Two pure-cosmetic preference panels under
+**Settings → Workspace**. Both persist in browser localStorage
+— no server restart required, no other tab affected on a
+different machine.
 
 ## Theme
 
-Settings → **Theme** picker:
+Settings → **Workspace → Appearance** picker:
 
 - **Dark** — default, matches the rest of the admin design.
 - **Light** — for daylight-monitor use.
@@ -19,10 +22,26 @@ Custom theme tokens (when you want corporate branding) live
 under `app/web/src/index.css` — change the CSS variables and
 rebuild. opendray doesn't ship a theme editor.
 
+## Font size
+
+Settings → **Workspace → Font size** scales the entire UI
+(titles, body text, icons, terminal characters):
+
+| Preset | Scale |
+|---|---|
+| Compact | 85% |
+| Default | 100% |
+| Comfy | 115% |
+| Large | 130% |
+
+Use Comfy / Large on a 4K display where Default looks too small;
+Compact when you have a Sessions workbench packed with tabs.
+Persists per browser, same as Theme.
+
 ## Keyboard shortcuts
 
-Settings → **Keyboard shortcuts** lists every binding the admin
-respects, with an inline editor.
+Shortcuts are baked-in (not yet operator-customisable). Below
+is the current bindings table.
 
 ![Keyboard shortcuts editor](/tutorial/settings-shortcuts.png)
 
@@ -41,17 +60,6 @@ respects, with an inline editor.
 | `Cmd / Ctrl + K` | Command palette |
 | `?` | Keyboard shortcut help dialog |
 | `Esc` | Close any open dialog / popup |
-
-To rebind:
-
-1. Click the binding row.
-2. Press the new key combination.
-3. The new combo replaces the old one. Conflicts are flagged
-   ("This combo is already bound to <other action>").
-4. Save → applies immediately (no restart).
-
-Bindings persist in localStorage. **Reset to defaults** drops
-all customisations.
 
 ## Command palette
 

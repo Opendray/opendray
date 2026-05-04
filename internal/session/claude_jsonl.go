@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -17,16 +18,21 @@ import (
 //
 // Claude writes one JSON object per line to:
 //
-//   ~/.claude/projects/<encoded-cwd>/<session-id>.jsonl
+//   <CLAUDE_CONFIG_DIR>/projects/<encoded-cwd>/<session-id>.jsonl
 //
 // The encoding of `<encoded-cwd>` is non-trivial (Claude does its own
 // underscore↔dash normalisation), so we resolve it by scanning the
 // projects/ root for a directory whose name contains every component
 // of the session's cwd in order.
 //
-// Multi-account note: the v2 single-account path covers the common
-// case; mapping ClaudeAccountID → alternate ~/.claude-accounts/<x>/
-// roots is deferred until we wire account-aware path resolution.
+// Multi-account: opendray points each session at one of:
+//   - ~/.claude/projects/                           (standalone Claude Code)
+//   - ~/.claude-accounts/<account>/projects/        (opendray multi-account;
+//                                                    typically a symlink to
+//                                                    ~/.claude-accounts/shared/projects/)
+//
+// We scan all of them and dedupe by canonical (symlink-resolved) path
+// so each transcript file contributes at most once.
 
 // claudeJSONLEntry is one line in Claude's transcript file. We decode
 // only the fields the snippet needs.
@@ -73,6 +79,205 @@ type claudeContentBlock struct {
 	// expose a string view via ToolResultText().
 	RawContent json.RawMessage `json:"content,omitempty"`
 	IsError    bool            `json:"is_error,omitempty"`
+}
+
+// ProjectInput is one human prompt found in a Claude JSONL
+// transcript. Used by the History panel to render every prompt the
+// operator has asked in this project (cwd) across all sessions.
+type ProjectInput struct {
+	Ts        time.Time `json:"ts"`
+	Text      string    `json:"text"`
+	SessionID string    `json:"session_id"` // Claude's own session id (filename)
+}
+
+// HistoryResponse is the result of Manager.History — user prompts
+// in this project + an "unsupported" flag for non-Claude providers
+// so the UI can render the right empty state without a separate
+// provider lookup.
+type HistoryResponse struct {
+	Entries             []ProjectInput `json:"entries"`
+	UnsupportedProvider bool           `json:"unsupported_provider,omitempty"`
+}
+
+// ClaudeHistoryConfig drives ProjectInputHistory's path resolution.
+// All fields optional — empty values fall back to ~/.claude/projects
+// plus every ~/.claude-accounts/*/projects (the same defaults the
+// hardcoded path used to expose).
+type ClaudeHistoryConfig struct {
+	// HistoryRoots is the explicit list of `<dir>/projects` roots to
+	// scan. When non-empty, it REPLACES the built-in defaults — the
+	// operator opted out of HOME-relative discovery entirely.
+	HistoryRoots []string
+	// AccountsDir overrides ~/.claude-accounts when looking for
+	// per-account project subtrees. Ignored when HistoryRoots is set.
+	AccountsDir string
+}
+
+// ProjectInputHistory returns up to `limit` user prompts from every
+// JSONL file in any Claude project directory matching `cwd`,
+// across the configured roots, chronologically ordered (newest
+// first). Empty result when nothing matches.
+//
+// Errors are swallowed deliberately on the per-file path so one
+// malformed transcript doesn't break the whole list.
+func ProjectInputHistory(cfg ClaudeHistoryConfig, cwd string, limit int) []ProjectInput {
+	if limit <= 0 {
+		limit = 200
+	}
+	roots := resolveClaudeRoots(cfg)
+	if len(roots) == 0 {
+		return nil
+	}
+	var out []ProjectInput
+	seenRoots := map[string]bool{}
+	seenFiles := map[string]bool{}
+	for _, root := range roots {
+		canon, err := filepath.EvalSymlinks(root)
+		if err != nil {
+			canon = root // root may not exist; findClaudeProjectDir will return ""
+		}
+		if seenRoots[canon] {
+			continue
+		}
+		seenRoots[canon] = true
+		dir := findClaudeProjectDir(canon, cwd)
+		if dir == "" {
+			continue
+		}
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		for _, e := range entries {
+			if e.IsDir() || !strings.HasSuffix(e.Name(), ".jsonl") {
+				continue
+			}
+			path := filepath.Join(dir, e.Name())
+			realPath, err := filepath.EvalSymlinks(path)
+			if err != nil {
+				realPath = path
+			}
+			if seenFiles[realPath] {
+				continue
+			}
+			seenFiles[realPath] = true
+			sid := strings.TrimSuffix(e.Name(), ".jsonl")
+			out = append(out, extractUserInputs(path, sid)...)
+		}
+	}
+	// Newest first.
+	sort.Slice(out, func(i, j int) bool { return out[i].Ts.After(out[j].Ts) })
+	if len(out) > limit {
+		out = out[:limit]
+	}
+	return out
+}
+
+// resolveClaudeRoots picks the list of projects-root directories
+// to scan. Precedence:
+//
+//  1. cfg.HistoryRoots — explicit operator override; used as-is.
+//  2. ~/.claude/projects + every ~/.claude-accounts/*/projects
+//     subtree, where ~/.claude-accounts is overridable via
+//     cfg.AccountsDir.
+//
+// Returns nil only when HOME isn't set AND no explicit roots are
+// configured (test environments stub HOME via t.Setenv).
+func resolveClaudeRoots(cfg ClaudeHistoryConfig) []string {
+	if len(cfg.HistoryRoots) > 0 {
+		return cfg.HistoryRoots
+	}
+	home := os.Getenv("HOME")
+	if home == "" {
+		return nil
+	}
+	roots := []string{filepath.Join(home, ".claude", "projects")}
+	accountsDir := cfg.AccountsDir
+	if accountsDir == "" {
+		accountsDir = filepath.Join(home, ".claude-accounts")
+	}
+	entries, err := os.ReadDir(accountsDir)
+	if err != nil {
+		return roots
+	}
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		// `tokens/` holds OAuth files, not project transcripts.
+		if e.Name() == "tokens" {
+			continue
+		}
+		roots = append(roots, filepath.Join(accountsDir, e.Name(), "projects"))
+	}
+	return roots
+}
+
+// extractUserInputs reads one JSONL file and returns the user
+// prompts inside. Skips entries whose `user.message.content` is
+// only tool_result blocks (those are agent feedback, not user
+// intent).
+func extractUserInputs(path, sessionID string) []ProjectInput {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
+
+	var out []ProjectInput
+	for scanner.Scan() {
+		var e claudeJSONLEntry
+		if err := json.Unmarshal(scanner.Bytes(), &e); err != nil {
+			continue
+		}
+		if e.Type != "user" || e.Message == nil {
+			continue
+		}
+		text := extractUserText(e.Message.Content)
+		if text == "" {
+			continue
+		}
+		out = append(out, ProjectInput{
+			Ts:        e.Time,
+			Text:      text,
+			SessionID: sessionID,
+		})
+	}
+	return out
+}
+
+// extractUserText returns the human prompt text from a user
+// entry's content. Handles both shapes:
+//   - bare JSON string  → treat as the prompt
+//   - array of blocks   → concatenate `text` blocks; skip
+//                          tool_result and any other block types.
+//
+// Returns "" when the entry carries no text (i.e. tool_result-only
+// entries that Claude writes as "feedback for itself").
+func extractUserText(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	if raw[0] == '"' {
+		var s string
+		if err := json.Unmarshal(raw, &s); err != nil {
+			return ""
+		}
+		return strings.TrimSpace(s)
+	}
+	var blocks []claudeContentBlock
+	if err := json.Unmarshal(raw, &blocks); err != nil {
+		return ""
+	}
+	parts := make([]string, 0, len(blocks))
+	for _, b := range blocks {
+		if b.Type == "text" && strings.TrimSpace(b.Text) != "" {
+			parts = append(parts, b.Text)
+		}
+	}
+	return strings.TrimSpace(strings.Join(parts, "\n"))
 }
 
 // ToolResultText returns the human-readable text from a tool_result

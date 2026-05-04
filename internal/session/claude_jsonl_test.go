@@ -2,6 +2,7 @@ package session
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -299,6 +300,163 @@ func userToolResult(t *testing.T, useID, body string) string {
 	return string(raw)
 }
 
+func TestProjectInputHistory_MergesAcrossSessions(t *testing.T) {
+	tmpHome := t.TempDir()
+	encoded := "-tmp-fake-cwd"
+	pdir := filepath.Join(tmpHome, ".claude", "projects", encoded)
+	if err := os.MkdirAll(pdir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Two sessions, interleaved timestamps. Each session has a mix
+	// of user prompts (string content + array content) and one
+	// tool_result-only entry that must be skipped.
+	sessionA := filepath.Join(pdir, "sess-A.jsonl")
+	sessionB := filepath.Join(pdir, "sess-B.jsonl")
+
+	writeJSONL(t, sessionA, []map[string]any{
+		userEntryString(t, "first prompt in A", "2026-05-04T10:00:00Z"),
+		assistantEntry(t, "ok", "2026-05-04T10:00:30Z"),
+		userToolResultOnly(t, "tool_a", "2026-05-04T10:01:00Z"), // skipped
+		userEntryString(t, "second prompt in A", "2026-05-04T10:02:00Z"),
+	})
+	writeJSONL(t, sessionB, []map[string]any{
+		userEntryString(t, "first prompt in B", "2026-05-04T10:01:30Z"),
+		userEntryArray(t, "second prompt in B", "2026-05-04T10:03:00Z"),
+	})
+
+	t.Setenv("HOME", tmpHome)
+	got := ProjectInputHistory(ClaudeHistoryConfig{}, "/tmp/fake/cwd", 50)
+
+	wantTexts := []string{
+		"second prompt in B", // 10:03:00 — newest
+		"second prompt in A", // 10:02:00
+		"first prompt in B",  // 10:01:30
+		"first prompt in A",  // 10:00:00 — oldest
+	}
+	if len(got) != len(wantTexts) {
+		t.Fatalf("got %d entries, want %d:\n%+v", len(got), len(wantTexts), got)
+	}
+	for i, want := range wantTexts {
+		if got[i].Text != want {
+			t.Errorf("entry %d text = %q, want %q", i, got[i].Text, want)
+		}
+	}
+	// Session id round-trip check.
+	if got[0].SessionID != "sess-B" {
+		t.Errorf("session id for newest = %q, want sess-B", got[0].SessionID)
+	}
+}
+
+func TestProjectInputHistory_LimitTrims(t *testing.T) {
+	tmpHome := t.TempDir()
+	encoded := "-tmp-fake-cwd"
+	pdir := filepath.Join(tmpHome, ".claude", "projects", encoded)
+	if err := os.MkdirAll(pdir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	entries := make([]map[string]any, 0, 30)
+	for i := 0; i < 30; i++ {
+		ts := fmt.Sprintf("2026-05-04T10:%02d:00Z", i)
+		entries = append(entries, userEntryString(t, fmt.Sprintf("prompt %d", i), ts))
+	}
+	writeJSONL(t, filepath.Join(pdir, "x.jsonl"), entries)
+
+	t.Setenv("HOME", tmpHome)
+	got := ProjectInputHistory(ClaudeHistoryConfig{}, "/tmp/fake/cwd", 5)
+
+	if len(got) != 5 {
+		t.Fatalf("limit not honoured: got %d, want 5", len(got))
+	}
+	if got[0].Text != "prompt 29" {
+		t.Errorf("newest first failed: %q", got[0].Text)
+	}
+}
+
+func TestProjectInputHistory_CustomHistoryRoots(t *testing.T) {
+	// HOME stays empty; default discovery would yield nothing.
+	t.Setenv("HOME", "")
+
+	tmp := t.TempDir()
+	pdir := filepath.Join(tmp, "custom-root", "-tmp-fake-cwd")
+	if err := os.MkdirAll(pdir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeJSONL(t, filepath.Join(pdir, "x.jsonl"), []map[string]any{
+		userEntryString(t, "from custom root", "2026-05-04T12:00:00Z"),
+	})
+
+	got := ProjectInputHistory(
+		ClaudeHistoryConfig{HistoryRoots: []string{filepath.Join(tmp, "custom-root")}},
+		"/tmp/fake/cwd", 10,
+	)
+	if len(got) != 1 || got[0].Text != "from custom root" {
+		t.Errorf("custom HistoryRoots not honoured: %+v", got)
+	}
+}
+
+func TestProjectInputHistory_CustomAccountsDir(t *testing.T) {
+	tmpHome := t.TempDir()
+	t.Setenv("HOME", tmpHome)
+
+	// Account root is somewhere unrelated to ~/.claude-accounts —
+	// only reachable through cfg.AccountsDir.
+	customAccounts := filepath.Join(tmpHome, "elsewhere", "accounts")
+	pdir := filepath.Join(customAccounts, "alice", "projects", "-tmp-fake-cwd")
+	if err := os.MkdirAll(pdir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeJSONL(t, filepath.Join(pdir, "x.jsonl"), []map[string]any{
+		userEntryString(t, "from custom accounts dir", "2026-05-04T12:00:00Z"),
+	})
+
+	got := ProjectInputHistory(
+		ClaudeHistoryConfig{AccountsDir: customAccounts},
+		"/tmp/fake/cwd", 10,
+	)
+	if len(got) != 1 || got[0].Text != "from custom accounts dir" {
+		t.Errorf("custom AccountsDir not honoured: %+v", got)
+	}
+}
+
+func TestProjectInputHistory_NoHomeOrProject(t *testing.T) {
+	t.Setenv("HOME", "")
+	if got := ProjectInputHistory(ClaudeHistoryConfig{}, "/anywhere", 50); got != nil {
+		t.Errorf("no HOME: want nil, got %v", got)
+	}
+
+	tmpHome := t.TempDir()
+	t.Setenv("HOME", tmpHome)
+	if got := ProjectInputHistory(ClaudeHistoryConfig{}, "/tmp/nothing-matches", 50); got != nil {
+		t.Errorf("no project dir: want nil, got %v", got)
+	}
+}
+
+func TestExtractUserText_ShapeVariants(t *testing.T) {
+	cases := []struct {
+		name string
+		raw  string
+		want string
+	}{
+		{"bare string", `"hello"`, "hello"},
+		{"trim whitespace", `"  hello  "`, "hello"},
+		{"text block", `[{"type":"text","text":"hi there"}]`, "hi there"},
+		{"text + tool_result mixed → only text", `[{"type":"text","text":"go"},{"type":"tool_result","tool_use_id":"x","content":"output"}]`, "go"},
+		{"only tool_result → empty", `[{"type":"tool_result","tool_use_id":"x","content":"output"}]`, ""},
+		{"empty array → empty", `[]`, ""},
+		{"empty string → empty", `""`, ""},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := extractUserText([]byte(c.raw))
+			if got != c.want {
+				t.Errorf("extractUserText(%q) = %q, want %q", c.raw, got, c.want)
+			}
+		})
+	}
+}
+
 func TestResolveLatestClaudeJSONL_RealFile(t *testing.T) {
 	// Build a fake ~/.claude/projects/<encoded>/<sid>.jsonl tree under TempDir.
 	tmpHome := t.TempDir()
@@ -345,4 +503,106 @@ func mustEntry(t *testing.T, role, text string) string {
 		t.Fatal(err)
 	}
 	return string(raw)
+}
+
+// writeJSONL writes the given entries one-per-line to path, each
+// marshalled as a single JSON object. Overwrites any existing file.
+func writeJSONL(t *testing.T, path string, entries []map[string]any) {
+	t.Helper()
+	var b strings.Builder
+	for _, e := range entries {
+		raw, err := json.Marshal(e)
+		if err != nil {
+			t.Fatal(err)
+		}
+		b.Write(raw)
+		b.WriteByte('\n')
+	}
+	if err := os.WriteFile(path, []byte(b.String()), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// userEntryString builds a user JSONL entry whose content is a bare
+// JSON string (the legacy "user typed this" shape).
+func userEntryString(t *testing.T, text, ts string) map[string]any {
+	t.Helper()
+	content, err := json.Marshal(text)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return map[string]any{
+		"type":      "user",
+		"timestamp": ts,
+		"message": map[string]any{
+			"role":    "user",
+			"content": json.RawMessage(content),
+		},
+	}
+}
+
+// userEntryArray builds a user JSONL entry whose content is an array
+// containing a single text block.
+func userEntryArray(t *testing.T, text, ts string) map[string]any {
+	t.Helper()
+	content, err := json.Marshal([]any{
+		map[string]any{"type": "text", "text": text},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return map[string]any{
+		"type":      "user",
+		"timestamp": ts,
+		"message": map[string]any{
+			"role":    "user",
+			"content": json.RawMessage(content),
+		},
+	}
+}
+
+// assistantEntry builds an assistant JSONL entry with a single text
+// block.
+func assistantEntry(t *testing.T, text, ts string) map[string]any {
+	t.Helper()
+	content, err := json.Marshal([]any{
+		map[string]any{"type": "text", "text": text},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return map[string]any{
+		"type":      "assistant",
+		"timestamp": ts,
+		"message": map[string]any{
+			"role":    "assistant",
+			"content": json.RawMessage(content),
+		},
+	}
+}
+
+// userToolResultOnly builds a user JSONL entry whose content array
+// holds only a tool_result block. Claude writes these so the next
+// assistant turn can see the tool's output — they are not human
+// input and ProjectInputHistory must skip them.
+func userToolResultOnly(t *testing.T, toolUseID, ts string) map[string]any {
+	t.Helper()
+	content, err := json.Marshal([]any{
+		map[string]any{
+			"type":        "tool_result",
+			"tool_use_id": toolUseID,
+			"content":     "tool output goes here",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return map[string]any{
+		"type":      "user",
+		"timestamp": ts,
+		"message": map[string]any{
+			"role":    "user",
+			"content": json.RawMessage(content),
+		},
+	}
 }

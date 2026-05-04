@@ -1,8 +1,8 @@
 # Inspector panel
 
 The Inspector is the collapsible right-side panel on the Sessions
-page. It carries metadata, linked notes, and tooling that doesn't
-fit inline in the terminal.
+page. It carries metadata, file browsing, history, and tooling
+that doesn't fit inline in the terminal.
 
 ![Inspector panel tabs](/tutorial/sessions-inspector.png)
 
@@ -11,71 +11,124 @@ in the top-right of the terminal pane.
 
 ## Sub-tabs
 
-### Outline
+The Inspector currently exposes six tabs in a 2×4 grid (top row
+of four + bottom row of two wider tabs):
 
-Auto-extracted markdown headers from the active session's most-
-recent assistant message (Claude only — pulls from the JSONL
-transcript) or from any markdown block in the live ring buffer
-output (other CLIs).
+| Row | Tabs |
+|---|---|
+| 1 | Files · Git · Search · Tasks |
+| 2 | History · Notes |
 
-Click a heading → terminal jumps to its location in the
-scrollback. Useful when Claude has written a long structured
-response and you want to skim.
+All tabs scope to the **session's `cwd`** — there's nothing
+showing data outside that working directory.
+
+### Files
+
+A scrollable tree of the session's working directory. Helpful
+when you've forgotten what files are in the project, or when
+the agent references a file you want to peek at without leaving
+the terminal.
+
+Click a file → opens a read-only viewer in the Inspector.
+
+The tree is collapsed by default to 3 levels deep so
+`node_modules` or `.venv` doesn't blow it up; expand specific
+subtrees on demand.
+
+### Git
+
+Inline `git status` for the cwd: untracked / modified / staged
+files with diff previews on click. Only shown when the cwd is
+inside a git repo. Useful for the "what did the agent actually
+change?" review at the end of a session.
+
+### Search
+
+Substring + regex search across the cwd. Powered by the same
+ripgrep wrapper the FS handler uses on the backend, so it
+respects `.gitignore` and skips `node_modules`. Match results
+link to the file viewer.
+
+### Tasks
+
+The session-scoped Custom Tasks runner. Every task you've saved
+under Plugins → Custom Tasks shows up here as a one-click
+launcher; the run spawns a **new** session in the same cwd
+under the parent session, so `g s` shows them grouped.
+
+### History
+
+**Project-level** input log: every prompt the operator has sent
+in this cwd, pooled across every session ever spawned there.
+
+Source of truth varies by provider:
+
+| Provider | Reads from |
+|---|---|
+| Claude | `~/.claude/projects/<encoded-cwd>/*.jsonl` and `~/.claude-accounts/*/projects/...` |
+| Codex | `~/.codex/sessions/**/*.jsonl` filtered by `session_meta.cwd` |
+| Gemini | `~/.gemini/tmp/<dir>/logs.json` (resolved via `projects.json` short-name) |
+
+These paths are configurable in **Settings → Server → Storage
+paths** (one section per provider). For non-supported providers
+(shell, etc.) the panel shows a friendly empty state.
+
+Each row carries:
+
+- Timestamp (relative — "2 hours ago")
+- The prompt text (wrapped, never truncated)
+- The CLI session id (8-char prefix; full id on hover)
+
+Per-row actions appear on hover:
+
+- **📋 Copy** — prompt text to clipboard.
+- **➤ Resend** — re-injects the prompt into the **currently
+  active** session via the same `/input` endpoint the terminal
+  uses. Uses `\r` (raw-mode Enter), not `\n`, so Claude doesn't
+  see a literal newline in the prompt.
+
+Newest entries first. Filter box at the top is case-insensitive
+substring match against prompt text. Polls every 10 s so newly
+typed prompts show up automatically.
 
 ### Notes
 
-The session's linked Obsidian note. Each session gets one note at
-`<vault-root>/sessions/<session-id>.md` automatically. The
-Inspector embeds the same Markdown editor you'd see on the Notes
-page:
+The session's linked Obsidian note. Each session gets one note
+at `<vault-root>/sessions/<session-id>.md` automatically. The
+Inspector embeds the same Markdown editor you'd see on the
+Notes page:
 
 - **Source / Preview** tabs at the top of the note pane — pick
   whichever matches the moment.
 - **Wiki-link suggestions** trigger when you type `[[`.
-- **Backlinks** show on the right (other notes that link to this
-  one).
-- **Auto-save** debounced 1s after the last keystroke.
+- **Backlinks** show on the right (other notes that link to
+  this one).
+- **Auto-save** debounced 1 s after the last keystroke.
 
 This is the right place for the operator's running scratchpad:
 "things to ask Claude about", "pending decisions", "TODO before
 ending the session". Survives session restart because it's
 file-based, not in-memory.
 
-### Context
+## What's NOT in the Inspector
 
-A scrollable tree of the session's working directory. Helpful when
-you've forgotten what files are in the project, or when Claude
-references a file you want to peek at without leaving the terminal.
-
-Click a file → opens a read-only viewer in the Inspector.
-
-The tree is collapsed by default to 3 levels deep so a `node_modules`
-or `.venv` doesn't blow it up; expand specific subtrees on demand.
-
-### Activity
-
-Per-session live event feed. Filtered to the active session id
-automatically — you see only events that mention this session.
-
-What lands here:
-
-- `session.idle` / `session.ended` lifecycle events
-- `channel.message_sent` — when a notification fires for this
-  session on any channel
-- `channel.message_forwarded` — when a Telegram (etc.) reply gets
-  routed to this session's stdin
-- Any custom topic an integration publishes
-
-Useful when debugging: "did the notification go out?" — check
-Activity here, see the `channel.message_sent` line, confirm.
+- **Lifecycle event timeline** — the per-session "what happened
+  when" view used to live here as an "Activity" tab. It was
+  removed in favour of History because raw event streams turned
+  out to be low-signal for vibe-coding. The system-wide event
+  bus is still available on the **Activity** page (top nav).
+- **Outline** of the latest assistant message — also previously
+  here, since dropped. Use Search instead, or the agent's own
+  scrollback.
 
 ## Hiding the inspector
 
 Two options:
 
-- **Toggle** with `g i` to slide the panel off-screen (state per-
-  user, persists across reloads).
+- **Toggle** with `g i` to slide the panel off-screen (state
+  per-user, persists across reloads).
 - **Collapse a single tab** by clicking its tab pill twice.
 
-When opened, the panel takes ~360px on the right. On narrow
-windows (<1200px) it overlays the terminal instead of side-by-side.
+When opened, the panel takes ~360 px on the right. On narrow
+windows (<1200 px) it overlays the terminal instead of
+side-by-side.

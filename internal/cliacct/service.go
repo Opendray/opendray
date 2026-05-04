@@ -17,20 +17,49 @@ import (
 // Service is the public surface used by HTTP handlers and the
 // SessionProvider adapter. It hides the on-disk token plumbing.
 type Service struct {
-	log   *slog.Logger
-	store *store
-	bus   *eventbus.Hub
+	log         *slog.Logger
+	store       *store
+	bus         *eventbus.Hub
+	accountsDir string // root for default ConfigDir/TokenPath; "" → ~/.claude-accounts
 }
 
-func NewService(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger) *Service {
+// Option mutates Service defaults.
+type Option func(*Service)
+
+// WithAccountsDir overrides the directory used to derive default
+// ConfigDir / TokenPath for new accounts. Empty value falls back
+// to ~/.claude-accounts (the historical hardcoded default).
+func WithAccountsDir(dir string) Option {
+	return func(s *Service) { s.accountsDir = dir }
+}
+
+func NewService(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger, opts ...Option) *Service {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &Service{
+	s := &Service{
 		log:   log.With("component", "cliacct"),
 		store: newStore(pool),
 		bus:   bus,
 	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
+}
+
+// resolveAccountsDir returns the configured root, falling back to
+// ~/.claude-accounts when unset. Returns "" only when HOME is also
+// unset (test environments must inject WithAccountsDir explicitly).
+func (s *Service) resolveAccountsDir() string {
+	if s.accountsDir != "" {
+		return s.accountsDir
+	}
+	home, _ := os.UserHomeDir()
+	if home == "" {
+		return ""
+	}
+	return filepath.Join(home, ".claude-accounts")
 }
 
 // List returns all accounts, with TokenFilled set per account.
@@ -69,14 +98,14 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (Account, error
 		return Account{}, err
 	}
 
-	home, _ := os.UserHomeDir()
+	accountsDir := s.resolveAccountsDir()
 	configDir := strings.TrimSpace(req.ConfigDir)
-	if configDir == "" && home != "" {
-		configDir = filepath.Join(home, ".claude-accounts", name)
+	if configDir == "" && accountsDir != "" {
+		configDir = filepath.Join(accountsDir, name)
 	}
 	tokenPath := strings.TrimSpace(req.TokenPath)
-	if tokenPath == "" && home != "" {
-		tokenPath = filepath.Join(home, ".claude-accounts", "tokens", name+".token")
+	if tokenPath == "" && accountsDir != "" {
+		tokenPath = filepath.Join(accountsDir, "tokens", name+".token")
 	}
 
 	if req.Token != "" {
@@ -176,11 +205,11 @@ func (s *Service) SetToken(ctx context.Context, id, token string) error {
 // Mirrors v1's behavior: zero-arg adoption flow for operators who set
 // up `claude-acc` before plugging into the gateway.
 func (s *Service) ImportLocal(ctx context.Context) ([]Account, error) {
-	home, err := os.UserHomeDir()
-	if err != nil || home == "" {
-		return nil, fmt.Errorf("resolve home dir: %w", err)
+	accountsDir := s.resolveAccountsDir()
+	if accountsDir == "" {
+		return nil, fmt.Errorf("resolve accounts dir: HOME unset and no accounts_dir configured")
 	}
-	tokensDir := filepath.Join(home, ".claude-accounts", "tokens")
+	tokensDir := filepath.Join(accountsDir, "tokens")
 	entries, err := os.ReadDir(tokensDir)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
