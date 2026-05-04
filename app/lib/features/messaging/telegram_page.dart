@@ -28,6 +28,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/api/api_client.dart';
 import '../../shared/providers_bus.dart';
 import '../../shared/theme/app_theme.dart';
+import '../plugins/plugin_configure_page.dart';
 
 class TelegramPage extends StatefulWidget {
   const TelegramPage({super.key});
@@ -357,6 +358,26 @@ class _Header extends StatelessWidget {
               ],
             ),
           ),
+          SizedBox(width: t.sp2),
+          // Always-available reconfigure entry — non-technical users
+          // shouldn't have to navigate to /plugins to clear the bot
+          // token or swap to a different bot. Pushes the configure form
+          // directly so the change is one click away regardless of the
+          // current setup state.
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const PluginConfigurePage(
+                pluginName: 'telegram',
+                displayName: 'Telegram',
+              ),
+            )),
+            icon: const Icon(Icons.tune, size: 14),
+            label: const Text('Configure'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(0, 32),
+              padding: EdgeInsets.symmetric(horizontal: t.sp3),
+            ),
+          ),
         ],
       ),
     );
@@ -500,9 +521,14 @@ class _Step2Content extends StatelessWidget {
               label: const Text('Open @BotFather'),
             ),
             FilledButton.icon(
-              onPressed: () => context.go('/plugins'),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const PluginConfigurePage(
+                  pluginName: 'telegram',
+                  displayName: 'Telegram',
+                ),
+              )),
               icon: const Icon(Icons.tune, size: 14),
-              label: const Text('Configure plugin'),
+              label: const Text('Paste token here'),
             ),
           ],
         ),
