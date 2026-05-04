@@ -10,21 +10,19 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// Handlers exposes the memory subsystem over HTTP under /admin/memory/*.
-// Mount under an admin-only route group.
+// Handlers exposes the memory subsystem over HTTP under /memory/*.
+// Mount under the dual-auth route group (admin OR integration) so
+// the auto-attached opendray-memory MCP subprocess can reach it
+// with an integration bearer rather than admin credentials.
 //
-// Endpoints (all admin-authed):
+// Endpoints (admin OR integration token):
 //
-//	POST   /admin/memory/store      body: StoreRequest         → {id}
-//	POST   /admin/memory/search     body: SearchRequest        → {hits}
-//	GET    /admin/memory/list       ?scope=…&scope_key=…&n=…   → {memories}
-//	DELETE /admin/memory/{id}                                  → 204
-//	GET    /admin/memory/status                                → {embedder, store, dim, threshold, top_k}
-//	POST   /admin/memory/test       body: {text}               → {dim, vector_preview}
-//
-// Phase 2 will add an MCP server that fronts the same Service so
-// agents can call these without going through HTTP — but the same
-// Service backs both.
+//	POST   /memory/store        body: StoreRequest         → {id}
+//	POST   /memory/search       body: SearchRequest        → {hits}
+//	GET    /memory/list         ?scope=…&scope_key=…&n=…   → {memories}
+//	DELETE /memory/{id}                                    → 204
+//	GET    /memory/status                                  → {embedder, store, dim}
+//	POST   /memory/test         body: {text}               → {dim, vector_preview}
 type Handlers struct {
 	svc *Service
 	log *slog.Logger
@@ -41,10 +39,10 @@ func NewHandlers(svc *Service, log *slog.Logger) *Handlers {
 	return &Handlers{svc: svc, log: log.With("component", "memory.http")}
 }
 
-// Mount registers all /admin/memory/* routes on r. r should already
-// have admin-auth middleware applied.
+// Mount registers all /memory/* routes on r. r should already have
+// dual-auth middleware (admin OR integration) applied.
 func (h *Handlers) Mount(r chi.Router) {
-	r.Route("/admin/memory", func(r chi.Router) {
+	r.Route("/memory", func(r chi.Router) {
 		r.Get("/status", h.status)
 		r.Post("/store", h.store)
 		r.Post("/search", h.search)

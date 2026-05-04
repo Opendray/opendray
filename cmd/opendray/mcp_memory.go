@@ -9,7 +9,7 @@
 //
 // The subprocess is intentionally thin — it holds no state and no
 // DB connection. Every tool call is forwarded to the gateway's
-// /api/v1/admin/memory/* endpoints, authenticated with whatever
+// /api/v1/memory/* endpoints, authenticated with whatever
 // bearer the operator wired into the launching env. That keeps the
 // memory layer's business logic in one place (internal/memory) and
 // makes the MCP wrapper trivially easy to evolve as MCP itself does.
@@ -329,7 +329,7 @@ func (s *memMCPServer) callSearch(args json.RawMessage) (any, error) {
 			Similarity float32        `json:"similarity"`
 		} `json:"hits"`
 	}
-	if err := s.gatewayPostJSON("/api/v1/admin/memory/search", body, &out); err != nil {
+	if err := s.gatewayPostJSON("/api/v1/memory/search", body, &out); err != nil {
 		return nil, err
 	}
 
@@ -375,7 +375,7 @@ func (s *memMCPServer) callStore(args json.RawMessage) (any, error) {
 	var out struct {
 		ID string `json:"id"`
 	}
-	if err := s.gatewayPostJSON("/api/v1/admin/memory/store", body, &out); err != nil {
+	if err := s.gatewayPostJSON("/api/v1/memory/store", body, &out); err != nil {
 		return nil, err
 	}
 	return map[string]any{
@@ -399,7 +399,7 @@ func (s *memMCPServer) callList(args json.RawMessage) (any, error) {
 		in.Limit = 200
 	}
 	url := fmt.Sprintf(
-		"/api/v1/admin/memory/list?scope=%s&scope_key=%s&n=%d",
+		"/api/v1/memory/list?scope=%s&scope_key=%s&n=%d",
 		s.cfg.scope, urlQuery(s.cfg.scopeKey), in.Limit,
 	)
 	var out struct {

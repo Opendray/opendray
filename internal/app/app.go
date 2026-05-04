@@ -281,7 +281,6 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				auditHandlers.Mount(r)
 				intgrCallLogHandlers.Mount(r)
 				settingsHandlers.Mount(r)
-				memoryHandlers.Mount(r)
 			})
 
 			// Dual-auth (admin OR integration API key): all business
@@ -299,6 +298,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				catalogHandlers.Mount(r)
 				cliacctHandlers.Mount(r)
 				channelHandlers.Mount(r)
+				memoryHandlers.Mount(r)
 				r.Get("/integrations/_events", eventsHandler.Serve)
 			})
 		},
