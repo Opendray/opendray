@@ -85,5 +85,5 @@ app consume too).
 | Error responses + retries | [Error handling](#consuming-error-handling) |
 
 The whole thing maps onto the
-[`examples/integrations/demo-client/`](https://github.com/linivek/opendray-v2/tree/main/examples/integrations/demo-client)
+[`examples/integrations/demo-client/`](https://github.com/Opendray/opendray_v2/tree/main/examples/integrations/demo-client)
 reference — copy that and edit, or read it alongside.

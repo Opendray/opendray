@@ -111,7 +111,7 @@ If you see a 500 with a generic message:
 1. Capture the request — method, path, body, time.
 2. Check the gateway log (Settings → Logging → Live tail) for an
    error around the same timestamp.
-3. File at <https://github.com/linivek/opendray-v2/issues> with
+3. File at <https://github.com/Opendray/opendray_v2/issues> with
    both the request shape and the relevant log lines.
 
 opendray is small enough that most 500s are reproducible bugs;

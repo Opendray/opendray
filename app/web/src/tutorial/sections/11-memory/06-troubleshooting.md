@@ -151,7 +151,7 @@ curl -X DELETE -H "Authorization: Bearer $TOKEN" .../integrations/$ID
 ## When to file a bug
 
 If the symptom isn't here, file at
-<https://github.com/linivek/opendray-v2/issues> with:
+<https://github.com/Opendray/opendray_v2/issues> with:
 
 1. Output of `tail -100 /tmp/opendray.log`
 2. The session's `mcp.json` (redact api_key first)
