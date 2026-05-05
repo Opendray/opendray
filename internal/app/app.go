@@ -293,10 +293,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			return nil, fmt.Errorf("backup: feature enabled but OPENDRAY_BACKUP_KEY not set")
 		}
 		bcfg := backup.Config{
-			Enabled:    true,
-			LocalDir:   defaultBackupDir(cfg.Backup.LocalDir, "backups"),
-			ExportDir:  defaultBackupDir(cfg.Backup.ExportDir, "exports"),
-			PgDumpPath: cfg.Backup.PgDumpPath,
+			Enabled:       true,
+			LocalDir:      defaultBackupDir(cfg.Backup.LocalDir, "backups"),
+			ExportDir:     defaultBackupDir(cfg.Backup.ExportDir, "exports"),
+			PgDumpPath:    cfg.Backup.PgDumpPath,
+			PgRestorePath: cfg.Backup.PgRestorePath,
 		}
 		bsvc, berr := backup.NewService(bcfg, backup.ServiceDeps{
 			Pool:       st.Pool(),

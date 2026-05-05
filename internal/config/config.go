@@ -234,10 +234,11 @@ type DatabaseConfig struct {
 //	export_dir    = ~/.opendray/exports   — staging dir for /export bundles
 //	pg_dump_path  = ""              — resolved from PATH at startup
 type BackupConfig struct {
-	Enabled    bool   `toml:"enabled" json:"enabled"`
-	LocalDir   string `toml:"local_dir" json:"local_dir"`
-	ExportDir  string `toml:"export_dir" json:"export_dir"`
-	PgDumpPath string `toml:"pg_dump_path" json:"pg_dump_path"`
+	Enabled       bool   `toml:"enabled" json:"enabled"`
+	LocalDir      string `toml:"local_dir" json:"local_dir"`
+	ExportDir     string `toml:"export_dir" json:"export_dir"`
+	PgDumpPath    string `toml:"pg_dump_path" json:"pg_dump_path"`
+	PgRestorePath string `toml:"pg_restore_path" json:"pg_restore_path"`
 }
 
 type AdminConfig struct {
@@ -362,6 +363,9 @@ func applyEnv(cfg *Config) {
 	}
 	if v := os.Getenv("OPENDRAY_BACKUP_PG_DUMP_PATH"); v != "" {
 		cfg.Backup.PgDumpPath = v
+	}
+	if v := os.Getenv("OPENDRAY_BACKUP_PG_RESTORE_PATH"); v != "" {
+		cfg.Backup.PgRestorePath = v
 	}
 }
 

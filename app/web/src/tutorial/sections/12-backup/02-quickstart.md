@@ -46,20 +46,44 @@ reports; if it's empty the trigger button is disabled.
    typical small instance: 1-3 seconds.
 5. Click the **download arrow** to grab `<id>.tar.gz.enc`.
 
-## Verify the bundle
+## Verify the bundle (without restoring)
+
+`examples/verify-backup` ships a one-shot Go program that proves
+the bundle round-trips without needing a target server:
 
 ```bash
-# Decrypt with the same passphrase used by opendray:
-go run ./cmd/opendray decrypt-backup --in <id>.tar.gz.enc --out plain.tar.gz
-tar -tzf plain.tar.gz
-# manifest.json
-# config.toml
-# dump.bin
+go run ./examples/verify-backup \
+  ~/.opendray/backups/2026/05/<id>.tar.gz.enc \
+  "<your OPENDRAY_BACKUP_KEY>" \
+  $(which pg_restore)
 ```
 
-Then `pg_restore --create plain.tar.gz` against an empty PG
-instance to verify the dump is valid.
+Output:
 
-> **Note**: the `decrypt-backup` CLI subcommand is a v1.1 deliverable.
-> Until then, decrypt by reading the file format documented in
-> `internal/backup/cipher.go` (it's stable).
+```
+cipher fingerprint: e344173f214c7641
+entry: manifest.json         431 bytes
+entry: config.toml           1081 bytes
+entry: dump.bin              91693 bytes
+
+manifest fingerprint: e344173f214c7641
+backup_id: bk_t53gcylshov5fylcd2szul
+pg_version: 17.9
+version: 1
+
+--- pg_restore --list output (header only) ---
+;     dbname: opendray_v2
+;     TOC Entries: 108
+…
+```
+
+The program decrypts via Cipher.Open, untars to /tmp, and runs
+`pg_restore --list` (no DB needed) to confirm the dump.bin is a
+structurally valid PostgreSQL custom-format dump.
+
+## Restore from the UI
+
+`/backups → Restore from file` accepts a bundle and runs it
+through `pg_restore` against the DSN you pick. See the
+"restore-and-import" tutorial section for the safety flow
+(typing "I understand" when restoring over opendray's own DB).

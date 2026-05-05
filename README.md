@@ -33,6 +33,24 @@ go run ./cmd/opendray serve -config config.toml
 # → Web admin:  http://127.0.0.1:8770/admin/
 ```
 
+### Optional: enable encrypted DB backups + data exports
+
+```bash
+# Master passphrase (env-only — never write into config.toml).
+export OPENDRAY_BACKUP_KEY="$(openssl rand -base64 32)"
+export OPENDRAY_BACKUP_ENABLED=1
+
+# pg_dump / pg_restore must match the server's major version. On
+# Apple Silicon dev machines pointing at a PG17 server:
+export OPENDRAY_BACKUP_PG_DUMP_PATH=/opt/homebrew/opt/postgresql@17/bin/pg_dump
+export OPENDRAY_BACKUP_PG_RESTORE_PATH=/opt/homebrew/opt/postgresql@17/bin/pg_restore
+```
+
+Restart opendray; the sidebar grows a Backups page (`/backups`)
+for encrypted PostgreSQL dumps + restore, and `/export` for
+zip-bundle data exports + import. ADR 0012 + the in-app
+Tutorial → Backups section have the full lifecycle.
+
 A single Go binary carries the whole web bundle — no Node runtime
 required at runtime, no separate static-file server, no Caddy/nginx
 needed. Cloudflare Tunnel terminates TLS in front of `:8770`.
@@ -45,12 +63,14 @@ internal/
 ├── app/             composition root (wires every subsystem)
 ├── audit/           subscribes to bus topics, persists to audit_log
 ├── auth/            admin bearer tokens (M2.5)
+├── backup/          encrypted DB dumps + admin export/import (ADR 0012)
 ├── catalog/         CLI provider manifests + per-id user config (M2)
 ├── channel/         channel hub + telegram impl (M4)
 ├── config/          TOML loader with OPENDRAY_* env overrides
 ├── eventbus/        in-process pub/sub
 ├── gateway/         chi HTTP router + middleware + slog
 ├── integration/     external-app registry + reverse proxy + events WS (M3)
+├── memory/          cross-CLI persistent memory (ADR 0011)
 ├── session/         PTY lifecycle + ring buffer + WS stream (M1)
 ├── store/           pgx pool + hand-rolled migration runner (M0)
 ├── version/         build-time identification
