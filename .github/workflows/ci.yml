@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    name: Frontend (web)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: app/web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: app/web
+
+      - name: Type-check + build
+        run: pnpm build
+        working-directory: app/web
+
+      # Hand the built bundle to the backend job so `go:embed` finds it.
+      - uses: actions/upload-artifact@v5
+        with:
+          name: web-dist
+          path: internal/web/dist
+          retention-days: 1
+          if-no-files-found: error
+
+  backend:
+    name: Backend (Go)
+    needs: frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: web-dist
+          path: internal/web/dist
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.25"
+
+      - run: go vet ./...
+
+      - name: go test -race
+        run: go test -race -coverprofile=coverage.out ./...
+
+      - name: go build
+        run: go build -o /dev/null ./cmd/opendray
