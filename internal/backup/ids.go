@@ -12,6 +12,7 @@ const (
 	idPrefixExport   = "exp"
 	idPrefixSchedule = "sch"
 	idPrefixTarget   = "tgt"
+	idPrefixImport   = "imp"
 )
 
 // idEntropyBytes is the random byte count behind every generated ID.
@@ -46,6 +47,9 @@ func NewScheduleID() string { return newID(idPrefixSchedule) }
 // NewTargetID returns a new "tgt_..." identifier (used when the
 // operator doesn't supply a human-readable id).
 func NewTargetID() string { return newID(idPrefixTarget) }
+
+// NewImportID returns a new "imp_..." identifier.
+func NewImportID() string { return newID(idPrefixImport) }
 
 // NewDownloadToken is the per-export download credential. 22 base32
 // chars (~110 bits) is overkill but keeps the surface uniform.

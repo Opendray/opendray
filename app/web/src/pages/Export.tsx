@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { Download, Package, ShieldAlert, Trash2 } from 'lucide-react'
+import { Download, Package, ShieldAlert, Trash2, Upload } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -11,13 +11,16 @@ import { Input } from '@/components/ui/input'
 
 import {
   type ExportRecord,
+  type ImportRecord,
   type IntegrationExportMode,
   createExport,
+  createImport,
   deleteExport,
   exportDownloadURL,
   formatBytes,
   getExport,
   listExports,
+  listImports,
 } from '@/lib/backup'
 import { APIError } from '@/lib/api'
 
@@ -52,10 +55,22 @@ export function ExportPage() {
       </header>
       <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5">
         <div className="max-w-3xl flex flex-col gap-6">
+          <SectionHeader>Export</SectionHeader>
           <ExportForm />
           <ExportHistory />
+          <SectionHeader>Import</SectionHeader>
+          <ImportForm />
+          <ImportHistory />
         </div>
       </div>
+    </div>
+  )
+}
+
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground border-b border-border pb-1.5">
+      {children}
     </div>
   )
 }
@@ -412,6 +427,262 @@ function msgFromAPI(err: APIError): string {
     return (err.body as { error: string }).error
   }
   return err.message
+}
+
+// ── Import (C reverse) ──────────────────────────────────────────
+
+function ImportForm() {
+  const [file, setFile] = useState<File | null>(null)
+  const [memories, setMemories] = useState(true)
+  const [integrations, setIntegrations] = useState(true)
+  const [customTasks, setCustomTasks] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [last, setLast] = useState<ImportRecord | null>(null)
+
+  async function submit() {
+    if (!file) {
+      toast.error('Pick a bundle file first')
+      return
+    }
+    setBusy(true)
+    try {
+      const imp = await createImport({
+        bundle: file,
+        memories,
+        integrations,
+        customTasks,
+      })
+      setLast(imp)
+      if (imp.status === 'succeeded') {
+        toast.success('Import done', {
+          description: importSummary(imp),
+        })
+      } else {
+        toast.warning('Import finished with errors', {
+          description: imp.error || importSummary(imp),
+        })
+      }
+      setFile(null)
+    } catch (err) {
+      const msg =
+        err instanceof APIError
+          ? msgFromAPI(err)
+          : err instanceof Error
+            ? err.message
+            : 'Unknown error'
+      toast.error('Import failed', { description: msg })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="rounded-md border border-border p-5 flex flex-col gap-4 bg-card/20">
+      <p className="text-[12px] text-muted-foreground">
+        Replay an export bundle (zip) into the live database.
+        Conflicts (matching id, or unique route_prefix for
+        integrations) are <strong>skipped</strong> by default.
+        Memories are tagged{' '}
+        <code className="text-foreground">embedder=imported_v1</code>{' '}
+        and need a re-embed pass before search returns them; trigger
+        re-embed under{' '}
+        <Link to="/memory" className="underline">
+          Memory → Maintenance
+        </Link>
+        . Integrations are imported with{' '}
+        <code className="text-foreground">enabled=false</code> and a
+        non-bcrypt placeholder key — operator must rotate before use.
+      </p>
+
+      <div className="flex flex-col gap-1.5">
+        <Label className="text-[12px]">Bundle (.zip)</Label>
+        <input
+          type="file"
+          accept=".zip,application/zip"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          className="text-[12px]"
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="flex items-center gap-2 text-[13px]">
+          <Switch
+            checked={memories}
+            onCheckedChange={setMemories}
+            className="scale-75"
+          />
+          Memories
+        </label>
+        <label className="flex items-center gap-2 text-[13px]">
+          <Switch
+            checked={integrations}
+            onCheckedChange={setIntegrations}
+            className="scale-75"
+          />
+          Integrations (metadata only — keys never imported)
+        </label>
+        <label className="flex items-center gap-2 text-[13px]">
+          <Switch
+            checked={customTasks}
+            onCheckedChange={setCustomTasks}
+            className="scale-75"
+          />
+          Custom tasks
+        </label>
+      </div>
+
+      <div className="flex justify-end">
+        <Button
+          onClick={submit}
+          disabled={busy || !file || (!memories && !integrations && !customTasks)}
+        >
+          <Upload className="size-3.5 mr-1.5" />
+          {busy ? 'Importing…' : 'Import bundle'}
+        </Button>
+      </div>
+
+      {last && <ImportSummaryCard imp={last} />}
+    </div>
+  )
+}
+
+function ImportSummaryCard({ imp }: { imp: ImportRecord }) {
+  return (
+    <div className="rounded-md border border-border bg-card/30 p-3 text-[12px] flex flex-col gap-1.5">
+      <div className="flex items-center gap-2">
+        <span className="font-mono text-[11px]">{imp.id}</span>
+        <ImportStatusBadge status={imp.status} />
+      </div>
+      <CountsRow label="Memories" c={imp.counts.memories} />
+      <CountsRow label="Integrations" c={imp.counts.integrations} />
+      <CountsRow label="Custom tasks" c={imp.counts.custom_tasks} />
+      {imp.error && (
+        <div className="mt-1 text-state-failed">{imp.error}</div>
+      )}
+    </div>
+  )
+}
+
+function CountsRow({
+  label,
+  c,
+}: {
+  label: string
+  c: { created: number; skipped: number; failed: number }
+}) {
+  if (c.created + c.skipped + c.failed === 0) {
+    return null
+  }
+  return (
+    <div className="flex items-center gap-3 text-muted-foreground">
+      <span className="w-32">{label}</span>
+      <span>
+        <strong className="text-foreground">{c.created}</strong> created
+      </span>
+      <span>{c.skipped} skipped</span>
+      {c.failed > 0 && (
+        <span className="text-state-failed">{c.failed} failed</span>
+      )}
+    </div>
+  )
+}
+
+function ImportStatusBadge({ status }: { status: ImportRecord['status'] }) {
+  const m: Record<
+    ImportRecord['status'],
+    'success' | 'warning' | 'danger' | 'muted'
+  > = {
+    pending: 'warning',
+    running: 'warning',
+    succeeded: 'success',
+    failed: 'danger',
+  }
+  return <Badge variant={m[status]}>{status}</Badge>
+}
+
+function importSummary(imp: ImportRecord): string {
+  const parts: string[] = []
+  const m = imp.counts.memories
+  const i = imp.counts.integrations
+  const t = imp.counts.custom_tasks
+  if (m.created || m.skipped) parts.push(`memories: ${m.created}/${m.created + m.skipped}`)
+  if (i.created || i.skipped) parts.push(`integrations: ${i.created}/${i.created + i.skipped}`)
+  if (t.created || t.skipped) parts.push(`custom_tasks: ${t.created}/${t.created + t.skipped}`)
+  return parts.join(' • ')
+}
+
+function ImportHistory() {
+  const [rows, setRows] = useState<ImportRecord[] | null>(null)
+
+  async function refresh() {
+    try {
+      const list = await listImports(20)
+      setRows(list)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      toast.error('Failed to list imports', { description: msg })
+    }
+  }
+
+  useEffect(() => {
+    refresh()
+    const t = window.setInterval(refresh, 5000)
+    return () => window.clearInterval(t)
+  }, [])
+
+  if (rows === null) return <div className="text-muted-foreground text-sm">Loading…</div>
+  if (rows.length === 0) {
+    return (
+      <div className="text-[12px] text-muted-foreground">
+        No imports yet.
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="text-[11px] font-medium text-muted-foreground tracking-wider uppercase">
+        History
+      </div>
+      <div className="rounded-md border border-border overflow-hidden">
+        <table className="w-full text-[12px]">
+          <thead className="bg-card/50 text-muted-foreground">
+            <tr className="text-left">
+              <th className="px-3 py-2 font-medium">ID</th>
+              <th className="px-3 py-2 font-medium">Status</th>
+              <th className="px-3 py-2 font-medium">Source</th>
+              <th className="px-3 py-2 font-medium">Counts</th>
+              <th className="px-3 py-2 font-medium">When</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((imp) => (
+              <tr key={imp.id} className="border-t border-border/60">
+                <td className="px-3 py-2 font-mono text-[11px]">{imp.id}</td>
+                <td className="px-3 py-2">
+                  <ImportStatusBadge status={imp.status} />
+                </td>
+                <td className="px-3 py-2 text-muted-foreground">
+                  {imp.source_filename || '—'}
+                  {imp.source_bytes > 0 && (
+                    <span className="ml-1 text-[10px]">
+                      ({formatBytes(imp.source_bytes)})
+                    </span>
+                  )}
+                </td>
+                <td className="px-3 py-2 text-muted-foreground text-[11px]">
+                  {importSummary(imp) || '(none)'}
+                </td>
+                <td className="px-3 py-2 text-muted-foreground">
+                  {formatRelative(imp.started_at)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
 }
 
 // Suppress unused Label import (kept for future field labels).

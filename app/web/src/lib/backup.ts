@@ -280,6 +280,98 @@ export function exportDownloadURL(id: string, token: string): string {
   return `/api/v1/exports/${encodeURIComponent(id)}/download?token=${encodeURIComponent(token)}`
 }
 
+// ── restore (A) ──────────────────────────────────────────────────
+
+export interface RestoreResult {
+  manifest: {
+    version: string
+    backup_id: string
+    created_at: string
+    opendray_version?: string
+    pg_version?: string
+    encryption: { algo: string; fingerprint: string }
+  }
+  bytes_read: number
+  target_dsn_used: string
+  fingerprint_ok: boolean
+  pg_restore_output: string
+  started_at: string
+  finished_at: string
+}
+
+export async function restoreBackup(opts: {
+  bundle: File
+  targetDsn?: string
+  clean: boolean
+  confirm?: string
+  note?: string
+}): Promise<RestoreResult> {
+  const fd = new FormData()
+  fd.set('bundle', opts.bundle)
+  if (opts.targetDsn) fd.set('target_dsn', opts.targetDsn)
+  fd.set('clean', String(opts.clean))
+  if (opts.confirm) fd.set('confirm', opts.confirm)
+  if (opts.note) fd.set('note', opts.note)
+  return api<RestoreResult>('/api/v1/backups/restore', {
+    method: 'POST',
+    body: fd,
+  })
+}
+
+// ── imports (C reverse) ──────────────────────────────────────────
+
+export type ImportStatus = 'pending' | 'running' | 'succeeded' | 'failed'
+
+export interface EntityCounts {
+  created: number
+  skipped: number
+  failed: number
+}
+
+export interface ImportRecord {
+  id: string
+  status: ImportStatus
+  requested_by: string
+  started_at: string
+  finished_at?: string | null
+  source_filename?: string
+  source_bytes: number
+  counts: {
+    memories: EntityCounts
+    integrations: EntityCounts
+    custom_tasks: EntityCounts
+  }
+  error?: string
+}
+
+export async function listImports(limit = 20): Promise<ImportRecord[]> {
+  const res = await api<{ imports: ImportRecord[] }>(
+    `/api/v1/imports?limit=${limit}`,
+  )
+  return res.imports
+}
+
+export async function getImport(id: string): Promise<ImportRecord> {
+  return api<ImportRecord>(`/api/v1/imports/${encodeURIComponent(id)}`)
+}
+
+export async function createImport(opts: {
+  bundle: File
+  memories: boolean
+  integrations: boolean
+  customTasks: boolean
+}): Promise<ImportRecord> {
+  const fd = new FormData()
+  fd.set('bundle', opts.bundle)
+  fd.set('memories', String(opts.memories))
+  fd.set('integrations', String(opts.integrations))
+  fd.set('custom_tasks', String(opts.customTasks))
+  return api<ImportRecord>('/api/v1/imports', {
+    method: 'POST',
+    body: fd,
+  })
+}
+
 // ── helpers ──────────────────────────────────────────────────────
 
 export function formatBytes(n: number): string {

@@ -15,6 +15,7 @@ func TestNewBackupID_FormatAndUniqueness(t *testing.T) {
 		{"export", NewExportID, "exp_"},
 		{"schedule", NewScheduleID, "sch_"},
 		{"target", NewTargetID, "tgt_"},
+		{"import", NewImportID, "imp_"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

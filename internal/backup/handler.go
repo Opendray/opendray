@@ -26,6 +26,7 @@ func (h *Handlers) Mount(r chi.Router) {
 	r.Route("/backups", func(r chi.Router) {
 		r.Get("/", h.list)
 		r.Post("/", h.create)
+		r.Post("/restore", h.restore)
 		r.Get("/{id}", h.get)
 		r.Get("/{id}/download", h.download)
 		r.Delete("/{id}", h.delete)
@@ -45,6 +46,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Post("/{id}/test", h.testTarget)
 	})
 	h.MountExports(r)
+	h.MountImports(r)
 	r.Get("/backup-status", h.status)
 }
 
@@ -356,14 +358,79 @@ func (h *Handlers) testTarget(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
+// restore serves POST /backups/restore. Multipart form:
+//
+//	bundle (file)        — encrypted .tar.gz.enc
+//	target_dsn (string)  — empty = opendray's own DSN (DANGER)
+//	clean (bool)         — true = pg_restore --clean --if-exists
+//	confirm (string)     — must equal "I understand" when target_dsn is empty
+//	note (string)        — free-form audit note
+//
+// Returns RestoreResult on success.
+func (h *Handlers) restore(w http.ResponseWriter, r *http.Request) {
+	// 256 MiB cap on bundle size; opendray's own DB is much
+	// smaller in practice, and pg_restore happily streams from
+	// disk. Bumps as needed via env later.
+	if err := r.ParseMultipartForm(256 << 20); err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Errorf("multipart: %w", err))
+		return
+	}
+	file, hdr, err := r.FormFile("bundle")
+	if err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Errorf("missing bundle file: %w", err))
+		return
+	}
+	defer file.Close()
+
+	targetDSN := r.FormValue("target_dsn")
+	clean := r.FormValue("clean") == "true"
+	confirm := r.FormValue("confirm")
+	note := r.FormValue("note")
+
+	if targetDSN == "" && confirm != "I understand" {
+		writeError(w, http.StatusBadRequest,
+			errors.New("restoring to opendray's own DB requires confirm=\"I understand\""))
+		return
+	}
+
+	res, err := h.svc.RestoreBackup(r.Context(), RestoreRequest{
+		Source:       file,
+		TargetDSN:    targetDSN,
+		Clean:        clean,
+		OperatorNote: note,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrPgRestoreUnavailable):
+			writeError(w, http.StatusServiceUnavailable, err)
+		case errors.Is(err, ErrCipherWrongKey), errors.Is(err, ErrCipherFormat):
+			writeError(w, http.StatusBadRequest, err)
+		case errors.Is(err, ErrRestoreFingerprintMismatch),
+			errors.Is(err, ErrRestoreNoDump):
+			writeError(w, http.StatusBadRequest, err)
+		default:
+			// Mid-restore failure (pg_restore exit). Return the
+			// result body so the UI can show pg_restore's tail.
+			writeJSON(w, http.StatusInternalServerError, map[string]any{
+				"error":  err.Error(),
+				"result": res,
+			})
+		}
+		return
+	}
+	_ = hdr // we don't currently expose the original filename
+	writeJSON(w, http.StatusOK, res)
+}
+
 // status surfaces feature health for the UI banner: pg_dump
 // resolved version, cipher fingerprint, etc.
 func (h *Handlers) status(w http.ResponseWriter, r *http.Request) {
 	pgVer, err := h.svc.PGVersion(r.Context())
 	resp := map[string]any{
-		"ok":              err == nil,
-		"key_fingerprint": h.svc.CipherFingerprint(),
-		"pg_dump_version": pgVer,
+		"ok":                 err == nil,
+		"key_fingerprint":    h.svc.CipherFingerprint(),
+		"pg_dump_version":    pgVer,
+		"pg_restore_version": h.svc.PgRestoreVersion(r.Context()),
 	}
 	if err != nil {
 		resp["pg_dump_error"] = err.Error()

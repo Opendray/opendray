@@ -8,7 +8,9 @@ import {
   Play,
   Plus,
   RotateCw,
+  ShieldAlert,
   Trash2,
+  Upload,
 } from 'lucide-react'
 
 import {
@@ -50,6 +52,7 @@ import {
   listBackups,
   listSchedules,
   listTargets,
+  restoreBackup,
   testTarget,
   updateSchedule,
 } from '@/lib/backup'
@@ -168,6 +171,7 @@ function BackupsTab() {
   const [rows, setRows] = useState<Backup[] | null>(null)
   const [busy, setBusy] = useState(false)
   const [includeConfig, setIncludeConfig] = useState(true)
+  const [restoreOpen, setRestoreOpen] = useState(false)
 
   async function refresh() {
     try {
@@ -228,11 +232,25 @@ function BackupsTab() {
           />
           include config.toml
         </label>
+        <Dialog open={restoreOpen} onOpenChange={setRestoreOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 ml-auto">
+              <Upload className="size-3.5 mr-1.5" />
+              Restore from file
+            </Button>
+          </DialogTrigger>
+          <RestoreDialog
+            onDone={async () => {
+              setRestoreOpen(false)
+              await refresh()
+            }}
+          />
+        </Dialog>
         <Button
           onClick={refresh}
           variant="outline"
           size="sm"
-          className="h-8 ml-auto"
+          className="h-8"
         >
           <RotateCw className="size-3.5 mr-1.5" />
           Refresh
@@ -240,6 +258,140 @@ function BackupsTab() {
       </div>
       <BackupTable rows={rows} onDelete={onDelete} />
     </div>
+  )
+}
+
+function RestoreDialog({ onDone }: { onDone: () => void | Promise<void> }) {
+  const [file, setFile] = useState<File | null>(null)
+  const [targetDsn, setTargetDsn] = useState('')
+  const [clean, setClean] = useState(true)
+  const [confirm, setConfirm] = useState('')
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [output, setOutput] = useState<string | null>(null)
+
+  const restoringOwn = targetDsn === ''
+  const confirmReady = !restoringOwn || confirm.trim() === 'I understand'
+
+  async function submit() {
+    if (!file) {
+      toast.error('Pick a bundle file first')
+      return
+    }
+    setBusy(true)
+    setOutput(null)
+    try {
+      const res = await restoreBackup({
+        bundle: file,
+        targetDsn: targetDsn || undefined,
+        clean,
+        confirm: restoringOwn ? confirm : undefined,
+        note,
+      })
+      setOutput(res.pg_restore_output || '(no pg_restore output)')
+      toast.success('Restore succeeded', {
+        description: `${formatBytes(res.bytes_read)} replayed from manifest ${res.manifest.backup_id}`,
+      })
+      await onDone()
+    } catch (err) {
+      const msg =
+        err instanceof APIError
+          ? msgFromAPI(err)
+          : err instanceof Error
+            ? err.message
+            : 'Unknown error'
+      toast.error('Restore failed', { description: msg })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Restore from backup bundle</DialogTitle>
+      </DialogHeader>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-[12px]">Encrypted bundle (.tar.gz.enc)</Label>
+          <input
+            type="file"
+            accept=".enc,.tar.gz.enc,application/octet-stream"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            className="text-[12px]"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-[12px]">
+            Target database DSN
+            <span className="text-muted-foreground ml-1 text-[11px]">
+              (blank = opendray's own DB — DANGEROUS)
+            </span>
+          </Label>
+          <Input
+            value={targetDsn}
+            onChange={(e) => setTargetDsn(e.target.value)}
+            placeholder="postgres://user:pass@host:5432/dbname"
+            className="h-8 font-mono text-[11px]"
+          />
+        </div>
+        <label className="flex items-center gap-2 text-[12px]">
+          <Switch
+            checked={clean}
+            onCheckedChange={setClean}
+            className="scale-75"
+          />
+          --clean --if-exists (drop existing schema first; required when
+          restoring over a populated DB)
+        </label>
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-[12px]">Audit note (optional)</Label>
+          <Input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Reason for restore — appears in slog"
+            className="h-8"
+          />
+        </div>
+
+        {restoringOwn && (
+          <div className="rounded-md border border-state-failed/40 bg-state-failed/10 p-3 text-[12px] flex gap-2 items-start">
+            <ShieldAlert className="size-4 text-state-failed shrink-0 mt-0.5" />
+            <div className="flex-1 flex flex-col gap-2">
+              <div>
+                You're restoring into <strong>opendray's own database</strong>.
+                With "--clean" enabled this drops every table and replays the
+                backup verbatim — irreversible. Type{' '}
+                <code className="px-1 rounded bg-card text-foreground">
+                  I understand
+                </code>{' '}
+                to proceed.
+              </div>
+              <Input
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                placeholder="I understand"
+                className="h-7 text-[12px]"
+              />
+            </div>
+          </div>
+        )}
+
+        {output && (
+          <details className="rounded-md border border-border bg-card/30 p-2 text-[11px]">
+            <summary className="cursor-pointer text-muted-foreground">
+              pg_restore output (last 8 KiB)
+            </summary>
+            <pre className="mt-2 whitespace-pre-wrap font-mono">{output}</pre>
+          </details>
+        )}
+      </div>
+      <DialogFooter>
+        <Button onClick={submit} disabled={busy || !file || !confirmReady}>
+          {busy ? 'Restoring…' : 'Restore'}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   )
 }
 

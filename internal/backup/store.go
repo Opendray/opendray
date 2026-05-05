@@ -713,6 +713,112 @@ func (s *store) GetExportFilePath(ctx context.Context, id string) (string, error
 	return p.String, nil
 }
 
+// ─── imports ──────────────────────────────────────────────────────
+
+func (s *store) InsertImport(ctx context.Context, imp Import) error {
+	countsRaw, _ := json.Marshal(imp.Counts)
+	if countsRaw == nil {
+		countsRaw = []byte("{}")
+	}
+	_, err := s.pool.Exec(ctx, `
+		INSERT INTO imports
+			(id, status, requested_by, started_at, source_filename, source_bytes, counts)
+		VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)`,
+		imp.ID, string(imp.Status), imp.RequestedBy, imp.StartedAt,
+		nullIfEmpty(imp.SourceFilename), imp.SourceBytes, countsRaw)
+	if err != nil {
+		return fmt.Errorf("insert import: %w", err)
+	}
+	return nil
+}
+
+func (s *store) GetImport(ctx context.Context, id string) (Import, error) {
+	row := s.pool.QueryRow(ctx, importSelectStmt+` WHERE id=$1`, id)
+	imp, err := scanImport(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Import{}, ErrImportNotFound
+	}
+	return imp, err
+}
+
+func (s *store) ListImports(ctx context.Context, limit int) ([]Import, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	rows, err := s.pool.Query(ctx,
+		importSelectStmt+` ORDER BY started_at DESC LIMIT $1`, limit)
+	if err != nil {
+		return nil, fmt.Errorf("list imports: %w", err)
+	}
+	defer rows.Close()
+	var out []Import
+	for rows.Next() {
+		imp, err := scanImport(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, imp)
+	}
+	return out, rows.Err()
+}
+
+func (s *store) MarkImportSucceeded(ctx context.Context, id string, counts ImportCounts) error {
+	raw, _ := json.Marshal(counts)
+	_, err := s.pool.Exec(ctx, `
+		UPDATE imports
+		   SET status='succeeded', finished_at=NOW(), counts=$1::jsonb
+		 WHERE id=$2`,
+		raw, id)
+	if err != nil {
+		return fmt.Errorf("mark import succeeded: %w", err)
+	}
+	return nil
+}
+
+func (s *store) MarkImportFailed(ctx context.Context, id, msg string, counts ImportCounts) error {
+	raw, _ := json.Marshal(counts)
+	_, err := s.pool.Exec(ctx, `
+		UPDATE imports
+		   SET status='failed', finished_at=NOW(), counts=$1::jsonb, error=$2
+		 WHERE id=$3`,
+		raw, msg, id)
+	if err != nil {
+		return fmt.Errorf("mark import failed: %w", err)
+	}
+	return nil
+}
+
+const importSelectStmt = `
+	SELECT id, status, requested_by, started_at, finished_at,
+	       COALESCE(source_filename, ''),
+	       source_bytes,
+	       COALESCE(counts, '{}'::jsonb),
+	       COALESCE(error, '')
+	  FROM imports`
+
+func scanImport(row rowScanner) (Import, error) {
+	var (
+		imp        Import
+		status     string
+		finishedAt sql.NullTime
+		countsRaw  []byte
+	)
+	if err := row.Scan(&imp.ID, &status, &imp.RequestedBy,
+		&imp.StartedAt, &finishedAt, &imp.SourceFilename,
+		&imp.SourceBytes, &countsRaw, &imp.Error); err != nil {
+		return Import{}, err
+	}
+	imp.Status = ImportStatus(status)
+	if finishedAt.Valid {
+		t := finishedAt.Time
+		imp.FinishedAt = &t
+	}
+	if len(countsRaw) > 0 {
+		_ = json.Unmarshal(countsRaw, &imp.Counts)
+	}
+	return imp, nil
+}
+
 // ─── helpers ──────────────────────────────────────────────────────
 
 type rowScanner interface {

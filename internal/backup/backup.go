@@ -146,6 +146,59 @@ type ExportScope struct {
 	CustomTasks  bool                  `json:"custom_tasks"`
 }
 
+// ImportStatus is the lifecycle state of a single Import row.
+type ImportStatus string
+
+const (
+	ImportPending   ImportStatus = "pending"
+	ImportRunning   ImportStatus = "running"
+	ImportSucceeded ImportStatus = "succeeded"
+	ImportFailed    ImportStatus = "failed"
+)
+
+// EntityCounts tracks per-entity import outcomes. Each kind reports
+// how many rows were created (newly inserted), skipped (already
+// existed by id or unique key), and failed (e.g. constraint violation
+// not covered by skip path).
+type EntityCounts struct {
+	Created int `json:"created"`
+	Skipped int `json:"skipped"`
+	Failed  int `json:"failed"`
+}
+
+// ImportCounts is the aggregate result of one ImportBundle run.
+type ImportCounts struct {
+	Memories     EntityCounts `json:"memories"`
+	Integrations EntityCounts `json:"integrations"`
+	CustomTasks  EntityCounts `json:"custom_tasks"`
+}
+
+// Import is the public view of one import row.
+type Import struct {
+	ID             string       `json:"id"`
+	Status         ImportStatus `json:"status"`
+	RequestedBy    string       `json:"requested_by"`
+	StartedAt      time.Time    `json:"started_at"`
+	FinishedAt     *time.Time   `json:"finished_at,omitempty"`
+	SourceFilename string       `json:"source_filename,omitempty"`
+	SourceBytes    int64        `json:"source_bytes"`
+	Counts         ImportCounts `json:"counts"`
+	Error          string       `json:"error,omitempty"`
+}
+
+// RestoreResult is what the /backups/restore endpoint returns. It
+// is NOT persisted — restore is a one-shot operator operation whose
+// outcome is the database itself. Audit-logged via slog.
+type RestoreResult struct {
+	Manifest        BundleManifest `json:"manifest"`
+	BytesRead       int64          `json:"bytes_read"`
+	TargetDSNUsed   string         `json:"target_dsn_used"`   // redacted (host/db only)
+	FingerprintOK   bool           `json:"fingerprint_ok"`    // matched server cipher
+	PGRestoreOutput string         `json:"pg_restore_output"` // tail of stderr/stdout
+	StartedAt       time.Time      `json:"started_at"`
+	FinishedAt      time.Time      `json:"finished_at"`
+}
+
 // Sentinel errors. All errors returned across package boundaries
 // wrap one of these so callers can errors.Is them.
 var (
@@ -162,6 +215,12 @@ var (
 	ErrExportExpired       = errors.New("backup: export expired")
 	ErrInvalidDownloadToken = errors.New("backup: invalid download token")
 
-	ErrPgDumpUnavailable = errors.New("backup: pg_dump binary not found on PATH")
-	ErrFeatureDisabled   = errors.New("backup: feature disabled (cfg.backup.enabled=false)")
+	ErrPgDumpUnavailable    = errors.New("backup: pg_dump binary not found on PATH")
+	ErrPgRestoreUnavailable = errors.New("backup: pg_restore binary not found on PATH")
+	ErrFeatureDisabled      = errors.New("backup: feature disabled (cfg.backup.enabled=false)")
+
+	ErrImportNotFound          = errors.New("backup: import not found")
+	ErrRestoreFingerprintMismatch = errors.New("backup: restore: bundle fingerprint does not match running cipher")
+	ErrRestoreNoDump              = errors.New("backup: restore: no dump.bin in bundle")
+	ErrImportBadBundle            = errors.New("backup: import: malformed bundle")
 )

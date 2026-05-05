@@ -20,10 +20,11 @@ import (
 // + env. Passphrase + DSN + ConfigPath travel through ServiceDeps so
 // this struct stays loggable.
 type Config struct {
-	Enabled    bool
-	LocalDir   string
-	ExportDir  string
-	PgDumpPath string
+	Enabled       bool
+	LocalDir      string
+	ExportDir     string
+	PgDumpPath    string
+	PgRestorePath string
 }
 
 // ServiceDeps groups the secrets + pool + logger required to build
@@ -45,6 +46,7 @@ type Service struct {
 	store      *store
 	cipher     Cipher
 	pgdump     *PgDump
+	pgrestore  *PgRestore // optional; nil if pg_restore not on PATH
 	targets    *targetRegistry
 	dsn        string
 	configPath string
@@ -79,6 +81,13 @@ func NewService(cfg Config, deps ServiceDeps) (*Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("backup: %w", err)
 	}
+	// pg_restore is best-effort: a missing binary disables /backups/restore
+	// but doesn't kill startup — operators may run with backup-only
+	// (no in-place restore) deployments.
+	pgrestore, prerr := NewPgRestore(cfg.PgRestorePath)
+	if prerr != nil {
+		pgrestore = nil
+	}
 
 	log := deps.Log
 	if log == nil {
@@ -95,6 +104,7 @@ func NewService(cfg Config, deps ServiceDeps) (*Service, error) {
 		store:      newStore(deps.Pool),
 		cipher:     cipher,
 		pgdump:     pgdump,
+		pgrestore:  pgrestore,
 		targets:    newTargetRegistry(),
 		dsn:        deps.DSN,
 		configPath: deps.ConfigPath,
