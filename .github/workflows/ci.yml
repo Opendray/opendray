@@ -78,3 +78,27 @@ jobs:
 
       - name: go build
         run: go build -o /dev/null ./cmd/opendray
+
+  lint:
+    name: Lint (Go)
+    # Lint runs the typecheck pass too, so it needs the embed tree
+    # populated — same dependency on the frontend artifact as Backend.
+    needs: frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: web-dist
+          path: internal/web/dist
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.25"
+
+      - uses: golangci/golangci-lint-action@v8
+        with:
+          # Pin to a specific version. Bumps go through a PR so a
+          # surprise lint regression can be reviewed, not absorbed.
+          version: v2.12.1
