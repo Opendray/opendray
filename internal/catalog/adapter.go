@@ -61,6 +61,18 @@ type SessionProvider struct {
 	// opendray pgvector store so cross-CLI search picks them up.
 	// Nil → no mirroring (memory disabled, or mirror not wired).
 	memoryMirror MemoryMirrorFunc
+
+	// ambientInjector, when set, renders a markdown banner of
+	// recent project memories into the system prompt at spawn
+	// time. Backed by internal/memory/injector. Nil → no injection.
+	ambientInjector AmbientInjector
+}
+
+// AmbientInjector is the contract internal/memory/injector
+// satisfies — kept here so catalog stays import-decoupled from the
+// memory package.
+type AmbientInjector interface {
+	Render(ctx context.Context, sessionID, cwd string) (string, error)
 }
 
 // MemoryMirrorFunc syncs Claude's local memory files for the given
@@ -122,6 +134,14 @@ func NewSessionProvider(
 // default). Returns the receiver for fluent setup at app startup.
 func (sp *SessionProvider) WithMemoryAutoAttach(cfg MemoryAutoAttach) *SessionProvider {
 	sp.memory = cfg
+	return sp
+}
+
+// WithAmbientInjector installs the ambient-memory injector — used
+// at spawn time to prepend a "Recent project memory" banner to the
+// agent's system prompt. Returns the receiver for chained setup.
+func (sp *SessionProvider) WithAmbientInjector(inj AmbientInjector) *SessionProvider {
+	sp.ambientInjector = inj
 	return sp
 }
 
@@ -268,6 +288,27 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		if sp.memory.Enabled && p.Manifest.Capabilities.SupportsMcp {
 			if err := injectMemoryGuidanceFor(providerID, baseDir, &out); err != nil {
 				return session.PrepareOutput{}, fmt.Errorf("inject memory guidance: %w", err)
+			}
+		}
+
+		// Ambient memory: pull a markdown banner of recent project
+		// memories from the injector and prepend it to the system
+		// prompt. Same per-CLI dispatch as memory guidance — claude
+		// gets another --append-system-prompt arg, codex appends to
+		// AGENTS.md, gemini to GEMINI.md. Empty rendered text means
+		// the operator's profile says "none" or there are no
+		// memories yet; we silently skip.
+		if sp.ambientInjector != nil {
+			cwd := session.Cwd(prepareCtx)
+			sessID := session.SessionIDFromContext(prepareCtx)
+			text, err := sp.ambientInjector.Render(prepareCtx, sessID, cwd)
+			if err != nil {
+				sp.log.Warn("ambient memory render failed; skipping inject",
+					"session_id", sessID, "cwd", cwd, "err", err)
+			} else if text != "" {
+				if err := injectAmbientMemoryFor(providerID, baseDir, text, &out); err != nil {
+					return session.PrepareOutput{}, fmt.Errorf("inject ambient memory: %w", err)
+				}
 			}
 		}
 
@@ -653,6 +694,41 @@ func injectMemoryGuidanceFor(providerID, baseDir string, out *session.PrepareOut
 	}
 	// Other providers: silently skip — they don't have an MCP
 	// surface yet so the memory MCP wouldn't be attached anyway.
+	return nil
+}
+
+// injectAmbientMemoryFor injects the rendered "Recent project
+// memory" banner into the agent's system prompt. Same per-CLI
+// dispatch as injectMemoryGuidanceFor.
+func injectAmbientMemoryFor(providerID, baseDir, text string, out *session.PrepareOutput) error {
+	if text == "" {
+		return nil
+	}
+	switch providerID {
+	case "claude":
+		out.Args = append(out.Args, "--append-system-prompt", text)
+		return nil
+	case "codex":
+		home := out.Env["CODEX_HOME"]
+		if home == "" {
+			home = filepath.Join(baseDir, "codex-home")
+			if err := os.MkdirAll(home, 0o700); err != nil {
+				return fmt.Errorf("mkdir codex home: %w", err)
+			}
+			out.Env["CODEX_HOME"] = home
+		}
+		path := filepath.Join(home, "AGENTS.md")
+		return appendToFile(path, "\n\n---\n\n"+text)
+	case "gemini":
+		path := filepath.Join(baseDir, "GEMINI.md")
+		if err := appendToFile(path, "\n\n---\n\n"+text); err != nil {
+			return err
+		}
+		if !hasArgPair(out.Args, "--include-directories", baseDir) {
+			out.Args = append(out.Args, "--include-directories", baseDir)
+		}
+		return nil
+	}
 	return nil
 }
 

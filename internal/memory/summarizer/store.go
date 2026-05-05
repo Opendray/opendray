@@ -109,7 +109,9 @@ var (
 // transaction so observers never see a state with two defaults or
 // none.
 func (s *Store) InsertProvider(ctx context.Context, row ProviderRow) (ProviderRow, error) {
-	if row.Kind != "anthropic" && row.Kind != "ollama" {
+	switch row.Kind {
+	case "anthropic", "ollama", "openai", "lmstudio", "integration":
+	default:
 		return ProviderRow{}, fmt.Errorf("summarizer store: unknown kind %q", row.Kind)
 	}
 	if row.Name == "" {
@@ -125,11 +127,14 @@ func (s *Store) InsertProvider(ctx context.Context, row ProviderRow) (ProviderRo
 		row.ID = newProviderID()
 	}
 
-	// Encrypt + fingerprint api_key (anthropic only — ollama has none).
-	if row.Kind == "anthropic" {
-		if row.APIKeyPlaintext == "" {
-			return ProviderRow{}, errors.New("summarizer store: anthropic provider needs api_key")
-		}
+	// Encrypt + fingerprint api_key when present. anthropic + openai
+	// require it; lmstudio + ollama allow empty (no auth on local
+	// LLM daemons); integration is handled at instantiation time.
+	requiresKey := row.Kind == "anthropic" || row.Kind == "openai"
+	if requiresKey && row.APIKeyPlaintext == "" {
+		return ProviderRow{}, fmt.Errorf("summarizer store: %s provider needs api_key", row.Kind)
+	}
+	if row.APIKeyPlaintext != "" {
 		if s.cipher == nil {
 			return ProviderRow{}, ErrCipherRequired
 		}
@@ -289,6 +294,9 @@ func (s *Store) UpdateProvider(ctx context.Context, id string, p ProviderPatch) 
 	if p.APIKeyPlaintext != nil {
 		if cur.Kind == "ollama" {
 			return ProviderRow{}, errors.New("summarizer store: ollama provider has no api_key")
+		}
+		if cur.Kind == "integration" {
+			return ProviderRow{}, errors.New("summarizer store: integration provider authenticates via the integration's own credentials")
 		}
 		if s.cipher == nil {
 			return ProviderRow{}, ErrCipherRequired

@@ -61,8 +61,8 @@ func (s *ProfileStore) Insert(ctx context.Context, p Profile) (Profile, error) {
 	if p.StrategyKind == "" {
 		p.StrategyKind = "none"
 	}
-	if p.StrategyKind != "none" && p.StrategyKind != "top_k_recent" {
-		return Profile{}, fmt.Errorf("injector: unsupported strategy_kind %q (Phase A: none|top_k_recent)", p.StrategyKind)
+	if !validStrategy(p.StrategyKind) {
+		return Profile{}, fmt.Errorf("injector: unsupported strategy_kind %q", p.StrategyKind)
 	}
 	if p.Config == nil {
 		p.Config = map[string]any{}
@@ -144,7 +144,7 @@ func (s *ProfileStore) Update(ctx context.Context, id string, p ProfilePatch) (P
 	}
 	if p.StrategyKind != nil {
 		k := *p.StrategyKind
-		if k != "none" && k != "top_k_recent" {
+		if !validStrategy(k) {
 			return Profile{}, fmt.Errorf("injector: unsupported strategy_kind %q", k)
 		}
 		if _, err := s.pool.Exec(ctx,
@@ -213,6 +213,17 @@ func nullIfEmpty(s string) any {
 		return nil
 	}
 	return s
+}
+
+// validStrategy returns whether kind is a recognised injection
+// strategy. Phase B widened from {none, top_k_recent} to include
+// top_k_relevant, on_keyword, manual_only, hybrid.
+func validStrategy(kind string) bool {
+	switch kind {
+	case "none", "top_k_recent", "top_k_relevant", "on_keyword", "manual_only", "hybrid":
+		return true
+	}
+	return false
 }
 
 func newProfileID() string {

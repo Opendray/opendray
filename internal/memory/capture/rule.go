@@ -87,8 +87,10 @@ func (s *RuleStore) Insert(ctx context.Context, r Rule) (Rule, error) {
 	if r.TriggerKind == "" {
 		r.TriggerKind = "after_messages"
 	}
-	if r.TriggerKind != "after_messages" {
-		return Rule{}, fmt.Errorf("capture: unsupported trigger_kind %q (Phase A: only after_messages)", r.TriggerKind)
+	switch r.TriggerKind {
+	case "after_messages", "on_idle", "k_chars", "manual":
+	default:
+		return Rule{}, fmt.Errorf("capture: unsupported trigger_kind %q", r.TriggerKind)
 	}
 	if r.DedupThreshold == 0 {
 		r.DedupThreshold = 0.85
@@ -208,8 +210,14 @@ func (s *RuleStore) Update(ctx context.Context, id string, p RulePatch) (Rule, e
 		}
 	}
 	if p.TriggerKind != nil {
-		if *p.TriggerKind != "after_messages" {
-			return Rule{}, fmt.Errorf("capture: unsupported trigger_kind %q (Phase A: only after_messages)", *p.TriggerKind)
+		switch *p.TriggerKind {
+		case "after_messages", "on_idle", "k_chars", "manual":
+		default:
+			return Rule{}, fmt.Errorf("capture: unsupported trigger_kind %q", *p.TriggerKind)
+		}
+		if _, err := tx.Exec(ctx,
+			`UPDATE memory_capture_rules SET trigger_kind=$1, updated_at=NOW() WHERE id=$2`, *p.TriggerKind, id); err != nil {
+			return Rule{}, fmt.Errorf("capture: update trigger_kind: %w", err)
 		}
 	}
 	if p.TriggerConfig != nil {

@@ -12,8 +12,9 @@ import (
 )
 
 type fakeMemoryReader struct {
-	mems []memory.Memory
-	err  error
+	mems       []memory.Memory
+	searchHits []memory.SearchHit
+	err        error
 }
 
 func (f *fakeMemoryReader) List(ctx context.Context, scope memory.Scope, scopeKey string, limit int) ([]memory.Memory, error) {
@@ -24,6 +25,16 @@ func (f *fakeMemoryReader) List(ctx context.Context, scope memory.Scope, scopeKe
 		return f.mems[:limit], nil
 	}
 	return f.mems, nil
+}
+
+func (f *fakeMemoryReader) Search(ctx context.Context, req memory.SearchRequest) ([]memory.SearchHit, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	if req.TopK > 0 && len(f.searchHits) > req.TopK {
+		return f.searchHits[:req.TopK], nil
+	}
+	return f.searchHits, nil
 }
 
 // fakeProfileStore implements *ProfileStore's Resolve via a stub

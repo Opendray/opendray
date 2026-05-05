@@ -83,3 +83,27 @@ func Cwd(ctx context.Context) string {
 	}
 	return ""
 }
+
+// sessionIDCtxKey + WithSessionID + SessionIDFromContext mirror the
+// cwd plumbing for the session.id, used by ambient-memory rendering
+// at spawn time. Defined here (alongside WithCwd) so callers don't
+// need a separate import.
+type sessionIDCtxKey struct{}
+
+// WithSessionID returns a derived context carrying the session id.
+// Empty is a no-op so call sites needn't guard.
+func WithSessionID(ctx context.Context, id string) context.Context {
+	if id == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, sessionIDCtxKey{}, id)
+}
+
+// SessionIDFromContext returns the value set by WithSessionID, or
+// "" when the key isn't present.
+func SessionIDFromContext(ctx context.Context) string {
+	if v, ok := ctx.Value(sessionIDCtxKey{}).(string); ok {
+		return v
+	}
+	return ""
+}

@@ -11,9 +11,15 @@ import (
 // builds providers on demand (no caching) — construction is cheap
 // (just an http.Client) and a future Phase C optimisation can
 // memoize once the read patterns stabilise.
+//
+// IntegrationLookup (optional, set via WithIntegrationLookup) is
+// used to resolve integration-kind rows by looking up the
+// integration's base_url. nil leaves integration-kind rows
+// unbuildable.
 type Registry struct {
-	store *Store
-	log   *slog.Logger
+	store        *Store
+	integrations IntegrationLookup
+	log          *slog.Logger
 }
 
 func NewRegistry(store *Store, log *slog.Logger) *Registry {
@@ -21,6 +27,13 @@ func NewRegistry(store *Store, log *slog.Logger) *Registry {
 		log = slog.Default()
 	}
 	return &Registry{store: store, log: log}
+}
+
+// WithIntegrationLookup lets the app wire integration resolution
+// after construction. Returns the registry for chaining.
+func (r *Registry) WithIntegrationLookup(lookup IntegrationLookup) *Registry {
+	r.integrations = lookup
+	return r
 }
 
 // Build constructs a runnable Provider from the row at id. Returns
@@ -111,8 +124,47 @@ func (r *Registry) buildFromRow(row ProviderRow) (Provider, error) {
 			cfg.MaxTokens = int(v)
 		}
 		return NewOllamaProvider(cfg)
+	case "openai", "lmstudio":
+		// LM Studio + OpenAI share wire format; only auth presence
+		// + base_url defaults differ. The OpenAICompatProvider
+		// handles both based on Kind.
+		cfg := OpenAICompatConfig{
+			Kind:    row.Kind,
+			APIKey:  row.APIKeyPlaintext, // empty OK for lmstudio
+			Model:   row.Model,
+			BaseURL: row.BaseURL,
+			Name:    row.Name,
+		}
+		if v, ok := row.ExtraConfig["max_tokens"].(float64); ok && v > 0 {
+			cfg.MaxTokens = int(v)
+		}
+		return NewOpenAICompatProvider(cfg)
+	case "integration":
+		if r.integrations == nil {
+			return nil, errors.New("registry: integration kind requires IntegrationLookup wired into the registry (app.go)")
+		}
+		integID, _ := row.ExtraConfig["integration_id"].(string)
+		if integID == "" {
+			return nil, errors.New("registry: integration provider extra_config missing integration_id")
+		}
+		baseURL, enabled, err := r.integrations.LookupBaseURL(context.Background(), integID)
+		if err != nil {
+			return nil, fmt.Errorf("registry: lookup integration %q: %w", integID, err)
+		}
+		if !enabled {
+			return nil, fmt.Errorf("registry: integration %q is disabled", integID)
+		}
+		// row.APIKeyPlaintext (when present) is the outbound bearer
+		// token opendray sends to the integration; left empty means
+		// no auth (relies on network trust).
+		return NewIntegrationProvider(IntegrationConfig{
+			IntegrationID: integID,
+			BaseURL:       baseURL,
+			OutboundToken: row.APIKeyPlaintext,
+			Name:          row.Name,
+		})
 	default:
-		return nil, fmt.Errorf("registry: unknown kind %q (Phase A supports anthropic + ollama)", row.Kind)
+		return nil, fmt.Errorf("registry: unknown kind %q", row.Kind)
 	}
 }
 

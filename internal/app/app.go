@@ -346,7 +346,8 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		}
 	}
 	summarizerStore := summarizer.NewStore(st.Pool(), ambientCipher)
-	summarizerRegistry := summarizer.NewRegistry(summarizerStore, log)
+	summarizerRegistry := summarizer.NewRegistry(summarizerStore, log).
+		WithIntegrationLookup(&summarizerIntegrationLookup{svc: intgrSvc})
 	summarizerHandlers := summarizer.NewHandlers(summarizerRegistry, summarizerStore, log)
 
 	captureRuleStore := capture.NewRuleStore(st.Pool())
@@ -368,7 +369,8 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	captureHandlers := capture.NewHandlers(captureRuleStore, log)
 
 	injectorProfileStore := injector.NewProfileStore(st.Pool())
-	_ = injector.New(injectorProfileStore, memorySvc, log) // engine constructed for symmetry; spawn-time render wiring is Phase B
+	ambientInjector := injector.New(injectorProfileStore, memorySvc, log)
+	sessionProvider.WithAmbientInjector(ambientInjector)
 	injectorHandlers := injector.NewHandlers(injectorProfileStore, log)
 
 	gw := gateway.NewServer(gateway.Deps{
@@ -957,6 +959,27 @@ func resolveGeminiHistoryConfig(c config.GeminiProviderConfig) session.GeminiHis
 		out.ProjectsFile = expandPath(c.ProjectsFile)
 	}
 	return out
+}
+
+// summarizerIntegrationLookup adapts integration.Service to the
+// summarizer.IntegrationLookup interface so the summarizer
+// registry can resolve integration-kind providers.
+type summarizerIntegrationLookup struct {
+	svc *integration.Service
+}
+
+func (a *summarizerIntegrationLookup) LookupBaseURL(ctx context.Context, id string) (string, bool, error) {
+	row, err := a.svc.Get(ctx, id)
+	if err != nil {
+		// integration.Service.Get returns ErrNotFound for unknown
+		// rows; surface that as (_, false, nil) so the registry
+		// can give a clear error message.
+		if errors.Is(err, integration.ErrNotFound) {
+			return "", false, nil
+		}
+		return "", false, err
+	}
+	return row.BaseURL, row.Enabled, nil
 }
 
 // captureSessionAdapter implements capture.SessionLister by

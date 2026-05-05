@@ -343,7 +343,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		extraEnv  map[string]string
 	)
 	if p.Prepare != nil {
-		out, err := p.Prepare(WithCwd(ctx, sess.Cwd), sess.ID, tempDir)
+		out, err := p.Prepare(WithSessionID(WithCwd(ctx, sess.Cwd), sess.ID), sess.ID, tempDir)
 		if err != nil {
 			_ = os.RemoveAll(tempDir)
 			return nil, fmt.Errorf("provider prepare: %w", err)

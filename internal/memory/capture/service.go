@@ -100,7 +100,22 @@ func (r *runner) runForSession(ctx context.Context, rule Rule, sess SessionInfo)
 		r.log.Warn("capture: bad trigger config", "rule_id", rule.ID, "err", err)
 		return
 	}
-	if !trig.Evaluate(st.LastSeenIndex, currentIndex+1) {
+	inputs := EvaluationInputs{
+		LastSeenIndex:       st.LastSeenIndex,
+		CurrentMessageCount: len(transcript),
+		Now:                 time.Now().UTC(),
+	}
+	if len(transcript) > 0 {
+		inputs.LastMessageAt = transcript[len(transcript)-1].Ts
+	}
+	startForChars := st.LastSeenIndex + 1
+	if startForChars < 0 || startForChars >= len(transcript) {
+		startForChars = 0
+	}
+	for _, e := range transcript[startForChars:] {
+		inputs.CharsSinceLastFire += len(e.Text)
+	}
+	if !trig.Evaluate(inputs) {
 		return
 	}
 

@@ -37,8 +37,17 @@ var modelPrices = map[string]modelPrice{
 	// ── Anthropic Opus 4.7 (rarely worth it for this task) ─────
 	"claude-opus-4-7": {InputPerM: 15.00, OutputPerM: 75.00},
 
-	// ── ollama / any local — operator pays for hardware ───────
-	"ollama:*": {InputPerM: 0, OutputPerM: 0},
+	// ── OpenAI — current as of Q1 2026 (recheck quarterly) ────
+	"gpt-4o-mini":  {InputPerM: 0.15, OutputPerM: 0.60},
+	"gpt-4o":       {InputPerM: 2.50, OutputPerM: 10.00},
+	"gpt-4.1":      {InputPerM: 2.00, OutputPerM: 8.00},
+	"gpt-4.1-mini": {InputPerM: 0.40, OutputPerM: 1.60},
+	"gpt-4.1-nano": {InputPerM: 0.10, OutputPerM: 0.40},
+	"o3-mini":      {InputPerM: 1.10, OutputPerM: 4.40},
+
+	// ── ollama / LM Studio / any local — operator pays for hardware ──
+	"ollama:*":   {InputPerM: 0, OutputPerM: 0},
+	"lmstudio:*": {InputPerM: 0, OutputPerM: 0},
 }
 
 // EstimateUSD returns the predicted USD cost of a single call

@@ -310,9 +310,18 @@ func runStep(t *testing.T, r *runner, prov summarizer.Provider, rule Rule, sess 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !trig.Evaluate(st.LastSeenIndex, currentIndex+1) {
+	inputs := EvaluationInputs{
+		LastSeenIndex:       st.LastSeenIndex,
+		CurrentMessageCount: len(transcript),
+		Now:                 time.Now().UTC(),
+	}
+	if len(transcript) > 0 {
+		inputs.LastMessageAt = transcript[len(transcript)-1].Ts
+	}
+	if !trig.Evaluate(inputs) {
 		return // not ready
 	}
+	_ = currentIndex
 	startIdx := st.LastSeenIndex + 1
 	if startIdx < 0 {
 		startIdx = 0
