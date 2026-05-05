@@ -3,6 +3,7 @@ package capture
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -156,6 +157,52 @@ func (e *Engine) tick(ctx context.Context) {
 		}
 		e.runner.runForSession(ctx, rule, sess)
 	}
+}
+
+// RunRuleNow invokes the runner for the given rule across every
+// matching live session, bypassing trigger evaluation. Used by:
+//   - the /run-now admin endpoint to fire a manual rule on demand,
+//   - future Phase C UI buttons in the session toolbar.
+//
+// session_id behaviour:
+//   - rule.SessionID == "" (global default): runs for every live
+//     session whose provider transcripts capture can read.
+//   - rule.SessionID != "": runs only for that one session.
+//
+// Each invocation goes through the same dedup + call-log path as
+// auto-fired ticks, so manual runs are auditable identically.
+//
+// Returns the count of sessions touched. Per-session errors are
+// logged via the runner's own log surface and don't abort siblings.
+func (e *Engine) RunRuleNow(ctx context.Context, ruleID string) (int, error) {
+	rule, err := e.deps.Rules.Get(ctx, ruleID)
+	if err != nil {
+		return 0, err
+	}
+	if !rule.Enabled {
+		return 0, fmt.Errorf("capture: rule %s is disabled", ruleID)
+	}
+	sessions, err := e.deps.Sessions.List(ctx)
+	if err != nil {
+		return 0, err
+	}
+	count := 0
+	for _, sess := range sessions {
+		if !providerSupported(sess.ProviderID) {
+			continue
+		}
+		if rule.SessionID != "" && rule.SessionID != sess.ID {
+			continue
+		}
+		// Force-fire by setting the cursor to "everything new" then
+		// calling runForSession; runForSession's trigger eval will
+		// pass because we just stuffed CharsSinceLastFire / message
+		// counts to satisfy any ManualTrigger or otherwise.
+		// Easiest: call runForSession with force=true via a helper.
+		e.runner.runForceForSession(ctx, rule, sess)
+		count++
+	}
+	return count, nil
 }
 
 // providerSupported is the allowlist of provider ids whose

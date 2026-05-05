@@ -257,6 +257,45 @@ var toolDefs = []map[string]any{
 			},
 		},
 	},
+	{
+		"name": "memory_load_context",
+		"description": "Load a markdown-formatted summary of the most " +
+			"relevant memories for the active scope, suitable for " +
+			"prepending to your reasoning. Use this when starting a " +
+			"new task that may benefit from project-level context " +
+			"the user has accumulated. Returns a single string.",
+		"inputSchema": map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"query": map[string]any{
+					"type":        "string",
+					"description": "Optional query to focus the context. Empty = use the active scope_key as the query.",
+				},
+				"top_k": map[string]any{
+					"type":        "integer",
+					"description": "Max memories to include (default 10, max 50).",
+				},
+			},
+		},
+	},
+	{
+		"name": "memory_get_provenance",
+		"description": "Fetch the provenance metadata of one stored " +
+			"memory: how it got into the store (manual / mcp_call / " +
+			"summarizer / mirror_claude_md / imported), the source " +
+			"reference, the originating session id (when extracted " +
+			"by the summarizer), and the confidence score.",
+		"inputSchema": map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"id": map[string]any{
+					"type":        "string",
+					"description": "The memory id (mem_…).",
+				},
+			},
+			"required": []string{"id"},
+		},
+	},
 }
 
 // handleToolCall dispatches one MCP tools/call invocation to the
@@ -284,6 +323,10 @@ func (s *memMCPServer) handleToolCall(req rpcRequest) {
 		result, err = s.callStore(params.Arguments)
 	case "memory_list":
 		result, err = s.callList(params.Arguments)
+	case "memory_load_context":
+		result, err = s.callLoadContext(params.Arguments)
+	case "memory_get_provenance":
+		result, err = s.callGetProvenance(params.Arguments)
 	default:
 		s.respondErr(req.ID, -32601, "Unknown tool", params.Name)
 		return
@@ -417,6 +460,109 @@ func (s *memMCPServer) callList(args json.RawMessage) (any, error) {
 			fmt.Fprintf(&b, "[%d] %s\n", i+1, stringField(m, "text"))
 		}
 	}
+	return map[string]any{
+		"content": []map[string]any{
+			{"type": "text", "text": b.String()},
+		},
+	}, nil
+}
+
+// callLoadContext renders a markdown banner of relevant memories
+// for the active scope. Wraps memory_search + a short formatter
+// so the agent gets one ready-to-prepend string instead of an
+// array it has to format itself.
+func (s *memMCPServer) callLoadContext(args json.RawMessage) (any, error) {
+	var in struct {
+		Query string `json:"query"`
+		TopK  int    `json:"top_k"`
+	}
+	if len(args) > 0 {
+		_ = json.Unmarshal(args, &in)
+	}
+	if in.TopK <= 0 {
+		in.TopK = 10
+	}
+	if in.TopK > 50 {
+		in.TopK = 50
+	}
+	if in.Query == "" {
+		// Default: use the scope_key (cwd basename for project,
+		// session id otherwise) so the search is at least loosely
+		// targeted at the active context.
+		in.Query = s.cfg.scopeKey
+		if idx := strings.LastIndex(in.Query, "/"); idx >= 0 && idx+1 < len(in.Query) {
+			in.Query = in.Query[idx+1:]
+		}
+		if in.Query == "" {
+			in.Query = "context"
+		}
+	}
+	body := map[string]any{
+		"query":     in.Query,
+		"scope":     s.cfg.scope,
+		"scope_key": s.cfg.scopeKey,
+		"top_k":     in.TopK,
+	}
+	var resp struct {
+		Hits []map[string]any `json:"hits"`
+	}
+	if err := s.gatewayPostJSON("/api/v1/memory/search", body, &resp); err != nil {
+		return nil, err
+	}
+	var b strings.Builder
+	if len(resp.Hits) == 0 {
+		b.WriteString("(no relevant memories found for this scope)")
+	} else {
+		fmt.Fprintf(&b, "## Relevant project memory\n\nopendray pulled %d memories matching `%s`:\n\n", len(resp.Hits), in.Query)
+		for _, hit := range resp.Hits {
+			memory, _ := hit["memory"].(map[string]any)
+			text := stringField(memory, "text")
+			if i := strings.IndexByte(text, '\n'); i >= 0 {
+				text = text[:i]
+			}
+			fmt.Fprintf(&b, "- %s\n", text)
+		}
+	}
+	return map[string]any{
+		"content": []map[string]any{
+			{"type": "text", "text": b.String()},
+		},
+	}, nil
+}
+
+// callGetProvenance asks /api/v1/memory/{id} for one memory's
+// provenance metadata (source_kind, source_ref, summarizer_session,
+// confidence). The agent can use this to decide how much to trust
+// a particular memory ("did the user type this themselves, or did
+// the summarizer extract it?").
+func (s *memMCPServer) callGetProvenance(args json.RawMessage) (any, error) {
+	var in struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(args, &in); err != nil || in.ID == "" {
+		return nil, fmt.Errorf("memory_get_provenance requires an id")
+	}
+	url := "/api/v1/memory/" + urlQuery(in.ID)
+	var memory map[string]any
+	if err := s.gatewayGetJSON(url, &memory); err != nil {
+		return nil, err
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "Memory %s:\n", stringField(memory, "id"))
+	fmt.Fprintf(&b, "  text:               %s\n", stringField(memory, "text"))
+	fmt.Fprintf(&b, "  source_kind:        %s\n", stringField(memory, "source_kind"))
+	if v := stringField(memory, "source_ref"); v != "" {
+		fmt.Fprintf(&b, "  source_ref:         %s\n", v)
+	}
+	if v := stringField(memory, "summarizer_session"); v != "" {
+		fmt.Fprintf(&b, "  summarizer_session: %s\n", v)
+	}
+	if v, ok := memory["confidence"].(float64); ok && v > 0 {
+		fmt.Fprintf(&b, "  confidence:         %.2f\n", v)
+	}
+	fmt.Fprintf(&b, "  scope:              %s/%s\n", stringField(memory, "scope"), stringField(memory, "scope_key"))
+	fmt.Fprintf(&b, "  embedder:           %s\n", stringField(memory, "embedder"))
+	fmt.Fprintf(&b, "  created_at:         %s\n", stringField(memory, "created_at"))
 	return map[string]any{
 		"content": []map[string]any{
 			{"type": "text", "text": b.String()},

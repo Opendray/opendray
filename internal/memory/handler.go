@@ -48,6 +48,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Post("/search", h.search)
 		r.Get("/list", h.list)
 		r.Get("/scope-keys", h.scopeKeys)
+		r.Get("/{id}", h.getOne)
 		r.Patch("/{id}", h.update)
 		r.Delete("/{id}", h.delete)
 		r.Post("/test", h.test)
@@ -308,6 +309,26 @@ func (h *Handlers) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// getOne returns a single memory by id. Used by the new
+// memory_get_provenance MCP tool which renders the row's
+// source_kind / confidence / etc. for the agent.
+func (h *Handlers) getOne(w http.ResponseWriter, r *http.Request) {
+	if !h.ensure(w) {
+		return
+	}
+	id := chi.URLParam(r, "id")
+	mem, err := h.svc.Get(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, mem)
 }
 
 // test exercises the embedder roundtrip without persisting. UI's

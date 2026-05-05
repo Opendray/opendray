@@ -75,11 +75,23 @@ type runner struct {
 	log       *slog.Logger
 }
 
+// runForceForSession bypasses trigger evaluation and pause state,
+// running the capture pipeline immediately. Used by the /run-now
+// endpoint and Phase C UI buttons. Equivalent to runForSession
+// minus the gate at the top.
+func (r *runner) runForceForSession(ctx context.Context, rule Rule, sess SessionInfo) {
+	r.runForSessionWithForce(ctx, rule, sess, true)
+}
+
 func (r *runner) runForSession(ctx context.Context, rule Rule, sess SessionInfo) {
+	r.runForSessionWithForce(ctx, rule, sess, false)
+}
+
+func (r *runner) runForSessionWithForce(ctx context.Context, rule Rule, sess SessionInfo, force bool) {
 	if rule.SessionID != "" && rule.SessionID != sess.ID {
 		return // shouldn't happen but cheap to defend
 	}
-	if r.state.IsPaused(rule.ID, sess.ID) {
+	if !force && r.state.IsPaused(rule.ID, sess.ID) {
 		return
 	}
 
@@ -115,7 +127,7 @@ func (r *runner) runForSession(ctx context.Context, rule Rule, sess SessionInfo)
 	for _, e := range transcript[startForChars:] {
 		inputs.CharsSinceLastFire += len(e.Text)
 	}
-	if !trig.Evaluate(inputs) {
+	if !force && !trig.Evaluate(inputs) {
 		return
 	}
 

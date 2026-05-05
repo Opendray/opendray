@@ -366,7 +366,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		st.Close()
 		return nil, fmt.Errorf("init capture engine: %w", ceErr)
 	}
-	captureHandlers := capture.NewHandlers(captureRuleStore, log)
+	captureHandlers := capture.NewHandlers(captureRuleStore, captureEngine, log)
 
 	injectorProfileStore := injector.NewProfileStore(st.Pool())
 	ambientInjector := injector.New(injectorProfileStore, memorySvc, log)

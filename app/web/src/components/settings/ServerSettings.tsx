@@ -47,6 +47,7 @@ import {
 import { TargetEditor, targetSummary } from '@/components/backup/TargetEditor'
 
 import { LogViewer } from './LogViewer'
+import { MemoryAmbientSection } from './MemoryAmbientSection'
 import { PathInput } from './PathInput'
 
 // SECTIONS describe every server-settings panel rendered to the right
@@ -59,6 +60,7 @@ export const SERVER_SECTIONS = [
   { id: 'vault', title: 'Vault', desc: 'Notes, skills, and git-versioned root.' },
   { id: 'mcp', title: 'MCP registry', desc: 'Server registry + secrets.' },
   { id: 'memory', title: 'Memory', desc: 'Cross-CLI persistent memory subsystem.' },
+  { id: 'memory-ambient', title: 'Memory · Ambient', desc: 'Auto-capture conversations into memory + spawn-time injection.' },
   { id: 'backup', title: 'Backup', desc: 'Encrypted DB backups, restore, and admin data exports.' },
   { id: 'claude', title: 'Storage · Claude', desc: 'Where Claude transcripts live on disk.' },
   { id: 'codex', title: 'Storage · Codex', desc: 'Codex sessions root.' },
@@ -76,6 +78,7 @@ const RESTART_REQUIRED_SECTIONS: Record<ServerSectionId, boolean> = {
   vault: true,
   mcp: true,
   memory: true, // backend / store wiring is read once at app.New
+  'memory-ambient': false, // CRUD via REST; no toml binding to restart
   backup: true, // pg_dump path + cipher are bound at NewService
   claude: false, // history paths are read on each request, no restart needed
   codex: false,
@@ -998,6 +1001,9 @@ function SectionForm({
         </div>
       )
 
+    case 'memory-ambient':
+      return <MemoryAmbientSection />
+
     case 'backup':
       return <BackupSection draft={draft} setDraft={setDraft} visible={visible} />
 
@@ -1391,6 +1397,10 @@ function mergeSection(
       break
     case 'memory':
       out.memory = src.memory
+      break
+    case 'memory-ambient':
+      // ambient memory has no toml-mergeable state — all CRUD goes
+      // through dedicated REST endpoints (/memory-summarizer-providers etc.)
       break
     case 'backup':
       out.backup = src.backup

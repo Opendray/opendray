@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -297,6 +298,52 @@ func (s *PgvectorStore) List(ctx context.Context, scope Scope, scopeKey string, 
 		out = append(out, m)
 	}
 	return out, rows.Err()
+}
+
+// Get returns one Memory row by id, including provenance fields.
+// Used by the memory_get_provenance MCP tool + future "show
+// details" UI affordances.
+func (s *PgvectorStore) Get(ctx context.Context, id string) (Memory, error) {
+	var (
+		m       Memory
+		meta    []byte
+		srcKind sql.NullString
+		srcRef  sql.NullString
+		summSes sql.NullString
+		conf    sql.NullFloat64
+	)
+	err := s.pool.QueryRow(ctx, `
+		SELECT id, scope, scope_key, text, embedder, metadata,
+		       created_at, updated_at, hit_count, last_hit_at,
+		       source_kind, source_ref, summarizer_session, confidence
+		  FROM memories
+		 WHERE id = $1`, id,
+	).Scan(&m.ID, &m.Scope, &m.ScopeKey, &m.Text, &m.Embedder, &meta,
+		&m.CreatedAt, &m.UpdatedAt, &m.HitCount, &m.LastHitAt,
+		&srcKind, &srcRef, &summSes, &conf)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Memory{}, ErrNotFound
+		}
+		return Memory{}, fmt.Errorf("memory: get: %w", err)
+	}
+	if len(meta) > 0 {
+		_ = json.Unmarshal(meta, &m.Metadata)
+	}
+	if srcKind.Valid {
+		m.SourceKind = srcKind.String
+	}
+	if srcRef.Valid {
+		m.SourceRef = srcRef.String
+	}
+	if summSes.Valid {
+		m.SummarizerSession = summSes.String
+	}
+	if conf.Valid {
+		v := float32(conf.Float64)
+		m.Confidence = &v
+	}
+	return m, nil
 }
 
 // Update overwrites text + embedding + metadata for one row. scope,

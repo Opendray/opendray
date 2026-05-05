@@ -294,6 +294,13 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	return s.store.Delete(ctx, id)
 }
 
+// Get returns one memory by id, including provenance fields.
+// Used by the GET /memory/{id} admin endpoint and the
+// memory_get_provenance MCP tool.
+func (s *Service) Get(ctx context.Context, id string) (Memory, error) {
+	return s.store.Get(ctx, id)
+}
+
 // EditRequest is the API-facing shape for an in-place memory edit.
 // The Service re-embeds the new text before calling Store.Update —
 // callers don't compute or pass vectors.

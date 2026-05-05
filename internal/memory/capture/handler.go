@@ -10,17 +10,18 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// Handlers wires capture admin endpoints (rule CRUD) onto chi.
+// Handlers wires capture admin endpoints (rule CRUD + run-now) onto chi.
 type Handlers struct {
-	store *RuleStore
-	log   *slog.Logger
+	store  *RuleStore
+	engine *Engine
+	log    *slog.Logger
 }
 
-func NewHandlers(store *RuleStore, log *slog.Logger) *Handlers {
+func NewHandlers(store *RuleStore, engine *Engine, log *slog.Logger) *Handlers {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &Handlers{store: store, log: log}
+	return &Handlers{store: store, engine: engine, log: log}
 }
 
 func (h *Handlers) Mount(r chi.Router) {
@@ -30,6 +31,33 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Get("/{id}", h.get)
 		r.Patch("/{id}", h.update)
 		r.Delete("/{id}", h.delete)
+		r.Post("/{id}/run-now", h.runNow)
+	})
+}
+
+// runNow forces an immediate fire of the rule, bypassing trigger
+// evaluation + pause state. Useful for manual triggers and Phase
+// C UI buttons. Synchronous: returns after every matching session
+// has been processed (sessions usually < 5; provider call ~1-2s
+// each).
+func (h *Handlers) runNow(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if h.engine == nil {
+		writeError(w, http.StatusServiceUnavailable, fmt.Errorf("capture engine not wired"))
+		return
+	}
+	count, err := h.engine.RunRuleNow(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, ErrRuleNotFound) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"rule_id":          id,
+		"sessions_invoked": count,
 	})
 }
 

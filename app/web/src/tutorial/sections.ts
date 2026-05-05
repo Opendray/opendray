@@ -123,6 +123,7 @@ const GROUP_LABELS: Record<string, string> = {
 	consuming: 'Consuming opendray',
 	memory: 'Memory',
 	backup: 'Backups',
+	'ambient-memory': 'Memory · Ambient',
 }
 
 export const groups: TutorialGroup[] = (() => {

@@ -69,6 +69,13 @@ type Memory struct {
 	// and rarely useful in admin views. Inspector dumps include it
 	// via a separate endpoint.
 	Embedding []float32 `json:"-"`
+
+	// Provenance — populated by Get() but absent from List() output
+	// since it's not interesting for the inspector's row table.
+	SourceKind        string   `json:"source_kind,omitempty"`
+	SourceRef         string   `json:"source_ref,omitempty"`
+	SummarizerSession string   `json:"summarizer_session,omitempty"`
+	Confidence        *float32 `json:"confidence,omitempty"`
 }
 
 // SearchHit is one match returned by Store.Search, paired with its
@@ -160,6 +167,9 @@ type Store interface {
 	// errors and log them — never propagate, since search results
 	// have already been handed to the caller.
 	RecordHits(ctx context.Context, ids []string) error
+	// Get returns one Memory row by id, including provenance fields.
+	// Returns ErrNotFound when the id is missing.
+	Get(ctx context.Context, id string) (Memory, error)
 	// Delete removes a memory by id; returns ErrNotFound when the
 	// id wasn't there.
 	Delete(ctx context.Context, id string) error
