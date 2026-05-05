@@ -913,6 +913,14 @@ func (s *Service) DeleteBackup(ctx context.Context, id string) error {
 // backup's stored fingerprint means restore needs the prior key.
 func (s *Service) CipherFingerprint() string { return s.cipher.Fingerprint() }
 
+// Cipher returns the running AES-GCM cipher derived from
+// OPENDRAY_BACKUP_KEY. Exposed so adjacent subsystems (e.g.
+// memory/summarizer storing encrypted provider API keys) can
+// reuse the same key derivation without each owning their own
+// passphrase. nil-safe — callers should treat a nil return as
+// "feature disabled, no cipher available".
+func (s *Service) Cipher() Cipher { return s.cipher }
+
 // PGVersion returns the pg_dump --version string (cached at boot).
 // The UI shows this so the operator can warn on mismatch with the
 // server version when restoring.

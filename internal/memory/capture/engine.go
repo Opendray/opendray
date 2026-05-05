@@ -1,0 +1,169 @@
+package capture
+
+import (
+	"context"
+	"errors"
+	"log/slog"
+	"time"
+
+	"github.com/opendray/opendray-v2/internal/memory/summarizer"
+)
+
+// DefaultTickInterval is the polling cadence. 10s is the planned
+// trade-off between latency-to-fire and CPU/network cost.
+const DefaultTickInterval = 10 * time.Second
+
+// DefaultHistoryLimit caps how many transcript entries each tick
+// reads per session — a guard against an enormous conversation
+// freezing the loop. Phase A 200 should comfortably exceed any
+// practical N for after_messages triggers.
+const DefaultHistoryLimit = 200
+
+// Deps groups the dependencies the engine wires together. All
+// required.
+type Deps struct {
+	Rules    *RuleStore
+	Registry *summarizer.Registry
+	Memory   MemoryWriter
+	Sessions SessionLister
+	History  HistoryReader
+	CallLog  SummarizerCallLogger
+	Log      *slog.Logger
+	// TickInterval — 0 falls back to DefaultTickInterval.
+	TickInterval time.Duration
+	// HistoryLimit — 0 falls back to DefaultHistoryLimit.
+	HistoryLimit int
+}
+
+// Engine drives the ambient capture loop: every TickInterval, list
+// live sessions, resolve each session's rule, evaluate the trigger,
+// and call the runner when the trigger fires.
+//
+// The engine is a single goroutine — sequential per-tick processing
+// is fine because (a) summarizer calls are minutes-apart in steady
+// state, (b) sequential keeps DB load predictable, and (c) the
+// 30-60s provider call budget per tick won't starve any other
+// session for catastrophic durations.
+type Engine struct {
+	deps   Deps
+	runner *runner
+	state  *stateMap
+	log    *slog.Logger
+}
+
+func NewEngine(deps Deps) (*Engine, error) {
+	if deps.Rules == nil {
+		return nil, errors.New("capture: Deps.Rules required")
+	}
+	if deps.Registry == nil {
+		return nil, errors.New("capture: Deps.Registry required")
+	}
+	if deps.Memory == nil {
+		return nil, errors.New("capture: Deps.Memory required")
+	}
+	if deps.Sessions == nil {
+		return nil, errors.New("capture: Deps.Sessions required")
+	}
+	if deps.History == nil {
+		return nil, errors.New("capture: Deps.History required")
+	}
+	if deps.CallLog == nil {
+		return nil, errors.New("capture: Deps.CallLog required")
+	}
+	if deps.Log == nil {
+		deps.Log = slog.Default()
+	}
+	if deps.TickInterval == 0 {
+		deps.TickInterval = DefaultTickInterval
+	}
+	if deps.HistoryLimit == 0 {
+		deps.HistoryLimit = DefaultHistoryLimit
+	}
+	state := newStateMap()
+	r := &runner{
+		rules:        deps.Rules,
+		registry:     deps.Registry,
+		memory:       deps.Memory,
+		history:      deps.History,
+		callLog:      deps.CallLog,
+		state:        state,
+		historyLimit: deps.HistoryLimit,
+		log:          deps.Log.With("component", "capture-runner"),
+	}
+	return &Engine{
+		deps:   deps,
+		runner: r,
+		state:  state,
+		log:    deps.Log.With("component", "capture-engine"),
+	}, nil
+}
+
+// Run blocks until ctx is cancelled. Each tick:
+//  1. List live sessions.
+//  2. For each session, resolve its rule (per-session override or
+//     global default).
+//  3. Hand to runner.runForSession.
+//
+// Errors at any step are logged and the loop continues — capture
+// is non-critical, never block the rest of opendray.
+func (e *Engine) Run(ctx context.Context) {
+	e.log.Info("capture engine running",
+		"interval", e.deps.TickInterval,
+		"history_limit", e.deps.HistoryLimit)
+	t := time.NewTicker(e.deps.TickInterval)
+	defer t.Stop()
+	// Run one tick immediately so the engine reacts fast to the
+	// first session that comes online instead of waiting for the
+	// initial timer.
+	e.tick(ctx)
+	for {
+		select {
+		case <-ctx.Done():
+			e.log.Info("capture engine stopping")
+			return
+		case <-t.C:
+			e.tick(ctx)
+		}
+	}
+}
+
+func (e *Engine) tick(ctx context.Context) {
+	sessions, err := e.deps.Sessions.List(ctx)
+	if err != nil {
+		e.log.Warn("tick: list sessions failed", "err", err)
+		return
+	}
+	for _, sess := range sessions {
+		// Only summarise providers whose transcripts we know how
+		// to read. session.Manager.History returns
+		// UnsupportedProvider=true for others; capture's wrapper
+		// returns an empty slice so the rule simply never fires
+		// for that session — but we save the call by skipping
+		// here.
+		if !providerSupported(sess.ProviderID) {
+			continue
+		}
+		rule, err := e.deps.Rules.Resolve(ctx, sess.ID)
+		if err != nil {
+			if errors.Is(err, ErrRuleNotFound) {
+				continue
+			}
+			e.log.Warn("tick: resolve rule failed", "session_id", sess.ID, "err", err)
+			continue
+		}
+		if !rule.Enabled {
+			continue
+		}
+		e.runner.runForSession(ctx, rule, sess)
+	}
+}
+
+// providerSupported is the allowlist of provider ids whose
+// transcripts capture can read via session.Manager.History.
+func providerSupported(providerID string) bool {
+	switch providerID {
+	case "claude", "codex", "gemini":
+		return true
+	}
+	return false
+}

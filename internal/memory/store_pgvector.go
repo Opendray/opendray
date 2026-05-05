@@ -108,16 +108,50 @@ func (s *PgvectorStore) Insert(ctx context.Context, req InsertRequest) (string, 
 	}
 
 	vec := vectorLiteral(req.Embedding)
-	_, err = s.pool.Exec(ctx, `
-		INSERT INTO memories (id, scope, scope_key, text, embedding, embedder, metadata)
-		VALUES ($1, $2, $3, $4, $5::vector, $6, $7::jsonb)
-	`, id, string(req.Scope), req.ScopeKey, req.Text, vec, req.Embedder, metaJSON)
+	// Provenance: empty SourceKind defers to DB default ('manual').
+	// nil Confidence stays NULL.
+	sourceKind := nullableStr(req.SourceKind)
+	sourceRef := nullableStr(req.SourceRef)
+	summSession := nullableStr(req.SummarizerSession)
+	var confidence any
+	if req.Confidence != nil {
+		confidence = *req.Confidence
+	}
+
+	if req.SourceKind != "" {
+		_, err = s.pool.Exec(ctx, `
+			INSERT INTO memories
+				(id, scope, scope_key, text, embedding, embedder, metadata,
+				 source_kind, source_ref, summarizer_session, confidence)
+			VALUES ($1, $2, $3, $4, $5::vector, $6, $7::jsonb,
+			        $8, $9, $10, $11)
+		`, id, string(req.Scope), req.ScopeKey, req.Text, vec, req.Embedder, metaJSON,
+			sourceKind, sourceRef, summSession, confidence)
+	} else {
+		// Skip provenance columns entirely so DB CHECK + DEFAULT apply
+		// — equivalent to legacy callers' behaviour pre-Phase-A.
+		_, err = s.pool.Exec(ctx, `
+			INSERT INTO memories (id, scope, scope_key, text, embedding, embedder, metadata)
+			VALUES ($1, $2, $3, $4, $5::vector, $6, $7::jsonb)
+		`, id, string(req.Scope), req.ScopeKey, req.Text, vec, req.Embedder, metaJSON)
+	}
 	if err != nil {
 		return "", fmt.Errorf("memory: insert: %w", err)
 	}
 
 	s.ensureIndex(ctx, req.Embedder, len(req.Embedding))
 	return id, nil
+}
+
+// nullableStr converts "" to a SQL NULL so DB defaults apply, and
+// passes non-empty strings through. Used for the provenance columns
+// added in migration 0018 — each is nullable except source_kind
+// which has a DEFAULT 'manual'.
+func nullableStr(s string) any {
+	if s == "" {
+		return nil
+	}
+	return s
 }
 
 // ensureIndex creates an HNSW index for (embedder, dim) once. Errors

@@ -47,6 +47,9 @@ import (
 	"github.com/opendray/opendray-v2/internal/gateway"
 	"github.com/opendray/opendray-v2/internal/integration"
 	"github.com/opendray/opendray-v2/internal/memory"
+	"github.com/opendray/opendray-v2/internal/memory/capture"
+	"github.com/opendray/opendray-v2/internal/memory/injector"
+	"github.com/opendray/opendray-v2/internal/memory/summarizer"
 	"github.com/opendray/opendray-v2/internal/session"
 	"github.com/opendray/opendray-v2/internal/settings"
 	"github.com/opendray/opendray-v2/internal/store"
@@ -66,6 +69,7 @@ type App struct {
 	intgrCallLogger *integration.CallLogger
 	vaultSync       *vaultgit.Syncer
 	backupScheduler *backup.Scheduler // nil when backup feature is off
+	captureEngine   *capture.Engine   // ambient memory capture loop
 	server          *http.Server
 }
 
@@ -321,6 +325,52 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			"key_fingerprint", bsvc.CipherFingerprint())
 	}
 
+	// Ambient memory subsystem (Phase A) — summarizer + capture +
+	// injector. Always wired (admin endpoints work standalone) but
+	// the capture engine only fires when at least one
+	// memory_capture_rules row + one enabled summarizer provider
+	// exist. Anthropic providers require backup cipher to encrypt
+	// api keys — wiring nil cipher is fine, the store rejects
+	// anthropic insert with a clear error in that case. ollama
+	// providers always work.
+	var ambientCipher summarizer.Cipher
+	if cfg.Backup.Enabled {
+		// Re-derive a service handle just to access Cipher; backup
+		// service was created above when Enabled. We rebuild a
+		// reference here without re-initialising the cipher.
+		passphrase := os.Getenv("OPENDRAY_BACKUP_KEY")
+		if passphrase != "" {
+			if c, cerr := backup.NewCipher(passphrase); cerr == nil {
+				ambientCipher = c
+			}
+		}
+	}
+	summarizerStore := summarizer.NewStore(st.Pool(), ambientCipher)
+	summarizerRegistry := summarizer.NewRegistry(summarizerStore, log)
+	summarizerHandlers := summarizer.NewHandlers(summarizerRegistry, summarizerStore, log)
+
+	captureRuleStore := capture.NewRuleStore(st.Pool())
+	captureSessionAdapter := &captureSessionAdapter{mgr: sessionMgr}
+	captureHistoryAdapter := &captureHistoryAdapter{mgr: sessionMgr}
+	captureEngine, ceErr := capture.NewEngine(capture.Deps{
+		Rules:    captureRuleStore,
+		Registry: summarizerRegistry,
+		Memory:   memorySvc,
+		Sessions: captureSessionAdapter,
+		History:  captureHistoryAdapter,
+		CallLog:  summarizerStore,
+		Log:      log,
+	})
+	if ceErr != nil {
+		st.Close()
+		return nil, fmt.Errorf("init capture engine: %w", ceErr)
+	}
+	captureHandlers := capture.NewHandlers(captureRuleStore, log)
+
+	injectorProfileStore := injector.NewProfileStore(st.Pool())
+	_ = injector.New(injectorProfileStore, memorySvc, log) // engine constructed for symmetry; spawn-time render wiring is Phase B
+	injectorHandlers := injector.NewHandlers(injectorProfileStore, log)
+
 	gw := gateway.NewServer(gateway.Deps{
 		Logger:    log,
 		DB:        st,
@@ -357,6 +407,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				if backupHandlers != nil {
 					backupHandlers.Mount(r)
 				}
+				summarizerHandlers.Mount(r)
+				captureHandlers.Mount(r)
+				injectorHandlers.Mount(r)
 			})
 
 			// Dual-auth (admin OR integration API key): all business
@@ -399,6 +452,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		intgrCallLogger: intgrCallLogger,
 		vaultSync:       vaultSyncer,
 		backupScheduler: backupScheduler,
+		captureEngine:   captureEngine,
 		server:          srv,
 	}, nil
 }
@@ -448,6 +502,12 @@ func (a *App) Run(ctx context.Context) error {
 			close(backupSchedulerDone)
 		}()
 	}
+
+	captureDone := make(chan struct{})
+	go func() {
+		a.captureEngine.Run(ctx)
+		close(captureDone)
+	}()
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -506,6 +566,12 @@ func (a *App) Run(ctx context.Context) error {
 		case <-time.After(5 * time.Second):
 			a.log.Warn("backup scheduler shutdown timed out")
 		}
+	}
+
+	select {
+	case <-captureDone:
+	case <-time.After(5 * time.Second):
+		a.log.Warn("capture engine shutdown timed out")
 	}
 
 	a.bus.Close()
@@ -891,6 +957,50 @@ func resolveGeminiHistoryConfig(c config.GeminiProviderConfig) session.GeminiHis
 		out.ProjectsFile = expandPath(c.ProjectsFile)
 	}
 	return out
+}
+
+// captureSessionAdapter implements capture.SessionLister by
+// translating session.Manager.List into capture.SessionInfo.
+type captureSessionAdapter struct {
+	mgr *session.Manager
+}
+
+func (a *captureSessionAdapter) List(ctx context.Context) ([]capture.SessionInfo, error) {
+	rows, err := a.mgr.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]capture.SessionInfo, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, capture.SessionInfo{
+			ID:         r.ID,
+			ProviderID: r.ProviderID,
+			Cwd:        r.Cwd,
+			State:      string(r.State),
+		})
+	}
+	return out, nil
+}
+
+// captureHistoryAdapter implements capture.HistoryReader by
+// translating session.Manager.History entries.
+type captureHistoryAdapter struct {
+	mgr *session.Manager
+}
+
+func (a *captureHistoryAdapter) History(ctx context.Context, sessionID string, limit int) ([]capture.TranscriptEntry, error) {
+	resp, err := a.mgr.History(ctx, sessionID, limit)
+	if err != nil {
+		return nil, err
+	}
+	if resp.UnsupportedProvider {
+		return nil, nil
+	}
+	out := make([]capture.TranscriptEntry, 0, len(resp.Entries))
+	for _, e := range resp.Entries {
+		out = append(out, capture.TranscriptEntry{Ts: e.Ts, Text: e.Text})
+	}
+	return out, nil
 }
 
 // defaultBackupDir returns expandPath(configured) when set, else

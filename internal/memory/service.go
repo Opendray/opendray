@@ -132,11 +132,22 @@ func (s *Service) Dimensions() int      { return s.emb.Dimensions() }
 // StoreRequest is the public shape callers (MCP, HTTP debug API)
 // pass to Store. It mirrors InsertRequest minus the embedding
 // (we compute that here).
+//
+// Provenance fields (Phase A) — all optional. SourceKind defaults
+// to "manual" via DB CHECK constraint when left empty so existing
+// callers (MCP tool, mirror, HTTP UI) need no changes.
 type StoreRequest struct {
 	Text     string                 `json:"text"`
 	Scope    Scope                  `json:"scope"`
 	ScopeKey string                 `json:"scope_key"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
+
+	// Provenance — set by ambient memory writers (summarizer, mirror,
+	// importer). Empty values cause DB defaults to apply.
+	SourceKind        string   `json:"source_kind,omitempty"`        // 'manual'|'mcp_call'|'summarizer'|'mirror_claude_md'|'imported'
+	SourceRef         string   `json:"source_ref,omitempty"`         // summarizer call id, mirror file path, etc.
+	SummarizerSession string   `json:"summarizer_session,omitempty"` // session id when source_kind='summarizer'
+	Confidence        *float32 `json:"confidence,omitempty"`         // summarizer self-reported 0..1
 }
 
 // SearchRequest mirrors a /memory.search tool call — text query
@@ -179,12 +190,16 @@ func (s *Service) Store(ctx context.Context, req StoreRequest) (string, error) {
 	}
 
 	id, err := s.store.Insert(ctx, InsertRequest{
-		Scope:     req.Scope,
-		ScopeKey:  req.ScopeKey,
-		Text:      req.Text,
-		Embedder:  s.emb.Name(),
-		Embedding: emb[0],
-		Metadata:  req.Metadata,
+		Scope:             req.Scope,
+		ScopeKey:          req.ScopeKey,
+		Text:              req.Text,
+		Embedder:          s.emb.Name(),
+		Embedding:         emb[0],
+		Metadata:          req.Metadata,
+		SourceKind:        req.SourceKind,
+		SourceRef:         req.SourceRef,
+		SummarizerSession: req.SummarizerSession,
+		Confidence:        req.Confidence,
 	})
 	if err != nil {
 		return "", err

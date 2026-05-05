@@ -89,6 +89,10 @@ type SearchQuery struct {
 }
 
 // InsertRequest is the shape passed to Store.Insert.
+//
+// Provenance fields (Phase A): empty strings + nil Confidence are
+// the "no opinion" signal — Store implementations let DB defaults
+// kick in (source_kind='manual', other columns NULL).
 type InsertRequest struct {
 	Scope     Scope
 	ScopeKey  string
@@ -96,6 +100,11 @@ type InsertRequest struct {
 	Embedder  string
 	Embedding []float32
 	Metadata  map[string]interface{}
+
+	SourceKind        string
+	SourceRef         string
+	SummarizerSession string
+	Confidence        *float32
 }
 
 // UpdateRequest carries the new text + (optional) metadata for an
