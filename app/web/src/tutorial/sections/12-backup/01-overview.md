@@ -25,13 +25,33 @@ set the entire feature stays off — see Quickstart below.
 | Best for? | Restore an entire opendray instance | Migration, audit, "give me my data" |
 | Restore tool? | `pg_restore` after decrypting | Future import flow (v1.1) |
 
-## What's NOT here
+## Where backups can go
 
-- **No S3 / GCS target yet.** The interface is open, but only
-  `local` and `smb` ship in v1.
-- **No reverse import.** Both bundles are export-only in v1.
-- **No PITR / WAL archiving.** A pg_dump is a snapshot, not a
-  continuous log.
-- **No automatic key rotation.** Lose the passphrase, lose the
+Six target kinds covering ≈99% of user storage habits:
+
+- **`local`** — directory on the opendray host (default fallback)
+- **`smb`** — Windows shares, home NAS (Synology / QNAP / UNAS)
+- **`s3`** — AWS S3, Cloudflare R2, B2, MinIO, 阿里 OSS, 腾讯 COS, …
+- **`webdav`** — Nextcloud, ownCloud, 群晖 DSM, Box, 坚果云, …
+- **`sftp`** — any SSH-accessible server (VPS, Hetzner Storage Box)
+- **`rclone`** — passthrough to 70+ extra backends (Google Drive,
+  OneDrive, Dropbox, 百度网盘, 阿里云盘, …)
+
+See **Targets** for the per-kind field list. All sensitive fields
+(passwords, secret keys, private keys) are AES-256-GCM encrypted
+at rest using the master backup passphrase.
+
+## What's NOT here (v1 scope cuts)
+
+- **No reverse import for restore** — restore replays a `pg_dump`
+  via `pg_restore`. The `/export` zip has its own import flow
+  (`/export → Import section`).
+- **No PITR / WAL archiving** — a pg_dump is a point-in-time
+  snapshot, not a continuous log. For sub-hour RPO use
+  PostgreSQL's own WAL archiving on top of opendray.
+- **No automatic key rotation** — lose the passphrase, lose the
   ability to decrypt prior backups. Record the key fingerprint
-  shown on the Backups page in your secrets manager.
+  shown on the Backups page in your secrets manager (Vaultwarden,
+  1Password, etc.).
+- **No edit-target UI** — to change a target's config (e.g. rotate
+  S3 credentials), delete + recreate. v1.1.
