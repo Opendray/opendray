@@ -21,6 +21,7 @@ import (
 
 	"github.com/opendray/opendray-v2/internal/audit"
 	"github.com/opendray/opendray-v2/internal/auth"
+	"github.com/opendray/opendray-v2/internal/backup"
 	"github.com/opendray/opendray-v2/internal/catalog"
 	"github.com/opendray/opendray-v2/internal/channel"
 	"github.com/opendray/opendray-v2/internal/channel/bridge" // also registers kind=bridge via init()
@@ -64,6 +65,7 @@ type App struct {
 	audit           *audit.Sink
 	intgrCallLogger *integration.CallLogger
 	vaultSync       *vaultgit.Syncer
+	backupScheduler *backup.Scheduler // nil when backup feature is off
 	server          *http.Server
 }
 
@@ -273,6 +275,51 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}
 	memoryHandlers := memory.NewHandlers(memorySvc, log)
 
+	// Backup subsystem — disabled by default. Enable by setting
+	// [backup] enabled = true in config.toml (or env
+	// OPENDRAY_BACKUP_ENABLED=1) AND providing a master passphrase
+	// in OPENDRAY_BACKUP_KEY. Without both, the feature stays
+	// completely off (no handlers mounted, no scheduler running),
+	// which the UI surfaces by treating /backup-status 404 as
+	// "feature off — set OPENDRAY_BACKUP_KEY".
+	var (
+		backupHandlers  *backup.Handlers
+		backupScheduler *backup.Scheduler
+	)
+	if cfg.Backup.Enabled {
+		passphrase := os.Getenv("OPENDRAY_BACKUP_KEY")
+		if passphrase == "" {
+			st.Close()
+			return nil, fmt.Errorf("backup: feature enabled but OPENDRAY_BACKUP_KEY not set")
+		}
+		bcfg := backup.Config{
+			Enabled:    true,
+			LocalDir:   defaultBackupDir(cfg.Backup.LocalDir, "backups"),
+			ExportDir:  defaultBackupDir(cfg.Backup.ExportDir, "exports"),
+			PgDumpPath: cfg.Backup.PgDumpPath,
+		}
+		bsvc, berr := backup.NewService(bcfg, backup.ServiceDeps{
+			Pool:       st.Pool(),
+			Passphrase: passphrase,
+			DSN:        cfg.Database.URL,
+			ConfigPath: cfg.FilePath,
+			Log:        log,
+		})
+		if berr != nil {
+			st.Close()
+			return nil, fmt.Errorf("init backup: %w", berr)
+		}
+		if err := bsvc.Bootstrap(ctx); err != nil {
+			st.Close()
+			return nil, fmt.Errorf("backup bootstrap: %w", err)
+		}
+		backupHandlers = backup.NewHandlers(bsvc)
+		backupScheduler = backup.NewScheduler(bsvc, 0)
+		log.Info("backup ready",
+			"local_dir", bcfg.LocalDir,
+			"key_fingerprint", bsvc.CipherFingerprint())
+	}
+
 	gw := gateway.NewServer(gateway.Deps{
 		Logger:    log,
 		DB:        st,
@@ -306,6 +353,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				auditHandlers.Mount(r)
 				intgrCallLogHandlers.Mount(r)
 				settingsHandlers.Mount(r)
+				if backupHandlers != nil {
+					backupHandlers.Mount(r)
+				}
 			})
 
 			// Dual-auth (admin OR integration API key): all business
@@ -347,6 +397,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		audit:           auditSink,
 		intgrCallLogger: intgrCallLogger,
 		vaultSync:       vaultSyncer,
+		backupScheduler: backupScheduler,
 		server:          srv,
 	}, nil
 }
@@ -387,6 +438,15 @@ func (a *App) Run(ctx context.Context) error {
 		a.vaultSync.Run(ctx)
 		close(vaultSyncDone)
 	}()
+
+	var backupSchedulerDone chan struct{}
+	if a.backupScheduler != nil {
+		backupSchedulerDone = make(chan struct{})
+		go func() {
+			a.backupScheduler.Run(ctx)
+			close(backupSchedulerDone)
+		}()
+	}
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -437,6 +497,14 @@ func (a *App) Run(ctx context.Context) error {
 	case <-vaultSyncDone:
 	case <-time.After(5 * time.Second):
 		a.log.Warn("vault auto-sync shutdown timed out")
+	}
+
+	if backupSchedulerDone != nil {
+		select {
+		case <-backupSchedulerDone:
+		case <-time.After(5 * time.Second):
+			a.log.Warn("backup scheduler shutdown timed out")
+		}
 	}
 
 	a.bus.Close()
@@ -822,6 +890,20 @@ func resolveGeminiHistoryConfig(c config.GeminiProviderConfig) session.GeminiHis
 		out.ProjectsFile = expandPath(c.ProjectsFile)
 	}
 	return out
+}
+
+// defaultBackupDir returns expandPath(configured) when set, else
+// ~/.opendray/<sub>. The backup feature falls back to a per-user
+// directory so a fresh dev machine works with zero config beyond
+// OPENDRAY_BACKUP_KEY + OPENDRAY_BACKUP_ENABLED.
+func defaultBackupDir(configured, sub string) string {
+	if v := strings.TrimSpace(configured); v != "" {
+		return expandPath(v)
+	}
+	if home, err := os.UserHomeDir(); err == nil {
+		return filepath.Join(home, ".opendray", sub)
+	}
+	return filepath.Join(".", sub)
 }
 
 // expandPath resolves ~/ prefixes against the calling user's home

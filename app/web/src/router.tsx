@@ -13,6 +13,8 @@ import { ChannelsPage } from '@/pages/Channels'
 import { IntegrationsPage } from '@/pages/Integrations'
 import { ActivityPage } from '@/pages/Activity'
 import { MemoryPage } from '@/pages/Memory'
+import { BackupsPage } from '@/pages/Backups'
+import { ExportPage } from '@/pages/Export'
 import { NotesPage } from '@/pages/Notes'
 import { PluginsPage } from '@/pages/Plugins'
 import { SettingsPage } from '@/pages/Settings'
@@ -101,6 +103,18 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 })
 
+const backupsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/backups',
+  component: BackupsPage,
+})
+
+const exportRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/export',
+  component: ExportPage,
+})
+
 const tutorialRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/tutorial',
@@ -120,6 +134,8 @@ const routeTree = rootRoute.addChildren([
     memoryRoute,
     pluginsRoute,
     settingsRoute,
+    backupsRoute,
+    exportRoute,
     tutorialRoute,
   ]),
 ])

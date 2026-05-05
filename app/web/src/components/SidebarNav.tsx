@@ -11,6 +11,7 @@ import {
   NotebookPen,
   BookOpen,
   Brain,
+  Archive,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -43,6 +44,7 @@ const groups: NavItem[][] = [
   ],
   [
     { to: '/plugins', icon: Boxes, label: 'Plugins', shortcut: 'g l' },
+    { to: '/backups', icon: Archive, label: 'Backups', shortcut: 'g b' },
     { to: '/settings', icon: Settings, label: 'Settings', shortcut: 'g ,' },
     { to: '/tutorial', icon: BookOpen, label: 'Tutorial', shortcut: 'g h' },
   ],

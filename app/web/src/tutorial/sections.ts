@@ -122,6 +122,7 @@ const GROUP_LABELS: Record<string, string> = {
 	settings: 'Settings',
 	consuming: 'Consuming opendray',
 	memory: 'Memory',
+	backup: 'Backups',
 }
 
 export const groups: TutorialGroup[] = (() => {

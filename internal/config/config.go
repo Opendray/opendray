@@ -22,6 +22,7 @@ type Config struct {
 	MCP       MCPConfig       `toml:"mcp" json:"mcp"`
 	Providers ProvidersConfig `toml:"providers" json:"providers"`
 	Memory    MemoryConfig    `toml:"memory" json:"memory"`
+	Backup    BackupConfig    `toml:"backup" json:"backup"`
 
 	// FilePath is the path config.toml was loaded from. Set by Load
 	// after a successful read so the runtime can find the same file
@@ -221,6 +222,24 @@ type DatabaseConfig struct {
 	URL string `toml:"url" json:"url"`
 }
 
+// BackupConfig drives the disaster-recovery backup + admin export
+// feature (internal/backup). The master encryption passphrase is
+// NOT in the toml; it lives only in env OPENDRAY_BACKUP_KEY so it
+// can never be checked in or read off disk by accident.
+//
+// Defaults when fields are empty:
+//
+//	enabled       = false           — feature off by default
+//	local_dir     = ~/.opendray/backups   — first writable target's root
+//	export_dir    = ~/.opendray/exports   — staging dir for /export bundles
+//	pg_dump_path  = ""              — resolved from PATH at startup
+type BackupConfig struct {
+	Enabled    bool   `toml:"enabled" json:"enabled"`
+	LocalDir   string `toml:"local_dir" json:"local_dir"`
+	ExportDir  string `toml:"export_dir" json:"export_dir"`
+	PgDumpPath string `toml:"pg_dump_path" json:"pg_dump_path"`
+}
+
 type AdminConfig struct {
 	User     string `toml:"user" json:"user"`
 	Password string `toml:"password" json:"password"`
@@ -331,6 +350,18 @@ func applyEnv(cfg *Config) {
 	}
 	if v := os.Getenv("OPENDRAY_MCP_SECRETS_FILE"); v != "" {
 		cfg.MCP.SecretsFile = v
+	}
+	if v := os.Getenv("OPENDRAY_BACKUP_ENABLED"); v == "1" || v == "true" {
+		cfg.Backup.Enabled = true
+	}
+	if v := os.Getenv("OPENDRAY_BACKUP_LOCAL_DIR"); v != "" {
+		cfg.Backup.LocalDir = v
+	}
+	if v := os.Getenv("OPENDRAY_BACKUP_EXPORT_DIR"); v != "" {
+		cfg.Backup.ExportDir = v
+	}
+	if v := os.Getenv("OPENDRAY_BACKUP_PG_DUMP_PATH"); v != "" {
+		cfg.Backup.PgDumpPath = v
 	}
 }
 

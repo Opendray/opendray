@@ -1,0 +1,745 @@
+package backup
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+// store wraps the pgxpool with backup-specific CRUD. Unexported per
+// project convention — callers go through Service.
+type store struct{ pool *pgxpool.Pool }
+
+func newStore(pool *pgxpool.Pool) *store { return &store{pool: pool} }
+
+// ─── targets ──────────────────────────────────────────────────────
+
+func (s *store) InsertTarget(ctx context.Context, t TargetSpec) error {
+	cfgRaw, err := json.Marshal(t.Config)
+	if err != nil {
+		return fmt.Errorf("marshal target config: %w", err)
+	}
+	if cfgRaw == nil || string(cfgRaw) == "null" {
+		cfgRaw = []byte("{}")
+	}
+	_, err = s.pool.Exec(ctx, `
+		INSERT INTO backup_targets (id, kind, config, enabled, created_at, updated_at)
+		VALUES ($1, $2, $3::jsonb, $4, $5, $5)`,
+		t.ID, string(t.Kind), cfgRaw, t.Enabled, t.CreatedAt)
+	if err != nil {
+		return fmt.Errorf("insert backup target: %w", err)
+	}
+	return nil
+}
+
+func (s *store) GetTarget(ctx context.Context, id string) (TargetSpec, error) {
+	row := s.pool.QueryRow(ctx,
+		`SELECT id, kind, config, enabled, created_at, updated_at
+		   FROM backup_targets WHERE id=$1`, id)
+	t, err := scanTarget(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return TargetSpec{}, ErrTargetNotFound
+	}
+	return t, err
+}
+
+func (s *store) ListTargets(ctx context.Context) ([]TargetSpec, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT id, kind, config, enabled, created_at, updated_at
+		   FROM backup_targets ORDER BY created_at ASC`)
+	if err != nil {
+		return nil, fmt.Errorf("list backup targets: %w", err)
+	}
+	defer rows.Close()
+	var out []TargetSpec
+	for rows.Next() {
+		t, err := scanTarget(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, t)
+	}
+	return out, rows.Err()
+}
+
+// TargetPatch carries optional updates for store.UpdateTarget.
+type TargetPatch struct {
+	Config  map[string]any
+	Enabled *bool
+}
+
+func (s *store) UpdateTarget(ctx context.Context, id string, patch TargetPatch) error {
+	if patch.Config != nil {
+		raw, err := json.Marshal(patch.Config)
+		if err != nil {
+			return fmt.Errorf("marshal target config: %w", err)
+		}
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE backup_targets SET config=$1::jsonb, updated_at=NOW() WHERE id=$2`,
+			raw, id); err != nil {
+			return fmt.Errorf("update target config: %w", err)
+		}
+	}
+	if patch.Enabled != nil {
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE backup_targets SET enabled=$1, updated_at=NOW() WHERE id=$2`,
+			*patch.Enabled, id); err != nil {
+			return fmt.Errorf("update target enabled: %w", err)
+		}
+	}
+	return nil
+}
+
+func (s *store) DeleteTarget(ctx context.Context, id string) error {
+	res, err := s.pool.Exec(ctx, `DELETE FROM backup_targets WHERE id=$1`, id)
+	if err != nil {
+		return fmt.Errorf("delete target: %w", err)
+	}
+	if res.RowsAffected() == 0 {
+		return ErrTargetNotFound
+	}
+	return nil
+}
+
+func scanTarget(row rowScanner) (TargetSpec, error) {
+	var (
+		t      TargetSpec
+		kind   string
+		cfgRaw []byte
+	)
+	if err := row.Scan(&t.ID, &kind, &cfgRaw, &t.Enabled, &t.CreatedAt, &t.UpdatedAt); err != nil {
+		return TargetSpec{}, err
+	}
+	t.Kind = TargetKind(kind)
+	if len(cfgRaw) > 0 {
+		_ = json.Unmarshal(cfgRaw, &t.Config)
+	}
+	if t.Config == nil {
+		t.Config = map[string]any{}
+	}
+	return t, nil
+}
+
+// ─── schedules ────────────────────────────────────────────────────
+
+func (s *store) InsertSchedule(ctx context.Context, sc Schedule) error {
+	_, err := s.pool.Exec(ctx, `
+		INSERT INTO backup_schedules
+			(id, target_id, interval_sec, retention, enabled, next_run_at, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $7)`,
+		sc.ID, sc.TargetID, sc.IntervalSec, sc.Retention, sc.Enabled,
+		sc.NextRunAt, sc.CreatedAt)
+	if err != nil {
+		return fmt.Errorf("insert schedule: %w", err)
+	}
+	return nil
+}
+
+func (s *store) GetSchedule(ctx context.Context, id string) (Schedule, error) {
+	row := s.pool.QueryRow(ctx, scheduleSelectStmt+` WHERE id=$1`, id)
+	sc, err := scanSchedule(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Schedule{}, ErrScheduleNotFound
+	}
+	return sc, err
+}
+
+func (s *store) ListSchedules(ctx context.Context) ([]Schedule, error) {
+	rows, err := s.pool.Query(ctx, scheduleSelectStmt+` ORDER BY created_at ASC`)
+	if err != nil {
+		return nil, fmt.Errorf("list schedules: %w", err)
+	}
+	defer rows.Close()
+	var out []Schedule
+	for rows.Next() {
+		sc, err := scanSchedule(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, sc)
+	}
+	return out, rows.Err()
+}
+
+// SchedulePatch carries partial updates.
+type SchedulePatch struct {
+	IntervalSec *int
+	Retention   *int
+	Enabled     *bool
+	NextRunAt   *time.Time
+}
+
+func (s *store) UpdateSchedule(ctx context.Context, id string, p SchedulePatch) error {
+	if p.IntervalSec != nil {
+		if *p.IntervalSec <= 0 {
+			return fmt.Errorf("interval_sec must be > 0")
+		}
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE backup_schedules SET interval_sec=$1, updated_at=NOW() WHERE id=$2`,
+			*p.IntervalSec, id); err != nil {
+			return fmt.Errorf("update interval: %w", err)
+		}
+	}
+	if p.Retention != nil {
+		if *p.Retention < 0 {
+			return fmt.Errorf("retention must be >= 0")
+		}
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE backup_schedules SET retention=$1, updated_at=NOW() WHERE id=$2`,
+			*p.Retention, id); err != nil {
+			return fmt.Errorf("update retention: %w", err)
+		}
+	}
+	if p.Enabled != nil {
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE backup_schedules SET enabled=$1, updated_at=NOW() WHERE id=$2`,
+			*p.Enabled, id); err != nil {
+			return fmt.Errorf("update enabled: %w", err)
+		}
+	}
+	if p.NextRunAt != nil {
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE backup_schedules SET next_run_at=$1, updated_at=NOW() WHERE id=$2`,
+			*p.NextRunAt, id); err != nil {
+			return fmt.Errorf("update next_run_at: %w", err)
+		}
+	}
+	return nil
+}
+
+func (s *store) DeleteSchedule(ctx context.Context, id string) error {
+	res, err := s.pool.Exec(ctx, `DELETE FROM backup_schedules WHERE id=$1`, id)
+	if err != nil {
+		return fmt.Errorf("delete schedule: %w", err)
+	}
+	if res.RowsAffected() == 0 {
+		return ErrScheduleNotFound
+	}
+	return nil
+}
+
+// ClaimDueSchedule atomically picks the oldest due, enabled schedule
+// (FOR UPDATE SKIP LOCKED so multiple opendray instances cooperate)
+// and bumps next_run_at = NOW() + interval. Returns ErrScheduleNotFound
+// when nothing's due. Caller invokes RunBackupSync afterwards.
+func (s *store) ClaimDueSchedule(ctx context.Context) (Schedule, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return Schedule{}, fmt.Errorf("begin claim tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	row := tx.QueryRow(ctx, scheduleSelectStmt+`
+		WHERE enabled = TRUE AND next_run_at <= NOW()
+		ORDER BY next_run_at ASC
+		FOR UPDATE SKIP LOCKED
+		LIMIT 1`)
+	sc, err := scanSchedule(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Schedule{}, ErrScheduleNotFound
+	}
+	if err != nil {
+		return Schedule{}, err
+	}
+
+	if _, err := tx.Exec(ctx, `
+		UPDATE backup_schedules
+		   SET last_run_at = NOW(),
+		       next_run_at = NOW() + ($1 || ' seconds')::interval,
+		       updated_at  = NOW()
+		 WHERE id = $2`,
+		fmt.Sprintf("%d", sc.IntervalSec), sc.ID); err != nil {
+		return Schedule{}, fmt.Errorf("bump next_run_at: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return Schedule{}, fmt.Errorf("commit claim tx: %w", err)
+	}
+	// Reflect the row we just bumped so the caller sees fresh times.
+	now := time.Now().UTC()
+	sc.LastRunAt = &now
+	sc.NextRunAt = now.Add(time.Duration(sc.IntervalSec) * time.Second)
+	return sc, nil
+}
+
+const scheduleSelectStmt = `
+	SELECT id, target_id, interval_sec, retention, enabled,
+	       last_run_at, next_run_at, created_at, updated_at
+	  FROM backup_schedules`
+
+func scanSchedule(row rowScanner) (Schedule, error) {
+	var (
+		sc        Schedule
+		lastRunAt sql.NullTime
+	)
+	if err := row.Scan(&sc.ID, &sc.TargetID, &sc.IntervalSec, &sc.Retention,
+		&sc.Enabled, &lastRunAt, &sc.NextRunAt, &sc.CreatedAt, &sc.UpdatedAt); err != nil {
+		return Schedule{}, err
+	}
+	if lastRunAt.Valid {
+		t := lastRunAt.Time
+		sc.LastRunAt = &t
+	}
+	return sc, nil
+}
+
+// ─── backups ──────────────────────────────────────────────────────
+
+func (s *store) InsertBackup(ctx context.Context, b Backup) error {
+	metaRaw, err := json.Marshal(b.Metadata)
+	if err != nil {
+		return fmt.Errorf("marshal backup meta: %w", err)
+	}
+	if metaRaw == nil || string(metaRaw) == "null" {
+		metaRaw = []byte("{}")
+	}
+	_, err = s.pool.Exec(ctx, `
+		INSERT INTO backups
+			(id, schedule_id, target_id, status, triggered_by, started_at,
+			 encrypted, metadata)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)`,
+		b.ID, scheduleIDOrNil(b.ScheduleID), b.TargetID,
+		string(b.Status), string(b.TriggeredBy), b.StartedAt,
+		b.Encrypted, metaRaw)
+	if err != nil {
+		return fmt.Errorf("insert backup: %w", err)
+	}
+	return nil
+}
+
+func (s *store) GetBackup(ctx context.Context, id string) (Backup, error) {
+	row := s.pool.QueryRow(ctx, backupSelectStmt+` WHERE id=$1`, id)
+	b, err := scanBackup(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Backup{}, ErrBackupNotFound
+	}
+	return b, err
+}
+
+// BackupListFilter narrows ListBackups results.
+type BackupListFilter struct {
+	Status      BackupStatus
+	TargetID    string
+	IncludeDeleted bool
+	Limit       int
+}
+
+func (s *store) ListBackups(ctx context.Context, f BackupListFilter) ([]Backup, error) {
+	q := backupSelectStmt
+	args := []any{}
+	conds := []string{}
+	if f.Status != "" {
+		args = append(args, string(f.Status))
+		conds = append(conds, fmt.Sprintf("status=$%d", len(args)))
+	} else if !f.IncludeDeleted {
+		conds = append(conds, "status<>'deleted'")
+	}
+	if f.TargetID != "" {
+		args = append(args, f.TargetID)
+		conds = append(conds, fmt.Sprintf("target_id=$%d", len(args)))
+	}
+	if len(conds) > 0 {
+		q += " WHERE " + joinAnd(conds)
+	}
+	q += " ORDER BY started_at DESC"
+	if f.Limit > 0 {
+		args = append(args, f.Limit)
+		q += fmt.Sprintf(" LIMIT $%d", len(args))
+	}
+	rows, err := s.pool.Query(ctx, q, args...)
+	if err != nil {
+		return nil, fmt.Errorf("list backups: %w", err)
+	}
+	defer rows.Close()
+	var out []Backup
+	for rows.Next() {
+		b, err := scanBackup(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, b)
+	}
+	return out, rows.Err()
+}
+
+func (s *store) MarkBackupRunning(ctx context.Context, id string) error {
+	res, err := s.pool.Exec(ctx,
+		`UPDATE backups SET status='running' WHERE id=$1 AND status='pending'`, id)
+	if err != nil {
+		return fmt.Errorf("mark running: %w", err)
+	}
+	if res.RowsAffected() == 0 {
+		return ErrBackupNotFound
+	}
+	return nil
+}
+
+// BackupResult bundles the success-side write of a backup row.
+type BackupResult struct {
+	Bytes           int64
+	SHA256          string
+	KeyFingerprint  string
+	TargetPath      string
+	PGVersion       string
+	OpendrayVersion string
+	GitSHA          string
+}
+
+func (s *store) MarkBackupSucceeded(ctx context.Context, id string, r BackupResult) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE backups
+		   SET status='succeeded',
+		       finished_at=NOW(),
+		       bytes=$1,
+		       sha256=$2,
+		       key_fingerprint=$3,
+		       target_path=$4,
+		       pg_version=$5,
+		       opendray_version=$6,
+		       git_sha=$7
+		 WHERE id=$8`,
+		r.Bytes, nullIfEmpty(r.SHA256), nullIfEmpty(r.KeyFingerprint),
+		nullIfEmpty(r.TargetPath), nullIfEmpty(r.PGVersion),
+		nullIfEmpty(r.OpendrayVersion), nullIfEmpty(r.GitSHA), id)
+	if err != nil {
+		return fmt.Errorf("mark succeeded: %w", err)
+	}
+	return nil
+}
+
+func (s *store) MarkBackupFailed(ctx context.Context, id string, errMsg string) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE backups
+		   SET status='failed', finished_at=NOW(), error=$1
+		 WHERE id=$2`,
+		errMsg, id)
+	if err != nil {
+		return fmt.Errorf("mark failed: %w", err)
+	}
+	return nil
+}
+
+// MarkBackupDeleted flips status to 'deleted' (soft-delete, kept for
+// audit). The blob removal happens out-of-band via Target.Delete.
+func (s *store) MarkBackupDeleted(ctx context.Context, id string) error {
+	res, err := s.pool.Exec(ctx,
+		`UPDATE backups SET status='deleted' WHERE id=$1`, id)
+	if err != nil {
+		return fmt.Errorf("mark deleted: %w", err)
+	}
+	if res.RowsAffected() == 0 {
+		return ErrBackupNotFound
+	}
+	return nil
+}
+
+// CountSucceededByTarget is consumed by retention to decide if any
+// rows need pruning.
+func (s *store) CountSucceededByTarget(ctx context.Context, targetID string) (int, error) {
+	var n int
+	err := s.pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM backups WHERE target_id=$1 AND status='succeeded'`,
+		targetID).Scan(&n)
+	if err != nil {
+		return 0, fmt.Errorf("count succeeded: %w", err)
+	}
+	return n, nil
+}
+
+// ListSucceededByTargetOldestFirst is consumed by retention. Caller
+// keeps the last N rows and Delete-then-MarkBackupDeleted the rest.
+func (s *store) ListSucceededByTargetOldestFirst(ctx context.Context, targetID string) ([]Backup, error) {
+	rows, err := s.pool.Query(ctx,
+		backupSelectStmt+` WHERE target_id=$1 AND status='succeeded' ORDER BY started_at ASC`,
+		targetID)
+	if err != nil {
+		return nil, fmt.Errorf("list for retention: %w", err)
+	}
+	defer rows.Close()
+	var out []Backup
+	for rows.Next() {
+		b, err := scanBackup(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, b)
+	}
+	return out, rows.Err()
+}
+
+// ResetStaleRunning flips backup rows that have been 'running' for
+// longer than the cutoff to 'failed' with a stale-marker error.
+// Called once at scheduler startup.
+func (s *store) ResetStaleRunning(ctx context.Context, cutoff time.Duration) (int, error) {
+	cmd, err := s.pool.Exec(ctx, `
+		UPDATE backups
+		   SET status='failed', finished_at=NOW(),
+		       error='reset by scheduler: still running after restart'
+		 WHERE status='running' AND started_at < NOW() - $1::interval`,
+		cutoff.String())
+	if err != nil {
+		return 0, fmt.Errorf("reset stale running: %w", err)
+	}
+	return int(cmd.RowsAffected()), nil
+}
+
+const backupSelectStmt = `
+	SELECT id, schedule_id, target_id, status, triggered_by,
+	       started_at, finished_at, bytes,
+	       COALESCE(sha256, ''),
+	       encrypted,
+	       COALESCE(key_fingerprint, ''),
+	       COALESCE(target_path, ''),
+	       COALESCE(pg_version, ''),
+	       COALESCE(opendray_version, ''),
+	       COALESCE(git_sha, ''),
+	       COALESCE(error, ''),
+	       COALESCE(metadata, '{}'::jsonb)
+	  FROM backups`
+
+func scanBackup(row rowScanner) (Backup, error) {
+	var (
+		b           Backup
+		scheduleID  sql.NullString
+		finishedAt  sql.NullTime
+		status      string
+		triggeredBy string
+		metaRaw     []byte
+	)
+	err := row.Scan(
+		&b.ID, &scheduleID, &b.TargetID, &status, &triggeredBy,
+		&b.StartedAt, &finishedAt, &b.Bytes,
+		&b.SHA256, &b.Encrypted, &b.KeyFingerprint,
+		&b.TargetPath, &b.PGVersion, &b.OpendrayVersion, &b.GitSHA,
+		&b.Error, &metaRaw,
+	)
+	if err != nil {
+		return Backup{}, err
+	}
+	if scheduleID.Valid {
+		s := scheduleID.String
+		b.ScheduleID = &s
+	}
+	if finishedAt.Valid {
+		t := finishedAt.Time
+		b.FinishedAt = &t
+	}
+	b.Status = BackupStatus(status)
+	b.TriggeredBy = TriggeredBy(triggeredBy)
+	if len(metaRaw) > 0 {
+		_ = json.Unmarshal(metaRaw, &b.Metadata)
+	}
+	if b.Metadata == nil {
+		b.Metadata = map[string]any{}
+	}
+	return b, nil
+}
+
+// ─── exports ──────────────────────────────────────────────────────
+
+func (s *store) InsertExport(ctx context.Context, e Export) error {
+	scopeRaw, err := json.Marshal(e.Scope)
+	if err != nil {
+		return fmt.Errorf("marshal export scope: %w", err)
+	}
+	_, err = s.pool.Exec(ctx, `
+		INSERT INTO exports
+			(id, status, requested_by, scope, started_at, expires_at, download_token)
+		VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7)`,
+		e.ID, string(e.Status), e.RequestedBy, scopeRaw,
+		e.StartedAt, e.ExpiresAt, e.DownloadToken)
+	if err != nil {
+		return fmt.Errorf("insert export: %w", err)
+	}
+	return nil
+}
+
+func (s *store) GetExport(ctx context.Context, id string) (Export, error) {
+	row := s.pool.QueryRow(ctx, exportSelectStmt+` WHERE id=$1`, id)
+	e, err := scanExport(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Export{}, ErrExportNotFound
+	}
+	return e, err
+}
+
+// GetExportByToken returns the export iff the supplied token
+// matches. Used for the unauthenticated download endpoint.
+func (s *store) GetExportByToken(ctx context.Context, id, token string) (Export, error) {
+	row := s.pool.QueryRow(ctx, exportSelectStmt+` WHERE id=$1 AND download_token=$2`, id, token)
+	e, err := scanExport(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Export{}, ErrInvalidDownloadToken
+	}
+	return e, err
+}
+
+func (s *store) ListExports(ctx context.Context) ([]Export, error) {
+	rows, err := s.pool.Query(ctx, exportSelectStmt+` ORDER BY started_at DESC`)
+	if err != nil {
+		return nil, fmt.Errorf("list exports: %w", err)
+	}
+	defer rows.Close()
+	var out []Export
+	for rows.Next() {
+		e, err := scanExport(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, e)
+	}
+	return out, rows.Err()
+}
+
+// ExportResult bundles the post-build write fields.
+type ExportResult struct {
+	FilePath string
+	Bytes    int64
+	SHA256   string
+}
+
+func (s *store) MarkExportReady(ctx context.Context, id string, r ExportResult) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE exports
+		   SET status='ready', finished_at=NOW(),
+		       file_path=$1, bytes=$2, sha256=$3
+		 WHERE id=$4`,
+		r.FilePath, r.Bytes, nullIfEmpty(r.SHA256), id)
+	if err != nil {
+		return fmt.Errorf("mark export ready: %w", err)
+	}
+	return nil
+}
+
+func (s *store) MarkExportFailed(ctx context.Context, id, msg string) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE exports SET status='failed', finished_at=NOW(), error=$1 WHERE id=$2`,
+		msg, id)
+	if err != nil {
+		return fmt.Errorf("mark export failed: %w", err)
+	}
+	return nil
+}
+
+func (s *store) MarkExportExpired(ctx context.Context, id string) error {
+	_, err := s.pool.Exec(ctx,
+		`UPDATE exports SET status='expired' WHERE id=$1 AND status<>'expired'`, id)
+	if err != nil {
+		return fmt.Errorf("mark export expired: %w", err)
+	}
+	return nil
+}
+
+func (s *store) ListExpiredExports(ctx context.Context) ([]Export, error) {
+	rows, err := s.pool.Query(ctx,
+		exportSelectStmt+` WHERE expires_at < NOW() AND status NOT IN ('expired')`)
+	if err != nil {
+		return nil, fmt.Errorf("list expired exports: %w", err)
+	}
+	defer rows.Close()
+	var out []Export
+	for rows.Next() {
+		e, err := scanExport(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, e)
+	}
+	return out, rows.Err()
+}
+
+func (s *store) DeleteExport(ctx context.Context, id string) error {
+	_, err := s.pool.Exec(ctx, `DELETE FROM exports WHERE id=$1`, id)
+	if err != nil {
+		return fmt.Errorf("delete export: %w", err)
+	}
+	return nil
+}
+
+const exportSelectStmt = `
+	SELECT id, status, requested_by, scope, started_at, finished_at,
+	       expires_at, bytes,
+	       COALESCE(sha256, ''),
+	       download_token,
+	       COALESCE(file_path, ''),
+	       COALESCE(error, '')
+	  FROM exports`
+
+func scanExport(row rowScanner) (Export, error) {
+	var (
+		e          Export
+		status     string
+		scopeRaw   []byte
+		finishedAt sql.NullTime
+		filePath   string
+	)
+	if err := row.Scan(
+		&e.ID, &status, &e.RequestedBy, &scopeRaw,
+		&e.StartedAt, &finishedAt, &e.ExpiresAt, &e.Bytes,
+		&e.SHA256, &e.DownloadToken, &filePath, &e.Error,
+	); err != nil {
+		return Export{}, err
+	}
+	e.Status = ExportStatus(status)
+	if finishedAt.Valid {
+		t := finishedAt.Time
+		e.FinishedAt = &t
+	}
+	if len(scopeRaw) > 0 {
+		_ = json.Unmarshal(scopeRaw, &e.Scope)
+	}
+	// file_path is intentionally not in Export — it's an internal
+	// detail. Caller wanting it goes through service.
+	_ = filePath
+	return e, nil
+}
+
+// GetExportFilePath returns just the file_path column. Internal:
+// used by service to open the bundle for streaming download.
+func (s *store) GetExportFilePath(ctx context.Context, id string) (string, error) {
+	var p sql.NullString
+	err := s.pool.QueryRow(ctx, `SELECT file_path FROM exports WHERE id=$1`, id).Scan(&p)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", ErrExportNotFound
+	}
+	if err != nil {
+		return "", fmt.Errorf("get export file_path: %w", err)
+	}
+	return p.String, nil
+}
+
+// ─── helpers ──────────────────────────────────────────────────────
+
+type rowScanner interface {
+	Scan(dest ...any) error
+}
+
+func nullIfEmpty(s string) any {
+	if s == "" {
+		return nil
+	}
+	return s
+}
+
+func scheduleIDOrNil(p *string) any {
+	if p == nil || *p == "" {
+		return nil
+	}
+	return *p
+}
+
+func joinAnd(parts []string) string {
+	out := ""
+	for i, p := range parts {
+		if i > 0 {
+			out += " AND "
+		}
+		out += p
+	}
+	return out
+}
