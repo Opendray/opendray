@@ -17,6 +17,7 @@ import {
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import {
   emptyConfig,
@@ -34,8 +35,16 @@ import {
 } from '@/lib/memory'
 import {
   type BackupStatusReport,
+  type Schedule,
+  type TargetSpec,
+  deleteTarget,
   fetchBackupStatus,
+  formatInterval,
+  listSchedules,
+  listTargets,
+  testTarget,
 } from '@/lib/backup'
+import { TargetEditor, targetSummary } from '@/components/backup/TargetEditor'
 
 import { LogViewer } from './LogViewer'
 import { PathInput } from './PathInput'
@@ -1619,9 +1628,10 @@ function ProbeResultLine({
   )
 }
 
-// BackupSection renders the Settings → Backup panel: feature
-// status (env-controlled, read-only) + path overrides (config.toml,
-// require restart). The actual backup operations live at /backups.
+// BackupSection is the operator's one-stop control center for the
+// backup feature: status, where backups go (targets), what's
+// scheduled, plus advanced (path overrides). The act-on-a-backup
+// pages (/backups, /export) handle the operational verbs.
 function BackupSection({
   draft,
   setDraft,
@@ -1632,31 +1642,57 @@ function BackupSection({
   visible: (label: string, hint?: string) => boolean
 }) {
   const c = draft
+  const qc = useQueryClient()
+  const [advancedOpen, setAdvancedOpen] = useState(false)
+  const [newTargetOpen, setNewTargetOpen] = useState(false)
 
-  // Status is best-effort — if the backup feature is disabled
-  // (404), we still show the form so the operator can configure
-  // paths and then enable via env on next restart.
   const { data: status } = useQuery<BackupStatusReport | null>({
     queryKey: ['backup-status'],
     queryFn: fetchBackupStatus,
     retry: false,
   })
 
+  const { data: targets } = useQuery<TargetSpec[]>({
+    queryKey: ['backup-targets'],
+    queryFn: listTargets,
+    enabled: status !== null && status !== undefined,
+  })
+
+  const { data: schedules } = useQuery<Schedule[]>({
+    queryKey: ['backup-schedules'],
+    queryFn: listSchedules,
+    enabled: status !== null && status !== undefined,
+  })
+
+  const featureOff = status === null
+  const showFilter = !visible || true // search filter not applied to control-center widgets
+
   return (
     <div className="flex flex-col gap-8">
+      {/* ── Status ─────────────────────────────────────────────── */}
       <FormGroup heading="Status">
-        <div className="rounded-md border border-border bg-card/30 p-3 text-[12px] flex flex-col gap-2">
-          {status === null && (
+        <div
+          className={cn(
+            'rounded-md border p-3 text-[12px] flex flex-col gap-2',
+            status?.ok
+              ? 'border-state-running/30 bg-state-running/5'
+              : 'border-state-idle/30 bg-state-idle/5',
+          )}
+        >
+          {featureOff && (
             <div className="flex items-start gap-2">
               <Archive className="size-3.5 mt-0.5 text-state-idle" />
               <div>
                 <div className="font-medium">Feature disabled</div>
                 <div className="text-muted-foreground mt-0.5">
-                  Set <code className="text-foreground">OPENDRAY_BACKUP_ENABLED=1</code>{' '}
-                  + <code className="text-foreground">OPENDRAY_BACKUP_KEY=&lt;passphrase&gt;</code>{' '}
-                  in opendray's environment, then restart. The
-                  master passphrase is env-only — it never touches
-                  config.toml.
+                  Set{' '}
+                  <code className="text-foreground">OPENDRAY_BACKUP_ENABLED=1</code>{' '}
+                  +{' '}
+                  <code className="text-foreground">
+                    OPENDRAY_BACKUP_KEY=&lt;passphrase&gt;
+                  </code>{' '}
+                  in opendray's environment, then restart. The master
+                  passphrase is env-only — it never touches config.toml.
                 </div>
               </div>
             </div>
@@ -1664,13 +1700,14 @@ function BackupSection({
           {status && (
             <>
               <Row label="Status">
-                <span className="text-state-running">enabled</span>
+                <span className={status.ok ? 'text-state-running' : 'text-state-failed'}>
+                  {status.ok ? 'enabled · healthy' : 'enabled · degraded'}
+                </span>
               </Row>
               <Row label="Key fingerprint">
                 <code className="text-foreground">{status.key_fingerprint}</code>
                 <span className="ml-2 text-[10.5px] text-muted-foreground">
-                  record this in your secrets manager — losing it
-                  means losing decrypt access to all prior backups
+                  record in Vaultwarden — losing it locks all prior backups
                 </span>
               </Row>
               <Row label="pg_dump">
@@ -1688,16 +1725,10 @@ function BackupSection({
                 </code>
               </Row>
               <div className="pt-1 border-t border-border/50 flex items-center justify-between">
-                <Link
-                  to="/backups"
-                  className="text-[11.5px] underline text-accent"
-                >
+                <Link to="/backups" className="text-[11.5px] underline text-accent">
                   Open Backups page →
                 </Link>
-                <Link
-                  to="/export"
-                  className="text-[11.5px] underline text-accent"
-                >
+                <Link to="/export" className="text-[11.5px] underline text-accent">
                   Open Export / Import →
                 </Link>
               </div>
@@ -1706,88 +1737,281 @@ function BackupSection({
         </div>
       </FormGroup>
 
-      <FormGroup heading="Storage paths (config.toml — restart to apply)">
-        {visible('Local backup directory', 'Where local-target bundles are written') && (
-          <FieldRow
-            label="Local backup directory"
-            hint="Root for the auto-created `local` target. Empty = ~/.opendray/backups. Restart required."
-            tomlKey="backup.local_dir"
-          >
-            <PathInput
-              value={c.backup.local_dir}
-              onChange={(v) =>
-                setDraft({ ...draft, backup: { ...c.backup, local_dir: v } })
-              }
-              placeholder="~/.opendray/backups"
-            />
-          </FieldRow>
-        )}
-        {visible('Export directory', 'Where /export bundles are staged') && (
-          <FieldRow
-            label="Export directory"
-            hint="Where one-shot export zips are staged on disk. Empty = ~/.opendray/exports. Bundles auto-expire after 24h. Restart required."
-            tomlKey="backup.export_dir"
-          >
-            <PathInput
-              value={c.backup.export_dir}
-              onChange={(v) =>
-                setDraft({ ...draft, backup: { ...c.backup, export_dir: v } })
-              }
-              placeholder="~/.opendray/exports"
-            />
-          </FieldRow>
-        )}
-      </FormGroup>
+      {/* ── Where backups go (targets) ─────────────────────────── */}
+      {!featureOff && showFilter && (
+        <FormGroup heading="Where backups go">
+          <p className="text-[12px] text-muted-foreground mb-1">
+            Each target is one place a backup blob can be written.
+            opendray supports <strong>local disk</strong>,{' '}
+            <strong>SMB/CIFS</strong> (Windows / NAS),{' '}
+            <strong>S3-compatible</strong> (AWS, R2, B2, MinIO, 阿里
+            OSS, 腾讯 COS, ...), <strong>WebDAV</strong> (Nextcloud,
+            群晖, 坚果云), <strong>SFTP</strong>, plus an{' '}
+            <strong>rclone</strong> passthrough that taps into 70+
+            extra backends (Google Drive, OneDrive, Dropbox, 百度网盘,
+            阿里云盘, ...).
+          </p>
 
-      <FormGroup heading="PostgreSQL client binaries (config.toml — restart to apply)">
-        {visible('pg_dump path', 'Override the resolved pg_dump binary') && (
-          <FieldRow
-            label="pg_dump path"
-            hint="Absolute path to pg_dump. Major version must be ≥ the server's. Empty = first pg_dump on PATH. Use this when brew keg-only / multiple PG versions coexist."
-            tomlKey="backup.pg_dump_path"
-          >
-            <PathInput
-              value={c.backup.pg_dump_path}
-              onChange={(v) =>
-                setDraft({ ...draft, backup: { ...c.backup, pg_dump_path: v } })
-              }
-              placeholder="/opt/homebrew/opt/postgresql@17/bin/pg_dump"
-            />
-          </FieldRow>
-        )}
-        {visible('pg_restore path', 'Override the resolved pg_restore binary') && (
-          <FieldRow
-            label="pg_restore path"
-            hint="Absolute path to pg_restore for the /backups/restore flow. Same major-version rule as pg_dump."
-            tomlKey="backup.pg_restore_path"
-          >
-            <PathInput
-              value={c.backup.pg_restore_path}
-              onChange={(v) =>
-                setDraft({
-                  ...draft,
-                  backup: { ...c.backup, pg_restore_path: v },
-                })
-              }
-              placeholder="/opt/homebrew/opt/postgresql@17/bin/pg_restore"
-            />
-          </FieldRow>
-        )}
-      </FormGroup>
+          <div className="flex flex-col gap-1.5">
+            {targets === undefined ? (
+              <div className="text-muted-foreground text-[12px]">Loading…</div>
+            ) : targets.length === 0 ? (
+              <div className="rounded-md border border-dashed border-border p-4 text-center text-[12px] text-muted-foreground">
+                No targets yet. Add one to start backing up.
+              </div>
+            ) : (
+              targets.map((t) => (
+                <TargetRow
+                  key={t.id}
+                  target={t}
+                  onChanged={() => qc.invalidateQueries({ queryKey: ['backup-targets'] })}
+                />
+              ))
+            )}
+          </div>
 
-      <FormGroup heading="What's in a backup?">
-        <div className="text-[12px] text-muted-foreground">
-          Each backup is a <code>pg_dump --format=custom</code> of every
-          opendray table (sessions, integrations, memories, audit_log,
-          etc.) plus a <code>manifest.json</code> and (optionally) the
-          live <code>config.toml</code>. The full live inventory with
-          row counts is one click away on the{' '}
-          <Link to="/backups" className="underline text-accent">
-            Backups page
-          </Link>{' '}
-          (top "What's in a backup?" panel).
+          <Dialog open={newTargetOpen} onOpenChange={setNewTargetOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="mt-2 self-start">
+                <Plus className="size-3.5 mr-1.5" />
+                Add target
+              </Button>
+            </DialogTrigger>
+            <TargetEditor
+              onCreated={async () => {
+                setNewTargetOpen(false)
+                qc.invalidateQueries({ queryKey: ['backup-targets'] })
+              }}
+            />
+          </Dialog>
+        </FormGroup>
+      )}
+
+      {/* ── Schedules ──────────────────────────────────────────── */}
+      {!featureOff && (
+        <FormGroup heading="Schedules">
+          {schedules === undefined ? (
+            <div className="text-muted-foreground text-[12px]">Loading…</div>
+          ) : schedules.length === 0 ? (
+            <div className="text-[12px] text-muted-foreground">
+              No recurring schedules. Add one on{' '}
+              <Link to="/backups" className="underline text-accent">
+                /backups → Schedules
+              </Link>{' '}
+              to take backups automatically.
+            </div>
+          ) : (
+            <div className="rounded-md border border-border bg-card/30 overflow-hidden">
+              <table className="w-full text-[12px]">
+                <thead className="bg-card/50 text-muted-foreground">
+                  <tr className="text-left">
+                    <th className="px-3 py-2 font-medium">Schedule</th>
+                    <th className="px-3 py-2 font-medium">Target</th>
+                    <th className="px-3 py-2 font-medium">Cadence</th>
+                    <th className="px-3 py-2 font-medium">Keep</th>
+                    <th className="px-3 py-2 font-medium">State</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {schedules.map((s) => (
+                    <tr key={s.id} className="border-t border-border/60">
+                      <td className="px-3 py-2 font-mono text-[11px]">{s.id}</td>
+                      <td className="px-3 py-2 font-mono text-[11px]">
+                        {s.target_id}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        every {formatInterval(s.interval_sec)}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {s.retention} backups
+                      </td>
+                      <td className="px-3 py-2">
+                        {s.enabled ? (
+                          <span className="text-state-running">enabled</span>
+                        ) : (
+                          <span className="text-muted-foreground">paused</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="px-3 py-2 border-t border-border/60 text-right">
+                <Link to="/backups" className="text-[11px] underline text-accent">
+                  Manage on /backups → Schedules →
+                </Link>
+              </div>
+            </div>
+          )}
+        </FormGroup>
+      )}
+
+      {/* ── What's in a backup? ───────────────────────────────── */}
+      {!featureOff && (
+        <FormGroup heading="What's in a backup?">
+          <div className="text-[12px] text-muted-foreground">
+            Each backup is a <code>pg_dump --format=custom</code> of every
+            opendray table (sessions, integrations, memories,
+            audit_log, etc.) plus a <code>manifest.json</code> and
+            (optionally) the live <code>config.toml</code>. Open the
+            "What's in a backup?" panel on the{' '}
+            <Link to="/backups" className="underline text-accent">
+              Backups page
+            </Link>{' '}
+            to see the live inventory with row counts.
+          </div>
+        </FormGroup>
+      )}
+
+      {/* ── Advanced (paths, collapsible) ─────────────────────── */}
+      <div className="rounded-md border border-border bg-card/20">
+        <button
+          type="button"
+          onClick={() => setAdvancedOpen((v) => !v)}
+          className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-card/40 text-left text-[12px] font-medium"
+        >
+          {advancedOpen ? '▾' : '▸'} Advanced (paths & client binaries) — restart required
+        </button>
+        {advancedOpen && (
+          <div className="px-4 pb-4 pt-2 border-t border-border/50 flex flex-col gap-5">
+            {visible('Local backup directory', 'Where local-target bundles are written') && (
+              <FieldRow
+                label="Local backup directory"
+                hint="Default root for the auto-created `local` target. Empty = ~/.opendray/backups. Restart required."
+                tomlKey="backup.local_dir"
+              >
+                <PathInput
+                  value={c.backup.local_dir}
+                  onChange={(v) =>
+                    setDraft({ ...draft, backup: { ...c.backup, local_dir: v } })
+                  }
+                  placeholder="~/.opendray/backups"
+                />
+              </FieldRow>
+            )}
+            {visible('Export directory', 'Where /export bundles are staged') && (
+              <FieldRow
+                label="Export directory"
+                hint="Where one-shot export zips are staged on disk. Empty = ~/.opendray/exports. Bundles auto-expire after 24h. Restart required."
+                tomlKey="backup.export_dir"
+              >
+                <PathInput
+                  value={c.backup.export_dir}
+                  onChange={(v) =>
+                    setDraft({ ...draft, backup: { ...c.backup, export_dir: v } })
+                  }
+                  placeholder="~/.opendray/exports"
+                />
+              </FieldRow>
+            )}
+            {visible('pg_dump path', 'Override the resolved pg_dump binary') && (
+              <FieldRow
+                label="pg_dump path"
+                hint="Absolute path to pg_dump. Major version must be ≥ the server's. Empty = first pg_dump on PATH."
+                tomlKey="backup.pg_dump_path"
+              >
+                <PathInput
+                  value={c.backup.pg_dump_path}
+                  onChange={(v) =>
+                    setDraft({ ...draft, backup: { ...c.backup, pg_dump_path: v } })
+                  }
+                  placeholder="/opt/homebrew/opt/postgresql@17/bin/pg_dump"
+                />
+              </FieldRow>
+            )}
+            {visible('pg_restore path', 'Override the resolved pg_restore binary') && (
+              <FieldRow
+                label="pg_restore path"
+                hint="Absolute path to pg_restore for the /backups/restore flow. Same major-version rule."
+                tomlKey="backup.pg_restore_path"
+              >
+                <PathInput
+                  value={c.backup.pg_restore_path}
+                  onChange={(v) =>
+                    setDraft({ ...draft, backup: { ...c.backup, pg_restore_path: v } })
+                  }
+                  placeholder="/opt/homebrew/opt/postgresql@17/bin/pg_restore"
+                />
+              </FieldRow>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function TargetRow({
+  target,
+  onChanged,
+}: {
+  target: TargetSpec
+  onChanged: () => void
+}) {
+  const [testing, setTesting] = useState(false)
+
+  async function onTest() {
+    setTesting(true)
+    try {
+      const res = await testTarget(target.id)
+      if (res.ok) toast.success(`${target.id}: connection OK`)
+      else toast.error('Connection failed', { description: res.error })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      toast.error('Test failed', { description: msg })
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  async function onDelete() {
+    if (!window.confirm(`Delete target "${target.id}"? Schedules referencing it will block the delete.`)) return
+    try {
+      await deleteTarget(target.id)
+      toast.success('Target deleted')
+      onChanged()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      toast.error('Delete failed', { description: msg })
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-3 p-2.5 rounded-md border border-border bg-card/30">
+      <span className="px-2 py-0.5 rounded border border-border text-[10px] uppercase tracking-wide bg-card font-mono">
+        {target.kind}
+      </span>
+      <div className="flex-1 min-w-0">
+        <div className="font-mono text-[11.5px] truncate">{target.id}</div>
+        <div className="text-[11px] text-muted-foreground truncate">
+          {targetSummary(target)}
         </div>
-      </FormGroup>
+      </div>
+      <span
+        className={cn(
+          'text-[10.5px] uppercase tracking-wide',
+          target.enabled ? 'text-state-running' : 'text-muted-foreground',
+        )}
+      >
+        {target.enabled ? 'on' : 'off'}
+      </span>
+      <Button
+        onClick={onTest}
+        variant="outline"
+        size="sm"
+        className="h-7 text-[11px]"
+        disabled={testing}
+      >
+        {testing ? 'Testing…' : 'Test'}
+      </Button>
+      <Button
+        onClick={onDelete}
+        variant="outline"
+        size="sm"
+        className="h-7 px-2 text-[11px]"
+      >
+        Delete
+      </Button>
     </div>
   )
 }

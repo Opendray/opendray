@@ -41,12 +41,10 @@ import {
   type BackupStatusReport,
   type InventoryGroup,
   type Schedule,
-  type TargetKind,
   type TargetSpec,
   backupDownloadURL,
   createBackup,
   createSchedule,
-  createTarget,
   deleteBackup,
   deleteSchedule,
   deleteTarget,
@@ -61,6 +59,7 @@ import {
   testTarget,
   updateSchedule,
 } from '@/lib/backup'
+import { TargetEditor, targetSummary } from './TargetEditor'
 import { APIError } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
@@ -886,7 +885,7 @@ function TargetsTab() {
               New target
             </Button>
           </DialogTrigger>
-          <NewTargetDialog
+          <TargetEditor
             onCreated={async () => {
               setOpen(false)
               await refresh()
@@ -954,194 +953,6 @@ function TargetsTab() {
         </div>
       )}
     </div>
-  )
-}
-
-function targetSummary(t: TargetSpec): string {
-  if (t.kind === 'local') {
-    return String(t.config?.root ?? '(default local dir)')
-  }
-  if (t.kind === 'smb') {
-    const host = t.config?.host
-    const share = t.config?.share
-    const user = t.config?.user
-    const prefix = t.config?.path_prefix
-    return `//${host ?? '?'}/${share ?? '?'} as ${user ?? '?'}${prefix ? ` → ${prefix}/` : ''}`
-  }
-  return JSON.stringify(t.config)
-}
-
-function NewTargetDialog({
-  onCreated,
-}: {
-  onCreated: () => void | Promise<void>
-}) {
-  const [kind, setKind] = useState<TargetKind>('smb')
-  const [id, setId] = useState('')
-  const [enabled, setEnabled] = useState(true)
-  const [busy, setBusy] = useState(false)
-  // local-specific
-  const [localRoot, setLocalRoot] = useState('')
-  // smb-specific
-  const [host, setHost] = useState('')
-  const [port, setPort] = useState('445')
-  const [share, setShare] = useState('')
-  const [user, setUser] = useState('')
-  const [password, setPassword] = useState('')
-  const [pathPrefix, setPathPrefix] = useState('')
-
-  async function submit() {
-    setBusy(true)
-    try {
-      const config: Record<string, unknown> =
-        kind === 'local'
-          ? localRoot
-            ? { root: localRoot }
-            : {}
-          : {
-              host,
-              port: Number(port) || 445,
-              share,
-              user,
-              password,
-              path_prefix: pathPrefix || undefined,
-            }
-      await createTarget({
-        id: id || undefined,
-        kind,
-        config,
-        enabled,
-      })
-      toast.success('Target created')
-      await onCreated()
-    } catch (err) {
-      const msg =
-        err instanceof APIError
-          ? msgFromAPI(err)
-          : err instanceof Error
-            ? err.message
-            : 'Unknown error'
-      toast.error('Create failed', { description: msg })
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>New backup target</DialogTitle>
-      </DialogHeader>
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1.5">
-          <Label className="text-[12px]">Kind</Label>
-          <select
-            value={kind}
-            onChange={(e) => setKind(e.target.value as TargetKind)}
-            className="h-8 px-2 rounded-md border border-border bg-card text-[12px]"
-          >
-            <option value="local">local (disk on opendray host)</option>
-            <option value="smb">smb (CIFS share)</option>
-          </select>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label className="text-[12px]">ID (optional)</Label>
-          <Input
-            value={id}
-            onChange={(e) => setId(e.target.value)}
-            placeholder="auto-generated if blank"
-            className="h-8"
-          />
-        </div>
-
-        {kind === 'local' && (
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-[12px]">Root directory</Label>
-            <Input
-              value={localRoot}
-              onChange={(e) => setLocalRoot(e.target.value)}
-              placeholder="leave blank to use cfg.backup.local_dir"
-              className="h-8"
-            />
-          </div>
-        )}
-
-        {kind === 'smb' && (
-          <>
-            <div className="flex gap-2">
-              <div className="flex-1 flex flex-col gap-1.5">
-                <Label className="text-[12px]">Host</Label>
-                <Input
-                  value={host}
-                  onChange={(e) => setHost(e.target.value)}
-                  placeholder="192.168.9.8"
-                  className="h-8"
-                />
-              </div>
-              <div className="w-24 flex flex-col gap-1.5">
-                <Label className="text-[12px]">Port</Label>
-                <Input
-                  value={port}
-                  onChange={(e) => setPort(e.target.value)}
-                  className="h-8"
-                />
-              </div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-[12px]">Share</Label>
-              <Input
-                value={share}
-                onChange={(e) => setShare(e.target.value)}
-                placeholder="Claude_Workspace"
-                className="h-8"
-              />
-            </div>
-            <div className="flex gap-2">
-              <div className="flex-1 flex flex-col gap-1.5">
-                <Label className="text-[12px]">User</Label>
-                <Input
-                  value={user}
-                  onChange={(e) => setUser(e.target.value)}
-                  className="h-8"
-                />
-              </div>
-              <div className="flex-1 flex flex-col gap-1.5">
-                <Label className="text-[12px]">Password</Label>
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-8"
-                />
-              </div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-[12px]">Path prefix (optional)</Label>
-              <Input
-                value={pathPrefix}
-                onChange={(e) => setPathPrefix(e.target.value)}
-                placeholder="opendray/backups"
-                className="h-8"
-              />
-            </div>
-          </>
-        )}
-
-        <label className="flex items-center gap-2 text-[12px]">
-          <Switch
-            checked={enabled}
-            onCheckedChange={setEnabled}
-            className="scale-75"
-          />
-          Enable immediately
-        </label>
-      </div>
-      <DialogFooter>
-        <Button onClick={submit} disabled={busy}>
-          {busy ? 'Creating…' : 'Create'}
-        </Button>
-      </DialogFooter>
-    </DialogContent>
   )
 }
 

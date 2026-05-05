@@ -188,7 +188,26 @@ func (s *Service) instantiateTarget(spec TargetSpec) (BackupTarget, error) {
 		}
 		return NewSMBTarget(spec.ID, cfg)
 	case TargetS3:
-		return nil, fmt.Errorf("%w: kind=s3 reserved for v1.1+", ErrTargetUnsupported)
+		cfg, err := s.decodeS3Config(spec.Config)
+		if err != nil {
+			return nil, fmt.Errorf("decode s3 config %q: %w", spec.ID, err)
+		}
+		return NewS3Target(spec.ID, cfg)
+	case TargetWebDAV:
+		cfg, err := s.decodeWebDAVConfig(spec.Config)
+		if err != nil {
+			return nil, fmt.Errorf("decode webdav config %q: %w", spec.ID, err)
+		}
+		return NewWebDAVTarget(spec.ID, cfg)
+	case TargetSFTP:
+		cfg, err := s.decodeSFTPConfig(spec.Config)
+		if err != nil {
+			return nil, fmt.Errorf("decode sftp config %q: %w", spec.ID, err)
+		}
+		return NewSFTPTarget(spec.ID, cfg)
+	case TargetRclone:
+		cfg := s.decodeRcloneConfig(spec.Config)
+		return NewRcloneTarget(spec.ID, cfg)
 	default:
 		return nil, fmt.Errorf("%w: unknown kind=%q", ErrTargetUnsupported, spec.Kind)
 	}
@@ -212,6 +231,90 @@ func (s *Service) decodeSMBConfig(raw map[string]any) (SMBConfig, error) {
 		cfg.Password = plain
 	}
 	return cfg, nil
+}
+
+func (s *Service) decodeS3Config(raw map[string]any) (S3Config, error) {
+	cfg := S3Config{
+		Endpoint:   cfgString(raw, "endpoint"),
+		Region:     cfgString(raw, "region"),
+		Bucket:     cfgString(raw, "bucket"),
+		AccessKey:  cfgString(raw, "access_key"),
+		PathPrefix: cfgString(raw, "path_prefix"),
+	}
+	if v, ok := raw["use_ssl"].(bool); ok {
+		cfg.UseSSL = v
+	} else {
+		cfg.UseSSL = true // safe default
+	}
+	if v, ok := raw["path_style"].(bool); ok {
+		cfg.PathStyle = v
+	}
+	if env := cfgString(raw, "secret_key"); env != "" {
+		plain, err := s.cipher.DecryptField(env)
+		if err != nil {
+			return cfg, fmt.Errorf("decrypt secret_key: %w", err)
+		}
+		cfg.SecretKey = plain
+	}
+	return cfg, nil
+}
+
+func (s *Service) decodeWebDAVConfig(raw map[string]any) (WebDAVConfig, error) {
+	cfg := WebDAVConfig{
+		BaseURL:    cfgString(raw, "base_url"),
+		User:       cfgString(raw, "user"),
+		PathPrefix: cfgString(raw, "path_prefix"),
+	}
+	if env := cfgString(raw, "password"); env != "" {
+		plain, err := s.cipher.DecryptField(env)
+		if err != nil {
+			return cfg, fmt.Errorf("decrypt password: %w", err)
+		}
+		cfg.Password = plain
+	}
+	return cfg, nil
+}
+
+func (s *Service) decodeSFTPConfig(raw map[string]any) (SFTPConfig, error) {
+	cfg := SFTPConfig{
+		Host:       cfgString(raw, "host"),
+		User:       cfgString(raw, "user"),
+		HostKey:    cfgString(raw, "host_key"),
+		PathPrefix: cfgString(raw, "path_prefix"),
+	}
+	cfg.Port = cfgInt(raw, "port")
+	if env := cfgString(raw, "password"); env != "" {
+		plain, err := s.cipher.DecryptField(env)
+		if err != nil {
+			return cfg, fmt.Errorf("decrypt password: %w", err)
+		}
+		cfg.Password = plain
+	}
+	if env := cfgString(raw, "private_key"); env != "" {
+		plain, err := s.cipher.DecryptField(env)
+		if err != nil {
+			return cfg, fmt.Errorf("decrypt private_key: %w", err)
+		}
+		cfg.PrivateKey = plain
+	}
+	return cfg, nil
+}
+
+func (s *Service) decodeRcloneConfig(raw map[string]any) RcloneConfig {
+	cfg := RcloneConfig{
+		Remote:     cfgString(raw, "remote"),
+		PathPrefix: cfgString(raw, "path_prefix"),
+		BinaryPath: cfgString(raw, "binary_path"),
+		ConfigPath: cfgString(raw, "config_path"),
+	}
+	if v, ok := raw["extra_args"].([]any); ok {
+		for _, a := range v {
+			if s, ok := a.(string); ok {
+				cfg.ExtraArgs = append(cfg.ExtraArgs, s)
+			}
+		}
+	}
+	return cfg
 }
 
 func cfgString(m map[string]any, k string) string {
@@ -251,9 +354,11 @@ func (s *Service) CreateTarget(ctx context.Context, req CreateTargetRequest) (Ta
 	if req.Kind == "" {
 		return TargetSpec{}, fmt.Errorf("kind is required")
 	}
-	if req.Kind != TargetLocal && req.Kind != TargetSMB {
-		return TargetSpec{}, fmt.Errorf("%w: kind=%q (only local + smb supported in v1)",
-			ErrTargetUnsupported, req.Kind)
+	switch req.Kind {
+	case TargetLocal, TargetSMB, TargetS3, TargetWebDAV, TargetSFTP, TargetRclone:
+		// supported
+	default:
+		return TargetSpec{}, fmt.Errorf("%w: kind=%q", ErrTargetUnsupported, req.Kind)
 	}
 	id := req.ID
 	if id == "" {
@@ -393,11 +498,25 @@ func (s *Service) encodeTargetConfig(kind TargetKind, raw map[string]any) (map[s
 	for k, v := range raw {
 		out[k] = v
 	}
+	encryptIfPresent := func(key string) error {
+		v, ok := out[key].(string)
+		if !ok || v == "" {
+			return nil
+		}
+		if strings.HasPrefix(v, fieldEnvelopePrefix) {
+			return nil // already wrapped
+		}
+		env, err := s.cipher.EncryptField(v)
+		if err != nil {
+			return fmt.Errorf("encrypt %s: %w", key, err)
+		}
+		out[key] = env
+		return nil
+	}
+
 	switch kind {
 	case TargetLocal:
-		if root, _ := out["root"].(string); root != "" {
-			out["root"] = root // pass-through
-		}
+		// nothing sensitive
 	case TargetSMB:
 		if cfgString(out, "host") == "" {
 			return nil, fmt.Errorf("smb config: host required")
@@ -408,16 +527,56 @@ func (s *Service) encodeTargetConfig(kind TargetKind, raw map[string]any) (map[s
 		if cfgString(out, "user") == "" {
 			return nil, fmt.Errorf("smb config: user required")
 		}
-		if pw, ok := out["password"].(string); ok && pw != "" {
-			// If it already looks like our envelope, don't re-wrap.
-			if !strings.HasPrefix(pw, fieldEnvelopePrefix) {
-				env, err := s.cipher.EncryptField(pw)
-				if err != nil {
-					return nil, fmt.Errorf("encrypt password: %w", err)
-				}
-				out["password"] = env
-			}
+		if err := encryptIfPresent("password"); err != nil {
+			return nil, err
 		}
+	case TargetS3:
+		if cfgString(out, "endpoint") == "" {
+			return nil, fmt.Errorf("s3 config: endpoint required")
+		}
+		if cfgString(out, "bucket") == "" {
+			return nil, fmt.Errorf("s3 config: bucket required")
+		}
+		if cfgString(out, "access_key") == "" {
+			return nil, fmt.Errorf("s3 config: access_key required")
+		}
+		if err := encryptIfPresent("secret_key"); err != nil {
+			return nil, err
+		}
+	case TargetWebDAV:
+		if cfgString(out, "base_url") == "" {
+			return nil, fmt.Errorf("webdav config: base_url required")
+		}
+		if cfgString(out, "user") == "" {
+			return nil, fmt.Errorf("webdav config: user required")
+		}
+		if err := encryptIfPresent("password"); err != nil {
+			return nil, err
+		}
+	case TargetSFTP:
+		if cfgString(out, "host") == "" {
+			return nil, fmt.Errorf("sftp config: host required")
+		}
+		if cfgString(out, "user") == "" {
+			return nil, fmt.Errorf("sftp config: user required")
+		}
+		hasPw := cfgString(out, "password") != ""
+		hasKey := cfgString(out, "private_key") != ""
+		if !hasPw && !hasKey {
+			return nil, fmt.Errorf("sftp config: password or private_key required")
+		}
+		if err := encryptIfPresent("password"); err != nil {
+			return nil, err
+		}
+		if err := encryptIfPresent("private_key"); err != nil {
+			return nil, err
+		}
+	case TargetRclone:
+		if cfgString(out, "remote") == "" {
+			return nil, fmt.Errorf("rclone config: remote name required")
+		}
+	default:
+		return nil, fmt.Errorf("%w: unknown kind=%q", ErrTargetUnsupported, kind)
 	}
 	return out, nil
 }
@@ -425,13 +584,17 @@ func (s *Service) encodeTargetConfig(kind TargetKind, raw map[string]any) (map[s
 // redactTargetSpec returns a copy with sensitive config fields
 // replaced by a placeholder so listing endpoints never echo
 // ciphertext (or worse, plaintext) back to the UI.
+//
+// Sensitive keys (any kind): password, secret_key, private_key.
 func (s *Service) redactTargetSpec(spec TargetSpec) TargetSpec {
 	cfg := map[string]any{}
 	for k, v := range spec.Config {
 		cfg[k] = v
 	}
-	if _, ok := cfg["password"]; ok {
-		cfg["password"] = "********"
+	for _, key := range []string{"password", "secret_key", "private_key"} {
+		if v, ok := cfg[key].(string); ok && v != "" {
+			cfg[key] = "********"
+		}
 	}
 	spec.Config = cfg
 	return spec

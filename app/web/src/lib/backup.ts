@@ -17,7 +17,60 @@ export type BackupStatus =
 
 export type TriggeredBy = 'scheduler' | 'manual' | 'api'
 
-export type TargetKind = 'local' | 'smb' | 's3'
+export type TargetKind =
+  | 'local'
+  | 'smb'
+  | 's3'
+  | 'webdav'
+  | 'sftp'
+  | 'rclone'
+
+// TARGET_KINDS is the canonical UI ordering shown in the picker.
+// Local first (default), then off-host options in increasing
+// "external dependency" weight.
+export const TARGET_KINDS: {
+  kind: TargetKind
+  label: string
+  description: string
+  examples: string
+}[] = [
+  {
+    kind: 'local',
+    label: 'Local disk',
+    description: 'Folder on the machine running opendray',
+    examples: '~/.opendray/backups · /var/backups · external HDD mounted to a path',
+  },
+  {
+    kind: 'smb',
+    label: 'SMB / CIFS',
+    description: 'Windows shares + most home NAS appliances',
+    examples: 'Synology · QNAP · UNAS · Windows file shares',
+  },
+  {
+    kind: 's3',
+    label: 'S3-compatible',
+    description: 'AWS S3 + every S3-compatible service',
+    examples: 'AWS S3 · Cloudflare R2 · Backblaze B2 · MinIO · 阿里云 OSS · 腾讯云 COS · DigitalOcean Spaces · Wasabi',
+  },
+  {
+    kind: 'webdav',
+    label: 'WebDAV',
+    description: 'Self-hosted clouds + file-sharing services',
+    examples: 'Nextcloud · ownCloud · 群晖 DSM · Box.com · 坚果云',
+  },
+  {
+    kind: 'sftp',
+    label: 'SFTP / SSH',
+    description: 'Any SSH-accessible server (Linux VPS, etc.)',
+    examples: 'Hetzner Storage Box · self-hosted VPS · home Linux server',
+  },
+  {
+    kind: 'rclone',
+    label: 'rclone passthrough',
+    description: 'Tap into 70+ backends configured via the rclone CLI',
+    examples: 'Google Drive · OneDrive · Dropbox · Mega · pCloud · iCloud-WebDAV · 百度网盘 · 阿里云盘',
+  },
+]
 
 export interface Backup {
   id: string

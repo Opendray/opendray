@@ -47,11 +47,12 @@ const (
 type TargetKind string
 
 const (
-	TargetLocal TargetKind = "local"
-	TargetSMB   TargetKind = "smb"
-	// TargetS3 is reserved — interface is honoured by the table but
-	// the service refuses to instantiate one in v1.
-	TargetS3 TargetKind = "s3"
+	TargetLocal  TargetKind = "local"
+	TargetSMB    TargetKind = "smb"
+	TargetS3     TargetKind = "s3"     // AWS/R2/B2/阿里/腾讯/MinIO etc. via minio-go
+	TargetWebDAV TargetKind = "webdav" // Nextcloud/群晖/坚果云/Box etc.
+	TargetSFTP   TargetKind = "sftp"   // any SSH-accessible host
+	TargetRclone TargetKind = "rclone" // passthrough to external rclone CLI for 70+ backends
 )
 
 // ExportStatus is the lifecycle state of a single Export row.
