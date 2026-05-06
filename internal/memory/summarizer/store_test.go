@@ -11,15 +11,19 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// devDB returns a pgxpool against the home-lab dev database, or
-// nil when OPENDRAY_DEV_DB_URL isn't set (tests will t.Skip).
+// devDB returns a pgxpool against the dev database addressed by the
+// OPENDRAY_DEV_DB_URL env var. Tests that depend on a real Postgres
+// skip cleanly when the env is unset (CI default) or when the DB is
+// unreachable.
+//
+// Set OPENDRAY_DEV_DB_URL to a writable Postgres DSN to run these
+// tests against your own database. The DSN must NOT be hard-coded
+// here — committed credentials are forever.
 func devDB(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 	url := os.Getenv("OPENDRAY_DEV_DB_URL")
 	if url == "" {
-		// Default: same DSN as config.toml. CI / non-dev should
-		// skip these tests, but local dev usually has DB up.
-		url = "postgres://opd2_user:UGuZjQVFtXR3MtKJ6Q@192.168.3.88:5432/opendray_v2?sslmode=disable"
+		t.Skip("OPENDRAY_DEV_DB_URL not set; export a writable Postgres DSN to run this test")
 	}
 	pool, err := pgxpool.New(context.Background(), url)
 	if err != nil {
