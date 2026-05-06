@@ -1,0 +1,6 @@
+# Monorepo workspace definition. Each entry under app/* is its own
+# package with its own package.json. Today only `web` exists; the
+# upcoming additions are `shared`, `shared-ui`, and `mobile` (see
+# docs/adr/0015-mobile-platform.md).
+packages:
+  - "app/*"
