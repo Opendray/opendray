@@ -67,9 +67,20 @@ func dialAndRegister(t *testing.T, wsURL, token, platform string, caps []channel
 	if err := conn.WriteMessage(websocket.TextMessage, raw); err != nil {
 		t.Fatalf("write register: %v", err)
 	}
+	// Bound the ack wait so a dropped/lost ack on a loaded CI runner
+	// fails this helper in seconds rather than hanging the whole
+	// `go test -timeout=5m` budget.
+	if err := conn.SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil {
+		t.Fatalf("set read deadline: %v", err)
+	}
 	_, ackRaw, err := conn.ReadMessage()
 	if err != nil {
 		t.Fatalf("read ack: %v", err)
+	}
+	// Reset the deadline so the caller can read further frames
+	// without tripping over our short ack window.
+	if err := conn.SetReadDeadline(time.Time{}); err != nil {
+		t.Fatalf("clear read deadline: %v", err)
 	}
 	var ack map[string]any
 	_ = json.Unmarshal(ackRaw, &ack)
