@@ -22,7 +22,7 @@ import {
   CommandGroup,
   CommandItem,
   CommandShortcut,
-} from './ui/command'
+} from '@/components/ui/command'
 import { useTheme, type ThemeMode } from '@/stores/theme'
 import { useAuth } from '@/stores/auth'
 
