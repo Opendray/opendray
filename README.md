@@ -14,8 +14,8 @@ post-v1.0 roadmap.
 ## Quickstart
 
 ```bash
-# 1. Postgres on 192.168.3.88 (per CLAUDE.md home-lab conventions).
-#    Credentials live in Vaultwarden item: homelab-db-opendray-v2.
+# 1. Start a Postgres for local dev (or point [database].url at your own).
+docker compose -f docker-compose.test.yml up -d   # 127.0.0.1:5432
 
 # 2. Local config — already gitignored.
 cp config.example.toml config.toml

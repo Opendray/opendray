@@ -74,7 +74,7 @@ func TestRender_TopKRecent_Renders(t *testing.T) {
 	mem := &fakeMemoryReader{
 		mems: []memory.Memory{
 			{ID: "1", Text: "User prefers pnpm"},
-			{ID: "2", Text: "DB at 192.168.3.88"},
+			{ID: "2", Text: "DB at db.example.com"},
 			{ID: "3", Text: "first line\nsecond line"},
 		},
 	}
@@ -91,7 +91,7 @@ func TestRender_TopKRecent_Renders(t *testing.T) {
 	if !strings.Contains(out, "User prefers pnpm") {
 		t.Errorf("missing fact1: %q", out)
 	}
-	if !strings.Contains(out, "DB at 192.168.3.88") {
+	if !strings.Contains(out, "DB at db.example.com") {
 		t.Errorf("missing fact2: %q", out)
 	}
 	// Multi-line fact should be truncated to first line.

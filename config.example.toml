@@ -7,8 +7,11 @@
 listen = "127.0.0.1:8770"
 
 [database]
-# Use a project-scoped postgres role per home-lab DB conventions.
-url = "postgres://opendray_user:CHANGEME@192.168.3.88:5432/opendray?sslmode=disable"
+# Point at any reachable Postgres 15+. Use a project-scoped role
+# (CRUD only, not a superuser) and rotate credentials out of band.
+# For local development, `docker compose -f docker-compose.test.yml up -d`
+# starts a Postgres on 127.0.0.1:5432 matching this DSN.
+url = "postgres://opendray:opendray@127.0.0.1:5432/opendray?sslmode=disable"
 
 [admin]
 # Admin auth (single human). Prefer env vars in production.

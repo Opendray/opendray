@@ -39,10 +39,10 @@ func TestMessagesToTranscriptText(t *testing.T) {
 		{Role: RoleUser, Text: "I prefer pnpm.", Timestamp: now},
 		{Role: RoleAssistant, Text: "Noted.", Timestamp: now},
 		{Role: RoleSystem, Text: "should be dropped", Timestamp: now},
-		{Role: RoleUser, Text: "Also: dev DB is 192.168.3.88.", Timestamp: now},
+		{Role: RoleUser, Text: "Also: dev DB is db.example.com.", Timestamp: now},
 	}
 	got := MessagesToTranscriptText(msgs)
-	want := "USER: I prefer pnpm.\nASSISTANT: Noted.\nUSER: Also: dev DB is 192.168.3.88."
+	want := "USER: I prefer pnpm.\nASSISTANT: Noted.\nUSER: Also: dev DB is db.example.com."
 	if got != want {
 		t.Errorf("transcript flatten mismatch:\n got: %q\nwant: %q", got, want)
 	}

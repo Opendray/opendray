@@ -92,7 +92,7 @@ func TestRunner_RunForSession_HappyPath(t *testing.T) {
 		res: summarizer.SummarizeResult{
 			Facts: []summarizer.Fact{
 				{Text: "User prefers pnpm", Category: summarizer.CategoryPreference, Confidence: 0.95},
-				{Text: "Dev DB at 192.168.3.88", Category: summarizer.CategoryIdentifier, Confidence: 0.98},
+				{Text: "Dev DB at db.example.com", Category: summarizer.CategoryIdentifier, Confidence: 0.98},
 			},
 			InputTokens:  100,
 			OutputTokens: 30,
@@ -113,7 +113,7 @@ func TestRunner_RunForSession_HappyPath(t *testing.T) {
 	r.history = mockHistory{
 		entries: []TranscriptEntry{
 			{Ts: time.Now().Add(-2 * time.Minute), Text: "I prefer pnpm"},
-			{Ts: time.Now().Add(-1 * time.Minute), Text: "DB is 192.168.3.88"},
+			{Ts: time.Now().Add(-1 * time.Minute), Text: "DB is db.example.com"},
 			{Ts: time.Now(), Text: "Anything else?"},
 		},
 	}
