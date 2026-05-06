@@ -1,0 +1,16 @@
+{
+  "name": "opendray-v2-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Root package for the opendray-v2 pnpm workspaces. Houses no source code; each surface lives under app/<workspace>/.",
+  "scripts": {
+    "build:web": "pnpm --filter web build",
+    "dev:web": "pnpm --filter web dev",
+    "lint:web": "pnpm --filter web lint"
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "packageManager": "pnpm@10.27.0"
+}

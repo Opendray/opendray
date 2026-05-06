@@ -22,23 +22,24 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # Reads `packageManager` from root package.json so this stays
+      # in lockstep with what local devs install via corepack.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: pnpm
-          cache-dependency-path: app/web/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
 
+      # Install at the workspace root so every workspace package
+      # (currently `web`; soon `shared`, `shared-ui`, `mobile`)
+      # gets its node_modules wired correctly.
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        working-directory: app/web
 
       - name: Type-check + build
-        run: pnpm build
-        working-directory: app/web
+        run: pnpm --filter web build
 
       # Hand the built bundle to the backend job so `go:embed` finds it.
       - uses: actions/upload-artifact@v5
