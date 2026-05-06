@@ -34,7 +34,7 @@ and write through.
    └────────────┘         │       │                 │
                           └───────┼─────────────────┘
                                   ▼
-                          PostgreSQL (192.168.3.88)
+                          PostgreSQL
 ```
 
 Every spawned session gets a `opendray-memory` MCP server

@@ -29,7 +29,7 @@ spawn. Format:
 opendray injected the following durable facts from prior
 sessions in this project:
 - User prefers pnpm over npm for package management
-- DB at 192.168.3.88:5432, dev_user role
+- DB at db.example.com:5432, dev_user role
 - ...
 End of memory preface.
 ```

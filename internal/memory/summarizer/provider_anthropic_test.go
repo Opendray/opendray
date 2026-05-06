@@ -64,7 +64,7 @@ func newAnthropicHappyPath(t *testing.T, facts []Fact) *httptest.Server {
 func TestAnthropicProvider_Summarize_HappyPath(t *testing.T) {
 	wantFacts := []Fact{
 		{Text: "User prefers pnpm", Category: CategoryPreference, Confidence: 0.95},
-		{Text: "DB is at 192.168.3.88", Category: CategoryIdentifier, Confidence: 0.98},
+		{Text: "DB is at db.example.com", Category: CategoryIdentifier, Confidence: 0.98},
 	}
 	srv := newAnthropicHappyPath(t, wantFacts)
 	defer srv.Close()
@@ -79,7 +79,7 @@ func TestAnthropicProvider_Summarize_HappyPath(t *testing.T) {
 	}
 
 	res, err := p.Summarize(context.Background(), []Message{
-		{Role: RoleUser, Text: "I prefer pnpm and the DB is at 192.168.3.88"},
+		{Role: RoleUser, Text: "I prefer pnpm and the DB is at db.example.com"},
 		{Role: RoleAssistant, Text: "Got it."},
 	})
 	if err != nil {

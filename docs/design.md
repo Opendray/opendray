@@ -142,7 +142,7 @@ If at planning time a feature pulls toward an anti-goal, drop the feature.
 | Layer | Tech | Rationale |
 |---|---|---|
 | **Backend / gateway** | Go 1.25+ | Single static binary, excellent concurrency for PTY + WebSocket fanout, ecosystem maturity (chi, pgx, gorilla/websocket, creack/pty). Hot-reload trade-off accepted: integration system runs external processes that hot-reload independently. |
-| **Database** | PostgreSQL | Already operational on `192.168.3.88:5432`; pgx/v5 stable; JSON columns for opaque metadata. |
+| **Database** | PostgreSQL 15+ | pgx/v5 stable; JSON columns for opaque metadata; pgvector for memory embeddings. |
 | **Mobile** | Flutter 3 + Riverpod | v1 investment, proven UX, single codebase iOS+Android. |
 | **Web** | Vue 3 + Vite | TBD — see §19, may consolidate to Flutter Web. |
 | **Internal RPC / event bus** | In-process Go channels | Keep simple; do not adopt NATS/Kafka without a real reason. |
@@ -722,7 +722,7 @@ Two separate tables, by design:
 
 ### Recommended layout
 - `opendray` binary on Mac (PTY needs a real TTY).
-- PostgreSQL on `192.168.3.88:5432` (existing).
+- PostgreSQL 15+ reachable from the binary's host.
 - Cloudflare Tunnel routes `opendray.<your-domain>` to the local port.
 - LXC option deferred until a non-Mac deployment is actually needed.
 

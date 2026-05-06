@@ -56,12 +56,12 @@ Output:
 {"facts":[]}
 
 Conversation:
-USER: My production DB is at 192.168.3.88:5432, please use the dev_user role.
+USER: My production DB is at db.example.com:5432, please use the dev_user role.
 ASSISTANT: Understood, I'll use dev_user for queries.
 
 Output:
 {"facts":[
-  {"text":"Production DB host is 192.168.3.88:5432","category":"identifier","confidence":0.98},
+  {"text":"Production DB host is db.example.com:5432","category":"identifier","confidence":0.98},
   {"text":"User wants the dev_user role for DB access","category":"preference","confidence":0.9}
 ]}
 
