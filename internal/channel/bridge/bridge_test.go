@@ -47,7 +47,7 @@ func fixture(t *testing.T, cfg Config) (*Broker, *Bridge, string, func()) {
 	return broker, br, wsURL, cleanup
 }
 
-func dialAndRegister(t *testing.T, wsURL, token, platform string, caps []channel.Capability) *websocket.Conn {
+func dialAndRegister(t *testing.T, br *Bridge, wsURL, token, platform string, caps []channel.Capability) *websocket.Conn {
 	t.Helper()
 	header := http.Header{}
 	header.Set("X-Bridge-Token", token)
@@ -87,6 +87,21 @@ func dialAndRegister(t *testing.T, wsURL, token, platform string, caps []channel
 	if ack["ok"] != true {
 		t.Fatalf("register failed: %v", ack)
 	}
+	// The ack confirms the broker received our register frame, but
+	// applying capabilities to the bridge's state map happens on a
+	// different goroutine. Block until every declared capability
+	// has propagated so callers can immediately call Send/SendCard
+	// without racing the broker. 2s is generous on every runner we
+	// observe; local typically lands in < 5ms.
+	waitFor(t, 2*time.Second, func() bool {
+		got := channel.Capabilities(br)
+		for _, c := range caps {
+			if !containsCap(got, c) {
+				return false
+			}
+		}
+		return true
+	})
 	return conn
 }
 
@@ -138,7 +153,7 @@ func TestRegister_AttachesBridgeAndDeliversInbound(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	conn := dialAndRegister(t, wsURL, "secret", "wechat",
+	conn := dialAndRegister(t, br, wsURL, "secret", "wechat",
 		[]channel.Capability{channel.CapText, channel.CapCard, channel.CapButtons})
 	defer conn.Close()
 
@@ -200,7 +215,7 @@ func TestSendCard_GatedByCapability(t *testing.T) {
 	}
 
 	// Adapter only declares "text" — no card capability.
-	conn := dialAndRegister(t, wsURL, "secret", "wechat",
+	conn := dialAndRegister(t, br, wsURL, "secret", "wechat",
 		[]channel.Capability{channel.CapText})
 	defer conn.Close()
 
@@ -218,18 +233,9 @@ func TestSendCard_WhenSupportedShipsFrame(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	conn := dialAndRegister(t, wsURL, "secret", "wechat",
+	conn := dialAndRegister(t, br, wsURL, "secret", "wechat",
 		[]channel.Capability{channel.CapText, channel.CapCard})
 	defer conn.Close()
-
-	// dialAndRegister returns once the WS message is sent, but
-	// capability propagation into br's state is async — wait for
-	// CapCard to surface before issuing the SendCard. Without
-	// this, the test races and intermittently fails with
-	// "capability not supported" under loaded CI runners.
-	waitFor(t, 2*time.Second, func() bool {
-		return containsCap(channel.Capabilities(br), channel.CapCard)
-	})
 
 	// Drain async frames from the adapter side.
 	frames := make(chan map[string]any, 4)
@@ -290,14 +296,9 @@ func TestDeclaredCapabilities_OnlyWhatAdapterClaimed(t *testing.T) {
 		t.Errorf("pre-attach caps = %v, want only [text]", got)
 	}
 
-	conn := dialAndRegister(t, wsURL, "secret", "wechat",
+	conn := dialAndRegister(t, br, wsURL, "secret", "wechat",
 		[]channel.Capability{channel.CapText, channel.CapButtons})
 	defer conn.Close()
-
-	// Wait briefly for attach side-effects.
-	waitFor(t, 1*time.Second, func() bool {
-		return containsCap(channel.Capabilities(br), channel.CapButtons)
-	})
 
 	got := channel.Capabilities(br)
 	if !containsCap(got, channel.CapButtons) || containsCap(got, channel.CapCard) {
