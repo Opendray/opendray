@@ -28,8 +28,9 @@ import (
 )
 
 const (
-	defaultTokenTTL = 24 * time.Hour
-	tokenByteLen    = 32
+	defaultTokenTTL       = 24 * time.Hour
+	defaultMobileTokenTTL = 30 * 24 * time.Hour
+	tokenByteLen          = 32
 )
 
 // ErrInvalidCredentials is returned by Login when user/password do not
@@ -46,10 +47,11 @@ type TokenInfo struct {
 // Service is the admin auth surface. Construct via New and pass
 // Middleware to chi.Router.Use for protected groups.
 type Service struct {
-	cfg config.AdminConfig
-	ttl time.Duration
-	bus *eventbus.Hub
-	log *slog.Logger
+	cfg       config.AdminConfig
+	ttl       time.Duration
+	mobileTTL time.Duration
+	bus       *eventbus.Hub
+	log       *slog.Logger
 
 	mu     sync.RWMutex
 	tokens map[string]TokenInfo
@@ -63,18 +65,37 @@ func New(cfg config.AdminConfig, bus *eventbus.Hub, log *slog.Logger) *Service {
 	if ttl <= 0 {
 		ttl = defaultTokenTTL
 	}
+	mobileTTL := cfg.MobileDuration()
+	if mobileTTL <= 0 {
+		mobileTTL = defaultMobileTokenTTL
+	}
 	return &Service{
-		cfg:    cfg,
-		ttl:    ttl,
-		bus:    bus,
-		log:    log.With("component", "auth"),
-		tokens: make(map[string]TokenInfo),
+		cfg:       cfg,
+		ttl:       ttl,
+		mobileTTL: mobileTTL,
+		bus:       bus,
+		log:       log.With("component", "auth"),
+		tokens:    make(map[string]TokenInfo),
 	}
 }
 
 // Login validates user/password using constant-time comparison and
 // issues a fresh token on success. Empty admin config rejects all.
+// Uses the configured `[admin].token_ttl` (default 24h).
 func (s *Service) Login(user, password string) (string, TokenInfo, error) {
+	return s.loginWithTTL(user, password, s.ttl)
+}
+
+// LoginMobile is identical to Login except the token's absolute
+// lifetime is `[admin].mobile_token_ttl` (default 30d). The longer
+// TTL is reasonable on mobile because the device gates access via
+// biometrics + secure storage; on a desktop browser the shorter
+// default applies. See ADR 0015 §5.
+func (s *Service) LoginMobile(user, password string) (string, TokenInfo, error) {
+	return s.loginWithTTL(user, password, s.mobileTTL)
+}
+
+func (s *Service) loginWithTTL(user, password string, ttl time.Duration) (string, TokenInfo, error) {
 	if s.cfg.User == "" || s.cfg.Password == "" {
 		s.publishLogin(user, false, "admin not configured")
 		return "", TokenInfo{}, ErrInvalidCredentials
@@ -94,7 +115,7 @@ func (s *Service) Login(user, password string) (string, TokenInfo, error) {
 	info := TokenInfo{
 		Username:  s.cfg.User,
 		IssuedAt:  now,
-		ExpiresAt: now.Add(s.ttl),
+		ExpiresAt: now.Add(ttl),
 	}
 	s.mu.Lock()
 	s.tokens[tok] = info

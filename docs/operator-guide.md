@@ -73,7 +73,8 @@ over file.
 |---|---|---|---|
 | `user` | `OPENDRAY_ADMIN_USER` | `admin` | Single-admin model — there's no multi-user system in v1. |
 | `password` | `OPENDRAY_ADMIN_PASSWORD` | _(required)_ | Compared with `subtle.ConstantTimeCompare` against the request body. **Stored plaintext** in the config file or env — there is no hash-at-rest. |
-| `token_ttl` | `OPENDRAY_ADMIN_TOKEN_TTL` | `24h` | Bearer token absolute lifetime. |
+| `token_ttl` | `OPENDRAY_ADMIN_TOKEN_TTL` | `24h` | Bearer token absolute lifetime for browser logins (`/api/v1/auth/login`). |
+| `mobile_token_ttl` | `OPENDRAY_ADMIN_MOBILE_TOKEN_TTL` | `30d` (`720h`) | Bearer token absolute lifetime for the Capacitor mobile app (`/api/v1/auth/mobile-login`). Longer because the device gates access via biometrics + secure storage. |
 
 ### `[log]`
 
