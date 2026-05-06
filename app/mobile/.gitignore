@@ -1,0 +1,31 @@
+# Bundler / TS output (regenerated on every build)
+dist/
+node_modules/
+
+# Native build output (Capacitor `cap add` creates ios/ and android/
+# at first checkout; the artefacts inside them must NOT be committed).
+
+# iOS
+ios/App/Pods/
+ios/App/Podfile.lock
+ios/App/build/
+ios/App/output/
+ios/DerivedData/
+ios/.gradle/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
+ios/capacitor-cordova-ios-plugins/
+*.xcuserdatad
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/captures/
+android/app/release/
+android/app/debug/
+android/keystores/
+*.iml
+.idea/

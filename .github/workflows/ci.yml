@@ -49,6 +49,30 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
+  mobile:
+    name: Frontend (mobile)
+    # Verifies that the mobile workspace's web bundle compiles. The
+    # native iOS / Android shells are NOT built here — that needs Xcode
+    # / Android SDK, which CI doesn't provision. cap sync / cap open
+    # happens on developer machines per app/mobile/README.md.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check + build
+        run: pnpm --filter mobile build
+
   backend:
     name: Backend (Go)
     needs: frontend
