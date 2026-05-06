@@ -1,0 +1,46 @@
+# What NOT to send to Docker build context.
+#
+# Speeds up `docker build` and avoids leaking dev artefacts into the
+# image (the .env / config.toml are gitignored anyway, doubly belt-and-
+# braces here).
+
+# Local secrets / config (also in .gitignore)
+config.toml
+.env
+.env.*
+!.env.example
+
+# IDE / OS noise
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# Build outputs
+node_modules/
+app/web/node_modules/
+app/web/dist/
+internal/web/dist/
+dist/
+bin/
+out/
+
+# Test / coverage artefacts
+coverage.out
+*.test
+*.prof
+
+# Git internals — Docker doesn't need them
+.git/
+.gitignore
+.gitattributes
+
+# CI / docs that don't ship inside the image
+.github/
+docs/
+examples/
+
+# Editor / shell history
+.bash_history
+.zsh_history
+.history/
