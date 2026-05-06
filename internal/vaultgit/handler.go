@@ -840,9 +840,11 @@ func parseBranchLine(line string, resp *StatusResponse) {
 	for _, part := range strings.Split(track, ", ") {
 		switch {
 		case strings.HasPrefix(part, "ahead "):
-			fmt.Sscanf(part, "ahead %d", &resp.Ahead)
+			// Best-effort parse; on malformed input Ahead stays 0.
+			_, _ = fmt.Sscanf(part, "ahead %d", &resp.Ahead)
 		case strings.HasPrefix(part, "behind "):
-			fmt.Sscanf(part, "behind %d", &resp.Behind)
+			// Best-effort parse; on malformed input Behind stays 0.
+			_, _ = fmt.Sscanf(part, "behind %d", &resp.Behind)
 		}
 	}
 }

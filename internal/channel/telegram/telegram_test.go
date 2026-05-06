@@ -154,7 +154,7 @@ func TestStartPollAndSend(t *testing.T) {
 	if err := tg.Start(context.Background(), inbound); err != nil {
 		t.Fatal(err)
 	}
-	defer tg.Stop(context.Background())
+	defer func() { _ = tg.Stop(context.Background()) }()
 
 	waitFor(t, 2*time.Second, func() bool {
 		mu.Lock()
@@ -295,7 +295,7 @@ func TestCallbackQuery_DeliveredAsAction(t *testing.T) {
 	if err := tg.Start(context.Background(), inbound); err != nil {
 		t.Fatal(err)
 	}
-	defer tg.Stop(context.Background())
+	defer func() { _ = tg.Stop(context.Background()) }()
 
 	waitFor(t, 2*time.Second, func() bool {
 		mu.Lock()

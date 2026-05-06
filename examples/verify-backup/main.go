@@ -58,16 +58,27 @@ func main() {
 		case "manifest.json":
 			manifestBody, _ = io.ReadAll(tr)
 		case "dump.bin":
-			out, _ := os.Create(dumpPath)
-			io.Copy(out, tr)
-			out.Close()
+			out, err := os.Create(dumpPath)
+			if err != nil {
+				log.Fatalf("create dump: %v", err)
+			}
+			if _, err := io.Copy(out, tr); err != nil {
+				log.Fatalf("copy dump: %v", err)
+			}
+			if err := out.Close(); err != nil {
+				log.Fatalf("close dump: %v", err)
+			}
 		default:
-			io.Copy(io.Discard, tr)
+			if _, err := io.Copy(io.Discard, tr); err != nil {
+				log.Fatalf("drain tar entry %q: %v", h.Name, err)
+			}
 		}
 	}
 
 	var mf map[string]any
-	json.Unmarshal(manifestBody, &mf)
+	if err := json.Unmarshal(manifestBody, &mf); err != nil {
+		log.Fatalf("parse manifest: %v", err)
+	}
 	fmt.Printf("\nmanifest fingerprint: %v\nbackup_id: %v\npg_version: %v\nversion: %v\n",
 		mf["encryption"].(map[string]any)["fingerprint"], mf["backup_id"], mf["pg_version"], mf["version"])
 

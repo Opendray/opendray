@@ -171,7 +171,7 @@ func (t *S3Target) Get(ctx context.Context, ref TargetRef) (io.ReadCloser, error
 	// before the caller starts reading (otherwise the error appears
 	// only on first Read, which is harder to handle in HTTP layers).
 	if _, err := obj.Stat(); err != nil {
-		obj.Close()
+		_ = obj.Close()
 		if isS3NotFound(err) {
 			return nil, ErrBackupNotFound
 		}
