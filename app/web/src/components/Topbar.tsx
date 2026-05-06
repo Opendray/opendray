@@ -11,7 +11,7 @@ import {
   PanelLeftOpen,
 } from 'lucide-react'
 
-import { Button } from './ui/button'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,8 +20,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuShortcut,
-} from './ui/dropdown-menu'
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
+} from '@/components/ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useTheme, type ThemeMode } from '@/stores/theme'
 import { useAuth } from '@/stores/auth'
 import { useLayout } from '@/stores/layout'

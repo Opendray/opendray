@@ -12,10 +12,10 @@ export default defineConfig(({ command }) => ({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: [
-      // Most specific first — `@/lib/*` and `@/stores/*` resolve into
-      // the shared workspace package; everything else still falls
-      // through to web's own src tree. Order matters: Vite's alias
-      // resolver does first-match-wins on the `find` field.
+      // Most specific first — anything that resolves into a sibling
+      // workspace package (shared, shared-ui) wins over the generic
+      // `@` → web/src fallback. Order matters: Vite's alias resolver
+      // does first-match-wins on the `find` field.
       {
         find: /^@\/lib\//,
         replacement: path.resolve(__dirname, '../shared/src/lib') + '/',
@@ -23,6 +23,10 @@ export default defineConfig(({ command }) => ({
       {
         find: /^@\/stores\//,
         replacement: path.resolve(__dirname, '../shared/src/stores') + '/',
+      },
+      {
+        find: /^@\/components\/ui\//,
+        replacement: path.resolve(__dirname, '../shared-ui/src/primitives') + '/',
       },
       { find: '@', replacement: path.resolve(__dirname, './src') },
     ],

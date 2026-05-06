@@ -6,7 +6,7 @@ import { SidebarNav } from './SidebarNav'
 import { Topbar } from './Topbar'
 import { CommandPalette, useCommandPaletteHotkey } from './CommandPalette'
 import { HealthBanner } from './HealthBanner'
-import { TooltipProvider } from './ui/tooltip'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 export function AppShell() {
   const [paletteOpen, setPaletteOpen] = useState(false)
