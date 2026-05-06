@@ -32,7 +32,7 @@ func NewLocalONNXEmbedder(_ LocalONNXConfig) (*LocalONNXEmbedder, error) {
 	return nil, errors.New(
 		"memory: LocalONNX embedder not compiled into this binary. " +
 			"Rebuild with `-tags local_onnx` and provide CGO_LDFLAGS for onnxruntime + libtokenizers. " +
-			"See docs/adr/0011-memory-subsystem.md and the Memory tutorial for setup.",
+			"See docs/adr/0014-memory-subsystem.md and the Memory tutorial for setup.",
 	)
 }
 

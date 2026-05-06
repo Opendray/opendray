@@ -1,4 +1,4 @@
-# ADR 0011 — Built-in cross-CLI memory subsystem
+# ADR 0014 — Built-in cross-CLI memory subsystem
 
 **Status**: Accepted (phase 1 + phase 2 step 1 shipped)
 **Date**: 2026-05-04

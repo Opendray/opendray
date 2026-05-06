@@ -70,7 +70,7 @@ internal/
 ├── eventbus/        in-process pub/sub
 ├── gateway/         chi HTTP router + middleware + slog
 ├── integration/     external-app registry + reverse proxy + events WS (M3)
-├── memory/          cross-CLI persistent memory (ADR 0011)
+├── memory/          cross-CLI persistent memory (ADR 0014)
 ├── session/         PTY lifecycle + ring buffer + WS stream (M1)
 ├── store/           pgx pool + hand-rolled migration runner (M0)
 ├── version/         build-time identification
@@ -134,4 +134,5 @@ work in v2.
 
 ## License
 
-Apache 2.0 (carried over from v1).
+Apache 2.0 — see [`LICENSE`](LICENSE). v2 is licensed independently of v1
+(which is MIT).

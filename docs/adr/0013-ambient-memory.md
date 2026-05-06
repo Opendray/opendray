@@ -2,11 +2,11 @@
 
 **Status**: Accepted, 2026-05-05
 **Authors**: Linivek, Claude (planner + impl)
-**Builds on**: ADR 0011 (memory subsystem)
+**Builds on**: ADR 0014 (memory subsystem)
 
 ## Context
 
-ADR 0011 established opendray's persistent memory layer (pgvector
+ADR 0014 established opendray's persistent memory layer (pgvector
 + MCP bridge + 3-CLI mirror). It works perfectly for facts the
 user explicitly tells the model to remember — but in practice
 99% of "valuable durable context" surfaces in conversation
