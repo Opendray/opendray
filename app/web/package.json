@@ -37,6 +37,7 @@
     "react-hook-form": "^7.74.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
+    "shared": "workspace:*",
     "simple-icons": "^16.18.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
