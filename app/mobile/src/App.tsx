@@ -1,39 +1,108 @@
-import { Button } from '@/components/ui/button'
-import { Capacitor } from '@capacitor/core'
+import { useEffect, useState } from 'react'
 
-// B1 placeholder screen. Confirms three things:
-//   1. Capacitor's Vite + WebView pipeline is wired correctly
-//   2. shared-ui primitives import + render under the mobile entry
-//   3. Tailwind v4 + design tokens (copied from web for now; A5 will
-//      consolidate into shared-ui/styles) are applied
+import { OnboardingScreen } from './screens/OnboardingScreen'
+import { LoginScreen } from './screens/LoginScreen'
+import { HomeScreen } from './screens/HomeScreen'
+import {
+  type StoredPrefs,
+  clearAll,
+  clearAuth,
+  getPrefs,
+  tokenExpired,
+} from './lib/storage'
+
+type AppState = 'loading' | 'onboarding' | 'login' | 'home'
+
+// Top-level state machine. Drives which screen renders based on what
+// we have persisted in Capacitor Preferences:
 //
-// Real screens land in B5 (Sessions list) onwards.
+//   serverURL absent              → onboarding
+//   serverURL set, no/expired tok → login
+//   serverURL set, valid token    → home
+//
+// B5 will replace HomeScreen with the real Sessions list. B4 will
+// add a biometric gate between launch and home (auto-unlock the
+// stored token via Face ID / Touch ID).
 export function App() {
-  const platform = Capacitor.getPlatform()
-  const isNative = Capacitor.isNativePlatform()
+  const [state, setState] = useState<AppState>('loading')
+  const [prefs, setPrefs] = useState<StoredPrefs | null>(null)
+
+  useEffect(() => {
+    void bootstrap()
+  }, [])
+
+  async function bootstrap() {
+    const p = await getPrefs()
+    setPrefs(p)
+    if (!p.serverURL) {
+      setState('onboarding')
+      return
+    }
+    if (!p.token || tokenExpired(p.expiresAt)) {
+      setState('login')
+      return
+    }
+    setState('home')
+  }
+
+  if (state === 'loading') {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-sm text-muted-foreground">Loading…</div>
+      </div>
+    )
+  }
+
+  if (state === 'onboarding') {
+    return (
+      <OnboardingScreen
+        onConnected={(url) => {
+          setPrefs((prev) => ({
+            serverURL: url,
+            token: prev?.token ?? null,
+            expiresAt: prev?.expiresAt ?? null,
+            username: prev?.username ?? null,
+          }))
+          setState('login')
+        }}
+      />
+    )
+  }
+
+  if (state === 'login') {
+    return (
+      <LoginScreen
+        serverURL={prefs!.serverURL!}
+        onAuthed={async () => {
+          // setAuth has already written; re-read so HomeScreen has the
+          // canonical values.
+          const fresh = await getPrefs()
+          setPrefs(fresh)
+          setState('home')
+        }}
+        onChangeServer={async () => {
+          await clearAll()
+          setPrefs(null)
+          setState('onboarding')
+        }}
+      />
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
-      <div className="max-w-md w-full space-y-4 text-center">
-        <h1 className="text-2xl font-semibold">OpenDray</h1>
-        <p className="text-sm text-muted-foreground">
-          Mobile shell — phase B1
-        </p>
-        <div className="rounded-md border border-border bg-card text-card-foreground p-4 text-left text-sm space-y-1">
-          <div>
-            Platform: <span className="text-accent">{platform}</span>
-          </div>
-          <div>
-            Native: <span className="text-accent">{String(isNative)}</span>
-          </div>
-        </div>
-        <Button
-          variant="default"
-          onClick={() => alert(`Hello from ${platform}`)}
-        >
-          Test shared-ui Button
-        </Button>
-      </div>
-    </div>
+    <HomeScreen
+      serverURL={prefs!.serverURL!}
+      username={prefs!.username ?? 'admin'}
+      expiresAt={prefs!.expiresAt}
+      onLogout={async () => {
+        await clearAuth()
+        setPrefs((prev) =>
+          prev
+            ? { ...prev, token: null, expiresAt: null, username: null }
+            : null,
+        )
+        setState('login')
+      }}
+    />
   )
 }
