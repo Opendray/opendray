@@ -171,6 +171,6 @@ func (r *Registry) buildFromRow(row ProviderRow) (Provider, error) {
 // Sentinel errors specific to the registry (alongside the row-level
 // ones in store.go).
 var (
-	ErrProviderDisabled    = errors.New("summarizer registry: provider exists but is disabled")
+	ErrProviderDisabled     = errors.New("summarizer registry: provider exists but is disabled")
 	ErrNoProviderConfigured = errors.New("summarizer registry: no enabled provider configured")
 )

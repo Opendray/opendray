@@ -49,9 +49,9 @@ type Config struct {
 // looks an incoming connection up by token and hands it to the
 // matching Bridge.
 type Broker struct {
-	mu       sync.RWMutex
-	byToken  map[string]*Bridge
-	byID     map[string]*Bridge
+	mu      sync.RWMutex
+	byToken map[string]*Bridge
+	byID    map[string]*Bridge
 }
 
 // NewBroker returns a fresh in-memory broker. One per process.
@@ -126,15 +126,15 @@ type Bridge struct {
 	log    *slog.Logger
 	broker *Broker
 
-	mu           sync.Mutex
-	conn         *websocket.Conn
-	writeMu      sync.Mutex // serialises conn writes
-	caps         map[channel.Capability]bool
-	platform     string // adapter-declared platform name ("wechat", ...)
-	inbound      channel.InboundFunc
-	cancel       context.CancelFunc
-	done         chan struct{}
-	registered   bool
+	mu         sync.Mutex
+	conn       *websocket.Conn
+	writeMu    sync.Mutex // serialises conn writes
+	caps       map[channel.Capability]bool
+	platform   string // adapter-declared platform name ("wechat", ...)
+	inbound    channel.InboundFunc
+	cancel     context.CancelFunc
+	done       chan struct{}
+	registered bool
 }
 
 func (b *Bridge) ID() string   { return b.id }
@@ -255,34 +255,6 @@ func acceptedSet(allowed []channel.Capability) map[channel.Capability]bool {
 		out[c] = true
 	}
 	return out
-}
-
-// detach cleans up a closed connection without deregistering from the
-// broker — the bridge stays available for the next adapter connect.
-func (b *Bridge) detach() {
-	b.mu.Lock()
-	conn := b.conn
-	cancel := b.cancel
-	done := b.done
-	b.conn = nil
-	b.cancel = nil
-	b.done = nil
-	b.caps = nil
-	b.platform = ""
-	b.mu.Unlock()
-	if cancel != nil {
-		cancel()
-	}
-	if conn != nil {
-		_ = conn.Close()
-	}
-	if done != nil {
-		// Best-effort wait — readPump's deferred close already signalled.
-		select {
-		case <-done:
-		case <-time.After(time.Second):
-		}
-	}
 }
 
 // Send writes a "send" frame (text only). When no adapter is attached

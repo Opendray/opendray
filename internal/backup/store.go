@@ -323,10 +323,10 @@ func (s *store) GetBackup(ctx context.Context, id string) (Backup, error) {
 
 // BackupListFilter narrows ListBackups results.
 type BackupListFilter struct {
-	Status      BackupStatus
-	TargetID    string
+	Status         BackupStatus
+	TargetID       string
 	IncludeDeleted bool
-	Limit       int
+	Limit          int
 }
 
 func (s *store) ListBackups(ctx context.Context, f BackupListFilter) ([]Backup, error) {
@@ -505,7 +505,7 @@ const backupSelectStmt = `
 	  FROM backups`
 
 // scanBackup reads a row produced by backupSelectStmt. target_id
-// is COALESCE'd to '' so we can scan into a plain string — empty
+// is COALESCE'd to ” so we can scan into a plain string — empty
 // string means "this row's target was deleted" (post-migration
 // 0017 nullable column).
 func scanBackup(row rowScanner) (Backup, error) {

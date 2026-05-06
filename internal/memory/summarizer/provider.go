@@ -90,11 +90,11 @@ type Provider interface {
 // Sentinel errors. Every provider-level error wraps one of these
 // so callers can errors.Is() instead of substring-matching.
 var (
-	ErrInvalidResponse  = errors.New("summarizer: invalid response from provider")
-	ErrUnreachable      = errors.New("summarizer: provider unreachable")
-	ErrAuthFailed       = errors.New("summarizer: provider authentication failed")
-	ErrRateLimited      = errors.New("summarizer: provider rate limited")
-	ErrModelNotFound    = errors.New("summarizer: provider does not have the requested model")
+	ErrInvalidResponse   = errors.New("summarizer: invalid response from provider")
+	ErrUnreachable       = errors.New("summarizer: provider unreachable")
+	ErrAuthFailed        = errors.New("summarizer: provider authentication failed")
+	ErrRateLimited       = errors.New("summarizer: provider rate limited")
+	ErrModelNotFound     = errors.New("summarizer: provider does not have the requested model")
 	ErrEmptyConversation = errors.New("summarizer: empty conversation, nothing to extract")
 )
 

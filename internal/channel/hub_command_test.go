@@ -18,10 +18,10 @@ type fakeChannel struct {
 	cards    []*Card
 }
 
-func (f *fakeChannel) ID() string                                                  { return f.id }
-func (f *fakeChannel) Kind() string                                                { return f.kind }
-func (f *fakeChannel) Start(_ context.Context, _ InboundFunc) error                { return nil }
-func (f *fakeChannel) Stop(_ context.Context) error                                { return nil }
+func (f *fakeChannel) ID() string                                   { return f.id }
+func (f *fakeChannel) Kind() string                                 { return f.kind }
+func (f *fakeChannel) Start(_ context.Context, _ InboundFunc) error { return nil }
+func (f *fakeChannel) Stop(_ context.Context) error                 { return nil }
 func (f *fakeChannel) Send(_ context.Context, msg ChannelMessage) error {
 	f.mu.Lock()
 	f.sent = append(f.sent, msg)

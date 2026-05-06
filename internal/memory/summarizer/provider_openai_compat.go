@@ -21,9 +21,9 @@ import (
 // Kind controls log+UI labelling and decides whether an api_key
 // is mandatory:
 //   - "openai":   api_key required; default base_url
-//                 https://api.openai.com/v1
+//     https://api.openai.com/v1
 //   - "lmstudio": api_key optional (LM Studio ignores it); default
-//                 base_url http://localhost:1234/v1
+//     base_url http://localhost:1234/v1
 //
 // Any other Kind value is treated like "openai" for behaviour but
 // preserved for display.

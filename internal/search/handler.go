@@ -66,10 +66,10 @@ func (h *Handlers) Mount(r chi.Router) {
 // Match is one search hit. Path is repo-relative to the search root
 // when possible (rg gives relative paths when invoked with -C dir).
 type Match struct {
-	Path        string      `json:"path"`
-	Line        int         `json:"line"`
-	Text        string      `json:"text"`
-	Submatches  []Submatch  `json:"submatches,omitempty"`
+	Path       string     `json:"path"`
+	Line       int        `json:"line"`
+	Text       string     `json:"text"`
+	Submatches []Submatch `json:"submatches,omitempty"`
 }
 
 // Submatch is a {start,end} byte offset inside `Text` so the client
@@ -80,9 +80,9 @@ type Submatch struct {
 }
 
 type Response struct {
-	Matches  []Match `json:"matches"`
-	Truncated bool   `json:"truncated,omitempty"`
-	Elapsed  string  `json:"elapsed,omitempty"`
+	Matches   []Match `json:"matches"`
+	Truncated bool    `json:"truncated,omitempty"`
+	Elapsed   string  `json:"elapsed,omitempty"`
 }
 
 func (h *Handlers) search(w http.ResponseWriter, r *http.Request) {
@@ -226,9 +226,9 @@ type rgEvent struct {
 }
 
 type rgEvtData struct {
-	Path       rgText      `json:"path"`
-	Lines      rgText      `json:"lines"`
-	LineNumber int         `json:"line_number"`
+	Path       rgText       `json:"path"`
+	Lines      rgText       `json:"lines"`
+	LineNumber int          `json:"line_number"`
 	Submatches []rgSubmatch `json:"submatches"`
 }
 

@@ -126,17 +126,17 @@ type TargetSpec struct {
 
 // Export is the public view of one export row.
 type Export struct {
-	ID            string         `json:"id"`
-	Status        ExportStatus   `json:"status"`
-	RequestedBy   string         `json:"requested_by"`
-	Scope         ExportScope    `json:"scope"`
-	StartedAt     time.Time      `json:"started_at"`
-	FinishedAt    *time.Time     `json:"finished_at,omitempty"`
-	ExpiresAt     time.Time      `json:"expires_at"`
-	Bytes         int64          `json:"bytes"`
-	SHA256        string         `json:"sha256,omitempty"`
-	DownloadToken string         `json:"download_token,omitempty"` // omitted in list responses
-	Error         string         `json:"error,omitempty"`
+	ID            string       `json:"id"`
+	Status        ExportStatus `json:"status"`
+	RequestedBy   string       `json:"requested_by"`
+	Scope         ExportScope  `json:"scope"`
+	StartedAt     time.Time    `json:"started_at"`
+	FinishedAt    *time.Time   `json:"finished_at,omitempty"`
+	ExpiresAt     time.Time    `json:"expires_at"`
+	Bytes         int64        `json:"bytes"`
+	SHA256        string       `json:"sha256,omitempty"`
+	DownloadToken string       `json:"download_token,omitempty"` // omitted in list responses
+	Error         string       `json:"error,omitempty"`
 }
 
 // ExportScope captures what the operator asked to be included in a
@@ -208,19 +208,19 @@ var (
 	ErrCipherWrongKey     = errors.New("backup: wrong key or tampered ciphertext")
 	ErrCipherFormat       = errors.New("backup: unrecognised cipher format/version")
 
-	ErrTargetNotFound      = errors.New("backup: target not found")
-	ErrTargetUnsupported   = errors.New("backup: target kind not supported in this build")
-	ErrBackupNotFound      = errors.New("backup: backup not found")
-	ErrScheduleNotFound    = errors.New("backup: schedule not found")
-	ErrExportNotFound      = errors.New("backup: export not found")
-	ErrExportExpired       = errors.New("backup: export expired")
+	ErrTargetNotFound       = errors.New("backup: target not found")
+	ErrTargetUnsupported    = errors.New("backup: target kind not supported in this build")
+	ErrBackupNotFound       = errors.New("backup: backup not found")
+	ErrScheduleNotFound     = errors.New("backup: schedule not found")
+	ErrExportNotFound       = errors.New("backup: export not found")
+	ErrExportExpired        = errors.New("backup: export expired")
 	ErrInvalidDownloadToken = errors.New("backup: invalid download token")
 
 	ErrPgDumpUnavailable    = errors.New("backup: pg_dump binary not found on PATH")
 	ErrPgRestoreUnavailable = errors.New("backup: pg_restore binary not found on PATH")
 	ErrFeatureDisabled      = errors.New("backup: feature disabled (cfg.backup.enabled=false)")
 
-	ErrImportNotFound          = errors.New("backup: import not found")
+	ErrImportNotFound             = errors.New("backup: import not found")
 	ErrRestoreFingerprintMismatch = errors.New("backup: restore: bundle fingerprint does not match running cipher")
 	ErrRestoreNoDump              = errors.New("backup: restore: no dump.bin in bundle")
 	ErrImportBadBundle            = errors.New("backup: import: malformed bundle")

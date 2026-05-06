@@ -78,14 +78,14 @@ type Discord struct {
 	log    *slog.Logger
 	client *http.Client
 
-	mu          sync.Mutex
-	cancel      context.CancelFunc
-	done        chan struct{}
-	conn        *websocket.Conn
-	writeMu     sync.Mutex
-	inbound     channel.InboundFunc
-	seq         int64
-	hbAck       chan struct{}
+	mu      sync.Mutex
+	cancel  context.CancelFunc
+	done    chan struct{}
+	conn    *websocket.Conn
+	writeMu sync.Mutex
+	inbound channel.InboundFunc
+	seq     int64
+	hbAck   chan struct{}
 }
 
 func New(id string, raw json.RawMessage, log *slog.Logger) (channel.Channel, error) {
@@ -566,10 +566,10 @@ func renderCard(card *channel.Card) (map[string]any, []map[string]any, string) {
 			components = append(components, map[string]any{
 				"type": 1,
 				"components": []map[string]any{{
-					"type":         3, // string select
-					"custom_id":    "select",
-					"placeholder":  v.Placeholder,
-					"options":      selectOptions(v),
+					"type":        3, // string select
+					"custom_id":   "select",
+					"placeholder": v.Placeholder,
+					"options":     selectOptions(v),
 				}},
 			})
 		case channel.CardNote:

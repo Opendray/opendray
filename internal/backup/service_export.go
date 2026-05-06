@@ -20,7 +20,7 @@ import (
 
 // ExportRequest controls a single export bundle invocation.
 type ExportRequest struct {
-	RequestedBy  string                // admin username (for audit)
+	RequestedBy  string // admin username (for audit)
 	Memories     bool
 	Integrations IntegrationExportMode // 'none' | 'metadata' | 'plaintext'
 	CustomTasks  bool

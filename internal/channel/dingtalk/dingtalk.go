@@ -182,8 +182,9 @@ func (d *DingTalk) post(ctx context.Context, body any) error {
 
 // signedURL adds the timestamp+sign query parameters required when the
 // custom robot is configured with the "Sign" security mode.
-//   stringToSign = "{ts}\n{secret}"
-//   sign         = base64(hmac-sha256(stringToSign, secret))
+//
+//	stringToSign = "{ts}\n{secret}"
+//	sign         = base64(hmac-sha256(stringToSign, secret))
 func signedURL(base, secret string, now time.Time) string {
 	ts := strconv.FormatInt(now.UnixMilli(), 10)
 	mac := hmac.New(sha256.New, []byte(secret))

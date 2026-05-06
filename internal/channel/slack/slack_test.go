@@ -57,7 +57,7 @@ func (s *slackServer) handle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *slackServer) close()                 { s.srv.Close() }
+func (s *slackServer) close() { s.srv.Close() }
 func (s *slackServer) callsFor(m string) []map[string]any {
 	s.mu.Lock()
 	defer s.mu.Unlock()

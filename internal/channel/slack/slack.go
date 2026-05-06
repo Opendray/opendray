@@ -106,9 +106,9 @@ func New(id string, raw json.RawMessage, log *slog.Logger) (channel.Channel, err
 	}, nil
 }
 
-func (s *Slack) ID() string           { return s.id }
-func (s *Slack) Kind() string         { return "slack" }
-func (s *Slack) SupportsReply() bool  { return true }
+func (s *Slack) ID() string          { return s.id }
+func (s *Slack) Kind() string        { return "slack" }
+func (s *Slack) SupportsReply() bool { return true }
 
 func (s *Slack) Start(_ context.Context, inbound channel.InboundFunc) error {
 	s.mu.Lock()
@@ -335,7 +335,7 @@ func (s *Slack) handleInteractive(ctx context.Context, env envelope) {
 	// Slack wraps the actual interactive payload in a string-encoded
 	// "payload" field on classic webhooks but Socket Mode delivers it as
 	// a JSON object on the envelope's payload. We accept either.
-	var raw json.RawMessage = env.Payload
+	raw := env.Payload
 	if len(raw) > 0 && raw[0] == '"' {
 		var s string
 		if err := json.Unmarshal(raw, &s); err == nil {
@@ -343,7 +343,7 @@ func (s *Slack) handleInteractive(ctx context.Context, env envelope) {
 		}
 	}
 	var payload struct {
-		Type    string `json:"type"`
+		Type    string              `json:"type"`
 		User    struct{ ID string } `json:"user"`
 		Channel struct{ ID string } `json:"channel"`
 		Message struct {

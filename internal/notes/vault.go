@@ -26,11 +26,11 @@ import (
 )
 
 var (
-	ErrNotFound       = errors.New("note not found")
-	ErrPathEscape     = errors.New("path escapes the vault root")
-	ErrInvalidPath    = errors.New("invalid path")
-	ErrNotMarkdown    = errors.New("path must end in .md")
-	ErrAlreadyExists  = errors.New("note already exists")
+	ErrNotFound      = errors.New("note not found")
+	ErrPathEscape    = errors.New("path escapes the vault root")
+	ErrInvalidPath   = errors.New("invalid path")
+	ErrNotMarkdown   = errors.New("path must end in .md")
+	ErrAlreadyExists = errors.New("note already exists")
 )
 
 // Note is the lightweight metadata view used in list / search results.
@@ -53,9 +53,9 @@ type FullNote struct {
 // being independent FS calls (no shared in-memory state in this phase
 // — index lands in Phase 4).
 type Vault struct {
-	root            string // canonical absolute path to the notes root
-	personalPrefix  string // default subfolder for personal scratchpads
-	projectsPrefix  string // default subfolder for AI project docs
+	root           string // canonical absolute path to the notes root
+	personalPrefix string // default subfolder for personal scratchpads
+	projectsPrefix string // default subfolder for AI project docs
 
 	projectMapMu sync.Mutex // guards reads/writes of projectMapFilename
 }

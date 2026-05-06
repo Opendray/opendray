@@ -27,18 +27,18 @@ const (
 // table is single-row (id=1, enforced by CHECK constraint) — updates
 // are always UPDATE … WHERE id=1.
 type SyncConfig struct {
-	Enabled         bool       `json:"enabled"`
-	CommitInterval  string     `json:"commit_interval"` // human form, e.g. "10m"
-	PushEnabled     bool       `json:"push_enabled"`
-	PullEnabled     bool       `json:"pull_enabled"`
-	PullInterval    string     `json:"pull_interval"`
-	CommitMessage   string     `json:"commit_message,omitempty"`
-	LastCommitAt    *time.Time `json:"last_commit_at,omitempty"`
-	LastCommitHash  string     `json:"last_commit_hash,omitempty"`
-	LastPushAt      *time.Time `json:"last_push_at,omitempty"`
-	LastPullAt      *time.Time `json:"last_pull_at,omitempty"`
-	LastError       string     `json:"last_error,omitempty"`
-	LastErrorAt     *time.Time `json:"last_error_at,omitempty"`
+	Enabled        bool       `json:"enabled"`
+	CommitInterval string     `json:"commit_interval"` // human form, e.g. "10m"
+	PushEnabled    bool       `json:"push_enabled"`
+	PullEnabled    bool       `json:"pull_enabled"`
+	PullInterval   string     `json:"pull_interval"`
+	CommitMessage  string     `json:"commit_message,omitempty"`
+	LastCommitAt   *time.Time `json:"last_commit_at,omitempty"`
+	LastCommitHash string     `json:"last_commit_hash,omitempty"`
+	LastPushAt     *time.Time `json:"last_push_at,omitempty"`
+	LastPullAt     *time.Time `json:"last_pull_at,omitempty"`
+	LastError      string     `json:"last_error,omitempty"`
+	LastErrorAt    *time.Time `json:"last_error_at,omitempty"`
 }
 
 // SyncConfigUpdate is the JSON body for PUT — only fields the client
@@ -231,12 +231,12 @@ func (s *Syncer) read(ctx context.Context) (SyncConfig, error) {
                last_push_at, last_pull_at, last_error, last_error_at
         FROM vault_sync_config WHERE id = 1`)
 	var (
-		c                  SyncConfig
-		commitMs, pullMs   int64
-		commitAt, pushAt   sql.NullTime
-		pullAt, errAt      sql.NullTime
-		hashStr, errStr    sql.NullString
-		msgStr             sql.NullString
+		c                SyncConfig
+		commitMs, pullMs int64
+		commitAt, pushAt sql.NullTime
+		pullAt, errAt    sql.NullTime
+		hashStr, errStr  sql.NullString
+		msgStr           sql.NullString
 	)
 	if err := row.Scan(
 		&c.Enabled, &commitMs, &c.PushEnabled,

@@ -28,13 +28,13 @@ type AnthropicConfig struct {
 }
 
 const (
-	anthropicDefaultBaseURL    = "https://api.anthropic.com"
-	anthropicVersionHeader     = "2023-06-01"
-	anthropicDefaultMaxTokens  = 1024
-	anthropicCallTimeout       = 30 * time.Second
-	anthropicHealthcheckPath   = "/v1/models"
-	anthropicMaxRetries        = 1 // retry once on 5xx
-	anthropicRateLimitBackoff  = 8 * time.Second
+	anthropicDefaultBaseURL   = "https://api.anthropic.com"
+	anthropicVersionHeader    = "2023-06-01"
+	anthropicDefaultMaxTokens = 1024
+	anthropicCallTimeout      = 30 * time.Second
+	anthropicHealthcheckPath  = "/v1/models"
+	anthropicMaxRetries       = 1 // retry once on 5xx
+	anthropicRateLimitBackoff = 8 * time.Second
 )
 
 // AnthropicProvider talks to Anthropic's Messages API directly via
@@ -152,7 +152,6 @@ func (p *AnthropicProvider) setAuthHeaders(req *http.Request) {
 }
 
 func (p *AnthropicProvider) buildRequestBody(transcript string) ([]byte, error) {
-	type schema = json.RawMessage
 	body := map[string]any{
 		"model":      p.cfg.Model,
 		"max_tokens": p.cfg.MaxTokens,

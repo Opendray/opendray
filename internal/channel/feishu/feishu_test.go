@@ -45,10 +45,10 @@ func (s *feishuServer) handle(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/open-apis/auth/v3/tenant_access_token/internal":
 		_ = json.NewEncoder(w).Encode(map[string]any{
-			"code":                 0,
-			"msg":                  "ok",
+			"code":                0,
+			"msg":                 "ok",
 			"tenant_access_token": "t-abc-123",
-			"expire":               7200,
+			"expire":              7200,
 		})
 	default:
 		_ = json.NewEncoder(w).Encode(map[string]any{"code": 0, "msg": "ok"})

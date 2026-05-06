@@ -23,51 +23,51 @@ import (
 // only set in-flight (Insert / Update input, decoded for Build()
 // output) and never persists. Callers must zero it after use.
 type ProviderRow struct {
-	ID                 string
-	Name               string
-	Kind               string // "anthropic" | "ollama"
-	Model              string
-	BaseURL            string
-	APIKeyCiphertext   string  // empty for ollama
-	APIKeyPlaintext    string  // never persisted; populated on input or after decryption
-	APIKeyFingerprint  string  // first 16 hex of SHA-256(plaintext); shown in UI
-	ExtraConfig        map[string]any
-	Enabled            bool
-	IsDefault          bool
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
+	ID                string
+	Name              string
+	Kind              string // "anthropic" | "ollama"
+	Model             string
+	BaseURL           string
+	APIKeyCiphertext  string // empty for ollama
+	APIKeyPlaintext   string // never persisted; populated on input or after decryption
+	APIKeyFingerprint string // first 16 hex of SHA-256(plaintext); shown in UI
+	ExtraConfig       map[string]any
+	Enabled           bool
+	IsDefault         bool
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 }
 
 // CallLogRow is one memory_summarizer_calls row written after every
 // invocation. INSERT-only — aggregated by SUM in /cost endpoints.
 type CallLogRow struct {
-	ID                    string
-	RuleID                string // nullable
-	ProviderID            string // nullable
-	SessionID             string // nullable
-	StartedAt             time.Time
-	FinishedAt            time.Time
-	DurationMs            int
-	InputTokens           int
-	OutputTokens          int
-	EstimatedUSD          float64
-	FactsExtracted        int
-	FactsStored           int
-	FactsSkippedDedup     int
-	Status                string // 'succeeded' | 'failed' | 'timeout' | 'provider_unavailable'
-	Error                 string
-	RawResponseTruncated  string
+	ID                   string
+	RuleID               string // nullable
+	ProviderID           string // nullable
+	SessionID            string // nullable
+	StartedAt            time.Time
+	FinishedAt           time.Time
+	DurationMs           int
+	InputTokens          int
+	OutputTokens         int
+	EstimatedUSD         float64
+	FactsExtracted       int
+	FactsStored          int
+	FactsSkippedDedup    int
+	Status               string // 'succeeded' | 'failed' | 'timeout' | 'provider_unavailable'
+	Error                string
+	RawResponseTruncated string
 }
 
 // CostSummary aggregates call-log rows for the /cost endpoint.
 type CostSummary struct {
-	ProviderID    string
-	PeriodStart   time.Time
-	PeriodEnd     time.Time
-	Calls         int
-	InputTokens   int
-	OutputTokens  int
-	EstimatedUSD  float64
+	ProviderID   string
+	PeriodStart  time.Time
+	PeriodEnd    time.Time
+	Calls        int
+	InputTokens  int
+	OutputTokens int
+	EstimatedUSD float64
 }
 
 // Cipher is the encrypt/decrypt contract we accept from outside —
@@ -91,10 +91,10 @@ func NewStore(pool *pgxpool.Pool, cipher Cipher) *Store {
 
 // Sentinel errors.
 var (
-	ErrProviderNotFound      = errors.New("summarizer store: provider not found")
-	ErrCallNotFound          = errors.New("summarizer store: call not found")
-	ErrCipherRequired        = errors.New("summarizer store: backup cipher required for non-ollama providers (set OPENDRAY_BACKUP_KEY)")
-	ErrDuplicateName         = errors.New("summarizer store: provider name already in use")
+	ErrProviderNotFound = errors.New("summarizer store: provider not found")
+	ErrCallNotFound     = errors.New("summarizer store: call not found")
+	ErrCipherRequired   = errors.New("summarizer store: backup cipher required for non-ollama providers (set OPENDRAY_BACKUP_KEY)")
+	ErrDuplicateName    = errors.New("summarizer store: provider name already in use")
 )
 
 // ─── providers ───────────────────────────────────────────────────
@@ -240,13 +240,13 @@ func (s *Store) GetDefaultProvider(ctx context.Context) (ProviderRow, error) {
 
 // ProviderPatch carries optional updates.
 type ProviderPatch struct {
-	Name              *string
-	Model             *string
-	BaseURL           *string
-	APIKeyPlaintext   *string // when set, re-encrypt + bump fingerprint
-	ExtraConfig       map[string]any
-	Enabled           *bool
-	IsDefault         *bool
+	Name            *string
+	Model           *string
+	BaseURL         *string
+	APIKeyPlaintext *string // when set, re-encrypt + bump fingerprint
+	ExtraConfig     map[string]any
+	Enabled         *bool
+	IsDefault       *bool
 }
 
 func (s *Store) UpdateProvider(ctx context.Context, id string, p ProviderPatch) (ProviderRow, error) {

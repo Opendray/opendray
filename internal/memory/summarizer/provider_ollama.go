@@ -23,9 +23,9 @@ type OllamaConfig struct {
 }
 
 const (
-	ollamaCallTimeout    = 60 * time.Second // local models are typically slower
+	ollamaCallTimeout     = 60 * time.Second // local models are typically slower
 	ollamaHealthcheckPath = "/api/tags"
-	ollamaChatPath       = "/api/chat"
+	ollamaChatPath        = "/api/chat"
 )
 
 // OllamaProvider talks to a local ollama daemon. Reuses our HTTP

@@ -30,11 +30,11 @@ import (
 //     reliable but spawns a subprocess per op.
 //   - HealthCheck uses `rclone lsd` to confirm auth + reachability.
 type RcloneConfig struct {
-	Remote       string // rclone remote name (e.g. "gdrive" or "r2-prod")
-	PathPrefix   string // sub-folder under the remote root
-	BinaryPath   string // optional override; default is exec.LookPath("rclone")
-	ConfigPath   string // optional --config <path> override; default rclone's own
-	ExtraArgs    []string // optional global flags (e.g. ["--bwlimit=10M"])
+	Remote     string   // rclone remote name (e.g. "gdrive" or "r2-prod")
+	PathPrefix string   // sub-folder under the remote root
+	BinaryPath string   // optional override; default is exec.LookPath("rclone")
+	ConfigPath string   // optional --config <path> override; default rclone's own
+	ExtraArgs  []string // optional global flags (e.g. ["--bwlimit=10M"])
 }
 
 // RcloneTarget shells out to an external rclone binary.

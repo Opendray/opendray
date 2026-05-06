@@ -66,10 +66,11 @@ type DumpResult struct {
 // Dump streams pg_dump --format=custom output for the given DSN.
 //
 // Fixed flag set:
-//   --format=custom        — compressed, supports parallel pg_restore
-//   --no-owner             — restore-target's user owns objects
-//   --no-privileges        — strip GRANT statements
-//   --dbname=<dsn>         — full conninfo URL or libpq connstring
+//
+//	--format=custom        — compressed, supports parallel pg_restore
+//	--no-owner             — restore-target's user owns objects
+//	--no-privileges        — strip GRANT statements
+//	--dbname=<dsn>         — full conninfo URL or libpq connstring
 //
 // We DON'T pass --blobs or --jobs — both are out of scope for v1.
 //

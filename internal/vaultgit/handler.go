@@ -112,7 +112,7 @@ type StatusFile struct {
 }
 
 type CommitRequest struct {
-	Message string   `json:"message"`
+	Message string `json:"message"`
 	// Files restricts what's added to the commit. Empty = `git add .`.
 	Files []string `json:"files,omitempty"`
 }
@@ -516,10 +516,10 @@ type AuthInfo struct {
 	Host      string `json:"host,omitempty"`
 	// For HTTPS remotes: report whether opendray will inject a token
 	// from the matching git_hosts row, and where it came from.
-	UsingToken    bool   `json:"using_token,omitempty"`
-	TokenSource   string `json:"token_source,omitempty"` // "git_hosts:<host>"
-	TokenMissing  bool   `json:"token_missing,omitempty"`
-	HelpfulHint   string `json:"helpful_hint,omitempty"`
+	UsingToken   bool   `json:"using_token,omitempty"`
+	TokenSource  string `json:"token_source,omitempty"` // "git_hosts:<host>"
+	TokenMissing bool   `json:"token_missing,omitempty"`
+	HelpfulHint  string `json:"helpful_hint,omitempty"`
 }
 
 func (h *Handlers) auth(w http.ResponseWriter, r *http.Request) {
@@ -603,8 +603,8 @@ func (h *Handlers) argsWithAuth(ctx context.Context, gitArgs ...string) ([]strin
 		shellEscape(username), shellEscape(hv.Token),
 	)
 	out := []string{
-		"-c", "credential.helper=",                   // wipe any inherited helper
-		"-c", "credential.helper=" + helper,           // ours
+		"-c", "credential.helper=", // wipe any inherited helper
+		"-c", "credential.helper=" + helper, // ours
 	}
 	out = append(out, gitArgs...)
 	return out, nil

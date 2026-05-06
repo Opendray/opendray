@@ -100,8 +100,8 @@ func New(id string, raw json.RawMessage, log *slog.Logger) (channel.Channel, err
 	}, nil
 }
 
-func (t *Telegram) ID() string         { return t.id }
-func (t *Telegram) Kind() string       { return "telegram" }
+func (t *Telegram) ID() string          { return t.id }
+func (t *Telegram) Kind() string        { return "telegram" }
 func (t *Telegram) SupportsReply() bool { return true }
 
 func (t *Telegram) Start(_ context.Context, inbound channel.InboundFunc) error {
@@ -237,9 +237,7 @@ func splitForTelegram(text string) []string {
 		}
 		if runesIn(line) > telegramChunkSize {
 			flush()
-			for _, slice := range hardSplitRunes(line, telegramChunkSize) {
-				chunks = append(chunks, slice)
-			}
+			chunks = append(chunks, hardSplitRunes(line, telegramChunkSize)...)
 			return
 		}
 		if b.Len() > 0 {

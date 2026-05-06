@@ -37,10 +37,10 @@ import (
 // claudeJSONLEntry is one line in Claude's transcript file. We decode
 // only the fields the snippet needs.
 type claudeJSONLEntry struct {
-	Type    string             `json:"type"`              // user | assistant | progress | system
-	Message *claudeJSONLMsg    `json:"message,omitempty"`
-	UUID    string             `json:"uuid,omitempty"`
-	Time    time.Time          `json:"timestamp,omitempty"`
+	Type    string          `json:"type"` // user | assistant | progress | system
+	Message *claudeJSONLMsg `json:"message,omitempty"`
+	UUID    string          `json:"uuid,omitempty"`
+	Time    time.Time       `json:"timestamp,omitempty"`
 }
 
 type claudeJSONLMsg struct {
@@ -252,7 +252,7 @@ func extractUserInputs(path, sessionID string) []ProjectInput {
 // entry's content. Handles both shapes:
 //   - bare JSON string  → treat as the prompt
 //   - array of blocks   → concatenate `text` blocks; skip
-//                          tool_result and any other block types.
+//     tool_result and any other block types.
 //
 // Returns "" when the entry carries no text (i.e. tool_result-only
 // entries that Claude writes as "feedback for itself").
@@ -425,10 +425,10 @@ func matchesClaudeProjectDir(encoded string, parts []string) bool {
 // results attached underneath.
 //
 // Algorithm:
-//   1. Read last n entries.
-//   2. Walk backwards to find the first assistant entry. Anchor.
-//   3. From that anchor, walk forward and render every entry until
-//      the next assistant turn boundary (or end of file).
+//  1. Read last n entries.
+//  2. Walk backwards to find the first assistant entry. Anchor.
+//  3. From that anchor, walk forward and render every entry until
+//     the next assistant turn boundary (or end of file).
 //
 // Result mirrors what the user sees on the TUI: a single "answer"
 // turn complete with tool calls and their feedback, no chrome.
@@ -661,12 +661,12 @@ func renderToolResults(out *strings.Builder, blocks []claudeContentBlock, toolUs
 // formatToolUse turns a tool_use block into the one-line summary
 // that goes after the bullet. Example outputs:
 //
-//   Write(docs/ANDROID_PORT_SPEC.md)
-//   Bash(rg "TODO" --type go) — search for outstanding items
-//   Read(internal/session/manager.go)
-//   Edit(README.md)
-//   AskUserQuestion: choose a model
-//   WebFetch(https://example.com/api)
+//	Write(docs/ANDROID_PORT_SPEC.md)
+//	Bash(rg "TODO" --type go) — search for outstanding items
+//	Read(internal/session/manager.go)
+//	Edit(README.md)
+//	AskUserQuestion: choose a model
+//	WebFetch(https://example.com/api)
 func formatToolUse(b claudeContentBlock) string {
 	name := b.Name
 	if name == "" {

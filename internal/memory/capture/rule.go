@@ -53,13 +53,13 @@ type Rule struct {
 
 // RulePatch is the partial update shape for store.UpdateRule.
 type RulePatch struct {
-	Name                  *string
-	Enabled               *bool
-	TriggerKind           *string
-	TriggerConfig         map[string]any
-	SummarizerProviderID  *string // empty string → clear (NULL)
-	DedupThreshold        *float32
-	TargetScope           *string
+	Name                 *string
+	Enabled              *bool
+	TriggerKind          *string
+	TriggerConfig        map[string]any
+	SummarizerProviderID *string // empty string → clear (NULL)
+	DedupThreshold       *float32
+	TargetScope          *string
 }
 
 // RuleStore wraps pgxpool with capture-rules CRUD.

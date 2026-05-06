@@ -57,8 +57,8 @@ func TestRenderClaudeMCP_HTTPServer(t *testing.T) {
 func TestRenderClaudeMCP_DropsInvalid(t *testing.T) {
 	dir := t.TempDir()
 	servers := []MCPServer{
-		{Name: "no-command"},                                 // dropped (no command)
-		{Name: "no-url", Transport: "sse"},                   // dropped (no url)
+		{Name: "no-command"},                                  // dropped (no command)
+		{Name: "no-url", Transport: "sse"},                    // dropped (no url)
 		{Name: "ok", Command: "node", Args: []string{"x.js"}}, // kept
 	}
 	args, _, err := renderMCP("claude", dir, servers)

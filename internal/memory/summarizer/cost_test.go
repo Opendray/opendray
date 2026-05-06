@@ -7,10 +7,10 @@ import (
 
 func TestEstimateUSD_KnownModels(t *testing.T) {
 	cases := []struct {
-		model           string
-		input, output   int
-		want            float64
-		tolerancePerM   float64 // micro-USD tolerance
+		model         string
+		input, output int
+		want          float64
+		tolerancePerM float64 // micro-USD tolerance
 	}{
 		// Haiku: $1/MTok input, $5/MTok output
 		{"claude-haiku-4-5", 1_000_000, 0, 1.00, 1e-6},
