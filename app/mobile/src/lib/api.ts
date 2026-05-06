@@ -106,3 +106,29 @@ export function postMobileLogin(
     body: { username, password },
   })
 }
+
+// Subset of `Session` from app/shared/src/lib/types.ts — only the
+// fields B5 actually renders. Importing the shared type would also
+// work, but B5 deliberately avoids coupling the mobile data layer
+// to the shared types until A4/A5 unify the API client.
+export interface SessionSummary {
+  id: string
+  name?: string
+  provider_id: string
+  cwd: string
+  state: 'pending' | 'running' | 'idle' | 'stopped' | 'ended'
+  started_at: string
+  ended_at?: string
+}
+
+export async function listSessions(
+  serverURL: string,
+  token: string,
+): Promise<SessionSummary[]> {
+  const res = await mobileFetch<{ sessions?: SessionSummary[] }>(
+    serverURL,
+    '/api/v1/sessions',
+    { token },
+  )
+  return res.sessions ?? []
+}
