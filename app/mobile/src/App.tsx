@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { OnboardingScreen } from './screens/OnboardingScreen'
 import { LoginScreen } from './screens/LoginScreen'
-import { HomeScreen } from './screens/HomeScreen'
+import { SessionsScreen } from './screens/SessionsScreen'
 import {
   type StoredPrefs,
   clearAll,
@@ -89,20 +89,21 @@ export function App() {
     )
   }
 
+  const onClearAuthAndReturnToLogin = async () => {
+    await clearAuth()
+    setPrefs((prev) =>
+      prev ? { ...prev, token: null, expiresAt: null, username: null } : null,
+    )
+    setState('login')
+  }
+
   return (
-    <HomeScreen
+    <SessionsScreen
       serverURL={prefs!.serverURL!}
+      token={prefs!.token!}
       username={prefs!.username ?? 'admin'}
-      expiresAt={prefs!.expiresAt}
-      onLogout={async () => {
-        await clearAuth()
-        setPrefs((prev) =>
-          prev
-            ? { ...prev, token: null, expiresAt: null, username: null }
-            : null,
-        )
-        setState('login')
-      }}
+      onLogout={onClearAuthAndReturnToLogin}
+      onAuthExpired={onClearAuthAndReturnToLogin}
     />
   )
 }
