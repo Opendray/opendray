@@ -56,6 +56,62 @@ func TestLogin_AdminNotConfigured(t *testing.T) {
 	}
 }
 
+func TestLoginMobile_UsesMobileTTL(t *testing.T) {
+	cfg := config.AdminConfig{
+		User:           "admin",
+		Password:       "secret",
+		TokenTTL:       "1h",
+		MobileTokenTTL: "168h", // 7d
+	}
+	s := New(cfg, nil, nil)
+
+	_, browserInfo, err := s.Login("admin", "secret")
+	if err != nil {
+		t.Fatalf("Login: %v", err)
+	}
+	_, mobileInfo, err := s.LoginMobile("admin", "secret")
+	if err != nil {
+		t.Fatalf("LoginMobile: %v", err)
+	}
+
+	browserSpan := browserInfo.ExpiresAt.Sub(browserInfo.IssuedAt)
+	mobileSpan := mobileInfo.ExpiresAt.Sub(mobileInfo.IssuedAt)
+	if browserSpan >= mobileSpan {
+		t.Errorf("expected mobile TTL > browser TTL; got browser=%s mobile=%s",
+			browserSpan, mobileSpan)
+	}
+	wantBrowser := time.Hour
+	wantMobile := 168 * time.Hour
+	if browserSpan != wantBrowser {
+		t.Errorf("browser TTL = %s, want %s", browserSpan, wantBrowser)
+	}
+	if mobileSpan != wantMobile {
+		t.Errorf("mobile TTL = %s, want %s", mobileSpan, wantMobile)
+	}
+}
+
+func TestLoginMobile_DefaultsToThirtyDays(t *testing.T) {
+	// MobileTokenTTL unset → 30d default; TokenTTL unset → 24h default.
+	cfg := config.AdminConfig{User: "admin", Password: "secret"}
+	s := New(cfg, nil, nil)
+	_, info, err := s.LoginMobile("admin", "secret")
+	if err != nil {
+		t.Fatalf("LoginMobile: %v", err)
+	}
+	span := info.ExpiresAt.Sub(info.IssuedAt)
+	want := 30 * 24 * time.Hour
+	if span != want {
+		t.Errorf("default mobile TTL = %s, want %s", span, want)
+	}
+}
+
+func TestLoginMobile_WrongCredentialsRejected(t *testing.T) {
+	s := newSvc(t, 0)
+	if _, _, err := s.LoginMobile("admin", "wrong"); err != ErrInvalidCredentials {
+		t.Fatalf("err=%v, want ErrInvalidCredentials", err)
+	}
+}
+
 func TestValidate_OK(t *testing.T) {
 	s := newSvc(t, 0)
 	tok, _, _ := s.Login("admin", "secret")
