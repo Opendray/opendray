@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/opendray/opendray-v2/internal/eventbus"
+	"github.com/opendray/opendray-v2/internal/wsutil"
 )
 
 const (
@@ -33,7 +34,12 @@ func NewEventsHandler(bus *eventbus.Hub, log *slog.Logger) *EventsHandler {
 	return &EventsHandler{
 		bus:      bus,
 		log:      log.With("component", "integration.events"),
-		upgrader: websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }},
+		// Integration consumers may be server-to-server (no Origin
+		// header) or run from a browser-based admin tab. Auth is the
+		// bearer token in ?token=; routing this through wsutil
+		// documents the deliberate any-origin policy and gives a
+		// single grep target if we ever want to lock it down.
+		upgrader: websocket.Upgrader{CheckOrigin: wsutil.AllowAnyOrigin()},
 	}
 }
 

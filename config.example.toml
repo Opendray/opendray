@@ -12,6 +12,9 @@ listen = "127.0.0.1:8770"
 # For local development, `docker compose -f docker-compose.test.yml up -d`
 # starts a Postgres on 127.0.0.1:5432 matching this DSN.
 url = "postgres://opendray:opendray@127.0.0.1:5432/opendray?sslmode=disable"
+# Optional: cap the pgx connection pool. Empty / 0 = 16 (store default).
+# Bump for high-fanout integration traffic; trim on shared PG instances.
+# max_conns = 16
 
 [admin]
 # Admin auth (single human). Prefer env vars in production.

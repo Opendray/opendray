@@ -57,3 +57,73 @@ func TestLoad_MissingDatabaseURL(t *testing.T) {
 		t.Fatal("expected validation error for missing database url")
 	}
 }
+
+func TestLoad_DatabaseMaxConns(t *testing.T) {
+	t.Run("from toml", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "config.toml")
+		if err := os.WriteFile(path, []byte(`
+[database]
+url = "postgres://x:y@localhost/z"
+max_conns = 32
+
+[admin]
+user = "admin"
+password = "secret"
+`), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		got, err := Load(path)
+		if err != nil {
+			t.Fatalf("Load: %v", err)
+		}
+		if got.Database.MaxConns != 32 {
+			t.Errorf("MaxConns = %d, want 32", got.Database.MaxConns)
+		}
+	})
+
+	t.Run("env override beats toml", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "config.toml")
+		if err := os.WriteFile(path, []byte(`
+[database]
+url = "postgres://x:y@localhost/z"
+max_conns = 8
+`), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		t.Setenv("OPENDRAY_DATABASE_MAX_CONNS", "64")
+		got, err := Load(path)
+		if err != nil {
+			t.Fatalf("Load: %v", err)
+		}
+		if got.Database.MaxConns != 64 {
+			t.Errorf("MaxConns = %d, want 64", got.Database.MaxConns)
+		}
+	})
+
+	t.Run("invalid env ignored", func(t *testing.T) {
+		t.Setenv("OPENDRAY_DATABASE_URL", "postgres://x")
+		t.Setenv("OPENDRAY_DATABASE_MAX_CONNS", "not-a-number")
+		got, err := Load("")
+		if err != nil {
+			t.Fatalf("Load: %v", err)
+		}
+		if got.Database.MaxConns != 0 {
+			t.Errorf("MaxConns = %d, want 0 (invalid env value should be ignored)",
+				got.Database.MaxConns)
+		}
+	})
+
+	t.Run("negative env ignored", func(t *testing.T) {
+		t.Setenv("OPENDRAY_DATABASE_URL", "postgres://x")
+		t.Setenv("OPENDRAY_DATABASE_MAX_CONNS", "-5")
+		got, err := Load("")
+		if err != nil {
+			t.Fatalf("Load: %v", err)
+		}
+		if got.Database.MaxConns != 0 {
+			t.Errorf("MaxConns = %d, want 0", got.Database.MaxConns)
+		}
+	})
+}

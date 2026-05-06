@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -220,6 +221,10 @@ type VaultConfig struct {
 
 type DatabaseConfig struct {
 	URL string `toml:"url" json:"url"`
+	// MaxConns caps the pgx connection pool. Empty / 0 → store defaults
+	// (16). Tune up for high-fanout integration traffic; tune down on
+	// shared PG instances where opendray must not crowd out peers.
+	MaxConns int `toml:"max_conns" json:"max_conns"`
 }
 
 // BackupConfig drives the disaster-recovery backup + admin export
@@ -312,6 +317,11 @@ func applyEnv(cfg *Config) {
 	}
 	if v := os.Getenv("OPENDRAY_DATABASE_URL"); v != "" {
 		cfg.Database.URL = v
+	}
+	if v := os.Getenv("OPENDRAY_DATABASE_MAX_CONNS"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			cfg.Database.MaxConns = n
+		}
 	}
 	if v := os.Getenv("OPENDRAY_ADMIN_USER"); v != "" {
 		cfg.Admin.User = v

@@ -18,6 +18,7 @@ import (
 
 	"github.com/opendray/opendray-v2/internal/applog"
 	"github.com/opendray/opendray-v2/internal/config"
+	"github.com/opendray/opendray-v2/internal/wsutil"
 )
 
 // Handler exposes settings endpoints. Mount under an admin-only
@@ -40,7 +41,10 @@ func NewHandler(svc *Service, ring *applog.Buffer, log *slog.Logger) *Handler {
 		log:  log.With("component", "settings.http"),
 		ring: ring,
 		upgrader: websocket.Upgrader{
-			CheckOrigin: func(*http.Request) bool { return true },
+			// Admin-only WS (logs/stream). Same CSWSH mitigation as
+			// session/: bearer-token in ?token=, plus Origin must be
+			// same-host or a LAN private range.
+			CheckOrigin: wsutil.SameOriginCheck(),
 		},
 	}
 }

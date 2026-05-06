@@ -80,7 +80,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	st, err := store.Open(ctx, cfg.Database.URL)
+	st, err := store.Open(ctx, cfg.Database.URL, cfg.Database.MaxConns)
 	if err != nil {
 		return nil, err
 	}

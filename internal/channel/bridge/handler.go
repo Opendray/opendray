@@ -17,6 +17,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/opendray/opendray-v2/internal/channel"
+	"github.com/opendray/opendray-v2/internal/wsutil"
 )
 
 // Handlers wires the bridge WS endpoint into an admin-less router.
@@ -45,7 +46,7 @@ func NewHandlers(b *Broker, log *slog.Logger) *Handlers {
 			// Bridge adapters connect from outside the browser — origin
 			// checks would block legitimate use. The token in the
 			// register frame is the real auth.
-			CheckOrigin: func(*http.Request) bool { return true },
+			CheckOrigin: wsutil.AllowAnyOrigin(),
 		},
 	}
 }

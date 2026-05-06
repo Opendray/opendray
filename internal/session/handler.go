@@ -11,6 +11,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
+
+	"github.com/opendray/opendray-v2/internal/wsutil"
 )
 
 // Service is the session-manager surface used by HTTP handlers,
@@ -45,9 +47,12 @@ func NewHandlers(svc Service, log *slog.Logger) *Handlers {
 		svc: svc,
 		log: log.With("component", "session.http"),
 		upgrader: websocket.Upgrader{
-			// Same-origin / LAN client; admin auth runs at gateway
-			// middleware. M3 will tighten CheckOrigin alongside auth.
-			CheckOrigin: func(*http.Request) bool { return true },
+			// Admin SPA in the browser. Token is in the ?token= query
+			// (browsers can't set custom headers on WS handshake), so
+			// CSWSH is mitigated by also checking Origin: same-host or
+			// LAN private ranges only. Non-browser clients (mobile,
+			// curl) send no Origin and are admitted as before.
+			CheckOrigin: wsutil.SameOriginCheck(),
 		},
 	}
 }

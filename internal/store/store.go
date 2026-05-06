@@ -18,12 +18,24 @@ type Store struct {
 	pool *pgxpool.Pool
 }
 
-// Open creates a pgx pool and pings the database.
-func Open(ctx context.Context, dsn string) (*Store, error) {
+// DefaultMaxConns is the cap applied when caller passes 0 to Open.
+// Calibrated for a single-admin home-lab deployment with a few
+// integration consumers; bump via config.database.max_conns when the
+// fanout grows.
+const DefaultMaxConns = 16
+
+// Open creates a pgx pool and pings the database. maxConns ≤ 0 falls
+// back to DefaultMaxConns so callers can pass the raw config value
+// without conditional branching.
+func Open(ctx context.Context, dsn string, maxConns int) (*Store, error) {
 	cfg, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, fmt.Errorf("store: parse dsn: %w", err)
 	}
+	if maxConns <= 0 {
+		maxConns = DefaultMaxConns
+	}
+	cfg.MaxConns = int32(maxConns)
 	cfg.MaxConnLifetime = 30 * time.Minute
 	cfg.MaxConnIdleTime = 5 * time.Minute
 	cfg.HealthCheckPeriod = time.Minute
