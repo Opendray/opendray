@@ -11,11 +11,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// devDB returns a pgxpool against the dev DB addressed by
+// OPENDRAY_DEV_DB_URL. Tests t.Skip when the env is unset (CI default)
+// or when the DB is unreachable. Never hardcode credentials — see
+// docs/quickstart.md for spinning up the bundled Postgres.
 func devDB(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 	url := os.Getenv("OPENDRAY_DEV_DB_URL")
 	if url == "" {
-		url = "postgres://opd2_user:UGuZjQVFtXR3MtKJ6Q@192.168.3.88:5432/opendray_v2?sslmode=disable"
+		t.Skip("OPENDRAY_DEV_DB_URL not set; export a writable Postgres DSN to run this test")
 	}
 	pool, err := pgxpool.New(context.Background(), url)
 	if err != nil {

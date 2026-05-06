@@ -104,6 +104,18 @@ func TestSameOriginCheck(t *testing.T) {
 			originHdr: "evil.example.com",
 			want:      false,
 		},
+		{
+			name:      "scheme-only origin (empty authority) rejected",
+			hostHdr:   "opendray.local:8770",
+			originHdr: "http://",
+			want:      false,
+		},
+		{
+			name:      "https origin against same host allowed",
+			hostHdr:   "opendray.local:8770",
+			originHdr: "https://opendray.local:8770",
+			want:      true,
+		},
 	}
 
 	for _, tc := range tests {

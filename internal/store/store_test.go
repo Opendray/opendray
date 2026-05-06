@@ -8,15 +8,18 @@ import (
 	"time"
 )
 
-// devDSN matches the convention used elsewhere in the repo
-// (memory/summarizer/store_test.go): OPENDRAY_DEV_DB_URL, falling
-// back to the home-lab default. Tests t.Skip when the DB is
-// unreachable so CI on a fresh laptop still passes.
-func devDSN() string {
-	if v := os.Getenv("OPENDRAY_DEV_DB_URL"); v != "" {
-		return v
+// devDSN returns the dev-DB DSN from OPENDRAY_DEV_DB_URL, or t.Skips
+// when unset. Never hardcode credentials — committed credentials are
+// forever. To run these tests locally, start the bundled Postgres
+// (`docker compose -f docker-compose.test.yml up -d`) and export
+// OPENDRAY_DEV_DB_URL accordingly. See docs/quickstart.md.
+func devDSN(t *testing.T) string {
+	t.Helper()
+	v := os.Getenv("OPENDRAY_DEV_DB_URL")
+	if v == "" {
+		t.Skip("OPENDRAY_DEV_DB_URL not set; export a writable Postgres DSN to run this test")
 	}
-	return "postgres://opd2_user:UGuZjQVFtXR3MtKJ6Q@192.168.3.88:5432/opendray_v2?sslmode=disable"
+	return v
 }
 
 func TestOpen_BadDSN(t *testing.T) {
@@ -50,7 +53,7 @@ func TestOpen_UnreachableDB(t *testing.T) {
 func TestOpen_Success(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	st, err := Open(ctx, devDSN(), 0)
+	st, err := Open(ctx, devDSN(t), 0)
 	if err != nil {
 		t.Skipf("dev DB unreachable, skipping: %v", err)
 	}
@@ -69,7 +72,7 @@ func TestOpen_MaxConnsApplied(t *testing.T) {
 	defer cancel()
 
 	t.Run("explicit positive maxConns honoured", func(t *testing.T) {
-		st, err := Open(ctx, devDSN(), 7)
+		st, err := Open(ctx, devDSN(t), 7)
 		if err != nil {
 			t.Skipf("dev DB unreachable, skipping: %v", err)
 		}
@@ -81,7 +84,7 @@ func TestOpen_MaxConnsApplied(t *testing.T) {
 	})
 
 	t.Run("zero falls back to DefaultMaxConns", func(t *testing.T) {
-		st, err := Open(ctx, devDSN(), 0)
+		st, err := Open(ctx, devDSN(t), 0)
 		if err != nil {
 			t.Skipf("dev DB unreachable, skipping: %v", err)
 		}
@@ -94,7 +97,7 @@ func TestOpen_MaxConnsApplied(t *testing.T) {
 	})
 
 	t.Run("negative also falls back", func(t *testing.T) {
-		st, err := Open(ctx, devDSN(), -1)
+		st, err := Open(ctx, devDSN(t), -1)
 		if err != nil {
 			t.Skipf("dev DB unreachable, skipping: %v", err)
 		}

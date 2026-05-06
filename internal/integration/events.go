@@ -32,8 +32,8 @@ func NewEventsHandler(bus *eventbus.Hub, log *slog.Logger) *EventsHandler {
 		log = slog.Default()
 	}
 	return &EventsHandler{
-		bus:      bus,
-		log:      log.With("component", "integration.events"),
+		bus: bus,
+		log: log.With("component", "integration.events"),
 		// Integration consumers may be server-to-server (no Origin
 		// header) or run from a browser-based admin tab. Auth is the
 		// bearer token in ?token=; routing this through wsutil

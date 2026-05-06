@@ -9,6 +9,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -34,6 +35,13 @@ func Open(ctx context.Context, dsn string, maxConns int) (*Store, error) {
 	}
 	if maxConns <= 0 {
 		maxConns = DefaultMaxConns
+	}
+	// Cap at int32 max — pgxpool.Config.MaxConns is int32 and a
+	// pathological TOML value (e.g. max_conns = 3000000000) would
+	// otherwise wrap to a negative int32 and silently fall back to
+	// pgx's own default.
+	if maxConns > math.MaxInt32 {
+		maxConns = math.MaxInt32
 	}
 	cfg.MaxConns = int32(maxConns)
 	cfg.MaxConnLifetime = 30 * time.Minute

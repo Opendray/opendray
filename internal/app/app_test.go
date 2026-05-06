@@ -45,9 +45,9 @@ func TestNewLogger_LevelParsing(t *testing.T) {
 		{"info", false},
 		{"warn", false},
 		{"error", false},
-		{"INFO", false},     // case-insensitive
-		{"unknown", false},  // falls back to info, no error
-		{"", false},         // default
+		{"INFO", false},    // case-insensitive
+		{"unknown", false}, // falls back to info, no error
+		{"", false},        // default
 	}
 	for _, tc := range tests {
 		t.Run("level="+tc.level, func(t *testing.T) {
