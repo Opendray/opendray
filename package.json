@@ -6,7 +6,9 @@
   "scripts": {
     "build:web": "pnpm --filter web build",
     "dev:web": "pnpm --filter web dev",
-    "lint:web": "pnpm --filter web lint"
+    "lint:web": "pnpm --filter web lint",
+    "build:mobile": "pnpm --filter mobile build",
+    "dev:mobile": "pnpm --filter mobile dev"
   },
   "engines": {
     "node": ">=22",
