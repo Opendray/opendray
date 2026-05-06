@@ -234,14 +234,20 @@ func (b *Bridge) attach(conn *websocket.Conn, declared []channel.Capability, pla
 		b.cancel()
 	}
 	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
 	b.conn = conn
 	b.cancel = cancel
-	b.done = make(chan struct{})
+	b.done = done
 	b.caps = caps
 	b.platform = platform
 	b.mu.Unlock()
 
-	go b.readPump(ctx, conn)
+	// Pass `done` as a captured local so readPump's deferred close
+	// still fires even if Stop() (which clears b.done) wins the race
+	// for b.mu. Reading b.done from inside readPump would race with
+	// that clear and silently leak a never-closed channel — Stop
+	// would then block forever on its own done receive.
+	go b.readPump(ctx, conn, done)
 	go b.pingPump(ctx, conn)
 	b.log.Info("bridge adapter attached", "platform", platform, "caps", declared)
 }
@@ -390,15 +396,11 @@ func (b *Bridge) writeFrame(payload map[string]any) error {
 }
 
 // readPump reads one frame at a time and dispatches it to the right
-// inbound path. Closes b.done on exit.
-func (b *Bridge) readPump(ctx context.Context, conn *websocket.Conn) {
-	b.mu.Lock()
-	done := b.done
-	b.mu.Unlock()
+// inbound path. Closes the supplied done channel on exit so Stop()
+// can wait for the goroutine to actually finish.
+func (b *Bridge) readPump(ctx context.Context, conn *websocket.Conn, done chan struct{}) {
 	defer func() {
-		if done != nil {
-			close(done)
-		}
+		close(done)
 		_ = conn.Close()
 	}()
 
