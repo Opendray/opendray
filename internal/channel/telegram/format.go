@@ -4,14 +4,14 @@
 // <pre>, <a href>, <blockquote>) but no tables, no nested lists, no
 // CSS. To mirror what Claude prints in its TUI we:
 //
-//   * Parse fenced code blocks (```), wrap them in <pre> with HTML
+//   - Parse fenced code blocks (```), wrap them in <pre> with HTML
 //     escaping inside.
-//   * Convert Markdown tables to a vertical "Header: value" layout —
+//   - Convert Markdown tables to a vertical "Header: value" layout —
 //     mobile-readable, no broken pipe characters.
-//   * Convert # / ## / ### headings to <b>.
-//   * Convert -/* bullets to "  • " lines.
-//   * inline: **bold** → <b>, `code` → <code>, *italic* → <i>.
-//   * Escape any stray <, >, & in plain text.
+//   - Convert # / ## / ### headings to <b>.
+//   - Convert -/* bullets to "  • " lines.
+//   - inline: **bold** → <b>, `code` → <code>, *italic* → <i>.
+//   - Escape any stray <, >, & in plain text.
 //
 // Ported from opendray v1's gateway/telegram/forwarder.go.
 package telegram
@@ -249,7 +249,7 @@ func renderTable(rows []string) string {
 }
 
 // inlineMarkdown converts the inline subset `**bold**`, `*italic*`,
-// `` `code` `` to HTML tags. Other characters are HTML-escaped.
+// “ `code` “ to HTML tags. Other characters are HTML-escaped.
 func inlineMarkdown(s string) string {
 	s = escapeHTML(s)
 	s = boldRe.ReplaceAllString(s, "<b>$1</b>")

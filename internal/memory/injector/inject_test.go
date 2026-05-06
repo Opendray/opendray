@@ -37,13 +37,6 @@ func (f *fakeMemoryReader) Search(ctx context.Context, req memory.SearchRequest)
 	return f.searchHits, nil
 }
 
-// fakeProfileStore implements *ProfileStore's Resolve via a stub
-// since the test doesn't need the rest. We embed a real store on
-// nil pool but only use the synthetic-default branch.
-type fakeProfileStore struct {
-	resolved Profile
-}
-
 // Resolve via the embedded ProfileStore would require a DB; we
 // build the Injector with a real ProfileStore against a no-op
 // pool and override the resolved Profile by injecting it through
@@ -56,7 +49,7 @@ type fakeProfileStore struct {
 func TestRender_NoneReturnsEmpty(t *testing.T) {
 	mem := &fakeMemoryReader{}
 	inj := &Injector{
-		store: nil, // not used in the test path
+		store:  nil, // not used in the test path
 		memory: mem,
 		log:    silentLog(),
 	}

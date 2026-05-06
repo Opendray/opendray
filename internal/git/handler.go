@@ -67,12 +67,12 @@ const (
 // the panel renders an "init" affordance from this rather than a
 // stack-trace.
 type StatusResponse struct {
-	IsRepo  bool         `json:"is_repo"`
-	Branch  string       `json:"branch,omitempty"`
-	Ahead   int          `json:"ahead"`
-	Behind  int          `json:"behind"`
-	Upstream string      `json:"upstream,omitempty"`
-	Files   []StatusFile `json:"files"`
+	IsRepo   bool         `json:"is_repo"`
+	Branch   string       `json:"branch,omitempty"`
+	Ahead    int          `json:"ahead"`
+	Behind   int          `json:"behind"`
+	Upstream string       `json:"upstream,omitempty"`
+	Files    []StatusFile `json:"files"`
 }
 
 // StatusFile mirrors `git status --porcelain=v1 -b -z`'s entries.
@@ -162,9 +162,9 @@ func (h *Handlers) log_(w http.ResponseWriter, r *http.Request) {
 
 // diff handles GET /git/diff?path=<dir>&file=<file>&scope=<unstaged|staged|all>.
 //
-//   scope=unstaged (default) → `git diff -- <file>`
-//   scope=staged             → `git diff --cached -- <file>`
-//   scope=all                → `git diff HEAD -- <file>`
+//	scope=unstaged (default) → `git diff -- <file>`
+//	scope=staged             → `git diff --cached -- <file>`
+//	scope=all                → `git diff HEAD -- <file>`
 //
 // `file` is optional; omit to diff the whole tree. Untracked files
 // have no diff (git tracks them as "??") so callers should fall back

@@ -341,7 +341,7 @@ func cfgInt(m map[string]any, k string) int {
 // values (e.g. SMB password) MUST arrive in plaintext — the
 // service encrypts them before persisting.
 type CreateTargetRequest struct {
-	ID      string         // optional; auto-generated if empty
+	ID      string // optional; auto-generated if empty
 	Kind    TargetKind
 	Config  map[string]any // raw, plaintext
 	Enabled bool

@@ -24,10 +24,10 @@ import (
 var ErrNotFound = errors.New("custom task not found")
 
 type Task struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	Command     string    `json:"command"`
-	Description string    `json:"description,omitempty"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Command     string `json:"command"`
+	Description string `json:"description,omitempty"`
 	// Cwd="" means global (visible from any session). Otherwise must
 	// be an absolute path; tasks list filters to entries where cwd
 	// equals the requesting session's cwd.
@@ -66,7 +66,7 @@ const taskSelect = `
     SELECT id, name, command, description, cwd, created_at, updated_at
     FROM custom_tasks`
 
-// List returns global tasks (cwd='') plus tasks scoped to the given
+// List returns global tasks (cwd=”) plus tasks scoped to the given
 // cwd. Pass cwd="" to get only globals, or omit the cwd param to get
 // every row (admin/management view from the Plugins page).
 func (s *Service) List(ctx context.Context, cwd string, all bool) ([]Task, error) {

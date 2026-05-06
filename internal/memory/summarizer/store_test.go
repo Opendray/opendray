@@ -201,12 +201,12 @@ func TestStore_LogCall_AndAggregate(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := store.LogCall(context.Background(), CallLogRow{
-		ProviderID:    prov.ID,
-		Status:        "succeeded",
-		InputTokens:   200,
-		OutputTokens:  50,
-		EstimatedUSD:  0.00045,
-		FactsStored:   4,
+		ProviderID:   prov.ID,
+		Status:       "succeeded",
+		InputTokens:  200,
+		OutputTokens: 50,
+		EstimatedUSD: 0.00045,
+		FactsStored:  4,
 	}); err != nil {
 		t.Fatal(err)
 	}

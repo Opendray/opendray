@@ -23,7 +23,7 @@ import (
 //
 // Auth modes (in priority order):
 //  1. PrivateKey set         → publickey auth, optional Password as the
-//                              key passphrase
+//     key passphrase
 //  2. Password set, no key   → password auth
 //
 // HostKey can be an explicit OpenSSH-format public key string or

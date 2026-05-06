@@ -131,9 +131,9 @@ type runningSession struct {
 	sessMu sync.RWMutex
 	sess   Session
 
-	cmd     *exec.Cmd
-	pty     *os.File
-	ring    *RingBuffer
+	cmd  *exec.Cmd
+	pty  *os.File
+	ring *RingBuffer
 	// vt is a virtual-terminal emulator fed in lockstep with `ring`.
 	// ring keeps the byte-stream history for client replay; vt keeps
 	// the *current screen* (post-redraw) for snapshots used by
@@ -291,11 +291,10 @@ func (m *Manager) Start(ctx context.Context, id string) (Session, error) {
 	if err != nil {
 		return Session{}, err
 	}
-	if !sess.State.IsTerminal() {
-		// Row says running but not in our map — likely a stale row
-		// surviving a gateway restart. Fall through and respawn.
-	}
-
+	// If sess.State is non-terminal at this point, the row says
+	// running but it's not in our in-memory map — likely a stale
+	// row surviving a gateway restart. Fall through and respawn
+	// regardless of state.
 	sess.State = StateRunning
 	sess.EndedAt = nil
 	sess.ExitCode = nil

@@ -44,8 +44,8 @@ func NewBM25Embedder(dim int) *BM25Embedder {
 	return &BM25Embedder{dim: dim}
 }
 
-func (e *BM25Embedder) Name() string     { return "bm25" }
-func (e *BM25Embedder) Dimensions() int  { return e.dim }
+func (e *BM25Embedder) Name() string    { return "bm25" }
+func (e *BM25Embedder) Dimensions() int { return e.dim }
 
 // Embed computes a hash-bucketed term-frequency vector for each
 // input. Vectors are L2-normalised so cosine similarity equals

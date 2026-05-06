@@ -3,8 +3,9 @@
 // for an AI agent to lazy-load on demand.
 //
 // Storage model — same philosophy as the notes vault:
-//   <vault>/skills/<id>/SKILL.md     # user / shared skills (filesystem)
-//   //go:embed builtin/<id>/SKILL.md # built-in skills shipped in the binary
+//
+//	<vault>/skills/<id>/SKILL.md     # user / shared skills (filesystem)
+//	//go:embed builtin/<id>/SKILL.md # built-in skills shipped in the binary
 //
 // Vault entries override built-ins of the same id, so users can customise
 // any shipped skill by dropping a same-named directory in their vault.
@@ -267,8 +268,8 @@ func IndexPrompt(skills []Skill) string {
 // Symlink rules:
 //   - srcDir/<entry>     → destDir/<entry>      (any non-skills entry)
 //   - srcDir/skills/     → real dir at destDir/skills/
-//     - srcDir/skills/<id> → destDir/skills/<id> (preserves user skills)
-//     - opendray skill   → real dir at destDir/skills/<id>/SKILL.md
+//   - srcDir/skills/<id> → destDir/skills/<id> (preserves user skills)
+//   - opendray skill   → real dir at destDir/skills/<id>/SKILL.md
 //   - opendray-injected skills shadow same-id entries from srcDir
 //     (so user can override an opendray skill by creating one with
 //     matching id in their account dir, but only if opendray's loader

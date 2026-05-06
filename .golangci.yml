@@ -1,0 +1,23 @@
+version: "2"
+
+run:
+  timeout: 5m
+  go: "1.25"
+
+linters:
+  default: standard
+  # errcheck flagged 96 unchecked errors across the tree at the
+  # baseline of this PR. Auditing each call is a separate effort
+  # tracked as a follow-up; disabling here is intentional and
+  # explicit so it doesn't quietly drift into the standard set.
+  disable:
+    - errcheck
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

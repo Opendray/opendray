@@ -24,8 +24,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/backup"
 	"github.com/opendray/opendray-v2/internal/catalog"
 	"github.com/opendray/opendray-v2/internal/channel"
-	"github.com/opendray/opendray-v2/internal/channel/bridge" // also registers kind=bridge via init()
-	"github.com/opendray/opendray-v2/internal/cliacct"
+	"github.com/opendray/opendray-v2/internal/channel/bridge"     // also registers kind=bridge via init()
 	_ "github.com/opendray/opendray-v2/internal/channel/dingtalk" // register kind=dingtalk
 	_ "github.com/opendray/opendray-v2/internal/channel/discord"  // register kind=discord
 	_ "github.com/opendray/opendray-v2/internal/channel/feishu"   // register kind=feishu
@@ -33,26 +32,27 @@ import (
 	_ "github.com/opendray/opendray-v2/internal/channel/telegram" // register kind=telegram
 	_ "github.com/opendray/opendray-v2/internal/channel/wechat"   // register kind=wechat (wxpusher push)
 	_ "github.com/opendray/opendray-v2/internal/channel/wecom"    // register kind=wecom
+	"github.com/opendray/opendray-v2/internal/cliacct"
 	"github.com/opendray/opendray-v2/internal/config"
+	customtask "github.com/opendray/opendray-v2/internal/customtask"
 	"github.com/opendray/opendray-v2/internal/eventbus"
 	fsapi "github.com/opendray/opendray-v2/internal/fs"
+	"github.com/opendray/opendray-v2/internal/gateway"
 	gitapi "github.com/opendray/opendray-v2/internal/git"
 	githost "github.com/opendray/opendray-v2/internal/githost"
-	customtask "github.com/opendray/opendray-v2/internal/customtask"
-	mcpapi "github.com/opendray/opendray-v2/internal/mcp"
-	notesapi "github.com/opendray/opendray-v2/internal/notes"
-	searchapi "github.com/opendray/opendray-v2/internal/search"
-	"github.com/opendray/opendray-v2/internal/skills"
-	vaultgit "github.com/opendray/opendray-v2/internal/vaultgit"
-	"github.com/opendray/opendray-v2/internal/gateway"
 	"github.com/opendray/opendray-v2/internal/integration"
+	mcpapi "github.com/opendray/opendray-v2/internal/mcp"
 	"github.com/opendray/opendray-v2/internal/memory"
 	"github.com/opendray/opendray-v2/internal/memory/capture"
 	"github.com/opendray/opendray-v2/internal/memory/injector"
 	"github.com/opendray/opendray-v2/internal/memory/summarizer"
+	notesapi "github.com/opendray/opendray-v2/internal/notes"
+	searchapi "github.com/opendray/opendray-v2/internal/search"
 	"github.com/opendray/opendray-v2/internal/session"
 	"github.com/opendray/opendray-v2/internal/settings"
+	"github.com/opendray/opendray-v2/internal/skills"
 	"github.com/opendray/opendray-v2/internal/store"
+	vaultgit "github.com/opendray/opendray-v2/internal/vaultgit"
 	"github.com/opendray/opendray-v2/internal/version"
 )
 
@@ -918,7 +918,6 @@ func buildEmbedder(cfg config.MemoryConfig) (memory.Embedder, error) {
 	}
 	return nil, fmt.Errorf("unknown memory.backend=%q (valid: auto, bm25, http, local)", cfg.Backend)
 }
-
 
 // resolveClaudeHistoryConfig translates the operator's
 // [providers.claude] TOML section into a session-package config,

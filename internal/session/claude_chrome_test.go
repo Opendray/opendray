@@ -84,8 +84,8 @@ func TestIsSeparatorLine(t *testing.T) {
 		{"________________", true},
 		{"---- ---- ----", true},
 		{"= = = = = =", true},
-		{"x x x", false},  // contains letters
-		{"--", false},      // too short
+		{"x x x", false}, // contains letters
+		{"--", false},    // too short
 		{"hello", false},
 		{"", false},
 	}

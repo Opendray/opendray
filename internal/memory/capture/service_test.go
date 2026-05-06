@@ -36,15 +36,15 @@ func (f *fakeMemory) Store(ctx context.Context, req memory.StoreRequest) (string
 
 // fakeProvider implements summarizer.Provider with a fixed response.
 type fakeProvider struct {
-	name        string
-	kind        string
-	res         summarizer.SummarizeResult
-	err         error
-	calls       int
+	name  string
+	kind  string
+	res   summarizer.SummarizeResult
+	err   error
+	calls int
 }
 
-func (f *fakeProvider) Name() string { return f.name }
-func (f *fakeProvider) Kind() string { return f.kind }
+func (f *fakeProvider) Name() string                        { return f.name }
+func (f *fakeProvider) Kind() string                        { return f.kind }
 func (f *fakeProvider) Available(ctx context.Context) error { return nil }
 func (f *fakeProvider) Summarize(ctx context.Context, msgs []summarizer.Message) (summarizer.SummarizeResult, error) {
 	f.calls++
@@ -66,20 +66,6 @@ func (f *fakeCallLog) LogCall(ctx context.Context, row summarizer.CallLogRow) er
 	defer f.mu.Unlock()
 	f.rows = append(f.rows, row)
 	return nil
-}
-
-// fakeRegistry returns a fixed Provider regardless of the rule's
-// configured ID. Implements just enough of the Registry surface
-// (we only call Build/Default in runner.pickProvider) by using a
-// real Registry wrapping a fake DB-less store stub — easier path
-// is testing the runner's flow with a higher-level injection.
-//
-// Approach: bypass the Registry and inject a fakeProvider directly
-// by unfortunately coupling on the runner internals. Pragmatic
-// solution: wrap pickProvider in a function variable that tests
-// can replace.
-type fakeRunner struct {
-	*runner
 }
 
 func TestRunner_RunForSession_HappyPath(t *testing.T) {
@@ -118,13 +104,13 @@ func TestRunner_RunForSession_HappyPath(t *testing.T) {
 		},
 	}
 	rule := Rule{
-		ID:               "rule-test",
-		Name:             "test",
-		Enabled:          true,
-		TriggerKind:      "after_messages",
-		TriggerConfig:    map[string]any{"n": float64(2)}, // fire after 2 new
-		DedupThreshold:   0.85,
-		TargetScope:      "project",
+		ID:             "rule-test",
+		Name:           "test",
+		Enabled:        true,
+		TriggerKind:    "after_messages",
+		TriggerConfig:  map[string]any{"n": float64(2)}, // fire after 2 new
+		DedupThreshold: 0.85,
+		TargetScope:    "project",
 	}
 	sess := SessionInfo{ID: "sess-1", ProviderID: "claude", Cwd: "/tmp/proj"}
 
@@ -376,7 +362,7 @@ func runStep(t *testing.T, r *runner, prov summarizer.Provider, rule Rule, sess 
 		RuleID: rule.ID, SessionID: sess.ID,
 		StartedAt: startedAt, FinishedAt: time.Now().UTC(),
 		InputTokens: res.InputTokens, OutputTokens: res.OutputTokens,
-		EstimatedUSD: res.EstimatedUSD,
+		EstimatedUSD:   res.EstimatedUSD,
 		FactsExtracted: len(res.Facts), FactsStored: stored, FactsSkippedDedup: skipped,
 		Status: "succeeded",
 	})

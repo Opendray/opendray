@@ -34,15 +34,15 @@ func (s State) IsTerminal() bool {
 // resources (PTY fd, ring buffer, subscribers) live on the Manager's
 // internal struct, not here.
 type Session struct {
-	ID              string     `json:"id"`
-	Name            string     `json:"name,omitempty"`
-	ProviderID      string     `json:"provider_id"`
-	Cwd             string     `json:"cwd"`
-	Args            []string   `json:"args"`
-	State           State      `json:"state"`
-	PID             int        `json:"pid,omitempty"`
-	ClaudeAccountID string     `json:"claude_account_id,omitempty"`
-	ClaudeSessionID string     `json:"claude_session_id,omitempty"`
+	ID              string   `json:"id"`
+	Name            string   `json:"name,omitempty"`
+	ProviderID      string   `json:"provider_id"`
+	Cwd             string   `json:"cwd"`
+	Args            []string `json:"args"`
+	State           State    `json:"state"`
+	PID             int      `json:"pid,omitempty"`
+	ClaudeAccountID string   `json:"claude_account_id,omitempty"`
+	ClaudeSessionID string   `json:"claude_session_id,omitempty"`
 	// ParentSessionID links a session spawned on behalf of another
 	// (e.g. the Inspector's Tasks tab spawns shell children of an
 	// AI session). Empty for top-level sessions. Used purely for UI
@@ -96,10 +96,10 @@ type SwitchAccountRequest struct {
 // Errors used by the manager and surfaced as HTTP status codes by the
 // handler layer.
 var (
-	ErrNotFound                = errors.New("session not found")
-	ErrAlreadyEnded            = errors.New("session already ended")
-	ErrUnknownProvider         = errors.New("unknown provider")
-	ErrProviderUnavailable     = errors.New("provider unavailable")
+	ErrNotFound                 = errors.New("session not found")
+	ErrAlreadyEnded             = errors.New("session already ended")
+	ErrUnknownProvider          = errors.New("unknown provider")
+	ErrProviderUnavailable      = errors.New("provider unavailable")
 	ErrAccountSwitchUnsupported = errors.New("account switch only supported for claude provider")
 )
 

@@ -66,11 +66,11 @@ func runMcpMemory(args []string) int {
 	}
 
 	srv := &memMCPServer{
-		cfg:     cfg,
-		client:  &http.Client{},
-		out:     os.Stdout,
-		outMu:   &sync.Mutex{},
-		errLog:  os.Stderr,
+		cfg:    cfg,
+		client: &http.Client{},
+		out:    os.Stdout,
+		outMu:  &sync.Mutex{},
+		errLog: os.Stderr,
 	}
 
 	scanner := bufio.NewScanner(os.Stdin)

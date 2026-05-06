@@ -66,9 +66,9 @@ func TestScreenSnapshot_KeepsOnlyVisibleScreen(t *testing.T) {
 	// byte stream is full of garbage but the visible screen is clean.
 	frames := []string{
 		"first frame line 1\nfirst frame line 2\n",
-		"\x1b[2J\x1b[H",                                // clear screen + home
+		"\x1b[2J\x1b[H", // clear screen + home
 		"\x1b[33mWaiting for input\x1b[0m\nReply with /resume\n",
-		"\x1b[2J\x1b[H",                                // clear again
+		"\x1b[2J\x1b[H", // clear again
 		"Final question:\nDo you approve? [y/N]\n",
 	}
 	for _, f := range frames {

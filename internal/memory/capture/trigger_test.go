@@ -94,7 +94,7 @@ func TestManualTrigger_NeverAutoFires(t *testing.T) {
 
 func TestTriggerFromRule_AllKinds(t *testing.T) {
 	cases := []struct {
-		kind     string
+		kind       string
 		expectKind string
 	}{
 		{"after_messages", "AfterMessagesTrigger"},

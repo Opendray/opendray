@@ -56,9 +56,9 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 
 func (h *Handler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	return &Handler{
-		inner: h.inner.WithAttrs(attrs),
-		ring:  h.ring,
-		attrs: append(append([]slog.Attr(nil), h.attrs...), attrs...),
+		inner:  h.inner.WithAttrs(attrs),
+		ring:   h.ring,
+		attrs:  append(append([]slog.Attr(nil), h.attrs...), attrs...),
 		groups: append([]string(nil), h.groups...),
 	}
 }

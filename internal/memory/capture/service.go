@@ -65,14 +65,14 @@ type SummarizerCallLogger interface {
 // Errors at step 3-5 don't abort the engine — they're logged into
 // the call log + bumped on the failure streak. Engine keeps ticking.
 type runner struct {
-	rules     *RuleStore
-	registry  *summarizer.Registry
-	memory    MemoryWriter
-	history   HistoryReader
-	callLog   SummarizerCallLogger
-	state     *stateMap
+	rules        *RuleStore
+	registry     *summarizer.Registry
+	memory       MemoryWriter
+	history      HistoryReader
+	callLog      SummarizerCallLogger
+	state        *stateMap
 	historyLimit int
-	log       *slog.Logger
+	log          *slog.Logger
 }
 
 // runForceForSession bypasses trigger evaluation and pause state,
@@ -164,11 +164,11 @@ func (r *runner) runForSessionWithForce(ctx context.Context, rule Rule, sess Ses
 		r.log.Info("capture: no provider available",
 			"rule_id", rule.ID, "session_id", sess.ID, "err", perr)
 		r.recordCall(ctx, summarizer.CallLogRow{
-			RuleID:                rule.ID,
-			SessionID:             sess.ID,
-			StartedAt:             time.Now().UTC(),
-			Status:                "provider_unavailable",
-			Error:                 perr.Error(),
+			RuleID:    rule.ID,
+			SessionID: sess.ID,
+			StartedAt: time.Now().UTC(),
+			Status:    "provider_unavailable",
+			Error:     perr.Error(),
 		})
 		r.state.MarkFailure(rule.ID, sess.ID)
 		return

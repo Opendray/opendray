@@ -7,7 +7,7 @@
 //
 // The webhook URL each channel needs is:
 //
-//   https://<opendray-host>/api/v1/channels/<channel_id>/webhook
+//	https://<opendray-host>/api/v1/channels/<channel_id>/webhook
 //
 // Configure that URL in the Lark dev portal → Event subscriptions →
 // "Request URL". The first POST Feishu sends is a URL-verification
@@ -195,12 +195,12 @@ func (f *Feishu) dispatchMessage(ctx context.Context, raw json.RawMessage) {
 			} `json:"sender_id"`
 		} `json:"sender"`
 		Message struct {
-			MessageID  string `json:"message_id"`
-			ChatID     string `json:"chat_id"`
-			ChatType   string `json:"chat_type"`
+			MessageID   string `json:"message_id"`
+			ChatID      string `json:"chat_id"`
+			ChatType    string `json:"chat_type"`
 			MessageType string `json:"message_type"`
-			Content    string `json:"content"` // JSON-encoded string
-			CreateTime string `json:"create_time"`
+			Content     string `json:"content"` // JSON-encoded string
+			CreateTime  string `json:"create_time"`
 		} `json:"message"`
 	}
 	if err := json.Unmarshal(raw, &ev); err != nil {
@@ -218,7 +218,7 @@ func (f *Feishu) dispatchMessage(ctx context.Context, raw json.RawMessage) {
 		Timestamp:      time.Now().UTC(),
 		ReplyCtx:       rc,
 		Metadata: map[string]any{
-			"feishu_message_id": ev.Message.MessageID,
+			"feishu_message_id":   ev.Message.MessageID,
 			"feishu_message_type": ev.Message.MessageType,
 		},
 	}
@@ -401,7 +401,7 @@ func renderCard(card *channel.Card) map[string]any {
 	}
 	if card.Header != nil && card.Header.Title != "" {
 		header := map[string]any{
-			"title":    map[string]any{"tag": "plain_text", "content": card.Header.Title},
+			"title": map[string]any{"tag": "plain_text", "content": card.Header.Title},
 		}
 		if t := feishuTemplate(card.Header.Color); t != "" {
 			header["template"] = t
@@ -413,8 +413,8 @@ func renderCard(card *channel.Card) map[string]any {
 		switch v := el.(type) {
 		case channel.CardMarkdown:
 			elements = append(elements, map[string]any{
-				"tag":     "div",
-				"text":    map[string]any{"tag": "lark_md", "content": v.Content},
+				"tag":  "div",
+				"text": map[string]any{"tag": "lark_md", "content": v.Content},
 			})
 		case channel.CardDivider:
 			elements = append(elements, map[string]any{"tag": "hr"})

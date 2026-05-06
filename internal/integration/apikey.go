@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	apiKeyPrefix       = "odk_live_"
-	apiKeyRandomBytes  = 32
-	apiKeyBcryptCost   = 12
+	apiKeyPrefix      = "odk_live_"
+	apiKeyRandomBytes = 32
+	apiKeyBcryptCost  = 12
 )
 
 // generateAPIKey returns a fresh "odk_live_<43chars>" string and its

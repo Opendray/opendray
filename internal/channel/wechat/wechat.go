@@ -16,12 +16,12 @@
 //
 // Provisioning:
 //
-//   1. Visit https://wxpusher.zjiecode.com → 应用管理 → 创建应用 →
-//      copy the **APP_TOKEN** (starts with `AT_`).
-//   2. Open the QR code from 用户管理 in WeChat to subscribe; copy
-//      your **UID** (starts with `UID_`). Or define a 主题 (topic)
-//      and use its numeric topicId so anyone subscribed to the topic
-//      receives the push.
+//  1. Visit https://wxpusher.zjiecode.com → 应用管理 → 创建应用 →
+//     copy the **APP_TOKEN** (starts with `AT_`).
+//  2. Open the QR code from 用户管理 in WeChat to subscribe; copy
+//     your **UID** (starts with `UID_`). Or define a 主题 (topic)
+//     and use its numeric topicId so anyone subscribed to the topic
+//     receives the push.
 package wechat
 
 import (
@@ -57,19 +57,20 @@ func apiURL(path string) string {
 func init() { channel.Register("wechat", New) }
 
 // contentType values from WxPusher docs:
-//   1 = plain text
-//   2 = HTML
-//   3 = Markdown
+//
+//	1 = plain text
+//	2 = HTML
+//	3 = Markdown
 const (
 	wxpContentText     = 1
 	wxpContentMarkdown = 3
 )
 
 type config struct {
-	AppToken      string  `json:"app_token"`
-	UIDs          []string `json:"uids,omitempty"`
-	TopicIDs      []int    `json:"topic_ids,omitempty"`
-	URL           string   `json:"url,omitempty"` // optional landing URL on tap
+	AppToken string   `json:"app_token"`
+	UIDs     []string `json:"uids,omitempty"`
+	TopicIDs []int    `json:"topic_ids,omitempty"`
+	URL      string   `json:"url,omitempty"` // optional landing URL on tap
 }
 
 type WeChat struct {

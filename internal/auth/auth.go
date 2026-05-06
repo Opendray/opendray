@@ -81,7 +81,7 @@ func (s *Service) Login(user, password string) (string, TokenInfo, error) {
 	}
 	userOK := subtle.ConstantTimeCompare([]byte(user), []byte(s.cfg.User)) == 1
 	passOK := subtle.ConstantTimeCompare([]byte(password), []byte(s.cfg.Password)) == 1
-	if !(userOK && passOK) {
+	if !userOK || !passOK {
 		s.publishLogin(user, false, "credentials mismatch")
 		return "", TokenInfo{}, ErrInvalidCredentials
 	}

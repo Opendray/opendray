@@ -23,16 +23,16 @@ import (
 
 // Secrets is the MCP secrets vault. Two on-disk formats are supported:
 //
-//   encrypted (preferred): a binary file with header `ODSE\x01` + 12-byte
-//     AES-GCM nonce + ciphertext. The 256-bit key lives in the OS
-//     keychain (macOS Keychain / Linux secret-service / Windows
-//     Credential Manager) under service "opendray", account
-//     "mcp-secrets-key".
+//	encrypted (preferred): a binary file with header `ODSE\x01` + 12-byte
+//	  AES-GCM nonce + ciphertext. The 256-bit key lives in the OS
+//	  keychain (macOS Keychain / Linux secret-service / Windows
+//	  Credential Manager) under service "opendray", account
+//	  "mcp-secrets-key".
 //
-//   plaintext (fallback / legacy): dotenv KEY=VALUE one-per-line. Used
-//     when the OS keychain is unavailable (typically headless Linux
-//     without gnome-keyring / kwallet running). Migrated to encrypted
-//     automatically on first load when the keychain becomes available.
+//	plaintext (fallback / legacy): dotenv KEY=VALUE one-per-line. Used
+//	  when the OS keychain is unavailable (typically headless Linux
+//	  without gnome-keyring / kwallet running). Migrated to encrypted
+//	  automatically on first load when the keychain becomes available.
 //
 // The substitution path used at session spawn time
 // (Substitute / SubstituteMap / Resolve) does not care which format

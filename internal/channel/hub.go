@@ -216,9 +216,10 @@ func (h *Hub) registerBuiltinCommands() {
 			lines := []string{"Recently-notified sessions (most recent first):"}
 			for _, k := range all {
 				marker := ""
-				if k.sid == active {
+				switch k.sid {
+				case active:
 					marker = "  ← /select"
-				} else if k.sid == last {
+				case last:
 					marker = "  (last)"
 				}
 				lines = append(lines, fmt.Sprintf("  /select %s%s", k.sid, marker))
@@ -513,12 +514,12 @@ func (h *Hub) isMuted(ctx context.Context, channelID string) bool {
 // NotifyMode is the per-channel suppression policy for repeat
 // session.* notifications.
 //
-//   once     — fire once per (channel, topic, session) tuple. Stays
-//              suppressed until either the channel is updated, the
-//              session ends, or user input arrives back via the same
-//              channel (which resets the entry).
-//   cooldown — time-window suppression keyed off notify_cooldown_s.
-//   every    — never suppress; every event fires a notification.
+//	once     — fire once per (channel, topic, session) tuple. Stays
+//	           suppressed until either the channel is updated, the
+//	           session ends, or user input arrives back via the same
+//	           channel (which resets the entry).
+//	cooldown — time-window suppression keyed off notify_cooldown_s.
+//	every    — never suppress; every event fires a notification.
 //
 // Default is `once`: matches user expectations ("notify me once when
 // the session needs me, not every minute").
@@ -580,7 +581,7 @@ func (h *Hub) notifyPolicy(ctx context.Context, channelID string) (NotifyMode, t
 //   - every    → never
 //   - cooldown → suppressed if last fire was within `cd` ago
 //   - once     → suppressed forever after the first fire (until
-//                forgetNotifyState* / TTL elapses)
+//     forgetNotifyState* / TTL elapses)
 //
 // The state map is opportunistically GC'd: entries older than the
 // effective TTL (cooldown→2×cd, once→onceModeTTL) are dropped on
@@ -1109,10 +1110,10 @@ func (h *Hub) snippetPrefs(ctx context.Context, channelID string) snippetPrefs {
 // session.idle bodies are rendered as plain text (no code-fence
 // wrapper, no parse_mode-specific markdown). The reasoning:
 //
-//   * Wrapping a long Claude reply in ``` makes Telegram show it as
+//   - Wrapping a long Claude reply in ``` makes Telegram show it as
 //     monospace, which is fine for shell output but wrong for
 //     prose responses (the actual JSONL content).
-//   * Telegram legacy parse_mode=Markdown breaks on Claude's
+//   - Telegram legacy parse_mode=Markdown breaks on Claude's
 //     `**bold**` (GitHub-flavored) and can return 400 mid-message,
 //     killing the rest of the chunked stream.
 //

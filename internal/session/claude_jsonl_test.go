@@ -281,9 +281,9 @@ func assistantWithTool(t *testing.T, text, useID, toolName string, input map[str
 func userToolResult(t *testing.T, useID, body string) string {
 	t.Helper()
 	resultBlock := map[string]any{
-		"type":         "tool_result",
-		"tool_use_id":  useID,
-		"content":      body,
+		"type":        "tool_result",
+		"tool_use_id": useID,
+		"content":     body,
 	}
 	content, _ := json.Marshal([]any{resultBlock})
 	entry := map[string]any{

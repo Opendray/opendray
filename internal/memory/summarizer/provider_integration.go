@@ -124,8 +124,8 @@ func (p *IntegrationProvider) Summarize(ctx context.Context, msgs []Message) (Su
 	}
 
 	body := map[string]any{
-		"messages": msgs,
-		"scope":    "session", // engine fills meaningful values via context; integrations can ignore
+		"messages":  msgs,
+		"scope":     "session", // engine fills meaningful values via context; integrations can ignore
 		"scope_key": "transcript",
 	}
 	rawBody, err := json.Marshal(body)

@@ -23,7 +23,7 @@ import (
 // slog handler.
 type Record struct {
 	Time    time.Time      `json:"time"`
-	Level   string         `json:"level"`   // "DEBUG"/"INFO"/"WARN"/"ERROR"
+	Level   string         `json:"level"` // "DEBUG"/"INFO"/"WARN"/"ERROR"
 	Message string         `json:"message"`
 	Attrs   map[string]any `json:"attrs,omitempty"`
 	Text    string         `json:"text"` // rendered "13:48:22 INFO foo=bar baz" preview

@@ -205,8 +205,8 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			Command: sp.memory.BinaryPath,
 			Args:    []string{"mcp-memory"},
 			Env: map[string]string{
-				"OPENDRAY_BASE_URL": sp.memory.BaseURL,
-				"OPENDRAY_API_KEY":  sp.memory.APIKey,
+				"OPENDRAY_BASE_URL":     sp.memory.BaseURL,
+				"OPENDRAY_API_KEY":      sp.memory.APIKey,
 				"OPENDRAY_MEMORY_SCOPE": defaultStr(sp.memory.Scope, "project"),
 				// Scope key is the cwd at spawn time — populated below
 				// inside Prepare since we need access to the live
@@ -374,10 +374,10 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 // providerSupportsSkills enumerates which CLI providers we have a
 // safe skill-injection path for by default.
 //
-//   claude — `--append-system-prompt` flag, zero filesystem touch
-//   gemini — writes a GEMINI.md inside the per-session scratch dir
-//            and adds it to the workspace via --include-directories;
-//            does NOT override ~/.gemini, so auth is preserved
+//	claude — `--append-system-prompt` flag, zero filesystem touch
+//	gemini — writes a GEMINI.md inside the per-session scratch dir
+//	         and adds it to the workspace via --include-directories;
+//	         does NOT override ~/.gemini, so auth is preserved
 //
 // codex is intentionally NOT in the default list: it has no system-
 // prompt CLI flag, so the only path is `<CODEX_HOME>/instructions.md`,
@@ -400,9 +400,9 @@ func providerSupportsSkills(id string) bool {
 // path. Each provider has its own convention for picking up extra
 // system instructions:
 //
-//   claude: --append-system-prompt <text>          (CLI flag)
-//   codex:  <CODEX_HOME>/instructions.md           (file in config dir)
-//   gemini: <baseDir>/GEMINI.md + --include-directories=<baseDir>
+//	claude: --append-system-prompt <text>          (CLI flag)
+//	codex:  <CODEX_HOME>/instructions.md           (file in config dir)
+//	gemini: <baseDir>/GEMINI.md + --include-directories=<baseDir>
 //
 // The skills index itself is the same markdown across providers — only
 // the delivery mechanism differs.

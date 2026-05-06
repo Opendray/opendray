@@ -90,11 +90,11 @@ func (h *Handler) put(w http.ResponseWriter, r *http.Request) {
 // types a custom roots path. Always returns 200 with an outcome
 // payload; never errors out the request.
 type testPathResponse struct {
-	Path        string `json:"path"`
-	Exists      bool   `json:"exists"`
-	IsDir       bool   `json:"is_dir"`
-	ChildCount  int    `json:"child_count,omitempty"`
-	Note        string `json:"note,omitempty"`
+	Path       string `json:"path"`
+	Exists     bool   `json:"exists"`
+	IsDir      bool   `json:"is_dir"`
+	ChildCount int    `json:"child_count,omitempty"`
+	Note       string `json:"note,omitempty"`
 }
 
 func (h *Handler) testPath(w http.ResponseWriter, r *http.Request) {

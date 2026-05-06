@@ -46,11 +46,11 @@ func TestChannelMessage_SessionKey(t *testing.T) {
 // the capability detector returns just "text" for bare impls.
 type stubChannel struct{}
 
-func (stubChannel) Kind() string                                                  { return "stub" }
-func (stubChannel) ID() string                                                    { return "ch_stub" }
-func (stubChannel) Start(_ context.Context, _ InboundFunc) error                  { return nil }
-func (stubChannel) Stop(_ context.Context) error                                  { return nil }
-func (stubChannel) Send(_ context.Context, _ ChannelMessage) error                { return nil }
+func (stubChannel) Kind() string                                   { return "stub" }
+func (stubChannel) ID() string                                     { return "ch_stub" }
+func (stubChannel) Start(_ context.Context, _ InboundFunc) error   { return nil }
+func (stubChannel) Stop(_ context.Context) error                   { return nil }
+func (stubChannel) Send(_ context.Context, _ ChannelMessage) error { return nil }
 
 // richChannel implements every optional capability — used to assert
 // the detector picks them all up.
@@ -60,9 +60,11 @@ func (richChannel) SendCard(_ context.Context, _ ChannelMessage, _ *Card) error 
 func (richChannel) SendWithButtons(_ context.Context, _ ChannelMessage, _ [][]ButtonOption) error {
 	return nil
 }
-func (richChannel) SendImage(_ context.Context, _ ChannelMessage, _ ImageAttachment) error { return nil }
-func (richChannel) SendFile(_ context.Context, _ ChannelMessage, _ FileAttachment) error   { return nil }
-func (richChannel) StartTyping(_ context.Context, _ ChannelMessage) (stop func())          { return func() {} }
+func (richChannel) SendImage(_ context.Context, _ ChannelMessage, _ ImageAttachment) error {
+	return nil
+}
+func (richChannel) SendFile(_ context.Context, _ ChannelMessage, _ FileAttachment) error { return nil }
+func (richChannel) StartTyping(_ context.Context, _ ChannelMessage) (stop func())        { return func() {} }
 func (richChannel) UpdateMessage(_ context.Context, _ ChannelMessage, _ string, _ string) error {
 	return nil
 }

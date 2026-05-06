@@ -42,9 +42,9 @@ type WebDAVConfig struct {
 // GiB) this is acceptable; larger deployments should prefer S3 or
 // SFTP.
 type WebDAVTarget struct {
-	id       string
-	cfg      WebDAVConfig
-	dialTO   time.Duration
+	id        string
+	cfg       WebDAVConfig
+	dialTO    time.Duration
 	requestTO time.Duration
 }
 

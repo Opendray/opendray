@@ -6,7 +6,7 @@
 //
 //   - "none"          → return "" (model still uses memory_search on demand)
 //   - "top_k_recent"  → fetch the K most recent project-scoped memories
-//                       and render a markdown preface
+//     and render a markdown preface
 //
 // Strategy selection is per-session (session-scoped Profile row)
 // with a fall-through to the global default Profile (session_id

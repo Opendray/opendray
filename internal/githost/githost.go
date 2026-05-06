@@ -1,10 +1,10 @@
 // Package githost adds two layers on top of the read-only `git`
 // helpers in internal/git:
 //
-//   1. CRUD for per-host API tokens (GitHub / Gitea / GitLab) so the
-//      Inspector's Plugins page can manage credentials.
-//   2. Detect-remote + list-PRs endpoints used by the Inspector's Git
-//      tab to render an "open PRs" section for the session's repo.
+//  1. CRUD for per-host API tokens (GitHub / Gitea / GitLab) so the
+//     Inspector's Plugins page can manage credentials.
+//  2. Detect-remote + list-PRs endpoints used by the Inspector's Git
+//     tab to render an "open PRs" section for the session's repo.
 //
 // Tokens are stored plaintext in `git_hosts` — same trust model as the
 // claude_accounts on-disk OAuth tokens. The handlers mount under the
@@ -35,7 +35,7 @@ const (
 )
 
 var (
-	ErrNotFound      = errors.New("git host not found")
+	ErrNotFound       = errors.New("git host not found")
 	ErrNoTokenForHost = errors.New("no git host configured for this remote")
 )
 
@@ -270,13 +270,13 @@ func scanHost(row rowScanner) (Host, error) {
 // the hosts table. `Kind` is filled when a matching host row exists,
 // otherwise empty (UI shows "configure a token for <Host>").
 type Remote struct {
-	URL       string `json:"url"`
-	Host      string `json:"host"`
-	Owner     string `json:"owner"`
-	Repo      string `json:"repo"`
-	Kind      Kind   `json:"kind,omitempty"`
-	HasToken  bool   `json:"has_token"`
-	WebURL    string `json:"web_url,omitempty"`
+	URL      string `json:"url"`
+	Host     string `json:"host"`
+	Owner    string `json:"owner"`
+	Repo     string `json:"repo"`
+	Kind     Kind   `json:"kind,omitempty"`
+	HasToken bool   `json:"has_token"`
+	WebURL   string `json:"web_url,omitempty"`
 }
 
 // DetectRemote reads `git remote get-url origin` from `dir` and parses
@@ -364,9 +364,9 @@ type PullRequest struct {
 	Title     string    `json:"title"`
 	State     string    `json:"state"` // open | closed | merged
 	Author    string    `json:"author"`
-	Head      string    `json:"head"`  // source branch
-	Base      string    `json:"base"`  // target branch
-	URL       string    `json:"url"`   // web URL
+	Head      string    `json:"head"` // source branch
+	Base      string    `json:"base"` // target branch
+	URL       string    `json:"url"`  // web URL
 	Draft     bool      `json:"draft"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -517,13 +517,13 @@ func (s *Service) listGitLabMRs(ctx context.Context, h Host, rem Remote, state s
 		return nil, err
 	}
 	var raw []struct {
-		IID          int       `json:"iid"`
-		Title        string    `json:"title"`
-		State        string    `json:"state"`
-		WebURL       string    `json:"web_url"`
-		UpdatedAt    time.Time `json:"updated_at"`
-		Draft        bool      `json:"draft"`
-		Author       struct {
+		IID       int       `json:"iid"`
+		Title     string    `json:"title"`
+		State     string    `json:"state"`
+		WebURL    string    `json:"web_url"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Draft     bool      `json:"draft"`
+		Author    struct {
 			Username string `json:"username"`
 		} `json:"author"`
 		SourceBranch string `json:"source_branch"`

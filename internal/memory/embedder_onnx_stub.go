@@ -30,15 +30,15 @@ type LocalONNXEmbedder struct{}
 
 func NewLocalONNXEmbedder(_ LocalONNXConfig) (*LocalONNXEmbedder, error) {
 	return nil, errors.New(
-		"memory: LocalONNX embedder not compiled into this binary. " +
-			"Rebuild with `-tags local_onnx` and provide CGO_LDFLAGS for onnxruntime + libtokenizers. " +
-			"See docs/adr/0014-memory-subsystem.md and the Memory tutorial for setup.",
+		"memory: LocalONNX embedder not compiled into this binary; " +
+			"rebuild with `-tags local_onnx` and provide CGO_LDFLAGS for onnxruntime + libtokenizers; " +
+			"see docs/adr/0014-memory-subsystem.md and the Memory tutorial for setup",
 	)
 }
 
-func (e *LocalONNXEmbedder) Close() error                                   { return nil }
-func (e *LocalONNXEmbedder) Name() string                                   { return "local-onnx-stub" }
-func (e *LocalONNXEmbedder) Dimensions() int                                { return 0 }
+func (e *LocalONNXEmbedder) Close() error    { return nil }
+func (e *LocalONNXEmbedder) Name() string    { return "local-onnx-stub" }
+func (e *LocalONNXEmbedder) Dimensions() int { return 0 }
 func (e *LocalONNXEmbedder) Embed(_ context.Context, _ []string) ([][]float32, error) {
 	return nil, errors.New("memory: LocalONNX stub — see NewLocalONNXEmbedder")
 }

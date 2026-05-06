@@ -44,11 +44,11 @@ func (h *Handlers) Mount(r chi.Router) {
 }
 
 type skillView struct {
-	ID               string `json:"id"`
-	Name             string `json:"name"`
-	Description      string `json:"description"`
-	Source           string `json:"source"`
-	Body             string `json:"body,omitempty"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Source      string `json:"source"`
+	Body        string `json:"body,omitempty"`
 	// OverridesBuiltin is true when source=="vault" AND a built-in
 	// with the same id exists embedded in the binary. UI uses this to
 	// offer a "Reset to built-in" action that just removes the vault

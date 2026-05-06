@@ -74,11 +74,11 @@ func TestPgDump_Dump_EmptyDSN(t *testing.T) {
 
 func TestParsePGMajorMinor(t *testing.T) {
 	cases := map[string]string{
-		"pg_dump (PostgreSQL) 14.19 (Homebrew)":       "14.19",
-		"pg_dump (PostgreSQL) 16.2":                   "16.2",
-		"pg_dump (PostgreSQL) 17.0 (Debian 17.0-1)":   "17.0",
-		"":                                            "",
-		"pg_dump (PostgreSQL) bogus":                  "",
+		"pg_dump (PostgreSQL) 14.19 (Homebrew)":     "14.19",
+		"pg_dump (PostgreSQL) 16.2":                 "16.2",
+		"pg_dump (PostgreSQL) 17.0 (Debian 17.0-1)": "17.0",
+		"":                           "",
+		"pg_dump (PostgreSQL) bogus": "",
 	}
 	for in, want := range cases {
 		if got := ParsePGMajorMinor(in); got != want {
