@@ -112,9 +112,9 @@ Zustand + xterm.js) and per-W milestone notes.
 - [`docs/design.md`](docs/design.md) — mission, architecture, subsystems,
   API, data model, roadmap
 - [`docs/adr/`](docs/adr/) — every binding architecture decision, dated
+- [`docs/operator-guide.md`](docs/operator-guide.md) — deploy + ops reference for production-ish setups
+- [`docs/integration-guide.md`](docs/integration-guide.md) — how to write an external integration in any language
 - `docs/api.md` — REST + WS reference (generated, lands post-v1.0)
-- `docs/integration-guide.md` — how to write an integration
-- `docs/operator-guide.md` — deploy + ops
 
 ## Tests
 
