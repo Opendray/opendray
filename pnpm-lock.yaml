@@ -8,6 +8,30 @@ importers:
 
   .: {}
 
+  app/shared:
+    dependencies:
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      highlight.js:
+        specifier: ^11.11.1
+        version: 11.11.1
+      lucide-react:
+        specifier: ^1.14.0
+        version: 1.14.0(react@19.2.5)
+      simple-icons:
+        specifier: ^16.18.1
+        version: 16.18.1
+      sonner:
+        specifier: ^2.0.7
+        version: 2.0.7(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      tailwind-merge:
+        specifier: ^3.5.0
+        version: 3.5.0
+      zustand:
+        specifier: ^5.0.12
+        version: 5.0.12(@types/react@19.2.14)(react@19.2.5)(use-sync-external-store@1.6.0(react@19.2.5))
+
   app/web:
     dependencies:
       '@hookform/resolvers':
@@ -91,6 +115,9 @@ importers:
       remark-gfm:
         specifier: ^4.0.1
         version: 4.0.1
+      shared:
+        specifier: workspace:*
+        version: link:../shared
       simple-icons:
         specifier: ^16.18.1
         version: 16.18.1

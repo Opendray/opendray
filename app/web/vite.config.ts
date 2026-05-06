@@ -11,9 +11,21 @@ export default defineConfig(({ command }) => ({
   base: command === 'build' ? '/admin/' : '/',
   plugins: [react(), tailwindcss()],
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
+    alias: [
+      // Most specific first — `@/lib/*` and `@/stores/*` resolve into
+      // the shared workspace package; everything else still falls
+      // through to web's own src tree. Order matters: Vite's alias
+      // resolver does first-match-wins on the `find` field.
+      {
+        find: /^@\/lib\//,
+        replacement: path.resolve(__dirname, '../shared/src/lib') + '/',
+      },
+      {
+        find: /^@\/stores\//,
+        replacement: path.resolve(__dirname, '../shared/src/stores') + '/',
+      },
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+    ],
   },
   server: {
     port: 5173,
