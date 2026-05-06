@@ -250,11 +250,23 @@ type AdminConfig struct {
 	User     string `toml:"user" json:"user"`
 	Password string `toml:"password" json:"password"`
 	TokenTTL string `toml:"token_ttl" json:"token_ttl"` // e.g. "24h", "12h", "30m"
+	// MobileTokenTTL is the absolute lifetime of bearer tokens issued
+	// to the mobile app via /api/v1/auth/mobile-login. Empty/0 falls
+	// back to a 30-day default (vs 24h for browser tokens) so users
+	// don't have to re-enter their password every day on devices that
+	// already gate access behind biometrics + secure storage.
+	MobileTokenTTL string `toml:"mobile_token_ttl" json:"mobile_token_ttl"`
 }
 
 // Duration parses TokenTTL; returns 0 if unset.
 func (a AdminConfig) Duration() time.Duration {
 	d, _ := time.ParseDuration(a.TokenTTL)
+	return d
+}
+
+// MobileDuration parses MobileTokenTTL; returns 0 if unset.
+func (a AdminConfig) MobileDuration() time.Duration {
+	d, _ := time.ParseDuration(a.MobileTokenTTL)
 	return d
 }
 
@@ -332,6 +344,9 @@ func applyEnv(cfg *Config) {
 	if v := os.Getenv("OPENDRAY_ADMIN_TOKEN_TTL"); v != "" {
 		cfg.Admin.TokenTTL = v
 	}
+	if v := os.Getenv("OPENDRAY_ADMIN_MOBILE_TOKEN_TTL"); v != "" {
+		cfg.Admin.MobileTokenTTL = v
+	}
 	if v := os.Getenv("OPENDRAY_LOG_LEVEL"); v != "" {
 		cfg.Log.Level = v
 	}
@@ -399,6 +414,11 @@ func (c Config) Validate() error {
 	if c.Admin.TokenTTL != "" {
 		if _, err := time.ParseDuration(c.Admin.TokenTTL); err != nil {
 			return fmt.Errorf("config: admin.token_ttl: %w", err)
+		}
+	}
+	if c.Admin.MobileTokenTTL != "" {
+		if _, err := time.ParseDuration(c.Admin.MobileTokenTTL); err != nil {
+			return fmt.Errorf("config: admin.mobile_token_ttl: %w", err)
 		}
 	}
 	return nil
