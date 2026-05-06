@@ -211,6 +211,15 @@ func TestSendCard_WhenSupportedShipsFrame(t *testing.T) {
 		[]channel.Capability{channel.CapText, channel.CapCard})
 	defer conn.Close()
 
+	// dialAndRegister returns once the WS message is sent, but
+	// capability propagation into br's state is async — wait for
+	// CapCard to surface before issuing the SendCard. Without
+	// this, the test races and intermittently fails with
+	// "capability not supported" under loaded CI runners.
+	waitFor(t, 2*time.Second, func() bool {
+		return containsCap(channel.Capabilities(br), channel.CapCard)
+	})
+
 	// Drain async frames from the adapter side.
 	frames := make(chan map[string]any, 4)
 	go func() {
