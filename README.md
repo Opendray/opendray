@@ -13,6 +13,8 @@ post-v1.0 roadmap.
 
 ## Quickstart
 
+For a full walkthrough with prereqs and troubleshooting, see [`docs/quickstart.md`](docs/quickstart.md). The condensed path:
+
 ```bash
 # 1. Start a Postgres for local dev (or point [database].url at your own).
 docker compose -f docker-compose.test.yml up -d   # 127.0.0.1:5432
@@ -106,6 +108,7 @@ Zustand + xterm.js) and per-W milestone notes.
 
 ## Documentation
 
+- [`docs/quickstart.md`](docs/quickstart.md) — full quickstart with prereqs, troubleshooting, and the docker-compose dev DB
 - [`docs/design.md`](docs/design.md) — mission, architecture, subsystems,
   API, data model, roadmap
 - [`docs/adr/`](docs/adr/) — every binding architecture decision, dated

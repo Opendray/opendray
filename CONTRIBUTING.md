@@ -15,6 +15,9 @@ this release ships.
 
 ## Development Setup
 
+> For a full walkthrough including troubleshooting, see [`docs/quickstart.md`](docs/quickstart.md). The condensed path is below.
+
+
 ```bash
 git clone https://github.com/Opendray/opendray_v2.git
 cd opendray_v2
