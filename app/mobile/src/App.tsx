@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { OnboardingScreen } from './screens/OnboardingScreen'
 import { LoginScreen } from './screens/LoginScreen'
 import { SessionsScreen } from './screens/SessionsScreen'
+import { SessionDetailScreen } from './screens/SessionDetailScreen'
+import { type SessionSummary } from './lib/api'
 import {
   type StoredPrefs,
   clearAll,
@@ -11,7 +13,7 @@ import {
   tokenExpired,
 } from './lib/storage'
 
-type AppState = 'loading' | 'onboarding' | 'login' | 'home'
+type AppState = 'loading' | 'onboarding' | 'login' | 'home' | 'session'
 
 // Top-level state machine. Drives which screen renders based on what
 // we have persisted in Capacitor Preferences:
@@ -26,6 +28,7 @@ type AppState = 'loading' | 'onboarding' | 'login' | 'home'
 export function App() {
   const [state, setState] = useState<AppState>('loading')
   const [prefs, setPrefs] = useState<StoredPrefs | null>(null)
+  const [activeSession, setActiveSession] = useState<SessionSummary | null>(null)
 
   useEffect(() => {
     void bootstrap()
@@ -94,7 +97,23 @@ export function App() {
     setPrefs((prev) =>
       prev ? { ...prev, token: null, expiresAt: null, username: null } : null,
     )
+    setActiveSession(null)
     setState('login')
+  }
+
+  if (state === 'session' && activeSession) {
+    return (
+      <SessionDetailScreen
+        serverURL={prefs!.serverURL!}
+        token={prefs!.token!}
+        sessionId={activeSession.id}
+        session={activeSession}
+        onBack={() => {
+          setActiveSession(null)
+          setState('home')
+        }}
+      />
+    )
   }
 
   return (
@@ -104,6 +123,10 @@ export function App() {
       username={prefs!.username ?? 'admin'}
       onLogout={onClearAuthAndReturnToLogin}
       onAuthExpired={onClearAuthAndReturnToLogin}
+      onOpenSession={(s) => {
+        setActiveSession(s)
+        setState('session')
+      }}
     />
   )
 }
