@@ -255,3 +255,82 @@ export async function listAudit(
   )
   return res.entries ?? []
 }
+
+// ── Channels ────────────────────────────────────────────────────────
+
+export interface ChannelSummary {
+  id: string
+  kind: string
+  enabled: boolean
+  running: boolean
+  muted: boolean
+  capabilities?: string[]
+}
+
+export async function listChannels(
+  serverURL: string,
+  token: string,
+): Promise<ChannelSummary[]> {
+  const res = await mobileFetch<{ channels?: ChannelSummary[] }>(
+    serverURL,
+    '/api/v1/channels',
+    { token },
+  )
+  return res.channels ?? []
+}
+
+// ── Integrations ────────────────────────────────────────────────────
+
+export interface IntegrationSummary {
+  id: string
+  name: string
+  base_url: string
+  route_prefix: string
+  scopes: string[]
+  version?: string
+  enabled: boolean
+  health_status: 'healthy' | 'degraded' | 'unhealthy' | 'unknown' | string
+  health_last_seen?: string
+}
+
+export async function listIntegrations(
+  serverURL: string,
+  token: string,
+): Promise<IntegrationSummary[]> {
+  const res = await mobileFetch<{ integrations?: IntegrationSummary[] }>(
+    serverURL,
+    '/api/v1/integrations',
+    { token },
+  )
+  return res.integrations ?? []
+}
+
+// ── Providers ───────────────────────────────────────────────────────
+
+export interface ProviderSummary {
+  id: string
+  name: string
+  manifest_hash: string
+  enabled: boolean
+}
+
+export async function listProviders(
+  serverURL: string,
+  token: string,
+): Promise<ProviderSummary[]> {
+  // Server returns the full Provider shape; we only need the few
+  // fields we render. Avoid pulling the whole types from shared.
+  const res = await mobileFetch<{
+    providers?: Array<{
+      manifest: { id: string; name: string }
+      manifest_hash: string
+      enabled: boolean
+    }>
+  }>(serverURL, '/api/v1/providers', { token })
+  return (res.providers ?? []).map((p) => ({
+    id: p.manifest.id,
+    name: p.manifest.name,
+    manifest_hash: p.manifest_hash,
+    enabled: p.enabled,
+  }))
+}

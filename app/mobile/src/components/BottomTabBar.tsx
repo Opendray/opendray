@@ -5,7 +5,7 @@
 // Sits above the home indicator via the `pb-safe` Tailwind utility
 // added in #27. Active-tab indicator is the accent color underline.
 
-export type Tab = 'sessions' | 'memory' | 'notes' | 'activity'
+export type Tab = 'sessions' | 'memory' | 'notes' | 'activity' | 'more'
 
 interface Props {
   active: Tab
@@ -17,6 +17,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'memory', label: 'Memory', icon: '◇' },
   { id: 'notes', label: 'Notes', icon: '☰' },
   { id: 'activity', label: 'Activity', icon: '⏱' },
+  { id: 'more', label: 'More', icon: '⋯' },
 ]
 
 export function BottomTabBar({ active, onChange }: Props) {
