@@ -7,6 +7,10 @@ import { SessionDetailScreen } from './screens/SessionDetailScreen'
 import { MemoryScreen } from './screens/MemoryScreen'
 import { NotesScreen } from './screens/NotesScreen'
 import { ActivityScreen } from './screens/ActivityScreen'
+import { MoreScreen, type SubPage } from './screens/MoreScreen'
+import { ChannelsScreen } from './screens/ChannelsScreen'
+import { IntegrationsScreen } from './screens/IntegrationsScreen'
+import { ProvidersScreen } from './screens/ProvidersScreen'
 import { BottomTabBar, type Tab } from './components/BottomTabBar'
 import { type SessionSummary } from './lib/api'
 import {
@@ -17,15 +21,23 @@ import {
   tokenExpired,
 } from './lib/storage'
 
-type AppState = 'loading' | 'onboarding' | 'login' | 'home' | 'session'
+type AppState =
+  | 'loading'
+  | 'onboarding'
+  | 'login'
+  | 'home'
+  | 'session'
+  | SubPage
 
 // Top-level state machine. Drives which screen renders based on what
 // we have persisted in Capacitor Preferences:
 //
 //   serverURL absent              → onboarding
 //   serverURL set, no/expired tok → login
-//   serverURL set, valid token    → home (with 4 tabs)
-//   home tab + tap session card   → session detail (full-screen)
+//   serverURL set, valid token    → home (5 bottom tabs)
+//   home + tap session card       → session detail (full-screen)
+//   "More" tab + tap entry        → channels / integrations / providers
+//                                    (full-screen, no tab bar)
 export function App() {
   const [state, setState] = useState<AppState>('loading')
   const [prefs, setPrefs] = useState<StoredPrefs | null>(null)
@@ -79,8 +91,6 @@ export function App() {
       <LoginScreen
         serverURL={prefs!.serverURL!}
         onAuthed={async () => {
-          // setAuth has already written; re-read so home tabs see the
-          // canonical values.
           const fresh = await getPrefs()
           setPrefs(fresh)
           setState('home')
@@ -103,13 +113,17 @@ export function App() {
     setState('login')
   }
 
-  // Session detail is full-screen — no bottom tab bar — so the
-  // terminal can use every available pixel.
+  const serverURL = prefs!.serverURL!
+  const token = prefs!.token!
+  const username = prefs!.username ?? 'admin'
+
+  // ── Full-screen sub-pages (no bottom tab bar) ────────────────────
+
   if (state === 'session' && activeSession) {
     return (
       <SessionDetailScreen
-        serverURL={prefs!.serverURL!}
-        token={prefs!.token!}
+        serverURL={serverURL}
+        token={token}
         sessionId={activeSession.id}
         session={activeSession}
         onBack={() => {
@@ -120,12 +134,40 @@ export function App() {
     )
   }
 
-  // Home shell — content fills the screen above the bottom tab bar.
-  // Each tab manages its own header + scrollable content; we just
-  // render the right component based on the active tab.
-  const serverURL = prefs!.serverURL!
-  const token = prefs!.token!
-  const username = prefs!.username ?? 'admin'
+  if (state === 'channels') {
+    return (
+      <ChannelsScreen
+        serverURL={serverURL}
+        token={token}
+        onBack={() => setState('home')}
+        onAuthExpired={onClearAuthAndReturnToLogin}
+      />
+    )
+  }
+
+  if (state === 'integrations') {
+    return (
+      <IntegrationsScreen
+        serverURL={serverURL}
+        token={token}
+        onBack={() => setState('home')}
+        onAuthExpired={onClearAuthAndReturnToLogin}
+      />
+    )
+  }
+
+  if (state === 'providers') {
+    return (
+      <ProvidersScreen
+        serverURL={serverURL}
+        token={token}
+        onBack={() => setState('home')}
+        onAuthExpired={onClearAuthAndReturnToLogin}
+      />
+    )
+  }
+
+  // ── Home shell with tab bar ──────────────────────────────────────
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -162,6 +204,15 @@ export function App() {
             serverURL={serverURL}
             token={token}
             onAuthExpired={onClearAuthAndReturnToLogin}
+          />
+        )}
+        {tab === 'more' && (
+          <MoreScreen
+            username={username}
+            serverURL={serverURL}
+            expiresAt={prefs!.expiresAt}
+            onOpen={(page) => setState(page)}
+            onLogout={onClearAuthAndReturnToLogin}
           />
         )}
       </div>
