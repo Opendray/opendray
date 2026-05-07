@@ -132,3 +132,126 @@ export async function listSessions(
   )
   return res.sessions ?? []
 }
+
+// ── Memory ──────────────────────────────────────────────────────────
+
+export interface MemoryRecord {
+  id: string
+  scope: 'session' | 'project' | 'global'
+  scope_key: string
+  text: string
+  embedder: string
+  created_at: string
+  updated_at: string
+}
+
+export async function listMemories(
+  serverURL: string,
+  token: string,
+  opts: { scope?: string; scopeKey?: string; n?: number } = {},
+): Promise<MemoryRecord[]> {
+  const sp = new URLSearchParams()
+  sp.set('scope', opts.scope ?? 'global')
+  if (opts.scopeKey) sp.set('scope_key', opts.scopeKey)
+  sp.set('n', String(opts.n ?? 100))
+  const res = await mobileFetch<{ memories?: MemoryRecord[] }>(
+    serverURL,
+    `/api/v1/memory/list?${sp.toString()}`,
+    { token },
+  )
+  return res.memories ?? []
+}
+
+export interface SearchHit {
+  record: MemoryRecord
+  similarity: number
+}
+
+export async function searchMemories(
+  serverURL: string,
+  token: string,
+  query: string,
+  scope: 'session' | 'project' | 'global' = 'global',
+  topK = 20,
+): Promise<SearchHit[]> {
+  const res = await mobileFetch<{ hits?: SearchHit[] }>(
+    serverURL,
+    '/api/v1/memory/search',
+    {
+      method: 'POST',
+      token,
+      body: { query, scope, top_k: topK },
+    },
+  )
+  return res.hits ?? []
+}
+
+// ── Notes ───────────────────────────────────────────────────────────
+
+export interface NoteSummary {
+  path: string
+  title: string
+  modified: string
+  size: number
+}
+
+export interface FullNote extends NoteSummary {
+  body: string
+}
+
+export async function listNotes(
+  serverURL: string,
+  token: string,
+): Promise<NoteSummary[]> {
+  const res = await mobileFetch<{ notes?: NoteSummary[] }>(
+    serverURL,
+    '/api/v1/notes/list',
+    { token },
+  )
+  return res.notes ?? []
+}
+
+export async function getNote(
+  serverURL: string,
+  token: string,
+  notePath: string,
+): Promise<FullNote> {
+  return mobileFetch<FullNote>(
+    serverURL,
+    `/api/v1/notes/get?path=${encodeURIComponent(notePath)}`,
+    { token },
+  )
+}
+
+// ── Audit / activity ────────────────────────────────────────────────
+
+export interface AuditEntry {
+  id: number
+  ts: string
+  actor_kind: string
+  actor_id?: string
+  action: string
+  subject_kind?: string
+  subject_id?: string
+  metadata?: unknown
+}
+
+export async function listAudit(
+  serverURL: string,
+  token: string,
+  opts: { action?: string; since?: string; limit?: number } = {},
+): Promise<AuditEntry[]> {
+  const sp = new URLSearchParams()
+  if (opts.action) sp.set('action', opts.action)
+  if (opts.since) sp.set('since', opts.since)
+  if (opts.limit) sp.set('limit', String(opts.limit))
+  const path = sp.toString()
+    ? `/api/v1/audit?${sp.toString()}`
+    : '/api/v1/audit'
+  const res = await mobileFetch<{ entries?: AuditEntry[] }>(
+    serverURL,
+    path,
+    { token },
+  )
+  return res.entries ?? []
+}
