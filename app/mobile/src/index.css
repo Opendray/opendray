@@ -115,6 +115,18 @@
       "ss03";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* iOS safe-area: viewport-fit=cover lets content render under
+       Dynamic Island / notch / home indicator. We push everything
+       inside #root past those zones so nothing gets occluded. The
+       `min` ensures we don't shrink below the existing 16px page
+       gutter on devices without notches. */
+    overscroll-behavior: none; /* kill rubber-band on iOS WebView */
+  }
+  #root {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
   ::selection {
     background-color: var(--accent);
@@ -136,6 +148,16 @@
     color: var(--muted-foreground);
     line-height: 1;
   }
+}
+
+/* Tailwind v4 custom utilities for safe-area-aware spacing.
+   Use these on sticky headers / fixed footers that should sit flush
+   with the device edge for visual continuity. */
+@utility pt-safe {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+@utility pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
 }
 
 /* highlight.js theme — a compact mapping that uses palette-friendly

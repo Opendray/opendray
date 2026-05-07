@@ -22,6 +22,21 @@ const config: CapacitorConfig = {
   // device dev with live reload, override per-developer via
   // `pnpm --filter mobile exec cap run ios -l --external` which
   // injects a transient server.url at runtime.
+  plugins: {
+    // Patch window.fetch / XMLHttpRequest to go through the native
+    // HTTP stack (URLSession on iOS, OkHttp on Android) instead of
+    // the WebView's networking. This bypasses the WebView's CORS
+    // enforcement — opendray's gateway is by definition a different
+    // origin (`http://...:8770`) than the WebView host
+    // (`capacitor://localhost`), and we'd otherwise need every
+    // gateway behind which mobile connects to set the right
+    // Access-Control-Allow-Origin headers. Native fetch sidesteps
+    // the issue entirely and is the Capacitor-recommended path for
+    // mobile-talks-to-gateway use cases.
+    CapacitorHttp: {
+      enabled: true,
+    },
+  },
 }
 
 export default config
