@@ -89,11 +89,19 @@
   --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 6px);
 
-  --font-sans:
-    "Inter Variable", "Inter", -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono:
-    "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, Menlo, Consolas,
-    monospace;
+  /* Mobile-first font stack — minimal, OS-led.
+     `system-ui` resolves to:
+       - iOS / iPadOS / macOS → SF Pro (handles Latin + CJK + emoji
+         via system substitution natively)
+       - Android → Roboto + Noto CJK + Noto Color Emoji
+       - Windows → Segoe UI + Segoe UI Emoji
+     We don't list Inter here on purpose. Variable webfonts in
+     WKWebView can claim coverage for non-Latin codepoints (rendering
+     them as .notdef instead of falling through), which is exactly
+     why CJK appeared as `[?]` on the first attempts. Letting the
+     OS pick the right family per script is the most reliable path. */
+  --font-sans: system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 @layer base {
@@ -123,8 +131,13 @@
     overscroll-behavior: none; /* kill rubber-band on iOS WebView */
   }
   #root {
+    /* Top + horizontal safe-area on #root: every screen's sticky
+       header automatically clears the Dynamic Island / notch.
+       Bottom inset is intentionally NOT applied here — bottom-
+       anchored elements (BottomTabBar, fixed input bars) handle it
+       themselves via the `pb-safe` utility, otherwise the padding
+       stacks and pushes those bars off-screen. */
     padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }

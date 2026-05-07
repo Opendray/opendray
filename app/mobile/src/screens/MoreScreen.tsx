@@ -1,10 +1,25 @@
 // "More" tab — overflow list of secondary surfaces. Lower-frequency
-// admin pages (Channels / Integrations / Providers / Settings) live
-// here so the bottom tab bar stays at 5 entries instead of 9+.
+// admin pages (Channels / Integrations / Providers / Settings /
+// Backups) live here so the bottom tab bar stays at 5 entries
+// instead of 9+.
 //
 // Each row navigates to a full-screen sub-page via the App.tsx
 // state machine, mirroring how SessionsScreen → SessionDetailScreen
 // works (full-screen, no bottom tab visible during sub-page).
+//
+// Icons use lucide-react (SVG) — same reason as BottomTabBar:
+// iOS 26.3 doesn't render the symbol-block Unicode glyphs we'd
+// otherwise want.
+
+import {
+  ChevronRight,
+  HardDrive,
+  type LucideIcon,
+  MessageSquare,
+  Plug,
+  Settings as SettingsIcon,
+  Terminal,
+} from 'lucide-react'
 
 interface Props {
   username: string
@@ -21,36 +36,41 @@ export type SubPage =
   | 'backups'
   | 'settings'
 
-const ITEMS: { id: SubPage; label: string; description: string; icon: string }[] = [
+const ITEMS: {
+  id: SubPage
+  label: string
+  description: string
+  icon: LucideIcon
+}[] = [
   {
     id: 'channels',
     label: 'Channels',
     description: 'Telegram / Discord / Slack adapters',
-    icon: '✉',
+    icon: MessageSquare,
   },
   {
     id: 'integrations',
     label: 'Integrations',
     description: 'External apps registered against the gateway',
-    icon: '⇄',
+    icon: Plug,
   },
   {
     id: 'providers',
     label: 'CLI Providers',
     description: 'Claude Code / Codex / Gemini configurations',
-    icon: '◈',
+    icon: Terminal,
   },
   {
     id: 'backups',
     label: 'Backups',
     description: 'Recent encrypted snapshot history',
-    icon: '⌧',
+    icon: HardDrive,
   },
   {
     id: 'settings',
     label: 'Settings',
     description: 'Theme + device info',
-    icon: '⚙',
+    icon: SettingsIcon,
   },
 ]
 
@@ -68,24 +88,27 @@ export function MoreScreen({
       </header>
       <main className="flex-1 px-4 py-3 space-y-4">
         <ul className="space-y-2">
-          {ITEMS.map((it) => (
-            <li key={it.id}>
-              <button
-                type="button"
-                onClick={() => onOpen(it.id)}
-                className="w-full text-left rounded-md border border-border bg-card text-card-foreground p-3 active:bg-accent/10 transition-colors flex items-center gap-3"
-              >
-                <span className="text-xl text-accent">{it.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium">{it.label}</div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {it.description}
+          {ITEMS.map((it) => {
+            const Icon = it.icon
+            return (
+              <li key={it.id}>
+                <button
+                  type="button"
+                  onClick={() => onOpen(it.id)}
+                  className="w-full text-left rounded-md border border-border bg-card text-card-foreground p-3 active:bg-accent/10 transition-colors flex items-center gap-3"
+                >
+                  <Icon className="w-5 h-5 text-accent shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium">{it.label}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {it.description}
+                    </div>
                   </div>
-                </div>
-                <span className="text-muted-foreground">›</span>
-              </button>
-            </li>
-          ))}
+                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                </button>
+              </li>
+            )
+          })}
         </ul>
 
         <div className="rounded-md border border-border bg-card p-3 text-xs space-y-1">

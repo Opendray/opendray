@@ -192,10 +192,17 @@ export function App() {
   }
 
   // ── Home shell with tab bar ──────────────────────────────────────
+  //
+  // Outer is fixed-height (h-screen — the safe-area-aware viewport
+  // since #root has the safe insets applied as padding) and clips
+  // overflow so the BottomTabBar always sits flush at the bottom.
+  // Inner content area scrolls on its own; each tab screen still
+  // declares min-h-screen for the case it's mounted standalone in
+  // the future, but inside this shell it just fills the scroll area.
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="flex-1 flex flex-col min-h-0">
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
         {tab === 'sessions' && (
           <SessionsScreen
             serverURL={serverURL}
