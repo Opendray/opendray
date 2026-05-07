@@ -8,12 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- ADR 0016 (Proposed): backup-format v2 design for per-install PBKDF2
+  salt. Captures the four binding decisions (in-header storage,
+  version-byte bump 1→2, per-Seal salt provenance, indefinite v1
+  read compat) and the three-PR rollout. Implementation pending.
 - LICENSE file (Apache 2.0) — previously declared in README only.
 - SECURITY.md — threat model, default posture, deployment checklist, report channel.
 - CONTRIBUTING.md — dev setup, test commands, PR + commit conventions.
 - CHANGELOG.md — this file.
 
 ### Changed
+- `internal/backup/cipher.go`: 6-line comment on `kdfSalt` flagging it
+  as a frozen v1 protocol constant and pointing at ADR 0016. No code
+  behaviour change.
 - Renumbered ADR `0011-memory-subsystem.md` → `0014-memory-subsystem.md` to
   resolve the duplicate-0011 collision with `0011-channel-rich-content-and-bridge.md`.
   Updated cross-references in README, ADR 0013, and the embed-onnx stub.
