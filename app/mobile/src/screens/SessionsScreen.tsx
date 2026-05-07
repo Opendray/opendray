@@ -11,6 +11,11 @@ interface Props {
   // accepted (revoked, rotated, or expired beyond local clock skew).
   // The host should clear auth and bounce back to LoginScreen.
   onAuthExpired: () => void
+  // Tapping a session card hands the summary up to App, which
+  // navigates into SessionDetailScreen. Decoupled like this so the
+  // detail screen never has to refetch metadata that the list already
+  // has.
+  onOpenSession: (session: SessionSummary) => void
 }
 
 type FetchState =
@@ -32,6 +37,7 @@ export function SessionsScreen({
   username,
   onLogout,
   onAuthExpired,
+  onOpenSession,
 }: Props) {
   const [state, setState] = useState<FetchState>({ kind: 'loading' })
 
@@ -73,7 +79,7 @@ export function SessionsScreen({
         </div>
       </header>
       <main className="flex-1 px-4 py-4">
-        <SessionsBody state={state} onRetry={refresh} />
+        <SessionsBody state={state} onRetry={refresh} onOpenSession={onOpenSession} />
       </main>
     </div>
   )
@@ -82,9 +88,10 @@ export function SessionsScreen({
 interface BodyProps {
   state: FetchState
   onRetry: () => void
+  onOpenSession: (session: SessionSummary) => void
 }
 
-function SessionsBody({ state, onRetry }: BodyProps) {
+function SessionsBody({ state, onRetry, onOpenSession }: BodyProps) {
   if (state.kind === 'loading') {
     return (
       <div className="text-sm text-muted-foreground">Loading sessions…</div>
@@ -112,25 +119,37 @@ function SessionsBody({ state, onRetry }: BodyProps) {
   return (
     <ul className="space-y-2">
       {state.sessions.map((s) => (
-        <SessionCard key={s.id} session={s} />
+        <SessionCard key={s.id} session={s} onOpen={() => onOpenSession(s)} />
       ))}
     </ul>
   )
 }
 
-function SessionCard({ session }: { session: SessionSummary }) {
+function SessionCard({
+  session,
+  onOpen,
+}: {
+  session: SessionSummary
+  onOpen: () => void
+}) {
   const label = session.name ?? session.id
   return (
-    <li className="rounded-md border border-border bg-card text-card-foreground p-3 space-y-1">
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-medium text-sm truncate">{label}</span>
-        <StateBadge state={session.state} />
-      </div>
-      <div className="text-xs text-muted-foreground space-y-0.5">
-        <div className="truncate">{session.provider_id}</div>
-        <div className="truncate">{session.cwd}</div>
-        <div>started {formatRelative(session.started_at)}</div>
-      </div>
+    <li>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="w-full text-left rounded-md border border-border bg-card text-card-foreground p-3 space-y-1 active:bg-accent/10 transition-colors"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-medium text-sm truncate">{label}</span>
+          <StateBadge state={session.state} />
+        </div>
+        <div className="text-xs text-muted-foreground space-y-0.5">
+          <div className="truncate">{session.provider_id}</div>
+          <div className="truncate">{session.cwd}</div>
+          <div>started {formatRelative(session.started_at)}</div>
+        </div>
+      </button>
     </li>
   )
 }

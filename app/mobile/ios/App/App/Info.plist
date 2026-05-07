@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+        <string>OpenDray</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>armv7</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
+	<!--
+		App Transport Security:
+		- NSAllowsArbitraryLoads permits cleartext HTTP everywhere.
+		  Development convenience: opendray gateways during dev are
+		  typically plain HTTP (LAN IP or localhost). For shipped
+		  builds we recommend tightening to NSAllowsArbitraryLoadsInWebContent
+		  + per-domain HTTPS exceptions, OR putting the production
+		  gateway behind HTTPS (Cloudflare Tunnel / nginx / Caddy)
+		  and removing this key entirely.
+		- NSAllowsLocalNetworking would have been narrower (LAN-only),
+		  but in practice WKWebView's interpretation of "local" is
+		  inconsistent in iOS 17+ and we hit "Load failed" errors
+		  for LAN IPs that Apple's docs say should be allowed. Trade
+		  off accepted: until production HTTPS lands, dev = open.
+	-->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<!--
+		Also ask iOS for local-network access permission up front. On
+		iOS 14+ a fresh app prompts the user the first time it touches
+		a LAN address; this string explains why.
+	-->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>OpenDray needs local-network access to reach an opendray gateway running on your LAN.</string>
+</dict>
+</plist>
