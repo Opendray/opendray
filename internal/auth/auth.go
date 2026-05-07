@@ -23,6 +23,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/opendray/opendray-v2/internal/config"
 	"github.com/opendray/opendray-v2/internal/eventbus"
 )
@@ -63,24 +65,38 @@ func New(cfg config.AdminConfig, bus *eventbus.Hub, log *slog.Logger) *Service {
 	if ttl <= 0 {
 		ttl = defaultTokenTTL
 	}
-	return &Service{
+	s := &Service{
 		cfg:    cfg,
 		ttl:    ttl,
 		bus:    bus,
 		log:    log.With("component", "auth"),
 		tokens: make(map[string]TokenInfo),
 	}
+	if cfg.PasswordHash == "" && cfg.Password != "" {
+		s.log.Warn("admin password is plaintext in config; generate a hash with `opendray hash-password` and replace [admin].password with [admin].password_hash")
+	}
+	return s
 }
 
-// Login validates user/password using constant-time comparison and
-// issues a fresh token on success. Empty admin config rejects all.
+// Login validates user/password and issues a fresh token on success.
+// Empty admin config rejects all.
+//
+// Verification path:
+//   - If cfg.PasswordHash is set, password is verified with
+//     bcrypt.CompareHashAndPassword (constant-time inside bcrypt).
+//   - Else if cfg.Password is set, password is constant-time compared
+//     against the plaintext config value (back-compat path; emits a
+//     one-time warning at construction time).
+//   - Else the admin is unconfigured and Login rejects everything.
+//
+// Username comparison is always constant-time.
 func (s *Service) Login(user, password string) (string, TokenInfo, error) {
-	if s.cfg.User == "" || s.cfg.Password == "" {
+	if s.cfg.User == "" || (s.cfg.Password == "" && s.cfg.PasswordHash == "") {
 		s.publishLogin(user, false, "admin not configured")
 		return "", TokenInfo{}, ErrInvalidCredentials
 	}
 	userOK := subtle.ConstantTimeCompare([]byte(user), []byte(s.cfg.User)) == 1
-	passOK := subtle.ConstantTimeCompare([]byte(password), []byte(s.cfg.Password)) == 1
+	passOK := s.verifyPassword(password)
 	if !userOK || !passOK {
 		s.publishLogin(user, false, "credentials mismatch")
 		return "", TokenInfo{}, ErrInvalidCredentials
@@ -188,6 +204,25 @@ func TokenFromContext(ctx context.Context) string {
 
 type userCtxKey struct{}
 type tokenCtxKey struct{}
+
+// verifyPassword checks the supplied password against either the
+// configured bcrypt hash or, as a back-compat path, the plaintext
+// password. The bcrypt route is preferred whenever PasswordHash is
+// non-empty; the plaintext route is constant-time-compared.
+func (s *Service) verifyPassword(password string) bool {
+	if s.cfg.PasswordHash != "" {
+		err := bcrypt.CompareHashAndPassword(
+			[]byte(s.cfg.PasswordHash), []byte(password),
+		)
+		return err == nil
+	}
+	if s.cfg.Password == "" {
+		return false
+	}
+	return subtle.ConstantTimeCompare(
+		[]byte(password), []byte(s.cfg.Password),
+	) == 1
+}
 
 func bearerToken(r *http.Request) string {
 	h := r.Header.Get("Authorization")

@@ -2,13 +2,14 @@
 //
 // Subcommands:
 //
-//	opendray serve   [-config FILE]   start the gateway
-//	opendray migrate [-config FILE]   apply pending DB migrations and exit
-//	opendray notes   <subcommand> ... operate on the file-system notes vault (no gateway needed)
-//	opendray skill   <subcommand> ... inspect / load agent skills (no gateway needed)
-//	opendray mcp     <subcommand> ... inspect MCP server registry (no gateway needed)
-//	opendray mcp-memory               stdio MCP server bridging agents to opendray memory (run by Claude/Codex/etc.)
-//	opendray version                  print build info and exit
+//	opendray serve         [-config FILE]   start the gateway
+//	opendray migrate       [-config FILE]   apply pending DB migrations and exit
+//	opendray hash-password                  bcrypt-hash a password for [admin].password_hash
+//	opendray notes         <subcommand> ... operate on the file-system notes vault (no gateway needed)
+//	opendray skill         <subcommand> ... inspect / load agent skills (no gateway needed)
+//	opendray mcp           <subcommand> ... inspect MCP server registry (no gateway needed)
+//	opendray mcp-memory                     stdio MCP server bridging agents to opendray memory (run by Claude/Codex/etc.)
+//	opendray version                        print build info and exit
 package main
 
 import (
@@ -39,6 +40,8 @@ func main() {
 			defer a.Close()
 			return a.Migrate(ctx)
 		}))
+	case "hash-password":
+		os.Exit(runHashPassword(args))
 	case "notes":
 		os.Exit(runNotes(args))
 	case "skill":
@@ -88,11 +91,12 @@ func usage() {
 	fmt.Fprintln(os.Stderr, `opendray — multiplexer + integration gateway for AI agent CLIs
 
 usage:
-  opendray serve   [-config FILE]
-  opendray migrate [-config FILE]
-  opendray notes   <subcommand> [args]   (run "opendray notes --help" for details)
-  opendray skill   <subcommand> [args]   (run "opendray skill --help" for details)
-  opendray mcp     <subcommand> [args]   (run "opendray mcp --help" for details)
+  opendray serve         [-config FILE]
+  opendray migrate       [-config FILE]
+  opendray hash-password                   (bcrypt-hash stdin → [admin].password_hash)
+  opendray notes         <subcommand> [args]   (run "opendray notes --help" for details)
+  opendray skill         <subcommand> [args]   (run "opendray skill --help" for details)
+  opendray mcp           <subcommand> [args]   (run "opendray mcp --help" for details)
   opendray mcp-memory                     (stdio MCP server — invoked by an agent CLI, not by humans)
   opendray version`)
 }

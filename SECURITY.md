@@ -23,21 +23,49 @@ exposed to the public internet without a reverse proxy and TLS.
 |---|---|---|
 | `listen` | `127.0.0.1:8770` | Loopback only; safe for local dev. |
 | Admin auth | Bearer token, 24h TTL | Issued by `/api/v1/auth/login` against `[admin]` config. |
-| Admin password | Constant-time compared to plaintext value in config | Single-admin self-host model. Prefer `OPENDRAY_ADMIN_PASSWORD` env over committing to `config.toml`. |
+| Admin password | bcrypt-verified (`[admin].password_hash`) when set; constant-time plaintext compare otherwise | Generate a hash with `opendray hash-password` and put it in `[admin].password_hash` to retire the plaintext path. The plaintext path remains for back-compat; the auth service warns at startup when it's in use. |
 | Integration API keys | bcrypt-hashed in DB | One key per integration; revocable. |
 | Backup encryption | AES-256-GCM, PBKDF2-HMAC-SHA256, 200,000 iterations | Key derived from `OPENDRAY_BACKUP_KEY`; **must** live in env, never in config. |
 | WebSocket auth | Bearer token in query parameter | All WS endpoints require auth before any data flows. |
 | Database | External Postgres (no bundled mode) | Operator chooses TLS posture via `?sslmode=` in DSN. |
 
-When `[admin].password` is unset (and no env override), the server **rejects
-every login attempt** rather than booting with no auth.
+When neither `[admin].password` nor `[admin].password_hash` is set (and
+no env override), the server **rejects every login attempt** rather than
+booting with no auth.
+
+### Migrating from plaintext to bcrypt
+
+Existing installs with `[admin].password` continue working. To upgrade:
+
+```bash
+# 1. Generate a hash from your current password.
+opendray hash-password
+enter password and press enter (visible while typing):
+mysecret
+$2a$10$0HPI0HSvwtcrTEuXuqgKmuc6tH8/Gxl2GbzyR0G2H9GJ9mXgY78xS
+
+# 2. Paste the hash into config.toml as password_hash, then remove
+#    the plaintext password line. Restart opendray.
+
+# 3. Verify the auth service is no longer warning about plaintext
+#    on the login flow.
+```
+
+`hash-password` reads from stdin, so `echo` and shell history are the only
+places the plaintext appears — both shorter-lived than a `config.toml` on
+disk. Pipe a password file in if you'd rather avoid even that:
+
+```bash
+opendray hash-password < /dev/shm/password.txt
+```
 
 ## Deployment Checklist
 
 1. **Reverse proxy.** Place OpenDray behind Cloudflare Tunnel, nginx, Caddy,
    or Traefik. Terminate TLS at the proxy. Keep `listen = "127.0.0.1:8770"`.
-2. **Strong admin password.** ≥ 16 random characters. Prefer
-   `OPENDRAY_ADMIN_PASSWORD` env var over `config.toml`.
+2. **Strong admin password.** ≥ 16 random characters. Use
+   `[admin].password_hash` (bcrypt) rather than the plaintext
+   `[admin].password` field. Generate via `opendray hash-password`.
 3. **Backup key in env only.** Set `OPENDRAY_BACKUP_KEY` via the OS secret
    manager, systemd `LoadCredential`, or Vault. Never commit it. Losing the
    key makes encrypted backups unrecoverable.

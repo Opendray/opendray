@@ -2,7 +2,8 @@
 #
 # Any field can be overridden by an OPENDRAY_-prefixed env variable —
 # OPENDRAY_LISTEN, OPENDRAY_DATABASE_URL, OPENDRAY_ADMIN_USER,
-# OPENDRAY_ADMIN_PASSWORD, OPENDRAY_LOG_LEVEL, OPENDRAY_LOG_FORMAT.
+# OPENDRAY_ADMIN_PASSWORD, OPENDRAY_ADMIN_PASSWORD_HASH,
+# OPENDRAY_LOG_LEVEL, OPENDRAY_LOG_FORMAT.
 
 listen = "127.0.0.1:8770"
 
@@ -18,8 +19,18 @@ url = "postgres://opendray:opendray@127.0.0.1:5432/opendray?sslmode=disable"
 
 [admin]
 # Admin auth (single human). Prefer env vars in production.
-user      = "admin"
-password  = "CHANGEME"
+user = "admin"
+
+# Recommended: store a bcrypt hash, not a plaintext password.
+# Generate with: `opendray hash-password` (reads from stdin).
+# When password_hash is set, `password` is ignored.
+# password_hash = "$2a$10$..."
+
+# Back-compat: plaintext password. Used only when password_hash is
+# empty. The auth service emits a one-time warning at startup when
+# this path is in use.
+password = "CHANGEME"
+
 token_ttl = "24h"  # bearer token absolute lifetime; empty = 24h default
 
 [log]

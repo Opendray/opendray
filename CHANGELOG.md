@@ -8,15 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `[admin].password_hash` config field for bcrypt-hashed admin passwords
+  (`OPENDRAY_ADMIN_PASSWORD_HASH` env override). Generate hashes with the
+  new `opendray hash-password` subcommand.
+- `opendray hash-password` subcommand — reads a password from stdin and
+  prints a bcrypt hash suitable for pasting into `[admin].password_hash`.
 - LICENSE file (Apache 2.0) — previously declared in README only.
 - SECURITY.md — threat model, default posture, deployment checklist, report channel.
 - CONTRIBUTING.md — dev setup, test commands, PR + commit conventions.
 - CHANGELOG.md — this file.
 
 ### Changed
+- Admin auth verifies `password_hash` via `bcrypt.CompareHashAndPassword`
+  when set, falling back to the existing constant-time plaintext compare
+  for installs that haven't migrated. The auth service emits a one-time
+  startup warning when the plaintext path is in use.
 - Renumbered ADR `0011-memory-subsystem.md` → `0014-memory-subsystem.md` to
   resolve the duplicate-0011 collision with `0011-channel-rich-content-and-bridge.md`.
   Updated cross-references in README, ADR 0013, and the embed-onnx stub.
+
+### Security
+- Operators can now retire the plaintext admin password by switching to
+  `[admin].password_hash`. See `SECURITY.md` § "Migrating from plaintext
+  to bcrypt" for the upgrade path. The plaintext field remains supported
+  for back-compat — no breaking change for existing installs.
 
 ## [v1.0-rc] — 2026-05-05
 

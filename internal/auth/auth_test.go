@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/opendray/opendray-v2/internal/config"
 )
 
@@ -53,6 +55,72 @@ func TestLogin_AdminNotConfigured(t *testing.T) {
 	s := New(config.AdminConfig{}, nil, nil)
 	if _, _, err := s.Login("admin", "secret"); err != ErrInvalidCredentials {
 		t.Fatalf("expected reject when admin unconfigured")
+	}
+}
+
+// bcryptHash returns a bcrypt hash of plaintext at MinCost, suitable
+// for tests that need a real hash without being slow. Production code
+// should never use MinCost — operators get bcrypt.DefaultCost through
+// the hash-password subcommand.
+func bcryptHash(t *testing.T, plaintext string) string {
+	t.Helper()
+	hash, err := bcrypt.GenerateFromPassword([]byte(plaintext), bcrypt.MinCost)
+	if err != nil {
+		t.Fatalf("bcrypt hash: %v", err)
+	}
+	return string(hash)
+}
+
+func TestLogin_PasswordHash_Success(t *testing.T) {
+	cfg := config.AdminConfig{User: "admin", PasswordHash: bcryptHash(t, "secret")}
+	s := New(cfg, nil, nil)
+	tok, info, err := s.Login("admin", "secret")
+	if err != nil {
+		t.Fatalf("Login: %v", err)
+	}
+	if tok == "" {
+		t.Fatal("token empty")
+	}
+	if info.Username != "admin" {
+		t.Errorf("username=%q", info.Username)
+	}
+}
+
+func TestLogin_PasswordHash_WrongPassword(t *testing.T) {
+	cfg := config.AdminConfig{User: "admin", PasswordHash: bcryptHash(t, "secret")}
+	s := New(cfg, nil, nil)
+	if _, _, err := s.Login("admin", "wrong"); err != ErrInvalidCredentials {
+		t.Fatalf("err=%v, want ErrInvalidCredentials", err)
+	}
+}
+
+// PasswordHash takes precedence — supplying the right plaintext for
+// the legacy field while the hash is set must NOT authenticate.
+func TestLogin_PasswordHashWinsOverPlaintext(t *testing.T) {
+	cfg := config.AdminConfig{
+		User:         "admin",
+		Password:     "old-plaintext",                   // would auth under back-compat…
+		PasswordHash: bcryptHash(t, "secret"),           // …but hash is set, so this is ignored.
+	}
+	s := New(cfg, nil, nil)
+	if _, _, err := s.Login("admin", "old-plaintext"); err != ErrInvalidCredentials {
+		t.Fatalf("plaintext should be ignored when PasswordHash is set; got err=%v", err)
+	}
+	if _, _, err := s.Login("admin", "secret"); err != nil {
+		t.Fatalf("hash path should authenticate; got err=%v", err)
+	}
+}
+
+func TestLogin_BackCompatPlaintext(t *testing.T) {
+	// Existing installs with [admin].password set and no
+	// password_hash must continue to authenticate.
+	cfg := config.AdminConfig{User: "admin", Password: "still-works"}
+	s := New(cfg, nil, nil)
+	if _, _, err := s.Login("admin", "still-works"); err != nil {
+		t.Fatalf("legacy plaintext path broken: %v", err)
+	}
+	if _, _, err := s.Login("admin", "wrong"); err != ErrInvalidCredentials {
+		t.Fatalf("legacy plaintext should still reject wrong password: %v", err)
 	}
 }
 

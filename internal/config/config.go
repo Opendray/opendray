@@ -247,9 +247,18 @@ type BackupConfig struct {
 }
 
 type AdminConfig struct {
-	User     string `toml:"user" json:"user"`
+	User string `toml:"user" json:"user"`
+	// Password is the plaintext admin password. Only consulted when
+	// PasswordHash is empty. Kept as a back-compat path for existing
+	// installs; new installs should prefer PasswordHash. The auth
+	// service emits a one-time warning at startup when Password is
+	// used.
 	Password string `toml:"password" json:"password"`
-	TokenTTL string `toml:"token_ttl" json:"token_ttl"` // e.g. "24h", "12h", "30m"
+	// PasswordHash is a bcrypt hash of the admin password
+	// (`$2a$…` / `$2b$…` / `$2y$…`). When set, Password is ignored.
+	// Generate with: `opendray hash-password`.
+	PasswordHash string `toml:"password_hash" json:"password_hash"`
+	TokenTTL     string `toml:"token_ttl" json:"token_ttl"` // e.g. "24h", "12h", "30m"
 }
 
 // Duration parses TokenTTL; returns 0 if unset.
@@ -328,6 +337,9 @@ func applyEnv(cfg *Config) {
 	}
 	if v := os.Getenv("OPENDRAY_ADMIN_PASSWORD"); v != "" {
 		cfg.Admin.Password = v
+	}
+	if v := os.Getenv("OPENDRAY_ADMIN_PASSWORD_HASH"); v != "" {
+		cfg.Admin.PasswordHash = v
 	}
 	if v := os.Getenv("OPENDRAY_ADMIN_TOKEN_TTL"); v != "" {
 		cfg.Admin.TokenTTL = v
