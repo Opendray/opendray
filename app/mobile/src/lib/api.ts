@@ -334,3 +334,28 @@ export async function listProviders(
     enabled: p.enabled,
   }))
 }
+
+// ── Backups ─────────────────────────────────────────────────────────
+
+export interface BackupSummary {
+  id: string
+  target_id: string
+  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'deleted' | string
+  triggered_by: string
+  started_at: string
+  finished_at?: string | null
+  bytes: number
+  encrypted: boolean
+}
+
+export async function listBackups(
+  serverURL: string,
+  token: string,
+): Promise<BackupSummary[]> {
+  const res = await mobileFetch<{ backups?: BackupSummary[] }>(
+    serverURL,
+    '/api/v1/backups',
+    { token },
+  )
+  return res.backups ?? []
+}

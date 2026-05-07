@@ -14,7 +14,12 @@ interface Props {
   onLogout: () => void
 }
 
-export type SubPage = 'channels' | 'integrations' | 'providers'
+export type SubPage =
+  | 'channels'
+  | 'integrations'
+  | 'providers'
+  | 'backups'
+  | 'settings'
 
 const ITEMS: { id: SubPage; label: string; description: string; icon: string }[] = [
   {
@@ -34,6 +39,18 @@ const ITEMS: { id: SubPage; label: string; description: string; icon: string }[]
     label: 'CLI Providers',
     description: 'Claude Code / Codex / Gemini configurations',
     icon: '◈',
+  },
+  {
+    id: 'backups',
+    label: 'Backups',
+    description: 'Recent encrypted snapshot history',
+    icon: '⌧',
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    description: 'Theme + device info',
+    icon: '⚙',
   },
 ]
 

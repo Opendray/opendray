@@ -11,6 +11,8 @@ import { MoreScreen, type SubPage } from './screens/MoreScreen'
 import { ChannelsScreen } from './screens/ChannelsScreen'
 import { IntegrationsScreen } from './screens/IntegrationsScreen'
 import { ProvidersScreen } from './screens/ProvidersScreen'
+import { BackupsScreen } from './screens/BackupsScreen'
+import { SettingsScreen } from './screens/SettingsScreen'
 import { BottomTabBar, type Tab } from './components/BottomTabBar'
 import { type SessionSummary } from './lib/api'
 import {
@@ -163,6 +165,28 @@ export function App() {
         token={token}
         onBack={() => setState('home')}
         onAuthExpired={onClearAuthAndReturnToLogin}
+      />
+    )
+  }
+
+  if (state === 'backups') {
+    return (
+      <BackupsScreen
+        serverURL={serverURL}
+        token={token}
+        onBack={() => setState('home')}
+        onAuthExpired={onClearAuthAndReturnToLogin}
+      />
+    )
+  }
+
+  if (state === 'settings') {
+    return (
+      <SettingsScreen
+        username={username}
+        serverURL={serverURL}
+        expiresAt={prefs!.expiresAt}
+        onBack={() => setState('home')}
       />
     )
   }
