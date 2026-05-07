@@ -1,7 +1,15 @@
 # ADR 0015 — Mobile platform: Capacitor wraps a shared React SPA
 
-**Status**: Accepted (foundation in progress on `feat/mobile-platform`)
+**Status**: Superseded by [ADR 0016](./0016-mobile-flutter-rewrite.md) (2026-05-08)
 **Date**: 2026-05-07
+
+> **Historical note (2026-05-08).** Phases A1–A3, B1–B6, and T2–T4
+> shipped to `feat/mobile-platform` per this ADR. After running the
+> Capacitor build on iPhone, the WebView ceiling was judged
+> unacceptable for the maintainer's primary-surface use case. The
+> mobile platform was rewritten in Flutter under ADR 0016. This
+> document is preserved for the rationale chain; do not start new
+> work from it.
 
 ## Context
 
