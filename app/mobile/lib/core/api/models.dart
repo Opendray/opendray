@@ -160,6 +160,43 @@ class ProviderSummary {
   final bool enabled;
 }
 
+// Multi-account picker option for the Claude provider. Mirrors the
+// fields the spawn-session form actually renders; the full
+// account record lives in /api/v1/claude-accounts.
+class ClaudeAccountSummary {
+  ClaudeAccountSummary({
+    required this.id,
+    required this.name,
+    required this.displayName,
+    required this.enabled,
+    required this.tokenFilled,
+  });
+
+  factory ClaudeAccountSummary.fromJson(Map<String, dynamic> json) {
+    final id = json['id'] as String? ?? '';
+    final name = json['name'] as String? ?? '';
+    final display = json['display_name'] as String? ?? '';
+    return ClaudeAccountSummary(
+      id: id,
+      name: name,
+      // Fall back through display_name → name → id so the picker
+      // never shows a blank row.
+      displayName:
+          display.isNotEmpty ? display : (name.isNotEmpty ? name : id),
+      enabled: json['enabled'] as bool? ?? false,
+      tokenFilled: json['token_filled'] as bool? ?? false,
+    );
+  }
+
+  final String id;
+  final String name;
+  final String displayName;
+  final bool enabled;
+  final bool tokenFilled;
+
+  bool get isUsable => enabled && tokenFilled;
+}
+
 class CreateSessionRequest {
   const CreateSessionRequest({
     required this.providerId,
