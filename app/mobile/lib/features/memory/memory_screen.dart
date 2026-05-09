@@ -73,9 +73,23 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
       keys.sort();
       setState(() {
         _projectKeys = AsyncValue.data(keys);
-        _selectedKey ??= keys.isEmpty ? null : keys.first;
+        // Drop the active selection if its scope_key was wiped by a
+        // bulk delete (or otherwise vanished from the server's
+        // distinct-keys list). Fall back to the first remaining
+        // chip, or to null when nothing's left.
+        if (_selectedKey != null && !keys.contains(_selectedKey)) {
+          _selectedKey = keys.isEmpty ? null : keys.first;
+        } else {
+          _selectedKey ??= keys.isEmpty ? null : keys.first;
+        }
       });
-      if (_selectedKey != null) await _loadProject();
+      if (_selectedKey != null) {
+        await _loadProject();
+      } else {
+        // No keys left — clear the row state so the empty-view
+        // renders instead of a stale list.
+        setState(() => _projectRows = const AsyncValue.data([]));
+      }
     } on ApiException catch (e) {
       if (mounted) {
         setState(() =>
@@ -175,6 +189,129 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
     }
   }
 
+  // Renders the AppBar overflow that exposes "delete every memory in
+  // this scope". Hidden when there's no actionable target (no chip
+  // picked on the Project tab).
+  Widget _bulkDeleteMenu(BuildContext context) {
+    final inProject = _tabs.index == 0;
+    final activeKey = _selectedKey;
+    if (inProject && (activeKey == null || activeKey.isEmpty)) {
+      return const SizedBox.shrink();
+    }
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert),
+      tooltip: 'More',
+      onSelected: (v) {
+        if (v == 'wipe') _confirmAndWipe();
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem<String>(
+          value: 'wipe',
+          child: Row(
+            children: [
+              Icon(
+                Icons.delete_sweep_outlined,
+                size: 18,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                inProject
+                    ? 'Delete all in this project'
+                    : 'Delete all global memories',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _confirmAndWipe() async {
+    final inProject = _tabs.index == 0;
+    final scope = inProject ? MemoryScope.project : MemoryScope.global;
+    final scopeKey = inProject ? _selectedKey : null;
+    final visibleCount = inProject
+        ? _projectRows.value?.length
+        : _globalRows.value?.length;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Delete every memory in this scope?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              inProject
+                  ? 'Project: $scopeKey'
+                  : 'Scope: Global',
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              visibleCount != null
+                  ? 'Currently visible: $visibleCount memory '
+                      '${visibleCount == 1 ? 'item' : 'items'}.'
+                  : 'Counts unknown until the list loads.',
+              style: Theme.of(dialogCtx).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'This cannot be undone. Memories that were ingested via the '
+              'Claude mirror will reappear on the next sync.',
+              style: Theme.of(dialogCtx).textTheme.bodySmall,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogCtx).colorScheme.error,
+            ),
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
+            child: const Text('Delete all'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final deleted = await ref.read(memoryApiProvider).deleteByScope(
+            scope: scope,
+            scopeKey: scopeKey,
+          );
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Deleted $deleted memory ${deleted == 1 ? 'item' : 'items'}'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      if (inProject) {
+        // Remove the now-empty scope_key from the chip strip if its
+        // count went to zero, then reload.
+        await _loadProjectKeys();
+      } else {
+        await _loadGlobal();
+      }
+    } on ApiException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Bulk delete failed: ${e.message}')),
+      );
+    } on Object catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Bulk delete failed: $e')),
+      );
+    }
+  }
+
   Future<void> _newMemory() async {
     final tabIndex = _tabs.index;
     final initialScope =
@@ -199,6 +336,12 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Memory'),
+        actions: [
+          AnimatedBuilder(
+            animation: _tabs,
+            builder: (_, __) => _bulkDeleteMenu(context),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabs,
           tabs: const [Tab(text: 'Project'), Tab(text: 'Global')],

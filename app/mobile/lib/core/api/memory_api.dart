@@ -159,6 +159,28 @@ class MemoryApi {
       throw toApiException(e);
     }
   }
+
+  // POST /memory/delete-by-scope — wipes every memory under
+  // (scope, scope_key) in one server-side SQL op. Returns the
+  // number of rows deleted. Server rejects non-global scopes with
+  // an empty scope_key to prevent fat-fingered table-clearing.
+  Future<int> deleteByScope({
+    required MemoryScope scope,
+    String? scopeKey,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/memory/delete-by-scope',
+        data: {
+          'scope': scope.wire,
+          'scope_key': scope == MemoryScope.global ? '' : (scopeKey ?? ''),
+        },
+      );
+      return (res.data?['deleted'] as num?)?.toInt() ?? 0;
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
 }
 
 final memoryApiProvider = Provider<MemoryApi>((ref) {
