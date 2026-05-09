@@ -275,3 +275,4 @@ Failed and successful logins both publish events (`admin.login_failed`,
 - [`docs/integration-guide.md`](integration-guide.md) — building external integrations
 - [`docs/adr/`](adr/) — architecture decisions
 - [`docs/design.md`](design.md) — full design spec
+- [`deploy/`](../deploy/) — systemd unit + Proxmox LXC notes for production install
