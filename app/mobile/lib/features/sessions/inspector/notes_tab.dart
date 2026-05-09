@@ -19,9 +19,9 @@ import 'package:path/path.dart' as p;
 //   "Project docs" → projects/<basename>/*.md — multiple agent-
 //                    authored docs. List view, click to open in a
 //                    full-screen editor dialog. "New doc" creates
-//                    via /notes/write. ⚙ pins the project mapping
-//                    if the operator's vault uses a non-default
-//                    layout.
+//                    via /notes/write. The settings icon in the
+//                    section header pins the project mapping if
+//                    the operator's vault uses a non-default layout.
 //
 // Both sections back into the same vault prefixes the web admin
 // uses, and the project mapping override is shared (stored at
@@ -56,10 +56,7 @@ class _NotesTabState extends ConsumerState<NotesTab>
       final api = ref.read(notesApiProvider);
       final info = await api.info();
       final mapping = await api.projectMapping(widget.cwd);
-      // Vault-relative project docs prefix derived by stripping the
-      // vault root from mapping.path. Falls back to "" if the mapping
-      // landed outside the vault (operator misconfig).
-      final projectsRel = _relPrefix(info.root, mapping.path);
+      final projectsRel = _projectsRel(info, mapping, widget.cwd);
       final projectsList = projectsRel.isEmpty
           ? <NoteSummary>[]
           : await api.list(prefix: projectsRel);
@@ -83,15 +80,63 @@ class _NotesTabState extends ConsumerState<NotesTab>
     }
   }
 
-  String _relPrefix(String vaultRoot, String absPath) {
-    if (vaultRoot.isEmpty || absPath.isEmpty) return '';
-    final root = vaultRoot.endsWith('/') ? vaultRoot : '$vaultRoot/';
-    if (!absPath.startsWith(root)) return '';
-    final rel = absPath.substring(root.length);
-    // The list/read API expects a trailing slash for prefix matches
-    // when the prefix is a directory; we'll normalise on the call
-    // site.
-    return rel;
+  // Vault-relative project docs prefix. Tries three sources in order:
+  //   1. mapping.path with vault root stripped — respects custom
+  //      overrides AND the default when both paths agree on
+  //      normalization.
+  //   2. mapping.path with the home tilde prefix swapped against
+  //      info.root — handles the macOS /Users vs /private/Users
+  //      symlink case where startsWith fails on otherwise-equal
+  //      paths.
+  //   3. <projects_prefix>/<slug(basename(cwd))> — matches the
+  //      web admin convention (app/shared/src/lib/notes.ts
+  //      projectNoteDir()) and works even when info.root is empty
+  //      because notes is misconfigured server-side.
+  String _projectsRel(NotesInfo info, ProjectMapping mapping, String cwd) {
+    // 1. literal startsWith strip
+    if (info.root.isNotEmpty && mapping.path.isNotEmpty) {
+      final r1 = _stripPrefix(mapping.path, info.root);
+      if (r1 != null) return r1;
+
+      // 2. /private prefix tolerance for macOS
+      const privatePrefix = '/private';
+      if (mapping.path.startsWith(privatePrefix) &&
+          !info.root.startsWith(privatePrefix)) {
+        final r2 = _stripPrefix(
+          mapping.path.substring(privatePrefix.length),
+          info.root,
+        );
+        if (r2 != null) return r2;
+      }
+      if (info.root.startsWith(privatePrefix) &&
+          !mapping.path.startsWith(privatePrefix)) {
+        final r3 = _stripPrefix(
+          mapping.path,
+          info.root.substring(privatePrefix.length),
+        );
+        if (r3 != null) return r3;
+      }
+    }
+    // 3. convention fallback
+    final prefix = info.projectsPrefix.isNotEmpty
+        ? info.projectsPrefix
+        : 'projects';
+    return '$prefix/${_cwdSlug(cwd)}';
+  }
+
+  // Returns the substring of [absPath] after [root], or null if
+  // [absPath] is not under [root]. Tolerates trailing-slash mismatch
+  // on either side.
+  String? _stripPrefix(String absPath, String root) {
+    if (root.isEmpty || absPath.isEmpty) return null;
+    final r = root.endsWith('/') ? root : '$root/';
+    if (absPath == root || absPath == r.substring(0, r.length - 1)) {
+      return '';
+    }
+    if (absPath.startsWith(r)) {
+      return absPath.substring(r.length);
+    }
+    return null;
   }
 
   @override
@@ -513,7 +558,8 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
         ? 'Pinned to ${widget.projectsRel}/ (overrides ${widget.mapping.defaultPath}). '
             'AI agents author docs here too.'
         : 'Architecture / spec / decisions / plan / retros — typically '
-            'authored by AI agents. Tap ⚙ to point at a different vault folder.';
+            'authored by AI agents. Use the settings button to point at a '
+            'different vault folder.';
     return _SectionCard(
       icon: Icons.auto_awesome,
       title: 'Project docs',
@@ -591,8 +637,9 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
           if (widget.projectsRel.isEmpty)
             _empty(
               context,
-              'Vault root not detected — check that /api/v1/notes/info '
-              'returns the path your gateway expects.',
+              'Could not resolve a project mapping for this session. '
+              'Check that the gateway has a notes vault configured '
+              'and the session has a non-empty cwd.',
             )
           else if (widget.docs.isEmpty)
             _empty(
