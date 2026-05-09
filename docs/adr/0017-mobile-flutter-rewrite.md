@@ -1,8 +1,15 @@
-# ADR 0016 — Mobile platform: rewrite in Flutter, retire Capacitor
+# ADR 0017 — Mobile platform: rewrite in Flutter, retire Capacitor
 
 **Status**: Proposed (rewrite in progress on `feat/mobile-flutter`)
 **Date**: 2026-05-08
 **Supersedes**: ADR 0015
+
+> **Numbering note.** This ADR was originally drafted as ADR 0016 on
+> 2026-05-08, but the number was already claimed by an earlier
+> Proposed ADR ("backup format v2: per-install PBKDF2 salt", drafted
+> 2026-05-07 by navidrast on `docs/adr-0016-backup-format-v2`).
+> Renumbered to 0017 to preserve chronological ordering of the
+> proposal pipeline.
 
 ## Context
 
@@ -275,7 +282,7 @@ for `app/mobile/build_release.sh`:
   ADR 0015. Switching framework doesn't fix iOS background
   WebSocket suspension.
 - **Two ADRs to keep in mind**: ADR 0015 stays on file as the
-  superseded record; readers must follow the chain to 0016.
+  superseded record; readers must follow the chain to 0017.
 
 ### Compatibility
 

@@ -60,7 +60,7 @@ func (h *Handlers) login(w http.ResponseWriter, r *http.Request) {
 
 // mobileLogin issues a longer-TTL token (default 30d) for the
 // Flutter mobile app. Same request/response shape as /auth/login;
-// only the token lifetime differs. See ADR 0016 §5 (and ADR 0015 §5
+// only the token lifetime differs. See ADR 0017 §5 (and ADR 0015 §5
 // for the original — superseded — auth design rationale).
 func (h *Handlers) mobileLogin(w http.ResponseWriter, r *http.Request) {
 	h.handleLogin(w, r, h.svc.LoginMobile)
