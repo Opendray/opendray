@@ -170,6 +170,19 @@ class NotesApi {
 
   // PUT /api/v1/notes/write — overwrite a note's full body. Used by
   // the personal scratchpad's auto-save and by "New doc" creation.
+  // DELETE /api/v1/notes/delete?path=… — irreversible. Server responds
+  // 204 on success, 404 if the path didn't exist.
+  Future<void> delete(String path) async {
+    try {
+      await _dio.delete<void>(
+        '/api/v1/notes/delete',
+        queryParameters: {'path': path},
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   Future<NoteSummary> write({required String path, required String body}) async {
     try {
       final res = await _dio.put<Map<String, dynamic>>(
