@@ -96,11 +96,13 @@ func TestLogin_PasswordHash_WrongPassword(t *testing.T) {
 
 // PasswordHash takes precedence — supplying the right plaintext for
 // the legacy field while the hash is set must NOT authenticate.
+// Password "old-plaintext" would otherwise auth under the back-compat
+// path; PasswordHash being set forces the bcrypt branch.
 func TestLogin_PasswordHashWinsOverPlaintext(t *testing.T) {
 	cfg := config.AdminConfig{
 		User:         "admin",
-		Password:     "old-plaintext",                   // would auth under back-compat…
-		PasswordHash: bcryptHash(t, "secret"),           // …but hash is set, so this is ignored.
+		Password:     "old-plaintext",
+		PasswordHash: bcryptHash(t, "secret"),
 	}
 	s := New(cfg, nil, nil)
 	if _, _, err := s.Login("admin", "old-plaintext"); err != ErrInvalidCredentials {
