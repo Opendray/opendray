@@ -173,6 +173,10 @@ type Store interface {
 	// Delete removes a memory by id; returns ErrNotFound when the
 	// id wasn't there.
 	Delete(ctx context.Context, id string) error
+	// DeleteByScope wipes every memory under the given (scope,
+	// scope_key) pair in a single SQL operation. Returns the row
+	// count actually removed; zero is not an error.
+	DeleteByScope(ctx context.Context, scope Scope, scopeKey string) (int64, error)
 	// Close releases store-level resources (DB conns, files).
 	// Safe to call multiple times.
 	Close() error
