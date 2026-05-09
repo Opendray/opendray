@@ -41,6 +41,77 @@ class ClaudeAccountsApi {
       throw toApiException(e);
     }
   }
+
+  // POST /claude-accounts. Token is optional — when omitted the row
+  // is created in "empty" state (token_filled=false) and the operator
+  // pastes the OAuth JSON later via setToken.
+  Future<void> create({
+    required String name,
+    String? displayName,
+    String? token,
+    bool enabled = true,
+  }) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/api/v1/claude-accounts',
+        data: {
+          'name': name,
+          if (displayName != null && displayName.isNotEmpty)
+            'display_name': displayName,
+          if (token != null && token.isNotEmpty) 'token': token,
+          'enabled': enabled,
+        },
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // PUT /claude-accounts/{id}. Pointer-style patch: pass null to
+  // leave a field untouched. Most common mobile edit is renaming
+  // display_name; the rest are rarely tweaked from a phone.
+  Future<void> update(
+    String id, {
+    String? displayName,
+    String? description,
+    bool? enabled,
+  }) async {
+    try {
+      await _dio.put<Map<String, dynamic>>(
+        '/api/v1/claude-accounts/$id',
+        data: {
+          if (displayName != null) 'display_name': displayName,
+          if (description != null) 'description': description,
+          if (enabled != null) 'enabled': enabled,
+        },
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // PUT /claude-accounts/{id}/token replaces the OAuth blob. Mobile
+  // accepts either the raw JSON pasted in (Claude exports it as a
+  // single-object JSON) or the bare access_token; the server treats
+  // the field as opaque text.
+  Future<void> setToken(String id, String token) async {
+    try {
+      await _dio.put<Map<String, dynamic>>(
+        '/api/v1/claude-accounts/$id/token',
+        data: {'token': token},
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  Future<void> delete(String id) async {
+    try {
+      await _dio.delete<void>('/api/v1/claude-accounts/$id');
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
 }
 
 final claudeAccountsApiProvider = Provider<ClaudeAccountsApi>((ref) {

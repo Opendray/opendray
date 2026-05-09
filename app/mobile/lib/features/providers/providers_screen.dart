@@ -5,6 +5,7 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/claude_accounts_api.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/providers_api.dart';
+import 'package:opendray/features/providers/claude_account_dialogs.dart';
 import 'package:opendray/features/providers/provider_config_screen.dart';
 
 // Providers — view CLI providers (Claude / Codex / Gemini / …) and,
@@ -99,6 +100,151 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
     }
   }
 
+  Future<void> _addAccount() async {
+    final form = await CreateClaudeAccountDialog.show(context);
+    if (form == null || !mounted) return;
+    await _runToggle(
+      key: 'new-account',
+      okMsg: 'Account ${form.name} added.',
+      failPrefix: 'Add failed',
+      op: () => ref.read(claudeAccountsApiProvider).create(
+            name: form.name,
+            displayName: form.displayName,
+            token: form.token,
+          ),
+    );
+  }
+
+  Future<void> _openAccountActions(ClaudeAccountSummary a) async {
+    final action = await showModalBottomSheet<_AccountAction>(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetCtx) => SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(a.displayName,
+                      style: Theme.of(sheetCtx).textTheme.titleSmall),
+                  Text(
+                    a.name,
+                    style: Theme.of(sheetCtx)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(fontFamily: 'monospace'),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.drive_file_rename_outline),
+              title: const Text('Rename'),
+              onTap: () =>
+                  Navigator.of(sheetCtx).pop(_AccountAction.rename),
+            ),
+            ListTile(
+              leading: const Icon(Icons.key_outlined),
+              title: Text(a.tokenFilled ? 'Replace token' : 'Set token'),
+              onTap: () =>
+                  Navigator.of(sheetCtx).pop(_AccountAction.setToken),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: Icon(
+                Icons.delete_outline,
+                color: Theme.of(sheetCtx).colorScheme.error,
+              ),
+              title: Text(
+                'Delete',
+                style: TextStyle(color: Theme.of(sheetCtx).colorScheme.error),
+              ),
+              onTap: () =>
+                  Navigator.of(sheetCtx).pop(_AccountAction.delete),
+            ),
+            const SizedBox(height: 4),
+          ],
+        ),
+      ),
+    );
+    if (action == null || !mounted) return;
+    switch (action) {
+      case _AccountAction.rename:
+        final next = await RenameClaudeAccountDialog.show(context, a);
+        if (next == null || !mounted) return;
+        await _runToggle(
+          key: 'a:${a.id}',
+          okMsg: 'Renamed to $next.',
+          failPrefix: 'Rename failed',
+          op: () => ref
+              .read(claudeAccountsApiProvider)
+              .update(a.id, displayName: next),
+        );
+      case _AccountAction.setToken:
+        final tok = await SetClaudeTokenDialog.show(context, a);
+        if (tok == null || !mounted) return;
+        await _runToggle(
+          key: 'a:${a.id}',
+          okMsg: 'Token saved.',
+          failPrefix: 'Set token failed',
+          op: () => ref.read(claudeAccountsApiProvider).setToken(a.id, tok),
+        );
+      case _AccountAction.delete:
+        final ok = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Delete account?'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${a.displayName} (${a.name})',
+                  style: Theme.of(ctx).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Removes the account and its stored OAuth token. '
+                  'Sessions already using this account stay running '
+                  'until they end.',
+                  style: Theme.of(ctx).textTheme.bodySmall,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(ctx).colorScheme.error,
+                ),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+        );
+        if (ok != true || !mounted) return;
+        await _runToggle(
+          key: 'a:${a.id}',
+          okMsg: 'Deleted ${a.name}.',
+          failPrefix: 'Delete failed',
+          op: () => ref.read(claudeAccountsApiProvider).delete(a.id),
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -159,13 +305,26 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
               ),
             ),
           const SizedBox(height: 8),
-          const _SectionHeader(label: 'Claude accounts'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Expanded(child: _SectionHeader(label: 'Claude accounts')),
+              Padding(
+                padding: const EdgeInsets.only(right: 12, top: 8),
+                child: TextButton.icon(
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('Add'),
+                  onPressed: _addAccount,
+                ),
+              ),
+            ],
+          ),
           if (data.accounts.isEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 16, 12),
               child: Text(
-                'No Claude accounts imported. Import via the web admin:\n'
-                'Providers → Claude → Add account.',
+                'No Claude accounts yet. Tap Add to paste an OAuth '
+                'token from a desktop login.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             )
@@ -184,6 +343,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
                       .read(claudeAccountsApiProvider)
                       .setEnabled(a.id, enabled: next),
                 ),
+                onTap: () => _openAccountActions(a),
               ),
           const SizedBox(height: 16),
         ],
@@ -285,20 +445,25 @@ class _ProviderTile extends StatelessWidget {
   }
 }
 
+enum _AccountAction { rename, setToken, delete }
+
 class _AccountTile extends StatelessWidget {
   const _AccountTile({
     required this.account,
     required this.busy,
     required this.onToggle,
+    required this.onTap,
   });
   final ClaudeAccountSummary account;
   final bool busy;
   final ValueChanged<bool> onToggle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final usable = account.isUsable;
     return ListTile(
+      onTap: busy ? null : onTap,
       leading: Icon(
         usable ? Icons.account_circle : Icons.account_circle_outlined,
         color: usable
