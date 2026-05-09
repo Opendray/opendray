@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/auth/auth_state.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -36,6 +37,7 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _sub;
   Timer? _reconnectTimer;
+  ProviderSubscription<AsyncValue<SessionSummary>>? _sessionStateSub;
   _ConnState _state = _ConnState.connecting;
   String? _lastError;
   int _retryAttempt = 0;
@@ -54,6 +56,16 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
     _terminal.onOutput = _onTerminalOutput;
     _terminal.onResize = _onTerminalResize;
     _connect();
+    // Watch the session row's lifecycle. When it transitions from
+    // stopped/ended back to running/pending (i.e. the user hit
+    // Restart from the action sheet, or some other client did),
+    // force-reconnect — otherwise the WS stays in `ended` state
+    // forever and the user has to back out and re-enter the screen
+    // to see the live output.
+    _sessionStateSub = ref.listenManual<AsyncValue<SessionSummary>>(
+      sessionByIdProvider(widget.sessionId),
+      _onSessionStateChange,
+    );
   }
 
   @override
@@ -62,8 +74,31 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
     _reconnectTimer?.cancel();
     _sub?.cancel();
     _channel?.sink.close();
+    _sessionStateSub?.close();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onSessionStateChange(
+    AsyncValue<SessionSummary>? previous,
+    AsyncValue<SessionSummary> next,
+  ) {
+    final prev = previous?.value?.state;
+    final now = next.value?.state;
+    if (prev == null || now == null) return;
+    final wasFinished =
+        prev == SessionState.stopped || prev == SessionState.ended;
+    final isLive = now == SessionState.running ||
+        now == SessionState.idle ||
+        now == SessionState.pending;
+    if (wasFinished && isLive) {
+      // Soft separator — keep prior output visible (the user may
+      // have hit Restart specifically to re-read the last error)
+      // but flag the boundary so it's obvious where the new
+      // process's output starts.
+      _terminal.write('\r\n\x1b[2m--- restart ---\x1b[0m\r\n');
+      _retryNow();
+    }
   }
 
   void _connect() {
