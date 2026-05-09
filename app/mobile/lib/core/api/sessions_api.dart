@@ -85,6 +85,36 @@ class SessionsApi {
       throw toApiException(e);
     }
   }
+
+  // Upload a file (typically an image) and let the gateway hand
+  // back the absolute path it landed at on the server's tempdir.
+  // The caller pastes that path into the live PTY so the running
+  // CLI (e.g. Claude Code) can attach the file as context.
+  Future<String> uploadFile({
+    required String sessionId,
+    required String localPath,
+    String? filename,
+  }) async {
+    try {
+      final form = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          localPath,
+          filename: filename,
+        ),
+      });
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/sessions/$sessionId/uploads',
+        data: form,
+      );
+      final path = res.data?['path'];
+      if (path is! String || path.isEmpty) {
+        throw const FormatException('uploads response missing "path"');
+      }
+      return path;
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
 }
 
 final sessionsApiProvider = Provider<SessionsApi>((ref) {

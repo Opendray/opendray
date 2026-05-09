@@ -37,6 +37,17 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<!-- image_picker permissions: opendray lets the user attach
+	     screenshots / photos to a running CLI session by picking
+	     from the photo library or shooting a new photo with the
+	     camera. Only triggered on explicit tap of the keyboard
+	     bar's image button. -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>opendray uses the photo library so you can attach screenshots and images to your CLI sessions.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>opendray uses the camera so you can attach a fresh photo to your CLI session.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>opendray does not record audio. This entry exists because image_picker's video-pick path links AVFoundation; opendray never invokes it.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

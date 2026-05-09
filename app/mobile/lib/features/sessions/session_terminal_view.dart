@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/auth/auth_state.dart';
@@ -311,6 +313,105 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
     _terminal.paste(text);
   }
 
+  // Image-attach flow:
+  //   1. Sheet asks Library / Camera / Cancel.
+  //   2. image_picker returns a local XFile path.
+  //   3. dio multipart-uploads the file to the gateway, which writes
+  //      it to the server's tempdir and returns the absolute path.
+  //   4. We paste that absolute path into the terminal so the running
+  //      CLI (e.g. Claude Code) can pick it up — the user sees the
+  //      path appear in their prompt and can edit / submit as usual.
+  Future<void> _attachImage() async {
+    final source = await _pickImageSource();
+    if (source == null || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    XFile? file;
+    try {
+      file = await ImagePicker().pickImage(
+        source: source,
+        imageQuality: 88,
+        maxWidth: 2048,
+      );
+    } on Object catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Image picker failed: $e')),
+      );
+      return;
+    }
+    if (file == null) return; // user cancelled
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Uploading image…'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+    try {
+      final remotePath = await ref.read(sessionsApiProvider).uploadFile(
+            sessionId: widget.sessionId,
+            localPath: file.path,
+            filename: file.name,
+          );
+      _terminal.paste(remotePath);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Image attached: $remotePath'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Upload failed (${e.statusCode}): ${e.message}')),
+      );
+    } on Object catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Upload failed: $e')),
+      );
+    }
+  }
+
+  Future<ImageSource?> _pickImageSource() {
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetCtx) => SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(sheetCtx).dividerColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Photo library'),
+              onTap: () => Navigator.of(sheetCtx).pop(ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Take a photo'),
+              onTap: () => Navigator.of(sheetCtx).pop(ImageSource.camera),
+            ),
+            const SizedBox(height: 4),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -366,6 +467,7 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
           onKey: _sendKey,
           onCopy: _copyBuffer,
           onPaste: _pasteFromClipboard,
+          onAttachImage: _attachImage,
         ),
       ],
     );
@@ -468,11 +570,13 @@ class _MobileKeyboardBar extends StatefulWidget {
     required this.onKey,
     required this.onCopy,
     required this.onPaste,
+    required this.onAttachImage,
   });
 
   final void Function(String) onKey;
   final Future<void> Function() onCopy;
   final Future<void> Function() onPaste;
+  final Future<void> Function() onAttachImage;
 
   @override
   State<_MobileKeyboardBar> createState() => _MobileKeyboardBarState();
@@ -579,6 +683,14 @@ class _MobileKeyboardBarState extends State<_MobileKeyboardBar> {
               onTap: () {
                 _haptic();
                 unawaited(widget.onPaste());
+              },
+            ),
+            _Key(
+              icon: Icons.add_photo_alternate_outlined,
+              tooltip: 'Attach image',
+              onTap: () {
+                _haptic();
+                unawaited(widget.onAttachImage());
               },
             ),
             _Key(

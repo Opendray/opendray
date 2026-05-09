@@ -2,11 +2,18 @@ package session
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -78,6 +85,7 @@ func (h *Handlers) Mount(r chi.Router) {
 			r.Get("/stream", h.stream)
 			r.Get("/history", h.history)
 			r.Patch("/claude-account", h.switchClaudeAccount)
+			r.Post("/uploads", h.upload)
 		})
 	})
 }
@@ -299,6 +307,89 @@ func (h *Handlers) streamCloseEnded(w http.ResponseWriter, r *http.Request) {
 		closeMsg,
 		time.Now().Add(time.Second),
 	)
+}
+
+// uploadMaxBytes caps each /uploads request — Claude Code can read
+// images up to a few MB; bigger payloads are usually a mistake.
+const uploadMaxBytes = 16 * 1024 * 1024 // 16 MiB
+
+// upload handles POST /sessions/{id}/uploads. The body is a multipart
+// form with a "file" part. The bytes are saved to a per-session
+// directory under the gateway host's tempdir; the saved absolute
+// path is returned so the client can paste it into the terminal as
+// e.g. an `@/path/to/file.png` reference for the running CLI.
+//
+// Path safety: the filename is regenerated server-side as a random
+// hex token + the client-supplied extension (lowercased + filtered to
+// known image suffixes). The original filename is never touched on
+// disk — guards against path traversal and odd shell-active chars.
+func (h *Handlers) upload(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	// Validate the session exists so we don't accumulate orphan
+	// directories from typo'd ids.
+	if _, err := h.svc.Get(r.Context(), id); err != nil {
+		h.respondError(w, err)
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, uploadMaxBytes)
+	if err := r.ParseMultipartForm(uploadMaxBytes); err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Errorf("parse multipart: %w", err))
+		return
+	}
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Errorf("missing file part: %w", err))
+		return
+	}
+	defer file.Close()
+
+	ext := normalizeUploadExt(header.Filename)
+	dir := filepath.Join(os.TempDir(), "opendray-uploads", id)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	tokenBytes := make([]byte, 8)
+	if _, err := rand.Read(tokenBytes); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	name := hex.EncodeToString(tokenBytes) + ext
+	outPath := filepath.Join(dir, name)
+	out, err := os.OpenFile(outPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	written, copyErr := io.Copy(out, file)
+	if cerr := out.Close(); cerr != nil && copyErr == nil {
+		copyErr = cerr
+	}
+	if copyErr != nil {
+		_ = os.Remove(outPath)
+		writeError(w, http.StatusInternalServerError, copyErr)
+		return
+	}
+	writeJSON(w, http.StatusCreated, map[string]any{
+		"path":          outPath,
+		"size":          written,
+		"original_name": header.Filename,
+	})
+}
+
+// normalizeUploadExt extracts a safe file extension from the
+// client-supplied filename. We accept a small allowlist of image
+// types Claude / Codex / Gemini are known to read; anything else
+// becomes ".bin" so the file lives somewhere predictable but the
+// CLI won't accidentally try to render it as JPEG.
+func normalizeUploadExt(filename string) string {
+	ext := strings.ToLower(filepath.Ext(filename))
+	switch ext {
+	case ".png", ".jpg", ".jpeg", ".gif", ".webp", ".heic", ".bmp":
+		return ext
+	default:
+		return ".bin"
+	}
 }
 
 // history handles GET /sessions/{id}/history. Returns up to `limit`
