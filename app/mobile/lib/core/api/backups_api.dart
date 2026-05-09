@@ -96,6 +96,16 @@ class BackupsApi {
       throw toApiException(e);
     }
   }
+
+  // DELETE /backups/{id} — server marks the row deleted and removes
+  // the underlying blob from its target. Audit row is retained.
+  Future<void> delete(String id) async {
+    try {
+      await _dio.delete<void>('/api/v1/backups/$id');
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
 }
 
 final backupsApiProvider = Provider<BackupsApi>((ref) {

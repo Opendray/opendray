@@ -92,7 +92,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
   }
 
   Future<void> _showDetail(BackupRow b) async {
-    await showDialog<void>(
+    final action = await showDialog<_DetailAction>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Backup detail'),
@@ -147,13 +147,85 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
           ),
         ),
         actions: [
+          if (b.status != 'deleted' && b.status != 'pending')
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(ctx).colorScheme.error,
+              ),
+              onPressed: () => Navigator.of(ctx).pop(_DetailAction.delete),
+              child: const Text('Delete'),
+            ),
           FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(),
+            onPressed: () => Navigator.of(ctx).pop(_DetailAction.close),
             child: const Text('Close'),
           ),
         ],
       ),
     );
+    if (action == _DetailAction.delete && mounted) {
+      await _confirmAndDelete(b);
+    }
+  }
+
+  Future<void> _confirmAndDelete(BackupRow b) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete backup?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Removes the blob from ${b.targetId} and marks the row '
+              'deleted. The audit entry is retained but the data '
+              'cannot be recovered.',
+              style: Theme.of(ctx).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              b.id,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(backupsApiProvider).delete(b.id);
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Deleted ${b.id}.'),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      await _load();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('Delete failed: ${e.message}')),
+      );
+    } on Object catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+    }
   }
 
   Widget _kv(String label, String value, {bool mono = false}) {
@@ -234,6 +306,8 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     );
   }
 }
+
+enum _DetailAction { close, delete }
 
 class _BackupTile extends StatelessWidget {
   const _BackupTile({required this.row, required this.onTap});

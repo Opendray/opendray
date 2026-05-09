@@ -135,6 +135,28 @@ class CallsPage {
   final String? nextCursor;
 }
 
+// RegisterResult is returned from POST /integrations and POST
+// /integrations/{id}/rotate-key. The plaintext APIKey is the only
+// time the operator can see it — the server only retains a bcrypt
+// hash afterwards. UI must reveal it once and warn before dismissal.
+class RegisterResult {
+  RegisterResult({required this.integration, required this.apiKey});
+
+  factory RegisterResult.fromJson(Map<String, dynamic> json) {
+    final raw = json['integration'];
+    final integration = raw is Map<String, dynamic>
+        ? Integration.fromJson(raw)
+        : Integration.fromJson({});
+    return RegisterResult(
+      integration: integration,
+      apiKey: json['api_key'] as String? ?? '',
+    );
+  }
+
+  final Integration integration;
+  final String apiKey;
+}
+
 class IntegrationsApi {
   IntegrationsApi(this._dio);
   final Dio _dio;
@@ -187,6 +209,79 @@ class IntegrationsApi {
         },
       );
       return CallsPage.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /integrations — server returns the freshly-minted plaintext
+  // API key (only chance to see it) plus the persisted Integration.
+  Future<RegisterResult> register({
+    required String name,
+    required String baseUrl,
+    required String routePrefix,
+    List<String>? scopes,
+    String? version,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/integrations',
+        data: {
+          'name': name,
+          'base_url': baseUrl,
+          'route_prefix': routePrefix,
+          if (scopes != null && scopes.isNotEmpty) 'scopes': scopes,
+          if (version != null && version.isNotEmpty) 'version': version,
+        },
+      );
+      return RegisterResult.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // PATCH /integrations/{id}. Each field optional — pass null to
+  // leave it untouched.
+  Future<Integration> update(
+    String id, {
+    String? baseUrl,
+    List<String>? scopes,
+    String? version,
+    bool? enabled,
+  }) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/api/v1/integrations/$id',
+        data: {
+          if (baseUrl != null) 'base_url': baseUrl,
+          if (scopes != null) 'scopes': scopes,
+          if (version != null) 'version': version,
+          if (enabled != null) 'enabled': enabled,
+        },
+      );
+      return Integration.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  Future<void> delete(String id) async {
+    try {
+      await _dio.delete<void>('/api/v1/integrations/$id');
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /integrations/{id}/rotate-key — invalidates the previous key
+  // and returns the freshly-minted plaintext for one-time display.
+  // Server returns 403 for is_system integrations.
+  Future<RegisterResult> rotateKey(String id) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/integrations/$id/rotate-key',
+      );
+      return RegisterResult.fromJson(res.data ?? {});
     } on Object catch (e) {
       throw toApiException(e);
     }

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/integrations_api.dart';
+import 'package:opendray/features/integrations/integration_forms.dart';
 
 // Per-integration detail: header card with the registration metadata
 // + cursor-paginated recent calls. Filter chips above the call list
@@ -135,16 +136,212 @@ class _IntegrationDetailScreenState
     );
   }
 
+  Future<void> _onEdit() async {
+    final i = _integration;
+    if (i == null) return;
+    final patch = await EditIntegrationDialog.show(context, i);
+    if (patch == null || patch.isEmpty || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(integrationsApiProvider).update(
+            i.id,
+            baseUrl: patch.baseUrl,
+            scopes: patch.scopes,
+            version: patch.version,
+            enabled: patch.enabled,
+          );
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Integration updated.'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      await _loadDetail();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('Update failed: ${e.message}')),
+      );
+    } on Object catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text('Update failed: $e')));
+    }
+  }
+
+  Future<void> _onDelete() async {
+    final i = _integration;
+    if (i == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete integration?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(i.name, style: Theme.of(ctx).textTheme.titleSmall),
+            const SizedBox(height: 4),
+            Text(
+              '/${i.routePrefix}',
+              style: Theme.of(ctx)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(fontFamily: 'monospace'),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Removes the registration and revokes the API key. '
+              'In-flight requests using the old key will start '
+              'failing immediately.',
+              style: Theme.of(ctx).textTheme.bodySmall,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      await ref.read(integrationsApiProvider).delete(i.id);
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Deleted ${i.name}.'),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      navigator.pop();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('Delete failed: ${e.message}')),
+      );
+    } on Object catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+    }
+  }
+
+  Future<void> _onRotateKey() async {
+    final i = _integration;
+    if (i == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Rotate API key?'),
+        content: Text(
+          'Generates a new API key for ${i.name} and immediately '
+          'invalidates the previous one. Any caller still holding '
+          'the old key will start getting 401s until you hand them '
+          'the new one.',
+          style: Theme.of(ctx).textTheme.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Rotate'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final result = await ref.read(integrationsApiProvider).rotateKey(i.id);
+      if (!mounted) return;
+      await RevealApiKeyDialog.show(
+        context: context,
+        apiKey: result.apiKey,
+        title: 'New API key for ${i.name}',
+        subtitle: 'Hand this to the integration. The previous key '
+            'has just been invalidated.',
+      );
+      if (!mounted) return;
+      await _loadDetail();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('Rotate failed: ${e.message}')),
+      );
+    } on Object catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text('Rotate failed: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final i = _integration;
+    final mutable = i != null && !i.isSystem;
     return Scaffold(
       appBar: AppBar(
-        title: Text(_integration?.name ?? 'Integration'),
+        title: Text(i?.name ?? 'Integration'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
             onPressed: _loadingCalls ? null : _loadAll,
+          ),
+          PopupMenuButton<_DetailAction>(
+            enabled: mutable,
+            tooltip: mutable ? 'More' : 'System integration — read-only',
+            onSelected: (a) {
+              switch (a) {
+                case _DetailAction.edit:
+                  _onEdit();
+                case _DetailAction.rotateKey:
+                  _onRotateKey();
+                case _DetailAction.delete:
+                  _onDelete();
+              }
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem(
+                value: _DetailAction.edit,
+                child: ListTile(
+                  leading: Icon(Icons.edit_outlined),
+                  title: Text('Edit'),
+                ),
+              ),
+              const PopupMenuItem(
+                value: _DetailAction.rotateKey,
+                child: ListTile(
+                  leading: Icon(Icons.vpn_key_outlined),
+                  title: Text('Rotate key'),
+                ),
+              ),
+              const PopupMenuItem(
+                value: _DetailAction.delete,
+                child: ListTile(
+                  leading: Icon(Icons.delete_outline, color: Colors.redAccent),
+                  title: Text(
+                    'Delete',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -313,6 +510,8 @@ class _IntegrationDetailScreenState
     );
   }
 }
+
+enum _DetailAction { edit, rotateKey, delete }
 
 enum _DirectionFilter {
   all('All', null),

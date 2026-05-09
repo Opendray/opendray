@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/integrations_api.dart';
 import 'package:opendray/features/integrations/integration_detail_screen.dart';
+import 'package:opendray/features/integrations/integration_forms.dart';
 
 // Top-level Integrations list. Splits operator-registered rows from
 // system rows (e.g. opendray-memory MCP) so the latter never visually
@@ -56,6 +57,39 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
     }
   }
 
+  Future<void> _onRegister() async {
+    final form = await RegisterIntegrationDialog.show(context);
+    if (form == null || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final result = await ref.read(integrationsApiProvider).register(
+            name: form.name,
+            baseUrl: form.baseUrl,
+            routePrefix: form.routePrefix,
+            scopes: form.scopes,
+            version: form.version,
+          );
+      if (!mounted) return;
+      await RevealApiKeyDialog.show(
+        context: context,
+        apiKey: result.apiKey,
+        title: 'API key for ${result.integration.name}',
+        subtitle: 'Hand this to the integration so it can authenticate '
+            'against /api/v1/${result.integration.routePrefix}/...',
+      );
+      if (!mounted) return;
+      await _load();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('Register failed: ${e.message}')),
+      );
+    } on Object catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text('Register failed: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,6 +107,11 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
         data: _buildList,
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _onRegister,
+        icon: const Icon(Icons.add),
+        label: const Text('Register'),
       ),
     );
   }
