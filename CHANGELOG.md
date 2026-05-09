@@ -21,6 +21,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `id-token: write` (cosign OIDC). Supply-chain hardening: SHA-pinned
   cosign-installer, sbom-action, and goreleaser-action; fail-fast
   tag-format validation on workflow_dispatch.
+- `deploy/` directory with reference deploy artefacts:
+  - `deploy/systemd/opendray.service` — production-ready systemd unit
+    with sandboxing (`NoNewPrivileges`, `ProtectSystem=strict`, etc.),
+    `migrate`-then-`serve` startup, 20s graceful-stop window.
+  - `deploy/lxc/proxmox-pty-notes.md` — Proxmox-specific guide covering
+    privileged vs unprivileged container PTY behaviour, the cgroup +
+    bind-mount config required for unprivileged LXCs, networking +
+    pgvector + pg_dump-version checks, and a pre-go-live checklist.
+  - `deploy/README.md` — index pointing operators at the right artefact
+    for their topology.
+  - operator-guide.md "Where to look next" section now links to `deploy/`.
+- ADR 0016 (Proposed): backup-format v2 design for per-install PBKDF2
+  salt. Captures the four binding decisions (in-header storage,
+  version-byte bump 1→2, per-Seal salt provenance, indefinite v1
+  read compat) and the three-PR rollout. Implementation pending.
 - LICENSE file (Apache 2.0) — previously declared in README only.
 - SECURITY.md — threat model, default posture, deployment checklist, report channel.
 - CONTRIBUTING.md — dev setup, test commands, PR + commit conventions.
