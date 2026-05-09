@@ -18,10 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   resolve the duplicate-0011 collision with `0011-channel-rich-content-and-bridge.md`.
   Updated cross-references in README, ADR 0013, and the embed-onnx stub.
 
-## [v1.0-rc] — 2026-05-05
+## [v1.0.0] — 2026-05-09
 
-Feature-complete release candidate. v1 (`Opendray/opendray`) keeps running
-in production; switchover happens after v1.0 ships.
+First stable release. Tagged at commit `fe96fd8` on `main`. Web frontend
++ backend feature-complete; mobile + Slack inbound + automated release
+workflow deferred to v1.x per the post-v1.0 roadmap. v1
+(`Opendray/opendray`) keeps running in production through this quarter
+per ADR 0001.
+
+The feature inventory below was originally captured under
+`[v1.0-rc] — 2026-05-05`; section was promoted to `[v1.0.0]` on tag.
 
 ### Added (since the greenfield start)
 
