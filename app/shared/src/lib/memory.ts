@@ -90,6 +90,27 @@ export async function deleteMemory(id: string): Promise<void> {
   await api(`/api/v1/memory/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }
 
+// deleteMemoriesByScope wipes every memory under (scope, scope_key)
+// in one server-side SQL operation. Returns the row count actually
+// removed. Server enforces:
+//   - non-global scopes require a non-empty scope_key (fat-finger
+//     guard against "delete every memory in this scope")
+//   - global scope must have an empty scope_key (the only valid
+//     value there)
+export async function deleteMemoriesByScope(
+  scope: Scope,
+  scopeKey: string,
+): Promise<number> {
+  const res = await api<{ deleted: number }>(
+    '/api/v1/memory/delete-by-scope',
+    {
+      method: 'POST',
+      body: { scope, scope_key: scope === 'global' ? '' : scopeKey },
+    },
+  )
+  return res.deleted ?? 0
+}
+
 export async function updateMemory(
   id: string,
   text: string,
