@@ -6,6 +6,7 @@ import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/features/_shared/placeholder_screen.dart';
 import 'package:opendray/features/channels/channels_screen.dart';
 import 'package:opendray/features/integrations/integrations_screen.dart';
+import 'package:opendray/features/providers/providers_screen.dart';
 
 // "More" tab — overflow menu for everything that doesn't earn its
 // own bottom-nav slot. Three sections: identity card, navigation
@@ -49,15 +50,7 @@ class MoreScreen extends ConsumerWidget {
             icon: Icons.psychology_outlined,
             title: 'Providers',
             subtitle: 'Claude / Codex / Gemini CLI status',
-            onTap: () => _push(
-              context,
-              const PlaceholderScreen(
-                title: 'Providers',
-                icon: Icons.psychology_outlined,
-                body: 'Read-only view of provider credentials and '
-                    'reachability lands in F10.',
-              ),
-            ),
+            onTap: () => _push(context, const ProvidersScreen()),
           ),
           const SizedBox(height: 8),
           const _SectionHeader(label: 'System'),

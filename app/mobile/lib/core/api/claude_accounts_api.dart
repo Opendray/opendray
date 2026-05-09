@@ -27,6 +27,20 @@ class ClaudeAccountsApi {
       throw toApiException(e);
     }
   }
+
+  // PATCH /claude-accounts/{id}/toggle. Disables/enables an individual
+  // OAuth account without touching the token; spawn picker filters
+  // out disabled accounts.
+  Future<void> setEnabled(String id, {required bool enabled}) async {
+    try {
+      await _dio.patch<Map<String, dynamic>>(
+        '/api/v1/claude-accounts/$id/toggle',
+        data: {'enabled': enabled},
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
 }
 
 final claudeAccountsApiProvider = Provider<ClaudeAccountsApi>((ref) {

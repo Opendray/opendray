@@ -25,6 +25,20 @@ class ProvidersApi {
       throw toApiException(e);
     }
   }
+
+  // PATCH /providers/{id}/toggle. Server fires `provider.toggle` audit
+  // event and refuses to disable the only enabled provider — handler
+  // returns the patched record on success.
+  Future<void> setEnabled(String id, {required bool enabled}) async {
+    try {
+      await _dio.patch<Map<String, dynamic>>(
+        '/api/v1/providers/$id/toggle',
+        data: {'enabled': enabled},
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
 }
 
 final providersApiProvider = Provider<ProvidersApi>((ref) {
