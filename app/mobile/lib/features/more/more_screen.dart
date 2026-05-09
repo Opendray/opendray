@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/features/_shared/placeholder_screen.dart';
+import 'package:opendray/features/channels/channels_screen.dart';
 import 'package:opendray/features/integrations/integrations_screen.dart';
 
 // "More" tab — overflow menu for everything that doesn't earn its
@@ -42,14 +43,7 @@ class MoreScreen extends ConsumerWidget {
             icon: Icons.notifications_outlined,
             title: 'Channels',
             subtitle: 'Notification destinations',
-            onTap: () => _push(
-              context,
-              const PlaceholderScreen(
-                title: 'Channels',
-                icon: Icons.notifications_outlined,
-                body: 'Slack / email / webhook destinations land in F9.',
-              ),
-            ),
+            onTap: () => _push(context, const ChannelsScreen()),
           ),
           _MenuTile(
             icon: Icons.psychology_outlined,
