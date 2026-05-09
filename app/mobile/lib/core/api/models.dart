@@ -160,6 +160,70 @@ class ProviderSummary {
   final bool enabled;
 }
 
+// One row from the gateway's audit log. Mirrors
+// internal/audit/service.go Entry. Metadata is kept as a raw map
+// because it varies per action — formatting/highlighting happens
+// at the UI layer.
+class AuditEntry {
+  AuditEntry({
+    required this.id,
+    required this.timestamp,
+    required this.actorKind,
+    required this.action,
+    this.actorId,
+    this.subjectKind,
+    this.subjectId,
+    this.metadata,
+  });
+
+  factory AuditEntry.fromJson(Map<String, dynamic> json) => AuditEntry(
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        timestamp:
+            DateTime.tryParse(json['ts'] as String? ?? '')?.toUtc() ??
+                DateTime.now().toUtc(),
+        actorKind: json['actor_kind'] as String? ?? '',
+        actorId: json['actor_id'] as String?,
+        action: json['action'] as String? ?? '',
+        subjectKind: json['subject_kind'] as String?,
+        subjectId: json['subject_id'] as String?,
+        metadata: json['metadata'] is Map
+            ? Map<String, dynamic>.from(json['metadata'] as Map)
+            : null,
+      );
+
+  final int id;
+  final DateTime timestamp;
+  final String actorKind;
+  final String? actorId;
+  final String action;
+  final String? subjectKind;
+  final String? subjectId;
+  final Map<String, dynamic>? metadata;
+}
+
+class AuditPage {
+  AuditPage({required this.entries, required this.nextCursor});
+
+  factory AuditPage.fromJson(Map<String, dynamic> json) {
+    final raw = json['entries'];
+    final entries = raw is List
+        ? raw
+            .whereType<Map<String, dynamic>>()
+            .map(AuditEntry.fromJson)
+            .toList()
+        : <AuditEntry>[];
+    return AuditPage(
+      entries: entries,
+      nextCursor: json['next_cursor'] as String?,
+    );
+  }
+
+  final List<AuditEntry> entries;
+  // null = no more pages; opaque string the server expects back as
+  // ?cursor= for the next page.
+  final String? nextCursor;
+}
+
 // Memory scope band — mirrors internal/memory/store.go.
 enum MemoryScope {
   session,
