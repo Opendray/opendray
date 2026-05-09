@@ -8,31 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- `deploy/` directory with reference deploy artefacts:
-  - `deploy/systemd/opendray.service` — production-ready systemd unit
-    with sandboxing (`NoNewPrivileges`, `ProtectSystem=strict`, etc.),
-    `migrate`-then-`serve` startup, 20s graceful-stop window.
-  - `deploy/lxc/proxmox-pty-notes.md` — Proxmox-specific guide covering
-    privileged vs unprivileged container PTY behaviour, the cgroup +
-    bind-mount config required for unprivileged LXCs, networking +
-    pgvector + pg_dump-version checks, and a pre-go-live checklist.
-  - `deploy/README.md` — index pointing operators at the right artefact
-    for their topology.
-  - operator-guide.md "Where to look next" section now links to `deploy/`.
+
 - LICENSE file (Apache 2.0) — previously declared in README only.
 - SECURITY.md — threat model, default posture, deployment checklist, report channel.
 - CONTRIBUTING.md — dev setup, test commands, PR + commit conventions.
 - CHANGELOG.md — this file.
 
 ### Changed
+- `internal/backup/cipher.go`: 6-line comment on `kdfSalt` flagging it
+  as a frozen v1 protocol constant and pointing at ADR 0016. No code
+  behaviour change.
 - Renumbered ADR `0011-memory-subsystem.md` → `0014-memory-subsystem.md` to
   resolve the duplicate-0011 collision with `0011-channel-rich-content-and-bridge.md`.
   Updated cross-references in README, ADR 0013, and the embed-onnx stub.
 
-## [v1.0-rc] — 2026-05-05
+## [v1.0.0] — 2026-05-09
 
-Feature-complete release candidate. v1 (`Opendray/opendray`) keeps running
-in production; switchover happens after v1.0 ships.
+First stable release. Tagged at commit `fe96fd8` on `main`. Web frontend
++ backend feature-complete; mobile + Slack inbound + automated release
+workflow deferred to v1.x per the post-v1.0 roadmap. v1
+(`Opendray/opendray`) keeps running in production through this quarter
+per ADR 0001.
+
+The feature inventory below was originally captured under
+`[v1.0-rc] — 2026-05-05`; section was promoted to `[v1.0.0]` on tag.
 
 ### Added (since the greenfield start)
 

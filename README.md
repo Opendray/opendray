@@ -7,8 +7,9 @@
 
 ## Status
 
-v2 v1.0-rc — Phase 1 (backend) + Phase 2 (web frontend) feature-complete
-on `main`. Mobile + Slack + deploy automation deferred per the
+**v1.0.0** — first stable release tagged on 2026-05-09. Phase 1 (backend)
++ Phase 2 (web frontend) feature-complete on `main`. Mobile + Slack
+inbound + automated release workflow deferred to v1.x per the
 post-v1.0 roadmap.
 
 ## Quickstart
