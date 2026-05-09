@@ -83,22 +83,53 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
     AsyncValue<SessionSummary>? previous,
     AsyncValue<SessionSummary> next,
   ) {
-    final prev = previous?.value?.state;
     final now = next.value?.state;
-    if (prev == null || now == null) return;
-    final wasFinished =
-        prev == SessionState.stopped || prev == SessionState.ended;
+    if (now == null) return;
+    final prev = previous?.value?.state;
+
+    final isFinished =
+        now == SessionState.stopped || now == SessionState.ended;
     final isLive = now == SessionState.running ||
         now == SessionState.idle ||
         now == SessionState.pending;
-    if (wasFinished && isLive) {
-      // Soft separator — keep prior output visible (the user may
-      // have hit Restart specifically to re-read the last error)
-      // but flag the boundary so it's obvious where the new
-      // process's output starts.
-      _terminal.write('\r\n\x1b[2m--- restart ---\x1b[0m\r\n');
-      _retryNow();
+
+    // live → finished: tear down the WS proactively. The server
+    // doesn't always send a close frame the instant the PTY dies
+    // (the read goroutine may still be blocked on the client's
+    // input until something nudges it), so the connection strip
+    // can otherwise sit on "Connected" while the metadata badge
+    // already shows "stopped". Force the disconnect on our side
+    // so the two indicators agree.
+    if (isFinished && _state != _ConnState.ended) {
+      _markEnded();
+      return;
     }
+
+    // finished → live: the user (or another client) hit Restart.
+    // Reconnect to pick up the new PTY, soft-separator first so
+    // the boundary between old and new output is obvious without
+    // throwing away the last-error context.
+    if (prev != null) {
+      final wasFinished =
+          prev == SessionState.stopped || prev == SessionState.ended;
+      if (wasFinished && isLive) {
+        _terminal.write('\r\n\x1b[2m--- restart ---\x1b[0m\r\n');
+        _retryNow();
+      }
+    }
+  }
+
+  void _markEnded() {
+    _reconnectTimer?.cancel();
+    _sub?.cancel();
+    _channel?.sink.close();
+    _channel = null;
+    _sub = null;
+    if (!mounted) return;
+    setState(() {
+      _state = _ConnState.ended;
+      _lastError = null;
+    });
   }
 
   void _connect() {
