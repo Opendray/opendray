@@ -55,6 +55,26 @@ class ChannelsApi {
   ChannelsApi(this._dio);
   final Dio _dio;
 
+  // POST /channels with `{kind, config, enabled}`. Server validates
+  // the config blob against the chosen kind's schema and returns the
+  // freshly-inserted ChannelView (status='starting' until the impl
+  // finishes connecting / first ping).
+  Future<ChannelView> create({
+    required String kind,
+    required Map<String, dynamic> config,
+    bool enabled = true,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/channels',
+        data: {'kind': kind, 'config': config, 'enabled': enabled},
+      );
+      return ChannelView.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   Future<List<ChannelView>> list() async {
     try {
       final res = await _dio.get<Map<String, dynamic>>('/api/v1/channels');

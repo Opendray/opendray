@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/channels_api.dart';
+import 'package:opendray/core/auth/auth_state.dart';
+import 'package:opendray/features/channels/channel_form_dialog.dart';
+import 'package:opendray/features/channels/channel_kinds.dart';
 
 // Notification destinations (Slack / Feishu / DingTalk / WeCom /
 // bridge). Read-only list. Per-row actions: test-send, toggle
@@ -145,6 +148,19 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
             ),
             const Divider(height: 1),
             ListTile(
+              enabled: !isBusy && findKind(ch.kind) != null,
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('Edit config'),
+              subtitle: findKind(ch.kind) == null
+                  ? const Text(
+                      'Bridge channels stay web-only',
+                      style: TextStyle(fontSize: 11),
+                    )
+                  : null,
+              onTap: () =>
+                  Navigator.of(sheetCtx).pop(_RowAction.editKindConfig),
+            ),
+            ListTile(
               enabled: !isBusy,
               leading: const Icon(Icons.tune_outlined),
               title: const Text('Edit notifications'),
@@ -210,6 +226,8 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
               .setMuted(ch.id, muted: next)
               .then((_) {}),
         );
+      case _RowAction.editKindConfig:
+        await _editKindConfig(ch);
       case _RowAction.editNotify:
         await _editNotifyPrefs(ch);
       case _RowAction.viewConfig:
@@ -227,6 +245,85 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
       case _RowAction.delete:
         await _confirmAndDelete(ch);
     }
+  }
+
+  Future<void> _onCreate() async {
+    final kind = await ChannelKindPickerSheet.show(context);
+    if (kind == null || !mounted) return;
+    final cfg = await ChannelFormDialog.show(context: context, kind: kind);
+    if (cfg == null || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final created = await ref
+          .read(channelsApiProvider)
+          .create(kind: kind.kind, config: cfg);
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Created ${kind.label} channel.'),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      if (kind.webhookBased) {
+        final auth = ref.read(authControllerProvider);
+        if (auth is AuthLoggedIn) {
+          await PostCreateWebhookDialog.show(
+            context: context,
+            serverUrl: auth.serverUrl,
+            channelId: created.id,
+            kind: kind,
+          );
+        }
+      }
+      if (!mounted) return;
+      await _load();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('Create failed: ${e.message}')),
+      );
+    } on Object catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text('Create failed: $e')));
+    }
+  }
+
+  Future<void> _editKindConfig(ChannelView ch) async {
+    final kind = findKind(ch.kind);
+    if (kind == null) return;
+    // Pull non-notify_* keys out so the kind-specific form only shows
+    // its own fields. Notify prefs and the muted flag round-trip
+    // untouched via the merge in updateConfig.
+    final cfg = await ChannelFormDialog.show(
+      context: context,
+      kind: kind,
+      initial: ch.config,
+    );
+    if (cfg == null || !mounted) return;
+    // Build a sparse patch: any field present in the form (cfg) gets
+    // upserted; any kind-defined optional field whose form value is
+    // empty becomes a remove sentinel so the server-side default
+    // applies cleanly.
+    final patch = <String, Object?>{};
+    for (final f in kind.fields) {
+      if (cfg.containsKey(f.name)) {
+        patch[f.name] = cfg[f.name];
+      } else {
+        // Field was omitted from the form result (optional + blank) —
+        // explicitly drop it from the saved config.
+        patch[f.name] = removeChannelConfigKey;
+      }
+    }
+    await _runAction(
+      id: ch.id,
+      okMessage: 'Channel config updated.',
+      failPrefix: 'Update failed',
+      op: () => ref
+          .read(channelsApiProvider)
+          .updateConfig(ch.id, patch)
+          .then((_) {}),
+    );
   }
 
   Future<void> _editNotifyPrefs(ChannelView ch) async {
@@ -356,6 +453,11 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _onCreate,
+        icon: const Icon(Icons.add),
+        label: const Text('New'),
+      ),
     );
   }
 
@@ -398,6 +500,7 @@ enum _RowAction {
   test,
   toggleEnabled,
   toggleMuted,
+  editKindConfig,
   editNotify,
   viewConfig,
   copyId,
