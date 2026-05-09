@@ -135,10 +135,20 @@ class ProviderSummary {
   });
 
   factory ProviderSummary.fromGatewayJson(Map<String, dynamic> json) {
+    // Server returns {manifest: Manifest, manifest_hash, config, enabled}.
+    // Manifest fields use camelCase (`displayName`, not `name`); we
+    // fall back through displayName → displayName_zh → id so the
+    // picker label is never blank.
     final manifest = json['manifest'] as Map<String, dynamic>? ?? {};
+    final id = manifest['id'] as String? ?? '';
+    final display = manifest['displayName'] as String? ?? '';
+    final displayZh = manifest['displayName_zh'] as String? ?? '';
+    final name = display.isNotEmpty
+        ? display
+        : (displayZh.isNotEmpty ? displayZh : id);
     return ProviderSummary(
-      id: manifest['id'] as String? ?? '',
-      name: manifest['name'] as String? ?? '',
+      id: id,
+      name: name,
       manifestHash: json['manifest_hash'] as String? ?? '',
       enabled: json['enabled'] as bool? ?? false,
     );
