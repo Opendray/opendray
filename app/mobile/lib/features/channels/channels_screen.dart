@@ -145,6 +145,13 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
             ),
             const Divider(height: 1),
             ListTile(
+              enabled: !isBusy,
+              leading: const Icon(Icons.tune_outlined),
+              title: const Text('Edit notifications'),
+              onTap: () =>
+                  Navigator.of(sheetCtx).pop(_RowAction.editNotify),
+            ),
+            ListTile(
               leading: const Icon(Icons.code),
               title: const Text('View raw config'),
               onTap: () => Navigator.of(sheetCtx).pop(_RowAction.viewConfig),
@@ -153,6 +160,19 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
               leading: const Icon(Icons.copy_outlined),
               title: const Text('Copy channel id'),
               onTap: () => Navigator.of(sheetCtx).pop(_RowAction.copyId),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              enabled: !isBusy,
+              leading: Icon(
+                Icons.delete_outline,
+                color: Theme.of(sheetCtx).colorScheme.error,
+              ),
+              title: Text(
+                'Delete',
+                style: TextStyle(color: Theme.of(sheetCtx).colorScheme.error),
+              ),
+              onTap: () => Navigator.of(sheetCtx).pop(_RowAction.delete),
             ),
             const SizedBox(height: 4),
           ],
@@ -190,6 +210,8 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
               .setMuted(ch.id, muted: next)
               .then((_) {}),
         );
+      case _RowAction.editNotify:
+        await _editNotifyPrefs(ch);
       case _RowAction.viewConfig:
         await _showConfig(ch);
       case _RowAction.copyId:
@@ -202,7 +224,77 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
             behavior: SnackBarBehavior.floating,
           ),
         );
+      case _RowAction.delete:
+        await _confirmAndDelete(ch);
     }
+  }
+
+  Future<void> _editNotifyPrefs(ChannelView ch) async {
+    final patch = await showDialog<Map<String, Object?>>(
+      context: context,
+      builder: (_) => _NotifyPrefsDialog(channel: ch),
+    );
+    if (patch == null || patch.isEmpty || !mounted) return;
+    await _runAction(
+      id: ch.id,
+      okMessage: 'Notification preferences updated.',
+      failPrefix: 'Update failed',
+      op: () => ref
+          .read(channelsApiProvider)
+          .updateConfig(ch.id, patch)
+          .then((_) {}),
+    );
+  }
+
+  Future<void> _confirmAndDelete(ChannelView ch) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete channel?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(ch.kind, style: Theme.of(ctx).textTheme.titleSmall),
+            const SizedBox(height: 4),
+            Text(
+              ch.id,
+              style: Theme.of(ctx)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(fontFamily: 'monospace'),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Stops the channel and removes its configuration. '
+              'In-flight notifications addressed to it will be '
+              'dropped silently.',
+              style: Theme.of(ctx).textTheme.bodySmall,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    await _runAction(
+      id: ch.id,
+      okMessage: 'Channel deleted.',
+      failPrefix: 'Delete failed',
+      op: () => ref.read(channelsApiProvider).delete(ch.id),
+    );
   }
 
   Future<void> _showConfig(ChannelView ch) async {
@@ -302,7 +394,15 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
   }
 }
 
-enum _RowAction { test, toggleEnabled, toggleMuted, viewConfig, copyId }
+enum _RowAction {
+  test,
+  toggleEnabled,
+  toggleMuted,
+  editNotify,
+  viewConfig,
+  copyId,
+  delete,
+}
 
 class _ChannelTile extends StatelessWidget {
   const _ChannelTile({
@@ -420,6 +520,222 @@ class _Badge extends StatelessWidget {
         label,
         style: TextStyle(color: color, fontSize: 10),
       ),
+    );
+  }
+}
+
+// _NotifyPrefsDialog edits the kind-agnostic notification keys that
+// every channel supports: which session topics to fire on, which
+// repeat policy, snippet inclusion + cap. Returns a sparse patch
+// map suitable for ChannelsApi.updateConfig — keys the operator
+// reverted to defaults are emitted with the removeChannelConfigKey
+// sentinel so the merge clears them.
+class _NotifyPrefsDialog extends StatefulWidget {
+  const _NotifyPrefsDialog({required this.channel});
+  final ChannelView channel;
+
+  @override
+  State<_NotifyPrefsDialog> createState() => _NotifyPrefsDialogState();
+}
+
+class _NotifyPrefsDialogState extends State<_NotifyPrefsDialog> {
+  static const _allTopics = ['session.started', 'session.idle', 'session.ended'];
+  static const _modes = [
+    ('once', 'Once per session', 'Fire once when idle, stay silent until reply or end.'),
+    ('cooldown', 'Time-window cooldown', 'Suppress repeats within the chosen window.'),
+    ('every', 'Every event (noisy)', 'No suppression — only for low-frequency channels.'),
+  ];
+  static const _cooldownPresets = [
+    (60, '1m'),
+    (300, '5m'),
+    (900, '15m'),
+    (1800, '30m'),
+    (3600, '1h'),
+  ];
+
+  late Set<String> _topics;
+  // 'once' is the server default; UI shows it but emits a remove
+  // sentinel so the saved config doesn't pin an explicit override.
+  late String _mode;
+  late int _cooldownSec;
+  late bool _includeSnippet;
+  late int _snippetCap; // 0 = no cap
+
+  @override
+  void initState() {
+    super.initState();
+    final cfg = widget.channel.config;
+    final topicsRaw = cfg['notify_on'];
+    _topics = topicsRaw is List
+        ? Set<String>.from(topicsRaw.whereType<String>())
+        : <String>{..._allTopics};
+    if (_topics.isEmpty) _topics = {..._allTopics};
+    _mode = (cfg['notify_mode'] as String?) ?? 'once';
+    _cooldownSec = (cfg['notify_cooldown_s'] as num?)?.toInt() ?? 300;
+    _includeSnippet = cfg['notify_include_snippet'] as bool? ?? true;
+    _snippetCap = (cfg['notify_snippet_max_chars'] as num?)?.toInt() ?? 0;
+  }
+
+  Map<String, Object?> _buildPatch() {
+    final patch = <String, Object?>{};
+
+    // Topics: persist only when partial selection. All-three or empty
+    // means "any topic" (server default), so drop the key.
+    if (_topics.length == _allTopics.length || _topics.isEmpty) {
+      patch['notify_on'] = removeChannelConfigKey;
+    } else {
+      patch['notify_on'] = _allTopics.where(_topics.contains).toList();
+    }
+
+    if (_mode == 'once') {
+      patch['notify_mode'] = removeChannelConfigKey;
+    } else {
+      patch['notify_mode'] = _mode;
+    }
+
+    if (_mode == 'cooldown') {
+      patch['notify_cooldown_s'] = _cooldownSec;
+    } else {
+      patch['notify_cooldown_s'] = removeChannelConfigKey;
+    }
+
+    if (_includeSnippet) {
+      patch['notify_include_snippet'] = removeChannelConfigKey;
+    } else {
+      patch['notify_include_snippet'] = false;
+    }
+
+    if (_snippetCap > 0) {
+      patch['notify_snippet_max_chars'] = _snippetCap;
+    } else {
+      patch['notify_snippet_max_chars'] = removeChannelConfigKey;
+    }
+
+    return patch;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).textTheme.bodySmall;
+    return AlertDialog(
+      title: const Text('Notification preferences'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Notify on', style: muted),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (final t in _allTopics)
+                  FilterChip(
+                    label: Text(t,
+                        style: const TextStyle(
+                            fontFamily: 'monospace', fontSize: 11)),
+                    selected: _topics.contains(t),
+                    onSelected: (v) => setState(() {
+                      if (v) {
+                        _topics.add(t);
+                      } else {
+                        _topics.remove(t);
+                      }
+                    }),
+                    visualDensity: VisualDensity.compact,
+                  ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                _topics.length == _allTopics.length
+                    ? 'All session events.'
+                    : _topics.isEmpty
+                        ? 'No events selected — outbound notifications muted.'
+                        : '${_topics.length} of ${_allTopics.length} selected.',
+                style: muted,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('Repeat policy', style: muted),
+            const SizedBox(height: 6),
+            RadioGroup<String>(
+              groupValue: _mode,
+              onChanged: (v) => setState(() => _mode = v ?? _mode),
+              child: Column(
+                children: [
+                  for (final (val, label, hint) in _modes)
+                    RadioListTile<String>(
+                      value: val,
+                      title: Text(label),
+                      subtitle: Text(hint, style: muted),
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                ],
+              ),
+            ),
+            if (_mode == 'cooldown') ...[
+              const SizedBox(height: 4),
+              Text('Cooldown window', style: muted),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  for (final (sec, label) in _cooldownPresets)
+                    ChoiceChip(
+                      label: Text(label),
+                      selected: _cooldownSec == sec,
+                      onSelected: (_) => setState(() => _cooldownSec = sec),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 16),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Include terminal snippet'),
+              subtitle: Text(
+                'Embeds the recent terminal tail in each notification.',
+                style: muted,
+              ),
+              value: _includeSnippet,
+              onChanged: (v) => setState(() => _includeSnippet = v),
+            ),
+            if (_includeSnippet) ...[
+              Text('Snippet length cap', style: muted),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  for (final n in const [0, 200, 500, 1000, 2000])
+                    ChoiceChip(
+                      label: Text(n == 0 ? 'no cap' : '$n chars'),
+                      selected: _snippetCap == n,
+                      onSelected: (_) => setState(() => _snippetCap = n),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_buildPatch()),
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }

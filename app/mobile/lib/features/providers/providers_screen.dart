@@ -5,6 +5,7 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/claude_accounts_api.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/providers_api.dart';
+import 'package:opendray/features/providers/provider_config_screen.dart';
 
 // Providers — view CLI providers (Claude / Codex / Gemini / …) and,
 // for Claude specifically, the multi-account list. Each row exposes
@@ -151,6 +152,11 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
                     .read(providersApiProvider)
                     .setEnabled(p.id, enabled: next),
               ),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => ProviderConfigScreen(providerId: p.id),
+                ),
+              ),
             ),
           const SizedBox(height: 8),
           const _SectionHeader(label: 'Claude accounts'),
@@ -219,14 +225,17 @@ class _ProviderTile extends StatelessWidget {
     required this.provider,
     required this.busy,
     required this.onToggle,
+    required this.onTap,
   });
   final ProviderSummary provider;
   final bool busy;
   final ValueChanged<bool> onToggle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      onTap: onTap,
       leading: Container(
         width: 36,
         height: 36,

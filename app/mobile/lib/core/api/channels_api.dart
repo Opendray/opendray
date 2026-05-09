@@ -120,7 +120,54 @@ class ChannelsApi {
       throw toApiException(e);
     }
   }
+
+  // Generic merge-then-PATCH for any subset of config keys. `patch`
+  // entries with non-null values overwrite that key; entries whose
+  // value is the literal sentinel _removeKey delete the key (used to
+  // revert to backend defaults — e.g. "use the server-side default
+  // notify_mode" by removing the explicit override).
+  Future<ChannelView> updateConfig(
+    String id,
+    Map<String, Object?> patch,
+  ) async {
+    try {
+      final current = await get(id);
+      final merged = Map<String, dynamic>.from(current.config);
+      for (final entry in patch.entries) {
+        if (identical(entry.value, _removeKey)) {
+          merged.remove(entry.key);
+        } else {
+          merged[entry.key] = entry.value;
+        }
+      }
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/api/v1/channels/$id',
+        data: {'config': merged},
+      );
+      return ChannelView.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  Future<void> delete(String id) async {
+    try {
+      await _dio.delete<void>('/api/v1/channels/$id');
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
 }
+
+// Sentinel for ChannelsApi.updateConfig — pass this as a value to
+// drop the corresponding key from the channel's config (revert to
+// server default) rather than overwriting it with null.
+class _RemoveSentinel {
+  const _RemoveSentinel();
+}
+
+const Object removeChannelConfigKey = _removeKey;
+const _removeKey = _RemoveSentinel();
 
 final channelsApiProvider = Provider<ChannelsApi>((ref) {
   return ChannelsApi(ref.watch(dioProvider));
