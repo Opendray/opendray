@@ -278,15 +278,54 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
 
   void _sendKey(String text) => _onTerminalOutput(text);
 
+  // Copy the entire xterm buffer (scrollback + visible) to the
+  // system clipboard. Triggered from the keyboard helper bar.
+  Future<void> _copyBuffer() async {
+    final selection = _controller.selection;
+    final text = selection != null
+        ? _terminal.buffer.getText(selection)
+        : _terminal.buffer.getText();
+    if (text.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          selection != null
+              ? 'Selection copied (${text.length} chars)'
+              : 'Buffer copied (${text.length} chars)',
+        ),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  // Read the system clipboard and feed the text into the terminal
+  // as if the user typed it. xterm's paste() handles bracketed-paste
+  // mode if the program negotiated it.
+  Future<void> _pasteFromClipboard() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text;
+    if (text == null || text.isEmpty) return;
+    _terminal.paste(text);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _StatusStrip(
-          state: _state,
-          error: _lastError,
-          onRetry: _state == _ConnState.error ? _retryNow : null,
-        ),
+        // Connection state: 3pt accent line is always visible (so the
+        // user can glance at colour for live status), but the verbose
+        // strip with text + retry button only appears when the WS
+        // isn't connected — saves vertical space on the happy path.
+        _ConnectionAccent(state: _state),
+        if (_state != _ConnState.connected)
+          _StatusStrip(
+            state: _state,
+            error: _lastError,
+            onRetry: _state == _ConnState.error ? _retryNow : null,
+          ),
         Expanded(
           child: ColoredBox(
             color: const Color(0xFF101012),
@@ -323,9 +362,33 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
             ),
           ),
         ),
-        _MobileKeyboardBar(onKey: _sendKey),
+        _MobileKeyboardBar(
+          onKey: _sendKey,
+          onCopy: _copyBuffer,
+          onPaste: _pasteFromClipboard,
+        ),
       ],
     );
+  }
+}
+
+class _ConnectionAccent extends StatelessWidget {
+  const _ConnectionAccent({required this.state});
+  final _ConnState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = switch (state) {
+      _ConnState.connected => Colors.greenAccent.withValues(alpha: 0.7),
+      _ConnState.connecting ||
+      _ConnState.reconnecting =>
+        Colors.amberAccent.withValues(alpha: 0.7),
+      _ConnState.error =>
+        Theme.of(context).colorScheme.error.withValues(alpha: 0.8),
+      _ConnState.ended =>
+        Theme.of(context).dividerColor.withValues(alpha: 0.6),
+    };
+    return Container(height: 2, color: color);
   }
 }
 
@@ -396,11 +459,20 @@ class _StatusStrip extends StatelessWidget {
 
 // Soft-keyboard helper: iOS / Android system keyboards lack the
 // keys terminals need most (Esc, Tab, Ctrl, arrows). Render them
-// as a horizontal toolbar above the keyboard so muscle memory works.
+// as a horizontal toolbar above the keyboard so muscle memory
+// works. Also exposes Copy / Paste because the system selection
+// menu doesn't reliably appear over a Flutter custom-painted
+// terminal on mobile.
 class _MobileKeyboardBar extends StatefulWidget {
-  const _MobileKeyboardBar({required this.onKey});
+  const _MobileKeyboardBar({
+    required this.onKey,
+    required this.onCopy,
+    required this.onPaste,
+  });
 
   final void Function(String) onKey;
+  final Future<void> Function() onCopy;
+  final Future<void> Function() onPaste;
 
   @override
   State<_MobileKeyboardBar> createState() => _MobileKeyboardBarState();
@@ -494,6 +566,22 @@ class _MobileKeyboardBarState extends State<_MobileKeyboardBar> {
               },
             ),
             _Key(
+              icon: Icons.content_copy,
+              tooltip: 'Copy buffer',
+              onTap: () {
+                _haptic();
+                unawaited(widget.onCopy());
+              },
+            ),
+            _Key(
+              icon: Icons.content_paste,
+              tooltip: 'Paste',
+              onTap: () {
+                _haptic();
+                unawaited(widget.onPaste());
+              },
+            ),
+            _Key(
               label: '|',
               onTap: () {
                 _haptic();
@@ -543,9 +631,20 @@ class _MobileKeyboardBarState extends State<_MobileKeyboardBar> {
 }
 
 class _Key extends StatelessWidget {
-  const _Key({required this.label, required this.onTap, this.active = false});
+  const _Key({
+    required this.onTap,
+    this.label,
+    this.icon,
+    this.tooltip,
+    this.active = false,
+  }) : assert(
+          label != null || icon != null,
+          'one of label / icon must be set',
+        );
 
-  final String label;
+  final String? label;
+  final IconData? icon;
+  final String? tooltip;
   final VoidCallback onTap;
   final bool active;
 
@@ -554,7 +653,21 @@ class _Key extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final bg = active ? scheme.primary.withValues(alpha: 0.3) : scheme.surface;
     final border = active ? scheme.primary : scheme.outline;
-    return Padding(
+    final fg = active ? scheme.primary : scheme.onSurface;
+    final inner = icon != null
+        ? Icon(icon, size: 18, color: fg)
+        : Text(
+            label!,
+            style: TextStyle(
+              fontFamily: defaultTargetPlatform == TargetPlatform.iOS
+                  ? '.SF Mono'
+                  : 'monospace',
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: fg,
+            ),
+          );
+    final body = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 3),
       child: InkWell(
         borderRadius: BorderRadius.circular(6),
@@ -567,18 +680,11 @@ class _Key extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
           ),
           alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: defaultTargetPlatform == TargetPlatform.iOS
-                  ? '.SF Mono'
-                  : 'monospace',
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          child: inner,
         ),
       ),
     );
+    final t = tooltip;
+    return t != null ? Tooltip(message: t, child: body) : body;
   }
 }
