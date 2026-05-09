@@ -1,0 +1,131 @@
+name: Release
+
+# Triggered automatically on tag push (v*) — produces a draft GitHub
+# release with goreleaser archives, cosign-signed checksums, and an
+# anchore-generated SBOM. The release lands as DRAFT (per
+# .goreleaser.yml release.draft: true) so a human reviews notes before
+# flipping it to public.
+#
+# workflow_dispatch is wired for two scenarios:
+#   * Re-running the pipeline against an existing tag (e.g. v1.0.0,
+#     which was tagged before this workflow existed).
+#   * Smoke-testing the workflow without cutting a real release —
+#     point it at a v0.0.0-test tag in your fork.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v1.0.0). Must already exist.'
+        required: true
+        type: string
+
+permissions:
+  contents: write   # create / append to GitHub release
+  id-token: write   # cosign keyless OIDC (Sigstore Fulcio)
+  # NOTE: `packages: write` intentionally omitted — least-privilege.
+  # Add it back in the PR that introduces a GHCR push step.
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref }}
+  cancel-in-progress: false   # never cancel a release mid-flight
+
+jobs:
+  release:
+    name: Release ${{ github.event.inputs.tag || github.ref_name }}
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      # ── Validate the tag input on manual dispatch BEFORE doing any
+      #    heavy work (checkout, setup-go, goreleaser). A typo like
+      #    `1.0.0` (missing v) or `V1.0.0` (uppercase) fails here in
+      #    seconds instead of minutes-deep in goreleaser.
+      - name: Validate tag format (workflow_dispatch only)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          echo "$INPUT_TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]' \
+            || { echo "ERROR: tag must match v<semver> (e.g. v1.0.0), got: $INPUT_TAG"; exit 1; }
+
+      - uses: actions/checkout@v5
+        with:
+          # Goreleaser walks the git history to compute the version +
+          # changelog. Shallow clone trips it up; full history is the
+          # safe default for releases.
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      # ── Frontend tooling — goreleaser's pre-build hooks invoke
+      #    `pnpm install --frozen-lockfile` and `pnpm build` so the
+      #    React SPA is in internal/web/dist before the Go build.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: app/web/pnpm-lock.yaml
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.25"
+
+      # ── Goreleaser: archives + checksums in ./dist, draft release on GH.
+      #    SHA-pinned for supply-chain integrity. Intentionally pinned
+      #    on v6 (not v7) to avoid the v7 ESM/Node 24 breaking change
+      #    until we explicitly validate it.
+      - name: Run goreleaser
+        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a  # v6
+        with:
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Cosign keyless: sign the SHA256SUMS produced by goreleaser.
+      #    No long-lived signing key — Sigstore Fulcio mints a short-
+      #    lived cert tied to this workflow's OIDC identity. Verifying
+      #    later: cosign verify-blob --certificate ...pem --signature
+      #    ...sig --certificate-identity-regexp ... SHA256SUMS
+      #    SHA-pinned for supply-chain integrity.
+      - uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac  # v3
+      - name: Sign checksums
+        run: |
+          cosign sign-blob --yes \
+            --output-signature dist/SHA256SUMS.sig \
+            --output-certificate dist/SHA256SUMS.pem \
+            dist/SHA256SUMS
+
+      - name: Upload cosign artefacts to release
+        if: success()
+        run: |
+          gh release upload "$TAG" \
+            dist/SHA256SUMS.sig \
+            dist/SHA256SUMS.pem \
+            --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── SBOM (SPDX). Belt-and-braces: anchore's auto-attach has
+      #    historically been flaky, so generate explicitly + upload via
+      #    gh release. Soft failure (continue-on-error) so a transient
+      #    SBOM hiccup doesn't block the rest of the release.
+      #    SHA-pinned for supply-chain integrity.
+      - name: Generate SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610  # v0
+        continue-on-error: true
+        with:
+          artifact-name: sbom-opendray.spdx.json
+          output-file: dist/sbom-opendray.spdx.json
+
+      - name: Upload SBOM to release
+        if: always() && hashFiles('dist/sbom-opendray.spdx.json') != ''
+        run: gh release upload "$TAG" dist/sbom-opendray.spdx.json --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
