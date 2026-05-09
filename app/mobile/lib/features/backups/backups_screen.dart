@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/backups_api.dart';
+import 'package:opendray/features/backups/backup_schedules_screen.dart';
+import 'package:opendray/features/backups/backup_targets_screen.dart';
 
 // Backups — observability surface. List recent backup rows with
 // status/target/size/duration; FAB kicks off a fresh dump against
@@ -258,6 +260,41 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
             tooltip: 'Refresh',
             onPressed: _state is AsyncLoading ? null : _load,
           ),
+          PopupMenuButton<_AppBarAction>(
+            tooltip: 'More',
+            onSelected: (a) {
+              switch (a) {
+                case _AppBarAction.schedules:
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const BackupSchedulesScreen(),
+                    ),
+                  );
+                case _AppBarAction.targets:
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const BackupTargetsScreen(),
+                    ),
+                  );
+              }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: _AppBarAction.schedules,
+                child: ListTile(
+                  leading: Icon(Icons.schedule_outlined),
+                  title: Text('Schedules'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _AppBarAction.targets,
+                child: ListTile(
+                  leading: Icon(Icons.cloud_outlined),
+                  title: Text('Targets'),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
       body: _state.when(
@@ -308,6 +345,8 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
 }
 
 enum _DetailAction { close, delete }
+
+enum _AppBarAction { schedules, targets }
 
 class _BackupTile extends StatelessWidget {
   const _BackupTile({required this.row, required this.onTap});
