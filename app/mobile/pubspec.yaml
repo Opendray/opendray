@@ -24,6 +24,7 @@ dependencies:
   pretty_dio_logger: ^1.4.0
   web_socket_channel: ^3.0.1
   xterm: ^4.0.0
+  yaml: ^3.1.2
 
 dev_dependencies:
   build_runner: ^2.4.13

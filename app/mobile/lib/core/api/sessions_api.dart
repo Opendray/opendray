@@ -75,6 +75,20 @@ class SessionsApi {
     }
   }
 
+  // GET /api/v1/sessions/:id/history?limit=N — past prompts from
+  // this project's transcripts (Claude-only on the gateway).
+  Future<HistoryResponse> history(String id, {int limit = 200}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/sessions/$id/history',
+        queryParameters: {'limit': limit},
+      );
+      return HistoryResponse.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   // POST /api/v1/sessions/:id/input — sends raw bytes to the PTY
   // stdin. Used by the inspector "push to terminal" actions to
   // inject things like `@/path/to/file` or a recalled prompt

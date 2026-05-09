@@ -160,6 +160,56 @@ class ProviderSummary {
   final bool enabled;
 }
 
+// One past prompt entry pulled from the running session's
+// project-scoped transcript history (currently Claude-only on the
+// gateway side — see internal/session/claude_jsonl.go).
+class ProjectInput {
+  ProjectInput({
+    required this.text,
+    required this.timestamp,
+    required this.sessionId,
+  });
+
+  factory ProjectInput.fromJson(Map<String, dynamic> json) => ProjectInput(
+        text: json['text'] as String? ?? '',
+        timestamp:
+            DateTime.tryParse(json['ts'] as String? ?? '')?.toUtc() ??
+                DateTime.now().toUtc(),
+        sessionId: json['session_id'] as String? ?? '',
+      );
+
+  // The user's typed prompt (what they actually sent to the model).
+  final String text;
+  // When the prompt was sent (UTC).
+  final DateTime timestamp;
+  // Claude's own session id (the JSONL filename), distinct from
+  // opendray's session row id.
+  final String sessionId;
+}
+
+class HistoryResponse {
+  HistoryResponse({required this.entries, required this.unsupportedProvider});
+
+  factory HistoryResponse.fromJson(Map<String, dynamic> json) {
+    final raw = json['entries'];
+    final entries = raw is List
+        ? raw
+            .whereType<Map<String, dynamic>>()
+            .map(ProjectInput.fromJson)
+            .toList()
+        : <ProjectInput>[];
+    return HistoryResponse(
+      entries: entries,
+      unsupportedProvider: json['unsupported_provider'] as bool? ?? false,
+    );
+  }
+
+  final List<ProjectInput> entries;
+  // True when the session's provider isn't Claude — UI renders a
+  // dedicated empty state instead of the "no entries yet" copy.
+  final bool unsupportedProvider;
+}
+
 // Multi-account picker option for the Claude provider. Mirrors the
 // fields the spawn-session form actually renders; the full
 // account record lives in /api/v1/claude-accounts.
