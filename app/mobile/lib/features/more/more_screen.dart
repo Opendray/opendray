@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:opendray/core/auth/auth_state.dart';
-import 'package:opendray/features/_shared/placeholder_screen.dart';
 import 'package:opendray/features/backups/backups_screen.dart';
 import 'package:opendray/features/channels/channels_screen.dart';
 import 'package:opendray/features/integrations/integrations_screen.dart';
+import 'package:opendray/features/more/about_screen.dart';
 import 'package:opendray/features/providers/providers_screen.dart';
 
 // "More" tab — overflow menu for everything that doesn't earn its
@@ -64,15 +64,8 @@ class MoreScreen extends ConsumerWidget {
           _MenuTile(
             icon: Icons.info_outline,
             title: 'About',
-            subtitle: 'Build version & diagnostics',
-            onTap: () => _push(
-              context,
-              const PlaceholderScreen(
-                title: 'About',
-                icon: Icons.info_outline,
-                body: 'Version, build date, and diagnostics land later.',
-              ),
-            ),
+            subtitle: 'Build version & server info',
+            onTap: () => _push(context, const AboutScreen()),
           ),
           const Divider(height: 32),
           Padding(
