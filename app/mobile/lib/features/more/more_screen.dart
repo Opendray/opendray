@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/features/_shared/placeholder_screen.dart';
+import 'package:opendray/features/backups/backups_screen.dart';
 import 'package:opendray/features/channels/channels_screen.dart';
 import 'package:opendray/features/integrations/integrations_screen.dart';
 import 'package:opendray/features/providers/providers_screen.dart';
@@ -57,15 +58,8 @@ class MoreScreen extends ConsumerWidget {
           _MenuTile(
             icon: Icons.backup_outlined,
             title: 'Backups',
-            subtitle: 'Latest backup status',
-            onTap: () => _push(
-              context,
-              const PlaceholderScreen(
-                title: 'Backups',
-                icon: Icons.backup_outlined,
-                body: 'Backup status (read-only) lands in F11.',
-              ),
-            ),
+            subtitle: 'Latest backup status & run-now',
+            onTap: () => _push(context, const BackupsScreen()),
           ),
           _MenuTile(
             icon: Icons.info_outline,
