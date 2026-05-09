@@ -6,14 +6,13 @@ import 'package:intl/intl.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/features/sessions/session_action_sheet.dart';
+import 'package:opendray/features/sessions/session_terminal_view.dart';
 
-// F2 placeholder for the session detail surface. Renders metadata
-// + state badge + Stop / Restart / Delete actions, but the actual
-// terminal stream lands in F3 once xterm.dart is wired up.
-//
-// This screen also handles the case where the session was deleted
-// (or stopped, or just-spawned) by listening to mutations on
-// sessionByIdProvider — we stay live without manual refresh.
+// Session detail surface. Top: a compact metadata strip + Actions
+// menu. Body: the live terminal (xterm.dart over WebSocket). When
+// the user mutates state via the action sheet (stop / restart /
+// delete) we invalidate the watched providers so the strip and
+// terminal both reflect the new state immediately.
 class SessionDetailScreen extends ConsumerWidget {
   const SessionDetailScreen({required this.sessionId, super.key});
 
@@ -24,185 +23,113 @@ class SessionDetailScreen extends ConsumerWidget {
     final async = ref.watch(sessionByIdProvider(sessionId));
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Session'),
+        title: async.when(
+          data: (s) => Text(
+            s.displayName,
+            overflow: TextOverflow.ellipsis,
+          ),
+          loading: () => const Text('Session'),
+          error: (_, __) => const Text('Session'),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh metadata',
             onPressed: () => ref.invalidate(sessionByIdProvider(sessionId)),
+          ),
+          async.maybeWhen(
+            data: (s) => IconButton(
+              icon: const Icon(Icons.tune),
+              tooltip: 'Actions',
+              onPressed: () async {
+                final result = await SessionActionSheet.show(
+                  context,
+                  session: s,
+                );
+                if (result == null) return;
+                if (!context.mounted) return;
+                if (result == SessionActionResult.deleted) {
+                  ref.invalidate(sessionsListProvider);
+                  context.pop();
+                  return;
+                }
+                ref
+                  ..invalidate(sessionByIdProvider(sessionId))
+                  ..invalidate(sessionsListProvider);
+              },
+            ),
+            orElse: SizedBox.shrink,
           ),
         ],
       ),
       body: async.when(
-        data: (session) => _Body(
-          session: session,
-          onChanged: () {
-            ref
-              ..invalidate(sessionByIdProvider(sessionId))
-              ..invalidate(sessionsListProvider);
-          },
-          onDeleted: () {
-            ref.invalidate(sessionsListProvider);
-            if (context.mounted) context.pop();
-          },
-        ),
+        data: (session) => _Body(session: session, sessionId: sessionId),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => _ErrorView(error: e, onRetry: () {
-          ref.invalidate(sessionByIdProvider(sessionId));
-        }),
+        error: (e, _) => _ErrorView(
+          error: e,
+          onRetry: () => ref.invalidate(sessionByIdProvider(sessionId)),
+        ),
       ),
     );
   }
 }
 
 class _Body extends StatelessWidget {
-  const _Body({
-    required this.session,
-    required this.onChanged,
-    required this.onDeleted,
-  });
+  const _Body({required this.session, required this.sessionId});
 
   final SessionSummary session;
-  final VoidCallback onChanged;
-  final VoidCallback onDeleted;
+  final String sessionId;
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return Column(
       children: [
-        _MetadataCard(session: session),
-        const SizedBox(height: 16),
-        _ActionBar(
-          session: session,
-          onChanged: onChanged,
-          onDeleted: onDeleted,
-        ),
-        const SizedBox(height: 24),
-        _TerminalPlaceholder(),
+        _MetadataStrip(session: session),
+        Expanded(child: SessionTerminalView(sessionId: sessionId)),
       ],
     );
   }
 }
 
-class _MetadataCard extends StatelessWidget {
-  const _MetadataCard({required this.session});
+class _MetadataStrip extends StatelessWidget {
+  const _MetadataStrip({required this.session});
   final SessionSummary session;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    session.displayName,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                _StateBadge(state: session.state),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _InfoRow(label: 'Provider', value: session.providerId),
-            _InfoRow(label: 'Working dir', value: session.cwd),
-            _InfoRow(label: 'Session id', value: session.id),
-            _InfoRow(
-              label: 'Started',
-              value: DateFormat.yMMMd()
-                  .add_Hm()
-                  .format(session.startedAt.toLocal()),
-            ),
-            if (session.endedAt != null)
-              _InfoRow(
-                label: 'Ended',
-                value: DateFormat.yMMMd()
-                    .add_Hm()
-                    .format(session.endedAt!.toLocal()),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionBar extends ConsumerWidget {
-  const _ActionBar({
-    required this.session,
-    required this.onChanged,
-    required this.onDeleted,
-  });
-
-  final SessionSummary session;
-  final VoidCallback onChanged;
-  final VoidCallback onDeleted;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () async {
-              final result = await SessionActionSheet.show(
-                context,
-                session: session,
-              );
-              if (result == null) return;
-              if (result == SessionActionResult.deleted) {
-                onDeleted();
-              } else {
-                onChanged();
-              }
-            },
-            icon: const Icon(Icons.tune),
-            label: const Text('Actions'),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TerminalPlaceholder extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
+    final muted = Theme.of(context).textTheme.bodySmall;
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        border: Border.all(color: Theme.of(context).dividerColor),
-        borderRadius: BorderRadius.circular(12),
+        border: Border(
+          bottom: BorderSide(color: Theme.of(context).dividerColor),
+        ),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.terminal_outlined,
-            size: 48,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  session.providerId,
+                  style: muted?.copyWith(fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              _StateBadge(state: session.state),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 2),
+          Text(session.cwd, style: muted, overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 2),
           Text(
-            'Terminal view',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'xterm.dart wiring lands in F3 — for now the session '
-            'is fully manageable from the Actions sheet above.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
+            'started ${DateFormat.yMMMd().add_Hm().format(session.startedAt.toLocal())}'
+            '${session.endedAt != null ? '  ·  ended ${DateFormat.yMMMd().add_Hm().format(session.endedAt!.toLocal())}' : ''}',
+            style: muted,
           ),
         ],
       ),
@@ -226,7 +153,7 @@ class _StateBadge extends StatelessWidget {
       SessionState.unknown => (Colors.grey.shade800, Colors.grey.shade400),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: bg.withValues(alpha: 0.45),
         border: Border.all(color: fg.withValues(alpha: 0.4)),
@@ -236,41 +163,10 @@ class _StateBadge extends StatelessWidget {
         state.wire,
         style: TextStyle(
           color: fg,
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.5,
         ),
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 92,
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-          Expanded(
-            child: SelectableText(
-              value,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ),
-        ],
       ),
     );
   }

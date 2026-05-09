@@ -74,6 +74,17 @@ class SessionsApi {
       throw toApiException(e);
     }
   }
+
+  Future<void> resize(String id, {required int cols, required int rows}) async {
+    try {
+      await _dio.post<void>(
+        '/api/v1/sessions/$id/resize',
+        data: {'cols': cols, 'rows': rows},
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
 }
 
 final sessionsApiProvider = Provider<SessionsApi>((ref) {
