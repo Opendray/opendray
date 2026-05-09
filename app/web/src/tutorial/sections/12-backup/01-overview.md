@@ -31,11 +31,11 @@ Six target kinds covering ≈99% of user storage habits:
 
 - **`local`** — directory on the opendray host (default fallback)
 - **`smb`** — Windows shares, home NAS (Synology / QNAP / UNAS)
-- **`s3`** — AWS S3, Cloudflare R2, B2, MinIO, 阿里 OSS, 腾讯 COS, …
-- **`webdav`** — Nextcloud, ownCloud, 群晖 DSM, Box, 坚果云, …
+- **`s3`** — AWS S3, Cloudflare R2, B2, MinIO, Alibaba Cloud OSS (阿里云 OSS), Tencent Cloud COS (腾讯云 COS), …
+- **`webdav`** — Nextcloud, ownCloud, Synology DSM (群晖 DSM), Box, Jianguoyun (坚果云), …
 - **`sftp`** — any SSH-accessible server (VPS, Hetzner Storage Box)
 - **`rclone`** — passthrough to 70+ extra backends (Google Drive,
-  OneDrive, Dropbox, 百度网盘, 阿里云盘, …)
+  OneDrive, Dropbox, Baidu Pan (百度网盘), Aliyun Drive (阿里云盘), …)
 
 See **Targets** for the per-kind field list. All sensitive fields
 (passwords, secret keys, private keys) are AES-256-GCM encrypted

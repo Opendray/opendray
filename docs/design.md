@@ -113,7 +113,7 @@ In strict priority order. Decisions that trade higher VP for lower VP go to the 
 | 2 | **Subscription cost arbitrage** | $20/mo Claude Pro replaces per-token API billing |
 | 3 | **Multi-CLI orchestration** | Parallel claude / codex / gemini, route + compare |
 | 4 | **Integration ecosystem** | Other apps register and consume AI without polluting OpenDray |
-| 5 | **Async / channel-based workflow** | Telegram / Slack / iMessage 双向 |
+| 5 | **Async / channel-based workflow** | Telegram / Slack / iMessage (bi-directional) |
 | 6 | **Reliable remote dev loop** | File browser, source control, in-app browser preview |
 
 ---

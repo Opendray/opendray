@@ -97,7 +97,7 @@ That confirms opendray → ollama → embedding round-trip works.
 Spawn a Claude session in any project (cwd):
 
 ```
-me: "我喜欢用 pnpm 做包管理"
+me: "I prefer pnpm as my package manager"
 claude: Called opendray-memory.memory_store("...")
         → stored as mem_xxx
 ```
