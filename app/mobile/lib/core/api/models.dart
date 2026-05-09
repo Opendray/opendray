@@ -113,4 +113,64 @@ class SessionSummary {
   final DateTime? endedAt;
 
   String get displayName => name?.isNotEmpty ?? false ? name! : id;
+
+  bool get isLive =>
+      state == SessionState.running ||
+      state == SessionState.idle ||
+      state == SessionState.pending;
+
+  bool get isFinished =>
+      state == SessionState.stopped || state == SessionState.ended;
+}
+
+// Provider summary as rendered by the spawn-session form. The
+// gateway returns the full Provider shape; we project to the
+// 4 fields the picker actually shows.
+class ProviderSummary {
+  ProviderSummary({
+    required this.id,
+    required this.name,
+    required this.manifestHash,
+    required this.enabled,
+  });
+
+  factory ProviderSummary.fromGatewayJson(Map<String, dynamic> json) {
+    final manifest = json['manifest'] as Map<String, dynamic>? ?? {};
+    return ProviderSummary(
+      id: manifest['id'] as String? ?? '',
+      name: manifest['name'] as String? ?? '',
+      manifestHash: json['manifest_hash'] as String? ?? '',
+      enabled: json['enabled'] as bool? ?? false,
+    );
+  }
+
+  final String id;
+  final String name;
+  final String manifestHash;
+  final bool enabled;
+}
+
+class CreateSessionRequest {
+  const CreateSessionRequest({
+    required this.providerId,
+    required this.cwd,
+    this.name,
+    this.args,
+    this.claudeAccountId,
+  });
+
+  final String providerId;
+  final String cwd;
+  final String? name;
+  final List<String>? args;
+  final String? claudeAccountId;
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'provider_id': providerId,
+        'cwd': cwd,
+        if (name != null && name!.isNotEmpty) 'name': name,
+        if (args != null && args!.isNotEmpty) 'args': args,
+        if (claudeAccountId != null && claudeAccountId!.isNotEmpty)
+          'claude_account_id': claudeAccountId,
+      };
 }
