@@ -1,0 +1,114 @@
+name: Release
+
+# Triggered automatically on tag push (v*) — produces a draft GitHub
+# release with goreleaser archives, cosign-signed checksums, and an
+# anchore-generated SBOM. The release lands as DRAFT (per
+# .goreleaser.yml release.draft: true) so a human reviews notes before
+# flipping it to public.
+#
+# workflow_dispatch is wired for two scenarios:
+#   * Re-running the pipeline against an existing tag (e.g. v1.0.0,
+#     which was tagged before this workflow existed).
+#   * Smoke-testing the workflow without cutting a real release —
+#     point it at a v0.0.0-test tag in your fork.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v1.0.0). Must already exist.'
+        required: true
+        type: string
+
+permissions:
+  contents: write   # create / append to GitHub release
+  id-token: write   # cosign keyless OIDC (Sigstore Fulcio)
+  packages: write   # reserved for future GHCR push (not used yet)
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref }}
+  cancel-in-progress: false   # never cancel a release mid-flight
+
+jobs:
+  release:
+    name: Release ${{ github.event.inputs.tag || github.ref_name }}
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Goreleaser walks the git history to compute the version +
+          # changelog. Shallow clone trips it up; full history is the
+          # safe default for releases.
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      # ── Frontend tooling — goreleaser's pre-build hooks invoke
+      #    `pnpm install --frozen-lockfile` and `pnpm build` so the
+      #    React SPA is in internal/web/dist before the Go build.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: app/web/pnpm-lock.yaml
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.25"
+
+      # ── Goreleaser: archives + checksums in ./dist, draft release on GH
+      - name: Run goreleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Cosign keyless: sign the SHA256SUMS produced by goreleaser.
+      #    No long-lived signing key — Sigstore Fulcio mints a short-
+      #    lived cert tied to this workflow's OIDC identity. Verifying
+      #    later: cosign verify-blob --certificate ...pem --signature
+      #    ...sig --certificate-identity-regexp ... SHA256SUMS
+      - uses: sigstore/cosign-installer@v3
+      - name: Sign checksums
+        run: |
+          cosign sign-blob --yes \
+            --output-signature dist/SHA256SUMS.sig \
+            --output-certificate dist/SHA256SUMS.pem \
+            dist/SHA256SUMS
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+
+      - name: Upload cosign artefacts to release
+        run: |
+          gh release upload "$TAG" \
+            dist/SHA256SUMS.sig \
+            dist/SHA256SUMS.pem \
+            --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── SBOM (SPDX). Belt-and-braces: anchore's auto-attach has
+      #    historically been flaky, so generate explicitly + upload via
+      #    gh release. Soft failure (continue-on-error) so a transient
+      #    SBOM hiccup doesn't block the rest of the release.
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        continue-on-error: true
+        with:
+          artifact-name: sbom-opendray.spdx.json
+          output-file: dist/sbom-opendray.spdx.json
+
+      - name: Upload SBOM to release
+        if: always() && hashFiles('dist/sbom-opendray.spdx.json') != ''
+        run: gh release upload "$TAG" dist/sbom-opendray.spdx.json --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

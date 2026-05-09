@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `.github/workflows/release.yml` — automated release pipeline. Triggers
+  on `v*` tag push (or manually via workflow_dispatch with a tag input).
+  Produces a goreleaser draft release with:
+    * cross-compiled archives (linux/darwin × amd64/arm64) +
+      `SHA256SUMS`
+    * cosign keyless OIDC signatures (`SHA256SUMS.sig`,
+      `SHA256SUMS.pem`)
+    * SPDX SBOM via anchore/sbom-action
+  Permissions: `contents: write` for the release upload,
+  `id-token: write` for cosign OIDC. Concurrency-grouped per tag so
+  re-running for an existing tag never races itself.
 - LICENSE file (Apache 2.0) — previously declared in README only.
 - SECURITY.md — threat model, default posture, deployment checklist, report channel.
 - CONTRIBUTING.md — dev setup, test commands, PR + commit conventions.
