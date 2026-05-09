@@ -7,24 +7,15 @@ import 'package:opendray/core/api/notes_api.dart';
 import 'package:opendray/features/notes/note_editor_dialog.dart';
 import 'package:path/path.dart' as p;
 
-// Global Notes tab — full vault browser.
+// Global Notes tab — vault drill-down browser.
 //
-// The session inspector's Notes tab handles per-cwd authoring; this
-// screen covers the cases where the operator wants to read or edit a
-// note that isn't bound to the current session: a personal scratchpad
-// from another project, a project doc whose session isn't running,
-// anything reached by typing the path or scrolling rather than via a
-// cwd lookup.
-//
-// Three top-level chips narrow the list:
-//   • All       — every .md in the vault
-//   • Personal  — paths starting with `personal/` (human scratchpads)
-//   • Projects  — paths starting with `projects/` (AI agent docs)
-//
-// Tap a row → opens the shared NoteEditorDialog (debounced auto-save,
-// same component the inspector uses). Long-press → action sheet
-// (Open / Copy path / Delete). FAB creates a note at an arbitrary
-// vault-relative path.
+// A flat list mixes personal scratchpads with every project's docs
+// in one stream — usable when the vault has 10 notes, unreadable
+// at 200. Mirrors the web admin's NotesTreeView pattern: the user
+// starts at the vault root, sees top-level folders + any root-level
+// .md files, and drills down level by level. Search collapses the
+// tree into a flat result list across the whole vault. Quick chips
+// jump to common roots (`personal/`, `projects/`).
 class NotesScreen extends ConsumerStatefulWidget {
   const NotesScreen({super.key});
 
@@ -34,7 +25,9 @@ class NotesScreen extends ConsumerStatefulWidget {
 
 class _NotesScreenState extends ConsumerState<NotesScreen> {
   AsyncValue<List<NoteSummary>> _state = const AsyncValue.loading();
-  _Filter _filter = _Filter.all;
+  // Vault-relative directory the user is currently viewing. '' means
+  // the vault root. Never has a trailing slash.
+  String _currentPath = '';
   String _query = '';
   final _searchCtrl = TextEditingController();
 
@@ -55,8 +48,6 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     try {
       final notes = await ref.read(notesApiProvider).list();
       if (!mounted) return;
-      // Sort newest-modified first — matches what the operator usually
-      // wants ("the note I just touched").
       notes.sort((a, b) => b.modified.compareTo(a.modified));
       setState(() => _state = AsyncValue.data(notes));
     } on ApiException catch (e) {
@@ -71,9 +62,17 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   Future<void> _openNote(NoteSummary note) async {
     await NoteEditorDialog.show(context: context, path: note.path);
     if (!mounted) return;
-    // Reload so the row's modified timestamp reflects any save that
-    // happened in the dialog.
     await _load();
+  }
+
+  void _enterFolder(String path) {
+    setState(() => _currentPath = path);
+  }
+
+  void _goUp() {
+    if (_currentPath.isEmpty) return;
+    final parent = p.dirname(_currentPath);
+    setState(() => _currentPath = (parent == '.' || parent == '/') ? '' : parent);
   }
 
   Future<void> _onLongPress(NoteSummary note) async {
@@ -215,9 +214,12 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   }
 
   Future<void> _newNote() async {
+    // Default the new note's path under the directory the user is
+    // currently viewing — saves them typing the prefix.
+    final prefix = _currentPath.isEmpty ? '' : '$_currentPath/';
     final path = await showDialog<String>(
       context: context,
-      builder: (_) => const _NewNoteDialog(),
+      builder: (_) => _NewNoteDialog(initialPathPrefix: prefix),
     );
     if (path == null || path.isEmpty || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -239,25 +241,60 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     }
   }
 
-  List<NoteSummary> _filtered(List<NoteSummary> notes) {
-    Iterable<NoteSummary> rows = notes;
-    switch (_filter) {
-      case _Filter.all:
-        break;
-      case _Filter.personal:
-        rows = rows.where((n) => n.path.startsWith('personal/'));
-      case _Filter.projects:
-        rows = rows.where((n) => n.path.startsWith('projects/'));
+  // _LevelView reduces the flat list of all vault notes into the
+  // immediate children of [_currentPath] — direct subfolders + the
+  // .md files that live exactly at this depth. Subfolder counts
+  // include every descendant recursively so the operator can see
+  // "projects/foo/ has 12 notes" without drilling in.
+  _LevelView _buildLevel(List<NoteSummary> all) {
+    final prefix = _currentPath.isEmpty ? '' : '$_currentPath/';
+    final notesHere = <NoteSummary>[];
+    final folderCounts = <String, int>{};
+    final folderLatest = <String, DateTime>{};
+    for (final n in all) {
+      if (prefix.isNotEmpty && !n.path.startsWith(prefix)) continue;
+      final relative = n.path.substring(prefix.length);
+      final slash = relative.indexOf('/');
+      if (slash < 0) {
+        // .md sitting directly in the current directory.
+        notesHere.add(n);
+      } else {
+        final folder = relative.substring(0, slash);
+        folderCounts[folder] = (folderCounts[folder] ?? 0) + 1;
+        final cur = folderLatest[folder];
+        if (cur == null || n.modified.isAfter(cur)) {
+          folderLatest[folder] = n.modified;
+        }
+      }
     }
-    if (_query.isNotEmpty) {
-      final q = _query.toLowerCase();
-      rows = rows.where(
-        (n) =>
-            n.path.toLowerCase().contains(q) ||
-            n.title.toLowerCase().contains(q),
-      );
-    }
-    return rows.toList(growable: false);
+    final folders = folderCounts.entries
+        .map((e) => _FolderRow(
+              name: e.key,
+              fullPath:
+                  _currentPath.isEmpty ? e.key : '$_currentPath/${e.key}',
+              count: e.value,
+              latestModified: folderLatest[e.key]!,
+            ))
+        .toList()
+      ..sort((a, b) {
+        // Latest-modified first within folders too, matches notes.
+        return b.latestModified.compareTo(a.latestModified);
+      });
+    return _LevelView(folders: folders, notes: notesHere);
+  }
+
+  // Search is a flat scan across every note in the vault; we don't
+  // restrict to _currentPath because the typical "I forgot which
+  // project this lives under" use case demands it.
+  List<NoteSummary> _searchAll(List<NoteSummary> all) {
+    final q = _query.toLowerCase();
+    return all
+        .where(
+          (n) =>
+              n.path.toLowerCase().contains(q) ||
+              n.title.toLowerCase().contains(q),
+        )
+        .toList();
   }
 
   @override
@@ -265,6 +302,13 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notes'),
+        leading: _currentPath.isEmpty
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: 'Up',
+                onPressed: _goUp,
+              ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -272,13 +316,6 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             onPressed: _load,
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: _FilterStrip(
-            value: _filter,
-            onChanged: (f) => setState(() => _filter = f),
-          ),
-        ),
       ),
       body: Column(
         children: [
@@ -289,7 +326,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               onChanged: (v) =>
                   setState(() => _query = v.trim().toLowerCase()),
               decoration: InputDecoration(
-                hintText: 'Search title / path…',
+                hintText: 'Search across the whole vault…',
                 prefixIcon: const Icon(Icons.search, size: 18),
                 isDense: true,
                 suffixIcon: _query.isEmpty
@@ -303,6 +340,11 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                       ),
               ),
             ),
+          ),
+          if (_query.isEmpty) _Breadcrumb(
+            path: _currentPath,
+            onGoRoot: () => setState(() => _currentPath = ''),
+            onJumpTo: (segments) => setState(() => _currentPath = segments),
           ),
           Expanded(child: _body()),
         ],
@@ -318,46 +360,58 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   Widget _body() {
     return _state.when(
       data: (notes) {
-        final filtered = _filtered(notes);
-        if (filtered.isEmpty) {
+        if (_query.isNotEmpty) {
+          final results = _searchAll(notes);
+          if (results.isEmpty) {
+            return _Empty(text: 'No notes match "$_query".');
+          }
+          return RefreshIndicator(
+            onRefresh: _load,
+            child: ListView.separated(
+              itemCount: results.length,
+              separatorBuilder: (_, __) => Divider(
+                height: 1,
+                color: Theme.of(context).dividerColor,
+              ),
+              itemBuilder: (_, i) => _NoteRow(
+                note: results[i],
+                showFullPath: true,
+                onTap: () => _openNote(results[i]),
+                onLongPress: () => _onLongPress(results[i]),
+              ),
+            ),
+          );
+        }
+        final level = _buildLevel(notes);
+        if (level.folders.isEmpty && level.notes.isEmpty) {
           return _Empty(
-            text: notes.isEmpty
+            text: _currentPath.isEmpty
                 ? 'Vault is empty. Tap + to create your first note.'
-                : 'No notes match the filter.',
+                : 'Folder "$_currentPath" is empty.',
           );
         }
         return RefreshIndicator(
           onRefresh: _load,
-          child: ListView.separated(
-            itemCount: filtered.length,
-            separatorBuilder: (_, __) => Divider(
-              height: 1,
-              color: Theme.of(context).dividerColor,
-            ),
-            itemBuilder: (_, i) {
-              final n = filtered[i];
-              return ListTile(
-                onTap: () => _openNote(n),
-                onLongPress: () => _onLongPress(n),
-                leading: Icon(
-                  n.path.startsWith('personal/')
-                      ? Icons.edit_note_outlined
-                      : Icons.description_outlined,
-                  color: Theme.of(context).colorScheme.primary,
+          child: ListView(
+            children: [
+              for (final f in level.folders)
+                _FolderTile(
+                  folder: f,
+                  onTap: () => _enterFolder(f.fullPath),
                 ),
-                title: Text(
-                  n.title.isNotEmpty ? n.title : p.basename(n.path),
-                  overflow: TextOverflow.ellipsis,
+              if (level.folders.isNotEmpty && level.notes.isNotEmpty)
+                Divider(
+                  height: 1,
+                  color: Theme.of(context).dividerColor,
                 ),
-                subtitle: Text(
-                  '${n.path}  ·  ${_formatBytes(n.size)} · ${_relTime(n.modified)}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
+              for (final n in level.notes)
+                _NoteRow(
+                  note: n,
+                  showFullPath: false,
+                  onTap: () => _openNote(n),
+                  onLongPress: () => _onLongPress(n),
                 ),
-                trailing: const Icon(Icons.chevron_right),
-              );
-            },
+            ],
           ),
         );
       },
@@ -367,57 +421,195 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   }
 }
 
-enum _Filter {
-  all('All'),
-  personal('Personal'),
-  projects('Projects');
-
-  const _Filter(this.label);
-  final String label;
-}
-
 enum _RowAction { open, copyPath, delete }
 
-class _FilterStrip extends StatelessWidget {
-  const _FilterStrip({required this.value, required this.onChanged});
-  final _Filter value;
-  final ValueChanged<_Filter> onChanged;
+class _LevelView {
+  _LevelView({required this.folders, required this.notes});
+  final List<_FolderRow> folders;
+  final List<NoteSummary> notes;
+}
+
+class _FolderRow {
+  _FolderRow({
+    required this.name,
+    required this.fullPath,
+    required this.count,
+    required this.latestModified,
+  });
+  final String name;
+  final String fullPath;
+  final int count;
+  final DateTime latestModified;
+}
+
+class _Breadcrumb extends StatelessWidget {
+  const _Breadcrumb({
+    required this.path,
+    required this.onGoRoot,
+    required this.onJumpTo,
+  });
+
+  final String path;
+  final VoidCallback onGoRoot;
+  // Jumps to the prefix that ends at the given vault-relative path.
+  final ValueChanged<String> onJumpTo;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
-      child: ListView.separated(
+    final muted = Theme.of(context).textTheme.bodySmall;
+    final segments = path.split('/').where((s) => s.isNotEmpty).toList();
+    if (segments.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(14, 4, 14, 6),
+        child: Text(
+          'vault root',
+          style: muted?.copyWith(fontFamily: 'monospace'),
+        ),
+      );
+    }
+    final children = <Widget>[
+      _BreadcrumbLink(label: 'vault', onTap: onGoRoot),
+    ];
+    var acc = '';
+    for (var i = 0; i < segments.length; i++) {
+      children.add(Text(' / ', style: muted));
+      acc = acc.isEmpty ? segments[i] : '$acc/${segments[i]}';
+      if (i == segments.length - 1) {
+        children.add(Text(
+          segments[i],
+          style: muted?.copyWith(fontFamily: 'monospace'),
+        ));
+      } else {
+        final target = acc;
+        children.add(_BreadcrumbLink(
+          label: segments[i],
+          onTap: () => onJumpTo(target),
+        ));
+      }
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 6),
+      child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        itemCount: _Filter.values.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 6),
-        itemBuilder: (_, i) {
-          final f = _Filter.values[i];
-          return ChoiceChip(
-            label: Text(f.label),
-            selected: f == value,
-            onSelected: (_) => onChanged(f),
-          );
-        },
+        child: Row(children: children),
       ),
     );
   }
 }
 
+class _BreadcrumbLink extends StatelessWidget {
+  const _BreadcrumbLink({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.primary,
+            fontSize: 12,
+            fontFamily: 'monospace',
+            decoration: TextDecoration.underline,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FolderTile extends StatelessWidget {
+  const _FolderTile({required this.folder, required this.onTap});
+  final _FolderRow folder;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: onTap,
+      leading: Icon(
+        Icons.folder_outlined,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      title: Text(folder.name),
+      subtitle: Text(
+        '${folder.count} note${folder.count == 1 ? '' : 's'}'
+        '  ·  latest ${_relTime(folder.latestModified)}',
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      trailing: const Icon(Icons.chevron_right),
+    );
+  }
+}
+
+class _NoteRow extends StatelessWidget {
+  const _NoteRow({
+    required this.note,
+    required this.showFullPath,
+    required this.onTap,
+    required this.onLongPress,
+  });
+
+  final NoteSummary note;
+  final bool showFullPath;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final subtitle = showFullPath
+        ? '${note.path}  ·  ${_formatBytes(note.size)} · ${_relTime(note.modified)}'
+        : '${_formatBytes(note.size)} · ${_relTime(note.modified)}';
+    return ListTile(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      leading: Icon(
+        note.path.startsWith('personal/')
+            ? Icons.edit_note_outlined
+            : Icons.description_outlined,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      title: Text(
+        note.title.isNotEmpty ? note.title : p.basename(note.path),
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        subtitle,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      trailing: const Icon(Icons.chevron_right),
+    );
+  }
+}
+
 // _NewNoteDialog asks for a vault-relative path. Auto-appends `.md`
-// if the user forgets and refuses path-traversal segments — same
-// posture as the inspector's project-doc create dialog.
+// if the user forgets and refuses path-traversal segments. Defaults
+// to whatever directory the user is currently viewing so creating
+// a note inside `projects/foo/` only requires typing the filename.
 class _NewNoteDialog extends StatefulWidget {
-  const _NewNoteDialog();
+  const _NewNoteDialog({required this.initialPathPrefix});
+  final String initialPathPrefix;
 
   @override
   State<_NewNoteDialog> createState() => _NewNoteDialogState();
 }
 
 class _NewNoteDialogState extends State<_NewNoteDialog> {
-  final _ctrl = TextEditingController();
+  late final TextEditingController _ctrl;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: widget.initialPathPrefix);
+  }
 
   @override
   void dispose() {
