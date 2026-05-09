@@ -151,6 +151,36 @@ class NotesApi {
       throw toApiException(e);
     }
   }
+
+  // PUT /api/v1/notes/project-mapping — pin a cwd to a vault-relative
+  // path. Empty `path` clears the override (revert to default).
+  Future<void> setProjectMapping({
+    required String cwd,
+    required String path,
+  }) async {
+    try {
+      await _dio.put<void>(
+        '/api/v1/notes/project-mapping',
+        data: {'cwd': cwd, 'path': path},
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // PUT /api/v1/notes/write — overwrite a note's full body. Used by
+  // the personal scratchpad's auto-save and by "New doc" creation.
+  Future<NoteSummary> write({required String path, required String body}) async {
+    try {
+      final res = await _dio.put<Map<String, dynamic>>(
+        '/api/v1/notes/write',
+        data: {'path': path, 'body': body},
+      );
+      return NoteSummary.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
 }
 
 final notesApiProvider = Provider<NotesApi>((ref) {
