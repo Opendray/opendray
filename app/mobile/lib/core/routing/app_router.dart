@@ -6,6 +6,7 @@ import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/features/auth/login_screen.dart';
 import 'package:opendray/features/home/home_shell.dart';
 import 'package:opendray/features/onboarding/onboarding_screen.dart';
+import 'package:opendray/features/sessions/inspector/session_inspector_screen.dart';
 import 'package:opendray/features/sessions/session_detail_screen.dart';
 
 // Top-level route map. The redirect callback funnels every
@@ -45,6 +46,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => SessionDetailScreen(
           sessionId: state.pathParameters['id']!,
         ),
+        routes: [
+          GoRoute(
+            path: 'inspector',
+            builder: (_, state) => SessionInspectorScreen(
+              sessionId: state.pathParameters['id']!,
+            ),
+          ),
+        ],
       ),
     ],
     redirect: (context, state) {

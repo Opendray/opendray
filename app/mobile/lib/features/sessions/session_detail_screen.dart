@@ -49,6 +49,12 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
             onPressed: () =>
                 ref.invalidate(sessionByIdProvider(widget.sessionId)),
           ),
+          IconButton(
+            icon: const Icon(Icons.dashboard_customize_outlined),
+            tooltip: 'Inspector (Files / Git / Tasks / History / Notes)',
+            onPressed: () =>
+                context.push('/session/${widget.sessionId}/inspector'),
+          ),
           async.maybeWhen(
             data: (s) => IconButton(
               icon: const Icon(Icons.tune),

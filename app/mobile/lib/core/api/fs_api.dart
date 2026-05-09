@@ -74,6 +74,27 @@ class FsApi {
     }
   }
 
+  // GET /api/v1/fs/read — pulls a file's bytes from the gateway
+  // host. Server caps the response at 256 KiB (see
+  // internal/fs/handler.go); returns the path as the X-OpenDray-Path
+  // header. Mobile uses this for the inspector "View" action to
+  // peek at a file's text without having to spawn a session.
+  Future<List<int>> read(String path) async {
+    try {
+      final res = await _dio.get<List<int>>(
+        '/api/v1/fs/read',
+        queryParameters: {'path': path},
+        options: Options(
+          responseType: ResponseType.bytes,
+          headers: {'Accept': 'application/octet-stream'},
+        ),
+      );
+      return res.data ?? <int>[];
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   Future<String> mkdir({required String parent, required String name}) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(

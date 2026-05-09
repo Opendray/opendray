@@ -75,6 +75,22 @@ class SessionsApi {
     }
   }
 
+  // POST /api/v1/sessions/:id/input — sends raw bytes to the PTY
+  // stdin. Used by the inspector "push to terminal" actions to
+  // inject things like `@/path/to/file` or a recalled prompt
+  // into the running CLI without having the live terminal
+  // widget mounted.
+  Future<void> input(String id, String data) async {
+    try {
+      await _dio.post<void>(
+        '/api/v1/sessions/$id/input',
+        data: {'data': data},
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   Future<void> resize(String id, {required int cols, required int rows}) async {
     try {
       await _dio.post<void>(
