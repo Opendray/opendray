@@ -5,6 +5,7 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/providers_api.dart';
 import 'package:opendray/core/api/sessions_api.dart';
+import 'package:opendray/features/sessions/directory_picker_sheet.dart';
 
 // Spawn-session bottom sheet. Loads providers live from
 // /api/v1/providers when opened so the picker reflects whatever
@@ -47,6 +48,16 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
     _nameCtrl.dispose();
     _argsCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _browseCwd() async {
+    final picked = await DirectoryPickerSheet.show(
+      context,
+      initialPath: _cwdCtrl.text.trim().isEmpty ? null : _cwdCtrl.text.trim(),
+    );
+    if (picked != null && picked.isNotEmpty) {
+      setState(() => _cwdCtrl.text = picked);
+    }
   }
 
   Future<void> _submit() async {
@@ -135,10 +146,15 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
                 enabled: !_submitting,
                 autocorrect: false,
                 keyboardType: TextInputType.url,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Working directory',
                   hintText: '/Users/you/projects/foo',
                   helperText: 'Absolute path on the gateway host.',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.folder_open_outlined),
+                    tooltip: 'Browse',
+                    onPressed: _submitting ? null : _browseCwd,
+                  ),
                 ),
               ),
               const SizedBox(height: 14),
@@ -200,7 +216,7 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
   }
 }
 
-class _ProviderField extends StatelessWidget {
+class _ProviderField extends ConsumerWidget {
   const _ProviderField({
     required this.async,
     required this.value,
@@ -212,12 +228,17 @@ class _ProviderField extends StatelessWidget {
   final ValueChanged<String?>? onChanged;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return async.when(
       data: (providers) {
         if (providers.isEmpty) {
-          return const _InlineError(
-            message: 'No providers configured on the gateway.',
+          return _ProviderProblem(
+            icon: Icons.inventory_2_outlined,
+            title: 'No providers configured',
+            message: 'The gateway has no CLI providers enabled. Configure '
+                'one under Providers (web admin) or [providers] in '
+                'config.toml, then tap Reload.',
+            onReload: () => ref.invalidate(providersListProvider),
           );
         }
         // Default to the first enabled provider when nothing picked yet.
@@ -245,7 +266,75 @@ class _ProviderField extends StatelessWidget {
         height: 56,
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (e, _) => _InlineError(message: 'Failed to load providers: $e'),
+      error: (e, _) => _ProviderProblem(
+        icon: Icons.cloud_off_outlined,
+        title: 'Could not load providers',
+        message: e is ApiException
+            ? '${e.statusCode == 0 ? "Network error" : "Server ${e.statusCode}"}: ${e.message}'
+            : e.toString(),
+        onReload: () => ref.invalidate(providersListProvider),
+      ),
+    );
+  }
+}
+
+class _ProviderProblem extends StatelessWidget {
+  const _ProviderProblem({
+    required this.icon,
+    required this.title,
+    required this.message,
+    required this.onReload,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final VoidCallback onReload;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: scheme.error.withValues(alpha: 0.08),
+        border: Border.all(color: scheme.error.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: scheme.error),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(color: scheme.error, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  message,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: onReload,
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Reload'),
+                  style: OutlinedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    foregroundColor: scheme.error,
+                    side: BorderSide(color: scheme.error.withValues(alpha: 0.4)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
