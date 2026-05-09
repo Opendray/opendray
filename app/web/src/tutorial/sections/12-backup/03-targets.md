@@ -11,10 +11,10 @@ ever appears in API responses or PG dumps.
 |---|---|---|
 | `local` | single-machine, Docker volume, mounted external HDD | `~/.opendray/backups/` |
 | `smb` | Windows shares, home NAS (Synology / QNAP / UNAS) | `//192.168.9.8/Claude_Workspace` |
-| `s3` | AWS S3, Cloudflare R2, B2, MinIO, 阿里 OSS, 腾讯 COS, ... | `s3://opendray@s3.amazonaws.com` |
-| `webdav` | Nextcloud, ownCloud, 群晖 DSM, Box, 坚果云 | `https://cloud.example.com/dav/` |
+| `s3` | AWS S3, Cloudflare R2, B2, MinIO, Alibaba Cloud OSS (阿里云 OSS), Tencent Cloud COS (腾讯云 COS), ... | `s3://opendray@s3.amazonaws.com` |
+| `webdav` | Nextcloud, ownCloud, Synology DSM (群晖 DSM), Box, Jianguoyun (坚果云) | `https://cloud.example.com/dav/` |
 | `sftp` | Hetzner Storage Box, self-hosted VPS, home Linux | `backup@vps.example.com:22` |
-| `rclone` | 70+ extra (Google Drive, OneDrive, Dropbox, 百度网盘, 阿里云盘, ...) | `gdrive:opendray-backups` |
+| `rclone` | 70+ extra (Google Drive, OneDrive, Dropbox, Baidu Pan (百度网盘), Aliyun Drive (阿里云盘), ...) | `gdrive:opendray-backups` |
 
 Add or edit targets at **`/backups → Targets`** or **`/settings →
 Backup → Where backups go`**. Both surfaces use the same
@@ -73,8 +73,8 @@ Configure with the right `endpoint` for your provider:
 | AWS S3 | `s3.amazonaws.com` (or `s3.<region>.amazonaws.com`) | e.g. `us-east-1` |
 | Cloudflare R2 | `<account-id>.r2.cloudflarestorage.com` | `auto` |
 | Backblaze B2 | `s3.<region>.backblazeb2.com` | e.g. `us-west-001` |
-| 阿里云 OSS | `oss-<region>.aliyuncs.com` | `oss-cn-shanghai` etc. |
-| 腾讯云 COS | `cos.<region>.myqcloud.com` | `ap-shanghai` etc. |
+| Alibaba Cloud OSS (阿里云 OSS) | `oss-<region>.aliyuncs.com` | `oss-cn-shanghai` etc. |
+| Tencent Cloud COS (腾讯云 COS) | `cos.<region>.myqcloud.com` | `ap-shanghai` etc. |
 | MinIO self-hosted | `minio.local:9000` | `us-east-1` (or any) |
 | DigitalOcean Spaces | `<region>.digitaloceanspaces.com` | e.g. `sgp1` |
 | Wasabi | `s3.<region>.wasabisys.com` | e.g. `us-east-1` |
@@ -114,7 +114,7 @@ Nextcloud:   https://cloud.example.com/remote.php/dav/files/<user>/
 ownCloud:    https://cloud.example.com/remote.php/webdav/
 Synology:    https://nas.local:5006/    (DSM Web Station + WebDAV)
 Box.com:     https://dav.box.com/dav
-坚果云:       https://dav.jianguoyun.com/dav/   (use a "third-party app" password)
+Jianguoyun:  https://dav.jianguoyun.com/dav/   (use a "third-party app" password)
 ```
 
 **When to use**: self-hosted clouds and "I have an app password
@@ -196,7 +196,7 @@ PATH lookup), `config_path` (override `~/.config/rclone/rclone.conf`).
 
 ```
 Google Drive · OneDrive · Dropbox · iCloud-via-WebDAV
-百度网盘 · 阿里云盘 (via aliyundrive-fuse) · pCloud · Mega
+Baidu Pan (百度网盘) · Aliyun Drive (阿里云盘, via aliyundrive-fuse) · pCloud · Mega
 Microsoft Graph (SharePoint) · Yandex Disk · Mail.ru Cloud
 HiDrive · Internet Archive · Jottacloud · Koofr · Mailbox.org
 Mega · Memory (testing) · Microsoft OneDrive · OpenStack Swift
@@ -207,7 +207,7 @@ SeaTable · Seafile · Sharepoint · SugarSync · Tardigrade · Yandex
 
 **When to use**:
 - Consumer cloud storage (Google Drive / OneDrive / Dropbox)
-- Domestic 中国大陆 services (百度网盘 / 阿里云盘) where direct
+- Mainland China services (百度网盘 / 阿里云盘) where direct
   API access is hostile to write-heavy backup tooling
 - Anything else rclone supports natively
 

@@ -49,7 +49,7 @@ servers you've registered.
 In a Claude session:
 
 ```
-me: 我常用的前端框架是 vue 与 react
+me: my preferred frontend frameworks are vue and react
 ```
 
 The agent does either:

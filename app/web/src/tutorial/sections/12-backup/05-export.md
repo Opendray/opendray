@@ -1,4 +1,4 @@
-# Backup — exports (C 方案)
+# Backup — exports (Plan C)
 
 `/export` is the operator-facing **data export** view. Distinct
 from `/backups` (which is operator-facing disaster recovery), an

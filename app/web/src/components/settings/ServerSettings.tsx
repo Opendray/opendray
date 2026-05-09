@@ -1754,12 +1754,12 @@ function BackupSection({
             Each target is one place a backup blob can be written.
             opendray supports <strong>local disk</strong>,{' '}
             <strong>SMB/CIFS</strong> (Windows / NAS),{' '}
-            <strong>S3-compatible</strong> (AWS, R2, B2, MinIO, 阿里
-            OSS, 腾讯 COS, ...), <strong>WebDAV</strong> (Nextcloud,
-            群晖, 坚果云), <strong>SFTP</strong>, plus an{' '}
-            <strong>rclone</strong> passthrough that taps into 70+
-            extra backends (Google Drive, OneDrive, Dropbox, 百度网盘,
-            阿里云盘, ...).
+            <strong>S3-compatible</strong> (AWS, R2, B2, MinIO,
+            Alibaba Cloud OSS, Tencent Cloud COS, ...),{' '}
+            <strong>WebDAV</strong> (Nextcloud, Synology, Jianguoyun),{' '}
+            <strong>SFTP</strong>, plus an <strong>rclone</strong>{' '}
+            passthrough that taps into 70+ extra backends (Google
+            Drive, OneDrive, Dropbox, Baidu Pan, Aliyun Drive, ...).
           </p>
 
           <div className="flex flex-col gap-1.5">
