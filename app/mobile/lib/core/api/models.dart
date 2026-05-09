@@ -160,6 +160,131 @@ class ProviderSummary {
   final bool enabled;
 }
 
+// Memory scope band — mirrors internal/memory/store.go.
+enum MemoryScope {
+  session,
+  project,
+  global,
+  unknown;
+
+  String get wire => switch (this) {
+        MemoryScope.session => 'session',
+        MemoryScope.project => 'project',
+        MemoryScope.global => 'global',
+        MemoryScope.unknown => '',
+      };
+
+  static MemoryScope parse(String? raw) => switch (raw) {
+        'session' => MemoryScope.session,
+        'project' => MemoryScope.project,
+        'global' => MemoryScope.global,
+        _ => MemoryScope.unknown,
+      };
+
+  String get label => switch (this) {
+        MemoryScope.session => 'Session',
+        MemoryScope.project => 'Project',
+        MemoryScope.global => 'Global',
+        MemoryScope.unknown => 'Unknown',
+      };
+}
+
+class Memory {
+  Memory({
+    required this.id,
+    required this.scope,
+    required this.scopeKey,
+    required this.text,
+    required this.embedder,
+    required this.createdAt,
+    required this.updatedAt,
+    this.metadata,
+    this.hitCount = 0,
+    this.lastHitAt,
+    this.sourceKind,
+    this.sourceRef,
+    this.summarizerSession,
+    this.confidence,
+  });
+
+  factory Memory.fromJson(Map<String, dynamic> json) => Memory(
+        id: json['id'] as String? ?? '',
+        scope: MemoryScope.parse(json['scope'] as String?),
+        scopeKey: json['scope_key'] as String? ?? '',
+        text: json['text'] as String? ?? '',
+        embedder: json['embedder'] as String? ?? '',
+        createdAt:
+            DateTime.tryParse(json['created_at'] as String? ?? '')?.toUtc() ??
+                DateTime.now().toUtc(),
+        updatedAt:
+            DateTime.tryParse(json['updated_at'] as String? ?? '')?.toUtc() ??
+                DateTime.now().toUtc(),
+        metadata: json['metadata'] is Map
+            ? Map<String, dynamic>.from(json['metadata'] as Map)
+            : null,
+        hitCount: (json['hit_count'] as num?)?.toInt() ?? 0,
+        lastHitAt: (json['last_hit_at'] is String)
+            ? DateTime.tryParse(json['last_hit_at'] as String)
+            : null,
+        sourceKind: json['source_kind'] as String?,
+        sourceRef: json['source_ref'] as String?,
+        summarizerSession: json['summarizer_session'] as String?,
+        confidence: (json['confidence'] as num?)?.toDouble(),
+      );
+
+  final String id;
+  final MemoryScope scope;
+  final String scopeKey;
+  final String text;
+  final String embedder;
+  final Map<String, dynamic>? metadata;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final int hitCount;
+  final DateTime? lastHitAt;
+  final String? sourceKind;
+  final String? sourceRef;
+  final String? summarizerSession;
+  final double? confidence;
+}
+
+// SearchHit pairs a Memory with its cosine similarity score so the
+// UI can render "0.83" badges on results.
+class MemoryHit {
+  MemoryHit({required this.memory, required this.similarity});
+
+  factory MemoryHit.fromJson(Map<String, dynamic> json) => MemoryHit(
+        memory: Memory.fromJson(
+          (json['memory'] as Map<String, dynamic>?) ?? {},
+        ),
+        similarity: (json['similarity'] as num?)?.toDouble() ?? 0,
+      );
+
+  final Memory memory;
+  final double similarity;
+}
+
+class MemoryStatus {
+  MemoryStatus({
+    required this.embedder,
+    required this.dimensions,
+    required this.enabled,
+    required this.autoDetected,
+  });
+
+  factory MemoryStatus.fromJson(Map<String, dynamic> json) => MemoryStatus(
+        embedder: json['embedder'] as String? ?? '',
+        dimensions: (json['dimensions'] as num?)?.toInt() ?? 0,
+        enabled: json['enabled'] as bool? ?? false,
+        autoDetected: json['auto_detected'] as bool? ?? false,
+      );
+
+  final String embedder;
+  final int dimensions;
+  final bool enabled;
+  final bool autoDetected;
+}
+
 // One past prompt entry pulled from the running session's
 // project-scoped transcript history (currently Claude-only on the
 // gateway side — see internal/session/claude_jsonl.go).
