@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/features/_shared/placeholder_screen.dart';
+import 'package:opendray/features/integrations/integrations_screen.dart';
 
 // "More" tab — overflow menu for everything that doesn't earn its
 // own bottom-nav slot. Three sections: identity card, navigation
@@ -35,15 +36,7 @@ class MoreScreen extends ConsumerWidget {
             icon: Icons.api_outlined,
             title: 'Integrations',
             subtitle: 'API callers — recent activity & error rates',
-            onTap: () => _push(
-              context,
-              const PlaceholderScreen(
-                title: 'Integrations',
-                icon: Icons.api_outlined,
-                body: 'Per-integration call history and error rates '
-                    'land in F8.',
-              ),
-            ),
+            onTap: () => _push(context, const IntegrationsScreen()),
           ),
           _MenuTile(
             icon: Icons.notifications_outlined,
