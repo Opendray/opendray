@@ -5,10 +5,12 @@ import 'package:intl/intl.dart';
 import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/features/backups/backups_screen.dart';
 import 'package:opendray/features/channels/channels_screen.dart';
+import 'package:opendray/features/githosts/githosts_screen.dart';
 import 'package:opendray/features/integrations/integrations_screen.dart';
 import 'package:opendray/features/mcp/mcp_screen.dart';
 import 'package:opendray/features/more/about_screen.dart';
 import 'package:opendray/features/providers/providers_screen.dart';
+import 'package:opendray/features/skills/skills_screen.dart';
 
 // "More" tab — overflow menu for everything that doesn't earn its
 // own bottom-nav slot. Three sections: identity card, navigation
@@ -59,6 +61,18 @@ class MoreScreen extends ConsumerWidget {
             title: 'MCP',
             subtitle: 'Model Context Protocol servers & secrets',
             onTap: () => _push(context, const McpScreen()),
+          ),
+          _MenuTile(
+            icon: Icons.auto_awesome_outlined,
+            title: 'Skills',
+            subtitle: 'Agent SKILL.md library (built-in + vault)',
+            onTap: () => _push(context, const SkillsScreen()),
+          ),
+          _MenuTile(
+            icon: Icons.account_tree_outlined,
+            title: 'Git hosts',
+            subtitle: 'PAT credentials for GitHub / GitLab / etc.',
+            onTap: () => _push(context, const GitHostsScreen()),
           ),
           const SizedBox(height: 8),
           const _SectionHeader(label: 'System'),
