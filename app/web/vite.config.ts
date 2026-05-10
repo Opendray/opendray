@@ -11,6 +11,17 @@ export default defineConfig(({ command }) => ({
   base: command === 'build' ? '/admin/' : '/',
   plugins: [react(), tailwindcss()],
   resolve: {
+    // pnpm workspaces give every package its own node_modules and
+    // each one symlinks its own react+react-dom. Without dedupe,
+    // Rolldown bundles ONE copy per import-graph entry — components
+    // from app/shared-ui import shared-ui's react, components from
+    // app/web import web's react, and at runtime the two React
+    // instances don't share their internal dispatcher state.
+    // useCallback called from a shared-ui component reads a null
+    // dispatcher → black-screen boot in production. Dedupe forces
+    // every "react" / "react-dom" specifier to resolve to the same
+    // physical module, restoring the single-instance invariant.
+    dedupe: ['react', 'react-dom'],
     alias: [
       // Most specific first — anything that resolves into a sibling
       // workspace package (shared, shared-ui) wins over the generic
