@@ -117,14 +117,22 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     xtermRef.current = term
     fitRef.current = fit
 
+    // alive flips false on cleanup so any straggler resize/onOpen
+    // callbacks scheduled before unmount don't fire `/resize` against
+    // a session that's just transitioned to ended — server returns
+    // 404 and browser logs it red in console even though we .catch().
+    let alive = true
+
     const ws = new BinaryWS(wsURL(`/api/v1/sessions/${sessionId}/stream`, token), {
       onMessage: (data) => term.write(data),
       onClose: () => {
+        if (!alive) return
         term.writeln('')
         term.writeln('\x1b[33m[disconnected — reconnecting…]\x1b[0m')
       },
       onOpen: () => {
         // After (re)connect, push current dimensions so server sizes the PTY.
+        if (!alive) return
         const { cols, rows } = term
         if (cols && rows) {
           resizeSession(sessionId, cols, rows).catch(() => {})
@@ -139,10 +147,12 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       ws.send(enc.buffer.slice(enc.byteOffset, enc.byteOffset + enc.byteLength) as ArrayBuffer)
     })
     term.onResize(({ cols, rows }) => {
+      if (!alive) return
       resizeSession(sessionId, cols, rows).catch(() => {})
     })
 
     const ro = new ResizeObserver(() => {
+      if (!alive) return
       try {
         fit.fit()
       } catch {
@@ -152,6 +162,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     ro.observe(containerRef.current)
 
     return () => {
+      alive = false
       ro.disconnect()
       ws.close()
       term.dispose()
