@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/claude_accounts_api.dart';
 import 'package:opendray/core/api/models.dart';
-import 'package:opendray/features/providers/claude_account_dialogs.dart';
+import 'package:opendray/features/providers/claude_account_dialogs.dart'
+    show RenameClaudeAccountDialog;
 
 // Self-contained widget that owns the Claude accounts list (fetch +
 // per-row actions). Lives inside the Claude provider's config page
@@ -82,20 +83,6 @@ class _ClaudeAccountsSectionState
     } finally {
       if (mounted) setState(() => _busy.remove(key));
     }
-  }
-
-  Future<void> _add() async {
-    final form = await CreateClaudeAccountScreen.push(context);
-    if (form == null || !mounted) return;
-    await _runOp(
-      key: 'new',
-      okMsg: 'Row ${form.name} created — populate via host claude login.',
-      failPrefix: 'Add failed',
-      op: () => ref.read(claudeAccountsApiProvider).create(
-            name: form.name,
-            displayName: form.displayName,
-          ),
-    );
   }
 
   Future<void> _openActions(ClaudeAccountSummary a) async {
@@ -236,25 +223,54 @@ class _ClaudeAccountsSectionState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(4, 14, 0, 6),
-          child: Row(
+          padding: const EdgeInsets.fromLTRB(4, 14, 4, 6),
+          child: Text(
+            'ACCOUNTS',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  letterSpacing: 0.8,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.6),
+                ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(10),
+          margin: const EdgeInsets.only(bottom: 6),
+          decoration: BoxDecoration(
+            color: Theme.of(context)
+                .colorScheme
+                .tertiary
+                .withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  'ACCOUNTS',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        letterSpacing: 0.8,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.6),
-                      ),
+              Text(
+                'Adding a new account is gateway-host only.',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.tertiary,
                 ),
               ),
-              TextButton.icon(
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Add'),
-                onPressed: _add,
+              const SizedBox(height: 4),
+              Text(
+                'SSH into the gateway and run "claude login" with '
+                'CLAUDE_CONFIG_DIR pointed at ~/.claude-accounts/<name>. '
+                'The new directory shows up here automatically. See '
+                'the Providers → Claude accounts section in the web '
+                'tutorial for the full guide.',
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1.4,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.75),
+                ),
               ),
             ],
           ),
@@ -310,8 +326,8 @@ class _ClaudeAccountsSectionState
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         child: Text(
-          'No Claude accounts yet. Tap Add to paste an OAuth token '
-          'from a desktop login.',
+          'No Claude accounts yet. Run the shell command above on the '
+          'gateway host; the row will appear here on the next refresh.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
       );

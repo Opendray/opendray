@@ -1,4 +1,3 @@
-import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   CircleDot,
@@ -6,55 +5,38 @@ import {
   HelpCircle,
   KeyRound,
   Loader2,
-  Plus,
   Trash2,
 } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import {
-  createClaudeAccount,
   deleteClaudeAccount,
   importLocalClaudeAccounts,
   listClaudeAccounts,
   toggleClaudeAccount,
 } from '@/lib/claudeAccounts'
 
-// ClaudeAccountsPanel renders the v1-style multi-account UI: each
-// account is a (name, displayName, configDir, tokenPath) tuple. The
-// OAuth token is uploaded separately via the Set-token form because
-// it's a long string and operators usually paste it from the host
-// tool `claude-acc`'s output.
+// ClaudeAccountsPanel renders the multi-account list for the Claude
+// provider. Account creation is filesystem-driven: operators run
+// `CLAUDE_CONFIG_DIR=~/.claude-accounts/<name> claude login` on the
+// gateway host and opendray's filesystem watcher picks the directory
+// up automatically. The Import local button forces a synchronous
+// scan for the case where the operator wants the row to appear
+// immediately.
+//
+// There is intentionally no Add-account form: pasting an OAuth token
+// into a web form produces an account that can't refresh and dies in
+// ~1 hour, while the canonical claude-login flow produces a
+// self-managed credentials file. Forcing the host-shell flow keeps
+// the affordance honest.
 export function ClaudeAccountsPanel() {
   const qc = useQueryClient()
   const { data: accounts, isLoading } = useQuery({
     queryKey: ['claude-accounts'],
     queryFn: listClaudeAccounts,
-  })
-
-  const [showAdd, setShowAdd] = useState(false)
-  const [name, setName] = useState('')
-  const [displayName, setDisplayName] = useState('')
-
-  const add = useMutation({
-    mutationFn: () =>
-      createClaudeAccount({
-        name: name.trim(),
-        display_name: displayName.trim() || undefined,
-      }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['claude-accounts'] })
-      toast.success('Account row created — populate the credentials with `claude login` on the gateway host.')
-      setName('')
-      setDisplayName('')
-      setShowAdd(false)
-    },
-    onError: (e: Error) => toast.error('Add failed', { description: e.message }),
   })
 
   const importLocal = useMutation({
@@ -89,15 +71,6 @@ export function ClaudeAccountsPanel() {
       toast.error('Remove failed', { description: e.message }),
   })
 
-  const submitAdd = (e: FormEvent) => {
-    e.preventDefault()
-    if (!name.trim()) {
-      toast.error('Name is required')
-      return
-    }
-    add.mutate()
-  }
-
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -117,34 +90,42 @@ export function ClaudeAccountsPanel() {
             <HelpCircle className="size-3.5" />
           </Link>
         </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => importLocal.mutate()}
-            disabled={importLocal.isPending}
-            className="text-[11px] gap-1"
-            title="Scan ~/.claude-accounts/ on the gateway host and register any new accounts. Only useful when the gateway has filesystem access to your home dir."
-          >
-            {importLocal.isPending ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <Download className="size-3.5" />
-            )}
-            Import local
-          </Button>
-          {!showAdd && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAdd(true)}
-              className="text-[11px] gap-1"
-            >
-              <Plus className="size-3.5" />
-              Add account
-            </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => importLocal.mutate()}
+          disabled={importLocal.isPending}
+          className="text-[11px] gap-1"
+          title="Scan ~/.claude-accounts/ on the gateway host and register any new directories. The button is gateway-host only — see the tutorial."
+        >
+          {importLocal.isPending ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Download className="size-3.5" />
           )}
-        </div>
+          Import local
+        </Button>
+      </div>
+
+      <div className="rounded-md border border-border bg-muted/20 px-3 py-2.5 text-[11px] text-muted-foreground leading-relaxed">
+        <span className="font-medium text-foreground">
+          Adding a new account.
+        </span>{' '}
+        Run on the gateway host:
+        <pre className="mt-1.5 mb-1.5 px-2 py-1.5 rounded bg-background/60 text-[10.5px] overflow-x-auto">
+{`mkdir -p ~/.claude-accounts/<name>
+CLAUDE_CONFIG_DIR=~/.claude-accounts/<name> claude login`}
+        </pre>
+        opendray's filesystem watcher will register the new directory
+        automatically, or click <span className="font-mono">Import local</span> to
+        scan immediately.{' '}
+        <Link
+          to="/tutorial"
+          hash="providers-claude-accounts"
+          className="underline hover:text-foreground"
+        >
+          Architecture &amp; full guide →
+        </Link>
       </div>
 
       {isLoading && (
@@ -153,13 +134,11 @@ export function ClaudeAccountsPanel() {
         </div>
       )}
 
-      {!isLoading && (accounts?.length ?? 0) === 0 && !showAdd && (
+      {!isLoading && (accounts?.length ?? 0) === 0 && (
         <p className="text-[12px] text-muted-foreground italic">
-          No Claude accounts yet. Use{' '}
-          <span className="font-mono">Import local</span> if you've already
-          run <span className="font-mono">claude-acc init</span> on the
-          gateway host, or click{' '}
-          <span className="font-mono">Add account</span> to register one.
+          No Claude accounts yet. Run the shell command above on the
+          gateway host, then click{' '}
+          <span className="font-mono">Import local</span> to scan.
         </p>
       )}
 
@@ -224,81 +203,6 @@ export function ClaudeAccountsPanel() {
           </div>
         ))}
       </div>
-
-      {showAdd && (
-        <>
-          <Separator />
-          <div className="rounded-md border border-border bg-muted/20 px-3 py-2.5 text-[11px] text-muted-foreground leading-relaxed">
-            <span className="font-medium text-foreground">
-              How to populate the credentials.
-            </span>{' '}
-            "Add account" only reserves the row; the OAuth login itself
-            is run on the gateway host:
-            <pre className="mt-1.5 mb-1 px-2 py-1.5 rounded bg-background/60 text-[10.5px] overflow-x-auto">
-{`mkdir -p ~/.claude-accounts/<name>
-CLAUDE_CONFIG_DIR=~/.claude-accounts/<name> claude login`}
-            </pre>
-            opendray's filesystem watcher picks up the new dir on
-            its own — you can also click <span className="font-mono">Import local</span> to
-            scan immediately.{' '}
-            <Link
-              to="/tutorial"
-              hash="providers-claude-accounts"
-              className="underline hover:text-foreground"
-            >
-              Full guide →
-            </Link>
-          </div>
-          <form onSubmit={submitAdd} className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="acc-name">Name (slug)</Label>
-              <Input
-                id="acc-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="personal"
-                required
-              />
-              <p className="text-[10px] text-muted-foreground/70">
-                Used as a slug. config_dir defaults to{' '}
-                <span className="font-mono">
-                  ~/.claude-accounts/&lt;name&gt;
-                </span>
-                .
-              </p>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="acc-display">Display name (optional)</Label>
-              <Input
-                id="acc-display"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Personal subscription"
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAdd(false)}
-                disabled={add.isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="accent"
-                size="sm"
-                disabled={add.isPending}
-              >
-                {add.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                {add.isPending ? 'Adding…' : 'Add account'}
-              </Button>
-            </div>
-          </form>
-        </>
-      )}
     </div>
   )
 }
