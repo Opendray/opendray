@@ -8,20 +8,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+- `.github/workflows/release.yml` — automated release pipeline.
+  Triggers on `v*` tag push (or manually via workflow_dispatch with a
+  tag input). Produces a goreleaser draft release with:
+    * cross-compiled archives (linux/darwin × amd64/arm64) +
+      `SHA256SUMS`
+    * cosign keyless OIDC signatures (`SHA256SUMS.sig`,
+      `SHA256SUMS.pem`) via Sigstore Fulcio — no long-lived key
+    * SPDX SBOM via anchore/sbom-action
+  Permissions limited to `contents: write` (release upload) and
+  `id-token: write` (cosign OIDC). Supply-chain hardening: SHA-pinned
+  cosign-installer, sbom-action, and goreleaser-action; fail-fast
+  tag-format validation on workflow_dispatch.
+- `deploy/` directory with reference deploy artefacts:
+  - `deploy/systemd/opendray.service` — production-ready systemd unit
+    with sandboxing (`NoNewPrivileges`, `ProtectSystem=strict`, etc.),
+    `migrate`-then-`serve` startup, 20s graceful-stop window.
+  - `deploy/lxc/proxmox-pty-notes.md` — Proxmox-specific guide covering
+    privileged vs unprivileged container PTY behaviour, the cgroup +
+    bind-mount config required for unprivileged LXCs, networking +
+    pgvector + pg_dump-version checks, and a pre-go-live checklist.
+  - `deploy/README.md` — index pointing operators at the right artefact
+    for their topology.
+  - operator-guide.md "Where to look next" section now links to `deploy/`.
+- ADR 0016 (Proposed): backup-format v2 design for per-install PBKDF2
+  salt. Captures the four binding decisions (in-header storage,
+  version-byte bump 1→2, per-Seal salt provenance, indefinite v1
+  read compat) and the three-PR rollout. Implementation pending.
 - LICENSE file (Apache 2.0) — previously declared in README only.
 - SECURITY.md — threat model, default posture, deployment checklist, report channel.
 - CONTRIBUTING.md — dev setup, test commands, PR + commit conventions.
 - CHANGELOG.md — this file.
 
 ### Changed
+- `internal/backup/cipher.go`: 6-line comment on `kdfSalt` flagging it
+  as a frozen v1 protocol constant and pointing at ADR 0016. No code
+  behaviour change.
 - Renumbered ADR `0011-memory-subsystem.md` → `0014-memory-subsystem.md` to
   resolve the duplicate-0011 collision with `0011-channel-rich-content-and-bridge.md`.
   Updated cross-references in README, ADR 0013, and the embed-onnx stub.
 
-## [v1.0-rc] — 2026-05-05
+## [v1.0.0] — 2026-05-09
 
-Feature-complete release candidate. v1 (`Opendray/opendray`) keeps running
-in production; switchover happens after v1.0 ships.
+First stable release. Tagged at commit `fe96fd8` on `main`. Web frontend
++ backend feature-complete; mobile + Slack inbound + automated release
+workflow deferred to v1.x per the post-v1.0 roadmap. v1
+(`Opendray/opendray`) keeps running in production through this quarter
+per ADR 0001.
+
+The feature inventory below was originally captured under
+`[v1.0-rc] — 2026-05-05`; section was promoted to `[v1.0.0]` on tag.
 
 ### Added (since the greenfield start)
 

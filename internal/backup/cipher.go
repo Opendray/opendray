@@ -35,6 +35,12 @@ var base64Field = base64.RawURLEncoding
 // effective birthday bound is comfortably above any plausible
 // backup size.
 const (
+	// kdfSalt is the v1 PBKDF2 salt — intentionally global-static.
+	// Don't change this string: every v1 backup file ever written
+	// derives its key from it. The migration to per-install random
+	// salt is captured in ADR 0016 (Proposed) and lands as a v2
+	// header format. Until then v1 stays — including for any new
+	// backups produced by this code path.
 	kdfSalt       = "opendray-v1-backup"
 	kdfIterations = 200_000
 	kdfKeyLen     = 32 // AES-256

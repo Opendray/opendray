@@ -24,7 +24,7 @@ shared, so once you've wired up one channel the rest is identical.
 | `discord` | Gateway WS | REST + embeds | no | dev/maker community |
 | `feishu` | webhook | tenant API | **yes** | China / cross-org formal channels |
 | `dingtalk` | (none) | group robot | no | China enterprise group rooms |
-| `wecom` | (none) | group robot | no | 企业微信 group rooms |
+| `wecom` | (none) | group robot | no | WeCom (企业微信) group rooms |
 | `wechat` | (none, push) | wxpusher | no | personal WeChat phone alerts |
 | `bridge` | WebSocket | WebSocket | no (token-auth) | custom platforms (Line / KakaoTalk / your own) |
 

@@ -50,13 +50,13 @@ export const TARGET_KINDS: {
     kind: 's3',
     label: 'S3-compatible',
     description: 'AWS S3 + every S3-compatible service',
-    examples: 'AWS S3 · Cloudflare R2 · Backblaze B2 · MinIO · 阿里云 OSS · 腾讯云 COS · DigitalOcean Spaces · Wasabi',
+    examples: 'AWS S3 · Cloudflare R2 · Backblaze B2 · MinIO · Alibaba Cloud OSS (阿里云 OSS) · Tencent Cloud COS (腾讯云 COS) · DigitalOcean Spaces · Wasabi',
   },
   {
     kind: 'webdav',
     label: 'WebDAV',
     description: 'Self-hosted clouds + file-sharing services',
-    examples: 'Nextcloud · ownCloud · 群晖 DSM · Box.com · 坚果云',
+    examples: 'Nextcloud · ownCloud · Synology DSM (群晖 DSM) · Box.com · Jianguoyun (坚果云)',
   },
   {
     kind: 'sftp',
@@ -68,7 +68,7 @@ export const TARGET_KINDS: {
     kind: 'rclone',
     label: 'rclone passthrough',
     description: 'Tap into 70+ backends configured via the rclone CLI',
-    examples: 'Google Drive · OneDrive · Dropbox · Mega · pCloud · iCloud-WebDAV · 百度网盘 · 阿里云盘',
+    examples: 'Google Drive · OneDrive · Dropbox · Mega · pCloud · iCloud-WebDAV · Baidu Pan (百度网盘) · Aliyun Drive (阿里云盘)',
   },
 ]
 
@@ -269,7 +269,7 @@ export async function deleteSchedule(id: string): Promise<void> {
 
 // ── helpers ──────────────────────────────────────────────────────
 
-// ── exports (C 方案) ─────────────────────────────────────────────
+// ── exports (Plan C) ─────────────────────────────────────────────
 
 export type IntegrationExportMode = 'none' | 'metadata' | 'plaintext'
 

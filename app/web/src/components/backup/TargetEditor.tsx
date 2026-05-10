@@ -270,7 +270,7 @@ export function TargetEditor({
             <>
               <Field
                 label="Base URL"
-                hint="Full URL including any path. Examples: https://cloud.example.com/remote.php/dav/files/me/ (Nextcloud), https://nas.local:5006/ (Synology), https://dav.jianguoyun.com/dav/ (坚果云)"
+                hint="Full URL including any path. Examples: https://cloud.example.com/remote.php/dav/files/me/ (Nextcloud), https://nas.local:5006/ (Synology), https://dav.jianguoyun.com/dav/ (Jianguoyun / 坚果云)"
               >
                 <Input
                   value={(config.base_url as string) ?? ''}

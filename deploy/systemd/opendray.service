@@ -1,0 +1,92 @@
+# opendray v2 systemd unit
+#
+# Standard Linux deploy: one binary at /usr/local/bin/opendray,
+# one config at /etc/opendray/config.toml, secrets injected via
+# an EnvironmentFile so they never sit in the config TOML.
+#
+# Install:
+#   sudo cp deploy/systemd/opendray.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now opendray
+#   sudo systemctl status opendray
+#
+# Inspect:
+#   journalctl -u opendray -f --no-pager
+#
+# This unit assumes:
+#   * /usr/local/bin/opendray exists (binary or symlink).
+#   * Service user `opendray` exists with $HOME at /var/lib/opendray.
+#   * /etc/opendray/config.toml is mode 600, owned by opendray:opendray.
+#   * /etc/opendray/env.d/secrets is mode 600, owned by root or
+#     opendray, and contains at minimum:
+#         OPENDRAY_ADMIN_PASSWORD=...
+#         OPENDRAY_BACKUP_KEY=...   (only if [backup].enabled = true)
+#
+# See deploy/README.md for the full bootstrap walkthrough.
+
+[Unit]
+Description=opendray v2 — multiplexer + integration gateway for AI agent CLIs
+Documentation=https://github.com/Opendray/opendray_v2/blob/main/docs/operator-guide.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=opendray
+Group=opendray
+WorkingDirectory=/var/lib/opendray
+
+# Secrets land here; this file is owned root:opendray, mode 0640.
+EnvironmentFile=/etc/opendray/env.d/secrets
+
+# Run pending migrations before starting the server. Idempotent;
+# re-running is a no-op when the schema is current. Failure here
+# blocks the main ExecStart, which is what we want.
+ExecStartPre=/usr/local/bin/opendray migrate -config /etc/opendray/config.toml
+
+# Bind to 127.0.0.1 by default (per config.example.toml). Front
+# with a reverse proxy or Cloudflare Tunnel for TLS.
+ExecStart=/usr/local/bin/opendray serve -config /etc/opendray/config.toml
+
+# Restart policy — opendray returns non-zero on fatal errors, never
+# on graceful shutdown. on-failure restarts only when something
+# actually broke; SIGTERM/SIGINT exits cleanly with status 0.
+Restart=on-failure
+RestartSec=5s
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+# Graceful shutdown window — opendray's internal supervisor budgets
+# 15s for HTTP drain + subsystem stop. Give systemd 20s before
+# escalating to SIGKILL.
+TimeoutStopSec=20s
+KillSignal=SIGTERM
+SendSIGKILL=yes
+
+# Sandboxing — adapt for your environment. The defaults below assume
+# OpenDray talks only to: /etc/opendray (read-only config) and
+# /var/lib/opendray (writable state). Loosen if you point [vault.root]
+# or [backup].local_dir elsewhere.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+ReadWritePaths=/var/lib/opendray
+
+# Capability surface — opendray needs none for the default loopback
+# bind on a port >1024. If you bind to a privileged port (<1024)
+# directly, add `AmbientCapabilities=CAP_NET_BIND_SERVICE` and
+# `CapabilityBoundingSet=CAP_NET_BIND_SERVICE`.
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target

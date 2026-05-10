@@ -58,7 +58,7 @@ three entries:
 
 ## When you'll see it work
 
-1. Open a Claude session, say "记住我喜欢 pnpm"
+1. Open a Claude session, say "remember I prefer pnpm"
 2. Either Claude calls `opendray-memory.memory_store(...)` directly,
    OR it writes a local `.claude/.../memory/preference_pnpm.md` —
    either way, opendray ends up with the fact in pgvector.
