@@ -6,6 +6,7 @@ import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/features/backups/backups_screen.dart';
 import 'package:opendray/features/channels/channels_screen.dart';
 import 'package:opendray/features/integrations/integrations_screen.dart';
+import 'package:opendray/features/mcp/mcp_screen.dart';
 import 'package:opendray/features/more/about_screen.dart';
 import 'package:opendray/features/providers/providers_screen.dart';
 
@@ -52,6 +53,12 @@ class MoreScreen extends ConsumerWidget {
             title: 'Providers',
             subtitle: 'Claude / Codex / Gemini CLI status',
             onTap: () => _push(context, const ProvidersScreen()),
+          ),
+          _MenuTile(
+            icon: Icons.extension_outlined,
+            title: 'MCP',
+            subtitle: 'Model Context Protocol servers & secrets',
+            onTap: () => _push(context, const McpScreen()),
           ),
           const SizedBox(height: 8),
           const _SectionHeader(label: 'System'),
