@@ -1,65 +1,43 @@
-import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Check,
   CircleDot,
   Download,
+  HelpCircle,
   KeyRound,
   Loader2,
-  Plus,
   Trash2,
 } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
-import { Switch } from '@/components/ui/switch'
+import { cn } from '@/lib/utils'
 import {
-  createClaudeAccount,
   deleteClaudeAccount,
   importLocalClaudeAccounts,
   listClaudeAccounts,
-  setClaudeAccountToken,
   toggleClaudeAccount,
 } from '@/lib/claudeAccounts'
+import type { ClaudeAccount } from '@/lib/types'
 
-// ClaudeAccountsPanel renders the v1-style multi-account UI: each
-// account is a (name, displayName, configDir, tokenPath) tuple. The
-// OAuth token is uploaded separately via the Set-token form because
-// it's a long string and operators usually paste it from the host
-// tool `claude-acc`'s output.
+// ClaudeAccountsPanel renders the multi-account list for the Claude
+// provider. Account creation is filesystem-driven: operators run
+// `CLAUDE_CONFIG_DIR=~/.claude-accounts/<name> claude login` on the
+// gateway host and opendray's filesystem watcher picks the directory
+// up automatically. The Import local button forces a synchronous
+// scan for the case where the operator wants the row to appear
+// immediately.
+//
+// There is intentionally no Add-account form: pasting an OAuth token
+// into a web form produces an account that can't refresh and dies in
+// ~1 hour, while the canonical claude-login flow produces a
+// self-managed credentials file. Forcing the host-shell flow keeps
+// the affordance honest.
 export function ClaudeAccountsPanel() {
   const qc = useQueryClient()
   const { data: accounts, isLoading } = useQuery({
     queryKey: ['claude-accounts'],
     queryFn: listClaudeAccounts,
-  })
-
-  const [showAdd, setShowAdd] = useState(false)
-  const [name, setName] = useState('')
-  const [displayName, setDisplayName] = useState('')
-  const [token, setToken] = useState('')
-  const [tokenAccountId, setTokenAccountId] = useState<string | null>(null)
-  const [pendingToken, setPendingToken] = useState('')
-
-  const add = useMutation({
-    mutationFn: () =>
-      createClaudeAccount({
-        name: name.trim(),
-        display_name: displayName.trim() || undefined,
-        token: token.trim() || undefined,
-      }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['claude-accounts'] })
-      toast.success('Account added')
-      setName('')
-      setDisplayName('')
-      setToken('')
-      setShowAdd(false)
-    },
-    onError: (e: Error) => toast.error('Add failed', { description: e.message }),
   })
 
   const importLocal = useMutation({
@@ -76,12 +54,31 @@ export function ClaudeAccountsPanel() {
       toast.error('Import failed', { description: e.message }),
   })
 
+  // Optimistic toggle: Radix Switch is fully controlled via
+  // `checked={a.enabled}`. Without an optimistic update the thumb
+  // doesn't budge between click and refetch, which on a slow round-
+  // trip looks indistinguishable from a broken button. We seed the
+  // cache with the new value on click and reconcile on settle.
   const toggle = useMutation({
     mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
       toggleClaudeAccount(id, enabled),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['claude-accounts'] }),
-    onError: (e: Error) =>
-      toast.error('Toggle failed', { description: e.message }),
+    onMutate: async ({ id, enabled }) => {
+      await qc.cancelQueries({ queryKey: ['claude-accounts'] })
+      const prev = qc.getQueryData<ClaudeAccount[]>(['claude-accounts'])
+      if (prev) {
+        qc.setQueryData<ClaudeAccount[]>(
+          ['claude-accounts'],
+          prev.map((a) => (a.id === id ? { ...a, enabled } : a)),
+        )
+      }
+      return { prev }
+    },
+    onError: (e: Error, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['claude-accounts'], ctx.prev)
+      toast.error('Toggle failed', { description: e.message })
+    },
+    onSettled: () =>
+      qc.invalidateQueries({ queryKey: ['claude-accounts'] }),
   })
 
   const remove = useMutation({
@@ -94,28 +91,6 @@ export function ClaudeAccountsPanel() {
       toast.error('Remove failed', { description: e.message }),
   })
 
-  const setToken_ = useMutation({
-    mutationFn: ({ id, t }: { id: string; t: string }) =>
-      setClaudeAccountToken(id, t),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['claude-accounts'] })
-      toast.success('Token saved')
-      setTokenAccountId(null)
-      setPendingToken('')
-    },
-    onError: (e: Error) =>
-      toast.error('Save token failed', { description: e.message }),
-  })
-
-  const submitAdd = (e: FormEvent) => {
-    e.preventDefault()
-    if (!name.trim()) {
-      toast.error('Name is required')
-      return
-    }
-    add.mutate()
-  }
-
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -126,35 +101,51 @@ export function ClaudeAccountsPanel() {
           <span className="text-[10px] text-muted-foreground/60 font-mono">
             {accounts?.length ?? 0}
           </span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => importLocal.mutate()}
-            disabled={importLocal.isPending}
-            className="text-[11px] gap-1"
-            title="Scan ~/.claude-accounts/tokens/ on the gateway host and register any new accounts"
+          <Link
+            to="/tutorial"
+            hash="providers-claude-accounts"
+            className="text-muted-foreground/70 hover:text-foreground inline-flex items-center"
+            title="Open the multi-account tutorial section"
           >
-            {importLocal.isPending ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <Download className="size-3.5" />
-            )}
-            Import local
-          </Button>
-          {!showAdd && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAdd(true)}
-              className="text-[11px] gap-1"
-            >
-              <Plus className="size-3.5" />
-              Add account
-            </Button>
-          )}
+            <HelpCircle className="size-3.5" />
+          </Link>
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => importLocal.mutate()}
+          disabled={importLocal.isPending}
+          className="text-[11px] gap-1"
+          title="Scan ~/.claude-accounts/ on the gateway host and register any new directories. The button is gateway-host only — see the tutorial."
+        >
+          {importLocal.isPending ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Download className="size-3.5" />
+          )}
+          Import local
+        </Button>
+      </div>
+
+      <div className="rounded-md border border-border bg-muted/20 px-3 py-2.5 text-[11px] text-muted-foreground leading-relaxed">
+        <span className="font-medium text-foreground">
+          Adding a new account.
+        </span>{' '}
+        Run on the gateway host:
+        <pre className="mt-1.5 mb-1.5 px-2 py-1.5 rounded bg-background/60 text-[10.5px] overflow-x-auto">
+{`mkdir -p ~/.claude-accounts/<name>
+CLAUDE_CONFIG_DIR=~/.claude-accounts/<name> claude login`}
+        </pre>
+        opendray's filesystem watcher will register the new directory
+        automatically, or click <span className="font-mono">Import local</span> to
+        scan immediately.{' '}
+        <Link
+          to="/tutorial"
+          hash="providers-claude-accounts"
+          className="underline hover:text-foreground"
+        >
+          Architecture &amp; full guide →
+        </Link>
       </div>
 
       {isLoading && (
@@ -163,13 +154,11 @@ export function ClaudeAccountsPanel() {
         </div>
       )}
 
-      {!isLoading && (accounts?.length ?? 0) === 0 && !showAdd && (
+      {!isLoading && (accounts?.length ?? 0) === 0 && (
         <p className="text-[12px] text-muted-foreground italic">
-          No Claude accounts yet. Use{' '}
-          <span className="font-mono">Import local</span> if you've already
-          run <span className="font-mono">claude-acc init</span> on the
-          gateway host, or click{' '}
-          <span className="font-mono">Add account</span> to register one.
+          No Claude accounts yet. Run the shell command above on the
+          gateway host, then click{' '}
+          <span className="font-mono">Import local</span> to scan.
         </p>
       )}
 
@@ -209,24 +198,12 @@ export function ClaudeAccountsPanel() {
                   token_path: {a.token_path || '—'}
                 </div>
               </div>
-              <Switch
-                checked={a.enabled}
-                onCheckedChange={(v) =>
-                  toggle.mutate({ id: a.id, enabled: v })
-                }
-                aria-label={`Toggle ${a.name}`}
+              <ToggleButton
+                enabled={a.enabled}
+                pending={toggle.isPending}
+                onToggle={(v) => toggle.mutate({ id: a.id, enabled: v })}
+                ariaLabel={`Toggle ${a.name}`}
               />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setTokenAccountId(tokenAccountId === a.id ? null : a.id)
-                  setPendingToken('')
-                }}
-                className="text-[11px]"
-              >
-                {a.token_filled ? 'Replace token' : 'Set token'}
-              </Button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -242,113 +219,55 @@ export function ClaudeAccountsPanel() {
                 <Trash2 className="size-3.5" />
               </Button>
             </div>
-            {tokenAccountId === a.id && (
-              <div className="mt-2.5 pt-2.5 border-t border-border/60 flex items-center gap-1.5">
-                <Input
-                  autoFocus
-                  type="password"
-                  value={pendingToken}
-                  onChange={(e) => setPendingToken(e.target.value)}
-                  placeholder="paste OAuth token (sk-ant-…)"
-                  className="flex-1 text-[12px]"
-                />
-                <Button
-                  variant="accent"
-                  size="sm"
-                  disabled={!pendingToken.trim() || setToken_.isPending}
-                  onClick={() =>
-                    setToken_.mutate({ id: a.id, t: pendingToken.trim() })
-                  }
-                >
-                  {setToken_.isPending ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <Check className="size-3.5" />
-                  )}
-                  Save
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setTokenAccountId(null)}
-                  disabled={setToken_.isPending}
-                >
-                  Cancel
-                </Button>
-              </div>
-            )}
           </div>
         ))}
       </div>
-
-      {showAdd && (
-        <>
-          <Separator />
-          <form onSubmit={submitAdd} className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="acc-name">Name (slug)</Label>
-              <Input
-                id="acc-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="personal"
-                required
-              />
-              <p className="text-[10px] text-muted-foreground/70">
-                Used as a slug. config_dir defaults to{' '}
-                <span className="font-mono">
-                  ~/.claude-accounts/&lt;name&gt;
-                </span>
-                .
-              </p>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="acc-display">Display name (optional)</Label>
-              <Input
-                id="acc-display"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Personal subscription"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="acc-token">OAuth token (optional)</Label>
-              <Input
-                id="acc-token"
-                type="password"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="paste now or set later"
-                autoComplete="off"
-              />
-              <p className="text-[10px] text-muted-foreground/70">
-                Leave empty to provision the row only. Token is written
-                chmod 600 to <span className="font-mono">token_path</span>.
-              </p>
-            </div>
-            <div className="flex justify-end gap-2 pt-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAdd(false)}
-                disabled={add.isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="accent"
-                size="sm"
-                disabled={add.isPending}
-              >
-                {add.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                {add.isPending ? 'Adding…' : 'Add account'}
-              </Button>
-            </div>
-          </form>
-        </>
-      )}
     </div>
+  )
+}
+
+// ToggleButton is a hand-rolled enable/disable control replacing the
+// Radix Switch primitive on this panel. Earlier versions used Switch
+// but the click was somehow not reaching the primitive in production
+// (no onCheckedChange fired, no network call). A plain <button> with
+// explicit onClick sidesteps the issue and gives us full control over
+// pending and disabled visual states.
+function ToggleButton({
+  enabled,
+  pending,
+  onToggle,
+  ariaLabel,
+}: {
+  enabled: boolean
+  pending: boolean
+  onToggle: (next: boolean) => void
+  ariaLabel: string
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={enabled}
+      aria-label={ariaLabel}
+      disabled={pending}
+      onClick={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        onToggle(!enabled)
+      }}
+      className={cn(
+        'inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-border transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'disabled:cursor-wait disabled:opacity-60',
+        enabled ? 'bg-accent' : 'bg-muted',
+      )}
+    >
+      <span
+        className={cn(
+          'pointer-events-none block size-4 rounded-full bg-background shadow-sm transition-transform',
+          enabled ? 'translate-x-4' : 'translate-x-0.5',
+        )}
+      />
+    </button>
   )
 }
