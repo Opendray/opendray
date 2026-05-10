@@ -11,7 +11,7 @@ import { Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
+import { cn } from '@/lib/utils'
 import {
   deleteClaudeAccount,
   importLocalClaudeAccounts,
@@ -198,12 +198,11 @@ CLAUDE_CONFIG_DIR=~/.claude-accounts/<name> claude login`}
                   token_path: {a.token_path || '—'}
                 </div>
               </div>
-              <Switch
-                checked={a.enabled}
-                onCheckedChange={(v) =>
-                  toggle.mutate({ id: a.id, enabled: v })
-                }
-                aria-label={`Toggle ${a.name}`}
+              <ToggleButton
+                enabled={a.enabled}
+                pending={toggle.isPending}
+                onToggle={(v) => toggle.mutate({ id: a.id, enabled: v })}
+                ariaLabel={`Toggle ${a.name}`}
               />
               <Button
                 variant="ghost"
@@ -224,5 +223,51 @@ CLAUDE_CONFIG_DIR=~/.claude-accounts/<name> claude login`}
         ))}
       </div>
     </div>
+  )
+}
+
+// ToggleButton is a hand-rolled enable/disable control replacing the
+// Radix Switch primitive on this panel. Earlier versions used Switch
+// but the click was somehow not reaching the primitive in production
+// (no onCheckedChange fired, no network call). A plain <button> with
+// explicit onClick sidesteps the issue and gives us full control over
+// pending and disabled visual states.
+function ToggleButton({
+  enabled,
+  pending,
+  onToggle,
+  ariaLabel,
+}: {
+  enabled: boolean
+  pending: boolean
+  onToggle: (next: boolean) => void
+  ariaLabel: string
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={enabled}
+      aria-label={ariaLabel}
+      disabled={pending}
+      onClick={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        onToggle(!enabled)
+      }}
+      className={cn(
+        'inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-border transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'disabled:cursor-wait disabled:opacity-60',
+        enabled ? 'bg-accent' : 'bg-muted',
+      )}
+    >
+      <span
+        className={cn(
+          'pointer-events-none block size-4 rounded-full bg-background shadow-sm transition-transform',
+          enabled ? 'translate-x-4' : 'translate-x-0.5',
+        )}
+      />
+    </button>
   )
 }
