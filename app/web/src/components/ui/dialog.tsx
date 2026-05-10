@@ -37,7 +37,15 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-md translate-x-[-50%] translate-y-[-50%] gap-3',
+        // Width: cap at max-w-md but never exceed viewport minus 2rem
+        // padding, so on a narrow viewport (mobile, DevTools responsive
+        // mode, split-screen) the dialog stays fully visible instead of
+        // clipping under DevTools / off-screen — which silently looks
+        // like "click did nothing" while in fact the dialog opened off
+        // the visible region and locked body pointer-events.
+        // Height: cap at viewport minus 2rem and scroll the content
+        // when it overflows (long forms on short screens).
+        'fixed left-[50%] top-[50%] z-50 grid w-[calc(100vw-2rem)] max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto translate-x-[-50%] translate-y-[-50%] gap-3',
         'border border-border bg-popover text-popover-foreground p-5 rounded-lg',
         'shadow-[0_4px_24px_rgba(0,0,0,0.25)]',
         'data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',

@@ -51,6 +51,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Get("/{id}", h.getOne)
 		r.Patch("/{id}", h.update)
 		r.Delete("/{id}", h.delete)
+		r.Post("/delete-by-scope", h.deleteByScope)
 		r.Post("/test", h.test)
 		r.Post("/probe", h.probe)
 		r.Get("/embedder-stats", h.embedderStats)
@@ -293,6 +294,33 @@ func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// deleteByScope wipes every memory under the given (scope, scope_key)
+// in one SQL operation. Body shape:
+//
+//	{ "scope": "project", "scope_key": "/Users/you/projects/foo" }
+//
+// Returns {"deleted": N}. Refuses non-global scopes with empty
+// scope_key — that would have wiped the whole table.
+func (h *Handlers) deleteByScope(w http.ResponseWriter, r *http.Request) {
+	if !h.ensure(w) {
+		return
+	}
+	var body struct {
+		Scope    Scope  `json:"scope"`
+		ScopeKey string `json:"scope_key"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	n, err := h.svc.DeleteByScope(r.Context(), body.Scope, body.ScopeKey)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"deleted": n})
 }
 
 func (h *Handlers) delete(w http.ResponseWriter, r *http.Request) {

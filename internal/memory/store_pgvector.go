@@ -530,6 +530,29 @@ func (s *PgvectorStore) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
+// DeleteByScope wipes every memory under the given scope/scope_key
+// in a single SQL statement. Returns the row count actually
+// removed. The empty scope_key is meaningful only for ScopeGlobal
+// (caller must pass "" there) — for session/project an empty key
+// is rejected upstream in the service layer to prevent the user
+// from accidentally nuking everything.
+func (s *PgvectorStore) DeleteByScope(
+	ctx context.Context,
+	scope Scope,
+	scopeKey string,
+) (int64, error) {
+	tag, err := s.pool.Exec(
+		ctx,
+		`DELETE FROM memories WHERE scope = $1 AND scope_key = $2`,
+		string(scope),
+		scopeKey,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("memory: delete by scope: %w", err)
+	}
+	return tag.RowsAffected(), nil
+}
+
 // vectorLiteral renders a []float32 as the pgvector text format
 // "[v1,v2,...]" pgx-compat. We could use the pgvector-go driver's
 // custom type, but a string literal keeps the dependency surface

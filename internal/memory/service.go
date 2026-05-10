@@ -294,6 +294,39 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	return s.store.Delete(ctx, id)
 }
 
+// DeleteByScope wipes every memory under (scope, scopeKey).
+// Refuses to fire on non-global scopes with an empty scope_key —
+// otherwise a typo would clear every project / session at once.
+// Global scope explicitly accepts an empty scope_key (that's the
+// only valid value there) so callers must pass scope=ScopeGlobal
+// AND scopeKey="" together to wipe global memories. Returns the
+// number of rows deleted.
+func (s *Service) DeleteByScope(
+	ctx context.Context,
+	scope Scope,
+	scopeKey string,
+) (int64, error) {
+	if err := scope.Validate(); err != nil {
+		return 0, err
+	}
+	if scope != ScopeGlobal && strings.TrimSpace(scopeKey) == "" {
+		return 0, fmt.Errorf(
+			"memory: scope %q requires a scope_key for bulk delete", scope,
+		)
+	}
+	if scope == ScopeGlobal && scopeKey != "" {
+		return 0, fmt.Errorf(
+			"memory: global scope must have empty scope_key (got %q)", scopeKey,
+		)
+	}
+	n, err := s.store.DeleteByScope(ctx, scope, scopeKey)
+	if err == nil && n > 0 {
+		s.log.Info("memory.delete_by_scope",
+			"scope", scope, "scope_key", scopeKey, "deleted", n)
+	}
+	return n, err
+}
+
 // Get returns one memory by id, including provenance fields.
 // Used by the GET /memory/{id} admin endpoint and the
 // memory_get_provenance MCP tool.

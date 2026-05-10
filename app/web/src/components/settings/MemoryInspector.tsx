@@ -14,6 +14,8 @@ import {
   RefreshCw,
   Activity,
   FolderSync,
+  EraserIcon,
+  Plus,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
@@ -31,6 +33,7 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import {
+  deleteMemoriesByScope,
   deleteMemory,
   fetchEmbedderStats,
   fetchMemoryStatus,
@@ -39,6 +42,7 @@ import {
   mirrorCwd,
   reembedAll,
   searchMemories,
+  storeMemory,
   testEmbedder,
   updateMemory,
   type EmbedderStats,
@@ -126,6 +130,53 @@ export function MemoryInspector() {
       setSearchHits((cur) => cur?.filter((h) => h.memory.id !== id) ?? null)
     },
     onError: (err: Error) => toast.error('Delete failed', { description: err.message }),
+  })
+
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const bulkDel = useMutation({
+    mutationFn: () => deleteMemoriesByScope(scope, scopeKey.trim()),
+    onSuccess: (n) => {
+      toast.success(
+        `Deleted ${n} ${n === 1 ? 'memory' : 'memories'} from this scope`,
+      )
+      setBulkDeleteOpen(false)
+      setSearchHits(null)
+      qc.invalidateQueries({ queryKey: ['memory-list'] })
+      qc.invalidateQueries({ queryKey: ['memory-scope-keys'] })
+      qc.invalidateQueries({ queryKey: ['memory-embedder-stats'] })
+    },
+    onError: (err: Error) =>
+      toast.error('Bulk delete failed', { description: err.message }),
+  })
+
+  // Add memory dialog state. Pre-fills its scope/scope_key from the
+  // currently-browsed scope so the common case (operator browsing
+  // a project, wants to add a fact for it) is one click.
+  const [addMemOpen, setAddMemOpen] = useState(false)
+  const [addMemScope, setAddMemScope] = useState<Scope>(scope)
+  const [addMemScopeKey, setAddMemScopeKey] = useState<string>(scopeKey)
+  const [addMemText, setAddMemText] = useState<string>('')
+  const openAddMem = () => {
+    setAddMemScope(scope)
+    setAddMemScopeKey(scopeKey)
+    setAddMemText('')
+    setAddMemOpen(true)
+  }
+  const addMem = useMutation({
+    mutationFn: () =>
+      storeMemory(
+        addMemText.trim(),
+        addMemScope,
+        addMemScope === 'global' ? '' : addMemScopeKey.trim(),
+      ),
+    onSuccess: () => {
+      toast.success('Memory created')
+      setAddMemOpen(false)
+      qc.invalidateQueries({ queryKey: ['memory-list'] })
+      qc.invalidateQueries({ queryKey: ['memory-scope-keys'] })
+    },
+    onError: (err: Error) =>
+      toast.error('Create failed', { description: err.message }),
   })
 
   const edit = useMutation({
@@ -399,6 +450,55 @@ export function MemoryInspector() {
 
       {/* Records */}
       <div className="flex flex-col gap-1.5">
+        {/* Records header — always rendered when browseEnabled so the
+            "+ Add" affordance is reachable even from an empty scope.
+            "Delete all" is gated on records.length > 0 + not currently
+            displaying semantic-search hits (we don't want the operator
+            to nuke a project just because their last search returned
+            two hits — they'd lose every other memory under that key). */}
+        {browseEnabled && !browse.isLoading && (
+          <div className="flex items-center justify-between gap-2 px-1">
+            <span className="text-[11px] text-muted-foreground/80">
+              {records.length === 0
+                ? 'No memories yet'
+                : searchHits !== null
+                  ? `${records.length} match${records.length === 1 ? '' : 'es'}`
+                  : `${records.length} ${records.length === 1 ? 'memory' : 'memories'}`}
+              {scope === 'global' ? ' (global)' : ` in ${scope}: `}
+              {scope !== 'global' && (
+                <code className="text-[10.5px] font-mono">
+                  {truncMid(scopeKey.trim(), 48)}
+                </code>
+              )}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-[11px] gap-1"
+                onClick={openAddMem}
+                title="Manually create a memory in this scope"
+              >
+                <Plus className="size-3" />
+                Add memory
+              </Button>
+              {searchHits === null && records.length > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[11px] gap-1 border-destructive/40 text-destructive hover:bg-destructive/10"
+                  onClick={() => setBulkDeleteOpen(true)}
+                  title="Delete every memory under this scope/scope_key"
+                >
+                  <EraserIcon className="size-3" />
+                  Delete all
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
         {browse.isLoading && (
           <p className="text-[11px] text-muted-foreground/70 italic">Loading…</p>
         )}
@@ -437,8 +537,196 @@ export function MemoryInspector() {
           />
         ))}
       </div>
+
+      {/* Bulk delete confirm dialog — shown when the operator clicks
+          "Delete all" in the records header. Server enforces the
+          scope-vs-scope_key invariants but we restate them in the
+          copy so the operator knows what's about to disappear. */}
+      <Dialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete every memory in this scope?</DialogTitle>
+            <DialogDescription>
+              This is a single SQL operation — all memories under the
+              specified scope are removed atomically. Memories that
+              were ingested via the Claude mirror reappear on the next
+              <code className="font-mono mx-1">Sync .md</code>{' '}
+              run; everything else is gone for good.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 text-[12px] py-2">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground/80">Scope</span>
+              <Badge variant="outline" className="font-mono">
+                {scope}
+              </Badge>
+            </div>
+            {scope !== 'global' && (
+              <div className="flex items-start gap-2">
+                <span className="text-muted-foreground/80 shrink-0">
+                  Scope key
+                </span>
+                <code className="font-mono text-[11px] break-all">
+                  {scopeKey.trim()}
+                </code>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground/80">Currently visible</span>
+              <span>
+                {records.length}{' '}
+                {records.length === 1 ? 'memory item' : 'memory items'}
+              </span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setBulkDeleteOpen(false)}
+              disabled={bulkDel.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={() => bulkDel.mutate()}
+              disabled={bulkDel.isPending}
+            >
+              {bulkDel.isPending && (
+                <Loader2 className="size-3.5 animate-spin" />
+              )}
+              Delete all
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add memory dialog — manually inserts a fact via /memory/store.
+          Same shape mobile uses on its FAB → New memory sheet, with
+          a scope select that defaults to whichever scope the operator
+          is currently browsing so the common case is one click. */}
+      <Dialog open={addMemOpen} onOpenChange={setAddMemOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add memory</DialogTitle>
+            <DialogDescription>
+              Manually create a memory. Agents create these automatically
+              via the <code className="font-mono">memory_store</code> MCP
+              tool — this form is for cases where the operator wants to
+              seed a fact without going through an agent.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              if (!addMemText.trim()) return
+              if (addMemScope !== 'global' && !addMemScopeKey.trim()) return
+              addMem.mutate()
+            }}
+            className="flex flex-col gap-3"
+          >
+            <div className="flex items-end gap-2 flex-wrap">
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground/80 font-medium uppercase tracking-wider">
+                  Scope
+                </label>
+                <select
+                  value={addMemScope}
+                  onChange={(e) => setAddMemScope(e.target.value as Scope)}
+                  className="h-8 px-2 text-xs rounded border border-border bg-background"
+                  disabled={addMem.isPending}
+                >
+                  <option value="project">project</option>
+                  <option value="session">session</option>
+                  <option value="global">global</option>
+                </select>
+              </div>
+              <div className="flex-1 space-y-1 min-w-[220px]">
+                <label className="text-[10px] text-muted-foreground/80 font-medium uppercase tracking-wider">
+                  Scope key{' '}
+                  {addMemScope === 'global' ? (
+                    <span className="opacity-60">(ignored for global)</span>
+                  ) : (
+                    <span className="opacity-60">
+                      ({addMemScope === 'project' ? 'cwd of the project' : 'session id'})
+                    </span>
+                  )}
+                </label>
+                <Input
+                  value={addMemScope === 'global' ? '' : addMemScopeKey}
+                  onChange={(e) => setAddMemScopeKey(e.target.value)}
+                  placeholder={
+                    addMemScope === 'project'
+                      ? '/path/to/project (cwd)'
+                      : 'session id'
+                  }
+                  disabled={addMemScope === 'global' || addMem.isPending}
+                  className="h-8 font-mono text-xs"
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] text-muted-foreground/80 font-medium uppercase tracking-wider">
+                Text
+              </label>
+              <textarea
+                value={addMemText}
+                onChange={(e) => setAddMemText(e.target.value)}
+                placeholder="Plain prose. The embedder turns this into a vector at store time; agents will retrieve it via memory_search."
+                rows={6}
+                disabled={addMem.isPending}
+                className={cn(
+                  'w-full rounded-md border border-border bg-background',
+                  'px-3 py-2 text-xs leading-relaxed',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                )}
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setAddMemOpen(false)}
+                disabled={addMem.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="accent"
+                size="sm"
+                disabled={
+                  addMem.isPending ||
+                  !addMemText.trim() ||
+                  (addMemScope !== 'global' && !addMemScopeKey.trim())
+                }
+              >
+                {addMem.isPending && (
+                  <Loader2 className="size-3.5 animate-spin" />
+                )}
+                Create
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
+}
+
+// truncMid shortens a path-like string by replacing its middle with
+// "…". Used in the records header so a long cwd doesn't push the
+// "Delete all" button off the line.
+function truncMid(s: string, max: number): string {
+  if (s.length <= max) return s
+  const head = Math.ceil((max - 1) / 2)
+  const tail = Math.floor((max - 1) / 2)
+  return `${s.slice(0, head)}…${s.slice(s.length - tail)}`
 }
 
 function ScopeKeyPicker({
