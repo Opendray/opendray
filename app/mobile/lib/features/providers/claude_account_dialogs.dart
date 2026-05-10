@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'package:opendray/core/api/models.dart';
 
-// Form dialogs for Claude accounts. Add (name + optional displayName +
-// optional token), Rename (just display_name), Set token (paste OAuth
-// JSON or bare access_token).
+// Claude account form pages and dialogs. Multi-field forms (Add,
+// Set-token) are full-screen pages because the OAuth blob alone wants
+// 4-5 visible lines and a dialog can't give that above the keyboard
+// on a phone. Rename is a single-field flow → stays a dialog.
 
 class _CreateAccountResult {
   _CreateAccountResult({
@@ -17,15 +18,17 @@ class _CreateAccountResult {
   final String token;
 }
 
-class CreateClaudeAccountDialog extends StatefulWidget {
-  const CreateClaudeAccountDialog({super.key});
+class CreateClaudeAccountScreen extends StatefulWidget {
+  const CreateClaudeAccountScreen({super.key});
 
-  static Future<({String name, String displayName, String token})?> show(
+  static Future<({String name, String displayName, String token})?> push(
     BuildContext context,
   ) async {
-    final res = await showDialog<_CreateAccountResult>(
-      context: context,
-      builder: (_) => const CreateClaudeAccountDialog(),
+    final res = await Navigator.of(context).push<_CreateAccountResult>(
+      MaterialPageRoute<_CreateAccountResult>(
+        builder: (_) => const CreateClaudeAccountScreen(),
+        fullscreenDialog: true,
+      ),
     );
     if (res == null) return null;
     return (
@@ -36,12 +39,12 @@ class CreateClaudeAccountDialog extends StatefulWidget {
   }
 
   @override
-  State<CreateClaudeAccountDialog> createState() =>
-      _CreateClaudeAccountDialogState();
+  State<CreateClaudeAccountScreen> createState() =>
+      _CreateClaudeAccountScreenState();
 }
 
-class _CreateClaudeAccountDialogState
-    extends State<CreateClaudeAccountDialog> {
+class _CreateClaudeAccountScreenState
+    extends State<CreateClaudeAccountScreen> {
   final _name = TextEditingController();
   final _display = TextEditingController();
   final _token = TextEditingController();
@@ -72,84 +75,79 @@ class _CreateClaudeAccountDialogState
   @override
   Widget build(BuildContext context) {
     final muted = Theme.of(context).textTheme.bodySmall;
-    return AlertDialog(
-      title: const Text('Add Claude account'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: _name,
-              autofocus: true,
-              autocorrect: false,
-              decoration: const InputDecoration(
-                labelText: 'Name (slug)',
-                hintText: 'work, personal, …',
-                helperText: 'Lowercase id used in spawn picker.',
-                isDense: true,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _display,
-              decoration: const InputDecoration(
-                labelText: 'Display name (optional)',
-                hintText: 'Work account',
-                isDense: true,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _token,
-              maxLines: 4,
-              autocorrect: false,
-              obscureText: _hideToken,
-              decoration: InputDecoration(
-                labelText: 'OAuth token (optional)',
-                hintText:
-                    '{"access_token":"…","refresh_token":"…"} or bare token',
-                helperText: 'Leave blank to add the row first and set the '
-                    'token later.',
-                helperMaxLines: 2,
-                isDense: true,
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _hideToken
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                    size: 18,
-                  ),
-                  onPressed: () => setState(() => _hideToken = !_hideToken),
-                ),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Tip: Claude exports the OAuth blob as a single JSON; '
-              'paste the whole object.',
-              style: muted,
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 6),
-              Text(
-                _error!,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ],
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Add Claude account'),
+        actions: [
+          TextButton(onPressed: _submit, child: const Text('Add')),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(onPressed: _submit, child: const Text('Add')),
-      ],
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        children: [
+          TextField(
+            controller: _name,
+            autofocus: true,
+            autocorrect: false,
+            decoration: const InputDecoration(
+              labelText: 'Name (slug)',
+              hintText: 'work, personal, …',
+              helperText: 'Lowercase id used in spawn picker.',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _display,
+            decoration: const InputDecoration(
+              labelText: 'Display name (optional)',
+              hintText: 'Work account',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _token,
+            maxLines: 5,
+            autocorrect: false,
+            obscureText: _hideToken,
+            decoration: InputDecoration(
+              labelText: 'OAuth token (optional)',
+              hintText:
+                  '{"access_token":"…","refresh_token":"…"} or bare token',
+              helperText: 'Leave blank to add the row first and set the '
+                  'token later.',
+              helperMaxLines: 2,
+              border: const OutlineInputBorder(),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _hideToken
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  size: 18,
+                ),
+                onPressed: () => setState(() => _hideToken = !_hideToken),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tip: Claude exports the OAuth blob as a single JSON; '
+            'paste the whole object.',
+            style: muted,
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _error!,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -219,25 +217,27 @@ class _RenameClaudeAccountDialogState
   }
 }
 
-class SetClaudeTokenDialog extends StatefulWidget {
-  const SetClaudeTokenDialog({required this.account, super.key});
+class SetClaudeTokenScreen extends StatefulWidget {
+  const SetClaudeTokenScreen({required this.account, super.key});
   final ClaudeAccountSummary account;
 
-  static Future<String?> show(
+  static Future<String?> push(
     BuildContext context,
     ClaudeAccountSummary account,
   ) {
-    return showDialog<String>(
-      context: context,
-      builder: (_) => SetClaudeTokenDialog(account: account),
+    return Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(
+        builder: (_) => SetClaudeTokenScreen(account: account),
+        fullscreenDialog: true,
+      ),
     );
   }
 
   @override
-  State<SetClaudeTokenDialog> createState() => _SetClaudeTokenDialogState();
+  State<SetClaudeTokenScreen> createState() => _SetClaudeTokenScreenState();
 }
 
-class _SetClaudeTokenDialogState extends State<SetClaudeTokenDialog> {
+class _SetClaudeTokenScreenState extends State<SetClaudeTokenScreen> {
   final _ctrl = TextEditingController();
   bool _hide = true;
   String? _error;
@@ -259,30 +259,43 @@ class _SetClaudeTokenDialogState extends State<SetClaudeTokenDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        widget.account.tokenFilled
-            ? 'Replace token for ${widget.account.name}'
-            : 'Set token for ${widget.account.name}',
+    final muted = Theme.of(context).textTheme.bodySmall;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          widget.account.tokenFilled
+              ? 'Replace token'
+              : 'Set token',
+        ),
+        actions: [
+          TextButton(onPressed: _submit, child: const Text('Save')),
+        ],
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
+          Text(
+            widget.account.name,
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            widget.account.tokenFilled
+                ? 'Replaces the existing token. The previous one is wiped.'
+                : 'Pastes a new OAuth blob into the empty account row.',
+            style: muted,
+          ),
+          const SizedBox(height: 16),
           TextField(
             controller: _ctrl,
             autofocus: true,
             autocorrect: false,
             obscureText: _hide,
-            maxLines: 5,
+            maxLines: 8,
             decoration: InputDecoration(
               labelText: 'OAuth blob or access_token',
               hintText: '{"access_token":"…","refresh_token":"…"}',
-              helperText: widget.account.tokenFilled
-                  ? 'Replaces the existing token. The previous one is wiped.'
-                  : null,
-              helperMaxLines: 2,
-              isDense: true,
+              border: const OutlineInputBorder(),
               suffixIcon: IconButton(
                 icon: Icon(
                   _hide
@@ -295,7 +308,7 @@ class _SetClaudeTokenDialogState extends State<SetClaudeTokenDialog> {
             ),
           ),
           if (_error != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               _error!,
               style: TextStyle(
@@ -306,13 +319,6 @@ class _SetClaudeTokenDialogState extends State<SetClaudeTokenDialog> {
           ],
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(onPressed: _submit, child: const Text('Save')),
-      ],
     );
   }
 }

@@ -3,35 +3,35 @@ import 'package:flutter/services.dart';
 
 import 'package:opendray/core/api/integrations_api.dart';
 
-// Dialogs/forms shared by IntegrationsScreen (register via FAB) and
-// IntegrationDetailScreen (edit via overflow menu, reveal-once after
-// rotate-key). Kept in one place because the field validation rules
-// for base_url / route_prefix / scopes are identical across register
-// and edit, and the reveal dialog is the same UI in both flows.
+// Form pages and small read-only dialogs shared by the Integrations
+// screens. Multi-field forms (register / edit) are full-screen pages
+// because AlertDialog leaves only half the screen above the keyboard
+// on phones, which crushes a five-input form. Read-only or
+// single-confirmation flows (RevealApiKey) stay as dialogs.
 
-// _RegisterDialog asks for the five fields the server requires (name,
-// base_url, route_prefix) plus the two optional ones (scopes, version).
-// Returns the form values; the caller invokes the API and handles the
-// reveal-once flow.
-class RegisterIntegrationDialog extends StatefulWidget {
-  const RegisterIntegrationDialog({super.key});
+// RegisterIntegrationScreen asks for the five fields the server
+// requires (name, base_url, route_prefix) plus the two optional ones
+// (scopes, version). Returns the form values; the caller invokes the
+// API and handles the reveal-once flow.
+class RegisterIntegrationScreen extends StatefulWidget {
+  const RegisterIntegrationScreen({super.key});
 
-  static Future<RegisterIntegrationFormResult?> show(
-    BuildContext context,
-  ) {
-    return showDialog<RegisterIntegrationFormResult>(
-      context: context,
-      builder: (_) => const RegisterIntegrationDialog(),
+  static Future<RegisterIntegrationFormResult?> push(BuildContext context) {
+    return Navigator.of(context).push<RegisterIntegrationFormResult>(
+      MaterialPageRoute<RegisterIntegrationFormResult>(
+        builder: (_) => const RegisterIntegrationScreen(),
+        fullscreenDialog: true,
+      ),
     );
   }
 
   @override
-  State<RegisterIntegrationDialog> createState() =>
-      _RegisterIntegrationDialogState();
+  State<RegisterIntegrationScreen> createState() =>
+      _RegisterIntegrationScreenState();
 }
 
-class _RegisterIntegrationDialogState
-    extends State<RegisterIntegrationDialog> {
+class _RegisterIntegrationScreenState
+    extends State<RegisterIntegrationScreen> {
   final _name = TextEditingController();
   final _baseUrl = TextEditingController();
   final _prefix = TextEditingController();
@@ -54,8 +54,9 @@ class _RegisterIntegrationDialogState
     final baseUrl = _baseUrl.text.trim();
     final prefix = _prefix.text.trim();
     if (name.isEmpty || baseUrl.isEmpty || prefix.isEmpty) {
-      setState(() =>
-          _error = 'Name, base URL, and route prefix are required.');
+      setState(
+        () => _error = 'Name, base URL, and route prefix are required.',
+      );
       return;
     }
     final scopes = _scopes.text
@@ -76,62 +77,60 @@ class _RegisterIntegrationDialogState
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Register integration'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _Field(
-              controller: _name,
-              label: 'Name',
-              hint: 'My Bot',
-              autofocus: true,
-            ),
-            _Field(
-              controller: _baseUrl,
-              label: 'Base URL',
-              hint: 'https://api.example.com',
-              keyboardType: TextInputType.url,
-            ),
-            _Field(
-              controller: _prefix,
-              label: 'Route prefix',
-              hint: 'mybot',
-              helper: 'Reachable as /api/v1/<prefix>/...',
-            ),
-            _Field(
-              controller: _scopes,
-              label: 'Scopes (optional)',
-              hint: 'session:read, session:events',
-              helper: 'Comma-separated. Empty = server defaults.',
-            ),
-            _Field(
-              controller: _version,
-              label: 'Version (optional)',
-              hint: '1.0.0',
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                _error!,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ],
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Register integration'),
+        actions: [
+          TextButton(
+            onPressed: _submit,
+            child: const Text('Register'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(onPressed: _submit, child: const Text('Register')),
-      ],
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        children: [
+          _Field(
+            controller: _name,
+            label: 'Name',
+            hint: 'My Bot',
+            autofocus: true,
+          ),
+          _Field(
+            controller: _baseUrl,
+            label: 'Base URL',
+            hint: 'https://api.example.com',
+            keyboardType: TextInputType.url,
+          ),
+          _Field(
+            controller: _prefix,
+            label: 'Route prefix',
+            hint: 'mybot',
+            helper: 'Reachable as /api/v1/<prefix>/...',
+          ),
+          _Field(
+            controller: _scopes,
+            label: 'Scopes (optional)',
+            hint: 'session:read, session:events',
+            helper: 'Comma-separated. Empty = server defaults.',
+          ),
+          _Field(
+            controller: _version,
+            label: 'Version (optional)',
+            hint: '1.0.0',
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _error!,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -151,28 +150,30 @@ class RegisterIntegrationFormResult {
   final String version;
 }
 
-// EditIntegrationDialog patches base_url / scopes / version / enabled.
-// Pre-fills from the existing record and only PATCHes the fields the
+// EditIntegrationScreen patches base_url / scopes / version / enabled.
+// Pre-fills from the existing record and only reports the fields the
 // operator actually changed (the API tolerates omitted fields).
-class EditIntegrationDialog extends StatefulWidget {
-  const EditIntegrationDialog({required this.current, super.key});
+class EditIntegrationScreen extends StatefulWidget {
+  const EditIntegrationScreen({required this.current, super.key});
   final Integration current;
 
-  static Future<EditIntegrationFormResult?> show(
+  static Future<EditIntegrationFormResult?> push(
     BuildContext context,
     Integration current,
   ) {
-    return showDialog<EditIntegrationFormResult>(
-      context: context,
-      builder: (_) => EditIntegrationDialog(current: current),
+    return Navigator.of(context).push<EditIntegrationFormResult>(
+      MaterialPageRoute<EditIntegrationFormResult>(
+        builder: (_) => EditIntegrationScreen(current: current),
+        fullscreenDialog: true,
+      ),
     );
   }
 
   @override
-  State<EditIntegrationDialog> createState() => _EditIntegrationDialogState();
+  State<EditIntegrationScreen> createState() => _EditIntegrationScreenState();
 }
 
-class _EditIntegrationDialogState extends State<EditIntegrationDialog> {
+class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
   late final TextEditingController _baseUrl;
   late final TextEditingController _scopes;
   late final TextEditingController _version;
@@ -223,52 +224,50 @@ class _EditIntegrationDialogState extends State<EditIntegrationDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('Edit ${widget.current.name}'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _Field(
-              controller: _baseUrl,
-              label: 'Base URL',
-              keyboardType: TextInputType.url,
-            ),
-            _Field(
-              controller: _scopes,
-              label: 'Scopes',
-              helper: 'Comma-separated.',
-            ),
-            _Field(
-              controller: _version,
-              label: 'Version',
-            ),
-            const SizedBox(height: 8),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Enabled'),
-              value: _enabled,
-              onChanged: (v) => setState(() => _enabled = v),
-            ),
-            if (_error != null)
-              Text(
-                _error!,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                  fontSize: 12,
-                ),
-              ),
-          ],
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Edit ${widget.current.name}'),
+        actions: [
+          TextButton(
+            onPressed: _submit,
+            child: const Text('Save'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(onPressed: _submit, child: const Text('Save')),
-      ],
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        children: [
+          _Field(
+            controller: _baseUrl,
+            label: 'Base URL',
+            keyboardType: TextInputType.url,
+          ),
+          _Field(
+            controller: _scopes,
+            label: 'Scopes',
+            helper: 'Comma-separated.',
+          ),
+          _Field(
+            controller: _version,
+            label: 'Version',
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Enabled'),
+            value: _enabled,
+            onChanged: (v) => setState(() => _enabled = v),
+          ),
+          if (_error != null)
+            Text(
+              _error!,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+                fontSize: 12,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -291,8 +290,8 @@ class EditIntegrationFormResult {
 
 // RevealApiKeyDialog displays a freshly-minted API key once. The
 // "I've saved it" button is grey until copy is tapped — this is the
-// only chance to capture the plaintext. Used by both the register
-// and rotate-key flows.
+// only chance to capture the plaintext. Stays a dialog because it's
+// short-form, read-only, and the user is making a single decision.
 class RevealApiKeyDialog extends StatefulWidget {
   const RevealApiKeyDialog({
     required this.apiKey,
@@ -424,7 +423,7 @@ class _Field extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: controller,
         autofocus: autofocus,
@@ -434,7 +433,8 @@ class _Field extends StatelessWidget {
           labelText: label,
           hintText: hint,
           helperText: helper,
-          isDense: true,
+          helperMaxLines: 2,
+          border: const OutlineInputBorder(),
         ),
       ),
     );

@@ -101,7 +101,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
   }
 
   Future<void> _addAccount() async {
-    final form = await CreateClaudeAccountDialog.show(context);
+    final form = await CreateClaudeAccountScreen.push(context);
     if (form == null || !mounted) return;
     await _runToggle(
       key: 'new-account',
@@ -190,7 +190,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
               .update(a.id, displayName: next),
         );
       case _AccountAction.setToken:
-        final tok = await SetClaudeTokenDialog.show(context, a);
+        final tok = await SetClaudeTokenScreen.push(context, a);
         if (tok == null || !mounted) return;
         await _runToggle(
           key: 'a:${a.id}',

@@ -3,17 +3,21 @@ import 'package:flutter/services.dart';
 
 import 'package:opendray/features/channels/channel_kinds.dart';
 
-// ChannelFormDialog renders a kind-driven form for create or edit.
+// ChannelFormScreen renders a kind-driven form for create or edit on
+// a full Scaffold so multi-field configs (slack, feishu, wechat) get
+// the whole screen above the keyboard rather than the cramped middle
+// strip a dialog leaves them with on a phone.
+//
 // Field types map to TextField (text, password) or multi-line
 // TextField (textarea). Required fields are validated locally before
 // submit; optional fields with empty values are dropped from the
 // returned config so server defaults apply.
 //
-// On create the dialog returns a Map<String, dynamic> for the new
+// On create the screen returns a Map<String, dynamic> for the new
 // channel's config. On edit the same shape is returned, suitable to
 // PATCH directly (the server replaces the config wholesale).
-class ChannelFormDialog extends StatefulWidget {
-  const ChannelFormDialog({
+class ChannelFormScreen extends StatefulWidget {
+  const ChannelFormScreen({
     required this.kind,
     this.initial,
     super.key,
@@ -23,22 +27,24 @@ class ChannelFormDialog extends StatefulWidget {
   // Pre-fill values, e.g. existing channel config when editing.
   final Map<String, dynamic>? initial;
 
-  static Future<Map<String, dynamic>?> show({
+  static Future<Map<String, dynamic>?> push({
     required BuildContext context,
     required ChannelKind kind,
     Map<String, dynamic>? initial,
   }) {
-    return showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (_) => ChannelFormDialog(kind: kind, initial: initial),
+    return Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute<Map<String, dynamic>>(
+        builder: (_) => ChannelFormScreen(kind: kind, initial: initial),
+        fullscreenDialog: true,
+      ),
     );
   }
 
   @override
-  State<ChannelFormDialog> createState() => _ChannelFormDialogState();
+  State<ChannelFormScreen> createState() => _ChannelFormScreenState();
 }
 
-class _ChannelFormDialogState extends State<ChannelFormDialog> {
+class _ChannelFormScreenState extends State<ChannelFormScreen> {
   final _ctrls = <String, TextEditingController>{};
   String? _error;
 
@@ -79,81 +85,76 @@ class _ChannelFormDialogState extends State<ChannelFormDialog> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.initial != null;
-    return AlertDialog(
-      title: Text(isEdit
-          ? 'Edit ${widget.kind.label}'
-          : 'New ${widget.kind.label} channel'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(
-                widget.kind.description,
-                style: Theme.of(context).textTheme.bodySmall,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(isEdit
+            ? 'Edit ${widget.kind.label}'
+            : 'New ${widget.kind.label} channel'),
+        actions: [
+          TextButton(
+            onPressed: _submit,
+            child: Text(isEdit ? 'Save' : 'Create'),
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              widget.kind.description,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          for (final f in widget.kind.fields)
+            _ChannelFieldEditor(
+              field: f,
+              controller: _ctrls[f.name]!,
+            ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _error!,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+                fontSize: 12,
               ),
             ),
-            for (final f in widget.kind.fields)
-              _ChannelFieldEditor(
-                field: f,
-                controller: _ctrls[f.name]!,
-              ),
-            if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                _error!,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-            if (widget.kind.webhookBased && !isEdit) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .tertiary
-                      .withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.tertiary,
-                    ),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'After creation, the channel card surfaces the '
-                        'webhook URL — paste it into the platform admin '
-                        'console to finish setup.',
-                        style: TextStyle(fontSize: 11),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ],
-        ),
+          if (widget.kind.webhookBased && !isEdit) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .tertiary
+                    .withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.tertiary,
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'After creation, the channel card will surface a '
+                      'webhook URL — paste it into the platform admin '
+                      'console to finish setup.',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _submit,
-          child: Text(isEdit ? 'Save' : 'Create'),
-        ),
-      ],
     );
   }
 }
@@ -180,7 +181,7 @@ class _ChannelFieldEditorState extends State<_ChannelFieldEditor> {
     final isPassword = f.type == ChannelFieldType.password;
     final isMulti = f.type == ChannelFieldType.textarea;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: widget.controller,
         autocorrect: false,
@@ -192,7 +193,7 @@ class _ChannelFieldEditorState extends State<_ChannelFieldEditor> {
           hintText: f.placeholder,
           helperText: f.hint,
           helperMaxLines: 3,
-          isDense: true,
+          border: const OutlineInputBorder(),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(

@@ -139,7 +139,7 @@ class _IntegrationDetailScreenState
   Future<void> _onEdit() async {
     final i = _integration;
     if (i == null) return;
-    final patch = await EditIntegrationDialog.show(context, i);
+    final patch = await EditIntegrationScreen.push(context, i);
     if (patch == null || patch.isEmpty || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     try {

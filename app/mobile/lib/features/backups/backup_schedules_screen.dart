@@ -91,9 +91,11 @@ class _BackupSchedulesScreenState
       );
       return;
     }
-    final form = await showDialog<_ScheduleFormResult>(
-      context: context,
-      builder: (_) => _ScheduleFormDialog(targets: targets),
+    final form = await Navigator.of(context).push<_ScheduleFormResult>(
+      MaterialPageRoute<_ScheduleFormResult>(
+        builder: (_) => _ScheduleFormScreen(targets: targets),
+        fullscreenDialog: true,
+      ),
     );
     if (form == null || !mounted) return;
     await _runOp(
@@ -113,11 +115,13 @@ class _BackupSchedulesScreenState
   }
 
   Future<void> _onEdit(BackupSchedule sc, List<BackupTarget> targets) async {
-    final form = await showDialog<_ScheduleFormResult>(
-      context: context,
-      builder: (_) => _ScheduleFormDialog(
-        targets: targets,
-        initial: sc,
+    final form = await Navigator.of(context).push<_ScheduleFormResult>(
+      MaterialPageRoute<_ScheduleFormResult>(
+        builder: (_) => _ScheduleFormScreen(
+          targets: targets,
+          initial: sc,
+        ),
+        fullscreenDialog: true,
       ),
     );
     if (form == null || !mounted) return;
@@ -354,16 +358,16 @@ class _ScheduleFormResult {
   final bool enabled;
 }
 
-class _ScheduleFormDialog extends StatefulWidget {
-  const _ScheduleFormDialog({required this.targets, this.initial});
+class _ScheduleFormScreen extends StatefulWidget {
+  const _ScheduleFormScreen({required this.targets, this.initial});
   final List<BackupTarget> targets;
   final BackupSchedule? initial;
 
   @override
-  State<_ScheduleFormDialog> createState() => _ScheduleFormDialogState();
+  State<_ScheduleFormScreen> createState() => _ScheduleFormScreenState();
 }
 
-class _ScheduleFormDialogState extends State<_ScheduleFormDialog> {
+class _ScheduleFormScreenState extends State<_ScheduleFormScreen> {
   static const _intervals = [
     (3600, '1 hour'),
     (6 * 3600, '6 hours'),
@@ -411,108 +415,101 @@ class _ScheduleFormDialogState extends State<_ScheduleFormDialog> {
   Widget build(BuildContext context) {
     final isEdit = widget.initial != null;
     final muted = Theme.of(context).textTheme.bodySmall;
-    return AlertDialog(
-      title: Text(isEdit ? 'Edit schedule' : 'New schedule'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Target', style: muted),
-            const SizedBox(height: 4),
-            DropdownButtonFormField<String>(
-              initialValue: _targetId,
-              isDense: true,
-              items: [
-                for (final t in widget.targets)
-                  DropdownMenuItem(
-                    value: t.id,
-                    child: Text('${t.id} (${t.kind})'),
-                  ),
-              ],
-              onChanged: isEdit
-                  ? null // Server doesn't allow changing target on existing schedule
-                  : (v) => setState(() => _targetId = v ?? _targetId),
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              ),
-            ),
-            if (isEdit)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  'Target is fixed once created.',
-                  style: muted,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(isEdit ? 'Edit schedule' : 'New schedule'),
+        actions: [
+          TextButton(
+            onPressed: _submit,
+            child: Text(isEdit ? 'Save' : 'Create'),
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        children: [
+          Text('Target', style: muted),
+          const SizedBox(height: 6),
+          DropdownButtonFormField<String>(
+            initialValue: _targetId,
+            items: [
+              for (final t in widget.targets)
+                DropdownMenuItem(
+                  value: t.id,
+                  child: Text('${t.id} (${t.kind})'),
                 ),
-              ),
-            const SizedBox(height: 16),
-            Text('Interval', style: muted),
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: [
-                for (final (sec, label) in _intervals)
-                  ChoiceChip(
-                    label: Text(label),
-                    selected: _intervalSec == sec,
-                    onSelected: (_) => setState(() => _intervalSec = sec),
-                    visualDensity: VisualDensity.compact,
-                  ),
-              ],
+            ],
+            onChanged: isEdit
+                ? null // Server doesn't allow changing target on existing schedule
+                : (v) => setState(() => _targetId = v ?? _targetId),
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
             ),
-            const SizedBox(height: 16),
-            Text('Retention (keep N most recent)', style: muted),
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: [
-                for (final n in _retentions)
-                  ChoiceChip(
-                    label: Text('$n'),
-                    selected: _retention == n,
-                    onSelected: (_) => setState(() => _retention = n),
-                    visualDensity: VisualDensity.compact,
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Enabled'),
-              subtitle: Text(
-                _enabled
-                    ? 'Scheduler will run this on cadence.'
-                    : 'Paused — no automatic runs until re-enabled.',
+          ),
+          if (isEdit)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                'Target is fixed once created.',
                 style: muted,
               ),
-              value: _enabled,
-              onChanged: (v) => setState(() => _enabled = v),
             ),
-            if (_error != null)
-              Text(
+          const SizedBox(height: 24),
+          Text('Interval', style: muted),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              for (final (sec, label) in _intervals)
+                ChoiceChip(
+                  label: Text(label),
+                  selected: _intervalSec == sec,
+                  onSelected: (_) => setState(() => _intervalSec = sec),
+                ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text('Retention (keep N most recent)', style: muted),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              for (final n in _retentions)
+                ChoiceChip(
+                  label: Text('$n'),
+                  selected: _retention == n,
+                  onSelected: (_) => setState(() => _retention = n),
+                ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Enabled'),
+            subtitle: Text(
+              _enabled
+                  ? 'Scheduler will run this on cadence.'
+                  : 'Paused — no automatic runs until re-enabled.',
+              style: muted,
+            ),
+            value: _enabled,
+            onChanged: (v) => setState(() => _enabled = v),
+          ),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
                 _error!,
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.error,
                   fontSize: 12,
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _submit,
-          child: Text(isEdit ? 'Save' : 'Create'),
-        ),
-      ],
     );
   }
 }

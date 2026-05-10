@@ -250,7 +250,7 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
   Future<void> _onCreate() async {
     final kind = await ChannelKindPickerSheet.show(context);
     if (kind == null || !mounted) return;
-    final cfg = await ChannelFormDialog.show(context: context, kind: kind);
+    final cfg = await ChannelFormScreen.push(context: context, kind: kind);
     if (cfg == null || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -295,7 +295,7 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
     // Pull non-notify_* keys out so the kind-specific form only shows
     // its own fields. Notify prefs and the muted flag round-trip
     // untouched via the merge in updateConfig.
-    final cfg = await ChannelFormDialog.show(
+    final cfg = await ChannelFormScreen.push(
       context: context,
       kind: kind,
       initial: ch.config,
@@ -327,9 +327,11 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
   }
 
   Future<void> _editNotifyPrefs(ChannelView ch) async {
-    final patch = await showDialog<Map<String, Object?>>(
-      context: context,
-      builder: (_) => _NotifyPrefsDialog(channel: ch),
+    final patch = await Navigator.of(context).push<Map<String, Object?>>(
+      MaterialPageRoute<Map<String, Object?>>(
+        builder: (_) => _NotifyPrefsScreen(channel: ch),
+        fullscreenDialog: true,
+      ),
     );
     if (patch == null || patch.isEmpty || !mounted) return;
     await _runAction(
@@ -627,21 +629,21 @@ class _Badge extends StatelessWidget {
   }
 }
 
-// _NotifyPrefsDialog edits the kind-agnostic notification keys that
+// _NotifyPrefsScreen edits the kind-agnostic notification keys that
 // every channel supports: which session topics to fire on, which
 // repeat policy, snippet inclusion + cap. Returns a sparse patch
 // map suitable for ChannelsApi.updateConfig — keys the operator
 // reverted to defaults are emitted with the removeChannelConfigKey
 // sentinel so the merge clears them.
-class _NotifyPrefsDialog extends StatefulWidget {
-  const _NotifyPrefsDialog({required this.channel});
+class _NotifyPrefsScreen extends StatefulWidget {
+  const _NotifyPrefsScreen({required this.channel});
   final ChannelView channel;
 
   @override
-  State<_NotifyPrefsDialog> createState() => _NotifyPrefsDialogState();
+  State<_NotifyPrefsScreen> createState() => _NotifyPrefsScreenState();
 }
 
-class _NotifyPrefsDialogState extends State<_NotifyPrefsDialog> {
+class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
   static const _allTopics = ['session.started', 'session.idle', 'session.ended'];
   static const _modes = [
     ('once', 'Once per session', 'Fire once when idle, stay silent until reply or end.'),
@@ -720,125 +722,117 @@ class _NotifyPrefsDialogState extends State<_NotifyPrefsDialog> {
   @override
   Widget build(BuildContext context) {
     final muted = Theme.of(context).textTheme.bodySmall;
-    return AlertDialog(
-      title: const Text('Notification preferences'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Notify on', style: muted),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Notification preferences'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(_buildPatch()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        children: [
+          Text('Notify on', style: muted),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              for (final t in _allTopics)
+                FilterChip(
+                  label: Text(t,
+                      style: const TextStyle(
+                          fontFamily: 'monospace', fontSize: 12)),
+                  selected: _topics.contains(t),
+                  onSelected: (v) => setState(() {
+                    if (v) {
+                      _topics.add(t);
+                    } else {
+                      _topics.remove(t);
+                    }
+                  }),
+                ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              _topics.length == _allTopics.length
+                  ? 'All session events.'
+                  : _topics.isEmpty
+                      ? 'No events selected — outbound notifications muted.'
+                      : '${_topics.length} of ${_allTopics.length} selected.',
+              style: muted,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text('Repeat policy', style: muted),
+          const SizedBox(height: 6),
+          RadioGroup<String>(
+            groupValue: _mode,
+            onChanged: (v) => setState(() => _mode = v ?? _mode),
+            child: Column(
+              children: [
+                for (final (val, label, hint) in _modes)
+                  RadioListTile<String>(
+                    value: val,
+                    title: Text(label),
+                    subtitle: Text(hint, style: muted),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+              ],
+            ),
+          ),
+          if (_mode == 'cooldown') ...[
+            const SizedBox(height: 8),
+            Text('Cooldown window', style: muted),
             const SizedBox(height: 6),
             Wrap(
               spacing: 6,
               runSpacing: 4,
               children: [
-                for (final t in _allTopics)
-                  FilterChip(
-                    label: Text(t,
-                        style: const TextStyle(
-                            fontFamily: 'monospace', fontSize: 11)),
-                    selected: _topics.contains(t),
-                    onSelected: (v) => setState(() {
-                      if (v) {
-                        _topics.add(t);
-                      } else {
-                        _topics.remove(t);
-                      }
-                    }),
-                    visualDensity: VisualDensity.compact,
+                for (final (sec, label) in _cooldownPresets)
+                  ChoiceChip(
+                    label: Text(label),
+                    selected: _cooldownSec == sec,
+                    onSelected: (_) => setState(() => _cooldownSec = sec),
                   ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                _topics.length == _allTopics.length
-                    ? 'All session events.'
-                    : _topics.isEmpty
-                        ? 'No events selected — outbound notifications muted.'
-                        : '${_topics.length} of ${_allTopics.length} selected.',
-                style: muted,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text('Repeat policy', style: muted),
-            const SizedBox(height: 6),
-            RadioGroup<String>(
-              groupValue: _mode,
-              onChanged: (v) => setState(() => _mode = v ?? _mode),
-              child: Column(
-                children: [
-                  for (final (val, label, hint) in _modes)
-                    RadioListTile<String>(
-                      value: val,
-                      title: Text(label),
-                      subtitle: Text(hint, style: muted),
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                ],
-              ),
-            ),
-            if (_mode == 'cooldown') ...[
-              const SizedBox(height: 4),
-              Text('Cooldown window', style: muted),
-              const SizedBox(height: 4),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: [
-                  for (final (sec, label) in _cooldownPresets)
-                    ChoiceChip(
-                      label: Text(label),
-                      selected: _cooldownSec == sec,
-                      onSelected: (_) => setState(() => _cooldownSec = sec),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 16),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Include terminal snippet'),
-              subtitle: Text(
-                'Embeds the recent terminal tail in each notification.',
-                style: muted,
-              ),
-              value: _includeSnippet,
-              onChanged: (v) => setState(() => _includeSnippet = v),
-            ),
-            if (_includeSnippet) ...[
-              Text('Snippet length cap', style: muted),
-              const SizedBox(height: 4),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: [
-                  for (final n in const [0, 200, 500, 1000, 2000])
-                    ChoiceChip(
-                      label: Text(n == 0 ? 'no cap' : '$n chars'),
-                      selected: _snippetCap == n,
-                      onSelected: (_) => setState(() => _snippetCap = n),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                ],
-              ),
-            ],
           ],
-        ),
+          const SizedBox(height: 24),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Include terminal snippet'),
+            subtitle: Text(
+              'Embeds the recent terminal tail in each notification.',
+              style: muted,
+            ),
+            value: _includeSnippet,
+            onChanged: (v) => setState(() => _includeSnippet = v),
+          ),
+          if (_includeSnippet) ...[
+            const SizedBox(height: 8),
+            Text('Snippet length cap', style: muted),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (final n in const [0, 200, 500, 1000, 2000])
+                  ChoiceChip(
+                    label: Text(n == 0 ? 'no cap' : '$n chars'),
+                    selected: _snippetCap == n,
+                    onSelected: (_) => setState(() => _snippetCap = n),
+                  ),
+              ],
+            ),
+          ],
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(_buildPatch()),
-          child: const Text('Save'),
-        ),
-      ],
     );
   }
 }

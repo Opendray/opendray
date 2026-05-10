@@ -58,7 +58,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
   }
 
   Future<void> _onRegister() async {
-    final form = await RegisterIntegrationDialog.show(context);
+    final form = await RegisterIntegrationScreen.push(context);
     if (form == null || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     try {
