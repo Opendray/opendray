@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Check,
   CircleDot,
   Download,
   HelpCircle,
@@ -23,7 +22,6 @@ import {
   deleteClaudeAccount,
   importLocalClaudeAccounts,
   listClaudeAccounts,
-  setClaudeAccountToken,
   toggleClaudeAccount,
 } from '@/lib/claudeAccounts'
 
@@ -42,23 +40,18 @@ export function ClaudeAccountsPanel() {
   const [showAdd, setShowAdd] = useState(false)
   const [name, setName] = useState('')
   const [displayName, setDisplayName] = useState('')
-  const [token, setToken] = useState('')
-  const [tokenAccountId, setTokenAccountId] = useState<string | null>(null)
-  const [pendingToken, setPendingToken] = useState('')
 
   const add = useMutation({
     mutationFn: () =>
       createClaudeAccount({
         name: name.trim(),
         display_name: displayName.trim() || undefined,
-        token: token.trim() || undefined,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['claude-accounts'] })
-      toast.success('Account added')
+      toast.success('Account row created — populate the credentials with `claude login` on the gateway host.')
       setName('')
       setDisplayName('')
-      setToken('')
       setShowAdd(false)
     },
     onError: (e: Error) => toast.error('Add failed', { description: e.message }),
@@ -94,19 +87,6 @@ export function ClaudeAccountsPanel() {
     },
     onError: (e: Error) =>
       toast.error('Remove failed', { description: e.message }),
-  })
-
-  const setToken_ = useMutation({
-    mutationFn: ({ id, t }: { id: string; t: string }) =>
-      setClaudeAccountToken(id, t),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['claude-accounts'] })
-      toast.success('Token saved')
-      setTokenAccountId(null)
-      setPendingToken('')
-    },
-    onError: (e: Error) =>
-      toast.error('Save token failed', { description: e.message }),
   })
 
   const submitAdd = (e: FormEvent) => {
@@ -228,17 +208,6 @@ export function ClaudeAccountsPanel() {
               />
               <Button
                 variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setTokenAccountId(tokenAccountId === a.id ? null : a.id)
-                  setPendingToken('')
-                }}
-                className="text-[11px]"
-              >
-                {a.token_filled ? 'Replace token' : 'Set token'}
-              </Button>
-              <Button
-                variant="ghost"
                 size="icon"
                 className="size-7 text-muted-foreground hover:text-destructive"
                 onClick={() => {
@@ -252,41 +221,6 @@ export function ClaudeAccountsPanel() {
                 <Trash2 className="size-3.5" />
               </Button>
             </div>
-            {tokenAccountId === a.id && (
-              <div className="mt-2.5 pt-2.5 border-t border-border/60 flex items-center gap-1.5">
-                <Input
-                  autoFocus
-                  type="password"
-                  value={pendingToken}
-                  onChange={(e) => setPendingToken(e.target.value)}
-                  placeholder="paste OAuth token (sk-ant-…)"
-                  className="flex-1 text-[12px]"
-                />
-                <Button
-                  variant="accent"
-                  size="sm"
-                  disabled={!pendingToken.trim() || setToken_.isPending}
-                  onClick={() =>
-                    setToken_.mutate({ id: a.id, t: pendingToken.trim() })
-                  }
-                >
-                  {setToken_.isPending ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <Check className="size-3.5" />
-                  )}
-                  Save
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setTokenAccountId(null)}
-                  disabled={setToken_.isPending}
-                >
-                  Cancel
-                </Button>
-              </div>
-            )}
           </div>
         ))}
       </div>
@@ -296,21 +230,20 @@ export function ClaudeAccountsPanel() {
           <Separator />
           <div className="rounded-md border border-border bg-muted/20 px-3 py-2.5 text-[11px] text-muted-foreground leading-relaxed">
             <span className="font-medium text-foreground">
-              Where does the OAuth token come from?
+              How to populate the credentials.
             </span>{' '}
-            On any machine where you've already run{' '}
-            <span className="font-mono">claude login</span>, copy the JSON
-            blob at{' '}
-            <span className="font-mono">~/.claude/.credentials.json</span>{' '}
-            (or under{' '}
-            <span className="font-mono">
-              ~/.claude-accounts/&lt;name&gt;/.claude/.credentials.json
-            </span>{' '}
-            if you used a per-account dir) and paste it below. Leave the
-            field blank to add the row first and set the token later.{' '}
+            "Add account" only reserves the row; the OAuth login itself
+            is run on the gateway host:
+            <pre className="mt-1.5 mb-1 px-2 py-1.5 rounded bg-background/60 text-[10.5px] overflow-x-auto">
+{`mkdir -p ~/.claude-accounts/<name>
+CLAUDE_CONFIG_DIR=~/.claude-accounts/<name> claude login`}
+            </pre>
+            opendray's filesystem watcher picks up the new dir on
+            its own — you can also click <span className="font-mono">Import local</span> to
+            scan immediately.{' '}
             <Link
               to="/tutorial"
-            hash="providers-claude-accounts"
+              hash="providers-claude-accounts"
               className="underline hover:text-foreground"
             >
               Full guide →
@@ -342,21 +275,6 @@ export function ClaudeAccountsPanel() {
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Personal subscription"
               />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="acc-token">OAuth token (optional)</Label>
-              <Input
-                id="acc-token"
-                type="password"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="paste now or set later"
-                autoComplete="off"
-              />
-              <p className="text-[10px] text-muted-foreground/70">
-                Leave empty to provision the row only. Token is written
-                chmod 600 to <span className="font-mono">token_path</span>.
-              </p>
             </div>
             <div className="flex justify-end gap-2 pt-1">
               <Button

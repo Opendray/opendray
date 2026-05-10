@@ -89,12 +89,11 @@ class _ClaudeAccountsSectionState
     if (form == null || !mounted) return;
     await _runOp(
       key: 'new',
-      okMsg: 'Account ${form.name} added.',
+      okMsg: 'Row ${form.name} created — populate via host claude login.',
       failPrefix: 'Add failed',
       op: () => ref.read(claudeAccountsApiProvider).create(
             name: form.name,
             displayName: form.displayName,
-            token: form.token,
           ),
     );
   }
@@ -143,12 +142,6 @@ class _ClaudeAccountsSectionState
               title: const Text('Rename'),
               onTap: () => Navigator.of(sheetCtx).pop(_AccountAction.rename),
             ),
-            ListTile(
-              leading: const Icon(Icons.key_outlined),
-              title: Text(a.tokenFilled ? 'Replace token' : 'Set token'),
-              onTap: () =>
-                  Navigator.of(sheetCtx).pop(_AccountAction.setToken),
-            ),
             const Divider(height: 1),
             ListTile(
               leading: Icon(
@@ -188,15 +181,6 @@ class _ClaudeAccountsSectionState
           op: () => ref
               .read(claudeAccountsApiProvider)
               .update(a.id, displayName: next),
-        );
-      case _AccountAction.setToken:
-        final tok = await SetClaudeTokenScreen.push(context, a);
-        if (tok == null || !mounted) return;
-        await _runOp(
-          key: 'a:${a.id}',
-          okMsg: 'Token saved.',
-          failPrefix: 'Set token failed',
-          op: () => ref.read(claudeAccountsApiProvider).setToken(a.id, tok),
         );
       case _AccountAction.delete:
         final ok = await showDialog<bool>(
@@ -345,7 +329,7 @@ class _ClaudeAccountsSectionState
   }
 }
 
-enum _AccountAction { toggleEnabled, rename, setToken, delete }
+enum _AccountAction { toggleEnabled, rename, delete }
 
 class _AccountTile extends StatelessWidget {
   const _AccountTile({
