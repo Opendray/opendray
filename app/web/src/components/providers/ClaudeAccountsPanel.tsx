@@ -18,6 +18,7 @@ import {
   listClaudeAccounts,
   toggleClaudeAccount,
 } from '@/lib/claudeAccounts'
+import type { ClaudeAccount } from '@/lib/types'
 
 // ClaudeAccountsPanel renders the multi-account list for the Claude
 // provider. Account creation is filesystem-driven: operators run
@@ -53,12 +54,31 @@ export function ClaudeAccountsPanel() {
       toast.error('Import failed', { description: e.message }),
   })
 
+  // Optimistic toggle: Radix Switch is fully controlled via
+  // `checked={a.enabled}`. Without an optimistic update the thumb
+  // doesn't budge between click and refetch, which on a slow round-
+  // trip looks indistinguishable from a broken button. We seed the
+  // cache with the new value on click and reconcile on settle.
   const toggle = useMutation({
     mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
       toggleClaudeAccount(id, enabled),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['claude-accounts'] }),
-    onError: (e: Error) =>
-      toast.error('Toggle failed', { description: e.message }),
+    onMutate: async ({ id, enabled }) => {
+      await qc.cancelQueries({ queryKey: ['claude-accounts'] })
+      const prev = qc.getQueryData<ClaudeAccount[]>(['claude-accounts'])
+      if (prev) {
+        qc.setQueryData<ClaudeAccount[]>(
+          ['claude-accounts'],
+          prev.map((a) => (a.id === id ? { ...a, enabled } : a)),
+        )
+      }
+      return { prev }
+    },
+    onError: (e: Error, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['claude-accounts'], ctx.prev)
+      toast.error('Toggle failed', { description: e.message })
+    },
+    onSettled: () =>
+      qc.invalidateQueries({ queryKey: ['claude-accounts'] }),
   })
 
   const remove = useMutation({
