@@ -216,23 +216,72 @@ class _ClaudeAccountsSectionState
     }
   }
 
+  Future<void> _importLocal() async {
+    setState(() => _busy.add('import'));
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final n = await ref.read(claudeAccountsApiProvider).importLocal();
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            n == 0
+                ? 'Already in sync — gateway has no new accounts.'
+                : 'Imported $n account${n == 1 ? '' : 's'}.',
+          ),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      await _load();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('Import failed: ${e.message}')),
+      );
+    } on Object catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text('Import failed: $e')));
+    } finally {
+      if (mounted) setState(() => _busy.remove('import'));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final muted = Theme.of(context).textTheme.bodySmall;
+    final importing = _busy.contains('import');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(4, 14, 4, 6),
-          child: Text(
-            'ACCOUNTS',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  letterSpacing: 0.8,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.6),
+          padding: const EdgeInsets.fromLTRB(4, 14, 0, 6),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'ACCOUNTS',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        letterSpacing: 0.8,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.6),
+                      ),
                 ),
+              ),
+              TextButton.icon(
+                icon: importing
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.cloud_sync_outlined, size: 16),
+                label: Text(importing ? 'Syncing…' : 'Import local'),
+                onPressed: importing ? null : _importLocal,
+              ),
+            ],
           ),
         ),
         Container(

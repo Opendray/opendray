@@ -112,6 +112,28 @@ class ClaudeAccountsApi {
       throw toApiException(e);
     }
   }
+
+  // POST /claude-accounts/import-local — gateway scans
+  // ~/.claude-accounts/ on its own host filesystem and registers any
+  // directory it finds that doesn't already have a matching DB row.
+  // Returns the count of newly-created accounts so the UI can toast
+  // "synced N" vs "already in sync".
+  //
+  // The mobile app calls this when the operator wants to surface an
+  // account they just created via host-shell `claude login` without
+  // waiting for the gateway's filesystem watcher to tick.
+  Future<int> importLocal() async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/claude-accounts/import-local',
+      );
+      final c = res.data?['count'];
+      if (c is num) return c.toInt();
+      return 0;
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
 }
 
 final claudeAccountsApiProvider = Provider<ClaudeAccountsApi>((ref) {
