@@ -4,11 +4,13 @@ import {
   Check,
   CircleDot,
   Download,
+  HelpCircle,
   KeyRound,
   Loader2,
   Plus,
   Trash2,
 } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -126,6 +128,14 @@ export function ClaudeAccountsPanel() {
           <span className="text-[10px] text-muted-foreground/60 font-mono">
             {accounts?.length ?? 0}
           </span>
+          <Link
+            to="/tutorial"
+            hash="providers-claude-accounts"
+            className="text-muted-foreground/70 hover:text-foreground inline-flex items-center"
+            title="Open the multi-account tutorial section"
+          >
+            <HelpCircle className="size-3.5" />
+          </Link>
         </div>
         <div className="flex items-center gap-1">
           <Button
@@ -134,7 +144,7 @@ export function ClaudeAccountsPanel() {
             onClick={() => importLocal.mutate()}
             disabled={importLocal.isPending}
             className="text-[11px] gap-1"
-            title="Scan ~/.claude-accounts/tokens/ on the gateway host and register any new accounts"
+            title="Scan ~/.claude-accounts/ on the gateway host and register any new accounts. Only useful when the gateway has filesystem access to your home dir."
           >
             {importLocal.isPending ? (
               <Loader2 className="size-3.5 animate-spin" />
@@ -284,6 +294,28 @@ export function ClaudeAccountsPanel() {
       {showAdd && (
         <>
           <Separator />
+          <div className="rounded-md border border-border bg-muted/20 px-3 py-2.5 text-[11px] text-muted-foreground leading-relaxed">
+            <span className="font-medium text-foreground">
+              Where does the OAuth token come from?
+            </span>{' '}
+            On any machine where you've already run{' '}
+            <span className="font-mono">claude login</span>, copy the JSON
+            blob at{' '}
+            <span className="font-mono">~/.claude/.credentials.json</span>{' '}
+            (or under{' '}
+            <span className="font-mono">
+              ~/.claude-accounts/&lt;name&gt;/.claude/.credentials.json
+            </span>{' '}
+            if you used a per-account dir) and paste it below. Leave the
+            field blank to add the row first and set the token later.{' '}
+            <Link
+              to="/tutorial"
+            hash="providers-claude-accounts"
+              className="underline hover:text-foreground"
+            >
+              Full guide →
+            </Link>
+          </div>
           <form onSubmit={submitAdd} className="space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="acc-name">Name (slug)</Label>

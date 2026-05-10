@@ -84,6 +84,57 @@ class _CreateClaudeAccountScreenState
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: Theme.of(context)
+                  .colorScheme
+                  .tertiary
+                  .withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.tertiary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Where does the OAuth token come from?',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.tertiary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'On any machine where you ran "claude login", the JSON '
+                  'is at ~/.claude/.credentials.json. If you used a '
+                  'per-account directory, look under '
+                  '~/.claude-accounts/<name>/.claude/.credentials.json. '
+                  'Copy the whole object and paste below. Leave blank '
+                  'to add the row first and set the token later.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    height: 1.4,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.75),
+                  ),
+                ),
+              ],
+            ),
+          ),
           TextField(
             controller: _name,
             autofocus: true,
