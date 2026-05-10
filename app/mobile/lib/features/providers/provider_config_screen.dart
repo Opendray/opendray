@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/providers_api.dart';
+import 'package:opendray/features/providers/claude_accounts_section.dart';
 
 // Provider config editor — schema-driven so we don't carry per-
 // provider hardcoded forms. The manifest's configSchema describes
@@ -162,7 +163,15 @@ class _ProviderConfigScreenState
   }
 
   Widget _buildEditor(ProviderDetail p) {
-    if (p.configSchema.isEmpty) {
+    final isClaude = p.id == 'claude';
+    final groups = <String, List<ConfigField>>{};
+    for (final f in p.configSchema) {
+      if (!_shouldShow(f)) continue;
+      final g = f.group ?? '';
+      groups.putIfAbsent(g, () => []).add(f);
+    }
+    final hasFields = groups.isNotEmpty;
+    if (!hasFields && !isClaude) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -173,12 +182,6 @@ class _ProviderConfigScreenState
           ),
         ),
       );
-    }
-    final groups = <String, List<ConfigField>>{};
-    for (final f in p.configSchema) {
-      if (!_shouldShow(f)) continue;
-      final g = f.group ?? '';
-      groups.putIfAbsent(g, () => []).add(f);
     }
     return ListView(
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 80),
@@ -191,18 +194,25 @@ class _ProviderConfigScreenState
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
-        for (final entry in groups.entries) ...[
-          if (entry.key.isNotEmpty) _SectionHeader(label: entry.key),
-          for (final f in entry.value)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
-              child: _FieldEditor(
-                field: f,
-                value: _values[f.key],
-                onChanged: (v) => _setValue(f.key, v),
+        if (hasFields) ...[
+          for (final entry in groups.entries) ...[
+            if (entry.key.isNotEmpty) _SectionHeader(label: entry.key),
+            for (final f in entry.value)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+                child: _FieldEditor(
+                  field: f,
+                  value: _values[f.key],
+                  onChanged: (v) => _setValue(f.key, v),
+                ),
               ),
-            ),
+          ],
         ],
+        if (isClaude)
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: ClaudeAccountsSection(),
+          ),
       ],
     );
   }

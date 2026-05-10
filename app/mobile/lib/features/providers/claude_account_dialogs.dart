@@ -48,7 +48,6 @@ class _CreateClaudeAccountScreenState
   final _name = TextEditingController();
   final _display = TextEditingController();
   final _token = TextEditingController();
-  bool _hideToken = true;
   String? _error;
 
   @override
@@ -110,24 +109,18 @@ class _CreateClaudeAccountScreenState
             controller: _token,
             maxLines: 5,
             autocorrect: false,
-            obscureText: _hideToken,
-            decoration: InputDecoration(
+            // OAuth blobs are multi-line JSON; obscureText would
+            // require maxLines==1 (Flutter asserts otherwise) and
+            // the operator just pasted it from elsewhere anyway, so
+            // showing it lets them sanity-check it landed cleanly.
+            decoration: const InputDecoration(
               labelText: 'OAuth token (optional)',
               hintText:
                   '{"access_token":"…","refresh_token":"…"} or bare token',
               helperText: 'Leave blank to add the row first and set the '
                   'token later.',
               helperMaxLines: 2,
-              border: const OutlineInputBorder(),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _hideToken
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                  size: 18,
-                ),
-                onPressed: () => setState(() => _hideToken = !_hideToken),
-              ),
+              border: OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 8),
@@ -239,7 +232,6 @@ class SetClaudeTokenScreen extends StatefulWidget {
 
 class _SetClaudeTokenScreenState extends State<SetClaudeTokenScreen> {
   final _ctrl = TextEditingController();
-  bool _hide = true;
   String? _error;
 
   @override
@@ -290,21 +282,13 @@ class _SetClaudeTokenScreenState extends State<SetClaudeTokenScreen> {
             controller: _ctrl,
             autofocus: true,
             autocorrect: false,
-            obscureText: _hide,
             maxLines: 8,
-            decoration: InputDecoration(
+            // Visible by design — OAuth blobs are multi-line JSON
+            // and obscureText would require maxLines==1.
+            decoration: const InputDecoration(
               labelText: 'OAuth blob or access_token',
               hintText: '{"access_token":"…","refresh_token":"…"}',
-              border: const OutlineInputBorder(),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _hide
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                  size: 18,
-                ),
-                onPressed: () => setState(() => _hide = !_hide),
-              ),
+              border: OutlineInputBorder(),
             ),
           ),
           if (_error != null) ...[

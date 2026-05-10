@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
-import 'package:opendray/core/api/claude_accounts_api.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/providers_api.dart';
-import 'package:opendray/features/providers/claude_account_dialogs.dart';
 import 'package:opendray/features/providers/provider_config_screen.dart';
 
-// Providers — view CLI providers (Claude / Codex / Gemini / …) and,
-// for Claude specifically, the multi-account list. Each row exposes
-// only the enable/disable switch. Token entry, OAuth imports, manifest
-// edits stay on the web admin where pasting long secrets is sane.
+// Providers — list of CLI providers (Claude / Codex / Gemini / Shell).
+// Each row exposes the enabled toggle and taps into the per-provider
+// config page. Claude-specific affordances (multi-account list +
+// add/rename/set-token/delete) live inside the Claude provider's
+// config page rather than as a peer section here, since the other
+// providers have no equivalent concept and a flat sibling section
+// reads as a bug.
 class ProvidersScreen extends ConsumerStatefulWidget {
   const ProvidersScreen({super.key});
 
@@ -20,7 +21,7 @@ class ProvidersScreen extends ConsumerStatefulWidget {
 }
 
 class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
-  AsyncValue<_ProvidersData> _state = const AsyncValue.loading();
+  AsyncValue<List<ProviderSummary>> _state = const AsyncValue.loading();
   // Track in-flight toggles so we can show a spinner only on the
   // affected row instead of grey-locking the whole screen.
   final Set<String> _busy = {};
@@ -34,29 +35,13 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
   Future<void> _load() async {
     setState(() => _state = const AsyncValue.loading());
     try {
-      // Both lists fetched in parallel — they're independent.
-      final providersFuture = ref.read(providersApiProvider).list();
-      final accountsFuture =
-          ref.read(claudeAccountsApiProvider).list();
-      final results = await Future.wait([providersFuture, accountsFuture]);
+      final providers = await ref.read(providersApiProvider).list();
       if (!mounted) return;
-      final providers = (results[0] as List<ProviderSummary>)
-        ..sort((a, b) {
-          if (a.enabled != b.enabled) return a.enabled ? -1 : 1;
-          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-        });
-      final accounts = (results[1] as List<ClaudeAccountSummary>)
-        ..sort((a, b) {
-          if (a.isUsable != b.isUsable) return a.isUsable ? -1 : 1;
-          return a.displayName
-              .toLowerCase()
-              .compareTo(b.displayName.toLowerCase());
-        });
-      setState(
-        () => _state = AsyncValue.data(
-          _ProvidersData(providers: providers, accounts: accounts),
-        ),
-      );
+      providers.sort((a, b) {
+        if (a.enabled != b.enabled) return a.enabled ? -1 : 1;
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      });
+      setState(() => _state = AsyncValue.data(providers));
     } on ApiException catch (e) {
       if (mounted) {
         setState(() => _state = AsyncValue.error(e, StackTrace.current));
@@ -100,151 +85,6 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
     }
   }
 
-  Future<void> _addAccount() async {
-    final form = await CreateClaudeAccountScreen.push(context);
-    if (form == null || !mounted) return;
-    await _runToggle(
-      key: 'new-account',
-      okMsg: 'Account ${form.name} added.',
-      failPrefix: 'Add failed',
-      op: () => ref.read(claudeAccountsApiProvider).create(
-            name: form.name,
-            displayName: form.displayName,
-            token: form.token,
-          ),
-    );
-  }
-
-  Future<void> _openAccountActions(ClaudeAccountSummary a) async {
-    final action = await showModalBottomSheet<_AccountAction>(
-      context: context,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (sheetCtx) => SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(a.displayName,
-                      style: Theme.of(sheetCtx).textTheme.titleSmall),
-                  Text(
-                    a.name,
-                    style: Theme.of(sheetCtx)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(fontFamily: 'monospace'),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.drive_file_rename_outline),
-              title: const Text('Rename'),
-              onTap: () =>
-                  Navigator.of(sheetCtx).pop(_AccountAction.rename),
-            ),
-            ListTile(
-              leading: const Icon(Icons.key_outlined),
-              title: Text(a.tokenFilled ? 'Replace token' : 'Set token'),
-              onTap: () =>
-                  Navigator.of(sheetCtx).pop(_AccountAction.setToken),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: Icon(
-                Icons.delete_outline,
-                color: Theme.of(sheetCtx).colorScheme.error,
-              ),
-              title: Text(
-                'Delete',
-                style: TextStyle(color: Theme.of(sheetCtx).colorScheme.error),
-              ),
-              onTap: () =>
-                  Navigator.of(sheetCtx).pop(_AccountAction.delete),
-            ),
-            const SizedBox(height: 4),
-          ],
-        ),
-      ),
-    );
-    if (action == null || !mounted) return;
-    switch (action) {
-      case _AccountAction.rename:
-        final next = await RenameClaudeAccountDialog.show(context, a);
-        if (next == null || !mounted) return;
-        await _runToggle(
-          key: 'a:${a.id}',
-          okMsg: 'Renamed to $next.',
-          failPrefix: 'Rename failed',
-          op: () => ref
-              .read(claudeAccountsApiProvider)
-              .update(a.id, displayName: next),
-        );
-      case _AccountAction.setToken:
-        final tok = await SetClaudeTokenScreen.push(context, a);
-        if (tok == null || !mounted) return;
-        await _runToggle(
-          key: 'a:${a.id}',
-          okMsg: 'Token saved.',
-          failPrefix: 'Set token failed',
-          op: () => ref.read(claudeAccountsApiProvider).setToken(a.id, tok),
-        );
-      case _AccountAction.delete:
-        final ok = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Delete account?'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${a.displayName} (${a.name})',
-                  style: Theme.of(ctx).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Removes the account and its stored OAuth token. '
-                  'Sessions already using this account stay running '
-                  'until they end.',
-                  style: Theme.of(ctx).textTheme.bodySmall,
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: Theme.of(ctx).colorScheme.error,
-                ),
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
-        );
-        if (ok != true || !mounted) return;
-        await _runToggle(
-          key: 'a:${a.id}',
-          okMsg: 'Deleted ${a.name}.',
-          failPrefix: 'Delete failed',
-          op: () => ref.read(claudeAccountsApiProvider).delete(a.id),
-        );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -266,8 +106,8 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
     );
   }
 
-  Widget _buildBody(_ProvidersData data) {
-    if (data.providers.isEmpty) {
+  Widget _buildBody(List<ProviderSummary> providers) {
+    if (providers.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -286,7 +126,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
       child: ListView(
         children: [
           const _SectionHeader(label: 'CLI providers'),
-          for (final p in data.providers)
+          for (final p in providers)
             _ProviderTile(
               provider: p,
               busy: _busy.contains('p:${p.id}'),
@@ -304,58 +144,11 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
                 ),
               ),
             ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Expanded(child: _SectionHeader(label: 'Claude accounts')),
-              Padding(
-                padding: const EdgeInsets.only(right: 12, top: 8),
-                child: TextButton.icon(
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Add'),
-                  onPressed: _addAccount,
-                ),
-              ),
-            ],
-          ),
-          if (data.accounts.isEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 16, 12),
-              child: Text(
-                'No Claude accounts yet. Tap Add to paste an OAuth '
-                'token from a desktop login.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            )
-          else
-            for (final a in data.accounts)
-              _AccountTile(
-                account: a,
-                busy: _busy.contains('a:${a.id}'),
-                onToggle: (next) => _runToggle(
-                  key: 'a:${a.id}',
-                  okMsg: next
-                      ? '${a.displayName} enabled.'
-                      : '${a.displayName} disabled.',
-                  failPrefix: 'Toggle failed',
-                  op: () => ref
-                      .read(claudeAccountsApiProvider)
-                      .setEnabled(a.id, enabled: next),
-                ),
-                onTap: () => _openAccountActions(a),
-              ),
           const SizedBox(height: 16),
         ],
       ),
     );
   }
-}
-
-class _ProvidersData {
-  _ProvidersData({required this.providers, required this.accounts});
-  final List<ProviderSummary> providers;
-  final List<ClaudeAccountSummary> accounts;
 }
 
 class _SectionHeader extends StatelessWidget {
@@ -441,88 +234,6 @@ class _ProviderTile extends StatelessWidget {
               value: provider.enabled,
               onChanged: onToggle,
             ),
-    );
-  }
-}
-
-enum _AccountAction { rename, setToken, delete }
-
-class _AccountTile extends StatelessWidget {
-  const _AccountTile({
-    required this.account,
-    required this.busy,
-    required this.onToggle,
-    required this.onTap,
-  });
-  final ClaudeAccountSummary account;
-  final bool busy;
-  final ValueChanged<bool> onToggle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final usable = account.isUsable;
-    return ListTile(
-      onTap: busy ? null : onTap,
-      leading: Icon(
-        usable ? Icons.account_circle : Icons.account_circle_outlined,
-        color: usable
-            ? Theme.of(context).colorScheme.primary
-            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
-      ),
-      title: Text(account.displayName),
-      subtitle: Wrap(
-        spacing: 6,
-        children: [
-          Text(
-            account.id,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(fontFamily: 'monospace'),
-          ),
-          if (!account.tokenFilled)
-            _MiniBadge(
-              label: 'no token',
-              color: Theme.of(context).colorScheme.error,
-            ),
-        ],
-      ),
-      trailing: busy
-          ? const SizedBox(
-              width: 32,
-              height: 32,
-              child: Padding(
-                padding: EdgeInsets.all(8),
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
-          : Switch(
-              value: account.enabled,
-              onChanged: onToggle,
-            ),
-    );
-  }
-}
-
-class _MiniBadge extends StatelessWidget {
-  const _MiniBadge({required this.label, required this.color});
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withValues(alpha: 0.6), width: 0.5),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 10),
-      ),
     );
   }
 }
