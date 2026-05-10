@@ -40,7 +40,13 @@ export default defineConfig(({ command }) => ({
         ? path.resolve(__dirname, '../../internal/web/dist')
         : path.resolve(__dirname, 'dist'),
     emptyOutDir: true,
-    chunkSizeWarningLimit: 1000,
+    // Bumped from the 500 kB default. Heavy node_modules deps
+    // (xterm, hljs, react-markdown, tanstack, react) are split out
+    // by manualChunks below; the remaining chunk is the application
+    // code itself, which currently sits ~990 kB minified / ~290 kB
+    // gzipped. Below 500 kB needs route-level React.lazy() splits
+    // that haven't been wired yet — tracked in the codemap.
+    chunkSizeWarningLimit: 1100,
     rolldownOptions: {
       output: {
         // Pull big runtimes out of the entry chunk so the login route +

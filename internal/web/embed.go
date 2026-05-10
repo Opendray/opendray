@@ -56,6 +56,17 @@ func Handler() http.Handler {
 			serveIndex(w, indexBytes)
 			return
 		}
+		// Vite emits content-hashed asset filenames (e.g.
+		// `index-CY1jwr6h.js`), so a long-lived immutable cache is
+		// always safe — when we rebuild the SPA, every changed chunk
+		// gets a new hash and `index.html` (which is no-cache) points
+		// at it. Without this header the browser sometimes serves a
+		// cached `index.html` that references chunk hashes the new
+		// binary no longer ships, and the page silently 404s on its
+		// own JS.
+		if strings.HasPrefix(path, "assets/") {
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		}
 		fileSrv.ServeHTTP(w, r)
 	})
 }
