@@ -407,6 +407,55 @@ class BackupsApi {
     }
   }
 
+  // POST /backup-targets — create a new destination. id is
+  // optional (server auto-derives from kind when omitted, e.g.
+  // "smb-1"). kind is required. config is the per-kind field
+  // bag (see TARGET_KIND_FIELDS for what each kind accepts).
+  Future<BackupTarget> createTarget({
+    required String kind,
+    required Map<String, dynamic> config,
+    String? id,
+    bool enabled = true,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/backup-targets',
+        data: {
+          if (id != null && id.isNotEmpty) 'id': id,
+          'kind': kind,
+          'config': config,
+          'enabled': enabled,
+        },
+      );
+      return BackupTarget.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // PATCH /backup-targets/{id} — partial update. Either field is
+  // optional; pass null to leave it untouched. Used for both
+  // editing config and the dedicated toggle-enabled flow (see
+  // setTargetEnabled below).
+  Future<BackupTarget> updateTarget(
+    String id, {
+    Map<String, dynamic>? config,
+    bool? enabled,
+  }) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/api/v1/backup-targets/$id',
+        data: {
+          if (config != null) 'config': config,
+          if (enabled != null) 'enabled': enabled,
+        },
+      );
+      return BackupTarget.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   Future<BackupTarget> setTargetEnabled(
     String id, {
     required bool enabled,
