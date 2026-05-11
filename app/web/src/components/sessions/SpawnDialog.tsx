@@ -147,7 +147,7 @@ export function SpawnDialog({
                     <BrandAvatar
                       iconKey={providerIconKey(p.manifest.id)}
                       fallbackLetter={p.manifest.displayName?.charAt(0) ?? '?'}
-                      size={24}
+                      size={32}
                       title={p.manifest.displayName}
                     />
                     <div className="flex flex-col min-w-0">
