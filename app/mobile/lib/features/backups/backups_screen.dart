@@ -25,6 +25,13 @@ class BackupsScreen extends ConsumerStatefulWidget {
 // instead of four separate AsyncValues means the banner / summary /
 // list paint together — no progressive-load flicker on a phone
 // where the whole screen fits above the fold.
+//
+// status==null is a load-bearing sentinel: the server returned 404
+// on /backup-status, which means the backup feature is
+// compile-disabled (OPENDRAY_BACKUP_KEY unset / Backup.Enabled=false).
+// In that case rows/targets/schedules are also empty since their
+// handlers aren't mounted either — the UI renders a dedicated
+// "feature disabled" view rather than a useless empty list.
 class _PageData {
   _PageData({
     required this.status,
@@ -33,10 +40,12 @@ class _PageData {
     required this.schedules,
   });
 
-  final BackupStatusReport status;
+  final BackupStatusReport? status;
   final List<BackupRow> rows;
   final List<BackupTarget> targets;
   final List<BackupSchedule> schedules;
+
+  bool get featureDisabled => status == null;
 }
 
 class _BackupsScreenState extends ConsumerState<BackupsScreen> {
@@ -67,20 +76,35 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
       // status endpoint dies the whole screen errors; if a sub-list
       // fails we still want a usable header, so non-status calls
       // degrade to empty.
+      // Status first — its result decides whether we even bother
+      // fetching the rest. When the feature is disabled the other
+      // three endpoints also return 404, and fanning out four 404s
+      // just to throw them away is wasteful (and noisy in the
+      // server logs).
+      final status = await api.status();
+      if (!mounted) return;
+      if (status == null) {
+        setState(() => _state = AsyncValue.data(_PageData(
+              status: null,
+              rows: const [],
+              targets: const [],
+              schedules: const [],
+            )));
+        return;
+      }
       final results = await Future.wait<Object>([
-        api.status(),
         api.list(limit: 50).catchError((_) => <BackupRow>[]),
         api.listTargets().catchError((_) => <BackupTarget>[]),
         api.listSchedules().catchError((_) => <BackupSchedule>[]),
       ]);
       if (!mounted) return;
-      final rows = (results[1] as List<BackupRow>)
+      final rows = (results[0] as List<BackupRow>)
         ..sort((a, b) => b.startedAt.compareTo(a.startedAt));
       setState(() => _state = AsyncValue.data(_PageData(
-            status: results[0] as BackupStatusReport,
+            status: status,
             rows: rows,
-            targets: results[2] as List<BackupTarget>,
-            schedules: results[3] as List<BackupSchedule>,
+            targets: results[1] as List<BackupTarget>,
+            schedules: results[2] as List<BackupSchedule>,
           )));
     } on ApiException catch (e) {
       if (mounted) {
@@ -103,16 +127,25 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     }
     try {
       final api = ref.read(backupsApiProvider);
-      final results = await Future.wait<Object>([
-        api.status(),
-        api.list(limit: 50),
-      ]);
+      final status = await api.status();
       if (!mounted) return;
-      final rows = (results[1] as List<BackupRow>)
-        ..sort((a, b) => b.startedAt.compareTo(a.startedAt));
+      if (status == null) {
+        // Feature was just disabled on the server between loads.
+        // Drop back to the disabled view rather than keep stale rows.
+        setState(() => _state = AsyncValue.data(_PageData(
+              status: null,
+              rows: const [],
+              targets: const [],
+              schedules: const [],
+            )));
+        return;
+      }
+      final list = await api.list(limit: 50);
+      if (!mounted) return;
+      list.sort((a, b) => b.startedAt.compareTo(a.startedAt));
       setState(() => _state = AsyncValue.data(_PageData(
-            status: results[0] as BackupStatusReport,
-            rows: rows,
+            status: status,
+            rows: list,
             targets: current.targets,
             schedules: current.schedules,
           )));
@@ -438,19 +471,24 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        // Disable Run now when pg_dump is broken or no targets are
-        // configured — clicking it would just produce a failed row.
-        onPressed: _canRunNow() ? _runNow : null,
-        icon: _running
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.cloud_upload_outlined),
-        label: Text(_running ? 'Queueing…' : 'Run now'),
-      ),
+      // Hide the FAB entirely when the feature is off — it can't do
+      // anything useful and the disabled view already gives the
+      // operator the setup instructions.
+      floatingActionButton: _state.valueOrNull?.featureDisabled ?? false
+          ? null
+          : FloatingActionButton.extended(
+              // Greyed-out when pg_dump is broken or no targets are
+              // configured — clicking would just produce a failed row.
+              onPressed: _canRunNow() ? _runNow : null,
+              icon: _running
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.cloud_upload_outlined),
+              label: Text(_running ? 'Queueing…' : 'Run now'),
+            ),
     );
   }
 
@@ -458,12 +496,15 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     if (_running) return false;
     final data = _state.valueOrNull;
     if (data == null) return false;
-    if (!data.status.ok) return false;
+    final status = data.status;
+    if (status == null || !status.ok) return false;
     final hasEnabledTarget = data.targets.any((t) => t.enabled);
     return hasEnabledTarget;
   }
 
   Widget _buildBody(_PageData data) {
+    if (data.featureDisabled) return _FeatureDisabledView(onRetry: _load);
+    final status = data.status!;
     final list = data.rows;
     // Always render a scrollable surface so pull-to-refresh works
     // even when the list is empty.
@@ -472,9 +513,8 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          _StatusBanner(status: data.status),
+          _StatusBanner(status: status),
           _SummaryCard(
-            status: data.status,
             targets: data.targets,
             schedules: data.schedules,
             rows: data.rows,
@@ -499,7 +539,9 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
 
   Widget _emptyState(_PageData data) {
     final hasTargets = data.targets.any((t) => t.enabled);
-    final pgOk = data.status.ok;
+    // featureDisabled was checked upstream in _buildBody, so status
+    // is guaranteed non-null here.
+    final pgOk = data.status?.ok ?? false;
     final theme = Theme.of(context);
     String headline;
     String body;
@@ -507,7 +549,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     if (!pgOk) {
       icon = Icons.error_outline;
       headline = "Backups can't run yet";
-      body = data.status.pgDumpError ??
+      body = data.status?.pgDumpError ??
           'pg_dump is not available on the server. '
               'Install postgresql-client and restart opendray.';
     } else if (!hasTargets) {
@@ -544,6 +586,83 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
 enum _DetailAction { close, delete }
 
 enum _AppBarAction { schedules, targets }
+
+// Rendered when /backup-status 404'd — the documented signal that
+// the backup feature is compile-disabled on this server. Tells the
+// operator exactly which env vars to set so they don't have to
+// guess; mirrors the FeatureDisabledBanner the web admin shows in
+// the same situation. Retry lets them re-check after restarting
+// the server without leaving the screen.
+class _FeatureDisabledView extends StatelessWidget {
+  const _FeatureDisabledView({required this.onRetry});
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.outline;
+    return RefreshIndicator(
+      onRefresh: onRetry,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(24),
+        children: [
+          const SizedBox(height: 32),
+          Icon(Icons.archive_outlined, size: 56, color: muted),
+          const SizedBox(height: 16),
+          Text(
+            'Backup feature is disabled',
+            style: theme.textTheme.titleMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'opendray refuses to encrypt or decrypt backup blobs without a '
+            'master passphrase, so the entire feature stays off until you '
+            'opt in. Set the two environment variables on the server, '
+            'then restart.',
+            style: theme.textTheme.bodySmall?.copyWith(color: muted),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: theme.dividerColor),
+            ),
+            child: const SelectableText(
+              'OPENDRAY_BACKUP_ENABLED=1\n'
+              'OPENDRAY_BACKUP_KEY=<long random passphrase>',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 12,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Pick a passphrase you can recover later — it is the only thing '
+            'that can decrypt the resulting backup blobs. Losing it means '
+            'losing your backups.',
+            style: theme.textTheme.bodySmall?.copyWith(color: muted),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Center(
+            child: FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Check again'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 // Feature-health banner. Renders red when pg_dump is unavailable
 // (with the underlying error so the operator can fix it from the
@@ -638,12 +757,10 @@ class _StatusBanner extends StatelessWidget {
 // where it makes sense.
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({
-    required this.status,
     required this.targets,
     required this.schedules,
     required this.rows,
   });
-  final BackupStatusReport status;
   final List<BackupTarget> targets;
   final List<BackupSchedule> schedules;
   final List<BackupRow> rows;

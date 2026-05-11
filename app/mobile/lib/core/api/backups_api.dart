@@ -172,15 +172,22 @@ class BackupsApi {
 
   // GET /backup-status — feature health snapshot. Cheap (no I/O
   // beyond exec pg_dump --version once), safe to call on every page
-  // load. Returns null only when the endpoint itself is unreachable,
-  // which we treat as "show generic load error" rather than guessing.
-  Future<BackupStatusReport> status() async {
+  // load.
+  //
+  // Returns null when the server responds 404 — that's the
+  // documented signal that backup is compile-disabled (no
+  // OPENDRAY_BACKUP_KEY / Backup.Enabled=false in opendray.toml).
+  // See internal/app/app.go for the comment. The UI uses null to
+  // show a setup-required screen instead of an error.
+  Future<BackupStatusReport?> status() async {
     try {
       final res =
           await _dio.get<Map<String, dynamic>>('/api/v1/backup-status');
       return BackupStatusReport.fromJson(res.data ?? {});
     } on Object catch (e) {
-      throw toApiException(e);
+      final apiErr = toApiException(e);
+      if (apiErr.statusCode == 404) return null;
+      throw apiErr;
     }
   }
 
