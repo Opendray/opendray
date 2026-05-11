@@ -14,10 +14,12 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { BrandAvatar } from '@/components/BrandAvatar'
 import { FileBrowserDialog } from '@/components/sessions/FileBrowserDialog'
 import { createSession } from '@/lib/sessions'
 import { listProviders } from '@/lib/catalog'
 import { listClaudeAccounts } from '@/lib/claudeAccounts'
+import { providerIconKey } from '@/lib/providerIcons'
 import type { Session } from '@/lib/types'
 
 interface SpawnDialogProps {
@@ -142,9 +144,12 @@ export function SpawnDialog({
                         : 'border-border hover:bg-card hover:border-foreground/20'
                     }`}
                   >
-                    <span className="text-base leading-none">
-                      {p.manifest.icon}
-                    </span>
+                    <BrandAvatar
+                      iconKey={providerIconKey(p.manifest.id)}
+                      fallbackLetter={p.manifest.displayName?.charAt(0) ?? '?'}
+                      size={24}
+                      title={p.manifest.displayName}
+                    />
                     <div className="flex flex-col min-w-0">
                       <span className="text-[12px] font-medium truncate">
                         {p.manifest.displayName}
