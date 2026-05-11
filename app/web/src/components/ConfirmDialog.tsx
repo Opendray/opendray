@@ -57,7 +57,16 @@ export function useConfirmDialog() {
     (opts: ConfirmOptions) =>
       new Promise<boolean>((resolve) => {
         resolverRef.current = resolve
-        setState({ ...opts, open: true })
+        // Defer the state update past the current click event. Without
+        // this, Radix Dialog mounts mid-bubble and its
+        // onInteractOutside / onPointerDownOutside handler sees the
+        // still-bubbling click (which originally hit the Remove
+        // button) as a click outside the dialog and closes it the
+        // same frame it opened — the operator sees a flash and the
+        // session never gets removed. queueMicrotask runs after the
+        // click finishes propagating but before the next paint, so
+        // there's no visible delay.
+        queueMicrotask(() => setState({ ...opts, open: true }))
       }),
     [],
   )
