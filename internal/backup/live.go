@@ -65,7 +65,7 @@ type liveDeps struct {
 // cancel func. atomic.Pointer[liveState] is the single source of
 // truth.
 type liveState struct {
-	svc        *Service
+	svc         *Service
 	cancelSched context.CancelFunc
 }
 

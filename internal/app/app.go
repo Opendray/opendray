@@ -71,9 +71,9 @@ type App struct {
 	// liveBackup owns the backup Service + scheduler. Always non-nil
 	// after New returns, but Service() returns nil when the feature
 	// is off. Disarm on shutdown to stop the scheduler goroutine.
-	liveBackup *backup.LiveBackup
-	captureEngine   *capture.Engine   // ambient memory capture loop
-	server          *http.Server
+	liveBackup    *backup.LiveBackup
+	captureEngine *capture.Engine // ambient memory capture loop
+	server        *http.Server
 }
 
 // New wires the runtime dependencies but does not start any goroutines.
