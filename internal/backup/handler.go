@@ -21,7 +21,11 @@ type Handlers struct {
 func NewHandlers(svc *Service) *Handlers { return &Handlers{svc: svc} }
 
 // Mount registers /backups, /backup-targets, /backup-schedules,
-// /backup-status under r.
+// /backup-inventory under r. The /backup-status, /backup-setup,
+// and /backup-setup/disable routes live on SetupHandlers (see
+// setup_handler.go) so they can be mounted even when the feature
+// is off — that's how an operator who hasn't configured backups
+// yet can use the UI to turn them on.
 func (h *Handlers) Mount(r chi.Router) {
 	r.Route("/backups", func(r chi.Router) {
 		r.Get("/", h.list)
@@ -47,7 +51,6 @@ func (h *Handlers) Mount(r chi.Router) {
 	})
 	h.MountExports(r)
 	h.MountImports(r)
-	r.Get("/backup-status", h.status)
 	r.Get("/backup-inventory", h.inventory)
 }
 
@@ -432,22 +435,6 @@ func (h *Handlers) inventory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"groups": groups})
-}
-
-// status surfaces feature health for the UI banner: pg_dump
-// resolved version, cipher fingerprint, etc.
-func (h *Handlers) status(w http.ResponseWriter, r *http.Request) {
-	pgVer, err := h.svc.PGVersion(r.Context())
-	resp := map[string]any{
-		"ok":                 err == nil,
-		"key_fingerprint":    h.svc.CipherFingerprint(),
-		"pg_dump_version":    pgVer,
-		"pg_restore_version": h.svc.PgRestoreVersion(r.Context()),
-	}
-	if err != nil {
-		resp["pg_dump_error"] = err.Error()
-	}
-	writeJSON(w, http.StatusOK, resp)
 }
 
 func writeJSON(w http.ResponseWriter, code int, body any) {

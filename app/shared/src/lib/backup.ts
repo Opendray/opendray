@@ -6,7 +6,7 @@
 // at the server level (OPENDRAY_BACKUP_ENABLED + OPENDRAY_BACKUP_KEY
 // are both required to turn it on).
 
-import { api, APIError } from './api'
+import { api } from './api'
 
 export type BackupStatus =
   | 'pending'
@@ -113,22 +113,63 @@ export interface TargetSpec {
   updated_at: string
 }
 
+// Since PR #49 /backup-status always returns 200 — `enabled` tells
+// you whether the feature is actively running, `configured` whether
+// a passphrase is available from any source, and `requires_restart`
+// whether the operator just wrote a key file via the UI and the
+// gateway hasn't picked it up yet. The legacy `ok` field is still
+// here for the live-feature pg_dump health check.
 export interface BackupStatusReport {
-  ok: boolean
-  key_fingerprint: string
-  pg_dump_version: string
+  enabled: boolean
+  configured: boolean
+  configured_via: 'env' | 'file' | ''
+  can_disable_via_ui: boolean
+  requires_restart: boolean
+  key_file_path: string
+  // Populated only when enabled === true.
+  ok?: boolean
+  key_fingerprint?: string
+  pg_dump_version?: string
   pg_dump_error?: string
   pg_restore_version?: string
 }
 
-/** Returns null when the backup feature is disabled (404 from server). */
-export async function fetchBackupStatus(): Promise<BackupStatusReport | null> {
-  try {
-    return await api<BackupStatusReport>('/api/v1/backup-status')
-  } catch (err) {
-    if (err instanceof APIError && err.status === 404) return null
-    throw err
-  }
+export async function fetchBackupStatus(): Promise<BackupStatusReport> {
+  return api<BackupStatusReport>('/api/v1/backup-status')
+}
+
+export interface BackupSetupResult {
+  ok: boolean
+  key_file_path: string
+  requires_restart: boolean
+  /** Server-generated passphrase; only present when mode==='generate'. */
+  passphrase?: string
+}
+
+/** POST /backup-setup. Writes the key file; returns the passphrase
+ * once when mode==='generate'. The operator MUST save it before
+ * continuing — no recovery path exists. */
+export async function postBackupSetup(opts: {
+  mode: 'generate' | 'paste'
+  passphrase?: string
+}): Promise<BackupSetupResult> {
+  return api<BackupSetupResult>('/api/v1/backup-setup', {
+    method: 'POST',
+    body: JSON.stringify(opts),
+    headers: { 'Content-Type': 'application/json' },
+  })
+}
+
+/** POST /backup-setup/disable. Removes the key file (no-op for env-
+ * configured deployments — server rejects with 409 in that case). */
+export async function postBackupDisable(): Promise<{
+  ok: boolean
+  requires_restart: boolean
+}> {
+  return api<{ ok: boolean; requires_restart: boolean }>(
+    '/api/v1/backup-setup/disable',
+    { method: 'POST' },
+  )
 }
 
 export async function listBackups(opts?: {

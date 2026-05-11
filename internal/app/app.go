@@ -279,23 +279,32 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}
 	memoryHandlers := memory.NewHandlers(memorySvc, log)
 
-	// Backup subsystem — disabled by default. Enable by setting
-	// [backup] enabled = true in config.toml (or env
-	// OPENDRAY_BACKUP_ENABLED=1) AND providing a master passphrase
-	// in OPENDRAY_BACKUP_KEY. Without both, the feature stays
-	// completely off (no handlers mounted, no scheduler running),
-	// which the UI surfaces by treating /backup-status 404 as
-	// "feature off — set OPENDRAY_BACKUP_KEY".
+	// Backup subsystem — opt-in. The passphrase resolution chain
+	// (env > KEY_FILE > default keyfile, see internal/backup/keyfile.go)
+	// is the single source of truth: presence of a passphrase from
+	// any source turns the feature on. The legacy [backup] enabled =
+	// true gate is kept only as a "you misconfigured something"
+	// signal — if it's true but no passphrase is available we hard-
+	// fail at startup, which matches the pre-PR-49 behaviour.
+	//
+	// The PR-49 setup-from-UI flow writes the default keyfile and
+	// asks the operator to restart; this branch is what reads it on
+	// the next boot.
+	keyLoad, kerr := backup.LoadPassphrase()
+	if kerr != nil {
+		st.Close()
+		return nil, fmt.Errorf("backup key load: %w", kerr)
+	}
+	if cfg.Backup.Enabled && keyLoad.Passphrase == "" {
+		st.Close()
+		return nil, fmt.Errorf("backup: [backup] enabled = true but no passphrase found in OPENDRAY_BACKUP_KEY, $OPENDRAY_BACKUP_KEY_FILE, or %s", keyLoad.Path)
+	}
 	var (
+		backupSvc       *backup.Service
 		backupHandlers  *backup.Handlers
 		backupScheduler *backup.Scheduler
 	)
-	if cfg.Backup.Enabled {
-		passphrase := os.Getenv("OPENDRAY_BACKUP_KEY")
-		if passphrase == "" {
-			st.Close()
-			return nil, fmt.Errorf("backup: feature enabled but OPENDRAY_BACKUP_KEY not set")
-		}
+	if keyLoad.Passphrase != "" {
 		bcfg := backup.Config{
 			Enabled:       true,
 			LocalDir:      defaultBackupDir(cfg.Backup.LocalDir, "backups"),
@@ -305,7 +314,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		}
 		bsvc, berr := backup.NewService(bcfg, backup.ServiceDeps{
 			Pool:       st.Pool(),
-			Passphrase: passphrase,
+			Passphrase: keyLoad.Passphrase,
 			DSN:        cfg.Database.URL,
 			ConfigPath: cfg.FilePath,
 			Log:        log,
@@ -318,10 +327,12 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			st.Close()
 			return nil, fmt.Errorf("backup bootstrap: %w", err)
 		}
+		backupSvc = bsvc
 		backupHandlers = backup.NewHandlers(bsvc)
 		backupScheduler = backup.NewScheduler(bsvc, 0)
 		log.Info("backup ready",
 			"local_dir", bcfg.LocalDir,
+			"key_source", string(keyLoad.Source),
 			"key_fingerprint", bsvc.CipherFingerprint())
 	}
 
@@ -334,15 +345,13 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// anthropic insert with a clear error in that case. ollama
 	// providers always work.
 	var ambientCipher summarizer.Cipher
-	if cfg.Backup.Enabled {
+	if keyLoad.Passphrase != "" {
 		// Re-derive a service handle just to access Cipher; backup
-		// service was created above when Enabled. We rebuild a
-		// reference here without re-initialising the cipher.
-		passphrase := os.Getenv("OPENDRAY_BACKUP_KEY")
-		if passphrase != "" {
-			if c, cerr := backup.NewCipher(passphrase); cerr == nil {
-				ambientCipher = c
-			}
+		// service was created above when a passphrase is available.
+		// We rebuild a reference here without re-initialising the
+		// cipher.
+		if c, cerr := backup.NewCipher(keyLoad.Passphrase); cerr == nil {
+			ambientCipher = c
 		}
 	}
 	summarizerStore := summarizer.NewStore(st.Pool(), ambientCipher)
@@ -406,6 +415,12 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				auditHandlers.Mount(r)
 				intgrCallLogHandlers.Mount(r)
 				settingsHandlers.Mount(r)
+				// SetupHandlers (status + setup + disable) is always
+				// mounted so the UI can drive an off→on transition
+				// — that's the whole point of PR #49. When backupSvc
+				// is nil the feature didn't initialise and status
+				// reports enabled=false, but setup is still callable.
+				backup.NewSetupHandlers(backupSvc, keyLoad.Source).Mount(r)
 				if backupHandlers != nil {
 					backupHandlers.Mount(r)
 				}

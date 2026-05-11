@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import {
-  Archive,
   ChevronDown,
   ChevronRight,
+  Copy,
+  Dice5,
   Download,
   HardDrive,
   KeyRound,
+  Lock,
   Package,
   Play,
   Plus,
+  RefreshCw,
   RotateCw,
   ShieldAlert,
   Trash2,
@@ -38,6 +41,7 @@ import {
 
 import {
   type Backup,
+  type BackupSetupResult,
   type BackupStatusReport,
   type InventoryGroup,
   type Schedule,
@@ -55,6 +59,7 @@ import {
   listBackups,
   listSchedules,
   listTargets,
+  postBackupSetup,
   restoreBackup,
   testTarget,
   updateSchedule,
@@ -64,26 +69,44 @@ import { APIError } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 export function BackupsView() {
-  const [status, setStatus] = useState<BackupStatusReport | null | undefined>(
-    undefined,
-  )
+  const [status, setStatus] = useState<BackupStatusReport | null>(null)
+
+  // refresh is exposed to the Setup/Restart child views so they can
+  // trigger a re-fetch after writing the key file or restarting the
+  // gateway, without parent/child plumbing.
+  async function refresh() {
+    try {
+      const next = await fetchBackupStatus()
+      setStatus(next)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      toast.error('Failed to load backup status', { description: msg })
+    }
+  }
 
   useEffect(() => {
-    fetchBackupStatus()
-      .then(setStatus)
-      .catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : 'Unknown error'
-        toast.error('Failed to load backup status', { description: msg })
-        setStatus(null)
-      })
+    void refresh()
   }, [])
 
-  if (status === undefined) {
+  if (status === null) {
     return <div className="text-muted-foreground text-sm">Loading…</div>
   }
-  if (status === null) {
-    return <FeatureDisabledBanner />
+
+  // Three-state machine based on the always-200 status payload:
+  //
+  //   enabled=true                          → live dashboard
+  //   enabled=false, requires_restart=true  → restart prompt (key file written, awaiting bounce)
+  //   enabled=false, requires_restart=false → first-time setup wizard
+  //
+  // The boolean fields are computed server-side so we don't have
+  // to repeat the env-vs-file decision tree here.
+  if (!status.enabled) {
+    if (status.requires_restart) {
+      return <RestartRequiredCard status={status} onRecheck={refresh} />
+    }
+    return <SetupWizardCard status={status} onComplete={refresh} />
   }
+
   return (
     <div className="flex flex-col gap-5">
       <StatusBanner status={status} />
@@ -205,23 +228,269 @@ function InventoryCard() {
   )
 }
 
-// ── Status banner ────────────────────────────────────────────────
+// ── Setup wizard + restart prompt ────────────────────────────────
 
-function FeatureDisabledBanner() {
+// Rendered when the operator wrote a key file (via this UI or a
+// prior install) but the gateway hasn't loaded it yet — i.e. the
+// service refuses to fail-and-restart the running process, so the
+// only path to live-backup is a manual bounce. After the operator
+// restarts opendray, the Check-again button picks up the new state.
+function RestartRequiredCard({
+  status,
+  onRecheck,
+}: {
+  status: BackupStatusReport
+  onRecheck: () => void | Promise<void>
+}) {
+  const [busy, setBusy] = useState(false)
+  async function recheck() {
+    setBusy(true)
+    try {
+      await onRecheck()
+    } finally {
+      setBusy(false)
+    }
+  }
   return (
-    <div className="rounded-md border border-state-idle/40 bg-state-idle/10 p-4">
+    <div className="rounded-md border border-accent/30 bg-accent/5 p-5">
       <div className="flex items-start gap-3">
-        <Archive className="size-4 mt-0.5 text-state-idle" />
-        <div className="text-[13px]">
-          <div className="font-medium">Backup feature is disabled</div>
-          <div className="text-muted-foreground mt-1">
-            Set <code className="text-foreground">OPENDRAY_BACKUP_ENABLED=1</code>{' '}
-            and <code className="text-foreground">OPENDRAY_BACKUP_KEY=&lt;passphrase&gt;</code>{' '}
-            in opendray's environment, then restart. Without a master
-            passphrase the server refuses to encrypt or decrypt any
-            backup blob.
+        <RefreshCw className="size-5 mt-0.5 text-accent" />
+        <div className="flex-1">
+          <div className="font-medium">
+            Restart opendray to activate backups
+          </div>
+          <div className="text-muted-foreground text-[13px] mt-1">
+            Your passphrase is saved. The gateway only loads it at startup,
+            so the feature stays off until you bounce the process.
+          </div>
+          {status.configured_via === 'file' && status.key_file_path && (
+            <div className="mt-3 text-[12px]">
+              <span className="text-muted-foreground">Key file:</span>{' '}
+              <code className="text-foreground">{status.key_file_path}</code>
+            </div>
+          )}
+          {status.configured_via === 'env' && (
+            <div className="mt-3 text-[12px]">
+              <span className="text-muted-foreground">Configured via:</span>{' '}
+              <code className="text-foreground">OPENDRAY_BACKUP_KEY</code> env var
+            </div>
+          )}
+          <div className="mt-4 flex gap-2">
+            <Button size="sm" onClick={() => void recheck()} disabled={busy}>
+              <RefreshCw className={cn('size-3.5', busy && 'animate-spin')} />
+              Check again
+            </Button>
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// First-time setup wizard. Mirrors the mobile flow — Generate
+// (server picks random key, returns once) or Paste (operator
+// supplies). On submit the server writes ~/.opendray/secrets/
+// backup.key (0600); the operator restarts the gateway to pick it
+// up; the parent re-fetches status and transitions to either
+// RestartRequiredCard (the natural next step) or directly to the
+// live dashboard if the operator was fast enough to restart
+// concurrently.
+function SetupWizardCard({
+  status,
+  onComplete,
+}: {
+  status: BackupStatusReport
+  onComplete: () => void | Promise<void>
+}) {
+  const [mode, setMode] = useState<'generate' | 'paste'>('generate')
+  const [pasted, setPasted] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  // Result of a successful generate call — must be shown once and
+  // the operator must acknowledge they saved it before we
+  // transition to the next step.
+  const [generated, setGenerated] = useState<BackupSetupResult | null>(null)
+  const [ackSaved, setAckSaved] = useState(false)
+
+  async function submit() {
+    setError(null)
+    setBusy(true)
+    try {
+      const result = await postBackupSetup(
+        mode === 'generate'
+          ? { mode: 'generate' }
+          : { mode: 'paste', passphrase: pasted.trim() },
+      )
+      if (result.passphrase) {
+        // Generate path — show the passphrase for save confirm
+        // before triggering parent refresh.
+        setGenerated(result)
+      } else {
+        // Paste path — caller already knows their passphrase,
+        // skip the confirm step.
+        await onComplete()
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      setError(msg)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (generated) {
+    return (
+      <GeneratedPassphrasePanel
+        result={generated}
+        ackSaved={ackSaved}
+        setAckSaved={setAckSaved}
+        onContinue={() => void onComplete()}
+      />
+    )
+  }
+
+  return (
+    <div className="rounded-md border border-border bg-card p-5">
+      <div className="flex items-center gap-2">
+        <Lock className="size-5 text-accent" />
+        <div className="font-medium">Set up backups</div>
+      </div>
+      <div className="text-muted-foreground text-[13px] mt-2">
+        Choose a master passphrase. opendray uses it to encrypt every backup
+        blob. <strong className="text-foreground">Lose it and your backups
+        become unrecoverable</strong>, so save it in a password manager
+        (Vaultwarden, 1Password, …) before continuing.
+      </div>
+
+      <div className="mt-4 flex gap-2">
+        <Button
+          variant={mode === 'generate' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setMode('generate')}
+        >
+          <Dice5 className="size-3.5" />
+          Generate
+        </Button>
+        <Button
+          variant={mode === 'paste' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setMode('paste')}
+        >
+          <KeyRound className="size-3.5" />
+          Paste my own
+        </Button>
+      </div>
+
+      {mode === 'generate' ? (
+        <div className="mt-4 rounded-md border border-border bg-input/20 p-3 text-[12px]">
+          <div className="font-medium">256-bit random key</div>
+          <div className="text-muted-foreground mt-1">
+            Server generates a cryptographically random passphrase and shows
+            it once. You must copy it before continuing — there is no
+            recovery path.
+          </div>
+        </div>
+      ) : (
+        <div className="mt-4">
+          <Label htmlFor="paste" className="text-[12px]">
+            Your passphrase
+          </Label>
+          <Input
+            id="paste"
+            value={pasted}
+            onChange={(e) => setPasted(e.target.value)}
+            placeholder="At least 20 characters"
+            className="mt-1 font-mono text-[13px]"
+            autoFocus
+          />
+          <div className="text-muted-foreground text-[11px] mt-1">
+            Recommended: 40+ characters from a password manager.
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-3 rounded-md border border-state-failed/40 bg-state-failed/10 p-2 text-[12px] text-state-failed">
+          {error}
+        </div>
+      )}
+
+      <div className="mt-4 flex items-center justify-between gap-3">
+        {status.key_file_path && (
+          <div className="text-muted-foreground text-[11px] truncate">
+            Saves to: <code>{status.key_file_path}</code>
+          </div>
+        )}
+        <Button
+          size="sm"
+          onClick={() => void submit()}
+          disabled={busy || (mode === 'paste' && pasted.trim().length < 20)}
+        >
+          {busy ? 'Saving…' : mode === 'generate' ? 'Generate and save' : 'Save'}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function GeneratedPassphrasePanel({
+  result,
+  ackSaved,
+  setAckSaved,
+  onContinue,
+}: {
+  result: BackupSetupResult
+  ackSaved: boolean
+  setAckSaved: (v: boolean) => void
+  onContinue: () => void
+}) {
+  const pass = result.passphrase ?? ''
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(pass)
+      toast.success('Passphrase copied to clipboard')
+    } catch {
+      toast.error('Copy failed — select and copy manually')
+    }
+  }
+  return (
+    <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-5">
+      <div className="flex items-center gap-2">
+        <ShieldAlert className="size-5 text-amber-500" />
+        <div className="font-medium">Save this passphrase NOW</div>
+      </div>
+      <div className="text-muted-foreground text-[13px] mt-2">
+        This is shown <strong className="text-foreground">once</strong>. It
+        will not be retrievable from opendray or anywhere else. Copy it into
+        a password manager before continuing.
+      </div>
+      <div className="mt-4 rounded-md border border-accent/40 bg-input/30 p-3 font-mono text-[13px] break-all select-all">
+        {pass}
+      </div>
+      <div className="mt-2 flex gap-2">
+        <Button variant="outline" size="sm" onClick={() => void copy()}>
+          <Copy className="size-3.5" />
+          Copy
+        </Button>
+      </div>
+      {result.key_file_path && (
+        <div className="text-muted-foreground text-[11px] mt-3">
+          Saved to: <code>{result.key_file_path}</code>
+        </div>
+      )}
+      <label className="mt-4 flex items-start gap-2 text-[13px] cursor-pointer">
+        <input
+          type="checkbox"
+          checked={ackSaved}
+          onChange={(e) => setAckSaved(e.target.checked)}
+          className="mt-0.5"
+        />
+        <span>I have saved this passphrase to my password manager</span>
+      </label>
+      <div className="mt-4">
+        <Button size="sm" onClick={onContinue} disabled={!ackSaved}>
+          Continue
+        </Button>
       </div>
     </div>
   )

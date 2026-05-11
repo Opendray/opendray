@@ -95,12 +95,19 @@ class BackupSchedule {
   final DateTime createdAt;
 }
 
-// Feature health snapshot from /api/v1/backup-status. Used to show
-// a "you're good to go" / "you're broken" banner at the top of the
-// Backups screen so operators don't push Run now and watch it fail
-// silently when pg_dump isn't on the server's PATH.
+// Full feature state from /api/v1/backup-status. Since PR #49 the
+// endpoint always returns 200 — the boolean fields below tell the
+// client where on the off/on spectrum the server is, so the UI
+// can show a Setup wizard, a Restart prompt, or the live Backup
+// dashboard without ever distinguishing 404 from other errors.
 class BackupStatusReport {
   BackupStatusReport({
+    required this.enabled,
+    required this.configured,
+    required this.configuredVia,
+    required this.canDisableViaUi,
+    required this.requiresRestart,
+    required this.keyFilePath,
     required this.ok,
     required this.keyFingerprint,
     required this.pgDumpVersion,
@@ -110,6 +117,12 @@ class BackupStatusReport {
 
   factory BackupStatusReport.fromJson(Map<String, dynamic> json) =>
       BackupStatusReport(
+        enabled: json['enabled'] as bool? ?? false,
+        configured: json['configured'] as bool? ?? false,
+        configuredVia: json['configured_via'] as String? ?? '',
+        canDisableViaUi: json['can_disable_via_ui'] as bool? ?? false,
+        requiresRestart: json['requires_restart'] as bool? ?? false,
+        keyFilePath: json['key_file_path'] as String? ?? '',
         ok: json['ok'] as bool? ?? false,
         keyFingerprint: json['key_fingerprint'] as String? ?? '',
         pgDumpVersion: json['pg_dump_version'] as String? ?? '',
@@ -117,15 +130,56 @@ class BackupStatusReport {
         pgDumpError: json['pg_dump_error'] as String?,
       );
 
-  // True when pg_dump resolved cleanly. Anything else and Run now
-  // can't actually produce a backup.
+  // True when backup is actively running in the gateway process.
+  final bool enabled;
+  // True when a passphrase is available from any source (env or
+  // file) — orthogonal to `enabled` during the post-setup pre-
+  // restart window.
+  final bool configured;
+  // "env" | "file" | "" — empty means no passphrase configured yet.
+  final String configuredVia;
+  // False when configuredVia == "env" (UI can't unset env vars
+  // out from under the running process).
+  final bool canDisableViaUi;
+  // True when configured but !enabled — i.e. setup just wrote a
+  // key file and the operator needs to restart opendray.
+  final bool requiresRestart;
+  // Canonical default location for the key file. Always populated
+  // so the UI can show "your key will be written to <path>" even
+  // before the first setup call.
+  final String keyFilePath;
+
+  // The next four fields are populated only when enabled=true.
   final bool ok;
-  // Short identifier for the OPENDRAY_BACKUP_KEY currently configured.
-  // Empty string when the feature is disabled (no key set server-side).
   final String keyFingerprint;
   final String pgDumpVersion;
   final String pgRestoreVersion;
   final String? pgDumpError;
+}
+
+// Result of /api/v1/backup-setup. When `passphrase` is non-null it
+// was server-generated (mode=generate) and MUST be saved by the
+// operator before continuing — there's no recovery path if they
+// lose it.
+class BackupSetupResult {
+  BackupSetupResult({
+    required this.keyFilePath,
+    required this.requiresRestart,
+    this.passphrase,
+  });
+
+  factory BackupSetupResult.fromJson(Map<String, dynamic> json) =>
+      BackupSetupResult(
+        keyFilePath: json['key_file_path'] as String? ?? '',
+        requiresRestart: json['requires_restart'] as bool? ?? false,
+        passphrase: json['passphrase'] as String?,
+      );
+
+  final String keyFilePath;
+  final bool requiresRestart;
+  // Only set when mode=generate. Null on paste mode (operator
+  // already knows it).
+  final String? passphrase;
 }
 
 class BackupTarget {
@@ -170,24 +224,49 @@ class BackupsApi {
   BackupsApi(this._dio);
   final Dio _dio;
 
-  // GET /backup-status — feature health snapshot. Cheap (no I/O
-  // beyond exec pg_dump --version once), safe to call on every page
-  // load.
-  //
-  // Returns null when the server responds 404 — that's the
-  // documented signal that backup is compile-disabled (no
-  // OPENDRAY_BACKUP_KEY / Backup.Enabled=false in opendray.toml).
-  // See internal/app/app.go for the comment. The UI uses null to
-  // show a setup-required screen instead of an error.
-  Future<BackupStatusReport?> status() async {
+  // GET /backup-status — always-200 since PR #49. The response
+  // carries explicit booleans (enabled, configured, requires_restart)
+  // so the UI can render the right screen without inferring state
+  // from HTTP error codes.
+  Future<BackupStatusReport> status() async {
     try {
       final res =
           await _dio.get<Map<String, dynamic>>('/api/v1/backup-status');
       return BackupStatusReport.fromJson(res.data ?? {});
     } on Object catch (e) {
-      final apiErr = toApiException(e);
-      if (apiErr.statusCode == 404) return null;
-      throw apiErr;
+      throw toApiException(e);
+    }
+  }
+
+  // POST /backup-setup. mode is either 'generate' (server picks
+  // random key, returns it once) or 'paste' (caller supplies it).
+  // Returns the key file path and requires_restart=true; the
+  // generated passphrase is in result.passphrase iff mode=generate.
+  Future<BackupSetupResult> setup({
+    required String mode,
+    String? passphrase,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/backup-setup',
+        data: {
+          'mode': mode,
+          if (passphrase != null) 'passphrase': passphrase,
+        },
+      );
+      return BackupSetupResult.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /backup-setup/disable. Removes the key file. Refused 409
+  // when bootSource is env (UI can't unset env vars).
+  Future<void> disableSetup() async {
+    try {
+      await _dio.post<void>('/api/v1/backup-setup/disable');
+    } on Object catch (e) {
+      throw toApiException(e);
     }
   }
 
