@@ -26,8 +26,10 @@ on:
 permissions:
   contents: write   # create / append to GitHub release
   id-token: write   # cosign keyless OIDC (Sigstore Fulcio)
-  # NOTE: `packages: write` intentionally omitted — least-privilege.
-  # Add it back in the PR that introduces a GHCR push step.
+  # NOTE: `packages: write` is granted only to the `ghcr` job below.
+  # The `release` job stays at contents+id-token least-privilege; even
+  # if a goreleaser action were ever compromised it could not push to
+  # ghcr.io.
 
 concurrency:
   group: release-${{ github.event.inputs.tag || github.ref }}
@@ -129,3 +131,88 @@ jobs:
         run: gh release upload "$TAG" dist/sbom-opendray.spdx.json --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── GHCR push ────────────────────────────────────────────────────
+  # Builds the multi-arch image from the repo Dockerfile and pushes
+  # to ghcr.io/opendray/opendray with the right semver tag set. Runs
+  # only after the `release` job succeeds, so a goreleaser failure
+  # (broken tag, build error, etc.) prevents an "image without
+  # corresponding GH release" inconsistency.
+  #
+  # Job-scoped permissions: contents: read (private repo checkout),
+  # packages: write (GHCR push). No id-token here — the binary is
+  # already signed at the release-job layer; image signing would be a
+  # follow-up using the same cosign workflow if/when desired.
+  ghcr:
+    name: GHCR push ${{ github.event.inputs.tag || github.ref_name }}
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      # Computed once so VERSION/COMMIT/DATE all match across the run.
+      # github.event.head_commit.timestamp is null on workflow_dispatch,
+      # so derive DATE in-shell rather than from the event payload.
+      - name: Compute build metadata
+        id: meta_build
+        run: |
+          {
+            echo "VERSION=${TAG#v}"
+            echo "COMMIT=$(git rev-parse --short HEAD)"
+            echo "DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130  # v3.7.0
+        with:
+          platforms: arm64
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f  # v3.12.0
+
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9  # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # docker/metadata-action computes the right tag set from the
+      # semver tag. flavor: latest=auto skips :latest on pre-releases
+      # (e.g. v1.0.0-rc1) but tags it on stable versions. For
+      # workflow_dispatch against an old tag, the action does NOT
+      # compare against the registry — it only looks at the input
+      # tag's semver — so dispatching v0.5.0 in 2027 would
+      # incorrectly move :latest. Mitigation: dispatch only the
+      # current/latest tag, or accept that follow-up rebuilds
+      # require a manual `docker tag` to fix :latest afterwards.
+      - uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051  # v5.10.0
+        id: meta
+        with:
+          images: ghcr.io/opendray/opendray
+          flavor: latest=auto
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=ref,event=tag
+
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6.19.2
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          provenance: true
+          sbom: true
+          build-args: |
+            VERSION=${{ steps.meta_build.outputs.VERSION }}
+            COMMIT=${{ steps.meta_build.outputs.COMMIT }}
+            DATE=${{ steps.meta_build.outputs.DATE }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=opendray
+          cache-to: type=gha,scope=opendray,mode=max

@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Release workflow gains a `ghcr` job that builds the multi-arch
+  Dockerfile (linux/amd64 + linux/arm64) and pushes to
+  `ghcr.io/opendray/opendray` on every tag release. Job-scoped
+  `packages: write` (the parent `release` job stays at
+  contents+id-token least-privilege). Tag set covers `:1.0.0`,
+  `:1.0`, `:v1.0.0`, plus `:latest` for non-prerelease semver.
+  SHA-pinned actions throughout, matching the existing release-
+  pipeline pattern.
+
 - `.github/workflows/release.yml` — automated release pipeline.
   Triggers on `v*` tag push (or manually via workflow_dispatch with a
   tag input). Produces a goreleaser draft release with:
