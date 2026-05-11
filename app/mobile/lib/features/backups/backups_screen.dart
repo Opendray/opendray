@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -19,9 +21,31 @@ class BackupsScreen extends ConsumerStatefulWidget {
   ConsumerState<BackupsScreen> createState() => _BackupsScreenState();
 }
 
+// Combined page data loaded in parallel. Keeping a single bundle
+// instead of four separate AsyncValues means the banner / summary /
+// list paint together — no progressive-load flicker on a phone
+// where the whole screen fits above the fold.
+class _PageData {
+  _PageData({
+    required this.status,
+    required this.rows,
+    required this.targets,
+    required this.schedules,
+  });
+
+  final BackupStatusReport status;
+  final List<BackupRow> rows;
+  final List<BackupTarget> targets;
+  final List<BackupSchedule> schedules;
+}
+
 class _BackupsScreenState extends ConsumerState<BackupsScreen> {
-  AsyncValue<List<BackupRow>> _state = const AsyncValue.loading();
+  AsyncValue<_PageData> _state = const AsyncValue.loading();
   bool _running = false;
+  // Active poll for a single-row run-now → succeeded/failed
+  // transition. Cancelled when the screen disposes or the row
+  // settles, so we never leak a pending Timer past pop.
+  Timer? _runPoll;
 
   @override
   void initState() {
@@ -29,19 +53,72 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _runPoll?.cancel();
+    super.dispose();
+  }
+
   Future<void> _load() async {
     setState(() => _state = const AsyncValue.loading());
     try {
-      final list = await ref.read(backupsApiProvider).list(limit: 50);
+      final api = ref.read(backupsApiProvider);
+      // Fan out — four cheap GETs, ~200ms total on a LAN. If the
+      // status endpoint dies the whole screen errors; if a sub-list
+      // fails we still want a usable header, so non-status calls
+      // degrade to empty.
+      final results = await Future.wait<Object>([
+        api.status(),
+        api.list(limit: 50).catchError((_) => <BackupRow>[]),
+        api.listTargets().catchError((_) => <BackupTarget>[]),
+        api.listSchedules().catchError((_) => <BackupSchedule>[]),
+      ]);
       if (!mounted) return;
-      list.sort((a, b) => b.startedAt.compareTo(a.startedAt));
-      setState(() => _state = AsyncValue.data(list));
+      final rows = (results[1] as List<BackupRow>)
+        ..sort((a, b) => b.startedAt.compareTo(a.startedAt));
+      setState(() => _state = AsyncValue.data(_PageData(
+            status: results[0] as BackupStatusReport,
+            rows: rows,
+            targets: results[2] as List<BackupTarget>,
+            schedules: results[3] as List<BackupSchedule>,
+          )));
     } on ApiException catch (e) {
       if (mounted) {
         setState(() => _state = AsyncValue.error(e, StackTrace.current));
       }
     } on Object catch (e, st) {
       if (mounted) setState(() => _state = AsyncValue.error(e, st));
+    }
+  }
+
+  // Lightweight in-place refresh: re-fetches rows + status without
+  // flashing the spinner. Used by the run-now poll and pull-to-
+  // refresh paths. Targets/schedules don't change during a single
+  // dump, so they're skipped.
+  Future<void> _softRefresh() async {
+    final current = _state.valueOrNull;
+    if (current == null) {
+      await _load();
+      return;
+    }
+    try {
+      final api = ref.read(backupsApiProvider);
+      final results = await Future.wait<Object>([
+        api.status(),
+        api.list(limit: 50),
+      ]);
+      if (!mounted) return;
+      final rows = (results[1] as List<BackupRow>)
+        ..sort((a, b) => b.startedAt.compareTo(a.startedAt));
+      setState(() => _state = AsyncValue.data(_PageData(
+            status: results[0] as BackupStatusReport,
+            rows: rows,
+            targets: current.targets,
+            schedules: current.schedules,
+          )));
+    } on Object {
+      // Swallow soft-refresh errors — the page is already
+      // rendered, no point flashing a full-screen error.
     }
   }
 
@@ -74,12 +151,13 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Backup queued (${row.id}).'),
+          content: Text('Backup queued (${row.id}). Watching for progress…'),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
       );
       await _load();
+      if (mounted) _startRunPoll(row.id, messenger);
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
@@ -91,6 +169,64 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     } finally {
       if (mounted) setState(() => _running = false);
     }
+  }
+
+  // After a successful runNow() the row is `pending`. The server
+  // transitions it through `running` → `succeeded`/`failed` async.
+  // Poll every 3s for up to 60s (a typical pg_dump on a dev DB
+  // finishes in well under that; long-running ones get the snackbar
+  // hint and the operator can pull-to-refresh themselves).
+  void _startRunPoll(String rowId, ScaffoldMessengerState messenger) {
+    _runPoll?.cancel();
+    var ticks = 0;
+    const maxTicks = 20; // 20 * 3s = 60s budget.
+    _runPoll = Timer.periodic(const Duration(seconds: 3), (t) async {
+      ticks++;
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      await _softRefresh();
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      final row = _state.valueOrNull?.rows.firstWhere(
+        (r) => r.id == rowId,
+        orElse: () => BackupRow(
+          id: '',
+          targetId: '',
+          status: '',
+          triggeredBy: '',
+          startedAt: DateTime.now().toUtc(),
+          bytes: 0,
+          encrypted: false,
+        ),
+      );
+      final settled =
+          row != null && (row.status == 'succeeded' || row.status == 'failed');
+      if (settled) {
+        t.cancel();
+        _runPoll = null;
+        final ok = row.status == 'succeeded';
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(ok
+                ? 'Backup succeeded (${_formatBytes(row.bytes)}).'
+                : 'Backup failed: ${row.error ?? "unknown error"}'),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: ok ? null : Theme.of(context).colorScheme.error,
+          ),
+        );
+      } else if (ticks >= maxTicks) {
+        t.cancel();
+        _runPoll = null;
+        // Don't fire a "still running" snackbar — too noisy.
+        // The row is on screen with the running chip; operator can
+        // pull-to-refresh.
+      }
+    });
   }
 
   Future<void> _showDetail(BackupRow b) async {
@@ -298,12 +434,14 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
         ],
       ),
       body: _state.when(
-        data: _buildList,
+        data: _buildBody,
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _running ? null : _runNow,
+        // Disable Run now when pg_dump is broken or no targets are
+        // configured — clicking it would just produce a failed row.
+        onPressed: _canRunNow() ? _runNow : null,
         icon: _running
             ? const SizedBox(
                 width: 16,
@@ -316,29 +454,88 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     );
   }
 
-  Widget _buildList(List<BackupRow> list) {
-    if (list.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            'No backups yet.\n\nTap "Run now" to take a fresh snapshot.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ),
-      );
-    }
+  bool _canRunNow() {
+    if (_running) return false;
+    final data = _state.valueOrNull;
+    if (data == null) return false;
+    if (!data.status.ok) return false;
+    final hasEnabledTarget = data.targets.any((t) => t.enabled);
+    return hasEnabledTarget;
+  }
+
+  Widget _buildBody(_PageData data) {
+    final list = data.rows;
+    // Always render a scrollable surface so pull-to-refresh works
+    // even when the list is empty.
     return RefreshIndicator(
       onRefresh: _load,
-      child: ListView.separated(
-        itemCount: list.length,
-        separatorBuilder: (_, __) => Divider(
-          height: 1,
-          color: Theme.of(context).dividerColor,
-        ),
-        itemBuilder: (_, i) =>
-            _BackupTile(row: list[i], onTap: () => _showDetail(list[i])),
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          _StatusBanner(status: data.status),
+          _SummaryCard(
+            status: data.status,
+            targets: data.targets,
+            schedules: data.schedules,
+            rows: data.rows,
+          ),
+          if (list.isEmpty)
+            _emptyState(data)
+          else
+            ...list.map(
+              (r) => Column(
+                children: [
+                  _BackupTile(row: r, onTap: () => _showDetail(r)),
+                  Divider(height: 1, color: Theme.of(context).dividerColor),
+                ],
+              ),
+            ),
+          // Footer padding so the FAB doesn't cover the last row.
+          const SizedBox(height: 96),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyState(_PageData data) {
+    final hasTargets = data.targets.any((t) => t.enabled);
+    final pgOk = data.status.ok;
+    final theme = Theme.of(context);
+    String headline;
+    String body;
+    IconData icon;
+    if (!pgOk) {
+      icon = Icons.error_outline;
+      headline = "Backups can't run yet";
+      body = data.status.pgDumpError ??
+          'pg_dump is not available on the server. '
+              'Install postgresql-client and restart opendray.';
+    } else if (!hasTargets) {
+      icon = Icons.cloud_off_outlined;
+      headline = 'No backup targets configured';
+      body =
+          'Open the More menu → Targets to add a destination (local / S3 / SMB / SFTP / WebDAV / rclone). '
+          'Then come back and tap "Run now".';
+    } else {
+      icon = Icons.archive_outlined;
+      headline = 'No backups yet';
+      body = 'Tap "Run now" to take a fresh snapshot, or open '
+          'Schedules to set up recurring runs.';
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+      child: Column(
+        children: [
+          Icon(icon, size: 48, color: theme.colorScheme.outline),
+          const SizedBox(height: 12),
+          Text(headline,
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center),
+          const SizedBox(height: 6),
+          Text(body,
+              style: theme.textTheme.bodySmall,
+              textAlign: TextAlign.center),
+        ],
       ),
     );
   }
@@ -347,6 +544,217 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
 enum _DetailAction { close, delete }
 
 enum _AppBarAction { schedules, targets }
+
+// Feature-health banner. Renders red when pg_dump is unavailable
+// (with the underlying error so the operator can fix it from the
+// server), green otherwise with the pg_dump version + cipher key
+// fingerprint so they can confirm "backups can run AND will be
+// encrypted with the key I think they're encrypted with."
+class _StatusBanner extends StatelessWidget {
+  const _StatusBanner({required this.status});
+  final BackupStatusReport status;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final ok = status.ok;
+    final color = ok ? Colors.green : theme.colorScheme.error;
+    final bg = color.withValues(alpha: 0.10);
+    final border = color.withValues(alpha: 0.45);
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(ok ? Icons.check_circle_outline : Icons.error_outline,
+                  size: 18, color: color),
+              const SizedBox(width: 8),
+              Text(
+                ok ? 'Backups ready' : 'Backups cannot run',
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (ok) ...[
+            _kvRow(context, 'pg_dump', status.pgDumpVersion),
+            const SizedBox(height: 4),
+            _kvRow(
+              context,
+              'key fingerprint',
+              status.keyFingerprint.isEmpty ? '—' : status.keyFingerprint,
+              mono: true,
+            ),
+          ] else
+            Text(
+              status.pgDumpError ??
+                  'pg_dump is not on PATH. Install postgresql-client '
+                      'on the server and restart opendray.',
+              style: theme.textTheme.bodySmall?.copyWith(color: color),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _kvRow(BuildContext context, String label, String value,
+      {bool mono = false}) {
+    final muted = Theme.of(context).textTheme.bodySmall;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 110,
+          child: Text(label, style: muted),
+        ),
+        Expanded(
+          child: SelectableText(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontFamily: mono ? 'monospace' : null,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// "Where do I stand" overview: targets, schedules, total runs,
+// disk usage. Each tile tappable into the corresponding sub-page
+// where it makes sense.
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({
+    required this.status,
+    required this.targets,
+    required this.schedules,
+    required this.rows,
+  });
+  final BackupStatusReport status;
+  final List<BackupTarget> targets;
+  final List<BackupSchedule> schedules;
+  final List<BackupRow> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final targetsEnabled = targets.where((t) => t.enabled).length;
+    final schedulesEnabled = schedules.where((s) => s.enabled).length;
+    final liveRows = rows.where((r) => r.status != 'deleted').toList();
+    final totalBytes =
+        liveRows.fold<int>(0, (acc, r) => acc + (r.bytes > 0 ? r.bytes : 0));
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Row(
+        children: [
+          _SummaryTile(
+            icon: Icons.cloud_outlined,
+            label: 'Targets',
+            value: '$targetsEnabled / ${targets.length}',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const BackupTargetsScreen(),
+              ),
+            ),
+          ),
+          _Divider(),
+          _SummaryTile(
+            icon: Icons.schedule_outlined,
+            label: 'Schedules',
+            value: '$schedulesEnabled / ${schedules.length}',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const BackupSchedulesScreen(),
+              ),
+            ),
+          ),
+          _Divider(),
+          _SummaryTile(
+            icon: Icons.archive_outlined,
+            label: 'Backups',
+            value: '${liveRows.length}',
+            sub: _formatBytes(totalBytes),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Divider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 44,
+      color: Theme.of(context).dividerColor,
+    );
+  }
+}
+
+class _SummaryTile extends StatelessWidget {
+  const _SummaryTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.sub,
+    this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final String value;
+  final String? sub;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          child: Column(
+            children: [
+              Icon(icon, size: 18, color: theme.colorScheme.outline),
+              const SizedBox(height: 4),
+              Text(label,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: theme.colorScheme.outline)),
+              const SizedBox(height: 2),
+              Text(value,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600)),
+              if (sub != null)
+                Text(sub!,
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: theme.colorScheme.outline)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _BackupTile extends StatelessWidget {
   const _BackupTile({required this.row, required this.onTap});

@@ -95,6 +95,39 @@ class BackupSchedule {
   final DateTime createdAt;
 }
 
+// Feature health snapshot from /api/v1/backup-status. Used to show
+// a "you're good to go" / "you're broken" banner at the top of the
+// Backups screen so operators don't push Run now and watch it fail
+// silently when pg_dump isn't on the server's PATH.
+class BackupStatusReport {
+  BackupStatusReport({
+    required this.ok,
+    required this.keyFingerprint,
+    required this.pgDumpVersion,
+    required this.pgRestoreVersion,
+    this.pgDumpError,
+  });
+
+  factory BackupStatusReport.fromJson(Map<String, dynamic> json) =>
+      BackupStatusReport(
+        ok: json['ok'] as bool? ?? false,
+        keyFingerprint: json['key_fingerprint'] as String? ?? '',
+        pgDumpVersion: json['pg_dump_version'] as String? ?? '',
+        pgRestoreVersion: json['pg_restore_version'] as String? ?? '',
+        pgDumpError: json['pg_dump_error'] as String?,
+      );
+
+  // True when pg_dump resolved cleanly. Anything else and Run now
+  // can't actually produce a backup.
+  final bool ok;
+  // Short identifier for the OPENDRAY_BACKUP_KEY currently configured.
+  // Empty string when the feature is disabled (no key set server-side).
+  final String keyFingerprint;
+  final String pgDumpVersion;
+  final String pgRestoreVersion;
+  final String? pgDumpError;
+}
+
 class BackupTarget {
   BackupTarget({
     required this.id,
@@ -136,6 +169,20 @@ class BackupTarget {
 class BackupsApi {
   BackupsApi(this._dio);
   final Dio _dio;
+
+  // GET /backup-status — feature health snapshot. Cheap (no I/O
+  // beyond exec pg_dump --version once), safe to call on every page
+  // load. Returns null only when the endpoint itself is unreachable,
+  // which we treat as "show generic load error" rather than guessing.
+  Future<BackupStatusReport> status() async {
+    try {
+      final res =
+          await _dio.get<Map<String, dynamic>>('/api/v1/backup-status');
+      return BackupStatusReport.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
 
   Future<List<BackupRow>> list({int limit = 50, String? status}) async {
     try {
