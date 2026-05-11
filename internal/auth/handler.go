@@ -32,6 +32,7 @@ func NewHandlers(svc *Service, log *slog.Logger) *Handlers {
 // — chi panics on a second Mount() of the same prefix.
 func (h *Handlers) MountPublic(r chi.Router) {
 	r.Post("/auth/login", h.login)
+	r.Post("/auth/mobile-login", h.mobileLogin)
 }
 
 // MountProtected mounts endpoints that require a valid bearer token.
@@ -54,12 +55,28 @@ type loginResponse struct {
 }
 
 func (h *Handlers) login(w http.ResponseWriter, r *http.Request) {
+	h.handleLogin(w, r, h.svc.Login)
+}
+
+// mobileLogin issues a longer-TTL token (default 30d) for the
+// Flutter mobile app. Same request/response shape as /auth/login;
+// only the token lifetime differs. See ADR 0017 §5 (and ADR 0015 §5
+// for the original — superseded — auth design rationale).
+func (h *Handlers) mobileLogin(w http.ResponseWriter, r *http.Request) {
+	h.handleLogin(w, r, h.svc.LoginMobile)
+}
+
+func (h *Handlers) handleLogin(
+	w http.ResponseWriter,
+	r *http.Request,
+	loginFn func(user, password string) (string, TokenInfo, error),
+) {
 	var req loginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
-	tok, info, err := h.svc.Login(req.Username, req.Password)
+	tok, info, err := loginFn(req.Username, req.Password)
 	if errors.Is(err, ErrInvalidCredentials) {
 		writeError(w, http.StatusUnauthorized, err)
 		return

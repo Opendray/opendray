@@ -1,0 +1,20 @@
+{
+  "name": "shared",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Cross-surface logic for opendray-v2: REST/WS clients, domain types, Zustand stores. Consumed as TypeScript source by both `web` and `mobile` Vite builds — no separate compile step.",
+  "type": "module",
+  "exports": {
+    "./lib/*": "./src/lib/*.ts",
+    "./stores/*": "./src/stores/*.ts"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "highlight.js": "^11.11.1",
+    "lucide-react": "^1.14.0",
+    "simple-icons": "^16.18.1",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.5.0",
+    "zustand": "^5.0.12"
+  }
+}

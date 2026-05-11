@@ -17,7 +17,7 @@ import {
 
 import { cn } from '@/lib/utils'
 import { useLayout } from '@/stores/layout'
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface NavItem {
   to: string

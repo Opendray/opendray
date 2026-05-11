@@ -1,0 +1,6 @@
+# Monorepo workspace definition. JS / TS packages live under app/*;
+# pnpm picks up any subdirectory containing a package.json. The
+# Flutter mobile project at app/mobile/ uses pubspec.yaml instead
+# and is silently ignored by pnpm (see ADR 0016).
+packages:
+  - "app/*"

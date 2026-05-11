@@ -20,8 +20,11 @@
     "noFallthroughCasesInSwitch": true,
 
     "paths": {
+      "@/lib/*": ["../shared/src/lib/*"],
+      "@/stores/*": ["../shared/src/stores/*"],
+      "@/components/ui/*": ["../shared-ui/src/primitives/*"],
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "../shared/src", "../shared-ui/src/primitives"]
 }

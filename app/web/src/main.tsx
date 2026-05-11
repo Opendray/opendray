@@ -5,8 +5,8 @@ import { RouterProvider } from '@tanstack/react-router'
 
 import './index.css'
 import { router } from './router'
-import { Toaster } from './components/ui/sonner'
-import './stores/theme' // side-effect: apply persisted theme
+import { Toaster } from '@/components/ui/sonner'
+import '@/stores/theme' // side-effect: apply persisted theme
 
 const queryClient = new QueryClient({
   defaultOptions: {

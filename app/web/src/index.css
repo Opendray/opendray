@@ -1,6 +1,16 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Tailwind v4 by default scans only files under the directory of
+ * this CSS entry. The monorepo's UI primitives live in sibling
+ * workspace packages, so add explicit @source declarations or any
+ * arbitrary class used over there (e.g. w-[calc(100vw-2rem)]
+ * in shared-ui/src/primitives/dialog.tsx) silently won't make it
+ * into the production bundle — the className lands on the element
+ * but the matching CSS rule is missing. */
+@source "../../shared-ui/src/**/*.{ts,tsx}";
+@source "../../shared/src/**/*.{ts,tsx}";
+
 @custom-variant dark (&:is(.dark *));
 
 /* Light theme — used when html.dark is absent. */

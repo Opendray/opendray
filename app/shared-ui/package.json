@@ -1,0 +1,33 @@
+{
+  "name": "shared-ui",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Cross-surface React components for opendray-v2: shadcn-derived primitives, layouts, and patterns. Consumed as TypeScript source by both `web` and `mobile` Vite builds — no separate compile step.",
+  "type": "module",
+  "exports": {
+    "./primitives/*": "./src/primitives/*.tsx"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-scroll-area": "^1.2.10",
+    "@radix-ui/react-select": "^2.2.6",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-switch": "^1.2.6",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "@radix-ui/react-tooltip": "^1.2.8",
+    "class-variance-authority": "^0.7.1",
+    "cmdk": "^1.1.1",
+    "lucide-react": "^1.14.0",
+    "shared": "workspace:*",
+    "sonner": "^2.0.7"
+  },
+  "peerDependencies": {
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3"
+  }
+}
