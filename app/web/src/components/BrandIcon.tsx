@@ -111,6 +111,33 @@ export interface BrandIconProps {
 	title?: string
 }
 
+// Keys whose curated SVG lives at app/web/public/icons/<key>.svg
+// (served at /admin/icons/<key>.svg in production). When set, BrandIcon
+// prefers the on-disk asset over the inline path because operator-
+// supplied SVGs are pixel-exact to the upstream brand mark, while the
+// inline paths are the abbreviated-by-hand fallbacks.
+const CURATED = new Set([
+	'claude',
+	'gemini',
+	'openai',
+	'shell',
+	'slack',
+	'dingtalk',
+	'feishu',
+	'wecom',
+])
+
+// Curated SVGs that ship as monochrome black (#000000). On the
+// admin's dark theme these need `invert` so the glyph reads against
+// the popover surface. Multi-colour curated SVGs (claude orange,
+// gemini gem, slack 4-colour) carry their own ink and are excluded.
+const CURATED_MONOCHROME_DARK_INVERT = new Set([
+	'openai',
+	'shell',
+	'dingtalk',
+	'feishu',
+])
+
 /**
  * Resolve an iconKey to its IconData record, regardless of source.
  * Returns null when the key is unknown so the caller can render a
@@ -122,6 +149,12 @@ function resolve(iconKey: string | undefined): IconData | null {
 	return SIMPLE[k] ?? INLINE[k] ?? null
 }
 
+/** True when the key has a curated SVG asset on disk. */
+export function hasCuratedSvg(iconKey: string | undefined): boolean {
+	if (!iconKey) return false
+	return CURATED.has(iconKey.toLowerCase())
+}
+
 export function BrandIcon({
 	iconKey,
 	size = 16,
@@ -130,6 +163,34 @@ export function BrandIcon({
 	tone = 'normal',
 	title,
 }: BrandIconProps) {
+	const k = iconKey?.toLowerCase()
+
+	// Curated SVG path — use the operator-supplied asset under
+	// /admin/icons/<key>.svg. Skips colour/tone overrides because the
+	// asset's own colours are the point of using it.
+	if (k && CURATED.has(k)) {
+		const invert = CURATED_MONOCHROME_DARK_INVERT.has(k)
+		const opacity = tone === 'muted' ? 0.72 : 1
+		const cls = [
+			'inline-block object-contain',
+			invert ? 'dark:invert dark:brightness-90' : '',
+			className ?? '',
+		]
+			.filter(Boolean)
+			.join(' ')
+		return (
+			<img
+				src={`/admin/icons/${k}.svg`}
+				width={size}
+				height={size}
+				alt={title ?? k}
+				title={title}
+				className={cls}
+				style={{ width: size, height: size, opacity }}
+			/>
+		)
+	}
+
 	const data = resolve(iconKey)
 	if (!data) return null
 
