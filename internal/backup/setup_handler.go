@@ -23,6 +23,7 @@
 package backup
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -37,28 +38,27 @@ import (
 
 // SetupHandlers — see file header. Always-mountable.
 //
-// Carries a concrete *Service rather than an interface so callers
-// can pass an untyped nil (e.g. `NewSetupHandlers(nil, ...)`)
-// without tripping the classic interface-holding-typed-nil gotcha
-// — `h.svc != nil` checks below mean exactly what they look like.
+// Carries a *LiveBackup whose Service() pointer flips at runtime
+// in response to /backup-setup and /backup-setup/disable. The
+// status endpoint reads live state via that pointer; setup/disable
+// arm/disarm it directly.
 type SetupHandlers struct {
-	// svc is non-nil iff the feature is currently active in this
-	// process. When nil, only Setup + status (with enabled=false)
-	// work; the live data routes (list/run/etc.) aren't wired.
-	svc *Service
+	live *LiveBackup
 	// bootSource records how (or whether) the passphrase was
 	// loaded at app start. The UI uses this to choose between
 	// "Setup" (no source) and "Already configured via env / file"
-	// flows — the latter has limited disable-via-UI capability.
+	// flows — the env case has limited disable-via-UI capability
+	// (we can't unset an env var in our parent process).
 	bootSource KeySource
 }
 
-// NewSetupHandlers constructs SetupHandlers. Pass nil svc when the
-// backup feature failed to load (no passphrase). Pass bootSource
-// from the LoadPassphrase call in app startup so the UI can
-// distinguish env-var vs file-loaded deployments.
-func NewSetupHandlers(svc *Service, bootSource KeySource) *SetupHandlers {
-	return &SetupHandlers{svc: svc, bootSource: bootSource}
+// NewSetupHandlers constructs SetupHandlers. live must be non-nil
+// (it's the single shared lifecycle handle the rest of the app
+// uses too). bootSource comes from the LoadPassphrase call in app
+// startup so the UI can distinguish env-var vs file-loaded
+// deployments.
+func NewSetupHandlers(live *LiveBackup, bootSource KeySource) *SetupHandlers {
+	return &SetupHandlers{live: live, bootSource: bootSource}
 }
 
 // Mount the three always-on endpoints under r. The caller is
@@ -91,27 +91,30 @@ func (h *SetupHandlers) Mount(r chi.Router) {
 //	pg_dump_error       string   — only on !ok
 func (h *SetupHandlers) status(w http.ResponseWriter, r *http.Request) {
 	keyPath, _ := DefaultKeyFilePath()
-	// Re-check disk state on every call rather than caching boot
-	// state: if the operator wrote the file via /backup-setup,
-	// hits status before restart, the response should reflect
-	// "configured but not yet enabled" — i.e. requires_restart.
+	// Re-check disk state on every call so we don't lie about
+	// "configured" right after a /backup-setup/disable.
 	currentLoad, _ := LoadPassphrase()
 
+	svc := h.live.Service()
 	resp := map[string]any{
-		"enabled":            h.svc != nil,
+		"enabled":            svc != nil,
 		"configured":         currentLoad.Passphrase != "",
 		"configured_via":     string(currentLoad.Source),
 		"can_disable_via_ui": currentLoad.Source == KeySourceFile,
-		"requires_restart":   h.svc == nil && currentLoad.Passphrase != "",
-		"key_file_path":      keyPath,
+		// requires_restart now only fires for the env-var edge
+		// case: an operator set OPENDRAY_BACKUP_KEY but hasn't
+		// restarted the process yet. The file path is handled
+		// in-process by Arm/Disarm so it doesn't trigger this.
+		"requires_restart": svc == nil && currentLoad.Source == KeySourceEnv,
+		"key_file_path":    keyPath,
 	}
 
-	if h.svc != nil {
-		pgVer, err := h.svc.PGVersion(r.Context())
+	if svc != nil {
+		pgVer, err := svc.PGVersion(r.Context())
 		resp["ok"] = err == nil
-		resp["key_fingerprint"] = h.svc.CipherFingerprint()
+		resp["key_fingerprint"] = svc.CipherFingerprint()
 		resp["pg_dump_version"] = pgVer
-		resp["pg_restore_version"] = h.svc.PgRestoreVersion(r.Context())
+		resp["pg_restore_version"] = svc.PgRestoreVersion(r.Context())
 		if err != nil {
 			resp["pg_dump_error"] = err.Error()
 		}
@@ -204,10 +207,27 @@ func (h *SetupHandlers) setup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Hot-arm: build a fresh Service + scheduler in-process and
+	// activate the data routes. r.Context() is request-scoped, so
+	// we pass context.Background() for the scheduler — it needs
+	// to outlive this request. (The scheduler ends when the
+	// LiveBackup gets Disarmed or the process exits.)
+	if err := h.live.Arm(context.Background(), passphrase); err != nil {
+		// Roll back the keyfile so the next /backup-status report
+		// doesn't show "configured" while the feature is actually
+		// in a broken half-state. The operator should see a clean
+		// error and try again.
+		_ = RemoveKeyFile()
+		writeError(w, http.StatusInternalServerError,
+			fmt.Errorf("arm backup feature: %w", err))
+		return
+	}
+
 	resp := map[string]any{
 		"ok":               true,
 		"key_file_path":    path,
-		"requires_restart": true,
+		"enabled":          true,
+		"requires_restart": false,
 	}
 	// Only return the passphrase on `generate` — pasted ones are
 	// already known to the caller. Returning it twice would give
@@ -238,9 +258,14 @@ func (h *SetupHandlers) disable(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
+	// Hot-disarm: stops the scheduler goroutine and flips the
+	// Service pointer to nil. Subsequent requests to /backups etc.
+	// get 503 via requireArmed middleware.
+	h.live.Disarm()
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":               true,
-		"requires_restart": h.svc != nil, // only need restart if the feature is currently on
+		"enabled":          false,
+		"requires_restart": false,
 	})
 }
 

@@ -26,7 +26,7 @@ func (h *Handlers) listImports(w http.ResponseWriter, r *http.Request) {
 			limit = n
 		}
 	}
-	list, err := h.svc.ListImports(r.Context(), limit)
+	list, err := h.live.Service().ListImports(r.Context(), limit)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -39,7 +39,7 @@ func (h *Handlers) listImports(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) getImport(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	imp, err := h.svc.GetImport(r.Context(), id)
+	imp, err := h.live.Service().GetImport(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, ErrImportNotFound) {
 			writeError(w, http.StatusNotFound, err)
@@ -74,7 +74,7 @@ func (h *Handlers) createImport(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	imp, err := h.svc.ImportBundle(r.Context(), ImportRequest{
+	imp, err := h.live.Service().ImportBundle(r.Context(), ImportRequest{
 		Source:       file,
 		Filename:     hdr.Filename,
 		RequestedBy:  r.FormValue("requested_by"),

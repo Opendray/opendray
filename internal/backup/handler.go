@@ -11,14 +11,21 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// Handlers wires Service onto the chi router. Caller mounts under
-// the admin-only group — every endpoint here assumes the caller is
-// already authenticated as the operator.
+// Handlers wires the backup data routes onto the chi router. The
+// caller mounts under the admin-only group — every endpoint here
+// assumes the caller is already authenticated as the operator.
+//
+// Since PR #50 the Handlers struct doesn't directly hold a Service
+// — it holds a *LiveBackup whose Service() pointer can be flipped
+// at runtime by /backup-setup. The requireArmed middleware short-
+// circuits requests with 503 when the feature isn't currently
+// enabled, so individual handler methods can assume Service() is
+// non-nil.
 type Handlers struct {
-	svc *Service
+	live *LiveBackup
 }
 
-func NewHandlers(svc *Service) *Handlers { return &Handlers{svc: svc} }
+func NewHandlers(live *LiveBackup) *Handlers { return &Handlers{live: live} }
 
 // Mount registers /backups, /backup-targets, /backup-schedules,
 // /backup-inventory under r. The /backup-status, /backup-setup,
@@ -26,32 +33,57 @@ func NewHandlers(svc *Service) *Handlers { return &Handlers{svc: svc} }
 // setup_handler.go) so they can be mounted even when the feature
 // is off — that's how an operator who hasn't configured backups
 // yet can use the UI to turn them on.
+//
+// All routes are wrapped in a Group with the requireArmed
+// middleware so a request that arrives while the LiveBackup is
+// disarmed gets a clean 503 instead of a nil-deref panic.
 func (h *Handlers) Mount(r chi.Router) {
-	r.Route("/backups", func(r chi.Router) {
-		r.Get("/", h.list)
-		r.Post("/", h.create)
-		r.Post("/restore", h.restore)
-		r.Get("/{id}", h.get)
-		r.Get("/{id}/download", h.download)
-		r.Delete("/{id}", h.delete)
+	r.Group(func(r chi.Router) {
+		r.Use(h.requireArmed)
+		r.Route("/backups", func(r chi.Router) {
+			r.Get("/", h.list)
+			r.Post("/", h.create)
+			r.Post("/restore", h.restore)
+			r.Get("/{id}", h.get)
+			r.Get("/{id}/download", h.download)
+			r.Delete("/{id}", h.delete)
+		})
+		r.Route("/backup-schedules", func(r chi.Router) {
+			r.Get("/", h.listSchedules)
+			r.Post("/", h.createSchedule)
+			r.Get("/{id}", h.getSchedule)
+			r.Patch("/{id}", h.updateSchedule)
+			r.Delete("/{id}", h.deleteSchedule)
+		})
+		r.Route("/backup-targets", func(r chi.Router) {
+			r.Get("/", h.listTargets)
+			r.Post("/", h.createTarget)
+			r.Patch("/{id}", h.updateTarget)
+			r.Delete("/{id}", h.deleteTarget)
+			r.Post("/{id}/test", h.testTarget)
+		})
+		h.MountExports(r)
+		h.MountImports(r)
+		r.Get("/backup-inventory", h.inventory)
 	})
-	r.Route("/backup-schedules", func(r chi.Router) {
-		r.Get("/", h.listSchedules)
-		r.Post("/", h.createSchedule)
-		r.Get("/{id}", h.getSchedule)
-		r.Patch("/{id}", h.updateSchedule)
-		r.Delete("/{id}", h.deleteSchedule)
+}
+
+// requireArmed shortcircuits requests with 503 when the LiveBackup
+// is disarmed — the operator hasn't set up a passphrase yet, or
+// just hit /backup-setup/disable. Returning 503 (rather than 404)
+// matches HTTP semantics: the endpoint exists, it just isn't
+// currently accepting work. Mobile/web clients use it as the
+// signal to drop back to the Setup wizard.
+func (h *Handlers) requireArmed(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if h.live.Service() == nil {
+			writeJSON(w, http.StatusServiceUnavailable, map[string]string{
+				"error": "backup feature is not enabled — set it up via the admin UI or set OPENDRAY_BACKUP_KEY and restart",
+			})
+			return
+		}
+		next.ServeHTTP(w, r)
 	})
-	r.Route("/backup-targets", func(r chi.Router) {
-		r.Get("/", h.listTargets)
-		r.Post("/", h.createTarget)
-		r.Patch("/{id}", h.updateTarget)
-		r.Delete("/{id}", h.deleteTarget)
-		r.Post("/{id}/test", h.testTarget)
-	})
-	h.MountExports(r)
-	h.MountImports(r)
-	r.Get("/backup-inventory", h.inventory)
 }
 
 // list serves GET /backups. Filters: ?status=&target_id=&limit=.
@@ -68,7 +100,7 @@ func (h *Handlers) list(w http.ResponseWriter, r *http.Request) {
 			f.Limit = n
 		}
 	}
-	list, err := h.svc.ListBackups(r.Context(), f)
+	list, err := h.live.Service().ListBackups(r.Context(), f)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -82,7 +114,7 @@ func (h *Handlers) list(w http.ResponseWriter, r *http.Request) {
 // get serves GET /backups/{id}.
 func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	b, err := h.svc.GetBackup(r.Context(), id)
+	b, err := h.live.Service().GetBackup(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, ErrBackupNotFound) {
 			writeError(w, http.StatusNotFound, err)
@@ -108,7 +140,7 @@ func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 	if req.TargetID == "" {
 		req.TargetID = "local"
 	}
-	b, err := h.svc.RunBackupNow(r.Context(), RunBackupRequest{
+	b, err := h.live.Service().RunBackupNow(r.Context(), RunBackupRequest{
 		TargetID:      req.TargetID,
 		TriggeredBy:   TriggeredAPI,
 		IncludeConfig: req.IncludeConfig,
@@ -131,7 +163,7 @@ func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 // (encrypted) bundle blob with octet-stream headers.
 func (h *Handlers) download(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	rc, b, err := h.svc.DownloadBackup(r.Context(), id)
+	rc, b, err := h.live.Service().DownloadBackup(r.Context(), id)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrBackupNotFound), errors.Is(err, ErrTargetNotFound):
@@ -158,7 +190,7 @@ func (h *Handlers) download(w http.ResponseWriter, r *http.Request) {
 // best-effort removes the blob from its target.
 func (h *Handlers) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	if err := h.svc.DeleteBackup(r.Context(), id); err != nil {
+	if err := h.live.Service().DeleteBackup(r.Context(), id); err != nil {
 		if errors.Is(err, ErrBackupNotFound) {
 			writeError(w, http.StatusNotFound, err)
 			return
@@ -172,7 +204,7 @@ func (h *Handlers) delete(w http.ResponseWriter, r *http.Request) {
 // ─── schedules ────────────────────────────────────────────────────
 
 func (h *Handlers) listSchedules(w http.ResponseWriter, r *http.Request) {
-	list, err := h.svc.ListSchedules(r.Context())
+	list, err := h.live.Service().ListSchedules(r.Context())
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -185,7 +217,7 @@ func (h *Handlers) listSchedules(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) getSchedule(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	sc, err := h.svc.GetSchedule(r.Context(), id)
+	sc, err := h.live.Service().GetSchedule(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, ErrScheduleNotFound) {
 			writeError(w, http.StatusNotFound, err)
@@ -211,7 +243,7 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 	if req.Retention == 0 {
 		req.Retention = 7
 	}
-	sc, err := h.svc.CreateSchedule(r.Context(), CreateScheduleRequest{
+	sc, err := h.live.Service().CreateSchedule(r.Context(), CreateScheduleRequest{
 		TargetID:    req.TargetID,
 		IntervalSec: req.IntervalSec,
 		Retention:   req.Retention,
@@ -239,7 +271,7 @@ func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid body: %w", err))
 		return
 	}
-	if err := h.svc.UpdateSchedule(r.Context(), id, SchedulePatch{
+	if err := h.live.Service().UpdateSchedule(r.Context(), id, SchedulePatch{
 		IntervalSec: req.IntervalSec,
 		Retention:   req.Retention,
 		Enabled:     req.Enabled,
@@ -247,7 +279,7 @@ func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
-	sc, err := h.svc.GetSchedule(r.Context(), id)
+	sc, err := h.live.Service().GetSchedule(r.Context(), id)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -257,7 +289,7 @@ func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) deleteSchedule(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	if err := h.svc.DeleteSchedule(r.Context(), id); err != nil {
+	if err := h.live.Service().DeleteSchedule(r.Context(), id); err != nil {
 		if errors.Is(err, ErrScheduleNotFound) {
 			writeError(w, http.StatusNotFound, err)
 			return
@@ -272,7 +304,7 @@ func (h *Handlers) deleteSchedule(w http.ResponseWriter, r *http.Request) {
 
 // listTargets serves GET /backup-targets.
 func (h *Handlers) listTargets(w http.ResponseWriter, r *http.Request) {
-	list, err := h.svc.ListTargets(r.Context())
+	list, err := h.live.Service().ListTargets(r.Context())
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -294,7 +326,7 @@ func (h *Handlers) createTarget(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid body: %w", err))
 		return
 	}
-	spec, err := h.svc.CreateTarget(r.Context(), CreateTargetRequest{
+	spec, err := h.live.Service().CreateTarget(r.Context(), CreateTargetRequest{
 		ID:      req.ID,
 		Kind:    req.Kind,
 		Config:  req.Config,
@@ -322,7 +354,7 @@ func (h *Handlers) updateTarget(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid body: %w", err))
 		return
 	}
-	spec, err := h.svc.UpdateTarget(r.Context(), id, UpdateTargetRequest{
+	spec, err := h.live.Service().UpdateTarget(r.Context(), id, UpdateTargetRequest{
 		Config:  req.Config,
 		Enabled: req.Enabled,
 	})
@@ -339,7 +371,7 @@ func (h *Handlers) updateTarget(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) deleteTarget(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	if err := h.svc.DeleteTarget(r.Context(), id); err != nil {
+	if err := h.live.Service().DeleteTarget(r.Context(), id); err != nil {
 		if errors.Is(err, ErrTargetNotFound) {
 			writeError(w, http.StatusNotFound, err)
 			return
@@ -355,7 +387,7 @@ func (h *Handlers) deleteTarget(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) testTarget(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	resp := map[string]any{"ok": true}
-	if err := h.svc.TestTarget(r.Context(), id); err != nil {
+	if err := h.live.Service().TestTarget(r.Context(), id); err != nil {
 		resp["ok"] = false
 		resp["error"] = err.Error()
 	}
@@ -397,7 +429,7 @@ func (h *Handlers) restore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := h.svc.RestoreBackup(r.Context(), RestoreRequest{
+	res, err := h.live.Service().RestoreBackup(r.Context(), RestoreRequest{
 		Source:       file,
 		TargetDSN:    targetDSN,
 		Clean:        clean,
@@ -429,7 +461,7 @@ func (h *Handlers) restore(w http.ResponseWriter, r *http.Request) {
 // inventory returns the grouped table list with live row counts so
 // the UI can show "what's actually in a backup right now."
 func (h *Handlers) inventory(w http.ResponseWriter, r *http.Request) {
-	groups, err := h.svc.Inventory(r.Context())
+	groups, err := h.live.Service().Inventory(r.Context())
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return

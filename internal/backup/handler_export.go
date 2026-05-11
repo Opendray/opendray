@@ -24,7 +24,7 @@ func (h *Handlers) MountExports(r chi.Router) {
 }
 
 func (h *Handlers) listExports(w http.ResponseWriter, r *http.Request) {
-	list, err := h.svc.ListExports(r.Context())
+	list, err := h.live.Service().ListExports(r.Context())
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -43,7 +43,7 @@ func (h *Handlers) listExports(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) getExport(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	e, err := h.svc.GetExport(r.Context(), id)
+	e, err := h.live.Service().GetExport(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, ErrExportNotFound) {
 			writeError(w, http.StatusNotFound, err)
@@ -67,7 +67,7 @@ func (h *Handlers) createExport(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid body: %w", err))
 		return
 	}
-	e, err := h.svc.CreateExport(r.Context(), ExportRequest{
+	e, err := h.live.Service().CreateExport(r.Context(), ExportRequest{
 		RequestedBy:  req.RequestedBy,
 		Memories:     req.Memories,
 		Integrations: req.Integrations,
@@ -90,7 +90,7 @@ func (h *Handlers) downloadExport(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, errors.New("token query param required"))
 		return
 	}
-	rc, e, err := h.svc.DownloadExport(r.Context(), id, token)
+	rc, e, err := h.live.Service().DownloadExport(r.Context(), id, token)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrExportNotFound), errors.Is(err, ErrInvalidDownloadToken):
@@ -113,7 +113,7 @@ func (h *Handlers) downloadExport(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) deleteExport(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	if err := h.svc.DeleteExport(r.Context(), id); err != nil {
+	if err := h.live.Service().DeleteExport(r.Context(), id); err != nil {
 		if errors.Is(err, ErrExportNotFound) {
 			writeError(w, http.StatusNotFound, err)
 			return

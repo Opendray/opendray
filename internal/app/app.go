@@ -68,7 +68,10 @@ type App struct {
 	audit           *audit.Sink
 	intgrCallLogger *integration.CallLogger
 	vaultSync       *vaultgit.Syncer
-	backupScheduler *backup.Scheduler // nil when backup feature is off
+	// liveBackup owns the backup Service + scheduler. Always non-nil
+	// after New returns, but Service() returns nil when the feature
+	// is off. Disarm on shutdown to stop the scheduler goroutine.
+	liveBackup *backup.LiveBackup
 	captureEngine   *capture.Engine   // ambient memory capture loop
 	server          *http.Server
 }
@@ -285,11 +288,12 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// any source turns the feature on. The legacy [backup] enabled =
 	// true gate is kept only as a "you misconfigured something"
 	// signal — if it's true but no passphrase is available we hard-
-	// fail at startup, which matches the pre-PR-49 behaviour.
+	// fail at startup, which matches the original behaviour.
 	//
-	// The PR-49 setup-from-UI flow writes the default keyfile and
-	// asks the operator to restart; this branch is what reads it on
-	// the next boot.
+	// Since PR #50 the feature is hot-armable: LiveBackup owns the
+	// Service + scheduler and can be Arm()'d from the /backup-setup
+	// HTTP handler without a restart. The path here is just the
+	// boot-time arm.
 	keyLoad, kerr := backup.LoadPassphrase()
 	if kerr != nil {
 		st.Close()
@@ -299,19 +303,18 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		st.Close()
 		return nil, fmt.Errorf("backup: [backup] enabled = true but no passphrase found in OPENDRAY_BACKUP_KEY, $OPENDRAY_BACKUP_KEY_FILE, or %s", keyLoad.Path)
 	}
-	var (
-		backupSvc       *backup.Service
-		backupHandlers  *backup.Handlers
-		backupScheduler *backup.Scheduler
-	)
+	bcfg := backup.Config{
+		Enabled:       true,
+		LocalDir:      defaultBackupDir(cfg.Backup.LocalDir, "backups"),
+		ExportDir:     defaultBackupDir(cfg.Backup.ExportDir, "exports"),
+		PgDumpPath:    cfg.Backup.PgDumpPath,
+		PgRestorePath: cfg.Backup.PgRestorePath,
+	}
+	liveBackup := backup.NewLiveBackup(bcfg, st.Pool(), cfg.Database.URL, cfg.FilePath, log)
 	if keyLoad.Passphrase != "" {
-		bcfg := backup.Config{
-			Enabled:       true,
-			LocalDir:      defaultBackupDir(cfg.Backup.LocalDir, "backups"),
-			ExportDir:     defaultBackupDir(cfg.Backup.ExportDir, "exports"),
-			PgDumpPath:    cfg.Backup.PgDumpPath,
-			PgRestorePath: cfg.Backup.PgRestorePath,
-		}
+		// Boot-time Arm: build the service eagerly so init errors
+		// (DB migration failure, etc.) crash boot rather than wait
+		// for the first /backups request.
 		bsvc, berr := backup.NewService(bcfg, backup.ServiceDeps{
 			Pool:       st.Pool(),
 			Passphrase: keyLoad.Passphrase,
@@ -327,33 +330,26 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			st.Close()
 			return nil, fmt.Errorf("backup bootstrap: %w", err)
 		}
-		backupSvc = bsvc
-		backupHandlers = backup.NewHandlers(bsvc)
-		backupScheduler = backup.NewScheduler(bsvc, 0)
+		if err := liveBackup.ArmWithService(ctx, bsvc); err != nil {
+			st.Close()
+			return nil, fmt.Errorf("arm backup: %w", err)
+		}
 		log.Info("backup ready",
 			"local_dir", bcfg.LocalDir,
 			"key_source", string(keyLoad.Source),
 			"key_fingerprint", bsvc.CipherFingerprint())
 	}
+	backupHandlers := backup.NewHandlers(liveBackup)
 
 	// Ambient memory subsystem (Phase A) — summarizer + capture +
 	// injector. Always wired (admin endpoints work standalone) but
 	// the capture engine only fires when at least one
 	// memory_capture_rules row + one enabled summarizer provider
 	// exist. Anthropic providers require backup cipher to encrypt
-	// api keys — wiring nil cipher is fine, the store rejects
-	// anthropic insert with a clear error in that case. ollama
-	// providers always work.
-	var ambientCipher summarizer.Cipher
-	if keyLoad.Passphrase != "" {
-		// Re-derive a service handle just to access Cipher; backup
-		// service was created above when a passphrase is available.
-		// We rebuild a reference here without re-initialising the
-		// cipher.
-		if c, cerr := backup.NewCipher(keyLoad.Passphrase); cerr == nil {
-			ambientCipher = c
-		}
-	}
+	// api keys; the cipher is now backed by LiveBackup so it Just
+	// Works as soon as the operator arms backups via /backup-setup
+	// — no restart required for anthropic provider creation either.
+	ambientCipher := backup.NewLiveCipher(liveBackup)
 	summarizerStore := summarizer.NewStore(st.Pool(), ambientCipher)
 	summarizerRegistry := summarizer.NewRegistry(summarizerStore, log).
 		WithIntegrationLookup(&summarizerIntegrationLookup{svc: intgrSvc})
@@ -416,14 +412,13 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				intgrCallLogHandlers.Mount(r)
 				settingsHandlers.Mount(r)
 				// SetupHandlers (status + setup + disable) is always
-				// mounted so the UI can drive an off→on transition
-				// — that's the whole point of PR #49. When backupSvc
-				// is nil the feature didn't initialise and status
-				// reports enabled=false, but setup is still callable.
-				backup.NewSetupHandlers(backupSvc, keyLoad.Source).Mount(r)
-				if backupHandlers != nil {
-					backupHandlers.Mount(r)
-				}
+				// mounted — that's the whole point of PR #49 / #50.
+				// Handlers (the data routes) is also always mounted
+				// since PR #50; its requireArmed middleware 503s
+				// when LiveBackup is disarmed, so the off-state is
+				// safe without a nil-handlers branch here.
+				backup.NewSetupHandlers(liveBackup, keyLoad.Source).Mount(r)
+				backupHandlers.Mount(r)
 				summarizerHandlers.Mount(r)
 				captureHandlers.Mount(r)
 				injectorHandlers.Mount(r)
@@ -468,7 +463,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		audit:           auditSink,
 		intgrCallLogger: intgrCallLogger,
 		vaultSync:       vaultSyncer,
-		backupScheduler: backupScheduler,
+		liveBackup:      liveBackup,
 		captureEngine:   captureEngine,
 		server:          srv,
 	}, nil
@@ -511,14 +506,9 @@ func (a *App) Run(ctx context.Context) error {
 		close(vaultSyncDone)
 	}()
 
-	var backupSchedulerDone chan struct{}
-	if a.backupScheduler != nil {
-		backupSchedulerDone = make(chan struct{})
-		go func() {
-			a.backupScheduler.Run(ctx)
-			close(backupSchedulerDone)
-		}()
-	}
+	// Backup scheduler lifecycle is owned by LiveBackup itself
+	// (started inside Arm / ArmWithService, stopped by Disarm or
+	// by ctx cancellation). No goroutine to wrangle here.
 
 	captureDone := make(chan struct{})
 	go func() {
@@ -577,13 +567,12 @@ func (a *App) Run(ctx context.Context) error {
 		a.log.Warn("vault auto-sync shutdown timed out")
 	}
 
-	if backupSchedulerDone != nil {
-		select {
-		case <-backupSchedulerDone:
-		case <-time.After(5 * time.Second):
-			a.log.Warn("backup scheduler shutdown timed out")
-		}
-	}
+	// Disarm idempotently stops the backup scheduler if it's
+	// running, otherwise no-ops. We do this explicitly rather
+	// than relying on ctx cancellation alone so the shutdown
+	// path doesn't race with a /backup-setup that arrives just
+	// as the server starts to drain.
+	a.liveBackup.Disarm()
 
 	select {
 	case <-captureDone:
