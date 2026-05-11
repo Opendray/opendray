@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Release workflow's `ghcr` job now produces image tags on
+  `workflow_dispatch`. `docker/metadata-action` was reading
+  `github.ref` (a branch when dispatched manually), so `type=semver`
+  rules emitted zero tags and buildx failed with "tag is needed when
+  pushing to registry". Each rule now passes `value=${{ env.TAG }}`
+  so the same ruleset works for both `push:tags` and
+  `workflow_dispatch` entry points.
+
 ### Added
 
 - Release workflow gains a `ghcr` job that builds the multi-arch
