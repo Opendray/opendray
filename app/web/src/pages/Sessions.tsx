@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useConfirmDialog } from '@/components/ConfirmDialog'
 import { SessionList } from '@/components/sessions/SessionList'
 import { SessionTabs } from '@/components/sessions/SessionTabs'
 import {
@@ -140,20 +141,22 @@ export function SessionsPage() {
     open({ id: s.id, name: s.name || s.provider_id })
   }
 
+  const { confirm: confirmDialog, dialog: confirmDialogEl } = useConfirmDialog()
+
   // Tab ✕ = full destroy: terminate the CLI process if still running,
   // then drop the DB row. Confirms for live sessions so users don't
   // kill work by accident; ended/stopped rows go straight through.
-  const handleCloseTab = (id: string) => {
+  const handleCloseTab = async (id: string) => {
     const target = sessions?.find((s) => s.id === id)
     if (target && !isTerminalSessionState(target.state)) {
-      if (
-        !confirm(
-          `Stop and remove "${target.name || target.provider_id}"? ` +
-            'The CLI process will be terminated and the row deleted.',
-        )
-      ) {
-        return
-      }
+      const ok = await confirmDialog({
+        title: `Stop and remove "${target.name || target.provider_id}"?`,
+        description:
+          'The CLI process will be terminated and the row deleted.',
+        confirmLabel: 'Stop and remove',
+        destructive: true,
+      })
+      if (!ok) return
     }
     remove.mutate(id)
   }
@@ -193,15 +196,15 @@ export function SessionsPage() {
               session={currentSession}
               onStop={() => currentId && stop.mutate(currentId)}
               onStart={() => currentId && start.mutate(currentId)}
-              onRemove={() => {
+              onRemove={async () => {
                 if (!currentId) return
-                if (
-                  !confirm(
-                    `Remove ${currentSession?.name || currentSession?.provider_id || 'session'}? This deletes the row.`,
-                  )
-                ) {
-                  return
-                }
+                const ok = await confirmDialog({
+                  title: `Remove ${currentSession?.name || currentSession?.provider_id || 'session'}?`,
+                  description: 'This deletes the row.',
+                  confirmLabel: 'Remove',
+                  destructive: true,
+                })
+                if (!ok) return
                 remove.mutate(currentId)
               }}
               stopping={stop.isPending}
@@ -250,6 +253,7 @@ export function SessionsPage() {
         onOpenChange={setSpawnOpen}
         onSpawned={(s) => open({ id: s.id, name: s.name || s.provider_id })}
       />
+      {confirmDialogEl}
     </div>
   )
 }
