@@ -190,15 +190,24 @@ jobs:
       # incorrectly move :latest. Mitigation: dispatch only the
       # current/latest tag, or accept that follow-up rebuilds
       # require a manual `docker tag` to fix :latest afterwards.
+      # `value=${{ env.TAG }}` overrides on every rule so the same
+      # ruleset works for both trigger paths:
+      #   * push on a `v*` tag — github.ref is `refs/tags/vX.Y.Z`,
+      #     metadata-action would derive the semver itself.
+      #   * workflow_dispatch — github.ref is `refs/heads/main`, so
+      #     the action's default tag-derivation finds nothing and
+      #     emits zero tags (buildx then fails with "tag is needed
+      #     when pushing to registry"). Forcing `value=` from the
+      #     dispatch input bypasses ref inspection entirely.
       - uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051  # v5.10.0
         id: meta
         with:
           images: ghcr.io/opendray/opendray
           flavor: latest=auto
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=ref,event=tag
+            type=semver,pattern={{version}},value=${{ env.TAG }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ env.TAG }}
+            type=raw,value=${{ env.TAG }}
 
       - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6.19.2
         with:
