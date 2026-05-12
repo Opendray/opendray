@@ -1,0 +1,118 @@
+package catalog
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/opendray/opendray-v2/internal/session"
+)
+
+// M19 — verify the spawn-time injection paths work for each CLI.
+// We exercise injectAmbientMemoryFor directly rather than spinning
+// up a real session, since these are pure functions of (provider,
+// baseDir, text) → file/arg mutations.
+
+func TestInjectAmbientMemory_Claude(t *testing.T) {
+	out := &session.PrepareOutput{}
+	if err := injectAmbientMemoryFor("claude", t.TempDir(), "PROJECT_BANNER", out); err != nil {
+		t.Fatal(err)
+	}
+	if len(out.Args) != 2 ||
+		out.Args[0] != "--append-system-prompt" ||
+		out.Args[1] != "PROJECT_BANNER" {
+		t.Errorf("claude: wrong args: %+v", out.Args)
+	}
+}
+
+func TestInjectAmbientMemory_Codex(t *testing.T) {
+	base := t.TempDir()
+	out := &session.PrepareOutput{Env: map[string]string{}}
+	if err := injectAmbientMemoryFor("codex", base, "PROJECT_BANNER", out); err != nil {
+		t.Fatal(err)
+	}
+	codexHome := out.Env["CODEX_HOME"]
+	if codexHome == "" {
+		t.Fatalf("codex: CODEX_HOME not set")
+	}
+	if filepath.Dir(codexHome) != base {
+		t.Errorf("codex: CODEX_HOME should be under baseDir; got %s vs base %s", codexHome, base)
+	}
+	agents := filepath.Join(codexHome, "AGENTS.md")
+	body, err := os.ReadFile(agents)
+	if err != nil {
+		t.Fatalf("read AGENTS.md: %v", err)
+	}
+	if !strings.Contains(string(body), "PROJECT_BANNER") {
+		t.Errorf("codex: AGENTS.md missing banner; got: %s", body)
+	}
+}
+
+func TestInjectAmbientMemory_Gemini(t *testing.T) {
+	base := t.TempDir()
+	out := &session.PrepareOutput{}
+	if err := injectAmbientMemoryFor("gemini", base, "PROJECT_BANNER", out); err != nil {
+		t.Fatal(err)
+	}
+	geminiMd := filepath.Join(base, "GEMINI.md")
+	body, err := os.ReadFile(geminiMd)
+	if err != nil {
+		t.Fatalf("read GEMINI.md: %v", err)
+	}
+	if !strings.Contains(string(body), "PROJECT_BANNER") {
+		t.Errorf("gemini: GEMINI.md missing banner; got: %s", body)
+	}
+	// Should also add --include-directories=baseDir to args so
+	// gemini picks up GEMINI.md as workspace memory.
+	found := false
+	for i := 0; i+1 < len(out.Args); i++ {
+		if out.Args[i] == "--include-directories" && out.Args[i+1] == base {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("gemini: --include-directories <baseDir> arg missing; got %+v", out.Args)
+	}
+}
+
+func TestInjectAmbientMemory_GeminiIdempotent(t *testing.T) {
+	// If the caller (skills injection) already added
+	// --include-directories baseDir, we should NOT add a duplicate.
+	base := t.TempDir()
+	out := &session.PrepareOutput{
+		Args: []string{"--include-directories", base},
+	}
+	if err := injectAmbientMemoryFor("gemini", base, "BANNER", out); err != nil {
+		t.Fatal(err)
+	}
+	count := 0
+	for _, a := range out.Args {
+		if a == "--include-directories" {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Errorf("expected exactly one --include-directories flag; got %d. args: %+v", count, out.Args)
+	}
+}
+
+func TestInjectAmbientMemory_EmptyTextNoop(t *testing.T) {
+	for _, prov := range []string{"claude", "codex", "gemini", "shell"} {
+		out := &session.PrepareOutput{Env: map[string]string{}}
+		if err := injectAmbientMemoryFor(prov, t.TempDir(), "", out); err != nil {
+			t.Errorf("%s: empty text should not error: %v", prov, err)
+		}
+		if len(out.Args) != 0 {
+			t.Errorf("%s: empty text should not mutate args; got %+v", prov, out.Args)
+		}
+	}
+}
+
+func TestInjectAmbientMemory_UnknownProviderSilent(t *testing.T) {
+	out := &session.PrepareOutput{}
+	if err := injectAmbientMemoryFor("nonexistent", t.TempDir(), "X", out); err != nil {
+		t.Errorf("unknown provider should not error: %v", err)
+	}
+}
