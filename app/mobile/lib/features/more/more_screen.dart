@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/features/backups/backups_screen.dart';
 import 'package:opendray/features/channels/channels_screen.dart';
+import 'package:opendray/features/custom_tasks/custom_tasks_screen.dart';
 import 'package:opendray/features/githosts/githosts_screen.dart';
 import 'package:opendray/features/integrations/integrations_screen.dart';
 import 'package:opendray/features/mcp/mcp_screen.dart';
@@ -74,6 +75,12 @@ class MoreScreen extends ConsumerWidget {
             title: 'Git hosts',
             subtitle: 'PAT credentials for GitHub / GitLab / etc.',
             onTap: () => _push(context, const GitHostsScreen()),
+          ),
+          _MenuTile(
+            icon: Icons.terminal_outlined,
+            title: 'Custom tasks',
+            subtitle: 'Slash commands shown in the session task picker',
+            onTap: () => _push(context, const CustomTasksScreen()),
           ),
           const SizedBox(height: 8),
           const _SectionHeader(label: 'System'),

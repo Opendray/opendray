@@ -30,6 +30,25 @@ interface SpawnDialogProps {
 
 const HOME_HINT = '/Users/' // macOS-friendly default; user can edit.
 
+// Per-provider "bypass" / autonomy flag set. The provider config
+// (Settings → Providers) may also bake these in; the per-session
+// toggle below is purely additive. Keeping the list here as a const
+// table avoids importing config logic from the gateway side.
+const BYPASS_FLAGS: Record<string, string[]> = {
+  claude: ['--dangerously-skip-permissions'],
+  codex: ['--ask-for-approval', 'never'],
+  gemini: ['--yolo'],
+}
+
+// Display label for the bypass toggle. Different CLIs use
+// different vocabulary; pretending they're all "Auto-approve"
+// would confuse operators who only know their tool's term.
+const BYPASS_LABEL: Record<string, string> = {
+  claude: 'Bypass permission prompts',
+  codex: 'Auto-approve (--ask-for-approval never)',
+  gemini: 'YOLO mode (--yolo)',
+}
+
 export function SpawnDialog({
   open,
   onOpenChange,
@@ -48,6 +67,11 @@ export function SpawnDialog({
   const [name, setName] = useState('')
   const [cwd, setCwd] = useState(defaultCwd ?? HOME_HINT)
   const [argsText, setArgsText] = useState('')
+  // Per-session bypass toggle (Claude --dangerously-skip-permissions,
+  // Codex --ask-for-approval never, Gemini --yolo). Defaults OFF;
+  // operators opt in per spawn. Independent of the provider's own
+  // bypass config — additive only.
+  const [bypassEnabled, setBypassEnabled] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [browserOpen, setBrowserOpen] = useState(false)
 
@@ -60,18 +84,35 @@ export function SpawnDialog({
   }, [open, providers, providerId])
 
   const isClaude = providerId === 'claude'
-  const { data: claudeAccounts } = useQuery({
+  const { data: claudeAccounts, isLoading: claudeAccountsLoading } = useQuery({
     queryKey: ['claude-accounts'],
     queryFn: listClaudeAccounts,
     enabled: open && isClaude,
   })
   const accounts = (claudeAccounts ?? []).filter((a) => a.enabled)
+  // Multi-account mode (≥2 enabled): no "Default" button — operator
+  // must pick one. Single-account mode keeps Default for parity
+  // with the pre-PR-54 behaviour.
+  const multiAccount = accounts.length >= 2
 
   // When provider changes, clear account selection so we don't keep
-  // a stale id from a different provider.
+  // a stale id from a different provider. Also reset the bypass
+  // toggle — each provider's flag is different, so a stale "ON"
+  // would carry semantics that don't apply.
   useEffect(() => {
     setAccountId('')
+    setBypassEnabled(false)
   }, [providerId])
+
+  // Multi-account auto-pick: when 2+ accounts are configured and
+  // nothing is selected yet, force-select the first one. Avoids
+  // the dialog ever submitting with an empty (== "Default")
+  // account id when Default isn't shown to the operator.
+  useEffect(() => {
+    if (multiAccount && !accountId && accounts.length > 0) {
+      setAccountId(accounts[0].id)
+    }
+  }, [multiAccount, accountId, accounts])
 
   const mutation = useMutation({
     mutationFn: createSession,
@@ -82,9 +123,11 @@ export function SpawnDialog({
       })
       onSpawned(session)
       onOpenChange(false)
-      // Reset for next spawn.
+      // Reset for next spawn. Bypass intentionally resets too —
+      // each new session should be a deliberate opt-in.
       setName('')
       setArgsText('')
+      setBypassEnabled(false)
       setError(null)
     },
     onError: (err: Error) => {
@@ -103,10 +146,17 @@ export function SpawnDialog({
       setError('cwd is required.')
       return
     }
-    const args = argsText
+    const userArgs = argsText
       .split('\n')
       .map((s) => s.trim())
       .filter((s) => s.length > 0)
+    // Bypass flags come first so the operator's explicit Extra args
+    // can still override (codex's --ask-for-approval is last-wins
+    // in the upstream parser).
+    const bypassFlags = bypassEnabled
+      ? BYPASS_FLAGS[providerId] ?? []
+      : []
+    const args = [...bypassFlags, ...userArgs]
     mutation.mutate({
       provider_id: providerId,
       cwd: cwd.trim(),
@@ -163,49 +213,67 @@ export function SpawnDialog({
             </div>
           </div>
 
-          {isClaude && accounts.length > 0 && (
+          {isClaude && (
             <div className="space-y-1.5">
               <Label>Claude account</Label>
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setAccountId('')}
-                  className={`px-2 py-1 rounded-md border text-[11px] transition-colors ${
-                    accountId === ''
-                      ? 'border-foreground/30 bg-card'
-                      : 'border-border hover:bg-card hover:border-foreground/20'
-                  }`}
-                  title="Use system keychain / env"
-                >
-                  Default
-                </button>
-                {accounts.map((a) => {
-                  const active = accountId === a.id
-                  return (
+              {claudeAccountsLoading && accounts.length === 0 ? (
+                <div className="text-[11px] text-muted-foreground">
+                  Loading accounts…
+                </div>
+              ) : accounts.length === 0 ? (
+                <div className="text-[11px] text-muted-foreground">
+                  No Claude accounts configured — the gateway will use the
+                  system ANTHROPIC_API_KEY.
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {!multiAccount && (
                     <button
-                      key={a.id}
                       type="button"
-                      onClick={() => setAccountId(a.id)}
-                      disabled={!a.token_filled}
-                      className={`px-2 py-1 rounded-md border text-[11px] transition-colors disabled:opacity-50 ${
-                        active
+                      onClick={() => setAccountId('')}
+                      className={`px-2 py-1 rounded-md border text-[11px] transition-colors ${
+                        accountId === ''
                           ? 'border-foreground/30 bg-card'
                           : 'border-border hover:bg-card hover:border-foreground/20'
                       }`}
-                      title={
-                        a.token_filled
-                          ? `${a.config_dir || a.name}`
-                          : 'No token set — set token in Providers panel first'
-                      }
+                      title="Use system keychain / env"
                     >
-                      {a.display_name || a.name}
-                      {!a.token_filled && (
-                        <span className="ml-1 text-amber-500/90">·empty</span>
-                      )}
+                      Default
                     </button>
-                  )
-                })}
-              </div>
+                  )}
+                  {accounts.map((a) => {
+                    const active = accountId === a.id
+                    return (
+                      <button
+                        key={a.id}
+                        type="button"
+                        onClick={() => setAccountId(a.id)}
+                        disabled={!a.token_filled}
+                        className={`px-2 py-1 rounded-md border text-[11px] transition-colors disabled:opacity-50 ${
+                          active
+                            ? 'border-foreground/30 bg-card'
+                            : 'border-border hover:bg-card hover:border-foreground/20'
+                        }`}
+                        title={
+                          a.token_filled
+                            ? `${a.config_dir || a.name}`
+                            : 'No token set — set token in Providers panel first'
+                        }
+                      >
+                        {a.display_name || a.name}
+                        {!a.token_filled && (
+                          <span className="ml-1 text-amber-500/90">·empty</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+              {multiAccount && (
+                <div className="text-[11px] text-muted-foreground">
+                  Multiple accounts configured — pick one for this session.
+                </div>
+              )}
             </div>
           )}
 
@@ -255,6 +323,25 @@ export function SpawnDialog({
               className="w-full font-mono text-[12px] rounded-md border border-border bg-input/40 px-3 py-2 text-foreground transition-colors placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
             />
           </div>
+
+          {BYPASS_LABEL[providerId] && (
+            <label className="flex items-start gap-2 text-[12px] cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={bypassEnabled}
+                onChange={(e) => setBypassEnabled(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span className="flex-1">
+                <span className="font-medium">{BYPASS_LABEL[providerId]}</span>
+                <span className="block text-muted-foreground mt-0.5 text-[11px]">
+                  {bypassEnabled
+                    ? 'This session will run with elevated autonomy.'
+                    : 'Off — confirmations and prompts behave normally.'}
+                </span>
+              </span>
+            </label>
+          )}
 
           {error && (
             <div className="text-[12px] text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">

@@ -12,6 +12,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/theme/theme_controller.dart';
 import 'package:opendray/features/settings/change_credentials_screen.dart';
+import 'package:opendray/features/settings/log_viewer_screen.dart';
+import 'package:opendray/features/settings/server_settings_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -73,6 +75,36 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => const ChangeCredentialsScreen(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const _SectionHeader('Gateway'),
+            ListTile(
+              leading: const Icon(Icons.dns_outlined),
+              title: const Text('Server settings'),
+              subtitle: Text(
+                'Listen address, logging, vault, memory, storage paths…',
+                style: theme.textTheme.bodySmall,
+              ),
+              trailing: const Icon(Icons.chevron_right, size: 18),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const ServerSettingsScreen(),
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.subject_outlined),
+              title: const Text('Live logs'),
+              subtitle: Text(
+                'Tail the gateway log buffer — same source as the web admin',
+                style: theme.textTheme.bodySmall,
+              ),
+              trailing: const Icon(Icons.chevron_right, size: 18),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const LogViewerScreen(),
                 ),
               ),
             ),
