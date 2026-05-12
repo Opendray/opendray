@@ -367,7 +367,7 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
               ? const _EmptyHeader(
                   text: 'No project-scoped memories yet. Use + to create one.',
                 )
-              : _ProjectKeyChips(
+              : _ProjectSelector(
                   keys: keys,
                   selected: _selectedKey,
                   onChanged: (k) {
@@ -458,8 +458,18 @@ class _RowEntry {
   final double? similarity;
 }
 
-class _ProjectKeyChips extends StatelessWidget {
-  const _ProjectKeyChips({
+// _ProjectSelector replaced the horizontal-strip ChoiceChip row in
+// PR #54. The strip was unusable with 15+ projects: finding the
+// right entry meant thumb-scrolling past everything alphabetically
+// after it, and the chips had no search affordance. The selector
+// is a single tappable row showing the active project's basename
+// + the total count; tapping opens a full-search modal picker.
+//
+// One row regardless of project count — the page no longer
+// "expands" visually with more projects, leaving the memory list
+// the same screen real estate either way.
+class _ProjectSelector extends StatelessWidget {
+  const _ProjectSelector({
     required this.keys,
     required this.selected,
     required this.onChanged,
@@ -471,24 +481,229 @@ class _ProjectKeyChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 44,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        separatorBuilder: (_, __) => const SizedBox(width: 6),
-        itemCount: keys.length,
-        itemBuilder: (_, i) {
-          final k = keys[i];
-          final isSelected = k == selected;
-          final label = p.basename(k).isEmpty ? k : p.basename(k);
-          return ChoiceChip(
-            label: Text(label),
-            tooltip: k,
-            selected: isSelected,
-            onSelected: (_) => onChanged(k),
-          );
-        },
+    final theme = Theme.of(context);
+    final activeLabel = selected == null
+        ? 'Pick a project'
+        : (p.basename(selected!).isEmpty ? selected! : p.basename(selected!));
+    final activePath = selected;
+    return InkWell(
+      onTap: () => _openPicker(context),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+        child: Row(
+          children: [
+            Icon(Icons.folder_outlined,
+                size: 18, color: theme.colorScheme.outline),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          activeLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '· ${keys.length}',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: theme.colorScheme.outline),
+                      ),
+                    ],
+                  ),
+                  if (activePath != null && activePath.isNotEmpty)
+                    Text(
+                      activePath,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.outline,
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(Icons.unfold_more,
+                size: 18, color: theme.colorScheme.outline),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openPicker(BuildContext context) async {
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _ProjectPickerSheet(keys: keys, selected: selected),
+    );
+    if (picked != null) onChanged(picked);
+  }
+}
+
+// _ProjectPickerSheet renders a full-search modal list of every
+// known project_key. Search filters by case-insensitive substring
+// match against both the basename and the full path — operators
+// who remember "the one under HomeLab" can type that and narrow
+// down without scrolling.
+class _ProjectPickerSheet extends StatefulWidget {
+  const _ProjectPickerSheet({required this.keys, required this.selected});
+  final List<String> keys;
+  final String? selected;
+
+  @override
+  State<_ProjectPickerSheet> createState() => _ProjectPickerSheetState();
+}
+
+class _ProjectPickerSheetState extends State<_ProjectPickerSheet> {
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Sort alphabetically by basename so projects with the same
+    // last segment (e.g. multiple "frontend" dirs under different
+    // workspaces) cluster together — easier to disambiguate when
+    // the operator can see them side-by-side.
+    final sorted = [...widget.keys]..sort((a, b) {
+        final ab = p.basename(a).toLowerCase();
+        final bb = p.basename(b).toLowerCase();
+        final cmp = ab.compareTo(bb);
+        return cmp != 0 ? cmp : a.toLowerCase().compareTo(b.toLowerCase());
+      });
+    final q = _query.trim().toLowerCase();
+    final filtered = q.isEmpty
+        ? sorted
+        : sorted.where((k) => k.toLowerCase().contains(q)).toList();
+    final mq = MediaQuery.of(context);
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: mq.size.height * 0.7,
+          child: Column(
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).dividerColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Pick project',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    Text(
+                      '${filtered.length} / ${sorted.length}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: TextField(
+                  controller: _searchCtrl,
+                  autofocus: true,
+                  onChanged: (v) => setState(() => _query = v),
+                  decoration: const InputDecoration(
+                    hintText: 'Filter by name or path…',
+                    prefixIcon: Icon(Icons.search, size: 18),
+                    isDense: true,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: filtered.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            'No projects match "$q".',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, __) => Divider(
+                          height: 1,
+                          color: Theme.of(context).dividerColor,
+                        ),
+                        itemBuilder: (_, i) {
+                          final k = filtered[i];
+                          final isSelected = k == widget.selected;
+                          final base =
+                              p.basename(k).isEmpty ? k : p.basename(k);
+                          return ListTile(
+                            dense: true,
+                            leading: Icon(
+                              isSelected
+                                  ? Icons.radio_button_checked
+                                  : Icons.folder_outlined,
+                              size: 18,
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).colorScheme.outline,
+                            ),
+                            title: Text(
+                              base,
+                              style: TextStyle(
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                            subtitle: Text(
+                              k,
+                              style: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 11,
+                              ),
+                            ),
+                            onTap: () => Navigator.of(context).pop(k),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
