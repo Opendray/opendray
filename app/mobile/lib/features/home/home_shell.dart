@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:opendray/features/activity/activity_screen.dart';
 import 'package:opendray/features/memory/memory_screen.dart';
 import 'package:opendray/features/more/more_screen.dart';
 import 'package:opendray/features/notes/notes_screen.dart';
 import 'package:opendray/features/sessions/sessions_screen.dart';
 
-// Home scaffold: 5 bottom-nav tabs matching the web admin's
-// information architecture (Sessions / Memory / Notes / Activity /
-// More). Uses IndexedStack so each tab keeps its own state across
-// switches — important for in-progress forms and scroll position.
+// Home scaffold: 4 bottom-nav tabs — Sessions / Memory / Notes /
+// More. Uses IndexedStack so each tab keeps its own state across
+// switches; important for in-progress forms and scroll position.
+//
+// Activity was removed in PR #54 — it surfaced the raw audit_log
+// stream which is >95% routine noise (idle polls, login self-pings,
+// successful sends). The operator has no daily "look at events"
+// workflow on a phone — moves are taken on Sessions / Memory / More
+// instead. If a future use case appears (e.g. an Inbox of events
+// that demand operator action), it earns its own tab with explicit
+// action surfaces rather than a generic log dump.
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
 
@@ -25,7 +31,6 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     _TabSpec(icon: Icons.terminal_outlined, label: 'Sessions'),
     _TabSpec(icon: Icons.psychology_outlined, label: 'Memory'),
     _TabSpec(icon: Icons.description_outlined, label: 'Notes'),
-    _TabSpec(icon: Icons.timeline_outlined, label: 'Activity'),
     _TabSpec(icon: Icons.more_horiz, label: 'More'),
   ];
 
@@ -35,7 +40,6 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       SessionsScreen(),
       MemoryScreen(),
       NotesScreen(),
-      ActivityScreen(),
       MoreScreen(),
     ];
 
