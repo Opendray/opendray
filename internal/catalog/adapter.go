@@ -627,30 +627,93 @@ func defaultStr(s, def string) string {
 }
 
 // memoryGuidanceText is appended to the agent's system prompt
-// whenever the memory MCP server is auto-attached. The wording
-// nudges the model to prefer the shared cross-CLI store over its
-// own built-in markdown memory feature.
+// whenever the memory MCP server is auto-attached. Rewritten in
+// PR-M1 to match Claude's auto-memory discipline — give the model
+// concrete save/skip criteria, categories, and dedup rules rather
+// than a generic "memory exists, use it" hint.
 //
-// Kept short: every byte costs context window. Anything longer
-// goes in the MCP tool descriptions themselves.
-const memoryGuidanceText = `## Persistent memory across CLIs (opendray-memory)
+// The wording is verbose by const-string standards (~80 lines) but
+// the discipline it encodes is what makes the difference between
+// "agent never uses memory" and "agent records every durable
+// project fact it discovers." Anything looser produces empty
+// memory stores in real-world use.
+//
+// Kept inside a const so per-spawn cost is just a string copy.
+// Optimisation knob if it grows further: move to a runtime-
+// loaded markdown file under ~/.opendray/prompts/.
+const memoryGuidanceText = `## Persistent cross-agent memory (opendray-memory)
 
 This session has access to an MCP server named ` + "`opendray-memory`" + ` that
-persists facts to a shared store available to every Claude / Codex /
-Gemini session running in the same project directory.
+persists durable facts to a shared store. **Every Claude / Codex /
+Gemini session in the same project reads and writes the same
+store.** What you save here is what the next session sees, no
+matter which CLI it runs under.
 
-PREFER opendray-memory's tools over writing to local memory files:
+### At session start
 
-- BEFORE answering anything that might benefit from past context,
-  call ` + "`opendray-memory.memory_search(query)`" + `. Memories survive across
-  sessions and across CLIs.
-- WHEN the user states a durable fact (preference, identifier,
-  decision, ongoing task), call ` + "`opendray-memory.memory_store(text)`" + `
-  instead of writing local memory files. The shared store is the
-  single source of truth.
-- Memories are scoped to the current project (cwd) by default. Any
-  future Claude / Codex / Gemini session in the same directory can
-  read them through the same MCP server.
+Call ` + "`opendray-memory.memory_load_context()`" + ` once for the project
+context relevant to the user's first ask. The store may already
+hold user preferences, project facts, past decisions you'd
+otherwise re-discover. Skipping this is the most common reason
+agents make mistakes that prior sessions already corrected.
+
+### When to store (proactively, without being asked)
+
+Save when you encounter ANY of these. Set ` + "`metadata.type`" + ` to the
+matching category so future sessions can filter:
+
+- **user_preference** — the user states or implies a durable
+  preference ("I prefer Go", "use pnpm", "no emoji in commits").
+- **project_fact** — non-obvious project information you discover
+  while working: DB schema details, deployment topology, key file
+  locations, environment quirks, external service URLs. Save what
+  a future session would otherwise have to re-discover.
+- **feedback** — the user corrects your approach. Save the
+  correction + the **Why:** so you don't repeat the mistake. Often
+  load-bearing on edge cases.
+- **reference** — pointers to external systems: where bugs live
+  (Linear / GitHub Issues), which Grafana dashboard tracks which
+  metric, where ops runbooks are.
+
+### When NOT to store
+
+- Anything derivable from the current code: file paths, function
+  names, types, struct fields. ` + "`grep`" + ` finds these next time.
+- Ephemeral state: what's in progress, the last command you ran,
+  the file currently open. The next session will look fresh.
+- Anything already documented in CLAUDE.md / AGENTS.md /
+  GEMINI.md — operator-curated docs are the source of truth there.
+
+### How to store
+
+Call ` + "`opendray-memory.memory_store`" + ` with:
+
+- ` + "`text`" + `: the memory body. Lead with the fact itself in one
+  sentence. For non-obvious items add a **Why:** line (the reason
+  this matters) and a **How to apply:** line (when/where this
+  guidance kicks in). Brief — one short paragraph per memory.
+- ` + "`metadata.type`" + `: ` + "`user_preference`" + ` / ` + "`project_fact`" + ` / ` + "`feedback`" + ` /
+  ` + "`reference`" + `.
+- Scope defaults to ` + "`project`" + ` (visible only in this cwd). Pass
+  ` + "`metadata.scope: global`" + ` for stable user-level facts you want
+  visible everywhere. Use ` + "`global`" + ` sparingly — it's expensive
+  context for every future spawn.
+
+### Dedup discipline
+
+Before storing, call ` + "`memory_search`" + ` with a query that would match
+the fact you're about to write. If a near-match exists:
+
+- If the existing entry is still correct → don't duplicate.
+- If your version is more accurate or richer → update the
+  existing entry's text rather than creating a sibling.
+
+### Stale memory
+
+If you find a memory that contradicts the current state of the
+code or the user's latest direction, **surface it to the user**
+and propose an update or delete. Don't silently work around it —
+silent contradictions are how memory rot starts.
 `
 
 // injectMemoryGuidanceFor adds memoryGuidanceText to the provider's

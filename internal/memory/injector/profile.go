@@ -117,8 +117,26 @@ func (s *ProfileStore) List(ctx context.Context) ([]Profile, error) {
 
 // Resolve returns the profile that governs sessionID. Prefers a
 // session-scoped row; falls back to the global default; if neither
-// exists, returns a synthesised "none" profile so callers always
-// have something to evaluate.
+// exists, returns a synthesised "top_k_relevant" profile (k=5) so
+// the cross-agent memory loop works out of the box without the
+// operator having to seed an injection profile manually.
+//
+// Pre PR-M3 this returned a {strategy: "none"} fallback, which
+// meant a fresh install never injected any memory into spawn
+// system prompts even though the storage layer was working. The
+// "none" default was load-bearing on the operator knowing to seed
+// a profile via API — nobody did, so the feature was silently
+// dormant on every deploy.
+//
+// With the new default:
+//   - Zero memories yet → renderTopKRelevant returns "" anyway, so
+//     no spam injection on a fresh project.
+//   - One or more project memories → the agent gets a top-5
+//     relevant preface in the system prompt on every spawn.
+//
+// Operators who explicitly want injection off can insert a
+// session_id-NULL row with strategy "none" — that wins over this
+// synthetic fallback.
 func (s *ProfileStore) Resolve(ctx context.Context, sessionID string) Profile {
 	if sessionID != "" {
 		row := s.pool.QueryRow(ctx, profileSelectStmt+` WHERE session_id = $1 LIMIT 1`, sessionID)
@@ -131,9 +149,9 @@ func (s *ProfileStore) Resolve(ctx context.Context, sessionID string) Profile {
 		return p
 	}
 	return Profile{
-		ID:           "synthetic-default-none",
-		StrategyKind: "none",
-		Config:       map[string]any{},
+		ID:           "synthetic-default-top-k-relevant",
+		StrategyKind: "top_k_relevant",
+		Config:       map[string]any{"k": float64(5)},
 	}
 }
 
