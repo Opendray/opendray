@@ -9,6 +9,7 @@ import 'package:opendray/features/custom_tasks/custom_tasks_screen.dart';
 import 'package:opendray/features/githosts/githosts_screen.dart';
 import 'package:opendray/features/integrations/integrations_screen.dart';
 import 'package:opendray/features/mcp/mcp_screen.dart';
+import 'package:opendray/features/memory_cleanup/cleanup_inbox_screen.dart';
 import 'package:opendray/features/more/about_screen.dart';
 import 'package:opendray/features/project/project_screen.dart';
 import 'package:opendray/features/providers/providers_screen.dart';
@@ -87,9 +88,16 @@ class MoreScreen extends ConsumerWidget {
           const _SectionHeader(label: 'Memory'),
           _MenuTile(
             icon: Icons.flag_outlined,
-            title: 'Project',
-            subtitle: 'Goal, plan, journal & agent proposals',
+            title: 'Project goal / plan / journal',
+            subtitle: 'Per-cwd memory layers 2-4 + agent proposals',
             onTap: () => _push(context, const ProjectScreen()),
+          ),
+          _MenuTile(
+            icon: Icons.cleaning_services_outlined,
+            title: 'Cleanup inbox',
+            subtitle:
+                'LLM-proposed deletions / merges across all projects',
+            onTap: () => _push(context, const CleanupInboxScreen()),
           ),
           const SizedBox(height: 8),
           const _SectionHeader(label: 'System'),
