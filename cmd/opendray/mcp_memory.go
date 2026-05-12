@@ -192,10 +192,23 @@ func (s *memMCPServer) handle(raw []byte) {
 
 // instructionsBlurb shows up in the agent's system context so the
 // model knows when to call the tools without explicit prompting.
-const instructionsBlurb = `Persistent memory backed by opendray's pgvector store.
+const instructionsBlurb = `Persistent memory backed by opendray's pgvector store, plus
+the cross-agent project goal / plan / journal layer.
+
+memory_*           — short discrete facts (top-K-relevant retrieval)
+project_goal_*     — long-term project intent (one doc per project)
+project_plan_*     — current roadmap / WIP arc (one doc per project)
+session_log_append — append a free-form note to the project journal
+decision_record    — append an ADR-style decision entry
+
 Use memory_search before answering anything that might benefit from past
 context. Use memory_store after the user states a durable preference,
-identifier, decision, relationship, or ongoing-task fact.`
+identifier, decision, relationship, or ongoing-task fact.
+
+If your work changes the goal or plan, call project_goal_set /
+project_plan_set — they file a proposal that the operator approves
+before the live doc updates. Do not bypass this by writing the
+change to a memory_store entry.`
 
 // toolDefs is the static list returned for tools/list.
 var toolDefs = []map[string]any{
@@ -296,6 +309,112 @@ var toolDefs = []map[string]any{
 			"required": []string{"id"},
 		},
 	},
+	{
+		"name": "project_goal_get",
+		"description": "Read the project's long-term goal document. " +
+			"One markdown body per project. Empty when the operator has " +
+			"not seeded one yet.",
+		"inputSchema": map[string]any{
+			"type":       "object",
+			"properties": map[string]any{},
+		},
+	},
+	{
+		"name": "project_plan_get",
+		"description": "Read the project's current plan / roadmap " +
+			"document. Same shape as project_goal_get — one body per " +
+			"project, markdown.",
+		"inputSchema": map[string]any{
+			"type":       "object",
+			"properties": map[string]any{},
+		},
+	},
+	{
+		"name": "project_goal_set",
+		"description": "File a proposal to replace the project goal " +
+			"with new content. Does NOT overwrite the live doc directly — " +
+			"the operator must approve the proposal first. Use this when " +
+			"the user agrees that the long-term direction has shifted, " +
+			"or to seed an initial goal on a fresh project.",
+		"inputSchema": map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"content": map[string]any{
+					"type":        "string",
+					"description": "The full proposed goal markdown.",
+				},
+				"reason": map[string]any{
+					"type":        "string",
+					"description": "Short rationale shown to the operator in the inbox.",
+				},
+			},
+			"required": []string{"content"},
+		},
+	},
+	{
+		"name": "project_plan_set",
+		"description": "File a proposal to replace the project plan " +
+			"with new content. Same approval flow as project_goal_set.",
+		"inputSchema": map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"content": map[string]any{
+					"type":        "string",
+					"description": "The full proposed plan markdown.",
+				},
+				"reason": map[string]any{
+					"type":        "string",
+					"description": "Short rationale shown to the operator.",
+				},
+			},
+			"required": []string{"content"},
+		},
+	},
+	{
+		"name": "session_log_append",
+		"description": "Append a free-form journal entry to the " +
+			"project's session log. Use when you want to record what " +
+			"the session just accomplished, surface a question for the " +
+			"next session, or note a non-decision finding. The entry " +
+			"is visible to every future session in this project.",
+		"inputSchema": map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"title": map[string]any{
+					"type":        "string",
+					"description": "One-line preview (e.g. \"M5 backend landed\").",
+				},
+				"content": map[string]any{
+					"type":        "string",
+					"description": "Full markdown body of the journal entry.",
+				},
+			},
+			"required": []string{"content"},
+		},
+	},
+	{
+		"name": "decision_record",
+		"description": "Append an ADR-style decision to the project " +
+			"journal. Use when the session locked in a choice (\"we " +
+			"picked Postgres over MySQL because X\") that future " +
+			"sessions need to know about. Tagged kind=decision so the " +
+			"operator UI can filter / index these separately from " +
+			"general journal entries.",
+		"inputSchema": map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"title": map[string]any{
+					"type":        "string",
+					"description": "ADR-style short title (e.g. \"Use pgvector for embeddings\").",
+				},
+				"content": map[string]any{
+					"type":        "string",
+					"description": "Body — context, decision, alternatives, consequences.",
+				},
+			},
+			"required": []string{"title", "content"},
+		},
+	},
 }
 
 // handleToolCall dispatches one MCP tools/call invocation to the
@@ -327,6 +446,18 @@ func (s *memMCPServer) handleToolCall(req rpcRequest) {
 		result, err = s.callLoadContext(params.Arguments)
 	case "memory_get_provenance":
 		result, err = s.callGetProvenance(params.Arguments)
+	case "project_goal_get":
+		result, err = s.callProjectDocGet("goal")
+	case "project_plan_get":
+		result, err = s.callProjectDocGet("plan")
+	case "project_goal_set":
+		result, err = s.callProjectDocPropose("goal", params.Arguments)
+	case "project_plan_set":
+		result, err = s.callProjectDocPropose("plan", params.Arguments)
+	case "session_log_append":
+		result, err = s.callSessionLogAppend("manual", params.Arguments)
+	case "decision_record":
+		result, err = s.callSessionLogAppend("decision", params.Arguments)
 	default:
 		s.respondErr(req.ID, -32601, "Unknown tool", params.Name)
 		return
@@ -566,6 +697,120 @@ func (s *memMCPServer) callGetProvenance(args json.RawMessage) (any, error) {
 	return map[string]any{
 		"content": []map[string]any{
 			{"type": "text", "text": b.String()},
+		},
+	}, nil
+}
+
+// callProjectDocGet fetches the live goal or plan document for the
+// active cwd (s.cfg.scopeKey). Returns the body as a text content
+// block. The gateway returns an empty doc when the row doesn't
+// exist, so the agent never gets a 404 — it just sees "(empty)".
+func (s *memMCPServer) callProjectDocGet(kind string) (any, error) {
+	cwd := s.cfg.scopeKey
+	if cwd == "" {
+		return nil, errors.New("project_doc requires OPENDRAY_MEMORY_SCOPE_KEY (cwd) to be set")
+	}
+	path := "/api/v1/project-docs/" + kind + "?cwd=" + urlQuery(cwd)
+	var doc struct {
+		Kind      string `json:"kind"`
+		Content   string `json:"content"`
+		UpdatedBy string `json:"updated_by"`
+	}
+	if err := s.gatewayGetJSON(path, &doc); err != nil {
+		return nil, err
+	}
+	var b strings.Builder
+	if strings.TrimSpace(doc.Content) == "" {
+		fmt.Fprintf(&b, "(no %s set for this project yet)", kind)
+	} else {
+		fmt.Fprintf(&b, "# Project %s\n\n_last updated by %s_\n\n%s", kind, doc.UpdatedBy, doc.Content)
+	}
+	return map[string]any{
+		"content": []map[string]any{
+			{"type": "text", "text": b.String()},
+		},
+	}, nil
+}
+
+// callProjectDocPropose files a change proposal for goal or plan.
+// Per design decision 3, agents cannot overwrite the live document
+// directly — the change lands in project_doc_proposals and waits
+// for operator approval.
+func (s *memMCPServer) callProjectDocPropose(kind string, args json.RawMessage) (any, error) {
+	cwd := s.cfg.scopeKey
+	if cwd == "" {
+		return nil, errors.New("project_doc_set requires OPENDRAY_MEMORY_SCOPE_KEY (cwd) to be set")
+	}
+	var in struct {
+		Content string `json:"content"`
+		Reason  string `json:"reason"`
+	}
+	if err := json.Unmarshal(args, &in); err != nil {
+		return nil, fmt.Errorf("invalid arguments: %w", err)
+	}
+	if strings.TrimSpace(in.Content) == "" {
+		return nil, errors.New("content is required")
+	}
+	body := map[string]any{
+		"cwd":              cwd,
+		"kind":             kind,
+		"proposed_content": in.Content,
+		"reason":           in.Reason,
+	}
+	var out struct {
+		ID string `json:"id"`
+	}
+	if err := s.gatewayPostJSON("/api/v1/project-doc-proposals", body, &out); err != nil {
+		return nil, err
+	}
+	return map[string]any{
+		"content": []map[string]any{
+			{"type": "text", "text": fmt.Sprintf(
+				"Filed %s proposal %s. Waiting for operator approval — the live doc is unchanged until then.",
+				kind, out.ID)},
+		},
+	}, nil
+}
+
+// callSessionLogAppend writes one journal entry. Used by both
+// session_log_append (kind=manual) and decision_record (kind=
+// decision); the schema then tags it author=agent so the operator
+// UI can distinguish agent-written entries from operator-written
+// ones at a glance.
+func (s *memMCPServer) callSessionLogAppend(kind string, args json.RawMessage) (any, error) {
+	cwd := s.cfg.scopeKey
+	if cwd == "" {
+		return nil, errors.New("session_log requires OPENDRAY_MEMORY_SCOPE_KEY (cwd) to be set")
+	}
+	var in struct {
+		Title   string `json:"title"`
+		Content string `json:"content"`
+	}
+	if err := json.Unmarshal(args, &in); err != nil {
+		return nil, fmt.Errorf("invalid arguments: %w", err)
+	}
+	if strings.TrimSpace(in.Content) == "" {
+		return nil, errors.New("content is required")
+	}
+	if kind == "decision" && strings.TrimSpace(in.Title) == "" {
+		return nil, errors.New("decision_record requires a title")
+	}
+	body := map[string]any{
+		"cwd":        cwd,
+		"kind":       kind,
+		"title":      in.Title,
+		"content":    in.Content,
+		"updated_by": "agent",
+	}
+	var out struct {
+		ID string `json:"id"`
+	}
+	if err := s.gatewayPostJSON("/api/v1/session-logs", body, &out); err != nil {
+		return nil, err
+	}
+	return map[string]any{
+		"content": []map[string]any{
+			{"type": "text", "text": fmt.Sprintf("Appended %s journal entry %s.", kind, out.ID)},
 		},
 	}, nil
 }
