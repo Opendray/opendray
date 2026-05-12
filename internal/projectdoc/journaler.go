@@ -1,0 +1,264 @@
+package projectdoc
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"strings"
+	"time"
+
+	"github.com/opendray/opendray-v2/internal/eventbus"
+)
+
+// SessionInfo is the minimal slice of session metadata the
+// journaler needs. Defined here (rather than depending on
+// internal/session.Session directly) so the import graph stays
+// one-way — internal/session keeps a clean surface and projectdoc
+// stays test-friendly with a fake adapter.
+type SessionInfo struct {
+	ID         string
+	ProviderID string
+	Cwd        string
+	StartedAt  time.Time
+	EndedAt    *time.Time
+	ExitCode   *int
+}
+
+// HistoryEntry mirrors session.ProjectInput. Same decoupling rationale.
+type HistoryEntry struct {
+	Ts   time.Time
+	Text string
+}
+
+// SessionLookup is the contract the journaler needs from the
+// session manager.
+//
+// Get returns the persisted session row by id (works for ended
+// sessions too — that's load-bearing for the journaler since events
+// fire AFTER the row is marked terminal).
+//
+// History returns the operator's recent inputs in the same cwd; we
+// use the last N entries as raw material for the auto-journal body.
+// Empty / unsupported provider → empty slice + nil error, journaler
+// still writes a metadata-only entry.
+type SessionLookup interface {
+	Get(ctx context.Context, id string) (SessionInfo, error)
+	History(ctx context.Context, id string, limit int) ([]HistoryEntry, error)
+}
+
+// Journaler subscribes to session-end events on the eventbus and
+// appends a session_logs row (kind=session_summary) per session.
+// This is the M8 "auto-journal" — without it, the journal only gets
+// entries when the operator or an agent explicitly appends one,
+// which is rare in practice.
+//
+// Current implementation is summarizer-LLM-free on purpose: it
+// builds a deterministic markdown body from session metadata + the
+// last few operator inputs. This means it works on a fresh install
+// without any LLM provider configured; a richer LLM-backed
+// summarizer can layer on top later by swapping the body assembly
+// inside writeEntry.
+type Journaler struct {
+	docs   *Service
+	bus    *eventbus.Hub
+	lookup SessionLookup
+	log    *slog.Logger
+
+	// inputsLimit caps how many operator inputs the journal entry
+	// quotes back. The journal is meant to be a glanceable record,
+	// not a transcript replay; 5 is plenty.
+	inputsLimit int
+}
+
+// NewJournaler builds a Journaler. None of the dependencies are
+// optional — pass real instances at app startup.
+func NewJournaler(docs *Service, bus *eventbus.Hub, lookup SessionLookup, log *slog.Logger) *Journaler {
+	if log == nil {
+		log = slog.Default()
+	}
+	return &Journaler{
+		docs:        docs,
+		bus:         bus,
+		lookup:      lookup,
+		log:         log.With("component", "projectdoc.journaler"),
+		inputsLimit: 5,
+	}
+}
+
+// Run subscribes to session.ended + session.stopped topics and
+// processes each event until ctx is cancelled. Errors per-event are
+// logged and dropped — failing to journal one session must not
+// break journaling for the next.
+//
+// Topics are exact-match (no wildcard) to keep the dependency on
+// eventbus.Hub small. If new terminal topics get added we add them
+// here.
+func (j *Journaler) Run(ctx context.Context) {
+	ended, cancelEnded := j.bus.Subscribe("session.ended", 16)
+	defer cancelEnded()
+	stopped, cancelStopped := j.bus.Subscribe("session.stopped", 16)
+	defer cancelStopped()
+
+	j.log.Info("session journaler running")
+	for {
+		select {
+		case <-ctx.Done():
+			j.log.Info("session journaler stopping")
+			return
+		case ev := <-ended:
+			j.process(ctx, ev, "ended")
+		case ev := <-stopped:
+			j.process(ctx, ev, "stopped")
+		}
+	}
+}
+
+// process turns one eventbus.Event into a session_logs row.
+func (j *Journaler) process(ctx context.Context, ev eventbus.Event, state string) {
+	data, ok := ev.Data.(map[string]any)
+	if !ok {
+		j.log.Warn("journaler: event data is not a map", "topic", ev.Topic)
+		return
+	}
+	sessionID, _ := data["session_id"].(string)
+	if sessionID == "" {
+		j.log.Warn("journaler: event missing session_id", "topic", ev.Topic)
+		return
+	}
+	sess, err := j.lookup.Get(ctx, sessionID)
+	if err != nil {
+		j.log.Warn("journaler: lookup session failed", "session_id", sessionID, "err", err)
+		return
+	}
+	if sess.Cwd == "" {
+		// Without cwd we can't anchor the row to a project.
+		// Shouldn't happen for normal spawns; log and skip rather
+		// than write an orphan journal entry.
+		j.log.Warn("journaler: session has no cwd", "session_id", sessionID)
+		return
+	}
+	inputs, err := j.lookup.History(ctx, sessionID, j.inputsLimit)
+	if err != nil {
+		// History errors are non-fatal — we just emit a metadata-only
+		// entry. Common in tests + when the provider has no history
+		// reader configured.
+		j.log.Debug("journaler: history fetch failed", "session_id", sessionID, "err", err)
+		inputs = nil
+	}
+	title, body := buildJournalBody(sess, state, inputs)
+	entry := LogEntry{
+		Cwd:       sess.Cwd,
+		SessionID: sess.ID,
+		Kind:      LogKindSessionSummary,
+		Title:     title,
+		Content:   body,
+		UpdatedBy: AuthorSummarizer,
+	}
+	if _, err := j.docs.AppendLog(ctx, entry); err != nil {
+		j.log.Warn("journaler: append failed", "session_id", sessionID, "cwd", sess.Cwd, "err", err)
+		return
+	}
+	j.log.Info("journaler: appended session summary",
+		"session_id", sessionID, "cwd", sess.Cwd, "title", title)
+}
+
+// buildJournalBody assembles a deterministic markdown summary. Kept
+// in a separate function so unit tests don't need an event bus or a
+// pgx pool.
+func buildJournalBody(sess SessionInfo, state string, inputs []HistoryEntry) (string, string) {
+	// Short id suffix is more friendly to read in a list than the
+	// full UUID. Falls back to full id when shorter than 8 chars.
+	shortID := sess.ID
+	if len(shortID) > 8 {
+		shortID = shortID[len(shortID)-8:]
+	}
+
+	title := fmt.Sprintf("Session %s — %s — %s",
+		shortID, providerLabel(sess.ProviderID), state)
+
+	var b strings.Builder
+	b.WriteString("**Session metadata**\n\n")
+	fmt.Fprintf(&b, "- id: `%s`\n", sess.ID)
+	fmt.Fprintf(&b, "- provider: %s\n", providerLabel(sess.ProviderID))
+	fmt.Fprintf(&b, "- cwd: `%s`\n", sess.Cwd)
+	fmt.Fprintf(&b, "- started: %s\n", sess.StartedAt.Format(time.RFC3339))
+	if sess.EndedAt != nil {
+		fmt.Fprintf(&b, "- ended: %s\n", sess.EndedAt.Format(time.RFC3339))
+		dur := sess.EndedAt.Sub(sess.StartedAt).Round(time.Second)
+		fmt.Fprintf(&b, "- duration: %s\n", dur)
+	}
+	if sess.ExitCode != nil {
+		fmt.Fprintf(&b, "- exit_code: %d\n", *sess.ExitCode)
+	}
+	b.WriteString("\n")
+
+	if len(inputs) > 0 {
+		b.WriteString("**Recent operator inputs**\n\n")
+		// Inputs come newest-first; render newest-first here too
+		// (most-relevant-on-top is what you want when skimming a
+		// journal list later).
+		for _, in := range inputs {
+			text := compactOneLine(in.Text, 200)
+			if text == "" {
+				continue
+			}
+			fmt.Fprintf(&b, "- %s\n", text)
+		}
+		b.WriteString("\n")
+	}
+
+	b.WriteString("_This entry is an auto-generated session summary. Replace with a richer LLM-based summary by configuring a summarizer provider._\n")
+	return title, b.String()
+}
+
+// providerLabel returns a friendly display name for known provider
+// ids and the id verbatim for anything else.
+func providerLabel(id string) string {
+	switch id {
+	case "claude":
+		return "Claude"
+	case "codex":
+		return "Codex"
+	case "gemini":
+		return "Gemini"
+	case "shell":
+		return "Shell"
+	default:
+		return id
+	}
+}
+
+// compactOneLine collapses internal whitespace into single spaces
+// and truncates with an ellipsis. Long operator inputs (multi-line
+// prompts pasted from a doc) otherwise blow up the journal list
+// preview.
+func compactOneLine(s string, max int) string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return ""
+	}
+	// Collapse whitespace runs.
+	var b strings.Builder
+	b.Grow(len(s))
+	prevSpace := false
+	for _, r := range s {
+		switch r {
+		case '\n', '\r', '\t':
+			r = ' '
+		}
+		if r == ' ' {
+			if prevSpace {
+				continue
+			}
+			prevSpace = true
+		} else {
+			prevSpace = false
+		}
+		b.WriteRune(r)
+	}
+	out := b.String()
+	if len(out) > max {
+		out = out[:max] + "…"
+	}
+	return out
+}

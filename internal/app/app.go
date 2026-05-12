@@ -74,6 +74,7 @@ type App struct {
 	// is off. Disarm on shutdown to stop the scheduler goroutine.
 	liveBackup    *backup.LiveBackup
 	captureEngine *capture.Engine // ambient memory capture loop
+	journaler     *projectdoc.Journaler
 	server        *http.Server
 }
 
@@ -391,6 +392,14 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// memory-layer-5 banner (ambient injector) inside the catalog
 	// adapter.
 	sessionProvider.WithProjectDocInjector(projectDocSvc)
+	// Auto-journal: on every session.ended / session.stopped event
+	// the Journaler writes a session_logs row so future sessions see
+	// a chronological record of what just happened in this project.
+	journaler := projectdoc.NewJournaler(
+		projectDocSvc, bus,
+		&projectdocSessionLookup{mgr: sessionMgr},
+		log,
+	)
 
 	gw := gateway.NewServer(gateway.Deps{
 		Logger:    log,
@@ -480,6 +489,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		vaultSync:       vaultSyncer,
 		liveBackup:      liveBackup,
 		captureEngine:   captureEngine,
+		journaler:       journaler,
 		server:          srv,
 	}, nil
 }
@@ -529,6 +539,12 @@ func (a *App) Run(ctx context.Context) error {
 	go func() {
 		a.captureEngine.Run(ctx)
 		close(captureDone)
+	}()
+
+	journalerDone := make(chan struct{})
+	go func() {
+		a.journaler.Run(ctx)
+		close(journalerDone)
 	}()
 
 	errCh := make(chan error, 1)
@@ -593,6 +609,11 @@ func (a *App) Run(ctx context.Context) error {
 	case <-captureDone:
 	case <-time.After(5 * time.Second):
 		a.log.Warn("capture engine shutdown timed out")
+	}
+	select {
+	case <-journalerDone:
+	case <-time.After(2 * time.Second):
+		a.log.Warn("journaler shutdown timed out")
 	}
 
 	a.bus.Close()
@@ -1040,6 +1061,45 @@ func (a *captureHistoryAdapter) History(ctx context.Context, sessionID string, l
 	out := make([]capture.TranscriptEntry, 0, len(resp.Entries))
 	for _, e := range resp.Entries {
 		out = append(out, capture.TranscriptEntry{Ts: e.Ts, Text: e.Text})
+	}
+	return out, nil
+}
+
+// projectdocSessionLookup adapts session.Manager.Get + History to the
+// projectdoc.SessionLookup interface the journaler depends on.
+// Decoupled from session.Session so projectdoc doesn't have to
+// import internal/session (avoids a future cycle when session needs
+// to read the journal at startup).
+type projectdocSessionLookup struct {
+	mgr *session.Manager
+}
+
+func (a *projectdocSessionLookup) Get(ctx context.Context, id string) (projectdoc.SessionInfo, error) {
+	s, err := a.mgr.Get(ctx, id)
+	if err != nil {
+		return projectdoc.SessionInfo{}, err
+	}
+	return projectdoc.SessionInfo{
+		ID:         s.ID,
+		ProviderID: s.ProviderID,
+		Cwd:        s.Cwd,
+		StartedAt:  s.StartedAt,
+		EndedAt:    s.EndedAt,
+		ExitCode:   s.ExitCode,
+	}, nil
+}
+
+func (a *projectdocSessionLookup) History(ctx context.Context, id string, limit int) ([]projectdoc.HistoryEntry, error) {
+	resp, err := a.mgr.History(ctx, id, limit)
+	if err != nil {
+		return nil, err
+	}
+	if resp.UnsupportedProvider {
+		return nil, nil
+	}
+	out := make([]projectdoc.HistoryEntry, 0, len(resp.Entries))
+	for _, e := range resp.Entries {
+		out = append(out, projectdoc.HistoryEntry{Ts: e.Ts, Text: e.Text})
 	}
 	return out, nil
 }
