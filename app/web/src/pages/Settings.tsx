@@ -441,6 +441,7 @@ function AccountSection({
   username: string | null
   expiresAt: string | null
 }) {
+  const [open, setOpen] = useState(false)
   return (
     <div>
       <SectionHeader
@@ -454,6 +455,186 @@ function AccountSection({
           value={expiresAt ? new Date(expiresAt).toLocaleString() : '—'}
           monospace
         />
+      </div>
+      <div className="mt-3">
+        <button
+          type="button"
+          className="text-[12px] px-3 py-1.5 rounded-md border border-border hover:bg-card transition-colors"
+          onClick={() => setOpen(true)}
+        >
+          Change credentials
+        </button>
+      </div>
+      {open && (
+        <ChangeCredentialsDialog
+          currentUsername={username ?? ''}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ChangeCredentialsDialog mirrors the mobile flow: verify current
+// password, pick new username + password, server hot-swaps the
+// hashed-cred keyfile and returns a fresh token under the new
+// credentials. The new token replaces the existing one in zustand
+// so the operator stays signed in.
+function ChangeCredentialsDialog({
+  currentUsername,
+  onClose,
+}: {
+  currentUsername: string
+  onClose: () => void
+}) {
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newUser, setNewUser] = useState(currentUsername)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const setSession = useAuth((s) => s.setSession)
+
+  async function submit() {
+    setError(null)
+    if (newPassword.length < 8) {
+      setError('New password must be at least 8 characters.')
+      return
+    }
+    if (newPassword !== confirm) {
+      setError("New password and confirmation don't match.")
+      return
+    }
+    setBusy(true)
+    try {
+      const res = await api<{
+        token: string
+        username: string
+        issued_at: string
+        expires_at: string
+      }>('/api/v1/auth/change-credentials', {
+        method: 'POST',
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_user: newUser.trim() || undefined,
+          new_password: newPassword,
+        }),
+        headers: { 'Content-Type': 'application/json' },
+      })
+      // Replace the existing zustand session with the fresh token
+      // returned by the server. Without this, the very next
+      // request would 401 because the old token was revoked
+      // server-side.
+      setSession(res.token, res.username, res.expires_at)
+      onClose()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      // Distinguish wrong-current-password (401) from validation
+      // failures so the operator knows where to look.
+      if (msg.includes('401') || msg.toLowerCase().includes('invalid')) {
+        setError('Current password is wrong.')
+      } else {
+        setError(msg)
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={onClose}
+    >
+      <div
+        className="w-[min(440px,calc(100vw-2rem))] max-h-[calc(100vh-2rem)] overflow-y-auto rounded-md border border-border bg-background p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="font-medium text-[15px]">Change credentials</div>
+        <div className="text-muted-foreground text-[12px] mt-1">
+          Verify your current password, then pick new credentials. All other
+          signed-in sessions will be revoked.
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3 text-[13px]">
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] text-muted-foreground">
+              Current password
+            </span>
+            <input
+              type="password"
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="h-8 px-2 rounded-md border border-border bg-input/40"
+              autoFocus
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] text-muted-foreground">
+              New username
+            </span>
+            <input
+              type="text"
+              autoComplete="username"
+              value={newUser}
+              onChange={(e) => setNewUser(e.target.value)}
+              className="h-8 px-2 rounded-md border border-border bg-input/40 font-mono"
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] text-muted-foreground">
+              New password
+            </span>
+            <input
+              type="password"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="h-8 px-2 rounded-md border border-border bg-input/40"
+            />
+            <span className="text-[11px] text-muted-foreground">
+              At least 8 characters.
+            </span>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] text-muted-foreground">
+              Confirm new password
+            </span>
+            <input
+              type="password"
+              autoComplete="new-password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              className="h-8 px-2 rounded-md border border-border bg-input/40"
+            />
+          </label>
+        </div>
+
+        {error && (
+          <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-[12px] text-destructive">
+            {error}
+          </div>
+        )}
+
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            className="text-[12px] px-3 py-1.5 rounded-md border border-border hover:bg-card transition-colors"
+            onClick={onClose}
+            disabled={busy}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="text-[12px] px-3 py-1.5 rounded-md border border-accent bg-accent text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-50"
+            onClick={() => void submit()}
+            disabled={busy}
+          >
+            {busy ? 'Saving…' : 'Update'}
+          </button>
+        </div>
       </div>
     </div>
   )

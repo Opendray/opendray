@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/theme/theme_controller.dart';
+import 'package:opendray/features/settings/change_credentials_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -63,15 +64,17 @@ class SettingsScreen extends ConsumerWidget {
             const _SectionHeader('Account'),
             ListTile(
               leading: const Icon(Icons.lock_outline),
-              title: const Text('Change password'),
+              title: const Text('Change credentials'),
               subtitle: Text(
-                'Coming soon',
+                'Username and password',
                 style: theme.textTheme.bodySmall,
               ),
-              enabled: false,
-              // Tap target intentionally inert until PR #52 lands —
-              // surface the feature path so operators know to come
-              // back here later.
+              trailing: const Icon(Icons.chevron_right, size: 18),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const ChangeCredentialsScreen(),
+                ),
+              ),
             ),
             const SizedBox(height: 24),
           ],
