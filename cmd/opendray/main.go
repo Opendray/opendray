@@ -47,6 +47,8 @@ func main() {
 		os.Exit(runMcp(args))
 	case "mcp-memory":
 		os.Exit(runMcpMemory(args))
+	case "hook":
+		os.Exit(runHook(args))
 	case "version":
 		fmt.Printf("opendray %s (%s, %s)\n", version.Version, version.Commit, version.Date)
 	case "-h", "--help", "help":
@@ -94,5 +96,6 @@ usage:
   opendray skill   <subcommand> [args]   (run "opendray skill --help" for details)
   opendray mcp     <subcommand> [args]   (run "opendray mcp --help" for details)
   opendray mcp-memory                     (stdio MCP server — invoked by an agent CLI, not by humans)
+  opendray hook    <event>                (Claude Code hook entry — auto-write journal entries; see "opendray hook --help")
   opendray version`)
 }
