@@ -138,6 +138,11 @@ var (
 type Service struct {
 	pool *pgxpool.Pool
 	log  *slog.Logger
+
+	// mirrorDisabled turns off the on-write `.opendray/*.md` mirror.
+	// Tests flip this on via DisableMirror() so they don't dirty
+	// arbitrary directories on the host.
+	mirrorDisabled bool
 }
 
 // NewService wires a Service against an existing pgx pool.
@@ -220,7 +225,11 @@ func (s *Service) PutDoc(ctx context.Context, cwd string, kind Kind, content str
 		       updated_at = NOW()
 		RETURNING id, cwd, kind, content, updated_by, created_at, updated_at`,
 		id, cwd, string(kind), content, string(author))
-	return scanDoc(row)
+	d, err := scanDoc(row)
+	if err == nil {
+		s.mirrorBestEffort(ctx, cwd)
+	}
+	return d, err
 }
 
 // ─── proposals ─────────────────────────────────────────────────
@@ -351,6 +360,7 @@ func (s *Service) ApproveProposal(ctx context.Context, id string) (Doc, error) {
 	if err := tx.Commit(ctx); err != nil {
 		return Doc{}, fmt.Errorf("projectdoc: commit: %w", err)
 	}
+	s.mirrorBestEffort(ctx, d.Cwd)
 	return d, nil
 }
 
@@ -415,7 +425,11 @@ func (s *Service) AppendLog(ctx context.Context, e LogEntry) (LogEntry, error) {
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id, cwd, COALESCE(session_id, ''), kind, title, content, updated_by, created_at`,
 		id, e.Cwd, sessID, string(e.Kind), e.Title, e.Content, string(e.UpdatedBy))
-	return scanLog(row)
+	out, err := scanLog(row)
+	if err == nil {
+		s.mirrorBestEffort(ctx, out.Cwd)
+	}
+	return out, err
 }
 
 // ListLogs returns chronological journal entries newest first.
@@ -604,6 +618,25 @@ func scanLog(row rowScanner) (LogEntry, error) {
 	l.UpdatedBy = Author(byStr)
 	return l, nil
 }
+
+// mirrorBestEffort calls Mirror but never returns an error to the
+// caller — failures here are logged and swallowed because the DB
+// write that triggered the mirror already succeeded; rolling back
+// because the operator's filesystem refused a write would lose
+// real data. Gated by mirrorDisabled so tests + integration suites
+// can opt out cleanly.
+func (s *Service) mirrorBestEffort(ctx context.Context, cwd string) {
+	if s.mirrorDisabled || cwd == "" {
+		return
+	}
+	if err := s.Mirror(ctx, cwd); err != nil {
+		s.log.Debug("projectdoc mirror failed (non-fatal)", "cwd", cwd, "err", err)
+	}
+}
+
+// DisableMirror turns off the on-write file mirror. Used by unit
+// tests that don't want side effects on the host filesystem.
+func (s *Service) DisableMirror() { s.mirrorDisabled = true }
 
 // newID returns a short alphanumeric id with a typed prefix. Same
 // 14-byte base32 entropy as the rest of the codebase (memory_capture
