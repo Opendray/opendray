@@ -17,7 +17,13 @@ import 'package:path/path.dart' as p;
 // / Inbox). Wide tabs save the user a button-press compared to a
 // scrollable list of sub-pages.
 class ProjectScreen extends ConsumerStatefulWidget {
-  const ProjectScreen({super.key});
+  const ProjectScreen({super.key, this.initialCwd});
+
+  /// When set, the screen jumps straight to that cwd's project view
+  /// instead of letting the operator pick from the dropdown. Used
+  /// when entering from a Session detail screen that already knows
+  /// which project the session is bound to.
+  final String? initialCwd;
 
   @override
   ConsumerState<ProjectScreen> createState() => _ProjectScreenState();
@@ -58,12 +64,29 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
           .scopeKeys(MemoryScope.project);
       if (!mounted) return;
       keys.sort();
+      // When the caller passed an initialCwd that's not yet in the
+      // memory scope_keys list (a brand-new session whose project
+      // has no L5 memories yet), inject it so the picker can still
+      // anchor on it. Tech-stack + journal + plan all live in their
+      // own tables and don't need a memory row to exist.
+      final initial = widget.initialCwd;
+      var mergedKeys = keys;
+      if (initial != null && !keys.contains(initial)) {
+        mergedKeys = [...keys, initial]..sort();
+      }
       setState(() {
-        _projectKeys = AsyncValue.data(keys);
-        if (_selectedKey != null && !keys.contains(_selectedKey)) {
+        _projectKeys = AsyncValue.data(mergedKeys);
+        if (initial != null && initial.isNotEmpty) {
+          // initialCwd wins on the first call. Subsequent _loadKeys
+          // calls (refresh, pull-to-reload) don't reset it because
+          // we leave _selectedKey alone when already set.
+          _selectedKey ??= initial;
+        }
+        if (_selectedKey != null && !mergedKeys.contains(_selectedKey)) {
           _selectedKey = null;
         }
-        _selectedKey ??= keys.isEmpty ? null : keys.first;
+        _selectedKey ??=
+            mergedKeys.isEmpty ? null : mergedKeys.first;
       });
       if (_selectedKey != null) {
         await _loadAll(_selectedKey!);

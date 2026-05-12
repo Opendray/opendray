@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
+import 'package:opendray/features/project/project_screen.dart';
 import 'package:opendray/features/sessions/session_action_sheet.dart';
 import 'package:opendray/features/sessions/session_terminal_view.dart';
 
@@ -54,6 +55,24 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
             tooltip: 'Inspector (Files / Git / Tasks / History / Notes)',
             onPressed: () =>
                 context.push('/session/${widget.sessionId}/inspector'),
+          ),
+          // Project memory shortcut — open the goal / plan / journal
+          // / inbox view pre-filtered to this session's cwd. Saves
+          // operators from going More → Project → picking the cwd by
+          // hand.
+          async.maybeWhen(
+            data: (s) => IconButton(
+              icon: const Icon(Icons.flag_outlined),
+              tooltip: 'Project memory (goal / plan / journal / inbox)',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => ProjectScreen(initialCwd: s.cwd),
+                  ),
+                );
+              },
+            ),
+            orElse: SizedBox.shrink,
           ),
           async.maybeWhen(
             data: (s) => IconButton(
