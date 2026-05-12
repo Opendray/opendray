@@ -44,6 +44,7 @@ import (
 	mcpapi "github.com/opendray/opendray-v2/internal/mcp"
 	"github.com/opendray/opendray-v2/internal/memory"
 	"github.com/opendray/opendray-v2/internal/memory/capture"
+	"github.com/opendray/opendray-v2/internal/memory/cleaner"
 	"github.com/opendray/opendray-v2/internal/memory/injector"
 	"github.com/opendray/opendray-v2/internal/memory/summarizer"
 	notesapi "github.com/opendray/opendray-v2/internal/notes"
@@ -72,10 +73,11 @@ type App struct {
 	// liveBackup owns the backup Service + scheduler. Always non-nil
 	// after New returns, but Service() returns nil when the feature
 	// is off. Disarm on shutdown to stop the scheduler goroutine.
-	liveBackup    *backup.LiveBackup
-	captureEngine *capture.Engine // ambient memory capture loop
-	journaler     *projectdoc.Journaler
-	server        *http.Server
+	liveBackup       *backup.LiveBackup
+	captureEngine    *capture.Engine // ambient memory capture loop
+	journaler        *projectdoc.Journaler
+	cleanerScheduler *cleaner.Scheduler // optional; nil when scheduler is off
+	server           *http.Server
 }
 
 // New wires the runtime dependencies but does not start any goroutines.
@@ -375,6 +377,43 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			"max_latency_ms", cfg.Memory.Gatekeeper.MaxLatencyMs)
 	}
 
+	// M13 — Cleaner. Independent of the gatekeeper: even installs
+	// that don't pre-judge writes can benefit from periodic review
+	// of accumulated noise. We always wire the service when memory
+	// + summarizer are up so the HTTP endpoints work; the scheduler
+	// only fires when [memory.cleaner] enabled = true.
+	var (
+		cleanerSvc       *cleaner.Service
+		cleanerHandlers  *cleaner.Handlers
+		cleanerScheduler *cleaner.Scheduler
+	)
+	if memorySvc != nil {
+		cc := cfg.Memory.Cleaner
+		cleanerSvc = cleaner.NewService(
+			st.Pool(), memorySvc, summarizerRegistry, summarizerStore,
+			cleaner.Config{
+				SummarizerID:        cc.SummarizerID,
+				BatchSize:           cc.BatchSize,
+				MinAge:              time.Duration(cc.MinAgeHours) * time.Hour,
+				SkipIfDecidedWithin: time.Duration(cc.SkipIfDecidedWithinHours) * time.Hour,
+				CallTimeout:         time.Duration(cc.CallTimeoutMs) * time.Millisecond,
+			},
+			log,
+		)
+		cleanerHandlers = cleaner.NewHandlers(cleanerSvc, log)
+		if cc.Enabled {
+			cleanerScheduler = cleaner.NewScheduler(cleanerSvc, memorySvc, cleaner.SchedulerConfig{
+				Interval:           time.Duration(cc.IntervalSeconds) * time.Second,
+				InitialDelay:       time.Duration(cc.InitialDelaySeconds) * time.Second,
+				IncludeGlobalScope: cc.IncludeGlobalScope,
+			}, log)
+			log.Info("memory cleaner scheduler enabled",
+				"interval_seconds", cc.IntervalSeconds,
+				"initial_delay_seconds", cc.InitialDelaySeconds,
+				"include_global_scope", cc.IncludeGlobalScope)
+		}
+	}
+
 	captureRuleStore := capture.NewRuleStore(st.Pool())
 	captureSessionAdapter := &captureSessionAdapter{mgr: sessionMgr}
 	captureHistoryAdapter := &captureHistoryAdapter{mgr: sessionMgr}
@@ -463,6 +502,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				summarizerHandlers.Mount(r)
 				captureHandlers.Mount(r)
 				injectorHandlers.Mount(r)
+				if cleanerHandlers != nil {
+					cleanerHandlers.Mount(r)
+				}
 			})
 
 			// Dual-auth (admin OR integration API key): all business
@@ -506,9 +548,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		intgrCallLogger: intgrCallLogger,
 		vaultSync:       vaultSyncer,
 		liveBackup:      liveBackup,
-		captureEngine:   captureEngine,
-		journaler:       journaler,
-		server:          srv,
+		captureEngine:    captureEngine,
+		journaler:        journaler,
+		cleanerScheduler: cleanerScheduler,
+		server:           srv,
 	}, nil
 }
 
@@ -563,6 +606,14 @@ func (a *App) Run(ctx context.Context) error {
 	go func() {
 		a.journaler.Run(ctx)
 		close(journalerDone)
+	}()
+
+	cleanerDone := make(chan struct{})
+	go func() {
+		if a.cleanerScheduler != nil {
+			a.cleanerScheduler.Run(ctx)
+		}
+		close(cleanerDone)
 	}()
 
 	errCh := make(chan error, 1)
@@ -632,6 +683,11 @@ func (a *App) Run(ctx context.Context) error {
 	case <-journalerDone:
 	case <-time.After(2 * time.Second):
 		a.log.Warn("journaler shutdown timed out")
+	}
+	select {
+	case <-cleanerDone:
+	case <-time.After(2 * time.Second):
+		a.log.Warn("cleaner scheduler shutdown timed out")
 	}
 
 	a.bus.Close()
