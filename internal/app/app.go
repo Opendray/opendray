@@ -47,6 +47,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/memory/injector"
 	"github.com/opendray/opendray-v2/internal/memory/summarizer"
 	notesapi "github.com/opendray/opendray-v2/internal/notes"
+	"github.com/opendray/opendray-v2/internal/projectdoc"
 	searchapi "github.com/opendray/opendray-v2/internal/search"
 	"github.com/opendray/opendray-v2/internal/session"
 	"github.com/opendray/opendray-v2/internal/settings"
@@ -378,6 +379,14 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	sessionProvider.WithAmbientInjector(ambientInjector)
 	injectorHandlers := injector.NewHandlers(injectorProfileStore, log)
 
+	// Project docs / proposals / session journal — memory layers 2-4.
+	// Composed at spawn time with memory layer 5 inside the catalog
+	// adapter; here we just wire HTTP. Mounted under the dual-auth
+	// group so the auto-attached opendray-memory MCP can reach it
+	// with an integration bearer.
+	projectDocSvc := projectdoc.NewService(st.Pool(), log)
+	projectDocHandlers := projectdoc.NewHandlers(projectDocSvc, log)
+
 	gw := gateway.NewServer(gateway.Deps{
 		Logger:    log,
 		DB:        st,
@@ -440,6 +449,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				cliacctHandlers.Mount(r)
 				channelHandlers.Mount(r)
 				memoryHandlers.Mount(r)
+				projectDocHandlers.Mount(r)
 				r.Get("/integrations/_events", eventsHandler.Serve)
 			})
 		},
