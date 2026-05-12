@@ -49,6 +49,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/memory/summarizer"
 	notesapi "github.com/opendray/opendray-v2/internal/notes"
 	"github.com/opendray/opendray-v2/internal/projectdoc"
+	"github.com/opendray/opendray-v2/internal/projectscan"
 	searchapi "github.com/opendray/opendray-v2/internal/search"
 	"github.com/opendray/opendray-v2/internal/session"
 	"github.com/opendray/opendray-v2/internal/settings"
@@ -449,6 +450,15 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// memory-layer-5 banner (ambient injector) inside the catalog
 	// adapter.
 	sessionProvider.WithProjectDocInjector(projectDocSvc)
+	// M16 — project scanner. Auto-detects tech stack + key dirs +
+	// git head at spawn time so a fresh agent doesn't have to
+	// re-index the repo. Stores the result as project_docs.kind=
+	// 'tech_stack'; RenderForSpawn includes it in the system-prompt
+	// banner. Re-scans on each spawn if the cached doc is older
+	// than 6h.
+	projectScanSvc := projectscan.NewService(projectDocSvc, log)
+	projectScanHandlers := projectscan.NewHandlers(projectScanSvc, log)
+	sessionProvider.WithProjectScanner(projectScanSvc, 6*time.Hour)
 	// Auto-journal: on every session.ended / session.stopped event
 	// the Journaler writes a session_logs row so future sessions see
 	// a chronological record of what just happened in this project.
@@ -505,6 +515,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				if cleanerHandlers != nil {
 					cleanerHandlers.Mount(r)
 				}
+				projectScanHandlers.Mount(r)
 			})
 
 			// Dual-auth (admin OR integration API key): all business

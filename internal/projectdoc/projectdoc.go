@@ -41,15 +41,16 @@ import (
 type Kind string
 
 const (
-	KindGoal Kind = "goal"
-	KindPlan Kind = "plan"
+	KindGoal      Kind = "goal"
+	KindPlan      Kind = "plan"
+	KindTechStack Kind = "tech_stack" // M16 — scanner-managed
 )
 
-// ValidKind returns true for the two supported document kinds.
+// ValidKind returns true for the supported document kinds.
 // Callers should use this rather than a hardcoded switch so the
 // list stays in one place.
 func ValidKind(k Kind) bool {
-	return k == KindGoal || k == KindPlan
+	return k == KindGoal || k == KindPlan || k == KindTechStack
 }
 
 // LogKind enumerates session_logs.kind. session_summary covers the
@@ -81,6 +82,7 @@ const (
 	AuthorAgent      Author = "agent"
 	AuthorSummarizer Author = "summarizer"
 	AuthorManual     Author = "manual"
+	AuthorScanner    Author = "scanner" // M16 — project scanner
 )
 
 // Doc represents one row from project_docs — the live state of a
@@ -512,24 +514,31 @@ func (s *Service) RenderForSpawn(ctx context.Context, cwd string, recentLogs int
 		return "", fmt.Errorf("projectdoc: render spawn logs: %w", err)
 	}
 
-	var goal, plan string
+	var goal, plan, techStack string
 	for _, d := range docs {
 		switch d.Kind {
 		case KindGoal:
 			goal = strings.TrimSpace(d.Content)
 		case KindPlan:
 			plan = strings.TrimSpace(d.Content)
+		case KindTechStack:
+			techStack = strings.TrimSpace(d.Content)
 		}
 	}
 
-	if goal == "" && plan == "" && len(logs) == 0 {
+	if goal == "" && plan == "" && techStack == "" && len(logs) == 0 {
 		return "", nil
 	}
 
 	var b strings.Builder
 	b.WriteString("## Project context (cross-agent shared)\n\n")
-	b.WriteString("The following goal, plan, and recent journal are shared across every claude / codex / gemini session in this project. They are the operator's source of truth for *what we're building* (goal), *how we're getting there* (plan), and *what just happened* (journal).\n\n")
+	b.WriteString("The following project state is shared across every claude / codex / gemini session in this project. It is the operator's source of truth for *what we're building* (goal), *how we're getting there* (plan), *what was just done* (journal), and *what tech stack and structure this project has* (tech_stack, scanner-managed).\n\n")
 
+	if techStack != "" {
+		b.WriteString("### Tech stack & structure\n\n")
+		b.WriteString(techStack)
+		b.WriteString("\n\n")
+	}
 	if goal != "" {
 		b.WriteString("### Project goal\n\n")
 		b.WriteString(goal)

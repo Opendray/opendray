@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/opendray/opendray-v2/internal/cliacct"
 	"github.com/opendray/opendray-v2/internal/mcp"
@@ -72,6 +73,16 @@ type SessionProvider struct {
 	// by internal/projectdoc.Service.RenderForSpawn. Nil → no
 	// injection (e.g. older builds without memory layers 2-4).
 	projectDocInjector ProjectDocInjector
+
+	// projectScanner, when set, auto-detects tech stack + structure
+	// at spawn time (only re-scans when the existing tech_stack doc
+	// is older than scannerMaxAge). Nil → no auto-scan, operator
+	// must POST /project-scan/run manually.
+	projectScanner ProjectScanner
+
+	// scannerMaxAge controls when a stale tech_stack doc triggers
+	// a re-scan. Default 6h.
+	scannerMaxAge time.Duration
 }
 
 // AmbientInjector is the contract internal/memory/injector
@@ -83,10 +94,21 @@ type AmbientInjector interface {
 
 // ProjectDocInjector is the contract internal/projectdoc.Service
 // satisfies. Returns a rendered markdown banner combining the
-// project goal, plan, and recent journal entries; empty string means
-// "nothing to inject — skip silently".
+// project goal, plan, tech_stack, and recent journal entries;
+// empty string means "nothing to inject — skip silently".
 type ProjectDocInjector interface {
 	RenderForSpawn(ctx context.Context, cwd string, recentLogs int) (string, error)
+}
+
+// ProjectScanner is the contract internal/projectscan.Service
+// satisfies. The catalog adapter calls Run at spawn time (when the
+// stored tech_stack doc is older than maxAge) so a fresh agent sees
+// the current tech stack + structure without re-indexing the repo.
+// Errors are best-effort — failure to scan shouldn't block the
+// spawn.
+type ProjectScanner interface {
+	Run(ctx context.Context, cwd string) error
+	IsStale(ctx context.Context, cwd string, maxAge time.Duration) bool
 }
 
 // MemoryMirrorFunc syncs Claude's local memory files for the given
@@ -164,6 +186,20 @@ func (sp *SessionProvider) WithAmbientInjector(inj AmbientInjector) *SessionProv
 // recent journal) to the agent's system prompt at spawn time.
 func (sp *SessionProvider) WithProjectDocInjector(inj ProjectDocInjector) *SessionProvider {
 	sp.projectDocInjector = inj
+	return sp
+}
+
+// WithProjectScanner installs the project scanner. When the
+// stored tech_stack doc for the spawning session's cwd is older
+// than maxAge (or missing), Run is called synchronously so the
+// freshly-scanned info ends up in the spawn-time banner. Set
+// maxAge=0 to use the default 6h.
+func (sp *SessionProvider) WithProjectScanner(scanner ProjectScanner, maxAge time.Duration) *SessionProvider {
+	sp.projectScanner = scanner
+	if maxAge <= 0 {
+		maxAge = 6 * time.Hour
+	}
+	sp.scannerMaxAge = maxAge
 	return sp
 }
 
@@ -335,12 +371,25 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		}
 
 		// Cross-agent project context: goal + plan + recent journal
-		// (memory layers 2-4). Injected through the same per-CLI
-		// channel as ambient memory so the agent sees one composite
-		// system prompt. Failures here are non-fatal — a missing
-		// banner is better than a failed spawn.
+		// (memory layers 2-4) + tech stack (M16 scanner). Injected
+		// through the same per-CLI channel as ambient memory so the
+		// agent sees one composite system prompt. Failures here are
+		// non-fatal — a missing banner is better than a failed spawn.
 		if sp.projectDocInjector != nil {
 			cwd := session.Cwd(prepareCtx)
+			// Trigger a fresh project scan when the cached tech_stack
+			// is stale. Runs synchronously so the renderer below
+			// pulls in the latest info. Failure is logged, not
+			// propagated — a stale or missing tech_stack section is
+			// still better than blocking the spawn.
+			if cwd != "" && sp.projectScanner != nil {
+				if sp.projectScanner.IsStale(prepareCtx, cwd, sp.scannerMaxAge) {
+					if err := sp.projectScanner.Run(prepareCtx, cwd); err != nil {
+						sp.log.Warn("project scanner failed; spawn continues with stale tech_stack",
+							"cwd", cwd, "err", err)
+					}
+				}
+			}
 			if cwd != "" {
 				text, err := sp.projectDocInjector.RenderForSpawn(prepareCtx, cwd, 5)
 				if err != nil {
