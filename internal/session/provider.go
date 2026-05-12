@@ -24,6 +24,14 @@ type PrepareFunc func(ctx context.Context, sessionID, baseDir string) (PrepareOu
 type PrepareOutput struct {
 	Args []string
 	Env  map[string]string
+
+	// ClaudeSessionID is the agent-side session UUID for providers
+	// that accept a `--session-id` flag (claude, gemini). When set,
+	// the manager persists it onto the session row so the M18
+	// transcript reader can find the right *.jsonl file without
+	// fragile mtime-based guessing. Empty for providers that don't
+	// support pre-assigned session IDs (e.g. codex).
+	ClaudeSessionID string
 }
 
 // ProviderResolver maps a provider_id to its ProviderInfo. The catalog

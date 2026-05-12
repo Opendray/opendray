@@ -102,6 +102,21 @@ func (s *sessionStore) Reactivate(ctx context.Context, id string, pid int) error
 	return nil
 }
 
+// SetClaudeSessionID updates the agent-side session UUID after spawn.
+// The Manager calls this when the provider's PrepareOutput carries a
+// freshly-generated UUID (claude / gemini via --session-id), so the
+// M18 transcript reader can locate the right *.jsonl file directly
+// instead of relying on mtime heuristics.
+func (s *sessionStore) SetClaudeSessionID(ctx context.Context, id, claudeSessionID string) error {
+	_, err := s.pool.Exec(ctx,
+		`UPDATE sessions SET claude_session_id=$1 WHERE id=$2`,
+		claudeSessionID, id)
+	if err != nil {
+		return fmt.Errorf("set claude_session_id: %w", err)
+	}
+	return nil
+}
+
 // MarkAllRunningAsEnded flips every non-terminal session row to
 // 'ended' with exit_code=-1. Called once at gateway startup: a fresh
 // Manager has an empty in-memory map, so any row claiming to be

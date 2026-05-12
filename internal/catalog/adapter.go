@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/opendray/opendray-v2/internal/cliacct"
 	"github.com/opendray/opendray-v2/internal/mcp"
 	"github.com/opendray/opendray-v2/internal/session"
@@ -334,6 +335,18 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		// can override deliberately.
 		for k, v := range configEnv {
 			out.Env[k] = v
+		}
+
+		// M21 — Pre-assign the agent-side session UUID so the M18
+		// transcript reader can locate the *.jsonl file directly,
+		// instead of falling back to "latest mtime in dir" which
+		// picks up unrelated active conversations. Claude Code and
+		// Gemini both accept `--session-id <uuid>`; Codex does not,
+		// so it stays on the cwd-based reader path.
+		if injectSessionIDFor(providerID, &out) {
+			// out.ClaudeSessionID is the channel the manager uses to
+			// persist this value onto the sessions row. injectSessionIDFor
+			// already populated it; nothing else to do here.
 		}
 
 		if wantClaudeAccount {
@@ -891,6 +904,32 @@ ephemeral state that belongs in a session_log_append OR a
 project_plan_set update. memory_store is for things future
 sessions will still want to retrieve months from now.
 `
+
+// injectSessionIDFor pre-assigns the agent-side session UUID for
+// providers that support `--session-id`. Returns true when an ID was
+// injected, false when the provider doesn't support pre-assignment.
+//
+// Mutates out.Args (adds the flag pair) and out.ClaudeSessionID
+// (so the session manager can persist the value onto the row).
+// Codex has no equivalent flag — it generates its own UUID inside
+// rollout-<ts>-<uuid>.jsonl, which the M18 reader still finds via
+// the cwd-based fallback path.
+//
+// Idempotent against operator-supplied --session-id: if the user
+// already passed a UUID via Session.Args we leave it untouched.
+// (Args ordering puts provider-baseline → out.Args → sess.Args, so
+// a user-supplied flag wins anyway, but we skip injection too to
+// avoid emitting a duplicate flag.)
+func injectSessionIDFor(providerID string, out *session.PrepareOutput) bool {
+	switch providerID {
+	case "claude", "gemini":
+		id := uuid.NewString()
+		out.Args = append(out.Args, "--session-id", id)
+		out.ClaudeSessionID = id
+		return true
+	}
+	return false
+}
 
 // injectMemoryGuidanceFor adds memoryGuidanceText to the provider's
 // system-prompt surface — same per-CLI dispatch shape as

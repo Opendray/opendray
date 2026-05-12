@@ -341,6 +341,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		extraArgs []string
 		extraEnv  map[string]string
 	)
+	var preparedClaudeSessionID string
 	if p.Prepare != nil {
 		out, err := p.Prepare(WithSessionID(WithCwd(ctx, sess.Cwd), sess.ID), sess.ID, tempDir)
 		if err != nil {
@@ -349,6 +350,15 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		}
 		extraArgs = out.Args
 		extraEnv = out.Env
+		// Capture the agent-side session UUID so the M18 transcript
+		// reader can anchor the right *.jsonl file. For fresh spawns
+		// this lands in the Insert below via sess.ClaudeSessionID;
+		// for Reactivate we issue a follow-up UPDATE since that path
+		// preserves the original row's columns.
+		if out.ClaudeSessionID != "" {
+			sess.ClaudeSessionID = out.ClaudeSessionID
+			preparedClaudeSessionID = out.ClaudeSessionID
+		}
 	}
 
 	args := append([]string(nil), p.Args...)
@@ -374,6 +384,15 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 			_ = ptmx.Close()
 			_ = os.RemoveAll(tempDir)
 			return nil, err
+		}
+		// Reactivate preserves the original row's columns, so we
+		// have to issue a follow-up UPDATE when the provider picked
+		// a fresh agent-side UUID for this respawn.
+		if preparedClaudeSessionID != "" {
+			if err := m.store.SetClaudeSessionID(ctx, sess.ID, preparedClaudeSessionID); err != nil {
+				m.log.Warn("persist claude_session_id failed; M18 transcript matching may fall back to mtime",
+					"session_id", sess.ID, "err", err)
+			}
 		}
 	} else {
 		if err := m.store.Insert(ctx, sess); err != nil {

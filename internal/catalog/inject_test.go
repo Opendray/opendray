@@ -116,3 +116,59 @@ func TestInjectAmbientMemory_UnknownProviderSilent(t *testing.T) {
 		t.Errorf("unknown provider should not error: %v", err)
 	}
 }
+
+// M21 — injectSessionIDFor pre-assigns the agent-side session UUID so
+// the M18 transcript reader hits the correct *.jsonl directly. Bug
+// caught in production: without this, sessions.claude_session_id is
+// empty, the reader falls back to "latest mtime in dir", and picks up
+// unrelated active conversations.
+
+func TestInjectSessionID_Claude(t *testing.T) {
+	out := &session.PrepareOutput{}
+	if !injectSessionIDFor("claude", out) {
+		t.Fatal("expected injection to fire for claude")
+	}
+	if out.ClaudeSessionID == "" {
+		t.Errorf("claude: ClaudeSessionID empty after inject")
+	}
+	if len(out.Args) != 2 || out.Args[0] != "--session-id" || out.Args[1] != out.ClaudeSessionID {
+		t.Errorf("claude: expected --session-id <id> arg pair, got %+v", out.Args)
+	}
+}
+
+func TestInjectSessionID_Gemini(t *testing.T) {
+	out := &session.PrepareOutput{}
+	if !injectSessionIDFor("gemini", out) {
+		t.Fatal("expected injection to fire for gemini")
+	}
+	if out.ClaudeSessionID == "" {
+		t.Errorf("gemini: ClaudeSessionID empty after inject")
+	}
+	if len(out.Args) != 2 || out.Args[0] != "--session-id" || out.Args[1] != out.ClaudeSessionID {
+		t.Errorf("gemini: expected --session-id <id> arg pair, got %+v", out.Args)
+	}
+}
+
+func TestInjectSessionID_CodexSkipped(t *testing.T) {
+	// Codex has no --session-id flag — must skip rather than emit a
+	// bogus arg that codex would reject.
+	out := &session.PrepareOutput{}
+	if injectSessionIDFor("codex", out) {
+		t.Errorf("codex: injection should not fire (no --session-id support)")
+	}
+	if len(out.Args) != 0 || out.ClaudeSessionID != "" {
+		t.Errorf("codex: out should be untouched, got args=%v id=%q", out.Args, out.ClaudeSessionID)
+	}
+}
+
+func TestInjectSessionID_FreshUUIDsAcrossSpawns(t *testing.T) {
+	// Every spawn must get its own UUID; otherwise two concurrent
+	// Claude sessions would race for the same *.jsonl.
+	out1 := &session.PrepareOutput{}
+	out2 := &session.PrepareOutput{}
+	injectSessionIDFor("claude", out1)
+	injectSessionIDFor("claude", out2)
+	if out1.ClaudeSessionID == out2.ClaudeSessionID {
+		t.Errorf("expected distinct UUIDs across spawns, got %q twice", out1.ClaudeSessionID)
+	}
+}
