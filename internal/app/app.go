@@ -47,6 +47,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/memory/cleaner"
 	"github.com/opendray/opendray-v2/internal/memory/injector"
 	"github.com/opendray/opendray-v2/internal/memory/summarizer"
+	"github.com/opendray/opendray-v2/internal/gitactivity"
 	notesapi "github.com/opendray/opendray-v2/internal/notes"
 	"github.com/opendray/opendray-v2/internal/projectdoc"
 	"github.com/opendray/opendray-v2/internal/projectscan"
@@ -459,6 +460,25 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	projectScanSvc := projectscan.NewService(projectDocSvc, log)
 	projectScanHandlers := projectscan.NewHandlers(projectScanSvc, log)
 	sessionProvider.WithProjectScanner(projectScanSvc, 6*time.Hour)
+
+	// M16c — git activity summariser. Runs `git log --stat` over
+	// the last 7 days, sends the parsed commits to an LLM (same
+	// provider as the gatekeeper / cleaner), persists the prose
+	// summary as project_docs.kind='recent_activity'. The LLM
+	// client is built once at startup from the default summariser
+	// provider — operators who add or change providers after boot
+	// must restart to pick up the new config.
+	gitActivityOpts := []gitactivity.ServiceOption{
+		gitactivity.WithWindow("7 days ago"),
+		gitactivity.WithCommitLimit(50),
+	}
+	if llm, err := buildGitActivityClient(ctx, summarizerRegistry); err != nil {
+		log.Warn("git activity LLM unavailable; falling back to raw stats", "err", err)
+	} else if llm != nil {
+		gitActivityOpts = append(gitActivityOpts, gitactivity.WithLLM(llm))
+	}
+	gitActivitySvc := gitactivity.NewService(projectDocSvc, log, gitActivityOpts...)
+	gitActivityHandlers := gitactivity.NewHandlers(gitActivitySvc, log)
 	// Auto-journal: on every session.ended / session.stopped event
 	// the Journaler writes a session_logs row so future sessions see
 	// a chronological record of what just happened in this project.
@@ -516,6 +536,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 					cleanerHandlers.Mount(r)
 				}
 				projectScanHandlers.Mount(r)
+				gitActivityHandlers.Mount(r)
 			})
 
 			// Dual-auth (admin OR integration API key): all business
@@ -569,6 +590,55 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 // Migrate applies pending DB migrations and returns. Used by `opendray migrate`.
 func (a *App) Migrate(ctx context.Context) error {
 	return a.store.Migrate(ctx, a.log)
+}
+
+// buildGitActivityClient resolves the default summariser provider
+// (or the explicitly-pinned one) and constructs an LLM client for
+// the git activity summariser. Returns (nil, nil) when no enabled
+// provider exists — that's not an error, the service falls back to
+// raw stats.
+func buildGitActivityClient(ctx context.Context, reg *summarizer.Registry) (*gitactivity.Client, error) {
+	if reg == nil {
+		return nil, nil
+	}
+	rows, err := reg.ListEnabledRows(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var pick summarizer.ProviderRow
+	found := false
+	for _, r := range rows {
+		if r.IsDefault {
+			pick = r
+			found = true
+			break
+		}
+	}
+	if !found {
+		if len(rows) == 0 {
+			return nil, nil
+		}
+		pick = rows[0]
+	}
+	// Get plaintext api_key (decrypts ciphered keys when cipher is armed).
+	rowWithKey, gerr := reg.Build(ctx, pick.ID)
+	_ = rowWithKey // we don't need the built Provider, just the side
+	// effect of decrypting. Re-fetch the row to read APIKeyPlaintext.
+	if gerr != nil {
+		return nil, gerr
+	}
+	// Re-fetch to get the plaintext key.
+	freshRows, err := reg.ListEnabledRows(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range freshRows {
+		if r.ID == pick.ID {
+			pick = r
+			break
+		}
+	}
+	return gitactivity.NewClient(pick, pick.APIKeyPlaintext)
 }
 
 // Run starts the HTTP server, channel hub, and audit sink, then blocks

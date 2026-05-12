@@ -41,16 +41,21 @@ import (
 type Kind string
 
 const (
-	KindGoal      Kind = "goal"
-	KindPlan      Kind = "plan"
-	KindTechStack Kind = "tech_stack" // M16 — scanner-managed
+	KindGoal           Kind = "goal"
+	KindPlan           Kind = "plan"
+	KindTechStack      Kind = "tech_stack"      // M16b — scanner-managed
+	KindRecentActivity Kind = "recent_activity" // M16c — git-summary-managed
 )
 
 // ValidKind returns true for the supported document kinds.
 // Callers should use this rather than a hardcoded switch so the
 // list stays in one place.
 func ValidKind(k Kind) bool {
-	return k == KindGoal || k == KindPlan || k == KindTechStack
+	switch k {
+	case KindGoal, KindPlan, KindTechStack, KindRecentActivity:
+		return true
+	}
+	return false
 }
 
 // LogKind enumerates session_logs.kind. session_summary covers the
@@ -514,7 +519,7 @@ func (s *Service) RenderForSpawn(ctx context.Context, cwd string, recentLogs int
 		return "", fmt.Errorf("projectdoc: render spawn logs: %w", err)
 	}
 
-	var goal, plan, techStack string
+	var goal, plan, techStack, recentActivity string
 	for _, d := range docs {
 		switch d.Kind {
 		case KindGoal:
@@ -523,20 +528,27 @@ func (s *Service) RenderForSpawn(ctx context.Context, cwd string, recentLogs int
 			plan = strings.TrimSpace(d.Content)
 		case KindTechStack:
 			techStack = strings.TrimSpace(d.Content)
+		case KindRecentActivity:
+			recentActivity = strings.TrimSpace(d.Content)
 		}
 	}
 
-	if goal == "" && plan == "" && techStack == "" && len(logs) == 0 {
+	if goal == "" && plan == "" && techStack == "" && recentActivity == "" && len(logs) == 0 {
 		return "", nil
 	}
 
 	var b strings.Builder
 	b.WriteString("## Project context (cross-agent shared)\n\n")
-	b.WriteString("The following project state is shared across every claude / codex / gemini session in this project. It is the operator's source of truth for *what we're building* (goal), *how we're getting there* (plan), *what was just done* (journal), and *what tech stack and structure this project has* (tech_stack, scanner-managed).\n\n")
+	b.WriteString("The following project state is shared across every claude / codex / gemini session in this project. It is the operator's source of truth for *what we're building* (goal), *how we're getting there* (plan), *what was just done* (journal), *the tech stack and structure* (tech_stack, scanner-managed), and *recent git activity* (recent_activity, scanner-managed).\n\n")
 
 	if techStack != "" {
 		b.WriteString("### Tech stack & structure\n\n")
 		b.WriteString(techStack)
+		b.WriteString("\n\n")
+	}
+	if recentActivity != "" {
+		b.WriteString("### Recent activity\n\n")
+		b.WriteString(recentActivity)
 		b.WriteString("\n\n")
 	}
 	if goal != "" {
