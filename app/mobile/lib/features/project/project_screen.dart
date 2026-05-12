@@ -400,6 +400,18 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
     }
   }
 
+  // _currentContentFor returns the live doc body for the given
+  // kind (goal / plan) so the proposal card can render a before /
+  // after diff. Returns empty string when nothing is loaded or the
+  // kind has no doc yet — _DiffBlock will render "(not set)".
+  String _currentContentFor(String kind) {
+    final docs = _docs.asData?.value ?? const <ProjectDoc>[];
+    for (final d in docs) {
+      if (d.kind == kind) return d.content;
+    }
+    return '';
+  }
+
   // ── Proposal inbox ─────────────────────────────────────────────
 
   Widget _inboxTab() {
@@ -439,6 +451,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
             separatorBuilder: (_, __) => const SizedBox(height: 4),
             itemBuilder: (_, i) => _ProposalCard(
               proposal: props[i],
+              currentContent: _currentContentFor(props[i].kind),
               onApprove: () async {
                 try {
                   await ref
@@ -799,20 +812,35 @@ class _LogTile extends StatelessWidget {
   }
 }
 
+// _ProposalCard shows ONE pending goal/plan proposal. Critical UX
+// decision: agents propose REPLACEMENT bodies (not patches), so an
+// Approve click overwrites the live doc. To prevent operators
+// shipping an "improvement" that drops half the existing plan, the
+// card always shows both the current live doc and the proposed
+// replacement side by side, and Approve goes through a confirm
+// dialog with the same diff.
 class _ProposalCard extends StatelessWidget {
   const _ProposalCard({
     required this.proposal,
+    required this.currentContent,
     required this.onApprove,
     required this.onReject,
   });
 
   final DocProposal proposal;
+
+  /// The live doc body for (cwd, proposal.kind) right now. Used to
+  /// render the "Current" half of the before/after view so operators
+  /// can decide whether the proposal genuinely extends the existing
+  /// plan or accidentally drops content.
+  final String currentContent;
   final VoidCallback onApprove;
   final VoidCallback onReject;
 
   @override
   Widget build(BuildContext context) {
     final muted = Theme.of(context).textTheme.bodySmall;
+    final scheme = Theme.of(context).colorScheme;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -832,19 +860,55 @@ class _ProposalCard extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 4),
+            // Loud warning so the operator can't miss the semantics.
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: scheme.error.withValues(alpha: 0.08),
+                border: Border.all(
+                  color: scheme.error.withValues(alpha: 0.3),
+                ),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_outlined,
+                      size: 16, color: scheme.error),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Approve will REPLACE the current ${proposal.kind} '
+                      'with this content — not merge.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: scheme.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 8),
             if (proposal.reason.isNotEmpty) ...[
-              Text('Reason', style: muted),
+              Text('Agent reason', style: muted),
               const SizedBox(height: 2),
               Text(proposal.reason),
               const SizedBox(height: 8),
             ],
-            Text('Proposed content', style: muted),
-            const SizedBox(height: 2),
-            Text(
-              proposal.proposedContent,
-              maxLines: 6,
-              overflow: TextOverflow.ellipsis,
+            _DiffBlock(
+              label: 'Current ${proposal.kind}',
+              body: currentContent,
+              empty: '(not set)',
+              tint: scheme.outline,
+            ),
+            const SizedBox(height: 6),
+            _DiffBlock(
+              label: 'After approve',
+              body: proposal.proposedContent,
+              empty: '(empty — approving would clear the doc)',
+              tint: scheme.primary,
             ),
             const SizedBox(height: 8),
             Row(
@@ -856,7 +920,7 @@ class _ProposalCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
-                  onPressed: onApprove,
+                  onPressed: () => _confirmAndApprove(context),
                   child: const Text('Approve'),
                 ),
               ],
@@ -864,6 +928,124 @@ class _ProposalCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _confirmAndApprove(BuildContext context) async {
+    final scheme = Theme.of(context).colorScheme;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text('Replace current ${proposal.kind}?'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'The agent proposed replacing the entire '
+                    '${proposal.kind} body. Make sure the new content '
+                    'covers everything you still want.',
+                    style: Theme.of(ctx).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  _DiffBlock(
+                    label: 'Current',
+                    body: currentContent,
+                    empty: '(not set)',
+                    tint: scheme.outline,
+                    maxLines: 8,
+                  ),
+                  const SizedBox(height: 8),
+                  _DiffBlock(
+                    label: 'After approve',
+                    body: proposal.proposedContent,
+                    empty: '(empty)',
+                    tint: scheme.primary,
+                    maxLines: 8,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text('Replace ${proposal.kind}'),
+            ),
+          ],
+        );
+      },
+    );
+    if (ok ?? false) {
+      onApprove();
+    }
+  }
+}
+
+class _DiffBlock extends StatelessWidget {
+  const _DiffBlock({
+    required this.label,
+    required this.body,
+    required this.empty,
+    required this.tint,
+    this.maxLines = 6,
+  });
+
+  final String label;
+  final String body;
+  final String empty;
+  final Color tint;
+  final int maxLines;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).textTheme.bodySmall;
+    final trimmed = body.trim();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 3,
+              height: 12,
+              color: tint,
+              margin: const EdgeInsets.only(right: 6),
+            ),
+            Text(label,
+                style: muted?.copyWith(fontWeight: FontWeight.w600)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: tint.withValues(alpha: 0.05),
+            border: Border.all(color: tint.withValues(alpha: 0.2)),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            trimmed.isEmpty ? empty : trimmed,
+            maxLines: maxLines,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 13,
+              fontFamily: 'monospace',
+              fontStyle: trimmed.isEmpty ? FontStyle.italic : null,
+              color: trimmed.isEmpty ? muted?.color : null,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
