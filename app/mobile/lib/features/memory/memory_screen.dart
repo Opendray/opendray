@@ -486,58 +486,89 @@ class _ProjectSelector extends StatelessWidget {
         ? 'Pick a project'
         : (p.basename(selected!).isEmpty ? selected! : p.basename(selected!));
     final activePath = selected;
-    return InkWell(
-      onTap: () => _openPicker(context),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-        child: Row(
-          children: [
-            Icon(Icons.folder_outlined,
-                size: 18, color: theme.colorScheme.outline),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
+    // Mirrors a Material dropdown form field — bordered surface,
+    // floating-style label, chevron on the right. The original
+    // single-row tile (no border, tiny chevron) didn't read as
+    // interactive; operators saw it as a header. The
+    // InputDecorator-style shell makes "tap me" unmistakable.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      child: InkWell(
+        onTap: () => _openPicker(context),
+        borderRadius: BorderRadius.circular(10),
+        child: InputDecorator(
+          decoration: InputDecoration(
+            labelText: 'Project',
+            // The picker is always pre-selected at first project, so
+            // there is always a value below the label — no need to
+            // suppress hintText. Adding an explicit suffixIcon makes
+            // the dropdown affordance obvious.
+            suffixIcon: Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: Icon(
+                Icons.unfold_more,
+                size: 22,
+                color: theme.colorScheme.outline,
+              ),
+            ),
+            prefixIcon: Padding(
+              padding: const EdgeInsets.only(left: 8, right: 4),
+              child: Icon(
+                Icons.folder_outlined,
+                size: 20,
+                color: theme.colorScheme.outline,
+              ),
+            ),
+            isDense: false,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      activeLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    if (activePath != null &&
+                        activePath.isNotEmpty &&
+                        activePath != activeLabel)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
                         child: Text(
-                          activeLabel,
+                          activePath,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.outline,
+                            fontFamily: 'monospace',
+                            fontSize: 11,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '· ${keys.length}',
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: theme.colorScheme.outline),
-                      ),
-                    ],
-                  ),
-                  if (activePath != null && activePath.isNotEmpty)
-                    Text(
-                      activePath,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.outline,
-                        fontFamily: 'monospace',
-                        fontSize: 11,
-                      ),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 6),
-            Icon(Icons.unfold_more,
-                size: 18, color: theme.colorScheme.outline),
-          ],
+              const SizedBox(width: 8),
+              Text(
+                '${keys.length}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
