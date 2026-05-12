@@ -756,6 +756,47 @@ If you find a memory that contradicts the current state of the
 code or the user's latest direction, **surface it to the user**
 and propose an update or delete. Don't silently work around it —
 silent contradictions are how memory rot starts.
+
+### Project state — keep it current (DO NOT skip)
+
+memory_store is for DISCRETE FACTS. Project STATE — what we're
+building, where we are, what just happened — belongs in three
+other tools you also have on this MCP server:
+
+- ` + "`project_goal_set`" + ` — the project's long-term intent.
+  Update only when the goal genuinely changes; rare.
+- ` + "`project_plan_set`" + ` — the current roadmap / WIP arc.
+  **Update whenever the plan moves forward**: when you finish a
+  phase, when a new phase appears, when scope shifts. Each call
+  files a proposal that the operator approves, so it's safe to
+  call often — the operator filters noise. A stale plan is the
+  most common reason future sessions repeat work.
+- ` + "`session_log_append`" + ` — append a journal entry. **Call this
+  every time you complete a meaningful unit of work** in the
+  current session: shipped a feature, fixed a bug, made a
+  decision, hit a blocker, learned something the next session
+  needs. Title = one-line summary, content = what you did + why.
+  These accumulate into the project journal that every future
+  session sees at spawn time.
+- ` + "`decision_record`" + ` — ADR-style entry for choices that future
+  sessions should not re-litigate ("we picked pgvector over
+  Pinecone because…"). Use for genuine architectural locks-in,
+  not every micro-decision.
+
+DO NOT confuse the layers:
+
+| layer        | what                                | when |
+|--------------|-------------------------------------|------|
+| memory_store | one-sentence fact, top-K retrieved  | rarely; only durable facts |
+| session_log_append | what we just did               | often; every meaningful step |
+| project_plan_set   | where we are vs where we're going | when the plan shifts |
+| project_goal_set   | the project's North Star       | rarely; only when goal changes |
+
+The single most common failure mode is agents writing "currently
+working on M5" as a memory_store entry. That's WRONG — it's
+ephemeral state that belongs in a session_log_append OR a
+project_plan_set update. memory_store is for things future
+sessions will still want to retrieve months from now.
 `
 
 // injectMemoryGuidanceFor adds memoryGuidanceText to the provider's

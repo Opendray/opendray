@@ -192,23 +192,37 @@ func (s *memMCPServer) handle(raw []byte) {
 
 // instructionsBlurb shows up in the agent's system context so the
 // model knows when to call the tools without explicit prompting.
-const instructionsBlurb = `Persistent memory backed by opendray's pgvector store, plus
-the cross-agent project goal / plan / journal layer.
+const instructionsBlurb = `Persistent cross-agent memory backed by opendray. Five layers,
+each with a different rhythm — pick the right tool for the job:
 
-memory_*           — short discrete facts (top-K-relevant retrieval)
-project_goal_*     — long-term project intent (one doc per project)
-project_plan_*     — current roadmap / WIP arc (one doc per project)
-session_log_append — append a free-form note to the project journal
-decision_record    — append an ADR-style decision entry
+  memory_*           short DISCRETE FACTS; retrieved top-K-relevant
+                     (e.g. "user prefers pnpm", "DB at db.example:5432")
+  project_goal_*     LONG-TERM INTENT — what we're building. Rare changes.
+  project_plan_*     CURRENT ROADMAP / WIP ARC. Update OFTEN — every time
+                     the plan moves forward (phase done, scope shift).
+  session_log_append PROJECT JOURNAL — append every time you finish a
+                     meaningful step, fix a bug, hit a blocker, learn
+                     something the next session should know.
+  decision_record    ADR-style architectural locks-in (rare).
 
-Use memory_search before answering anything that might benefit from past
-context. Use memory_store after the user states a durable preference,
-identifier, decision, relationship, or ongoing-task fact.
+CRITICAL HABITS:
 
-If your work changes the goal or plan, call project_goal_set /
-project_plan_set — they file a proposal that the operator approves
-before the live doc updates. Do not bypass this by writing the
-change to a memory_store entry.`
+1. Call memory_load_context at session start so you don't repeat
+   work prior sessions already addressed.
+
+2. AS YOU WORK, call session_log_append liberally. The journal is
+   the primary way future sessions know "where we are". A session
+   that ends with no journal entries is a session that taught the
+   next agent nothing.
+
+3. When the plan shifts, call project_plan_set with the new plan.
+   It files a proposal — the operator approves — so feel free to
+   call it whenever progress changes the roadmap shape.
+
+4. memory_store is for FUTURE-SESSION-USEFUL FACTS, not for
+   tracking what you're currently doing. "Working on M5" is NOT
+   a memory_store entry — that goes in session_log_append or as
+   a project_plan_set update.`
 
 // toolDefs is the static list returned for tools/list.
 var toolDefs = []map[string]any{

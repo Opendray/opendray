@@ -7,6 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/memory_api.dart';
 import 'package:opendray/core/api/models.dart';
+import 'package:opendray/core/api/project_docs_api.dart';
+import 'package:opendray/features/project/project_screen.dart';
 import 'package:path/path.dart' as p;
 
 // Global Memory tab. Browses the cross-session pgvector memory
@@ -43,6 +45,14 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
   AsyncValue<List<_RowEntry>> _globalRows = const AsyncValue.loading();
   final _globalSearch = TextEditingController();
   String _globalQuery = '';
+
+  // Project state snapshot for the currently selected project key.
+  // Surfaces goal / plan / latest-journal so operators see what the
+  // project "is doing right now" alongside the discrete fact list.
+  // The full editor for these still lives in More → Project — this
+  // card is a glanceable summary, not a CRUD surface.
+  AsyncValue<_ProjectStateSnapshot> _projectState =
+      const AsyncValue.loading();
 
   Timer? _debounce;
 
@@ -103,7 +113,10 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
   Future<void> _loadProject() async {
     final key = _selectedKey;
     if (key == null) return;
-    setState(() => _projectRows = const AsyncValue.loading());
+    setState(() {
+      _projectRows = const AsyncValue.loading();
+      _projectState = const AsyncValue.loading();
+    });
     try {
       final rows = _projectQuery.isEmpty
           ? await _listAsRows(MemoryScope.project, key)
@@ -117,6 +130,30 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
       }
     } on Object catch (e, st) {
       if (mounted) setState(() => _projectRows = AsyncValue.error(e, st));
+    }
+    // Fetch goal / plan / journal snapshot in parallel-ish. These
+    // calls are independent of the memory list above; failures are
+    // non-fatal (snapshot just stays empty).
+    try {
+      final api = ref.read(projectDocsApiProvider);
+      final docs = await api.listDocs(key);
+      final logs = await api.listLogs(key, limit: 1);
+      if (!mounted) return;
+      var goal = '';
+      var plan = '';
+      for (final d in docs) {
+        if (d.kind == 'goal') goal = d.content;
+        if (d.kind == 'plan') plan = d.content;
+      }
+      setState(() => _projectState = AsyncValue.data(
+            _ProjectStateSnapshot(
+              goal: goal,
+              plan: plan,
+              latestLog: logs.isEmpty ? null : logs.first,
+            ),
+          ));
+    } on Object catch (e, st) {
+      if (mounted) setState(() => _projectState = AsyncValue.error(e, st));
     }
   }
 
@@ -378,6 +415,17 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
           loading: () => const _LoadingStrip(),
           error: (e, _) => _ErrorStrip(error: e, onRetry: _loadProjectKeys),
         ),
+        if (_selectedKey != null)
+          _ProjectStateCard(
+            state: _projectState,
+            onOpenProject: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const ProjectScreen(),
+                ),
+              );
+            },
+          ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
           child: TextField(
@@ -1665,6 +1713,201 @@ class _ScopeKeyField extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+// _ProjectStateSnapshot bundles the goal / plan / latest-journal
+// triple shown on the Memory tab as a one-glance summary. Goal and
+// plan are markdown bodies; latestLog is the newest session_logs
+// row if any.
+class _ProjectStateSnapshot {
+  _ProjectStateSnapshot({
+    required this.goal,
+    required this.plan,
+    required this.latestLog,
+  });
+  final String goal;
+  final String plan;
+  final SessionLogEntry? latestLog;
+
+  bool get isEmpty => goal.isEmpty && plan.isEmpty && latestLog == null;
+}
+
+// _ProjectStateCard renders the snapshot. Tap → open the full
+// Project screen for editing. We render two lines of preview per
+// section so the card never grows huge on a phone screen.
+class _ProjectStateCard extends StatelessWidget {
+  const _ProjectStateCard({
+    required this.state,
+    required this.onOpenProject,
+  });
+
+  final AsyncValue<_ProjectStateSnapshot> state;
+  final VoidCallback onOpenProject;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: state.when(
+        loading: () => const SizedBox.shrink(),
+        error: (_, __) => const SizedBox.shrink(),
+        data: (snap) {
+          if (snap.isEmpty) {
+            return _EmptySnapshot(onOpenProject: onOpenProject);
+          }
+          return Card(
+            child: InkWell(
+              onTap: onOpenProject,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.flag_outlined,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Project state',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color:
+                                    Theme.of(context).colorScheme.primary,
+                              ),
+                        ),
+                        const Spacer(),
+                        Icon(
+                          Icons.chevron_right,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _SnapshotSection(label: 'Goal', body: snap.goal),
+                    _SnapshotSection(label: 'Plan', body: snap.plan),
+                    if (snap.latestLog != null)
+                      _SnapshotSection(
+                        label: 'Last journal',
+                        body: snap.latestLog!.title.isNotEmpty
+                            ? '${snap.latestLog!.title} — ${snap.latestLog!.content}'
+                            : snap.latestLog!.content,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SnapshotSection extends StatelessWidget {
+  const _SnapshotSection({required this.label, required this.body});
+  final String label;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).textTheme.bodySmall;
+    final trimmed = body.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (trimmed.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 70,
+              child: Text(label, style: muted),
+            ),
+            Expanded(
+              child: Text(
+                '(not set)',
+                style: muted?.copyWith(fontStyle: FontStyle.italic),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 70,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(label, style: muted),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              trimmed,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptySnapshot extends StatelessWidget {
+  const _EmptySnapshot({required this.onOpenProject});
+  final VoidCallback onOpenProject;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      color: scheme.primary.withValues(alpha: 0.04),
+      child: InkWell(
+        onTap: onOpenProject,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Icon(Icons.flag_outlined, size: 20, color: scheme.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'No goal / plan / journal yet for this project',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Tap to seed them in the Project screen',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: scheme.outline),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: scheme.outline),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
