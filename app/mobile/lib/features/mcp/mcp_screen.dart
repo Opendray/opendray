@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/mcp_api.dart';
+import 'package:opendray/features/mcp/mcp_editor_screen.dart';
 
 // Two-section MCP control surface for mobile.
 //
@@ -128,6 +129,15 @@ class _McpScreenState extends ConsumerState<McpScreen> {
             ),
             const Divider(height: 1),
             ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('Edit config'),
+              subtitle: const Text(
+                'Full JSON editor — vault-backed servers only',
+                style: TextStyle(fontSize: 11),
+              ),
+              onTap: () => Navigator.of(sheetCtx).pop(_ServerAction.edit),
+            ),
+            ListTile(
               leading: const Icon(Icons.code),
               title: const Text('View raw config'),
               subtitle: const Text(
@@ -161,6 +171,8 @@ class _McpScreenState extends ConsumerState<McpScreen> {
     );
     if (action == null || !mounted) return;
     switch (action) {
+      case _ServerAction.edit:
+        await _openEditor(existing: s);
       case _ServerAction.viewConfig:
         await _showServerConfig(s);
       case _ServerAction.copyId:
@@ -175,6 +187,26 @@ class _McpScreenState extends ConsumerState<McpScreen> {
         );
       case _ServerAction.delete:
         await _confirmDeleteServer(s);
+    }
+  }
+
+  Future<void> _openEditor({McpServer? existing}) async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => McpEditorScreen(existing: existing),
+      ),
+    );
+    if ((saved ?? false) && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(existing == null
+              ? 'MCP server created.'
+              : 'MCP server updated.'),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      await _load();
     }
   }
 
@@ -393,6 +425,11 @@ class _McpScreenState extends ConsumerState<McpScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openEditor,
+        icon: const Icon(Icons.add),
+        label: const Text('New server'),
+      ),
     );
   }
 
@@ -406,8 +443,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
             const Padding(
               padding: EdgeInsets.fromLTRB(20, 0, 16, 12),
               child: Text(
-                'No MCP servers registered. Create them from the web '
-                'admin: MCP → New server.',
+                'No MCP servers registered. Tap "New server" to add one.',
                 style: TextStyle(fontSize: 12),
               ),
             )
@@ -489,7 +525,7 @@ class _Data {
   final McpSecretsState secrets;
 }
 
-enum _ServerAction { viewConfig, copyId, delete }
+enum _ServerAction { edit, viewConfig, copyId, delete }
 
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.label});

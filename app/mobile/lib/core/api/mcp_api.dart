@@ -126,9 +126,43 @@ class McpApi {
     }
   }
 
+  // POST /mcps creates a new server from the supplied body. id must
+  // match the body's server.id. Server-side validates the schema
+  // and 400s with a parseable message on malformed JSON.
+  Future<void> create({
+    required String id,
+    required Map<String, dynamic> server,
+  }) async {
+    try {
+      await _dio.post<void>(
+        '/api/v1/mcps',
+        data: {'id': id, 'server': server},
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // PUT /mcps/{id} replaces the whole Server object with the body.
+  // Used for full edits (config JSON) — see also setEnabled for the
+  // common toggle-only path.
+  Future<void> replace({
+    required String id,
+    required Map<String, dynamic> server,
+  }) async {
+    try {
+      await _dio.put<void>(
+        '/api/v1/mcps/$id',
+        data: {'id': id, 'server': server},
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   // PUT /mcps/{id} replaces the whole Server object. Mobile uses this
-  // only for toggling enabled — the multi-field create/edit flow
-  // stays web-only — so we read-merge-write to keep the rest intact.
+  // for the common enabled-toggle path; create/edit goes through
+  // the dedicated create() / replace() above.
   Future<void> setEnabled(String id, {required bool enabled}) async {
     try {
       final current = await get(id);
