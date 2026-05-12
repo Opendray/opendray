@@ -550,10 +550,14 @@ class _ProjectSelector extends StatelessWidget {
                           activePath,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
+                          // Don't override the body-small color —
+                          // colorScheme.outline maps to a near-border
+                          // tone in our dark theme and rendered the
+                          // path nearly invisible. Default bodySmall
+                          // already uses the readable muted token.
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.outline,
                             fontFamily: 'monospace',
-                            fontSize: 11,
+                            fontSize: 12,
                           ),
                         ),
                       ),
@@ -722,10 +726,17 @@ class _ProjectPickerSheetState extends State<_ProjectPickerSheet> {
                             ),
                             subtitle: Text(
                               k,
-                              style: const TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 11,
-                              ),
+                              // Inherit ListTile subtitle's default
+                              // color (theme.textTheme.bodySmall →
+                              // _darkMuted in dark mode), readable
+                              // against the picker sheet surface.
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    fontFamily: 'monospace',
+                                    fontSize: 12,
+                                  ),
                             ),
                             onTap: () => Navigator.of(context).pop(k),
                           );
