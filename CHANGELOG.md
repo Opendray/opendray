@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Per-session bypass toggle in the Spawn dialog (mobile + web).
+  Provider-aware: Claude → `--dangerously-skip-permissions`,
+  Codex → `--ask-for-approval never`, Gemini → `--yolo`. Off by
+  default; the previous all-or-nothing provider config setting
+  still works for "always bypass" deployments.
+
+### Changed
+
+- Spawn dialog's Claude account picker now appears immediately on
+  open (mobile + web). Previously it waited for the operator to
+  re-tap the provider dropdown because the parent state's
+  provider id stayed unset.
+- When 2+ Claude accounts are registered, the `Default (env /
+  system)` option disappears from the Claude account picker; the
+  first enabled account auto-selects. Single-account setups
+  retain the Default option.
+
 ### Fixed
 
 - Release workflow's `ghcr` job now produces image tags on
