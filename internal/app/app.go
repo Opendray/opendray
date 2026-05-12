@@ -357,6 +357,24 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		WithIntegrationLookup(&summarizerIntegrationLookup{svc: intgrSvc})
 	summarizerHandlers := summarizer.NewHandlers(summarizerRegistry, summarizerStore, log)
 
+	// M12 — Gatekeeper. Wired late because the summarizer registry
+	// only exists after backup cipher + summarizer store are up.
+	// When operators set [memory.gatekeeper] enabled = true, every
+	// memory_store call gets a pre-write LLM judgement; otherwise
+	// behaviour matches pre-M12 (no extra round-trip).
+	if memorySvc != nil && cfg.Memory.Gatekeeper.Enabled {
+		gk := memory.NewSummarizerGatekeeper(
+			summarizerRegistry,
+			cfg.Memory.Gatekeeper.SummarizerID,
+			time.Duration(cfg.Memory.Gatekeeper.MaxLatencyMs)*time.Millisecond,
+			log,
+		)
+		memorySvc.SetGatekeeper(gk)
+		log.Info("memory gatekeeper enabled",
+			"summarizer_id", cfg.Memory.Gatekeeper.SummarizerID,
+			"max_latency_ms", cfg.Memory.Gatekeeper.MaxLatencyMs)
+	}
+
 	captureRuleStore := capture.NewRuleStore(st.Pool())
 	captureSessionAdapter := &captureSessionAdapter{mgr: sessionMgr}
 	captureHistoryAdapter := &captureHistoryAdapter{mgr: sessionMgr}
@@ -915,6 +933,7 @@ func resolveMemoryService(
 		Store:               memStore,
 		SimilarityThreshold: float32(cfg.SimilarityThreshold),
 		DefaultTopK:         cfg.DefaultTopK,
+		DedupThreshold:      float32(cfg.DedupThreshold),
 		Scope: memory.ScopeDefaults{
 			Default: memory.Scope(cfg.Scope.Default),
 		},

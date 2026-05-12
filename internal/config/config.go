@@ -77,6 +77,18 @@ type MemoryConfig struct {
 	// and dedupe-on-insert). Empty → 0.7.
 	SimilarityThreshold float64 `toml:"similarity_threshold" json:"similarity_threshold"`
 
+	// DedupThreshold (0..1) — M11. When memory_store finds an
+	// existing memory in the same scope with cosine similarity ≥
+	// this value, it merges into that row (re-embed + bump
+	// metadata.deduped_count) instead of inserting a new one.
+	// 0 disables dedup; sensible values: ~0.85 for dense embedders
+	// (bge-m3 / ada-002), ~0.4 for BM25. Empty → 0 (off — preserves
+	// historical behaviour for fresh installs).
+	DedupThreshold float64 `toml:"dedup_threshold" json:"dedup_threshold"`
+
+	// Gatekeeper (M12) — pre-write LLM judge.
+	Gatekeeper MemoryGatekeeperConfig `toml:"gatekeeper" json:"gatekeeper"`
+
 	// Local + HTTP backends. Only the active one matters.
 	Local MemoryLocalConfig `toml:"local" json:"local"`
 	HTTP  MemoryHTTPConfig  `toml:"http" json:"http"`
@@ -131,6 +143,26 @@ type MemoryScopeConfig struct {
 	// pass one explicitly. "session" / "project" / "global".
 	// Empty → "project".
 	Default string `toml:"default" json:"default"`
+}
+
+// MemoryGatekeeperConfig (M12) — pre-write LLM judge that decides
+// whether a memory_store call carries a durable fact or noise.
+type MemoryGatekeeperConfig struct {
+	// Enabled flips the feature. Default false — the gatekeeper
+	// adds a per-store LLM round-trip (~200ms with LM Studio), and
+	// noisy writes are a tolerable problem until operators see the
+	// payoff in their memory list.
+	Enabled bool `toml:"enabled" json:"enabled"`
+
+	// SummarizerID picks which configured summarizer provider runs
+	// the judgement. Empty → use the registry default (whatever
+	// memory_summarizer_providers.is_default = true points at).
+	SummarizerID string `toml:"summarizer_id" json:"summarizer_id"`
+
+	// MaxLatencyMs caps the per-call timeout. Above this the
+	// gatekeeper logs and degrades to "allow" — better to let
+	// the write through than block on a slow LLM. Empty → 2000.
+	MaxLatencyMs int `toml:"max_latency_ms" json:"max_latency_ms"`
 }
 
 type ProvidersConfig struct {

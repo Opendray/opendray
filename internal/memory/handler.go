@@ -189,6 +189,13 @@ func (h *Handlers) store(w http.ResponseWriter, r *http.Request) {
 	}
 	id, err := h.svc.Store(r.Context(), req)
 	if err != nil {
+		// Gatekeeper rejections get their own status so MCP / UI
+		// can distinguish "the model judged this noise" from
+		// validation errors. 422 = Unprocessable Entity.
+		if errors.Is(err, ErrNotDurable) {
+			writeError(w, http.StatusUnprocessableEntity, err)
+			return
+		}
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}

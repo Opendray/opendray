@@ -23,6 +23,17 @@ type Service struct {
 	scope     ScopeDefaults
 	log       *slog.Logger
 
+	// dedupThreshold (M11): cosine similarity above which Store
+	// merges into an existing row instead of inserting a new one.
+	// 0 disables dedup. Sensible defaults are ~0.85 for dense
+	// embedders (bge-m3 / ada-002), ~0.4 for BM25.
+	dedupThreshold float32
+
+	// gatekeeper (M12): optional pre-write LLM that judges whether
+	// a memory is durable. nil → no gatekeeping (agent's own
+	// judgement only).
+	gatekeeper Gatekeeper
+
 	// AutoDetected captures the embedding services opendray noticed
 	// at startup (ollama / LM Studio on their default ports). Pure
 	// metadata — never auto-switches the active embedder. The UI
@@ -35,6 +46,23 @@ type Service struct {
 	// HTTP "Sync now" endpoint returns 503.
 	mirror *Mirror
 }
+
+// Gatekeeper is the contract a pre-write LLM judge satisfies (M12).
+// Returns (durable, category, reason). When durable=false the Store
+// path short-circuits and rejects the write, surfacing reason in the
+// returned error so the agent can adjust.
+//
+// Implementations should be fast (≤ 2s) and cheap; a remote 30B-class
+// model is overkill — Haiku / LM Studio with a 3B model is the
+// expected backend.
+type Gatekeeper interface {
+	Judge(ctx context.Context, text string) (durable bool, category string, reason string, err error)
+}
+
+// ErrNotDurable is returned by Store when the gatekeeper rejects a
+// write. Surfaced as a "tool error" by the MCP wrapper so the agent
+// sees the rejection reason but the session is otherwise unaffected.
+var ErrNotDurable = errors.New("memory: gatekeeper rejected — not a durable fact")
 
 // SetAutoDetected stores the results of a startup probe sweep so
 // the UI can surface them. Idempotent.
@@ -75,7 +103,19 @@ type Options struct {
 	SimilarityThreshold float32
 	DefaultTopK         int
 	Scope               ScopeDefaults
-	Logger              *slog.Logger
+
+	// DedupThreshold (M11) — cosine similarity above which Store
+	// merges into an existing row instead of inserting a new one.
+	// 0 (zero value) disables dedup; that's the historical behaviour
+	// and stays the default for fresh installs until the operator
+	// opts in via config.
+	DedupThreshold float32
+
+	// Gatekeeper (M12) — optional pre-write LLM judge. nil disables
+	// gatekeeping. See Gatekeeper interface for the contract.
+	Gatekeeper Gatekeeper
+
+	Logger *slog.Logger
 }
 
 // New builds a Service. Sensible defaults fill in zero-valued
@@ -106,15 +146,25 @@ func New(opts Options) (*Service, error) {
 	if opts.Scope.Default == "" {
 		opts.Scope.Default = ScopeProject
 	}
+	if opts.DedupThreshold < 0 {
+		opts.DedupThreshold = 0
+	}
 	return &Service{
-		emb:       opts.Embedder,
-		store:     opts.Store,
-		threshold: opts.SimilarityThreshold,
-		topK:      opts.DefaultTopK,
-		scope:     opts.Scope,
-		log:       opts.Logger.With("component", "memory"),
+		emb:            opts.Embedder,
+		store:          opts.Store,
+		threshold:      opts.SimilarityThreshold,
+		topK:           opts.DefaultTopK,
+		scope:          opts.Scope,
+		dedupThreshold: opts.DedupThreshold,
+		gatekeeper:     opts.Gatekeeper,
+		log:            opts.Logger.With("component", "memory"),
 	}, nil
 }
+
+// SetGatekeeper installs (or removes) the pre-write LLM judge after
+// Service construction. Used by the app when the summarizer registry
+// finishes booting after memory.New runs. Pass nil to disable.
+func (s *Service) SetGatekeeper(g Gatekeeper) { s.gatekeeper = g }
 
 // Close releases the store's resources.
 func (s *Service) Close() error {
@@ -164,9 +214,22 @@ type SearchRequest struct {
 	MinSimilarity float32 `json:"min_similarity,omitempty"`
 }
 
-// Store embeds + persists a fact. Always inserts a new row; we
-// don't dedupe / merge similar facts — operators trim with the
-// inspector if a particular scope's memories pile up.
+// Store embeds + persists a fact. Two filters run before the insert:
+//
+//   1. (M12) Gatekeeper — if installed, an LLM judges "is this a
+//      durable cross-session fact?" Rejection returns ErrNotDurable
+//      so the MCP wrapper can surface the reason to the agent.
+//   2. (M11) Dedup-on-store — if dedupThreshold > 0, search the
+//      same scope for a near-duplicate. If top-1 similarity ≥
+//      threshold, merge into that row (overwrite text, re-embed)
+//      instead of inserting a new one. The returned id is the
+//      existing row, with metadata.deduped_count++ so audit views
+//      can see how often this kicks in.
+//
+// Both filters are best-effort: a gatekeeper error degrades to
+// "allow" rather than blocking the write (we'd rather let noise
+// through than silently drop signal during an outage). A dedup
+// search error degrades to "insert a new row" — same fallback.
 func (s *Service) Store(ctx context.Context, req StoreRequest) (string, error) {
 	if strings.TrimSpace(req.Text) == "" {
 		return "", errors.New("memory: empty text")
@@ -181,12 +244,72 @@ func (s *Service) Store(ctx context.Context, req StoreRequest) (string, error) {
 		return "", fmt.Errorf("memory: scope %q requires a scope_key", req.Scope)
 	}
 
+	// (M12) Gatekeeper — pre-write LLM judgement.
+	if s.gatekeeper != nil {
+		durable, category, reason, gerr := s.gatekeeper.Judge(ctx, req.Text)
+		if gerr != nil {
+			// Outage / timeout — fall through to insert. Log so the
+			// operator notices the gate is mis-configured.
+			s.log.Warn("memory.gatekeeper_error", "err", gerr, "text_len", len(req.Text))
+		} else if !durable {
+			s.log.Info("memory.store_rejected",
+				"reason", reason, "scope", req.Scope, "scope_key", req.ScopeKey, "len", len(req.Text))
+			return "", fmt.Errorf("%w: %s", ErrNotDurable, reason)
+		} else if category != "" && req.Metadata != nil {
+			// Auto-tag if gatekeeper assigned a category and caller
+			// didn't provide one. Useful for agents that forgot to
+			// set metadata.type.
+			if _, has := req.Metadata["type"]; !has {
+				req.Metadata["type"] = category
+			}
+		} else if category != "" && req.Metadata == nil {
+			req.Metadata = map[string]any{"type": category}
+		}
+	}
+
 	emb, err := s.emb.Embed(ctx, []string{req.Text})
 	if err != nil {
 		return "", fmt.Errorf("memory: embed for store: %w", err)
 	}
 	if len(emb) != 1 {
 		return "", fmt.Errorf("memory: embedder returned %d vectors", len(emb))
+	}
+
+	// (M11) Dedup-on-store. Reuses the embedding we just computed so
+	// we don't pay a second embed call for the same text.
+	if s.dedupThreshold > 0 {
+		hits, sErr := s.store.Search(ctx, SearchQuery{
+			Vector:   emb[0],
+			Embedder: s.emb.Name(),
+			Scope:    req.Scope,
+			ScopeKey: req.ScopeKey,
+			TopK:     1,
+		})
+		if sErr != nil {
+			s.log.Warn("memory.dedup_search_failed", "err", sErr)
+		} else if len(hits) > 0 && hits[0].Similarity >= s.dedupThreshold {
+			existing := hits[0].Memory
+			merged := mergeMetadata(existing.Metadata, req.Metadata)
+			merged["deduped_count"] = dedupedCount(existing.Metadata) + 1
+			merged["deduped_last_at"] = time.Now().UTC().Format(time.RFC3339)
+			if uErr := s.store.Update(ctx, UpdateRequest{
+				ID:        existing.ID,
+				Text:      req.Text,
+				Embedder:  s.emb.Name(),
+				Embedding: emb[0],
+				Metadata:  merged,
+			}); uErr != nil {
+				s.log.Warn("memory.dedup_update_failed", "err", uErr, "merged_into", existing.ID)
+				// Fall through to insert — better duplicate than lost signal.
+			} else {
+				s.log.Info("memory.store_deduped",
+					"id", existing.ID,
+					"similarity", hits[0].Similarity,
+					"threshold", s.dedupThreshold,
+					"scope", req.Scope, "scope_key", req.ScopeKey)
+				return existing.ID, nil
+			}
+		}
 	}
 
 	id, err := s.store.Insert(ctx, InsertRequest{
@@ -206,6 +329,40 @@ func (s *Service) Store(ctx context.Context, req StoreRequest) (string, error) {
 	}
 	s.log.Info("memory.store", "id", id, "scope", req.Scope, "scope_key", req.ScopeKey, "len", len(req.Text))
 	return id, nil
+}
+
+// mergeMetadata combines an existing memory's metadata with the
+// incoming write's metadata. Incoming values win on key collision so
+// agent corrections ("oh actually it's pnpm not yarn") replace stale
+// values. Always returns a non-nil map so callers can safely set keys
+// without nil checks.
+func mergeMetadata(existing, incoming map[string]any) map[string]any {
+	out := make(map[string]any, len(existing)+len(incoming)+2)
+	for k, v := range existing {
+		out[k] = v
+	}
+	for k, v := range incoming {
+		out[k] = v
+	}
+	return out
+}
+
+// dedupedCount returns the previous deduped_count value from
+// metadata, or 0 if missing / malformed. Defensive against the JSON
+// round-tripping that turns ints into float64s.
+func dedupedCount(meta map[string]any) int {
+	if meta == nil {
+		return 0
+	}
+	switch v := meta["deduped_count"].(type) {
+	case int:
+		return v
+	case int64:
+		return int(v)
+	case float64:
+		return int(v)
+	}
+	return 0
 }
 
 // Search embeds the query and asks the store for top-K similar

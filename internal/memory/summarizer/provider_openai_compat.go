@@ -125,11 +125,36 @@ func (p *OpenAICompatProvider) Available(ctx context.Context) error {
 	}
 }
 
-// Summarize uses chat completions with response_format=json_object
-// to get strict JSON back. OpenAI's tool-use API would also work,
-// but json_object is the lowest common denominator — LM Studio and
-// most third-party compatibles support it, while tool_choice is
-// uneven.
+// responseFormatFor returns the response_format block to send for a
+// given provider kind. OpenAI accepts json_object — its loose-JSON
+// mode; LM Studio (since 0.3.x) rejects json_object and only
+// accepts json_schema or text. We send the strict schema from
+// prompt.go for lmstudio so the model is guaranteed to emit the
+// {"facts":[…]} envelope.
+func responseFormatFor(kind string) map[string]any {
+	switch kind {
+	case "lmstudio":
+		var schema map[string]any
+		_ = json.Unmarshal([]byte(FactsToolJSONSchema), &schema)
+		return map[string]any{
+			"type": "json_schema",
+			"json_schema": map[string]any{
+				"name":   FactsToolName,
+				"strict": true,
+				"schema": schema,
+			},
+		}
+	default:
+		return map[string]any{"type": "json_object"}
+	}
+}
+
+// Summarize uses chat completions with a kind-appropriate
+// response_format to get strict JSON back. OpenAI's tool-use API
+// would also work, but response_format is the lowest common
+// denominator — every OpenAI-compatible provider supports either
+// json_object (OpenAI itself, most third-party hosts) or
+// json_schema (LM Studio).
 func (p *OpenAICompatProvider) Summarize(ctx context.Context, msgs []Message) (SummarizeResult, error) {
 	if len(msgs) == 0 {
 		return SummarizeResult{}, ErrEmptyConversation
@@ -145,7 +170,7 @@ func (p *OpenAICompatProvider) Summarize(ctx context.Context, msgs []Message) (S
 			{"role": "system", "content": SystemPrompt()},
 			{"role": "user", "content": transcript},
 		},
-		"response_format": map[string]any{"type": "json_object"},
+		"response_format": responseFormatFor(p.cfg.Kind),
 		"max_tokens":      p.cfg.MaxTokens,
 		"stream":          false,
 	}
@@ -266,6 +291,15 @@ func parseOpenAICompatResponse(res map[string]any) ([]Fact, int, int, error) {
 	msg, _ := first["message"].(map[string]any)
 	content, _ := msg["content"].(string)
 	content = strings.TrimSpace(content)
+	// LM Studio reasoning models (qwen3/r1/deepseek/etc.) emit the
+	// actual structured answer in reasoning_content and leave content
+	// empty. Fall back to that field so the gatekeeper + capture engine
+	// work on reasoning-model backends without operator workarounds.
+	if content == "" {
+		if rc, ok := msg["reasoning_content"].(string); ok {
+			content = strings.TrimSpace(rc)
+		}
+	}
 	if content == "" {
 		return nil, in, out, nil
 	}
