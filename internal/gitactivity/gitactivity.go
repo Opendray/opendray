@@ -38,10 +38,10 @@ import (
 
 // Commit is one git log entry with its file change stat.
 type Commit struct {
-	SHA         string // short SHA
-	Author      string
-	AuthoredAt  time.Time
-	Subject     string // first line of commit message
+	SHA          string // short SHA
+	Author       string
+	AuthoredAt   time.Time
+	Subject      string // first line of commit message
 	FilesChanged int
 	Insertions   int
 	Deletions    int
@@ -213,29 +213,29 @@ func extractInt(line, suffix string) int {
 
 // Summary precomputes lightweight aggregates the LLM prompt needs.
 type Summary struct {
-	Commits        []Commit
-	TotalCommits   int
-	TotalFiles     int
-	TotalInserts   int
-	TotalDeletes   int
-	HotPaths       []PathStat // top 10 paths by change count
-	WindowSince    string
-	GeneratedAt    time.Time
+	Commits      []Commit
+	TotalCommits int
+	TotalFiles   int
+	TotalInserts int
+	TotalDeletes int
+	HotPaths     []PathStat // top 10 paths by change count
+	WindowSince  string
+	GeneratedAt  time.Time
 }
 
 // PathStat is one entry in HotPaths.
 type PathStat struct {
-	Path  string
-	Hits  int
+	Path string
+	Hits int
 }
 
 // SummariseRaw rolls up a commit slice into a Summary. No LLM —
 // just counting. The LLM step happens in the Summariser.
 func SummariseRaw(commits []Commit, since string) Summary {
 	s := Summary{
-		Commits:     commits,
-		WindowSince: since,
-		GeneratedAt: time.Now().UTC(),
+		Commits:      commits,
+		WindowSince:  since,
+		GeneratedAt:  time.Now().UTC(),
 		TotalCommits: len(commits),
 	}
 	hits := map[string]int{}
@@ -311,9 +311,9 @@ func RenderRawMarkdown(s Summary) string {
 
 // Service ties Reader + (optional) LLM summariser + persistence.
 type Service struct {
-	reader      *Reader
-	llm         *Client // nil → fall back to raw markdown
-	docs        *projectdoc.Service
+	reader       *Reader
+	llm          *Client // nil → fall back to raw markdown
+	docs         *projectdoc.Service
 	defaultSince string
 	limit        int
 	log          *slog.Logger

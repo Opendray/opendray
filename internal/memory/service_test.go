@@ -77,9 +77,9 @@ func (s *fakeStore) Get(_ context.Context, id string) (Memory, error) {
 	}
 	return Memory{}, errors.New("not found")
 }
-func (s *fakeStore) Delete(context.Context, string) error            { return nil }
+func (s *fakeStore) Delete(context.Context, string) error                        { return nil }
 func (s *fakeStore) DeleteByScope(context.Context, Scope, string) (int64, error) { return 0, nil }
-func (s *fakeStore) Close() error                                    { return nil }
+func (s *fakeStore) Close() error                                                { return nil }
 
 func newTestService(t *testing.T, store Store, opts Options) *Service {
 	t.Helper()

@@ -112,11 +112,11 @@ func NewService(
 
 // RunResult summarises one cleanup pass.
 type RunResult struct {
-	RunID       string `json:"run_id"`
-	Scope       string `json:"scope"`
-	ScopeKey    string `json:"scope_key"`
-	MemoriesIn  int    `json:"memories_in"`
-	DecisionsOut int   `json:"decisions_out"`
+	RunID        string `json:"run_id"`
+	Scope        string `json:"scope"`
+	ScopeKey     string `json:"scope_key"`
+	MemoriesIn   int    `json:"memories_in"`
+	DecisionsOut int    `json:"decisions_out"`
 }
 
 // Run scans up to BatchSize aged-eligible memories under (scope,

@@ -216,15 +216,15 @@ type SearchRequest struct {
 
 // Store embeds + persists a fact. Two filters run before the insert:
 //
-//   1. (M12) Gatekeeper — if installed, an LLM judges "is this a
-//      durable cross-session fact?" Rejection returns ErrNotDurable
-//      so the MCP wrapper can surface the reason to the agent.
-//   2. (M11) Dedup-on-store — if dedupThreshold > 0, search the
-//      same scope for a near-duplicate. If top-1 similarity ≥
-//      threshold, merge into that row (overwrite text, re-embed)
-//      instead of inserting a new one. The returned id is the
-//      existing row, with metadata.deduped_count++ so audit views
-//      can see how often this kicks in.
+//  1. (M12) Gatekeeper — if installed, an LLM judges "is this a
+//     durable cross-session fact?" Rejection returns ErrNotDurable
+//     so the MCP wrapper can surface the reason to the agent.
+//  2. (M11) Dedup-on-store — if dedupThreshold > 0, search the
+//     same scope for a near-duplicate. If top-1 similarity ≥
+//     threshold, merge into that row (overwrite text, re-embed)
+//     instead of inserting a new one. The returned id is the
+//     existing row, with metadata.deduped_count++ so audit views
+//     can see how often this kicks in.
 //
 // Both filters are best-effort: a gatekeeper error degrades to
 // "allow" rather than blocking the write (we'd rather let noise

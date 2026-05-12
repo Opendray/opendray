@@ -39,6 +39,7 @@ import (
 	fsapi "github.com/opendray/opendray-v2/internal/fs"
 	"github.com/opendray/opendray-v2/internal/gateway"
 	gitapi "github.com/opendray/opendray-v2/internal/git"
+	"github.com/opendray/opendray-v2/internal/gitactivity"
 	githost "github.com/opendray/opendray-v2/internal/githost"
 	"github.com/opendray/opendray-v2/internal/integration"
 	mcpapi "github.com/opendray/opendray-v2/internal/mcp"
@@ -47,7 +48,6 @@ import (
 	"github.com/opendray/opendray-v2/internal/memory/cleaner"
 	"github.com/opendray/opendray-v2/internal/memory/injector"
 	"github.com/opendray/opendray-v2/internal/memory/summarizer"
-	"github.com/opendray/opendray-v2/internal/gitactivity"
 	notesapi "github.com/opendray/opendray-v2/internal/notes"
 	"github.com/opendray/opendray-v2/internal/projectdoc"
 	"github.com/opendray/opendray-v2/internal/projectscan"
@@ -589,18 +589,18 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}
 
 	return &App{
-		cfg:             cfg,
-		log:             log,
-		store:           st,
-		bus:             bus,
-		sessions:        sessionMgr,
-		channels:        channelHub,
-		integrations:    intgrSvc,
-		healthCheck:     healthCheck,
-		audit:           auditSink,
-		intgrCallLogger: intgrCallLogger,
-		vaultSync:       vaultSyncer,
-		liveBackup:      liveBackup,
+		cfg:                  cfg,
+		log:                  log,
+		store:                st,
+		bus:                  bus,
+		sessions:             sessionMgr,
+		channels:             channelHub,
+		integrations:         intgrSvc,
+		healthCheck:          healthCheck,
+		audit:                auditSink,
+		intgrCallLogger:      intgrCallLogger,
+		vaultSync:            vaultSyncer,
+		liveBackup:           liveBackup,
 		captureEngine:        captureEngine,
 		journaler:            journaler,
 		cleanerScheduler:     cleanerScheduler,

@@ -38,10 +38,10 @@ import (
 //	task       → reference      (a pointer to ongoing work)
 //	other      → project_fact   (fallback)
 type SummarizerGatekeeper struct {
-	reg          *summarizer.Registry
-	providerID   string        // empty → registry default
-	maxLatency   time.Duration // hard cap per judge call
-	log          *slog.Logger
+	reg        *summarizer.Registry
+	providerID string        // empty → registry default
+	maxLatency time.Duration // hard cap per judge call
+	log        *slog.Logger
 }
 
 // NewSummarizerGatekeeper wires a gatekeeper backed by the
