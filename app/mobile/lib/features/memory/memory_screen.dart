@@ -801,6 +801,39 @@ class _MemoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final m = row.memory;
     final preview = m.text.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+    // Extract metadata signals surfaced as chips.
+    final meta = m.metadata ?? const {};
+    final typeTag = meta['type']?.toString() ?? '';
+    final dedupedCount = _readInt(meta['deduped_count']);
+    final originLabel = _originLabel(m.sourceKind);
+
+    final badges = <Widget>[];
+    if (typeTag.isNotEmpty) {
+      badges.add(_TileBadge(
+        text: typeTag,
+        color: _typeColor(context, typeTag),
+      ));
+    }
+    if (originLabel != null) {
+      badges.add(_TileBadge(
+        text: originLabel,
+        color: Theme.of(context).colorScheme.secondary,
+      ));
+    }
+    if (dedupedCount > 0) {
+      badges.add(_TileBadge(
+        text: 'merged ×$dedupedCount',
+        color: Theme.of(context).colorScheme.tertiary,
+      ));
+    }
+    if (m.hitCount > 0) {
+      badges.add(_TileBadge(
+        text: '${m.hitCount} hits',
+        color: Theme.of(context).colorScheme.outline,
+      ));
+    }
+
     return ListTile(
       onTap: onTap,
       title: Text(
@@ -809,33 +842,43 @@ class _MemoryTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.bodyMedium,
       ),
-      subtitle: Row(
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (m.scopeKey.isNotEmpty)
-            Flexible(
-              child: Text(
-                p.basename(m.scopeKey).isEmpty
-                    ? m.scopeKey
-                    : p.basename(m.scopeKey),
-                style: Theme.of(context).textTheme.bodySmall,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          if (m.scopeKey.isNotEmpty) const Text('  ·  '),
-          Text(
-            _relTime(m.updatedAt),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          if (row.similarity != null) ...[
-            const Text('  ·  '),
-            Text(
-              row.similarity!.toStringAsFixed(2),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
+          if (badges.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Wrap(spacing: 6, runSpacing: 4, children: badges),
+            const SizedBox(height: 2),
           ],
+          Row(
+            children: [
+              if (m.scopeKey.isNotEmpty)
+                Flexible(
+                  child: Text(
+                    p.basename(m.scopeKey).isEmpty
+                        ? m.scopeKey
+                        : p.basename(m.scopeKey),
+                    style: Theme.of(context).textTheme.bodySmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              if (m.scopeKey.isNotEmpty) const Text('  ·  '),
+              Text(
+                _relTime(m.updatedAt),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              if (row.similarity != null) ...[
+                const Text('  ·  '),
+                Text(
+                  row.similarity!.toStringAsFixed(2),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
       trailing: const Icon(Icons.chevron_right),
@@ -849,6 +892,77 @@ class _MemoryTile extends StatelessWidget {
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
     return DateFormat.yMMMd().format(ts.toLocal());
+  }
+
+  static int _readInt(Object? v) {
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    if (v is String) return int.tryParse(v) ?? 0;
+    return 0;
+  }
+
+  static String? _originLabel(String? sourceKind) {
+    switch (sourceKind) {
+      case 'mcp_call':
+        return 'agent';
+      case 'summarizer':
+        return 'summarizer';
+      case 'mirror_claude_md':
+        return 'mirror';
+      case 'imported':
+        return 'imported';
+      case 'manual':
+      case null:
+      case '':
+        return null;
+      default:
+        return sourceKind;
+    }
+  }
+
+  static Color _typeColor(BuildContext context, String type) {
+    final scheme = Theme.of(context).colorScheme;
+    switch (type) {
+      case 'user_preference':
+        return scheme.primary;
+      case 'project_fact':
+        return scheme.secondary;
+      case 'feedback':
+        return scheme.error;
+      case 'reference':
+        return scheme.tertiary;
+      default:
+        return scheme.outline;
+    }
+  }
+}
+
+// _TileBadge is a tight 11-px chip used in the memory list. Smaller
+// than Material's Chip so multiple badges fit on a phone-sized row.
+class _TileBadge extends StatelessWidget {
+  const _TileBadge({required this.text, required this.color});
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 10,
+          color: color,
+          fontWeight: FontWeight.w600,
+          height: 1.2,
+        ),
+      ),
+    );
   }
 }
 
