@@ -14,13 +14,13 @@ package auth
 import (
 	"context"
 	"crypto/rand"
-	"crypto/subtle"
 	"encoding/base64"
 	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/opendray/opendray-v2/internal/config"
@@ -46,12 +46,24 @@ type TokenInfo struct {
 
 // Service is the admin auth surface. Construct via New and pass
 // Middleware to chi.Router.Use for protected groups.
+//
+// Since PR #53 the active credentials live in an atomic.Pointer so
+// the change-credentials handler can hot-swap them without
+// restarting the gateway. Reads (login path) are lock-free; the
+// only writer is ChangeCredentials, which serialises via credsMu.
 type Service struct {
 	cfg       config.AdminConfig
 	ttl       time.Duration
 	mobileTTL time.Duration
 	bus       *eventbus.Hub
 	log       *slog.Logger
+
+	// creds is the live credentials snapshot. Atomically swapped
+	// by ChangeCredentials. Loaded once at startup via LoadCreds;
+	// callers read via activeCreds() which is a single atomic
+	// load.
+	creds   atomic.Pointer[AdminCreds]
+	credsMu sync.Mutex
 
 	mu     sync.RWMutex
 	tokens map[string]TokenInfo
@@ -69,7 +81,7 @@ func New(cfg config.AdminConfig, bus *eventbus.Hub, log *slog.Logger) *Service {
 	if mobileTTL <= 0 {
 		mobileTTL = defaultMobileTokenTTL
 	}
-	return &Service{
+	s := &Service{
 		cfg:       cfg,
 		ttl:       ttl,
 		mobileTTL: mobileTTL,
@@ -77,6 +89,25 @@ func New(cfg config.AdminConfig, bus *eventbus.Hub, log *slog.Logger) *Service {
 		log:       log.With("component", "auth"),
 		tokens:    make(map[string]TokenInfo),
 	}
+	// Boot-time credential load. Errors here are loud (corrupt
+	// keyfile, etc.) but we degrade rather than refuse to start —
+	// callers can re-configure via env or by removing the bad
+	// file. activeCreds() returning nil simply rejects all logins
+	// until that happens.
+	creds, err := LoadCreds(cfg.User, cfg.Password)
+	if err != nil {
+		s.log.Error("admin credentials load failed; logins disabled until fixed", "err", err)
+	} else if creds.User != "" {
+		s.creds.Store(&creds)
+		s.log.Info("admin credentials loaded", "user", creds.User, "source", string(creds.Source))
+	}
+	return s
+}
+
+// activeCreds returns the current credentials snapshot, or nil
+// when admin is not configured. Single atomic load.
+func (s *Service) activeCreds() *AdminCreds {
+	return s.creds.Load()
 }
 
 // Login validates user/password using constant-time comparison and
@@ -96,13 +127,12 @@ func (s *Service) LoginMobile(user, password string) (string, TokenInfo, error) 
 }
 
 func (s *Service) loginWithTTL(user, password string, ttl time.Duration) (string, TokenInfo, error) {
-	if s.cfg.User == "" || s.cfg.Password == "" {
+	creds := s.activeCreds()
+	if creds == nil {
 		s.publishLogin(user, false, "admin not configured")
 		return "", TokenInfo{}, ErrInvalidCredentials
 	}
-	userOK := subtle.ConstantTimeCompare([]byte(user), []byte(s.cfg.User)) == 1
-	passOK := subtle.ConstantTimeCompare([]byte(password), []byte(s.cfg.Password)) == 1
-	if !userOK || !passOK {
+	if !creds.VerifyPassword(user, password) {
 		s.publishLogin(user, false, "credentials mismatch")
 		return "", TokenInfo{}, ErrInvalidCredentials
 	}
@@ -113,7 +143,7 @@ func (s *Service) loginWithTTL(user, password string, ttl time.Duration) (string
 	}
 	now := time.Now().UTC()
 	info := TokenInfo{
-		Username:  s.cfg.User,
+		Username:  creds.User,
 		IssuedAt:  now,
 		ExpiresAt: now.Add(ttl),
 	}
@@ -122,6 +152,96 @@ func (s *Service) loginWithTTL(user, password string, ttl time.Duration) (string
 	s.mu.Unlock()
 	s.publishLogin(s.cfg.User, true, "")
 	return tok, info, nil
+}
+
+// ChangeCredentials rotates the operator's username + password.
+// Verifies currentPassword against the live credentials first
+// (defence against a stolen bearer token — without the current
+// password an attacker can't lock the operator out of their own
+// gateway).
+//
+// On success: writes a new keyfile, hot-swaps the in-memory creds
+// pointer, and revokes ALL existing tokens so everyone has to
+// re-authenticate with the new password. The revoke step is what
+// makes "change password after a suspected leak" actually
+// defensive — otherwise the attacker's token keeps working.
+func (s *Service) ChangeCredentials(currentPassword, newUser, newPassword string) error {
+	s.credsMu.Lock()
+	defer s.credsMu.Unlock()
+
+	active := s.activeCreds()
+	if active == nil {
+		return ErrInvalidCredentials
+	}
+	if !active.VerifyPassword(active.User, currentPassword) {
+		s.publishLogin(active.User, false, "change-credentials: current password mismatch")
+		return ErrInvalidCredentials
+	}
+
+	newUser = strings.TrimSpace(newUser)
+	if newUser == "" {
+		newUser = active.User
+	}
+	if len(newPassword) < MinPasswordLen {
+		return errors.New("new password too short")
+	}
+
+	if _, err := WriteKeyFile(newUser, newPassword); err != nil {
+		return err
+	}
+	// Re-load so the in-memory copy matches what was just
+	// written, including the bcrypt hash (not the plaintext).
+	loaded, err := LoadCreds(s.cfg.User, s.cfg.Password)
+	if err != nil {
+		return err
+	}
+	s.creds.Store(&loaded)
+	s.revokeAllTokens()
+	s.publishCredsChanged(newUser)
+	return nil
+}
+
+// revokeAllTokens drops every issued token so a credential
+// rotation forces re-authentication.
+func (s *Service) revokeAllTokens() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.tokens = make(map[string]TokenInfo)
+}
+
+func (s *Service) publishCredsChanged(user string) {
+	if s.bus == nil {
+		return
+	}
+	s.bus.Publish(eventbus.Event{
+		Topic: "admin.credentials_changed",
+		Data: map[string]any{
+			"user": user,
+		},
+	})
+}
+
+// ActiveUser exposes the current admin username for read-only UI
+// surfaces (e.g. populating "new username" with the current value).
+// Returns "" when admin isn't configured.
+func (s *Service) ActiveUser() string {
+	c := s.activeCreds()
+	if c == nil {
+		return ""
+	}
+	return c.User
+}
+
+// ActiveSource lets the UI explain how the operator is currently
+// authenticated (env / file / config) — useful for the change-
+// credentials screen so it can warn when an env var is going to
+// keep shadowing whatever the operator writes via UI.
+func (s *Service) ActiveSource() CredSource {
+	c := s.activeCreds()
+	if c == nil {
+		return CredSourceNone
+	}
+	return c.Source
 }
 
 // Validate returns the TokenInfo if the token is known and unexpired.

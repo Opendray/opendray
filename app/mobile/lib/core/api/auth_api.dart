@@ -43,6 +43,32 @@ class AuthApi {
       throw toApiException(e);
     }
   }
+
+  // POST /api/v1/auth/change-credentials — rotates the operator's
+  // username + password. Server returns a fresh token issued
+  // under the new credentials so the client stays logged in
+  // without re-prompting for password immediately. All other
+  // tokens are revoked server-side; an attacker holding a stolen
+  // bearer would be kicked out on the next request.
+  Future<MobileLoginResponse> changeCredentials({
+    required String currentPassword,
+    required String newPassword,
+    String? newUser,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/auth/change-credentials',
+        data: {
+          'current_password': currentPassword,
+          'new_password': newPassword,
+          if (newUser != null && newUser.isNotEmpty) 'new_user': newUser,
+        },
+      );
+      return MobileLoginResponse.fromJson(res.data ?? {});
+    } catch (e) {
+      throw toApiException(e);
+    }
+  }
 }
 
 final authApiProvider = Provider<AuthApi>((ref) {
