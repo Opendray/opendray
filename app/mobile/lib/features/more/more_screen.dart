@@ -10,6 +10,7 @@ import 'package:opendray/features/githosts/githosts_screen.dart';
 import 'package:opendray/features/integrations/integrations_screen.dart';
 import 'package:opendray/features/mcp/mcp_screen.dart';
 import 'package:opendray/features/more/about_screen.dart';
+import 'package:opendray/features/project/project_screen.dart';
 import 'package:opendray/features/providers/providers_screen.dart';
 import 'package:opendray/features/settings/settings_screen.dart';
 import 'package:opendray/features/skills/skills_screen.dart';
@@ -81,6 +82,14 @@ class MoreScreen extends ConsumerWidget {
             title: 'Custom tasks',
             subtitle: 'Slash commands shown in the session task picker',
             onTap: () => _push(context, const CustomTasksScreen()),
+          ),
+          const SizedBox(height: 8),
+          const _SectionHeader(label: 'Memory'),
+          _MenuTile(
+            icon: Icons.flag_outlined,
+            title: 'Project',
+            subtitle: 'Goal, plan, journal & agent proposals',
+            onTap: () => _push(context, const ProjectScreen()),
           ),
           const SizedBox(height: 8),
           const _SectionHeader(label: 'System'),
