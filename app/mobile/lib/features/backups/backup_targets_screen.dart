@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/backups_api.dart';
+import 'package:opendray/features/backups/backup_target_editor_screen.dart';
 
 // Backup targets — destinations a backup blob can be written to.
 // Mobile exposes list / test / toggle / delete; per-kind create+edit
@@ -127,6 +128,19 @@ class _BackupTargetsScreenState
                   Navigator.of(sheetCtx).pop(_TargetAction.toggleEnabled),
             ),
             ListTile(
+              enabled: !isBusy,
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('Edit config'),
+              subtitle: Text(
+                _isBuiltinLocal(t)
+                    ? 'Built-in local target — root path only'
+                    : 'Per-kind fields. Secret fields are server-redacted '
+                        'on read; leave blank to keep current.',
+                style: const TextStyle(fontSize: 11),
+              ),
+              onTap: () => Navigator.of(sheetCtx).pop(_TargetAction.edit),
+            ),
+            ListTile(
               leading: const Icon(Icons.code),
               title: const Text('View raw config'),
               subtitle: const Text(
@@ -175,8 +189,38 @@ class _BackupTargetsScreenState
         );
       case _TargetAction.viewConfig:
         await _showConfig(t);
+      case _TargetAction.edit:
+        await _openEditor(existing: t);
       case _TargetAction.delete:
         await _confirmAndDelete(t);
+    }
+  }
+
+  // Built-in local target — when the operator hasn't configured
+  // anything, opendray exposes a `local` target derived from
+  // cfg.backup.local_dir. It has no DB row, so editing it would
+  // need a create. We let the user edit it (which actually
+  // creates a real row that overrides the default).
+  bool _isBuiltinLocal(BackupTarget t) =>
+      t.id == 'local' && t.kind == 'local';
+
+  Future<void> _openEditor({BackupTarget? existing}) async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => BackupTargetEditorScreen(existing: existing),
+      ),
+    );
+    if ((saved ?? false) && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(existing == null
+              ? 'Target created.'
+              : 'Target updated.'),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      await _load();
     }
   }
 
@@ -283,6 +327,11 @@ class _BackupTargetsScreenState
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openEditor,
+        icon: const Icon(Icons.add),
+        label: const Text('New target'),
+      ),
     );
   }
 
@@ -293,7 +342,8 @@ class _BackupTargetsScreenState
           padding: const EdgeInsets.all(24),
           child: Text(
             'No backup targets yet.\n\n'
-            'Add one from the web admin: Backups → Targets → New.',
+            'Tap "New target" to add a destination '
+            '(local / SMB / S3 / WebDAV / SFTP / rclone).',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
@@ -321,7 +371,7 @@ class _BackupTargetsScreenState
   }
 }
 
-enum _TargetAction { test, toggleEnabled, viewConfig, delete }
+enum _TargetAction { test, toggleEnabled, viewConfig, edit, delete }
 
 class _TargetTile extends StatelessWidget {
   const _TargetTile({
