@@ -13,6 +13,34 @@ import 'package:opendray/features/sessions/directory_picker_sheet.dart';
 // spawn against env-var credentials and have no account concept.
 const _claudeProviderId = 'claude';
 
+// Per-session "bypass" flags. The provider config (in Providers
+// settings) can bake these into every session; the per-session
+// toggle below is purely additive — when OFF we send no extra
+// args, when ON we append the flag(s) the user picked.
+//
+// Backend already concatenates session args after config args, so
+// passing the flag a second time when the provider config already
+// has it is harmless: claude/gemini boolean flags are idempotent;
+// codex's --ask-for-approval gets overridden by the second occurrence
+// (later wins in cobra parse).
+const Map<String, List<String>> _bypassFlagsByProvider = {
+  'claude': ['--dangerously-skip-permissions'],
+  'codex': ['--ask-for-approval', 'never'],
+  'gemini': ['--yolo'],
+};
+
+// Per-provider label for the bypass toggle. Different CLIs name
+// the concept differently and operators recognise their tool's
+// term; pretending it's all "Auto-approve" would be confusing.
+String? _bypassLabelFor(String providerId) {
+  return switch (providerId) {
+    'claude' => 'Bypass permissions',
+    'codex' => 'Auto-approve (never ask)',
+    'gemini' => 'YOLO mode',
+    _ => null,
+  };
+}
+
 // Spawn-session bottom sheet. Loads providers live from
 // /api/v1/providers when opened so the picker reflects whatever
 // the operator has enabled.
@@ -47,7 +75,14 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
   String? _providerId;
   // null = "default" (let the gateway use env / system credentials),
   // any other value = a specific Claude account row id.
+  //
+  // Multi-account mode (≥2 enabled accounts) forces a non-null
+  // value — see _ClaudeAccountField for the auto-pick logic.
   String? _claudeAccountId;
+  // Per-session bypass toggle. Defaults OFF — operators opt in
+  // explicitly per spawn. When ON, _submit appends the right
+  // flag(s) for the selected provider to the args list.
+  bool _bypassEnabled = false;
   bool _submitting = false;
   String? _error;
 
@@ -81,12 +116,22 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
     });
 
     final argsRaw = _argsCtrl.text.trim();
-    final args = argsRaw.isEmpty
-        ? null
+    final userArgs = argsRaw.isEmpty
+        ? <String>[]
         : argsRaw
             .split(RegExp(r'\s+'))
             .where((s) => s.isNotEmpty)
             .toList();
+
+    // Compose final args: bypass flags first (so the operator's
+    // explicit Extra args can still override them by appearing
+    // later — important for codex where --ask-for-approval is a
+    // last-wins string).
+    final bypassFlags = _bypassEnabled
+        ? (_bypassFlagsByProvider[_providerId] ?? const <String>[])
+        : const <String>[];
+    final composed = [...bypassFlags, ...userArgs];
+    final args = composed.isEmpty ? null : composed;
 
     try {
       // claude_account_id is only relevant when the picked provider
@@ -117,6 +162,30 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
   Widget build(BuildContext context) {
     final asyncProviders = ref.watch(providersListProvider);
     final mq = MediaQuery.of(context);
+
+    // Pre-pick the default provider as soon as the list loads. This
+    // is what makes the Claude-account section appear immediately
+    // when the operator opens the sheet — previously _providerId
+    // stayed null until the user manually re-tapped the dropdown,
+    // because the dropdown's "first enabled" fallback was a UI
+    // display-only computation that never wrote back to state.
+    asyncProviders.whenData((providers) {
+      if (_providerId == null && providers.isNotEmpty) {
+        final first = providers.firstWhere(
+          (p) => p.enabled,
+          orElse: () => providers.first,
+        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _providerId == null) {
+            setState(() => _providerId = first.id);
+          }
+        });
+      }
+    });
+
+    final isClaude = _providerId == _claudeProviderId;
+    final bypassLabel =
+        _providerId == null ? null : _bypassLabelFor(_providerId!);
 
     return Padding(
       padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
@@ -157,9 +226,13 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
                           // Reset account when provider changes — the
                           // account picker is provider-scoped.
                           _claudeAccountId = null;
+                          // Reset bypass too — each provider has its
+                          // own flag, and a stale "ON" carrying the
+                          // wrong flag would surprise the operator.
+                          _bypassEnabled = false;
                         }),
               ),
-              if (_providerId == _claudeProviderId) ...[
+              if (isClaude) ...[
                 const SizedBox(height: 14),
                 _ClaudeAccountField(
                   value: _claudeAccountId,
@@ -206,6 +279,24 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
                       "Whitespace-separated; blank uses the provider's defaults.",
                 ),
               ),
+              if (bypassLabel != null) ...[
+                const SizedBox(height: 6),
+                SwitchListTile.adaptive(
+                  value: _bypassEnabled,
+                  onChanged: _submitting
+                      ? null
+                      : (v) => setState(() => _bypassEnabled = v),
+                  title: Text(bypassLabel),
+                  subtitle: Text(
+                    _bypassEnabled
+                        ? 'This session will run with elevated autonomy.'
+                        : 'Off — confirmations and prompts behave normally.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
               if (_error != null) ...[
                 const SizedBox(height: 14),
                 _InlineError(message: _error!),
@@ -327,19 +418,49 @@ class _ClaudeAccountField extends ConsumerWidget {
                 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY. Add accounts under Settings → Accounts on the web admin.',
           );
         }
+        // Multi-account (2+ enabled): drop the Default option and
+        // force an explicit pick. When you've gone to the trouble of
+        // registering multiple Claude accounts, "default to env"
+        // almost certainly isn't what you want for the next session.
+        // Single-account mode keeps Default as an option for parity
+        // with the pre-PR-54 behaviour.
+        final enabledCount = accounts.where((a) => a.enabled).length;
+        final multiAccount = enabledCount >= 2;
+        final firstEnabled = multiAccount
+            ? accounts.firstWhere(
+                (a) => a.enabled,
+                orElse: () => accounts.first,
+              )
+            : null;
+
+        // In multi-account mode, the controller-managed value must
+        // be one of the account ids — never null. We can't call
+        // setState from a build, so we use a post-frame callback to
+        // surface the auto-pick to the parent's onChanged.
+        if (multiAccount && value == null && onChanged != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            onChanged!(firstEnabled!.id);
+          });
+        }
+
+        final effectiveValue =
+            multiAccount && value == null ? firstEnabled!.id : value;
+
         return DropdownButtonFormField<String?>(
-          initialValue: value,
-          decoration: const InputDecoration(
+          initialValue: effectiveValue,
+          decoration: InputDecoration(
             labelText: 'Claude account',
-            helperText:
-                'Pick a configured account or use the default (env / system).',
+            helperText: multiAccount
+                ? 'Multiple accounts configured — pick one for this session.'
+                : 'Pick a configured account or use the default (env / system).',
           ),
           onChanged: onChanged,
           items: [
-            const DropdownMenuItem<String?>(
-              value: null,
-              child: Text('Default (env / system)'),
-            ),
+            if (!multiAccount)
+              const DropdownMenuItem<String?>(
+                value: null,
+                child: Text('Default (env / system)'),
+              ),
             for (final a in accounts)
               DropdownMenuItem<String?>(
                 value: a.id,
