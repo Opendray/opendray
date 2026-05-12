@@ -386,6 +386,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// with an integration bearer.
 	projectDocSvc := projectdoc.NewService(st.Pool(), log)
 	projectDocHandlers := projectdoc.NewHandlers(projectDocSvc, log)
+	// Inject the cross-agent goal+plan+journal banner into every
+	// spawned session's system prompt. Composed alongside the
+	// memory-layer-5 banner (ambient injector) inside the catalog
+	// adapter.
+	sessionProvider.WithProjectDocInjector(projectDocSvc)
 
 	gw := gateway.NewServer(gateway.Deps{
 		Logger:    log,

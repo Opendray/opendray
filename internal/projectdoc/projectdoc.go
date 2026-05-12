@@ -464,6 +464,99 @@ func (s *Service) DeleteLog(ctx context.Context, id string) error {
 	return nil
 }
 
+// ─── spawn-time injection ──────────────────────────────────────
+
+// RenderForSpawn produces a single markdown banner combining the
+// project goal, plan, and the most recent session-log entries.
+// Designed to be prepended to the agent's system prompt alongside
+// the ambient memory banner (top-K facts) so the agent boots into a
+// session already aware of the long-term arc (goal), the current WIP
+// (plan), and the last few sessions' decisions (journal).
+//
+// Returns "" when there is nothing to inject — no goal, no plan, no
+// logs. The caller treats empty string as "skip injection" so a
+// fresh project does not get spammed with empty headers.
+//
+// recentLogs caps the number of session-log entries rendered;
+// values ≤ 0 fall back to 5. Each entry shows title + content; the
+// banner stops growing past ~6KB even at high recentLogs, so the
+// spawn cost is bounded.
+func (s *Service) RenderForSpawn(ctx context.Context, cwd string, recentLogs int) (string, error) {
+	if strings.TrimSpace(cwd) == "" {
+		return "", nil
+	}
+	if recentLogs <= 0 {
+		recentLogs = 5
+	}
+
+	docs, err := s.ListDocsForCwd(ctx, cwd)
+	if err != nil {
+		return "", fmt.Errorf("projectdoc: render spawn docs: %w", err)
+	}
+	logs, err := s.ListLogs(ctx, cwd, recentLogs)
+	if err != nil {
+		return "", fmt.Errorf("projectdoc: render spawn logs: %w", err)
+	}
+
+	var goal, plan string
+	for _, d := range docs {
+		switch d.Kind {
+		case KindGoal:
+			goal = strings.TrimSpace(d.Content)
+		case KindPlan:
+			plan = strings.TrimSpace(d.Content)
+		}
+	}
+
+	if goal == "" && plan == "" && len(logs) == 0 {
+		return "", nil
+	}
+
+	var b strings.Builder
+	b.WriteString("## Project context (cross-agent shared)\n\n")
+	b.WriteString("The following goal, plan, and recent journal are shared across every claude / codex / gemini session in this project. They are the operator's source of truth for *what we're building* (goal), *how we're getting there* (plan), and *what just happened* (journal).\n\n")
+
+	if goal != "" {
+		b.WriteString("### Project goal\n\n")
+		b.WriteString(goal)
+		b.WriteString("\n\n")
+	}
+	if plan != "" {
+		b.WriteString("### Project plan\n\n")
+		b.WriteString(plan)
+		b.WriteString("\n\n")
+	}
+	if len(logs) > 0 {
+		b.WriteString("### Recent journal\n\n")
+		// logs are newest-first; render oldest-first inside the banner
+		// so the chronology reads naturally top-to-bottom.
+		for i := len(logs) - 1; i >= 0; i-- {
+			e := logs[i]
+			b.WriteString("- ")
+			if e.Title != "" {
+				b.WriteString("**")
+				b.WriteString(e.Title)
+				b.WriteString("** — ")
+			}
+			body := strings.TrimSpace(e.Content)
+			// Keep each journal line compact — the goal here is "remind
+			// the agent" not "replay full session summaries". 600 chars
+			// is roughly two paragraphs; longer entries stay readable
+			// when the operator drills into the journal page.
+			if len(body) > 600 {
+				body = body[:600] + "…"
+			}
+			b.WriteString(body)
+			b.WriteString("\n")
+		}
+		b.WriteString("\n")
+	}
+
+	b.WriteString("If your work changes the goal or plan, do **not** silently overwrite them. Use the `project_goal_set` / `project_plan_set` MCP tools — they file a proposal that the operator approves before the live doc updates.\n")
+
+	return b.String(), nil
+}
+
 // ─── scanners ──────────────────────────────────────────────────
 
 type rowScanner interface {

@@ -66,6 +66,12 @@ type SessionProvider struct {
 	// recent project memories into the system prompt at spawn
 	// time. Backed by internal/memory/injector. Nil → no injection.
 	ambientInjector AmbientInjector
+
+	// projectDocInjector, when set, renders the cross-agent project
+	// goal + plan + recent journal as a system-prompt banner. Backed
+	// by internal/projectdoc.Service.RenderForSpawn. Nil → no
+	// injection (e.g. older builds without memory layers 2-4).
+	projectDocInjector ProjectDocInjector
 }
 
 // AmbientInjector is the contract internal/memory/injector
@@ -73,6 +79,14 @@ type SessionProvider struct {
 // memory package.
 type AmbientInjector interface {
 	Render(ctx context.Context, sessionID, cwd string) (string, error)
+}
+
+// ProjectDocInjector is the contract internal/projectdoc.Service
+// satisfies. Returns a rendered markdown banner combining the
+// project goal, plan, and recent journal entries; empty string means
+// "nothing to inject — skip silently".
+type ProjectDocInjector interface {
+	RenderForSpawn(ctx context.Context, cwd string, recentLogs int) (string, error)
 }
 
 // MemoryMirrorFunc syncs Claude's local memory files for the given
@@ -142,6 +156,14 @@ func (sp *SessionProvider) WithMemoryAutoAttach(cfg MemoryAutoAttach) *SessionPr
 // agent's system prompt. Returns the receiver for chained setup.
 func (sp *SessionProvider) WithAmbientInjector(inj AmbientInjector) *SessionProvider {
 	sp.ambientInjector = inj
+	return sp
+}
+
+// WithProjectDocInjector installs the cross-agent project-doc
+// injector — prepends a "Project context" banner (goal + plan +
+// recent journal) to the agent's system prompt at spawn time.
+func (sp *SessionProvider) WithProjectDocInjector(inj ProjectDocInjector) *SessionProvider {
+	sp.projectDocInjector = inj
 	return sp
 }
 
@@ -308,6 +330,26 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			} else if text != "" {
 				if err := injectAmbientMemoryFor(providerID, baseDir, text, &out); err != nil {
 					return session.PrepareOutput{}, fmt.Errorf("inject ambient memory: %w", err)
+				}
+			}
+		}
+
+		// Cross-agent project context: goal + plan + recent journal
+		// (memory layers 2-4). Injected through the same per-CLI
+		// channel as ambient memory so the agent sees one composite
+		// system prompt. Failures here are non-fatal — a missing
+		// banner is better than a failed spawn.
+		if sp.projectDocInjector != nil {
+			cwd := session.Cwd(prepareCtx)
+			if cwd != "" {
+				text, err := sp.projectDocInjector.RenderForSpawn(prepareCtx, cwd, 5)
+				if err != nil {
+					sp.log.Warn("project doc render failed; skipping inject",
+						"cwd", cwd, "err", err)
+				} else if text != "" {
+					if err := injectAmbientMemoryFor(providerID, baseDir, text, &out); err != nil {
+						return session.PrepareOutput{}, fmt.Errorf("inject project docs: %w", err)
+					}
 				}
 			}
 		}
