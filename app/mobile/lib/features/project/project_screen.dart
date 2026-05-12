@@ -450,6 +450,10 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Approve failed: $e')),
                     );
+                    // Stale UI: the proposal was already decided
+                    // (CLI / web / another phone). Refresh so this
+                    // user stops seeing it as pending.
+                    await _loadAll(_selectedKey!);
                   }
                 }
               },
@@ -464,6 +468,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Reject failed: $e')),
                     );
+                    await _loadAll(_selectedKey!);
                   }
                 }
               },
@@ -595,6 +600,8 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Approve failed: $e')),
         );
+        // Stale UI — re-pull to show the real status.
+        await _loadAll(_selectedKey!);
       }
     }
   }
@@ -608,6 +615,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Reject failed: $e')),
         );
+        await _loadAll(_selectedKey!);
       }
     }
   }

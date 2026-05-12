@@ -54,6 +54,10 @@ class _CleanupInboxScreenState extends ConsumerState<CleanupInboxScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Approve failed: $e')),
         );
+        // Stale UI — server already decided this row out from under
+        // us (CLI / web / another phone). Re-pull so the user sees
+        // the real state.
+        await _load();
       }
     }
   }
@@ -67,6 +71,7 @@ class _CleanupInboxScreenState extends ConsumerState<CleanupInboxScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Reject failed: $e')),
         );
+        await _load();
       }
     }
   }
