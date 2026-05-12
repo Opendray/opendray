@@ -75,11 +75,12 @@ type App struct {
 	// liveBackup owns the backup Service + scheduler. Always non-nil
 	// after New returns, but Service() returns nil when the feature
 	// is off. Disarm on shutdown to stop the scheduler goroutine.
-	liveBackup       *backup.LiveBackup
-	captureEngine    *capture.Engine // ambient memory capture loop
-	journaler        *projectdoc.Journaler
-	cleanerScheduler *cleaner.Scheduler // optional; nil when scheduler is off
-	server           *http.Server
+	liveBackup           *backup.LiveBackup
+	captureEngine        *capture.Engine // ambient memory capture loop
+	journaler            *projectdoc.Journaler
+	cleanerScheduler     *cleaner.Scheduler // optional; nil when scheduler is off
+	gitActivityScheduler *gitactivity.Scheduler
+	server               *http.Server
 }
 
 // New wires the runtime dependencies but does not start any goroutines.
@@ -479,6 +480,18 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}
 	gitActivitySvc := gitactivity.NewService(projectDocSvc, log, gitActivityOpts...)
 	gitActivityHandlers := gitactivity.NewHandlers(gitActivitySvc, log)
+	// Spawn-time async refresh — see catalog.SessionProvider.
+	sessionProvider.WithGitActivityRefresher(gitActivitySvc, 12*time.Hour)
+	// Background scheduler (24h tick by default).
+	gitActivityScheduler := gitactivity.NewScheduler(
+		gitActivitySvc, memorySvc,
+		gitactivity.SchedulerConfig{
+			Interval:     24 * time.Hour,
+			InitialDelay: 10 * time.Minute,
+			MaxAge:       12 * time.Hour,
+		},
+		log,
+	)
 	// Auto-journal: on every session.ended / session.stopped event
 	// the Journaler writes a session_logs row so future sessions see
 	// a chronological record of what just happened in this project.
@@ -580,10 +593,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		intgrCallLogger: intgrCallLogger,
 		vaultSync:       vaultSyncer,
 		liveBackup:      liveBackup,
-		captureEngine:    captureEngine,
-		journaler:        journaler,
-		cleanerScheduler: cleanerScheduler,
-		server:           srv,
+		captureEngine:        captureEngine,
+		journaler:            journaler,
+		cleanerScheduler:     cleanerScheduler,
+		gitActivityScheduler: gitActivityScheduler,
+		server:               srv,
 	}, nil
 }
 
@@ -697,6 +711,14 @@ func (a *App) Run(ctx context.Context) error {
 		close(cleanerDone)
 	}()
 
+	gitActivityDone := make(chan struct{})
+	go func() {
+		if a.gitActivityScheduler != nil {
+			a.gitActivityScheduler.Run(ctx)
+		}
+		close(gitActivityDone)
+	}()
+
 	errCh := make(chan error, 1)
 	go func() {
 		if err := a.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -769,6 +791,11 @@ func (a *App) Run(ctx context.Context) error {
 	case <-cleanerDone:
 	case <-time.After(2 * time.Second):
 		a.log.Warn("cleaner scheduler shutdown timed out")
+	}
+	select {
+	case <-gitActivityDone:
+	case <-time.After(2 * time.Second):
+		a.log.Warn("git activity scheduler shutdown timed out")
 	}
 
 	a.bus.Close()

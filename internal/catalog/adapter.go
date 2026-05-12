@@ -83,6 +83,13 @@ type SessionProvider struct {
 	// scannerMaxAge controls when a stale tech_stack doc triggers
 	// a re-scan. Default 6h.
 	scannerMaxAge time.Duration
+
+	// gitActivity, when set, kicks off a background refresh of the
+	// recent_activity doc when the cached one is older than
+	// gitActivityMaxAge. Done async — we don't block spawn on a
+	// 60-150s LLM call.
+	gitActivity       GitActivityRefresher
+	gitActivityMaxAge time.Duration
 }
 
 // AmbientInjector is the contract internal/memory/injector
@@ -109,6 +116,17 @@ type ProjectDocInjector interface {
 type ProjectScanner interface {
 	Run(ctx context.Context, cwd string) error
 	IsStale(ctx context.Context, cwd string, maxAge time.Duration) bool
+}
+
+// GitActivityRefresher is the contract internal/gitactivity.Service
+// satisfies. Same shape as ProjectScanner: at spawn time, if the
+// recent_activity doc is stale, the catalog kicks off a refresh in
+// a background goroutine (not sync — git+LLM takes 60-150s and we
+// don't want to block PTY allocation that long). The next spawn,
+// or a polling UI, will see the refreshed doc.
+type GitActivityRefresher interface {
+	IsStale(ctx context.Context, cwd string, maxAge time.Duration) bool
+	RefreshAsync(cwd string)
 }
 
 // MemoryMirrorFunc syncs Claude's local memory files for the given
@@ -200,6 +218,23 @@ func (sp *SessionProvider) WithProjectScanner(scanner ProjectScanner, maxAge tim
 		maxAge = 6 * time.Hour
 	}
 	sp.scannerMaxAge = maxAge
+	return sp
+}
+
+// WithGitActivityRefresher installs the git activity refresher.
+// At spawn time we check if the recent_activity doc is stale and,
+// if so, kick off the refresh asynchronously. The first spawn
+// after a stale doc still sees the *previous* summary in its
+// banner — the freshly generated one lands moments later for the
+// next spawn or polling client. We trade banner freshness for not
+// blocking the agent's PTY allocation behind a 60-150s LLM call.
+// maxAge=0 uses the default 12h.
+func (sp *SessionProvider) WithGitActivityRefresher(r GitActivityRefresher, maxAge time.Duration) *SessionProvider {
+	sp.gitActivity = r
+	if maxAge <= 0 {
+		maxAge = 12 * time.Hour
+	}
+	sp.gitActivityMaxAge = maxAge
 	return sp
 }
 
@@ -388,6 +423,15 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 						sp.log.Warn("project scanner failed; spawn continues with stale tech_stack",
 							"cwd", cwd, "err", err)
 					}
+				}
+			}
+			// Git activity refresher — async because the LLM step is
+			// slow (60-150s). The current spawn sees the previous
+			// summary in its banner; the freshly generated one lands
+			// in time for the next spawn.
+			if cwd != "" && sp.gitActivity != nil {
+				if sp.gitActivity.IsStale(prepareCtx, cwd, sp.gitActivityMaxAge) {
+					sp.gitActivity.RefreshAsync(cwd)
 				}
 			}
 			if cwd != "" {

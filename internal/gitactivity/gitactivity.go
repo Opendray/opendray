@@ -423,6 +423,28 @@ func (s *Service) IsStale(ctx context.Context, cwd string, maxAge time.Duration)
 	return time.Since(doc.UpdatedAt) > maxAge
 }
 
+// RefreshAsync runs Service.Run for cwd in a detached goroutine
+// with its own background context. Used by the catalog adapter at
+// spawn time so a slow LLM call (~60-150s on reasoning models)
+// can't block the agent's PTY allocation.
+//
+// We do not coalesce concurrent calls for the same cwd — if two
+// spawns hit a stale doc at the same time, both fire. Service.Run
+// is idempotent (UPSERT) so the worst case is one redundant LLM
+// call, not corrupted data.
+func (s *Service) RefreshAsync(cwd string) {
+	if cwd == "" {
+		return
+	}
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
+		defer cancel()
+		if _, err := s.Run(ctx, cwd); err != nil {
+			s.log.Warn("gitactivity.refresh_async_failed", "cwd", cwd, "err", err)
+		}
+	}()
+}
+
 // composeFinalMarkdown wraps the LLM-generated narrative with a
 // deterministic header (window + stats) so operators always see
 // generation metadata regardless of model quirks.
