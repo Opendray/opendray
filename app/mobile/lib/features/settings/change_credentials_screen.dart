@@ -171,7 +171,7 @@ class _ChangeCredentialsScreenState
                 obscureText: _obscureNew,
                 autocorrect: false,
                 decoration: InputDecoration(
-                  helperText: 'At least 12 characters',
+                  helperText: 'At least 8 characters',
                   suffixIcon: IconButton(
                     icon: Icon(_obscureNew
                         ? Icons.visibility_off_outlined
@@ -182,8 +182,8 @@ class _ChangeCredentialsScreenState
                 ),
                 validator: (v) {
                   if (v == null || v.isEmpty) return 'Required';
-                  if (v.length < 12) {
-                    return 'Must be at least 12 characters';
+                  if (v.length < 8) {
+                    return 'Must be at least 8 characters';
                   }
                   return null;
                 },

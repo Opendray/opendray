@@ -197,11 +197,11 @@ func WriteKeyFile(user, password string) (string, error) {
 }
 
 // MinPasswordLen is the floor enforced by both WriteKeyFile and
-// the /auth/change-credentials handler. Twelve is a defensible
-// compromise — long enough to resist dictionary attacks against
-// the bcrypt hash if the file ever leaks, short enough that
-// operators won't write it on a sticky note.
-const MinPasswordLen = 12
+// the /auth/change-credentials handler. Eight is the operator-
+// chosen minimum: low enough that an existing memorable password
+// usually clears it, high enough to keep trivial guesses out.
+// bcrypt covers the rest of the entropy story.
+const MinPasswordLen = 8
 
 func readKeyFile(path string) (AdminCreds, error) {
 	b, err := os.ReadFile(path)

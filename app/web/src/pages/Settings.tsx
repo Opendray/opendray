@@ -497,8 +497,8 @@ function ChangeCredentialsDialog({
 
   async function submit() {
     setError(null)
-    if (newPassword.length < 12) {
-      setError('New password must be at least 12 characters.')
+    if (newPassword.length < 8) {
+      setError('New password must be at least 8 characters.')
       return
     }
     if (newPassword !== confirm) {
@@ -594,7 +594,7 @@ function ChangeCredentialsDialog({
               className="h-8 px-2 rounded-md border border-border bg-input/40"
             />
             <span className="text-[11px] text-muted-foreground">
-              At least 12 characters.
+              At least 8 characters.
             </span>
           </label>
           <label className="flex flex-col gap-1">

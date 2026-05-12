@@ -3,11 +3,29 @@ package auth
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/opendray/opendray-v2/internal/config"
 )
+
+// TestMain isolates HOME + the keyfile env override for the whole
+// test binary so auth.New() doesn't pick up a real
+// ~/.opendray/secrets/admin.key from the developer's home dir.
+// Without this the config-source creds in newSvc / newRouter get
+// shadowed by whatever the dev's UI-created keyfile holds, and
+// every Login test that expects "admin / secret" returns 401.
+func TestMain(m *testing.M) {
+	tmp, err := os.MkdirTemp("", "auth-test-home-*")
+	if err != nil {
+		panic(err)
+	}
+	defer func() { _ = os.RemoveAll(tmp) }()
+	_ = os.Setenv("HOME", tmp)
+	_ = os.Unsetenv(envOverride)
+	os.Exit(m.Run())
+}
 
 func newSvc(t *testing.T, ttl time.Duration) *Service {
 	t.Helper()
