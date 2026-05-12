@@ -41,9 +41,26 @@ type HistoryEntry struct {
 // use the last N entries as raw material for the auto-journal body.
 // Empty / unsupported provider → empty slice + nil error, journaler
 // still writes a metadata-only entry.
+//
+// TranscriptText (M18) returns the full conversation log
+// (user + assistant turns) formatted as plain markdown. The
+// journaler feeds this to an LLM to produce a real "what did the
+// agent do" summary across Claude / Codex / Gemini. Returns empty
+// string for providers without a transcript reader yet — the
+// journaler falls back to metadata-only journaling in that case.
 type SessionLookup interface {
 	Get(ctx context.Context, id string) (SessionInfo, error)
 	History(ctx context.Context, id string, limit int) ([]HistoryEntry, error)
+	TranscriptText(ctx context.Context, id string, maxBytes int) (string, error)
+}
+
+// TranscriptSummariser is the optional LLM hook that turns a raw
+// transcript into a 1-3 paragraph "what the agent did" narrative.
+// The journaler degrades to metadata-only when this is nil, when
+// it errors, or when the transcript is empty — never blocks the
+// journal write on LLM availability.
+type TranscriptSummariser interface {
+	SummariseTranscript(ctx context.Context, transcript string) (string, error)
 }
 
 // Journaler subscribes to session-end events on the eventbus and
@@ -68,21 +85,44 @@ type Journaler struct {
 	// quotes back. The journal is meant to be a glanceable record,
 	// not a transcript replay; 5 is plenty.
 	inputsLimit int
+
+	// summariser is the M18 LLM hook. Nil disables the
+	// transcript-aware path; metadata-only journaling still works.
+	summariser TranscriptSummariser
+
+	// transcriptMaxBytes caps how much transcript we feed the LLM.
+	// 16 KiB ≈ 4k tokens — enough context for a meaningful summary
+	// without paying tokens we don't need. Older content is
+	// trimmed by the session reader before this layer sees it.
+	transcriptMaxBytes int
 }
 
-// NewJournaler builds a Journaler. None of the dependencies are
-// optional — pass real instances at app startup.
+// NewJournaler builds a Journaler. docs / bus / lookup must be
+// non-nil at app startup. The optional TranscriptSummariser is
+// installed separately via WithSummariser so the LLM dependency
+// stays isolated from journaler core wiring.
 func NewJournaler(docs *Service, bus *eventbus.Hub, lookup SessionLookup, log *slog.Logger) *Journaler {
 	if log == nil {
 		log = slog.Default()
 	}
 	return &Journaler{
-		docs:        docs,
-		bus:         bus,
-		lookup:      lookup,
-		log:         log.With("component", "projectdoc.journaler"),
-		inputsLimit: 5,
+		docs:               docs,
+		bus:                bus,
+		lookup:             lookup,
+		log:                log.With("component", "projectdoc.journaler"),
+		inputsLimit:        5,
+		transcriptMaxBytes: 16 * 1024,
 	}
+}
+
+// WithSummariser installs the optional LLM hook for M18 — when set,
+// every session.ended event also kicks off a transcript-based
+// "what did the agent do" summary that gets appended to the
+// metadata-only body. Pass nil to disable. Returns the receiver
+// for chained setup.
+func (j *Journaler) WithSummariser(s TranscriptSummariser) *Journaler {
+	j.summariser = s
+	return j
 }
 
 // Run subscribes to session.ended + session.stopped topics and
@@ -146,6 +186,31 @@ func (j *Journaler) process(ctx context.Context, ev eventbus.Event, state string
 		inputs = nil
 	}
 	title, body := buildJournalBody(sess, state, inputs)
+
+	// M18 — append an LLM-generated narrative when we have both a
+	// transcript reader and a summariser configured. Both calls
+	// are best-effort: failure logs + we ship the metadata-only
+	// body so the journal never goes silent.
+	if j.summariser != nil {
+		transcript, terr := j.lookup.TranscriptText(ctx, sessionID, j.transcriptMaxBytes)
+		if terr != nil {
+			j.log.Debug("journaler: transcript fetch failed", "session_id", sessionID, "err", terr)
+		} else if strings.TrimSpace(transcript) != "" {
+			// LLM gets its own background context — the eventbus
+			// goroutine that delivered session.ended is short-lived;
+			// don't block it on a 60-180s reasoning model call.
+			llmCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			summary, lerr := j.summariser.SummariseTranscript(llmCtx, transcript)
+			cancel()
+			if lerr != nil {
+				j.log.Warn("journaler: llm summarise failed; metadata-only entry",
+					"session_id", sessionID, "err", lerr)
+			} else if s := strings.TrimSpace(summary); s != "" {
+				body = body + "\n**Agent activity summary**\n\n" + s + "\n"
+			}
+		}
+	}
+
 	entry := LogEntry{
 		Cwd:       sess.Cwd,
 		SessionID: sess.ID,

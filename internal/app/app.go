@@ -500,6 +500,14 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		&projectdocSessionLookup{mgr: sessionMgr},
 		log,
 	)
+	// M18 — install the LLM summariser if a provider is configured.
+	// Same provider chain as gatekeeper / cleaner / gitactivity.
+	if ts, err := buildTranscriptSummariser(ctx, summarizerRegistry); err != nil {
+		log.Warn("transcript summariser unavailable; journaler writes metadata-only entries", "err", err)
+	} else if ts != nil {
+		journaler.WithSummariser(ts)
+		log.Info("transcript-aware journaler enabled (LLM-summarised session.ended)")
+	}
 
 	gw := gateway.NewServer(gateway.Deps{
 		Logger:    log,
@@ -604,6 +612,45 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 // Migrate applies pending DB migrations and returns. Used by `opendray migrate`.
 func (a *App) Migrate(ctx context.Context) error {
 	return a.store.Migrate(ctx, a.log)
+}
+
+// buildTranscriptSummariser resolves the default summariser
+// provider and constructs an M18 transcript summariser. Returns
+// (nil, nil) when no provider exists — the journaler falls back to
+// metadata-only entries.
+func buildTranscriptSummariser(ctx context.Context, reg *summarizer.Registry) (*transcriptSummariser, error) {
+	if reg == nil {
+		return nil, nil
+	}
+	rows, err := reg.ListEnabledRows(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, nil
+	}
+	pick := rows[0]
+	for _, r := range rows {
+		if r.IsDefault {
+			pick = r
+			break
+		}
+	}
+	// Force decryption of api_key by going through Build.
+	if _, err := reg.Build(ctx, pick.ID); err != nil {
+		return nil, err
+	}
+	freshRows, err := reg.ListEnabledRows(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range freshRows {
+		if r.ID == pick.ID {
+			pick = r
+			break
+		}
+	}
+	return newTranscriptSummariser(pick, pick.APIKeyPlaintext)
 }
 
 // buildGitActivityClient resolves the default summariser provider
@@ -1285,6 +1332,15 @@ func (a *projectdocSessionLookup) History(ctx context.Context, id string, limit 
 		out = append(out, projectdoc.HistoryEntry{Ts: e.Ts, Text: e.Text})
 	}
 	return out, nil
+}
+
+// TranscriptText (M18) returns the full conversation transcript
+// for the session — Claude / Codex / Gemini each have their own
+// JSONL reader; Manager.TranscriptText dispatches by provider.
+// Returns "" for providers we haven't taught yet rather than an
+// error so the journaler falls back to metadata-only.
+func (a *projectdocSessionLookup) TranscriptText(ctx context.Context, id string, maxBytes int) (string, error) {
+	return a.mgr.TranscriptText(ctx, id, maxBytes)
 }
 
 // defaultBackupDir returns expandPath(configured) when set, else
