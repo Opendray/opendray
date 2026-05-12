@@ -1,17 +1,37 @@
 import 'package:flutter/material.dart';
 
-// Material 3 dark theme, single design language with the web SPA.
-// Color palette mirrors app/web/src/index.css custom properties so
-// screens look like one product across surfaces.
+// Material 3 themes for the mobile app. Single design language with
+// the web SPA: the dark palette mirrors app/web/src/index.css custom
+// properties so screens look like one product across surfaces.
+//
+// The light variant was added in PR #51 to let operators flip the
+// app to match their phone's system appearance. The same accent
+// (#e6ae57) drives both variants — only the surface / text / border
+// tokens swap.
 class AppTheme {
   AppTheme._();
 
-  static const _accent = Color(0xFFE6AE57); // #e6ae57 — opendray accent
-  static const _bg = Color(0xFF0E0F11);
-  static const _card = Color(0xFF161718);
-  static const _border = Color(0xFF2A2C30);
-  static const _muted = Color(0xFF8B9098);
+  // Shared accent. Used as primary in both variants.
+  static const _accent = Color(0xFFE6AE57);
   static const _destructive = Color(0xFFE07A5F);
+
+  // ── Dark palette ────────────────────────────────────────────
+  static const _darkBg = Color(0xFF0E0F11);
+  static const _darkCard = Color(0xFF161718);
+  static const _darkBorder = Color(0xFF2A2C30);
+  static const _darkMuted = Color(0xFF8B9098);
+  static const _darkInput = Color(0xFF111214);
+
+  // ── Light palette ───────────────────────────────────────────
+  // Chosen to keep readable contrast against the same accent. Off-
+  // white background (not pure #FFFFFF) reduces glare under bright
+  // sunlight, common when the operator uses the phone outdoors.
+  static const _lightBg = Color(0xFFF7F7F5);
+  static const _lightCard = Color(0xFFFFFFFF);
+  static const _lightBorder = Color(0xFFE3E4E7);
+  static const _lightMuted = Color(0xFF6B7280);
+  static const _lightInput = Color(0xFFFAFAF9);
+  static const _lightText = Color(0xFF111418);
 
   static ThemeData dark() {
     const scheme = ColorScheme.dark(
@@ -19,51 +39,109 @@ class AppTheme {
       onPrimary: Color(0xFF1A1308),
       secondary: _accent,
       onSecondary: Color(0xFF1A1308),
-      surface: _card,
+      surface: _darkCard,
       onSurface: Colors.white,
-      surfaceContainerHighest: _card,
+      surfaceContainerHighest: _darkCard,
       error: _destructive,
       onError: Colors.white,
-      outline: _border,
-      outlineVariant: _border,
+      outline: _darkBorder,
+      outlineVariant: _darkBorder,
     );
 
+    return _build(
+      brightness: Brightness.dark,
+      scheme: scheme,
+      bg: _darkBg,
+      card: _darkCard,
+      border: _darkBorder,
+      muted: _darkMuted,
+      inputFill: _darkInput,
+      bodyColor: Colors.white,
+      appBarFg: Colors.white,
+      navUnselected: _darkMuted,
+    );
+  }
+
+  static ThemeData light() {
+    const scheme = ColorScheme.light(
+      primary: _accent,
+      onPrimary: Color(0xFF1A1308),
+      secondary: _accent,
+      onSecondary: Color(0xFF1A1308),
+      surface: _lightCard,
+      onSurface: _lightText,
+      surfaceContainerHighest: _lightCard,
+      error: _destructive,
+      onError: Colors.white,
+      outline: _lightBorder,
+      outlineVariant: _lightBorder,
+    );
+
+    return _build(
+      brightness: Brightness.light,
+      scheme: scheme,
+      bg: _lightBg,
+      card: _lightCard,
+      border: _lightBorder,
+      muted: _lightMuted,
+      inputFill: _lightInput,
+      bodyColor: _lightText,
+      appBarFg: _lightText,
+      navUnselected: _lightMuted,
+    );
+  }
+
+  // _build is the shared chassis — every visual choice that doesn't
+  // depend on brightness lives here so light/dark can never drift
+  // structurally. Only the color tokens are parameterised.
+  static ThemeData _build({
+    required Brightness brightness,
+    required ColorScheme scheme,
+    required Color bg,
+    required Color card,
+    required Color border,
+    required Color muted,
+    required Color inputFill,
+    required Color bodyColor,
+    required Color appBarFg,
+    required Color navUnselected,
+  }) {
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: _bg,
-      brightness: Brightness.dark,
-      textTheme: const TextTheme(
-        bodyLarge: TextStyle(color: Colors.white),
-        bodyMedium: TextStyle(color: Colors.white),
-        bodySmall: TextStyle(color: _muted),
-        labelMedium: TextStyle(color: _muted),
+      scaffoldBackgroundColor: bg,
+      brightness: brightness,
+      textTheme: TextTheme(
+        bodyLarge: TextStyle(color: bodyColor),
+        bodyMedium: TextStyle(color: bodyColor),
+        bodySmall: TextStyle(color: muted),
+        labelMedium: TextStyle(color: muted),
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: _bg,
-        foregroundColor: Colors.white,
+      appBarTheme: AppBarTheme(
+        backgroundColor: bg,
+        foregroundColor: appBarFg,
         elevation: 0,
         centerTitle: false,
       ),
       cardTheme: CardThemeData(
-        color: _card,
+        color: card,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          side: const BorderSide(color: _border),
+          side: BorderSide(color: border),
           borderRadius: BorderRadius.circular(12),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF111214),
+        fillColor: inputFill,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _border),
+          borderSide: BorderSide(color: border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _border),
+          borderSide: BorderSide(color: border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -88,14 +166,14 @@ class AppTheme {
           ),
         ),
       ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: _card,
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: card,
         selectedItemColor: _accent,
-        unselectedItemColor: _muted,
+        unselectedItemColor: navUnselected,
         type: BottomNavigationBarType.fixed,
         showUnselectedLabels: true,
       ),
-      dividerColor: _border,
+      dividerColor: border,
     );
   }
 }

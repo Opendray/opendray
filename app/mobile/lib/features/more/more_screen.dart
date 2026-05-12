@@ -10,6 +10,7 @@ import 'package:opendray/features/integrations/integrations_screen.dart';
 import 'package:opendray/features/mcp/mcp_screen.dart';
 import 'package:opendray/features/more/about_screen.dart';
 import 'package:opendray/features/providers/providers_screen.dart';
+import 'package:opendray/features/settings/settings_screen.dart';
 import 'package:opendray/features/skills/skills_screen.dart';
 
 // "More" tab — overflow menu for everything that doesn't earn its
@@ -81,6 +82,12 @@ class MoreScreen extends ConsumerWidget {
             title: 'Backups',
             subtitle: 'Latest backup status & run-now',
             onTap: () => _push(context, const BackupsScreen()),
+          ),
+          _MenuTile(
+            icon: Icons.tune_outlined,
+            title: 'Settings',
+            subtitle: 'Appearance, account',
+            onTap: () => _push(context, const SettingsScreen()),
           ),
           _MenuTile(
             icon: Icons.info_outline,
