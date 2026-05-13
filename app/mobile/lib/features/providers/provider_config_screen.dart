@@ -136,7 +136,7 @@ class _ProviderConfigScreenState
       appBar: AppBar(
         title: Text(_state.maybeWhen(
           data: (d) => d.displayName,
-          orElse: () => 'Provider config',
+          orElse: () => t.providers.configFallbackTitle,
         )),
         actions: [
           IconButton(
@@ -162,7 +162,7 @@ class _ProviderConfigScreenState
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.save_outlined),
-              label: Text(_saving ? 'Saving…' : 'Save'),
+              label: Text(_saving ? t.providers.saving : t.providers.save),
             )
           : null,
     );
@@ -287,7 +287,7 @@ class _FieldEditor extends StatelessWidget {
           field: field,
           value: value,
           onChanged: onChanged,
-          helperOverride: 'Whitespace-separated CLI args.',
+          helperOverride: t.providers.argsHelper,
         );
       // string and unknown types fall through to text.
       case 'string':
@@ -493,7 +493,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Failed to load provider',
+              t.providers.configLoadFailed,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),

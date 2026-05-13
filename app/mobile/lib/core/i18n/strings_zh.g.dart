@@ -208,6 +208,17 @@ class _TranslationsProvidersZh extends TranslationsProvidersEn {
 	@override late final _TranslationsProvidersErrorPrefixZh errorPrefix = _TranslationsProvidersErrorPrefixZh._(_root);
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
 	@override late final _TranslationsProvidersAccountsZh accounts = _TranslationsProvidersAccountsZh._(_root);
+	@override String get configFallbackTitle => '提供商配置';
+	@override String get saving => '保存中…';
+	@override String get save => '保存';
+	@override String get configLoadFailed => '加载提供商失败';
+	@override String get argsHelper => '以空格分隔的 CLI 参数。';
+	@override String get listEmptyHeadline => '未加载任何提供商。';
+	@override String get listEmptyBody => '网关在启动时从插件目录解析提供商。如果有遗漏，请检查日志。';
+	@override String get listLoadFailed => '加载提供商失败';
+	@override String get cliSectionHeader => 'CLI 提供商';
+	@override String enabledSnack({required Object name}) => '${name} 已启用。';
+	@override String disabledSnack({required Object name}) => '${name} 已停用。';
 }
 
 // Path: integrations
@@ -243,6 +254,29 @@ class _TranslationsIntegrationsZh extends TranslationsIntegrationsEn {
 	@override String get newApiKeySubtitle => '将其交给集成方。旧密钥已失效。';
 	@override String rotateFailedApi({required Object error}) => '轮换失败：${error}';
 	@override String rotateFailedGeneric({required Object error}) => '轮换失败：${error}';
+	@override String get deleteBody => '移除该注册并吊销 API key。使用旧 key 的进行中请求将开始失败。';
+	@override String rotateBody({required Object name}) => '为 ${name} 生成新 API key 并立即让旧 key 失效。';
+	@override String get appBarFallback => '集成';
+	@override String get tooltipMore => '更多';
+	@override String get tooltipReadOnly => '系统集成 — 只读';
+	@override String get kvRoutePrefix => '路由前缀';
+	@override String get kvBaseUrl => 'Base URL';
+	@override String get kvScopes => '范围';
+	@override String get kvVersion => '版本';
+	@override String get kvLastHealthPing => '最近健康检查';
+	@override String get kvCreated => '创建于';
+	@override String get kvKeyRotated => 'Key 轮换于';
+	@override String detailLoadFailed({required Object error}) => '加载集成失败：${error}';
+	@override String get callsLoadFailed => '加载调用失败';
+	@override String get noMatchingCalls => '日志中暂无匹配的调用。';
+	@override String get directionAll => '全部';
+	@override String get directionInbound => '入站';
+	@override String get directionOutbound => '出站';
+	@override late final _TranslationsIntegrationsFormZh form = _TranslationsIntegrationsFormZh._(_root);
+	@override String get emptyState => '在 Web 管理端注册：集成 → 新建。';
+	@override String get sectionRegistered => '已注册';
+	@override String get sectionSystem => '系统';
+	@override String get listLoadFailed => '加载集成失败';
 }
 
 // Path: memoryWorkers
@@ -412,6 +446,12 @@ class _TranslationsGithostsZh extends TranslationsGithostsEn {
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
 	@override late final _TranslationsGithostsErrorPrefixZh errorPrefix = _TranslationsGithostsErrorPrefixZh._(_root);
 	@override late final _TranslationsGithostsFormZh form = _TranslationsGithostsFormZh._(_root);
+	@override String deleteBody({required Object host}) => '移除该凭据。试图列出 ${host} 的 PR 的会话将回退到未认证 API。';
+	@override String deletedSnack({required Object name}) => '已删除 ${name}。';
+	@override String enabledSnack({required Object name}) => '${name} 已启用。';
+	@override String disabledSnack({required Object name}) => '${name} 已停用。';
+	@override String get emptyList => '未配置任何 Git 主机。\n\n添加一个凭据，让网关可以列出你仓库的 pull request。';
+	@override String get failedToLoad => '加载 Git 主机失败';
 }
 
 // Path: channels
@@ -474,6 +514,35 @@ class _TranslationsSkillsZh extends TranslationsSkillsEn {
 	@override String get idLabel => 'Id（slug）';
 	@override String get idHint => '例如：tdd-guide';
 	@override String get bodyLabel => '正文（Markdown）';
+	@override String loadFailedApi({required Object error}) => '加载失败：${error}';
+	@override String loadFailedGeneric({required Object error}) => '加载失败：${error}';
+	@override String get idRequired => '必须填写 Id。';
+	@override String get bodyRequired => '正文不能为空。';
+	@override String get snackCreated => '技能已创建。';
+	@override String get snackOverride => '已保存为库覆盖。';
+	@override String get snackUpdated => '技能已更新。';
+	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
+	@override String saveFailedGeneric({required Object error}) => '保存失败：${error}';
+	@override String get resetTitle => '重置为内置？';
+	@override String get deleteTitle => '删除技能？';
+	@override String resetBody({required Object id}) => '移除 ${id} 的库覆盖。会话将回退到内置正文。';
+	@override String get resetButton => '重置';
+	@override String resetSnack({required Object id}) => '已将 ${id} 重置为内置。';
+	@override String deletedSnack({required Object id}) => '已删除 ${id}。';
+	@override String deleteFailedApi({required Object error}) => '删除失败：${error}';
+	@override String deleteFailedGeneric({required Object error}) => '删除失败：${error}';
+	@override String deleteBody({required Object id}) => '从库中移除 ${id}。引用它的会话在恢复前会失败。';
+	@override String get newSkillTitle => '新建技能';
+	@override String customizeTitle({required Object id}) => '自定义 ${id}';
+	@override String editTitle({required Object id}) => '编辑 ${id}';
+	@override String get resetTooltip => '重置为内置';
+	@override String get deleteTooltip => '删除';
+	@override String get saving => '保存中…';
+	@override String get saveOverride => '保存覆盖';
+	@override String get overrideBanner => '保存会以相同 id 创建一个库覆盖。会话将使用此正文而非内置版本，直到你重置。';
+	@override String get idHelper => '小写字母 / 数字 / 横线。创建后锁定。';
+	@override String get emptyList => '未配置任何技能。网关附带内置技能（planner、code-reviewer 等）。';
+	@override String get failedToLoad => '加载技能失败';
 }
 
 // Path: customTasks
@@ -497,6 +566,29 @@ class _TranslationsCustomTasksZh extends TranslationsCustomTasksEn {
 	@override String get scopeGlobal => '全局';
 	@override String get scopeProject => '项目';
 	@override String get cwdHint => '/Users/you/projects/backend';
+	@override String get snackCreated => '任务已创建。';
+	@override String get snackUpdated => '任务已更新。';
+	@override String get deleteBody => '从目录中移除任务。已插入到会话中的实例不受影响。';
+	@override String get introBanner => '定义自己的斜杠命令。它们会与内置任务一起出现在会话任务选择器中。';
+	@override String get validateNameRequired => '必须填写名称';
+	@override String get validateCommandRequired => '必须填写命令';
+	@override String get validateProjectCwd => '项目范围任务需要绝对 cwd 路径';
+	@override String get appBarEdit => '编辑自定义任务';
+	@override String get appBarNew => '新建自定义任务';
+	@override String get fieldName => '名称';
+	@override String get nameHelper => '在检查器的任务选择器中显示。';
+	@override String get fieldCommand => '命令';
+	@override String get commandHelper => '选择时插入到会话的文本。可以是 CLI 命令或 Claude 斜杠命令。';
+	@override String get fieldDescription => '描述（可选）';
+	@override String get fieldScope => '范围';
+	@override String get globalScopeHint => '从任何会话可见，不论 cwd。';
+	@override String get projectScopeHint => '仅当会话的 cwd 匹配以下路径时可见。';
+	@override String get fieldProjectCwd => '项目 cwd';
+	@override String get cwdHelper => '绝对路径。以此 cwd 启动的会话将看到该任务。';
+	@override String get saving => '保存中…';
+	@override String get save => '保存';
+	@override String get create => '创建';
+	@override String get failedToLoad => '加载自定义任务失败';
 }
 
 // Path: notesPage
@@ -907,6 +999,48 @@ class _TranslationsProvidersAccountsZh extends TranslationsProvidersAccountsEn {
 	@override String get deleteTitle => '删除账号？';
 	@override String importFailedApi({required Object error}) => '导入失败：${error}';
 	@override String importFailedGeneric({required Object error}) => '导入失败：${error}';
+	@override String get enable => '启用';
+	@override String get disable => '停用';
+	@override String get deleteLabel => '删除';
+	@override String get deleteBody => '移除该账号及其存储的 OAuth token。已使用此账号的会话保持运行，但重新认证会失败。';
+	@override String deletedSnack({required Object name}) => '已删除 ${name}。';
+	@override String get importSyncedSnack => '已同步 — 网关没有新账号。';
+	@override String importedSnackOne({required Object n}) => '已导入 ${n} 个账号。';
+	@override String importedSnackOther({required Object n}) => '已导入 ${n} 个账号。';
+	@override String get importing => '同步中…';
+	@override String get importLocal => '导入本地';
+	@override String get addHint => '添加新账号仅可在网关主机上操作。';
+	@override String get addBody => '新目录会自动出现在这里。OAuth 流程步骤参见文档。';
+	@override String loadFailed({required Object error}) => '加载账号失败：${error}';
+	@override String get intro => '以 Claude 提供商启动的会话会从这些账号中选择（或回退到环境变量）。';
+	@override String enabledSnack({required Object name}) => '${name} 已启用。';
+	@override String disabledSnack({required Object name}) => '${name} 已停用。';
+	@override String renamedSnack({required Object name}) => '已重命名为 ${name}。';
+}
+
+// Path: integrations.form
+class _TranslationsIntegrationsFormZh extends TranslationsIntegrationsFormEn {
+	_TranslationsIntegrationsFormZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get validateRequired => '名称、Base URL、路由前缀必填。';
+	@override String get fieldName => '名称';
+	@override String get fieldNameHint => 'My Bot';
+	@override String get fieldBaseUrl => 'Base URL';
+	@override String get fieldRoutePrefix => '路由前缀';
+	@override String get routePrefixHelper => '可通过 /api/v1/<前缀>/... 访问';
+	@override String get fieldScopes => '范围（可选）';
+	@override String get scopesHelper => '逗号分隔。留空 = 服务器默认。';
+	@override String get fieldVersion => '版本（可选）';
+	@override String get validateBaseUrl => '必须填写 Base URL。';
+	@override String get editFieldScopes => '范围';
+	@override String get editScopesHelper => '逗号分隔。';
+	@override String get editFieldVersion => '版本';
+	@override String get apiKeyWarn => '此 key 只显示这一次。';
+	@override String get copyCopied => '已复制';
+	@override String get copyCopy => '复制';
 }
 
 // Path: memoryWorkers.tasks
@@ -960,6 +1094,28 @@ class _TranslationsGithostsFormZh extends TranslationsGithostsFormEn {
 	@override String get hostLabel => '主机';
 	@override String get nameLabel => '名称';
 	@override String get nameHint => 'work-github、personal-gitlab、…';
+	@override late final _TranslationsGithostsFormKindsZh kinds = _TranslationsGithostsFormKindsZh._(_root);
+	@override String get validateHost => '必须填写主机。';
+	@override String get validateName => '必须填写名称。';
+	@override String get snackAdded => '主机已添加。';
+	@override String get snackUpdated => '主机已更新。';
+	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
+	@override String saveFailedGeneric({required Object error}) => '保存失败：${error}';
+	@override String get saving => '保存中…';
+	@override String get save => '保存';
+	@override String get add => '添加';
+	@override String get nameHelper => '在 PR 列表中显示的名字。';
+	@override String get tokenLabelKeep => 'Token（留空 = 保留现有）';
+	@override String get tokenLabel => 'Token';
+	@override String get tokenHintKeep => '留空 = 保留现有。';
+	@override String get tokenHintNew => '粘贴个人访问令牌。';
+	@override String get enabledHelper => '可供会话用于 PR / 远端查找。';
+	@override String get validateTokenRequired => '添加主机时必须填写 Token。';
+	@override String appBarEdit({required Object name}) => '编辑 ${name}';
+	@override String get appBarNew => '添加 Git 主机';
+	@override String tokenPreviewHint({required Object preview}) => '当前预览：${preview}';
+	@override String get tokenPreviewNone => '（无）';
+	@override String get pausedSubtitle => '已暂停 — 会话跳过此主机。';
 }
 
 // Path: channels.configDialog
@@ -1705,6 +1861,20 @@ class _TranslationsMemoryWorkersTasksTranscriptZh extends TranslationsMemoryWork
 	@override String get description => '会话结束时的「agent 做了什么」摘要。天然适合 agent 工作器。';
 }
 
+// Path: githosts.form.kinds
+class _TranslationsGithostsFormKindsZh extends TranslationsGithostsFormKindsEn {
+	_TranslationsGithostsFormKindsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get github => 'GitHub';
+	@override String get gitlab => 'GitLab';
+	@override String get bitbucket => 'Bitbucket';
+	@override String get gitea => 'Gitea';
+	@override String get custom => '自定义';
+}
+
 // Path: channels.notifications.modes
 class _TranslationsChannelsNotificationsModesZh extends TranslationsChannelsNotificationsModesEn {
 	_TranslationsChannelsNotificationsModesZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -2175,6 +2345,34 @@ extension on TranslationsZh {
 			'providers.accounts.deleteTitle' => '删除账号？',
 			'providers.accounts.importFailedApi' => ({required Object error}) => '导入失败：${error}',
 			'providers.accounts.importFailedGeneric' => ({required Object error}) => '导入失败：${error}',
+			'providers.accounts.enable' => '启用',
+			'providers.accounts.disable' => '停用',
+			'providers.accounts.deleteLabel' => '删除',
+			'providers.accounts.deleteBody' => '移除该账号及其存储的 OAuth token。已使用此账号的会话保持运行，但重新认证会失败。',
+			'providers.accounts.deletedSnack' => ({required Object name}) => '已删除 ${name}。',
+			'providers.accounts.importSyncedSnack' => '已同步 — 网关没有新账号。',
+			'providers.accounts.importedSnackOne' => ({required Object n}) => '已导入 ${n} 个账号。',
+			'providers.accounts.importedSnackOther' => ({required Object n}) => '已导入 ${n} 个账号。',
+			'providers.accounts.importing' => '同步中…',
+			'providers.accounts.importLocal' => '导入本地',
+			'providers.accounts.addHint' => '添加新账号仅可在网关主机上操作。',
+			'providers.accounts.addBody' => '新目录会自动出现在这里。OAuth 流程步骤参见文档。',
+			'providers.accounts.loadFailed' => ({required Object error}) => '加载账号失败：${error}',
+			'providers.accounts.intro' => '以 Claude 提供商启动的会话会从这些账号中选择（或回退到环境变量）。',
+			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
+			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} 已停用。',
+			'providers.accounts.renamedSnack' => ({required Object name}) => '已重命名为 ${name}。',
+			'providers.configFallbackTitle' => '提供商配置',
+			'providers.saving' => '保存中…',
+			'providers.save' => '保存',
+			'providers.configLoadFailed' => '加载提供商失败',
+			'providers.argsHelper' => '以空格分隔的 CLI 参数。',
+			'providers.listEmptyHeadline' => '未加载任何提供商。',
+			'providers.listEmptyBody' => '网关在启动时从插件目录解析提供商。如果有遗漏，请检查日志。',
+			'providers.listLoadFailed' => '加载提供商失败',
+			'providers.cliSectionHeader' => 'CLI 提供商',
+			'providers.enabledSnack' => ({required Object name}) => '${name} 已启用。',
+			'providers.disabledSnack' => ({required Object name}) => '${name} 已停用。',
 			'integrations.title' => '集成',
 			'integrations.register' => '注册',
 			'integrations.registerDialogTitle' => '注册集成',
@@ -2201,6 +2399,44 @@ extension on TranslationsZh {
 			'integrations.newApiKeySubtitle' => '将其交给集成方。旧密钥已失效。',
 			'integrations.rotateFailedApi' => ({required Object error}) => '轮换失败：${error}',
 			'integrations.rotateFailedGeneric' => ({required Object error}) => '轮换失败：${error}',
+			'integrations.deleteBody' => '移除该注册并吊销 API key。使用旧 key 的进行中请求将开始失败。',
+			'integrations.rotateBody' => ({required Object name}) => '为 ${name} 生成新 API key 并立即让旧 key 失效。',
+			'integrations.appBarFallback' => '集成',
+			'integrations.tooltipMore' => '更多',
+			'integrations.tooltipReadOnly' => '系统集成 — 只读',
+			'integrations.kvRoutePrefix' => '路由前缀',
+			'integrations.kvBaseUrl' => 'Base URL',
+			'integrations.kvScopes' => '范围',
+			'integrations.kvVersion' => '版本',
+			'integrations.kvLastHealthPing' => '最近健康检查',
+			'integrations.kvCreated' => '创建于',
+			'integrations.kvKeyRotated' => 'Key 轮换于',
+			'integrations.detailLoadFailed' => ({required Object error}) => '加载集成失败：${error}',
+			'integrations.callsLoadFailed' => '加载调用失败',
+			'integrations.noMatchingCalls' => '日志中暂无匹配的调用。',
+			'integrations.directionAll' => '全部',
+			'integrations.directionInbound' => '入站',
+			'integrations.directionOutbound' => '出站',
+			'integrations.form.validateRequired' => '名称、Base URL、路由前缀必填。',
+			'integrations.form.fieldName' => '名称',
+			'integrations.form.fieldNameHint' => 'My Bot',
+			'integrations.form.fieldBaseUrl' => 'Base URL',
+			'integrations.form.fieldRoutePrefix' => '路由前缀',
+			'integrations.form.routePrefixHelper' => '可通过 /api/v1/<前缀>/... 访问',
+			'integrations.form.fieldScopes' => '范围（可选）',
+			'integrations.form.scopesHelper' => '逗号分隔。留空 = 服务器默认。',
+			'integrations.form.fieldVersion' => '版本（可选）',
+			'integrations.form.validateBaseUrl' => '必须填写 Base URL。',
+			'integrations.form.editFieldScopes' => '范围',
+			'integrations.form.editScopesHelper' => '逗号分隔。',
+			'integrations.form.editFieldVersion' => '版本',
+			'integrations.form.apiKeyWarn' => '此 key 只显示这一次。',
+			'integrations.form.copyCopied' => '已复制',
+			'integrations.form.copyCopy' => '复制',
+			'integrations.emptyState' => '在 Web 管理端注册：集成 → 新建。',
+			'integrations.sectionRegistered' => '已注册',
+			'integrations.sectionSystem' => '系统',
+			'integrations.listLoadFailed' => '加载集成失败',
 			'memoryWorkers.title' => '记忆工作器',
 			'memoryWorkers.savedSnack' => ({required Object label}) => '${label} 已保存',
 			'memoryWorkers.saveFailed' => ({required Object error}) => '保存失败：${error}',
@@ -2315,6 +2551,40 @@ extension on TranslationsZh {
 			'githosts.form.hostLabel' => '主机',
 			'githosts.form.nameLabel' => '名称',
 			'githosts.form.nameHint' => 'work-github、personal-gitlab、…',
+			'githosts.form.kinds.github' => 'GitHub',
+			'githosts.form.kinds.gitlab' => 'GitLab',
+			'githosts.form.kinds.bitbucket' => 'Bitbucket',
+			'githosts.form.kinds.gitea' => 'Gitea',
+			'githosts.form.kinds.custom' => '自定义',
+			'githosts.form.validateHost' => '必须填写主机。',
+			'githosts.form.validateName' => '必须填写名称。',
+			'githosts.form.snackAdded' => '主机已添加。',
+			'githosts.form.snackUpdated' => '主机已更新。',
+			'githosts.form.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
+			'githosts.form.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
+			'githosts.form.saving' => '保存中…',
+			'githosts.form.save' => '保存',
+			_ => null,
+		} ?? switch (path) {
+			'githosts.form.add' => '添加',
+			'githosts.form.nameHelper' => '在 PR 列表中显示的名字。',
+			'githosts.form.tokenLabelKeep' => 'Token（留空 = 保留现有）',
+			'githosts.form.tokenLabel' => 'Token',
+			'githosts.form.tokenHintKeep' => '留空 = 保留现有。',
+			'githosts.form.tokenHintNew' => '粘贴个人访问令牌。',
+			'githosts.form.enabledHelper' => '可供会话用于 PR / 远端查找。',
+			'githosts.form.validateTokenRequired' => '添加主机时必须填写 Token。',
+			'githosts.form.appBarEdit' => ({required Object name}) => '编辑 ${name}',
+			'githosts.form.appBarNew' => '添加 Git 主机',
+			'githosts.form.tokenPreviewHint' => ({required Object preview}) => '当前预览：${preview}',
+			'githosts.form.tokenPreviewNone' => '（无）',
+			'githosts.form.pausedSubtitle' => '已暂停 — 会话跳过此主机。',
+			'githosts.deleteBody' => ({required Object host}) => '移除该凭据。试图列出 ${host} 的 PR 的会话将回退到未认证 API。',
+			'githosts.deletedSnack' => ({required Object name}) => '已删除 ${name}。',
+			'githosts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
+			'githosts.disabledSnack' => ({required Object name}) => '${name} 已停用。',
+			'githosts.emptyList' => '未配置任何 Git 主机。\n\n添加一个凭据，让网关可以列出你仓库的 pull request。',
+			'githosts.failedToLoad' => '加载 Git 主机失败',
 			'channels.title' => '通道',
 			'channels.kNew' => '新建',
 			'channels.sendTest' => '发送测试消息',
@@ -2394,8 +2664,6 @@ extension on TranslationsZh {
 			'channels.kinds.discord.channelIdLabel' => '默认 channel ID',
 			'channels.kinds.discord.channelIdPlaceholder' => '123456789012345678（可选）',
 			'channels.kinds.feishu.description' => '应用级凭据。入站走事件订阅 webhook。下方生成公网 webhook URL — 粘贴到飞书开放平台控制台。',
-			_ => null,
-		} ?? switch (path) {
 			'channels.kinds.feishu.afterCreateHint' => '在通道卡上打开 webhook URL，粘贴到飞书开放平台 → 事件订阅 → Request URL。',
 			'channels.kinds.feishu.appIdLabel' => 'App ID',
 			'channels.kinds.feishu.appSecretLabel' => 'App secret',
@@ -2430,6 +2698,35 @@ extension on TranslationsZh {
 			'skills.idLabel' => 'Id（slug）',
 			'skills.idHint' => '例如：tdd-guide',
 			'skills.bodyLabel' => '正文（Markdown）',
+			'skills.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
+			'skills.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
+			'skills.idRequired' => '必须填写 Id。',
+			'skills.bodyRequired' => '正文不能为空。',
+			'skills.snackCreated' => '技能已创建。',
+			'skills.snackOverride' => '已保存为库覆盖。',
+			'skills.snackUpdated' => '技能已更新。',
+			'skills.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
+			'skills.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
+			'skills.resetTitle' => '重置为内置？',
+			'skills.deleteTitle' => '删除技能？',
+			'skills.resetBody' => ({required Object id}) => '移除 ${id} 的库覆盖。会话将回退到内置正文。',
+			'skills.resetButton' => '重置',
+			'skills.resetSnack' => ({required Object id}) => '已将 ${id} 重置为内置。',
+			'skills.deletedSnack' => ({required Object id}) => '已删除 ${id}。',
+			'skills.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
+			'skills.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
+			'skills.deleteBody' => ({required Object id}) => '从库中移除 ${id}。引用它的会话在恢复前会失败。',
+			'skills.newSkillTitle' => '新建技能',
+			'skills.customizeTitle' => ({required Object id}) => '自定义 ${id}',
+			'skills.editTitle' => ({required Object id}) => '编辑 ${id}',
+			'skills.resetTooltip' => '重置为内置',
+			'skills.deleteTooltip' => '删除',
+			'skills.saving' => '保存中…',
+			'skills.saveOverride' => '保存覆盖',
+			'skills.overrideBanner' => '保存会以相同 id 创建一个库覆盖。会话将使用此正文而非内置版本，直到你重置。',
+			'skills.idHelper' => '小写字母 / 数字 / 横线。创建后锁定。',
+			'skills.emptyList' => '未配置任何技能。网关附带内置技能（planner、code-reviewer 等）。',
+			'skills.failedToLoad' => '加载技能失败',
 			'customTasks.title' => '自定义任务',
 			'customTasks.newTask' => '新建任务',
 			'customTasks.deleteTitle' => '删除任务？',
@@ -2444,6 +2741,29 @@ extension on TranslationsZh {
 			'customTasks.scopeGlobal' => '全局',
 			'customTasks.scopeProject' => '项目',
 			'customTasks.cwdHint' => '/Users/you/projects/backend',
+			'customTasks.snackCreated' => '任务已创建。',
+			'customTasks.snackUpdated' => '任务已更新。',
+			'customTasks.deleteBody' => '从目录中移除任务。已插入到会话中的实例不受影响。',
+			'customTasks.introBanner' => '定义自己的斜杠命令。它们会与内置任务一起出现在会话任务选择器中。',
+			'customTasks.validateNameRequired' => '必须填写名称',
+			'customTasks.validateCommandRequired' => '必须填写命令',
+			'customTasks.validateProjectCwd' => '项目范围任务需要绝对 cwd 路径',
+			'customTasks.appBarEdit' => '编辑自定义任务',
+			'customTasks.appBarNew' => '新建自定义任务',
+			'customTasks.fieldName' => '名称',
+			'customTasks.nameHelper' => '在检查器的任务选择器中显示。',
+			'customTasks.fieldCommand' => '命令',
+			'customTasks.commandHelper' => '选择时插入到会话的文本。可以是 CLI 命令或 Claude 斜杠命令。',
+			'customTasks.fieldDescription' => '描述（可选）',
+			'customTasks.fieldScope' => '范围',
+			'customTasks.globalScopeHint' => '从任何会话可见，不论 cwd。',
+			'customTasks.projectScopeHint' => '仅当会话的 cwd 匹配以下路径时可见。',
+			'customTasks.fieldProjectCwd' => '项目 cwd',
+			'customTasks.cwdHelper' => '绝对路径。以此 cwd 启动的会话将看到该任务。',
+			'customTasks.saving' => '保存中…',
+			'customTasks.save' => '保存',
+			'customTasks.create' => '创建',
+			'customTasks.failedToLoad' => '加载自定义任务失败',
 			'notesPage.title' => '笔记',
 			'notesPage.newButton' => '新建',
 			'notesPage.newNoteDialogTitle' => '新建笔记',

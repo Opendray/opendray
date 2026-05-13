@@ -60,7 +60,9 @@ class _CustomTasksScreenState extends ConsumerState<CustomTasksScreen> {
     if ((saved ?? false) && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(existing == null ? 'Task created.' : 'Task updated.'),
+          content: Text(existing == null
+              ? i18n.t.customTasks.snackCreated
+              : i18n.t.customTasks.snackUpdated),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
@@ -84,9 +86,7 @@ class _CustomTasksScreenState extends ConsumerState<CustomTasksScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Removes the task from the catalogue. Sessions that already '
-              'showed it in their picker will still complete any in-flight '
-              'run, but new invocations will fail.',
+              i18n.t.customTasks.deleteBody,
               style: Theme.of(ctx).textTheme.bodySmall,
             ),
           ],
@@ -163,9 +163,7 @@ class _CustomTasksScreenState extends ConsumerState<CustomTasksScreen> {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            'No custom tasks yet.\n\n'
-            'Define your own slash commands. They appear in the session '
-            "inspector's task picker.",
+            i18n.t.customTasks.introBanner,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
@@ -301,16 +299,16 @@ class _CustomTaskEditorScreenState
     final name = _nameCtrl.text.trim();
     final command = _commandCtrl.text.trim();
     if (name.isEmpty) {
-      setState(() => _error = 'Name is required');
+      setState(() => _error = i18n.t.customTasks.validateNameRequired);
       return;
     }
     if (command.isEmpty) {
-      setState(() => _error = 'Command is required');
+      setState(() => _error = i18n.t.customTasks.validateCommandRequired);
       return;
     }
     final cwd = _scope == _Scope.global ? '' : _cwdCtrl.text.trim();
     if (_scope == _Scope.project && cwd.isEmpty) {
-      setState(() => _error = 'Project-scoped tasks need an absolute cwd path');
+      setState(() => _error = i18n.t.customTasks.validateProjectCwd);
       return;
     }
     setState(() {
@@ -359,25 +357,27 @@ class _CustomTaskEditorScreenState
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEdit ? 'Edit custom task' : 'New custom task'),
+        title: Text(_isEdit
+            ? i18n.t.customTasks.appBarEdit
+            : i18n.t.customTasks.appBarNew),
       ),
       body: SafeArea(
         bottom: false,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            _label('Name'),
+            _label(i18n.t.customTasks.fieldName),
             const SizedBox(height: 4),
             TextField(
               controller: _nameCtrl,
               enabled: !_submitting,
               decoration: InputDecoration(
                 hintText: i18n.t.customTasks.nameHint,
-                helperText: "Shown in the inspector's task picker.",
+                helperText: i18n.t.customTasks.nameHelper,
               ),
             ),
             const SizedBox(height: 14),
-            _label('Command'),
+            _label(i18n.t.customTasks.fieldCommand),
             const SizedBox(height: 4),
             TextField(
               controller: _commandCtrl,
@@ -387,13 +387,12 @@ class _CustomTaskEditorScreenState
               minLines: 1,
               decoration: InputDecoration(
                 hintText: i18n.t.customTasks.commandHint,
-                helperText:
-                    'The text inserted into the session when picked. Can be a CLI command or a Claude slash command.',
+                helperText: i18n.t.customTasks.commandHelper,
               ),
               style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
             ),
             const SizedBox(height: 14),
-            _label('Description (optional)'),
+            _label(i18n.t.customTasks.fieldDescription),
             const SizedBox(height: 4),
             TextField(
               controller: _descriptionCtrl,
@@ -405,7 +404,7 @@ class _CustomTaskEditorScreenState
               ),
             ),
             const SizedBox(height: 14),
-            _label('Scope'),
+            _label(i18n.t.customTasks.fieldScope),
             const SizedBox(height: 4),
             SegmentedButton<_Scope>(
               segments: [
@@ -428,13 +427,13 @@ class _CustomTaskEditorScreenState
             const SizedBox(height: 8),
             Text(
               _scope == _Scope.global
-                  ? 'Visible from every session, regardless of cwd.'
-                  : "Visible only when a session's cwd matches the path below.",
+                  ? i18n.t.customTasks.globalScopeHint
+                  : i18n.t.customTasks.projectScopeHint,
               style: theme.textTheme.bodySmall,
             ),
             if (_scope == _Scope.project) ...[
               const SizedBox(height: 12),
-              _label('Project cwd'),
+              _label(i18n.t.customTasks.fieldProjectCwd),
               const SizedBox(height: 4),
               TextField(
                 controller: _cwdCtrl,
@@ -443,8 +442,7 @@ class _CustomTaskEditorScreenState
                 keyboardType: TextInputType.url,
                 decoration: InputDecoration(
                   hintText: i18n.t.customTasks.cwdHint,
-                  helperText:
-                      'Absolute path. Sessions spawned with this exact cwd will see the task.',
+                  helperText: i18n.t.customTasks.cwdHelper,
                 ),
                 style: const TextStyle(fontFamily: 'monospace'),
               ),
@@ -492,10 +490,10 @@ class _CustomTaskEditorScreenState
                           )
                         : const Icon(Icons.check, size: 18),
                     label: Text(_submitting
-                        ? 'Saving…'
+                        ? i18n.t.customTasks.saving
                         : _isEdit
-                            ? 'Save'
-                            : 'Create'),
+                            ? i18n.t.customTasks.save
+                            : i18n.t.customTasks.create),
                   ),
                 ),
               ],
@@ -543,7 +541,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Failed to load custom tasks',
+              i18n.t.customTasks.failedToLoad,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 4),

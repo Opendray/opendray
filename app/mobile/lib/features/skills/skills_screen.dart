@@ -102,9 +102,7 @@ class _SkillsScreenState extends ConsumerState<SkillsScreen> {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            'No skills configured. The gateway ships with built-ins '
-            'embedded in the binary; if none appear, the vault root '
-            'is probably misconfigured.',
+            t.skills.emptyList,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
@@ -235,7 +233,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Failed to load skills',
+              t.skills.failedToLoad,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),

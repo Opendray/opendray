@@ -340,6 +340,39 @@ class TranslationsProvidersEn {
 	String errorWithMessage({required Object prefix, required Object error}) => '${prefix}: ${error}';
 
 	late final TranslationsProvidersAccountsEn accounts = TranslationsProvidersAccountsEn.internal(_root);
+
+	/// en: 'Provider config'
+	String get configFallbackTitle => 'Provider config';
+
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Failed to load provider'
+	String get configLoadFailed => 'Failed to load provider';
+
+	/// en: 'Whitespace-separated CLI args.'
+	String get argsHelper => 'Whitespace-separated CLI args.';
+
+	/// en: 'No providers loaded.'
+	String get listEmptyHeadline => 'No providers loaded.';
+
+	/// en: 'The gateway resolves providers from its plugin directory at startup. Check the logs if you expect one.'
+	String get listEmptyBody => 'The gateway resolves providers from its plugin directory at startup. Check the logs if you expect one.';
+
+	/// en: 'Failed to load providers'
+	String get listLoadFailed => 'Failed to load providers';
+
+	/// en: 'CLI providers'
+	String get cliSectionHeader => 'CLI providers';
+
+	/// en: '{name} enabled.'
+	String enabledSnack({required Object name}) => '${name} enabled.';
+
+	/// en: '{name} disabled.'
+	String disabledSnack({required Object name}) => '${name} disabled.';
 }
 
 // Path: integrations
@@ -427,6 +460,74 @@ class TranslationsIntegrationsEn {
 
 	/// en: 'Rotate failed: {error}'
 	String rotateFailedGeneric({required Object error}) => 'Rotate failed: ${error}';
+
+	/// en: 'Removes the registration and revokes the API key. In-flight requests using the old key will start failing.'
+	String get deleteBody => 'Removes the registration and revokes the API key. In-flight requests using the old key will start failing.';
+
+	/// en: 'Generates a new API key for {name} and immediately invalidates the old one.'
+	String rotateBody({required Object name}) => 'Generates a new API key for ${name} and immediately invalidates the old one.';
+
+	/// en: 'Integration'
+	String get appBarFallback => 'Integration';
+
+	/// en: 'More'
+	String get tooltipMore => 'More';
+
+	/// en: 'System integration — read-only'
+	String get tooltipReadOnly => 'System integration — read-only';
+
+	/// en: 'Route prefix'
+	String get kvRoutePrefix => 'Route prefix';
+
+	/// en: 'Base URL'
+	String get kvBaseUrl => 'Base URL';
+
+	/// en: 'Scopes'
+	String get kvScopes => 'Scopes';
+
+	/// en: 'Version'
+	String get kvVersion => 'Version';
+
+	/// en: 'Last health ping'
+	String get kvLastHealthPing => 'Last health ping';
+
+	/// en: 'Created'
+	String get kvCreated => 'Created';
+
+	/// en: 'Key rotated'
+	String get kvKeyRotated => 'Key rotated';
+
+	/// en: 'Failed to load integration: {error}'
+	String detailLoadFailed({required Object error}) => 'Failed to load integration: ${error}';
+
+	/// en: 'Failed to load calls'
+	String get callsLoadFailed => 'Failed to load calls';
+
+	/// en: 'No matching calls in the log yet.'
+	String get noMatchingCalls => 'No matching calls in the log yet.';
+
+	/// en: 'All'
+	String get directionAll => 'All';
+
+	/// en: 'Inbound'
+	String get directionInbound => 'Inbound';
+
+	/// en: 'Outbound'
+	String get directionOutbound => 'Outbound';
+
+	late final TranslationsIntegrationsFormEn form = TranslationsIntegrationsFormEn.internal(_root);
+
+	/// en: 'Register from the web admin: Integrations → New.'
+	String get emptyState => 'Register from the web admin: Integrations → New.';
+
+	/// en: 'Registered'
+	String get sectionRegistered => 'Registered';
+
+	/// en: 'System'
+	String get sectionSystem => 'System';
+
+	/// en: 'Failed to load integrations'
+	String get listLoadFailed => 'Failed to load integrations';
 }
 
 // Path: memoryWorkers
@@ -785,6 +886,24 @@ class TranslationsGithostsEn {
 
 	late final TranslationsGithostsErrorPrefixEn errorPrefix = TranslationsGithostsErrorPrefixEn.internal(_root);
 	late final TranslationsGithostsFormEn form = TranslationsGithostsFormEn.internal(_root);
+
+	/// en: 'Removes the credential. Sessions trying to list PRs from {host} will fall back to the unauthenticated API.'
+	String deleteBody({required Object host}) => 'Removes the credential. Sessions trying to list PRs from ${host} will fall back to the unauthenticated API.';
+
+	/// en: 'Deleted {name}.'
+	String deletedSnack({required Object name}) => 'Deleted ${name}.';
+
+	/// en: '{name} enabled.'
+	String enabledSnack({required Object name}) => '${name} enabled.';
+
+	/// en: '{name} disabled.'
+	String disabledSnack({required Object name}) => '${name} disabled.';
+
+	/// en: 'No git hosts configured. Add a credential so the gateway can list pull requests across your repos.'
+	String get emptyList => 'No git hosts configured.\n\nAdd a credential so the gateway can list pull requests across your repos.';
+
+	/// en: 'Failed to load git hosts'
+	String get failedToLoad => 'Failed to load git hosts';
 }
 
 // Path: channels
@@ -905,6 +1024,93 @@ class TranslationsSkillsEn {
 
 	/// en: 'Body (markdown)'
 	String get bodyLabel => 'Body (markdown)';
+
+	/// en: 'Load failed: {error}'
+	String loadFailedApi({required Object error}) => 'Load failed: ${error}';
+
+	/// en: 'Load failed: {error}'
+	String loadFailedGeneric({required Object error}) => 'Load failed: ${error}';
+
+	/// en: 'Id is required.'
+	String get idRequired => 'Id is required.';
+
+	/// en: 'Body cannot be empty.'
+	String get bodyRequired => 'Body cannot be empty.';
+
+	/// en: 'Skill created.'
+	String get snackCreated => 'Skill created.';
+
+	/// en: 'Saved as vault override.'
+	String get snackOverride => 'Saved as vault override.';
+
+	/// en: 'Skill updated.'
+	String get snackUpdated => 'Skill updated.';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedApi({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedGeneric({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Reset to built-in?'
+	String get resetTitle => 'Reset to built-in?';
+
+	/// en: 'Delete skill?'
+	String get deleteTitle => 'Delete skill?';
+
+	/// en: 'Removes the vault override for {id}. Sessions will fall back to the built-in body.'
+	String resetBody({required Object id}) => 'Removes the vault override for ${id}. Sessions will fall back to the built-in body.';
+
+	/// en: 'Reset'
+	String get resetButton => 'Reset';
+
+	/// en: 'Reset {id} to built-in.'
+	String resetSnack({required Object id}) => 'Reset ${id} to built-in.';
+
+	/// en: 'Deleted {id}.'
+	String deletedSnack({required Object id}) => 'Deleted ${id}.';
+
+	/// en: 'Delete failed: {error}'
+	String deleteFailedApi({required Object error}) => 'Delete failed: ${error}';
+
+	/// en: 'Delete failed: {error}'
+	String deleteFailedGeneric({required Object error}) => 'Delete failed: ${error}';
+
+	/// en: 'Removes {id} from the vault. Sessions that reference it will fail until restored.'
+	String deleteBody({required Object id}) => 'Removes ${id} from the vault. Sessions that reference it will fail until restored.';
+
+	/// en: 'New skill'
+	String get newSkillTitle => 'New skill';
+
+	/// en: 'Customize {id}'
+	String customizeTitle({required Object id}) => 'Customize ${id}';
+
+	/// en: 'Edit {id}'
+	String editTitle({required Object id}) => 'Edit ${id}';
+
+	/// en: 'Reset to built-in'
+	String get resetTooltip => 'Reset to built-in';
+
+	/// en: 'Delete'
+	String get deleteTooltip => 'Delete';
+
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
+	/// en: 'Save override'
+	String get saveOverride => 'Save override';
+
+	/// en: 'Saving creates a vault override with the same id. Sessions will use this body instead of the built-in until you reset.'
+	String get overrideBanner => 'Saving creates a vault override with the same id. Sessions will use this body instead of the built-in until you reset.';
+
+	/// en: 'Lowercase letters / digits / dash. Locked once created.'
+	String get idHelper => 'Lowercase letters / digits / dash. Locked once created.';
+
+	/// en: 'No skills configured. The gateway ships with built-ins (planner, code-reviewer, etc.).'
+	String get emptyList => 'No skills configured. The gateway ships with built-ins (planner, code-reviewer, etc.).';
+
+	/// en: 'Failed to load skills'
+	String get failedToLoad => 'Failed to load skills';
 }
 
 // Path: customTasks
@@ -956,6 +1162,75 @@ class TranslationsCustomTasksEn {
 
 	/// en: '/Users/you/projects/backend'
 	String get cwdHint => '/Users/you/projects/backend';
+
+	/// en: 'Task created.'
+	String get snackCreated => 'Task created.';
+
+	/// en: 'Task updated.'
+	String get snackUpdated => 'Task updated.';
+
+	/// en: 'Removes the task from the catalogue. Sessions that already inserted it stay unaffected.'
+	String get deleteBody => 'Removes the task from the catalogue. Sessions that already inserted it stay unaffected.';
+
+	/// en: 'Define your own slash commands. They appear in the session task picker alongside the built-ins.'
+	String get introBanner => 'Define your own slash commands. They appear in the session task picker alongside the built-ins.';
+
+	/// en: 'Name is required'
+	String get validateNameRequired => 'Name is required';
+
+	/// en: 'Command is required'
+	String get validateCommandRequired => 'Command is required';
+
+	/// en: 'Project-scoped tasks need an absolute cwd path'
+	String get validateProjectCwd => 'Project-scoped tasks need an absolute cwd path';
+
+	/// en: 'Edit custom task'
+	String get appBarEdit => 'Edit custom task';
+
+	/// en: 'New custom task'
+	String get appBarNew => 'New custom task';
+
+	/// en: 'Name'
+	String get fieldName => 'Name';
+
+	/// en: 'Shown in the inspector's task picker.'
+	String get nameHelper => 'Shown in the inspector\'s task picker.';
+
+	/// en: 'Command'
+	String get fieldCommand => 'Command';
+
+	/// en: 'The text inserted into the session when picked. Can be a CLI command or a Claude slash command.'
+	String get commandHelper => 'The text inserted into the session when picked. Can be a CLI command or a Claude slash command.';
+
+	/// en: 'Description (optional)'
+	String get fieldDescription => 'Description (optional)';
+
+	/// en: 'Scope'
+	String get fieldScope => 'Scope';
+
+	/// en: 'Visible from every session, regardless of cwd.'
+	String get globalScopeHint => 'Visible from every session, regardless of cwd.';
+
+	/// en: 'Visible only when a session's cwd matches the path below.'
+	String get projectScopeHint => 'Visible only when a session\'s cwd matches the path below.';
+
+	/// en: 'Project cwd'
+	String get fieldProjectCwd => 'Project cwd';
+
+	/// en: 'Absolute path. Sessions spawned with this exact cwd will see the task.'
+	String get cwdHelper => 'Absolute path. Sessions spawned with this exact cwd will see the task.';
+
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Create'
+	String get create => 'Create';
+
+	/// en: 'Failed to load custom tasks'
+	String get failedToLoad => 'Failed to load custom tasks';
 }
 
 // Path: notesPage
@@ -1675,6 +1950,114 @@ class TranslationsProvidersAccountsEn {
 
 	/// en: 'Import failed: {error}'
 	String importFailedGeneric({required Object error}) => 'Import failed: ${error}';
+
+	/// en: 'Enable'
+	String get enable => 'Enable';
+
+	/// en: 'Disable'
+	String get disable => 'Disable';
+
+	/// en: 'Delete'
+	String get deleteLabel => 'Delete';
+
+	/// en: 'Removes the account and its stored OAuth token. Sessions already using this account stay running but reauth will fail.'
+	String get deleteBody => 'Removes the account and its stored OAuth token. Sessions already using this account stay running but reauth will fail.';
+
+	/// en: 'Deleted {name}.'
+	String deletedSnack({required Object name}) => 'Deleted ${name}.';
+
+	/// en: 'Already in sync — gateway has no new accounts.'
+	String get importSyncedSnack => 'Already in sync — gateway has no new accounts.';
+
+	/// en: 'Imported {n} account.'
+	String importedSnackOne({required Object n}) => 'Imported ${n} account.';
+
+	/// en: 'Imported {n} accounts.'
+	String importedSnackOther({required Object n}) => 'Imported ${n} accounts.';
+
+	/// en: 'Syncing…'
+	String get importing => 'Syncing…';
+
+	/// en: 'Import local'
+	String get importLocal => 'Import local';
+
+	/// en: 'Adding a new account is gateway-host only.'
+	String get addHint => 'Adding a new account is gateway-host only.';
+
+	/// en: 'The new directory shows up here automatically. See the docs for OAuth flow steps.'
+	String get addBody => 'The new directory shows up here automatically. See the docs for OAuth flow steps.';
+
+	/// en: 'Failed to load accounts: {error}'
+	String loadFailed({required Object error}) => 'Failed to load accounts: ${error}';
+
+	/// en: 'Sessions spawned with the Claude provider pick from these accounts (or fall back to env).'
+	String get intro => 'Sessions spawned with the Claude provider pick from these accounts (or fall back to env).';
+
+	/// en: '{name} enabled.'
+	String enabledSnack({required Object name}) => '${name} enabled.';
+
+	/// en: '{name} disabled.'
+	String disabledSnack({required Object name}) => '${name} disabled.';
+
+	/// en: 'Renamed to {name}.'
+	String renamedSnack({required Object name}) => 'Renamed to ${name}.';
+}
+
+// Path: integrations.form
+class TranslationsIntegrationsFormEn {
+	TranslationsIntegrationsFormEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Name, base URL, and route prefix are required.'
+	String get validateRequired => 'Name, base URL, and route prefix are required.';
+
+	/// en: 'Name'
+	String get fieldName => 'Name';
+
+	/// en: 'My Bot'
+	String get fieldNameHint => 'My Bot';
+
+	/// en: 'Base URL'
+	String get fieldBaseUrl => 'Base URL';
+
+	/// en: 'Route prefix'
+	String get fieldRoutePrefix => 'Route prefix';
+
+	/// en: 'Reachable as /api/v1/<prefix>/...'
+	String get routePrefixHelper => 'Reachable as /api/v1/<prefix>/...';
+
+	/// en: 'Scopes (optional)'
+	String get fieldScopes => 'Scopes (optional)';
+
+	/// en: 'Comma-separated. Empty = server defaults.'
+	String get scopesHelper => 'Comma-separated. Empty = server defaults.';
+
+	/// en: 'Version (optional)'
+	String get fieldVersion => 'Version (optional)';
+
+	/// en: 'Base URL is required.'
+	String get validateBaseUrl => 'Base URL is required.';
+
+	/// en: 'Scopes'
+	String get editFieldScopes => 'Scopes';
+
+	/// en: 'Comma-separated.'
+	String get editScopesHelper => 'Comma-separated.';
+
+	/// en: 'Version'
+	String get editFieldVersion => 'Version';
+
+	/// en: 'You won't see this key again.'
+	String get apiKeyWarn => 'You won\'t see this key again.';
+
+	/// en: 'Copied'
+	String get copyCopied => 'Copied';
+
+	/// en: 'Copy'
+	String get copyCopy => 'Copy';
 }
 
 // Path: memoryWorkers.tasks
@@ -1754,6 +2137,71 @@ class TranslationsGithostsFormEn {
 
 	/// en: 'work-github, personal-gitlab, …'
 	String get nameHint => 'work-github, personal-gitlab, …';
+
+	late final TranslationsGithostsFormKindsEn kinds = TranslationsGithostsFormKindsEn.internal(_root);
+
+	/// en: 'Host is required.'
+	String get validateHost => 'Host is required.';
+
+	/// en: 'Name is required.'
+	String get validateName => 'Name is required.';
+
+	/// en: 'Host added.'
+	String get snackAdded => 'Host added.';
+
+	/// en: 'Host updated.'
+	String get snackUpdated => 'Host updated.';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedApi({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedGeneric({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Add'
+	String get add => 'Add';
+
+	/// en: 'Display name shown in PR lists.'
+	String get nameHelper => 'Display name shown in PR lists.';
+
+	/// en: 'Token (leave blank to keep existing)'
+	String get tokenLabelKeep => 'Token (leave blank to keep existing)';
+
+	/// en: 'Token'
+	String get tokenLabel => 'Token';
+
+	/// en: 'Leave blank to keep existing.'
+	String get tokenHintKeep => 'Leave blank to keep existing.';
+
+	/// en: 'Paste the personal access token.'
+	String get tokenHintNew => 'Paste the personal access token.';
+
+	/// en: 'Available to sessions for PR / remote lookups.'
+	String get enabledHelper => 'Available to sessions for PR / remote lookups.';
+
+	/// en: 'Token is required when adding a host.'
+	String get validateTokenRequired => 'Token is required when adding a host.';
+
+	/// en: 'Edit {name}'
+	String appBarEdit({required Object name}) => 'Edit ${name}';
+
+	/// en: 'Add git host'
+	String get appBarNew => 'Add git host';
+
+	/// en: 'Current preview: {preview}'
+	String tokenPreviewHint({required Object preview}) => 'Current preview: ${preview}';
+
+	/// en: '(none)'
+	String get tokenPreviewNone => '(none)';
+
+	/// en: 'Paused — sessions skip this host.'
+	String get pausedSubtitle => 'Paused — sessions skip this host.';
 }
 
 // Path: channels.configDialog
@@ -2959,6 +3407,30 @@ class TranslationsMemoryWorkersTasksTranscriptEn {
 	String get description => 'Session-end \'what did the agent do\' summary. Naturally fits an agent worker.';
 }
 
+// Path: githosts.form.kinds
+class TranslationsGithostsFormKindsEn {
+	TranslationsGithostsFormKindsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'GitHub'
+	String get github => 'GitHub';
+
+	/// en: 'GitLab'
+	String get gitlab => 'GitLab';
+
+	/// en: 'Bitbucket'
+	String get bitbucket => 'Bitbucket';
+
+	/// en: 'Gitea'
+	String get gitea => 'Gitea';
+
+	/// en: 'Custom'
+	String get custom => 'Custom';
+}
+
 // Path: channels.notifications.modes
 class TranslationsChannelsNotificationsModesEn {
 	TranslationsChannelsNotificationsModesEn.internal(this._root);
@@ -3569,6 +4041,34 @@ extension on Translations {
 			'providers.accounts.deleteTitle' => 'Delete account?',
 			'providers.accounts.importFailedApi' => ({required Object error}) => 'Import failed: ${error}',
 			'providers.accounts.importFailedGeneric' => ({required Object error}) => 'Import failed: ${error}',
+			'providers.accounts.enable' => 'Enable',
+			'providers.accounts.disable' => 'Disable',
+			'providers.accounts.deleteLabel' => 'Delete',
+			'providers.accounts.deleteBody' => 'Removes the account and its stored OAuth token. Sessions already using this account stay running but reauth will fail.',
+			'providers.accounts.deletedSnack' => ({required Object name}) => 'Deleted ${name}.',
+			'providers.accounts.importSyncedSnack' => 'Already in sync — gateway has no new accounts.',
+			'providers.accounts.importedSnackOne' => ({required Object n}) => 'Imported ${n} account.',
+			'providers.accounts.importedSnackOther' => ({required Object n}) => 'Imported ${n} accounts.',
+			'providers.accounts.importing' => 'Syncing…',
+			'providers.accounts.importLocal' => 'Import local',
+			'providers.accounts.addHint' => 'Adding a new account is gateway-host only.',
+			'providers.accounts.addBody' => 'The new directory shows up here automatically. See the docs for OAuth flow steps.',
+			'providers.accounts.loadFailed' => ({required Object error}) => 'Failed to load accounts: ${error}',
+			'providers.accounts.intro' => 'Sessions spawned with the Claude provider pick from these accounts (or fall back to env).',
+			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} enabled.',
+			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} disabled.',
+			'providers.accounts.renamedSnack' => ({required Object name}) => 'Renamed to ${name}.',
+			'providers.configFallbackTitle' => 'Provider config',
+			'providers.saving' => 'Saving…',
+			'providers.save' => 'Save',
+			'providers.configLoadFailed' => 'Failed to load provider',
+			'providers.argsHelper' => 'Whitespace-separated CLI args.',
+			'providers.listEmptyHeadline' => 'No providers loaded.',
+			'providers.listEmptyBody' => 'The gateway resolves providers from its plugin directory at startup. Check the logs if you expect one.',
+			'providers.listLoadFailed' => 'Failed to load providers',
+			'providers.cliSectionHeader' => 'CLI providers',
+			'providers.enabledSnack' => ({required Object name}) => '${name} enabled.',
+			'providers.disabledSnack' => ({required Object name}) => '${name} disabled.',
 			'integrations.title' => 'Integrations',
 			'integrations.register' => 'Register',
 			'integrations.registerDialogTitle' => 'Register integration',
@@ -3595,6 +4095,44 @@ extension on Translations {
 			'integrations.newApiKeySubtitle' => 'Hand this to the integration. The previous key has just been invalidated.',
 			'integrations.rotateFailedApi' => ({required Object error}) => 'Rotate failed: ${error}',
 			'integrations.rotateFailedGeneric' => ({required Object error}) => 'Rotate failed: ${error}',
+			'integrations.deleteBody' => 'Removes the registration and revokes the API key. In-flight requests using the old key will start failing.',
+			'integrations.rotateBody' => ({required Object name}) => 'Generates a new API key for ${name} and immediately invalidates the old one.',
+			'integrations.appBarFallback' => 'Integration',
+			'integrations.tooltipMore' => 'More',
+			'integrations.tooltipReadOnly' => 'System integration — read-only',
+			'integrations.kvRoutePrefix' => 'Route prefix',
+			'integrations.kvBaseUrl' => 'Base URL',
+			'integrations.kvScopes' => 'Scopes',
+			'integrations.kvVersion' => 'Version',
+			'integrations.kvLastHealthPing' => 'Last health ping',
+			'integrations.kvCreated' => 'Created',
+			'integrations.kvKeyRotated' => 'Key rotated',
+			'integrations.detailLoadFailed' => ({required Object error}) => 'Failed to load integration: ${error}',
+			'integrations.callsLoadFailed' => 'Failed to load calls',
+			'integrations.noMatchingCalls' => 'No matching calls in the log yet.',
+			'integrations.directionAll' => 'All',
+			'integrations.directionInbound' => 'Inbound',
+			'integrations.directionOutbound' => 'Outbound',
+			'integrations.form.validateRequired' => 'Name, base URL, and route prefix are required.',
+			'integrations.form.fieldName' => 'Name',
+			'integrations.form.fieldNameHint' => 'My Bot',
+			'integrations.form.fieldBaseUrl' => 'Base URL',
+			'integrations.form.fieldRoutePrefix' => 'Route prefix',
+			'integrations.form.routePrefixHelper' => 'Reachable as /api/v1/<prefix>/...',
+			'integrations.form.fieldScopes' => 'Scopes (optional)',
+			'integrations.form.scopesHelper' => 'Comma-separated. Empty = server defaults.',
+			'integrations.form.fieldVersion' => 'Version (optional)',
+			'integrations.form.validateBaseUrl' => 'Base URL is required.',
+			'integrations.form.editFieldScopes' => 'Scopes',
+			'integrations.form.editScopesHelper' => 'Comma-separated.',
+			'integrations.form.editFieldVersion' => 'Version',
+			'integrations.form.apiKeyWarn' => 'You won\'t see this key again.',
+			'integrations.form.copyCopied' => 'Copied',
+			'integrations.form.copyCopy' => 'Copy',
+			'integrations.emptyState' => 'Register from the web admin: Integrations → New.',
+			'integrations.sectionRegistered' => 'Registered',
+			'integrations.sectionSystem' => 'System',
+			'integrations.listLoadFailed' => 'Failed to load integrations',
 			'memoryWorkers.title' => 'Memory workers',
 			'memoryWorkers.savedSnack' => ({required Object label}) => '${label} saved',
 			'memoryWorkers.saveFailed' => ({required Object error}) => 'Save failed: ${error}',
@@ -3709,6 +4247,40 @@ extension on Translations {
 			'githosts.form.hostLabel' => 'Host',
 			'githosts.form.nameLabel' => 'Name',
 			'githosts.form.nameHint' => 'work-github, personal-gitlab, …',
+			'githosts.form.kinds.github' => 'GitHub',
+			'githosts.form.kinds.gitlab' => 'GitLab',
+			'githosts.form.kinds.bitbucket' => 'Bitbucket',
+			'githosts.form.kinds.gitea' => 'Gitea',
+			'githosts.form.kinds.custom' => 'Custom',
+			'githosts.form.validateHost' => 'Host is required.',
+			'githosts.form.validateName' => 'Name is required.',
+			'githosts.form.snackAdded' => 'Host added.',
+			'githosts.form.snackUpdated' => 'Host updated.',
+			'githosts.form.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
+			'githosts.form.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
+			'githosts.form.saving' => 'Saving…',
+			'githosts.form.save' => 'Save',
+			_ => null,
+		} ?? switch (path) {
+			'githosts.form.add' => 'Add',
+			'githosts.form.nameHelper' => 'Display name shown in PR lists.',
+			'githosts.form.tokenLabelKeep' => 'Token (leave blank to keep existing)',
+			'githosts.form.tokenLabel' => 'Token',
+			'githosts.form.tokenHintKeep' => 'Leave blank to keep existing.',
+			'githosts.form.tokenHintNew' => 'Paste the personal access token.',
+			'githosts.form.enabledHelper' => 'Available to sessions for PR / remote lookups.',
+			'githosts.form.validateTokenRequired' => 'Token is required when adding a host.',
+			'githosts.form.appBarEdit' => ({required Object name}) => 'Edit ${name}',
+			'githosts.form.appBarNew' => 'Add git host',
+			'githosts.form.tokenPreviewHint' => ({required Object preview}) => 'Current preview: ${preview}',
+			'githosts.form.tokenPreviewNone' => '(none)',
+			'githosts.form.pausedSubtitle' => 'Paused — sessions skip this host.',
+			'githosts.deleteBody' => ({required Object host}) => 'Removes the credential. Sessions trying to list PRs from ${host} will fall back to the unauthenticated API.',
+			'githosts.deletedSnack' => ({required Object name}) => 'Deleted ${name}.',
+			'githosts.enabledSnack' => ({required Object name}) => '${name} enabled.',
+			'githosts.disabledSnack' => ({required Object name}) => '${name} disabled.',
+			'githosts.emptyList' => 'No git hosts configured.\n\nAdd a credential so the gateway can list pull requests across your repos.',
+			'githosts.failedToLoad' => 'Failed to load git hosts',
 			'channels.title' => 'Channels',
 			'channels.kNew' => 'New',
 			'channels.sendTest' => 'Send test message',
@@ -3788,8 +4360,6 @@ extension on Translations {
 			'channels.kinds.discord.channelIdLabel' => 'Default channel ID',
 			'channels.kinds.discord.channelIdPlaceholder' => '123456789012345678 (optional)',
 			'channels.kinds.feishu.description' => 'App-level credentials. Uses event subscription webhook for inbound. Public webhook URL is generated below — paste it into the Feishu dev console.',
-			_ => null,
-		} ?? switch (path) {
 			'channels.kinds.feishu.afterCreateHint' => 'Open the webhook URL from the channel card and paste it into Feishu Open Platform → Event Subscriptions → Request URL.',
 			'channels.kinds.feishu.appIdLabel' => 'App ID',
 			'channels.kinds.feishu.appSecretLabel' => 'App secret',
@@ -3824,6 +4394,35 @@ extension on Translations {
 			'skills.idLabel' => 'Id (slug)',
 			'skills.idHint' => 'e.g. tdd-guide',
 			'skills.bodyLabel' => 'Body (markdown)',
+			'skills.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
+			'skills.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
+			'skills.idRequired' => 'Id is required.',
+			'skills.bodyRequired' => 'Body cannot be empty.',
+			'skills.snackCreated' => 'Skill created.',
+			'skills.snackOverride' => 'Saved as vault override.',
+			'skills.snackUpdated' => 'Skill updated.',
+			'skills.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
+			'skills.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
+			'skills.resetTitle' => 'Reset to built-in?',
+			'skills.deleteTitle' => 'Delete skill?',
+			'skills.resetBody' => ({required Object id}) => 'Removes the vault override for ${id}. Sessions will fall back to the built-in body.',
+			'skills.resetButton' => 'Reset',
+			'skills.resetSnack' => ({required Object id}) => 'Reset ${id} to built-in.',
+			'skills.deletedSnack' => ({required Object id}) => 'Deleted ${id}.',
+			'skills.deleteFailedApi' => ({required Object error}) => 'Delete failed: ${error}',
+			'skills.deleteFailedGeneric' => ({required Object error}) => 'Delete failed: ${error}',
+			'skills.deleteBody' => ({required Object id}) => 'Removes ${id} from the vault. Sessions that reference it will fail until restored.',
+			'skills.newSkillTitle' => 'New skill',
+			'skills.customizeTitle' => ({required Object id}) => 'Customize ${id}',
+			'skills.editTitle' => ({required Object id}) => 'Edit ${id}',
+			'skills.resetTooltip' => 'Reset to built-in',
+			'skills.deleteTooltip' => 'Delete',
+			'skills.saving' => 'Saving…',
+			'skills.saveOverride' => 'Save override',
+			'skills.overrideBanner' => 'Saving creates a vault override with the same id. Sessions will use this body instead of the built-in until you reset.',
+			'skills.idHelper' => 'Lowercase letters / digits / dash. Locked once created.',
+			'skills.emptyList' => 'No skills configured. The gateway ships with built-ins (planner, code-reviewer, etc.).',
+			'skills.failedToLoad' => 'Failed to load skills',
 			'customTasks.title' => 'Custom tasks',
 			'customTasks.newTask' => 'New task',
 			'customTasks.deleteTitle' => 'Delete task?',
@@ -3838,6 +4437,29 @@ extension on Translations {
 			'customTasks.scopeGlobal' => 'Global',
 			'customTasks.scopeProject' => 'Project',
 			'customTasks.cwdHint' => '/Users/you/projects/backend',
+			'customTasks.snackCreated' => 'Task created.',
+			'customTasks.snackUpdated' => 'Task updated.',
+			'customTasks.deleteBody' => 'Removes the task from the catalogue. Sessions that already inserted it stay unaffected.',
+			'customTasks.introBanner' => 'Define your own slash commands. They appear in the session task picker alongside the built-ins.',
+			'customTasks.validateNameRequired' => 'Name is required',
+			'customTasks.validateCommandRequired' => 'Command is required',
+			'customTasks.validateProjectCwd' => 'Project-scoped tasks need an absolute cwd path',
+			'customTasks.appBarEdit' => 'Edit custom task',
+			'customTasks.appBarNew' => 'New custom task',
+			'customTasks.fieldName' => 'Name',
+			'customTasks.nameHelper' => 'Shown in the inspector\'s task picker.',
+			'customTasks.fieldCommand' => 'Command',
+			'customTasks.commandHelper' => 'The text inserted into the session when picked. Can be a CLI command or a Claude slash command.',
+			'customTasks.fieldDescription' => 'Description (optional)',
+			'customTasks.fieldScope' => 'Scope',
+			'customTasks.globalScopeHint' => 'Visible from every session, regardless of cwd.',
+			'customTasks.projectScopeHint' => 'Visible only when a session\'s cwd matches the path below.',
+			'customTasks.fieldProjectCwd' => 'Project cwd',
+			'customTasks.cwdHelper' => 'Absolute path. Sessions spawned with this exact cwd will see the task.',
+			'customTasks.saving' => 'Saving…',
+			'customTasks.save' => 'Save',
+			'customTasks.create' => 'Create',
+			'customTasks.failedToLoad' => 'Failed to load custom tasks',
 			'notesPage.title' => 'Notes',
 			'notesPage.newButton' => 'New',
 			'notesPage.newNoteDialogTitle' => 'New note',
