@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 // History surface inside the session inspector. Shows the user's
 // past prompts in this project (cwd) across every session that
@@ -95,7 +96,7 @@ class _HistoryTabState extends ConsumerState<HistoryTab>
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.send_outlined),
-              title: const Text('Insert into terminal'),
+              title: Text(t.sessions.inspector.history.insertIntoTerminal),
               subtitle: const Text(
                 'Pastes the prompt as keystrokes; press Return to send',
               ),
@@ -126,10 +127,23 @@ class _HistoryTabState extends ConsumerState<HistoryTab>
       );
     } on ApiException catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Insert failed (${e.statusCode}): ${e.message}')),
+        SnackBar(
+          content: Text(
+            t.sessions.inspector.shared.insertFailedApi(
+              status: e.statusCode.toString(),
+              message: e.message,
+            ),
+          ),
+        ),
       );
     } on Object catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Insert failed: $e')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            t.sessions.inspector.shared.insertFailedGeneric(error: e.toString()),
+          ),
+        ),
+      );
     }
   }
 
@@ -211,7 +225,7 @@ class _SearchBar extends StatelessWidget {
               textInputAction: TextInputAction.search,
               onChanged: onChanged,
               decoration: InputDecoration(
-                hintText: 'Search prompts…',
+                hintText: t.sessions.inspector.history.searchHint,
                 prefixIcon: const Icon(Icons.search, size: 20),
                 suffixIcon: controller.text.isEmpty
                     ? null
@@ -229,7 +243,7 @@ class _SearchBar extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: t.sessions.inspector.shared.refresh,
             onPressed: onRefresh,
           ),
         ],
@@ -370,7 +384,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),

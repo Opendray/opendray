@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/fs_api.dart';
 import 'package:opendray/core/api/sessions_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:path/path.dart' as p;
 
 // Files surface inside the session inspector. Browses the gateway-
@@ -94,7 +95,7 @@ class _FilesTabState extends ConsumerState<FilesTab>
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.alternate_email),
-              title: const Text('Insert as @reference'),
+              title: Text(t.sessions.inspector.files.insertAtRef),
               subtitle: const Text(
                 'Pastes "@<path>" into the running prompt',
               ),
@@ -102,14 +103,14 @@ class _FilesTabState extends ConsumerState<FilesTab>
             ),
             ListTile(
               leading: const Icon(Icons.content_paste_go),
-              title: const Text('Insert path'),
-              subtitle: const Text('Pastes the absolute path verbatim'),
+              title: Text(t.sessions.inspector.files.insertPath),
+              subtitle: Text(t.sessions.inspector.files.insertPathSubtitle),
               onTap: () => Navigator.of(sheetCtx).pop(_FileAction.insertPath),
             ),
             ListTile(
               leading: const Icon(Icons.text_snippet_outlined),
-              title: const Text('Read content'),
-              subtitle: const Text('Up to 256 KiB plain text'),
+              title: Text(t.sessions.inspector.files.readContent),
+              subtitle: Text(t.sessions.inspector.files.readContentSubtitle),
               onTap: () => Navigator.of(sheetCtx).pop(_FileAction.read),
             ),
             const SizedBox(height: 4),
@@ -134,18 +135,29 @@ class _FilesTabState extends ConsumerState<FilesTab>
       await ref.read(sessionsApiProvider).input(widget.sessionId, text);
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Inserted: $text'),
+          content: Text(t.sessions.inspector.shared.inserted(text: text)),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
       );
     } on ApiException catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Insert failed (${e.statusCode}): ${e.message}')),
+        SnackBar(
+          content: Text(
+            t.sessions.inspector.shared.insertFailedApi(
+              status: e.statusCode.toString(),
+              message: e.message,
+            ),
+          ),
+        ),
       );
     } on Object catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Insert failed: $e')),
+        SnackBar(
+          content: Text(
+            t.sessions.inspector.shared.insertFailedGeneric(error: e.toString()),
+          ),
+        ),
       );
     }
   }
@@ -205,11 +217,22 @@ class _FilesTabState extends ConsumerState<FilesTab>
       );
     } on ApiException catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Read failed (${e.statusCode}): ${e.message}')),
+        SnackBar(
+          content: Text(
+            t.sessions.inspector.files.readFailedApi(
+              status: e.statusCode.toString(),
+              message: e.message,
+            ),
+          ),
+        ),
       );
     } on Object catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Read failed: $e')),
+        SnackBar(
+          content: Text(
+            t.sessions.inspector.files.readFailedGeneric(error: e.toString()),
+          ),
+        ),
       );
     }
   }
@@ -314,13 +337,13 @@ class _PathBar extends StatelessWidget {
         children: [
           IconButton(
             icon: const Icon(Icons.arrow_upward),
-            tooltip: 'Parent',
+            tooltip: t.sessions.inspector.files.parent,
             onPressed: canGoUp ? onUp : null,
             visualDensity: VisualDensity.compact,
           ),
           IconButton(
             icon: const Icon(Icons.home_outlined),
-            tooltip: 'Back to session cwd',
+            tooltip: t.sessions.inspector.files.backToCwd,
             onPressed: onGoToCwd,
             visualDensity: VisualDensity.compact,
           ),
@@ -336,7 +359,7 @@ class _PathBar extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: t.sessions.inspector.shared.refresh,
             onPressed: onRefresh,
             visualDensity: VisualDensity.compact,
           ),
@@ -371,7 +394,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),

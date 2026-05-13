@@ -187,6 +187,7 @@ class TranslationsSessionsEn {
 	late final TranslationsSessionsTerminalEn terminal = TranslationsSessionsTerminalEn.internal(_root);
 	late final TranslationsSessionsActionEn action = TranslationsSessionsActionEn.internal(_root);
 	late final TranslationsSessionsDirPickerEn dirPicker = TranslationsSessionsDirPickerEn.internal(_root);
+	late final TranslationsSessionsInspectorEn inspector = TranslationsSessionsInspectorEn.internal(_root);
 	late final TranslationsSessionsSpawnSheetEn spawnSheet = TranslationsSessionsSpawnSheetEn.internal(_root);
 }
 
@@ -485,6 +486,22 @@ class TranslationsSessionsDirPickerEn {
 	String mkdirFailedSnack({required Object error}) => 'mkdir failed: ${error}';
 
 	late final TranslationsSessionsDirPickerDialogEn dialog = TranslationsSessionsDirPickerDialogEn.internal(_root);
+}
+
+// Path: sessions.inspector
+class TranslationsSessionsInspectorEn {
+	TranslationsSessionsInspectorEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsSessionsInspectorShellEn shell = TranslationsSessionsInspectorShellEn.internal(_root);
+	late final TranslationsSessionsInspectorSharedEn shared = TranslationsSessionsInspectorSharedEn.internal(_root);
+	late final TranslationsSessionsInspectorHistoryEn history = TranslationsSessionsInspectorHistoryEn.internal(_root);
+	late final TranslationsSessionsInspectorFilesEn files = TranslationsSessionsInspectorFilesEn.internal(_root);
+	late final TranslationsSessionsInspectorGitEn git = TranslationsSessionsInspectorGitEn.internal(_root);
+	late final TranslationsSessionsInspectorTasksEn tasks = TranslationsSessionsInspectorTasksEn.internal(_root);
+	late final TranslationsSessionsInspectorNotesEn notes = TranslationsSessionsInspectorNotesEn.internal(_root);
 }
 
 // Path: sessions.spawnSheet
@@ -1008,6 +1025,206 @@ class TranslationsSessionsDirPickerDialogEn {
 	String get create => 'Create';
 }
 
+// Path: sessions.inspector.shell
+class TranslationsSessionsInspectorShellEn {
+	TranslationsSessionsInspectorShellEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Inspector'
+	String get title => 'Inspector';
+
+	/// en: 'Failed to load session: {error}'
+	String loadError({required Object error}) => 'Failed to load session: ${error}';
+
+	late final TranslationsSessionsInspectorShellTabsEn tabs = TranslationsSessionsInspectorShellTabsEn.internal(_root);
+}
+
+// Path: sessions.inspector.shared
+class TranslationsSessionsInspectorSharedEn {
+	TranslationsSessionsInspectorSharedEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Refresh'
+	String get refresh => 'Refresh';
+
+	/// en: 'Inserted: {text}'
+	String inserted({required Object text}) => 'Inserted: ${text}';
+
+	/// en: 'Insert failed ({status}): {message}'
+	String insertFailedApi({required Object status, required Object message}) => 'Insert failed (${status}): ${message}';
+
+	/// en: 'Insert failed: {error}'
+	String insertFailedGeneric({required Object error}) => 'Insert failed: ${error}';
+
+	/// en: 'Insert failed: {error}'
+	String insertFailedShort({required Object error}) => 'Insert failed: ${error}';
+}
+
+// Path: sessions.inspector.history
+class TranslationsSessionsInspectorHistoryEn {
+	TranslationsSessionsInspectorHistoryEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Insert into terminal'
+	String get insertIntoTerminal => 'Insert into terminal';
+
+	/// en: 'Search prompts…'
+	String get searchHint => 'Search prompts…';
+}
+
+// Path: sessions.inspector.files
+class TranslationsSessionsInspectorFilesEn {
+	TranslationsSessionsInspectorFilesEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Insert as @reference'
+	String get insertAtRef => 'Insert as @reference';
+
+	/// en: 'Insert path'
+	String get insertPath => 'Insert path';
+
+	/// en: 'Pastes the absolute path verbatim'
+	String get insertPathSubtitle => 'Pastes the absolute path verbatim';
+
+	/// en: 'Read content'
+	String get readContent => 'Read content';
+
+	/// en: 'Up to 256 KiB plain text'
+	String get readContentSubtitle => 'Up to 256 KiB plain text';
+
+	/// en: 'Read failed ({status}): {message}'
+	String readFailedApi({required Object status, required Object message}) => 'Read failed (${status}): ${message}';
+
+	/// en: 'Read failed: {error}'
+	String readFailedGeneric({required Object error}) => 'Read failed: ${error}';
+
+	/// en: 'Parent'
+	String get parent => 'Parent';
+
+	/// en: 'Back to session cwd'
+	String get backToCwd => 'Back to session cwd';
+}
+
+// Path: sessions.inspector.git
+class TranslationsSessionsInspectorGitEn {
+	TranslationsSessionsInspectorGitEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Insert as @reference'
+	String get insertAtRef => 'Insert as @reference';
+
+	/// en: 'Insert path'
+	String get insertPath => 'Insert path';
+
+	/// en: 'Show diff'
+	String get showDiff => 'Show diff';
+
+	/// en: 'Diff failed ({status}): {message}'
+	String diffFailedApi({required Object status, required Object message}) => 'Diff failed (${status}): ${message}';
+
+	/// en: 'Diff failed: {error}'
+	String diffFailedGeneric({required Object error}) => 'Diff failed: ${error}';
+
+	/// en: 'Insert hash'
+	String get insertHash => 'Insert hash';
+
+	/// en: 'Show full patch'
+	String get showFullPatch => 'Show full patch';
+
+	/// en: 'Show failed ({status}): {message}'
+	String showFailedApi({required Object status, required Object message}) => 'Show failed (${status}): ${message}';
+
+	/// en: 'Show failed: {error}'
+	String showFailedGeneric({required Object error}) => 'Show failed: ${error}';
+
+	/// en: 'Status'
+	String get tabStatus => 'Status';
+
+	/// en: 'Log'
+	String get tabLog => 'Log';
+}
+
+// Path: sessions.inspector.tasks
+class TranslationsSessionsInspectorTasksEn {
+	TranslationsSessionsInspectorTasksEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Run command'
+	String get runCommand => 'Run command';
+
+	/// en: 'Insert command'
+	String get insertCommand => 'Insert command';
+
+	/// en: 'Pastes without return so you can edit'
+	String get insertCommandSubtitle => 'Pastes without return so you can edit';
+}
+
+// Path: sessions.inspector.notes
+class TranslationsSessionsInspectorNotesEn {
+	TranslationsSessionsInspectorNotesEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Inserted: @{path}'
+	String insertedAt({required Object path}) => 'Inserted: @${path}';
+
+	/// en: 'My notes'
+	String get myNotes => 'My notes';
+
+	/// en: 'Project docs'
+	String get projectDocs => 'Project docs';
+
+	/// en: 'Insert as @reference'
+	String get insertAtRefTooltip => 'Insert as @reference';
+
+	/// en: 'Insert @reference'
+	String get insertAtRefShort => 'Insert @reference';
+
+	/// en: '# {project} Thoughts, todos, context for the agent…'
+	String draftHint({required Object project}) => '# ${project}\n\nThoughts, todos, context for the agent…';
+
+	/// en: 'Create failed: {error}'
+	String createFailed({required Object error}) => 'Create failed: ${error}';
+
+	/// en: 'Save failed: {error}'
+	String saveFailed({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Change project docs location'
+	String get changeLocationTooltip => 'Change project docs location';
+
+	/// en: 'filename (e.g. spec or design.md)'
+	String get filenameHint => 'filename (e.g. spec or design.md)';
+
+	/// en: 'Create'
+	String get create => 'Create';
+
+	/// en: 'Filter…'
+	String get filterHint => 'Filter…';
+
+	/// en: 'Project docs location'
+	String get locationDialogTitle => 'Project docs location';
+}
+
 // Path: sessions.spawnSheet.bypass
 class TranslationsSessionsSpawnSheetBypassEn {
 	TranslationsSessionsSpawnSheetBypassEn.internal(this._root);
@@ -1102,6 +1319,30 @@ class TranslationsSessionsSpawnSheetClaudeAccountEn {
 
 	/// en: 'Could not load Claude accounts ({error}). The session will spawn with the gateway default.'
 	String errorHint({required Object error}) => 'Could not load Claude accounts (${error}). The session will spawn with the gateway default.';
+}
+
+// Path: sessions.inspector.shell.tabs
+class TranslationsSessionsInspectorShellTabsEn {
+	TranslationsSessionsInspectorShellTabsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Files'
+	String get files => 'Files';
+
+	/// en: 'Git'
+	String get git => 'Git';
+
+	/// en: 'Tasks'
+	String get tasks => 'Tasks';
+
+	/// en: 'History'
+	String get history => 'History';
+
+	/// en: 'Notes'
+	String get notes => 'Notes';
 }
 
 /// The flat map containing all translations for locale <en>.
@@ -1230,6 +1471,56 @@ extension on Translations {
 			'sessions.dirPicker.dialog.title' => 'New folder',
 			'sessions.dirPicker.dialog.hint' => 'Folder name',
 			'sessions.dirPicker.dialog.create' => 'Create',
+			'sessions.inspector.shell.title' => 'Inspector',
+			'sessions.inspector.shell.loadError' => ({required Object error}) => 'Failed to load session: ${error}',
+			'sessions.inspector.shell.tabs.files' => 'Files',
+			'sessions.inspector.shell.tabs.git' => 'Git',
+			'sessions.inspector.shell.tabs.tasks' => 'Tasks',
+			'sessions.inspector.shell.tabs.history' => 'History',
+			'sessions.inspector.shell.tabs.notes' => 'Notes',
+			'sessions.inspector.shared.refresh' => 'Refresh',
+			'sessions.inspector.shared.inserted' => ({required Object text}) => 'Inserted: ${text}',
+			'sessions.inspector.shared.insertFailedApi' => ({required Object status, required Object message}) => 'Insert failed (${status}): ${message}',
+			'sessions.inspector.shared.insertFailedGeneric' => ({required Object error}) => 'Insert failed: ${error}',
+			'sessions.inspector.shared.insertFailedShort' => ({required Object error}) => 'Insert failed: ${error}',
+			'sessions.inspector.history.insertIntoTerminal' => 'Insert into terminal',
+			'sessions.inspector.history.searchHint' => 'Search prompts…',
+			'sessions.inspector.files.insertAtRef' => 'Insert as @reference',
+			'sessions.inspector.files.insertPath' => 'Insert path',
+			'sessions.inspector.files.insertPathSubtitle' => 'Pastes the absolute path verbatim',
+			'sessions.inspector.files.readContent' => 'Read content',
+			'sessions.inspector.files.readContentSubtitle' => 'Up to 256 KiB plain text',
+			'sessions.inspector.files.readFailedApi' => ({required Object status, required Object message}) => 'Read failed (${status}): ${message}',
+			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => 'Read failed: ${error}',
+			'sessions.inspector.files.parent' => 'Parent',
+			'sessions.inspector.files.backToCwd' => 'Back to session cwd',
+			'sessions.inspector.git.insertAtRef' => 'Insert as @reference',
+			'sessions.inspector.git.insertPath' => 'Insert path',
+			'sessions.inspector.git.showDiff' => 'Show diff',
+			'sessions.inspector.git.diffFailedApi' => ({required Object status, required Object message}) => 'Diff failed (${status}): ${message}',
+			'sessions.inspector.git.diffFailedGeneric' => ({required Object error}) => 'Diff failed: ${error}',
+			'sessions.inspector.git.insertHash' => 'Insert hash',
+			'sessions.inspector.git.showFullPatch' => 'Show full patch',
+			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => 'Show failed (${status}): ${message}',
+			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => 'Show failed: ${error}',
+			'sessions.inspector.git.tabStatus' => 'Status',
+			'sessions.inspector.git.tabLog' => 'Log',
+			'sessions.inspector.tasks.runCommand' => 'Run command',
+			'sessions.inspector.tasks.insertCommand' => 'Insert command',
+			'sessions.inspector.tasks.insertCommandSubtitle' => 'Pastes without return so you can edit',
+			'sessions.inspector.notes.insertedAt' => ({required Object path}) => 'Inserted: @${path}',
+			'sessions.inspector.notes.myNotes' => 'My notes',
+			'sessions.inspector.notes.projectDocs' => 'Project docs',
+			'sessions.inspector.notes.insertAtRefTooltip' => 'Insert as @reference',
+			'sessions.inspector.notes.insertAtRefShort' => 'Insert @reference',
+			'sessions.inspector.notes.draftHint' => ({required Object project}) => '# ${project}\n\nThoughts, todos, context for the agent…',
+			'sessions.inspector.notes.createFailed' => ({required Object error}) => 'Create failed: ${error}',
+			'sessions.inspector.notes.saveFailed' => ({required Object error}) => 'Save failed: ${error}',
+			'sessions.inspector.notes.changeLocationTooltip' => 'Change project docs location',
+			'sessions.inspector.notes.filenameHint' => 'filename (e.g. spec or design.md)',
+			'sessions.inspector.notes.create' => 'Create',
+			'sessions.inspector.notes.filterHint' => 'Filter…',
+			'sessions.inspector.notes.locationDialogTitle' => 'Project docs location',
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
