@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:opendray/core/api/integrations_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 // Form pages and small read-only dialogs shared by the Integrations
 // screens. Multi-field forms (register / edit) are full-screen pages
@@ -79,11 +80,11 @@ class _RegisterIntegrationScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Register integration'),
+        title: Text(t.integrations.registerDialogTitle),
         actions: [
           TextButton(
             onPressed: _submit,
-            child: const Text('Register'),
+            child: Text(t.integrations.register),
           ),
         ],
       ),
@@ -226,11 +227,11 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit ${widget.current.name}'),
+        title: Text(t.integrations.editTitle(name: widget.current.name)),
         actions: [
           TextButton(
             onPressed: _submit,
-            child: const Text('Save'),
+            child: Text(t.common.save),
           ),
         ],
       ),
@@ -254,7 +255,7 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
           const SizedBox(height: 8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Enabled'),
+            title: Text(t.integrations.enabledLabel),
             value: _enabled,
             onChanged: (v) => setState(() => _enabled = v),
           ),
@@ -396,7 +397,7 @@ class _RevealApiKeyDialogState extends State<RevealApiKeyDialog> {
         ),
         FilledButton(
           onPressed: _copied ? () => Navigator.of(context).pop() : null,
-          child: const Text("I've saved it"),
+          child: Text(t.integrations.iSavedIt),
         ),
       ],
     );

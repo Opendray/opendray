@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:opendray/core/api/models.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 // Claude account UI dialogs. Account creation is gateway-host only
 // (run `claude login` with CLAUDE_CONFIG_DIR), so the only dialog
@@ -44,27 +45,29 @@ class _RenameClaudeAccountDialogState
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Rename ${widget.account.name}'),
+      title: Text(
+        t.providers.accounts.renameTitle(name: widget.account.name),
+      ),
       content: TextField(
         controller: _ctrl,
         autofocus: true,
         autocorrect: false,
         textInputAction: TextInputAction.done,
         onSubmitted: (v) => Navigator.of(context).pop(v.trim()),
-        decoration: const InputDecoration(
-          labelText: 'Display name',
-          hintText: 'Work account',
+        decoration: InputDecoration(
+          labelText: t.providers.accounts.displayNameLabel,
+          hintText: t.providers.accounts.displayNameHint,
           isDense: true,
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(t.common.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_ctrl.text.trim()),
-          child: const Text('Save'),
+          child: Text(t.common.save),
         ),
       ],
     );
