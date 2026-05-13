@@ -51,22 +51,11 @@ func TestRenderBatch_CollapsesMultilineText(t *testing.T) {
 	}
 }
 
-func TestResponseFormatFor_LMStudioEmitsSchema(t *testing.T) {
-	got := responseFormatFor("lmstudio")
-	if got["type"] != "json_schema" {
-		t.Errorf("lmstudio should use json_schema, got %v", got["type"])
-	}
-	if got["json_schema"] == nil {
-		t.Errorf("lmstudio response_format should include json_schema body")
-	}
-}
-
-func TestResponseFormatFor_OtherUsesObject(t *testing.T) {
-	got := responseFormatFor("openai")
-	if got["type"] != "json_object" {
-		t.Errorf("openai should use json_object, got %v", got["type"])
-	}
-}
+// (TestResponseFormatFor_* removed in M25 — response_format
+// enforcement moved from cleaner.responseFormatFor into the
+// worker package's SummarizerWorker.Run, which always emits
+// json_schema when Request.ResponseFormatJSONSchema is set.
+// cleaner.Client just passes DecisionsJSONSchema through.)
 
 func TestValidVerdict(t *testing.T) {
 	for _, tc := range []struct {

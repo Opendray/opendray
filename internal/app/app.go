@@ -402,8 +402,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	)
 	if memorySvc != nil {
 		cc := cfg.Memory.Cleaner
+		// M25 — cleaner dispatch goes through the memory worker
+		// registry; SummarizerID config is now ignored (lives in
+		// memory_workers.cleaner.summarizer_id instead).
 		cleanerSvc = cleaner.NewService(
-			st.Pool(), memorySvc, summarizerRegistry, summarizerStore,
+			st.Pool(), memorySvc, memoryWorkerRegistry,
 			cleaner.Config{
 				SummarizerID:        cc.SummarizerID,
 				BatchSize:           cc.BatchSize,
@@ -483,11 +486,13 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		gitactivity.WithWindow("7 days ago"),
 		gitactivity.WithCommitLimit(50),
 	}
-	if llm, err := buildGitActivityClient(ctx, summarizerRegistry); err != nil {
-		log.Warn("git activity LLM unavailable; falling back to raw stats", "err", err)
-	} else if llm != nil {
-		gitActivityOpts = append(gitActivityOpts, gitactivity.WithLLM(llm))
-	}
+	// M25 — gitactivity LLM dispatch goes through the memory
+	// worker registry. The registry handles provider selection
+	// per-call from memory_workers.gitactivity, so operator
+	// changes via the UI take effect on the next 24h tick (or
+	// on /api/v1/git-activity/run if the operator forces it).
+	gitActivityOpts = append(gitActivityOpts,
+		gitactivity.WithLLM(gitactivity.NewClient(memoryWorkerRegistry)))
 	gitActivitySvc := gitactivity.NewService(projectDocSvc, log, gitActivityOpts...)
 	gitActivityHandlers := gitactivity.NewHandlers(gitActivitySvc, log)
 	// Spawn-time async refresh — see catalog.SessionProvider.
@@ -628,54 +633,9 @@ func (a *App) Migrate(ctx context.Context) error {
 // summariser now routes through the memory worker registry
 // directly. See newTranscriptSummariser in transcript_summariser.go.)
 
-// buildGitActivityClient resolves the default summariser provider
-// (or the explicitly-pinned one) and constructs an LLM client for
-// the git activity summariser. Returns (nil, nil) when no enabled
-// provider exists — that's not an error, the service falls back to
-// raw stats.
-func buildGitActivityClient(ctx context.Context, reg *summarizer.Registry) (*gitactivity.Client, error) {
-	if reg == nil {
-		return nil, nil
-	}
-	rows, err := reg.ListEnabledRows(ctx)
-	if err != nil {
-		return nil, err
-	}
-	var pick summarizer.ProviderRow
-	found := false
-	for _, r := range rows {
-		if r.IsDefault {
-			pick = r
-			found = true
-			break
-		}
-	}
-	if !found {
-		if len(rows) == 0 {
-			return nil, nil
-		}
-		pick = rows[0]
-	}
-	// Get plaintext api_key (decrypts ciphered keys when cipher is armed).
-	rowWithKey, gerr := reg.Build(ctx, pick.ID)
-	_ = rowWithKey // we don't need the built Provider, just the side
-	// effect of decrypting. Re-fetch the row to read APIKeyPlaintext.
-	if gerr != nil {
-		return nil, gerr
-	}
-	// Re-fetch to get the plaintext key.
-	freshRows, err := reg.ListEnabledRows(ctx)
-	if err != nil {
-		return nil, err
-	}
-	for _, r := range freshRows {
-		if r.ID == pick.ID {
-			pick = r
-			break
-		}
-	}
-	return gitactivity.NewClient(pick, pick.APIKeyPlaintext)
-}
+// (buildGitActivityClient was removed in M25 — gitactivity now
+// routes through the memory worker registry. See
+// gitactivity.NewClient(*worker.Registry).)
 
 // Run starts the HTTP server, channel hub, and audit sink, then blocks
 // until ctx is cancelled. Graceful shutdown order:

@@ -1,17 +1,14 @@
 package cleaner
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
 	"time"
 
-	"github.com/opendray/opendray-v2/internal/memory/summarizer"
+	"github.com/opendray/opendray-v2/internal/memory/worker"
 )
 
 // Verdict is the LLM's per-memory judgement.
@@ -48,133 +45,65 @@ type llmDecision struct {
 	MergeInto *string `json:"merge_into,omitempty"`
 }
 
-// Client wraps an OpenAI-compatible chat completions endpoint with
-// the cleaner prompt + JSON-schema enforcement. Built per Run call
-// (cheap — just a config struct) from a summarizer.ProviderRow so
-// operators can reuse the same provider they configured for the
-// gatekeeper.
+// Client wraps a worker.Registry with the cleaner-specific prompt
+// + JSON-schema enforcement. M25 — replaced the direct HTTP
+// client with a Registry dispatch so the cleaner touchpoint
+// independently picks between the summarizer HTTP path and a
+// headless Claude/Gemini agent based on the operator's choice in
+// memory_workers.cleaner.
 //
-// Why a separate client rather than re-using summarizer.Provider:
-// summarizer's Summarize method is locked to the "extract facts"
-// prompt, and changing the system prompt path through that
-// abstraction would force every provider to re-implement to a
-// new shape. The cleaner only needs OpenAI-compatible chat
-// completions; that's a small focused HTTP call we keep here.
+// The DecisionsJSONSchema constant is plumbed through worker.Request
+// to enforce JSON-mode output (response_format=json_schema for the
+// summarizer worker; appended-to-prompt schema for the agent
+// worker since agent CLIs don't natively support response_format).
 type Client struct {
-	baseURL string
-	apiKey  string
-	model   string
-	kind    string
-	http    *http.Client
+	registry *worker.Registry
 }
 
-// NewClient builds a Client from a summarizer provider row. Only
-// kinds with an OpenAI-compatible chat completions endpoint are
-// supported (openai / lmstudio / ollama-with-openai-shim); other
-// kinds return an error so the operator gets a clear startup
-// failure instead of a silent gatekeeper degradation.
-func NewClient(row summarizer.ProviderRow, apiKey string) (*Client, error) {
-	switch row.Kind {
-	case "openai", "lmstudio":
-		// OK — both speak chat completions; lmstudio uses the same
-		// /v1/chat/completions path.
-	default:
-		return nil, fmt.Errorf("cleaner: unsupported provider kind %q (expected openai or lmstudio)", row.Kind)
+// NewClient builds a Client that dispatches through the given
+// worker registry. Returns nil when registry is nil so callers
+// can short-circuit gracefully.
+func NewClient(reg *worker.Registry) *Client {
+	if reg == nil {
+		return nil
 	}
-	base := strings.TrimRight(row.BaseURL, "/")
-	if base == "" {
-		return nil, errors.New("cleaner: provider has no base_url")
-	}
-	if row.Model == "" {
-		return nil, errors.New("cleaner: provider has no model")
-	}
-	return &Client{
-		baseURL: base,
-		apiKey:  apiKey,
-		model:   row.Model,
-		kind:    row.Kind,
-		http: &http.Client{
-			Timeout: 60 * time.Second,
-		},
-	}, nil
+	return &Client{registry: reg}
 }
 
-// Judge sends the whole batch to the LLM and returns the parsed
-// per-item decisions. The returned slice has the same length as
-// items unless the model refused / drifted, in which case missing
-// memories are reported by the caller as "no decision".
+// Judge sends the whole batch to the registry-selected worker and
+// returns the parsed per-item decisions. The returned slice has
+// the same length as items unless the model refused / drifted, in
+// which case missing memories are reported by the caller as
+// "no decision".
 //
-// timeout caps the HTTP call; LM Studio reasoning models can take
-// 5-10s on a warm pass, longer on cold-start, so callers should
-// allow at least 30s when running against local models.
+// timeout caps the underlying worker call.
 func (c *Client) Judge(ctx context.Context, items []BatchItem, timeout time.Duration) ([]llmDecision, error) {
+	if c == nil || c.registry == nil {
+		return nil, errors.New("cleaner: nil client / registry")
+	}
 	if len(items) == 0 {
 		return nil, nil
 	}
 	if timeout <= 0 {
-		timeout = 30 * time.Second
+		timeout = 60 * time.Second
 	}
-
-	body := map[string]any{
-		"model": c.model,
-		"messages": []map[string]any{
-			{"role": "system", "content": SystemPrompt()},
-			{"role": "user", "content": renderBatch(items)},
-		},
-		"response_format": responseFormatFor(c.kind),
-		"max_tokens":      4096,
-		"stream":          false,
-	}
-	raw, err := json.Marshal(body)
+	resp, err := c.registry.Run(ctx, worker.Request{
+		Task:                     worker.TaskCleaner,
+		SystemPrompt:             SystemPrompt(),
+		UserInput:                renderBatch(items),
+		MaxTokens:                4096,
+		Timeout:                  timeout,
+		ResponseFormatJSONSchema: DecisionsJSONSchema,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("cleaner: marshal request: %w", err)
+		return nil, fmt.Errorf("cleaner: worker call: %w", err)
 	}
-
-	callCtx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	req, err := http.NewRequestWithContext(callCtx, http.MethodPost, c.baseURL+"/chat/completions", bytes.NewReader(raw))
-	if err != nil {
-		return nil, fmt.Errorf("cleaner: build request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	if c.apiKey != "" {
-		req.Header.Set("Authorization", "Bearer "+c.apiKey)
-	}
-
-	res, err := c.http.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("cleaner: call llm: %w", err)
-	}
-	defer res.Body.Close()
-	rawRes, _ := io.ReadAll(io.LimitReader(res.Body, 1<<20))
-	if res.StatusCode/100 != 2 {
-		return nil, fmt.Errorf("cleaner: llm HTTP %d: %s", res.StatusCode, truncate(string(rawRes), 400))
-	}
-
-	var envelope struct {
-		Choices []struct {
-			Message struct {
-				Content          string `json:"content"`
-				ReasoningContent string `json:"reasoning_content"`
-			} `json:"message"`
-		} `json:"choices"`
-	}
-	if err := json.Unmarshal(rawRes, &envelope); err != nil {
-		return nil, fmt.Errorf("cleaner: parse llm envelope: %w", err)
-	}
-	if len(envelope.Choices) == 0 {
-		return nil, errors.New("cleaner: llm returned no choices")
-	}
-	content := strings.TrimSpace(envelope.Choices[0].Message.Content)
-	// Reasoning models (qwen3 / deepseek-r1 / etc.) on LM Studio
-	// emit the structured answer in reasoning_content; fall back
-	// (mirrors the same fix in summarizer/provider_openai_compat.go).
+	content := strings.TrimSpace(resp.Content)
 	if content == "" {
-		content = strings.TrimSpace(envelope.Choices[0].Message.ReasoningContent)
+		return nil, errors.New("cleaner: worker returned empty content")
 	}
-	if content == "" {
-		return nil, errors.New("cleaner: llm returned empty content")
-	}
+	// Agent workers may wrap output in markdown fences — strip them.
+	content = stripJSONFence(content)
 
 	var parsed struct {
 		Decisions []llmDecision `json:"decisions"`
@@ -217,26 +146,22 @@ func renderBatch(items []BatchItem) string {
 	return strings.TrimRight(b.String(), "\n") + "\n"
 }
 
-// responseFormatFor mirrors summarizer/provider_openai_compat —
-// LM Studio rejects json_object, OpenAI accepts both. We always
-// send the schema for "lmstudio" so reasoning models get the
-// strict shape they need to stay aligned.
-func responseFormatFor(kind string) map[string]any {
-	switch kind {
-	case "lmstudio":
-		var schema map[string]any
-		_ = json.Unmarshal([]byte(DecisionsJSONSchema), &schema)
-		return map[string]any{
-			"type": "json_schema",
-			"json_schema": map[string]any{
-				"name":   "memory_cleanup_decisions",
-				"strict": true,
-				"schema": schema,
-			},
-		}
-	default:
-		return map[string]any{"type": "json_object"}
+// stripJSONFence removes ```json ... ``` or ``` ... ``` wrappers
+// that agent CLIs sometimes add around JSON output. Idempotent on
+// already-clean input.
+func stripJSONFence(s string) string {
+	s = strings.TrimSpace(s)
+	if !strings.HasPrefix(s, "```") {
+		return s
 	}
+	// Drop the opening fence (with optional language tag).
+	if nl := strings.IndexByte(s, '\n'); nl != -1 {
+		s = s[nl+1:]
+	}
+	if i := strings.LastIndex(s, "```"); i != -1 {
+		s = s[:i]
+	}
+	return strings.TrimSpace(s)
 }
 
 func truncate(s string, max int) string {

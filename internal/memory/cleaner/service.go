@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/opendray/opendray-v2/internal/memory"
-	"github.com/opendray/opendray-v2/internal/memory/summarizer"
+	"github.com/opendray/opendray-v2/internal/memory/worker"
 )
 
 // Config controls scanning + LLM batching behaviour.
@@ -65,34 +65,32 @@ type MemoryAdapter interface {
 	Delete(ctx context.Context, id string) error
 }
 
-// ProviderFetcher fetches a single summarizer provider row WITH the
-// decrypted api_key in APIKeyPlaintext (when the row is anthropic
-// + the cipher is armed). summarizer.Store satisfies this directly
-// via GetProvider. Defined as an interface here so cleaner tests
-// can stub it without dragging in the cipher chain.
-type ProviderFetcher interface {
-	GetProvider(ctx context.Context, id string) (summarizer.ProviderRow, error)
-}
+// (ProviderFetcher was removed in M25 — provider selection now
+// lives behind the worker.Registry, which handles decryption +
+// fallback internally per memory_workers.cleaner row.)
 
 // Service is the cleaner's public surface.
 type Service struct {
-	pool      *pgxpool.Pool
-	store     *store
-	mem       MemoryAdapter
-	reg       *summarizer.Registry
-	providers ProviderFetcher
-	cfg       Config
-	log       *slog.Logger
+	pool   *pgxpool.Pool
+	store  *store
+	mem    MemoryAdapter
+	worker *worker.Registry
+	cfg    Config
+	log    *slog.Logger
 }
 
-// NewService wires a cleaner. mem + reg + providers must non-nil;
-// Run will fail with a clear error if reg is missing rather than
-// silently no-op'ing.
+// NewService wires a cleaner. mem + worker registry must be
+// non-nil; Run will fail with a clear error if the worker registry
+// is missing rather than silently no-op'ing.
+//
+// M25 — replaced direct summarizer.Registry / ProviderFetcher
+// deps with worker.Registry. Provider selection now happens per-
+// call via memory_workers.cleaner config so operators flip
+// between local-LLM and agent without restart.
 func NewService(
 	pool *pgxpool.Pool,
 	mem MemoryAdapter,
-	reg *summarizer.Registry,
-	providers ProviderFetcher,
+	wr *worker.Registry,
 	cfg Config,
 	log *slog.Logger,
 ) *Service {
@@ -100,13 +98,12 @@ func NewService(
 		log = slog.Default()
 	}
 	return &Service{
-		pool:      pool,
-		store:     newStore(pool),
-		mem:       mem,
-		reg:       reg,
-		providers: providers,
-		cfg:       cfg.applyDefaults(),
-		log:       log.With("component", "memory.cleaner"),
+		pool:   pool,
+		store:  newStore(pool),
+		mem:    mem,
+		worker: wr,
+		cfg:    cfg.applyDefaults(),
+		log:    log.With("component", "memory.cleaner"),
 	}
 }
 
@@ -128,8 +125,8 @@ type RunResult struct {
 // propagate. Partial success is possible: if the LLM returns 30
 // decisions but the DB rejects 2, we still report 28 written.
 func (s *Service) Run(ctx context.Context, scope memory.Scope, scopeKey string) (RunResult, error) {
-	if s.reg == nil {
-		return RunResult{}, errors.New("cleaner: no summarizer registry wired")
+	if s.worker == nil {
+		return RunResult{}, errors.New("cleaner: no worker registry wired")
 	}
 	if scope == "" {
 		return RunResult{}, errors.New("cleaner: scope required")
@@ -161,16 +158,14 @@ func (s *Service) Run(ctx context.Context, scope memory.Scope, scopeKey string) 
 		return RunResult{RunID: runID, Scope: string(scope), ScopeKey: scopeKey, MemoriesIn: 0, DecisionsOut: 0}, nil
 	}
 
-	// 3. Build LLM client + run judgement.
-	provider, providerID, err := s.resolveProvider(ctx)
-	if err != nil {
-		return RunResult{}, err
+	// 3. Build LLM client + run judgement. M25 — dispatch goes
+	// through the worker registry; provider selection happens per
+	// memory_workers.cleaner row.
+	cli := NewClient(s.worker)
+	if cli == nil {
+		return RunResult{}, errors.New("cleaner: worker registry not wired")
 	}
-	apiKey, _ := s.peekAPIKey(ctx, providerID)
-	cli, err := NewClient(provider, apiKey)
-	if err != nil {
-		return RunResult{}, err
-	}
+	providerID := ""
 
 	items := make([]BatchItem, 0, len(candidate))
 	for _, m := range candidate {
@@ -361,48 +356,6 @@ func (s *Service) filterEligible(ctx context.Context, in []memory.Memory, scope 
 	return out, nil
 }
 
-// resolveProvider picks the configured summarizer row + builds a
-// Provider (just to validate it's wireable). We return both the
-// raw row (for HTTP client construction) and the row id for
-// audit logging.
-func (s *Service) resolveProvider(ctx context.Context) (summarizer.ProviderRow, string, error) {
-	rows, err := s.reg.ListEnabledRows(ctx)
-	if err != nil {
-		return summarizer.ProviderRow{}, "", fmt.Errorf("cleaner: list summarizer rows: %w", err)
-	}
-	if len(rows) == 0 {
-		return summarizer.ProviderRow{}, "", errors.New("cleaner: no enabled summarizer provider")
-	}
-	if s.cfg.SummarizerID != "" {
-		for _, r := range rows {
-			if r.ID == s.cfg.SummarizerID {
-				return r, r.ID, nil
-			}
-		}
-		return summarizer.ProviderRow{}, "", fmt.Errorf("cleaner: summarizer %q not found / not enabled", s.cfg.SummarizerID)
-	}
-	for _, r := range rows {
-		if r.IsDefault {
-			return r, r.ID, nil
-		}
-	}
-	// No default flagged: pick the first enabled one for
-	// determinism. Operators can pin via SummarizerID.
-	return rows[0], rows[0].ID, nil
-}
-
-// peekAPIKey fetches the plaintext API key for one provider row.
-// Goes through ProviderFetcher.GetProvider — that's the path that
-// decrypts the ciphered key when the backup cipher is armed. LM
-// Studio rows have no api_key and return "" + nil error, which is
-// what we want (HTTP client just skips the Authorization header).
-func (s *Service) peekAPIKey(ctx context.Context, providerID string) (string, error) {
-	if providerID == "" || s.providers == nil {
-		return "", nil
-	}
-	row, err := s.providers.GetProvider(ctx, providerID)
-	if err != nil {
-		return "", err
-	}
-	return row.APIKeyPlaintext, nil
-}
+// (resolveProvider and peekAPIKey were removed in M25 — provider
+// selection now happens inside the worker registry per call,
+// driven by the memory_workers.cleaner row.)

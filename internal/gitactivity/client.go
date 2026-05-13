@@ -1,59 +1,40 @@
 package gitactivity
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
 	"time"
 
-	"github.com/opendray/opendray-v2/internal/memory/summarizer"
+	"github.com/opendray/opendray-v2/internal/memory/worker"
 )
 
-// Client wraps an OpenAI-compatible chat completions endpoint with
-// the "project historian" prompt below. Built per Service from a
-// summarizer.ProviderRow so operators can reuse whichever provider
-// they configured for the gatekeeper / cleaner.
+// Client wraps a worker.Registry with the gitactivity-specific
+// prompt + response parser. M25 — replaced the direct HTTP client
+// with a Registry dispatch so the gitactivity touchpoint
+// independently picks between the summarizer HTTP path and a
+// headless Claude/Gemini agent based on the operator's choice in
+// memory_workers.gitactivity.
 //
 // Why a separate client rather than re-using summarizer.Provider:
 // summarizer.Provider's contract is "extract facts" which is the
-// wrong shape — we want a prose summary, not a fact array. The
-// HTTP envelope is identical to cleaner's, so this is a small
-// focused copy.
+// wrong shape — we want a prose summary, not a fact array. So we
+// keep our own prompt + tag extraction here; only the LLM call
+// dispatch is shared via the registry.
 type Client struct {
-	baseURL string
-	apiKey  string
-	model   string
-	kind    string
-	http    *http.Client
+	registry *worker.Registry
 }
 
-// NewClient builds a Client from a summarizer provider row. Same
-// supported kinds as the cleaner: openai / lmstudio.
-func NewClient(row summarizer.ProviderRow, apiKey string) (*Client, error) {
-	switch row.Kind {
-	case "openai", "lmstudio":
-	default:
-		return nil, fmt.Errorf("gitactivity: unsupported provider kind %q", row.Kind)
+// NewClient builds a Client that dispatches through the given
+// worker registry. Returns nil when registry is nil so callers
+// (gitactivity.Service.WithLLM) can drop in defensively without
+// a guard on every call site.
+func NewClient(reg *worker.Registry) *Client {
+	if reg == nil {
+		return nil
 	}
-	base := strings.TrimRight(row.BaseURL, "/")
-	if base == "" {
-		return nil, errors.New("gitactivity: provider has no base_url")
-	}
-	if row.Model == "" {
-		return nil, errors.New("gitactivity: provider has no model")
-	}
-	return &Client{
-		baseURL: base,
-		apiKey:  apiKey,
-		model:   row.Model,
-		kind:    row.Kind,
-		http:    &http.Client{Timeout: 5 * time.Minute},
-	}, nil
+	return &Client{registry: reg}
 }
 
 const systemPromptText = `You are a project historian.
@@ -89,72 +70,27 @@ that saw heavy activity, like ` + "`internal/foo/bar.go`" + `.
 Third paragraph with advice for incoming sessions.
 </summary>`
 
-// Summarise sends the rolled-up summary to the LLM and returns the
-// 2-3 paragraph narrative.
+// Summarise sends the rolled-up summary to the registry-selected
+// worker and returns the 2-3 paragraph narrative.
 func (c *Client) Summarise(ctx context.Context, s Summary) (string, error) {
+	if c == nil || c.registry == nil {
+		return "", errors.New("gitactivity: nil client / registry")
+	}
 	user := renderUserPrompt(s)
-	body := map[string]any{
-		"model": c.model,
-		"messages": []map[string]any{
-			{"role": "system", "content": systemPromptText},
-			{"role": "user", "content": user},
-		},
-		"max_tokens": 4096,
-		"stream":     false,
-	}
-	// LM Studio rejects json_object for plain-text answers; we
-	// don't need a JSON schema here so just leave response_format
-	// unset.
-	raw, err := json.Marshal(body)
+	resp, err := c.registry.Run(ctx, worker.Request{
+		Task:         worker.TaskGitActivity,
+		SystemPrompt: systemPromptText,
+		UserInput:    user,
+		MaxTokens:    4096,
+		Timeout:      5 * time.Minute,
+	})
 	if err != nil {
-		return "", fmt.Errorf("gitactivity: marshal request: %w", err)
+		return "", fmt.Errorf("gitactivity: worker call: %w", err)
 	}
-
-	// Caller controls the timeout via ctx — gitactivity.Service
-	// gives us a 5-minute deadline because reasoning models on
-	// LM Studio commonly need 2-3 minutes on a 50-commit batch.
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/chat/completions", bytes.NewReader(raw))
-	if err != nil {
-		return "", err
+	if strings.TrimSpace(resp.Content) == "" {
+		return "", errors.New("gitactivity: worker returned empty content")
 	}
-	req.Header.Set("Content-Type", "application/json")
-	if c.apiKey != "" {
-		req.Header.Set("Authorization", "Bearer "+c.apiKey)
-	}
-
-	res, err := c.http.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("gitactivity: call llm: %w", err)
-	}
-	defer res.Body.Close()
-	rawRes, _ := io.ReadAll(io.LimitReader(res.Body, 1<<20))
-	if res.StatusCode/100 != 2 {
-		return "", fmt.Errorf("gitactivity: llm HTTP %d: %s", res.StatusCode, truncate(string(rawRes), 400))
-	}
-
-	var envelope struct {
-		Choices []struct {
-			Message struct {
-				Content          string `json:"content"`
-				ReasoningContent string `json:"reasoning_content"`
-			} `json:"message"`
-		} `json:"choices"`
-	}
-	if err := json.Unmarshal(rawRes, &envelope); err != nil {
-		return "", fmt.Errorf("gitactivity: parse llm envelope: %w", err)
-	}
-	if len(envelope.Choices) == 0 {
-		return "", errors.New("gitactivity: llm returned no choices")
-	}
-	content := strings.TrimSpace(envelope.Choices[0].Message.Content)
-	if content == "" {
-		// Reasoning models put their answer in reasoning_content.
-		content = strings.TrimSpace(envelope.Choices[0].Message.ReasoningContent)
-	}
-	if content == "" {
-		return "", errors.New("gitactivity: llm returned empty content")
-	}
-	return extractSummary(content), nil
+	return extractSummary(resp.Content), nil
 }
 
 // extractSummary pulls the content inside <summary>...</summary>
@@ -206,11 +142,4 @@ func renderUserPrompt(s Summary) string {
 		}
 	}
 	return b.String()
-}
-
-func truncate(s string, max int) string {
-	if len(s) <= max {
-		return s
-	}
-	return s[:max] + "…"
 }
