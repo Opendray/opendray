@@ -13,6 +13,7 @@ import { ChannelsPage } from '@/pages/Channels'
 import { IntegrationsPage } from '@/pages/Integrations'
 import { ActivityPage } from '@/pages/Activity'
 import { MemoryPage } from '@/pages/Memory'
+import { MemoryWorkersPage } from '@/pages/MemoryWorkers'
 import { ProjectPage } from '@/pages/Project'
 import { CleanupInboxPage } from '@/pages/CleanupInbox'
 import { BackupsPage } from '@/pages/Backups'
@@ -108,6 +109,12 @@ const memoryCleanupRoute = createRoute({
   component: CleanupInboxPage,
 })
 
+const memoryWorkersRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/memory/workers',
+  component: MemoryWorkersPage,
+})
+
 const pluginsRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/plugins',
@@ -154,6 +161,7 @@ const routeTree = rootRoute.addChildren([
     memoryRoute,
     memoryProjectRoute,
     memoryCleanupRoute,
+    memoryWorkersRoute,
     pluginsRoute,
     settingsRoute,
     backupsRoute,

@@ -1,4 +1,4 @@
-import { Brain, FolderTree, Inbox } from 'lucide-react'
+import { Brain, FolderTree, Inbox, Workflow } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
@@ -65,6 +65,17 @@ export function MemoryPage() {
                     {pendingCount}
                   </Badge>
                 )}
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="h-8 text-[11px]"
+            >
+              <Link to="/memory/workers">
+                <Workflow className="mr-1 size-3" />
+                Workers
               </Link>
             </Button>
             <Button
