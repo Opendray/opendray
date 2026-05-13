@@ -47,6 +47,9 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsMcpZh mcp = _TranslationsMcpZh._(_root);
 	@override late final _TranslationsProvidersZh providers = _TranslationsProvidersZh._(_root);
 	@override late final _TranslationsIntegrationsZh integrations = _TranslationsIntegrationsZh._(_root);
+	@override late final _TranslationsMemoryWorkersZh memoryWorkers = _TranslationsMemoryWorkersZh._(_root);
+	@override late final _TranslationsMemoryCleanupZh memoryCleanup = _TranslationsMemoryCleanupZh._(_root);
+	@override late final _TranslationsProjectZh project = _TranslationsProjectZh._(_root);
 	@override late final _TranslationsBackupsZh backups = _TranslationsBackupsZh._(_root);
 	@override late final _TranslationsBackupTargetsZh backupTargets = _TranslationsBackupTargetsZh._(_root);
 	@override late final _TranslationsBackupSchedulesZh backupSchedules = _TranslationsBackupSchedulesZh._(_root);
@@ -222,6 +225,82 @@ class _TranslationsIntegrationsZh extends TranslationsIntegrationsEn {
 	@override String get newApiKeySubtitle => '将其交给集成方。旧密钥已失效。';
 	@override String rotateFailedApi({required Object error}) => '轮换失败：${error}';
 	@override String rotateFailedGeneric({required Object error}) => '轮换失败：${error}';
+}
+
+// Path: memoryWorkers
+class _TranslationsMemoryWorkersZh extends TranslationsMemoryWorkersEn {
+	_TranslationsMemoryWorkersZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '记忆工作器';
+	@override String savedSnack({required Object label}) => '${label} 已保存';
+	@override String saveFailed({required Object error}) => '保存失败：${error}';
+	@override String testFailed({required Object error}) => '测试调用失败：${error}';
+	@override String get workerLabel => '工作器';
+	@override String get summarizerHttp => '摘要器（HTTP）';
+	@override String get agentCliPrint => 'Agent（CLI --print）';
+	@override String get cliLabel => 'CLI';
+	@override String get cliClaude => 'Claude';
+	@override String get cliGemini => 'Gemini';
+	@override String get claudeAccountLabel => 'Claude 账号';
+	@override String get claudeAccountDefault => '默认';
+	@override String get test => '测试';
+}
+
+// Path: memoryCleanup
+class _TranslationsMemoryCleanupZh extends TranslationsMemoryCleanupEn {
+	_TranslationsMemoryCleanupZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '记忆清理';
+	@override String approveFailed({required Object error}) => '批准失败：${error}';
+	@override String rejectFailed({required Object error}) => '拒绝失败：${error}';
+	@override String loadFailed({required Object error}) => '加载失败：${error}';
+	@override String get reject => '拒绝';
+}
+
+// Path: project
+class _TranslationsProjectZh extends TranslationsProjectEn {
+	_TranslationsProjectZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '项目';
+	@override String get pickFirst => '请先选择一个项目。';
+	@override String loadFailed({required Object error}) => '加载失败：${error}';
+	@override String projectsLoadFailed({required Object error}) => '加载项目列表失败：${error}';
+	@override String get projectLabel => '项目';
+	@override String get resetTooltip => '重置项目记忆';
+	@override String get append => '追加';
+	@override String get appendDialogTitle => '追加日志条目';
+	@override String get titleFieldLabel => '标题（可选）';
+	@override String get contentFieldLabel => '内容（Markdown）';
+	@override String appendFailed({required Object error}) => '失败：${error}';
+	@override String approveFailed({required Object error}) => '批准失败：${error}';
+	@override String rejectFailed({required Object error}) => '拒绝失败：${error}';
+	@override String cleanupFailed({required Object error}) => '清理失败：${error}';
+	@override String get resetConfirmTitle => '重置项目记忆？';
+	@override String get alsoDeleteScanner => '同时删除扫描器文档';
+	@override String get alsoDeletePgvector => '同时删除 pgvector 记忆';
+	@override String get deleteForever => '永久删除';
+	@override String resetDoneSnack({required Object parts}) => '已重置：${parts}';
+	@override String resetFailed({required Object error}) => '重置失败：${error}';
+	@override String docSavedSnack({required Object kind}) => '${kind} 已保存';
+	@override String docSaveFailed({required Object error}) => '保存失败：${error}';
+	@override String docHintTemplate({required Object kind}) => '以 Markdown 编写 ${kind}…';
+	@override String get deleteEntryTooltip => '删除条目';
+	@override String get agentReason => 'Agent 原因';
+	@override String get reject => '拒绝';
+	@override String get approve => '批准';
+	@override String replaceConfirmTitle({required Object kind}) => '替换当前 ${kind}？';
+	@override String replaceKind({required Object kind}) => '替换 ${kind}';
+	@override String get reason => '原因';
+	@override String get willMergeInto => '将合并到';
 }
 
 // Path: backups
@@ -1627,6 +1706,55 @@ extension on TranslationsZh {
 			'integrations.newApiKeySubtitle' => '将其交给集成方。旧密钥已失效。',
 			'integrations.rotateFailedApi' => ({required Object error}) => '轮换失败：${error}',
 			'integrations.rotateFailedGeneric' => ({required Object error}) => '轮换失败：${error}',
+			'memoryWorkers.title' => '记忆工作器',
+			'memoryWorkers.savedSnack' => ({required Object label}) => '${label} 已保存',
+			'memoryWorkers.saveFailed' => ({required Object error}) => '保存失败：${error}',
+			'memoryWorkers.testFailed' => ({required Object error}) => '测试调用失败：${error}',
+			'memoryWorkers.workerLabel' => '工作器',
+			'memoryWorkers.summarizerHttp' => '摘要器（HTTP）',
+			'memoryWorkers.agentCliPrint' => 'Agent（CLI --print）',
+			'memoryWorkers.cliLabel' => 'CLI',
+			'memoryWorkers.cliClaude' => 'Claude',
+			'memoryWorkers.cliGemini' => 'Gemini',
+			'memoryWorkers.claudeAccountLabel' => 'Claude 账号',
+			'memoryWorkers.claudeAccountDefault' => '默认',
+			'memoryWorkers.test' => '测试',
+			'memoryCleanup.title' => '记忆清理',
+			'memoryCleanup.approveFailed' => ({required Object error}) => '批准失败：${error}',
+			'memoryCleanup.rejectFailed' => ({required Object error}) => '拒绝失败：${error}',
+			'memoryCleanup.loadFailed' => ({required Object error}) => '加载失败：${error}',
+			'memoryCleanup.reject' => '拒绝',
+			'project.title' => '项目',
+			'project.pickFirst' => '请先选择一个项目。',
+			'project.loadFailed' => ({required Object error}) => '加载失败：${error}',
+			'project.projectsLoadFailed' => ({required Object error}) => '加载项目列表失败：${error}',
+			'project.projectLabel' => '项目',
+			'project.resetTooltip' => '重置项目记忆',
+			'project.append' => '追加',
+			'project.appendDialogTitle' => '追加日志条目',
+			'project.titleFieldLabel' => '标题（可选）',
+			'project.contentFieldLabel' => '内容（Markdown）',
+			'project.appendFailed' => ({required Object error}) => '失败：${error}',
+			'project.approveFailed' => ({required Object error}) => '批准失败：${error}',
+			'project.rejectFailed' => ({required Object error}) => '拒绝失败：${error}',
+			'project.cleanupFailed' => ({required Object error}) => '清理失败：${error}',
+			'project.resetConfirmTitle' => '重置项目记忆？',
+			'project.alsoDeleteScanner' => '同时删除扫描器文档',
+			'project.alsoDeletePgvector' => '同时删除 pgvector 记忆',
+			'project.deleteForever' => '永久删除',
+			'project.resetDoneSnack' => ({required Object parts}) => '已重置：${parts}',
+			'project.resetFailed' => ({required Object error}) => '重置失败：${error}',
+			'project.docSavedSnack' => ({required Object kind}) => '${kind} 已保存',
+			'project.docSaveFailed' => ({required Object error}) => '保存失败：${error}',
+			'project.docHintTemplate' => ({required Object kind}) => '以 Markdown 编写 ${kind}…',
+			'project.deleteEntryTooltip' => '删除条目',
+			'project.agentReason' => 'Agent 原因',
+			'project.reject' => '拒绝',
+			'project.approve' => '批准',
+			'project.replaceConfirmTitle' => ({required Object kind}) => '替换当前 ${kind}？',
+			'project.replaceKind' => ({required Object kind}) => '替换 ${kind}',
+			'project.reason' => '原因',
+			'project.willMergeInto' => '将合并到',
 			'backups.title' => '备份',
 			'backups.runConfirmTitle' => '立即运行备份？',
 			'backups.run' => '运行',

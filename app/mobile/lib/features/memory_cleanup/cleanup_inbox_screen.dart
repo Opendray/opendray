@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/memory_cleanup_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:path/path.dart' as p;
 
 /// A scope_key looks "orphan" when it has fewer than 2 non-empty
@@ -63,7 +64,11 @@ class _CleanupInboxScreenState extends ConsumerState<CleanupInboxScreen> {
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Approve failed: $e')),
+          SnackBar(
+            content: Text(
+              t.memoryCleanup.approveFailed(error: e.toString()),
+            ),
+          ),
         );
         // Stale UI — server already decided this row out from under
         // us (CLI / web / another phone). Re-pull so the user sees
@@ -80,7 +85,11 @@ class _CleanupInboxScreenState extends ConsumerState<CleanupInboxScreen> {
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reject failed: $e')),
+          SnackBar(
+            content: Text(
+              t.memoryCleanup.rejectFailed(error: e.toString()),
+            ),
+          ),
         );
         await _load();
       }
@@ -91,10 +100,10 @@ class _CleanupInboxScreenState extends ConsumerState<CleanupInboxScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Memory cleanup'),
+        title: Text(t.memoryCleanup.title),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: t.common.refresh,
             icon: const Icon(Icons.refresh),
             onPressed: _load,
           ),
@@ -105,7 +114,7 @@ class _CleanupInboxScreenState extends ConsumerState<CleanupInboxScreen> {
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text('Failed to load: $e'),
+            child: Text(t.memoryCleanup.loadFailed(error: e.toString())),
           ),
         ),
         data: (rows) {
@@ -399,7 +408,7 @@ class _InboxDecisionCard extends StatelessWidget {
               children: [
                 TextButton(
                   onPressed: onReject,
-                  child: const Text('Reject'),
+                  child: Text(t.memoryCleanup.reject),
                 ),
                 const SizedBox(width: 8),
                 FilledButton(

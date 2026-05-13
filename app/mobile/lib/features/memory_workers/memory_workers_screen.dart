@@ -5,6 +5,7 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/claude_accounts_api.dart';
 import 'package:opendray/core/api/memory_workers_api.dart';
 import 'package:opendray/core/api/models.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 // MemoryWorkersScreen — mobile parity with the web MemoryWorkers
 // page. One card per task with worker-kind picker, optional
@@ -45,7 +46,7 @@ class _MemoryWorkersScreenState extends ConsumerState<MemoryWorkersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Memory workers'),
+        title: Text(t.memoryWorkers.title),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -188,13 +189,20 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${widget.config.task.label} saved')),
+        SnackBar(
+          content: Text(t.memoryWorkers
+              .savedSnack(label: widget.config.task.label)),
+        ),
       );
       widget.onChanged();
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Save failed: $e')),
+          SnackBar(
+            content: Text(
+              t.memoryWorkers.saveFailed(error: e.toString()),
+            ),
+          ),
         );
       }
     } finally {
@@ -230,7 +238,11 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Test call failed: $e')),
+          SnackBar(
+            content: Text(
+              t.memoryWorkers.testFailed(error: e.toString()),
+            ),
+          ),
         );
       }
     } finally {
@@ -309,18 +321,18 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
                   onChanged: (v) =>
                       setState(() => _enabled = v ?? true),
                 ),
-                const Text('Enabled', style: TextStyle(fontSize: 12)),
+                Text(t.common.enabled, style: const TextStyle(fontSize: 12)),
                 const Spacer(),
                 OutlinedButton.icon(
                   onPressed: _busy ? null : _test,
                   icon: const Icon(Icons.play_arrow, size: 14),
-                  label: const Text('Test'),
+                  label: Text(t.memoryWorkers.test),
                 ),
                 const SizedBox(width: 8),
                 FilledButton.icon(
                   onPressed: (_busy || !_dirty) ? null : _save,
                   icon: const Icon(Icons.save, size: 14),
-                  label: const Text('Save'),
+                  label: Text(t.common.save),
                 ),
               ],
             ),
@@ -335,20 +347,20 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
   Widget _kindSelector(bool agentAllowed) {
     return DropdownButtonFormField<WorkerKind>(
       initialValue: _kind,
-      decoration: const InputDecoration(
-        labelText: 'Worker',
-        border: OutlineInputBorder(),
+      decoration: InputDecoration(
+        labelText: t.memoryWorkers.workerLabel,
+        border: const OutlineInputBorder(),
         isDense: true,
       ),
       items: [
-        const DropdownMenuItem(
+        DropdownMenuItem(
           value: WorkerKind.summarizer,
-          child: Text('Summarizer (HTTP)'),
+          child: Text(t.memoryWorkers.summarizerHttp),
         ),
         if (agentAllowed)
-          const DropdownMenuItem(
+          DropdownMenuItem(
             value: WorkerKind.agent,
-            child: Text('Agent (CLI --print)'),
+            child: Text(t.memoryWorkers.agentCliPrint),
           ),
       ],
       onChanged: agentAllowed ? (v) => setState(() => _kind = v!) : null,
@@ -386,14 +398,20 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
   Widget _providerSelector() {
     return DropdownButtonFormField<String>(
       initialValue: _providerId.isEmpty ? null : _providerId,
-      decoration: const InputDecoration(
-        labelText: 'CLI',
-        border: OutlineInputBorder(),
+      decoration: InputDecoration(
+        labelText: t.memoryWorkers.cliLabel,
+        border: const OutlineInputBorder(),
         isDense: true,
       ),
-      items: const [
-        DropdownMenuItem(value: 'claude', child: Text('Claude')),
-        DropdownMenuItem(value: 'gemini', child: Text('Gemini')),
+      items: [
+        DropdownMenuItem(
+          value: 'claude',
+          child: Text(t.memoryWorkers.cliClaude),
+        ),
+        DropdownMenuItem(
+          value: 'gemini',
+          child: Text(t.memoryWorkers.cliGemini),
+        ),
       ],
       onChanged: (v) => setState(() => _providerId = v ?? ''),
     );
@@ -406,15 +424,15 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
         final accounts = snap.data ?? const <ClaudeAccountSummary>[];
         return DropdownButtonFormField<String>(
           initialValue: _accountId.isEmpty ? '__default__' : _accountId,
-          decoration: const InputDecoration(
-            labelText: 'Claude account',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: t.memoryWorkers.claudeAccountLabel,
+            border: const OutlineInputBorder(),
             isDense: true,
           ),
           items: [
-            const DropdownMenuItem(
+            DropdownMenuItem(
               value: '__default__',
-              child: Text('Default'),
+              child: Text(t.memoryWorkers.claudeAccountDefault),
             ),
             for (final a in accounts)
               DropdownMenuItem(
