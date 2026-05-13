@@ -323,17 +323,42 @@ class _TranslationsBackupsZh extends TranslationsBackupsEn {
 	// Translations
 	@override String get title => '备份';
 	@override String get runConfirmTitle => '立即运行备份？';
+	@override String get runConfirmBody => '向本地目标触发一次新的转储。任务在服务端运行；此列表会随进度刷新。';
 	@override String get run => '运行';
+	@override String get runNow => '立即运行';
+	@override String get queueing => '入队中…';
 	@override String queuedSnack({required Object id}) => '备份已入队（${id}）。监控进度中…';
 	@override String runFailedApi({required Object error}) => '运行失败：${error}';
 	@override String runFailedGeneric({required Object error}) => '运行失败：${error}';
+	@override String rowSucceededSnack({required Object bytes}) => '备份成功（${bytes}）。';
+	@override String rowFailedSnack({required Object error}) => '备份失败：${error}';
+	@override String get unknownError => '未知错误';
 	@override String get detailTitle => '备份详情';
 	@override String get deleteTitle => '删除备份？';
+	@override String deleteBody({required Object target}) => '从 ${target} 移除二进制文件，并在索引中标记该行为已删除。';
 	@override String deletedSnack({required Object id}) => '已删除 ${id}。';
 	@override String deleteFailedApi({required Object error}) => '删除失败：${error}';
 	@override String deleteFailedGeneric({required Object error}) => '删除失败：${error}';
 	@override String get menuSchedules => '计划';
 	@override String get menuTargets => '目标';
+	@override late final _TranslationsBackupsKvZh kv = _TranslationsBackupsKvZh._(_root);
+	@override late final _TranslationsBackupsEmptyMissingDepsZh emptyMissingDeps = _TranslationsBackupsEmptyMissingDepsZh._(_root);
+	@override late final _TranslationsBackupsEmptyNoTargetsZh emptyNoTargets = _TranslationsBackupsEmptyNoTargetsZh._(_root);
+	@override late final _TranslationsBackupsEmptyNoBackupsZh emptyNoBackups = _TranslationsBackupsEmptyNoBackupsZh._(_root);
+	@override String get restartToActivate => '重启 opendray 以激活备份';
+	@override String get passphraseSaved => '你的密语已保存。网关仅在启动时加载，因此更改需重启后才生效。';
+	@override String get keyFileLabel => '密钥文件';
+	@override String get configuredViaLabel => '配置方式';
+	@override late final _TranslationsBackupsWizardZh wizard = _TranslationsBackupsWizardZh._(_root);
+	@override String get statusReady => '备份就绪';
+	@override String get statusCannot => '备份无法运行';
+	@override String get overviewTargets => '目标';
+	@override String get overviewSchedules => '计划';
+	@override String get overviewBackups => '备份';
+	@override String get failedToLoad => '加载备份失败';
+	@override String get envVarConfigured => 'OPENDRAY_BACKUP_KEY 环境变量';
+	@override String get savedConfirmCheckbox => '我已将密语保存到密码管理器';
+	@override String get pgDumpMissing => 'pg_dump 不在 PATH 中。请安装 postgresql-client 并重启 opendray。';
 	@override late final _TranslationsBackupsEncryptionZh encryption = _TranslationsBackupsEncryptionZh._(_root);
 }
 
@@ -362,11 +387,36 @@ class _TranslationsBackupSchedulesZh extends TranslationsBackupSchedulesEn {
 
 	// Translations
 	@override String get title => '备份计划';
+	@override String get newButton => '新建';
 	@override String get deleteTitle => '删除计划？';
 	@override String get targetLabel => '目标';
 	@override String get intervalLabel => '间隔';
 	@override String get retentionLabel => '保留（最近 N 个）';
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
+	@override String get noTargets => '未配置任何备份目标。请从 Web 管理端或「目标」屏添加。';
+	@override String get okMsgCreate => '计划已创建。';
+	@override String get okMsgUpdate => '计划已更新。';
+	@override String get okMsgDelete => '计划已删除。';
+	@override String get errorPrefixCreate => '创建失败';
+	@override String get errorPrefixUpdate => '更新失败';
+	@override String get errorPrefixDelete => '删除失败';
+	@override String deleteBody({required Object targetId}) => '移除目标 ${targetId} 的定期规格。已存在的备份不受影响。';
+	@override String get emptyList => '暂无计划。\n点击「新建」创建一个。';
+	@override String get validatePickTarget => '请选择一个目标。';
+	@override String get validateInterval => '间隔必须大于 0。';
+	@override String get formTitleEdit => '编辑计划';
+	@override String get formTitleNew => '新建计划';
+	@override String get saveButtonEdit => '保存';
+	@override String get saveButtonNew => '创建';
+	@override String get targetFixedHint => '目标一旦创建即不可改。';
+	@override String get enabledOn => '调度器将按周期运行。';
+	@override String get enabledOff => '已暂停 — 重新启用前不会自动运行。';
+	@override String get loadFailedTitle => '加载计划失败';
+	@override String get pausedBadge => '已暂停';
+	@override String everyInterval({required Object interval}) => '每 ${interval}';
+	@override String keepRetention({required Object n}) => '· 保留 ${n}';
+	@override String nextRun({required Object when}) => '· 下次 ${when}';
+	@override String lastRun({required Object when}) => '· 上次 ${when}';
 }
 
 // Path: backupTargetEditor
@@ -379,6 +429,55 @@ class _TranslationsBackupTargetEditorZh extends TranslationsBackupTargetEditorEn
 	@override String get useHttps => '使用 HTTPS';
 	@override String get pathStyle => '路径风格寻址';
 	@override String get pathStyleSubtitle => '旧版 / MinIO';
+	@override late final _TranslationsBackupTargetEditorKindsZh kinds = _TranslationsBackupTargetEditorKindsZh._(_root);
+	@override String get formTitleEdit => '编辑目标';
+	@override String get formTitleNew => '新建备份目标';
+	@override String idHintAuto({required Object prefix}) => '自动：${prefix}-1';
+	@override String get idHelper => '小写字母、数字、连字符。默认为下一个可用槽。';
+	@override String get enabledOn => '定期和临时备份可使用此目标。';
+	@override String get enabledOff => '服务器将拒绝向此处写入备份。';
+	@override String get saving => '保存中…';
+	@override String get create => '创建';
+	@override String get rootDirLabel => '根目录';
+	@override String get rootDirHint => '留空 = cfg.backup.local_dir (~/.opendray/backups)';
+	@override String get hostLabel => '主机';
+	@override String get portLabel => '端口';
+	@override String get shareLabel => '共享';
+	@override String get shareHint => '顶层共享名';
+	@override String get shareSampleHint => 'Claude_Workspace';
+	@override String get userLabel => '用户';
+	@override String get passwordLabel => '密码';
+	@override String get passwordHintKeepCurrent => '留空 = 保留当前值';
+	@override String get passwordHintKeep => '留空 = 保留';
+	@override String get pathPrefixLabel => '路径前缀';
+	@override String get pathPrefixHintShareRoot => '共享根下的子文件夹（可选）';
+	@override String get pathPrefixHintBaseUrl => 'Base URL 下的子文件夹（可选）';
+	@override String get pathPrefixHintObjectKey => '对象键前缀（可选）';
+	@override String get pathPrefixHintSshFolder => '绝对路径或相对用户主目录（可选）';
+	@override String get pathPrefixHintRemoteRoot => '远端根下的子文件夹（可选）';
+	@override String get endpointLabel => '端点';
+	@override String get regionLabel => '区域';
+	@override String get bucketLabel => '存储桶';
+	@override String get accessKeyLabel => 'Access Key';
+	@override String get secretKeyLabel => 'Secret Key';
+	@override String get secretKeyHintEdit => '留空 = 保留当前值。已 AES-256-GCM 加密存储。';
+	@override String get secretKeyHintNew => '已 AES-256-GCM 加密存储；不会回显。';
+	@override String get baseUrlLabel => 'Base URL';
+	@override String get baseUrlHint => '完整 URL 包含路径。Nextcloud：https://cloud.example/remote.php/dav/files/<user>';
+	@override String get sftpPasswordHintEdit => '留空 = 保留。如果密码 + 私钥同时存在，私钥优先。';
+	@override String get sftpPasswordHintNew => '密码或私钥二选一。两者同时存在时，密码仅作回退。';
+	@override String get privateKeyLabel => '私钥（PEM）';
+	@override String get privateKeyHintEdit => '留空 = 保留。粘贴 OpenSSH/PEM 内容。';
+	@override String get privateKeyHintNew => '粘贴 OpenSSH/PEM 私钥内容。多行输入 — 保留 BEGIN/END 标记。';
+	@override String get hostKeyLabel => 'Host key（pinning）';
+	@override String get hostKeyHint => 'OpenSSH 格式的服务器公钥。`ssh-keyscan <host>` 获取。留空 = 不 pinning（局域网外不推荐）。';
+	@override String get rcloneNote => '需要 opendray 主机上安装 rclone CLI。首次需运行 `rclone config` 交互式认证云账户。';
+	@override String get rcloneRemoteLabel => '远端名';
+	@override String get rcloneRemoteHint => '来自 `rclone config` 的名字（不带冒号）。';
+	@override String get rcloneBinaryLabel => '二进制路径';
+	@override String get rcloneBinaryHint => '覆盖 `which rclone`。留空 = PATH 查找。';
+	@override String get rcloneConfigLabel => '配置路径';
+	@override String get rcloneConfigHint => '覆盖 --config。留空 = rclone 默认。';
 }
 
 // Path: githosts
@@ -841,6 +940,77 @@ class _TranslationsMemoryWorkersTasksZh extends TranslationsMemoryWorkersTasksEn
 	@override late final _TranslationsMemoryWorkersTasksTranscriptZh transcript = _TranslationsMemoryWorkersTasksTranscriptZh._(_root);
 }
 
+// Path: backups.kv
+class _TranslationsBackupsKvZh extends TranslationsBackupsKvEn {
+	_TranslationsBackupsKvZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get status => '状态';
+	@override String get target => '目标';
+	@override String get triggeredBy => '触发者';
+	@override String get started => '开始';
+	@override String get finished => '完成';
+	@override String get size => '大小';
+	@override String get encrypted => '已加密';
+	@override String get targetPath => '目标路径';
+	@override String get error => '错误';
+	@override String get yes => '是';
+	@override String get no => '否';
+}
+
+// Path: backups.emptyMissingDeps
+class _TranslationsBackupsEmptyMissingDepsZh extends TranslationsBackupsEmptyMissingDepsEn {
+	_TranslationsBackupsEmptyMissingDepsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get headline => '备份暂时无法运行';
+	@override String get body => '安装 postgresql-client 并重启 opendray。';
+}
+
+// Path: backups.emptyNoTargets
+class _TranslationsBackupsEmptyNoTargetsZh extends TranslationsBackupsEmptyNoTargetsEn {
+	_TranslationsBackupsEmptyNoTargetsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get headline => '未配置任何备份目标';
+	@override String get body => '打开「更多」菜单 → 目标，添加一个目的地（本地 / S3 / SMB / SFTP / WebDAV / rclone）。然后返回并点击「立即运行」。';
+}
+
+// Path: backups.emptyNoBackups
+class _TranslationsBackupsEmptyNoBackupsZh extends TranslationsBackupsEmptyNoBackupsEn {
+	_TranslationsBackupsEmptyNoBackupsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get headline => '暂无备份';
+	@override String get body => '点击「立即运行」生成一次新快照，或打开「计划」设置定期运行。';
+}
+
+// Path: backups.wizard
+class _TranslationsBackupsWizardZh extends TranslationsBackupsWizardEn {
+	_TranslationsBackupsWizardZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '设置备份';
+	@override String get intro => '选择一个主密语。opendray 用它通过 AES-256-GCM 加密每一份备份。丢失密语就丢失数据 — 无法恢复。';
+	@override String get saving => '保存中…';
+	@override String get generateAndSave => '生成并保存';
+	@override String get savePassphrase => '保存密语';
+	@override String get generateHint => '服务器生成密码学级别随机密语，你复制到密码管理器，然后确认。';
+	@override String get helperRecommended => '建议：从密码管理器生成 40+ 字符';
+	@override String get saveNowHeader => '立即保存这个密语';
+	@override String get saveNowBody => '此处只显示一次。之后无法从 opendray 取回。';
+}
+
 // Path: backups.encryption
 class _TranslationsBackupsEncryptionZh extends TranslationsBackupsEncryptionEn {
 	_TranslationsBackupsEncryptionZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -855,6 +1025,21 @@ class _TranslationsBackupsEncryptionZh extends TranslationsBackupsEncryptionEn {
 	@override String get passphraseLabel => '你的密语';
 	@override String get passphraseHint => '至少 20 个字符';
 	@override String get passphraseCopied => '密语已复制到剪贴板';
+}
+
+// Path: backupTargetEditor.kinds
+class _TranslationsBackupTargetEditorKindsZh extends TranslationsBackupTargetEditorKindsEn {
+	_TranslationsBackupTargetEditorKindsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsBackupTargetEditorKindsLocalZh local = _TranslationsBackupTargetEditorKindsLocalZh._(_root);
+	@override late final _TranslationsBackupTargetEditorKindsSmbZh smb = _TranslationsBackupTargetEditorKindsSmbZh._(_root);
+	@override late final _TranslationsBackupTargetEditorKindsWebdavZh webdav = _TranslationsBackupTargetEditorKindsWebdavZh._(_root);
+	@override late final _TranslationsBackupTargetEditorKindsSftpZh sftp = _TranslationsBackupTargetEditorKindsSftpZh._(_root);
+	@override late final _TranslationsBackupTargetEditorKindsS3Zh s3 = _TranslationsBackupTargetEditorKindsS3Zh._(_root);
+	@override late final _TranslationsBackupTargetEditorKindsRcloneZh rclone = _TranslationsBackupTargetEditorKindsRcloneZh._(_root);
 }
 
 // Path: githosts.errorPrefix
@@ -1544,6 +1729,72 @@ class _TranslationsMemoryWorkersTasksTranscriptZh extends TranslationsMemoryWork
 	@override String get description => '会话结束时的「agent 做了什么」摘要。天然适合 agent 工作器。';
 }
 
+// Path: backupTargetEditor.kinds.local
+class _TranslationsBackupTargetEditorKindsLocalZh extends TranslationsBackupTargetEditorKindsLocalEn {
+	_TranslationsBackupTargetEditorKindsLocalZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '本地磁盘';
+	@override String get description => '运行 opendray 的机器上的文件夹';
+}
+
+// Path: backupTargetEditor.kinds.smb
+class _TranslationsBackupTargetEditorKindsSmbZh extends TranslationsBackupTargetEditorKindsSmbEn {
+	_TranslationsBackupTargetEditorKindsSmbZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'SMB 共享';
+	@override String get description => 'Windows 共享 + 多数家用 NAS 设备';
+}
+
+// Path: backupTargetEditor.kinds.webdav
+class _TranslationsBackupTargetEditorKindsWebdavZh extends TranslationsBackupTargetEditorKindsWebdavEn {
+	_TranslationsBackupTargetEditorKindsWebdavZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'WebDAV';
+	@override String get description => '自托管云盘 + 文件共享服务';
+}
+
+// Path: backupTargetEditor.kinds.sftp
+class _TranslationsBackupTargetEditorKindsSftpZh extends TranslationsBackupTargetEditorKindsSftpEn {
+	_TranslationsBackupTargetEditorKindsSftpZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'SFTP';
+	@override String get description => '任何可 SSH 访问的服务器';
+}
+
+// Path: backupTargetEditor.kinds.s3
+class _TranslationsBackupTargetEditorKindsS3Zh extends TranslationsBackupTargetEditorKindsS3En {
+	_TranslationsBackupTargetEditorKindsS3Zh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'S3 / 兼容';
+	@override String get description => 'Amazon S3 + S3 兼容存储桶（MinIO、R2、B2）';
+}
+
+// Path: backupTargetEditor.kinds.rclone
+class _TranslationsBackupTargetEditorKindsRcloneZh extends TranslationsBackupTargetEditorKindsRcloneEn {
+	_TranslationsBackupTargetEditorKindsRcloneZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'rclone（任意）';
+	@override String get description => '通过 rclone CLI 访问 OneDrive、Google Drive、Dropbox';
+}
+
 // Path: settings.logViewer.levels
 class _TranslationsSettingsLogViewerLevelsZh extends TranslationsSettingsLogViewerLevelsEn {
 	_TranslationsSettingsLogViewerLevelsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -1936,17 +2187,63 @@ extension on TranslationsZh {
 			'project.willMergeInto' => '将合并到',
 			'backups.title' => '备份',
 			'backups.runConfirmTitle' => '立即运行备份？',
+			'backups.runConfirmBody' => '向本地目标触发一次新的转储。任务在服务端运行；此列表会随进度刷新。',
 			'backups.run' => '运行',
+			'backups.runNow' => '立即运行',
+			'backups.queueing' => '入队中…',
 			'backups.queuedSnack' => ({required Object id}) => '备份已入队（${id}）。监控进度中…',
 			'backups.runFailedApi' => ({required Object error}) => '运行失败：${error}',
 			'backups.runFailedGeneric' => ({required Object error}) => '运行失败：${error}',
+			'backups.rowSucceededSnack' => ({required Object bytes}) => '备份成功（${bytes}）。',
+			'backups.rowFailedSnack' => ({required Object error}) => '备份失败：${error}',
+			'backups.unknownError' => '未知错误',
 			'backups.detailTitle' => '备份详情',
 			'backups.deleteTitle' => '删除备份？',
+			'backups.deleteBody' => ({required Object target}) => '从 ${target} 移除二进制文件，并在索引中标记该行为已删除。',
 			'backups.deletedSnack' => ({required Object id}) => '已删除 ${id}。',
 			'backups.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
 			'backups.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
 			'backups.menuSchedules' => '计划',
 			'backups.menuTargets' => '目标',
+			'backups.kv.status' => '状态',
+			'backups.kv.target' => '目标',
+			'backups.kv.triggeredBy' => '触发者',
+			'backups.kv.started' => '开始',
+			'backups.kv.finished' => '完成',
+			'backups.kv.size' => '大小',
+			'backups.kv.encrypted' => '已加密',
+			'backups.kv.targetPath' => '目标路径',
+			'backups.kv.error' => '错误',
+			'backups.kv.yes' => '是',
+			'backups.kv.no' => '否',
+			'backups.emptyMissingDeps.headline' => '备份暂时无法运行',
+			'backups.emptyMissingDeps.body' => '安装 postgresql-client 并重启 opendray。',
+			'backups.emptyNoTargets.headline' => '未配置任何备份目标',
+			'backups.emptyNoTargets.body' => '打开「更多」菜单 → 目标，添加一个目的地（本地 / S3 / SMB / SFTP / WebDAV / rclone）。然后返回并点击「立即运行」。',
+			'backups.emptyNoBackups.headline' => '暂无备份',
+			'backups.emptyNoBackups.body' => '点击「立即运行」生成一次新快照，或打开「计划」设置定期运行。',
+			'backups.restartToActivate' => '重启 opendray 以激活备份',
+			'backups.passphraseSaved' => '你的密语已保存。网关仅在启动时加载，因此更改需重启后才生效。',
+			'backups.keyFileLabel' => '密钥文件',
+			'backups.configuredViaLabel' => '配置方式',
+			'backups.wizard.title' => '设置备份',
+			'backups.wizard.intro' => '选择一个主密语。opendray 用它通过 AES-256-GCM 加密每一份备份。丢失密语就丢失数据 — 无法恢复。',
+			'backups.wizard.saving' => '保存中…',
+			'backups.wizard.generateAndSave' => '生成并保存',
+			'backups.wizard.savePassphrase' => '保存密语',
+			'backups.wizard.generateHint' => '服务器生成密码学级别随机密语，你复制到密码管理器，然后确认。',
+			'backups.wizard.helperRecommended' => '建议：从密码管理器生成 40+ 字符',
+			'backups.wizard.saveNowHeader' => '立即保存这个密语',
+			'backups.wizard.saveNowBody' => '此处只显示一次。之后无法从 opendray 取回。',
+			'backups.statusReady' => '备份就绪',
+			'backups.statusCannot' => '备份无法运行',
+			'backups.overviewTargets' => '目标',
+			'backups.overviewSchedules' => '计划',
+			'backups.overviewBackups' => '备份',
+			'backups.failedToLoad' => '加载备份失败',
+			'backups.envVarConfigured' => 'OPENDRAY_BACKUP_KEY 环境变量',
+			'backups.savedConfirmCheckbox' => '我已将密语保存到密码管理器',
+			'backups.pgDumpMissing' => 'pg_dump 不在 PATH 中。请安装 postgresql-client 并重启 opendray。',
 			'backups.encryption.checkAgain' => '重新检查',
 			'backups.encryption.generate' => '生成',
 			'backups.encryption.paste' => '粘贴',
@@ -1963,14 +2260,99 @@ extension on TranslationsZh {
 			'backupTargets.deleteTitle' => '删除目标？',
 			'backupTargets.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'backupSchedules.title' => '备份计划',
+			'backupSchedules.newButton' => '新建',
 			'backupSchedules.deleteTitle' => '删除计划？',
 			'backupSchedules.targetLabel' => '目标',
 			'backupSchedules.intervalLabel' => '间隔',
 			'backupSchedules.retentionLabel' => '保留（最近 N 个）',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
+			'backupSchedules.noTargets' => '未配置任何备份目标。请从 Web 管理端或「目标」屏添加。',
+			'backupSchedules.okMsgCreate' => '计划已创建。',
+			'backupSchedules.okMsgUpdate' => '计划已更新。',
+			'backupSchedules.okMsgDelete' => '计划已删除。',
+			'backupSchedules.errorPrefixCreate' => '创建失败',
+			'backupSchedules.errorPrefixUpdate' => '更新失败',
+			'backupSchedules.errorPrefixDelete' => '删除失败',
+			'backupSchedules.deleteBody' => ({required Object targetId}) => '移除目标 ${targetId} 的定期规格。已存在的备份不受影响。',
+			'backupSchedules.emptyList' => '暂无计划。\n点击「新建」创建一个。',
+			'backupSchedules.validatePickTarget' => '请选择一个目标。',
+			'backupSchedules.validateInterval' => '间隔必须大于 0。',
+			'backupSchedules.formTitleEdit' => '编辑计划',
+			'backupSchedules.formTitleNew' => '新建计划',
+			'backupSchedules.saveButtonEdit' => '保存',
+			'backupSchedules.saveButtonNew' => '创建',
+			'backupSchedules.targetFixedHint' => '目标一旦创建即不可改。',
+			'backupSchedules.enabledOn' => '调度器将按周期运行。',
+			'backupSchedules.enabledOff' => '已暂停 — 重新启用前不会自动运行。',
+			'backupSchedules.loadFailedTitle' => '加载计划失败',
+			'backupSchedules.pausedBadge' => '已暂停',
+			'backupSchedules.everyInterval' => ({required Object interval}) => '每 ${interval}',
+			'backupSchedules.keepRetention' => ({required Object n}) => '· 保留 ${n}',
+			'backupSchedules.nextRun' => ({required Object when}) => '· 下次 ${when}',
+			'backupSchedules.lastRun' => ({required Object when}) => '· 上次 ${when}',
 			'backupTargetEditor.useHttps' => '使用 HTTPS',
 			'backupTargetEditor.pathStyle' => '路径风格寻址',
 			'backupTargetEditor.pathStyleSubtitle' => '旧版 / MinIO',
+			'backupTargetEditor.kinds.local.label' => '本地磁盘',
+			'backupTargetEditor.kinds.local.description' => '运行 opendray 的机器上的文件夹',
+			'backupTargetEditor.kinds.smb.label' => 'SMB 共享',
+			'backupTargetEditor.kinds.smb.description' => 'Windows 共享 + 多数家用 NAS 设备',
+			'backupTargetEditor.kinds.webdav.label' => 'WebDAV',
+			'backupTargetEditor.kinds.webdav.description' => '自托管云盘 + 文件共享服务',
+			'backupTargetEditor.kinds.sftp.label' => 'SFTP',
+			'backupTargetEditor.kinds.sftp.description' => '任何可 SSH 访问的服务器',
+			'backupTargetEditor.kinds.s3.label' => 'S3 / 兼容',
+			'backupTargetEditor.kinds.s3.description' => 'Amazon S3 + S3 兼容存储桶（MinIO、R2、B2）',
+			'backupTargetEditor.kinds.rclone.label' => 'rclone（任意）',
+			'backupTargetEditor.kinds.rclone.description' => '通过 rclone CLI 访问 OneDrive、Google Drive、Dropbox',
+			'backupTargetEditor.formTitleEdit' => '编辑目标',
+			'backupTargetEditor.formTitleNew' => '新建备份目标',
+			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => '自动：${prefix}-1',
+			'backupTargetEditor.idHelper' => '小写字母、数字、连字符。默认为下一个可用槽。',
+			'backupTargetEditor.enabledOn' => '定期和临时备份可使用此目标。',
+			'backupTargetEditor.enabledOff' => '服务器将拒绝向此处写入备份。',
+			'backupTargetEditor.saving' => '保存中…',
+			'backupTargetEditor.create' => '创建',
+			'backupTargetEditor.rootDirLabel' => '根目录',
+			'backupTargetEditor.rootDirHint' => '留空 = cfg.backup.local_dir (~/.opendray/backups)',
+			'backupTargetEditor.hostLabel' => '主机',
+			'backupTargetEditor.portLabel' => '端口',
+			'backupTargetEditor.shareLabel' => '共享',
+			'backupTargetEditor.shareHint' => '顶层共享名',
+			'backupTargetEditor.shareSampleHint' => 'Claude_Workspace',
+			'backupTargetEditor.userLabel' => '用户',
+			'backupTargetEditor.passwordLabel' => '密码',
+			'backupTargetEditor.passwordHintKeepCurrent' => '留空 = 保留当前值',
+			'backupTargetEditor.passwordHintKeep' => '留空 = 保留',
+			'backupTargetEditor.pathPrefixLabel' => '路径前缀',
+			'backupTargetEditor.pathPrefixHintShareRoot' => '共享根下的子文件夹（可选）',
+			'backupTargetEditor.pathPrefixHintBaseUrl' => 'Base URL 下的子文件夹（可选）',
+			'backupTargetEditor.pathPrefixHintObjectKey' => '对象键前缀（可选）',
+			'backupTargetEditor.pathPrefixHintSshFolder' => '绝对路径或相对用户主目录（可选）',
+			'backupTargetEditor.pathPrefixHintRemoteRoot' => '远端根下的子文件夹（可选）',
+			'backupTargetEditor.endpointLabel' => '端点',
+			'backupTargetEditor.regionLabel' => '区域',
+			'backupTargetEditor.bucketLabel' => '存储桶',
+			'backupTargetEditor.accessKeyLabel' => 'Access Key',
+			'backupTargetEditor.secretKeyLabel' => 'Secret Key',
+			'backupTargetEditor.secretKeyHintEdit' => '留空 = 保留当前值。已 AES-256-GCM 加密存储。',
+			'backupTargetEditor.secretKeyHintNew' => '已 AES-256-GCM 加密存储；不会回显。',
+			'backupTargetEditor.baseUrlLabel' => 'Base URL',
+			'backupTargetEditor.baseUrlHint' => '完整 URL 包含路径。Nextcloud：https://cloud.example/remote.php/dav/files/<user>',
+			'backupTargetEditor.sftpPasswordHintEdit' => '留空 = 保留。如果密码 + 私钥同时存在，私钥优先。',
+			'backupTargetEditor.sftpPasswordHintNew' => '密码或私钥二选一。两者同时存在时，密码仅作回退。',
+			'backupTargetEditor.privateKeyLabel' => '私钥（PEM）',
+			'backupTargetEditor.privateKeyHintEdit' => '留空 = 保留。粘贴 OpenSSH/PEM 内容。',
+			'backupTargetEditor.privateKeyHintNew' => '粘贴 OpenSSH/PEM 私钥内容。多行输入 — 保留 BEGIN/END 标记。',
+			'backupTargetEditor.hostKeyLabel' => 'Host key（pinning）',
+			'backupTargetEditor.hostKeyHint' => 'OpenSSH 格式的服务器公钥。`ssh-keyscan <host>` 获取。留空 = 不 pinning（局域网外不推荐）。',
+			'backupTargetEditor.rcloneNote' => '需要 opendray 主机上安装 rclone CLI。首次需运行 `rclone config` 交互式认证云账户。',
+			'backupTargetEditor.rcloneRemoteLabel' => '远端名',
+			'backupTargetEditor.rcloneRemoteHint' => '来自 `rclone config` 的名字（不带冒号）。',
+			'backupTargetEditor.rcloneBinaryLabel' => '二进制路径',
+			'backupTargetEditor.rcloneBinaryHint' => '覆盖 `which rclone`。留空 = PATH 查找。',
+			'backupTargetEditor.rcloneConfigLabel' => '配置路径',
+			'backupTargetEditor.rcloneConfigHint' => '覆盖 --config。留空 = rclone 默认。',
 			'githosts.title' => 'Git 主机',
 			'githosts.addHost' => '添加主机',
 			'githosts.deleteTitle' => '删除 Git 主机？',
@@ -1980,6 +2362,8 @@ extension on TranslationsZh {
 			'githosts.form.kindLabel' => '类型',
 			'githosts.form.hostLabel' => '主机',
 			'githosts.form.nameLabel' => '名称',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.form.nameHint' => 'work-github、personal-gitlab、…',
 			'channels.title' => '通道',
 			'channels.kNew' => '新建',
@@ -2111,8 +2495,6 @@ extension on TranslationsZh {
 			'settings.changeCredentials.currentPassword' => '当前密码',
 			'settings.changeCredentials.newUsername' => '新用户名',
 			'settings.changeCredentials.newPassword' => '新密码',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.confirmPassword' => '确认新密码',
 			'settings.changeCredentials.validatorRequired' => '必填',
 			'settings.changeCredentials.passwordHelper' => '至少 8 个字符',

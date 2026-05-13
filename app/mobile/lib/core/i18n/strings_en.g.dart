@@ -599,8 +599,17 @@ class TranslationsBackupsEn {
 	/// en: 'Run backup now?'
 	String get runConfirmTitle => 'Run backup now?';
 
+	/// en: 'Triggers a fresh dump against the local target. The job runs server-side; this list will refresh as it progresses.'
+	String get runConfirmBody => 'Triggers a fresh dump against the local target. The job runs server-side; this list will refresh as it progresses.';
+
 	/// en: 'Run'
 	String get run => 'Run';
+
+	/// en: 'Run now'
+	String get runNow => 'Run now';
+
+	/// en: 'Queueing…'
+	String get queueing => 'Queueing…';
 
 	/// en: 'Backup queued ({id}). Watching for progress…'
 	String queuedSnack({required Object id}) => 'Backup queued (${id}). Watching for progress…';
@@ -611,11 +620,23 @@ class TranslationsBackupsEn {
 	/// en: 'Run failed: {error}'
 	String runFailedGeneric({required Object error}) => 'Run failed: ${error}';
 
+	/// en: 'Backup succeeded ({bytes}).'
+	String rowSucceededSnack({required Object bytes}) => 'Backup succeeded (${bytes}).';
+
+	/// en: 'Backup failed: {error}'
+	String rowFailedSnack({required Object error}) => 'Backup failed: ${error}';
+
+	/// en: 'unknown error'
+	String get unknownError => 'unknown error';
+
 	/// en: 'Backup detail'
 	String get detailTitle => 'Backup detail';
 
 	/// en: 'Delete backup?'
 	String get deleteTitle => 'Delete backup?';
+
+	/// en: 'Removes the blob from {target} and marks the row deleted in the index.'
+	String deleteBody({required Object target}) => 'Removes the blob from ${target} and marks the row deleted in the index.';
 
 	/// en: 'Deleted {id}.'
 	String deletedSnack({required Object id}) => 'Deleted ${id}.';
@@ -631,6 +652,52 @@ class TranslationsBackupsEn {
 
 	/// en: 'Targets'
 	String get menuTargets => 'Targets';
+
+	late final TranslationsBackupsKvEn kv = TranslationsBackupsKvEn.internal(_root);
+	late final TranslationsBackupsEmptyMissingDepsEn emptyMissingDeps = TranslationsBackupsEmptyMissingDepsEn.internal(_root);
+	late final TranslationsBackupsEmptyNoTargetsEn emptyNoTargets = TranslationsBackupsEmptyNoTargetsEn.internal(_root);
+	late final TranslationsBackupsEmptyNoBackupsEn emptyNoBackups = TranslationsBackupsEmptyNoBackupsEn.internal(_root);
+
+	/// en: 'Restart opendray to activate backups'
+	String get restartToActivate => 'Restart opendray to activate backups';
+
+	/// en: 'Your passphrase is saved. The gateway only loads it at startup, so changes only take effect after a restart.'
+	String get passphraseSaved => 'Your passphrase is saved. The gateway only loads it at startup, so changes only take effect after a restart.';
+
+	/// en: 'Key file'
+	String get keyFileLabel => 'Key file';
+
+	/// en: 'Configured via'
+	String get configuredViaLabel => 'Configured via';
+
+	late final TranslationsBackupsWizardEn wizard = TranslationsBackupsWizardEn.internal(_root);
+
+	/// en: 'Backups ready'
+	String get statusReady => 'Backups ready';
+
+	/// en: 'Backups cannot run'
+	String get statusCannot => 'Backups cannot run';
+
+	/// en: 'Targets'
+	String get overviewTargets => 'Targets';
+
+	/// en: 'Schedules'
+	String get overviewSchedules => 'Schedules';
+
+	/// en: 'Backups'
+	String get overviewBackups => 'Backups';
+
+	/// en: 'Failed to load backups'
+	String get failedToLoad => 'Failed to load backups';
+
+	/// en: 'OPENDRAY_BACKUP_KEY env var'
+	String get envVarConfigured => 'OPENDRAY_BACKUP_KEY env var';
+
+	/// en: 'I have saved this passphrase to my password manager'
+	String get savedConfirmCheckbox => 'I have saved this passphrase to my password manager';
+
+	/// en: 'pg_dump is not on PATH. Install postgresql-client and restart opendray.'
+	String get pgDumpMissing => 'pg_dump is not on PATH. Install postgresql-client and restart opendray.';
 
 	late final TranslationsBackupsEncryptionEn encryption = TranslationsBackupsEncryptionEn.internal(_root);
 }
@@ -679,6 +746,9 @@ class TranslationsBackupSchedulesEn {
 	/// en: 'Backup schedules'
 	String get title => 'Backup schedules';
 
+	/// en: 'New'
+	String get newButton => 'New';
+
 	/// en: 'Delete schedule?'
 	String get deleteTitle => 'Delete schedule?';
 
@@ -693,6 +763,78 @@ class TranslationsBackupSchedulesEn {
 
 	/// en: '{prefix}: {error}'
 	String errorWithMessage({required Object prefix, required Object error}) => '${prefix}: ${error}';
+
+	/// en: 'No backup targets configured. Add one from the web admin or the Targets screen.'
+	String get noTargets => 'No backup targets configured. Add one from the web admin or the Targets screen.';
+
+	/// en: 'Schedule created.'
+	String get okMsgCreate => 'Schedule created.';
+
+	/// en: 'Schedule updated.'
+	String get okMsgUpdate => 'Schedule updated.';
+
+	/// en: 'Schedule deleted.'
+	String get okMsgDelete => 'Schedule deleted.';
+
+	/// en: 'Create failed'
+	String get errorPrefixCreate => 'Create failed';
+
+	/// en: 'Update failed'
+	String get errorPrefixUpdate => 'Update failed';
+
+	/// en: 'Delete failed'
+	String get errorPrefixDelete => 'Delete failed';
+
+	/// en: 'Removes the recurring spec for target {targetId}. Existing backup blobs are not touched.'
+	String deleteBody({required Object targetId}) => 'Removes the recurring spec for target ${targetId}. Existing backup blobs are not touched.';
+
+	/// en: 'No schedules yet. Tap "New" to create one.'
+	String get emptyList => 'No schedules yet.\nTap "New" to create one.';
+
+	/// en: 'Pick a target.'
+	String get validatePickTarget => 'Pick a target.';
+
+	/// en: 'Interval must be > 0.'
+	String get validateInterval => 'Interval must be > 0.';
+
+	/// en: 'Edit schedule'
+	String get formTitleEdit => 'Edit schedule';
+
+	/// en: 'New schedule'
+	String get formTitleNew => 'New schedule';
+
+	/// en: 'Save'
+	String get saveButtonEdit => 'Save';
+
+	/// en: 'Create'
+	String get saveButtonNew => 'Create';
+
+	/// en: 'Target is fixed once created.'
+	String get targetFixedHint => 'Target is fixed once created.';
+
+	/// en: 'Scheduler will run this on cadence.'
+	String get enabledOn => 'Scheduler will run this on cadence.';
+
+	/// en: 'Paused — no automatic runs until re-enabled.'
+	String get enabledOff => 'Paused — no automatic runs until re-enabled.';
+
+	/// en: 'Failed to load schedules'
+	String get loadFailedTitle => 'Failed to load schedules';
+
+	/// en: 'paused'
+	String get pausedBadge => 'paused';
+
+	/// en: 'every {interval}'
+	String everyInterval({required Object interval}) => 'every ${interval}';
+
+	/// en: '· keep {n}'
+	String keepRetention({required Object n}) => '· keep ${n}';
+
+	/// en: '· next {when}'
+	String nextRun({required Object when}) => '· next ${when}';
+
+	/// en: '· last {when}'
+	String lastRun({required Object when}) => '· last ${when}';
 }
 
 // Path: backupTargetEditor
@@ -711,6 +853,152 @@ class TranslationsBackupTargetEditorEn {
 
 	/// en: 'Legacy / MinIO'
 	String get pathStyleSubtitle => 'Legacy / MinIO';
+
+	late final TranslationsBackupTargetEditorKindsEn kinds = TranslationsBackupTargetEditorKindsEn.internal(_root);
+
+	/// en: 'Edit target'
+	String get formTitleEdit => 'Edit target';
+
+	/// en: 'New backup target'
+	String get formTitleNew => 'New backup target';
+
+	/// en: 'Auto: {prefix}-1'
+	String idHintAuto({required Object prefix}) => 'Auto: ${prefix}-1';
+
+	/// en: 'Lower-case letters, digits, dashes. Defaults to the next available slot.'
+	String get idHelper => 'Lower-case letters, digits, dashes. Defaults to the next available slot.';
+
+	/// en: 'Scheduled and ad-hoc backups can target this.'
+	String get enabledOn => 'Scheduled and ad-hoc backups can target this.';
+
+	/// en: 'Server will refuse to write backups here.'
+	String get enabledOff => 'Server will refuse to write backups here.';
+
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
+	/// en: 'Create'
+	String get create => 'Create';
+
+	/// en: 'Root directory'
+	String get rootDirLabel => 'Root directory';
+
+	/// en: 'Empty = cfg.backup.local_dir (~/.opendray/backups)'
+	String get rootDirHint => 'Empty = cfg.backup.local_dir (~/.opendray/backups)';
+
+	/// en: 'Host'
+	String get hostLabel => 'Host';
+
+	/// en: 'Port'
+	String get portLabel => 'Port';
+
+	/// en: 'Share'
+	String get shareLabel => 'Share';
+
+	/// en: 'Top-level share name'
+	String get shareHint => 'Top-level share name';
+
+	/// en: 'Claude_Workspace'
+	String get shareSampleHint => 'Claude_Workspace';
+
+	/// en: 'User'
+	String get userLabel => 'User';
+
+	/// en: 'Password'
+	String get passwordLabel => 'Password';
+
+	/// en: 'Leave blank to keep current'
+	String get passwordHintKeepCurrent => 'Leave blank to keep current';
+
+	/// en: 'Leave blank to keep'
+	String get passwordHintKeep => 'Leave blank to keep';
+
+	/// en: 'Path prefix'
+	String get pathPrefixLabel => 'Path prefix';
+
+	/// en: 'Sub-folder under the share root (optional)'
+	String get pathPrefixHintShareRoot => 'Sub-folder under the share root (optional)';
+
+	/// en: 'Sub-folder under the base URL (optional)'
+	String get pathPrefixHintBaseUrl => 'Sub-folder under the base URL (optional)';
+
+	/// en: 'Object-key prefix (optional)'
+	String get pathPrefixHintObjectKey => 'Object-key prefix (optional)';
+
+	/// en: 'Absolute or relative to user home (optional)'
+	String get pathPrefixHintSshFolder => 'Absolute or relative to user home (optional)';
+
+	/// en: 'Sub-folder under the remote root (optional)'
+	String get pathPrefixHintRemoteRoot => 'Sub-folder under the remote root (optional)';
+
+	/// en: 'Endpoint'
+	String get endpointLabel => 'Endpoint';
+
+	/// en: 'Region'
+	String get regionLabel => 'Region';
+
+	/// en: 'Bucket'
+	String get bucketLabel => 'Bucket';
+
+	/// en: 'Access key'
+	String get accessKeyLabel => 'Access key';
+
+	/// en: 'Secret key'
+	String get secretKeyLabel => 'Secret key';
+
+	/// en: 'Leave blank to keep current. Stored AES-256-GCM encrypted.'
+	String get secretKeyHintEdit => 'Leave blank to keep current. Stored AES-256-GCM encrypted.';
+
+	/// en: 'Stored AES-256-GCM encrypted; never echoed back.'
+	String get secretKeyHintNew => 'Stored AES-256-GCM encrypted; never echoed back.';
+
+	/// en: 'Base URL'
+	String get baseUrlLabel => 'Base URL';
+
+	/// en: 'Full URL including path. Nextcloud: https://cloud.example/remote.php/dav/files/<user>'
+	String get baseUrlHint => 'Full URL including path. Nextcloud: https://cloud.example/remote.php/dav/files/<user>';
+
+	/// en: 'Leave blank to keep. If both password + private key are present, the private key wins.'
+	String get sftpPasswordHintEdit => 'Leave blank to keep. If both password + private key are present, the private key wins.';
+
+	/// en: 'Either password OR private key. If both, password becomes a fallback only.'
+	String get sftpPasswordHintNew => 'Either password OR private key. If both, password becomes a fallback only.';
+
+	/// en: 'Private key (PEM)'
+	String get privateKeyLabel => 'Private key (PEM)';
+
+	/// en: 'Leave blank to keep. Paste OpenSSH/PEM contents.'
+	String get privateKeyHintEdit => 'Leave blank to keep. Paste OpenSSH/PEM contents.';
+
+	/// en: 'Paste the contents of an OpenSSH/PEM private key. Multi-line input — keep the BEGIN/END markers.'
+	String get privateKeyHintNew => 'Paste the contents of an OpenSSH/PEM private key. Multi-line input — keep the BEGIN/END markers.';
+
+	/// en: 'Host key (pinning)'
+	String get hostKeyLabel => 'Host key (pinning)';
+
+	/// en: 'OpenSSH-style server public key. `ssh-keyscan <host>` to obtain. Blank = no pinning (NOT recommended outside LAN).'
+	String get hostKeyHint => 'OpenSSH-style server public key. `ssh-keyscan <host>` to obtain. Blank = no pinning (NOT recommended outside LAN).';
+
+	/// en: 'Requires the rclone CLI on the opendray host. First run `rclone config` once interactively to authenticate cloud accounts.'
+	String get rcloneNote => 'Requires the rclone CLI on the opendray host. First run `rclone config` once interactively to authenticate cloud accounts.';
+
+	/// en: 'Remote name'
+	String get rcloneRemoteLabel => 'Remote name';
+
+	/// en: 'Name from `rclone config` (no colon).'
+	String get rcloneRemoteHint => 'Name from `rclone config` (no colon).';
+
+	/// en: 'Binary path'
+	String get rcloneBinaryLabel => 'Binary path';
+
+	/// en: 'Override `which rclone`. Empty = PATH lookup.'
+	String get rcloneBinaryHint => 'Override `which rclone`. Empty = PATH lookup.';
+
+	/// en: 'Config path'
+	String get rcloneConfigLabel => 'Config path';
+
+	/// en: 'Override --config. Empty = rclone default.'
+	String get rcloneConfigHint => 'Override --config. Empty = rclone default.';
 }
 
 // Path: githosts
@@ -1495,6 +1783,129 @@ class TranslationsMemoryWorkersTasksEn {
 	late final TranslationsMemoryWorkersTasksTranscriptEn transcript = TranslationsMemoryWorkersTasksTranscriptEn.internal(_root);
 }
 
+// Path: backups.kv
+class TranslationsBackupsKvEn {
+	TranslationsBackupsKvEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Status'
+	String get status => 'Status';
+
+	/// en: 'Target'
+	String get target => 'Target';
+
+	/// en: 'Triggered by'
+	String get triggeredBy => 'Triggered by';
+
+	/// en: 'Started'
+	String get started => 'Started';
+
+	/// en: 'Finished'
+	String get finished => 'Finished';
+
+	/// en: 'Size'
+	String get size => 'Size';
+
+	/// en: 'Encrypted'
+	String get encrypted => 'Encrypted';
+
+	/// en: 'Target path'
+	String get targetPath => 'Target path';
+
+	/// en: 'Error'
+	String get error => 'Error';
+
+	/// en: 'yes'
+	String get yes => 'yes';
+
+	/// en: 'no'
+	String get no => 'no';
+}
+
+// Path: backups.emptyMissingDeps
+class TranslationsBackupsEmptyMissingDepsEn {
+	TranslationsBackupsEmptyMissingDepsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Backups can't run yet'
+	String get headline => 'Backups can\'t run yet';
+
+	/// en: 'Install postgresql-client and restart opendray.'
+	String get body => 'Install postgresql-client and restart opendray.';
+}
+
+// Path: backups.emptyNoTargets
+class TranslationsBackupsEmptyNoTargetsEn {
+	TranslationsBackupsEmptyNoTargetsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'No backup targets configured'
+	String get headline => 'No backup targets configured';
+
+	/// en: 'Open the More menu → Targets to add a destination (local / S3 / SMB / SFTP / WebDAV / rclone). Then come back and tap "Run now".'
+	String get body => 'Open the More menu → Targets to add a destination (local / S3 / SMB / SFTP / WebDAV / rclone). Then come back and tap "Run now".';
+}
+
+// Path: backups.emptyNoBackups
+class TranslationsBackupsEmptyNoBackupsEn {
+	TranslationsBackupsEmptyNoBackupsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'No backups yet'
+	String get headline => 'No backups yet';
+
+	/// en: 'Tap "Run now" to take a fresh snapshot, or open Schedules to set up recurring runs.'
+	String get body => 'Tap "Run now" to take a fresh snapshot, or open Schedules to set up recurring runs.';
+}
+
+// Path: backups.wizard
+class TranslationsBackupsWizardEn {
+	TranslationsBackupsWizardEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Set up backups'
+	String get title => 'Set up backups';
+
+	/// en: 'Choose a master passphrase. opendray uses it to encrypt every backup blob with AES-256-GCM. Lose the passphrase and you lose the data — there is no recovery.'
+	String get intro => 'Choose a master passphrase. opendray uses it to encrypt every backup blob with AES-256-GCM. Lose the passphrase and you lose the data — there is no recovery.';
+
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
+	/// en: 'Generate and save'
+	String get generateAndSave => 'Generate and save';
+
+	/// en: 'Save passphrase'
+	String get savePassphrase => 'Save passphrase';
+
+	/// en: 'Server generates a cryptographically random passphrase, you copy it to a password manager, then commit.'
+	String get generateHint => 'Server generates a cryptographically random passphrase, you copy it to a password manager, then commit.';
+
+	/// en: 'Recommended: 40+ chars from a password manager'
+	String get helperRecommended => 'Recommended: 40+ chars from a password manager';
+
+	/// en: 'Save this passphrase NOW'
+	String get saveNowHeader => 'Save this passphrase NOW';
+
+	/// en: 'This is shown ONCE. It will not be retrievable from opendray afterwards.'
+	String get saveNowBody => 'This is shown ONCE. It will not be retrievable from opendray afterwards.';
+}
+
 // Path: backups.encryption
 class TranslationsBackupsEncryptionEn {
 	TranslationsBackupsEncryptionEn.internal(this._root);
@@ -1523,6 +1934,21 @@ class TranslationsBackupsEncryptionEn {
 
 	/// en: 'Passphrase copied to clipboard'
 	String get passphraseCopied => 'Passphrase copied to clipboard';
+}
+
+// Path: backupTargetEditor.kinds
+class TranslationsBackupTargetEditorKindsEn {
+	TranslationsBackupTargetEditorKindsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsBackupTargetEditorKindsLocalEn local = TranslationsBackupTargetEditorKindsLocalEn.internal(_root);
+	late final TranslationsBackupTargetEditorKindsSmbEn smb = TranslationsBackupTargetEditorKindsSmbEn.internal(_root);
+	late final TranslationsBackupTargetEditorKindsWebdavEn webdav = TranslationsBackupTargetEditorKindsWebdavEn.internal(_root);
+	late final TranslationsBackupTargetEditorKindsSftpEn sftp = TranslationsBackupTargetEditorKindsSftpEn.internal(_root);
+	late final TranslationsBackupTargetEditorKindsS3En s3 = TranslationsBackupTargetEditorKindsS3En.internal(_root);
+	late final TranslationsBackupTargetEditorKindsRcloneEn rclone = TranslationsBackupTargetEditorKindsRcloneEn.internal(_root);
 }
 
 // Path: githosts.errorPrefix
@@ -2629,6 +3055,96 @@ class TranslationsMemoryWorkersTasksTranscriptEn {
 	String get description => 'Session-end \'what did the agent do\' summary. Naturally fits an agent worker.';
 }
 
+// Path: backupTargetEditor.kinds.local
+class TranslationsBackupTargetEditorKindsLocalEn {
+	TranslationsBackupTargetEditorKindsLocalEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Local disk'
+	String get label => 'Local disk';
+
+	/// en: 'Folder on the machine running opendray'
+	String get description => 'Folder on the machine running opendray';
+}
+
+// Path: backupTargetEditor.kinds.smb
+class TranslationsBackupTargetEditorKindsSmbEn {
+	TranslationsBackupTargetEditorKindsSmbEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'SMB share'
+	String get label => 'SMB share';
+
+	/// en: 'Windows shares + most home NAS appliances'
+	String get description => 'Windows shares + most home NAS appliances';
+}
+
+// Path: backupTargetEditor.kinds.webdav
+class TranslationsBackupTargetEditorKindsWebdavEn {
+	TranslationsBackupTargetEditorKindsWebdavEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'WebDAV'
+	String get label => 'WebDAV';
+
+	/// en: 'Self-hosted clouds + file-sharing services'
+	String get description => 'Self-hosted clouds + file-sharing services';
+}
+
+// Path: backupTargetEditor.kinds.sftp
+class TranslationsBackupTargetEditorKindsSftpEn {
+	TranslationsBackupTargetEditorKindsSftpEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'SFTP'
+	String get label => 'SFTP';
+
+	/// en: 'Any SSH-accessible server'
+	String get description => 'Any SSH-accessible server';
+}
+
+// Path: backupTargetEditor.kinds.s3
+class TranslationsBackupTargetEditorKindsS3En {
+	TranslationsBackupTargetEditorKindsS3En.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'S3 / compatible'
+	String get label => 'S3 / compatible';
+
+	/// en: 'Amazon S3 + S3-compatible buckets (MinIO, R2, B2)'
+	String get description => 'Amazon S3 + S3-compatible buckets (MinIO, R2, B2)';
+}
+
+// Path: backupTargetEditor.kinds.rclone
+class TranslationsBackupTargetEditorKindsRcloneEn {
+	TranslationsBackupTargetEditorKindsRcloneEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'rclone (any)'
+	String get label => 'rclone (any)';
+
+	/// en: 'OneDrive, Google Drive, Dropbox via the rclone CLI'
+	String get description => 'OneDrive, Google Drive, Dropbox via the rclone CLI';
+}
+
 // Path: settings.logViewer.levels
 class TranslationsSettingsLogViewerLevelsEn {
 	TranslationsSettingsLogViewerLevelsEn.internal(this._root);
@@ -3061,17 +3577,63 @@ extension on Translations {
 			'project.willMergeInto' => 'Will merge into',
 			'backups.title' => 'Backups',
 			'backups.runConfirmTitle' => 'Run backup now?',
+			'backups.runConfirmBody' => 'Triggers a fresh dump against the local target. The job runs server-side; this list will refresh as it progresses.',
 			'backups.run' => 'Run',
+			'backups.runNow' => 'Run now',
+			'backups.queueing' => 'Queueing…',
 			'backups.queuedSnack' => ({required Object id}) => 'Backup queued (${id}). Watching for progress…',
 			'backups.runFailedApi' => ({required Object error}) => 'Run failed: ${error}',
 			'backups.runFailedGeneric' => ({required Object error}) => 'Run failed: ${error}',
+			'backups.rowSucceededSnack' => ({required Object bytes}) => 'Backup succeeded (${bytes}).',
+			'backups.rowFailedSnack' => ({required Object error}) => 'Backup failed: ${error}',
+			'backups.unknownError' => 'unknown error',
 			'backups.detailTitle' => 'Backup detail',
 			'backups.deleteTitle' => 'Delete backup?',
+			'backups.deleteBody' => ({required Object target}) => 'Removes the blob from ${target} and marks the row deleted in the index.',
 			'backups.deletedSnack' => ({required Object id}) => 'Deleted ${id}.',
 			'backups.deleteFailedApi' => ({required Object error}) => 'Delete failed: ${error}',
 			'backups.deleteFailedGeneric' => ({required Object error}) => 'Delete failed: ${error}',
 			'backups.menuSchedules' => 'Schedules',
 			'backups.menuTargets' => 'Targets',
+			'backups.kv.status' => 'Status',
+			'backups.kv.target' => 'Target',
+			'backups.kv.triggeredBy' => 'Triggered by',
+			'backups.kv.started' => 'Started',
+			'backups.kv.finished' => 'Finished',
+			'backups.kv.size' => 'Size',
+			'backups.kv.encrypted' => 'Encrypted',
+			'backups.kv.targetPath' => 'Target path',
+			'backups.kv.error' => 'Error',
+			'backups.kv.yes' => 'yes',
+			'backups.kv.no' => 'no',
+			'backups.emptyMissingDeps.headline' => 'Backups can\'t run yet',
+			'backups.emptyMissingDeps.body' => 'Install postgresql-client and restart opendray.',
+			'backups.emptyNoTargets.headline' => 'No backup targets configured',
+			'backups.emptyNoTargets.body' => 'Open the More menu → Targets to add a destination (local / S3 / SMB / SFTP / WebDAV / rclone). Then come back and tap "Run now".',
+			'backups.emptyNoBackups.headline' => 'No backups yet',
+			'backups.emptyNoBackups.body' => 'Tap "Run now" to take a fresh snapshot, or open Schedules to set up recurring runs.',
+			'backups.restartToActivate' => 'Restart opendray to activate backups',
+			'backups.passphraseSaved' => 'Your passphrase is saved. The gateway only loads it at startup, so changes only take effect after a restart.',
+			'backups.keyFileLabel' => 'Key file',
+			'backups.configuredViaLabel' => 'Configured via',
+			'backups.wizard.title' => 'Set up backups',
+			'backups.wizard.intro' => 'Choose a master passphrase. opendray uses it to encrypt every backup blob with AES-256-GCM. Lose the passphrase and you lose the data — there is no recovery.',
+			'backups.wizard.saving' => 'Saving…',
+			'backups.wizard.generateAndSave' => 'Generate and save',
+			'backups.wizard.savePassphrase' => 'Save passphrase',
+			'backups.wizard.generateHint' => 'Server generates a cryptographically random passphrase, you copy it to a password manager, then commit.',
+			'backups.wizard.helperRecommended' => 'Recommended: 40+ chars from a password manager',
+			'backups.wizard.saveNowHeader' => 'Save this passphrase NOW',
+			'backups.wizard.saveNowBody' => 'This is shown ONCE. It will not be retrievable from opendray afterwards.',
+			'backups.statusReady' => 'Backups ready',
+			'backups.statusCannot' => 'Backups cannot run',
+			'backups.overviewTargets' => 'Targets',
+			'backups.overviewSchedules' => 'Schedules',
+			'backups.overviewBackups' => 'Backups',
+			'backups.failedToLoad' => 'Failed to load backups',
+			'backups.envVarConfigured' => 'OPENDRAY_BACKUP_KEY env var',
+			'backups.savedConfirmCheckbox' => 'I have saved this passphrase to my password manager',
+			'backups.pgDumpMissing' => 'pg_dump is not on PATH. Install postgresql-client and restart opendray.',
 			'backups.encryption.checkAgain' => 'Check again',
 			'backups.encryption.generate' => 'Generate',
 			'backups.encryption.paste' => 'Paste',
@@ -3088,14 +3650,99 @@ extension on Translations {
 			'backupTargets.deleteTitle' => 'Delete target?',
 			'backupTargets.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.title' => 'Backup schedules',
+			'backupSchedules.newButton' => 'New',
 			'backupSchedules.deleteTitle' => 'Delete schedule?',
 			'backupSchedules.targetLabel' => 'Target',
 			'backupSchedules.intervalLabel' => 'Interval',
 			'backupSchedules.retentionLabel' => 'Retention (keep N most recent)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
+			'backupSchedules.noTargets' => 'No backup targets configured. Add one from the web admin or the Targets screen.',
+			'backupSchedules.okMsgCreate' => 'Schedule created.',
+			'backupSchedules.okMsgUpdate' => 'Schedule updated.',
+			'backupSchedules.okMsgDelete' => 'Schedule deleted.',
+			'backupSchedules.errorPrefixCreate' => 'Create failed',
+			'backupSchedules.errorPrefixUpdate' => 'Update failed',
+			'backupSchedules.errorPrefixDelete' => 'Delete failed',
+			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Removes the recurring spec for target ${targetId}. Existing backup blobs are not touched.',
+			'backupSchedules.emptyList' => 'No schedules yet.\nTap "New" to create one.',
+			'backupSchedules.validatePickTarget' => 'Pick a target.',
+			'backupSchedules.validateInterval' => 'Interval must be > 0.',
+			'backupSchedules.formTitleEdit' => 'Edit schedule',
+			'backupSchedules.formTitleNew' => 'New schedule',
+			'backupSchedules.saveButtonEdit' => 'Save',
+			'backupSchedules.saveButtonNew' => 'Create',
+			'backupSchedules.targetFixedHint' => 'Target is fixed once created.',
+			'backupSchedules.enabledOn' => 'Scheduler will run this on cadence.',
+			'backupSchedules.enabledOff' => 'Paused — no automatic runs until re-enabled.',
+			'backupSchedules.loadFailedTitle' => 'Failed to load schedules',
+			'backupSchedules.pausedBadge' => 'paused',
+			'backupSchedules.everyInterval' => ({required Object interval}) => 'every ${interval}',
+			'backupSchedules.keepRetention' => ({required Object n}) => '· keep ${n}',
+			'backupSchedules.nextRun' => ({required Object when}) => '· next ${when}',
+			'backupSchedules.lastRun' => ({required Object when}) => '· last ${when}',
 			'backupTargetEditor.useHttps' => 'Use HTTPS',
 			'backupTargetEditor.pathStyle' => 'Path-style addressing',
 			'backupTargetEditor.pathStyleSubtitle' => 'Legacy / MinIO',
+			'backupTargetEditor.kinds.local.label' => 'Local disk',
+			'backupTargetEditor.kinds.local.description' => 'Folder on the machine running opendray',
+			'backupTargetEditor.kinds.smb.label' => 'SMB share',
+			'backupTargetEditor.kinds.smb.description' => 'Windows shares + most home NAS appliances',
+			'backupTargetEditor.kinds.webdav.label' => 'WebDAV',
+			'backupTargetEditor.kinds.webdav.description' => 'Self-hosted clouds + file-sharing services',
+			'backupTargetEditor.kinds.sftp.label' => 'SFTP',
+			'backupTargetEditor.kinds.sftp.description' => 'Any SSH-accessible server',
+			'backupTargetEditor.kinds.s3.label' => 'S3 / compatible',
+			'backupTargetEditor.kinds.s3.description' => 'Amazon S3 + S3-compatible buckets (MinIO, R2, B2)',
+			'backupTargetEditor.kinds.rclone.label' => 'rclone (any)',
+			'backupTargetEditor.kinds.rclone.description' => 'OneDrive, Google Drive, Dropbox via the rclone CLI',
+			'backupTargetEditor.formTitleEdit' => 'Edit target',
+			'backupTargetEditor.formTitleNew' => 'New backup target',
+			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => 'Auto: ${prefix}-1',
+			'backupTargetEditor.idHelper' => 'Lower-case letters, digits, dashes. Defaults to the next available slot.',
+			'backupTargetEditor.enabledOn' => 'Scheduled and ad-hoc backups can target this.',
+			'backupTargetEditor.enabledOff' => 'Server will refuse to write backups here.',
+			'backupTargetEditor.saving' => 'Saving…',
+			'backupTargetEditor.create' => 'Create',
+			'backupTargetEditor.rootDirLabel' => 'Root directory',
+			'backupTargetEditor.rootDirHint' => 'Empty = cfg.backup.local_dir (~/.opendray/backups)',
+			'backupTargetEditor.hostLabel' => 'Host',
+			'backupTargetEditor.portLabel' => 'Port',
+			'backupTargetEditor.shareLabel' => 'Share',
+			'backupTargetEditor.shareHint' => 'Top-level share name',
+			'backupTargetEditor.shareSampleHint' => 'Claude_Workspace',
+			'backupTargetEditor.userLabel' => 'User',
+			'backupTargetEditor.passwordLabel' => 'Password',
+			'backupTargetEditor.passwordHintKeepCurrent' => 'Leave blank to keep current',
+			'backupTargetEditor.passwordHintKeep' => 'Leave blank to keep',
+			'backupTargetEditor.pathPrefixLabel' => 'Path prefix',
+			'backupTargetEditor.pathPrefixHintShareRoot' => 'Sub-folder under the share root (optional)',
+			'backupTargetEditor.pathPrefixHintBaseUrl' => 'Sub-folder under the base URL (optional)',
+			'backupTargetEditor.pathPrefixHintObjectKey' => 'Object-key prefix (optional)',
+			'backupTargetEditor.pathPrefixHintSshFolder' => 'Absolute or relative to user home (optional)',
+			'backupTargetEditor.pathPrefixHintRemoteRoot' => 'Sub-folder under the remote root (optional)',
+			'backupTargetEditor.endpointLabel' => 'Endpoint',
+			'backupTargetEditor.regionLabel' => 'Region',
+			'backupTargetEditor.bucketLabel' => 'Bucket',
+			'backupTargetEditor.accessKeyLabel' => 'Access key',
+			'backupTargetEditor.secretKeyLabel' => 'Secret key',
+			'backupTargetEditor.secretKeyHintEdit' => 'Leave blank to keep current. Stored AES-256-GCM encrypted.',
+			'backupTargetEditor.secretKeyHintNew' => 'Stored AES-256-GCM encrypted; never echoed back.',
+			'backupTargetEditor.baseUrlLabel' => 'Base URL',
+			'backupTargetEditor.baseUrlHint' => 'Full URL including path. Nextcloud: https://cloud.example/remote.php/dav/files/<user>',
+			'backupTargetEditor.sftpPasswordHintEdit' => 'Leave blank to keep. If both password + private key are present, the private key wins.',
+			'backupTargetEditor.sftpPasswordHintNew' => 'Either password OR private key. If both, password becomes a fallback only.',
+			'backupTargetEditor.privateKeyLabel' => 'Private key (PEM)',
+			'backupTargetEditor.privateKeyHintEdit' => 'Leave blank to keep. Paste OpenSSH/PEM contents.',
+			'backupTargetEditor.privateKeyHintNew' => 'Paste the contents of an OpenSSH/PEM private key. Multi-line input — keep the BEGIN/END markers.',
+			'backupTargetEditor.hostKeyLabel' => 'Host key (pinning)',
+			'backupTargetEditor.hostKeyHint' => 'OpenSSH-style server public key. `ssh-keyscan <host>` to obtain. Blank = no pinning (NOT recommended outside LAN).',
+			'backupTargetEditor.rcloneNote' => 'Requires the rclone CLI on the opendray host. First run `rclone config` once interactively to authenticate cloud accounts.',
+			'backupTargetEditor.rcloneRemoteLabel' => 'Remote name',
+			'backupTargetEditor.rcloneRemoteHint' => 'Name from `rclone config` (no colon).',
+			'backupTargetEditor.rcloneBinaryLabel' => 'Binary path',
+			'backupTargetEditor.rcloneBinaryHint' => 'Override `which rclone`. Empty = PATH lookup.',
+			'backupTargetEditor.rcloneConfigLabel' => 'Config path',
+			'backupTargetEditor.rcloneConfigHint' => 'Override --config. Empty = rclone default.',
 			'githosts.title' => 'Git hosts',
 			'githosts.addHost' => 'Add host',
 			'githosts.deleteTitle' => 'Delete git host?',
@@ -3105,6 +3752,8 @@ extension on Translations {
 			'githosts.form.kindLabel' => 'Kind',
 			'githosts.form.hostLabel' => 'Host',
 			'githosts.form.nameLabel' => 'Name',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.form.nameHint' => 'work-github, personal-gitlab, …',
 			'channels.title' => 'Channels',
 			'channels.kNew' => 'New',
@@ -3236,8 +3885,6 @@ extension on Translations {
 			'settings.changeCredentials.currentPassword' => 'Current password',
 			'settings.changeCredentials.newUsername' => 'New username',
 			'settings.changeCredentials.newPassword' => 'New password',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.confirmPassword' => 'Confirm new password',
 			'settings.changeCredentials.validatorRequired' => 'Required',
 			'settings.changeCredentials.passwordHelper' => 'At least 8 characters',

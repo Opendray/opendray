@@ -89,11 +89,8 @@ class _BackupSchedulesScreenState
   Future<void> _onCreate(List<BackupTarget> targets) async {
     if (targets.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'No backup targets configured. Add one from the web '
-            'admin first.',
-          ),
+        SnackBar(
+          content: Text(t.backupSchedules.noTargets),
         ),
       );
       return;
@@ -107,8 +104,8 @@ class _BackupSchedulesScreenState
     if (form == null || !mounted) return;
     await _runOp(
       key: 'new',
-      okMsg: 'Schedule created.',
-      failPrefix: 'Create failed',
+      okMsg: t.backupSchedules.okMsgCreate,
+      failPrefix: t.backupSchedules.errorPrefixCreate,
       op: () => ref
           .read(backupsApiProvider)
           .createSchedule(
@@ -134,8 +131,8 @@ class _BackupSchedulesScreenState
     if (form == null || !mounted) return;
     await _runOp(
       key: 's:${sc.id}',
-      okMsg: 'Schedule updated.',
-      failPrefix: 'Update failed',
+      okMsg: t.backupSchedules.okMsgUpdate,
+      failPrefix: t.backupSchedules.errorPrefixUpdate,
       op: () => ref
           .read(backupsApiProvider)
           .updateSchedule(
@@ -155,8 +152,7 @@ class _BackupSchedulesScreenState
       builder: (ctx) => AlertDialog(
         title: Text(t.backupSchedules.deleteTitle),
         content: Text(
-          'Removes the recurring spec for target ${sc.targetId}. '
-          'Existing backup blobs are not touched.',
+          t.backupSchedules.deleteBody(targetId: sc.targetId),
           style: Theme.of(ctx).textTheme.bodySmall,
         ),
         actions: [
@@ -177,8 +173,8 @@ class _BackupSchedulesScreenState
     if (ok != true || !mounted) return;
     await _runOp(
       key: 's:${sc.id}',
-      okMsg: 'Schedule deleted.',
-      failPrefix: 'Delete failed',
+      okMsg: t.backupSchedules.okMsgDelete,
+      failPrefix: t.backupSchedules.errorPrefixDelete,
       op: () => ref.read(backupsApiProvider).deleteSchedule(sc.id),
     );
   }
@@ -205,7 +201,7 @@ class _BackupSchedulesScreenState
         data: (d) => FloatingActionButton.extended(
           onPressed: () => _onCreate(d.targets),
           icon: const Icon(Icons.add),
-          label: const Text('New'),
+          label: Text(t.backupSchedules.newButton),
         ),
         orElse: () => null,
       ),
@@ -218,7 +214,7 @@ class _BackupSchedulesScreenState
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            'No schedules yet.\nTap "New" to create one.',
+            t.backupSchedules.emptyList,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
@@ -291,7 +287,7 @@ class _ScheduleTile extends StatelessWidget {
           const SizedBox(width: 8),
           if (!schedule.enabled)
             _Badge(
-              label: 'paused',
+              label: t.backupSchedules.pausedBadge,
               color: Theme.of(context).colorScheme.error,
             ),
         ],
@@ -302,13 +298,21 @@ class _ScheduleTile extends StatelessWidget {
           spacing: 6,
           runSpacing: 2,
           children: [
-            Text('every ${_formatInterval(schedule.intervalSec)}'),
-            Text('· keep ${schedule.retention}'),
             Text(
-              '· next ${_relTime(schedule.nextRunAt, future: true)}',
+              t.backupSchedules.everyInterval(
+                interval: _formatInterval(schedule.intervalSec),
+              ),
+            ),
+            Text(t.backupSchedules.keepRetention(n: schedule.retention.toString())),
+            Text(
+              t.backupSchedules.nextRun(
+                when: _relTime(schedule.nextRunAt, future: true),
+              ),
             ),
             if (schedule.lastRunAt != null)
-              Text('· last ${_relTime(schedule.lastRunAt!)}'),
+              Text(
+                t.backupSchedules.lastRun(when: _relTime(schedule.lastRunAt!)),
+              ),
           ],
         ),
       ),
@@ -403,11 +407,11 @@ class _ScheduleFormScreenState extends State<_ScheduleFormScreen> {
 
   void _submit() {
     if (_targetId.isEmpty) {
-      setState(() => _error = 'Pick a target.');
+      setState(() => _error = t.backupSchedules.validatePickTarget);
       return;
     }
     if (_intervalSec <= 0) {
-      setState(() => _error = 'Interval must be > 0.');
+      setState(() => _error = t.backupSchedules.validateInterval);
       return;
     }
     Navigator.of(context).pop(_ScheduleFormResult(
@@ -424,11 +428,15 @@ class _ScheduleFormScreenState extends State<_ScheduleFormScreen> {
     final muted = Theme.of(context).textTheme.bodySmall;
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit ? 'Edit schedule' : 'New schedule'),
+        title: Text(isEdit
+            ? t.backupSchedules.formTitleEdit
+            : t.backupSchedules.formTitleNew),
         actions: [
           TextButton(
             onPressed: _submit,
-            child: Text(isEdit ? 'Save' : 'Create'),
+            child: Text(isEdit
+                ? t.backupSchedules.saveButtonEdit
+                : t.backupSchedules.saveButtonNew),
           ),
         ],
       ),
@@ -457,7 +465,7 @@ class _ScheduleFormScreenState extends State<_ScheduleFormScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 6),
               child: Text(
-                'Target is fixed once created.',
+                t.backupSchedules.targetFixedHint,
                 style: muted,
               ),
             ),
@@ -497,8 +505,8 @@ class _ScheduleFormScreenState extends State<_ScheduleFormScreen> {
             title: Text(t.common.enabled),
             subtitle: Text(
               _enabled
-                  ? 'Scheduler will run this on cadence.'
-                  : 'Paused — no automatic runs until re-enabled.',
+                  ? t.backupSchedules.enabledOn
+                  : t.backupSchedules.enabledOff,
               style: muted,
             ),
             value: _enabled,
@@ -541,7 +549,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Failed to load schedules',
+              t.backupSchedules.loadFailedTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),
