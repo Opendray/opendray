@@ -10,6 +10,7 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/auth/auth_state.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:xterm/xterm.dart';
 
@@ -334,15 +335,19 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
       );
     } on Object catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Image picker failed: $e')),
+        SnackBar(
+          content: Text(
+            t.sessions.terminal.snackbar.imagePickerFailed(error: e.toString()),
+          ),
+        ),
       );
       return;
     }
     if (file == null) return; // user cancelled
     messenger.showSnackBar(
-      const SnackBar(
-        content: Text('Uploading image…'),
-        duration: Duration(seconds: 1),
+      SnackBar(
+        content: Text(t.sessions.terminal.snackbar.uploadingImage),
+        duration: const Duration(seconds: 1),
       ),
     );
     try {
@@ -355,7 +360,9 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Image attached: $remotePath'),
+          content: Text(
+            t.sessions.terminal.snackbar.imageAttached(path: remotePath),
+          ),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 3),
         ),
@@ -363,12 +370,23 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Upload failed (${e.statusCode}): ${e.message}')),
+        SnackBar(
+          content: Text(
+            t.sessions.terminal.snackbar.uploadFailed(
+              status: e.statusCode.toString(),
+              message: e.message,
+            ),
+          ),
+        ),
       );
     } on Object catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Upload failed: $e')),
+        SnackBar(
+          content: Text(
+            t.sessions.terminal.snackbar.uploadFailedGeneric(error: e.toString()),
+          ),
+        ),
       );
     }
   }
@@ -397,12 +415,12 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
             const SizedBox(height: 8),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Photo library'),
+              title: Text(t.sessions.terminal.imageSource.photoLibrary),
               onTap: () => Navigator.of(sheetCtx).pop(ImageSource.gallery),
             ),
             ListTile(
               leading: const Icon(Icons.camera_alt_outlined),
-              title: const Text('Take a photo'),
+              title: Text(t.sessions.terminal.imageSource.takePhoto),
               onTap: () => Navigator.of(sheetCtx).pop(ImageSource.camera),
             ),
             const SizedBox(height: 4),
@@ -510,13 +528,21 @@ class _StatusStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (state) {
-      _ConnState.connecting => ('Connecting…', Colors.amber),
-      _ConnState.connected => ('Connected', Colors.green),
-      _ConnState.reconnecting =>
-        (error != null ? 'Reconnecting (${_short(error!)})…' : 'Reconnecting…', Colors.amber),
-      _ConnState.error =>
-        (error != null ? 'Disconnected (${_short(error!)})' : 'Disconnected', Colors.red),
-      _ConnState.ended => ('Session ended', Colors.grey),
+      _ConnState.connecting => (t.sessions.terminal.connection.connecting, Colors.amber),
+      _ConnState.connected => (t.sessions.terminal.connection.connected, Colors.green),
+      _ConnState.reconnecting => (
+          error != null
+              ? t.sessions.terminal.connection.reconnectingWithError(error: _short(error!))
+              : t.sessions.terminal.connection.reconnecting,
+          Colors.amber,
+        ),
+      _ConnState.error => (
+          error != null
+              ? t.sessions.terminal.connection.disconnectedWithError(error: _short(error!))
+              : t.sessions.terminal.connection.disconnected,
+          Colors.red,
+        ),
+      _ConnState.ended => (t.sessions.terminal.connection.ended, Colors.grey),
     };
     return Container(
       width: double.infinity,
@@ -546,7 +572,7 @@ class _StatusStrip extends StatelessWidget {
                 minimumSize: const Size(0, 28),
                 padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
-              child: const Text('Retry'),
+              child: Text(t.common.retry),
             ),
         ],
       ),
@@ -671,7 +697,7 @@ class _MobileKeyboardBarState extends State<_MobileKeyboardBar> {
             ),
             _Key(
               icon: Icons.content_copy,
-              tooltip: 'Copy buffer',
+              tooltip: t.sessions.terminal.keyboard.copyBuffer,
               onTap: () {
                 _haptic();
                 unawaited(widget.onCopy());
@@ -679,7 +705,7 @@ class _MobileKeyboardBarState extends State<_MobileKeyboardBar> {
             ),
             _Key(
               icon: Icons.content_paste,
-              tooltip: 'Paste',
+              tooltip: t.sessions.terminal.keyboard.paste,
               onTap: () {
                 _haptic();
                 unawaited(widget.onPaste());
@@ -687,7 +713,7 @@ class _MobileKeyboardBarState extends State<_MobileKeyboardBar> {
             ),
             _Key(
               icon: Icons.add_photo_alternate_outlined,
-              tooltip: 'Attach image',
+              tooltip: t.sessions.terminal.keyboard.attachImage,
               onTap: () {
                 _haptic();
                 unawaited(widget.onAttachImage());
