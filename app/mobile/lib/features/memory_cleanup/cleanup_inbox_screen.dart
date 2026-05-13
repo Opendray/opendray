@@ -5,6 +5,17 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/memory_cleanup_api.dart';
 import 'package:path/path.dart' as p;
 
+/// A scope_key looks "orphan" when it has fewer than 2 non-empty
+/// path segments — e.g. `/Users/` left behind by old truncated
+/// mirror imports. Not a real project, shouldn't be treated as one.
+/// Mirrors web's same-name helper in
+/// app/web/src/pages/CleanupInbox.tsx.
+bool _isLikelyOrphanScope(String cwd) {
+  if (cwd.isEmpty) return false;
+  final parts = cwd.split('/').where((s) => s.isNotEmpty).toList();
+  return parts.length < 2;
+}
+
 // CleanupInboxScreen surfaces pending memory_cleanup_decisions
 // across every project in one list. Reachable from More → Memory
 // → Cleanup so operators don't have to drill into a specific
@@ -207,6 +218,36 @@ class _ProjectGroup extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    if (_isLikelyOrphanScope(scopeKey)) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Tooltip(
+                          message:
+                              'Truncated scope_key (old mirror import). '
+                              'Not a real project — approve-stale these '
+                              'or use Project Reset to clear.',
+                          child: Text(
+                            'orphan',
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                    ],
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 2),
