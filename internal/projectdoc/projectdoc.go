@@ -537,9 +537,12 @@ func (s *Service) RenderForSpawn(ctx context.Context, cwd string, recentLogs int
 		return "", nil
 	}
 
+	// M23 — banner is consumed by the agent, not the operator. Keep
+	// structural headers (the LLM uses them to separate sections),
+	// drop human-courtesy framing (intro essays, "auto-generated"
+	// markers, last-scanned timestamps). Saves ~15-25% spawn tokens.
 	var b strings.Builder
-	b.WriteString("## Project context (cross-agent shared)\n\n")
-	b.WriteString("The following project state is shared across every claude / codex / gemini session in this project. It is the operator's source of truth for *what we're building* (goal), *how we're getting there* (plan), *what was just done* (journal), *the tech stack and structure* (tech_stack, scanner-managed), and *recent git activity* (recent_activity, scanner-managed).\n\n")
+	b.WriteString("## Project context (cross-agent shared, read-only)\n\n")
 
 	if techStack != "" {
 		b.WriteString("### Tech stack & structure\n\n")
