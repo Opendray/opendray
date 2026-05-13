@@ -1014,6 +1014,9 @@ class TranslationsSettingsEn {
 	late final TranslationsSettingsAppearanceEn appearance = TranslationsSettingsAppearanceEn.internal(_root);
 	late final TranslationsSettingsAccountEn account = TranslationsSettingsAccountEn.internal(_root);
 	late final TranslationsSettingsGatewayEn gateway = TranslationsSettingsGatewayEn.internal(_root);
+	late final TranslationsSettingsChangeCredentialsEn changeCredentials = TranslationsSettingsChangeCredentialsEn.internal(_root);
+	late final TranslationsSettingsLogViewerEn logViewer = TranslationsSettingsLogViewerEn.internal(_root);
+	late final TranslationsSettingsServerSettingsEn serverSettings = TranslationsSettingsServerSettingsEn.internal(_root);
 }
 
 // Path: more.identity
@@ -1807,6 +1810,121 @@ class TranslationsSettingsGatewayEn {
 	String get liveLogsSubtitle => 'Tail the gateway log buffer — same source as the web admin';
 }
 
+// Path: settings.changeCredentials
+class TranslationsSettingsChangeCredentialsEn {
+	TranslationsSettingsChangeCredentialsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Change credentials'
+	String get title => 'Change credentials';
+
+	/// en: 'Verify your current password, then pick new credentials. All other signed-in sessions will be revoked.'
+	String get explanation => 'Verify your current password, then pick new credentials. All other signed-in sessions will be revoked.';
+
+	/// en: 'Current password'
+	String get currentPassword => 'Current password';
+
+	/// en: 'New username'
+	String get newUsername => 'New username';
+
+	/// en: 'New password'
+	String get newPassword => 'New password';
+
+	/// en: 'Confirm new password'
+	String get confirmPassword => 'Confirm new password';
+
+	/// en: 'Required'
+	String get validatorRequired => 'Required';
+
+	/// en: 'At least 8 characters'
+	String get passwordHelper => 'At least 8 characters';
+
+	/// en: 'Must be at least 8 characters'
+	String get passwordTooShort => 'Must be at least 8 characters';
+
+	/// en: 'Doesn't match the new password'
+	String get passwordMismatch => 'Doesn\'t match the new password';
+
+	/// en: 'Credentials updated.'
+	String get updatedSnack => 'Credentials updated.';
+
+	/// en: 'Current password is wrong.'
+	String get wrongCurrent => 'Current password is wrong.';
+
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
+	/// en: 'Update'
+	String get update => 'Update';
+}
+
+// Path: settings.logViewer
+class TranslationsSettingsLogViewerEn {
+	TranslationsSettingsLogViewerEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Live logs'
+	String get title => 'Live logs';
+
+	/// en: 'Reconnect'
+	String get reconnect => 'Reconnect';
+
+	/// en: 'Copy buffer'
+	String get copyBuffer => 'Copy buffer';
+
+	/// en: 'Clear local view'
+	String get clearLocal => 'Clear local view';
+
+	/// en: 'Copied buffer to clipboard'
+	String get copiedSnack => 'Copied buffer to clipboard';
+
+	/// en: 'Filter substring…'
+	String get filterHint => 'Filter substring…';
+
+	late final TranslationsSettingsLogViewerLevelsEn levels = TranslationsSettingsLogViewerLevelsEn.internal(_root);
+}
+
+// Path: settings.serverSettings
+class TranslationsSettingsServerSettingsEn {
+	TranslationsSettingsServerSettingsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Server settings'
+	String get title => 'Server settings';
+
+	/// en: 'Reload from server'
+	String get reloadTooltip => 'Reload from server';
+
+	/// en: 'Restart gateway'
+	String get restartTooltip => 'Restart gateway';
+
+	/// en: 'Restart opendray?'
+	String get restartConfirmTitle => 'Restart opendray?';
+
+	/// en: 'Restart'
+	String get restart => 'Restart';
+
+	/// en: 'Restart requested. Pull-to-refresh in a moment.'
+	String get restartQueuedSnack => 'Restart requested. Pull-to-refresh in a moment.';
+
+	/// en: 'Restart failed: {error}'
+	String restartFailedApi({required Object error}) => 'Restart failed: ${error}';
+
+	/// en: 'Restart failed: {error}'
+	String restartFailedGeneric({required Object error}) => 'Restart failed: ${error}';
+
+	late final TranslationsSettingsServerSettingsSectionsEn sections = TranslationsSettingsServerSettingsSectionsEn.internal(_root);
+}
+
 // Path: more.items.integrations
 class TranslationsMoreItemsIntegrationsEn {
 	TranslationsMoreItemsIntegrationsEn.internal(this._root);
@@ -2406,6 +2524,69 @@ class TranslationsSessionsSpawnSheetClaudeAccountEn {
 	String errorHint({required Object error}) => 'Could not load Claude accounts (${error}). The session will spawn with the gateway default.';
 }
 
+// Path: settings.logViewer.levels
+class TranslationsSettingsLogViewerLevelsEn {
+	TranslationsSettingsLogViewerLevelsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'All'
+	String get all => 'All';
+
+	/// en: 'Debug'
+	String get debug => 'Debug';
+
+	/// en: 'Info'
+	String get info => 'Info';
+
+	/// en: 'Warn'
+	String get warn => 'Warn';
+
+	/// en: 'Error'
+	String get error => 'Error';
+}
+
+// Path: settings.serverSettings.sections
+class TranslationsSettingsServerSettingsSectionsEn {
+	TranslationsSettingsServerSettingsSectionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'General'
+	String get general => 'General';
+
+	/// en: 'Logging'
+	String get logging => 'Logging';
+
+	/// en: 'Sessions'
+	String get sessions => 'Sessions';
+
+	/// en: 'Vault'
+	String get vault => 'Vault';
+
+	/// en: 'MCP registry'
+	String get mcpRegistry => 'MCP registry';
+
+	/// en: 'Memory'
+	String get memory => 'Memory';
+
+	/// en: 'Backup'
+	String get backup => 'Backup';
+
+	/// en: 'Storage · Claude'
+	String get storageClaude => 'Storage · Claude';
+
+	/// en: 'Storage · Codex'
+	String get storageCodex => 'Storage · Codex';
+
+	/// en: 'Storage · Gemini'
+	String get storageGemini => 'Storage · Gemini';
+}
+
 // Path: sessions.inspector.shell.tabs
 class TranslationsSessionsInspectorShellTabsEn {
 	TranslationsSessionsInspectorShellTabsEn.internal(this._root);
@@ -2927,6 +3108,51 @@ extension on Translations {
 			'settings.gateway.serverSettingsSubtitle' => 'Listen address, logging, vault, memory, storage paths…',
 			'settings.gateway.liveLogs' => 'Live logs',
 			'settings.gateway.liveLogsSubtitle' => 'Tail the gateway log buffer — same source as the web admin',
+			'settings.changeCredentials.title' => 'Change credentials',
+			'settings.changeCredentials.explanation' => 'Verify your current password, then pick new credentials. All other signed-in sessions will be revoked.',
+			'settings.changeCredentials.currentPassword' => 'Current password',
+			'settings.changeCredentials.newUsername' => 'New username',
+			'settings.changeCredentials.newPassword' => 'New password',
+			'settings.changeCredentials.confirmPassword' => 'Confirm new password',
+			'settings.changeCredentials.validatorRequired' => 'Required',
+			'settings.changeCredentials.passwordHelper' => 'At least 8 characters',
+			'settings.changeCredentials.passwordTooShort' => 'Must be at least 8 characters',
+			'settings.changeCredentials.passwordMismatch' => 'Doesn\'t match the new password',
+			'settings.changeCredentials.updatedSnack' => 'Credentials updated.',
+			'settings.changeCredentials.wrongCurrent' => 'Current password is wrong.',
+			'settings.changeCredentials.saving' => 'Saving…',
+			'settings.changeCredentials.update' => 'Update',
+			'settings.logViewer.title' => 'Live logs',
+			'settings.logViewer.reconnect' => 'Reconnect',
+			'settings.logViewer.copyBuffer' => 'Copy buffer',
+			'settings.logViewer.clearLocal' => 'Clear local view',
+			'settings.logViewer.copiedSnack' => 'Copied buffer to clipboard',
+			'settings.logViewer.filterHint' => 'Filter substring…',
+			'settings.logViewer.levels.all' => 'All',
+			'settings.logViewer.levels.debug' => 'Debug',
+			'settings.logViewer.levels.info' => 'Info',
+			_ => null,
+		} ?? switch (path) {
+			'settings.logViewer.levels.warn' => 'Warn',
+			'settings.logViewer.levels.error' => 'Error',
+			'settings.serverSettings.title' => 'Server settings',
+			'settings.serverSettings.reloadTooltip' => 'Reload from server',
+			'settings.serverSettings.restartTooltip' => 'Restart gateway',
+			'settings.serverSettings.restartConfirmTitle' => 'Restart opendray?',
+			'settings.serverSettings.restart' => 'Restart',
+			'settings.serverSettings.restartQueuedSnack' => 'Restart requested. Pull-to-refresh in a moment.',
+			'settings.serverSettings.restartFailedApi' => ({required Object error}) => 'Restart failed: ${error}',
+			'settings.serverSettings.restartFailedGeneric' => ({required Object error}) => 'Restart failed: ${error}',
+			'settings.serverSettings.sections.general' => 'General',
+			'settings.serverSettings.sections.logging' => 'Logging',
+			'settings.serverSettings.sections.sessions' => 'Sessions',
+			'settings.serverSettings.sections.vault' => 'Vault',
+			'settings.serverSettings.sections.mcpRegistry' => 'MCP registry',
+			'settings.serverSettings.sections.memory' => 'Memory',
+			'settings.serverSettings.sections.backup' => 'Backup',
+			'settings.serverSettings.sections.storageClaude' => 'Storage · Claude',
+			'settings.serverSettings.sections.storageCodex' => 'Storage · Codex',
+			'settings.serverSettings.sections.storageGemini' => 'Storage · Gemini',
 			_ => null,
 		};
 	}

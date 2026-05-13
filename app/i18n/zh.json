@@ -666,6 +666,59 @@
       "serverSettingsSubtitle": "监听地址、日志、凭据库、内存、存储路径…",
       "liveLogs": "实时日志",
       "liveLogsSubtitle": "查看网关实时日志 — 与 Web 管理端同源"
+    },
+    "changeCredentials": {
+      "title": "修改凭据",
+      "explanation": "验证当前密码，然后选择新凭据。其他已登录会话将全部失效。",
+      "currentPassword": "当前密码",
+      "newUsername": "新用户名",
+      "newPassword": "新密码",
+      "confirmPassword": "确认新密码",
+      "validatorRequired": "必填",
+      "passwordHelper": "至少 8 个字符",
+      "passwordTooShort": "至少需要 8 个字符",
+      "passwordMismatch": "与新密码不一致",
+      "updatedSnack": "凭据已更新。",
+      "wrongCurrent": "当前密码不正确。",
+      "saving": "保存中…",
+      "update": "更新"
+    },
+    "logViewer": {
+      "title": "实时日志",
+      "reconnect": "重新连接",
+      "copyBuffer": "复制缓冲",
+      "clearLocal": "清除本地视图",
+      "copiedSnack": "已将缓冲复制到剪贴板",
+      "filterHint": "筛选子串…",
+      "levels": {
+        "all": "全部",
+        "debug": "调试",
+        "info": "信息",
+        "warn": "警告",
+        "error": "错误"
+      }
+    },
+    "serverSettings": {
+      "title": "服务器设置",
+      "reloadTooltip": "从服务器重新加载",
+      "restartTooltip": "重启网关",
+      "restartConfirmTitle": "重启 opendray？",
+      "restart": "重启",
+      "restartQueuedSnack": "已请求重启。稍后下拉刷新。",
+      "restartFailedApi": "重启失败：{error}",
+      "restartFailedGeneric": "重启失败：{error}",
+      "sections": {
+        "general": "通用",
+        "logging": "日志",
+        "sessions": "会话",
+        "vault": "凭据库",
+        "mcpRegistry": "MCP 注册表",
+        "memory": "记忆",
+        "backup": "备份",
+        "storageClaude": "存储 · Claude",
+        "storageCodex": "存储 · Codex",
+        "storageGemini": "存储 · Gemini"
+      }
     }
   }
 }

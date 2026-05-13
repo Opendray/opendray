@@ -666,6 +666,59 @@
       "serverSettingsSubtitle": "Listen address, logging, vault, memory, storage paths…",
       "liveLogs": "Live logs",
       "liveLogsSubtitle": "Tail the gateway log buffer — same source as the web admin"
+    },
+    "changeCredentials": {
+      "title": "Change credentials",
+      "explanation": "Verify your current password, then pick new credentials. All other signed-in sessions will be revoked.",
+      "currentPassword": "Current password",
+      "newUsername": "New username",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "validatorRequired": "Required",
+      "passwordHelper": "At least 8 characters",
+      "passwordTooShort": "Must be at least 8 characters",
+      "passwordMismatch": "Doesn't match the new password",
+      "updatedSnack": "Credentials updated.",
+      "wrongCurrent": "Current password is wrong.",
+      "saving": "Saving…",
+      "update": "Update"
+    },
+    "logViewer": {
+      "title": "Live logs",
+      "reconnect": "Reconnect",
+      "copyBuffer": "Copy buffer",
+      "clearLocal": "Clear local view",
+      "copiedSnack": "Copied buffer to clipboard",
+      "filterHint": "Filter substring…",
+      "levels": {
+        "all": "All",
+        "debug": "Debug",
+        "info": "Info",
+        "warn": "Warn",
+        "error": "Error"
+      }
+    },
+    "serverSettings": {
+      "title": "Server settings",
+      "reloadTooltip": "Reload from server",
+      "restartTooltip": "Restart gateway",
+      "restartConfirmTitle": "Restart opendray?",
+      "restart": "Restart",
+      "restartQueuedSnack": "Restart requested. Pull-to-refresh in a moment.",
+      "restartFailedApi": "Restart failed: {error}",
+      "restartFailedGeneric": "Restart failed: {error}",
+      "sections": {
+        "general": "General",
+        "logging": "Logging",
+        "sessions": "Sessions",
+        "vault": "Vault",
+        "mcpRegistry": "MCP registry",
+        "memory": "Memory",
+        "backup": "Backup",
+        "storageClaude": "Storage · Claude",
+        "storageCodex": "Storage · Codex",
+        "storageGemini": "Storage · Gemini"
+      }
     }
   }
 }

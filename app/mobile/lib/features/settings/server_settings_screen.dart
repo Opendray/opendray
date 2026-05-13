@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/settings_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 // ── Field spec table ────────────────────────────────────────────
 
@@ -67,13 +68,13 @@ class _Section {
   final bool restartRequired;
 }
 
-const _sections = <_Section>[
+List<_Section> _buildSections() => <_Section>[
   _Section(
     id: 'general',
-    title: 'General',
+    title: t.settings.serverSettings.sections.general,
     description: 'Listen address, operator account, token TTL.',
     restartRequired: true,
-    fields: [
+    fields: const [
       _Field(
         label: 'Listen address',
         path: 'listen',
@@ -109,10 +110,10 @@ const _sections = <_Section>[
   ),
   _Section(
     id: 'logging',
-    title: 'Logging',
+    title: t.settings.serverSettings.sections.logging,
     description: 'Verbosity, format, and on-disk log path.',
     restartRequired: true,
-    fields: [
+    fields: const [
       _Field(
         label: 'Level',
         path: 'log.level',
@@ -137,10 +138,10 @@ const _sections = <_Section>[
   ),
   _Section(
     id: 'sessions',
-    title: 'Sessions',
+    title: t.settings.serverSettings.sections.sessions,
     description: 'Idle detection thresholds.',
     restartRequired: true,
-    fields: [
+    fields: const [
       _Field(
         label: 'Idle threshold',
         path: 'session.idle_threshold',
@@ -162,10 +163,10 @@ const _sections = <_Section>[
   ),
   _Section(
     id: 'vault',
-    title: 'Vault',
+    title: t.settings.serverSettings.sections.vault,
     description: 'Notes, skills, and git-versioned root.',
     restartRequired: true,
-    fields: [
+    fields: const [
       _Field(
         label: 'Root',
         path: 'vault.root',
@@ -207,10 +208,10 @@ const _sections = <_Section>[
   ),
   _Section(
     id: 'mcp',
-    title: 'MCP registry',
+    title: t.settings.serverSettings.sections.mcpRegistry,
     description: 'Vault paths for MCP servers + secrets file.',
     restartRequired: true,
-    fields: [
+    fields: const [
       _Field(
         label: 'Registry root',
         path: 'mcp.root',
@@ -228,10 +229,10 @@ const _sections = <_Section>[
   ),
   _Section(
     id: 'memory',
-    title: 'Memory',
+    title: t.settings.serverSettings.sections.memory,
     description: 'Cross-CLI persistent memory subsystem.',
     restartRequired: true,
-    fields: [
+    fields: const [
       _Field(
         label: 'Backend',
         path: 'memory.backend',
@@ -326,11 +327,11 @@ const _sections = <_Section>[
   ),
   _Section(
     id: 'backup',
-    title: 'Backup',
+    title: t.settings.serverSettings.sections.backup,
     description:
         'Encrypted DB backups + admin data exports. Passphrase lives in the keyfile (Settings → Backups).',
     restartRequired: true,
-    fields: [
+    fields: const [
       _Field(
         label: 'Enabled',
         path: 'backup.enabled',
@@ -367,10 +368,10 @@ const _sections = <_Section>[
   ),
   _Section(
     id: 'claude',
-    title: 'Storage · Claude',
+    title: t.settings.serverSettings.sections.storageClaude,
     description: 'Where Claude transcripts live on disk.',
     restartRequired: false,
-    fields: [
+    fields: const [
       _Field(
         label: 'Accounts dir',
         path: 'providers.claude.accounts_dir',
@@ -383,10 +384,10 @@ const _sections = <_Section>[
   ),
   _Section(
     id: 'codex',
-    title: 'Storage · Codex',
+    title: t.settings.serverSettings.sections.storageCodex,
     description: 'Codex sessions root.',
     restartRequired: false,
-    fields: [
+    fields: const [
       _Field(
         label: 'Sessions root',
         path: 'providers.codex.sessions_root',
@@ -398,10 +399,10 @@ const _sections = <_Section>[
   ),
   _Section(
     id: 'gemini',
-    title: 'Storage · Gemini',
+    title: t.settings.serverSettings.sections.storageGemini,
     description: 'Per-project tmp + projects.json paths.',
     restartRequired: false,
-    fields: [
+    fields: const [
       _Field(
         label: 'tmp root',
         path: 'providers.gemini.tmp_root',
@@ -493,7 +494,7 @@ class _ServerSettingsScreenState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Restart opendray?'),
+        title: Text(t.settings.serverSettings.restartConfirmTitle),
         content: const Text(
           'The gateway will exec itself. The mobile app may briefly lose '
           'connection; tokens issued before the restart stay valid.',
@@ -501,11 +502,11 @@ class _ServerSettingsScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(t.common.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Restart'),
+            child: Text(t.settings.serverSettings.restart),
           ),
         ],
       ),
@@ -516,20 +517,24 @@ class _ServerSettingsScreenState
       await ref.read(settingsApiProvider).restart();
       if (!mounted) return;
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Restart requested. Pull-to-refresh in a moment.'),
-          duration: Duration(seconds: 3),
+        SnackBar(
+          content: Text(t.settings.serverSettings.restartQueuedSnack),
+          duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
         ),
       );
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('Restart failed: ${e.message}')),
+        SnackBar(
+            content: Text(t.settings.serverSettings
+                .restartFailedApi(error: e.message))),
       );
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('Restart failed: $e')));
+      messenger.showSnackBar(SnackBar(
+          content: Text(t.settings.serverSettings
+              .restartFailedGeneric(error: e.toString()))));
     }
   }
 
@@ -537,16 +542,16 @@ class _ServerSettingsScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Server settings'),
+        title: Text(t.settings.serverSettings.title),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Reload from server',
+            tooltip: t.settings.serverSettings.reloadTooltip,
             onPressed: _state is AsyncLoading ? null : _load,
           ),
           IconButton(
             icon: const Icon(Icons.restart_alt),
-            tooltip: 'Restart gateway',
+            tooltip: t.settings.serverSettings.restartTooltip,
             onPressed: _state is AsyncLoading ? null : _confirmRestart,
           ),
         ],
@@ -583,7 +588,7 @@ class _ServerSettingsScreenState
               style: TextStyle(fontSize: 12),
             ),
           ),
-          for (final s in _sections)
+          for (final s in _buildSections())
             ListTile(
               title: Text(s.title),
               subtitle: Text(
@@ -850,7 +855,7 @@ class _SectionEditorScreenState
                     onPressed: _submitting
                         ? null
                         : () => Navigator.of(context).pop(false),
-                    child: const Text('Cancel'),
+                    child: Text(t.common.cancel),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -864,7 +869,7 @@ class _SectionEditorScreenState
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.check, size: 18),
-                    label: Text(_submitting ? 'Saving…' : 'Save'),
+                    label: Text(_submitting ? t.settings.changeCredentials.saving : t.common.save),
                   ),
                 ),
               ],
@@ -981,7 +986,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),
