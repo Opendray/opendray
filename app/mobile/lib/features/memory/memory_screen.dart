@@ -8,6 +8,7 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/memory_api.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/memory_workers/memory_workers_screen.dart';
 import 'package:opendray/features/project/project_screen.dart';
 import 'package:path/path.dart' as p;
@@ -238,7 +239,7 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
     }
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert),
-      tooltip: 'More',
+      tooltip: t.memory.more,
       onSelected: (v) {
         if (v == 'wipe') _confirmAndWipe();
       },
@@ -276,7 +277,7 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
     final ok = await showDialog<bool>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: const Text('Delete every memory in this scope?'),
+        title: Text(t.memory.deleteAllConfirm.title),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,14 +307,14 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(t.common.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(dialogCtx).colorScheme.error,
             ),
             onPressed: () => Navigator.of(dialogCtx).pop(true),
-            child: const Text('Delete all'),
+            child: Text(t.memory.deleteAllConfirm.deleteAll),
           ),
         ],
       ),
@@ -328,7 +329,11 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Deleted $deleted memory ${deleted == 1 ? 'item' : 'items'}'),
+          content: Text(
+            deleted == 1
+                ? t.memory.deletedSnackOne(n: deleted.toString())
+                : t.memory.deletedSnackOther(n: deleted.toString()),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -341,11 +346,11 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
       }
     } on ApiException catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Bulk delete failed: ${e.message}')),
+        SnackBar(content: Text(t.memory.bulkDeleteFailedApi(error: e.message))),
       );
     } on Object catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Bulk delete failed: $e')),
+        SnackBar(content: Text(t.memory.bulkDeleteFailedGeneric(error: e.toString()))),
       );
     }
   }
@@ -373,11 +378,11 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Memory'),
+        title: Text(t.memory.title),
         actions: [
           IconButton(
             icon: const Icon(Icons.tune),
-            tooltip: 'Memory workers',
+            tooltip: t.memory.workers,
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
@@ -403,7 +408,7 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _newMemory,
         icon: const Icon(Icons.add),
-        label: const Text('New'),
+        label: Text(t.memory.kNew),
       ),
     );
   }
@@ -444,7 +449,7 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
             controller: _projectSearch,
             onChanged: _onProjectQueryChanged,
             decoration: InputDecoration(
-              hintText: 'Search…',
+              hintText: t.memory.searchHint,
               prefixIcon: const Icon(Icons.search, size: 18),
               isDense: true,
               suffixIcon: _projectQuery.isEmpty
@@ -483,7 +488,7 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
             controller: _globalSearch,
             onChanged: _onGlobalQueryChanged,
             decoration: InputDecoration(
-              hintText: 'Search…',
+              hintText: t.memory.searchHint,
               prefixIcon: const Icon(Icons.search, size: 18),
               isDense: true,
               suffixIcon: _globalQuery.isEmpty
@@ -558,7 +563,7 @@ class _ProjectSelector extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         child: InputDecorator(
           decoration: InputDecoration(
-            labelText: 'Project',
+            labelText: t.memory.projectLabel,
             // The picker is always pre-selected at first project, so
             // there is always a value below the label — no need to
             // suppress hintText. Adding an explicit suffixIcon makes
@@ -735,9 +740,9 @@ class _ProjectPickerSheetState extends State<_ProjectPickerSheet> {
                   controller: _searchCtrl,
                   autofocus: true,
                   onChanged: (v) => setState(() => _query = v),
-                  decoration: const InputDecoration(
-                    hintText: 'Filter by name or path…',
-                    prefixIcon: Icon(Icons.search, size: 18),
+                  decoration: InputDecoration(
+                    hintText: t.memory.filterHint,
+                    prefixIcon: const Icon(Icons.search, size: 18),
                     isDense: true,
                   ),
                 ),
@@ -1053,7 +1058,7 @@ class _ErrorStrip extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
+          TextButton(onPressed: onRetry, child: Text(t.common.retry)),
         ],
       ),
     );
@@ -1119,7 +1124,7 @@ class _ErrorView extends StatelessWidget {
             const SizedBox(height: 16),
             FilledButton(
               onPressed: onRetry,
-              child: const Text('Retry'),
+              child: Text(t.common.retry),
             ),
           ],
         ),
@@ -1218,8 +1223,8 @@ class _MemoryDetailSheetState extends ConsumerState<_MemoryDetailSheet> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: const Text('Delete memory?'),
-        content: const Text('This cannot be undone.'),
+        title: Text(t.memory.deleteOne.title),
+        content: Text(t.memory.deleteOne.body),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(false),
@@ -1265,9 +1270,9 @@ class _MemoryDetailSheetState extends ConsumerState<_MemoryDetailSheet> {
     await Clipboard.setData(ClipboardData(text: widget.memory.text));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Copied'),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(t.memory.copied),
+        duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -1311,7 +1316,7 @@ class _MemoryDetailSheetState extends ConsumerState<_MemoryDetailSheet> {
                     ),
                   IconButton(
                     icon: const Icon(Icons.copy, size: 18),
-                    tooltip: 'Copy text',
+                    tooltip: t.memory.copyTooltip,
                     onPressed: _busy ? null : _copyText,
                   ),
                   IconButton(
@@ -1376,7 +1381,7 @@ class _MemoryDetailSheetState extends ConsumerState<_MemoryDetailSheet> {
                                 width: 16,
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
-                            : const Text('Save'),
+                            : Text(t.common.save),
                       ),
                     )
                   else
@@ -1393,7 +1398,7 @@ class _MemoryDetailSheetState extends ConsumerState<_MemoryDetailSheet> {
                           ),
                         ),
                         icon: const Icon(Icons.delete_outline, size: 18),
-                        label: const Text('Delete'),
+                        label: Text(t.common.delete),
                       ),
                     ),
                 ],
@@ -1611,14 +1616,14 @@ class _NewMemorySheetState extends ConsumerState<_NewMemorySheet> {
               ),
               const SizedBox(height: 16),
               SegmentedButton<MemoryScope>(
-                segments: const [
+                segments: [
                   ButtonSegment(
                     value: MemoryScope.project,
-                    label: Text('Project'),
+                    label: Text(t.memory.scope.project),
                   ),
                   ButtonSegment(
                     value: MemoryScope.global,
-                    label: Text('Global'),
+                    label: Text(t.memory.scope.global),
                   ),
                 ],
                 selected: {_scope},
@@ -1642,7 +1647,7 @@ class _NewMemorySheetState extends ConsumerState<_NewMemorySheet> {
                 minLines: 5,
                 autofocus: true,
                 decoration: InputDecoration(
-                  labelText: 'Text',
+                  labelText: t.memory.create.textLabel,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -1717,8 +1722,8 @@ class _ScopeKeyField extends StatelessWidget {
           focusNode: focusNode,
           autocorrect: false,
           decoration: InputDecoration(
-            labelText: 'Scope key (project cwd)',
-            hintText: '/Users/you/projects/foo',
+            labelText: t.memory.create.scopeKeyLabel,
+            hintText: t.memory.create.scopeKeyHint,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
             ),

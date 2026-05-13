@@ -44,6 +44,7 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsNavZh nav = _TranslationsNavZh._(_root);
 	@override late final _TranslationsMoreZh more = _TranslationsMoreZh._(_root);
 	@override late final _TranslationsSessionsZh sessions = _TranslationsSessionsZh._(_root);
+	@override late final _TranslationsMemoryZh memory = _TranslationsMemoryZh._(_root);
 	@override late final _TranslationsAboutZh about = _TranslationsAboutZh._(_root);
 	@override late final _TranslationsSettingsZh settings = _TranslationsSettingsZh._(_root);
 }
@@ -131,6 +132,32 @@ class _TranslationsSessionsZh extends TranslationsSessionsEn {
 	@override late final _TranslationsSessionsDirPickerZh dirPicker = _TranslationsSessionsDirPickerZh._(_root);
 	@override late final _TranslationsSessionsInspectorZh inspector = _TranslationsSessionsInspectorZh._(_root);
 	@override late final _TranslationsSessionsSpawnSheetZh spawnSheet = _TranslationsSessionsSpawnSheetZh._(_root);
+}
+
+// Path: memory
+class _TranslationsMemoryZh extends TranslationsMemoryEn {
+	_TranslationsMemoryZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '记忆';
+	@override String get more => '更多';
+	@override String get workers => '记忆工作器';
+	@override String get kNew => '新建';
+	@override String get searchHint => '搜索…';
+	@override String get projectLabel => '项目';
+	@override String get filterHint => '按名称或路径筛选…';
+	@override String get copied => '已复制';
+	@override String get copyTooltip => '复制文本';
+	@override late final _TranslationsMemoryDeleteAllConfirmZh deleteAllConfirm = _TranslationsMemoryDeleteAllConfirmZh._(_root);
+	@override String deletedSnackOne({required Object n}) => '已删除 ${n} 条记忆';
+	@override String deletedSnackOther({required Object n}) => '已删除 ${n} 条记忆';
+	@override String bulkDeleteFailedApi({required Object error}) => '批量删除失败：${error}';
+	@override String bulkDeleteFailedGeneric({required Object error}) => '批量删除失败：${error}';
+	@override late final _TranslationsMemoryDeleteOneZh deleteOne = _TranslationsMemoryDeleteOneZh._(_root);
+	@override late final _TranslationsMemoryScopeZh scope = _TranslationsMemoryScopeZh._(_root);
+	@override late final _TranslationsMemoryCreateZh create = _TranslationsMemoryCreateZh._(_root);
 }
 
 // Path: about
@@ -368,6 +395,52 @@ class _TranslationsSessionsSpawnSheetZh extends TranslationsSessionsSpawnSheetEn
 	@override late final _TranslationsSessionsSpawnSheetNoProvidersZh noProviders = _TranslationsSessionsSpawnSheetNoProvidersZh._(_root);
 	@override late final _TranslationsSessionsSpawnSheetProviderLoadErrorZh providerLoadError = _TranslationsSessionsSpawnSheetProviderLoadErrorZh._(_root);
 	@override late final _TranslationsSessionsSpawnSheetClaudeAccountZh claudeAccount = _TranslationsSessionsSpawnSheetClaudeAccountZh._(_root);
+}
+
+// Path: memory.deleteAllConfirm
+class _TranslationsMemoryDeleteAllConfirmZh extends TranslationsMemoryDeleteAllConfirmEn {
+	_TranslationsMemoryDeleteAllConfirmZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '删除此范围内所有记忆？';
+	@override String get deleteAll => '全部删除';
+}
+
+// Path: memory.deleteOne
+class _TranslationsMemoryDeleteOneZh extends TranslationsMemoryDeleteOneEn {
+	_TranslationsMemoryDeleteOneZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '删除该记忆？';
+	@override String get body => '此操作不可撤销。';
+}
+
+// Path: memory.scope
+class _TranslationsMemoryScopeZh extends TranslationsMemoryScopeEn {
+	_TranslationsMemoryScopeZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get project => '项目';
+	@override String get global => '全局';
+}
+
+// Path: memory.create
+class _TranslationsMemoryCreateZh extends TranslationsMemoryCreateEn {
+	_TranslationsMemoryCreateZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get textLabel => '文本';
+	@override String get scopeKeyLabel => '范围键（项目 cwd）';
+	@override String get scopeKeyHint => '/Users/you/projects/foo';
+	@override String get submit => '创建';
 }
 
 // Path: about.sections
@@ -1064,6 +1137,29 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.claudeAccount.noTokenSuffix' => '（无令牌）',
 			'sessions.spawnSheet.claudeAccount.noneHint' => '未配置 Claude 账号 — 网关将使用系统的 ANTHROPIC_API_KEY。在 Web 管理端的「设置 → 账号」中添加账号。',
 			'sessions.spawnSheet.claudeAccount.errorHint' => ({required Object error}) => '无法加载 Claude 账号（${error}）。会话将以网关默认配置启动。',
+			'memory.title' => '记忆',
+			'memory.more' => '更多',
+			'memory.workers' => '记忆工作器',
+			'memory.kNew' => '新建',
+			'memory.searchHint' => '搜索…',
+			'memory.projectLabel' => '项目',
+			'memory.filterHint' => '按名称或路径筛选…',
+			'memory.copied' => '已复制',
+			'memory.copyTooltip' => '复制文本',
+			'memory.deleteAllConfirm.title' => '删除此范围内所有记忆？',
+			'memory.deleteAllConfirm.deleteAll' => '全部删除',
+			'memory.deletedSnackOne' => ({required Object n}) => '已删除 ${n} 条记忆',
+			'memory.deletedSnackOther' => ({required Object n}) => '已删除 ${n} 条记忆',
+			'memory.bulkDeleteFailedApi' => ({required Object error}) => '批量删除失败：${error}',
+			'memory.bulkDeleteFailedGeneric' => ({required Object error}) => '批量删除失败：${error}',
+			'memory.deleteOne.title' => '删除该记忆？',
+			'memory.deleteOne.body' => '此操作不可撤销。',
+			'memory.scope.project' => '项目',
+			'memory.scope.global' => '全局',
+			'memory.create.textLabel' => '文本',
+			'memory.create.scopeKeyLabel' => '范围键（项目 cwd）',
+			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',
+			'memory.create.submit' => '创建',
 			'about.title' => '关于',
 			'about.loading' => '加载中…',
 			'about.sections.app' => '应用',

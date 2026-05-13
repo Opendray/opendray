@@ -45,6 +45,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsNavEn nav = TranslationsNavEn.internal(_root);
 	late final TranslationsMoreEn more = TranslationsMoreEn.internal(_root);
 	late final TranslationsSessionsEn sessions = TranslationsSessionsEn.internal(_root);
+	late final TranslationsMemoryEn memory = TranslationsMemoryEn.internal(_root);
 	late final TranslationsAboutEn about = TranslationsAboutEn.internal(_root);
 	late final TranslationsSettingsEn settings = TranslationsSettingsEn.internal(_root);
 }
@@ -189,6 +190,60 @@ class TranslationsSessionsEn {
 	late final TranslationsSessionsDirPickerEn dirPicker = TranslationsSessionsDirPickerEn.internal(_root);
 	late final TranslationsSessionsInspectorEn inspector = TranslationsSessionsInspectorEn.internal(_root);
 	late final TranslationsSessionsSpawnSheetEn spawnSheet = TranslationsSessionsSpawnSheetEn.internal(_root);
+}
+
+// Path: memory
+class TranslationsMemoryEn {
+	TranslationsMemoryEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Memory'
+	String get title => 'Memory';
+
+	/// en: 'More'
+	String get more => 'More';
+
+	/// en: 'Memory workers'
+	String get workers => 'Memory workers';
+
+	/// en: 'New'
+	String get kNew => 'New';
+
+	/// en: 'Search…'
+	String get searchHint => 'Search…';
+
+	/// en: 'Project'
+	String get projectLabel => 'Project';
+
+	/// en: 'Filter by name or path…'
+	String get filterHint => 'Filter by name or path…';
+
+	/// en: 'Copied'
+	String get copied => 'Copied';
+
+	/// en: 'Copy text'
+	String get copyTooltip => 'Copy text';
+
+	late final TranslationsMemoryDeleteAllConfirmEn deleteAllConfirm = TranslationsMemoryDeleteAllConfirmEn.internal(_root);
+
+	/// en: 'Deleted {n} memory item'
+	String deletedSnackOne({required Object n}) => 'Deleted ${n} memory item';
+
+	/// en: 'Deleted {n} memory items'
+	String deletedSnackOther({required Object n}) => 'Deleted ${n} memory items';
+
+	/// en: 'Bulk delete failed: {error}'
+	String bulkDeleteFailedApi({required Object error}) => 'Bulk delete failed: ${error}';
+
+	/// en: 'Bulk delete failed: {error}'
+	String bulkDeleteFailedGeneric({required Object error}) => 'Bulk delete failed: ${error}';
+
+	late final TranslationsMemoryDeleteOneEn deleteOne = TranslationsMemoryDeleteOneEn.internal(_root);
+	late final TranslationsMemoryScopeEn scope = TranslationsMemoryScopeEn.internal(_root);
+	late final TranslationsMemoryCreateEn create = TranslationsMemoryCreateEn.internal(_root);
 }
 
 // Path: about
@@ -564,6 +619,72 @@ class TranslationsSessionsSpawnSheetEn {
 	late final TranslationsSessionsSpawnSheetNoProvidersEn noProviders = TranslationsSessionsSpawnSheetNoProvidersEn.internal(_root);
 	late final TranslationsSessionsSpawnSheetProviderLoadErrorEn providerLoadError = TranslationsSessionsSpawnSheetProviderLoadErrorEn.internal(_root);
 	late final TranslationsSessionsSpawnSheetClaudeAccountEn claudeAccount = TranslationsSessionsSpawnSheetClaudeAccountEn.internal(_root);
+}
+
+// Path: memory.deleteAllConfirm
+class TranslationsMemoryDeleteAllConfirmEn {
+	TranslationsMemoryDeleteAllConfirmEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Delete every memory in this scope?'
+	String get title => 'Delete every memory in this scope?';
+
+	/// en: 'Delete all'
+	String get deleteAll => 'Delete all';
+}
+
+// Path: memory.deleteOne
+class TranslationsMemoryDeleteOneEn {
+	TranslationsMemoryDeleteOneEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Delete memory?'
+	String get title => 'Delete memory?';
+
+	/// en: 'This cannot be undone.'
+	String get body => 'This cannot be undone.';
+}
+
+// Path: memory.scope
+class TranslationsMemoryScopeEn {
+	TranslationsMemoryScopeEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Project'
+	String get project => 'Project';
+
+	/// en: 'Global'
+	String get global => 'Global';
+}
+
+// Path: memory.create
+class TranslationsMemoryCreateEn {
+	TranslationsMemoryCreateEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Text'
+	String get textLabel => 'Text';
+
+	/// en: 'Scope key (project cwd)'
+	String get scopeKeyLabel => 'Scope key (project cwd)';
+
+	/// en: '/Users/you/projects/foo'
+	String get scopeKeyHint => '/Users/you/projects/foo';
+
+	/// en: 'Create'
+	String get submit => 'Create';
 }
 
 // Path: about.sections
@@ -1557,6 +1678,29 @@ extension on Translations {
 			'sessions.spawnSheet.claudeAccount.noTokenSuffix' => ' (no token)',
 			'sessions.spawnSheet.claudeAccount.noneHint' => 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY. Add accounts under Settings → Accounts on the web admin.',
 			'sessions.spawnSheet.claudeAccount.errorHint' => ({required Object error}) => 'Could not load Claude accounts (${error}). The session will spawn with the gateway default.',
+			'memory.title' => 'Memory',
+			'memory.more' => 'More',
+			'memory.workers' => 'Memory workers',
+			'memory.kNew' => 'New',
+			'memory.searchHint' => 'Search…',
+			'memory.projectLabel' => 'Project',
+			'memory.filterHint' => 'Filter by name or path…',
+			'memory.copied' => 'Copied',
+			'memory.copyTooltip' => 'Copy text',
+			'memory.deleteAllConfirm.title' => 'Delete every memory in this scope?',
+			'memory.deleteAllConfirm.deleteAll' => 'Delete all',
+			'memory.deletedSnackOne' => ({required Object n}) => 'Deleted ${n} memory item',
+			'memory.deletedSnackOther' => ({required Object n}) => 'Deleted ${n} memory items',
+			'memory.bulkDeleteFailedApi' => ({required Object error}) => 'Bulk delete failed: ${error}',
+			'memory.bulkDeleteFailedGeneric' => ({required Object error}) => 'Bulk delete failed: ${error}',
+			'memory.deleteOne.title' => 'Delete memory?',
+			'memory.deleteOne.body' => 'This cannot be undone.',
+			'memory.scope.project' => 'Project',
+			'memory.scope.global' => 'Global',
+			'memory.create.textLabel' => 'Text',
+			'memory.create.scopeKeyLabel' => 'Scope key (project cwd)',
+			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',
+			'memory.create.submit' => 'Create',
 			'about.title' => 'About',
 			'about.loading' => 'Loading…',
 			'about.sections.app' => 'App',
