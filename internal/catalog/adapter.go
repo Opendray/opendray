@@ -342,12 +342,10 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		// instead of falling back to "latest mtime in dir" which
 		// picks up unrelated active conversations. Claude Code and
 		// Gemini both accept `--session-id <uuid>`; Codex does not,
-		// so it stays on the cwd-based reader path.
-		if injectSessionIDFor(providerID, &out) {
-			// out.ClaudeSessionID is the channel the manager uses to
-			// persist this value onto the sessions row. injectSessionIDFor
-			// already populated it; nothing else to do here.
-		}
+		// so it stays on the cwd-based reader path. injectSessionIDFor
+		// mutates out.Args + out.ClaudeSessionID directly, and the
+		// session manager picks up the UUID for persistence.
+		injectSessionIDFor(providerID, &out)
 
 		if wantClaudeAccount {
 			acct, token, err := sp.accounts.ReadToken(prepareCtx, claudeAccountID)
