@@ -392,7 +392,35 @@
     "cliGemini": "Gemini",
     "claudeAccountLabel": "Claude 账号",
     "claudeAccountDefault": "默认",
-    "test": "测试"
+    "test": "测试",
+    "intro": "每个记忆系统的 LLM 触点都可以独立服务 — 由本地 summarizer 端点（LM Studio / OpenAI 兼容）或在 --print 模式下生成无头 Claude / Gemini agent 来处理。高质量叙事任务（gitactivity、transcript）适合 agent 工作器；高频任务（gatekeeper）按设计保留在本地端点上。",
+    "errorTitle": "端点不可达",
+    "errorDetail": "/api/v1/memory/workers 路由在 M25 中是新增的 — opendray 二进制可能需要重启以挂载这些路由并运行迁移 0029。",
+    "summarizerOnlyBadge": "仅 summarizer",
+    "summarizerInfo": "使用注册表默认 summarizer 提供商。在 Web 管理端选择具体行。",
+    "agentWarning": "Agent 模式每次调用都会生成无头 CLI。延迟约 5-15 秒（相比 summarizer 约 1 秒）；成本从 CPU 转移到你的 Claude / Gemini 配额。",
+    "noCalls24h": "过去 24 小时没有调用。",
+    "testOkSnack": "{label} OK — {duration}ms",
+    "testFailedReturnedSnack": "{label} 失败：{error}",
+    "unknownError": "未知",
+    "tasks": {
+      "gatekeeper": {
+        "label": "守门员",
+        "description": "每次 memory_store 写入前的过滤器。高频（目标 <500ms） — 仅 summarizer。"
+      },
+      "cleaner": {
+        "label": "清理馆员",
+        "description": "定期 LLM 馆员。判断旧记忆为保留 / 过期 / 重复。"
+      },
+      "gitactivity": {
+        "label": "Git 活动摘要器",
+        "description": "git log → 每 24 小时的 2-3 段叙事。天然适合 agent 工作器。"
+      },
+      "transcript": {
+        "label": "会话记录摘要器",
+        "description": "会话结束时的「agent 做了什么」摘要。天然适合 agent 工作器。"
+      }
+    }
   },
   "memoryCleanup": {
     "title": "记忆清理",

@@ -247,6 +247,17 @@ class _TranslationsMemoryWorkersZh extends TranslationsMemoryWorkersEn {
 	@override String get claudeAccountLabel => 'Claude 账号';
 	@override String get claudeAccountDefault => '默认';
 	@override String get test => '测试';
+	@override String get intro => '每个记忆系统的 LLM 触点都可以独立服务 — 由本地 summarizer 端点（LM Studio / OpenAI 兼容）或在 --print 模式下生成无头 Claude / Gemini agent 来处理。高质量叙事任务（gitactivity、transcript）适合 agent 工作器；高频任务（gatekeeper）按设计保留在本地端点上。';
+	@override String get errorTitle => '端点不可达';
+	@override String get errorDetail => '/api/v1/memory/workers 路由在 M25 中是新增的 — opendray 二进制可能需要重启以挂载这些路由并运行迁移 0029。';
+	@override String get summarizerOnlyBadge => '仅 summarizer';
+	@override String get summarizerInfo => '使用注册表默认 summarizer 提供商。在 Web 管理端选择具体行。';
+	@override String get agentWarning => 'Agent 模式每次调用都会生成无头 CLI。延迟约 5-15 秒（相比 summarizer 约 1 秒）；成本从 CPU 转移到你的 Claude / Gemini 配额。';
+	@override String get noCalls24h => '过去 24 小时没有调用。';
+	@override String testOkSnack({required Object label, required Object duration}) => '${label} OK — ${duration}ms';
+	@override String testFailedReturnedSnack({required Object label, required Object error}) => '${label} 失败：${error}';
+	@override String get unknownError => '未知';
+	@override late final _TranslationsMemoryWorkersTasksZh tasks = _TranslationsMemoryWorkersTasksZh._(_root);
 }
 
 // Path: memoryCleanup
@@ -815,6 +826,19 @@ class _TranslationsProvidersAccountsZh extends TranslationsProvidersAccountsEn {
 	@override String get deleteTitle => '删除账号？';
 	@override String importFailedApi({required Object error}) => '导入失败：${error}';
 	@override String importFailedGeneric({required Object error}) => '导入失败：${error}';
+}
+
+// Path: memoryWorkers.tasks
+class _TranslationsMemoryWorkersTasksZh extends TranslationsMemoryWorkersTasksEn {
+	_TranslationsMemoryWorkersTasksZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsMemoryWorkersTasksGatekeeperZh gatekeeper = _TranslationsMemoryWorkersTasksGatekeeperZh._(_root);
+	@override late final _TranslationsMemoryWorkersTasksCleanerZh cleaner = _TranslationsMemoryWorkersTasksCleanerZh._(_root);
+	@override late final _TranslationsMemoryWorkersTasksGitactivityZh gitactivity = _TranslationsMemoryWorkersTasksGitactivityZh._(_root);
+	@override late final _TranslationsMemoryWorkersTasksTranscriptZh transcript = _TranslationsMemoryWorkersTasksTranscriptZh._(_root);
 }
 
 // Path: backups.encryption
@@ -1476,6 +1500,50 @@ class _TranslationsSessionsSpawnSheetClaudeAccountZh extends TranslationsSession
 	@override String errorHint({required Object error}) => '无法加载 Claude 账号（${error}）。会话将以网关默认配置启动。';
 }
 
+// Path: memoryWorkers.tasks.gatekeeper
+class _TranslationsMemoryWorkersTasksGatekeeperZh extends TranslationsMemoryWorkersTasksGatekeeperEn {
+	_TranslationsMemoryWorkersTasksGatekeeperZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '守门员';
+	@override String get description => '每次 memory_store 写入前的过滤器。高频（目标 <500ms） — 仅 summarizer。';
+}
+
+// Path: memoryWorkers.tasks.cleaner
+class _TranslationsMemoryWorkersTasksCleanerZh extends TranslationsMemoryWorkersTasksCleanerEn {
+	_TranslationsMemoryWorkersTasksCleanerZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '清理馆员';
+	@override String get description => '定期 LLM 馆员。判断旧记忆为保留 / 过期 / 重复。';
+}
+
+// Path: memoryWorkers.tasks.gitactivity
+class _TranslationsMemoryWorkersTasksGitactivityZh extends TranslationsMemoryWorkersTasksGitactivityEn {
+	_TranslationsMemoryWorkersTasksGitactivityZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Git 活动摘要器';
+	@override String get description => 'git log → 每 24 小时的 2-3 段叙事。天然适合 agent 工作器。';
+}
+
+// Path: memoryWorkers.tasks.transcript
+class _TranslationsMemoryWorkersTasksTranscriptZh extends TranslationsMemoryWorkersTasksTranscriptEn {
+	_TranslationsMemoryWorkersTasksTranscriptZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '会话记录摘要器';
+	@override String get description => '会话结束时的「agent 做了什么」摘要。天然适合 agent 工作器。';
+}
+
 // Path: settings.logViewer.levels
 class _TranslationsSettingsLogViewerLevelsZh extends TranslationsSettingsLogViewerLevelsEn {
 	_TranslationsSettingsLogViewerLevelsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -1812,6 +1880,24 @@ extension on TranslationsZh {
 			'memoryWorkers.claudeAccountLabel' => 'Claude 账号',
 			'memoryWorkers.claudeAccountDefault' => '默认',
 			'memoryWorkers.test' => '测试',
+			'memoryWorkers.intro' => '每个记忆系统的 LLM 触点都可以独立服务 — 由本地 summarizer 端点（LM Studio / OpenAI 兼容）或在 --print 模式下生成无头 Claude / Gemini agent 来处理。高质量叙事任务（gitactivity、transcript）适合 agent 工作器；高频任务（gatekeeper）按设计保留在本地端点上。',
+			'memoryWorkers.errorTitle' => '端点不可达',
+			'memoryWorkers.errorDetail' => '/api/v1/memory/workers 路由在 M25 中是新增的 — opendray 二进制可能需要重启以挂载这些路由并运行迁移 0029。',
+			'memoryWorkers.summarizerOnlyBadge' => '仅 summarizer',
+			'memoryWorkers.summarizerInfo' => '使用注册表默认 summarizer 提供商。在 Web 管理端选择具体行。',
+			'memoryWorkers.agentWarning' => 'Agent 模式每次调用都会生成无头 CLI。延迟约 5-15 秒（相比 summarizer 约 1 秒）；成本从 CPU 转移到你的 Claude / Gemini 配额。',
+			'memoryWorkers.noCalls24h' => '过去 24 小时没有调用。',
+			'memoryWorkers.testOkSnack' => ({required Object label, required Object duration}) => '${label} OK — ${duration}ms',
+			'memoryWorkers.testFailedReturnedSnack' => ({required Object label, required Object error}) => '${label} 失败：${error}',
+			'memoryWorkers.unknownError' => '未知',
+			'memoryWorkers.tasks.gatekeeper.label' => '守门员',
+			'memoryWorkers.tasks.gatekeeper.description' => '每次 memory_store 写入前的过滤器。高频（目标 <500ms） — 仅 summarizer。',
+			'memoryWorkers.tasks.cleaner.label' => '清理馆员',
+			'memoryWorkers.tasks.cleaner.description' => '定期 LLM 馆员。判断旧记忆为保留 / 过期 / 重复。',
+			'memoryWorkers.tasks.gitactivity.label' => 'Git 活动摘要器',
+			'memoryWorkers.tasks.gitactivity.description' => 'git log → 每 24 小时的 2-3 段叙事。天然适合 agent 工作器。',
+			'memoryWorkers.tasks.transcript.label' => '会话记录摘要器',
+			'memoryWorkers.tasks.transcript.description' => '会话结束时的「agent 做了什么」摘要。天然适合 agent 工作器。',
 			'memoryCleanup.title' => '记忆清理',
 			'memoryCleanup.approveFailed' => ({required Object error}) => '批准失败：${error}',
 			'memoryCleanup.rejectFailed' => ({required Object error}) => '拒绝失败：${error}',
@@ -2025,6 +2111,8 @@ extension on TranslationsZh {
 			'settings.changeCredentials.currentPassword' => '当前密码',
 			'settings.changeCredentials.newUsername' => '新用户名',
 			'settings.changeCredentials.newPassword' => '新密码',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.confirmPassword' => '确认新密码',
 			'settings.changeCredentials.validatorRequired' => '必填',
 			'settings.changeCredentials.passwordHelper' => '至少 8 个字符',
@@ -2043,8 +2131,6 @@ extension on TranslationsZh {
 			'settings.logViewer.levels.all' => '全部',
 			'settings.logViewer.levels.debug' => '调试',
 			'settings.logViewer.levels.info' => '信息',
-			_ => null,
-		} ?? switch (path) {
 			'settings.logViewer.levels.warn' => '警告',
 			'settings.logViewer.levels.error' => '错误',
 			'settings.serverSettings.title' => '服务器设置',
