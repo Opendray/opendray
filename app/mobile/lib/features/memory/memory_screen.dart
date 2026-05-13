@@ -8,6 +8,7 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/memory_api.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
+import 'package:opendray/features/memory_workers/memory_workers_screen.dart';
 import 'package:opendray/features/project/project_screen.dart';
 import 'package:path/path.dart' as p;
 
@@ -374,6 +375,17 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
       appBar: AppBar(
         title: const Text('Memory'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.tune),
+            tooltip: 'Memory workers',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const MemoryWorkersScreen(),
+                ),
+              );
+            },
+          ),
           AnimatedBuilder(
             animation: _tabs,
             builder: (_, __) => _bulkDeleteMenu(context),
