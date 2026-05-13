@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/skills_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/skills/skill_editor_screen.dart';
 
 // Skills list screen. Two visual classes:
@@ -71,11 +72,11 @@ class _SkillsScreenState extends ConsumerState<SkillsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Skills'),
+        title: Text(t.skills.title),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: t.sessions.inspector.shared.refresh,
             onPressed: _state is AsyncLoading ? null : _load,
           ),
         ],
@@ -89,7 +90,7 @@ class _SkillsScreenState extends ConsumerState<SkillsScreen> {
         // ignore: unnecessary_lambdas — _openEditor returns Future<void>
         onPressed: () => _openEditor(),
         icon: const Icon(Icons.add),
-        label: const Text('New skill'),
+        label: Text(t.skills.newSkill),
       ),
     );
   }
@@ -243,7 +244,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),

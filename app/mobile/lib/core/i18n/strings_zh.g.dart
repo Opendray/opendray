@@ -47,6 +47,9 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsMcpZh mcp = _TranslationsMcpZh._(_root);
 	@override late final _TranslationsProvidersZh providers = _TranslationsProvidersZh._(_root);
 	@override late final _TranslationsIntegrationsZh integrations = _TranslationsIntegrationsZh._(_root);
+	@override late final _TranslationsSkillsZh skills = _TranslationsSkillsZh._(_root);
+	@override late final _TranslationsCustomTasksZh customTasks = _TranslationsCustomTasksZh._(_root);
+	@override late final _TranslationsNotesPageZh notesPage = _TranslationsNotesPageZh._(_root);
 	@override late final _TranslationsMemoryZh memory = _TranslationsMemoryZh._(_root);
 	@override late final _TranslationsAboutZh about = _TranslationsAboutZh._(_root);
 	@override late final _TranslationsSettingsZh settings = _TranslationsSettingsZh._(_root);
@@ -209,6 +212,71 @@ class _TranslationsIntegrationsZh extends TranslationsIntegrationsEn {
 	@override String get newApiKeySubtitle => '将其交给集成方。旧密钥已失效。';
 	@override String rotateFailedApi({required Object error}) => '轮换失败：${error}';
 	@override String rotateFailedGeneric({required Object error}) => '轮换失败：${error}';
+}
+
+// Path: skills
+class _TranslationsSkillsZh extends TranslationsSkillsEn {
+	_TranslationsSkillsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '技能';
+	@override String get newSkill => '新建技能';
+	@override String customizingBuiltin({required Object id}) => '自定义内置 ${id}';
+	@override String get idLabel => 'Id（slug）';
+	@override String get idHint => '例如：tdd-guide';
+	@override String get bodyLabel => '正文（Markdown）';
+}
+
+// Path: customTasks
+class _TranslationsCustomTasksZh extends TranslationsCustomTasksEn {
+	_TranslationsCustomTasksZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '自定义任务';
+	@override String get newTask => '新建任务';
+	@override String get deleteTitle => '删除任务？';
+	@override String deletedSnack({required Object name}) => '已删除 ${name}。';
+	@override String deleteFailedApi({required Object error}) => '删除失败：${error}';
+	@override String deleteFailedGeneric({required Object error}) => '删除失败：${error}';
+	@override String get popupEdit => '编辑';
+	@override String get popupDelete => '删除';
+	@override String get nameHint => '例如：backend-tests';
+	@override String get commandHint => '/run pnpm test --filter backend';
+	@override String get descriptionHint => '在任务名下方显示的一行说明。';
+	@override String get scopeGlobal => '全局';
+	@override String get scopeProject => '项目';
+	@override String get cwdHint => '/Users/you/projects/backend';
+}
+
+// Path: notesPage
+class _TranslationsNotesPageZh extends TranslationsNotesPageEn {
+	_TranslationsNotesPageZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '笔记';
+	@override String get newButton => '新建';
+	@override String get newNoteDialogTitle => '新建笔记';
+	@override String get searchHint => '搜索整个仓库…';
+	@override String get up => '上级';
+	@override String get copyPath => '复制路径';
+	@override String get open => '打开';
+	@override String copiedSnack({required Object path}) => '已复制 ${path}';
+	@override String get deleteTitle => '删除笔记？';
+	@override String deletedSnack({required Object path}) => '已删除 ${path}';
+	@override String deleteFailedApi({required Object error}) => '删除失败：${error}';
+	@override String deleteFailedGeneric({required Object error}) => '删除失败：${error}';
+	@override String createFailedApi({required Object error}) => '创建失败：${error}';
+	@override String createFailedGeneric({required Object error}) => '创建失败：${error}';
+	@override String get pathLabel => '相对仓库的路径';
+	@override String get pathHint => 'personal/scratch.md';
+	@override String get create => '创建';
+	@override late final _TranslationsNotesPageEditorZh editor = _TranslationsNotesPageEditorZh._(_root);
 }
 
 // Path: memory
@@ -536,6 +604,18 @@ class _TranslationsProvidersAccountsZh extends TranslationsProvidersAccountsEn {
 	@override String get deleteTitle => '删除账号？';
 	@override String importFailedApi({required Object error}) => '导入失败：${error}';
 	@override String importFailedGeneric({required Object error}) => '导入失败：${error}';
+}
+
+// Path: notesPage.editor
+class _TranslationsNotesPageEditorZh extends TranslationsNotesPageEditorEn {
+	_TranslationsNotesPageEditorZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get markdownHint => 'Markdown…';
+	@override String get saving => '保存中…';
+	@override String get autosave => '随输入自动保存';
 }
 
 // Path: memory.deleteAllConfirm
@@ -1339,6 +1419,46 @@ extension on TranslationsZh {
 			'integrations.newApiKeySubtitle' => '将其交给集成方。旧密钥已失效。',
 			'integrations.rotateFailedApi' => ({required Object error}) => '轮换失败：${error}',
 			'integrations.rotateFailedGeneric' => ({required Object error}) => '轮换失败：${error}',
+			'skills.title' => '技能',
+			'skills.newSkill' => '新建技能',
+			'skills.customizingBuiltin' => ({required Object id}) => '自定义内置 ${id}',
+			'skills.idLabel' => 'Id（slug）',
+			'skills.idHint' => '例如：tdd-guide',
+			'skills.bodyLabel' => '正文（Markdown）',
+			'customTasks.title' => '自定义任务',
+			'customTasks.newTask' => '新建任务',
+			'customTasks.deleteTitle' => '删除任务？',
+			'customTasks.deletedSnack' => ({required Object name}) => '已删除 ${name}。',
+			'customTasks.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
+			'customTasks.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
+			'customTasks.popupEdit' => '编辑',
+			'customTasks.popupDelete' => '删除',
+			'customTasks.nameHint' => '例如：backend-tests',
+			'customTasks.commandHint' => '/run pnpm test --filter backend',
+			'customTasks.descriptionHint' => '在任务名下方显示的一行说明。',
+			'customTasks.scopeGlobal' => '全局',
+			'customTasks.scopeProject' => '项目',
+			'customTasks.cwdHint' => '/Users/you/projects/backend',
+			'notesPage.title' => '笔记',
+			'notesPage.newButton' => '新建',
+			'notesPage.newNoteDialogTitle' => '新建笔记',
+			'notesPage.searchHint' => '搜索整个仓库…',
+			'notesPage.up' => '上级',
+			'notesPage.copyPath' => '复制路径',
+			'notesPage.open' => '打开',
+			'notesPage.copiedSnack' => ({required Object path}) => '已复制 ${path}',
+			'notesPage.deleteTitle' => '删除笔记？',
+			'notesPage.deletedSnack' => ({required Object path}) => '已删除 ${path}',
+			'notesPage.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
+			'notesPage.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
+			'notesPage.createFailedApi' => ({required Object error}) => '创建失败：${error}',
+			'notesPage.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',
+			'notesPage.pathLabel' => '相对仓库的路径',
+			'notesPage.pathHint' => 'personal/scratch.md',
+			'notesPage.create' => '创建',
+			'notesPage.editor.markdownHint' => 'Markdown…',
+			'notesPage.editor.saving' => '保存中…',
+			'notesPage.editor.autosave' => '随输入自动保存',
 			'memory.title' => '记忆',
 			'memory.more' => '更多',
 			'memory.workers' => '记忆工作器',

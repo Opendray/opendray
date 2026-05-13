@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/skills_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 // SkillEditorScreen handles three flows from one page:
 //
@@ -158,7 +159,7 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(t.common.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
@@ -259,7 +260,7 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
                   if (_isCustomize)
                     _InfoBanner(
                       tone: Theme.of(context).colorScheme.tertiary,
-                      title: 'Customizing built-in ${ex!.id}',
+                      title: t.skills.customizingBuiltin(id: ex!.id),
                       body: 'Saving creates a vault override with the same '
                           'id. The original built-in stays embedded in '
                           'the gateway binary; deleting the override '
@@ -269,12 +270,12 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
                     controller: _idCtrl,
                     autocorrect: false,
                     enabled: _isNew,
-                    decoration: const InputDecoration(
-                      labelText: 'Id (slug)',
-                      hintText: 'e.g. tdd-guide',
+                    decoration: InputDecoration(
+                      labelText: t.skills.idLabel,
+                      hintText: t.skills.idHint,
                       helperText: 'Lowercase letters / digits / dash. '
                           'Locked once created.',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -293,10 +294,10 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
                         fontSize: 13,
                         height: 1.4,
                       ),
-                      decoration: const InputDecoration(
-                        labelText: 'Body (markdown)',
+                      decoration: InputDecoration(
+                        labelText: t.skills.bodyLabel,
                         alignLabelWithHint: true,
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                   ),

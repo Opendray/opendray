@@ -48,6 +48,9 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsMcpEn mcp = TranslationsMcpEn.internal(_root);
 	late final TranslationsProvidersEn providers = TranslationsProvidersEn.internal(_root);
 	late final TranslationsIntegrationsEn integrations = TranslationsIntegrationsEn.internal(_root);
+	late final TranslationsSkillsEn skills = TranslationsSkillsEn.internal(_root);
+	late final TranslationsCustomTasksEn customTasks = TranslationsCustomTasksEn.internal(_root);
+	late final TranslationsNotesPageEn notesPage = TranslationsNotesPageEn.internal(_root);
 	late final TranslationsMemoryEn memory = TranslationsMemoryEn.internal(_root);
 	late final TranslationsAboutEn about = TranslationsAboutEn.internal(_root);
 	late final TranslationsSettingsEn settings = TranslationsSettingsEn.internal(_root);
@@ -355,6 +358,146 @@ class TranslationsIntegrationsEn {
 
 	/// en: 'Rotate failed: {error}'
 	String rotateFailedGeneric({required Object error}) => 'Rotate failed: ${error}';
+}
+
+// Path: skills
+class TranslationsSkillsEn {
+	TranslationsSkillsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Skills'
+	String get title => 'Skills';
+
+	/// en: 'New skill'
+	String get newSkill => 'New skill';
+
+	/// en: 'Customizing built-in {id}'
+	String customizingBuiltin({required Object id}) => 'Customizing built-in ${id}';
+
+	/// en: 'Id (slug)'
+	String get idLabel => 'Id (slug)';
+
+	/// en: 'e.g. tdd-guide'
+	String get idHint => 'e.g. tdd-guide';
+
+	/// en: 'Body (markdown)'
+	String get bodyLabel => 'Body (markdown)';
+}
+
+// Path: customTasks
+class TranslationsCustomTasksEn {
+	TranslationsCustomTasksEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Custom tasks'
+	String get title => 'Custom tasks';
+
+	/// en: 'New task'
+	String get newTask => 'New task';
+
+	/// en: 'Delete task?'
+	String get deleteTitle => 'Delete task?';
+
+	/// en: 'Deleted {name}.'
+	String deletedSnack({required Object name}) => 'Deleted ${name}.';
+
+	/// en: 'Delete failed: {error}'
+	String deleteFailedApi({required Object error}) => 'Delete failed: ${error}';
+
+	/// en: 'Delete failed: {error}'
+	String deleteFailedGeneric({required Object error}) => 'Delete failed: ${error}';
+
+	/// en: 'Edit'
+	String get popupEdit => 'Edit';
+
+	/// en: 'Delete'
+	String get popupDelete => 'Delete';
+
+	/// en: 'e.g. backend-tests'
+	String get nameHint => 'e.g. backend-tests';
+
+	/// en: '/run pnpm test --filter backend'
+	String get commandHint => '/run pnpm test --filter backend';
+
+	/// en: 'One-liner shown under the task name.'
+	String get descriptionHint => 'One-liner shown under the task name.';
+
+	/// en: 'Global'
+	String get scopeGlobal => 'Global';
+
+	/// en: 'Project'
+	String get scopeProject => 'Project';
+
+	/// en: '/Users/you/projects/backend'
+	String get cwdHint => '/Users/you/projects/backend';
+}
+
+// Path: notesPage
+class TranslationsNotesPageEn {
+	TranslationsNotesPageEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Notes'
+	String get title => 'Notes';
+
+	/// en: 'New'
+	String get newButton => 'New';
+
+	/// en: 'New note'
+	String get newNoteDialogTitle => 'New note';
+
+	/// en: 'Search across the whole vault…'
+	String get searchHint => 'Search across the whole vault…';
+
+	/// en: 'Up'
+	String get up => 'Up';
+
+	/// en: 'Copy path'
+	String get copyPath => 'Copy path';
+
+	/// en: 'Open'
+	String get open => 'Open';
+
+	/// en: 'Copied {path}'
+	String copiedSnack({required Object path}) => 'Copied ${path}';
+
+	/// en: 'Delete note?'
+	String get deleteTitle => 'Delete note?';
+
+	/// en: 'Deleted {path}'
+	String deletedSnack({required Object path}) => 'Deleted ${path}';
+
+	/// en: 'Delete failed: {error}'
+	String deleteFailedApi({required Object error}) => 'Delete failed: ${error}';
+
+	/// en: 'Delete failed: {error}'
+	String deleteFailedGeneric({required Object error}) => 'Delete failed: ${error}';
+
+	/// en: 'Create failed: {error}'
+	String createFailedApi({required Object error}) => 'Create failed: ${error}';
+
+	/// en: 'Create failed: {error}'
+	String createFailedGeneric({required Object error}) => 'Create failed: ${error}';
+
+	/// en: 'Vault-relative path'
+	String get pathLabel => 'Vault-relative path';
+
+	/// en: 'personal/scratch.md'
+	String get pathHint => 'personal/scratch.md';
+
+	/// en: 'Create'
+	String get create => 'Create';
+
+	late final TranslationsNotesPageEditorEn editor = TranslationsNotesPageEditorEn.internal(_root);
 }
 
 // Path: memory
@@ -886,6 +1029,24 @@ class TranslationsProvidersAccountsEn {
 
 	/// en: 'Import failed: {error}'
 	String importFailedGeneric({required Object error}) => 'Import failed: ${error}';
+}
+
+// Path: notesPage.editor
+class TranslationsNotesPageEditorEn {
+	TranslationsNotesPageEditorEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Markdown…'
+	String get markdownHint => 'Markdown…';
+
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
+	/// en: 'Auto-saves as you type'
+	String get autosave => 'Auto-saves as you type';
 }
 
 // Path: memory.deleteAllConfirm
@@ -2006,6 +2167,46 @@ extension on Translations {
 			'integrations.newApiKeySubtitle' => 'Hand this to the integration. The previous key has just been invalidated.',
 			'integrations.rotateFailedApi' => ({required Object error}) => 'Rotate failed: ${error}',
 			'integrations.rotateFailedGeneric' => ({required Object error}) => 'Rotate failed: ${error}',
+			'skills.title' => 'Skills',
+			'skills.newSkill' => 'New skill',
+			'skills.customizingBuiltin' => ({required Object id}) => 'Customizing built-in ${id}',
+			'skills.idLabel' => 'Id (slug)',
+			'skills.idHint' => 'e.g. tdd-guide',
+			'skills.bodyLabel' => 'Body (markdown)',
+			'customTasks.title' => 'Custom tasks',
+			'customTasks.newTask' => 'New task',
+			'customTasks.deleteTitle' => 'Delete task?',
+			'customTasks.deletedSnack' => ({required Object name}) => 'Deleted ${name}.',
+			'customTasks.deleteFailedApi' => ({required Object error}) => 'Delete failed: ${error}',
+			'customTasks.deleteFailedGeneric' => ({required Object error}) => 'Delete failed: ${error}',
+			'customTasks.popupEdit' => 'Edit',
+			'customTasks.popupDelete' => 'Delete',
+			'customTasks.nameHint' => 'e.g. backend-tests',
+			'customTasks.commandHint' => '/run pnpm test --filter backend',
+			'customTasks.descriptionHint' => 'One-liner shown under the task name.',
+			'customTasks.scopeGlobal' => 'Global',
+			'customTasks.scopeProject' => 'Project',
+			'customTasks.cwdHint' => '/Users/you/projects/backend',
+			'notesPage.title' => 'Notes',
+			'notesPage.newButton' => 'New',
+			'notesPage.newNoteDialogTitle' => 'New note',
+			'notesPage.searchHint' => 'Search across the whole vault…',
+			'notesPage.up' => 'Up',
+			'notesPage.copyPath' => 'Copy path',
+			'notesPage.open' => 'Open',
+			'notesPage.copiedSnack' => ({required Object path}) => 'Copied ${path}',
+			'notesPage.deleteTitle' => 'Delete note?',
+			'notesPage.deletedSnack' => ({required Object path}) => 'Deleted ${path}',
+			'notesPage.deleteFailedApi' => ({required Object error}) => 'Delete failed: ${error}',
+			'notesPage.deleteFailedGeneric' => ({required Object error}) => 'Delete failed: ${error}',
+			'notesPage.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
+			'notesPage.createFailedGeneric' => ({required Object error}) => 'Create failed: ${error}',
+			'notesPage.pathLabel' => 'Vault-relative path',
+			'notesPage.pathHint' => 'personal/scratch.md',
+			'notesPage.create' => 'Create',
+			'notesPage.editor.markdownHint' => 'Markdown…',
+			'notesPage.editor.saving' => 'Saving…',
+			'notesPage.editor.autosave' => 'Auto-saves as you type',
 			'memory.title' => 'Memory',
 			'memory.more' => 'More',
 			'memory.workers' => 'Memory workers',

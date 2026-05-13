@@ -16,6 +16,7 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/custom_tasks_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart' as i18n;
 
 class CustomTasksScreen extends ConsumerStatefulWidget {
   const CustomTasksScreen({super.key});
@@ -72,7 +73,7 @@ class _CustomTasksScreenState extends ConsumerState<CustomTasksScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete task?'),
+        title: Text(i18n.t.customTasks.deleteTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,14 +94,14 @@ class _CustomTasksScreenState extends ConsumerState<CustomTasksScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(i18n.t.common.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text(i18n.t.common.delete),
           ),
         ],
       ),
@@ -112,7 +113,7 @@ class _CustomTasksScreenState extends ConsumerState<CustomTasksScreen> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Deleted ${t.name}.'),
+          content: Text(i18n.t.customTasks.deletedSnack(name: t.name)),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
@@ -121,11 +122,11 @@ class _CustomTasksScreenState extends ConsumerState<CustomTasksScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('Delete failed: ${e.message}')),
+        SnackBar(content: Text(i18n.t.customTasks.deleteFailedApi(error: e.message))),
       );
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(i18n.t.customTasks.deleteFailedGeneric(error: e.toString()))));
     }
   }
 
@@ -133,11 +134,11 @@ class _CustomTasksScreenState extends ConsumerState<CustomTasksScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Custom tasks'),
+        title: Text(i18n.t.customTasks.title),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: i18n.t.sessions.inspector.shared.refresh,
             onPressed: _state is AsyncLoading ? null : _load,
           ),
         ],
@@ -150,7 +151,7 @@ class _CustomTasksScreenState extends ConsumerState<CustomTasksScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openEditor,
         icon: const Icon(Icons.add),
-        label: const Text('New task'),
+        label: Text(i18n.t.customTasks.newTask),
       ),
     );
   }
@@ -229,9 +230,9 @@ class _CustomTasksScreenState extends ConsumerState<CustomTasksScreen> {
             ),
             trailing: PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, size: 20),
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'edit', child: Text('Edit')),
-                PopupMenuItem(value: 'delete', child: Text('Delete')),
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'edit', child: Text(i18n.t.customTasks.popupEdit)),
+                PopupMenuItem(value: 'delete', child: Text(i18n.t.customTasks.popupDelete)),
               ],
               onSelected: (action) {
                 if (action == 'edit') {
@@ -369,8 +370,8 @@ class _CustomTaskEditorScreenState
             TextField(
               controller: _nameCtrl,
               enabled: !_submitting,
-              decoration: const InputDecoration(
-                hintText: 'e.g. backend-tests',
+              decoration: InputDecoration(
+                hintText: i18n.t.customTasks.nameHint,
                 helperText: "Shown in the inspector's task picker.",
               ),
             ),
@@ -383,8 +384,8 @@ class _CustomTaskEditorScreenState
               autocorrect: false,
               maxLines: 3,
               minLines: 1,
-              decoration: const InputDecoration(
-                hintText: '/run pnpm test --filter backend',
+              decoration: InputDecoration(
+                hintText: i18n.t.customTasks.commandHint,
                 helperText:
                     'The text inserted into the session when picked. Can be a CLI command or a Claude slash command.',
               ),
@@ -398,24 +399,24 @@ class _CustomTaskEditorScreenState
               enabled: !_submitting,
               maxLines: 2,
               minLines: 1,
-              decoration: const InputDecoration(
-                hintText: 'One-liner shown under the task name.',
+              decoration: InputDecoration(
+                hintText: i18n.t.customTasks.descriptionHint,
               ),
             ),
             const SizedBox(height: 14),
             _label('Scope'),
             const SizedBox(height: 4),
             SegmentedButton<_Scope>(
-              segments: const [
+              segments: [
                 ButtonSegment(
                   value: _Scope.global,
-                  icon: Icon(Icons.public, size: 18),
-                  label: Text('Global'),
+                  icon: const Icon(Icons.public, size: 18),
+                  label: Text(i18n.t.customTasks.scopeGlobal),
                 ),
                 ButtonSegment(
                   value: _Scope.project,
-                  icon: Icon(Icons.folder_outlined, size: 18),
-                  label: Text('Project'),
+                  icon: const Icon(Icons.folder_outlined, size: 18),
+                  label: Text(i18n.t.customTasks.scopeProject),
                 ),
               ],
               selected: {_scope},
@@ -439,8 +440,8 @@ class _CustomTaskEditorScreenState
                 enabled: !_submitting,
                 autocorrect: false,
                 keyboardType: TextInputType.url,
-                decoration: const InputDecoration(
-                  hintText: '/Users/you/projects/backend',
+                decoration: InputDecoration(
+                  hintText: i18n.t.customTasks.cwdHint,
                   helperText:
                       'Absolute path. Sessions spawned with this exact cwd will see the task.',
                 ),
@@ -475,7 +476,7 @@ class _CustomTaskEditorScreenState
                     onPressed: _submitting
                         ? null
                         : () => Navigator.of(context).pop(false),
-                    child: const Text('Cancel'),
+                    child: Text(i18n.t.common.cancel),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -551,7 +552,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(i18n.t.common.retry)),
           ],
         ),
       ),
