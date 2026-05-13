@@ -42,6 +42,9 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	// Translations
 	late final TranslationsCommonEn common = TranslationsCommonEn.internal(_root);
 	late final TranslationsAuthEn auth = TranslationsAuthEn.internal(_root);
+	late final TranslationsNavEn nav = TranslationsNavEn.internal(_root);
+	late final TranslationsMoreEn more = TranslationsMoreEn.internal(_root);
+	late final TranslationsAboutEn about = TranslationsAboutEn.internal(_root);
 	late final TranslationsSettingsEn settings = TranslationsSettingsEn.internal(_root);
 }
 
@@ -111,6 +114,75 @@ class TranslationsAuthEn {
 	String errorGeneric({required Object error}) => 'Login failed: ${error}';
 }
 
+// Path: nav
+class TranslationsNavEn {
+	TranslationsNavEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Sessions'
+	String get sessions => 'Sessions';
+
+	/// en: 'Memory'
+	String get memory => 'Memory';
+
+	/// en: 'Notes'
+	String get notes => 'Notes';
+
+	/// en: 'More'
+	String get more => 'More';
+}
+
+// Path: more
+class TranslationsMoreEn {
+	TranslationsMoreEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'More'
+	String get title => 'More';
+
+	late final TranslationsMoreIdentityEn identity = TranslationsMoreIdentityEn.internal(_root);
+	late final TranslationsMoreSectionsEn sections = TranslationsMoreSectionsEn.internal(_root);
+	late final TranslationsMoreItemsEn items = TranslationsMoreItemsEn.internal(_root);
+
+	/// en: 'Sign out'
+	String get signOut => 'Sign out';
+}
+
+// Path: about
+class TranslationsAboutEn {
+	TranslationsAboutEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'About'
+	String get title => 'About';
+
+	/// en: 'Loading…'
+	String get loading => 'Loading…';
+
+	late final TranslationsAboutSectionsEn sections = TranslationsAboutSectionsEn.internal(_root);
+	late final TranslationsAboutFieldsEn fields = TranslationsAboutFieldsEn.internal(_root);
+
+	/// en: 'Copied {label}'
+	String copied({required Object label}) => 'Copied ${label}';
+
+	/// en: 'Copy'
+	String get copyTooltip => 'Copy';
+
+	late final TranslationsAboutCopyLabelsEn copyLabels = TranslationsAboutCopyLabelsEn.internal(_root);
+
+	/// en: 'opendray mobile — multi-CLI gateway control. Source: github.com/Opendray/opendray_v2'
+	String get tagline => 'opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray_v2';
+}
+
 // Path: settings
 class TranslationsSettingsEn {
 	TranslationsSettingsEn.internal(this._root);
@@ -126,6 +198,123 @@ class TranslationsSettingsEn {
 	late final TranslationsSettingsAppearanceEn appearance = TranslationsSettingsAppearanceEn.internal(_root);
 	late final TranslationsSettingsAccountEn account = TranslationsSettingsAccountEn.internal(_root);
 	late final TranslationsSettingsGatewayEn gateway = TranslationsSettingsGatewayEn.internal(_root);
+}
+
+// Path: more.identity
+class TranslationsMoreIdentityEn {
+	TranslationsMoreIdentityEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Signed in as'
+	String get signedInAs => 'Signed in as';
+
+	/// en: 'Server'
+	String get server => 'Server';
+
+	/// en: 'Token expires'
+	String get tokenExpires => 'Token expires';
+}
+
+// Path: more.sections
+class TranslationsMoreSectionsEn {
+	TranslationsMoreSectionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Gateway'
+	String get gateway => 'Gateway';
+
+	/// en: 'Memory'
+	String get memory => 'Memory';
+
+	/// en: 'System'
+	String get system => 'System';
+}
+
+// Path: more.items
+class TranslationsMoreItemsEn {
+	TranslationsMoreItemsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsMoreItemsIntegrationsEn integrations = TranslationsMoreItemsIntegrationsEn.internal(_root);
+	late final TranslationsMoreItemsChannelsEn channels = TranslationsMoreItemsChannelsEn.internal(_root);
+	late final TranslationsMoreItemsProvidersEn providers = TranslationsMoreItemsProvidersEn.internal(_root);
+	late final TranslationsMoreItemsMcpEn mcp = TranslationsMoreItemsMcpEn.internal(_root);
+	late final TranslationsMoreItemsSkillsEn skills = TranslationsMoreItemsSkillsEn.internal(_root);
+	late final TranslationsMoreItemsGitHostsEn gitHosts = TranslationsMoreItemsGitHostsEn.internal(_root);
+	late final TranslationsMoreItemsCustomTasksEn customTasks = TranslationsMoreItemsCustomTasksEn.internal(_root);
+	late final TranslationsMoreItemsProjectMemoryEn projectMemory = TranslationsMoreItemsProjectMemoryEn.internal(_root);
+	late final TranslationsMoreItemsCleanupInboxEn cleanupInbox = TranslationsMoreItemsCleanupInboxEn.internal(_root);
+	late final TranslationsMoreItemsBackupsEn backups = TranslationsMoreItemsBackupsEn.internal(_root);
+	late final TranslationsMoreItemsSettingsEn settings = TranslationsMoreItemsSettingsEn.internal(_root);
+	late final TranslationsMoreItemsAboutEn about = TranslationsMoreItemsAboutEn.internal(_root);
+}
+
+// Path: about.sections
+class TranslationsAboutSectionsEn {
+	TranslationsAboutSectionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'App'
+	String get app => 'App';
+
+	/// en: 'Server'
+	String get server => 'Server';
+}
+
+// Path: about.fields
+class TranslationsAboutFieldsEn {
+	TranslationsAboutFieldsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'App'
+	String get app => 'App';
+
+	/// en: 'Version'
+	String get version => 'Version';
+
+	/// en: '{version} (build {build})'
+	String versionFormat({required Object version, required Object build}) => '${version} (build ${build})';
+
+	/// en: 'Package'
+	String get package => 'Package';
+
+	/// en: 'URL'
+	String get url => 'URL';
+
+	/// en: 'Signed in as'
+	String get signedInAs => 'Signed in as';
+
+	/// en: 'Token expires'
+	String get tokenExpires => 'Token expires';
+}
+
+// Path: about.copyLabels
+class TranslationsAboutCopyLabelsEn {
+	TranslationsAboutCopyLabelsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'version'
+	String get version => 'version';
+
+	/// en: 'server URL'
+	String get serverUrl => 'server URL';
 }
 
 // Path: settings.language
@@ -224,6 +413,186 @@ class TranslationsSettingsGatewayEn {
 	String get liveLogsSubtitle => 'Tail the gateway log buffer — same source as the web admin';
 }
 
+// Path: more.items.integrations
+class TranslationsMoreItemsIntegrationsEn {
+	TranslationsMoreItemsIntegrationsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Integrations'
+	String get title => 'Integrations';
+
+	/// en: 'API callers — recent activity & error rates'
+	String get subtitle => 'API callers — recent activity & error rates';
+}
+
+// Path: more.items.channels
+class TranslationsMoreItemsChannelsEn {
+	TranslationsMoreItemsChannelsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Channels'
+	String get title => 'Channels';
+
+	/// en: 'Notification destinations'
+	String get subtitle => 'Notification destinations';
+}
+
+// Path: more.items.providers
+class TranslationsMoreItemsProvidersEn {
+	TranslationsMoreItemsProvidersEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Providers'
+	String get title => 'Providers';
+
+	/// en: 'Claude / Codex / Gemini CLI status'
+	String get subtitle => 'Claude / Codex / Gemini CLI status';
+}
+
+// Path: more.items.mcp
+class TranslationsMoreItemsMcpEn {
+	TranslationsMoreItemsMcpEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'MCP'
+	String get title => 'MCP';
+
+	/// en: 'Model Context Protocol servers & secrets'
+	String get subtitle => 'Model Context Protocol servers & secrets';
+}
+
+// Path: more.items.skills
+class TranslationsMoreItemsSkillsEn {
+	TranslationsMoreItemsSkillsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Skills'
+	String get title => 'Skills';
+
+	/// en: 'Agent SKILL.md library (built-in + vault)'
+	String get subtitle => 'Agent SKILL.md library (built-in + vault)';
+}
+
+// Path: more.items.gitHosts
+class TranslationsMoreItemsGitHostsEn {
+	TranslationsMoreItemsGitHostsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Git hosts'
+	String get title => 'Git hosts';
+
+	/// en: 'PAT credentials for GitHub / GitLab / etc.'
+	String get subtitle => 'PAT credentials for GitHub / GitLab / etc.';
+}
+
+// Path: more.items.customTasks
+class TranslationsMoreItemsCustomTasksEn {
+	TranslationsMoreItemsCustomTasksEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Custom tasks'
+	String get title => 'Custom tasks';
+
+	/// en: 'Slash commands shown in the session task picker'
+	String get subtitle => 'Slash commands shown in the session task picker';
+}
+
+// Path: more.items.projectMemory
+class TranslationsMoreItemsProjectMemoryEn {
+	TranslationsMoreItemsProjectMemoryEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Project goal / plan / journal'
+	String get title => 'Project goal / plan / journal';
+
+	/// en: 'Per-cwd memory layers 2-4 + agent proposals'
+	String get subtitle => 'Per-cwd memory layers 2-4 + agent proposals';
+}
+
+// Path: more.items.cleanupInbox
+class TranslationsMoreItemsCleanupInboxEn {
+	TranslationsMoreItemsCleanupInboxEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Cleanup inbox'
+	String get title => 'Cleanup inbox';
+
+	/// en: 'LLM-proposed deletions / merges across all projects'
+	String get subtitle => 'LLM-proposed deletions / merges across all projects';
+}
+
+// Path: more.items.backups
+class TranslationsMoreItemsBackupsEn {
+	TranslationsMoreItemsBackupsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Backups'
+	String get title => 'Backups';
+
+	/// en: 'Latest backup status & run-now'
+	String get subtitle => 'Latest backup status & run-now';
+}
+
+// Path: more.items.settings
+class TranslationsMoreItemsSettingsEn {
+	TranslationsMoreItemsSettingsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Settings'
+	String get title => 'Settings';
+
+	/// en: 'Language, appearance, account'
+	String get subtitle => 'Language, appearance, account';
+}
+
+// Path: more.items.about
+class TranslationsMoreItemsAboutEn {
+	TranslationsMoreItemsAboutEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'About'
+	String get title => 'About';
+
+	/// en: 'Build version & server info'
+	String get subtitle => 'Build version & server info';
+}
+
 /// The flat map containing all translations for locale <en>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -248,6 +617,58 @@ extension on Translations {
 			'auth.signIn' => 'Sign in',
 			'auth.errorRequired' => 'Username and password are required',
 			'auth.errorGeneric' => ({required Object error}) => 'Login failed: ${error}',
+			'nav.sessions' => 'Sessions',
+			'nav.memory' => 'Memory',
+			'nav.notes' => 'Notes',
+			'nav.more' => 'More',
+			'more.title' => 'More',
+			'more.identity.signedInAs' => 'Signed in as',
+			'more.identity.server' => 'Server',
+			'more.identity.tokenExpires' => 'Token expires',
+			'more.sections.gateway' => 'Gateway',
+			'more.sections.memory' => 'Memory',
+			'more.sections.system' => 'System',
+			'more.items.integrations.title' => 'Integrations',
+			'more.items.integrations.subtitle' => 'API callers — recent activity & error rates',
+			'more.items.channels.title' => 'Channels',
+			'more.items.channels.subtitle' => 'Notification destinations',
+			'more.items.providers.title' => 'Providers',
+			'more.items.providers.subtitle' => 'Claude / Codex / Gemini CLI status',
+			'more.items.mcp.title' => 'MCP',
+			'more.items.mcp.subtitle' => 'Model Context Protocol servers & secrets',
+			'more.items.skills.title' => 'Skills',
+			'more.items.skills.subtitle' => 'Agent SKILL.md library (built-in + vault)',
+			'more.items.gitHosts.title' => 'Git hosts',
+			'more.items.gitHosts.subtitle' => 'PAT credentials for GitHub / GitLab / etc.',
+			'more.items.customTasks.title' => 'Custom tasks',
+			'more.items.customTasks.subtitle' => 'Slash commands shown in the session task picker',
+			'more.items.projectMemory.title' => 'Project goal / plan / journal',
+			'more.items.projectMemory.subtitle' => 'Per-cwd memory layers 2-4 + agent proposals',
+			'more.items.cleanupInbox.title' => 'Cleanup inbox',
+			'more.items.cleanupInbox.subtitle' => 'LLM-proposed deletions / merges across all projects',
+			'more.items.backups.title' => 'Backups',
+			'more.items.backups.subtitle' => 'Latest backup status & run-now',
+			'more.items.settings.title' => 'Settings',
+			'more.items.settings.subtitle' => 'Language, appearance, account',
+			'more.items.about.title' => 'About',
+			'more.items.about.subtitle' => 'Build version & server info',
+			'more.signOut' => 'Sign out',
+			'about.title' => 'About',
+			'about.loading' => 'Loading…',
+			'about.sections.app' => 'App',
+			'about.sections.server' => 'Server',
+			'about.fields.app' => 'App',
+			'about.fields.version' => 'Version',
+			'about.fields.versionFormat' => ({required Object version, required Object build}) => '${version} (build ${build})',
+			'about.fields.package' => 'Package',
+			'about.fields.url' => 'URL',
+			'about.fields.signedInAs' => 'Signed in as',
+			'about.fields.tokenExpires' => 'Token expires',
+			'about.copied' => ({required Object label}) => 'Copied ${label}',
+			'about.copyTooltip' => 'Copy',
+			'about.copyLabels.version' => 'version',
+			'about.copyLabels.serverUrl' => 'server URL',
+			'about.tagline' => 'opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray_v2',
 			'settings.title' => 'Settings',
 			'settings.language.section' => 'Language',
 			'settings.language.system' => 'System',
