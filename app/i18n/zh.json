@@ -656,7 +656,67 @@
       "update": "更新失败",
       "delete": "删除失败"
     },
-    "failedToLoad": "加载通道失败"
+    "failedToLoad": "加载通道失败",
+    "kinds": {
+      "telegram": {
+        "description": "通过 @BotFather 创建机器人。opendray 长轮询 getUpdates 并通过 REST 发送。原生支持按钮和 reply_to_message。",
+        "botTokenLabel": "机器人 Token",
+        "botTokenHint": "从 @BotFather 获取。存储于通道配置；仅管理员 API 可见。",
+        "chatIdLabel": "默认 chat ID",
+        "chatIdPlaceholder": "42（可选 — 没有 ReplyCtx 时使用）"
+      },
+      "slack": {
+        "description": "Socket Mode — 无需公网 webhook。需要 bot OAuth token（xoxb-）和带 connections:write 的 app-level token（xapp-）。",
+        "botTokenLabel": "Bot token（xoxb-…）",
+        "botTokenHint": "OAuth & Permissions → Bot User OAuth Token。需要 chat:write。",
+        "appTokenLabel": "App-level token（xapp-…）",
+        "appTokenHint": "Settings → Basic Information → App-Level Tokens。范围：connections:write。",
+        "channelIdLabel": "默认 channel ID",
+        "channelIdPlaceholder": "C0123ABC456（可选）"
+      },
+      "discord": {
+        "description": "通过 Discord Developer Portal 创建机器人，启用 MESSAGE CONTENT INTENT。连接 Gateway WS — 无需公网 URL。",
+        "botTokenLabel": "Bot token",
+        "botTokenPlaceholder": "来自 Discord Developer Portal 的 Bot token",
+        "botTokenHint": "Application → Bot → Reset Token。邀请机器人时勾选 send_messages + embed_links。",
+        "channelIdLabel": "默认 channel ID",
+        "channelIdPlaceholder": "123456789012345678（可选）"
+      },
+      "feishu": {
+        "description": "应用级凭据。入站走事件订阅 webhook。下方生成公网 webhook URL — 粘贴到飞书开放平台控制台。",
+        "afterCreateHint": "在通道卡上打开 webhook URL，粘贴到飞书开放平台 → 事件订阅 → Request URL。",
+        "appIdLabel": "App ID",
+        "appSecretLabel": "App secret",
+        "appSecretPlaceholder": "应用凭据 secret",
+        "verificationTokenLabel": "Verification token",
+        "verificationTokenHint": "来自 事件订阅 → Verification Token。设置后，opendray 拒绝 token 不匹配的 webhook。",
+        "chatIdLabel": "默认 chat ID（oc_…）",
+        "chatIdPlaceholder": "oc_xxxxxxxxxx（可选）"
+      },
+      "dingtalk": {
+        "description": "自定义群机器人。仅外发。群聊 → 机器人 → 添加 → 加签模式 → 复制 webhook + secret。",
+        "webhookUrlLabel": "Webhook URL",
+        "secretLabel": "加签 secret",
+        "secretHint": "当机器人为「加签」安全模式时，将 secret 复制到这里。opendray 自动添加 timestamp + sign 参数。"
+      },
+      "wecom": {
+        "description": "群机器人 webhook。仅外发（文本 + markdown）。群设置 → 群机器人 → 添加 → 复制 webhook URL。",
+        "webhookKeyLabel": "Webhook key",
+        "webhookKeyPlaceholder": "「key=」查询参数值",
+        "webhookKeyHint": "或将整个 webhook URL 粘贴到下方字段 — 任一即可。",
+        "webhookUrlLabel": "或完整 webhook URL"
+      },
+      "wechat": {
+        "description": "通过 WxPusher 推送到个人微信。仅外发 — 推送服务不转发用户回复。每个接收方需通过二维码订阅一次。",
+        "appTokenLabel": "App token（AT_…）",
+        "appTokenHint": "WxPusher → 应用管理 → 创建应用 → 复制 App Token。",
+        "uidsLabel": "接收方 UID（每行一个）",
+        "uidsHint": "UID 或 topic ID 至少需要一个。",
+        "topicIdsLabel": "Topic ID（每行一个）",
+        "urlLabel": "点击跳转 URL",
+        "urlHint": "设置后，点击微信通知会打开此页面。"
+      }
+    }
   },
   "onboarding": {
     "gatewayLabel": "网关 URL",

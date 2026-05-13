@@ -446,6 +446,7 @@ class _TranslationsChannelsZh extends TranslationsChannelsEn {
 	@override late final _TranslationsChannelsSnacksZh snacks = _TranslationsChannelsSnacksZh._(_root);
 	@override late final _TranslationsChannelsErrorPrefixZh errorPrefix = _TranslationsChannelsErrorPrefixZh._(_root);
 	@override String get failedToLoad => '加载通道失败';
+	@override late final _TranslationsChannelsKindsZh kinds = _TranslationsChannelsKindsZh._(_root);
 }
 
 // Path: onboarding
@@ -1059,6 +1060,22 @@ class _TranslationsChannelsErrorPrefixZh extends TranslationsChannelsErrorPrefix
 	@override String get muteToggle => '静音切换失败';
 	@override String get update => '更新失败';
 	@override String get delete => '删除失败';
+}
+
+// Path: channels.kinds
+class _TranslationsChannelsKindsZh extends TranslationsChannelsKindsEn {
+	_TranslationsChannelsKindsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsChannelsKindsTelegramZh telegram = _TranslationsChannelsKindsTelegramZh._(_root);
+	@override late final _TranslationsChannelsKindsSlackZh slack = _TranslationsChannelsKindsSlackZh._(_root);
+	@override late final _TranslationsChannelsKindsDiscordZh discord = _TranslationsChannelsKindsDiscordZh._(_root);
+	@override late final _TranslationsChannelsKindsFeishuZh feishu = _TranslationsChannelsKindsFeishuZh._(_root);
+	@override late final _TranslationsChannelsKindsDingtalkZh dingtalk = _TranslationsChannelsKindsDingtalkZh._(_root);
+	@override late final _TranslationsChannelsKindsWecomZh wecom = _TranslationsChannelsKindsWecomZh._(_root);
+	@override late final _TranslationsChannelsKindsWechatZh wechat = _TranslationsChannelsKindsWechatZh._(_root);
 }
 
 // Path: notesPage.editor
@@ -1703,6 +1720,113 @@ class _TranslationsChannelsNotificationsModesZh extends TranslationsChannelsNoti
 	@override String get everyDescription => '不抑制 — 仅适合低频通道。';
 }
 
+// Path: channels.kinds.telegram
+class _TranslationsChannelsKindsTelegramZh extends TranslationsChannelsKindsTelegramEn {
+	_TranslationsChannelsKindsTelegramZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '通过 @BotFather 创建机器人。opendray 长轮询 getUpdates 并通过 REST 发送。原生支持按钮和 reply_to_message。';
+	@override String get botTokenLabel => '机器人 Token';
+	@override String get botTokenHint => '从 @BotFather 获取。存储于通道配置；仅管理员 API 可见。';
+	@override String get chatIdLabel => '默认 chat ID';
+	@override String get chatIdPlaceholder => '42（可选 — 没有 ReplyCtx 时使用）';
+}
+
+// Path: channels.kinds.slack
+class _TranslationsChannelsKindsSlackZh extends TranslationsChannelsKindsSlackEn {
+	_TranslationsChannelsKindsSlackZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => 'Socket Mode — 无需公网 webhook。需要 bot OAuth token（xoxb-）和带 connections:write 的 app-level token（xapp-）。';
+	@override String get botTokenLabel => 'Bot token（xoxb-…）';
+	@override String get botTokenHint => 'OAuth & Permissions → Bot User OAuth Token。需要 chat:write。';
+	@override String get appTokenLabel => 'App-level token（xapp-…）';
+	@override String get appTokenHint => 'Settings → Basic Information → App-Level Tokens。范围：connections:write。';
+	@override String get channelIdLabel => '默认 channel ID';
+	@override String get channelIdPlaceholder => 'C0123ABC456（可选）';
+}
+
+// Path: channels.kinds.discord
+class _TranslationsChannelsKindsDiscordZh extends TranslationsChannelsKindsDiscordEn {
+	_TranslationsChannelsKindsDiscordZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '通过 Discord Developer Portal 创建机器人，启用 MESSAGE CONTENT INTENT。连接 Gateway WS — 无需公网 URL。';
+	@override String get botTokenLabel => 'Bot token';
+	@override String get botTokenPlaceholder => '来自 Discord Developer Portal 的 Bot token';
+	@override String get botTokenHint => 'Application → Bot → Reset Token。邀请机器人时勾选 send_messages + embed_links。';
+	@override String get channelIdLabel => '默认 channel ID';
+	@override String get channelIdPlaceholder => '123456789012345678（可选）';
+}
+
+// Path: channels.kinds.feishu
+class _TranslationsChannelsKindsFeishuZh extends TranslationsChannelsKindsFeishuEn {
+	_TranslationsChannelsKindsFeishuZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '应用级凭据。入站走事件订阅 webhook。下方生成公网 webhook URL — 粘贴到飞书开放平台控制台。';
+	@override String get afterCreateHint => '在通道卡上打开 webhook URL，粘贴到飞书开放平台 → 事件订阅 → Request URL。';
+	@override String get appIdLabel => 'App ID';
+	@override String get appSecretLabel => 'App secret';
+	@override String get appSecretPlaceholder => '应用凭据 secret';
+	@override String get verificationTokenLabel => 'Verification token';
+	@override String get verificationTokenHint => '来自 事件订阅 → Verification Token。设置后，opendray 拒绝 token 不匹配的 webhook。';
+	@override String get chatIdLabel => '默认 chat ID（oc_…）';
+	@override String get chatIdPlaceholder => 'oc_xxxxxxxxxx（可选）';
+}
+
+// Path: channels.kinds.dingtalk
+class _TranslationsChannelsKindsDingtalkZh extends TranslationsChannelsKindsDingtalkEn {
+	_TranslationsChannelsKindsDingtalkZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '自定义群机器人。仅外发。群聊 → 机器人 → 添加 → 加签模式 → 复制 webhook + secret。';
+	@override String get webhookUrlLabel => 'Webhook URL';
+	@override String get secretLabel => '加签 secret';
+	@override String get secretHint => '当机器人为「加签」安全模式时，将 secret 复制到这里。opendray 自动添加 timestamp + sign 参数。';
+}
+
+// Path: channels.kinds.wecom
+class _TranslationsChannelsKindsWecomZh extends TranslationsChannelsKindsWecomEn {
+	_TranslationsChannelsKindsWecomZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '群机器人 webhook。仅外发（文本 + markdown）。群设置 → 群机器人 → 添加 → 复制 webhook URL。';
+	@override String get webhookKeyLabel => 'Webhook key';
+	@override String get webhookKeyPlaceholder => '「key=」查询参数值';
+	@override String get webhookKeyHint => '或将整个 webhook URL 粘贴到下方字段 — 任一即可。';
+	@override String get webhookUrlLabel => '或完整 webhook URL';
+}
+
+// Path: channels.kinds.wechat
+class _TranslationsChannelsKindsWechatZh extends TranslationsChannelsKindsWechatEn {
+	_TranslationsChannelsKindsWechatZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '通过 WxPusher 推送到个人微信。仅外发 — 推送服务不转发用户回复。每个接收方需通过二维码订阅一次。';
+	@override String get appTokenLabel => 'App token（AT_…）';
+	@override String get appTokenHint => 'WxPusher → 应用管理 → 创建应用 → 复制 App Token。';
+	@override String get uidsLabel => '接收方 UID（每行一个）';
+	@override String get uidsHint => 'UID 或 topic ID 至少需要一个。';
+	@override String get topicIdsLabel => 'Topic ID（每行一个）';
+	@override String get urlLabel => '点击跳转 URL';
+	@override String get urlHint => '设置后，点击微信通知会打开此页面。';
+}
+
 // Path: settings.logViewer.levels
 class _TranslationsSettingsLogViewerLevelsZh extends TranslationsSettingsLogViewerLevelsEn {
 	_TranslationsSettingsLogViewerLevelsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -2251,6 +2375,52 @@ extension on TranslationsZh {
 			'channels.errorPrefix.update' => '更新失败',
 			'channels.errorPrefix.delete' => '删除失败',
 			'channels.failedToLoad' => '加载通道失败',
+			'channels.kinds.telegram.description' => '通过 @BotFather 创建机器人。opendray 长轮询 getUpdates 并通过 REST 发送。原生支持按钮和 reply_to_message。',
+			'channels.kinds.telegram.botTokenLabel' => '机器人 Token',
+			'channels.kinds.telegram.botTokenHint' => '从 @BotFather 获取。存储于通道配置；仅管理员 API 可见。',
+			'channels.kinds.telegram.chatIdLabel' => '默认 chat ID',
+			'channels.kinds.telegram.chatIdPlaceholder' => '42（可选 — 没有 ReplyCtx 时使用）',
+			'channels.kinds.slack.description' => 'Socket Mode — 无需公网 webhook。需要 bot OAuth token（xoxb-）和带 connections:write 的 app-level token（xapp-）。',
+			'channels.kinds.slack.botTokenLabel' => 'Bot token（xoxb-…）',
+			'channels.kinds.slack.botTokenHint' => 'OAuth & Permissions → Bot User OAuth Token。需要 chat:write。',
+			'channels.kinds.slack.appTokenLabel' => 'App-level token（xapp-…）',
+			'channels.kinds.slack.appTokenHint' => 'Settings → Basic Information → App-Level Tokens。范围：connections:write。',
+			'channels.kinds.slack.channelIdLabel' => '默认 channel ID',
+			'channels.kinds.slack.channelIdPlaceholder' => 'C0123ABC456（可选）',
+			'channels.kinds.discord.description' => '通过 Discord Developer Portal 创建机器人，启用 MESSAGE CONTENT INTENT。连接 Gateway WS — 无需公网 URL。',
+			'channels.kinds.discord.botTokenLabel' => 'Bot token',
+			'channels.kinds.discord.botTokenPlaceholder' => '来自 Discord Developer Portal 的 Bot token',
+			'channels.kinds.discord.botTokenHint' => 'Application → Bot → Reset Token。邀请机器人时勾选 send_messages + embed_links。',
+			'channels.kinds.discord.channelIdLabel' => '默认 channel ID',
+			'channels.kinds.discord.channelIdPlaceholder' => '123456789012345678（可选）',
+			'channels.kinds.feishu.description' => '应用级凭据。入站走事件订阅 webhook。下方生成公网 webhook URL — 粘贴到飞书开放平台控制台。',
+			_ => null,
+		} ?? switch (path) {
+			'channels.kinds.feishu.afterCreateHint' => '在通道卡上打开 webhook URL，粘贴到飞书开放平台 → 事件订阅 → Request URL。',
+			'channels.kinds.feishu.appIdLabel' => 'App ID',
+			'channels.kinds.feishu.appSecretLabel' => 'App secret',
+			'channels.kinds.feishu.appSecretPlaceholder' => '应用凭据 secret',
+			'channels.kinds.feishu.verificationTokenLabel' => 'Verification token',
+			'channels.kinds.feishu.verificationTokenHint' => '来自 事件订阅 → Verification Token。设置后，opendray 拒绝 token 不匹配的 webhook。',
+			'channels.kinds.feishu.chatIdLabel' => '默认 chat ID（oc_…）',
+			'channels.kinds.feishu.chatIdPlaceholder' => 'oc_xxxxxxxxxx（可选）',
+			'channels.kinds.dingtalk.description' => '自定义群机器人。仅外发。群聊 → 机器人 → 添加 → 加签模式 → 复制 webhook + secret。',
+			'channels.kinds.dingtalk.webhookUrlLabel' => 'Webhook URL',
+			'channels.kinds.dingtalk.secretLabel' => '加签 secret',
+			'channels.kinds.dingtalk.secretHint' => '当机器人为「加签」安全模式时，将 secret 复制到这里。opendray 自动添加 timestamp + sign 参数。',
+			'channels.kinds.wecom.description' => '群机器人 webhook。仅外发（文本 + markdown）。群设置 → 群机器人 → 添加 → 复制 webhook URL。',
+			'channels.kinds.wecom.webhookKeyLabel' => 'Webhook key',
+			'channels.kinds.wecom.webhookKeyPlaceholder' => '「key=」查询参数值',
+			'channels.kinds.wecom.webhookKeyHint' => '或将整个 webhook URL 粘贴到下方字段 — 任一即可。',
+			'channels.kinds.wecom.webhookUrlLabel' => '或完整 webhook URL',
+			'channels.kinds.wechat.description' => '通过 WxPusher 推送到个人微信。仅外发 — 推送服务不转发用户回复。每个接收方需通过二维码订阅一次。',
+			'channels.kinds.wechat.appTokenLabel' => 'App token（AT_…）',
+			'channels.kinds.wechat.appTokenHint' => 'WxPusher → 应用管理 → 创建应用 → 复制 App Token。',
+			'channels.kinds.wechat.uidsLabel' => '接收方 UID（每行一个）',
+			'channels.kinds.wechat.uidsHint' => 'UID 或 topic ID 至少需要一个。',
+			'channels.kinds.wechat.topicIdsLabel' => 'Topic ID（每行一个）',
+			'channels.kinds.wechat.urlLabel' => '点击跳转 URL',
+			'channels.kinds.wechat.urlHint' => '设置后，点击微信通知会打开此页面。',
 			'onboarding.gatewayLabel' => '网关 URL',
 			'onboarding.gatewayHint' => 'https://opendray.example.com',
 			'onboarding.kContinue' => '继续',
@@ -2270,8 +2440,6 @@ extension on TranslationsZh {
 			'customTasks.popupDelete' => '删除',
 			'customTasks.nameHint' => '例如：backend-tests',
 			'customTasks.commandHint' => '/run pnpm test --filter backend',
-			_ => null,
-		} ?? switch (path) {
 			'customTasks.descriptionHint' => '在任务名下方显示的一行说明。',
 			'customTasks.scopeGlobal' => '全局',
 			'customTasks.scopeProject' => '项目',

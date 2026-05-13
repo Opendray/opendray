@@ -656,7 +656,67 @@
       "update": "Update failed",
       "delete": "Delete failed"
     },
-    "failedToLoad": "Failed to load channels"
+    "failedToLoad": "Failed to load channels",
+    "kinds": {
+      "telegram": {
+        "description": "Bot via @BotFather. opendray long-polls getUpdates and sends via REST. Buttons + reply_to_message work natively.",
+        "botTokenLabel": "Bot token",
+        "botTokenHint": "From @BotFather. Stored in channel config; admin-only API.",
+        "chatIdLabel": "Default chat ID",
+        "chatIdPlaceholder": "42 (optional — used when no ReplyCtx)"
+      },
+      "slack": {
+        "description": "Socket Mode — no public webhook needed. Requires a bot OAuth token (xoxb-) and an app-level token (xapp-) with connections:write.",
+        "botTokenLabel": "Bot token (xoxb-…)",
+        "botTokenHint": "OAuth & Permissions → Bot User OAuth Token. Needs chat:write.",
+        "appTokenLabel": "App-level token (xapp-…)",
+        "appTokenHint": "Settings → Basic Information → App-Level Tokens. Scope: connections:write.",
+        "channelIdLabel": "Default channel ID",
+        "channelIdPlaceholder": "C0123ABC456 (optional)"
+      },
+      "discord": {
+        "description": "Bot via Discord Developer Portal with MESSAGE CONTENT INTENT enabled. Connects to Gateway WS — no public URL required.",
+        "botTokenLabel": "Bot token",
+        "botTokenPlaceholder": "Bot token from Discord Developer Portal",
+        "botTokenHint": "Application → Bot → Reset Token. Invite bot with send_messages + embed_links.",
+        "channelIdLabel": "Default channel ID",
+        "channelIdPlaceholder": "123456789012345678 (optional)"
+      },
+      "feishu": {
+        "description": "App-level credentials. Uses event subscription webhook for inbound. Public webhook URL is generated below — paste it into the Feishu dev console.",
+        "afterCreateHint": "Open the webhook URL from the channel card and paste it into Feishu Open Platform → Event Subscriptions → Request URL.",
+        "appIdLabel": "App ID",
+        "appSecretLabel": "App secret",
+        "appSecretPlaceholder": "Application credential secret",
+        "verificationTokenLabel": "Verification token",
+        "verificationTokenHint": "From Event Subscriptions → Verification Token. When set, opendray rejects webhooks with a different token.",
+        "chatIdLabel": "Default chat ID (oc_…)",
+        "chatIdPlaceholder": "oc_xxxxxxxxxx (optional)"
+      },
+      "dingtalk": {
+        "description": "Custom group robot. Outbound only. Group chat → Robots → Add → Sign mode → copy webhook + secret.",
+        "webhookUrlLabel": "Webhook URL",
+        "secretLabel": "Sign secret",
+        "secretHint": "When the robot is set to \"Sign\" security mode, copy the secret here. opendray adds the timestamp + sign params automatically."
+      },
+      "wecom": {
+        "description": "Group robot webhook. Outbound only (text + markdown). Group settings → Group robots → Add → copy webhook URL.",
+        "webhookKeyLabel": "Webhook key",
+        "webhookKeyPlaceholder": "The \"key=\" query value",
+        "webhookKeyHint": "Or paste the whole webhook URL into the field below — either is enough.",
+        "webhookUrlLabel": "Or full webhook URL"
+      },
+      "wechat": {
+        "description": "Push to personal WeChat via WxPusher. Outbound-only — push services do not relay user replies. Each recipient subscribes once via QR code.",
+        "appTokenLabel": "App token (AT_…)",
+        "appTokenHint": "WxPusher → 应用管理 → 创建应用 → 复制 App Token.",
+        "uidsLabel": "Recipient UIDs (one per line)",
+        "uidsHint": "Either UIDs or topic IDs is required.",
+        "topicIdsLabel": "Topic IDs (one per line)",
+        "urlLabel": "Tap-through URL",
+        "urlHint": "When set, tapping the WeChat notification opens this page."
+      }
+    }
   },
   "onboarding": {
     "gatewayLabel": "Gateway URL",

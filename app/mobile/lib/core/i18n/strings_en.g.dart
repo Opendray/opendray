@@ -858,6 +858,8 @@ class TranslationsChannelsEn {
 
 	/// en: 'Failed to load channels'
 	String get failedToLoad => 'Failed to load channels';
+
+	late final TranslationsChannelsKindsEn kinds = TranslationsChannelsKindsEn.internal(_root);
 }
 
 // Path: onboarding
@@ -1927,6 +1929,22 @@ class TranslationsChannelsErrorPrefixEn {
 	String get delete => 'Delete failed';
 }
 
+// Path: channels.kinds
+class TranslationsChannelsKindsEn {
+	TranslationsChannelsKindsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsChannelsKindsTelegramEn telegram = TranslationsChannelsKindsTelegramEn.internal(_root);
+	late final TranslationsChannelsKindsSlackEn slack = TranslationsChannelsKindsSlackEn.internal(_root);
+	late final TranslationsChannelsKindsDiscordEn discord = TranslationsChannelsKindsDiscordEn.internal(_root);
+	late final TranslationsChannelsKindsFeishuEn feishu = TranslationsChannelsKindsFeishuEn.internal(_root);
+	late final TranslationsChannelsKindsDingtalkEn dingtalk = TranslationsChannelsKindsDingtalkEn.internal(_root);
+	late final TranslationsChannelsKindsWecomEn wecom = TranslationsChannelsKindsWecomEn.internal(_root);
+	late final TranslationsChannelsKindsWechatEn wechat = TranslationsChannelsKindsWechatEn.internal(_root);
+}
+
 // Path: notesPage.editor
 class TranslationsNotesPageEditorEn {
 	TranslationsNotesPageEditorEn.internal(this._root);
@@ -2968,6 +2986,201 @@ class TranslationsChannelsNotificationsModesEn {
 	String get everyDescription => 'No suppression — only for low-frequency channels.';
 }
 
+// Path: channels.kinds.telegram
+class TranslationsChannelsKindsTelegramEn {
+	TranslationsChannelsKindsTelegramEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Bot via @BotFather. opendray long-polls getUpdates and sends via REST. Buttons + reply_to_message work natively.'
+	String get description => 'Bot via @BotFather. opendray long-polls getUpdates and sends via REST. Buttons + reply_to_message work natively.';
+
+	/// en: 'Bot token'
+	String get botTokenLabel => 'Bot token';
+
+	/// en: 'From @BotFather. Stored in channel config; admin-only API.'
+	String get botTokenHint => 'From @BotFather. Stored in channel config; admin-only API.';
+
+	/// en: 'Default chat ID'
+	String get chatIdLabel => 'Default chat ID';
+
+	/// en: '42 (optional — used when no ReplyCtx)'
+	String get chatIdPlaceholder => '42 (optional — used when no ReplyCtx)';
+}
+
+// Path: channels.kinds.slack
+class TranslationsChannelsKindsSlackEn {
+	TranslationsChannelsKindsSlackEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Socket Mode — no public webhook needed. Requires a bot OAuth token (xoxb-) and an app-level token (xapp-) with connections:write.'
+	String get description => 'Socket Mode — no public webhook needed. Requires a bot OAuth token (xoxb-) and an app-level token (xapp-) with connections:write.';
+
+	/// en: 'Bot token (xoxb-…)'
+	String get botTokenLabel => 'Bot token (xoxb-…)';
+
+	/// en: 'OAuth & Permissions → Bot User OAuth Token. Needs chat:write.'
+	String get botTokenHint => 'OAuth & Permissions → Bot User OAuth Token. Needs chat:write.';
+
+	/// en: 'App-level token (xapp-…)'
+	String get appTokenLabel => 'App-level token (xapp-…)';
+
+	/// en: 'Settings → Basic Information → App-Level Tokens. Scope: connections:write.'
+	String get appTokenHint => 'Settings → Basic Information → App-Level Tokens. Scope: connections:write.';
+
+	/// en: 'Default channel ID'
+	String get channelIdLabel => 'Default channel ID';
+
+	/// en: 'C0123ABC456 (optional)'
+	String get channelIdPlaceholder => 'C0123ABC456 (optional)';
+}
+
+// Path: channels.kinds.discord
+class TranslationsChannelsKindsDiscordEn {
+	TranslationsChannelsKindsDiscordEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Bot via Discord Developer Portal with MESSAGE CONTENT INTENT enabled. Connects to Gateway WS — no public URL required.'
+	String get description => 'Bot via Discord Developer Portal with MESSAGE CONTENT INTENT enabled. Connects to Gateway WS — no public URL required.';
+
+	/// en: 'Bot token'
+	String get botTokenLabel => 'Bot token';
+
+	/// en: 'Bot token from Discord Developer Portal'
+	String get botTokenPlaceholder => 'Bot token from Discord Developer Portal';
+
+	/// en: 'Application → Bot → Reset Token. Invite bot with send_messages + embed_links.'
+	String get botTokenHint => 'Application → Bot → Reset Token. Invite bot with send_messages + embed_links.';
+
+	/// en: 'Default channel ID'
+	String get channelIdLabel => 'Default channel ID';
+
+	/// en: '123456789012345678 (optional)'
+	String get channelIdPlaceholder => '123456789012345678 (optional)';
+}
+
+// Path: channels.kinds.feishu
+class TranslationsChannelsKindsFeishuEn {
+	TranslationsChannelsKindsFeishuEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'App-level credentials. Uses event subscription webhook for inbound. Public webhook URL is generated below — paste it into the Feishu dev console.'
+	String get description => 'App-level credentials. Uses event subscription webhook for inbound. Public webhook URL is generated below — paste it into the Feishu dev console.';
+
+	/// en: 'Open the webhook URL from the channel card and paste it into Feishu Open Platform → Event Subscriptions → Request URL.'
+	String get afterCreateHint => 'Open the webhook URL from the channel card and paste it into Feishu Open Platform → Event Subscriptions → Request URL.';
+
+	/// en: 'App ID'
+	String get appIdLabel => 'App ID';
+
+	/// en: 'App secret'
+	String get appSecretLabel => 'App secret';
+
+	/// en: 'Application credential secret'
+	String get appSecretPlaceholder => 'Application credential secret';
+
+	/// en: 'Verification token'
+	String get verificationTokenLabel => 'Verification token';
+
+	/// en: 'From Event Subscriptions → Verification Token. When set, opendray rejects webhooks with a different token.'
+	String get verificationTokenHint => 'From Event Subscriptions → Verification Token. When set, opendray rejects webhooks with a different token.';
+
+	/// en: 'Default chat ID (oc_…)'
+	String get chatIdLabel => 'Default chat ID (oc_…)';
+
+	/// en: 'oc_xxxxxxxxxx (optional)'
+	String get chatIdPlaceholder => 'oc_xxxxxxxxxx (optional)';
+}
+
+// Path: channels.kinds.dingtalk
+class TranslationsChannelsKindsDingtalkEn {
+	TranslationsChannelsKindsDingtalkEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Custom group robot. Outbound only. Group chat → Robots → Add → Sign mode → copy webhook + secret.'
+	String get description => 'Custom group robot. Outbound only. Group chat → Robots → Add → Sign mode → copy webhook + secret.';
+
+	/// en: 'Webhook URL'
+	String get webhookUrlLabel => 'Webhook URL';
+
+	/// en: 'Sign secret'
+	String get secretLabel => 'Sign secret';
+
+	/// en: 'When the robot is set to "Sign" security mode, copy the secret here. opendray adds the timestamp + sign params automatically.'
+	String get secretHint => 'When the robot is set to "Sign" security mode, copy the secret here. opendray adds the timestamp + sign params automatically.';
+}
+
+// Path: channels.kinds.wecom
+class TranslationsChannelsKindsWecomEn {
+	TranslationsChannelsKindsWecomEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Group robot webhook. Outbound only (text + markdown). Group settings → Group robots → Add → copy webhook URL.'
+	String get description => 'Group robot webhook. Outbound only (text + markdown). Group settings → Group robots → Add → copy webhook URL.';
+
+	/// en: 'Webhook key'
+	String get webhookKeyLabel => 'Webhook key';
+
+	/// en: 'The "key=" query value'
+	String get webhookKeyPlaceholder => 'The "key=" query value';
+
+	/// en: 'Or paste the whole webhook URL into the field below — either is enough.'
+	String get webhookKeyHint => 'Or paste the whole webhook URL into the field below — either is enough.';
+
+	/// en: 'Or full webhook URL'
+	String get webhookUrlLabel => 'Or full webhook URL';
+}
+
+// Path: channels.kinds.wechat
+class TranslationsChannelsKindsWechatEn {
+	TranslationsChannelsKindsWechatEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Push to personal WeChat via WxPusher. Outbound-only — push services do not relay user replies. Each recipient subscribes once via QR code.'
+	String get description => 'Push to personal WeChat via WxPusher. Outbound-only — push services do not relay user replies. Each recipient subscribes once via QR code.';
+
+	/// en: 'App token (AT_…)'
+	String get appTokenLabel => 'App token (AT_…)';
+
+	/// en: 'WxPusher → 应用管理 → 创建应用 → 复制 App Token.'
+	String get appTokenHint => 'WxPusher → 应用管理 → 创建应用 → 复制 App Token.';
+
+	/// en: 'Recipient UIDs (one per line)'
+	String get uidsLabel => 'Recipient UIDs (one per line)';
+
+	/// en: 'Either UIDs or topic IDs is required.'
+	String get uidsHint => 'Either UIDs or topic IDs is required.';
+
+	/// en: 'Topic IDs (one per line)'
+	String get topicIdsLabel => 'Topic IDs (one per line)';
+
+	/// en: 'Tap-through URL'
+	String get urlLabel => 'Tap-through URL';
+
+	/// en: 'When set, tapping the WeChat notification opens this page.'
+	String get urlHint => 'When set, tapping the WeChat notification opens this page.';
+}
+
 // Path: settings.logViewer.levels
 class TranslationsSettingsLogViewerLevelsEn {
 	TranslationsSettingsLogViewerLevelsEn.internal(this._root);
@@ -3556,6 +3769,52 @@ extension on Translations {
 			'channels.errorPrefix.update' => 'Update failed',
 			'channels.errorPrefix.delete' => 'Delete failed',
 			'channels.failedToLoad' => 'Failed to load channels',
+			'channels.kinds.telegram.description' => 'Bot via @BotFather. opendray long-polls getUpdates and sends via REST. Buttons + reply_to_message work natively.',
+			'channels.kinds.telegram.botTokenLabel' => 'Bot token',
+			'channels.kinds.telegram.botTokenHint' => 'From @BotFather. Stored in channel config; admin-only API.',
+			'channels.kinds.telegram.chatIdLabel' => 'Default chat ID',
+			'channels.kinds.telegram.chatIdPlaceholder' => '42 (optional — used when no ReplyCtx)',
+			'channels.kinds.slack.description' => 'Socket Mode — no public webhook needed. Requires a bot OAuth token (xoxb-) and an app-level token (xapp-) with connections:write.',
+			'channels.kinds.slack.botTokenLabel' => 'Bot token (xoxb-…)',
+			'channels.kinds.slack.botTokenHint' => 'OAuth & Permissions → Bot User OAuth Token. Needs chat:write.',
+			'channels.kinds.slack.appTokenLabel' => 'App-level token (xapp-…)',
+			'channels.kinds.slack.appTokenHint' => 'Settings → Basic Information → App-Level Tokens. Scope: connections:write.',
+			'channels.kinds.slack.channelIdLabel' => 'Default channel ID',
+			'channels.kinds.slack.channelIdPlaceholder' => 'C0123ABC456 (optional)',
+			'channels.kinds.discord.description' => 'Bot via Discord Developer Portal with MESSAGE CONTENT INTENT enabled. Connects to Gateway WS — no public URL required.',
+			'channels.kinds.discord.botTokenLabel' => 'Bot token',
+			'channels.kinds.discord.botTokenPlaceholder' => 'Bot token from Discord Developer Portal',
+			'channels.kinds.discord.botTokenHint' => 'Application → Bot → Reset Token. Invite bot with send_messages + embed_links.',
+			'channels.kinds.discord.channelIdLabel' => 'Default channel ID',
+			'channels.kinds.discord.channelIdPlaceholder' => '123456789012345678 (optional)',
+			'channels.kinds.feishu.description' => 'App-level credentials. Uses event subscription webhook for inbound. Public webhook URL is generated below — paste it into the Feishu dev console.',
+			_ => null,
+		} ?? switch (path) {
+			'channels.kinds.feishu.afterCreateHint' => 'Open the webhook URL from the channel card and paste it into Feishu Open Platform → Event Subscriptions → Request URL.',
+			'channels.kinds.feishu.appIdLabel' => 'App ID',
+			'channels.kinds.feishu.appSecretLabel' => 'App secret',
+			'channels.kinds.feishu.appSecretPlaceholder' => 'Application credential secret',
+			'channels.kinds.feishu.verificationTokenLabel' => 'Verification token',
+			'channels.kinds.feishu.verificationTokenHint' => 'From Event Subscriptions → Verification Token. When set, opendray rejects webhooks with a different token.',
+			'channels.kinds.feishu.chatIdLabel' => 'Default chat ID (oc_…)',
+			'channels.kinds.feishu.chatIdPlaceholder' => 'oc_xxxxxxxxxx (optional)',
+			'channels.kinds.dingtalk.description' => 'Custom group robot. Outbound only. Group chat → Robots → Add → Sign mode → copy webhook + secret.',
+			'channels.kinds.dingtalk.webhookUrlLabel' => 'Webhook URL',
+			'channels.kinds.dingtalk.secretLabel' => 'Sign secret',
+			'channels.kinds.dingtalk.secretHint' => 'When the robot is set to "Sign" security mode, copy the secret here. opendray adds the timestamp + sign params automatically.',
+			'channels.kinds.wecom.description' => 'Group robot webhook. Outbound only (text + markdown). Group settings → Group robots → Add → copy webhook URL.',
+			'channels.kinds.wecom.webhookKeyLabel' => 'Webhook key',
+			'channels.kinds.wecom.webhookKeyPlaceholder' => 'The "key=" query value',
+			'channels.kinds.wecom.webhookKeyHint' => 'Or paste the whole webhook URL into the field below — either is enough.',
+			'channels.kinds.wecom.webhookUrlLabel' => 'Or full webhook URL',
+			'channels.kinds.wechat.description' => 'Push to personal WeChat via WxPusher. Outbound-only — push services do not relay user replies. Each recipient subscribes once via QR code.',
+			'channels.kinds.wechat.appTokenLabel' => 'App token (AT_…)',
+			'channels.kinds.wechat.appTokenHint' => 'WxPusher → 应用管理 → 创建应用 → 复制 App Token.',
+			'channels.kinds.wechat.uidsLabel' => 'Recipient UIDs (one per line)',
+			'channels.kinds.wechat.uidsHint' => 'Either UIDs or topic IDs is required.',
+			'channels.kinds.wechat.topicIdsLabel' => 'Topic IDs (one per line)',
+			'channels.kinds.wechat.urlLabel' => 'Tap-through URL',
+			'channels.kinds.wechat.urlHint' => 'When set, tapping the WeChat notification opens this page.',
 			'onboarding.gatewayLabel' => 'Gateway URL',
 			'onboarding.gatewayHint' => 'https://opendray.example.com',
 			'onboarding.kContinue' => 'Continue',
@@ -3575,8 +3834,6 @@ extension on Translations {
 			'customTasks.popupDelete' => 'Delete',
 			'customTasks.nameHint' => 'e.g. backend-tests',
 			'customTasks.commandHint' => '/run pnpm test --filter backend',
-			_ => null,
-		} ?? switch (path) {
 			'customTasks.descriptionHint' => 'One-liner shown under the task name.',
 			'customTasks.scopeGlobal' => 'Global',
 			'customTasks.scopeProject' => 'Project',
