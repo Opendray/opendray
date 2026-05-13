@@ -10,17 +10,19 @@
 import { useState } from 'react'
 import { useSearch, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { AlertCircle, Folder } from 'lucide-react'
+import { AlertCircle, Folder, FolderSearch } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ProjectScreen } from '@/components/project/ProjectScreen'
+import { FileBrowserDialog } from '@/components/sessions/FileBrowserDialog'
 import { listScopeKeys } from '@/lib/memory'
 
 export function ProjectPage() {
   const search = useSearch({ strict: false }) as { cwd?: string }
   const navigate = useNavigate()
   const [picker, setPicker] = useState('')
+  const [browserOpen, setBrowserOpen] = useState(false)
 
   const projectsQuery = useQuery({
     queryKey: ['memory-project-scope-keys'],
@@ -44,6 +46,14 @@ export function ProjectPage() {
             className="font-mono"
           />
           <Button
+            variant="outline"
+            onClick={() => setBrowserOpen(true)}
+            title="Browse the gateway host's filesystem"
+          >
+            <FolderSearch className="mr-1 size-3.5" />
+            Browse
+          </Button>
+          <Button
             disabled={!picker.trim()}
             onClick={() =>
               navigate({
@@ -55,6 +65,18 @@ export function ProjectPage() {
             Open
           </Button>
         </div>
+        <FileBrowserDialog
+          open={browserOpen}
+          onOpenChange={setBrowserOpen}
+          initialPath={picker.trim() || undefined}
+          onSelect={(path) => {
+            setPicker(path)
+            navigate({
+              to: '/memory/project',
+              search: { cwd: path },
+            })
+          }}
+        />
         {projectsQuery.data && projectsQuery.data.length > 0 && (
           <div className="space-y-1">
             <p className="text-muted-foreground text-xs">
