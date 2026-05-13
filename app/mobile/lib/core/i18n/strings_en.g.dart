@@ -44,6 +44,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsAuthEn auth = TranslationsAuthEn.internal(_root);
 	late final TranslationsNavEn nav = TranslationsNavEn.internal(_root);
 	late final TranslationsMoreEn more = TranslationsMoreEn.internal(_root);
+	late final TranslationsSessionsEn sessions = TranslationsSessionsEn.internal(_root);
 	late final TranslationsAboutEn about = TranslationsAboutEn.internal(_root);
 	late final TranslationsSettingsEn settings = TranslationsSettingsEn.internal(_root);
 }
@@ -154,6 +155,36 @@ class TranslationsMoreEn {
 	String get signOut => 'Sign out';
 }
 
+// Path: sessions
+class TranslationsSessionsEn {
+	TranslationsSessionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Sessions'
+	String get title => 'Sessions';
+
+	/// en: 'Refresh'
+	String get refresh => 'Refresh';
+
+	/// en: 'Actions'
+	String get actions => 'Actions';
+
+	/// en: 'Spawn'
+	String get spawn => 'Spawn';
+
+	late final TranslationsSessionsFiltersEn filters = TranslationsSessionsFiltersEn.internal(_root);
+	late final TranslationsSessionsCardEn card = TranslationsSessionsCardEn.internal(_root);
+	late final TranslationsSessionsEmptyEn empty = TranslationsSessionsEmptyEn.internal(_root);
+
+	/// en: 'Failed to load sessions'
+	String get errorTitle => 'Failed to load sessions';
+
+	late final TranslationsSessionsRelativeEn relative = TranslationsSessionsRelativeEn.internal(_root);
+}
+
 // Path: about
 class TranslationsAboutEn {
 	TranslationsAboutEn.internal(this._root);
@@ -255,6 +286,81 @@ class TranslationsMoreItemsEn {
 	late final TranslationsMoreItemsBackupsEn backups = TranslationsMoreItemsBackupsEn.internal(_root);
 	late final TranslationsMoreItemsSettingsEn settings = TranslationsMoreItemsSettingsEn.internal(_root);
 	late final TranslationsMoreItemsAboutEn about = TranslationsMoreItemsAboutEn.internal(_root);
+}
+
+// Path: sessions.filters
+class TranslationsSessionsFiltersEn {
+	TranslationsSessionsFiltersEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'All'
+	String get all => 'All';
+
+	/// en: 'Running'
+	String get running => 'Running';
+
+	/// en: 'Idle'
+	String get idle => 'Idle';
+
+	/// en: 'Ended'
+	String get ended => 'Ended';
+}
+
+// Path: sessions.card
+class TranslationsSessionsCardEn {
+	TranslationsSessionsCardEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: '{provider} · started {when}'
+	String startedRelative({required Object provider, required Object when}) => '${provider} · started ${when}';
+}
+
+// Path: sessions.empty
+class TranslationsSessionsEmptyEn {
+	TranslationsSessionsEmptyEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'No sessions yet'
+	String get titleAll => 'No sessions yet';
+
+	/// en: 'No sessions match the "{filter}" filter.'
+	String titleFiltered({required Object filter}) => 'No sessions match the "${filter}" filter.';
+
+	/// en: 'Tap the Spawn button to create one.'
+	String get subtitleAll => 'Tap the Spawn button to create one.';
+
+	/// en: 'Try a different filter or pull to refresh.'
+	String get subtitleFiltered => 'Try a different filter or pull to refresh.';
+}
+
+// Path: sessions.relative
+class TranslationsSessionsRelativeEn {
+	TranslationsSessionsRelativeEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: '{n}s ago'
+	String secondsAgo({required Object n}) => '${n}s ago';
+
+	/// en: '{n}m ago'
+	String minutesAgo({required Object n}) => '${n}m ago';
+
+	/// en: '{n}h ago'
+	String hoursAgo({required Object n}) => '${n}h ago';
+
+	/// en: '{n}d ago'
+	String daysAgo({required Object n}) => '${n}d ago';
 }
 
 // Path: about.sections
@@ -653,6 +759,24 @@ extension on Translations {
 			'more.items.about.title' => 'About',
 			'more.items.about.subtitle' => 'Build version & server info',
 			'more.signOut' => 'Sign out',
+			'sessions.title' => 'Sessions',
+			'sessions.refresh' => 'Refresh',
+			'sessions.actions' => 'Actions',
+			'sessions.spawn' => 'Spawn',
+			'sessions.filters.all' => 'All',
+			'sessions.filters.running' => 'Running',
+			'sessions.filters.idle' => 'Idle',
+			'sessions.filters.ended' => 'Ended',
+			'sessions.card.startedRelative' => ({required Object provider, required Object when}) => '${provider} · started ${when}',
+			'sessions.empty.titleAll' => 'No sessions yet',
+			'sessions.empty.titleFiltered' => ({required Object filter}) => 'No sessions match the "${filter}" filter.',
+			'sessions.empty.subtitleAll' => 'Tap the Spawn button to create one.',
+			'sessions.empty.subtitleFiltered' => 'Try a different filter or pull to refresh.',
+			'sessions.errorTitle' => 'Failed to load sessions',
+			'sessions.relative.secondsAgo' => ({required Object n}) => '${n}s ago',
+			'sessions.relative.minutesAgo' => ({required Object n}) => '${n}m ago',
+			'sessions.relative.hoursAgo' => ({required Object n}) => '${n}h ago',
+			'sessions.relative.daysAgo' => ({required Object n}) => '${n}d ago',
 			'about.title' => 'About',
 			'about.loading' => 'Loading…',
 			'about.sections.app' => 'App',
