@@ -183,6 +183,8 @@ class TranslationsSessionsEn {
 	String get errorTitle => 'Failed to load sessions';
 
 	late final TranslationsSessionsRelativeEn relative = TranslationsSessionsRelativeEn.internal(_root);
+	late final TranslationsSessionsDetailEn detail = TranslationsSessionsDetailEn.internal(_root);
+	late final TranslationsSessionsTerminalEn terminal = TranslationsSessionsTerminalEn.internal(_root);
 	late final TranslationsSessionsActionEn action = TranslationsSessionsActionEn.internal(_root);
 	late final TranslationsSessionsDirPickerEn dirPicker = TranslationsSessionsDirPickerEn.internal(_root);
 	late final TranslationsSessionsSpawnSheetEn spawnSheet = TranslationsSessionsSpawnSheetEn.internal(_root);
@@ -364,6 +366,55 @@ class TranslationsSessionsRelativeEn {
 
 	/// en: '{n}d ago'
 	String daysAgo({required Object n}) => '${n}d ago';
+}
+
+// Path: sessions.detail
+class TranslationsSessionsDetailEn {
+	TranslationsSessionsDetailEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Session'
+	String get fallbackTitle => 'Session';
+
+	/// en: 'Refresh metadata'
+	String get refreshMetadata => 'Refresh metadata';
+
+	/// en: 'Inspector (Files / Git / Tasks / History / Notes)'
+	String get inspector => 'Inspector (Files / Git / Tasks / History / Notes)';
+
+	/// en: 'Project memory (goal / plan / journal / inbox)'
+	String get projectMemory => 'Project memory (goal / plan / journal / inbox)';
+
+	/// en: 'Actions'
+	String get actions => 'Actions';
+
+	/// en: 'started {when}'
+	String started({required Object when}) => 'started ${when}';
+
+	/// en: 'started {started} · ended {ended}'
+	String startedEnded({required Object started, required Object ended}) => 'started ${started}  ·  ended ${ended}';
+
+	/// en: 'id: {id}'
+	String idPrefix({required Object id}) => 'id: ${id}';
+
+	/// en: 'Failed to load session'
+	String get errorTitle => 'Failed to load session';
+}
+
+// Path: sessions.terminal
+class TranslationsSessionsTerminalEn {
+	TranslationsSessionsTerminalEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsSessionsTerminalSnackbarEn snackbar = TranslationsSessionsTerminalSnackbarEn.internal(_root);
+	late final TranslationsSessionsTerminalImageSourceEn imageSource = TranslationsSessionsTerminalImageSourceEn.internal(_root);
+	late final TranslationsSessionsTerminalKeyboardEn keyboard = TranslationsSessionsTerminalKeyboardEn.internal(_root);
+	late final TranslationsSessionsTerminalConnectionEn connection = TranslationsSessionsTerminalConnectionEn.internal(_root);
 }
 
 // Path: sessions.action
@@ -834,6 +885,93 @@ class TranslationsMoreItemsAboutEn {
 	String get subtitle => 'Build version & server info';
 }
 
+// Path: sessions.terminal.snackbar
+class TranslationsSessionsTerminalSnackbarEn {
+	TranslationsSessionsTerminalSnackbarEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Image picker failed: {error}'
+	String imagePickerFailed({required Object error}) => 'Image picker failed: ${error}';
+
+	/// en: 'Uploading image…'
+	String get uploadingImage => 'Uploading image…';
+
+	/// en: 'Image attached: {path}'
+	String imageAttached({required Object path}) => 'Image attached: ${path}';
+
+	/// en: 'Upload failed ({status}): {message}'
+	String uploadFailed({required Object status, required Object message}) => 'Upload failed (${status}): ${message}';
+
+	/// en: 'Upload failed: {error}'
+	String uploadFailedGeneric({required Object error}) => 'Upload failed: ${error}';
+}
+
+// Path: sessions.terminal.imageSource
+class TranslationsSessionsTerminalImageSourceEn {
+	TranslationsSessionsTerminalImageSourceEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Photo library'
+	String get photoLibrary => 'Photo library';
+
+	/// en: 'Take a photo'
+	String get takePhoto => 'Take a photo';
+}
+
+// Path: sessions.terminal.keyboard
+class TranslationsSessionsTerminalKeyboardEn {
+	TranslationsSessionsTerminalKeyboardEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Copy buffer'
+	String get copyBuffer => 'Copy buffer';
+
+	/// en: 'Paste'
+	String get paste => 'Paste';
+
+	/// en: 'Attach image'
+	String get attachImage => 'Attach image';
+}
+
+// Path: sessions.terminal.connection
+class TranslationsSessionsTerminalConnectionEn {
+	TranslationsSessionsTerminalConnectionEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Connecting…'
+	String get connecting => 'Connecting…';
+
+	/// en: 'Connected'
+	String get connected => 'Connected';
+
+	/// en: 'Reconnecting…'
+	String get reconnecting => 'Reconnecting…';
+
+	/// en: 'Reconnecting ({error})…'
+	String reconnectingWithError({required Object error}) => 'Reconnecting (${error})…';
+
+	/// en: 'Disconnected'
+	String get disconnected => 'Disconnected';
+
+	/// en: 'Disconnected ({error})'
+	String disconnectedWithError({required Object error}) => 'Disconnected (${error})';
+
+	/// en: 'Session ended'
+	String get ended => 'Session ended';
+}
+
 // Path: sessions.action.errors
 class TranslationsSessionsActionErrorsEn {
 	TranslationsSessionsActionErrorsEn.internal(this._root);
@@ -1044,6 +1182,32 @@ extension on Translations {
 			'sessions.relative.minutesAgo' => ({required Object n}) => '${n}m ago',
 			'sessions.relative.hoursAgo' => ({required Object n}) => '${n}h ago',
 			'sessions.relative.daysAgo' => ({required Object n}) => '${n}d ago',
+			'sessions.detail.fallbackTitle' => 'Session',
+			'sessions.detail.refreshMetadata' => 'Refresh metadata',
+			'sessions.detail.inspector' => 'Inspector (Files / Git / Tasks / History / Notes)',
+			'sessions.detail.projectMemory' => 'Project memory (goal / plan / journal / inbox)',
+			'sessions.detail.actions' => 'Actions',
+			'sessions.detail.started' => ({required Object when}) => 'started ${when}',
+			'sessions.detail.startedEnded' => ({required Object started, required Object ended}) => 'started ${started}  ·  ended ${ended}',
+			'sessions.detail.idPrefix' => ({required Object id}) => 'id: ${id}',
+			'sessions.detail.errorTitle' => 'Failed to load session',
+			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => 'Image picker failed: ${error}',
+			'sessions.terminal.snackbar.uploadingImage' => 'Uploading image…',
+			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => 'Image attached: ${path}',
+			'sessions.terminal.snackbar.uploadFailed' => ({required Object status, required Object message}) => 'Upload failed (${status}): ${message}',
+			'sessions.terminal.snackbar.uploadFailedGeneric' => ({required Object error}) => 'Upload failed: ${error}',
+			'sessions.terminal.imageSource.photoLibrary' => 'Photo library',
+			'sessions.terminal.imageSource.takePhoto' => 'Take a photo',
+			'sessions.terminal.keyboard.copyBuffer' => 'Copy buffer',
+			'sessions.terminal.keyboard.paste' => 'Paste',
+			'sessions.terminal.keyboard.attachImage' => 'Attach image',
+			'sessions.terminal.connection.connecting' => 'Connecting…',
+			'sessions.terminal.connection.connected' => 'Connected',
+			'sessions.terminal.connection.reconnecting' => 'Reconnecting…',
+			'sessions.terminal.connection.reconnectingWithError' => ({required Object error}) => 'Reconnecting (${error})…',
+			'sessions.terminal.connection.disconnected' => 'Disconnected',
+			'sessions.terminal.connection.disconnectedWithError' => ({required Object error}) => 'Disconnected (${error})',
+			'sessions.terminal.connection.ended' => 'Session ended',
 			'sessions.action.stop' => 'Stop',
 			'sessions.action.stopping' => 'Stopping…',
 			'sessions.action.stopDescription' => 'Send SIGTERM, retain history',

@@ -125,6 +125,8 @@ class _TranslationsSessionsZh extends TranslationsSessionsEn {
 	@override late final _TranslationsSessionsEmptyZh empty = _TranslationsSessionsEmptyZh._(_root);
 	@override String get errorTitle => '加载会话失败';
 	@override late final _TranslationsSessionsRelativeZh relative = _TranslationsSessionsRelativeZh._(_root);
+	@override late final _TranslationsSessionsDetailZh detail = _TranslationsSessionsDetailZh._(_root);
+	@override late final _TranslationsSessionsTerminalZh terminal = _TranslationsSessionsTerminalZh._(_root);
 	@override late final _TranslationsSessionsActionZh action = _TranslationsSessionsActionZh._(_root);
 	@override late final _TranslationsSessionsDirPickerZh dirPicker = _TranslationsSessionsDirPickerZh._(_root);
 	@override late final _TranslationsSessionsSpawnSheetZh spawnSheet = _TranslationsSessionsSpawnSheetZh._(_root);
@@ -253,6 +255,37 @@ class _TranslationsSessionsRelativeZh extends TranslationsSessionsRelativeEn {
 	@override String minutesAgo({required Object n}) => '${n} 分钟前';
 	@override String hoursAgo({required Object n}) => '${n} 小时前';
 	@override String daysAgo({required Object n}) => '${n} 天前';
+}
+
+// Path: sessions.detail
+class _TranslationsSessionsDetailZh extends TranslationsSessionsDetailEn {
+	_TranslationsSessionsDetailZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get fallbackTitle => '会话';
+	@override String get refreshMetadata => '刷新元数据';
+	@override String get inspector => '检查器（文件 / Git / 任务 / 历史 / 笔记）';
+	@override String get projectMemory => '项目记忆（目标 / 计划 / 日志 / 收件箱）';
+	@override String get actions => '操作';
+	@override String started({required Object when}) => '${when} 启动';
+	@override String startedEnded({required Object started, required Object ended}) => '${started} 启动  ·  ${ended} 结束';
+	@override String idPrefix({required Object id}) => 'id: ${id}';
+	@override String get errorTitle => '加载会话失败';
+}
+
+// Path: sessions.terminal
+class _TranslationsSessionsTerminalZh extends TranslationsSessionsTerminalEn {
+	_TranslationsSessionsTerminalZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsSessionsTerminalSnackbarZh snackbar = _TranslationsSessionsTerminalSnackbarZh._(_root);
+	@override late final _TranslationsSessionsTerminalImageSourceZh imageSource = _TranslationsSessionsTerminalImageSourceZh._(_root);
+	@override late final _TranslationsSessionsTerminalKeyboardZh keyboard = _TranslationsSessionsTerminalKeyboardZh._(_root);
+	@override late final _TranslationsSessionsTerminalConnectionZh connection = _TranslationsSessionsTerminalConnectionZh._(_root);
 }
 
 // Path: sessions.action
@@ -546,6 +579,59 @@ class _TranslationsMoreItemsAboutZh extends TranslationsMoreItemsAboutEn {
 	@override String get subtitle => '构建版本与服务器信息';
 }
 
+// Path: sessions.terminal.snackbar
+class _TranslationsSessionsTerminalSnackbarZh extends TranslationsSessionsTerminalSnackbarEn {
+	_TranslationsSessionsTerminalSnackbarZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String imagePickerFailed({required Object error}) => '图片选择失败：${error}';
+	@override String get uploadingImage => '正在上传图片…';
+	@override String imageAttached({required Object path}) => '已附加图片：${path}';
+	@override String uploadFailed({required Object status, required Object message}) => '上传失败（${status}）：${message}';
+	@override String uploadFailedGeneric({required Object error}) => '上传失败：${error}';
+}
+
+// Path: sessions.terminal.imageSource
+class _TranslationsSessionsTerminalImageSourceZh extends TranslationsSessionsTerminalImageSourceEn {
+	_TranslationsSessionsTerminalImageSourceZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get photoLibrary => '相册';
+	@override String get takePhoto => '拍照';
+}
+
+// Path: sessions.terminal.keyboard
+class _TranslationsSessionsTerminalKeyboardZh extends TranslationsSessionsTerminalKeyboardEn {
+	_TranslationsSessionsTerminalKeyboardZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get copyBuffer => '复制缓冲';
+	@override String get paste => '粘贴';
+	@override String get attachImage => '附加图片';
+}
+
+// Path: sessions.terminal.connection
+class _TranslationsSessionsTerminalConnectionZh extends TranslationsSessionsTerminalConnectionEn {
+	_TranslationsSessionsTerminalConnectionZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get connecting => '连接中…';
+	@override String get connected => '已连接';
+	@override String get reconnecting => '重连中…';
+	@override String reconnectingWithError({required Object error}) => '重连中（${error}）…';
+	@override String get disconnected => '已断开';
+	@override String disconnectedWithError({required Object error}) => '已断开（${error}）';
+	@override String get ended => '会话已结束';
+}
+
 // Path: sessions.action.errors
 class _TranslationsSessionsActionErrorsZh extends TranslationsSessionsActionErrorsEn {
 	_TranslationsSessionsActionErrorsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -704,6 +790,32 @@ extension on TranslationsZh {
 			'sessions.relative.minutesAgo' => ({required Object n}) => '${n} 分钟前',
 			'sessions.relative.hoursAgo' => ({required Object n}) => '${n} 小时前',
 			'sessions.relative.daysAgo' => ({required Object n}) => '${n} 天前',
+			'sessions.detail.fallbackTitle' => '会话',
+			'sessions.detail.refreshMetadata' => '刷新元数据',
+			'sessions.detail.inspector' => '检查器（文件 / Git / 任务 / 历史 / 笔记）',
+			'sessions.detail.projectMemory' => '项目记忆（目标 / 计划 / 日志 / 收件箱）',
+			'sessions.detail.actions' => '操作',
+			'sessions.detail.started' => ({required Object when}) => '${when} 启动',
+			'sessions.detail.startedEnded' => ({required Object started, required Object ended}) => '${started} 启动  ·  ${ended} 结束',
+			'sessions.detail.idPrefix' => ({required Object id}) => 'id: ${id}',
+			'sessions.detail.errorTitle' => '加载会话失败',
+			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => '图片选择失败：${error}',
+			'sessions.terminal.snackbar.uploadingImage' => '正在上传图片…',
+			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => '已附加图片：${path}',
+			'sessions.terminal.snackbar.uploadFailed' => ({required Object status, required Object message}) => '上传失败（${status}）：${message}',
+			'sessions.terminal.snackbar.uploadFailedGeneric' => ({required Object error}) => '上传失败：${error}',
+			'sessions.terminal.imageSource.photoLibrary' => '相册',
+			'sessions.terminal.imageSource.takePhoto' => '拍照',
+			'sessions.terminal.keyboard.copyBuffer' => '复制缓冲',
+			'sessions.terminal.keyboard.paste' => '粘贴',
+			'sessions.terminal.keyboard.attachImage' => '附加图片',
+			'sessions.terminal.connection.connecting' => '连接中…',
+			'sessions.terminal.connection.connected' => '已连接',
+			'sessions.terminal.connection.reconnecting' => '重连中…',
+			'sessions.terminal.connection.reconnectingWithError' => ({required Object error}) => '重连中（${error}）…',
+			'sessions.terminal.connection.disconnected' => '已断开',
+			'sessions.terminal.connection.disconnectedWithError' => ({required Object error}) => '已断开（${error}）',
+			'sessions.terminal.connection.ended' => '会话已结束',
 			'sessions.action.stop' => '停止',
 			'sessions.action.stopping' => '停止中…',
 			'sessions.action.stopDescription' => '发送 SIGTERM，保留历史',
