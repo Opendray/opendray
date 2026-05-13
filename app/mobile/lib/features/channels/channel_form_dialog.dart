@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/channels/channel_kinds.dart';
 
 // ChannelFormScreen renders a kind-driven form for create or edit on
@@ -330,7 +331,7 @@ class PostCreateWebhookDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('${kind.label} webhook URL'),
+      title: Text(t.channels.webhookDialog.title(kind: kind.label)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -363,14 +364,14 @@ class PostCreateWebhookDialog extends StatelessWidget {
       actions: [
         TextButton.icon(
           icon: const Icon(Icons.copy_outlined, size: 18),
-          label: const Text('Copy'),
+          label: Text(t.common.copy),
           onPressed: () async {
             await Clipboard.setData(ClipboardData(text: _webhookUrl));
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Copied webhook URL.'),
-                duration: Duration(seconds: 2),
+              SnackBar(
+                content: Text(t.channels.webhookDialog.copiedSnack),
+                duration: const Duration(seconds: 2),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -378,7 +379,7 @@ class PostCreateWebhookDialog extends StatelessWidget {
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Done'),
+          child: Text(t.common.done),
         ),
       ],
     );
