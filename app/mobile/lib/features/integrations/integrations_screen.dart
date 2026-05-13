@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/integrations_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/integrations/integration_detail_screen.dart';
 import 'package:opendray/features/integrations/integration_forms.dart';
 
@@ -73,20 +74,29 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
       await RevealApiKeyDialog.show(
         context: context,
         apiKey: result.apiKey,
-        title: 'API key for ${result.integration.name}',
-        subtitle: 'Hand this to the integration so it can authenticate '
-            'against /api/v1/${result.integration.routePrefix}/...',
+        title: t.integrations.apiKeyForName(name: result.integration.name),
+        subtitle: t.integrations.apiKeySubtitleRegister(
+          routePrefix: result.integration.routePrefix,
+        ),
       );
       if (!mounted) return;
       await _load();
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('Register failed: ${e.message}')),
+        SnackBar(
+          content: Text(t.integrations.registerFailedApi(error: e.message)),
+        ),
       );
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('Register failed: $e')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            t.integrations.registerFailedGeneric(error: e.toString()),
+          ),
+        ),
+      );
     }
   }
 
@@ -94,11 +104,11 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Integrations'),
+        title: Text(t.integrations.title),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: t.sessions.inspector.shared.refresh,
             onPressed: _state is AsyncLoading ? null : _load,
           ),
         ],
@@ -111,7 +121,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _onRegister,
         icon: const Icon(Icons.add),
-        label: const Text('Register'),
+        label: Text(t.integrations.register),
       ),
     );
   }
@@ -330,7 +340,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),

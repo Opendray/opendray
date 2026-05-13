@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/providers_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/providers/claude_accounts_section.dart';
 
 // Provider config editor — schema-driven so we don't carry per-
@@ -80,9 +81,9 @@ class _ProviderConfigScreenState
           .updateConfig(widget.providerId, _values);
       if (!mounted) return;
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Provider config updated.'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(t.providers.configSaved),
+          duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -90,11 +91,15 @@ class _ProviderConfigScreenState
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('Save failed: ${e.message}')),
+        SnackBar(content: Text(t.providers.saveFailedApi(error: e.message))),
       );
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('Save failed: $e')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(t.providers.saveFailedGeneric(error: e.toString())),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -136,7 +141,7 @@ class _ProviderConfigScreenState
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Reload',
+            tooltip: t.providers.reload,
             onPressed: _saving ? null : _load,
           ),
         ],
@@ -497,7 +502,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),

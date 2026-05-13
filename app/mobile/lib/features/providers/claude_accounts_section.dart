@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/claude_accounts_api.dart';
 import 'package:opendray/core/api/models.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/providers/claude_account_dialogs.dart'
     show RenameClaudeAccountDialog;
 
@@ -75,11 +76,22 @@ class _ClaudeAccountsSectionState
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('$failPrefix: ${e.message}')),
+        SnackBar(
+          content: Text(
+            t.providers.errorWithMessage(prefix: failPrefix, error: e.message),
+          ),
+        ),
       );
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('$failPrefix: $e')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            t.providers
+                .errorWithMessage(prefix: failPrefix, error: e.toString()),
+          ),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _busy.remove(key));
     }
@@ -126,7 +138,7 @@ class _ClaudeAccountsSectionState
             ),
             ListTile(
               leading: const Icon(Icons.drive_file_rename_outline),
-              title: const Text('Rename'),
+              title: Text(t.providers.accounts.rename),
               onTap: () => Navigator.of(sheetCtx).pop(_AccountAction.rename),
             ),
             const Divider(height: 1),
@@ -153,7 +165,7 @@ class _ClaudeAccountsSectionState
         await _runOp(
           key: 'a:${a.id}',
           okMsg: next ? '${a.displayName} enabled.' : '${a.displayName} disabled.',
-          failPrefix: 'Toggle failed',
+          failPrefix: t.providers.errorPrefix.toggle,
           op: () => ref
               .read(claudeAccountsApiProvider)
               .setEnabled(a.id, enabled: next),
@@ -164,7 +176,7 @@ class _ClaudeAccountsSectionState
         await _runOp(
           key: 'a:${a.id}',
           okMsg: 'Renamed to $next.',
-          failPrefix: 'Rename failed',
+          failPrefix: t.providers.errorPrefix.rename,
           op: () => ref
               .read(claudeAccountsApiProvider)
               .update(a.id, displayName: next),
@@ -173,7 +185,7 @@ class _ClaudeAccountsSectionState
         final ok = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Delete account?'),
+            title: Text(t.providers.accounts.deleteTitle),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,14 +206,14 @@ class _ClaudeAccountsSectionState
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
+                child: Text(t.common.cancel),
               ),
               FilledButton(
                 style: FilledButton.styleFrom(
                   backgroundColor: Theme.of(ctx).colorScheme.error,
                 ),
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Delete'),
+                child: Text(t.common.delete),
               ),
             ],
           ),
@@ -210,7 +222,7 @@ class _ClaudeAccountsSectionState
         await _runOp(
           key: 'a:${a.id}',
           okMsg: 'Deleted ${a.name}.',
-          failPrefix: 'Delete failed',
+          failPrefix: t.providers.errorPrefix.delete,
           op: () => ref.read(claudeAccountsApiProvider).delete(a.id),
         );
     }
@@ -237,11 +249,21 @@ class _ClaudeAccountsSectionState
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('Import failed: ${e.message}')),
+        SnackBar(
+          content: Text(
+            t.providers.accounts.importFailedApi(error: e.message),
+          ),
+        ),
       );
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('Import failed: $e')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            t.providers.accounts.importFailedGeneric(error: e.toString()),
+          ),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _busy.remove('import'));
     }
@@ -351,7 +373,7 @@ class _ClaudeAccountsSectionState
                 const SizedBox(height: 6),
                 OutlinedButton(
                   onPressed: _load,
-                  child: const Text('Retry'),
+                  child: Text(t.common.retry),
                 ),
               ],
             ),

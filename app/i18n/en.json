@@ -299,6 +299,83 @@
       }
     }
   },
+  "mcp": {
+    "title": "MCP",
+    "newServer": "New server",
+    "addSecret": "Add secret",
+    "editConfig": "Edit config",
+    "viewRawConfig": "View raw config",
+    "copyId": "Copy id",
+    "copiedSnack": "Copied {id}",
+    "deleteServerTitle": "Delete MCP server?",
+    "deleteSecretTitle": "Delete secret?",
+    "errorPrefix": {
+      "delete": "Delete failed",
+      "add": "Add failed",
+      "update": "Update failed",
+      "toggle": "Toggle failed"
+    },
+    "errorWithMessage": "{prefix}: {error}",
+    "editor": {
+      "nameHint": "my-mcp-server",
+      "jsonHint": "JSON config — name, transport: stdio, command, args…"
+    },
+    "secret": {
+      "keyLabel": "Key",
+      "keyHint": "GITHUB_TOKEN, OPENAI_KEY, …",
+      "valueLabel": "Value"
+    }
+  },
+  "providers": {
+    "title": "Providers",
+    "configSaved": "Provider config updated.",
+    "saveFailedApi": "Save failed: {error}",
+    "saveFailedGeneric": "Save failed: {error}",
+    "reload": "Reload",
+    "errorPrefix": {
+      "toggle": "Toggle failed",
+      "rename": "Rename failed",
+      "delete": "Delete failed"
+    },
+    "errorWithMessage": "{prefix}: {error}",
+    "accounts": {
+      "rename": "Rename",
+      "renameTitle": "Rename {name}",
+      "displayNameLabel": "Display name",
+      "displayNameHint": "Work account",
+      "deleteTitle": "Delete account?",
+      "importFailedApi": "Import failed: {error}",
+      "importFailedGeneric": "Import failed: {error}"
+    }
+  },
+  "integrations": {
+    "title": "Integrations",
+    "register": "Register",
+    "registerDialogTitle": "Register integration",
+    "edit": "Edit",
+    "editTitle": "Edit {name}",
+    "enabledLabel": "Enabled",
+    "iSavedIt": "I've saved it",
+    "apiKeyForName": "API key for {name}",
+    "apiKeySubtitleRegister": "Hand this to the integration so it can authenticate against /api/v1/{routePrefix}/…",
+    "copiedRequestId": "Copied request_id {id}",
+    "updateOk": "Integration updated.",
+    "registerFailedApi": "Register failed: {error}",
+    "registerFailedGeneric": "Register failed: {error}",
+    "updateFailedApi": "Update failed: {error}",
+    "updateFailedGeneric": "Update failed: {error}",
+    "deleteTitle": "Delete integration?",
+    "deletedSnack": "Deleted {name}.",
+    "deleteFailedApi": "Delete failed: {error}",
+    "deleteFailedGeneric": "Delete failed: {error}",
+    "rotateKey": "Rotate key",
+    "rotateConfirmTitle": "Rotate API key?",
+    "rotate": "Rotate",
+    "newApiKeyTitle": "New API key for {name}",
+    "newApiKeySubtitle": "Hand this to the integration. The previous key has just been invalidated.",
+    "rotateFailedApi": "Rotate failed: {error}",
+    "rotateFailedGeneric": "Rotate failed: {error}"
+  },
   "memory": {
     "title": "Memory",
     "more": "More",

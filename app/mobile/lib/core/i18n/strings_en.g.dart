@@ -45,6 +45,9 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsNavEn nav = TranslationsNavEn.internal(_root);
 	late final TranslationsMoreEn more = TranslationsMoreEn.internal(_root);
 	late final TranslationsSessionsEn sessions = TranslationsSessionsEn.internal(_root);
+	late final TranslationsMcpEn mcp = TranslationsMcpEn.internal(_root);
+	late final TranslationsProvidersEn providers = TranslationsProvidersEn.internal(_root);
+	late final TranslationsIntegrationsEn integrations = TranslationsIntegrationsEn.internal(_root);
 	late final TranslationsMemoryEn memory = TranslationsMemoryEn.internal(_root);
 	late final TranslationsAboutEn about = TranslationsAboutEn.internal(_root);
 	late final TranslationsSettingsEn settings = TranslationsSettingsEn.internal(_root);
@@ -190,6 +193,168 @@ class TranslationsSessionsEn {
 	late final TranslationsSessionsDirPickerEn dirPicker = TranslationsSessionsDirPickerEn.internal(_root);
 	late final TranslationsSessionsInspectorEn inspector = TranslationsSessionsInspectorEn.internal(_root);
 	late final TranslationsSessionsSpawnSheetEn spawnSheet = TranslationsSessionsSpawnSheetEn.internal(_root);
+}
+
+// Path: mcp
+class TranslationsMcpEn {
+	TranslationsMcpEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'MCP'
+	String get title => 'MCP';
+
+	/// en: 'New server'
+	String get newServer => 'New server';
+
+	/// en: 'Add secret'
+	String get addSecret => 'Add secret';
+
+	/// en: 'Edit config'
+	String get editConfig => 'Edit config';
+
+	/// en: 'View raw config'
+	String get viewRawConfig => 'View raw config';
+
+	/// en: 'Copy id'
+	String get copyId => 'Copy id';
+
+	/// en: 'Copied {id}'
+	String copiedSnack({required Object id}) => 'Copied ${id}';
+
+	/// en: 'Delete MCP server?'
+	String get deleteServerTitle => 'Delete MCP server?';
+
+	/// en: 'Delete secret?'
+	String get deleteSecretTitle => 'Delete secret?';
+
+	late final TranslationsMcpErrorPrefixEn errorPrefix = TranslationsMcpErrorPrefixEn.internal(_root);
+
+	/// en: '{prefix}: {error}'
+	String errorWithMessage({required Object prefix, required Object error}) => '${prefix}: ${error}';
+
+	late final TranslationsMcpEditorEn editor = TranslationsMcpEditorEn.internal(_root);
+	late final TranslationsMcpSecretEn secret = TranslationsMcpSecretEn.internal(_root);
+}
+
+// Path: providers
+class TranslationsProvidersEn {
+	TranslationsProvidersEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Providers'
+	String get title => 'Providers';
+
+	/// en: 'Provider config updated.'
+	String get configSaved => 'Provider config updated.';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedApi({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedGeneric({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Reload'
+	String get reload => 'Reload';
+
+	late final TranslationsProvidersErrorPrefixEn errorPrefix = TranslationsProvidersErrorPrefixEn.internal(_root);
+
+	/// en: '{prefix}: {error}'
+	String errorWithMessage({required Object prefix, required Object error}) => '${prefix}: ${error}';
+
+	late final TranslationsProvidersAccountsEn accounts = TranslationsProvidersAccountsEn.internal(_root);
+}
+
+// Path: integrations
+class TranslationsIntegrationsEn {
+	TranslationsIntegrationsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Integrations'
+	String get title => 'Integrations';
+
+	/// en: 'Register'
+	String get register => 'Register';
+
+	/// en: 'Register integration'
+	String get registerDialogTitle => 'Register integration';
+
+	/// en: 'Edit'
+	String get edit => 'Edit';
+
+	/// en: 'Edit {name}'
+	String editTitle({required Object name}) => 'Edit ${name}';
+
+	/// en: 'Enabled'
+	String get enabledLabel => 'Enabled';
+
+	/// en: 'I've saved it'
+	String get iSavedIt => 'I\'ve saved it';
+
+	/// en: 'API key for {name}'
+	String apiKeyForName({required Object name}) => 'API key for ${name}';
+
+	/// en: 'Hand this to the integration so it can authenticate against /api/v1/{routePrefix}/…'
+	String apiKeySubtitleRegister({required Object routePrefix}) => 'Hand this to the integration so it can authenticate against /api/v1/${routePrefix}/…';
+
+	/// en: 'Copied request_id {id}'
+	String copiedRequestId({required Object id}) => 'Copied request_id ${id}';
+
+	/// en: 'Integration updated.'
+	String get updateOk => 'Integration updated.';
+
+	/// en: 'Register failed: {error}'
+	String registerFailedApi({required Object error}) => 'Register failed: ${error}';
+
+	/// en: 'Register failed: {error}'
+	String registerFailedGeneric({required Object error}) => 'Register failed: ${error}';
+
+	/// en: 'Update failed: {error}'
+	String updateFailedApi({required Object error}) => 'Update failed: ${error}';
+
+	/// en: 'Update failed: {error}'
+	String updateFailedGeneric({required Object error}) => 'Update failed: ${error}';
+
+	/// en: 'Delete integration?'
+	String get deleteTitle => 'Delete integration?';
+
+	/// en: 'Deleted {name}.'
+	String deletedSnack({required Object name}) => 'Deleted ${name}.';
+
+	/// en: 'Delete failed: {error}'
+	String deleteFailedApi({required Object error}) => 'Delete failed: ${error}';
+
+	/// en: 'Delete failed: {error}'
+	String deleteFailedGeneric({required Object error}) => 'Delete failed: ${error}';
+
+	/// en: 'Rotate key'
+	String get rotateKey => 'Rotate key';
+
+	/// en: 'Rotate API key?'
+	String get rotateConfirmTitle => 'Rotate API key?';
+
+	/// en: 'Rotate'
+	String get rotate => 'Rotate';
+
+	/// en: 'New API key for {name}'
+	String newApiKeyTitle({required Object name}) => 'New API key for ${name}';
+
+	/// en: 'Hand this to the integration. The previous key has just been invalidated.'
+	String get newApiKeySubtitle => 'Hand this to the integration. The previous key has just been invalidated.';
+
+	/// en: 'Rotate failed: {error}'
+	String rotateFailedApi({required Object error}) => 'Rotate failed: ${error}';
+
+	/// en: 'Rotate failed: {error}'
+	String rotateFailedGeneric({required Object error}) => 'Rotate failed: ${error}';
 }
 
 // Path: memory
@@ -619,6 +784,108 @@ class TranslationsSessionsSpawnSheetEn {
 	late final TranslationsSessionsSpawnSheetNoProvidersEn noProviders = TranslationsSessionsSpawnSheetNoProvidersEn.internal(_root);
 	late final TranslationsSessionsSpawnSheetProviderLoadErrorEn providerLoadError = TranslationsSessionsSpawnSheetProviderLoadErrorEn.internal(_root);
 	late final TranslationsSessionsSpawnSheetClaudeAccountEn claudeAccount = TranslationsSessionsSpawnSheetClaudeAccountEn.internal(_root);
+}
+
+// Path: mcp.errorPrefix
+class TranslationsMcpErrorPrefixEn {
+	TranslationsMcpErrorPrefixEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Delete failed'
+	String get delete => 'Delete failed';
+
+	/// en: 'Add failed'
+	String get add => 'Add failed';
+
+	/// en: 'Update failed'
+	String get update => 'Update failed';
+
+	/// en: 'Toggle failed'
+	String get toggle => 'Toggle failed';
+}
+
+// Path: mcp.editor
+class TranslationsMcpEditorEn {
+	TranslationsMcpEditorEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'my-mcp-server'
+	String get nameHint => 'my-mcp-server';
+
+	/// en: 'JSON config — name, transport: stdio, command, args…'
+	String get jsonHint => 'JSON config — name, transport: stdio, command, args…';
+}
+
+// Path: mcp.secret
+class TranslationsMcpSecretEn {
+	TranslationsMcpSecretEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Key'
+	String get keyLabel => 'Key';
+
+	/// en: 'GITHUB_TOKEN, OPENAI_KEY, …'
+	String get keyHint => 'GITHUB_TOKEN, OPENAI_KEY, …';
+
+	/// en: 'Value'
+	String get valueLabel => 'Value';
+}
+
+// Path: providers.errorPrefix
+class TranslationsProvidersErrorPrefixEn {
+	TranslationsProvidersErrorPrefixEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Toggle failed'
+	String get toggle => 'Toggle failed';
+
+	/// en: 'Rename failed'
+	String get rename => 'Rename failed';
+
+	/// en: 'Delete failed'
+	String get delete => 'Delete failed';
+}
+
+// Path: providers.accounts
+class TranslationsProvidersAccountsEn {
+	TranslationsProvidersAccountsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Rename'
+	String get rename => 'Rename';
+
+	/// en: 'Rename {name}'
+	String renameTitle({required Object name}) => 'Rename ${name}';
+
+	/// en: 'Display name'
+	String get displayNameLabel => 'Display name';
+
+	/// en: 'Work account'
+	String get displayNameHint => 'Work account';
+
+	/// en: 'Delete account?'
+	String get deleteTitle => 'Delete account?';
+
+	/// en: 'Import failed: {error}'
+	String importFailedApi({required Object error}) => 'Import failed: ${error}';
+
+	/// en: 'Import failed: {error}'
+	String importFailedGeneric({required Object error}) => 'Import failed: ${error}';
 }
 
 // Path: memory.deleteAllConfirm
@@ -1678,6 +1945,67 @@ extension on Translations {
 			'sessions.spawnSheet.claudeAccount.noTokenSuffix' => ' (no token)',
 			'sessions.spawnSheet.claudeAccount.noneHint' => 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY. Add accounts under Settings → Accounts on the web admin.',
 			'sessions.spawnSheet.claudeAccount.errorHint' => ({required Object error}) => 'Could not load Claude accounts (${error}). The session will spawn with the gateway default.',
+			'mcp.title' => 'MCP',
+			'mcp.newServer' => 'New server',
+			'mcp.addSecret' => 'Add secret',
+			'mcp.editConfig' => 'Edit config',
+			'mcp.viewRawConfig' => 'View raw config',
+			'mcp.copyId' => 'Copy id',
+			'mcp.copiedSnack' => ({required Object id}) => 'Copied ${id}',
+			'mcp.deleteServerTitle' => 'Delete MCP server?',
+			'mcp.deleteSecretTitle' => 'Delete secret?',
+			'mcp.errorPrefix.delete' => 'Delete failed',
+			'mcp.errorPrefix.add' => 'Add failed',
+			'mcp.errorPrefix.update' => 'Update failed',
+			'mcp.errorPrefix.toggle' => 'Toggle failed',
+			'mcp.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
+			'mcp.editor.nameHint' => 'my-mcp-server',
+			'mcp.editor.jsonHint' => 'JSON config — name, transport: stdio, command, args…',
+			'mcp.secret.keyLabel' => 'Key',
+			'mcp.secret.keyHint' => 'GITHUB_TOKEN, OPENAI_KEY, …',
+			'mcp.secret.valueLabel' => 'Value',
+			'providers.title' => 'Providers',
+			'providers.configSaved' => 'Provider config updated.',
+			'providers.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
+			'providers.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
+			'providers.reload' => 'Reload',
+			'providers.errorPrefix.toggle' => 'Toggle failed',
+			'providers.errorPrefix.rename' => 'Rename failed',
+			'providers.errorPrefix.delete' => 'Delete failed',
+			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
+			'providers.accounts.rename' => 'Rename',
+			'providers.accounts.renameTitle' => ({required Object name}) => 'Rename ${name}',
+			'providers.accounts.displayNameLabel' => 'Display name',
+			'providers.accounts.displayNameHint' => 'Work account',
+			'providers.accounts.deleteTitle' => 'Delete account?',
+			'providers.accounts.importFailedApi' => ({required Object error}) => 'Import failed: ${error}',
+			'providers.accounts.importFailedGeneric' => ({required Object error}) => 'Import failed: ${error}',
+			'integrations.title' => 'Integrations',
+			'integrations.register' => 'Register',
+			'integrations.registerDialogTitle' => 'Register integration',
+			'integrations.edit' => 'Edit',
+			'integrations.editTitle' => ({required Object name}) => 'Edit ${name}',
+			'integrations.enabledLabel' => 'Enabled',
+			'integrations.iSavedIt' => 'I\'ve saved it',
+			'integrations.apiKeyForName' => ({required Object name}) => 'API key for ${name}',
+			'integrations.apiKeySubtitleRegister' => ({required Object routePrefix}) => 'Hand this to the integration so it can authenticate against /api/v1/${routePrefix}/…',
+			'integrations.copiedRequestId' => ({required Object id}) => 'Copied request_id ${id}',
+			'integrations.updateOk' => 'Integration updated.',
+			'integrations.registerFailedApi' => ({required Object error}) => 'Register failed: ${error}',
+			'integrations.registerFailedGeneric' => ({required Object error}) => 'Register failed: ${error}',
+			'integrations.updateFailedApi' => ({required Object error}) => 'Update failed: ${error}',
+			'integrations.updateFailedGeneric' => ({required Object error}) => 'Update failed: ${error}',
+			'integrations.deleteTitle' => 'Delete integration?',
+			'integrations.deletedSnack' => ({required Object name}) => 'Deleted ${name}.',
+			'integrations.deleteFailedApi' => ({required Object error}) => 'Delete failed: ${error}',
+			'integrations.deleteFailedGeneric' => ({required Object error}) => 'Delete failed: ${error}',
+			'integrations.rotateKey' => 'Rotate key',
+			'integrations.rotateConfirmTitle' => 'Rotate API key?',
+			'integrations.rotate' => 'Rotate',
+			'integrations.newApiKeyTitle' => ({required Object name}) => 'New API key for ${name}',
+			'integrations.newApiKeySubtitle' => 'Hand this to the integration. The previous key has just been invalidated.',
+			'integrations.rotateFailedApi' => ({required Object error}) => 'Rotate failed: ${error}',
+			'integrations.rotateFailedGeneric' => ({required Object error}) => 'Rotate failed: ${error}',
 			'memory.title' => 'Memory',
 			'memory.more' => 'More',
 			'memory.workers' => 'Memory workers',

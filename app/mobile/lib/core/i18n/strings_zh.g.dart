@@ -44,6 +44,9 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsNavZh nav = _TranslationsNavZh._(_root);
 	@override late final _TranslationsMoreZh more = _TranslationsMoreZh._(_root);
 	@override late final _TranslationsSessionsZh sessions = _TranslationsSessionsZh._(_root);
+	@override late final _TranslationsMcpZh mcp = _TranslationsMcpZh._(_root);
+	@override late final _TranslationsProvidersZh providers = _TranslationsProvidersZh._(_root);
+	@override late final _TranslationsIntegrationsZh integrations = _TranslationsIntegrationsZh._(_root);
 	@override late final _TranslationsMemoryZh memory = _TranslationsMemoryZh._(_root);
 	@override late final _TranslationsAboutZh about = _TranslationsAboutZh._(_root);
 	@override late final _TranslationsSettingsZh settings = _TranslationsSettingsZh._(_root);
@@ -132,6 +135,80 @@ class _TranslationsSessionsZh extends TranslationsSessionsEn {
 	@override late final _TranslationsSessionsDirPickerZh dirPicker = _TranslationsSessionsDirPickerZh._(_root);
 	@override late final _TranslationsSessionsInspectorZh inspector = _TranslationsSessionsInspectorZh._(_root);
 	@override late final _TranslationsSessionsSpawnSheetZh spawnSheet = _TranslationsSessionsSpawnSheetZh._(_root);
+}
+
+// Path: mcp
+class _TranslationsMcpZh extends TranslationsMcpEn {
+	_TranslationsMcpZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'MCP';
+	@override String get newServer => '新建服务器';
+	@override String get addSecret => '添加密钥';
+	@override String get editConfig => '编辑配置';
+	@override String get viewRawConfig => '查看原始配置';
+	@override String get copyId => '复制 ID';
+	@override String copiedSnack({required Object id}) => '已复制 ${id}';
+	@override String get deleteServerTitle => '删除 MCP 服务器？';
+	@override String get deleteSecretTitle => '删除密钥？';
+	@override late final _TranslationsMcpErrorPrefixZh errorPrefix = _TranslationsMcpErrorPrefixZh._(_root);
+	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
+	@override late final _TranslationsMcpEditorZh editor = _TranslationsMcpEditorZh._(_root);
+	@override late final _TranslationsMcpSecretZh secret = _TranslationsMcpSecretZh._(_root);
+}
+
+// Path: providers
+class _TranslationsProvidersZh extends TranslationsProvidersEn {
+	_TranslationsProvidersZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '提供商';
+	@override String get configSaved => '提供商配置已更新。';
+	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
+	@override String saveFailedGeneric({required Object error}) => '保存失败：${error}';
+	@override String get reload => '重新加载';
+	@override late final _TranslationsProvidersErrorPrefixZh errorPrefix = _TranslationsProvidersErrorPrefixZh._(_root);
+	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
+	@override late final _TranslationsProvidersAccountsZh accounts = _TranslationsProvidersAccountsZh._(_root);
+}
+
+// Path: integrations
+class _TranslationsIntegrationsZh extends TranslationsIntegrationsEn {
+	_TranslationsIntegrationsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '集成';
+	@override String get register => '注册';
+	@override String get registerDialogTitle => '注册集成';
+	@override String get edit => '编辑';
+	@override String editTitle({required Object name}) => '编辑 ${name}';
+	@override String get enabledLabel => '已启用';
+	@override String get iSavedIt => '我已保存';
+	@override String apiKeyForName({required Object name}) => '${name} 的 API key';
+	@override String apiKeySubtitleRegister({required Object routePrefix}) => '将其交给集成方，使其能够通过 /api/v1/${routePrefix}/… 进行认证。';
+	@override String copiedRequestId({required Object id}) => '已复制 request_id ${id}';
+	@override String get updateOk => '集成已更新。';
+	@override String registerFailedApi({required Object error}) => '注册失败：${error}';
+	@override String registerFailedGeneric({required Object error}) => '注册失败：${error}';
+	@override String updateFailedApi({required Object error}) => '更新失败：${error}';
+	@override String updateFailedGeneric({required Object error}) => '更新失败：${error}';
+	@override String get deleteTitle => '删除集成？';
+	@override String deletedSnack({required Object name}) => '已删除 ${name}。';
+	@override String deleteFailedApi({required Object error}) => '删除失败：${error}';
+	@override String deleteFailedGeneric({required Object error}) => '删除失败：${error}';
+	@override String get rotateKey => '轮换密钥';
+	@override String get rotateConfirmTitle => '轮换 API key？';
+	@override String get rotate => '轮换';
+	@override String newApiKeyTitle({required Object name}) => '${name} 的新 API key';
+	@override String get newApiKeySubtitle => '将其交给集成方。旧密钥已失效。';
+	@override String rotateFailedApi({required Object error}) => '轮换失败：${error}';
+	@override String rotateFailedGeneric({required Object error}) => '轮换失败：${error}';
 }
 
 // Path: memory
@@ -395,6 +472,70 @@ class _TranslationsSessionsSpawnSheetZh extends TranslationsSessionsSpawnSheetEn
 	@override late final _TranslationsSessionsSpawnSheetNoProvidersZh noProviders = _TranslationsSessionsSpawnSheetNoProvidersZh._(_root);
 	@override late final _TranslationsSessionsSpawnSheetProviderLoadErrorZh providerLoadError = _TranslationsSessionsSpawnSheetProviderLoadErrorZh._(_root);
 	@override late final _TranslationsSessionsSpawnSheetClaudeAccountZh claudeAccount = _TranslationsSessionsSpawnSheetClaudeAccountZh._(_root);
+}
+
+// Path: mcp.errorPrefix
+class _TranslationsMcpErrorPrefixZh extends TranslationsMcpErrorPrefixEn {
+	_TranslationsMcpErrorPrefixZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get delete => '删除失败';
+	@override String get add => '添加失败';
+	@override String get update => '更新失败';
+	@override String get toggle => '切换失败';
+}
+
+// Path: mcp.editor
+class _TranslationsMcpEditorZh extends TranslationsMcpEditorEn {
+	_TranslationsMcpEditorZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get nameHint => 'my-mcp-server';
+	@override String get jsonHint => 'JSON 配置 — name、transport: stdio、command、args…';
+}
+
+// Path: mcp.secret
+class _TranslationsMcpSecretZh extends TranslationsMcpSecretEn {
+	_TranslationsMcpSecretZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get keyLabel => '键';
+	@override String get keyHint => 'GITHUB_TOKEN、OPENAI_KEY、…';
+	@override String get valueLabel => '值';
+}
+
+// Path: providers.errorPrefix
+class _TranslationsProvidersErrorPrefixZh extends TranslationsProvidersErrorPrefixEn {
+	_TranslationsProvidersErrorPrefixZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get toggle => '切换失败';
+	@override String get rename => '重命名失败';
+	@override String get delete => '删除失败';
+}
+
+// Path: providers.accounts
+class _TranslationsProvidersAccountsZh extends TranslationsProvidersAccountsEn {
+	_TranslationsProvidersAccountsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get rename => '重命名';
+	@override String renameTitle({required Object name}) => '重命名 ${name}';
+	@override String get displayNameLabel => '显示名';
+	@override String get displayNameHint => '工作账号';
+	@override String get deleteTitle => '删除账号？';
+	@override String importFailedApi({required Object error}) => '导入失败：${error}';
+	@override String importFailedGeneric({required Object error}) => '导入失败：${error}';
 }
 
 // Path: memory.deleteAllConfirm
@@ -1137,6 +1278,67 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.claudeAccount.noTokenSuffix' => '（无令牌）',
 			'sessions.spawnSheet.claudeAccount.noneHint' => '未配置 Claude 账号 — 网关将使用系统的 ANTHROPIC_API_KEY。在 Web 管理端的「设置 → 账号」中添加账号。',
 			'sessions.spawnSheet.claudeAccount.errorHint' => ({required Object error}) => '无法加载 Claude 账号（${error}）。会话将以网关默认配置启动。',
+			'mcp.title' => 'MCP',
+			'mcp.newServer' => '新建服务器',
+			'mcp.addSecret' => '添加密钥',
+			'mcp.editConfig' => '编辑配置',
+			'mcp.viewRawConfig' => '查看原始配置',
+			'mcp.copyId' => '复制 ID',
+			'mcp.copiedSnack' => ({required Object id}) => '已复制 ${id}',
+			'mcp.deleteServerTitle' => '删除 MCP 服务器？',
+			'mcp.deleteSecretTitle' => '删除密钥？',
+			'mcp.errorPrefix.delete' => '删除失败',
+			'mcp.errorPrefix.add' => '添加失败',
+			'mcp.errorPrefix.update' => '更新失败',
+			'mcp.errorPrefix.toggle' => '切换失败',
+			'mcp.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
+			'mcp.editor.nameHint' => 'my-mcp-server',
+			'mcp.editor.jsonHint' => 'JSON 配置 — name、transport: stdio、command、args…',
+			'mcp.secret.keyLabel' => '键',
+			'mcp.secret.keyHint' => 'GITHUB_TOKEN、OPENAI_KEY、…',
+			'mcp.secret.valueLabel' => '值',
+			'providers.title' => '提供商',
+			'providers.configSaved' => '提供商配置已更新。',
+			'providers.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
+			'providers.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
+			'providers.reload' => '重新加载',
+			'providers.errorPrefix.toggle' => '切换失败',
+			'providers.errorPrefix.rename' => '重命名失败',
+			'providers.errorPrefix.delete' => '删除失败',
+			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
+			'providers.accounts.rename' => '重命名',
+			'providers.accounts.renameTitle' => ({required Object name}) => '重命名 ${name}',
+			'providers.accounts.displayNameLabel' => '显示名',
+			'providers.accounts.displayNameHint' => '工作账号',
+			'providers.accounts.deleteTitle' => '删除账号？',
+			'providers.accounts.importFailedApi' => ({required Object error}) => '导入失败：${error}',
+			'providers.accounts.importFailedGeneric' => ({required Object error}) => '导入失败：${error}',
+			'integrations.title' => '集成',
+			'integrations.register' => '注册',
+			'integrations.registerDialogTitle' => '注册集成',
+			'integrations.edit' => '编辑',
+			'integrations.editTitle' => ({required Object name}) => '编辑 ${name}',
+			'integrations.enabledLabel' => '已启用',
+			'integrations.iSavedIt' => '我已保存',
+			'integrations.apiKeyForName' => ({required Object name}) => '${name} 的 API key',
+			'integrations.apiKeySubtitleRegister' => ({required Object routePrefix}) => '将其交给集成方，使其能够通过 /api/v1/${routePrefix}/… 进行认证。',
+			'integrations.copiedRequestId' => ({required Object id}) => '已复制 request_id ${id}',
+			'integrations.updateOk' => '集成已更新。',
+			'integrations.registerFailedApi' => ({required Object error}) => '注册失败：${error}',
+			'integrations.registerFailedGeneric' => ({required Object error}) => '注册失败：${error}',
+			'integrations.updateFailedApi' => ({required Object error}) => '更新失败：${error}',
+			'integrations.updateFailedGeneric' => ({required Object error}) => '更新失败：${error}',
+			'integrations.deleteTitle' => '删除集成？',
+			'integrations.deletedSnack' => ({required Object name}) => '已删除 ${name}。',
+			'integrations.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
+			'integrations.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
+			'integrations.rotateKey' => '轮换密钥',
+			'integrations.rotateConfirmTitle' => '轮换 API key？',
+			'integrations.rotate' => '轮换',
+			'integrations.newApiKeyTitle' => ({required Object name}) => '${name} 的新 API key',
+			'integrations.newApiKeySubtitle' => '将其交给集成方。旧密钥已失效。',
+			'integrations.rotateFailedApi' => ({required Object error}) => '轮换失败：${error}',
+			'integrations.rotateFailedGeneric' => ({required Object error}) => '轮换失败：${error}',
 			'memory.title' => '记忆',
 			'memory.more' => '更多',
 			'memory.workers' => '记忆工作器',
