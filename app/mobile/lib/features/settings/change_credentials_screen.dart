@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/auth_api.dart';
 import 'package:opendray/core/auth/auth_state.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 class ChangeCredentialsScreen extends ConsumerStatefulWidget {
   const ChangeCredentialsScreen({super.key});
@@ -86,9 +87,9 @@ class _ChangeCredentialsScreenState
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Credentials updated.'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(t.settings.changeCredentials.updatedSnack),
+          duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -97,7 +98,7 @@ class _ChangeCredentialsScreenState
       if (mounted) {
         setState(() {
           _error = e.statusCode == 401
-              ? 'Current password is wrong.'
+              ? t.settings.changeCredentials.wrongCurrent
               : e.message;
           _submitting = false;
         });
@@ -116,7 +117,7 @@ class _ChangeCredentialsScreenState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Change credentials')),
+      appBar: AppBar(title: Text(t.settings.changeCredentials.title)),
       body: SafeArea(
         bottom: false,
         child: Form(
@@ -126,14 +127,13 @@ class _ChangeCredentialsScreenState
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             children: [
               Text(
-                'Verify your current password, then pick new credentials. '
-                'All other signed-in sessions will be revoked.',
+                t.settings.changeCredentials.explanation,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.outline,
                 ),
               ),
               const SizedBox(height: 16),
-              _label('Current password'),
+              _label(t.settings.changeCredentials.currentPassword),
               const SizedBox(height: 4),
               TextFormField(
                 controller: _currentCtrl,
@@ -148,11 +148,12 @@ class _ChangeCredentialsScreenState
                         () => _obscureCurrent = !_obscureCurrent),
                   ),
                 ),
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Required' : null,
+                validator: (v) => (v == null || v.isEmpty)
+                    ? t.settings.changeCredentials.validatorRequired
+                    : null,
               ),
               const SizedBox(height: 16),
-              _label('New username'),
+              _label(t.settings.changeCredentials.newUsername),
               const SizedBox(height: 4),
               TextFormField(
                 controller: _newUserCtrl,
@@ -160,18 +161,19 @@ class _ChangeCredentialsScreenState
                 textCapitalization: TextCapitalization.none,
                 decoration: const InputDecoration(),
                 style: const TextStyle(fontFamily: 'monospace'),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Required' : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? t.settings.changeCredentials.validatorRequired
+                    : null,
               ),
               const SizedBox(height: 16),
-              _label('New password'),
+              _label(t.settings.changeCredentials.newPassword),
               const SizedBox(height: 4),
               TextFormField(
                 controller: _newPassCtrl,
                 obscureText: _obscureNew,
                 autocorrect: false,
                 decoration: InputDecoration(
-                  helperText: 'At least 8 characters',
+                  helperText: t.settings.changeCredentials.passwordHelper,
                   suffixIcon: IconButton(
                     icon: Icon(_obscureNew
                         ? Icons.visibility_off_outlined
@@ -181,15 +183,17 @@ class _ChangeCredentialsScreenState
                   ),
                 ),
                 validator: (v) {
-                  if (v == null || v.isEmpty) return 'Required';
+                  if (v == null || v.isEmpty) {
+                    return t.settings.changeCredentials.validatorRequired;
+                  }
                   if (v.length < 8) {
-                    return 'Must be at least 8 characters';
+                    return t.settings.changeCredentials.passwordTooShort;
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 16),
-              _label('Confirm new password'),
+              _label(t.settings.changeCredentials.confirmPassword),
               const SizedBox(height: 4),
               TextFormField(
                 controller: _confirmCtrl,
@@ -198,7 +202,7 @@ class _ChangeCredentialsScreenState
                 decoration: const InputDecoration(),
                 validator: (v) {
                   if (v != _newPassCtrl.text) {
-                    return "Doesn't match the new password";
+                    return t.settings.changeCredentials.passwordMismatch;
                   }
                   return null;
                 },
@@ -231,7 +235,7 @@ class _ChangeCredentialsScreenState
                       onPressed: _submitting
                           ? null
                           : () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
+                      child: Text(t.common.cancel),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -246,7 +250,9 @@ class _ChangeCredentialsScreenState
                                   CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.check, size: 18),
-                      label: Text(_submitting ? 'Saving…' : 'Update'),
+                      label: Text(_submitting
+                          ? t.settings.changeCredentials.saving
+                          : t.settings.changeCredentials.update),
                     ),
                   ),
                 ],

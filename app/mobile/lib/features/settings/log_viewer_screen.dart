@@ -29,6 +29,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/logs_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 const _maxBuffered = 2000;
 
@@ -139,9 +140,9 @@ class _LogViewerScreenState extends ConsumerState<LogViewerScreen> {
     }).join('\n');
     Clipboard.setData(ClipboardData(text: body));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Copied buffer to clipboard'),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(t.settings.logViewer.copiedSnack),
+        duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -152,7 +153,7 @@ class _LogViewerScreenState extends ConsumerState<LogViewerScreen> {
     final filtered = _filteredRecords();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Live logs'),
+        title: Text(t.settings.logViewer.title),
         actions: [
           IconButton(
             tooltip: _paused ? 'Resume auto-scroll' : 'Pause auto-scroll',
@@ -162,17 +163,17 @@ class _LogViewerScreenState extends ConsumerState<LogViewerScreen> {
             onPressed: () => setState(() => _paused = !_paused),
           ),
           IconButton(
-            tooltip: 'Reconnect',
+            tooltip: t.settings.logViewer.reconnect,
             icon: const Icon(Icons.refresh),
             onPressed: _reconnect,
           ),
           IconButton(
-            tooltip: 'Copy buffer',
+            tooltip: t.settings.logViewer.copyBuffer,
             icon: const Icon(Icons.copy_outlined),
             onPressed: _records.isEmpty ? null : _copyAll,
           ),
           IconButton(
-            tooltip: 'Clear local view',
+            tooltip: t.settings.logViewer.clearLocal,
             icon: const Icon(Icons.delete_outline),
             onPressed: _records.isEmpty
                 ? null
@@ -197,9 +198,9 @@ class _LogViewerScreenState extends ConsumerState<LogViewerScreen> {
                   child: TextField(
                     controller: _filterCtrl,
                     onChanged: (v) => setState(() => _filter = v),
-                    decoration: const InputDecoration(
-                      hintText: 'Filter substring…',
-                      prefixIcon: Icon(Icons.search, size: 18),
+                    decoration: InputDecoration(
+                      hintText: t.settings.logViewer.filterHint,
+                      prefixIcon: const Icon(Icons.search, size: 18),
                       isDense: true,
                     ),
                   ),
@@ -210,12 +211,22 @@ class _LogViewerScreenState extends ConsumerState<LogViewerScreen> {
                   onChanged: (v) {
                     if (v != null) setState(() => _levelFilter = v);
                   },
-                  items: const [
-                    DropdownMenuItem(value: 'ALL', child: Text('All')),
-                    DropdownMenuItem(value: 'DEBUG', child: Text('Debug')),
-                    DropdownMenuItem(value: 'INFO', child: Text('Info')),
-                    DropdownMenuItem(value: 'WARN', child: Text('Warn')),
-                    DropdownMenuItem(value: 'ERROR', child: Text('Error')),
+                  items: [
+                    DropdownMenuItem(
+                        value: 'ALL',
+                        child: Text(t.settings.logViewer.levels.all)),
+                    DropdownMenuItem(
+                        value: 'DEBUG',
+                        child: Text(t.settings.logViewer.levels.debug)),
+                    DropdownMenuItem(
+                        value: 'INFO',
+                        child: Text(t.settings.logViewer.levels.info)),
+                    DropdownMenuItem(
+                        value: 'WARN',
+                        child: Text(t.settings.logViewer.levels.warn)),
+                    DropdownMenuItem(
+                        value: 'ERROR',
+                        child: Text(t.settings.logViewer.levels.error)),
                   ],
                 ),
               ],

@@ -542,6 +542,9 @@ class _TranslationsSettingsZh extends TranslationsSettingsEn {
 	@override late final _TranslationsSettingsAppearanceZh appearance = _TranslationsSettingsAppearanceZh._(_root);
 	@override late final _TranslationsSettingsAccountZh account = _TranslationsSettingsAccountZh._(_root);
 	@override late final _TranslationsSettingsGatewayZh gateway = _TranslationsSettingsGatewayZh._(_root);
+	@override late final _TranslationsSettingsChangeCredentialsZh changeCredentials = _TranslationsSettingsChangeCredentialsZh._(_root);
+	@override late final _TranslationsSettingsLogViewerZh logViewer = _TranslationsSettingsLogViewerZh._(_root);
+	@override late final _TranslationsSettingsServerSettingsZh serverSettings = _TranslationsSettingsServerSettingsZh._(_root);
 }
 
 // Path: more.identity
@@ -1042,6 +1045,63 @@ class _TranslationsSettingsGatewayZh extends TranslationsSettingsGatewayEn {
 	@override String get liveLogsSubtitle => '查看网关实时日志 — 与 Web 管理端同源';
 }
 
+// Path: settings.changeCredentials
+class _TranslationsSettingsChangeCredentialsZh extends TranslationsSettingsChangeCredentialsEn {
+	_TranslationsSettingsChangeCredentialsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '修改凭据';
+	@override String get explanation => '验证当前密码，然后选择新凭据。其他已登录会话将全部失效。';
+	@override String get currentPassword => '当前密码';
+	@override String get newUsername => '新用户名';
+	@override String get newPassword => '新密码';
+	@override String get confirmPassword => '确认新密码';
+	@override String get validatorRequired => '必填';
+	@override String get passwordHelper => '至少 8 个字符';
+	@override String get passwordTooShort => '至少需要 8 个字符';
+	@override String get passwordMismatch => '与新密码不一致';
+	@override String get updatedSnack => '凭据已更新。';
+	@override String get wrongCurrent => '当前密码不正确。';
+	@override String get saving => '保存中…';
+	@override String get update => '更新';
+}
+
+// Path: settings.logViewer
+class _TranslationsSettingsLogViewerZh extends TranslationsSettingsLogViewerEn {
+	_TranslationsSettingsLogViewerZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '实时日志';
+	@override String get reconnect => '重新连接';
+	@override String get copyBuffer => '复制缓冲';
+	@override String get clearLocal => '清除本地视图';
+	@override String get copiedSnack => '已将缓冲复制到剪贴板';
+	@override String get filterHint => '筛选子串…';
+	@override late final _TranslationsSettingsLogViewerLevelsZh levels = _TranslationsSettingsLogViewerLevelsZh._(_root);
+}
+
+// Path: settings.serverSettings
+class _TranslationsSettingsServerSettingsZh extends TranslationsSettingsServerSettingsEn {
+	_TranslationsSettingsServerSettingsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '服务器设置';
+	@override String get reloadTooltip => '从服务器重新加载';
+	@override String get restartTooltip => '重启网关';
+	@override String get restartConfirmTitle => '重启 opendray？';
+	@override String get restart => '重启';
+	@override String get restartQueuedSnack => '已请求重启。稍后下拉刷新。';
+	@override String restartFailedApi({required Object error}) => '重启失败：${error}';
+	@override String restartFailedGeneric({required Object error}) => '重启失败：${error}';
+	@override late final _TranslationsSettingsServerSettingsSectionsZh sections = _TranslationsSettingsServerSettingsSectionsZh._(_root);
+}
+
 // Path: more.items.integrations
 class _TranslationsMoreItemsIntegrationsZh extends TranslationsMoreItemsIntegrationsEn {
 	_TranslationsMoreItemsIntegrationsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -1414,6 +1474,39 @@ class _TranslationsSessionsSpawnSheetClaudeAccountZh extends TranslationsSession
 	@override String get noTokenSuffix => '（无令牌）';
 	@override String get noneHint => '未配置 Claude 账号 — 网关将使用系统的 ANTHROPIC_API_KEY。在 Web 管理端的「设置 → 账号」中添加账号。';
 	@override String errorHint({required Object error}) => '无法加载 Claude 账号（${error}）。会话将以网关默认配置启动。';
+}
+
+// Path: settings.logViewer.levels
+class _TranslationsSettingsLogViewerLevelsZh extends TranslationsSettingsLogViewerLevelsEn {
+	_TranslationsSettingsLogViewerLevelsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get all => '全部';
+	@override String get debug => '调试';
+	@override String get info => '信息';
+	@override String get warn => '警告';
+	@override String get error => '错误';
+}
+
+// Path: settings.serverSettings.sections
+class _TranslationsSettingsServerSettingsSectionsZh extends TranslationsSettingsServerSettingsSectionsEn {
+	_TranslationsSettingsServerSettingsSectionsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get general => '通用';
+	@override String get logging => '日志';
+	@override String get sessions => '会话';
+	@override String get vault => '凭据库';
+	@override String get mcpRegistry => 'MCP 注册表';
+	@override String get memory => '记忆';
+	@override String get backup => '备份';
+	@override String get storageClaude => '存储 · Claude';
+	@override String get storageCodex => '存储 · Codex';
+	@override String get storageGemini => '存储 · Gemini';
 }
 
 // Path: sessions.inspector.shell.tabs
@@ -1927,6 +2020,51 @@ extension on TranslationsZh {
 			'settings.gateway.serverSettingsSubtitle' => '监听地址、日志、凭据库、内存、存储路径…',
 			'settings.gateway.liveLogs' => '实时日志',
 			'settings.gateway.liveLogsSubtitle' => '查看网关实时日志 — 与 Web 管理端同源',
+			'settings.changeCredentials.title' => '修改凭据',
+			'settings.changeCredentials.explanation' => '验证当前密码，然后选择新凭据。其他已登录会话将全部失效。',
+			'settings.changeCredentials.currentPassword' => '当前密码',
+			'settings.changeCredentials.newUsername' => '新用户名',
+			'settings.changeCredentials.newPassword' => '新密码',
+			'settings.changeCredentials.confirmPassword' => '确认新密码',
+			'settings.changeCredentials.validatorRequired' => '必填',
+			'settings.changeCredentials.passwordHelper' => '至少 8 个字符',
+			'settings.changeCredentials.passwordTooShort' => '至少需要 8 个字符',
+			'settings.changeCredentials.passwordMismatch' => '与新密码不一致',
+			'settings.changeCredentials.updatedSnack' => '凭据已更新。',
+			'settings.changeCredentials.wrongCurrent' => '当前密码不正确。',
+			'settings.changeCredentials.saving' => '保存中…',
+			'settings.changeCredentials.update' => '更新',
+			'settings.logViewer.title' => '实时日志',
+			'settings.logViewer.reconnect' => '重新连接',
+			'settings.logViewer.copyBuffer' => '复制缓冲',
+			'settings.logViewer.clearLocal' => '清除本地视图',
+			'settings.logViewer.copiedSnack' => '已将缓冲复制到剪贴板',
+			'settings.logViewer.filterHint' => '筛选子串…',
+			'settings.logViewer.levels.all' => '全部',
+			'settings.logViewer.levels.debug' => '调试',
+			'settings.logViewer.levels.info' => '信息',
+			_ => null,
+		} ?? switch (path) {
+			'settings.logViewer.levels.warn' => '警告',
+			'settings.logViewer.levels.error' => '错误',
+			'settings.serverSettings.title' => '服务器设置',
+			'settings.serverSettings.reloadTooltip' => '从服务器重新加载',
+			'settings.serverSettings.restartTooltip' => '重启网关',
+			'settings.serverSettings.restartConfirmTitle' => '重启 opendray？',
+			'settings.serverSettings.restart' => '重启',
+			'settings.serverSettings.restartQueuedSnack' => '已请求重启。稍后下拉刷新。',
+			'settings.serverSettings.restartFailedApi' => ({required Object error}) => '重启失败：${error}',
+			'settings.serverSettings.restartFailedGeneric' => ({required Object error}) => '重启失败：${error}',
+			'settings.serverSettings.sections.general' => '通用',
+			'settings.serverSettings.sections.logging' => '日志',
+			'settings.serverSettings.sections.sessions' => '会话',
+			'settings.serverSettings.sections.vault' => '凭据库',
+			'settings.serverSettings.sections.mcpRegistry' => 'MCP 注册表',
+			'settings.serverSettings.sections.memory' => '记忆',
+			'settings.serverSettings.sections.backup' => '备份',
+			'settings.serverSettings.sections.storageClaude' => '存储 · Claude',
+			'settings.serverSettings.sections.storageCodex' => '存储 · Codex',
+			'settings.serverSettings.sections.storageGemini' => '存储 · Gemini',
 			_ => null,
 		};
 	}
