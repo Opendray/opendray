@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:opendray/core/auth/auth_state.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/backups/backups_screen.dart';
 import 'package:opendray/features/channels/channels_screen.dart';
 import 'package:opendray/features/custom_tasks/custom_tasks_screen.dart';
@@ -36,87 +37,86 @@ class MoreScreen extends ConsumerWidget {
       return const Scaffold(body: SizedBox.shrink());
     }
     return Scaffold(
-      appBar: AppBar(title: const Text('More')),
+      appBar: AppBar(title: Text(t.more.title)),
       body: ListView(
         children: [
           _IdentityCard(auth: auth),
           const SizedBox(height: 8),
-          const _SectionHeader(label: 'Gateway'),
+          _SectionHeader(label: t.more.sections.gateway),
           _MenuTile(
             icon: Icons.api_outlined,
-            title: 'Integrations',
-            subtitle: 'API callers — recent activity & error rates',
+            title: t.more.items.integrations.title,
+            subtitle: t.more.items.integrations.subtitle,
             onTap: () => _push(context, const IntegrationsScreen()),
           ),
           _MenuTile(
             icon: Icons.notifications_outlined,
-            title: 'Channels',
-            subtitle: 'Notification destinations',
+            title: t.more.items.channels.title,
+            subtitle: t.more.items.channels.subtitle,
             onTap: () => _push(context, const ChannelsScreen()),
           ),
           _MenuTile(
             icon: Icons.psychology_outlined,
-            title: 'Providers',
-            subtitle: 'Claude / Codex / Gemini CLI status',
+            title: t.more.items.providers.title,
+            subtitle: t.more.items.providers.subtitle,
             onTap: () => _push(context, const ProvidersScreen()),
           ),
           _MenuTile(
             icon: Icons.extension_outlined,
-            title: 'MCP',
-            subtitle: 'Model Context Protocol servers & secrets',
+            title: t.more.items.mcp.title,
+            subtitle: t.more.items.mcp.subtitle,
             onTap: () => _push(context, const McpScreen()),
           ),
           _MenuTile(
             icon: Icons.auto_awesome_outlined,
-            title: 'Skills',
-            subtitle: 'Agent SKILL.md library (built-in + vault)',
+            title: t.more.items.skills.title,
+            subtitle: t.more.items.skills.subtitle,
             onTap: () => _push(context, const SkillsScreen()),
           ),
           _MenuTile(
             icon: Icons.account_tree_outlined,
-            title: 'Git hosts',
-            subtitle: 'PAT credentials for GitHub / GitLab / etc.',
+            title: t.more.items.gitHosts.title,
+            subtitle: t.more.items.gitHosts.subtitle,
             onTap: () => _push(context, const GitHostsScreen()),
           ),
           _MenuTile(
             icon: Icons.terminal_outlined,
-            title: 'Custom tasks',
-            subtitle: 'Slash commands shown in the session task picker',
+            title: t.more.items.customTasks.title,
+            subtitle: t.more.items.customTasks.subtitle,
             onTap: () => _push(context, const CustomTasksScreen()),
           ),
           const SizedBox(height: 8),
-          const _SectionHeader(label: 'Memory'),
+          _SectionHeader(label: t.more.sections.memory),
           _MenuTile(
             icon: Icons.flag_outlined,
-            title: 'Project goal / plan / journal',
-            subtitle: 'Per-cwd memory layers 2-4 + agent proposals',
+            title: t.more.items.projectMemory.title,
+            subtitle: t.more.items.projectMemory.subtitle,
             onTap: () => _push(context, const ProjectScreen()),
           ),
           _MenuTile(
             icon: Icons.cleaning_services_outlined,
-            title: 'Cleanup inbox',
-            subtitle:
-                'LLM-proposed deletions / merges across all projects',
+            title: t.more.items.cleanupInbox.title,
+            subtitle: t.more.items.cleanupInbox.subtitle,
             onTap: () => _push(context, const CleanupInboxScreen()),
           ),
           const SizedBox(height: 8),
-          const _SectionHeader(label: 'System'),
+          _SectionHeader(label: t.more.sections.system),
           _MenuTile(
             icon: Icons.backup_outlined,
-            title: 'Backups',
-            subtitle: 'Latest backup status & run-now',
+            title: t.more.items.backups.title,
+            subtitle: t.more.items.backups.subtitle,
             onTap: () => _push(context, const BackupsScreen()),
           ),
           _MenuTile(
             icon: Icons.tune_outlined,
-            title: 'Settings',
-            subtitle: 'Appearance, account',
+            title: t.more.items.settings.title,
+            subtitle: t.more.items.settings.subtitle,
             onTap: () => _push(context, const SettingsScreen()),
           ),
           _MenuTile(
             icon: Icons.info_outline,
-            title: 'About',
-            subtitle: 'Build version & server info',
+            title: t.more.items.about.title,
+            subtitle: t.more.items.about.subtitle,
             onTap: () => _push(context, const AboutScreen()),
           ),
           const Divider(height: 32),
@@ -135,7 +135,7 @@ class MoreScreen extends ConsumerWidget {
               ),
               onPressed: () =>
                   ref.read(authControllerProvider.notifier).logout(),
-              child: const Text('Sign out'),
+              child: Text(t.more.signOut),
             ),
           ),
         ],
@@ -165,19 +165,19 @@ class _IdentityCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Signed in as', style: muted),
+              Text(t.more.identity.signedInAs, style: muted),
               Text(
                 auth.username,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),
-              Text('Server', style: muted),
+              Text(t.more.identity.server, style: muted),
               Text(
                 auth.serverUrl,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 12),
-              Text('Token expires', style: muted),
+              Text(t.more.identity.tokenExpires, style: muted),
               Text(
                 DateFormat.yMMMd().add_jm().format(auth.expiresAt.toLocal()),
                 style: Theme.of(context).textTheme.bodyMedium,

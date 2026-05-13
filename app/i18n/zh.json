@@ -19,6 +19,100 @@
     "errorRequired": "请输入用户名和密码",
     "errorGeneric": "登录失败：{error}"
   },
+  "nav": {
+    "sessions": "会话",
+    "memory": "记忆",
+    "notes": "笔记",
+    "more": "更多"
+  },
+  "more": {
+    "title": "更多",
+    "identity": {
+      "signedInAs": "登录账号",
+      "server": "服务器",
+      "tokenExpires": "令牌到期"
+    },
+    "sections": {
+      "gateway": "网关",
+      "memory": "记忆",
+      "system": "系统"
+    },
+    "items": {
+      "integrations": {
+        "title": "集成",
+        "subtitle": "API 调用方 — 近期活动与错误率"
+      },
+      "channels": {
+        "title": "通道",
+        "subtitle": "通知目的地"
+      },
+      "providers": {
+        "title": "提供商",
+        "subtitle": "Claude / Codex / Gemini CLI 状态"
+      },
+      "mcp": {
+        "title": "MCP",
+        "subtitle": "Model Context Protocol 服务与密钥"
+      },
+      "skills": {
+        "title": "技能",
+        "subtitle": "Agent SKILL.md 库（内置 + 库）"
+      },
+      "gitHosts": {
+        "title": "Git 主机",
+        "subtitle": "GitHub / GitLab 等的 PAT 凭据"
+      },
+      "customTasks": {
+        "title": "自定义任务",
+        "subtitle": "会话任务选择器中显示的斜杠命令"
+      },
+      "projectMemory": {
+        "title": "项目目标 / 计划 / 日志",
+        "subtitle": "按 cwd 的记忆层 2-4 + 代理提案"
+      },
+      "cleanupInbox": {
+        "title": "清理收件箱",
+        "subtitle": "跨项目的 LLM 提议删除 / 合并"
+      },
+      "backups": {
+        "title": "备份",
+        "subtitle": "最新备份状态与立即运行"
+      },
+      "settings": {
+        "title": "设置",
+        "subtitle": "语言、外观、账户"
+      },
+      "about": {
+        "title": "关于",
+        "subtitle": "构建版本与服务器信息"
+      }
+    },
+    "signOut": "退出登录"
+  },
+  "about": {
+    "title": "关于",
+    "loading": "加载中…",
+    "sections": {
+      "app": "应用",
+      "server": "服务器"
+    },
+    "fields": {
+      "app": "应用",
+      "version": "版本",
+      "versionFormat": "{version}（build {build}）",
+      "package": "包名",
+      "url": "URL",
+      "signedInAs": "登录账号",
+      "tokenExpires": "令牌到期"
+    },
+    "copied": "已复制 {label}",
+    "copyTooltip": "复制",
+    "copyLabels": {
+      "version": "版本",
+      "serverUrl": "服务器 URL"
+    },
+    "tagline": "opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray_v2"
+  },
   "settings": {
     "title": "设置",
     "language": {

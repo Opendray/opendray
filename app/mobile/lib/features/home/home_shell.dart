@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/memory/memory_screen.dart';
 import 'package:opendray/features/more/more_screen.dart';
 import 'package:opendray/features/notes/notes_screen.dart';
@@ -27,13 +28,6 @@ class HomeShell extends ConsumerStatefulWidget {
 class _HomeShellState extends ConsumerState<HomeShell> {
   int _index = 0;
 
-  static const _tabs = <_TabSpec>[
-    _TabSpec(icon: Icons.terminal_outlined, label: 'Sessions'),
-    _TabSpec(icon: Icons.psychology_outlined, label: 'Memory'),
-    _TabSpec(icon: Icons.description_outlined, label: 'Notes'),
-    _TabSpec(icon: Icons.more_horiz, label: 'More'),
-  ];
-
   @override
   Widget build(BuildContext context) {
     const pages = [
@@ -42,6 +36,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       NotesScreen(),
       MoreScreen(),
     ];
+    final tabs = <_TabSpec>[
+      _TabSpec(icon: Icons.terminal_outlined, label: t.nav.sessions),
+      _TabSpec(icon: Icons.psychology_outlined, label: t.nav.memory),
+      _TabSpec(icon: Icons.description_outlined, label: t.nav.notes),
+      _TabSpec(icon: Icons.more_horiz, label: t.nav.more),
+    ];
 
     return Scaffold(
       body: IndexedStack(index: _index, children: pages),
@@ -49,8 +49,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         currentIndex: _index,
         onTap: (i) => setState(() => _index = i),
         items: [
-          for (final t in _tabs)
-            BottomNavigationBarItem(icon: Icon(t.icon), label: t.label),
+          for (final tab in tabs)
+            BottomNavigationBarItem(icon: Icon(tab.icon), label: tab.label),
         ],
       ),
     );

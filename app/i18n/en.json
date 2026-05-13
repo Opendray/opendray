@@ -19,6 +19,100 @@
     "errorRequired": "Username and password are required",
     "errorGeneric": "Login failed: {error}"
   },
+  "nav": {
+    "sessions": "Sessions",
+    "memory": "Memory",
+    "notes": "Notes",
+    "more": "More"
+  },
+  "more": {
+    "title": "More",
+    "identity": {
+      "signedInAs": "Signed in as",
+      "server": "Server",
+      "tokenExpires": "Token expires"
+    },
+    "sections": {
+      "gateway": "Gateway",
+      "memory": "Memory",
+      "system": "System"
+    },
+    "items": {
+      "integrations": {
+        "title": "Integrations",
+        "subtitle": "API callers — recent activity & error rates"
+      },
+      "channels": {
+        "title": "Channels",
+        "subtitle": "Notification destinations"
+      },
+      "providers": {
+        "title": "Providers",
+        "subtitle": "Claude / Codex / Gemini CLI status"
+      },
+      "mcp": {
+        "title": "MCP",
+        "subtitle": "Model Context Protocol servers & secrets"
+      },
+      "skills": {
+        "title": "Skills",
+        "subtitle": "Agent SKILL.md library (built-in + vault)"
+      },
+      "gitHosts": {
+        "title": "Git hosts",
+        "subtitle": "PAT credentials for GitHub / GitLab / etc."
+      },
+      "customTasks": {
+        "title": "Custom tasks",
+        "subtitle": "Slash commands shown in the session task picker"
+      },
+      "projectMemory": {
+        "title": "Project goal / plan / journal",
+        "subtitle": "Per-cwd memory layers 2-4 + agent proposals"
+      },
+      "cleanupInbox": {
+        "title": "Cleanup inbox",
+        "subtitle": "LLM-proposed deletions / merges across all projects"
+      },
+      "backups": {
+        "title": "Backups",
+        "subtitle": "Latest backup status & run-now"
+      },
+      "settings": {
+        "title": "Settings",
+        "subtitle": "Language, appearance, account"
+      },
+      "about": {
+        "title": "About",
+        "subtitle": "Build version & server info"
+      }
+    },
+    "signOut": "Sign out"
+  },
+  "about": {
+    "title": "About",
+    "loading": "Loading…",
+    "sections": {
+      "app": "App",
+      "server": "Server"
+    },
+    "fields": {
+      "app": "App",
+      "version": "Version",
+      "versionFormat": "{version} (build {build})",
+      "package": "Package",
+      "url": "URL",
+      "signedInAs": "Signed in as",
+      "tokenExpires": "Token expires"
+    },
+    "copied": "Copied {label}",
+    "copyTooltip": "Copy",
+    "copyLabels": {
+      "version": "version",
+      "serverUrl": "server URL"
+    },
+    "tagline": "opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray_v2"
+  },
   "settings": {
     "title": "Settings",
     "language": {

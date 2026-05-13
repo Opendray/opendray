@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:opendray/core/auth/auth_state.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 // Diagnostics screen for "what version is this and which server am
@@ -37,7 +38,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Copied $label'),
+        content: Text(t.about.copied(label: label)),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
@@ -50,61 +51,64 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     final loggedIn = auth is AuthLoggedIn ? auth : null;
     final info = _info;
     return Scaffold(
-      appBar: AppBar(title: const Text('About')),
+      appBar: AppBar(title: Text(t.about.title)),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
-          const _SectionHeader(label: 'App'),
+          _SectionHeader(label: t.about.sections.app),
           if (info == null)
-            const ListTile(
-              leading: SizedBox(
+            ListTile(
+              leading: const SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
-              title: Text('Loading…'),
+              title: Text(t.about.loading),
             )
           else ...[
             _kv(
               context,
-              label: 'App',
+              label: t.about.fields.app,
               value: info.appName,
             ),
             _kv(
               context,
-              label: 'Version',
-              value: '${info.version} (build ${info.buildNumber})',
+              label: t.about.fields.version,
+              value: t.about.fields.versionFormat(
+                version: info.version,
+                build: info.buildNumber,
+              ),
               mono: true,
               onCopy: () => _copy(
-                'version',
+                t.about.copyLabels.version,
                 '${info.version}+${info.buildNumber}',
               ),
             ),
             _kv(
               context,
-              label: 'Package',
+              label: t.about.fields.package,
               value: info.packageName,
               mono: true,
             ),
           ],
           const SizedBox(height: 8),
           if (loggedIn != null) ...[
-            const _SectionHeader(label: 'Server'),
+            _SectionHeader(label: t.about.sections.server),
             _kv(
               context,
-              label: 'URL',
+              label: t.about.fields.url,
               value: loggedIn.serverUrl,
               mono: true,
-              onCopy: () => _copy('server URL', loggedIn.serverUrl),
+              onCopy: () => _copy(t.about.copyLabels.serverUrl, loggedIn.serverUrl),
             ),
             _kv(
               context,
-              label: 'Signed in as',
+              label: t.about.fields.signedInAs,
               value: loggedIn.username,
             ),
             _kv(
               context,
-              label: 'Token expires',
+              label: t.about.fields.tokenExpires,
               value: DateFormat.yMMMd()
                   .add_Hms()
                   .format(loggedIn.expiresAt.toLocal()),
@@ -115,8 +119,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                'opendray mobile — multi-CLI gateway control.\n'
-                'Source: github.com/Opendray/opendray_v2',
+                t.about.tagline,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
@@ -151,7 +154,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           ? null
           : IconButton(
               icon: const Icon(Icons.copy_outlined, size: 18),
-              tooltip: 'Copy',
+              tooltip: t.about.copyTooltip,
               onPressed: onCopy,
             ),
       dense: true,
