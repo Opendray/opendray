@@ -115,6 +115,82 @@
       "minutesAgo": "{n} 分钟前",
       "hoursAgo": "{n} 小时前",
       "daysAgo": "{n} 天前"
+    },
+    "action": {
+      "stop": "停止",
+      "stopping": "停止中…",
+      "stopDescription": "发送 SIGTERM，保留历史",
+      "restart": "重启",
+      "restarting": "重启中…",
+      "restartDescription": "重新启动 CLI 进程",
+      "delete": "删除",
+      "deleteDescription": "移除会话及其历史",
+      "deleteConfirm": "确定永久删除此会话吗？其环形缓冲区和历史将全部丢失。",
+      "errors": {
+        "stop": "停止失败：{error}",
+        "start": "重启失败：{error}",
+        "delete": "删除失败：{error}"
+      }
+    },
+    "dirPicker": {
+      "parent": "上级",
+      "newFolder": "新建文件夹",
+      "useThisFolder": "使用此文件夹",
+      "loading": "加载中…",
+      "empty": "此处没有子文件夹。\n选择此文件夹，或新建一个。",
+      "createdSnack": "已创建 {path}",
+      "mkdirFailedSnack": "创建文件夹失败：{error}",
+      "dialog": {
+        "title": "新建文件夹",
+        "hint": "文件夹名",
+        "create": "创建"
+      }
+    },
+    "spawnSheet": {
+      "title": "新建会话",
+      "errorRequired": "需要指定提供商和工作目录",
+      "errorGeneric": "创建会话失败：{error}",
+      "cancel": "取消",
+      "spawn": "创建",
+      "providerLabel": "提供商",
+      "disabledSuffix": "（已停用）",
+      "cwdLabel": "工作目录",
+      "cwdHint": "/Users/you/projects/foo",
+      "cwdHelper": "网关主机上的绝对路径。",
+      "browse": "浏览",
+      "nameLabel": "名称（可选）",
+      "nameHint": "例如：backend-refactor",
+      "argsLabel": "额外参数（可选）",
+      "argsHint": "--continue --verbose",
+      "argsHelper": "以空格分隔；留空使用提供商默认值。",
+      "bypass": {
+        "labelClaude": "绕过权限",
+        "labelCodex": "自动批准（从不询问）",
+        "labelGemini": "YOLO 模式",
+        "subtitleOn": "此会话将以提升的自主权运行。",
+        "subtitleOff": "关闭 — 确认和提示按正常方式处理。"
+      },
+      "noProviders": {
+        "title": "未配置任何提供商",
+        "message": "网关没有启用任何 CLI 提供商。在 Web 管理端的「提供商」中配置，或编辑 config.toml 的 [providers] 段，然后点击重新加载。",
+        "reload": "重新加载"
+      },
+      "providerLoadError": {
+        "title": "无法加载提供商",
+        "networkError": "网络错误",
+        "serverPrefix": "服务器 {code}",
+        "format": "{prefix}：{message}"
+      },
+      "claudeAccount": {
+        "label": "Claude 账号",
+        "helperMulti": "已配置多个账号 — 为此会话选择一个。",
+        "helperSingle": "选择已配置的账号，或使用默认（环境变量 / 系统）。",
+        "default": "默认（环境变量 / 系统）",
+        "disabledSuffix": "（已停用）",
+        "noTokenSuffix": "（无令牌）",
+        "noneHint": "未配置 Claude 账号 — 网关将使用系统的 ANTHROPIC_API_KEY。在 Web 管理端的「设置 → 账号」中添加账号。",
+        "errorHint": "无法加载 Claude 账号（{error}）。会话将以网关默认配置启动。"
+      }
     }
   },
   "about": {

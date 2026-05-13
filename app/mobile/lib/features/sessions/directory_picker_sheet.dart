@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/fs_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 // Server-side directory picker. Renders a full-height bottom sheet
 // (90% screen) with a path bar, breadcrumb-style "up" affordance,
@@ -104,12 +105,16 @@ class _DirectoryPickerSheetState extends ConsumerState<DirectoryPickerSheet> {
       // Surface a confirm.
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Created $created')),
+        SnackBar(content: Text(t.sessions.dirPicker.createdSnack(path: created))),
       );
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('mkdir failed: ${e.message}')),
+        SnackBar(
+          content: Text(
+            t.sessions.dirPicker.mkdirFailedSnack(error: e.message),
+          ),
+        ),
       );
     }
   }
@@ -172,7 +177,7 @@ class _Body extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Text(
-            'No subfolders here.\nPick this folder, or create a new one.',
+            t.sessions.dirPicker.empty,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
@@ -224,7 +229,7 @@ class _Header extends StatelessWidget {
         children: [
           IconButton(
             icon: const Icon(Icons.arrow_upward),
-            tooltip: 'Parent',
+            tooltip: t.sessions.dirPicker.parent,
             onPressed: canGoUp ? onUp : null,
           ),
           Expanded(
@@ -240,12 +245,12 @@ class _Header extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.create_new_folder_outlined),
-            tooltip: 'New folder',
+            tooltip: t.sessions.dirPicker.newFolder,
             onPressed: onNewFolder,
           ),
           IconButton(
             icon: const Icon(Icons.close),
-            tooltip: 'Close',
+            tooltip: t.common.close,
             onPressed: onClose,
           ),
         ],
@@ -279,7 +284,9 @@ class _Footer extends StatelessWidget {
                 onPressed: onUse,
                 icon: const Icon(Icons.check),
                 label: Text(
-                  path != null ? 'Use this folder' : 'Loading…',
+                  path != null
+                      ? t.sessions.dirPicker.useThisFolder
+                      : t.sessions.dirPicker.loading,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -310,24 +317,24 @@ class _NewFolderDialogState extends State<_NewFolderDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('New folder'),
+      title: Text(t.sessions.dirPicker.dialog.title),
       content: TextField(
         controller: _ctrl,
         autofocus: true,
         autocorrect: false,
-        decoration: const InputDecoration(
-          hintText: 'Folder name',
+        decoration: InputDecoration(
+          hintText: t.sessions.dirPicker.dialog.hint,
         ),
         onSubmitted: (v) => Navigator.of(context).pop(v),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(t.common.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_ctrl.text),
-          child: const Text('Create'),
+          child: Text(t.sessions.dirPicker.dialog.create),
         ),
       ],
     );
@@ -375,7 +382,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),
