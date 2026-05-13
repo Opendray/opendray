@@ -50,6 +50,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Get("/", h.listDocs)
 		r.Get("/{kind}", h.getDoc)
 		r.Put("/{kind}", h.putDoc)
+		r.Post("/reset", h.resetCwd)
 	})
 	r.Route("/project-doc-proposals", func(r chi.Router) {
 		r.Get("/pending", h.listPending)
@@ -122,6 +123,53 @@ func (h *Handlers) putDoc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, doc)
+}
+
+// resetCwd wipes per-cwd project memory state — goal/plan
+// (optionally scanner-managed docs too), proposals queue, journal,
+// and the M13 cleanup decisions for this cwd. Memories (pgvector
+// facts) are NOT touched here; the UI calls
+// POST /memory/delete-by-scope separately when the operator opts
+// in. Two-step on purpose: memories live in a different subsystem
+// with its own dispatch/disabled-mode rules.
+//
+// Body:
+//
+//	{
+//	  "cwd": "/path/to/project",            (required)
+//	  "include_scanner_docs": false,        (default false — they auto-rebuild on next spawn)
+//	  "include_cleanup_decisions": true     (default true — closely tied to this cwd)
+//	}
+//
+// Returns ResetCounts so the UI can show "deleted X docs, Y journal
+// entries, …" in the toast.
+func (h *Handlers) resetCwd(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Cwd                     string `json:"cwd"`
+		IncludeScannerDocs      bool   `json:"include_scanner_docs"`
+		IncludeCleanupDecisions *bool  `json:"include_cleanup_decisions,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if body.Cwd == "" {
+		writeError(w, http.StatusBadRequest, errors.New("cwd required"))
+		return
+	}
+	includeCleanup := true
+	if body.IncludeCleanupDecisions != nil {
+		includeCleanup = *body.IncludeCleanupDecisions
+	}
+	counts, err := h.svc.ResetCwd(r.Context(), body.Cwd, ResetCwdOptions{
+		IncludeScannerDocs:      body.IncludeScannerDocs,
+		IncludeCleanupDecisions: includeCleanup,
+	})
+	if err != nil {
+		h.respondErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, counts)
 }
 
 // ─── proposals ────────────────────────────────────────────────────
