@@ -48,6 +48,9 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsMcpEn mcp = TranslationsMcpEn.internal(_root);
 	late final TranslationsProvidersEn providers = TranslationsProvidersEn.internal(_root);
 	late final TranslationsIntegrationsEn integrations = TranslationsIntegrationsEn.internal(_root);
+	late final TranslationsGithostsEn githosts = TranslationsGithostsEn.internal(_root);
+	late final TranslationsChannelsEn channels = TranslationsChannelsEn.internal(_root);
+	late final TranslationsOnboardingEn onboarding = TranslationsOnboardingEn.internal(_root);
 	late final TranslationsSkillsEn skills = TranslationsSkillsEn.internal(_root);
 	late final TranslationsCustomTasksEn customTasks = TranslationsCustomTasksEn.internal(_root);
 	late final TranslationsNotesPageEn notesPage = TranslationsNotesPageEn.internal(_root);
@@ -90,6 +93,15 @@ class TranslationsCommonEn {
 
 	/// en: 'Retry'
 	String get retry => 'Retry';
+
+	/// en: 'Copy'
+	String get copy => 'Copy';
+
+	/// en: 'Enabled'
+	String get enabled => 'Enabled';
+
+	/// en: 'Refresh'
+	String get refresh => 'Refresh';
 }
 
 // Path: auth
@@ -358,6 +370,101 @@ class TranslationsIntegrationsEn {
 
 	/// en: 'Rotate failed: {error}'
 	String rotateFailedGeneric({required Object error}) => 'Rotate failed: ${error}';
+}
+
+// Path: githosts
+class TranslationsGithostsEn {
+	TranslationsGithostsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Git hosts'
+	String get title => 'Git hosts';
+
+	/// en: 'Add host'
+	String get addHost => 'Add host';
+
+	/// en: 'Delete git host?'
+	String get deleteTitle => 'Delete git host?';
+
+	/// en: '{prefix}: {error}'
+	String errorWithMessage({required Object prefix, required Object error}) => '${prefix}: ${error}';
+
+	late final TranslationsGithostsErrorPrefixEn errorPrefix = TranslationsGithostsErrorPrefixEn.internal(_root);
+	late final TranslationsGithostsFormEn form = TranslationsGithostsFormEn.internal(_root);
+}
+
+// Path: channels
+class TranslationsChannelsEn {
+	TranslationsChannelsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Channels'
+	String get title => 'Channels';
+
+	/// en: 'New'
+	String get kNew => 'New';
+
+	/// en: 'Send test message'
+	String get sendTest => 'Send test message';
+
+	/// en: 'Edit config'
+	String get editConfig => 'Edit config';
+
+	/// en: 'Edit notifications'
+	String get editNotifications => 'Edit notifications';
+
+	/// en: 'View raw config'
+	String get viewRawConfig => 'View raw config';
+
+	/// en: 'Copy channel id'
+	String get copyChannelId => 'Copy channel id';
+
+	/// en: 'Copied {id}'
+	String copiedSnack({required Object id}) => 'Copied ${id}';
+
+	/// en: 'Created {kind} channel.'
+	String createdSnack({required Object kind}) => 'Created ${kind} channel.';
+
+	/// en: 'Create failed: {error}'
+	String createFailedApi({required Object error}) => 'Create failed: ${error}';
+
+	/// en: 'Create failed: {error}'
+	String createFailedGeneric({required Object error}) => 'Create failed: ${error}';
+
+	/// en: 'Delete channel?'
+	String get deleteTitle => 'Delete channel?';
+
+	late final TranslationsChannelsConfigDialogEn configDialog = TranslationsChannelsConfigDialogEn.internal(_root);
+	late final TranslationsChannelsWebhookDialogEn webhookDialog = TranslationsChannelsWebhookDialogEn.internal(_root);
+
+	/// en: '{prefix}: {error}'
+	String errorWithMessage({required Object prefix, required Object error}) => '${prefix}: ${error}';
+
+	late final TranslationsChannelsNotificationsEn notifications = TranslationsChannelsNotificationsEn.internal(_root);
+}
+
+// Path: onboarding
+class TranslationsOnboardingEn {
+	TranslationsOnboardingEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Gateway URL'
+	String get gatewayLabel => 'Gateway URL';
+
+	/// en: 'https://opendray.example.com'
+	String get gatewayHint => 'https://opendray.example.com';
+
+	/// en: 'Continue'
+	String get kContinue => 'Continue';
 }
 
 // Path: skills
@@ -1029,6 +1136,96 @@ class TranslationsProvidersAccountsEn {
 
 	/// en: 'Import failed: {error}'
 	String importFailedGeneric({required Object error}) => 'Import failed: ${error}';
+}
+
+// Path: githosts.errorPrefix
+class TranslationsGithostsErrorPrefixEn {
+	TranslationsGithostsErrorPrefixEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Toggle failed'
+	String get toggle => 'Toggle failed';
+
+	/// en: 'Delete failed'
+	String get delete => 'Delete failed';
+}
+
+// Path: githosts.form
+class TranslationsGithostsFormEn {
+	TranslationsGithostsFormEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Kind'
+	String get kindLabel => 'Kind';
+
+	/// en: 'Host'
+	String get hostLabel => 'Host';
+
+	/// en: 'Name'
+	String get nameLabel => 'Name';
+
+	/// en: 'work-github, personal-gitlab, …'
+	String get nameHint => 'work-github, personal-gitlab, …';
+}
+
+// Path: channels.configDialog
+class TranslationsChannelsConfigDialogEn {
+	TranslationsChannelsConfigDialogEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: '{kind} config'
+	String title({required Object kind}) => '${kind} config';
+}
+
+// Path: channels.webhookDialog
+class TranslationsChannelsWebhookDialogEn {
+	TranslationsChannelsWebhookDialogEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: '{kind} webhook URL'
+	String title({required Object kind}) => '${kind} webhook URL';
+
+	/// en: 'Copied webhook URL.'
+	String get copiedSnack => 'Copied webhook URL.';
+}
+
+// Path: channels.notifications
+class TranslationsChannelsNotificationsEn {
+	TranslationsChannelsNotificationsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Notification preferences'
+	String get title => 'Notification preferences';
+
+	/// en: 'Notify on'
+	String get notifyOn => 'Notify on';
+
+	/// en: 'Repeat policy'
+	String get repeatPolicy => 'Repeat policy';
+
+	/// en: 'Cooldown window'
+	String get cooldownWindow => 'Cooldown window';
+
+	/// en: 'Include terminal snippet'
+	String get includeSnippet => 'Include terminal snippet';
+
+	/// en: 'Snippet length cap'
+	String get snippetLengthCap => 'Snippet length cap';
 }
 
 // Path: notesPage.editor
@@ -1911,6 +2108,9 @@ extension on Translations {
 			'common.done' => 'Done',
 			'common.close' => 'Close',
 			'common.retry' => 'Retry',
+			'common.copy' => 'Copy',
+			'common.enabled' => 'Enabled',
+			'common.refresh' => 'Refresh',
 			'auth.signInTitle' => 'Sign in',
 			'auth.changeServer' => 'Change',
 			'auth.username' => 'Username',
@@ -2167,6 +2367,41 @@ extension on Translations {
 			'integrations.newApiKeySubtitle' => 'Hand this to the integration. The previous key has just been invalidated.',
 			'integrations.rotateFailedApi' => ({required Object error}) => 'Rotate failed: ${error}',
 			'integrations.rotateFailedGeneric' => ({required Object error}) => 'Rotate failed: ${error}',
+			'githosts.title' => 'Git hosts',
+			'githosts.addHost' => 'Add host',
+			'githosts.deleteTitle' => 'Delete git host?',
+			'githosts.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
+			'githosts.errorPrefix.toggle' => 'Toggle failed',
+			'githosts.errorPrefix.delete' => 'Delete failed',
+			'githosts.form.kindLabel' => 'Kind',
+			'githosts.form.hostLabel' => 'Host',
+			'githosts.form.nameLabel' => 'Name',
+			'githosts.form.nameHint' => 'work-github, personal-gitlab, …',
+			'channels.title' => 'Channels',
+			'channels.kNew' => 'New',
+			'channels.sendTest' => 'Send test message',
+			'channels.editConfig' => 'Edit config',
+			'channels.editNotifications' => 'Edit notifications',
+			'channels.viewRawConfig' => 'View raw config',
+			'channels.copyChannelId' => 'Copy channel id',
+			'channels.copiedSnack' => ({required Object id}) => 'Copied ${id}',
+			'channels.createdSnack' => ({required Object kind}) => 'Created ${kind} channel.',
+			'channels.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
+			'channels.createFailedGeneric' => ({required Object error}) => 'Create failed: ${error}',
+			'channels.deleteTitle' => 'Delete channel?',
+			'channels.configDialog.title' => ({required Object kind}) => '${kind} config',
+			'channels.webhookDialog.title' => ({required Object kind}) => '${kind} webhook URL',
+			'channels.webhookDialog.copiedSnack' => 'Copied webhook URL.',
+			'channels.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
+			'channels.notifications.title' => 'Notification preferences',
+			'channels.notifications.notifyOn' => 'Notify on',
+			'channels.notifications.repeatPolicy' => 'Repeat policy',
+			'channels.notifications.cooldownWindow' => 'Cooldown window',
+			'channels.notifications.includeSnippet' => 'Include terminal snippet',
+			'channels.notifications.snippetLengthCap' => 'Snippet length cap',
+			'onboarding.gatewayLabel' => 'Gateway URL',
+			'onboarding.gatewayHint' => 'https://opendray.example.com',
+			'onboarding.kContinue' => 'Continue',
 			'skills.title' => 'Skills',
 			'skills.newSkill' => 'New skill',
 			'skills.customizingBuiltin' => ({required Object id}) => 'Customizing built-in ${id}',
