@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/backups_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart' as i18n;
 import 'package:opendray/features/backups/backup_target_editor_screen.dart';
 
 // Backup targets — destinations a backup blob can be written to.
@@ -72,10 +73,16 @@ class _BackupTargetsScreenState
       await _load();
     } on ApiException catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('$failPrefix: ${e.message}')));
+      messenger.showSnackBar(SnackBar(
+        content: Text(i18n.t.backupTargets
+            .errorWithMessage(prefix: failPrefix, error: e.message)),
+      ));
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('$failPrefix: $e')));
+      messenger.showSnackBar(SnackBar(
+        content: Text(i18n.t.backupTargets
+            .errorWithMessage(prefix: failPrefix, error: e.toString())),
+      ));
     } finally {
       if (mounted) setState(() => _busy.remove(key));
     }
@@ -113,7 +120,7 @@ class _BackupTargetsScreenState
             ListTile(
               enabled: !isBusy,
               leading: const Icon(Icons.network_check_outlined),
-              title: const Text('Test connection'),
+              title: Text(i18n.t.backupTargets.testConnection),
               onTap: () => Navigator.of(sheetCtx).pop(_TargetAction.test),
             ),
             ListTile(
@@ -130,7 +137,7 @@ class _BackupTargetsScreenState
             ListTile(
               enabled: !isBusy,
               leading: const Icon(Icons.edit_outlined),
-              title: const Text('Edit config'),
+              title: Text(i18n.t.backupTargets.editConfig),
               subtitle: Text(
                 _isBuiltinLocal(t)
                     ? 'Built-in local target — root path only'
@@ -142,7 +149,7 @@ class _BackupTargetsScreenState
             ),
             ListTile(
               leading: const Icon(Icons.code),
-              title: const Text('View raw config'),
+              title: Text(i18n.t.backupTargets.viewRawConfig),
               subtitle: const Text(
                 'Sensitive fields are server-redacted',
                 style: TextStyle(fontSize: 11),
@@ -230,7 +237,7 @@ class _BackupTargetsScreenState
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('${t.kind} config'),
+        title: Text(i18n.t.backupTargets.configDialogTitle(kind: t.kind)),
         content: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(ctx).size.height * 0.6,
@@ -246,7 +253,7 @@ class _BackupTargetsScreenState
         actions: [
           TextButton.icon(
             icon: const Icon(Icons.copy_outlined, size: 18),
-            label: const Text('Copy'),
+            label: Text(i18n.t.common.copy),
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: pretty));
               if (!ctx.mounted) return;
@@ -255,7 +262,7 @@ class _BackupTargetsScreenState
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Close'),
+            child: Text(i18n.t.common.close),
           ),
         ],
       ),
@@ -266,7 +273,7 @@ class _BackupTargetsScreenState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete target?'),
+        title: Text(i18n.t.backupTargets.deleteTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,14 +295,14 @@ class _BackupTargetsScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(i18n.t.common.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text(i18n.t.common.delete),
           ),
         ],
       ),
@@ -313,11 +320,11 @@ class _BackupTargetsScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Backup targets'),
+        title: Text(i18n.t.backupTargets.title),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: i18n.t.common.refresh,
             onPressed: _state is AsyncLoading ? null : _load,
           ),
         ],
@@ -330,7 +337,7 @@ class _BackupTargetsScreenState
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openEditor,
         icon: const Icon(Icons.add),
-        label: const Text('New target'),
+        label: Text(i18n.t.backupTargets.newTarget),
       ),
     );
   }
@@ -504,7 +511,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(i18n.t.common.retry)),
           ],
         ),
       ),

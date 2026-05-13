@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/backups_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 // BackupTargetEditorScreen — create / edit a backup destination
 // from mobile. Pre-PR-51 this was web-only on the grounds that
@@ -302,7 +303,7 @@ class _BackupTargetEditorScreenState
             const SizedBox(height: 16),
             SwitchListTile.adaptive(
               value: _enabled,
-              title: const Text('Enabled'),
+              title: Text(t.common.enabled),
               subtitle: Text(
                 _enabled
                     ? 'Scheduled and ad-hoc backups can target this.'
@@ -337,7 +338,7 @@ class _BackupTargetEditorScreenState
                   child: OutlinedButton(
                     onPressed:
                         _submitting ? null : () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
+                    child: Text(t.common.cancel),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -611,16 +612,16 @@ class _BackupTargetEditorScreenState
         SwitchListTile.adaptive(
           value: _useSsl ?? true,
           onChanged: (v) => setState(() => _useSsl = v),
-          title: const Text('Use HTTPS'),
+          title: Text(t.backupTargetEditor.useHttps),
           dense: true,
           contentPadding: EdgeInsets.zero,
         ),
         SwitchListTile.adaptive(
           value: _pathStyle ?? false,
           onChanged: (v) => setState(() => _pathStyle = v),
-          title: const Text('Path-style addressing'),
-          subtitle: const Text('Legacy / MinIO',
-              style: TextStyle(fontSize: 11)),
+          title: Text(t.backupTargetEditor.pathStyle),
+          subtitle: Text(t.backupTargetEditor.pathStyleSubtitle,
+              style: const TextStyle(fontSize: 11)),
           dense: true,
           contentPadding: EdgeInsets.zero,
         ),

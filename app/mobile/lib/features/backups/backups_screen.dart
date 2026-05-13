@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/backups_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/backups/backup_schedules_screen.dart';
 import 'package:opendray/features/backups/backup_targets_screen.dart';
 
@@ -162,7 +163,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Run backup now?'),
+        title: Text(t.backups.runConfirmTitle),
         content: const Text(
           'Triggers a fresh dump against the local target. The job '
           'runs server-side; this list will refresh as it progresses.',
@@ -170,11 +171,11 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(t.common.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Run'),
+            child: Text(t.backups.run),
           ),
         ],
       ),
@@ -187,7 +188,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Backup queued (${row.id}). Watching for progress…'),
+          content: Text(t.backups.queuedSnack(id: row.id)),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
@@ -197,11 +198,13 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('Run failed: ${e.message}')),
+        SnackBar(content: Text(t.backups.runFailedApi(error: e.message))),
       );
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('Run failed: $e')));
+      messenger.showSnackBar(SnackBar(
+        content: Text(t.backups.runFailedGeneric(error: e.toString())),
+      ));
     } finally {
       if (mounted) setState(() => _running = false);
     }
@@ -269,7 +272,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     final action = await showDialog<_DetailAction>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Backup detail'),
+        title: Text(t.backups.detailTitle),
         content: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(ctx).size.height * 0.6,
@@ -327,11 +330,11 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
                 foregroundColor: Theme.of(ctx).colorScheme.error,
               ),
               onPressed: () => Navigator.of(ctx).pop(_DetailAction.delete),
-              child: const Text('Delete'),
+              child: Text(t.common.delete),
             ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(_DetailAction.close),
-            child: const Text('Close'),
+            child: Text(t.common.close),
           ),
         ],
       ),
@@ -345,7 +348,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete backup?'),
+        title: Text(t.backups.deleteTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,14 +369,14 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(t.common.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text(t.common.delete),
           ),
         ],
       ),
@@ -385,7 +388,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Deleted ${b.id}.'),
+          content: Text(t.backups.deletedSnack(id: b.id)),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
@@ -394,11 +397,13 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('Delete failed: ${e.message}')),
+        SnackBar(content: Text(t.backups.deleteFailedApi(error: e.message))),
       );
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+      messenger.showSnackBar(SnackBar(
+        content: Text(t.backups.deleteFailedGeneric(error: e.toString())),
+      ));
     }
   }
 
@@ -425,15 +430,15 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Backups'),
+        title: Text(t.backups.title),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: t.common.refresh,
             onPressed: _state is AsyncLoading ? null : _load,
           ),
           PopupMenuButton<_AppBarAction>(
-            tooltip: 'More',
+            tooltip: t.more.title,
             onSelected: (a) {
               switch (a) {
                 case _AppBarAction.schedules:
@@ -450,19 +455,19 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
                   );
               }
             },
-            itemBuilder: (_) => const [
+            itemBuilder: (_) => [
               PopupMenuItem(
                 value: _AppBarAction.schedules,
                 child: ListTile(
-                  leading: Icon(Icons.schedule_outlined),
-                  title: Text('Schedules'),
+                  leading: const Icon(Icons.schedule_outlined),
+                  title: Text(t.backups.menuSchedules),
                 ),
               ),
               PopupMenuItem(
                 value: _AppBarAction.targets,
                 child: ListTile(
-                  leading: Icon(Icons.cloud_outlined),
-                  title: Text('Targets'),
+                  leading: const Icon(Icons.cloud_outlined),
+                  title: Text(t.backups.menuTargets),
                 ),
               ),
             ],
@@ -648,7 +653,7 @@ class _RestartRequiredView extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: onRecheck,
               icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Check again'),
+              label: Text(t.backups.encryption.checkAgain),
             ),
           ),
         ],
@@ -797,16 +802,16 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
         ),
         const SizedBox(height: 20),
         SegmentedButton<_SetupMode>(
-          segments: const [
+          segments: [
             ButtonSegment(
               value: _SetupMode.generate,
-              icon: Icon(Icons.casino_outlined, size: 18),
-              label: Text('Generate'),
+              icon: const Icon(Icons.casino_outlined, size: 18),
+              label: Text(t.backups.encryption.generate),
             ),
             ButtonSegment(
               value: _SetupMode.paste,
-              icon: Icon(Icons.edit_outlined, size: 18),
-              label: Text('Paste'),
+              icon: const Icon(Icons.edit_outlined, size: 18),
+              label: Text(t.backups.encryption.paste),
             ),
           ],
           selected: {_mode},
@@ -877,8 +882,8 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
             children: [
               Icon(Icons.shield_outlined, size: 18, color: muted),
               const SizedBox(width: 8),
-              const Text('256-bit random key',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
+              Text(t.backups.encryption.random256bit,
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
             ],
           ),
           const SizedBox(height: 6),
@@ -901,8 +906,8 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
       maxLines: 2,
       minLines: 1,
       decoration: InputDecoration(
-        labelText: 'Your passphrase',
-        hintText: 'At least 20 characters',
+        labelText: t.backups.encryption.passphraseLabel,
+        hintText: t.backups.encryption.passphraseHint,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         helperText: 'Recommended: 40+ chars from a password manager',
         helperStyle: TextStyle(color: theme.colorScheme.outline),
@@ -969,7 +974,7 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
                   await _copyToClipboard(context, pass);
                 },
                 icon: const Icon(Icons.copy, size: 16),
-                label: const Text('Copy'),
+                label: Text(t.common.copy),
               ),
             ),
           ],
@@ -995,7 +1000,7 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
         FilledButton.icon(
           onPressed: _ackSaved ? () => widget.onComplete() : null,
           icon: const Icon(Icons.arrow_forward, size: 18),
-          label: const Text('Continue'),
+          label: Text(t.onboarding.kContinue),
         ),
       ],
     );
@@ -1005,9 +1010,9 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
     await Clipboard.setData(ClipboardData(text: text));
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Passphrase copied to clipboard'),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(t.backups.encryption.passphraseCopied),
+        duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -1337,7 +1342,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),

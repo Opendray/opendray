@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/backups_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 // Backup schedules — recurring spec (target + interval + retention +
 // enabled). Mobile-friendly because the shape is plain seconds, not
@@ -70,10 +71,16 @@ class _BackupSchedulesScreenState
       await _load();
     } on ApiException catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('$failPrefix: ${e.message}')));
+      messenger.showSnackBar(SnackBar(
+        content: Text(t.backupSchedules
+            .errorWithMessage(prefix: failPrefix, error: e.message)),
+      ));
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('$failPrefix: $e')));
+      messenger.showSnackBar(SnackBar(
+        content: Text(t.backupSchedules
+            .errorWithMessage(prefix: failPrefix, error: e.toString())),
+      ));
     } finally {
       if (mounted) setState(() => _busy.remove(key));
     }
@@ -146,7 +153,7 @@ class _BackupSchedulesScreenState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete schedule?'),
+        title: Text(t.backupSchedules.deleteTitle),
         content: Text(
           'Removes the recurring spec for target ${sc.targetId}. '
           'Existing backup blobs are not touched.',
@@ -155,14 +162,14 @@ class _BackupSchedulesScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(t.common.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text(t.common.delete),
           ),
         ],
       ),
@@ -180,11 +187,11 @@ class _BackupSchedulesScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Backup schedules'),
+        title: Text(t.backupSchedules.title),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: t.common.refresh,
             onPressed: _state is AsyncLoading ? null : _load,
           ),
         ],
@@ -316,7 +323,7 @@ class _ScheduleTile extends StatelessWidget {
                 Icons.delete_outline,
                 color: Theme.of(context).colorScheme.error,
               ),
-              tooltip: 'Delete',
+              tooltip: t.common.delete,
               onPressed: onDelete,
             ),
     );
@@ -428,7 +435,7 @@ class _ScheduleFormScreenState extends State<_ScheduleFormScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          Text('Target', style: muted),
+          Text(t.backupSchedules.targetLabel, style: muted),
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
             initialValue: _targetId,
@@ -455,7 +462,7 @@ class _ScheduleFormScreenState extends State<_ScheduleFormScreen> {
               ),
             ),
           const SizedBox(height: 24),
-          Text('Interval', style: muted),
+          Text(t.backupSchedules.intervalLabel, style: muted),
           const SizedBox(height: 6),
           Wrap(
             spacing: 6,
@@ -470,7 +477,7 @@ class _ScheduleFormScreenState extends State<_ScheduleFormScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          Text('Retention (keep N most recent)', style: muted),
+          Text(t.backupSchedules.retentionLabel, style: muted),
           const SizedBox(height: 6),
           Wrap(
             spacing: 6,
@@ -487,7 +494,7 @@ class _ScheduleFormScreenState extends State<_ScheduleFormScreen> {
           const SizedBox(height: 24),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Enabled'),
+            title: Text(t.common.enabled),
             subtitle: Text(
               _enabled
                   ? 'Scheduler will run this on cadence.'
@@ -544,7 +551,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),

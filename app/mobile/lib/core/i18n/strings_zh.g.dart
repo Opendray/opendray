@@ -47,6 +47,10 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsMcpZh mcp = _TranslationsMcpZh._(_root);
 	@override late final _TranslationsProvidersZh providers = _TranslationsProvidersZh._(_root);
 	@override late final _TranslationsIntegrationsZh integrations = _TranslationsIntegrationsZh._(_root);
+	@override late final _TranslationsBackupsZh backups = _TranslationsBackupsZh._(_root);
+	@override late final _TranslationsBackupTargetsZh backupTargets = _TranslationsBackupTargetsZh._(_root);
+	@override late final _TranslationsBackupSchedulesZh backupSchedules = _TranslationsBackupSchedulesZh._(_root);
+	@override late final _TranslationsBackupTargetEditorZh backupTargetEditor = _TranslationsBackupTargetEditorZh._(_root);
 	@override late final _TranslationsGithostsZh githosts = _TranslationsGithostsZh._(_root);
 	@override late final _TranslationsChannelsZh channels = _TranslationsChannelsZh._(_root);
 	@override late final _TranslationsOnboardingZh onboarding = _TranslationsOnboardingZh._(_root);
@@ -218,6 +222,73 @@ class _TranslationsIntegrationsZh extends TranslationsIntegrationsEn {
 	@override String get newApiKeySubtitle => '将其交给集成方。旧密钥已失效。';
 	@override String rotateFailedApi({required Object error}) => '轮换失败：${error}';
 	@override String rotateFailedGeneric({required Object error}) => '轮换失败：${error}';
+}
+
+// Path: backups
+class _TranslationsBackupsZh extends TranslationsBackupsEn {
+	_TranslationsBackupsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '备份';
+	@override String get runConfirmTitle => '立即运行备份？';
+	@override String get run => '运行';
+	@override String queuedSnack({required Object id}) => '备份已入队（${id}）。监控进度中…';
+	@override String runFailedApi({required Object error}) => '运行失败：${error}';
+	@override String runFailedGeneric({required Object error}) => '运行失败：${error}';
+	@override String get detailTitle => '备份详情';
+	@override String get deleteTitle => '删除备份？';
+	@override String deletedSnack({required Object id}) => '已删除 ${id}。';
+	@override String deleteFailedApi({required Object error}) => '删除失败：${error}';
+	@override String deleteFailedGeneric({required Object error}) => '删除失败：${error}';
+	@override String get menuSchedules => '计划';
+	@override String get menuTargets => '目标';
+	@override late final _TranslationsBackupsEncryptionZh encryption = _TranslationsBackupsEncryptionZh._(_root);
+}
+
+// Path: backupTargets
+class _TranslationsBackupTargetsZh extends TranslationsBackupTargetsEn {
+	_TranslationsBackupTargetsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '备份目标';
+	@override String get newTarget => '新建目标';
+	@override String get testConnection => '测试连接';
+	@override String get editConfig => '编辑配置';
+	@override String get viewRawConfig => '查看原始配置';
+	@override String configDialogTitle({required Object kind}) => '${kind} 配置';
+	@override String get deleteTitle => '删除目标？';
+	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
+}
+
+// Path: backupSchedules
+class _TranslationsBackupSchedulesZh extends TranslationsBackupSchedulesEn {
+	_TranslationsBackupSchedulesZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '备份计划';
+	@override String get deleteTitle => '删除计划？';
+	@override String get targetLabel => '目标';
+	@override String get intervalLabel => '间隔';
+	@override String get retentionLabel => '保留（最近 N 个）';
+	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
+}
+
+// Path: backupTargetEditor
+class _TranslationsBackupTargetEditorZh extends TranslationsBackupTargetEditorEn {
+	_TranslationsBackupTargetEditorZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get useHttps => '使用 HTTPS';
+	@override String get pathStyle => '路径风格寻址';
+	@override String get pathStyleSubtitle => '旧版 / MinIO';
 }
 
 // Path: githosts
@@ -662,6 +733,22 @@ class _TranslationsProvidersAccountsZh extends TranslationsProvidersAccountsEn {
 	@override String get deleteTitle => '删除账号？';
 	@override String importFailedApi({required Object error}) => '导入失败：${error}';
 	@override String importFailedGeneric({required Object error}) => '导入失败：${error}';
+}
+
+// Path: backups.encryption
+class _TranslationsBackupsEncryptionZh extends TranslationsBackupsEncryptionEn {
+	_TranslationsBackupsEncryptionZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get checkAgain => '重新检查';
+	@override String get generate => '生成';
+	@override String get paste => '粘贴';
+	@override String get random256bit => '256 位随机密钥';
+	@override String get passphraseLabel => '你的密语';
+	@override String get passphraseHint => '至少 20 个字符';
+	@override String get passphraseCopied => '密语已复制到剪贴板';
 }
 
 // Path: githosts.errorPrefix
@@ -1540,6 +1627,43 @@ extension on TranslationsZh {
 			'integrations.newApiKeySubtitle' => '将其交给集成方。旧密钥已失效。',
 			'integrations.rotateFailedApi' => ({required Object error}) => '轮换失败：${error}',
 			'integrations.rotateFailedGeneric' => ({required Object error}) => '轮换失败：${error}',
+			'backups.title' => '备份',
+			'backups.runConfirmTitle' => '立即运行备份？',
+			'backups.run' => '运行',
+			'backups.queuedSnack' => ({required Object id}) => '备份已入队（${id}）。监控进度中…',
+			'backups.runFailedApi' => ({required Object error}) => '运行失败：${error}',
+			'backups.runFailedGeneric' => ({required Object error}) => '运行失败：${error}',
+			'backups.detailTitle' => '备份详情',
+			'backups.deleteTitle' => '删除备份？',
+			'backups.deletedSnack' => ({required Object id}) => '已删除 ${id}。',
+			'backups.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
+			'backups.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
+			'backups.menuSchedules' => '计划',
+			'backups.menuTargets' => '目标',
+			'backups.encryption.checkAgain' => '重新检查',
+			'backups.encryption.generate' => '生成',
+			'backups.encryption.paste' => '粘贴',
+			'backups.encryption.random256bit' => '256 位随机密钥',
+			'backups.encryption.passphraseLabel' => '你的密语',
+			'backups.encryption.passphraseHint' => '至少 20 个字符',
+			'backups.encryption.passphraseCopied' => '密语已复制到剪贴板',
+			'backupTargets.title' => '备份目标',
+			'backupTargets.newTarget' => '新建目标',
+			'backupTargets.testConnection' => '测试连接',
+			'backupTargets.editConfig' => '编辑配置',
+			'backupTargets.viewRawConfig' => '查看原始配置',
+			'backupTargets.configDialogTitle' => ({required Object kind}) => '${kind} 配置',
+			'backupTargets.deleteTitle' => '删除目标？',
+			'backupTargets.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
+			'backupSchedules.title' => '备份计划',
+			'backupSchedules.deleteTitle' => '删除计划？',
+			'backupSchedules.targetLabel' => '目标',
+			'backupSchedules.intervalLabel' => '间隔',
+			'backupSchedules.retentionLabel' => '保留（最近 N 个）',
+			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
+			'backupTargetEditor.useHttps' => '使用 HTTPS',
+			'backupTargetEditor.pathStyle' => '路径风格寻址',
+			'backupTargetEditor.pathStyleSubtitle' => '旧版 / MinIO',
 			'githosts.title' => 'Git 主机',
 			'githosts.addHost' => '添加主机',
 			'githosts.deleteTitle' => '删除 Git 主机？',
