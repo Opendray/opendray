@@ -89,6 +89,34 @@
     },
     "signOut": "退出登录"
   },
+  "sessions": {
+    "title": "会话",
+    "refresh": "刷新",
+    "actions": "操作",
+    "spawn": "创建",
+    "filters": {
+      "all": "全部",
+      "running": "运行中",
+      "idle": "空闲",
+      "ended": "已结束"
+    },
+    "card": {
+      "startedRelative": "{provider} · {when}启动"
+    },
+    "empty": {
+      "titleAll": "暂无会话",
+      "titleFiltered": "没有匹配「{filter}」筛选的会话。",
+      "subtitleAll": "点击「创建」按钮新建一个。",
+      "subtitleFiltered": "试试其他筛选条件或下拉刷新。"
+    },
+    "errorTitle": "加载会话失败",
+    "relative": {
+      "secondsAgo": "{n} 秒前",
+      "minutesAgo": "{n} 分钟前",
+      "hoursAgo": "{n} 小时前",
+      "daysAgo": "{n} 天前"
+    }
+  },
   "about": {
     "title": "关于",
     "loading": "加载中…",

@@ -43,6 +43,7 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsAuthZh auth = _TranslationsAuthZh._(_root);
 	@override late final _TranslationsNavZh nav = _TranslationsNavZh._(_root);
 	@override late final _TranslationsMoreZh more = _TranslationsMoreZh._(_root);
+	@override late final _TranslationsSessionsZh sessions = _TranslationsSessionsZh._(_root);
 	@override late final _TranslationsAboutZh about = _TranslationsAboutZh._(_root);
 	@override late final _TranslationsSettingsZh settings = _TranslationsSettingsZh._(_root);
 }
@@ -106,6 +107,24 @@ class _TranslationsMoreZh extends TranslationsMoreEn {
 	@override late final _TranslationsMoreSectionsZh sections = _TranslationsMoreSectionsZh._(_root);
 	@override late final _TranslationsMoreItemsZh items = _TranslationsMoreItemsZh._(_root);
 	@override String get signOut => '退出登录';
+}
+
+// Path: sessions
+class _TranslationsSessionsZh extends TranslationsSessionsEn {
+	_TranslationsSessionsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '会话';
+	@override String get refresh => '刷新';
+	@override String get actions => '操作';
+	@override String get spawn => '创建';
+	@override late final _TranslationsSessionsFiltersZh filters = _TranslationsSessionsFiltersZh._(_root);
+	@override late final _TranslationsSessionsCardZh card = _TranslationsSessionsCardZh._(_root);
+	@override late final _TranslationsSessionsEmptyZh empty = _TranslationsSessionsEmptyZh._(_root);
+	@override String get errorTitle => '加载会话失败';
+	@override late final _TranslationsSessionsRelativeZh relative = _TranslationsSessionsRelativeZh._(_root);
 }
 
 // Path: about
@@ -182,6 +201,55 @@ class _TranslationsMoreItemsZh extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsBackupsZh backups = _TranslationsMoreItemsBackupsZh._(_root);
 	@override late final _TranslationsMoreItemsSettingsZh settings = _TranslationsMoreItemsSettingsZh._(_root);
 	@override late final _TranslationsMoreItemsAboutZh about = _TranslationsMoreItemsAboutZh._(_root);
+}
+
+// Path: sessions.filters
+class _TranslationsSessionsFiltersZh extends TranslationsSessionsFiltersEn {
+	_TranslationsSessionsFiltersZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get all => '全部';
+	@override String get running => '运行中';
+	@override String get idle => '空闲';
+	@override String get ended => '已结束';
+}
+
+// Path: sessions.card
+class _TranslationsSessionsCardZh extends TranslationsSessionsCardEn {
+	_TranslationsSessionsCardZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String startedRelative({required Object provider, required Object when}) => '${provider} · ${when}启动';
+}
+
+// Path: sessions.empty
+class _TranslationsSessionsEmptyZh extends TranslationsSessionsEmptyEn {
+	_TranslationsSessionsEmptyZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get titleAll => '暂无会话';
+	@override String titleFiltered({required Object filter}) => '没有匹配「${filter}」筛选的会话。';
+	@override String get subtitleAll => '点击「创建」按钮新建一个。';
+	@override String get subtitleFiltered => '试试其他筛选条件或下拉刷新。';
+}
+
+// Path: sessions.relative
+class _TranslationsSessionsRelativeZh extends TranslationsSessionsRelativeEn {
+	_TranslationsSessionsRelativeZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String secondsAgo({required Object n}) => '${n} 秒前';
+	@override String minutesAgo({required Object n}) => '${n} 分钟前';
+	@override String hoursAgo({required Object n}) => '${n} 小时前';
+	@override String daysAgo({required Object n}) => '${n} 天前';
 }
 
 // Path: about.sections
@@ -470,6 +538,24 @@ extension on TranslationsZh {
 			'more.items.about.title' => '关于',
 			'more.items.about.subtitle' => '构建版本与服务器信息',
 			'more.signOut' => '退出登录',
+			'sessions.title' => '会话',
+			'sessions.refresh' => '刷新',
+			'sessions.actions' => '操作',
+			'sessions.spawn' => '创建',
+			'sessions.filters.all' => '全部',
+			'sessions.filters.running' => '运行中',
+			'sessions.filters.idle' => '空闲',
+			'sessions.filters.ended' => '已结束',
+			'sessions.card.startedRelative' => ({required Object provider, required Object when}) => '${provider} · ${when}启动',
+			'sessions.empty.titleAll' => '暂无会话',
+			'sessions.empty.titleFiltered' => ({required Object filter}) => '没有匹配「${filter}」筛选的会话。',
+			'sessions.empty.subtitleAll' => '点击「创建」按钮新建一个。',
+			'sessions.empty.subtitleFiltered' => '试试其他筛选条件或下拉刷新。',
+			'sessions.errorTitle' => '加载会话失败',
+			'sessions.relative.secondsAgo' => ({required Object n}) => '${n} 秒前',
+			'sessions.relative.minutesAgo' => ({required Object n}) => '${n} 分钟前',
+			'sessions.relative.hoursAgo' => ({required Object n}) => '${n} 小时前',
+			'sessions.relative.daysAgo' => ({required Object n}) => '${n} 天前',
 			'about.title' => '关于',
 			'about.loading' => '加载中…',
 			'about.sections.app' => '应用',
