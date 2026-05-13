@@ -38,13 +38,17 @@ func (m *Manager) Transcript(ctx context.Context, sessionID string, maxBytes int
 	if err != nil {
 		return nil, err
 	}
+	var endedAt time.Time
+	if sess.EndedAt != nil {
+		endedAt = *sess.EndedAt
+	}
 	switch sess.ProviderID {
 	case "claude":
-		return claudeTranscript(m.claudeHistoryCfg, sess.Cwd, sess.ClaudeSessionID, maxBytes), nil
+		return claudeTranscript(m.claudeHistoryCfg, sess.Cwd, sess.ClaudeSessionID, sess.StartedAt, endedAt, maxBytes), nil
 	case "codex":
-		return codexTranscript(m.codexHistoryCfg, sess.Cwd, maxBytes), nil
+		return codexTranscript(m.codexHistoryCfg, sess.Cwd, sess.StartedAt, endedAt, maxBytes), nil
 	case "gemini":
-		return geminiTranscript(m.geminiHistoryCfg, sess.Cwd, maxBytes), nil
+		return geminiTranscript(m.geminiHistoryCfg, sess.Cwd, sess.StartedAt, endedAt, maxBytes), nil
 	default:
 		return nil, nil
 	}
@@ -77,12 +81,35 @@ func FormatTranscript(turns []Turn) string {
 
 // ── Claude ────────────────────────────────────────────────────
 
-// claudeTranscript walks the latest matching JSONL file and
-// returns user + assistant text turns in chronological order.
-// Tool-use / tool-result / thinking blocks are dropped — the
-// summariser cares about the conversation, not the raw tool call
-// payloads.
-func claudeTranscript(cfg ClaudeHistoryConfig, cwd, claudeSessID string, maxBytes int) []Turn {
+// claudeTranscript walks the matching JSONL file and returns
+// user + assistant text turns in chronological order, scoped to
+// the calling session's identity. Tool-use / tool-result /
+// thinking blocks are dropped — the summariser cares about the
+// conversation, not the raw tool call payloads.
+//
+// M22 — three layers of isolation defend against transcript
+// cross-contamination (one session reading another session's or
+// project's jsonl content, then the LLM treating the wrong
+// content as "what just happened"):
+//
+//  1. **Fail-closed on missing UUID file**: when claudeSessID is
+//     set but the named *.jsonl doesn't exist, return nil rather
+//     than falling back to "latest mtime in dir" — the latest may
+//     be an unrelated, accumulating session.
+//  2. **Time-window filter**: each parsed turn must fall within
+//     [startedAt-30s, endedAt+30s]. Defensive even when we pick
+//     the right file: if the file accumulates content across
+//     multiple opendray sessions (Claude Code reuse), only the
+//     current spawn's turns survive.
+//  3. **Cwd canary**: the first jsonl entry that carries a `cwd`
+//     field must match the calling session's cwd exactly. One
+//     mismatch and the whole file is rejected. Catches the worst
+//     case — a jsonl from a different project being mis-routed
+//     into this project's dir.
+//
+// startedAt may be zero (skips lower-bound check). endedAt may be
+// zero (session still running; only lower-bound filtering).
+func claudeTranscript(cfg ClaudeHistoryConfig, cwd, claudeSessID string, startedAt, endedAt time.Time, maxBytes int) []Turn {
 	roots := resolveClaudeRoots(cfg)
 	var path string
 	for _, r := range roots {
@@ -96,6 +123,11 @@ func claudeTranscript(cfg ClaudeHistoryConfig, cwd, claudeSessID string, maxByte
 				path = candidate
 				break
 			}
+			// M22.1 — caller asked for a specific UUID. If it
+			// isn't here, don't fall back to the latest mtime in
+			// this dir; that's how unrelated sessions leak in.
+			// Try the next root instead.
+			continue
 		}
 		p := findLatestClaudeJSONL(dir)
 		if p != "" {
@@ -106,6 +138,18 @@ func claudeTranscript(cfg ClaudeHistoryConfig, cwd, claudeSessID string, maxByte
 	if path == "" {
 		return nil
 	}
+
+	// M22.2 — build the time window. ±30s padding absorbs clock
+	// skew between Claude Code's jsonl timestamps and opendray's
+	// session.started_at / ended_at.
+	var windowStart, windowEnd time.Time
+	if !startedAt.IsZero() {
+		windowStart = startedAt.Add(-30 * time.Second)
+	}
+	if !endedAt.IsZero() {
+		windowEnd = endedAt.Add(30 * time.Second)
+	}
+
 	f, err := os.Open(path)
 	if err != nil {
 		return nil
@@ -115,14 +159,36 @@ func claudeTranscript(cfg ClaudeHistoryConfig, cwd, claudeSessID string, maxByte
 	scanner.Buffer(make([]byte, 0, 64<<10), 1<<20)
 	var turns []Turn
 	bytesUsed := 0
+	cwdChecked := false
 	for scanner.Scan() {
 		raw := scanner.Bytes()
 		var e claudeJSONLEntry
 		if err := json.Unmarshal(raw, &e); err != nil {
 			continue
 		}
+		// M22.3 — cwd canary. Check the first entry that carries
+		// a cwd field. One mismatch and the whole file is
+		// abandoned — better an empty transcript than a wrong
+		// summary attributed to the wrong project.
+		if !cwdChecked && e.Cwd != "" {
+			cwdChecked = true
+			if e.Cwd != cwd {
+				return nil
+			}
+		}
 		if e.Message == nil {
 			continue
+		}
+		// M22.2 — window filter. Entries without a timestamp are
+		// kept (defensive); entries outside the window are
+		// dropped silently.
+		if !e.Time.IsZero() {
+			if !windowStart.IsZero() && e.Time.Before(windowStart) {
+				continue
+			}
+			if !windowEnd.IsZero() && e.Time.After(windowEnd) {
+				continue
+			}
 		}
 		text := extractClaudeText(e.Message.Content)
 		text = strings.TrimSpace(text)
@@ -232,10 +298,20 @@ func trimTurnsHead(turns []Turn, bytes *int, max int) []Turn {
 //
 // Tool calls live in payload.type=function_call and are summarised
 // inline like Claude tools.
-func codexTranscript(cfg CodexHistoryConfig, cwd string, maxBytes int) []Turn {
+// codexTranscript matches by session_meta.cwd already; the M22
+// time-window filter is added on top so accumulated rollouts can't
+// leak across sessions in the same cwd.
+func codexTranscript(cfg CodexHistoryConfig, cwd string, startedAt, endedAt time.Time, maxBytes int) []Turn {
 	path := resolveLatestCodexJSONL(cfg, cwd)
 	if path == "" {
 		return nil
+	}
+	var windowStart, windowEnd time.Time
+	if !startedAt.IsZero() {
+		windowStart = startedAt.Add(-30 * time.Second)
+	}
+	if !endedAt.IsZero() {
+		windowEnd = endedAt.Add(30 * time.Second)
 	}
 	f, err := os.Open(path)
 	if err != nil {
@@ -261,6 +337,14 @@ func codexTranscript(cfg CodexHistoryConfig, cwd string, maxBytes int) []Turn {
 		}
 		if err := json.Unmarshal(scanner.Bytes(), &entry); err != nil {
 			continue
+		}
+		if !entry.Timestamp.IsZero() {
+			if !windowStart.IsZero() && entry.Timestamp.Before(windowStart) {
+				continue
+			}
+			if !windowEnd.IsZero() && entry.Timestamp.After(windowEnd) {
+				continue
+			}
 		}
 		var role, text string
 		switch entry.Payload.Type {
@@ -333,8 +417,10 @@ func resolveLatestCodexJSONL(cfg CodexHistoryConfig, cwd string) string {
 
 // geminiTranscript reads Gemini CLI's chats.json (NOT JSONL — it's
 // a single JSON document with a "messages" array). Picks the
-// session that ran in cwd.
-func geminiTranscript(cfg GeminiHistoryConfig, cwd string, maxBytes int) []Turn {
+// session that ran in cwd. M22 time-window filter applies to
+// individual messages even after the right session is selected,
+// to defend against chats.json accumulating across spawns.
+func geminiTranscript(cfg GeminiHistoryConfig, cwd string, startedAt, endedAt time.Time, maxBytes int) []Turn {
 	path := resolveGeminiChatsFile(cfg)
 	if path == "" {
 		return nil
@@ -384,6 +470,13 @@ func geminiTranscript(cfg GeminiHistoryConfig, cwd string, maxBytes int) []Turn 
 	sort.SliceStable(best.Messages, func(i, j int) bool {
 		return best.Messages[i].Time.Before(best.Messages[j].Time)
 	})
+	var windowStart, windowEnd time.Time
+	if !startedAt.IsZero() {
+		windowStart = startedAt.Add(-30 * time.Second)
+	}
+	if !endedAt.IsZero() {
+		windowEnd = endedAt.Add(30 * time.Second)
+	}
 	var turns []Turn
 	bytesUsed := 0
 	for _, m := range best.Messages {
@@ -397,6 +490,14 @@ func geminiTranscript(cfg GeminiHistoryConfig, cwd string, maxBytes int) []Turn 
 		text := strings.TrimSpace(m.Content)
 		if text == "" {
 			continue
+		}
+		if !m.Time.IsZero() {
+			if !windowStart.IsZero() && m.Time.Before(windowStart) {
+				continue
+			}
+			if !windowEnd.IsZero() && m.Time.After(windowEnd) {
+				continue
+			}
 		}
 		bytesUsed += len(text) + len(role) + 4
 		if bytesUsed > maxBytes && len(turns) > 0 {

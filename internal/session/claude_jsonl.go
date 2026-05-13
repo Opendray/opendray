@@ -41,6 +41,14 @@ type claudeJSONLEntry struct {
 	Message *claudeJSONLMsg `json:"message,omitempty"`
 	UUID    string          `json:"uuid,omitempty"`
 	Time    time.Time       `json:"timestamp,omitempty"`
+
+	// M22 — Claude Code stamps each user-typed turn with the cwd it
+	// was invoked under. The transcript reader uses this as a
+	// canary: if the first cwd we encounter in a file doesn't match
+	// the calling session's cwd, the whole file is rejected as
+	// "wrong project". Defensive against Claude Code reusing or
+	// mis-routing jsonl files across projects.
+	Cwd string `json:"cwd,omitempty"`
 }
 
 type claudeJSONLMsg struct {

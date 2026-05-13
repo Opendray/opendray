@@ -41,7 +41,7 @@ func TestClaudeTranscript_Synthetic(t *testing.T) {
 
 	turns := claudeTranscript(
 		ClaudeHistoryConfig{HistoryRoots: []string{projectsRoot}},
-		cwd, "", 16*1024,
+		cwd, "", time.Time{}, time.Time{}, 16*1024,
 	)
 	if len(turns) != 3 {
 		t.Fatalf("want 3 turns, got %d: %+v", len(turns), turns)
@@ -81,7 +81,7 @@ func TestClaudeTranscript_DropsToolResults(t *testing.T) {
 
 	turns := claudeTranscript(
 		ClaudeHistoryConfig{HistoryRoots: []string{dir}},
-		cwd, "", 16*1024,
+		cwd, "", time.Time{}, time.Time{}, 16*1024,
 	)
 	for _, tn := range turns {
 		if strings.Contains(tn.Text, "much noise") || strings.Contains(tn.Text, "FAIL: TestFoo") {
@@ -115,7 +115,7 @@ func TestCodexTranscript_Synthetic(t *testing.T) {
 
 	turns := codexTranscript(
 		CodexHistoryConfig{SessionsRoot: sessionsRoot},
-		cwd, 16*1024,
+		cwd, time.Time{}, time.Time{}, 16*1024,
 	)
 	if len(turns) != 3 {
 		t.Fatalf("want 3 turns, got %d: %+v", len(turns), turns)
@@ -149,7 +149,7 @@ func TestCodexTranscript_FiltersByCwd(t *testing.T) {
 		`{"type":"response_item","payload":{"type":"message","role":"user","content":[{"text":"pick me"}]}}`,
 	}, "\n")), 0o644)
 
-	turns := codexTranscript(CodexHistoryConfig{SessionsRoot: sessionsRoot}, "/tmp/want", 16*1024)
+	turns := codexTranscript(CodexHistoryConfig{SessionsRoot: sessionsRoot}, "/tmp/want", time.Time{}, time.Time{}, 16*1024)
 	if len(turns) != 1 || !strings.Contains(turns[0].Text, "pick me") {
 		t.Errorf("wrong rollout matched: %+v", turns)
 	}
@@ -183,7 +183,7 @@ func TestGeminiTranscript_Synthetic(t *testing.T) {
 
 	turns := geminiTranscript(
 		GeminiHistoryConfig{ProjectsFile: chatsPath},
-		"/tmp/gemini-cw", 16*1024,
+		"/tmp/gemini-cw", time.Time{}, time.Time{}, 16*1024,
 	)
 	if len(turns) != 2 {
 		t.Fatalf("want 2 turns, got %d: %+v", len(turns), turns)
@@ -216,6 +216,95 @@ func TestFormatTranscript(t *testing.T) {
 	want := "USER: hi\nASSISTANT: hello\nUSER: do X"
 	if out != want {
 		t.Errorf("FormatTranscript mismatch:\n got:\n%s\nwant:\n%s", out, want)
+	}
+}
+
+// M22 — three layers of isolation against transcript leakage.
+// Each test isolates one defense so a regression in any single
+// layer is caught directly.
+
+func TestClaudeTranscript_FailClosedOnMissingUUID(t *testing.T) {
+	// Caller asks for a specific session UUID. The file doesn't
+	// exist. There ARE other jsonls in the dir (newer mtime). The
+	// reader MUST NOT fall back to those — that's how unrelated
+	// sessions leak in. Pre-M22 this returned the newest jsonl;
+	// post-M22 it returns nil.
+	dir := t.TempDir()
+	cwd := "/tmp/proj"
+	_ = os.MkdirAll(cwd, 0o755)
+	projDir := filepath.Join(dir, "-tmp-proj")
+	_ = os.MkdirAll(projDir, 0o755)
+	// A jsonl from an UNRELATED session.
+	_ = os.WriteFile(filepath.Join(projDir, "other-session.jsonl"),
+		[]byte(`{"type":"user","message":{"role":"user","content":[{"type":"text","text":"unrelated work"}]},"cwd":"/tmp/proj"}`),
+		0o644)
+
+	turns := claudeTranscript(
+		ClaudeHistoryConfig{HistoryRoots: []string{dir}},
+		cwd, "missing-uuid", time.Time{}, time.Time{}, 16*1024,
+	)
+	if len(turns) != 0 {
+		t.Errorf("expected empty when requested UUID missing; got %d turns. Pre-M22 regression: reader fell back to latest mtime and leaked unrelated session content.", len(turns))
+	}
+}
+
+func TestClaudeTranscript_CwdCanaryRejectsWrongProject(t *testing.T) {
+	// Reader is asked for cwd /tmp/foo but the jsonl claims its
+	// cwd is /tmp/bar (e.g. Claude Code mis-routed the file).
+	// The whole file must be rejected — better empty than wrong.
+	dir := t.TempDir()
+	cwd := "/tmp/foo"
+	_ = os.MkdirAll(cwd, 0o755)
+	projDir := filepath.Join(dir, "-tmp-foo")
+	_ = os.MkdirAll(projDir, 0o755)
+	jsonlPath := filepath.Join(projDir, "s.jsonl")
+	// First entry's cwd is /tmp/bar — mismatch.
+	_ = os.WriteFile(jsonlPath, []byte(strings.Join([]string{
+		`{"type":"user","message":{"role":"user","content":[{"type":"text","text":"work from wrong project"}]},"cwd":"/tmp/bar"}`,
+		`{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"wrong project response"}]}}`,
+	}, "\n")), 0o644)
+
+	turns := claudeTranscript(
+		ClaudeHistoryConfig{HistoryRoots: []string{dir}},
+		cwd, "", time.Time{}, time.Time{}, 16*1024,
+	)
+	if len(turns) != 0 {
+		t.Errorf("cwd canary should have rejected wrong-cwd jsonl; got %d turns: %+v", len(turns), turns)
+	}
+}
+
+func TestClaudeTranscript_TimeWindowFiltersAccumulatedFile(t *testing.T) {
+	// Mimics the production case where Claude Code's jsonl
+	// accumulates content across multiple opendray spawns in the
+	// same cwd. Only turns within [startedAt-30s, endedAt+30s]
+	// must survive.
+	dir := t.TempDir()
+	cwd := "/tmp/p"
+	_ = os.MkdirAll(cwd, 0o755)
+	projDir := filepath.Join(dir, "-tmp-p")
+	_ = os.MkdirAll(projDir, 0o755)
+	jsonlPath := filepath.Join(projDir, "long-session.jsonl")
+	// 3 turns: one weeks ago, one inside the window, one days ago.
+	weeksAgo := time.Now().Add(-30 * 24 * time.Hour).UTC().Format(time.RFC3339)
+	insideWindow := time.Now().Add(-5 * time.Minute).UTC().Format(time.RFC3339)
+	daysAgo := time.Now().Add(-2 * 24 * time.Hour).UTC().Format(time.RFC3339)
+	_ = os.WriteFile(jsonlPath, []byte(strings.Join([]string{
+		`{"type":"user","message":{"role":"user","content":[{"type":"text","text":"ancient work"}]},"cwd":"/tmp/p","timestamp":"` + weeksAgo + `"}`,
+		`{"type":"user","message":{"role":"user","content":[{"type":"text","text":"current work"}]},"cwd":"/tmp/p","timestamp":"` + insideWindow + `"}`,
+		`{"type":"user","message":{"role":"user","content":[{"type":"text","text":"recent but pre-spawn"}]},"cwd":"/tmp/p","timestamp":"` + daysAgo + `"}`,
+	}, "\n")), 0o644)
+
+	startedAt := time.Now().Add(-10 * time.Minute)
+	endedAt := time.Now().Add(-1 * time.Minute)
+	turns := claudeTranscript(
+		ClaudeHistoryConfig{HistoryRoots: []string{dir}},
+		cwd, "", startedAt, endedAt, 16*1024,
+	)
+	if len(turns) != 1 {
+		t.Fatalf("expected exactly the inside-window turn; got %d: %+v", len(turns), turns)
+	}
+	if !strings.Contains(turns[0].Text, "current") {
+		t.Errorf("wrong turn survived; want 'current work', got %q", turns[0].Text)
 	}
 }
 
