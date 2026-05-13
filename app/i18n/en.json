@@ -1,0 +1,44 @@
+{
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "done": "Done",
+    "close": "Close",
+    "retry": "Retry"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": {
+      "section": "Language",
+      "system": "System",
+      "systemSubtitle": "Follow your phone's language setting",
+      "english": "English",
+      "chinese": "中文"
+    },
+    "appearance": {
+      "section": "Appearance",
+      "system": "System",
+      "systemSubtitle": "Follow your phone's appearance setting",
+      "light": "Light",
+      "lightSubtitle": "Always use the light palette",
+      "dark": "Dark",
+      "darkSubtitle": "Always use the dark palette"
+    },
+    "account": {
+      "section": "Account",
+      "changeCredentials": "Change credentials",
+      "changeCredentialsSubtitle": "Username and password"
+    },
+    "gateway": {
+      "section": "Gateway",
+      "serverSettings": "Server settings",
+      "serverSettingsSubtitle": "Listen address, logging, vault, memory, storage paths…",
+      "liveLogs": "Live logs",
+      "liveLogsSubtitle": "Tail the gateway log buffer — same source as the web admin"
+    }
+  }
+}

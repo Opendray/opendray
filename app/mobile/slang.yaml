@@ -1,0 +1,13 @@
+base_locale: en
+fallback_strategy: base_locale
+input_directory: ../i18n
+input_file_pattern: .json
+output_directory: lib/core/i18n
+output_file_name: strings.g.dart
+locale_handling: true
+flutter_integration: true
+namespaces: false
+translate_var: t
+enum_name: AppLocale
+class_name: Translations
+translation_class_visibility: private

@@ -1,0 +1,44 @@
+{
+  "common": {
+    "ok": "确定",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "back": "返回",
+    "done": "完成",
+    "close": "关闭",
+    "retry": "重试"
+  },
+  "settings": {
+    "title": "设置",
+    "language": {
+      "section": "语言",
+      "system": "跟随系统",
+      "systemSubtitle": "跟随手机的语言设置",
+      "english": "English",
+      "chinese": "中文"
+    },
+    "appearance": {
+      "section": "外观",
+      "system": "跟随系统",
+      "systemSubtitle": "跟随手机的外观设置",
+      "light": "浅色",
+      "lightSubtitle": "始终使用浅色主题",
+      "dark": "深色",
+      "darkSubtitle": "始终使用深色主题"
+    },
+    "account": {
+      "section": "账户",
+      "changeCredentials": "修改凭据",
+      "changeCredentialsSubtitle": "用户名和密码"
+    },
+    "gateway": {
+      "section": "网关",
+      "serverSettings": "服务器设置",
+      "serverSettingsSubtitle": "监听地址、日志、凭据库、内存、存储路径…",
+      "liveLogs": "实时日志",
+      "liveLogsSubtitle": "查看网关实时日志 — 与 Web 管理端同源"
+    }
+  }
+}

@@ -2,14 +2,15 @@
 // that aren't tied to a specific server resource. Reached via
 // More → Settings.
 //
-// PR #51 ships the Appearance section. The Account section
-// (change password / change username) lands in PR #52 — its
-// placeholder is included here so the layout doesn't shift when
-// it arrives.
+// All visible strings flow through slang (`t.settings.*`). The
+// Language section at the top lets the user override the system
+// locale; LocaleController persists the pick to shared_preferences.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/core/locale/locale_controller.dart';
 import 'package:opendray/core/theme/theme_controller.dart';
 import 'package:opendray/features/settings/change_credentials_screen.dart';
 import 'package:opendray/features/settings/log_viewer_screen.dart';
@@ -21,15 +22,49 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeControllerProvider);
+    final locale = ref.watch(localeControllerProvider);
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(t.settings.title)),
       body: SafeArea(
         bottom: false,
         child: ListView(
           padding: const EdgeInsets.symmetric(vertical: 8),
           children: [
-            const _SectionHeader('Appearance'),
+            _SectionHeader(t.settings.language.section),
+            RadioGroup<LocalePreference>(
+              groupValue: locale,
+              onChanged: (pref) {
+                if (pref == null) return;
+                ref
+                    .read(localeControllerProvider.notifier)
+                    .setPreference(pref);
+              },
+              child: Column(
+                children: [
+                  _LocaleOption(
+                    title: t.settings.language.system,
+                    subtitle: t.settings.language.systemSubtitle,
+                    icon: Icons.language_outlined,
+                    value: LocalePreference.system,
+                  ),
+                  _LocaleOption(
+                    title: t.settings.language.english,
+                    subtitle: 'English',
+                    icon: Icons.translate_outlined,
+                    value: LocalePreference.english,
+                  ),
+                  _LocaleOption(
+                    title: t.settings.language.chinese,
+                    subtitle: '中文',
+                    icon: Icons.translate_outlined,
+                    value: LocalePreference.chinese,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            _SectionHeader(t.settings.appearance.section),
             // RadioGroup is the Flutter 3.32+ way to share group
             // state across Radio<T> descendants without each tile
             // duplicating groupValue/onChanged.
@@ -39,23 +74,23 @@ class SettingsScreen extends ConsumerWidget {
                 if (m == null) return;
                 ref.read(themeControllerProvider.notifier).setMode(m);
               },
-              child: const Column(
+              child: Column(
                 children: [
                   _ThemeOption(
-                    title: 'System',
-                    subtitle: "Follow your phone's appearance setting",
+                    title: t.settings.appearance.system,
+                    subtitle: t.settings.appearance.systemSubtitle,
                     icon: Icons.brightness_auto_outlined,
                     value: ThemeMode.system,
                   ),
                   _ThemeOption(
-                    title: 'Light',
-                    subtitle: 'Always use the light palette',
+                    title: t.settings.appearance.light,
+                    subtitle: t.settings.appearance.lightSubtitle,
                     icon: Icons.light_mode_outlined,
                     value: ThemeMode.light,
                   ),
                   _ThemeOption(
-                    title: 'Dark',
-                    subtitle: 'Always use the dark palette',
+                    title: t.settings.appearance.dark,
+                    subtitle: t.settings.appearance.darkSubtitle,
                     icon: Icons.dark_mode_outlined,
                     value: ThemeMode.dark,
                   ),
@@ -63,12 +98,12 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const _SectionHeader('Account'),
+            _SectionHeader(t.settings.account.section),
             ListTile(
               leading: const Icon(Icons.lock_outline),
-              title: const Text('Change credentials'),
+              title: Text(t.settings.account.changeCredentials),
               subtitle: Text(
-                'Username and password',
+                t.settings.account.changeCredentialsSubtitle,
                 style: theme.textTheme.bodySmall,
               ),
               trailing: const Icon(Icons.chevron_right, size: 18),
@@ -79,12 +114,12 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const _SectionHeader('Gateway'),
+            _SectionHeader(t.settings.gateway.section),
             ListTile(
               leading: const Icon(Icons.dns_outlined),
-              title: const Text('Server settings'),
+              title: Text(t.settings.gateway.serverSettings),
               subtitle: Text(
-                'Listen address, logging, vault, memory, storage paths…',
+                t.settings.gateway.serverSettingsSubtitle,
                 style: theme.textTheme.bodySmall,
               ),
               trailing: const Icon(Icons.chevron_right, size: 18),
@@ -96,9 +131,9 @@ class SettingsScreen extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Icons.subject_outlined),
-              title: const Text('Live logs'),
+              title: Text(t.settings.gateway.liveLogs),
               subtitle: Text(
-                'Tail the gateway log buffer — same source as the web admin',
+                t.settings.gateway.liveLogsSubtitle,
                 style: theme.textTheme.bodySmall,
               ),
               trailing: const Icon(Icons.chevron_right, size: 18),
@@ -162,14 +197,40 @@ class _ThemeOption extends StatelessWidget {
         style: theme.textTheme.bodySmall,
       ),
       trailing: Radio<ThemeMode>(value: value),
-      // ListTile.onTap forwards through RadioGroup's onChanged
-      // automatically via the Radio widget — no manual wiring
-      // needed.
       onTap: () {
-        // Find the ancestor RadioGroup and report this value as
-        // the new selection. Reaching through context keeps the
-        // option widget itself stateless.
         final group = RadioGroup.maybeOf<ThemeMode>(context);
+        group?.onChanged(value);
+      },
+    );
+  }
+}
+
+class _LocaleOption extends StatelessWidget {
+  const _LocaleOption({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.value,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final LocalePreference value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Text(
+        subtitle,
+        style: theme.textTheme.bodySmall,
+      ),
+      trailing: Radio<LocalePreference>(value: value),
+      onTap: () {
+        final group = RadioGroup.maybeOf<LocalePreference>(context);
         group?.onChanged(value);
       },
     );
