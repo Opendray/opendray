@@ -299,6 +299,83 @@
       }
     }
   },
+  "mcp": {
+    "title": "MCP",
+    "newServer": "新建服务器",
+    "addSecret": "添加密钥",
+    "editConfig": "编辑配置",
+    "viewRawConfig": "查看原始配置",
+    "copyId": "复制 ID",
+    "copiedSnack": "已复制 {id}",
+    "deleteServerTitle": "删除 MCP 服务器？",
+    "deleteSecretTitle": "删除密钥？",
+    "errorPrefix": {
+      "delete": "删除失败",
+      "add": "添加失败",
+      "update": "更新失败",
+      "toggle": "切换失败"
+    },
+    "errorWithMessage": "{prefix}：{error}",
+    "editor": {
+      "nameHint": "my-mcp-server",
+      "jsonHint": "JSON 配置 — name、transport: stdio、command、args…"
+    },
+    "secret": {
+      "keyLabel": "键",
+      "keyHint": "GITHUB_TOKEN、OPENAI_KEY、…",
+      "valueLabel": "值"
+    }
+  },
+  "providers": {
+    "title": "提供商",
+    "configSaved": "提供商配置已更新。",
+    "saveFailedApi": "保存失败：{error}",
+    "saveFailedGeneric": "保存失败：{error}",
+    "reload": "重新加载",
+    "errorPrefix": {
+      "toggle": "切换失败",
+      "rename": "重命名失败",
+      "delete": "删除失败"
+    },
+    "errorWithMessage": "{prefix}：{error}",
+    "accounts": {
+      "rename": "重命名",
+      "renameTitle": "重命名 {name}",
+      "displayNameLabel": "显示名",
+      "displayNameHint": "工作账号",
+      "deleteTitle": "删除账号？",
+      "importFailedApi": "导入失败：{error}",
+      "importFailedGeneric": "导入失败：{error}"
+    }
+  },
+  "integrations": {
+    "title": "集成",
+    "register": "注册",
+    "registerDialogTitle": "注册集成",
+    "edit": "编辑",
+    "editTitle": "编辑 {name}",
+    "enabledLabel": "已启用",
+    "iSavedIt": "我已保存",
+    "apiKeyForName": "{name} 的 API key",
+    "apiKeySubtitleRegister": "将其交给集成方，使其能够通过 /api/v1/{routePrefix}/… 进行认证。",
+    "copiedRequestId": "已复制 request_id {id}",
+    "updateOk": "集成已更新。",
+    "registerFailedApi": "注册失败：{error}",
+    "registerFailedGeneric": "注册失败：{error}",
+    "updateFailedApi": "更新失败：{error}",
+    "updateFailedGeneric": "更新失败：{error}",
+    "deleteTitle": "删除集成？",
+    "deletedSnack": "已删除 {name}。",
+    "deleteFailedApi": "删除失败：{error}",
+    "deleteFailedGeneric": "删除失败：{error}",
+    "rotateKey": "轮换密钥",
+    "rotateConfirmTitle": "轮换 API key？",
+    "rotate": "轮换",
+    "newApiKeyTitle": "{name} 的新 API key",
+    "newApiKeySubtitle": "将其交给集成方。旧密钥已失效。",
+    "rotateFailedApi": "轮换失败：{error}",
+    "rotateFailedGeneric": "轮换失败：{error}"
+  },
   "memory": {
     "title": "记忆",
     "more": "更多",

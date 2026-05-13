@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/mcp_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 class McpEditorScreen extends ConsumerStatefulWidget {
   const McpEditorScreen({super.key, this.existing});
@@ -164,7 +165,7 @@ class _McpEditorScreenState extends ConsumerState<McpEditorScreen> {
               autocorrect: false,
               textCapitalization: TextCapitalization.none,
               decoration: InputDecoration(
-                hintText: 'my-mcp-server',
+                hintText: t.mcp.editor.nameHint,
                 helperText: _isEdit
                     ? 'Locked in edit mode — delete + recreate to change.'
                     : null,
@@ -184,8 +185,8 @@ class _McpEditorScreenState extends ConsumerState<McpEditorScreen> {
               maxLines: 18,
               minLines: 10,
               keyboardType: TextInputType.multiline,
-              decoration: const InputDecoration(
-                hintText: '{ "name": ..., "transport": "stdio", ... }',
+              decoration: InputDecoration(
+                hintText: t.mcp.editor.jsonHint,
               ),
               style: const TextStyle(
                 fontFamily: 'monospace',
@@ -230,7 +231,7 @@ class _McpEditorScreenState extends ConsumerState<McpEditorScreen> {
                     onPressed: _submitting
                         ? null
                         : () => Navigator.of(context).pop(false),
-                    child: const Text('Cancel'),
+                    child: Text(t.common.cancel),
                   ),
                 ),
                 const SizedBox(width: 12),

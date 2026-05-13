@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/integrations_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/integrations/integration_forms.dart';
 
 // Per-integration detail: header card with the registration metadata
@@ -129,7 +130,7 @@ class _IntegrationDetailScreenState
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Copied request_id $id'),
+        content: Text(t.integrations.copiedRequestId(id: id)),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
@@ -152,9 +153,9 @@ class _IntegrationDetailScreenState
           );
       if (!mounted) return;
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Integration updated.'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(t.integrations.updateOk),
+          duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -162,11 +163,19 @@ class _IntegrationDetailScreenState
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('Update failed: ${e.message}')),
+        SnackBar(
+          content: Text(t.integrations.updateFailedApi(error: e.message)),
+        ),
       );
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('Update failed: $e')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            t.integrations.updateFailedGeneric(error: e.toString()),
+          ),
+        ),
+      );
     }
   }
 
@@ -176,7 +185,7 @@ class _IntegrationDetailScreenState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete integration?'),
+        title: Text(t.integrations.deleteTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,14 +211,14 @@ class _IntegrationDetailScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(t.common.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text(t.common.delete),
           ),
         ],
       ),
@@ -222,7 +231,7 @@ class _IntegrationDetailScreenState
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Deleted ${i.name}.'),
+          content: Text(t.integrations.deletedSnack(name: i.name)),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
@@ -231,11 +240,19 @@ class _IntegrationDetailScreenState
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('Delete failed: ${e.message}')),
+        SnackBar(
+          content: Text(t.integrations.deleteFailedApi(error: e.message)),
+        ),
       );
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            t.integrations.deleteFailedGeneric(error: e.toString()),
+          ),
+        ),
+      );
     }
   }
 
@@ -245,7 +262,7 @@ class _IntegrationDetailScreenState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Rotate API key?'),
+        title: Text(t.integrations.rotateConfirmTitle),
         content: Text(
           'Generates a new API key for ${i.name} and immediately '
           'invalidates the previous one. Any caller still holding '
@@ -256,11 +273,11 @@ class _IntegrationDetailScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(t.common.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Rotate'),
+            child: Text(t.integrations.rotate),
           ),
         ],
       ),
@@ -273,20 +290,27 @@ class _IntegrationDetailScreenState
       await RevealApiKeyDialog.show(
         context: context,
         apiKey: result.apiKey,
-        title: 'New API key for ${i.name}',
-        subtitle: 'Hand this to the integration. The previous key '
-            'has just been invalidated.',
+        title: t.integrations.newApiKeyTitle(name: i.name),
+        subtitle: t.integrations.newApiKeySubtitle,
       );
       if (!mounted) return;
       await _loadDetail();
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('Rotate failed: ${e.message}')),
+        SnackBar(
+          content: Text(t.integrations.rotateFailedApi(error: e.message)),
+        ),
       );
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('Rotate failed: $e')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            t.integrations.rotateFailedGeneric(error: e.toString()),
+          ),
+        ),
+      );
     }
   }
 
@@ -300,7 +324,7 @@ class _IntegrationDetailScreenState
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: t.sessions.inspector.shared.refresh,
             onPressed: _loadingCalls ? null : _loadAll,
           ),
           PopupMenuButton<_DetailAction>(
@@ -317,27 +341,28 @@ class _IntegrationDetailScreenState
               }
             },
             itemBuilder: (_) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: _DetailAction.edit,
                 child: ListTile(
-                  leading: Icon(Icons.edit_outlined),
-                  title: Text('Edit'),
+                  leading: const Icon(Icons.edit_outlined),
+                  title: Text(t.integrations.edit),
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: _DetailAction.rotateKey,
                 child: ListTile(
-                  leading: Icon(Icons.vpn_key_outlined),
-                  title: Text('Rotate key'),
+                  leading: const Icon(Icons.vpn_key_outlined),
+                  title: Text(t.integrations.rotateKey),
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: _DetailAction.delete,
                 child: ListTile(
-                  leading: Icon(Icons.delete_outline, color: Colors.redAccent),
+                  leading: const Icon(Icons.delete_outline,
+                      color: Colors.redAccent),
                   title: Text(
-                    'Delete',
-                    style: TextStyle(color: Colors.redAccent),
+                    t.common.delete,
+                    style: const TextStyle(color: Colors.redAccent),
                   ),
                 ),
               ),
@@ -803,7 +828,7 @@ class _InlineError extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),

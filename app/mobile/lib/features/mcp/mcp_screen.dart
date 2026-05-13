@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/mcp_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/mcp/mcp_editor_screen.dart';
 
 // Two-section MCP control surface for mobile.
@@ -85,11 +86,21 @@ class _McpScreenState extends ConsumerState<McpScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('$failPrefix: ${e.message}')),
+        SnackBar(
+          content: Text(
+            t.mcp.errorWithMessage(prefix: failPrefix, error: e.message),
+          ),
+        ),
       );
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('$failPrefix: $e')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            t.mcp.errorWithMessage(prefix: failPrefix, error: e.toString()),
+          ),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _busy.remove(key));
     }
@@ -130,7 +141,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.edit_outlined),
-              title: const Text('Edit config'),
+              title: Text(t.mcp.editConfig),
               subtitle: const Text(
                 'Full JSON editor — vault-backed servers only',
                 style: TextStyle(fontSize: 11),
@@ -139,7 +150,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.code),
-              title: const Text('View raw config'),
+              title: Text(t.mcp.viewRawConfig),
               subtitle: const Text(
                 'Read-only inspector for the server JSON',
                 style: TextStyle(fontSize: 11),
@@ -149,7 +160,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.copy_outlined),
-              title: const Text('Copy id'),
+              title: Text(t.mcp.copyId),
               onTap: () => Navigator.of(sheetCtx).pop(_ServerAction.copyId),
             ),
             const Divider(height: 1),
@@ -180,7 +191,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Copied ${s.id}'),
+            content: Text(t.mcp.copiedSnack(id: s.id)),
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ),
@@ -279,7 +290,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
         actions: [
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Close'),
+            child: Text(t.common.close),
           ),
         ],
       ),
@@ -290,7 +301,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete MCP server?'),
+        title: Text(t.mcp.deleteServerTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -316,14 +327,14 @@ class _McpScreenState extends ConsumerState<McpScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(t.common.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text(t.common.delete),
           ),
         ],
       ),
@@ -332,7 +343,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
     await _runOp(
       key: 's:${s.id}',
       okMsg: 'Deleted ${s.id}.',
-      failPrefix: 'Delete failed',
+      failPrefix: t.mcp.errorPrefix.delete,
       op: () => ref.read(mcpApiProvider).delete(s.id),
     );
   }
@@ -350,7 +361,9 @@ class _McpScreenState extends ConsumerState<McpScreen> {
       okMsg: existingKey == null
           ? 'Secret ${res.key} added.'
           : 'Secret ${res.key} updated.',
-      failPrefix: existingKey == null ? 'Add failed' : 'Update failed',
+      failPrefix: existingKey == null
+          ? t.mcp.errorPrefix.add
+          : t.mcp.errorPrefix.update,
       op: () => ref
           .read(mcpApiProvider)
           .secretsSet(res.key, res.value)
@@ -362,7 +375,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete secret?'),
+        title: Text(t.mcp.deleteSecretTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,14 +399,14 @@ class _McpScreenState extends ConsumerState<McpScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(t.common.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text(t.common.delete),
           ),
         ],
       ),
@@ -402,7 +415,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
     await _runOp(
       key: 'k:$key',
       okMsg: 'Deleted $key.',
-      failPrefix: 'Delete failed',
+      failPrefix: t.mcp.errorPrefix.delete,
       op: () => ref.read(mcpApiProvider).secretsDelete(key),
     );
   }
@@ -411,11 +424,11 @@ class _McpScreenState extends ConsumerState<McpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MCP'),
+        title: Text(t.mcp.title),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: t.sessions.inspector.shared.refresh,
             onPressed: _state is AsyncLoading ? null : _load,
           ),
         ],
@@ -428,7 +441,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openEditor,
         icon: const Icon(Icons.add),
-        label: const Text('New server'),
+        label: Text(t.mcp.newServer),
       ),
     );
   }
@@ -455,7 +468,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
                 onToggle: (next) => _runOp(
                   key: 's:${s.id}',
                   okMsg: next ? '${s.name} enabled.' : '${s.name} disabled.',
-                  failPrefix: 'Toggle failed',
+                  failPrefix: t.mcp.errorPrefix.toggle,
                   op: () => ref
                       .read(mcpApiProvider)
                       .setEnabled(s.id, enabled: next),
@@ -487,7 +500,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             child: OutlinedButton.icon(
               icon: const Icon(Icons.add, size: 16),
-              label: const Text('Add secret'),
+              label: Text(t.mcp.addSecret),
               // Lambda needed because _setSecret returns Future<void>
               // — VoidCallback expects () -> void.
               // ignore: unnecessary_lambdas
@@ -716,7 +729,7 @@ class _SecretTile extends StatelessWidget {
                 Icons.delete_outline,
                 color: Theme.of(context).colorScheme.error,
               ),
-              tooltip: 'Delete',
+              tooltip: t.common.delete,
               onPressed: onDelete,
             ),
     );
@@ -775,7 +788,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),
@@ -864,14 +877,14 @@ class _SecretFormScreenState extends State<_SecretFormScreen> {
             autofocus: !isReplace,
             autocorrect: false,
             enabled: !isReplace,
-            decoration: const InputDecoration(
-              labelText: 'Key',
-              hintText: 'GITHUB_TOKEN, OPENAI_KEY, …',
+            decoration: InputDecoration(
+              labelText: t.mcp.secret.keyLabel,
+              hintText: t.mcp.secret.keyHint,
               helperText:
                   'Shell-env-var rules: starts with a letter or _, '
                   'rest letters/digits/_.',
               helperMaxLines: 2,
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
@@ -884,7 +897,7 @@ class _SecretFormScreenState extends State<_SecretFormScreen> {
             // multiline is forbidden by Flutter, and a single-line
             // capped field would truncate certificate blobs.
             decoration: InputDecoration(
-              labelText: 'Value',
+              labelText: t.mcp.secret.valueLabel,
               hintText: isReplace
                   ? 'Paste new value (the previous one is wiped)'
                   : 'Paste secret value',

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/providers_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/providers/provider_config_screen.dart';
 
 // Providers — list of CLI providers (Claude / Codex / Gemini / Shell).
@@ -73,12 +74,21 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('$failPrefix: ${e.message}')),
+        SnackBar(
+          content: Text(
+            t.providers.errorWithMessage(prefix: failPrefix, error: e.message),
+          ),
+        ),
       );
     } on Object catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('$failPrefix: $e')),
+        SnackBar(
+          content: Text(
+            t.providers
+                .errorWithMessage(prefix: failPrefix, error: e.toString()),
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _busy.remove(key));
@@ -89,11 +99,11 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Providers'),
+        title: Text(t.providers.title),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: t.sessions.inspector.shared.refresh,
             onPressed: _state is AsyncLoading ? null : _load,
           ),
         ],
@@ -133,7 +143,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
               onToggle: (next) => _runToggle(
                 key: 'p:${p.id}',
                 okMsg: next ? '${p.name} enabled.' : '${p.name} disabled.',
-                failPrefix: 'Toggle failed',
+                failPrefix: t.providers.errorPrefix.toggle,
                 op: () => ref
                     .read(providersApiProvider)
                     .setEnabled(p.id, enabled: next),
@@ -268,7 +278,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),
