@@ -6,6 +6,7 @@ import 'package:opendray/core/api/memory_api.dart';
 import 'package:opendray/core/api/memory_cleanup_api.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:path/path.dart' as p;
 
 // Project screen — surfaces memory layers 2-4 (goal / plan / journal)
@@ -153,7 +154,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
       ),
       error: (e, _) => Padding(
         padding: const EdgeInsets.all(16),
-        child: Text('Failed to load projects: $e'),
+        child: Text(t.project.projectsLoadFailed(error: e.toString())),
       ),
       data: (keys) {
         if (keys.isEmpty) {
@@ -170,10 +171,10 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
           child: InkWell(
             onTap: () => _openProjectPicker(keys),
             child: InputDecorator(
-              decoration: const InputDecoration(
-                labelText: 'Project',
-                border: OutlineInputBorder(),
-                suffixIcon: Icon(Icons.unfold_more),
+              decoration: InputDecoration(
+                labelText: t.project.projectLabel,
+                border: const OutlineInputBorder(),
+                suffixIcon: const Icon(Icons.unfold_more),
               ),
               child: Text(
                 _selectedKey == null
@@ -232,12 +233,12 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Project'),
+        title: Text(t.project.title),
         actions: [
           if (_selectedKey != null && _selectedKey!.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.restart_alt),
-              tooltip: 'Reset project memory',
+              tooltip: t.project.resetTooltip,
               onPressed: () => _confirmReset(_selectedKey!),
             ),
         ],
@@ -294,14 +295,14 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
 
   Widget _docTab(String kind) {
     if (_selectedKey == null) {
-      return const Center(child: Text('Pick a project first.'));
+      return Center(child: Text(t.project.pickFirst));
     }
     return _docs.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Text('Failed to load: $e'),
+          child: Text(t.project.loadFailed(error: e.toString())),
         ),
       ),
       data: (docs) {
@@ -330,14 +331,14 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
   // only shows the content + last-updated metadata.
   Widget _readonlyDocTab(String kind, {required String emptyText}) {
     if (_selectedKey == null) {
-      return const Center(child: Text('Pick a project first.'));
+      return Center(child: Text(t.project.pickFirst));
     }
     return _docs.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Text('Failed to load: $e'),
+          child: Text(t.project.loadFailed(error: e.toString())),
         ),
       ),
       data: (docs) {
@@ -380,11 +381,12 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
 
   Widget _journalTab() {
     if (_selectedKey == null) {
-      return const Center(child: Text('Pick a project first.'));
+      return Center(child: Text(t.project.pickFirst));
     }
     return _logs.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Failed to load: $e')),
+      error: (e, _) =>
+          Center(child: Text(t.project.loadFailed(error: e.toString()))),
       data: (logs) {
         return RefreshIndicator(
           onRefresh: () async {
@@ -426,7 +428,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                 child: FloatingActionButton.extended(
                   onPressed: _openAppendJournal,
                   icon: const Icon(Icons.add),
-                  label: const Text('Append'),
+                  label: Text(t.project.append),
                 ),
               ),
             ],
@@ -444,15 +446,15 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Append journal entry'),
+        title: Text(t.project.appendDialogTitle),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: titleCtl,
-                decoration: const InputDecoration(
-                  labelText: 'Title (optional)',
+                decoration: InputDecoration(
+                  labelText: t.project.titleFieldLabel,
                 ),
               ),
               const SizedBox(height: 8),
@@ -460,9 +462,9 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                 controller: bodyCtl,
                 minLines: 3,
                 maxLines: 8,
-                decoration: const InputDecoration(
-                  labelText: 'Content (markdown)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: t.project.contentFieldLabel,
+                  border: const OutlineInputBorder(),
                 ),
               ),
             ],
@@ -471,11 +473,11 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(t.common.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Append'),
+            child: Text(t.project.append),
           ),
         ],
       ),
@@ -494,7 +496,9 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed: $e')),
+        SnackBar(
+          content: Text(t.project.appendFailed(error: e.toString())),
+        ),
       );
     }
   }
@@ -515,11 +519,12 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
 
   Widget _inboxTab() {
     if (_selectedKey == null) {
-      return const Center(child: Text('Pick a project first.'));
+      return Center(child: Text(t.project.pickFirst));
     }
     return _proposals.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Failed to load: $e')),
+      error: (e, _) =>
+          Center(child: Text(t.project.loadFailed(error: e.toString()))),
       data: (props) {
         if (props.isEmpty) {
           return RefreshIndicator(
@@ -560,7 +565,11 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                 } on ApiException catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Approve failed: $e')),
+                      SnackBar(
+                        content: Text(
+                          t.project.approveFailed(error: e.toString()),
+                        ),
+                      ),
                     );
                     // Stale UI: the proposal was already decided
                     // (CLI / web / another phone). Refresh so this
@@ -578,7 +587,11 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                 } on ApiException catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Reject failed: $e')),
+                      SnackBar(
+                        content: Text(
+                          t.project.rejectFailed(error: e.toString()),
+                        ),
+                      ),
                     );
                     await _loadAll(_selectedKey!);
                   }
@@ -595,11 +608,12 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
 
   Widget _cleanupTab() {
     if (_selectedKey == null) {
-      return const Center(child: Text('Pick a project first.'));
+      return Center(child: Text(t.project.pickFirst));
     }
     return _cleanupDecisions.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Failed to load: $e')),
+      error: (e, _) =>
+          Center(child: Text(t.project.loadFailed(error: e.toString()))),
       data: (decisions) {
         return RefreshIndicator(
           onRefresh: () async => _loadAll(_selectedKey!),
@@ -696,7 +710,9 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cleanup failed: $e')),
+        SnackBar(
+          content: Text(t.project.cleanupFailed(error: e.toString())),
+        ),
       );
     } finally {
       if (mounted) setState(() => _cleanupRunning = false);
@@ -710,7 +726,9 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Approve failed: $e')),
+          SnackBar(
+            content: Text(t.project.approveFailed(error: e.toString())),
+          ),
         );
         // Stale UI — re-pull to show the real status.
         await _loadAll(_selectedKey!);
@@ -725,7 +743,9 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reject failed: $e')),
+          SnackBar(
+            content: Text(t.project.rejectFailed(error: e.toString())),
+          ),
         );
         await _loadAll(_selectedKey!);
       }
@@ -744,7 +764,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return AlertDialog(
-              title: const Text('Reset project memory?'),
+              title: Text(t.project.resetConfirmTitle),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -791,8 +811,8 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                     contentPadding: EdgeInsets.zero,
                     dense: true,
                     value: includeScanner,
-                    title: const Text('Also delete scanner docs',
-                        style: TextStyle(fontSize: 13)),
+                    title: Text(t.project.alsoDeleteScanner,
+                        style: const TextStyle(fontSize: 13)),
                     subtitle: const Text(
                       'tech_stack + recent_activity (auto-rebuild on next spawn).',
                       style: TextStyle(fontSize: 11),
@@ -804,8 +824,8 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                     contentPadding: EdgeInsets.zero,
                     dense: true,
                     value: includeMemories,
-                    title: const Text('Also delete pgvector memories',
-                        style: TextStyle(fontSize: 13)),
+                    title: Text(t.project.alsoDeletePgvector,
+                        style: const TextStyle(fontSize: 13)),
                     subtitle: const Text(
                       'Long-term facts for this scope_key. Cannot be recovered.',
                       style: TextStyle(fontSize: 11),
@@ -818,7 +838,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text('Cancel'),
+                  child: Text(t.common.cancel),
                 ),
                 FilledButton.tonal(
                   style: FilledButton.styleFrom(
@@ -826,7 +846,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                     foregroundColor: Theme.of(ctx).colorScheme.onErrorContainer,
                   ),
                   onPressed: () => Navigator.of(ctx).pop(true),
-                  child: const Text('Delete forever'),
+                  child: Text(t.project.deleteForever),
                 ),
               ],
             );
@@ -855,13 +875,19 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
       ];
       if (includeMemories) parts.add('$memCount memories');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Reset: ${parts.join(' · ')}')),
+        SnackBar(
+          content: Text(
+            t.project.resetDoneSnack(parts: parts.join(' · ')),
+          ),
+        ),
       );
       await _loadAll(cwd);
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reset failed: $e')),
+          SnackBar(
+            content: Text(t.project.resetFailed(error: e.toString())),
+          ),
         );
       }
     }
@@ -910,13 +936,18 @@ class _DocEditorState extends State<_DocEditor> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${widget.doc.kind} saved')),
+        SnackBar(
+          content:
+              Text(t.project.docSavedSnack(kind: widget.doc.kind)),
+        ),
       );
       widget.onSaved();
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Save failed: $e')),
+        SnackBar(
+          content: Text(t.project.docSaveFailed(error: e.toString())),
+        ),
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -947,7 +978,7 @@ class _DocEditorState extends State<_DocEditor> {
               textAlignVertical: TextAlignVertical.top,
               keyboardType: TextInputType.multiline,
               decoration: InputDecoration(
-                hintText: 'Write the ${widget.doc.kind} as markdown…',
+                hintText: t.project.docHintTemplate(kind: widget.doc.kind),
                 border: const OutlineInputBorder(),
               ),
             ),
@@ -1007,7 +1038,7 @@ class _LogTile extends StatelessWidget {
         ),
         trailing: IconButton(
           icon: const Icon(Icons.delete_outline),
-          tooltip: 'Delete entry',
+          tooltip: t.project.deleteEntryTooltip,
           onPressed: onDelete,
         ),
         onTap: () {
@@ -1126,7 +1157,7 @@ class _ProposalCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             if (proposal.reason.isNotEmpty) ...[
-              Text('Agent reason', style: muted),
+              Text(t.project.agentReason, style: muted),
               const SizedBox(height: 2),
               Text(proposal.reason),
               const SizedBox(height: 8),
@@ -1150,12 +1181,12 @@ class _ProposalCard extends StatelessWidget {
               children: [
                 TextButton(
                   onPressed: onReject,
-                  child: const Text('Reject'),
+                  child: Text(t.project.reject),
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
                   onPressed: () => _confirmAndApprove(context),
-                  child: const Text('Approve'),
+                  child: Text(t.project.approve),
                 ),
               ],
             ),
@@ -1171,7 +1202,7 @@ class _ProposalCard extends StatelessWidget {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text('Replace current ${proposal.kind}?'),
+          title: Text(t.project.replaceConfirmTitle(kind: proposal.kind)),
           content: SizedBox(
             width: double.maxFinite,
             child: SingleChildScrollView(
@@ -1208,11 +1239,11 @@ class _ProposalCard extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancel'),
+              child: Text(t.common.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text('Replace ${proposal.kind}'),
+              child: Text(t.project.replaceKind(kind: proposal.kind)),
             ),
           ],
         );
@@ -1357,13 +1388,13 @@ class _CleanupCard extends StatelessWidget {
             ),
             if (decision.reason.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text('Reason', style: muted),
+              Text(t.project.reason, style: muted),
               const SizedBox(height: 2),
               Text(decision.reason),
             ],
             if (decision.mergeInto.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text('Will merge into', style: muted),
+              Text(t.project.willMergeInto, style: muted),
               const SizedBox(height: 2),
               Text(
                 decision.mergeInto,
@@ -1376,7 +1407,7 @@ class _CleanupCard extends StatelessWidget {
               children: [
                 TextButton(
                   onPressed: onReject,
-                  child: const Text('Reject'),
+                  child: Text(t.project.reject),
                 ),
                 const SizedBox(width: 8),
                 FilledButton(

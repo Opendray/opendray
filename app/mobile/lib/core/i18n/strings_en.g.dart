@@ -48,6 +48,9 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsMcpEn mcp = TranslationsMcpEn.internal(_root);
 	late final TranslationsProvidersEn providers = TranslationsProvidersEn.internal(_root);
 	late final TranslationsIntegrationsEn integrations = TranslationsIntegrationsEn.internal(_root);
+	late final TranslationsMemoryWorkersEn memoryWorkers = TranslationsMemoryWorkersEn.internal(_root);
+	late final TranslationsMemoryCleanupEn memoryCleanup = TranslationsMemoryCleanupEn.internal(_root);
+	late final TranslationsProjectEn project = TranslationsProjectEn.internal(_root);
 	late final TranslationsBackupsEn backups = TranslationsBackupsEn.internal(_root);
 	late final TranslationsBackupTargetsEn backupTargets = TranslationsBackupTargetsEn.internal(_root);
 	late final TranslationsBackupSchedulesEn backupSchedules = TranslationsBackupSchedulesEn.internal(_root);
@@ -374,6 +377,180 @@ class TranslationsIntegrationsEn {
 
 	/// en: 'Rotate failed: {error}'
 	String rotateFailedGeneric({required Object error}) => 'Rotate failed: ${error}';
+}
+
+// Path: memoryWorkers
+class TranslationsMemoryWorkersEn {
+	TranslationsMemoryWorkersEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Memory workers'
+	String get title => 'Memory workers';
+
+	/// en: '{label} saved'
+	String savedSnack({required Object label}) => '${label} saved';
+
+	/// en: 'Save failed: {error}'
+	String saveFailed({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Test call failed: {error}'
+	String testFailed({required Object error}) => 'Test call failed: ${error}';
+
+	/// en: 'Worker'
+	String get workerLabel => 'Worker';
+
+	/// en: 'Summarizer (HTTP)'
+	String get summarizerHttp => 'Summarizer (HTTP)';
+
+	/// en: 'Agent (CLI --print)'
+	String get agentCliPrint => 'Agent (CLI --print)';
+
+	/// en: 'CLI'
+	String get cliLabel => 'CLI';
+
+	/// en: 'Claude'
+	String get cliClaude => 'Claude';
+
+	/// en: 'Gemini'
+	String get cliGemini => 'Gemini';
+
+	/// en: 'Claude account'
+	String get claudeAccountLabel => 'Claude account';
+
+	/// en: 'Default'
+	String get claudeAccountDefault => 'Default';
+
+	/// en: 'Test'
+	String get test => 'Test';
+}
+
+// Path: memoryCleanup
+class TranslationsMemoryCleanupEn {
+	TranslationsMemoryCleanupEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Memory cleanup'
+	String get title => 'Memory cleanup';
+
+	/// en: 'Approve failed: {error}'
+	String approveFailed({required Object error}) => 'Approve failed: ${error}';
+
+	/// en: 'Reject failed: {error}'
+	String rejectFailed({required Object error}) => 'Reject failed: ${error}';
+
+	/// en: 'Failed to load: {error}'
+	String loadFailed({required Object error}) => 'Failed to load: ${error}';
+
+	/// en: 'Reject'
+	String get reject => 'Reject';
+}
+
+// Path: project
+class TranslationsProjectEn {
+	TranslationsProjectEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Project'
+	String get title => 'Project';
+
+	/// en: 'Pick a project first.'
+	String get pickFirst => 'Pick a project first.';
+
+	/// en: 'Failed to load: {error}'
+	String loadFailed({required Object error}) => 'Failed to load: ${error}';
+
+	/// en: 'Failed to load projects: {error}'
+	String projectsLoadFailed({required Object error}) => 'Failed to load projects: ${error}';
+
+	/// en: 'Project'
+	String get projectLabel => 'Project';
+
+	/// en: 'Reset project memory'
+	String get resetTooltip => 'Reset project memory';
+
+	/// en: 'Append'
+	String get append => 'Append';
+
+	/// en: 'Append journal entry'
+	String get appendDialogTitle => 'Append journal entry';
+
+	/// en: 'Title (optional)'
+	String get titleFieldLabel => 'Title (optional)';
+
+	/// en: 'Content (markdown)'
+	String get contentFieldLabel => 'Content (markdown)';
+
+	/// en: 'Failed: {error}'
+	String appendFailed({required Object error}) => 'Failed: ${error}';
+
+	/// en: 'Approve failed: {error}'
+	String approveFailed({required Object error}) => 'Approve failed: ${error}';
+
+	/// en: 'Reject failed: {error}'
+	String rejectFailed({required Object error}) => 'Reject failed: ${error}';
+
+	/// en: 'Cleanup failed: {error}'
+	String cleanupFailed({required Object error}) => 'Cleanup failed: ${error}';
+
+	/// en: 'Reset project memory?'
+	String get resetConfirmTitle => 'Reset project memory?';
+
+	/// en: 'Also delete scanner docs'
+	String get alsoDeleteScanner => 'Also delete scanner docs';
+
+	/// en: 'Also delete pgvector memories'
+	String get alsoDeletePgvector => 'Also delete pgvector memories';
+
+	/// en: 'Delete forever'
+	String get deleteForever => 'Delete forever';
+
+	/// en: 'Reset: {parts}'
+	String resetDoneSnack({required Object parts}) => 'Reset: ${parts}';
+
+	/// en: 'Reset failed: {error}'
+	String resetFailed({required Object error}) => 'Reset failed: ${error}';
+
+	/// en: '{kind} saved'
+	String docSavedSnack({required Object kind}) => '${kind} saved';
+
+	/// en: 'Save failed: {error}'
+	String docSaveFailed({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Write the {kind} as markdown…'
+	String docHintTemplate({required Object kind}) => 'Write the ${kind} as markdown…';
+
+	/// en: 'Delete entry'
+	String get deleteEntryTooltip => 'Delete entry';
+
+	/// en: 'Agent reason'
+	String get agentReason => 'Agent reason';
+
+	/// en: 'Reject'
+	String get reject => 'Reject';
+
+	/// en: 'Approve'
+	String get approve => 'Approve';
+
+	/// en: 'Replace current {kind}?'
+	String replaceConfirmTitle({required Object kind}) => 'Replace current ${kind}?';
+
+	/// en: 'Replace {kind}'
+	String replaceKind({required Object kind}) => 'Replace ${kind}';
+
+	/// en: 'Reason'
+	String get reason => 'Reason';
+
+	/// en: 'Will merge into'
+	String get willMergeInto => 'Will merge into';
 }
 
 // Path: backups
@@ -2529,6 +2706,55 @@ extension on Translations {
 			'integrations.newApiKeySubtitle' => 'Hand this to the integration. The previous key has just been invalidated.',
 			'integrations.rotateFailedApi' => ({required Object error}) => 'Rotate failed: ${error}',
 			'integrations.rotateFailedGeneric' => ({required Object error}) => 'Rotate failed: ${error}',
+			'memoryWorkers.title' => 'Memory workers',
+			'memoryWorkers.savedSnack' => ({required Object label}) => '${label} saved',
+			'memoryWorkers.saveFailed' => ({required Object error}) => 'Save failed: ${error}',
+			'memoryWorkers.testFailed' => ({required Object error}) => 'Test call failed: ${error}',
+			'memoryWorkers.workerLabel' => 'Worker',
+			'memoryWorkers.summarizerHttp' => 'Summarizer (HTTP)',
+			'memoryWorkers.agentCliPrint' => 'Agent (CLI --print)',
+			'memoryWorkers.cliLabel' => 'CLI',
+			'memoryWorkers.cliClaude' => 'Claude',
+			'memoryWorkers.cliGemini' => 'Gemini',
+			'memoryWorkers.claudeAccountLabel' => 'Claude account',
+			'memoryWorkers.claudeAccountDefault' => 'Default',
+			'memoryWorkers.test' => 'Test',
+			'memoryCleanup.title' => 'Memory cleanup',
+			'memoryCleanup.approveFailed' => ({required Object error}) => 'Approve failed: ${error}',
+			'memoryCleanup.rejectFailed' => ({required Object error}) => 'Reject failed: ${error}',
+			'memoryCleanup.loadFailed' => ({required Object error}) => 'Failed to load: ${error}',
+			'memoryCleanup.reject' => 'Reject',
+			'project.title' => 'Project',
+			'project.pickFirst' => 'Pick a project first.',
+			'project.loadFailed' => ({required Object error}) => 'Failed to load: ${error}',
+			'project.projectsLoadFailed' => ({required Object error}) => 'Failed to load projects: ${error}',
+			'project.projectLabel' => 'Project',
+			'project.resetTooltip' => 'Reset project memory',
+			'project.append' => 'Append',
+			'project.appendDialogTitle' => 'Append journal entry',
+			'project.titleFieldLabel' => 'Title (optional)',
+			'project.contentFieldLabel' => 'Content (markdown)',
+			'project.appendFailed' => ({required Object error}) => 'Failed: ${error}',
+			'project.approveFailed' => ({required Object error}) => 'Approve failed: ${error}',
+			'project.rejectFailed' => ({required Object error}) => 'Reject failed: ${error}',
+			'project.cleanupFailed' => ({required Object error}) => 'Cleanup failed: ${error}',
+			'project.resetConfirmTitle' => 'Reset project memory?',
+			'project.alsoDeleteScanner' => 'Also delete scanner docs',
+			'project.alsoDeletePgvector' => 'Also delete pgvector memories',
+			'project.deleteForever' => 'Delete forever',
+			'project.resetDoneSnack' => ({required Object parts}) => 'Reset: ${parts}',
+			'project.resetFailed' => ({required Object error}) => 'Reset failed: ${error}',
+			'project.docSavedSnack' => ({required Object kind}) => '${kind} saved',
+			'project.docSaveFailed' => ({required Object error}) => 'Save failed: ${error}',
+			'project.docHintTemplate' => ({required Object kind}) => 'Write the ${kind} as markdown…',
+			'project.deleteEntryTooltip' => 'Delete entry',
+			'project.agentReason' => 'Agent reason',
+			'project.reject' => 'Reject',
+			'project.approve' => 'Approve',
+			'project.replaceConfirmTitle' => ({required Object kind}) => 'Replace current ${kind}?',
+			'project.replaceKind' => ({required Object kind}) => 'Replace ${kind}',
+			'project.reason' => 'Reason',
+			'project.willMergeInto' => 'Will merge into',
 			'backups.title' => 'Backups',
 			'backups.runConfirmTitle' => 'Run backup now?',
 			'backups.run' => 'Run',
