@@ -269,11 +269,42 @@ There's one human admin. The flow:
 Failed and successful logins both publish events (`admin.login_failed`,
 `admin.login_success`) that the audit sink persists.
 
+## Unified memory subsystem
+
+opendray ships with a cross-CLI project memory layer. Each Claude /
+Codex / Gemini spawn boots with a shared markdown banner derived
+from five sources:
+
+- **Tech stack & structure** (scanner-managed, auto-refreshed)
+- **Project goal** (operator-set, agent-proposable)
+- **Project plan** (operator-set, agent-proposable)
+- **Recent activity** (LLM-summarised git log, refreshed every 24h)
+- **Recent journal** (auto-appended session-end summaries)
+
+Long-term facts an agent stores via the memory MCP are filtered by
+a server-side LLM gatekeeper, deduplicated by vector similarity,
+and periodically reviewed by an LLM librarian (operator approves
+deletions). Three layers of isolation defend against transcript
+leakage between projects (see ADR 0018).
+
+UI surfaces:
+
+- **Mobile / web → Memory → Project** — 7-tab page for the
+  per-project goal/plan/tech/activity/journal/inbox/cleanup
+- **Memory → Cleanup inbox** — cross-project pending cleanup
+  decisions
+- **Session detail → 🏁 Project memory** — jump from any session
+  into its project's memory page
+
+Operator-facing detail and SQL recipes for validation are in
+[`docs/memory-system.md`](memory-system.md).
+
 ## Where to look next
 
+- [`docs/memory-system.md`](memory-system.md) — operator guide for the unified memory layer
 - [`config.example.toml`](../config.example.toml) — full annotated config
 - [`docs/quickstart.md`](quickstart.md) — developer setup
 - [`docs/integration-guide.md`](integration-guide.md) — building external integrations
-- [`docs/adr/`](adr/) — architecture decisions
+- [`docs/adr/`](adr/) — architecture decisions (notably 0014 + 0018 for memory)
 - [`docs/design.md`](design.md) — full design spec
 - [`deploy/`](../deploy/) — systemd unit + Proxmox LXC notes for production install

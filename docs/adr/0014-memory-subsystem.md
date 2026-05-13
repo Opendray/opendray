@@ -1,7 +1,13 @@
 # ADR 0014 — Built-in cross-CLI memory subsystem
 
-**Status**: Accepted (phase 1 + phase 2 step 1 shipped)
-**Date**: 2026-05-04
+**Status**: Accepted (phase 1 + phase 2 shipped — unified memory landed via PR #56, M5-M24)
+**Date**: 2026-05-04 · *Last updated: 2026-05-13 (M5-M24 milestone update)*
+
+> See ADR 0018 for the M5-M24 unified-memory layer that sits on
+> top of this subsystem: shared goal/plan/journal/tech_stack/
+> recent_activity per project, LLM gatekeeper, dedup, librarian,
+> cross-CLI transcript-aware auto-journaling, and isolation
+> fortress against transcript leakage.
 
 ## Context
 
