@@ -193,16 +193,17 @@ fills it via `--session-id` flag at spawn).
   staleness check that triggers sync refresh when overdue.
 - Operator approval queues (proposals + cleanup) require touch.
   Inactive operators leave goal/plan proposals pending forever;
-  mitigated only by cleanup-staleness sweeps (TODO: M25).
+  mitigated by cleanup-staleness sweeps once a worker is configured
+  (M25, shipped).
 
 ## Follow-ups
 
-- **M25 — pluggable Memory worker**. Today all four LLM touch
-  points go through the same `summarizer.Registry` HTTP path.
-  M25 will add an `AgentWorker` implementation that spawns a
-  headless Claude/Codex/Gemini session in `--print` mode to do
-  the work, with per-task-kind switching (operator picks
-  summarizer vs agent per touch-point in mobile Settings).
+- **M25 — pluggable Memory worker** *(shipped)*. The four LLM
+  touch-points now route through `worker.Registry`, which resolves
+  per-task config (DB-backed) to either the existing summarizer
+  HTTP path or a freshly-spawned `claude --print` / `gemini --print`
+  agent. See ADR 0019 for the architecture and the Memory → Workers
+  UI for operator flow.
 - **Codex session UUID capture**. Codex has no `--session-id`
   flag; currently relies on cwd-based matching + M22 time-window
   filtering. Robust for single-session-per-cwd; multi-concurrent

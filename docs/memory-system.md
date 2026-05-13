@@ -253,17 +253,40 @@ Settings → Server → Memory.
 | Memory growing unbounded | Cleaner disabled; or operator not approving decisions | Enable cleaner, work through inbox |
 | Cross-project leakage suspected | Pre-M22 contamination; or new M22 bypass | Run hallucination check SQL above; if confirmed, file issue |
 
+## Pluggable LLM workers (M25, shipped)
+
+Each of the four memory touch-points (gatekeeper / cleaner /
+gitactivity / transcript) can independently be served by either:
+
+- **SummarizerWorker** — the original OpenAI-compat HTTP path
+  (LM Studio / OpenAI / ollama). ~1s latency.
+- **AgentWorker** — a headless `claude --print` or `gemini --print`
+  spawn keyed to one of your multi-account OAuth tokens. ~5-15s
+  latency, frontier-model quality, draws from your Claude / Gemini
+  subscription quota.
+
+Operators flip per task on the **Memory → Workers** page (web +
+mobile). Default rows are all `summarizer` — zero behavioural
+change for existing installs. Per-call latency + outcome lands in
+`memory_worker_calls`; a 24h rollup is surfaced on each card.
+
+Gatekeeper stays summarizer-only by design — agent spawn (5-15s)
+violates its <500ms latency budget. Codex is unsupported (no
+`--print` mode).
+
+See ADR 0019 for the architecture, the **Memory → Workers**
+tutorial (sections 15.1-15.3) for operator workflow, and the
+implementation under `internal/memory/worker/`.
+
 ## Roadmap
 
-- **M25 — pluggable Memory worker**. Today all four LLM touch
-  points hit a single HTTP endpoint. M25 will let you route some
-  touch-points through a headless Claude / Codex / Gemini agent
-  session for higher quality (at higher cost). Per-task-kind
-  switching in mobile Settings → Memory → Workers.
-- **Codex session UUID capture**. Codex lacks `--session-id`;
-  M25 may parse `session_meta.id` from the first rollout line
-  post-spawn to get the same isolation guarantees Claude/Gemini
-  already have.
+- **Codex session UUID capture**. Codex lacks `--session-id`; a
+  future patch could parse `session_meta.id` from the first
+  rollout line post-spawn to get the same isolation guarantees
+  Claude/Gemini already have.
 - **Self-healing cleaner**. Extend the cleaner to detect cross-cwd
   file references in journal summaries (hallucination signal)
   using opendray's own LLM provider chain.
+- **Per-cwd worker overrides**. Today the worker config is global
+  per task; a future revision may let operators pin a specific
+  cwd to a heavier worker (e.g. "use Claude only for project X").

@@ -64,7 +64,7 @@ gracefully).
 
 **AgentWorker** spawns a headless CLI:
 
-- `claude --print --append-system-prompt <prompt> --session-id <uuid> --bare`
+- `claude --print --append-system-prompt <prompt> --session-id <uuid>`
 - `gemini --print --session-id <uuid> --include-directories <scratch>`
 
 Input goes to stdin; stdout is captured until EOF; Request.Timeout
@@ -74,6 +74,17 @@ tasks (cleaner) prepend the schema to the system prompt instead
 of using `response_format` (agent CLIs don't natively support it).
 Worker sessions deliberately don't create a `sessions` table row —
 they're out-of-band invocations, invisible to the journaler.
+
+**Why not `--bare`?** The Claude CLI's `--bare` flag (skip hooks /
+plugins / CLAUDE.md auto-discovery) is tempting but forces auth
+through `ANTHROPIC_API_KEY` only — opendray's multi-account flow
+stores OAuth tokens (`CLAUDE_CODE_OAUTH_TOKEN`) which `--bare`
+silently ignores, causing exit 1 "Not logged in". The isolation
+properties `--bare` would give us are already provided by the
+scratch CWD (CLAUDE.md auto-discovery has nothing to find) and
+the `--print` mode (no tool use means PostToolUse / Stop hooks
+don't fire). Plugin sync cost is accepted in exchange for OAuth
+auth working.
 
 Codex is unsupported because it has no `--print` equivalent.
 
