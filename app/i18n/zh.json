@@ -8,7 +8,10 @@
     "back": "返回",
     "done": "完成",
     "close": "关闭",
-    "retry": "重试"
+    "retry": "重试",
+    "copy": "复制",
+    "enabled": "已启用",
+    "refresh": "刷新"
   },
   "auth": {
     "signInTitle": "登录",
@@ -375,6 +378,57 @@
     "newApiKeySubtitle": "将其交给集成方。旧密钥已失效。",
     "rotateFailedApi": "轮换失败：{error}",
     "rotateFailedGeneric": "轮换失败：{error}"
+  },
+  "githosts": {
+    "title": "Git 主机",
+    "addHost": "添加主机",
+    "deleteTitle": "删除 Git 主机？",
+    "errorWithMessage": "{prefix}：{error}",
+    "errorPrefix": {
+      "toggle": "切换失败",
+      "delete": "删除失败"
+    },
+    "form": {
+      "kindLabel": "类型",
+      "hostLabel": "主机",
+      "nameLabel": "名称",
+      "nameHint": "work-github、personal-gitlab、…"
+    }
+  },
+  "channels": {
+    "title": "通道",
+    "new": "新建",
+    "sendTest": "发送测试消息",
+    "editConfig": "编辑配置",
+    "editNotifications": "编辑通知",
+    "viewRawConfig": "查看原始配置",
+    "copyChannelId": "复制通道 ID",
+    "copiedSnack": "已复制 {id}",
+    "createdSnack": "已创建 {kind} 通道。",
+    "createFailedApi": "创建失败：{error}",
+    "createFailedGeneric": "创建失败：{error}",
+    "deleteTitle": "删除通道？",
+    "configDialog": {
+      "title": "{kind} 配置"
+    },
+    "webhookDialog": {
+      "title": "{kind} Webhook URL",
+      "copiedSnack": "已复制 Webhook URL。"
+    },
+    "errorWithMessage": "{prefix}：{error}",
+    "notifications": {
+      "title": "通知偏好",
+      "notifyOn": "通知时机",
+      "repeatPolicy": "重复策略",
+      "cooldownWindow": "冷却时间",
+      "includeSnippet": "包含终端片段",
+      "snippetLengthCap": "片段长度上限"
+    }
+  },
+  "onboarding": {
+    "gatewayLabel": "网关 URL",
+    "gatewayHint": "https://opendray.example.com",
+    "continue": "继续"
   },
   "skills": {
     "title": "技能",

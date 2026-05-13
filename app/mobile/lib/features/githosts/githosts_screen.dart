@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/githosts_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/githosts/githost_form_screen.dart';
 
 // Git hosts list screen — registered host credentials the gateway
@@ -72,11 +73,21 @@ class _GitHostsScreenState extends ConsumerState<GitHostsScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('$failPrefix: ${e.message}')),
+        SnackBar(
+          content: Text(
+            t.githosts.errorWithMessage(prefix: failPrefix, error: e.message),
+          ),
+        ),
       );
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('$failPrefix: $e')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            t.githosts.errorWithMessage(prefix: failPrefix, error: e.toString()),
+          ),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _busy.remove(key));
     }
@@ -105,7 +116,7 @@ class _GitHostsScreenState extends ConsumerState<GitHostsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete git host?'),
+        title: Text(t.githosts.deleteTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,14 +142,14 @@ class _GitHostsScreenState extends ConsumerState<GitHostsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(t.common.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text(t.common.delete),
           ),
         ],
       ),
@@ -147,7 +158,7 @@ class _GitHostsScreenState extends ConsumerState<GitHostsScreen> {
     await _runOp(
       key: h.id,
       okMsg: 'Deleted ${h.name}.',
-      failPrefix: 'Delete failed',
+      failPrefix: t.githosts.errorPrefix.delete,
       op: () => ref.read(gitHostsApiProvider).delete(h.id),
     );
   }
@@ -156,11 +167,11 @@ class _GitHostsScreenState extends ConsumerState<GitHostsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Git hosts'),
+        title: Text(t.githosts.title),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: t.common.refresh,
             onPressed: _state is AsyncLoading ? null : _load,
           ),
         ],
@@ -173,7 +184,7 @@ class _GitHostsScreenState extends ConsumerState<GitHostsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _onCreate,
         icon: const Icon(Icons.add),
-        label: const Text('Add host'),
+        label: Text(t.githosts.addHost),
       ),
     );
   }
@@ -210,7 +221,7 @@ class _GitHostsScreenState extends ConsumerState<GitHostsScreen> {
             onToggle: (next) => _runOp(
               key: h.id,
               okMsg: next ? '${h.name} enabled.' : '${h.name} disabled.',
-              failPrefix: 'Toggle failed',
+              failPrefix: t.githosts.errorPrefix.toggle,
               op: () => ref
                   .read(gitHostsApiProvider)
                   .update(h.id, enabled: next)
@@ -313,7 +324,7 @@ class _HostTile extends StatelessWidget {
                     Icons.delete_outline,
                     color: Theme.of(context).colorScheme.error,
                   ),
-                  tooltip: 'Delete',
+                  tooltip: t.common.delete,
                   onPressed: onDelete,
                 ),
               ],
@@ -374,7 +385,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),

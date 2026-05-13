@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/auth_api.dart';
 import 'package:opendray/core/auth/auth_state.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 // First-run screen. The user types the gateway URL here; we
 // validate by calling /api/v1/health on it before persisting.
@@ -96,9 +97,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 keyboardType: TextInputType.url,
                 textInputAction: TextInputAction.go,
                 onSubmitted: (_) => _continue(),
-                decoration: const InputDecoration(
-                  labelText: 'Gateway URL',
-                  hintText: 'https://opendray.example.com',
+                decoration: InputDecoration(
+                  labelText: t.onboarding.gatewayLabel,
+                  hintText: t.onboarding.gatewayHint,
                 ),
               ),
               const SizedBox(height: 8),
@@ -124,7 +125,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         width: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Continue'),
+                    : Text(t.onboarding.kContinue),
               ),
             ],
           ),

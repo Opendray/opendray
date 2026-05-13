@@ -47,6 +47,9 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsMcpZh mcp = _TranslationsMcpZh._(_root);
 	@override late final _TranslationsProvidersZh providers = _TranslationsProvidersZh._(_root);
 	@override late final _TranslationsIntegrationsZh integrations = _TranslationsIntegrationsZh._(_root);
+	@override late final _TranslationsGithostsZh githosts = _TranslationsGithostsZh._(_root);
+	@override late final _TranslationsChannelsZh channels = _TranslationsChannelsZh._(_root);
+	@override late final _TranslationsOnboardingZh onboarding = _TranslationsOnboardingZh._(_root);
 	@override late final _TranslationsSkillsZh skills = _TranslationsSkillsZh._(_root);
 	@override late final _TranslationsCustomTasksZh customTasks = _TranslationsCustomTasksZh._(_root);
 	@override late final _TranslationsNotesPageZh notesPage = _TranslationsNotesPageZh._(_root);
@@ -71,6 +74,9 @@ class _TranslationsCommonZh extends TranslationsCommonEn {
 	@override String get done => '完成';
 	@override String get close => '关闭';
 	@override String get retry => '重试';
+	@override String get copy => '复制';
+	@override String get enabled => '已启用';
+	@override String get refresh => '刷新';
 }
 
 // Path: auth
@@ -212,6 +218,58 @@ class _TranslationsIntegrationsZh extends TranslationsIntegrationsEn {
 	@override String get newApiKeySubtitle => '将其交给集成方。旧密钥已失效。';
 	@override String rotateFailedApi({required Object error}) => '轮换失败：${error}';
 	@override String rotateFailedGeneric({required Object error}) => '轮换失败：${error}';
+}
+
+// Path: githosts
+class _TranslationsGithostsZh extends TranslationsGithostsEn {
+	_TranslationsGithostsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Git 主机';
+	@override String get addHost => '添加主机';
+	@override String get deleteTitle => '删除 Git 主机？';
+	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
+	@override late final _TranslationsGithostsErrorPrefixZh errorPrefix = _TranslationsGithostsErrorPrefixZh._(_root);
+	@override late final _TranslationsGithostsFormZh form = _TranslationsGithostsFormZh._(_root);
+}
+
+// Path: channels
+class _TranslationsChannelsZh extends TranslationsChannelsEn {
+	_TranslationsChannelsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '通道';
+	@override String get kNew => '新建';
+	@override String get sendTest => '发送测试消息';
+	@override String get editConfig => '编辑配置';
+	@override String get editNotifications => '编辑通知';
+	@override String get viewRawConfig => '查看原始配置';
+	@override String get copyChannelId => '复制通道 ID';
+	@override String copiedSnack({required Object id}) => '已复制 ${id}';
+	@override String createdSnack({required Object kind}) => '已创建 ${kind} 通道。';
+	@override String createFailedApi({required Object error}) => '创建失败：${error}';
+	@override String createFailedGeneric({required Object error}) => '创建失败：${error}';
+	@override String get deleteTitle => '删除通道？';
+	@override late final _TranslationsChannelsConfigDialogZh configDialog = _TranslationsChannelsConfigDialogZh._(_root);
+	@override late final _TranslationsChannelsWebhookDialogZh webhookDialog = _TranslationsChannelsWebhookDialogZh._(_root);
+	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
+	@override late final _TranslationsChannelsNotificationsZh notifications = _TranslationsChannelsNotificationsZh._(_root);
+}
+
+// Path: onboarding
+class _TranslationsOnboardingZh extends TranslationsOnboardingEn {
+	_TranslationsOnboardingZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get gatewayLabel => '网关 URL';
+	@override String get gatewayHint => 'https://opendray.example.com';
+	@override String get kContinue => '继续';
 }
 
 // Path: skills
@@ -604,6 +662,66 @@ class _TranslationsProvidersAccountsZh extends TranslationsProvidersAccountsEn {
 	@override String get deleteTitle => '删除账号？';
 	@override String importFailedApi({required Object error}) => '导入失败：${error}';
 	@override String importFailedGeneric({required Object error}) => '导入失败：${error}';
+}
+
+// Path: githosts.errorPrefix
+class _TranslationsGithostsErrorPrefixZh extends TranslationsGithostsErrorPrefixEn {
+	_TranslationsGithostsErrorPrefixZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get toggle => '切换失败';
+	@override String get delete => '删除失败';
+}
+
+// Path: githosts.form
+class _TranslationsGithostsFormZh extends TranslationsGithostsFormEn {
+	_TranslationsGithostsFormZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get kindLabel => '类型';
+	@override String get hostLabel => '主机';
+	@override String get nameLabel => '名称';
+	@override String get nameHint => 'work-github、personal-gitlab、…';
+}
+
+// Path: channels.configDialog
+class _TranslationsChannelsConfigDialogZh extends TranslationsChannelsConfigDialogEn {
+	_TranslationsChannelsConfigDialogZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String title({required Object kind}) => '${kind} 配置';
+}
+
+// Path: channels.webhookDialog
+class _TranslationsChannelsWebhookDialogZh extends TranslationsChannelsWebhookDialogEn {
+	_TranslationsChannelsWebhookDialogZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String title({required Object kind}) => '${kind} Webhook URL';
+	@override String get copiedSnack => '已复制 Webhook URL。';
+}
+
+// Path: channels.notifications
+class _TranslationsChannelsNotificationsZh extends TranslationsChannelsNotificationsEn {
+	_TranslationsChannelsNotificationsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '通知偏好';
+	@override String get notifyOn => '通知时机';
+	@override String get repeatPolicy => '重复策略';
+	@override String get cooldownWindow => '冷却时间';
+	@override String get includeSnippet => '包含终端片段';
+	@override String get snippetLengthCap => '片段长度上限';
 }
 
 // Path: notesPage.editor
@@ -1163,6 +1281,9 @@ extension on TranslationsZh {
 			'common.done' => '完成',
 			'common.close' => '关闭',
 			'common.retry' => '重试',
+			'common.copy' => '复制',
+			'common.enabled' => '已启用',
+			'common.refresh' => '刷新',
 			'auth.signInTitle' => '登录',
 			'auth.changeServer' => '更换',
 			'auth.username' => '用户名',
@@ -1419,6 +1540,41 @@ extension on TranslationsZh {
 			'integrations.newApiKeySubtitle' => '将其交给集成方。旧密钥已失效。',
 			'integrations.rotateFailedApi' => ({required Object error}) => '轮换失败：${error}',
 			'integrations.rotateFailedGeneric' => ({required Object error}) => '轮换失败：${error}',
+			'githosts.title' => 'Git 主机',
+			'githosts.addHost' => '添加主机',
+			'githosts.deleteTitle' => '删除 Git 主机？',
+			'githosts.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
+			'githosts.errorPrefix.toggle' => '切换失败',
+			'githosts.errorPrefix.delete' => '删除失败',
+			'githosts.form.kindLabel' => '类型',
+			'githosts.form.hostLabel' => '主机',
+			'githosts.form.nameLabel' => '名称',
+			'githosts.form.nameHint' => 'work-github、personal-gitlab、…',
+			'channels.title' => '通道',
+			'channels.kNew' => '新建',
+			'channels.sendTest' => '发送测试消息',
+			'channels.editConfig' => '编辑配置',
+			'channels.editNotifications' => '编辑通知',
+			'channels.viewRawConfig' => '查看原始配置',
+			'channels.copyChannelId' => '复制通道 ID',
+			'channels.copiedSnack' => ({required Object id}) => '已复制 ${id}',
+			'channels.createdSnack' => ({required Object kind}) => '已创建 ${kind} 通道。',
+			'channels.createFailedApi' => ({required Object error}) => '创建失败：${error}',
+			'channels.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',
+			'channels.deleteTitle' => '删除通道？',
+			'channels.configDialog.title' => ({required Object kind}) => '${kind} 配置',
+			'channels.webhookDialog.title' => ({required Object kind}) => '${kind} Webhook URL',
+			'channels.webhookDialog.copiedSnack' => '已复制 Webhook URL。',
+			'channels.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
+			'channels.notifications.title' => '通知偏好',
+			'channels.notifications.notifyOn' => '通知时机',
+			'channels.notifications.repeatPolicy' => '重复策略',
+			'channels.notifications.cooldownWindow' => '冷却时间',
+			'channels.notifications.includeSnippet' => '包含终端片段',
+			'channels.notifications.snippetLengthCap' => '片段长度上限',
+			'onboarding.gatewayLabel' => '网关 URL',
+			'onboarding.gatewayHint' => 'https://opendray.example.com',
+			'onboarding.kContinue' => '继续',
 			'skills.title' => '技能',
 			'skills.newSkill' => '新建技能',
 			'skills.customizingBuiltin' => ({required Object id}) => '自定义内置 ${id}',

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/channels_api.dart';
 import 'package:opendray/core/auth/auth_state.dart';
+import 'package:opendray/core/i18n/strings.g.dart' as i18n;
 import 'package:opendray/features/channels/channel_form_dialog.dart';
 import 'package:opendray/features/channels/channel_kinds.dart';
 
@@ -78,12 +79,26 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('$failPrefix: ${e.message}')),
+        SnackBar(
+          content: Text(
+            i18n.t.channels.errorWithMessage(
+              prefix: failPrefix,
+              error: e.message,
+            ),
+          ),
+        ),
       );
     } on Object catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('$failPrefix: $e')),
+        SnackBar(
+          content: Text(
+            i18n.t.channels.errorWithMessage(
+              prefix: failPrefix,
+              error: e.toString(),
+            ),
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _busy.remove(id));
@@ -127,7 +142,7 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
             ListTile(
               enabled: !isBusy,
               leading: const Icon(Icons.send_outlined),
-              title: const Text('Send test message'),
+              title: Text(i18n.t.channels.sendTest),
               onTap: () => Navigator.of(sheetCtx).pop(_RowAction.test),
             ),
             ListTile(
@@ -150,7 +165,7 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
             ListTile(
               enabled: !isBusy && findKind(ch.kind) != null,
               leading: const Icon(Icons.edit_outlined),
-              title: const Text('Edit config'),
+              title: Text(i18n.t.channels.editConfig),
               subtitle: findKind(ch.kind) == null
                   ? const Text(
                       'Bridge channels stay web-only',
@@ -163,18 +178,18 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
             ListTile(
               enabled: !isBusy,
               leading: const Icon(Icons.tune_outlined),
-              title: const Text('Edit notifications'),
+              title: Text(i18n.t.channels.editNotifications),
               onTap: () =>
                   Navigator.of(sheetCtx).pop(_RowAction.editNotify),
             ),
             ListTile(
               leading: const Icon(Icons.code),
-              title: const Text('View raw config'),
+              title: Text(i18n.t.channels.viewRawConfig),
               onTap: () => Navigator.of(sheetCtx).pop(_RowAction.viewConfig),
             ),
             ListTile(
               leading: const Icon(Icons.copy_outlined),
-              title: const Text('Copy channel id'),
+              title: Text(i18n.t.channels.copyChannelId),
               onTap: () => Navigator.of(sheetCtx).pop(_RowAction.copyId),
             ),
             const Divider(height: 1),
@@ -237,7 +252,7 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Copied ${ch.id}'),
+            content: Text(i18n.t.channels.copiedSnack(id: ch.id)),
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ),
@@ -260,7 +275,7 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Created ${kind.label} channel.'),
+          content: Text(i18n.t.channels.createdSnack(kind: kind.label)),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
@@ -281,11 +296,21 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('Create failed: ${e.message}')),
+        SnackBar(
+          content: Text(
+            i18n.t.channels.createFailedApi(error: e.message),
+          ),
+        ),
       );
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('Create failed: $e')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            i18n.t.channels.createFailedGeneric(error: e.toString()),
+          ),
+        ),
+      );
     }
   }
 
@@ -349,7 +374,7 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete channel?'),
+        title: Text(i18n.t.channels.deleteTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,14 +400,14 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(i18n.t.common.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
+            child: Text(i18n.t.common.delete),
           ),
         ],
       ),
@@ -402,7 +427,7 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
     await showDialog<void>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: Text('${ch.kind} config'),
+        title: Text(i18n.t.channels.configDialog.title(kind: ch.kind)),
         content: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(dialogCtx).size.height * 0.6,
@@ -426,11 +451,11 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
               if (!dialogCtx.mounted) return;
               Navigator.of(dialogCtx).pop();
             },
-            child: const Text('Copy'),
+            child: Text(i18n.t.common.copy),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: const Text('Close'),
+            child: Text(i18n.t.common.close),
           ),
         ],
       ),
@@ -441,11 +466,11 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Channels'),
+        title: Text(i18n.t.channels.title),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: i18n.t.common.refresh,
             onPressed: _state is AsyncLoading ? null : _load,
           ),
         ],
@@ -458,7 +483,7 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _onCreate,
         icon: const Icon(Icons.add),
-        label: const Text('New'),
+        label: Text(i18n.t.channels.kNew),
       ),
     );
   }
@@ -724,18 +749,18 @@ class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
     final muted = Theme.of(context).textTheme.bodySmall;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notification preferences'),
+        title: Text(i18n.t.channels.notifications.title),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(_buildPatch()),
-            child: const Text('Save'),
+            child: Text(i18n.t.common.save),
           ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          Text('Notify on', style: muted),
+          Text(i18n.t.channels.notifications.notifyOn, style: muted),
           const SizedBox(height: 6),
           Wrap(
             spacing: 6,
@@ -769,7 +794,7 @@ class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          Text('Repeat policy', style: muted),
+          Text(i18n.t.channels.notifications.repeatPolicy, style: muted),
           const SizedBox(height: 6),
           RadioGroup<String>(
             groupValue: _mode,
@@ -788,7 +813,7 @@ class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
           ),
           if (_mode == 'cooldown') ...[
             const SizedBox(height: 8),
-            Text('Cooldown window', style: muted),
+            Text(i18n.t.channels.notifications.cooldownWindow, style: muted),
             const SizedBox(height: 6),
             Wrap(
               spacing: 6,
@@ -806,7 +831,7 @@ class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
           const SizedBox(height: 24),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Include terminal snippet'),
+            title: Text(i18n.t.channels.notifications.includeSnippet),
             subtitle: Text(
               'Embeds the recent terminal tail in each notification.',
               style: muted,
@@ -816,7 +841,7 @@ class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
           ),
           if (_includeSnippet) ...[
             const SizedBox(height: 8),
-            Text('Snippet length cap', style: muted),
+            Text(i18n.t.channels.notifications.snippetLengthCap, style: muted),
             const SizedBox(height: 6),
             Wrap(
               spacing: 6,
@@ -867,7 +892,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(i18n.t.common.retry)),
           ],
         ),
       ),

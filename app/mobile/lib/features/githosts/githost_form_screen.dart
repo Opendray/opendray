@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/githosts_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 // Single form for both Add and Edit. Token field semantics differ:
 // on Add it's required (no other way to provision). On Edit it's
@@ -141,7 +142,7 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          Text('Kind', style: muted),
+          Text(t.githosts.form.kindLabel, style: muted),
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
             initialValue: _kind,
@@ -158,7 +159,7 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
             autocorrect: false,
             keyboardType: TextInputType.url,
             decoration: InputDecoration(
-              labelText: 'Host',
+              labelText: t.githosts.form.hostLabel,
               hintText: _kind == 'github' ? 'api.github.com' : 'gitlab.example.com',
               helperText: 'API base or canonical hostname.',
               border: const OutlineInputBorder(),
@@ -168,11 +169,11 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
           TextField(
             controller: _name,
             autocorrect: false,
-            decoration: const InputDecoration(
-              labelText: 'Name',
-              hintText: 'work-github, personal-gitlab, …',
+            decoration: InputDecoration(
+              labelText: t.githosts.form.nameLabel,
+              hintText: t.githosts.form.nameHint,
               helperText: 'Display name shown in PR lists.',
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
@@ -193,7 +194,7 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
           const SizedBox(height: 12),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Enabled'),
+            title: Text(t.common.enabled),
             subtitle: Text(
               _enabled
                   ? 'Available to sessions for PR / remote lookups.'

@@ -8,7 +8,10 @@
     "back": "Back",
     "done": "Done",
     "close": "Close",
-    "retry": "Retry"
+    "retry": "Retry",
+    "copy": "Copy",
+    "enabled": "Enabled",
+    "refresh": "Refresh"
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -375,6 +378,57 @@
     "newApiKeySubtitle": "Hand this to the integration. The previous key has just been invalidated.",
     "rotateFailedApi": "Rotate failed: {error}",
     "rotateFailedGeneric": "Rotate failed: {error}"
+  },
+  "githosts": {
+    "title": "Git hosts",
+    "addHost": "Add host",
+    "deleteTitle": "Delete git host?",
+    "errorWithMessage": "{prefix}: {error}",
+    "errorPrefix": {
+      "toggle": "Toggle failed",
+      "delete": "Delete failed"
+    },
+    "form": {
+      "kindLabel": "Kind",
+      "hostLabel": "Host",
+      "nameLabel": "Name",
+      "nameHint": "work-github, personal-gitlab, …"
+    }
+  },
+  "channels": {
+    "title": "Channels",
+    "new": "New",
+    "sendTest": "Send test message",
+    "editConfig": "Edit config",
+    "editNotifications": "Edit notifications",
+    "viewRawConfig": "View raw config",
+    "copyChannelId": "Copy channel id",
+    "copiedSnack": "Copied {id}",
+    "createdSnack": "Created {kind} channel.",
+    "createFailedApi": "Create failed: {error}",
+    "createFailedGeneric": "Create failed: {error}",
+    "deleteTitle": "Delete channel?",
+    "configDialog": {
+      "title": "{kind} config"
+    },
+    "webhookDialog": {
+      "title": "{kind} webhook URL",
+      "copiedSnack": "Copied webhook URL."
+    },
+    "errorWithMessage": "{prefix}: {error}",
+    "notifications": {
+      "title": "Notification preferences",
+      "notifyOn": "Notify on",
+      "repeatPolicy": "Repeat policy",
+      "cooldownWindow": "Cooldown window",
+      "includeSnippet": "Include terminal snippet",
+      "snippetLengthCap": "Snippet length cap"
+    }
+  },
+  "onboarding": {
+    "gatewayLabel": "Gateway URL",
+    "gatewayHint": "https://opendray.example.com",
+    "continue": "Continue"
   },
   "skills": {
     "title": "Skills",
