@@ -146,13 +146,13 @@ type Worker interface {
 // Config carries the per-task configuration read from
 // memory_workers. The Resolver builds a Worker from this.
 type Config struct {
-	Task         TaskKind
-	Kind         WorkerKind
-	SummarizerID string // when Kind==WorkerSummarizer; "" → registry default
-	ProviderID   string // when Kind==WorkerAgent: "claude" | "gemini"
-	AccountID    string // when ProviderID=="claude"; "" → catalog's default account
-	Enabled      bool
-	UpdatedAt    time.Time
+	Task         TaskKind   `json:"task"`
+	Kind         WorkerKind `json:"kind"`
+	SummarizerID string     `json:"summarizer_id"` // when Kind==WorkerSummarizer; "" → registry default
+	ProviderID   string     `json:"provider_id"`   // when Kind==WorkerAgent: "claude" | "gemini"
+	AccountID    string     `json:"account_id"`    // when ProviderID=="claude"; "" → catalog's default account
+	Enabled      bool       `json:"enabled"`
+	UpdatedAt    time.Time  `json:"updated_at"`
 }
 
 // Valid returns nil if the config is internally consistent.

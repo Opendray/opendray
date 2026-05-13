@@ -101,19 +101,19 @@ func (s *store) Upsert(ctx context.Context, c Config) error {
 // CallSummary is one row from memory_worker_calls for the UI's
 // metrics list.
 type CallSummary struct {
-	ID           int64
-	Task         TaskKind
-	WorkerKind   WorkerKind
-	ProviderID   string
-	AccountID    string
-	StartedAt    time.Time
-	DurationMS   int64
-	Success      bool
-	ErrorMessage string
-	InputBytes   int
-	OutputBytes  int
-	TokensIn     int
-	TokensOut    int
+	ID           int64      `json:"id"`
+	Task         TaskKind   `json:"task"`
+	WorkerKind   WorkerKind `json:"worker_kind"`
+	ProviderID   string     `json:"provider_id"`
+	AccountID    string     `json:"account_id"`
+	StartedAt    time.Time  `json:"started_at"`
+	DurationMS   int64      `json:"duration_ms"`
+	Success      bool       `json:"success"`
+	ErrorMessage string     `json:"error_message"`
+	InputBytes   int        `json:"input_bytes"`
+	OutputBytes  int        `json:"output_bytes"`
+	TokensIn     int        `json:"tokens_in"`
+	TokensOut    int        `json:"tokens_out"`
 }
 
 // RecordCall persists a metrics row. Best-effort: failures here
