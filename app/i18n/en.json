@@ -116,6 +116,44 @@
       "hoursAgo": "{n}h ago",
       "daysAgo": "{n}d ago"
     },
+    "detail": {
+      "fallbackTitle": "Session",
+      "refreshMetadata": "Refresh metadata",
+      "inspector": "Inspector (Files / Git / Tasks / History / Notes)",
+      "projectMemory": "Project memory (goal / plan / journal / inbox)",
+      "actions": "Actions",
+      "started": "started {when}",
+      "startedEnded": "started {started}  ·  ended {ended}",
+      "idPrefix": "id: {id}",
+      "errorTitle": "Failed to load session"
+    },
+    "terminal": {
+      "snackbar": {
+        "imagePickerFailed": "Image picker failed: {error}",
+        "uploadingImage": "Uploading image…",
+        "imageAttached": "Image attached: {path}",
+        "uploadFailed": "Upload failed ({status}): {message}",
+        "uploadFailedGeneric": "Upload failed: {error}"
+      },
+      "imageSource": {
+        "photoLibrary": "Photo library",
+        "takePhoto": "Take a photo"
+      },
+      "keyboard": {
+        "copyBuffer": "Copy buffer",
+        "paste": "Paste",
+        "attachImage": "Attach image"
+      },
+      "connection": {
+        "connecting": "Connecting…",
+        "connected": "Connected",
+        "reconnecting": "Reconnecting…",
+        "reconnectingWithError": "Reconnecting ({error})…",
+        "disconnected": "Disconnected",
+        "disconnectedWithError": "Disconnected ({error})",
+        "ended": "Session ended"
+      }
+    },
     "action": {
       "stop": "Stop",
       "stopping": "Stopping…",

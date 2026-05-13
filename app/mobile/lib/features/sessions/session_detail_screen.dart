@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/project/project_screen.dart';
 import 'package:opendray/features/sessions/session_action_sheet.dart';
 import 'package:opendray/features/sessions/session_terminal_view.dart';
@@ -40,19 +41,19 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
             s.displayName,
             overflow: TextOverflow.ellipsis,
           ),
-          loading: () => const Text('Session'),
-          error: (_, __) => const Text('Session'),
+          loading: () => Text(t.sessions.detail.fallbackTitle),
+          error: (_, __) => Text(t.sessions.detail.fallbackTitle),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh metadata',
+            tooltip: t.sessions.detail.refreshMetadata,
             onPressed: () =>
                 ref.invalidate(sessionByIdProvider(widget.sessionId)),
           ),
           IconButton(
             icon: const Icon(Icons.dashboard_customize_outlined),
-            tooltip: 'Inspector (Files / Git / Tasks / History / Notes)',
+            tooltip: t.sessions.detail.inspector,
             onPressed: () =>
                 context.push('/session/${widget.sessionId}/inspector'),
           ),
@@ -63,7 +64,7 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
           async.maybeWhen(
             data: (s) => IconButton(
               icon: const Icon(Icons.flag_outlined),
-              tooltip: 'Project memory (goal / plan / journal / inbox)',
+              tooltip: t.sessions.detail.projectMemory,
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
@@ -77,7 +78,7 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
           async.maybeWhen(
             data: (s) => IconButton(
               icon: const Icon(Icons.tune),
-              tooltip: 'Actions',
+              tooltip: t.sessions.detail.actions,
               onPressed: () async {
                 final result = await SessionActionSheet.show(
                   context,
@@ -206,13 +207,16 @@ class _ExpandedDetail extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             ended == null
-                ? 'started $started'
-                : 'started $started  ·  ended $ended',
+                ? t.sessions.detail.started(when: started)
+                : t.sessions.detail.startedEnded(
+                    started: started,
+                    ended: ended,
+                  ),
             style: muted,
           ),
           const SizedBox(height: 2),
           SelectableText(
-            'id: ${session.id}',
+            t.sessions.detail.idPrefix(id: session.id),
             style: muted,
           ),
         ],
@@ -276,7 +280,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Failed to load session',
+              t.sessions.detail.errorTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
@@ -286,7 +290,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),

@@ -116,6 +116,44 @@
       "hoursAgo": "{n} 小时前",
       "daysAgo": "{n} 天前"
     },
+    "detail": {
+      "fallbackTitle": "会话",
+      "refreshMetadata": "刷新元数据",
+      "inspector": "检查器（文件 / Git / 任务 / 历史 / 笔记）",
+      "projectMemory": "项目记忆（目标 / 计划 / 日志 / 收件箱）",
+      "actions": "操作",
+      "started": "{when} 启动",
+      "startedEnded": "{started} 启动  ·  {ended} 结束",
+      "idPrefix": "id: {id}",
+      "errorTitle": "加载会话失败"
+    },
+    "terminal": {
+      "snackbar": {
+        "imagePickerFailed": "图片选择失败：{error}",
+        "uploadingImage": "正在上传图片…",
+        "imageAttached": "已附加图片：{path}",
+        "uploadFailed": "上传失败（{status}）：{message}",
+        "uploadFailedGeneric": "上传失败：{error}"
+      },
+      "imageSource": {
+        "photoLibrary": "相册",
+        "takePhoto": "拍照"
+      },
+      "keyboard": {
+        "copyBuffer": "复制缓冲",
+        "paste": "粘贴",
+        "attachImage": "附加图片"
+      },
+      "connection": {
+        "connecting": "连接中…",
+        "connected": "已连接",
+        "reconnecting": "重连中…",
+        "reconnectingWithError": "重连中（{error}）…",
+        "disconnected": "已断开",
+        "disconnectedWithError": "已断开（{error}）",
+        "ended": "会话已结束"
+      }
+    },
     "action": {
       "stop": "停止",
       "stopping": "停止中…",
