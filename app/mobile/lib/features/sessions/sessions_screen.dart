@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/features/sessions/session_action_sheet.dart';
 import 'package:opendray/features/sessions/spawn_session_sheet.dart';
+import 'package:path/path.dart' as p;
 
 // Sessions home — full CRUD over the multi-CLI session pool.
 //   • Filter chips above the list narrow by lifecycle state.
@@ -190,7 +190,7 @@ class _SessionCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            session.displayName,
+                            _projectTitle(session),
                             style: Theme.of(context)
                                 .textTheme
                                 .titleSmall
@@ -204,18 +204,18 @@ class _SessionCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      session.providerId,
-                      style: Theme.of(context).textTheme.bodySmall,
+                      _shortCwd(session.cwd),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                          ),
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 2),
                     Text(
-                      session.cwd,
+                      '${session.providerId} · started ${_formatRelative(session.startedAt)}',
                       style: Theme.of(context).textTheme.bodySmall,
                       overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      'started ${_formatRelative(session.startedAt)}',
-                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
                 ),
@@ -350,4 +350,29 @@ String _formatRelative(DateTime ts) {
   if (diff.inHours < 24) return '${diff.inHours}h ago';
   if (diff.inDays < 7) return '${diff.inDays}d ago';
   return DateFormat.yMMMd().format(ts.toLocal());
+}
+
+// Headline shown on the session card. Prefer the operator-given
+// session name, then the cwd's basename (so a session in
+// `.../Claude_Workspace/opendray-v2` reads as `opendray-v2` at a
+// glance), and only fall back to the opaque `ses_…` id when both
+// are missing.
+String _projectTitle(SessionSummary session) {
+  final name = session.name;
+  if (name != null && name.isNotEmpty) return name;
+  final base = p.basename(session.cwd);
+  if (base.isNotEmpty && base != '/') return base;
+  return session.id;
+}
+
+// Compact a long cwd to head-ellipsis + last two segments, e.g.
+// `/Users/linivek/Documents/HomeLab/Claude_Workspace/opendray-v2`
+// → `…/Claude_Workspace/opendray-v2`. Short paths pass through.
+// Keeps the project-identifying tail visible inside the card's
+// fixed width.
+String _shortCwd(String cwd) {
+  if (cwd.isEmpty) return '';
+  final parts = p.split(cwd).where((s) => s.isNotEmpty).toList();
+  if (parts.length <= 2) return cwd;
+  return '…/${parts[parts.length - 2]}/${parts.last}';
 }
