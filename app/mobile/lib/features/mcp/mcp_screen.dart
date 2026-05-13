@@ -435,6 +435,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
         error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'mcp_fab',
         onPressed: _openEditor,
         icon: const Icon(Icons.add),
         label: Text(t.mcp.newServer),

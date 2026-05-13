@@ -119,6 +119,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
         error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'integrations_fab',
         onPressed: _onRegister,
         icon: const Icon(Icons.add),
         label: Text(t.integrations.register),

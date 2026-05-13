@@ -607,8 +607,56 @@
       "repeatPolicy": "重复策略",
       "cooldownWindow": "冷却时间",
       "includeSnippet": "包含终端片段",
-      "snippetLengthCap": "片段长度上限"
-    }
+      "snippetLengthCap": "片段长度上限",
+      "notifyOnAll": "所有会话事件。",
+      "notifyOnEmpty": "未选择事件 — 已静音外发通知。",
+      "snippetHelper": "在每条通知中嵌入终端最近的内容。",
+      "snippetNoCap": "无上限",
+      "snippetChars": "{n} 字符",
+      "updatedSnack": "通知偏好已更新。",
+      "modes": {
+        "onceLabel": "每会话一次",
+        "onceDescription": "空闲时触发一次，回复或结束前不再触发。",
+        "cooldownLabel": "时间窗冷却",
+        "cooldownDescription": "在所选时间窗内抑制重复。",
+        "everyLabel": "每次事件（嘈杂）",
+        "everyDescription": "不抑制 — 仅适合低频通道。"
+      }
+    },
+    "popup": {
+      "enable": "启用",
+      "disable": "停用",
+      "mute": "静音",
+      "unmute": "取消静音",
+      "deleteLabel": "删除"
+    },
+    "badges": {
+      "running": "运行中",
+      "starting": "启动中…",
+      "disabled": "已停用",
+      "muted": "已静音"
+    },
+    "capsLabel": "· 能力：{list}",
+    "bridgeWebOnly": "Bridge 通道仅 Web 端",
+    "bridgeEmptyAdd": "在 Web 管理端添加：通道 → 新建。",
+    "deleteBody": "停止该通道并移除其配置。仍在传输中的通知会被静默丢弃。",
+    "snacks": {
+      "testDispatched": "测试消息已发送。",
+      "channelEnabled": "通道已启用。",
+      "channelDisabled": "通道已停用。",
+      "channelMuted": "通道已静音。",
+      "channelUnmuted": "通道已取消静音。",
+      "configUpdated": "通道配置已更新。",
+      "channelDeleted": "通道已删除。"
+    },
+    "errorPrefix": {
+      "test": "测试失败",
+      "toggle": "切换失败",
+      "muteToggle": "静音切换失败",
+      "update": "更新失败",
+      "delete": "删除失败"
+    },
+    "failedToLoad": "加载通道失败"
   },
   "onboarding": {
     "gatewayLabel": "网关 URL",

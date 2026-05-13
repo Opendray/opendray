@@ -182,6 +182,7 @@ class _GitHostsScreenState extends ConsumerState<GitHostsScreen> {
         error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'githosts_fab',
         onPressed: _onCreate,
         icon: const Icon(Icons.add),
         label: Text(t.githosts.addHost),

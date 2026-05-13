@@ -203,6 +203,7 @@ class _BackupSchedulesScreenState
       ),
       floatingActionButton: _state.maybeWhen(
         data: (d) => FloatingActionButton.extended(
+          heroTag: 'backup_schedules_fab',
           onPressed: () => _onCreate(d.targets),
           icon: const Icon(Icons.add),
           label: const Text('New'),

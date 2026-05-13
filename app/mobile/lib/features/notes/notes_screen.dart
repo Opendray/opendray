@@ -351,6 +351,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'notes_fab',
         onPressed: _newNote,
         icon: const Icon(Icons.add),
         label: Text(t.notesPage.newButton),

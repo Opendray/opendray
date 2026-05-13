@@ -87,6 +87,7 @@ class _SkillsScreenState extends ConsumerState<SkillsScreen> {
         error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'skills_fab',
         // ignore: unnecessary_lambdas — _openEditor returns Future<void>
         onPressed: () => _openEditor(),
         icon: const Icon(Icons.add),

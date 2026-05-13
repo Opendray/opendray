@@ -153,6 +153,7 @@ class _ProviderConfigScreenState
       ),
       floatingActionButton: _dirty
           ? FloatingActionButton.extended(
+              heroTag: 'provider_config_fab',
               onPressed: _saving ? null : _save,
               icon: _saving
                   ? const SizedBox(

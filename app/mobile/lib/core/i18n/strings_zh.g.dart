@@ -437,6 +437,15 @@ class _TranslationsChannelsZh extends TranslationsChannelsEn {
 	@override late final _TranslationsChannelsWebhookDialogZh webhookDialog = _TranslationsChannelsWebhookDialogZh._(_root);
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
 	@override late final _TranslationsChannelsNotificationsZh notifications = _TranslationsChannelsNotificationsZh._(_root);
+	@override late final _TranslationsChannelsPopupZh popup = _TranslationsChannelsPopupZh._(_root);
+	@override late final _TranslationsChannelsBadgesZh badges = _TranslationsChannelsBadgesZh._(_root);
+	@override String capsLabel({required Object list}) => '· 能力：${list}';
+	@override String get bridgeWebOnly => 'Bridge 通道仅 Web 端';
+	@override String get bridgeEmptyAdd => '在 Web 管理端添加：通道 → 新建。';
+	@override String get deleteBody => '停止该通道并移除其配置。仍在传输中的通知会被静默丢弃。';
+	@override late final _TranslationsChannelsSnacksZh snacks = _TranslationsChannelsSnacksZh._(_root);
+	@override late final _TranslationsChannelsErrorPrefixZh errorPrefix = _TranslationsChannelsErrorPrefixZh._(_root);
+	@override String get failedToLoad => '加载通道失败';
 }
 
 // Path: onboarding
@@ -986,6 +995,70 @@ class _TranslationsChannelsNotificationsZh extends TranslationsChannelsNotificat
 	@override String get cooldownWindow => '冷却时间';
 	@override String get includeSnippet => '包含终端片段';
 	@override String get snippetLengthCap => '片段长度上限';
+	@override String get notifyOnAll => '所有会话事件。';
+	@override String get notifyOnEmpty => '未选择事件 — 已静音外发通知。';
+	@override String get snippetHelper => '在每条通知中嵌入终端最近的内容。';
+	@override String get snippetNoCap => '无上限';
+	@override String snippetChars({required Object n}) => '${n} 字符';
+	@override String get updatedSnack => '通知偏好已更新。';
+	@override late final _TranslationsChannelsNotificationsModesZh modes = _TranslationsChannelsNotificationsModesZh._(_root);
+}
+
+// Path: channels.popup
+class _TranslationsChannelsPopupZh extends TranslationsChannelsPopupEn {
+	_TranslationsChannelsPopupZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get enable => '启用';
+	@override String get disable => '停用';
+	@override String get mute => '静音';
+	@override String get unmute => '取消静音';
+	@override String get deleteLabel => '删除';
+}
+
+// Path: channels.badges
+class _TranslationsChannelsBadgesZh extends TranslationsChannelsBadgesEn {
+	_TranslationsChannelsBadgesZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get running => '运行中';
+	@override String get starting => '启动中…';
+	@override String get disabled => '已停用';
+	@override String get muted => '已静音';
+}
+
+// Path: channels.snacks
+class _TranslationsChannelsSnacksZh extends TranslationsChannelsSnacksEn {
+	_TranslationsChannelsSnacksZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get testDispatched => '测试消息已发送。';
+	@override String get channelEnabled => '通道已启用。';
+	@override String get channelDisabled => '通道已停用。';
+	@override String get channelMuted => '通道已静音。';
+	@override String get channelUnmuted => '通道已取消静音。';
+	@override String get configUpdated => '通道配置已更新。';
+	@override String get channelDeleted => '通道已删除。';
+}
+
+// Path: channels.errorPrefix
+class _TranslationsChannelsErrorPrefixZh extends TranslationsChannelsErrorPrefixEn {
+	_TranslationsChannelsErrorPrefixZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get test => '测试失败';
+	@override String get toggle => '切换失败';
+	@override String get muteToggle => '静音切换失败';
+	@override String get update => '更新失败';
+	@override String get delete => '删除失败';
 }
 
 // Path: notesPage.editor
@@ -1615,6 +1688,21 @@ class _TranslationsMemoryWorkersTasksTranscriptZh extends TranslationsMemoryWork
 	@override String get description => '会话结束时的「agent 做了什么」摘要。天然适合 agent 工作器。';
 }
 
+// Path: channels.notifications.modes
+class _TranslationsChannelsNotificationsModesZh extends TranslationsChannelsNotificationsModesEn {
+	_TranslationsChannelsNotificationsModesZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get onceLabel => '每会话一次';
+	@override String get onceDescription => '空闲时触发一次，回复或结束前不再触发。';
+	@override String get cooldownLabel => '时间窗冷却';
+	@override String get cooldownDescription => '在所选时间窗内抑制重复。';
+	@override String get everyLabel => '每次事件（嘈杂）';
+	@override String get everyDescription => '不抑制 — 仅适合低频通道。';
+}
+
 // Path: settings.logViewer.levels
 class _TranslationsSettingsLogViewerLevelsZh extends TranslationsSettingsLogViewerLevelsEn {
 	_TranslationsSettingsLogViewerLevelsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -2125,6 +2213,44 @@ extension on TranslationsZh {
 			'channels.notifications.cooldownWindow' => '冷却时间',
 			'channels.notifications.includeSnippet' => '包含终端片段',
 			'channels.notifications.snippetLengthCap' => '片段长度上限',
+			'channels.notifications.notifyOnAll' => '所有会话事件。',
+			'channels.notifications.notifyOnEmpty' => '未选择事件 — 已静音外发通知。',
+			'channels.notifications.snippetHelper' => '在每条通知中嵌入终端最近的内容。',
+			'channels.notifications.snippetNoCap' => '无上限',
+			'channels.notifications.snippetChars' => ({required Object n}) => '${n} 字符',
+			'channels.notifications.updatedSnack' => '通知偏好已更新。',
+			'channels.notifications.modes.onceLabel' => '每会话一次',
+			'channels.notifications.modes.onceDescription' => '空闲时触发一次，回复或结束前不再触发。',
+			'channels.notifications.modes.cooldownLabel' => '时间窗冷却',
+			'channels.notifications.modes.cooldownDescription' => '在所选时间窗内抑制重复。',
+			'channels.notifications.modes.everyLabel' => '每次事件（嘈杂）',
+			'channels.notifications.modes.everyDescription' => '不抑制 — 仅适合低频通道。',
+			'channels.popup.enable' => '启用',
+			'channels.popup.disable' => '停用',
+			'channels.popup.mute' => '静音',
+			'channels.popup.unmute' => '取消静音',
+			'channels.popup.deleteLabel' => '删除',
+			'channels.badges.running' => '运行中',
+			'channels.badges.starting' => '启动中…',
+			'channels.badges.disabled' => '已停用',
+			'channels.badges.muted' => '已静音',
+			'channels.capsLabel' => ({required Object list}) => '· 能力：${list}',
+			'channels.bridgeWebOnly' => 'Bridge 通道仅 Web 端',
+			'channels.bridgeEmptyAdd' => '在 Web 管理端添加：通道 → 新建。',
+			'channels.deleteBody' => '停止该通道并移除其配置。仍在传输中的通知会被静默丢弃。',
+			'channels.snacks.testDispatched' => '测试消息已发送。',
+			'channels.snacks.channelEnabled' => '通道已启用。',
+			'channels.snacks.channelDisabled' => '通道已停用。',
+			'channels.snacks.channelMuted' => '通道已静音。',
+			'channels.snacks.channelUnmuted' => '通道已取消静音。',
+			'channels.snacks.configUpdated' => '通道配置已更新。',
+			'channels.snacks.channelDeleted' => '通道已删除。',
+			'channels.errorPrefix.test' => '测试失败',
+			'channels.errorPrefix.toggle' => '切换失败',
+			'channels.errorPrefix.muteToggle' => '静音切换失败',
+			'channels.errorPrefix.update' => '更新失败',
+			'channels.errorPrefix.delete' => '删除失败',
+			'channels.failedToLoad' => '加载通道失败',
 			'onboarding.gatewayLabel' => '网关 URL',
 			'onboarding.gatewayHint' => 'https://opendray.example.com',
 			'onboarding.kContinue' => '继续',
@@ -2144,6 +2270,8 @@ extension on TranslationsZh {
 			'customTasks.popupDelete' => '删除',
 			'customTasks.nameHint' => '例如：backend-tests',
 			'customTasks.commandHint' => '/run pnpm test --filter backend',
+			_ => null,
+		} ?? switch (path) {
 			'customTasks.descriptionHint' => '在任务名下方显示的一行说明。',
 			'customTasks.scopeGlobal' => '全局',
 			'customTasks.scopeProject' => '项目',
@@ -2182,8 +2310,6 @@ extension on TranslationsZh {
 			'memory.deletedSnackOne' => ({required Object n}) => '已删除 ${n} 条记忆',
 			'memory.deletedSnackOther' => ({required Object n}) => '已删除 ${n} 条记忆',
 			'memory.bulkDeleteFailedApi' => ({required Object error}) => '批量删除失败：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'memory.bulkDeleteFailedGeneric' => ({required Object error}) => '批量删除失败：${error}',
 			'memory.deleteOne.title' => '删除该记忆？',
 			'memory.deleteOne.body' => '此操作不可撤销。',

@@ -607,8 +607,56 @@
       "repeatPolicy": "Repeat policy",
       "cooldownWindow": "Cooldown window",
       "includeSnippet": "Include terminal snippet",
-      "snippetLengthCap": "Snippet length cap"
-    }
+      "snippetLengthCap": "Snippet length cap",
+      "notifyOnAll": "All session events.",
+      "notifyOnEmpty": "No events selected — outbound notifications muted.",
+      "snippetHelper": "Embeds the recent terminal tail in each notification.",
+      "snippetNoCap": "no cap",
+      "snippetChars": "{n} chars",
+      "updatedSnack": "Notification preferences updated.",
+      "modes": {
+        "onceLabel": "Once per session",
+        "onceDescription": "Fire once when idle, stay silent until reply or end.",
+        "cooldownLabel": "Time-window cooldown",
+        "cooldownDescription": "Suppress repeats within the chosen window.",
+        "everyLabel": "Every event (noisy)",
+        "everyDescription": "No suppression — only for low-frequency channels."
+      }
+    },
+    "popup": {
+      "enable": "Enable",
+      "disable": "Disable",
+      "mute": "Mute",
+      "unmute": "Unmute",
+      "deleteLabel": "Delete"
+    },
+    "badges": {
+      "running": "running",
+      "starting": "starting…",
+      "disabled": "disabled",
+      "muted": "muted"
+    },
+    "capsLabel": "· caps: {list}",
+    "bridgeWebOnly": "Bridge channels stay web-only",
+    "bridgeEmptyAdd": "Add one from the web admin: Channels → New.",
+    "deleteBody": "Stops the channel and removes its configuration. In-flight notifications addressed to it will be dropped silently.",
+    "snacks": {
+      "testDispatched": "Test message dispatched.",
+      "channelEnabled": "Channel enabled.",
+      "channelDisabled": "Channel disabled.",
+      "channelMuted": "Channel muted.",
+      "channelUnmuted": "Channel unmuted.",
+      "configUpdated": "Channel config updated.",
+      "channelDeleted": "Channel deleted."
+    },
+    "errorPrefix": {
+      "test": "Test failed",
+      "toggle": "Toggle failed",
+      "muteToggle": "Mute toggle failed",
+      "update": "Update failed",
+      "delete": "Delete failed"
+    },
+    "failedToLoad": "Failed to load channels"
   },
   "onboarding": {
     "gatewayLabel": "Gateway URL",

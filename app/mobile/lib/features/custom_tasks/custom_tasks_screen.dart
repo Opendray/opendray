@@ -149,6 +149,7 @@ class _CustomTasksScreenState extends ConsumerState<CustomTasksScreen> {
         error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'custom_tasks_fab',
         onPressed: _openEditor,
         icon: const Icon(Icons.add),
         label: Text(i18n.t.customTasks.newTask),

@@ -150,7 +150,7 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
               leading: Icon(
                 ch.enabled ? Icons.pause_circle_outline : Icons.play_circle_outline,
               ),
-              title: Text(ch.enabled ? 'Disable' : 'Enable'),
+              title: Text(ch.enabled ? i18n.t.channels.popup.disable : i18n.t.channels.popup.enable),
               onTap: () => Navigator.of(sheetCtx).pop(_RowAction.toggleEnabled),
             ),
             ListTile(
@@ -158,7 +158,7 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
               leading: Icon(
                 ch.muted ? Icons.notifications_active_outlined : Icons.notifications_off_outlined,
               ),
-              title: Text(ch.muted ? 'Unmute' : 'Mute'),
+              title: Text(ch.muted ? i18n.t.channels.popup.unmute : i18n.t.channels.popup.mute),
               onTap: () => Navigator.of(sheetCtx).pop(_RowAction.toggleMuted),
             ),
             const Divider(height: 1),
@@ -167,9 +167,9 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
               leading: const Icon(Icons.edit_outlined),
               title: Text(i18n.t.channels.editConfig),
               subtitle: findKind(ch.kind) == null
-                  ? const Text(
-                      'Bridge channels stay web-only',
-                      style: TextStyle(fontSize: 11),
+                  ? Text(
+                      i18n.t.channels.bridgeWebOnly,
+                      style: const TextStyle(fontSize: 11),
                     )
                   : null,
               onTap: () =>
@@ -200,7 +200,7 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
                 color: Theme.of(sheetCtx).colorScheme.error,
               ),
               title: Text(
-                'Delete',
+                i18n.t.channels.popup.deleteLabel,
                 style: TextStyle(color: Theme.of(sheetCtx).colorScheme.error),
               ),
               onTap: () => Navigator.of(sheetCtx).pop(_RowAction.delete),
@@ -215,16 +215,16 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
       case _RowAction.test:
         await _runAction(
           id: ch.id,
-          okMessage: 'Test message dispatched.',
-          failPrefix: 'Test failed',
+          okMessage: i18n.t.channels.snacks.testDispatched,
+          failPrefix: i18n.t.channels.errorPrefix.test,
           op: () => ref.read(channelsApiProvider).test(ch.id),
         );
       case _RowAction.toggleEnabled:
         final next = !ch.enabled;
         await _runAction(
           id: ch.id,
-          okMessage: next ? 'Channel enabled.' : 'Channel disabled.',
-          failPrefix: 'Toggle failed',
+          okMessage: next ? i18n.t.channels.snacks.channelEnabled : i18n.t.channels.snacks.channelDisabled,
+          failPrefix: i18n.t.channels.errorPrefix.toggle,
           op: () => ref
               .read(channelsApiProvider)
               .setEnabled(ch.id, enabled: next)
@@ -234,8 +234,8 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
         final next = !ch.muted;
         await _runAction(
           id: ch.id,
-          okMessage: next ? 'Channel muted.' : 'Channel unmuted.',
-          failPrefix: 'Mute toggle failed',
+          okMessage: next ? i18n.t.channels.snacks.channelMuted : i18n.t.channels.snacks.channelUnmuted,
+          failPrefix: i18n.t.channels.errorPrefix.muteToggle,
           op: () => ref
               .read(channelsApiProvider)
               .setMuted(ch.id, muted: next)
@@ -342,8 +342,8 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
     }
     await _runAction(
       id: ch.id,
-      okMessage: 'Channel config updated.',
-      failPrefix: 'Update failed',
+      okMessage: i18n.t.channels.snacks.configUpdated,
+      failPrefix: i18n.t.channels.errorPrefix.update,
       op: () => ref
           .read(channelsApiProvider)
           .updateConfig(ch.id, patch)
@@ -361,8 +361,8 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
     if (patch == null || patch.isEmpty || !mounted) return;
     await _runAction(
       id: ch.id,
-      okMessage: 'Notification preferences updated.',
-      failPrefix: 'Update failed',
+      okMessage: i18n.t.channels.notifications.updatedSnack,
+      failPrefix: i18n.t.channels.errorPrefix.update,
       op: () => ref
           .read(channelsApiProvider)
           .updateConfig(ch.id, patch)
@@ -390,9 +390,7 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Stops the channel and removes its configuration. '
-              'In-flight notifications addressed to it will be '
-              'dropped silently.',
+              i18n.t.channels.deleteBody,
               style: Theme.of(ctx).textTheme.bodySmall,
             ),
           ],
@@ -415,8 +413,8 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
     if (ok != true || !mounted) return;
     await _runAction(
       id: ch.id,
-      okMessage: 'Channel deleted.',
-      failPrefix: 'Delete failed',
+      okMessage: i18n.t.channels.snacks.channelDeleted,
+      failPrefix: i18n.t.channels.errorPrefix.delete,
       op: () => ref.read(channelsApiProvider).delete(ch.id),
     );
   }
@@ -481,6 +479,7 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
         error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'channels_fab',
         onPressed: _onCreate,
         icon: const Icon(Icons.add),
         label: Text(i18n.t.channels.kNew),
@@ -494,8 +493,7 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            'No channels configured yet.\n\n'
-            'Add one from the web admin: Channels → New.',
+            i18n.t.channels.bridgeEmptyAdd,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
@@ -593,7 +591,7 @@ class _ChannelTile extends StatelessWidget {
               style: const TextStyle(fontFamily: 'monospace'),
             ),
             if (channel.capabilities.isNotEmpty)
-              Text('· caps: ${channel.capabilities.join(", ")}'),
+              Text(i18n.t.channels.capsLabel(list: channel.capabilities.join(', '))),
           ],
         ),
       ),
@@ -616,17 +614,17 @@ class _StatusBadges extends StatelessWidget {
   Widget build(BuildContext context) {
     final badges = <Widget>[];
     if (channel.running) {
-      badges.add(const _Badge(label: 'running', color: Colors.greenAccent));
+      badges.add(_Badge(label: i18n.t.channels.badges.running, color: Colors.greenAccent));
     } else if (channel.enabled) {
-      badges.add(const _Badge(label: 'starting…', color: Colors.amberAccent));
+      badges.add(_Badge(label: i18n.t.channels.badges.starting, color: Colors.amberAccent));
     } else {
       badges.add(_Badge(
-        label: 'disabled',
+        label: i18n.t.channels.badges.disabled,
         color: Theme.of(context).colorScheme.error,
       ));
     }
     if (channel.muted) {
-      badges.add(const _Badge(label: 'muted', color: Colors.amberAccent));
+      badges.add(_Badge(label: i18n.t.channels.badges.muted, color: Colors.amberAccent));
     }
     return Wrap(spacing: 4, runSpacing: 2, children: badges);
   }
@@ -670,10 +668,22 @@ class _NotifyPrefsScreen extends StatefulWidget {
 
 class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
   static const _allTopics = ['session.started', 'session.idle', 'session.ended'];
-  static const _modes = [
-    ('once', 'Once per session', 'Fire once when idle, stay silent until reply or end.'),
-    ('cooldown', 'Time-window cooldown', 'Suppress repeats within the chosen window.'),
-    ('every', 'Every event (noisy)', 'No suppression — only for low-frequency channels.'),
+  static List<(String, String, String)> _modes() => [
+    (
+      'once',
+      i18n.t.channels.notifications.modes.onceLabel,
+      i18n.t.channels.notifications.modes.onceDescription,
+    ),
+    (
+      'cooldown',
+      i18n.t.channels.notifications.modes.cooldownLabel,
+      i18n.t.channels.notifications.modes.cooldownDescription,
+    ),
+    (
+      'every',
+      i18n.t.channels.notifications.modes.everyLabel,
+      i18n.t.channels.notifications.modes.everyDescription,
+    ),
   ];
   static const _cooldownPresets = [
     (60, '1m'),
@@ -786,9 +796,9 @@ class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
             padding: const EdgeInsets.only(top: 6),
             child: Text(
               _topics.length == _allTopics.length
-                  ? 'All session events.'
+                  ? i18n.t.channels.notifications.notifyOnAll
                   : _topics.isEmpty
-                      ? 'No events selected — outbound notifications muted.'
+                      ? i18n.t.channels.notifications.notifyOnEmpty
                       : '${_topics.length} of ${_allTopics.length} selected.',
               style: muted,
             ),
@@ -801,7 +811,7 @@ class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
             onChanged: (v) => setState(() => _mode = v ?? _mode),
             child: Column(
               children: [
-                for (final (val, label, hint) in _modes)
+                for (final (val, label, hint) in _modes())
                   RadioListTile<String>(
                     value: val,
                     title: Text(label),
@@ -833,7 +843,7 @@ class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
             contentPadding: EdgeInsets.zero,
             title: Text(i18n.t.channels.notifications.includeSnippet),
             subtitle: Text(
-              'Embeds the recent terminal tail in each notification.',
+              i18n.t.channels.notifications.snippetHelper,
               style: muted,
             ),
             value: _includeSnippet,
@@ -849,7 +859,7 @@ class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
               children: [
                 for (final n in const [0, 200, 500, 1000, 2000])
                   ChoiceChip(
-                    label: Text(n == 0 ? 'no cap' : '$n chars'),
+                    label: Text(n == 0 ? i18n.t.channels.notifications.snippetNoCap : i18n.t.channels.notifications.snippetChars(n: n.toString())),
                     selected: _snippetCap == n,
                     onSelected: (_) => setState(() => _snippetCap = n),
                   ),
@@ -882,7 +892,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Failed to load channels',
+              i18n.t.channels.failedToLoad,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),

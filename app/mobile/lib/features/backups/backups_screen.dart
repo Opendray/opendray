@@ -485,6 +485,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
       floatingActionButton: _state.valueOrNull?.featureOff ?? true
           ? null
           : FloatingActionButton.extended(
+              heroTag: 'backups_fab',
               // Greyed-out when pg_dump is broken or no targets are
               // configured — clicking would just produce a failed row.
               onPressed: _canRunNow() ? _runNow : null,

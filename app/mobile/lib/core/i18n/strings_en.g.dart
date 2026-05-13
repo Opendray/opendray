@@ -838,6 +838,26 @@ class TranslationsChannelsEn {
 	String errorWithMessage({required Object prefix, required Object error}) => '${prefix}: ${error}';
 
 	late final TranslationsChannelsNotificationsEn notifications = TranslationsChannelsNotificationsEn.internal(_root);
+	late final TranslationsChannelsPopupEn popup = TranslationsChannelsPopupEn.internal(_root);
+	late final TranslationsChannelsBadgesEn badges = TranslationsChannelsBadgesEn.internal(_root);
+
+	/// en: '· caps: {list}'
+	String capsLabel({required Object list}) => '· caps: ${list}';
+
+	/// en: 'Bridge channels stay web-only'
+	String get bridgeWebOnly => 'Bridge channels stay web-only';
+
+	/// en: 'Add one from the web admin: Channels → New.'
+	String get bridgeEmptyAdd => 'Add one from the web admin: Channels → New.';
+
+	/// en: 'Stops the channel and removes its configuration. In-flight notifications addressed to it will be dropped silently.'
+	String get deleteBody => 'Stops the channel and removes its configuration. In-flight notifications addressed to it will be dropped silently.';
+
+	late final TranslationsChannelsSnacksEn snacks = TranslationsChannelsSnacksEn.internal(_root);
+	late final TranslationsChannelsErrorPrefixEn errorPrefix = TranslationsChannelsErrorPrefixEn.internal(_root);
+
+	/// en: 'Failed to load channels'
+	String get failedToLoad => 'Failed to load channels';
 }
 
 // Path: onboarding
@@ -1786,6 +1806,125 @@ class TranslationsChannelsNotificationsEn {
 
 	/// en: 'Snippet length cap'
 	String get snippetLengthCap => 'Snippet length cap';
+
+	/// en: 'All session events.'
+	String get notifyOnAll => 'All session events.';
+
+	/// en: 'No events selected — outbound notifications muted.'
+	String get notifyOnEmpty => 'No events selected — outbound notifications muted.';
+
+	/// en: 'Embeds the recent terminal tail in each notification.'
+	String get snippetHelper => 'Embeds the recent terminal tail in each notification.';
+
+	/// en: 'no cap'
+	String get snippetNoCap => 'no cap';
+
+	/// en: '{n} chars'
+	String snippetChars({required Object n}) => '${n} chars';
+
+	/// en: 'Notification preferences updated.'
+	String get updatedSnack => 'Notification preferences updated.';
+
+	late final TranslationsChannelsNotificationsModesEn modes = TranslationsChannelsNotificationsModesEn.internal(_root);
+}
+
+// Path: channels.popup
+class TranslationsChannelsPopupEn {
+	TranslationsChannelsPopupEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Enable'
+	String get enable => 'Enable';
+
+	/// en: 'Disable'
+	String get disable => 'Disable';
+
+	/// en: 'Mute'
+	String get mute => 'Mute';
+
+	/// en: 'Unmute'
+	String get unmute => 'Unmute';
+
+	/// en: 'Delete'
+	String get deleteLabel => 'Delete';
+}
+
+// Path: channels.badges
+class TranslationsChannelsBadgesEn {
+	TranslationsChannelsBadgesEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'running'
+	String get running => 'running';
+
+	/// en: 'starting…'
+	String get starting => 'starting…';
+
+	/// en: 'disabled'
+	String get disabled => 'disabled';
+
+	/// en: 'muted'
+	String get muted => 'muted';
+}
+
+// Path: channels.snacks
+class TranslationsChannelsSnacksEn {
+	TranslationsChannelsSnacksEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Test message dispatched.'
+	String get testDispatched => 'Test message dispatched.';
+
+	/// en: 'Channel enabled.'
+	String get channelEnabled => 'Channel enabled.';
+
+	/// en: 'Channel disabled.'
+	String get channelDisabled => 'Channel disabled.';
+
+	/// en: 'Channel muted.'
+	String get channelMuted => 'Channel muted.';
+
+	/// en: 'Channel unmuted.'
+	String get channelUnmuted => 'Channel unmuted.';
+
+	/// en: 'Channel config updated.'
+	String get configUpdated => 'Channel config updated.';
+
+	/// en: 'Channel deleted.'
+	String get channelDeleted => 'Channel deleted.';
+}
+
+// Path: channels.errorPrefix
+class TranslationsChannelsErrorPrefixEn {
+	TranslationsChannelsErrorPrefixEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Test failed'
+	String get test => 'Test failed';
+
+	/// en: 'Toggle failed'
+	String get toggle => 'Toggle failed';
+
+	/// en: 'Mute toggle failed'
+	String get muteToggle => 'Mute toggle failed';
+
+	/// en: 'Update failed'
+	String get update => 'Update failed';
+
+	/// en: 'Delete failed'
+	String get delete => 'Delete failed';
 }
 
 // Path: notesPage.editor
@@ -2802,6 +2941,33 @@ class TranslationsMemoryWorkersTasksTranscriptEn {
 	String get description => 'Session-end \'what did the agent do\' summary. Naturally fits an agent worker.';
 }
 
+// Path: channels.notifications.modes
+class TranslationsChannelsNotificationsModesEn {
+	TranslationsChannelsNotificationsModesEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Once per session'
+	String get onceLabel => 'Once per session';
+
+	/// en: 'Fire once when idle, stay silent until reply or end.'
+	String get onceDescription => 'Fire once when idle, stay silent until reply or end.';
+
+	/// en: 'Time-window cooldown'
+	String get cooldownLabel => 'Time-window cooldown';
+
+	/// en: 'Suppress repeats within the chosen window.'
+	String get cooldownDescription => 'Suppress repeats within the chosen window.';
+
+	/// en: 'Every event (noisy)'
+	String get everyLabel => 'Every event (noisy)';
+
+	/// en: 'No suppression — only for low-frequency channels.'
+	String get everyDescription => 'No suppression — only for low-frequency channels.';
+}
+
 // Path: settings.logViewer.levels
 class TranslationsSettingsLogViewerLevelsEn {
 	TranslationsSettingsLogViewerLevelsEn.internal(this._root);
@@ -3352,6 +3518,44 @@ extension on Translations {
 			'channels.notifications.cooldownWindow' => 'Cooldown window',
 			'channels.notifications.includeSnippet' => 'Include terminal snippet',
 			'channels.notifications.snippetLengthCap' => 'Snippet length cap',
+			'channels.notifications.notifyOnAll' => 'All session events.',
+			'channels.notifications.notifyOnEmpty' => 'No events selected — outbound notifications muted.',
+			'channels.notifications.snippetHelper' => 'Embeds the recent terminal tail in each notification.',
+			'channels.notifications.snippetNoCap' => 'no cap',
+			'channels.notifications.snippetChars' => ({required Object n}) => '${n} chars',
+			'channels.notifications.updatedSnack' => 'Notification preferences updated.',
+			'channels.notifications.modes.onceLabel' => 'Once per session',
+			'channels.notifications.modes.onceDescription' => 'Fire once when idle, stay silent until reply or end.',
+			'channels.notifications.modes.cooldownLabel' => 'Time-window cooldown',
+			'channels.notifications.modes.cooldownDescription' => 'Suppress repeats within the chosen window.',
+			'channels.notifications.modes.everyLabel' => 'Every event (noisy)',
+			'channels.notifications.modes.everyDescription' => 'No suppression — only for low-frequency channels.',
+			'channels.popup.enable' => 'Enable',
+			'channels.popup.disable' => 'Disable',
+			'channels.popup.mute' => 'Mute',
+			'channels.popup.unmute' => 'Unmute',
+			'channels.popup.deleteLabel' => 'Delete',
+			'channels.badges.running' => 'running',
+			'channels.badges.starting' => 'starting…',
+			'channels.badges.disabled' => 'disabled',
+			'channels.badges.muted' => 'muted',
+			'channels.capsLabel' => ({required Object list}) => '· caps: ${list}',
+			'channels.bridgeWebOnly' => 'Bridge channels stay web-only',
+			'channels.bridgeEmptyAdd' => 'Add one from the web admin: Channels → New.',
+			'channels.deleteBody' => 'Stops the channel and removes its configuration. In-flight notifications addressed to it will be dropped silently.',
+			'channels.snacks.testDispatched' => 'Test message dispatched.',
+			'channels.snacks.channelEnabled' => 'Channel enabled.',
+			'channels.snacks.channelDisabled' => 'Channel disabled.',
+			'channels.snacks.channelMuted' => 'Channel muted.',
+			'channels.snacks.channelUnmuted' => 'Channel unmuted.',
+			'channels.snacks.configUpdated' => 'Channel config updated.',
+			'channels.snacks.channelDeleted' => 'Channel deleted.',
+			'channels.errorPrefix.test' => 'Test failed',
+			'channels.errorPrefix.toggle' => 'Toggle failed',
+			'channels.errorPrefix.muteToggle' => 'Mute toggle failed',
+			'channels.errorPrefix.update' => 'Update failed',
+			'channels.errorPrefix.delete' => 'Delete failed',
+			'channels.failedToLoad' => 'Failed to load channels',
 			'onboarding.gatewayLabel' => 'Gateway URL',
 			'onboarding.gatewayHint' => 'https://opendray.example.com',
 			'onboarding.kContinue' => 'Continue',
@@ -3371,6 +3575,8 @@ extension on Translations {
 			'customTasks.popupDelete' => 'Delete',
 			'customTasks.nameHint' => 'e.g. backend-tests',
 			'customTasks.commandHint' => '/run pnpm test --filter backend',
+			_ => null,
+		} ?? switch (path) {
 			'customTasks.descriptionHint' => 'One-liner shown under the task name.',
 			'customTasks.scopeGlobal' => 'Global',
 			'customTasks.scopeProject' => 'Project',
@@ -3409,8 +3615,6 @@ extension on Translations {
 			'memory.deletedSnackOne' => ({required Object n}) => 'Deleted ${n} memory item',
 			'memory.deletedSnackOther' => ({required Object n}) => 'Deleted ${n} memory items',
 			'memory.bulkDeleteFailedApi' => ({required Object error}) => 'Bulk delete failed: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'memory.bulkDeleteFailedGeneric' => ({required Object error}) => 'Bulk delete failed: ${error}',
 			'memory.deleteOne.title' => 'Delete memory?',
 			'memory.deleteOne.body' => 'This cannot be undone.',
