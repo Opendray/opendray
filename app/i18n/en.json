@@ -376,6 +376,54 @@
     "rotateFailedApi": "Rotate failed: {error}",
     "rotateFailedGeneric": "Rotate failed: {error}"
   },
+  "skills": {
+    "title": "Skills",
+    "newSkill": "New skill",
+    "customizingBuiltin": "Customizing built-in {id}",
+    "idLabel": "Id (slug)",
+    "idHint": "e.g. tdd-guide",
+    "bodyLabel": "Body (markdown)"
+  },
+  "customTasks": {
+    "title": "Custom tasks",
+    "newTask": "New task",
+    "deleteTitle": "Delete task?",
+    "deletedSnack": "Deleted {name}.",
+    "deleteFailedApi": "Delete failed: {error}",
+    "deleteFailedGeneric": "Delete failed: {error}",
+    "popupEdit": "Edit",
+    "popupDelete": "Delete",
+    "nameHint": "e.g. backend-tests",
+    "commandHint": "/run pnpm test --filter backend",
+    "descriptionHint": "One-liner shown under the task name.",
+    "scopeGlobal": "Global",
+    "scopeProject": "Project",
+    "cwdHint": "/Users/you/projects/backend"
+  },
+  "notesPage": {
+    "title": "Notes",
+    "newButton": "New",
+    "newNoteDialogTitle": "New note",
+    "searchHint": "Search across the whole vault…",
+    "up": "Up",
+    "copyPath": "Copy path",
+    "open": "Open",
+    "copiedSnack": "Copied {path}",
+    "deleteTitle": "Delete note?",
+    "deletedSnack": "Deleted {path}",
+    "deleteFailedApi": "Delete failed: {error}",
+    "deleteFailedGeneric": "Delete failed: {error}",
+    "createFailedApi": "Create failed: {error}",
+    "createFailedGeneric": "Create failed: {error}",
+    "pathLabel": "Vault-relative path",
+    "pathHint": "personal/scratch.md",
+    "create": "Create",
+    "editor": {
+      "markdownHint": "Markdown…",
+      "saving": "Saving…",
+      "autosave": "Auto-saves as you type"
+    }
+  },
   "memory": {
     "title": "Memory",
     "more": "More",

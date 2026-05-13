@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/notes_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/notes/note_editor_dialog.dart';
 import 'package:path/path.dart' as p;
 
@@ -109,12 +110,12 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.edit_outlined),
-              title: const Text('Open'),
+              title: Text(t.notesPage.open),
               onTap: () => Navigator.of(sheetCtx).pop(_RowAction.open),
             ),
             ListTile(
               leading: const Icon(Icons.copy),
-              title: const Text('Copy path'),
+              title: Text(t.notesPage.copyPath),
               onTap: () => Navigator.of(sheetCtx).pop(_RowAction.copyPath),
             ),
             ListTile(
@@ -142,7 +143,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Copied ${note.path}'),
+            content: Text(t.notesPage.copiedSnack(path: note.path)),
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ),
@@ -156,7 +157,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: const Text('Delete note?'),
+        title: Text(t.notesPage.deleteTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,14 +182,14 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(t.common.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(dialogCtx).colorScheme.error,
             ),
             onPressed: () => Navigator.of(dialogCtx).pop(true),
-            child: const Text('Delete'),
+            child: Text(t.common.delete),
           ),
         ],
       ),
@@ -199,17 +200,17 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       await ref.read(notesApiProvider).delete(note.path);
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Deleted ${note.path}'),
+          content: Text(t.notesPage.deletedSnack(path: note.path)),
           behavior: SnackBarBehavior.floating,
         ),
       );
       await _load();
     } on ApiException catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Delete failed: ${e.message}')),
+        SnackBar(content: Text(t.notesPage.deleteFailedApi(error: e.message))),
       );
     } on Object catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(t.notesPage.deleteFailedGeneric(error: e.toString()))));
     }
   }
 
@@ -234,10 +235,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       await _load();
     } on ApiException catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Create failed: ${e.message}')),
+        SnackBar(content: Text(t.notesPage.createFailedApi(error: e.message))),
       );
     } on Object catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Create failed: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(t.notesPage.createFailedGeneric(error: e.toString()))));
     }
   }
 
@@ -301,18 +302,18 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notes'),
+        title: Text(t.notesPage.title),
         leading: _currentPath.isEmpty
             ? null
             : IconButton(
                 icon: const Icon(Icons.arrow_back),
-                tooltip: 'Up',
+                tooltip: t.notesPage.up,
                 onPressed: _goUp,
               ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: t.sessions.inspector.shared.refresh,
             onPressed: _load,
           ),
         ],
@@ -326,7 +327,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               onChanged: (v) =>
                   setState(() => _query = v.trim().toLowerCase()),
               decoration: InputDecoration(
-                hintText: 'Search across the whole vault…',
+                hintText: t.notesPage.searchHint,
                 prefixIcon: const Icon(Icons.search, size: 18),
                 isDense: true,
                 suffixIcon: _query.isEmpty
@@ -352,7 +353,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _newNote,
         icon: const Icon(Icons.add),
-        label: const Text('New'),
+        label: Text(t.notesPage.newButton),
       ),
     );
   }
@@ -636,7 +637,7 @@ class _NewNoteDialogState extends State<_NewNoteDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('New note'),
+      title: Text(t.notesPage.newNoteDialogTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -647,9 +648,9 @@ class _NewNoteDialogState extends State<_NewNoteDialog> {
             autocorrect: false,
             textInputAction: TextInputAction.go,
             onSubmitted: (_) => _submit(),
-            decoration: const InputDecoration(
-              labelText: 'Vault-relative path',
-              hintText: 'personal/scratch.md',
+            decoration: InputDecoration(
+              labelText: t.notesPage.pathLabel,
+              hintText: t.notesPage.pathHint,
               helperText: 'Auto-appends .md if missing.',
             ),
           ),
@@ -668,9 +669,9 @@ class _NewNoteDialogState extends State<_NewNoteDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(t.common.cancel),
         ),
-        FilledButton(onPressed: _submit, child: const Text('Create')),
+        FilledButton(onPressed: _submit, child: Text(t.notesPage.create)),
       ],
     );
   }
@@ -720,7 +721,7 @@ class _Error extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),

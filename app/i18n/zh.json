@@ -376,6 +376,54 @@
     "rotateFailedApi": "轮换失败：{error}",
     "rotateFailedGeneric": "轮换失败：{error}"
   },
+  "skills": {
+    "title": "技能",
+    "newSkill": "新建技能",
+    "customizingBuiltin": "自定义内置 {id}",
+    "idLabel": "Id（slug）",
+    "idHint": "例如：tdd-guide",
+    "bodyLabel": "正文（Markdown）"
+  },
+  "customTasks": {
+    "title": "自定义任务",
+    "newTask": "新建任务",
+    "deleteTitle": "删除任务？",
+    "deletedSnack": "已删除 {name}。",
+    "deleteFailedApi": "删除失败：{error}",
+    "deleteFailedGeneric": "删除失败：{error}",
+    "popupEdit": "编辑",
+    "popupDelete": "删除",
+    "nameHint": "例如：backend-tests",
+    "commandHint": "/run pnpm test --filter backend",
+    "descriptionHint": "在任务名下方显示的一行说明。",
+    "scopeGlobal": "全局",
+    "scopeProject": "项目",
+    "cwdHint": "/Users/you/projects/backend"
+  },
+  "notesPage": {
+    "title": "笔记",
+    "newButton": "新建",
+    "newNoteDialogTitle": "新建笔记",
+    "searchHint": "搜索整个仓库…",
+    "up": "上级",
+    "copyPath": "复制路径",
+    "open": "打开",
+    "copiedSnack": "已复制 {path}",
+    "deleteTitle": "删除笔记？",
+    "deletedSnack": "已删除 {path}",
+    "deleteFailedApi": "删除失败：{error}",
+    "deleteFailedGeneric": "删除失败：{error}",
+    "createFailedApi": "创建失败：{error}",
+    "createFailedGeneric": "创建失败：{error}",
+    "pathLabel": "相对仓库的路径",
+    "pathHint": "personal/scratch.md",
+    "create": "创建",
+    "editor": {
+      "markdownHint": "Markdown…",
+      "saving": "保存中…",
+      "autosave": "随输入自动保存"
+    }
+  },
   "memory": {
     "title": "记忆",
     "more": "更多",
