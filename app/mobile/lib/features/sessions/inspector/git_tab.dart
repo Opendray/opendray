@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/git_api.dart';
 import 'package:opendray/core/api/sessions_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 // Git surface inside the session inspector. Two views toggle via a
 // segmented control:
@@ -72,17 +73,30 @@ class _GitTabState extends ConsumerState<GitTab>
       await ref.read(sessionsApiProvider).input(widget.sessionId, text);
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Inserted: $text'),
+          content: Text(t.sessions.inspector.shared.inserted(text: text)),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
       );
     } on ApiException catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Insert failed (${e.statusCode}): ${e.message}')),
+        SnackBar(
+          content: Text(
+            t.sessions.inspector.shared.insertFailedApi(
+              status: e.statusCode.toString(),
+              message: e.message,
+            ),
+          ),
+        ),
       );
     } on Object catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Insert failed: $e')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            t.sessions.inspector.shared.insertFailedGeneric(error: e.toString()),
+          ),
+        ),
+      );
     }
   }
 
@@ -122,18 +136,18 @@ class _GitTabState extends ConsumerState<GitTab>
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.alternate_email),
-              title: const Text('Insert as @reference'),
+              title: Text(t.sessions.inspector.git.insertAtRef),
               onTap: () => Navigator.of(sheetCtx).pop(_FileAction.insertAt),
             ),
             ListTile(
               leading: const Icon(Icons.content_paste_go),
-              title: const Text('Insert path'),
+              title: Text(t.sessions.inspector.git.insertPath),
               onTap: () => Navigator.of(sheetCtx).pop(_FileAction.insertPath),
             ),
             if (!file.isUntracked)
               ListTile(
                 leading: const Icon(Icons.compare_arrows),
-                title: const Text('Show diff'),
+                title: Text(t.sessions.inspector.git.showDiff),
                 subtitle: Text(
                   file.isStaged ? 'staged changes' : 'unstaged changes',
                 ),
@@ -167,10 +181,23 @@ class _GitTabState extends ConsumerState<GitTab>
       await _showTextDialog(title: file.path, body: body);
     } on ApiException catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Diff failed (${e.statusCode}): ${e.message}')),
+        SnackBar(
+          content: Text(
+            t.sessions.inspector.git.diffFailedApi(
+              status: e.statusCode.toString(),
+              message: e.message,
+            ),
+          ),
+        ),
       );
     } on Object catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Diff failed: $e')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            t.sessions.inspector.git.diffFailedGeneric(error: e.toString()),
+          ),
+        ),
+      );
     }
   }
 
@@ -215,13 +242,13 @@ class _GitTabState extends ConsumerState<GitTab>
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.tag_outlined),
-              title: const Text('Insert hash'),
+              title: Text(t.sessions.inspector.git.insertHash),
               subtitle: Text(commit.shortHash),
               onTap: () => Navigator.of(sheetCtx).pop(_CommitAction.insertHash),
             ),
             ListTile(
               leading: const Icon(Icons.description_outlined),
-              title: const Text('Show full patch'),
+              title: Text(t.sessions.inspector.git.showFullPatch),
               onTap: () => Navigator.of(sheetCtx).pop(_CommitAction.show),
             ),
             const SizedBox(height: 4),
@@ -249,10 +276,23 @@ class _GitTabState extends ConsumerState<GitTab>
       await _showTextDialog(title: commit.shortHash, body: body);
     } on ApiException catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Show failed (${e.statusCode}): ${e.message}')),
+        SnackBar(
+          content: Text(
+            t.sessions.inspector.git.showFailedApi(
+              status: e.statusCode.toString(),
+              message: e.message,
+            ),
+          ),
+        ),
       );
     } on Object catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Show failed: $e')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            t.sessions.inspector.git.showFailedGeneric(error: e.toString()),
+          ),
+        ),
+      );
     }
   }
 
@@ -459,16 +499,16 @@ class _PaneSwitch extends StatelessWidget {
         children: [
           Expanded(
             child: SegmentedButton<_Pane>(
-              segments: const [
+              segments: [
                 ButtonSegment<_Pane>(
                   value: _Pane.status,
-                  icon: Icon(Icons.list_alt, size: 18),
-                  label: Text('Status'),
+                  icon: const Icon(Icons.list_alt, size: 18),
+                  label: Text(t.sessions.inspector.git.tabStatus),
                 ),
                 ButtonSegment<_Pane>(
                   value: _Pane.log,
-                  icon: Icon(Icons.history, size: 18),
-                  label: Text('Log'),
+                  icon: const Icon(Icons.history, size: 18),
+                  label: Text(t.sessions.inspector.git.tabLog),
                 ),
               ],
               selected: {pane},
@@ -477,7 +517,7 @@ class _PaneSwitch extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: t.sessions.inspector.shared.refresh,
             onPressed: onRefresh,
           ),
         ],
@@ -632,7 +672,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),

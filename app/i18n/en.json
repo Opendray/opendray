@@ -184,6 +184,74 @@
         "create": "Create"
       }
     },
+    "inspector": {
+      "shell": {
+        "title": "Inspector",
+        "loadError": "Failed to load session: {error}",
+        "tabs": {
+          "files": "Files",
+          "git": "Git",
+          "tasks": "Tasks",
+          "history": "History",
+          "notes": "Notes"
+        }
+      },
+      "shared": {
+        "refresh": "Refresh",
+        "inserted": "Inserted: {text}",
+        "insertFailedApi": "Insert failed ({status}): {message}",
+        "insertFailedGeneric": "Insert failed: {error}",
+        "insertFailedShort": "Insert failed: {error}"
+      },
+      "history": {
+        "insertIntoTerminal": "Insert into terminal",
+        "searchHint": "Search prompts…"
+      },
+      "files": {
+        "insertAtRef": "Insert as @reference",
+        "insertPath": "Insert path",
+        "insertPathSubtitle": "Pastes the absolute path verbatim",
+        "readContent": "Read content",
+        "readContentSubtitle": "Up to 256 KiB plain text",
+        "readFailedApi": "Read failed ({status}): {message}",
+        "readFailedGeneric": "Read failed: {error}",
+        "parent": "Parent",
+        "backToCwd": "Back to session cwd"
+      },
+      "git": {
+        "insertAtRef": "Insert as @reference",
+        "insertPath": "Insert path",
+        "showDiff": "Show diff",
+        "diffFailedApi": "Diff failed ({status}): {message}",
+        "diffFailedGeneric": "Diff failed: {error}",
+        "insertHash": "Insert hash",
+        "showFullPatch": "Show full patch",
+        "showFailedApi": "Show failed ({status}): {message}",
+        "showFailedGeneric": "Show failed: {error}",
+        "tabStatus": "Status",
+        "tabLog": "Log"
+      },
+      "tasks": {
+        "runCommand": "Run command",
+        "insertCommand": "Insert command",
+        "insertCommandSubtitle": "Pastes without return so you can edit"
+      },
+      "notes": {
+        "insertedAt": "Inserted: @{path}",
+        "myNotes": "My notes",
+        "projectDocs": "Project docs",
+        "insertAtRefTooltip": "Insert as @reference",
+        "insertAtRefShort": "Insert @reference",
+        "draftHint": "# {project}\n\nThoughts, todos, context for the agent…",
+        "createFailed": "Create failed: {error}",
+        "saveFailed": "Save failed: {error}",
+        "changeLocationTooltip": "Change project docs location",
+        "filenameHint": "filename (e.g. spec or design.md)",
+        "create": "Create",
+        "filterHint": "Filter…",
+        "locationDialogTitle": "Project docs location"
+      }
+    },
     "spawnSheet": {
       "title": "New session",
       "errorRequired": "Provider and working directory are required",

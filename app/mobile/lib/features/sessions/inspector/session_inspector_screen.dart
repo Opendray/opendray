@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/sessions/inspector/files_tab.dart';
 import 'package:opendray/features/sessions/inspector/git_tab.dart';
 import 'package:opendray/features/sessions/inspector/history_tab.dart';
@@ -47,7 +48,7 @@ class _Body extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Inspector',
+                t.sessions.inspector.shell.title,
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               Text(
@@ -57,15 +58,30 @@ class _Body extends StatelessWidget {
               ),
             ],
           ),
-          bottom: const TabBar(
+          bottom: TabBar(
             isScrollable: true,
             tabAlignment: TabAlignment.start,
             tabs: [
-              Tab(icon: Icon(Icons.folder_outlined), text: 'Files'),
-              Tab(icon: Icon(Icons.account_tree_outlined), text: 'Git'),
-              Tab(icon: Icon(Icons.play_circle_outline), text: 'Tasks'),
-              Tab(icon: Icon(Icons.history), text: 'History'),
-              Tab(icon: Icon(Icons.description_outlined), text: 'Notes'),
+              Tab(
+                icon: const Icon(Icons.folder_outlined),
+                text: t.sessions.inspector.shell.tabs.files,
+              ),
+              Tab(
+                icon: const Icon(Icons.account_tree_outlined),
+                text: t.sessions.inspector.shell.tabs.git,
+              ),
+              Tab(
+                icon: const Icon(Icons.play_circle_outline),
+                text: t.sessions.inspector.shell.tabs.tasks,
+              ),
+              Tab(
+                icon: const Icon(Icons.history),
+                text: t.sessions.inspector.shell.tabs.history,
+              ),
+              Tab(
+                icon: const Icon(Icons.description_outlined),
+                text: t.sessions.inspector.shell.tabs.notes,
+              ),
             ],
           ),
         ),
@@ -89,7 +105,7 @@ class _LoadingScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Inspector')),
+      appBar: AppBar(title: Text(t.sessions.inspector.shell.title)),
       body: const Center(child: CircularProgressIndicator()),
     );
   }
@@ -102,12 +118,12 @@ class _ErrorScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Inspector')),
+      appBar: AppBar(title: Text(t.sessions.inspector.shell.title)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            'Failed to load session: $error',
+            t.sessions.inspector.shell.loadError(error: error.toString()),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
           ),

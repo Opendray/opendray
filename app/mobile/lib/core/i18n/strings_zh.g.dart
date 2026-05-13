@@ -129,6 +129,7 @@ class _TranslationsSessionsZh extends TranslationsSessionsEn {
 	@override late final _TranslationsSessionsTerminalZh terminal = _TranslationsSessionsTerminalZh._(_root);
 	@override late final _TranslationsSessionsActionZh action = _TranslationsSessionsActionZh._(_root);
 	@override late final _TranslationsSessionsDirPickerZh dirPicker = _TranslationsSessionsDirPickerZh._(_root);
+	@override late final _TranslationsSessionsInspectorZh inspector = _TranslationsSessionsInspectorZh._(_root);
 	@override late final _TranslationsSessionsSpawnSheetZh spawnSheet = _TranslationsSessionsSpawnSheetZh._(_root);
 }
 
@@ -322,6 +323,22 @@ class _TranslationsSessionsDirPickerZh extends TranslationsSessionsDirPickerEn {
 	@override String createdSnack({required Object path}) => '已创建 ${path}';
 	@override String mkdirFailedSnack({required Object error}) => '创建文件夹失败：${error}';
 	@override late final _TranslationsSessionsDirPickerDialogZh dialog = _TranslationsSessionsDirPickerDialogZh._(_root);
+}
+
+// Path: sessions.inspector
+class _TranslationsSessionsInspectorZh extends TranslationsSessionsInspectorEn {
+	_TranslationsSessionsInspectorZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsSessionsInspectorShellZh shell = _TranslationsSessionsInspectorShellZh._(_root);
+	@override late final _TranslationsSessionsInspectorSharedZh shared = _TranslationsSessionsInspectorSharedZh._(_root);
+	@override late final _TranslationsSessionsInspectorHistoryZh history = _TranslationsSessionsInspectorHistoryZh._(_root);
+	@override late final _TranslationsSessionsInspectorFilesZh files = _TranslationsSessionsInspectorFilesZh._(_root);
+	@override late final _TranslationsSessionsInspectorGitZh git = _TranslationsSessionsInspectorGitZh._(_root);
+	@override late final _TranslationsSessionsInspectorTasksZh tasks = _TranslationsSessionsInspectorTasksZh._(_root);
+	@override late final _TranslationsSessionsInspectorNotesZh notes = _TranslationsSessionsInspectorNotesZh._(_root);
 }
 
 // Path: sessions.spawnSheet
@@ -656,6 +673,115 @@ class _TranslationsSessionsDirPickerDialogZh extends TranslationsSessionsDirPick
 	@override String get create => '创建';
 }
 
+// Path: sessions.inspector.shell
+class _TranslationsSessionsInspectorShellZh extends TranslationsSessionsInspectorShellEn {
+	_TranslationsSessionsInspectorShellZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '检查器';
+	@override String loadError({required Object error}) => '加载会话失败：${error}';
+	@override late final _TranslationsSessionsInspectorShellTabsZh tabs = _TranslationsSessionsInspectorShellTabsZh._(_root);
+}
+
+// Path: sessions.inspector.shared
+class _TranslationsSessionsInspectorSharedZh extends TranslationsSessionsInspectorSharedEn {
+	_TranslationsSessionsInspectorSharedZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get refresh => '刷新';
+	@override String inserted({required Object text}) => '已插入：${text}';
+	@override String insertFailedApi({required Object status, required Object message}) => '插入失败（${status}）：${message}';
+	@override String insertFailedGeneric({required Object error}) => '插入失败：${error}';
+	@override String insertFailedShort({required Object error}) => '插入失败：${error}';
+}
+
+// Path: sessions.inspector.history
+class _TranslationsSessionsInspectorHistoryZh extends TranslationsSessionsInspectorHistoryEn {
+	_TranslationsSessionsInspectorHistoryZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get insertIntoTerminal => '插入到终端';
+	@override String get searchHint => '搜索提示…';
+}
+
+// Path: sessions.inspector.files
+class _TranslationsSessionsInspectorFilesZh extends TranslationsSessionsInspectorFilesEn {
+	_TranslationsSessionsInspectorFilesZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get insertAtRef => '作为 @引用 插入';
+	@override String get insertPath => '插入路径';
+	@override String get insertPathSubtitle => '原样粘贴绝对路径';
+	@override String get readContent => '读取内容';
+	@override String get readContentSubtitle => '最多 256 KiB 纯文本';
+	@override String readFailedApi({required Object status, required Object message}) => '读取失败（${status}）：${message}';
+	@override String readFailedGeneric({required Object error}) => '读取失败：${error}';
+	@override String get parent => '上级';
+	@override String get backToCwd => '返回会话目录';
+}
+
+// Path: sessions.inspector.git
+class _TranslationsSessionsInspectorGitZh extends TranslationsSessionsInspectorGitEn {
+	_TranslationsSessionsInspectorGitZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get insertAtRef => '作为 @引用 插入';
+	@override String get insertPath => '插入路径';
+	@override String get showDiff => '查看 diff';
+	@override String diffFailedApi({required Object status, required Object message}) => 'Diff 失败（${status}）：${message}';
+	@override String diffFailedGeneric({required Object error}) => 'Diff 失败：${error}';
+	@override String get insertHash => '插入哈希';
+	@override String get showFullPatch => '查看完整 patch';
+	@override String showFailedApi({required Object status, required Object message}) => '查看失败（${status}）：${message}';
+	@override String showFailedGeneric({required Object error}) => '查看失败：${error}';
+	@override String get tabStatus => '状态';
+	@override String get tabLog => '日志';
+}
+
+// Path: sessions.inspector.tasks
+class _TranslationsSessionsInspectorTasksZh extends TranslationsSessionsInspectorTasksEn {
+	_TranslationsSessionsInspectorTasksZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get runCommand => '运行命令';
+	@override String get insertCommand => '插入命令';
+	@override String get insertCommandSubtitle => '粘贴但不回车，方便编辑';
+}
+
+// Path: sessions.inspector.notes
+class _TranslationsSessionsInspectorNotesZh extends TranslationsSessionsInspectorNotesEn {
+	_TranslationsSessionsInspectorNotesZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String insertedAt({required Object path}) => '已插入：@${path}';
+	@override String get myNotes => '我的笔记';
+	@override String get projectDocs => '项目文档';
+	@override String get insertAtRefTooltip => '作为 @引用 插入';
+	@override String get insertAtRefShort => '插入 @引用';
+	@override String draftHint({required Object project}) => '# ${project}\n\n想法、待办、为 agent 提供的上下文…';
+	@override String createFailed({required Object error}) => '创建失败：${error}';
+	@override String saveFailed({required Object error}) => '保存失败：${error}';
+	@override String get changeLocationTooltip => '更改项目文档位置';
+	@override String get filenameHint => '文件名（例如：spec 或 design.md）';
+	@override String get create => '创建';
+	@override String get filterHint => '筛选…';
+	@override String get locationDialogTitle => '项目文档位置';
+}
+
 // Path: sessions.spawnSheet.bypass
 class _TranslationsSessionsSpawnSheetBypassZh extends TranslationsSessionsSpawnSheetBypassEn {
 	_TranslationsSessionsSpawnSheetBypassZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -710,6 +836,20 @@ class _TranslationsSessionsSpawnSheetClaudeAccountZh extends TranslationsSession
 	@override String get noTokenSuffix => '（无令牌）';
 	@override String get noneHint => '未配置 Claude 账号 — 网关将使用系统的 ANTHROPIC_API_KEY。在 Web 管理端的「设置 → 账号」中添加账号。';
 	@override String errorHint({required Object error}) => '无法加载 Claude 账号（${error}）。会话将以网关默认配置启动。';
+}
+
+// Path: sessions.inspector.shell.tabs
+class _TranslationsSessionsInspectorShellTabsZh extends TranslationsSessionsInspectorShellTabsEn {
+	_TranslationsSessionsInspectorShellTabsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get files => '文件';
+	@override String get git => 'Git';
+	@override String get tasks => '任务';
+	@override String get history => '历史';
+	@override String get notes => '笔记';
 }
 
 /// The flat map containing all translations for locale <zh>.
@@ -838,6 +978,56 @@ extension on TranslationsZh {
 			'sessions.dirPicker.dialog.title' => '新建文件夹',
 			'sessions.dirPicker.dialog.hint' => '文件夹名',
 			'sessions.dirPicker.dialog.create' => '创建',
+			'sessions.inspector.shell.title' => '检查器',
+			'sessions.inspector.shell.loadError' => ({required Object error}) => '加载会话失败：${error}',
+			'sessions.inspector.shell.tabs.files' => '文件',
+			'sessions.inspector.shell.tabs.git' => 'Git',
+			'sessions.inspector.shell.tabs.tasks' => '任务',
+			'sessions.inspector.shell.tabs.history' => '历史',
+			'sessions.inspector.shell.tabs.notes' => '笔记',
+			'sessions.inspector.shared.refresh' => '刷新',
+			'sessions.inspector.shared.inserted' => ({required Object text}) => '已插入：${text}',
+			'sessions.inspector.shared.insertFailedApi' => ({required Object status, required Object message}) => '插入失败（${status}）：${message}',
+			'sessions.inspector.shared.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
+			'sessions.inspector.shared.insertFailedShort' => ({required Object error}) => '插入失败：${error}',
+			'sessions.inspector.history.insertIntoTerminal' => '插入到终端',
+			'sessions.inspector.history.searchHint' => '搜索提示…',
+			'sessions.inspector.files.insertAtRef' => '作为 @引用 插入',
+			'sessions.inspector.files.insertPath' => '插入路径',
+			'sessions.inspector.files.insertPathSubtitle' => '原样粘贴绝对路径',
+			'sessions.inspector.files.readContent' => '读取内容',
+			'sessions.inspector.files.readContentSubtitle' => '最多 256 KiB 纯文本',
+			'sessions.inspector.files.readFailedApi' => ({required Object status, required Object message}) => '读取失败（${status}）：${message}',
+			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => '读取失败：${error}',
+			'sessions.inspector.files.parent' => '上级',
+			'sessions.inspector.files.backToCwd' => '返回会话目录',
+			'sessions.inspector.git.insertAtRef' => '作为 @引用 插入',
+			'sessions.inspector.git.insertPath' => '插入路径',
+			'sessions.inspector.git.showDiff' => '查看 diff',
+			'sessions.inspector.git.diffFailedApi' => ({required Object status, required Object message}) => 'Diff 失败（${status}）：${message}',
+			'sessions.inspector.git.diffFailedGeneric' => ({required Object error}) => 'Diff 失败：${error}',
+			'sessions.inspector.git.insertHash' => '插入哈希',
+			'sessions.inspector.git.showFullPatch' => '查看完整 patch',
+			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => '查看失败（${status}）：${message}',
+			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => '查看失败：${error}',
+			'sessions.inspector.git.tabStatus' => '状态',
+			'sessions.inspector.git.tabLog' => '日志',
+			'sessions.inspector.tasks.runCommand' => '运行命令',
+			'sessions.inspector.tasks.insertCommand' => '插入命令',
+			'sessions.inspector.tasks.insertCommandSubtitle' => '粘贴但不回车，方便编辑',
+			'sessions.inspector.notes.insertedAt' => ({required Object path}) => '已插入：@${path}',
+			'sessions.inspector.notes.myNotes' => '我的笔记',
+			'sessions.inspector.notes.projectDocs' => '项目文档',
+			'sessions.inspector.notes.insertAtRefTooltip' => '作为 @引用 插入',
+			'sessions.inspector.notes.insertAtRefShort' => '插入 @引用',
+			'sessions.inspector.notes.draftHint' => ({required Object project}) => '# ${project}\n\n想法、待办、为 agent 提供的上下文…',
+			'sessions.inspector.notes.createFailed' => ({required Object error}) => '创建失败：${error}',
+			'sessions.inspector.notes.saveFailed' => ({required Object error}) => '保存失败：${error}',
+			'sessions.inspector.notes.changeLocationTooltip' => '更改项目文档位置',
+			'sessions.inspector.notes.filenameHint' => '文件名（例如：spec 或 design.md）',
+			'sessions.inspector.notes.create' => '创建',
+			'sessions.inspector.notes.filterHint' => '筛选…',
+			'sessions.inspector.notes.locationDialogTitle' => '项目文档位置',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',

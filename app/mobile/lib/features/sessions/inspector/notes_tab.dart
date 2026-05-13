@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/notes_api.dart';
 import 'package:opendray/core/api/sessions_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/notes/note_editor_dialog.dart';
 
 // Notes surface inside the session inspector. Mirrors the web admin
@@ -325,7 +326,7 @@ class _PersonalSectionState extends ConsumerState<_PersonalSection> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Inserted: @${widget.personalPath}'),
+          content: Text(t.sessions.inspector.notes.insertedAt(path: widget.personalPath)),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
@@ -353,7 +354,7 @@ class _PersonalSectionState extends ConsumerState<_PersonalSection> {
           'not write here.',
       action: IconButton(
         icon: const Icon(Icons.alternate_email, size: 18),
-        tooltip: 'Insert as @reference',
+        tooltip: t.sessions.inspector.notes.insertAtRefTooltip,
         onPressed: _insertReference,
       ),
       child: _loading
@@ -373,8 +374,7 @@ class _PersonalSectionState extends ConsumerState<_PersonalSection> {
                   keyboardType: TextInputType.multiline,
                   style: const TextStyle(fontSize: 13, height: 1.5),
                   decoration: InputDecoration(
-                    hintText: '# ${widget.cwdBase}\n\nThoughts, todos, '
-                        'context for the agent…',
+                    hintText: t.sessions.inspector.notes.draftHint(project: widget.cwdBase),
                     border: OutlineInputBorder(
                       borderSide: BorderSide(
                         color: Theme.of(context).dividerColor,
@@ -519,7 +519,7 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
             'different vault folder.';
     return _SectionCard(
       icon: Icons.auto_awesome,
-      title: 'Project docs',
+      title: t.sessions.inspector.notes.projectDocs,
       subtitle: widget.projectsRel.isEmpty
           ? '(no project mapping)'
           : '${widget.projectsRel}/',
@@ -529,7 +529,7 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
         children: [
           IconButton(
             icon: const Icon(Icons.tune, size: 18),
-            tooltip: 'Change project docs location',
+            tooltip: t.sessions.inspector.notes.changeLocationTooltip,
             onPressed: _editMapping,
           ),
           IconButton(
@@ -555,10 +555,10 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
                     autocorrect: false,
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => _create(),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       isDense: true,
-                      hintText: 'filename (e.g. spec or design.md)',
-                      contentPadding: EdgeInsets.symmetric(
+                      hintText: t.sessions.inspector.notes.filenameHint,
+                      contentPadding: const EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 10,
                       ),
@@ -568,7 +568,7 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
                 const SizedBox(width: 6),
                 FilledButton(
                   onPressed: _create,
-                  child: const Text('Create'),
+                  child: Text(t.sessions.inspector.notes.create),
                 ),
               ],
             ),
@@ -579,11 +579,11 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
               controller: _searchCtrl,
               onChanged: (v) =>
                   setState(() => _query = v.trim().toLowerCase()),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 isDense: true,
-                hintText: 'Filter…',
-                prefixIcon: Icon(Icons.search, size: 18),
-                contentPadding: EdgeInsets.symmetric(
+                hintText: t.sessions.inspector.notes.filterHint,
+                prefixIcon: const Icon(Icons.search, size: 18),
+                contentPadding: const EdgeInsets.symmetric(
                   horizontal: 8,
                   vertical: 8,
                 ),
@@ -628,7 +628,7 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
       await ref.read(sessionsApiProvider).input(sid, text);
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Inserted: $text'),
+          content: Text(t.sessions.inspector.shared.inserted(text: text)),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
@@ -711,7 +711,7 @@ class _DocTile extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.alternate_email, size: 16),
-              tooltip: 'Insert @reference',
+              tooltip: t.sessions.inspector.notes.insertAtRefShort,
               visualDensity: VisualDensity.compact,
               onPressed: onInsertRef,
             ),
@@ -773,7 +773,7 @@ class _MappingDialogState extends State<_MappingDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Project docs location'),
+      title: Text(t.sessions.inspector.notes.locationDialogTitle),
       content: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -821,7 +821,7 @@ class _MappingDialogState extends State<_MappingDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(null),
-          child: const Text('Cancel'),
+          child: Text(t.common.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_ctrl.text.trim()),
@@ -936,7 +936,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),

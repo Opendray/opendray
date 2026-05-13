@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/fs_api.dart';
 import 'package:opendray/core/api/sessions_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
@@ -134,7 +135,7 @@ class _TasksTabState extends ConsumerState<TasksTab>
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.play_arrow),
-              title: const Text('Run command'),
+              title: Text(t.sessions.inspector.tasks.runCommand),
               subtitle: const Text(
                 'Pastes the command and presses return — runs immediately',
               ),
@@ -142,8 +143,8 @@ class _TasksTabState extends ConsumerState<TasksTab>
             ),
             ListTile(
               leading: const Icon(Icons.content_paste_go),
-              title: const Text('Insert command'),
-              subtitle: const Text('Pastes without return so you can edit'),
+              title: Text(t.sessions.inspector.tasks.insertCommand),
+              subtitle: Text(t.sessions.inspector.tasks.insertCommandSubtitle),
               onTap: () => Navigator.of(sheetCtx).pop(_TaskAction.insert),
             ),
             const SizedBox(height: 4),
@@ -170,10 +171,23 @@ class _TasksTabState extends ConsumerState<TasksTab>
       );
     } on ApiException catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Insert failed (${e.statusCode}): ${e.message}')),
+        SnackBar(
+          content: Text(
+            t.sessions.inspector.shared.insertFailedApi(
+              status: e.statusCode.toString(),
+              message: e.message,
+            ),
+          ),
+        ),
       );
     } on Object catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Insert failed: $e')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            t.sessions.inspector.shared.insertFailedGeneric(error: e.toString()),
+          ),
+        ),
+      );
     }
   }
 
@@ -235,7 +249,7 @@ class _Header extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: t.sessions.inspector.shared.refresh,
             onPressed: onRefresh,
           ),
         ],
@@ -400,7 +414,7 @@ class _ErrorView extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
         ),
       ),

@@ -184,6 +184,74 @@
         "create": "创建"
       }
     },
+    "inspector": {
+      "shell": {
+        "title": "检查器",
+        "loadError": "加载会话失败：{error}",
+        "tabs": {
+          "files": "文件",
+          "git": "Git",
+          "tasks": "任务",
+          "history": "历史",
+          "notes": "笔记"
+        }
+      },
+      "shared": {
+        "refresh": "刷新",
+        "inserted": "已插入：{text}",
+        "insertFailedApi": "插入失败（{status}）：{message}",
+        "insertFailedGeneric": "插入失败：{error}",
+        "insertFailedShort": "插入失败：{error}"
+      },
+      "history": {
+        "insertIntoTerminal": "插入到终端",
+        "searchHint": "搜索提示…"
+      },
+      "files": {
+        "insertAtRef": "作为 @引用 插入",
+        "insertPath": "插入路径",
+        "insertPathSubtitle": "原样粘贴绝对路径",
+        "readContent": "读取内容",
+        "readContentSubtitle": "最多 256 KiB 纯文本",
+        "readFailedApi": "读取失败（{status}）：{message}",
+        "readFailedGeneric": "读取失败：{error}",
+        "parent": "上级",
+        "backToCwd": "返回会话目录"
+      },
+      "git": {
+        "insertAtRef": "作为 @引用 插入",
+        "insertPath": "插入路径",
+        "showDiff": "查看 diff",
+        "diffFailedApi": "Diff 失败（{status}）：{message}",
+        "diffFailedGeneric": "Diff 失败：{error}",
+        "insertHash": "插入哈希",
+        "showFullPatch": "查看完整 patch",
+        "showFailedApi": "查看失败（{status}）：{message}",
+        "showFailedGeneric": "查看失败：{error}",
+        "tabStatus": "状态",
+        "tabLog": "日志"
+      },
+      "tasks": {
+        "runCommand": "运行命令",
+        "insertCommand": "插入命令",
+        "insertCommandSubtitle": "粘贴但不回车，方便编辑"
+      },
+      "notes": {
+        "insertedAt": "已插入：@{path}",
+        "myNotes": "我的笔记",
+        "projectDocs": "项目文档",
+        "insertAtRefTooltip": "作为 @引用 插入",
+        "insertAtRefShort": "插入 @引用",
+        "draftHint": "# {project}\n\n想法、待办、为 agent 提供的上下文…",
+        "createFailed": "创建失败：{error}",
+        "saveFailed": "保存失败：{error}",
+        "changeLocationTooltip": "更改项目文档位置",
+        "filenameHint": "文件名（例如：spec 或 design.md）",
+        "create": "创建",
+        "filterHint": "筛选…",
+        "locationDialogTitle": "项目文档位置"
+      }
+    },
     "spawnSheet": {
       "title": "新建会话",
       "errorRequired": "需要指定提供商和工作目录",
