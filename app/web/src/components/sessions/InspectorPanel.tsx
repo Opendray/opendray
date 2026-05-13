@@ -1,4 +1,5 @@
 import {
+  Brain,
   Folder,
   GitBranch,
   Search,
@@ -14,6 +15,7 @@ import type { Session } from '@/lib/types'
 import { FilesPanel } from './inspector/FilesPanel'
 import { GitPanel } from './inspector/GitPanel'
 import { HistoryPanel } from './inspector/HistoryPanel'
+import { MemoryPanel } from './inspector/MemoryPanel'
 import { NotesPanel } from './inspector/NotesPanel'
 import { SearchPanel } from './inspector/SearchPanel'
 import { TaskRunnerPanel } from './inspector/TaskRunnerPanel'
@@ -29,8 +31,10 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
     <aside className="w-80 shrink-0 border-l border-border bg-background flex flex-col">
       <Tabs defaultValue="files" className="flex-1 flex flex-col min-h-0">
         <div className="px-2 py-2 border-b border-border shrink-0">
-          {/* 6 tabs in a 4-col grid → row 1: Files / Git / Search / Tasks,
-              row 2: History + Notes each spanning 2 cols. */}
+          {/* 7 tabs in a 4-col grid → row 1: Files / Git / Search / Tasks,
+              row 2: History (2) + Notes (2),
+              row 3: Memory (4) — mirrors mobile's 🏁 Project memory
+              shortcut that jumps from session detail to ProjectScreen. */}
           <TabsList className="bg-transparent border-0 p-0 gap-0.5 w-full grid grid-cols-4 gap-y-0.5">
             <TabsTrigger
               value="files"
@@ -74,6 +78,13 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
               <NotebookPen className="size-3" />
               Notes
             </TabsTrigger>
+            <TabsTrigger
+              value="memory"
+              className="flex items-center justify-center gap-1.5 col-span-4 data-[state=active]:bg-card"
+            >
+              <Brain className="size-3" />
+              Memory
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -95,6 +106,9 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
           </TabsContent>
           <TabsContent value="notes" className="m-0 p-3">
             <NotesPanel cwd={session.cwd} />
+          </TabsContent>
+          <TabsContent value="memory" className="m-0 p-3">
+            <MemoryPanel cwd={session.cwd} />
           </TabsContent>
         </ScrollArea>
       </Tabs>
