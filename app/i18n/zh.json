@@ -10,6 +10,15 @@
     "close": "关闭",
     "retry": "重试"
   },
+  "auth": {
+    "signInTitle": "登录",
+    "changeServer": "更换",
+    "username": "用户名",
+    "password": "密码",
+    "signIn": "登录",
+    "errorRequired": "请输入用户名和密码",
+    "errorGeneric": "登录失败：{error}"
+  },
   "settings": {
     "title": "设置",
     "language": {
