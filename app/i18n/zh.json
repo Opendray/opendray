@@ -321,13 +321,68 @@
     "errorWithMessage": "{prefix}：{error}",
     "editor": {
       "nameHint": "my-mcp-server",
-      "jsonHint": "JSON 配置 — name、transport: stdio、command、args…"
+      "jsonHint": "JSON 配置 — name、transport: stdio、command、args…",
+      "descriptionPlaceholder": "可选的一行说明",
+      "validateJsonObject": "正文必须是 JSON 对象",
+      "validateJsonInvalid": "无效的 JSON：{error}",
+      "appBarEdit": "编辑 MCP 服务器",
+      "appBarNew": "新建 MCP 服务器",
+      "idLockedHint": "编辑模式下锁定 — 需删除后重建以更改。",
+      "jsonLabel": "服务器 JSON",
+      "jsonSchemaHelp": "Schema：transport 必须是 stdio、http 或 sse。stdio 需要 command + args。http/sse 需要 url + headers。用 \\$secret:KEY 引用密钥库的密钥。",
+      "idLabel": "id（URL 片段，小写字母数字 / 横线 / 下划线）",
+      "idRequired": "id 必填",
+      "saving": "保存中…",
+      "save": "保存",
+      "create": "创建"
     },
     "secret": {
       "keyLabel": "键",
       "keyHint": "GITHUB_TOKEN、OPENAI_KEY、…",
-      "valueLabel": "值"
-    }
+      "valueLabel": "值",
+      "keyRequired": "必须填写键。",
+      "keyInvalid": "键必须匹配 [A-Za-z_][A-Za-z0-9_]* — 与 shell 环境变量规则相同。",
+      "valueRequired": "必须填写值。",
+      "replaceTitle": "替换密钥值",
+      "addTitle": "添加密钥",
+      "saveButton": "保存",
+      "addButton": "添加",
+      "helpRules": "shell 环境变量规则：字母或 _ 开头，仅含字母 / 数字 / _。",
+      "replaceHint": "粘贴新值（旧值被擦除）",
+      "addHint": "粘贴密钥值",
+      "addedSnack": "已添加密钥 {key}。",
+      "updatedSnack": "已更新密钥 {key}。",
+      "deletedSnack": "已删除 {key}。",
+      "deleteBody": "从加密的密钥库中移除该值。引用此密钥的 MCP 服务器在恢复前将无法启动。"
+    },
+    "popup": {
+      "editConfigSubtitle": "完整 JSON 编辑器 — 仅限密钥库支持的服务器",
+      "viewRawSubtitle": "服务器 JSON 的只读查看器",
+      "deleteLabel": "删除"
+    },
+    "kv": {
+      "transport": "传输",
+      "description": "描述",
+      "command": "命令",
+      "args": "参数",
+      "headers": "Headers"
+    },
+    "deleteServerBody": "移除 {id} 的密钥库目录。引用此服务器的会话将无法启动。",
+    "deleteServerSnack": "已删除 {id}。",
+    "serversCount": "服务器（{count}）",
+    "secretsCount": "密钥（{count}）",
+    "emptyServers": "未注册任何 MCP 服务器。点击「新建服务器」添加一个。",
+    "emptySecrets": "暂无密钥。添加一个，将敏感的 env / headers 注入 MCP 服务器，无需放在 JSON 里。",
+    "noVaultFileYet": "尚无密钥库文件 — 添加密钥时会创建。",
+    "tapToReplaceHint": "点击替换 · 长按 / 垃圾桶 删除",
+    "failedToLoad": "加载 MCP 状态失败",
+    "serverCreatedSnack": "MCP 服务器已创建。",
+    "serverUpdatedSnack": "MCP 服务器已更新。",
+    "envHeading": "环境变量",
+    "encryptionAes": "AES-GCM 加密（密钥存于 OS keychain）",
+    "encryptionPlaintext": "明文 — keychain 不可用",
+    "toggleEnabledSnack": "{name} 已启用。",
+    "toggleDisabledSnack": "{name} 已停用。"
   },
   "providers": {
     "title": "提供商",

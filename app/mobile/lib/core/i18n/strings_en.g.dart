@@ -259,6 +259,56 @@ class TranslationsMcpEn {
 
 	late final TranslationsMcpEditorEn editor = TranslationsMcpEditorEn.internal(_root);
 	late final TranslationsMcpSecretEn secret = TranslationsMcpSecretEn.internal(_root);
+	late final TranslationsMcpPopupEn popup = TranslationsMcpPopupEn.internal(_root);
+	late final TranslationsMcpKvEn kv = TranslationsMcpKvEn.internal(_root);
+
+	/// en: 'Removes the vault directory for {id}. Sessions that reference this server stop being able to spawn it.'
+	String deleteServerBody({required Object id}) => 'Removes the vault directory for ${id}. Sessions that reference this server stop being able to spawn it.';
+
+	/// en: 'Deleted {id}.'
+	String deleteServerSnack({required Object id}) => 'Deleted ${id}.';
+
+	/// en: 'Servers ({count})'
+	String serversCount({required Object count}) => 'Servers (${count})';
+
+	/// en: 'Secrets ({count})'
+	String secretsCount({required Object count}) => 'Secrets (${count})';
+
+	/// en: 'No MCP servers registered. Tap "New server" to add one.'
+	String get emptyServers => 'No MCP servers registered. Tap "New server" to add one.';
+
+	/// en: 'No secrets stored. Add one to feed sensitive env / headers into MCP servers without putting them in the JSON.'
+	String get emptySecrets => 'No secrets stored. Add one to feed sensitive env / headers into MCP servers without putting them in the JSON.';
+
+	/// en: 'No vault file yet — added secrets create it.'
+	String get noVaultFileYet => 'No vault file yet — added secrets create it.';
+
+	/// en: 'Tap to replace · long-press / trash to delete'
+	String get tapToReplaceHint => 'Tap to replace · long-press / trash to delete';
+
+	/// en: 'Failed to load MCP state'
+	String get failedToLoad => 'Failed to load MCP state';
+
+	/// en: 'MCP server created.'
+	String get serverCreatedSnack => 'MCP server created.';
+
+	/// en: 'MCP server updated.'
+	String get serverUpdatedSnack => 'MCP server updated.';
+
+	/// en: 'Env'
+	String get envHeading => 'Env';
+
+	/// en: 'AES-GCM encrypted (key in OS keychain)'
+	String get encryptionAes => 'AES-GCM encrypted (key in OS keychain)';
+
+	/// en: 'PLAINTEXT — keychain unavailable'
+	String get encryptionPlaintext => 'PLAINTEXT — keychain unavailable';
+
+	/// en: '{name} enabled.'
+	String toggleEnabledSnack({required Object name}) => '${name} enabled.';
+
+	/// en: '{name} disabled.'
+	String toggleDisabledSnack({required Object name}) => '${name} disabled.';
 }
 
 // Path: providers
@@ -1414,6 +1464,45 @@ class TranslationsMcpEditorEn {
 
 	/// en: 'JSON config — name, transport: stdio, command, args…'
 	String get jsonHint => 'JSON config — name, transport: stdio, command, args…';
+
+	/// en: 'Optional one-liner'
+	String get descriptionPlaceholder => 'Optional one-liner';
+
+	/// en: 'Body must be a JSON object'
+	String get validateJsonObject => 'Body must be a JSON object';
+
+	/// en: 'Invalid JSON: {error}'
+	String validateJsonInvalid({required Object error}) => 'Invalid JSON: ${error}';
+
+	/// en: 'Edit MCP server'
+	String get appBarEdit => 'Edit MCP server';
+
+	/// en: 'New MCP server'
+	String get appBarNew => 'New MCP server';
+
+	/// en: 'Locked in edit mode — delete + recreate to change.'
+	String get idLockedHint => 'Locked in edit mode — delete + recreate to change.';
+
+	/// en: 'Server JSON'
+	String get jsonLabel => 'Server JSON';
+
+	/// en: 'Schema: transport must be stdio, http or sse. For stdio set command + args. For http/sse set url + headers. Use \$secret:KEY to reference vault secrets.'
+	String get jsonSchemaHelp => 'Schema: transport must be stdio, http or sse. For stdio set command + args. For http/sse set url + headers. Use \$secret:KEY to reference vault secrets.';
+
+	/// en: 'id (URL segment, lowercase alphanumeric / dash / underscore)'
+	String get idLabel => 'id (URL segment, lowercase alphanumeric / dash / underscore)';
+
+	/// en: 'id is required'
+	String get idRequired => 'id is required';
+
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Create'
+	String get create => 'Create';
 }
 
 // Path: mcp.secret
@@ -1432,6 +1521,90 @@ class TranslationsMcpSecretEn {
 
 	/// en: 'Value'
 	String get valueLabel => 'Value';
+
+	/// en: 'Key is required.'
+	String get keyRequired => 'Key is required.';
+
+	/// en: 'Key must match [A-Za-z_][A-Za-z0-9_]* — same rules as a shell env var.'
+	String get keyInvalid => 'Key must match [A-Za-z_][A-Za-z0-9_]* — same rules as a shell env var.';
+
+	/// en: 'Value is required.'
+	String get valueRequired => 'Value is required.';
+
+	/// en: 'Replace secret value'
+	String get replaceTitle => 'Replace secret value';
+
+	/// en: 'Add secret'
+	String get addTitle => 'Add secret';
+
+	/// en: 'Save'
+	String get saveButton => 'Save';
+
+	/// en: 'Add'
+	String get addButton => 'Add';
+
+	/// en: 'Shell-env-var rules: starts with a letter or _, then letters / digits / _ only.'
+	String get helpRules => 'Shell-env-var rules: starts with a letter or _, then letters / digits / _ only.';
+
+	/// en: 'Paste new value (the previous one is wiped)'
+	String get replaceHint => 'Paste new value (the previous one is wiped)';
+
+	/// en: 'Paste secret value'
+	String get addHint => 'Paste secret value';
+
+	/// en: 'Secret {key} added.'
+	String addedSnack({required Object key}) => 'Secret ${key} added.';
+
+	/// en: 'Secret {key} updated.'
+	String updatedSnack({required Object key}) => 'Secret ${key} updated.';
+
+	/// en: 'Deleted {key}.'
+	String deletedSnack({required Object key}) => 'Deleted ${key}.';
+
+	/// en: 'Removes the value from the encrypted vault. Any MCP server that references it will fail until restored.'
+	String get deleteBody => 'Removes the value from the encrypted vault. Any MCP server that references it will fail until restored.';
+}
+
+// Path: mcp.popup
+class TranslationsMcpPopupEn {
+	TranslationsMcpPopupEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Full JSON editor — vault-backed servers only'
+	String get editConfigSubtitle => 'Full JSON editor — vault-backed servers only';
+
+	/// en: 'Read-only inspector for the server JSON'
+	String get viewRawSubtitle => 'Read-only inspector for the server JSON';
+
+	/// en: 'Delete'
+	String get deleteLabel => 'Delete';
+}
+
+// Path: mcp.kv
+class TranslationsMcpKvEn {
+	TranslationsMcpKvEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Transport'
+	String get transport => 'Transport';
+
+	/// en: 'Description'
+	String get description => 'Description';
+
+	/// en: 'Command'
+	String get command => 'Command';
+
+	/// en: 'Args'
+	String get args => 'Args';
+
+	/// en: 'Headers'
+	String get headers => 'Headers';
 }
 
 // Path: providers.errorPrefix
@@ -2947,9 +3120,60 @@ extension on Translations {
 			'mcp.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'mcp.editor.nameHint' => 'my-mcp-server',
 			'mcp.editor.jsonHint' => 'JSON config — name, transport: stdio, command, args…',
+			'mcp.editor.descriptionPlaceholder' => 'Optional one-liner',
+			'mcp.editor.validateJsonObject' => 'Body must be a JSON object',
+			'mcp.editor.validateJsonInvalid' => ({required Object error}) => 'Invalid JSON: ${error}',
+			'mcp.editor.appBarEdit' => 'Edit MCP server',
+			'mcp.editor.appBarNew' => 'New MCP server',
+			'mcp.editor.idLockedHint' => 'Locked in edit mode — delete + recreate to change.',
+			'mcp.editor.jsonLabel' => 'Server JSON',
+			'mcp.editor.jsonSchemaHelp' => 'Schema: transport must be stdio, http or sse. For stdio set command + args. For http/sse set url + headers. Use \$secret:KEY to reference vault secrets.',
+			'mcp.editor.idLabel' => 'id (URL segment, lowercase alphanumeric / dash / underscore)',
+			'mcp.editor.idRequired' => 'id is required',
+			'mcp.editor.saving' => 'Saving…',
+			'mcp.editor.save' => 'Save',
+			'mcp.editor.create' => 'Create',
 			'mcp.secret.keyLabel' => 'Key',
 			'mcp.secret.keyHint' => 'GITHUB_TOKEN, OPENAI_KEY, …',
 			'mcp.secret.valueLabel' => 'Value',
+			'mcp.secret.keyRequired' => 'Key is required.',
+			'mcp.secret.keyInvalid' => 'Key must match [A-Za-z_][A-Za-z0-9_]* — same rules as a shell env var.',
+			'mcp.secret.valueRequired' => 'Value is required.',
+			'mcp.secret.replaceTitle' => 'Replace secret value',
+			'mcp.secret.addTitle' => 'Add secret',
+			'mcp.secret.saveButton' => 'Save',
+			'mcp.secret.addButton' => 'Add',
+			'mcp.secret.helpRules' => 'Shell-env-var rules: starts with a letter or _, then letters / digits / _ only.',
+			'mcp.secret.replaceHint' => 'Paste new value (the previous one is wiped)',
+			'mcp.secret.addHint' => 'Paste secret value',
+			'mcp.secret.addedSnack' => ({required Object key}) => 'Secret ${key} added.',
+			'mcp.secret.updatedSnack' => ({required Object key}) => 'Secret ${key} updated.',
+			'mcp.secret.deletedSnack' => ({required Object key}) => 'Deleted ${key}.',
+			'mcp.secret.deleteBody' => 'Removes the value from the encrypted vault. Any MCP server that references it will fail until restored.',
+			'mcp.popup.editConfigSubtitle' => 'Full JSON editor — vault-backed servers only',
+			'mcp.popup.viewRawSubtitle' => 'Read-only inspector for the server JSON',
+			'mcp.popup.deleteLabel' => 'Delete',
+			'mcp.kv.transport' => 'Transport',
+			'mcp.kv.description' => 'Description',
+			'mcp.kv.command' => 'Command',
+			'mcp.kv.args' => 'Args',
+			'mcp.kv.headers' => 'Headers',
+			'mcp.deleteServerBody' => ({required Object id}) => 'Removes the vault directory for ${id}. Sessions that reference this server stop being able to spawn it.',
+			'mcp.deleteServerSnack' => ({required Object id}) => 'Deleted ${id}.',
+			'mcp.serversCount' => ({required Object count}) => 'Servers (${count})',
+			'mcp.secretsCount' => ({required Object count}) => 'Secrets (${count})',
+			'mcp.emptyServers' => 'No MCP servers registered. Tap "New server" to add one.',
+			'mcp.emptySecrets' => 'No secrets stored. Add one to feed sensitive env / headers into MCP servers without putting them in the JSON.',
+			'mcp.noVaultFileYet' => 'No vault file yet — added secrets create it.',
+			'mcp.tapToReplaceHint' => 'Tap to replace · long-press / trash to delete',
+			'mcp.failedToLoad' => 'Failed to load MCP state',
+			'mcp.serverCreatedSnack' => 'MCP server created.',
+			'mcp.serverUpdatedSnack' => 'MCP server updated.',
+			'mcp.envHeading' => 'Env',
+			'mcp.encryptionAes' => 'AES-GCM encrypted (key in OS keychain)',
+			'mcp.encryptionPlaintext' => 'PLAINTEXT — keychain unavailable',
+			'mcp.toggleEnabledSnack' => ({required Object name}) => '${name} enabled.',
+			'mcp.toggleDisabledSnack' => ({required Object name}) => '${name} disabled.',
 			'providers.title' => 'Providers',
 			'providers.configSaved' => 'Provider config updated.',
 			'providers.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
@@ -3185,6 +3409,8 @@ extension on Translations {
 			'memory.deletedSnackOne' => ({required Object n}) => 'Deleted ${n} memory item',
 			'memory.deletedSnackOther' => ({required Object n}) => 'Deleted ${n} memory items',
 			'memory.bulkDeleteFailedApi' => ({required Object error}) => 'Bulk delete failed: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'memory.bulkDeleteFailedGeneric' => ({required Object error}) => 'Bulk delete failed: ${error}',
 			'memory.deleteOne.title' => 'Delete memory?',
 			'memory.deleteOne.body' => 'This cannot be undone.',
@@ -3236,8 +3462,6 @@ extension on Translations {
 			'settings.changeCredentials.currentPassword' => 'Current password',
 			'settings.changeCredentials.newUsername' => 'New username',
 			'settings.changeCredentials.newPassword' => 'New password',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.confirmPassword' => 'Confirm new password',
 			'settings.changeCredentials.validatorRequired' => 'Required',
 			'settings.changeCredentials.passwordHelper' => 'At least 8 characters',

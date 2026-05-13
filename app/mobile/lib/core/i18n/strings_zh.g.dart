@@ -173,6 +173,24 @@ class _TranslationsMcpZh extends TranslationsMcpEn {
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
 	@override late final _TranslationsMcpEditorZh editor = _TranslationsMcpEditorZh._(_root);
 	@override late final _TranslationsMcpSecretZh secret = _TranslationsMcpSecretZh._(_root);
+	@override late final _TranslationsMcpPopupZh popup = _TranslationsMcpPopupZh._(_root);
+	@override late final _TranslationsMcpKvZh kv = _TranslationsMcpKvZh._(_root);
+	@override String deleteServerBody({required Object id}) => '移除 ${id} 的密钥库目录。引用此服务器的会话将无法启动。';
+	@override String deleteServerSnack({required Object id}) => '已删除 ${id}。';
+	@override String serversCount({required Object count}) => '服务器（${count}）';
+	@override String secretsCount({required Object count}) => '密钥（${count}）';
+	@override String get emptyServers => '未注册任何 MCP 服务器。点击「新建服务器」添加一个。';
+	@override String get emptySecrets => '暂无密钥。添加一个，将敏感的 env / headers 注入 MCP 服务器，无需放在 JSON 里。';
+	@override String get noVaultFileYet => '尚无密钥库文件 — 添加密钥时会创建。';
+	@override String get tapToReplaceHint => '点击替换 · 长按 / 垃圾桶 删除';
+	@override String get failedToLoad => '加载 MCP 状态失败';
+	@override String get serverCreatedSnack => 'MCP 服务器已创建。';
+	@override String get serverUpdatedSnack => 'MCP 服务器已更新。';
+	@override String get envHeading => '环境变量';
+	@override String get encryptionAes => 'AES-GCM 加密（密钥存于 OS keychain）';
+	@override String get encryptionPlaintext => '明文 — keychain 不可用';
+	@override String toggleEnabledSnack({required Object name}) => '${name} 已启用。';
+	@override String toggleDisabledSnack({required Object name}) => '${name} 已停用。';
 }
 
 // Path: providers
@@ -786,6 +804,19 @@ class _TranslationsMcpEditorZh extends TranslationsMcpEditorEn {
 	// Translations
 	@override String get nameHint => 'my-mcp-server';
 	@override String get jsonHint => 'JSON 配置 — name、transport: stdio、command、args…';
+	@override String get descriptionPlaceholder => '可选的一行说明';
+	@override String get validateJsonObject => '正文必须是 JSON 对象';
+	@override String validateJsonInvalid({required Object error}) => '无效的 JSON：${error}';
+	@override String get appBarEdit => '编辑 MCP 服务器';
+	@override String get appBarNew => '新建 MCP 服务器';
+	@override String get idLockedHint => '编辑模式下锁定 — 需删除后重建以更改。';
+	@override String get jsonLabel => '服务器 JSON';
+	@override String get jsonSchemaHelp => 'Schema：transport 必须是 stdio、http 或 sse。stdio 需要 command + args。http/sse 需要 url + headers。用 \$secret:KEY 引用密钥库的密钥。';
+	@override String get idLabel => 'id（URL 片段，小写字母数字 / 横线 / 下划线）';
+	@override String get idRequired => 'id 必填';
+	@override String get saving => '保存中…';
+	@override String get save => '保存';
+	@override String get create => '创建';
 }
 
 // Path: mcp.secret
@@ -798,6 +829,46 @@ class _TranslationsMcpSecretZh extends TranslationsMcpSecretEn {
 	@override String get keyLabel => '键';
 	@override String get keyHint => 'GITHUB_TOKEN、OPENAI_KEY、…';
 	@override String get valueLabel => '值';
+	@override String get keyRequired => '必须填写键。';
+	@override String get keyInvalid => '键必须匹配 [A-Za-z_][A-Za-z0-9_]* — 与 shell 环境变量规则相同。';
+	@override String get valueRequired => '必须填写值。';
+	@override String get replaceTitle => '替换密钥值';
+	@override String get addTitle => '添加密钥';
+	@override String get saveButton => '保存';
+	@override String get addButton => '添加';
+	@override String get helpRules => 'shell 环境变量规则：字母或 _ 开头，仅含字母 / 数字 / _。';
+	@override String get replaceHint => '粘贴新值（旧值被擦除）';
+	@override String get addHint => '粘贴密钥值';
+	@override String addedSnack({required Object key}) => '已添加密钥 ${key}。';
+	@override String updatedSnack({required Object key}) => '已更新密钥 ${key}。';
+	@override String deletedSnack({required Object key}) => '已删除 ${key}。';
+	@override String get deleteBody => '从加密的密钥库中移除该值。引用此密钥的 MCP 服务器在恢复前将无法启动。';
+}
+
+// Path: mcp.popup
+class _TranslationsMcpPopupZh extends TranslationsMcpPopupEn {
+	_TranslationsMcpPopupZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get editConfigSubtitle => '完整 JSON 编辑器 — 仅限密钥库支持的服务器';
+	@override String get viewRawSubtitle => '服务器 JSON 的只读查看器';
+	@override String get deleteLabel => '删除';
+}
+
+// Path: mcp.kv
+class _TranslationsMcpKvZh extends TranslationsMcpKvEn {
+	_TranslationsMcpKvZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get transport => '传输';
+	@override String get description => '描述';
+	@override String get command => '命令';
+	@override String get args => '参数';
+	@override String get headers => 'Headers';
 }
 
 // Path: providers.errorPrefix
@@ -1822,9 +1893,60 @@ extension on TranslationsZh {
 			'mcp.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'mcp.editor.nameHint' => 'my-mcp-server',
 			'mcp.editor.jsonHint' => 'JSON 配置 — name、transport: stdio、command、args…',
+			'mcp.editor.descriptionPlaceholder' => '可选的一行说明',
+			'mcp.editor.validateJsonObject' => '正文必须是 JSON 对象',
+			'mcp.editor.validateJsonInvalid' => ({required Object error}) => '无效的 JSON：${error}',
+			'mcp.editor.appBarEdit' => '编辑 MCP 服务器',
+			'mcp.editor.appBarNew' => '新建 MCP 服务器',
+			'mcp.editor.idLockedHint' => '编辑模式下锁定 — 需删除后重建以更改。',
+			'mcp.editor.jsonLabel' => '服务器 JSON',
+			'mcp.editor.jsonSchemaHelp' => 'Schema：transport 必须是 stdio、http 或 sse。stdio 需要 command + args。http/sse 需要 url + headers。用 \$secret:KEY 引用密钥库的密钥。',
+			'mcp.editor.idLabel' => 'id（URL 片段，小写字母数字 / 横线 / 下划线）',
+			'mcp.editor.idRequired' => 'id 必填',
+			'mcp.editor.saving' => '保存中…',
+			'mcp.editor.save' => '保存',
+			'mcp.editor.create' => '创建',
 			'mcp.secret.keyLabel' => '键',
 			'mcp.secret.keyHint' => 'GITHUB_TOKEN、OPENAI_KEY、…',
 			'mcp.secret.valueLabel' => '值',
+			'mcp.secret.keyRequired' => '必须填写键。',
+			'mcp.secret.keyInvalid' => '键必须匹配 [A-Za-z_][A-Za-z0-9_]* — 与 shell 环境变量规则相同。',
+			'mcp.secret.valueRequired' => '必须填写值。',
+			'mcp.secret.replaceTitle' => '替换密钥值',
+			'mcp.secret.addTitle' => '添加密钥',
+			'mcp.secret.saveButton' => '保存',
+			'mcp.secret.addButton' => '添加',
+			'mcp.secret.helpRules' => 'shell 环境变量规则：字母或 _ 开头，仅含字母 / 数字 / _。',
+			'mcp.secret.replaceHint' => '粘贴新值（旧值被擦除）',
+			'mcp.secret.addHint' => '粘贴密钥值',
+			'mcp.secret.addedSnack' => ({required Object key}) => '已添加密钥 ${key}。',
+			'mcp.secret.updatedSnack' => ({required Object key}) => '已更新密钥 ${key}。',
+			'mcp.secret.deletedSnack' => ({required Object key}) => '已删除 ${key}。',
+			'mcp.secret.deleteBody' => '从加密的密钥库中移除该值。引用此密钥的 MCP 服务器在恢复前将无法启动。',
+			'mcp.popup.editConfigSubtitle' => '完整 JSON 编辑器 — 仅限密钥库支持的服务器',
+			'mcp.popup.viewRawSubtitle' => '服务器 JSON 的只读查看器',
+			'mcp.popup.deleteLabel' => '删除',
+			'mcp.kv.transport' => '传输',
+			'mcp.kv.description' => '描述',
+			'mcp.kv.command' => '命令',
+			'mcp.kv.args' => '参数',
+			'mcp.kv.headers' => 'Headers',
+			'mcp.deleteServerBody' => ({required Object id}) => '移除 ${id} 的密钥库目录。引用此服务器的会话将无法启动。',
+			'mcp.deleteServerSnack' => ({required Object id}) => '已删除 ${id}。',
+			'mcp.serversCount' => ({required Object count}) => '服务器（${count}）',
+			'mcp.secretsCount' => ({required Object count}) => '密钥（${count}）',
+			'mcp.emptyServers' => '未注册任何 MCP 服务器。点击「新建服务器」添加一个。',
+			'mcp.emptySecrets' => '暂无密钥。添加一个，将敏感的 env / headers 注入 MCP 服务器，无需放在 JSON 里。',
+			'mcp.noVaultFileYet' => '尚无密钥库文件 — 添加密钥时会创建。',
+			'mcp.tapToReplaceHint' => '点击替换 · 长按 / 垃圾桶 删除',
+			'mcp.failedToLoad' => '加载 MCP 状态失败',
+			'mcp.serverCreatedSnack' => 'MCP 服务器已创建。',
+			'mcp.serverUpdatedSnack' => 'MCP 服务器已更新。',
+			'mcp.envHeading' => '环境变量',
+			'mcp.encryptionAes' => 'AES-GCM 加密（密钥存于 OS keychain）',
+			'mcp.encryptionPlaintext' => '明文 — keychain 不可用',
+			'mcp.toggleEnabledSnack' => ({required Object name}) => '${name} 已启用。',
+			'mcp.toggleDisabledSnack' => ({required Object name}) => '${name} 已停用。',
 			'providers.title' => '提供商',
 			'providers.configSaved' => '提供商配置已更新。',
 			'providers.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
@@ -2060,6 +2182,8 @@ extension on TranslationsZh {
 			'memory.deletedSnackOne' => ({required Object n}) => '已删除 ${n} 条记忆',
 			'memory.deletedSnackOther' => ({required Object n}) => '已删除 ${n} 条记忆',
 			'memory.bulkDeleteFailedApi' => ({required Object error}) => '批量删除失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'memory.bulkDeleteFailedGeneric' => ({required Object error}) => '批量删除失败：${error}',
 			'memory.deleteOne.title' => '删除该记忆？',
 			'memory.deleteOne.body' => '此操作不可撤销。',
@@ -2111,8 +2235,6 @@ extension on TranslationsZh {
 			'settings.changeCredentials.currentPassword' => '当前密码',
 			'settings.changeCredentials.newUsername' => '新用户名',
 			'settings.changeCredentials.newPassword' => '新密码',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.confirmPassword' => '确认新密码',
 			'settings.changeCredentials.validatorRequired' => '必填',
 			'settings.changeCredentials.passwordHelper' => '至少 8 个字符',

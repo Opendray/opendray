@@ -321,13 +321,68 @@
     "errorWithMessage": "{prefix}: {error}",
     "editor": {
       "nameHint": "my-mcp-server",
-      "jsonHint": "JSON config — name, transport: stdio, command, args…"
+      "jsonHint": "JSON config — name, transport: stdio, command, args…",
+      "descriptionPlaceholder": "Optional one-liner",
+      "validateJsonObject": "Body must be a JSON object",
+      "validateJsonInvalid": "Invalid JSON: {error}",
+      "appBarEdit": "Edit MCP server",
+      "appBarNew": "New MCP server",
+      "idLockedHint": "Locked in edit mode — delete + recreate to change.",
+      "jsonLabel": "Server JSON",
+      "jsonSchemaHelp": "Schema: transport must be stdio, http or sse. For stdio set command + args. For http/sse set url + headers. Use \\$secret:KEY to reference vault secrets.",
+      "idLabel": "id (URL segment, lowercase alphanumeric / dash / underscore)",
+      "idRequired": "id is required",
+      "saving": "Saving…",
+      "save": "Save",
+      "create": "Create"
     },
     "secret": {
       "keyLabel": "Key",
       "keyHint": "GITHUB_TOKEN, OPENAI_KEY, …",
-      "valueLabel": "Value"
-    }
+      "valueLabel": "Value",
+      "keyRequired": "Key is required.",
+      "keyInvalid": "Key must match [A-Za-z_][A-Za-z0-9_]* — same rules as a shell env var.",
+      "valueRequired": "Value is required.",
+      "replaceTitle": "Replace secret value",
+      "addTitle": "Add secret",
+      "saveButton": "Save",
+      "addButton": "Add",
+      "helpRules": "Shell-env-var rules: starts with a letter or _, then letters / digits / _ only.",
+      "replaceHint": "Paste new value (the previous one is wiped)",
+      "addHint": "Paste secret value",
+      "addedSnack": "Secret {key} added.",
+      "updatedSnack": "Secret {key} updated.",
+      "deletedSnack": "Deleted {key}.",
+      "deleteBody": "Removes the value from the encrypted vault. Any MCP server that references it will fail until restored."
+    },
+    "popup": {
+      "editConfigSubtitle": "Full JSON editor — vault-backed servers only",
+      "viewRawSubtitle": "Read-only inspector for the server JSON",
+      "deleteLabel": "Delete"
+    },
+    "kv": {
+      "transport": "Transport",
+      "description": "Description",
+      "command": "Command",
+      "args": "Args",
+      "headers": "Headers"
+    },
+    "deleteServerBody": "Removes the vault directory for {id}. Sessions that reference this server stop being able to spawn it.",
+    "deleteServerSnack": "Deleted {id}.",
+    "serversCount": "Servers ({count})",
+    "secretsCount": "Secrets ({count})",
+    "emptyServers": "No MCP servers registered. Tap \"New server\" to add one.",
+    "emptySecrets": "No secrets stored. Add one to feed sensitive env / headers into MCP servers without putting them in the JSON.",
+    "noVaultFileYet": "No vault file yet — added secrets create it.",
+    "tapToReplaceHint": "Tap to replace · long-press / trash to delete",
+    "failedToLoad": "Failed to load MCP state",
+    "serverCreatedSnack": "MCP server created.",
+    "serverUpdatedSnack": "MCP server updated.",
+    "envHeading": "Env",
+    "encryptionAes": "AES-GCM encrypted (key in OS keychain)",
+    "encryptionPlaintext": "PLAINTEXT — keychain unavailable",
+    "toggleEnabledSnack": "{name} enabled.",
+    "toggleDisabledSnack": "{name} disabled."
   },
   "providers": {
     "title": "Providers",
