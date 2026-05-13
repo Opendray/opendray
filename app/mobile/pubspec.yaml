@@ -36,5 +36,12 @@ dev_dependencies:
   json_serializable: ^6.9.0
   very_good_analysis: ^7.0.0
 
+# Use the in-repo xterm fork (third_party/xterm) which enables IME features
+# (voice input, suggestions, personalized learning) on the terminal input.
+# Upstream xterm 4.0.0 hard-codes these flags off in custom_text_edit.dart.
+dependency_overrides:
+  xterm:
+    path: ../../third_party/xterm
+
 flutter:
   uses-material-design: true
