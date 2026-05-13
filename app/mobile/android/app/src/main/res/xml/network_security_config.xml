@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Allow cleartext HTTP. opendray is typically self-hosted on a LAN
+  (Proxmox LXC, home server, etc.) and reached via a private IP like
+  192.168.x.x — but Android 9+ blocks cleartext globally by default,
+  so the release APK silently fails to connect.
+
+  Why not restrict by IP range: Android's network-security-config
+  <domain> matches literal hostnames only, no CIDR / no IP-range
+  syntax. Enumerating every possible private address is impractical;
+  the realistic options are "all cleartext" or "no cleartext".
+
+  Since this app's sole purpose is talking to a single self-hosted
+  gateway the operator already trusts (and points to via base URL
+  in settings), permitting cleartext globally is the right trade-off.
+
+  If you front opendray with a TLS reverse proxy and always reach
+  it via HTTPS, this file becomes a no-op.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system"/>
+            <certificates src="user"/>
+        </trust-anchors>
+    </base-config>
+</network-security-config>
