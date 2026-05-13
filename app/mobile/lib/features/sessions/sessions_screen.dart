@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/sessions/session_action_sheet.dart';
 import 'package:opendray/features/sessions/spawn_session_sheet.dart';
 import 'package:path/path.dart' as p;
@@ -50,11 +51,11 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sessions'),
+        title: Text(t.sessions.title),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
+            tooltip: t.sessions.refresh,
             onPressed: async.isLoading
                 ? null
                 : () => ref.invalidate(sessionsListProvider),
@@ -105,20 +106,24 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _onSpawn,
         icon: const Icon(Icons.add),
-        label: const Text('Spawn'),
+        label: Text(t.sessions.spawn),
       ),
     );
   }
 }
 
 enum _Filter {
-  all('All'),
-  running('Running'),
-  idle('Idle'),
-  ended('Ended');
+  all,
+  running,
+  idle,
+  ended;
 
-  const _Filter(this.label);
-  final String label;
+  String label() => switch (this) {
+        _Filter.all => t.sessions.filters.all,
+        _Filter.running => t.sessions.filters.running,
+        _Filter.idle => t.sessions.filters.idle,
+        _Filter.ended => t.sessions.filters.ended,
+      };
 
   bool matches(SessionSummary s) => switch (this) {
         _Filter.all => true,
@@ -148,7 +153,7 @@ class _FilterBar extends StatelessWidget {
           final f = _Filter.values[i];
           final selected = f == value;
           return ChoiceChip(
-            label: Text(f.label),
+            label: Text(f.label()),
             selected: selected,
             onSelected: (_) => onChanged(f),
           );
@@ -213,7 +218,10 @@ class _SessionCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${session.providerId} · started ${_formatRelative(session.startedAt)}',
+                      t.sessions.card.startedRelative(
+                        provider: session.providerId,
+                        when: _formatRelative(session.startedAt),
+                      ),
                       style: Theme.of(context).textTheme.bodySmall,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -222,7 +230,7 @@ class _SessionCard extends StatelessWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.more_vert),
-                tooltip: 'Actions',
+                tooltip: t.sessions.actions,
                 onPressed: onMore,
               ),
             ],
@@ -284,8 +292,8 @@ class _EmptyState extends StatelessWidget {
         Center(
           child: Text(
             hasAny
-                ? 'No sessions match the "${filter.label}" filter.'
-                : 'No sessions yet',
+                ? t.sessions.empty.titleFiltered(filter: filter.label())
+                : t.sessions.empty.titleAll,
             style: Theme.of(context).textTheme.titleMedium,
           ),
         ),
@@ -293,8 +301,8 @@ class _EmptyState extends StatelessWidget {
         Center(
           child: Text(
             hasAny
-                ? 'Try a different filter or pull to refresh.'
-                : 'Tap the Spawn button to create one.',
+                ? t.sessions.empty.subtitleFiltered
+                : t.sessions.empty.subtitleAll,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
           ),
@@ -322,7 +330,7 @@ class _ErrorView extends StatelessWidget {
         const SizedBox(height: 12),
         Center(
           child: Text(
-            'Failed to load sessions',
+            t.sessions.errorTitle,
             style: Theme.of(context).textTheme.titleMedium,
           ),
         ),
@@ -336,7 +344,7 @@ class _ErrorView extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Center(
-          child: FilledButton(onPressed: onRetry, child: const Text('Retry')),
+          child: FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
         ),
       ],
     );
@@ -345,10 +353,10 @@ class _ErrorView extends StatelessWidget {
 
 String _formatRelative(DateTime ts) {
   final diff = DateTime.now().toUtc().difference(ts.toUtc());
-  if (diff.inSeconds < 60) return '${diff.inSeconds}s ago';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-  if (diff.inHours < 24) return '${diff.inHours}h ago';
-  if (diff.inDays < 7) return '${diff.inDays}d ago';
+  if (diff.inSeconds < 60) return t.sessions.relative.secondsAgo(n: diff.inSeconds);
+  if (diff.inMinutes < 60) return t.sessions.relative.minutesAgo(n: diff.inMinutes);
+  if (diff.inHours < 24) return t.sessions.relative.hoursAgo(n: diff.inHours);
+  if (diff.inDays < 7) return t.sessions.relative.daysAgo(n: diff.inDays);
   return DateFormat.yMMMd().format(ts.toLocal());
 }
 

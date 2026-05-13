@@ -89,6 +89,34 @@
     },
     "signOut": "Sign out"
   },
+  "sessions": {
+    "title": "Sessions",
+    "refresh": "Refresh",
+    "actions": "Actions",
+    "spawn": "Spawn",
+    "filters": {
+      "all": "All",
+      "running": "Running",
+      "idle": "Idle",
+      "ended": "Ended"
+    },
+    "card": {
+      "startedRelative": "{provider} · started {when}"
+    },
+    "empty": {
+      "titleAll": "No sessions yet",
+      "titleFiltered": "No sessions match the \"{filter}\" filter.",
+      "subtitleAll": "Tap the Spawn button to create one.",
+      "subtitleFiltered": "Try a different filter or pull to refresh."
+    },
+    "errorTitle": "Failed to load sessions",
+    "relative": {
+      "secondsAgo": "{n}s ago",
+      "minutesAgo": "{n}m ago",
+      "hoursAgo": "{n}h ago",
+      "daysAgo": "{n}d ago"
+    }
+  },
   "about": {
     "title": "About",
     "loading": "Loading…",
