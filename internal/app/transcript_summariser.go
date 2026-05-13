@@ -1,35 +1,26 @@
 package app
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
-	"net/http"
 	"strings"
 	"time"
 
-	"github.com/opendray/opendray-v2/internal/memory/summarizer"
+	"github.com/opendray/opendray-v2/internal/memory/worker"
 )
 
 // transcriptSummariser is the M18 implementation of
-// projectdoc.TranscriptSummariser. It re-uses the OpenAI-compatible
-// chat completions endpoint we already use for the gatekeeper and
-// git activity summarisers, with a "session reviewer" prompt that
-// turns a raw transcript into 1-3 paragraphs of "what the agent
-// did in this session".
+// projectdoc.TranscriptSummariser. As of M25 it routes through
+// worker.Registry so operators can pick per-task between the
+// summarizer HTTP path and a headless agent CLI (Claude/Gemini
+// `--print` mode). The prompt + tag-extraction logic stays local
+// to this file because each touchpoint has its own
+// idiosyncrasies; only the LLM call dispatch is shared.
 //
 // Wrapped in <summary>…</summary> tags so reasoning models that
 // leak thinking process still get post-processed cleanly — same
 // trick the gitactivity summariser uses.
 type transcriptSummariser struct {
-	baseURL string
-	apiKey  string
-	model   string
-	kind    string
-	http    *http.Client
+	registry *worker.Registry
 }
 
 const transcriptSystemPrompt = `You are a session reviewer.
@@ -57,26 +48,13 @@ If the transcript is too short / sparse to summarise (e.g. agent
 just answered one question and the session ended), output an empty
 <summary></summary> block.`
 
-func newTranscriptSummariser(row summarizer.ProviderRow, apiKey string) (*transcriptSummariser, error) {
-	switch row.Kind {
-	case "openai", "lmstudio":
-	default:
-		return nil, fmt.Errorf("transcript summariser: unsupported provider kind %q", row.Kind)
-	}
-	base := strings.TrimRight(row.BaseURL, "/")
-	if base == "" {
-		return nil, errors.New("transcript summariser: provider has no base_url")
-	}
-	if row.Model == "" {
-		return nil, errors.New("transcript summariser: provider has no model")
-	}
-	return &transcriptSummariser{
-		baseURL: base,
-		apiKey:  apiKey,
-		model:   row.Model,
-		kind:    row.Kind,
-		http:    &http.Client{Timeout: 5 * time.Minute},
-	}, nil
+// newTranscriptSummariser is M25-shape: just hold a worker
+// registry reference and dispatch when SummariseTranscript is
+// called. The actual provider lookup happens inside the worker
+// registry per call, so operator UI changes apply immediately
+// without restart.
+func newTranscriptSummariser(reg *worker.Registry) *transcriptSummariser {
+	return &transcriptSummariser{registry: reg}
 }
 
 // SummariseTranscript implements projectdoc.TranscriptSummariser.
@@ -84,58 +62,26 @@ func (s *transcriptSummariser) SummariseTranscript(ctx context.Context, transcri
 	if strings.TrimSpace(transcript) == "" {
 		return "", nil
 	}
-	body := map[string]any{
-		"model": s.model,
-		"messages": []map[string]any{
-			{"role": "system", "content": transcriptSystemPrompt},
-			{"role": "user", "content": transcript},
-		},
-		"max_tokens": 4096,
-		"stream":     false,
+	if s.registry == nil {
+		// Registry not wired → degrade silently. Journaler will
+		// write a metadata-only entry, which is the right fail-
+		// mode for "no LLM available".
+		return "", nil
 	}
-	raw, err := json.Marshal(body)
-	if err != nil {
-		return "", fmt.Errorf("transcript summariser: marshal: %w", err)
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.baseURL+"/chat/completions", bytes.NewReader(raw))
+	resp, err := s.registry.Run(ctx, worker.Request{
+		Task:         worker.TaskTranscript,
+		SystemPrompt: transcriptSystemPrompt,
+		UserInput:    transcript,
+		MaxTokens:    4096,
+		Timeout:      5 * time.Minute,
+	})
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	if s.apiKey != "" {
-		req.Header.Set("Authorization", "Bearer "+s.apiKey)
-	}
-	res, err := s.http.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("transcript summariser: call: %w", err)
-	}
-	defer res.Body.Close()
-	rawRes, _ := io.ReadAll(io.LimitReader(res.Body, 1<<20))
-	if res.StatusCode/100 != 2 {
-		return "", fmt.Errorf("transcript summariser: HTTP %d: %s", res.StatusCode, truncate(string(rawRes), 300))
-	}
-	var envelope struct {
-		Choices []struct {
-			Message struct {
-				Content          string `json:"content"`
-				ReasoningContent string `json:"reasoning_content"`
-			} `json:"message"`
-		} `json:"choices"`
-	}
-	if err := json.Unmarshal(rawRes, &envelope); err != nil {
-		return "", fmt.Errorf("transcript summariser: parse: %w", err)
-	}
-	if len(envelope.Choices) == 0 {
-		return "", errors.New("transcript summariser: no choices")
-	}
-	content := strings.TrimSpace(envelope.Choices[0].Message.Content)
-	if content == "" {
-		content = strings.TrimSpace(envelope.Choices[0].Message.ReasoningContent)
-	}
-	if content == "" {
+	if resp.Content == "" {
 		return "", nil
 	}
-	return extractTaggedSummary(content), nil
+	return extractTaggedSummary(resp.Content), nil
 }
 
 // extractTaggedSummary pulls content between <summary>...</summary>
@@ -154,11 +100,4 @@ func extractTaggedSummary(s string) string {
 		return strings.TrimSpace(rest)
 	}
 	return strings.TrimSpace(rest[:j])
-}
-
-func truncate(s string, max int) string {
-	if len(s) <= max {
-		return s
-	}
-	return s[:max] + "…"
 }

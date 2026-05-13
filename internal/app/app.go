@@ -48,6 +48,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/memory/cleaner"
 	"github.com/opendray/opendray-v2/internal/memory/injector"
 	"github.com/opendray/opendray-v2/internal/memory/summarizer"
+	memworker "github.com/opendray/opendray-v2/internal/memory/worker"
 	notesapi "github.com/opendray/opendray-v2/internal/notes"
 	"github.com/opendray/opendray-v2/internal/projectdoc"
 	"github.com/opendray/opendray-v2/internal/projectscan"
@@ -362,6 +363,15 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		WithIntegrationLookup(&summarizerIntegrationLookup{svc: intgrSvc})
 	summarizerHandlers := summarizer.NewHandlers(summarizerRegistry, summarizerStore, log)
 
+	// M25 — pluggable memory worker. Operators pick per-task
+	// between the summarizer HTTP path (existing) and a headless
+	// agent CLI (`claude --print` / `gemini --print`). All four
+	// memory touchpoints (gatekeeper, cleaner, gitactivity,
+	// transcript) read their config row from memory_workers.
+	memoryWorkerRegistry := memworker.NewRegistry(
+		st.Pool(), summarizerRegistry, cliacctSvc, log)
+	memoryWorkerHandlers := memworker.NewHandlers(memoryWorkerRegistry, log)
+
 	// M12 — Gatekeeper. Wired late because the summarizer registry
 	// only exists after backup cipher + summarizer store are up.
 	// When operators set [memory.gatekeeper] enabled = true, every
@@ -500,14 +510,13 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		&projectdocSessionLookup{mgr: sessionMgr},
 		log,
 	)
-	// M18 — install the LLM summariser if a provider is configured.
-	// Same provider chain as gatekeeper / cleaner / gitactivity.
-	if ts, err := buildTranscriptSummariser(ctx, summarizerRegistry); err != nil {
-		log.Warn("transcript summariser unavailable; journaler writes metadata-only entries", "err", err)
-	} else if ts != nil {
-		journaler.WithSummariser(ts)
-		log.Info("transcript-aware journaler enabled (LLM-summarised session.ended)")
-	}
+	// M18 + M25 — transcript summariser routes through the
+	// memory worker registry, so operator config in
+	// memory_workers picks summarizer vs agent at call time.
+	// No upfront provider check needed: the registry handles
+	// degraded states (no summarizer configured → returns empty).
+	journaler.WithSummariser(newTranscriptSummariser(memoryWorkerRegistry))
+	log.Info("transcript-aware journaler enabled (worker-registry routing)")
 
 	gw := gateway.NewServer(gateway.Deps{
 		Logger:    log,
@@ -551,6 +560,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				backup.NewSetupHandlers(liveBackup, keyLoad.Source).Mount(r)
 				backupHandlers.Mount(r)
 				summarizerHandlers.Mount(r)
+				memoryWorkerHandlers.Mount(r)
 				captureHandlers.Mount(r)
 				injectorHandlers.Mount(r)
 				if cleanerHandlers != nil {
@@ -614,44 +624,9 @@ func (a *App) Migrate(ctx context.Context) error {
 	return a.store.Migrate(ctx, a.log)
 }
 
-// buildTranscriptSummariser resolves the default summariser
-// provider and constructs an M18 transcript summariser. Returns
-// (nil, nil) when no provider exists — the journaler falls back to
-// metadata-only entries.
-func buildTranscriptSummariser(ctx context.Context, reg *summarizer.Registry) (*transcriptSummariser, error) {
-	if reg == nil {
-		return nil, nil
-	}
-	rows, err := reg.ListEnabledRows(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if len(rows) == 0 {
-		return nil, nil
-	}
-	pick := rows[0]
-	for _, r := range rows {
-		if r.IsDefault {
-			pick = r
-			break
-		}
-	}
-	// Force decryption of api_key by going through Build.
-	if _, err := reg.Build(ctx, pick.ID); err != nil {
-		return nil, err
-	}
-	freshRows, err := reg.ListEnabledRows(ctx)
-	if err != nil {
-		return nil, err
-	}
-	for _, r := range freshRows {
-		if r.ID == pick.ID {
-			pick = r
-			break
-		}
-	}
-	return newTranscriptSummariser(pick, pick.APIKeyPlaintext)
-}
+// (buildTranscriptSummariser was removed in M25 — the transcript
+// summariser now routes through the memory worker registry
+// directly. See newTranscriptSummariser in transcript_summariser.go.)
 
 // buildGitActivityClient resolves the default summariser provider
 // (or the explicitly-pinned one) and constructs an LLM client for
