@@ -504,10 +504,10 @@ type ResetCwdOptions struct {
 // ResetCounts is what ResetCwd returns: counts of rows deleted per
 // table so the UI can show "deleted X docs, Y journal entries, …".
 type ResetCounts struct {
-	ProjectDocs       int64 `json:"project_docs"`
-	Proposals         int64 `json:"project_doc_proposals"`
-	SessionLogs       int64 `json:"session_logs"`
-	CleanupDecisions  int64 `json:"memory_cleanup_decisions"`
+	ProjectDocs      int64 `json:"project_docs"`
+	Proposals        int64 `json:"project_doc_proposals"`
+	SessionLogs      int64 `json:"session_logs"`
+	CleanupDecisions int64 `json:"memory_cleanup_decisions"`
 }
 
 // ResetCwd wipes per-cwd project memory state in a single
