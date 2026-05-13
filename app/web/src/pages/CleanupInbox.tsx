@@ -78,16 +78,24 @@ export function CleanupInboxPage() {
 
       {grouped.map(([key, decisions]) => {
         const [scope, scopeKey] = key.split(':', 2)
+        const orphan = scope === 'project' && isLikelyOrphanScope(scopeKey)
         return (
           <section key={key} className="space-y-3">
             <header className="flex items-center justify-between border-b pb-2">
-              <div>
-                <Badge variant="outline" className="mr-2">
-                  {scope}
-                </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">{scope}</Badge>
                 <span className="font-mono text-xs">{scopeKey}</span>
+                {orphan && (
+                  <Badge
+                    variant="muted"
+                    className="text-[9px]"
+                    title="Truncated scope_key (old mirror import). Not a navigable project."
+                  >
+                    orphan
+                  </Badge>
+                )}
               </div>
-              {scope === 'project' && scopeKey && (
+              {scope === 'project' && scopeKey && !orphan && (
                 <Link
                   to="/memory/project"
                   search={{ cwd: scopeKey }}
@@ -105,6 +113,15 @@ export function CleanupInboxPage() {
       })}
     </div>
   )
+}
+
+// Same heuristic as in pages/Project.tsx — scope_keys with fewer
+// than 2 non-empty path segments (e.g. `/Users/`) are bug data
+// from old mirror imports, not real projects.
+function isLikelyOrphanScope(cwd: string): boolean {
+  if (!cwd) return false
+  const parts = cwd.split('/').filter((s) => s.length > 0)
+  return parts.length < 2
 }
 
 function CleanupRow({
