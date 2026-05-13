@@ -299,6 +299,39 @@
       }
     }
   },
+  "memory": {
+    "title": "记忆",
+    "more": "更多",
+    "workers": "记忆工作器",
+    "new": "新建",
+    "searchHint": "搜索…",
+    "projectLabel": "项目",
+    "filterHint": "按名称或路径筛选…",
+    "copied": "已复制",
+    "copyTooltip": "复制文本",
+    "deleteAllConfirm": {
+      "title": "删除此范围内所有记忆？",
+      "deleteAll": "全部删除"
+    },
+    "deletedSnackOne": "已删除 {n} 条记忆",
+    "deletedSnackOther": "已删除 {n} 条记忆",
+    "bulkDeleteFailedApi": "批量删除失败：{error}",
+    "bulkDeleteFailedGeneric": "批量删除失败：{error}",
+    "deleteOne": {
+      "title": "删除该记忆？",
+      "body": "此操作不可撤销。"
+    },
+    "scope": {
+      "project": "项目",
+      "global": "全局"
+    },
+    "create": {
+      "textLabel": "文本",
+      "scopeKeyLabel": "范围键（项目 cwd）",
+      "scopeKeyHint": "/Users/you/projects/foo",
+      "submit": "创建"
+    }
+  },
   "about": {
     "title": "关于",
     "loading": "加载中…",

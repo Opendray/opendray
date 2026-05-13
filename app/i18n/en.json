@@ -299,6 +299,39 @@
       }
     }
   },
+  "memory": {
+    "title": "Memory",
+    "more": "More",
+    "workers": "Memory workers",
+    "new": "New",
+    "searchHint": "Search…",
+    "projectLabel": "Project",
+    "filterHint": "Filter by name or path…",
+    "copied": "Copied",
+    "copyTooltip": "Copy text",
+    "deleteAllConfirm": {
+      "title": "Delete every memory in this scope?",
+      "deleteAll": "Delete all"
+    },
+    "deletedSnackOne": "Deleted {n} memory item",
+    "deletedSnackOther": "Deleted {n} memory items",
+    "bulkDeleteFailedApi": "Bulk delete failed: {error}",
+    "bulkDeleteFailedGeneric": "Bulk delete failed: {error}",
+    "deleteOne": {
+      "title": "Delete memory?",
+      "body": "This cannot be undone."
+    },
+    "scope": {
+      "project": "Project",
+      "global": "Global"
+    },
+    "create": {
+      "textLabel": "Text",
+      "scopeKeyLabel": "Scope key (project cwd)",
+      "scopeKeyHint": "/Users/you/projects/foo",
+      "submit": "Create"
+    }
+  },
   "about": {
     "title": "About",
     "loading": "Loading…",
