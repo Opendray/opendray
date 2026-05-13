@@ -379,6 +379,53 @@
     "rotateFailedApi": "Rotate failed: {error}",
     "rotateFailedGeneric": "Rotate failed: {error}"
   },
+  "backups": {
+    "title": "Backups",
+    "runConfirmTitle": "Run backup now?",
+    "run": "Run",
+    "queuedSnack": "Backup queued ({id}). Watching for progress…",
+    "runFailedApi": "Run failed: {error}",
+    "runFailedGeneric": "Run failed: {error}",
+    "detailTitle": "Backup detail",
+    "deleteTitle": "Delete backup?",
+    "deletedSnack": "Deleted {id}.",
+    "deleteFailedApi": "Delete failed: {error}",
+    "deleteFailedGeneric": "Delete failed: {error}",
+    "menuSchedules": "Schedules",
+    "menuTargets": "Targets",
+    "encryption": {
+      "checkAgain": "Check again",
+      "generate": "Generate",
+      "paste": "Paste",
+      "random256bit": "256-bit random key",
+      "passphraseLabel": "Your passphrase",
+      "passphraseHint": "At least 20 characters",
+      "passphraseCopied": "Passphrase copied to clipboard"
+    }
+  },
+  "backupTargets": {
+    "title": "Backup targets",
+    "newTarget": "New target",
+    "testConnection": "Test connection",
+    "editConfig": "Edit config",
+    "viewRawConfig": "View raw config",
+    "configDialogTitle": "{kind} config",
+    "deleteTitle": "Delete target?",
+    "errorWithMessage": "{prefix}: {error}"
+  },
+  "backupSchedules": {
+    "title": "Backup schedules",
+    "deleteTitle": "Delete schedule?",
+    "targetLabel": "Target",
+    "intervalLabel": "Interval",
+    "retentionLabel": "Retention (keep N most recent)",
+    "errorWithMessage": "{prefix}: {error}"
+  },
+  "backupTargetEditor": {
+    "useHttps": "Use HTTPS",
+    "pathStyle": "Path-style addressing",
+    "pathStyleSubtitle": "Legacy / MinIO"
+  },
   "githosts": {
     "title": "Git hosts",
     "addHost": "Add host",

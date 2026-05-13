@@ -379,6 +379,53 @@
     "rotateFailedApi": "轮换失败：{error}",
     "rotateFailedGeneric": "轮换失败：{error}"
   },
+  "backups": {
+    "title": "备份",
+    "runConfirmTitle": "立即运行备份？",
+    "run": "运行",
+    "queuedSnack": "备份已入队（{id}）。监控进度中…",
+    "runFailedApi": "运行失败：{error}",
+    "runFailedGeneric": "运行失败：{error}",
+    "detailTitle": "备份详情",
+    "deleteTitle": "删除备份？",
+    "deletedSnack": "已删除 {id}。",
+    "deleteFailedApi": "删除失败：{error}",
+    "deleteFailedGeneric": "删除失败：{error}",
+    "menuSchedules": "计划",
+    "menuTargets": "目标",
+    "encryption": {
+      "checkAgain": "重新检查",
+      "generate": "生成",
+      "paste": "粘贴",
+      "random256bit": "256 位随机密钥",
+      "passphraseLabel": "你的密语",
+      "passphraseHint": "至少 20 个字符",
+      "passphraseCopied": "密语已复制到剪贴板"
+    }
+  },
+  "backupTargets": {
+    "title": "备份目标",
+    "newTarget": "新建目标",
+    "testConnection": "测试连接",
+    "editConfig": "编辑配置",
+    "viewRawConfig": "查看原始配置",
+    "configDialogTitle": "{kind} 配置",
+    "deleteTitle": "删除目标？",
+    "errorWithMessage": "{prefix}：{error}"
+  },
+  "backupSchedules": {
+    "title": "备份计划",
+    "deleteTitle": "删除计划？",
+    "targetLabel": "目标",
+    "intervalLabel": "间隔",
+    "retentionLabel": "保留（最近 N 个）",
+    "errorWithMessage": "{prefix}：{error}"
+  },
+  "backupTargetEditor": {
+    "useHttps": "使用 HTTPS",
+    "pathStyle": "路径风格寻址",
+    "pathStyleSubtitle": "旧版 / MinIO"
+  },
   "githosts": {
     "title": "Git 主机",
     "addHost": "添加主机",

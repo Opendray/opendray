@@ -48,6 +48,10 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsMcpEn mcp = TranslationsMcpEn.internal(_root);
 	late final TranslationsProvidersEn providers = TranslationsProvidersEn.internal(_root);
 	late final TranslationsIntegrationsEn integrations = TranslationsIntegrationsEn.internal(_root);
+	late final TranslationsBackupsEn backups = TranslationsBackupsEn.internal(_root);
+	late final TranslationsBackupTargetsEn backupTargets = TranslationsBackupTargetsEn.internal(_root);
+	late final TranslationsBackupSchedulesEn backupSchedules = TranslationsBackupSchedulesEn.internal(_root);
+	late final TranslationsBackupTargetEditorEn backupTargetEditor = TranslationsBackupTargetEditorEn.internal(_root);
 	late final TranslationsGithostsEn githosts = TranslationsGithostsEn.internal(_root);
 	late final TranslationsChannelsEn channels = TranslationsChannelsEn.internal(_root);
 	late final TranslationsOnboardingEn onboarding = TranslationsOnboardingEn.internal(_root);
@@ -370,6 +374,134 @@ class TranslationsIntegrationsEn {
 
 	/// en: 'Rotate failed: {error}'
 	String rotateFailedGeneric({required Object error}) => 'Rotate failed: ${error}';
+}
+
+// Path: backups
+class TranslationsBackupsEn {
+	TranslationsBackupsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Backups'
+	String get title => 'Backups';
+
+	/// en: 'Run backup now?'
+	String get runConfirmTitle => 'Run backup now?';
+
+	/// en: 'Run'
+	String get run => 'Run';
+
+	/// en: 'Backup queued ({id}). Watching for progress…'
+	String queuedSnack({required Object id}) => 'Backup queued (${id}). Watching for progress…';
+
+	/// en: 'Run failed: {error}'
+	String runFailedApi({required Object error}) => 'Run failed: ${error}';
+
+	/// en: 'Run failed: {error}'
+	String runFailedGeneric({required Object error}) => 'Run failed: ${error}';
+
+	/// en: 'Backup detail'
+	String get detailTitle => 'Backup detail';
+
+	/// en: 'Delete backup?'
+	String get deleteTitle => 'Delete backup?';
+
+	/// en: 'Deleted {id}.'
+	String deletedSnack({required Object id}) => 'Deleted ${id}.';
+
+	/// en: 'Delete failed: {error}'
+	String deleteFailedApi({required Object error}) => 'Delete failed: ${error}';
+
+	/// en: 'Delete failed: {error}'
+	String deleteFailedGeneric({required Object error}) => 'Delete failed: ${error}';
+
+	/// en: 'Schedules'
+	String get menuSchedules => 'Schedules';
+
+	/// en: 'Targets'
+	String get menuTargets => 'Targets';
+
+	late final TranslationsBackupsEncryptionEn encryption = TranslationsBackupsEncryptionEn.internal(_root);
+}
+
+// Path: backupTargets
+class TranslationsBackupTargetsEn {
+	TranslationsBackupTargetsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Backup targets'
+	String get title => 'Backup targets';
+
+	/// en: 'New target'
+	String get newTarget => 'New target';
+
+	/// en: 'Test connection'
+	String get testConnection => 'Test connection';
+
+	/// en: 'Edit config'
+	String get editConfig => 'Edit config';
+
+	/// en: 'View raw config'
+	String get viewRawConfig => 'View raw config';
+
+	/// en: '{kind} config'
+	String configDialogTitle({required Object kind}) => '${kind} config';
+
+	/// en: 'Delete target?'
+	String get deleteTitle => 'Delete target?';
+
+	/// en: '{prefix}: {error}'
+	String errorWithMessage({required Object prefix, required Object error}) => '${prefix}: ${error}';
+}
+
+// Path: backupSchedules
+class TranslationsBackupSchedulesEn {
+	TranslationsBackupSchedulesEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Backup schedules'
+	String get title => 'Backup schedules';
+
+	/// en: 'Delete schedule?'
+	String get deleteTitle => 'Delete schedule?';
+
+	/// en: 'Target'
+	String get targetLabel => 'Target';
+
+	/// en: 'Interval'
+	String get intervalLabel => 'Interval';
+
+	/// en: 'Retention (keep N most recent)'
+	String get retentionLabel => 'Retention (keep N most recent)';
+
+	/// en: '{prefix}: {error}'
+	String errorWithMessage({required Object prefix, required Object error}) => '${prefix}: ${error}';
+}
+
+// Path: backupTargetEditor
+class TranslationsBackupTargetEditorEn {
+	TranslationsBackupTargetEditorEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Use HTTPS'
+	String get useHttps => 'Use HTTPS';
+
+	/// en: 'Path-style addressing'
+	String get pathStyle => 'Path-style addressing';
+
+	/// en: 'Legacy / MinIO'
+	String get pathStyleSubtitle => 'Legacy / MinIO';
 }
 
 // Path: githosts
@@ -1136,6 +1268,36 @@ class TranslationsProvidersAccountsEn {
 
 	/// en: 'Import failed: {error}'
 	String importFailedGeneric({required Object error}) => 'Import failed: ${error}';
+}
+
+// Path: backups.encryption
+class TranslationsBackupsEncryptionEn {
+	TranslationsBackupsEncryptionEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Check again'
+	String get checkAgain => 'Check again';
+
+	/// en: 'Generate'
+	String get generate => 'Generate';
+
+	/// en: 'Paste'
+	String get paste => 'Paste';
+
+	/// en: '256-bit random key'
+	String get random256bit => '256-bit random key';
+
+	/// en: 'Your passphrase'
+	String get passphraseLabel => 'Your passphrase';
+
+	/// en: 'At least 20 characters'
+	String get passphraseHint => 'At least 20 characters';
+
+	/// en: 'Passphrase copied to clipboard'
+	String get passphraseCopied => 'Passphrase copied to clipboard';
 }
 
 // Path: githosts.errorPrefix
@@ -2367,6 +2529,43 @@ extension on Translations {
 			'integrations.newApiKeySubtitle' => 'Hand this to the integration. The previous key has just been invalidated.',
 			'integrations.rotateFailedApi' => ({required Object error}) => 'Rotate failed: ${error}',
 			'integrations.rotateFailedGeneric' => ({required Object error}) => 'Rotate failed: ${error}',
+			'backups.title' => 'Backups',
+			'backups.runConfirmTitle' => 'Run backup now?',
+			'backups.run' => 'Run',
+			'backups.queuedSnack' => ({required Object id}) => 'Backup queued (${id}). Watching for progress…',
+			'backups.runFailedApi' => ({required Object error}) => 'Run failed: ${error}',
+			'backups.runFailedGeneric' => ({required Object error}) => 'Run failed: ${error}',
+			'backups.detailTitle' => 'Backup detail',
+			'backups.deleteTitle' => 'Delete backup?',
+			'backups.deletedSnack' => ({required Object id}) => 'Deleted ${id}.',
+			'backups.deleteFailedApi' => ({required Object error}) => 'Delete failed: ${error}',
+			'backups.deleteFailedGeneric' => ({required Object error}) => 'Delete failed: ${error}',
+			'backups.menuSchedules' => 'Schedules',
+			'backups.menuTargets' => 'Targets',
+			'backups.encryption.checkAgain' => 'Check again',
+			'backups.encryption.generate' => 'Generate',
+			'backups.encryption.paste' => 'Paste',
+			'backups.encryption.random256bit' => '256-bit random key',
+			'backups.encryption.passphraseLabel' => 'Your passphrase',
+			'backups.encryption.passphraseHint' => 'At least 20 characters',
+			'backups.encryption.passphraseCopied' => 'Passphrase copied to clipboard',
+			'backupTargets.title' => 'Backup targets',
+			'backupTargets.newTarget' => 'New target',
+			'backupTargets.testConnection' => 'Test connection',
+			'backupTargets.editConfig' => 'Edit config',
+			'backupTargets.viewRawConfig' => 'View raw config',
+			'backupTargets.configDialogTitle' => ({required Object kind}) => '${kind} config',
+			'backupTargets.deleteTitle' => 'Delete target?',
+			'backupTargets.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
+			'backupSchedules.title' => 'Backup schedules',
+			'backupSchedules.deleteTitle' => 'Delete schedule?',
+			'backupSchedules.targetLabel' => 'Target',
+			'backupSchedules.intervalLabel' => 'Interval',
+			'backupSchedules.retentionLabel' => 'Retention (keep N most recent)',
+			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
+			'backupTargetEditor.useHttps' => 'Use HTTPS',
+			'backupTargetEditor.pathStyle' => 'Path-style addressing',
+			'backupTargetEditor.pathStyleSubtitle' => 'Legacy / MinIO',
 			'githosts.title' => 'Git hosts',
 			'githosts.addHost' => 'Add host',
 			'githosts.deleteTitle' => 'Delete git host?',
