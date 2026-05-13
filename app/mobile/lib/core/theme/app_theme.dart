@@ -26,10 +26,17 @@ class AppTheme {
   // Chosen to keep readable contrast against the same accent. Off-
   // white background (not pure #FFFFFF) reduces glare under bright
   // sunlight, common when the operator uses the phone outdoors.
+  //
+  // Contrast notes (vs `_lightBg = #F7F7F5`):
+  //  - `_lightText`  (#111418) ≈ 16:1   — body text, easily AAA
+  //  - `_lightMuted` (#4B5563) ≈ 6.5:1  — secondary text, AA-clean
+  //    (was #6B7280 ≈ 4.17:1, which fell below the WCAG-AA 4.5:1
+  //    minimum and read as a grey haze on cwd rows / timestamps)
+  //  - `_lightBorder` (#D1D5DB) ≈ 1.5:1 — non-text, just visible
   static const _lightBg = Color(0xFFF7F7F5);
   static const _lightCard = Color(0xFFFFFFFF);
-  static const _lightBorder = Color(0xFFE3E4E7);
-  static const _lightMuted = Color(0xFF6B7280);
+  static const _lightBorder = Color(0xFFD1D5DB);
+  static const _lightMuted = Color(0xFF4B5563);
   static const _lightInput = Color(0xFFFAFAF9);
   static const _lightText = Color(0xFF111418);
 
