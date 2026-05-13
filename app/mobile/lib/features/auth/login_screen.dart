@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/auth_api.dart';
 import 'package:opendray/core/auth/auth_state.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 // Username + password login. Calls /api/v1/auth/mobile-login which
 // returns a token with mobile_token_ttl (default 30 days, vs the
@@ -34,7 +35,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final username = _userCtrl.text.trim();
     final password = _passCtrl.text;
     if (username.isEmpty || password.isEmpty) {
-      setState(() => _error = 'Username and password are required');
+      setState(() => _error = t.auth.errorRequired);
       return;
     }
     setState(() {
@@ -56,7 +57,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     } on Object catch (e) {
-      setState(() => _error = 'Login failed: $e');
+      setState(() => _error = t.auth.errorGeneric(error: e.toString()));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -81,7 +82,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Sign in',
+                t.auth.signInTitle,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -98,7 +99,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   TextButton(
                     onPressed: _busy ? null : _changeServer,
-                    child: const Text('Change'),
+                    child: Text(t.auth.changeServer),
                   ),
                 ],
               ),
@@ -108,7 +109,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 autocorrect: false,
                 textCapitalization: TextCapitalization.none,
                 textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(labelText: 'Username'),
+                decoration: InputDecoration(labelText: t.auth.username),
               ),
               const SizedBox(height: 16),
               TextField(
@@ -118,7 +119,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 textInputAction: TextInputAction.go,
                 onSubmitted: (_) => _submit(),
                 decoration: InputDecoration(
-                  labelText: 'Password',
+                  labelText: t.auth.password,
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePass
@@ -164,7 +165,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         width: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Sign in'),
+                    : Text(t.auth.signIn),
               ),
             ],
           ),

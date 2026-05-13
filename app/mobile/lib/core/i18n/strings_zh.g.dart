@@ -40,6 +40,7 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 
 	// Translations
 	@override late final _TranslationsCommonZh common = _TranslationsCommonZh._(_root);
+	@override late final _TranslationsAuthZh auth = _TranslationsAuthZh._(_root);
 	@override late final _TranslationsSettingsZh settings = _TranslationsSettingsZh._(_root);
 }
 
@@ -59,6 +60,22 @@ class _TranslationsCommonZh extends TranslationsCommonEn {
 	@override String get done => '完成';
 	@override String get close => '关闭';
 	@override String get retry => '重试';
+}
+
+// Path: auth
+class _TranslationsAuthZh extends TranslationsAuthEn {
+	_TranslationsAuthZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get signInTitle => '登录';
+	@override String get changeServer => '更换';
+	@override String get username => '用户名';
+	@override String get password => '密码';
+	@override String get signIn => '登录';
+	@override String get errorRequired => '请输入用户名和密码';
+	@override String errorGeneric({required Object error}) => '登录失败：${error}';
 }
 
 // Path: settings
@@ -148,6 +165,13 @@ extension on TranslationsZh {
 			'common.done' => '完成',
 			'common.close' => '关闭',
 			'common.retry' => '重试',
+			'auth.signInTitle' => '登录',
+			'auth.changeServer' => '更换',
+			'auth.username' => '用户名',
+			'auth.password' => '密码',
+			'auth.signIn' => '登录',
+			'auth.errorRequired' => '请输入用户名和密码',
+			'auth.errorGeneric' => ({required Object error}) => '登录失败：${error}',
 			'settings.title' => '设置',
 			'settings.language.section' => '语言',
 			'settings.language.system' => '跟随系统',

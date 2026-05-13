@@ -10,6 +10,15 @@
     "close": "Close",
     "retry": "Retry"
   },
+  "auth": {
+    "signInTitle": "Sign in",
+    "changeServer": "Change",
+    "username": "Username",
+    "password": "Password",
+    "signIn": "Sign in",
+    "errorRequired": "Username and password are required",
+    "errorGeneric": "Login failed: {error}"
+  },
   "settings": {
     "title": "Settings",
     "language": {

@@ -41,6 +41,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 
 	// Translations
 	late final TranslationsCommonEn common = TranslationsCommonEn.internal(_root);
+	late final TranslationsAuthEn auth = TranslationsAuthEn.internal(_root);
 	late final TranslationsSettingsEn settings = TranslationsSettingsEn.internal(_root);
 }
 
@@ -78,6 +79,36 @@ class TranslationsCommonEn {
 
 	/// en: 'Retry'
 	String get retry => 'Retry';
+}
+
+// Path: auth
+class TranslationsAuthEn {
+	TranslationsAuthEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Sign in'
+	String get signInTitle => 'Sign in';
+
+	/// en: 'Change'
+	String get changeServer => 'Change';
+
+	/// en: 'Username'
+	String get username => 'Username';
+
+	/// en: 'Password'
+	String get password => 'Password';
+
+	/// en: 'Sign in'
+	String get signIn => 'Sign in';
+
+	/// en: 'Username and password are required'
+	String get errorRequired => 'Username and password are required';
+
+	/// en: 'Login failed: {error}'
+	String errorGeneric({required Object error}) => 'Login failed: ${error}';
 }
 
 // Path: settings
@@ -210,6 +241,13 @@ extension on Translations {
 			'common.done' => 'Done',
 			'common.close' => 'Close',
 			'common.retry' => 'Retry',
+			'auth.signInTitle' => 'Sign in',
+			'auth.changeServer' => 'Change',
+			'auth.username' => 'Username',
+			'auth.password' => 'Password',
+			'auth.signIn' => 'Sign in',
+			'auth.errorRequired' => 'Username and password are required',
+			'auth.errorGeneric' => ({required Object error}) => 'Login failed: ${error}',
 			'settings.title' => 'Settings',
 			'settings.language.section' => 'Language',
 			'settings.language.system' => 'System',
