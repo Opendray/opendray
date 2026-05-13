@@ -183,6 +183,9 @@ class TranslationsSessionsEn {
 	String get errorTitle => 'Failed to load sessions';
 
 	late final TranslationsSessionsRelativeEn relative = TranslationsSessionsRelativeEn.internal(_root);
+	late final TranslationsSessionsActionEn action = TranslationsSessionsActionEn.internal(_root);
+	late final TranslationsSessionsDirPickerEn dirPicker = TranslationsSessionsDirPickerEn.internal(_root);
+	late final TranslationsSessionsSpawnSheetEn spawnSheet = TranslationsSessionsSpawnSheetEn.internal(_root);
 }
 
 // Path: about
@@ -361,6 +364,138 @@ class TranslationsSessionsRelativeEn {
 
 	/// en: '{n}d ago'
 	String daysAgo({required Object n}) => '${n}d ago';
+}
+
+// Path: sessions.action
+class TranslationsSessionsActionEn {
+	TranslationsSessionsActionEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Stop'
+	String get stop => 'Stop';
+
+	/// en: 'Stopping…'
+	String get stopping => 'Stopping…';
+
+	/// en: 'Send SIGTERM, retain history'
+	String get stopDescription => 'Send SIGTERM, retain history';
+
+	/// en: 'Restart'
+	String get restart => 'Restart';
+
+	/// en: 'Restarting…'
+	String get restarting => 'Restarting…';
+
+	/// en: 'Re-spawn the CLI process'
+	String get restartDescription => 'Re-spawn the CLI process';
+
+	/// en: 'Delete'
+	String get delete => 'Delete';
+
+	/// en: 'Remove the session and its history'
+	String get deleteDescription => 'Remove the session and its history';
+
+	/// en: 'Delete this session permanently? Its ring buffer and history will be gone.'
+	String get deleteConfirm => 'Delete this session permanently? Its ring buffer and history will be gone.';
+
+	late final TranslationsSessionsActionErrorsEn errors = TranslationsSessionsActionErrorsEn.internal(_root);
+}
+
+// Path: sessions.dirPicker
+class TranslationsSessionsDirPickerEn {
+	TranslationsSessionsDirPickerEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Parent'
+	String get parent => 'Parent';
+
+	/// en: 'New folder'
+	String get newFolder => 'New folder';
+
+	/// en: 'Use this folder'
+	String get useThisFolder => 'Use this folder';
+
+	/// en: 'Loading…'
+	String get loading => 'Loading…';
+
+	/// en: 'No subfolders here. Pick this folder, or create a new one.'
+	String get empty => 'No subfolders here.\nPick this folder, or create a new one.';
+
+	/// en: 'Created {path}'
+	String createdSnack({required Object path}) => 'Created ${path}';
+
+	/// en: 'mkdir failed: {error}'
+	String mkdirFailedSnack({required Object error}) => 'mkdir failed: ${error}';
+
+	late final TranslationsSessionsDirPickerDialogEn dialog = TranslationsSessionsDirPickerDialogEn.internal(_root);
+}
+
+// Path: sessions.spawnSheet
+class TranslationsSessionsSpawnSheetEn {
+	TranslationsSessionsSpawnSheetEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'New session'
+	String get title => 'New session';
+
+	/// en: 'Provider and working directory are required'
+	String get errorRequired => 'Provider and working directory are required';
+
+	/// en: 'Failed to spawn session: {error}'
+	String errorGeneric({required Object error}) => 'Failed to spawn session: ${error}';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+
+	/// en: 'Spawn'
+	String get spawn => 'Spawn';
+
+	/// en: 'Provider'
+	String get providerLabel => 'Provider';
+
+	/// en: ' (disabled)'
+	String get disabledSuffix => ' (disabled)';
+
+	/// en: 'Working directory'
+	String get cwdLabel => 'Working directory';
+
+	/// en: '/Users/you/projects/foo'
+	String get cwdHint => '/Users/you/projects/foo';
+
+	/// en: 'Absolute path on the gateway host.'
+	String get cwdHelper => 'Absolute path on the gateway host.';
+
+	/// en: 'Browse'
+	String get browse => 'Browse';
+
+	/// en: 'Name (optional)'
+	String get nameLabel => 'Name (optional)';
+
+	/// en: 'e.g. backend-refactor'
+	String get nameHint => 'e.g. backend-refactor';
+
+	/// en: 'Extra args (optional)'
+	String get argsLabel => 'Extra args (optional)';
+
+	/// en: '--continue --verbose'
+	String get argsHint => '--continue --verbose';
+
+	/// en: 'Whitespace-separated; blank uses the provider's defaults.'
+	String get argsHelper => 'Whitespace-separated; blank uses the provider\'s defaults.';
+
+	late final TranslationsSessionsSpawnSheetBypassEn bypass = TranslationsSessionsSpawnSheetBypassEn.internal(_root);
+	late final TranslationsSessionsSpawnSheetNoProvidersEn noProviders = TranslationsSessionsSpawnSheetNoProvidersEn.internal(_root);
+	late final TranslationsSessionsSpawnSheetProviderLoadErrorEn providerLoadError = TranslationsSessionsSpawnSheetProviderLoadErrorEn.internal(_root);
+	late final TranslationsSessionsSpawnSheetClaudeAccountEn claudeAccount = TranslationsSessionsSpawnSheetClaudeAccountEn.internal(_root);
 }
 
 // Path: about.sections
@@ -699,6 +834,138 @@ class TranslationsMoreItemsAboutEn {
 	String get subtitle => 'Build version & server info';
 }
 
+// Path: sessions.action.errors
+class TranslationsSessionsActionErrorsEn {
+	TranslationsSessionsActionErrorsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Stop failed: {error}'
+	String stop({required Object error}) => 'Stop failed: ${error}';
+
+	/// en: 'Restart failed: {error}'
+	String start({required Object error}) => 'Restart failed: ${error}';
+
+	/// en: 'Delete failed: {error}'
+	String delete({required Object error}) => 'Delete failed: ${error}';
+}
+
+// Path: sessions.dirPicker.dialog
+class TranslationsSessionsDirPickerDialogEn {
+	TranslationsSessionsDirPickerDialogEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'New folder'
+	String get title => 'New folder';
+
+	/// en: 'Folder name'
+	String get hint => 'Folder name';
+
+	/// en: 'Create'
+	String get create => 'Create';
+}
+
+// Path: sessions.spawnSheet.bypass
+class TranslationsSessionsSpawnSheetBypassEn {
+	TranslationsSessionsSpawnSheetBypassEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Bypass permissions'
+	String get labelClaude => 'Bypass permissions';
+
+	/// en: 'Auto-approve (never ask)'
+	String get labelCodex => 'Auto-approve (never ask)';
+
+	/// en: 'YOLO mode'
+	String get labelGemini => 'YOLO mode';
+
+	/// en: 'This session will run with elevated autonomy.'
+	String get subtitleOn => 'This session will run with elevated autonomy.';
+
+	/// en: 'Off — confirmations and prompts behave normally.'
+	String get subtitleOff => 'Off — confirmations and prompts behave normally.';
+}
+
+// Path: sessions.spawnSheet.noProviders
+class TranslationsSessionsSpawnSheetNoProvidersEn {
+	TranslationsSessionsSpawnSheetNoProvidersEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'No providers configured'
+	String get title => 'No providers configured';
+
+	/// en: 'The gateway has no CLI providers enabled. Configure one under Providers (web admin) or [providers] in config.toml, then tap Reload.'
+	String get message => 'The gateway has no CLI providers enabled. Configure one under Providers (web admin) or [providers] in config.toml, then tap Reload.';
+
+	/// en: 'Reload'
+	String get reload => 'Reload';
+}
+
+// Path: sessions.spawnSheet.providerLoadError
+class TranslationsSessionsSpawnSheetProviderLoadErrorEn {
+	TranslationsSessionsSpawnSheetProviderLoadErrorEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Could not load providers'
+	String get title => 'Could not load providers';
+
+	/// en: 'Network error'
+	String get networkError => 'Network error';
+
+	/// en: 'Server {code}'
+	String serverPrefix({required Object code}) => 'Server ${code}';
+
+	/// en: '{prefix}: {message}'
+	String format({required Object prefix, required Object message}) => '${prefix}: ${message}';
+}
+
+// Path: sessions.spawnSheet.claudeAccount
+class TranslationsSessionsSpawnSheetClaudeAccountEn {
+	TranslationsSessionsSpawnSheetClaudeAccountEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Claude account'
+	String get label => 'Claude account';
+
+	/// en: 'Multiple accounts configured — pick one for this session.'
+	String get helperMulti => 'Multiple accounts configured — pick one for this session.';
+
+	/// en: 'Pick a configured account or use the default (env / system).'
+	String get helperSingle => 'Pick a configured account or use the default (env / system).';
+
+	/// en: 'Default (env / system)'
+	String get kDefault => 'Default (env / system)';
+
+	/// en: ' (disabled)'
+	String get disabledSuffix => ' (disabled)';
+
+	/// en: ' (no token)'
+	String get noTokenSuffix => ' (no token)';
+
+	/// en: 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY. Add accounts under Settings → Accounts on the web admin.'
+	String get noneHint => 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY. Add accounts under Settings → Accounts on the web admin.';
+
+	/// en: 'Could not load Claude accounts ({error}). The session will spawn with the gateway default.'
+	String errorHint({required Object error}) => 'Could not load Claude accounts (${error}). The session will spawn with the gateway default.';
+}
+
 /// The flat map containing all translations for locale <en>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -777,6 +1044,64 @@ extension on Translations {
 			'sessions.relative.minutesAgo' => ({required Object n}) => '${n}m ago',
 			'sessions.relative.hoursAgo' => ({required Object n}) => '${n}h ago',
 			'sessions.relative.daysAgo' => ({required Object n}) => '${n}d ago',
+			'sessions.action.stop' => 'Stop',
+			'sessions.action.stopping' => 'Stopping…',
+			'sessions.action.stopDescription' => 'Send SIGTERM, retain history',
+			'sessions.action.restart' => 'Restart',
+			'sessions.action.restarting' => 'Restarting…',
+			'sessions.action.restartDescription' => 'Re-spawn the CLI process',
+			'sessions.action.delete' => 'Delete',
+			'sessions.action.deleteDescription' => 'Remove the session and its history',
+			'sessions.action.deleteConfirm' => 'Delete this session permanently? Its ring buffer and history will be gone.',
+			'sessions.action.errors.stop' => ({required Object error}) => 'Stop failed: ${error}',
+			'sessions.action.errors.start' => ({required Object error}) => 'Restart failed: ${error}',
+			'sessions.action.errors.delete' => ({required Object error}) => 'Delete failed: ${error}',
+			'sessions.dirPicker.parent' => 'Parent',
+			'sessions.dirPicker.newFolder' => 'New folder',
+			'sessions.dirPicker.useThisFolder' => 'Use this folder',
+			'sessions.dirPicker.loading' => 'Loading…',
+			'sessions.dirPicker.empty' => 'No subfolders here.\nPick this folder, or create a new one.',
+			'sessions.dirPicker.createdSnack' => ({required Object path}) => 'Created ${path}',
+			'sessions.dirPicker.mkdirFailedSnack' => ({required Object error}) => 'mkdir failed: ${error}',
+			'sessions.dirPicker.dialog.title' => 'New folder',
+			'sessions.dirPicker.dialog.hint' => 'Folder name',
+			'sessions.dirPicker.dialog.create' => 'Create',
+			'sessions.spawnSheet.title' => 'New session',
+			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
+			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
+			'sessions.spawnSheet.cancel' => 'Cancel',
+			'sessions.spawnSheet.spawn' => 'Spawn',
+			'sessions.spawnSheet.providerLabel' => 'Provider',
+			'sessions.spawnSheet.disabledSuffix' => ' (disabled)',
+			'sessions.spawnSheet.cwdLabel' => 'Working directory',
+			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
+			'sessions.spawnSheet.cwdHelper' => 'Absolute path on the gateway host.',
+			'sessions.spawnSheet.browse' => 'Browse',
+			'sessions.spawnSheet.nameLabel' => 'Name (optional)',
+			'sessions.spawnSheet.nameHint' => 'e.g. backend-refactor',
+			'sessions.spawnSheet.argsLabel' => 'Extra args (optional)',
+			'sessions.spawnSheet.argsHint' => '--continue --verbose',
+			'sessions.spawnSheet.argsHelper' => 'Whitespace-separated; blank uses the provider\'s defaults.',
+			'sessions.spawnSheet.bypass.labelClaude' => 'Bypass permissions',
+			'sessions.spawnSheet.bypass.labelCodex' => 'Auto-approve (never ask)',
+			'sessions.spawnSheet.bypass.labelGemini' => 'YOLO mode',
+			'sessions.spawnSheet.bypass.subtitleOn' => 'This session will run with elevated autonomy.',
+			'sessions.spawnSheet.bypass.subtitleOff' => 'Off — confirmations and prompts behave normally.',
+			'sessions.spawnSheet.noProviders.title' => 'No providers configured',
+			'sessions.spawnSheet.noProviders.message' => 'The gateway has no CLI providers enabled. Configure one under Providers (web admin) or [providers] in config.toml, then tap Reload.',
+			'sessions.spawnSheet.noProviders.reload' => 'Reload',
+			'sessions.spawnSheet.providerLoadError.title' => 'Could not load providers',
+			'sessions.spawnSheet.providerLoadError.networkError' => 'Network error',
+			'sessions.spawnSheet.providerLoadError.serverPrefix' => ({required Object code}) => 'Server ${code}',
+			'sessions.spawnSheet.providerLoadError.format' => ({required Object prefix, required Object message}) => '${prefix}: ${message}',
+			'sessions.spawnSheet.claudeAccount.label' => 'Claude account',
+			'sessions.spawnSheet.claudeAccount.helperMulti' => 'Multiple accounts configured — pick one for this session.',
+			'sessions.spawnSheet.claudeAccount.helperSingle' => 'Pick a configured account or use the default (env / system).',
+			'sessions.spawnSheet.claudeAccount.kDefault' => 'Default (env / system)',
+			'sessions.spawnSheet.claudeAccount.disabledSuffix' => ' (disabled)',
+			'sessions.spawnSheet.claudeAccount.noTokenSuffix' => ' (no token)',
+			'sessions.spawnSheet.claudeAccount.noneHint' => 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY. Add accounts under Settings → Accounts on the web admin.',
+			'sessions.spawnSheet.claudeAccount.errorHint' => ({required Object error}) => 'Could not load Claude accounts (${error}). The session will spawn with the gateway default.',
 			'about.title' => 'About',
 			'about.loading' => 'Loading…',
 			'about.sections.app' => 'App',

@@ -115,6 +115,82 @@
       "minutesAgo": "{n}m ago",
       "hoursAgo": "{n}h ago",
       "daysAgo": "{n}d ago"
+    },
+    "action": {
+      "stop": "Stop",
+      "stopping": "Stopping…",
+      "stopDescription": "Send SIGTERM, retain history",
+      "restart": "Restart",
+      "restarting": "Restarting…",
+      "restartDescription": "Re-spawn the CLI process",
+      "delete": "Delete",
+      "deleteDescription": "Remove the session and its history",
+      "deleteConfirm": "Delete this session permanently? Its ring buffer and history will be gone.",
+      "errors": {
+        "stop": "Stop failed: {error}",
+        "start": "Restart failed: {error}",
+        "delete": "Delete failed: {error}"
+      }
+    },
+    "dirPicker": {
+      "parent": "Parent",
+      "newFolder": "New folder",
+      "useThisFolder": "Use this folder",
+      "loading": "Loading…",
+      "empty": "No subfolders here.\nPick this folder, or create a new one.",
+      "createdSnack": "Created {path}",
+      "mkdirFailedSnack": "mkdir failed: {error}",
+      "dialog": {
+        "title": "New folder",
+        "hint": "Folder name",
+        "create": "Create"
+      }
+    },
+    "spawnSheet": {
+      "title": "New session",
+      "errorRequired": "Provider and working directory are required",
+      "errorGeneric": "Failed to spawn session: {error}",
+      "cancel": "Cancel",
+      "spawn": "Spawn",
+      "providerLabel": "Provider",
+      "disabledSuffix": " (disabled)",
+      "cwdLabel": "Working directory",
+      "cwdHint": "/Users/you/projects/foo",
+      "cwdHelper": "Absolute path on the gateway host.",
+      "browse": "Browse",
+      "nameLabel": "Name (optional)",
+      "nameHint": "e.g. backend-refactor",
+      "argsLabel": "Extra args (optional)",
+      "argsHint": "--continue --verbose",
+      "argsHelper": "Whitespace-separated; blank uses the provider's defaults.",
+      "bypass": {
+        "labelClaude": "Bypass permissions",
+        "labelCodex": "Auto-approve (never ask)",
+        "labelGemini": "YOLO mode",
+        "subtitleOn": "This session will run with elevated autonomy.",
+        "subtitleOff": "Off — confirmations and prompts behave normally."
+      },
+      "noProviders": {
+        "title": "No providers configured",
+        "message": "The gateway has no CLI providers enabled. Configure one under Providers (web admin) or [providers] in config.toml, then tap Reload.",
+        "reload": "Reload"
+      },
+      "providerLoadError": {
+        "title": "Could not load providers",
+        "networkError": "Network error",
+        "serverPrefix": "Server {code}",
+        "format": "{prefix}: {message}"
+      },
+      "claudeAccount": {
+        "label": "Claude account",
+        "helperMulti": "Multiple accounts configured — pick one for this session.",
+        "helperSingle": "Pick a configured account or use the default (env / system).",
+        "default": "Default (env / system)",
+        "disabledSuffix": " (disabled)",
+        "noTokenSuffix": " (no token)",
+        "noneHint": "No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY. Add accounts under Settings → Accounts on the web admin.",
+        "errorHint": "Could not load Claude accounts ({error}). The session will spawn with the gateway default."
+      }
     }
   },
   "about": {

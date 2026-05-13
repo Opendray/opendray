@@ -6,6 +6,7 @@ import 'package:opendray/core/api/claude_accounts_api.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/providers_api.dart';
 import 'package:opendray/core/api/sessions_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/sessions/directory_picker_sheet.dart';
 
 // Provider id that triggers the Claude-account picker. Multi-account
@@ -34,9 +35,9 @@ const Map<String, List<String>> _bypassFlagsByProvider = {
 // term; pretending it's all "Auto-approve" would be confusing.
 String? _bypassLabelFor(String providerId) {
   return switch (providerId) {
-    'claude' => 'Bypass permissions',
-    'codex' => 'Auto-approve (never ask)',
-    'gemini' => 'YOLO mode',
+    'claude' => t.sessions.spawnSheet.bypass.labelClaude,
+    'codex' => t.sessions.spawnSheet.bypass.labelCodex,
+    'gemini' => t.sessions.spawnSheet.bypass.labelGemini,
     _ => null,
   };
 }
@@ -107,7 +108,7 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
   Future<void> _submit() async {
     final cwd = _cwdCtrl.text.trim();
     if (_providerId == null || _providerId!.isEmpty || cwd.isEmpty) {
-      setState(() => _error = 'Provider and working directory are required');
+      setState(() => _error = t.sessions.spawnSheet.errorRequired);
       return;
     }
     setState(() {
@@ -152,7 +153,7 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     } on Object catch (e) {
-      setState(() => _error = 'Failed to spawn session: $e');
+      setState(() => _error = t.sessions.spawnSheet.errorGeneric(error: e.toString()));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -203,7 +204,7 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
                 children: [
                   Expanded(
                     child: Text(
-                      'New session',
+                      t.sessions.spawnSheet.title,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),
@@ -248,12 +249,12 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
                 autocorrect: false,
                 keyboardType: TextInputType.url,
                 decoration: InputDecoration(
-                  labelText: 'Working directory',
-                  hintText: '/Users/you/projects/foo',
-                  helperText: 'Absolute path on the gateway host.',
+                  labelText: t.sessions.spawnSheet.cwdLabel,
+                  hintText: t.sessions.spawnSheet.cwdHint,
+                  helperText: t.sessions.spawnSheet.cwdHelper,
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.folder_open_outlined),
-                    tooltip: 'Browse',
+                    tooltip: t.sessions.spawnSheet.browse,
                     onPressed: _submitting ? null : _browseCwd,
                   ),
                 ),
@@ -262,9 +263,9 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
               TextField(
                 controller: _nameCtrl,
                 enabled: !_submitting,
-                decoration: const InputDecoration(
-                  labelText: 'Name (optional)',
-                  hintText: 'e.g. backend-refactor',
+                decoration: InputDecoration(
+                  labelText: t.sessions.spawnSheet.nameLabel,
+                  hintText: t.sessions.spawnSheet.nameHint,
                 ),
               ),
               const SizedBox(height: 14),
@@ -272,11 +273,10 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
                 controller: _argsCtrl,
                 enabled: !_submitting,
                 autocorrect: false,
-                decoration: const InputDecoration(
-                  labelText: 'Extra args (optional)',
-                  hintText: '--continue --verbose',
-                  helperText:
-                      "Whitespace-separated; blank uses the provider's defaults.",
+                decoration: InputDecoration(
+                  labelText: t.sessions.spawnSheet.argsLabel,
+                  hintText: t.sessions.spawnSheet.argsHint,
+                  helperText: t.sessions.spawnSheet.argsHelper,
                 ),
               ),
               if (bypassLabel != null) ...[
@@ -289,8 +289,8 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
                   title: Text(bypassLabel),
                   subtitle: Text(
                     _bypassEnabled
-                        ? 'This session will run with elevated autonomy.'
-                        : 'Off — confirmations and prompts behave normally.',
+                        ? t.sessions.spawnSheet.bypass.subtitleOn
+                        : t.sessions.spawnSheet.bypass.subtitleOff,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   contentPadding: EdgeInsets.zero,
@@ -309,7 +309,7 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
                       onPressed: _submitting
                           ? null
                           : () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
+                      child: Text(t.common.cancel),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -322,7 +322,7 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
                               width: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Spawn'),
+                          : Text(t.sessions.spawnSheet.spawn),
                     ),
                   ),
                 ],
@@ -353,10 +353,8 @@ class _ProviderField extends ConsumerWidget {
         if (providers.isEmpty) {
           return _ProviderProblem(
             icon: Icons.inventory_2_outlined,
-            title: 'No providers configured',
-            message: 'The gateway has no CLI providers enabled. Configure '
-                'one under Providers (web admin) or [providers] in '
-                'config.toml, then tap Reload.',
+            title: t.sessions.spawnSheet.noProviders.title,
+            message: t.sessions.spawnSheet.noProviders.message,
             onReload: () => ref.invalidate(providersListProvider),
           );
         }
@@ -370,13 +368,19 @@ class _ProviderField extends ConsumerWidget {
                 .id;
         return DropdownButtonFormField<String>(
           initialValue: effectiveValue,
-          decoration: const InputDecoration(labelText: 'Provider'),
+          decoration: InputDecoration(
+            labelText: t.sessions.spawnSheet.providerLabel,
+          ),
           onChanged: onChanged,
           items: [
             for (final p in providers)
               DropdownMenuItem<String>(
                 value: p.id,
-                child: Text(p.enabled ? p.name : '${p.name} (disabled)'),
+                child: Text(
+                  p.enabled
+                      ? p.name
+                      : '${p.name}${t.sessions.spawnSheet.disabledSuffix}',
+                ),
               ),
           ],
         );
@@ -387,9 +391,15 @@ class _ProviderField extends ConsumerWidget {
       ),
       error: (e, _) => _ProviderProblem(
         icon: Icons.cloud_off_outlined,
-        title: 'Could not load providers',
+        title: t.sessions.spawnSheet.providerLoadError.title,
         message: e is ApiException
-            ? '${e.statusCode == 0 ? "Network error" : "Server ${e.statusCode}"}: ${e.message}'
+            ? t.sessions.spawnSheet.providerLoadError.format(
+                prefix: e.statusCode == 0
+                    ? t.sessions.spawnSheet.providerLoadError.networkError
+                    : t.sessions.spawnSheet.providerLoadError
+                        .serverPrefix(code: e.statusCode.toString()),
+                message: e.message,
+              )
             : e.toString(),
         onReload: () => ref.invalidate(providersListProvider),
       ),
@@ -413,9 +423,8 @@ class _ClaudeAccountField extends ConsumerWidget {
         // single-account setups. Operators who want multi-account
         // configure them in web admin → Settings → Accounts.
         if (accounts.isEmpty) {
-          return const _AccountHint(
-            text:
-                'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY. Add accounts under Settings → Accounts on the web admin.',
+          return _AccountHint(
+            text: t.sessions.spawnSheet.claudeAccount.noneHint,
           );
         }
         // Multi-account (2+ enabled): drop the Default option and
@@ -449,17 +458,17 @@ class _ClaudeAccountField extends ConsumerWidget {
         return DropdownButtonFormField<String?>(
           initialValue: effectiveValue,
           decoration: InputDecoration(
-            labelText: 'Claude account',
+            labelText: t.sessions.spawnSheet.claudeAccount.label,
             helperText: multiAccount
-                ? 'Multiple accounts configured — pick one for this session.'
-                : 'Pick a configured account or use the default (env / system).',
+                ? t.sessions.spawnSheet.claudeAccount.helperMulti
+                : t.sessions.spawnSheet.claudeAccount.helperSingle,
           ),
           onChanged: onChanged,
           items: [
             if (!multiAccount)
-              const DropdownMenuItem<String?>(
+              DropdownMenuItem<String?>(
                 value: null,
-                child: Text('Default (env / system)'),
+                child: Text(t.sessions.spawnSheet.claudeAccount.kDefault),
               ),
             for (final a in accounts)
               DropdownMenuItem<String?>(
@@ -476,16 +485,21 @@ class _ClaudeAccountField extends ConsumerWidget {
       // Error here is not fatal — fall back to "Default" silently with
       // a small inline note so the user can still spawn the session.
       error: (e, _) => _AccountHint(
-        text:
-            'Could not load Claude accounts (${e is ApiException ? e.message : e}). The session will spawn with the gateway default.',
+        text: t.sessions.spawnSheet.claudeAccount.errorHint(
+          error: e is ApiException ? e.message : e.toString(),
+        ),
       ),
     );
   }
 
   static String _accountLabel(ClaudeAccountSummary a) {
     final base = a.displayName;
-    if (!a.enabled) return '$base (disabled)';
-    if (!a.tokenFilled) return '$base (no token)';
+    if (!a.enabled) {
+      return '$base${t.sessions.spawnSheet.claudeAccount.disabledSuffix}';
+    }
+    if (!a.tokenFilled) {
+      return '$base${t.sessions.spawnSheet.claudeAccount.noTokenSuffix}';
+    }
     return base;
   }
 }
@@ -555,7 +569,7 @@ class _ProviderProblem extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: onReload,
                   icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Reload'),
+                  label: Text(t.sessions.spawnSheet.noProviders.reload),
                   style: OutlinedButton.styleFrom(
                     visualDensity: VisualDensity.compact,
                     foregroundColor: scheme.error,

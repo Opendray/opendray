@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
+import 'package:opendray/core/i18n/strings.g.dart';
 
 // Result returned to the caller so it knows what happened (and
 // can choose to refresh the list, navigate away, etc.).
@@ -61,7 +62,13 @@ class _SessionActionSheetState extends ConsumerState<SessionActionSheet> {
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     } on Object catch (e) {
-      setState(() => _error = 'Failed to $verb: $e');
+      final errStr = e.toString();
+      setState(() => _error = switch (verb) {
+            'stop' => t.sessions.action.errors.stop(error: errStr),
+            'start' => t.sessions.action.errors.start(error: errStr),
+            'delete' => t.sessions.action.errors.delete(error: errStr),
+            _ => errStr,
+          });
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -165,21 +172,25 @@ class _Actions extends StatelessWidget {
         if (session.isLive)
           _ActionTile(
             icon: Icons.stop_circle_outlined,
-            label: busyVerb == 'stop' ? 'Stopping…' : 'Stop',
-            description: 'Send SIGTERM, retain history',
+            label: busyVerb == 'stop'
+                ? t.sessions.action.stopping
+                : t.sessions.action.stop,
+            description: t.sessions.action.stopDescription,
             onTap: busy ? null : onStop,
           ),
         if (session.isFinished)
           _ActionTile(
             icon: Icons.play_circle_outline,
-            label: busyVerb == 'start' ? 'Restarting…' : 'Restart',
-            description: 'Re-spawn the CLI process',
+            label: busyVerb == 'start'
+                ? t.sessions.action.restarting
+                : t.sessions.action.restart,
+            description: t.sessions.action.restartDescription,
             onTap: busy ? null : onStart,
           ),
         _ActionTile(
           icon: Icons.delete_outline,
-          label: 'Delete',
-          description: 'Remove the session and its history',
+          label: t.sessions.action.delete,
+          description: t.sessions.action.deleteDescription,
           destructive: true,
           onTap: busy ? null : onDelete,
         ),
@@ -274,8 +285,7 @@ class _DeleteConfirm extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Delete this session permanently? Its ring buffer and '
-          'history will be gone.',
+          t.sessions.action.deleteConfirm,
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: 16),
@@ -284,7 +294,7 @@ class _DeleteConfirm extends StatelessWidget {
             Expanded(
               child: OutlinedButton(
                 onPressed: busy ? null : onCancel,
-                child: const Text('Cancel'),
+                child: Text(t.common.cancel),
               ),
             ),
             const SizedBox(width: 12),
@@ -301,7 +311,7 @@ class _DeleteConfirm extends StatelessWidget {
                         width: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Delete'),
+                    : Text(t.common.delete),
               ),
             ),
           ],
