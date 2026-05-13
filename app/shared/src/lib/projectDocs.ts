@@ -136,3 +136,39 @@ export async function appendSessionLog(input: {
 export async function deleteSessionLog(id: string): Promise<void> {
   await api(`/api/v1/session-logs/${id}`, { method: 'DELETE' })
 }
+
+// ── reset ─────────────────────────────────────────────────────
+
+export interface ResetProjectMemoryOptions {
+  cwd: string
+  /** Also wipe tech_stack + recent_activity (default false; they auto-rebuild on next spawn). */
+  include_scanner_docs?: boolean
+  /** Also wipe memory_cleanup_decisions for this cwd (default true). */
+  include_cleanup_decisions?: boolean
+}
+
+export interface ResetProjectMemoryCounts {
+  project_docs: number
+  project_doc_proposals: number
+  session_logs: number
+  memory_cleanup_decisions: number
+}
+
+/**
+ * Wipes per-cwd project memory state in a transaction:
+ * project_docs (goal/plan, optionally scanner-managed docs too),
+ * project_doc_proposals, session_logs, and memory_cleanup_decisions
+ * for this cwd.
+ *
+ * Does NOT touch the pgvector `memories` table — call
+ * deleteMemoriesByScope('project', cwd) separately when the
+ * operator opts in.
+ */
+export async function resetProjectMemory(
+  opts: ResetProjectMemoryOptions,
+): Promise<ResetProjectMemoryCounts> {
+  return api<ResetProjectMemoryCounts>('/api/v1/project-docs/reset', {
+    method: 'POST',
+    body: opts,
+  })
+}

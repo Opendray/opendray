@@ -233,6 +233,14 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Project'),
+        actions: [
+          if (_selectedKey != null && _selectedKey!.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.restart_alt),
+              tooltip: 'Reset project memory',
+              onPressed: () => _confirmReset(_selectedKey!),
+            ),
+        ],
         bottom: TabBar(
           controller: _tabs,
           isScrollable: true,
@@ -720,6 +728,141 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
           SnackBar(content: Text('Reject failed: $e')),
         );
         await _loadAll(_selectedKey!);
+      }
+    }
+  }
+
+  /// Shows the reset confirmation dialog, then on confirm calls the
+  /// reset endpoint + (optionally) deleteMemoriesByScope. Mirrors
+  /// the web ResetButton flow in app/web.../ProjectScreen.tsx.
+  Future<void> _confirmReset(String cwd) async {
+    var includeScanner = false;
+    var includeMemories = false;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              title: const Text('Reset project memory?'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(ctx).colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.warning_amber_rounded,
+                            size: 18,
+                            color: Theme.of(ctx).colorScheme.onErrorContainer),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SelectableText(
+                                cwd,
+                                style: const TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Always deleted: goal, plan, proposals, '
+                                'journal, cleanup decisions.',
+                                style: TextStyle(fontSize: 11),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    value: includeScanner,
+                    title: const Text('Also delete scanner docs',
+                        style: TextStyle(fontSize: 13)),
+                    subtitle: const Text(
+                      'tech_stack + recent_activity (auto-rebuild on next spawn).',
+                      style: TextStyle(fontSize: 11),
+                    ),
+                    onChanged: (v) =>
+                        setDialogState(() => includeScanner = v ?? false),
+                  ),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    value: includeMemories,
+                    title: const Text('Also delete pgvector memories',
+                        style: TextStyle(fontSize: 13)),
+                    subtitle: const Text(
+                      'Long-term facts for this scope_key. Cannot be recovered.',
+                      style: TextStyle(fontSize: 11),
+                    ),
+                    onChanged: (v) =>
+                        setDialogState(() => includeMemories = v ?? false),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton.tonal(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(ctx).colorScheme.errorContainer,
+                    foregroundColor: Theme.of(ctx).colorScheme.onErrorContainer,
+                  ),
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Delete forever'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (confirmed != true) return;
+    try {
+      final counts = await ref.read(projectDocsApiProvider).resetCwd(
+            cwd: cwd,
+            includeScannerDocs: includeScanner,
+          );
+      var memCount = 0;
+      if (includeMemories) {
+        memCount = await ref.read(memoryApiProvider).deleteByScope(
+              scope: MemoryScope.project,
+              scopeKey: cwd,
+            );
+      }
+      if (!mounted) return;
+      final parts = <String>[
+        '${counts['project_docs'] ?? 0} doc',
+        '${counts['session_logs'] ?? 0} journal',
+        '${counts['memory_cleanup_decisions'] ?? 0} cleanup',
+      ];
+      if (includeMemories) parts.add('$memCount memories');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Reset: ${parts.join(' · ')}')),
+      );
+      await _loadAll(cwd);
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Reset failed: $e')),
+        );
       }
     }
   }

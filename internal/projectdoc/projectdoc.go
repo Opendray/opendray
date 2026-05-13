@@ -32,6 +32,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -483,6 +484,96 @@ func (s *Service) DeleteLog(ctx context.Context, id string) error {
 		return ErrNotFound
 	}
 	return nil
+}
+
+// ResetCwdOptions controls which tables/kinds the reset wipes.
+type ResetCwdOptions struct {
+	// IncludeScannerDocs deletes tech_stack + recent_activity rows
+	// too. Default false: scanner doc kinds auto-rebuild on the
+	// next spawn anyway, and operators usually want to keep them
+	// (they're objective project facts, not user content).
+	IncludeScannerDocs bool
+
+	// IncludeCleanupDecisions deletes memory_cleanup_decisions rows
+	// keyed to this cwd. Defaults to true since they're tightly
+	// scoped to the cwd's memories — kept as an option in case a
+	// future caller wants to preserve the audit trail.
+	IncludeCleanupDecisions bool
+}
+
+// ResetCounts is what ResetCwd returns: counts of rows deleted per
+// table so the UI can show "deleted X docs, Y journal entries, …".
+type ResetCounts struct {
+	ProjectDocs       int64 `json:"project_docs"`
+	Proposals         int64 `json:"project_doc_proposals"`
+	SessionLogs       int64 `json:"session_logs"`
+	CleanupDecisions  int64 `json:"memory_cleanup_decisions"`
+}
+
+// ResetCwd wipes per-cwd project memory state in a single
+// transaction. Always deletes session_logs + project_doc_proposals
+// (no use without their parent project_docs anyway) + operator-
+// editable docs (goal/plan). Optionally also wipes scanner-managed
+// docs (tech_stack/recent_activity — auto-rebuild on next spawn)
+// and the M13 cleanup decisions queue.
+//
+// memories rows are NOT deleted here — they live in the memory
+// subsystem with its own scope_key indexing. Callers (the
+// `/project-docs/reset` HTTP handler) chain memory.DeleteByScope
+// when the operator opts in.
+func (s *Service) ResetCwd(ctx context.Context, cwd string, opts ResetCwdOptions) (ResetCounts, error) {
+	if cwd == "" {
+		return ResetCounts{}, fmt.Errorf("projectdoc: reset: cwd required")
+	}
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return ResetCounts{}, fmt.Errorf("projectdoc: reset begin: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	var counts ResetCounts
+
+	// project_docs — always wipe goal+plan; scanner docs gated by opt.
+	var docCmd pgconn.CommandTag
+	if opts.IncludeScannerDocs {
+		docCmd, err = tx.Exec(ctx, `DELETE FROM project_docs WHERE cwd = $1`, cwd)
+	} else {
+		docCmd, err = tx.Exec(ctx,
+			`DELETE FROM project_docs WHERE cwd = $1 AND kind IN ('goal','plan')`, cwd)
+	}
+	if err != nil {
+		return ResetCounts{}, fmt.Errorf("projectdoc: reset docs: %w", err)
+	}
+	counts.ProjectDocs = docCmd.RowsAffected()
+
+	propCmd, err := tx.Exec(ctx,
+		`DELETE FROM project_doc_proposals WHERE cwd = $1`, cwd)
+	if err != nil {
+		return ResetCounts{}, fmt.Errorf("projectdoc: reset proposals: %w", err)
+	}
+	counts.Proposals = propCmd.RowsAffected()
+
+	logCmd, err := tx.Exec(ctx,
+		`DELETE FROM session_logs WHERE cwd = $1`, cwd)
+	if err != nil {
+		return ResetCounts{}, fmt.Errorf("projectdoc: reset logs: %w", err)
+	}
+	counts.SessionLogs = logCmd.RowsAffected()
+
+	if opts.IncludeCleanupDecisions {
+		cdCmd, err := tx.Exec(ctx,
+			`DELETE FROM memory_cleanup_decisions
+			 WHERE memory_scope = 'project' AND memory_scope_key = $1`, cwd)
+		if err != nil {
+			return ResetCounts{}, fmt.Errorf("projectdoc: reset cleanup decisions: %w", err)
+		}
+		counts.CleanupDecisions = cdCmd.RowsAffected()
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return ResetCounts{}, fmt.Errorf("projectdoc: reset commit: %w", err)
+	}
+	return counts, nil
 }
 
 // ─── spawn-time injection ──────────────────────────────────────

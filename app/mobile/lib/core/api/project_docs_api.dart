@@ -60,6 +60,35 @@ class ProjectDocsApi {
     }
   }
 
+  /// Wipes per-cwd project memory state. Always deletes goal+plan,
+  /// proposals, session_logs, and cleanup_decisions for the cwd.
+  /// Optionally scanner-managed docs (tech_stack + recent_activity)
+  /// which would otherwise auto-rebuild on next spawn.
+  ///
+  /// Memories (pgvector) live in a separate subsystem — call
+  /// MemoryApi.deleteByScope('project', cwd) separately when the
+  /// operator opts in.
+  Future<Map<String, int>> resetCwd({
+    required String cwd,
+    bool includeScannerDocs = false,
+    bool includeCleanupDecisions = true,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/project-docs/reset',
+        data: {
+          'cwd': cwd,
+          'include_scanner_docs': includeScannerDocs,
+          'include_cleanup_decisions': includeCleanupDecisions,
+        },
+      );
+      final raw = res.data ?? const <String, dynamic>{};
+      return raw.map((k, v) => MapEntry(k, (v is int) ? v : 0));
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   // ── proposals ──────────────────────────────────────────────────
 
   Future<List<DocProposal>> listPendingProposals({String? cwd}) async {

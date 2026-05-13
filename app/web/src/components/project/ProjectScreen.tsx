@@ -17,6 +17,7 @@ import {
   Check,
   Inbox,
   Loader2,
+  RotateCcw,
   Save,
   Sparkles,
   Trash2,
@@ -47,6 +48,7 @@ import {
   listSessionLogs,
   putProjectDoc,
   rejectProposal,
+  resetProjectMemory,
 } from '@/lib/projectDocs'
 import {
   type CleanupDecision,
@@ -55,6 +57,7 @@ import {
   rejectDecision,
   runCleanup,
 } from '@/lib/memoryCleanup'
+import { deleteMemoriesByScope } from '@/lib/memory'
 
 interface ProjectScreenProps {
   cwd: string
@@ -115,27 +118,41 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b px-4 py-3">
-        <div className="text-muted-foreground font-mono text-xs">{cwd}</div>
-        <div className="mt-1 flex items-center gap-3 text-xs">
-          <span>{(docsQuery.data ?? []).length} docs</span>
-          <span>·</span>
-          <span>{(logsQuery.data ?? []).length} journal entries</span>
-          {inboxCount > 0 && (
-            <>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-muted-foreground font-mono text-xs">{cwd}</div>
+            <div className="mt-1 flex items-center gap-3 text-xs">
+              <span>{(docsQuery.data ?? []).length} docs</span>
               <span>·</span>
-              <Badge variant="danger" className="text-[10px]">
-                {inboxCount} pending proposal{inboxCount > 1 ? 's' : ''}
-              </Badge>
-            </>
-          )}
-          {cleanupCount > 0 && (
-            <>
-              <span>·</span>
-              <Badge variant="muted" className="text-[10px]">
-                {cleanupCount} cleanup pending
-              </Badge>
-            </>
-          )}
+              <span>{(logsQuery.data ?? []).length} journal entries</span>
+              {inboxCount > 0 && (
+                <>
+                  <span>·</span>
+                  <Badge variant="danger" className="text-[10px]">
+                    {inboxCount} pending proposal{inboxCount > 1 ? 's' : ''}
+                  </Badge>
+                </>
+              )}
+              {cleanupCount > 0 && (
+                <>
+                  <span>·</span>
+                  <Badge variant="muted" className="text-[10px]">
+                    {cleanupCount} cleanup pending
+                  </Badge>
+                </>
+              )}
+            </div>
+          </div>
+          <ResetButton
+            cwd={cwd}
+            onDone={() => {
+              qc.invalidateQueries({ queryKey: ['project-docs', cwd] })
+              qc.invalidateQueries({ queryKey: ['project-doc-proposals', cwd] })
+              qc.invalidateQueries({ queryKey: ['session-logs', cwd] })
+              qc.invalidateQueries({ queryKey: ['cleanup-decisions'] })
+              qc.invalidateQueries({ queryKey: ['memories'] })
+            }}
+          />
         </div>
       </div>
 
@@ -725,6 +742,143 @@ function CleanupDecisionCard({
         </Button>
       </div>
     </div>
+  )
+}
+
+// ─── Reset project memory ────────────────────────────────────
+
+interface ResetButtonProps {
+  cwd: string
+  onDone: () => void
+}
+
+function ResetButton({ cwd, onDone }: ResetButtonProps) {
+  const [open, setOpen] = useState(false)
+  const [includeScanner, setIncludeScanner] = useState(false)
+  const [includeMemories, setIncludeMemories] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  const handleReset = async () => {
+    setBusy(true)
+    try {
+      const counts = await resetProjectMemory({
+        cwd,
+        include_scanner_docs: includeScanner,
+        include_cleanup_decisions: true,
+      })
+      let memoryCount = 0
+      if (includeMemories) {
+        memoryCount = await deleteMemoriesByScope('project', cwd)
+      }
+      const parts = [
+        `${counts.project_docs} doc${counts.project_docs === 1 ? '' : 's'}`,
+        `${counts.session_logs} journal`,
+        `${counts.project_doc_proposals} proposal${counts.project_doc_proposals === 1 ? '' : 's'}`,
+        `${counts.memory_cleanup_decisions} cleanup`,
+      ]
+      if (includeMemories) parts.push(`${memoryCount} memories`)
+      toast.success(`Reset: deleted ${parts.join(' · ')}`)
+      onDone()
+      setOpen(false)
+    } catch (e) {
+      toast.error('Reset failed', {
+        description: e instanceof Error ? e.message : String(e),
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        className="text-destructive hover:text-destructive flex-none"
+        onClick={() => setOpen(true)}
+      >
+        <RotateCcw className="mr-1 h-3 w-3" />
+        Reset
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset project memory?</DialogTitle>
+            <DialogDescription>
+              Deletes all stored project context for this cwd.
+              This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="text-destructive bg-destructive/10 mb-3 flex items-start gap-2 rounded-md p-3 text-xs">
+            <AlertTriangle className="mt-0.5 h-3 w-3 flex-none" />
+            <div>
+              <strong className="font-mono">{cwd}</strong>
+              <br />
+              Always deleted: goal, plan, proposals, journal,
+              cleanup decisions.
+            </div>
+          </div>
+          <div className="space-y-2 text-sm">
+            <label className="flex cursor-pointer items-start gap-2">
+              <input
+                type="checkbox"
+                checked={includeScanner}
+                onChange={(e) => setIncludeScanner(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                <strong>Also delete scanner docs</strong> (tech_stack +
+                recent_activity).
+                <br />
+                <span className="text-muted-foreground text-xs">
+                  Auto-rebuild on next spawn anyway — leaving unchecked is
+                  usually fine.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-2">
+              <input
+                type="checkbox"
+                checked={includeMemories}
+                onChange={(e) => setIncludeMemories(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                <strong>Also delete pgvector memories</strong> for this
+                scope_key.
+                <br />
+                <span className="text-muted-foreground text-xs">
+                  Long-term facts the agent stored (user preferences,
+                  project facts). Cannot be recovered.
+                </span>
+              </span>
+            </label>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={busy}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="default"
+              className="bg-destructive hover:bg-destructive/90"
+              onClick={handleReset}
+              disabled={busy}
+            >
+              {busy ? (
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+              ) : (
+                <Trash2 className="mr-1 h-3 w-3" />
+              )}
+              Delete forever
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
