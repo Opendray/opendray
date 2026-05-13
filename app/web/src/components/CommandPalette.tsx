@@ -79,6 +79,12 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <Brain /> Memory
             <CommandShortcut>g m</CommandShortcut>
           </CommandItem>
+          <CommandItem onSelect={() => navigate({ to: '/memory/project', search: { cwd: '' } })}>
+            <Brain /> Project memory
+          </CommandItem>
+          <CommandItem onSelect={go('/memory/cleanup')}>
+            <Brain /> Cleanup inbox
+          </CommandItem>
           <CommandItem onSelect={go('/activity')}>
             <Activity /> Activity
             <CommandShortcut>g a</CommandShortcut>
