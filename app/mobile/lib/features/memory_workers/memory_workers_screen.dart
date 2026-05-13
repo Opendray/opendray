@@ -70,16 +70,14 @@ class _MemoryWorkersScreenState extends ConsumerState<MemoryWorkersScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Endpoint not reachable',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      Text(
+                        t.memoryWorkers.errorTitle,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'The /api/v1/memory/workers routes are new in M25 — '
-                        'the opendray binary may need a restart to mount '
-                        'them and run migration 0029.',
-                        style: TextStyle(fontSize: 12),
+                      Text(
+                        t.memoryWorkers.errorDetail,
+                        style: const TextStyle(fontSize: 12),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -101,18 +99,11 @@ class _MemoryWorkersScreenState extends ConsumerState<MemoryWorkersScreen> {
             children: [
               Card(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                child: const Padding(
-                  padding: EdgeInsets.all(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
                   child: Text(
-                    'Each memory-system LLM touchpoint can be served '
-                    'independently by the local summarizer endpoint '
-                    '(LM Studio / OpenAI-compat) or by spawning a '
-                    'headless Claude / Gemini agent in --print mode. '
-                    'High-quality narrative tasks (gitactivity, '
-                    'transcript) benefit from agent workers; '
-                    'high-frequency tasks (gatekeeper) stay on the '
-                    'local endpoint by design.',
-                    style: TextStyle(fontSize: 12),
+                    t.memoryWorkers.intro,
+                    style: const TextStyle(fontSize: 12),
                   ),
                 ),
               ),
@@ -191,7 +182,7 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(t.memoryWorkers
-              .savedSnack(label: widget.config.task.label)),
+              .savedSnack(label: _taskLabel(widget.config.task))),
         ),
       );
       widget.onChanged();
@@ -217,12 +208,16 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
           await ref.read(memoryWorkersApiProvider).test(widget.config.task);
       if (!mounted) return;
       if (res.ok) {
+        final base = t.memoryWorkers.testOkSnack(
+          label: _taskLabel(widget.config.task),
+          duration: res.durationMs.toString(),
+        );
+        final preview = (res.preview != null && res.preview!.isNotEmpty)
+            ? '\n${_truncate(res.preview!, 200)}'
+            : '';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              '${widget.config.task.label} OK — ${res.durationMs}ms'
-              '${res.preview != null && res.preview!.isNotEmpty ? "\n${_truncate(res.preview!, 200)}" : ""}',
-            ),
+            content: Text('$base$preview'),
             duration: const Duration(seconds: 6),
           ),
         );
@@ -230,7 +225,10 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '${widget.config.task.label} failed: ${res.error ?? "unknown"}',
+              t.memoryWorkers.testFailedReturnedSnack(
+                label: _taskLabel(widget.config.task),
+                error: res.error ?? t.memoryWorkers.unknownError,
+              ),
             ),
           ),
         );
@@ -250,6 +248,20 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
     }
   }
 
+  String _taskLabel(WorkerTaskKind k) => switch (k) {
+        WorkerTaskKind.gatekeeper => t.memoryWorkers.tasks.gatekeeper.label,
+        WorkerTaskKind.cleaner => t.memoryWorkers.tasks.cleaner.label,
+        WorkerTaskKind.gitactivity => t.memoryWorkers.tasks.gitactivity.label,
+        WorkerTaskKind.transcript => t.memoryWorkers.tasks.transcript.label,
+      };
+
+  String _taskDescription(WorkerTaskKind k) => switch (k) {
+        WorkerTaskKind.gatekeeper => t.memoryWorkers.tasks.gatekeeper.description,
+        WorkerTaskKind.cleaner => t.memoryWorkers.tasks.cleaner.description,
+        WorkerTaskKind.gitactivity => t.memoryWorkers.tasks.gitactivity.description,
+        WorkerTaskKind.transcript => t.memoryWorkers.tasks.transcript.description,
+      };
+
   @override
   Widget build(BuildContext context) {
     final agentAllowed = widget.config.task.agentSupported;
@@ -264,7 +276,7 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
               children: [
                 Expanded(
                   child: Text(
-                    widget.config.task.label,
+                    _taskLabel(widget.config.task),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -279,7 +291,7 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      'summarizer-only',
+                      t.memoryWorkers.summarizerOnlyBadge,
                       style: TextStyle(
                         fontSize: 9,
                         color:
@@ -292,7 +304,7 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
             ),
             const SizedBox(height: 4),
             Text(
-              widget.config.task.description,
+              _taskDescription(widget.config.task),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).hintColor,
                   ),
@@ -385,8 +397,7 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              'Uses the registry default summarizer provider. '
-              'Pick a specific row on the web admin.',
+              t.memoryWorkers.summarizerInfo,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
@@ -461,9 +472,7 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              'Agent mode spawns a headless CLI per call. Latency ~5-15s '
-              '(vs ~1s summarizer); cost shifts from CPU to your '
-              'Claude/Gemini quota.',
+              t.memoryWorkers.agentWarning,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
@@ -486,7 +495,7 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
             .toList();
         if (recent.isEmpty) {
           return Text(
-            'No calls in last 24h.',
+            t.memoryWorkers.noCalls24h,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).hintColor,
                   fontSize: 11,

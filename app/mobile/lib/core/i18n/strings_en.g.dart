@@ -425,6 +425,38 @@ class TranslationsMemoryWorkersEn {
 
 	/// en: 'Test'
 	String get test => 'Test';
+
+	/// en: 'Each memory-system LLM touchpoint can be served independently by the local summarizer endpoint (LM Studio / OpenAI-compat) or by spawning a headless Claude / Gemini agent in --print mode. High-quality narrative tasks (gitactivity, transcript) benefit from agent workers; high-frequency tasks (gatekeeper) stay on the local endpoint by design.'
+	String get intro => 'Each memory-system LLM touchpoint can be served independently by the local summarizer endpoint (LM Studio / OpenAI-compat) or by spawning a headless Claude / Gemini agent in --print mode. High-quality narrative tasks (gitactivity, transcript) benefit from agent workers; high-frequency tasks (gatekeeper) stay on the local endpoint by design.';
+
+	/// en: 'Endpoint not reachable'
+	String get errorTitle => 'Endpoint not reachable';
+
+	/// en: 'The /api/v1/memory/workers routes are new in M25 — the opendray binary may need a restart to mount them and run migration 0029.'
+	String get errorDetail => 'The /api/v1/memory/workers routes are new in M25 — the opendray binary may need a restart to mount them and run migration 0029.';
+
+	/// en: 'summarizer-only'
+	String get summarizerOnlyBadge => 'summarizer-only';
+
+	/// en: 'Uses the registry default summarizer provider. Pick a specific row on the web admin.'
+	String get summarizerInfo => 'Uses the registry default summarizer provider. Pick a specific row on the web admin.';
+
+	/// en: 'Agent mode spawns a headless CLI per call. Latency ~5-15s (vs ~1s summarizer); cost shifts from CPU to your Claude/Gemini quota.'
+	String get agentWarning => 'Agent mode spawns a headless CLI per call. Latency ~5-15s (vs ~1s summarizer); cost shifts from CPU to your Claude/Gemini quota.';
+
+	/// en: 'No calls in last 24h.'
+	String get noCalls24h => 'No calls in last 24h.';
+
+	/// en: '{label} OK — {duration}ms'
+	String testOkSnack({required Object label, required Object duration}) => '${label} OK — ${duration}ms';
+
+	/// en: '{label} failed: {error}'
+	String testFailedReturnedSnack({required Object label, required Object error}) => '${label} failed: ${error}';
+
+	/// en: 'unknown'
+	String get unknownError => 'unknown';
+
+	late final TranslationsMemoryWorkersTasksEn tasks = TranslationsMemoryWorkersTasksEn.internal(_root);
 }
 
 // Path: memoryCleanup
@@ -1448,6 +1480,19 @@ class TranslationsProvidersAccountsEn {
 
 	/// en: 'Import failed: {error}'
 	String importFailedGeneric({required Object error}) => 'Import failed: ${error}';
+}
+
+// Path: memoryWorkers.tasks
+class TranslationsMemoryWorkersTasksEn {
+	TranslationsMemoryWorkersTasksEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsMemoryWorkersTasksGatekeeperEn gatekeeper = TranslationsMemoryWorkersTasksGatekeeperEn.internal(_root);
+	late final TranslationsMemoryWorkersTasksCleanerEn cleaner = TranslationsMemoryWorkersTasksCleanerEn.internal(_root);
+	late final TranslationsMemoryWorkersTasksGitactivityEn gitactivity = TranslationsMemoryWorkersTasksGitactivityEn.internal(_root);
+	late final TranslationsMemoryWorkersTasksTranscriptEn transcript = TranslationsMemoryWorkersTasksTranscriptEn.internal(_root);
 }
 
 // Path: backups.encryption
@@ -2524,6 +2569,66 @@ class TranslationsSessionsSpawnSheetClaudeAccountEn {
 	String errorHint({required Object error}) => 'Could not load Claude accounts (${error}). The session will spawn with the gateway default.';
 }
 
+// Path: memoryWorkers.tasks.gatekeeper
+class TranslationsMemoryWorkersTasksGatekeeperEn {
+	TranslationsMemoryWorkersTasksGatekeeperEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Gatekeeper'
+	String get label => 'Gatekeeper';
+
+	/// en: 'Pre-write filter on every memory_store. High frequency (<500ms target) — summarizer-only.'
+	String get description => 'Pre-write filter on every memory_store. High frequency (<500ms target) — summarizer-only.';
+}
+
+// Path: memoryWorkers.tasks.cleaner
+class TranslationsMemoryWorkersTasksCleanerEn {
+	TranslationsMemoryWorkersTasksCleanerEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Cleaner librarian'
+	String get label => 'Cleaner librarian';
+
+	/// en: 'Periodic LLM librarian. Judges aged memories as keep / stale / duplicate.'
+	String get description => 'Periodic LLM librarian. Judges aged memories as keep / stale / duplicate.';
+}
+
+// Path: memoryWorkers.tasks.gitactivity
+class TranslationsMemoryWorkersTasksGitactivityEn {
+	TranslationsMemoryWorkersTasksGitactivityEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Git activity summariser'
+	String get label => 'Git activity summariser';
+
+	/// en: 'git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker.'
+	String get description => 'git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker.';
+}
+
+// Path: memoryWorkers.tasks.transcript
+class TranslationsMemoryWorkersTasksTranscriptEn {
+	TranslationsMemoryWorkersTasksTranscriptEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Session transcript summariser'
+	String get label => 'Session transcript summariser';
+
+	/// en: 'Session-end 'what did the agent do' summary. Naturally fits an agent worker.'
+	String get description => 'Session-end \'what did the agent do\' summary. Naturally fits an agent worker.';
+}
+
 // Path: settings.logViewer.levels
 class TranslationsSettingsLogViewerLevelsEn {
 	TranslationsSettingsLogViewerLevelsEn.internal(this._root);
@@ -2900,6 +3005,24 @@ extension on Translations {
 			'memoryWorkers.claudeAccountLabel' => 'Claude account',
 			'memoryWorkers.claudeAccountDefault' => 'Default',
 			'memoryWorkers.test' => 'Test',
+			'memoryWorkers.intro' => 'Each memory-system LLM touchpoint can be served independently by the local summarizer endpoint (LM Studio / OpenAI-compat) or by spawning a headless Claude / Gemini agent in --print mode. High-quality narrative tasks (gitactivity, transcript) benefit from agent workers; high-frequency tasks (gatekeeper) stay on the local endpoint by design.',
+			'memoryWorkers.errorTitle' => 'Endpoint not reachable',
+			'memoryWorkers.errorDetail' => 'The /api/v1/memory/workers routes are new in M25 — the opendray binary may need a restart to mount them and run migration 0029.',
+			'memoryWorkers.summarizerOnlyBadge' => 'summarizer-only',
+			'memoryWorkers.summarizerInfo' => 'Uses the registry default summarizer provider. Pick a specific row on the web admin.',
+			'memoryWorkers.agentWarning' => 'Agent mode spawns a headless CLI per call. Latency ~5-15s (vs ~1s summarizer); cost shifts from CPU to your Claude/Gemini quota.',
+			'memoryWorkers.noCalls24h' => 'No calls in last 24h.',
+			'memoryWorkers.testOkSnack' => ({required Object label, required Object duration}) => '${label} OK — ${duration}ms',
+			'memoryWorkers.testFailedReturnedSnack' => ({required Object label, required Object error}) => '${label} failed: ${error}',
+			'memoryWorkers.unknownError' => 'unknown',
+			'memoryWorkers.tasks.gatekeeper.label' => 'Gatekeeper',
+			'memoryWorkers.tasks.gatekeeper.description' => 'Pre-write filter on every memory_store. High frequency (<500ms target) — summarizer-only.',
+			'memoryWorkers.tasks.cleaner.label' => 'Cleaner librarian',
+			'memoryWorkers.tasks.cleaner.description' => 'Periodic LLM librarian. Judges aged memories as keep / stale / duplicate.',
+			'memoryWorkers.tasks.gitactivity.label' => 'Git activity summariser',
+			'memoryWorkers.tasks.gitactivity.description' => 'git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker.',
+			'memoryWorkers.tasks.transcript.label' => 'Session transcript summariser',
+			'memoryWorkers.tasks.transcript.description' => 'Session-end \'what did the agent do\' summary. Naturally fits an agent worker.',
 			'memoryCleanup.title' => 'Memory cleanup',
 			'memoryCleanup.approveFailed' => ({required Object error}) => 'Approve failed: ${error}',
 			'memoryCleanup.rejectFailed' => ({required Object error}) => 'Reject failed: ${error}',
@@ -3113,6 +3236,8 @@ extension on Translations {
 			'settings.changeCredentials.currentPassword' => 'Current password',
 			'settings.changeCredentials.newUsername' => 'New username',
 			'settings.changeCredentials.newPassword' => 'New password',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.confirmPassword' => 'Confirm new password',
 			'settings.changeCredentials.validatorRequired' => 'Required',
 			'settings.changeCredentials.passwordHelper' => 'At least 8 characters',
@@ -3131,8 +3256,6 @@ extension on Translations {
 			'settings.logViewer.levels.all' => 'All',
 			'settings.logViewer.levels.debug' => 'Debug',
 			'settings.logViewer.levels.info' => 'Info',
-			_ => null,
-		} ?? switch (path) {
 			'settings.logViewer.levels.warn' => 'Warn',
 			'settings.logViewer.levels.error' => 'Error',
 			'settings.serverSettings.title' => 'Server settings',

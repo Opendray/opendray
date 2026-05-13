@@ -392,7 +392,35 @@
     "cliGemini": "Gemini",
     "claudeAccountLabel": "Claude account",
     "claudeAccountDefault": "Default",
-    "test": "Test"
+    "test": "Test",
+    "intro": "Each memory-system LLM touchpoint can be served independently by the local summarizer endpoint (LM Studio / OpenAI-compat) or by spawning a headless Claude / Gemini agent in --print mode. High-quality narrative tasks (gitactivity, transcript) benefit from agent workers; high-frequency tasks (gatekeeper) stay on the local endpoint by design.",
+    "errorTitle": "Endpoint not reachable",
+    "errorDetail": "The /api/v1/memory/workers routes are new in M25 — the opendray binary may need a restart to mount them and run migration 0029.",
+    "summarizerOnlyBadge": "summarizer-only",
+    "summarizerInfo": "Uses the registry default summarizer provider. Pick a specific row on the web admin.",
+    "agentWarning": "Agent mode spawns a headless CLI per call. Latency ~5-15s (vs ~1s summarizer); cost shifts from CPU to your Claude/Gemini quota.",
+    "noCalls24h": "No calls in last 24h.",
+    "testOkSnack": "{label} OK — {duration}ms",
+    "testFailedReturnedSnack": "{label} failed: {error}",
+    "unknownError": "unknown",
+    "tasks": {
+      "gatekeeper": {
+        "label": "Gatekeeper",
+        "description": "Pre-write filter on every memory_store. High frequency (<500ms target) — summarizer-only."
+      },
+      "cleaner": {
+        "label": "Cleaner librarian",
+        "description": "Periodic LLM librarian. Judges aged memories as keep / stale / duplicate."
+      },
+      "gitactivity": {
+        "label": "Git activity summariser",
+        "description": "git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker."
+      },
+      "transcript": {
+        "label": "Session transcript summariser",
+        "description": "Session-end 'what did the agent do' summary. Naturally fits an agent worker."
+      }
+    }
   },
   "memoryCleanup": {
     "title": "Memory cleanup",
