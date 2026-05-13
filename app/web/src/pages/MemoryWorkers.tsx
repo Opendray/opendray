@@ -78,6 +78,27 @@ export function MemoryWorkersPage() {
     )
   }
 
+  // Empty-data state: most common reason is the server hasn't yet
+  // applied migration 0029 (memory_workers table) — surface it
+  // clearly so operators don't stare at a half-empty page wondering
+  // what went wrong.
+  if (workersQuery.isError) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-3 p-6 text-sm">
+        <h1 className="text-xl font-semibold">Memory workers</h1>
+        <div className="bg-destructive/10 text-destructive rounded-md border p-3 text-xs">
+          <strong>Endpoint not reachable.</strong> The
+          /api/v1/memory/workers routes are new in M25 — the
+          opendray binary may need a restart to mount them and
+          run migration 0029.
+        </div>
+        <pre className="bg-muted/30 overflow-auto rounded p-2 font-mono text-[10px]">
+          {String(workersQuery.error)}
+        </pre>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
       <header>
