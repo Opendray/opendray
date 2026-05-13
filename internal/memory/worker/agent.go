@@ -136,16 +136,18 @@ func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 	}()
 
 	if err := cmd.Wait(); err != nil {
-		stderrTrunc := truncate(stderr.String(), 400)
-		// Distinguish timeout from other errors for the metrics
-		// table — operators want to know whether to bump the
-		// timeout or chase a model error.
+		// Claude / Gemini CLIs print auth + 4xx errors to stdout
+		// (not stderr), so include both streams in the error
+		// message — operators can't debug "exit status 1 (stderr: )"
+		// blind.
+		stderrTrunc := truncate(stderr.String(), 200)
+		stdoutTrunc := truncate(stdout.String(), 400)
 		if errors.Is(runCtx.Err(), context.DeadlineExceeded) {
-			return Response{}, fmt.Errorf("agent worker: timeout after %s (stderr: %s)",
-				timeout, stderrTrunc)
+			return Response{}, fmt.Errorf("agent worker: timeout after %s (stdout: %s, stderr: %s)",
+				timeout, stdoutTrunc, stderrTrunc)
 		}
-		return Response{}, fmt.Errorf("agent worker: %s --print: %w (stderr: %s)",
-			w.cfg.ProviderID, err, stderrTrunc)
+		return Response{}, fmt.Errorf("agent worker: %s --print: %w (stdout: %s, stderr: %s)",
+			w.cfg.ProviderID, err, stdoutTrunc, stderrTrunc)
 	}
 	dur := time.Since(t0).Milliseconds()
 
@@ -168,11 +170,14 @@ func (w *AgentWorker) buildCommand(req Request, sessionID string) ([]string, []s
 		args := []string{
 			"--print",
 			"--session-id", sessionID,
-			// --bare skips hooks, plugin sync, CLAUDE.md auto-
-			// discovery, auto-memory, keychain reads —
-			// minimising cold-start latency and avoiding the
-			// agent picking up unrelated project context.
-			"--bare",
+			// NOTE: --bare is tempting (it skips hooks / plugin
+			// sync / CLAUDE.md auto-discovery), but it forces
+			// auth via ANTHROPIC_API_KEY only — our multi-account
+			// OAuth tokens (CLAUDE_CODE_OAUTH_TOKEN) get ignored
+			// and the call fails with exit 1 "Not logged in".
+			// We rely on the scratch CWD to isolate from project
+			// CLAUDE.md, and --print already skips tool use so
+			// PostToolUse hooks won't fire.
 		}
 		sys := req.SystemPrompt
 		if req.ResponseFormatJSONSchema != "" {
