@@ -330,6 +330,61 @@ void main() {
       expect(cl.length, 0);
     });
 
+    test(
+        'insert tolerates dangling refs left by zero-copy ref shifts',
+        () {
+      // Reproduces the crash that mobile Codex sessions hit:
+      // Buffer.scrollUp/scrollDown shifts BufferLine references
+      // with `lines[i] = lines[i + n]`, which leaves the same
+      // line referenced from two cyclic slots until the source
+      // slot is reassigned. _adoptChild on the source slot then
+      // _detach()es the line we just re-attached at `i`,
+      // leaving an `attached=false` reference behind in the
+      // backing array.
+      //
+      // The fix lives in _moveChild/_move (graceful skip on a
+      // dangling source), not in _adoptChild. We don't try to
+      // remove the dangling reference up front — too many
+      // upstream call sites can produce one and over-eager
+      // cleanup elsewhere broke buffer invariants (NPE on
+      // `lines[absoluteCursorY]`). Instead we tolerate the
+      // dangling slot: the surrounding insert/_moveChild keeps
+      // working on the unaffected slots, and the next
+      // _adoptChild that writes to that logical index reclaims
+      // it.
+      final cl = IndexAwareCircularBuffer<IndexedValue<int>>(8);
+      cl.pushAll(
+        List<int>.generate(8, (i) => i).map(IndexedValue.new),
+      );
+
+      // Simulate scrollUp(1) on the inner region [1..6] — this
+      // is the exact pattern Buffer.scrollUp generates.
+      for (var i = 1; i <= 5; i++) {
+        cl[i] = cl[i + 1];
+      }
+      cl[6] = IndexedValue(99);
+
+      // Buffer is now in the dangling-reference state. The
+      // crash the user reported was on `cl.insert(...)` next.
+      // With the _moveChild + _move guards in place this no
+      // longer throws.
+      cl.insert(3, IndexedValue(77));
+
+      expect(cl.length, 8);
+      // Buffer is full, so insert drops the head element to make
+      // room; the user-visible indices shift left by one, which
+      // is why the inserted value ends up at cl[2] rather than
+      // cl[3] (see the "insert circular works" test for the
+      // same convention).
+      expect(cl[2].value, 77);
+      // No NPE: every visible slot is reachable via operator [].
+      for (var i = 0; i < cl.length; i++) {
+        // operator [] would null-assert if the cyclic slot were
+        // empty, so just touching cl[i] is the assertion.
+        cl[i];
+      }
+    });
+
     test('can track index of items', () {
       final cl = IndexAwareCircularBuffer<IndexedValue<int>>(3);
       final item0 = IndexedValue(0);

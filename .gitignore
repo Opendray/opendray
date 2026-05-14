@@ -46,6 +46,14 @@ app/mobile/.packages
 app/mobile/.pub-cache/
 app/mobile/.pub/
 app/mobile/build/
+
+# ── Vendored Flutter packages (third_party/xterm/) ───────────
+# Library package — pubspec.lock should not be committed (the
+# consuming app's lock file is authoritative). Build artefacts
+# only appear when running tests inside the fork directly.
+third_party/xterm/.dart_tool/
+third_party/xterm/build/
+third_party/xterm/pubspec.lock
 app/mobile/ios/Pods/
 app/mobile/ios/.symlinks/
 app/mobile/ios/Flutter/Flutter.framework

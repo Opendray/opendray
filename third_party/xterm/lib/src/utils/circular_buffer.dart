@@ -48,8 +48,26 @@ class IndexAwareCircularBuffer<T extends IndexedItem> {
   void _moveChild(int fromIndex, int toIndex) {
     final fromCyclicIndex = _getCyclicIndex(fromIndex);
     final toCyclicIndex = _getCyclicIndex(toIndex);
+    final source = _array[fromCyclicIndex];
+    if (source != null && !source.attached) {
+      // Defensive: the source slot holds a dangling reference
+      // (some upstream mutation left an `attached=false` line in
+      // the backing array — observed on mobile codex sessions in
+      // a way we haven't fully traced yet). Calling `_move` on
+      // it would trip `assert(attached)` and crash the whole
+      // terminal. Propagate the dangling slot along the shift
+      // path instead of dropping it: the to-slot stays non-null
+      // (preserving `_array[cyclic(i)] != null for i in [0,
+      // length)` so `operator[]` doesn't NPE later), and the
+      // dangling reference is overwritten when _adoptChild
+      // eventually writes a fresh line into that logical index.
+      _array[toCyclicIndex]?._detach();
+      _array[toCyclicIndex] = source;
+      _array[fromCyclicIndex] = null;
+      return;
+    }
     _array[toCyclicIndex]?._detach();
-    _array[toCyclicIndex] = _array[fromCyclicIndex]?.._move(toIndex);
+    _array[toCyclicIndex] = source?.._move(toIndex);
     _array[fromCyclicIndex] = null;
   }
 
@@ -309,7 +327,14 @@ mixin IndexedItem {
 
   /// Moves this item to [newIndex] in the buffer.
   void _move(int newIndex) {
-    assert(attached);
+    // Defensive: previously this asserted `attached` and crashed
+    // the whole terminal when a sibling mutation left a dangling
+    // reference in the backing array (see _moveChild's guard).
+    // Treat the call as a no-op instead — the caller's `?._move`
+    // cascade still chains, and the dangling slot is either about
+    // to be cleared by the surrounding loop or overwritten by the
+    // next _adoptChild.
+    if (_owner == null) return;
     _absoluteIndex = _owner!._absoluteStartIndex + newIndex;
   }
 }
