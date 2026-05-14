@@ -1589,6 +1589,262 @@
         "timedOutTitle": "重启超时",
         "timedOutDesc": "Health 接口未恢复。请查看服务器日志。",
         "successToast": "服务器已重启"
+      },
+      "formGroups": {
+        "network": "网络",
+        "operatorAccount": "操作员账号",
+        "memoryConfiguration": "配置",
+        "memoryHttp": "HTTP 后端（当 backend=http 时使用）",
+        "memoryLocal": "本地 ONNX（当 backend=local 时使用）",
+        "backupStatus": "状态",
+        "backupWhere": "备份目标位置",
+        "backupSchedules": "计划任务",
+        "backupWhatsInside": "备份里有什么？"
+      },
+      "fields": {
+        "listenAddress": {
+          "label": "监听地址",
+          "hint": "HTTP 服务绑定的 host:port，例如：0.0.0.0:8770。"
+        },
+        "username": {
+          "label": "用户名",
+          "hint": "登录表单使用的账号。修改后下次请求会强制重新登录。"
+        },
+        "password": {
+          "label": "密码",
+          "hint": "留空保持当前密码不变；填值则会覆盖。",
+          "hideTitle": "隐藏",
+          "revealTitle": "显示"
+        },
+        "tokenTTL": {
+          "label": "令牌 TTL",
+          "hint": "Bearer 令牌生命周期，使用 Go duration，如 \"24h\"、\"30m\"。留空 = 永不过期。"
+        },
+        "logLevel": {
+          "label": "日志级别",
+          "hint": "低于此级别的日志将被丢弃。"
+        },
+        "logFormat": {
+          "label": "格式",
+          "hint": "\"text\" 适合人读；\"json\" 便于机器解析。"
+        },
+        "logFile": {
+          "label": "日志文件",
+          "hint": "可选的文件路径。10MB 自动轮转，保留 5 个备份。留空 = 仅输出到 stderr。"
+        },
+        "idleThreshold": {
+          "label": "空闲阈值",
+          "hint": "会话静默这么久后触发 session.idle。留空 = 30s。"
+        },
+        "idlePollInterval": {
+          "label": "空闲轮询间隔",
+          "hint": "空闲检测器的唤醒频率。越低 = 延迟越低、唤醒越多。留空 = 5s。"
+        },
+        "vaultRoot": {
+          "label": "Vault 根目录",
+          "hint": "笔记、技能和 MCP 注册表的顶层目录。"
+        },
+        "notesDirectory": {
+          "label": "笔记目录",
+          "hint": "覆盖笔记位置。默认为 <vault root>/notes。"
+        },
+        "skillsDirectory": {
+          "label": "技能目录",
+          "hint": "覆盖技能位置。默认为 <vault root>/skills。"
+        },
+        "gitRoot": {
+          "label": "Git 根目录",
+          "hint": "Vault Sync 功能提交到的工作树。"
+        },
+        "personalPrefix": {
+          "label": "个人前缀",
+          "hint": "自动派生路径时用于个人笔记的文件夹名。默认 \"personal\"。"
+        },
+        "projectsPrefix": {
+          "label": "项目前缀",
+          "hint": "项目笔记的文件夹名。默认 \"projects\"。"
+        },
+        "registryRoot": {
+          "label": "注册表根目录",
+          "hint": "存放 MCP server JSON 定义的目录。默认为 <vault>/mcp。"
+        },
+        "secretsFile": {
+          "label": "密钥文件",
+          "hint": "spawn 时替换进 MCP server 命令的 key=value 文件。"
+        },
+        "memoryBackend": {
+          "label": "嵌入器后端",
+          "hint": "\"auto\" / \"bm25\" 使用纯 Go 关键词路径（无需 cgo）；\"http\" 调用任何兼容 OpenAI 的 /v1/embeddings（ollama / OpenAI / LocalAI）；\"local\" 进程内运行 ONNX sentence-transformer — 需要用 `-tags local_onnx` 编译的二进制。"
+        },
+        "memoryStore": {
+          "label": "存储",
+          "hint": "\"pgvector\" 复用 opendray 已有的 PG + vector 扩展；v1 唯一选项。"
+        },
+        "memoryTopK": {
+          "label": "默认 top-K",
+          "hint": "agent 未指定时 memory_search 返回多少条命中。留空 = 5。"
+        },
+        "memoryThreshold": {
+          "label": "相似度阈值",
+          "hint": "分数低于此值的命中将被丢弃。留空 = 0.1（宽松 — BM25 稀疏向量很少超过 0.5）。"
+        },
+        "memoryScope": {
+          "label": "默认作用域",
+          "hint": "agent 未指定时 memory_store 使用的作用域。\"project\"（推荐）按 cwd 分组；\"session\" 按会话隔离；\"global\" 跨 cwd 共享。"
+        },
+        "memoryBaseUrl": {
+          "label": "Base URL",
+          "hint": "如 ollama 用 \"http://localhost:11434/v1\"，OpenAI 用 \"https://api.openai.com/v1\"。"
+        },
+        "memoryModel": {
+          "label": "模型",
+          "hint": "如 ollama 用 \"nomic-embed-text\"，OpenAI 用 \"text-embedding-3-small\"。"
+        },
+        "memoryApiKey": {
+          "label": "API 密钥",
+          "hint": "ollama / 本地服务可留空；OpenAI / Voyage / 托管服务必填。"
+        },
+        "memoryLocalModel": {
+          "label": "模型名",
+          "hint": "仅作显示用 — 出现在日志 / Inspector 中。如 \"bge-m3\"、\"bge-small-en-v1.5\"。"
+        },
+        "memoryLibraryPath": {
+          "label": "库路径",
+          "hint": "存放 libonnxruntime.dylib (macOS) / libonnxruntime.so (Linux) 的目录。`brew install onnxruntime` 后即 /opt/homebrew/opt/onnxruntime/lib。"
+        },
+        "memoryModelPath": {
+          "label": "模型路径",
+          "hint": ".onnx 权重的绝对路径。从 HuggingFace 下载，如 Xenova/bge-m3 或 Xenova/bge-small-en-v1.5。"
+        },
+        "memoryTokenizerPath": {
+          "label": "Tokenizer 路径",
+          "hint": "tokenizer.json（HuggingFace 标准格式）的绝对路径 — 通常和模型放在一起。"
+        },
+        "memoryMaxSeqLen": {
+          "label": "最大序列长度",
+          "hint": "超过这个 token 数会被截断。bge-m3 默认 512。留空 = 512。"
+        },
+        "claudeHistoryRoots": {
+          "label": "历史根目录",
+          "hint": "扫描 Claude 每项目 JSONL 记录的目录。留空 = 扫描 ~/.claude/projects + 所有 ~/.claude-accounts/*/projects。"
+        },
+        "claudeAccountsDir": {
+          "label": "账号目录",
+          "hint": "opendray 管理的 Claude 账号 ConfigDir 根目录。默认 ~/.claude-accounts。"
+        },
+        "codexSessionsRoot": {
+          "label": "会话根目录",
+          "hint": "遍历 Codex rollout JSONL 文件的目录。默认 ~/.codex/sessions。"
+        },
+        "geminiTmpRoot": {
+          "label": "tmp 目录",
+          "hint": "存放 Gemini 每项目 tmp 文件夹的根目录。默认 ~/.gemini/tmp。"
+        },
+        "geminiProjectsFile": {
+          "label": "projects.json",
+          "hint": "Gemini cwd→短名映射文件的路径。默认 ~/.gemini/projects.json。"
+        },
+        "backupLocalDir": {
+          "label": "本地备份目录",
+          "hint": "自动创建的 `local` 目标的默认根目录。留空 = ~/.opendray/backups。需要重启。"
+        },
+        "backupExportDir": {
+          "label": "导出目录",
+          "hint": "一次性导出 zip 在磁盘上的暂存位置。留空 = ~/.opendray/exports。包将在 24 小时后自动过期。需要重启。"
+        },
+        "backupPgDumpPath": {
+          "label": "pg_dump 路径",
+          "hint": "pg_dump 的绝对路径。主版本号必须 ≥ 服务器的。留空 = PATH 上的第一个 pg_dump。"
+        },
+        "backupPgRestorePath": {
+          "label": "pg_restore 路径",
+          "hint": "/backups/restore 流程使用的 pg_restore 绝对路径。同样的主版本号规则。"
+        }
+      },
+      "liveTail": {
+        "heading": "实时日志",
+        "description": "内存中的环形缓冲区（最近约 2,000 条）。重启后清空。"
+      },
+      "memoryInspectorCard": {
+        "heading": "检查器",
+        "description": "在专门页面浏览、搜索、编辑已存储的记忆。",
+        "openButton": "打开记忆 →"
+      },
+      "localOnnxBanner": "需要使用 <1>-tags local_onnx</1> 编译二进制。标准构建在选择此后端时会返回明确的 stub 错误。设置步骤参见 <3>记忆 → 本地 ONNX</3> 教程。",
+      "stringList": {
+        "noneDefault": "（无 — 使用内置默认值）",
+        "addPath": "添加路径",
+        "removeTitle": "移除"
+      },
+      "httpHelpers": {
+        "autoDetected": "启动时自动检测到",
+        "modelCount": "{count} 个模型 — 点击使用",
+        "presets": "预设：",
+        "testConnection": "测试连接",
+        "presetTip": {
+          "ollama": "本地 ollama 守护进程",
+          "lmStudio": "LM Studio 本地服务",
+          "openai": "OpenAI 云端（需要 API key）"
+        }
+      },
+      "probe": {
+        "unreachable": "✗ 不可达：{error}",
+        "connectionFailed": "连接失败",
+        "reachable": "✓ 可达 {detected}· 共 {total} 个模型 · {embedding} 个嵌入",
+        "modelMissing": "⚠ 配置的模型 {model} 不在列表中。从下方嵌入模型中选一个，或修正名称。",
+        "embeddingModelsLabel": "嵌入模型：",
+        "moreModels": "还有 {count} 个",
+        "noEmbeddingFound": "⚠ 没有模型名包含 \"embed\"。该端点可能未加载嵌入模型 — 请检查本地服务。",
+        "configuredTitle": "当前已配置",
+        "applyTitle": "点击应用"
+      },
+      "backup": {
+        "featureDisabledTitle": "功能已禁用",
+        "featureDisabledHint": "在 opendray 的环境变量中设置 <1>OPENDRAY_BACKUP_ENABLED=1</1> + <3>OPENDRAY_BACKUP_KEY=&lt;passphrase&gt;</3>，然后重启。主密码仅来自环境变量 — 永不写入 config.toml。",
+        "statusRowLabel": "状态",
+        "enabledHealthy": "已启用 · 健康",
+        "enabledDegraded": "已启用 · 异常",
+        "keyFingerprintLabel": "密钥指纹",
+        "keyFingerprintHint": "记录到 Vaultwarden — 丢失会锁死所有先前的备份",
+        "pgDumpLabel": "pg_dump",
+        "pgDumpUnavailable": "不可用",
+        "pgRestoreLabel": "pg_restore",
+        "pgRestoreNotResolved": "（未解析）",
+        "openBackups": "打开备份页 →",
+        "openExport": "打开导出 / 导入 →",
+        "whereDesc": "每个目标都是备份块可写入的一个地方。opendray 支持 <1>本地磁盘</1>、<3>SMB/CIFS</3>（Windows / NAS）、<5>S3 兼容</5>（AWS、R2、B2、MinIO、阿里云 OSS、腾讯云 COS …）、<7>WebDAV</7>（Nextcloud、群晖、坚果云）、<9>SFTP</9>，外加 <11>rclone</11> 透传，接入另外 70+ 个后端（Google Drive、OneDrive、Dropbox、百度云、阿里云盘 …）。",
+        "loading": "加载中…",
+        "noTargets": "尚未添加目标。添加一个开始备份。",
+        "addTarget": "添加目标",
+        "noSchedulesHint": "没有循环计划。在 <1>/backups → 计划任务</1> 添加一个以自动执行备份。",
+        "scheduleHeaders": {
+          "schedule": "计划",
+          "target": "目标",
+          "cadence": "频率",
+          "keep": "保留",
+          "state": "状态"
+        },
+        "every": "每 {interval}",
+        "backupsKeep": "{count} 份备份",
+        "stateEnabled": "已启用",
+        "statePaused": "已暂停",
+        "manageSchedules": "在 /backups → 计划任务 管理 →",
+        "whatsInsideDesc": "每份备份都是所有 opendray 表（sessions、integrations、memories、audit_log 等）的 <1>pg_dump --format=custom</1>，加上一个 <3>manifest.json</3>，以及（可选）当前的 <5>config.toml</5>。在 <7>备份页</7> 打开「备份里有什么？」面板可以看到带行数的实时清单。",
+        "advancedToggle": "高级选项（路径与客户端二进制）— 需要重启"
+      },
+      "targetRow": {
+        "on": "开",
+        "off": "关",
+        "test": "测试",
+        "testing": "测试中…",
+        "delete": "删除",
+        "connectionOk": "{id}：连接正常",
+        "connectionFailedTitle": "连接失败",
+        "testFailedTitle": "测试失败",
+        "deleteConfirm": "删除目标 \"{id}\"？引用它的计划任务将阻止删除。",
+        "deleteSuccess": "目标已删除",
+        "deleteFailedTitle": "删除失败",
+        "unknownError": "未知错误"
       }
     },
     "settings": {
