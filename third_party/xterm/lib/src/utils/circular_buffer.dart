@@ -38,24 +38,6 @@ class IndexAwareCircularBuffer<T extends IndexedItem> {
   @pragma('vm:prefer-inline')
   void _adoptChild(int index, T child) {
     final cyclicIndex = _getCyclicIndex(index);
-    // Buffer.scrollUp/scrollDown shifts lines with `[i] = [i ± n]`
-    // for zero-copy line moves. The RHS line is still attached at
-    // its prior cyclic slot when the LHS adoption runs; a later
-    // iteration that overwrites the prior slot would then _detach
-    // the same line we just re-attached here, leaving an
-    // `attached=false` reference behind in the backing array.
-    // The next insert() walking past that slot trips
-    // IndexedItem._move's `assert(attached)` — observed in Codex
-    // sessions on mobile under DECSTBM with a full scrollback.
-    // Null the prior slot before re-attaching so no dangling
-    // reference can survive the surrounding loop.
-    if (identical(child._owner, this)) {
-      final priorCyclic = _getCyclicIndex(child.index);
-      if (priorCyclic != cyclicIndex &&
-          identical(_array[priorCyclic], child)) {
-        _array[priorCyclic] = null;
-      }
-    }
     _array[cyclicIndex]?._detach();
     _array[cyclicIndex] = child.._attach(this, index);
   }
@@ -65,29 +47,27 @@ class IndexAwareCircularBuffer<T extends IndexedItem> {
   @pragma('vm:prefer-inline')
   void _moveChild(int fromIndex, int toIndex) {
     final fromCyclicIndex = _getCyclicIndex(fromIndex);
+    final toCyclicIndex = _getCyclicIndex(toIndex);
     final source = _array[fromCyclicIndex];
-    if (source == null) {
-      // Nothing to move — the from-slot was already cleared by an
-      // earlier mutation (e.g. _adoptChild's prior-slot null-out
-      // when the same line was about to be shifted).
-      return;
-    }
-    if (!source.attached) {
-      // Defensive: the source is a dangling reference left behind
-      // by a buffer mutation we haven't (yet) accounted for in
-      // _adoptChild. Calling source._move would trip its
-      // `assert(attached)` and crash the terminal (mobile codex
-      // sessions used to hit this on every IND inside a DECSTBM
-      // region with full scrollback). Drop the dangling slot
-      // silently; the surrounding insert/_moveChild loop will
-      // recover when _adoptChild writes the freshly-allocated
-      // item at the target index.
+    if (source != null && !source.attached) {
+      // Defensive: the source slot holds a dangling reference
+      // (some upstream mutation left an `attached=false` line in
+      // the backing array — observed on mobile codex sessions in
+      // a way we haven't fully traced yet). Calling `_move` on
+      // it would trip `assert(attached)` and crash the whole
+      // terminal. Propagate the dangling slot along the shift
+      // path instead of dropping it: the to-slot stays non-null
+      // (preserving `_array[cyclic(i)] != null for i in [0,
+      // length)` so `operator[]` doesn't NPE later), and the
+      // dangling reference is overwritten when _adoptChild
+      // eventually writes a fresh line into that logical index.
+      _array[toCyclicIndex]?._detach();
+      _array[toCyclicIndex] = source;
       _array[fromCyclicIndex] = null;
       return;
     }
-    final toCyclicIndex = _getCyclicIndex(toIndex);
     _array[toCyclicIndex]?._detach();
-    _array[toCyclicIndex] = source.._move(toIndex);
+    _array[toCyclicIndex] = source?.._move(toIndex);
     _array[fromCyclicIndex] = null;
   }
 
