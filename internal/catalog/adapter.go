@@ -3,6 +3,7 @@ package catalog
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -280,6 +281,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		ID:         p.Manifest.ID,
 		Executable: exe,
 		Args:       args,
+		Conflicts:  providerConflicts(p.Manifest.ID),
 	}
 
 	// Account selection: only meaningful for the Claude provider —
@@ -759,39 +761,90 @@ func resolveMCPSecrets(servers []MCPServer, path string, log *slog.Logger) ([]MC
 	return out, missing
 }
 
-// mirrorCodexHome symlinks every entry of src into dest, skipping
-// files we layer ourselves (config.toml, instructions.md). Lets the
-// codex CLI see the user's auth.json + history.jsonl + cache while
-// our skill index sits alongside as a real file.
+// mirrorCodexHome copies the minimal subset of the user's Codex home
+// that a session scratch dir needs to start authenticated inside a
+// sandbox.
+//
+// We intentionally do NOT symlink the whole ~/.codex tree anymore.
+// Under codex's workspace-write sandbox, symlinked sqlite/log/cache
+// files still resolve to paths outside the writable scratch dir, so
+// startup fails with "attempt to write a readonly database". Keeping
+// mutable runtime state local to dest avoids that while still
+// preserving auth and user rules/plugins.
 func mirrorCodexHome(src, dest string) error {
 	if err := os.MkdirAll(dest, 0o700); err != nil {
 		return err
 	}
-	entries, err := os.ReadDir(src)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
+	allow := map[string]bool{
+		"auth.json":                true,
+		".codex-global-state.json": true,
+		"installation_id":          true,
+		"version.json":             true,
+		"plugins":                  true,
+		"rules":                    true,
+		"skills":                   true,
 	}
-	skip := map[string]bool{
-		"config.toml":     true,
-		"instructions.md": true,
-	}
-	for _, e := range entries {
-		if skip[e.Name()] {
-			continue
-		}
-		srcPath := filepath.Join(src, e.Name())
-		dstPath := filepath.Join(dest, e.Name())
-		if err := os.Symlink(srcPath, dstPath); err != nil {
-			if os.IsExist(err) {
+	for name := range allow {
+		srcPath := filepath.Join(src, name)
+		if _, err := os.Stat(srcPath); err != nil {
+			if os.IsNotExist(err) {
 				continue
 			}
-			return fmt.Errorf("symlink %s: %w", e.Name(), err)
+			return err
+		}
+		dstPath := filepath.Join(dest, name)
+		if err := copyPath(srcPath, dstPath); err != nil {
+			return fmt.Errorf("copy %s: %w", name, err)
 		}
 	}
 	return nil
+}
+
+func copyPath(src, dst string) error {
+	info, err := os.Stat(src)
+	if err != nil {
+		if os.IsNotExist(err) {
+			if li, lerr := os.Lstat(src); lerr == nil && li.Mode()&os.ModeSymlink != 0 {
+				// Dangling symlink in user's codex home — skip rather than
+				// fail the whole mirror. Stale skill links are common when
+				// a source repo is moved or deleted.
+				return nil
+			}
+		}
+		return err
+	}
+	if info.IsDir() {
+		if err := os.MkdirAll(dst, info.Mode().Perm()); err != nil {
+			return err
+		}
+		entries, err := os.ReadDir(src)
+		if err != nil {
+			return err
+		}
+		for _, e := range entries {
+			if err := copyPath(filepath.Join(src, e.Name()), filepath.Join(dst, e.Name())); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
+		return err
+	}
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode().Perm())
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(out, in); err != nil {
+		_ = out.Close()
+		return err
+	}
+	return out.Close()
 }
 
 func ensureCodexScratchTrust(home, cwd string) error {
@@ -819,6 +872,30 @@ func ensureCodexScratchTrust(home, cwd string) error {
 	}
 	body += projectHeader + "\ntrust_level = \"trusted\"\n"
 	return os.WriteFile(path, []byte(body), 0o600)
+}
+
+// providerConflicts returns the static CLI argument-group rules for
+// a provider. Each entry maps a "trigger" flag (one that may appear in
+// user spawn args) to the set of provider-config flags that conflict
+// with it and must be stripped before exec.
+//
+// Currently only codex needs this: its clap ArgGroup makes
+// --dangerously-bypass-approvals-and-sandbox mutually exclusive with
+// --ask-for-approval (-a) and --sandbox (-s). Without this stripping
+// step the spawn fails because the saved provider config keeps emitting
+// the default approval/sandbox flags.
+func providerConflicts(providerID string) map[string][]string {
+	switch providerID {
+	case "codex":
+		return map[string][]string{
+			"--dangerously-bypass-approvals-and-sandbox": {
+				"--ask-for-approval", "-a",
+				"--sandbox", "-s",
+			},
+		}
+	default:
+		return nil
+	}
 }
 
 // defaultStr returns def when s is empty after trimming, otherwise s.

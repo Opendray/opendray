@@ -84,7 +84,7 @@ The flag is provider-specific:
 | Provider | Toggle label | Appended flag(s) |
 |---|---|---|
 | Claude | `Bypass permission prompts` | `--dangerously-skip-permissions` |
-| Codex | `Auto-approve (--ask-for-approval never)` | `--ask-for-approval never` |
+| Codex | `Bypass approvals & sandbox` | `--dangerously-bypass-approvals-and-sandbox` |
 | Gemini | `YOLO mode (--yolo)` | `--yolo` |
 
 The toggle is **additive** — it doesn't disable a provider-wide
@@ -93,9 +93,17 @@ Approval / YOLO**. If the provider config already has bypass on,
 every session bypasses regardless of this toggle. Leave the
 provider default off if you want per-session control.
 
-Bypass flags are appended *before* anything you type into **Args**
-above, so your explicit args win on conflicts (codex's
-`--ask-for-approval` is last-wins in the upstream parser).
+Per-session bypass flags are appended *before* anything you type
+into **Args** above. When the same flag exists in the provider's
+saved config (e.g. codex's saved `--ask-for-approval on-request`),
+the session-level value wins — opendray drops the provider's copy
+to avoid duplicates that codex's parser would reject.
+
+For codex specifically: `--ask-for-approval never` only
+auto-approves shell exec commands, **not** MCP tool calls. The
+session toggle uses `--dangerously-bypass-approvals-and-sandbox`
+instead, which is codex's "skip everything" switch (also disables
+the workspace sandbox).
 
 The toggle resets to OFF on provider change + after each spawn, so
 the next session is always a deliberate opt-in.

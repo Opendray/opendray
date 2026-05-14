@@ -199,3 +199,92 @@ func TestEnsureCodexScratchTrust_AppendsCurrentCwd(t *testing.T) {
 		t.Errorf("trust level missing: %s", str)
 	}
 }
+
+func TestMirrorCodexHome_CopiesMinimalAuthSubset(t *testing.T) {
+	src := t.TempDir()
+	dest := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(src, "auth.json"), []byte(`{"token":"x"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(src, "state_5.sqlite"), []byte("sqlite"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(src, "rules"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(src, "rules", "team.md"), []byte("rule"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(src, "plugins"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(src, "plugins", "marketplace.json"), []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := mirrorCodexHome(src, dest); err != nil {
+		t.Fatal(err)
+	}
+
+	authPath := filepath.Join(dest, "auth.json")
+	info, err := os.Lstat(authPath)
+	if err != nil {
+		t.Fatalf("auth.json missing: %v", err)
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		t.Fatalf("auth.json should be copied, not symlinked")
+	}
+	body, err := os.ReadFile(authPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(body) != `{"token":"x"}` {
+		t.Fatalf("auth.json content mismatch: %s", body)
+	}
+
+	if _, err := os.Stat(filepath.Join(dest, "rules", "team.md")); err != nil {
+		t.Fatalf("rules directory should be copied: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dest, "plugins", "marketplace.json")); err != nil {
+		t.Fatalf("plugins directory should be copied: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dest, "state_5.sqlite")); !os.IsNotExist(err) {
+		t.Fatalf("sqlite runtime should not be mirrored, got err=%v", err)
+	}
+}
+
+func TestMirrorCodexHome_SkipsDanglingSymlinks(t *testing.T) {
+	src := t.TempDir()
+	dest := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(src, "auth.json"), []byte(`{"token":"x"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	skillsDir := filepath.Join(src, "skills")
+	if err := os.MkdirAll(skillsDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	// Real skill alongside a dangling symlink — mirrors the user's actual
+	// ~/.codex/skills layout when a skill source repo has been deleted.
+	if err := os.MkdirAll(filepath.Join(skillsDir, "good"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(skillsDir, "good", "SKILL.md"), []byte("ok"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Join(src, "nonexistent-target"), filepath.Join(skillsDir, "broken")); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := mirrorCodexHome(src, dest); err != nil {
+		t.Fatalf("mirror should tolerate dangling symlinks: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(dest, "skills", "good", "SKILL.md")); err != nil {
+		t.Fatalf("valid skill should be copied: %v", err)
+	}
+	if _, err := os.Lstat(filepath.Join(dest, "skills", "broken")); !os.IsNotExist(err) {
+		t.Fatalf("dangling symlink should be skipped, got err=%v", err)
+	}
+}

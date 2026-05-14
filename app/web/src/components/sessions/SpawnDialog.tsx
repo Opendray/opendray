@@ -35,9 +35,14 @@ const HOME_HINT = '/Users/' // macOS-friendly default; user can edit.
 // (Settings → Providers) may also bake these in; the per-session
 // toggle below is purely additive. Keeping the list here as a const
 // table avoids importing config logic from the gateway side.
+// codex's --ask-for-approval=never only auto-approves shell exec calls;
+// MCP tool invocations still prompt. --dangerously-bypass-approvals-and-sandbox
+// is codex's true "skip everything" switch (parallels claude's
+// --dangerously-skip-permissions) and also disables the sandbox — the
+// per-session toggle below is the right place to opt into that.
 const BYPASS_FLAGS: Record<string, string[]> = {
   claude: ['--dangerously-skip-permissions'],
-  codex: ['--ask-for-approval', 'never', '-c', 'approval_policy="never"'],
+  codex: ['--dangerously-bypass-approvals-and-sandbox'],
   gemini: ['--yolo'],
 }
 

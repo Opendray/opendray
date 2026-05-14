@@ -4374,8 +4374,8 @@ class TranslationsWebSessionsSpawnEn {
 	/// en: 'Bypass permission prompts'
 	String get bypassClaude => 'Bypass permission prompts';
 
-	/// en: 'Auto-approve (--ask-for-approval never)'
-	String get bypassCodex => 'Auto-approve (--ask-for-approval never)';
+	/// en: 'Bypass approvals & sandbox (--dangerously-bypass-approvals-and-sandbox)'
+	String get bypassCodex => 'Bypass approvals & sandbox (--dangerously-bypass-approvals-and-sandbox)';
 
 	/// en: 'YOLO mode (--yolo)'
 	String get bypassGemini => 'YOLO mode (--yolo)';
@@ -8828,8 +8828,8 @@ class TranslationsSessionsSpawnSheetBypassEn {
 	/// en: 'Bypass permissions'
 	String get labelClaude => 'Bypass permissions';
 
-	/// en: 'Auto-approve (never ask)'
-	String get labelCodex => 'Auto-approve (never ask)';
+	/// en: 'Bypass approvals & sandbox'
+	String get labelCodex => 'Bypass approvals & sandbox';
 
 	/// en: 'YOLO mode'
 	String get labelGemini => 'YOLO mode';
@@ -12376,7 +12376,7 @@ extension on Translations {
 			'web.sessions.spawn.namePlaceholder' => 'claude in pet-tracker',
 			'web.sessions.spawn.argsLabel' => 'CLI args (one per line)',
 			'web.sessions.spawn.bypassClaude' => 'Bypass permission prompts',
-			'web.sessions.spawn.bypassCodex' => 'Auto-approve (--ask-for-approval never)',
+			'web.sessions.spawn.bypassCodex' => 'Bypass approvals & sandbox (--dangerously-bypass-approvals-and-sandbox)',
 			'web.sessions.spawn.bypassGemini' => 'YOLO mode (--yolo)',
 			'web.sessions.spawn.bypassOnHint' => 'This session will run with elevated autonomy.',
 			'web.sessions.spawn.bypassOffHint' => 'Off — confirmations and prompts behave normally.',
@@ -14163,7 +14163,7 @@ extension on Translations {
 			'sessions.spawnSheet.argsHint' => '--continue --verbose',
 			'sessions.spawnSheet.argsHelper' => 'Whitespace-separated; blank uses the provider\'s defaults.',
 			'sessions.spawnSheet.bypass.labelClaude' => 'Bypass permissions',
-			'sessions.spawnSheet.bypass.labelCodex' => 'Auto-approve (never ask)',
+			'sessions.spawnSheet.bypass.labelCodex' => 'Bypass approvals & sandbox',
 			'sessions.spawnSheet.bypass.labelGemini' => 'YOLO mode',
 			'sessions.spawnSheet.bypass.subtitleOn' => 'This session will run with elevated autonomy.',
 			'sessions.spawnSheet.bypass.subtitleOff' => 'Off — confirmations and prompts behave normally.',

@@ -152,7 +152,7 @@
         "namePlaceholder": "claude in pet-tracker",
         "argsLabel": "CLI args (one per line)",
         "bypassClaude": "Bypass permission prompts",
-        "bypassCodex": "Auto-approve (--ask-for-approval never)",
+        "bypassCodex": "Bypass approvals & sandbox (--dangerously-bypass-approvals-and-sandbox)",
         "bypassGemini": "YOLO mode (--yolo)",
         "bypassOnHint": "This session will run with elevated autonomy.",
         "bypassOffHint": "Off — confirmations and prompts behave normally.",
@@ -2458,7 +2458,7 @@
       "argsHelper": "Whitespace-separated; blank uses the provider's defaults.",
       "bypass": {
         "labelClaude": "Bypass permissions",
-        "labelCodex": "Auto-approve (never ask)",
+        "labelCodex": "Bypass approvals & sandbox",
         "labelGemini": "YOLO mode",
         "subtitleOn": "This session will run with elevated autonomy.",
         "subtitleOff": "Off — confirmations and prompts behave normally."

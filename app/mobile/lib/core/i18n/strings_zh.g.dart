@@ -2288,7 +2288,7 @@ class _TranslationsWebSessionsSpawnZh extends TranslationsWebSessionsSpawnEn {
 	@override String get namePlaceholder => 'claude in pet-tracker';
 	@override String get argsLabel => 'CLI 参数（每行一个）';
 	@override String get bypassClaude => '跳过权限提示';
-	@override String get bypassCodex => '自动批准 (--ask-for-approval never)';
+	@override String get bypassCodex => '跳过所有批准与沙盒 (--dangerously-bypass-approvals-and-sandbox)';
 	@override String get bypassGemini => 'YOLO 模式 (--yolo)';
 	@override String get bypassOnHint => '本次会话将以更高的自主权运行。';
 	@override String get bypassOffHint => '关闭 — 确认与提示按正常流程处理。';
@@ -4644,7 +4644,7 @@ class _TranslationsSessionsSpawnSheetBypassZh extends TranslationsSessionsSpawnS
 
 	// Translations
 	@override String get labelClaude => '绕过权限';
-	@override String get labelCodex => '自动批准（从不询问）';
+	@override String get labelCodex => '跳过批准与沙盒';
 	@override String get labelGemini => 'YOLO 模式';
 	@override String get subtitleOn => '此会话将以提升的自主权运行。';
 	@override String get subtitleOff => '关闭 — 确认和提示按正常方式处理。';
@@ -6742,7 +6742,7 @@ extension on TranslationsZh {
 			'web.sessions.spawn.namePlaceholder' => 'claude in pet-tracker',
 			'web.sessions.spawn.argsLabel' => 'CLI 参数（每行一个）',
 			'web.sessions.spawn.bypassClaude' => '跳过权限提示',
-			'web.sessions.spawn.bypassCodex' => '自动批准 (--ask-for-approval never)',
+			'web.sessions.spawn.bypassCodex' => '跳过所有批准与沙盒 (--dangerously-bypass-approvals-and-sandbox)',
 			'web.sessions.spawn.bypassGemini' => 'YOLO 模式 (--yolo)',
 			'web.sessions.spawn.bypassOnHint' => '本次会话将以更高的自主权运行。',
 			'web.sessions.spawn.bypassOffHint' => '关闭 — 确认与提示按正常流程处理。',
@@ -8529,7 +8529,7 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.argsHint' => '--continue --verbose',
 			'sessions.spawnSheet.argsHelper' => '以空格分隔；留空使用提供商默认值。',
 			'sessions.spawnSheet.bypass.labelClaude' => '绕过权限',
-			'sessions.spawnSheet.bypass.labelCodex' => '自动批准（从不询问）',
+			'sessions.spawnSheet.bypass.labelCodex' => '跳过批准与沙盒',
 			'sessions.spawnSheet.bypass.labelGemini' => 'YOLO 模式',
 			'sessions.spawnSheet.bypass.subtitleOn' => '此会话将以提升的自主权运行。',
 			'sessions.spawnSheet.bypass.subtitleOff' => '关闭 — 确认和提示按正常方式处理。',
