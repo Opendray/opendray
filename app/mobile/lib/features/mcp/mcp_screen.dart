@@ -142,18 +142,18 @@ class _McpScreenState extends ConsumerState<McpScreen> {
             ListTile(
               leading: const Icon(Icons.edit_outlined),
               title: Text(t.mcp.editConfig),
-              subtitle: const Text(
-                'Full JSON editor — vault-backed servers only',
-                style: TextStyle(fontSize: 11),
+              subtitle: Text(
+                t.mcp.popup.editConfigSubtitle,
+                style: const TextStyle(fontSize: 11),
               ),
               onTap: () => Navigator.of(sheetCtx).pop(_ServerAction.edit),
             ),
             ListTile(
               leading: const Icon(Icons.code),
               title: Text(t.mcp.viewRawConfig),
-              subtitle: const Text(
-                'Read-only inspector for the server JSON',
-                style: TextStyle(fontSize: 11),
+              subtitle: Text(
+                t.mcp.popup.viewRawSubtitle,
+                style: const TextStyle(fontSize: 11),
               ),
               onTap: () =>
                   Navigator.of(sheetCtx).pop(_ServerAction.viewConfig),
@@ -170,7 +170,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
                 color: Theme.of(sheetCtx).colorScheme.error,
               ),
               title: Text(
-                'Delete',
+                t.mcp.popup.deleteLabel,
                 style: TextStyle(color: Theme.of(sheetCtx).colorScheme.error),
               ),
               onTap: () => Navigator.of(sheetCtx).pop(_ServerAction.delete),
@@ -211,8 +211,8 @@ class _McpScreenState extends ConsumerState<McpScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(existing == null
-              ? 'MCP server created.'
-              : 'MCP server updated.'),
+              ? t.mcp.serverCreatedSnack
+              : t.mcp.serverUpdatedSnack),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
@@ -236,19 +236,19 @@ class _McpScreenState extends ConsumerState<McpScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _kv('ID', s.id, mono: true),
-                _kv('Transport', s.transport),
+                _kv(t.mcp.kv.transport, s.transport),
                 if ((s.description ?? '').isNotEmpty)
-                  _kv('Description', s.description!),
+                  _kv(t.mcp.kv.description, s.description!),
                 if ((s.command ?? '').isNotEmpty)
-                  _kv('Command', s.command!, mono: true),
+                  _kv(t.mcp.kv.command, s.command!, mono: true),
                 if (s.args != null && s.args!.isNotEmpty)
-                  _kv('Args', s.args!.join('  '), mono: true),
+                  _kv(t.mcp.kv.args, s.args!.join('  '), mono: true),
                 if ((s.url ?? '').isNotEmpty)
                   _kv('URL', s.url!, mono: true),
                 if (s.env != null && s.env!.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(
-                    'Env',
+                    t.mcp.envHeading,
                     style: Theme.of(ctx).textTheme.bodySmall,
                   ),
                   ...s.env!.entries.map(
@@ -267,7 +267,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
                 if (s.headers != null && s.headers!.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(
-                    'Headers',
+                    t.mcp.kv.headers,
                     style: Theme.of(ctx).textTheme.bodySmall,
                   ),
                   ...s.headers!.entries.map(
@@ -317,9 +317,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Removes the vault directory for ${s.id}. Sessions that '
-              'inject this MCP at spawn will fail to load it on the '
-              'next launch.',
+              t.mcp.deleteServerBody(id: s.id),
               style: Theme.of(ctx).textTheme.bodySmall,
             ),
           ],
@@ -342,7 +340,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
     if (ok != true || !mounted) return;
     await _runOp(
       key: 's:${s.id}',
-      okMsg: 'Deleted ${s.id}.',
+      okMsg: t.mcp.deleteServerSnack(id: s.id),
       failPrefix: t.mcp.errorPrefix.delete,
       op: () => ref.read(mcpApiProvider).delete(s.id),
     );
@@ -359,8 +357,8 @@ class _McpScreenState extends ConsumerState<McpScreen> {
     await _runOp(
       key: 'k:${res.key}',
       okMsg: existingKey == null
-          ? 'Secret ${res.key} added.'
-          : 'Secret ${res.key} updated.',
+          ? t.mcp.secret.addedSnack(key: res.key)
+          : t.mcp.secret.updatedSnack(key: res.key),
       failPrefix: existingKey == null
           ? t.mcp.errorPrefix.add
           : t.mcp.errorPrefix.update,
@@ -389,9 +387,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Removes the value from the encrypted vault. Any MCP '
-              'server referencing $key in its env or headers will '
-              'fail at next spawn.',
+              t.mcp.secret.deleteBody,
               style: Theme.of(ctx).textTheme.bodySmall,
             ),
           ],
@@ -414,7 +410,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
     if (ok != true || !mounted) return;
     await _runOp(
       key: 'k:$key',
-      okMsg: 'Deleted $key.',
+      okMsg: t.mcp.secret.deletedSnack(key: key),
       failPrefix: t.mcp.errorPrefix.delete,
       op: () => ref.read(mcpApiProvider).secretsDelete(key),
     );
@@ -439,6 +435,7 @@ class _McpScreenState extends ConsumerState<McpScreen> {
         error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'mcp_fab',
         onPressed: _openEditor,
         icon: const Icon(Icons.add),
         label: Text(t.mcp.newServer),
@@ -451,13 +448,15 @@ class _McpScreenState extends ConsumerState<McpScreen> {
       onRefresh: _load,
       child: ListView(
         children: [
-          _SectionHeader(label: 'Servers (${data.servers.length})'),
+          _SectionHeader(
+            label: t.mcp.serversCount(count: data.servers.length.toString()),
+          ),
           if (data.servers.isEmpty)
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 0, 16, 12),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 16, 12),
               child: Text(
-                'No MCP servers registered. Tap "New server" to add one.',
-                style: TextStyle(fontSize: 12),
+                t.mcp.emptyServers,
+                style: const TextStyle(fontSize: 12),
               ),
             )
           else
@@ -467,7 +466,9 @@ class _McpScreenState extends ConsumerState<McpScreen> {
                 busy: _busy.contains('s:${s.id}'),
                 onToggle: (next) => _runOp(
                   key: 's:${s.id}',
-                  okMsg: next ? '${s.name} enabled.' : '${s.name} disabled.',
+                  okMsg: next
+                      ? t.mcp.toggleEnabledSnack(name: s.name)
+                      : t.mcp.toggleDisabledSnack(name: s.name),
                   failPrefix: t.mcp.errorPrefix.toggle,
                   op: () => ref
                       .read(mcpApiProvider)
@@ -476,16 +477,18 @@ class _McpScreenState extends ConsumerState<McpScreen> {
                 onTap: () => _onServerTap(s),
               ),
           const SizedBox(height: 8),
-          _SectionHeader(label: 'Secrets (${data.secrets.keys.length})'),
+          _SectionHeader(
+            label: t.mcp.secretsCount(
+              count: data.secrets.keys.length.toString(),
+            ),
+          ),
           _SecretsHeader(state: data.secrets),
           if (data.secrets.keys.isEmpty)
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 6, 16, 12),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 6, 16, 12),
               child: Text(
-                'No secrets stored. Add one to feed sensitive env / '
-                'header values into MCP servers without committing them '
-                'to vault config.',
-                style: TextStyle(fontSize: 12),
+                t.mcp.emptySecrets,
+                style: const TextStyle(fontSize: 12),
               ),
             )
           else
@@ -672,10 +675,10 @@ class _SecretsHeader extends StatelessWidget {
           Expanded(
             child: Text(
               state.encrypted
-                  ? 'AES-GCM encrypted (key in OS keychain)'
+                  ? t.mcp.encryptionAes
                   : state.present
-                      ? 'PLAINTEXT — keychain unavailable'
-                      : 'No vault file yet — added secrets create it.',
+                      ? t.mcp.encryptionPlaintext
+                      : t.mcp.noVaultFileYet,
               style: muted,
             ),
           ),
@@ -711,7 +714,7 @@ class _SecretTile extends StatelessWidget {
         style: const TextStyle(fontFamily: 'monospace'),
       ),
       subtitle: Text(
-        'Tap to replace · long-press / trash to delete',
+        t.mcp.tapToReplaceHint,
         style: Theme.of(context).textTheme.bodySmall,
       ),
       onLongPress: busy ? null : onDelete,
@@ -778,7 +781,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Failed to load MCP state',
+              t.mcp.failedToLoad,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),
@@ -838,19 +841,16 @@ class _SecretFormScreenState extends State<_SecretFormScreen> {
     final key = _key.text.trim();
     final value = _value.text;
     if (key.isEmpty) {
-      setState(() => _error = 'Key is required.');
+      setState(() => _error = t.mcp.secret.keyRequired);
       return;
     }
     final keyOk = RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$').hasMatch(key);
     if (!keyOk) {
-      setState(
-        () => _error =
-            'Key must match [A-Za-z_][A-Za-z0-9_]* — same rules as a shell env var.',
-      );
+      setState(() => _error = t.mcp.secret.keyInvalid);
       return;
     }
     if (value.isEmpty) {
-      setState(() => _error = 'Value is required.');
+      setState(() => _error = t.mcp.secret.valueRequired);
       return;
     }
     Navigator.of(context).pop(_SecretFormResult(key: key, value: value));
@@ -861,11 +861,15 @@ class _SecretFormScreenState extends State<_SecretFormScreen> {
     final isReplace = widget.existingKey != null;
     return Scaffold(
       appBar: AppBar(
-        title: Text(isReplace ? 'Replace secret value' : 'Add secret'),
+        title: Text(
+          isReplace ? t.mcp.secret.replaceTitle : t.mcp.secret.addTitle,
+        ),
         actions: [
           TextButton(
             onPressed: _submit,
-            child: Text(isReplace ? 'Save' : 'Add'),
+            child: Text(
+              isReplace ? t.mcp.secret.saveButton : t.mcp.secret.addButton,
+            ),
           ),
         ],
       ),
@@ -880,9 +884,7 @@ class _SecretFormScreenState extends State<_SecretFormScreen> {
             decoration: InputDecoration(
               labelText: t.mcp.secret.keyLabel,
               hintText: t.mcp.secret.keyHint,
-              helperText:
-                  'Shell-env-var rules: starts with a letter or _, '
-                  'rest letters/digits/_.',
+              helperText: t.mcp.secret.helpRules,
               helperMaxLines: 2,
               border: const OutlineInputBorder(),
             ),
@@ -899,8 +901,8 @@ class _SecretFormScreenState extends State<_SecretFormScreen> {
             decoration: InputDecoration(
               labelText: t.mcp.secret.valueLabel,
               hintText: isReplace
-                  ? 'Paste new value (the previous one is wiped)'
-                  : 'Paste secret value',
+                  ? t.mcp.secret.replaceHint
+                  : t.mcp.secret.addHint,
               border: const OutlineInputBorder(),
             ),
           ),

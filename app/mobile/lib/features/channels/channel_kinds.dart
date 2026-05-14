@@ -5,6 +5,8 @@
 // and capability multiselect that don't translate cleanly to the
 // mobile form pattern; bridge channels stay web-only on creation.
 
+import 'package:opendray/core/i18n/strings.g.dart';
+
 enum ChannelFieldType { text, password, textarea }
 
 class ChannelField {
@@ -56,242 +58,215 @@ class ChannelKind {
   final String? afterCreateHint;
 }
 
-const channelKinds = <ChannelKind>[
-  ChannelKind(
-    kind: 'telegram',
-    label: 'Telegram',
-    description:
-        'Bot via @BotFather. opendray long-polls getUpdates and sends '
-        'via REST. Buttons + reply_to_message work natively.',
-    tokenFields: ['bot_token'],
-    fields: [
-      ChannelField(
-        name: 'bot_token',
-        label: 'Bot token',
-        type: ChannelFieldType.password,
-        required: true,
-        placeholder: '123456:ABC-DEF...',
-        hint: 'From @BotFather. Stored in channel config; admin-only API.',
+// Runtime builder — i18n strings resolved against the active locale
+// each time it's called. Cheap (a few dozen string lookups) and the
+// callers already invoke it once per rebuild, so memoizing isn't
+// worth the staleness risk.
+List<ChannelKind> channelKindsList() => [
+      ChannelKind(
+        kind: 'telegram',
+        label: 'Telegram',
+        description: t.channels.kinds.telegram.description,
+        tokenFields: const ['bot_token'],
+        fields: [
+          ChannelField(
+            name: 'bot_token',
+            label: t.channels.kinds.telegram.botTokenLabel,
+            type: ChannelFieldType.password,
+            required: true,
+            placeholder: '123456:ABC-DEF...',
+            hint: t.channels.kinds.telegram.botTokenHint,
+          ),
+          ChannelField(
+            name: 'chat_id',
+            label: t.channels.kinds.telegram.chatIdLabel,
+            type: ChannelFieldType.text,
+            placeholder: t.channels.kinds.telegram.chatIdPlaceholder,
+            optional: true,
+          ),
+        ],
       ),
-      ChannelField(
-        name: 'chat_id',
-        label: 'Default chat ID',
-        type: ChannelFieldType.text,
-        placeholder: '42 (optional — used when no ReplyCtx)',
-        optional: true,
+      ChannelKind(
+        kind: 'slack',
+        label: 'Slack',
+        description: t.channels.kinds.slack.description,
+        tokenFields: const ['bot_token'],
+        fields: [
+          ChannelField(
+            name: 'bot_token',
+            label: t.channels.kinds.slack.botTokenLabel,
+            type: ChannelFieldType.password,
+            required: true,
+            placeholder: 'xoxb-...',
+            hint: t.channels.kinds.slack.botTokenHint,
+          ),
+          ChannelField(
+            name: 'app_token',
+            label: t.channels.kinds.slack.appTokenLabel,
+            type: ChannelFieldType.password,
+            required: true,
+            placeholder: 'xapp-...',
+            hint: t.channels.kinds.slack.appTokenHint,
+          ),
+          ChannelField(
+            name: 'channel_id',
+            label: t.channels.kinds.slack.channelIdLabel,
+            type: ChannelFieldType.text,
+            placeholder: t.channels.kinds.slack.channelIdPlaceholder,
+            optional: true,
+          ),
+        ],
       ),
-    ],
-  ),
-  ChannelKind(
-    kind: 'slack',
-    label: 'Slack',
-    description:
-        'Socket Mode — no public webhook needed. Requires a bot OAuth '
-        'token (xoxb-) and an app-level token (xapp-) with '
-        'connections:write.',
-    tokenFields: ['bot_token'],
-    fields: [
-      ChannelField(
-        name: 'bot_token',
-        label: 'Bot token (xoxb-…)',
-        type: ChannelFieldType.password,
-        required: true,
-        placeholder: 'xoxb-...',
-        hint:
-            'OAuth & Permissions → Bot User OAuth Token. Needs chat:write.',
+      ChannelKind(
+        kind: 'discord',
+        label: 'Discord',
+        description: t.channels.kinds.discord.description,
+        tokenFields: const ['bot_token'],
+        fields: [
+          ChannelField(
+            name: 'bot_token',
+            label: t.channels.kinds.discord.botTokenLabel,
+            type: ChannelFieldType.password,
+            required: true,
+            placeholder: t.channels.kinds.discord.botTokenPlaceholder,
+            hint: t.channels.kinds.discord.botTokenHint,
+          ),
+          ChannelField(
+            name: 'channel_id',
+            label: t.channels.kinds.discord.channelIdLabel,
+            type: ChannelFieldType.text,
+            placeholder: t.channels.kinds.discord.channelIdPlaceholder,
+            optional: true,
+          ),
+        ],
       ),
-      ChannelField(
-        name: 'app_token',
-        label: 'App-level token (xapp-…)',
-        type: ChannelFieldType.password,
-        required: true,
-        placeholder: 'xapp-...',
-        hint:
-            'Settings → Basic Information → App-Level Tokens. Scope: '
-            'connections:write.',
+      ChannelKind(
+        kind: 'feishu',
+        label: 'Feishu (飞书)',
+        description: t.channels.kinds.feishu.description,
+        tokenFields: const ['app_secret'],
+        webhookBased: true,
+        afterCreateHint: t.channels.kinds.feishu.afterCreateHint,
+        fields: [
+          ChannelField(
+            name: 'app_id',
+            label: t.channels.kinds.feishu.appIdLabel,
+            type: ChannelFieldType.text,
+            required: true,
+            placeholder: 'cli_a1b2c3d4...',
+          ),
+          ChannelField(
+            name: 'app_secret',
+            label: t.channels.kinds.feishu.appSecretLabel,
+            type: ChannelFieldType.password,
+            required: true,
+            placeholder: t.channels.kinds.feishu.appSecretPlaceholder,
+          ),
+          ChannelField(
+            name: 'verification_token',
+            label: t.channels.kinds.feishu.verificationTokenLabel,
+            type: ChannelFieldType.password,
+            optional: true,
+            hint: t.channels.kinds.feishu.verificationTokenHint,
+          ),
+          ChannelField(
+            name: 'chat_id',
+            label: t.channels.kinds.feishu.chatIdLabel,
+            type: ChannelFieldType.text,
+            placeholder: t.channels.kinds.feishu.chatIdPlaceholder,
+            optional: true,
+          ),
+        ],
       ),
-      ChannelField(
-        name: 'channel_id',
-        label: 'Default channel ID',
-        type: ChannelFieldType.text,
-        placeholder: 'C0123ABC456 (optional)',
-        optional: true,
+      ChannelKind(
+        kind: 'dingtalk',
+        label: 'DingTalk (钉钉)',
+        description: t.channels.kinds.dingtalk.description,
+        tokenFields: const ['secret', 'webhook_url'],
+        fields: [
+          ChannelField(
+            name: 'webhook_url',
+            label: t.channels.kinds.dingtalk.webhookUrlLabel,
+            type: ChannelFieldType.password,
+            required: true,
+            placeholder: 'https://oapi.dingtalk.com/robot/send?access_token=...',
+          ),
+          ChannelField(
+            name: 'secret',
+            label: t.channels.kinds.dingtalk.secretLabel,
+            type: ChannelFieldType.password,
+            optional: true,
+            placeholder: 'SEC...',
+            hint: t.channels.kinds.dingtalk.secretHint,
+          ),
+        ],
       ),
-    ],
-  ),
-  ChannelKind(
-    kind: 'discord',
-    label: 'Discord',
-    description:
-        'Bot via Discord Developer Portal with MESSAGE CONTENT INTENT '
-        'enabled. Connects to Gateway WS — no public URL required.',
-    tokenFields: ['bot_token'],
-    fields: [
-      ChannelField(
-        name: 'bot_token',
-        label: 'Bot token',
-        type: ChannelFieldType.password,
-        required: true,
-        placeholder: 'Bot token from Discord Developer Portal',
-        hint:
-            'Application → Bot → Reset Token. Invite bot with '
-            'send_messages + embed_links.',
+      ChannelKind(
+        kind: 'wecom',
+        label: 'WeCom (企业微信)',
+        description: t.channels.kinds.wecom.description,
+        tokenFields: const ['webhook_key', 'webhook_url'],
+        fields: [
+          ChannelField(
+            name: 'webhook_key',
+            label: t.channels.kinds.wecom.webhookKeyLabel,
+            type: ChannelFieldType.password,
+            required: true,
+            placeholder: t.channels.kinds.wecom.webhookKeyPlaceholder,
+            hint: t.channels.kinds.wecom.webhookKeyHint,
+          ),
+          ChannelField(
+            name: 'webhook_url',
+            label: t.channels.kinds.wecom.webhookUrlLabel,
+            type: ChannelFieldType.password,
+            optional: true,
+            placeholder: 'https://qyapi.weixin.qq.com/...',
+          ),
+        ],
       ),
-      ChannelField(
-        name: 'channel_id',
-        label: 'Default channel ID',
-        type: ChannelFieldType.text,
-        placeholder: '123456789012345678 (optional)',
-        optional: true,
+      ChannelKind(
+        kind: 'wechat',
+        label: 'WeChat (个人微信)',
+        description: t.channels.kinds.wechat.description,
+        tokenFields: const ['app_token'],
+        fields: [
+          ChannelField(
+            name: 'app_token',
+            label: t.channels.kinds.wechat.appTokenLabel,
+            type: ChannelFieldType.password,
+            required: true,
+            placeholder: 'AT_xxxxxxxxxxxxx',
+            hint: t.channels.kinds.wechat.appTokenHint,
+          ),
+          ChannelField(
+            name: 'uids',
+            label: t.channels.kinds.wechat.uidsLabel,
+            type: ChannelFieldType.textarea,
+            optional: true,
+            placeholder: 'UID_xxxxxxxxxxxx\nUID_yyyyyyyyyyyy',
+            hint: t.channels.kinds.wechat.uidsHint,
+          ),
+          ChannelField(
+            name: 'topic_ids',
+            label: t.channels.kinds.wechat.topicIdsLabel,
+            type: ChannelFieldType.textarea,
+            optional: true,
+            placeholder: '123\n456',
+          ),
+          ChannelField(
+            name: 'url',
+            label: t.channels.kinds.wechat.urlLabel,
+            type: ChannelFieldType.text,
+            optional: true,
+            placeholder: 'https://opendray.example/',
+            hint: t.channels.kinds.wechat.urlHint,
+          ),
+        ],
       ),
-    ],
-  ),
-  ChannelKind(
-    kind: 'feishu',
-    label: 'Feishu (飞书)',
-    description:
-        'App-level credentials. Uses event subscription webhook for '
-        'inbound. Public webhook URL is generated below — paste it '
-        'into the Feishu dev console.',
-    tokenFields: ['app_secret'],
-    webhookBased: true,
-    afterCreateHint:
-        'Open the webhook URL from the channel card and paste it into '
-        'Feishu Open Platform → Event Subscriptions → Request URL.',
-    fields: [
-      ChannelField(
-        name: 'app_id',
-        label: 'App ID',
-        type: ChannelFieldType.text,
-        required: true,
-        placeholder: 'cli_a1b2c3d4...',
-      ),
-      ChannelField(
-        name: 'app_secret',
-        label: 'App secret',
-        type: ChannelFieldType.password,
-        required: true,
-        placeholder: 'Application credential secret',
-      ),
-      ChannelField(
-        name: 'verification_token',
-        label: 'Verification token',
-        type: ChannelFieldType.password,
-        optional: true,
-        hint:
-            'From Event Subscriptions → Verification Token. When set, '
-            'opendray rejects webhooks with a different token.',
-      ),
-      ChannelField(
-        name: 'chat_id',
-        label: 'Default chat ID (oc_…)',
-        type: ChannelFieldType.text,
-        placeholder: 'oc_xxxxxxxxxx (optional)',
-        optional: true,
-      ),
-    ],
-  ),
-  ChannelKind(
-    kind: 'dingtalk',
-    label: 'DingTalk (钉钉)',
-    description:
-        'Custom group robot. Outbound only. Group chat → Robots → Add '
-        '→ Sign mode → copy webhook + secret.',
-    tokenFields: ['secret', 'webhook_url'],
-    fields: [
-      ChannelField(
-        name: 'webhook_url',
-        label: 'Webhook URL',
-        type: ChannelFieldType.password,
-        required: true,
-        placeholder: 'https://oapi.dingtalk.com/robot/send?access_token=...',
-      ),
-      ChannelField(
-        name: 'secret',
-        label: 'Sign secret',
-        type: ChannelFieldType.password,
-        optional: true,
-        placeholder: 'SEC...',
-        hint:
-            'When the robot is set to "Sign" security mode, copy the '
-            'secret here. opendray adds the timestamp + sign params '
-            'automatically.',
-      ),
-    ],
-  ),
-  ChannelKind(
-    kind: 'wecom',
-    label: 'WeCom (企业微信)',
-    description:
-        'Group robot webhook. Outbound only (text + markdown). Group '
-        'settings → Group robots → Add → copy webhook URL.',
-    tokenFields: ['webhook_key', 'webhook_url'],
-    fields: [
-      ChannelField(
-        name: 'webhook_key',
-        label: 'Webhook key',
-        type: ChannelFieldType.password,
-        required: true,
-        placeholder: 'The "key=" query value',
-        hint:
-            'Or paste the whole webhook URL into the field below — '
-            'either is enough.',
-      ),
-      ChannelField(
-        name: 'webhook_url',
-        label: 'Or full webhook URL',
-        type: ChannelFieldType.password,
-        optional: true,
-        placeholder: 'https://qyapi.weixin.qq.com/...',
-      ),
-    ],
-  ),
-  ChannelKind(
-    kind: 'wechat',
-    label: 'WeChat (个人微信)',
-    description:
-        'Push to personal WeChat via WxPusher. Outbound-only — push '
-        'services do not relay user replies. Each recipient '
-        'subscribes once via QR code.',
-    tokenFields: ['app_token'],
-    fields: [
-      ChannelField(
-        name: 'app_token',
-        label: 'App token (AT_…)',
-        type: ChannelFieldType.password,
-        required: true,
-        placeholder: 'AT_xxxxxxxxxxxxx',
-        hint: 'WxPusher → 应用管理 → 创建应用 → 复制 App Token.',
-      ),
-      ChannelField(
-        name: 'uids',
-        label: 'Recipient UIDs (one per line)',
-        type: ChannelFieldType.textarea,
-        optional: true,
-        placeholder: 'UID_xxxxxxxxxxxx\nUID_yyyyyyyyyyyy',
-        hint: 'Either UIDs or topic IDs is required.',
-      ),
-      ChannelField(
-        name: 'topic_ids',
-        label: 'Topic IDs (one per line)',
-        type: ChannelFieldType.textarea,
-        optional: true,
-        placeholder: '123\n456',
-      ),
-      ChannelField(
-        name: 'url',
-        label: 'Tap-through URL',
-        type: ChannelFieldType.text,
-        optional: true,
-        placeholder: 'https://opendray.example/',
-        hint: 'When set, tapping the WeChat notification opens this page.',
-      ),
-    ],
-  ),
-];
+    ];
 
 ChannelKind? findKind(String kind) {
-  for (final k in channelKinds) {
+  for (final k in channelKindsList()) {
     if (k.kind == kind) return k;
   }
   return null;

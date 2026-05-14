@@ -122,9 +122,7 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            'No providers loaded.\n\n'
-            'The gateway resolves providers from its plugin directory '
-            '— check the operator guide if this looks wrong.',
+            '${t.providers.listEmptyHeadline}\n\n${t.providers.listEmptyBody}',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
@@ -135,14 +133,16 @@ class _ProvidersScreenState extends ConsumerState<ProvidersScreen> {
       onRefresh: _load,
       child: ListView(
         children: [
-          const _SectionHeader(label: 'CLI providers'),
+          _SectionHeader(label: t.providers.cliSectionHeader),
           for (final p in providers)
             _ProviderTile(
               provider: p,
               busy: _busy.contains('p:${p.id}'),
               onToggle: (next) => _runToggle(
                 key: 'p:${p.id}',
-                okMsg: next ? '${p.name} enabled.' : '${p.name} disabled.',
+                okMsg: next
+                    ? t.providers.enabledSnack(name: p.name)
+                    : t.providers.disabledSnack(name: p.name),
                 failPrefix: t.providers.errorPrefix.toggle,
                 op: () => ref
                     .read(providersApiProvider)
@@ -268,7 +268,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Failed to load providers',
+              t.providers.listLoadFailed,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),

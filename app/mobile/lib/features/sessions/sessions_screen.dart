@@ -104,6 +104,7 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'sessions_fab',
         onPressed: _onSpawn,
         icon: const Icon(Icons.add),
         label: Text(t.sessions.spawn),

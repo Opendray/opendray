@@ -69,14 +69,14 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
       if (mounted) {
         setState(() {
           _loading = false;
-          _error = 'Load failed: ${e.message}';
+          _error = t.skills.loadFailedApi(error: e.message);
         });
       }
     } on Object catch (e) {
       if (mounted) {
         setState(() {
           _loading = false;
-          _error = 'Load failed: $e';
+          _error = t.skills.loadFailedGeneric(error: e.toString());
         });
       }
     }
@@ -86,12 +86,12 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
     if (_saving) return;
     final id = _idCtrl.text.trim();
     if (id.isEmpty) {
-      setState(() => _error = 'Id is required.');
+      setState(() => _error = t.skills.idRequired);
       return;
     }
     final body = _bodyCtrl.text;
     if (body.trim().isEmpty) {
-      setState(() => _error = 'Body cannot be empty.');
+      setState(() => _error = t.skills.bodyRequired);
       return;
     }
     setState(() {
@@ -111,10 +111,10 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
         SnackBar(
           content: Text(
             _isNew
-                ? 'Skill created.'
+                ? t.skills.snackCreated
                 : _isCustomize
-                    ? 'Saved as vault override.'
-                    : 'Skill updated.',
+                    ? t.skills.snackOverride
+                    : t.skills.snackUpdated,
           ),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
@@ -126,14 +126,14 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Save failed: ${e.message}';
+          _error = t.skills.saveFailedApi(error: e.message);
         });
       }
     } on Object catch (e) {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Save failed: $e';
+          _error = t.skills.saveFailedGeneric(error: e.toString());
         });
       }
     }
@@ -146,14 +146,11 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(overrides ? 'Reset to built-in?' : 'Delete skill?'),
+        title: Text(overrides ? t.skills.resetTitle : t.skills.deleteTitle),
         content: Text(
           overrides
-              ? 'Removes the vault override for ${ex.id}. Sessions will '
-                  'fall back to the built-in body embedded in the gateway '
-                  'binary.'
-              : 'Removes ${ex.id} from the vault. Sessions that reference '
-                  'this skill at spawn will lose it.',
+              ? t.skills.resetBody(id: ex.id)
+              : t.skills.deleteBody(id: ex.id),
           style: Theme.of(ctx).textTheme.bodySmall,
         ),
         actions: [
@@ -166,7 +163,7 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(overrides ? 'Reset' : 'Delete'),
+            child: Text(overrides ? t.skills.resetButton : t.common.delete),
           ),
         ],
       ),
@@ -181,7 +178,9 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            overrides ? 'Reset ${ex.id} to built-in.' : 'Deleted ${ex.id}.',
+            overrides
+                ? t.skills.resetSnack(id: ex.id)
+                : t.skills.deletedSnack(id: ex.id),
           ),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
@@ -192,14 +191,14 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
       if (mounted) {
         setState(() {
           _deleting = false;
-          _error = 'Delete failed: ${e.message}';
+          _error = t.skills.deleteFailedApi(error: e.message);
         });
       }
     } on Object catch (e) {
       if (mounted) {
         setState(() {
           _deleting = false;
-          _error = 'Delete failed: $e';
+          _error = t.skills.deleteFailedGeneric(error: e.toString());
         });
       }
     }
@@ -213,10 +212,10 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
       appBar: AppBar(
         title: Text(
           _isNew
-              ? 'New skill'
+              ? t.skills.newSkillTitle
               : _isCustomize
-                  ? 'Customize ${ex!.id}'
-                  : 'Edit ${ex!.id}',
+                  ? t.skills.customizeTitle(id: ex!.id)
+                  : t.skills.editTitle(id: ex!.id),
         ),
         actions: [
           if (!_isNew && ex!.isVault)
@@ -233,7 +232,9 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
                           : Icons.delete_outline,
                       color: Theme.of(context).colorScheme.error,
                     ),
-              tooltip: ex.overridesBuiltin ? 'Reset to built-in' : 'Delete',
+              tooltip: ex.overridesBuiltin
+                  ? t.skills.resetTooltip
+                  : t.skills.deleteTooltip,
               onPressed: _deleting ? null : _delete,
             ),
           TextButton(
@@ -242,10 +243,10 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
                 : _save,
             child: Text(
               _saving
-                  ? 'Saving…'
+                  ? t.skills.saving
                   : _isCustomize
-                      ? 'Save override'
-                      : 'Save',
+                      ? t.skills.saveOverride
+                      : t.common.save,
             ),
           ),
         ],
@@ -261,10 +262,7 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
                     _InfoBanner(
                       tone: Theme.of(context).colorScheme.tertiary,
                       title: t.skills.customizingBuiltin(id: ex!.id),
-                      body: 'Saving creates a vault override with the same '
-                          'id. The original built-in stays embedded in '
-                          'the gateway binary; deleting the override '
-                          'restores it.',
+                      body: t.skills.overrideBanner,
                     ),
                   TextField(
                     controller: _idCtrl,
@@ -273,8 +271,7 @@ class _SkillEditorScreenState extends ConsumerState<SkillEditorScreen> {
                     decoration: InputDecoration(
                       labelText: t.skills.idLabel,
                       hintText: t.skills.idHint,
-                      helperText: 'Lowercase letters / digits / dash. '
-                          'Locked once created.',
+                      helperText: t.skills.idHelper,
                       border: const OutlineInputBorder(),
                     ),
                   ),

@@ -173,6 +173,24 @@ class _TranslationsMcpZh extends TranslationsMcpEn {
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
 	@override late final _TranslationsMcpEditorZh editor = _TranslationsMcpEditorZh._(_root);
 	@override late final _TranslationsMcpSecretZh secret = _TranslationsMcpSecretZh._(_root);
+	@override late final _TranslationsMcpPopupZh popup = _TranslationsMcpPopupZh._(_root);
+	@override late final _TranslationsMcpKvZh kv = _TranslationsMcpKvZh._(_root);
+	@override String deleteServerBody({required Object id}) => '移除 ${id} 的密钥库目录。引用此服务器的会话将无法启动。';
+	@override String deleteServerSnack({required Object id}) => '已删除 ${id}。';
+	@override String serversCount({required Object count}) => '服务器（${count}）';
+	@override String secretsCount({required Object count}) => '密钥（${count}）';
+	@override String get emptyServers => '未注册任何 MCP 服务器。点击「新建服务器」添加一个。';
+	@override String get emptySecrets => '暂无密钥。添加一个，将敏感的 env / headers 注入 MCP 服务器，无需放在 JSON 里。';
+	@override String get noVaultFileYet => '尚无密钥库文件 — 添加密钥时会创建。';
+	@override String get tapToReplaceHint => '点击替换 · 长按 / 垃圾桶 删除';
+	@override String get failedToLoad => '加载 MCP 状态失败';
+	@override String get serverCreatedSnack => 'MCP 服务器已创建。';
+	@override String get serverUpdatedSnack => 'MCP 服务器已更新。';
+	@override String get envHeading => '环境变量';
+	@override String get encryptionAes => 'AES-GCM 加密（密钥存于 OS keychain）';
+	@override String get encryptionPlaintext => '明文 — keychain 不可用';
+	@override String toggleEnabledSnack({required Object name}) => '${name} 已启用。';
+	@override String toggleDisabledSnack({required Object name}) => '${name} 已停用。';
 }
 
 // Path: providers
@@ -190,6 +208,17 @@ class _TranslationsProvidersZh extends TranslationsProvidersEn {
 	@override late final _TranslationsProvidersErrorPrefixZh errorPrefix = _TranslationsProvidersErrorPrefixZh._(_root);
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
 	@override late final _TranslationsProvidersAccountsZh accounts = _TranslationsProvidersAccountsZh._(_root);
+	@override String get configFallbackTitle => '提供商配置';
+	@override String get saving => '保存中…';
+	@override String get save => '保存';
+	@override String get configLoadFailed => '加载提供商失败';
+	@override String get argsHelper => '以空格分隔的 CLI 参数。';
+	@override String get listEmptyHeadline => '未加载任何提供商。';
+	@override String get listEmptyBody => '网关在启动时从插件目录解析提供商。如果有遗漏，请检查日志。';
+	@override String get listLoadFailed => '加载提供商失败';
+	@override String get cliSectionHeader => 'CLI 提供商';
+	@override String enabledSnack({required Object name}) => '${name} 已启用。';
+	@override String disabledSnack({required Object name}) => '${name} 已停用。';
 }
 
 // Path: integrations
@@ -225,6 +254,29 @@ class _TranslationsIntegrationsZh extends TranslationsIntegrationsEn {
 	@override String get newApiKeySubtitle => '将其交给集成方。旧密钥已失效。';
 	@override String rotateFailedApi({required Object error}) => '轮换失败：${error}';
 	@override String rotateFailedGeneric({required Object error}) => '轮换失败：${error}';
+	@override String get deleteBody => '移除该注册并吊销 API key。使用旧 key 的进行中请求将开始失败。';
+	@override String rotateBody({required Object name}) => '为 ${name} 生成新 API key 并立即让旧 key 失效。';
+	@override String get appBarFallback => '集成';
+	@override String get tooltipMore => '更多';
+	@override String get tooltipReadOnly => '系统集成 — 只读';
+	@override String get kvRoutePrefix => '路由前缀';
+	@override String get kvBaseUrl => 'Base URL';
+	@override String get kvScopes => '范围';
+	@override String get kvVersion => '版本';
+	@override String get kvLastHealthPing => '最近健康检查';
+	@override String get kvCreated => '创建于';
+	@override String get kvKeyRotated => 'Key 轮换于';
+	@override String detailLoadFailed({required Object error}) => '加载集成失败：${error}';
+	@override String get callsLoadFailed => '加载调用失败';
+	@override String get noMatchingCalls => '日志中暂无匹配的调用。';
+	@override String get directionAll => '全部';
+	@override String get directionInbound => '入站';
+	@override String get directionOutbound => '出站';
+	@override late final _TranslationsIntegrationsFormZh form = _TranslationsIntegrationsFormZh._(_root);
+	@override String get emptyState => '在 Web 管理端注册：集成 → 新建。';
+	@override String get sectionRegistered => '已注册';
+	@override String get sectionSystem => '系统';
+	@override String get listLoadFailed => '加载集成失败';
 }
 
 // Path: memoryWorkers
@@ -493,6 +545,12 @@ class _TranslationsGithostsZh extends TranslationsGithostsEn {
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
 	@override late final _TranslationsGithostsErrorPrefixZh errorPrefix = _TranslationsGithostsErrorPrefixZh._(_root);
 	@override late final _TranslationsGithostsFormZh form = _TranslationsGithostsFormZh._(_root);
+	@override String deleteBody({required Object host}) => '移除该凭据。试图列出 ${host} 的 PR 的会话将回退到未认证 API。';
+	@override String deletedSnack({required Object name}) => '已删除 ${name}。';
+	@override String enabledSnack({required Object name}) => '${name} 已启用。';
+	@override String disabledSnack({required Object name}) => '${name} 已停用。';
+	@override String get emptyList => '未配置任何 Git 主机。\n\n添加一个凭据，让网关可以列出你仓库的 pull request。';
+	@override String get failedToLoad => '加载 Git 主机失败';
 }
 
 // Path: channels
@@ -518,6 +576,16 @@ class _TranslationsChannelsZh extends TranslationsChannelsEn {
 	@override late final _TranslationsChannelsWebhookDialogZh webhookDialog = _TranslationsChannelsWebhookDialogZh._(_root);
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
 	@override late final _TranslationsChannelsNotificationsZh notifications = _TranslationsChannelsNotificationsZh._(_root);
+	@override late final _TranslationsChannelsPopupZh popup = _TranslationsChannelsPopupZh._(_root);
+	@override late final _TranslationsChannelsBadgesZh badges = _TranslationsChannelsBadgesZh._(_root);
+	@override String capsLabel({required Object list}) => '· 能力：${list}';
+	@override String get bridgeWebOnly => 'Bridge 通道仅 Web 端';
+	@override String get bridgeEmptyAdd => '在 Web 管理端添加：通道 → 新建。';
+	@override String get deleteBody => '停止该通道并移除其配置。仍在传输中的通知会被静默丢弃。';
+	@override late final _TranslationsChannelsSnacksZh snacks = _TranslationsChannelsSnacksZh._(_root);
+	@override late final _TranslationsChannelsErrorPrefixZh errorPrefix = _TranslationsChannelsErrorPrefixZh._(_root);
+	@override String get failedToLoad => '加载通道失败';
+	@override late final _TranslationsChannelsKindsZh kinds = _TranslationsChannelsKindsZh._(_root);
 }
 
 // Path: onboarding
@@ -545,6 +613,35 @@ class _TranslationsSkillsZh extends TranslationsSkillsEn {
 	@override String get idLabel => 'Id（slug）';
 	@override String get idHint => '例如：tdd-guide';
 	@override String get bodyLabel => '正文（Markdown）';
+	@override String loadFailedApi({required Object error}) => '加载失败：${error}';
+	@override String loadFailedGeneric({required Object error}) => '加载失败：${error}';
+	@override String get idRequired => '必须填写 Id。';
+	@override String get bodyRequired => '正文不能为空。';
+	@override String get snackCreated => '技能已创建。';
+	@override String get snackOverride => '已保存为库覆盖。';
+	@override String get snackUpdated => '技能已更新。';
+	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
+	@override String saveFailedGeneric({required Object error}) => '保存失败：${error}';
+	@override String get resetTitle => '重置为内置？';
+	@override String get deleteTitle => '删除技能？';
+	@override String resetBody({required Object id}) => '移除 ${id} 的库覆盖。会话将回退到内置正文。';
+	@override String get resetButton => '重置';
+	@override String resetSnack({required Object id}) => '已将 ${id} 重置为内置。';
+	@override String deletedSnack({required Object id}) => '已删除 ${id}。';
+	@override String deleteFailedApi({required Object error}) => '删除失败：${error}';
+	@override String deleteFailedGeneric({required Object error}) => '删除失败：${error}';
+	@override String deleteBody({required Object id}) => '从库中移除 ${id}。引用它的会话在恢复前会失败。';
+	@override String get newSkillTitle => '新建技能';
+	@override String customizeTitle({required Object id}) => '自定义 ${id}';
+	@override String editTitle({required Object id}) => '编辑 ${id}';
+	@override String get resetTooltip => '重置为内置';
+	@override String get deleteTooltip => '删除';
+	@override String get saving => '保存中…';
+	@override String get saveOverride => '保存覆盖';
+	@override String get overrideBanner => '保存会以相同 id 创建一个库覆盖。会话将使用此正文而非内置版本，直到你重置。';
+	@override String get idHelper => '小写字母 / 数字 / 横线。创建后锁定。';
+	@override String get emptyList => '未配置任何技能。网关附带内置技能（planner、code-reviewer 等）。';
+	@override String get failedToLoad => '加载技能失败';
 }
 
 // Path: customTasks
@@ -568,6 +665,29 @@ class _TranslationsCustomTasksZh extends TranslationsCustomTasksEn {
 	@override String get scopeGlobal => '全局';
 	@override String get scopeProject => '项目';
 	@override String get cwdHint => '/Users/you/projects/backend';
+	@override String get snackCreated => '任务已创建。';
+	@override String get snackUpdated => '任务已更新。';
+	@override String get deleteBody => '从目录中移除任务。已插入到会话中的实例不受影响。';
+	@override String get introBanner => '定义自己的斜杠命令。它们会与内置任务一起出现在会话任务选择器中。';
+	@override String get validateNameRequired => '必须填写名称';
+	@override String get validateCommandRequired => '必须填写命令';
+	@override String get validateProjectCwd => '项目范围任务需要绝对 cwd 路径';
+	@override String get appBarEdit => '编辑自定义任务';
+	@override String get appBarNew => '新建自定义任务';
+	@override String get fieldName => '名称';
+	@override String get nameHelper => '在检查器的任务选择器中显示。';
+	@override String get fieldCommand => '命令';
+	@override String get commandHelper => '选择时插入到会话的文本。可以是 CLI 命令或 Claude 斜杠命令。';
+	@override String get fieldDescription => '描述（可选）';
+	@override String get fieldScope => '范围';
+	@override String get globalScopeHint => '从任何会话可见，不论 cwd。';
+	@override String get projectScopeHint => '仅当会话的 cwd 匹配以下路径时可见。';
+	@override String get fieldProjectCwd => '项目 cwd';
+	@override String get cwdHelper => '绝对路径。以此 cwd 启动的会话将看到该任务。';
+	@override String get saving => '保存中…';
+	@override String get save => '保存';
+	@override String get create => '创建';
+	@override String get failedToLoad => '加载自定义任务失败';
 }
 
 // Path: notesPage
@@ -594,6 +714,14 @@ class _TranslationsNotesPageZh extends TranslationsNotesPageEn {
 	@override String get pathLabel => '相对仓库的路径';
 	@override String get pathHint => 'personal/scratch.md';
 	@override String get create => '创建';
+	@override String get popupDelete => '删除';
+	@override String get deleteBody => '此操作不可撤销。仓库的 git 同步会同时移除网关主机上的文件。';
+	@override String emptyFilterMatch({required Object query}) => '未找到匹配「${query}」的笔记。';
+	@override String get emptyVault => '仓库为空。点击 + 创建第一条笔记。';
+	@override String emptyFolder({required Object path}) => '文件夹「${path}」为空。';
+	@override String get validatePath => '必须填写路径';
+	@override String get validatePathDots => '路径不能包含「..」';
+	@override String get pathHelper => '缺失时自动追加 .md。';
 	@override late final _TranslationsNotesPageEditorZh editor = _TranslationsNotesPageEditorZh._(_root);
 }
 
@@ -885,6 +1013,19 @@ class _TranslationsMcpEditorZh extends TranslationsMcpEditorEn {
 	// Translations
 	@override String get nameHint => 'my-mcp-server';
 	@override String get jsonHint => 'JSON 配置 — name、transport: stdio、command、args…';
+	@override String get descriptionPlaceholder => '可选的一行说明';
+	@override String get validateJsonObject => '正文必须是 JSON 对象';
+	@override String validateJsonInvalid({required Object error}) => '无效的 JSON：${error}';
+	@override String get appBarEdit => '编辑 MCP 服务器';
+	@override String get appBarNew => '新建 MCP 服务器';
+	@override String get idLockedHint => '编辑模式下锁定 — 需删除后重建以更改。';
+	@override String get jsonLabel => '服务器 JSON';
+	@override String get jsonSchemaHelp => 'Schema：transport 必须是 stdio、http 或 sse。stdio 需要 command + args。http/sse 需要 url + headers。用 \$secret:KEY 引用密钥库的密钥。';
+	@override String get idLabel => 'id（URL 片段，小写字母数字 / 横线 / 下划线）';
+	@override String get idRequired => 'id 必填';
+	@override String get saving => '保存中…';
+	@override String get save => '保存';
+	@override String get create => '创建';
 }
 
 // Path: mcp.secret
@@ -897,6 +1038,46 @@ class _TranslationsMcpSecretZh extends TranslationsMcpSecretEn {
 	@override String get keyLabel => '键';
 	@override String get keyHint => 'GITHUB_TOKEN、OPENAI_KEY、…';
 	@override String get valueLabel => '值';
+	@override String get keyRequired => '必须填写键。';
+	@override String get keyInvalid => '键必须匹配 [A-Za-z_][A-Za-z0-9_]* — 与 shell 环境变量规则相同。';
+	@override String get valueRequired => '必须填写值。';
+	@override String get replaceTitle => '替换密钥值';
+	@override String get addTitle => '添加密钥';
+	@override String get saveButton => '保存';
+	@override String get addButton => '添加';
+	@override String get helpRules => 'shell 环境变量规则：字母或 _ 开头，仅含字母 / 数字 / _。';
+	@override String get replaceHint => '粘贴新值（旧值被擦除）';
+	@override String get addHint => '粘贴密钥值';
+	@override String addedSnack({required Object key}) => '已添加密钥 ${key}。';
+	@override String updatedSnack({required Object key}) => '已更新密钥 ${key}。';
+	@override String deletedSnack({required Object key}) => '已删除 ${key}。';
+	@override String get deleteBody => '从加密的密钥库中移除该值。引用此密钥的 MCP 服务器在恢复前将无法启动。';
+}
+
+// Path: mcp.popup
+class _TranslationsMcpPopupZh extends TranslationsMcpPopupEn {
+	_TranslationsMcpPopupZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get editConfigSubtitle => '完整 JSON 编辑器 — 仅限密钥库支持的服务器';
+	@override String get viewRawSubtitle => '服务器 JSON 的只读查看器';
+	@override String get deleteLabel => '删除';
+}
+
+// Path: mcp.kv
+class _TranslationsMcpKvZh extends TranslationsMcpKvEn {
+	_TranslationsMcpKvZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get transport => '传输';
+	@override String get description => '描述';
+	@override String get command => '命令';
+	@override String get args => '参数';
+	@override String get headers => 'Headers';
 }
 
 // Path: providers.errorPrefix
@@ -925,6 +1106,48 @@ class _TranslationsProvidersAccountsZh extends TranslationsProvidersAccountsEn {
 	@override String get deleteTitle => '删除账号？';
 	@override String importFailedApi({required Object error}) => '导入失败：${error}';
 	@override String importFailedGeneric({required Object error}) => '导入失败：${error}';
+	@override String get enable => '启用';
+	@override String get disable => '停用';
+	@override String get deleteLabel => '删除';
+	@override String get deleteBody => '移除该账号及其存储的 OAuth token。已使用此账号的会话保持运行，但重新认证会失败。';
+	@override String deletedSnack({required Object name}) => '已删除 ${name}。';
+	@override String get importSyncedSnack => '已同步 — 网关没有新账号。';
+	@override String importedSnackOne({required Object n}) => '已导入 ${n} 个账号。';
+	@override String importedSnackOther({required Object n}) => '已导入 ${n} 个账号。';
+	@override String get importing => '同步中…';
+	@override String get importLocal => '导入本地';
+	@override String get addHint => '添加新账号仅可在网关主机上操作。';
+	@override String get addBody => '新目录会自动出现在这里。OAuth 流程步骤参见文档。';
+	@override String loadFailed({required Object error}) => '加载账号失败：${error}';
+	@override String get intro => '以 Claude 提供商启动的会话会从这些账号中选择（或回退到环境变量）。';
+	@override String enabledSnack({required Object name}) => '${name} 已启用。';
+	@override String disabledSnack({required Object name}) => '${name} 已停用。';
+	@override String renamedSnack({required Object name}) => '已重命名为 ${name}。';
+}
+
+// Path: integrations.form
+class _TranslationsIntegrationsFormZh extends TranslationsIntegrationsFormEn {
+	_TranslationsIntegrationsFormZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get validateRequired => '名称、Base URL、路由前缀必填。';
+	@override String get fieldName => '名称';
+	@override String get fieldNameHint => 'My Bot';
+	@override String get fieldBaseUrl => 'Base URL';
+	@override String get fieldRoutePrefix => '路由前缀';
+	@override String get routePrefixHelper => '可通过 /api/v1/<前缀>/... 访问';
+	@override String get fieldScopes => '范围（可选）';
+	@override String get scopesHelper => '逗号分隔。留空 = 服务器默认。';
+	@override String get fieldVersion => '版本（可选）';
+	@override String get validateBaseUrl => '必须填写 Base URL。';
+	@override String get editFieldScopes => '范围';
+	@override String get editScopesHelper => '逗号分隔。';
+	@override String get editFieldVersion => '版本';
+	@override String get apiKeyWarn => '此 key 只显示这一次。';
+	@override String get copyCopied => '已复制';
+	@override String get copyCopy => '复制';
 }
 
 // Path: memoryWorkers.tasks
@@ -1064,6 +1287,28 @@ class _TranslationsGithostsFormZh extends TranslationsGithostsFormEn {
 	@override String get hostLabel => '主机';
 	@override String get nameLabel => '名称';
 	@override String get nameHint => 'work-github、personal-gitlab、…';
+	@override late final _TranslationsGithostsFormKindsZh kinds = _TranslationsGithostsFormKindsZh._(_root);
+	@override String get validateHost => '必须填写主机。';
+	@override String get validateName => '必须填写名称。';
+	@override String get snackAdded => '主机已添加。';
+	@override String get snackUpdated => '主机已更新。';
+	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
+	@override String saveFailedGeneric({required Object error}) => '保存失败：${error}';
+	@override String get saving => '保存中…';
+	@override String get save => '保存';
+	@override String get add => '添加';
+	@override String get nameHelper => '在 PR 列表中显示的名字。';
+	@override String get tokenLabelKeep => 'Token（留空 = 保留现有）';
+	@override String get tokenLabel => 'Token';
+	@override String get tokenHintKeep => '留空 = 保留现有。';
+	@override String get tokenHintNew => '粘贴个人访问令牌。';
+	@override String get enabledHelper => '可供会话用于 PR / 远端查找。';
+	@override String get validateTokenRequired => '添加主机时必须填写 Token。';
+	@override String appBarEdit({required Object name}) => '编辑 ${name}';
+	@override String get appBarNew => '添加 Git 主机';
+	@override String tokenPreviewHint({required Object preview}) => '当前预览：${preview}';
+	@override String get tokenPreviewNone => '（无）';
+	@override String get pausedSubtitle => '已暂停 — 会话跳过此主机。';
 }
 
 // Path: channels.configDialog
@@ -1100,6 +1345,86 @@ class _TranslationsChannelsNotificationsZh extends TranslationsChannelsNotificat
 	@override String get cooldownWindow => '冷却时间';
 	@override String get includeSnippet => '包含终端片段';
 	@override String get snippetLengthCap => '片段长度上限';
+	@override String get notifyOnAll => '所有会话事件。';
+	@override String get notifyOnEmpty => '未选择事件 — 已静音外发通知。';
+	@override String get snippetHelper => '在每条通知中嵌入终端最近的内容。';
+	@override String get snippetNoCap => '无上限';
+	@override String snippetChars({required Object n}) => '${n} 字符';
+	@override String get updatedSnack => '通知偏好已更新。';
+	@override late final _TranslationsChannelsNotificationsModesZh modes = _TranslationsChannelsNotificationsModesZh._(_root);
+}
+
+// Path: channels.popup
+class _TranslationsChannelsPopupZh extends TranslationsChannelsPopupEn {
+	_TranslationsChannelsPopupZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get enable => '启用';
+	@override String get disable => '停用';
+	@override String get mute => '静音';
+	@override String get unmute => '取消静音';
+	@override String get deleteLabel => '删除';
+}
+
+// Path: channels.badges
+class _TranslationsChannelsBadgesZh extends TranslationsChannelsBadgesEn {
+	_TranslationsChannelsBadgesZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get running => '运行中';
+	@override String get starting => '启动中…';
+	@override String get disabled => '已停用';
+	@override String get muted => '已静音';
+}
+
+// Path: channels.snacks
+class _TranslationsChannelsSnacksZh extends TranslationsChannelsSnacksEn {
+	_TranslationsChannelsSnacksZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get testDispatched => '测试消息已发送。';
+	@override String get channelEnabled => '通道已启用。';
+	@override String get channelDisabled => '通道已停用。';
+	@override String get channelMuted => '通道已静音。';
+	@override String get channelUnmuted => '通道已取消静音。';
+	@override String get configUpdated => '通道配置已更新。';
+	@override String get channelDeleted => '通道已删除。';
+}
+
+// Path: channels.errorPrefix
+class _TranslationsChannelsErrorPrefixZh extends TranslationsChannelsErrorPrefixEn {
+	_TranslationsChannelsErrorPrefixZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get test => '测试失败';
+	@override String get toggle => '切换失败';
+	@override String get muteToggle => '静音切换失败';
+	@override String get update => '更新失败';
+	@override String get delete => '删除失败';
+}
+
+// Path: channels.kinds
+class _TranslationsChannelsKindsZh extends TranslationsChannelsKindsEn {
+	_TranslationsChannelsKindsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsChannelsKindsTelegramZh telegram = _TranslationsChannelsKindsTelegramZh._(_root);
+	@override late final _TranslationsChannelsKindsSlackZh slack = _TranslationsChannelsKindsSlackZh._(_root);
+	@override late final _TranslationsChannelsKindsDiscordZh discord = _TranslationsChannelsKindsDiscordZh._(_root);
+	@override late final _TranslationsChannelsKindsFeishuZh feishu = _TranslationsChannelsKindsFeishuZh._(_root);
+	@override late final _TranslationsChannelsKindsDingtalkZh dingtalk = _TranslationsChannelsKindsDingtalkZh._(_root);
+	@override late final _TranslationsChannelsKindsWecomZh wecom = _TranslationsChannelsKindsWecomZh._(_root);
+	@override late final _TranslationsChannelsKindsWechatZh wechat = _TranslationsChannelsKindsWechatZh._(_root);
 }
 
 // Path: notesPage.editor
@@ -1112,6 +1437,11 @@ class _TranslationsNotesPageEditorZh extends TranslationsNotesPageEditorEn {
 	@override String get markdownHint => 'Markdown…';
 	@override String get saving => '保存中…';
 	@override String get autosave => '随输入自动保存';
+	@override String loadFailedApi({required Object error}) => '加载失败：${error}';
+	@override String loadFailedGeneric({required Object error}) => '加载失败：${error}';
+	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
+	@override String saveFailedGeneric({required Object error}) => '保存失败：${error}';
+	@override String savedAt({required Object time}) => '${time} 已保存';
 }
 
 // Path: memory.deleteAllConfirm
@@ -1627,6 +1957,31 @@ class _TranslationsSessionsInspectorNotesZh extends TranslationsSessionsInspecto
 	@override String get create => '创建';
 	@override String get filterHint => '筛选…';
 	@override String get locationDialogTitle => '项目文档位置';
+	@override String loadFailedApi({required Object error}) => '加载失败：${error}';
+	@override String loadFailedGeneric({required Object error}) => '加载失败：${error}';
+	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
+	@override String saveFailedGeneric({required Object error}) => '保存失败：${error}';
+	@override String insertFailedApi({required Object error}) => '插入失败：${error}';
+	@override String insertFailedGeneric({required Object error}) => '插入失败：${error}';
+	@override String createFailedApi({required Object error}) => '创建失败：${error}';
+	@override String createFailedGeneric({required Object error}) => '创建失败：${error}';
+	@override String get personalHint => '个人草稿 — 随输入自动保存。AI agent 不会写入这里。';
+	@override String get projectDocsHint => '架构 / 规范 / 决策 / 计划 / 回顾 — 通常由 agent 撰写或维护。';
+	@override String get mappingCleared => '映射已清除 — 使用默认值';
+	@override String mappedTo({required Object path}) => '已映射到 ${path}';
+	@override String get cancelTooltip => '取消';
+	@override String get newDocTooltip => '新建文档';
+	@override String get noProjectMapping => '无法为此会话解析项目映射。检查网关是否配置了笔记库，以及会话的 cwd 是否已设置。';
+	@override String get emptyProjectDocs => '暂无项目文档。点击 + 创建一个，或让 AI agent 根据提示生成。';
+	@override String emptyFilterMatch({required Object query}) => '未找到匹配「${query}」的内容。';
+	@override String get locationDialogHelp => '将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。';
+	@override String get sessionCwd => '会话 cwd';
+	@override String get projectDocsPath => '相对笔记库的项目文档路径';
+	@override String get locationStoredHint => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。';
+	@override String pinnedHint({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。';
+	@override String get noProjectMapping2 => '（无项目映射）';
+	@override String get clearOverride => '清除覆盖';
+	@override String get save => '保存';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -1793,6 +2148,142 @@ class _TranslationsBackupTargetEditorKindsRcloneZh extends TranslationsBackupTar
 	// Translations
 	@override String get label => 'rclone（任意）';
 	@override String get description => '通过 rclone CLI 访问 OneDrive、Google Drive、Dropbox';
+}
+
+// Path: githosts.form.kinds
+class _TranslationsGithostsFormKindsZh extends TranslationsGithostsFormKindsEn {
+	_TranslationsGithostsFormKindsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get github => 'GitHub';
+	@override String get gitlab => 'GitLab';
+	@override String get bitbucket => 'Bitbucket';
+	@override String get gitea => 'Gitea';
+	@override String get custom => '自定义';
+}
+
+// Path: channels.notifications.modes
+class _TranslationsChannelsNotificationsModesZh extends TranslationsChannelsNotificationsModesEn {
+	_TranslationsChannelsNotificationsModesZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get onceLabel => '每会话一次';
+	@override String get onceDescription => '空闲时触发一次，回复或结束前不再触发。';
+	@override String get cooldownLabel => '时间窗冷却';
+	@override String get cooldownDescription => '在所选时间窗内抑制重复。';
+	@override String get everyLabel => '每次事件（嘈杂）';
+	@override String get everyDescription => '不抑制 — 仅适合低频通道。';
+}
+
+// Path: channels.kinds.telegram
+class _TranslationsChannelsKindsTelegramZh extends TranslationsChannelsKindsTelegramEn {
+	_TranslationsChannelsKindsTelegramZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '通过 @BotFather 创建机器人。opendray 长轮询 getUpdates 并通过 REST 发送。原生支持按钮和 reply_to_message。';
+	@override String get botTokenLabel => '机器人 Token';
+	@override String get botTokenHint => '从 @BotFather 获取。存储于通道配置；仅管理员 API 可见。';
+	@override String get chatIdLabel => '默认 chat ID';
+	@override String get chatIdPlaceholder => '42（可选 — 没有 ReplyCtx 时使用）';
+}
+
+// Path: channels.kinds.slack
+class _TranslationsChannelsKindsSlackZh extends TranslationsChannelsKindsSlackEn {
+	_TranslationsChannelsKindsSlackZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => 'Socket Mode — 无需公网 webhook。需要 bot OAuth token（xoxb-）和带 connections:write 的 app-level token（xapp-）。';
+	@override String get botTokenLabel => 'Bot token（xoxb-…）';
+	@override String get botTokenHint => 'OAuth & Permissions → Bot User OAuth Token。需要 chat:write。';
+	@override String get appTokenLabel => 'App-level token（xapp-…）';
+	@override String get appTokenHint => 'Settings → Basic Information → App-Level Tokens。范围：connections:write。';
+	@override String get channelIdLabel => '默认 channel ID';
+	@override String get channelIdPlaceholder => 'C0123ABC456（可选）';
+}
+
+// Path: channels.kinds.discord
+class _TranslationsChannelsKindsDiscordZh extends TranslationsChannelsKindsDiscordEn {
+	_TranslationsChannelsKindsDiscordZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '通过 Discord Developer Portal 创建机器人，启用 MESSAGE CONTENT INTENT。连接 Gateway WS — 无需公网 URL。';
+	@override String get botTokenLabel => 'Bot token';
+	@override String get botTokenPlaceholder => '来自 Discord Developer Portal 的 Bot token';
+	@override String get botTokenHint => 'Application → Bot → Reset Token。邀请机器人时勾选 send_messages + embed_links。';
+	@override String get channelIdLabel => '默认 channel ID';
+	@override String get channelIdPlaceholder => '123456789012345678（可选）';
+}
+
+// Path: channels.kinds.feishu
+class _TranslationsChannelsKindsFeishuZh extends TranslationsChannelsKindsFeishuEn {
+	_TranslationsChannelsKindsFeishuZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '应用级凭据。入站走事件订阅 webhook。下方生成公网 webhook URL — 粘贴到飞书开放平台控制台。';
+	@override String get afterCreateHint => '在通道卡上打开 webhook URL，粘贴到飞书开放平台 → 事件订阅 → Request URL。';
+	@override String get appIdLabel => 'App ID';
+	@override String get appSecretLabel => 'App secret';
+	@override String get appSecretPlaceholder => '应用凭据 secret';
+	@override String get verificationTokenLabel => 'Verification token';
+	@override String get verificationTokenHint => '来自 事件订阅 → Verification Token。设置后，opendray 拒绝 token 不匹配的 webhook。';
+	@override String get chatIdLabel => '默认 chat ID（oc_…）';
+	@override String get chatIdPlaceholder => 'oc_xxxxxxxxxx（可选）';
+}
+
+// Path: channels.kinds.dingtalk
+class _TranslationsChannelsKindsDingtalkZh extends TranslationsChannelsKindsDingtalkEn {
+	_TranslationsChannelsKindsDingtalkZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '自定义群机器人。仅外发。群聊 → 机器人 → 添加 → 加签模式 → 复制 webhook + secret。';
+	@override String get webhookUrlLabel => 'Webhook URL';
+	@override String get secretLabel => '加签 secret';
+	@override String get secretHint => '当机器人为「加签」安全模式时，将 secret 复制到这里。opendray 自动添加 timestamp + sign 参数。';
+}
+
+// Path: channels.kinds.wecom
+class _TranslationsChannelsKindsWecomZh extends TranslationsChannelsKindsWecomEn {
+	_TranslationsChannelsKindsWecomZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '群机器人 webhook。仅外发（文本 + markdown）。群设置 → 群机器人 → 添加 → 复制 webhook URL。';
+	@override String get webhookKeyLabel => 'Webhook key';
+	@override String get webhookKeyPlaceholder => '「key=」查询参数值';
+	@override String get webhookKeyHint => '或将整个 webhook URL 粘贴到下方字段 — 任一即可。';
+	@override String get webhookUrlLabel => '或完整 webhook URL';
+}
+
+// Path: channels.kinds.wechat
+class _TranslationsChannelsKindsWechatZh extends TranslationsChannelsKindsWechatEn {
+	_TranslationsChannelsKindsWechatZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '通过 WxPusher 推送到个人微信。仅外发 — 推送服务不转发用户回复。每个接收方需通过二维码订阅一次。';
+	@override String get appTokenLabel => 'App token（AT_…）';
+	@override String get appTokenHint => 'WxPusher → 应用管理 → 创建应用 → 复制 App Token。';
+	@override String get uidsLabel => '接收方 UID（每行一个）';
+	@override String get uidsHint => 'UID 或 topic ID 至少需要一个。';
+	@override String get topicIdsLabel => 'Topic ID（每行一个）';
+	@override String get urlLabel => '点击跳转 URL';
+	@override String get urlHint => '设置后，点击微信通知会打开此页面。';
 }
 
 // Path: settings.logViewer.levels
@@ -2021,6 +2512,31 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.create' => '创建',
 			'sessions.inspector.notes.filterHint' => '筛选…',
 			'sessions.inspector.notes.locationDialogTitle' => '项目文档位置',
+			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
+			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
+			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
+			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
+			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => '插入失败：${error}',
+			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
+			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => '创建失败：${error}',
+			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',
+			'sessions.inspector.notes.personalHint' => '个人草稿 — 随输入自动保存。AI agent 不会写入这里。',
+			'sessions.inspector.notes.projectDocsHint' => '架构 / 规范 / 决策 / 计划 / 回顾 — 通常由 agent 撰写或维护。',
+			'sessions.inspector.notes.mappingCleared' => '映射已清除 — 使用默认值',
+			'sessions.inspector.notes.mappedTo' => ({required Object path}) => '已映射到 ${path}',
+			'sessions.inspector.notes.cancelTooltip' => '取消',
+			'sessions.inspector.notes.newDocTooltip' => '新建文档',
+			'sessions.inspector.notes.noProjectMapping' => '无法为此会话解析项目映射。检查网关是否配置了笔记库，以及会话的 cwd 是否已设置。',
+			'sessions.inspector.notes.emptyProjectDocs' => '暂无项目文档。点击 + 创建一个，或让 AI agent 根据提示生成。',
+			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => '未找到匹配「${query}」的内容。',
+			'sessions.inspector.notes.locationDialogHelp' => '将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。',
+			'sessions.inspector.notes.sessionCwd' => '会话 cwd',
+			'sessions.inspector.notes.projectDocsPath' => '相对笔记库的项目文档路径',
+			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
+			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
+			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
+			'sessions.inspector.notes.clearOverride' => '清除覆盖',
+			'sessions.inspector.notes.save' => '保存',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
@@ -2073,9 +2589,60 @@ extension on TranslationsZh {
 			'mcp.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'mcp.editor.nameHint' => 'my-mcp-server',
 			'mcp.editor.jsonHint' => 'JSON 配置 — name、transport: stdio、command、args…',
+			'mcp.editor.descriptionPlaceholder' => '可选的一行说明',
+			'mcp.editor.validateJsonObject' => '正文必须是 JSON 对象',
+			'mcp.editor.validateJsonInvalid' => ({required Object error}) => '无效的 JSON：${error}',
+			'mcp.editor.appBarEdit' => '编辑 MCP 服务器',
+			'mcp.editor.appBarNew' => '新建 MCP 服务器',
+			'mcp.editor.idLockedHint' => '编辑模式下锁定 — 需删除后重建以更改。',
+			'mcp.editor.jsonLabel' => '服务器 JSON',
+			'mcp.editor.jsonSchemaHelp' => 'Schema：transport 必须是 stdio、http 或 sse。stdio 需要 command + args。http/sse 需要 url + headers。用 \$secret:KEY 引用密钥库的密钥。',
+			'mcp.editor.idLabel' => 'id（URL 片段，小写字母数字 / 横线 / 下划线）',
+			'mcp.editor.idRequired' => 'id 必填',
+			'mcp.editor.saving' => '保存中…',
+			'mcp.editor.save' => '保存',
+			'mcp.editor.create' => '创建',
 			'mcp.secret.keyLabel' => '键',
 			'mcp.secret.keyHint' => 'GITHUB_TOKEN、OPENAI_KEY、…',
 			'mcp.secret.valueLabel' => '值',
+			'mcp.secret.keyRequired' => '必须填写键。',
+			'mcp.secret.keyInvalid' => '键必须匹配 [A-Za-z_][A-Za-z0-9_]* — 与 shell 环境变量规则相同。',
+			'mcp.secret.valueRequired' => '必须填写值。',
+			'mcp.secret.replaceTitle' => '替换密钥值',
+			'mcp.secret.addTitle' => '添加密钥',
+			'mcp.secret.saveButton' => '保存',
+			'mcp.secret.addButton' => '添加',
+			'mcp.secret.helpRules' => 'shell 环境变量规则：字母或 _ 开头，仅含字母 / 数字 / _。',
+			'mcp.secret.replaceHint' => '粘贴新值（旧值被擦除）',
+			'mcp.secret.addHint' => '粘贴密钥值',
+			'mcp.secret.addedSnack' => ({required Object key}) => '已添加密钥 ${key}。',
+			'mcp.secret.updatedSnack' => ({required Object key}) => '已更新密钥 ${key}。',
+			'mcp.secret.deletedSnack' => ({required Object key}) => '已删除 ${key}。',
+			'mcp.secret.deleteBody' => '从加密的密钥库中移除该值。引用此密钥的 MCP 服务器在恢复前将无法启动。',
+			'mcp.popup.editConfigSubtitle' => '完整 JSON 编辑器 — 仅限密钥库支持的服务器',
+			'mcp.popup.viewRawSubtitle' => '服务器 JSON 的只读查看器',
+			'mcp.popup.deleteLabel' => '删除',
+			'mcp.kv.transport' => '传输',
+			'mcp.kv.description' => '描述',
+			'mcp.kv.command' => '命令',
+			'mcp.kv.args' => '参数',
+			'mcp.kv.headers' => 'Headers',
+			'mcp.deleteServerBody' => ({required Object id}) => '移除 ${id} 的密钥库目录。引用此服务器的会话将无法启动。',
+			'mcp.deleteServerSnack' => ({required Object id}) => '已删除 ${id}。',
+			'mcp.serversCount' => ({required Object count}) => '服务器（${count}）',
+			'mcp.secretsCount' => ({required Object count}) => '密钥（${count}）',
+			'mcp.emptyServers' => '未注册任何 MCP 服务器。点击「新建服务器」添加一个。',
+			'mcp.emptySecrets' => '暂无密钥。添加一个，将敏感的 env / headers 注入 MCP 服务器，无需放在 JSON 里。',
+			'mcp.noVaultFileYet' => '尚无密钥库文件 — 添加密钥时会创建。',
+			'mcp.tapToReplaceHint' => '点击替换 · 长按 / 垃圾桶 删除',
+			'mcp.failedToLoad' => '加载 MCP 状态失败',
+			'mcp.serverCreatedSnack' => 'MCP 服务器已创建。',
+			'mcp.serverUpdatedSnack' => 'MCP 服务器已更新。',
+			'mcp.envHeading' => '环境变量',
+			'mcp.encryptionAes' => 'AES-GCM 加密（密钥存于 OS keychain）',
+			'mcp.encryptionPlaintext' => '明文 — keychain 不可用',
+			'mcp.toggleEnabledSnack' => ({required Object name}) => '${name} 已启用。',
+			'mcp.toggleDisabledSnack' => ({required Object name}) => '${name} 已停用。',
 			'providers.title' => '提供商',
 			'providers.configSaved' => '提供商配置已更新。',
 			'providers.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
@@ -2092,6 +2659,34 @@ extension on TranslationsZh {
 			'providers.accounts.deleteTitle' => '删除账号？',
 			'providers.accounts.importFailedApi' => ({required Object error}) => '导入失败：${error}',
 			'providers.accounts.importFailedGeneric' => ({required Object error}) => '导入失败：${error}',
+			'providers.accounts.enable' => '启用',
+			'providers.accounts.disable' => '停用',
+			'providers.accounts.deleteLabel' => '删除',
+			'providers.accounts.deleteBody' => '移除该账号及其存储的 OAuth token。已使用此账号的会话保持运行，但重新认证会失败。',
+			'providers.accounts.deletedSnack' => ({required Object name}) => '已删除 ${name}。',
+			'providers.accounts.importSyncedSnack' => '已同步 — 网关没有新账号。',
+			'providers.accounts.importedSnackOne' => ({required Object n}) => '已导入 ${n} 个账号。',
+			'providers.accounts.importedSnackOther' => ({required Object n}) => '已导入 ${n} 个账号。',
+			'providers.accounts.importing' => '同步中…',
+			'providers.accounts.importLocal' => '导入本地',
+			'providers.accounts.addHint' => '添加新账号仅可在网关主机上操作。',
+			'providers.accounts.addBody' => '新目录会自动出现在这里。OAuth 流程步骤参见文档。',
+			'providers.accounts.loadFailed' => ({required Object error}) => '加载账号失败：${error}',
+			'providers.accounts.intro' => '以 Claude 提供商启动的会话会从这些账号中选择（或回退到环境变量）。',
+			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
+			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} 已停用。',
+			'providers.accounts.renamedSnack' => ({required Object name}) => '已重命名为 ${name}。',
+			'providers.configFallbackTitle' => '提供商配置',
+			'providers.saving' => '保存中…',
+			'providers.save' => '保存',
+			'providers.configLoadFailed' => '加载提供商失败',
+			'providers.argsHelper' => '以空格分隔的 CLI 参数。',
+			'providers.listEmptyHeadline' => '未加载任何提供商。',
+			'providers.listEmptyBody' => '网关在启动时从插件目录解析提供商。如果有遗漏，请检查日志。',
+			'providers.listLoadFailed' => '加载提供商失败',
+			'providers.cliSectionHeader' => 'CLI 提供商',
+			'providers.enabledSnack' => ({required Object name}) => '${name} 已启用。',
+			'providers.disabledSnack' => ({required Object name}) => '${name} 已停用。',
 			'integrations.title' => '集成',
 			'integrations.register' => '注册',
 			'integrations.registerDialogTitle' => '注册集成',
@@ -2118,6 +2713,44 @@ extension on TranslationsZh {
 			'integrations.newApiKeySubtitle' => '将其交给集成方。旧密钥已失效。',
 			'integrations.rotateFailedApi' => ({required Object error}) => '轮换失败：${error}',
 			'integrations.rotateFailedGeneric' => ({required Object error}) => '轮换失败：${error}',
+			'integrations.deleteBody' => '移除该注册并吊销 API key。使用旧 key 的进行中请求将开始失败。',
+			'integrations.rotateBody' => ({required Object name}) => '为 ${name} 生成新 API key 并立即让旧 key 失效。',
+			'integrations.appBarFallback' => '集成',
+			'integrations.tooltipMore' => '更多',
+			'integrations.tooltipReadOnly' => '系统集成 — 只读',
+			'integrations.kvRoutePrefix' => '路由前缀',
+			'integrations.kvBaseUrl' => 'Base URL',
+			'integrations.kvScopes' => '范围',
+			'integrations.kvVersion' => '版本',
+			'integrations.kvLastHealthPing' => '最近健康检查',
+			'integrations.kvCreated' => '创建于',
+			'integrations.kvKeyRotated' => 'Key 轮换于',
+			'integrations.detailLoadFailed' => ({required Object error}) => '加载集成失败：${error}',
+			'integrations.callsLoadFailed' => '加载调用失败',
+			'integrations.noMatchingCalls' => '日志中暂无匹配的调用。',
+			'integrations.directionAll' => '全部',
+			'integrations.directionInbound' => '入站',
+			'integrations.directionOutbound' => '出站',
+			'integrations.form.validateRequired' => '名称、Base URL、路由前缀必填。',
+			'integrations.form.fieldName' => '名称',
+			'integrations.form.fieldNameHint' => 'My Bot',
+			'integrations.form.fieldBaseUrl' => 'Base URL',
+			'integrations.form.fieldRoutePrefix' => '路由前缀',
+			'integrations.form.routePrefixHelper' => '可通过 /api/v1/<前缀>/... 访问',
+			'integrations.form.fieldScopes' => '范围（可选）',
+			'integrations.form.scopesHelper' => '逗号分隔。留空 = 服务器默认。',
+			'integrations.form.fieldVersion' => '版本（可选）',
+			'integrations.form.validateBaseUrl' => '必须填写 Base URL。',
+			'integrations.form.editFieldScopes' => '范围',
+			'integrations.form.editScopesHelper' => '逗号分隔。',
+			'integrations.form.editFieldVersion' => '版本',
+			'integrations.form.apiKeyWarn' => '此 key 只显示这一次。',
+			'integrations.form.copyCopied' => '已复制',
+			'integrations.form.copyCopy' => '复制',
+			'integrations.emptyState' => '在 Web 管理端注册：集成 → 新建。',
+			'integrations.sectionRegistered' => '已注册',
+			'integrations.sectionSystem' => '系统',
+			'integrations.listLoadFailed' => '加载集成失败',
 			'memoryWorkers.title' => '记忆工作器',
 			'memoryWorkers.savedSnack' => ({required Object label}) => '${label} 已保存',
 			'memoryWorkers.saveFailed' => ({required Object error}) => '保存失败：${error}',
@@ -2220,6 +2853,8 @@ extension on TranslationsZh {
 			'backups.emptyMissingDeps.body' => '安装 postgresql-client 并重启 opendray。',
 			'backups.emptyNoTargets.headline' => '未配置任何备份目标',
 			'backups.emptyNoTargets.body' => '打开「更多」菜单 → 目标，添加一个目的地（本地 / S3 / SMB / SFTP / WebDAV / rclone）。然后返回并点击「立即运行」。',
+			_ => null,
+		} ?? switch (path) {
 			'backups.emptyNoBackups.headline' => '暂无备份',
 			'backups.emptyNoBackups.body' => '点击「立即运行」生成一次新快照，或打开「计划」设置定期运行。',
 			'backups.restartToActivate' => '重启 opendray 以激活备份',
@@ -2362,9 +2997,39 @@ extension on TranslationsZh {
 			'githosts.form.kindLabel' => '类型',
 			'githosts.form.hostLabel' => '主机',
 			'githosts.form.nameLabel' => '名称',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.form.nameHint' => 'work-github、personal-gitlab、…',
+			'githosts.form.kinds.github' => 'GitHub',
+			'githosts.form.kinds.gitlab' => 'GitLab',
+			'githosts.form.kinds.bitbucket' => 'Bitbucket',
+			'githosts.form.kinds.gitea' => 'Gitea',
+			'githosts.form.kinds.custom' => '自定义',
+			'githosts.form.validateHost' => '必须填写主机。',
+			'githosts.form.validateName' => '必须填写名称。',
+			'githosts.form.snackAdded' => '主机已添加。',
+			'githosts.form.snackUpdated' => '主机已更新。',
+			'githosts.form.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
+			'githosts.form.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
+			'githosts.form.saving' => '保存中…',
+			'githosts.form.save' => '保存',
+			'githosts.form.add' => '添加',
+			'githosts.form.nameHelper' => '在 PR 列表中显示的名字。',
+			'githosts.form.tokenLabelKeep' => 'Token（留空 = 保留现有）',
+			'githosts.form.tokenLabel' => 'Token',
+			'githosts.form.tokenHintKeep' => '留空 = 保留现有。',
+			'githosts.form.tokenHintNew' => '粘贴个人访问令牌。',
+			'githosts.form.enabledHelper' => '可供会话用于 PR / 远端查找。',
+			'githosts.form.validateTokenRequired' => '添加主机时必须填写 Token。',
+			'githosts.form.appBarEdit' => ({required Object name}) => '编辑 ${name}',
+			'githosts.form.appBarNew' => '添加 Git 主机',
+			'githosts.form.tokenPreviewHint' => ({required Object preview}) => '当前预览：${preview}',
+			'githosts.form.tokenPreviewNone' => '（无）',
+			'githosts.form.pausedSubtitle' => '已暂停 — 会话跳过此主机。',
+			'githosts.deleteBody' => ({required Object host}) => '移除该凭据。试图列出 ${host} 的 PR 的会话将回退到未认证 API。',
+			'githosts.deletedSnack' => ({required Object name}) => '已删除 ${name}。',
+			'githosts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
+			'githosts.disabledSnack' => ({required Object name}) => '${name} 已停用。',
+			'githosts.emptyList' => '未配置任何 Git 主机。\n\n添加一个凭据，让网关可以列出你仓库的 pull request。',
+			'githosts.failedToLoad' => '加载 Git 主机失败',
 			'channels.title' => '通道',
 			'channels.kNew' => '新建',
 			'channels.sendTest' => '发送测试消息',
@@ -2387,6 +3052,88 @@ extension on TranslationsZh {
 			'channels.notifications.cooldownWindow' => '冷却时间',
 			'channels.notifications.includeSnippet' => '包含终端片段',
 			'channels.notifications.snippetLengthCap' => '片段长度上限',
+			'channels.notifications.notifyOnAll' => '所有会话事件。',
+			'channels.notifications.notifyOnEmpty' => '未选择事件 — 已静音外发通知。',
+			'channels.notifications.snippetHelper' => '在每条通知中嵌入终端最近的内容。',
+			'channels.notifications.snippetNoCap' => '无上限',
+			'channels.notifications.snippetChars' => ({required Object n}) => '${n} 字符',
+			'channels.notifications.updatedSnack' => '通知偏好已更新。',
+			'channels.notifications.modes.onceLabel' => '每会话一次',
+			'channels.notifications.modes.onceDescription' => '空闲时触发一次，回复或结束前不再触发。',
+			'channels.notifications.modes.cooldownLabel' => '时间窗冷却',
+			'channels.notifications.modes.cooldownDescription' => '在所选时间窗内抑制重复。',
+			'channels.notifications.modes.everyLabel' => '每次事件（嘈杂）',
+			'channels.notifications.modes.everyDescription' => '不抑制 — 仅适合低频通道。',
+			'channels.popup.enable' => '启用',
+			'channels.popup.disable' => '停用',
+			'channels.popup.mute' => '静音',
+			'channels.popup.unmute' => '取消静音',
+			'channels.popup.deleteLabel' => '删除',
+			'channels.badges.running' => '运行中',
+			'channels.badges.starting' => '启动中…',
+			'channels.badges.disabled' => '已停用',
+			'channels.badges.muted' => '已静音',
+			'channels.capsLabel' => ({required Object list}) => '· 能力：${list}',
+			'channels.bridgeWebOnly' => 'Bridge 通道仅 Web 端',
+			'channels.bridgeEmptyAdd' => '在 Web 管理端添加：通道 → 新建。',
+			'channels.deleteBody' => '停止该通道并移除其配置。仍在传输中的通知会被静默丢弃。',
+			'channels.snacks.testDispatched' => '测试消息已发送。',
+			'channels.snacks.channelEnabled' => '通道已启用。',
+			'channels.snacks.channelDisabled' => '通道已停用。',
+			'channels.snacks.channelMuted' => '通道已静音。',
+			'channels.snacks.channelUnmuted' => '通道已取消静音。',
+			'channels.snacks.configUpdated' => '通道配置已更新。',
+			'channels.snacks.channelDeleted' => '通道已删除。',
+			'channels.errorPrefix.test' => '测试失败',
+			'channels.errorPrefix.toggle' => '切换失败',
+			'channels.errorPrefix.muteToggle' => '静音切换失败',
+			'channels.errorPrefix.update' => '更新失败',
+			'channels.errorPrefix.delete' => '删除失败',
+			'channels.failedToLoad' => '加载通道失败',
+			'channels.kinds.telegram.description' => '通过 @BotFather 创建机器人。opendray 长轮询 getUpdates 并通过 REST 发送。原生支持按钮和 reply_to_message。',
+			'channels.kinds.telegram.botTokenLabel' => '机器人 Token',
+			'channels.kinds.telegram.botTokenHint' => '从 @BotFather 获取。存储于通道配置；仅管理员 API 可见。',
+			'channels.kinds.telegram.chatIdLabel' => '默认 chat ID',
+			'channels.kinds.telegram.chatIdPlaceholder' => '42（可选 — 没有 ReplyCtx 时使用）',
+			'channels.kinds.slack.description' => 'Socket Mode — 无需公网 webhook。需要 bot OAuth token（xoxb-）和带 connections:write 的 app-level token（xapp-）。',
+			'channels.kinds.slack.botTokenLabel' => 'Bot token（xoxb-…）',
+			'channels.kinds.slack.botTokenHint' => 'OAuth & Permissions → Bot User OAuth Token。需要 chat:write。',
+			'channels.kinds.slack.appTokenLabel' => 'App-level token（xapp-…）',
+			'channels.kinds.slack.appTokenHint' => 'Settings → Basic Information → App-Level Tokens。范围：connections:write。',
+			'channels.kinds.slack.channelIdLabel' => '默认 channel ID',
+			'channels.kinds.slack.channelIdPlaceholder' => 'C0123ABC456（可选）',
+			'channels.kinds.discord.description' => '通过 Discord Developer Portal 创建机器人，启用 MESSAGE CONTENT INTENT。连接 Gateway WS — 无需公网 URL。',
+			'channels.kinds.discord.botTokenLabel' => 'Bot token',
+			'channels.kinds.discord.botTokenPlaceholder' => '来自 Discord Developer Portal 的 Bot token',
+			'channels.kinds.discord.botTokenHint' => 'Application → Bot → Reset Token。邀请机器人时勾选 send_messages + embed_links。',
+			'channels.kinds.discord.channelIdLabel' => '默认 channel ID',
+			'channels.kinds.discord.channelIdPlaceholder' => '123456789012345678（可选）',
+			'channels.kinds.feishu.description' => '应用级凭据。入站走事件订阅 webhook。下方生成公网 webhook URL — 粘贴到飞书开放平台控制台。',
+			'channels.kinds.feishu.afterCreateHint' => '在通道卡上打开 webhook URL，粘贴到飞书开放平台 → 事件订阅 → Request URL。',
+			'channels.kinds.feishu.appIdLabel' => 'App ID',
+			'channels.kinds.feishu.appSecretLabel' => 'App secret',
+			'channels.kinds.feishu.appSecretPlaceholder' => '应用凭据 secret',
+			'channels.kinds.feishu.verificationTokenLabel' => 'Verification token',
+			'channels.kinds.feishu.verificationTokenHint' => '来自 事件订阅 → Verification Token。设置后，opendray 拒绝 token 不匹配的 webhook。',
+			'channels.kinds.feishu.chatIdLabel' => '默认 chat ID（oc_…）',
+			'channels.kinds.feishu.chatIdPlaceholder' => 'oc_xxxxxxxxxx（可选）',
+			'channels.kinds.dingtalk.description' => '自定义群机器人。仅外发。群聊 → 机器人 → 添加 → 加签模式 → 复制 webhook + secret。',
+			'channels.kinds.dingtalk.webhookUrlLabel' => 'Webhook URL',
+			'channels.kinds.dingtalk.secretLabel' => '加签 secret',
+			'channels.kinds.dingtalk.secretHint' => '当机器人为「加签」安全模式时，将 secret 复制到这里。opendray 自动添加 timestamp + sign 参数。',
+			'channels.kinds.wecom.description' => '群机器人 webhook。仅外发（文本 + markdown）。群设置 → 群机器人 → 添加 → 复制 webhook URL。',
+			'channels.kinds.wecom.webhookKeyLabel' => 'Webhook key',
+			'channels.kinds.wecom.webhookKeyPlaceholder' => '「key=」查询参数值',
+			'channels.kinds.wecom.webhookKeyHint' => '或将整个 webhook URL 粘贴到下方字段 — 任一即可。',
+			'channels.kinds.wecom.webhookUrlLabel' => '或完整 webhook URL',
+			'channels.kinds.wechat.description' => '通过 WxPusher 推送到个人微信。仅外发 — 推送服务不转发用户回复。每个接收方需通过二维码订阅一次。',
+			'channels.kinds.wechat.appTokenLabel' => 'App token（AT_…）',
+			'channels.kinds.wechat.appTokenHint' => 'WxPusher → 应用管理 → 创建应用 → 复制 App Token。',
+			'channels.kinds.wechat.uidsLabel' => '接收方 UID（每行一个）',
+			'channels.kinds.wechat.uidsHint' => 'UID 或 topic ID 至少需要一个。',
+			'channels.kinds.wechat.topicIdsLabel' => 'Topic ID（每行一个）',
+			'channels.kinds.wechat.urlLabel' => '点击跳转 URL',
+			'channels.kinds.wechat.urlHint' => '设置后，点击微信通知会打开此页面。',
 			'onboarding.gatewayLabel' => '网关 URL',
 			'onboarding.gatewayHint' => 'https://opendray.example.com',
 			'onboarding.kContinue' => '继续',
@@ -2396,6 +3143,35 @@ extension on TranslationsZh {
 			'skills.idLabel' => 'Id（slug）',
 			'skills.idHint' => '例如：tdd-guide',
 			'skills.bodyLabel' => '正文（Markdown）',
+			'skills.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
+			'skills.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
+			'skills.idRequired' => '必须填写 Id。',
+			'skills.bodyRequired' => '正文不能为空。',
+			'skills.snackCreated' => '技能已创建。',
+			'skills.snackOverride' => '已保存为库覆盖。',
+			'skills.snackUpdated' => '技能已更新。',
+			'skills.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
+			'skills.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
+			'skills.resetTitle' => '重置为内置？',
+			'skills.deleteTitle' => '删除技能？',
+			'skills.resetBody' => ({required Object id}) => '移除 ${id} 的库覆盖。会话将回退到内置正文。',
+			'skills.resetButton' => '重置',
+			'skills.resetSnack' => ({required Object id}) => '已将 ${id} 重置为内置。',
+			'skills.deletedSnack' => ({required Object id}) => '已删除 ${id}。',
+			'skills.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
+			'skills.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
+			'skills.deleteBody' => ({required Object id}) => '从库中移除 ${id}。引用它的会话在恢复前会失败。',
+			'skills.newSkillTitle' => '新建技能',
+			'skills.customizeTitle' => ({required Object id}) => '自定义 ${id}',
+			'skills.editTitle' => ({required Object id}) => '编辑 ${id}',
+			'skills.resetTooltip' => '重置为内置',
+			'skills.deleteTooltip' => '删除',
+			'skills.saving' => '保存中…',
+			'skills.saveOverride' => '保存覆盖',
+			'skills.overrideBanner' => '保存会以相同 id 创建一个库覆盖。会话将使用此正文而非内置版本，直到你重置。',
+			'skills.idHelper' => '小写字母 / 数字 / 横线。创建后锁定。',
+			'skills.emptyList' => '未配置任何技能。网关附带内置技能（planner、code-reviewer 等）。',
+			'skills.failedToLoad' => '加载技能失败',
 			'customTasks.title' => '自定义任务',
 			'customTasks.newTask' => '新建任务',
 			'customTasks.deleteTitle' => '删除任务？',
@@ -2410,6 +3186,29 @@ extension on TranslationsZh {
 			'customTasks.scopeGlobal' => '全局',
 			'customTasks.scopeProject' => '项目',
 			'customTasks.cwdHint' => '/Users/you/projects/backend',
+			'customTasks.snackCreated' => '任务已创建。',
+			'customTasks.snackUpdated' => '任务已更新。',
+			'customTasks.deleteBody' => '从目录中移除任务。已插入到会话中的实例不受影响。',
+			'customTasks.introBanner' => '定义自己的斜杠命令。它们会与内置任务一起出现在会话任务选择器中。',
+			'customTasks.validateNameRequired' => '必须填写名称',
+			'customTasks.validateCommandRequired' => '必须填写命令',
+			'customTasks.validateProjectCwd' => '项目范围任务需要绝对 cwd 路径',
+			'customTasks.appBarEdit' => '编辑自定义任务',
+			'customTasks.appBarNew' => '新建自定义任务',
+			'customTasks.fieldName' => '名称',
+			'customTasks.nameHelper' => '在检查器的任务选择器中显示。',
+			'customTasks.fieldCommand' => '命令',
+			'customTasks.commandHelper' => '选择时插入到会话的文本。可以是 CLI 命令或 Claude 斜杠命令。',
+			'customTasks.fieldDescription' => '描述（可选）',
+			'customTasks.fieldScope' => '范围',
+			'customTasks.globalScopeHint' => '从任何会话可见，不论 cwd。',
+			'customTasks.projectScopeHint' => '仅当会话的 cwd 匹配以下路径时可见。',
+			'customTasks.fieldProjectCwd' => '项目 cwd',
+			'customTasks.cwdHelper' => '绝对路径。以此 cwd 启动的会话将看到该任务。',
+			'customTasks.saving' => '保存中…',
+			'customTasks.save' => '保存',
+			'customTasks.create' => '创建',
+			'customTasks.failedToLoad' => '加载自定义任务失败',
 			'notesPage.title' => '笔记',
 			'notesPage.newButton' => '新建',
 			'notesPage.newNoteDialogTitle' => '新建笔记',
@@ -2427,9 +3226,22 @@ extension on TranslationsZh {
 			'notesPage.pathLabel' => '相对仓库的路径',
 			'notesPage.pathHint' => 'personal/scratch.md',
 			'notesPage.create' => '创建',
+			'notesPage.popupDelete' => '删除',
+			'notesPage.deleteBody' => '此操作不可撤销。仓库的 git 同步会同时移除网关主机上的文件。',
+			'notesPage.emptyFilterMatch' => ({required Object query}) => '未找到匹配「${query}」的笔记。',
+			'notesPage.emptyVault' => '仓库为空。点击 + 创建第一条笔记。',
+			'notesPage.emptyFolder' => ({required Object path}) => '文件夹「${path}」为空。',
+			'notesPage.validatePath' => '必须填写路径',
+			'notesPage.validatePathDots' => '路径不能包含「..」',
+			'notesPage.pathHelper' => '缺失时自动追加 .md。',
 			'notesPage.editor.markdownHint' => 'Markdown…',
 			'notesPage.editor.saving' => '保存中…',
 			'notesPage.editor.autosave' => '随输入自动保存',
+			'notesPage.editor.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
+			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
+			'notesPage.editor.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
+			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
+			'notesPage.editor.savedAt' => ({required Object time}) => '${time} 已保存',
 			'memory.title' => '记忆',
 			'memory.more' => '更多',
 			'memory.workers' => '记忆工作器',

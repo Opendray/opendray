@@ -406,6 +406,7 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
         children: [_projectTab(), _globalTab()],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'memory_fab',
         onPressed: _newMemory,
         icon: const Icon(Icons.add),
         label: Text(t.memory.kNew),
