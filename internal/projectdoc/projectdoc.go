@@ -552,6 +552,54 @@ func pgvecString(v []float32) string {
 	return b.String()
 }
 
+// StaleJournalEntries returns journal entries that are candidates
+// for cleanup: older than `olderThan`, kind=session_summary, and
+// NOT referenced by any pending memory_conflicts row. The result
+// is sorted oldest first so callers can present a prune list.
+//
+// The intent is the M-PC "cleaner extension to layer 4" — give
+// operators a one-shot view of accumulated noise without forcing
+// a destructive default. UI bulk-delete + a dedicated cleanup
+// tab can layer on top later; for now this is just the query.
+func (s *Service) StaleJournalEntries(ctx context.Context, cwd string, olderThan time.Duration) ([]LogEntry, error) {
+	if strings.TrimSpace(cwd) == "" {
+		return nil, ErrEmptyCwd
+	}
+	if olderThan <= 0 {
+		olderThan = 90 * 24 * time.Hour
+	}
+	cutoff := time.Now().UTC().Add(-olderThan)
+	rows, err := s.pool.Query(ctx, `
+		SELECT sl.id, sl.cwd, COALESCE(sl.session_id, ''), sl.kind,
+		       sl.title, sl.content, sl.updated_by, sl.created_at
+		  FROM session_logs sl
+		 WHERE sl.cwd = $1
+		   AND sl.kind = 'session_summary'
+		   AND sl.created_at < $2
+		   AND NOT EXISTS (
+		       SELECT 1 FROM memory_conflicts mc
+		        WHERE mc.cwd = sl.cwd
+		          AND mc.status = 'pending'
+		          AND ((mc.layer_a = 'journal' AND mc.ref_a = sl.id)
+		            OR (mc.layer_b = 'journal' AND mc.ref_b = sl.id))
+		   )
+		 ORDER BY sl.created_at ASC
+		 LIMIT 200`, cwd, cutoff)
+	if err != nil {
+		return nil, fmt.Errorf("projectdoc: stale journal: %w", err)
+	}
+	defer rows.Close()
+	var out []LogEntry
+	for rows.Next() {
+		l, err := scanLog(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, l)
+	}
+	return out, rows.Err()
+}
+
 // ListLogs returns chronological journal entries newest first.
 // limit ≤ 0 falls back to 50; values >200 are clamped.
 func (s *Service) ListLogs(ctx context.Context, cwd string, limit int) ([]LogEntry, error) {

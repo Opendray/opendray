@@ -42,18 +42,22 @@ import (
 type TaskKind string
 
 const (
-	TaskGatekeeper  TaskKind = "gatekeeper"
-	TaskCleaner     TaskKind = "cleaner"
-	TaskGitActivity TaskKind = "gitactivity"
-	TaskTranscript  TaskKind = "transcript"
-	TaskPlanDrift   TaskKind = "plan_drift"
+	TaskGatekeeper       TaskKind = "gatekeeper"
+	TaskCleaner          TaskKind = "cleaner"
+	TaskGitActivity      TaskKind = "gitactivity"
+	TaskTranscript       TaskKind = "transcript"
+	TaskPlanDrift        TaskKind = "plan_drift"
+	TaskConflictDetector TaskKind = "conflict_detector"
 )
 
 // AllTasks returns every recognised TaskKind in a stable order.
 // Used by the UI to render the config rows + by registry bootstrap
 // to seed missing entries.
 func AllTasks() []TaskKind {
-	return []TaskKind{TaskGatekeeper, TaskCleaner, TaskGitActivity, TaskTranscript, TaskPlanDrift}
+	return []TaskKind{
+		TaskGatekeeper, TaskCleaner, TaskGitActivity, TaskTranscript,
+		TaskPlanDrift, TaskConflictDetector,
+	}
 }
 
 // WorkerKind names the implementation strategy. Persisted as the
@@ -160,7 +164,8 @@ type Config struct {
 // Caller (HTTP handler) should run this before INSERT/UPDATE.
 func (c Config) Valid() error {
 	switch c.Task {
-	case TaskGatekeeper, TaskCleaner, TaskGitActivity, TaskTranscript, TaskPlanDrift:
+	case TaskGatekeeper, TaskCleaner, TaskGitActivity, TaskTranscript,
+		TaskPlanDrift, TaskConflictDetector:
 	default:
 		return errors.New("memory worker: invalid task")
 	}

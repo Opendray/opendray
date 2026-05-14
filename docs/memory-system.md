@@ -371,6 +371,66 @@ journal) and rendering stops once the budget is exhausted, with
 a trailing truncation note so the agent knows to visit
 `/memory/project` for the full set.
 
+## Smarter ranking (M-PC, shipped)
+
+`memory_search` used to rank purely by cosine similarity. That
+let one-shot 10-month-old memories crowd out fresh high-quality
+matches, and never benefited from the fact that some memories
+get retrieved 30× while others sit at zero hits forever.
+
+The new formula:
+
+```
+effective_score = similarity
+                × age_decay(age_days)        # max(0.5, 1 - age/180d)
+                × hit_boost(hit_count)       # 1 + min(hit_count*0.02, 0.5)
+                × confidence_floor(conf)     # max(conf, 0.3)
+```
+
+Threshold filtering still uses raw `similarity` so an explicit
+`MinSimilarity` from the caller behaves like always; only the
+**ordering** changes. The result: a popular 6-month-old fact at
+0.8 similarity (score 0.60) outranks a brand-new mediocre 0.5
+match (score 0.50), which is what operators were already doing
+mentally.
+
+Tuning knobs live in `internal/memory/ranking.go` — recompile to
+change them.
+
+## Cross-layer conflict detection (M-PC, shipped)
+
+A new daily worker (`conflict_detector` TaskKind) scans each
+project's plan + top-hit facts + recent journal and asks the
+configured LLM: "do any of these claims contradict each other?"
+Findings land in `memory_conflicts` (migration 0032) with the
+two conflicting refs + the LLM's evidence + a severity tag.
+
+Operators review the inbox at `/memory/project` → **Conflicts**
+tab. Two buttons per row:
+
+- **Accept** — operator agrees a contradiction exists and will
+  apply the fix manually (delete a stale fact, update the plan,
+  etc.). Status flips to `accepted` and the row stays in the
+  audit history.
+- **Dismiss** — the detector got it wrong; status flips to
+  `dismissed` and an identical pair won't be re-flagged in
+  future sweeps.
+
+The scheduler tick is 24h with a per-cwd 10-minute LLM budget.
+Operators can force a sweep with the "Detect now" button on the
+tab or `POST /api/v1/memory/conflicts/detect?cwd=…`.
+
+Worker selection lives at **Memory → Workers → conflict_detector**;
+default is `summarizer`. Disable to skip detection entirely.
+
+## Journal cleanup helper (M-PC, shipped)
+
+`GET /api/v1/session-logs/stale?cwd=&days=` returns
+`session_summary` journal entries older than `days` (default 90)
+that aren't referenced by any pending conflict. Operators use
+this list to prune accumulated noise without losing any
+journaling that's still doing work via the conflict detector.
+
 ## Roadmap
 
 - **Codex session UUID capture**. Codex lacks `--session-id`; a

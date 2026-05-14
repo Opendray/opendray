@@ -60,6 +60,7 @@ import {
 } from '@/lib/memoryCleanup'
 import { deleteMemoriesByScope } from '@/lib/memory'
 import { MemoryHealthCard } from '@/components/project/MemoryHealthCard'
+import { ConflictsPanel } from '@/components/project/ConflictsPanel'
 
 interface ProjectScreenProps {
   cwd: string
@@ -204,6 +205,9 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="conflicts">
+            {t('web.project.tabs.conflicts')}
+          </TabsTrigger>
           <TabsTrigger value="cleanup" className="relative">
             {t('web.project.tabs.cleanup')}
             {cleanupCount > 0 && (
@@ -257,6 +261,10 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
               qc.invalidateQueries({ queryKey: ['project-docs', cwd] })
             }}
           />
+        </TabsContent>
+
+        <TabsContent value="conflicts" className="flex-1 overflow-auto">
+          <ConflictsPanel cwd={cwd} />
         </TabsContent>
 
         <TabsContent value="cleanup" className="flex-1 overflow-auto p-4">

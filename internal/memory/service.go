@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sort"
 	"strings"
 	"time"
 )
@@ -418,12 +419,23 @@ func (s *Service) Search(ctx context.Context, req SearchRequest) ([]SearchHit, e
 	case req.MinSimilarity > 0:
 		threshold = req.MinSimilarity
 	}
+	// M-PC — compute the effective score for each hit (similarity
+	// dampened by age, lifted by hit count + stored confidence) and
+	// re-sort by it. Threshold filtering keeps using the raw
+	// similarity so an explicit MinSimilarity from the caller behaves
+	// like it always did; the new score affects ordering only.
 	out := make([]SearchHit, 0, len(hits))
+	now := time.Now().UTC()
 	for _, h := range hits {
-		if h.Similarity >= threshold {
-			out = append(out, h)
+		if h.Similarity < threshold {
+			continue
 		}
+		h.EffectiveScore = RankingScore(h.Similarity, h.Memory, now)
+		out = append(out, h)
 	}
+	sort.SliceStable(out, func(i, j int) bool {
+		return out[i].EffectiveScore > out[j].EffectiveScore
+	})
 	// Fire-and-forget: bump hit_count for every memory we're about to
 	// return so the inspector can show "this fact has been used N times".
 	// Detach from the request context so the bump survives even if the

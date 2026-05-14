@@ -80,9 +80,16 @@ type Memory struct {
 
 // SearchHit is one match returned by Store.Search, paired with its
 // cosine similarity score for caller-side cutoff / display.
+//
+// EffectiveScore is the M-PC ranking signal — similarity adjusted
+// for memory age, retrieval frequency, and stored confidence. The
+// Store implementations leave it zero; Service.Search computes and
+// sets it. The final ordering uses EffectiveScore but Similarity
+// is preserved so the inspector can show the raw cosine number.
 type SearchHit struct {
-	Memory     Memory  `json:"memory"`
-	Similarity float32 `json:"similarity"`
+	Memory         Memory  `json:"memory"`
+	Similarity     float32 `json:"similarity"`
+	EffectiveScore float32 `json:"effective_score,omitempty"`
 }
 
 // SearchQuery describes a similarity search. ScopeKey is required

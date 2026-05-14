@@ -220,6 +220,24 @@
       "navWorkers": "Workers",
       "navConfiguration": "Configuration →"
     },
+    "conflicts": {
+      "title": "Cross-layer conflicts",
+      "subtitle": "Contradictions the daily detector found between facts, plan, goal, and journal entries.",
+      "loading": "Loading conflicts…",
+      "empty": "No pending conflicts. Click \"Detect now\" to run an on-demand sweep.",
+      "pickCwd": "Pick a project to see its conflicts.",
+      "detectNow": "Detect now",
+      "detected": "{count} new conflict(s) found",
+      "accept": "Accept",
+      "dismiss": "Dismiss",
+      "accepted": "Conflict accepted — remember to apply the fix",
+      "dismissed": "Conflict dismissed",
+      "severity": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high"
+      }
+    },
     "memoryHealth": {
       "title": "Memory health — last {days} days",
       "subtitle": "Aggregate signals across both memory subsystems for this project.",
@@ -353,6 +371,7 @@
         "activity": "Activity",
         "journal": "Journal",
         "inbox": "Inbox",
+        "conflicts": "Conflicts",
         "cleanup": "Cleanup"
       },
       "docLabel": {

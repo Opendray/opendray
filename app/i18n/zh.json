@@ -220,6 +220,24 @@
       "navWorkers": "Workers",
       "navConfiguration": "配置 →"
     },
+    "conflicts": {
+      "title": "跨层冲突",
+      "subtitle": "每日 detector 在 facts/plan/goal/journal 之间发现的矛盾。",
+      "loading": "正在加载冲突…",
+      "empty": "无待处理冲突。点击\"立即检测\"运行一次按需扫描。",
+      "pickCwd": "选一个项目查看其冲突。",
+      "detectNow": "立即检测",
+      "detected": "新发现 {count} 条冲突",
+      "accept": "采纳",
+      "dismiss": "驳回",
+      "accepted": "已采纳 — 别忘了实际修正",
+      "dismissed": "已驳回",
+      "severity": {
+        "low": "低",
+        "medium": "中",
+        "high": "高"
+      }
+    },
     "memoryHealth": {
       "title": "记忆健康 — 最近 {days} 天",
       "subtitle": "本项目两套记忆子系统的运行情况聚合。",
@@ -353,6 +371,7 @@
         "activity": "活动",
         "journal": "日志",
         "inbox": "收件箱",
+        "conflicts": "冲突",
         "cleanup": "清理"
       },
       "docLabel": {

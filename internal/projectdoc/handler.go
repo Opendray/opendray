@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -60,9 +61,37 @@ func (h *Handlers) Mount(r chi.Router) {
 	})
 	r.Route("/session-logs", func(r chi.Router) {
 		r.Get("/", h.listLogs)
+		r.Get("/stale", h.listStale)
 		r.Post("/", h.appendLog)
 		r.Delete("/{id}", h.deleteLog)
 	})
+}
+
+// listStale returns journal entries older than `days` (default 90)
+// that aren't referenced by any pending conflict. Operators use
+// this list to bulk-delete accumulated noise from the cleanup UI.
+func (h *Handlers) listStale(w http.ResponseWriter, r *http.Request) {
+	cwd := r.URL.Query().Get("cwd")
+	if cwd == "" {
+		writeError(w, http.StatusBadRequest, errors.New("cwd is required"))
+		return
+	}
+	days := 90
+	if v := r.URL.Query().Get("days"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			days = n
+		}
+	}
+	out, err := h.svc.StaleJournalEntries(r.Context(), cwd,
+		time.Duration(days)*24*time.Hour)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if out == nil {
+		out = []LogEntry{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"stale": out})
 }
 
 // ─── project_docs ─────────────────────────────────────────────────

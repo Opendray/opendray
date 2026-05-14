@@ -43,6 +43,7 @@ import (
 	githost "github.com/opendray/opendray-v2/internal/githost"
 	"github.com/opendray/opendray-v2/internal/integration"
 	mcpapi "github.com/opendray/opendray-v2/internal/mcp"
+	"github.com/opendray/opendray-v2/internal/memconflict"
 	"github.com/opendray/opendray-v2/internal/memhealth"
 	"github.com/opendray/opendray-v2/internal/memory"
 	"github.com/opendray/opendray-v2/internal/memory/capture"
@@ -84,6 +85,7 @@ type App struct {
 	projectDocSvc        *projectdoc.Service // owns the M-PB journal embed backfill loop
 	cleanerScheduler     *cleaner.Scheduler  // optional; nil when scheduler is off
 	gitActivityScheduler *gitactivity.Scheduler
+	conflictScheduler    *memconflict.Scheduler // M-PC daily cross-layer conflict scan
 	server               *http.Server
 }
 
@@ -491,6 +493,21 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		return nil, fmt.Errorf("memquery init: %w", err)
 	}
 	memqueryHandlers = memquery.NewHandlers(memquerySvc, log)
+
+	// M-PC — cross-layer conflict detector. Daily scheduler runs
+	// across every project_docs cwd and asks the configured worker
+	// LLM for contradictions; new findings land in
+	// memory_conflicts pending the operator's verdict.
+	conflictSvc, err := memconflict.New(st.Pool(), memorySvc, projectDocSvc, memoryWorkerRegistry, log)
+	if err != nil {
+		return nil, fmt.Errorf("memconflict init: %w", err)
+	}
+	conflictHandlers := memconflict.NewHandlers(conflictSvc, log)
+	conflictScheduler := memconflict.NewScheduler(
+		conflictSvc,
+		memconflict.NewSQLCwdLister(st.Pool()),
+		memconflict.SchedulerConfig{},
+	)
 	projectDocHandlers := projectdoc.NewHandlers(projectDocSvc, log)
 	// Inject the cross-agent goal+plan+journal banner into every
 	// spawned session's system prompt. Composed alongside the
@@ -606,6 +623,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				memoryWorkerHandlers.Mount(r)
 				memhealthHandlers.Mount(r)
 				memqueryHandlers.Mount(r)
+				conflictHandlers.Mount(r)
 				captureHandlers.Mount(r)
 				injectorHandlers.Mount(r)
 				if cleanerHandlers != nil {
@@ -661,6 +679,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		projectDocSvc:        projectDocSvc,
 		cleanerScheduler:     cleanerScheduler,
 		gitActivityScheduler: gitActivityScheduler,
+		conflictScheduler:    conflictScheduler,
 		server:               srv,
 	}, nil
 }
@@ -750,6 +769,17 @@ func (a *App) Run(ctx context.Context) error {
 			a.gitActivityScheduler.Run(ctx)
 		}
 		close(gitActivityDone)
+	}()
+
+	// M-PC — daily conflict detector. Same goroutine pattern as
+	// the git activity scheduler; nil-safe so disabling the
+	// service skips cleanly.
+	conflictDone := make(chan struct{})
+	go func() {
+		if a.conflictScheduler != nil {
+			a.conflictScheduler.Run(ctx)
+		}
+		close(conflictDone)
 	}()
 
 	errCh := make(chan error, 1)
