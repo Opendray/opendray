@@ -252,7 +252,32 @@
         "filenameHint": "文件名（例如：spec 或 design.md）",
         "create": "创建",
         "filterHint": "筛选…",
-        "locationDialogTitle": "项目文档位置"
+        "locationDialogTitle": "项目文档位置",
+        "loadFailedApi": "加载失败：{error}",
+        "loadFailedGeneric": "加载失败：{error}",
+        "saveFailedApi": "保存失败：{error}",
+        "saveFailedGeneric": "保存失败：{error}",
+        "insertFailedApi": "插入失败：{error}",
+        "insertFailedGeneric": "插入失败：{error}",
+        "createFailedApi": "创建失败：{error}",
+        "createFailedGeneric": "创建失败：{error}",
+        "personalHint": "个人草稿 — 随输入自动保存。AI agent 不会写入这里。",
+        "projectDocsHint": "架构 / 规范 / 决策 / 计划 / 回顾 — 通常由 agent 撰写或维护。",
+        "mappingCleared": "映射已清除 — 使用默认值",
+        "mappedTo": "已映射到 {path}",
+        "cancelTooltip": "取消",
+        "newDocTooltip": "新建文档",
+        "noProjectMapping": "无法为此会话解析项目映射。检查网关是否配置了笔记库，以及会话的 cwd 是否已设置。",
+        "emptyProjectDocs": "暂无项目文档。点击 + 创建一个，或让 AI agent 根据提示生成。",
+        "emptyFilterMatch": "未找到匹配「{query}」的内容。",
+        "locationDialogHelp": "将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。",
+        "sessionCwd": "会话 cwd",
+        "projectDocsPath": "相对笔记库的项目文档路径",
+        "locationStoredHint": "存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。",
+        "pinnedHint": "已固定到 {path}/（覆盖 {defaultPath}）。AI agent 也会在此撰写文档。",
+        "noProjectMapping2": "（无项目映射）",
+        "clearOverride": "清除覆盖",
+        "save": "保存"
       }
     },
     "spawnSheet": {
@@ -919,10 +944,23 @@
     "pathLabel": "相对仓库的路径",
     "pathHint": "personal/scratch.md",
     "create": "创建",
+    "popupDelete": "删除",
+    "deleteBody": "此操作不可撤销。仓库的 git 同步会同时移除网关主机上的文件。",
+    "emptyFilterMatch": "未找到匹配「{query}」的笔记。",
+    "emptyVault": "仓库为空。点击 + 创建第一条笔记。",
+    "emptyFolder": "文件夹「{path}」为空。",
+    "validatePath": "必须填写路径",
+    "validatePathDots": "路径不能包含「..」",
+    "pathHelper": "缺失时自动追加 .md。",
     "editor": {
       "markdownHint": "Markdown…",
       "saving": "保存中…",
-      "autosave": "随输入自动保存"
+      "autosave": "随输入自动保存",
+      "loadFailedApi": "加载失败：{error}",
+      "loadFailedGeneric": "加载失败：{error}",
+      "saveFailedApi": "保存失败：{error}",
+      "saveFailedGeneric": "保存失败：{error}",
+      "savedAt": "{time} 已保存"
     }
   },
   "memory": {

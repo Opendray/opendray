@@ -1292,6 +1292,30 @@ class TranslationsNotesPageEn {
 	/// en: 'Create'
 	String get create => 'Create';
 
+	/// en: 'Delete'
+	String get popupDelete => 'Delete';
+
+	/// en: 'This is irreversible. Vault git sync will remove the file on the gateway host too.'
+	String get deleteBody => 'This is irreversible. Vault git sync will remove the file on the gateway host too.';
+
+	/// en: 'No notes match "{query}".'
+	String emptyFilterMatch({required Object query}) => 'No notes match "${query}".';
+
+	/// en: 'Vault is empty. Tap + to create your first note.'
+	String get emptyVault => 'Vault is empty. Tap + to create your first note.';
+
+	/// en: 'Folder "{path}" is empty.'
+	String emptyFolder({required Object path}) => 'Folder "${path}" is empty.';
+
+	/// en: 'Path is required'
+	String get validatePath => 'Path is required';
+
+	/// en: 'Path cannot contain ".."'
+	String get validatePathDots => 'Path cannot contain ".."';
+
+	/// en: 'Auto-appends .md if missing.'
+	String get pathHelper => 'Auto-appends .md if missing.';
+
 	late final TranslationsNotesPageEditorEn editor = TranslationsNotesPageEditorEn.internal(_root);
 }
 
@@ -2409,6 +2433,21 @@ class TranslationsNotesPageEditorEn {
 
 	/// en: 'Auto-saves as you type'
 	String get autosave => 'Auto-saves as you type';
+
+	/// en: 'Load failed: {error}'
+	String loadFailedApi({required Object error}) => 'Load failed: ${error}';
+
+	/// en: 'Load failed: {error}'
+	String loadFailedGeneric({required Object error}) => 'Load failed: ${error}';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedApi({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedGeneric({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Saved {time}'
+	String savedAt({required Object time}) => 'Saved ${time}';
 }
 
 // Path: memory.deleteAllConfirm
@@ -3249,6 +3288,81 @@ class TranslationsSessionsInspectorNotesEn {
 
 	/// en: 'Project docs location'
 	String get locationDialogTitle => 'Project docs location';
+
+	/// en: 'Load failed: {error}'
+	String loadFailedApi({required Object error}) => 'Load failed: ${error}';
+
+	/// en: 'Load failed: {error}'
+	String loadFailedGeneric({required Object error}) => 'Load failed: ${error}';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedApi({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedGeneric({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Insert failed: {error}'
+	String insertFailedApi({required Object error}) => 'Insert failed: ${error}';
+
+	/// en: 'Insert failed: {error}'
+	String insertFailedGeneric({required Object error}) => 'Insert failed: ${error}';
+
+	/// en: 'Create failed: {error}'
+	String createFailedApi({required Object error}) => 'Create failed: ${error}';
+
+	/// en: 'Create failed: {error}'
+	String createFailedGeneric({required Object error}) => 'Create failed: ${error}';
+
+	/// en: 'Personal scratchpad — auto-saves as you type. AI agents do not write here.'
+	String get personalHint => 'Personal scratchpad — auto-saves as you type. AI agents do not write here.';
+
+	/// en: 'Architecture / spec / decisions / plan / retros — typically authored or maintained by an agent.'
+	String get projectDocsHint => 'Architecture / spec / decisions / plan / retros — typically authored or maintained by an agent.';
+
+	/// en: 'Mapping cleared — using default'
+	String get mappingCleared => 'Mapping cleared — using default';
+
+	/// en: 'Mapped to {path}'
+	String mappedTo({required Object path}) => 'Mapped to ${path}';
+
+	/// en: 'Cancel'
+	String get cancelTooltip => 'Cancel';
+
+	/// en: 'New doc'
+	String get newDocTooltip => 'New doc';
+
+	/// en: 'Could not resolve a project mapping for this session. Check that the gateway has a notes vault configured and that the session cwd is set.'
+	String get noProjectMapping => 'Could not resolve a project mapping for this session. Check that the gateway has a notes vault configured and that the session cwd is set.';
+
+	/// en: 'No project docs yet. Tap + to create one, or let an AI agent generate from a prompt.'
+	String get emptyProjectDocs => 'No project docs yet. Tap + to create one, or let an AI agent generate from a prompt.';
+
+	/// en: 'No matches for "{query}".'
+	String emptyFilterMatch({required Object query}) => 'No matches for "${query}".';
+
+	/// en: 'Pin this session's cwd to a specific folder under your notes vault. Leave blank to reset.'
+	String get locationDialogHelp => 'Pin this session\'s cwd to a specific folder under your notes vault. Leave blank to reset.';
+
+	/// en: 'Session cwd'
+	String get sessionCwd => 'Session cwd';
+
+	/// en: 'Vault-relative project docs path'
+	String get projectDocsPath => 'Vault-relative project docs path';
+
+	/// en: 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.'
+	String get locationStoredHint => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.';
+
+	/// en: 'Pinned to {path}/ (overrides {defaultPath}). AI agents author docs here too.'
+	String pinnedHint({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.';
+
+	/// en: '(no project mapping)'
+	String get noProjectMapping2 => '(no project mapping)';
+
+	/// en: 'Clear override'
+	String get clearOverride => 'Clear override';
+
+	/// en: 'Save'
+	String get save => 'Save';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -3919,6 +4033,31 @@ extension on Translations {
 			'sessions.inspector.notes.create' => 'Create',
 			'sessions.inspector.notes.filterHint' => 'Filter…',
 			'sessions.inspector.notes.locationDialogTitle' => 'Project docs location',
+			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
+			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
+			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
+			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
+			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Insert failed: ${error}',
+			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Insert failed: ${error}',
+			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
+			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => 'Create failed: ${error}',
+			'sessions.inspector.notes.personalHint' => 'Personal scratchpad — auto-saves as you type. AI agents do not write here.',
+			'sessions.inspector.notes.projectDocsHint' => 'Architecture / spec / decisions / plan / retros — typically authored or maintained by an agent.',
+			'sessions.inspector.notes.mappingCleared' => 'Mapping cleared — using default',
+			'sessions.inspector.notes.mappedTo' => ({required Object path}) => 'Mapped to ${path}',
+			'sessions.inspector.notes.cancelTooltip' => 'Cancel',
+			'sessions.inspector.notes.newDocTooltip' => 'New doc',
+			'sessions.inspector.notes.noProjectMapping' => 'Could not resolve a project mapping for this session. Check that the gateway has a notes vault configured and that the session cwd is set.',
+			'sessions.inspector.notes.emptyProjectDocs' => 'No project docs yet. Tap + to create one, or let an AI agent generate from a prompt.',
+			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => 'No matches for "${query}".',
+			'sessions.inspector.notes.locationDialogHelp' => 'Pin this session\'s cwd to a specific folder under your notes vault. Leave blank to reset.',
+			'sessions.inspector.notes.sessionCwd' => 'Session cwd',
+			'sessions.inspector.notes.projectDocsPath' => 'Vault-relative project docs path',
+			'sessions.inspector.notes.locationStoredHint' => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.',
+			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
+			'sessions.inspector.notes.noProjectMapping2' => '(no project mapping)',
+			'sessions.inspector.notes.clearOverride' => 'Clear override',
+			'sessions.inspector.notes.save' => 'Save',
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
@@ -4235,6 +4374,8 @@ extension on Translations {
 			'backupSchedules.retentionLabel' => 'Retention (keep N most recent)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupTargetEditor.useHttps' => 'Use HTTPS',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.pathStyle' => 'Path-style addressing',
 			'backupTargetEditor.pathStyleSubtitle' => 'Legacy / MinIO',
 			'githosts.title' => 'Git hosts',
@@ -4260,8 +4401,6 @@ extension on Translations {
 			'githosts.form.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
 			'githosts.form.saving' => 'Saving…',
 			'githosts.form.save' => 'Save',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.form.add' => 'Add',
 			'githosts.form.nameHelper' => 'Display name shown in PR lists.',
 			'githosts.form.tokenLabelKeep' => 'Token (leave blank to keep existing)',
@@ -4477,9 +4616,22 @@ extension on Translations {
 			'notesPage.pathLabel' => 'Vault-relative path',
 			'notesPage.pathHint' => 'personal/scratch.md',
 			'notesPage.create' => 'Create',
+			'notesPage.popupDelete' => 'Delete',
+			'notesPage.deleteBody' => 'This is irreversible. Vault git sync will remove the file on the gateway host too.',
+			'notesPage.emptyFilterMatch' => ({required Object query}) => 'No notes match "${query}".',
+			'notesPage.emptyVault' => 'Vault is empty. Tap + to create your first note.',
+			'notesPage.emptyFolder' => ({required Object path}) => 'Folder "${path}" is empty.',
+			'notesPage.validatePath' => 'Path is required',
+			'notesPage.validatePathDots' => 'Path cannot contain ".."',
+			'notesPage.pathHelper' => 'Auto-appends .md if missing.',
 			'notesPage.editor.markdownHint' => 'Markdown…',
 			'notesPage.editor.saving' => 'Saving…',
 			'notesPage.editor.autosave' => 'Auto-saves as you type',
+			'notesPage.editor.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
+			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
+			'notesPage.editor.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
+			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
+			'notesPage.editor.savedAt' => ({required Object time}) => 'Saved ${time}',
 			'memory.title' => 'Memory',
 			'memory.more' => 'More',
 			'memory.workers' => 'Memory workers',

@@ -615,6 +615,14 @@ class _TranslationsNotesPageZh extends TranslationsNotesPageEn {
 	@override String get pathLabel => '相对仓库的路径';
 	@override String get pathHint => 'personal/scratch.md';
 	@override String get create => '创建';
+	@override String get popupDelete => '删除';
+	@override String get deleteBody => '此操作不可撤销。仓库的 git 同步会同时移除网关主机上的文件。';
+	@override String emptyFilterMatch({required Object query}) => '未找到匹配「${query}」的笔记。';
+	@override String get emptyVault => '仓库为空。点击 + 创建第一条笔记。';
+	@override String emptyFolder({required Object path}) => '文件夹「${path}」为空。';
+	@override String get validatePath => '必须填写路径';
+	@override String get validatePathDots => '路径不能包含「..」';
+	@override String get pathHelper => '缺失时自动追加 .md。';
 	@override late final _TranslationsNotesPageEditorZh editor = _TranslationsNotesPageEditorZh._(_root);
 }
 
@@ -1244,6 +1252,11 @@ class _TranslationsNotesPageEditorZh extends TranslationsNotesPageEditorEn {
 	@override String get markdownHint => 'Markdown…';
 	@override String get saving => '保存中…';
 	@override String get autosave => '随输入自动保存';
+	@override String loadFailedApi({required Object error}) => '加载失败：${error}';
+	@override String loadFailedGeneric({required Object error}) => '加载失败：${error}';
+	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
+	@override String saveFailedGeneric({required Object error}) => '保存失败：${error}';
+	@override String savedAt({required Object time}) => '${time} 已保存';
 }
 
 // Path: memory.deleteAllConfirm
@@ -1759,6 +1772,31 @@ class _TranslationsSessionsInspectorNotesZh extends TranslationsSessionsInspecto
 	@override String get create => '创建';
 	@override String get filterHint => '筛选…';
 	@override String get locationDialogTitle => '项目文档位置';
+	@override String loadFailedApi({required Object error}) => '加载失败：${error}';
+	@override String loadFailedGeneric({required Object error}) => '加载失败：${error}';
+	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
+	@override String saveFailedGeneric({required Object error}) => '保存失败：${error}';
+	@override String insertFailedApi({required Object error}) => '插入失败：${error}';
+	@override String insertFailedGeneric({required Object error}) => '插入失败：${error}';
+	@override String createFailedApi({required Object error}) => '创建失败：${error}';
+	@override String createFailedGeneric({required Object error}) => '创建失败：${error}';
+	@override String get personalHint => '个人草稿 — 随输入自动保存。AI agent 不会写入这里。';
+	@override String get projectDocsHint => '架构 / 规范 / 决策 / 计划 / 回顾 — 通常由 agent 撰写或维护。';
+	@override String get mappingCleared => '映射已清除 — 使用默认值';
+	@override String mappedTo({required Object path}) => '已映射到 ${path}';
+	@override String get cancelTooltip => '取消';
+	@override String get newDocTooltip => '新建文档';
+	@override String get noProjectMapping => '无法为此会话解析项目映射。检查网关是否配置了笔记库，以及会话的 cwd 是否已设置。';
+	@override String get emptyProjectDocs => '暂无项目文档。点击 + 创建一个，或让 AI agent 根据提示生成。';
+	@override String emptyFilterMatch({required Object query}) => '未找到匹配「${query}」的内容。';
+	@override String get locationDialogHelp => '将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。';
+	@override String get sessionCwd => '会话 cwd';
+	@override String get projectDocsPath => '相对笔记库的项目文档路径';
+	@override String get locationStoredHint => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。';
+	@override String pinnedHint({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。';
+	@override String get noProjectMapping2 => '（无项目映射）';
+	@override String get clearOverride => '清除覆盖';
+	@override String get save => '保存';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -2223,6 +2261,31 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.create' => '创建',
 			'sessions.inspector.notes.filterHint' => '筛选…',
 			'sessions.inspector.notes.locationDialogTitle' => '项目文档位置',
+			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
+			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
+			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
+			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
+			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => '插入失败：${error}',
+			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
+			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => '创建失败：${error}',
+			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',
+			'sessions.inspector.notes.personalHint' => '个人草稿 — 随输入自动保存。AI agent 不会写入这里。',
+			'sessions.inspector.notes.projectDocsHint' => '架构 / 规范 / 决策 / 计划 / 回顾 — 通常由 agent 撰写或维护。',
+			'sessions.inspector.notes.mappingCleared' => '映射已清除 — 使用默认值',
+			'sessions.inspector.notes.mappedTo' => ({required Object path}) => '已映射到 ${path}',
+			'sessions.inspector.notes.cancelTooltip' => '取消',
+			'sessions.inspector.notes.newDocTooltip' => '新建文档',
+			'sessions.inspector.notes.noProjectMapping' => '无法为此会话解析项目映射。检查网关是否配置了笔记库，以及会话的 cwd 是否已设置。',
+			'sessions.inspector.notes.emptyProjectDocs' => '暂无项目文档。点击 + 创建一个，或让 AI agent 根据提示生成。',
+			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => '未找到匹配「${query}」的内容。',
+			'sessions.inspector.notes.locationDialogHelp' => '将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。',
+			'sessions.inspector.notes.sessionCwd' => '会话 cwd',
+			'sessions.inspector.notes.projectDocsPath' => '相对笔记库的项目文档路径',
+			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
+			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
+			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
+			'sessions.inspector.notes.clearOverride' => '清除覆盖',
+			'sessions.inspector.notes.save' => '保存',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
@@ -2539,6 +2602,8 @@ extension on TranslationsZh {
 			'backupSchedules.retentionLabel' => '保留（最近 N 个）',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'backupTargetEditor.useHttps' => '使用 HTTPS',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.pathStyle' => '路径风格寻址',
 			'backupTargetEditor.pathStyleSubtitle' => '旧版 / MinIO',
 			'githosts.title' => 'Git 主机',
@@ -2564,8 +2629,6 @@ extension on TranslationsZh {
 			'githosts.form.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
 			'githosts.form.saving' => '保存中…',
 			'githosts.form.save' => '保存',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.form.add' => '添加',
 			'githosts.form.nameHelper' => '在 PR 列表中显示的名字。',
 			'githosts.form.tokenLabelKeep' => 'Token（留空 = 保留现有）',
@@ -2781,9 +2844,22 @@ extension on TranslationsZh {
 			'notesPage.pathLabel' => '相对仓库的路径',
 			'notesPage.pathHint' => 'personal/scratch.md',
 			'notesPage.create' => '创建',
+			'notesPage.popupDelete' => '删除',
+			'notesPage.deleteBody' => '此操作不可撤销。仓库的 git 同步会同时移除网关主机上的文件。',
+			'notesPage.emptyFilterMatch' => ({required Object query}) => '未找到匹配「${query}」的笔记。',
+			'notesPage.emptyVault' => '仓库为空。点击 + 创建第一条笔记。',
+			'notesPage.emptyFolder' => ({required Object path}) => '文件夹「${path}」为空。',
+			'notesPage.validatePath' => '必须填写路径',
+			'notesPage.validatePathDots' => '路径不能包含「..」',
+			'notesPage.pathHelper' => '缺失时自动追加 .md。',
 			'notesPage.editor.markdownHint' => 'Markdown…',
 			'notesPage.editor.saving' => '保存中…',
 			'notesPage.editor.autosave' => '随输入自动保存',
+			'notesPage.editor.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
+			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
+			'notesPage.editor.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
+			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
+			'notesPage.editor.savedAt' => ({required Object time}) => '${time} 已保存',
 			'memory.title' => '记忆',
 			'memory.more' => '更多',
 			'memory.workers' => '记忆工作器',

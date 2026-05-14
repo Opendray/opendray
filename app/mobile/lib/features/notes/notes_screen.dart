@@ -124,7 +124,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                 color: Theme.of(sheetCtx).colorScheme.error,
               ),
               title: Text(
-                'Delete',
+                t.notesPage.popupDelete,
                 style: TextStyle(color: Theme.of(sheetCtx).colorScheme.error),
               ),
               onTap: () => Navigator.of(sheetCtx).pop(_RowAction.delete),
@@ -173,8 +173,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'This is irreversible. Vault git sync will remove the file '
-              'from the next commit.',
+              t.notesPage.deleteBody,
               style: Theme.of(dialogCtx).textTheme.bodySmall,
             ),
           ],
@@ -365,7 +364,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         if (_query.isNotEmpty) {
           final results = _searchAll(notes);
           if (results.isEmpty) {
-            return _Empty(text: 'No notes match "$_query".');
+            return _Empty(text: t.notesPage.emptyFilterMatch(query: _query));
           }
           return RefreshIndicator(
             onRefresh: _load,
@@ -388,8 +387,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         if (level.folders.isEmpty && level.notes.isEmpty) {
           return _Empty(
             text: _currentPath.isEmpty
-                ? 'Vault is empty. Tap + to create your first note.'
-                : 'Folder "$_currentPath" is empty.',
+                ? t.notesPage.emptyVault
+                : t.notesPage.emptyFolder(path: _currentPath),
           );
         }
         return RefreshIndicator(
@@ -622,11 +621,11 @@ class _NewNoteDialogState extends State<_NewNoteDialog> {
   void _submit() {
     final raw = _ctrl.text.trim();
     if (raw.isEmpty) {
-      setState(() => _error = 'Path is required');
+      setState(() => _error = t.notesPage.validatePath);
       return;
     }
     if (raw.contains('..')) {
-      setState(() => _error = 'Path cannot contain ".."');
+      setState(() => _error = t.notesPage.validatePathDots);
       return;
     }
     final cleaned = raw.replaceAll(RegExp('^/+'), '');
@@ -652,7 +651,7 @@ class _NewNoteDialogState extends State<_NewNoteDialog> {
             decoration: InputDecoration(
               labelText: t.notesPage.pathLabel,
               hintText: t.notesPage.pathHint,
-              helperText: 'Auto-appends .md if missing.',
+              helperText: t.notesPage.pathHelper,
             ),
           ),
           if (_error != null) ...[

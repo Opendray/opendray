@@ -252,7 +252,32 @@
         "filenameHint": "filename (e.g. spec or design.md)",
         "create": "Create",
         "filterHint": "Filter…",
-        "locationDialogTitle": "Project docs location"
+        "locationDialogTitle": "Project docs location",
+        "loadFailedApi": "Load failed: {error}",
+        "loadFailedGeneric": "Load failed: {error}",
+        "saveFailedApi": "Save failed: {error}",
+        "saveFailedGeneric": "Save failed: {error}",
+        "insertFailedApi": "Insert failed: {error}",
+        "insertFailedGeneric": "Insert failed: {error}",
+        "createFailedApi": "Create failed: {error}",
+        "createFailedGeneric": "Create failed: {error}",
+        "personalHint": "Personal scratchpad — auto-saves as you type. AI agents do not write here.",
+        "projectDocsHint": "Architecture / spec / decisions / plan / retros — typically authored or maintained by an agent.",
+        "mappingCleared": "Mapping cleared — using default",
+        "mappedTo": "Mapped to {path}",
+        "cancelTooltip": "Cancel",
+        "newDocTooltip": "New doc",
+        "noProjectMapping": "Could not resolve a project mapping for this session. Check that the gateway has a notes vault configured and that the session cwd is set.",
+        "emptyProjectDocs": "No project docs yet. Tap + to create one, or let an AI agent generate from a prompt.",
+        "emptyFilterMatch": "No matches for \"{query}\".",
+        "locationDialogHelp": "Pin this session's cwd to a specific folder under your notes vault. Leave blank to reset.",
+        "sessionCwd": "Session cwd",
+        "projectDocsPath": "Vault-relative project docs path",
+        "locationStoredHint": "Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.",
+        "pinnedHint": "Pinned to {path}/ (overrides {defaultPath}). AI agents author docs here too.",
+        "noProjectMapping2": "(no project mapping)",
+        "clearOverride": "Clear override",
+        "save": "Save"
       }
     },
     "spawnSheet": {
@@ -919,10 +944,23 @@
     "pathLabel": "Vault-relative path",
     "pathHint": "personal/scratch.md",
     "create": "Create",
+    "popupDelete": "Delete",
+    "deleteBody": "This is irreversible. Vault git sync will remove the file on the gateway host too.",
+    "emptyFilterMatch": "No notes match \"{query}\".",
+    "emptyVault": "Vault is empty. Tap + to create your first note.",
+    "emptyFolder": "Folder \"{path}\" is empty.",
+    "validatePath": "Path is required",
+    "validatePathDots": "Path cannot contain \"..\"",
+    "pathHelper": "Auto-appends .md if missing.",
     "editor": {
       "markdownHint": "Markdown…",
       "saving": "Saving…",
-      "autosave": "Auto-saves as you type"
+      "autosave": "Auto-saves as you type",
+      "loadFailedApi": "Load failed: {error}",
+      "loadFailedGeneric": "Load failed: {error}",
+      "saveFailedApi": "Save failed: {error}",
+      "saveFailedGeneric": "Save failed: {error}",
+      "savedAt": "Saved {time}"
     }
   },
   "memory": {
