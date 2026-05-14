@@ -19,13 +19,13 @@ class GitHostFormScreen extends ConsumerStatefulWidget {
 }
 
 class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
-  static const _kinds = [
-    ('github', 'GitHub'),
-    ('gitlab', 'GitLab'),
-    ('bitbucket', 'Bitbucket'),
-    ('gitea', 'Gitea'),
-    ('custom', 'Custom'),
-  ];
+  static List<(String, String)> _kinds() => [
+        ('github', t.githosts.form.kinds.github),
+        ('gitlab', t.githosts.form.kinds.gitlab),
+        ('bitbucket', t.githosts.form.kinds.bitbucket),
+        ('gitea', t.githosts.form.kinds.gitea),
+        ('custom', t.githosts.form.kinds.custom),
+      ];
 
   late final TextEditingController _host;
   late final TextEditingController _name;
@@ -61,15 +61,15 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
     final name = _name.text.trim();
     final token = _token.text.trim();
     if (host.isEmpty) {
-      setState(() => _error = 'Host is required.');
+      setState(() => _error = t.githosts.form.validateHost);
       return;
     }
     if (name.isEmpty) {
-      setState(() => _error = 'Name is required.');
+      setState(() => _error = t.githosts.form.validateName);
       return;
     }
     if (!_isEdit && token.isEmpty) {
-      setState(() => _error = 'Token is required when adding a host.');
+      setState(() => _error = t.githosts.form.validateTokenRequired);
       return;
     }
     setState(() {
@@ -103,7 +103,9 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text(_isEdit ? 'Host updated.' : 'Host added.'),
+          content: Text(_isEdit
+              ? t.githosts.form.snackUpdated
+              : t.githosts.form.snackAdded),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
@@ -113,14 +115,14 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Save failed: ${e.message}';
+          _error = t.githosts.form.saveFailedApi(error: e.message);
         });
       }
     } on Object catch (e) {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Save failed: $e';
+          _error = t.githosts.form.saveFailedGeneric(error: e.toString());
         });
       }
     }
@@ -131,11 +133,15 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
     final muted = Theme.of(context).textTheme.bodySmall;
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEdit ? 'Edit ${widget.existing!.name}' : 'Add git host'),
+        title: Text(_isEdit
+            ? t.githosts.form.appBarEdit(name: widget.existing!.name)
+            : t.githosts.form.appBarNew),
         actions: [
           TextButton(
             onPressed: _saving ? null : _submit,
-            child: Text(_saving ? 'Saving…' : (_isEdit ? 'Save' : 'Add')),
+            child: Text(_saving
+                ? t.githosts.form.saving
+                : (_isEdit ? t.githosts.form.save : t.githosts.form.add)),
           ),
         ],
       ),
@@ -147,7 +153,7 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
           DropdownButtonFormField<String>(
             initialValue: _kind,
             items: [
-              for (final (val, label) in _kinds)
+              for (final (val, label) in _kinds())
                 DropdownMenuItem(value: val, child: Text(label)),
             ],
             onChanged: (v) => setState(() => _kind = v ?? _kind),
@@ -172,7 +178,7 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
             decoration: InputDecoration(
               labelText: t.githosts.form.nameLabel,
               hintText: t.githosts.form.nameHint,
-              helperText: 'Display name shown in PR lists.',
+              helperText: t.githosts.form.nameHelper,
               border: const OutlineInputBorder(),
             ),
           ),
@@ -182,12 +188,16 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
             autocorrect: false,
             decoration: InputDecoration(
               labelText: _isEdit
-                  ? 'Token (leave blank to keep existing)'
-                  : 'Token',
+                  ? t.githosts.form.tokenLabelKeep
+                  : t.githosts.form.tokenLabel,
               hintText: _kind == 'github' ? 'ghp_…' : 'glpat-… or PAT',
               helperText: _isEdit
-                  ? 'Current preview: ${widget.existing!.tokenMask.isEmpty ? "(none)" : widget.existing!.tokenMask}'
-                  : 'Paste the personal access token.',
+                  ? t.githosts.form.tokenPreviewHint(
+                      preview: widget.existing!.tokenMask.isEmpty
+                          ? t.githosts.form.tokenPreviewNone
+                          : widget.existing!.tokenMask,
+                    )
+                  : t.githosts.form.tokenHintNew,
               border: const OutlineInputBorder(),
             ),
           ),
@@ -197,8 +207,8 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
             title: Text(t.common.enabled),
             subtitle: Text(
               _enabled
-                  ? 'Available to sessions for PR / remote lookups.'
-                  : 'Paused — sessions skip this host.',
+                  ? t.githosts.form.enabledHelper
+                  : t.githosts.form.pausedSubtitle,
               style: muted,
             ),
             value: _enabled,

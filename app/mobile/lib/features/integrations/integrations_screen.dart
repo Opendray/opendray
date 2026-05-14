@@ -133,8 +133,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            'No integrations registered yet.\n\n'
-            'Register from the web admin: Integrations → New.',
+            t.integrations.emptyState,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
@@ -149,11 +148,11 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
       child: ListView(
         children: [
           if (operator.isNotEmpty) ...[
-            const _SectionHeader(label: 'Registered'),
+            _SectionHeader(label: t.integrations.sectionRegistered),
             for (final i in operator) _IntegrationTile(integration: i),
           ],
           if (system.isNotEmpty) ...[
-            const _SectionHeader(label: 'System'),
+            _SectionHeader(label: t.integrations.sectionSystem),
             for (final i in system) _IntegrationTile(integration: i),
           ],
           const SizedBox(height: 16),
@@ -331,7 +330,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Failed to load integrations',
+              t.integrations.listLoadFailed,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),

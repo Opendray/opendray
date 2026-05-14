@@ -164,10 +164,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(t.backups.runConfirmTitle),
-        content: const Text(
-          'Triggers a fresh dump against the local target. The job '
-          'runs server-side; this list will refresh as it progresses.',
-        ),
+        content: Text(t.backups.runConfirmBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -219,15 +216,15 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     _runPoll?.cancel();
     var ticks = 0;
     const maxTicks = 20; // 20 * 3s = 60s budget.
-    _runPoll = Timer.periodic(const Duration(seconds: 3), (t) async {
+    _runPoll = Timer.periodic(const Duration(seconds: 3), (timer) async {
       ticks++;
       if (!mounted) {
-        t.cancel();
+        timer.cancel();
         return;
       }
       await _softRefresh();
       if (!mounted) {
-        t.cancel();
+        timer.cancel();
         return;
       }
       final row = _state.valueOrNull?.rows.firstWhere(
@@ -245,21 +242,22 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
       final settled =
           row != null && (row.status == 'succeeded' || row.status == 'failed');
       if (settled) {
-        t.cancel();
+        timer.cancel();
         _runPoll = null;
         final ok = row.status == 'succeeded';
         messenger.showSnackBar(
           SnackBar(
             content: Text(ok
-                ? 'Backup succeeded (${_formatBytes(row.bytes)}).'
-                : 'Backup failed: ${row.error ?? "unknown error"}'),
+                ? t.backups.rowSucceededSnack(bytes: _formatBytes(row.bytes))
+                : t.backups.rowFailedSnack(
+                    error: row.error ?? t.backups.unknownError)),
             duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
             backgroundColor: ok ? null : Theme.of(context).colorScheme.error,
           ),
         );
       } else if (ticks >= maxTicks) {
-        t.cancel();
+        timer.cancel();
         _runPoll = null;
         // Don't fire a "still running" snackbar — too noisy.
         // The row is on screen with the running chip; operator can
@@ -283,28 +281,29 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _kv('ID', b.id, mono: true),
-                _kv('Status', b.status),
-                _kv('Target', b.targetId),
-                _kv('Triggered by', b.triggeredBy),
+                _kv(t.backups.kv.status, b.status),
+                _kv(t.backups.kv.target, b.targetId),
+                _kv(t.backups.kv.triggeredBy, b.triggeredBy),
                 _kv(
-                  'Started',
+                  t.backups.kv.started,
                   DateFormat.yMMMd().add_Hms().format(b.startedAt.toLocal()),
                 ),
                 if (b.finishedAt != null)
                   _kv(
-                    'Finished',
+                    t.backups.kv.finished,
                     DateFormat.yMMMd()
                         .add_Hms()
                         .format(b.finishedAt!.toLocal()),
                   ),
-                _kv('Size', _formatBytes(b.bytes)),
-                _kv('Encrypted', b.encrypted ? 'yes' : 'no'),
+                _kv(t.backups.kv.size, _formatBytes(b.bytes)),
+                _kv(t.backups.kv.encrypted,
+                    b.encrypted ? t.backups.kv.yes : t.backups.kv.no),
                 if ((b.targetPath ?? '').isNotEmpty)
-                  _kv('Target path', b.targetPath!, mono: true),
+                  _kv(t.backups.kv.targetPath, b.targetPath!, mono: true),
                 if ((b.error ?? '').isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(
-                    'Error',
+                    t.backups.kv.error,
                     style: TextStyle(
                       color: Theme.of(ctx).colorScheme.error,
                       fontWeight: FontWeight.w600,
@@ -354,9 +353,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Removes the blob from ${b.targetId} and marks the row '
-              'deleted. The audit entry is retained but the data '
-              'cannot be recovered.',
+              t.backups.deleteBody(target: b.targetId),
               style: Theme.of(ctx).textTheme.bodySmall,
             ),
             const SizedBox(height: 8),
@@ -496,7 +493,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.cloud_upload_outlined),
-              label: Text(_running ? 'Queueing…' : 'Run now'),
+              label: Text(_running ? t.backups.queueing : t.backups.runNow),
             ),
     );
   }
@@ -564,21 +561,16 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
     IconData icon;
     if (!pgOk) {
       icon = Icons.error_outline;
-      headline = "Backups can't run yet";
-      body = data.status.pgDumpError ??
-          'pg_dump is not available on the server. '
-              'Install postgresql-client and restart opendray.';
+      headline = t.backups.emptyMissingDeps.headline;
+      body = data.status.pgDumpError ?? t.backups.emptyMissingDeps.body;
     } else if (!hasTargets) {
       icon = Icons.cloud_off_outlined;
-      headline = 'No backup targets configured';
-      body =
-          'Open the More menu → Targets to add a destination (local / S3 / SMB / SFTP / WebDAV / rclone). '
-          'Then come back and tap "Run now".';
+      headline = t.backups.emptyNoTargets.headline;
+      body = t.backups.emptyNoTargets.body;
     } else {
       icon = Icons.archive_outlined;
-      headline = 'No backups yet';
-      body = 'Tap "Run now" to take a fresh snapshot, or open '
-          'Schedules to set up recurring runs.';
+      headline = t.backups.emptyNoBackups.headline;
+      body = t.backups.emptyNoBackups.body;
     }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
@@ -629,25 +621,25 @@ class _RestartRequiredView extends StatelessWidget {
           Icon(Icons.restart_alt, size: 56, color: theme.colorScheme.primary),
           const SizedBox(height: 16),
           Text(
-            'Restart opendray to activate backups',
+            t.backups.restartToActivate,
             style: theme.textTheme.titleMedium,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
-            'Your passphrase is saved. The gateway only loads it at '
-            'startup, so backups stay off until you bounce the process.',
+            t.backups.passphraseSaved,
             style: theme.textTheme.bodySmall?.copyWith(color: muted),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
           if (status.configuredVia == 'file' && status.keyFilePath.isNotEmpty)
-            _kvBox(context, label: 'Key file', value: status.keyFilePath),
+            _kvBox(context,
+                label: t.backups.keyFileLabel, value: status.keyFilePath),
           if (status.configuredVia == 'env')
             _kvBox(
               context,
-              label: 'Configured via',
-              value: 'OPENDRAY_BACKUP_KEY env var',
+              label: t.backups.configuredViaLabel,
+              value: t.backups.envVarConfigured,
             ),
           const SizedBox(height: 24),
           Center(
@@ -788,16 +780,13 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
         Icon(Icons.lock_outlined, size: 48, color: theme.colorScheme.primary),
         const SizedBox(height: 12),
         Text(
-          'Set up backups',
+          t.backups.wizard.title,
           style: theme.textTheme.titleMedium,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 6),
         Text(
-          'Choose a master passphrase. opendray uses it to encrypt every '
-          'backup blob. Lose it and your backups become unrecoverable, '
-          'so save it in a password manager (Vaultwarden, 1Password) '
-          'before continuing.',
+          t.backups.wizard.intro,
           style: theme.textTheme.bodySmall?.copyWith(color: muted),
           textAlign: TextAlign.center,
         ),
@@ -850,10 +839,10 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
                 )
               : const Icon(Icons.check, size: 18),
           label: Text(_submitting
-              ? 'Saving…'
+              ? t.backups.wizard.saving
               : _mode == _SetupMode.generate
-                  ? 'Generate and save'
-                  : 'Save passphrase'),
+                  ? t.backups.wizard.generateAndSave
+                  : t.backups.wizard.savePassphrase),
         ),
         const SizedBox(height: 20),
         if (widget.status.keyFilePath.isNotEmpty)
@@ -889,9 +878,7 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Server generates a cryptographically random passphrase, '
-            'shows it to you once. You must copy it to a password manager '
-            'before continuing — there is no recovery path.',
+            t.backups.wizard.generateHint,
             style: theme.textTheme.bodySmall?.copyWith(color: muted),
           ),
         ],
@@ -910,7 +897,7 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
         labelText: t.backups.encryption.passphraseLabel,
         hintText: t.backups.encryption.passphraseHint,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        helperText: 'Recommended: 40+ chars from a password manager',
+        helperText: t.backups.wizard.helperRecommended,
         helperStyle: TextStyle(color: theme.colorScheme.outline),
       ),
       style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
@@ -930,15 +917,13 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
             size: 48, color: Colors.amber.shade700),
         const SizedBox(height: 12),
         Text(
-          'Save this passphrase NOW',
+          t.backups.wizard.saveNowHeader,
           style: theme.textTheme.titleMedium,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 6),
         Text(
-          'This is shown ONCE. It will not be retrievable from opendray '
-          'or anywhere else. Copy it into a password manager before '
-          'tapping Continue.',
+          t.backups.wizard.saveNowBody,
           style: theme.textTheme.bodySmall?.copyWith(color: muted),
           textAlign: TextAlign.center,
         ),
@@ -992,9 +977,9 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
           value: _ackSaved,
           onChanged: (v) => setState(() => _ackSaved = v ?? false),
           dense: true,
-          title: const Text(
-            'I have saved this passphrase to my password manager',
-            style: TextStyle(fontSize: 13),
+          title: Text(
+            t.backups.savedConfirmCheckbox,
+            style: const TextStyle(fontSize: 13),
           ),
         ),
         const SizedBox(height: 12),
@@ -1053,7 +1038,7 @@ class _StatusBanner extends StatelessWidget {
                   size: 18, color: color),
               const SizedBox(width: 8),
               Text(
-                ok ? 'Backups ready' : 'Backups cannot run',
+                ok ? t.backups.statusReady : t.backups.statusCannot,
                 style: TextStyle(
                   color: color,
                   fontWeight: FontWeight.w600,
@@ -1074,9 +1059,7 @@ class _StatusBanner extends StatelessWidget {
             ),
           ] else
             Text(
-              status.pgDumpError ??
-                  'pg_dump is not on PATH. Install postgresql-client '
-                      'on the server and restart opendray.',
+              status.pgDumpError ?? t.backups.pgDumpMissing,
               style: theme.textTheme.bodySmall?.copyWith(color: color),
             ),
         ],
@@ -1140,7 +1123,7 @@ class _SummaryCard extends StatelessWidget {
         children: [
           _SummaryTile(
             icon: Icons.cloud_outlined,
-            label: 'Targets',
+            label: t.backups.overviewTargets,
             value: '$targetsEnabled / ${targets.length}',
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
@@ -1151,7 +1134,7 @@ class _SummaryCard extends StatelessWidget {
           _Divider(),
           _SummaryTile(
             icon: Icons.schedule_outlined,
-            label: 'Schedules',
+            label: t.backups.overviewSchedules,
             value: '$schedulesEnabled / ${schedules.length}',
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
@@ -1162,7 +1145,7 @@ class _SummaryCard extends StatelessWidget {
           _Divider(),
           _SummaryTile(
             icon: Icons.archive_outlined,
-            label: 'Backups',
+            label: t.backups.overviewBackups,
             value: '${liveRows.length}',
             sub: _formatBytes(totalBytes),
           ),
@@ -1333,7 +1316,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Failed to load backups',
+              t.backups.failedToLoad,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),

@@ -208,6 +208,17 @@ class _TranslationsProvidersZh extends TranslationsProvidersEn {
 	@override late final _TranslationsProvidersErrorPrefixZh errorPrefix = _TranslationsProvidersErrorPrefixZh._(_root);
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
 	@override late final _TranslationsProvidersAccountsZh accounts = _TranslationsProvidersAccountsZh._(_root);
+	@override String get configFallbackTitle => '提供商配置';
+	@override String get saving => '保存中…';
+	@override String get save => '保存';
+	@override String get configLoadFailed => '加载提供商失败';
+	@override String get argsHelper => '以空格分隔的 CLI 参数。';
+	@override String get listEmptyHeadline => '未加载任何提供商。';
+	@override String get listEmptyBody => '网关在启动时从插件目录解析提供商。如果有遗漏，请检查日志。';
+	@override String get listLoadFailed => '加载提供商失败';
+	@override String get cliSectionHeader => 'CLI 提供商';
+	@override String enabledSnack({required Object name}) => '${name} 已启用。';
+	@override String disabledSnack({required Object name}) => '${name} 已停用。';
 }
 
 // Path: integrations
@@ -243,6 +254,29 @@ class _TranslationsIntegrationsZh extends TranslationsIntegrationsEn {
 	@override String get newApiKeySubtitle => '将其交给集成方。旧密钥已失效。';
 	@override String rotateFailedApi({required Object error}) => '轮换失败：${error}';
 	@override String rotateFailedGeneric({required Object error}) => '轮换失败：${error}';
+	@override String get deleteBody => '移除该注册并吊销 API key。使用旧 key 的进行中请求将开始失败。';
+	@override String rotateBody({required Object name}) => '为 ${name} 生成新 API key 并立即让旧 key 失效。';
+	@override String get appBarFallback => '集成';
+	@override String get tooltipMore => '更多';
+	@override String get tooltipReadOnly => '系统集成 — 只读';
+	@override String get kvRoutePrefix => '路由前缀';
+	@override String get kvBaseUrl => 'Base URL';
+	@override String get kvScopes => '范围';
+	@override String get kvVersion => '版本';
+	@override String get kvLastHealthPing => '最近健康检查';
+	@override String get kvCreated => '创建于';
+	@override String get kvKeyRotated => 'Key 轮换于';
+	@override String detailLoadFailed({required Object error}) => '加载集成失败：${error}';
+	@override String get callsLoadFailed => '加载调用失败';
+	@override String get noMatchingCalls => '日志中暂无匹配的调用。';
+	@override String get directionAll => '全部';
+	@override String get directionInbound => '入站';
+	@override String get directionOutbound => '出站';
+	@override late final _TranslationsIntegrationsFormZh form = _TranslationsIntegrationsFormZh._(_root);
+	@override String get emptyState => '在 Web 管理端注册：集成 → 新建。';
+	@override String get sectionRegistered => '已注册';
+	@override String get sectionSystem => '系统';
+	@override String get listLoadFailed => '加载集成失败';
 }
 
 // Path: memoryWorkers
@@ -341,17 +375,42 @@ class _TranslationsBackupsZh extends TranslationsBackupsEn {
 	// Translations
 	@override String get title => '备份';
 	@override String get runConfirmTitle => '立即运行备份？';
+	@override String get runConfirmBody => '向本地目标触发一次新的转储。任务在服务端运行；此列表会随进度刷新。';
 	@override String get run => '运行';
+	@override String get runNow => '立即运行';
+	@override String get queueing => '入队中…';
 	@override String queuedSnack({required Object id}) => '备份已入队（${id}）。监控进度中…';
 	@override String runFailedApi({required Object error}) => '运行失败：${error}';
 	@override String runFailedGeneric({required Object error}) => '运行失败：${error}';
+	@override String rowSucceededSnack({required Object bytes}) => '备份成功（${bytes}）。';
+	@override String rowFailedSnack({required Object error}) => '备份失败：${error}';
+	@override String get unknownError => '未知错误';
 	@override String get detailTitle => '备份详情';
 	@override String get deleteTitle => '删除备份？';
+	@override String deleteBody({required Object target}) => '从 ${target} 移除二进制文件，并在索引中标记该行为已删除。';
 	@override String deletedSnack({required Object id}) => '已删除 ${id}。';
 	@override String deleteFailedApi({required Object error}) => '删除失败：${error}';
 	@override String deleteFailedGeneric({required Object error}) => '删除失败：${error}';
 	@override String get menuSchedules => '计划';
 	@override String get menuTargets => '目标';
+	@override late final _TranslationsBackupsKvZh kv = _TranslationsBackupsKvZh._(_root);
+	@override late final _TranslationsBackupsEmptyMissingDepsZh emptyMissingDeps = _TranslationsBackupsEmptyMissingDepsZh._(_root);
+	@override late final _TranslationsBackupsEmptyNoTargetsZh emptyNoTargets = _TranslationsBackupsEmptyNoTargetsZh._(_root);
+	@override late final _TranslationsBackupsEmptyNoBackupsZh emptyNoBackups = _TranslationsBackupsEmptyNoBackupsZh._(_root);
+	@override String get restartToActivate => '重启 opendray 以激活备份';
+	@override String get passphraseSaved => '你的密语已保存。网关仅在启动时加载，因此更改需重启后才生效。';
+	@override String get keyFileLabel => '密钥文件';
+	@override String get configuredViaLabel => '配置方式';
+	@override late final _TranslationsBackupsWizardZh wizard = _TranslationsBackupsWizardZh._(_root);
+	@override String get statusReady => '备份就绪';
+	@override String get statusCannot => '备份无法运行';
+	@override String get overviewTargets => '目标';
+	@override String get overviewSchedules => '计划';
+	@override String get overviewBackups => '备份';
+	@override String get failedToLoad => '加载备份失败';
+	@override String get envVarConfigured => 'OPENDRAY_BACKUP_KEY 环境变量';
+	@override String get savedConfirmCheckbox => '我已将密语保存到密码管理器';
+	@override String get pgDumpMissing => 'pg_dump 不在 PATH 中。请安装 postgresql-client 并重启 opendray。';
 	@override late final _TranslationsBackupsEncryptionZh encryption = _TranslationsBackupsEncryptionZh._(_root);
 }
 
@@ -380,11 +439,36 @@ class _TranslationsBackupSchedulesZh extends TranslationsBackupSchedulesEn {
 
 	// Translations
 	@override String get title => '备份计划';
+	@override String get newButton => '新建';
 	@override String get deleteTitle => '删除计划？';
 	@override String get targetLabel => '目标';
 	@override String get intervalLabel => '间隔';
 	@override String get retentionLabel => '保留（最近 N 个）';
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
+	@override String get noTargets => '未配置任何备份目标。请从 Web 管理端或「目标」屏添加。';
+	@override String get okMsgCreate => '计划已创建。';
+	@override String get okMsgUpdate => '计划已更新。';
+	@override String get okMsgDelete => '计划已删除。';
+	@override String get errorPrefixCreate => '创建失败';
+	@override String get errorPrefixUpdate => '更新失败';
+	@override String get errorPrefixDelete => '删除失败';
+	@override String deleteBody({required Object targetId}) => '移除目标 ${targetId} 的定期规格。已存在的备份不受影响。';
+	@override String get emptyList => '暂无计划。\n点击「新建」创建一个。';
+	@override String get validatePickTarget => '请选择一个目标。';
+	@override String get validateInterval => '间隔必须大于 0。';
+	@override String get formTitleEdit => '编辑计划';
+	@override String get formTitleNew => '新建计划';
+	@override String get saveButtonEdit => '保存';
+	@override String get saveButtonNew => '创建';
+	@override String get targetFixedHint => '目标一旦创建即不可改。';
+	@override String get enabledOn => '调度器将按周期运行。';
+	@override String get enabledOff => '已暂停 — 重新启用前不会自动运行。';
+	@override String get loadFailedTitle => '加载计划失败';
+	@override String get pausedBadge => '已暂停';
+	@override String everyInterval({required Object interval}) => '每 ${interval}';
+	@override String keepRetention({required Object n}) => '· 保留 ${n}';
+	@override String nextRun({required Object when}) => '· 下次 ${when}';
+	@override String lastRun({required Object when}) => '· 上次 ${when}';
 }
 
 // Path: backupTargetEditor
@@ -397,6 +481,55 @@ class _TranslationsBackupTargetEditorZh extends TranslationsBackupTargetEditorEn
 	@override String get useHttps => '使用 HTTPS';
 	@override String get pathStyle => '路径风格寻址';
 	@override String get pathStyleSubtitle => '旧版 / MinIO';
+	@override late final _TranslationsBackupTargetEditorKindsZh kinds = _TranslationsBackupTargetEditorKindsZh._(_root);
+	@override String get formTitleEdit => '编辑目标';
+	@override String get formTitleNew => '新建备份目标';
+	@override String idHintAuto({required Object prefix}) => '自动：${prefix}-1';
+	@override String get idHelper => '小写字母、数字、连字符。默认为下一个可用槽。';
+	@override String get enabledOn => '定期和临时备份可使用此目标。';
+	@override String get enabledOff => '服务器将拒绝向此处写入备份。';
+	@override String get saving => '保存中…';
+	@override String get create => '创建';
+	@override String get rootDirLabel => '根目录';
+	@override String get rootDirHint => '留空 = cfg.backup.local_dir (~/.opendray/backups)';
+	@override String get hostLabel => '主机';
+	@override String get portLabel => '端口';
+	@override String get shareLabel => '共享';
+	@override String get shareHint => '顶层共享名';
+	@override String get shareSampleHint => 'Claude_Workspace';
+	@override String get userLabel => '用户';
+	@override String get passwordLabel => '密码';
+	@override String get passwordHintKeepCurrent => '留空 = 保留当前值';
+	@override String get passwordHintKeep => '留空 = 保留';
+	@override String get pathPrefixLabel => '路径前缀';
+	@override String get pathPrefixHintShareRoot => '共享根下的子文件夹（可选）';
+	@override String get pathPrefixHintBaseUrl => 'Base URL 下的子文件夹（可选）';
+	@override String get pathPrefixHintObjectKey => '对象键前缀（可选）';
+	@override String get pathPrefixHintSshFolder => '绝对路径或相对用户主目录（可选）';
+	@override String get pathPrefixHintRemoteRoot => '远端根下的子文件夹（可选）';
+	@override String get endpointLabel => '端点';
+	@override String get regionLabel => '区域';
+	@override String get bucketLabel => '存储桶';
+	@override String get accessKeyLabel => 'Access Key';
+	@override String get secretKeyLabel => 'Secret Key';
+	@override String get secretKeyHintEdit => '留空 = 保留当前值。已 AES-256-GCM 加密存储。';
+	@override String get secretKeyHintNew => '已 AES-256-GCM 加密存储；不会回显。';
+	@override String get baseUrlLabel => 'Base URL';
+	@override String get baseUrlHint => '完整 URL 包含路径。Nextcloud：https://cloud.example/remote.php/dav/files/<user>';
+	@override String get sftpPasswordHintEdit => '留空 = 保留。如果密码 + 私钥同时存在，私钥优先。';
+	@override String get sftpPasswordHintNew => '密码或私钥二选一。两者同时存在时，密码仅作回退。';
+	@override String get privateKeyLabel => '私钥（PEM）';
+	@override String get privateKeyHintEdit => '留空 = 保留。粘贴 OpenSSH/PEM 内容。';
+	@override String get privateKeyHintNew => '粘贴 OpenSSH/PEM 私钥内容。多行输入 — 保留 BEGIN/END 标记。';
+	@override String get hostKeyLabel => 'Host key（pinning）';
+	@override String get hostKeyHint => 'OpenSSH 格式的服务器公钥。`ssh-keyscan <host>` 获取。留空 = 不 pinning（局域网外不推荐）。';
+	@override String get rcloneNote => '需要 opendray 主机上安装 rclone CLI。首次需运行 `rclone config` 交互式认证云账户。';
+	@override String get rcloneRemoteLabel => '远端名';
+	@override String get rcloneRemoteHint => '来自 `rclone config` 的名字（不带冒号）。';
+	@override String get rcloneBinaryLabel => '二进制路径';
+	@override String get rcloneBinaryHint => '覆盖 `which rclone`。留空 = PATH 查找。';
+	@override String get rcloneConfigLabel => '配置路径';
+	@override String get rcloneConfigHint => '覆盖 --config。留空 = rclone 默认。';
 }
 
 // Path: githosts
@@ -412,6 +545,12 @@ class _TranslationsGithostsZh extends TranslationsGithostsEn {
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
 	@override late final _TranslationsGithostsErrorPrefixZh errorPrefix = _TranslationsGithostsErrorPrefixZh._(_root);
 	@override late final _TranslationsGithostsFormZh form = _TranslationsGithostsFormZh._(_root);
+	@override String deleteBody({required Object host}) => '移除该凭据。试图列出 ${host} 的 PR 的会话将回退到未认证 API。';
+	@override String deletedSnack({required Object name}) => '已删除 ${name}。';
+	@override String enabledSnack({required Object name}) => '${name} 已启用。';
+	@override String disabledSnack({required Object name}) => '${name} 已停用。';
+	@override String get emptyList => '未配置任何 Git 主机。\n\n添加一个凭据，让网关可以列出你仓库的 pull request。';
+	@override String get failedToLoad => '加载 Git 主机失败';
 }
 
 // Path: channels
@@ -446,6 +585,7 @@ class _TranslationsChannelsZh extends TranslationsChannelsEn {
 	@override late final _TranslationsChannelsSnacksZh snacks = _TranslationsChannelsSnacksZh._(_root);
 	@override late final _TranslationsChannelsErrorPrefixZh errorPrefix = _TranslationsChannelsErrorPrefixZh._(_root);
 	@override String get failedToLoad => '加载通道失败';
+	@override late final _TranslationsChannelsKindsZh kinds = _TranslationsChannelsKindsZh._(_root);
 }
 
 // Path: onboarding
@@ -473,6 +613,35 @@ class _TranslationsSkillsZh extends TranslationsSkillsEn {
 	@override String get idLabel => 'Id（slug）';
 	@override String get idHint => '例如：tdd-guide';
 	@override String get bodyLabel => '正文（Markdown）';
+	@override String loadFailedApi({required Object error}) => '加载失败：${error}';
+	@override String loadFailedGeneric({required Object error}) => '加载失败：${error}';
+	@override String get idRequired => '必须填写 Id。';
+	@override String get bodyRequired => '正文不能为空。';
+	@override String get snackCreated => '技能已创建。';
+	@override String get snackOverride => '已保存为库覆盖。';
+	@override String get snackUpdated => '技能已更新。';
+	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
+	@override String saveFailedGeneric({required Object error}) => '保存失败：${error}';
+	@override String get resetTitle => '重置为内置？';
+	@override String get deleteTitle => '删除技能？';
+	@override String resetBody({required Object id}) => '移除 ${id} 的库覆盖。会话将回退到内置正文。';
+	@override String get resetButton => '重置';
+	@override String resetSnack({required Object id}) => '已将 ${id} 重置为内置。';
+	@override String deletedSnack({required Object id}) => '已删除 ${id}。';
+	@override String deleteFailedApi({required Object error}) => '删除失败：${error}';
+	@override String deleteFailedGeneric({required Object error}) => '删除失败：${error}';
+	@override String deleteBody({required Object id}) => '从库中移除 ${id}。引用它的会话在恢复前会失败。';
+	@override String get newSkillTitle => '新建技能';
+	@override String customizeTitle({required Object id}) => '自定义 ${id}';
+	@override String editTitle({required Object id}) => '编辑 ${id}';
+	@override String get resetTooltip => '重置为内置';
+	@override String get deleteTooltip => '删除';
+	@override String get saving => '保存中…';
+	@override String get saveOverride => '保存覆盖';
+	@override String get overrideBanner => '保存会以相同 id 创建一个库覆盖。会话将使用此正文而非内置版本，直到你重置。';
+	@override String get idHelper => '小写字母 / 数字 / 横线。创建后锁定。';
+	@override String get emptyList => '未配置任何技能。网关附带内置技能（planner、code-reviewer 等）。';
+	@override String get failedToLoad => '加载技能失败';
 }
 
 // Path: customTasks
@@ -496,6 +665,29 @@ class _TranslationsCustomTasksZh extends TranslationsCustomTasksEn {
 	@override String get scopeGlobal => '全局';
 	@override String get scopeProject => '项目';
 	@override String get cwdHint => '/Users/you/projects/backend';
+	@override String get snackCreated => '任务已创建。';
+	@override String get snackUpdated => '任务已更新。';
+	@override String get deleteBody => '从目录中移除任务。已插入到会话中的实例不受影响。';
+	@override String get introBanner => '定义自己的斜杠命令。它们会与内置任务一起出现在会话任务选择器中。';
+	@override String get validateNameRequired => '必须填写名称';
+	@override String get validateCommandRequired => '必须填写命令';
+	@override String get validateProjectCwd => '项目范围任务需要绝对 cwd 路径';
+	@override String get appBarEdit => '编辑自定义任务';
+	@override String get appBarNew => '新建自定义任务';
+	@override String get fieldName => '名称';
+	@override String get nameHelper => '在检查器的任务选择器中显示。';
+	@override String get fieldCommand => '命令';
+	@override String get commandHelper => '选择时插入到会话的文本。可以是 CLI 命令或 Claude 斜杠命令。';
+	@override String get fieldDescription => '描述（可选）';
+	@override String get fieldScope => '范围';
+	@override String get globalScopeHint => '从任何会话可见，不论 cwd。';
+	@override String get projectScopeHint => '仅当会话的 cwd 匹配以下路径时可见。';
+	@override String get fieldProjectCwd => '项目 cwd';
+	@override String get cwdHelper => '绝对路径。以此 cwd 启动的会话将看到该任务。';
+	@override String get saving => '保存中…';
+	@override String get save => '保存';
+	@override String get create => '创建';
+	@override String get failedToLoad => '加载自定义任务失败';
 }
 
 // Path: notesPage
@@ -522,6 +714,14 @@ class _TranslationsNotesPageZh extends TranslationsNotesPageEn {
 	@override String get pathLabel => '相对仓库的路径';
 	@override String get pathHint => 'personal/scratch.md';
 	@override String get create => '创建';
+	@override String get popupDelete => '删除';
+	@override String get deleteBody => '此操作不可撤销。仓库的 git 同步会同时移除网关主机上的文件。';
+	@override String emptyFilterMatch({required Object query}) => '未找到匹配「${query}」的笔记。';
+	@override String get emptyVault => '仓库为空。点击 + 创建第一条笔记。';
+	@override String emptyFolder({required Object path}) => '文件夹「${path}」为空。';
+	@override String get validatePath => '必须填写路径';
+	@override String get validatePathDots => '路径不能包含「..」';
+	@override String get pathHelper => '缺失时自动追加 .md。';
 	@override late final _TranslationsNotesPageEditorZh editor = _TranslationsNotesPageEditorZh._(_root);
 }
 
@@ -906,6 +1106,48 @@ class _TranslationsProvidersAccountsZh extends TranslationsProvidersAccountsEn {
 	@override String get deleteTitle => '删除账号？';
 	@override String importFailedApi({required Object error}) => '导入失败：${error}';
 	@override String importFailedGeneric({required Object error}) => '导入失败：${error}';
+	@override String get enable => '启用';
+	@override String get disable => '停用';
+	@override String get deleteLabel => '删除';
+	@override String get deleteBody => '移除该账号及其存储的 OAuth token。已使用此账号的会话保持运行，但重新认证会失败。';
+	@override String deletedSnack({required Object name}) => '已删除 ${name}。';
+	@override String get importSyncedSnack => '已同步 — 网关没有新账号。';
+	@override String importedSnackOne({required Object n}) => '已导入 ${n} 个账号。';
+	@override String importedSnackOther({required Object n}) => '已导入 ${n} 个账号。';
+	@override String get importing => '同步中…';
+	@override String get importLocal => '导入本地';
+	@override String get addHint => '添加新账号仅可在网关主机上操作。';
+	@override String get addBody => '新目录会自动出现在这里。OAuth 流程步骤参见文档。';
+	@override String loadFailed({required Object error}) => '加载账号失败：${error}';
+	@override String get intro => '以 Claude 提供商启动的会话会从这些账号中选择（或回退到环境变量）。';
+	@override String enabledSnack({required Object name}) => '${name} 已启用。';
+	@override String disabledSnack({required Object name}) => '${name} 已停用。';
+	@override String renamedSnack({required Object name}) => '已重命名为 ${name}。';
+}
+
+// Path: integrations.form
+class _TranslationsIntegrationsFormZh extends TranslationsIntegrationsFormEn {
+	_TranslationsIntegrationsFormZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get validateRequired => '名称、Base URL、路由前缀必填。';
+	@override String get fieldName => '名称';
+	@override String get fieldNameHint => 'My Bot';
+	@override String get fieldBaseUrl => 'Base URL';
+	@override String get fieldRoutePrefix => '路由前缀';
+	@override String get routePrefixHelper => '可通过 /api/v1/<前缀>/... 访问';
+	@override String get fieldScopes => '范围（可选）';
+	@override String get scopesHelper => '逗号分隔。留空 = 服务器默认。';
+	@override String get fieldVersion => '版本（可选）';
+	@override String get validateBaseUrl => '必须填写 Base URL。';
+	@override String get editFieldScopes => '范围';
+	@override String get editScopesHelper => '逗号分隔。';
+	@override String get editFieldVersion => '版本';
+	@override String get apiKeyWarn => '此 key 只显示这一次。';
+	@override String get copyCopied => '已复制';
+	@override String get copyCopy => '复制';
 }
 
 // Path: memoryWorkers.tasks
@@ -919,6 +1161,77 @@ class _TranslationsMemoryWorkersTasksZh extends TranslationsMemoryWorkersTasksEn
 	@override late final _TranslationsMemoryWorkersTasksCleanerZh cleaner = _TranslationsMemoryWorkersTasksCleanerZh._(_root);
 	@override late final _TranslationsMemoryWorkersTasksGitactivityZh gitactivity = _TranslationsMemoryWorkersTasksGitactivityZh._(_root);
 	@override late final _TranslationsMemoryWorkersTasksTranscriptZh transcript = _TranslationsMemoryWorkersTasksTranscriptZh._(_root);
+}
+
+// Path: backups.kv
+class _TranslationsBackupsKvZh extends TranslationsBackupsKvEn {
+	_TranslationsBackupsKvZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get status => '状态';
+	@override String get target => '目标';
+	@override String get triggeredBy => '触发者';
+	@override String get started => '开始';
+	@override String get finished => '完成';
+	@override String get size => '大小';
+	@override String get encrypted => '已加密';
+	@override String get targetPath => '目标路径';
+	@override String get error => '错误';
+	@override String get yes => '是';
+	@override String get no => '否';
+}
+
+// Path: backups.emptyMissingDeps
+class _TranslationsBackupsEmptyMissingDepsZh extends TranslationsBackupsEmptyMissingDepsEn {
+	_TranslationsBackupsEmptyMissingDepsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get headline => '备份暂时无法运行';
+	@override String get body => '安装 postgresql-client 并重启 opendray。';
+}
+
+// Path: backups.emptyNoTargets
+class _TranslationsBackupsEmptyNoTargetsZh extends TranslationsBackupsEmptyNoTargetsEn {
+	_TranslationsBackupsEmptyNoTargetsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get headline => '未配置任何备份目标';
+	@override String get body => '打开「更多」菜单 → 目标，添加一个目的地（本地 / S3 / SMB / SFTP / WebDAV / rclone）。然后返回并点击「立即运行」。';
+}
+
+// Path: backups.emptyNoBackups
+class _TranslationsBackupsEmptyNoBackupsZh extends TranslationsBackupsEmptyNoBackupsEn {
+	_TranslationsBackupsEmptyNoBackupsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get headline => '暂无备份';
+	@override String get body => '点击「立即运行」生成一次新快照，或打开「计划」设置定期运行。';
+}
+
+// Path: backups.wizard
+class _TranslationsBackupsWizardZh extends TranslationsBackupsWizardEn {
+	_TranslationsBackupsWizardZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '设置备份';
+	@override String get intro => '选择一个主密语。opendray 用它通过 AES-256-GCM 加密每一份备份。丢失密语就丢失数据 — 无法恢复。';
+	@override String get saving => '保存中…';
+	@override String get generateAndSave => '生成并保存';
+	@override String get savePassphrase => '保存密语';
+	@override String get generateHint => '服务器生成密码学级别随机密语，你复制到密码管理器，然后确认。';
+	@override String get helperRecommended => '建议：从密码管理器生成 40+ 字符';
+	@override String get saveNowHeader => '立即保存这个密语';
+	@override String get saveNowBody => '此处只显示一次。之后无法从 opendray 取回。';
 }
 
 // Path: backups.encryption
@@ -935,6 +1248,21 @@ class _TranslationsBackupsEncryptionZh extends TranslationsBackupsEncryptionEn {
 	@override String get passphraseLabel => '你的密语';
 	@override String get passphraseHint => '至少 20 个字符';
 	@override String get passphraseCopied => '密语已复制到剪贴板';
+}
+
+// Path: backupTargetEditor.kinds
+class _TranslationsBackupTargetEditorKindsZh extends TranslationsBackupTargetEditorKindsEn {
+	_TranslationsBackupTargetEditorKindsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsBackupTargetEditorKindsLocalZh local = _TranslationsBackupTargetEditorKindsLocalZh._(_root);
+	@override late final _TranslationsBackupTargetEditorKindsSmbZh smb = _TranslationsBackupTargetEditorKindsSmbZh._(_root);
+	@override late final _TranslationsBackupTargetEditorKindsWebdavZh webdav = _TranslationsBackupTargetEditorKindsWebdavZh._(_root);
+	@override late final _TranslationsBackupTargetEditorKindsSftpZh sftp = _TranslationsBackupTargetEditorKindsSftpZh._(_root);
+	@override late final _TranslationsBackupTargetEditorKindsS3Zh s3 = _TranslationsBackupTargetEditorKindsS3Zh._(_root);
+	@override late final _TranslationsBackupTargetEditorKindsRcloneZh rclone = _TranslationsBackupTargetEditorKindsRcloneZh._(_root);
 }
 
 // Path: githosts.errorPrefix
@@ -959,6 +1287,28 @@ class _TranslationsGithostsFormZh extends TranslationsGithostsFormEn {
 	@override String get hostLabel => '主机';
 	@override String get nameLabel => '名称';
 	@override String get nameHint => 'work-github、personal-gitlab、…';
+	@override late final _TranslationsGithostsFormKindsZh kinds = _TranslationsGithostsFormKindsZh._(_root);
+	@override String get validateHost => '必须填写主机。';
+	@override String get validateName => '必须填写名称。';
+	@override String get snackAdded => '主机已添加。';
+	@override String get snackUpdated => '主机已更新。';
+	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
+	@override String saveFailedGeneric({required Object error}) => '保存失败：${error}';
+	@override String get saving => '保存中…';
+	@override String get save => '保存';
+	@override String get add => '添加';
+	@override String get nameHelper => '在 PR 列表中显示的名字。';
+	@override String get tokenLabelKeep => 'Token（留空 = 保留现有）';
+	@override String get tokenLabel => 'Token';
+	@override String get tokenHintKeep => '留空 = 保留现有。';
+	@override String get tokenHintNew => '粘贴个人访问令牌。';
+	@override String get enabledHelper => '可供会话用于 PR / 远端查找。';
+	@override String get validateTokenRequired => '添加主机时必须填写 Token。';
+	@override String appBarEdit({required Object name}) => '编辑 ${name}';
+	@override String get appBarNew => '添加 Git 主机';
+	@override String tokenPreviewHint({required Object preview}) => '当前预览：${preview}';
+	@override String get tokenPreviewNone => '（无）';
+	@override String get pausedSubtitle => '已暂停 — 会话跳过此主机。';
 }
 
 // Path: channels.configDialog
@@ -1061,6 +1411,22 @@ class _TranslationsChannelsErrorPrefixZh extends TranslationsChannelsErrorPrefix
 	@override String get delete => '删除失败';
 }
 
+// Path: channels.kinds
+class _TranslationsChannelsKindsZh extends TranslationsChannelsKindsEn {
+	_TranslationsChannelsKindsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsChannelsKindsTelegramZh telegram = _TranslationsChannelsKindsTelegramZh._(_root);
+	@override late final _TranslationsChannelsKindsSlackZh slack = _TranslationsChannelsKindsSlackZh._(_root);
+	@override late final _TranslationsChannelsKindsDiscordZh discord = _TranslationsChannelsKindsDiscordZh._(_root);
+	@override late final _TranslationsChannelsKindsFeishuZh feishu = _TranslationsChannelsKindsFeishuZh._(_root);
+	@override late final _TranslationsChannelsKindsDingtalkZh dingtalk = _TranslationsChannelsKindsDingtalkZh._(_root);
+	@override late final _TranslationsChannelsKindsWecomZh wecom = _TranslationsChannelsKindsWecomZh._(_root);
+	@override late final _TranslationsChannelsKindsWechatZh wechat = _TranslationsChannelsKindsWechatZh._(_root);
+}
+
 // Path: notesPage.editor
 class _TranslationsNotesPageEditorZh extends TranslationsNotesPageEditorEn {
 	_TranslationsNotesPageEditorZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -1071,6 +1437,11 @@ class _TranslationsNotesPageEditorZh extends TranslationsNotesPageEditorEn {
 	@override String get markdownHint => 'Markdown…';
 	@override String get saving => '保存中…';
 	@override String get autosave => '随输入自动保存';
+	@override String loadFailedApi({required Object error}) => '加载失败：${error}';
+	@override String loadFailedGeneric({required Object error}) => '加载失败：${error}';
+	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
+	@override String saveFailedGeneric({required Object error}) => '保存失败：${error}';
+	@override String savedAt({required Object time}) => '${time} 已保存';
 }
 
 // Path: memory.deleteAllConfirm
@@ -1263,11 +1634,22 @@ class _TranslationsSettingsServerSettingsZh extends TranslationsSettingsServerSe
 	@override String get reloadTooltip => '从服务器重新加载';
 	@override String get restartTooltip => '重启网关';
 	@override String get restartConfirmTitle => '重启 opendray？';
+	@override String get restartConfirmBody => '网关将自我 exec。手机应用可能短暂断开连接。';
 	@override String get restart => '重启';
 	@override String get restartQueuedSnack => '已请求重启。稍后下拉刷新。';
 	@override String restartFailedApi({required Object error}) => '重启失败：${error}';
 	@override String restartFailedGeneric({required Object error}) => '重启失败：${error}';
+	@override String loadedFrom({required Object path}) => '加载自：${path}';
+	@override String get restartHint => '大部分配置需要重启网关后生效。重启按钮在 AppBar 中。';
+	@override String get savedNeedsRestart => '已保存。重启网关以生效。';
+	@override String get savedSimple => '已保存。';
+	@override String get changesNeedRestart => '此配置的修改需重启网关。';
+	@override String get loadFailed => '加载服务器设置失败';
 	@override late final _TranslationsSettingsServerSettingsSectionsZh sections = _TranslationsSettingsServerSettingsSectionsZh._(_root);
+	@override late final _TranslationsSettingsServerSettingsSectionDescriptionsZh sectionDescriptions = _TranslationsSettingsServerSettingsSectionDescriptionsZh._(_root);
+	@override late final _TranslationsSettingsServerSettingsFieldsZh fields = _TranslationsSettingsServerSettingsFieldsZh._(_root);
+	@override String validateInteger({required Object field}) => '「${field}」必须是整数';
+	@override String validateNumber({required Object field}) => '「${field}」必须是数字';
 }
 
 // Path: more.items.integrations
@@ -1586,6 +1968,31 @@ class _TranslationsSessionsInspectorNotesZh extends TranslationsSessionsInspecto
 	@override String get create => '创建';
 	@override String get filterHint => '筛选…';
 	@override String get locationDialogTitle => '项目文档位置';
+	@override String loadFailedApi({required Object error}) => '加载失败：${error}';
+	@override String loadFailedGeneric({required Object error}) => '加载失败：${error}';
+	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
+	@override String saveFailedGeneric({required Object error}) => '保存失败：${error}';
+	@override String insertFailedApi({required Object error}) => '插入失败：${error}';
+	@override String insertFailedGeneric({required Object error}) => '插入失败：${error}';
+	@override String createFailedApi({required Object error}) => '创建失败：${error}';
+	@override String createFailedGeneric({required Object error}) => '创建失败：${error}';
+	@override String get personalHint => '个人草稿 — 随输入自动保存。AI agent 不会写入这里。';
+	@override String get projectDocsHint => '架构 / 规范 / 决策 / 计划 / 回顾 — 通常由 agent 撰写或维护。';
+	@override String get mappingCleared => '映射已清除 — 使用默认值';
+	@override String mappedTo({required Object path}) => '已映射到 ${path}';
+	@override String get cancelTooltip => '取消';
+	@override String get newDocTooltip => '新建文档';
+	@override String get noProjectMapping => '无法为此会话解析项目映射。检查网关是否配置了笔记库，以及会话的 cwd 是否已设置。';
+	@override String get emptyProjectDocs => '暂无项目文档。点击 + 创建一个，或让 AI agent 根据提示生成。';
+	@override String emptyFilterMatch({required Object query}) => '未找到匹配「${query}」的内容。';
+	@override String get locationDialogHelp => '将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。';
+	@override String get sessionCwd => '会话 cwd';
+	@override String get projectDocsPath => '相对笔记库的项目文档路径';
+	@override String get locationStoredHint => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。';
+	@override String pinnedHint({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。';
+	@override String get noProjectMapping2 => '（无项目映射）';
+	@override String get clearOverride => '清除覆盖';
+	@override String get save => '保存';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -1688,6 +2095,86 @@ class _TranslationsMemoryWorkersTasksTranscriptZh extends TranslationsMemoryWork
 	@override String get description => '会话结束时的「agent 做了什么」摘要。天然适合 agent 工作器。';
 }
 
+// Path: backupTargetEditor.kinds.local
+class _TranslationsBackupTargetEditorKindsLocalZh extends TranslationsBackupTargetEditorKindsLocalEn {
+	_TranslationsBackupTargetEditorKindsLocalZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '本地磁盘';
+	@override String get description => '运行 opendray 的机器上的文件夹';
+}
+
+// Path: backupTargetEditor.kinds.smb
+class _TranslationsBackupTargetEditorKindsSmbZh extends TranslationsBackupTargetEditorKindsSmbEn {
+	_TranslationsBackupTargetEditorKindsSmbZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'SMB 共享';
+	@override String get description => 'Windows 共享 + 多数家用 NAS 设备';
+}
+
+// Path: backupTargetEditor.kinds.webdav
+class _TranslationsBackupTargetEditorKindsWebdavZh extends TranslationsBackupTargetEditorKindsWebdavEn {
+	_TranslationsBackupTargetEditorKindsWebdavZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'WebDAV';
+	@override String get description => '自托管云盘 + 文件共享服务';
+}
+
+// Path: backupTargetEditor.kinds.sftp
+class _TranslationsBackupTargetEditorKindsSftpZh extends TranslationsBackupTargetEditorKindsSftpEn {
+	_TranslationsBackupTargetEditorKindsSftpZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'SFTP';
+	@override String get description => '任何可 SSH 访问的服务器';
+}
+
+// Path: backupTargetEditor.kinds.s3
+class _TranslationsBackupTargetEditorKindsS3Zh extends TranslationsBackupTargetEditorKindsS3En {
+	_TranslationsBackupTargetEditorKindsS3Zh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'S3 / 兼容';
+	@override String get description => 'Amazon S3 + S3 兼容存储桶（MinIO、R2、B2）';
+}
+
+// Path: backupTargetEditor.kinds.rclone
+class _TranslationsBackupTargetEditorKindsRcloneZh extends TranslationsBackupTargetEditorKindsRcloneEn {
+	_TranslationsBackupTargetEditorKindsRcloneZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'rclone（任意）';
+	@override String get description => '通过 rclone CLI 访问 OneDrive、Google Drive、Dropbox';
+}
+
+// Path: githosts.form.kinds
+class _TranslationsGithostsFormKindsZh extends TranslationsGithostsFormKindsEn {
+	_TranslationsGithostsFormKindsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get github => 'GitHub';
+	@override String get gitlab => 'GitLab';
+	@override String get bitbucket => 'Bitbucket';
+	@override String get gitea => 'Gitea';
+	@override String get custom => '自定义';
+}
+
 // Path: channels.notifications.modes
 class _TranslationsChannelsNotificationsModesZh extends TranslationsChannelsNotificationsModesEn {
 	_TranslationsChannelsNotificationsModesZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -1701,6 +2188,113 @@ class _TranslationsChannelsNotificationsModesZh extends TranslationsChannelsNoti
 	@override String get cooldownDescription => '在所选时间窗内抑制重复。';
 	@override String get everyLabel => '每次事件（嘈杂）';
 	@override String get everyDescription => '不抑制 — 仅适合低频通道。';
+}
+
+// Path: channels.kinds.telegram
+class _TranslationsChannelsKindsTelegramZh extends TranslationsChannelsKindsTelegramEn {
+	_TranslationsChannelsKindsTelegramZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '通过 @BotFather 创建机器人。opendray 长轮询 getUpdates 并通过 REST 发送。原生支持按钮和 reply_to_message。';
+	@override String get botTokenLabel => '机器人 Token';
+	@override String get botTokenHint => '从 @BotFather 获取。存储于通道配置；仅管理员 API 可见。';
+	@override String get chatIdLabel => '默认 chat ID';
+	@override String get chatIdPlaceholder => '42（可选 — 没有 ReplyCtx 时使用）';
+}
+
+// Path: channels.kinds.slack
+class _TranslationsChannelsKindsSlackZh extends TranslationsChannelsKindsSlackEn {
+	_TranslationsChannelsKindsSlackZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => 'Socket Mode — 无需公网 webhook。需要 bot OAuth token（xoxb-）和带 connections:write 的 app-level token（xapp-）。';
+	@override String get botTokenLabel => 'Bot token（xoxb-…）';
+	@override String get botTokenHint => 'OAuth & Permissions → Bot User OAuth Token。需要 chat:write。';
+	@override String get appTokenLabel => 'App-level token（xapp-…）';
+	@override String get appTokenHint => 'Settings → Basic Information → App-Level Tokens。范围：connections:write。';
+	@override String get channelIdLabel => '默认 channel ID';
+	@override String get channelIdPlaceholder => 'C0123ABC456（可选）';
+}
+
+// Path: channels.kinds.discord
+class _TranslationsChannelsKindsDiscordZh extends TranslationsChannelsKindsDiscordEn {
+	_TranslationsChannelsKindsDiscordZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '通过 Discord Developer Portal 创建机器人，启用 MESSAGE CONTENT INTENT。连接 Gateway WS — 无需公网 URL。';
+	@override String get botTokenLabel => 'Bot token';
+	@override String get botTokenPlaceholder => '来自 Discord Developer Portal 的 Bot token';
+	@override String get botTokenHint => 'Application → Bot → Reset Token。邀请机器人时勾选 send_messages + embed_links。';
+	@override String get channelIdLabel => '默认 channel ID';
+	@override String get channelIdPlaceholder => '123456789012345678（可选）';
+}
+
+// Path: channels.kinds.feishu
+class _TranslationsChannelsKindsFeishuZh extends TranslationsChannelsKindsFeishuEn {
+	_TranslationsChannelsKindsFeishuZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '应用级凭据。入站走事件订阅 webhook。下方生成公网 webhook URL — 粘贴到飞书开放平台控制台。';
+	@override String get afterCreateHint => '在通道卡上打开 webhook URL，粘贴到飞书开放平台 → 事件订阅 → Request URL。';
+	@override String get appIdLabel => 'App ID';
+	@override String get appSecretLabel => 'App secret';
+	@override String get appSecretPlaceholder => '应用凭据 secret';
+	@override String get verificationTokenLabel => 'Verification token';
+	@override String get verificationTokenHint => '来自 事件订阅 → Verification Token。设置后，opendray 拒绝 token 不匹配的 webhook。';
+	@override String get chatIdLabel => '默认 chat ID（oc_…）';
+	@override String get chatIdPlaceholder => 'oc_xxxxxxxxxx（可选）';
+}
+
+// Path: channels.kinds.dingtalk
+class _TranslationsChannelsKindsDingtalkZh extends TranslationsChannelsKindsDingtalkEn {
+	_TranslationsChannelsKindsDingtalkZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '自定义群机器人。仅外发。群聊 → 机器人 → 添加 → 加签模式 → 复制 webhook + secret。';
+	@override String get webhookUrlLabel => 'Webhook URL';
+	@override String get secretLabel => '加签 secret';
+	@override String get secretHint => '当机器人为「加签」安全模式时，将 secret 复制到这里。opendray 自动添加 timestamp + sign 参数。';
+}
+
+// Path: channels.kinds.wecom
+class _TranslationsChannelsKindsWecomZh extends TranslationsChannelsKindsWecomEn {
+	_TranslationsChannelsKindsWecomZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '群机器人 webhook。仅外发（文本 + markdown）。群设置 → 群机器人 → 添加 → 复制 webhook URL。';
+	@override String get webhookKeyLabel => 'Webhook key';
+	@override String get webhookKeyPlaceholder => '「key=」查询参数值';
+	@override String get webhookKeyHint => '或将整个 webhook URL 粘贴到下方字段 — 任一即可。';
+	@override String get webhookUrlLabel => '或完整 webhook URL';
+}
+
+// Path: channels.kinds.wechat
+class _TranslationsChannelsKindsWechatZh extends TranslationsChannelsKindsWechatEn {
+	_TranslationsChannelsKindsWechatZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get description => '通过 WxPusher 推送到个人微信。仅外发 — 推送服务不转发用户回复。每个接收方需通过二维码订阅一次。';
+	@override String get appTokenLabel => 'App token（AT_…）';
+	@override String get appTokenHint => 'WxPusher → 应用管理 → 创建应用 → 复制 App Token。';
+	@override String get uidsLabel => '接收方 UID（每行一个）';
+	@override String get uidsHint => 'UID 或 topic ID 至少需要一个。';
+	@override String get topicIdsLabel => 'Topic ID（每行一个）';
+	@override String get urlLabel => '点击跳转 URL';
+	@override String get urlHint => '设置后，点击微信通知会打开此页面。';
 }
 
 // Path: settings.logViewer.levels
@@ -1734,6 +2328,92 @@ class _TranslationsSettingsServerSettingsSectionsZh extends TranslationsSettings
 	@override String get storageClaude => '存储 · Claude';
 	@override String get storageCodex => '存储 · Codex';
 	@override String get storageGemini => '存储 · Gemini';
+}
+
+// Path: settings.serverSettings.sectionDescriptions
+class _TranslationsSettingsServerSettingsSectionDescriptionsZh extends TranslationsSettingsServerSettingsSectionDescriptionsEn {
+	_TranslationsSettingsServerSettingsSectionDescriptionsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get general => '监听地址、管理员账号、令牌 TTL。';
+	@override String get logging => '详细程度、格式、磁盘日志路径。';
+	@override String get sessions => '空闲检测阈值。';
+	@override String get vault => '笔记、技能、git 版本化的根目录。';
+	@override String get mcpRegistry => 'MCP 服务器 + 密钥文件的凭据库路径。';
+	@override String get memory => '跨 CLI 的持久记忆子系统。';
+	@override String get backup => '加密的数据库备份 + 管理数据导出。密语保存在密钥文件（设置 → 备份）。';
+	@override String get storageClaude => 'Claude 会话记录在磁盘的存放位置。';
+	@override String get storageCodex => 'Codex 会话根目录。';
+	@override String get storageGemini => '按项目的临时目录 + projects.json 路径。';
+}
+
+// Path: settings.serverSettings.fields
+class _TranslationsSettingsServerSettingsFieldsZh extends TranslationsSettingsServerSettingsFieldsEn {
+	_TranslationsSettingsServerSettingsFieldsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get listenAddress => '监听地址';
+	@override String get adminUser => '管理员用户';
+	@override String get adminUserHelper => '当未设置密钥文件或环境变量时生效。否则参见 设置 → 账户。';
+	@override String get adminPassword => '管理员密码';
+	@override String get adminPasswordHelper => '留空 = 保留。日常轮换请用 设置 → 账户（密钥文件支持，无需重启）。';
+	@override String get tokenTtlWeb => '令牌 TTL（Web）';
+	@override String get tokenTtlHelper => 'Go duration 字符串，如 24h、30m。';
+	@override String get level => '级别';
+	@override String get format => '格式';
+	@override String get filePath => '文件路径';
+	@override String get filePathHelper => '留空 = 仅 stdout。';
+	@override String get idleThreshold => '空闲阈值';
+	@override String get idleThresholdHelper => '会话被标记为空闲前的安静时长。Go duration。';
+	@override String get idleCheckInterval => '空闲检查间隔';
+	@override String get idleCheckHelper => '空闲回收器运行的频率。';
+	@override String get root => '根目录';
+	@override String get rootHelper => 'notes / skills / git_root 子路径的父目录。';
+	@override String get notesPath => '笔记路径';
+	@override String get skillsPath => '技能路径';
+	@override String get gitRoot => 'Git 根';
+	@override String get personalPrefix => '个人前缀';
+	@override String get projectsPrefix => '项目前缀';
+	@override String get registryRoot => '注册表根';
+	@override String get secretsFile => '密钥文件';
+	@override String get backend => '后端';
+	@override String get store => '存储';
+	@override String get defaultTopK => '默认 top-k';
+	@override String get similarityThreshold => '相似度阈值';
+	@override String get defaultScope => '默认范围';
+	@override String get chromemHelper => '当 store=chromem 时。';
+	@override String get preserveHelper => '留空 = 保留当前值。';
+	@override String get localModelName => '本地模型名';
+	@override String get localLibraryPath => '本地库路径';
+	@override String get localModelPath => '本地模型路径';
+	@override String get localTokenizerPath => '本地分词器路径';
+	@override String get localMaxSeqLen => '本地最大序列长度';
+	@override String get backupEnabled => '已启用';
+	@override String get backupEnabledHelper => '即使打开此项，备份子系统仍需配置 OPENDRAY_BACKUP_KEY 或密钥文件才会运行。';
+	@override String get backupLocalDir => '本地目录';
+	@override String get backupExportDir => '导出目录';
+	@override String get pathHelper => '留空 = 启动时从 PATH 解析。';
+	@override String get accountsDir => '账号目录';
+	@override String get accountsHelper => '各账号 .claude/ 子目录的父目录。留空 = ~/.claude-accounts。';
+	@override String get sessionsRoot => '会话根目录';
+	@override String get sessionsRootHelper => '留空 = ~/.codex/sessions。';
+	@override String get listenHelper => '网关绑定的 host:port。需重启。';
+	@override String get secretsHelper => 'AES-256-GCM 加密的密钥库。';
+	@override String get backendHelper => 'auto 选择最佳可用；local 需要 ONNX。';
+	@override String get similarityHelper => '0.0–1.0；低于此值的结果会被过滤。';
+	@override String get chromemPath => 'chromem 路径';
+	@override String get httpBaseUrl => 'HTTP base URL';
+	@override String get httpModel => 'HTTP model';
+	@override String get httpApiKey => 'HTTP api key';
+	@override String get httpDimensions => 'HTTP dimensions';
+	@override String get pgDumpPath => 'pg_dump 路径';
+	@override String get pgRestorePath => 'pg_restore 路径';
+	@override String get tmpRoot => '临时根目录';
+	@override String get projectsJson => 'projects.json';
 }
 
 // Path: sessions.inspector.shell.tabs
@@ -1929,6 +2609,31 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.create' => '创建',
 			'sessions.inspector.notes.filterHint' => '筛选…',
 			'sessions.inspector.notes.locationDialogTitle' => '项目文档位置',
+			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
+			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
+			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
+			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
+			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => '插入失败：${error}',
+			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
+			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => '创建失败：${error}',
+			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',
+			'sessions.inspector.notes.personalHint' => '个人草稿 — 随输入自动保存。AI agent 不会写入这里。',
+			'sessions.inspector.notes.projectDocsHint' => '架构 / 规范 / 决策 / 计划 / 回顾 — 通常由 agent 撰写或维护。',
+			'sessions.inspector.notes.mappingCleared' => '映射已清除 — 使用默认值',
+			'sessions.inspector.notes.mappedTo' => ({required Object path}) => '已映射到 ${path}',
+			'sessions.inspector.notes.cancelTooltip' => '取消',
+			'sessions.inspector.notes.newDocTooltip' => '新建文档',
+			'sessions.inspector.notes.noProjectMapping' => '无法为此会话解析项目映射。检查网关是否配置了笔记库，以及会话的 cwd 是否已设置。',
+			'sessions.inspector.notes.emptyProjectDocs' => '暂无项目文档。点击 + 创建一个，或让 AI agent 根据提示生成。',
+			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => '未找到匹配「${query}」的内容。',
+			'sessions.inspector.notes.locationDialogHelp' => '将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。',
+			'sessions.inspector.notes.sessionCwd' => '会话 cwd',
+			'sessions.inspector.notes.projectDocsPath' => '相对笔记库的项目文档路径',
+			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
+			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
+			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
+			'sessions.inspector.notes.clearOverride' => '清除覆盖',
+			'sessions.inspector.notes.save' => '保存',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
@@ -2051,6 +2756,34 @@ extension on TranslationsZh {
 			'providers.accounts.deleteTitle' => '删除账号？',
 			'providers.accounts.importFailedApi' => ({required Object error}) => '导入失败：${error}',
 			'providers.accounts.importFailedGeneric' => ({required Object error}) => '导入失败：${error}',
+			'providers.accounts.enable' => '启用',
+			'providers.accounts.disable' => '停用',
+			'providers.accounts.deleteLabel' => '删除',
+			'providers.accounts.deleteBody' => '移除该账号及其存储的 OAuth token。已使用此账号的会话保持运行，但重新认证会失败。',
+			'providers.accounts.deletedSnack' => ({required Object name}) => '已删除 ${name}。',
+			'providers.accounts.importSyncedSnack' => '已同步 — 网关没有新账号。',
+			'providers.accounts.importedSnackOne' => ({required Object n}) => '已导入 ${n} 个账号。',
+			'providers.accounts.importedSnackOther' => ({required Object n}) => '已导入 ${n} 个账号。',
+			'providers.accounts.importing' => '同步中…',
+			'providers.accounts.importLocal' => '导入本地',
+			'providers.accounts.addHint' => '添加新账号仅可在网关主机上操作。',
+			'providers.accounts.addBody' => '新目录会自动出现在这里。OAuth 流程步骤参见文档。',
+			'providers.accounts.loadFailed' => ({required Object error}) => '加载账号失败：${error}',
+			'providers.accounts.intro' => '以 Claude 提供商启动的会话会从这些账号中选择（或回退到环境变量）。',
+			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
+			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} 已停用。',
+			'providers.accounts.renamedSnack' => ({required Object name}) => '已重命名为 ${name}。',
+			'providers.configFallbackTitle' => '提供商配置',
+			'providers.saving' => '保存中…',
+			'providers.save' => '保存',
+			'providers.configLoadFailed' => '加载提供商失败',
+			'providers.argsHelper' => '以空格分隔的 CLI 参数。',
+			'providers.listEmptyHeadline' => '未加载任何提供商。',
+			'providers.listEmptyBody' => '网关在启动时从插件目录解析提供商。如果有遗漏，请检查日志。',
+			'providers.listLoadFailed' => '加载提供商失败',
+			'providers.cliSectionHeader' => 'CLI 提供商',
+			'providers.enabledSnack' => ({required Object name}) => '${name} 已启用。',
+			'providers.disabledSnack' => ({required Object name}) => '${name} 已停用。',
 			'integrations.title' => '集成',
 			'integrations.register' => '注册',
 			'integrations.registerDialogTitle' => '注册集成',
@@ -2077,6 +2810,44 @@ extension on TranslationsZh {
 			'integrations.newApiKeySubtitle' => '将其交给集成方。旧密钥已失效。',
 			'integrations.rotateFailedApi' => ({required Object error}) => '轮换失败：${error}',
 			'integrations.rotateFailedGeneric' => ({required Object error}) => '轮换失败：${error}',
+			'integrations.deleteBody' => '移除该注册并吊销 API key。使用旧 key 的进行中请求将开始失败。',
+			'integrations.rotateBody' => ({required Object name}) => '为 ${name} 生成新 API key 并立即让旧 key 失效。',
+			'integrations.appBarFallback' => '集成',
+			'integrations.tooltipMore' => '更多',
+			'integrations.tooltipReadOnly' => '系统集成 — 只读',
+			'integrations.kvRoutePrefix' => '路由前缀',
+			'integrations.kvBaseUrl' => 'Base URL',
+			'integrations.kvScopes' => '范围',
+			'integrations.kvVersion' => '版本',
+			'integrations.kvLastHealthPing' => '最近健康检查',
+			'integrations.kvCreated' => '创建于',
+			'integrations.kvKeyRotated' => 'Key 轮换于',
+			'integrations.detailLoadFailed' => ({required Object error}) => '加载集成失败：${error}',
+			'integrations.callsLoadFailed' => '加载调用失败',
+			'integrations.noMatchingCalls' => '日志中暂无匹配的调用。',
+			'integrations.directionAll' => '全部',
+			'integrations.directionInbound' => '入站',
+			'integrations.directionOutbound' => '出站',
+			'integrations.form.validateRequired' => '名称、Base URL、路由前缀必填。',
+			'integrations.form.fieldName' => '名称',
+			'integrations.form.fieldNameHint' => 'My Bot',
+			'integrations.form.fieldBaseUrl' => 'Base URL',
+			'integrations.form.fieldRoutePrefix' => '路由前缀',
+			'integrations.form.routePrefixHelper' => '可通过 /api/v1/<前缀>/... 访问',
+			'integrations.form.fieldScopes' => '范围（可选）',
+			'integrations.form.scopesHelper' => '逗号分隔。留空 = 服务器默认。',
+			'integrations.form.fieldVersion' => '版本（可选）',
+			'integrations.form.validateBaseUrl' => '必须填写 Base URL。',
+			'integrations.form.editFieldScopes' => '范围',
+			'integrations.form.editScopesHelper' => '逗号分隔。',
+			'integrations.form.editFieldVersion' => '版本',
+			'integrations.form.apiKeyWarn' => '此 key 只显示这一次。',
+			'integrations.form.copyCopied' => '已复制',
+			'integrations.form.copyCopy' => '复制',
+			'integrations.emptyState' => '在 Web 管理端注册：集成 → 新建。',
+			'integrations.sectionRegistered' => '已注册',
+			'integrations.sectionSystem' => '系统',
+			'integrations.listLoadFailed' => '加载集成失败',
 			'memoryWorkers.title' => '记忆工作器',
 			'memoryWorkers.savedSnack' => ({required Object label}) => '${label} 已保存',
 			'memoryWorkers.saveFailed' => ({required Object error}) => '保存失败：${error}',
@@ -2146,17 +2917,65 @@ extension on TranslationsZh {
 			'project.willMergeInto' => '将合并到',
 			'backups.title' => '备份',
 			'backups.runConfirmTitle' => '立即运行备份？',
+			'backups.runConfirmBody' => '向本地目标触发一次新的转储。任务在服务端运行；此列表会随进度刷新。',
 			'backups.run' => '运行',
+			'backups.runNow' => '立即运行',
+			'backups.queueing' => '入队中…',
 			'backups.queuedSnack' => ({required Object id}) => '备份已入队（${id}）。监控进度中…',
 			'backups.runFailedApi' => ({required Object error}) => '运行失败：${error}',
 			'backups.runFailedGeneric' => ({required Object error}) => '运行失败：${error}',
+			'backups.rowSucceededSnack' => ({required Object bytes}) => '备份成功（${bytes}）。',
+			'backups.rowFailedSnack' => ({required Object error}) => '备份失败：${error}',
+			'backups.unknownError' => '未知错误',
 			'backups.detailTitle' => '备份详情',
 			'backups.deleteTitle' => '删除备份？',
+			'backups.deleteBody' => ({required Object target}) => '从 ${target} 移除二进制文件，并在索引中标记该行为已删除。',
 			'backups.deletedSnack' => ({required Object id}) => '已删除 ${id}。',
 			'backups.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
 			'backups.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
 			'backups.menuSchedules' => '计划',
 			'backups.menuTargets' => '目标',
+			'backups.kv.status' => '状态',
+			'backups.kv.target' => '目标',
+			'backups.kv.triggeredBy' => '触发者',
+			'backups.kv.started' => '开始',
+			'backups.kv.finished' => '完成',
+			'backups.kv.size' => '大小',
+			'backups.kv.encrypted' => '已加密',
+			'backups.kv.targetPath' => '目标路径',
+			'backups.kv.error' => '错误',
+			'backups.kv.yes' => '是',
+			'backups.kv.no' => '否',
+			'backups.emptyMissingDeps.headline' => '备份暂时无法运行',
+			'backups.emptyMissingDeps.body' => '安装 postgresql-client 并重启 opendray。',
+			'backups.emptyNoTargets.headline' => '未配置任何备份目标',
+			'backups.emptyNoTargets.body' => '打开「更多」菜单 → 目标，添加一个目的地（本地 / S3 / SMB / SFTP / WebDAV / rclone）。然后返回并点击「立即运行」。',
+			_ => null,
+		} ?? switch (path) {
+			'backups.emptyNoBackups.headline' => '暂无备份',
+			'backups.emptyNoBackups.body' => '点击「立即运行」生成一次新快照，或打开「计划」设置定期运行。',
+			'backups.restartToActivate' => '重启 opendray 以激活备份',
+			'backups.passphraseSaved' => '你的密语已保存。网关仅在启动时加载，因此更改需重启后才生效。',
+			'backups.keyFileLabel' => '密钥文件',
+			'backups.configuredViaLabel' => '配置方式',
+			'backups.wizard.title' => '设置备份',
+			'backups.wizard.intro' => '选择一个主密语。opendray 用它通过 AES-256-GCM 加密每一份备份。丢失密语就丢失数据 — 无法恢复。',
+			'backups.wizard.saving' => '保存中…',
+			'backups.wizard.generateAndSave' => '生成并保存',
+			'backups.wizard.savePassphrase' => '保存密语',
+			'backups.wizard.generateHint' => '服务器生成密码学级别随机密语，你复制到密码管理器，然后确认。',
+			'backups.wizard.helperRecommended' => '建议：从密码管理器生成 40+ 字符',
+			'backups.wizard.saveNowHeader' => '立即保存这个密语',
+			'backups.wizard.saveNowBody' => '此处只显示一次。之后无法从 opendray 取回。',
+			'backups.statusReady' => '备份就绪',
+			'backups.statusCannot' => '备份无法运行',
+			'backups.overviewTargets' => '目标',
+			'backups.overviewSchedules' => '计划',
+			'backups.overviewBackups' => '备份',
+			'backups.failedToLoad' => '加载备份失败',
+			'backups.envVarConfigured' => 'OPENDRAY_BACKUP_KEY 环境变量',
+			'backups.savedConfirmCheckbox' => '我已将密语保存到密码管理器',
+			'backups.pgDumpMissing' => 'pg_dump 不在 PATH 中。请安装 postgresql-client 并重启 opendray。',
 			'backups.encryption.checkAgain' => '重新检查',
 			'backups.encryption.generate' => '生成',
 			'backups.encryption.paste' => '粘贴',
@@ -2173,14 +2992,99 @@ extension on TranslationsZh {
 			'backupTargets.deleteTitle' => '删除目标？',
 			'backupTargets.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'backupSchedules.title' => '备份计划',
+			'backupSchedules.newButton' => '新建',
 			'backupSchedules.deleteTitle' => '删除计划？',
 			'backupSchedules.targetLabel' => '目标',
 			'backupSchedules.intervalLabel' => '间隔',
 			'backupSchedules.retentionLabel' => '保留（最近 N 个）',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
+			'backupSchedules.noTargets' => '未配置任何备份目标。请从 Web 管理端或「目标」屏添加。',
+			'backupSchedules.okMsgCreate' => '计划已创建。',
+			'backupSchedules.okMsgUpdate' => '计划已更新。',
+			'backupSchedules.okMsgDelete' => '计划已删除。',
+			'backupSchedules.errorPrefixCreate' => '创建失败',
+			'backupSchedules.errorPrefixUpdate' => '更新失败',
+			'backupSchedules.errorPrefixDelete' => '删除失败',
+			'backupSchedules.deleteBody' => ({required Object targetId}) => '移除目标 ${targetId} 的定期规格。已存在的备份不受影响。',
+			'backupSchedules.emptyList' => '暂无计划。\n点击「新建」创建一个。',
+			'backupSchedules.validatePickTarget' => '请选择一个目标。',
+			'backupSchedules.validateInterval' => '间隔必须大于 0。',
+			'backupSchedules.formTitleEdit' => '编辑计划',
+			'backupSchedules.formTitleNew' => '新建计划',
+			'backupSchedules.saveButtonEdit' => '保存',
+			'backupSchedules.saveButtonNew' => '创建',
+			'backupSchedules.targetFixedHint' => '目标一旦创建即不可改。',
+			'backupSchedules.enabledOn' => '调度器将按周期运行。',
+			'backupSchedules.enabledOff' => '已暂停 — 重新启用前不会自动运行。',
+			'backupSchedules.loadFailedTitle' => '加载计划失败',
+			'backupSchedules.pausedBadge' => '已暂停',
+			'backupSchedules.everyInterval' => ({required Object interval}) => '每 ${interval}',
+			'backupSchedules.keepRetention' => ({required Object n}) => '· 保留 ${n}',
+			'backupSchedules.nextRun' => ({required Object when}) => '· 下次 ${when}',
+			'backupSchedules.lastRun' => ({required Object when}) => '· 上次 ${when}',
 			'backupTargetEditor.useHttps' => '使用 HTTPS',
 			'backupTargetEditor.pathStyle' => '路径风格寻址',
 			'backupTargetEditor.pathStyleSubtitle' => '旧版 / MinIO',
+			'backupTargetEditor.kinds.local.label' => '本地磁盘',
+			'backupTargetEditor.kinds.local.description' => '运行 opendray 的机器上的文件夹',
+			'backupTargetEditor.kinds.smb.label' => 'SMB 共享',
+			'backupTargetEditor.kinds.smb.description' => 'Windows 共享 + 多数家用 NAS 设备',
+			'backupTargetEditor.kinds.webdav.label' => 'WebDAV',
+			'backupTargetEditor.kinds.webdav.description' => '自托管云盘 + 文件共享服务',
+			'backupTargetEditor.kinds.sftp.label' => 'SFTP',
+			'backupTargetEditor.kinds.sftp.description' => '任何可 SSH 访问的服务器',
+			'backupTargetEditor.kinds.s3.label' => 'S3 / 兼容',
+			'backupTargetEditor.kinds.s3.description' => 'Amazon S3 + S3 兼容存储桶（MinIO、R2、B2）',
+			'backupTargetEditor.kinds.rclone.label' => 'rclone（任意）',
+			'backupTargetEditor.kinds.rclone.description' => '通过 rclone CLI 访问 OneDrive、Google Drive、Dropbox',
+			'backupTargetEditor.formTitleEdit' => '编辑目标',
+			'backupTargetEditor.formTitleNew' => '新建备份目标',
+			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => '自动：${prefix}-1',
+			'backupTargetEditor.idHelper' => '小写字母、数字、连字符。默认为下一个可用槽。',
+			'backupTargetEditor.enabledOn' => '定期和临时备份可使用此目标。',
+			'backupTargetEditor.enabledOff' => '服务器将拒绝向此处写入备份。',
+			'backupTargetEditor.saving' => '保存中…',
+			'backupTargetEditor.create' => '创建',
+			'backupTargetEditor.rootDirLabel' => '根目录',
+			'backupTargetEditor.rootDirHint' => '留空 = cfg.backup.local_dir (~/.opendray/backups)',
+			'backupTargetEditor.hostLabel' => '主机',
+			'backupTargetEditor.portLabel' => '端口',
+			'backupTargetEditor.shareLabel' => '共享',
+			'backupTargetEditor.shareHint' => '顶层共享名',
+			'backupTargetEditor.shareSampleHint' => 'Claude_Workspace',
+			'backupTargetEditor.userLabel' => '用户',
+			'backupTargetEditor.passwordLabel' => '密码',
+			'backupTargetEditor.passwordHintKeepCurrent' => '留空 = 保留当前值',
+			'backupTargetEditor.passwordHintKeep' => '留空 = 保留',
+			'backupTargetEditor.pathPrefixLabel' => '路径前缀',
+			'backupTargetEditor.pathPrefixHintShareRoot' => '共享根下的子文件夹（可选）',
+			'backupTargetEditor.pathPrefixHintBaseUrl' => 'Base URL 下的子文件夹（可选）',
+			'backupTargetEditor.pathPrefixHintObjectKey' => '对象键前缀（可选）',
+			'backupTargetEditor.pathPrefixHintSshFolder' => '绝对路径或相对用户主目录（可选）',
+			'backupTargetEditor.pathPrefixHintRemoteRoot' => '远端根下的子文件夹（可选）',
+			'backupTargetEditor.endpointLabel' => '端点',
+			'backupTargetEditor.regionLabel' => '区域',
+			'backupTargetEditor.bucketLabel' => '存储桶',
+			'backupTargetEditor.accessKeyLabel' => 'Access Key',
+			'backupTargetEditor.secretKeyLabel' => 'Secret Key',
+			'backupTargetEditor.secretKeyHintEdit' => '留空 = 保留当前值。已 AES-256-GCM 加密存储。',
+			'backupTargetEditor.secretKeyHintNew' => '已 AES-256-GCM 加密存储；不会回显。',
+			'backupTargetEditor.baseUrlLabel' => 'Base URL',
+			'backupTargetEditor.baseUrlHint' => '完整 URL 包含路径。Nextcloud：https://cloud.example/remote.php/dav/files/<user>',
+			'backupTargetEditor.sftpPasswordHintEdit' => '留空 = 保留。如果密码 + 私钥同时存在，私钥优先。',
+			'backupTargetEditor.sftpPasswordHintNew' => '密码或私钥二选一。两者同时存在时，密码仅作回退。',
+			'backupTargetEditor.privateKeyLabel' => '私钥（PEM）',
+			'backupTargetEditor.privateKeyHintEdit' => '留空 = 保留。粘贴 OpenSSH/PEM 内容。',
+			'backupTargetEditor.privateKeyHintNew' => '粘贴 OpenSSH/PEM 私钥内容。多行输入 — 保留 BEGIN/END 标记。',
+			'backupTargetEditor.hostKeyLabel' => 'Host key（pinning）',
+			'backupTargetEditor.hostKeyHint' => 'OpenSSH 格式的服务器公钥。`ssh-keyscan <host>` 获取。留空 = 不 pinning（局域网外不推荐）。',
+			'backupTargetEditor.rcloneNote' => '需要 opendray 主机上安装 rclone CLI。首次需运行 `rclone config` 交互式认证云账户。',
+			'backupTargetEditor.rcloneRemoteLabel' => '远端名',
+			'backupTargetEditor.rcloneRemoteHint' => '来自 `rclone config` 的名字（不带冒号）。',
+			'backupTargetEditor.rcloneBinaryLabel' => '二进制路径',
+			'backupTargetEditor.rcloneBinaryHint' => '覆盖 `which rclone`。留空 = PATH 查找。',
+			'backupTargetEditor.rcloneConfigLabel' => '配置路径',
+			'backupTargetEditor.rcloneConfigHint' => '覆盖 --config。留空 = rclone 默认。',
 			'githosts.title' => 'Git 主机',
 			'githosts.addHost' => '添加主机',
 			'githosts.deleteTitle' => '删除 Git 主机？',
@@ -2191,6 +3095,38 @@ extension on TranslationsZh {
 			'githosts.form.hostLabel' => '主机',
 			'githosts.form.nameLabel' => '名称',
 			'githosts.form.nameHint' => 'work-github、personal-gitlab、…',
+			'githosts.form.kinds.github' => 'GitHub',
+			'githosts.form.kinds.gitlab' => 'GitLab',
+			'githosts.form.kinds.bitbucket' => 'Bitbucket',
+			'githosts.form.kinds.gitea' => 'Gitea',
+			'githosts.form.kinds.custom' => '自定义',
+			'githosts.form.validateHost' => '必须填写主机。',
+			'githosts.form.validateName' => '必须填写名称。',
+			'githosts.form.snackAdded' => '主机已添加。',
+			'githosts.form.snackUpdated' => '主机已更新。',
+			'githosts.form.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
+			'githosts.form.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
+			'githosts.form.saving' => '保存中…',
+			'githosts.form.save' => '保存',
+			'githosts.form.add' => '添加',
+			'githosts.form.nameHelper' => '在 PR 列表中显示的名字。',
+			'githosts.form.tokenLabelKeep' => 'Token（留空 = 保留现有）',
+			'githosts.form.tokenLabel' => 'Token',
+			'githosts.form.tokenHintKeep' => '留空 = 保留现有。',
+			'githosts.form.tokenHintNew' => '粘贴个人访问令牌。',
+			'githosts.form.enabledHelper' => '可供会话用于 PR / 远端查找。',
+			'githosts.form.validateTokenRequired' => '添加主机时必须填写 Token。',
+			'githosts.form.appBarEdit' => ({required Object name}) => '编辑 ${name}',
+			'githosts.form.appBarNew' => '添加 Git 主机',
+			'githosts.form.tokenPreviewHint' => ({required Object preview}) => '当前预览：${preview}',
+			'githosts.form.tokenPreviewNone' => '（无）',
+			'githosts.form.pausedSubtitle' => '已暂停 — 会话跳过此主机。',
+			'githosts.deleteBody' => ({required Object host}) => '移除该凭据。试图列出 ${host} 的 PR 的会话将回退到未认证 API。',
+			'githosts.deletedSnack' => ({required Object name}) => '已删除 ${name}。',
+			'githosts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
+			'githosts.disabledSnack' => ({required Object name}) => '${name} 已停用。',
+			'githosts.emptyList' => '未配置任何 Git 主机。\n\n添加一个凭据，让网关可以列出你仓库的 pull request。',
+			'githosts.failedToLoad' => '加载 Git 主机失败',
 			'channels.title' => '通道',
 			'channels.kNew' => '新建',
 			'channels.sendTest' => '发送测试消息',
@@ -2251,6 +3187,50 @@ extension on TranslationsZh {
 			'channels.errorPrefix.update' => '更新失败',
 			'channels.errorPrefix.delete' => '删除失败',
 			'channels.failedToLoad' => '加载通道失败',
+			'channels.kinds.telegram.description' => '通过 @BotFather 创建机器人。opendray 长轮询 getUpdates 并通过 REST 发送。原生支持按钮和 reply_to_message。',
+			'channels.kinds.telegram.botTokenLabel' => '机器人 Token',
+			'channels.kinds.telegram.botTokenHint' => '从 @BotFather 获取。存储于通道配置；仅管理员 API 可见。',
+			'channels.kinds.telegram.chatIdLabel' => '默认 chat ID',
+			'channels.kinds.telegram.chatIdPlaceholder' => '42（可选 — 没有 ReplyCtx 时使用）',
+			'channels.kinds.slack.description' => 'Socket Mode — 无需公网 webhook。需要 bot OAuth token（xoxb-）和带 connections:write 的 app-level token（xapp-）。',
+			'channels.kinds.slack.botTokenLabel' => 'Bot token（xoxb-…）',
+			'channels.kinds.slack.botTokenHint' => 'OAuth & Permissions → Bot User OAuth Token。需要 chat:write。',
+			'channels.kinds.slack.appTokenLabel' => 'App-level token（xapp-…）',
+			'channels.kinds.slack.appTokenHint' => 'Settings → Basic Information → App-Level Tokens。范围：connections:write。',
+			'channels.kinds.slack.channelIdLabel' => '默认 channel ID',
+			'channels.kinds.slack.channelIdPlaceholder' => 'C0123ABC456（可选）',
+			'channels.kinds.discord.description' => '通过 Discord Developer Portal 创建机器人，启用 MESSAGE CONTENT INTENT。连接 Gateway WS — 无需公网 URL。',
+			'channels.kinds.discord.botTokenLabel' => 'Bot token',
+			'channels.kinds.discord.botTokenPlaceholder' => '来自 Discord Developer Portal 的 Bot token',
+			'channels.kinds.discord.botTokenHint' => 'Application → Bot → Reset Token。邀请机器人时勾选 send_messages + embed_links。',
+			'channels.kinds.discord.channelIdLabel' => '默认 channel ID',
+			'channels.kinds.discord.channelIdPlaceholder' => '123456789012345678（可选）',
+			'channels.kinds.feishu.description' => '应用级凭据。入站走事件订阅 webhook。下方生成公网 webhook URL — 粘贴到飞书开放平台控制台。',
+			'channels.kinds.feishu.afterCreateHint' => '在通道卡上打开 webhook URL，粘贴到飞书开放平台 → 事件订阅 → Request URL。',
+			'channels.kinds.feishu.appIdLabel' => 'App ID',
+			'channels.kinds.feishu.appSecretLabel' => 'App secret',
+			'channels.kinds.feishu.appSecretPlaceholder' => '应用凭据 secret',
+			'channels.kinds.feishu.verificationTokenLabel' => 'Verification token',
+			'channels.kinds.feishu.verificationTokenHint' => '来自 事件订阅 → Verification Token。设置后，opendray 拒绝 token 不匹配的 webhook。',
+			'channels.kinds.feishu.chatIdLabel' => '默认 chat ID（oc_…）',
+			'channels.kinds.feishu.chatIdPlaceholder' => 'oc_xxxxxxxxxx（可选）',
+			'channels.kinds.dingtalk.description' => '自定义群机器人。仅外发。群聊 → 机器人 → 添加 → 加签模式 → 复制 webhook + secret。',
+			'channels.kinds.dingtalk.webhookUrlLabel' => 'Webhook URL',
+			'channels.kinds.dingtalk.secretLabel' => '加签 secret',
+			'channels.kinds.dingtalk.secretHint' => '当机器人为「加签」安全模式时，将 secret 复制到这里。opendray 自动添加 timestamp + sign 参数。',
+			'channels.kinds.wecom.description' => '群机器人 webhook。仅外发（文本 + markdown）。群设置 → 群机器人 → 添加 → 复制 webhook URL。',
+			'channels.kinds.wecom.webhookKeyLabel' => 'Webhook key',
+			'channels.kinds.wecom.webhookKeyPlaceholder' => '「key=」查询参数值',
+			'channels.kinds.wecom.webhookKeyHint' => '或将整个 webhook URL 粘贴到下方字段 — 任一即可。',
+			'channels.kinds.wecom.webhookUrlLabel' => '或完整 webhook URL',
+			'channels.kinds.wechat.description' => '通过 WxPusher 推送到个人微信。仅外发 — 推送服务不转发用户回复。每个接收方需通过二维码订阅一次。',
+			'channels.kinds.wechat.appTokenLabel' => 'App token（AT_…）',
+			'channels.kinds.wechat.appTokenHint' => 'WxPusher → 应用管理 → 创建应用 → 复制 App Token。',
+			'channels.kinds.wechat.uidsLabel' => '接收方 UID（每行一个）',
+			'channels.kinds.wechat.uidsHint' => 'UID 或 topic ID 至少需要一个。',
+			'channels.kinds.wechat.topicIdsLabel' => 'Topic ID（每行一个）',
+			'channels.kinds.wechat.urlLabel' => '点击跳转 URL',
+			'channels.kinds.wechat.urlHint' => '设置后，点击微信通知会打开此页面。',
 			'onboarding.gatewayLabel' => '网关 URL',
 			'onboarding.gatewayHint' => 'https://opendray.example.com',
 			'onboarding.kContinue' => '继续',
@@ -2260,6 +3240,35 @@ extension on TranslationsZh {
 			'skills.idLabel' => 'Id（slug）',
 			'skills.idHint' => '例如：tdd-guide',
 			'skills.bodyLabel' => '正文（Markdown）',
+			'skills.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
+			'skills.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
+			'skills.idRequired' => '必须填写 Id。',
+			'skills.bodyRequired' => '正文不能为空。',
+			'skills.snackCreated' => '技能已创建。',
+			'skills.snackOverride' => '已保存为库覆盖。',
+			'skills.snackUpdated' => '技能已更新。',
+			'skills.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
+			'skills.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
+			'skills.resetTitle' => '重置为内置？',
+			'skills.deleteTitle' => '删除技能？',
+			'skills.resetBody' => ({required Object id}) => '移除 ${id} 的库覆盖。会话将回退到内置正文。',
+			'skills.resetButton' => '重置',
+			'skills.resetSnack' => ({required Object id}) => '已将 ${id} 重置为内置。',
+			'skills.deletedSnack' => ({required Object id}) => '已删除 ${id}。',
+			'skills.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
+			'skills.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
+			'skills.deleteBody' => ({required Object id}) => '从库中移除 ${id}。引用它的会话在恢复前会失败。',
+			'skills.newSkillTitle' => '新建技能',
+			'skills.customizeTitle' => ({required Object id}) => '自定义 ${id}',
+			'skills.editTitle' => ({required Object id}) => '编辑 ${id}',
+			'skills.resetTooltip' => '重置为内置',
+			'skills.deleteTooltip' => '删除',
+			'skills.saving' => '保存中…',
+			'skills.saveOverride' => '保存覆盖',
+			'skills.overrideBanner' => '保存会以相同 id 创建一个库覆盖。会话将使用此正文而非内置版本，直到你重置。',
+			'skills.idHelper' => '小写字母 / 数字 / 横线。创建后锁定。',
+			'skills.emptyList' => '未配置任何技能。网关附带内置技能（planner、code-reviewer 等）。',
+			'skills.failedToLoad' => '加载技能失败',
 			'customTasks.title' => '自定义任务',
 			'customTasks.newTask' => '新建任务',
 			'customTasks.deleteTitle' => '删除任务？',
@@ -2270,12 +3279,33 @@ extension on TranslationsZh {
 			'customTasks.popupDelete' => '删除',
 			'customTasks.nameHint' => '例如：backend-tests',
 			'customTasks.commandHint' => '/run pnpm test --filter backend',
-			_ => null,
-		} ?? switch (path) {
 			'customTasks.descriptionHint' => '在任务名下方显示的一行说明。',
 			'customTasks.scopeGlobal' => '全局',
 			'customTasks.scopeProject' => '项目',
 			'customTasks.cwdHint' => '/Users/you/projects/backend',
+			'customTasks.snackCreated' => '任务已创建。',
+			'customTasks.snackUpdated' => '任务已更新。',
+			'customTasks.deleteBody' => '从目录中移除任务。已插入到会话中的实例不受影响。',
+			'customTasks.introBanner' => '定义自己的斜杠命令。它们会与内置任务一起出现在会话任务选择器中。',
+			'customTasks.validateNameRequired' => '必须填写名称',
+			'customTasks.validateCommandRequired' => '必须填写命令',
+			'customTasks.validateProjectCwd' => '项目范围任务需要绝对 cwd 路径',
+			'customTasks.appBarEdit' => '编辑自定义任务',
+			'customTasks.appBarNew' => '新建自定义任务',
+			'customTasks.fieldName' => '名称',
+			'customTasks.nameHelper' => '在检查器的任务选择器中显示。',
+			'customTasks.fieldCommand' => '命令',
+			'customTasks.commandHelper' => '选择时插入到会话的文本。可以是 CLI 命令或 Claude 斜杠命令。',
+			'customTasks.fieldDescription' => '描述（可选）',
+			'customTasks.fieldScope' => '范围',
+			'customTasks.globalScopeHint' => '从任何会话可见，不论 cwd。',
+			'customTasks.projectScopeHint' => '仅当会话的 cwd 匹配以下路径时可见。',
+			'customTasks.fieldProjectCwd' => '项目 cwd',
+			'customTasks.cwdHelper' => '绝对路径。以此 cwd 启动的会话将看到该任务。',
+			'customTasks.saving' => '保存中…',
+			'customTasks.save' => '保存',
+			'customTasks.create' => '创建',
+			'customTasks.failedToLoad' => '加载自定义任务失败',
 			'notesPage.title' => '笔记',
 			'notesPage.newButton' => '新建',
 			'notesPage.newNoteDialogTitle' => '新建笔记',
@@ -2293,9 +3323,22 @@ extension on TranslationsZh {
 			'notesPage.pathLabel' => '相对仓库的路径',
 			'notesPage.pathHint' => 'personal/scratch.md',
 			'notesPage.create' => '创建',
+			'notesPage.popupDelete' => '删除',
+			'notesPage.deleteBody' => '此操作不可撤销。仓库的 git 同步会同时移除网关主机上的文件。',
+			'notesPage.emptyFilterMatch' => ({required Object query}) => '未找到匹配「${query}」的笔记。',
+			'notesPage.emptyVault' => '仓库为空。点击 + 创建第一条笔记。',
+			'notesPage.emptyFolder' => ({required Object path}) => '文件夹「${path}」为空。',
+			'notesPage.validatePath' => '必须填写路径',
+			'notesPage.validatePathDots' => '路径不能包含「..」',
+			'notesPage.pathHelper' => '缺失时自动追加 .md。',
 			'notesPage.editor.markdownHint' => 'Markdown…',
 			'notesPage.editor.saving' => '保存中…',
 			'notesPage.editor.autosave' => '随输入自动保存',
+			'notesPage.editor.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
+			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
+			'notesPage.editor.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
+			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
+			'notesPage.editor.savedAt' => ({required Object time}) => '${time} 已保存',
 			'memory.title' => '记忆',
 			'memory.more' => '更多',
 			'memory.workers' => '记忆工作器',
@@ -2385,10 +3428,17 @@ extension on TranslationsZh {
 			'settings.serverSettings.reloadTooltip' => '从服务器重新加载',
 			'settings.serverSettings.restartTooltip' => '重启网关',
 			'settings.serverSettings.restartConfirmTitle' => '重启 opendray？',
+			'settings.serverSettings.restartConfirmBody' => '网关将自我 exec。手机应用可能短暂断开连接。',
 			'settings.serverSettings.restart' => '重启',
 			'settings.serverSettings.restartQueuedSnack' => '已请求重启。稍后下拉刷新。',
 			'settings.serverSettings.restartFailedApi' => ({required Object error}) => '重启失败：${error}',
 			'settings.serverSettings.restartFailedGeneric' => ({required Object error}) => '重启失败：${error}',
+			'settings.serverSettings.loadedFrom' => ({required Object path}) => '加载自：${path}',
+			'settings.serverSettings.restartHint' => '大部分配置需要重启网关后生效。重启按钮在 AppBar 中。',
+			'settings.serverSettings.savedNeedsRestart' => '已保存。重启网关以生效。',
+			'settings.serverSettings.savedSimple' => '已保存。',
+			'settings.serverSettings.changesNeedRestart' => '此配置的修改需重启网关。',
+			'settings.serverSettings.loadFailed' => '加载服务器设置失败',
 			'settings.serverSettings.sections.general' => '通用',
 			'settings.serverSettings.sections.logging' => '日志',
 			'settings.serverSettings.sections.sessions' => '会话',
@@ -2399,6 +3449,78 @@ extension on TranslationsZh {
 			'settings.serverSettings.sections.storageClaude' => '存储 · Claude',
 			'settings.serverSettings.sections.storageCodex' => '存储 · Codex',
 			'settings.serverSettings.sections.storageGemini' => '存储 · Gemini',
+			'settings.serverSettings.sectionDescriptions.general' => '监听地址、管理员账号、令牌 TTL。',
+			'settings.serverSettings.sectionDescriptions.logging' => '详细程度、格式、磁盘日志路径。',
+			'settings.serverSettings.sectionDescriptions.sessions' => '空闲检测阈值。',
+			'settings.serverSettings.sectionDescriptions.vault' => '笔记、技能、git 版本化的根目录。',
+			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'MCP 服务器 + 密钥文件的凭据库路径。',
+			'settings.serverSettings.sectionDescriptions.memory' => '跨 CLI 的持久记忆子系统。',
+			'settings.serverSettings.sectionDescriptions.backup' => '加密的数据库备份 + 管理数据导出。密语保存在密钥文件（设置 → 备份）。',
+			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Claude 会话记录在磁盘的存放位置。',
+			'settings.serverSettings.sectionDescriptions.storageCodex' => 'Codex 会话根目录。',
+			'settings.serverSettings.sectionDescriptions.storageGemini' => '按项目的临时目录 + projects.json 路径。',
+			'settings.serverSettings.fields.listenAddress' => '监听地址',
+			'settings.serverSettings.fields.adminUser' => '管理员用户',
+			'settings.serverSettings.fields.adminUserHelper' => '当未设置密钥文件或环境变量时生效。否则参见 设置 → 账户。',
+			'settings.serverSettings.fields.adminPassword' => '管理员密码',
+			'settings.serverSettings.fields.adminPasswordHelper' => '留空 = 保留。日常轮换请用 设置 → 账户（密钥文件支持，无需重启）。',
+			_ => null,
+		} ?? switch (path) {
+			'settings.serverSettings.fields.tokenTtlWeb' => '令牌 TTL（Web）',
+			'settings.serverSettings.fields.tokenTtlHelper' => 'Go duration 字符串，如 24h、30m。',
+			'settings.serverSettings.fields.level' => '级别',
+			'settings.serverSettings.fields.format' => '格式',
+			'settings.serverSettings.fields.filePath' => '文件路径',
+			'settings.serverSettings.fields.filePathHelper' => '留空 = 仅 stdout。',
+			'settings.serverSettings.fields.idleThreshold' => '空闲阈值',
+			'settings.serverSettings.fields.idleThresholdHelper' => '会话被标记为空闲前的安静时长。Go duration。',
+			'settings.serverSettings.fields.idleCheckInterval' => '空闲检查间隔',
+			'settings.serverSettings.fields.idleCheckHelper' => '空闲回收器运行的频率。',
+			'settings.serverSettings.fields.root' => '根目录',
+			'settings.serverSettings.fields.rootHelper' => 'notes / skills / git_root 子路径的父目录。',
+			'settings.serverSettings.fields.notesPath' => '笔记路径',
+			'settings.serverSettings.fields.skillsPath' => '技能路径',
+			'settings.serverSettings.fields.gitRoot' => 'Git 根',
+			'settings.serverSettings.fields.personalPrefix' => '个人前缀',
+			'settings.serverSettings.fields.projectsPrefix' => '项目前缀',
+			'settings.serverSettings.fields.registryRoot' => '注册表根',
+			'settings.serverSettings.fields.secretsFile' => '密钥文件',
+			'settings.serverSettings.fields.backend' => '后端',
+			'settings.serverSettings.fields.store' => '存储',
+			'settings.serverSettings.fields.defaultTopK' => '默认 top-k',
+			'settings.serverSettings.fields.similarityThreshold' => '相似度阈值',
+			'settings.serverSettings.fields.defaultScope' => '默认范围',
+			'settings.serverSettings.fields.chromemHelper' => '当 store=chromem 时。',
+			'settings.serverSettings.fields.preserveHelper' => '留空 = 保留当前值。',
+			'settings.serverSettings.fields.localModelName' => '本地模型名',
+			'settings.serverSettings.fields.localLibraryPath' => '本地库路径',
+			'settings.serverSettings.fields.localModelPath' => '本地模型路径',
+			'settings.serverSettings.fields.localTokenizerPath' => '本地分词器路径',
+			'settings.serverSettings.fields.localMaxSeqLen' => '本地最大序列长度',
+			'settings.serverSettings.fields.backupEnabled' => '已启用',
+			'settings.serverSettings.fields.backupEnabledHelper' => '即使打开此项，备份子系统仍需配置 OPENDRAY_BACKUP_KEY 或密钥文件才会运行。',
+			'settings.serverSettings.fields.backupLocalDir' => '本地目录',
+			'settings.serverSettings.fields.backupExportDir' => '导出目录',
+			'settings.serverSettings.fields.pathHelper' => '留空 = 启动时从 PATH 解析。',
+			'settings.serverSettings.fields.accountsDir' => '账号目录',
+			'settings.serverSettings.fields.accountsHelper' => '各账号 .claude/ 子目录的父目录。留空 = ~/.claude-accounts。',
+			'settings.serverSettings.fields.sessionsRoot' => '会话根目录',
+			'settings.serverSettings.fields.sessionsRootHelper' => '留空 = ~/.codex/sessions。',
+			'settings.serverSettings.fields.listenHelper' => '网关绑定的 host:port。需重启。',
+			'settings.serverSettings.fields.secretsHelper' => 'AES-256-GCM 加密的密钥库。',
+			'settings.serverSettings.fields.backendHelper' => 'auto 选择最佳可用；local 需要 ONNX。',
+			'settings.serverSettings.fields.similarityHelper' => '0.0–1.0；低于此值的结果会被过滤。',
+			'settings.serverSettings.fields.chromemPath' => 'chromem 路径',
+			'settings.serverSettings.fields.httpBaseUrl' => 'HTTP base URL',
+			'settings.serverSettings.fields.httpModel' => 'HTTP model',
+			'settings.serverSettings.fields.httpApiKey' => 'HTTP api key',
+			'settings.serverSettings.fields.httpDimensions' => 'HTTP dimensions',
+			'settings.serverSettings.fields.pgDumpPath' => 'pg_dump 路径',
+			'settings.serverSettings.fields.pgRestorePath' => 'pg_restore 路径',
+			'settings.serverSettings.fields.tmpRoot' => '临时根目录',
+			'settings.serverSettings.fields.projectsJson' => 'projects.json',
+			'settings.serverSettings.validateInteger' => ({required Object field}) => '「${field}」必须是整数',
+			'settings.serverSettings.validateNumber' => ({required Object field}) => '「${field}」必须是数字',
 			_ => null,
 		};
 	}

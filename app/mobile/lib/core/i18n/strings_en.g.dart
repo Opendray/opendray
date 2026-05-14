@@ -340,6 +340,39 @@ class TranslationsProvidersEn {
 	String errorWithMessage({required Object prefix, required Object error}) => '${prefix}: ${error}';
 
 	late final TranslationsProvidersAccountsEn accounts = TranslationsProvidersAccountsEn.internal(_root);
+
+	/// en: 'Provider config'
+	String get configFallbackTitle => 'Provider config';
+
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Failed to load provider'
+	String get configLoadFailed => 'Failed to load provider';
+
+	/// en: 'Whitespace-separated CLI args.'
+	String get argsHelper => 'Whitespace-separated CLI args.';
+
+	/// en: 'No providers loaded.'
+	String get listEmptyHeadline => 'No providers loaded.';
+
+	/// en: 'The gateway resolves providers from its plugin directory at startup. Check the logs if you expect one.'
+	String get listEmptyBody => 'The gateway resolves providers from its plugin directory at startup. Check the logs if you expect one.';
+
+	/// en: 'Failed to load providers'
+	String get listLoadFailed => 'Failed to load providers';
+
+	/// en: 'CLI providers'
+	String get cliSectionHeader => 'CLI providers';
+
+	/// en: '{name} enabled.'
+	String enabledSnack({required Object name}) => '${name} enabled.';
+
+	/// en: '{name} disabled.'
+	String disabledSnack({required Object name}) => '${name} disabled.';
 }
 
 // Path: integrations
@@ -427,6 +460,74 @@ class TranslationsIntegrationsEn {
 
 	/// en: 'Rotate failed: {error}'
 	String rotateFailedGeneric({required Object error}) => 'Rotate failed: ${error}';
+
+	/// en: 'Removes the registration and revokes the API key. In-flight requests using the old key will start failing.'
+	String get deleteBody => 'Removes the registration and revokes the API key. In-flight requests using the old key will start failing.';
+
+	/// en: 'Generates a new API key for {name} and immediately invalidates the old one.'
+	String rotateBody({required Object name}) => 'Generates a new API key for ${name} and immediately invalidates the old one.';
+
+	/// en: 'Integration'
+	String get appBarFallback => 'Integration';
+
+	/// en: 'More'
+	String get tooltipMore => 'More';
+
+	/// en: 'System integration — read-only'
+	String get tooltipReadOnly => 'System integration — read-only';
+
+	/// en: 'Route prefix'
+	String get kvRoutePrefix => 'Route prefix';
+
+	/// en: 'Base URL'
+	String get kvBaseUrl => 'Base URL';
+
+	/// en: 'Scopes'
+	String get kvScopes => 'Scopes';
+
+	/// en: 'Version'
+	String get kvVersion => 'Version';
+
+	/// en: 'Last health ping'
+	String get kvLastHealthPing => 'Last health ping';
+
+	/// en: 'Created'
+	String get kvCreated => 'Created';
+
+	/// en: 'Key rotated'
+	String get kvKeyRotated => 'Key rotated';
+
+	/// en: 'Failed to load integration: {error}'
+	String detailLoadFailed({required Object error}) => 'Failed to load integration: ${error}';
+
+	/// en: 'Failed to load calls'
+	String get callsLoadFailed => 'Failed to load calls';
+
+	/// en: 'No matching calls in the log yet.'
+	String get noMatchingCalls => 'No matching calls in the log yet.';
+
+	/// en: 'All'
+	String get directionAll => 'All';
+
+	/// en: 'Inbound'
+	String get directionInbound => 'Inbound';
+
+	/// en: 'Outbound'
+	String get directionOutbound => 'Outbound';
+
+	late final TranslationsIntegrationsFormEn form = TranslationsIntegrationsFormEn.internal(_root);
+
+	/// en: 'Register from the web admin: Integrations → New.'
+	String get emptyState => 'Register from the web admin: Integrations → New.';
+
+	/// en: 'Registered'
+	String get sectionRegistered => 'Registered';
+
+	/// en: 'System'
+	String get sectionSystem => 'System';
+
+	/// en: 'Failed to load integrations'
+	String get listLoadFailed => 'Failed to load integrations';
 }
 
 // Path: memoryWorkers
@@ -649,8 +750,17 @@ class TranslationsBackupsEn {
 	/// en: 'Run backup now?'
 	String get runConfirmTitle => 'Run backup now?';
 
+	/// en: 'Triggers a fresh dump against the local target. The job runs server-side; this list will refresh as it progresses.'
+	String get runConfirmBody => 'Triggers a fresh dump against the local target. The job runs server-side; this list will refresh as it progresses.';
+
 	/// en: 'Run'
 	String get run => 'Run';
+
+	/// en: 'Run now'
+	String get runNow => 'Run now';
+
+	/// en: 'Queueing…'
+	String get queueing => 'Queueing…';
 
 	/// en: 'Backup queued ({id}). Watching for progress…'
 	String queuedSnack({required Object id}) => 'Backup queued (${id}). Watching for progress…';
@@ -661,11 +771,23 @@ class TranslationsBackupsEn {
 	/// en: 'Run failed: {error}'
 	String runFailedGeneric({required Object error}) => 'Run failed: ${error}';
 
+	/// en: 'Backup succeeded ({bytes}).'
+	String rowSucceededSnack({required Object bytes}) => 'Backup succeeded (${bytes}).';
+
+	/// en: 'Backup failed: {error}'
+	String rowFailedSnack({required Object error}) => 'Backup failed: ${error}';
+
+	/// en: 'unknown error'
+	String get unknownError => 'unknown error';
+
 	/// en: 'Backup detail'
 	String get detailTitle => 'Backup detail';
 
 	/// en: 'Delete backup?'
 	String get deleteTitle => 'Delete backup?';
+
+	/// en: 'Removes the blob from {target} and marks the row deleted in the index.'
+	String deleteBody({required Object target}) => 'Removes the blob from ${target} and marks the row deleted in the index.';
 
 	/// en: 'Deleted {id}.'
 	String deletedSnack({required Object id}) => 'Deleted ${id}.';
@@ -681,6 +803,52 @@ class TranslationsBackupsEn {
 
 	/// en: 'Targets'
 	String get menuTargets => 'Targets';
+
+	late final TranslationsBackupsKvEn kv = TranslationsBackupsKvEn.internal(_root);
+	late final TranslationsBackupsEmptyMissingDepsEn emptyMissingDeps = TranslationsBackupsEmptyMissingDepsEn.internal(_root);
+	late final TranslationsBackupsEmptyNoTargetsEn emptyNoTargets = TranslationsBackupsEmptyNoTargetsEn.internal(_root);
+	late final TranslationsBackupsEmptyNoBackupsEn emptyNoBackups = TranslationsBackupsEmptyNoBackupsEn.internal(_root);
+
+	/// en: 'Restart opendray to activate backups'
+	String get restartToActivate => 'Restart opendray to activate backups';
+
+	/// en: 'Your passphrase is saved. The gateway only loads it at startup, so changes only take effect after a restart.'
+	String get passphraseSaved => 'Your passphrase is saved. The gateway only loads it at startup, so changes only take effect after a restart.';
+
+	/// en: 'Key file'
+	String get keyFileLabel => 'Key file';
+
+	/// en: 'Configured via'
+	String get configuredViaLabel => 'Configured via';
+
+	late final TranslationsBackupsWizardEn wizard = TranslationsBackupsWizardEn.internal(_root);
+
+	/// en: 'Backups ready'
+	String get statusReady => 'Backups ready';
+
+	/// en: 'Backups cannot run'
+	String get statusCannot => 'Backups cannot run';
+
+	/// en: 'Targets'
+	String get overviewTargets => 'Targets';
+
+	/// en: 'Schedules'
+	String get overviewSchedules => 'Schedules';
+
+	/// en: 'Backups'
+	String get overviewBackups => 'Backups';
+
+	/// en: 'Failed to load backups'
+	String get failedToLoad => 'Failed to load backups';
+
+	/// en: 'OPENDRAY_BACKUP_KEY env var'
+	String get envVarConfigured => 'OPENDRAY_BACKUP_KEY env var';
+
+	/// en: 'I have saved this passphrase to my password manager'
+	String get savedConfirmCheckbox => 'I have saved this passphrase to my password manager';
+
+	/// en: 'pg_dump is not on PATH. Install postgresql-client and restart opendray.'
+	String get pgDumpMissing => 'pg_dump is not on PATH. Install postgresql-client and restart opendray.';
 
 	late final TranslationsBackupsEncryptionEn encryption = TranslationsBackupsEncryptionEn.internal(_root);
 }
@@ -729,6 +897,9 @@ class TranslationsBackupSchedulesEn {
 	/// en: 'Backup schedules'
 	String get title => 'Backup schedules';
 
+	/// en: 'New'
+	String get newButton => 'New';
+
 	/// en: 'Delete schedule?'
 	String get deleteTitle => 'Delete schedule?';
 
@@ -743,6 +914,78 @@ class TranslationsBackupSchedulesEn {
 
 	/// en: '{prefix}: {error}'
 	String errorWithMessage({required Object prefix, required Object error}) => '${prefix}: ${error}';
+
+	/// en: 'No backup targets configured. Add one from the web admin or the Targets screen.'
+	String get noTargets => 'No backup targets configured. Add one from the web admin or the Targets screen.';
+
+	/// en: 'Schedule created.'
+	String get okMsgCreate => 'Schedule created.';
+
+	/// en: 'Schedule updated.'
+	String get okMsgUpdate => 'Schedule updated.';
+
+	/// en: 'Schedule deleted.'
+	String get okMsgDelete => 'Schedule deleted.';
+
+	/// en: 'Create failed'
+	String get errorPrefixCreate => 'Create failed';
+
+	/// en: 'Update failed'
+	String get errorPrefixUpdate => 'Update failed';
+
+	/// en: 'Delete failed'
+	String get errorPrefixDelete => 'Delete failed';
+
+	/// en: 'Removes the recurring spec for target {targetId}. Existing backup blobs are not touched.'
+	String deleteBody({required Object targetId}) => 'Removes the recurring spec for target ${targetId}. Existing backup blobs are not touched.';
+
+	/// en: 'No schedules yet. Tap "New" to create one.'
+	String get emptyList => 'No schedules yet.\nTap "New" to create one.';
+
+	/// en: 'Pick a target.'
+	String get validatePickTarget => 'Pick a target.';
+
+	/// en: 'Interval must be > 0.'
+	String get validateInterval => 'Interval must be > 0.';
+
+	/// en: 'Edit schedule'
+	String get formTitleEdit => 'Edit schedule';
+
+	/// en: 'New schedule'
+	String get formTitleNew => 'New schedule';
+
+	/// en: 'Save'
+	String get saveButtonEdit => 'Save';
+
+	/// en: 'Create'
+	String get saveButtonNew => 'Create';
+
+	/// en: 'Target is fixed once created.'
+	String get targetFixedHint => 'Target is fixed once created.';
+
+	/// en: 'Scheduler will run this on cadence.'
+	String get enabledOn => 'Scheduler will run this on cadence.';
+
+	/// en: 'Paused — no automatic runs until re-enabled.'
+	String get enabledOff => 'Paused — no automatic runs until re-enabled.';
+
+	/// en: 'Failed to load schedules'
+	String get loadFailedTitle => 'Failed to load schedules';
+
+	/// en: 'paused'
+	String get pausedBadge => 'paused';
+
+	/// en: 'every {interval}'
+	String everyInterval({required Object interval}) => 'every ${interval}';
+
+	/// en: '· keep {n}'
+	String keepRetention({required Object n}) => '· keep ${n}';
+
+	/// en: '· next {when}'
+	String nextRun({required Object when}) => '· next ${when}';
+
+	/// en: '· last {when}'
+	String lastRun({required Object when}) => '· last ${when}';
 }
 
 // Path: backupTargetEditor
@@ -761,6 +1004,152 @@ class TranslationsBackupTargetEditorEn {
 
 	/// en: 'Legacy / MinIO'
 	String get pathStyleSubtitle => 'Legacy / MinIO';
+
+	late final TranslationsBackupTargetEditorKindsEn kinds = TranslationsBackupTargetEditorKindsEn.internal(_root);
+
+	/// en: 'Edit target'
+	String get formTitleEdit => 'Edit target';
+
+	/// en: 'New backup target'
+	String get formTitleNew => 'New backup target';
+
+	/// en: 'Auto: {prefix}-1'
+	String idHintAuto({required Object prefix}) => 'Auto: ${prefix}-1';
+
+	/// en: 'Lower-case letters, digits, dashes. Defaults to the next available slot.'
+	String get idHelper => 'Lower-case letters, digits, dashes. Defaults to the next available slot.';
+
+	/// en: 'Scheduled and ad-hoc backups can target this.'
+	String get enabledOn => 'Scheduled and ad-hoc backups can target this.';
+
+	/// en: 'Server will refuse to write backups here.'
+	String get enabledOff => 'Server will refuse to write backups here.';
+
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
+	/// en: 'Create'
+	String get create => 'Create';
+
+	/// en: 'Root directory'
+	String get rootDirLabel => 'Root directory';
+
+	/// en: 'Empty = cfg.backup.local_dir (~/.opendray/backups)'
+	String get rootDirHint => 'Empty = cfg.backup.local_dir (~/.opendray/backups)';
+
+	/// en: 'Host'
+	String get hostLabel => 'Host';
+
+	/// en: 'Port'
+	String get portLabel => 'Port';
+
+	/// en: 'Share'
+	String get shareLabel => 'Share';
+
+	/// en: 'Top-level share name'
+	String get shareHint => 'Top-level share name';
+
+	/// en: 'Claude_Workspace'
+	String get shareSampleHint => 'Claude_Workspace';
+
+	/// en: 'User'
+	String get userLabel => 'User';
+
+	/// en: 'Password'
+	String get passwordLabel => 'Password';
+
+	/// en: 'Leave blank to keep current'
+	String get passwordHintKeepCurrent => 'Leave blank to keep current';
+
+	/// en: 'Leave blank to keep'
+	String get passwordHintKeep => 'Leave blank to keep';
+
+	/// en: 'Path prefix'
+	String get pathPrefixLabel => 'Path prefix';
+
+	/// en: 'Sub-folder under the share root (optional)'
+	String get pathPrefixHintShareRoot => 'Sub-folder under the share root (optional)';
+
+	/// en: 'Sub-folder under the base URL (optional)'
+	String get pathPrefixHintBaseUrl => 'Sub-folder under the base URL (optional)';
+
+	/// en: 'Object-key prefix (optional)'
+	String get pathPrefixHintObjectKey => 'Object-key prefix (optional)';
+
+	/// en: 'Absolute or relative to user home (optional)'
+	String get pathPrefixHintSshFolder => 'Absolute or relative to user home (optional)';
+
+	/// en: 'Sub-folder under the remote root (optional)'
+	String get pathPrefixHintRemoteRoot => 'Sub-folder under the remote root (optional)';
+
+	/// en: 'Endpoint'
+	String get endpointLabel => 'Endpoint';
+
+	/// en: 'Region'
+	String get regionLabel => 'Region';
+
+	/// en: 'Bucket'
+	String get bucketLabel => 'Bucket';
+
+	/// en: 'Access key'
+	String get accessKeyLabel => 'Access key';
+
+	/// en: 'Secret key'
+	String get secretKeyLabel => 'Secret key';
+
+	/// en: 'Leave blank to keep current. Stored AES-256-GCM encrypted.'
+	String get secretKeyHintEdit => 'Leave blank to keep current. Stored AES-256-GCM encrypted.';
+
+	/// en: 'Stored AES-256-GCM encrypted; never echoed back.'
+	String get secretKeyHintNew => 'Stored AES-256-GCM encrypted; never echoed back.';
+
+	/// en: 'Base URL'
+	String get baseUrlLabel => 'Base URL';
+
+	/// en: 'Full URL including path. Nextcloud: https://cloud.example/remote.php/dav/files/<user>'
+	String get baseUrlHint => 'Full URL including path. Nextcloud: https://cloud.example/remote.php/dav/files/<user>';
+
+	/// en: 'Leave blank to keep. If both password + private key are present, the private key wins.'
+	String get sftpPasswordHintEdit => 'Leave blank to keep. If both password + private key are present, the private key wins.';
+
+	/// en: 'Either password OR private key. If both, password becomes a fallback only.'
+	String get sftpPasswordHintNew => 'Either password OR private key. If both, password becomes a fallback only.';
+
+	/// en: 'Private key (PEM)'
+	String get privateKeyLabel => 'Private key (PEM)';
+
+	/// en: 'Leave blank to keep. Paste OpenSSH/PEM contents.'
+	String get privateKeyHintEdit => 'Leave blank to keep. Paste OpenSSH/PEM contents.';
+
+	/// en: 'Paste the contents of an OpenSSH/PEM private key. Multi-line input — keep the BEGIN/END markers.'
+	String get privateKeyHintNew => 'Paste the contents of an OpenSSH/PEM private key. Multi-line input — keep the BEGIN/END markers.';
+
+	/// en: 'Host key (pinning)'
+	String get hostKeyLabel => 'Host key (pinning)';
+
+	/// en: 'OpenSSH-style server public key. `ssh-keyscan <host>` to obtain. Blank = no pinning (NOT recommended outside LAN).'
+	String get hostKeyHint => 'OpenSSH-style server public key. `ssh-keyscan <host>` to obtain. Blank = no pinning (NOT recommended outside LAN).';
+
+	/// en: 'Requires the rclone CLI on the opendray host. First run `rclone config` once interactively to authenticate cloud accounts.'
+	String get rcloneNote => 'Requires the rclone CLI on the opendray host. First run `rclone config` once interactively to authenticate cloud accounts.';
+
+	/// en: 'Remote name'
+	String get rcloneRemoteLabel => 'Remote name';
+
+	/// en: 'Name from `rclone config` (no colon).'
+	String get rcloneRemoteHint => 'Name from `rclone config` (no colon).';
+
+	/// en: 'Binary path'
+	String get rcloneBinaryLabel => 'Binary path';
+
+	/// en: 'Override `which rclone`. Empty = PATH lookup.'
+	String get rcloneBinaryHint => 'Override `which rclone`. Empty = PATH lookup.';
+
+	/// en: 'Config path'
+	String get rcloneConfigLabel => 'Config path';
+
+	/// en: 'Override --config. Empty = rclone default.'
+	String get rcloneConfigHint => 'Override --config. Empty = rclone default.';
 }
 
 // Path: githosts
@@ -785,6 +1174,24 @@ class TranslationsGithostsEn {
 
 	late final TranslationsGithostsErrorPrefixEn errorPrefix = TranslationsGithostsErrorPrefixEn.internal(_root);
 	late final TranslationsGithostsFormEn form = TranslationsGithostsFormEn.internal(_root);
+
+	/// en: 'Removes the credential. Sessions trying to list PRs from {host} will fall back to the unauthenticated API.'
+	String deleteBody({required Object host}) => 'Removes the credential. Sessions trying to list PRs from ${host} will fall back to the unauthenticated API.';
+
+	/// en: 'Deleted {name}.'
+	String deletedSnack({required Object name}) => 'Deleted ${name}.';
+
+	/// en: '{name} enabled.'
+	String enabledSnack({required Object name}) => '${name} enabled.';
+
+	/// en: '{name} disabled.'
+	String disabledSnack({required Object name}) => '${name} disabled.';
+
+	/// en: 'No git hosts configured. Add a credential so the gateway can list pull requests across your repos.'
+	String get emptyList => 'No git hosts configured.\n\nAdd a credential so the gateway can list pull requests across your repos.';
+
+	/// en: 'Failed to load git hosts'
+	String get failedToLoad => 'Failed to load git hosts';
 }
 
 // Path: channels
@@ -858,6 +1265,8 @@ class TranslationsChannelsEn {
 
 	/// en: 'Failed to load channels'
 	String get failedToLoad => 'Failed to load channels';
+
+	late final TranslationsChannelsKindsEn kinds = TranslationsChannelsKindsEn.internal(_root);
 }
 
 // Path: onboarding
@@ -903,6 +1312,93 @@ class TranslationsSkillsEn {
 
 	/// en: 'Body (markdown)'
 	String get bodyLabel => 'Body (markdown)';
+
+	/// en: 'Load failed: {error}'
+	String loadFailedApi({required Object error}) => 'Load failed: ${error}';
+
+	/// en: 'Load failed: {error}'
+	String loadFailedGeneric({required Object error}) => 'Load failed: ${error}';
+
+	/// en: 'Id is required.'
+	String get idRequired => 'Id is required.';
+
+	/// en: 'Body cannot be empty.'
+	String get bodyRequired => 'Body cannot be empty.';
+
+	/// en: 'Skill created.'
+	String get snackCreated => 'Skill created.';
+
+	/// en: 'Saved as vault override.'
+	String get snackOverride => 'Saved as vault override.';
+
+	/// en: 'Skill updated.'
+	String get snackUpdated => 'Skill updated.';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedApi({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedGeneric({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Reset to built-in?'
+	String get resetTitle => 'Reset to built-in?';
+
+	/// en: 'Delete skill?'
+	String get deleteTitle => 'Delete skill?';
+
+	/// en: 'Removes the vault override for {id}. Sessions will fall back to the built-in body.'
+	String resetBody({required Object id}) => 'Removes the vault override for ${id}. Sessions will fall back to the built-in body.';
+
+	/// en: 'Reset'
+	String get resetButton => 'Reset';
+
+	/// en: 'Reset {id} to built-in.'
+	String resetSnack({required Object id}) => 'Reset ${id} to built-in.';
+
+	/// en: 'Deleted {id}.'
+	String deletedSnack({required Object id}) => 'Deleted ${id}.';
+
+	/// en: 'Delete failed: {error}'
+	String deleteFailedApi({required Object error}) => 'Delete failed: ${error}';
+
+	/// en: 'Delete failed: {error}'
+	String deleteFailedGeneric({required Object error}) => 'Delete failed: ${error}';
+
+	/// en: 'Removes {id} from the vault. Sessions that reference it will fail until restored.'
+	String deleteBody({required Object id}) => 'Removes ${id} from the vault. Sessions that reference it will fail until restored.';
+
+	/// en: 'New skill'
+	String get newSkillTitle => 'New skill';
+
+	/// en: 'Customize {id}'
+	String customizeTitle({required Object id}) => 'Customize ${id}';
+
+	/// en: 'Edit {id}'
+	String editTitle({required Object id}) => 'Edit ${id}';
+
+	/// en: 'Reset to built-in'
+	String get resetTooltip => 'Reset to built-in';
+
+	/// en: 'Delete'
+	String get deleteTooltip => 'Delete';
+
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
+	/// en: 'Save override'
+	String get saveOverride => 'Save override';
+
+	/// en: 'Saving creates a vault override with the same id. Sessions will use this body instead of the built-in until you reset.'
+	String get overrideBanner => 'Saving creates a vault override with the same id. Sessions will use this body instead of the built-in until you reset.';
+
+	/// en: 'Lowercase letters / digits / dash. Locked once created.'
+	String get idHelper => 'Lowercase letters / digits / dash. Locked once created.';
+
+	/// en: 'No skills configured. The gateway ships with built-ins (planner, code-reviewer, etc.).'
+	String get emptyList => 'No skills configured. The gateway ships with built-ins (planner, code-reviewer, etc.).';
+
+	/// en: 'Failed to load skills'
+	String get failedToLoad => 'Failed to load skills';
 }
 
 // Path: customTasks
@@ -954,6 +1450,75 @@ class TranslationsCustomTasksEn {
 
 	/// en: '/Users/you/projects/backend'
 	String get cwdHint => '/Users/you/projects/backend';
+
+	/// en: 'Task created.'
+	String get snackCreated => 'Task created.';
+
+	/// en: 'Task updated.'
+	String get snackUpdated => 'Task updated.';
+
+	/// en: 'Removes the task from the catalogue. Sessions that already inserted it stay unaffected.'
+	String get deleteBody => 'Removes the task from the catalogue. Sessions that already inserted it stay unaffected.';
+
+	/// en: 'Define your own slash commands. They appear in the session task picker alongside the built-ins.'
+	String get introBanner => 'Define your own slash commands. They appear in the session task picker alongside the built-ins.';
+
+	/// en: 'Name is required'
+	String get validateNameRequired => 'Name is required';
+
+	/// en: 'Command is required'
+	String get validateCommandRequired => 'Command is required';
+
+	/// en: 'Project-scoped tasks need an absolute cwd path'
+	String get validateProjectCwd => 'Project-scoped tasks need an absolute cwd path';
+
+	/// en: 'Edit custom task'
+	String get appBarEdit => 'Edit custom task';
+
+	/// en: 'New custom task'
+	String get appBarNew => 'New custom task';
+
+	/// en: 'Name'
+	String get fieldName => 'Name';
+
+	/// en: 'Shown in the inspector's task picker.'
+	String get nameHelper => 'Shown in the inspector\'s task picker.';
+
+	/// en: 'Command'
+	String get fieldCommand => 'Command';
+
+	/// en: 'The text inserted into the session when picked. Can be a CLI command or a Claude slash command.'
+	String get commandHelper => 'The text inserted into the session when picked. Can be a CLI command or a Claude slash command.';
+
+	/// en: 'Description (optional)'
+	String get fieldDescription => 'Description (optional)';
+
+	/// en: 'Scope'
+	String get fieldScope => 'Scope';
+
+	/// en: 'Visible from every session, regardless of cwd.'
+	String get globalScopeHint => 'Visible from every session, regardless of cwd.';
+
+	/// en: 'Visible only when a session's cwd matches the path below.'
+	String get projectScopeHint => 'Visible only when a session\'s cwd matches the path below.';
+
+	/// en: 'Project cwd'
+	String get fieldProjectCwd => 'Project cwd';
+
+	/// en: 'Absolute path. Sessions spawned with this exact cwd will see the task.'
+	String get cwdHelper => 'Absolute path. Sessions spawned with this exact cwd will see the task.';
+
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Create'
+	String get create => 'Create';
+
+	/// en: 'Failed to load custom tasks'
+	String get failedToLoad => 'Failed to load custom tasks';
 }
 
 // Path: notesPage
@@ -1014,6 +1579,30 @@ class TranslationsNotesPageEn {
 
 	/// en: 'Create'
 	String get create => 'Create';
+
+	/// en: 'Delete'
+	String get popupDelete => 'Delete';
+
+	/// en: 'This is irreversible. Vault git sync will remove the file on the gateway host too.'
+	String get deleteBody => 'This is irreversible. Vault git sync will remove the file on the gateway host too.';
+
+	/// en: 'No notes match "{query}".'
+	String emptyFilterMatch({required Object query}) => 'No notes match "${query}".';
+
+	/// en: 'Vault is empty. Tap + to create your first note.'
+	String get emptyVault => 'Vault is empty. Tap + to create your first note.';
+
+	/// en: 'Folder "{path}" is empty.'
+	String emptyFolder({required Object path}) => 'Folder "${path}" is empty.';
+
+	/// en: 'Path is required'
+	String get validatePath => 'Path is required';
+
+	/// en: 'Path cannot contain ".."'
+	String get validatePathDots => 'Path cannot contain ".."';
+
+	/// en: 'Auto-appends .md if missing.'
+	String get pathHelper => 'Auto-appends .md if missing.';
 
 	late final TranslationsNotesPageEditorEn editor = TranslationsNotesPageEditorEn.internal(_root);
 }
@@ -1673,6 +2262,114 @@ class TranslationsProvidersAccountsEn {
 
 	/// en: 'Import failed: {error}'
 	String importFailedGeneric({required Object error}) => 'Import failed: ${error}';
+
+	/// en: 'Enable'
+	String get enable => 'Enable';
+
+	/// en: 'Disable'
+	String get disable => 'Disable';
+
+	/// en: 'Delete'
+	String get deleteLabel => 'Delete';
+
+	/// en: 'Removes the account and its stored OAuth token. Sessions already using this account stay running but reauth will fail.'
+	String get deleteBody => 'Removes the account and its stored OAuth token. Sessions already using this account stay running but reauth will fail.';
+
+	/// en: 'Deleted {name}.'
+	String deletedSnack({required Object name}) => 'Deleted ${name}.';
+
+	/// en: 'Already in sync — gateway has no new accounts.'
+	String get importSyncedSnack => 'Already in sync — gateway has no new accounts.';
+
+	/// en: 'Imported {n} account.'
+	String importedSnackOne({required Object n}) => 'Imported ${n} account.';
+
+	/// en: 'Imported {n} accounts.'
+	String importedSnackOther({required Object n}) => 'Imported ${n} accounts.';
+
+	/// en: 'Syncing…'
+	String get importing => 'Syncing…';
+
+	/// en: 'Import local'
+	String get importLocal => 'Import local';
+
+	/// en: 'Adding a new account is gateway-host only.'
+	String get addHint => 'Adding a new account is gateway-host only.';
+
+	/// en: 'The new directory shows up here automatically. See the docs for OAuth flow steps.'
+	String get addBody => 'The new directory shows up here automatically. See the docs for OAuth flow steps.';
+
+	/// en: 'Failed to load accounts: {error}'
+	String loadFailed({required Object error}) => 'Failed to load accounts: ${error}';
+
+	/// en: 'Sessions spawned with the Claude provider pick from these accounts (or fall back to env).'
+	String get intro => 'Sessions spawned with the Claude provider pick from these accounts (or fall back to env).';
+
+	/// en: '{name} enabled.'
+	String enabledSnack({required Object name}) => '${name} enabled.';
+
+	/// en: '{name} disabled.'
+	String disabledSnack({required Object name}) => '${name} disabled.';
+
+	/// en: 'Renamed to {name}.'
+	String renamedSnack({required Object name}) => 'Renamed to ${name}.';
+}
+
+// Path: integrations.form
+class TranslationsIntegrationsFormEn {
+	TranslationsIntegrationsFormEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Name, base URL, and route prefix are required.'
+	String get validateRequired => 'Name, base URL, and route prefix are required.';
+
+	/// en: 'Name'
+	String get fieldName => 'Name';
+
+	/// en: 'My Bot'
+	String get fieldNameHint => 'My Bot';
+
+	/// en: 'Base URL'
+	String get fieldBaseUrl => 'Base URL';
+
+	/// en: 'Route prefix'
+	String get fieldRoutePrefix => 'Route prefix';
+
+	/// en: 'Reachable as /api/v1/<prefix>/...'
+	String get routePrefixHelper => 'Reachable as /api/v1/<prefix>/...';
+
+	/// en: 'Scopes (optional)'
+	String get fieldScopes => 'Scopes (optional)';
+
+	/// en: 'Comma-separated. Empty = server defaults.'
+	String get scopesHelper => 'Comma-separated. Empty = server defaults.';
+
+	/// en: 'Version (optional)'
+	String get fieldVersion => 'Version (optional)';
+
+	/// en: 'Base URL is required.'
+	String get validateBaseUrl => 'Base URL is required.';
+
+	/// en: 'Scopes'
+	String get editFieldScopes => 'Scopes';
+
+	/// en: 'Comma-separated.'
+	String get editScopesHelper => 'Comma-separated.';
+
+	/// en: 'Version'
+	String get editFieldVersion => 'Version';
+
+	/// en: 'You won't see this key again.'
+	String get apiKeyWarn => 'You won\'t see this key again.';
+
+	/// en: 'Copied'
+	String get copyCopied => 'Copied';
+
+	/// en: 'Copy'
+	String get copyCopy => 'Copy';
 }
 
 // Path: memoryWorkers.tasks
@@ -1686,6 +2383,129 @@ class TranslationsMemoryWorkersTasksEn {
 	late final TranslationsMemoryWorkersTasksCleanerEn cleaner = TranslationsMemoryWorkersTasksCleanerEn.internal(_root);
 	late final TranslationsMemoryWorkersTasksGitactivityEn gitactivity = TranslationsMemoryWorkersTasksGitactivityEn.internal(_root);
 	late final TranslationsMemoryWorkersTasksTranscriptEn transcript = TranslationsMemoryWorkersTasksTranscriptEn.internal(_root);
+}
+
+// Path: backups.kv
+class TranslationsBackupsKvEn {
+	TranslationsBackupsKvEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Status'
+	String get status => 'Status';
+
+	/// en: 'Target'
+	String get target => 'Target';
+
+	/// en: 'Triggered by'
+	String get triggeredBy => 'Triggered by';
+
+	/// en: 'Started'
+	String get started => 'Started';
+
+	/// en: 'Finished'
+	String get finished => 'Finished';
+
+	/// en: 'Size'
+	String get size => 'Size';
+
+	/// en: 'Encrypted'
+	String get encrypted => 'Encrypted';
+
+	/// en: 'Target path'
+	String get targetPath => 'Target path';
+
+	/// en: 'Error'
+	String get error => 'Error';
+
+	/// en: 'yes'
+	String get yes => 'yes';
+
+	/// en: 'no'
+	String get no => 'no';
+}
+
+// Path: backups.emptyMissingDeps
+class TranslationsBackupsEmptyMissingDepsEn {
+	TranslationsBackupsEmptyMissingDepsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Backups can't run yet'
+	String get headline => 'Backups can\'t run yet';
+
+	/// en: 'Install postgresql-client and restart opendray.'
+	String get body => 'Install postgresql-client and restart opendray.';
+}
+
+// Path: backups.emptyNoTargets
+class TranslationsBackupsEmptyNoTargetsEn {
+	TranslationsBackupsEmptyNoTargetsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'No backup targets configured'
+	String get headline => 'No backup targets configured';
+
+	/// en: 'Open the More menu → Targets to add a destination (local / S3 / SMB / SFTP / WebDAV / rclone). Then come back and tap "Run now".'
+	String get body => 'Open the More menu → Targets to add a destination (local / S3 / SMB / SFTP / WebDAV / rclone). Then come back and tap "Run now".';
+}
+
+// Path: backups.emptyNoBackups
+class TranslationsBackupsEmptyNoBackupsEn {
+	TranslationsBackupsEmptyNoBackupsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'No backups yet'
+	String get headline => 'No backups yet';
+
+	/// en: 'Tap "Run now" to take a fresh snapshot, or open Schedules to set up recurring runs.'
+	String get body => 'Tap "Run now" to take a fresh snapshot, or open Schedules to set up recurring runs.';
+}
+
+// Path: backups.wizard
+class TranslationsBackupsWizardEn {
+	TranslationsBackupsWizardEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Set up backups'
+	String get title => 'Set up backups';
+
+	/// en: 'Choose a master passphrase. opendray uses it to encrypt every backup blob with AES-256-GCM. Lose the passphrase and you lose the data — there is no recovery.'
+	String get intro => 'Choose a master passphrase. opendray uses it to encrypt every backup blob with AES-256-GCM. Lose the passphrase and you lose the data — there is no recovery.';
+
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
+	/// en: 'Generate and save'
+	String get generateAndSave => 'Generate and save';
+
+	/// en: 'Save passphrase'
+	String get savePassphrase => 'Save passphrase';
+
+	/// en: 'Server generates a cryptographically random passphrase, you copy it to a password manager, then commit.'
+	String get generateHint => 'Server generates a cryptographically random passphrase, you copy it to a password manager, then commit.';
+
+	/// en: 'Recommended: 40+ chars from a password manager'
+	String get helperRecommended => 'Recommended: 40+ chars from a password manager';
+
+	/// en: 'Save this passphrase NOW'
+	String get saveNowHeader => 'Save this passphrase NOW';
+
+	/// en: 'This is shown ONCE. It will not be retrievable from opendray afterwards.'
+	String get saveNowBody => 'This is shown ONCE. It will not be retrievable from opendray afterwards.';
 }
 
 // Path: backups.encryption
@@ -1716,6 +2536,21 @@ class TranslationsBackupsEncryptionEn {
 
 	/// en: 'Passphrase copied to clipboard'
 	String get passphraseCopied => 'Passphrase copied to clipboard';
+}
+
+// Path: backupTargetEditor.kinds
+class TranslationsBackupTargetEditorKindsEn {
+	TranslationsBackupTargetEditorKindsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsBackupTargetEditorKindsLocalEn local = TranslationsBackupTargetEditorKindsLocalEn.internal(_root);
+	late final TranslationsBackupTargetEditorKindsSmbEn smb = TranslationsBackupTargetEditorKindsSmbEn.internal(_root);
+	late final TranslationsBackupTargetEditorKindsWebdavEn webdav = TranslationsBackupTargetEditorKindsWebdavEn.internal(_root);
+	late final TranslationsBackupTargetEditorKindsSftpEn sftp = TranslationsBackupTargetEditorKindsSftpEn.internal(_root);
+	late final TranslationsBackupTargetEditorKindsS3En s3 = TranslationsBackupTargetEditorKindsS3En.internal(_root);
+	late final TranslationsBackupTargetEditorKindsRcloneEn rclone = TranslationsBackupTargetEditorKindsRcloneEn.internal(_root);
 }
 
 // Path: githosts.errorPrefix
@@ -1752,6 +2587,71 @@ class TranslationsGithostsFormEn {
 
 	/// en: 'work-github, personal-gitlab, …'
 	String get nameHint => 'work-github, personal-gitlab, …';
+
+	late final TranslationsGithostsFormKindsEn kinds = TranslationsGithostsFormKindsEn.internal(_root);
+
+	/// en: 'Host is required.'
+	String get validateHost => 'Host is required.';
+
+	/// en: 'Name is required.'
+	String get validateName => 'Name is required.';
+
+	/// en: 'Host added.'
+	String get snackAdded => 'Host added.';
+
+	/// en: 'Host updated.'
+	String get snackUpdated => 'Host updated.';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedApi({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedGeneric({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Saving…'
+	String get saving => 'Saving…';
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Add'
+	String get add => 'Add';
+
+	/// en: 'Display name shown in PR lists.'
+	String get nameHelper => 'Display name shown in PR lists.';
+
+	/// en: 'Token (leave blank to keep existing)'
+	String get tokenLabelKeep => 'Token (leave blank to keep existing)';
+
+	/// en: 'Token'
+	String get tokenLabel => 'Token';
+
+	/// en: 'Leave blank to keep existing.'
+	String get tokenHintKeep => 'Leave blank to keep existing.';
+
+	/// en: 'Paste the personal access token.'
+	String get tokenHintNew => 'Paste the personal access token.';
+
+	/// en: 'Available to sessions for PR / remote lookups.'
+	String get enabledHelper => 'Available to sessions for PR / remote lookups.';
+
+	/// en: 'Token is required when adding a host.'
+	String get validateTokenRequired => 'Token is required when adding a host.';
+
+	/// en: 'Edit {name}'
+	String appBarEdit({required Object name}) => 'Edit ${name}';
+
+	/// en: 'Add git host'
+	String get appBarNew => 'Add git host';
+
+	/// en: 'Current preview: {preview}'
+	String tokenPreviewHint({required Object preview}) => 'Current preview: ${preview}';
+
+	/// en: '(none)'
+	String get tokenPreviewNone => '(none)';
+
+	/// en: 'Paused — sessions skip this host.'
+	String get pausedSubtitle => 'Paused — sessions skip this host.';
 }
 
 // Path: channels.configDialog
@@ -1927,6 +2827,22 @@ class TranslationsChannelsErrorPrefixEn {
 	String get delete => 'Delete failed';
 }
 
+// Path: channels.kinds
+class TranslationsChannelsKindsEn {
+	TranslationsChannelsKindsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsChannelsKindsTelegramEn telegram = TranslationsChannelsKindsTelegramEn.internal(_root);
+	late final TranslationsChannelsKindsSlackEn slack = TranslationsChannelsKindsSlackEn.internal(_root);
+	late final TranslationsChannelsKindsDiscordEn discord = TranslationsChannelsKindsDiscordEn.internal(_root);
+	late final TranslationsChannelsKindsFeishuEn feishu = TranslationsChannelsKindsFeishuEn.internal(_root);
+	late final TranslationsChannelsKindsDingtalkEn dingtalk = TranslationsChannelsKindsDingtalkEn.internal(_root);
+	late final TranslationsChannelsKindsWecomEn wecom = TranslationsChannelsKindsWecomEn.internal(_root);
+	late final TranslationsChannelsKindsWechatEn wechat = TranslationsChannelsKindsWechatEn.internal(_root);
+}
+
 // Path: notesPage.editor
 class TranslationsNotesPageEditorEn {
 	TranslationsNotesPageEditorEn.internal(this._root);
@@ -1943,6 +2859,21 @@ class TranslationsNotesPageEditorEn {
 
 	/// en: 'Auto-saves as you type'
 	String get autosave => 'Auto-saves as you type';
+
+	/// en: 'Load failed: {error}'
+	String loadFailedApi({required Object error}) => 'Load failed: ${error}';
+
+	/// en: 'Load failed: {error}'
+	String loadFailedGeneric({required Object error}) => 'Load failed: ${error}';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedApi({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedGeneric({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Saved {time}'
+	String savedAt({required Object time}) => 'Saved ${time}';
 }
 
 // Path: memory.deleteAllConfirm
@@ -2267,6 +3198,9 @@ class TranslationsSettingsServerSettingsEn {
 	/// en: 'Restart opendray?'
 	String get restartConfirmTitle => 'Restart opendray?';
 
+	/// en: 'The gateway will exec itself. The mobile app may briefly lose connection.'
+	String get restartConfirmBody => 'The gateway will exec itself. The mobile app may briefly lose connection.';
+
 	/// en: 'Restart'
 	String get restart => 'Restart';
 
@@ -2279,7 +3213,33 @@ class TranslationsSettingsServerSettingsEn {
 	/// en: 'Restart failed: {error}'
 	String restartFailedGeneric({required Object error}) => 'Restart failed: ${error}';
 
+	/// en: 'Loaded from: {path}'
+	String loadedFrom({required Object path}) => 'Loaded from: ${path}';
+
+	/// en: 'Most sections need a gateway restart to take effect. The restart button is in the AppBar.'
+	String get restartHint => 'Most sections need a gateway restart to take effect. The restart button is in the AppBar.';
+
+	/// en: 'Saved. Restart the gateway to apply.'
+	String get savedNeedsRestart => 'Saved. Restart the gateway to apply.';
+
+	/// en: 'Saved.'
+	String get savedSimple => 'Saved.';
+
+	/// en: 'Changes to this section need a gateway restart.'
+	String get changesNeedRestart => 'Changes to this section need a gateway restart.';
+
+	/// en: 'Failed to load server settings'
+	String get loadFailed => 'Failed to load server settings';
+
 	late final TranslationsSettingsServerSettingsSectionsEn sections = TranslationsSettingsServerSettingsSectionsEn.internal(_root);
+	late final TranslationsSettingsServerSettingsSectionDescriptionsEn sectionDescriptions = TranslationsSettingsServerSettingsSectionDescriptionsEn.internal(_root);
+	late final TranslationsSettingsServerSettingsFieldsEn fields = TranslationsSettingsServerSettingsFieldsEn.internal(_root);
+
+	/// en: '"{field}" must be an integer'
+	String validateInteger({required Object field}) => '"${field}" must be an integer';
+
+	/// en: '"{field}" must be a number'
+	String validateNumber({required Object field}) => '"${field}" must be a number';
 }
 
 // Path: more.items.integrations
@@ -2783,6 +3743,81 @@ class TranslationsSessionsInspectorNotesEn {
 
 	/// en: 'Project docs location'
 	String get locationDialogTitle => 'Project docs location';
+
+	/// en: 'Load failed: {error}'
+	String loadFailedApi({required Object error}) => 'Load failed: ${error}';
+
+	/// en: 'Load failed: {error}'
+	String loadFailedGeneric({required Object error}) => 'Load failed: ${error}';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedApi({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Save failed: {error}'
+	String saveFailedGeneric({required Object error}) => 'Save failed: ${error}';
+
+	/// en: 'Insert failed: {error}'
+	String insertFailedApi({required Object error}) => 'Insert failed: ${error}';
+
+	/// en: 'Insert failed: {error}'
+	String insertFailedGeneric({required Object error}) => 'Insert failed: ${error}';
+
+	/// en: 'Create failed: {error}'
+	String createFailedApi({required Object error}) => 'Create failed: ${error}';
+
+	/// en: 'Create failed: {error}'
+	String createFailedGeneric({required Object error}) => 'Create failed: ${error}';
+
+	/// en: 'Personal scratchpad — auto-saves as you type. AI agents do not write here.'
+	String get personalHint => 'Personal scratchpad — auto-saves as you type. AI agents do not write here.';
+
+	/// en: 'Architecture / spec / decisions / plan / retros — typically authored or maintained by an agent.'
+	String get projectDocsHint => 'Architecture / spec / decisions / plan / retros — typically authored or maintained by an agent.';
+
+	/// en: 'Mapping cleared — using default'
+	String get mappingCleared => 'Mapping cleared — using default';
+
+	/// en: 'Mapped to {path}'
+	String mappedTo({required Object path}) => 'Mapped to ${path}';
+
+	/// en: 'Cancel'
+	String get cancelTooltip => 'Cancel';
+
+	/// en: 'New doc'
+	String get newDocTooltip => 'New doc';
+
+	/// en: 'Could not resolve a project mapping for this session. Check that the gateway has a notes vault configured and that the session cwd is set.'
+	String get noProjectMapping => 'Could not resolve a project mapping for this session. Check that the gateway has a notes vault configured and that the session cwd is set.';
+
+	/// en: 'No project docs yet. Tap + to create one, or let an AI agent generate from a prompt.'
+	String get emptyProjectDocs => 'No project docs yet. Tap + to create one, or let an AI agent generate from a prompt.';
+
+	/// en: 'No matches for "{query}".'
+	String emptyFilterMatch({required Object query}) => 'No matches for "${query}".';
+
+	/// en: 'Pin this session's cwd to a specific folder under your notes vault. Leave blank to reset.'
+	String get locationDialogHelp => 'Pin this session\'s cwd to a specific folder under your notes vault. Leave blank to reset.';
+
+	/// en: 'Session cwd'
+	String get sessionCwd => 'Session cwd';
+
+	/// en: 'Vault-relative project docs path'
+	String get projectDocsPath => 'Vault-relative project docs path';
+
+	/// en: 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.'
+	String get locationStoredHint => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.';
+
+	/// en: 'Pinned to {path}/ (overrides {defaultPath}). AI agents author docs here too.'
+	String pinnedHint({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.';
+
+	/// en: '(no project mapping)'
+	String get noProjectMapping2 => '(no project mapping)';
+
+	/// en: 'Clear override'
+	String get clearOverride => 'Clear override';
+
+	/// en: 'Save'
+	String get save => 'Save';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -2941,6 +3976,120 @@ class TranslationsMemoryWorkersTasksTranscriptEn {
 	String get description => 'Session-end \'what did the agent do\' summary. Naturally fits an agent worker.';
 }
 
+// Path: backupTargetEditor.kinds.local
+class TranslationsBackupTargetEditorKindsLocalEn {
+	TranslationsBackupTargetEditorKindsLocalEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Local disk'
+	String get label => 'Local disk';
+
+	/// en: 'Folder on the machine running opendray'
+	String get description => 'Folder on the machine running opendray';
+}
+
+// Path: backupTargetEditor.kinds.smb
+class TranslationsBackupTargetEditorKindsSmbEn {
+	TranslationsBackupTargetEditorKindsSmbEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'SMB share'
+	String get label => 'SMB share';
+
+	/// en: 'Windows shares + most home NAS appliances'
+	String get description => 'Windows shares + most home NAS appliances';
+}
+
+// Path: backupTargetEditor.kinds.webdav
+class TranslationsBackupTargetEditorKindsWebdavEn {
+	TranslationsBackupTargetEditorKindsWebdavEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'WebDAV'
+	String get label => 'WebDAV';
+
+	/// en: 'Self-hosted clouds + file-sharing services'
+	String get description => 'Self-hosted clouds + file-sharing services';
+}
+
+// Path: backupTargetEditor.kinds.sftp
+class TranslationsBackupTargetEditorKindsSftpEn {
+	TranslationsBackupTargetEditorKindsSftpEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'SFTP'
+	String get label => 'SFTP';
+
+	/// en: 'Any SSH-accessible server'
+	String get description => 'Any SSH-accessible server';
+}
+
+// Path: backupTargetEditor.kinds.s3
+class TranslationsBackupTargetEditorKindsS3En {
+	TranslationsBackupTargetEditorKindsS3En.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'S3 / compatible'
+	String get label => 'S3 / compatible';
+
+	/// en: 'Amazon S3 + S3-compatible buckets (MinIO, R2, B2)'
+	String get description => 'Amazon S3 + S3-compatible buckets (MinIO, R2, B2)';
+}
+
+// Path: backupTargetEditor.kinds.rclone
+class TranslationsBackupTargetEditorKindsRcloneEn {
+	TranslationsBackupTargetEditorKindsRcloneEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'rclone (any)'
+	String get label => 'rclone (any)';
+
+	/// en: 'OneDrive, Google Drive, Dropbox via the rclone CLI'
+	String get description => 'OneDrive, Google Drive, Dropbox via the rclone CLI';
+}
+
+// Path: githosts.form.kinds
+class TranslationsGithostsFormKindsEn {
+	TranslationsGithostsFormKindsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'GitHub'
+	String get github => 'GitHub';
+
+	/// en: 'GitLab'
+	String get gitlab => 'GitLab';
+
+	/// en: 'Bitbucket'
+	String get bitbucket => 'Bitbucket';
+
+	/// en: 'Gitea'
+	String get gitea => 'Gitea';
+
+	/// en: 'Custom'
+	String get custom => 'Custom';
+}
+
 // Path: channels.notifications.modes
 class TranslationsChannelsNotificationsModesEn {
 	TranslationsChannelsNotificationsModesEn.internal(this._root);
@@ -2966,6 +4115,201 @@ class TranslationsChannelsNotificationsModesEn {
 
 	/// en: 'No suppression — only for low-frequency channels.'
 	String get everyDescription => 'No suppression — only for low-frequency channels.';
+}
+
+// Path: channels.kinds.telegram
+class TranslationsChannelsKindsTelegramEn {
+	TranslationsChannelsKindsTelegramEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Bot via @BotFather. opendray long-polls getUpdates and sends via REST. Buttons + reply_to_message work natively.'
+	String get description => 'Bot via @BotFather. opendray long-polls getUpdates and sends via REST. Buttons + reply_to_message work natively.';
+
+	/// en: 'Bot token'
+	String get botTokenLabel => 'Bot token';
+
+	/// en: 'From @BotFather. Stored in channel config; admin-only API.'
+	String get botTokenHint => 'From @BotFather. Stored in channel config; admin-only API.';
+
+	/// en: 'Default chat ID'
+	String get chatIdLabel => 'Default chat ID';
+
+	/// en: '42 (optional — used when no ReplyCtx)'
+	String get chatIdPlaceholder => '42 (optional — used when no ReplyCtx)';
+}
+
+// Path: channels.kinds.slack
+class TranslationsChannelsKindsSlackEn {
+	TranslationsChannelsKindsSlackEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Socket Mode — no public webhook needed. Requires a bot OAuth token (xoxb-) and an app-level token (xapp-) with connections:write.'
+	String get description => 'Socket Mode — no public webhook needed. Requires a bot OAuth token (xoxb-) and an app-level token (xapp-) with connections:write.';
+
+	/// en: 'Bot token (xoxb-…)'
+	String get botTokenLabel => 'Bot token (xoxb-…)';
+
+	/// en: 'OAuth & Permissions → Bot User OAuth Token. Needs chat:write.'
+	String get botTokenHint => 'OAuth & Permissions → Bot User OAuth Token. Needs chat:write.';
+
+	/// en: 'App-level token (xapp-…)'
+	String get appTokenLabel => 'App-level token (xapp-…)';
+
+	/// en: 'Settings → Basic Information → App-Level Tokens. Scope: connections:write.'
+	String get appTokenHint => 'Settings → Basic Information → App-Level Tokens. Scope: connections:write.';
+
+	/// en: 'Default channel ID'
+	String get channelIdLabel => 'Default channel ID';
+
+	/// en: 'C0123ABC456 (optional)'
+	String get channelIdPlaceholder => 'C0123ABC456 (optional)';
+}
+
+// Path: channels.kinds.discord
+class TranslationsChannelsKindsDiscordEn {
+	TranslationsChannelsKindsDiscordEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Bot via Discord Developer Portal with MESSAGE CONTENT INTENT enabled. Connects to Gateway WS — no public URL required.'
+	String get description => 'Bot via Discord Developer Portal with MESSAGE CONTENT INTENT enabled. Connects to Gateway WS — no public URL required.';
+
+	/// en: 'Bot token'
+	String get botTokenLabel => 'Bot token';
+
+	/// en: 'Bot token from Discord Developer Portal'
+	String get botTokenPlaceholder => 'Bot token from Discord Developer Portal';
+
+	/// en: 'Application → Bot → Reset Token. Invite bot with send_messages + embed_links.'
+	String get botTokenHint => 'Application → Bot → Reset Token. Invite bot with send_messages + embed_links.';
+
+	/// en: 'Default channel ID'
+	String get channelIdLabel => 'Default channel ID';
+
+	/// en: '123456789012345678 (optional)'
+	String get channelIdPlaceholder => '123456789012345678 (optional)';
+}
+
+// Path: channels.kinds.feishu
+class TranslationsChannelsKindsFeishuEn {
+	TranslationsChannelsKindsFeishuEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'App-level credentials. Uses event subscription webhook for inbound. Public webhook URL is generated below — paste it into the Feishu dev console.'
+	String get description => 'App-level credentials. Uses event subscription webhook for inbound. Public webhook URL is generated below — paste it into the Feishu dev console.';
+
+	/// en: 'Open the webhook URL from the channel card and paste it into Feishu Open Platform → Event Subscriptions → Request URL.'
+	String get afterCreateHint => 'Open the webhook URL from the channel card and paste it into Feishu Open Platform → Event Subscriptions → Request URL.';
+
+	/// en: 'App ID'
+	String get appIdLabel => 'App ID';
+
+	/// en: 'App secret'
+	String get appSecretLabel => 'App secret';
+
+	/// en: 'Application credential secret'
+	String get appSecretPlaceholder => 'Application credential secret';
+
+	/// en: 'Verification token'
+	String get verificationTokenLabel => 'Verification token';
+
+	/// en: 'From Event Subscriptions → Verification Token. When set, opendray rejects webhooks with a different token.'
+	String get verificationTokenHint => 'From Event Subscriptions → Verification Token. When set, opendray rejects webhooks with a different token.';
+
+	/// en: 'Default chat ID (oc_…)'
+	String get chatIdLabel => 'Default chat ID (oc_…)';
+
+	/// en: 'oc_xxxxxxxxxx (optional)'
+	String get chatIdPlaceholder => 'oc_xxxxxxxxxx (optional)';
+}
+
+// Path: channels.kinds.dingtalk
+class TranslationsChannelsKindsDingtalkEn {
+	TranslationsChannelsKindsDingtalkEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Custom group robot. Outbound only. Group chat → Robots → Add → Sign mode → copy webhook + secret.'
+	String get description => 'Custom group robot. Outbound only. Group chat → Robots → Add → Sign mode → copy webhook + secret.';
+
+	/// en: 'Webhook URL'
+	String get webhookUrlLabel => 'Webhook URL';
+
+	/// en: 'Sign secret'
+	String get secretLabel => 'Sign secret';
+
+	/// en: 'When the robot is set to "Sign" security mode, copy the secret here. opendray adds the timestamp + sign params automatically.'
+	String get secretHint => 'When the robot is set to "Sign" security mode, copy the secret here. opendray adds the timestamp + sign params automatically.';
+}
+
+// Path: channels.kinds.wecom
+class TranslationsChannelsKindsWecomEn {
+	TranslationsChannelsKindsWecomEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Group robot webhook. Outbound only (text + markdown). Group settings → Group robots → Add → copy webhook URL.'
+	String get description => 'Group robot webhook. Outbound only (text + markdown). Group settings → Group robots → Add → copy webhook URL.';
+
+	/// en: 'Webhook key'
+	String get webhookKeyLabel => 'Webhook key';
+
+	/// en: 'The "key=" query value'
+	String get webhookKeyPlaceholder => 'The "key=" query value';
+
+	/// en: 'Or paste the whole webhook URL into the field below — either is enough.'
+	String get webhookKeyHint => 'Or paste the whole webhook URL into the field below — either is enough.';
+
+	/// en: 'Or full webhook URL'
+	String get webhookUrlLabel => 'Or full webhook URL';
+}
+
+// Path: channels.kinds.wechat
+class TranslationsChannelsKindsWechatEn {
+	TranslationsChannelsKindsWechatEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Push to personal WeChat via WxPusher. Outbound-only — push services do not relay user replies. Each recipient subscribes once via QR code.'
+	String get description => 'Push to personal WeChat via WxPusher. Outbound-only — push services do not relay user replies. Each recipient subscribes once via QR code.';
+
+	/// en: 'App token (AT_…)'
+	String get appTokenLabel => 'App token (AT_…)';
+
+	/// en: 'WxPusher → 应用管理 → 创建应用 → 复制 App Token.'
+	String get appTokenHint => 'WxPusher → 应用管理 → 创建应用 → 复制 App Token.';
+
+	/// en: 'Recipient UIDs (one per line)'
+	String get uidsLabel => 'Recipient UIDs (one per line)';
+
+	/// en: 'Either UIDs or topic IDs is required.'
+	String get uidsHint => 'Either UIDs or topic IDs is required.';
+
+	/// en: 'Topic IDs (one per line)'
+	String get topicIdsLabel => 'Topic IDs (one per line)';
+
+	/// en: 'Tap-through URL'
+	String get urlLabel => 'Tap-through URL';
+
+	/// en: 'When set, tapping the WeChat notification opens this page.'
+	String get urlHint => 'When set, tapping the WeChat notification opens this page.';
 }
 
 // Path: settings.logViewer.levels
@@ -3029,6 +4373,228 @@ class TranslationsSettingsServerSettingsSectionsEn {
 
 	/// en: 'Storage · Gemini'
 	String get storageGemini => 'Storage · Gemini';
+}
+
+// Path: settings.serverSettings.sectionDescriptions
+class TranslationsSettingsServerSettingsSectionDescriptionsEn {
+	TranslationsSettingsServerSettingsSectionDescriptionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Listen address, operator account, token TTL.'
+	String get general => 'Listen address, operator account, token TTL.';
+
+	/// en: 'Verbosity, format, and on-disk log path.'
+	String get logging => 'Verbosity, format, and on-disk log path.';
+
+	/// en: 'Idle detection thresholds.'
+	String get sessions => 'Idle detection thresholds.';
+
+	/// en: 'Notes, skills, and git-versioned root.'
+	String get vault => 'Notes, skills, and git-versioned root.';
+
+	/// en: 'Vault paths for MCP servers + secrets file.'
+	String get mcpRegistry => 'Vault paths for MCP servers + secrets file.';
+
+	/// en: 'Cross-CLI persistent memory subsystem.'
+	String get memory => 'Cross-CLI persistent memory subsystem.';
+
+	/// en: 'Encrypted DB backups + admin data exports. Passphrase lives in the keyfile (Settings → Backups).'
+	String get backup => 'Encrypted DB backups + admin data exports. Passphrase lives in the keyfile (Settings → Backups).';
+
+	/// en: 'Where Claude transcripts live on disk.'
+	String get storageClaude => 'Where Claude transcripts live on disk.';
+
+	/// en: 'Codex sessions root.'
+	String get storageCodex => 'Codex sessions root.';
+
+	/// en: 'Per-project tmp + projects.json paths.'
+	String get storageGemini => 'Per-project tmp + projects.json paths.';
+}
+
+// Path: settings.serverSettings.fields
+class TranslationsSettingsServerSettingsFieldsEn {
+	TranslationsSettingsServerSettingsFieldsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Listen address'
+	String get listenAddress => 'Listen address';
+
+	/// en: 'Admin user'
+	String get adminUser => 'Admin user';
+
+	/// en: 'Effective when no keyfile or env var is set. Otherwise see Settings → Account.'
+	String get adminUserHelper => 'Effective when no keyfile or env var is set. Otherwise see Settings → Account.';
+
+	/// en: 'Admin password'
+	String get adminPassword => 'Admin password';
+
+	/// en: 'Send blank to preserve. For ongoing rotations use Settings → Account (keyfile-backed, no restart).'
+	String get adminPasswordHelper => 'Send blank to preserve. For ongoing rotations use Settings → Account (keyfile-backed, no restart).';
+
+	/// en: 'Token TTL (web)'
+	String get tokenTtlWeb => 'Token TTL (web)';
+
+	/// en: 'Go duration string, e.g. 24h, 30m.'
+	String get tokenTtlHelper => 'Go duration string, e.g. 24h, 30m.';
+
+	/// en: 'Level'
+	String get level => 'Level';
+
+	/// en: 'Format'
+	String get format => 'Format';
+
+	/// en: 'File path'
+	String get filePath => 'File path';
+
+	/// en: 'Empty = stdout only.'
+	String get filePathHelper => 'Empty = stdout only.';
+
+	/// en: 'Idle threshold'
+	String get idleThreshold => 'Idle threshold';
+
+	/// en: 'Quiet period before a session is flagged idle. Go duration.'
+	String get idleThresholdHelper => 'Quiet period before a session is flagged idle. Go duration.';
+
+	/// en: 'Idle check interval'
+	String get idleCheckInterval => 'Idle check interval';
+
+	/// en: 'How often the idle reaper runs.'
+	String get idleCheckHelper => 'How often the idle reaper runs.';
+
+	/// en: 'Root'
+	String get root => 'Root';
+
+	/// en: 'Parent of notes / skills / git_root sub-paths.'
+	String get rootHelper => 'Parent of notes / skills / git_root sub-paths.';
+
+	/// en: 'Notes path'
+	String get notesPath => 'Notes path';
+
+	/// en: 'Skills path'
+	String get skillsPath => 'Skills path';
+
+	/// en: 'Git root'
+	String get gitRoot => 'Git root';
+
+	/// en: 'Personal prefix'
+	String get personalPrefix => 'Personal prefix';
+
+	/// en: 'Projects prefix'
+	String get projectsPrefix => 'Projects prefix';
+
+	/// en: 'Registry root'
+	String get registryRoot => 'Registry root';
+
+	/// en: 'Secrets file'
+	String get secretsFile => 'Secrets file';
+
+	/// en: 'Backend'
+	String get backend => 'Backend';
+
+	/// en: 'Store'
+	String get store => 'Store';
+
+	/// en: 'Default top-k'
+	String get defaultTopK => 'Default top-k';
+
+	/// en: 'Similarity threshold'
+	String get similarityThreshold => 'Similarity threshold';
+
+	/// en: 'Default scope'
+	String get defaultScope => 'Default scope';
+
+	/// en: 'When store=chromem.'
+	String get chromemHelper => 'When store=chromem.';
+
+	/// en: 'Blank to preserve current.'
+	String get preserveHelper => 'Blank to preserve current.';
+
+	/// en: 'Local model name'
+	String get localModelName => 'Local model name';
+
+	/// en: 'Local library path'
+	String get localLibraryPath => 'Local library path';
+
+	/// en: 'Local model path'
+	String get localModelPath => 'Local model path';
+
+	/// en: 'Local tokenizer path'
+	String get localTokenizerPath => 'Local tokenizer path';
+
+	/// en: 'Local max seq len'
+	String get localMaxSeqLen => 'Local max seq len';
+
+	/// en: 'Enabled'
+	String get backupEnabled => 'Enabled';
+
+	/// en: 'Even with this on, the backup subsystem stays off until OPENDRAY_BACKUP_KEY or the keyfile is configured.'
+	String get backupEnabledHelper => 'Even with this on, the backup subsystem stays off until OPENDRAY_BACKUP_KEY or the keyfile is configured.';
+
+	/// en: 'Local dir'
+	String get backupLocalDir => 'Local dir';
+
+	/// en: 'Export dir'
+	String get backupExportDir => 'Export dir';
+
+	/// en: 'Empty = resolve from PATH at startup.'
+	String get pathHelper => 'Empty = resolve from PATH at startup.';
+
+	/// en: 'Accounts dir'
+	String get accountsDir => 'Accounts dir';
+
+	/// en: 'Parent of per-account .claude/ subdirs. Empty = ~/.claude-accounts.'
+	String get accountsHelper => 'Parent of per-account .claude/ subdirs. Empty = ~/.claude-accounts.';
+
+	/// en: 'Sessions root'
+	String get sessionsRoot => 'Sessions root';
+
+	/// en: 'Empty = ~/.codex/sessions.'
+	String get sessionsRootHelper => 'Empty = ~/.codex/sessions.';
+
+	/// en: 'host:port the gateway binds to. Restart required.'
+	String get listenHelper => 'host:port the gateway binds to. Restart required.';
+
+	/// en: 'AES-256-GCM encrypted secrets vault.'
+	String get secretsHelper => 'AES-256-GCM encrypted secrets vault.';
+
+	/// en: 'auto picks the best available; local needs ONNX.'
+	String get backendHelper => 'auto picks the best available; local needs ONNX.';
+
+	/// en: '0.0–1.0; results under this are filtered out.'
+	String get similarityHelper => '0.0–1.0; results under this are filtered out.';
+
+	/// en: 'chromem path'
+	String get chromemPath => 'chromem path';
+
+	/// en: 'HTTP base URL'
+	String get httpBaseUrl => 'HTTP base URL';
+
+	/// en: 'HTTP model'
+	String get httpModel => 'HTTP model';
+
+	/// en: 'HTTP api key'
+	String get httpApiKey => 'HTTP api key';
+
+	/// en: 'HTTP dimensions'
+	String get httpDimensions => 'HTTP dimensions';
+
+	/// en: 'pg_dump path'
+	String get pgDumpPath => 'pg_dump path';
+
+	/// en: 'pg_restore path'
+	String get pgRestorePath => 'pg_restore path';
+
+	/// en: 'tmp root'
+	String get tmpRoot => 'tmp root';
+
+	/// en: 'projects.json'
+	String get projectsJson => 'projects.json';
 }
 
 // Path: sessions.inspector.shell.tabs
@@ -3234,6 +4800,31 @@ extension on Translations {
 			'sessions.inspector.notes.create' => 'Create',
 			'sessions.inspector.notes.filterHint' => 'Filter…',
 			'sessions.inspector.notes.locationDialogTitle' => 'Project docs location',
+			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
+			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
+			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
+			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
+			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Insert failed: ${error}',
+			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Insert failed: ${error}',
+			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
+			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => 'Create failed: ${error}',
+			'sessions.inspector.notes.personalHint' => 'Personal scratchpad — auto-saves as you type. AI agents do not write here.',
+			'sessions.inspector.notes.projectDocsHint' => 'Architecture / spec / decisions / plan / retros — typically authored or maintained by an agent.',
+			'sessions.inspector.notes.mappingCleared' => 'Mapping cleared — using default',
+			'sessions.inspector.notes.mappedTo' => ({required Object path}) => 'Mapped to ${path}',
+			'sessions.inspector.notes.cancelTooltip' => 'Cancel',
+			'sessions.inspector.notes.newDocTooltip' => 'New doc',
+			'sessions.inspector.notes.noProjectMapping' => 'Could not resolve a project mapping for this session. Check that the gateway has a notes vault configured and that the session cwd is set.',
+			'sessions.inspector.notes.emptyProjectDocs' => 'No project docs yet. Tap + to create one, or let an AI agent generate from a prompt.',
+			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => 'No matches for "${query}".',
+			'sessions.inspector.notes.locationDialogHelp' => 'Pin this session\'s cwd to a specific folder under your notes vault. Leave blank to reset.',
+			'sessions.inspector.notes.sessionCwd' => 'Session cwd',
+			'sessions.inspector.notes.projectDocsPath' => 'Vault-relative project docs path',
+			'sessions.inspector.notes.locationStoredHint' => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.',
+			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
+			'sessions.inspector.notes.noProjectMapping2' => '(no project mapping)',
+			'sessions.inspector.notes.clearOverride' => 'Clear override',
+			'sessions.inspector.notes.save' => 'Save',
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
@@ -3356,6 +4947,34 @@ extension on Translations {
 			'providers.accounts.deleteTitle' => 'Delete account?',
 			'providers.accounts.importFailedApi' => ({required Object error}) => 'Import failed: ${error}',
 			'providers.accounts.importFailedGeneric' => ({required Object error}) => 'Import failed: ${error}',
+			'providers.accounts.enable' => 'Enable',
+			'providers.accounts.disable' => 'Disable',
+			'providers.accounts.deleteLabel' => 'Delete',
+			'providers.accounts.deleteBody' => 'Removes the account and its stored OAuth token. Sessions already using this account stay running but reauth will fail.',
+			'providers.accounts.deletedSnack' => ({required Object name}) => 'Deleted ${name}.',
+			'providers.accounts.importSyncedSnack' => 'Already in sync — gateway has no new accounts.',
+			'providers.accounts.importedSnackOne' => ({required Object n}) => 'Imported ${n} account.',
+			'providers.accounts.importedSnackOther' => ({required Object n}) => 'Imported ${n} accounts.',
+			'providers.accounts.importing' => 'Syncing…',
+			'providers.accounts.importLocal' => 'Import local',
+			'providers.accounts.addHint' => 'Adding a new account is gateway-host only.',
+			'providers.accounts.addBody' => 'The new directory shows up here automatically. See the docs for OAuth flow steps.',
+			'providers.accounts.loadFailed' => ({required Object error}) => 'Failed to load accounts: ${error}',
+			'providers.accounts.intro' => 'Sessions spawned with the Claude provider pick from these accounts (or fall back to env).',
+			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} enabled.',
+			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} disabled.',
+			'providers.accounts.renamedSnack' => ({required Object name}) => 'Renamed to ${name}.',
+			'providers.configFallbackTitle' => 'Provider config',
+			'providers.saving' => 'Saving…',
+			'providers.save' => 'Save',
+			'providers.configLoadFailed' => 'Failed to load provider',
+			'providers.argsHelper' => 'Whitespace-separated CLI args.',
+			'providers.listEmptyHeadline' => 'No providers loaded.',
+			'providers.listEmptyBody' => 'The gateway resolves providers from its plugin directory at startup. Check the logs if you expect one.',
+			'providers.listLoadFailed' => 'Failed to load providers',
+			'providers.cliSectionHeader' => 'CLI providers',
+			'providers.enabledSnack' => ({required Object name}) => '${name} enabled.',
+			'providers.disabledSnack' => ({required Object name}) => '${name} disabled.',
 			'integrations.title' => 'Integrations',
 			'integrations.register' => 'Register',
 			'integrations.registerDialogTitle' => 'Register integration',
@@ -3382,6 +5001,44 @@ extension on Translations {
 			'integrations.newApiKeySubtitle' => 'Hand this to the integration. The previous key has just been invalidated.',
 			'integrations.rotateFailedApi' => ({required Object error}) => 'Rotate failed: ${error}',
 			'integrations.rotateFailedGeneric' => ({required Object error}) => 'Rotate failed: ${error}',
+			'integrations.deleteBody' => 'Removes the registration and revokes the API key. In-flight requests using the old key will start failing.',
+			'integrations.rotateBody' => ({required Object name}) => 'Generates a new API key for ${name} and immediately invalidates the old one.',
+			'integrations.appBarFallback' => 'Integration',
+			'integrations.tooltipMore' => 'More',
+			'integrations.tooltipReadOnly' => 'System integration — read-only',
+			'integrations.kvRoutePrefix' => 'Route prefix',
+			'integrations.kvBaseUrl' => 'Base URL',
+			'integrations.kvScopes' => 'Scopes',
+			'integrations.kvVersion' => 'Version',
+			'integrations.kvLastHealthPing' => 'Last health ping',
+			'integrations.kvCreated' => 'Created',
+			'integrations.kvKeyRotated' => 'Key rotated',
+			'integrations.detailLoadFailed' => ({required Object error}) => 'Failed to load integration: ${error}',
+			'integrations.callsLoadFailed' => 'Failed to load calls',
+			'integrations.noMatchingCalls' => 'No matching calls in the log yet.',
+			'integrations.directionAll' => 'All',
+			'integrations.directionInbound' => 'Inbound',
+			'integrations.directionOutbound' => 'Outbound',
+			'integrations.form.validateRequired' => 'Name, base URL, and route prefix are required.',
+			'integrations.form.fieldName' => 'Name',
+			'integrations.form.fieldNameHint' => 'My Bot',
+			'integrations.form.fieldBaseUrl' => 'Base URL',
+			'integrations.form.fieldRoutePrefix' => 'Route prefix',
+			'integrations.form.routePrefixHelper' => 'Reachable as /api/v1/<prefix>/...',
+			'integrations.form.fieldScopes' => 'Scopes (optional)',
+			'integrations.form.scopesHelper' => 'Comma-separated. Empty = server defaults.',
+			'integrations.form.fieldVersion' => 'Version (optional)',
+			'integrations.form.validateBaseUrl' => 'Base URL is required.',
+			'integrations.form.editFieldScopes' => 'Scopes',
+			'integrations.form.editScopesHelper' => 'Comma-separated.',
+			'integrations.form.editFieldVersion' => 'Version',
+			'integrations.form.apiKeyWarn' => 'You won\'t see this key again.',
+			'integrations.form.copyCopied' => 'Copied',
+			'integrations.form.copyCopy' => 'Copy',
+			'integrations.emptyState' => 'Register from the web admin: Integrations → New.',
+			'integrations.sectionRegistered' => 'Registered',
+			'integrations.sectionSystem' => 'System',
+			'integrations.listLoadFailed' => 'Failed to load integrations',
 			'memoryWorkers.title' => 'Memory workers',
 			'memoryWorkers.savedSnack' => ({required Object label}) => '${label} saved',
 			'memoryWorkers.saveFailed' => ({required Object error}) => 'Save failed: ${error}',
@@ -3451,17 +5108,65 @@ extension on Translations {
 			'project.willMergeInto' => 'Will merge into',
 			'backups.title' => 'Backups',
 			'backups.runConfirmTitle' => 'Run backup now?',
+			'backups.runConfirmBody' => 'Triggers a fresh dump against the local target. The job runs server-side; this list will refresh as it progresses.',
 			'backups.run' => 'Run',
+			'backups.runNow' => 'Run now',
+			'backups.queueing' => 'Queueing…',
 			'backups.queuedSnack' => ({required Object id}) => 'Backup queued (${id}). Watching for progress…',
 			'backups.runFailedApi' => ({required Object error}) => 'Run failed: ${error}',
 			'backups.runFailedGeneric' => ({required Object error}) => 'Run failed: ${error}',
+			'backups.rowSucceededSnack' => ({required Object bytes}) => 'Backup succeeded (${bytes}).',
+			'backups.rowFailedSnack' => ({required Object error}) => 'Backup failed: ${error}',
+			'backups.unknownError' => 'unknown error',
 			'backups.detailTitle' => 'Backup detail',
 			'backups.deleteTitle' => 'Delete backup?',
+			'backups.deleteBody' => ({required Object target}) => 'Removes the blob from ${target} and marks the row deleted in the index.',
 			'backups.deletedSnack' => ({required Object id}) => 'Deleted ${id}.',
 			'backups.deleteFailedApi' => ({required Object error}) => 'Delete failed: ${error}',
 			'backups.deleteFailedGeneric' => ({required Object error}) => 'Delete failed: ${error}',
 			'backups.menuSchedules' => 'Schedules',
 			'backups.menuTargets' => 'Targets',
+			'backups.kv.status' => 'Status',
+			'backups.kv.target' => 'Target',
+			'backups.kv.triggeredBy' => 'Triggered by',
+			'backups.kv.started' => 'Started',
+			'backups.kv.finished' => 'Finished',
+			'backups.kv.size' => 'Size',
+			'backups.kv.encrypted' => 'Encrypted',
+			'backups.kv.targetPath' => 'Target path',
+			'backups.kv.error' => 'Error',
+			'backups.kv.yes' => 'yes',
+			'backups.kv.no' => 'no',
+			'backups.emptyMissingDeps.headline' => 'Backups can\'t run yet',
+			'backups.emptyMissingDeps.body' => 'Install postgresql-client and restart opendray.',
+			'backups.emptyNoTargets.headline' => 'No backup targets configured',
+			'backups.emptyNoTargets.body' => 'Open the More menu → Targets to add a destination (local / S3 / SMB / SFTP / WebDAV / rclone). Then come back and tap "Run now".',
+			_ => null,
+		} ?? switch (path) {
+			'backups.emptyNoBackups.headline' => 'No backups yet',
+			'backups.emptyNoBackups.body' => 'Tap "Run now" to take a fresh snapshot, or open Schedules to set up recurring runs.',
+			'backups.restartToActivate' => 'Restart opendray to activate backups',
+			'backups.passphraseSaved' => 'Your passphrase is saved. The gateway only loads it at startup, so changes only take effect after a restart.',
+			'backups.keyFileLabel' => 'Key file',
+			'backups.configuredViaLabel' => 'Configured via',
+			'backups.wizard.title' => 'Set up backups',
+			'backups.wizard.intro' => 'Choose a master passphrase. opendray uses it to encrypt every backup blob with AES-256-GCM. Lose the passphrase and you lose the data — there is no recovery.',
+			'backups.wizard.saving' => 'Saving…',
+			'backups.wizard.generateAndSave' => 'Generate and save',
+			'backups.wizard.savePassphrase' => 'Save passphrase',
+			'backups.wizard.generateHint' => 'Server generates a cryptographically random passphrase, you copy it to a password manager, then commit.',
+			'backups.wizard.helperRecommended' => 'Recommended: 40+ chars from a password manager',
+			'backups.wizard.saveNowHeader' => 'Save this passphrase NOW',
+			'backups.wizard.saveNowBody' => 'This is shown ONCE. It will not be retrievable from opendray afterwards.',
+			'backups.statusReady' => 'Backups ready',
+			'backups.statusCannot' => 'Backups cannot run',
+			'backups.overviewTargets' => 'Targets',
+			'backups.overviewSchedules' => 'Schedules',
+			'backups.overviewBackups' => 'Backups',
+			'backups.failedToLoad' => 'Failed to load backups',
+			'backups.envVarConfigured' => 'OPENDRAY_BACKUP_KEY env var',
+			'backups.savedConfirmCheckbox' => 'I have saved this passphrase to my password manager',
+			'backups.pgDumpMissing' => 'pg_dump is not on PATH. Install postgresql-client and restart opendray.',
 			'backups.encryption.checkAgain' => 'Check again',
 			'backups.encryption.generate' => 'Generate',
 			'backups.encryption.paste' => 'Paste',
@@ -3478,14 +5183,99 @@ extension on Translations {
 			'backupTargets.deleteTitle' => 'Delete target?',
 			'backupTargets.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.title' => 'Backup schedules',
+			'backupSchedules.newButton' => 'New',
 			'backupSchedules.deleteTitle' => 'Delete schedule?',
 			'backupSchedules.targetLabel' => 'Target',
 			'backupSchedules.intervalLabel' => 'Interval',
 			'backupSchedules.retentionLabel' => 'Retention (keep N most recent)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
+			'backupSchedules.noTargets' => 'No backup targets configured. Add one from the web admin or the Targets screen.',
+			'backupSchedules.okMsgCreate' => 'Schedule created.',
+			'backupSchedules.okMsgUpdate' => 'Schedule updated.',
+			'backupSchedules.okMsgDelete' => 'Schedule deleted.',
+			'backupSchedules.errorPrefixCreate' => 'Create failed',
+			'backupSchedules.errorPrefixUpdate' => 'Update failed',
+			'backupSchedules.errorPrefixDelete' => 'Delete failed',
+			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Removes the recurring spec for target ${targetId}. Existing backup blobs are not touched.',
+			'backupSchedules.emptyList' => 'No schedules yet.\nTap "New" to create one.',
+			'backupSchedules.validatePickTarget' => 'Pick a target.',
+			'backupSchedules.validateInterval' => 'Interval must be > 0.',
+			'backupSchedules.formTitleEdit' => 'Edit schedule',
+			'backupSchedules.formTitleNew' => 'New schedule',
+			'backupSchedules.saveButtonEdit' => 'Save',
+			'backupSchedules.saveButtonNew' => 'Create',
+			'backupSchedules.targetFixedHint' => 'Target is fixed once created.',
+			'backupSchedules.enabledOn' => 'Scheduler will run this on cadence.',
+			'backupSchedules.enabledOff' => 'Paused — no automatic runs until re-enabled.',
+			'backupSchedules.loadFailedTitle' => 'Failed to load schedules',
+			'backupSchedules.pausedBadge' => 'paused',
+			'backupSchedules.everyInterval' => ({required Object interval}) => 'every ${interval}',
+			'backupSchedules.keepRetention' => ({required Object n}) => '· keep ${n}',
+			'backupSchedules.nextRun' => ({required Object when}) => '· next ${when}',
+			'backupSchedules.lastRun' => ({required Object when}) => '· last ${when}',
 			'backupTargetEditor.useHttps' => 'Use HTTPS',
 			'backupTargetEditor.pathStyle' => 'Path-style addressing',
 			'backupTargetEditor.pathStyleSubtitle' => 'Legacy / MinIO',
+			'backupTargetEditor.kinds.local.label' => 'Local disk',
+			'backupTargetEditor.kinds.local.description' => 'Folder on the machine running opendray',
+			'backupTargetEditor.kinds.smb.label' => 'SMB share',
+			'backupTargetEditor.kinds.smb.description' => 'Windows shares + most home NAS appliances',
+			'backupTargetEditor.kinds.webdav.label' => 'WebDAV',
+			'backupTargetEditor.kinds.webdav.description' => 'Self-hosted clouds + file-sharing services',
+			'backupTargetEditor.kinds.sftp.label' => 'SFTP',
+			'backupTargetEditor.kinds.sftp.description' => 'Any SSH-accessible server',
+			'backupTargetEditor.kinds.s3.label' => 'S3 / compatible',
+			'backupTargetEditor.kinds.s3.description' => 'Amazon S3 + S3-compatible buckets (MinIO, R2, B2)',
+			'backupTargetEditor.kinds.rclone.label' => 'rclone (any)',
+			'backupTargetEditor.kinds.rclone.description' => 'OneDrive, Google Drive, Dropbox via the rclone CLI',
+			'backupTargetEditor.formTitleEdit' => 'Edit target',
+			'backupTargetEditor.formTitleNew' => 'New backup target',
+			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => 'Auto: ${prefix}-1',
+			'backupTargetEditor.idHelper' => 'Lower-case letters, digits, dashes. Defaults to the next available slot.',
+			'backupTargetEditor.enabledOn' => 'Scheduled and ad-hoc backups can target this.',
+			'backupTargetEditor.enabledOff' => 'Server will refuse to write backups here.',
+			'backupTargetEditor.saving' => 'Saving…',
+			'backupTargetEditor.create' => 'Create',
+			'backupTargetEditor.rootDirLabel' => 'Root directory',
+			'backupTargetEditor.rootDirHint' => 'Empty = cfg.backup.local_dir (~/.opendray/backups)',
+			'backupTargetEditor.hostLabel' => 'Host',
+			'backupTargetEditor.portLabel' => 'Port',
+			'backupTargetEditor.shareLabel' => 'Share',
+			'backupTargetEditor.shareHint' => 'Top-level share name',
+			'backupTargetEditor.shareSampleHint' => 'Claude_Workspace',
+			'backupTargetEditor.userLabel' => 'User',
+			'backupTargetEditor.passwordLabel' => 'Password',
+			'backupTargetEditor.passwordHintKeepCurrent' => 'Leave blank to keep current',
+			'backupTargetEditor.passwordHintKeep' => 'Leave blank to keep',
+			'backupTargetEditor.pathPrefixLabel' => 'Path prefix',
+			'backupTargetEditor.pathPrefixHintShareRoot' => 'Sub-folder under the share root (optional)',
+			'backupTargetEditor.pathPrefixHintBaseUrl' => 'Sub-folder under the base URL (optional)',
+			'backupTargetEditor.pathPrefixHintObjectKey' => 'Object-key prefix (optional)',
+			'backupTargetEditor.pathPrefixHintSshFolder' => 'Absolute or relative to user home (optional)',
+			'backupTargetEditor.pathPrefixHintRemoteRoot' => 'Sub-folder under the remote root (optional)',
+			'backupTargetEditor.endpointLabel' => 'Endpoint',
+			'backupTargetEditor.regionLabel' => 'Region',
+			'backupTargetEditor.bucketLabel' => 'Bucket',
+			'backupTargetEditor.accessKeyLabel' => 'Access key',
+			'backupTargetEditor.secretKeyLabel' => 'Secret key',
+			'backupTargetEditor.secretKeyHintEdit' => 'Leave blank to keep current. Stored AES-256-GCM encrypted.',
+			'backupTargetEditor.secretKeyHintNew' => 'Stored AES-256-GCM encrypted; never echoed back.',
+			'backupTargetEditor.baseUrlLabel' => 'Base URL',
+			'backupTargetEditor.baseUrlHint' => 'Full URL including path. Nextcloud: https://cloud.example/remote.php/dav/files/<user>',
+			'backupTargetEditor.sftpPasswordHintEdit' => 'Leave blank to keep. If both password + private key are present, the private key wins.',
+			'backupTargetEditor.sftpPasswordHintNew' => 'Either password OR private key. If both, password becomes a fallback only.',
+			'backupTargetEditor.privateKeyLabel' => 'Private key (PEM)',
+			'backupTargetEditor.privateKeyHintEdit' => 'Leave blank to keep. Paste OpenSSH/PEM contents.',
+			'backupTargetEditor.privateKeyHintNew' => 'Paste the contents of an OpenSSH/PEM private key. Multi-line input — keep the BEGIN/END markers.',
+			'backupTargetEditor.hostKeyLabel' => 'Host key (pinning)',
+			'backupTargetEditor.hostKeyHint' => 'OpenSSH-style server public key. `ssh-keyscan <host>` to obtain. Blank = no pinning (NOT recommended outside LAN).',
+			'backupTargetEditor.rcloneNote' => 'Requires the rclone CLI on the opendray host. First run `rclone config` once interactively to authenticate cloud accounts.',
+			'backupTargetEditor.rcloneRemoteLabel' => 'Remote name',
+			'backupTargetEditor.rcloneRemoteHint' => 'Name from `rclone config` (no colon).',
+			'backupTargetEditor.rcloneBinaryLabel' => 'Binary path',
+			'backupTargetEditor.rcloneBinaryHint' => 'Override `which rclone`. Empty = PATH lookup.',
+			'backupTargetEditor.rcloneConfigLabel' => 'Config path',
+			'backupTargetEditor.rcloneConfigHint' => 'Override --config. Empty = rclone default.',
 			'githosts.title' => 'Git hosts',
 			'githosts.addHost' => 'Add host',
 			'githosts.deleteTitle' => 'Delete git host?',
@@ -3496,6 +5286,38 @@ extension on Translations {
 			'githosts.form.hostLabel' => 'Host',
 			'githosts.form.nameLabel' => 'Name',
 			'githosts.form.nameHint' => 'work-github, personal-gitlab, …',
+			'githosts.form.kinds.github' => 'GitHub',
+			'githosts.form.kinds.gitlab' => 'GitLab',
+			'githosts.form.kinds.bitbucket' => 'Bitbucket',
+			'githosts.form.kinds.gitea' => 'Gitea',
+			'githosts.form.kinds.custom' => 'Custom',
+			'githosts.form.validateHost' => 'Host is required.',
+			'githosts.form.validateName' => 'Name is required.',
+			'githosts.form.snackAdded' => 'Host added.',
+			'githosts.form.snackUpdated' => 'Host updated.',
+			'githosts.form.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
+			'githosts.form.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
+			'githosts.form.saving' => 'Saving…',
+			'githosts.form.save' => 'Save',
+			'githosts.form.add' => 'Add',
+			'githosts.form.nameHelper' => 'Display name shown in PR lists.',
+			'githosts.form.tokenLabelKeep' => 'Token (leave blank to keep existing)',
+			'githosts.form.tokenLabel' => 'Token',
+			'githosts.form.tokenHintKeep' => 'Leave blank to keep existing.',
+			'githosts.form.tokenHintNew' => 'Paste the personal access token.',
+			'githosts.form.enabledHelper' => 'Available to sessions for PR / remote lookups.',
+			'githosts.form.validateTokenRequired' => 'Token is required when adding a host.',
+			'githosts.form.appBarEdit' => ({required Object name}) => 'Edit ${name}',
+			'githosts.form.appBarNew' => 'Add git host',
+			'githosts.form.tokenPreviewHint' => ({required Object preview}) => 'Current preview: ${preview}',
+			'githosts.form.tokenPreviewNone' => '(none)',
+			'githosts.form.pausedSubtitle' => 'Paused — sessions skip this host.',
+			'githosts.deleteBody' => ({required Object host}) => 'Removes the credential. Sessions trying to list PRs from ${host} will fall back to the unauthenticated API.',
+			'githosts.deletedSnack' => ({required Object name}) => 'Deleted ${name}.',
+			'githosts.enabledSnack' => ({required Object name}) => '${name} enabled.',
+			'githosts.disabledSnack' => ({required Object name}) => '${name} disabled.',
+			'githosts.emptyList' => 'No git hosts configured.\n\nAdd a credential so the gateway can list pull requests across your repos.',
+			'githosts.failedToLoad' => 'Failed to load git hosts',
 			'channels.title' => 'Channels',
 			'channels.kNew' => 'New',
 			'channels.sendTest' => 'Send test message',
@@ -3556,6 +5378,50 @@ extension on Translations {
 			'channels.errorPrefix.update' => 'Update failed',
 			'channels.errorPrefix.delete' => 'Delete failed',
 			'channels.failedToLoad' => 'Failed to load channels',
+			'channels.kinds.telegram.description' => 'Bot via @BotFather. opendray long-polls getUpdates and sends via REST. Buttons + reply_to_message work natively.',
+			'channels.kinds.telegram.botTokenLabel' => 'Bot token',
+			'channels.kinds.telegram.botTokenHint' => 'From @BotFather. Stored in channel config; admin-only API.',
+			'channels.kinds.telegram.chatIdLabel' => 'Default chat ID',
+			'channels.kinds.telegram.chatIdPlaceholder' => '42 (optional — used when no ReplyCtx)',
+			'channels.kinds.slack.description' => 'Socket Mode — no public webhook needed. Requires a bot OAuth token (xoxb-) and an app-level token (xapp-) with connections:write.',
+			'channels.kinds.slack.botTokenLabel' => 'Bot token (xoxb-…)',
+			'channels.kinds.slack.botTokenHint' => 'OAuth & Permissions → Bot User OAuth Token. Needs chat:write.',
+			'channels.kinds.slack.appTokenLabel' => 'App-level token (xapp-…)',
+			'channels.kinds.slack.appTokenHint' => 'Settings → Basic Information → App-Level Tokens. Scope: connections:write.',
+			'channels.kinds.slack.channelIdLabel' => 'Default channel ID',
+			'channels.kinds.slack.channelIdPlaceholder' => 'C0123ABC456 (optional)',
+			'channels.kinds.discord.description' => 'Bot via Discord Developer Portal with MESSAGE CONTENT INTENT enabled. Connects to Gateway WS — no public URL required.',
+			'channels.kinds.discord.botTokenLabel' => 'Bot token',
+			'channels.kinds.discord.botTokenPlaceholder' => 'Bot token from Discord Developer Portal',
+			'channels.kinds.discord.botTokenHint' => 'Application → Bot → Reset Token. Invite bot with send_messages + embed_links.',
+			'channels.kinds.discord.channelIdLabel' => 'Default channel ID',
+			'channels.kinds.discord.channelIdPlaceholder' => '123456789012345678 (optional)',
+			'channels.kinds.feishu.description' => 'App-level credentials. Uses event subscription webhook for inbound. Public webhook URL is generated below — paste it into the Feishu dev console.',
+			'channels.kinds.feishu.afterCreateHint' => 'Open the webhook URL from the channel card and paste it into Feishu Open Platform → Event Subscriptions → Request URL.',
+			'channels.kinds.feishu.appIdLabel' => 'App ID',
+			'channels.kinds.feishu.appSecretLabel' => 'App secret',
+			'channels.kinds.feishu.appSecretPlaceholder' => 'Application credential secret',
+			'channels.kinds.feishu.verificationTokenLabel' => 'Verification token',
+			'channels.kinds.feishu.verificationTokenHint' => 'From Event Subscriptions → Verification Token. When set, opendray rejects webhooks with a different token.',
+			'channels.kinds.feishu.chatIdLabel' => 'Default chat ID (oc_…)',
+			'channels.kinds.feishu.chatIdPlaceholder' => 'oc_xxxxxxxxxx (optional)',
+			'channels.kinds.dingtalk.description' => 'Custom group robot. Outbound only. Group chat → Robots → Add → Sign mode → copy webhook + secret.',
+			'channels.kinds.dingtalk.webhookUrlLabel' => 'Webhook URL',
+			'channels.kinds.dingtalk.secretLabel' => 'Sign secret',
+			'channels.kinds.dingtalk.secretHint' => 'When the robot is set to "Sign" security mode, copy the secret here. opendray adds the timestamp + sign params automatically.',
+			'channels.kinds.wecom.description' => 'Group robot webhook. Outbound only (text + markdown). Group settings → Group robots → Add → copy webhook URL.',
+			'channels.kinds.wecom.webhookKeyLabel' => 'Webhook key',
+			'channels.kinds.wecom.webhookKeyPlaceholder' => 'The "key=" query value',
+			'channels.kinds.wecom.webhookKeyHint' => 'Or paste the whole webhook URL into the field below — either is enough.',
+			'channels.kinds.wecom.webhookUrlLabel' => 'Or full webhook URL',
+			'channels.kinds.wechat.description' => 'Push to personal WeChat via WxPusher. Outbound-only — push services do not relay user replies. Each recipient subscribes once via QR code.',
+			'channels.kinds.wechat.appTokenLabel' => 'App token (AT_…)',
+			'channels.kinds.wechat.appTokenHint' => 'WxPusher → 应用管理 → 创建应用 → 复制 App Token.',
+			'channels.kinds.wechat.uidsLabel' => 'Recipient UIDs (one per line)',
+			'channels.kinds.wechat.uidsHint' => 'Either UIDs or topic IDs is required.',
+			'channels.kinds.wechat.topicIdsLabel' => 'Topic IDs (one per line)',
+			'channels.kinds.wechat.urlLabel' => 'Tap-through URL',
+			'channels.kinds.wechat.urlHint' => 'When set, tapping the WeChat notification opens this page.',
 			'onboarding.gatewayLabel' => 'Gateway URL',
 			'onboarding.gatewayHint' => 'https://opendray.example.com',
 			'onboarding.kContinue' => 'Continue',
@@ -3565,6 +5431,35 @@ extension on Translations {
 			'skills.idLabel' => 'Id (slug)',
 			'skills.idHint' => 'e.g. tdd-guide',
 			'skills.bodyLabel' => 'Body (markdown)',
+			'skills.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
+			'skills.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
+			'skills.idRequired' => 'Id is required.',
+			'skills.bodyRequired' => 'Body cannot be empty.',
+			'skills.snackCreated' => 'Skill created.',
+			'skills.snackOverride' => 'Saved as vault override.',
+			'skills.snackUpdated' => 'Skill updated.',
+			'skills.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
+			'skills.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
+			'skills.resetTitle' => 'Reset to built-in?',
+			'skills.deleteTitle' => 'Delete skill?',
+			'skills.resetBody' => ({required Object id}) => 'Removes the vault override for ${id}. Sessions will fall back to the built-in body.',
+			'skills.resetButton' => 'Reset',
+			'skills.resetSnack' => ({required Object id}) => 'Reset ${id} to built-in.',
+			'skills.deletedSnack' => ({required Object id}) => 'Deleted ${id}.',
+			'skills.deleteFailedApi' => ({required Object error}) => 'Delete failed: ${error}',
+			'skills.deleteFailedGeneric' => ({required Object error}) => 'Delete failed: ${error}',
+			'skills.deleteBody' => ({required Object id}) => 'Removes ${id} from the vault. Sessions that reference it will fail until restored.',
+			'skills.newSkillTitle' => 'New skill',
+			'skills.customizeTitle' => ({required Object id}) => 'Customize ${id}',
+			'skills.editTitle' => ({required Object id}) => 'Edit ${id}',
+			'skills.resetTooltip' => 'Reset to built-in',
+			'skills.deleteTooltip' => 'Delete',
+			'skills.saving' => 'Saving…',
+			'skills.saveOverride' => 'Save override',
+			'skills.overrideBanner' => 'Saving creates a vault override with the same id. Sessions will use this body instead of the built-in until you reset.',
+			'skills.idHelper' => 'Lowercase letters / digits / dash. Locked once created.',
+			'skills.emptyList' => 'No skills configured. The gateway ships with built-ins (planner, code-reviewer, etc.).',
+			'skills.failedToLoad' => 'Failed to load skills',
 			'customTasks.title' => 'Custom tasks',
 			'customTasks.newTask' => 'New task',
 			'customTasks.deleteTitle' => 'Delete task?',
@@ -3575,12 +5470,33 @@ extension on Translations {
 			'customTasks.popupDelete' => 'Delete',
 			'customTasks.nameHint' => 'e.g. backend-tests',
 			'customTasks.commandHint' => '/run pnpm test --filter backend',
-			_ => null,
-		} ?? switch (path) {
 			'customTasks.descriptionHint' => 'One-liner shown under the task name.',
 			'customTasks.scopeGlobal' => 'Global',
 			'customTasks.scopeProject' => 'Project',
 			'customTasks.cwdHint' => '/Users/you/projects/backend',
+			'customTasks.snackCreated' => 'Task created.',
+			'customTasks.snackUpdated' => 'Task updated.',
+			'customTasks.deleteBody' => 'Removes the task from the catalogue. Sessions that already inserted it stay unaffected.',
+			'customTasks.introBanner' => 'Define your own slash commands. They appear in the session task picker alongside the built-ins.',
+			'customTasks.validateNameRequired' => 'Name is required',
+			'customTasks.validateCommandRequired' => 'Command is required',
+			'customTasks.validateProjectCwd' => 'Project-scoped tasks need an absolute cwd path',
+			'customTasks.appBarEdit' => 'Edit custom task',
+			'customTasks.appBarNew' => 'New custom task',
+			'customTasks.fieldName' => 'Name',
+			'customTasks.nameHelper' => 'Shown in the inspector\'s task picker.',
+			'customTasks.fieldCommand' => 'Command',
+			'customTasks.commandHelper' => 'The text inserted into the session when picked. Can be a CLI command or a Claude slash command.',
+			'customTasks.fieldDescription' => 'Description (optional)',
+			'customTasks.fieldScope' => 'Scope',
+			'customTasks.globalScopeHint' => 'Visible from every session, regardless of cwd.',
+			'customTasks.projectScopeHint' => 'Visible only when a session\'s cwd matches the path below.',
+			'customTasks.fieldProjectCwd' => 'Project cwd',
+			'customTasks.cwdHelper' => 'Absolute path. Sessions spawned with this exact cwd will see the task.',
+			'customTasks.saving' => 'Saving…',
+			'customTasks.save' => 'Save',
+			'customTasks.create' => 'Create',
+			'customTasks.failedToLoad' => 'Failed to load custom tasks',
 			'notesPage.title' => 'Notes',
 			'notesPage.newButton' => 'New',
 			'notesPage.newNoteDialogTitle' => 'New note',
@@ -3598,9 +5514,22 @@ extension on Translations {
 			'notesPage.pathLabel' => 'Vault-relative path',
 			'notesPage.pathHint' => 'personal/scratch.md',
 			'notesPage.create' => 'Create',
+			'notesPage.popupDelete' => 'Delete',
+			'notesPage.deleteBody' => 'This is irreversible. Vault git sync will remove the file on the gateway host too.',
+			'notesPage.emptyFilterMatch' => ({required Object query}) => 'No notes match "${query}".',
+			'notesPage.emptyVault' => 'Vault is empty. Tap + to create your first note.',
+			'notesPage.emptyFolder' => ({required Object path}) => 'Folder "${path}" is empty.',
+			'notesPage.validatePath' => 'Path is required',
+			'notesPage.validatePathDots' => 'Path cannot contain ".."',
+			'notesPage.pathHelper' => 'Auto-appends .md if missing.',
 			'notesPage.editor.markdownHint' => 'Markdown…',
 			'notesPage.editor.saving' => 'Saving…',
 			'notesPage.editor.autosave' => 'Auto-saves as you type',
+			'notesPage.editor.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
+			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
+			'notesPage.editor.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
+			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
+			'notesPage.editor.savedAt' => ({required Object time}) => 'Saved ${time}',
 			'memory.title' => 'Memory',
 			'memory.more' => 'More',
 			'memory.workers' => 'Memory workers',
@@ -3690,10 +5619,17 @@ extension on Translations {
 			'settings.serverSettings.reloadTooltip' => 'Reload from server',
 			'settings.serverSettings.restartTooltip' => 'Restart gateway',
 			'settings.serverSettings.restartConfirmTitle' => 'Restart opendray?',
+			'settings.serverSettings.restartConfirmBody' => 'The gateway will exec itself. The mobile app may briefly lose connection.',
 			'settings.serverSettings.restart' => 'Restart',
 			'settings.serverSettings.restartQueuedSnack' => 'Restart requested. Pull-to-refresh in a moment.',
 			'settings.serverSettings.restartFailedApi' => ({required Object error}) => 'Restart failed: ${error}',
 			'settings.serverSettings.restartFailedGeneric' => ({required Object error}) => 'Restart failed: ${error}',
+			'settings.serverSettings.loadedFrom' => ({required Object path}) => 'Loaded from: ${path}',
+			'settings.serverSettings.restartHint' => 'Most sections need a gateway restart to take effect. The restart button is in the AppBar.',
+			'settings.serverSettings.savedNeedsRestart' => 'Saved. Restart the gateway to apply.',
+			'settings.serverSettings.savedSimple' => 'Saved.',
+			'settings.serverSettings.changesNeedRestart' => 'Changes to this section need a gateway restart.',
+			'settings.serverSettings.loadFailed' => 'Failed to load server settings',
 			'settings.serverSettings.sections.general' => 'General',
 			'settings.serverSettings.sections.logging' => 'Logging',
 			'settings.serverSettings.sections.sessions' => 'Sessions',
@@ -3704,6 +5640,78 @@ extension on Translations {
 			'settings.serverSettings.sections.storageClaude' => 'Storage · Claude',
 			'settings.serverSettings.sections.storageCodex' => 'Storage · Codex',
 			'settings.serverSettings.sections.storageGemini' => 'Storage · Gemini',
+			'settings.serverSettings.sectionDescriptions.general' => 'Listen address, operator account, token TTL.',
+			'settings.serverSettings.sectionDescriptions.logging' => 'Verbosity, format, and on-disk log path.',
+			'settings.serverSettings.sectionDescriptions.sessions' => 'Idle detection thresholds.',
+			'settings.serverSettings.sectionDescriptions.vault' => 'Notes, skills, and git-versioned root.',
+			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'Vault paths for MCP servers + secrets file.',
+			'settings.serverSettings.sectionDescriptions.memory' => 'Cross-CLI persistent memory subsystem.',
+			'settings.serverSettings.sectionDescriptions.backup' => 'Encrypted DB backups + admin data exports. Passphrase lives in the keyfile (Settings → Backups).',
+			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Where Claude transcripts live on disk.',
+			'settings.serverSettings.sectionDescriptions.storageCodex' => 'Codex sessions root.',
+			'settings.serverSettings.sectionDescriptions.storageGemini' => 'Per-project tmp + projects.json paths.',
+			'settings.serverSettings.fields.listenAddress' => 'Listen address',
+			'settings.serverSettings.fields.adminUser' => 'Admin user',
+			'settings.serverSettings.fields.adminUserHelper' => 'Effective when no keyfile or env var is set. Otherwise see Settings → Account.',
+			'settings.serverSettings.fields.adminPassword' => 'Admin password',
+			'settings.serverSettings.fields.adminPasswordHelper' => 'Send blank to preserve. For ongoing rotations use Settings → Account (keyfile-backed, no restart).',
+			_ => null,
+		} ?? switch (path) {
+			'settings.serverSettings.fields.tokenTtlWeb' => 'Token TTL (web)',
+			'settings.serverSettings.fields.tokenTtlHelper' => 'Go duration string, e.g. 24h, 30m.',
+			'settings.serverSettings.fields.level' => 'Level',
+			'settings.serverSettings.fields.format' => 'Format',
+			'settings.serverSettings.fields.filePath' => 'File path',
+			'settings.serverSettings.fields.filePathHelper' => 'Empty = stdout only.',
+			'settings.serverSettings.fields.idleThreshold' => 'Idle threshold',
+			'settings.serverSettings.fields.idleThresholdHelper' => 'Quiet period before a session is flagged idle. Go duration.',
+			'settings.serverSettings.fields.idleCheckInterval' => 'Idle check interval',
+			'settings.serverSettings.fields.idleCheckHelper' => 'How often the idle reaper runs.',
+			'settings.serverSettings.fields.root' => 'Root',
+			'settings.serverSettings.fields.rootHelper' => 'Parent of notes / skills / git_root sub-paths.',
+			'settings.serverSettings.fields.notesPath' => 'Notes path',
+			'settings.serverSettings.fields.skillsPath' => 'Skills path',
+			'settings.serverSettings.fields.gitRoot' => 'Git root',
+			'settings.serverSettings.fields.personalPrefix' => 'Personal prefix',
+			'settings.serverSettings.fields.projectsPrefix' => 'Projects prefix',
+			'settings.serverSettings.fields.registryRoot' => 'Registry root',
+			'settings.serverSettings.fields.secretsFile' => 'Secrets file',
+			'settings.serverSettings.fields.backend' => 'Backend',
+			'settings.serverSettings.fields.store' => 'Store',
+			'settings.serverSettings.fields.defaultTopK' => 'Default top-k',
+			'settings.serverSettings.fields.similarityThreshold' => 'Similarity threshold',
+			'settings.serverSettings.fields.defaultScope' => 'Default scope',
+			'settings.serverSettings.fields.chromemHelper' => 'When store=chromem.',
+			'settings.serverSettings.fields.preserveHelper' => 'Blank to preserve current.',
+			'settings.serverSettings.fields.localModelName' => 'Local model name',
+			'settings.serverSettings.fields.localLibraryPath' => 'Local library path',
+			'settings.serverSettings.fields.localModelPath' => 'Local model path',
+			'settings.serverSettings.fields.localTokenizerPath' => 'Local tokenizer path',
+			'settings.serverSettings.fields.localMaxSeqLen' => 'Local max seq len',
+			'settings.serverSettings.fields.backupEnabled' => 'Enabled',
+			'settings.serverSettings.fields.backupEnabledHelper' => 'Even with this on, the backup subsystem stays off until OPENDRAY_BACKUP_KEY or the keyfile is configured.',
+			'settings.serverSettings.fields.backupLocalDir' => 'Local dir',
+			'settings.serverSettings.fields.backupExportDir' => 'Export dir',
+			'settings.serverSettings.fields.pathHelper' => 'Empty = resolve from PATH at startup.',
+			'settings.serverSettings.fields.accountsDir' => 'Accounts dir',
+			'settings.serverSettings.fields.accountsHelper' => 'Parent of per-account .claude/ subdirs. Empty = ~/.claude-accounts.',
+			'settings.serverSettings.fields.sessionsRoot' => 'Sessions root',
+			'settings.serverSettings.fields.sessionsRootHelper' => 'Empty = ~/.codex/sessions.',
+			'settings.serverSettings.fields.listenHelper' => 'host:port the gateway binds to. Restart required.',
+			'settings.serverSettings.fields.secretsHelper' => 'AES-256-GCM encrypted secrets vault.',
+			'settings.serverSettings.fields.backendHelper' => 'auto picks the best available; local needs ONNX.',
+			'settings.serverSettings.fields.similarityHelper' => '0.0–1.0; results under this are filtered out.',
+			'settings.serverSettings.fields.chromemPath' => 'chromem path',
+			'settings.serverSettings.fields.httpBaseUrl' => 'HTTP base URL',
+			'settings.serverSettings.fields.httpModel' => 'HTTP model',
+			'settings.serverSettings.fields.httpApiKey' => 'HTTP api key',
+			'settings.serverSettings.fields.httpDimensions' => 'HTTP dimensions',
+			'settings.serverSettings.fields.pgDumpPath' => 'pg_dump path',
+			'settings.serverSettings.fields.pgRestorePath' => 'pg_restore path',
+			'settings.serverSettings.fields.tmpRoot' => 'tmp root',
+			'settings.serverSettings.fields.projectsJson' => 'projects.json',
+			'settings.serverSettings.validateInteger' => ({required Object field}) => '"${field}" must be an integer',
+			'settings.serverSettings.validateNumber' => ({required Object field}) => '"${field}" must be a number',
 			_ => null,
 		};
 	}

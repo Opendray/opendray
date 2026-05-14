@@ -132,9 +132,7 @@ class _GitHostsScreenState extends ConsumerState<GitHostsScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Removes the credential. Sessions trying to list PRs '
-              'or detect the remote on this host will fall back to '
-              'the unauthenticated path (often rate-limited).',
+              t.githosts.deleteBody(host: h.host),
               style: Theme.of(ctx).textTheme.bodySmall,
             ),
           ],
@@ -157,7 +155,7 @@ class _GitHostsScreenState extends ConsumerState<GitHostsScreen> {
     if (ok != true || !mounted) return;
     await _runOp(
       key: h.id,
-      okMsg: 'Deleted ${h.name}.',
+      okMsg: t.githosts.deletedSnack(name: h.name),
       failPrefix: t.githosts.errorPrefix.delete,
       op: () => ref.read(gitHostsApiProvider).delete(h.id),
     );
@@ -196,9 +194,7 @@ class _GitHostsScreenState extends ConsumerState<GitHostsScreen> {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            'No git hosts configured.\n\n'
-            'Add a credential so the gateway can list pull requests '
-            'and detect remotes for sessions running against this host.',
+            t.githosts.emptyList,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
@@ -221,7 +217,9 @@ class _GitHostsScreenState extends ConsumerState<GitHostsScreen> {
             onTap: () => _onEdit(h),
             onToggle: (next) => _runOp(
               key: h.id,
-              okMsg: next ? '${h.name} enabled.' : '${h.name} disabled.',
+              okMsg: next
+                  ? t.githosts.enabledSnack(name: h.name)
+                  : t.githosts.disabledSnack(name: h.name),
               failPrefix: t.githosts.errorPrefix.toggle,
               op: () => ref
                   .read(gitHostsApiProvider)
@@ -376,7 +374,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Failed to load git hosts',
+              t.githosts.failedToLoad,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),
