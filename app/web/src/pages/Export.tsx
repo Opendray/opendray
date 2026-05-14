@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { Download, Package, ShieldAlert, Trash2, Upload } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -33,6 +34,7 @@ import { APIError } from '@/lib/api'
 // has no recoverable plaintext keys (all bcrypt hashes), so the
 // option exists mostly to surface that fact in the manifest.
 export function ExportPage() {
+  const { t } = useTranslation()
   return (
     <div className="flex-1 min-h-0 flex flex-col">
       <header className="px-6 py-4 border-b border-border bg-card/30">
@@ -40,25 +42,23 @@ export function ExportPage() {
           <div>
             <h1 className="text-base font-medium flex items-center gap-2">
               <Package className="size-4 text-accent" />
-              Export data
+              {t('web.export.title')}
             </h1>
             <p className="text-[12px] text-muted-foreground mt-0.5">
-              Take a one-shot zip bundle of selected logical entities.
-              Bundles are kept on the server for 24 hours, then
-              automatically reaped.
+              {t('web.export.subtitle')}
             </p>
           </div>
           <Button asChild variant="outline" size="sm" className="h-8 text-[11px]">
-            <Link to="/backups">← Backups</Link>
+            <Link to="/backups">{t('web.export.backToBackups')}</Link>
           </Button>
         </div>
       </header>
       <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5">
         <div className="max-w-3xl flex flex-col gap-6">
-          <SectionHeader>Export</SectionHeader>
+          <SectionHeader>{t('web.export.sections.export')}</SectionHeader>
           <ExportForm />
           <ExportHistory />
-          <SectionHeader>Import</SectionHeader>
+          <SectionHeader>{t('web.export.sections.import')}</SectionHeader>
           <ImportForm />
           <ImportHistory />
         </div>
@@ -76,6 +76,7 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 }
 
 function ExportForm() {
+  const { t } = useTranslation()
   const [memories, setMemories] = useState(true)
   const [customTasks, setCustomTasks] = useState(true)
   const [integrations, setIntegrations] =
@@ -85,7 +86,8 @@ function ExportForm() {
 
   const wantsPlaintext = integrations === 'plaintext'
   const confirmReady =
-    !wantsPlaintext || confirm.trim().toLowerCase() === 'i understand'
+    !wantsPlaintext ||
+    confirm.trim().toLowerCase() === t('web.export.form.confirmSentinel')
 
   async function submit() {
     setBusy(true)
@@ -95,8 +97,10 @@ function ExportForm() {
         integrations,
         customTasks,
       })
-      toast.success('Export ready', {
-        description: `${e.bytes.toLocaleString()} bytes`,
+      toast.success(t('web.export.form.readyToast'), {
+        description: t('web.export.form.readyDescription', {
+          bytes: e.bytes.toLocaleString(),
+        }),
       })
     } catch (err) {
       const msg =
@@ -105,7 +109,7 @@ function ExportForm() {
           : err instanceof Error
             ? err.message
             : 'Unknown error'
-      toast.error('Export failed', { description: msg })
+      toast.error(t('web.export.form.failedToast'), { description: msg })
     } finally {
       setBusy(false)
     }
@@ -115,7 +119,7 @@ function ExportForm() {
     <div className="rounded-md border border-border p-5 flex flex-col gap-4 bg-card/20">
       <div className="flex flex-col gap-3">
         <div className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
-          Scope
+          {t('web.export.form.scope')}
         </div>
 
         <label className="flex items-start gap-3 text-[13px]">
@@ -125,34 +129,33 @@ function ExportForm() {
             className="mt-0.5"
           />
           <div>
-            <div className="font-medium">Memories</div>
+            <div className="font-medium">{t('web.export.form.memories')}</div>
             <div className="text-muted-foreground text-[12px]">
-              Cross-CLI persistent memory rows (text + scope + metadata).
-              Embedding vectors are omitted; importer re-embeds.
+              {t('web.export.form.memoriesHint')}
             </div>
           </div>
         </label>
 
         <div className="flex flex-col gap-2 pl-1 border-l-2 border-border ml-2 pl-3">
-          <div className="text-[13px] font-medium">Integrations</div>
+          <div className="text-[13px] font-medium">{t('web.export.form.integrations')}</div>
           <div className="flex flex-col gap-1.5">
             <RadioRow
               checked={integrations === 'none'}
               onClick={() => setIntegrations('none')}
-              label="None"
-              hint="Skip the integrations table entirely."
+              label={t('web.export.form.integrationOptions.none')}
+              hint={t('web.export.form.integrationOptions.noneHint')}
             />
             <RadioRow
               checked={integrations === 'metadata'}
               onClick={() => setIntegrations('metadata')}
-              label="Metadata only (recommended)"
-              hint="ID, name, route prefix, scopes — no API key material."
+              label={t('web.export.form.integrationOptions.metadata')}
+              hint={t('web.export.form.integrationOptions.metadataHint')}
             />
             <RadioRow
               checked={integrations === 'plaintext'}
               onClick={() => setIntegrations('plaintext')}
-              label="Include plaintext API keys"
-              hint="v1 bcrypt-only: no recoverable plaintext exists. Manifest documents this; nothing leaks."
+              label={t('web.export.form.integrationOptions.plaintext')}
+              hint={t('web.export.form.integrationOptions.plaintextHint')}
               danger
             />
           </div>
@@ -161,19 +164,17 @@ function ExportForm() {
               <ShieldAlert className="size-4 text-state-failed shrink-0 mt-0.5" />
               <div className="flex-1 flex flex-col gap-2">
                 <div>
-                  Type{' '}
-                  <code className="px-1 rounded bg-card text-foreground">
-                    I understand
-                  </code>{' '}
-                  to confirm. opendray currently stores only bcrypt
-                  hashes — selecting plaintext does NOT export any
-                  plaintext (the feature is reserved for a future
-                  release that keeps plaintext caches).
+                  <Trans
+                    i18nKey="web.export.form.confirmWarning"
+                    components={{
+                      1: <code className="px-1 rounded bg-card text-foreground" />,
+                    }}
+                  />
                 </div>
                 <Input
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="I understand"
+                  placeholder={t('web.export.form.confirmPlaceholder')}
                   className="h-7 text-[12px]"
                 />
               </div>
@@ -188,9 +189,9 @@ function ExportForm() {
             className="mt-0.5"
           />
           <div>
-            <div className="font-medium">Custom tasks</div>
+            <div className="font-medium">{t('web.export.form.customTasks')}</div>
             <div className="text-muted-foreground text-[12px]">
-              Operator-defined tasks shown in the Inspector's Tasks tab.
+              {t('web.export.form.customTasksHint')}
             </div>
           </div>
         </label>
@@ -198,11 +199,10 @@ function ExportForm() {
 
       <div className="border-t border-border pt-3 flex items-center justify-between">
         <div className="text-[11px] text-muted-foreground">
-          Audit logs and session transcripts are out of scope —
-          covered by /backups (operator dump) instead.
+          {t('web.export.form.footnote')}
         </div>
         <Button onClick={submit} disabled={busy || !confirmReady}>
-          {busy ? 'Building…' : 'Create export'}
+          {busy ? t('web.export.form.building') : t('web.export.form.create')}
         </Button>
       </div>
     </div>
@@ -252,6 +252,7 @@ function RadioRow({
 }
 
 function ExportHistory() {
+  const { t } = useTranslation()
   const [rows, setRows] = useState<ExportRecord[] | null>(null)
   const [tokenCache, setTokenCache] = useState<Record<string, string>>({})
 
@@ -261,14 +262,15 @@ function ExportHistory() {
       setRows(list)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error('Failed to list exports', { description: msg })
+      toast.error(t('web.export.history.listFailedToast'), { description: msg })
     }
   }
 
   useEffect(() => {
     refresh()
-    const t = window.setInterval(refresh, 5000)
-    return () => window.clearInterval(t)
+    const intervalId = window.setInterval(refresh, 5000)
+    return () => window.clearInterval(intervalId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function onDownload(id: string) {
@@ -280,34 +282,34 @@ function ExportHistory() {
         token = detail.download_token ?? ''
       }
       if (!token) {
-        toast.error('No download token (expired?)')
+        toast.error(t('web.export.history.noTokenToast'))
         return
       }
       setTokenCache((c) => ({ ...c, [id]: token }))
       window.location.href = exportDownloadURL(id, token)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error('Download failed', { description: msg })
+      toast.error(t('web.export.history.downloadFailedToast'), { description: msg })
     }
   }
 
   async function onDelete(id: string) {
-    if (!window.confirm(`Delete export ${id}?`)) return
+    if (!window.confirm(t('web.export.history.deleteConfirm', { id }))) return
     try {
       await deleteExport(id)
-      toast.success('Export deleted')
+      toast.success(t('web.export.history.deletedToast'))
       await refresh()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error('Delete failed', { description: msg })
+      toast.error(t('web.export.history.deleteFailedToast'), { description: msg })
     }
   }
 
-  if (rows === null) return <div className="text-muted-foreground text-sm">Loading…</div>
+  if (rows === null) return <div className="text-muted-foreground text-sm">{t('web.export.history.loading')}</div>
   if (rows.length === 0) {
     return (
       <div className="text-[12px] text-muted-foreground">
-        No exports yet. Use the form above to create one.
+        {t('web.export.history.empty')}
       </div>
     )
   }
@@ -315,18 +317,18 @@ function ExportHistory() {
   return (
     <div className="flex flex-col gap-2">
       <div className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
-        History
+        {t('web.export.history.title')}
       </div>
       <div className="rounded-md border border-border overflow-hidden">
         <table className="w-full text-[12px]">
           <thead className="bg-card/50 text-muted-foreground">
             <tr className="text-left">
-              <th className="px-3 py-2 font-medium">ID</th>
-              <th className="px-3 py-2 font-medium">Status</th>
-              <th className="px-3 py-2 font-medium">Scope</th>
-              <th className="px-3 py-2 font-medium">Size</th>
-              <th className="px-3 py-2 font-medium">Expires</th>
-              <th className="px-3 py-2 font-medium text-right">Actions</th>
+              <th className="px-3 py-2 font-medium">{t('web.export.history.columns.id')}</th>
+              <th className="px-3 py-2 font-medium">{t('web.export.history.columns.status')}</th>
+              <th className="px-3 py-2 font-medium">{t('web.export.history.columns.scope')}</th>
+              <th className="px-3 py-2 font-medium">{t('web.export.history.columns.size')}</th>
+              <th className="px-3 py-2 font-medium">{t('web.export.history.columns.expires')}</th>
+              <th className="px-3 py-2 font-medium text-right">{t('web.export.history.columns.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -337,7 +339,7 @@ function ExportHistory() {
                   <ExportStatusBadge status={e.status} />
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">
-                  {scopeSummary(e.scope)}
+                  {scopeSummary(e.scope) || t('web.export.history.scopeEmpty')}
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">
                   {e.bytes > 0 ? formatBytes(e.bytes) : '—'}
@@ -355,7 +357,7 @@ function ExportHistory() {
                         className="h-7 text-[11px]"
                       >
                         <Download className="size-3 mr-1" />
-                        Download
+                        {t('web.export.history.download')}
                       </Button>
                     )}
                     <Button
@@ -363,7 +365,7 @@ function ExportHistory() {
                       variant="outline"
                       size="sm"
                       className="h-7 w-7 p-0"
-                      title="Delete"
+                      title={t('web.export.history.deleteTooltip')}
                     >
                       <Trash2 className="size-3.5" />
                     </Button>
@@ -397,7 +399,7 @@ function scopeSummary(s: ExportRecord['scope']): string {
   if (s.memories) parts.push('memories')
   if (s.integrations !== 'none') parts.push(`integrations(${s.integrations})`)
   if (s.custom_tasks) parts.push('custom_tasks')
-  return parts.join(', ') || '(empty)'
+  return parts.join(', ')
 }
 
 function formatRelative(iso: string): string {
@@ -432,6 +434,7 @@ function msgFromAPI(err: APIError): string {
 // ── Import (C reverse) ──────────────────────────────────────────
 
 function ImportForm() {
+  const { t } = useTranslation()
   const [file, setFile] = useState<File | null>(null)
   const [memories, setMemories] = useState(true)
   const [integrations, setIntegrations] = useState(true)
@@ -441,7 +444,7 @@ function ImportForm() {
 
   async function submit() {
     if (!file) {
-      toast.error('Pick a bundle file first')
+      toast.error(t('web.export.import.pickFileToast'))
       return
     }
     setBusy(true)
@@ -454,11 +457,11 @@ function ImportForm() {
       })
       setLast(imp)
       if (imp.status === 'succeeded') {
-        toast.success('Import done', {
+        toast.success(t('web.export.import.doneToast'), {
           description: importSummary(imp),
         })
       } else {
-        toast.warning('Import finished with errors', {
+        toast.warning(t('web.export.import.finishedWithErrors'), {
           description: imp.error || importSummary(imp),
         })
       }
@@ -470,7 +473,7 @@ function ImportForm() {
           : err instanceof Error
             ? err.message
             : 'Unknown error'
-      toast.error('Import failed', { description: msg })
+      toast.error(t('web.export.import.failedToast'), { description: msg })
     } finally {
       setBusy(false)
     }
@@ -479,23 +482,19 @@ function ImportForm() {
   return (
     <div className="rounded-md border border-border p-5 flex flex-col gap-4 bg-card/20">
       <p className="text-[12px] text-muted-foreground">
-        Replay an export bundle (zip) into the live database.
-        Conflicts (matching id, or unique route_prefix for
-        integrations) are <strong>skipped</strong> by default.
-        Memories are tagged{' '}
-        <code className="text-foreground">embedder=imported_v1</code>{' '}
-        and need a re-embed pass before search returns them; trigger
-        re-embed under{' '}
-        <Link to="/memory" className="underline">
-          Memory → Maintenance
-        </Link>
-        . Integrations are imported with{' '}
-        <code className="text-foreground">enabled=false</code> and a
-        non-bcrypt placeholder key — operator must rotate before use.
+        <Trans
+          i18nKey="web.export.import.intro"
+          components={{
+            1: <strong />,
+            3: <code className="text-foreground" />,
+            5: <Link to="/memory" className="underline" />,
+            7: <code className="text-foreground" />,
+          }}
+        />
       </p>
 
       <div className="flex flex-col gap-1.5">
-        <Label className="text-[12px]">Bundle (.zip)</Label>
+        <Label className="text-[12px]">{t('web.export.import.bundleLabel')}</Label>
         <input
           type="file"
           accept=".zip,application/zip"
@@ -511,7 +510,7 @@ function ImportForm() {
             onCheckedChange={setMemories}
             className="scale-75"
           />
-          Memories
+          {t('web.export.import.memoriesLabel')}
         </label>
         <label className="flex items-center gap-2 text-[13px]">
           <Switch
@@ -519,7 +518,7 @@ function ImportForm() {
             onCheckedChange={setIntegrations}
             className="scale-75"
           />
-          Integrations (metadata only — keys never imported)
+          {t('web.export.import.integrationsLabel')}
         </label>
         <label className="flex items-center gap-2 text-[13px]">
           <Switch
@@ -527,7 +526,7 @@ function ImportForm() {
             onCheckedChange={setCustomTasks}
             className="scale-75"
           />
-          Custom tasks
+          {t('web.export.import.customTasksLabel')}
         </label>
       </div>
 
@@ -537,7 +536,7 @@ function ImportForm() {
           disabled={busy || !file || (!memories && !integrations && !customTasks)}
         >
           <Upload className="size-3.5 mr-1.5" />
-          {busy ? 'Importing…' : 'Import bundle'}
+          {busy ? t('web.export.import.importing') : t('web.export.import.importBundle')}
         </Button>
       </div>
 
@@ -547,15 +546,16 @@ function ImportForm() {
 }
 
 function ImportSummaryCard({ imp }: { imp: ImportRecord }) {
+  const { t } = useTranslation()
   return (
     <div className="rounded-md border border-border bg-card/30 p-3 text-[12px] flex flex-col gap-1.5">
       <div className="flex items-center gap-2">
         <span className="font-mono text-[11px]">{imp.id}</span>
         <ImportStatusBadge status={imp.status} />
       </div>
-      <CountsRow label="Memories" c={imp.counts.memories} />
-      <CountsRow label="Integrations" c={imp.counts.integrations} />
-      <CountsRow label="Custom tasks" c={imp.counts.custom_tasks} />
+      <CountsRow label={t('web.export.import.summaryCard.memories')} c={imp.counts.memories} />
+      <CountsRow label={t('web.export.import.summaryCard.integrations')} c={imp.counts.integrations} />
+      <CountsRow label={t('web.export.import.summaryCard.customTasks')} c={imp.counts.custom_tasks} />
       {imp.error && (
         <div className="mt-1 text-state-failed">{imp.error}</div>
       )}
@@ -570,6 +570,7 @@ function CountsRow({
   label: string
   c: { created: number; skipped: number; failed: number }
 }) {
+  const { t } = useTranslation()
   if (c.created + c.skipped + c.failed === 0) {
     return null
   }
@@ -577,11 +578,16 @@ function CountsRow({
     <div className="flex items-center gap-3 text-muted-foreground">
       <span className="w-32">{label}</span>
       <span>
-        <strong className="text-foreground">{c.created}</strong> created
+        <strong className="text-foreground">{c.created}</strong>{' '}
+        {t('web.export.import.summaryCard.created')}
       </span>
-      <span>{c.skipped} skipped</span>
+      <span>
+        {c.skipped} {t('web.export.import.summaryCard.skipped')}
+      </span>
       {c.failed > 0 && (
-        <span className="text-state-failed">{c.failed} failed</span>
+        <span className="text-state-failed">
+          {c.failed} {t('web.export.import.summaryCard.failed')}
+        </span>
       )}
     </div>
   )
@@ -612,6 +618,7 @@ function importSummary(imp: ImportRecord): string {
 }
 
 function ImportHistory() {
+  const { t } = useTranslation()
   const [rows, setRows] = useState<ImportRecord[] | null>(null)
 
   async function refresh() {
@@ -620,21 +627,22 @@ function ImportHistory() {
       setRows(list)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error('Failed to list imports', { description: msg })
+      toast.error(t('web.export.imports.listFailedToast'), { description: msg })
     }
   }
 
   useEffect(() => {
     refresh()
-    const t = window.setInterval(refresh, 5000)
-    return () => window.clearInterval(t)
+    const intervalId = window.setInterval(refresh, 5000)
+    return () => window.clearInterval(intervalId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  if (rows === null) return <div className="text-muted-foreground text-sm">Loading…</div>
+  if (rows === null) return <div className="text-muted-foreground text-sm">{t('web.export.imports.loading')}</div>
   if (rows.length === 0) {
     return (
       <div className="text-[12px] text-muted-foreground">
-        No imports yet.
+        {t('web.export.imports.empty')}
       </div>
     )
   }
@@ -642,17 +650,17 @@ function ImportHistory() {
   return (
     <div className="flex flex-col gap-2">
       <div className="text-[11px] font-medium text-muted-foreground tracking-wider uppercase">
-        History
+        {t('web.export.imports.title')}
       </div>
       <div className="rounded-md border border-border overflow-hidden">
         <table className="w-full text-[12px]">
           <thead className="bg-card/50 text-muted-foreground">
             <tr className="text-left">
-              <th className="px-3 py-2 font-medium">ID</th>
-              <th className="px-3 py-2 font-medium">Status</th>
-              <th className="px-3 py-2 font-medium">Source</th>
-              <th className="px-3 py-2 font-medium">Counts</th>
-              <th className="px-3 py-2 font-medium">When</th>
+              <th className="px-3 py-2 font-medium">{t('web.export.imports.columns.id')}</th>
+              <th className="px-3 py-2 font-medium">{t('web.export.imports.columns.status')}</th>
+              <th className="px-3 py-2 font-medium">{t('web.export.imports.columns.source')}</th>
+              <th className="px-3 py-2 font-medium">{t('web.export.imports.columns.counts')}</th>
+              <th className="px-3 py-2 font-medium">{t('web.export.imports.columns.when')}</th>
             </tr>
           </thead>
           <tbody>
@@ -671,7 +679,7 @@ function ImportHistory() {
                   )}
                 </td>
                 <td className="px-3 py-2 text-muted-foreground text-[11px]">
-                  {importSummary(imp) || '(none)'}
+                  {importSummary(imp) || t('web.export.imports.noneCounts')}
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">
                   {formatRelative(imp.started_at)}
