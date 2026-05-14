@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 import {
   Dialog,
@@ -35,6 +36,7 @@ export function EditIntegrationDialog({
   integration,
   onOpenChange,
 }: EditIntegrationDialogProps) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [baseURL, setBaseURL] = useState('')
   const [version, setVersion] = useState('')
@@ -56,7 +58,7 @@ export function EditIntegrationDialog({
       updateIntegration(integration!.id, patch),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['integrations'] })
-      toast.success('Integration updated')
+      toast.success(t('web.integrations.edit_dialog.updatedToast'))
       onOpenChange(false)
     },
     onError: (err: Error) => setError(err.message),
@@ -80,9 +82,7 @@ export function EditIntegrationDialog({
     e.preventDefault()
     setError(null)
     if (baseURLLooksLikeModeSwitch) {
-      setError(
-        'Switching between consumer-only and reverse-proxy mode requires deleting the integration and re-registering — name and route_prefix can\'t change in place.',
-      )
+      setError(t('web.integrations.edit_dialog.errorModeSwitch'))
       return
     }
     const patch: Parameters<typeof updateIntegration>[1] = {}
@@ -106,17 +106,20 @@ export function EditIntegrationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[560px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit integration · {integration.name}</DialogTitle>
+          <DialogTitle>
+            {t('web.integrations.edit_dialog.title', { name: integration.name })}
+          </DialogTitle>
           <DialogDescription>
-            Change scopes, version, or base URL. Name and route prefix are
-            immutable — delete + re-register if you need to change those.
+            {t('web.integrations.edit_dialog.description')}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} className="flex flex-col gap-5 mt-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-[11px] text-muted-foreground/70">Name</Label>
+              <Label className="text-[11px] text-muted-foreground/70">
+                {t('web.integrations.edit_dialog.nameLabel')}
+              </Label>
               <Input
                 value={integration.name}
                 readOnly
@@ -126,10 +129,13 @@ export function EditIntegrationDialog({
             </div>
             <div className="space-y-1.5">
               <Label className="text-[11px] text-muted-foreground/70">
-                Route prefix
+                {t('web.integrations.edit_dialog.routePrefixLabel')}
               </Label>
               <Input
-                value={integration.route_prefix || '(consumer-only)'}
+                value={
+                  integration.route_prefix ||
+                  t('web.integrations.edit_dialog.consumerOnlyLabel')
+                }
                 readOnly
                 disabled
                 className="font-mono opacity-70"
@@ -139,9 +145,11 @@ export function EditIntegrationDialog({
 
           <div className="space-y-1.5">
             <Label htmlFor="edit_base_url">
-              Base URL{' '}
+              {t('web.integrations.edit_dialog.baseUrlLabel')}{' '}
               <span className="text-muted-foreground/60">
-                {isConsumer ? '(consumer-only — leave blank)' : '(reverse-proxy target)'}
+                {isConsumer
+                  ? t('web.integrations.edit_dialog.baseUrlConsumerSuffix')
+                  : t('web.integrations.edit_dialog.baseUrlProxySuffix')}
               </span>
             </Label>
             <Input
@@ -150,38 +158,38 @@ export function EditIntegrationDialog({
               onChange={(e) => setBaseURL(e.target.value)}
               placeholder={
                 isConsumer
-                  ? '(blank — this integration consumes opendray\'s API)'
-                  : 'http://127.0.0.1:8080'
+                  ? t('web.integrations.edit_dialog.baseUrlConsumerPlaceholder')
+                  : t('web.integrations.edit_dialog.baseUrlProxyPlaceholder')
               }
               className="font-mono"
               disabled={isConsumer}
             />
             {isConsumer && (
               <p className="text-[10.5px] text-muted-foreground/60">
-                This is a consumer-only integration. Changing base URL here
-                would also require a route prefix; do that with delete +
-                re-register.
+                {t('web.integrations.edit_dialog.consumerHint')}
               </p>
             )}
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="edit_version">Version</Label>
+            <Label htmlFor="edit_version">
+              {t('web.integrations.edit_dialog.versionLabel')}
+            </Label>
             <Input
               id="edit_version"
               value={version}
               onChange={(e) => setVersion(e.target.value)}
-              placeholder="0.1.0"
+              placeholder={t('web.integrations.edit_dialog.versionPlaceholder')}
               className="font-mono"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label>Scopes</Label>
+            <Label>{t('web.integrations.edit_dialog.scopesLabel')}</Label>
             <ScopePicker
               selected={scopes}
               onChange={setScopes}
-              intro="Trim or widen the API surface this integration's API key authorises. Live tokens are unaffected — the new scope set takes effect on the next request."
+              intro={t('web.integrations.edit_dialog.scopesIntro')}
             />
           </div>
 
@@ -199,7 +207,7 @@ export function EditIntegrationDialog({
               onClick={() => onOpenChange(false)}
               disabled={update.isPending}
             >
-              Cancel
+              {t('web.integrations.edit_dialog.cancel')}
             </Button>
             <Button
               type="submit"
@@ -208,7 +216,7 @@ export function EditIntegrationDialog({
               disabled={update.isPending}
             >
               {update.isPending && <Loader2 className="size-3.5 animate-spin" />}
-              Save changes
+              {t('web.integrations.edit_dialog.save')}
             </Button>
           </DialogFooter>
         </form>

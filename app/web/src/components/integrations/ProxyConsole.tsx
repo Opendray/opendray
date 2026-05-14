@@ -22,6 +22,7 @@ import {
   SelectItem,
   SelectValue,
 } from '@/components/ui/select'
+import { Trans, useTranslation } from 'react-i18next'
 import { listIntegrations } from '@/lib/integrations'
 import { useAuth } from '@/stores/auth'
 import { cn } from '@/lib/utils'
@@ -67,6 +68,7 @@ function saveHistory(id: string, list: HistoryEntry[]) {
 }
 
 export function ProxyConsole() {
+  const { t } = useTranslation()
   const token = useAuth((s) => s.token)
   const { data: integrations } = useQuery({
     queryKey: ['integrations'],
@@ -169,7 +171,11 @@ export function ProxyConsole() {
       setHistory(next)
       if (selectedId) saveHistory(selectedId, next)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'request failed')
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('web.integrations.proxy.requestFailed'),
+      )
     } finally {
       setSending(false)
     }
@@ -179,10 +185,11 @@ export function ProxyConsole() {
     return (
       <div className="flex flex-col items-center justify-center gap-3 text-center py-16 px-6">
         <Plug className="size-10 text-muted-foreground/40" strokeWidth={1.5} />
-        <h2 className="text-[14px] font-semibold">No integrations registered</h2>
+        <h2 className="text-[14px] font-semibold">
+          {t('web.integrations.proxy.emptyTitle')}
+        </h2>
         <p className="text-[12px] text-muted-foreground max-w-[360px]">
-          Register an integration first; the console proxies through
-          /api/v1/proxy/{'{prefix}'}/* using the admin token.
+          {t('web.integrations.proxy.emptyDescription')}
         </p>
       </div>
     )
@@ -194,14 +201,14 @@ export function ProxyConsole() {
       <aside className="flex flex-col gap-3 min-h-0">
         <div>
           <Label className="!text-[10px] !uppercase !tracking-wider">
-            Target
+            {t('web.integrations.proxy.targetLabel')}
           </Label>
           <Select
             value={selectedId ?? ''}
             onValueChange={(v) => setSelectedId(v)}
           >
             <SelectTrigger className="mt-1.5">
-              <SelectValue placeholder="Select integration…" />
+              <SelectValue placeholder={t('web.integrations.proxy.selectPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
               {(integrations ?? []).map((i) => (
@@ -213,7 +220,7 @@ export function ProxyConsole() {
           </Select>
           {selected && (
             <div className="mt-2 text-[11px] text-muted-foreground/80 font-mono">
-              base: {selected.base_url}
+              {t('web.integrations.proxy.baseLabel')} {selected.base_url}
             </div>
           )}
         </div>
@@ -221,13 +228,13 @@ export function ProxyConsole() {
         <div className="flex flex-col min-h-0 gap-1.5">
           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
             <History className="size-3" />
-            History
+            {t('web.integrations.proxy.history')}
           </div>
           <ScrollArea className="flex-1 min-h-0">
             <div className="flex flex-col gap-0.5 pr-1">
               {history.length === 0 && (
                 <span className="text-[11px] text-muted-foreground/60 italic">
-                  no past requests for this integration
+                  {t('web.integrations.proxy.historyEmpty')}
                 </span>
               )}
               {history.map((h) => (
@@ -281,7 +288,9 @@ export function ProxyConsole() {
             </Select>
             <div className="flex-1 flex items-center border border-border rounded-md bg-input/40 h-9 overflow-hidden font-mono text-[12px]">
               <span className="px-2 text-muted-foreground border-r border-border">
-                /api/v1/proxy/{selected?.route_prefix ?? '<prefix>'}
+                /api/v1/proxy/
+                {selected?.route_prefix ??
+                  t('web.integrations.proxy.prefixPlaceholder')}
               </span>
               <input
                 type="text"
@@ -302,14 +311,16 @@ export function ProxyConsole() {
               ) : (
                 <Send className="size-3.5" />
               )}
-              {sending ? 'Sending…' : 'Send'}
+              {sending
+                ? t('web.integrations.proxy.sending')
+                : t('web.integrations.proxy.send')}
             </Button>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label className="!text-[10px] !uppercase !tracking-wider">
-                Extra headers (one per line, Name: Value)
+                {t('web.integrations.proxy.extraHeadersLabel')}
               </Label>
               <Textarea
                 rows={3}
@@ -321,7 +332,7 @@ export function ProxyConsole() {
             </div>
             <div className="space-y-1">
               <Label className="!text-[10px] !uppercase !tracking-wider">
-                Body
+                {t('web.integrations.proxy.bodyLabel')}
               </Label>
               <Textarea
                 rows={3}
@@ -370,7 +381,7 @@ export function ProxyConsole() {
                 <div className="flex flex-col gap-3 pr-1">
                   <div>
                     <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium mb-1">
-                      Headers
+                      {t('web.integrations.proxy.headers')}
                     </div>
                     <Code className="text-[10px]">
                       {response.headers
@@ -380,9 +391,11 @@ export function ProxyConsole() {
                   </div>
                   <div>
                     <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium mb-1">
-                      Body
+                      {t('web.integrations.proxy.body')}
                     </div>
-                    <Code>{response.body || '(empty)'}</Code>
+                    <Code>
+                      {response.body || t('web.integrations.proxy.emptyBody')}
+                    </Code>
                   </div>
                 </div>
               </ScrollArea>
@@ -396,12 +409,15 @@ export function ProxyConsole() {
                 strokeWidth={1.5}
               />
               <span>
-                Send a request to see the upstream response.
+                {t('web.integrations.proxy.stubText')}
                 <br />
-                opendray injects{' '}
-                <code className="font-mono text-foreground">X-Integration-ID</code>{' '}
-                and strips your <code className="font-mono">Authorization</code>{' '}
-                header.
+                <Trans
+                  i18nKey="web.integrations.proxy.stubInjects"
+                  components={{
+                    1: <code className="font-mono text-foreground" />,
+                    3: <code className="font-mono" />,
+                  }}
+                />
               </span>
               <ChevronRight className="size-4 opacity-0" />
             </div>

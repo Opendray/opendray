@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Copy, AlertTriangle, Check, X } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import {
   Dialog,
@@ -36,10 +37,13 @@ interface APIKeyRevealDialogProps {
 export function APIKeyRevealDialog({
   open,
   apiKey,
-  title = 'API key issued',
-  description = 'This is the only time the plaintext key will be shown. Copy it now and update every consumer app — the previous key (if any) no longer authenticates.',
+  title,
+  description,
   onClose,
 }: APIKeyRevealDialogProps) {
+  const { t } = useTranslation()
+  const resolvedTitle = title ?? t('web.integrations.reveal.titleIssued')
+  const resolvedDescription = description ?? t('web.integrations.reveal.description')
   const [acknowledged, setAcknowledged] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -54,12 +58,7 @@ export function APIKeyRevealDialog({
   }
 
   const discard = () => {
-    if (
-      !window.confirm(
-        'Discard the new key? Rotation has already invalidated the old key — discarding means you have NO working key for this integration until you rotate again.',
-      )
-    )
-      return
+    if (!window.confirm(t('web.integrations.reveal.discardConfirm'))) return
     close()
   }
 
@@ -102,8 +101,8 @@ export function APIKeyRevealDialog({
           type="button"
           onClick={discard}
           className="absolute right-3 top-3 rounded-sm p-1 text-muted-foreground/70 hover:text-foreground hover:bg-muted/40 transition-colors"
-          aria-label="Discard new key"
-          title="Discard the new key (rotation already happened — old key is gone too)"
+          aria-label={t('web.integrations.reveal.discardAria')}
+          title={t('web.integrations.reveal.discardTooltip')}
         >
           <X className="size-4" />
         </button>
@@ -111,9 +110,9 @@ export function APIKeyRevealDialog({
         <DialogHeader>
           <div className="flex items-center gap-2">
             <AlertTriangle className="size-4 text-state-idle" />
-            <DialogTitle>{title}</DialogTitle>
+            <DialogTitle>{resolvedTitle}</DialogTitle>
           </div>
-          <DialogDescription>{description}</DialogDescription>
+          <DialogDescription>{resolvedDescription}</DialogDescription>
         </DialogHeader>
 
         <div className="flex items-center gap-2 mt-3">
@@ -127,22 +126,22 @@ export function APIKeyRevealDialog({
             {copied ? (
               <>
                 <Check className="size-3.5" />
-                Copied
+                {t('web.integrations.reveal.copied')}
               </>
             ) : (
               <>
                 <Copy className="size-3.5" />
-                Copy
+                {t('web.integrations.reveal.copy')}
               </>
             )}
           </Button>
         </div>
 
         <p className="text-[11px] text-muted-foreground/80 mt-3 leading-snug">
-          <strong>Update every consumer app with this new key.</strong>
-          {' '}The previous key has been invalidated server-side and
-          will return <code>401 unauthorized</code> on the next
-          request.
+          <Trans
+            i18nKey="web.integrations.reveal.updateHint"
+            components={{ 1: <strong />, 3: <code /> }}
+          />
         </p>
 
         <label className="flex items-start gap-2 mt-3 text-[12px] text-muted-foreground cursor-pointer">
@@ -152,10 +151,7 @@ export function APIKeyRevealDialog({
             onChange={(e) => setAcknowledged(e.target.checked)}
             className="mt-0.5 accent-accent"
           />
-          <span>
-            I have copied the key and will update my consumer apps. I
-            understand opendray will not display it again.
-          </span>
+          <span>{t('web.integrations.reveal.acknowledge')}</span>
         </label>
 
         <DialogFooter>
@@ -165,7 +161,7 @@ export function APIKeyRevealDialog({
             onClick={discard}
             className="text-muted-foreground hover:text-destructive"
           >
-            Discard
+            {t('web.integrations.reveal.discard')}
           </Button>
           <Button
             variant="accent"
@@ -173,7 +169,7 @@ export function APIKeyRevealDialog({
             disabled={!acknowledged}
             onClick={close}
           >
-            Done
+            {t('web.integrations.reveal.done')}
           </Button>
         </DialogFooter>
       </DialogContent>

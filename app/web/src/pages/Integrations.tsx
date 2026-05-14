@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -53,11 +54,14 @@ const HEALTH_VARIANT: Record<
 }
 
 export function IntegrationsPage() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [createOpen, setCreateOpen] = useState(false)
   const [editing, setEditing] = useState<Integration | null>(null)
   const [revealKey, setRevealKey] = useState<string | null>(null)
-  const [revealTitle, setRevealTitle] = useState<string>('API key issued')
+  const [revealTitle, setRevealTitle] = useState<string>(
+    t('web.integrations.reveal.titleIssued'),
+  )
 
   const { data: integrations, isLoading } = useQuery({
     queryKey: ['integrations'],
@@ -66,12 +70,12 @@ export function IntegrationsPage() {
   })
 
   const onRegistered = (key: string) => {
-    setRevealTitle('API key issued')
+    setRevealTitle(t('web.integrations.reveal.titleIssued'))
     setRevealKey(key)
   }
 
   const onRotated = (key: string) => {
-    setRevealTitle('API key rotated')
+    setRevealTitle(t('web.integrations.reveal.titleRotated'))
     setRevealKey(key)
   }
 
@@ -80,12 +84,13 @@ export function IntegrationsPage() {
       <header className="border-b border-border px-6 py-4 flex items-center gap-3">
         <div className="flex-1">
           <h1 className="text-[16px] font-semibold tracking-tight">
-            Integrations
+            {t('web.integrations.title')}
           </h1>
           <p className="text-[12px] text-muted-foreground">
-            External apps that consume opendray. Reverse-proxy through
-            <code className="mx-1">/api/v1/proxy/&lt;prefix&gt;/…</code>
-            and subscribe to events via the WS endpoint.
+            <Trans
+              i18nKey="web.integrations.subtitle"
+              components={{ 1: <code className="mx-1" /> }}
+            />
           </p>
         </div>
         <Button
@@ -93,15 +98,19 @@ export function IntegrationsPage() {
           size="sm"
           onClick={() => setCreateOpen(true)}
         >
-          <Plus className="size-3.5" /> Register
+          <Plus className="size-3.5" /> {t('web.integrations.register')}
         </Button>
       </header>
 
       <Tabs defaultValue="registered" className="flex-1 flex flex-col min-h-0">
         <div className="border-b border-border px-6 py-2">
           <TabsList>
-            <TabsTrigger value="registered">Registered</TabsTrigger>
-            <TabsTrigger value="console">Reverse proxy</TabsTrigger>
+            <TabsTrigger value="registered">
+              {t('web.integrations.tabs.registered')}
+            </TabsTrigger>
+            <TabsTrigger value="console">
+              {t('web.integrations.tabs.console')}
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -114,23 +123,24 @@ export function IntegrationsPage() {
               {isLoading && (
                 <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
                   <Loader2 className="size-3.5 animate-spin" />
-                  Loading…
+                  {t('web.integrations.loading')}
                 </div>
               )}
           {!isLoading && (integrations?.length ?? 0) === 0 && (
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
               <Plug className="size-10 text-muted-foreground/40" strokeWidth={1.5} />
-              <h2 className="text-[14px] font-semibold">No integrations yet</h2>
+              <h2 className="text-[14px] font-semibold">
+                {t('web.integrations.empty.title')}
+              </h2>
               <p className="text-[12px] text-muted-foreground max-w-[360px]">
-                Register an external app to give it a scoped API key. Its
-                code stays out of this repo.
+                {t('web.integrations.empty.description')}
               </p>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCreateOpen(true)}
               >
-                <Plus className="size-3.5" /> Register integration
+                <Plus className="size-3.5" /> {t('web.integrations.empty.register')}
               </Button>
             </div>
           )}
@@ -146,7 +156,7 @@ export function IntegrationsPage() {
                     onRotate={() => {
                       if (
                         !window.confirm(
-                          `Rotate the API key for "${i.name}"? The current key will stop working immediately.`,
+                          t('web.integrations.card.rotateConfirm', { name: i.name }),
                         )
                       )
                         return
@@ -165,11 +175,16 @@ export function IntegrationsPage() {
                         .catch((err: Error) => toast.error(err.message))
                     }
                     onDelete={() => {
-                      if (!confirm(`Delete integration ${i.name}?`)) return
+                      if (
+                        !confirm(
+                          t('web.integrations.card.deleteConfirm', { name: i.name }),
+                        )
+                      )
+                        return
                       deleteIntegration(i.id)
                         .then(() => {
                           qc.invalidateQueries({ queryKey: ['integrations'] })
-                          toast.success('Integration removed')
+                          toast.success(t('web.integrations.card.removedToast'))
                         })
                         .catch((err: Error) => toast.error(err.message))
                     }}
@@ -180,14 +195,14 @@ export function IntegrationsPage() {
                     {system.length > 0 && (
                       <>
                         <div className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium pt-1">
-                          System (managed by opendray)
+                          {t('web.integrations.groupSystem')}
                         </div>
                         {system.map(renderCard)}
                       </>
                     )}
                     {system.length > 0 && operator.length > 0 && (
                       <div className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium pt-3">
-                        Operator-registered
+                        {t('web.integrations.groupOperator')}
                       </div>
                     )}
                     {operator.map(renderCard)}
@@ -247,6 +262,7 @@ function IntegrationCard({
   onToggle: (enabled: boolean) => void
   onDelete: () => void
 }) {
+  const { t } = useTranslation()
   const managed = i.is_system
   return (
     <div
@@ -273,10 +289,10 @@ function IntegrationCard({
               <Badge
                 variant="outline"
                 className="border-accent/40 text-accent normal-case"
-                title="opendray manages this integration. Editing or rotating its key would orphan running sessions whose mcp.json holds the previous bearer."
+                title={t('web.integrations.card.managedTooltip')}
               >
                 <Lock className="size-2.5" />
-                managed
+                {t('web.integrations.card.managedBadge')}
               </Badge>
             )}
             {i.base_url ? (
@@ -286,12 +302,16 @@ function IntegrationCard({
             ) : (
               <Badge
                 variant="muted"
-                title="Consumer-only integration — no HTTP service to probe"
+                title={t('web.integrations.card.consumerTooltip')}
               >
-                consumer
+                {t('web.integrations.card.consumerBadge')}
               </Badge>
             )}
-            {!i.enabled && <Badge variant="muted">disabled</Badge>}
+            {!i.enabled && (
+              <Badge variant="muted">
+                {t('web.integrations.card.disabledBadge')}
+              </Badge>
+            )}
           </div>
           {i.base_url ? (
             <div className="text-[11px] text-muted-foreground/80 font-mono mt-1 flex items-center gap-1.5 flex-wrap">
@@ -302,7 +322,7 @@ function IntegrationCard({
             </div>
           ) : (
             <div className="text-[11px] text-muted-foreground/60 mt-1">
-              Consumes opendray's API. No reverse proxy mounted.
+              {t('web.integrations.card.consumerOnlyHint')}
             </div>
           )}
           <div className="text-[11px] text-muted-foreground/70 mt-1.5 flex flex-wrap gap-1">
@@ -314,13 +334,19 @@ function IntegrationCard({
           </div>
           {(i.health_last_seen || i.rotated_at) && (
             <div className="text-[10px] text-muted-foreground/60 font-mono mt-1.5">
-              {i.health_last_seen && i.base_url && (
-                <>last probed {formatDistanceToNow(new Date(i.health_last_seen), { addSuffix: true })}</>
-              )}
+              {i.health_last_seen && i.base_url &&
+                t('web.integrations.card.lastProbed', {
+                  relative: formatDistanceToNow(new Date(i.health_last_seen), {
+                    addSuffix: true,
+                  }),
+                })}
               {i.health_last_seen && i.base_url && i.rotated_at && ' · '}
-              {i.rotated_at && (
-                <>rotated {formatDistanceToNow(new Date(i.rotated_at), { addSuffix: true })}</>
-              )}
+              {i.rotated_at &&
+                t('web.integrations.card.rotated', {
+                  relative: formatDistanceToNow(new Date(i.rotated_at), {
+                    addSuffix: true,
+                  }),
+                })}
             </div>
           )}
         </div>
@@ -328,9 +354,9 @@ function IntegrationCard({
           {managed ? (
             <span
               className="text-[10px] text-muted-foreground/70 italic max-w-[180px] text-right leading-tight"
-              title="opendray manages this row. To reset: delete ~/.opendray/memory.key and restart, or delete this row directly via SQL — it'll be re-bootstrapped at next startup."
+              title={t('web.integrations.card.managedReadOnlyTooltip')}
             >
-              read-only — opendray bakes its key into every spawn's mcp.json
+              {t('web.integrations.card.managedReadOnly')}
             </span>
           ) : (
             <>
@@ -339,21 +365,21 @@ function IntegrationCard({
                 variant="ghost"
                 size="icon"
                 onClick={onEdit}
-                aria-label="Edit integration"
-                title="Edit scopes / base URL / version"
+                aria-label={t('web.integrations.card.editAria')}
+                title={t('web.integrations.card.editTooltip')}
                 className="text-muted-foreground hover:text-foreground"
               >
                 <Pencil className="size-3.5" />
               </Button>
               <Button variant="outline" size="sm" onClick={onRotate}>
                 <RotateCw className="size-3.5" />
-                Rotate key
+                {t('web.integrations.card.rotateKey')}
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onDelete}
-                aria-label="Delete integration"
+                aria-label={t('web.integrations.card.deleteAria')}
                 className="text-muted-foreground hover:text-destructive"
               >
                 <Trash2 className="size-3.5" />
@@ -375,6 +401,7 @@ function RegisterDialog({
   onOpenChange: (v: boolean) => void
   onRegistered: (apiKey: string) => void
 }) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [name, setName] = useState('')
   const [baseURL, setBaseURL] = useState('')
@@ -410,13 +437,13 @@ function RegisterDialog({
     e.preventDefault()
     setError(null)
     if (!name.trim()) {
-      setError('Name is required.')
+      setError(t('web.integrations.register_dialog.errorNameRequired'))
       return
     }
     const url = baseURL.trim()
     const prefix = routePrefix.trim()
     if ((url && !prefix) || (!url && prefix)) {
-      setError('base_url and route_prefix go together. Set both for a reverse-proxy integration, leave both blank for a consumer-only integration.')
+      setError(t('web.integrations.register_dialog.errorBothOrNeither'))
       return
     }
     register.mutate({
@@ -438,73 +465,90 @@ function RegisterDialog({
     >
       <DialogContent className="max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>Register integration</DialogTitle>
+          <DialogTitle>{t('web.integrations.register_dialog.title')}</DialogTitle>
           <DialogDescription>
-            Issues a one-time API key. Copy it before closing — opendray
-            never displays the plaintext again.
+            {t('web.integrations.register_dialog.description')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-4 mt-2">
           <div className="space-y-1.5">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">
+              {t('web.integrations.register_dialog.nameLabel')}
+            </Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="PetTracker"
+              placeholder={t('web.integrations.register_dialog.namePlaceholder')}
               required
               autoFocus
             />
           </div>
           <div className="rounded-md border border-border/60 bg-muted/10 p-3 text-[11px] text-muted-foreground leading-snug">
-            Leave the next two fields blank for a <strong>consumer-only</strong>
-            {' '}integration (third-party app that calls opendray's API but
-            doesn't expose its own service). Fill both for a
-            <strong> reverse-proxy</strong> integration.
+            <Trans
+              i18nKey="web.integrations.register_dialog.modeHint"
+              components={{ 1: <strong />, 3: <strong /> }}
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="base_url">
-              Base URL <span className="text-muted-foreground/60">(optional)</span>
+              {t('web.integrations.register_dialog.baseUrlLabel')}{' '}
+              <span className="text-muted-foreground/60">
+                {t('web.integrations.register_dialog.optionalSuffix')}
+              </span>
             </Label>
             <Input
               id="base_url"
               value={baseURL}
               onChange={(e) => setBaseURL(e.target.value)}
-              placeholder="http://192.168.3.42:8080"
+              placeholder={t('web.integrations.register_dialog.baseUrlPlaceholder')}
               className="font-mono"
             />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="route_prefix">
-              Route prefix <span className="text-muted-foreground/60">(optional)</span>
+              {t('web.integrations.register_dialog.routePrefixLabel')}{' '}
+              <span className="text-muted-foreground/60">
+                {t('web.integrations.register_dialog.optionalSuffix')}
+              </span>
             </Label>
             <Input
               id="route_prefix"
               value={routePrefix}
               onChange={(e) => setRoutePrefix(e.target.value)}
-              placeholder="pet-tracker"
+              placeholder={t('web.integrations.register_dialog.routePrefixPlaceholder')}
               className="font-mono"
             />
             <p className="text-[11px] text-muted-foreground/80">
-              Reachable at <code>/api/v1/proxy/{routePrefix || '<prefix>'}/*</code>.
+              <Trans
+                i18nKey="web.integrations.register_dialog.routePrefixHint"
+                values={{
+                  prefix:
+                    routePrefix ||
+                    t('web.integrations.register_dialog.routePrefixPlaceholderToken'),
+                }}
+                components={{ 1: <code /> }}
+              />
             </p>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="version">Version (optional)</Label>
+            <Label htmlFor="version">
+              {t('web.integrations.register_dialog.versionLabel')}
+            </Label>
             <Input
               id="version"
               value={version}
               onChange={(e) => setVersion(e.target.value)}
-              placeholder="0.1.0"
+              placeholder={t('web.integrations.register_dialog.versionPlaceholder')}
               className="font-mono"
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Scopes</Label>
+            <Label>{t('web.integrations.register_dialog.scopesLabel')}</Label>
             <ScopePicker
               selected={scopes}
               onChange={setScopes}
-              intro="Pick the API surface this integration is allowed to call. Each toggle maps to a Bearer-token claim — opendray rejects requests that touch endpoints outside the granted set."
+              intro={t('web.integrations.register_dialog.scopesIntro')}
             />
           </div>
 
@@ -522,7 +566,7 @@ function RegisterDialog({
               onClick={() => onOpenChange(false)}
               disabled={register.isPending}
             >
-              Cancel
+              {t('web.integrations.register_dialog.cancel')}
             </Button>
             <Button
               type="submit"
@@ -533,7 +577,9 @@ function RegisterDialog({
               {register.isPending && (
                 <Loader2 className="size-3.5 animate-spin" />
               )}
-              {register.isPending ? 'Registering…' : 'Register'}
+              {register.isPending
+                ? t('web.integrations.register_dialog.submitting')
+                : t('web.integrations.register_dialog.submit')}
             </Button>
           </DialogFooter>
         </form>
