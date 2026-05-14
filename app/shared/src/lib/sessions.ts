@@ -93,3 +93,29 @@ export async function resendInput(
   })
 }
 
+export interface UploadResponse {
+  // Absolute path of the file on the gateway host's tempdir.
+  // The caller writes this into the PTY so the CLI (Claude / Codex /
+  // Gemini) can resolve it as an image attachment.
+  path: string
+  size: number
+  original_name?: string
+}
+
+// uploadSessionFile multipart-uploads a file to the gateway and
+// returns the absolute server-side path where it was saved. The
+// caller is expected to write the returned path into the live PTY
+// (e.g. via TerminalHandle.sendInput) so the running CLI can attach
+// the file as context.
+export async function uploadSessionFile(
+  id: string,
+  file: File,
+): Promise<UploadResponse> {
+  const form = new FormData()
+  form.append('file', file, file.name || 'upload')
+  return api<UploadResponse>(`/api/v1/sessions/${id}/uploads`, {
+    method: 'POST',
+    body: form,
+  })
+}
+

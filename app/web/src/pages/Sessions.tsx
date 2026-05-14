@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  ImagePlus,
   Layers,
   Plus,
   Power,
@@ -11,7 +12,6 @@ import {
   PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
-  Keyboard,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Trans, useTranslation } from 'react-i18next'
@@ -25,7 +25,6 @@ import {
   Terminal,
   type TerminalHandle,
 } from '@/components/sessions/Terminal'
-import { TerminalToolbar } from '@/components/sessions/TerminalToolbar'
 import { EndedSessionView } from '@/components/sessions/EndedSessionView'
 import { SpawnDialog } from '@/components/sessions/SpawnDialog'
 import { StatePill } from '@/components/sessions/StatePill'
@@ -172,12 +171,21 @@ export function SessionsPage() {
 
   const listCollapsed = useLayout((s) => s.sessionListCollapsed)
   const toggleList = useLayout((s) => s.toggleSessionList)
-  const toolbarOpen = useLayout((s) => s.terminalToolbarOpen)
-  const toggleToolbar = useLayout((s) => s.toggleTerminalToolbar)
   const inspectorOpen = useLayout((s) => s.inspectorOpen)
   const toggleInspector = useLayout((s) => s.toggleInspector)
 
   const termRef = useRef<TerminalHandle>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handlePickImage = () => fileInputRef.current?.click()
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    // Reset right away so picking the same file twice still fires
+    // a change event the second time around.
+    e.target.value = ''
+    if (!file) return
+    void termRef.current?.uploadFile(file)
+  }
 
   // sessionListCollapsed is persisted in localStorage. The toggle
   // button lives inside WorkbenchHeader, which only renders when a
@@ -228,8 +236,11 @@ export function SessionsPage() {
               removing={remove.isPending}
               listCollapsed={listCollapsed}
               onToggleList={toggleList}
-              toolbarOpen={toolbarOpen}
-              onToggleToolbar={toggleToolbar}
+              attachImageEnabled={
+                !!currentSession &&
+                !isTerminalSessionState(currentSession.state)
+              }
+              onAttachImage={handlePickImage}
               inspectorOpen={inspectorOpen}
               onToggleInspector={toggleInspector}
             />
@@ -249,13 +260,6 @@ export function SessionsPage() {
                 />
               )}
             </div>
-            {toolbarOpen &&
-              currentSession &&
-              !isTerminalSessionState(currentSession.state) && (
-              <TerminalToolbar
-                onKey={(seq) => termRef.current?.sendInput(seq)}
-              />
-            )}
           </>
         )}
       </div>
@@ -263,6 +267,14 @@ export function SessionsPage() {
       {inspectorOpen && currentSession && (
         <InspectorPanel session={currentSession} />
       )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
 
       <SpawnDialog
         open={spawnOpen}
@@ -312,8 +324,8 @@ function WorkbenchHeader({
   removing,
   listCollapsed,
   onToggleList,
-  toolbarOpen,
-  onToggleToolbar,
+  attachImageEnabled,
+  onAttachImage,
   inspectorOpen,
   onToggleInspector,
 }: {
@@ -326,8 +338,8 @@ function WorkbenchHeader({
   removing: boolean
   listCollapsed: boolean
   onToggleList: () => void
-  toolbarOpen: boolean
-  onToggleToolbar: () => void
+  attachImageEnabled: boolean
+  onAttachImage: () => void
   inspectorOpen: boolean
   onToggleInspector: () => void
 }) {
@@ -347,12 +359,8 @@ function WorkbenchHeader({
   const inspectorLabel = inspectorOpen
     ? t('web.sessions.header.hideInspector')
     : t('web.sessions.header.showInspector')
-  const keyboardAria = toolbarOpen
-    ? t('web.sessions.header.hideKeyboard')
-    : t('web.sessions.header.showKeyboard')
-  const keyboardTooltip = toolbarOpen
-    ? t('web.sessions.header.hideKeyboard')
-    : t('web.sessions.header.showKeyboardTooltip')
+  const attachLabel = t('web.sessions.header.attachImage')
+  const attachTooltip = t('web.sessions.header.attachImageTooltip')
   return (
     <div className="h-14 border-b border-border flex items-center px-3 gap-3">
       <Tooltip>
@@ -402,14 +410,15 @@ function WorkbenchHeader({
           <Button
             variant="ghost"
             size="icon"
-            onClick={onToggleToolbar}
-            aria-label={keyboardAria}
-            className={cn('size-7 shrink-0', toolbarOpen && 'text-foreground')}
+            onClick={onAttachImage}
+            disabled={!attachImageEnabled}
+            aria-label={attachLabel}
+            className="size-7 shrink-0"
           >
-            <Keyboard className="size-3.5" />
+            <ImagePlus className="size-3.5" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>{keyboardTooltip}</TooltipContent>
+        <TooltipContent>{attachTooltip}</TooltipContent>
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>

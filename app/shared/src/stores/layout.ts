@@ -6,8 +6,6 @@ interface LayoutState {
   sidebarCollapsed: boolean
   /** Sessions inner list panel hidden so the workbench takes full width. */
   sessionListCollapsed: boolean
-  /** Soft-keyboard / shortcut bar under the terminal. */
-  terminalToolbarOpen: boolean
   /** Right-side inspector panel (Plugins / MCP / Files / Logs). */
   inspectorOpen: boolean
   /** UI scale applied via CSS zoom on <body>. 1 = default. */
@@ -15,8 +13,6 @@ interface LayoutState {
 
   toggleSidebar: () => void
   toggleSessionList: () => void
-  toggleTerminalToolbar: () => void
-  setTerminalToolbarOpen: (v: boolean) => void
   toggleInspector: () => void
   setFontScale: (v: number) => void
 }
@@ -43,7 +39,6 @@ export const useLayout = create<LayoutState>()(
     (set, get) => ({
       sidebarCollapsed: false,
       sessionListCollapsed: false,
-      terminalToolbarOpen: false,
       inspectorOpen: true,
       fontScale: 1,
 
@@ -51,9 +46,6 @@ export const useLayout = create<LayoutState>()(
         set({ sidebarCollapsed: !get().sidebarCollapsed }),
       toggleSessionList: () =>
         set({ sessionListCollapsed: !get().sessionListCollapsed }),
-      toggleTerminalToolbar: () =>
-        set({ terminalToolbarOpen: !get().terminalToolbarOpen }),
-      setTerminalToolbarOpen: (v) => set({ terminalToolbarOpen: v }),
       toggleInspector: () =>
         set({ inspectorOpen: !get().inspectorOpen }),
       setFontScale: (v) => {
