@@ -361,7 +361,16 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		}
 	}
 
-	args := append([]string(nil), p.Args...)
+	// User-supplied spawn args take precedence over provider-config-derived
+	// args: drop any flag from p.Args that the user is re-specifying, plus
+	// any provider-side flag that the catalog declares mutually exclusive
+	// with a user-supplied flag. Without this, CLIs that reject duplicate
+	// flags (codex's clap rejects a second --ask-for-approval) or
+	// ArgGroup conflicts (codex's --dangerously-bypass-approvals-and-sandbox
+	// vs --ask-for-approval) fail to spawn.
+	providerArgs := dropOverriddenFlags(p.Args, sess.Args)
+	providerArgs = dropConflictingFlags(providerArgs, sess.Args, p.Conflicts)
+	args := append([]string(nil), providerArgs...)
 	args = append(args, extraArgs...)
 	args = append(args, sess.Args...)
 
@@ -814,4 +823,120 @@ func (m *Manager) Shutdown(ctx context.Context) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	}
+}
+
+// dropOverriddenFlags returns providerArgs with any flag (and its value)
+// removed when the same flag is also present in userArgs. Lets per-session
+// spawn args override saved provider config without producing duplicates
+// that CLI parsers reject (e.g. codex's clap rejects repeated
+// --ask-for-approval).
+//
+// Value-flag detection is a peek heuristic: a flag is treated as taking a
+// value when the following token does not itself start with "-". This
+// matches every flag opendray's bundled providers actually emit (codex,
+// claude, gemini). It does NOT support flag values that start with "-"
+// (e.g. negative numbers); none of our providers use such values.
+func dropOverriddenFlags(providerArgs, userArgs []string) []string {
+	if len(providerArgs) == 0 || len(userArgs) == 0 {
+		return providerArgs
+	}
+	override := map[string]struct{}{}
+	for _, a := range userArgs {
+		if name, ok := flagName(a); ok {
+			override[name] = struct{}{}
+		}
+	}
+	if len(override) == 0 {
+		return providerArgs
+	}
+	out := make([]string, 0, len(providerArgs))
+	for i := 0; i < len(providerArgs); i++ {
+		tok := providerArgs[i]
+		name, isFlag := flagName(tok)
+		if !isFlag {
+			out = append(out, tok)
+			continue
+		}
+		if _, drop := override[name]; !drop {
+			out = append(out, tok)
+			continue
+		}
+		// Drop this flag. If it's the "--key=value" form the value is
+		// already attached; otherwise peek the next token and drop it
+		// too when it looks like a value (not another flag).
+		if strings.Contains(tok, "=") {
+			continue
+		}
+		if i+1 < len(providerArgs) {
+			next := providerArgs[i+1]
+			if _, nextIsFlag := flagName(next); !nextIsFlag {
+				i++
+			}
+		}
+	}
+	return out
+}
+
+// dropConflictingFlags strips from providerArgs every flag in the
+// conflict set triggered by any user spawn arg. Used for CLI parsers
+// where two distinct flags can't appear together (clap ArgGroup); the
+// catalog declares the rules per provider in ProviderInfo.Conflicts.
+//
+// Example for codex: when userArgs contains
+// --dangerously-bypass-approvals-and-sandbox, every occurrence of
+// --ask-for-approval, -a, --sandbox, -s (plus their values) is removed
+// from providerArgs.
+func dropConflictingFlags(providerArgs, userArgs []string, conflicts map[string][]string) []string {
+	if len(providerArgs) == 0 || len(userArgs) == 0 || len(conflicts) == 0 {
+		return providerArgs
+	}
+	drop := map[string]struct{}{}
+	for _, a := range userArgs {
+		name, ok := flagName(a)
+		if !ok {
+			continue
+		}
+		for _, victim := range conflicts[name] {
+			drop[victim] = struct{}{}
+		}
+	}
+	if len(drop) == 0 {
+		return providerArgs
+	}
+	out := make([]string, 0, len(providerArgs))
+	for i := 0; i < len(providerArgs); i++ {
+		tok := providerArgs[i]
+		name, isFlag := flagName(tok)
+		if !isFlag {
+			out = append(out, tok)
+			continue
+		}
+		if _, victim := drop[name]; !victim {
+			out = append(out, tok)
+			continue
+		}
+		if strings.Contains(tok, "=") {
+			continue
+		}
+		if i+1 < len(providerArgs) {
+			next := providerArgs[i+1]
+			if _, nextIsFlag := flagName(next); !nextIsFlag {
+				i++
+			}
+		}
+	}
+	return out
+}
+
+// flagName returns the canonical name of a CLI flag token ("--ask-for-approval"
+// for "--ask-for-approval=never" or "--ask-for-approval"), with ok=false for
+// non-flag tokens (positional args, values).
+func flagName(tok string) (string, bool) {
+	if len(tok) < 2 || tok[0] != '-' {
+		return "", false
+	}
+	if eq := strings.IndexByte(tok, '='); eq > 0 {
+		return tok[:eq], true
+	}
+	return tok, true
 }

@@ -20,14 +20,16 @@ const _claudeProviderId = 'claude';
 // toggle below is purely additive — when OFF we send no extra
 // args, when ON we append the flag(s) the user picked.
 //
-// Backend already concatenates session args after config args, so
-// passing the flag a second time when the provider config already
-// has it is harmless: claude/gemini boolean flags are idempotent;
-// codex's --ask-for-approval gets overridden by the second occurrence
-// (later wins in cobra parse).
+// claude/gemini bool flags are idempotent so duplicates are safe.
+// codex requires its true "skip everything" switch
+// (--dangerously-bypass-approvals-and-sandbox) — --ask-for-approval=never
+// only auto-approves shell exec, not MCP tool calls, and clap rejects
+// duplicate --ask-for-approval flags. The backend session manager strips
+// any provider-config flags (--ask-for-approval, -s) that conflict with
+// codex's ArgGroup, so this single flag is sufficient.
 const Map<String, List<String>> _bypassFlagsByProvider = {
   'claude': ['--dangerously-skip-permissions'],
-  'codex': ['--ask-for-approval', 'never', '-c', 'approval_policy="never"'],
+  'codex': ['--dangerously-bypass-approvals-and-sandbox'],
   'gemini': ['--yolo'],
 };
 

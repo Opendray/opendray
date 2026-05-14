@@ -13,7 +13,20 @@ type ProviderInfo struct {
 	ID         string
 	Executable string
 	Args       []string
-	Prepare    PrepareFunc
+
+	// Conflicts declares provider-specific CLI argument-group rules.
+	// When a user spawn arg matches a key flag, every flag listed in
+	// the value slice is stripped from Args before exec (along with
+	// the value following each flag, when applicable).
+	//
+	// Use this for CLI parsers that reject "this flag cannot be used
+	// with that flag" (clap ArgGroup), where simple name-based dedup
+	// is insufficient. E.g. codex's
+	// --dangerously-bypass-approvals-and-sandbox is mutually exclusive
+	// with --ask-for-approval and -s/--sandbox.
+	Conflicts map[string][]string
+
+	Prepare PrepareFunc
 }
 
 // PrepareFunc is the spawn-time hook signature.
