@@ -1,18 +1,22 @@
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useRef,
+  useState,
 } from 'react'
 import { Terminal as XTerm } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import '@xterm/xterm/css/xterm.css'
+import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 import { useAuth } from '@/stores/auth'
 import { useTheme } from '@/stores/theme'
 import { BinaryWS, wsURL } from '@/lib/ws'
-import { resizeSession } from '@/lib/sessions'
+import { resizeSession, uploadSessionFile } from '@/lib/sessions'
 
 interface TerminalProps {
   sessionId: string
@@ -21,11 +25,16 @@ interface TerminalProps {
 export interface TerminalHandle {
   /**
    * Send a raw byte sequence to the PTY's stdin (e.g. ESC '\x1b',
-   * Ctrl+C '\x03', arrow up '\x1b[A'). Used by the on-screen
-   * keyboard toolbar to forward keys browsers don't send naturally
-   * on touch devices.
+   * Ctrl+C '\x03'). Kept on the handle so callers (header buttons,
+   * inspector panels) can inject input without touching xterm.
    */
   sendInput: (data: string) => void
+  /**
+   * Multipart-upload `file` to the gateway and write the returned
+   * server-side path into the PTY so the running CLI can attach it
+   * as context. Used by the header "attach image" button.
+   */
+  uploadFile: (file: File) => Promise<void>
 }
 
 function readVar(name: string): string {
@@ -75,20 +84,56 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   const wsRef = useRef<BinaryWS | null>(null)
   const token = useAuth((s) => s.token)
   const themeApplied = useTheme((s) => s.applied())
+  const { t } = useTranslation()
+  const [dragActive, setDragActive] = useState(false)
 
-  useImperativeHandle(ref, () => ({
-    sendInput: (data: string) => {
-      const ws = wsRef.current
-      if (!ws || !ws.isOpen()) return
-      const enc = new TextEncoder().encode(data)
-      ws.send(
-        enc.buffer.slice(
-          enc.byteOffset,
-          enc.byteOffset + enc.byteLength,
-        ) as ArrayBuffer,
-      )
+  const sendInput = useCallback((data: string) => {
+    const ws = wsRef.current
+    if (!ws || !ws.isOpen()) return
+    const enc = new TextEncoder().encode(data)
+    ws.send(
+      enc.buffer.slice(
+        enc.byteOffset,
+        enc.byteOffset + enc.byteLength,
+      ) as ArrayBuffer,
+    )
+  }, [])
+
+  // Upload an image and paste the resolved server path back into
+  // the PTY so the CLI can attach it. Path-only — never the bytes —
+  // because Claude / Codex / Gemini all consume images via filename
+  // references, not stdin streams.
+  const uploadFile = useCallback(
+    async (file: File): Promise<void> => {
+      if (!file.type.startsWith('image/')) {
+        toast.error(t('web.sessions.terminal.uploadInvalidTypeToast'), {
+          description: file.type || file.name,
+        })
+        return
+      }
+      const toastId = `session-upload:${sessionId}`
+      toast.loading(t('web.sessions.terminal.uploadingToast'), { id: toastId })
+      try {
+        const res = await uploadSessionFile(sessionId, file)
+        sendInput(res.path)
+        toast.success(t('web.sessions.terminal.uploadedToast'), {
+          id: toastId,
+          description: res.path,
+        })
+      } catch (err) {
+        toast.error(t('web.sessions.terminal.uploadFailedToast'), {
+          id: toastId,
+          description: (err as Error).message,
+        })
+      }
     },
-  }))
+    [sessionId, sendInput, t],
+  )
+
+  useImperativeHandle(ref, () => ({ sendInput, uploadFile }), [
+    sendInput,
+    uploadFile,
+  ])
 
   // Mount xterm + WS once per session id.
   useEffect(() => {
@@ -172,6 +217,90 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     }
   }, [sessionId, token])
 
+  // Clipboard + drag-and-drop image attach. Browsers don't expose
+  // clipboard images through xterm's default paste hook (which only
+  // looks at text/plain), so we shadow paste at capture phase: when
+  // the clipboard contains an image, we own the event and upload it;
+  // otherwise we let xterm's normal text-paste flow proceed.
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    const onPaste = (e: ClipboardEvent) => {
+      const dt = e.clipboardData
+      if (!dt) return
+      // DataTransferItemList may include both a text/plain fallback
+      // (e.g. screenshot tools sometimes copy the filename too) and
+      // an image/*; prefer the image entry. Files-only paste (e.g.
+      // Finder → copy → ⌘V) ends up in dt.files.
+      const items = Array.from(dt.items)
+      const imageItem = items.find(
+        (it) => it.kind === 'file' && it.type.startsWith('image/'),
+      )
+      const file = imageItem?.getAsFile() ?? null
+      const filesImage =
+        file ?? Array.from(dt.files).find((f) => f.type.startsWith('image/'))
+      if (!filesImage) return // let xterm handle text paste
+      e.preventDefault()
+      e.stopPropagation()
+      void uploadFile(filesImage)
+    }
+
+    const hasFiles = (dt: DataTransfer | null): boolean => {
+      if (!dt) return false
+      return Array.from(dt.types).includes('Files')
+    }
+
+    const onDragEnter = (e: DragEvent) => {
+      if (!hasFiles(e.dataTransfer)) return
+      e.preventDefault()
+      setDragActive(true)
+    }
+    const onDragOver = (e: DragEvent) => {
+      if (!hasFiles(e.dataTransfer)) return
+      // preventDefault on dragover is required for drop to fire.
+      e.preventDefault()
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'
+    }
+    const onDragLeave = (e: DragEvent) => {
+      // Fires when crossing into a child element too — only reset
+      // when the cursor actually leaves the container box.
+      if (e.target !== el) return
+      setDragActive(false)
+    }
+    const onDrop = (e: DragEvent) => {
+      if (!hasFiles(e.dataTransfer)) return
+      e.preventDefault()
+      setDragActive(false)
+      const files = Array.from(e.dataTransfer?.files ?? [])
+      const imageFile = files.find((f) => f.type.startsWith('image/'))
+      if (!imageFile) {
+        toast.error(t('web.sessions.terminal.uploadInvalidTypeToast'), {
+          description: files[0]?.name,
+        })
+        return
+      }
+      void uploadFile(imageFile)
+    }
+
+    // Paste at capture phase: xterm's own listener lives on its
+    // internal helper textarea and runs at the target. By taking
+    // the event in capture we can decide before xterm whether the
+    // payload is an image (we handle it) or text (we step aside).
+    el.addEventListener('paste', onPaste, true)
+    el.addEventListener('dragenter', onDragEnter)
+    el.addEventListener('dragover', onDragOver)
+    el.addEventListener('dragleave', onDragLeave)
+    el.addEventListener('drop', onDrop)
+    return () => {
+      el.removeEventListener('paste', onPaste, true)
+      el.removeEventListener('dragenter', onDragEnter)
+      el.removeEventListener('dragover', onDragOver)
+      el.removeEventListener('dragleave', onDragLeave)
+      el.removeEventListener('drop', onDrop)
+    }
+  }, [uploadFile, t])
+
   // Refresh xterm theme when the site theme changes.
   useEffect(() => {
     const term = xtermRef.current
@@ -181,8 +310,15 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   }, [themeApplied])
 
   return (
-    <div className="h-full w-full bg-background">
+    <div className="h-full w-full bg-background relative">
       <div ref={containerRef} className="h-full w-full p-3" />
+      {dragActive && (
+        <div className="pointer-events-none absolute inset-2 rounded-md border-2 border-dashed border-accent/70 bg-accent/10 flex items-center justify-center">
+          <div className="text-[12px] font-mono text-accent">
+            {t('web.sessions.terminal.dropToAttach')}
+          </div>
+        </div>
+      )}
     </div>
   )
 })

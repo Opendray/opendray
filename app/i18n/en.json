@@ -116,9 +116,8 @@
         "hideList": "Hide session list",
         "showInspector": "Show inspector",
         "hideInspector": "Hide inspector",
-        "showKeyboard": "Show on-screen keys",
-        "hideKeyboard": "Hide on-screen keys",
-        "showKeyboardTooltip": "Show on-screen keys (ESC, TAB, ↑↓, ⌃C…)",
+        "attachImage": "Attach image",
+        "attachImageTooltip": "Attach image (or paste / drop into terminal)",
         "restart": "Restart",
         "restarting": "Restarting…",
         "remove": "Remove",
@@ -126,6 +125,13 @@
         "stop": "Stop",
         "stopping": "Stopping…",
         "pid": "pid {pid}"
+      },
+      "terminal": {
+        "uploadingToast": "Uploading image…",
+        "uploadedToast": "Image attached",
+        "uploadFailedToast": "Upload failed",
+        "uploadInvalidTypeToast": "Only image files can be attached",
+        "dropToAttach": "Drop image to attach"
       },
       "spawn": {
         "title": "Spawn session",

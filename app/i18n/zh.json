@@ -116,9 +116,8 @@
         "hideList": "隐藏会话列表",
         "showInspector": "显示检查器",
         "hideInspector": "隐藏检查器",
-        "showKeyboard": "显示屏幕键盘",
-        "hideKeyboard": "隐藏屏幕键盘",
-        "showKeyboardTooltip": "显示屏幕键盘 (ESC、TAB、↑↓、⌃C…)",
+        "attachImage": "附加图片",
+        "attachImageTooltip": "附加图片（或直接粘贴 / 拖入终端）",
         "restart": "重启",
         "restarting": "重启中…",
         "remove": "移除",
@@ -126,6 +125,13 @@
         "stop": "停止",
         "stopping": "停止中…",
         "pid": "pid {pid}"
+      },
+      "terminal": {
+        "uploadingToast": "正在上传图片…",
+        "uploadedToast": "图片已附加",
+        "uploadFailedToast": "上传失败",
+        "uploadInvalidTypeToast": "仅支持图片文件",
+        "dropToAttach": "释放以附加图片"
       },
       "spawn": {
         "title": "创建会话",
