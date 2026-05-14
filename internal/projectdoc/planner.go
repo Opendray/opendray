@@ -122,9 +122,7 @@ func stripJSONFence(s string) string {
 		return ""
 	}
 	rest := s[i+len(fence):]
-	if strings.HasPrefix(rest, "json") {
-		rest = rest[len("json"):]
-	}
+	rest = strings.TrimPrefix(rest, "json")
 	rest = strings.TrimLeft(rest, " \t\r\n")
 	j := strings.Index(rest, fence)
 	if j < 0 {

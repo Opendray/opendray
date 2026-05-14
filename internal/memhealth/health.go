@@ -34,29 +34,29 @@ type Snapshot struct {
 	LookbackDays int       `json:"lookback_days"`
 
 	// Layer 5 — discrete facts.
-	NewFactsCount       int      `json:"new_facts_count"`
-	TotalFactsCount     int      `json:"total_facts_count"`
-	ZeroHitFactsCount   int      `json:"zero_hit_facts_count"`
-	TopHitFactText      string   `json:"top_hit_fact_text"`
-	TopHitFactHits      int      `json:"top_hit_fact_hits"`
+	NewFactsCount     int    `json:"new_facts_count"`
+	TotalFactsCount   int    `json:"total_facts_count"`
+	ZeroHitFactsCount int    `json:"zero_hit_facts_count"`
+	TopHitFactText    string `json:"top_hit_fact_text"`
+	TopHitFactHits    int    `json:"top_hit_fact_hits"`
 
 	// Capture engine — how often the layer-5 writer is firing.
-	CaptureFires           int `json:"capture_fires"`
-	CaptureFactsExtracted  int `json:"capture_facts_extracted"`
-	CaptureFactsStored     int `json:"capture_facts_stored"`
-	CaptureFactsDeduped    int `json:"capture_facts_deduped"`
-	CaptureFailedFires     int `json:"capture_failed_fires"`
+	CaptureFires          int `json:"capture_fires"`
+	CaptureFactsExtracted int `json:"capture_facts_extracted"`
+	CaptureFactsStored    int `json:"capture_facts_stored"`
+	CaptureFactsDeduped   int `json:"capture_facts_deduped"`
+	CaptureFailedFires    int `json:"capture_failed_fires"`
 
 	// Layer 4 — session journal.
 	NewJournalCount   int `json:"new_journal_count"`
 	TotalJournalCount int `json:"total_journal_count"`
 
 	// Layers 2-3 — operator-owned plan/goal.
-	PlanLastUpdatedAt    *time.Time `json:"plan_last_updated_at,omitempty"`
-	GoalLastUpdatedAt    *time.Time `json:"goal_last_updated_at,omitempty"`
-	PendingProposals     int        `json:"pending_proposals"`
-	OldestPendingDays    int        `json:"oldest_pending_days"`
-	PlanDriftProposals   int        `json:"plan_drift_proposals"`
+	PlanLastUpdatedAt  *time.Time `json:"plan_last_updated_at,omitempty"`
+	GoalLastUpdatedAt  *time.Time `json:"goal_last_updated_at,omitempty"`
+	PendingProposals   int        `json:"pending_proposals"`
+	OldestPendingDays  int        `json:"oldest_pending_days"`
+	PlanDriftProposals int        `json:"plan_drift_proposals"`
 }
 
 // Service computes Snapshots against a pgxpool. Stateless beyond
