@@ -680,6 +680,68 @@
         "today": "Today",
         "yesterday": "Yesterday"
       }
+    },
+    "providers": {
+      "list": {
+        "title": "Providers",
+        "loading": "Loading…",
+        "disabledBadge": "disabled",
+        "noneSelected": "No provider selected."
+      },
+      "detail": {
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "toggleAria": "Toggle {name}",
+        "configuration": "Configuration",
+        "noConfig": "This provider has no user-configurable fields.",
+        "executable": "executable:",
+        "manifestHash": "manifest_hash:",
+        "reset": "Reset",
+        "save": "Save changes",
+        "saving": "Saving…",
+        "savedToast": "Provider config saved",
+        "saveFailedToast": "Save failed",
+        "toggleFailedToast": "Toggle failed",
+        "caps": {
+          "resume": "resume",
+          "stream": "stream",
+          "images": "images",
+          "mcp": "mcp"
+        }
+      },
+      "configForm": {
+        "selectPlaceholder": "Select…",
+        "defaultOption": "(default)",
+        "switchOn": "On",
+        "switchOff": "Off",
+        "showSecret": "Show secret",
+        "hideSecret": "Hide secret"
+      },
+      "claudeAccounts": {
+        "title": "Claude accounts",
+        "tutorialTooltip": "Open the multi-account tutorial section",
+        "importLocal": "Import local",
+        "importLocalTooltip": "Scan ~/.claude-accounts/ on the gateway host and register any new directories. The button is gateway-host only — see the tutorial.",
+        "importedNothingToast": "Nothing to import — accounts already in sync.",
+        "importedToast_one": "Imported {count} account from ~/.claude-accounts",
+        "importedToast_other": "Imported {count} accounts from ~/.claude-accounts",
+        "importFailedToast": "Import failed",
+        "addingTitle": "Adding a new account.",
+        "addingBodyPrefix": "Run on the gateway host:",
+        "addingBodySuffix": "opendray's filesystem watcher will register the new directory automatically, or click <1>Import local</1> to scan immediately.",
+        "architectureLink": "Architecture & full guide →",
+        "loading": "Loading…",
+        "empty": "No Claude accounts yet. Run the shell command above on the gateway host, then click <1>Import local</1> to scan.",
+        "noTokenYet": "no token yet",
+        "configDir": "config_dir:",
+        "tokenPath": "token_path:",
+        "toggleFailedToast": "Toggle failed",
+        "removeConfirm": "Remove account \"{name}\"?",
+        "removedToast": "Account removed",
+        "removeFailedToast": "Remove failed",
+        "toggleAria": "Toggle {name}",
+        "removeAria": "Remove {name}"
+      }
     }
   },
   "more": {

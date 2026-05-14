@@ -680,6 +680,68 @@
         "today": "今天",
         "yesterday": "昨天"
       }
+    },
+    "providers": {
+      "list": {
+        "title": "Providers",
+        "loading": "加载中…",
+        "disabledBadge": "已禁用",
+        "noneSelected": "未选择任何 Provider。"
+      },
+      "detail": {
+        "enabled": "已启用",
+        "disabled": "已禁用",
+        "toggleAria": "切换 {name}",
+        "configuration": "配置",
+        "noConfig": "此 Provider 没有可配置字段。",
+        "executable": "executable:",
+        "manifestHash": "manifest_hash:",
+        "reset": "重置",
+        "save": "保存更改",
+        "saving": "保存中…",
+        "savedToast": "Provider 配置已保存",
+        "saveFailedToast": "保存失败",
+        "toggleFailedToast": "切换失败",
+        "caps": {
+          "resume": "resume",
+          "stream": "stream",
+          "images": "images",
+          "mcp": "mcp"
+        }
+      },
+      "configForm": {
+        "selectPlaceholder": "选择…",
+        "defaultOption": "(默认)",
+        "switchOn": "开",
+        "switchOff": "关",
+        "showSecret": "显示密钥",
+        "hideSecret": "隐藏密钥"
+      },
+      "claudeAccounts": {
+        "title": "Claude 账号",
+        "tutorialTooltip": "打开多账号教程章节",
+        "importLocal": "导入本地",
+        "importLocalTooltip": "扫描网关主机上的 ~/.claude-accounts/ 目录并注册新的目录。该按钮仅在网关主机环境下工作 — 详见教程。",
+        "importedNothingToast": "无需导入 — 账号已同步。",
+        "importedToast_one": "已从 ~/.claude-accounts 导入 {count} 个账号",
+        "importedToast_other": "已从 ~/.claude-accounts 导入 {count} 个账号",
+        "importFailedToast": "导入失败",
+        "addingTitle": "添加新账号。",
+        "addingBodyPrefix": "在网关主机执行：",
+        "addingBodySuffix": "opendray 的文件系统监听会自动注册新目录，或点击 <1>导入本地</1> 立即扫描。",
+        "architectureLink": "架构与完整指南 →",
+        "loading": "加载中…",
+        "empty": "尚无 Claude 账号。在网关主机执行上面的 shell 命令，然后点击 <1>导入本地</1> 扫描。",
+        "noTokenYet": "尚无 token",
+        "configDir": "config_dir:",
+        "tokenPath": "token_path:",
+        "toggleFailedToast": "切换失败",
+        "removeConfirm": "移除账号 \"{name}\"?",
+        "removedToast": "账号已移除",
+        "removeFailedToast": "移除失败",
+        "toggleAria": "切换 {name}",
+        "removeAria": "移除 {name}"
+      }
     }
   },
   "more": {

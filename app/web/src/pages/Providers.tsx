@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Loader2, Save, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -21,6 +22,7 @@ import type { Provider } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 export function ProvidersPage() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const { data: providers, isLoading } = useQuery({
     queryKey: ['providers'],
@@ -49,16 +51,22 @@ export function ProvidersPage() {
       updateProviderConfig(id, cfg),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['providers'] })
-      toast.success('Provider config saved')
+      toast.success(t('web.providers.detail.savedToast'))
     },
-    onError: (e: Error) => toast.error('Save failed', { description: e.message }),
+    onError: (e: Error) =>
+      toast.error(t('web.providers.detail.saveFailedToast'), {
+        description: e.message,
+      }),
   })
 
   const toggle = useMutation({
     mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
       toggleProvider(id, enabled),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['providers'] }),
-    onError: (e: Error) => toast.error('Toggle failed', { description: e.message }),
+    onError: (e: Error) =>
+      toast.error(t('web.providers.detail.toggleFailedToast'), {
+        description: e.message,
+      }),
   })
 
   return (
@@ -67,7 +75,7 @@ export function ProvidersPage() {
       <aside className="w-64 shrink-0 border-r border-border flex flex-col bg-background">
         <div className="h-9 px-3 flex items-center border-b border-border">
           <span className="text-[11px] font-semibold uppercase tracking-tight text-muted-foreground">
-            Providers
+            {t('web.providers.list.title')}
           </span>
           <span className="ml-2 text-[10px] text-muted-foreground/60 font-mono">
             {providers?.length ?? 0}
@@ -78,7 +86,7 @@ export function ProvidersPage() {
             {isLoading && (
               <div className="flex items-center gap-2 px-2 py-3 text-[12px] text-muted-foreground">
                 <Loader2 className="size-3.5 animate-spin" />
-                Loading…
+                {t('web.providers.list.loading')}
               </div>
             )}
             {(providers ?? []).map((p) => (
@@ -105,7 +113,9 @@ export function ProvidersPage() {
                       {p.manifest.displayName}
                     </span>
                     {!p.enabled && (
-                      <Badge variant="muted">disabled</Badge>
+                      <Badge variant="muted">
+                        {t('web.providers.list.disabledBadge')}
+                      </Badge>
                     )}
                   </div>
                   <div className="text-[10px] text-muted-foreground/70 font-mono truncate">
@@ -136,7 +146,7 @@ export function ProvidersPage() {
         />
       ) : (
         <div className="flex-1 flex items-center justify-center text-[12px] text-muted-foreground">
-          {isLoading ? '' : 'No provider selected.'}
+          {isLoading ? '' : t('web.providers.list.noneSelected')}
         </div>
       )}
     </div>
@@ -161,12 +171,13 @@ function ProviderDetail({
   onReset: () => void
   onToggle: (enabled: boolean) => void
 }) {
+  const { t } = useTranslation()
   const m = provider.manifest
-  const caps: { key: keyof typeof m.capabilities; label: string }[] = [
-    { key: 'supportsResume', label: 'resume' },
-    { key: 'supportsStream', label: 'stream' },
-    { key: 'supportsImages', label: 'images' },
-    { key: 'supportsMcp', label: 'mcp' },
+  const caps: { key: keyof typeof m.capabilities; labelKey: string }[] = [
+    { key: 'supportsResume', labelKey: 'web.providers.detail.caps.resume' },
+    { key: 'supportsStream', labelKey: 'web.providers.detail.caps.stream' },
+    { key: 'supportsImages', labelKey: 'web.providers.detail.caps.images' },
+    { key: 'supportsMcp', labelKey: 'web.providers.detail.caps.mcp' },
   ]
   return (
     <main className="flex-1 flex flex-col min-w-0 bg-background">
@@ -194,10 +205,10 @@ function ProviderDetail({
             {m.description}
           </p>
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-            {caps.map(({ key, label }) =>
+            {caps.map(({ key, labelKey }) =>
               m.capabilities[key] ? (
                 <Badge key={key} variant="accent">
-                  {label}
+                  {t(labelKey)}
                 </Badge>
               ) : null,
             )}
@@ -205,12 +216,16 @@ function ProviderDetail({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-[11px] text-muted-foreground">
-            {provider.enabled ? 'Enabled' : 'Disabled'}
+            {provider.enabled
+              ? t('web.providers.detail.enabled')
+              : t('web.providers.detail.disabled')}
           </span>
           <Switch
             checked={provider.enabled}
             onCheckedChange={onToggle}
-            aria-label={`Toggle ${m.displayName}`}
+            aria-label={t('web.providers.detail.toggleAria', {
+              name: m.displayName,
+            })}
           />
         </div>
       </div>
@@ -218,7 +233,7 @@ function ProviderDetail({
       <ScrollArea className="flex-1">
         <div className="px-6 py-6 max-w-[640px]">
           <h2 className="text-[12px] font-semibold uppercase tracking-wider text-muted-foreground/80 mb-4">
-            Configuration
+            {t('web.providers.detail.configuration')}
           </h2>
           {m.configSchema && m.configSchema.length > 0 ? (
             <ConfigForm
@@ -228,7 +243,7 @@ function ProviderDetail({
             />
           ) : (
             <p className="text-[12px] text-muted-foreground italic">
-              This provider has no user-configurable fields.
+              {t('web.providers.detail.noConfig')}
             </p>
           )}
           {m.id === 'claude' && (
@@ -239,9 +254,9 @@ function ProviderDetail({
           )}
           <Separator className="my-6" />
           <div className="text-[10px] text-muted-foreground/70 font-mono">
-            executable: {m.executable}
+            {t('web.providers.detail.executable')} {m.executable}
             <br />
-            manifest_hash: {provider.manifest_hash}
+            {t('web.providers.detail.manifestHash')} {provider.manifest_hash}
           </div>
         </div>
       </ScrollArea>
@@ -254,7 +269,7 @@ function ProviderDetail({
           disabled={!dirty || saving}
         >
           <RotateCcw className="size-3.5" />
-          Reset
+          {t('web.providers.detail.reset')}
         </Button>
         <Button
           variant="accent"
@@ -267,7 +282,9 @@ function ProviderDetail({
           ) : (
             <Save className="size-3.5" />
           )}
-          {saving ? 'Saving…' : 'Save changes'}
+          {saving
+            ? t('web.providers.detail.saving')
+            : t('web.providers.detail.save')}
         </Button>
       </div>
     </main>

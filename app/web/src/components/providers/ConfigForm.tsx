@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -92,7 +93,7 @@ function FieldRow({
           </span>
         )}
       </div>
-      {renderInput(field, value, onChange)}
+      <RenderInput field={field} value={value} onChange={onChange} />
       {field.description && (
         <p className="text-[11px] text-muted-foreground/80 leading-relaxed">
           {field.description}
@@ -102,11 +103,16 @@ function FieldRow({
   )
 }
 
-function renderInput(
-  field: ConfigField,
-  value: unknown,
-  onChange: (v: unknown) => void,
-) {
+function RenderInput({
+  field,
+  value,
+  onChange,
+}: {
+  field: ConfigField
+  value: unknown
+  onChange: (v: unknown) => void
+}) {
+  const { t } = useTranslation()
   switch (field.type) {
     case 'string':
       return (
@@ -138,7 +144,9 @@ function renderInput(
             onCheckedChange={(checked) => onChange(checked)}
           />
           <span className="text-[12px] text-muted-foreground">
-            {value ? 'On' : 'Off'}
+            {value
+              ? t('web.providers.configForm.switchOn')
+              : t('web.providers.configForm.switchOff')}
           </span>
         </div>
       )
@@ -156,12 +164,16 @@ function renderInput(
           onValueChange={(v) => onChange(v === EMPTY ? '' : v)}
         >
           <SelectTrigger id={field.key}>
-            <SelectValue placeholder={field.placeholder ?? 'Select…'} />
+            <SelectValue
+              placeholder={
+                field.placeholder ?? t('web.providers.configForm.selectPlaceholder')
+              }
+            />
           </SelectTrigger>
           <SelectContent>
             {(field.options ?? []).map((opt) => (
               <SelectItem key={opt} value={opt === '' ? EMPTY : opt}>
-                {opt || '(default)'}
+                {opt || t('web.providers.configForm.defaultOption')}
               </SelectItem>
             ))}
           </SelectContent>
@@ -218,6 +230,7 @@ function SecretInput({
   placeholder?: string
   onChange: (v: string) => void
 }) {
+  const { t } = useTranslation()
   const [reveal, setReveal] = useState(false)
   return (
     <div className="relative">
@@ -235,7 +248,11 @@ function SecretInput({
         size="icon"
         onClick={() => setReveal((v) => !v)}
         className="absolute right-1 top-1 size-7"
-        aria-label={reveal ? 'Hide secret' : 'Show secret'}
+        aria-label={
+          reveal
+            ? t('web.providers.configForm.hideSecret')
+            : t('web.providers.configForm.showSecret')
+        }
       >
         {reveal ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
       </Button>

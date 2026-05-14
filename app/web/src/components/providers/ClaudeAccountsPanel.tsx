@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -34,6 +35,7 @@ import type { ClaudeAccount } from '@/lib/types'
 // self-managed credentials file. Forcing the host-shell flow keeps
 // the affordance honest.
 export function ClaudeAccountsPanel() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const { data: accounts, isLoading } = useQuery({
     queryKey: ['claude-accounts'],
@@ -45,13 +47,17 @@ export function ClaudeAccountsPanel() {
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ['claude-accounts'] })
       if (res.count === 0) {
-        toast.success('Nothing to import — accounts already in sync.')
+        toast.success(t('web.providers.claudeAccounts.importedNothingToast'))
       } else {
-        toast.success(`Imported ${res.count} account(s) from ~/.claude-accounts`)
+        toast.success(
+          t('web.providers.claudeAccounts.importedToast', { count: res.count }),
+        )
       }
     },
     onError: (e: Error) =>
-      toast.error('Import failed', { description: e.message }),
+      toast.error(t('web.providers.claudeAccounts.importFailedToast'), {
+        description: e.message,
+      }),
   })
 
   // Optimistic toggle: Radix Switch is fully controlled via
@@ -75,7 +81,9 @@ export function ClaudeAccountsPanel() {
     },
     onError: (e: Error, _vars, ctx) => {
       if (ctx?.prev) qc.setQueryData(['claude-accounts'], ctx.prev)
-      toast.error('Toggle failed', { description: e.message })
+      toast.error(t('web.providers.claudeAccounts.toggleFailedToast'), {
+        description: e.message,
+      })
     },
     onSettled: () =>
       qc.invalidateQueries({ queryKey: ['claude-accounts'] }),
@@ -85,10 +93,12 @@ export function ClaudeAccountsPanel() {
     mutationFn: deleteClaudeAccount,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['claude-accounts'] })
-      toast.success('Account removed')
+      toast.success(t('web.providers.claudeAccounts.removedToast'))
     },
     onError: (e: Error) =>
-      toast.error('Remove failed', { description: e.message }),
+      toast.error(t('web.providers.claudeAccounts.removeFailedToast'), {
+        description: e.message,
+      }),
   })
 
   return (
@@ -96,7 +106,7 @@ export function ClaudeAccountsPanel() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-[12px] font-semibold uppercase tracking-wider text-muted-foreground/80">
-            Claude accounts
+            {t('web.providers.claudeAccounts.title')}
           </h2>
           <span className="text-[10px] text-muted-foreground/60 font-mono">
             {accounts?.length ?? 0}
@@ -105,7 +115,7 @@ export function ClaudeAccountsPanel() {
             to="/tutorial"
             hash="providers-claude-accounts"
             className="text-muted-foreground/70 hover:text-foreground inline-flex items-center"
-            title="Open the multi-account tutorial section"
+            title={t('web.providers.claudeAccounts.tutorialTooltip')}
           >
             <HelpCircle className="size-3.5" />
           </Link>
@@ -116,49 +126,51 @@ export function ClaudeAccountsPanel() {
           onClick={() => importLocal.mutate()}
           disabled={importLocal.isPending}
           className="text-[11px] gap-1"
-          title="Scan ~/.claude-accounts/ on the gateway host and register any new directories. The button is gateway-host only — see the tutorial."
+          title={t('web.providers.claudeAccounts.importLocalTooltip')}
         >
           {importLocal.isPending ? (
             <Loader2 className="size-3.5 animate-spin" />
           ) : (
             <Download className="size-3.5" />
           )}
-          Import local
+          {t('web.providers.claudeAccounts.importLocal')}
         </Button>
       </div>
 
       <div className="rounded-md border border-border bg-muted/20 px-3 py-2.5 text-[11px] text-muted-foreground leading-relaxed">
         <span className="font-medium text-foreground">
-          Adding a new account.
+          {t('web.providers.claudeAccounts.addingTitle')}
         </span>{' '}
-        Run on the gateway host:
+        {t('web.providers.claudeAccounts.addingBodyPrefix')}
         <pre className="mt-1.5 mb-1.5 px-2 py-1.5 rounded bg-background/60 text-[10.5px] overflow-x-auto">
 {`mkdir -p ~/.claude-accounts/<name>
 CLAUDE_CONFIG_DIR=~/.claude-accounts/<name> claude login`}
         </pre>
-        opendray's filesystem watcher will register the new directory
-        automatically, or click <span className="font-mono">Import local</span> to
-        scan immediately.{' '}
+        <Trans
+          i18nKey="web.providers.claudeAccounts.addingBodySuffix"
+          components={{ 1: <span className="font-mono" /> }}
+        />{' '}
         <Link
           to="/tutorial"
           hash="providers-claude-accounts"
           className="underline hover:text-foreground"
         >
-          Architecture &amp; full guide →
+          {t('web.providers.claudeAccounts.architectureLink')}
         </Link>
       </div>
 
       {isLoading && (
         <div className="text-[12px] text-muted-foreground italic">
-          Loading…
+          {t('web.providers.claudeAccounts.loading')}
         </div>
       )}
 
       {!isLoading && (accounts?.length ?? 0) === 0 && (
         <p className="text-[12px] text-muted-foreground italic">
-          No Claude accounts yet. Run the shell command above on the
-          gateway host, then click{' '}
-          <span className="font-mono">Import local</span> to scan.
+          <Trans
+            i18nKey="web.providers.claudeAccounts.empty"
+            components={{ 1: <span className="font-mono" /> }}
+          />
         </p>
       )}
 
@@ -187,34 +199,46 @@ CLAUDE_CONFIG_DIR=~/.claude-accounts/<name> claude login`}
                   {!a.token_filled && (
                     <span className="text-[10px] uppercase tracking-wide text-amber-500/90 inline-flex items-center gap-1">
                       <CircleDot className="size-2.5" />
-                      no token yet
+                      {t('web.providers.claudeAccounts.noTokenYet')}
                     </span>
                   )}
                 </div>
                 <div className="text-[10px] font-mono text-muted-foreground/70 truncate">
-                  config_dir: {a.config_dir || '—'}
+                  {t('web.providers.claudeAccounts.configDir')}{' '}
+                  {a.config_dir || '—'}
                 </div>
                 <div className="text-[10px] font-mono text-muted-foreground/70 truncate">
-                  token_path: {a.token_path || '—'}
+                  {t('web.providers.claudeAccounts.tokenPath')}{' '}
+                  {a.token_path || '—'}
                 </div>
               </div>
               <ToggleButton
                 enabled={a.enabled}
                 pending={toggle.isPending}
                 onToggle={(v) => toggle.mutate({ id: a.id, enabled: v })}
-                ariaLabel={`Toggle ${a.name}`}
+                ariaLabel={t('web.providers.claudeAccounts.toggleAria', {
+                  name: a.name,
+                })}
               />
               <Button
                 variant="ghost"
                 size="icon"
                 className="size-7 text-muted-foreground hover:text-destructive"
                 onClick={() => {
-                  if (confirm(`Remove account "${a.name}"?`)) {
+                  if (
+                    confirm(
+                      t('web.providers.claudeAccounts.removeConfirm', {
+                        name: a.name,
+                      }),
+                    )
+                  ) {
                     remove.mutate(a.id)
                   }
                 }}
                 disabled={remove.isPending}
-                aria-label={`Remove ${a.name}`}
+                aria-label={t('web.providers.claudeAccounts.removeAria', {
+                  name: a.name,
+                })}
               >
                 <Trash2 className="size-3.5" />
               </Button>
