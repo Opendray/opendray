@@ -615,6 +615,128 @@
         "foldersInVault": "{count} folders in vault",
         "noMatch": "No existing folder matches. Save anyway to use <1>{value}</1> (lazy-created on first write)."
       },
+      "vaultSync": {
+        "title": "Vault sync",
+        "description": "Commit, pull, and push the notes vault as a git repository. Authentication uses your gateway host's git credentials (SSH agent / credential helper).",
+        "reading": "Reading vault state…",
+        "init": {
+          "title": "Vault is not a git repo yet",
+          "body": "Initialising will run <1>git init -b main</1> in your vault root and add a sane <3>.gitignore</3>. After that you can commit your notes and configure a remote (GitHub / Gitea / GitLab) for cross-machine sync.",
+          "button": "Initialise vault as git repo",
+          "initToast": "Vault initialised as git repo",
+          "initFailedToast": "Init failed"
+        },
+        "branch": {
+          "clean": "clean",
+          "staged": "{count} staged",
+          "modified": "{count} modified",
+          "untracked": "{count} untracked"
+        },
+        "action": {
+          "pull": "Pull",
+          "push": "Push",
+          "pullTitleNoRemote": "Configure a remote first",
+          "pullTitleHasUpstream": "git pull --rebase --autostash",
+          "pullTitleNoUpstream": "Pulls origin's HEAD; sets up tracking implicitly",
+          "pushTitleNoRemote": "Configure a remote first",
+          "pushTitleHasUpstream": "git push -u origin HEAD",
+          "pushTitleNoUpstream": "First push — will set upstream to origin/HEAD",
+          "noRemote": "No remote configured — pull/push disabled",
+          "noUpstream": "No upstream tracking yet — first push will set it.",
+          "pulledToast": "Pulled",
+          "pullFailedToast": "Pull failed",
+          "pushedToast": "Pushed",
+          "pushFailedToast": "Push failed"
+        },
+        "commit": {
+          "title": "Commit",
+          "placeholder": "Notes: {date} (default)",
+          "commitAll": "Commit all",
+          "hint": "Stages every change (<1>git add .</1>) then commits with this message. Empty message defaults to a timestamped subject.",
+          "committedToast": "Committed {hash}",
+          "commitFailedToast": "Commit failed"
+        },
+        "fileList": {
+          "title": "Working tree · {count}",
+          "moreSuffix": "+{count} more"
+        },
+        "remote": {
+          "title": "Remote (origin)",
+          "cancel": "Cancel",
+          "change": "Change",
+          "configure": "Configure",
+          "empty": "No remote set. Add an HTTPS or SSH URL (e.g. <1>git@github.com:you/notes.git</1> or <3>https://tea.linivek.online/you/notes.git</3>) to enable push / pull.",
+          "urlLabel": "URL (HTTPS or SSH)",
+          "urlPlaceholder": "git@host:owner/notes.git",
+          "save": "Save",
+          "savedToast": "Remote saved",
+          "saveFailedToast": "Set remote failed"
+        },
+        "history": {
+          "title": "Recent commits",
+          "loading": "Loading…",
+          "empty": "No commits yet."
+        },
+        "conflict": {
+          "kinds": {
+            "rebase": "rebase",
+            "merge": "merge",
+            "cherryPick": "cherry-pick",
+            "operation": "operation"
+          },
+          "headline": "Vault has a paused {kind} with unresolved conflicts",
+          "explainer": "Pull, push and commit are blocked until the {kind} finishes. You can either <1>abort</1> (restore the working tree to its state before the {kind} — keeps your local commits, drops the remote ones) or <3>force reset to remote</3> (discard ALL local commits + uncommitted changes; vault becomes an exact mirror of origin).",
+          "conflictedHeader": "Conflicted files · {count}",
+          "abort": "Abort {kind}",
+          "abortTitle": "git {kind} --abort",
+          "forceReset": "Force reset to remote",
+          "forceResetTitle": "git fetch && git reset --hard origin/<branch> && git clean -fd",
+          "forceResetConfirm": "DESTRUCTIVE: this will\n  • abort the in-progress {kind}\n  • run git fetch origin\n  • reset --hard to origin/<branch>\n  • clean -fd (drop untracked files)\n\nAny local commits not pushed to origin AND any uncommitted edits will be PERMANENTLY LOST.\n\nContinue?",
+          "abortedToast": "Aborted {kind}",
+          "abortedDescription": "Working tree restored to pre-operation state.",
+          "abortFailedToast": "Abort failed",
+          "resetToast": "Reset to {branch}",
+          "resetDescription": "Local changes discarded; vault matches remote.",
+          "resetFailedToast": "Reset failed"
+        },
+        "auth": {
+          "title": "Authentication",
+          "httpsTokenOk": "Will use the token stored for <1>{host}</1> in Plugins → Git hosts. ✓",
+          "httpsTokenMissing": "HTTPS remote on <1>{host}</1> with no opendray token configured. Push / pull will likely fail for private repos until you add one.",
+          "ssh": "SSH remote on <1>{host}</1>. Auth uses the gateway host's <3>~/.ssh/</3> (ssh-agent, identity file, host config). Verify with <5>ssh -T git@{host}</5> from the host shell.",
+          "configureTokenLink": "→ Configure git host token"
+        },
+        "autoSync": {
+          "loading": "Loading auto-sync settings…",
+          "title": "Auto-sync",
+          "on": "on",
+          "runNow": "Run now",
+          "runNowTooltip": "Wake the sync loop now (skips the wait, then runs whichever steps are due)",
+          "configure": "Configure",
+          "hide": "Hide",
+          "enabled": "Enabled",
+          "enabledTooltipNoRemote": "Configure a remote first to enable auto-sync",
+          "noRemoteHint": "No remote — push/pull will be skipped.",
+          "commitEvery": "Commit every",
+          "commitEveryExamples": "Examples: <1>30s</1>, <3>10m</3>, <5>2h</5>. Min 30s.",
+          "pullEvery": "Pull every",
+          "pullEveryHint": "Only used when Pull is enabled.",
+          "pushAfterCommit": "Push after commit",
+          "pullPeriodically": "Pull periodically",
+          "commitTemplateLabel": "Commit message template",
+          "commitTemplatePlaceholder": "Auto-sync: {date}  (default if empty)",
+          "saveSettings": "Save settings",
+          "discard": "Discard",
+          "lastCommit": "last commit",
+          "lastPush": "last push",
+          "lastPull": "last pull",
+          "never": "never",
+          "savedToast": "Auto-sync settings saved",
+          "saveFailedToast": "Save failed",
+          "triggeredToast": "Auto-sync triggered",
+          "runFailedToast": "Run failed"
+        }
+      },
       "syncBadge": {
         "loading": "Loading…",
         "syncLabel": "Sync",

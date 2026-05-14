@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 
 import {
   Dialog,
@@ -69,6 +69,7 @@ interface VaultSyncDialogProps {
 //
 // When the vault isn't a repo yet, we render the init prompt instead.
 export function VaultSyncDialog({ open, onOpenChange }: VaultSyncDialogProps) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
 
   const status = useQuery({
@@ -119,63 +120,69 @@ export function VaultSyncDialog({ open, onOpenChange }: VaultSyncDialogProps) {
   const init = useMutation({
     mutationFn: vaultInit,
     onSuccess: () => {
-      toast.success('Vault initialised as git repo')
+      toast.success(t('web.notes.vaultSync.init.initToast'))
       qc.invalidateQueries({ queryKey: ['vault-status'] })
       qc.invalidateQueries({ queryKey: ['vault-remotes'] })
       qc.invalidateQueries({ queryKey: ['vault-log'] })
     },
-    onError: (e: Error) => toast.error('Init failed', { description: e.message }),
+    onError: (e: Error) =>
+      toast.error(t('web.notes.vaultSync.init.initFailedToast'), { description: e.message }),
   })
 
   const commit = useMutation({
     mutationFn: () => vaultCommit({ message }),
     onSuccess: (res) => {
-      toast.success(`Committed ${res.hash}`, { description: res.message })
+      toast.success(t('web.notes.vaultSync.commit.committedToast', { hash: res.hash }), {
+        description: res.message,
+      })
       setMessage('')
       qc.invalidateQueries({ queryKey: ['vault-status'] })
       qc.invalidateQueries({ queryKey: ['vault-log'] })
     },
-    onError: (e: Error) => toast.error('Commit failed', { description: e.message }),
+    onError: (e: Error) =>
+      toast.error(t('web.notes.vaultSync.commit.commitFailedToast'), { description: e.message }),
   })
 
   const pull = useMutation({
     mutationFn: vaultPull,
     onSuccess: () => {
-      toast.success('Pulled')
+      toast.success(t('web.notes.vaultSync.action.pulledToast'))
       qc.invalidateQueries({ queryKey: ['vault-status'] })
       qc.invalidateQueries({ queryKey: ['vault-log'] })
       qc.invalidateQueries({ queryKey: ['notes-list'] })
       qc.invalidateQueries({ queryKey: ['notes-list-all'] })
     },
-    onError: (e: Error) => toast.error('Pull failed', { description: e.message }),
+    onError: (e: Error) =>
+      toast.error(t('web.notes.vaultSync.action.pullFailedToast'), { description: e.message }),
   })
 
   const push = useMutation({
     mutationFn: vaultPush,
     onSuccess: () => {
-      toast.success('Pushed')
+      toast.success(t('web.notes.vaultSync.action.pushedToast'))
       qc.invalidateQueries({ queryKey: ['vault-status'] })
     },
-    onError: (e: Error) => toast.error('Push failed', { description: e.message }),
+    onError: (e: Error) =>
+      toast.error(t('web.notes.vaultSync.action.pushFailedToast'), { description: e.message }),
   })
 
   const setRemote = useMutation({
     mutationFn: () => vaultSetRemote('origin', remoteUrl.trim()),
     onSuccess: () => {
-      toast.success('Remote saved')
+      toast.success(t('web.notes.vaultSync.remote.savedToast'))
       setShowRemoteForm(false)
       qc.invalidateQueries({ queryKey: ['vault-remotes'] })
       qc.invalidateQueries({ queryKey: ['vault-status'] })
     },
     onError: (e: Error) =>
-      toast.error('Set remote failed', { description: e.message }),
+      toast.error(t('web.notes.vaultSync.remote.saveFailedToast'), { description: e.message }),
   })
 
   const abort = useMutation({
     mutationFn: () => vaultAbort('auto'),
     onSuccess: (res) => {
-      toast.success(`Aborted ${res.kind}`, {
-        description: 'Working tree restored to pre-operation state.',
+      toast.success(t('web.notes.vaultSync.conflict.abortedToast', { kind: res.kind }), {
+        description: t('web.notes.vaultSync.conflict.abortedDescription'),
       })
       qc.invalidateQueries({ queryKey: ['vault-status'] })
       qc.invalidateQueries({ queryKey: ['vault-log'] })
@@ -183,14 +190,14 @@ export function VaultSyncDialog({ open, onOpenChange }: VaultSyncDialogProps) {
       qc.invalidateQueries({ queryKey: ['notes-list-all'] })
     },
     onError: (e: Error) =>
-      toast.error('Abort failed', { description: e.message }),
+      toast.error(t('web.notes.vaultSync.conflict.abortFailedToast'), { description: e.message }),
   })
 
   const resetToRemote = useMutation({
     mutationFn: () => vaultResetToRemote(),
     onSuccess: (res) => {
-      toast.success(`Reset to ${res.remote_branch}`, {
-        description: 'Local changes discarded; vault matches remote.',
+      toast.success(t('web.notes.vaultSync.conflict.resetToast', { branch: res.remote_branch }), {
+        description: t('web.notes.vaultSync.conflict.resetDescription'),
       })
       qc.invalidateQueries({ queryKey: ['vault-status'] })
       qc.invalidateQueries({ queryKey: ['vault-log'] })
@@ -198,7 +205,7 @@ export function VaultSyncDialog({ open, onOpenChange }: VaultSyncDialogProps) {
       qc.invalidateQueries({ queryKey: ['notes-list-all'] })
     },
     onError: (e: Error) =>
-      toast.error('Reset failed', { description: e.message }),
+      toast.error(t('web.notes.vaultSync.conflict.resetFailedToast'), { description: e.message }),
   })
 
   const summary = useMemo(() => {
@@ -224,12 +231,10 @@ export function VaultSyncDialog({ open, onOpenChange }: VaultSyncDialogProps) {
         <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <GitBranch className="size-4 text-muted-foreground" />
-            Vault sync
+            {t('web.notes.vaultSync.title')}
           </DialogTitle>
           <DialogDescription>
-            Commit, pull, and push the notes vault as a git repository.
-            Authentication uses your gateway host's git credentials
-            (SSH agent / credential helper).
+            {t('web.notes.vaultSync.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -237,7 +242,7 @@ export function VaultSyncDialog({ open, onOpenChange }: VaultSyncDialogProps) {
           {status.isLoading ? (
             <div className="flex items-center gap-2 text-[12px] text-muted-foreground py-3">
               <Loader2 className="size-3 animate-spin" />
-              Reading vault state…
+              {t('web.notes.vaultSync.reading')}
             </div>
           ) : !status.data?.is_repo ? (
             <InitPrompt
@@ -326,16 +331,17 @@ function InitPrompt({
   busy: boolean
   onInit: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col items-center text-center gap-3 py-6">
       <GitBranch className="size-8 text-muted-foreground/40" strokeWidth={1.5} />
       <div className="space-y-1">
-        <h3 className="text-[14px] font-semibold">Vault is not a git repo yet</h3>
+        <h3 className="text-[14px] font-semibold">{t('web.notes.vaultSync.init.title')}</h3>
         <p className="text-[12px] text-muted-foreground max-w-[480px]">
-          Initialising will run <code>git init -b main</code> in your vault
-          root and add a sane <code>.gitignore</code>. After that you can
-          commit your notes and configure a remote (GitHub / Gitea / GitLab)
-          for cross-machine sync.
+          <Trans
+            i18nKey="web.notes.vaultSync.init.body"
+            components={{ 1: <code />, 3: <code /> }}
+          />
         </p>
         {root && (
           <div className="text-[11px] font-mono text-muted-foreground/70 mt-2">
@@ -345,7 +351,7 @@ function InitPrompt({
       </div>
       <Button onClick={onInit} disabled={busy} variant="accent" size="sm">
         {busy && <Loader2 className="size-3.5 animate-spin" />}
-        Initialise vault as git repo
+        {t('web.notes.vaultSync.init.button')}
       </Button>
     </div>
   )
@@ -364,6 +370,7 @@ function BranchBar({
   behind: number
   summary: { staged: number; modified: number; untracked: number; total: number }
 }) {
+  const { t } = useTranslation()
   return (
     <section className="rounded-md border border-border/60 bg-card/40 px-3 py-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
       <div className="flex items-center gap-1.5 text-[12px]">
@@ -394,19 +401,23 @@ function BranchBar({
         {summary.total === 0 ? (
           <span className="text-state-running flex items-center gap-1">
             <CheckCircle2 className="size-3" />
-            clean
+            {t('web.notes.vaultSync.branch.clean')}
           </span>
         ) : (
           <>
             {summary.staged > 0 && (
-              <span className="text-state-running">{summary.staged} staged</span>
+              <span className="text-state-running">
+                {t('web.notes.vaultSync.branch.staged', { count: summary.staged })}
+              </span>
             )}
             {summary.modified > 0 && (
-              <span className="text-state-idle">{summary.modified} modified</span>
+              <span className="text-state-idle">
+                {t('web.notes.vaultSync.branch.modified', { count: summary.modified })}
+              </span>
             )}
             {summary.untracked > 0 && (
               <span className="text-muted-foreground">
-                {summary.untracked} untracked
+                {t('web.notes.vaultSync.branch.untracked', { count: summary.untracked })}
               </span>
             )}
           </>
@@ -436,19 +447,20 @@ function ActionRow({
   onPull: () => void
   onPush: () => void
 }) {
+  const { t } = useTranslation()
   // Push is enabled whenever we have a remote — `git push -u origin
   // HEAD` will create the upstream tracking on its first call, so we
   // must not block on hasUpstream (chicken-and-egg).
   const pushTitle = !hasRemote
-    ? 'Configure a remote first'
+    ? t('web.notes.vaultSync.action.pushTitleNoRemote')
     : hasUpstream
-      ? 'git push -u origin HEAD'
-      : 'First push — will set upstream to origin/HEAD'
+      ? t('web.notes.vaultSync.action.pushTitleHasUpstream')
+      : t('web.notes.vaultSync.action.pushTitleNoUpstream')
   const pullTitle = !hasRemote
-    ? 'Configure a remote first'
+    ? t('web.notes.vaultSync.action.pullTitleNoRemote')
     : hasUpstream
-      ? 'git pull --rebase --autostash'
-      : 'Pulls origin\'s HEAD; sets up tracking implicitly'
+      ? t('web.notes.vaultSync.action.pullTitleHasUpstream')
+      : t('web.notes.vaultSync.action.pullTitleNoUpstream')
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <Button
@@ -465,7 +477,7 @@ function ActionRow({
         ) : (
           <CloudDownload className="size-3" />
         )}
-        Pull
+        {t('web.notes.vaultSync.action.pull')}
       </Button>
       <Button
         type="button"
@@ -481,17 +493,17 @@ function ActionRow({
         ) : (
           <CloudUpload className="size-3" />
         )}
-        Push
+        {t('web.notes.vaultSync.action.push')}
       </Button>
       {!hasRemote ? (
         <span className="text-[10.5px] text-muted-foreground/70 inline-flex items-center gap-1">
           <AlertCircle className="size-3" />
-          No remote configured — pull/push disabled
+          {t('web.notes.vaultSync.action.noRemote')}
         </span>
       ) : !hasUpstream ? (
         <span className="text-[10.5px] text-muted-foreground/70 inline-flex items-center gap-1">
           <AlertCircle className="size-3" />
-          No upstream tracking yet — first push will set it.
+          {t('web.notes.vaultSync.action.noUpstream')}
         </span>
       ) : null}
     </div>
@@ -511,17 +523,20 @@ function CommitForm({
   committing: boolean
   onCommit: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <section className="flex flex-col gap-2 rounded-md border border-border/60 bg-card/40 px-3 py-2.5">
       <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
         <GitCommit className="size-3" />
-        Commit
+        {t('web.notes.vaultSync.commit.title')}
       </div>
       <div className="flex gap-2">
         <Input
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder={`Notes: ${new Date().toISOString().slice(0, 10)} (default)`}
+          placeholder={t('web.notes.vaultSync.commit.placeholder', {
+            date: new Date().toISOString().slice(0, 10),
+          })}
           className="flex-1 text-[12px]"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && summary.total > 0) {
@@ -543,25 +558,28 @@ function CommitForm({
           ) : (
             <GitCommit className="size-3" />
           )}
-          Commit all
+          {t('web.notes.vaultSync.commit.commitAll')}
         </Button>
       </div>
       <p className="text-[10.5px] text-muted-foreground/70">
-        Stages every change (<code>git add .</code>) then commits with this
-        message. Empty message defaults to a timestamped subject.
+        <Trans
+          i18nKey="web.notes.vaultSync.commit.hint"
+          components={{ 1: <code /> }}
+        />
       </p>
     </section>
   )
 }
 
 function FileList({ files }: { files: VaultStatusFile[] }) {
+  const { t } = useTranslation()
   if (files.length === 0) {
     return null
   }
   return (
     <section className="flex flex-col gap-1">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium px-1">
-        Working tree · {files.length}
+        {t('web.notes.vaultSync.fileList.title', { count: files.length })}
       </div>
       <div className="rounded-md border border-border/60 bg-card/30 max-h-[180px] overflow-y-auto">
         {files.slice(0, 200).map((f) => {
@@ -593,7 +611,7 @@ function FileList({ files }: { files: VaultStatusFile[] }) {
         })}
         {files.length > 200 && (
           <div className="text-[10px] text-muted-foreground/60 px-2 py-1">
-            +{files.length - 200} more
+            {t('web.notes.vaultSync.fileList.moreSuffix', { count: files.length - 200 })}
           </div>
         )}
       </div>
@@ -618,13 +636,14 @@ function RemoteSection({
   onSave: () => void
   saving: boolean
 }) {
+  const { t } = useTranslation()
   const origin = remotes.find((r) => r.name === 'origin')
   return (
     <section className="flex flex-col gap-2 rounded-md border border-border/60 bg-card/40 px-3 py-2.5">
       <div className="flex items-center gap-1.5">
         <Settings2 className="size-3 text-muted-foreground" />
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
-          Remote (origin)
+          {t('web.notes.vaultSync.remote.title')}
         </span>
         <div className="flex-1" />
         <button
@@ -632,7 +651,11 @@ function RemoteSection({
           onClick={onToggle}
           className="text-[11px] text-muted-foreground hover:text-foreground"
         >
-          {editing ? 'Cancel' : origin ? 'Change' : 'Configure'}
+          {editing
+            ? t('web.notes.vaultSync.remote.cancel')
+            : origin
+              ? t('web.notes.vaultSync.remote.change')
+              : t('web.notes.vaultSync.remote.configure')}
         </button>
       </div>
       {!editing && origin ? (
@@ -644,22 +667,22 @@ function RemoteSection({
         </div>
       ) : !editing && !origin ? (
         <p className="text-[11px] text-muted-foreground/70">
-          No remote set. Add an HTTPS or SSH URL (e.g.{' '}
-          <code>git@github.com:you/notes.git</code> or{' '}
-          <code>https://tea.linivek.online/you/notes.git</code>) to enable
-          push / pull.
+          <Trans
+            i18nKey="web.notes.vaultSync.remote.empty"
+            components={{ 1: <code />, 3: <code /> }}
+          />
         </p>
       ) : (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="remote-url" className="text-[10.5px] text-muted-foreground/80">
-            URL (HTTPS or SSH)
+            {t('web.notes.vaultSync.remote.urlLabel')}
           </Label>
           <div className="flex gap-2">
             <Input
               id="remote-url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="git@host:owner/notes.git"
+              placeholder={t('web.notes.vaultSync.remote.urlPlaceholder')}
               className="flex-1 text-[12px] font-mono"
             />
             <Button
@@ -669,7 +692,7 @@ function RemoteSection({
               disabled={saving || !url.trim()}
               onClick={onSave}
             >
-              {saving ? <Loader2 className="size-3 animate-spin" /> : 'Save'}
+              {saving ? <Loader2 className="size-3 animate-spin" /> : t('web.notes.vaultSync.remote.save')}
             </Button>
           </div>
         </div>
@@ -685,19 +708,20 @@ function CommitHistory({
   commits: { hash: string; short_hash: string; author: string; when: string; subject: string }[]
   loading: boolean
 }) {
+  const { t } = useTranslation()
   return (
     <section className="flex flex-col gap-1">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium px-1">
-        Recent commits
+        {t('web.notes.vaultSync.history.title')}
       </div>
       {loading ? (
         <div className="flex items-center gap-2 text-[11px] text-muted-foreground px-1">
           <Loader2 className="size-3 animate-spin" />
-          Loading…
+          {t('web.notes.vaultSync.history.loading')}
         </div>
       ) : commits.length === 0 ? (
         <div className="text-[11px] text-muted-foreground/60 px-1">
-          No commits yet.
+          {t('web.notes.vaultSync.history.empty')}
         </div>
       ) : (
         <div className="rounded-md border border-border/60 bg-card/30 divide-y divide-border/40">
@@ -735,34 +759,35 @@ function ConflictBanner({
   onAbort: () => void
   onReset: () => void
 }) {
-  const kind = state.rebase_in_progress
+  const { t } = useTranslation()
+  const kindRaw = state.rebase_in_progress
     ? 'rebase'
     : state.merge_in_progress
       ? 'merge'
       : state.cherry_pick_in_progress
-        ? 'cherry-pick'
+        ? 'cherryPick'
         : 'operation'
+  const kind = t(`web.notes.vaultSync.conflict.kinds.${kindRaw}`)
   const conflicts = state.conflicted_files ?? []
   return (
     <section className="rounded-md border border-state-failed/40 bg-state-failed/5 px-3 py-3 flex flex-col gap-2.5">
       <div className="flex items-center gap-1.5">
         <AlertCircle className="size-4 text-state-failed" />
         <span className="text-[12px] font-semibold text-state-failed">
-          Vault has a paused {kind} with unresolved conflicts
+          {t('web.notes.vaultSync.conflict.headline', { kind })}
         </span>
       </div>
       <p className="text-[11.5px] text-foreground/85 leading-relaxed">
-        Pull, push and commit are blocked until the {kind} finishes. You can
-        either <strong>abort</strong> (restore the working tree to its state
-        before the {kind} — keeps your local commits, drops the remote ones)
-        or <strong>force reset to remote</strong> (discard ALL local
-        commits + uncommitted changes; vault becomes an exact mirror of
-        origin).
+        <Trans
+          i18nKey="web.notes.vaultSync.conflict.explainer"
+          values={{ kind }}
+          components={{ 1: <strong />, 3: <strong /> }}
+        />
       </p>
       {conflicts.length > 0 && (
         <div className="text-[10.5px] font-mono text-muted-foreground/80 border-l-2 border-state-failed/40 pl-2 max-h-32 overflow-y-auto">
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground/60 mb-1">
-            Conflicted files · {conflicts.length}
+            {t('web.notes.vaultSync.conflict.conflictedHeader', { count: conflicts.length })}
           </div>
           {conflicts.map((p) => (
             <div key={p} className="truncate" title={p}>
@@ -779,42 +804,34 @@ function ConflictBanner({
           onClick={onAbort}
           disabled={aborting || resetting}
           className="gap-1.5"
-          title={`git ${kind} --abort`}
+          title={t('web.notes.vaultSync.conflict.abortTitle', { kind })}
         >
           {aborting ? (
             <Loader2 className="size-3 animate-spin" />
           ) : (
             <AlertCircle className="size-3" />
           )}
-          Abort {kind}
+          {t('web.notes.vaultSync.conflict.abort', { kind })}
         </Button>
         <Button
           type="button"
           size="sm"
           variant="outline"
           onClick={() => {
-            if (
-              confirm(
-                'DESTRUCTIVE: this will\n  • abort the in-progress ' +
-                  kind +
-                  '\n  • run git fetch origin\n  • reset --hard to origin/<branch>\n  • clean -fd (drop untracked files)\n\n' +
-                  'Any local commits not pushed to origin AND any uncommitted edits will be PERMANENTLY LOST.\n\n' +
-                  'Continue?',
-              )
-            ) {
+            if (confirm(t('web.notes.vaultSync.conflict.forceResetConfirm', { kind }))) {
               onReset()
             }
           }}
           disabled={aborting || resetting}
           className="gap-1.5 text-destructive hover:text-destructive border-destructive/40 hover:border-destructive/60"
-          title="git fetch && git reset --hard origin/<branch> && git clean -fd"
+          title={t('web.notes.vaultSync.conflict.forceResetTitle')}
         >
           {resetting ? (
             <Loader2 className="size-3 animate-spin" />
           ) : (
             <CloudDownload className="size-3" />
           )}
-          Force reset to remote
+          {t('web.notes.vaultSync.conflict.forceReset')}
         </Button>
       </div>
     </section>
@@ -828,6 +845,7 @@ function AuthSection({
   info: VaultAuthInfo | undefined
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   if (!info) return null
   if (!info.has_remote) return null
 
@@ -862,37 +880,35 @@ function AuthSection({
           <Settings2 className="size-3 text-muted-foreground" />
         )}
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
-          Authentication
+          {t('web.notes.vaultSync.auth.title')}
         </span>
       </div>
 
       <div className="text-[11.5px] text-foreground/85 leading-relaxed">
         {isHTTPS ? (
           info.using_token ? (
-            <>
-              Will use the token stored for{' '}
-              <code className="font-mono text-[11px]">{info.host}</code> in
-              Plugins → Git hosts. ✓
-            </>
+            <Trans
+              i18nKey="web.notes.vaultSync.auth.httpsTokenOk"
+              values={{ host: info.host }}
+              components={{ 1: <code className="font-mono text-[11px]" /> }}
+            />
           ) : (
-            <>
-              HTTPS remote on{' '}
-              <code className="font-mono text-[11px]">{info.host}</code> with
-              no opendray token configured. Push / pull will likely fail for
-              private repos until you add one.
-            </>
+            <Trans
+              i18nKey="web.notes.vaultSync.auth.httpsTokenMissing"
+              values={{ host: info.host }}
+              components={{ 1: <code className="font-mono text-[11px]" /> }}
+            />
           )
         ) : (
-          <>
-            SSH remote on{' '}
-            <code className="font-mono text-[11px]">{info.host}</code>. Auth
-            uses the gateway host's <code className="font-mono">~/.ssh/</code>{' '}
-            (ssh-agent, identity file, host config). Verify with{' '}
-            <code className="font-mono text-[11px]">
-              ssh -T git@{info.host}
-            </code>{' '}
-            from the host shell.
-          </>
+          <Trans
+            i18nKey="web.notes.vaultSync.auth.ssh"
+            values={{ host: info.host }}
+            components={{
+              1: <code className="font-mono text-[11px]" />,
+              3: <code className="font-mono" />,
+              5: <code className="font-mono text-[11px]" />,
+            }}
+          />
         )}
       </div>
 
@@ -908,7 +924,7 @@ function AuthSection({
           onClick={onClose}
           className="text-[11px] text-state-running hover:underline self-start inline-flex items-center gap-0.5"
         >
-          → Configure git host token
+          {t('web.notes.vaultSync.auth.configureTokenLink')}
         </Link>
       )}
     </section>
@@ -927,6 +943,7 @@ function AutoSyncSection({
   hasRemote: boolean
   open: boolean
 }) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const cfg = useQuery({
     queryKey: ['vault-sync-config'],
@@ -950,22 +967,22 @@ function AutoSyncSection({
     onSuccess: (next) => {
       qc.setQueryData(['vault-sync-config'], next)
       setDraft({})
-      toast.success('Auto-sync settings saved')
+      toast.success(t('web.notes.vaultSync.autoSync.savedToast'))
     },
     onError: (e: Error) =>
-      toast.error('Save failed', { description: e.message }),
+      toast.error(t('web.notes.vaultSync.autoSync.saveFailedToast'), { description: e.message }),
   })
 
   const runNow = useMutation({
     mutationFn: vaultSyncRunNow,
     onSuccess: () => {
-      toast.success('Auto-sync triggered')
+      toast.success(t('web.notes.vaultSync.autoSync.triggeredToast'))
       qc.invalidateQueries({ queryKey: ['vault-sync-config'] })
       qc.invalidateQueries({ queryKey: ['vault-status'] })
       qc.invalidateQueries({ queryKey: ['vault-log'] })
     },
     onError: (e: Error) =>
-      toast.error('Run failed', { description: e.message }),
+      toast.error(t('web.notes.vaultSync.autoSync.runFailedToast'), { description: e.message }),
   })
 
   const c = cfg.data
@@ -989,7 +1006,7 @@ function AutoSyncSection({
     return (
       <section className="flex items-center gap-2 rounded-md border border-border/60 bg-card/40 px-3 py-2.5 text-[11px] text-muted-foreground">
         <Loader2 className="size-3 animate-spin" />
-        Loading auto-sync settings…
+        {t('web.notes.vaultSync.autoSync.loading')}
       </section>
     )
   }
@@ -999,12 +1016,12 @@ function AutoSyncSection({
       <div className="flex items-center gap-1.5">
         <Clock className="size-3 text-muted-foreground" />
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
-          Auto-sync
+          {t('web.notes.vaultSync.autoSync.title')}
         </span>
         {v.enabled && (
           <span className="text-[10px] font-mono text-state-running inline-flex items-center gap-0.5">
             <span className="size-1.5 rounded-full bg-state-running animate-pulse" />
-            on
+            {t('web.notes.vaultSync.autoSync.on')}
           </span>
         )}
         <div className="flex-1" />
@@ -1013,21 +1030,23 @@ function AutoSyncSection({
           onClick={() => runNow.mutate()}
           disabled={runNow.isPending}
           className="text-[11px] inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-card disabled:opacity-50"
-          title="Wake the sync loop now (skips the wait, then runs whichever steps are due)"
+          title={t('web.notes.vaultSync.autoSync.runNowTooltip')}
         >
           {runNow.isPending ? (
             <Loader2 className="size-3 animate-spin" />
           ) : (
             <Play className="size-3" />
           )}
-          Run now
+          {t('web.notes.vaultSync.autoSync.runNow')}
         </button>
         <button
           type="button"
           onClick={() => setCollapsed((p) => !p)}
           className="text-[11px] text-muted-foreground hover:text-foreground"
         >
-          {collapsed ? 'Configure' : 'Hide'}
+          {collapsed
+            ? t('web.notes.vaultSync.autoSync.configure')
+            : t('web.notes.vaultSync.autoSync.hide')}
         </button>
       </div>
 
@@ -1043,16 +1062,16 @@ function AutoSyncSection({
             disabled={!hasRemote && !v.enabled}
             title={
               !hasRemote
-                ? 'Configure a remote first to enable auto-sync'
+                ? t('web.notes.vaultSync.autoSync.enabledTooltipNoRemote')
                 : undefined
             }
           />
-          <span>Enabled</span>
+          <span>{t('web.notes.vaultSync.autoSync.enabled')}</span>
         </label>
         {!hasRemote && (
           <span className="text-[10.5px] text-muted-foreground/70 inline-flex items-center gap-1">
             <AlertCircle className="size-3" />
-            No remote — push/pull will be skipped.
+            {t('web.notes.vaultSync.autoSync.noRemoteHint')}
           </span>
         )}
       </div>
@@ -1065,7 +1084,7 @@ function AutoSyncSection({
                 htmlFor="commit-interval"
                 className="text-[10.5px] text-muted-foreground/80"
               >
-                Commit every
+                {t('web.notes.vaultSync.autoSync.commitEvery')}
               </Label>
               <Input
                 id="commit-interval"
@@ -1077,8 +1096,10 @@ function AutoSyncSection({
                 className="text-[12px] font-mono h-8"
               />
               <span className="text-[10px] text-muted-foreground/60">
-                Examples: <code>30s</code>, <code>10m</code>, <code>2h</code>.
-                Min 30s.
+                <Trans
+                  i18nKey="web.notes.vaultSync.autoSync.commitEveryExamples"
+                  components={{ 1: <code />, 3: <code />, 5: <code /> }}
+                />
               </span>
             </div>
 
@@ -1087,7 +1108,7 @@ function AutoSyncSection({
                 htmlFor="pull-interval"
                 className="text-[10.5px] text-muted-foreground/80"
               >
-                Pull every
+                {t('web.notes.vaultSync.autoSync.pullEvery')}
               </Label>
               <Input
                 id="pull-interval"
@@ -1100,7 +1121,7 @@ function AutoSyncSection({
                 disabled={!v.pull_enabled}
               />
               <span className="text-[10px] text-muted-foreground/60">
-                Only used when Pull is enabled.
+                {t('web.notes.vaultSync.autoSync.pullEveryHint')}
               </span>
             </div>
           </div>
@@ -1115,7 +1136,7 @@ function AutoSyncSection({
                 }
                 className="size-3.5 accent-state-running"
               />
-              <span>Push after commit</span>
+              <span>{t('web.notes.vaultSync.autoSync.pushAfterCommit')}</span>
             </label>
             <label className="inline-flex items-center gap-1.5 cursor-pointer">
               <input
@@ -1126,7 +1147,7 @@ function AutoSyncSection({
                 }
                 className="size-3.5 accent-state-running"
               />
-              <span>Pull periodically</span>
+              <span>{t('web.notes.vaultSync.autoSync.pullPeriodically')}</span>
             </label>
           </div>
 
@@ -1135,7 +1156,7 @@ function AutoSyncSection({
               htmlFor="commit-template"
               className="text-[10.5px] text-muted-foreground/80"
             >
-              Commit message template
+              {t('web.notes.vaultSync.autoSync.commitTemplateLabel')}
             </Label>
             <Input
               id="commit-template"
@@ -1143,7 +1164,7 @@ function AutoSyncSection({
               onChange={(e) =>
                 setDraft((p) => ({ ...p, commit_message: e.target.value }))
               }
-              placeholder="Auto-sync: {date}  (default if empty)"
+              placeholder={t('web.notes.vaultSync.autoSync.commitTemplatePlaceholder')}
               className="text-[12px] h-8"
             />
           </div>
@@ -1157,7 +1178,7 @@ function AutoSyncSection({
               disabled={!dirty || save.isPending}
             >
               {save.isPending && <Loader2 className="size-3 animate-spin" />}
-              Save settings
+              {t('web.notes.vaultSync.autoSync.saveSettings')}
             </Button>
             {dirty && (
               <button
@@ -1165,7 +1186,7 @@ function AutoSyncSection({
                 onClick={() => setDraft({})}
                 className="text-[11px] text-muted-foreground hover:text-foreground"
               >
-                Discard
+                {t('web.notes.vaultSync.autoSync.discard')}
               </button>
             )}
           </div>
@@ -1174,12 +1195,12 @@ function AutoSyncSection({
 
       <div className="flex flex-col gap-0.5 text-[10.5px] text-muted-foreground/70 font-mono pt-1 border-t border-border/40">
         <SyncTimestampRow
-          label="last commit"
+          label={t('web.notes.vaultSync.autoSync.lastCommit')}
           ts={c.last_commit_at}
           extra={c.last_commit_hash ? `· ${c.last_commit_hash}` : ''}
         />
-        <SyncTimestampRow label="last push" ts={c.last_push_at} />
-        <SyncTimestampRow label="last pull" ts={c.last_pull_at} />
+        <SyncTimestampRow label={t('web.notes.vaultSync.autoSync.lastPush')} ts={c.last_push_at} />
+        <SyncTimestampRow label={t('web.notes.vaultSync.autoSync.lastPull')} ts={c.last_pull_at} />
         {c.last_error && (
           <div className="text-state-failed mt-1 text-[10.5px] font-sans whitespace-pre-wrap break-all">
             <AlertCircle className="size-3 inline-block mr-1 align-text-bottom" />
@@ -1205,10 +1226,11 @@ function SyncTimestampRow({
   ts?: string
   extra?: string
 }) {
+  const { t } = useTranslation()
   return (
     <div className="flex items-center gap-1.5">
       <span className="text-muted-foreground/50 w-20">{label}</span>
-      <span>{ts ? relativeTime(ts) : 'never'}</span>
+      <span>{ts ? relativeTime(ts) : t('web.notes.vaultSync.autoSync.never')}</span>
       {extra && <span className="text-muted-foreground/50">{extra}</span>}
     </div>
   )

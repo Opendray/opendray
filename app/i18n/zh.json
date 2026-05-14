@@ -615,6 +615,128 @@
         "foldersInVault": "vault 中 {count} 个文件夹",
         "noMatch": "未找到匹配的文件夹。直接保存即可使用 <1>{value}</1>（首次写入时懒创建）。"
       },
+      "vaultSync": {
+        "title": "Vault 同步",
+        "description": "把 notes vault 作为 git 仓库进行 commit、pull 与 push。认证使用网关主机的 git 凭据（SSH agent / credential helper）。",
+        "reading": "正在读取 vault 状态…",
+        "init": {
+          "title": "vault 尚未初始化为 git 仓库",
+          "body": "初始化会在 vault 根目录运行 <1>git init -b main</1> 并加入一份合理的 <3>.gitignore</3>。之后你就可以提交笔记并配置 remote（GitHub / Gitea / GitLab）进行跨机同步。",
+          "button": "把 vault 初始化为 git 仓库",
+          "initToast": "vault 已初始化为 git 仓库",
+          "initFailedToast": "初始化失败"
+        },
+        "branch": {
+          "clean": "干净",
+          "staged": "{count} 已暂存",
+          "modified": "{count} 已修改",
+          "untracked": "{count} 未跟踪"
+        },
+        "action": {
+          "pull": "拉取",
+          "push": "推送",
+          "pullTitleNoRemote": "请先配置 remote",
+          "pullTitleHasUpstream": "git pull --rebase --autostash",
+          "pullTitleNoUpstream": "拉取 origin 的 HEAD；隐式建立 tracking",
+          "pushTitleNoRemote": "请先配置 remote",
+          "pushTitleHasUpstream": "git push -u origin HEAD",
+          "pushTitleNoUpstream": "首次推送 — 会将 upstream 设为 origin/HEAD",
+          "noRemote": "尚未配置 remote — pull/push 已禁用",
+          "noUpstream": "尚无 upstream tracking — 首次推送会自动建立。",
+          "pulledToast": "已拉取",
+          "pullFailedToast": "拉取失败",
+          "pushedToast": "已推送",
+          "pushFailedToast": "推送失败"
+        },
+        "commit": {
+          "title": "提交",
+          "placeholder": "Notes: {date}（默认）",
+          "commitAll": "提交全部",
+          "hint": "暂存所有变更（<1>git add .</1>）然后用此 message 提交。message 为空则使用带时间戳的默认值。",
+          "committedToast": "已提交 {hash}",
+          "commitFailedToast": "提交失败"
+        },
+        "fileList": {
+          "title": "工作树 · {count}",
+          "moreSuffix": "+{count} 更多"
+        },
+        "remote": {
+          "title": "Remote（origin）",
+          "cancel": "取消",
+          "change": "更换",
+          "configure": "配置",
+          "empty": "尚未设置 remote。添加一个 HTTPS 或 SSH URL（例如 <1>git@github.com:you/notes.git</1> 或 <3>https://tea.linivek.online/you/notes.git</3>）以启用 push / pull。",
+          "urlLabel": "URL（HTTPS 或 SSH）",
+          "urlPlaceholder": "git@host:owner/notes.git",
+          "save": "保存",
+          "savedToast": "Remote 已保存",
+          "saveFailedToast": "设置 remote 失败"
+        },
+        "history": {
+          "title": "最近提交",
+          "loading": "加载中…",
+          "empty": "暂无提交。"
+        },
+        "conflict": {
+          "kinds": {
+            "rebase": "rebase",
+            "merge": "merge",
+            "cherryPick": "cherry-pick",
+            "operation": "operation"
+          },
+          "headline": "vault 存在暂停的 {kind} 且有未解决的冲突",
+          "explainer": "在 {kind} 完成之前，pull、push 与 commit 都被阻塞。你可以选择 <1>中止</1>（把工作树恢复到 {kind} 之前的状态 — 保留本地提交，丢弃远端提交），或 <3>强制重置到 remote</3>（丢弃所有本地提交 + 未提交修改；vault 变成 origin 的精确镜像）。",
+          "conflictedHeader": "冲突文件 · {count}",
+          "abort": "中止 {kind}",
+          "abortTitle": "git {kind} --abort",
+          "forceReset": "强制重置到 remote",
+          "forceResetTitle": "git fetch && git reset --hard origin/<branch> && git clean -fd",
+          "forceResetConfirm": "破坏性操作：将\n  • 中止进行中的 {kind}\n  • 运行 git fetch origin\n  • reset --hard 到 origin/<branch>\n  • clean -fd（删除未跟踪文件）\n\n任何尚未推送到 origin 的本地提交以及任何未提交修改都将永久丢失。\n\n继续？",
+          "abortedToast": "已中止 {kind}",
+          "abortedDescription": "工作树已恢复到操作前状态。",
+          "abortFailedToast": "中止失败",
+          "resetToast": "已重置到 {branch}",
+          "resetDescription": "本地更改已丢弃；vault 与 remote 一致。",
+          "resetFailedToast": "重置失败"
+        },
+        "auth": {
+          "title": "认证",
+          "httpsTokenOk": "将使用 Plugins → Git hosts 中为 <1>{host}</1> 存的 token。✓",
+          "httpsTokenMissing": "<1>{host}</1> 上的 HTTPS remote，opendray 中没有配置 token。在你为其添加 token 之前，私有仓库的 push / pull 很可能失败。",
+          "ssh": "<1>{host}</1> 上的 SSH remote。认证使用网关主机的 <3>~/.ssh/</3>（ssh-agent、identity 文件、host config）。可在主机 shell 用 <5>ssh -T git@{host}</5> 验证。",
+          "configureTokenLink": "→ 配置 git host token"
+        },
+        "autoSync": {
+          "loading": "加载自动同步设置…",
+          "title": "自动同步",
+          "on": "开",
+          "runNow": "立即运行",
+          "runNowTooltip": "立即唤醒同步循环（跳过等待，然后运行所有到期的步骤）",
+          "configure": "配置",
+          "hide": "隐藏",
+          "enabled": "启用",
+          "enabledTooltipNoRemote": "请先配置 remote 才能启用自动同步",
+          "noRemoteHint": "尚无 remote — push/pull 将被跳过。",
+          "commitEvery": "提交间隔",
+          "commitEveryExamples": "示例：<1>30s</1>、<3>10m</3>、<5>2h</5>。最小 30s。",
+          "pullEvery": "拉取间隔",
+          "pullEveryHint": "仅在启用 Pull 时使用。",
+          "pushAfterCommit": "提交后 push",
+          "pullPeriodically": "周期性 pull",
+          "commitTemplateLabel": "提交 message 模板",
+          "commitTemplatePlaceholder": "Auto-sync: {date}（留空则使用默认）",
+          "saveSettings": "保存设置",
+          "discard": "丢弃",
+          "lastCommit": "最近 commit",
+          "lastPush": "最近 push",
+          "lastPull": "最近 pull",
+          "never": "从未",
+          "savedToast": "自动同步设置已保存",
+          "saveFailedToast": "保存失败",
+          "triggeredToast": "已触发自动同步",
+          "runFailedToast": "运行失败"
+        }
+      },
       "syncBadge": {
         "loading": "加载中…",
         "syncLabel": "同步",
