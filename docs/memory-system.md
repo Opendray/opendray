@@ -431,6 +431,53 @@ that aren't referenced by any pending conflict. Operators use
 this list to prune accumulated noise without losing any
 journaling that's still doing work via the conflict detector.
 
+## Operator UX polish (M-PD, shipped)
+
+The Phase A-C plumbing surfaced new signals (effective_score,
+journal staleness, cross-layer conflicts); Phase D wires them
+into the operator UI so they're actionable in two clicks.
+
+### Ranking math visible in the inspector
+
+Every row in **Memory** (`/memory`) now shows a `rank` badge next
+to `sim`. Hover for a tooltip that spells out the formula:
+
+```
+effective 0.43 = sim 0.78 × age 0.72 (50d) × hits 1.08 × conf 1.00
+```
+
+Operators can see at a glance *why* a row sits where it does and
+which factor dominates. Backed by `app/shared/src/lib/memoryRanking.ts`
+which mirrors `internal/memory/ranking.go` so the explanation
+matches what the backend ranker actually computed.
+
+### Journal bulk-prune
+
+The Journal tab (`/memory/project` → Journal) gains a collapsed
+"Prune stale entries" panel. Expand it, optionally tune the age
+threshold (default 90 days), select entries with the checkboxes,
+and bulk-delete in one shot. Entries currently referenced by a
+pending conflict are hidden from the list (server-side filter)
+so operators don't accidentally lose context the detector still
+considers load-bearing.
+
+### Conflict quick-actions
+
+Each conflict card on the **Conflicts** tab now grows a
+"Fix:" row at the bottom with context-aware shortcuts:
+
+- `fact` side → **Delete fact** (yanks the memory row + auto-
+  accepts the conflict; one click clears the row from the
+  inbox and the offending fact from search results).
+- `plan` / `goal` side → **Open plan/goal editor** (jumps to
+  the corresponding ProjectScreen tab so the operator can
+  rewrite the doc; the conflict stays pending until they hit
+  Accept after editing).
+
+The "Open editor" jumps work because `ProjectScreen`'s Tabs
+component is controlled (`activeTab` state) — the panel exposes
+an `onJumpTab(tab: string)` callback that flips it.
+
 ## Roadmap
 
 - **Codex session UUID capture**. Codex lacks `--session-id`; a

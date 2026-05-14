@@ -220,6 +220,18 @@
       "navWorkers": "Workers",
       "navConfiguration": "配置 →"
     },
+    "journalStale": {
+      "title": "清理陈旧条目",
+      "subtitle": "（超过 {days} 天、无 pending 冲突引用）",
+      "daysLabel": "超过（天）：",
+      "loading": "扫描中…",
+      "empty": "没有可清理的陈旧条目。",
+      "selectAll": "全选",
+      "deselectAll": "取消全选",
+      "deleteSelected": "删除 ({count})",
+      "deleted_one": "已删除 {count} 条",
+      "deleted_other": "已删除 {count} 条"
+    },
     "conflicts": {
       "title": "跨层冲突",
       "subtitle": "每日 detector 在 facts/plan/goal/journal 之间发现的矛盾。",
@@ -232,6 +244,13 @@
       "dismiss": "驳回",
       "accepted": "已采纳 — 别忘了实际修正",
       "dismissed": "已驳回",
+      "deletedFact": "已删除 fact 并采纳冲突",
+      "quickActions": "快速修复：",
+      "deleteFact": "删除 fact",
+      "openLayer": {
+        "plan": "打开计划编辑器",
+        "goal": "打开目标编辑器"
+      },
       "severity": {
         "low": "低",
         "medium": "中",
@@ -526,6 +545,8 @@
       },
       "row": {
         "simBadge": "相似度 {value}",
+        "rankBadge": "排名分 {value}",
+        "rankTooltip": "有效分 {effective} = 相似度 {similarity} × 时效 {age} ({days}d) × 命中 {hits} × 置信 {confidence}",
         "hits_one": "命中 {count} 次",
         "hits_other": "命中 {count} 次",
         "lastHitTooltip": "最近命中 {relative}",

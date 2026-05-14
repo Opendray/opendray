@@ -137,6 +137,20 @@ export async function deleteSessionLog(id: string): Promise<void> {
   await api(`/api/v1/session-logs/${id}`, { method: 'DELETE' })
 }
 
+// M-PD — list stale journal entries that the daily conflict
+// detector hasn't tied to any pending finding. Used by the
+// Journal tab's Stale subview to bulk-prune accumulated noise.
+export async function listStaleSessionLogs(
+  cwd: string,
+  days = 90,
+): Promise<SessionLogEntry[]> {
+  const qs = new URLSearchParams({ cwd, days: String(days) })
+  const res = await api<{ stale: SessionLogEntry[] }>(
+    `/api/v1/session-logs/stale?${qs}`,
+  )
+  return res.stale ?? []
+}
+
 // ── reset ─────────────────────────────────────────────────────
 
 export interface ResetProjectMemoryOptions {

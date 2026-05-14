@@ -220,6 +220,18 @@
       "navWorkers": "Workers",
       "navConfiguration": "Configuration →"
     },
+    "journalStale": {
+      "title": "Prune stale entries",
+      "subtitle": "(older than {days} days, no pending conflicts)",
+      "daysLabel": "Older than (days):",
+      "loading": "Scanning…",
+      "empty": "Nothing stale to prune.",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all",
+      "deleteSelected": "Delete ({count})",
+      "deleted_one": "{count} entry deleted",
+      "deleted_other": "{count} entries deleted"
+    },
     "conflicts": {
       "title": "Cross-layer conflicts",
       "subtitle": "Contradictions the daily detector found between facts, plan, goal, and journal entries.",
@@ -232,6 +244,13 @@
       "dismiss": "Dismiss",
       "accepted": "Conflict accepted — remember to apply the fix",
       "dismissed": "Conflict dismissed",
+      "deletedFact": "Fact deleted and conflict accepted",
+      "quickActions": "Fix:",
+      "deleteFact": "Delete fact",
+      "openLayer": {
+        "plan": "Open plan editor",
+        "goal": "Open goal editor"
+      },
       "severity": {
         "low": "low",
         "medium": "medium",
@@ -526,6 +545,8 @@
       },
       "row": {
         "simBadge": "sim {value}",
+        "rankBadge": "rank {value}",
+        "rankTooltip": "effective {effective} = sim {similarity} × age {age} ({days}d) × hits {hits} × conf {confidence}",
         "hits_one": "{count} hit",
         "hits_other": "{count} hits",
         "lastHitTooltip": "Last hit {relative}",

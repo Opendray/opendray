@@ -61,6 +61,7 @@ import {
 import { deleteMemoriesByScope } from '@/lib/memory'
 import { MemoryHealthCard } from '@/components/project/MemoryHealthCard'
 import { ConflictsPanel } from '@/components/project/ConflictsPanel'
+import { JournalStalePanel } from '@/components/project/JournalStalePanel'
 
 interface ProjectScreenProps {
   cwd: string
@@ -84,6 +85,10 @@ function useVerdictLabel() {
 export function ProjectScreen({ cwd }: ProjectScreenProps) {
   const { t } = useTranslation()
   const qc = useQueryClient()
+  // Controlled tabs so quick-actions in ConflictsPanel can jump
+  // directly to the Plan / Goal editor without the operator
+  // hunting for the right tab.
+  const [activeTab, setActiveTab] = useState('health')
 
   const docsQuery = useQuery({
     queryKey: ['project-docs', cwd],
@@ -185,7 +190,11 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
         </div>
       </div>
 
-      <Tabs defaultValue="health" className="flex flex-1 flex-col overflow-hidden">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex flex-1 flex-col overflow-hidden"
+      >
         <TabsList className="bg-muted/30 mx-4 mt-3 w-fit">
           <TabsTrigger value="health">{t('web.project.tabs.health')}</TabsTrigger>
           <TabsTrigger value="goal">{t('web.project.tabs.goal')}</TabsTrigger>
@@ -249,6 +258,7 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
         </TabsContent>
 
         <TabsContent value="journal" className="flex-1 overflow-auto p-4">
+          <JournalStalePanel cwd={cwd} />
           <JournalTab entries={logsQuery.data ?? []} loading={logsQuery.isLoading} />
         </TabsContent>
 
@@ -264,7 +274,7 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
         </TabsContent>
 
         <TabsContent value="conflicts" className="flex-1 overflow-auto">
-          <ConflictsPanel cwd={cwd} />
+          <ConflictsPanel cwd={cwd} onJumpTab={setActiveTab} />
         </TabsContent>
 
         <TabsContent value="cleanup" className="flex-1 overflow-auto p-4">
