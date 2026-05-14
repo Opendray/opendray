@@ -1532,6 +1532,98 @@
       "notFound": "not found ·",
       "childrenSuffix": "children",
       "expectedDirectory": "· expected directory"
+    },
+    "export": {
+      "title": "Export data",
+      "subtitle": "Take a one-shot zip bundle of selected logical entities. Bundles are kept on the server for 24 hours, then automatically reaped.",
+      "backToBackups": "← Backups",
+      "sections": {
+        "export": "Export",
+        "import": "Import"
+      },
+      "form": {
+        "scope": "Scope",
+        "memories": "Memories",
+        "memoriesHint": "Cross-CLI persistent memory rows (text + scope + metadata). Embedding vectors are omitted; importer re-embeds.",
+        "integrations": "Integrations",
+        "customTasks": "Custom tasks",
+        "customTasksHint": "Operator-defined tasks shown in the Inspector's Tasks tab.",
+        "integrationOptions": {
+          "none": "None",
+          "noneHint": "Skip the integrations table entirely.",
+          "metadata": "Metadata only (recommended)",
+          "metadataHint": "ID, name, route prefix, scopes — no API key material.",
+          "plaintext": "Include plaintext API keys",
+          "plaintextHint": "v1 bcrypt-only: no recoverable plaintext exists. Manifest documents this; nothing leaks."
+        },
+        "confirmWarning": "Type <1>I understand</1> to confirm. opendray currently stores only bcrypt hashes — selecting plaintext does NOT export any plaintext (the feature is reserved for a future release that keeps plaintext caches).",
+        "confirmPlaceholder": "I understand",
+        "confirmSentinel": "i understand",
+        "footnote": "Audit logs and session transcripts are out of scope — covered by /backups (operator dump) instead.",
+        "building": "Building…",
+        "create": "Create export",
+        "readyToast": "Export ready",
+        "readyDescription": "{bytes} bytes",
+        "failedToast": "Export failed"
+      },
+      "history": {
+        "loading": "Loading…",
+        "empty": "No exports yet. Use the form above to create one.",
+        "title": "History",
+        "columns": {
+          "id": "ID",
+          "status": "Status",
+          "scope": "Scope",
+          "size": "Size",
+          "expires": "Expires",
+          "actions": "Actions"
+        },
+        "download": "Download",
+        "deleteTooltip": "Delete",
+        "listFailedToast": "Failed to list exports",
+        "downloadFailedToast": "Download failed",
+        "noTokenToast": "No download token (expired?)",
+        "deleteConfirm": "Delete export {id}?",
+        "deletedToast": "Export deleted",
+        "deleteFailedToast": "Delete failed",
+        "scopeEmpty": "(empty)"
+      },
+      "import": {
+        "intro": "Replay an export bundle (zip) into the live database. Conflicts (matching id, or unique route_prefix for integrations) are <1>skipped</1> by default. Memories are tagged <3>embedder=imported_v1</3> and need a re-embed pass before search returns them; trigger re-embed under <5>Memory → Maintenance</5>. Integrations are imported with <7>enabled=false</7> and a non-bcrypt placeholder key — operator must rotate before use.",
+        "memoryLink": "Memory → Maintenance",
+        "bundleLabel": "Bundle (.zip)",
+        "memoriesLabel": "Memories",
+        "integrationsLabel": "Integrations (metadata only — keys never imported)",
+        "customTasksLabel": "Custom tasks",
+        "importing": "Importing…",
+        "importBundle": "Import bundle",
+        "pickFileToast": "Pick a bundle file first",
+        "doneToast": "Import done",
+        "finishedWithErrors": "Import finished with errors",
+        "failedToast": "Import failed",
+        "summaryCard": {
+          "memories": "Memories",
+          "integrations": "Integrations",
+          "customTasks": "Custom tasks",
+          "created": "created",
+          "skipped": "skipped",
+          "failed": "failed"
+        }
+      },
+      "imports": {
+        "loading": "Loading…",
+        "empty": "No imports yet.",
+        "title": "History",
+        "columns": {
+          "id": "ID",
+          "status": "Status",
+          "source": "Source",
+          "counts": "Counts",
+          "when": "When"
+        },
+        "noneCounts": "(none)",
+        "listFailedToast": "Failed to list imports"
+      }
     }
   },
   "more": {
