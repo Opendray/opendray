@@ -246,15 +246,17 @@ class ChannelKindPickerSheet extends StatelessWidget {
           ),
           const Divider(height: 1),
           Flexible(
-            child: ListView.separated(
-              shrinkWrap: true,
-              itemCount: channelKinds.length,
-              separatorBuilder: (_, __) => Divider(
-                height: 1,
-                color: Theme.of(context).dividerColor,
-              ),
-              itemBuilder: (_, i) {
-                final k = channelKinds[i];
+            child: Builder(builder: (context) {
+              final kinds = channelKindsList();
+              return ListView.separated(
+                shrinkWrap: true,
+                itemCount: kinds.length,
+                separatorBuilder: (_, __) => Divider(
+                  height: 1,
+                  color: Theme.of(context).dividerColor,
+                ),
+                itemBuilder: (_, i) {
+                  final k = kinds[i];
                 return ListTile(
                   leading: Container(
                     width: 36,
@@ -285,7 +287,8 @@ class ChannelKindPickerSheet extends StatelessWidget {
                   onTap: () => Navigator.of(context).pop(k),
                 );
               },
-            ),
+              );
+            }),
           ),
           const SizedBox(height: 8),
         ],

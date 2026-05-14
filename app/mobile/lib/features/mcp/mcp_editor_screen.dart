@@ -76,9 +76,9 @@ class _McpEditorScreenState extends ConsumerState<McpEditorScreen> {
   // Starter template for a new stdio MCP server — the operator
   // edits this into shape rather than facing a blank box.
   static String _scaffoldJson() {
-    const example = {
+    final example = {
       'name': 'my-mcp-server',
-      'description': 'Optional one-liner',
+      'description': t.mcp.editor.descriptionPlaceholder,
       'transport': 'stdio',
       'command': '/path/to/binary',
       'args': ['--arg1'],
@@ -91,19 +91,19 @@ class _McpEditorScreenState extends ConsumerState<McpEditorScreen> {
   Future<void> _submit() async {
     final id = _idCtrl.text.trim();
     if (id.isEmpty) {
-      setState(() => _error = 'id is required');
+      setState(() => _error = t.mcp.editor.idRequired);
       return;
     }
     Map<String, dynamic> parsed;
     try {
       final decoded = jsonDecode(_bodyCtrl.text);
       if (decoded is! Map<String, dynamic>) {
-        setState(() => _error = 'Body must be a JSON object');
+        setState(() => _error = t.mcp.editor.validateJsonObject);
         return;
       }
       parsed = decoded;
     } on FormatException catch (e) {
-      setState(() => _error = 'Invalid JSON: ${e.message}');
+      setState(() => _error = t.mcp.editor.validateJsonInvalid(error: e.message));
       return;
     }
     // Inject id into the server body; the server requires
@@ -147,7 +147,7 @@ class _McpEditorScreenState extends ConsumerState<McpEditorScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEdit ? 'Edit MCP server' : 'New MCP server'),
+        title: Text(_isEdit ? t.mcp.editor.appBarEdit : t.mcp.editor.appBarNew),
       ),
       body: SafeArea(
         bottom: false,
@@ -155,7 +155,7 @@ class _McpEditorScreenState extends ConsumerState<McpEditorScreen> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
             Text(
-              'id (URL segment, lowercase alphanumeric / dash / underscore)',
+              t.mcp.editor.idLabel,
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 4),
@@ -166,15 +166,13 @@ class _McpEditorScreenState extends ConsumerState<McpEditorScreen> {
               textCapitalization: TextCapitalization.none,
               decoration: InputDecoration(
                 hintText: t.mcp.editor.nameHint,
-                helperText: _isEdit
-                    ? 'Locked in edit mode — delete + recreate to change.'
-                    : null,
+                helperText: _isEdit ? t.mcp.editor.idLockedHint : null,
               ),
               style: const TextStyle(fontFamily: 'monospace'),
             ),
             const SizedBox(height: 14),
             Text(
-              'Server JSON',
+              t.mcp.editor.jsonLabel,
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 4),
@@ -197,9 +195,7 @@ class _McpEditorScreenState extends ConsumerState<McpEditorScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Schema: transport ∈ {stdio, http, sse}. For stdio set command + args. '
-              r'For http/sse set url + headers. Use $secret:KEY to reference '
-              'MCP secrets vault entries.',
+              t.mcp.editor.jsonSchemaHelp,
               style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
             ),
             if (_error != null) ...[
@@ -246,10 +242,10 @@ class _McpEditorScreenState extends ConsumerState<McpEditorScreen> {
                           )
                         : const Icon(Icons.check, size: 18),
                     label: Text(_submitting
-                        ? 'Saving…'
-                        : _isEdit
-                            ? 'Save'
-                            : 'Create'),
+                        ? t.mcp.editor.saving
+                        : (_isEdit
+                            ? t.mcp.editor.save
+                            : t.mcp.editor.create)),
                   ),
                 ),
               ],

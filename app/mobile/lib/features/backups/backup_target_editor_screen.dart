@@ -38,21 +38,21 @@ extension TargetKindLabel on TargetKind {
       };
 
   String get label => switch (this) {
-        TargetKind.local => 'Local disk',
-        TargetKind.smb => 'SMB / CIFS',
-        TargetKind.s3 => 'S3-compatible',
-        TargetKind.webdav => 'WebDAV',
-        TargetKind.sftp => 'SFTP / SSH',
-        TargetKind.rclone => 'rclone passthrough',
+        TargetKind.local => t.backupTargetEditor.kinds.local.label,
+        TargetKind.smb => t.backupTargetEditor.kinds.smb.label,
+        TargetKind.s3 => t.backupTargetEditor.kinds.s3.label,
+        TargetKind.webdav => t.backupTargetEditor.kinds.webdav.label,
+        TargetKind.sftp => t.backupTargetEditor.kinds.sftp.label,
+        TargetKind.rclone => t.backupTargetEditor.kinds.rclone.label,
       };
 
   String get description => switch (this) {
-        TargetKind.local => 'Folder on the machine running opendray',
-        TargetKind.smb => 'Windows shares + most home NAS appliances',
-        TargetKind.s3 => 'AWS S3 + every S3-compatible service',
-        TargetKind.webdav => 'Self-hosted clouds + file-sharing services',
-        TargetKind.sftp => 'Any SSH-accessible server',
-        TargetKind.rclone => '70+ backends via the rclone CLI',
+        TargetKind.local => t.backupTargetEditor.kinds.local.description,
+        TargetKind.smb => t.backupTargetEditor.kinds.smb.description,
+        TargetKind.s3 => t.backupTargetEditor.kinds.s3.description,
+        TargetKind.webdav => t.backupTargetEditor.kinds.webdav.description,
+        TargetKind.sftp => t.backupTargetEditor.kinds.sftp.description,
+        TargetKind.rclone => t.backupTargetEditor.kinds.rclone.description,
       };
 
   IconData get icon => switch (this) {
@@ -273,7 +273,9 @@ class _BackupTargetEditorScreenState
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEdit ? 'Edit target' : 'New backup target'),
+        title: Text(_isEdit
+            ? t.backupTargetEditor.formTitleEdit
+            : t.backupTargetEditor.formTitleNew),
       ),
       body: SafeArea(
         bottom: false,
@@ -287,13 +289,13 @@ class _BackupTargetEditorScreenState
               const SizedBox(height: 4),
               TextField(
                 controller: _idCtrl,
-                decoration: _inputDeco(hint: 'Auto: ${_kind.apiValue}-1'),
+                decoration: _inputDeco(
+                    hint: t.backupTargetEditor.idHintAuto(prefix: _kind.apiValue)),
                 style: _monoStyle,
               ),
               const SizedBox(height: 4),
               Text(
-                'Lower-case letters, digits, dashes. Defaults to the next '
-                'available "{kind}-N".',
+                t.backupTargetEditor.idHelper,
                 style: theme.textTheme.bodySmall
                     ?.copyWith(color: theme.colorScheme.outline),
               ),
@@ -306,8 +308,8 @@ class _BackupTargetEditorScreenState
               title: Text(t.common.enabled),
               subtitle: Text(
                 _enabled
-                    ? 'Scheduled and ad-hoc backups can target this.'
-                    : 'Server will refuse to write backups here.',
+                    ? t.backupTargetEditor.enabledOn
+                    : t.backupTargetEditor.enabledOff,
                 style: theme.textTheme.bodySmall,
               ),
               contentPadding: EdgeInsets.zero,
@@ -353,10 +355,10 @@ class _BackupTargetEditorScreenState
                           )
                         : const Icon(Icons.check, size: 18),
                     label: Text(_submitting
-                        ? 'Saving…'
+                        ? t.backupTargetEditor.saving
                         : _isEdit
-                            ? 'Save'
-                            : 'Create'),
+                            ? t.common.save
+                            : t.backupTargetEditor.create),
                   ),
                 ),
               ],
@@ -443,8 +445,8 @@ class _BackupTargetEditorScreenState
 
   Widget _localForm(ThemeData theme) {
     return _field(
-      label: 'Root directory',
-      hint: 'Empty = cfg.backup.local_dir (~/.opendray/backups)',
+      label: t.backupTargetEditor.rootDirLabel,
+      hint: t.backupTargetEditor.rootDirHint,
       child: TextField(
         controller: _ctrl('root'),
         decoration:
@@ -463,7 +465,7 @@ class _BackupTargetEditorScreenState
             Expanded(
               flex: 3,
               child: _field(
-                label: 'Host',
+                label: t.backupTargetEditor.hostLabel,
                 child: TextField(
                   controller: _ctrl('host'),
                   decoration: _inputDeco(hint: '192.168.9.8'),
@@ -476,7 +478,7 @@ class _BackupTargetEditorScreenState
             const SizedBox(width: 8),
             Expanded(
               child: _field(
-                label: 'Port',
+                label: t.backupTargetEditor.portLabel,
                 child: TextField(
                   controller: _ctrl('port'),
                   decoration: _inputDeco(hint: '445'),
@@ -487,18 +489,18 @@ class _BackupTargetEditorScreenState
           ],
         ),
         _field(
-          label: 'Share',
-          hint: 'Top-level share name',
+          label: t.backupTargetEditor.shareLabel,
+          hint: t.backupTargetEditor.shareHint,
           child: TextField(
             controller: _ctrl('share'),
-            decoration: _inputDeco(hint: 'Claude_Workspace'),
+            decoration: _inputDeco(hint: t.backupTargetEditor.shareSampleHint),
           ),
         ),
         Row(
           children: [
             Expanded(
               child: _field(
-                label: 'User',
+                label: t.backupTargetEditor.userLabel,
                 child: TextField(
                   controller: _ctrl('user'),
                   decoration: _inputDeco(),
@@ -510,8 +512,10 @@ class _BackupTargetEditorScreenState
             const SizedBox(width: 8),
             Expanded(
               child: _field(
-                label: 'Password',
-                hint: _isEdit ? 'Leave blank to keep current' : null,
+                label: t.backupTargetEditor.passwordLabel,
+                hint: _isEdit
+                    ? t.backupTargetEditor.passwordHintKeepCurrent
+                    : null,
                 child: TextField(
                   controller: _ctrl('password'),
                   decoration: _inputDeco(),
@@ -523,8 +527,8 @@ class _BackupTargetEditorScreenState
           ],
         ),
         _field(
-          label: 'Path prefix',
-          hint: 'Sub-folder under the share root (optional)',
+          label: t.backupTargetEditor.pathPrefixLabel,
+          hint: t.backupTargetEditor.pathPrefixHintShareRoot,
           child: TextField(
             controller: _ctrl('path_prefix'),
             decoration: _inputDeco(hint: 'opendray/backups'),
@@ -540,7 +544,7 @@ class _BackupTargetEditorScreenState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _field(
-          label: 'Endpoint',
+          label: t.backupTargetEditor.endpointLabel,
           hint:
               'AWS: s3.amazonaws.com  ·  R2: <id>.r2.cloudflarestorage.com  ·  MinIO: minio.local:9000',
           child: TextField(
@@ -555,7 +559,7 @@ class _BackupTargetEditorScreenState
           children: [
             Expanded(
               child: _field(
-                label: 'Region',
+                label: t.backupTargetEditor.regionLabel,
                 hint: 'AWS only; R2 = auto',
                 child: TextField(
                   controller: _ctrl('region'),
@@ -567,7 +571,7 @@ class _BackupTargetEditorScreenState
             const SizedBox(width: 8),
             Expanded(
               child: _field(
-                label: 'Bucket',
+                label: t.backupTargetEditor.bucketLabel,
                 child: TextField(
                   controller: _ctrl('bucket'),
                   decoration: _inputDeco(hint: 'opendray-backups'),
@@ -578,7 +582,7 @@ class _BackupTargetEditorScreenState
           ],
         ),
         _field(
-          label: 'Access key',
+          label: t.backupTargetEditor.accessKeyLabel,
           child: TextField(
             controller: _ctrl('access_key'),
             decoration: _inputDeco(),
@@ -587,10 +591,10 @@ class _BackupTargetEditorScreenState
           ),
         ),
         _field(
-          label: 'Secret key',
+          label: t.backupTargetEditor.secretKeyLabel,
           hint: _isEdit
-              ? 'Leave blank to keep current. Stored AES-256-GCM encrypted.'
-              : 'Stored AES-256-GCM encrypted; never echoed back.',
+              ? t.backupTargetEditor.secretKeyHintEdit
+              : t.backupTargetEditor.secretKeyHintNew,
           child: TextField(
             controller: _ctrl('secret_key'),
             decoration: _inputDeco(),
@@ -600,8 +604,8 @@ class _BackupTargetEditorScreenState
           ),
         ),
         _field(
-          label: 'Path prefix',
-          hint: 'Object-key prefix (optional)',
+          label: t.backupTargetEditor.pathPrefixLabel,
+          hint: t.backupTargetEditor.pathPrefixHintObjectKey,
           child: TextField(
             controller: _ctrl('path_prefix'),
             decoration: _inputDeco(hint: 'opendray/backups'),
@@ -634,9 +638,8 @@ class _BackupTargetEditorScreenState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _field(
-          label: 'Base URL',
-          hint: 'Full URL including path. Nextcloud: '
-              'https://cloud.example.com/remote.php/dav/files/<user>/',
+          label: t.backupTargetEditor.baseUrlLabel,
+          hint: t.backupTargetEditor.baseUrlHint,
           child: TextField(
             controller: _ctrl('base_url'),
             decoration:
@@ -650,7 +653,7 @@ class _BackupTargetEditorScreenState
           children: [
             Expanded(
               child: _field(
-                label: 'User',
+                label: t.backupTargetEditor.userLabel,
                 child: TextField(
                   controller: _ctrl('user'),
                   decoration: _inputDeco(),
@@ -662,8 +665,10 @@ class _BackupTargetEditorScreenState
             const SizedBox(width: 8),
             Expanded(
               child: _field(
-                label: 'Password',
-                hint: _isEdit ? 'Leave blank to keep' : null,
+                label: t.backupTargetEditor.passwordLabel,
+                hint: _isEdit
+                    ? t.backupTargetEditor.passwordHintKeep
+                    : null,
                 child: TextField(
                   controller: _ctrl('password'),
                   decoration: _inputDeco(),
@@ -675,8 +680,8 @@ class _BackupTargetEditorScreenState
           ],
         ),
         _field(
-          label: 'Path prefix',
-          hint: 'Sub-folder under the base URL (optional)',
+          label: t.backupTargetEditor.pathPrefixLabel,
+          hint: t.backupTargetEditor.pathPrefixHintBaseUrl,
           child: TextField(
             controller: _ctrl('path_prefix'),
             decoration: _inputDeco(hint: 'opendray/backups'),
@@ -696,7 +701,7 @@ class _BackupTargetEditorScreenState
             Expanded(
               flex: 3,
               child: _field(
-                label: 'Host',
+                label: t.backupTargetEditor.hostLabel,
                 child: TextField(
                   controller: _ctrl('host'),
                   decoration: _inputDeco(hint: 'vps.example.com'),
@@ -709,7 +714,7 @@ class _BackupTargetEditorScreenState
             const SizedBox(width: 8),
             Expanded(
               child: _field(
-                label: 'Port',
+                label: t.backupTargetEditor.portLabel,
                 child: TextField(
                   controller: _ctrl('port'),
                   decoration: _inputDeco(hint: '22'),
@@ -720,7 +725,7 @@ class _BackupTargetEditorScreenState
           ],
         ),
         _field(
-          label: 'User',
+          label: t.backupTargetEditor.userLabel,
           child: TextField(
             controller: _ctrl('user'),
             decoration: _inputDeco(),
@@ -730,12 +735,10 @@ class _BackupTargetEditorScreenState
           ),
         ),
         _field(
-          label: 'Password',
+          label: t.backupTargetEditor.passwordLabel,
           hint: _isEdit
-              ? 'Leave blank to keep. If both password + private key are '
-                  'provided, password is treated as the key passphrase.'
-              : 'Either password OR private key. If both, password becomes '
-                  'the key passphrase.',
+              ? t.backupTargetEditor.sftpPasswordHintEdit
+              : t.backupTargetEditor.sftpPasswordHintNew,
           child: TextField(
             controller: _ctrl('password'),
             decoration: _inputDeco(),
@@ -744,11 +747,10 @@ class _BackupTargetEditorScreenState
           ),
         ),
         _field(
-          label: 'Private key (PEM)',
+          label: t.backupTargetEditor.privateKeyLabel,
           hint: _isEdit
-              ? 'Leave blank to keep. Paste OpenSSH/PEM contents.'
-              : 'Paste the contents of an OpenSSH/PEM private key. '
-                  'Multi-line input — keep the BEGIN/END markers.',
+              ? t.backupTargetEditor.privateKeyHintEdit
+              : t.backupTargetEditor.privateKeyHintNew,
           child: TextField(
             controller: _ctrl('private_key'),
             decoration: _inputDeco(
@@ -761,10 +763,8 @@ class _BackupTargetEditorScreenState
           ),
         ),
         _field(
-          label: 'Host key (pinning)',
-          hint:
-              'OpenSSH-style server public key. `ssh-keyscan <host>` to obtain. '
-              'Blank = no pinning (NOT recommended outside LAN).',
+          label: t.backupTargetEditor.hostKeyLabel,
+          hint: t.backupTargetEditor.hostKeyHint,
           child: TextField(
             controller: _ctrl('host_key'),
             decoration: _inputDeco(hint: 'ssh-ed25519 AAAA...'),
@@ -774,8 +774,8 @@ class _BackupTargetEditorScreenState
           ),
         ),
         _field(
-          label: 'Path prefix',
-          hint: 'Absolute or relative to user home (optional)',
+          label: t.backupTargetEditor.pathPrefixLabel,
+          hint: t.backupTargetEditor.pathPrefixHintSshFolder,
           child: TextField(
             controller: _ctrl('path_prefix'),
             decoration: _inputDeco(hint: '/var/backups/opendray'),
@@ -799,16 +799,14 @@ class _BackupTargetEditorScreenState
             border: Border.all(color: theme.dividerColor),
           ),
           child: Text(
-            'Requires the rclone CLI on the opendray host. First run '
-            '`rclone config` to set up your remote, then use its name '
-            'below. opendray invokes rclone rcat / cat / lsd internally.',
+            t.backupTargetEditor.rcloneNote,
             style: theme.textTheme.bodySmall,
           ),
         ),
         const SizedBox(height: 12),
         _field(
-          label: 'Remote name',
-          hint: 'Name from `rclone config` (no colon).',
+          label: t.backupTargetEditor.rcloneRemoteLabel,
+          hint: t.backupTargetEditor.rcloneRemoteHint,
           child: TextField(
             controller: _ctrl('remote'),
             decoration: _inputDeco(hint: 'gdrive'),
@@ -818,8 +816,8 @@ class _BackupTargetEditorScreenState
           ),
         ),
         _field(
-          label: 'Path prefix',
-          hint: 'Sub-folder under the remote root (optional)',
+          label: t.backupTargetEditor.pathPrefixLabel,
+          hint: t.backupTargetEditor.pathPrefixHintRemoteRoot,
           child: TextField(
             controller: _ctrl('path_prefix'),
             decoration: _inputDeco(hint: 'opendray/backups'),
@@ -827,8 +825,8 @@ class _BackupTargetEditorScreenState
           ),
         ),
         _field(
-          label: 'Binary path',
-          hint: 'Override `which rclone`. Empty = PATH lookup.',
+          label: t.backupTargetEditor.rcloneBinaryLabel,
+          hint: t.backupTargetEditor.rcloneBinaryHint,
           child: TextField(
             controller: _ctrl('binary_path'),
             decoration: _inputDeco(hint: '/opt/homebrew/bin/rclone'),
@@ -837,8 +835,8 @@ class _BackupTargetEditorScreenState
           ),
         ),
         _field(
-          label: 'Config path',
-          hint: 'Override --config. Empty = rclone default.',
+          label: t.backupTargetEditor.rcloneConfigLabel,
+          hint: t.backupTargetEditor.rcloneConfigHint,
           child: TextField(
             controller: _ctrl('config_path'),
             decoration: _inputDeco(),

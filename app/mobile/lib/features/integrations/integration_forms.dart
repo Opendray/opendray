@@ -56,7 +56,7 @@ class _RegisterIntegrationScreenState
     final prefix = _prefix.text.trim();
     if (name.isEmpty || baseUrl.isEmpty || prefix.isEmpty) {
       setState(
-        () => _error = 'Name, base URL, and route prefix are required.',
+        () => _error = t.integrations.form.validateRequired,
       );
       return;
     }
@@ -93,31 +93,31 @@ class _RegisterIntegrationScreenState
         children: [
           _Field(
             controller: _name,
-            label: 'Name',
-            hint: 'My Bot',
+            label: t.integrations.form.fieldName,
+            hint: t.integrations.form.fieldNameHint,
             autofocus: true,
           ),
           _Field(
             controller: _baseUrl,
-            label: 'Base URL',
+            label: t.integrations.form.fieldBaseUrl,
             hint: 'https://api.example.com',
             keyboardType: TextInputType.url,
           ),
           _Field(
             controller: _prefix,
-            label: 'Route prefix',
+            label: t.integrations.form.fieldRoutePrefix,
             hint: 'mybot',
-            helper: 'Reachable as /api/v1/<prefix>/...',
+            helper: t.integrations.form.routePrefixHelper,
           ),
           _Field(
             controller: _scopes,
-            label: 'Scopes (optional)',
+            label: t.integrations.form.fieldScopes,
             hint: 'session:read, session:events',
-            helper: 'Comma-separated. Empty = server defaults.',
+            helper: t.integrations.form.scopesHelper,
           ),
           _Field(
             controller: _version,
-            label: 'Version (optional)',
+            label: t.integrations.form.fieldVersion,
             hint: '1.0.0',
           ),
           if (_error != null) ...[
@@ -201,7 +201,7 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
   void _submit() {
     final baseUrl = _baseUrl.text.trim();
     if (baseUrl.isEmpty) {
-      setState(() => _error = 'Base URL is required.');
+      setState(() => _error = t.integrations.form.validateBaseUrl);
       return;
     }
     final scopes = _scopes.text
@@ -240,17 +240,17 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
         children: [
           _Field(
             controller: _baseUrl,
-            label: 'Base URL',
+            label: t.integrations.form.fieldBaseUrl,
             keyboardType: TextInputType.url,
           ),
           _Field(
             controller: _scopes,
-            label: 'Scopes',
-            helper: 'Comma-separated.',
+            label: t.integrations.form.editFieldScopes,
+            helper: t.integrations.form.editScopesHelper,
           ),
           _Field(
             controller: _version,
-            label: 'Version',
+            label: t.integrations.form.editFieldVersion,
           ),
           const SizedBox(height: 8),
           SwitchListTile(
@@ -371,7 +371,7 @@ class _RevealApiKeyDialogState extends State<RevealApiKeyDialog> {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  "You won't see this key again.",
+                  t.integrations.form.apiKeyWarn,
                   style: TextStyle(
                     fontSize: 11,
                     color: Theme.of(context).colorScheme.tertiary,
@@ -388,7 +388,9 @@ class _RevealApiKeyDialogState extends State<RevealApiKeyDialog> {
             _copied ? Icons.check : Icons.copy_outlined,
             size: 18,
           ),
-          label: Text(_copied ? 'Copied' : 'Copy'),
+          label: Text(_copied
+              ? t.integrations.form.copyCopied
+              : t.integrations.form.copyCopy),
           onPressed: () async {
             await Clipboard.setData(ClipboardData(text: widget.apiKey));
             if (!mounted) return;

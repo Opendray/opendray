@@ -73,14 +73,14 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
       if (mounted) {
         setState(() {
           _loading = false;
-          _error = 'Load failed: ${e.message}';
+          _error = t.notesPage.editor.loadFailedApi(error: e.message);
         });
       }
     } on Object catch (e) {
       if (mounted) {
         setState(() {
           _loading = false;
-          _error = 'Load failed: $e';
+          _error = t.notesPage.editor.loadFailedGeneric(error: e.toString());
         });
       }
     }
@@ -110,14 +110,14 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Save failed: ${e.message}';
+          _error = t.notesPage.editor.saveFailedApi(error: e.message);
         });
       }
     } on Object catch (e) {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Save failed: $e';
+          _error = t.notesPage.editor.saveFailedGeneric(error: e.toString());
         });
       }
     }
@@ -258,7 +258,7 @@ class NoteSaveStatus extends StatelessWidget {
     }
     if (lastSaved != null) {
       return Text(
-        'Saved ${DateFormat.Hm().format(lastSaved!.toLocal())}',
+        t.notesPage.editor.savedAt(time: DateFormat.Hm().format(lastSaved!.toLocal())),
         style: muted,
       );
     }

@@ -335,6 +335,7 @@ class _BackupTargetsScreenState
         error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'backup_targets_fab',
         onPressed: _openEditor,
         icon: const Icon(Icons.add),
         label: Text(i18n.t.backupTargets.newTarget),
