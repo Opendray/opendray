@@ -50,6 +50,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/memory/injector"
 	"github.com/opendray/opendray-v2/internal/memory/summarizer"
 	memworker "github.com/opendray/opendray-v2/internal/memory/worker"
+	"github.com/opendray/opendray-v2/internal/memquery"
 	notesapi "github.com/opendray/opendray-v2/internal/notes"
 	"github.com/opendray/opendray-v2/internal/projectdoc"
 	"github.com/opendray/opendray-v2/internal/projectscan"
@@ -80,7 +81,8 @@ type App struct {
 	liveBackup           *backup.LiveBackup
 	captureEngine        *capture.Engine // ambient memory capture loop
 	journaler            *projectdoc.Journaler
-	cleanerScheduler     *cleaner.Scheduler // optional; nil when scheduler is off
+	projectDocSvc        *projectdoc.Service // owns the M-PB journal embed backfill loop
+	cleanerScheduler     *cleaner.Scheduler  // optional; nil when scheduler is off
 	gitActivityScheduler *gitactivity.Scheduler
 	server               *http.Server
 }
@@ -382,6 +384,12 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}
 	memhealthHandlers := memhealth.NewHandlers(memhealthSvc, log)
 
+	// M-PB — cross-layer search composing memory facts + journal
+	// + goal/plan. Initialised lazily after projectDocSvc is ready
+	// to avoid a forward reference here; see further down.
+	var memquerySvc *memquery.Service
+	var memqueryHandlers *memquery.Handlers
+
 	// M12 — Gatekeeper. Wired late because the summarizer registry
 	// only exists after backup cipher + summarizer store are up.
 	// When operators set [memory.gatekeeper] enabled = true, every
@@ -469,6 +477,20 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// group so the auto-attached opendray-memory MCP can reach it
 	// with an integration bearer.
 	projectDocSvc := projectdoc.NewService(st.Pool(), log)
+	// M-PB — share the memory service's embedder so journal vectors
+	// land in the same space as memory facts. Cross-layer search
+	// then compares cosines apples-to-apples; otherwise BM25-vs-
+	// bge-m3 hits would rank against each other meaninglessly.
+	projectDocSvc.WithEmbedder(projectdocEmbedderAdapter{emb: memorySvc.Embedder()})
+
+	// M-PB — now that projectDocSvc exists, build the cross-layer
+	// search service. memquery.New is strict about nil deps so we
+	// surface a misconfiguration at boot rather than at first hit.
+	memquerySvc, err = memquery.New(memorySvc, projectDocSvc, st.Pool())
+	if err != nil {
+		return nil, fmt.Errorf("memquery init: %w", err)
+	}
+	memqueryHandlers = memquery.NewHandlers(memquerySvc, log)
 	projectDocHandlers := projectdoc.NewHandlers(projectDocSvc, log)
 	// Inject the cross-agent goal+plan+journal banner into every
 	// spawned session's system prompt. Composed alongside the
@@ -583,6 +605,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				summarizerHandlers.Mount(r)
 				memoryWorkerHandlers.Mount(r)
 				memhealthHandlers.Mount(r)
+				memqueryHandlers.Mount(r)
 				captureHandlers.Mount(r)
 				injectorHandlers.Mount(r)
 				if cleanerHandlers != nil {
@@ -635,6 +658,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		liveBackup:           liveBackup,
 		captureEngine:        captureEngine,
 		journaler:            journaler,
+		projectDocSvc:        projectDocSvc,
 		cleanerScheduler:     cleanerScheduler,
 		gitActivityScheduler: gitActivityScheduler,
 		server:               srv,
@@ -700,6 +724,16 @@ func (a *App) Run(ctx context.Context) error {
 	go func() {
 		a.journaler.Run(ctx)
 		close(journalerDone)
+	}()
+
+	// M-PB — backfill missing embeddings on the journal so the new
+	// cross-layer project_search hits historical entries, not just
+	// rows appended after this release shipped. Skips itself when
+	// no embedder is wired (see RunLogEmbedBackfill guard).
+	logEmbedBackfillDone := make(chan struct{})
+	go func() {
+		a.projectDocSvc.RunLogEmbedBackfill(ctx, projectdoc.LogEmbedBackfillConfig{})
+		close(logEmbedBackfillDone)
 	}()
 
 	cleanerDone := make(chan struct{})

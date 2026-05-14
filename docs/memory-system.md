@@ -320,6 +320,57 @@ Backed by `GET /api/v1/memory/health?cwd=<cwd>` — one aggregate
 read that crosses both subsystems. No polling; refreshes on tab
 view.
 
+## Cross-layer search (M-PB, shipped)
+
+Phase B closes the second gap from Phase A: the journal was
+write-only — `session_log_append` shoved entries in but agents had
+no way to ask "what did we decide about X last month". M-PB makes
+journal entries first-class semantic-search citizens alongside
+memory facts.
+
+### What changed under the hood
+
+- Migration 0031 adds `embedding`, `embedder`, `embedding_at`
+  columns to `session_logs`.
+- Every new journal entry is embedded synchronously at
+  `AppendLog` time using the same embedder the memory subsystem
+  already runs (BM25 / bge-m3 / OpenAI). Vector lives in the same
+  space as `memories.embedding`, so cosines are directly
+  comparable.
+- A background goroutine catches up pre-feature journal rows in
+  batches of 50; runs idle when caught up.
+
+### The new search tool
+
+`project_search` MCP tool + `GET /api/v1/project-search?cwd=&q=&top_k=`
+take a natural-language query and return the top-K hits across
+**five layers** in one ranked list:
+
+- `fact` — memory_search results (layer 5)
+- `journal` — semantic match against session_logs (layer 4)
+- `goal` — lexical match against project_docs.goal (layer 2)
+- `plan` — lexical match against project_docs.plan (layer 3)
+
+Each hit carries `similarity`, `effective_score` (similarity with
+time-decay applied: 1.0 today, 0.5 floor past 180 days), and the
+`source` label so agents and UI can render layer badges.
+
+Agent guidance is rolled into the MCP `instructionsBlurb` so models
+use `project_search` for "where might this context live" queries
+instead of guessing between `memory_search` and reading journal
+pages by hand.
+
+### Banner token budget
+
+`RenderForSpawn` now has a sibling `RenderForSpawnWithBudget`
+(`maxBytes int`). Operators dial it via
+`SessionProvider.WithProjectDocBudget(N)` — 0 keeps today's
+unconstrained behaviour. When set, sections are appended in
+priority order (plan → tech_stack → goal → recent_activity →
+journal) and rendering stops once the budget is exhausted, with
+a trailing truncation note so the agent knows to visit
+`/memory/project` for the full set.
+
 ## Roadmap
 
 - **Codex session UUID capture**. Codex lacks `--session-id`; a
