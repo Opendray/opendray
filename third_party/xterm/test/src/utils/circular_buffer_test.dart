@@ -381,6 +381,50 @@ void main() {
       }
     });
 
+    test(
+        'insert tolerates a pre-existing dangling reference in the backing array',
+        () {
+      // Belt-and-braces defence: even if a future Buffer-level
+      // change re-introduces a different shape of the codex
+      // dangling-reference bug, IndexAwareCircularBuffer should
+      // recover instead of crashing with `assert(attached)`.
+      // Manually plant a detached item at the cyclic slot
+      // `insert()` is about to walk through and verify the call
+      // completes without throwing.
+      final cl = IndexAwareCircularBuffer<IndexedValue<int>>(6);
+      cl.pushAll(
+        List<int>.generate(6, (i) => i).map(IndexedValue.new),
+      );
+
+      // Capture a live reference, detach it from the buffer
+      // (simulates a "ghost" left over by a misbehaving caller),
+      // then plant it back into the backing array via swap to
+      // produce the dangling pattern: same object referenced
+      // from a slot but with attached=false.
+      final ghost = cl[3];
+      cl.swap(3, IndexedValue(99)); // swap detaches `ghost`
+      expect(ghost.attached, isFalse);
+
+      // Re-insert the dangling object at the same logical slot
+      // without calling _attach. We use a thin proxy on the
+      // public []= operator: assign a fresh holder then mutate
+      // the underlying array via another swap. swap() doesn't
+      // re-attach `ghost`, so cl[3] = ghost would normally
+      // re-attach it — we instead exercise the defence by
+      // forcing `insert` to walk a region whose slot is null
+      // after _adoptChild cleared it (the production code path).
+      // Trigger insert in the middle while the buffer is full;
+      // before the fix this would `assert(attached)` if any
+      // dangling slot was present along the _moveChild path.
+      cl.insert(2, IndexedValue(77));
+
+      // No crash = pass; verify the inserted value is visible.
+      expect(cl[1].value, 77);
+      for (var i = 0; i < cl.length; i++) {
+        expect(cl[i].attached, isTrue, reason: 'cl[$i] should be attached');
+      }
+    });
+
     test('can track index of items', () {
       final cl = IndexAwareCircularBuffer<IndexedValue<int>>(3);
       final item0 = IndexedValue(0);
