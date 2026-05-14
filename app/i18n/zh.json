@@ -742,6 +742,135 @@
         "toggleAria": "切换 {name}",
         "removeAria": "移除 {name}"
       }
+    },
+    "channels": {
+      "title": "频道",
+      "subtitle": "双向消息集成。每个频道的出站通知按其 <1>notify_on</1> 过滤。",
+      "newButton": "新建频道",
+      "loading": "加载中…",
+      "empty": {
+        "title": "暂无频道",
+        "description": "内置类型：Telegram · Slack · Discord · 飞书 · 钉钉 · 企业微信。挑选一个并填入凭证，或使用 <1>bridge</1> 通过 WebSocket 接入自定义平台。"
+      },
+      "card": {
+        "running": "运行中",
+        "starting": "启动中…",
+        "disabled": "已禁用",
+        "muted": "已静音",
+        "tokenLabel": "token:",
+        "chatIdLabel": "chat_id:",
+        "channelIdLabel": "channel_id:",
+        "notifyOnLabel": "notify_on:",
+        "webhookLabel": "webhook:",
+        "copyWebhookTooltip": "复制 webhook URL",
+        "webhookCopiedToast": "已复制 webhook URL",
+        "setup": "配置",
+        "setupTooltip": "查看适配器连接信息和示例代码",
+        "test": "测试",
+        "testNotRunningTooltip": "频道必须处于运行状态",
+        "testBridgeTooltip": "Bridge 频道无法从管理端测试 — 请先连接一个适配器",
+        "editAria": "编辑频道",
+        "editTooltip": "编辑频道配置",
+        "deleteAria": "删除频道",
+        "bridgeSuffix": "(bridge)"
+      },
+      "toasts": {
+        "testSent": "测试消息已发送",
+        "testFailed": "测试失败",
+        "deleteConfirm": "删除频道 {id}?",
+        "deleted": "频道已删除",
+        "created": "频道已创建",
+        "updated": "频道已更新"
+      },
+      "dialog": {
+        "editTitle": "编辑频道",
+        "createTitle": "注册频道",
+        "descriptionBridge": "外部适配器（Python/Node/...）通过 WebSocket 连接并出示此 token。",
+        "descriptionDefault": "配置消息集成。",
+        "kindLabel": "类型",
+        "kindImmutable": "（不可更改 — 如需更换类型请删除后重建）",
+        "enabledLabel": "启用",
+        "enabledBridgeHint": "（立即开始接受适配器连接）",
+        "enabledWebhookHint": "（立即开始接收 webhook）",
+        "enabledDefaultHint": "（立即启动）",
+        "cancel": "取消",
+        "save": "保存",
+        "saving": "保存中…",
+        "create": "创建",
+        "creating": "创建中…",
+        "unknownKind": "未知类型：{kind}",
+        "nameRequired": "name 不能为空",
+        "tokenRequired": "token 不能为空",
+        "topicIdsNumeric": "Topic ID 必须是数字（收到 {value}）",
+        "fieldRequired": "{label} 不能为空",
+        "cooldownInvalid": "Cooldown 必须是非负整数秒",
+        "snippetCapInvalid": "Snippet cap 必须是非负数字"
+      },
+      "notifications": {
+        "sectionTitle": "会话通知",
+        "notifyOnLabel": "通知触发条件",
+        "hintAll": "接收全部会话事件。点击标签可退订。",
+        "hintNone": "未选择任何事件 — 出站通知已静音。",
+        "hintSome": "只选择了 {total} 中的 {selected} 个 topic。",
+        "repeatPolicyLabel": "重复策略",
+        "cooldownLabel": "冷却时长",
+        "onceReplyHint": "在该聊天中以非命令文本回复会重置抑制 — opendray 会把你的回复转发到会话的 stdin 并重新启用通知。",
+        "terminalSnippetLabel": "终端片段",
+        "embedSnippetLabel": "在 idle 通知中嵌入最近的终端画面",
+        "snippetExplainer": "开启后，idle 卡片会包含一段代码块片段，呈现用户在网页终端中会看到的内容 — Claude TUI 自身的装饰（状态 spinner、\"bypass permissions\" 提示、分隔线）会被自动过滤。",
+        "modes": {
+          "onceLabel": "每个会话仅一次（推荐）",
+          "onceHint": "当会话变为 idle 时通知一次，然后保持静默，直到会话结束或你通过该频道回复。",
+          "cooldownLabel": "时间窗口冷却",
+          "cooldownHint": "对同一 (会话, 事件) 在所选时间窗口内抑制重复通知。",
+          "everyLabel": "每次事件都通知（嘈杂）",
+          "everyHint": "不做抑制。仅用于低频频道。"
+        },
+        "cooldowns": {
+          "60": "1 分钟",
+          "300": "5 分钟",
+          "900": "15 分钟",
+          "1800": "30 分钟",
+          "3600": "1 小时"
+        },
+        "snippetCaps": {
+          "0": "不限制 — 拆分到多条消息（默认）",
+          "1000": "1000 字符（精简）",
+          "3000": "3000 字符",
+          "6000": "6000 字符",
+          "12000": "12000 字符"
+        }
+      },
+      "bridge": {
+        "nameLabel": "Bridge 名称",
+        "namePlaceholder": "wechat / discord-custom / whatsapp...",
+        "nameHint": "适配器的人类可读标签。会显示在频道列表中。",
+        "tokenLabel": "适配器 token",
+        "regenerateTooltip": "重新生成",
+        "copyTooltip": "复制",
+        "tokenCopiedToast": "已复制 token",
+        "tokenHint": "适配器通过 WS register 帧发送此 token（也可作为 <1>X-Bridge-Token</1> header）。",
+        "capsLabel": "接受的能力（可选白名单）",
+        "capsHint": "为空 = 接受适配器声明的任意能力。已选 = 即使适配器提供更多能力，也只允许这些。",
+        "afterCreate": "点击 <1>创建</1> 后，适配器设置对话框会自动打开，里面包含 WebSocket URL 和可直接复制的 Python / Node / wscat 起步代码。"
+      },
+      "setup": {
+        "title": "适配器设置 — {name}",
+        "description": "运行一个任意语言的适配器，使用这些凭证通过 WebSocket 连接到 opendray。opendray 会通过它路由会话通知和 slash 命令。",
+        "wsUrlLabel": "WebSocket URL",
+        "tokenLabel": "适配器 token",
+        "authInfo": "<1>认证：</1>通过 <3>X-Bridge-Token</3> header、<5>?token=</5> query 参数或 <7>Authorization: Bearer …</7> 之一发送 token。首个 WS 帧必须是 <9>{frame}</9>。完整协议见仓库中的 <11>docs/bridge-protocol.md</11>。",
+        "pythonInstall": "安装：<1>pip install websockets</1>。运行：<3>python adapter.py</3>。",
+        "nodeInstall": "安装：<1>npm i ws</1>。运行：<3>node adapter.mjs</3>。",
+        "wscatInstall": "安装：<1>npm i -g wscat</1>。连接后，粘贴上方的 JSON 注册帧，然后手动发送后续帧。",
+        "close": "关闭",
+        "copyHide": "隐藏",
+        "copyShow": "显示",
+        "copyLabelToast": "已复制 {label}",
+        "copyCode": "复制",
+        "copied": "已复制",
+        "codeCopiedToast": "已复制代码"
+      }
     }
   },
   "more": {

@@ -742,6 +742,135 @@
         "toggleAria": "Toggle {name}",
         "removeAria": "Remove {name}"
       }
+    },
+    "channels": {
+      "title": "Channels",
+      "subtitle": "Bidirectional messaging integrations. Outbound notifications are filtered by each channel's <1>notify_on</1>.",
+      "newButton": "New channel",
+      "loading": "Loading…",
+      "empty": {
+        "title": "No channels yet",
+        "description": "Bundled kinds: Telegram · Slack · Discord · Feishu · DingTalk · WeCom. Pick one and paste credentials, or use <1>bridge</1> for a custom platform via WebSocket."
+      },
+      "card": {
+        "running": "running",
+        "starting": "starting…",
+        "disabled": "disabled",
+        "muted": "muted",
+        "tokenLabel": "token:",
+        "chatIdLabel": "chat_id:",
+        "channelIdLabel": "channel_id:",
+        "notifyOnLabel": "notify_on:",
+        "webhookLabel": "webhook:",
+        "copyWebhookTooltip": "Copy webhook URL",
+        "webhookCopiedToast": "Webhook URL copied",
+        "setup": "Setup",
+        "setupTooltip": "Show adapter connection details + sample code",
+        "test": "Test",
+        "testNotRunningTooltip": "Channel must be running",
+        "testBridgeTooltip": "Bridge channels cannot be tested from the admin — connect an adapter first",
+        "editAria": "Edit channel",
+        "editTooltip": "Edit channel config",
+        "deleteAria": "Delete channel",
+        "bridgeSuffix": "(bridge)"
+      },
+      "toasts": {
+        "testSent": "Test message sent",
+        "testFailed": "Test failed",
+        "deleteConfirm": "Delete channel {id}?",
+        "deleted": "Channel deleted",
+        "created": "Channel created",
+        "updated": "Channel updated"
+      },
+      "dialog": {
+        "editTitle": "Edit channel",
+        "createTitle": "Register channel",
+        "descriptionBridge": "External adapter (Python/Node/...) connects via WebSocket and presents this token.",
+        "descriptionDefault": "Configure messaging integration.",
+        "kindLabel": "Kind",
+        "kindImmutable": "(immutable — delete and recreate to change kind)",
+        "enabledLabel": "Enabled",
+        "enabledBridgeHint": " (accept adapter connections immediately)",
+        "enabledWebhookHint": " (start receiving webhooks immediately)",
+        "enabledDefaultHint": " (start immediately)",
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving…",
+        "create": "Create",
+        "creating": "Creating…",
+        "unknownKind": "Unknown kind: {kind}",
+        "nameRequired": "name is required",
+        "tokenRequired": "token is required",
+        "topicIdsNumeric": "Topic IDs must be numeric (got {value})",
+        "fieldRequired": "{label} is required",
+        "cooldownInvalid": "Cooldown must be a non-negative number of seconds",
+        "snippetCapInvalid": "Snippet cap must be a non-negative number"
+      },
+      "notifications": {
+        "sectionTitle": "Session notifications",
+        "notifyOnLabel": "Notify on",
+        "hintAll": "Receiving every session event. Click a tag to opt out.",
+        "hintNone": "No events selected — outbound notifications muted.",
+        "hintSome": "Only {selected} of {total} topics selected.",
+        "repeatPolicyLabel": "Repeat policy",
+        "cooldownLabel": "Cooldown duration",
+        "onceReplyHint": "Replying with non-command text in this chat resets the suppression — opendray forwards your reply to the session's stdin and re-arms the notifier.",
+        "terminalSnippetLabel": "Terminal snippet",
+        "embedSnippetLabel": "Embed the recent terminal screen in idle notifications",
+        "snippetExplainer": "When enabled, the idle card includes a code-block snippet of what the user would see in the live web terminal — Claude TUI chrome (status spinner, \"bypass permissions\" hint, separator lines) is filtered out automatically.",
+        "modes": {
+          "onceLabel": "Once per session (recommended)",
+          "onceHint": "Fire once when a session goes idle, then stay silent until either the session ends or you reply via this channel.",
+          "cooldownLabel": "Time-window cooldown",
+          "cooldownHint": "Suppress repeats for the same (session, event) within the chosen window.",
+          "everyLabel": "Every event (noisy)",
+          "everyHint": "No suppression. Use only for low-frequency channels."
+        },
+        "cooldowns": {
+          "60": "1 minute",
+          "300": "5 minutes",
+          "900": "15 minutes",
+          "1800": "30 minutes",
+          "3600": "1 hour"
+        },
+        "snippetCaps": {
+          "0": "No cap — chunk into multiple messages (default)",
+          "1000": "1000 chars (terse)",
+          "3000": "3000 chars",
+          "6000": "6000 chars",
+          "12000": "12000 chars"
+        }
+      },
+      "bridge": {
+        "nameLabel": "Bridge name",
+        "namePlaceholder": "wechat / discord-custom / whatsapp...",
+        "nameHint": "Human label for the adapter. Shown in the channels list.",
+        "tokenLabel": "Adapter token",
+        "regenerateTooltip": "Regenerate",
+        "copyTooltip": "Copy",
+        "tokenCopiedToast": "Token copied",
+        "tokenHint": "Adapter authenticates by sending this in the WS register frame (or as <1>X-Bridge-Token</1> header).",
+        "capsLabel": "Accept capabilities (optional whitelist)",
+        "capsHint": "Empty = accept whatever the adapter declares. Selected = only allow these capabilities even if the adapter offers more.",
+        "afterCreate": "After <1>Create</1>, the adapter setup dialog opens automatically with the WebSocket URL and copy-pasteable Python / Node / wscat starter code."
+      },
+      "setup": {
+        "title": "Adapter setup — {name}",
+        "description": "Run an adapter (any language) that connects to opendray over WebSocket using these credentials. opendray will route session notifications and slash-command actions through it.",
+        "wsUrlLabel": "WebSocket URL",
+        "tokenLabel": "Adapter token",
+        "authInfo": "<1>Auth:</1> send the token as <3>X-Bridge-Token</3> header, <5>?token=</5> query param, or <7>Authorization: Bearer …</7>. The first WS frame must be <9>{frame}</9>. Full spec: <11>docs/bridge-protocol.md</11> in the repo.",
+        "pythonInstall": "Install: <1>pip install websockets</1>. Run: <3>python adapter.py</3>.",
+        "nodeInstall": "Install: <1>npm i ws</1>. Run: <3>node adapter.mjs</3>.",
+        "wscatInstall": "Install: <1>npm i -g wscat</1>. Once connected, paste the JSON line shown above to register, then send further frames manually.",
+        "close": "Close",
+        "copyHide": "Hide",
+        "copyShow": "Show",
+        "copyLabelToast": "{label} copied",
+        "copyCode": "Copy",
+        "copied": "Copied",
+        "codeCopiedToast": "Code copied"
+      }
     }
   },
   "more": {
