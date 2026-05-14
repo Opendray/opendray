@@ -19,14 +19,48 @@
     "username": "用户名",
     "password": "密码",
     "signIn": "登录",
+    "signingIn": "登录中…",
+    "subtitle": "请使用运维账号登录。",
     "errorRequired": "请输入用户名和密码",
-    "errorGeneric": "登录失败：{error}"
+    "errorGeneric": "登录失败：{error}",
+    "errorFallback": "登录失败"
   },
   "nav": {
     "sessions": "会话",
     "memory": "记忆",
     "notes": "笔记",
-    "more": "更多"
+    "more": "更多",
+    "activity": "活动",
+    "providers": "提供方",
+    "channels": "频道",
+    "integrations": "集成",
+    "plugins": "插件",
+    "backups": "备份",
+    "settings": "设置",
+    "tutorial": "教程",
+    "workspace": "工作区"
+  },
+  "web": {
+    "brand": "opendray",
+    "loading": "加载中…",
+    "topbar": {
+      "expandSidebar": "展开侧边栏",
+      "collapseSidebar": "收起侧边栏",
+      "search": "搜索",
+      "openPalette": "打开命令面板",
+      "theme": "主题",
+      "themeLabel": "主题：{mode}",
+      "appearance": "外观",
+      "themeLight": "浅色",
+      "themeDark": "深色",
+      "themeSystem": "跟随系统",
+      "language": "语言",
+      "languageEnglish": "English",
+      "languageChinese": "中文",
+      "signedInAs": "登录账号",
+      "tokenExpires": "令牌到期",
+      "signOut": "退出登录"
+    }
   },
   "more": {
     "title": "更多",
