@@ -291,6 +291,274 @@
       "approveFailedToast": "批准失败",
       "rejectedToast": "已驳回 — 记忆保留",
       "rejectFailedToast": "驳回失败"
+    },
+    "project": {
+      "picker": {
+        "title": "选择项目",
+        "subtitle": "项目记忆按工作目录划分。选择一个以管理它的目标、计划、日志和清理队列。",
+        "pathPlaceholder": "/path/to/your/project",
+        "browse": "浏览",
+        "browseTooltip": "浏览网关主机的文件系统",
+        "open": "打开",
+        "recentLabel": "最近的项目（来自已存记忆）：",
+        "orphanTooltip": "看上去是被截断的 scope_key（老旧镜像导入 bug）。可能没有项目文档。",
+        "orphanBadge": "孤立"
+      },
+      "noCwd": "选择一个项目以管理其记忆。",
+      "header": {
+        "docsCount_one": "{count} 份文档",
+        "docsCount_other": "{count} 份文档",
+        "journalEntries_one": "{count} 条日志",
+        "journalEntries_other": "{count} 条日志",
+        "pendingProposals_one": "{count} 条待处理提案",
+        "pendingProposals_other": "{count} 条待处理提案",
+        "cleanupPending": "{count} 条待清理"
+      },
+      "tabs": {
+        "goal": "目标",
+        "plan": "计划",
+        "tech": "技术栈",
+        "activity": "活动",
+        "journal": "日志",
+        "inbox": "收件箱",
+        "cleanup": "清理"
+      },
+      "docLabel": {
+        "goal": "目标",
+        "plan": "计划",
+        "tech_stack": "技术栈",
+        "recent_activity": "最近活动"
+      },
+      "verdictLabel": {
+        "stale": "删除",
+        "duplicate": "合并",
+        "keep": "保留"
+      },
+      "editor": {
+        "updatedBy": "更新者",
+        "noDocSet": "尚未设置{label}。",
+        "save": "保存",
+        "saveFailedToast": "保存失败",
+        "savedToast": "{label}已保存",
+        "goalPlaceholder": "我们在做什么？一段文字。每个 agent 在 spawn 时都会读取。",
+        "planPlaceholder": "当前计划 — 现在在做什么、下一步是什么。随进度更新。"
+      },
+      "readonly": {
+        "tech_stack": {
+          "label": "技术栈与结构",
+          "empty": "在该项目运行一次 Claude 会话 — scanner 会在每次 spawn 时刷新。"
+        },
+        "recent_activity": {
+          "label": "最近活动 (git → LLM)",
+          "empty": "Git 活动总结每 24 小时运行；下次调度后再来看看。"
+        },
+        "noneCaptured": "尚未捕获{label}。",
+        "generatedBy": "生成者",
+        "lastRefresh": "最近刷新"
+      },
+      "journal": {
+        "loading": "加载中…",
+        "empty": "暂无日志条目。每次会话结束都会自动追加一条。"
+      },
+      "inbox": {
+        "loading": "加载中…",
+        "emptyTitle": "收件箱为空。",
+        "emptyHint": "Agent 通过 `project_goal_set` / `project_plan_set` MCP 工具在这里提交提案。",
+        "approvedToast": "{label}已更新",
+        "approveFailedToast": "批准失败",
+        "rejectedToast": "已驳回",
+        "rejectFailedToast": "驳回失败",
+        "sessionPrefix": "ses",
+        "warning": "批准将完全替换当前{label}。",
+        "warningSuffix": "请检查下方 diff；这不是合并。",
+        "current": "当前",
+        "proposed": "提议",
+        "emptyBody": "(空)",
+        "approve": "批准",
+        "reject": "驳回",
+        "confirmDialogTitle": "替换{label}?",
+        "confirmDialogDescription": "当前{label}将被提议内容覆盖。无法通过本界面撤销（可手动改回）。",
+        "confirmCancel": "取消",
+        "confirmReplace": "确认替换"
+      },
+      "cleanup": {
+        "hint": "LLM librarian 为该项目的记忆提出保留 / 过期 / 重复 的判定。删除前需你批准。",
+        "runNow": "立即运行清理",
+        "runSucceededToast": "清理已运行：{decided} 条决策入队（扫描了 {scanned} 条）",
+        "runFailedToast": "清理运行失败",
+        "empty": "暂无待处理决策。要么没有记忆达到判定年龄，要么上次运行判断全部仍是关键内容。",
+        "mergeIntoPrefix": "→ 合并到",
+        "reasonPrefix": "原因：",
+        "executeButton": "执行",
+        "confirmKeepButton": "确认保留",
+        "rejectButton": "驳回",
+        "approvedExecutedToast": "已执行{label}",
+        "approveFailedToast": "批准失败",
+        "rejectedToast": "已驳回 — 记忆保留",
+        "rejectFailedToast": "驳回失败"
+      },
+      "reset": {
+        "button": "重置",
+        "dialogTitle": "重置项目记忆?",
+        "dialogDescription": "删除该 cwd 下存储的所有项目上下文。不可撤销。",
+        "alwaysDeleted": "始终删除：目标、计划、提案、日志、清理决策。",
+        "alsoDeleteScannerLabel": "同时删除 scanner 文档",
+        "alsoDeleteScannerSuffix": "(tech_stack + recent_activity)。",
+        "alsoDeleteScannerHint": "下次 spawn 会自动重建 — 通常不勾选即可。",
+        "alsoDeleteMemoriesLabel": "同时删除 pgvector 记忆",
+        "alsoDeleteMemoriesSuffix": "（该 scope_key 下的）。",
+        "alsoDeleteMemoriesHint": "Agent 存储的长期事实（用户偏好、项目事实）。无法恢复。",
+        "cancel": "取消",
+        "deleteForever": "永久删除",
+        "successToast": "重置：已删除 {summary}",
+        "summary": {
+          "docs_one": "{count} 份文档",
+          "docs_other": "{count} 份文档",
+          "journal": "{count} 条日志",
+          "proposals_one": "{count} 条提案",
+          "proposals_other": "{count} 条提案",
+          "cleanup": "{count} 条清理",
+          "memories": "{count} 条记忆"
+        },
+        "failedToast": "重置失败"
+      }
+    },
+    "memoryInspector": {
+      "status": {
+        "label": "当前 embedder",
+        "unavailable": "不可用",
+        "probing": "探测中…",
+        "dimensions": "{dim} 维 · {state}",
+        "enabled": "已启用",
+        "disabled": "已禁用",
+        "testButton": "测试 embedder"
+      },
+      "statusBody": "这是网关当前用于每次 <1>memory_search</1> / <3>memory_store</3> 调用的 embedder。如果与上方配置不一致，说明有未保存的更改 — 点击 Save 后重启服务即可生效。",
+      "scope": {
+        "label": "Scope",
+        "scopeKey": "Scope key",
+        "scopeKeyIgnored": "(global 时忽略)",
+        "scopeKeyCwd": "(项目的 cwd)",
+        "scopeKeySession": "(session id)",
+        "placeholderProject": "/path/to/project (cwd)",
+        "placeholderSession": "session id",
+        "syncMd": "同步 .md",
+        "syncTooltip": "把 Claude 的 <cwd>/.claude/memory/*.md 重新摄取到 pgvector",
+        "values": {
+          "project": "project",
+          "session": "session",
+          "global": "global"
+        }
+      },
+      "search": {
+        "placeholder": "语义搜索查询（Enter 运行；为空则浏览）",
+        "run": "搜索",
+        "clear": "清空",
+        "failedToast": "搜索失败"
+      },
+      "records": {
+        "noMemories": "暂无记忆",
+        "matches_one": "{count} 条匹配",
+        "matches_other": "{count} 条匹配",
+        "memories_one": "{count} 条记忆",
+        "memories_other": "{count} 条记忆",
+        "scopeGlobalSuffix": "（全局）",
+        "scopeInSuffix": "（{scope}：",
+        "addButton": "添加记忆",
+        "addTooltip": "手动在此 scope 创建一条记忆",
+        "deleteAll": "全部删除",
+        "deleteAllTooltip": "删除该 scope/scope_key 下的全部记忆",
+        "loading": "加载中…",
+        "enterScopeKeyHint": "输入 scope key 以浏览记忆。",
+        "noMatchesForQuery": "未找到匹配 \"{query}\"",
+        "noMemoriesInScope": "此 scope 暂无记忆。"
+      },
+      "row": {
+        "simBadge": "相似度 {value}",
+        "hits_one": "命中 {count} 次",
+        "hits_other": "命中 {count} 次",
+        "lastHitTooltip": "最近命中 {relative}",
+        "editPlaceholder": "记忆文本 — Cmd/Ctrl+Enter 保存 · Esc 取消",
+        "saveTooltip": "保存 (Cmd/Ctrl+Enter)",
+        "cancelTooltip": "取消 (Esc)",
+        "editTooltip": "编辑该记忆",
+        "deleteTooltip": "删除该记忆",
+        "emptyError": "记忆文本不能为空",
+        "deleteConfirm": "删除记忆 {id}? 不可恢复。"
+      },
+      "toasts": {
+        "deleted": "记忆已删除",
+        "deleteFailed": "删除失败",
+        "bulkDeleted_one": "已从此 scope 删除 {count} 条记忆",
+        "bulkDeleted_other": "已从此 scope 删除 {count} 条记忆",
+        "bulkDeleteFailed": "批量删除失败",
+        "created": "记忆已创建",
+        "createFailed": "创建失败",
+        "updated": "记忆已更新",
+        "updateFailed": "更新失败",
+        "migrated": "已迁移 {reembed}/{examined} 条记忆到 {to}",
+        "migrationFailed": "迁移失败",
+        "syncIngested_one": "已摄取 {count} 个新记忆文件",
+        "syncIngested_other": "已摄取 {count} 个新记忆文件",
+        "syncEmpty": "没有需要同步的新 .md 文件",
+        "syncEmptyDescription": "已是最新，或该 cwd 没有 Claude memory 目录。",
+        "syncFailed": "同步失败",
+        "testOk": "Embedder OK：{embedder} · {dim} 维",
+        "testOkDescription": "vector_preview = [{preview}…]",
+        "testFailed": "Embedder 探测失败"
+      },
+      "bulkDelete": {
+        "title": "删除此 scope 的全部记忆?",
+        "description": "这是一次 SQL 操作 — 该 scope 下全部记忆将被原子性删除。通过 Claude 镜像摄取的记忆会在下次 <1>同步 .md</1> 时重新出现；其余内容永久消失。",
+        "scope": "Scope",
+        "scopeKey": "Scope key",
+        "currentlyVisible": "当前可见",
+        "items_one": "{count} 条记忆",
+        "items_other": "{count} 条记忆",
+        "cancel": "取消",
+        "deleteAll": "全部删除"
+      },
+      "addMem": {
+        "title": "添加记忆",
+        "description": "手动创建一条记忆。Agent 会通过 <1>memory_store</1> MCP 工具自动创建；此表单用于运维想跳过 agent 直接录入事实的场景。",
+        "textLabel": "文本",
+        "textPlaceholder": "纯文本。Embedder 在存储时把它转成向量；agent 通过 memory_search 取回。",
+        "cancel": "取消",
+        "create": "创建"
+      },
+      "picker": {
+        "button": "选择",
+        "buttonTooltip": "从已保存的 scope key 或活跃会话中选择",
+        "loading": "加载中…",
+        "empty": "{scope} 暂无已保存的 key 或活跃会话。",
+        "savedHeader": "已保存的记忆",
+        "activeHeader": "活跃会话"
+      },
+      "migrationBanner": {
+        "headline_one": "{count} 条记忆不会出现在搜索结果中",
+        "headline_other": "{count} 条记忆不会出现在搜索结果中",
+        "subtitle": "{summary} — 当前 embedder 为 <1>{current}</1>。pgvector 按 embedder 分区其相似度索引，旧条目在重嵌入前不会被检索到。",
+        "summaryItem": "{count} 条在 {name}",
+        "migrateButton": "迁移"
+      },
+      "reembed": {
+        "title": "重新嵌入记忆",
+        "description": "对存储在其他 embedder 下的记忆重新计算向量，使它们再次可被搜索到。",
+        "targetEmbedder": "目标 embedder",
+        "onName": "在",
+        "totalToReembed": "待重嵌入总数",
+        "explainer": "每条记忆的文本会重新发送到当前 embedder；新向量原地替换旧向量。ID、scope、scope_key、metadata 与时间戳保持不变。搜索结果立即生效 — 无需重启。",
+        "reportExamined": "已检查",
+        "reportReembedded": "已重嵌入",
+        "reportFailed": "失败",
+        "reportFrom": "来源",
+        "errors_one": "{count} 个错误",
+        "errors_other": "{count} 个错误",
+        "done": "完成",
+        "cancel": "取消",
+        "reembedding": "重嵌入中…",
+        "reembedTotal": "重嵌入 {total} 条"
+      }
     }
   },
   "more": {

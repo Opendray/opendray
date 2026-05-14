@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -62,6 +63,7 @@ import { listSessions } from '@/lib/sessions'
 // behaviour for newly-stored memories). The operator types or picks
 // a `scope_key` (a cwd) and we list memories under that scope.
 export function MemoryInspector() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [scope, setScope] = useState<Scope>('project')
   const [scopeKey, setScopeKey] = useState<string>('')
@@ -114,7 +116,9 @@ export function MemoryInspector() {
       })
       setSearchHits(hits)
     } catch (err) {
-      toast.error('Search failed', { description: (err as Error).message })
+      toast.error(t('web.memoryInspector.search.failedToast'), {
+        description: (err as Error).message,
+      })
       setSearchHits(null)
     } finally {
       setSearchBusy(false)
@@ -124,12 +128,15 @@ export function MemoryInspector() {
   const del = useMutation({
     mutationFn: (id: string) => deleteMemory(id).then(() => id),
     onSuccess: (id) => {
-      toast.success('Memory deleted')
+      toast.success(t('web.memoryInspector.toasts.deleted'))
       qc.invalidateQueries({ queryKey: ['memory-list'] })
       qc.invalidateQueries({ queryKey: ['memory-scope-keys'] })
       setSearchHits((cur) => cur?.filter((h) => h.memory.id !== id) ?? null)
     },
-    onError: (err: Error) => toast.error('Delete failed', { description: err.message }),
+    onError: (err: Error) =>
+      toast.error(t('web.memoryInspector.toasts.deleteFailed'), {
+        description: err.message,
+      }),
   })
 
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
@@ -137,7 +144,7 @@ export function MemoryInspector() {
     mutationFn: () => deleteMemoriesByScope(scope, scopeKey.trim()),
     onSuccess: (n) => {
       toast.success(
-        `Deleted ${n} ${n === 1 ? 'memory' : 'memories'} from this scope`,
+        t('web.memoryInspector.toasts.bulkDeleted', { count: n }),
       )
       setBulkDeleteOpen(false)
       setSearchHits(null)
@@ -146,7 +153,9 @@ export function MemoryInspector() {
       qc.invalidateQueries({ queryKey: ['memory-embedder-stats'] })
     },
     onError: (err: Error) =>
-      toast.error('Bulk delete failed', { description: err.message }),
+      toast.error(t('web.memoryInspector.toasts.bulkDeleteFailed'), {
+        description: err.message,
+      }),
   })
 
   // Add memory dialog state. Pre-fills its scope/scope_key from the
@@ -170,20 +179,22 @@ export function MemoryInspector() {
         addMemScope === 'global' ? '' : addMemScopeKey.trim(),
       ),
     onSuccess: () => {
-      toast.success('Memory created')
+      toast.success(t('web.memoryInspector.toasts.created'))
       setAddMemOpen(false)
       qc.invalidateQueries({ queryKey: ['memory-list'] })
       qc.invalidateQueries({ queryKey: ['memory-scope-keys'] })
     },
     onError: (err: Error) =>
-      toast.error('Create failed', { description: err.message }),
+      toast.error(t('web.memoryInspector.toasts.createFailed'), {
+        description: err.message,
+      }),
   })
 
   const edit = useMutation({
     mutationFn: ({ id, text }: { id: string; text: string }) =>
       updateMemory(id, text).then(() => ({ id, text })),
     onSuccess: ({ id, text }) => {
-      toast.success('Memory updated')
+      toast.success(t('web.memoryInspector.toasts.updated'))
       qc.invalidateQueries({ queryKey: ['memory-list'] })
       // Reflect the edit immediately in any open search results.
       setSearchHits((cur) =>
@@ -192,7 +203,10 @@ export function MemoryInspector() {
         ) ?? null,
       )
     },
-    onError: (err: Error) => toast.error('Update failed', { description: err.message }),
+    onError: (err: Error) =>
+      toast.error(t('web.memoryInspector.toasts.updateFailed'), {
+        description: err.message,
+      }),
   })
 
   const stats = useQuery<EmbedderStats>({
@@ -223,10 +237,18 @@ export function MemoryInspector() {
       qc.invalidateQueries({ queryKey: ['memory-list'] })
       qc.invalidateQueries({ queryKey: ['memory-embedder-stats'] })
       qc.invalidateQueries({ queryKey: ['memory-scope-keys'] })
-      toast.success(`Migrated ${r.reembed}/${r.examined} memories to ${r.to}`)
+      toast.success(
+        t('web.memoryInspector.toasts.migrated', {
+          reembed: r.reembed,
+          examined: r.examined,
+          to: r.to,
+        }),
+      )
     },
     onError: (err: Error) =>
-      toast.error('Migration failed', { description: err.message }),
+      toast.error(t('web.memoryInspector.toasts.migrationFailed'), {
+        description: err.message,
+      }),
   })
 
   const sync = useMutation({
@@ -237,29 +259,41 @@ export function MemoryInspector() {
       qc.invalidateQueries({ queryKey: ['memory-scope-keys'] })
       if (r.ingested > 0) {
         toast.success(
-          `Ingested ${r.ingested} new memory file${r.ingested === 1 ? '' : 's'}`,
+          t('web.memoryInspector.toasts.syncIngested', { count: r.ingested }),
         )
       } else {
-        toast.message('No new .md files to sync', {
-          description: 'Already in sync, or no Claude memory dir for this cwd.',
+        toast.message(t('web.memoryInspector.toasts.syncEmpty'), {
+          description: t('web.memoryInspector.toasts.syncEmptyDescription'),
         })
       }
     },
     onError: (err: Error) =>
-      toast.error('Sync failed', { description: err.message }),
+      toast.error(t('web.memoryInspector.toasts.syncFailed'), {
+        description: err.message,
+      }),
   })
 
   const test = useMutation({
     mutationFn: () => testEmbedder('opendray memory subsystem self-test'),
     onSuccess: (r) =>
-      toast.success(`Embedder OK: ${r.embedder} · ${r.dim} dimensions`, {
-        description: `vector_preview = [${r.vector_preview
-          .slice(0, 4)
-          .map((v) => v.toFixed(3))
-          .join(', ')}…]`,
-      }),
+      toast.success(
+        t('web.memoryInspector.toasts.testOk', {
+          embedder: r.embedder,
+          dim: r.dim,
+        }),
+        {
+          description: t('web.memoryInspector.toasts.testOkDescription', {
+            preview: r.vector_preview
+              .slice(0, 4)
+              .map((v) => v.toFixed(3))
+              .join(', '),
+          }),
+        },
+      ),
     onError: (err: Error) =>
-      toast.error('Embedder probe failed', { description: err.message }),
+      toast.error(t('web.memoryInspector.toasts.testFailed'), {
+        description: err.message,
+      }),
   })
 
   const records = useMemo(() => {
@@ -275,30 +309,40 @@ export function MemoryInspector() {
         <div className="flex-1 min-w-0 flex flex-col gap-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] text-muted-foreground/70 font-medium uppercase tracking-wider">
-              Active embedder
+              {t('web.memoryInspector.status.label')}
             </span>
             {statusError ? (
-              <Badge variant="danger">unavailable</Badge>
+              <Badge variant="danger">
+                {t('web.memoryInspector.status.unavailable')}
+              </Badge>
             ) : status ? (
               <>
                 <Badge variant="success" className="font-mono">
                   {status.embedder}
                 </Badge>
                 <span className="text-[11px] text-muted-foreground">
-                  {status.dimensions}-dim · {status.enabled ? 'enabled' : 'disabled'}
+                  {t('web.memoryInspector.status.dimensions', {
+                    dim: status.dimensions,
+                    state: status.enabled
+                      ? t('web.memoryInspector.status.enabled')
+                      : t('web.memoryInspector.status.disabled'),
+                  })}
                 </span>
               </>
             ) : (
-              <span className="text-[11px] text-muted-foreground">probing…</span>
+              <span className="text-[11px] text-muted-foreground">
+                {t('web.memoryInspector.status.probing')}
+              </span>
             )}
           </div>
           <p className="text-[10px] text-muted-foreground/70 leading-snug">
-            {`This is the embedder the gateway is currently using for every
-            `}
-            <code className="font-mono mx-1">memory_search</code> /
-            <code className="font-mono mx-1">memory_store</code>
-            {` call. If this doesn't match the configuration above, you have
-            unsaved changes — click Save then Restart server to apply.`}
+            <Trans
+              i18nKey="web.memoryInspector.statusBody"
+              components={{
+                1: <code className="font-mono mx-1" />,
+                3: <code className="font-mono mx-1" />,
+              }}
+            />
           </p>
         </div>
         <Button
@@ -309,7 +353,11 @@ export function MemoryInspector() {
           onClick={() => test.mutate()}
           disabled={test.isPending}
         >
-          {test.isPending ? <Loader2 className="size-3 animate-spin" /> : 'Test embedder'}
+          {test.isPending ? (
+            <Loader2 className="size-3 animate-spin" />
+          ) : (
+            t('web.memoryInspector.status.testButton')
+          )}
         </Button>
       </div>
 
@@ -343,7 +391,7 @@ export function MemoryInspector() {
       <div className="flex items-end gap-2 flex-wrap">
         <div className="space-y-1">
           <label className="text-[10px] text-muted-foreground/80 font-medium uppercase tracking-wider">
-            Scope
+            {t('web.memoryInspector.scope.label')}
           </label>
           <select
             value={scope}
@@ -353,19 +401,29 @@ export function MemoryInspector() {
             }}
             className="h-8 px-2 text-xs rounded border border-border bg-background"
           >
-            <option value="project">project</option>
-            <option value="session">session</option>
-            <option value="global">global</option>
+            <option value="project">
+              {t('web.memoryInspector.scope.values.project')}
+            </option>
+            <option value="session">
+              {t('web.memoryInspector.scope.values.session')}
+            </option>
+            <option value="global">
+              {t('web.memoryInspector.scope.values.global')}
+            </option>
           </select>
         </div>
         <div className="flex-1 space-y-1 min-w-[280px]">
           <label className="text-[10px] text-muted-foreground/80 font-medium uppercase tracking-wider">
-            Scope key{' '}
+            {t('web.memoryInspector.scope.scopeKey')}{' '}
             {scope === 'global' ? (
-              <span className="opacity-60">(ignored for global)</span>
+              <span className="opacity-60">
+                {t('web.memoryInspector.scope.scopeKeyIgnored')}
+              </span>
             ) : (
               <span className="opacity-60">
-                ({scope === 'project' ? 'cwd of the project' : 'session id'})
+                {scope === 'project'
+                  ? t('web.memoryInspector.scope.scopeKeyCwd')
+                  : t('web.memoryInspector.scope.scopeKeySession')}
               </span>
             )}
           </label>
@@ -376,7 +434,11 @@ export function MemoryInspector() {
                 setScopeKey(e.target.value)
                 setSearchHits(null)
               }}
-              placeholder={scope === 'project' ? '/path/to/project (cwd)' : 'session id'}
+              placeholder={
+                scope === 'project'
+                  ? t('web.memoryInspector.scope.placeholderProject')
+                  : t('web.memoryInspector.scope.placeholderSession')
+              }
               disabled={scope === 'global'}
               className="h-8 font-mono text-xs flex-1"
             />
@@ -397,14 +459,14 @@ export function MemoryInspector() {
                 onClick={() => sync.mutate()}
                 disabled={!scopeKey.trim() || sync.isPending}
                 className="h-8 text-[11px] gap-1"
-                title="Re-ingest Claude's <cwd>/.claude/memory/*.md files into pgvector"
+                title={t('web.memoryInspector.scope.syncTooltip')}
               >
                 {sync.isPending ? (
                   <Loader2 className="size-3 animate-spin" />
                 ) : (
                   <FolderSync className="size-3" />
                 )}
-                Sync .md
+                {t('web.memoryInspector.scope.syncMd')}
               </Button>
             )}
           </div>
@@ -419,7 +481,7 @@ export function MemoryInspector() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && runSearch()}
-            placeholder="Semantic search query (Enter to run; empty = browse)"
+            placeholder={t('web.memoryInspector.search.placeholder')}
             className="h-8 pl-7 text-xs"
           />
         </div>
@@ -430,7 +492,11 @@ export function MemoryInspector() {
           disabled={searchBusy}
           className="h-8 text-[11px]"
         >
-          {searchBusy ? <Loader2 className="size-3 animate-spin" /> : 'Search'}
+          {searchBusy ? (
+            <Loader2 className="size-3 animate-spin" />
+          ) : (
+            t('web.memoryInspector.search.run')
+          )}
         </Button>
         {searchHits !== null && (
           <Button
@@ -443,7 +509,7 @@ export function MemoryInspector() {
             }}
             className="h-8 text-[11px]"
           >
-            Clear
+            {t('web.memoryInspector.search.clear')}
           </Button>
         )}
       </div>
@@ -460,11 +526,17 @@ export function MemoryInspector() {
           <div className="flex items-center justify-between gap-2 px-1">
             <span className="text-[11px] text-muted-foreground/80">
               {records.length === 0
-                ? 'No memories yet'
+                ? t('web.memoryInspector.records.noMemories')
                 : searchHits !== null
-                  ? `${records.length} match${records.length === 1 ? '' : 'es'}`
-                  : `${records.length} ${records.length === 1 ? 'memory' : 'memories'}`}
-              {scope === 'global' ? ' (global)' : ` in ${scope}: `}
+                  ? t('web.memoryInspector.records.matches', {
+                      count: records.length,
+                    })
+                  : t('web.memoryInspector.records.memories', {
+                      count: records.length,
+                    })}
+              {scope === 'global'
+                ? t('web.memoryInspector.records.scopeGlobalSuffix')
+                : t('web.memoryInspector.records.scopeInSuffix', { scope })}
               {scope !== 'global' && (
                 <code className="text-[10.5px] font-mono">
                   {truncMid(scopeKey.trim(), 48)}
@@ -478,10 +550,10 @@ export function MemoryInspector() {
                 size="sm"
                 className="h-7 text-[11px] gap-1"
                 onClick={openAddMem}
-                title="Manually create a memory in this scope"
+                title={t('web.memoryInspector.records.addTooltip')}
               >
                 <Plus className="size-3" />
-                Add memory
+                {t('web.memoryInspector.records.addButton')}
               </Button>
               {searchHits === null && records.length > 0 && (
                 <Button
@@ -490,28 +562,30 @@ export function MemoryInspector() {
                   size="sm"
                   className="h-7 text-[11px] gap-1 border-destructive/40 text-destructive hover:bg-destructive/10"
                   onClick={() => setBulkDeleteOpen(true)}
-                  title="Delete every memory under this scope/scope_key"
+                  title={t('web.memoryInspector.records.deleteAllTooltip')}
                 >
                   <EraserIcon className="size-3" />
-                  Delete all
+                  {t('web.memoryInspector.records.deleteAll')}
                 </Button>
               )}
             </div>
           </div>
         )}
         {browse.isLoading && (
-          <p className="text-[11px] text-muted-foreground/70 italic">Loading…</p>
+          <p className="text-[11px] text-muted-foreground/70 italic">
+            {t('web.memoryInspector.records.loading')}
+          </p>
         )}
         {!browseEnabled && (
           <p className="text-[11px] text-muted-foreground/70 italic">
-            Enter a scope key to browse memories.
+            {t('web.memoryInspector.records.enterScopeKeyHint')}
           </p>
         )}
         {browseEnabled && !browse.isLoading && records.length === 0 && (
           <p className="text-[11px] text-muted-foreground/70 italic">
             {searchHits !== null
-              ? `No matches for "${search}"`
-              : 'No memories in this scope yet.'}
+              ? t('web.memoryInspector.records.noMatchesForQuery', { query: search })
+              : t('web.memoryInspector.records.noMemoriesInScope')}
           </p>
         )}
         {records.map(({ memory: m, similarity }) => (
@@ -520,7 +594,12 @@ export function MemoryInspector() {
             mem={m}
             similarity={similarity}
             onDelete={() => {
-              if (!window.confirm(`Delete memory ${m.id}? This is permanent.`)) return
+              if (
+                !window.confirm(
+                  t('web.memoryInspector.row.deleteConfirm', { id: m.id }),
+                )
+              )
+                return
               del.mutate(m.id)
             }}
             onSave={(text) =>
@@ -545,18 +624,21 @@ export function MemoryInspector() {
       <Dialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete every memory in this scope?</DialogTitle>
+            <DialogTitle>
+              {t('web.memoryInspector.bulkDelete.title')}
+            </DialogTitle>
             <DialogDescription>
-              This is a single SQL operation — all memories under the
-              specified scope are removed atomically. Memories that
-              were ingested via the Claude mirror reappear on the next
-              <code className="font-mono mx-1">Sync .md</code>{' '}
-              run; everything else is gone for good.
+              <Trans
+                i18nKey="web.memoryInspector.bulkDelete.description"
+                components={{ 1: <code className="font-mono mx-1" /> }}
+              />
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 text-[12px] py-2">
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground/80">Scope</span>
+              <span className="text-muted-foreground/80">
+                {t('web.memoryInspector.bulkDelete.scope')}
+              </span>
               <Badge variant="outline" className="font-mono">
                 {scope}
               </Badge>
@@ -564,7 +646,7 @@ export function MemoryInspector() {
             {scope !== 'global' && (
               <div className="flex items-start gap-2">
                 <span className="text-muted-foreground/80 shrink-0">
-                  Scope key
+                  {t('web.memoryInspector.bulkDelete.scopeKey')}
                 </span>
                 <code className="font-mono text-[11px] break-all">
                   {scopeKey.trim()}
@@ -572,10 +654,13 @@ export function MemoryInspector() {
               </div>
             )}
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground/80">Currently visible</span>
+              <span className="text-muted-foreground/80">
+                {t('web.memoryInspector.bulkDelete.currentlyVisible')}
+              </span>
               <span>
-                {records.length}{' '}
-                {records.length === 1 ? 'memory item' : 'memory items'}
+                {t('web.memoryInspector.bulkDelete.items', {
+                  count: records.length,
+                })}
               </span>
             </div>
           </div>
@@ -587,7 +672,7 @@ export function MemoryInspector() {
               onClick={() => setBulkDeleteOpen(false)}
               disabled={bulkDel.isPending}
             >
-              Cancel
+              {t('web.memoryInspector.bulkDelete.cancel')}
             </Button>
             <Button
               type="button"
@@ -599,7 +684,7 @@ export function MemoryInspector() {
               {bulkDel.isPending && (
                 <Loader2 className="size-3.5 animate-spin" />
               )}
-              Delete all
+              {t('web.memoryInspector.bulkDelete.deleteAll')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -612,12 +697,12 @@ export function MemoryInspector() {
       <Dialog open={addMemOpen} onOpenChange={setAddMemOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add memory</DialogTitle>
+            <DialogTitle>{t('web.memoryInspector.addMem.title')}</DialogTitle>
             <DialogDescription>
-              Manually create a memory. Agents create these automatically
-              via the <code className="font-mono">memory_store</code> MCP
-              tool — this form is for cases where the operator wants to
-              seed a fact without going through an agent.
+              <Trans
+                i18nKey="web.memoryInspector.addMem.description"
+                components={{ 1: <code className="font-mono" /> }}
+              />
             </DialogDescription>
           </DialogHeader>
           <form
@@ -632,7 +717,7 @@ export function MemoryInspector() {
             <div className="flex items-end gap-2 flex-wrap">
               <div className="space-y-1">
                 <label className="text-[10px] text-muted-foreground/80 font-medium uppercase tracking-wider">
-                  Scope
+                  {t('web.memoryInspector.scope.label')}
                 </label>
                 <select
                   value={addMemScope}
@@ -640,19 +725,29 @@ export function MemoryInspector() {
                   className="h-8 px-2 text-xs rounded border border-border bg-background"
                   disabled={addMem.isPending}
                 >
-                  <option value="project">project</option>
-                  <option value="session">session</option>
-                  <option value="global">global</option>
+                  <option value="project">
+                    {t('web.memoryInspector.scope.values.project')}
+                  </option>
+                  <option value="session">
+                    {t('web.memoryInspector.scope.values.session')}
+                  </option>
+                  <option value="global">
+                    {t('web.memoryInspector.scope.values.global')}
+                  </option>
                 </select>
               </div>
               <div className="flex-1 space-y-1 min-w-[220px]">
                 <label className="text-[10px] text-muted-foreground/80 font-medium uppercase tracking-wider">
-                  Scope key{' '}
+                  {t('web.memoryInspector.scope.scopeKey')}{' '}
                   {addMemScope === 'global' ? (
-                    <span className="opacity-60">(ignored for global)</span>
+                    <span className="opacity-60">
+                      {t('web.memoryInspector.scope.scopeKeyIgnored')}
+                    </span>
                   ) : (
                     <span className="opacity-60">
-                      ({addMemScope === 'project' ? 'cwd of the project' : 'session id'})
+                      {addMemScope === 'project'
+                        ? t('web.memoryInspector.scope.scopeKeyCwd')
+                        : t('web.memoryInspector.scope.scopeKeySession')}
                     </span>
                   )}
                 </label>
@@ -661,8 +756,8 @@ export function MemoryInspector() {
                   onChange={(e) => setAddMemScopeKey(e.target.value)}
                   placeholder={
                     addMemScope === 'project'
-                      ? '/path/to/project (cwd)'
-                      : 'session id'
+                      ? t('web.memoryInspector.scope.placeholderProject')
+                      : t('web.memoryInspector.scope.placeholderSession')
                   }
                   disabled={addMemScope === 'global' || addMem.isPending}
                   className="h-8 font-mono text-xs"
@@ -671,12 +766,12 @@ export function MemoryInspector() {
             </div>
             <div className="space-y-1">
               <label className="text-[10px] text-muted-foreground/80 font-medium uppercase tracking-wider">
-                Text
+                {t('web.memoryInspector.addMem.textLabel')}
               </label>
               <textarea
                 value={addMemText}
                 onChange={(e) => setAddMemText(e.target.value)}
-                placeholder="Plain prose. The embedder turns this into a vector at store time; agents will retrieve it via memory_search."
+                placeholder={t('web.memoryInspector.addMem.textPlaceholder')}
                 rows={6}
                 disabled={addMem.isPending}
                 className={cn(
@@ -694,7 +789,7 @@ export function MemoryInspector() {
                 onClick={() => setAddMemOpen(false)}
                 disabled={addMem.isPending}
               >
-                Cancel
+                {t('web.memoryInspector.addMem.cancel')}
               </Button>
               <Button
                 type="submit"
@@ -709,7 +804,7 @@ export function MemoryInspector() {
                 {addMem.isPending && (
                   <Loader2 className="size-3.5 animate-spin" />
                 )}
-                Create
+                {t('web.memoryInspector.addMem.create')}
               </Button>
             </DialogFooter>
           </form>
@@ -736,6 +831,7 @@ function ScopeKeyPicker({
   scope: Scope
   onPick: (key: string) => void
 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -801,28 +897,29 @@ function ScopeKeyPicker({
         size="sm"
         onClick={() => setOpen((v) => !v)}
         className="h-8 text-[11px] gap-1"
-        title="Pick from saved scope keys or active sessions"
+        title={t('web.memoryInspector.picker.buttonTooltip')}
       >
-        Pick <ChevronDown className="size-3" />
+        {t('web.memoryInspector.picker.button')}{' '}
+        <ChevronDown className="size-3" />
       </Button>
       {open && (
         <div className="absolute right-0 top-full mt-1 z-20 min-w-[320px] max-w-[480px] rounded-md border border-border bg-popover shadow-lg">
           <div className="p-1 max-h-72 overflow-y-auto">
             {isLoading && (
               <p className="text-[11px] text-muted-foreground/70 italic px-2 py-1.5">
-                Loading…
+                {t('web.memoryInspector.picker.loading')}
               </p>
             )}
             {!isLoading && !hasAnything && (
               <p className="text-[11px] text-muted-foreground/70 italic px-2 py-1.5">
-                No saved keys or active sessions for {scope}.
+                {t('web.memoryInspector.picker.empty', { scope })}
               </p>
             )}
 
             {(savedKeys.data?.length ?? 0) > 0 && (
               <>
                 <div className="px-2 pt-1 pb-0.5 text-[10px] uppercase tracking-wider text-muted-foreground/60">
-                  Saved memories
+                  {t('web.memoryInspector.picker.savedHeader')}
                 </div>
                 {savedKeys.data?.map((k) => (
                   <button
@@ -844,7 +941,7 @@ function ScopeKeyPicker({
             {sessionCandidates.length > 0 && (
               <>
                 <div className="px-2 pt-1.5 pb-0.5 text-[10px] uppercase tracking-wider text-muted-foreground/60">
-                  Active sessions
+                  {t('web.memoryInspector.picker.activeHeader')}
                 </div>
                 {scope === 'project' &&
                   (sessionCandidates as string[]).map((cwd) => (
@@ -901,6 +998,7 @@ function Row({
   onDelete: () => void
   onSave: (text: string) => Promise<void>
 }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(mem.text)
@@ -929,7 +1027,7 @@ function Row({
       return
     }
     if (!draft.trim()) {
-      toast.error('Memory text cannot be empty')
+      toast.error(t('web.memoryInspector.row.emptyError'))
       return
     }
     setSaving(true)
@@ -960,7 +1058,9 @@ function Row({
                       : 'border-border text-muted-foreground/60',
                 )}
               >
-                sim {similarity.toFixed(3)}
+                {t('web.memoryInspector.row.simBadge', {
+                  value: similarity.toFixed(3),
+                })}
               </span>
             )}
             {source && (
@@ -974,12 +1074,17 @@ function Row({
                 className="text-[10px] text-muted-foreground/70 inline-flex items-center gap-0.5"
                 title={
                   mem.last_hit_at
-                    ? `Last hit ${formatDistanceToNow(new Date(mem.last_hit_at), { addSuffix: true })}`
+                    ? t('web.memoryInspector.row.lastHitTooltip', {
+                        relative: formatDistanceToNow(
+                          new Date(mem.last_hit_at),
+                          { addSuffix: true },
+                        ),
+                      })
                     : ''
                 }
               >
                 <Activity className="size-2.5" />
-                {mem.hit_count} {mem.hit_count === 1 ? 'hit' : 'hits'}
+                {t('web.memoryInspector.row.hits', { count: mem.hit_count })}
               </span>
             )}
             <span className="text-[10px] text-muted-foreground/50 ml-auto">
@@ -1002,7 +1107,7 @@ function Row({
               rows={Math.min(12, Math.max(3, draft.split('\n').length + 1))}
               autoFocus
               className="w-full text-xs leading-snug font-sans rounded border border-accent/40 bg-background px-2 py-1.5 resize-y"
-              placeholder="Memory text — Cmd/Ctrl+Enter to save · Esc to cancel"
+              placeholder={t('web.memoryInspector.row.editPlaceholder')}
             />
           ) : (
             <button
@@ -1036,7 +1141,7 @@ function Row({
                 className="size-7 text-emerald-400 hover:text-emerald-300"
                 onClick={() => void commitEdit()}
                 disabled={saving}
-                title="Save (Cmd/Ctrl+Enter)"
+                title={t('web.memoryInspector.row.saveTooltip')}
               >
                 {saving ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
               </Button>
@@ -1047,7 +1152,7 @@ function Row({
                 className="size-7 text-muted-foreground hover:text-foreground"
                 onClick={cancelEdit}
                 disabled={saving}
-                title="Cancel (Esc)"
+                title={t('web.memoryInspector.row.cancelTooltip')}
               >
                 <X className="size-3" />
               </Button>
@@ -1060,7 +1165,7 @@ function Row({
                 size="icon"
                 className="size-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-accent"
                 onClick={startEdit}
-                title="Edit this memory"
+                title={t('web.memoryInspector.row.editTooltip')}
               >
                 <Pencil className="size-3" />
               </Button>
@@ -1070,7 +1175,7 @@ function Row({
                 size="icon"
                 className="size-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
                 onClick={onDelete}
-                title="Delete this memory"
+                title={t('web.memoryInspector.row.deleteTooltip')}
               >
                 <Trash2 className="size-3" />
               </Button>
@@ -1091,22 +1196,30 @@ function MigrationBanner({
   current: string
   onOpenDialog: () => void
 }) {
+  const { t } = useTranslation()
   const summary = mismatched.breakdown
-    .map((b) => `${b.count} on ${b.name}`)
+    .map((b) =>
+      t('web.memoryInspector.migrationBanner.summaryItem', {
+        count: b.count,
+        name: b.name,
+      }),
+    )
     .join(', ')
   return (
     <div className="flex items-start gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2.5">
       <AlertTriangle className="size-4 text-amber-400 shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
         <p className="text-[12px] font-medium text-amber-200">
-          {mismatched.total} {mismatched.total === 1 ? 'memory' : 'memories'} won't
-          appear in searches
+          {t('web.memoryInspector.migrationBanner.headline', {
+            count: mismatched.total,
+          })}
         </p>
         <p className="text-[11px] text-muted-foreground mt-0.5">
-          {summary} — current embedder is{' '}
-          <code className="font-mono text-foreground">{current}</code>. pgvector
-          partitions its similarity index by embedder, so older entries are
-          silent until reembedded.
+          <Trans
+            i18nKey="web.memoryInspector.migrationBanner.subtitle"
+            values={{ summary, current }}
+            components={{ 1: <code className="font-mono text-foreground" /> }}
+          />
         </p>
       </div>
       <Button
@@ -1116,7 +1229,8 @@ function MigrationBanner({
         className="h-7 text-[11px] border-amber-500/40 hover:bg-amber-500/20 shrink-0"
         onClick={onOpenDialog}
       >
-        <RefreshCw className="size-3" /> Migrate
+        <RefreshCw className="size-3" />{' '}
+        {t('web.memoryInspector.migrationBanner.migrateButton')}
       </Button>
     </div>
   )
@@ -1139,15 +1253,17 @@ function ReembedDialog({
   running: boolean
   onRun: () => void
 }) {
+  const { t } = useTranslation()
   const total = breakdown.reduce((acc, b) => acc + b.count, 0)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-base">Reembed memories</DialogTitle>
+          <DialogTitle className="text-base">
+            {t('web.memoryInspector.reembed.title')}
+          </DialogTitle>
           <DialogDescription>
-            Recompute vectors for memories stored under a different embedder so
-            they become searchable again.
+            {t('web.memoryInspector.reembed.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -1155,55 +1271,65 @@ function ReembedDialog({
           <div className="rounded-md border border-border bg-card/30 p-3 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                Target embedder
+                {t('web.memoryInspector.reembed.targetEmbedder')}
               </span>
               <code className="font-mono text-[11px] text-foreground">{current}</code>
             </div>
             {breakdown.map((b) => (
               <div key={b.name} className="flex items-center justify-between">
                 <span className="text-muted-foreground">
-                  on <code className="font-mono">{b.name}</code>
+                  {t('web.memoryInspector.reembed.onName')}{' '}
+                  <code className="font-mono">{b.name}</code>
                 </span>
                 <span className="font-mono">{b.count}</span>
               </div>
             ))}
             <div className="flex items-center justify-between border-t border-border/50 pt-1.5 mt-1.5">
-              <span className="font-medium">Total to reembed</span>
+              <span className="font-medium">
+                {t('web.memoryInspector.reembed.totalToReembed')}
+              </span>
               <span className="font-mono font-medium">{total}</span>
             </div>
           </div>
 
           <p className="text-[11px] text-muted-foreground">
-            Each memory's text gets re-sent to the current embedder; the new
-            vector replaces the old one in place. ID, scope, scope_key,
-            metadata and timestamps are preserved. Search results take effect
-            immediately — no restart needed.
+            {t('web.memoryInspector.reembed.explainer')}
           </p>
 
           {report && (
             <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-1 text-[11px]">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Examined</span>
+                <span className="text-muted-foreground">
+                  {t('web.memoryInspector.reembed.reportExamined')}
+                </span>
                 <span className="font-mono">{report.examined}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Reembedded</span>
+                <span className="text-muted-foreground">
+                  {t('web.memoryInspector.reembed.reportReembedded')}
+                </span>
                 <span className="font-mono text-emerald-300">{report.reembed}</span>
               </div>
               {report.failed > 0 && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Failed</span>
+                  <span className="text-muted-foreground">
+                    {t('web.memoryInspector.reembed.reportFailed')}
+                  </span>
                   <span className="font-mono text-rose-300">{report.failed}</span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-muted-foreground">From</span>
+                <span className="text-muted-foreground">
+                  {t('web.memoryInspector.reembed.reportFrom')}
+                </span>
                 <span className="font-mono">{report.from.join(', ') || '—'}</span>
               </div>
               {(report.errors?.length ?? 0) > 0 && (
                 <details className="mt-1.5">
                   <summary className="cursor-pointer text-rose-300">
-                    {report.errors?.length} error{(report.errors?.length ?? 0) > 1 ? 's' : ''}
+                    {t('web.memoryInspector.reembed.errors', {
+                      count: report.errors?.length ?? 0,
+                    })}
                   </summary>
                   <pre className="mt-1 text-[10px] font-mono whitespace-pre-wrap break-all bg-background/50 p-2 rounded max-h-32 overflow-y-auto">
                     {report.errors?.join('\n')}
@@ -1223,7 +1349,9 @@ function ReembedDialog({
             onClick={() => onOpenChange(false)}
             disabled={running}
           >
-            {report ? 'Done' : 'Cancel'}
+            {report
+              ? t('web.memoryInspector.reembed.done')
+              : t('web.memoryInspector.reembed.cancel')}
           </Button>
           {!report && (
             <Button
@@ -1235,11 +1363,13 @@ function ReembedDialog({
             >
               {running ? (
                 <>
-                  <Loader2 className="size-3 animate-spin" /> Reembedding…
+                  <Loader2 className="size-3 animate-spin" />{' '}
+                  {t('web.memoryInspector.reembed.reembedding')}
                 </>
               ) : (
                 <>
-                  <RefreshCw className="size-3" /> Reembed {total}
+                  <RefreshCw className="size-3" />{' '}
+                  {t('web.memoryInspector.reembed.reembedTotal', { total })}
                 </>
               )}
             </Button>
