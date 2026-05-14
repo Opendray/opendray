@@ -628,6 +628,58 @@
         "tooltipLastError": " · last error: {error}",
         "branchPlaceholder": "—"
       }
+    },
+    "activity": {
+      "title": "Activity",
+      "subtitle": "Per-call audit of API requests made by registered integrations. Includes both inbound calls (a third-party app calling opendray with its API key) and outbound proxied calls (admin → opendray proxy → integration). Calls made directly by this admin UI are not recorded.",
+      "refresh": "Refresh",
+      "refreshTooltip": "Refresh",
+      "filters": {
+        "integration": "Integration",
+        "direction": "Direction",
+        "status": "Status",
+        "allIntegrations": "All integrations",
+        "all": "All",
+        "inbound": "Inbound",
+        "outbound": "Outbound",
+        "allStatuses": "All statuses",
+        "status2": "2xx success",
+        "status3": "3xx redirect",
+        "status4": "4xx client error",
+        "status5": "5xx server error"
+      },
+      "callsCount_one": "{count} call",
+      "callsCount_other": "{count} calls",
+      "loading": "Loading…",
+      "table": {
+        "time": "Time",
+        "integration": "Integration",
+        "directionTitle": "Direction",
+        "method": "Method",
+        "path": "Path",
+        "status": "Status",
+        "duration": "Duration",
+        "inboundAria": "inbound",
+        "outboundAria": "outbound"
+      },
+      "empty": {
+        "filtered": "No calls match these filters.",
+        "title": "No API calls recorded yet",
+        "description": "When a third-party app calls opendray with its integration API key, every request is logged here.",
+        "stepWithIntegrations": "Use an existing integration's API key in your third-party app",
+        "stepRegister": "Register an integration in Integrations → New",
+        "stepCallEndpoint": "Call any endpoint, e.g. <1>POST /api/v1/sessions</1>",
+        "stepAppears": "Calls appear here within seconds",
+        "footnote": "Calls you make from this admin UI are not logged — only integration-attributed traffic is recorded."
+      },
+      "events": {
+        "loading": "Loading events…",
+        "empty": "No events yet.",
+        "emptyFiltered": "No matching events.",
+        "loadOlder": "Load older events",
+        "today": "Today",
+        "yesterday": "Yesterday"
+      }
     }
   },
   "more": {

@@ -7,6 +7,7 @@ import {
   RefreshCw,
   Activity as ActivityIcon,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -112,6 +113,7 @@ export function EventTimeline({
   emptyHint,
   className,
 }: EventTimelineProps) {
+  const { t } = useTranslation()
   const baseQuery: AuditQuery = useMemo(
     () => ({
       subject_kind: subject?.kind,
@@ -179,7 +181,14 @@ export function EventTimeline({
     )
   }, [byId, search])
 
-  const groups = useMemo(() => groupByDay(entries), [entries])
+  const groups = useMemo(
+    () =>
+      groupByDay(entries, {
+        today: t('web.activity.events.today'),
+        yesterday: t('web.activity.events.yesterday'),
+      }),
+    [entries, t],
+  )
 
   const onLoadMore = useCallback(async () => {
     if (!nextCursor || loadingMore) return
@@ -206,7 +215,7 @@ export function EventTimeline({
       {isLoading ? (
         <div className="flex items-center justify-center py-8 gap-2 text-[12px] text-muted-foreground">
           <Loader2 className="size-3.5 animate-spin" />
-          Loading events…
+          {t('web.activity.events.loading')}
         </div>
       ) : entries.length === 0 ? (
         <Empty hint={emptyHint} hasFilter={!!search} />
@@ -236,7 +245,7 @@ export function EventTimeline({
             ) : (
               <RefreshCw className="size-3.5" />
             )}
-            Load older events
+            {t('web.activity.events.loadOlder')}
           </Button>
         </div>
       )}
@@ -336,10 +345,15 @@ function Empty({
   hint: string | undefined
   hasFilter: boolean
 }) {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col items-center justify-center py-12 gap-2 text-[12px] text-muted-foreground">
       <ActivityIcon className="size-4 text-muted-foreground/50" />
-      <span>{hasFilter ? 'No matching events.' : 'No events yet.'}</span>
+      <span>
+        {hasFilter
+          ? t('web.activity.events.emptyFiltered')
+          : t('web.activity.events.empty')}
+      </span>
       {!hasFilter && hint && (
         <span className="text-[11px] text-muted-foreground/60 max-w-md text-center">
           {hint}
@@ -355,7 +369,10 @@ interface DayGroupData {
   entries: AuditEntry[]
 }
 
-function groupByDay(entries: AuditEntry[]): DayGroupData[] {
+function groupByDay(
+  entries: AuditEntry[],
+  labels: { today: string; yesterday: string },
+): DayGroupData[] {
   const today = startOfDay(new Date())
   const yesterday = new Date(today.getTime() - 86_400_000)
   const out: DayGroupData[] = []
@@ -364,9 +381,9 @@ function groupByDay(entries: AuditEntry[]): DayGroupData[] {
     const d = startOfDay(new Date(e.ts))
     const label =
       d.getTime() === today.getTime()
-        ? 'Today'
+        ? labels.today
         : d.getTime() === yesterday.getTime()
-          ? 'Yesterday'
+          ? labels.yesterday
           : d.toLocaleDateString(undefined, {
               month: 'short',
               day: 'numeric',

@@ -628,6 +628,58 @@
         "tooltipLastError": " · 上次错误：{error}",
         "branchPlaceholder": "—"
       }
+    },
+    "activity": {
+      "title": "活动",
+      "subtitle": "按调用维度审计每个由注册集成发起的 API 请求。包括入站调用（第三方应用以集成 API key 调用 opendray）和出站代理调用（admin → opendray 代理 → 集成）。本管理端 UI 直接发起的调用不会被记录。",
+      "refresh": "刷新",
+      "refreshTooltip": "刷新",
+      "filters": {
+        "integration": "集成",
+        "direction": "方向",
+        "status": "状态",
+        "allIntegrations": "所有集成",
+        "all": "全部",
+        "inbound": "入站",
+        "outbound": "出站",
+        "allStatuses": "所有状态",
+        "status2": "2xx 成功",
+        "status3": "3xx 重定向",
+        "status4": "4xx 客户端错误",
+        "status5": "5xx 服务端错误"
+      },
+      "callsCount_one": "{count} 次调用",
+      "callsCount_other": "{count} 次调用",
+      "loading": "加载中…",
+      "table": {
+        "time": "时间",
+        "integration": "集成",
+        "directionTitle": "方向",
+        "method": "方法",
+        "path": "路径",
+        "status": "状态",
+        "duration": "耗时",
+        "inboundAria": "入站",
+        "outboundAria": "出站"
+      },
+      "empty": {
+        "filtered": "没有调用符合当前筛选条件。",
+        "title": "尚未记录任何 API 调用",
+        "description": "当第三方应用以其集成 API key 调用 opendray 时，每次请求都会被记录在这里。",
+        "stepWithIntegrations": "在你的第三方应用中使用已有集成的 API key",
+        "stepRegister": "在 集成 → 新建 中注册一个集成",
+        "stepCallEndpoint": "调用任意接口，例如 <1>POST /api/v1/sessions</1>",
+        "stepAppears": "调用会在几秒内出现在这里",
+        "footnote": "你在本管理端 UI 中发起的调用不会被记录 — 仅集成归属的流量会被记录。"
+      },
+      "events": {
+        "loading": "正在加载事件…",
+        "empty": "尚无事件。",
+        "emptyFiltered": "没有匹配的事件。",
+        "loadOlder": "加载更早的事件",
+        "today": "今天",
+        "yesterday": "昨天"
+      }
     }
   },
   "more": {

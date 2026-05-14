@@ -9,6 +9,7 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { formatDistanceToNowStrict } from 'date-fns'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -54,6 +55,7 @@ type StatusFilter = 'all' | '2' | '3' | '4' | '5'
 // Integrations gets a detail page, OR when 2+ active integrations
 // make the unfiltered view noisy.
 export function ActivityPage() {
+  const { t } = useTranslation()
   const [integrationID, setIntegrationID] = useState<string>('')
   const [direction, setDirection] = useState<DirectionFilter>('all')
   const [status, setStatus] = useState<StatusFilter>('all')
@@ -90,14 +92,10 @@ export function ActivityPage() {
         <div className="flex-1 min-w-[260px]">
           <h1 className="text-[16px] font-semibold tracking-tight flex items-center gap-2">
             <ActivityIcon className="size-4 text-muted-foreground" />
-            Activity
+            {t('web.activity.title')}
           </h1>
           <p className="text-[12px] text-muted-foreground max-w-2xl">
-            Per-call audit of API requests made by registered integrations.
-            Includes both inbound calls (a third-party app calling opendray
-            with its API key) and outbound proxied calls (admin → opendray
-            proxy → integration). Calls made directly by this admin UI are
-            not recorded.
+            {t('web.activity.subtitle')}
           </p>
         </div>
         <Button
@@ -105,19 +103,19 @@ export function ActivityPage() {
           size="sm"
           onClick={() => calls.refetch()}
           disabled={calls.isFetching}
-          title="Refresh"
+          title={t('web.activity.refreshTooltip')}
         >
           {calls.isFetching ? (
             <Loader2 className="size-3.5 animate-spin" />
           ) : (
             <RefreshCw className="size-3.5" />
           )}
-          Refresh
+          {t('web.activity.refresh')}
         </Button>
       </header>
 
       <div className="border-b border-border px-6 py-3 flex flex-wrap items-center gap-2">
-        <Filter label="Integration">
+        <Filter label={t('web.activity.filters.integration')}>
           <Select
             value={integrationID || '__all__'}
             onValueChange={(v) =>
@@ -125,10 +123,14 @@ export function ActivityPage() {
             }
           >
             <SelectTrigger className="h-8 w-[220px] text-[12px]">
-              <SelectValue placeholder="All integrations" />
+              <SelectValue
+                placeholder={t('web.activity.filters.allIntegrations')}
+              />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">All integrations</SelectItem>
+              <SelectItem value="__all__">
+                {t('web.activity.filters.allIntegrations')}
+              </SelectItem>
               {integrations.data?.map((i) => (
                 <SelectItem key={i.id} value={i.id}>
                   {i.name}{' '}
@@ -141,7 +143,7 @@ export function ActivityPage() {
           </Select>
         </Filter>
 
-        <Filter label="Direction">
+        <Filter label={t('web.activity.filters.direction')}>
           <Select
             value={direction}
             onValueChange={(v) => setDirection(v as DirectionFilter)}
@@ -150,14 +152,20 @@ export function ActivityPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="inbound">Inbound</SelectItem>
-              <SelectItem value="outbound">Outbound</SelectItem>
+              <SelectItem value="all">
+                {t('web.activity.filters.all')}
+              </SelectItem>
+              <SelectItem value="inbound">
+                {t('web.activity.filters.inbound')}
+              </SelectItem>
+              <SelectItem value="outbound">
+                {t('web.activity.filters.outbound')}
+              </SelectItem>
             </SelectContent>
           </Select>
         </Filter>
 
-        <Filter label="Status">
+        <Filter label={t('web.activity.filters.status')}>
           <Select
             value={status}
             onValueChange={(v) => setStatus(v as StatusFilter)}
@@ -166,18 +174,28 @@ export function ActivityPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="2">2xx success</SelectItem>
-              <SelectItem value="3">3xx redirect</SelectItem>
-              <SelectItem value="4">4xx client error</SelectItem>
-              <SelectItem value="5">5xx server error</SelectItem>
+              <SelectItem value="all">
+                {t('web.activity.filters.allStatuses')}
+              </SelectItem>
+              <SelectItem value="2">
+                {t('web.activity.filters.status2')}
+              </SelectItem>
+              <SelectItem value="3">
+                {t('web.activity.filters.status3')}
+              </SelectItem>
+              <SelectItem value="4">
+                {t('web.activity.filters.status4')}
+              </SelectItem>
+              <SelectItem value="5">
+                {t('web.activity.filters.status5')}
+              </SelectItem>
             </SelectContent>
           </Select>
         </Filter>
 
         <div className="flex-1" />
         <span className="text-[10px] text-muted-foreground/70 font-mono tabular-nums">
-          {entries.length} {entries.length === 1 ? 'call' : 'calls'}
+          {t('web.activity.callsCount', { count: entries.length })}
         </span>
       </div>
 
@@ -185,7 +203,7 @@ export function ActivityPage() {
         {calls.isLoading ? (
           <div className="flex items-center justify-center py-16 gap-2 text-[12px] text-muted-foreground">
             <Loader2 className="size-3.5 animate-spin" />
-            Loading…
+            {t('web.activity.loading')}
           </div>
         ) : entries.length === 0 ? (
           <EmptyState
@@ -225,17 +243,18 @@ function CallsTable({
   calls: IntegrationCall[]
   integrationName: (id: string) => string
 }) {
+  const { t } = useTranslation()
   return (
     <table className="w-full text-[12px] border-collapse">
       <thead>
         <tr className="border-b border-border bg-card/40">
-          <Th>Time</Th>
-          <Th>Integration</Th>
-          <Th className="w-[50px]" title="Direction" />
-          <Th>Method</Th>
-          <Th>Path</Th>
-          <Th className="text-right">Status</Th>
-          <Th className="text-right">Duration</Th>
+          <Th>{t('web.activity.table.time')}</Th>
+          <Th>{t('web.activity.table.integration')}</Th>
+          <Th className="w-[50px]" title={t('web.activity.table.directionTitle')} />
+          <Th>{t('web.activity.table.method')}</Th>
+          <Th>{t('web.activity.table.path')}</Th>
+          <Th className="text-right">{t('web.activity.table.status')}</Th>
+          <Th className="text-right">{t('web.activity.table.duration')}</Th>
         </tr>
       </thead>
       <tbody>
@@ -280,11 +299,12 @@ function CallRow({
   call: IntegrationCall
   integrationName: string
 }) {
-  const t = new Date(call.ts)
-  const time = isNaN(t.getTime()) ? '--' : t.toTimeString().slice(0, 8)
-  const ageLabel = isNaN(t.getTime())
+  const { t } = useTranslation()
+  const ts = new Date(call.ts)
+  const time = isNaN(ts.getTime()) ? '--' : ts.toTimeString().slice(0, 8)
+  const ageLabel = isNaN(ts.getTime())
     ? ''
-    : compactRel(formatDistanceToNowStrict(t, { addSuffix: false }))
+    : compactRel(formatDistanceToNowStrict(ts, { addSuffix: false }))
 
   const statusClass =
     call.status_code >= 500
@@ -308,12 +328,12 @@ function CallRow({
         {call.direction === 'inbound' ? (
           <ArrowDownToLine
             className="size-3 text-state-running"
-            aria-label="inbound"
+            aria-label={t('web.activity.table.inboundAria')}
           />
         ) : (
           <ArrowUpFromLine
             className="size-3 text-accent"
-            aria-label="outbound"
+            aria-label={t('web.activity.table.outboundAria')}
           />
         )}
       </td>
@@ -340,10 +360,11 @@ function EmptyState({
   hasIntegrations: boolean
   hasFilter: boolean
 }) {
+  const { t } = useTranslation()
   if (hasFilter) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-2 text-[12px] text-muted-foreground">
-        <span>No calls match these filters.</span>
+        <span>{t('web.activity.empty.filtered')}</span>
       </div>
     )
   }
@@ -351,29 +372,29 @@ function EmptyState({
     <div className="flex flex-col items-center justify-center py-16 px-6 gap-3 text-center">
       <Plug className="size-6 text-muted-foreground/40" />
       <div className="text-[13px] font-medium text-foreground">
-        No API calls recorded yet
+        {t('web.activity.empty.title')}
       </div>
       <p className="text-[12px] text-muted-foreground max-w-md leading-relaxed">
-        When a third-party app calls opendray with its integration API key,
-        every request is logged here.
+        {t('web.activity.empty.description')}
       </p>
       <ol className="text-[12px] text-muted-foreground/80 max-w-md leading-relaxed flex flex-col gap-1 list-decimal list-inside text-left">
         <li>
           {hasIntegrations
-            ? 'Use an existing integration\'s API key in your third-party app'
-            : 'Register an integration in Integrations → New'}
+            ? t('web.activity.empty.stepWithIntegrations')
+            : t('web.activity.empty.stepRegister')}
         </li>
         <li>
-          Call any endpoint, e.g.{' '}
-          <code className="text-foreground/80 font-mono text-[11px]">
-            POST /api/v1/sessions
-          </code>
+          <Trans
+            i18nKey="web.activity.empty.stepCallEndpoint"
+            components={{
+              1: <code className="text-foreground/80 font-mono text-[11px]" />,
+            }}
+          />
         </li>
-        <li>Calls appear here within seconds</li>
+        <li>{t('web.activity.empty.stepAppears')}</li>
       </ol>
       <p className="text-[11px] text-muted-foreground/60 max-w-md leading-relaxed mt-1">
-        Calls you make from this admin UI are not logged — only
-        integration-attributed traffic is recorded.
+        {t('web.activity.empty.footnote')}
       </p>
     </div>
   )
