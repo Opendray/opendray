@@ -5,6 +5,7 @@ import {
   Folder,
   FileText,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 import type { Note } from '@/lib/notes'
@@ -43,6 +44,7 @@ export const NotesTreeView = forwardRef<NotesTreeViewHandle, NotesTreeViewProps>
     { notes, selected, onSelect, initialExpanded },
     ref,
   ) {
+  const { t } = useTranslation()
   const tree = useMemo(() => buildTree(notes), [notes])
 
   // Auto-expand the path leading to the selected note so it stays
@@ -90,7 +92,7 @@ export const NotesTreeView = forwardRef<NotesTreeViewHandle, NotesTreeViewProps>
     <div className="flex flex-col font-mono text-[12px]">
       {tree.children.size === 0 ? (
         <div className="px-2 py-3 text-[11px] text-muted-foreground/60">
-          Vault is empty.
+          {t('web.notes.tree.empty')}
         </div>
       ) : (
         Array.from(tree.children.values()).map((child) => (

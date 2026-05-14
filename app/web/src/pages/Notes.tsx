@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 import {
@@ -51,6 +52,7 @@ type LeftMode = 'tree' | 'tags'
 // top), right = NoteEditor for the selected note. Independent of any
 // session — works even when no sessions are running.
 export function NotesPage() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const { data: info } = useQuery({
     queryKey: ['notes-info'],
@@ -143,9 +145,9 @@ export function NotesPage() {
     if (!notes) return []
     let out = notes
     if (activeTag && tagsData) {
-      const t = tagsData.find((x) => x.tag === activeTag)
-      if (t?.notes) {
-        const set = new Set(t.notes)
+      const tag = tagsData.find((x) => x.tag === activeTag)
+      if (tag?.notes) {
+        const set = new Set(tag.notes)
         out = out.filter((n) => set.has(n.path))
       }
     }
@@ -169,26 +171,25 @@ export function NotesPage() {
     onSuccess: (path) => {
       qc.invalidateQueries({ queryKey: ['notes-list'] })
       setSelected(path)
-      toast.success('Note created', { description: path })
+      toast.success(t('web.notes.newNote.createdToast'), { description: path })
     },
     onError: (err: Error) =>
-      toast.error('Create failed', { description: err.message }),
+      toast.error(t('web.notes.newNote.createFailedToast'), {
+        description: err.message,
+      }),
   })
 
   const handleNewNote = () => {
     const today = format(new Date(), 'yyyy-MM-dd')
-    const def = `notes-${today}.md`
-    const input = prompt(
-      'New note path (vault-relative, must end .md)',
-      `library/${def}`,
-    )
+    const defaultPath = t('web.notes.newNote.defaultPath', { date: today })
+    const input = prompt(t('web.notes.newNote.prompt'), defaultPath)
     if (!input) return
     const cleaned = input
       .trim()
       .replace(/^\/+/, '')
       .replace(/\.\.\/+/g, '')
     if (!cleaned.toLowerCase().endsWith('.md')) {
-      toast.error('Path must end in .md')
+      toast.error(t('web.notes.newNote.errorMustEndMd'))
       return
     }
     create.mutate(cleaned)
@@ -208,7 +209,9 @@ export function NotesPage() {
         setSelected(path)
       })
       .catch((err) =>
-        toast.error('Create failed', { description: (err as Error).message }),
+        toast.error(t('web.notes.newNote.createFailedToast'), {
+          description: (err as Error).message,
+        }),
       )
   }
 
@@ -216,7 +219,9 @@ export function NotesPage() {
     <div className="h-full flex flex-col">
       <header className="h-12 border-b border-border flex items-center px-3 gap-2 shrink-0">
         <NotebookPen className="size-4 text-muted-foreground" />
-        <h1 className="text-[14px] font-semibold tracking-tight">Notes</h1>
+        <h1 className="text-[14px] font-semibold tracking-tight">
+          {t('web.notes.title')}
+        </h1>
         {info && (
           <span
             className="text-[10.5px] text-muted-foreground/60 font-mono truncate"
@@ -236,23 +241,27 @@ export function NotesPage() {
               ? 'text-foreground bg-card'
               : 'text-muted-foreground hover:text-foreground',
           )}
-          title={outlineOpen ? 'Hide outline' : 'Show outline'}
+          title={
+            outlineOpen
+              ? t('web.notes.header.hideOutline')
+              : t('web.notes.header.showOutline')
+          }
         >
           {outlineOpen ? (
             <PanelRightClose className="size-3" />
           ) : (
             <PanelRightOpen className="size-3" />
           )}
-          Outline
+          {t('web.notes.header.outline')}
         </button>
         <button
           type="button"
           onClick={handleNewDaily}
           className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md hover:bg-card text-muted-foreground hover:text-foreground"
-          title="Open or create today's daily note"
+          title={t('web.notes.header.todayTooltip')}
         >
           <Calendar className="size-3" />
-          Today
+          {t('web.notes.header.today')}
         </button>
         <button
           type="button"
@@ -260,7 +269,7 @@ export function NotesPage() {
           className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md bg-accent text-accent-foreground hover:bg-accent/90"
         >
           <Plus className="size-3" />
-          New
+          {t('web.notes.header.new')}
         </button>
       </header>
 
@@ -280,7 +289,7 @@ export function NotesPage() {
                 )}
               >
                 <FolderOpen className="size-3" />
-                Tree
+                {t('web.notes.left.tree')}
               </button>
               <button
                 type="button"
@@ -293,7 +302,7 @@ export function NotesPage() {
                 )}
               >
                 <Hash className="size-3" />
-                Tags
+                {t('web.notes.left.tags')}
               </button>
             </div>
             <div className="relative">
@@ -302,7 +311,9 @@ export function NotesPage() {
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 placeholder={
-                  leftMode === 'tree' ? 'Filter notes…' : 'Filter tags…'
+                  leftMode === 'tree'
+                    ? t('web.notes.left.filterNotes')
+                    : t('web.notes.left.filterTags')
                 }
                 className={cn(
                   'w-full h-7 pl-7 pr-2 text-[11.5px] rounded-md',
@@ -314,12 +325,14 @@ export function NotesPage() {
             </div>
             {activeTag && (
               <div className="flex items-center gap-1 text-[10.5px]">
-                <span className="text-muted-foreground/70">filtered by</span>
+                <span className="text-muted-foreground/70">
+                  {t('web.notes.left.filteredBy')}
+                </span>
                 <button
                   type="button"
                   onClick={() => setActiveTag(null)}
                   className="inline-flex items-center gap-0.5 px-1.5 py-px rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25"
-                  title="Clear tag filter"
+                  title={t('web.notes.left.clearTagTooltip')}
                 >
                   <Hash className="size-2.5" />
                   {activeTag}
@@ -333,18 +346,18 @@ export function NotesPage() {
                   type="button"
                   onClick={() => treeRef.current?.expandAll()}
                   className="hover:text-foreground"
-                  title="Expand every folder"
+                  title={t('web.notes.left.expandAllTooltip')}
                 >
-                  Expand all
+                  {t('web.notes.left.expandAll')}
                 </button>
                 <span className="opacity-40">·</span>
                 <button
                   type="button"
                   onClick={() => treeRef.current?.collapseAll()}
                   className="hover:text-foreground"
-                  title="Collapse every folder"
+                  title={t('web.notes.left.collapseAllTooltip')}
                 >
-                  Collapse all
+                  {t('web.notes.left.collapseAll')}
                 </button>
               </div>
             )}
@@ -354,7 +367,7 @@ export function NotesPage() {
             {isLoading ? (
               <div className="flex items-center gap-2 px-2 py-3 text-[12px] text-muted-foreground">
                 <Loader2 className="size-3 animate-spin" />
-                Loading…
+                {t('web.notes.left.loading')}
               </div>
             ) : leftMode === 'tree' ? (
               <NotesTreeView
@@ -368,8 +381,8 @@ export function NotesPage() {
                 tags={tagsData ?? []}
                 filter={filter}
                 active={activeTag}
-                onSelect={(t) => {
-                  setActiveTag(t)
+                onSelect={(tag) => {
+                  setActiveTag(tag)
                   setLeftMode('tree')
                 }}
               />
@@ -377,7 +390,10 @@ export function NotesPage() {
           </div>
 
           <div className="px-3 py-2 border-t border-border text-[10px] text-muted-foreground/60 font-mono">
-            {visibleNotes.length} / {notes?.length ?? 0} notes
+            {t('web.notes.left.footer', {
+              visible: visibleNotes.length,
+              total: notes?.length ?? 0,
+            })}
           </div>
         </aside>
 
@@ -458,36 +474,39 @@ function TagsList({
   active: string | null
   onSelect: (tag: string) => void
 }) {
+  const { t } = useTranslation()
   const q = filter.trim().toLowerCase()
   const visible = q
-    ? tags.filter((t) => t.tag.toLowerCase().includes(q))
+    ? tags.filter((tag) => tag.tag.toLowerCase().includes(q))
     : tags
   if (visible.length === 0) {
     return (
       <div className="px-2 py-3 text-[11px] text-muted-foreground/60">
-        {tags.length === 0 ? 'No tags in vault yet.' : `No matches for "${filter}".`}
+        {tags.length === 0
+          ? t('web.notes.tags.emptyVault')
+          : t('web.notes.tags.noMatches', { query: filter })}
       </div>
     )
   }
   return (
     <div className="flex flex-col">
-      {visible.map((t) => (
+      {visible.map((tag) => (
         <button
-          key={t.tag}
+          key={tag.tag}
           type="button"
-          onClick={() => onSelect(t.tag)}
+          onClick={() => onSelect(tag.tag)}
           className={cn(
             'flex items-center gap-1.5 py-0.5 pr-1 pl-1 rounded-sm text-left',
             'hover:bg-card',
-            active === t.tag
+            active === tag.tag
               ? 'bg-card text-foreground'
               : 'text-muted-foreground/90',
           )}
         >
           <Hash className="size-3 shrink-0 opacity-60" />
-          <span className="truncate text-[12px]">{t.tag}</span>
+          <span className="truncate text-[12px]">{tag.tag}</span>
           <span className="ml-auto text-[10px] text-muted-foreground/60 font-mono">
-            {t.count}
+            {tag.count}
           </span>
         </button>
       ))}
@@ -502,16 +521,17 @@ function EmptyState({
   onNew: () => void
   onDaily: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center px-6">
       <NotebookPen className="size-8 text-muted-foreground/40" strokeWidth={1.5} />
       <div className="space-y-1">
-        <h2 className="text-[14px] font-semibold">No note selected</h2>
+        <h2 className="text-[14px] font-semibold">{t('web.notes.empty.title')}</h2>
         <p className="text-[12px] text-muted-foreground max-w-[420px]">
-          Pick a note from the tree on the left, jump straight to today's
-          daily log, or create a fresh one. AI-written project docs live
-          under <code>projects/</code>; your personal scratchpads under{' '}
-          <code>personal/</code>.
+          <Trans
+            i18nKey="web.notes.empty.hint"
+            components={{ 1: <code />, 3: <code /> }}
+          />
         </p>
       </div>
       <div className="flex items-center gap-2">
@@ -521,7 +541,7 @@ function EmptyState({
           className="inline-flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-md hover:bg-card border border-border text-foreground"
         >
           <Calendar className="size-3.5" />
-          Today's daily note
+          {t('web.notes.empty.today')}
         </button>
         <button
           type="button"
@@ -529,7 +549,7 @@ function EmptyState({
           className="inline-flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-md bg-accent text-accent-foreground hover:bg-accent/90"
         >
           <Plus className="size-3.5" />
-          New note
+          {t('web.notes.empty.new')}
         </button>
       </div>
     </div>

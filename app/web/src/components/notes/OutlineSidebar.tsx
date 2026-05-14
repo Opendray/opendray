@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ListTree } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 import type { OutlineHeading } from '@/lib/outline'
@@ -64,8 +65,10 @@ export function OutlineSidebar({
   if (headings.length === 0) {
     return (
       <div className="px-3 py-3 text-[11px] text-muted-foreground/60">
-        No headings in this note. Add <code className="text-[10px]">## Title</code>{' '}
-        lines to populate the outline.
+        <Trans
+          i18nKey="web.notes.outline.empty"
+          components={{ 1: <code className="text-[10px]" /> }}
+        />
       </div>
     )
   }
@@ -115,10 +118,11 @@ function cssEscape(s: string): string {
 }
 
 export function OutlineHeader({ count }: { count: number }) {
+  const { t } = useTranslation()
   return (
     <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
       <ListTree className="size-3" />
-      Outline
+      {t('web.notes.outline.label')}
       <span className="text-muted-foreground/50 normal-case tracking-normal">
         · {count}
       </span>
