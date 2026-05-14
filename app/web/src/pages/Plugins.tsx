@@ -16,6 +16,7 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -78,16 +79,15 @@ import { cn } from '@/lib/utils'
 // (Logs filters, Tasks aliases, …) will land as additional sections
 // here rather than spawning more nav items.
 export function PluginsPage() {
+  const { t } = useTranslation()
   return (
     <div className="h-full flex flex-col p-6 gap-4 overflow-y-auto">
       <header className="flex flex-col gap-1">
         <h1 className="text-[18px] font-semibold tracking-tight">
-          Inspector plugins
+          {t('web.plugins.title')}
         </h1>
         <p className="text-[12px] text-muted-foreground max-w-[640px]">
-          Configure data sources surfaced in the right-hand Inspector panel
-          when a session is open. Each plugin is admin-only and shared
-          across all sessions. Click a section header to collapse it.
+          {t('web.plugins.subtitle')}
         </p>
       </header>
 
@@ -175,6 +175,7 @@ function CollapsibleSection({
 }
 
 function McpSection() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const { data: servers, isLoading } = useQuery({
     queryKey: ['mcps'],
@@ -187,10 +188,12 @@ function McpSection() {
     mutationFn: deleteMcp,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['mcps'] })
-      toast.success('MCP server removed')
+      toast.success(t('web.plugins.mcp.removedToast'))
     },
     onError: (err: Error) =>
-      toast.error('Delete failed', { description: err.message }),
+      toast.error(t('web.plugins.mcp.deleteFailedToast'), {
+        description: err.message,
+      }),
   })
 
   const toggle = useMutation({
@@ -200,22 +203,21 @@ function McpSection() {
       qc.invalidateQueries({ queryKey: ['mcps'] })
     },
     onError: (err: Error) =>
-      toast.error('Toggle failed', { description: err.message }),
+      toast.error(t('web.plugins.mcp.toggleFailedToast'), {
+        description: err.message,
+      }),
   })
 
   return (
     <CollapsibleSection
       id="mcp-servers"
       icon={<Plug className="size-4 text-muted-foreground" />}
-      title="MCP servers"
+      title={t('web.plugins.mcp.title')}
       description={
-        <>
-          Model Context Protocol servers injected into every spawn (claude /
-          codex). Vault entries live at{' '}
-          <code>~/.opendray/vault/mcp/&lt;id&gt;/mcp.json</code>; secrets
-          (referenced as <code>${'{KEY}'}</code> in env / headers) come from
-          the <strong>MCP secrets</strong> section below.
-        </>
+        <Trans
+          i18nKey="web.plugins.mcp.description"
+          components={{ 1: <code />, 3: <code />, 5: <strong /> }}
+        />
       }
       action={
         <Button
@@ -225,7 +227,7 @@ function McpSection() {
           className="gap-1"
         >
           <Plus className="size-3.5" />
-          New server
+          {t('web.plugins.mcp.newServer')}
         </Button>
       }
     >
@@ -233,21 +235,28 @@ function McpSection() {
         {isLoading ? (
           <div className="px-4 py-6 flex items-center gap-2 text-[12px] text-muted-foreground">
             <Loader2 className="size-3 animate-spin" />
-            Loading…
+            {t('web.plugins.common.loading')}
           </div>
         ) : (servers ?? []).length === 0 ? (
           <div className="px-4 py-8 text-center text-[12px] text-muted-foreground">
-            No MCP servers yet. Add one to expose extra tools to your agent
-            sessions.
+            {t('web.plugins.mcp.empty')}
           </div>
         ) : (
           <table className="w-full text-[12px]">
             <thead className="bg-card/40 text-[10px] uppercase tracking-wider text-muted-foreground/70">
               <tr>
-                <th className="text-left px-3 py-2 font-medium">Name</th>
-                <th className="text-left px-3 py-2 font-medium">Transport</th>
-                <th className="text-left px-3 py-2 font-medium">Spec</th>
-                <th className="text-left px-3 py-2 font-medium">Enabled</th>
+                <th className="text-left px-3 py-2 font-medium">
+                  {t('web.plugins.mcp.columns.name')}
+                </th>
+                <th className="text-left px-3 py-2 font-medium">
+                  {t('web.plugins.mcp.columns.transport')}
+                </th>
+                <th className="text-left px-3 py-2 font-medium">
+                  {t('web.plugins.mcp.columns.spec')}
+                </th>
+                <th className="text-left px-3 py-2 font-medium">
+                  {t('web.plugins.mcp.columns.enabled')}
+                </th>
                 <th className="px-3 py-2"></th>
               </tr>
             </thead>
@@ -270,10 +279,18 @@ function McpSection() {
                   </td>
                   <td className="px-3 py-2 font-mono text-[10.5px] break-all max-w-[260px]">
                     {s.transport === 'sse' || s.transport === 'http'
-                      ? s.url || <span className="opacity-50">no url</span>
+                      ? s.url || (
+                          <span className="opacity-50">
+                            {t('web.plugins.mcp.noUrl')}
+                          </span>
+                        )
                       : s.command
                         ? `${s.command}${s.args?.length ? ' ' + s.args.join(' ') : ''}`
-                        : <span className="opacity-50">no command</span>}
+                        : (
+                          <span className="opacity-50">
+                            {t('web.plugins.mcp.noCommand')}
+                          </span>
+                        )}
                   </td>
                   <td className="px-3 py-2">
                     <Switch
@@ -291,13 +308,17 @@ function McpSection() {
                         className="h-7 px-2 text-[11px] gap-1"
                       >
                         <Pencil className="size-3" />
-                        Edit
+                        {t('web.plugins.common.edit')}
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          if (confirm(`Delete MCP server "${s.id}"?`)) {
+                          if (
+                            confirm(
+                              t('web.plugins.mcp.deleteConfirm', { id: s.id }),
+                            )
+                          ) {
                             remove.mutate(s.id)
                           }
                         }}
@@ -337,6 +358,7 @@ interface McpEditorProps {
 }
 
 function McpEditor({ open, onOpenChange, mode, editingId }: McpEditorProps) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [id, setId] = useState('')
   const [body, setBody] = useState('')
@@ -368,11 +390,13 @@ function McpEditor({ open, onOpenChange, mode, editingId }: McpEditorProps) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['mcps'] })
-      toast.success('MCP server created')
+      toast.success(t('web.plugins.mcp.editor.createdToast'))
       onOpenChange(false)
     },
     onError: (err: Error) =>
-      toast.error('Create failed', { description: err.message }),
+      toast.error(t('web.plugins.mcp.editor.createFailedToast'), {
+        description: err.message,
+      }),
   })
 
   const update = useMutation({
@@ -383,11 +407,13 @@ function McpEditor({ open, onOpenChange, mode, editingId }: McpEditorProps) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['mcps'] })
       qc.invalidateQueries({ queryKey: ['mcp', editingId] })
-      toast.success('MCP server saved')
+      toast.success(t('web.plugins.mcp.editor.savedToast'))
       onOpenChange(false)
     },
     onError: (err: Error) =>
-      toast.error('Save failed', { description: err.message }),
+      toast.error(t('web.plugins.mcp.editor.saveFailedToast'), {
+        description: err.message,
+      }),
   })
 
   const submit = (e: FormEvent) => {
@@ -410,42 +436,57 @@ function McpEditor({ open, onOpenChange, mode, editingId }: McpEditorProps) {
       <DialogContent className="max-w-[min(92vw,860px)] w-[min(92vw,860px)]">
         <DialogHeader>
           <DialogTitle>
-            {mode === 'create' ? 'New MCP server' : `Edit MCP: ${editingId}`}
+            {mode === 'create'
+              ? t('web.plugins.mcp.editor.createTitle')
+              : t('web.plugins.mcp.editor.editTitle', { id: editingId })}
           </DialogTitle>
           <DialogDescription>
-            JSON shape: <code>command</code>+<code>args</code>+<code>env</code>{' '}
-            for stdio (default), or <code>transport</code> +<code> url</code>+
-            <code>headers</code> for sse / http. Reference secrets as{' '}
-            <code>${'{API_KEY}'}</code> — they get substituted at spawn time
-            from the secrets file.
+            <Trans
+              i18nKey="web.plugins.mcp.editor.description"
+              components={{
+                1: <code />,
+                3: <code />,
+                5: <code />,
+                7: <code />,
+                9: <code />,
+                11: <code />,
+                13: <code />,
+              }}
+            />
           </DialogDescription>
         </DialogHeader>
         {isLoading && mode === 'edit' ? (
           <div className="flex items-center gap-2 text-[12px] text-muted-foreground py-6">
             <Loader2 className="size-3 animate-spin" />
-            Loading…
+            {t('web.plugins.common.loading')}
           </div>
         ) : (
           <form onSubmit={submit} className="flex flex-col gap-3">
             {mode === 'create' && (
               <div className="space-y-1.5">
-                <Label htmlFor="mcp-id">ID</Label>
+                <Label htmlFor="mcp-id">
+                  {t('web.plugins.mcp.editor.idLabel')}
+                </Label>
                 <Input
                   id="mcp-id"
                   value={id}
                   onChange={(e) => setId(e.target.value)}
-                  placeholder="filesystem"
+                  placeholder={t('web.plugins.mcp.editor.idPlaceholder')}
                   required
                   className="font-mono"
                 />
                 <p className="text-[10.5px] text-muted-foreground/80">
-                  Lowercase / digits / dash / underscore. Becomes both the
-                  directory name and the default <code>name</code>.
+                  <Trans
+                    i18nKey="web.plugins.mcp.editor.idHint"
+                    components={{ 1: <code /> }}
+                  />
                 </p>
               </div>
             )}
             <div className="space-y-1.5">
-              <Label htmlFor="mcp-body">mcp.json</Label>
+              <Label htmlFor="mcp-body">
+                {t('web.plugins.mcp.editor.bodyLabel')}
+              </Label>
               <textarea
                 id="mcp-body"
                 value={body}
@@ -464,7 +505,7 @@ function McpEditor({ open, onOpenChange, mode, editingId }: McpEditorProps) {
               />
               {parseError && (
                 <p className="text-[11px] text-destructive">
-                  Invalid JSON: {parseError}
+                  {t('web.plugins.mcp.editor.invalidJson', { error: parseError })}
                 </p>
               )}
             </div>
@@ -476,11 +517,13 @@ function McpEditor({ open, onOpenChange, mode, editingId }: McpEditorProps) {
                 onClick={() => onOpenChange(false)}
                 disabled={busy}
               >
-                Cancel
+                {t('web.plugins.common.cancel')}
               </Button>
               <Button type="submit" variant="accent" size="sm" disabled={busy}>
                 {busy && <Loader2 className="size-3.5 animate-spin" />}
-                {mode === 'create' ? 'Create' : 'Save'}
+                {mode === 'create'
+                  ? t('web.plugins.common.create')
+                  : t('web.plugins.common.save')}
               </Button>
             </DialogFooter>
           </form>
@@ -511,6 +554,7 @@ function parseMcp(body: string, id: string): McpServer {
 }
 
 function McpSecretsSection() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const { data, isLoading } = useQuery({
     queryKey: ['mcp-secrets'],
@@ -523,10 +567,12 @@ function McpSecretsSection() {
     mutationFn: deleteMcpSecret,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['mcp-secrets'] })
-      toast.success('Secret removed')
+      toast.success(t('web.plugins.mcpSecrets.removedToast'))
     },
     onError: (err: Error) =>
-      toast.error('Delete failed', { description: err.message }),
+      toast.error(t('web.plugins.mcpSecrets.deleteFailedToast'), {
+        description: err.message,
+      }),
   })
 
   const keyCount = data?.keys.length ?? 0
@@ -535,7 +581,7 @@ function McpSecretsSection() {
     <CollapsibleSection
       id="mcp-secrets"
       icon={<ShieldCheck className="size-4 text-muted-foreground" />}
-      title="MCP secrets"
+      title={t('web.plugins.mcpSecrets.title')}
       badge={
         data && (
           <span
@@ -547,25 +593,28 @@ function McpSecretsSection() {
             )}
             title={
               data.encrypted
-                ? 'AES-GCM encrypted on disk; key stored in OS keychain'
-                : 'OS keychain unavailable — file is plaintext on disk. Check the gateway log.'
+                ? t('web.plugins.mcpSecrets.encryptedTooltip')
+                : t('web.plugins.mcpSecrets.plaintextTooltip')
             }
           >
-            {data.encrypted ? 'encrypted' : 'plaintext'}
+            {data.encrypted
+              ? t('web.plugins.mcpSecrets.encryptedBadge')
+              : t('web.plugins.mcpSecrets.plaintextBadge')}
           </span>
         )
       }
       description={
         <>
-          Values referenced from <code>${'{KEY}'}</code> placeholders in any{' '}
-          <code>mcp.json</code> get substituted at spawn time.{' '}
-          <strong>Saved values are never returned over the API</strong> — you
-          can overwrite or delete them but not read them back.
+          <Trans
+            i18nKey="web.plugins.mcpSecrets.description"
+            components={{ 1: <code />, 3: <code />, 5: <strong /> }}
+          />
           {data?.path && (
-            <>
-              {' '}
-              Stored at <code>{data.path}</code>.
-            </>
+            <Trans
+              i18nKey="web.plugins.mcpSecrets.descriptionStored"
+              values={{ path: data.path }}
+              components={{ 1: <code /> }}
+            />
           )}
         </>
       }
@@ -577,7 +626,7 @@ function McpSecretsSection() {
           className="gap-1"
         >
           <Plus className="size-3.5" />
-          Add secret
+          {t('web.plugins.mcpSecrets.addSecret')}
         </Button>
       }
     >
@@ -585,19 +634,25 @@ function McpSecretsSection() {
         {isLoading ? (
           <div className="px-4 py-6 flex items-center gap-2 text-[12px] text-muted-foreground">
             <Loader2 className="size-3 animate-spin" />
-            Loading…
+            {t('web.plugins.common.loading')}
           </div>
         ) : keyCount === 0 ? (
           <div className="px-4 py-8 text-center text-[12px] text-muted-foreground">
-            No secrets stored. Add one to start referencing it as{' '}
-            <code>${'{KEY}'}</code> in your MCP server configs.
+            <Trans
+              i18nKey="web.plugins.mcpSecrets.empty"
+              components={{ 1: <code /> }}
+            />
           </div>
         ) : (
           <table className="w-full text-[12px]">
             <thead className="bg-card/40 text-[10px] uppercase tracking-wider text-muted-foreground/70">
               <tr>
-                <th className="text-left px-3 py-2 font-medium">Key</th>
-                <th className="text-left px-3 py-2 font-medium">Value</th>
+                <th className="text-left px-3 py-2 font-medium">
+                  {t('web.plugins.mcpSecrets.columns.key')}
+                </th>
+                <th className="text-left px-3 py-2 font-medium">
+                  {t('web.plugins.mcpSecrets.columns.value')}
+                </th>
                 <th className="px-3 py-2"></th>
               </tr>
             </thead>
@@ -618,10 +673,10 @@ function McpSecretsSection() {
                         size="sm"
                         onClick={() => setEditingKey(k)}
                         className="h-7 px-2 text-[11px] gap-1"
-                        title="Overwrite the stored value"
+                        title={t('web.plugins.mcpSecrets.editTooltip')}
                       >
                         <Pencil className="size-3" />
-                        Edit
+                        {t('web.plugins.common.edit')}
                       </Button>
                       <Button
                         variant="ghost"
@@ -629,7 +684,7 @@ function McpSecretsSection() {
                         onClick={() => {
                           if (
                             confirm(
-                              `Delete secret "${k}"? Any mcp.json that references \${${k}} will fall back to the literal placeholder until you set a new value.`,
+                              t('web.plugins.mcpSecrets.deleteConfirm', { key: k }),
                             )
                           ) {
                             remove.mutate(k)
@@ -680,6 +735,7 @@ function SecretEditor({
   keyName,
   existingKeys,
 }: SecretEditorProps) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [name, setName] = useState('')
   const [value, setValue] = useState('')
@@ -697,11 +753,17 @@ function SecretEditor({
     mutationFn: () => setMcpSecret(name, value),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['mcp-secrets'] })
-      toast.success(mode === 'create' ? 'Secret added' : 'Secret updated')
+      toast.success(
+        mode === 'create'
+          ? t('web.plugins.mcpSecrets.editor.addedToast')
+          : t('web.plugins.mcpSecrets.editor.updatedToast'),
+      )
       onOpenChange(false)
     },
     onError: (err: Error) =>
-      toast.error('Save failed', { description: err.message }),
+      toast.error(t('web.plugins.mcpSecrets.editor.saveFailedToast'), {
+        description: err.message,
+      }),
   })
 
   const validKey = /^[A-Za-z_][A-Za-z0-9_]*$/.test(name)
@@ -714,12 +776,14 @@ function SecretEditor({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {mode === 'create' ? 'Add secret' : `Update ${keyName}`}
+            {mode === 'create'
+              ? t('web.plugins.mcpSecrets.editor.addTitle')
+              : t('web.plugins.mcpSecrets.editor.updateTitle', { key: keyName })}
           </DialogTitle>
           <DialogDescription>
             {mode === 'create'
-              ? 'Stored encrypted on disk if the OS keychain is available. Reference it from any mcp.json env / headers / args / url with ${KEY}.'
-              : 'Enter the new value to overwrite. The previous value cannot be recovered.'}
+              ? t('web.plugins.mcpSecrets.editor.addDescription')
+              : t('web.plugins.mcpSecrets.editor.editDescription')}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -730,12 +794,14 @@ function SecretEditor({
           className="flex flex-col gap-3 mt-2"
         >
           <div className="space-y-1.5">
-            <Label htmlFor="secret-name">Key</Label>
+            <Label htmlFor="secret-name">
+              {t('web.plugins.mcpSecrets.editor.keyLabel')}
+            </Label>
             <Input
               id="secret-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="BRAVE_API_KEY"
+              placeholder={t('web.plugins.mcpSecrets.editor.keyPlaceholder')}
               required
               disabled={mode === 'edit'}
               className="font-mono"
@@ -743,17 +809,22 @@ function SecretEditor({
             />
             {name && !validKey && (
               <p className="text-[10.5px] text-destructive">
-                Must match <code>[A-Za-z_][A-Za-z0-9_]*</code>
+                <Trans
+                  i18nKey="web.plugins.mcpSecrets.editor.keyPattern"
+                  components={{ 1: <code /> }}
+                />
               </p>
             )}
             {collision && (
               <p className="text-[10.5px] text-amber-300">
-                Already exists — use Edit instead, or pick a different name.
+                {t('web.plugins.mcpSecrets.editor.keyCollision')}
               </p>
             )}
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="secret-value">Value</Label>
+            <Label htmlFor="secret-value">
+              {t('web.plugins.mcpSecrets.editor.valueLabel')}
+            </Label>
             <Input
               id="secret-value"
               type="password"
@@ -767,7 +838,7 @@ function SecretEditor({
               autoFocus={mode === 'edit'}
             />
             <p className="text-[10.5px] text-muted-foreground/80">
-              Hidden as you type. Saved value is never returned over the API.
+              {t('web.plugins.mcpSecrets.editor.valueHint')}
             </p>
           </div>
           <DialogFooter>
@@ -778,7 +849,7 @@ function SecretEditor({
               onClick={() => onOpenChange(false)}
               disabled={save.isPending}
             >
-              Cancel
+              {t('web.plugins.common.cancel')}
             </Button>
             <Button
               type="submit"
@@ -787,7 +858,9 @@ function SecretEditor({
               disabled={!canSubmit}
             >
               {save.isPending && <Loader2 className="size-3.5 animate-spin" />}
-              {mode === 'create' ? 'Add' : 'Save'}
+              {mode === 'create'
+                ? t('web.plugins.common.add')
+                : t('web.plugins.common.save')}
             </Button>
           </DialogFooter>
         </form>
@@ -797,6 +870,7 @@ function SecretEditor({
 }
 
 function SkillsSection() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const { data: skills, isLoading } = useQuery({
     queryKey: ['skills'],
@@ -809,26 +883,24 @@ function SkillsSection() {
     mutationFn: deleteSkill,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['skills'] })
-      toast.success('Skill removed')
+      toast.success(t('web.plugins.skills.removedToast'))
     },
     onError: (err: Error) =>
-      toast.error('Delete failed', { description: err.message }),
+      toast.error(t('web.plugins.skills.deleteFailedToast'), {
+        description: err.message,
+      }),
   })
 
   return (
     <CollapsibleSection
       id="agent-skills"
       icon={<Sparkles className="size-4 text-muted-foreground" />}
-      title="Agent skills"
+      title={t('web.plugins.skills.title')}
       description={
-        <>
-          Reusable capabilities injected into Claude sessions as a Tier 1
-          index — the agent loads full SKILL.md on demand via{' '}
-          <code>opendray skill describe &lt;id&gt;</code>. Built-ins ship in
-          the binary but can be <strong>customized</strong> — your edits land
-          at <code>~/.opendray/vault/skills/&lt;id&gt;/SKILL.md</code> and
-          override the embedded version. Use Reset to revert.
-        </>
+        <Trans
+          i18nKey="web.plugins.skills.description"
+          components={{ 1: <code />, 3: <strong />, 5: <code /> }}
+        />
       }
       action={
         <Button
@@ -838,7 +910,7 @@ function SkillsSection() {
           className="gap-1"
         >
           <Plus className="size-3.5" />
-          New skill
+          {t('web.plugins.skills.newSkill')}
         </Button>
       }
     >
@@ -846,19 +918,25 @@ function SkillsSection() {
         {isLoading ? (
           <div className="px-4 py-6 flex items-center gap-2 text-[12px] text-muted-foreground">
             <Loader2 className="size-3 animate-spin" />
-            Loading…
+            {t('web.plugins.common.loading')}
           </div>
         ) : (skills ?? []).length === 0 ? (
           <div className="px-4 py-8 text-center text-[12px] text-muted-foreground">
-            No skills found.
+            {t('web.plugins.skills.empty')}
           </div>
         ) : (
           <table className="w-full text-[12px]">
             <thead className="bg-card/40 text-[10px] uppercase tracking-wider text-muted-foreground/70">
               <tr>
-                <th className="text-left px-3 py-2 font-medium">ID</th>
-                <th className="text-left px-3 py-2 font-medium">Description</th>
-                <th className="text-left px-3 py-2 font-medium">Source</th>
+                <th className="text-left px-3 py-2 font-medium">
+                  {t('web.plugins.skills.columns.id')}
+                </th>
+                <th className="text-left px-3 py-2 font-medium">
+                  {t('web.plugins.skills.columns.description')}
+                </th>
+                <th className="text-left px-3 py-2 font-medium">
+                  {t('web.plugins.skills.columns.source')}
+                </th>
                 <th className="px-3 py-2"></th>
               </tr>
             </thead>
@@ -873,27 +951,31 @@ function SkillsSection() {
                   </td>
                   <td className="px-3 py-2 text-muted-foreground/90">
                     {s.description || (
-                      <span className="italic opacity-60">no description</span>
+                      <span className="italic opacity-60">
+                        {t('web.plugins.skills.noDescription')}
+                      </span>
                     )}
                   </td>
                   <td className="px-3 py-2">
                     {s.source === 'builtin' ? (
                       <span
                         className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/70"
-                        title="Embedded in the opendray binary — click Customize to override in your vault"
+                        title={t('web.plugins.skills.builtinTooltip')}
                       >
                         <Lock className="size-3" />
-                        builtin
+                        {t('web.plugins.skills.builtinBadge')}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 text-[10px]">
-                        <span className="text-state-running">vault</span>
+                        <span className="text-state-running">
+                          {t('web.plugins.skills.vaultBadge')}
+                        </span>
                         {s.overrides_builtin && (
                           <span
                             className="text-[9px] text-amber-400 px-1 py-px rounded bg-amber-500/10 border border-amber-500/30"
-                            title="This vault skill overrides the built-in version of the same id"
+                            title={t('web.plugins.skills.overridesBuiltinTooltip')}
                           >
-                            overrides builtin
+                            {t('web.plugins.skills.overridesBuiltin')}
                           </span>
                         )}
                       </span>
@@ -908,12 +990,14 @@ function SkillsSection() {
                         className="h-7 px-2 text-[11px] gap-1"
                         title={
                           s.source === 'builtin'
-                            ? 'Open the SKILL.md and save changes as a vault override'
-                            : 'Edit this vault skill'
+                            ? t('web.plugins.skills.customizeTooltip')
+                            : t('web.plugins.skills.editTooltip')
                         }
                       >
                         <Pencil className="size-3" />
-                        {s.source === 'builtin' ? 'Customize' : 'Edit'}
+                        {s.source === 'builtin'
+                          ? t('web.plugins.skills.customize')
+                          : t('web.plugins.common.edit')}
                       </Button>
                       {s.source === 'vault' && s.overrides_builtin && (
                         <Button
@@ -922,17 +1006,17 @@ function SkillsSection() {
                           onClick={() => {
                             if (
                               confirm(
-                                `Reset "${s.id}" to the built-in version? This deletes your vault SKILL.md and falls back to the embedded copy.`,
+                                t('web.plugins.skills.resetConfirm', { id: s.id }),
                               )
                             ) {
                               remove.mutate(s.id)
                             }
                           }}
                           className="h-7 px-2 text-[11px] gap-1 text-muted-foreground hover:text-foreground"
-                          title="Delete vault override and fall back to the built-in version"
+                          title={t('web.plugins.skills.resetTooltip')}
                         >
                           <RotateCcw className="size-3" />
-                          Reset
+                          {t('web.plugins.skills.reset')}
                         </Button>
                       )}
                       {s.source === 'vault' && !s.overrides_builtin && (
@@ -942,7 +1026,7 @@ function SkillsSection() {
                           onClick={() => {
                             if (
                               confirm(
-                                `Delete skill "${s.id}" from your vault? This removes the SKILL.md file.`,
+                                t('web.plugins.skills.deleteConfirm', { id: s.id }),
                               )
                             ) {
                               remove.mutate(s.id)
@@ -985,6 +1069,7 @@ interface SkillEditorProps {
 }
 
 function SkillEditor({ open, onOpenChange, mode, editingId }: SkillEditorProps) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [id, setId] = useState('')
   const [body, setBody] = useState('')
@@ -1015,11 +1100,13 @@ function SkillEditor({ open, onOpenChange, mode, editingId }: SkillEditorProps) 
     mutationFn: () => createSkill(id, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['skills'] })
-      toast.success('Skill created')
+      toast.success(t('web.plugins.skills.editor.createdToast'))
       onOpenChange(false)
     },
     onError: (err: Error) =>
-      toast.error('Create failed', { description: err.message }),
+      toast.error(t('web.plugins.skills.editor.createFailedToast'), {
+        description: err.message,
+      }),
   })
 
   const update = useMutation({
@@ -1028,12 +1115,16 @@ function SkillEditor({ open, onOpenChange, mode, editingId }: SkillEditorProps) 
       qc.invalidateQueries({ queryKey: ['skills'] })
       qc.invalidateQueries({ queryKey: ['skill', editingId] })
       toast.success(
-        isCustomizingBuiltin ? 'Saved as vault override' : 'Skill saved',
+        isCustomizingBuiltin
+          ? t('web.plugins.skills.editor.savedOverrideToast')
+          : t('web.plugins.skills.editor.savedToast'),
       )
       onOpenChange(false)
     },
     onError: (err: Error) =>
-      toast.error('Save failed', { description: err.message }),
+      toast.error(t('web.plugins.skills.editor.saveFailedToast'), {
+        description: err.message,
+      }),
   })
 
   const submit = (e: FormEvent) => {
@@ -1053,43 +1144,49 @@ function SkillEditor({ open, onOpenChange, mode, editingId }: SkillEditorProps) 
               <Lock className="size-3.5 text-muted-foreground" />
             )}
             {mode === 'create'
-              ? 'New skill'
+              ? t('web.plugins.skills.editor.createTitle')
               : isCustomizingBuiltin
-                ? `Customize built-in: ${editingId}`
-                : `Edit skill: ${editingId}`}
+                ? t('web.plugins.skills.editor.customizeTitle', { id: editingId })
+                : t('web.plugins.skills.editor.editTitle', { id: editingId })}
           </DialogTitle>
           <DialogDescription>
             {isCustomizingBuiltin
-              ? 'You\'re viewing a built-in skill embedded in opendray. Saving will create a vault override at the same id — your edits live under ~/.opendray/vault/skills/<id>/SKILL.md and shadow the built-in until you Reset.'
-              : 'SKILL.md format — frontmatter with name + description, then markdown instructions. The description appears in the agent\'s Tier 1 index.'}
+              ? t('web.plugins.skills.editor.customizeDescription')
+              : t('web.plugins.skills.editor.editDescription')}
           </DialogDescription>
         </DialogHeader>
         {isLoading && mode === 'edit' ? (
           <div className="flex items-center gap-2 text-[12px] text-muted-foreground py-6">
             <Loader2 className="size-3 animate-spin" />
-            Loading…
+            {t('web.plugins.common.loading')}
           </div>
         ) : (
           <form onSubmit={submit} className="flex flex-col gap-3">
             {mode === 'create' && (
               <div className="space-y-1.5">
-                <Label htmlFor="skill-id">ID</Label>
+                <Label htmlFor="skill-id">
+                  {t('web.plugins.skills.editor.idLabel')}
+                </Label>
                 <Input
                   id="skill-id"
                   value={id}
                   onChange={(e) => setId(e.target.value)}
-                  placeholder="my-helper"
+                  placeholder={t('web.plugins.skills.editor.idPlaceholder')}
                   required
                   className="font-mono"
                 />
                 <p className="text-[10.5px] text-muted-foreground/80">
-                  Lowercase / digits / dash / underscore. Becomes the directory
-                  name under <code>~/.opendray/vault/skills/&lt;id&gt;/</code>.
+                  <Trans
+                    i18nKey="web.plugins.skills.editor.idHint"
+                    components={{ 1: <code /> }}
+                  />
                 </p>
               </div>
             )}
             <div className="space-y-1.5">
-              <Label htmlFor="skill-body">SKILL.md</Label>
+              <Label htmlFor="skill-body">
+                {t('web.plugins.skills.editor.bodyLabel')}
+              </Label>
               <textarea
                 id="skill-body"
                 value={body}
@@ -1111,15 +1208,15 @@ function SkillEditor({ open, onOpenChange, mode, editingId }: SkillEditorProps) 
                 onClick={() => onOpenChange(false)}
                 disabled={busy}
               >
-                Cancel
+                {t('web.plugins.common.cancel')}
               </Button>
               <Button type="submit" variant="accent" size="sm" disabled={busy}>
                 {busy && <Loader2 className="size-3.5 animate-spin" />}
                 {mode === 'create'
-                  ? 'Create'
+                  ? t('web.plugins.common.create')
                   : isCustomizingBuiltin
-                    ? 'Save as vault override'
-                    : 'Save'}
+                    ? t('web.plugins.skills.editor.saveAsOverride')
+                    : t('web.plugins.common.save')}
               </Button>
             </DialogFooter>
           </form>
@@ -1130,6 +1227,7 @@ function SkillEditor({ open, onOpenChange, mode, editingId }: SkillEditorProps) 
 }
 
 function CustomTasksSection() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['custom-tasks-all'],
@@ -1143,18 +1241,20 @@ function CustomTasksSection() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['custom-tasks-all'] })
       qc.invalidateQueries({ queryKey: ['custom-tasks'] })
-      toast.success('Task removed')
+      toast.success(t('web.plugins.customTasks.removedToast'))
     },
     onError: (err: Error) =>
-      toast.error('Delete failed', { description: err.message }),
+      toast.error(t('web.plugins.customTasks.deleteFailedToast'), {
+        description: err.message,
+      }),
   })
 
   return (
     <CollapsibleSection
       id="custom-tasks"
       icon={<Play className="size-4 text-muted-foreground" />}
-      title="Custom tasks"
-      description="Click-to-run shortcuts surfaced in the Tasks tab. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope."
+      title={t('web.plugins.customTasks.title')}
+      description={t('web.plugins.customTasks.description')}
       action={
         <Button
           variant="accent"
@@ -1163,7 +1263,7 @@ function CustomTasksSection() {
           className="gap-1"
         >
           <Plus className="size-3.5" />
-          Add task
+          {t('web.plugins.customTasks.addTask')}
         </Button>
       }
     >
@@ -1171,44 +1271,52 @@ function CustomTasksSection() {
         {isLoading ? (
           <div className="px-4 py-6 flex items-center gap-2 text-[12px] text-muted-foreground">
             <Loader2 className="size-3 animate-spin" />
-            Loading…
+            {t('web.plugins.common.loading')}
           </div>
         ) : (tasks ?? []).length === 0 ? (
           <div className="px-4 py-8 text-center text-[12px] text-muted-foreground">
-            No custom tasks yet.
+            {t('web.plugins.customTasks.empty')}
           </div>
         ) : (
           <table className="w-full text-[12px]">
             <thead className="bg-card/40 text-[10px] uppercase tracking-wider text-muted-foreground/70">
               <tr>
-                <th className="text-left px-3 py-2 font-medium">Name</th>
-                <th className="text-left px-3 py-2 font-medium">Command</th>
-                <th className="text-left px-3 py-2 font-medium">Scope</th>
+                <th className="text-left px-3 py-2 font-medium">
+                  {t('web.plugins.customTasks.columns.name')}
+                </th>
+                <th className="text-left px-3 py-2 font-medium">
+                  {t('web.plugins.customTasks.columns.command')}
+                </th>
+                <th className="text-left px-3 py-2 font-medium">
+                  {t('web.plugins.customTasks.columns.scope')}
+                </th>
                 <th className="px-3 py-2"></th>
               </tr>
             </thead>
             <tbody>
-              {tasks!.map((t) => (
+              {tasks!.map((task) => (
                 <tr
-                  key={t.id}
+                  key={task.id}
                   className="border-t border-border hover:bg-card/40 align-top"
                 >
                   <td className="px-3 py-2">
-                    <div className="font-medium">{t.name}</div>
-                    {t.description && (
+                    <div className="font-medium">{task.name}</div>
+                    {task.description && (
                       <div className="text-[10px] text-muted-foreground/70 italic">
-                        {t.description}
+                        {task.description}
                       </div>
                     )}
                   </td>
                   <td className="px-3 py-2 font-mono text-[11px] break-all">
-                    {t.command}
+                    {task.command}
                   </td>
                   <td className="px-3 py-2 font-mono text-[10px]">
-                    {t.cwd ? (
-                      <span title={t.cwd}>{trimPath(t.cwd)}</span>
+                    {task.cwd ? (
+                      <span title={task.cwd}>{trimPath(task.cwd)}</span>
                     ) : (
-                      <span className="text-muted-foreground/70">global</span>
+                      <span className="text-muted-foreground/70">
+                        {t('web.plugins.customTasks.globalScope')}
+                      </span>
                     )}
                   </td>
                   <td className="px-3 py-2 text-right">
@@ -1216,18 +1324,24 @@ function CustomTasksSection() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setEditing(t)}
+                        onClick={() => setEditing(task)}
                         className="h-7 px-2 text-[11px] gap-1"
                       >
                         <Pencil className="size-3" />
-                        Edit
+                        {t('web.plugins.common.edit')}
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          if (confirm(`Delete custom task "${t.name}"?`)) {
-                            remove.mutate(t.id)
+                          if (
+                            confirm(
+                              t('web.plugins.customTasks.deleteConfirm', {
+                                name: task.name,
+                              }),
+                            )
+                          ) {
+                            remove.mutate(task.id)
                           }
                         }}
                         className="h-7 px-2 text-[11px] gap-1 text-muted-foreground hover:text-destructive"
@@ -1272,6 +1386,7 @@ interface CustomTaskDialogProps {
 }
 
 function CustomTaskDialog({ open, onOpenChange, mode, task }: CustomTaskDialogProps) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [name, setName] = useState(task?.name ?? '')
   const [command, setCommand] = useState(task?.command ?? '')
@@ -1291,11 +1406,13 @@ function CustomTaskDialog({ open, onOpenChange, mode, task }: CustomTaskDialogPr
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['custom-tasks-all'] })
       qc.invalidateQueries({ queryKey: ['custom-tasks'] })
-      toast.success('Task added')
+      toast.success(t('web.plugins.customTasks.dialog.addedToast'))
       onOpenChange(false)
     },
     onError: (err: Error) =>
-      toast.error('Add failed', { description: err.message }),
+      toast.error(t('web.plugins.customTasks.dialog.addFailedToast'), {
+        description: err.message,
+      }),
   })
 
   const update = useMutation({
@@ -1304,11 +1421,13 @@ function CustomTaskDialog({ open, onOpenChange, mode, task }: CustomTaskDialogPr
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['custom-tasks-all'] })
       qc.invalidateQueries({ queryKey: ['custom-tasks'] })
-      toast.success('Task updated')
+      toast.success(t('web.plugins.customTasks.dialog.updatedToast'))
       onOpenChange(false)
     },
     onError: (err: Error) =>
-      toast.error('Update failed', { description: err.message }),
+      toast.error(t('web.plugins.customTasks.dialog.updateFailedToast'), {
+        description: err.message,
+      }),
   })
 
   const submit = (e: FormEvent) => {
@@ -1324,58 +1443,66 @@ function CustomTaskDialog({ open, onOpenChange, mode, task }: CustomTaskDialogPr
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {mode === 'create' ? 'Add custom task' : `Edit ${task?.name}`}
+            {mode === 'create'
+              ? t('web.plugins.customTasks.dialog.addTitle')
+              : t('web.plugins.customTasks.dialog.editTitle', { name: task?.name })}
           </DialogTitle>
           <DialogDescription>
-            The command is sent verbatim into the session's terminal. Same as
-            typing it at the prompt and pressing Enter.
+            {t('web.plugins.customTasks.dialog.description')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-3 mt-2">
           <div className="space-y-1.5">
-            <Label htmlFor="task-name">Name</Label>
+            <Label htmlFor="task-name">
+              {t('web.plugins.customTasks.dialog.nameLabel')}
+            </Label>
             <Input
               id="task-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="dev"
+              placeholder={t('web.plugins.customTasks.dialog.namePlaceholder')}
               required
               autoFocus
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="task-cmd">Command</Label>
+            <Label htmlFor="task-cmd">
+              {t('web.plugins.customTasks.dialog.commandLabel')}
+            </Label>
             <Textarea
               id="task-cmd"
               value={command}
               onChange={(e) => setCommand(e.target.value)}
-              placeholder="docker compose up --build"
+              placeholder={t('web.plugins.customTasks.dialog.commandPlaceholder')}
               rows={2}
               required
               className="font-mono text-[12px]"
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="task-desc">Description (optional)</Label>
+            <Label htmlFor="task-desc">
+              {t('web.plugins.customTasks.dialog.descLabel')}
+            </Label>
             <Input
               id="task-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Boots dev infra and tails logs"
+              placeholder={t('web.plugins.customTasks.dialog.descPlaceholder')}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="task-cwd">Cwd scope (optional)</Label>
+            <Label htmlFor="task-cwd">
+              {t('web.plugins.customTasks.dialog.cwdLabel')}
+            </Label>
             <Input
               id="task-cwd"
               value={cwd}
               onChange={(e) => setCwd(e.target.value)}
-              placeholder="/Users/me/projects/foo  (blank = global)"
+              placeholder={t('web.plugins.customTasks.dialog.cwdPlaceholder')}
               className="font-mono text-[12px]"
             />
             <p className="text-[10.5px] text-muted-foreground/80">
-              Blank = visible in every session. Otherwise the task only shows
-              when the session's cwd matches this absolute path.
+              {t('web.plugins.customTasks.dialog.cwdHint')}
             </p>
           </div>
           <DialogFooter>
@@ -1386,11 +1513,13 @@ function CustomTaskDialog({ open, onOpenChange, mode, task }: CustomTaskDialogPr
               onClick={() => onOpenChange(false)}
               disabled={busy}
             >
-              Cancel
+              {t('web.plugins.common.cancel')}
             </Button>
             <Button type="submit" variant="accent" size="sm" disabled={busy}>
               {busy && <Loader2 className="size-3.5 animate-spin" />}
-              {mode === 'create' ? 'Add' : 'Save'}
+              {mode === 'create'
+                ? t('web.plugins.common.add')
+                : t('web.plugins.common.save')}
             </Button>
           </DialogFooter>
         </form>
@@ -1400,6 +1529,7 @@ function CustomTaskDialog({ open, onOpenChange, mode, task }: CustomTaskDialogPr
 }
 
 function GitHostsSection() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const { data: hosts, isLoading } = useQuery({
     queryKey: ['git-hosts'],
@@ -1412,24 +1542,24 @@ function GitHostsSection() {
     mutationFn: deleteGitHost,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['git-hosts'] })
-      toast.success('Git host removed')
+      toast.success(t('web.plugins.gitHosts.removedToast'))
     },
     onError: (err: Error) =>
-      toast.error('Delete failed', { description: err.message }),
+      toast.error(t('web.plugins.gitHosts.deleteFailedToast'), {
+        description: err.message,
+      }),
   })
 
   return (
     <CollapsibleSection
       id="git-hosts"
       icon={<GitBranch className="size-4 text-muted-foreground" />}
-      title="Git hosts"
+      title={t('web.plugins.gitHosts.title')}
       description={
-        <>
-          One token per host — used by the Git tab to fetch pull requests
-          <strong> and by the Notes vault sync</strong> when its remote uses
-          HTTPS to a private repo on the same host. GitHub.com, self-hosted
-          GitHub Enterprise, Gitea, and GitLab are supported.
-        </>
+        <Trans
+          i18nKey="web.plugins.gitHosts.description"
+          components={{ 1: <strong /> }}
+        />
       }
       action={
         <Button
@@ -1439,7 +1569,7 @@ function GitHostsSection() {
           className="gap-1"
         >
           <Plus className="size-3.5" />
-          Add host
+          {t('web.plugins.gitHosts.addHost')}
         </Button>
       }
     >
@@ -1447,22 +1577,28 @@ function GitHostsSection() {
         {isLoading ? (
           <div className="px-4 py-6 flex items-center gap-2 text-[12px] text-muted-foreground">
             <Loader2 className="size-3 animate-spin" />
-            Loading…
+            {t('web.plugins.common.loading')}
           </div>
         ) : (hosts ?? []).length === 0 ? (
-          <div className="px-4 py-8 text-center text-[12px] text-muted-foreground">
-            No git hosts configured.
-            <br />
-            Add one to enable the PR list in the inspector's Git tab.
+          <div className="px-4 py-8 text-center text-[12px] text-muted-foreground whitespace-pre-line">
+            {t('web.plugins.gitHosts.empty')}
           </div>
         ) : (
           <table className="w-full text-[12px]">
             <thead className="bg-card/40 text-[10px] uppercase tracking-wider text-muted-foreground/70">
               <tr>
-                <th className="text-left px-3 py-2 font-medium">Host</th>
-                <th className="text-left px-3 py-2 font-medium">Kind</th>
-                <th className="text-left px-3 py-2 font-medium">Token</th>
-                <th className="text-left px-3 py-2 font-medium">Enabled</th>
+                <th className="text-left px-3 py-2 font-medium">
+                  {t('web.plugins.gitHosts.columns.host')}
+                </th>
+                <th className="text-left px-3 py-2 font-medium">
+                  {t('web.plugins.gitHosts.columns.kind')}
+                </th>
+                <th className="text-left px-3 py-2 font-medium">
+                  {t('web.plugins.gitHosts.columns.token')}
+                </th>
+                <th className="text-left px-3 py-2 font-medium">
+                  {t('web.plugins.gitHosts.columns.enabled')}
+                </th>
                 <th className="px-3 py-2"></th>
               </tr>
             </thead>
@@ -1501,7 +1637,9 @@ function GitHostsSection() {
                             : 'bg-muted-foreground/40',
                         )}
                       />
-                      {h.enabled ? 'enabled' : 'disabled'}
+                      {h.enabled
+                        ? t('web.plugins.gitHosts.statusEnabled')
+                        : t('web.plugins.gitHosts.statusDisabled')}
                     </span>
                   </td>
                   <td className="px-3 py-2 text-right">
@@ -1513,7 +1651,7 @@ function GitHostsSection() {
                         className="h-7 px-2 text-[11px] gap-1"
                       >
                         <Pencil className="size-3" />
-                        Edit
+                        {t('web.plugins.common.edit')}
                       </Button>
                       <Button
                         variant="ghost"
@@ -1521,7 +1659,9 @@ function GitHostsSection() {
                         onClick={() => {
                           if (
                             confirm(
-                              `Remove git host ${h.host}? PR queries against this host will stop working.`,
+                              t('web.plugins.gitHosts.deleteConfirm', {
+                                host: h.host,
+                              }),
                             )
                           ) {
                             remove.mutate(h.id)
@@ -1563,6 +1703,7 @@ interface GitHostDialogProps {
 }
 
 function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [kind, setKind] = useState<GitHostKind>(host?.kind ?? 'github')
   const [hostName, setHostName] = useState(host?.host ?? '')
@@ -1584,11 +1725,13 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
     mutationFn: () => createGitHost({ kind, host: hostName, name, token }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['git-hosts'] })
-      toast.success('Git host added')
+      toast.success(t('web.plugins.gitHosts.dialog.addedToast'))
       onOpenChange(false)
     },
     onError: (err: Error) =>
-      toast.error('Add failed', { description: err.message }),
+      toast.error(t('web.plugins.gitHosts.dialog.addFailedToast'), {
+        description: err.message,
+      }),
   })
 
   const update = useMutation({
@@ -1602,11 +1745,13 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['git-hosts'] })
-      toast.success('Git host updated')
+      toast.success(t('web.plugins.gitHosts.dialog.updatedToast'))
       onOpenChange(false)
     },
     onError: (err: Error) =>
-      toast.error('Update failed', { description: err.message }),
+      toast.error(t('web.plugins.gitHosts.dialog.updateFailedToast'), {
+        description: err.message,
+      }),
   })
 
   const submit = (e: FormEvent) => {
@@ -1622,17 +1767,20 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {mode === 'create' ? 'Add git host' : `Edit ${host?.host}`}
+            {mode === 'create'
+              ? t('web.plugins.gitHosts.dialog.addTitle')
+              : t('web.plugins.gitHosts.dialog.editTitle', { host: host?.host })}
           </DialogTitle>
           <DialogDescription>
-            Token is stored on the gateway. Used only for read-only API
-            calls (list PRs, etc.).
+            {t('web.plugins.gitHosts.dialog.description')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-3 mt-2">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="kind">Kind</Label>
+              <Label htmlFor="kind">
+                {t('web.plugins.gitHosts.dialog.kindLabel')}
+              </Label>
               <Select
                 value={kind}
                 onValueChange={(v) => setKind(v as GitHostKind)}
@@ -1641,31 +1789,41 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="github">GitHub</SelectItem>
-                  <SelectItem value="gitea">Gitea</SelectItem>
-                  <SelectItem value="gitlab">GitLab</SelectItem>
+                  <SelectItem value="github">
+                    {t('web.plugins.gitHosts.dialog.kindGitHub')}
+                  </SelectItem>
+                  <SelectItem value="gitea">
+                    {t('web.plugins.gitHosts.dialog.kindGitea')}
+                  </SelectItem>
+                  <SelectItem value="gitlab">
+                    {t('web.plugins.gitHosts.dialog.kindGitLab')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="host">Host</Label>
+              <Label htmlFor="host">
+                {t('web.plugins.gitHosts.dialog.hostLabel')}
+              </Label>
               <Input
                 id="host"
                 value={hostName}
                 onChange={(e) => setHostName(e.target.value)}
-                placeholder="github.com"
+                placeholder={t('web.plugins.gitHosts.dialog.hostPlaceholder')}
                 required
                 autoFocus
               />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="name">Display name (optional)</Label>
+            <Label htmlFor="name">
+              {t('web.plugins.gitHosts.dialog.displayNameLabel')}
+            </Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Personal"
+              placeholder={t('web.plugins.gitHosts.dialog.displayNamePlaceholder')}
             />
           </div>
           <div className="space-y-1.5">
@@ -1674,7 +1832,9 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
               className="flex items-center gap-1.5 text-foreground"
             >
               <KeyRound className="size-3 text-muted-foreground" />
-              {mode === 'create' ? 'Token' : 'New token (leave blank to keep)'}
+              {mode === 'create'
+                ? t('web.plugins.gitHosts.dialog.tokenLabel')
+                : t('web.plugins.gitHosts.dialog.newTokenLabel')}
             </Label>
             <Input
               id="token"
@@ -1682,14 +1842,18 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
               value={token}
               onChange={(e) => setToken(e.target.value)}
               placeholder={
-                mode === 'create' ? 'ghp_… / gho_… / glpat-…' : '…'
+                mode === 'create'
+                  ? t('web.plugins.gitHosts.dialog.tokenPlaceholder')
+                  : t('web.plugins.gitHosts.dialog.tokenPlaceholderEdit')
               }
               required={mode === 'create'}
               className="font-mono"
             />
             <p className="text-[10.5px] text-muted-foreground/80">
-              GitHub: PAT with <code>repo</code> scope. Gitea: token with{' '}
-              <code>read:repository</code>. GitLab: PAT with <code>read_api</code>.
+              <Trans
+                i18nKey="web.plugins.gitHosts.dialog.tokenHint"
+                components={{ 1: <code />, 3: <code />, 5: <code /> }}
+              />
             </p>
           </div>
           {mode === 'edit' && (
@@ -1700,7 +1864,7 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
                 onCheckedChange={setEnabled}
               />
               <Label htmlFor="enabled" className="text-[12px]">
-                Enabled
+                {t('web.plugins.gitHosts.dialog.enabledLabel')}
               </Label>
             </div>
           )}
@@ -1712,11 +1876,13 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
               onClick={() => onOpenChange(false)}
               disabled={busy}
             >
-              Cancel
+              {t('web.plugins.common.cancel')}
             </Button>
             <Button type="submit" variant="accent" size="sm" disabled={busy}>
               {busy && <Loader2 className="size-3.5 animate-spin" />}
-              {mode === 'create' ? 'Add' : 'Save'}
+              {mode === 'create'
+                ? t('web.plugins.common.add')
+                : t('web.plugins.common.save')}
             </Button>
           </DialogFooter>
         </form>
