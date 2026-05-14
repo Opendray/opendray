@@ -38,6 +38,24 @@ class IndexAwareCircularBuffer<T extends IndexedItem> {
   @pragma('vm:prefer-inline')
   void _adoptChild(int index, T child) {
     final cyclicIndex = _getCyclicIndex(index);
+    // Buffer.scrollUp/scrollDown shifts lines with `[i] = [i ± n]`
+    // for zero-copy line moves. The RHS line is still attached at
+    // its prior cyclic slot when the LHS adoption runs; a later
+    // iteration that overwrites the prior slot would then _detach
+    // the same line we just re-attached here, leaving an
+    // `attached=false` reference behind in the backing array.
+    // The next insert() walking past that slot trips
+    // IndexedItem._move's `assert(attached)` — observed in Codex
+    // sessions on mobile under DECSTBM with a full scrollback.
+    // Null the prior slot before re-attaching so no dangling
+    // reference can survive the surrounding loop.
+    if (identical(child._owner, this)) {
+      final priorCyclic = _getCyclicIndex(child.index);
+      if (priorCyclic != cyclicIndex &&
+          identical(_array[priorCyclic], child)) {
+        _array[priorCyclic] = null;
+      }
+    }
     _array[cyclicIndex]?._detach();
     _array[cyclicIndex] = child.._attach(this, index);
   }

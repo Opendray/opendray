@@ -244,4 +244,125 @@ void main() {
       expect(terminal.buffer.lines[2].toString(), '');
     });
   });
+
+  // Smoke tests around the codex crash path. The strict
+  // regression is `IndexAwareCircularBuffer zero-copy ref shift
+  // via []= leaves no dangling refs before insert` in
+  // circular_buffer_test.dart — these two only exercise the
+  // surrounding Buffer plumbing so we'd catch a future Buffer-
+  // level change that re-introduces a different shape of the
+  // same dangling-reference bug.
+  group('Buffer scroll + insert smoke (codex crash neighbourhood)', () {
+    test('scrollUp followed by insert past the region survives', () {
+      // Direct reproduction of the codex crash without relying on
+      // ANSI escape decoding: call scrollUp inside a margin (which
+      // is what Buffer.index() does on IND/LF at marginBottom),
+      // then call lines.insert past the region (which is what
+      // Buffer.index() does in the marginTop==0 branch). Before
+      // the fix, scrollUp leaves dangling line refs in the
+      // backing array; insert's _moveChild walks one and trips
+      // IndexedItem._move's `assert(attached)`.
+      // Stay at the default 24-row viewport: maxLines must be
+      // >= viewHeight (Buffer's ctor seeds viewHeight empty
+      // lines), and Terminal.resize(_, h) pops from the same
+      // ring, so any maxLines below the default viewHeight
+      // trips an unrelated assertion inside resize.
+      const viewHeight = 24;
+      final terminal = Terminal(maxLines: viewHeight);
+      final buffer = terminal.buffer;
+
+      // Fill the ring so its _startIndex moves off zero — the
+      // cyclic-index arithmetic is where the dangling reference
+      // becomes observable.
+      for (var i = 0; i < viewHeight * 3; i++) {
+        terminal.write('row $i\r\n');
+      }
+
+      // Install a DECSTBM-style region [0..3] and scroll inside it.
+      buffer.setVerticalMargins(0, 3);
+      buffer.scrollUp(1);
+
+      // Now ask insert() to walk through the dangling slots.
+      // absoluteMarginBottom + 1 lands in the middle of the
+      // backing array, which routes through the for-loop in
+      // IndexAwareCircularBuffer.insert.
+      buffer.lines.insert(
+        buffer.absoluteMarginBottom + 1,
+        buffer.lines[0],
+      );
+
+      // No crash = pass. Verify every slot is still attached as a
+      // belt-and-braces guard against silent corruption.
+      for (var i = 0; i < buffer.lines.length; i++) {
+        expect(buffer.lines[i], isNotNull,
+            reason: 'lines[$i] should not be null after scrollUp+insert');
+      }
+    });
+
+    test(
+      'DECSTBM scrolling region + full scrollback + lineFeed survives',
+      () {
+        // Reproduces the mobile Codex crash:
+        //
+        //   'package:xterm/.../circular_buffer.dart': Failed
+        //   assertion: line 312 pos 12: 'attached': is not true.
+        //   #2  IndexedItem._move
+        //   #3  IndexAwareCircularBuffer._moveChild
+        //   #4  IndexAwareCircularBuffer.insert
+        //   #5  Buffer.index
+        //   #6  Buffer.lineFeed
+        //
+        // Path: codex sets a DECSTBM scroll region inside the
+        // main buffer, fills the scrollback to maxLines, then
+        // line-feeds at the bottom of the region. scrollUp's
+        // zero-copy `lines[i] = lines[i+1]` used to leave
+        // dangling line refs in the backing array, which the
+        // subsequent `lines.insert(absoluteMarginBottom + 1, …)`
+        // tripped over.
+        //
+        // The crash needs three things together:
+        //   1. main buffer (not alt — see buffer.dart line 238)
+        //   2. marginTop == 0 with marginBottom < viewHeight - 1
+        //   3. buffer.lines._length == maxLines (so insert() walks
+        //      the _moveChild loop instead of taking the push path)
+        //
+        // maxLines must be >= viewHeight (Buffer ctor pushes
+        // viewHeight empties), so we pick the smallest legal
+        // value that still lets us fill the ring quickly.
+        const viewHeight = 24;
+        final terminal = Terminal(maxLines: viewHeight);
+
+        // Push more lines than maxLines so the ring's
+        // _startIndex moves off zero — the cyclic-index math is
+        // exactly where the dangling reference manifests.
+        for (var i = 0; i < viewHeight * 2; i++) {
+          terminal.write('line $i\r\n');
+        }
+
+        // DECSTBM: scroll region rows 1..4 (1-indexed wire
+        // protocol → marginTop=0, marginBottom=3). Codex pins a
+        // status panel near the top with a similar shape.
+        terminal.write('\x1b[1;4r');
+
+        // Park the cursor on the bottom row of the region and
+        // pump line feeds. Each LF at marginBottom runs
+        // Buffer.index() → lines.insert(absoluteMarginBottom + 1,
+        // …); before the fix, the dangling reference left by a
+        // previous IND tripped IndexedItem._move's
+        // assert(attached).
+        terminal.write('\x1b[4;1H');
+        for (var i = 0; i < viewHeight * 3; i++) {
+          terminal.write('row $i\n');
+        }
+
+        // Reach this point at all = no crash. Sanity-check that
+        // every line in the buffer is still a valid (attached)
+        // BufferLine.
+        for (var i = 0; i < terminal.buffer.lines.length; i++) {
+          expect(terminal.buffer.lines[i], isNotNull,
+              reason: 'lines[$i] should not be null after scroll');
+        }
+      },
+    );
+  });
 }

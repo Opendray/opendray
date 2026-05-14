@@ -330,6 +330,57 @@ void main() {
       expect(cl.length, 0);
     });
 
+    test(
+        'zero-copy ref shift via []= leaves no dangling refs before insert',
+        () {
+      // Reproduces the crash that mobile Codex sessions hit:
+      // Buffer.scrollUp/scrollDown shifts BufferLine references with
+      // `lines[i] = lines[i + n]`, which used to leave the same line
+      // referenced from two cyclic slots until the source slot was
+      // reassigned. _adoptChild on the source slot would then detach
+      // the line we just re-attached, leaving an `attached=false`
+      // reference behind. The next insert() walking past that slot
+      // tripped IndexedItem._move's `assert(attached)`.
+      final cl = IndexAwareCircularBuffer<IndexedValue<int>>(8);
+      cl.pushAll(
+        List<int>.generate(8, (i) => i).map(IndexedValue.new),
+      );
+
+      // Simulate scrollUp(1) on the inner region [1..6]:
+      //   for i in [1..5]: lines[i] = lines[i + 1]
+      //   lines[6] = new
+      for (var i = 1; i <= 5; i++) {
+        cl[i] = cl[i + 1];
+      }
+      cl[6] = IndexedValue(99);
+
+      // Post-condition: no slot in the backing array should hold a
+      // detached item — every visible cl[i] must be attached, and
+      // calling insert() must not trip the _move() assertion.
+      for (var i = 0; i < cl.length; i++) {
+        expect(cl[i].attached, isTrue, reason: 'cl[$i] should be attached');
+      }
+      expect(cl[1].value, 2);
+      expect(cl[5].value, 6);
+      expect(cl[6].value, 99);
+
+      // The bug: this call used to throw `'attached': is not true`
+      // because _moveChild walked over a dangling slot.
+      cl.insert(3, IndexedValue(77));
+
+      expect(cl.length, 8);
+      // Buffer is full, so insert drops the head element to make
+      // room; the user-visible indices shift left by one, which
+      // is why the inserted value ends up at cl[2] rather than
+      // cl[3] (see the "insert circular works" test for the
+      // same convention).
+      expect(cl[2].value, 77);
+      expect(cl[0].value, 2);
+      for (var i = 0; i < cl.length; i++) {
+        expect(cl[i].attached, isTrue, reason: 'cl[$i] should be attached');
+      }
+    });
+
     test('can track index of items', () {
       final cl = IndexAwareCircularBuffer<IndexedValue<int>>(3);
       final item0 = IndexedValue(0);
