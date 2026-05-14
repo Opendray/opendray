@@ -11,6 +11,7 @@ import { useState } from 'react'
 import { useSearch, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { AlertCircle, Folder, FolderSearch } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,7 @@ import { FileBrowserDialog } from '@/components/sessions/FileBrowserDialog'
 import { listScopeKeys } from '@/lib/memory'
 
 export function ProjectPage() {
+  const { t } = useTranslation()
   const search = useSearch({ strict: false }) as { cwd?: string }
   const navigate = useNavigate()
   const [picker, setPicker] = useState('')
@@ -33,14 +35,13 @@ export function ProjectPage() {
   if (!search.cwd) {
     return (
       <div className="mx-auto max-w-2xl space-y-4 p-6">
-        <h1 className="text-xl font-semibold">Pick a project</h1>
+        <h1 className="text-xl font-semibold">{t('web.project.picker.title')}</h1>
         <p className="text-muted-foreground text-sm">
-          Project memory is scoped by working directory. Pick one to manage its
-          goal, plan, journal, and cleanup queue.
+          {t('web.project.picker.subtitle')}
         </p>
         <div className="flex gap-2">
           <Input
-            placeholder="/path/to/your/project"
+            placeholder={t('web.project.picker.pathPlaceholder')}
             value={picker}
             onChange={(e) => setPicker(e.target.value)}
             className="font-mono"
@@ -48,10 +49,10 @@ export function ProjectPage() {
           <Button
             variant="outline"
             onClick={() => setBrowserOpen(true)}
-            title="Browse the gateway host's filesystem"
+            title={t('web.project.picker.browseTooltip')}
           >
             <FolderSearch className="mr-1 size-3.5" />
-            Browse
+            {t('web.project.picker.browse')}
           </Button>
           <Button
             disabled={!picker.trim()}
@@ -62,7 +63,7 @@ export function ProjectPage() {
               })
             }
           >
-            Open
+            {t('web.project.picker.open')}
           </Button>
         </div>
         <FileBrowserDialog
@@ -80,7 +81,7 @@ export function ProjectPage() {
         {projectsQuery.data && projectsQuery.data.length > 0 && (
           <div className="space-y-1">
             <p className="text-muted-foreground text-xs">
-              Recent projects (from stored memory):
+              {t('web.project.picker.recentLabel')}
             </p>
             {sortProjectsValidFirst(projectsQuery.data).map((cwd) => {
               const orphan = isLikelyOrphanScope(cwd)
@@ -97,9 +98,7 @@ export function ProjectPage() {
                     })
                   }
                   title={
-                    orphan
-                      ? 'Looks like a truncated scope_key (old mirror import bug). May have no project docs.'
-                      : undefined
+                    orphan ? t('web.project.picker.orphanTooltip') : undefined
                   }
                 >
                   {orphan ? (
@@ -110,7 +109,7 @@ export function ProjectPage() {
                   <span className="truncate font-mono text-xs">{cwd}</span>
                   {orphan && (
                     <span className="text-muted-foreground ml-auto text-[10px]">
-                      orphan
+                      {t('web.project.picker.orphanBadge')}
                     </span>
                   )}
                 </button>

@@ -23,6 +23,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -63,7 +64,23 @@ interface ProjectScreenProps {
   cwd: string
 }
 
+function useDocLabel() {
+  const { t } = useTranslation()
+  return (kind: DocKind | 'goal' | 'plan'): string =>
+    t(`web.project.docLabel.${kind}`)
+}
+
+function useVerdictLabel() {
+  const { t } = useTranslation()
+  return (v: string): string => {
+    if (v === 'stale') return t('web.project.verdictLabel.stale')
+    if (v === 'duplicate') return t('web.project.verdictLabel.duplicate')
+    return t('web.project.verdictLabel.keep')
+  }
+}
+
 export function ProjectScreen({ cwd }: ProjectScreenProps) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
 
   const docsQuery = useQuery({
@@ -106,11 +123,13 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
 
   const inboxCount = proposalsQuery.data?.length ?? 0
   const cleanupCount = decisionsQuery.data?.length ?? 0
+  const docsCount = (docsQuery.data ?? []).length
+  const journalCount = (logsQuery.data ?? []).length
 
   if (!cwd) {
     return (
       <div className="text-muted-foreground p-8 text-center text-sm">
-        Pick a project to manage its memory.
+        {t('web.project.noCwd')}
       </div>
     )
   }
@@ -122,14 +141,20 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
           <div>
             <div className="text-muted-foreground font-mono text-xs">{cwd}</div>
             <div className="mt-1 flex items-center gap-3 text-xs">
-              <span>{(docsQuery.data ?? []).length} docs</span>
+              <span>
+                {t('web.project.header.docsCount', { count: docsCount })}
+              </span>
               <span>·</span>
-              <span>{(logsQuery.data ?? []).length} journal entries</span>
+              <span>
+                {t('web.project.header.journalEntries', { count: journalCount })}
+              </span>
               {inboxCount > 0 && (
                 <>
                   <span>·</span>
                   <Badge variant="danger" className="text-[10px]">
-                    {inboxCount} pending proposal{inboxCount > 1 ? 's' : ''}
+                    {t('web.project.header.pendingProposals', {
+                      count: inboxCount,
+                    })}
                   </Badge>
                 </>
               )}
@@ -137,7 +162,9 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
                 <>
                   <span>·</span>
                   <Badge variant="muted" className="text-[10px]">
-                    {cleanupCount} cleanup pending
+                    {t('web.project.header.cleanupPending', {
+                      count: cleanupCount,
+                    })}
                   </Badge>
                 </>
               )}
@@ -158,13 +185,17 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
 
       <Tabs defaultValue="goal" className="flex flex-1 flex-col overflow-hidden">
         <TabsList className="bg-muted/30 mx-4 mt-3 w-fit">
-          <TabsTrigger value="goal">Goal</TabsTrigger>
-          <TabsTrigger value="plan">Plan</TabsTrigger>
-          <TabsTrigger value="tech">Tech</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-          <TabsTrigger value="journal">Journal</TabsTrigger>
+          <TabsTrigger value="goal">{t('web.project.tabs.goal')}</TabsTrigger>
+          <TabsTrigger value="plan">{t('web.project.tabs.plan')}</TabsTrigger>
+          <TabsTrigger value="tech">{t('web.project.tabs.tech')}</TabsTrigger>
+          <TabsTrigger value="activity">
+            {t('web.project.tabs.activity')}
+          </TabsTrigger>
+          <TabsTrigger value="journal">
+            {t('web.project.tabs.journal')}
+          </TabsTrigger>
           <TabsTrigger value="inbox" className="relative">
-            Inbox
+            {t('web.project.tabs.inbox')}
             {inboxCount > 0 && (
               <span className="bg-destructive text-destructive-foreground absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold">
                 {inboxCount}
@@ -172,7 +203,7 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
             )}
           </TabsTrigger>
           <TabsTrigger value="cleanup" className="relative">
-            Cleanup
+            {t('web.project.tabs.cleanup')}
             {cleanupCount > 0 && (
               <span className="bg-secondary absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold">
                 {cleanupCount}
@@ -200,19 +231,11 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
         </TabsContent>
 
         <TabsContent value="tech" className="flex-1 overflow-auto p-4">
-          <ReadonlyDocTab
-            doc={docsByKind.tech_stack}
-            kindLabel="Tech stack & structure"
-            emptyHint="Run a Claude session in this project — scanner refreshes on every spawn."
-          />
+          <ReadonlyDocTab doc={docsByKind.tech_stack} kind="tech_stack" />
         </TabsContent>
 
         <TabsContent value="activity" className="flex-1 overflow-auto p-4">
-          <ReadonlyDocTab
-            doc={docsByKind.recent_activity}
-            kindLabel="Recent activity (git → LLM)"
-            emptyHint="The git activity summariser runs every 24h; check back after the next scheduler tick."
-          />
+          <ReadonlyDocTab doc={docsByKind.recent_activity} kind="recent_activity" />
         </TabsContent>
 
         <TabsContent value="journal" className="flex-1 overflow-auto p-4">
@@ -257,6 +280,8 @@ interface DocEditorProps {
 }
 
 function DocEditor({ cwd, kind, doc, onSaved }: DocEditorProps) {
+  const { t } = useTranslation()
+  const labelFor = useDocLabel()
   const [text, setText] = useState(doc?.content ?? '')
   const [dirty, setDirty] = useState(false)
   useMemo(() => {
@@ -269,10 +294,14 @@ function DocEditor({ cwd, kind, doc, onSaved }: DocEditorProps) {
     onSuccess: () => {
       setDirty(false)
       onSaved()
-      toast.success(`${labelFor(kind)} saved`)
+      toast.success(
+        t('web.project.editor.savedToast', { label: labelFor(kind) }),
+      )
     },
     onError: (e: Error) =>
-      toast.error('Save failed', { description: e.message }),
+      toast.error(t('web.project.editor.saveFailedToast'), {
+        description: e.message,
+      }),
   })
 
   return (
@@ -281,13 +310,15 @@ function DocEditor({ cwd, kind, doc, onSaved }: DocEditorProps) {
         <span>
           {doc ? (
             <>
-              Updated by <strong>{doc.updated_by}</strong>{' '}
+              {t('web.project.editor.updatedBy')} <strong>{doc.updated_by}</strong>{' '}
               <span className="ml-1">
                 {new Date(doc.updated_at).toLocaleString()}
               </span>
             </>
           ) : (
-            <span>No {labelFor(kind).toLowerCase()} set yet.</span>
+            <span>
+              {t('web.project.editor.noDocSet', { label: labelFor(kind) })}
+            </span>
           )}
         </span>
         <Button
@@ -300,7 +331,7 @@ function DocEditor({ cwd, kind, doc, onSaved }: DocEditorProps) {
           ) : (
             <Save className="mr-2 h-3 w-3" />
           )}
-          Save
+          {t('web.project.editor.save')}
         </Button>
       </div>
       <Textarea
@@ -312,8 +343,8 @@ function DocEditor({ cwd, kind, doc, onSaved }: DocEditorProps) {
         }}
         placeholder={
           kind === 'goal'
-            ? 'What are we building? One paragraph. Read by every agent on spawn.'
-            : 'Active plan — what we are doing right now and what is next. Updated as work progresses.'
+            ? t('web.project.editor.goalPlaceholder')
+            : t('web.project.editor.planPlaceholder')
         }
         className="font-mono text-sm"
       />
@@ -325,15 +356,19 @@ function DocEditor({ cwd, kind, doc, onSaved }: DocEditorProps) {
 
 interface ReadonlyDocTabProps {
   doc?: ProjectDoc
-  kindLabel: string
-  emptyHint: string
+  kind: 'tech_stack' | 'recent_activity'
 }
 
-function ReadonlyDocTab({ doc, kindLabel, emptyHint }: ReadonlyDocTabProps) {
+function ReadonlyDocTab({ doc, kind }: ReadonlyDocTabProps) {
+  const { t } = useTranslation()
+  const kindLabel = t(`web.project.readonly.${kind}.label`)
+  const emptyHint = t(`web.project.readonly.${kind}.empty`)
   if (!doc) {
     return (
       <div className="text-muted-foreground text-sm">
-        <p className="mb-2">No {kindLabel} captured yet.</p>
+        <p className="mb-2">
+          {t('web.project.readonly.noneCaptured', { label: kindLabel })}
+        </p>
         <p className="text-xs">{emptyHint}</p>
       </div>
     )
@@ -342,7 +377,9 @@ function ReadonlyDocTab({ doc, kindLabel, emptyHint }: ReadonlyDocTabProps) {
     <div className="space-y-3">
       <div className="text-muted-foreground flex items-center justify-between text-xs">
         <span>
-          Generated by <strong>{doc.updated_by}</strong> · last refresh{' '}
+          {t('web.project.readonly.generatedBy')}{' '}
+          <strong>{doc.updated_by}</strong> ·{' '}
+          {t('web.project.readonly.lastRefresh')}{' '}
           {new Date(doc.updated_at).toLocaleString()}
         </span>
       </div>
@@ -362,17 +399,18 @@ function JournalTab({
   entries: SessionLogEntry[]
   loading: boolean
 }) {
+  const { t } = useTranslation()
   if (loading) {
     return (
       <div className="text-muted-foreground flex items-center gap-2 text-sm">
-        <Loader2 className="h-3 w-3 animate-spin" /> Loading…
+        <Loader2 className="h-3 w-3 animate-spin" /> {t('web.project.journal.loading')}
       </div>
     )
   }
   if (entries.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">
-        No journal entries yet. Each session-end appends one automatically.
+        {t('web.project.journal.empty')}
       </p>
     )
   }
@@ -416,10 +454,11 @@ function InboxTab({
   loading: boolean
   onChange: () => void
 }) {
+  const { t } = useTranslation()
   if (loading) {
     return (
       <div className="text-muted-foreground flex items-center gap-2 text-sm">
-        <Loader2 className="h-3 w-3 animate-spin" /> Loading…
+        <Loader2 className="h-3 w-3 animate-spin" /> {t('web.project.inbox.loading')}
       </div>
     )
   }
@@ -427,11 +466,8 @@ function InboxTab({
     return (
       <div className="text-muted-foreground flex flex-col items-center gap-2 py-12 text-sm">
         <Inbox className="text-muted-foreground/50 h-8 w-8" />
-        <p>Inbox empty.</p>
-        <p className="text-xs">
-          Agents file proposals here via `project_goal_set` / `project_plan_set`
-          MCP tools.
-        </p>
+        <p>{t('web.project.inbox.emptyTitle')}</p>
+        <p className="text-xs">{t('web.project.inbox.emptyHint')}</p>
       </div>
     )
   }
@@ -450,16 +486,24 @@ interface ProposalCardProps {
 }
 
 function ProposalCard({ proposal, onChange }: ProposalCardProps) {
+  const { t } = useTranslation()
+  const labelFor = useDocLabel()
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const label = labelFor(proposal.kind)
+
   const approve = useMutation({
     mutationFn: () => approveProposal(proposal.id),
     onSuccess: () => {
-      toast.success(`${labelFor(proposal.kind)} updated`)
+      toast.success(
+        t('web.project.inbox.approvedToast', { label }),
+      )
       onChange()
       setConfirmOpen(false)
     },
     onError: (e: Error) => {
-      toast.error('Approve failed', { description: e.message })
+      toast.error(t('web.project.inbox.approveFailedToast'), {
+        description: e.message,
+      })
       // refresh anyway — likely 409 already-decided
       onChange()
       setConfirmOpen(false)
@@ -468,11 +512,13 @@ function ProposalCard({ proposal, onChange }: ProposalCardProps) {
   const reject = useMutation({
     mutationFn: () => rejectProposal(proposal.id),
     onSuccess: () => {
-      toast.success('Rejected')
+      toast.success(t('web.project.inbox.rejectedToast'))
       onChange()
     },
     onError: (e: Error) => {
-      toast.error('Reject failed', { description: e.message })
+      toast.error(t('web.project.inbox.rejectFailedToast'), {
+        description: e.message,
+      })
       onChange()
     },
   })
@@ -480,13 +526,14 @@ function ProposalCard({ proposal, onChange }: ProposalCardProps) {
   return (
     <div className="bg-card rounded-md border p-3">
       <div className="mb-2 flex items-center gap-2">
-        <Badge variant="default">{labelFor(proposal.kind)}</Badge>
+        <Badge variant="default">{label}</Badge>
         <span className="text-muted-foreground text-[11px]">
           {new Date(proposal.created_at).toLocaleString()}
         </span>
         {proposal.proposed_by_session && (
           <span className="text-muted-foreground font-mono text-[10px]">
-            ses {proposal.proposed_by_session.slice(-8)}
+            {t('web.project.inbox.sessionPrefix')}{' '}
+            {proposal.proposed_by_session.slice(-8)}
           </span>
         )}
       </div>
@@ -496,17 +543,17 @@ function ProposalCard({ proposal, onChange }: ProposalCardProps) {
       <div className="text-destructive bg-destructive/10 mb-3 flex items-start gap-2 rounded-md p-2 text-xs">
         <AlertTriangle className="mt-0.5 h-3 w-3 flex-none" />
         <div>
-          <strong>Approve will REPLACE the current {labelFor(proposal.kind).toLowerCase()} entirely.</strong>{' '}
-          Review the diff below; this isn't a merge.
+          <strong>{t('web.project.inbox.warning', { label })}</strong>{' '}
+          {t('web.project.inbox.warningSuffix')}
         </div>
       </div>
       <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-2">
         <DiffBlock
-          label="Current"
-          body={proposal.prior_content ?? '(empty)'}
+          label={t('web.project.inbox.current')}
+          body={proposal.prior_content ?? t('web.project.inbox.emptyBody')}
         />
         <DiffBlock
-          label="Proposed"
+          label={t('web.project.inbox.proposed')}
           body={proposal.proposed_content}
           highlight
         />
@@ -519,7 +566,7 @@ function ProposalCard({ proposal, onChange }: ProposalCardProps) {
           disabled={approve.isPending || reject.isPending}
         >
           <Check className="mr-1 h-3 w-3" />
-          Approve
+          {t('web.project.inbox.approve')}
         </Button>
         <Button
           size="sm"
@@ -528,7 +575,7 @@ function ProposalCard({ proposal, onChange }: ProposalCardProps) {
           disabled={approve.isPending || reject.isPending}
         >
           <X className="mr-1 h-3 w-3" />
-          Reject
+          {t('web.project.inbox.reject')}
         </Button>
       </div>
 
@@ -536,12 +583,10 @@ function ProposalCard({ proposal, onChange }: ProposalCardProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              Replace {labelFor(proposal.kind).toLowerCase()}?
+              {t('web.project.inbox.confirmDialogTitle', { label })}
             </DialogTitle>
             <DialogDescription>
-              The current {labelFor(proposal.kind).toLowerCase()} will be
-              overwritten with the proposed content. This cannot be undone via
-              this UI (you can manually edit it back).
+              {t('web.project.inbox.confirmDialogDescription', { label })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -550,7 +595,7 @@ function ProposalCard({ proposal, onChange }: ProposalCardProps) {
               onClick={() => setConfirmOpen(false)}
               disabled={approve.isPending}
             >
-              Cancel
+              {t('web.project.inbox.confirmCancel')}
             </Button>
             <Button
               onClick={() => approve.mutate()}
@@ -561,7 +606,7 @@ function ProposalCard({ proposal, onChange }: ProposalCardProps) {
               ) : (
                 <Check className="mr-1 h-3 w-3" />
               )}
-              Confirm replace
+              {t('web.project.inbox.confirmReplace')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -608,24 +653,29 @@ function CleanupTab({
   loading: boolean
   onChange: () => void
 }) {
+  const { t } = useTranslation()
   const runMutation = useMutation({
     mutationFn: () => runCleanup({ scope: 'project', scope_key: cwd }),
     onSuccess: (res) => {
       toast.success(
-        `Cleanup run: ${res.decided} decisions queued (${res.scanned} scanned)`,
+        t('web.project.cleanup.runSucceededToast', {
+          decided: res.decided,
+          scanned: res.scanned,
+        }),
       )
       onChange()
     },
     onError: (e: Error) =>
-      toast.error('Cleanup run failed', { description: e.message }),
+      toast.error(t('web.project.cleanup.runFailedToast'), {
+        description: e.message,
+      }),
   })
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground text-xs">
-          The LLM librarian proposes keep / stale / duplicate verdicts for
-          this project's memories. You approve before anything is deleted.
+          {t('web.project.cleanup.hint')}
         </p>
         <Button
           size="sm"
@@ -638,15 +688,14 @@ function CleanupTab({
           ) : (
             <Sparkles className="mr-1 h-3 w-3" />
           )}
-          Run cleanup now
+          {t('web.project.cleanup.runNow')}
         </Button>
       </div>
       {loading ? (
         <Loader2 className="h-3 w-3 animate-spin" />
       ) : decisions.length === 0 ? (
         <p className="text-muted-foreground py-8 text-center text-sm">
-          No pending decisions. Either nothing aged into eligibility or the
-          last run found everything load-bearing.
+          {t('web.project.cleanup.empty')}
         </p>
       ) : (
         decisions.map((d) => (
@@ -664,25 +713,35 @@ function CleanupDecisionCard({
   decision: CleanupDecision
   onChange: () => void
 }) {
+  const { t } = useTranslation()
+  const labelForVerdict = useVerdictLabel()
   const approve = useMutation({
     mutationFn: () => approveDecision(decision.id),
     onSuccess: () => {
-      toast.success(`${labelForVerdict(decision.verdict)} executed`)
+      toast.success(
+        t('web.project.cleanup.approvedExecutedToast', {
+          label: labelForVerdict(decision.verdict),
+        }),
+      )
       onChange()
     },
     onError: (e: Error) => {
-      toast.error('Approve failed', { description: e.message })
+      toast.error(t('web.project.cleanup.approveFailedToast'), {
+        description: e.message,
+      })
       onChange()
     },
   })
   const reject = useMutation({
     mutationFn: () => rejectDecision(decision.id),
     onSuccess: () => {
-      toast.success('Rejected — memory kept')
+      toast.success(t('web.project.cleanup.rejectedToast'))
       onChange()
     },
     onError: (e: Error) => {
-      toast.error('Reject failed', { description: e.message })
+      toast.error(t('web.project.cleanup.rejectFailedToast'), {
+        description: e.message,
+      })
       onChange()
     },
   })
@@ -705,7 +764,8 @@ function CleanupDecisionCard({
         </span>
         {decision.merge_into && (
           <span className="text-muted-foreground font-mono text-[10px]">
-            → merge into {decision.merge_into.slice(-8)}
+            {t('web.project.cleanup.mergeIntoPrefix')}{' '}
+            {decision.merge_into.slice(-8)}
           </span>
         )}
       </div>
@@ -713,7 +773,7 @@ function CleanupDecisionCard({
         {decision.memory_text_snapshot}
       </pre>
       <p className="text-muted-foreground mb-3 text-xs italic">
-        Reason: {decision.reason}
+        {t('web.project.cleanup.reasonPrefix')} {decision.reason}
       </p>
       <div className="flex gap-2">
         <Button
@@ -729,7 +789,9 @@ function CleanupDecisionCard({
           ) : (
             <Trash2 className="mr-1 h-3 w-3" />
           )}
-          {decision.verdict === 'keep' ? 'Confirm keep' : 'Execute'}
+          {decision.verdict === 'keep'
+            ? t('web.project.cleanup.confirmKeepButton')
+            : t('web.project.cleanup.executeButton')}
         </Button>
         <Button
           size="sm"
@@ -738,7 +800,7 @@ function CleanupDecisionCard({
           disabled={approve.isPending || reject.isPending}
         >
           <X className="mr-1 h-3 w-3" />
-          Reject
+          {t('web.project.cleanup.rejectButton')}
         </Button>
       </div>
     </div>
@@ -753,6 +815,7 @@ interface ResetButtonProps {
 }
 
 function ResetButton({ cwd, onDone }: ResetButtonProps) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [includeScanner, setIncludeScanner] = useState(false)
   const [includeMemories, setIncludeMemories] = useState(false)
@@ -771,17 +834,24 @@ function ResetButton({ cwd, onDone }: ResetButtonProps) {
         memoryCount = await deleteMemoriesByScope('project', cwd)
       }
       const parts = [
-        `${counts.project_docs} doc${counts.project_docs === 1 ? '' : 's'}`,
-        `${counts.session_logs} journal`,
-        `${counts.project_doc_proposals} proposal${counts.project_doc_proposals === 1 ? '' : 's'}`,
-        `${counts.memory_cleanup_decisions} cleanup`,
+        t('web.project.reset.summary.docs', { count: counts.project_docs }),
+        t('web.project.reset.summary.journal', { count: counts.session_logs }),
+        t('web.project.reset.summary.proposals', {
+          count: counts.project_doc_proposals,
+        }),
+        t('web.project.reset.summary.cleanup', {
+          count: counts.memory_cleanup_decisions,
+        }),
       ]
-      if (includeMemories) parts.push(`${memoryCount} memories`)
-      toast.success(`Reset: deleted ${parts.join(' · ')}`)
+      if (includeMemories)
+        parts.push(t('web.project.reset.summary.memories', { count: memoryCount }))
+      toast.success(
+        t('web.project.reset.successToast', { summary: parts.join(' · ') }),
+      )
       onDone()
       setOpen(false)
     } catch (e) {
-      toast.error('Reset failed', {
+      toast.error(t('web.project.reset.failedToast'), {
         description: e instanceof Error ? e.message : String(e),
       })
     } finally {
@@ -798,15 +868,14 @@ function ResetButton({ cwd, onDone }: ResetButtonProps) {
         onClick={() => setOpen(true)}
       >
         <RotateCcw className="mr-1 h-3 w-3" />
-        Reset
+        {t('web.project.reset.button')}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reset project memory?</DialogTitle>
+            <DialogTitle>{t('web.project.reset.dialogTitle')}</DialogTitle>
             <DialogDescription>
-              Deletes all stored project context for this cwd.
-              This cannot be undone.
+              {t('web.project.reset.dialogDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="text-destructive bg-destructive/10 mb-3 flex items-start gap-2 rounded-md p-3 text-xs">
@@ -814,8 +883,7 @@ function ResetButton({ cwd, onDone }: ResetButtonProps) {
             <div>
               <strong className="font-mono">{cwd}</strong>
               <br />
-              Always deleted: goal, plan, proposals, journal,
-              cleanup decisions.
+              {t('web.project.reset.alwaysDeleted')}
             </div>
           </div>
           <div className="space-y-2 text-sm">
@@ -827,12 +895,11 @@ function ResetButton({ cwd, onDone }: ResetButtonProps) {
                 className="mt-0.5"
               />
               <span>
-                <strong>Also delete scanner docs</strong> (tech_stack +
-                recent_activity).
+                <strong>{t('web.project.reset.alsoDeleteScannerLabel')}</strong>{' '}
+                {t('web.project.reset.alsoDeleteScannerSuffix')}
                 <br />
                 <span className="text-muted-foreground text-xs">
-                  Auto-rebuild on next spawn anyway — leaving unchecked is
-                  usually fine.
+                  {t('web.project.reset.alsoDeleteScannerHint')}
                 </span>
               </span>
             </label>
@@ -844,12 +911,11 @@ function ResetButton({ cwd, onDone }: ResetButtonProps) {
                 className="mt-0.5"
               />
               <span>
-                <strong>Also delete pgvector memories</strong> for this
-                scope_key.
+                <strong>{t('web.project.reset.alsoDeleteMemoriesLabel')}</strong>{' '}
+                {t('web.project.reset.alsoDeleteMemoriesSuffix')}
                 <br />
                 <span className="text-muted-foreground text-xs">
-                  Long-term facts the agent stored (user preferences,
-                  project facts). Cannot be recovered.
+                  {t('web.project.reset.alsoDeleteMemoriesHint')}
                 </span>
               </span>
             </label>
@@ -860,7 +926,7 @@ function ResetButton({ cwd, onDone }: ResetButtonProps) {
               onClick={() => setOpen(false)}
               disabled={busy}
             >
-              Cancel
+              {t('web.project.reset.cancel')}
             </Button>
             <Button
               variant="default"
@@ -873,33 +939,11 @@ function ResetButton({ cwd, onDone }: ResetButtonProps) {
               ) : (
                 <Trash2 className="mr-1 h-3 w-3" />
               )}
-              Delete forever
+              {t('web.project.reset.deleteForever')}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
   )
-}
-
-// ─── helpers ─────────────────────────────────────────────────
-
-function labelFor(kind: DocKind | 'goal' | 'plan'): string {
-  switch (kind) {
-    case 'goal':
-      return 'Goal'
-    case 'plan':
-      return 'Plan'
-    case 'tech_stack':
-      return 'Tech stack'
-    case 'recent_activity':
-      return 'Recent activity'
-  }
-  return kind
-}
-
-function labelForVerdict(v: string): string {
-  if (v === 'stale') return 'Delete'
-  if (v === 'duplicate') return 'Merge'
-  return 'Keep'
 }
