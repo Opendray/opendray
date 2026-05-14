@@ -17,6 +17,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Brain, Plus, Wand2 } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -72,19 +73,14 @@ export function MemoryAmbientSection() {
 }
 
 function SectionHeader() {
+  const { t } = useTranslation()
   return (
     <div className="rounded-md border border-border bg-card/30 p-3 text-[12px] flex items-start gap-3">
       <Brain className="size-4 mt-0.5 text-accent" />
       <div className="flex-1">
-        <div className="font-medium">Ambient memory — auto-capture & inject</div>
+        <div className="font-medium">{t('web.memoryAmbient.header.title')}</div>
         <div className="text-muted-foreground mt-1">
-          opendray polls every live agent session every 10 seconds,
-          extracts durable facts via a configurable LLM, and dedups
-          before storing them in the shared memory pool. Configure
-          which LLM does the extraction (Provider), when extraction
-          fires (Capture rule), and what — if anything — gets
-          prepended to the agent's system prompt at spawn (Injection
-          profile).
+          {t('web.memoryAmbient.header.body')}
         </div>
       </div>
     </div>
@@ -94,6 +90,7 @@ function SectionHeader() {
 // ── providers ────────────────────────────────────────────────────
 
 function ProvidersBlock() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
   const { data: providers, isLoading } = useQuery({
@@ -104,12 +101,12 @@ function ProvidersBlock() {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-[13px] font-medium">Summarizer providers</h3>
+        <h3 className="text-[13px] font-medium">{t('web.memoryAmbient.providers.title')}</h3>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="size-3 mr-1" />
-              Add provider
+              {t('web.memoryAmbient.providers.addButton')}
             </Button>
           </DialogTrigger>
           <NewProviderDialog
@@ -121,15 +118,13 @@ function ProvidersBlock() {
         </Dialog>
       </div>
       <p className="text-[11.5px] text-muted-foreground mb-2">
-        At least one enabled provider is required for capture to
-        actually fire. Local options (Ollama, LM Studio,
-        Integration) keep your transcripts off external networks.
+        {t('web.memoryAmbient.providers.intro')}
       </p>
       {isLoading ? (
-        <div className="text-[12px] text-muted-foreground">Loading…</div>
+        <div className="text-[12px] text-muted-foreground">{t('web.memoryAmbient.loading')}</div>
       ) : !providers || providers.length === 0 ? (
         <div className="rounded-md border border-dashed border-border p-4 text-center text-[12px] text-muted-foreground">
-          No providers configured yet.
+          {t('web.memoryAmbient.providers.empty')}
         </div>
       ) : (
         <div className="flex flex-col gap-1.5">
@@ -157,29 +152,30 @@ function ProviderRow({
   provider: SummarizerProvider
   onChanged: () => void
 }) {
+  const { t } = useTranslation()
   const [testing, setTesting] = useState(false)
 
   async function onTest() {
     setTesting(true)
     try {
       const res = await testProvider(provider.id)
-      if (res.ok) toast.success(`${provider.name}: connection OK`)
-      else toast.error('Test failed', { description: res.error })
+      if (res.ok) toast.success(t('web.memoryAmbient.providers.row.testOk', { name: provider.name }))
+      else toast.error(t('web.memoryAmbient.providers.row.testFailedToast'), { description: res.error })
     } catch (err) {
-      toast.error('Test failed', { description: errMsg(err) })
+      toast.error(t('web.memoryAmbient.providers.row.testFailedToast'), { description: errMsg(err) })
     } finally {
       setTesting(false)
     }
   }
 
   async function onDelete() {
-    if (!window.confirm(`Delete provider "${provider.name}"?`)) return
+    if (!window.confirm(t('web.memoryAmbient.providers.row.deleteConfirm', { name: provider.name }))) return
     try {
       await deleteProvider(provider.id)
-      toast.success('Provider deleted')
+      toast.success(t('web.memoryAmbient.providers.row.deletedToast'))
       onChanged()
     } catch (err) {
-      toast.error('Delete failed', { description: errMsg(err) })
+      toast.error(t('web.memoryAmbient.providers.row.deleteFailedToast'), { description: errMsg(err) })
     }
   }
 
@@ -188,17 +184,17 @@ function ProviderRow({
       await updateProvider(provider.id, { enabled: !provider.enabled })
       onChanged()
     } catch (err) {
-      toast.error('Update failed', { description: errMsg(err) })
+      toast.error(t('web.memoryAmbient.providers.row.updateFailedToast'), { description: errMsg(err) })
     }
   }
 
   async function onMakeDefault() {
     try {
       await updateProvider(provider.id, { is_default: true })
-      toast.success(`${provider.name} is now the default`)
+      toast.success(t('web.memoryAmbient.providers.row.madeDefaultToast', { name: provider.name }))
       onChanged()
     } catch (err) {
-      toast.error('Update failed', { description: errMsg(err) })
+      toast.error(t('web.memoryAmbient.providers.row.updateFailedToast'), { description: errMsg(err) })
     }
   }
 
@@ -211,7 +207,9 @@ function ProviderRow({
         <div className="font-mono text-[11.5px] truncate">
           {provider.name}{' '}
           {provider.is_default && (
-            <span className="text-accent text-[10px]">★ default</span>
+            <span className="text-accent text-[10px]">
+              {t('web.memoryAmbient.providers.row.defaultBadge')}
+            </span>
           )}
         </div>
         <div className="text-[11px] text-muted-foreground truncate">
@@ -234,7 +232,7 @@ function ProviderRow({
           size="sm"
           className="h-7 text-[11px]"
         >
-          Make default
+          {t('web.memoryAmbient.providers.row.makeDefault')}
         </Button>
       )}
       <Button
@@ -244,7 +242,9 @@ function ProviderRow({
         className="h-7 text-[11px]"
         disabled={testing}
       >
-        {testing ? 'Testing…' : 'Test'}
+        {testing
+          ? t('web.memoryAmbient.providers.row.testing')
+          : t('web.memoryAmbient.providers.row.test')}
       </Button>
       <Button
         onClick={onDelete}
@@ -252,13 +252,14 @@ function ProviderRow({
         size="sm"
         className="h-7 px-2 text-[11px]"
       >
-        Delete
+        {t('web.memoryAmbient.providers.row.delete')}
       </Button>
     </div>
   )
 }
 
 function NewProviderDialog({ onCreated }: { onCreated: () => void }) {
+  const { t } = useTranslation()
   const [kind, setKind] = useState<ProviderKind>('ollama')
   const [name, setName] = useState('')
   const [model, setModel] = useState('')
@@ -297,7 +298,7 @@ function NewProviderDialog({ onCreated }: { onCreated: () => void }) {
 
   async function submit() {
     if (!name) {
-      toast.error('Name is required')
+      toast.error(t('web.memoryAmbient.providers.dialog.nameRequiredToast'))
       return
     }
     setBusy(true)
@@ -311,10 +312,10 @@ function NewProviderDialog({ onCreated }: { onCreated: () => void }) {
         is_default: isDefault,
         enabled: true,
       })
-      toast.success(`Provider ${name} created`)
+      toast.success(t('web.memoryAmbient.providers.dialog.createdToast', { name }))
       onCreated()
     } catch (err) {
-      toast.error('Create failed', { description: errMsg(err) })
+      toast.error(t('web.memoryAmbient.providers.dialog.createFailedToast'), { description: errMsg(err) })
     } finally {
       setBusy(false)
     }
@@ -323,10 +324,10 @@ function NewProviderDialog({ onCreated }: { onCreated: () => void }) {
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Add summarizer provider</DialogTitle>
+        <DialogTitle>{t('web.memoryAmbient.providers.dialog.title')}</DialogTitle>
       </DialogHeader>
       <div className="flex flex-col gap-3 text-[12px]">
-        <Label>Kind</Label>
+        <Label>{t('web.memoryAmbient.providers.dialog.kindLabel')}</Label>
         <select
           value={kind}
           onChange={(e) => setKind(e.target.value as ProviderKind)}
@@ -338,17 +339,17 @@ function NewProviderDialog({ onCreated }: { onCreated: () => void }) {
             </option>
           ))}
         </select>
-        <Label>Name</Label>
+        <Label>{t('web.memoryAmbient.providers.dialog.nameLabel')}</Label>
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. lmstudio-qwen"
+          placeholder={t('web.memoryAmbient.providers.dialog.namePlaceholder')}
         />
-        <Label>Model</Label>
+        <Label>{t('web.memoryAmbient.providers.dialog.modelLabel')}</Label>
         <Input value={model} onChange={(e) => setModel(e.target.value)} />
         {kind !== 'anthropic' && kind !== 'openai' && kind !== 'integration' && (
           <>
-            <Label>Base URL</Label>
+            <Label>{t('web.memoryAmbient.providers.dialog.baseUrlLabel')}</Label>
             <Input
               value={baseURL}
               onChange={(e) => setBaseURL(e.target.value)}
@@ -357,15 +358,12 @@ function NewProviderDialog({ onCreated }: { onCreated: () => void }) {
         )}
         {kind === 'integration' && (
           <p className="text-[11px] text-muted-foreground">
-            Integration providers resolve their base URL from a
-            registered integration. Configure that under
-            Integrations first; advanced wiring (extra_config) is
-            DB-only in this release.
+            {t('web.memoryAmbient.providers.dialog.integrationNote')}
           </p>
         )}
         {requiresAPIKey && (
           <>
-            <Label>API key</Label>
+            <Label>{t('web.memoryAmbient.providers.dialog.apiKeyLabel')}</Label>
             <Input
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
@@ -373,9 +371,7 @@ function NewProviderDialog({ onCreated }: { onCreated: () => void }) {
               placeholder={kind === 'openai' ? 'sk-…' : 'sk-ant-…'}
             />
             <p className="text-[10.5px] text-muted-foreground">
-              Stored encrypted (AES-GCM with the backup master
-              passphrase). Never echoed back; only the fingerprint
-              is shown after save.
+              {t('web.memoryAmbient.providers.dialog.apiKeyHint')}
             </p>
           </>
         )}
@@ -385,12 +381,12 @@ function NewProviderDialog({ onCreated }: { onCreated: () => void }) {
             onCheckedChange={setIsDefault}
             className="scale-75"
           />
-          Make this the default provider
+          {t('web.memoryAmbient.providers.dialog.makeDefaultLabel')}
         </label>
       </div>
       <DialogFooter>
         <Button onClick={submit} disabled={busy}>
-          Create
+          {t('web.memoryAmbient.providers.dialog.create')}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -400,6 +396,7 @@ function NewProviderDialog({ onCreated }: { onCreated: () => void }) {
 // ── capture rules ────────────────────────────────────────────────
 
 function RulesBlock() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
   const { data: rules, isLoading } = useQuery({
@@ -410,12 +407,12 @@ function RulesBlock() {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-[13px] font-medium">Capture rules</h3>
+        <h3 className="text-[13px] font-medium">{t('web.memoryAmbient.rules.title')}</h3>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="size-3 mr-1" />
-              Add rule
+              {t('web.memoryAmbient.rules.addButton')}
             </Button>
           </DialogTrigger>
           <NewRuleDialog
@@ -427,16 +424,13 @@ function RulesBlock() {
         </Dialog>
       </div>
       <p className="text-[11.5px] text-muted-foreground mb-2">
-        Each rule says "when this trigger fires, summarize new
-        transcript messages and store the durable facts." Per-
-        session rules override the global default. v1 ships
-        4 trigger kinds.
+        {t('web.memoryAmbient.rules.intro')}
       </p>
       {isLoading ? (
-        <div className="text-[12px] text-muted-foreground">Loading…</div>
+        <div className="text-[12px] text-muted-foreground">{t('web.memoryAmbient.loading')}</div>
       ) : !rules || rules.length === 0 ? (
         <div className="rounded-md border border-dashed border-border p-4 text-center text-[12px] text-muted-foreground">
-          No capture rules yet. Add one to enable auto-capture.
+          {t('web.memoryAmbient.rules.empty')}
         </div>
       ) : (
         <div className="flex flex-col gap-1.5">
@@ -462,28 +456,29 @@ function RuleRow({
   rule: CaptureRule
   onChanged: () => void
 }) {
+  const { t } = useTranslation()
   const [running, setRunning] = useState(false)
 
   async function onRunNow() {
     setRunning(true)
     try {
       const res = await runCaptureRuleNow(rule.id)
-      toast.success(`Rule fired across ${res.sessions_invoked} session(s)`)
+      toast.success(t('web.memoryAmbient.rules.row.firedToast', { sessions: res.sessions_invoked }))
     } catch (err) {
-      toast.error('Run-now failed', { description: errMsg(err) })
+      toast.error(t('web.memoryAmbient.rules.row.runNowFailedToast'), { description: errMsg(err) })
     } finally {
       setRunning(false)
     }
   }
 
   async function onDelete() {
-    if (!window.confirm(`Delete rule "${rule.name}"?`)) return
+    if (!window.confirm(t('web.memoryAmbient.rules.row.deleteConfirm', { name: rule.name }))) return
     try {
       await deleteCaptureRule(rule.id)
-      toast.success('Rule deleted')
+      toast.success(t('web.memoryAmbient.rules.row.deletedToast'))
       onChanged()
     } catch (err) {
-      toast.error('Delete failed', { description: errMsg(err) })
+      toast.error(t('web.memoryAmbient.rules.row.deleteFailedToast'), { description: errMsg(err) })
     }
   }
 
@@ -491,15 +486,15 @@ function RuleRow({
     const cfg = rule.trigger_config || {}
     switch (rule.trigger_kind) {
       case 'after_messages':
-        return `every ${(cfg as any).n ?? 6} messages`
+        return t('web.memoryAmbient.rules.row.summary.afterMessages', { n: (cfg as any).n ?? 6 })
       case 'on_idle':
-        return `idle ≥ ${(cfg as any).seconds ?? 60}s`
+        return t('web.memoryAmbient.rules.row.summary.onIdle', { seconds: (cfg as any).seconds ?? 60 })
       case 'k_chars':
-        return `≥ ${(cfg as any).k ?? 4000} chars`
+        return t('web.memoryAmbient.rules.row.summary.kChars', { k: (cfg as any).k ?? 4000 })
       case 'manual':
-        return 'manual only'
+        return t('web.memoryAmbient.rules.row.summary.manual')
     }
-  }, [rule])
+  }, [rule, t])
 
   return (
     <div className="flex items-center gap-3 p-2.5 rounded-md border border-border bg-card/30">
@@ -511,12 +506,13 @@ function RuleRow({
           {rule.name}
           {!rule.session_id && (
             <span className="ml-2 text-[10px] text-muted-foreground">
-              global default
+              {t('web.memoryAmbient.rules.row.globalDefault')}
             </span>
           )}
         </div>
         <div className="text-[11px] text-muted-foreground truncate">
-          {triggerSummary} · scope:{rule.target_scope} · dedup:
+          {triggerSummary} · {t('web.memoryAmbient.rules.row.scopeLabel')}{rule.target_scope} ·{' '}
+          {t('web.memoryAmbient.rules.row.dedupLabel')}
           {rule.dedup_threshold.toFixed(2)}
         </div>
       </div>
@@ -528,7 +524,9 @@ function RuleRow({
         disabled={running}
       >
         <Wand2 className="size-3 mr-1" />
-        {running ? 'Running…' : 'Run now'}
+        {running
+          ? t('web.memoryAmbient.rules.row.running')
+          : t('web.memoryAmbient.rules.row.runNow')}
       </Button>
       <Button
         onClick={onDelete}
@@ -536,13 +534,14 @@ function RuleRow({
         size="sm"
         className="h-7 px-2 text-[11px]"
       >
-        Delete
+        {t('web.memoryAmbient.rules.row.delete')}
       </Button>
     </div>
   )
 }
 
 function NewRuleDialog({ onCreated }: { onCreated: () => void }) {
+  const { t } = useTranslation()
   const [name, setName] = useState('global-default')
   const [triggerKind, setTriggerKind] = useState<TriggerKind>('after_messages')
   const [n, setN] = useState(6)
@@ -554,7 +553,7 @@ function NewRuleDialog({ onCreated }: { onCreated: () => void }) {
 
   async function submit() {
     if (!name) {
-      toast.error('Name is required')
+      toast.error(t('web.memoryAmbient.rules.dialog.nameRequiredToast'))
       return
     }
     let trigger_config: Record<string, unknown> = {}
@@ -582,10 +581,10 @@ function NewRuleDialog({ onCreated }: { onCreated: () => void }) {
         dedup_threshold: dedup,
         enabled: true,
       })
-      toast.success(`Rule ${name} created`)
+      toast.success(t('web.memoryAmbient.rules.dialog.createdToast', { name }))
       onCreated()
     } catch (err) {
-      toast.error('Create failed', { description: errMsg(err) })
+      toast.error(t('web.memoryAmbient.rules.dialog.createFailedToast'), { description: errMsg(err) })
     } finally {
       setBusy(false)
     }
@@ -594,12 +593,12 @@ function NewRuleDialog({ onCreated }: { onCreated: () => void }) {
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Add capture rule</DialogTitle>
+        <DialogTitle>{t('web.memoryAmbient.rules.dialog.title')}</DialogTitle>
       </DialogHeader>
       <div className="flex flex-col gap-3 text-[12px]">
-        <Label>Name</Label>
+        <Label>{t('web.memoryAmbient.rules.dialog.nameLabel')}</Label>
         <Input value={name} onChange={(e) => setName(e.target.value)} />
-        <Label>Trigger</Label>
+        <Label>{t('web.memoryAmbient.rules.dialog.triggerLabel')}</Label>
         <select
           value={triggerKind}
           onChange={(e) => setTriggerKind(e.target.value as TriggerKind)}
@@ -613,7 +612,7 @@ function NewRuleDialog({ onCreated }: { onCreated: () => void }) {
         </select>
         {triggerKind === 'after_messages' && (
           <>
-            <Label>N (messages)</Label>
+            <Label>{t('web.memoryAmbient.rules.dialog.nLabel')}</Label>
             <Input
               type="number"
               value={n}
@@ -623,7 +622,7 @@ function NewRuleDialog({ onCreated }: { onCreated: () => void }) {
         )}
         {triggerKind === 'on_idle' && (
           <>
-            <Label>Idle seconds</Label>
+            <Label>{t('web.memoryAmbient.rules.dialog.idleLabel')}</Label>
             <Input
               type="number"
               value={seconds}
@@ -633,7 +632,7 @@ function NewRuleDialog({ onCreated }: { onCreated: () => void }) {
         )}
         {triggerKind === 'k_chars' && (
           <>
-            <Label>K (characters)</Label>
+            <Label>{t('web.memoryAmbient.rules.dialog.kLabel')}</Label>
             <Input
               type="number"
               value={k}
@@ -641,17 +640,17 @@ function NewRuleDialog({ onCreated }: { onCreated: () => void }) {
             />
           </>
         )}
-        <Label>Target scope</Label>
+        <Label>{t('web.memoryAmbient.rules.dialog.scopeLabel')}</Label>
         <select
           value={targetScope}
           onChange={(e) => setTargetScope(e.target.value as TargetScope)}
           className="h-8 rounded-md border border-border bg-background px-2"
         >
-          <option value="session">session</option>
-          <option value="project">project (recommended)</option>
-          <option value="global">global</option>
+          <option value="session">{t('web.memoryAmbient.rules.dialog.scopeSession')}</option>
+          <option value="project">{t('web.memoryAmbient.rules.dialog.scopeProject')}</option>
+          <option value="global">{t('web.memoryAmbient.rules.dialog.scopeGlobal')}</option>
         </select>
-        <Label>Dedup threshold (0.0 – 1.0)</Label>
+        <Label>{t('web.memoryAmbient.rules.dialog.dedupLabel')}</Label>
         <Input
           type="number"
           step="0.05"
@@ -661,13 +660,12 @@ function NewRuleDialog({ onCreated }: { onCreated: () => void }) {
           onChange={(e) => setDedup(parseFloat(e.target.value) || 0.85)}
         />
         <p className="text-[10.5px] text-muted-foreground">
-          Higher = stricter de-duplication. 0.85 is the recommended
-          sweet spot.
+          {t('web.memoryAmbient.rules.dialog.dedupHint')}
         </p>
       </div>
       <DialogFooter>
         <Button onClick={submit} disabled={busy}>
-          Create
+          {t('web.memoryAmbient.rules.dialog.create')}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -677,6 +675,7 @@ function NewRuleDialog({ onCreated }: { onCreated: () => void }) {
 // ── injection profiles ───────────────────────────────────────────
 
 function ProfilesBlock() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
   const { data: profiles, isLoading } = useQuery({
@@ -687,12 +686,12 @@ function ProfilesBlock() {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-[13px] font-medium">Injection profiles</h3>
+        <h3 className="text-[13px] font-medium">{t('web.memoryAmbient.profiles.title')}</h3>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="size-3 mr-1" />
-              Add profile
+              {t('web.memoryAmbient.profiles.addButton')}
             </Button>
           </DialogTrigger>
           <NewProfileDialog
@@ -704,17 +703,13 @@ function ProfilesBlock() {
         </Dialog>
       </div>
       <p className="text-[11.5px] text-muted-foreground mb-2">
-        At spawn time opendray prepends a markdown banner of
-        recent project memories to the agent's system prompt — IF
-        a profile is configured. Without a profile, the model
-        still uses memory_search on demand.
+        {t('web.memoryAmbient.profiles.intro')}
       </p>
       {isLoading ? (
-        <div className="text-[12px] text-muted-foreground">Loading…</div>
+        <div className="text-[12px] text-muted-foreground">{t('web.memoryAmbient.loading')}</div>
       ) : !profiles || profiles.length === 0 ? (
         <div className="rounded-md border border-dashed border-border p-4 text-center text-[12px] text-muted-foreground">
-          No injection profile. Memories are not auto-injected at
-          spawn — model still uses memory_search.
+          {t('web.memoryAmbient.profiles.empty')}
         </div>
       ) : (
         <div className="flex flex-col gap-1.5">
@@ -742,14 +737,15 @@ function ProfileRow({
   profile: InjectionProfile
   onChanged: () => void
 }) {
+  const { t } = useTranslation()
   async function onDelete() {
-    if (!window.confirm(`Delete this injection profile?`)) return
+    if (!window.confirm(t('web.memoryAmbient.profiles.row.deleteConfirm'))) return
     try {
       await deleteInjectionProfile(profile.id)
-      toast.success('Profile deleted')
+      toast.success(t('web.memoryAmbient.profiles.row.deletedToast'))
       onChanged()
     } catch (err) {
-      toast.error('Delete failed', { description: errMsg(err) })
+      toast.error(t('web.memoryAmbient.profiles.row.deleteFailedToast'), { description: errMsg(err) })
     }
   }
   return (
@@ -762,7 +758,7 @@ function ProfileRow({
           {profile.id}
           {!profile.session_id && (
             <span className="ml-2 text-[10px] text-muted-foreground">
-              global default
+              {t('web.memoryAmbient.profiles.row.globalDefault')}
             </span>
           )}
         </div>
@@ -779,13 +775,14 @@ function ProfileRow({
         size="sm"
         className="h-7 px-2 text-[11px]"
       >
-        Delete
+        {t('web.memoryAmbient.profiles.row.delete')}
       </Button>
     </div>
   )
 }
 
 function NewProfileDialog({ onCreated }: { onCreated: () => void }) {
+  const { t } = useTranslation()
   const [strategy, setStrategy] = useState<InjectionStrategy>('top_k_recent')
   const [k, setK] = useState(5)
   const [busy, setBusy] = useState(false)
@@ -800,10 +797,10 @@ function NewProfileDialog({ onCreated }: { onCreated: () => void }) {
         strategy_kind: strategy,
         config: usesK ? { k } : {},
       })
-      toast.success('Profile created')
+      toast.success(t('web.memoryAmbient.profiles.dialog.createdToast'))
       onCreated()
     } catch (err) {
-      toast.error('Create failed', { description: errMsg(err) })
+      toast.error(t('web.memoryAmbient.profiles.dialog.createFailedToast'), { description: errMsg(err) })
     } finally {
       setBusy(false)
     }
@@ -812,10 +809,10 @@ function NewProfileDialog({ onCreated }: { onCreated: () => void }) {
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Add injection profile</DialogTitle>
+        <DialogTitle>{t('web.memoryAmbient.profiles.dialog.title')}</DialogTitle>
       </DialogHeader>
       <div className="flex flex-col gap-3 text-[12px]">
-        <Label>Strategy</Label>
+        <Label>{t('web.memoryAmbient.profiles.dialog.strategyLabel')}</Label>
         <select
           value={strategy}
           onChange={(e) => setStrategy(e.target.value as InjectionStrategy)}
@@ -829,7 +826,7 @@ function NewProfileDialog({ onCreated }: { onCreated: () => void }) {
         </select>
         {usesK && (
           <>
-            <Label>K (top memories to inject)</Label>
+            <Label>{t('web.memoryAmbient.profiles.dialog.kLabel')}</Label>
             <Input
               type="number"
               min="1"
@@ -840,14 +837,12 @@ function NewProfileDialog({ onCreated }: { onCreated: () => void }) {
           </>
         )}
         <p className="text-[10.5px] text-muted-foreground">
-          One profile per session_id (or global default).
-          Per-session profiles can be added later via API; UI
-          currently only manages the global default.
+          {t('web.memoryAmbient.profiles.dialog.hint')}
         </p>
       </div>
       <DialogFooter>
         <Button onClick={submit} disabled={busy}>
-          Create
+          {t('web.memoryAmbient.profiles.dialog.create')}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -857,6 +852,7 @@ function NewProfileDialog({ onCreated }: { onCreated: () => void }) {
 // ── token cost panel ─────────────────────────────────────────────
 
 function CostBlock() {
+  const { t } = useTranslation()
   const { data: providers } = useQuery({
     queryKey: ['memory-summarizer-providers'],
     queryFn: listProviders,
@@ -869,27 +865,27 @@ function CostBlock() {
 
   return (
     <div>
-      <h3 className="text-[13px] font-medium mb-2">Token cost (all-time)</h3>
+      <h3 className="text-[13px] font-medium mb-2">{t('web.memoryAmbient.cost.title')}</h3>
       <p className="text-[11.5px] text-muted-foreground mb-2">
-        Per-provider summary aggregated from{' '}
-        <code className="text-foreground">memory_summarizer_calls</code>.
-        Local providers (Ollama, LM Studio, Integration) are
-        priced as $0 — operator owns hardware cost.
+        <Trans
+          i18nKey="web.memoryAmbient.cost.intro"
+          components={{ 1: <code className="text-foreground" /> }}
+        />
       </p>
       {enabledProviders.length === 0 ? (
         <div className="rounded-md border border-dashed border-border p-4 text-center text-[12px] text-muted-foreground">
-          No enabled providers — no cost data.
+          {t('web.memoryAmbient.cost.empty')}
         </div>
       ) : (
         <div className="rounded-md border border-border overflow-hidden">
           <table className="w-full text-[11.5px]">
             <thead className="bg-card/50 text-[11px] text-muted-foreground">
               <tr>
-                <th className="px-3 py-1.5 text-left font-medium">Provider</th>
-                <th className="px-3 py-1.5 text-right font-medium">Calls</th>
-                <th className="px-3 py-1.5 text-right font-medium">In tokens</th>
-                <th className="px-3 py-1.5 text-right font-medium">Out tokens</th>
-                <th className="px-3 py-1.5 text-right font-medium">USD est.</th>
+                <th className="px-3 py-1.5 text-left font-medium">{t('web.memoryAmbient.cost.columns.provider')}</th>
+                <th className="px-3 py-1.5 text-right font-medium">{t('web.memoryAmbient.cost.columns.calls')}</th>
+                <th className="px-3 py-1.5 text-right font-medium">{t('web.memoryAmbient.cost.columns.inTokens')}</th>
+                <th className="px-3 py-1.5 text-right font-medium">{t('web.memoryAmbient.cost.columns.outTokens')}</th>
+                <th className="px-3 py-1.5 text-right font-medium">{t('web.memoryAmbient.cost.columns.usdEst')}</th>
               </tr>
             </thead>
             <tbody>

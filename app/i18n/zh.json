@@ -1533,6 +1533,126 @@
       "childrenSuffix": "项",
       "expectedDirectory": "· 期望是目录"
     },
+    "memoryAmbient": {
+      "header": {
+        "title": "环境记忆 — 自动捕获与注入",
+        "body": "opendray 每 10 秒轮询所有运行中的 agent 会话，通过可配置的 LLM 提取持久事实，去重后存入共享记忆池。配置由哪个 LLM 做提取（Provider）、何时触发提取（Capture rule）、以及在 spawn 时把什么内容（如果有）拼接到 agent 的 system prompt（Injection profile）。"
+      },
+      "loading": "加载中…",
+      "providers": {
+        "title": "Summarizer Providers",
+        "addButton": "添加 provider",
+        "intro": "至少需要一个已启用的 provider 才能真正触发捕获。本地选项（Ollama、LM Studio、Integration）让你的会话内容不出外网。",
+        "empty": "尚未配置 provider。",
+        "row": {
+          "defaultBadge": "★ 默认",
+          "makeDefault": "设为默认",
+          "test": "测试",
+          "testing": "测试中…",
+          "delete": "删除",
+          "testOk": "{name}：连接成功",
+          "testFailedToast": "测试失败",
+          "deleteConfirm": "删除 provider \"{name}\"?",
+          "deletedToast": "Provider 已删除",
+          "deleteFailedToast": "删除失败",
+          "updateFailedToast": "更新失败",
+          "madeDefaultToast": "{name} 已设为默认"
+        },
+        "dialog": {
+          "title": "添加 summarizer provider",
+          "kindLabel": "类型",
+          "nameLabel": "名称",
+          "namePlaceholder": "例如 lmstudio-qwen",
+          "modelLabel": "模型",
+          "baseUrlLabel": "Base URL",
+          "integrationNote": "Integration 类型 provider 通过一个已注册的集成解析 base URL。请先在 Integrations 中配置；更高级的 wiring（extra_config）在本版本中仅 DB 配置。",
+          "apiKeyLabel": "API key",
+          "apiKeyHint": "AES-GCM 加密存储（使用 backup 主口令）。不会被回显；保存后只显示指纹。",
+          "makeDefaultLabel": "将此设为默认 provider",
+          "create": "创建",
+          "nameRequiredToast": "名称不能为空",
+          "createdToast": "已创建 Provider {name}",
+          "createFailedToast": "创建失败"
+        }
+      },
+      "rules": {
+        "title": "捕获规则",
+        "addButton": "添加规则",
+        "intro": "每条规则表示 \"当此 trigger 触发时，对新的会话消息做总结并存储持久事实。\" 单会话规则覆盖全局默认。v1 内置 4 种 trigger 类型。",
+        "empty": "尚无捕获规则。添加一条以启用自动捕获。",
+        "row": {
+          "globalDefault": "全局默认",
+          "scopeLabel": "scope:",
+          "dedupLabel": "dedup:",
+          "runNow": "立即运行",
+          "running": "运行中…",
+          "delete": "删除",
+          "firedToast": "规则已对 {sessions} 个会话触发",
+          "runNowFailedToast": "立即运行失败",
+          "deleteConfirm": "删除规则 \"{name}\"?",
+          "deletedToast": "规则已删除",
+          "deleteFailedToast": "删除失败",
+          "summary": {
+            "afterMessages": "每 {n} 条消息",
+            "onIdle": "idle ≥ {seconds}s",
+            "kChars": "≥ {k} 字符",
+            "manual": "仅手动"
+          }
+        },
+        "dialog": {
+          "title": "添加捕获规则",
+          "nameLabel": "名称",
+          "triggerLabel": "Trigger",
+          "nLabel": "N（消息条数）",
+          "idleLabel": "Idle 秒数",
+          "kLabel": "K（字符数）",
+          "scopeLabel": "目标 scope",
+          "scopeSession": "session",
+          "scopeProject": "project（推荐）",
+          "scopeGlobal": "global",
+          "dedupLabel": "去重阈值（0.0 – 1.0）",
+          "dedupHint": "越高 = 去重越严格。0.85 是推荐的平衡点。",
+          "create": "创建",
+          "nameRequiredToast": "名称不能为空",
+          "createdToast": "已创建规则 {name}",
+          "createFailedToast": "创建失败"
+        }
+      },
+      "profiles": {
+        "title": "Injection Profiles",
+        "addButton": "添加 profile",
+        "intro": "spawn 时，opendray 会把最近的项目记忆作为一段 markdown banner 拼接到 agent 的 system prompt — 前提是配置了 profile。没有 profile 时，模型仍可按需调用 memory_search。",
+        "empty": "尚无 injection profile。spawn 时不会自动注入记忆 — 模型仍可使用 memory_search。",
+        "row": {
+          "globalDefault": "全局默认",
+          "delete": "删除",
+          "deleteConfirm": "删除该 injection profile?",
+          "deletedToast": "Profile 已删除",
+          "deleteFailedToast": "删除失败"
+        },
+        "dialog": {
+          "title": "添加 injection profile",
+          "strategyLabel": "策略",
+          "kLabel": "K（注入的 top memory 数）",
+          "hint": "每个 session_id 一个 profile（或全局默认）。单会话 profile 暂只能通过 API 添加；UI 当前只管理全局默认。",
+          "create": "创建",
+          "createdToast": "Profile 已创建",
+          "createFailedToast": "创建失败"
+        }
+      },
+      "cost": {
+        "title": "Token 成本（总计）",
+        "intro": "按 provider 聚合自 <1>memory_summarizer_calls</1>。本地 provider（Ollama、LM Studio、Integration）按 $0 计价 — 硬件成本由运维承担。",
+        "empty": "暂无已启用的 provider — 没有成本数据。",
+        "columns": {
+          "provider": "Provider",
+          "calls": "调用",
+          "inTokens": "输入 token",
+          "outTokens": "输出 token",
+          "usdEst": "USD 估算"
+        }
+      }
+    },
     "noteEditor": {
       "loading": "加载中…",
       "source": "源码",
