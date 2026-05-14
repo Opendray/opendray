@@ -1589,6 +1589,262 @@
         "timedOutTitle": "Restart timed out",
         "timedOutDesc": "Health endpoint never came back. Check server logs.",
         "successToast": "Server restarted"
+      },
+      "formGroups": {
+        "network": "Network",
+        "operatorAccount": "Operator account",
+        "memoryConfiguration": "Configuration",
+        "memoryHttp": "HTTP backend (used when backend=http)",
+        "memoryLocal": "Local ONNX (used when backend=local)",
+        "backupStatus": "Status",
+        "backupWhere": "Where backups go",
+        "backupSchedules": "Schedules",
+        "backupWhatsInside": "What's in a backup?"
+      },
+      "fields": {
+        "listenAddress": {
+          "label": "Listen address",
+          "hint": "The host:port the HTTP server binds to. Example: 0.0.0.0:8770."
+        },
+        "username": {
+          "label": "Username",
+          "hint": "Login name used in the sign-in form. Changing this forces a re-login on the next request."
+        },
+        "password": {
+          "label": "Password",
+          "hint": "Leave blank to keep the current password. Sending a value overwrites it.",
+          "hideTitle": "Hide",
+          "revealTitle": "Reveal"
+        },
+        "tokenTTL": {
+          "label": "Token TTL",
+          "hint": "Bearer-token lifetime as a Go duration, e.g. \"24h\", \"30m\". Empty = never expire."
+        },
+        "logLevel": {
+          "label": "Log level",
+          "hint": "Lines below this level are dropped."
+        },
+        "logFormat": {
+          "label": "Format",
+          "hint": "\"text\" is human-readable; \"json\" is machine-parsable."
+        },
+        "logFile": {
+          "label": "Log file",
+          "hint": "Optional file path. Auto-rotates at 10 MB, keeps 5 backups. Empty = stderr only."
+        },
+        "idleThreshold": {
+          "label": "Idle threshold",
+          "hint": "A session is silent for this long before session.idle fires. Empty = 30s."
+        },
+        "idlePollInterval": {
+          "label": "Idle poll interval",
+          "hint": "How often the idle detector wakes up. Lower = lower latency, more wakeups. Empty = 5s."
+        },
+        "vaultRoot": {
+          "label": "Vault root",
+          "hint": "Top-level directory for notes, skills, and MCP registry."
+        },
+        "notesDirectory": {
+          "label": "Notes directory",
+          "hint": "Override notes location. Defaults to <vault root>/notes."
+        },
+        "skillsDirectory": {
+          "label": "Skills directory",
+          "hint": "Override skills location. Defaults to <vault root>/skills."
+        },
+        "gitRoot": {
+          "label": "Git root",
+          "hint": "Working tree the Vault Sync feature commits to."
+        },
+        "personalPrefix": {
+          "label": "Personal prefix",
+          "hint": "Folder name used for personal notes when auto-deriving paths. Default \"personal\"."
+        },
+        "projectsPrefix": {
+          "label": "Projects prefix",
+          "hint": "Folder name used for project notes. Default \"projects\"."
+        },
+        "registryRoot": {
+          "label": "Registry root",
+          "hint": "Directory holding MCP server JSON definitions. Defaults to <vault>/mcp."
+        },
+        "secretsFile": {
+          "label": "Secrets file",
+          "hint": "key=value file substituted into MCP server commands at spawn time."
+        },
+        "memoryBackend": {
+          "label": "Embedder backend",
+          "hint": "\"auto\" / \"bm25\" use the cgo-free pure-Go keyword path. \"http\" calls any OpenAI-compatible /v1/embeddings (ollama / OpenAI / LocalAI). \"local\" runs an ONNX sentence-transformer in-process — requires a binary built with `-tags local_onnx`."
+        },
+        "memoryStore": {
+          "label": "Store",
+          "hint": "\"pgvector\" reuses opendray's existing PG with the vector extension; only option in v1."
+        },
+        "memoryTopK": {
+          "label": "Default top-K",
+          "hint": "How many hits memory_search returns when the agent doesn't specify. Empty = 5."
+        },
+        "memoryThreshold": {
+          "label": "Similarity threshold",
+          "hint": "Hits below this score are dropped. Empty = 0.1 (permissive — BM25 sparse vectors rarely break 0.5)."
+        },
+        "memoryScope": {
+          "label": "Default scope",
+          "hint": "What memory_store uses when the agent doesn't specify. \"project\" (recommended) groups by cwd; \"session\" isolates per session; \"global\" shares across cwds."
+        },
+        "memoryBaseUrl": {
+          "label": "Base URL",
+          "hint": "e.g. \"http://localhost:11434/v1\" for ollama, \"https://api.openai.com/v1\" for OpenAI."
+        },
+        "memoryModel": {
+          "label": "Model",
+          "hint": "e.g. \"nomic-embed-text\" for ollama, \"text-embedding-3-small\" for OpenAI."
+        },
+        "memoryApiKey": {
+          "label": "API key",
+          "hint": "Empty for ollama / local servers. Required for OpenAI / Voyage / hosted services."
+        },
+        "memoryLocalModel": {
+          "label": "Model name",
+          "hint": "Cosmetic — appears in logs / Inspector. e.g. \"bge-m3\", \"bge-small-en-v1.5\"."
+        },
+        "memoryLibraryPath": {
+          "label": "Library path",
+          "hint": "Directory holding libonnxruntime.dylib (macOS) / libonnxruntime.so (Linux). After `brew install onnxruntime`, that's /opt/homebrew/opt/onnxruntime/lib."
+        },
+        "memoryModelPath": {
+          "label": "Model path",
+          "hint": "Absolute path to the .onnx weights. Download from HuggingFace, e.g. Xenova/bge-m3 or Xenova/bge-small-en-v1.5."
+        },
+        "memoryTokenizerPath": {
+          "label": "Tokenizer path",
+          "hint": "Absolute path to tokenizer.json (HuggingFace standard format) — usually right next to the model."
+        },
+        "memoryMaxSeqLen": {
+          "label": "Max sequence length",
+          "hint": "Tokens beyond this are truncated. bge-m3 default is 512. Empty = 512."
+        },
+        "claudeHistoryRoots": {
+          "label": "History roots",
+          "hint": "Directories scanned for Claude per-project JSONL transcripts. Empty = scan ~/.claude/projects + every ~/.claude-accounts/*/projects."
+        },
+        "claudeAccountsDir": {
+          "label": "Accounts directory",
+          "hint": "Root used for opendray-managed Claude account ConfigDirs. Default ~/.claude-accounts."
+        },
+        "codexSessionsRoot": {
+          "label": "Sessions root",
+          "hint": "Directory walked for Codex rollout JSONL files. Default ~/.codex/sessions."
+        },
+        "geminiTmpRoot": {
+          "label": "Tmp directory",
+          "hint": "Root holding Gemini per-project tmp folders. Default ~/.gemini/tmp."
+        },
+        "geminiProjectsFile": {
+          "label": "projects.json",
+          "hint": "Path to Gemini's cwd→short-name mapping file. Default ~/.gemini/projects.json."
+        },
+        "backupLocalDir": {
+          "label": "Local backup directory",
+          "hint": "Default root for the auto-created `local` target. Empty = ~/.opendray/backups. Restart required."
+        },
+        "backupExportDir": {
+          "label": "Export directory",
+          "hint": "Where one-shot export zips are staged on disk. Empty = ~/.opendray/exports. Bundles auto-expire after 24h. Restart required."
+        },
+        "backupPgDumpPath": {
+          "label": "pg_dump path",
+          "hint": "Absolute path to pg_dump. Major version must be ≥ the server's. Empty = first pg_dump on PATH."
+        },
+        "backupPgRestorePath": {
+          "label": "pg_restore path",
+          "hint": "Absolute path to pg_restore for the /backups/restore flow. Same major-version rule."
+        }
+      },
+      "liveTail": {
+        "heading": "Live tail",
+        "description": "In-memory ring buffer (last ~2,000 records). Resets on restart."
+      },
+      "memoryInspectorCard": {
+        "heading": "Inspector",
+        "description": "Browse, search and edit stored memories on the dedicated page.",
+        "openButton": "Open Memory →"
+      },
+      "localOnnxBanner": "Requires the binary to be compiled with <1>-tags local_onnx</1>. The standard build returns a clear stub error when this backend is selected. See <3>Memory → Local ONNX</3> tutorial for setup steps.",
+      "stringList": {
+        "noneDefault": "(none — using built-in defaults)",
+        "addPath": "Add path",
+        "removeTitle": "Remove"
+      },
+      "httpHelpers": {
+        "autoDetected": "Auto-detected at startup",
+        "modelCount": "{count} model(s) — click to use",
+        "presets": "Presets:",
+        "testConnection": "Test connection",
+        "presetTip": {
+          "ollama": "Local ollama daemon",
+          "lmStudio": "LM Studio local server",
+          "openai": "OpenAI cloud (needs API key)"
+        }
+      },
+      "probe": {
+        "unreachable": "✗ unreachable: {error}",
+        "connectionFailed": "connection failed",
+        "reachable": "✓ reachable {detected}· {total} model(s) total · {embedding} embedding",
+        "modelMissing": "⚠ Configured model {model} isn't in the list. Pick one of the embedding models below or fix the name.",
+        "embeddingModelsLabel": "embedding models:",
+        "moreModels": "+{count} more",
+        "noEmbeddingFound": "⚠ No model name contains \"embed\". The endpoint might not have an embedding model loaded — check your local server.",
+        "configuredTitle": "Currently configured",
+        "applyTitle": "Click to apply"
+      },
+      "backup": {
+        "featureDisabledTitle": "Feature disabled",
+        "featureDisabledHint": "Set <1>OPENDRAY_BACKUP_ENABLED=1</1> + <3>OPENDRAY_BACKUP_KEY=&lt;passphrase&gt;</3> in opendray's environment, then restart. The master passphrase is env-only — it never touches config.toml.",
+        "statusRowLabel": "Status",
+        "enabledHealthy": "enabled · healthy",
+        "enabledDegraded": "enabled · degraded",
+        "keyFingerprintLabel": "Key fingerprint",
+        "keyFingerprintHint": "record in Vaultwarden — losing it locks all prior backups",
+        "pgDumpLabel": "pg_dump",
+        "pgDumpUnavailable": "unavailable",
+        "pgRestoreLabel": "pg_restore",
+        "pgRestoreNotResolved": "(not resolved)",
+        "openBackups": "Open Backups page →",
+        "openExport": "Open Export / Import →",
+        "whereDesc": "Each target is one place a backup blob can be written. opendray supports <1>local disk</1>, <3>SMB/CIFS</3> (Windows / NAS), <5>S3-compatible</5> (AWS, R2, B2, MinIO, Alibaba Cloud OSS, Tencent Cloud COS, ...), <7>WebDAV</7> (Nextcloud, Synology, Jianguoyun), <9>SFTP</9>, plus an <11>rclone</11> passthrough that taps into 70+ extra backends (Google Drive, OneDrive, Dropbox, Baidu Pan, Aliyun Drive, ...).",
+        "loading": "Loading…",
+        "noTargets": "No targets yet. Add one to start backing up.",
+        "addTarget": "Add target",
+        "noSchedulesHint": "No recurring schedules. Add one on <1>/backups → Schedules</1> to take backups automatically.",
+        "scheduleHeaders": {
+          "schedule": "Schedule",
+          "target": "Target",
+          "cadence": "Cadence",
+          "keep": "Keep",
+          "state": "State"
+        },
+        "every": "every {interval}",
+        "backupsKeep": "{count} backups",
+        "stateEnabled": "enabled",
+        "statePaused": "paused",
+        "manageSchedules": "Manage on /backups → Schedules →",
+        "whatsInsideDesc": "Each backup is a <1>pg_dump --format=custom</1> of every opendray table (sessions, integrations, memories, audit_log, etc.) plus a <3>manifest.json</3> and (optionally) the live <5>config.toml</5>. Open the \"What's in a backup?\" panel on the <7>Backups page</7> to see the live inventory with row counts.",
+        "advancedToggle": "Advanced (paths & client binaries) — restart required"
+      },
+      "targetRow": {
+        "on": "on",
+        "off": "off",
+        "test": "Test",
+        "testing": "Testing…",
+        "delete": "Delete",
+        "connectionOk": "{id}: connection OK",
+        "connectionFailedTitle": "Connection failed",
+        "testFailedTitle": "Test failed",
+        "deleteConfirm": "Delete target \"{id}\"? Schedules referencing it will block the delete.",
+        "deleteSuccess": "Target deleted",
+        "deleteFailedTitle": "Delete failed",
+        "unknownError": "Unknown error"
       }
     },
     "settings": {
