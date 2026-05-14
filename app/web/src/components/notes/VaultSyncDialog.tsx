@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 import {
   Dialog,
@@ -1246,6 +1247,7 @@ export function VaultSyncBadge({
   status: VaultStatus | undefined
   onClick: () => void
 }) {
+  const { t } = useTranslation()
   // Cheap independent fetch — same query key as the dialog so we share
   // the cache. enabled=is_repo so we don't poll on a non-repo vault.
   const autoCfg = useQuery({
@@ -1262,10 +1264,10 @@ export function VaultSyncBadge({
         type="button"
         onClick={onClick}
         className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded-md text-muted-foreground hover:bg-card hover:text-foreground"
-        title="Loading…"
+        title={t('web.notes.syncBadge.loading')}
       >
         <Loader2 className="size-3 animate-spin" />
-        Sync
+        {t('web.notes.syncBadge.syncLabel')}
       </button>
     )
   }
@@ -1275,10 +1277,10 @@ export function VaultSyncBadge({
         type="button"
         onClick={onClick}
         className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded-md text-muted-foreground hover:bg-card hover:text-foreground border border-dashed border-border"
-        title="Vault is not a git repo yet"
+        title={t('web.notes.syncBadge.initTooltip')}
       >
         <GitBranch className="size-3" />
-        Init
+        {t('web.notes.syncBadge.initLabel')}
       </button>
     )
   }
@@ -1292,10 +1294,11 @@ export function VaultSyncBadge({
         type="button"
         onClick={onClick}
         className="text-[11px] inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-state-failed/40 bg-state-failed/10 text-state-failed hover:bg-state-failed/15"
-        title="Vault has unresolved conflicts — click to recover"
+        title={t('web.notes.syncBadge.conflictTooltip')}
       >
         <AlertCircle className="size-3" />
-        Conflict{n > 0 ? ` · ${n}` : ''}
+        {t('web.notes.syncBadge.conflictLabel')}
+        {n > 0 ? ` · ${n}` : ''}
       </button>
     )
   }
@@ -1303,6 +1306,17 @@ export function VaultSyncBadge({
   const dirty = status.files.length > 0
   const ahead = status.ahead
   const behind = status.behind
+  const branchLabel = status.branch ?? t('web.notes.syncBadge.branchPlaceholder')
+  const baseTooltip = t('web.notes.syncBadge.tooltip', {
+    branch: branchLabel,
+    files: status.files.length,
+    ahead,
+    behind,
+  })
+  const tooltip =
+    baseTooltip +
+    (autoOn ? t('web.notes.syncBadge.tooltipAutoOn') : '') +
+    (autoErr ? t('web.notes.syncBadge.tooltipLastError', { error: autoErr }) : '')
   return (
     <button
       type="button"
@@ -1316,12 +1330,12 @@ export function VaultSyncBadge({
             ? 'border-state-running/40 text-state-running'
             : 'text-muted-foreground hover:text-foreground',
       )}
-      title={`branch ${status.branch ?? '—'} · ${status.files.length} changes · ${ahead} ahead · ${behind} behind${
-        autoOn ? ' · auto-sync on' : ''
-      }${autoErr ? ` · last error: ${autoErr}` : ''}`}
+      title={tooltip}
     >
       <GitBranch className="size-3" />
-      <span className="font-mono">{status.branch ?? 'sync'}</span>
+      <span className="font-mono">
+        {status.branch ?? t('web.notes.syncBadge.syncFallback')}
+      </span>
       {dirty && (
         <span className="text-[10px] font-mono">
           ·{status.files.length}

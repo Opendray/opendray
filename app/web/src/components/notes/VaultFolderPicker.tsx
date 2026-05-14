@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Folder, ChevronDown } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 import { listNotes, type Note } from '@/lib/notes'
@@ -28,6 +29,7 @@ export function VaultFolderPicker({
   className,
   inputId,
 }: VaultFolderPickerProps) {
+  const { t } = useTranslation()
   const { data: notes } = useQuery({
     queryKey: ['notes-list'],
     queryFn: () => listNotes(),
@@ -134,7 +136,7 @@ export function VaultFolderPicker({
           onClick={() => setOpen((v) => !v)}
           className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-muted-foreground/60 hover:text-foreground"
           tabIndex={-1}
-          aria-label="Browse folders"
+          aria-label={t('web.notes.picker.browseAria')}
         >
           <ChevronDown className="size-3.5" />
         </button>
@@ -151,15 +153,17 @@ export function VaultFolderPicker({
           <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/60 font-mono flex items-center justify-between">
             <span>
               {value
-                ? `${matches.length} match${matches.length === 1 ? '' : 'es'}`
-                : `${allDirs.length} folders in vault`}
+                ? t('web.notes.picker.matches', { count: matches.length })
+                : t('web.notes.picker.foldersInVault', { count: allDirs.length })}
             </span>
           </div>
           {matches.length === 0 ? (
             <div className="px-2 py-1.5 text-[11.5px] text-muted-foreground/70">
-              No existing folder matches. Save anyway to use{' '}
-              <code className="text-[11px]">{value}</code> (lazy-created on
-              first write).
+              <Trans
+                i18nKey="web.notes.picker.noMatch"
+                values={{ value }}
+                components={{ 1: <code className="text-[11px]" /> }}
+              />
             </div>
           ) : (
             matches.map((d, i) => (

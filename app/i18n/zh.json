@@ -559,6 +559,75 @@
         "reembedding": "重嵌入中…",
         "reembedTotal": "重嵌入 {total} 条"
       }
+    },
+    "notes": {
+      "title": "笔记",
+      "header": {
+        "outline": "大纲",
+        "showOutline": "显示大纲",
+        "hideOutline": "隐藏大纲",
+        "today": "今天",
+        "todayTooltip": "打开或创建今天的日志笔记",
+        "new": "新建"
+      },
+      "left": {
+        "tree": "目录树",
+        "tags": "标签",
+        "filterNotes": "过滤笔记…",
+        "filterTags": "过滤标签…",
+        "filteredBy": "已筛选",
+        "clearTagTooltip": "清除标签筛选",
+        "expandAll": "全部展开",
+        "expandAllTooltip": "展开全部文件夹",
+        "collapseAll": "全部收起",
+        "collapseAllTooltip": "收起全部文件夹",
+        "loading": "加载中…",
+        "footer": "{visible} / {total} 条笔记"
+      },
+      "tags": {
+        "emptyVault": "vault 中暂无标签。",
+        "noMatches": "未找到匹配 \"{query}\"。"
+      },
+      "tree": {
+        "empty": "vault 为空。"
+      },
+      "outline": {
+        "label": "大纲",
+        "empty": "此笔记没有标题。添加 <1>## 标题</1> 行以填充大纲。"
+      },
+      "newNote": {
+        "prompt": "新笔记路径（相对 vault，必须以 .md 结尾）",
+        "defaultPath": "library/notes-{date}.md",
+        "errorMustEndMd": "路径必须以 .md 结尾",
+        "createdToast": "笔记已创建",
+        "createFailedToast": "创建失败"
+      },
+      "empty": {
+        "title": "未选择笔记",
+        "hint": "从左侧目录树挑选一条笔记，直接跳到今天的日志，或新建一条。AI 生成的项目文档位于 <1>projects/</1>；个人草稿位于 <3>personal/</3>。",
+        "today": "今天的日志笔记",
+        "new": "新建笔记"
+      },
+      "picker": {
+        "browseAria": "浏览文件夹",
+        "matches_one": "{count} 个匹配",
+        "matches_other": "{count} 个匹配",
+        "foldersInVault": "vault 中 {count} 个文件夹",
+        "noMatch": "未找到匹配的文件夹。直接保存即可使用 <1>{value}</1>（首次写入时懒创建）。"
+      },
+      "syncBadge": {
+        "loading": "加载中…",
+        "syncLabel": "同步",
+        "initLabel": "初始化",
+        "initTooltip": "vault 尚未初始化为 git 仓库",
+        "conflictLabel": "冲突",
+        "conflictTooltip": "vault 存在未解决的冲突 — 点击进入恢复",
+        "syncFallback": "sync",
+        "tooltip": "分支 {branch} · {files} 处改动 · 领先 {ahead} · 落后 {behind}",
+        "tooltipAutoOn": " · 自动同步已开启",
+        "tooltipLastError": " · 上次错误：{error}",
+        "branchPlaceholder": "—"
+      }
     }
   },
   "more": {

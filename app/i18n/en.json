@@ -559,6 +559,75 @@
         "reembedding": "Reembedding…",
         "reembedTotal": "Reembed {total}"
       }
+    },
+    "notes": {
+      "title": "Notes",
+      "header": {
+        "outline": "Outline",
+        "showOutline": "Show outline",
+        "hideOutline": "Hide outline",
+        "today": "Today",
+        "todayTooltip": "Open or create today's daily note",
+        "new": "New"
+      },
+      "left": {
+        "tree": "Tree",
+        "tags": "Tags",
+        "filterNotes": "Filter notes…",
+        "filterTags": "Filter tags…",
+        "filteredBy": "filtered by",
+        "clearTagTooltip": "Clear tag filter",
+        "expandAll": "Expand all",
+        "expandAllTooltip": "Expand every folder",
+        "collapseAll": "Collapse all",
+        "collapseAllTooltip": "Collapse every folder",
+        "loading": "Loading…",
+        "footer": "{visible} / {total} notes"
+      },
+      "tags": {
+        "emptyVault": "No tags in vault yet.",
+        "noMatches": "No matches for \"{query}\"."
+      },
+      "tree": {
+        "empty": "Vault is empty."
+      },
+      "outline": {
+        "label": "Outline",
+        "empty": "No headings in this note. Add <1>## Title</1> lines to populate the outline."
+      },
+      "newNote": {
+        "prompt": "New note path (vault-relative, must end .md)",
+        "defaultPath": "library/notes-{date}.md",
+        "errorMustEndMd": "Path must end in .md",
+        "createdToast": "Note created",
+        "createFailedToast": "Create failed"
+      },
+      "empty": {
+        "title": "No note selected",
+        "hint": "Pick a note from the tree on the left, jump straight to today's daily log, or create a fresh one. AI-written project docs live under <1>projects/</1>; your personal scratchpads under <3>personal/</3>.",
+        "today": "Today's daily note",
+        "new": "New note"
+      },
+      "picker": {
+        "browseAria": "Browse folders",
+        "matches_one": "{count} match",
+        "matches_other": "{count} matches",
+        "foldersInVault": "{count} folders in vault",
+        "noMatch": "No existing folder matches. Save anyway to use <1>{value}</1> (lazy-created on first write)."
+      },
+      "syncBadge": {
+        "loading": "Loading…",
+        "syncLabel": "Sync",
+        "initLabel": "Init",
+        "initTooltip": "Vault is not a git repo yet",
+        "conflictLabel": "Conflict",
+        "conflictTooltip": "Vault has unresolved conflicts — click to recover",
+        "syncFallback": "sync",
+        "tooltip": "branch {branch} · {files} changes · {ahead} ahead · {behind} behind",
+        "tooltipAutoOn": " · auto-sync on",
+        "tooltipLastError": " · last error: {error}",
+        "branchPlaceholder": "—"
+      }
     }
   },
   "more": {
