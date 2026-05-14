@@ -13,6 +13,8 @@ import {
   Pencil,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { Trans, useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -75,6 +77,7 @@ function generateBridgeToken(): string {
 }
 
 export function ChannelsPage() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [createOpen, setCreateOpen] = useState(false)
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null)
@@ -90,10 +93,14 @@ export function ChannelsPage() {
     <div className="h-full flex flex-col bg-background">
       <header className="border-b border-border px-6 py-4 flex items-center gap-3">
         <div className="flex-1">
-          <h1 className="text-[16px] font-semibold tracking-tight">Channels</h1>
+          <h1 className="text-[16px] font-semibold tracking-tight">
+            {t('web.channels.title')}
+          </h1>
           <p className="text-[12px] text-muted-foreground">
-            Bidirectional messaging integrations. Outbound notifications are
-            filtered by each channel's <code>notify_on</code>.
+            <Trans
+              i18nKey="web.channels.subtitle"
+              components={{ 1: <code /> }}
+            />
           </p>
         </div>
         <Button
@@ -101,7 +108,7 @@ export function ChannelsPage() {
           size="sm"
           onClick={() => setCreateOpen(true)}
         >
-          <Plus className="size-3.5" /> New channel
+          <Plus className="size-3.5" /> {t('web.channels.newButton')}
         </Button>
       </header>
 
@@ -110,7 +117,7 @@ export function ChannelsPage() {
           {isLoading && (
             <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
               <Loader2 className="size-3.5 animate-spin" />
-              Loading…
+              {t('web.channels.loading')}
             </div>
           )}
           {!isLoading && (channels?.length ?? 0) === 0 && (
@@ -119,18 +126,21 @@ export function ChannelsPage() {
                 className="size-10 text-muted-foreground/40"
                 strokeWidth={1.5}
               />
-              <h2 className="text-[14px] font-semibold">No channels yet</h2>
+              <h2 className="text-[14px] font-semibold">
+                {t('web.channels.empty.title')}
+              </h2>
               <p className="text-[12px] text-muted-foreground max-w-[420px]">
-                Bundled kinds: Telegram · Slack · Discord · Feishu · DingTalk
-                · WeCom. Pick one and paste credentials, or use{' '}
-                <code>bridge</code> for a custom platform via WebSocket.
+                <Trans
+                  i18nKey="web.channels.empty.description"
+                  components={{ 1: <code /> }}
+                />
               </p>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCreateOpen(true)}
               >
-                <Plus className="size-3.5" /> New channel
+                <Plus className="size-3.5" /> {t('web.channels.newButton')}
               </Button>
             </div>
           )}
@@ -140,9 +150,11 @@ export function ChannelsPage() {
               channel={c}
               onTest={() => {
                 testChannel(c.id)
-                  .then(() => toast.success('Test message sent'))
+                  .then(() => toast.success(t('web.channels.toasts.testSent')))
                   .catch((err: Error) =>
-                    toast.error('Test failed', { description: err.message }),
+                    toast.error(t('web.channels.toasts.testFailed'), {
+                      description: err.message,
+                    }),
                   )
               }}
               onToggle={(enabled) => {
@@ -151,11 +163,14 @@ export function ChannelsPage() {
                   .catch((err: Error) => toast.error(err.message))
               }}
               onDelete={() => {
-                if (!confirm(`Delete channel ${c.id}?`)) return
+                if (
+                  !confirm(t('web.channels.toasts.deleteConfirm', { id: c.id }))
+                )
+                  return
                 deleteChannel(c.id)
                   .then(() => {
                     qc.invalidateQueries({ queryKey: ['channels'] })
-                    toast.success('Channel deleted')
+                    toast.success(t('web.channels.toasts.deleted'))
                   })
                   .catch((err: Error) => toast.error(err.message))
               }}
@@ -206,6 +221,7 @@ function ChannelCard({
   onSetup: () => void
   onEdit: () => void
 }) {
+  const { t } = useTranslation()
   const cfg = channel.config as Record<string, unknown>
   const def = getKindDef(channel.kind)
   const isBridge = channel.kind === 'bridge'
@@ -229,7 +245,9 @@ function ChannelCard({
     : '—'
 
   const displayKind =
-    isBridge && cfg.name ? `${cfg.name} (bridge)` : (def?.label ?? channel.kind)
+    isBridge && cfg.name
+      ? `${cfg.name} ${t('web.channels.card.bridgeSuffix')}`
+      : (def?.label ?? channel.kind)
   const webhookURL = def?.webhookBased ? buildWebhookURL(channel.id) : ''
 
   return (
@@ -248,29 +266,42 @@ function ChannelCard({
               {channel.id}
             </Badge>
             {channel.running ? (
-              <Badge variant="success">running</Badge>
+              <Badge variant="success">{t('web.channels.card.running')}</Badge>
             ) : channel.enabled ? (
-              <Badge variant="warning">starting…</Badge>
+              <Badge variant="warning">{t('web.channels.card.starting')}</Badge>
             ) : (
-              <Badge variant="muted">disabled</Badge>
+              <Badge variant="muted">{t('web.channels.card.disabled')}</Badge>
             )}
-            {channel.muted && <Badge variant="warning">muted</Badge>}
+            {channel.muted && (
+              <Badge variant="warning">{t('web.channels.card.muted')}</Badge>
+            )}
           </div>
           <div className="text-[11px] text-muted-foreground/80 font-mono mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
-            <span>token: {tokenPreview}</span>
+            <span>
+              {t('web.channels.card.tokenLabel')} {tokenPreview}
+            </span>
             {typeof cfg.chat_id === 'string' || typeof cfg.chat_id === 'number' ? (
-              <span>chat_id: {String(cfg.chat_id)}</span>
+              <span>
+                {t('web.channels.card.chatIdLabel')} {String(cfg.chat_id)}
+              </span>
             ) : null}
             {typeof cfg.channel_id === 'string' && cfg.channel_id ? (
-              <span>channel_id: {String(cfg.channel_id)}</span>
+              <span>
+                {t('web.channels.card.channelIdLabel')} {String(cfg.channel_id)}
+              </span>
             ) : null}
             {Array.isArray(cfg.notify_on) && (cfg.notify_on as string[]).length > 0 && (
-              <span>notify_on: {(cfg.notify_on as string[]).join(', ')}</span>
+              <span>
+                {t('web.channels.card.notifyOnLabel')}{' '}
+                {(cfg.notify_on as string[]).join(', ')}
+              </span>
             )}
           </div>
           {webhookURL && (
             <div className="mt-2 flex items-center gap-2 text-[11px] font-mono">
-              <span className="text-muted-foreground">webhook:</span>
+              <span className="text-muted-foreground">
+                {t('web.channels.card.webhookLabel')}
+              </span>
               <code className="truncate flex-1 text-muted-foreground/90">{webhookURL}</code>
               <Button
                 variant="ghost"
@@ -278,9 +309,9 @@ function ChannelCard({
                 className="h-6 px-2 text-[11px]"
                 onClick={() => {
                   navigator.clipboard.writeText(webhookURL)
-                  toast.success('Webhook URL copied')
+                  toast.success(t('web.channels.card.webhookCopiedToast'))
                 }}
-                title="Copy webhook URL"
+                title={t('web.channels.card.copyWebhookTooltip')}
               >
                 <Copy className="size-3" />
               </Button>
@@ -303,9 +334,9 @@ function ChannelCard({
               variant="outline"
               size="sm"
               onClick={onSetup}
-              title="Show adapter connection details + sample code"
+              title={t('web.channels.card.setupTooltip')}
             >
-              <Code2 className="size-3.5" /> Setup
+              <Code2 className="size-3.5" /> {t('web.channels.card.setup')}
             </Button>
           )}
           <Button
@@ -315,20 +346,20 @@ function ChannelCard({
             disabled={!channel.running || isBridge}
             title={
               isBridge
-                ? 'Bridge channels cannot be tested from the admin — connect an adapter first'
+                ? t('web.channels.card.testBridgeTooltip')
                 : !channel.running
-                  ? 'Channel must be running'
+                  ? t('web.channels.card.testNotRunningTooltip')
                   : undefined
             }
           >
-            <Send className="size-3.5" /> Test
+            <Send className="size-3.5" /> {t('web.channels.card.test')}
           </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={onEdit}
-            aria-label="Edit channel"
-            title="Edit channel config"
+            aria-label={t('web.channels.card.editAria')}
+            title={t('web.channels.card.editTooltip')}
           >
             <Pencil className="size-3.5" />
           </Button>
@@ -336,7 +367,7 @@ function ChannelCard({
             variant="ghost"
             size="icon"
             onClick={onDelete}
-            aria-label="Delete channel"
+            aria-label={t('web.channels.card.deleteAria')}
             className="text-muted-foreground hover:text-destructive"
           >
             <Trash2 className="size-3.5" />
@@ -361,6 +392,7 @@ function ChannelDialog({
   // updateChannel(id, …) instead of createChannel(…).
   editing?: Channel | null
 }) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const isEdit = !!editing
   const { data: kinds } = useQuery({
@@ -439,7 +471,7 @@ function ChannelDialog({
     mutationFn: createChannel,
     onSuccess: (channel) => {
       qc.invalidateQueries({ queryKey: ['channels'] })
-      toast.success('Channel created')
+      toast.success(t('web.channels.toasts.created'))
       onOpenChange(false)
       onCreated?.(channel)
     },
@@ -451,7 +483,7 @@ function ChannelDialog({
       updateChannel(vars.id, { config: vars.config, enabled: vars.enabled }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['channels'] })
-      toast.success('Channel updated')
+      toast.success(t('web.channels.toasts.updated'))
       onOpenChange(false)
     },
     onError: (e: Error) => setError(e.message),
@@ -464,11 +496,11 @@ function ChannelDialog({
     let config: Record<string, unknown>
     if (kind === 'bridge') {
       if (!bridgeName.trim()) {
-        setError('name is required')
+        setError(t('web.channels.dialog.nameRequired'))
         return
       }
       if (!bridgeToken.trim()) {
-        setError('token is required')
+        setError(t('web.channels.dialog.tokenRequired'))
         return
       }
       config = {
@@ -480,13 +512,13 @@ function ChannelDialog({
       }
     } else if (def) {
       try {
-        config = buildConfigFromValues(def, values)
+        config = buildConfigFromValues(def, values, t)
       } catch (err) {
         setError((err as Error).message)
         return
       }
     } else {
-      setError(`Unknown kind: ${kind}`)
+      setError(t('web.channels.dialog.unknownKind', { kind }))
       return
     }
 
@@ -510,16 +542,20 @@ function ChannelDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[520px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit channel' : 'Register channel'}</DialogTitle>
+          <DialogTitle>
+            {isEdit
+              ? t('web.channels.dialog.editTitle')
+              : t('web.channels.dialog.createTitle')}
+          </DialogTitle>
           <DialogDescription>
             {kind === 'bridge'
-              ? 'External adapter (Python/Node/...) connects via WebSocket and presents this token.'
-              : (def?.description ?? 'Configure messaging integration.')}
+              ? t('web.channels.dialog.descriptionBridge')
+              : (def?.description ?? t('web.channels.dialog.descriptionDefault'))}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-4 mt-2">
           <div className="space-y-1.5">
-            <Label htmlFor="kind">Kind</Label>
+            <Label htmlFor="kind">{t('web.channels.dialog.kindLabel')}</Label>
             {isEdit ? (
               <div className="flex items-center gap-2 px-3 py-2 border border-border rounded-md bg-muted/20 text-[12px]">
                 <BrandIcon
@@ -528,7 +564,9 @@ function ChannelDialog({
                   title={def?.label ?? kind}
                 />
                 <span className="font-mono">{def?.label ?? kind}</span>
-                <span className="text-muted-foreground/70">(immutable — delete and recreate to change kind)</span>
+                <span className="text-muted-foreground/70">
+                  {t('web.channels.dialog.kindImmutable')}
+                </span>
               </div>
             ) : (
               <Select value={kind} onValueChange={setKind}>
@@ -592,12 +630,12 @@ function ChannelDialog({
               onCheckedChange={setEnabled}
             />
             <Label htmlFor="enabled" className="!text-[12px]">
-              Enabled
+              {t('web.channels.dialog.enabledLabel')}
               {kind === 'bridge'
-                ? ' (accept adapter connections immediately)'
+                ? t('web.channels.dialog.enabledBridgeHint')
                 : def?.webhookBased
-                  ? ' (start receiving webhooks immediately)'
-                  : ' (start immediately)'}
+                  ? t('web.channels.dialog.enabledWebhookHint')
+                  : t('web.channels.dialog.enabledDefaultHint')}
             </Label>
           </div>
 
@@ -615,7 +653,7 @@ function ChannelDialog({
               onClick={() => onOpenChange(false)}
               disabled={pending}
             >
-              Cancel
+              {t('web.channels.dialog.cancel')}
             </Button>
             <Button
               type="submit"
@@ -626,11 +664,11 @@ function ChannelDialog({
               {pending && <Loader2 className="size-3.5 animate-spin" />}
               {isEdit
                 ? pending
-                  ? 'Saving…'
-                  : 'Save'
+                  ? t('web.channels.dialog.saving')
+                  : t('web.channels.dialog.save')
                 : pending
-                  ? 'Creating…'
-                  : 'Create'}
+                  ? t('web.channels.dialog.creating')
+                  : t('web.channels.dialog.create')}
             </Button>
           </DialogFooter>
         </form>
@@ -695,45 +733,12 @@ function valuesFromConfig(
 // Order matches the order they're rendered as checkboxes.
 const SESSION_TOPICS = ['session.started', 'session.idle', 'session.ended'] as const
 
-const NOTIFY_MODE_OPTIONS: Array<{ value: string; label: string; hint: string }> = [
-  {
-    value: 'once',
-    label: 'Once per session (recommended)',
-    hint:
-      'Fire once when a session goes idle, then stay silent until either the session ends or you reply via this channel.',
-  },
-  {
-    value: 'cooldown',
-    label: 'Time-window cooldown',
-    hint:
-      'Suppress repeats for the same (session, event) within the chosen window.',
-  },
-  {
-    value: 'every',
-    label: 'Every event (noisy)',
-    hint: 'No suppression. Use only for low-frequency channels.',
-  },
-]
-
-const COOLDOWN_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: '60', label: '1 minute' },
-  { value: '300', label: '5 minutes' },
-  { value: '900', label: '15 minutes' },
-  { value: '1800', label: '30 minutes' },
-  { value: '3600', label: '1 hour' },
-]
+const NOTIFY_MODE_VALUES = ['once', 'cooldown', 'every'] as const
+const COOLDOWN_VALUES = ['60', '300', '900', '1800', '3600'] as const
+const SNIPPET_CAP_VALUES = ['0', '1000', '3000', '6000', '12000'] as const
 
 const DEFAULT_NOTIFY_MODE = 'once'
 const DEFAULT_COOLDOWN = '300'
-
-const SNIPPET_CAP_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: '0', label: 'No cap — chunk into multiple messages (default)' },
-  { value: '1000', label: '1000 chars (terse)' },
-  { value: '3000', label: '3000 chars' },
-  { value: '6000', label: '6000 chars' },
-  { value: '12000', label: '12000 chars' },
-]
-
 const DEFAULT_SNIPPET_CAP = '0'
 
 // NotificationFields renders the per-channel notification controls
@@ -748,6 +753,7 @@ function NotificationFields({
   values: Record<string, string>
   setValue: (name: string, val: string) => void
 }) {
+  const { t } = useTranslation()
   // Stored as comma-separated topics. Empty string = all topics
   // (matches the backend's notify_on=[] = "any" semantics).
   const selected = parseTopicList(values.notify_on ?? '')
@@ -760,8 +766,17 @@ function NotificationFields({
   const includeSnippet = values.notify_include_snippet !== 'false'
   const snippetCap = values.notify_snippet_max_chars ?? DEFAULT_SNIPPET_CAP
 
-  const modeHint =
-    NOTIFY_MODE_OPTIONS.find((o) => o.value === mode)?.hint ?? ''
+  const modeHintMap: Record<string, string> = {
+    once: t('web.channels.notifications.modes.onceHint'),
+    cooldown: t('web.channels.notifications.modes.cooldownHint'),
+    every: t('web.channels.notifications.modes.everyHint'),
+  }
+  const modeLabelMap: Record<string, string> = {
+    once: t('web.channels.notifications.modes.onceLabel'),
+    cooldown: t('web.channels.notifications.modes.cooldownLabel'),
+    every: t('web.channels.notifications.modes.everyLabel'),
+  }
+  const modeHint = modeHintMap[mode] ?? ''
 
   const toggleTopic = (topic: string) => {
     // First click: convert "all" → explicit list of remaining ones.
@@ -781,12 +796,12 @@ function NotificationFields({
   return (
     <div className="space-y-2 border border-border rounded-md p-3 bg-muted/10">
       <div className="text-[12px] font-semibold text-muted-foreground/90">
-        Session notifications
+        {t('web.channels.notifications.sectionTitle')}
       </div>
 
       <div className="space-y-1.5">
         <Label className="!text-[11px] text-muted-foreground/80">
-          Notify on
+          {t('web.channels.notifications.notifyOnLabel')}
         </Label>
         <div className="flex flex-wrap gap-1.5">
           {SESSION_TOPICS.map((topic) => {
@@ -805,25 +820,28 @@ function NotificationFields({
         </div>
         <p className="text-[11px] text-muted-foreground/80">
           {isAllSelected
-            ? 'Receiving every session event. Click a tag to opt out.'
+            ? t('web.channels.notifications.hintAll')
             : selected.length === 0
-              ? 'No events selected — outbound notifications muted.'
-              : `Only ${selected.length} of ${SESSION_TOPICS.length} topics selected.`}
+              ? t('web.channels.notifications.hintNone')
+              : t('web.channels.notifications.hintSome', {
+                  selected: selected.length,
+                  total: SESSION_TOPICS.length,
+                })}
         </p>
       </div>
 
       <div className="space-y-1.5">
         <Label htmlFor="notify_mode" className="!text-[11px] text-muted-foreground/80">
-          Repeat policy
+          {t('web.channels.notifications.repeatPolicyLabel')}
         </Label>
         <Select value={mode} onValueChange={(v) => setValue('notify_mode', v)}>
           <SelectTrigger id="notify_mode">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {NOTIFY_MODE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
+            {NOTIFY_MODE_VALUES.map((value) => (
+              <SelectItem key={value} value={value}>
+                {modeLabelMap[value]}
               </SelectItem>
             ))}
           </SelectContent>
@@ -837,7 +855,7 @@ function NotificationFields({
               htmlFor="notify_cooldown_s"
               className="!text-[11px] text-muted-foreground/80"
             >
-              Cooldown duration
+              {t('web.channels.notifications.cooldownLabel')}
             </Label>
             <Select
               value={cooldown}
@@ -847,9 +865,9 @@ function NotificationFields({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {COOLDOWN_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
+                {COOLDOWN_VALUES.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {t(`web.channels.notifications.cooldowns.${value}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -858,16 +876,14 @@ function NotificationFields({
         )}
         {mode === 'once' && (
           <p className="text-[11px] text-muted-foreground/60 italic">
-            Replying with non-command text in this chat resets the
-            suppression — opendray forwards your reply to the
-            session's stdin and re-arms the notifier.
+            {t('web.channels.notifications.onceReplyHint')}
           </p>
         )}
       </div>
 
       <div className="space-y-1.5">
         <Label className="!text-[11px] text-muted-foreground/80">
-          Terminal snippet
+          {t('web.channels.notifications.terminalSnippetLabel')}
         </Label>
         <div className="flex items-center gap-2">
           <Switch
@@ -878,7 +894,7 @@ function NotificationFields({
             }
           />
           <Label htmlFor="notify_include_snippet" className="!text-[11px]">
-            Embed the recent terminal screen in idle notifications
+            {t('web.channels.notifications.embedSnippetLabel')}
           </Label>
         </div>
         {includeSnippet && (
@@ -890,19 +906,16 @@ function NotificationFields({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {SNIPPET_CAP_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
+              {SNIPPET_CAP_VALUES.map((value) => (
+                <SelectItem key={value} value={value}>
+                  {t(`web.channels.notifications.snippetCaps.${value}`)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         )}
         <p className="text-[11px] text-muted-foreground/80">
-          When enabled, the idle card includes a code-block snippet of
-          what the user would see in the live web terminal — Claude
-          TUI chrome (status spinner, "bypass permissions" hint,
-          separator lines) is filtered out automatically.
+          {t('web.channels.notifications.snippetExplainer')}
         </p>
       </div>
     </div>
@@ -999,13 +1012,16 @@ function KindFieldRow({
 function buildConfigFromValues(
   def: KindDef,
   values: Record<string, string>,
+  t: TFunction,
 ): Record<string, unknown> {
   const cfg: Record<string, unknown> = {}
   for (const field of def.fields) {
     const raw = (values[field.name] ?? '').trim()
     if (!raw) {
       if (field.required) {
-        throw new Error(`${field.label} is required`)
+        throw new Error(
+          t('web.channels.dialog.fieldRequired', { label: field.label }),
+        )
       }
       continue
     }
@@ -1025,7 +1041,9 @@ function buildConfigFromValues(
         .map((s) => {
           const n = Number(s)
           if (!Number.isFinite(n) || !/^\d+$/.test(s)) {
-            throw new Error(`Topic IDs must be numeric (got ${s})`)
+            throw new Error(
+              t('web.channels.dialog.topicIdsNumeric', { value: s }),
+            )
           }
           return n
         })
@@ -1060,7 +1078,7 @@ function buildConfigFromValues(
     if (cooldown !== '') {
       const n = Number(cooldown)
       if (!Number.isFinite(n) || n < 0) {
-        throw new Error('Cooldown must be a non-negative number of seconds')
+        throw new Error(t('web.channels.dialog.cooldownInvalid'))
       }
       cfg.notify_cooldown_s = n
     }
@@ -1075,7 +1093,7 @@ function buildConfigFromValues(
   if (cap !== '' && cap !== DEFAULT_SNIPPET_CAP) {
     const n = Number(cap)
     if (!Number.isFinite(n) || n < 0) {
-      throw new Error('Snippet cap must be a non-negative number')
+      throw new Error(t('web.channels.dialog.snippetCapInvalid'))
     }
     // 0 = no cap (channel impl handles platform-specific chunking).
     cfg.notify_snippet_max_chars = n
@@ -1114,25 +1132,28 @@ function BridgeFields({
   caps: string[]
   toggleCap: (cap: string) => void
 }) {
+  const { t } = useTranslation()
   return (
     <>
       <div className="space-y-1.5">
-        <Label htmlFor="bridge_name">Bridge name</Label>
+        <Label htmlFor="bridge_name">{t('web.channels.bridge.nameLabel')}</Label>
         <Input
           id="bridge_name"
           autoComplete="off"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="wechat / discord-custom / whatsapp..."
+          placeholder={t('web.channels.bridge.namePlaceholder')}
           required
           autoFocus
         />
         <p className="text-[11px] text-muted-foreground/80">
-          Human label for the adapter. Shown in the channels list.
+          {t('web.channels.bridge.nameHint')}
         </p>
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="bridge_token">Adapter token</Label>
+        <Label htmlFor="bridge_token">
+          {t('web.channels.bridge.tokenLabel')}
+        </Label>
         <div className="flex gap-2">
           <Input
             id="bridge_token"
@@ -1146,7 +1167,7 @@ function BridgeFields({
             variant="outline"
             size="sm"
             onClick={() => setToken(generateBridgeToken())}
-            title="Regenerate"
+            title={t('web.channels.bridge.regenerateTooltip')}
           >
             <RefreshCw className="size-3.5" />
           </Button>
@@ -1156,20 +1177,22 @@ function BridgeFields({
             size="sm"
             onClick={() => {
               navigator.clipboard.writeText(token)
-              toast.success('Token copied')
+              toast.success(t('web.channels.bridge.tokenCopiedToast'))
             }}
-            title="Copy"
+            title={t('web.channels.bridge.copyTooltip')}
           >
             <Copy className="size-3.5" />
           </Button>
         </div>
         <p className="text-[11px] text-muted-foreground/80">
-          Adapter authenticates by sending this in the WS register frame
-          (or as <code>X-Bridge-Token</code> header).
+          <Trans
+            i18nKey="web.channels.bridge.tokenHint"
+            components={{ 1: <code /> }}
+          />
         </p>
       </div>
       <div className="space-y-1.5">
-        <Label>Accept capabilities (optional whitelist)</Label>
+        <Label>{t('web.channels.bridge.capsLabel')}</Label>
         <div className="flex flex-wrap gap-1">
           {BRIDGE_CAPABILITIES.map((cap) => {
             const active = caps.includes(cap)
@@ -1186,14 +1209,14 @@ function BridgeFields({
           })}
         </div>
         <p className="text-[11px] text-muted-foreground/80">
-          Empty = accept whatever the adapter declares. Selected = only
-          allow these capabilities even if the adapter offers more.
+          {t('web.channels.bridge.capsHint')}
         </p>
       </div>
       <div className="text-[11px] text-muted-foreground bg-muted/30 border border-border rounded-md px-3 py-2 leading-relaxed">
-        After <strong>Create</strong>, the adapter setup dialog opens
-        automatically with the WebSocket URL and copy-pasteable Python
-        / Node / wscat starter code.
+        <Trans
+          i18nKey="web.channels.bridge.afterCreate"
+          components={{ 1: <strong /> }}
+        />
       </div>
     </>
   )
@@ -1208,6 +1231,7 @@ function BridgeSetupDialog({
   open: boolean
   onOpenChange: (v: boolean) => void
 }) {
+  const { t } = useTranslation()
   if (!channel || channel.kind !== 'bridge') return null
   const cfg = channel.config as {
     name?: string
@@ -1247,24 +1271,40 @@ function BridgeSetupDialog({
       <DialogContent className="max-w-[720px]">
         <DialogHeader>
           <DialogTitle>
-            Adapter setup — <span className="font-mono">{name}</span>
+            <Trans
+              i18nKey="web.channels.setup.title"
+              values={{ name }}
+              components={{
+                1: <span className="font-mono" />,
+              }}
+            >
+              {`Adapter setup — `}
+              <span className="font-mono">{name}</span>
+            </Trans>
           </DialogTitle>
           <DialogDescription>
-            Run an adapter (any language) that connects to opendray over
-            WebSocket using these credentials. opendray will route
-            session notifications and slash-command actions through it.
+            {t('web.channels.setup.description')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 mt-2">
-          <CopyRow label="WebSocket URL" value={wsURL} />
-          <CopyRow label="Adapter token" value={token} secret />
+          <CopyRow label={t('web.channels.setup.wsUrlLabel')} value={wsURL} />
+          <CopyRow label={t('web.channels.setup.tokenLabel')} value={token} secret />
           <div className="text-[11px] text-muted-foreground leading-relaxed bg-muted/20 border border-border rounded-md px-3 py-2">
-            <strong>Auth:</strong> send the token as <code>X-Bridge-Token</code>{' '}
-            header, <code>?token=</code> query param, or{' '}
-            <code>Authorization: Bearer …</code>. The first WS frame must be{' '}
-            <code>{`{"type":"register","platform":"…","capabilities":[…]}`}</code>.
-            Full spec: <code>docs/bridge-protocol.md</code> in the repo.
+            <Trans
+              i18nKey="web.channels.setup.authInfo"
+              values={{
+                frame: `{"type":"register","platform":"…","capabilities":[…]}`,
+              }}
+              components={{
+                1: <strong />,
+                3: <code />,
+                5: <code />,
+                7: <code />,
+                9: <code />,
+                11: <code />,
+              }}
+            />
           </div>
 
           <Tabs defaultValue="python" className="w-full">
@@ -1276,22 +1316,28 @@ function BridgeSetupDialog({
             <TabsContent value="python" className="mt-3">
               <CodeBlock filename="adapter.py" code={pythonCode} />
               <p className="text-[11px] text-muted-foreground/80 mt-2">
-                Install: <code>pip install websockets</code>. Run:{' '}
-                <code>python adapter.py</code>.
+                <Trans
+                  i18nKey="web.channels.setup.pythonInstall"
+                  components={{ 1: <code />, 3: <code /> }}
+                />
               </p>
             </TabsContent>
             <TabsContent value="node" className="mt-3">
               <CodeBlock filename="adapter.mjs" code={nodeCode} />
               <p className="text-[11px] text-muted-foreground/80 mt-2">
-                Install: <code>npm i ws</code>. Run: <code>node adapter.mjs</code>.
+                <Trans
+                  i18nKey="web.channels.setup.nodeInstall"
+                  components={{ 1: <code />, 3: <code /> }}
+                />
               </p>
             </TabsContent>
             <TabsContent value="wscat" className="mt-3">
               <CodeBlock filename="shell" code={wscatCmd} />
               <p className="text-[11px] text-muted-foreground/80 mt-2">
-                Install: <code>npm i -g wscat</code>. Once connected,
-                paste the JSON line shown above to register, then send
-                further frames manually.
+                <Trans
+                  i18nKey="web.channels.setup.wscatInstall"
+                  components={{ 1: <code /> }}
+                />
               </p>
             </TabsContent>
           </Tabs>
@@ -1299,7 +1345,7 @@ function BridgeSetupDialog({
 
         <DialogFooter>
           <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
-            Close
+            {t('web.channels.setup.close')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1316,6 +1362,7 @@ function CopyRow({
   value: string
   secret?: boolean
 }) {
+  const { t } = useTranslation()
   const [revealed, setRevealed] = useState(!secret)
   const [copied, setCopied] = useState(false)
   const display = revealed ? value : '•'.repeat(Math.min(value.length, 40))
@@ -1331,7 +1378,9 @@ function CopyRow({
             size="sm"
             onClick={() => setRevealed((v) => !v)}
           >
-            {revealed ? 'Hide' : 'Show'}
+            {revealed
+              ? t('web.channels.setup.copyHide')
+              : t('web.channels.setup.copyShow')}
           </Button>
         )}
         <Button
@@ -1342,7 +1391,7 @@ function CopyRow({
             navigator.clipboard.writeText(value)
             setCopied(true)
             setTimeout(() => setCopied(false), 1500)
-            toast.success(`${label} copied`)
+            toast.success(t('web.channels.setup.copyLabelToast', { label }))
           }}
         >
           {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
@@ -1353,6 +1402,7 @@ function CopyRow({
 }
 
 function CodeBlock({ filename, code }: { filename: string; code: string }) {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
   return (
     <div className="border border-border rounded-md overflow-hidden bg-card/50">
@@ -1369,11 +1419,13 @@ function CodeBlock({ filename, code }: { filename: string; code: string }) {
             navigator.clipboard.writeText(code)
             setCopied(true)
             setTimeout(() => setCopied(false), 1500)
-            toast.success('Code copied')
+            toast.success(t('web.channels.setup.codeCopiedToast'))
           }}
         >
           {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-          {copied ? 'Copied' : 'Copy'}
+          {copied
+            ? t('web.channels.setup.copied')
+            : t('web.channels.setup.copyCode')}
         </Button>
       </div>
       <pre className="text-[11px] font-mono p-3 overflow-x-auto leading-snug max-h-[320px]">
