@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,6 +30,7 @@ export function TargetEditor({
 }: {
   onCreated: () => void | Promise<void>
 }) {
+  const { t } = useTranslation()
   const [kind, setKind] = useState<TargetKind>('local')
   const [id, setId] = useState('')
   const [enabled, setEnabled] = useState(true)
@@ -54,7 +56,7 @@ export function TargetEditor({
         config: cleaned,
         enabled,
       })
-      toast.success('Target created')
+      toast.success(t('web.backups.targetEditor.createdToast'))
       await onCreated()
     } catch (err) {
       const msg =
@@ -63,7 +65,7 @@ export function TargetEditor({
           : err instanceof Error
             ? err.message
             : 'Unknown error'
-      toast.error('Create failed', { description: msg })
+      toast.error(t('web.backups.targetEditor.createFailedToast'), { description: msg })
     } finally {
       setBusy(false)
     }
@@ -77,13 +79,13 @@ export function TargetEditor({
   return (
     <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>New backup target</DialogTitle>
+        <DialogTitle>{t('web.backups.targetEditor.title')}</DialogTitle>
       </DialogHeader>
 
       <div className="flex flex-col gap-4">
         {/* Kind picker as cards */}
         <div className="flex flex-col gap-1.5">
-          <Label className="text-[12px]">Where do you want to back up to?</Label>
+          <Label className="text-[12px]">{t('web.backups.targetEditor.kindPicker')}</Label>
           <div className="grid grid-cols-2 gap-2">
             {TARGET_KINDS.map((k) => (
               <button
@@ -111,11 +113,11 @@ export function TargetEditor({
 
         {/* ID (optional) */}
         <div className="flex flex-col gap-1.5">
-          <Label className="text-[12px]">ID (optional)</Label>
+          <Label className="text-[12px]">{t('web.backups.targetEditor.idLabel')}</Label>
           <Input
             value={id}
             onChange={(e) => setId(e.target.value)}
-            placeholder="auto-generated if blank, e.g. tgt_xxx"
+            placeholder={t('web.backups.targetEditor.idPlaceholder')}
             className="h-8 font-mono"
           />
         </div>
@@ -123,11 +125,14 @@ export function TargetEditor({
         {/* Per-kind config */}
         <div className="flex flex-col gap-3 border-t border-border pt-3">
           {kind === 'local' && (
-            <Field label="Root directory" hint="Empty = cfg.backup.local_dir (~/.opendray/backups)">
+            <Field
+              label={t('web.backups.targetEditor.local.rootLabel')}
+              hint={t('web.backups.targetEditor.local.rootHint')}
+            >
               <Input
                 value={(config.root as string) ?? ''}
                 onChange={(e) => patch({ root: e.target.value })}
-                placeholder="~/backups/opendray  or  /mnt/external-hdd/opendray"
+                placeholder={t('web.backups.targetEditor.local.rootPlaceholder')}
                 className="h-8 font-mono"
               />
             </Field>
@@ -136,15 +141,15 @@ export function TargetEditor({
           {kind === 'smb' && (
             <>
               <FieldRow>
-                <Field label="Host" className="flex-1">
+                <Field label={t('web.backups.targetEditor.smb.hostLabel')} className="flex-1">
                   <Input
                     value={(config.host as string) ?? ''}
                     onChange={(e) => patch({ host: e.target.value })}
-                    placeholder="192.168.9.8"
+                    placeholder={t('web.backups.targetEditor.smb.hostPlaceholder')}
                     className="h-8 font-mono"
                   />
                 </Field>
-                <Field label="Port" className="w-24">
+                <Field label={t('web.backups.targetEditor.smb.portLabel')} className="w-24">
                   <Input
                     type="number"
                     value={(config.port as number) ?? 445}
@@ -153,23 +158,26 @@ export function TargetEditor({
                   />
                 </Field>
               </FieldRow>
-              <Field label="Share" hint="Top-level share name on the SMB server">
+              <Field
+                label={t('web.backups.targetEditor.smb.shareLabel')}
+                hint={t('web.backups.targetEditor.smb.shareHint')}
+              >
                 <Input
                   value={(config.share as string) ?? ''}
                   onChange={(e) => patch({ share: e.target.value })}
-                  placeholder="Claude_Workspace"
+                  placeholder={t('web.backups.targetEditor.smb.sharePlaceholder')}
                   className="h-8"
                 />
               </Field>
               <FieldRow>
-                <Field label="User" className="flex-1">
+                <Field label={t('web.backups.targetEditor.smb.userLabel')} className="flex-1">
                   <Input
                     value={(config.user as string) ?? ''}
                     onChange={(e) => patch({ user: e.target.value })}
                     className="h-8"
                   />
                 </Field>
-                <Field label="Password" className="flex-1">
+                <Field label={t('web.backups.targetEditor.smb.passwordLabel')} className="flex-1">
                   <Input
                     type="password"
                     value={(config.password as string) ?? ''}
@@ -178,11 +186,14 @@ export function TargetEditor({
                   />
                 </Field>
               </FieldRow>
-              <Field label="Path prefix" hint="Sub-folder under the share root (optional)">
+              <Field
+                label={t('web.backups.targetEditor.smb.pathPrefixLabel')}
+                hint={t('web.backups.targetEditor.smb.pathPrefixHint')}
+              >
                 <Input
                   value={(config.path_prefix as string) ?? ''}
                   onChange={(e) => patch({ path_prefix: e.target.value })}
-                  placeholder="opendray/backups"
+                  placeholder={t('web.backups.targetEditor.smb.pathPrefixPlaceholder')}
                   className="h-8 font-mono"
                 />
               </Field>
@@ -192,35 +203,39 @@ export function TargetEditor({
           {kind === 's3' && (
             <>
               <Field
-                label="Endpoint"
-                hint="Host (no protocol). AWS: s3.amazonaws.com · R2: <accountid>.r2.cloudflarestorage.com · MinIO: minio.local:9000"
+                label={t('web.backups.targetEditor.s3.endpointLabel')}
+                hint={t('web.backups.targetEditor.s3.endpointHint')}
               >
                 <Input
                   value={(config.endpoint as string) ?? ''}
                   onChange={(e) => patch({ endpoint: e.target.value })}
-                  placeholder="s3.amazonaws.com"
+                  placeholder={t('web.backups.targetEditor.s3.endpointPlaceholder')}
                   className="h-8 font-mono"
                 />
               </Field>
               <FieldRow>
-                <Field label="Region" className="flex-1" hint="AWS only; R2 use 'auto'">
+                <Field
+                  label={t('web.backups.targetEditor.s3.regionLabel')}
+                  className="flex-1"
+                  hint={t('web.backups.targetEditor.s3.regionHint')}
+                >
                   <Input
                     value={(config.region as string) ?? ''}
                     onChange={(e) => patch({ region: e.target.value })}
-                    placeholder="us-east-1 / auto"
+                    placeholder={t('web.backups.targetEditor.s3.regionPlaceholder')}
                     className="h-8 font-mono"
                   />
                 </Field>
-                <Field label="Bucket" className="flex-1">
+                <Field label={t('web.backups.targetEditor.s3.bucketLabel')} className="flex-1">
                   <Input
                     value={(config.bucket as string) ?? ''}
                     onChange={(e) => patch({ bucket: e.target.value })}
-                    placeholder="opendray-backups"
+                    placeholder={t('web.backups.targetEditor.s3.bucketPlaceholder')}
                     className="h-8 font-mono"
                   />
                 </Field>
               </FieldRow>
-              <Field label="Access key">
+              <Field label={t('web.backups.targetEditor.s3.accessKeyLabel')}>
                 <Input
                   value={(config.access_key as string) ?? ''}
                   onChange={(e) => patch({ access_key: e.target.value })}
@@ -228,7 +243,10 @@ export function TargetEditor({
                   autoComplete="off"
                 />
               </Field>
-              <Field label="Secret key" hint="Stored AES-256-GCM encrypted; never echoed back">
+              <Field
+                label={t('web.backups.targetEditor.s3.secretKeyLabel')}
+                hint={t('web.backups.targetEditor.s3.secretKeyHint')}
+              >
                 <Input
                   type="password"
                   value={(config.secret_key as string) ?? ''}
@@ -237,11 +255,14 @@ export function TargetEditor({
                   autoComplete="off"
                 />
               </Field>
-              <Field label="Path prefix" hint="Object-key prefix (optional)">
+              <Field
+                label={t('web.backups.targetEditor.s3.pathPrefixLabel')}
+                hint={t('web.backups.targetEditor.s3.pathPrefixHint')}
+              >
                 <Input
                   value={(config.path_prefix as string) ?? ''}
                   onChange={(e) => patch({ path_prefix: e.target.value })}
-                  placeholder="opendray/backups"
+                  placeholder={t('web.backups.targetEditor.s3.pathPrefixPlaceholder')}
                   className="h-8 font-mono"
                 />
               </Field>
@@ -252,7 +273,7 @@ export function TargetEditor({
                     onCheckedChange={(v) => patch({ use_ssl: v })}
                     className="scale-75"
                   />
-                  Use HTTPS
+                  {t('web.backups.targetEditor.s3.useHttps')}
                 </label>
                 <label className="flex items-center gap-2">
                   <Switch
@@ -260,7 +281,7 @@ export function TargetEditor({
                     onCheckedChange={(v) => patch({ path_style: v })}
                     className="scale-75"
                   />
-                  Path-style addressing (legacy / MinIO)
+                  {t('web.backups.targetEditor.s3.pathStyle')}
                 </label>
               </div>
             </>
@@ -269,25 +290,25 @@ export function TargetEditor({
           {kind === 'webdav' && (
             <>
               <Field
-                label="Base URL"
-                hint="Full URL including any path. Examples: https://cloud.example.com/remote.php/dav/files/me/ (Nextcloud), https://nas.local:5006/ (Synology), https://dav.jianguoyun.com/dav/ (Jianguoyun / 坚果云)"
+                label={t('web.backups.targetEditor.webdav.baseUrlLabel')}
+                hint={t('web.backups.targetEditor.webdav.baseUrlHint')}
               >
                 <Input
                   value={(config.base_url as string) ?? ''}
                   onChange={(e) => patch({ base_url: e.target.value })}
-                  placeholder="https://cloud.example.com/remote.php/dav/files/<user>/"
+                  placeholder={t('web.backups.targetEditor.webdav.baseUrlPlaceholder')}
                   className="h-8 font-mono"
                 />
               </Field>
               <FieldRow>
-                <Field label="User" className="flex-1">
+                <Field label={t('web.backups.targetEditor.webdav.userLabel')} className="flex-1">
                   <Input
                     value={(config.user as string) ?? ''}
                     onChange={(e) => patch({ user: e.target.value })}
                     className="h-8"
                   />
                 </Field>
-                <Field label="Password" className="flex-1">
+                <Field label={t('web.backups.targetEditor.webdav.passwordLabel')} className="flex-1">
                   <Input
                     type="password"
                     value={(config.password as string) ?? ''}
@@ -296,11 +317,14 @@ export function TargetEditor({
                   />
                 </Field>
               </FieldRow>
-              <Field label="Path prefix" hint="Sub-folder under the base URL (optional)">
+              <Field
+                label={t('web.backups.targetEditor.webdav.pathPrefixLabel')}
+                hint={t('web.backups.targetEditor.webdav.pathPrefixHint')}
+              >
                 <Input
                   value={(config.path_prefix as string) ?? ''}
                   onChange={(e) => patch({ path_prefix: e.target.value })}
-                  placeholder="opendray/backups"
+                  placeholder={t('web.backups.targetEditor.webdav.pathPrefixPlaceholder')}
                   className="h-8 font-mono"
                 />
               </Field>
@@ -310,15 +334,15 @@ export function TargetEditor({
           {kind === 'sftp' && (
             <>
               <FieldRow>
-                <Field label="Host" className="flex-1">
+                <Field label={t('web.backups.targetEditor.sftp.hostLabel')} className="flex-1">
                   <Input
                     value={(config.host as string) ?? ''}
                     onChange={(e) => patch({ host: e.target.value })}
-                    placeholder="vps.example.com"
+                    placeholder={t('web.backups.targetEditor.sftp.hostPlaceholder')}
                     className="h-8 font-mono"
                   />
                 </Field>
-                <Field label="Port" className="w-24">
+                <Field label={t('web.backups.targetEditor.sftp.portLabel')} className="w-24">
                   <Input
                     type="number"
                     value={(config.port as number) ?? 22}
@@ -327,7 +351,7 @@ export function TargetEditor({
                   />
                 </Field>
               </FieldRow>
-              <Field label="User">
+              <Field label={t('web.backups.targetEditor.sftp.userLabel')}>
                 <Input
                   value={(config.user as string) ?? ''}
                   onChange={(e) => patch({ user: e.target.value })}
@@ -335,8 +359,8 @@ export function TargetEditor({
                 />
               </Field>
               <Field
-                label="Password"
-                hint="Either password OR private key required. If both, password is treated as the key passphrase."
+                label={t('web.backups.targetEditor.sftp.passwordLabel')}
+                hint={t('web.backups.targetEditor.sftp.passwordHint')}
               >
                 <Input
                   type="password"
@@ -346,34 +370,37 @@ export function TargetEditor({
                 />
               </Field>
               <Field
-                label="Private key (PEM)"
-                hint="Paste contents of an OpenSSH/PEM private key (e.g. ~/.ssh/id_ed25519). Leave blank for password-only auth."
+                label={t('web.backups.targetEditor.sftp.privateKeyLabel')}
+                hint={t('web.backups.targetEditor.sftp.privateKeyHint')}
               >
                 <textarea
                   value={(config.private_key as string) ?? ''}
                   onChange={(e) => patch({ private_key: e.target.value })}
-                  placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..."
+                  placeholder={t('web.backups.targetEditor.sftp.privateKeyPlaceholder')}
                   rows={4}
                   className="w-full px-2 py-1.5 rounded-md border border-border bg-card text-[11px] font-mono"
                 />
               </Field>
               <Field
-                label="Host key (pinning)"
-                hint="OpenSSH-style server public key (run `ssh-keyscan host` to obtain). Leave blank to disable pinning (NOT recommended outside LAN)."
+                label={t('web.backups.targetEditor.sftp.hostKeyLabel')}
+                hint={t('web.backups.targetEditor.sftp.hostKeyHint')}
               >
                 <textarea
                   value={(config.host_key as string) ?? ''}
                   onChange={(e) => patch({ host_key: e.target.value })}
-                  placeholder="ssh-ed25519 AAAA..."
+                  placeholder={t('web.backups.targetEditor.sftp.hostKeyPlaceholder')}
                   rows={2}
                   className="w-full px-2 py-1.5 rounded-md border border-border bg-card text-[11px] font-mono"
                 />
               </Field>
-              <Field label="Path prefix" hint="Absolute or relative to user home (optional)">
+              <Field
+                label={t('web.backups.targetEditor.sftp.pathPrefixLabel')}
+                hint={t('web.backups.targetEditor.sftp.pathPrefixHint')}
+              >
                 <Input
                   value={(config.path_prefix as string) ?? ''}
                   onChange={(e) => patch({ path_prefix: e.target.value })}
-                  placeholder="/var/backups/opendray  or  opendray-backups"
+                  placeholder={t('web.backups.targetEditor.sftp.pathPrefixPlaceholder')}
                   className="h-8 font-mono"
                 />
               </Field>
@@ -383,52 +410,56 @@ export function TargetEditor({
           {kind === 'rclone' && (
             <>
               <div className="rounded-md border border-state-idle/40 bg-state-idle/10 p-2 text-[11px]">
-                Requires the <code className="text-foreground">rclone</code>{' '}
-                CLI installed on the opendray host. First configure your
-                remote with{' '}
-                <code className="text-foreground">rclone config</code>, then
-                use the remote name below. opendray invokes{' '}
-                <code className="text-foreground">rclone rcat / cat / lsd</code>{' '}
-                under the hood.
+                <Trans
+                  i18nKey="web.backups.targetEditor.rclone.rcloneHint"
+                  components={{
+                    1: <code className="text-foreground" />,
+                    3: <code className="text-foreground" />,
+                    5: <code className="text-foreground" />,
+                  }}
+                />
               </div>
               <Field
-                label="Remote name"
-                hint="Name from `rclone config` (no colon). Example: gdrive, onedrive, dropbox-personal, baidu-pan"
+                label={t('web.backups.targetEditor.rclone.remoteLabel')}
+                hint={t('web.backups.targetEditor.rclone.remoteHint')}
               >
                 <Input
                   value={(config.remote as string) ?? ''}
                   onChange={(e) => patch({ remote: e.target.value })}
-                  placeholder="gdrive"
-                  className="h-8 font-mono"
-                />
-              </Field>
-              <Field label="Path prefix" hint="Sub-folder under the remote root (optional)">
-                <Input
-                  value={(config.path_prefix as string) ?? ''}
-                  onChange={(e) => patch({ path_prefix: e.target.value })}
-                  placeholder="opendray/backups"
+                  placeholder={t('web.backups.targetEditor.rclone.remotePlaceholder')}
                   className="h-8 font-mono"
                 />
               </Field>
               <Field
-                label="Binary path"
-                hint="Override `which rclone`. Empty uses PATH lookup."
+                label={t('web.backups.targetEditor.rclone.pathPrefixLabel')}
+                hint={t('web.backups.targetEditor.rclone.pathPrefixHint')}
+              >
+                <Input
+                  value={(config.path_prefix as string) ?? ''}
+                  onChange={(e) => patch({ path_prefix: e.target.value })}
+                  placeholder={t('web.backups.targetEditor.rclone.pathPrefixPlaceholder')}
+                  className="h-8 font-mono"
+                />
+              </Field>
+              <Field
+                label={t('web.backups.targetEditor.rclone.binaryPathLabel')}
+                hint={t('web.backups.targetEditor.rclone.binaryPathHint')}
               >
                 <Input
                   value={(config.binary_path as string) ?? ''}
                   onChange={(e) => patch({ binary_path: e.target.value })}
-                  placeholder="/opt/homebrew/bin/rclone"
+                  placeholder={t('web.backups.targetEditor.rclone.binaryPathPlaceholder')}
                   className="h-8 font-mono"
                 />
               </Field>
               <Field
-                label="Config path"
-                hint="Override --config (default ~/.config/rclone/rclone.conf or ~/.rclone.conf)"
+                label={t('web.backups.targetEditor.rclone.configPathLabel')}
+                hint={t('web.backups.targetEditor.rclone.configPathHint')}
               >
                 <Input
                   value={(config.config_path as string) ?? ''}
                   onChange={(e) => patch({ config_path: e.target.value })}
-                  placeholder="leave blank for rclone default"
+                  placeholder={t('web.backups.targetEditor.rclone.configPathPlaceholder')}
                   className="h-8 font-mono"
                 />
               </Field>
@@ -442,14 +473,15 @@ export function TargetEditor({
             onCheckedChange={setEnabled}
             className="scale-75"
           />
-          Enable immediately (otherwise saved as disabled — useful for "configure
-          now, turn on later")
+          {t('web.backups.targetEditor.enableImmediately')}
         </label>
       </div>
 
       <DialogFooter>
         <Button onClick={submit} disabled={busy}>
-          {busy ? 'Creating…' : 'Create target'}
+          {busy
+            ? t('web.backups.targetEditor.creating')
+            : t('web.backups.targetEditor.create')}
         </Button>
       </DialogFooter>
     </DialogContent>

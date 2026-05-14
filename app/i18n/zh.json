@@ -1179,6 +1179,253 @@
           "updateFailedToast": "更新失败"
         }
       }
+    },
+    "backups": {
+      "title": "备份",
+      "subtitle": "写入到可插拔目标的加密 PostgreSQL dump。配置计划与保留策略，或触发一次性备份作为快速安全网。",
+      "exportData": "导出数据",
+      "loading": "加载中…",
+      "loadStatusFailedToast": "加载备份状态失败",
+      "tabs": {
+        "backups": "备份",
+        "schedules": "计划",
+        "targets": "目标"
+      },
+      "inventory": {
+        "title": "备份里包含什么？",
+        "summary": "{tables} 张表共 {rows} 行",
+        "description": "每次备份是一个对下方所有表执行 <1>pg_dump --format=custom</1> 的产物，外加 <3>manifest.json</3> 和（可选的）<5>config.toml</5>。计数是实时的；bundle 捕获的是备份发生那一刻的数据。",
+        "loadFailedToast": "加载清单失败",
+        "rowsLabel": "行"
+      },
+      "restart": {
+        "title": "请重启 opendray 以激活备份",
+        "description": "你的口令已保存。网关仅在启动时加载它，因此该功能在进程重启之前保持关闭。",
+        "keyFile": "密钥文件：",
+        "configuredVia": "配置方式：",
+        "envVar": "OPENDRAY_BACKUP_KEY 环境变量",
+        "checkAgain": "再次检查"
+      },
+      "setup": {
+        "title": "设置备份",
+        "description": "选择一个主口令。opendray 会用它加密每个备份 blob。<1>丢失它意味着你的备份无法恢复</1>，请在继续之前把它保存到密码管理器（Vaultwarden、1Password 等）。",
+        "generate": "生成",
+        "pasteOwn": "粘贴自定义",
+        "generateTitle": "256 位随机密钥",
+        "generateHint": "服务端生成一个加密随机的口令并仅显示一次。你必须在继续前复制它 — 没有恢复路径。",
+        "pasteLabel": "你的口令",
+        "pastePlaceholder": "至少 20 个字符",
+        "pasteHint": "建议：使用密码管理器生成 40 个以上字符。",
+        "savesTo": "保存到：",
+        "saving": "保存中…",
+        "generateAndSave": "生成并保存",
+        "save": "保存"
+      },
+      "generated": {
+        "title": "立即保存此口令",
+        "description": "这是 <1>唯一一次</1> 显示。opendray 与任何其他地方都将无法取回。请在继续前复制到密码管理器。",
+        "copy": "复制",
+        "copiedToast": "口令已复制到剪贴板",
+        "copyFailedToast": "复制失败 — 请手动选中并复制",
+        "savedTo": "已保存到：",
+        "ack": "我已将此口令保存到密码管理器",
+        "continue": "继续"
+      },
+      "status": {
+        "keyFingerprint": "密钥指纹：",
+        "pgDump": "pg_dump：",
+        "pgDumpUnavailable": "不可用",
+        "pgDumpHint": "备份在 pg_dump 进入 PATH 之前无法运行（也可通过 <1>backup.pg_dump_path</1> 设置绝对路径）。请安装与你的服务器主版本匹配的 <3>postgresql-client</3> 并重启。"
+      },
+      "backupsTab": {
+        "backupNow": "立即备份",
+        "triggering": "触发中…",
+        "includeConfig": "包含 config.toml",
+        "restoreFromFile": "从文件恢复",
+        "refresh": "刷新",
+        "queuedToast": "备份已排队",
+        "triggerFailedToast": "触发失败",
+        "listFailedToast": "加载备份列表失败",
+        "deleteConfirm": "删除备份 {id}? 该 blob 将从目标中移除。",
+        "deletedToast": "备份已删除",
+        "deleteFailedToast": "删除失败",
+        "empty": "暂无备份。点击上方 \"立即备份\" 进行第一次。",
+        "columns": {
+          "id": "ID",
+          "target": "目标",
+          "status": "状态",
+          "started": "开始",
+          "size": "大小",
+          "actions": "操作"
+        },
+        "downloadTooltip": "下载",
+        "deleteTooltip": "删除"
+      },
+      "restore": {
+        "title": "从备份 bundle 恢复",
+        "bundleLabel": "加密 bundle（.tar.gz.enc）",
+        "targetDsnLabel": "目标数据库 DSN",
+        "targetDsnHint": "（留空 = opendray 自己的 DB — 危险）",
+        "targetDsnPlaceholder": "postgres://user:pass@host:5432/dbname",
+        "cleanLabel": "--clean --if-exists（先 drop 现有 schema；恢复到已填充的 DB 上时必需）",
+        "auditNoteLabel": "审计备注（可选）",
+        "auditNotePlaceholder": "恢复原因 — 会出现在 slog 中",
+        "ownDbWarning": "你正在恢复到 <1>opendray 自己的数据库</1>。启用 \"--clean\" 时会 drop 每张表并按字面回放备份 — 不可逆。请输入 <3>I understand</3> 以继续。",
+        "confirmPlaceholder": "I understand",
+        "confirmSentinel": "I understand",
+        "pgRestoreOutput": "pg_restore 输出（最后 8 KiB）",
+        "noPgRestoreOutput": "（无 pg_restore 输出）",
+        "pickFileToast": "请先选择一个 bundle 文件",
+        "succeededToast": "恢复成功",
+        "replayedDescription": "已回放 {bytes}，来自 manifest {id}",
+        "failedToast": "恢复失败",
+        "restoring": "恢复中…",
+        "restore": "恢复"
+      },
+      "schedulesTab": {
+        "description": "周期备份。调度器每 30 秒轮询一次，并运行最旧的到期计划。",
+        "newSchedule": "新建计划",
+        "loadFailedToast": "加载计划失败",
+        "deleteConfirm": "删除计划 {id}?",
+        "deletedToast": "计划已删除",
+        "deleteFailedToast": "删除失败",
+        "toggleFailedToast": "切换失败",
+        "empty": "暂无计划。添加一个以进行周期性自动备份。",
+        "columns": {
+          "id": "ID",
+          "target": "目标",
+          "interval": "间隔",
+          "keep": "保留",
+          "nextRun": "下次运行",
+          "enabled": "启用",
+          "actions": "操作"
+        },
+        "keepCount": "{count} 个备份",
+        "deleteTooltip": "删除"
+      },
+      "newSchedule": {
+        "title": "新建备份计划",
+        "targetLabel": "目标",
+        "everyHoursLabel": "每隔（小时）",
+        "keepLastNLabel": "保留最近 N 个",
+        "enableImmediately": "立即启用",
+        "createdToast": "计划已创建",
+        "createFailedToast": "创建失败",
+        "creating": "创建中…",
+        "create": "创建"
+      },
+      "targetsTab": {
+        "description": "存储目标。v1 支持 <1>local</1>（opendray 主机磁盘）与 <3>smb</3>（任意 SMB / CIFS 共享，如 UNAS 或群晖）。",
+        "newTarget": "新建目标",
+        "listFailedToast": "加载目标列表失败",
+        "deleteConfirm": "删除目标 {id}? 引用它的计划会阻止删除。",
+        "deletedToast": "目标已删除",
+        "deleteFailedToast": "删除失败",
+        "connectionOkToast": "连接成功",
+        "connectionFailedToast": "连接失败",
+        "testFailedToast": "测试失败",
+        "columns": {
+          "id": "ID",
+          "kind": "类型",
+          "config": "配置",
+          "enabled": "启用",
+          "actions": "操作"
+        },
+        "on": "开",
+        "off": "关",
+        "test": "测试",
+        "testing": "测试中…",
+        "deleteTooltip": "删除"
+      },
+      "targetEditor": {
+        "title": "新建备份目标",
+        "kindPicker": "你想备份到哪里？",
+        "idLabel": "ID（可选）",
+        "idPlaceholder": "留空则自动生成，例如 tgt_xxx",
+        "createdToast": "目标已创建",
+        "createFailedToast": "创建失败",
+        "creating": "创建中…",
+        "create": "创建目标",
+        "enableImmediately": "立即启用（否则保存为禁用 — 适合 \"先配置好，稍后开启\"）",
+        "local": {
+          "rootLabel": "根目录",
+          "rootHint": "留空 = cfg.backup.local_dir (~/.opendray/backups)",
+          "rootPlaceholder": "~/backups/opendray  或  /mnt/external-hdd/opendray"
+        },
+        "smb": {
+          "hostLabel": "主机",
+          "hostPlaceholder": "192.168.9.8",
+          "portLabel": "端口",
+          "shareLabel": "Share",
+          "shareHint": "SMB 服务器上的顶层共享名",
+          "sharePlaceholder": "Claude_Workspace",
+          "userLabel": "用户",
+          "passwordLabel": "密码",
+          "pathPrefixLabel": "路径前缀",
+          "pathPrefixHint": "共享根下的子文件夹（可选）",
+          "pathPrefixPlaceholder": "opendray/backups"
+        },
+        "s3": {
+          "endpointLabel": "Endpoint",
+          "endpointHint": "主机（不要带协议）。AWS: s3.amazonaws.com · R2: <accountid>.r2.cloudflarestorage.com · MinIO: minio.local:9000",
+          "endpointPlaceholder": "s3.amazonaws.com",
+          "regionLabel": "Region",
+          "regionHint": "仅 AWS；R2 用 'auto'",
+          "regionPlaceholder": "us-east-1 / auto",
+          "bucketLabel": "Bucket",
+          "bucketPlaceholder": "opendray-backups",
+          "accessKeyLabel": "Access key",
+          "secretKeyLabel": "Secret key",
+          "secretKeyHint": "AES-256-GCM 加密存储；不会被回显",
+          "pathPrefixLabel": "Path prefix",
+          "pathPrefixHint": "Object-key 前缀（可选）",
+          "pathPrefixPlaceholder": "opendray/backups",
+          "useHttps": "使用 HTTPS",
+          "pathStyle": "Path-style 寻址（legacy / MinIO）"
+        },
+        "webdav": {
+          "baseUrlLabel": "Base URL",
+          "baseUrlHint": "包含任意路径的完整 URL。示例：https://cloud.example.com/remote.php/dav/files/me/（Nextcloud）、https://nas.local:5006/（群晖）、https://dav.jianguoyun.com/dav/（坚果云）",
+          "baseUrlPlaceholder": "https://cloud.example.com/remote.php/dav/files/<user>/",
+          "userLabel": "用户",
+          "passwordLabel": "密码",
+          "pathPrefixLabel": "路径前缀",
+          "pathPrefixHint": "Base URL 下的子文件夹（可选）",
+          "pathPrefixPlaceholder": "opendray/backups"
+        },
+        "sftp": {
+          "hostLabel": "主机",
+          "hostPlaceholder": "vps.example.com",
+          "portLabel": "端口",
+          "userLabel": "用户",
+          "passwordLabel": "密码",
+          "passwordHint": "密码或私钥二选一。若两者都填，密码会被作为私钥口令使用。",
+          "privateKeyLabel": "私钥（PEM）",
+          "privateKeyHint": "粘贴 OpenSSH/PEM 格式的私钥内容（例如 ~/.ssh/id_ed25519）。留空则仅用密码认证。",
+          "privateKeyPlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----...",
+          "hostKeyLabel": "Host key（pinning）",
+          "hostKeyHint": "OpenSSH 风格的服务器公钥（运行 `ssh-keyscan host` 获取）。留空则禁用 pinning（LAN 之外不推荐）。",
+          "hostKeyPlaceholder": "ssh-ed25519 AAAA...",
+          "pathPrefixLabel": "路径前缀",
+          "pathPrefixHint": "绝对路径或相对家目录（可选）",
+          "pathPrefixPlaceholder": "/var/backups/opendray  或  opendray-backups"
+        },
+        "rclone": {
+          "rcloneHint": "要求 opendray 主机上已安装 <1>rclone</1> CLI。请先通过 <3>rclone config</3> 配置 remote，然后在下面填写 remote 名。opendray 在内部调用 <5>rclone rcat / cat / lsd</5>。",
+          "remoteLabel": "Remote name",
+          "remoteHint": "来自 `rclone config` 的名字（不带冒号）。例如：gdrive、onedrive、dropbox-personal、baidu-pan",
+          "remotePlaceholder": "gdrive",
+          "pathPrefixLabel": "路径前缀",
+          "pathPrefixHint": "Remote 根下的子文件夹（可选）",
+          "pathPrefixPlaceholder": "opendray/backups",
+          "binaryPathLabel": "二进制路径",
+          "binaryPathHint": "覆盖 `which rclone`。留空则走 PATH 查找。",
+          "binaryPathPlaceholder": "/opt/homebrew/bin/rclone",
+          "configPathLabel": "Config 路径",
+          "configPathHint": "覆盖 --config（默认 ~/.config/rclone/rclone.conf 或 ~/.rclone.conf）",
+          "configPathPlaceholder": "留空则使用 rclone 默认"
+        }
+      }
     }
   },
   "more": {

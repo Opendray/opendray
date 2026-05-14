@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { Trans, useTranslation } from 'react-i18next'
 import {
   ChevronDown,
   ChevronRight,
@@ -69,6 +70,7 @@ import { APIError } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 export function BackupsView() {
+  const { t } = useTranslation()
   const [status, setStatus] = useState<BackupStatusReport | null>(null)
 
   // refresh is exposed to the Setup/Restart child views so they can
@@ -80,7 +82,7 @@ export function BackupsView() {
       setStatus(next)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error('Failed to load backup status', { description: msg })
+      toast.error(t('web.backups.loadStatusFailedToast'), { description: msg })
     }
   }
 
@@ -89,7 +91,7 @@ export function BackupsView() {
   }, [])
 
   if (status === null) {
-    return <div className="text-muted-foreground text-sm">Loading…</div>
+    return <div className="text-muted-foreground text-sm">{t('web.backups.loading')}</div>
   }
 
   // Three-state machine based on the always-200 status payload:
@@ -113,9 +115,9 @@ export function BackupsView() {
       <InventoryCard />
       <Tabs defaultValue="backups" className="w-full">
         <TabsList>
-          <TabsTrigger value="backups">Backups</TabsTrigger>
-          <TabsTrigger value="schedules">Schedules</TabsTrigger>
-          <TabsTrigger value="targets">Targets</TabsTrigger>
+          <TabsTrigger value="backups">{t('web.backups.tabs.backups')}</TabsTrigger>
+          <TabsTrigger value="schedules">{t('web.backups.tabs.schedules')}</TabsTrigger>
+          <TabsTrigger value="targets">{t('web.backups.tabs.targets')}</TabsTrigger>
         </TabsList>
         <TabsContent value="backups" className="mt-4">
           <BackupsTab />
@@ -134,6 +136,7 @@ export function BackupsView() {
 // ── Inventory card (what does a backup contain right now?) ──────
 
 function InventoryCard() {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [groups, setGroups] = useState<InventoryGroup[] | null>(null)
   const [loading, setLoading] = useState(false)
@@ -145,7 +148,7 @@ function InventoryCard() {
       setGroups(await fetchBackupInventory())
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error('Failed to load inventory', { description: msg })
+      toast.error(t('web.backups.inventory.loadFailedToast'), { description: msg })
     } finally {
       setLoading(false)
     }
@@ -176,46 +179,50 @@ function InventoryCard() {
           <ChevronRight className="size-3.5 text-muted-foreground" />
         )}
         <Package className="size-3.5 text-accent" />
-        <span className="text-[13px] font-medium">What's in a backup?</span>
+        <span className="text-[13px] font-medium">{t('web.backups.inventory.title')}</span>
         {groups && (
           <span className="text-[11px] text-muted-foreground ml-1">
-            {totalRows.toLocaleString()} rows across{' '}
-            {groups.reduce((a, g) => a + g.tables.length, 0)} tables
+            {t('web.backups.inventory.summary', {
+              rows: totalRows.toLocaleString(),
+              tables: groups.reduce((a, g) => a + g.tables.length, 0),
+            })}
           </span>
         )}
       </button>
       {open && (
         <div className="px-4 pb-4 pt-1 border-t border-border/50 flex flex-col gap-3">
           <p className="text-[12px] text-muted-foreground">
-            Each backup is a <code>pg_dump --format=custom</code> of every
-            table below, plus <code>manifest.json</code> and (optionally){' '}
-            <code>config.toml</code>. Counts are live; the bundle captures
-            whatever's there at backup time.
+            <Trans
+              i18nKey="web.backups.inventory.description"
+              components={{ 1: <code />, 3: <code />, 5: <code /> }}
+            />
           </p>
           {loading && (
-            <div className="text-muted-foreground text-[12px]">Loading…</div>
+            <div className="text-muted-foreground text-[12px]">{t('web.backups.loading')}</div>
           )}
           {groups?.map((g) => (
             <div key={g.id} className="flex flex-col gap-1.5">
               <div className="flex items-baseline gap-2">
                 <h4 className="text-[12px] font-semibold">{g.label}</h4>
                 <span className="text-[11px] text-muted-foreground">
-                  {g.tables.reduce((a, t) => a + t.count, 0).toLocaleString()}{' '}
-                  rows
+                  {g.tables
+                    .reduce((a, tbl) => a + tbl.count, 0)
+                    .toLocaleString()}{' '}
+                  {t('web.backups.inventory.rowsLabel')}
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground">
                 {g.description}
               </p>
               <div className="flex flex-wrap gap-1.5 mt-0.5">
-                {g.tables.map((t) => (
+                {g.tables.map((tbl) => (
                   <span
-                    key={t.name}
+                    key={tbl.name}
                     className="inline-flex items-baseline gap-1.5 px-2 py-0.5 rounded border border-border bg-card text-[11px]"
                   >
-                    <code className="text-foreground">{t.name}</code>
+                    <code className="text-foreground">{tbl.name}</code>
                     <span className="text-muted-foreground">
-                      {t.count.toLocaleString()}
+                      {tbl.count.toLocaleString()}
                     </span>
                   </span>
                 ))}
@@ -242,6 +249,7 @@ function RestartRequiredCard({
   status: BackupStatusReport
   onRecheck: () => void | Promise<void>
 }) {
+  const { t } = useTranslation()
   const [busy, setBusy] = useState(false)
   async function recheck() {
     setBusy(true)
@@ -256,29 +264,26 @@ function RestartRequiredCard({
       <div className="flex items-start gap-3">
         <RefreshCw className="size-5 mt-0.5 text-accent" />
         <div className="flex-1">
-          <div className="font-medium">
-            Restart opendray to activate backups
-          </div>
+          <div className="font-medium">{t('web.backups.restart.title')}</div>
           <div className="text-muted-foreground text-[13px] mt-1">
-            Your passphrase is saved. The gateway only loads it at startup,
-            so the feature stays off until you bounce the process.
+            {t('web.backups.restart.description')}
           </div>
           {status.configured_via === 'file' && status.key_file_path && (
             <div className="mt-3 text-[12px]">
-              <span className="text-muted-foreground">Key file:</span>{' '}
+              <span className="text-muted-foreground">{t('web.backups.restart.keyFile')}</span>{' '}
               <code className="text-foreground">{status.key_file_path}</code>
             </div>
           )}
           {status.configured_via === 'env' && (
             <div className="mt-3 text-[12px]">
-              <span className="text-muted-foreground">Configured via:</span>{' '}
-              <code className="text-foreground">OPENDRAY_BACKUP_KEY</code> env var
+              <span className="text-muted-foreground">{t('web.backups.restart.configuredVia')}</span>{' '}
+              <code className="text-foreground">{t('web.backups.restart.envVar')}</code>
             </div>
           )}
           <div className="mt-4 flex gap-2">
             <Button size="sm" onClick={() => void recheck()} disabled={busy}>
               <RefreshCw className={cn('size-3.5', busy && 'animate-spin')} />
-              Check again
+              {t('web.backups.restart.checkAgain')}
             </Button>
           </div>
         </div>
@@ -302,6 +307,7 @@ function SetupWizardCard({
   status: BackupStatusReport
   onComplete: () => void | Promise<void>
 }) {
+  const { t } = useTranslation()
   const [mode, setMode] = useState<'generate' | 'paste'>('generate')
   const [pasted, setPasted] = useState('')
   const [busy, setBusy] = useState(false)
@@ -353,13 +359,13 @@ function SetupWizardCard({
     <div className="rounded-md border border-border bg-card p-5">
       <div className="flex items-center gap-2">
         <Lock className="size-5 text-accent" />
-        <div className="font-medium">Set up backups</div>
+        <div className="font-medium">{t('web.backups.setup.title')}</div>
       </div>
       <div className="text-muted-foreground text-[13px] mt-2">
-        Choose a master passphrase. opendray uses it to encrypt every backup
-        blob. <strong className="text-foreground">Lose it and your backups
-        become unrecoverable</strong>, so save it in a password manager
-        (Vaultwarden, 1Password, …) before continuing.
+        <Trans
+          i18nKey="web.backups.setup.description"
+          components={{ 1: <strong className="text-foreground" /> }}
+        />
       </div>
 
       <div className="mt-4 flex gap-2">
@@ -369,7 +375,7 @@ function SetupWizardCard({
           onClick={() => setMode('generate')}
         >
           <Dice5 className="size-3.5" />
-          Generate
+          {t('web.backups.setup.generate')}
         </Button>
         <Button
           variant={mode === 'paste' ? 'default' : 'outline'}
@@ -377,34 +383,32 @@ function SetupWizardCard({
           onClick={() => setMode('paste')}
         >
           <KeyRound className="size-3.5" />
-          Paste my own
+          {t('web.backups.setup.pasteOwn')}
         </Button>
       </div>
 
       {mode === 'generate' ? (
         <div className="mt-4 rounded-md border border-border bg-input/20 p-3 text-[12px]">
-          <div className="font-medium">256-bit random key</div>
+          <div className="font-medium">{t('web.backups.setup.generateTitle')}</div>
           <div className="text-muted-foreground mt-1">
-            Server generates a cryptographically random passphrase and shows
-            it once. You must copy it before continuing — there is no
-            recovery path.
+            {t('web.backups.setup.generateHint')}
           </div>
         </div>
       ) : (
         <div className="mt-4">
           <Label htmlFor="paste" className="text-[12px]">
-            Your passphrase
+            {t('web.backups.setup.pasteLabel')}
           </Label>
           <Input
             id="paste"
             value={pasted}
             onChange={(e) => setPasted(e.target.value)}
-            placeholder="At least 20 characters"
+            placeholder={t('web.backups.setup.pastePlaceholder')}
             className="mt-1 font-mono text-[13px]"
             autoFocus
           />
           <div className="text-muted-foreground text-[11px] mt-1">
-            Recommended: 40+ characters from a password manager.
+            {t('web.backups.setup.pasteHint')}
           </div>
         </div>
       )}
@@ -418,7 +422,7 @@ function SetupWizardCard({
       <div className="mt-4 flex items-center justify-between gap-3">
         {status.key_file_path && (
           <div className="text-muted-foreground text-[11px] truncate">
-            Saves to: <code>{status.key_file_path}</code>
+            {t('web.backups.setup.savesTo')} <code>{status.key_file_path}</code>
           </div>
         )}
         <Button
@@ -426,7 +430,11 @@ function SetupWizardCard({
           onClick={() => void submit()}
           disabled={busy || (mode === 'paste' && pasted.trim().length < 20)}
         >
-          {busy ? 'Saving…' : mode === 'generate' ? 'Generate and save' : 'Save'}
+          {busy
+            ? t('web.backups.setup.saving')
+            : mode === 'generate'
+              ? t('web.backups.setup.generateAndSave')
+              : t('web.backups.setup.save')}
         </Button>
       </div>
     </div>
@@ -444,25 +452,27 @@ function GeneratedPassphrasePanel({
   setAckSaved: (v: boolean) => void
   onContinue: () => void
 }) {
+  const { t } = useTranslation()
   const pass = result.passphrase ?? ''
   async function copy() {
     try {
       await navigator.clipboard.writeText(pass)
-      toast.success('Passphrase copied to clipboard')
+      toast.success(t('web.backups.generated.copiedToast'))
     } catch {
-      toast.error('Copy failed — select and copy manually')
+      toast.error(t('web.backups.generated.copyFailedToast'))
     }
   }
   return (
     <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-5">
       <div className="flex items-center gap-2">
         <ShieldAlert className="size-5 text-amber-500" />
-        <div className="font-medium">Save this passphrase NOW</div>
+        <div className="font-medium">{t('web.backups.generated.title')}</div>
       </div>
       <div className="text-muted-foreground text-[13px] mt-2">
-        This is shown <strong className="text-foreground">once</strong>. It
-        will not be retrievable from opendray or anywhere else. Copy it into
-        a password manager before continuing.
+        <Trans
+          i18nKey="web.backups.generated.description"
+          components={{ 1: <strong className="text-foreground" /> }}
+        />
       </div>
       <div className="mt-4 rounded-md border border-accent/40 bg-input/30 p-3 font-mono text-[13px] break-all select-all">
         {pass}
@@ -470,12 +480,12 @@ function GeneratedPassphrasePanel({
       <div className="mt-2 flex gap-2">
         <Button variant="outline" size="sm" onClick={() => void copy()}>
           <Copy className="size-3.5" />
-          Copy
+          {t('web.backups.generated.copy')}
         </Button>
       </div>
       {result.key_file_path && (
         <div className="text-muted-foreground text-[11px] mt-3">
-          Saved to: <code>{result.key_file_path}</code>
+          {t('web.backups.generated.savedTo')} <code>{result.key_file_path}</code>
         </div>
       )}
       <label className="mt-4 flex items-start gap-2 text-[13px] cursor-pointer">
@@ -485,11 +495,11 @@ function GeneratedPassphrasePanel({
           onChange={(e) => setAckSaved(e.target.checked)}
           className="mt-0.5"
         />
-        <span>I have saved this passphrase to my password manager</span>
+        <span>{t('web.backups.generated.ack')}</span>
       </label>
       <div className="mt-4">
         <Button size="sm" onClick={onContinue} disabled={!ackSaved}>
-          Continue
+          {t('web.backups.generated.continue')}
         </Button>
       </div>
     </div>
@@ -497,6 +507,7 @@ function GeneratedPassphrasePanel({
 }
 
 function StatusBanner({ status }: { status: BackupStatusReport }) {
+  const { t } = useTranslation()
   return (
     <div
       className={cn(
@@ -509,27 +520,27 @@ function StatusBanner({ status }: { status: BackupStatusReport }) {
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
         <div className="flex items-center gap-2">
           <KeyRound className="size-3.5 text-accent" />
-          <span className="text-muted-foreground">Key fingerprint:</span>
+          <span className="text-muted-foreground">{t('web.backups.status.keyFingerprint')}</span>
           <code className="text-foreground">{status.key_fingerprint}</code>
         </div>
         <div className="flex items-center gap-2">
           <HardDrive className="size-3.5 text-accent" />
-          <span className="text-muted-foreground">pg_dump:</span>
+          <span className="text-muted-foreground">{t('web.backups.status.pgDump')}</span>
           {status.ok ? (
             <code className="text-foreground">{status.pg_dump_version}</code>
           ) : (
             <span className="text-state-failed">
-              {status.pg_dump_error || 'unavailable'}
+              {status.pg_dump_error || t('web.backups.status.pgDumpUnavailable')}
             </span>
           )}
         </div>
       </div>
       {!status.ok && (
         <div className="mt-2 text-state-failed">
-          Backups can't run until pg_dump is on PATH (or its absolute
-          path is set in <code>backup.pg_dump_path</code>). Install{' '}
-          <code>postgresql-client</code> matching your server's major
-          version and restart.
+          <Trans
+            i18nKey="web.backups.status.pgDumpHint"
+            components={{ 1: <code />, 3: <code /> }}
+          />
         </div>
       )}
     </div>
@@ -539,6 +550,7 @@ function StatusBanner({ status }: { status: BackupStatusReport }) {
 // ── Backups tab ──────────────────────────────────────────────────
 
 function BackupsTab() {
+  const { t } = useTranslation()
   const [rows, setRows] = useState<Backup[] | null>(null)
   const [busy, setBusy] = useState(false)
   const [includeConfig, setIncludeConfig] = useState(true)
@@ -550,41 +562,44 @@ function BackupsTab() {
       setRows(list)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error('Failed to list backups', { description: msg })
+      toast.error(t('web.backups.backupsTab.listFailedToast'), { description: msg })
     }
   }
 
   useEffect(() => {
     refresh()
-    const t = window.setInterval(refresh, 5000)
-    return () => window.clearInterval(t)
+    const id = window.setInterval(refresh, 5000)
+    return () => window.clearInterval(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function trigger() {
     setBusy(true)
     try {
       await createBackup({ includeConfig })
-      toast.success('Backup queued')
+      toast.success(t('web.backups.backupsTab.queuedToast'))
       await refresh()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error('Trigger failed', { description: msg })
+      toast.error(t('web.backups.backupsTab.triggerFailedToast'), { description: msg })
     } finally {
       setBusy(false)
     }
   }
 
   async function onDelete(id: string) {
-    if (!window.confirm(`Delete backup ${id}? The blob is removed from its target.`)) {
+    if (
+      !window.confirm(t('web.backups.backupsTab.deleteConfirm', { id }))
+    ) {
       return
     }
     try {
       await deleteBackup(id)
-      toast.success('Backup deleted')
+      toast.success(t('web.backups.backupsTab.deletedToast'))
       await refresh()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error('Delete failed', { description: msg })
+      toast.error(t('web.backups.backupsTab.deleteFailedToast'), { description: msg })
     }
   }
 
@@ -593,7 +608,9 @@ function BackupsTab() {
       <div className="flex items-center gap-3 flex-wrap">
         <Button onClick={trigger} disabled={busy} size="sm" className="h-8">
           <Play className="size-3.5 mr-1.5" />
-          {busy ? 'Triggering…' : 'Backup now'}
+          {busy
+            ? t('web.backups.backupsTab.triggering')
+            : t('web.backups.backupsTab.backupNow')}
         </Button>
         <label className="flex items-center gap-2 text-[12px] text-muted-foreground">
           <Switch
@@ -601,13 +618,13 @@ function BackupsTab() {
             onCheckedChange={setIncludeConfig}
             className="scale-75"
           />
-          include config.toml
+          {t('web.backups.backupsTab.includeConfig')}
         </label>
         <Dialog open={restoreOpen} onOpenChange={setRestoreOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm" className="h-8 ml-auto">
               <Upload className="size-3.5 mr-1.5" />
-              Restore from file
+              {t('web.backups.backupsTab.restoreFromFile')}
             </Button>
           </DialogTrigger>
           <RestoreDialog
@@ -624,7 +641,7 @@ function BackupsTab() {
           className="h-8"
         >
           <RotateCw className="size-3.5 mr-1.5" />
-          Refresh
+          {t('web.backups.backupsTab.refresh')}
         </Button>
       </div>
       <BackupTable rows={rows} onDelete={onDelete} />
@@ -633,6 +650,7 @@ function BackupsTab() {
 }
 
 function RestoreDialog({ onDone }: { onDone: () => void | Promise<void> }) {
+  const { t } = useTranslation()
   const [file, setFile] = useState<File | null>(null)
   const [targetDsn, setTargetDsn] = useState('')
   const [clean, setClean] = useState(true)
@@ -642,11 +660,13 @@ function RestoreDialog({ onDone }: { onDone: () => void | Promise<void> }) {
   const [output, setOutput] = useState<string | null>(null)
 
   const restoringOwn = targetDsn === ''
-  const confirmReady = !restoringOwn || confirm.trim() === 'I understand'
+  const confirmReady =
+    !restoringOwn ||
+    confirm.trim() === t('web.backups.restore.confirmSentinel')
 
   async function submit() {
     if (!file) {
-      toast.error('Pick a bundle file first')
+      toast.error(t('web.backups.restore.pickFileToast'))
       return
     }
     setBusy(true)
@@ -659,9 +679,12 @@ function RestoreDialog({ onDone }: { onDone: () => void | Promise<void> }) {
         confirm: restoringOwn ? confirm : undefined,
         note,
       })
-      setOutput(res.pg_restore_output || '(no pg_restore output)')
-      toast.success('Restore succeeded', {
-        description: `${formatBytes(res.bytes_read)} replayed from manifest ${res.manifest.backup_id}`,
+      setOutput(res.pg_restore_output || t('web.backups.restore.noPgRestoreOutput'))
+      toast.success(t('web.backups.restore.succeededToast'), {
+        description: t('web.backups.restore.replayedDescription', {
+          bytes: formatBytes(res.bytes_read),
+          id: res.manifest.backup_id,
+        }),
       })
       await onDone()
     } catch (err) {
@@ -671,7 +694,7 @@ function RestoreDialog({ onDone }: { onDone: () => void | Promise<void> }) {
           : err instanceof Error
             ? err.message
             : 'Unknown error'
-      toast.error('Restore failed', { description: msg })
+      toast.error(t('web.backups.restore.failedToast'), { description: msg })
     } finally {
       setBusy(false)
     }
@@ -680,11 +703,11 @@ function RestoreDialog({ onDone }: { onDone: () => void | Promise<void> }) {
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Restore from backup bundle</DialogTitle>
+        <DialogTitle>{t('web.backups.restore.title')}</DialogTitle>
       </DialogHeader>
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
-          <Label className="text-[12px]">Encrypted bundle (.tar.gz.enc)</Label>
+          <Label className="text-[12px]">{t('web.backups.restore.bundleLabel')}</Label>
           <input
             type="file"
             accept=".enc,.tar.gz.enc,application/octet-stream"
@@ -694,15 +717,15 @@ function RestoreDialog({ onDone }: { onDone: () => void | Promise<void> }) {
         </div>
         <div className="flex flex-col gap-1.5">
           <Label className="text-[12px]">
-            Target database DSN
+            {t('web.backups.restore.targetDsnLabel')}
             <span className="text-muted-foreground ml-1 text-[11px]">
-              (blank = opendray's own DB — DANGEROUS)
+              {t('web.backups.restore.targetDsnHint')}
             </span>
           </Label>
           <Input
             value={targetDsn}
             onChange={(e) => setTargetDsn(e.target.value)}
-            placeholder="postgres://user:pass@host:5432/dbname"
+            placeholder={t('web.backups.restore.targetDsnPlaceholder')}
             className="h-8 font-mono text-[11px]"
           />
         </div>
@@ -712,15 +735,14 @@ function RestoreDialog({ onDone }: { onDone: () => void | Promise<void> }) {
             onCheckedChange={setClean}
             className="scale-75"
           />
-          --clean --if-exists (drop existing schema first; required when
-          restoring over a populated DB)
+          {t('web.backups.restore.cleanLabel')}
         </label>
         <div className="flex flex-col gap-1.5">
-          <Label className="text-[12px]">Audit note (optional)</Label>
+          <Label className="text-[12px]">{t('web.backups.restore.auditNoteLabel')}</Label>
           <Input
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Reason for restore — appears in slog"
+            placeholder={t('web.backups.restore.auditNotePlaceholder')}
             className="h-8"
           />
         </div>
@@ -730,18 +752,18 @@ function RestoreDialog({ onDone }: { onDone: () => void | Promise<void> }) {
             <ShieldAlert className="size-4 text-state-failed shrink-0 mt-0.5" />
             <div className="flex-1 flex flex-col gap-2">
               <div>
-                You're restoring into <strong>opendray's own database</strong>.
-                With "--clean" enabled this drops every table and replays the
-                backup verbatim — irreversible. Type{' '}
-                <code className="px-1 rounded bg-card text-foreground">
-                  I understand
-                </code>{' '}
-                to proceed.
+                <Trans
+                  i18nKey="web.backups.restore.ownDbWarning"
+                  components={{
+                    1: <strong />,
+                    3: <code className="px-1 rounded bg-card text-foreground" />,
+                  }}
+                />
               </div>
               <Input
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                placeholder="I understand"
+                placeholder={t('web.backups.restore.confirmPlaceholder')}
                 className="h-7 text-[12px]"
               />
             </div>
@@ -751,7 +773,7 @@ function RestoreDialog({ onDone }: { onDone: () => void | Promise<void> }) {
         {output && (
           <details className="rounded-md border border-border bg-card/30 p-2 text-[11px]">
             <summary className="cursor-pointer text-muted-foreground">
-              pg_restore output (last 8 KiB)
+              {t('web.backups.restore.pgRestoreOutput')}
             </summary>
             <pre className="mt-2 whitespace-pre-wrap font-mono">{output}</pre>
           </details>
@@ -759,7 +781,9 @@ function RestoreDialog({ onDone }: { onDone: () => void | Promise<void> }) {
       </div>
       <DialogFooter>
         <Button onClick={submit} disabled={busy || !file || !confirmReady}>
-          {busy ? 'Restoring…' : 'Restore'}
+          {busy
+            ? t('web.backups.restore.restoring')
+            : t('web.backups.restore.restore')}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -773,13 +797,14 @@ function BackupTable({
   rows: Backup[] | null
   onDelete: (id: string) => void | Promise<void>
 }) {
+  const { t } = useTranslation()
   if (rows === null) {
-    return <div className="text-muted-foreground text-sm">Loading…</div>
+    return <div className="text-muted-foreground text-sm">{t('web.backups.loading')}</div>
   }
   if (rows.length === 0) {
     return (
       <div className="rounded-md border border-dashed border-border p-6 text-center text-muted-foreground text-[13px]">
-        No backups yet. Click "Backup now" above to take the first one.
+        {t('web.backups.backupsTab.empty')}
       </div>
     )
   }
@@ -788,12 +813,12 @@ function BackupTable({
       <table className="w-full text-[12px]">
         <thead className="bg-card/50 text-muted-foreground">
           <tr className="text-left">
-            <th className="px-3 py-2 font-medium">ID</th>
-            <th className="px-3 py-2 font-medium">Target</th>
-            <th className="px-3 py-2 font-medium">Status</th>
-            <th className="px-3 py-2 font-medium">Started</th>
-            <th className="px-3 py-2 font-medium">Size</th>
-            <th className="px-3 py-2 font-medium text-right">Actions</th>
+            <th className="px-3 py-2 font-medium">{t('web.backups.backupsTab.columns.id')}</th>
+            <th className="px-3 py-2 font-medium">{t('web.backups.backupsTab.columns.target')}</th>
+            <th className="px-3 py-2 font-medium">{t('web.backups.backupsTab.columns.status')}</th>
+            <th className="px-3 py-2 font-medium">{t('web.backups.backupsTab.columns.started')}</th>
+            <th className="px-3 py-2 font-medium">{t('web.backups.backupsTab.columns.size')}</th>
+            <th className="px-3 py-2 font-medium text-right">{t('web.backups.backupsTab.columns.actions')}</th>
           </tr>
         </thead>
         <tbody>
@@ -824,7 +849,7 @@ function BackupTable({
                     <a
                       href={backupDownloadURL(b.id)}
                       className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-border hover:bg-card"
-                      title="Download"
+                      title={t('web.backups.backupsTab.downloadTooltip')}
                     >
                       <Download className="size-3.5" />
                     </a>
@@ -834,7 +859,7 @@ function BackupTable({
                     variant="outline"
                     size="sm"
                     className="h-7 w-7 p-0"
-                    title="Delete"
+                    title={t('web.backups.backupsTab.deleteTooltip')}
                   >
                     <Trash2 className="size-3.5" />
                   </Button>
@@ -862,6 +887,7 @@ function StatusBadge({ status }: { status: Backup['status'] }) {
 // ── Schedules tab ────────────────────────────────────────────────
 
 function SchedulesTab() {
+  const { t } = useTranslation()
   const [rows, setRows] = useState<Schedule[] | null>(null)
   const [targets, setTargets] = useState<TargetSpec[]>([])
   const [open, setOpen] = useState(false)
@@ -873,23 +899,24 @@ function SchedulesTab() {
       setTargets(tgts)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error('Failed to load schedules', { description: msg })
+      toast.error(t('web.backups.schedulesTab.loadFailedToast'), { description: msg })
     }
   }
 
   useEffect(() => {
     refresh()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function onDelete(id: string) {
-    if (!window.confirm(`Delete schedule ${id}?`)) return
+    if (!window.confirm(t('web.backups.schedulesTab.deleteConfirm', { id }))) return
     try {
       await deleteSchedule(id)
-      toast.success('Schedule deleted')
+      toast.success(t('web.backups.schedulesTab.deletedToast'))
       await refresh()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error('Delete failed', { description: msg })
+      toast.error(t('web.backups.schedulesTab.deleteFailedToast'), { description: msg })
     }
   }
 
@@ -899,7 +926,7 @@ function SchedulesTab() {
       await refresh()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error('Toggle failed', { description: msg })
+      toast.error(t('web.backups.schedulesTab.toggleFailedToast'), { description: msg })
     }
   }
 
@@ -907,13 +934,13 @@ function SchedulesTab() {
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <p className="text-[12px] text-muted-foreground">
-          Recurring backups. The scheduler polls every 30s and runs the oldest due schedule.
+          {t('web.backups.schedulesTab.description')}
         </p>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="h-8">
               <Plus className="size-3.5 mr-1.5" />
-              New schedule
+              {t('web.backups.schedulesTab.newSchedule')}
             </Button>
           </DialogTrigger>
           <NewScheduleDialog
@@ -926,23 +953,23 @@ function SchedulesTab() {
         </Dialog>
       </div>
       {rows === null ? (
-        <div className="text-muted-foreground text-sm">Loading…</div>
+        <div className="text-muted-foreground text-sm">{t('web.backups.loading')}</div>
       ) : rows.length === 0 ? (
         <div className="rounded-md border border-dashed border-border p-6 text-center text-muted-foreground text-[13px]">
-          No schedules. Add one to take automatic recurring backups.
+          {t('web.backups.schedulesTab.empty')}
         </div>
       ) : (
         <div className="rounded-md border border-border overflow-hidden">
           <table className="w-full text-[12px]">
             <thead className="bg-card/50 text-muted-foreground">
               <tr className="text-left">
-                <th className="px-3 py-2 font-medium">ID</th>
-                <th className="px-3 py-2 font-medium">Target</th>
-                <th className="px-3 py-2 font-medium">Interval</th>
-                <th className="px-3 py-2 font-medium">Keep</th>
-                <th className="px-3 py-2 font-medium">Next run</th>
-                <th className="px-3 py-2 font-medium">Enabled</th>
-                <th className="px-3 py-2 font-medium text-right">Actions</th>
+                <th className="px-3 py-2 font-medium">{t('web.backups.schedulesTab.columns.id')}</th>
+                <th className="px-3 py-2 font-medium">{t('web.backups.schedulesTab.columns.target')}</th>
+                <th className="px-3 py-2 font-medium">{t('web.backups.schedulesTab.columns.interval')}</th>
+                <th className="px-3 py-2 font-medium">{t('web.backups.schedulesTab.columns.keep')}</th>
+                <th className="px-3 py-2 font-medium">{t('web.backups.schedulesTab.columns.nextRun')}</th>
+                <th className="px-3 py-2 font-medium">{t('web.backups.schedulesTab.columns.enabled')}</th>
+                <th className="px-3 py-2 font-medium text-right">{t('web.backups.schedulesTab.columns.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -954,7 +981,7 @@ function SchedulesTab() {
                     {formatInterval(s.interval_sec)}
                   </td>
                   <td className="px-3 py-2 text-muted-foreground">
-                    {s.retention} backups
+                    {t('web.backups.schedulesTab.keepCount', { count: s.retention })}
                   </td>
                   <td className="px-3 py-2 text-muted-foreground">
                     {formatRelative(s.next_run_at)}
@@ -972,7 +999,7 @@ function SchedulesTab() {
                       variant="outline"
                       size="sm"
                       className="h-7 w-7 p-0"
-                      title="Delete"
+                      title={t('web.backups.schedulesTab.deleteTooltip')}
                     >
                       <Trash2 className="size-3.5" />
                     </Button>
@@ -994,7 +1021,8 @@ function NewScheduleDialog({
   targets: TargetSpec[]
   onCreated: () => void | Promise<void>
 }) {
-  const enabled = targets.filter((t) => t.enabled)
+  const { t } = useTranslation()
+  const enabled = targets.filter((target) => target.enabled)
   const [targetId, setTargetId] = useState(enabled[0]?.id ?? '')
   const [hours, setHours] = useState('24')
   const [retention, setRetention] = useState('7')
@@ -1011,7 +1039,7 @@ function NewScheduleDialog({
         retention: Math.max(0, Number(retention)),
         enabled: enabledFlag,
       })
-      toast.success('Schedule created')
+      toast.success(t('web.backups.newSchedule.createdToast'))
       await onCreated()
     } catch (err) {
       const msg =
@@ -1020,7 +1048,7 @@ function NewScheduleDialog({
           : err instanceof Error
             ? err.message
             : 'Unknown error'
-      toast.error('Create failed', { description: msg })
+      toast.error(t('web.backups.newSchedule.createFailedToast'), { description: msg })
     } finally {
       setBusy(false)
     }
@@ -1029,26 +1057,26 @@ function NewScheduleDialog({
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>New backup schedule</DialogTitle>
+        <DialogTitle>{t('web.backups.newSchedule.title')}</DialogTitle>
       </DialogHeader>
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
-          <Label className="text-[12px]">Target</Label>
+          <Label className="text-[12px]">{t('web.backups.newSchedule.targetLabel')}</Label>
           <select
             value={targetId}
             onChange={(e) => setTargetId(e.target.value)}
             className="h-8 px-2 rounded-md border border-border bg-card text-[12px]"
           >
-            {enabled.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.id} ({t.kind})
+            {enabled.map((target) => (
+              <option key={target.id} value={target.id}>
+                {target.id} ({target.kind})
               </option>
             ))}
           </select>
         </div>
         <div className="flex gap-3">
           <div className="flex-1 flex flex-col gap-1.5">
-            <Label className="text-[12px]">Every (hours)</Label>
+            <Label className="text-[12px]">{t('web.backups.newSchedule.everyHoursLabel')}</Label>
             <Input
               type="number"
               min="0.1"
@@ -1059,7 +1087,7 @@ function NewScheduleDialog({
             />
           </div>
           <div className="flex-1 flex flex-col gap-1.5">
-            <Label className="text-[12px]">Keep last N</Label>
+            <Label className="text-[12px]">{t('web.backups.newSchedule.keepLastNLabel')}</Label>
             <Input
               type="number"
               min="0"
@@ -1076,12 +1104,14 @@ function NewScheduleDialog({
             onCheckedChange={setEnabledFlag}
             className="scale-75"
           />
-          Enable immediately
+          {t('web.backups.newSchedule.enableImmediately')}
         </label>
       </div>
       <DialogFooter>
         <Button onClick={submit} disabled={busy || !targetId}>
-          {busy ? 'Creating…' : 'Create'}
+          {busy
+            ? t('web.backups.newSchedule.creating')
+            : t('web.backups.newSchedule.create')}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -1091,6 +1121,7 @@ function NewScheduleDialog({
 // ── Targets tab ──────────────────────────────────────────────────
 
 function TargetsTab() {
+  const { t } = useTranslation()
   const [rows, setRows] = useState<TargetSpec[] | null>(null)
   const [open, setOpen] = useState(false)
   const [testing, setTesting] = useState<string | null>(null)
@@ -1100,25 +1131,26 @@ function TargetsTab() {
       setRows(await listTargets())
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error('Failed to list targets', { description: msg })
+      toast.error(t('web.backups.targetsTab.listFailedToast'), { description: msg })
     }
   }
 
   useEffect(() => {
     refresh()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function onDelete(id: string) {
-    if (!window.confirm(`Delete target ${id}? Schedules referencing it will block the delete.`)) {
+    if (!window.confirm(t('web.backups.targetsTab.deleteConfirm', { id }))) {
       return
     }
     try {
       await deleteTarget(id)
-      toast.success('Target deleted')
+      toast.success(t('web.backups.targetsTab.deletedToast'))
       await refresh()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error('Delete failed', { description: msg })
+      toast.error(t('web.backups.targetsTab.deleteFailedToast'), { description: msg })
     }
   }
 
@@ -1127,13 +1159,13 @@ function TargetsTab() {
     try {
       const res = await testTarget(id)
       if (res.ok) {
-        toast.success('Connection OK', { description: id })
+        toast.success(t('web.backups.targetsTab.connectionOkToast'), { description: id })
       } else {
-        toast.error('Connection failed', { description: res.error })
+        toast.error(t('web.backups.targetsTab.connectionFailedToast'), { description: res.error })
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error('Test failed', { description: msg })
+      toast.error(t('web.backups.targetsTab.testFailedToast'), { description: msg })
     } finally {
       setTesting(null)
     }
@@ -1143,15 +1175,16 @@ function TargetsTab() {
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <p className="text-[12px] text-muted-foreground">
-          Storage destinations. v1 supports <code>local</code> (disk
-          on the opendray host) and <code>smb</code> (any SMB / CIFS
-          share, e.g. UNAS or Synology).
+          <Trans
+            i18nKey="web.backups.targetsTab.description"
+            components={{ 1: <code />, 3: <code /> }}
+          />
         </p>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="h-8">
               <Plus className="size-3.5 mr-1.5" />
-              New target
+              {t('web.backups.targetsTab.newTarget')}
             </Button>
           </DialogTrigger>
           <TargetEditor
@@ -1163,53 +1196,55 @@ function TargetsTab() {
         </Dialog>
       </div>
       {rows === null ? (
-        <div className="text-muted-foreground text-sm">Loading…</div>
+        <div className="text-muted-foreground text-sm">{t('web.backups.loading')}</div>
       ) : (
         <div className="rounded-md border border-border overflow-hidden">
           <table className="w-full text-[12px]">
             <thead className="bg-card/50 text-muted-foreground">
               <tr className="text-left">
-                <th className="px-3 py-2 font-medium">ID</th>
-                <th className="px-3 py-2 font-medium">Kind</th>
-                <th className="px-3 py-2 font-medium">Config</th>
-                <th className="px-3 py-2 font-medium">Enabled</th>
-                <th className="px-3 py-2 font-medium text-right">Actions</th>
+                <th className="px-3 py-2 font-medium">{t('web.backups.targetsTab.columns.id')}</th>
+                <th className="px-3 py-2 font-medium">{t('web.backups.targetsTab.columns.kind')}</th>
+                <th className="px-3 py-2 font-medium">{t('web.backups.targetsTab.columns.config')}</th>
+                <th className="px-3 py-2 font-medium">{t('web.backups.targetsTab.columns.enabled')}</th>
+                <th className="px-3 py-2 font-medium text-right">{t('web.backups.targetsTab.columns.actions')}</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((t) => (
-                <tr key={t.id} className="border-t border-border/60">
-                  <td className="px-3 py-2 font-mono text-[11px]">{t.id}</td>
+              {rows.map((target) => (
+                <tr key={target.id} className="border-t border-border/60">
+                  <td className="px-3 py-2 font-mono text-[11px]">{target.id}</td>
                   <td className="px-3 py-2">
-                    <Badge variant="outline">{t.kind}</Badge>
+                    <Badge variant="outline">{target.kind}</Badge>
                   </td>
                   <td className="px-3 py-2 text-muted-foreground font-mono text-[11px]">
-                    {targetSummary(t)}
+                    {targetSummary(target)}
                   </td>
                   <td className="px-3 py-2">
-                    {t.enabled ? (
-                      <Badge variant="success">on</Badge>
+                    {target.enabled ? (
+                      <Badge variant="success">{t('web.backups.targetsTab.on')}</Badge>
                     ) : (
-                      <Badge variant="muted">off</Badge>
+                      <Badge variant="muted">{t('web.backups.targetsTab.off')}</Badge>
                     )}
                   </td>
                   <td className="px-3 py-2 text-right">
                     <div className="inline-flex gap-1">
                       <Button
-                        onClick={() => onTest(t.id)}
+                        onClick={() => onTest(target.id)}
                         variant="outline"
                         size="sm"
                         className="h-7 text-[11px]"
-                        disabled={testing === t.id}
+                        disabled={testing === target.id}
                       >
-                        {testing === t.id ? 'Testing…' : 'Test'}
+                        {testing === target.id
+                          ? t('web.backups.targetsTab.testing')
+                          : t('web.backups.targetsTab.test')}
                       </Button>
                       <Button
-                        onClick={() => onDelete(t.id)}
+                        onClick={() => onDelete(target.id)}
                         variant="outline"
                         size="sm"
                         className="h-7 w-7 p-0"
-                        title="Delete"
+                        title={t('web.backups.targetsTab.deleteTooltip')}
                       >
                         <Trash2 className="size-3.5" />
                       </Button>

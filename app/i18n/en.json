@@ -1179,6 +1179,253 @@
           "updateFailedToast": "Update failed"
         }
       }
+    },
+    "backups": {
+      "title": "Backups",
+      "subtitle": "Encrypted PostgreSQL dumps written to a pluggable target. Configure schedules + retention, or trigger one-off backups for a quick safety net.",
+      "exportData": "Export data",
+      "loading": "Loading…",
+      "loadStatusFailedToast": "Failed to load backup status",
+      "tabs": {
+        "backups": "Backups",
+        "schedules": "Schedules",
+        "targets": "Targets"
+      },
+      "inventory": {
+        "title": "What's in a backup?",
+        "summary": "{rows} rows across {tables} tables",
+        "description": "Each backup is a <1>pg_dump --format=custom</1> of every table below, plus <3>manifest.json</3> and (optionally) <5>config.toml</5>. Counts are live; the bundle captures whatever's there at backup time.",
+        "loadFailedToast": "Failed to load inventory",
+        "rowsLabel": "rows"
+      },
+      "restart": {
+        "title": "Restart opendray to activate backups",
+        "description": "Your passphrase is saved. The gateway only loads it at startup, so the feature stays off until you bounce the process.",
+        "keyFile": "Key file:",
+        "configuredVia": "Configured via:",
+        "envVar": "OPENDRAY_BACKUP_KEY env var",
+        "checkAgain": "Check again"
+      },
+      "setup": {
+        "title": "Set up backups",
+        "description": "Choose a master passphrase. opendray uses it to encrypt every backup blob. <1>Lose it and your backups become unrecoverable</1>, so save it in a password manager (Vaultwarden, 1Password, …) before continuing.",
+        "generate": "Generate",
+        "pasteOwn": "Paste my own",
+        "generateTitle": "256-bit random key",
+        "generateHint": "Server generates a cryptographically random passphrase and shows it once. You must copy it before continuing — there is no recovery path.",
+        "pasteLabel": "Your passphrase",
+        "pastePlaceholder": "At least 20 characters",
+        "pasteHint": "Recommended: 40+ characters from a password manager.",
+        "savesTo": "Saves to:",
+        "saving": "Saving…",
+        "generateAndSave": "Generate and save",
+        "save": "Save"
+      },
+      "generated": {
+        "title": "Save this passphrase NOW",
+        "description": "This is shown <1>once</1>. It will not be retrievable from opendray or anywhere else. Copy it into a password manager before continuing.",
+        "copy": "Copy",
+        "copiedToast": "Passphrase copied to clipboard",
+        "copyFailedToast": "Copy failed — select and copy manually",
+        "savedTo": "Saved to:",
+        "ack": "I have saved this passphrase to my password manager",
+        "continue": "Continue"
+      },
+      "status": {
+        "keyFingerprint": "Key fingerprint:",
+        "pgDump": "pg_dump:",
+        "pgDumpUnavailable": "unavailable",
+        "pgDumpHint": "Backups can't run until pg_dump is on PATH (or its absolute path is set in <1>backup.pg_dump_path</1>). Install <3>postgresql-client</3> matching your server's major version and restart."
+      },
+      "backupsTab": {
+        "backupNow": "Backup now",
+        "triggering": "Triggering…",
+        "includeConfig": "include config.toml",
+        "restoreFromFile": "Restore from file",
+        "refresh": "Refresh",
+        "queuedToast": "Backup queued",
+        "triggerFailedToast": "Trigger failed",
+        "listFailedToast": "Failed to list backups",
+        "deleteConfirm": "Delete backup {id}? The blob is removed from its target.",
+        "deletedToast": "Backup deleted",
+        "deleteFailedToast": "Delete failed",
+        "empty": "No backups yet. Click \"Backup now\" above to take the first one.",
+        "columns": {
+          "id": "ID",
+          "target": "Target",
+          "status": "Status",
+          "started": "Started",
+          "size": "Size",
+          "actions": "Actions"
+        },
+        "downloadTooltip": "Download",
+        "deleteTooltip": "Delete"
+      },
+      "restore": {
+        "title": "Restore from backup bundle",
+        "bundleLabel": "Encrypted bundle (.tar.gz.enc)",
+        "targetDsnLabel": "Target database DSN",
+        "targetDsnHint": "(blank = opendray's own DB — DANGEROUS)",
+        "targetDsnPlaceholder": "postgres://user:pass@host:5432/dbname",
+        "cleanLabel": "--clean --if-exists (drop existing schema first; required when restoring over a populated DB)",
+        "auditNoteLabel": "Audit note (optional)",
+        "auditNotePlaceholder": "Reason for restore — appears in slog",
+        "ownDbWarning": "You're restoring into <1>opendray's own database</1>. With \"--clean\" enabled this drops every table and replays the backup verbatim — irreversible. Type <3>I understand</3> to proceed.",
+        "confirmPlaceholder": "I understand",
+        "confirmSentinel": "I understand",
+        "pgRestoreOutput": "pg_restore output (last 8 KiB)",
+        "noPgRestoreOutput": "(no pg_restore output)",
+        "pickFileToast": "Pick a bundle file first",
+        "succeededToast": "Restore succeeded",
+        "replayedDescription": "{bytes} replayed from manifest {id}",
+        "failedToast": "Restore failed",
+        "restoring": "Restoring…",
+        "restore": "Restore"
+      },
+      "schedulesTab": {
+        "description": "Recurring backups. The scheduler polls every 30s and runs the oldest due schedule.",
+        "newSchedule": "New schedule",
+        "loadFailedToast": "Failed to load schedules",
+        "deleteConfirm": "Delete schedule {id}?",
+        "deletedToast": "Schedule deleted",
+        "deleteFailedToast": "Delete failed",
+        "toggleFailedToast": "Toggle failed",
+        "empty": "No schedules. Add one to take automatic recurring backups.",
+        "columns": {
+          "id": "ID",
+          "target": "Target",
+          "interval": "Interval",
+          "keep": "Keep",
+          "nextRun": "Next run",
+          "enabled": "Enabled",
+          "actions": "Actions"
+        },
+        "keepCount": "{count} backups",
+        "deleteTooltip": "Delete"
+      },
+      "newSchedule": {
+        "title": "New backup schedule",
+        "targetLabel": "Target",
+        "everyHoursLabel": "Every (hours)",
+        "keepLastNLabel": "Keep last N",
+        "enableImmediately": "Enable immediately",
+        "createdToast": "Schedule created",
+        "createFailedToast": "Create failed",
+        "creating": "Creating…",
+        "create": "Create"
+      },
+      "targetsTab": {
+        "description": "Storage destinations. v1 supports <1>local</1> (disk on the opendray host) and <3>smb</3> (any SMB / CIFS share, e.g. UNAS or Synology).",
+        "newTarget": "New target",
+        "listFailedToast": "Failed to list targets",
+        "deleteConfirm": "Delete target {id}? Schedules referencing it will block the delete.",
+        "deletedToast": "Target deleted",
+        "deleteFailedToast": "Delete failed",
+        "connectionOkToast": "Connection OK",
+        "connectionFailedToast": "Connection failed",
+        "testFailedToast": "Test failed",
+        "columns": {
+          "id": "ID",
+          "kind": "Kind",
+          "config": "Config",
+          "enabled": "Enabled",
+          "actions": "Actions"
+        },
+        "on": "on",
+        "off": "off",
+        "test": "Test",
+        "testing": "Testing…",
+        "deleteTooltip": "Delete"
+      },
+      "targetEditor": {
+        "title": "New backup target",
+        "kindPicker": "Where do you want to back up to?",
+        "idLabel": "ID (optional)",
+        "idPlaceholder": "auto-generated if blank, e.g. tgt_xxx",
+        "createdToast": "Target created",
+        "createFailedToast": "Create failed",
+        "creating": "Creating…",
+        "create": "Create target",
+        "enableImmediately": "Enable immediately (otherwise saved as disabled — useful for \"configure now, turn on later\")",
+        "local": {
+          "rootLabel": "Root directory",
+          "rootHint": "Empty = cfg.backup.local_dir (~/.opendray/backups)",
+          "rootPlaceholder": "~/backups/opendray  or  /mnt/external-hdd/opendray"
+        },
+        "smb": {
+          "hostLabel": "Host",
+          "hostPlaceholder": "192.168.9.8",
+          "portLabel": "Port",
+          "shareLabel": "Share",
+          "shareHint": "Top-level share name on the SMB server",
+          "sharePlaceholder": "Claude_Workspace",
+          "userLabel": "User",
+          "passwordLabel": "Password",
+          "pathPrefixLabel": "Path prefix",
+          "pathPrefixHint": "Sub-folder under the share root (optional)",
+          "pathPrefixPlaceholder": "opendray/backups"
+        },
+        "s3": {
+          "endpointLabel": "Endpoint",
+          "endpointHint": "Host (no protocol). AWS: s3.amazonaws.com · R2: <accountid>.r2.cloudflarestorage.com · MinIO: minio.local:9000",
+          "endpointPlaceholder": "s3.amazonaws.com",
+          "regionLabel": "Region",
+          "regionHint": "AWS only; R2 use 'auto'",
+          "regionPlaceholder": "us-east-1 / auto",
+          "bucketLabel": "Bucket",
+          "bucketPlaceholder": "opendray-backups",
+          "accessKeyLabel": "Access key",
+          "secretKeyLabel": "Secret key",
+          "secretKeyHint": "Stored AES-256-GCM encrypted; never echoed back",
+          "pathPrefixLabel": "Path prefix",
+          "pathPrefixHint": "Object-key prefix (optional)",
+          "pathPrefixPlaceholder": "opendray/backups",
+          "useHttps": "Use HTTPS",
+          "pathStyle": "Path-style addressing (legacy / MinIO)"
+        },
+        "webdav": {
+          "baseUrlLabel": "Base URL",
+          "baseUrlHint": "Full URL including any path. Examples: https://cloud.example.com/remote.php/dav/files/me/ (Nextcloud), https://nas.local:5006/ (Synology), https://dav.jianguoyun.com/dav/ (Jianguoyun / 坚果云)",
+          "baseUrlPlaceholder": "https://cloud.example.com/remote.php/dav/files/<user>/",
+          "userLabel": "User",
+          "passwordLabel": "Password",
+          "pathPrefixLabel": "Path prefix",
+          "pathPrefixHint": "Sub-folder under the base URL (optional)",
+          "pathPrefixPlaceholder": "opendray/backups"
+        },
+        "sftp": {
+          "hostLabel": "Host",
+          "hostPlaceholder": "vps.example.com",
+          "portLabel": "Port",
+          "userLabel": "User",
+          "passwordLabel": "Password",
+          "passwordHint": "Either password OR private key required. If both, password is treated as the key passphrase.",
+          "privateKeyLabel": "Private key (PEM)",
+          "privateKeyHint": "Paste contents of an OpenSSH/PEM private key (e.g. ~/.ssh/id_ed25519). Leave blank for password-only auth.",
+          "privateKeyPlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----...",
+          "hostKeyLabel": "Host key (pinning)",
+          "hostKeyHint": "OpenSSH-style server public key (run `ssh-keyscan host` to obtain). Leave blank to disable pinning (NOT recommended outside LAN).",
+          "hostKeyPlaceholder": "ssh-ed25519 AAAA...",
+          "pathPrefixLabel": "Path prefix",
+          "pathPrefixHint": "Absolute or relative to user home (optional)",
+          "pathPrefixPlaceholder": "/var/backups/opendray  or  opendray-backups"
+        },
+        "rclone": {
+          "rcloneHint": "Requires the <1>rclone</1> CLI installed on the opendray host. First configure your remote with <3>rclone config</3>, then use the remote name below. opendray invokes <5>rclone rcat / cat / lsd</5> under the hood.",
+          "remoteLabel": "Remote name",
+          "remoteHint": "Name from `rclone config` (no colon). Example: gdrive, onedrive, dropbox-personal, baidu-pan",
+          "remotePlaceholder": "gdrive",
+          "pathPrefixLabel": "Path prefix",
+          "pathPrefixHint": "Sub-folder under the remote root (optional)",
+          "pathPrefixPlaceholder": "opendray/backups",
+          "binaryPathLabel": "Binary path",
+          "binaryPathHint": "Override `which rclone`. Empty uses PATH lookup.",
+          "binaryPathPlaceholder": "/opt/homebrew/bin/rclone",
+          "configPathLabel": "Config path",
+          "configPathHint": "Override --config (default ~/.config/rclone/rclone.conf or ~/.rclone.conf)",
+          "configPathPlaceholder": "leave blank for rclone default"
+        }
+      }
     }
   },
   "more": {

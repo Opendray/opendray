@@ -1,5 +1,6 @@
 import { Archive, Package } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { BackupsView } from '@/components/backup/BackupsView'
@@ -11,6 +12,7 @@ import { BackupsView } from '@/components/backup/BackupsView'
 // User-level data exports (C) live at /export — there's a button on
 // this page to jump there.
 export function BackupsPage() {
+  const { t } = useTranslation()
   return (
     <div className="flex-1 min-h-0 flex flex-col">
       <header className="px-6 py-4 border-b border-border bg-card/30">
@@ -18,18 +20,16 @@ export function BackupsPage() {
           <div>
             <h1 className="text-base font-medium flex items-center gap-2">
               <Archive className="size-4 text-accent" />
-              Backups
+              {t('web.backups.title')}
             </h1>
             <p className="text-[12px] text-muted-foreground mt-0.5">
-              Encrypted PostgreSQL dumps written to a pluggable target.
-              Configure schedules + retention, or trigger one-off
-              backups for a quick safety net.
+              {t('web.backups.subtitle')}
             </p>
           </div>
           <Button asChild variant="outline" size="sm" className="h-8 text-[11px]">
             <Link to="/export">
               <Package className="size-3.5 mr-1.5" />
-              Export data
+              {t('web.backups.exportData')}
             </Link>
           </Button>
         </div>
