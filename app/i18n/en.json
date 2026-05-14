@@ -60,6 +60,151 @@
       "signedInAs": "Signed in as",
       "tokenExpires": "Token expires",
       "signOut": "Sign out"
+    },
+    "sessions": {
+      "list": {
+        "title": "Sessions",
+        "countSeparator": "·",
+        "newAria": "Spawn new session",
+        "newTooltip": "New session",
+        "loading": "Loading…",
+        "emptyTitle": "No sessions yet.",
+        "emptyHint": "Press {kbd} to spawn.",
+        "endedHeader": "Ended ({count})",
+        "clearAll": "Clear all",
+        "confirmClearAll": "Remove all {count} ended sessions?",
+        "confirmTerminate": "Terminate and remove {name}?",
+        "childPromoted": " {count} child task session will be promoted to top-level.",
+        "childPromotedPlural": " {count} child task sessions will be promoted to top-level.",
+        "footer": "{live} live · {ended} ended",
+        "row": {
+          "deleteAria": "Delete session",
+          "titleRemoveHistory": "Remove from history",
+          "titleTerminate": "Terminate and remove",
+          "titleRemove": "Remove",
+          "claudeAccountTitle": "Claude account: {label}"
+        },
+        "deleteFailedToast": "Delete failed"
+      },
+      "tabs": {
+        "closeAria": "Close tab and remove session",
+        "closeTitle": "Close tab and remove session"
+      },
+      "page": {
+        "removedToast": "Session removed",
+        "removeFailedToast": "Remove failed",
+        "stoppedToast": "Session stopped",
+        "stopFailedToast": "Stop failed",
+        "restartedToast": "Session restarted",
+        "restartFailedToast": "Restart failed",
+        "confirmCloseTabTitle": "Stop and remove \"{name}\"?",
+        "confirmCloseTabDescription": "The CLI process will be terminated and the row deleted.",
+        "confirmCloseTabConfirm": "Stop and remove",
+        "confirmRemoveTitle": "Remove {name}?",
+        "confirmRemoveTitleFallback": "Remove session?",
+        "confirmRemoveDescription": "This deletes the row.",
+        "confirmRemoveConfirm": "Remove"
+      },
+      "empty": {
+        "title": "No session open",
+        "hint": "Pick a session from the list, or spawn a new one. Keyboard: {kbdN} new, {kbdW} close, {kbdRange} switch.",
+        "spawn": "Spawn session"
+      },
+      "header": {
+        "loadingSession": "Loading session…",
+        "showList": "Show session list",
+        "hideList": "Hide session list",
+        "showInspector": "Show inspector",
+        "hideInspector": "Hide inspector",
+        "showKeyboard": "Show on-screen keys",
+        "hideKeyboard": "Hide on-screen keys",
+        "showKeyboardTooltip": "Show on-screen keys (ESC, TAB, ↑↓, ⌃C…)",
+        "restart": "Restart",
+        "restarting": "Restarting…",
+        "remove": "Remove",
+        "removing": "Removing…",
+        "stop": "Stop",
+        "stopping": "Stopping…",
+        "pid": "pid {pid}"
+      },
+      "spawn": {
+        "title": "Spawn session",
+        "description": "Start a CLI session under a registered provider.",
+        "provider": "Provider",
+        "claudeAccount": "Claude account",
+        "loadingAccounts": "Loading accounts…",
+        "noAccounts": "No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY.",
+        "default": "Default",
+        "defaultTooltip": "Use system keychain / env",
+        "tokenEmptyBadge": "·empty",
+        "tokenMissingTooltip": "No token set — set token in Providers panel first",
+        "multiAccountHint": "Multiple accounts configured — pick one for this session.",
+        "cwd": "Working directory",
+        "cwdPlaceholder": "/Users/you/projects/foo",
+        "browse": "Browse",
+        "nameLabel": "Name (optional)",
+        "namePlaceholder": "claude in pet-tracker",
+        "argsLabel": "CLI args (one per line)",
+        "bypassClaude": "Bypass permission prompts",
+        "bypassCodex": "Auto-approve (--ask-for-approval never)",
+        "bypassGemini": "YOLO mode (--yolo)",
+        "bypassOnHint": "This session will run with elevated autonomy.",
+        "bypassOffHint": "Off — confirmations and prompts behave normally.",
+        "errorPickProvider": "Pick a provider.",
+        "errorCwdRequired": "cwd is required.",
+        "cancel": "Cancel",
+        "submit": "Spawn",
+        "submitting": "Spawning…",
+        "spawnedToast": "Session spawned",
+        "spawnedDescription": "{provider} · pid {pid}",
+        "pidFallback": "—"
+      },
+      "accountSwitcher": {
+        "tooltip": "Switch Claude account (restarts the CLI process)",
+        "currentDefault": "default",
+        "menuTitle": "Switch Claude account",
+        "defaultName": "Default",
+        "defaultSubtitle": "CLI's system keychain / env",
+        "tokenEmpty": "·empty",
+        "confirmSwitch": "Switching account will restart the Claude CLI process. In-progress conversation state inside the CLI will be lost. Continue?",
+        "switchedToast": "Account switched",
+        "switchedDescription": "Now using @{account} · pid {pid}",
+        "switchedDefault": "default",
+        "switchFailedToast": "Switch failed"
+      },
+      "inspector": {
+        "tabs": {
+          "files": "Files",
+          "git": "Git",
+          "search": "Search",
+          "tasks": "Tasks",
+          "history": "History",
+          "notes": "Notes",
+          "memory": "Memory"
+        }
+      },
+      "ended": {
+        "bufferUnavailable": "[buffer unavailable]",
+        "readOnlyBanner": "[session ended — read-only buffer]"
+      },
+      "fileBrowser": {
+        "title": "Choose working directory",
+        "description": "Browse the gateway host's filesystem and pick a folder.",
+        "parent": "Parent directory",
+        "home": "Home directory",
+        "refresh": "Refresh",
+        "pathPlaceholder": "/Users/you/projects",
+        "loading": "Loading…",
+        "empty": "Empty directory.",
+        "newFolder": "New folder",
+        "newFolderPlaceholder": "new-folder-name",
+        "create": "Create",
+        "cancel": "Cancel",
+        "useThisFolder": "Use this folder",
+        "createdToast": "Directory created",
+        "mkdirFailedToast": "Mkdir failed",
+        "homeFailedToast": "Failed to read home"
+      }
     }
   },
   "more": {

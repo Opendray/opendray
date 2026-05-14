@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Terminal as XTerm } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import '@xterm/xterm/css/xterm.css'
+import { useTranslation } from 'react-i18next'
 
 import { api } from '@/lib/api'
 import { useTheme } from '@/stores/theme'
@@ -49,6 +50,7 @@ function buildTheme(applied: 'light' | 'dark') {
  * the workbench tries to stream a process that has already exited.
  */
 export function EndedSessionView({ sessionId }: EndedSessionViewProps) {
+  const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
   const xtermRef = useRef<XTerm | null>(null)
   const fitRef = useRef<FitAddon | null>(null)
@@ -88,13 +90,13 @@ export function EndedSessionView({ sessionId }: EndedSessionViewProps) {
       })
       .catch(() => {
         if (!cancelled) {
-          term.writeln('\x1b[31m[buffer unavailable]\x1b[0m')
+          term.writeln(`\x1b[31m${t('web.sessions.ended.bufferUnavailable')}\x1b[0m`)
         }
       })
       .finally(() => {
         if (!cancelled) {
           term.writeln('')
-          term.writeln('\x1b[33m[session ended — read-only buffer]\x1b[0m')
+          term.writeln(`\x1b[33m${t('web.sessions.ended.readOnlyBanner')}\x1b[0m`)
         }
       })
 
@@ -114,7 +116,7 @@ export function EndedSessionView({ sessionId }: EndedSessionViewProps) {
       xtermRef.current = null
       fitRef.current = null
     }
-  }, [sessionId, themeApplied])
+  }, [sessionId, themeApplied, t])
 
   return (
     <div className="h-full w-full bg-background">

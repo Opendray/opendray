@@ -7,6 +7,7 @@ import {
   NotebookPen,
   History as HistoryIcon,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -27,6 +28,7 @@ interface InspectorPanelProps {
 // InspectorPanel — right-hand workbench sidebar. All four tabs are
 // scoped to the current session's working directory.
 export function InspectorPanel({ session }: InspectorPanelProps) {
+  const { t } = useTranslation()
   return (
     <aside className="w-80 shrink-0 border-l border-border bg-background flex flex-col">
       <Tabs defaultValue="files" className="flex-1 flex flex-col min-h-0">
@@ -41,49 +43,49 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
               className="flex items-center justify-center gap-1.5 data-[state=active]:bg-card"
             >
               <Folder className="size-3" />
-              Files
+              {t('web.sessions.inspector.tabs.files')}
             </TabsTrigger>
             <TabsTrigger
               value="git"
               className="flex items-center justify-center gap-1.5 data-[state=active]:bg-card"
             >
               <GitBranch className="size-3" />
-              Git
+              {t('web.sessions.inspector.tabs.git')}
             </TabsTrigger>
             <TabsTrigger
               value="search"
               className="flex items-center justify-center gap-1.5 data-[state=active]:bg-card"
             >
               <Search className="size-3" />
-              Search
+              {t('web.sessions.inspector.tabs.search')}
             </TabsTrigger>
             <TabsTrigger
               value="tasks"
               className="flex items-center justify-center gap-1.5 data-[state=active]:bg-card"
             >
               <Play className="size-3" />
-              Tasks
+              {t('web.sessions.inspector.tabs.tasks')}
             </TabsTrigger>
             <TabsTrigger
               value="history"
               className="flex items-center justify-center gap-1.5 col-span-2 data-[state=active]:bg-card"
             >
               <HistoryIcon className="size-3" />
-              History
+              {t('web.sessions.inspector.tabs.history')}
             </TabsTrigger>
             <TabsTrigger
               value="notes"
               className="flex items-center justify-center gap-1.5 col-span-2 data-[state=active]:bg-card"
             >
               <NotebookPen className="size-3" />
-              Notes
+              {t('web.sessions.inspector.tabs.notes')}
             </TabsTrigger>
             <TabsTrigger
               value="memory"
               className="flex items-center justify-center gap-1.5 col-span-4 data-[state=active]:bg-card"
             >
               <Brain className="size-3" />
-              Memory
+              {t('web.sessions.inspector.tabs.memory')}
             </TabsTrigger>
           </TabsList>
         </div>

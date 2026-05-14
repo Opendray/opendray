@@ -10,6 +10,7 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 import {
   Dialog,
@@ -38,6 +39,7 @@ export function FileBrowserDialog({
   initialPath,
   onSelect,
 }: FileBrowserDialogProps) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [path, setPath] = useState<string>(initialPath ?? '')
   const [pathInput, setPathInput] = useState<string>(initialPath ?? '')
@@ -88,14 +90,16 @@ export function FileBrowserDialog({
     mutationFn: () => makeDir(path, newName.trim()),
     onSuccess: (created) => {
       qc.invalidateQueries({ queryKey: ['fs', path] })
-      toast.success('Directory created')
+      toast.success(t('web.sessions.fileBrowser.createdToast'))
       setNewName('')
       setShowMkdir(false)
       // Step into the new directory.
       setPath(created)
     },
     onError: (e: Error) =>
-      toast.error('Mkdir failed', { description: e.message }),
+      toast.error(t('web.sessions.fileBrowser.mkdirFailedToast'), {
+        description: e.message,
+      }),
   })
 
   const goHome = async () => {
@@ -103,7 +107,7 @@ export function FileBrowserDialog({
       const home = await getHomeDir()
       setPath(home)
     } catch (e) {
-      toast.error('Failed to read home', {
+      toast.error(t('web.sessions.fileBrowser.homeFailedToast'), {
         description: (e as Error).message,
       })
     }
@@ -120,9 +124,9 @@ export function FileBrowserDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[640px]">
         <DialogHeader>
-          <DialogTitle>Choose working directory</DialogTitle>
+          <DialogTitle>{t('web.sessions.fileBrowser.title')}</DialogTitle>
           <DialogDescription>
-            Browse the gateway host's filesystem and pick a folder.
+            {t('web.sessions.fileBrowser.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -137,12 +141,14 @@ export function FileBrowserDialog({
                   if (list.data?.parent) setPath(list.data.parent)
                 }}
                 disabled={!list.data?.parent}
-                aria-label="Parent directory"
+                aria-label={t('web.sessions.fileBrowser.parent')}
               >
                 <ArrowUp className="size-3.5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Parent directory</TooltipContent>
+            <TooltipContent>
+              {t('web.sessions.fileBrowser.parent')}
+            </TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -151,12 +157,14 @@ export function FileBrowserDialog({
                 size="icon"
                 className="size-7"
                 onClick={goHome}
-                aria-label="Home directory"
+                aria-label={t('web.sessions.fileBrowser.home')}
               >
                 <Home className="size-3.5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Home directory</TooltipContent>
+            <TooltipContent>
+              {t('web.sessions.fileBrowser.home')}
+            </TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -167,12 +175,14 @@ export function FileBrowserDialog({
                 onClick={() =>
                   qc.invalidateQueries({ queryKey: ['fs', path] })
                 }
-                aria-label="Refresh"
+                aria-label={t('web.sessions.fileBrowser.refresh')}
               >
                 <RefreshCw className="size-3.5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Refresh</TooltipContent>
+            <TooltipContent>
+              {t('web.sessions.fileBrowser.refresh')}
+            </TooltipContent>
           </Tooltip>
           <Input
             value={pathInput}
@@ -183,7 +193,7 @@ export function FileBrowserDialog({
                 setPath(pathInput.trim())
               }
             }}
-            placeholder="/Users/you/projects"
+            placeholder={t('web.sessions.fileBrowser.pathPlaceholder')}
             className="flex-1 font-mono text-[12px]"
           />
         </div>
@@ -193,7 +203,7 @@ export function FileBrowserDialog({
             {list.isLoading ? (
               <div className="flex items-center gap-2 p-3 text-[12px] text-muted-foreground">
                 <Loader2 className="size-3.5 animate-spin" />
-                Loading…
+                {t('web.sessions.fileBrowser.loading')}
               </div>
             ) : list.error ? (
               <div className="p-3 text-[12px] text-destructive">
@@ -201,7 +211,7 @@ export function FileBrowserDialog({
               </div>
             ) : (list.data?.entries ?? []).length === 0 ? (
               <div className="p-3 text-[12px] text-muted-foreground italic">
-                Empty directory.
+                {t('web.sessions.fileBrowser.empty')}
               </div>
             ) : (
               <ul className="py-1">
@@ -237,7 +247,7 @@ export function FileBrowserDialog({
                 }
                 if (e.key === 'Escape') setShowMkdir(false)
               }}
-              placeholder="new-folder-name"
+              placeholder={t('web.sessions.fileBrowser.newFolderPlaceholder')}
               className="flex-1 text-[12px]"
             />
             <Button
@@ -251,7 +261,7 @@ export function FileBrowserDialog({
               ) : (
                 <Check className="size-3.5" />
               )}
-              Create
+              {t('web.sessions.fileBrowser.create')}
             </Button>
             <Button
               variant="ghost"
@@ -259,7 +269,7 @@ export function FileBrowserDialog({
               onClick={() => setShowMkdir(false)}
               disabled={mkdir.isPending}
             >
-              Cancel
+              {t('web.sessions.fileBrowser.cancel')}
             </Button>
           </div>
         ) : (
@@ -270,7 +280,7 @@ export function FileBrowserDialog({
             className="self-start text-[11px] gap-1"
           >
             <FolderPlus className="size-3.5" />
-            New folder
+            {t('web.sessions.fileBrowser.newFolder')}
           </Button>
         )}
 
@@ -281,7 +291,7 @@ export function FileBrowserDialog({
             size="sm"
             onClick={() => onOpenChange(false)}
           >
-            Cancel
+            {t('web.sessions.fileBrowser.cancel')}
           </Button>
           <Button
             type="button"
@@ -290,7 +300,7 @@ export function FileBrowserDialog({
             onClick={handleSelect}
             disabled={!pathInput.trim()}
           >
-            Use this folder
+            {t('web.sessions.fileBrowser.useThisFolder')}
           </Button>
         </DialogFooter>
       </DialogContent>

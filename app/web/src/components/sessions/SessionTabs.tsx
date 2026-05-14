@@ -1,4 +1,5 @@
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 import { useSessionTabs } from '@/stores/sessionTabs'
@@ -11,6 +12,7 @@ interface SessionTabsProps {
 }
 
 export function SessionTabs({ onCloseTab }: SessionTabsProps) {
+  const { t } = useTranslation()
   const tabs = useSessionTabs((s) => s.tabs)
   const currentId = useSessionTabs((s) => s.currentId)
   const setCurrent = useSessionTabs((s) => s.setCurrent)
@@ -51,8 +53,8 @@ export function SessionTabs({ onCloseTab }: SessionTabsProps) {
                 onCloseTab(tab.id)
               }}
               className="opacity-0 group-hover:opacity-100 hover:bg-border rounded-sm p-0.5 transition-opacity"
-              aria-label="Close tab and remove session"
-              title="Close tab and remove session"
+              aria-label={t('web.sessions.tabs.closeAria')}
+              title={t('web.sessions.tabs.closeTitle')}
             >
               <X className="size-3" />
             </button>

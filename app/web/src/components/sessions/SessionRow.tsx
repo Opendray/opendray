@@ -1,5 +1,6 @@
 import { formatDistanceToNow } from 'date-fns'
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 import { providerVisual, cwdTail } from '@/lib/providers'
@@ -48,10 +49,14 @@ export function SessionRow({
   onDelete,
   accountLabel,
 }: SessionRowProps) {
+  const { t } = useTranslation()
   const visual = providerVisual(session.provider_id)
   const isClaude = session.provider_id === 'claude'
   const acct = isClaude
-    ? accountLabel ?? (session.claude_account_id ? '…' : 'default')
+    ? accountLabel ??
+      (session.claude_account_id
+        ? '…'
+        : t('web.sessions.accountSwitcher.currentDefault'))
     : null
 
   return (
@@ -103,7 +108,9 @@ export function SessionRow({
           {acct && (
             <span
               className="ml-auto shrink-0 text-[10px] font-mono px-1.5 py-px rounded bg-card border border-border/60 text-muted-foreground/80"
-              title={`Claude account: ${acct}`}
+              title={t('web.sessions.list.row.claudeAccountTitle', {
+                label: acct,
+              })}
             >
               @{acct}
             </span>
@@ -118,11 +125,11 @@ export function SessionRow({
             e.stopPropagation()
             onDelete()
           }}
-          aria-label="Delete session"
+          aria-label={t('web.sessions.list.row.deleteAria')}
           title={
             session.state === 'ended' || session.state === 'stopped'
-              ? 'Remove from history'
-              : 'Terminate and remove'
+              ? t('web.sessions.list.row.titleRemoveHistory')
+              : t('web.sessions.list.row.titleTerminate')
           }
           className={cn(
             'absolute top-2 right-2 size-5 rounded-sm flex items-center justify-center',

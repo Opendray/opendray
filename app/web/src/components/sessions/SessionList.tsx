@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus, Loader2, X, CornerDownRight } from 'lucide-react'
 import { toast } from 'sonner'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -56,6 +57,7 @@ function buildTree(sessions: Session[]) {
 }
 
 export function SessionList({ onSpawn, onOpen }: SessionListProps) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const { data: sessions, isLoading } = useQuery({
     queryKey: ['sessions'],
@@ -72,7 +74,8 @@ export function SessionList({ onSpawn, onOpen }: SessionListProps) {
   )
   const labelFor = (s: Session): string | undefined => {
     if (s.provider_id !== 'claude') return undefined
-    if (!s.claude_account_id) return 'default'
+    if (!s.claude_account_id)
+      return t('web.sessions.accountSwitcher.currentDefault')
     return accountById.get(s.claude_account_id) ?? s.claude_account_id
   }
 
@@ -94,7 +97,9 @@ export function SessionList({ onSpawn, onOpen }: SessionListProps) {
       qc.invalidateQueries({ queryKey: ['sessions'] })
     },
     onError: (err: Error) =>
-      toast.error('Delete failed', { description: err.message }),
+      toast.error(t('web.sessions.list.deleteFailedToast'), {
+        description: err.message,
+      }),
   })
 
   const handleDelete = (s: Session) => {
@@ -102,11 +107,18 @@ export function SessionList({ onSpawn, onOpen }: SessionListProps) {
       const childCount = childrenOf.get(s.id)?.length ?? 0
       const childNote =
         childCount > 0
-          ? ` ${childCount} child task session${childCount === 1 ? '' : 's'} will be promoted to top-level.`
+          ? t(
+              childCount === 1
+                ? 'web.sessions.list.childPromoted'
+                : 'web.sessions.list.childPromotedPlural',
+              { count: childCount },
+            )
           : ''
       if (
         !confirm(
-          `Terminate and remove ${s.name || s.provider_id}?${childNote}`,
+          t('web.sessions.list.confirmTerminate', {
+            name: s.name || s.provider_id,
+          }) + childNote,
         )
       ) {
         return
@@ -144,7 +156,7 @@ export function SessionList({ onSpawn, onOpen }: SessionListProps) {
       <div className="h-14 px-3 flex items-center justify-between border-b border-border">
         <div className="flex items-baseline gap-1.5">
           <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-muted-foreground">
-            Sessions
+            {t('web.sessions.list.title')}
           </span>
           <span className="text-[11px] text-muted-foreground/60 font-mono">
             · {all.length}
@@ -156,14 +168,15 @@ export function SessionList({ onSpawn, onOpen }: SessionListProps) {
               variant="ghost"
               size="icon"
               onClick={onSpawn}
-              aria-label="Spawn new session"
+              aria-label={t('web.sessions.list.newAria')}
               className="size-6"
             >
               <Plus className="size-3.5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            New session <kbd className="ml-1">⌘N</kbd>
+            {t('web.sessions.list.newTooltip')}{' '}
+            <kbd className="ml-1">⌘N</kbd>
           </TooltipContent>
         </Tooltip>
       </div>
@@ -173,14 +186,18 @@ export function SessionList({ onSpawn, onOpen }: SessionListProps) {
           {isLoading && (
             <div className="flex items-center gap-2 px-2 py-3 text-[12px] text-muted-foreground">
               <Loader2 className="size-3.5 animate-spin" />
-              Loading…
+              {t('web.sessions.list.loading')}
             </div>
           )}
           {!isLoading && all.length === 0 && (
             <div className="px-3 py-6 text-center text-[12px] text-muted-foreground">
-              No sessions yet.
+              {t('web.sessions.list.emptyTitle')}
               <br />
-              Press <kbd>⌘N</kbd> to spawn.
+              <Trans
+                i18nKey="web.sessions.list.emptyHint"
+                values={{ kbd: '⌘N' }}
+                components={{ 0: <kbd /> }}
+              />
             </div>
           )}
 
@@ -189,13 +206,19 @@ export function SessionList({ onSpawn, onOpen }: SessionListProps) {
           {endedTops.length > 0 && (
             <div className="px-2 py-1.5 mt-1 flex items-center justify-between gap-2">
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">
-                Ended ({endedCount})
+                {t('web.sessions.list.endedHeader', { count: endedCount })}
               </span>
               {endedCount > 1 && (
                 <button
                   type="button"
                   onClick={() => {
-                    if (!confirm(`Remove all ${endedCount} ended sessions?`))
+                    if (
+                      !confirm(
+                        t('web.sessions.list.confirmClearAll', {
+                          count: endedCount,
+                        }),
+                      )
+                    )
                       return
                     // Remove children first to keep parent_session_id
                     // FK happy, then parents.
@@ -209,7 +232,7 @@ export function SessionList({ onSpawn, onOpen }: SessionListProps) {
                   }}
                   className="text-[10px] text-muted-foreground/70 hover:text-destructive transition-colors"
                 >
-                  Clear all
+                  {t('web.sessions.list.clearAll')}
                 </button>
               )}
             </div>
@@ -219,7 +242,7 @@ export function SessionList({ onSpawn, onOpen }: SessionListProps) {
       </ScrollArea>
 
       <div className="px-3 py-2 border-t border-border text-[10px] text-muted-foreground/60 font-mono">
-        {liveCount} live · {endedCount} ended
+        {t('web.sessions.list.footer', { live: liveCount, ended: endedCount })}
       </div>
     </aside>
   )
@@ -237,6 +260,7 @@ interface ChildRowProps {
 // project's grouping visible without taking the full vertical real estate
 // of a top-level row.
 function ChildRow({ session, active, onClick, onDelete }: ChildRowProps) {
+  const { t } = useTranslation()
   const visual = providerVisual(session.provider_id)
   const dot =
     session.state === 'running'
@@ -246,6 +270,10 @@ function ChildRow({ session, active, onClick, onDelete }: ChildRowProps) {
         : session.exit_code != null && session.exit_code !== 0
           ? 'bg-state-failed'
           : 'bg-muted-foreground/60'
+  const deleteTitle =
+    session.state === 'ended' || session.state === 'stopped'
+      ? t('web.sessions.list.row.titleRemove')
+      : t('web.sessions.list.row.titleTerminate')
   return (
     <div
       role="button"
@@ -289,12 +317,8 @@ function ChildRow({ session, active, onClick, onDelete }: ChildRowProps) {
           e.stopPropagation()
           onDelete()
         }}
-        aria-label="Delete session"
-        title={
-          session.state === 'ended' || session.state === 'stopped'
-            ? 'Remove'
-            : 'Terminate and remove'
-        }
+        aria-label={t('web.sessions.list.row.deleteAria')}
+        title={deleteTitle}
         className={cn(
           'size-4 rounded-sm flex items-center justify-center shrink-0',
           'text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10',

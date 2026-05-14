@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FolderOpen, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 import {
   Dialog,
@@ -40,13 +41,13 @@ const BYPASS_FLAGS: Record<string, string[]> = {
   gemini: ['--yolo'],
 }
 
-// Display label for the bypass toggle. Different CLIs use
-// different vocabulary; pretending they're all "Auto-approve"
+// i18n key suffix per provider for the bypass toggle label. Different
+// CLIs use different vocabulary; pretending they're all "Auto-approve"
 // would confuse operators who only know their tool's term.
-const BYPASS_LABEL: Record<string, string> = {
-  claude: 'Bypass permission prompts',
-  codex: 'Auto-approve (--ask-for-approval never)',
-  gemini: 'YOLO mode (--yolo)',
+const BYPASS_LABEL_KEY: Record<string, string> = {
+  claude: 'web.sessions.spawn.bypassClaude',
+  codex: 'web.sessions.spawn.bypassCodex',
+  gemini: 'web.sessions.spawn.bypassGemini',
 }
 
 export function SpawnDialog({
@@ -55,6 +56,7 @@ export function SpawnDialog({
   onSpawned,
   defaultCwd,
 }: SpawnDialogProps) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const { data: providers } = useQuery({
     queryKey: ['providers'],
@@ -118,8 +120,11 @@ export function SpawnDialog({
     mutationFn: createSession,
     onSuccess: (session) => {
       qc.invalidateQueries({ queryKey: ['sessions'] })
-      toast.success('Session spawned', {
-        description: `${session.provider_id} · pid ${session.pid ?? '—'}`,
+      toast.success(t('web.sessions.spawn.spawnedToast'), {
+        description: t('web.sessions.spawn.spawnedDescription', {
+          provider: session.provider_id,
+          pid: session.pid ?? t('web.sessions.spawn.pidFallback'),
+        }),
       })
       onSpawned(session)
       onOpenChange(false)
@@ -139,11 +144,11 @@ export function SpawnDialog({
     e.preventDefault()
     setError(null)
     if (!providerId) {
-      setError('Pick a provider.')
+      setError(t('web.sessions.spawn.errorPickProvider'))
       return
     }
     if (!cwd.trim()) {
-      setError('cwd is required.')
+      setError(t('web.sessions.spawn.errorCwdRequired'))
       return
     }
     const userArgs = argsText
@@ -166,18 +171,20 @@ export function SpawnDialog({
     })
   }
 
+  const bypassLabelKey = BYPASS_LABEL_KEY[providerId]
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Spawn session</DialogTitle>
+          <DialogTitle>{t('web.sessions.spawn.title')}</DialogTitle>
           <DialogDescription>
-            Start a CLI session under a registered provider.
+            {t('web.sessions.spawn.description')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-4 mt-2">
           <div className="space-y-1.5">
-            <Label htmlFor="provider">Provider</Label>
+            <Label htmlFor="provider">{t('web.sessions.spawn.provider')}</Label>
             <div className="grid grid-cols-2 gap-2">
               {(providers ?? []).map((p) => {
                 const active = providerId === p.manifest.id
@@ -215,15 +222,14 @@ export function SpawnDialog({
 
           {isClaude && (
             <div className="space-y-1.5">
-              <Label>Claude account</Label>
+              <Label>{t('web.sessions.spawn.claudeAccount')}</Label>
               {claudeAccountsLoading && accounts.length === 0 ? (
                 <div className="text-[11px] text-muted-foreground">
-                  Loading accounts…
+                  {t('web.sessions.spawn.loadingAccounts')}
                 </div>
               ) : accounts.length === 0 ? (
                 <div className="text-[11px] text-muted-foreground">
-                  No Claude accounts configured — the gateway will use the
-                  system ANTHROPIC_API_KEY.
+                  {t('web.sessions.spawn.noAccounts')}
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
@@ -236,9 +242,9 @@ export function SpawnDialog({
                           ? 'border-foreground/30 bg-card'
                           : 'border-border hover:bg-card hover:border-foreground/20'
                       }`}
-                      title="Use system keychain / env"
+                      title={t('web.sessions.spawn.defaultTooltip')}
                     >
-                      Default
+                      {t('web.sessions.spawn.default')}
                     </button>
                   )}
                   {accounts.map((a) => {
@@ -257,12 +263,14 @@ export function SpawnDialog({
                         title={
                           a.token_filled
                             ? `${a.config_dir || a.name}`
-                            : 'No token set — set token in Providers panel first'
+                            : t('web.sessions.spawn.tokenMissingTooltip')
                         }
                       >
                         {a.display_name || a.name}
                         {!a.token_filled && (
-                          <span className="ml-1 text-amber-500/90">·empty</span>
+                          <span className="ml-1 text-amber-500/90">
+                            {t('web.sessions.spawn.tokenEmptyBadge')}
+                          </span>
                         )}
                       </button>
                     )
@@ -271,20 +279,20 @@ export function SpawnDialog({
               )}
               {multiAccount && (
                 <div className="text-[11px] text-muted-foreground">
-                  Multiple accounts configured — pick one for this session.
+                  {t('web.sessions.spawn.multiAccountHint')}
                 </div>
               )}
             </div>
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="cwd">Working directory</Label>
+            <Label htmlFor="cwd">{t('web.sessions.spawn.cwd')}</Label>
             <div className="flex gap-1.5">
               <Input
                 id="cwd"
                 value={cwd}
                 onChange={(e) => setCwd(e.target.value)}
-                placeholder="/Users/you/projects/foo"
+                placeholder={t('web.sessions.spawn.cwdPlaceholder')}
                 required
                 autoFocus
                 className="flex-1"
@@ -297,23 +305,23 @@ export function SpawnDialog({
                 className="shrink-0 gap-1"
               >
                 <FolderOpen className="size-3.5" />
-                Browse
+                {t('web.sessions.spawn.browse')}
               </Button>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="name">Name (optional)</Label>
+            <Label htmlFor="name">{t('web.sessions.spawn.nameLabel')}</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="claude in pet-tracker"
+              placeholder={t('web.sessions.spawn.namePlaceholder')}
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="args">CLI args (one per line)</Label>
+            <Label htmlFor="args">{t('web.sessions.spawn.argsLabel')}</Label>
             <textarea
               id="args"
               rows={3}
@@ -324,7 +332,7 @@ export function SpawnDialog({
             />
           </div>
 
-          {BYPASS_LABEL[providerId] && (
+          {bypassLabelKey && (
             <label className="flex items-start gap-2 text-[12px] cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -333,11 +341,11 @@ export function SpawnDialog({
                 className="mt-0.5"
               />
               <span className="flex-1">
-                <span className="font-medium">{BYPASS_LABEL[providerId]}</span>
+                <span className="font-medium">{t(bypassLabelKey)}</span>
                 <span className="block text-muted-foreground mt-0.5 text-[11px]">
                   {bypassEnabled
-                    ? 'This session will run with elevated autonomy.'
-                    : 'Off — confirmations and prompts behave normally.'}
+                    ? t('web.sessions.spawn.bypassOnHint')
+                    : t('web.sessions.spawn.bypassOffHint')}
                 </span>
               </span>
             </label>
@@ -357,7 +365,7 @@ export function SpawnDialog({
               onClick={() => onOpenChange(false)}
               disabled={mutation.isPending}
             >
-              Cancel
+              {t('web.sessions.spawn.cancel')}
             </Button>
             <Button
               type="submit"
@@ -368,7 +376,9 @@ export function SpawnDialog({
               {mutation.isPending && (
                 <Loader2 className="size-3.5 animate-spin" />
               )}
-              {mutation.isPending ? 'Spawning…' : 'Spawn'}
+              {mutation.isPending
+                ? t('web.sessions.spawn.submitting')
+                : t('web.sessions.spawn.submit')}
             </Button>
           </DialogFooter>
         </form>

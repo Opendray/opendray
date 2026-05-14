@@ -14,6 +14,7 @@ import {
   Keyboard,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -45,6 +46,7 @@ import { cn } from '@/lib/utils'
 import { isTerminalSessionState, type Session } from '@/lib/types'
 
 export function SessionsPage() {
+  const { t } = useTranslation()
   const [spawnOpen, setSpawnOpen] = useState(false)
   const tabs = useSessionTabs((s) => s.tabs)
   const currentId = useSessionTabs((s) => s.currentId)
@@ -66,30 +68,36 @@ export function SessionsPage() {
     onSuccess: (_, id) => {
       qc.invalidateQueries({ queryKey: ['sessions'] })
       close(id)
-      toast.success('Session removed')
+      toast.success(t('web.sessions.page.removedToast'))
     },
     onError: (err: Error) =>
-      toast.error('Remove failed', { description: err.message }),
+      toast.error(t('web.sessions.page.removeFailedToast'), {
+        description: err.message,
+      }),
   })
 
   const stop = useMutation({
     mutationFn: stopSession,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sessions'] })
-      toast.success('Session stopped')
+      toast.success(t('web.sessions.page.stoppedToast'))
     },
     onError: (err: Error) =>
-      toast.error('Stop failed', { description: err.message }),
+      toast.error(t('web.sessions.page.stopFailedToast'), {
+        description: err.message,
+      }),
   })
 
   const start = useMutation({
     mutationFn: startSession,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sessions'] })
-      toast.success('Session restarted')
+      toast.success(t('web.sessions.page.restartedToast'))
     },
     onError: (err: Error) =>
-      toast.error('Restart failed', { description: err.message }),
+      toast.error(t('web.sessions.page.restartFailedToast'), {
+        description: err.message,
+      }),
   })
 
   // Reconcile: if a tab's session is gone from server, drop it.
@@ -150,10 +158,11 @@ export function SessionsPage() {
     const target = sessions?.find((s) => s.id === id)
     if (target && !isTerminalSessionState(target.state)) {
       const ok = await confirmDialog({
-        title: `Stop and remove "${target.name || target.provider_id}"?`,
-        description:
-          'The CLI process will be terminated and the row deleted.',
-        confirmLabel: 'Stop and remove',
+        title: t('web.sessions.page.confirmCloseTabTitle', {
+          name: target.name || target.provider_id,
+        }),
+        description: t('web.sessions.page.confirmCloseTabDescription'),
+        confirmLabel: t('web.sessions.page.confirmCloseTabConfirm'),
         destructive: true,
       })
       if (!ok) return
@@ -199,9 +208,16 @@ export function SessionsPage() {
               onRemove={async () => {
                 if (!currentId) return
                 const ok = await confirmDialog({
-                  title: `Remove ${currentSession?.name || currentSession?.provider_id || 'session'}?`,
-                  description: 'This deletes the row.',
-                  confirmLabel: 'Remove',
+                  title: currentSession?.name || currentSession?.provider_id
+                    ? t('web.sessions.page.confirmRemoveTitle', {
+                        name:
+                          currentSession?.name ||
+                          currentSession?.provider_id ||
+                          '',
+                      })
+                    : t('web.sessions.page.confirmRemoveTitleFallback'),
+                  description: t('web.sessions.page.confirmRemoveDescription'),
+                  confirmLabel: t('web.sessions.page.confirmRemoveConfirm'),
                   destructive: true,
                 })
                 if (!ok) return
@@ -259,19 +275,28 @@ export function SessionsPage() {
 }
 
 function EmptyWorkbench({ onSpawn }: { onSpawn: () => void }) {
+  const { t } = useTranslation()
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center p-6">
       <Layers className="size-10 text-muted-foreground/40" strokeWidth={1.5} />
       <div className="space-y-1">
-        <h2 className="text-[14px] font-semibold">No session open</h2>
+        <h2 className="text-[14px] font-semibold">
+          {t('web.sessions.empty.title')}
+        </h2>
         <p className="text-[12px] text-muted-foreground max-w-[320px]">
-          Pick a session from the list, or spawn a new one. Keyboard:{' '}
-          <kbd>⌘N</kbd> new, <kbd>⌘W</kbd> close,{' '}
-          <kbd>⌘1</kbd>–<kbd>⌘9</kbd> switch.
+          <Trans
+            i18nKey="web.sessions.empty.hint"
+            values={{
+              kbdN: '⌘N',
+              kbdW: '⌘W',
+              kbdRange: '⌘1–⌘9',
+            }}
+            components={{ 0: <kbd />, 1: <kbd />, 2: <kbd /> }}
+          />
         </p>
       </div>
       <Button onClick={onSpawn} variant="accent" size="sm">
-        <Plus className="size-3.5" /> Spawn session
+        <Plus className="size-3.5" /> {t('web.sessions.empty.spawn')}
       </Button>
     </div>
   )
@@ -306,15 +331,28 @@ function WorkbenchHeader({
   inspectorOpen: boolean
   onToggleInspector: () => void
 }) {
+  const { t } = useTranslation()
   if (!session) {
     return (
       <div className="h-14 border-b border-border flex items-center px-3 text-[12px] text-muted-foreground">
         <Loader2 className="size-3 animate-spin" />
-        <span className="ml-2">Loading session…</span>
+        <span className="ml-2">{t('web.sessions.header.loadingSession')}</span>
       </div>
     )
   }
   const visual = providerVisual(session.provider_id)
+  const listLabel = listCollapsed
+    ? t('web.sessions.header.showList')
+    : t('web.sessions.header.hideList')
+  const inspectorLabel = inspectorOpen
+    ? t('web.sessions.header.hideInspector')
+    : t('web.sessions.header.showInspector')
+  const keyboardAria = toolbarOpen
+    ? t('web.sessions.header.hideKeyboard')
+    : t('web.sessions.header.showKeyboard')
+  const keyboardTooltip = toolbarOpen
+    ? t('web.sessions.header.hideKeyboard')
+    : t('web.sessions.header.showKeyboardTooltip')
   return (
     <div className="h-14 border-b border-border flex items-center px-3 gap-3">
       <Tooltip>
@@ -323,7 +361,7 @@ function WorkbenchHeader({
             variant="ghost"
             size="icon"
             onClick={onToggleList}
-            aria-label={listCollapsed ? 'Show session list' : 'Hide session list'}
+            aria-label={listLabel}
             className="size-7 shrink-0"
           >
             {listCollapsed ? (
@@ -333,9 +371,7 @@ function WorkbenchHeader({
             )}
           </Button>
         </TooltipTrigger>
-        <TooltipContent>
-          {listCollapsed ? 'Show session list' : 'Hide session list'}
-        </TooltipContent>
+        <TooltipContent>{listLabel}</TooltipContent>
       </Tooltip>
       <BrandAvatar
         iconKey={providerIconKey(session.provider_id)}
@@ -351,7 +387,7 @@ function WorkbenchHeader({
           {visual.name} · {session.cwd}
           {session.pid != null && (
             <span className="ml-2 text-muted-foreground/60">
-              pid {session.pid}
+              {t('web.sessions.header.pid', { pid: session.pid })}
             </span>
           )}
         </div>
@@ -367,19 +403,13 @@ function WorkbenchHeader({
             variant="ghost"
             size="icon"
             onClick={onToggleToolbar}
-            aria-label={
-              toolbarOpen ? 'Hide on-screen keys' : 'Show on-screen keys'
-            }
+            aria-label={keyboardAria}
             className={cn('size-7 shrink-0', toolbarOpen && 'text-foreground')}
           >
             <Keyboard className="size-3.5" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>
-          {toolbarOpen
-            ? 'Hide on-screen keys'
-            : 'Show on-screen keys (ESC, TAB, ↑↓, ⌃C…)'}
-        </TooltipContent>
+        <TooltipContent>{keyboardTooltip}</TooltipContent>
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
@@ -387,9 +417,7 @@ function WorkbenchHeader({
             variant="ghost"
             size="icon"
             onClick={onToggleInspector}
-            aria-label={
-              inspectorOpen ? 'Hide inspector' : 'Show inspector'
-            }
+            aria-label={inspectorLabel}
             className={cn(
               'size-7 shrink-0',
               inspectorOpen && 'text-foreground',
@@ -402,9 +430,7 @@ function WorkbenchHeader({
             )}
           </Button>
         </TooltipTrigger>
-        <TooltipContent>
-          {inspectorOpen ? 'Hide inspector' : 'Show inspector'}
-        </TooltipContent>
+        <TooltipContent>{inspectorLabel}</TooltipContent>
       </Tooltip>
       {isTerminalSessionState(session.state) ? (
         <>
@@ -420,7 +446,9 @@ function WorkbenchHeader({
             ) : (
               <RotateCcw className="size-3" />
             )}
-            {starting ? 'Restarting…' : 'Restart'}
+            {starting
+              ? t('web.sessions.header.restarting')
+              : t('web.sessions.header.restart')}
           </Button>
           <Button
             variant="ghost"
@@ -430,7 +458,9 @@ function WorkbenchHeader({
             className="text-[11px] gap-1 text-muted-foreground hover:text-destructive"
           >
             <Trash2 className="size-3" />
-            {removing ? 'Removing…' : 'Remove'}
+            {removing
+              ? t('web.sessions.header.removing')
+              : t('web.sessions.header.remove')}
           </Button>
         </>
       ) : (
@@ -443,11 +473,12 @@ function WorkbenchHeader({
             className="text-[11px] gap-1 text-muted-foreground hover:text-destructive"
           >
             <Power className="size-3" />
-            {stopping ? 'Stopping…' : 'Stop'}
+            {stopping
+              ? t('web.sessions.header.stopping')
+              : t('web.sessions.header.stop')}
           </Button>
         </>
       )}
     </div>
   )
 }
-

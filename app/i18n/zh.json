@@ -60,6 +60,151 @@
       "signedInAs": "登录账号",
       "tokenExpires": "令牌到期",
       "signOut": "退出登录"
+    },
+    "sessions": {
+      "list": {
+        "title": "会话",
+        "countSeparator": "·",
+        "newAria": "创建新会话",
+        "newTooltip": "新建会话",
+        "loading": "加载中…",
+        "emptyTitle": "暂无会话。",
+        "emptyHint": "按 {kbd} 创建。",
+        "endedHeader": "已结束 ({count})",
+        "clearAll": "清空全部",
+        "confirmClearAll": "确定移除全部 {count} 个已结束的会话?",
+        "confirmTerminate": "终止并移除 {name}?",
+        "childPromoted": "其 {count} 个子任务会话将被提升为顶级。",
+        "childPromotedPlural": "其 {count} 个子任务会话将被提升为顶级。",
+        "footer": "{live} 运行中 · {ended} 已结束",
+        "row": {
+          "deleteAria": "删除会话",
+          "titleRemoveHistory": "从历史中移除",
+          "titleTerminate": "终止并移除",
+          "titleRemove": "移除",
+          "claudeAccountTitle": "Claude 账号：{label}"
+        },
+        "deleteFailedToast": "删除失败"
+      },
+      "tabs": {
+        "closeAria": "关闭标签并移除会话",
+        "closeTitle": "关闭标签并移除会话"
+      },
+      "page": {
+        "removedToast": "会话已移除",
+        "removeFailedToast": "移除失败",
+        "stoppedToast": "会话已停止",
+        "stopFailedToast": "停止失败",
+        "restartedToast": "会话已重启",
+        "restartFailedToast": "重启失败",
+        "confirmCloseTabTitle": "停止并移除 \"{name}\"?",
+        "confirmCloseTabDescription": "CLI 进程将被终止并删除该记录。",
+        "confirmCloseTabConfirm": "停止并移除",
+        "confirmRemoveTitle": "移除 {name}?",
+        "confirmRemoveTitleFallback": "移除会话?",
+        "confirmRemoveDescription": "这将删除该记录。",
+        "confirmRemoveConfirm": "移除"
+      },
+      "empty": {
+        "title": "未打开任何会话",
+        "hint": "从列表中挑选一个会话，或新建一个。快捷键：{kbdN} 新建，{kbdW} 关闭，{kbdRange} 切换。",
+        "spawn": "创建会话"
+      },
+      "header": {
+        "loadingSession": "正在加载会话…",
+        "showList": "显示会话列表",
+        "hideList": "隐藏会话列表",
+        "showInspector": "显示检查器",
+        "hideInspector": "隐藏检查器",
+        "showKeyboard": "显示屏幕键盘",
+        "hideKeyboard": "隐藏屏幕键盘",
+        "showKeyboardTooltip": "显示屏幕键盘 (ESC、TAB、↑↓、⌃C…)",
+        "restart": "重启",
+        "restarting": "重启中…",
+        "remove": "移除",
+        "removing": "移除中…",
+        "stop": "停止",
+        "stopping": "停止中…",
+        "pid": "pid {pid}"
+      },
+      "spawn": {
+        "title": "创建会话",
+        "description": "在已注册的 Provider 下启动一个 CLI 会话。",
+        "provider": "Provider",
+        "claudeAccount": "Claude 账号",
+        "loadingAccounts": "正在加载账号…",
+        "noAccounts": "尚未配置 Claude 账号 — 网关将使用系统的 ANTHROPIC_API_KEY。",
+        "default": "默认",
+        "defaultTooltip": "使用系统 keychain / 环境变量",
+        "tokenEmptyBadge": "·未填",
+        "tokenMissingTooltip": "未设置 token — 请先在 Providers 面板中填入",
+        "multiAccountHint": "已配置多个账号 — 请为本次会话挑选一个。",
+        "cwd": "工作目录",
+        "cwdPlaceholder": "/Users/you/projects/foo",
+        "browse": "浏览",
+        "nameLabel": "名称（可选）",
+        "namePlaceholder": "claude in pet-tracker",
+        "argsLabel": "CLI 参数（每行一个）",
+        "bypassClaude": "跳过权限提示",
+        "bypassCodex": "自动批准 (--ask-for-approval never)",
+        "bypassGemini": "YOLO 模式 (--yolo)",
+        "bypassOnHint": "本次会话将以更高的自主权运行。",
+        "bypassOffHint": "关闭 — 确认与提示按正常流程处理。",
+        "errorPickProvider": "请选择一个 Provider。",
+        "errorCwdRequired": "请填写工作目录。",
+        "cancel": "取消",
+        "submit": "创建",
+        "submitting": "创建中…",
+        "spawnedToast": "会话已创建",
+        "spawnedDescription": "{provider} · pid {pid}",
+        "pidFallback": "—"
+      },
+      "accountSwitcher": {
+        "tooltip": "切换 Claude 账号（将重启 CLI 进程）",
+        "currentDefault": "默认",
+        "menuTitle": "切换 Claude 账号",
+        "defaultName": "默认",
+        "defaultSubtitle": "CLI 的系统 keychain / 环境变量",
+        "tokenEmpty": "·未填",
+        "confirmSwitch": "切换账号将重启 Claude CLI 进程。CLI 内部进行中的对话状态将丢失。继续？",
+        "switchedToast": "账号已切换",
+        "switchedDescription": "当前使用 @{account} · pid {pid}",
+        "switchedDefault": "默认",
+        "switchFailedToast": "切换失败"
+      },
+      "inspector": {
+        "tabs": {
+          "files": "文件",
+          "git": "Git",
+          "search": "搜索",
+          "tasks": "任务",
+          "history": "历史",
+          "notes": "笔记",
+          "memory": "记忆"
+        }
+      },
+      "ended": {
+        "bufferUnavailable": "[缓冲区不可用]",
+        "readOnlyBanner": "[会话已结束 — 只读缓冲区]"
+      },
+      "fileBrowser": {
+        "title": "选择工作目录",
+        "description": "浏览网关主机的文件系统并选择一个文件夹。",
+        "parent": "上级目录",
+        "home": "家目录",
+        "refresh": "刷新",
+        "pathPlaceholder": "/Users/you/projects",
+        "loading": "加载中…",
+        "empty": "目录为空。",
+        "newFolder": "新建文件夹",
+        "newFolderPlaceholder": "new-folder-name",
+        "create": "创建",
+        "cancel": "取消",
+        "useThisFolder": "使用此文件夹",
+        "createdToast": "文件夹已创建",
+        "mkdirFailedToast": "创建失败",
+        "homeFailedToast": "读取家目录失败"
+      }
     }
   },
   "more": {
