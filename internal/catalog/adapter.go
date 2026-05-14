@@ -507,6 +507,24 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			for k, v := range mcpEnv {
 				out.Env[k] = v
 			}
+
+			// Gemini mirroring: if renderMCP set GEMINI_CONFIG_DIR,
+			// symlink the user's real ~/.gemini into the scratch dir
+			// so they stay logged in.
+			if providerID == "gemini" && out.Env["GEMINI_CONFIG_DIR"] != "" {
+				home := out.Env["GEMINI_CONFIG_DIR"]
+				userHome := os.Getenv("GEMINI_CONFIG_DIR")
+				if userHome == "" {
+					if h, err := os.UserHomeDir(); err == nil {
+						userHome = filepath.Join(h, ".gemini")
+					}
+				}
+				if userHome != "" && userHome != home {
+					if err := mirrorGeminiHome(userHome, home); err != nil {
+						return session.PrepareOutput{}, fmt.Errorf("mirror gemini home: %w", err)
+					}
+				}
+			}
 		}
 
 		if len(out.Env) == 0 {
@@ -1020,6 +1038,36 @@ func appendToFile(path, content string) error {
 	defer f.Close()
 	if _, err := f.WriteString(content); err != nil {
 		return fmt.Errorf("write %s: %w", path, err)
+	}
+	return nil
+}
+
+func mirrorGeminiHome(src, dest string) error {
+	if err := os.MkdirAll(dest, 0o700); err != nil {
+		return err
+	}
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	skip := map[string]bool{
+		"settings.json": true,
+	}
+	for _, e := range entries {
+		if skip[e.Name()] {
+			continue
+		}
+		srcPath := filepath.Join(src, e.Name())
+		dstPath := filepath.Join(dest, e.Name())
+		if err := os.Symlink(srcPath, dstPath); err != nil {
+			if os.IsExist(err) {
+				continue
+			}
+			return fmt.Errorf("symlink %s: %w", e.Name(), err)
+		}
 	}
 	return nil
 }

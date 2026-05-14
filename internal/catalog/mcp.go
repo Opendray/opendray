@@ -53,6 +53,8 @@ func renderMCP(providerID, baseDir string, servers []MCPServer) ([]string, map[s
 		return renderClaudeMCP(baseDir, servers)
 	case "codex":
 		return renderCodexMCP(baseDir, servers)
+	case "gemini":
+		return renderGeminiMCP(baseDir, servers)
 	default:
 		// Provider declared supportsMcp=true but we have no renderer
 		// for it; surface as a no-op rather than failing the spawn.
@@ -63,7 +65,7 @@ func renderMCP(providerID, baseDir string, servers []MCPServer) ([]string, map[s
 func renderClaudeMCP(baseDir string, servers []MCPServer) ([]string, map[string]string, error) {
 	entries := map[string]map[string]any{}
 	for _, s := range servers {
-		spec := claudeServerSpec(s)
+		spec := stdioMCPServerSpec(s)
 		if spec == nil {
 			continue
 		}
@@ -86,7 +88,38 @@ func renderClaudeMCP(baseDir string, servers []MCPServer) ([]string, map[string]
 	return []string{"--mcp-config", path}, nil, nil
 }
 
-func claudeServerSpec(s MCPServer) map[string]any {
+func renderGeminiMCP(baseDir string, servers []MCPServer) ([]string, map[string]string, error) {
+	entries := map[string]map[string]any{}
+	for _, s := range servers {
+		spec := stdioMCPServerSpec(s)
+		if spec == nil {
+			continue
+		}
+		entries[s.Name] = spec
+	}
+	if len(entries) == 0 {
+		return nil, nil, nil
+	}
+
+	home := filepath.Join(baseDir, "gemini-home")
+	if err := os.MkdirAll(home, 0o700); err != nil {
+		return nil, nil, fmt.Errorf("mkdir gemini home: %w", err)
+	}
+
+	payload := map[string]any{"mcpServers": entries}
+	data, err := json.MarshalIndent(payload, "", "  ")
+	if err != nil {
+		return nil, nil, fmt.Errorf("marshal gemini settings: %w", err)
+	}
+
+	path := filepath.Join(home, "settings.json")
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		return nil, nil, fmt.Errorf("write gemini settings: %w", err)
+	}
+	return nil, map[string]string{"GEMINI_CONFIG_DIR": home}, nil
+}
+
+func stdioMCPServerSpec(s MCPServer) map[string]any {
 	switch s.Transport {
 	case "sse":
 		if s.URL == "" {

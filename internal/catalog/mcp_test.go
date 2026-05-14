@@ -129,12 +129,42 @@ func TestRenderCodexMCP_SkipsNonStdio(t *testing.T) {
 	}
 }
 
+func TestRenderGeminiMCP_SettingsOutput(t *testing.T) {
+	dir := t.TempDir()
+	servers := []MCPServer{
+		{Name: "fs", Command: "npx", Args: []string{"-y", "server-fs"}},
+	}
+	args, env, err := renderMCP("gemini", dir, servers)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(args) != 0 {
+		t.Errorf("args=%v, want none", args)
+	}
+	home, ok := env["GEMINI_CONFIG_DIR"]
+	if !ok {
+		t.Fatalf("GEMINI_CONFIG_DIR missing from env=%v", env)
+	}
+	body, err := os.ReadFile(filepath.Join(home, "settings.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(body, &got); err != nil {
+		t.Fatalf("invalid json: %v", err)
+	}
+	servers0 := got["mcpServers"].(map[string]any)["fs"].(map[string]any)
+	if servers0["command"].(string) != "npx" {
+		t.Errorf("command=%v", servers0["command"])
+	}
+}
+
 func TestRenderMCP_UnknownProviderNoOp(t *testing.T) {
-	args, env, err := renderMCP("gemini", t.TempDir(), []MCPServer{
+	args, env, err := renderMCP("unknown-provider", t.TempDir(), []MCPServer{
 		{Name: "x", Command: "y"},
 	})
 	if err != nil || args != nil || env != nil {
-		t.Errorf("expected no-op for gemini, got args=%v env=%v err=%v", args, env, err)
+		t.Errorf("expected no-op for unknown-provider, got args=%v env=%v err=%v", args, env, err)
 	}
 }
 
