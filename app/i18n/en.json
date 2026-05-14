@@ -1426,6 +1426,112 @@
           "configPathPlaceholder": "leave blank for rclone default"
         }
       }
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Workspace, account, and gateway config.",
+      "groups": {
+        "workspace": "Workspace",
+        "server": "Server",
+        "system": "System"
+      },
+      "items": {
+        "appearance": "Appearance",
+        "font": "Font size",
+        "account": "Account",
+        "status": "Status",
+        "about": "About"
+      },
+      "health": {
+        "connecting": "connecting…",
+        "dbOk": "db ok",
+        "dbDown": "db down"
+      },
+      "breadcrumb": {
+        "server": "Server"
+      },
+      "appearance": {
+        "title": "Appearance",
+        "description": "Choose how opendray looks.",
+        "options": {
+          "light": "Light",
+          "lightDesc": "Always light",
+          "dark": "Dark",
+          "darkDesc": "Always dark",
+          "system": "System",
+          "systemDesc": "Follow the OS setting"
+        }
+      },
+      "font": {
+        "title": "Font size",
+        "description": "Scales the entire interface. Persisted per browser.",
+        "options": {
+          "compact": "Compact",
+          "default": "Default",
+          "comfy": "Comfy",
+          "large": "Large"
+        }
+      },
+      "account": {
+        "title": "Account",
+        "description": "Operator and current bearer token.",
+        "username": "Username",
+        "tokenExpires": "Token expires",
+        "changeCredentials": "Change credentials"
+      },
+      "changeCredentials": {
+        "title": "Change credentials",
+        "description": "Verify your current password, then pick new credentials. All other signed-in sessions will be revoked.",
+        "currentPassword": "Current password",
+        "newUsername": "New username",
+        "newPassword": "New password",
+        "newPasswordHint": "At least 8 characters.",
+        "confirm": "Confirm new password",
+        "errorTooShort": "New password must be at least 8 characters.",
+        "errorMismatch": "New password and confirmation don't match.",
+        "errorWrongPassword": "Current password is wrong.",
+        "cancel": "Cancel",
+        "update": "Update",
+        "saving": "Saving…"
+      },
+      "system": {
+        "title": "System status",
+        "description": "Live status from the gateway's /health endpoint.",
+        "status": "Status",
+        "version": "Version",
+        "uptime": "Uptime",
+        "database": "Database",
+        "reachable": "reachable",
+        "unreachable": "unreachable"
+      },
+      "about": {
+        "title": "About",
+        "description": "opendray v2 — the multiplexer + integration gateway for AI agent CLIs. Source under Apache 2.0."
+      }
+    },
+    "logViewer": {
+      "filterPlaceholder": "Filter…",
+      "debugTooltip": "Debug count",
+      "infoTooltip": "Info count",
+      "warnTooltip": "Warn count",
+      "errorTooltip": "Error count",
+      "streaming": "Streaming",
+      "disconnected": "Disconnected",
+      "live": "live",
+      "offline": "offline",
+      "pauseTooltip": "Pause auto-scroll",
+      "resumeTooltip": "Resume auto-scroll",
+      "clearTooltip": "Clear local view (server ring untouched)",
+      "downloadTooltip": "Download full ring as .log file",
+      "emptyWaiting": "Waiting for log records…",
+      "emptyFiltered": "No records match \"{query}\""
+    },
+    "pathInput": {
+      "testButton": "Test",
+      "testTooltip": "Resolve and check this path",
+      "notFound": "not found ·",
+      "childrenSuffix": "children",
+      "expectedDirectory": "· expected directory"
     }
   },
   "more": {

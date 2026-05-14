@@ -1426,6 +1426,112 @@
           "configPathPlaceholder": "留空则使用 rclone 默认"
         }
       }
+    },
+    "settings": {
+      "title": "设置",
+      "subtitle": "工作区、账号与网关配置。",
+      "groups": {
+        "workspace": "工作区",
+        "server": "服务器",
+        "system": "系统"
+      },
+      "items": {
+        "appearance": "外观",
+        "font": "字号",
+        "account": "账号",
+        "status": "状态",
+        "about": "关于"
+      },
+      "health": {
+        "connecting": "连接中…",
+        "dbOk": "db 正常",
+        "dbDown": "db 异常"
+      },
+      "breadcrumb": {
+        "server": "服务器"
+      },
+      "appearance": {
+        "title": "外观",
+        "description": "选择 opendray 的外观风格。",
+        "options": {
+          "light": "浅色",
+          "lightDesc": "始终浅色",
+          "dark": "深色",
+          "darkDesc": "始终深色",
+          "system": "跟随系统",
+          "systemDesc": "跟随操作系统设置"
+        }
+      },
+      "font": {
+        "title": "字号",
+        "description": "缩放整个界面。按浏览器保存。",
+        "options": {
+          "compact": "紧凑",
+          "default": "默认",
+          "comfy": "舒适",
+          "large": "大"
+        }
+      },
+      "account": {
+        "title": "账号",
+        "description": "运维与当前 bearer token。",
+        "username": "用户名",
+        "tokenExpires": "Token 过期",
+        "changeCredentials": "修改凭证"
+      },
+      "changeCredentials": {
+        "title": "修改凭证",
+        "description": "先验证当前密码，再选择新凭证。所有其它已登录会话都将被吊销。",
+        "currentPassword": "当前密码",
+        "newUsername": "新用户名",
+        "newPassword": "新密码",
+        "newPasswordHint": "至少 8 个字符。",
+        "confirm": "确认新密码",
+        "errorTooShort": "新密码至少 8 个字符。",
+        "errorMismatch": "新密码和确认不一致。",
+        "errorWrongPassword": "当前密码不正确。",
+        "cancel": "取消",
+        "update": "更新",
+        "saving": "保存中…"
+      },
+      "system": {
+        "title": "系统状态",
+        "description": "来自网关 /health 接口的实时状态。",
+        "status": "状态",
+        "version": "版本",
+        "uptime": "运行时长",
+        "database": "数据库",
+        "reachable": "可达",
+        "unreachable": "不可达"
+      },
+      "about": {
+        "title": "关于",
+        "description": "opendray v2 — 面向 AI agent CLI 的多路复用 + 集成网关。源码采用 Apache 2.0 协议。"
+      }
+    },
+    "logViewer": {
+      "filterPlaceholder": "过滤…",
+      "debugTooltip": "Debug 计数",
+      "infoTooltip": "Info 计数",
+      "warnTooltip": "Warn 计数",
+      "errorTooltip": "Error 计数",
+      "streaming": "正在流式传输",
+      "disconnected": "已断开",
+      "live": "实时",
+      "offline": "离线",
+      "pauseTooltip": "暂停自动滚动",
+      "resumeTooltip": "恢复自动滚动",
+      "clearTooltip": "清空本地视图（服务端 ring 不受影响）",
+      "downloadTooltip": "下载完整 ring 为 .log 文件",
+      "emptyWaiting": "等待日志记录…",
+      "emptyFiltered": "没有匹配 \"{query}\" 的记录"
+    },
+    "pathInput": {
+      "testButton": "测试",
+      "testTooltip": "解析并检查此路径",
+      "notFound": "未找到 ·",
+      "childrenSuffix": "项",
+      "expectedDirectory": "· 期望是目录"
     }
   },
   "more": {

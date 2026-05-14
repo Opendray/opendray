@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSearch } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import {
   Sun,
   Moon,
@@ -46,18 +47,20 @@ type TopSection =
   | 'system'
   | 'about'
 
+// Map item keys → i18n key suffixes; labels resolved at render time
+// inside the sidebar.
 const TOP_GROUPS: {
   id: string
-  title: string
-  items: { key: TopSection; label: string; icon: LucideIcon }[]
+  titleKey: string
+  items: { key: TopSection; labelKey: string; icon: LucideIcon }[]
 }[] = [
   {
     id: 'workspace',
-    title: 'Workspace',
+    titleKey: 'web.settings.groups.workspace',
     items: [
-      { key: 'appearance', label: 'Appearance', icon: Monitor },
-      { key: 'font', label: 'Font size', icon: Type },
-      { key: 'account', label: 'Account', icon: UserIcon },
+      { key: 'appearance', labelKey: 'web.settings.items.appearance', icon: Monitor },
+      { key: 'font', labelKey: 'web.settings.items.font', icon: Type },
+      { key: 'account', labelKey: 'web.settings.items.account', icon: UserIcon },
     ],
   },
 ]
@@ -80,6 +83,7 @@ function isValidTopSection(s: string | undefined): s is TopSection {
 }
 
 export function SettingsPage() {
+  const { t } = useTranslation()
   // Deep-link: /settings?section=server.memory selects that section on
   // mount. The Memory page "Configuration →" button uses this so users
   // land on the memory config instead of the default Appearance.
@@ -113,20 +117,22 @@ export function SettingsPage() {
       {/* Sidebar */}
       <aside className="w-60 shrink-0 border-r border-border bg-background flex flex-col">
         <div className="px-5 pt-6 pb-3">
-          <h1 className="text-[15px] font-semibold tracking-tight">Settings</h1>
+          <h1 className="text-[15px] font-semibold tracking-tight">
+            {t('web.settings.title')}
+          </h1>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            Workspace, account, and gateway config.
+            {t('web.settings.subtitle')}
           </p>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2 pb-6">
           {TOP_GROUPS.map((g) => (
-            <SidebarGroup key={g.id} title={g.title}>
+            <SidebarGroup key={g.id} title={t(g.titleKey)}>
               {g.items.map((item) => (
                 <SidebarItem
                   key={item.key}
                   icon={item.icon}
-                  label={item.label}
+                  label={t(item.labelKey)}
                   active={active === item.key}
                   onClick={() => setActive(item.key)}
                 />
@@ -134,7 +140,7 @@ export function SettingsPage() {
             </SidebarGroup>
           ))}
 
-          <SidebarGroup title="Server">
+          <SidebarGroup title={t('web.settings.groups.server')}>
             {SERVER_SECTIONS.map((s) => {
               const key: TopSection = `server.${s.id}`
               return (
@@ -149,16 +155,16 @@ export function SettingsPage() {
             })}
           </SidebarGroup>
 
-          <SidebarGroup title="System">
+          <SidebarGroup title={t('web.settings.groups.system')}>
             <SidebarItem
               icon={Activity}
-              label="Status"
+              label={t('web.settings.items.status')}
               active={active === 'system'}
               onClick={() => setActive('system')}
             />
             <SidebarItem
               icon={Info}
-              label="About"
+              label={t('web.settings.items.about')}
               active={active === 'about'}
               onClick={() => setActive('about')}
             />
@@ -176,8 +182,12 @@ export function SettingsPage() {
           />
           <span className="text-muted-foreground truncate">
             {health
-              ? `${health.version} · ${health.db_ok ? 'db ok' : 'db down'}`
-              : 'connecting…'}
+              ? `${health.version} · ${
+                  health.db_ok
+                    ? t('web.settings.health.dbOk')
+                    : t('web.settings.health.dbDown')
+                }`
+              : t('web.settings.health.connecting')}
           </span>
         </div>
       </aside>
@@ -189,7 +199,9 @@ export function SettingsPage() {
           {active.startsWith('server.') && (
             <div className="flex items-center gap-3 mb-6">
               <Server className="size-3.5 text-muted-foreground/60" />
-              <span className="text-[11px] text-muted-foreground">Server</span>
+              <span className="text-[11px] text-muted-foreground">
+                {t('web.settings.breadcrumb.server')}
+              </span>
               <ChevronRight className="size-3 text-muted-foreground/40" />
               <span className="text-[11px] text-foreground font-medium">
                 {SERVER_SECTIONS.find((s) => `server.${s.id}` === active)?.title}
@@ -328,29 +340,40 @@ function AppearanceSection({
   mode: ThemeMode
   setMode: (m: ThemeMode) => void
 }) {
+  const { t } = useTranslation()
   const themeOptions: {
     mode: ThemeMode
-    label: string
-    description: string
+    labelKey: string
+    descKey: string
     icon: LucideIcon
   }[] = [
-    { mode: 'light', label: 'Light', description: 'Always light', icon: Sun },
-    { mode: 'dark', label: 'Dark', description: 'Always dark', icon: Moon },
+    {
+      mode: 'light',
+      labelKey: 'web.settings.appearance.options.light',
+      descKey: 'web.settings.appearance.options.lightDesc',
+      icon: Sun,
+    },
+    {
+      mode: 'dark',
+      labelKey: 'web.settings.appearance.options.dark',
+      descKey: 'web.settings.appearance.options.darkDesc',
+      icon: Moon,
+    },
     {
       mode: 'system',
-      label: 'System',
-      description: 'Follow the OS setting',
+      labelKey: 'web.settings.appearance.options.system',
+      descKey: 'web.settings.appearance.options.systemDesc',
       icon: Monitor,
     },
   ]
   return (
     <div>
       <SectionHeader
-        title="Appearance"
-        description="Choose how opendray looks."
+        title={t('web.settings.appearance.title')}
+        description={t('web.settings.appearance.description')}
       />
       <div className="grid grid-cols-3 gap-2">
-        {themeOptions.map(({ mode: m, label, description, icon: Icon }) => {
+        {themeOptions.map(({ mode: m, labelKey, descKey, icon: Icon }) => {
           const active = mode === m
           return (
             <button
@@ -366,9 +389,9 @@ function AppearanceSection({
             >
               <Icon className="size-4 text-muted-foreground" />
               <div className="flex flex-col gap-0.5">
-                <span className="text-[13px] font-medium">{label}</span>
+                <span className="text-[13px] font-medium">{t(labelKey)}</span>
                 <span className="text-[11px] text-muted-foreground leading-snug">
-                  {description}
+                  {t(descKey)}
                 </span>
               </div>
               {active && (
@@ -389,20 +412,21 @@ function FontSection({
   fontScale: number
   setFontScale: (s: number) => void
 }) {
-  const opts: { scale: number; label: string }[] = [
-    { scale: 0.85, label: 'Compact' },
-    { scale: 1, label: 'Default' },
-    { scale: 1.15, label: 'Comfy' },
-    { scale: 1.3, label: 'Large' },
+  const { t } = useTranslation()
+  const opts: { scale: number; labelKey: string }[] = [
+    { scale: 0.85, labelKey: 'web.settings.font.options.compact' },
+    { scale: 1, labelKey: 'web.settings.font.options.default' },
+    { scale: 1.15, labelKey: 'web.settings.font.options.comfy' },
+    { scale: 1.3, labelKey: 'web.settings.font.options.large' },
   ]
   return (
     <div>
       <SectionHeader
-        title="Font size"
-        description="Scales the entire interface. Persisted per browser."
+        title={t('web.settings.font.title')}
+        description={t('web.settings.font.description')}
       />
       <div className="grid grid-cols-4 gap-2">
-        {opts.map(({ scale, label }) => {
+        {opts.map(({ scale, labelKey }) => {
           const active = Math.abs(fontScale - scale) < 0.001
           return (
             <button
@@ -418,7 +442,7 @@ function FontSection({
             >
               <Type className="size-4 text-muted-foreground" />
               <div className="flex flex-col gap-0.5">
-                <span className="text-[13px] font-medium">{label}</span>
+                <span className="text-[13px] font-medium">{t(labelKey)}</span>
                 <span className="text-[11px] text-muted-foreground">
                   {Math.round(scale * 100)}%
                 </span>
@@ -441,17 +465,18 @@ function AccountSection({
   username: string | null
   expiresAt: string | null
 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   return (
     <div>
       <SectionHeader
-        title="Account"
-        description="Operator and current bearer token."
+        title={t('web.settings.account.title')}
+        description={t('web.settings.account.description')}
       />
       <div className="flex flex-col gap-1.5">
-        <Field label="Username" value={username ?? '—'} />
+        <Field label={t('web.settings.account.username')} value={username ?? '—'} />
         <Field
-          label="Token expires"
+          label={t('web.settings.account.tokenExpires')}
           value={expiresAt ? new Date(expiresAt).toLocaleString() : '—'}
           monospace
         />
@@ -462,7 +487,7 @@ function AccountSection({
           className="text-[12px] px-3 py-1.5 rounded-md border border-border hover:bg-card transition-colors"
           onClick={() => setOpen(true)}
         >
-          Change credentials
+          {t('web.settings.account.changeCredentials')}
         </button>
       </div>
       {open && (
@@ -487,6 +512,7 @@ function ChangeCredentialsDialog({
   currentUsername: string
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newUser, setNewUser] = useState(currentUsername)
   const [newPassword, setNewPassword] = useState('')
@@ -498,11 +524,11 @@ function ChangeCredentialsDialog({
   async function submit() {
     setError(null)
     if (newPassword.length < 8) {
-      setError('New password must be at least 8 characters.')
+      setError(t('web.settings.changeCredentials.errorTooShort'))
       return
     }
     if (newPassword !== confirm) {
-      setError("New password and confirmation don't match.")
+      setError(t('web.settings.changeCredentials.errorMismatch'))
       return
     }
     setBusy(true)
@@ -532,7 +558,7 @@ function ChangeCredentialsDialog({
       // Distinguish wrong-current-password (401) from validation
       // failures so the operator knows where to look.
       if (msg.includes('401') || msg.toLowerCase().includes('invalid')) {
-        setError('Current password is wrong.')
+        setError(t('web.settings.changeCredentials.errorWrongPassword'))
       } else {
         setError(msg)
       }
@@ -550,16 +576,15 @@ function ChangeCredentialsDialog({
         className="w-[min(440px,calc(100vw-2rem))] max-h-[calc(100vh-2rem)] overflow-y-auto rounded-md border border-border bg-background p-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="font-medium text-[15px]">Change credentials</div>
+        <div className="font-medium text-[15px]">{t('web.settings.changeCredentials.title')}</div>
         <div className="text-muted-foreground text-[12px] mt-1">
-          Verify your current password, then pick new credentials. All other
-          signed-in sessions will be revoked.
+          {t('web.settings.changeCredentials.description')}
         </div>
 
         <div className="mt-4 flex flex-col gap-3 text-[13px]">
           <label className="flex flex-col gap-1">
             <span className="text-[11px] text-muted-foreground">
-              Current password
+              {t('web.settings.changeCredentials.currentPassword')}
             </span>
             <input
               type="password"
@@ -572,7 +597,7 @@ function ChangeCredentialsDialog({
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-[11px] text-muted-foreground">
-              New username
+              {t('web.settings.changeCredentials.newUsername')}
             </span>
             <input
               type="text"
@@ -584,7 +609,7 @@ function ChangeCredentialsDialog({
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-[11px] text-muted-foreground">
-              New password
+              {t('web.settings.changeCredentials.newPassword')}
             </span>
             <input
               type="password"
@@ -594,12 +619,12 @@ function ChangeCredentialsDialog({
               className="h-8 px-2 rounded-md border border-border bg-input/40"
             />
             <span className="text-[11px] text-muted-foreground">
-              At least 8 characters.
+              {t('web.settings.changeCredentials.newPasswordHint')}
             </span>
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-[11px] text-muted-foreground">
-              Confirm new password
+              {t('web.settings.changeCredentials.confirm')}
             </span>
             <input
               type="password"
@@ -624,7 +649,7 @@ function ChangeCredentialsDialog({
             onClick={onClose}
             disabled={busy}
           >
-            Cancel
+            {t('web.settings.changeCredentials.cancel')}
           </button>
           <button
             type="button"
@@ -632,7 +657,9 @@ function ChangeCredentialsDialog({
             onClick={() => void submit()}
             disabled={busy}
           >
-            {busy ? 'Saving…' : 'Update'}
+            {busy
+              ? t('web.settings.changeCredentials.saving')
+              : t('web.settings.changeCredentials.update')}
           </button>
         </div>
       </div>
@@ -641,28 +668,35 @@ function ChangeCredentialsDialog({
 }
 
 function SystemSection({ health }: { health: HealthResponse | undefined }) {
+  const { t } = useTranslation()
   return (
     <div>
       <SectionHeader
-        title="System status"
-        description="Live status from the gateway's /health endpoint."
+        title={t('web.settings.system.title')}
+        description={t('web.settings.system.description')}
       />
       <div className="flex flex-col gap-1.5">
-        <Field label="Status" value={health?.status ?? '…'} />
+        <Field label={t('web.settings.system.status')} value={health?.status ?? '…'} />
         <Field
-          label="Version"
+          label={t('web.settings.system.version')}
           value={
             health ? `${health.version} (${health.commit.slice(0, 7)})` : '…'
           }
           monospace
         />
         <Field
-          label="Uptime"
+          label={t('web.settings.system.uptime')}
           value={health ? formatUptime(health.uptime_s) : '…'}
         />
         <Field
-          label="Database"
-          value={health ? (health.db_ok ? 'reachable' : 'unreachable') : '…'}
+          label={t('web.settings.system.database')}
+          value={
+            health
+              ? health.db_ok
+                ? t('web.settings.system.reachable')
+                : t('web.settings.system.unreachable')
+              : '…'
+          }
           tone={health?.db_ok === false ? 'fail' : 'ok'}
         />
       </div>
@@ -671,12 +705,12 @@ function SystemSection({ health }: { health: HealthResponse | undefined }) {
 }
 
 function AboutSection() {
+  const { t } = useTranslation()
   return (
     <div>
-      <SectionHeader title="About" />
+      <SectionHeader title={t('web.settings.about.title')} />
       <p className="text-[12px] text-muted-foreground leading-relaxed">
-        opendray v2 — the multiplexer + integration gateway for AI agent CLIs.
-        Source under Apache 2.0.
+        {t('web.settings.about.description')}
       </p>
     </div>
   )
