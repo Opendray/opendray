@@ -9,6 +9,8 @@ import {
   WifiOff,
 } from 'lucide-react'
 
+import { useTranslation } from 'react-i18next'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { downloadLogs, streamLogs, type LogRecord } from '@/lib/logs'
@@ -36,6 +38,7 @@ const LEVEL_BADGE: Record<LogRecord['level'], string> = {
 // header lets the operator pause auto-scroll, filter with substring
 // search, clear the local view, and download the full ring as text.
 export function LogViewer() {
+  const { t } = useTranslation()
   const [records, setRecords] = useState<LogRecord[]>([])
   const [filter, setFilter] = useState('')
   const [paused, setPaused] = useState(false)
@@ -101,17 +104,17 @@ export function LogViewer() {
           <Input
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            placeholder="Filter…"
+            placeholder={t('web.logViewer.filterPlaceholder')}
             className="h-7 pl-7 text-xs w-44"
           />
         </div>
         <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground">
-          <span title="Debug count">{stats.DEBUG} D</span>
-          <span title="Info count">{stats.INFO} I</span>
-          <span className="text-amber-300/80" title="Warn count">
+          <span title={t('web.logViewer.debugTooltip')}>{stats.DEBUG} D</span>
+          <span title={t('web.logViewer.infoTooltip')}>{stats.INFO} I</span>
+          <span className="text-amber-300/80" title={t('web.logViewer.warnTooltip')}>
             {stats.WARN} W
           </span>
-          <span className="text-rose-400/80" title="Error count">
+          <span className="text-rose-400/80" title={t('web.logViewer.errorTooltip')}>
             {stats.ERROR} E
           </span>
         </div>
@@ -121,14 +124,14 @@ export function LogViewer() {
               'flex items-center gap-1 text-[10px] mr-2',
               connected ? 'text-emerald-400' : 'text-muted-foreground',
             )}
-            title={connected ? 'Streaming' : 'Disconnected'}
+            title={connected ? t('web.logViewer.streaming') : t('web.logViewer.disconnected')}
           >
             {connected ? (
               <Wifi className="size-3" />
             ) : (
               <WifiOff className="size-3" />
             )}
-            {connected ? 'live' : 'offline'}
+            {connected ? t('web.logViewer.live') : t('web.logViewer.offline')}
           </span>
           <Button
             type="button"
@@ -136,7 +139,7 @@ export function LogViewer() {
             size="sm"
             className="h-7 px-2 text-[11px]"
             onClick={() => setPaused((v) => !v)}
-            title={paused ? 'Resume auto-scroll' : 'Pause auto-scroll'}
+            title={paused ? t('web.logViewer.resumeTooltip') : t('web.logViewer.pauseTooltip')}
           >
             {paused ? (
               <Play className="size-3" />
@@ -150,7 +153,7 @@ export function LogViewer() {
             size="sm"
             className="h-7 px-2 text-[11px]"
             onClick={() => setRecords([])}
-            title="Clear local view (server ring untouched)"
+            title={t('web.logViewer.clearTooltip')}
           >
             <Eraser className="size-3" />
           </Button>
@@ -160,7 +163,7 @@ export function LogViewer() {
             size="sm"
             className="h-7 px-2 text-[11px]"
             onClick={() => downloadLogs()}
-            title="Download full ring as .log file"
+            title={t('web.logViewer.downloadTooltip')}
           >
             <Download className="size-3" />
           </Button>
@@ -175,8 +178,8 @@ export function LogViewer() {
         {filtered.length === 0 && (
           <p className="text-muted-foreground/50 italic">
             {records.length === 0
-              ? 'Waiting for log records…'
-              : `No records match "${filter}"`}
+              ? t('web.logViewer.emptyWaiting')
+              : t('web.logViewer.emptyFiltered', { query: filter })}
           </p>
         )}
         {filtered.map((r, i) => (

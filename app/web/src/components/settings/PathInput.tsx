@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Check, FlaskConical, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +24,7 @@ export function PathInput({
   placeholder,
   expectDir,
 }: PathInputProps) {
+  const { t } = useTranslation()
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<TestPathResponse | null>(null)
 
@@ -56,10 +58,10 @@ export function PathInput({
           className="h-8 px-2 text-xs"
           disabled={busy || !value.trim()}
           onClick={test}
-          title="Resolve and check this path"
+          title={t('web.pathInput.testTooltip')}
         >
           <FlaskConical className="size-3 mr-1" />
-          Test
+          {t('web.pathInput.testButton')}
         </Button>
       </div>
       {result && <PathResult res={result} expectDir={expectDir} />}
@@ -74,11 +76,12 @@ function PathResult({
   res: TestPathResponse
   expectDir?: boolean
 }) {
+  const { t } = useTranslation()
   if (!res.exists) {
     return (
       <p className="text-[10px] text-destructive flex items-center gap-1 px-1">
         <X className="size-3" />
-        not found · {res.path}
+        {t('web.pathInput.notFound')} {res.path}
       </p>
     )
   }
@@ -93,9 +96,11 @@ function PathResult({
       {wrongType ? <X className="size-3" /> : <Check className="size-3" />}
       {res.path}
       {res.is_dir && (
-        <span className="opacity-60">· {res.child_count ?? 0} children</span>
+        <span className="opacity-60">
+          · {res.child_count ?? 0} {t('web.pathInput.childrenSuffix')}
+        </span>
       )}
-      {wrongType && <span className="opacity-60">· expected directory</span>}
+      {wrongType && <span className="opacity-60">{t('web.pathInput.expectedDirectory')}</span>}
     </p>
   )
 }
