@@ -110,103 +110,117 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
     final action = await showModalBottomSheet<_RowAction>(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (sheetCtx) => SafeArea(
         top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    ch.kind,
-                    style: Theme.of(sheetCtx).textTheme.titleSmall,
-                  ),
-                  Text(
-                    ch.id,
-                    style: Theme.of(sheetCtx)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(fontFamily: 'monospace'),
-                  ),
-                ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      ch.kind,
+                      style: Theme.of(sheetCtx).textTheme.titleSmall,
+                    ),
+                    Text(
+                      ch.id,
+                      style: Theme.of(
+                        sheetCtx,
+                      ).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              enabled: !isBusy,
-              leading: const Icon(Icons.send_outlined),
-              title: Text(i18n.t.channels.sendTest),
-              onTap: () => Navigator.of(sheetCtx).pop(_RowAction.test),
-            ),
-            ListTile(
-              enabled: !isBusy,
-              leading: Icon(
-                ch.enabled ? Icons.pause_circle_outline : Icons.play_circle_outline,
+              const Divider(height: 1),
+              ListTile(
+                enabled: !isBusy,
+                leading: const Icon(Icons.send_outlined),
+                title: Text(i18n.t.channels.sendTest),
+                onTap: () => Navigator.of(sheetCtx).pop(_RowAction.test),
               ),
-              title: Text(ch.enabled ? i18n.t.channels.popup.disable : i18n.t.channels.popup.enable),
-              onTap: () => Navigator.of(sheetCtx).pop(_RowAction.toggleEnabled),
-            ),
-            ListTile(
-              enabled: !isBusy,
-              leading: Icon(
-                ch.muted ? Icons.notifications_active_outlined : Icons.notifications_off_outlined,
+              ListTile(
+                enabled: !isBusy,
+                leading: Icon(
+                  ch.enabled
+                      ? Icons.pause_circle_outline
+                      : Icons.play_circle_outline,
+                ),
+                title: Text(
+                  ch.enabled
+                      ? i18n.t.channels.popup.disable
+                      : i18n.t.channels.popup.enable,
+                ),
+                onTap: () =>
+                    Navigator.of(sheetCtx).pop(_RowAction.toggleEnabled),
               ),
-              title: Text(ch.muted ? i18n.t.channels.popup.unmute : i18n.t.channels.popup.mute),
-              onTap: () => Navigator.of(sheetCtx).pop(_RowAction.toggleMuted),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              enabled: !isBusy && findKind(ch.kind) != null,
-              leading: const Icon(Icons.edit_outlined),
-              title: Text(i18n.t.channels.editConfig),
-              subtitle: findKind(ch.kind) == null
-                  ? Text(
-                      i18n.t.channels.bridgeWebOnly,
-                      style: const TextStyle(fontSize: 11),
-                    )
-                  : null,
-              onTap: () =>
-                  Navigator.of(sheetCtx).pop(_RowAction.editKindConfig),
-            ),
-            ListTile(
-              enabled: !isBusy,
-              leading: const Icon(Icons.tune_outlined),
-              title: Text(i18n.t.channels.editNotifications),
-              onTap: () =>
-                  Navigator.of(sheetCtx).pop(_RowAction.editNotify),
-            ),
-            ListTile(
-              leading: const Icon(Icons.code),
-              title: Text(i18n.t.channels.viewRawConfig),
-              onTap: () => Navigator.of(sheetCtx).pop(_RowAction.viewConfig),
-            ),
-            ListTile(
-              leading: const Icon(Icons.copy_outlined),
-              title: Text(i18n.t.channels.copyChannelId),
-              onTap: () => Navigator.of(sheetCtx).pop(_RowAction.copyId),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              enabled: !isBusy,
-              leading: Icon(
-                Icons.delete_outline,
-                color: Theme.of(sheetCtx).colorScheme.error,
+              ListTile(
+                enabled: !isBusy,
+                leading: Icon(
+                  ch.muted
+                      ? Icons.notifications_active_outlined
+                      : Icons.notifications_off_outlined,
+                ),
+                title: Text(
+                  ch.muted
+                      ? i18n.t.channels.popup.unmute
+                      : i18n.t.channels.popup.mute,
+                ),
+                onTap: () => Navigator.of(sheetCtx).pop(_RowAction.toggleMuted),
               ),
-              title: Text(
-                i18n.t.channels.popup.deleteLabel,
-                style: TextStyle(color: Theme.of(sheetCtx).colorScheme.error),
+              const Divider(height: 1),
+              ListTile(
+                enabled: !isBusy && findKind(ch.kind) != null,
+                leading: const Icon(Icons.edit_outlined),
+                title: Text(i18n.t.channels.editConfig),
+                subtitle: findKind(ch.kind) == null
+                    ? Text(
+                        i18n.t.channels.bridgeWebOnly,
+                        style: const TextStyle(fontSize: 11),
+                      )
+                    : null,
+                onTap: () =>
+                    Navigator.of(sheetCtx).pop(_RowAction.editKindConfig),
               ),
-              onTap: () => Navigator.of(sheetCtx).pop(_RowAction.delete),
-            ),
-            const SizedBox(height: 4),
-          ],
+              ListTile(
+                enabled: !isBusy,
+                leading: const Icon(Icons.tune_outlined),
+                title: Text(i18n.t.channels.editNotifications),
+                onTap: () => Navigator.of(sheetCtx).pop(_RowAction.editNotify),
+              ),
+              ListTile(
+                leading: const Icon(Icons.code),
+                title: Text(i18n.t.channels.viewRawConfig),
+                onTap: () => Navigator.of(sheetCtx).pop(_RowAction.viewConfig),
+              ),
+              ListTile(
+                leading: const Icon(Icons.copy_outlined),
+                title: Text(i18n.t.channels.copyChannelId),
+                onTap: () => Navigator.of(sheetCtx).pop(_RowAction.copyId),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                enabled: !isBusy,
+                leading: Icon(
+                  Icons.delete_outline,
+                  color: Theme.of(sheetCtx).colorScheme.error,
+                ),
+                title: Text(
+                  i18n.t.channels.popup.deleteLabel,
+                  style: TextStyle(color: Theme.of(sheetCtx).colorScheme.error),
+                ),
+                onTap: () => Navigator.of(sheetCtx).pop(_RowAction.delete),
+              ),
+              const SizedBox(height: 4),
+            ],
+          ),
         ),
       ),
     );
@@ -223,7 +237,9 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
         final next = !ch.enabled;
         await _runAction(
           id: ch.id,
-          okMessage: next ? i18n.t.channels.snacks.channelEnabled : i18n.t.channels.snacks.channelDisabled,
+          okMessage: next
+              ? i18n.t.channels.snacks.channelEnabled
+              : i18n.t.channels.snacks.channelDisabled,
           failPrefix: i18n.t.channels.errorPrefix.toggle,
           op: () => ref
               .read(channelsApiProvider)
@@ -234,7 +250,9 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
         final next = !ch.muted;
         await _runAction(
           id: ch.id,
-          okMessage: next ? i18n.t.channels.snacks.channelMuted : i18n.t.channels.snacks.channelUnmuted,
+          okMessage: next
+              ? i18n.t.channels.snacks.channelMuted
+              : i18n.t.channels.snacks.channelUnmuted,
           failPrefix: i18n.t.channels.errorPrefix.muteToggle,
           op: () => ref
               .read(channelsApiProvider)
@@ -297,9 +315,7 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text(
-            i18n.t.channels.createFailedApi(error: e.message),
-          ),
+          content: Text(i18n.t.channels.createFailedApi(error: e.message)),
         ),
       );
     } on Object catch (e) {
@@ -344,10 +360,8 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
       id: ch.id,
       okMessage: i18n.t.channels.snacks.configUpdated,
       failPrefix: i18n.t.channels.errorPrefix.update,
-      op: () => ref
-          .read(channelsApiProvider)
-          .updateConfig(ch.id, patch)
-          .then((_) {}),
+      op: () =>
+          ref.read(channelsApiProvider).updateConfig(ch.id, patch).then((_) {}),
     );
   }
 
@@ -363,10 +377,8 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
       id: ch.id,
       okMessage: i18n.t.channels.notifications.updatedSnack,
       failPrefix: i18n.t.channels.errorPrefix.update,
-      op: () => ref
-          .read(channelsApiProvider)
-          .updateConfig(ch.id, patch)
-          .then((_) {}),
+      op: () =>
+          ref.read(channelsApiProvider).updateConfig(ch.id, patch).then((_) {}),
     );
   }
 
@@ -383,10 +395,9 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
             const SizedBox(height: 4),
             Text(
               ch.id,
-              style: Theme.of(ctx)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(fontFamily: 'monospace'),
+              style: Theme.of(
+                ctx,
+              ).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
             ),
             const SizedBox(height: 12),
             Text(
@@ -504,10 +515,8 @@ class _ChannelsScreenState extends ConsumerState<ChannelsScreen> {
       onRefresh: _load,
       child: ListView.separated(
         itemCount: list.length,
-        separatorBuilder: (_, __) => Divider(
-          height: 1,
-          color: Theme.of(context).dividerColor,
-        ),
+        separatorBuilder: (_, __) =>
+            Divider(height: 1, color: Theme.of(context).dividerColor),
         itemBuilder: (_, i) {
           final ch = list[i];
           return _ChannelTile(
@@ -553,10 +562,7 @@ class _ChannelTile extends StatelessWidget {
         height: 36,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Theme.of(context)
-              .colorScheme
-              .primary
-              .withValues(alpha: 0.12),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
@@ -586,12 +592,13 @@ class _ChannelTile extends StatelessWidget {
           spacing: 6,
           runSpacing: 2,
           children: [
-            Text(
-              channel.id,
-              style: const TextStyle(fontFamily: 'monospace'),
-            ),
+            Text(channel.id, style: const TextStyle(fontFamily: 'monospace')),
             if (channel.capabilities.isNotEmpty)
-              Text(i18n.t.channels.capsLabel(list: channel.capabilities.join(', '))),
+              Text(
+                i18n.t.channels.capsLabel(
+                  list: channel.capabilities.join(', '),
+                ),
+              ),
           ],
         ),
       ),
@@ -614,17 +621,31 @@ class _StatusBadges extends StatelessWidget {
   Widget build(BuildContext context) {
     final badges = <Widget>[];
     if (channel.running) {
-      badges.add(_Badge(label: i18n.t.channels.badges.running, color: Colors.greenAccent));
+      badges.add(
+        _Badge(
+          label: i18n.t.channels.badges.running,
+          color: Colors.greenAccent,
+        ),
+      );
     } else if (channel.enabled) {
-      badges.add(_Badge(label: i18n.t.channels.badges.starting, color: Colors.amberAccent));
+      badges.add(
+        _Badge(
+          label: i18n.t.channels.badges.starting,
+          color: Colors.amberAccent,
+        ),
+      );
     } else {
-      badges.add(_Badge(
-        label: i18n.t.channels.badges.disabled,
-        color: Theme.of(context).colorScheme.error,
-      ));
+      badges.add(
+        _Badge(
+          label: i18n.t.channels.badges.disabled,
+          color: Theme.of(context).colorScheme.error,
+        ),
+      );
     }
     if (channel.muted) {
-      badges.add(_Badge(label: i18n.t.channels.badges.muted, color: Colors.amberAccent));
+      badges.add(
+        _Badge(label: i18n.t.channels.badges.muted, color: Colors.amberAccent),
+      );
     }
     return Wrap(spacing: 4, runSpacing: 2, children: badges);
   }
@@ -644,10 +665,7 @@ class _Badge extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: color.withValues(alpha: 0.6), width: 0.5),
       ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 10),
-      ),
+      child: Text(label, style: TextStyle(color: color, fontSize: 10)),
     );
   }
 }
@@ -667,7 +685,11 @@ class _NotifyPrefsScreen extends StatefulWidget {
 }
 
 class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
-  static const _allTopics = ['session.started', 'session.idle', 'session.ended'];
+  static const _allTopics = [
+    'session.started',
+    'session.idle',
+    'session.ended',
+  ];
   static List<(String, String, String)> _modes() => [
     (
       'once',
@@ -778,9 +800,13 @@ class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
             children: [
               for (final t in _allTopics)
                 FilterChip(
-                  label: Text(t,
-                      style: const TextStyle(
-                          fontFamily: 'monospace', fontSize: 12)),
+                  label: Text(
+                    t,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                    ),
+                  ),
                   selected: _topics.contains(t),
                   onSelected: (v) => setState(() {
                     if (v) {
@@ -798,8 +824,8 @@ class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
               _topics.length == _allTopics.length
                   ? i18n.t.channels.notifications.notifyOnAll
                   : _topics.isEmpty
-                      ? i18n.t.channels.notifications.notifyOnEmpty
-                      : '${_topics.length} of ${_allTopics.length} selected.',
+                  ? i18n.t.channels.notifications.notifyOnEmpty
+                  : '${_topics.length} of ${_allTopics.length} selected.',
               style: muted,
             ),
           ),
@@ -859,7 +885,13 @@ class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
               children: [
                 for (final n in const [0, 200, 500, 1000, 2000])
                   ChoiceChip(
-                    label: Text(n == 0 ? i18n.t.channels.notifications.snippetNoCap : i18n.t.channels.notifications.snippetChars(n: n.toString())),
+                    label: Text(
+                      n == 0
+                          ? i18n.t.channels.notifications.snippetNoCap
+                          : i18n.t.channels.notifications.snippetChars(
+                              n: n.toString(),
+                            ),
+                    ),
                     selected: _snippetCap == n,
                     onSelected: (_) => setState(() => _snippetCap = n),
                   ),

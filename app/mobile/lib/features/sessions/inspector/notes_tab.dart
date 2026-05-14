@@ -265,14 +265,14 @@ class _PersonalSectionState extends ConsumerState<_PersonalSection> {
       if (mounted) {
         setState(() {
         _loading = false;
-        _saveError = 'Load failed: ${e.message}';
+        _saveError = t.sessions.inspector.notes.loadFailedApi(error: e.message);
       });
       }
     } on Object catch (e) {
       if (mounted) {
         setState(() {
         _loading = false;
-        _saveError = 'Load failed: $e';
+        _saveError = t.sessions.inspector.notes.loadFailedGeneric(error: e.toString());
       });
       }
     }
@@ -305,14 +305,14 @@ class _PersonalSectionState extends ConsumerState<_PersonalSection> {
       if (mounted) {
         setState(() {
         _saving = false;
-        _saveError = 'Save failed: ${e.message}';
+        _saveError = t.sessions.inspector.notes.saveFailedApi(error: e.message);
       });
       }
     } on Object catch (e) {
       if (mounted) {
         setState(() {
         _saving = false;
-        _saveError = 'Save failed: $e';
+        _saveError = t.sessions.inspector.notes.saveFailedGeneric(error: e.toString());
       });
       }
     }
@@ -334,12 +334,12 @@ class _PersonalSectionState extends ConsumerState<_PersonalSection> {
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Insert failed: ${e.message}')),
+        SnackBar(content: Text(t.sessions.inspector.notes.insertFailedApi(error: e.message))),
       );
     } on Object catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Insert failed: $e')),
+        SnackBar(content: Text(t.sessions.inspector.notes.insertFailedGeneric(error: e.toString()))),
       );
     }
   }
@@ -348,10 +348,9 @@ class _PersonalSectionState extends ConsumerState<_PersonalSection> {
   Widget build(BuildContext context) {
     return _SectionCard(
       icon: Icons.edit_note_outlined,
-      title: 'My notes',
+      title: t.sessions.inspector.notes.myNotes,
       subtitle: widget.personalPath,
-      hint: 'Personal scratchpad — auto-saves as you type. AI agents do '
-          'not write here.',
+      hint: t.sessions.inspector.notes.personalHint,
       action: IconButton(
         icon: const Icon(Icons.alternate_email, size: 18),
         tooltip: t.sessions.inspector.notes.insertAtRefTooltip,
@@ -459,10 +458,10 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
       await NoteEditorDialog.show(context: context, path: path);
     } on ApiException catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Create failed: ${e.message}')),
+        SnackBar(content: Text(t.sessions.inspector.notes.createFailedApi(error: e.message))),
       );
     } on Object catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Create failed: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(t.sessions.inspector.notes.createFailedGeneric(error: e.toString()))));
     }
   }
 
@@ -487,18 +486,18 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
         SnackBar(
           content: Text(
             result.isEmpty
-                ? 'Mapping cleared — using default'
-                : 'Mapped to $result',
+                ? t.sessions.inspector.notes.mappingCleared
+                : t.sessions.inspector.notes.mappedTo(path: result),
           ),
         ),
       );
       await widget.onRefresh();
     } on ApiException catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Save failed: ${e.message}')),
+        SnackBar(content: Text(t.sessions.inspector.notes.saveFailedApi(error: e.message))),
       );
     } on Object catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Save failed: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(t.sessions.inspector.notes.saveFailedGeneric(error: e.toString()))));
     }
   }
 
@@ -512,16 +511,16 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
                 d.title.toLowerCase().contains(_query))
             .toList();
     final hint = widget.mapping.custom
-        ? 'Pinned to ${widget.projectsRel}/ (overrides ${widget.mapping.defaultPath}). '
-            'AI agents author docs here too.'
-        : 'Architecture / spec / decisions / plan / retros — typically '
-            'authored by AI agents. Use the settings button to point at a '
-            'different vault folder.';
+        ? t.sessions.inspector.notes.pinnedHint(
+            path: widget.projectsRel,
+            defaultPath: widget.mapping.defaultPath,
+          )
+        : t.sessions.inspector.notes.projectDocsHint;
     return _SectionCard(
       icon: Icons.auto_awesome,
       title: t.sessions.inspector.notes.projectDocs,
       subtitle: widget.projectsRel.isEmpty
-          ? '(no project mapping)'
+          ? t.sessions.inspector.notes.noProjectMapping2
           : '${widget.projectsRel}/',
       hint: hint,
       action: Row(
@@ -534,7 +533,7 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
           ),
           IconButton(
             icon: Icon(_creating ? Icons.close : Icons.add, size: 18),
-            tooltip: _creating ? 'Cancel' : 'New doc',
+            tooltip: _creating ? t.sessions.inspector.notes.cancelTooltip : t.sessions.inspector.notes.newDocTooltip,
             onPressed: () => setState(() {
               _creating = !_creating;
               if (!_creating) _newNameCtrl.clear();
@@ -594,18 +593,15 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
           if (widget.projectsRel.isEmpty)
             _empty(
               context,
-              'Could not resolve a project mapping for this session. '
-              'Check that the gateway has a notes vault configured '
-              'and the session has a non-empty cwd.',
+              t.sessions.inspector.notes.noProjectMapping,
             )
           else if (widget.docs.isEmpty)
             _empty(
               context,
-              'No project docs yet. Tap + to create one, or let an AI '
-              'agent write to ${widget.projectsRel}/<file>.md.',
+              t.sessions.inspector.notes.emptyProjectDocs,
             )
           else if (filtered.isEmpty)
-            _empty(context, 'No matches for "$_query".')
+            _empty(context, t.sessions.inspector.notes.emptyFilterMatch(query: _query))
           else
             for (final d in filtered)
               _DocTile(
@@ -635,10 +631,10 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
       );
     } on ApiException catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Insert failed: ${e.message}')),
+        SnackBar(content: Text(t.sessions.inspector.notes.insertFailedApi(error: e.message))),
       );
     } on Object catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Insert failed: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(t.sessions.inspector.notes.insertFailedGeneric(error: e.toString()))));
     }
   }
 
@@ -780,13 +776,12 @@ class _MappingDialogState extends State<_MappingDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              "Pin this session's cwd to a specific folder under your "
-              'vault. Leave empty to revert to default.',
+              t.sessions.inspector.notes.locationDialogHelp,
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
             Text(
-              'Session cwd',
+              t.sessions.inspector.notes.sessionCwd,
               style: Theme.of(context).textTheme.labelSmall,
             ),
             const SizedBox(height: 4),
@@ -796,7 +791,7 @@ class _MappingDialogState extends State<_MappingDialog> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Vault-relative project docs path',
+              t.sessions.inspector.notes.projectDocsPath,
               style: Theme.of(context).textTheme.labelSmall,
             ),
             const SizedBox(height: 4),
@@ -811,8 +806,7 @@ class _MappingDialogState extends State<_MappingDialog> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Stored in <vault>/.opendray-projects.json — git-syncs with '
-              'your notes.',
+              t.sessions.inspector.notes.locationStoredHint,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
@@ -825,7 +819,9 @@ class _MappingDialogState extends State<_MappingDialog> {
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_ctrl.text.trim()),
-          child: Text(_ctrl.text.trim().isEmpty ? 'Clear override' : 'Save'),
+          child: Text(_ctrl.text.trim().isEmpty
+              ? t.sessions.inspector.notes.clearOverride
+              : t.sessions.inspector.notes.save),
         ),
       ],
     );
