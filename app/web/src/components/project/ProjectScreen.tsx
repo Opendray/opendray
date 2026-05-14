@@ -59,6 +59,7 @@ import {
   runCleanup,
 } from '@/lib/memoryCleanup'
 import { deleteMemoriesByScope } from '@/lib/memory'
+import { MemoryHealthCard } from '@/components/project/MemoryHealthCard'
 
 interface ProjectScreenProps {
   cwd: string
@@ -183,8 +184,9 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
         </div>
       </div>
 
-      <Tabs defaultValue="goal" className="flex flex-1 flex-col overflow-hidden">
+      <Tabs defaultValue="health" className="flex flex-1 flex-col overflow-hidden">
         <TabsList className="bg-muted/30 mx-4 mt-3 w-fit">
+          <TabsTrigger value="health">{t('web.project.tabs.health')}</TabsTrigger>
           <TabsTrigger value="goal">{t('web.project.tabs.goal')}</TabsTrigger>
           <TabsTrigger value="plan">{t('web.project.tabs.plan')}</TabsTrigger>
           <TabsTrigger value="tech">{t('web.project.tabs.tech')}</TabsTrigger>
@@ -211,6 +213,10 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
             )}
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="health" className="flex-1 overflow-auto">
+          <MemoryHealthCard cwd={cwd} />
+        </TabsContent>
 
         <TabsContent value="goal" className="flex-1 overflow-auto p-4">
           <DocEditor

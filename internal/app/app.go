@@ -43,6 +43,7 @@ import (
 	githost "github.com/opendray/opendray-v2/internal/githost"
 	"github.com/opendray/opendray-v2/internal/integration"
 	mcpapi "github.com/opendray/opendray-v2/internal/mcp"
+	"github.com/opendray/opendray-v2/internal/memhealth"
 	"github.com/opendray/opendray-v2/internal/memory"
 	"github.com/opendray/opendray-v2/internal/memory/capture"
 	"github.com/opendray/opendray-v2/internal/memory/cleaner"
@@ -372,6 +373,15 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		st.Pool(), summarizerRegistry, cliacctSvc, log)
 	memoryWorkerHandlers := memworker.NewHandlers(memoryWorkerRegistry, log)
 
+	// M-PA — memory health dashboard. Aggregates "is the memory
+	// system actually working?" metrics across both subsystems
+	// (layer 5 + projectdoc) for one HTTP read.
+	memhealthSvc, err := memhealth.New(st.Pool())
+	if err != nil {
+		return nil, fmt.Errorf("memhealth init: %w", err)
+	}
+	memhealthHandlers := memhealth.NewHandlers(memhealthSvc, log)
+
 	// M12 — Gatekeeper. Wired late because the summarizer registry
 	// only exists after backup cipher + summarizer store are up.
 	// When operators set [memory.gatekeeper] enabled = true, every
@@ -521,7 +531,13 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// No upfront provider check needed: the registry handles
 	// degraded states (no summarizer configured → returns empty).
 	journaler.WithSummariser(newTranscriptSummariser(memoryWorkerRegistry))
-	log.Info("transcript-aware journaler enabled (worker-registry routing)")
+	// M-PA — same routing for the plan-drift detector. After each
+	// successful session summary the journaler asks the detector
+	// whether the project plan needs updating and files a proposal
+	// when so.
+	journaler.WithPlanDetector(newPlanDriftDetector(memoryWorkerRegistry))
+	log.Info("transcript-aware journaler enabled (worker-registry routing)",
+		"plan_drift_enabled", true)
 
 	gw := gateway.NewServer(gateway.Deps{
 		Logger:    log,
@@ -566,6 +582,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				backupHandlers.Mount(r)
 				summarizerHandlers.Mount(r)
 				memoryWorkerHandlers.Mount(r)
+				memhealthHandlers.Mount(r)
 				captureHandlers.Mount(r)
 				injectorHandlers.Mount(r)
 				if cleanerHandlers != nil {

@@ -220,6 +220,31 @@
       "navWorkers": "Workers",
       "navConfiguration": "配置 →"
     },
+    "memoryHealth": {
+      "title": "记忆健康 — 最近 {days} 天",
+      "subtitle": "本项目两套记忆子系统的运行情况聚合。",
+      "loading": "正在加载健康快照…",
+      "errorLoading": "加载健康快照失败。",
+      "pickCwd": "选一个项目查看其记忆健康。",
+      "newFacts": "新增 facts",
+      "newFactsHint": "累计 {total} 条",
+      "captureFires": "Capture 触发次数",
+      "captureFiresHint": "存入 {stored} · 去重 {deduped}",
+      "newJournal": "新增日志条目",
+      "newJournalHint": "累计 {total} 条",
+      "planAge": "计划最近更新",
+      "planAgeHint": "{count} 条 plan-drift 提案待审",
+      "planAgeHintNone": "无 plan-drift 提案待审",
+      "goalAge": "目标最近更新",
+      "pending": "待审提案",
+      "pendingHint": "最久 {days} 天",
+      "topHit": "命中最多 · {hits} 次",
+      "zeroHit": "{count} 条超过 7 天未命中的 fact — 清理候选。",
+      "never": "从未",
+      "today": "今日",
+      "daysAgo_one": "{count} 天前",
+      "daysAgo_other": "{count} 天前"
+    },
     "memoryWorkers": {
       "title": "Memory workers",
       "loading": "正在加载 worker 配置…",
@@ -321,6 +346,7 @@
         "cleanupPending": "{count} 条待清理"
       },
       "tabs": {
+        "health": "健康",
         "goal": "目标",
         "plan": "计划",
         "tech": "技术栈",

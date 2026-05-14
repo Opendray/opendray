@@ -220,6 +220,31 @@
       "navWorkers": "Workers",
       "navConfiguration": "Configuration →"
     },
+    "memoryHealth": {
+      "title": "Memory health — last {days} days",
+      "subtitle": "Aggregate signals across both memory subsystems for this project.",
+      "loading": "Loading health snapshot…",
+      "errorLoading": "Failed to load health snapshot.",
+      "pickCwd": "Pick a project to see its memory health.",
+      "newFacts": "New facts",
+      "newFactsHint": "{total} stored in total",
+      "captureFires": "Capture fires",
+      "captureFiresHint": "{stored} stored · {deduped} deduped",
+      "newJournal": "Journal entries",
+      "newJournalHint": "{total} in total",
+      "planAge": "Plan last updated",
+      "planAgeHint": "{count} plan-drift proposal(s) pending",
+      "planAgeHintNone": "No plan-drift proposals pending",
+      "goalAge": "Goal last updated",
+      "pending": "Pending proposals",
+      "pendingHint": "oldest {days}d old",
+      "topHit": "Top hit · {hits} retrievals",
+      "zeroHit": "{count} facts older than 7d with zero retrievals — candidates for cleanup.",
+      "never": "never",
+      "today": "today",
+      "daysAgo_one": "{count} day ago",
+      "daysAgo_other": "{count} days ago"
+    },
     "memoryWorkers": {
       "title": "Memory workers",
       "loading": "Loading worker config…",
@@ -321,6 +346,7 @@
         "cleanupPending": "{count} cleanup pending"
       },
       "tabs": {
+        "health": "Health",
         "goal": "Goal",
         "plan": "Plan",
         "tech": "Tech",

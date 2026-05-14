@@ -90,6 +90,18 @@ type Journaler struct {
 	// transcript-aware path; metadata-only journaling still works.
 	summariser TranscriptSummariser
 
+	// planDetector is the M-PA LLM hook. When set, every successful
+	// transcript summary kicks off a plan-drift check; if the
+	// detector says the plan needs updating, a proposal is filed
+	// into project_doc_proposals (operator approves in the inbox).
+	// Nil disables — journaling works exactly as before.
+	planDetector PlanDriftDetector
+
+	// driftJournalLookback is how many recent journal entries the
+	// drift detector sees as context. 5 is enough to give the model
+	// a sense of project momentum without exploding the prompt.
+	driftJournalLookback int
+
 	// transcriptMaxBytes caps how much transcript we feed the LLM.
 	// 16 KiB ≈ 4k tokens — enough context for a meaningful summary
 	// without paying tokens we don't need. Older content is
@@ -106,12 +118,13 @@ func NewJournaler(docs *Service, bus *eventbus.Hub, lookup SessionLookup, log *s
 		log = slog.Default()
 	}
 	return &Journaler{
-		docs:               docs,
-		bus:                bus,
-		lookup:             lookup,
-		log:                log.With("component", "projectdoc.journaler"),
-		inputsLimit:        5,
-		transcriptMaxBytes: 16 * 1024,
+		docs:                 docs,
+		bus:                  bus,
+		lookup:               lookup,
+		log:                  log.With("component", "projectdoc.journaler"),
+		inputsLimit:          5,
+		driftJournalLookback: 5,
+		transcriptMaxBytes:   16 * 1024,
 	}
 }
 
@@ -122,6 +135,17 @@ func NewJournaler(docs *Service, bus *eventbus.Hub, lookup SessionLookup, log *s
 // for chained setup.
 func (j *Journaler) WithSummariser(s TranscriptSummariser) *Journaler {
 	j.summariser = s
+	return j
+}
+
+// WithPlanDetector installs the optional M-PA plan-drift hook.
+// After the transcript summary lands, the journaler asks the
+// detector whether the project's plan document needs updating
+// based on this session's work; if so, it files a proposal that
+// the operator approves in the inbox (same flow as a manual
+// `project_plan_set` MCP call). Pass nil to disable.
+func (j *Journaler) WithPlanDetector(d PlanDriftDetector) *Journaler {
+	j.planDetector = d
 	return j
 }
 
@@ -190,7 +214,10 @@ func (j *Journaler) process(ctx context.Context, ev eventbus.Event, state string
 	// M18 — append an LLM-generated narrative when we have both a
 	// transcript reader and a summariser configured. Both calls
 	// are best-effort: failure logs + we ship the metadata-only
-	// body so the journal never goes silent.
+	// body so the journal never goes silent. transcriptSummary is
+	// reused by the M-PA plan-drift detector below so we don't
+	// re-summarise.
+	var transcriptSummary string
 	if j.summariser != nil {
 		transcript, terr := j.lookup.TranscriptText(ctx, sessionID, j.transcriptMaxBytes)
 		if terr != nil {
@@ -206,6 +233,7 @@ func (j *Journaler) process(ctx context.Context, ev eventbus.Event, state string
 				j.log.Warn("journaler: llm summarise failed; metadata-only entry",
 					"session_id", sessionID, "err", lerr)
 			} else if s := strings.TrimSpace(summary); s != "" {
+				transcriptSummary = s
 				body = body + "\n**Agent activity summary**\n\n" + s + "\n"
 			}
 		}
@@ -225,6 +253,81 @@ func (j *Journaler) process(ctx context.Context, ev eventbus.Event, state string
 	}
 	j.log.Info("journaler: appended session summary",
 		"session_id", sessionID, "cwd", sess.Cwd, "title", title)
+
+	// M-PA — once the journal entry is safely persisted, decide
+	// whether the project plan needs updating. We do this AFTER the
+	// journal write so a failure here can never block the basic
+	// journal flow.
+	j.maybeProposePlanDrift(sess, transcriptSummary)
+}
+
+// maybeProposePlanDrift runs the plan-drift detector and, if the
+// detector says the plan needs updating, files a proposal into the
+// operator's inbox. Soft-fail at every step — detector errors,
+// proposal write errors, and empty-plan short-circuits are all
+// logged but never bubbled up to the caller. The work happens on
+// its own background context because the LLM call can run minutes
+// and the event delivery goroutine must not block.
+func (j *Journaler) maybeProposePlanDrift(sess SessionInfo, transcriptSummary string) {
+	if j.planDetector == nil {
+		return
+	}
+	if strings.TrimSpace(transcriptSummary) == "" {
+		// Without a summary we have nothing concrete to feed the
+		// detector. Skip rather than asking the LLM to guess.
+		return
+	}
+
+	bgCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	currentDoc, err := j.docs.GetDoc(bgCtx, sess.Cwd, KindPlan)
+	if err != nil {
+		// ErrNotFound is the "fresh project" case — leave it for the
+		// operator to seed the first plan. Other errors are logged.
+		if err != ErrNotFound {
+			j.log.Debug("journaler: plan-drift get-plan failed", "cwd", sess.Cwd, "err", err)
+		}
+		return
+	}
+	if strings.TrimSpace(currentDoc.Content) == "" {
+		return
+	}
+
+	logs, err := j.docs.ListLogs(bgCtx, sess.Cwd, j.driftJournalLookback)
+	if err != nil {
+		j.log.Debug("journaler: plan-drift list-logs failed", "cwd", sess.Cwd, "err", err)
+		logs = nil
+	}
+
+	out, derr := j.planDetector.DetectDrift(bgCtx, DriftInput{
+		Cwd:               sess.Cwd,
+		CurrentPlan:       currentDoc.Content,
+		TranscriptSummary: transcriptSummary,
+		RecentJournal:     logs,
+	})
+	if derr != nil {
+		j.log.Warn("journaler: plan-drift detector failed", "cwd", sess.Cwd, "err", derr)
+		return
+	}
+	if !out.ShouldPropose {
+		j.log.Debug("journaler: plan-drift detector saw no change needed",
+			"cwd", sess.Cwd, "session_id", sess.ID)
+		return
+	}
+
+	reason := strings.TrimSpace(out.Reason)
+	if reason == "" {
+		reason = "Plan-drift detector flagged this session as a likely plan update."
+	}
+	proposal, perr := j.docs.ProposeDoc(bgCtx, sess.Cwd, KindPlan, out.NewPlan, reason, sess.ID)
+	if perr != nil {
+		j.log.Warn("journaler: plan-drift propose failed",
+			"cwd", sess.Cwd, "session_id", sess.ID, "err", perr)
+		return
+	}
+	j.log.Info("journaler: plan-drift proposal filed",
+		"cwd", sess.Cwd, "session_id", sess.ID, "proposal_id", proposal.ID)
 }
 
 // buildJournalBody assembles a deterministic markdown summary. Kept

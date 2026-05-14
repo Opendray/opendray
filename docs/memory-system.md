@@ -278,6 +278,48 @@ See ADR 0019 for the architecture, the **Memory → Workers**
 tutorial (sections 15.1-15.3) for operator workflow, and the
 implementation under `internal/memory/worker/`.
 
+## Plan-drift auto-proposals (M-PA, shipped)
+
+The plan document used to update only when an agent explicitly
+called `project_plan_set` — which agents rarely did in practice,
+so plans drifted out of date as projects iterated.
+
+M-PA adds a fifth memory worker task — **`plan_drift`** — that
+runs after every `session.ended` event. Given the session's
+transcript summary, the current plan, and the last few journal
+entries, it asks the configured worker LLM: "does this plan need
+updating?" If yes, it files a proposal into the operator's inbox
+with a one-line reason. Same approval flow as a manual
+`project_plan_set` — operators always have final say.
+
+Worker selection lives at **Memory → Workers → plan_drift**;
+default is `summarizer`. Disable per task if you want the
+historical behaviour back. The drift detector is a no-op when:
+
+- the plan document is empty (refuses to seed an initial plan)
+- the transcript summariser produced no narrative
+- no worker is configured for `plan_drift`
+
+Per-fire metrics land in `memory_worker_calls` alongside the
+other four touch-points.
+
+## Memory health dashboard (M-PA, shipped)
+
+Each project's **Health** tab (`/memory/project` → first tab)
+surfaces a single-page snapshot of "is the memory system
+actually working for this project?":
+
+- New facts / journal entries this week + cumulative totals
+- Capture engine fire count, stored vs deduped, failure count
+- Plan / goal last-updated relative times
+- Pending proposal queue depth + oldest age
+- Plan-drift proposals filed this week
+- Top-hit fact (most retrieved) + count of zero-hit stale facts
+
+Backed by `GET /api/v1/memory/health?cwd=<cwd>` — one aggregate
+read that crosses both subsystems. No polling; refreshes on tab
+view.
+
 ## Roadmap
 
 - **Codex session UUID capture**. Codex lacks `--session-id`; a
