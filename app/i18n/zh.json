@@ -1549,6 +1549,48 @@
         }
       }
     },
+    "serverSettings": {
+      "sections": {
+        "general": { "title": "通用", "desc": "监听地址、操作员账号、令牌 TTL。" },
+        "logging": { "title": "日志", "desc": "日志级别、格式与实时跟踪。" },
+        "sessions": { "title": "会话", "desc": "空闲检测阈值。" },
+        "vault": { "title": "Vault", "desc": "笔记、技能与 git 版本化根目录。" },
+        "mcp": { "title": "MCP 注册表", "desc": "服务器注册表与密钥。" },
+        "memory": { "title": "记忆", "desc": "跨 CLI 的持久化记忆子系统。" },
+        "memoryAmbient": { "title": "记忆 · 环境感知", "desc": "自动捕获对话进入记忆，并在 spawn 时注入。" },
+        "backup": { "title": "备份", "desc": "加密数据库备份、恢复，以及管理员数据导出。" },
+        "claude": { "title": "存储 · Claude", "desc": "Claude 会话记录在磁盘上的位置。" },
+        "codex": { "title": "存储 · Codex", "desc": "Codex 会话根目录。" },
+        "gemini": { "title": "存储 · Gemini", "desc": "Gemini 每项目 tmp 与 projects.json。" }
+      },
+      "loading": "正在加载服务器设置…",
+      "loadFailed": "加载失败：{message}",
+      "noConfigFlag": "opendray 启动时未指定 -config，设置仅从环境变量加载，无法在此编辑。",
+      "resetButton": "重置",
+      "resetButtonTitle": "丢弃此分区中未保存的修改",
+      "resetConfirm": "将\"{section}\"重置为上次保存的值？",
+      "badgeRestartRequired": "需要重启",
+      "badgeUnsaved": "未保存",
+      "saveButton": "保存修改",
+      "saveToastTitle": "设置已保存",
+      "saveToastDesc": "点击「重启」以应用。",
+      "saveErrorTitle": "保存失败",
+      "dangerousConfirm": "您更改了监听地址 / 管理员账号 / 管理员密码。重启后可能需要重新登录或使用新地址。是否继续？",
+      "unsavedHint": "有未保存的修改",
+      "savedHint": "所有修改已保存",
+      "searchPlaceholder": "筛选字段…",
+      "restart": {
+        "button": "重启服务器",
+        "buttonTitle": "对网关进程执行 self-exec",
+        "dirtyConfirm": "您有未保存的修改。重启将使用「上次保存」的配置，是否继续？",
+        "confirm": "重启 opendray 网关？所有打开的终端会话将自动重新连接。",
+        "overlay": "正在重启服务器…",
+        "waiting": "等待 /health · {tick}s",
+        "timedOutTitle": "重启超时",
+        "timedOutDesc": "Health 接口未恢复。请查看服务器日志。",
+        "successToast": "服务器已重启"
+      }
+    },
     "settings": {
       "title": "设置",
       "subtitle": "工作区、账号与网关配置。",

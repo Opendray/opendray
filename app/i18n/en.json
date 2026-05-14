@@ -1549,6 +1549,48 @@
         }
       }
     },
+    "serverSettings": {
+      "sections": {
+        "general": { "title": "General", "desc": "Listen address, operator account, token TTL." },
+        "logging": { "title": "Logging", "desc": "Verbosity, format, and live tail." },
+        "sessions": { "title": "Sessions", "desc": "Idle detection thresholds." },
+        "vault": { "title": "Vault", "desc": "Notes, skills, and git-versioned root." },
+        "mcp": { "title": "MCP registry", "desc": "Server registry + secrets." },
+        "memory": { "title": "Memory", "desc": "Cross-CLI persistent memory subsystem." },
+        "memoryAmbient": { "title": "Memory · Ambient", "desc": "Auto-capture conversations into memory + spawn-time injection." },
+        "backup": { "title": "Backup", "desc": "Encrypted DB backups, restore, and admin data exports." },
+        "claude": { "title": "Storage · Claude", "desc": "Where Claude transcripts live on disk." },
+        "codex": { "title": "Storage · Codex", "desc": "Codex sessions root." },
+        "gemini": { "title": "Storage · Gemini", "desc": "Gemini per-project tmp + projects.json." }
+      },
+      "loading": "Loading server settings…",
+      "loadFailed": "Failed to load: {message}",
+      "noConfigFlag": "opendray was started without a -config flag. Settings are loaded from environment variables only and cannot be edited here.",
+      "resetButton": "Reset",
+      "resetButtonTitle": "Discard unsaved changes in this section",
+      "resetConfirm": "Reset \"{section}\" to last-saved values?",
+      "badgeRestartRequired": "restart required",
+      "badgeUnsaved": "unsaved",
+      "saveButton": "Save changes",
+      "saveToastTitle": "Settings saved",
+      "saveToastDesc": "Click Restart to apply.",
+      "saveErrorTitle": "Save failed",
+      "dangerousConfirm": "You changed listen address / admin user / admin password. After restart you may need to re-authenticate or use the new address. Continue?",
+      "unsavedHint": "You have unsaved changes",
+      "savedHint": "All changes saved",
+      "searchPlaceholder": "Filter fields…",
+      "restart": {
+        "button": "Restart server",
+        "buttonTitle": "Self-exec the gateway process",
+        "dirtyConfirm": "You have unsaved changes. Restart will use the LAST SAVED config. Continue?",
+        "confirm": "Restart the opendray gateway? All open terminal sessions will reconnect automatically.",
+        "overlay": "Restarting server…",
+        "waiting": "Waiting for /health · {tick}s",
+        "timedOutTitle": "Restart timed out",
+        "timedOutDesc": "Health endpoint never came back. Check server logs.",
+        "successToast": "Server restarted"
+      }
+    },
     "settings": {
       "title": "Settings",
       "subtitle": "Workspace, account, and gateway config.",

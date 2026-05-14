@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import {
   AlertTriangle,
   Archive,
@@ -51,23 +52,38 @@ import { MemoryAmbientSection } from './MemoryAmbientSection'
 import { PathInput } from './PathInput'
 
 // SECTIONS describe every server-settings panel rendered to the right
-// of the sidebar. ID is used as the URL hash + active key. Title is
-// what the operator sees in the nav and toolbar.
+// of the sidebar. ID is used as the URL hash + active key. Title/desc
+// are looked up at render time via useServerSectionLabel().
 export const SERVER_SECTIONS = [
-  { id: 'general', title: 'General', desc: 'Listen address, operator account, token TTL.' },
-  { id: 'logging', title: 'Logging', desc: 'Verbosity, format, and live tail.' },
-  { id: 'sessions', title: 'Sessions', desc: 'Idle detection thresholds.' },
-  { id: 'vault', title: 'Vault', desc: 'Notes, skills, and git-versioned root.' },
-  { id: 'mcp', title: 'MCP registry', desc: 'Server registry + secrets.' },
-  { id: 'memory', title: 'Memory', desc: 'Cross-CLI persistent memory subsystem.' },
-  { id: 'memory-ambient', title: 'Memory · Ambient', desc: 'Auto-capture conversations into memory + spawn-time injection.' },
-  { id: 'backup', title: 'Backup', desc: 'Encrypted DB backups, restore, and admin data exports.' },
-  { id: 'claude', title: 'Storage · Claude', desc: 'Where Claude transcripts live on disk.' },
-  { id: 'codex', title: 'Storage · Codex', desc: 'Codex sessions root.' },
-  { id: 'gemini', title: 'Storage · Gemini', desc: 'Gemini per-project tmp + projects.json.' },
+  { id: 'general' },
+  { id: 'logging' },
+  { id: 'sessions' },
+  { id: 'vault' },
+  { id: 'mcp' },
+  { id: 'memory' },
+  { id: 'memory-ambient' },
+  { id: 'backup' },
+  { id: 'claude' },
+  { id: 'codex' },
+  { id: 'gemini' },
 ] as const
 
 export type ServerSectionId = (typeof SERVER_SECTIONS)[number]['id']
+
+// Map kebab-cased section id to the i18n key segment (camelCase).
+function sectionI18nKey(id: ServerSectionId): string {
+  return id === 'memory-ambient' ? 'memoryAmbient' : id
+}
+
+// useServerSectionLabel returns translated title + desc for a section id.
+// eslint-disable-next-line react-refresh/only-export-components
+export function useServerSectionLabel() {
+  const { t } = useTranslation()
+  return (id: ServerSectionId) => ({
+    title: t(`web.serverSettings.sections.${sectionI18nKey(id)}.title`),
+    desc: t(`web.serverSettings.sections.${sectionI18nKey(id)}.desc`),
+  })
+}
 
 // Sections whose values affect bound resources (listen/log/admin)
 // — flag them so we can show "Restart required" when changed.
@@ -99,6 +115,8 @@ export function ServerSettings({
   searchQuery,
 }: ServerSettingsProps) {
   const qc = useQueryClient()
+  const { t } = useTranslation()
+  const sectionLabel = useServerSectionLabel()
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['server-settings'],
@@ -129,18 +147,18 @@ export function ServerSettings({
   const save = useMutation({
     mutationFn: (cfg: ServerConfig) => updateServerSettings(cfg),
     onSuccess: () => {
-      toast.success('Settings saved', { description: 'Click Restart to apply.' })
+      toast.success(t('web.serverSettings.saveToastTitle'), {
+        description: t('web.serverSettings.saveToastDesc'),
+      })
       qc.invalidateQueries({ queryKey: ['server-settings'] })
     },
     onError: (err: Error) =>
-      toast.error('Save failed', { description: err.message }),
+      toast.error(t('web.serverSettings.saveErrorTitle'), { description: err.message }),
   })
 
   const onSave = () => {
     if (dangerousChanged) {
-      const ok = window.confirm(
-        'You changed listen address / admin user / admin password. After restart you may need to re-authenticate or use the new address. Continue?',
-      )
+      const ok = window.confirm(t('web.serverSettings.dangerousConfirm'))
       if (!ok) return
     }
     save.mutate(draft)
@@ -150,7 +168,9 @@ export function ServerSettings({
     if (!data?.config) return
     if (
       !window.confirm(
-        `Reset "${SERVER_SECTIONS.find((s) => s.id === activeSection)?.title}" to last-saved values?`,
+        t('web.serverSettings.resetConfirm', {
+          section: sectionLabel(activeSection).title,
+        }),
       )
     )
       return
@@ -164,7 +184,7 @@ export function ServerSettings({
     return (
       <div className="flex items-center gap-2 text-[12px] text-muted-foreground p-6">
         <Loader2 className="size-3 animate-spin" />
-        Loading server settings…
+        {t('web.serverSettings.loading')}
       </div>
     )
   }
@@ -172,7 +192,7 @@ export function ServerSettings({
     return (
       <div className="flex items-center gap-2 text-[12px] text-destructive p-6">
         <AlertTriangle className="size-3" />
-        Failed to load: {(error as Error).message}
+        {t('web.serverSettings.loadFailed', { message: (error as Error).message })}
       </div>
     )
   }
@@ -181,13 +201,12 @@ export function ServerSettings({
   if (!data.config_path) {
     return (
       <div className="rounded-lg border border-yellow-700/40 bg-yellow-950/20 p-4 text-[12px] text-yellow-200/80">
-        opendray was started without a -config flag. Settings are loaded from
-        environment variables only and cannot be edited here.
+        {t('web.serverSettings.noConfigFlag')}
       </div>
     )
   }
 
-  const sectionMeta = SERVER_SECTIONS.find((s) => s.id === activeSection)!
+  const sectionMeta = sectionLabel(activeSection)
   const restartRequired = dirty && RESTART_REQUIRED_SECTIONS[activeSection]
 
   return (
@@ -209,10 +228,10 @@ export function ServerSettings({
             size="sm"
             className="h-7 text-[11px] text-muted-foreground hover:text-foreground"
             onClick={onResetSection}
-            title="Discard unsaved changes in this section"
+            title={t('web.serverSettings.resetButtonTitle')}
           >
             <RotateCcw className="size-3 mr-1" />
-            Reset
+            {t('web.serverSettings.resetButton')}
           </Button>
         </div>
       </header>
@@ -225,12 +244,12 @@ export function ServerSettings({
         <div className="flex items-center gap-2 shrink-0">
           {restartRequired && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
-              restart required
+              {t('web.serverSettings.badgeRestartRequired')}
             </span>
           )}
           {dirty && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-300 border border-blue-500/30">
-              unsaved
+              {t('web.serverSettings.badgeUnsaved')}
             </span>
           )}
         </div>
@@ -260,11 +279,13 @@ export function ServerSettings({
             ) : (
               <Save className="size-3.5 mr-2" />
             )}
-            Save changes
+            {t('web.serverSettings.saveButton')}
           </Button>
           <RestartButton dirty={dirty} />
           <div className="ml-auto text-[10px] text-muted-foreground">
-            {dirty ? 'You have unsaved changes' : 'All changes saved'}
+            {dirty
+              ? t('web.serverSettings.unsavedHint')
+              : t('web.serverSettings.savedHint')}
           </div>
         </div>
       </div>
@@ -1292,22 +1313,16 @@ function StringList({
 // behind a fullscreen overlay so the operator doesn't try to use a
 // dead server.
 function RestartButton({ dirty }: { dirty: boolean }) {
+  const { t } = useTranslation()
   const [waiting, setWaiting] = useState(false)
   const [tick, setTick] = useState(0)
 
   const restart = async () => {
     if (dirty) {
-      const ok = window.confirm(
-        'You have unsaved changes. Restart will use the LAST SAVED config. Continue?',
-      )
+      const ok = window.confirm(t('web.serverSettings.restart.dirtyConfirm'))
       if (!ok) return
     }
-    if (
-      !window.confirm(
-        'Restart the opendray gateway? All open terminal sessions will reconnect automatically.',
-      )
-    )
-      return
+    if (!window.confirm(t('web.serverSettings.restart.confirm'))) return
 
     setWaiting(true)
     setTick(0)
@@ -1319,12 +1334,12 @@ function RestartButton({ dirty }: { dirty: boolean }) {
 
     const start = Date.now()
     const timer = setInterval(async () => {
-      setTick((t) => t + 1)
+      setTick((n) => n + 1)
       if (Date.now() - start > 30_000) {
         clearInterval(timer)
         setWaiting(false)
-        toast.error('Restart timed out', {
-          description: 'Health endpoint never came back. Check server logs.',
+        toast.error(t('web.serverSettings.restart.timedOutTitle'), {
+          description: t('web.serverSettings.restart.timedOutDesc'),
         })
         return
       }
@@ -1332,7 +1347,7 @@ function RestartButton({ dirty }: { dirty: boolean }) {
         const res = await fetch('/api/v1/health', { cache: 'no-store' })
         if (res.ok) {
           clearInterval(timer)
-          toast.success('Server restarted')
+          toast.success(t('web.serverSettings.restart.successToast'))
           setTimeout(() => window.location.reload(), 400)
         }
       } catch {
@@ -1349,17 +1364,19 @@ function RestartButton({ dirty }: { dirty: boolean }) {
         onClick={restart}
         disabled={waiting}
         className="h-9 px-4"
-        title="Self-exec the gateway process"
+        title={t('web.serverSettings.restart.buttonTitle')}
       >
         <Power className="size-3.5 mr-2" />
-        Restart server
+        {t('web.serverSettings.restart.button')}
       </Button>
       {waiting && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
           <Loader2 className="size-8 animate-spin text-accent" />
-          <p className="text-[14px] font-semibold">Restarting server…</p>
+          <p className="text-[14px] font-semibold">
+            {t('web.serverSettings.restart.overlay')}
+          </p>
           <p className="text-[12px] text-muted-foreground">
-            Waiting for /health · {tick}s
+            {t('web.serverSettings.restart.waiting', { tick })}
           </p>
         </div>
       )}
@@ -2042,19 +2059,20 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export function SettingsSearchInput({
   value,
   onChange,
-  placeholder = 'Filter fields…',
+  placeholder,
 }: {
   value: string
   onChange: (v: string) => void
   placeholder?: string
 }) {
+  const { t } = useTranslation()
   return (
     <div className="relative">
       <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/60" />
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t('web.serverSettings.searchPlaceholder')}
         className="h-8 pl-8 text-xs w-56"
       />
     </div>

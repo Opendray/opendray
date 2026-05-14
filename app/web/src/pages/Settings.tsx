@@ -26,6 +26,7 @@ import {
   ServerSettings,
   SettingsSearchInput,
   SERVER_SECTIONS,
+  useServerSectionLabel,
   type ServerSectionId,
 } from '@/components/settings/ServerSettings'
 
@@ -84,6 +85,7 @@ function isValidTopSection(s: string | undefined): s is TopSection {
 
 export function SettingsPage() {
   const { t } = useTranslation()
+  const serverSectionLabel = useServerSectionLabel()
   // Deep-link: /settings?section=server.memory selects that section on
   // mount. The Memory page "Configuration →" button uses this so users
   // land on the memory config instead of the default Appearance.
@@ -147,7 +149,7 @@ export function SettingsPage() {
                 <SidebarItem
                   key={s.id}
                   icon={Settings2}
-                  label={s.title}
+                  label={serverSectionLabel(s.id).title}
                   active={active === key}
                   onClick={() => setActive(key)}
                 />
@@ -204,7 +206,12 @@ export function SettingsPage() {
               </span>
               <ChevronRight className="size-3 text-muted-foreground/40" />
               <span className="text-[11px] text-foreground font-medium">
-                {SERVER_SECTIONS.find((s) => `server.${s.id}` === active)?.title}
+                {(() => {
+                  const id = SERVER_SECTIONS.find(
+                    (s) => `server.${s.id}` === active,
+                  )?.id
+                  return id ? serverSectionLabel(id).title : ''
+                })()}
               </span>
               <div className="ml-auto">
                 <SettingsSearchInput value={search} onChange={setSearch} />
