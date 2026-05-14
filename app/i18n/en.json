@@ -1533,6 +1533,126 @@
       "childrenSuffix": "children",
       "expectedDirectory": "· expected directory"
     },
+    "memoryAmbient": {
+      "header": {
+        "title": "Ambient memory — auto-capture & inject",
+        "body": "opendray polls every live agent session every 10 seconds, extracts durable facts via a configurable LLM, and dedups before storing them in the shared memory pool. Configure which LLM does the extraction (Provider), when extraction fires (Capture rule), and what — if anything — gets prepended to the agent's system prompt at spawn (Injection profile)."
+      },
+      "loading": "Loading…",
+      "providers": {
+        "title": "Summarizer providers",
+        "addButton": "Add provider",
+        "intro": "At least one enabled provider is required for capture to actually fire. Local options (Ollama, LM Studio, Integration) keep your transcripts off external networks.",
+        "empty": "No providers configured yet.",
+        "row": {
+          "defaultBadge": "★ default",
+          "makeDefault": "Make default",
+          "test": "Test",
+          "testing": "Testing…",
+          "delete": "Delete",
+          "testOk": "{name}: connection OK",
+          "testFailedToast": "Test failed",
+          "deleteConfirm": "Delete provider \"{name}\"?",
+          "deletedToast": "Provider deleted",
+          "deleteFailedToast": "Delete failed",
+          "updateFailedToast": "Update failed",
+          "madeDefaultToast": "{name} is now the default"
+        },
+        "dialog": {
+          "title": "Add summarizer provider",
+          "kindLabel": "Kind",
+          "nameLabel": "Name",
+          "namePlaceholder": "e.g. lmstudio-qwen",
+          "modelLabel": "Model",
+          "baseUrlLabel": "Base URL",
+          "integrationNote": "Integration providers resolve their base URL from a registered integration. Configure that under Integrations first; advanced wiring (extra_config) is DB-only in this release.",
+          "apiKeyLabel": "API key",
+          "apiKeyHint": "Stored encrypted (AES-GCM with the backup master passphrase). Never echoed back; only the fingerprint is shown after save.",
+          "makeDefaultLabel": "Make this the default provider",
+          "create": "Create",
+          "nameRequiredToast": "Name is required",
+          "createdToast": "Provider {name} created",
+          "createFailedToast": "Create failed"
+        }
+      },
+      "rules": {
+        "title": "Capture rules",
+        "addButton": "Add rule",
+        "intro": "Each rule says \"when this trigger fires, summarize new transcript messages and store the durable facts.\" Per-session rules override the global default. v1 ships 4 trigger kinds.",
+        "empty": "No capture rules yet. Add one to enable auto-capture.",
+        "row": {
+          "globalDefault": "global default",
+          "scopeLabel": "scope:",
+          "dedupLabel": "dedup:",
+          "runNow": "Run now",
+          "running": "Running…",
+          "delete": "Delete",
+          "firedToast": "Rule fired across {sessions} session(s)",
+          "runNowFailedToast": "Run-now failed",
+          "deleteConfirm": "Delete rule \"{name}\"?",
+          "deletedToast": "Rule deleted",
+          "deleteFailedToast": "Delete failed",
+          "summary": {
+            "afterMessages": "every {n} messages",
+            "onIdle": "idle ≥ {seconds}s",
+            "kChars": "≥ {k} chars",
+            "manual": "manual only"
+          }
+        },
+        "dialog": {
+          "title": "Add capture rule",
+          "nameLabel": "Name",
+          "triggerLabel": "Trigger",
+          "nLabel": "N (messages)",
+          "idleLabel": "Idle seconds",
+          "kLabel": "K (characters)",
+          "scopeLabel": "Target scope",
+          "scopeSession": "session",
+          "scopeProject": "project (recommended)",
+          "scopeGlobal": "global",
+          "dedupLabel": "Dedup threshold (0.0 – 1.0)",
+          "dedupHint": "Higher = stricter de-duplication. 0.85 is the recommended sweet spot.",
+          "create": "Create",
+          "nameRequiredToast": "Name is required",
+          "createdToast": "Rule {name} created",
+          "createFailedToast": "Create failed"
+        }
+      },
+      "profiles": {
+        "title": "Injection profiles",
+        "addButton": "Add profile",
+        "intro": "At spawn time opendray prepends a markdown banner of recent project memories to the agent's system prompt — IF a profile is configured. Without a profile, the model still uses memory_search on demand.",
+        "empty": "No injection profile. Memories are not auto-injected at spawn — model still uses memory_search.",
+        "row": {
+          "globalDefault": "global default",
+          "delete": "Delete",
+          "deleteConfirm": "Delete this injection profile?",
+          "deletedToast": "Profile deleted",
+          "deleteFailedToast": "Delete failed"
+        },
+        "dialog": {
+          "title": "Add injection profile",
+          "strategyLabel": "Strategy",
+          "kLabel": "K (top memories to inject)",
+          "hint": "One profile per session_id (or global default). Per-session profiles can be added later via API; UI currently only manages the global default.",
+          "create": "Create",
+          "createdToast": "Profile created",
+          "createFailedToast": "Create failed"
+        }
+      },
+      "cost": {
+        "title": "Token cost (all-time)",
+        "intro": "Per-provider summary aggregated from <1>memory_summarizer_calls</1>. Local providers (Ollama, LM Studio, Integration) are priced as $0 — operator owns hardware cost.",
+        "empty": "No enabled providers — no cost data.",
+        "columns": {
+          "provider": "Provider",
+          "calls": "Calls",
+          "inTokens": "In tokens",
+          "outTokens": "Out tokens",
+          "usdEst": "USD est."
+        }
+      }
+    },
     "noteEditor": {
       "loading": "Loading…",
       "source": "Source",
