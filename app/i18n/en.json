@@ -1533,6 +1533,21 @@
       "childrenSuffix": "children",
       "expectedDirectory": "· expected directory"
     },
+    "noteEditor": {
+      "loading": "Loading…",
+      "source": "Source",
+      "preview": "Preview",
+      "tagTitle": "tag #{tag}",
+      "emptyNote": "Empty note. Switch to Source to start writing.",
+      "saveFailedToast": "Save failed",
+      "status": {
+        "saveFailed": "save failed",
+        "saving": "saving…",
+        "unsaved": "unsaved",
+        "newNote": "new note",
+        "saved": "saved"
+      }
+    },
     "export": {
       "title": "Export data",
       "subtitle": "Take a one-shot zip bundle of selected logical entities. Bundles are kept on the server for 24 hours, then automatically reaped.",

@@ -1533,6 +1533,21 @@
       "childrenSuffix": "项",
       "expectedDirectory": "· 期望是目录"
     },
+    "noteEditor": {
+      "loading": "加载中…",
+      "source": "源码",
+      "preview": "预览",
+      "tagTitle": "标签 #{tag}",
+      "emptyNote": "空白笔记。切换到源码标签开始书写。",
+      "saveFailedToast": "保存失败",
+      "status": {
+        "saveFailed": "保存失败",
+        "saving": "保存中…",
+        "unsaved": "未保存",
+        "newNote": "新笔记",
+        "saved": "已保存"
+      }
+    },
     "export": {
       "title": "导出数据",
       "subtitle": "把选中的逻辑实体打成一份一次性 zip 包。服务器上保留 24 小时后自动回收。",

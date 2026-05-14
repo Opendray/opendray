@@ -4,6 +4,7 @@ import { Loader2, Eye, Pencil, Check, AlertCircle, Hash } from 'lucide-react'
 import { toast } from 'sonner'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 import { listNotes, readNote, writeNote } from '@/lib/notes'
@@ -67,6 +68,7 @@ export function NoteEditor({
   onBodyChange,
   previewScrollRef,
 }: NoteEditorProps) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
 
   const { data, isLoading } = useQuery({
@@ -118,7 +120,7 @@ export function NoteEditor({
     },
     onError: (err: Error) => {
       setError(err.message)
-      toast.error('Save failed', { description: err.message })
+      toast.error(t('web.noteEditor.saveFailedToast'), { description: err.message })
     },
   })
 
@@ -149,12 +151,12 @@ export function NoteEditor({
     label: string
     tone: 'idle' | 'saving' | 'saved' | 'error'
   }>(() => {
-    if (error) return { label: 'save failed', tone: 'error' }
-    if (save.isPending) return { label: 'saving…', tone: 'saving' }
-    if (dirty) return { label: 'unsaved', tone: 'idle' }
-    if (data == null) return { label: 'new note', tone: 'idle' }
-    return { label: 'saved', tone: 'saved' }
-  }, [error, save.isPending, dirty, data])
+    if (error) return { label: t('web.noteEditor.status.saveFailed'), tone: 'error' }
+    if (save.isPending) return { label: t('web.noteEditor.status.saving'), tone: 'saving' }
+    if (dirty) return { label: t('web.noteEditor.status.unsaved'), tone: 'idle' }
+    if (data == null) return { label: t('web.noteEditor.status.newNote'), tone: 'idle' }
+    return { label: t('web.noteEditor.status.saved'), tone: 'saved' }
+  }, [error, save.isPending, dirty, data, t])
 
   // Tag chips and wiki-link resolution rely on the global note list
   // for basename → path mapping. Cached aggressively (30s) since list
@@ -253,7 +255,7 @@ export function NoteEditor({
     return (
       <div className="flex items-center gap-2 text-[12px] text-muted-foreground py-3">
         <Loader2 className="size-3 animate-spin" />
-        Loading…
+        {t('web.noteEditor.loading')}
       </div>
     )
   }
@@ -282,7 +284,7 @@ export function NoteEditor({
           )}
         >
           <Pencil className="size-3" />
-          Source
+          {t('web.noteEditor.source')}
         </button>
         <button
           type="button"
@@ -295,7 +297,7 @@ export function NoteEditor({
           )}
         >
           <Eye className="size-3" />
-          Preview
+          {t('web.noteEditor.preview')}
         </button>
         <div className="flex-1" />
         {showStatus && <SaveStatus status={status} />}
@@ -303,14 +305,14 @@ export function NoteEditor({
 
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1 shrink-0">
-          {tags.map((t) => (
+          {tags.map((tag) => (
             <span
-              key={t}
+              key={tag}
               className="inline-flex items-center gap-0.5 text-[10px] font-mono px-1.5 py-px rounded bg-card border border-border/60 text-muted-foreground/80"
-              title={`tag #${t}`}
+              title={t('web.noteEditor.tagTitle', { tag })}
             >
               <Hash className="size-2.5" />
-              {t}
+              {tag}
             </span>
           ))}
         </div>
@@ -365,7 +367,7 @@ export function NoteEditor({
         >
           {body.trim().length === 0 ? (
             <div className="text-muted-foreground/60">
-              Empty note. Switch to Source to start writing.
+              {t('web.noteEditor.emptyNote')}
             </div>
           ) : (
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
