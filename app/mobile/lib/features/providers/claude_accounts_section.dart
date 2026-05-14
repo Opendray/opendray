@@ -132,7 +132,9 @@ class _ClaudeAccountsSectionState
               leading: Icon(
                 a.enabled ? Icons.pause_circle_outline : Icons.play_circle_outline,
               ),
-              title: Text(a.enabled ? 'Disable' : 'Enable'),
+              title: Text(a.enabled
+                  ? t.providers.accounts.disable
+                  : t.providers.accounts.enable),
               onTap: () =>
                   Navigator.of(sheetCtx).pop(_AccountAction.toggleEnabled),
             ),
@@ -148,7 +150,7 @@ class _ClaudeAccountsSectionState
                 color: Theme.of(sheetCtx).colorScheme.error,
               ),
               title: Text(
-                'Delete',
+                t.providers.accounts.deleteLabel,
                 style: TextStyle(color: Theme.of(sheetCtx).colorScheme.error),
               ),
               onTap: () => Navigator.of(sheetCtx).pop(_AccountAction.delete),
@@ -164,7 +166,9 @@ class _ClaudeAccountsSectionState
         final next = !a.enabled;
         await _runOp(
           key: 'a:${a.id}',
-          okMsg: next ? '${a.displayName} enabled.' : '${a.displayName} disabled.',
+          okMsg: next
+              ? t.providers.accounts.enabledSnack(name: a.displayName)
+              : t.providers.accounts.disabledSnack(name: a.displayName),
           failPrefix: t.providers.errorPrefix.toggle,
           op: () => ref
               .read(claudeAccountsApiProvider)
@@ -175,7 +179,7 @@ class _ClaudeAccountsSectionState
         if (next == null || !mounted) return;
         await _runOp(
           key: 'a:${a.id}',
-          okMsg: 'Renamed to $next.',
+          okMsg: t.providers.accounts.renamedSnack(name: next),
           failPrefix: t.providers.errorPrefix.rename,
           op: () => ref
               .read(claudeAccountsApiProvider)
@@ -196,9 +200,7 @@ class _ClaudeAccountsSectionState
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Removes the account and its stored OAuth token. '
-                  'Sessions already using this account stay running '
-                  'until they end.',
+                  t.providers.accounts.deleteBody,
                   style: Theme.of(ctx).textTheme.bodySmall,
                 ),
               ],
@@ -221,7 +223,7 @@ class _ClaudeAccountsSectionState
         if (ok != true || !mounted) return;
         await _runOp(
           key: 'a:${a.id}',
-          okMsg: 'Deleted ${a.name}.',
+          okMsg: t.providers.accounts.deletedSnack(name: a.name),
           failPrefix: t.providers.errorPrefix.delete,
           op: () => ref.read(claudeAccountsApiProvider).delete(a.id),
         );
@@ -238,8 +240,10 @@ class _ClaudeAccountsSectionState
         SnackBar(
           content: Text(
             n == 0
-                ? 'Already in sync — gateway has no new accounts.'
-                : 'Imported $n account${n == 1 ? '' : 's'}.',
+                ? t.providers.accounts.importSyncedSnack
+                : (n == 1
+                    ? t.providers.accounts.importedSnackOne(n: n.toString())
+                    : t.providers.accounts.importedSnackOther(n: n.toString())),
           ),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
@@ -300,7 +304,9 @@ class _ClaudeAccountsSectionState
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.cloud_sync_outlined, size: 16),
-                label: Text(importing ? 'Syncing…' : 'Import local'),
+                label: Text(importing
+                    ? t.providers.accounts.importing
+                    : t.providers.accounts.importLocal),
                 onPressed: importing ? null : _importLocal,
               ),
             ],
@@ -320,7 +326,7 @@ class _ClaudeAccountsSectionState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Adding a new account is gateway-host only.',
+                t.providers.accounts.addHint,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -329,11 +335,7 @@ class _ClaudeAccountsSectionState
               ),
               const SizedBox(height: 4),
               Text(
-                'SSH into the gateway and run "claude login" with '
-                'CLAUDE_CONFIG_DIR pointed at ~/.claude-accounts/<name>. '
-                'The new directory shows up here automatically. See '
-                'the Providers → Claude accounts section in the web '
-                'tutorial for the full guide.',
+                t.providers.accounts.addBody,
                 style: TextStyle(
                   fontSize: 11,
                   height: 1.4,
@@ -364,7 +366,7 @@ class _ClaudeAccountsSectionState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Failed to load accounts: $e',
+                  t.providers.accounts.loadFailed(error: e.toString()),
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.error,
                     fontSize: 12,
@@ -382,9 +384,7 @@ class _ClaudeAccountsSectionState
         Padding(
           padding: const EdgeInsets.only(top: 6, left: 4),
           child: Text(
-            'Sessions spawned with the Claude provider pick from these '
-            'accounts. Disabled / token-empty rows are filtered out of '
-            'the picker.',
+            t.providers.accounts.intro,
             style: muted,
           ),
         ),

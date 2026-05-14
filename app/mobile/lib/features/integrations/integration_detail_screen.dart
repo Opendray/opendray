@@ -201,9 +201,7 @@ class _IntegrationDetailScreenState
             ),
             const SizedBox(height: 12),
             Text(
-              'Removes the registration and revokes the API key. '
-              'In-flight requests using the old key will start '
-              'failing immediately.',
+              t.integrations.deleteBody,
               style: Theme.of(ctx).textTheme.bodySmall,
             ),
           ],
@@ -264,10 +262,7 @@ class _IntegrationDetailScreenState
       builder: (ctx) => AlertDialog(
         title: Text(t.integrations.rotateConfirmTitle),
         content: Text(
-          'Generates a new API key for ${i.name} and immediately '
-          'invalidates the previous one. Any caller still holding '
-          'the old key will start getting 401s until you hand them '
-          'the new one.',
+          t.integrations.rotateBody(name: i.name),
           style: Theme.of(ctx).textTheme.bodyMedium,
         ),
         actions: [
@@ -320,7 +315,7 @@ class _IntegrationDetailScreenState
     final mutable = i != null && !i.isSystem;
     return Scaffold(
       appBar: AppBar(
-        title: Text(i?.name ?? 'Integration'),
+        title: Text(i?.name ?? t.integrations.appBarFallback),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -329,7 +324,9 @@ class _IntegrationDetailScreenState
           ),
           PopupMenuButton<_DetailAction>(
             enabled: mutable,
-            tooltip: mutable ? 'More' : 'System integration — read-only',
+            tooltip: mutable
+                ? t.integrations.tooltipMore
+                : t.integrations.tooltipReadOnly,
             onSelected: (a) {
               switch (a) {
                 case _DetailAction.edit:
@@ -413,7 +410,7 @@ class _IntegrationDetailScreenState
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Text(
-                      'No matching calls in the log yet.',
+                      t.integrations.noMatchingCalls,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ),
@@ -456,7 +453,7 @@ class _IntegrationDetailScreenState
       return Padding(
         padding: const EdgeInsets.all(16),
         child: Text(
-          'Failed to load integration: $_detailError',
+          t.integrations.detailLoadFailed(error: _detailError ?? ''),
           style: TextStyle(color: Theme.of(context).colorScheme.error),
         ),
       );
@@ -499,16 +496,16 @@ class _IntegrationDetailScreenState
                 ],
               ),
               const SizedBox(height: 12),
-              _KV(label: 'Route prefix', value: '/${i.routePrefix}', mono: true),
-              _KV(label: 'Base URL', value: i.baseUrl, mono: true),
+              _KV(label: t.integrations.kvRoutePrefix, value: '/${i.routePrefix}', mono: true),
+              _KV(label: t.integrations.kvBaseUrl, value: i.baseUrl, mono: true),
               _KV(
-                label: 'Scopes',
+                label: t.integrations.kvScopes,
                 value: i.scopes.isEmpty ? '(none)' : i.scopes.join(', '),
               ),
               if ((i.version ?? '').isNotEmpty)
-                _KV(label: 'Version', value: i.version!),
+                _KV(label: t.integrations.kvVersion, value: i.version!),
               _KV(
-                label: 'Last health ping',
+                label: t.integrations.kvLastHealthPing,
                 value: i.healthLastSeen == null
                     ? 'never'
                     : DateFormat.yMMMd()
@@ -516,14 +513,14 @@ class _IntegrationDetailScreenState
                         .format(i.healthLastSeen!.toLocal()),
               ),
               _KV(
-                label: 'Created',
+                label: t.integrations.kvCreated,
                 value: DateFormat.yMMMd()
                     .add_Hms()
                     .format(i.createdAt.toLocal()),
               ),
               if (i.rotatedAt != null)
                 _KV(
-                  label: 'Key rotated',
+                  label: t.integrations.kvKeyRotated,
                   value: DateFormat.yMMMd()
                       .add_Hms()
                       .format(i.rotatedAt!.toLocal()),
@@ -572,6 +569,17 @@ class _FilterStrip extends StatelessWidget {
   final ValueChanged<_DirectionFilter> onDirection;
   final ValueChanged<_StatusFilter> onStatus;
 
+  String _directionLabel(_DirectionFilter d) {
+    switch (d) {
+      case _DirectionFilter.all:
+        return t.integrations.directionAll;
+      case _DirectionFilter.inbound:
+        return t.integrations.directionInbound;
+      case _DirectionFilter.outbound:
+        return t.integrations.directionOutbound;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -583,7 +591,7 @@ class _FilterStrip extends StatelessWidget {
           children: [
             for (final d in _DirectionFilter.values) ...[
               ChoiceChip(
-                label: Text(d.label),
+                label: Text(_directionLabel(d)),
                 selected: d == direction,
                 onSelected: (_) => onDirection(d),
                 visualDensity: VisualDensity.compact,
@@ -818,7 +826,7 @@ class _InlineError extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Failed to load calls',
+              t.integrations.callsLoadFailed,
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 6),

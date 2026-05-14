@@ -426,6 +426,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                 right: 16,
                 bottom: 16,
                 child: FloatingActionButton.extended(
+                  heroTag: 'project_journal_fab',
                   onPressed: _openAppendJournal,
                   icon: const Icon(Icons.add),
                   label: Text(t.project.append),
@@ -670,6 +671,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                 right: 16,
                 bottom: 16,
                 child: FloatingActionButton.extended(
+                  heroTag: 'project_cleanup_fab',
                   onPressed: _cleanupRunning ? null : _runCleanup,
                   icon: _cleanupRunning
                       ? const SizedBox(
