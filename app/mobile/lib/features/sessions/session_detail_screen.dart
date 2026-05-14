@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/core/providers/provider_visual.dart';
+import 'package:opendray/core/widgets/brand_avatar.dart';
 import 'package:opendray/features/project/project_screen.dart';
 import 'package:opendray/features/sessions/session_action_sheet.dart';
 import 'package:opendray/features/sessions/session_terminal_view.dart';
@@ -36,10 +38,24 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
     final async = ref.watch(sessionByIdProvider(widget.sessionId));
     return Scaffold(
       appBar: AppBar(
+        // Brand mark next to the title so the operator can tell at
+        // a glance which CLI is driving the session, matching the
+        // sessions list and the web admin's workbench header. Kept
+        // inside `title` (rather than the leading slot) so the
+        // system back arrow stays in place.
+        titleSpacing: 0,
         title: async.when(
-          data: (s) => Text(
-            s.displayName,
-            overflow: TextOverflow.ellipsis,
+          data: (s) => Row(
+            children: [
+              BrandAvatar(providerId: s.providerId, size: 28),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  s.displayName,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
           loading: () => Text(t.sessions.detail.fallbackTitle),
           error: (_, __) => Text(t.sessions.detail.fallbackTitle),
@@ -151,7 +167,7 @@ class _MetadataHeader extends StatelessWidget {
               child: Row(
                 children: [
                   Text(
-                    session.providerId,
+                    providerVisualFor(session.providerId).label,
                     style: muted?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(width: 8),

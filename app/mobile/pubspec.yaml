@@ -16,6 +16,7 @@ dependencies:
     sdk: flutter
   flutter_riverpod: ^2.6.1
   flutter_secure_storage: ^9.2.2
+  flutter_svg: ^2.0.10+1
   freezed_annotation: ^2.4.4
   go_router: ^14.6.2
   image_picker: ^1.1.2
@@ -50,3 +51,5 @@ dependency_overrides:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/provider_icons/

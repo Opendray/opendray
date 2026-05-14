@@ -7,6 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/core/providers/provider_visual.dart';
+import 'package:opendray/core/widgets/brand_avatar.dart';
 import 'package:opendray/features/sessions/session_action_sheet.dart';
 import 'package:opendray/features/sessions/spawn_session_sheet.dart';
 import 'package:path/path.dart' as p;
@@ -179,15 +181,19 @@ class _SessionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final visual = providerVisualFor(session.providerId);
     return Card(
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+          padding: const EdgeInsets.fromLTRB(12, 12, 6, 12),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              BrandAvatar(providerId: session.providerId, size: 40),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,7 +226,7 @@ class _SessionCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       t.sessions.card.startedRelative(
-                        provider: session.providerId,
+                        provider: visual.label,
                         when: _formatRelative(session.startedAt),
                       ),
                       style: Theme.of(context).textTheme.bodySmall,

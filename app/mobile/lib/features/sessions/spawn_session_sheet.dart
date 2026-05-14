@@ -7,6 +7,7 @@ import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/providers_api.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/core/widgets/brand_avatar.dart';
 import 'package:opendray/features/sessions/directory_picker_sheet.dart';
 
 // Provider id that triggers the Claude-account picker. Multi-account
@@ -376,10 +377,17 @@ class _ProviderField extends ConsumerWidget {
             for (final p in providers)
               DropdownMenuItem<String>(
                 value: p.id,
-                child: Text(
-                  p.enabled
-                      ? p.name
-                      : '${p.name}${t.sessions.spawnSheet.disabledSuffix}',
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    BrandAvatar(providerId: p.id, size: 22),
+                    const SizedBox(width: 10),
+                    Text(
+                      p.enabled
+                          ? p.name
+                          : '${p.name}${t.sessions.spawnSheet.disabledSuffix}',
+                    ),
+                  ],
                 ),
               ),
           ],
