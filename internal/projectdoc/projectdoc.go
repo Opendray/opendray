@@ -28,6 +28,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 	"time"
 
@@ -140,12 +141,28 @@ var (
 	ErrEmptyCwd       = errors.New("projectdoc: cwd is required")
 )
 
+// LogEmbedder is the minimal embedding surface projectdoc needs
+// to vector-index session_logs at append time + during the M-PB
+// backfill loop. The memory subsystem's own Embedder implements
+// this; defined here as a narrow local interface so projectdoc
+// doesn't import internal/memory and risk circular dependencies.
+type LogEmbedder interface {
+	Embed(ctx context.Context, texts []string) ([][]float32, error)
+	Name() string
+}
+
 // Service is the CRUD-plus-policy surface for project docs +
 // proposals + session logs. Constructed once per process and shared
 // across HTTP handlers / MCP tools / spawn-time injector.
 type Service struct {
 	pool *pgxpool.Pool
 	log  *slog.Logger
+
+	// embedder is the optional M-PB hook for journal vector
+	// indexing. When non-nil, AppendLog also embeds the entry; the
+	// backfill goroutine uses the same one for catching up legacy
+	// rows. Nil disables — append-time path stays unchanged.
+	embedder LogEmbedder
 
 	// mirrorDisabled turns off the on-write `.opendray/*.md` mirror.
 	// Tests flip this on via DisableMirror() so they don't dirty
@@ -160,6 +177,25 @@ func NewService(pool *pgxpool.Pool, log *slog.Logger) *Service {
 	}
 	return &Service{pool: pool, log: log.With("component", "projectdoc")}
 }
+
+// WithEmbedder installs the M-PB journal embedding hook. Returns
+// the receiver for chained setup at composition-root time. Passing
+// nil clears any previously-installed embedder.
+func (s *Service) WithEmbedder(emb LogEmbedder) *Service {
+	s.embedder = emb
+	return s
+}
+
+// Embedder returns the currently-installed embedder, or nil.
+// Exposed for the backfill goroutine + cross-layer search service
+// which need to embed the user's query the same way.
+func (s *Service) Embedder() LogEmbedder { return s.embedder }
+
+// Pool exposes the underlying pgxpool for callers that need raw
+// SQL access — specifically the backfill worker (which writes
+// embedding columns) and the cross-layer search service (which
+// runs vector queries against session_logs).
+func (s *Service) Pool() *pgxpool.Pool { return s.pool }
 
 // ─── docs (goal / plan) ────────────────────────────────────────
 
@@ -436,8 +472,84 @@ func (s *Service) AppendLog(ctx context.Context, e LogEntry) (LogEntry, error) {
 	out, err := scanLog(row)
 	if err == nil {
 		s.mirrorBestEffort(ctx, out.Cwd)
+		// M-PB — embed the new entry synchronously when an embedder
+		// is wired. Failure here is non-fatal: the row is already
+		// committed, and the backfill goroutine will catch up the
+		// missing vector on its next sweep. Embedding logged so
+		// operators can spot a misconfigured embedder.
+		s.embedLogBestEffort(ctx, out)
 	}
 	return out, err
+}
+
+// embedLogBestEffort computes + persists an embedding for one
+// freshly-appended journal entry. No-op when no embedder is
+// configured. Soft-fails: a logged warning is the worst outcome.
+func (s *Service) embedLogBestEffort(ctx context.Context, e LogEntry) {
+	if s.embedder == nil {
+		return
+	}
+	text := embedTextForLog(e)
+	if text == "" {
+		return
+	}
+	vecs, err := s.embedder.Embed(ctx, []string{text})
+	if err != nil || len(vecs) == 0 || len(vecs[0]) == 0 {
+		s.log.Debug("projectdoc: log embed at append-time failed (will retry via backfill)",
+			"log_id", e.ID, "err", err)
+		return
+	}
+	name := s.embedder.Name()
+	if _, err := s.pool.Exec(ctx, `
+		UPDATE session_logs
+		   SET embedding = $1,
+		       embedder = $2,
+		       embedding_at = NOW()
+		 WHERE id = $3`, pgvecString(vecs[0]), name, e.ID); err != nil {
+		s.log.Debug("projectdoc: log embed write-back failed",
+			"log_id", e.ID, "err", err)
+	}
+}
+
+// embedTextForLog assembles the string passed to the embedder.
+// "title — content" mirrors how the spawn-time banner renders the
+// entry, so query semantics match what the agent will eventually
+// see in its system prompt.
+func embedTextForLog(e LogEntry) string {
+	title := strings.TrimSpace(e.Title)
+	content := strings.TrimSpace(e.Content)
+	if title == "" && content == "" {
+		return ""
+	}
+	if title == "" {
+		return content
+	}
+	if content == "" {
+		return title
+	}
+	return title + " — " + content
+}
+
+// pgvecString encodes a float32 slice into pgvector's bracketed
+// literal form. We feed it as a parameter rather than building a
+// SQL fragment so pgx still treats it as a typed argument (no
+// injection risk). Same encoding pattern lives in
+// memory/store_pgvector.go for the memories table.
+func pgvecString(v []float32) string {
+	if len(v) == 0 {
+		return "[]"
+	}
+	var b strings.Builder
+	b.Grow(2 + len(v)*8)
+	b.WriteByte('[')
+	for i, f := range v {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		b.WriteString(strconv.FormatFloat(float64(f), 'f', -1, 32))
+	}
+	b.WriteByte(']')
+	return b.String()
 }
 
 // ListLogs returns chronological journal entries newest first.
@@ -593,7 +705,30 @@ func (s *Service) ResetCwd(ctx context.Context, cwd string, opts ResetCwdOptions
 // values ≤ 0 fall back to 5. Each entry shows title + content; the
 // banner stops growing past ~6KB even at high recentLogs, so the
 // spawn cost is bounded.
+//
+// This is the legacy entry point — equivalent to
+// RenderForSpawnWithBudget(ctx, cwd, recentLogs, 0). Kept stable
+// so existing callers don't need an immediate update.
 func (s *Service) RenderForSpawn(ctx context.Context, cwd string, recentLogs int) (string, error) {
+	return s.RenderForSpawnWithBudget(ctx, cwd, recentLogs, 0)
+}
+
+// RenderForSpawnWithBudget is the M-PB token-budgeted renderer.
+// maxBytes <= 0 disables the cap (matches legacy RenderForSpawn).
+// When set, sections are appended in priority order and rendering
+// halts once the budget is exceeded, with a "truncated" notice
+// added so the agent knows the prompt is incomplete.
+//
+// Priority order is fixed to favour the things an agent acts on:
+//  1. plan          — most useful for picking up where work left off
+//  2. tech_stack    — orients the agent in the codebase
+//  3. goal          — long-term direction (rare changes; smaller body)
+//  4. recent_activity — git narrative (large; lower priority by design)
+//  5. journal       — episodic detail; takes whatever budget is left
+//
+// 4 KiB ≈ 1k tokens is a sensible default for most operators; the
+// catalog adapter can pass its own value once we expose it.
+func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, recentLogs, maxBytes int) (string, error) {
 	if strings.TrimSpace(cwd) == "" {
 		return "", nil
 	}
@@ -633,57 +768,90 @@ func (s *Service) RenderForSpawn(ctx context.Context, cwd string, recentLogs int
 	// drop human-courtesy framing (intro essays, "auto-generated"
 	// markers, last-scanned timestamps). Saves ~15-25% spawn tokens.
 	var b strings.Builder
-	b.WriteString("## Project context (cross-agent shared, read-only)\n\n")
+	header := "## Project context (cross-agent shared, read-only)\n\n"
+	footer := "If your work changes the goal or plan, do **not** silently overwrite them. Use the `project_goal_set` / `project_plan_set` MCP tools — they file a proposal that the operator approves before the live doc updates.\n"
+	b.WriteString(header)
 
-	if techStack != "" {
-		b.WriteString("### Tech stack & structure\n\n")
-		b.WriteString(techStack)
-		b.WriteString("\n\n")
+	// Reserve room for the footer when a budget is active; without
+	// the footer the agent loses the proposal-flow nudge.
+	footerReserve := 0
+	truncated := false
+	if maxBytes > 0 {
+		footerReserve = len(footer)
 	}
-	if recentActivity != "" {
-		b.WriteString("### Recent activity\n\n")
-		b.WriteString(recentActivity)
-		b.WriteString("\n\n")
-	}
-	if goal != "" {
-		b.WriteString("### Project goal\n\n")
-		b.WriteString(goal)
-		b.WriteString("\n\n")
-	}
-	if plan != "" {
-		b.WriteString("### Project plan\n\n")
-		b.WriteString(plan)
-		b.WriteString("\n\n")
-	}
-	if len(logs) > 0 {
-		b.WriteString("### Recent journal\n\n")
-		// logs are newest-first; render oldest-first inside the banner
-		// so the chronology reads naturally top-to-bottom.
-		for i := len(logs) - 1; i >= 0; i-- {
-			e := logs[i]
-			b.WriteString("- ")
-			if e.Title != "" {
-				b.WriteString("**")
-				b.WriteString(e.Title)
-				b.WriteString("** — ")
-			}
-			body := strings.TrimSpace(e.Content)
-			// Keep each journal line compact — the goal here is "remind
-			// the agent" not "replay full session summaries". 600 chars
-			// is roughly two paragraphs; longer entries stay readable
-			// when the operator drills into the journal page.
-			if len(body) > 600 {
-				body = body[:600] + "…"
-			}
-			b.WriteString(body)
-			b.WriteString("\n")
+
+	appendSection := func(title, body string) {
+		if body == "" || truncated {
+			return
 		}
-		b.WriteString("\n")
+		section := "### " + title + "\n\n" + body + "\n\n"
+		if maxBytes > 0 && b.Len()+len(section)+footerReserve > maxBytes {
+			truncated = true
+			return
+		}
+		b.WriteString(section)
 	}
 
-	b.WriteString("If your work changes the goal or plan, do **not** silently overwrite them. Use the `project_goal_set` / `project_plan_set` MCP tools — they file a proposal that the operator approves before the live doc updates.\n")
+	appendSection("Project plan", plan)
+	appendSection("Tech stack & structure", techStack)
+	appendSection("Project goal", goal)
+	appendSection("Recent activity", recentActivity)
 
+	if len(logs) > 0 && !truncated {
+		jb, jTrunc := renderJournalSection(logs, maxBytes-b.Len()-footerReserve)
+		if jb != "" {
+			b.WriteString(jb)
+		}
+		if jTrunc {
+			truncated = true
+		}
+	}
+
+	if truncated {
+		b.WriteString("_(banner truncated to fit spawn-prompt budget — visit /memory/project for the full set)_\n\n")
+	}
+
+	b.WriteString(footer)
 	return b.String(), nil
+}
+
+// renderJournalSection assembles the journal block, stopping when
+// it would exceed remaining bytes. Returns the section text + a
+// "we hit the limit" flag so the caller can append a truncation
+// note. remaining <=0 disables the cap.
+func renderJournalSection(logs []LogEntry, remaining int) (string, bool) {
+	var b strings.Builder
+	b.WriteString("### Recent journal\n\n")
+	truncated := false
+	// logs are newest-first; render oldest-first so chronology reads
+	// top-to-bottom.
+	for i := len(logs) - 1; i >= 0; i-- {
+		e := logs[i]
+		body := strings.TrimSpace(e.Content)
+		if len(body) > 600 {
+			body = body[:600] + "…"
+		}
+		var line strings.Builder
+		line.WriteString("- ")
+		if e.Title != "" {
+			line.WriteString("**")
+			line.WriteString(e.Title)
+			line.WriteString("** — ")
+		}
+		line.WriteString(body)
+		line.WriteString("\n")
+		if remaining > 0 && b.Len()+line.Len() > remaining {
+			truncated = true
+			break
+		}
+		b.WriteString(line.String())
+	}
+	b.WriteString("\n")
+	// If we wrote nothing past the heading, drop the section entirely.
+	if strings.Count(b.String(), "\n") <= 3 {
+		return "", truncated
+	}
+	return b.String(), truncated
 }
 
 // ─── scanners ──────────────────────────────────────────────────

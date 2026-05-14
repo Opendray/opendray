@@ -179,6 +179,14 @@ func (s *Service) Close() error {
 func (s *Service) EmbedderName() string { return s.emb.Name() }
 func (s *Service) Dimensions() int      { return s.emb.Dimensions() }
 
+// Embedder returns the active Embedder. Exposed so cross-package
+// callers (M-PB journal indexing in projectdoc, the cross-layer
+// search service) can use the same vector space the memory store
+// already speaks — comparing vectors produced by different
+// embedders is meaningless, so sharing the instance is load-
+// bearing.
+func (s *Service) Embedder() Embedder { return s.emb }
+
 // StoreRequest is the public shape callers (MCP, HTTP debug API)
 // pass to Store. It mirrors InsertRequest minus the embedding
 // (we compute that here).

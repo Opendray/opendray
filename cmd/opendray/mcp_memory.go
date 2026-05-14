@@ -204,6 +204,9 @@ each with a different rhythm — pick the right tool for the job:
                      meaningful step, fix a bug, hit a blocker, learn
                      something the next session should know.
   decision_record    ADR-style architectural locks-in (rare).
+  project_search     CROSS-LAYER semantic search across facts, journal,
+                     goal, and plan. Use when context might live anywhere
+                     ("have we hit X before", "what did we decide about Y").
 
 CRITICAL HABITS:
 
@@ -429,6 +432,30 @@ var toolDefs = []map[string]any{
 			"required": []string{"title", "content"},
 		},
 	},
+	{
+		"name": "project_search",
+		"description": "Search ACROSS all memory layers (facts + " +
+			"journal entries + goal/plan documents) in the current " +
+			"project. Use this when you want context that might live " +
+			"anywhere — \"what did we decide about X\", \"have we " +
+			"hit Y before\", \"how does our plan handle Z\". Returns " +
+			"results ranked by semantic similarity with a time-decay " +
+			"penalty, each tagged with which layer it came from.",
+		"inputSchema": map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"query": map[string]any{
+					"type":        "string",
+					"description": "Natural-language query.",
+				},
+				"top_k": map[string]any{
+					"type":        "integer",
+					"description": "Max hits across all layers combined (default 10, max 100).",
+				},
+			},
+			"required": []string{"query"},
+		},
+	},
 }
 
 // handleToolCall dispatches one MCP tools/call invocation to the
@@ -472,6 +499,8 @@ func (s *memMCPServer) handleToolCall(req rpcRequest) {
 		result, err = s.callSessionLogAppend("manual", params.Arguments)
 	case "decision_record":
 		result, err = s.callSessionLogAppend("decision", params.Arguments)
+	case "project_search":
+		result, err = s.callProjectSearch(params.Arguments)
 	default:
 		s.respondErr(req.ID, -32601, "Unknown tool", params.Name)
 		return
@@ -825,6 +854,78 @@ func (s *memMCPServer) callSessionLogAppend(kind string, args json.RawMessage) (
 	return map[string]any{
 		"content": []map[string]any{
 			{"type": "text", "text": fmt.Sprintf("Appended %s journal entry %s.", kind, out.ID)},
+		},
+	}, nil
+}
+
+// callProjectSearch wraps /api/v1/project-search. Surfaces hits
+// from all five memory layers in one ranked list so the agent can
+// answer "have we touched X before" without choosing a layer
+// first. Output is rendered as a markdown bullet list so the
+// model can quote pieces back into its response naturally.
+func (s *memMCPServer) callProjectSearch(args json.RawMessage) (any, error) {
+	cwd := s.cfg.scopeKey
+	if cwd == "" {
+		return nil, errors.New("project_search requires OPENDRAY_MEMORY_SCOPE_KEY (cwd) to be set")
+	}
+	var in struct {
+		Query string `json:"query"`
+		TopK  int    `json:"top_k"`
+	}
+	if err := json.Unmarshal(args, &in); err != nil {
+		return nil, fmt.Errorf("invalid arguments: %w", err)
+	}
+	q := strings.TrimSpace(in.Query)
+	if q == "" {
+		return nil, errors.New("query is required")
+	}
+	topK := in.TopK
+	if topK <= 0 {
+		topK = 10
+	}
+	if topK > 100 {
+		topK = 100
+	}
+
+	url := fmt.Sprintf("/api/v1/project-search?cwd=%s&q=%s&top_k=%d",
+		urlQuery(cwd), urlQuery(q), topK)
+	var resp struct {
+		Hits []struct {
+			Source         string  `json:"source"`
+			ID             string  `json:"id"`
+			Text           string  `json:"text"`
+			Title          string  `json:"title"`
+			Similarity     float32 `json:"similarity"`
+			EffectiveScore float32 `json:"effective_score"`
+			CreatedAt      string  `json:"created_at"`
+		} `json:"hits"`
+	}
+	if err := s.gatewayGetJSON(url, &resp); err != nil {
+		return nil, err
+	}
+	if len(resp.Hits) == 0 {
+		return map[string]any{
+			"content": []map[string]any{
+				{"type": "text", "text": fmt.Sprintf("No cross-layer hits for %q.", q)},
+			},
+		}, nil
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "Top %d cross-layer matches for %q (effective_score · source — preview):\n\n",
+		len(resp.Hits), q)
+	for _, h := range resp.Hits {
+		text := strings.TrimSpace(h.Text)
+		if h.Title != "" && !strings.HasPrefix(text, h.Title) {
+			text = h.Title + " — " + text
+		}
+		if len(text) > 240 {
+			text = text[:240] + "…"
+		}
+		fmt.Fprintf(&b, "- **%.2f · %s** — %s\n", h.EffectiveScore, h.Source, text)
+	}
+	return map[string]any{
+		"content": []map[string]any{
+			{"type": "text", "text": b.String()},
 		},
 	}, nil
 }

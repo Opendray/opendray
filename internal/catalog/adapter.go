@@ -77,6 +77,13 @@ type SessionProvider struct {
 	// injection (e.g. older builds without memory layers 2-4).
 	projectDocInjector ProjectDocInjector
 
+	// projectDocBudget caps the rendered banner size in bytes. 0
+	// disables the cap (legacy behaviour). Operators dial this via
+	// WithProjectDocBudget; the catalog adapter calls
+	// RenderForSpawnWithBudget when non-zero. Default 4096 — about
+	// 1k tokens, plenty for a one-screen banner.
+	projectDocBudget int
+
 	// projectScanner, when set, auto-detects tech stack + structure
 	// at spawn time (only re-scans when the existing tech_stack doc
 	// is older than scannerMaxAge). Nil → no auto-scan, operator
@@ -106,8 +113,14 @@ type AmbientInjector interface {
 // satisfies. Returns a rendered markdown banner combining the
 // project goal, plan, tech_stack, and recent journal entries;
 // empty string means "nothing to inject — skip silently".
+//
+// The catalog adapter calls RenderForSpawnWithBudget when an
+// operator opts into a byte cap; otherwise it falls back to the
+// legacy RenderForSpawn (no cap). Implementations must support
+// both shapes to stay forward-compatible.
 type ProjectDocInjector interface {
 	RenderForSpawn(ctx context.Context, cwd string, recentLogs int) (string, error)
+	RenderForSpawnWithBudget(ctx context.Context, cwd string, recentLogs, maxBytes int) (string, error)
 }
 
 // ProjectScanner is the contract internal/projectscan.Service
@@ -207,6 +220,16 @@ func (sp *SessionProvider) WithAmbientInjector(inj AmbientInjector) *SessionProv
 // recent journal) to the agent's system prompt at spawn time.
 func (sp *SessionProvider) WithProjectDocInjector(inj ProjectDocInjector) *SessionProvider {
 	sp.projectDocInjector = inj
+	return sp
+}
+
+// WithProjectDocBudget caps the rendered banner size in bytes.
+// 0 disables the cap (legacy behaviour). Operators tune this when
+// the unbudgeted banner pushes spawn prompts past model context
+// limits; default 4096 (≈1k tokens) is a reasonable cap for
+// typical projects.
+func (sp *SessionProvider) WithProjectDocBudget(maxBytes int) *SessionProvider {
+	sp.projectDocBudget = maxBytes
 	return sp
 }
 
@@ -454,7 +477,19 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 				}
 			}
 			if cwd != "" {
-				text, err := sp.projectDocInjector.RenderForSpawn(prepareCtx, cwd, 5)
+				// M-PB — when WithProjectDocBudget is set, route to the
+				// budgeted renderer so the banner can't blow past the
+				// configured byte cap. Zero budget keeps the legacy
+				// unconstrained shape.
+				var (
+					text string
+					err  error
+				)
+				if sp.projectDocBudget > 0 {
+					text, err = sp.projectDocInjector.RenderForSpawnWithBudget(prepareCtx, cwd, 5, sp.projectDocBudget)
+				} else {
+					text, err = sp.projectDocInjector.RenderForSpawn(prepareCtx, cwd, 5)
+				}
 				if err != nil {
 					sp.log.Warn("project doc render failed; skipping inject",
 						"cwd", cwd, "err", err)
