@@ -75,6 +75,7 @@ func TestRenderClaudeMCP_DropsInvalid(t *testing.T) {
 }
 
 func TestRenderCodexMCP_TomlOutput(t *testing.T) {
+	t.Setenv("CODEX_HOME", t.TempDir())
 	dir := t.TempDir()
 	servers := []MCPServer{
 		{Name: "fs", Command: "npx", Args: []string{"-y", "server-fs"},
@@ -110,7 +111,41 @@ func TestRenderCodexMCP_TomlOutput(t *testing.T) {
 	}
 }
 
+func TestRenderCodexMCP_PreservesUserConfig(t *testing.T) {
+	userHome := t.TempDir()
+	t.Setenv("CODEX_HOME", userHome)
+	if err := os.WriteFile(filepath.Join(userHome, "config.toml"), []byte(`model = "gpt-5.4"
+
+[projects."/repo"]
+trust_level = "trusted"
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	_, env, err := renderMCP("codex", t.TempDir(), []MCPServer{
+		{Name: "fs", Command: "npx"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(filepath.Join(env["CODEX_HOME"], "config.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	str := string(body)
+	if !strings.Contains(str, `model = "gpt-5.4"`) {
+		t.Errorf("user model config missing: %s", str)
+	}
+	if !strings.Contains(str, `[projects."/repo"]`) {
+		t.Errorf("user project trust missing: %s", str)
+	}
+	if !strings.Contains(str, `[mcp_servers.fs]`) {
+		t.Errorf("mcp server missing: %s", str)
+	}
+}
+
 func TestRenderCodexMCP_SkipsNonStdio(t *testing.T) {
+	t.Setenv("CODEX_HOME", t.TempDir())
 	dir := t.TempDir()
 	servers := []MCPServer{
 		{Name: "remote", Transport: "http", URL: "https://x"},

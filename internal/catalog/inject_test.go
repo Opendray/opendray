@@ -172,3 +172,30 @@ func TestInjectSessionID_FreshUUIDsAcrossSpawns(t *testing.T) {
 		t.Errorf("expected distinct UUIDs across spawns, got %q twice", out1.ClaudeSessionID)
 	}
 }
+
+func TestEnsureCodexScratchTrust_AppendsCurrentCwd(t *testing.T) {
+	home := t.TempDir()
+	if err := os.WriteFile(filepath.Join(home, "config.toml"), []byte(`model = "gpt-5.4"
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	cwd := "/Users/test/work with spaces"
+	if err := ensureCodexScratchTrust(home, cwd); err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(filepath.Join(home, "config.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	str := string(body)
+	if !strings.Contains(str, `model = "gpt-5.4"`) {
+		t.Errorf("base config missing: %s", str)
+	}
+	if !strings.Contains(str, `[projects."/Users/test/work with spaces"]`) {
+		t.Errorf("project trust header missing: %s", str)
+	}
+	if !strings.Contains(str, `trust_level = "trusted"`) {
+		t.Errorf("trust level missing: %s", str)
+	}
+}

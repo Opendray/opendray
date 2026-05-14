@@ -36,7 +36,7 @@ const HOME_HINT = '/Users/' // macOS-friendly default; user can edit.
 // table avoids importing config logic from the gateway side.
 const BYPASS_FLAGS: Record<string, string[]> = {
   claude: ['--dangerously-skip-permissions'],
-  codex: ['--ask-for-approval', 'never'],
+  codex: ['--ask-for-approval', 'never', '-c', 'approval_policy="never"'],
   gemini: ['--yolo'],
 }
 

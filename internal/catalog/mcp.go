@@ -175,11 +175,32 @@ func renderCodexMCP(baseDir string, servers []MCPServer) ([]string, map[string]s
 		return nil, nil, fmt.Errorf("mkdir codex home: %w", err)
 	}
 	path := filepath.Join(home, "config.toml")
-	body := strings.Join(blocks, "\n\n") + "\n"
+	body := codexBaseConfigForScratch()
+	if strings.TrimSpace(body) != "" {
+		body = strings.TrimRight(body, "\n") + "\n\n"
+	}
+	body += strings.Join(blocks, "\n\n") + "\n"
 	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
 		return nil, nil, fmt.Errorf("write codex config: %w", err)
 	}
 	return nil, map[string]string{"CODEX_HOME": home}, nil
+}
+
+func codexBaseConfigForScratch() string {
+	home := os.Getenv("CODEX_HOME")
+	if home == "" {
+		if h, err := os.UserHomeDir(); err == nil {
+			home = filepath.Join(h, ".codex")
+		}
+	}
+	if home == "" {
+		return ""
+	}
+	data, err := os.ReadFile(filepath.Join(home, "config.toml"))
+	if err != nil {
+		return ""
+	}
+	return string(data)
 }
 
 func codexServerBlock(s MCPServer) string {

@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -269,6 +270,11 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// manifest, which keeps spawn args reproducible across restarts.
 	configArgs, configEnv := applyConfigSchema(p.Manifest.ConfigSchema, p.Config)
 	args = append(args, configArgs...)
+	if p.Manifest.ID == "codex" {
+		if approval, ok := p.Config["approval"].(string); ok && approval != "" {
+			args = append(args, "-c", "approval_policy="+tomlString(approval))
+		}
+	}
 
 	info := session.ProviderInfo{
 		ID:         p.Manifest.ID,
@@ -527,6 +533,12 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			}
 		}
 
+		if providerID == "codex" && out.Env["CODEX_HOME"] != "" {
+			if err := ensureCodexScratchTrust(out.Env["CODEX_HOME"], session.Cwd(prepareCtx)); err != nil {
+				return session.PrepareOutput{}, fmt.Errorf("prepare codex config: %w", err)
+			}
+		}
+
 		if len(out.Env) == 0 {
 			out.Env = nil
 		}
@@ -780,6 +792,33 @@ func mirrorCodexHome(src, dest string) error {
 		}
 	}
 	return nil
+}
+
+func ensureCodexScratchTrust(home, cwd string) error {
+	if home == "" || cwd == "" {
+		return nil
+	}
+	if err := os.MkdirAll(home, 0o700); err != nil {
+		return err
+	}
+	path := filepath.Join(home, "config.toml")
+	bodyBytes, err := os.ReadFile(path)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+		bodyBytes = []byte(codexBaseConfigForScratch())
+	}
+	body := string(bodyBytes)
+	projectHeader := "[projects." + tomlString(cwd) + "]"
+	if strings.Contains(body, projectHeader) {
+		return nil
+	}
+	if strings.TrimSpace(body) != "" {
+		body = strings.TrimRight(body, "\n") + "\n\n"
+	}
+	body += projectHeader + "\ntrust_level = \"trusted\"\n"
+	return os.WriteFile(path, []byte(body), 0o600)
 }
 
 // defaultStr returns def when s is empty after trimming, otherwise s.

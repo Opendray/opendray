@@ -26,7 +26,7 @@ const _claudeProviderId = 'claude';
 // (later wins in cobra parse).
 const Map<String, List<String>> _bypassFlagsByProvider = {
   'claude': ['--dangerously-skip-permissions'],
-  'codex': ['--ask-for-approval', 'never'],
+  'codex': ['--ask-for-approval', 'never', '-c', 'approval_policy="never"'],
   'gemini': ['--yolo'],
 };
 
