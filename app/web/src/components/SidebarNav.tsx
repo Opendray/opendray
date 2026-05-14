@@ -14,6 +14,7 @@ import {
   Archive,
   type LucideIcon,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 import { useLayout } from '@/stores/layout'
@@ -22,7 +23,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 interface NavItem {
   to: string
   icon: LucideIcon
-  label: string
+  labelKey: string
   shortcut: string
 }
 
@@ -32,25 +33,26 @@ interface NavItem {
 //   3. Platform  — extensions, config, help
 const groups: NavItem[][] = [
   [
-    { to: '/sessions', icon: Layers, label: 'Sessions', shortcut: 'g s' },
-    { to: '/notes', icon: NotebookPen, label: 'Notes', shortcut: 'g n' },
-    { to: '/memory', icon: Brain, label: 'Memory', shortcut: 'g m' },
-    { to: '/activity', icon: Activity, label: 'Activity', shortcut: 'g a' },
+    { to: '/sessions', icon: Layers, labelKey: 'nav.sessions', shortcut: 'g s' },
+    { to: '/notes', icon: NotebookPen, labelKey: 'nav.notes', shortcut: 'g n' },
+    { to: '/memory', icon: Brain, labelKey: 'nav.memory', shortcut: 'g m' },
+    { to: '/activity', icon: Activity, labelKey: 'nav.activity', shortcut: 'g a' },
   ],
   [
-    { to: '/providers', icon: Cpu, label: 'Providers', shortcut: 'g p' },
-    { to: '/channels', icon: MessageSquare, label: 'Channels', shortcut: 'g c' },
-    { to: '/integrations', icon: Plug, label: 'Integrations', shortcut: 'g i' },
+    { to: '/providers', icon: Cpu, labelKey: 'nav.providers', shortcut: 'g p' },
+    { to: '/channels', icon: MessageSquare, labelKey: 'nav.channels', shortcut: 'g c' },
+    { to: '/integrations', icon: Plug, labelKey: 'nav.integrations', shortcut: 'g i' },
   ],
   [
-    { to: '/plugins', icon: Boxes, label: 'Plugins', shortcut: 'g l' },
-    { to: '/backups', icon: Archive, label: 'Backups', shortcut: 'g b' },
-    { to: '/settings', icon: Settings, label: 'Settings', shortcut: 'g ,' },
-    { to: '/tutorial', icon: BookOpen, label: 'Tutorial', shortcut: 'g h' },
+    { to: '/plugins', icon: Boxes, labelKey: 'nav.plugins', shortcut: 'g l' },
+    { to: '/backups', icon: Archive, labelKey: 'nav.backups', shortcut: 'g b' },
+    { to: '/settings', icon: Settings, labelKey: 'nav.settings', shortcut: 'g ,' },
+    { to: '/tutorial', icon: BookOpen, labelKey: 'nav.tutorial', shortcut: 'g h' },
   ],
 ]
 
 export function SidebarNav() {
+  const { t } = useTranslation()
   const { location } = useRouterState()
   const collapsed = useLayout((s) => s.sidebarCollapsed)
   return (
@@ -62,7 +64,7 @@ export function SidebarNav() {
     >
       {!collapsed && (
         <div className="px-2 pb-2 text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
-          Workspace
+          {t('nav.workspace')}
         </div>
       )}
       {groups.map((group, gi) => (
@@ -76,7 +78,8 @@ export function SidebarNav() {
               aria-hidden
             />
           )}
-          {group.map(({ to, icon: Icon, label, shortcut }) => {
+          {group.map(({ to, icon: Icon, labelKey, shortcut }) => {
+            const label = t(labelKey)
             const active =
               to === '/sessions'
                 ? location.pathname.startsWith('/sessions') ||

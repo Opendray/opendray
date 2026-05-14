@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from '@tanstack/react-router'
 
 import './index.css'
+import './i18n' // side-effect: initialise i18next before render
 import { router } from './router'
 import { Toaster } from '@/components/ui/sonner'
 import '@/stores/theme' // side-effect: apply persisted theme

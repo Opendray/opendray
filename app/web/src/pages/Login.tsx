@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Terminal as TerminalIcon, Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,6 +17,7 @@ interface LoginResponse {
 }
 
 export function LoginPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { next?: string }
   const setSession = useAuth((s) => s.setSession)
@@ -37,12 +39,14 @@ export function LoginPage() {
       setSession(res.token, res.username, res.expires_at)
       navigate({ to: search.next || '/sessions' })
     } catch (err) {
-      setError(
+      const message =
         err instanceof APIError
           ? err.message
           : err instanceof Error
             ? err.message
-            : 'login failed',
+            : null
+      setError(
+        message ? t('auth.errorGeneric', { error: message }) : t('auth.errorFallback'),
       )
     } finally {
       setSubmitting(false)
@@ -55,20 +59,20 @@ export function LoginPage() {
         <div className="flex items-center gap-2 mb-2">
           <TerminalIcon className="size-5 text-accent" strokeWidth={2.5} />
           <span className="text-[15px] font-semibold tracking-tight">
-            opendray
+            {t('web.brand')}
           </span>
         </div>
         <div className="space-y-1">
           <h1 className="text-[20px] font-semibold tracking-tight">
-            Sign in
+            {t('auth.signInTitle')}
           </h1>
           <p className="text-[13px] text-muted-foreground">
-            Use your operator credentials.
+            {t('auth.subtitle')}
           </p>
         </div>
         <form onSubmit={submit} className="flex flex-col gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username">{t('auth.username')}</Label>
             <Input
               id="username"
               value={username}
@@ -79,7 +83,7 @@ export function LoginPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('auth.password')}</Label>
             <Input
               id="password"
               type="password"
@@ -101,7 +105,7 @@ export function LoginPage() {
             className="mt-2"
           >
             {submitting ? <Loader2 className="size-3.5 animate-spin" /> : null}
-            {submitting ? 'Signing in…' : 'Sign in'}
+            {submitting ? t('auth.signingIn') : t('auth.signIn')}
           </Button>
         </form>
       </div>

@@ -19,14 +19,48 @@
     "username": "Username",
     "password": "Password",
     "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "subtitle": "Use your operator credentials.",
     "errorRequired": "Username and password are required",
-    "errorGeneric": "Login failed: {error}"
+    "errorGeneric": "Login failed: {error}",
+    "errorFallback": "Login failed"
   },
   "nav": {
     "sessions": "Sessions",
     "memory": "Memory",
     "notes": "Notes",
-    "more": "More"
+    "more": "More",
+    "activity": "Activity",
+    "providers": "Providers",
+    "channels": "Channels",
+    "integrations": "Integrations",
+    "plugins": "Plugins",
+    "backups": "Backups",
+    "settings": "Settings",
+    "tutorial": "Tutorial",
+    "workspace": "Workspace"
+  },
+  "web": {
+    "brand": "opendray",
+    "loading": "Loading…",
+    "topbar": {
+      "expandSidebar": "Expand sidebar",
+      "collapseSidebar": "Collapse sidebar",
+      "search": "Search",
+      "openPalette": "Open command palette",
+      "theme": "Theme",
+      "themeLabel": "Theme: {mode}",
+      "appearance": "Appearance",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "themeSystem": "System",
+      "language": "Language",
+      "languageEnglish": "English",
+      "languageChinese": "中文",
+      "signedInAs": "Signed in as",
+      "tokenExpires": "Token expires",
+      "signOut": "Sign out"
+    }
   },
   "more": {
     "title": "More",

@@ -1,6 +1,7 @@
 import { Suspense, useState } from 'react'
 import { Outlet } from '@tanstack/react-router'
 import { Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { SidebarNav } from './SidebarNav'
 import { Topbar } from './Topbar'
@@ -32,10 +33,11 @@ export function AppShell() {
 }
 
 function RouteFallback() {
+  const { t } = useTranslation()
   return (
     <div className="h-full flex items-center justify-center gap-2 text-[12px] text-muted-foreground">
       <Loader2 className="size-3.5 animate-spin" />
-      Loading…
+      {t('web.loading')}
     </div>
   )
 }
