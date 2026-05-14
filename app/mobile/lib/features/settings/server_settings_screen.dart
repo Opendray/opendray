@@ -72,134 +72,131 @@ List<_Section> _buildSections() => <_Section>[
   _Section(
     id: 'general',
     title: t.settings.serverSettings.sections.general,
-    description: 'Listen address, operator account, token TTL.',
+    description: t.settings.serverSettings.sectionDescriptions.general,
     restartRequired: true,
-    fields: const [
+    fields: [
       _Field(
-        label: 'Listen address',
+        label: t.settings.serverSettings.fields.listenAddress,
         path: 'listen',
         kind: _FieldKind.text,
         monospace: true,
         placeholder: ':8770',
-        helper: 'host:port the gateway binds to. Restart required.',
+        helper: t.settings.serverSettings.fields.listenHelper,
       ),
       _Field(
-        label: 'Admin user',
+        label: t.settings.serverSettings.fields.adminUser,
         path: 'admin.user',
         kind: _FieldKind.text,
         monospace: true,
-        helper:
-            'Effective when no keyfile or env var is set. Otherwise see Settings → Account.',
+        helper: t.settings.serverSettings.fields.adminUserHelper,
       ),
       _Field(
-        label: 'Admin password',
+        label: t.settings.serverSettings.fields.adminPassword,
         path: 'admin.password',
         kind: _FieldKind.password,
-        helper:
-            'Send blank to preserve. For ongoing rotations use Settings → Account (keyfile-backed, no restart).',
+        helper: t.settings.serverSettings.fields.adminPasswordHelper,
       ),
       _Field(
-        label: 'Token TTL (web)',
+        label: t.settings.serverSettings.fields.tokenTtlWeb,
         path: 'admin.token_ttl',
         kind: _FieldKind.text,
         monospace: true,
         placeholder: '24h',
-        helper: 'Go duration string, e.g. 24h, 30m.',
+        helper: t.settings.serverSettings.fields.tokenTtlHelper,
       ),
     ],
   ),
   _Section(
     id: 'logging',
     title: t.settings.serverSettings.sections.logging,
-    description: 'Verbosity, format, and on-disk log path.',
+    description: t.settings.serverSettings.sectionDescriptions.logging,
     restartRequired: true,
-    fields: const [
+    fields: [
       _Field(
-        label: 'Level',
+        label: t.settings.serverSettings.fields.level,
         path: 'log.level',
         kind: _FieldKind.select,
-        options: ['debug', 'info', 'warn', 'error'],
+        options: const ['debug', 'info', 'warn', 'error'],
       ),
       _Field(
-        label: 'Format',
+        label: t.settings.serverSettings.fields.format,
         path: 'log.format',
         kind: _FieldKind.select,
-        options: ['text', 'json'],
+        options: const ['text', 'json'],
       ),
       _Field(
-        label: 'File path',
+        label: t.settings.serverSettings.fields.filePath,
         path: 'log.file',
         kind: _FieldKind.text,
         monospace: true,
         placeholder: '~/.opendray/logs/opendray.log',
-        helper: 'Empty = stdout only.',
+        helper: t.settings.serverSettings.fields.filePathHelper,
       ),
     ],
   ),
   _Section(
     id: 'sessions',
     title: t.settings.serverSettings.sections.sessions,
-    description: 'Idle detection thresholds.',
+    description: t.settings.serverSettings.sectionDescriptions.sessions,
     restartRequired: true,
-    fields: const [
+    fields: [
       _Field(
-        label: 'Idle threshold',
+        label: t.settings.serverSettings.fields.idleThreshold,
         path: 'session.idle_threshold',
         kind: _FieldKind.text,
         monospace: true,
         placeholder: '5m',
-        helper:
-            'Quiet period before a session is flagged idle. Go duration.',
+        helper: t.settings.serverSettings.fields.idleThresholdHelper,
       ),
       _Field(
-        label: 'Idle check interval',
+        label: t.settings.serverSettings.fields.idleCheckInterval,
         path: 'session.idle_interval',
         kind: _FieldKind.text,
         monospace: true,
         placeholder: '15s',
-        helper: 'How often the idle reaper runs.',
+        helper: t.settings.serverSettings.fields.idleCheckHelper,
       ),
     ],
   ),
   _Section(
     id: 'vault',
     title: t.settings.serverSettings.sections.vault,
-    description: 'Notes, skills, and git-versioned root.',
+    description: t.settings.serverSettings.sectionDescriptions.vault,
     restartRequired: true,
-    fields: const [
+    fields: [
       _Field(
-        label: 'Root',
+        label: t.settings.serverSettings.fields.root,
         path: 'vault.root',
         kind: _FieldKind.text,
         monospace: true,
-        helper: 'Parent of notes / skills / git_root sub-paths.',
+        helper: t.settings.serverSettings.fields.rootHelper,
       ),
       _Field(
-        label: 'Notes path',
+        label: t.settings.serverSettings.fields.notesPath,
         path: 'vault.notes',
         kind: _FieldKind.text,
         monospace: true,
       ),
       _Field(
-        label: 'Skills path',
+        label: t.settings.serverSettings.fields.skillsPath,
         path: 'vault.skills',
         kind: _FieldKind.text,
         monospace: true,
       ),
       _Field(
-        label: 'Git root',
+        label: t.settings.serverSettings.fields.gitRoot,
         path: 'vault.git_root',
         kind: _FieldKind.text,
         monospace: true,
       ),
       _Field(
-        label: 'Personal prefix',
+        label: t.settings.serverSettings.fields.personalPrefix,
         path: 'vault.personal_prefix',
         kind: _FieldKind.text,
         monospace: true,
       ),
       _Field(
-        label: 'Projects prefix',
+        label: t.settings.serverSettings.fields.projectsPrefix,
         path: 'vault.projects_prefix',
         kind: _FieldKind.text,
         monospace: true,
@@ -209,117 +206,117 @@ List<_Section> _buildSections() => <_Section>[
   _Section(
     id: 'mcp',
     title: t.settings.serverSettings.sections.mcpRegistry,
-    description: 'Vault paths for MCP servers + secrets file.',
+    description: t.settings.serverSettings.sectionDescriptions.mcpRegistry,
     restartRequired: true,
-    fields: const [
+    fields: [
       _Field(
-        label: 'Registry root',
+        label: t.settings.serverSettings.fields.registryRoot,
         path: 'mcp.root',
         kind: _FieldKind.text,
         monospace: true,
       ),
       _Field(
-        label: 'Secrets file',
+        label: t.settings.serverSettings.fields.secretsFile,
         path: 'mcp.secrets_file',
         kind: _FieldKind.text,
         monospace: true,
-        helper: 'AES-256-GCM encrypted secrets vault.',
+        helper: t.settings.serverSettings.fields.secretsHelper,
       ),
     ],
   ),
   _Section(
     id: 'memory',
     title: t.settings.serverSettings.sections.memory,
-    description: 'Cross-CLI persistent memory subsystem.',
+    description: t.settings.serverSettings.sectionDescriptions.memory,
     restartRequired: true,
-    fields: const [
+    fields: [
       _Field(
-        label: 'Backend',
+        label: t.settings.serverSettings.fields.backend,
         path: 'memory.backend',
         kind: _FieldKind.select,
-        options: ['auto', 'bm25', 'http', 'local'],
-        helper: 'auto picks the best available; local needs ONNX.',
+        options: const ['auto', 'bm25', 'http', 'local'],
+        helper: t.settings.serverSettings.fields.backendHelper,
       ),
       _Field(
-        label: 'Store',
+        label: t.settings.serverSettings.fields.store,
         path: 'memory.store',
         kind: _FieldKind.select,
-        options: ['pgvector', 'chromem'],
+        options: const ['pgvector', 'chromem'],
       ),
       _Field(
-        label: 'Default top-k',
+        label: t.settings.serverSettings.fields.defaultTopK,
         path: 'memory.default_top_k',
         kind: _FieldKind.numberInt,
       ),
       _Field(
-        label: 'Similarity threshold',
+        label: t.settings.serverSettings.fields.similarityThreshold,
         path: 'memory.similarity_threshold',
         kind: _FieldKind.numberDouble,
-        helper: '0.0–1.0; results under this are filtered out.',
+        helper: t.settings.serverSettings.fields.similarityHelper,
       ),
       _Field(
-        label: 'Default scope',
+        label: t.settings.serverSettings.fields.defaultScope,
         path: 'memory.scope.default',
         kind: _FieldKind.select,
-        options: ['project', 'session', 'global'],
+        options: const ['project', 'session', 'global'],
       ),
       _Field(
-        label: 'chromem path',
+        label: t.settings.serverSettings.fields.chromemPath,
         path: 'memory.chromem_path',
         kind: _FieldKind.text,
         monospace: true,
-        helper: 'When store=chromem.',
+        helper: t.settings.serverSettings.fields.chromemHelper,
       ),
       _Field(
-        label: 'HTTP base URL',
+        label: t.settings.serverSettings.fields.httpBaseUrl,
         path: 'memory.http.base_url',
         kind: _FieldKind.text,
         monospace: true,
         placeholder: 'http://localhost:11434/v1',
       ),
       _Field(
-        label: 'HTTP model',
+        label: t.settings.serverSettings.fields.httpModel,
         path: 'memory.http.model',
         kind: _FieldKind.text,
         monospace: true,
       ),
       _Field(
-        label: 'HTTP api key',
+        label: t.settings.serverSettings.fields.httpApiKey,
         path: 'memory.http.api_key',
         kind: _FieldKind.password,
-        helper: 'Blank to preserve current.',
+        helper: t.settings.serverSettings.fields.preserveHelper,
       ),
       _Field(
-        label: 'HTTP dimensions',
+        label: t.settings.serverSettings.fields.httpDimensions,
         path: 'memory.http.dimensions',
         kind: _FieldKind.numberInt,
       ),
       _Field(
-        label: 'Local model name',
+        label: t.settings.serverSettings.fields.localModelName,
         path: 'memory.local.model',
         kind: _FieldKind.text,
         monospace: true,
       ),
       _Field(
-        label: 'Local library path',
+        label: t.settings.serverSettings.fields.localLibraryPath,
         path: 'memory.local.library_path',
         kind: _FieldKind.text,
         monospace: true,
       ),
       _Field(
-        label: 'Local model path',
+        label: t.settings.serverSettings.fields.localModelPath,
         path: 'memory.local.model_path',
         kind: _FieldKind.text,
         monospace: true,
       ),
       _Field(
-        label: 'Local tokenizer path',
+        label: t.settings.serverSettings.fields.localTokenizerPath,
         path: 'memory.local.tokenizer_path',
         kind: _FieldKind.text,
         monospace: true,
       ),
       _Field(
-        label: 'Local max seq len',
+        label: t.settings.serverSettings.fields.localMaxSeqLen,
         path: 'memory.local.max_seq_len',
         kind: _FieldKind.numberInt,
       ),
@@ -328,38 +325,36 @@ List<_Section> _buildSections() => <_Section>[
   _Section(
     id: 'backup',
     title: t.settings.serverSettings.sections.backup,
-    description:
-        'Encrypted DB backups + admin data exports. Passphrase lives in the keyfile (Settings → Backups).',
+    description: t.settings.serverSettings.sectionDescriptions.backup,
     restartRequired: true,
-    fields: const [
+    fields: [
       _Field(
-        label: 'Enabled',
+        label: t.settings.serverSettings.fields.backupEnabled,
         path: 'backup.enabled',
         kind: _FieldKind.switchToggle,
-        helper:
-            'Even with this on, the backup subsystem stays off until OPENDRAY_BACKUP_KEY or the keyfile is configured.',
+        helper: t.settings.serverSettings.fields.backupEnabledHelper,
       ),
       _Field(
-        label: 'Local dir',
+        label: t.settings.serverSettings.fields.backupLocalDir,
         path: 'backup.local_dir',
         kind: _FieldKind.text,
         monospace: true,
       ),
       _Field(
-        label: 'Export dir',
+        label: t.settings.serverSettings.fields.backupExportDir,
         path: 'backup.export_dir',
         kind: _FieldKind.text,
         monospace: true,
       ),
       _Field(
-        label: 'pg_dump path',
+        label: t.settings.serverSettings.fields.pgDumpPath,
         path: 'backup.pg_dump_path',
         kind: _FieldKind.text,
         monospace: true,
-        helper: 'Empty = resolve from PATH at startup.',
+        helper: t.settings.serverSettings.fields.pathHelper,
       ),
       _Field(
-        label: 'pg_restore path',
+        label: t.settings.serverSettings.fields.pgRestorePath,
         path: 'backup.pg_restore_path',
         kind: _FieldKind.text,
         monospace: true,
@@ -369,48 +364,47 @@ List<_Section> _buildSections() => <_Section>[
   _Section(
     id: 'claude',
     title: t.settings.serverSettings.sections.storageClaude,
-    description: 'Where Claude transcripts live on disk.',
+    description: t.settings.serverSettings.sectionDescriptions.storageClaude,
     restartRequired: false,
-    fields: const [
+    fields: [
       _Field(
-        label: 'Accounts dir',
+        label: t.settings.serverSettings.fields.accountsDir,
         path: 'providers.claude.accounts_dir',
         kind: _FieldKind.text,
         monospace: true,
-        helper:
-            'Parent of per-account .claude/ subdirs. Empty = ~/.claude-accounts.',
+        helper: t.settings.serverSettings.fields.accountsHelper,
       ),
     ],
   ),
   _Section(
     id: 'codex',
     title: t.settings.serverSettings.sections.storageCodex,
-    description: 'Codex sessions root.',
+    description: t.settings.serverSettings.sectionDescriptions.storageCodex,
     restartRequired: false,
-    fields: const [
+    fields: [
       _Field(
-        label: 'Sessions root',
+        label: t.settings.serverSettings.fields.sessionsRoot,
         path: 'providers.codex.sessions_root',
         kind: _FieldKind.text,
         monospace: true,
-        helper: 'Empty = ~/.codex/sessions.',
+        helper: t.settings.serverSettings.fields.sessionsRootHelper,
       ),
     ],
   ),
   _Section(
     id: 'gemini',
     title: t.settings.serverSettings.sections.storageGemini,
-    description: 'Per-project tmp + projects.json paths.',
+    description: t.settings.serverSettings.sectionDescriptions.storageGemini,
     restartRequired: false,
-    fields: const [
+    fields: [
       _Field(
-        label: 'tmp root',
+        label: t.settings.serverSettings.fields.tmpRoot,
         path: 'providers.gemini.tmp_root',
         kind: _FieldKind.text,
         monospace: true,
       ),
       _Field(
-        label: 'projects.json',
+        label: t.settings.serverSettings.fields.projectsJson,
         path: 'providers.gemini.projects_file',
         kind: _FieldKind.text,
         monospace: true,
@@ -495,10 +489,7 @@ class _ServerSettingsScreenState
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(t.settings.serverSettings.restartConfirmTitle),
-        content: const Text(
-          'The gateway will exec itself. The mobile app may briefly lose '
-          'connection; tokens issued before the restart stay valid.',
-        ),
+        content: Text(t.settings.serverSettings.restartConfirmBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -573,19 +564,18 @@ class _ServerSettingsScreenState
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
               child: Text(
-                'Loaded from: ${data.configPath}',
+                t.settings.serverSettings.loadedFrom(path: data.configPath),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontFamily: 'monospace',
                       fontSize: 11,
                     ),
               ),
             ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: Text(
-              'Most sections need a gateway restart to take effect. The '
-              'restart button is in the top-right.',
-              style: TextStyle(fontSize: 12),
+              t.settings.serverSettings.restartHint,
+              style: const TextStyle(fontSize: 12),
             ),
           ),
           for (final s in _buildSections())
@@ -721,7 +711,7 @@ class _SectionEditorScreenState
             final parsed = int.tryParse(raw);
             if (parsed == null) {
               setState(() {
-                _error = '"${f.label}" must be an integer';
+                _error = t.settings.serverSettings.validateInteger(field: f.label);
                 _submitting = false;
               });
               return;
@@ -736,7 +726,7 @@ class _SectionEditorScreenState
             final parsed = double.tryParse(raw);
             if (parsed == null) {
               setState(() {
-                _error = '"${f.label}" must be a number';
+                _error = t.settings.serverSettings.validateNumber(field: f.label);
                 _submitting = false;
               });
               return;
@@ -756,8 +746,8 @@ class _SectionEditorScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(widget.section.restartRequired
-              ? 'Saved. Restart the gateway to apply.'
-              : 'Saved.'),
+              ? t.settings.serverSettings.savedNeedsRestart
+              : t.settings.serverSettings.savedSimple),
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
         ),
@@ -812,7 +802,7 @@ class _SectionEditorScreenState
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        'Changes to this section need a gateway restart.',
+                        t.settings.serverSettings.changesNeedRestart,
                         style: TextStyle(
                             fontSize: 12, color: theme.colorScheme.primary),
                       ),
@@ -976,7 +966,7 @@ class _ErrorView extends StatelessWidget {
                 size: 40, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: 8),
             Text(
-              'Failed to load server settings',
+              t.settings.serverSettings.loadFailed,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 4),

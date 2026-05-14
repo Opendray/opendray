@@ -3198,6 +3198,9 @@ class TranslationsSettingsServerSettingsEn {
 	/// en: 'Restart opendray?'
 	String get restartConfirmTitle => 'Restart opendray?';
 
+	/// en: 'The gateway will exec itself. The mobile app may briefly lose connection.'
+	String get restartConfirmBody => 'The gateway will exec itself. The mobile app may briefly lose connection.';
+
 	/// en: 'Restart'
 	String get restart => 'Restart';
 
@@ -3210,7 +3213,33 @@ class TranslationsSettingsServerSettingsEn {
 	/// en: 'Restart failed: {error}'
 	String restartFailedGeneric({required Object error}) => 'Restart failed: ${error}';
 
+	/// en: 'Loaded from: {path}'
+	String loadedFrom({required Object path}) => 'Loaded from: ${path}';
+
+	/// en: 'Most sections need a gateway restart to take effect. The restart button is in the AppBar.'
+	String get restartHint => 'Most sections need a gateway restart to take effect. The restart button is in the AppBar.';
+
+	/// en: 'Saved. Restart the gateway to apply.'
+	String get savedNeedsRestart => 'Saved. Restart the gateway to apply.';
+
+	/// en: 'Saved.'
+	String get savedSimple => 'Saved.';
+
+	/// en: 'Changes to this section need a gateway restart.'
+	String get changesNeedRestart => 'Changes to this section need a gateway restart.';
+
+	/// en: 'Failed to load server settings'
+	String get loadFailed => 'Failed to load server settings';
+
 	late final TranslationsSettingsServerSettingsSectionsEn sections = TranslationsSettingsServerSettingsSectionsEn.internal(_root);
+	late final TranslationsSettingsServerSettingsSectionDescriptionsEn sectionDescriptions = TranslationsSettingsServerSettingsSectionDescriptionsEn.internal(_root);
+	late final TranslationsSettingsServerSettingsFieldsEn fields = TranslationsSettingsServerSettingsFieldsEn.internal(_root);
+
+	/// en: '"{field}" must be an integer'
+	String validateInteger({required Object field}) => '"${field}" must be an integer';
+
+	/// en: '"{field}" must be a number'
+	String validateNumber({required Object field}) => '"${field}" must be a number';
 }
 
 // Path: more.items.integrations
@@ -4346,6 +4375,228 @@ class TranslationsSettingsServerSettingsSectionsEn {
 	String get storageGemini => 'Storage · Gemini';
 }
 
+// Path: settings.serverSettings.sectionDescriptions
+class TranslationsSettingsServerSettingsSectionDescriptionsEn {
+	TranslationsSettingsServerSettingsSectionDescriptionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Listen address, operator account, token TTL.'
+	String get general => 'Listen address, operator account, token TTL.';
+
+	/// en: 'Verbosity, format, and on-disk log path.'
+	String get logging => 'Verbosity, format, and on-disk log path.';
+
+	/// en: 'Idle detection thresholds.'
+	String get sessions => 'Idle detection thresholds.';
+
+	/// en: 'Notes, skills, and git-versioned root.'
+	String get vault => 'Notes, skills, and git-versioned root.';
+
+	/// en: 'Vault paths for MCP servers + secrets file.'
+	String get mcpRegistry => 'Vault paths for MCP servers + secrets file.';
+
+	/// en: 'Cross-CLI persistent memory subsystem.'
+	String get memory => 'Cross-CLI persistent memory subsystem.';
+
+	/// en: 'Encrypted DB backups + admin data exports. Passphrase lives in the keyfile (Settings → Backups).'
+	String get backup => 'Encrypted DB backups + admin data exports. Passphrase lives in the keyfile (Settings → Backups).';
+
+	/// en: 'Where Claude transcripts live on disk.'
+	String get storageClaude => 'Where Claude transcripts live on disk.';
+
+	/// en: 'Codex sessions root.'
+	String get storageCodex => 'Codex sessions root.';
+
+	/// en: 'Per-project tmp + projects.json paths.'
+	String get storageGemini => 'Per-project tmp + projects.json paths.';
+}
+
+// Path: settings.serverSettings.fields
+class TranslationsSettingsServerSettingsFieldsEn {
+	TranslationsSettingsServerSettingsFieldsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Listen address'
+	String get listenAddress => 'Listen address';
+
+	/// en: 'Admin user'
+	String get adminUser => 'Admin user';
+
+	/// en: 'Effective when no keyfile or env var is set. Otherwise see Settings → Account.'
+	String get adminUserHelper => 'Effective when no keyfile or env var is set. Otherwise see Settings → Account.';
+
+	/// en: 'Admin password'
+	String get adminPassword => 'Admin password';
+
+	/// en: 'Send blank to preserve. For ongoing rotations use Settings → Account (keyfile-backed, no restart).'
+	String get adminPasswordHelper => 'Send blank to preserve. For ongoing rotations use Settings → Account (keyfile-backed, no restart).';
+
+	/// en: 'Token TTL (web)'
+	String get tokenTtlWeb => 'Token TTL (web)';
+
+	/// en: 'Go duration string, e.g. 24h, 30m.'
+	String get tokenTtlHelper => 'Go duration string, e.g. 24h, 30m.';
+
+	/// en: 'Level'
+	String get level => 'Level';
+
+	/// en: 'Format'
+	String get format => 'Format';
+
+	/// en: 'File path'
+	String get filePath => 'File path';
+
+	/// en: 'Empty = stdout only.'
+	String get filePathHelper => 'Empty = stdout only.';
+
+	/// en: 'Idle threshold'
+	String get idleThreshold => 'Idle threshold';
+
+	/// en: 'Quiet period before a session is flagged idle. Go duration.'
+	String get idleThresholdHelper => 'Quiet period before a session is flagged idle. Go duration.';
+
+	/// en: 'Idle check interval'
+	String get idleCheckInterval => 'Idle check interval';
+
+	/// en: 'How often the idle reaper runs.'
+	String get idleCheckHelper => 'How often the idle reaper runs.';
+
+	/// en: 'Root'
+	String get root => 'Root';
+
+	/// en: 'Parent of notes / skills / git_root sub-paths.'
+	String get rootHelper => 'Parent of notes / skills / git_root sub-paths.';
+
+	/// en: 'Notes path'
+	String get notesPath => 'Notes path';
+
+	/// en: 'Skills path'
+	String get skillsPath => 'Skills path';
+
+	/// en: 'Git root'
+	String get gitRoot => 'Git root';
+
+	/// en: 'Personal prefix'
+	String get personalPrefix => 'Personal prefix';
+
+	/// en: 'Projects prefix'
+	String get projectsPrefix => 'Projects prefix';
+
+	/// en: 'Registry root'
+	String get registryRoot => 'Registry root';
+
+	/// en: 'Secrets file'
+	String get secretsFile => 'Secrets file';
+
+	/// en: 'Backend'
+	String get backend => 'Backend';
+
+	/// en: 'Store'
+	String get store => 'Store';
+
+	/// en: 'Default top-k'
+	String get defaultTopK => 'Default top-k';
+
+	/// en: 'Similarity threshold'
+	String get similarityThreshold => 'Similarity threshold';
+
+	/// en: 'Default scope'
+	String get defaultScope => 'Default scope';
+
+	/// en: 'When store=chromem.'
+	String get chromemHelper => 'When store=chromem.';
+
+	/// en: 'Blank to preserve current.'
+	String get preserveHelper => 'Blank to preserve current.';
+
+	/// en: 'Local model name'
+	String get localModelName => 'Local model name';
+
+	/// en: 'Local library path'
+	String get localLibraryPath => 'Local library path';
+
+	/// en: 'Local model path'
+	String get localModelPath => 'Local model path';
+
+	/// en: 'Local tokenizer path'
+	String get localTokenizerPath => 'Local tokenizer path';
+
+	/// en: 'Local max seq len'
+	String get localMaxSeqLen => 'Local max seq len';
+
+	/// en: 'Enabled'
+	String get backupEnabled => 'Enabled';
+
+	/// en: 'Even with this on, the backup subsystem stays off until OPENDRAY_BACKUP_KEY or the keyfile is configured.'
+	String get backupEnabledHelper => 'Even with this on, the backup subsystem stays off until OPENDRAY_BACKUP_KEY or the keyfile is configured.';
+
+	/// en: 'Local dir'
+	String get backupLocalDir => 'Local dir';
+
+	/// en: 'Export dir'
+	String get backupExportDir => 'Export dir';
+
+	/// en: 'Empty = resolve from PATH at startup.'
+	String get pathHelper => 'Empty = resolve from PATH at startup.';
+
+	/// en: 'Accounts dir'
+	String get accountsDir => 'Accounts dir';
+
+	/// en: 'Parent of per-account .claude/ subdirs. Empty = ~/.claude-accounts.'
+	String get accountsHelper => 'Parent of per-account .claude/ subdirs. Empty = ~/.claude-accounts.';
+
+	/// en: 'Sessions root'
+	String get sessionsRoot => 'Sessions root';
+
+	/// en: 'Empty = ~/.codex/sessions.'
+	String get sessionsRootHelper => 'Empty = ~/.codex/sessions.';
+
+	/// en: 'host:port the gateway binds to. Restart required.'
+	String get listenHelper => 'host:port the gateway binds to. Restart required.';
+
+	/// en: 'AES-256-GCM encrypted secrets vault.'
+	String get secretsHelper => 'AES-256-GCM encrypted secrets vault.';
+
+	/// en: 'auto picks the best available; local needs ONNX.'
+	String get backendHelper => 'auto picks the best available; local needs ONNX.';
+
+	/// en: '0.0–1.0; results under this are filtered out.'
+	String get similarityHelper => '0.0–1.0; results under this are filtered out.';
+
+	/// en: 'chromem path'
+	String get chromemPath => 'chromem path';
+
+	/// en: 'HTTP base URL'
+	String get httpBaseUrl => 'HTTP base URL';
+
+	/// en: 'HTTP model'
+	String get httpModel => 'HTTP model';
+
+	/// en: 'HTTP api key'
+	String get httpApiKey => 'HTTP api key';
+
+	/// en: 'HTTP dimensions'
+	String get httpDimensions => 'HTTP dimensions';
+
+	/// en: 'pg_dump path'
+	String get pgDumpPath => 'pg_dump path';
+
+	/// en: 'pg_restore path'
+	String get pgRestorePath => 'pg_restore path';
+
+	/// en: 'tmp root'
+	String get tmpRoot => 'tmp root';
+
+	/// en: 'projects.json'
+	String get projectsJson => 'projects.json';
+}
+
 // Path: sessions.inspector.shell.tabs
 class TranslationsSessionsInspectorShellTabsEn {
 	TranslationsSessionsInspectorShellTabsEn.internal(this._root);
@@ -5368,10 +5619,17 @@ extension on Translations {
 			'settings.serverSettings.reloadTooltip' => 'Reload from server',
 			'settings.serverSettings.restartTooltip' => 'Restart gateway',
 			'settings.serverSettings.restartConfirmTitle' => 'Restart opendray?',
+			'settings.serverSettings.restartConfirmBody' => 'The gateway will exec itself. The mobile app may briefly lose connection.',
 			'settings.serverSettings.restart' => 'Restart',
 			'settings.serverSettings.restartQueuedSnack' => 'Restart requested. Pull-to-refresh in a moment.',
 			'settings.serverSettings.restartFailedApi' => ({required Object error}) => 'Restart failed: ${error}',
 			'settings.serverSettings.restartFailedGeneric' => ({required Object error}) => 'Restart failed: ${error}',
+			'settings.serverSettings.loadedFrom' => ({required Object path}) => 'Loaded from: ${path}',
+			'settings.serverSettings.restartHint' => 'Most sections need a gateway restart to take effect. The restart button is in the AppBar.',
+			'settings.serverSettings.savedNeedsRestart' => 'Saved. Restart the gateway to apply.',
+			'settings.serverSettings.savedSimple' => 'Saved.',
+			'settings.serverSettings.changesNeedRestart' => 'Changes to this section need a gateway restart.',
+			'settings.serverSettings.loadFailed' => 'Failed to load server settings',
 			'settings.serverSettings.sections.general' => 'General',
 			'settings.serverSettings.sections.logging' => 'Logging',
 			'settings.serverSettings.sections.sessions' => 'Sessions',
@@ -5382,6 +5640,78 @@ extension on Translations {
 			'settings.serverSettings.sections.storageClaude' => 'Storage · Claude',
 			'settings.serverSettings.sections.storageCodex' => 'Storage · Codex',
 			'settings.serverSettings.sections.storageGemini' => 'Storage · Gemini',
+			'settings.serverSettings.sectionDescriptions.general' => 'Listen address, operator account, token TTL.',
+			'settings.serverSettings.sectionDescriptions.logging' => 'Verbosity, format, and on-disk log path.',
+			'settings.serverSettings.sectionDescriptions.sessions' => 'Idle detection thresholds.',
+			'settings.serverSettings.sectionDescriptions.vault' => 'Notes, skills, and git-versioned root.',
+			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'Vault paths for MCP servers + secrets file.',
+			'settings.serverSettings.sectionDescriptions.memory' => 'Cross-CLI persistent memory subsystem.',
+			'settings.serverSettings.sectionDescriptions.backup' => 'Encrypted DB backups + admin data exports. Passphrase lives in the keyfile (Settings → Backups).',
+			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Where Claude transcripts live on disk.',
+			'settings.serverSettings.sectionDescriptions.storageCodex' => 'Codex sessions root.',
+			'settings.serverSettings.sectionDescriptions.storageGemini' => 'Per-project tmp + projects.json paths.',
+			'settings.serverSettings.fields.listenAddress' => 'Listen address',
+			'settings.serverSettings.fields.adminUser' => 'Admin user',
+			'settings.serverSettings.fields.adminUserHelper' => 'Effective when no keyfile or env var is set. Otherwise see Settings → Account.',
+			'settings.serverSettings.fields.adminPassword' => 'Admin password',
+			'settings.serverSettings.fields.adminPasswordHelper' => 'Send blank to preserve. For ongoing rotations use Settings → Account (keyfile-backed, no restart).',
+			_ => null,
+		} ?? switch (path) {
+			'settings.serverSettings.fields.tokenTtlWeb' => 'Token TTL (web)',
+			'settings.serverSettings.fields.tokenTtlHelper' => 'Go duration string, e.g. 24h, 30m.',
+			'settings.serverSettings.fields.level' => 'Level',
+			'settings.serverSettings.fields.format' => 'Format',
+			'settings.serverSettings.fields.filePath' => 'File path',
+			'settings.serverSettings.fields.filePathHelper' => 'Empty = stdout only.',
+			'settings.serverSettings.fields.idleThreshold' => 'Idle threshold',
+			'settings.serverSettings.fields.idleThresholdHelper' => 'Quiet period before a session is flagged idle. Go duration.',
+			'settings.serverSettings.fields.idleCheckInterval' => 'Idle check interval',
+			'settings.serverSettings.fields.idleCheckHelper' => 'How often the idle reaper runs.',
+			'settings.serverSettings.fields.root' => 'Root',
+			'settings.serverSettings.fields.rootHelper' => 'Parent of notes / skills / git_root sub-paths.',
+			'settings.serverSettings.fields.notesPath' => 'Notes path',
+			'settings.serverSettings.fields.skillsPath' => 'Skills path',
+			'settings.serverSettings.fields.gitRoot' => 'Git root',
+			'settings.serverSettings.fields.personalPrefix' => 'Personal prefix',
+			'settings.serverSettings.fields.projectsPrefix' => 'Projects prefix',
+			'settings.serverSettings.fields.registryRoot' => 'Registry root',
+			'settings.serverSettings.fields.secretsFile' => 'Secrets file',
+			'settings.serverSettings.fields.backend' => 'Backend',
+			'settings.serverSettings.fields.store' => 'Store',
+			'settings.serverSettings.fields.defaultTopK' => 'Default top-k',
+			'settings.serverSettings.fields.similarityThreshold' => 'Similarity threshold',
+			'settings.serverSettings.fields.defaultScope' => 'Default scope',
+			'settings.serverSettings.fields.chromemHelper' => 'When store=chromem.',
+			'settings.serverSettings.fields.preserveHelper' => 'Blank to preserve current.',
+			'settings.serverSettings.fields.localModelName' => 'Local model name',
+			'settings.serverSettings.fields.localLibraryPath' => 'Local library path',
+			'settings.serverSettings.fields.localModelPath' => 'Local model path',
+			'settings.serverSettings.fields.localTokenizerPath' => 'Local tokenizer path',
+			'settings.serverSettings.fields.localMaxSeqLen' => 'Local max seq len',
+			'settings.serverSettings.fields.backupEnabled' => 'Enabled',
+			'settings.serverSettings.fields.backupEnabledHelper' => 'Even with this on, the backup subsystem stays off until OPENDRAY_BACKUP_KEY or the keyfile is configured.',
+			'settings.serverSettings.fields.backupLocalDir' => 'Local dir',
+			'settings.serverSettings.fields.backupExportDir' => 'Export dir',
+			'settings.serverSettings.fields.pathHelper' => 'Empty = resolve from PATH at startup.',
+			'settings.serverSettings.fields.accountsDir' => 'Accounts dir',
+			'settings.serverSettings.fields.accountsHelper' => 'Parent of per-account .claude/ subdirs. Empty = ~/.claude-accounts.',
+			'settings.serverSettings.fields.sessionsRoot' => 'Sessions root',
+			'settings.serverSettings.fields.sessionsRootHelper' => 'Empty = ~/.codex/sessions.',
+			'settings.serverSettings.fields.listenHelper' => 'host:port the gateway binds to. Restart required.',
+			'settings.serverSettings.fields.secretsHelper' => 'AES-256-GCM encrypted secrets vault.',
+			'settings.serverSettings.fields.backendHelper' => 'auto picks the best available; local needs ONNX.',
+			'settings.serverSettings.fields.similarityHelper' => '0.0–1.0; results under this are filtered out.',
+			'settings.serverSettings.fields.chromemPath' => 'chromem path',
+			'settings.serverSettings.fields.httpBaseUrl' => 'HTTP base URL',
+			'settings.serverSettings.fields.httpModel' => 'HTTP model',
+			'settings.serverSettings.fields.httpApiKey' => 'HTTP api key',
+			'settings.serverSettings.fields.httpDimensions' => 'HTTP dimensions',
+			'settings.serverSettings.fields.pgDumpPath' => 'pg_dump path',
+			'settings.serverSettings.fields.pgRestorePath' => 'pg_restore path',
+			'settings.serverSettings.fields.tmpRoot' => 'tmp root',
+			'settings.serverSettings.fields.projectsJson' => 'projects.json',
+			'settings.serverSettings.validateInteger' => ({required Object field}) => '"${field}" must be an integer',
+			'settings.serverSettings.validateNumber' => ({required Object field}) => '"${field}" must be a number',
 			_ => null,
 		};
 	}

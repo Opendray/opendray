@@ -1634,11 +1634,22 @@ class _TranslationsSettingsServerSettingsZh extends TranslationsSettingsServerSe
 	@override String get reloadTooltip => '从服务器重新加载';
 	@override String get restartTooltip => '重启网关';
 	@override String get restartConfirmTitle => '重启 opendray？';
+	@override String get restartConfirmBody => '网关将自我 exec。手机应用可能短暂断开连接。';
 	@override String get restart => '重启';
 	@override String get restartQueuedSnack => '已请求重启。稍后下拉刷新。';
 	@override String restartFailedApi({required Object error}) => '重启失败：${error}';
 	@override String restartFailedGeneric({required Object error}) => '重启失败：${error}';
+	@override String loadedFrom({required Object path}) => '加载自：${path}';
+	@override String get restartHint => '大部分配置需要重启网关后生效。重启按钮在 AppBar 中。';
+	@override String get savedNeedsRestart => '已保存。重启网关以生效。';
+	@override String get savedSimple => '已保存。';
+	@override String get changesNeedRestart => '此配置的修改需重启网关。';
+	@override String get loadFailed => '加载服务器设置失败';
 	@override late final _TranslationsSettingsServerSettingsSectionsZh sections = _TranslationsSettingsServerSettingsSectionsZh._(_root);
+	@override late final _TranslationsSettingsServerSettingsSectionDescriptionsZh sectionDescriptions = _TranslationsSettingsServerSettingsSectionDescriptionsZh._(_root);
+	@override late final _TranslationsSettingsServerSettingsFieldsZh fields = _TranslationsSettingsServerSettingsFieldsZh._(_root);
+	@override String validateInteger({required Object field}) => '「${field}」必须是整数';
+	@override String validateNumber({required Object field}) => '「${field}」必须是数字';
 }
 
 // Path: more.items.integrations
@@ -2317,6 +2328,92 @@ class _TranslationsSettingsServerSettingsSectionsZh extends TranslationsSettings
 	@override String get storageClaude => '存储 · Claude';
 	@override String get storageCodex => '存储 · Codex';
 	@override String get storageGemini => '存储 · Gemini';
+}
+
+// Path: settings.serverSettings.sectionDescriptions
+class _TranslationsSettingsServerSettingsSectionDescriptionsZh extends TranslationsSettingsServerSettingsSectionDescriptionsEn {
+	_TranslationsSettingsServerSettingsSectionDescriptionsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get general => '监听地址、管理员账号、令牌 TTL。';
+	@override String get logging => '详细程度、格式、磁盘日志路径。';
+	@override String get sessions => '空闲检测阈值。';
+	@override String get vault => '笔记、技能、git 版本化的根目录。';
+	@override String get mcpRegistry => 'MCP 服务器 + 密钥文件的凭据库路径。';
+	@override String get memory => '跨 CLI 的持久记忆子系统。';
+	@override String get backup => '加密的数据库备份 + 管理数据导出。密语保存在密钥文件（设置 → 备份）。';
+	@override String get storageClaude => 'Claude 会话记录在磁盘的存放位置。';
+	@override String get storageCodex => 'Codex 会话根目录。';
+	@override String get storageGemini => '按项目的临时目录 + projects.json 路径。';
+}
+
+// Path: settings.serverSettings.fields
+class _TranslationsSettingsServerSettingsFieldsZh extends TranslationsSettingsServerSettingsFieldsEn {
+	_TranslationsSettingsServerSettingsFieldsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get listenAddress => '监听地址';
+	@override String get adminUser => '管理员用户';
+	@override String get adminUserHelper => '当未设置密钥文件或环境变量时生效。否则参见 设置 → 账户。';
+	@override String get adminPassword => '管理员密码';
+	@override String get adminPasswordHelper => '留空 = 保留。日常轮换请用 设置 → 账户（密钥文件支持，无需重启）。';
+	@override String get tokenTtlWeb => '令牌 TTL（Web）';
+	@override String get tokenTtlHelper => 'Go duration 字符串，如 24h、30m。';
+	@override String get level => '级别';
+	@override String get format => '格式';
+	@override String get filePath => '文件路径';
+	@override String get filePathHelper => '留空 = 仅 stdout。';
+	@override String get idleThreshold => '空闲阈值';
+	@override String get idleThresholdHelper => '会话被标记为空闲前的安静时长。Go duration。';
+	@override String get idleCheckInterval => '空闲检查间隔';
+	@override String get idleCheckHelper => '空闲回收器运行的频率。';
+	@override String get root => '根目录';
+	@override String get rootHelper => 'notes / skills / git_root 子路径的父目录。';
+	@override String get notesPath => '笔记路径';
+	@override String get skillsPath => '技能路径';
+	@override String get gitRoot => 'Git 根';
+	@override String get personalPrefix => '个人前缀';
+	@override String get projectsPrefix => '项目前缀';
+	@override String get registryRoot => '注册表根';
+	@override String get secretsFile => '密钥文件';
+	@override String get backend => '后端';
+	@override String get store => '存储';
+	@override String get defaultTopK => '默认 top-k';
+	@override String get similarityThreshold => '相似度阈值';
+	@override String get defaultScope => '默认范围';
+	@override String get chromemHelper => '当 store=chromem 时。';
+	@override String get preserveHelper => '留空 = 保留当前值。';
+	@override String get localModelName => '本地模型名';
+	@override String get localLibraryPath => '本地库路径';
+	@override String get localModelPath => '本地模型路径';
+	@override String get localTokenizerPath => '本地分词器路径';
+	@override String get localMaxSeqLen => '本地最大序列长度';
+	@override String get backupEnabled => '已启用';
+	@override String get backupEnabledHelper => '即使打开此项，备份子系统仍需配置 OPENDRAY_BACKUP_KEY 或密钥文件才会运行。';
+	@override String get backupLocalDir => '本地目录';
+	@override String get backupExportDir => '导出目录';
+	@override String get pathHelper => '留空 = 启动时从 PATH 解析。';
+	@override String get accountsDir => '账号目录';
+	@override String get accountsHelper => '各账号 .claude/ 子目录的父目录。留空 = ~/.claude-accounts。';
+	@override String get sessionsRoot => '会话根目录';
+	@override String get sessionsRootHelper => '留空 = ~/.codex/sessions。';
+	@override String get listenHelper => '网关绑定的 host:port。需重启。';
+	@override String get secretsHelper => 'AES-256-GCM 加密的密钥库。';
+	@override String get backendHelper => 'auto 选择最佳可用；local 需要 ONNX。';
+	@override String get similarityHelper => '0.0–1.0；低于此值的结果会被过滤。';
+	@override String get chromemPath => 'chromem 路径';
+	@override String get httpBaseUrl => 'HTTP base URL';
+	@override String get httpModel => 'HTTP model';
+	@override String get httpApiKey => 'HTTP api key';
+	@override String get httpDimensions => 'HTTP dimensions';
+	@override String get pgDumpPath => 'pg_dump 路径';
+	@override String get pgRestorePath => 'pg_restore 路径';
+	@override String get tmpRoot => '临时根目录';
+	@override String get projectsJson => 'projects.json';
 }
 
 // Path: sessions.inspector.shell.tabs
@@ -3331,10 +3428,17 @@ extension on TranslationsZh {
 			'settings.serverSettings.reloadTooltip' => '从服务器重新加载',
 			'settings.serverSettings.restartTooltip' => '重启网关',
 			'settings.serverSettings.restartConfirmTitle' => '重启 opendray？',
+			'settings.serverSettings.restartConfirmBody' => '网关将自我 exec。手机应用可能短暂断开连接。',
 			'settings.serverSettings.restart' => '重启',
 			'settings.serverSettings.restartQueuedSnack' => '已请求重启。稍后下拉刷新。',
 			'settings.serverSettings.restartFailedApi' => ({required Object error}) => '重启失败：${error}',
 			'settings.serverSettings.restartFailedGeneric' => ({required Object error}) => '重启失败：${error}',
+			'settings.serverSettings.loadedFrom' => ({required Object path}) => '加载自：${path}',
+			'settings.serverSettings.restartHint' => '大部分配置需要重启网关后生效。重启按钮在 AppBar 中。',
+			'settings.serverSettings.savedNeedsRestart' => '已保存。重启网关以生效。',
+			'settings.serverSettings.savedSimple' => '已保存。',
+			'settings.serverSettings.changesNeedRestart' => '此配置的修改需重启网关。',
+			'settings.serverSettings.loadFailed' => '加载服务器设置失败',
 			'settings.serverSettings.sections.general' => '通用',
 			'settings.serverSettings.sections.logging' => '日志',
 			'settings.serverSettings.sections.sessions' => '会话',
@@ -3345,6 +3449,78 @@ extension on TranslationsZh {
 			'settings.serverSettings.sections.storageClaude' => '存储 · Claude',
 			'settings.serverSettings.sections.storageCodex' => '存储 · Codex',
 			'settings.serverSettings.sections.storageGemini' => '存储 · Gemini',
+			'settings.serverSettings.sectionDescriptions.general' => '监听地址、管理员账号、令牌 TTL。',
+			'settings.serverSettings.sectionDescriptions.logging' => '详细程度、格式、磁盘日志路径。',
+			'settings.serverSettings.sectionDescriptions.sessions' => '空闲检测阈值。',
+			'settings.serverSettings.sectionDescriptions.vault' => '笔记、技能、git 版本化的根目录。',
+			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'MCP 服务器 + 密钥文件的凭据库路径。',
+			'settings.serverSettings.sectionDescriptions.memory' => '跨 CLI 的持久记忆子系统。',
+			'settings.serverSettings.sectionDescriptions.backup' => '加密的数据库备份 + 管理数据导出。密语保存在密钥文件（设置 → 备份）。',
+			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Claude 会话记录在磁盘的存放位置。',
+			'settings.serverSettings.sectionDescriptions.storageCodex' => 'Codex 会话根目录。',
+			'settings.serverSettings.sectionDescriptions.storageGemini' => '按项目的临时目录 + projects.json 路径。',
+			'settings.serverSettings.fields.listenAddress' => '监听地址',
+			'settings.serverSettings.fields.adminUser' => '管理员用户',
+			'settings.serverSettings.fields.adminUserHelper' => '当未设置密钥文件或环境变量时生效。否则参见 设置 → 账户。',
+			'settings.serverSettings.fields.adminPassword' => '管理员密码',
+			'settings.serverSettings.fields.adminPasswordHelper' => '留空 = 保留。日常轮换请用 设置 → 账户（密钥文件支持，无需重启）。',
+			_ => null,
+		} ?? switch (path) {
+			'settings.serverSettings.fields.tokenTtlWeb' => '令牌 TTL（Web）',
+			'settings.serverSettings.fields.tokenTtlHelper' => 'Go duration 字符串，如 24h、30m。',
+			'settings.serverSettings.fields.level' => '级别',
+			'settings.serverSettings.fields.format' => '格式',
+			'settings.serverSettings.fields.filePath' => '文件路径',
+			'settings.serverSettings.fields.filePathHelper' => '留空 = 仅 stdout。',
+			'settings.serverSettings.fields.idleThreshold' => '空闲阈值',
+			'settings.serverSettings.fields.idleThresholdHelper' => '会话被标记为空闲前的安静时长。Go duration。',
+			'settings.serverSettings.fields.idleCheckInterval' => '空闲检查间隔',
+			'settings.serverSettings.fields.idleCheckHelper' => '空闲回收器运行的频率。',
+			'settings.serverSettings.fields.root' => '根目录',
+			'settings.serverSettings.fields.rootHelper' => 'notes / skills / git_root 子路径的父目录。',
+			'settings.serverSettings.fields.notesPath' => '笔记路径',
+			'settings.serverSettings.fields.skillsPath' => '技能路径',
+			'settings.serverSettings.fields.gitRoot' => 'Git 根',
+			'settings.serverSettings.fields.personalPrefix' => '个人前缀',
+			'settings.serverSettings.fields.projectsPrefix' => '项目前缀',
+			'settings.serverSettings.fields.registryRoot' => '注册表根',
+			'settings.serverSettings.fields.secretsFile' => '密钥文件',
+			'settings.serverSettings.fields.backend' => '后端',
+			'settings.serverSettings.fields.store' => '存储',
+			'settings.serverSettings.fields.defaultTopK' => '默认 top-k',
+			'settings.serverSettings.fields.similarityThreshold' => '相似度阈值',
+			'settings.serverSettings.fields.defaultScope' => '默认范围',
+			'settings.serverSettings.fields.chromemHelper' => '当 store=chromem 时。',
+			'settings.serverSettings.fields.preserveHelper' => '留空 = 保留当前值。',
+			'settings.serverSettings.fields.localModelName' => '本地模型名',
+			'settings.serverSettings.fields.localLibraryPath' => '本地库路径',
+			'settings.serverSettings.fields.localModelPath' => '本地模型路径',
+			'settings.serverSettings.fields.localTokenizerPath' => '本地分词器路径',
+			'settings.serverSettings.fields.localMaxSeqLen' => '本地最大序列长度',
+			'settings.serverSettings.fields.backupEnabled' => '已启用',
+			'settings.serverSettings.fields.backupEnabledHelper' => '即使打开此项，备份子系统仍需配置 OPENDRAY_BACKUP_KEY 或密钥文件才会运行。',
+			'settings.serverSettings.fields.backupLocalDir' => '本地目录',
+			'settings.serverSettings.fields.backupExportDir' => '导出目录',
+			'settings.serverSettings.fields.pathHelper' => '留空 = 启动时从 PATH 解析。',
+			'settings.serverSettings.fields.accountsDir' => '账号目录',
+			'settings.serverSettings.fields.accountsHelper' => '各账号 .claude/ 子目录的父目录。留空 = ~/.claude-accounts。',
+			'settings.serverSettings.fields.sessionsRoot' => '会话根目录',
+			'settings.serverSettings.fields.sessionsRootHelper' => '留空 = ~/.codex/sessions。',
+			'settings.serverSettings.fields.listenHelper' => '网关绑定的 host:port。需重启。',
+			'settings.serverSettings.fields.secretsHelper' => 'AES-256-GCM 加密的密钥库。',
+			'settings.serverSettings.fields.backendHelper' => 'auto 选择最佳可用；local 需要 ONNX。',
+			'settings.serverSettings.fields.similarityHelper' => '0.0–1.0；低于此值的结果会被过滤。',
+			'settings.serverSettings.fields.chromemPath' => 'chromem 路径',
+			'settings.serverSettings.fields.httpBaseUrl' => 'HTTP base URL',
+			'settings.serverSettings.fields.httpModel' => 'HTTP model',
+			'settings.serverSettings.fields.httpApiKey' => 'HTTP api key',
+			'settings.serverSettings.fields.httpDimensions' => 'HTTP dimensions',
+			'settings.serverSettings.fields.pgDumpPath' => 'pg_dump 路径',
+			'settings.serverSettings.fields.pgRestorePath' => 'pg_restore 路径',
+			'settings.serverSettings.fields.tmpRoot' => '临时根目录',
+			'settings.serverSettings.fields.projectsJson' => 'projects.json',
+			'settings.serverSettings.validateInteger' => ({required Object field}) => '「${field}」必须是整数',
+			'settings.serverSettings.validateNumber' => ({required Object field}) => '「${field}」必须是数字',
 			_ => null,
 		};
 	}
