@@ -1,6 +1,8 @@
 import { Brain, FolderTree, Inbox, Workflow } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
+
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { MemoryInspector } from '@/components/settings/MemoryInspector'
@@ -17,6 +19,7 @@ import { listCleanupDecisions } from '@/lib/memoryCleanup'
 // inbox, so the operator doesn't have to dig through scope dropdowns
 // to find the new unified-memory surfaces.
 export function MemoryPage() {
+  const { t } = useTranslation()
   const pendingDecisions = useQuery({
     queryKey: ['cleanup-decisions', 'pending-count'],
     queryFn: () =>
@@ -32,11 +35,10 @@ export function MemoryPage() {
           <div>
             <h1 className="flex items-center gap-2 text-base font-medium">
               <Brain className="text-accent size-4" />
-              Memory
+              {t('web.memory.title')}
             </h1>
             <p className="text-muted-foreground mt-0.5 text-[12px]">
-              Browse, search and edit memories agents have stored via the
-              opendray-memory MCP server.
+              {t('web.memory.subtitle')}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -48,7 +50,7 @@ export function MemoryPage() {
             >
               <Link to="/memory/project" search={{ cwd: '' }}>
                 <FolderTree className="mr-1 size-3" />
-                Project
+                {t('web.memory.navProject')}
               </Link>
             </Button>
             <Button
@@ -59,7 +61,7 @@ export function MemoryPage() {
             >
               <Link to="/memory/cleanup">
                 <Inbox className="mr-1 size-3" />
-                Cleanup inbox
+                {t('web.memory.navCleanupInbox')}
                 {pendingCount > 0 && (
                   <Badge variant="danger" className="ml-1 text-[9px]">
                     {pendingCount}
@@ -75,7 +77,7 @@ export function MemoryPage() {
             >
               <Link to="/memory/workers">
                 <Workflow className="mr-1 size-3" />
-                Workers
+                {t('web.memory.navWorkers')}
               </Link>
             </Button>
             <Button
@@ -85,7 +87,7 @@ export function MemoryPage() {
               className="h-8 text-[11px]"
             >
               <Link to="/settings" search={{ section: 'server.memory' }}>
-                Configuration →
+                {t('web.memory.navConfiguration')}
               </Link>
             </Button>
           </div>

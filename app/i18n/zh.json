@@ -205,6 +205,92 @@
         "mkdirFailedToast": "创建失败",
         "homeFailedToast": "读取家目录失败"
       }
+    },
+    "memory": {
+      "title": "记忆",
+      "subtitle": "浏览、搜索并编辑 Agent 通过 opendray-memory MCP 服务器存储的记忆。",
+      "navProject": "项目",
+      "navCleanupInbox": "清理收件箱",
+      "navWorkers": "Workers",
+      "navConfiguration": "配置 →"
+    },
+    "memoryWorkers": {
+      "title": "Memory workers",
+      "loading": "正在加载 worker 配置…",
+      "errorTitle": "无法访问该接口。",
+      "errorDescription": "/api/v1/memory/workers 路由在 M25 中新增 — opendray 二进制可能需要重启以挂载它们并执行 migration 0029。",
+      "intro": "Memory 子系统的每个 LLM 接入点都可由本地 <1>summarizer</1>（LM Studio / OpenAI 兼容）端点服务，或通过以 <5>--print</5> 模式启动的无头 <3>Claude / Gemini agent</3> 服务。叙事性任务（gitactivity、transcript）从 agent worker 中获益；高频任务（gatekeeper）按设计仍走本地端点。",
+      "enabledBadge": "已启用",
+      "disabledBadge": "已禁用",
+      "summarizerOnlyBadge": "仅 summarizer",
+      "callsCount": "{count} 次调用 · 24 小时",
+      "avgMs": "平均 {ms}ms",
+      "errorsCount": "{count} 次错误",
+      "workerLabel": "Worker",
+      "summarizerHttp": "Summarizer (HTTP)",
+      "agentCliPrint": "Agent (CLI --print)",
+      "summarizerProviderLabel": "Summarizer Provider",
+      "registryDefault": "注册表默认值",
+      "cliLabel": "CLI",
+      "selectPlaceholder": "选择",
+      "cliClaude": "Claude",
+      "cliGemini": "Gemini",
+      "claudeAccountLabel": "Claude 账号",
+      "claudeAccountDefault": "默认",
+      "agentWarning": "Agent 模式每次调用都会启动一个无头 CLI。延迟从 <1>~1s</1>（summarizer）上升到 <3>~5-15s</3>；成本从 CPU 转移到 Claude/Gemini 配额。",
+      "enabledCheckbox": "启用",
+      "testButton": "测试",
+      "saveButton": "保存",
+      "recentCalls": "最近调用 ({count})",
+      "tableWhen": "时间",
+      "tableWorker": "worker",
+      "tableMs": "ms",
+      "tableOk": "ok",
+      "savedToast": "{label} 已更新",
+      "saveFailedToast": "保存失败",
+      "testOkToast": "{label} OK — {ms}ms",
+      "testFailedToast": "{label} 失败",
+      "testCallFailedToast": "测试调用失败",
+      "unknownError": "未知错误",
+      "tasks": {
+        "gatekeeper": {
+          "label": "Gatekeeper",
+          "description": "每次 memory_store 前的预写过滤器。高频（目标 <500ms） — 仅 summarizer。"
+        },
+        "cleaner": {
+          "label": "Cleaner librarian",
+          "description": "周期性 LLM 整理。对旧记忆判定为保留 / 过期 / 重复。"
+        },
+        "gitactivity": {
+          "label": "Git 活动总结器",
+          "description": "git log → 每 24 小时生成 2-3 段叙事。天然适合 agent worker。"
+        },
+        "transcript": {
+          "label": "会话记录总结器",
+          "description": "会话结束时的“agent 都做了什么”总结。天然适合 agent worker。"
+        }
+      }
+    },
+    "cleanupInbox": {
+      "loading": "加载中…",
+      "emptyTitle": "清理收件箱为空",
+      "emptyDescription": "目前所有项目均无待处理的清理决策。LLM librarian 要么尚未跑过这些记忆，要么判断全部仍是关键内容。",
+      "title": "清理收件箱",
+      "subtitle": "LLM memory librarian 的跨项目待处理决策。批准 stale → 删除，批准 duplicate → 合并，批准 keep → 一段时间内冻结该条目不再被重新判断。",
+      "globalScope": "(全局)",
+      "orphanBadge": "孤立",
+      "orphanTitle": "scope_key 被截断（老旧的镜像导入数据）。不是可导航的项目。",
+      "openProject": "打开项目",
+      "mergeIntoPrefix": "→ 合并到",
+      "reasonPrefix": "原因：",
+      "executeButton": "执行",
+      "confirmKeepButton": "确认保留",
+      "rejectButton": "驳回",
+      "approvedKeptToast": "已保留",
+      "approvedExecutedToast": "已执行 {verdict}",
+      "approveFailedToast": "批准失败",
+      "rejectedToast": "已驳回 — 记忆保留",
+      "rejectFailedToast": "驳回失败"
     }
   },
   "more": {

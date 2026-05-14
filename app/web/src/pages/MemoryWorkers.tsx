@@ -16,6 +16,7 @@ import {
   Play,
   Save,
 } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -32,18 +33,27 @@ import {
   type CallSummary,
   type WorkerConfig,
   type WorkerKind,
+  type TaskKind,
   listMemoryWorkerCalls,
   listMemoryWorkers,
   taskAgentSupported,
-  taskDescription,
-  taskLabel,
   testMemoryWorker,
   upsertMemoryWorker,
 } from '@/lib/memoryWorkers'
 import { listProviders as listSummarizerProviders } from '@/lib/memoryAmbient'
 import { listClaudeAccounts } from '@/lib/claudeAccounts'
 
+function useTaskLabels() {
+  const { t } = useTranslation()
+  return {
+    label: (task: TaskKind) => t(`web.memoryWorkers.tasks.${task}.label`),
+    description: (task: TaskKind) =>
+      t(`web.memoryWorkers.tasks.${task}.description`),
+  }
+}
+
 export function MemoryWorkersPage() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const workersQuery = useQuery({
     queryKey: ['memory-workers'],
@@ -73,7 +83,7 @@ export function MemoryWorkersPage() {
     return (
       <div className="text-muted-foreground flex items-center gap-2 p-8 text-sm">
         <Loader2 className="size-3 animate-spin" />
-        Loading worker config…
+        {t('web.memoryWorkers.loading')}
       </div>
     )
   }
@@ -85,12 +95,12 @@ export function MemoryWorkersPage() {
   if (workersQuery.isError) {
     return (
       <div className="mx-auto max-w-2xl space-y-3 p-6 text-sm">
-        <h1 className="text-xl font-semibold">Memory workers</h1>
+        <h1 className="text-xl font-semibold">
+          {t('web.memoryWorkers.title')}
+        </h1>
         <div className="bg-destructive/10 text-destructive rounded-md border p-3 text-xs">
-          <strong>Endpoint not reachable.</strong> The
-          /api/v1/memory/workers routes are new in M25 — the
-          opendray binary may need a restart to mount them and
-          run migration 0029.
+          <strong>{t('web.memoryWorkers.errorTitle')}</strong>{' '}
+          {t('web.memoryWorkers.errorDescription')}
         </div>
         <pre className="bg-muted/30 overflow-auto rounded p-2 font-mono text-[10px]">
           {String(workersQuery.error)}
@@ -102,15 +112,14 @@ export function MemoryWorkersPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
       <header>
-        <h1 className="text-xl font-semibold">Memory workers</h1>
+        <h1 className="text-xl font-semibold">
+          {t('web.memoryWorkers.title')}
+        </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Each memory-system LLM touchpoint can be served independently
-          by the local <strong>summarizer</strong> endpoint
-          (LM Studio / OpenAI-compat) or by spawning a headless{' '}
-          <strong>Claude / Gemini agent</strong> in <code>--print</code>{' '}
-          mode. High-quality narrative tasks (gitactivity, transcript)
-          benefit from agent workers; high-frequency tasks (gatekeeper)
-          stay on the local endpoint by design.
+          <Trans
+            i18nKey="web.memoryWorkers.intro"
+            components={{ 1: <strong />, 3: <strong />, 5: <code /> }}
+          />
         </p>
       </header>
 
@@ -145,6 +154,8 @@ function WorkerCard({
   calls,
   onSaved,
 }: WorkerCardProps) {
+  const { t } = useTranslation()
+  const taskLabels = useTaskLabels()
   const [kind, setKind] = useState<WorkerKind>(config.kind)
   const [summarizerId, setSummarizerId] = useState(config.summarizer_id ?? '')
   const [providerId, setProviderId] = useState<AgentProviderID | ''>(
@@ -172,11 +183,15 @@ function WorkerCard({
         enabled,
       }),
     onSuccess: () => {
-      toast.success(`${taskLabel(config.task)} updated`)
+      toast.success(
+        t('web.memoryWorkers.savedToast', { label: taskLabels.label(config.task) }),
+      )
       onSaved()
     },
     onError: (e: Error) =>
-      toast.error('Save failed', { description: e.message }),
+      toast.error(t('web.memoryWorkers.saveFailedToast'), {
+        description: e.message,
+      }),
   })
 
   const test = useMutation({
@@ -184,17 +199,27 @@ function WorkerCard({
     onSuccess: (res) => {
       if (res.ok) {
         toast.success(
-          `${taskLabel(config.task)} OK — ${res.duration_ms}ms`,
+          t('web.memoryWorkers.testOkToast', {
+            label: taskLabels.label(config.task),
+            ms: res.duration_ms,
+          }),
           { description: res.preview ? truncate(res.preview, 200) : '' },
         )
       } else {
-        toast.error(`${taskLabel(config.task)} failed`, {
-          description: res.error ?? 'unknown error',
-        })
+        toast.error(
+          t('web.memoryWorkers.testFailedToast', {
+            label: taskLabels.label(config.task),
+          }),
+          {
+            description: res.error ?? t('web.memoryWorkers.unknownError'),
+          },
+        )
       }
     },
     onError: (e: Error) =>
-      toast.error('Test call failed', { description: e.message }),
+      toast.error(t('web.memoryWorkers.testCallFailedToast'), {
+        description: e.message,
+      }),
   })
 
   const recentMetrics = useMemo(() => computeMetrics(calls), [calls])
@@ -205,29 +230,37 @@ function WorkerCard({
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-base font-semibold">
-              {taskLabel(config.task)}
+              {taskLabels.label(config.task)}
             </h2>
             <Badge variant={enabled ? 'success' : 'muted'} className="text-[9px]">
-              {enabled ? 'enabled' : 'disabled'}
+              {enabled
+                ? t('web.memoryWorkers.enabledBadge')
+                : t('web.memoryWorkers.disabledBadge')}
             </Badge>
             {!agentAllowed && (
               <Badge variant="warning" className="text-[9px]">
-                summarizer-only
+                {t('web.memoryWorkers.summarizerOnlyBadge')}
               </Badge>
             )}
           </div>
           <p className="text-muted-foreground mt-1 text-xs">
-            {taskDescription(config.task)}
+            {taskLabels.description(config.task)}
           </p>
         </div>
         <div className="text-muted-foreground flex flex-col items-end text-[10px]">
-          <span>{recentMetrics.count} calls · 24h</span>
+          <span>
+            {t('web.memoryWorkers.callsCount', { count: recentMetrics.count })}
+          </span>
           {recentMetrics.count > 0 && (
             <>
-              <span>avg {recentMetrics.avgMs}ms</span>
+              <span>
+                {t('web.memoryWorkers.avgMs', { ms: recentMetrics.avgMs })}
+              </span>
               {recentMetrics.errorCount > 0 && (
                 <span className="text-destructive">
-                  {recentMetrics.errorCount} errors
+                  {t('web.memoryWorkers.errorsCount', {
+                    count: recentMetrics.errorCount,
+                  })}
                 </span>
               )}
             </>
@@ -239,7 +272,7 @@ function WorkerCard({
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <div>
             <label className="text-muted-foreground mb-1 block text-[10px] tracking-wide uppercase">
-              Worker
+              {t('web.memoryWorkers.workerLabel')}
             </label>
             <Select
               value={kind}
@@ -250,9 +283,13 @@ function WorkerCard({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="summarizer">Summarizer (HTTP)</SelectItem>
+                <SelectItem value="summarizer">
+                  {t('web.memoryWorkers.summarizerHttp')}
+                </SelectItem>
                 {agentAllowed && (
-                  <SelectItem value="agent">Agent (CLI --print)</SelectItem>
+                  <SelectItem value="agent">
+                    {t('web.memoryWorkers.agentCliPrint')}
+                  </SelectItem>
                 )}
               </SelectContent>
             </Select>
@@ -261,7 +298,7 @@ function WorkerCard({
           {kind === 'summarizer' && (
             <div className="md:col-span-2">
               <label className="text-muted-foreground mb-1 block text-[10px] tracking-wide uppercase">
-                Summarizer provider
+                {t('web.memoryWorkers.summarizerProviderLabel')}
               </label>
               <Select
                 value={summarizerId || '__default__'}
@@ -270,11 +307,13 @@ function WorkerCard({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Registry default" />
+                  <SelectValue
+                    placeholder={t('web.memoryWorkers.registryDefault')}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__default__">
-                    Registry default
+                    {t('web.memoryWorkers.registryDefault')}
                   </SelectItem>
                   {summarizers.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
@@ -290,7 +329,7 @@ function WorkerCard({
             <>
               <div>
                 <label className="text-muted-foreground mb-1 block text-[10px] tracking-wide uppercase">
-                  CLI
+                  {t('web.memoryWorkers.cliLabel')}
                 </label>
                 <Select
                   value={providerId || ''}
@@ -299,18 +338,24 @@ function WorkerCard({
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select" />
+                    <SelectValue
+                      placeholder={t('web.memoryWorkers.selectPlaceholder')}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="claude">Claude</SelectItem>
-                    <SelectItem value="gemini">Gemini</SelectItem>
+                    <SelectItem value="claude">
+                      {t('web.memoryWorkers.cliClaude')}
+                    </SelectItem>
+                    <SelectItem value="gemini">
+                      {t('web.memoryWorkers.cliGemini')}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               {providerId === 'claude' && (
                 <div>
                   <label className="text-muted-foreground mb-1 block text-[10px] tracking-wide uppercase">
-                    Claude account
+                    {t('web.memoryWorkers.claudeAccountLabel')}
                   </label>
                   <Select
                     value={accountId || '__default__'}
@@ -319,10 +364,14 @@ function WorkerCard({
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Default" />
+                      <SelectValue
+                        placeholder={t('web.memoryWorkers.claudeAccountDefault')}
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__default__">Default</SelectItem>
+                      <SelectItem value="__default__">
+                        {t('web.memoryWorkers.claudeAccountDefault')}
+                      </SelectItem>
                       {accounts.map((a) => (
                         <SelectItem key={a.id} value={a.id}>
                           {a.display_name || a.name || a.id}
@@ -340,10 +389,10 @@ function WorkerCard({
           <div className="text-muted-foreground bg-muted/30 flex items-start gap-2 rounded-md p-2 text-xs">
             <AlertTriangle className="mt-0.5 size-3 flex-none" />
             <div>
-              Agent mode spawns a headless CLI per call. Latency rises
-              from <strong>~1s</strong> (summarizer) to{' '}
-              <strong>~5-15s</strong>; cost shifts from CPU to your
-              Claude/Gemini quota.
+              <Trans
+                i18nKey="web.memoryWorkers.agentWarning"
+                components={{ 1: <strong />, 3: <strong /> }}
+              />
             </div>
           </div>
         )}
@@ -356,7 +405,7 @@ function WorkerCard({
             checked={enabled}
             onChange={(e) => setEnabled(e.target.checked)}
           />
-          Enabled
+          {t('web.memoryWorkers.enabledCheckbox')}
         </label>
         <div className="ml-auto flex gap-2">
           <Button
@@ -370,7 +419,7 @@ function WorkerCard({
             ) : (
               <Play className="mr-1 size-3" />
             )}
-            Test
+            {t('web.memoryWorkers.testButton')}
           </Button>
           <Button
             size="sm"
@@ -382,7 +431,7 @@ function WorkerCard({
             ) : (
               <Save className="mr-1 size-3" />
             )}
-            Save
+            {t('web.memoryWorkers.saveButton')}
           </Button>
         </div>
       </div>
@@ -391,16 +440,24 @@ function WorkerCard({
         <details className="text-xs">
           <summary className="text-muted-foreground hover:text-foreground inline-flex cursor-pointer items-center gap-1">
             <ChevronRight className="size-3 transition-transform" />
-            Recent calls ({calls.length})
+            {t('web.memoryWorkers.recentCalls', { count: calls.length })}
           </summary>
           <div className="mt-2 max-h-48 overflow-auto rounded-md border">
             <table className="w-full text-[11px]">
               <thead className="bg-muted/30">
                 <tr>
-                  <th className="px-2 py-1 text-left">when</th>
-                  <th className="px-2 py-1 text-left">worker</th>
-                  <th className="px-2 py-1 text-right">ms</th>
-                  <th className="px-2 py-1">ok</th>
+                  <th className="px-2 py-1 text-left">
+                    {t('web.memoryWorkers.tableWhen')}
+                  </th>
+                  <th className="px-2 py-1 text-left">
+                    {t('web.memoryWorkers.tableWorker')}
+                  </th>
+                  <th className="px-2 py-1 text-right">
+                    {t('web.memoryWorkers.tableMs')}
+                  </th>
+                  <th className="px-2 py-1">
+                    {t('web.memoryWorkers.tableOk')}
+                  </th>
                 </tr>
               </thead>
               <tbody>

@@ -8,6 +8,7 @@ import { Link } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Check, ChevronRight, Loader2, Trash2, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -20,6 +21,7 @@ import {
 } from '@/lib/memoryCleanup'
 
 export function CleanupInboxPage() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
 
   const query = useQuery({
@@ -32,14 +34,14 @@ export function CleanupInboxPage() {
   const grouped = useMemo(() => {
     const m = new Map<string, CleanupDecision[]>()
     for (const d of query.data ?? []) {
-      const key = `${d.memory_scope}:${d.memory_scope_key || '(global)'}`
+      const key = `${d.memory_scope}:${d.memory_scope_key || t('web.cleanupInbox.globalScope')}`
       if (!m.has(key)) m.set(key, [])
       m.get(key)!.push(d)
     }
     return [...m.entries()].sort((a, b) =>
       a[0].localeCompare(b[0]),
     )
-  }, [query.data])
+  }, [query.data, t])
 
   const refresh = () =>
     qc.invalidateQueries({ queryKey: ['cleanup-decisions'] })
@@ -47,7 +49,8 @@ export function CleanupInboxPage() {
   if (query.isLoading) {
     return (
       <div className="text-muted-foreground flex items-center gap-2 p-6 text-sm">
-        <Loader2 className="h-3 w-3 animate-spin" /> Loading…
+        <Loader2 className="h-3 w-3 animate-spin" />{' '}
+        {t('web.cleanupInbox.loading')}
       </div>
     )
   }
@@ -55,11 +58,11 @@ export function CleanupInboxPage() {
   if ((query.data ?? []).length === 0) {
     return (
       <div className="mx-auto max-w-2xl space-y-2 p-12 text-center">
-        <h1 className="text-lg font-semibold">Cleanup inbox empty</h1>
+        <h1 className="text-lg font-semibold">
+          {t('web.cleanupInbox.emptyTitle')}
+        </h1>
         <p className="text-muted-foreground text-sm">
-          No pending cleanup decisions across any project. The LLM librarian
-          either hasn't run yet for the eligible memories, or it found
-          everything load-bearing.
+          {t('web.cleanupInbox.emptyDescription')}
         </p>
       </div>
     )
@@ -68,11 +71,9 @@ export function CleanupInboxPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <div>
-        <h1 className="text-xl font-semibold">Cleanup inbox</h1>
+        <h1 className="text-xl font-semibold">{t('web.cleanupInbox.title')}</h1>
         <p className="text-muted-foreground text-sm">
-          Cross-project pending decisions from the LLM memory librarian.
-          Approving stale → deletes, approving duplicate → merges,
-          approving keep → freezes the entry from being re-judged for a while.
+          {t('web.cleanupInbox.subtitle')}
         </p>
       </div>
 
@@ -89,9 +90,9 @@ export function CleanupInboxPage() {
                   <Badge
                     variant="muted"
                     className="text-[9px]"
-                    title="Truncated scope_key (old mirror import). Not a navigable project."
+                    title={t('web.cleanupInbox.orphanTitle')}
                   >
-                    orphan
+                    {t('web.cleanupInbox.orphanBadge')}
                   </Badge>
                 )}
               </div>
@@ -101,7 +102,8 @@ export function CleanupInboxPage() {
                   search={{ cwd: scopeKey }}
                   className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs"
                 >
-                  Open project <ChevronRight className="h-3 w-3" />
+                  {t('web.cleanupInbox.openProject')}{' '}
+                  <ChevronRight className="h-3 w-3" />
                 </Link>
               )}
             </header>
@@ -131,27 +133,36 @@ function CleanupRow({
   decision: CleanupDecision
   onChange: () => void
 }) {
+  const { t } = useTranslation()
   const approve = useMutation({
     mutationFn: () => approveDecision(decision.id),
     onSuccess: () => {
       toast.success(
-        decision.verdict === 'keep' ? 'Kept' : `${decision.verdict} executed`,
+        decision.verdict === 'keep'
+          ? t('web.cleanupInbox.approvedKeptToast')
+          : t('web.cleanupInbox.approvedExecutedToast', {
+              verdict: decision.verdict,
+            }),
       )
       onChange()
     },
     onError: (e: Error) => {
-      toast.error('Approve failed', { description: e.message })
+      toast.error(t('web.cleanupInbox.approveFailedToast'), {
+        description: e.message,
+      })
       onChange()
     },
   })
   const reject = useMutation({
     mutationFn: () => rejectDecision(decision.id),
     onSuccess: () => {
-      toast.success('Rejected — memory kept')
+      toast.success(t('web.cleanupInbox.rejectedToast'))
       onChange()
     },
     onError: (e: Error) => {
-      toast.error('Reject failed', { description: e.message })
+      toast.error(t('web.cleanupInbox.rejectFailedToast'), {
+        description: e.message,
+      })
       onChange()
     },
   })
@@ -174,7 +185,8 @@ function CleanupRow({
         </span>
         {decision.merge_into && (
           <span className="text-muted-foreground font-mono text-[10px]">
-            → merge into {decision.merge_into.slice(-8)}
+            {t('web.cleanupInbox.mergeIntoPrefix')}{' '}
+            {decision.merge_into.slice(-8)}
           </span>
         )}
       </div>
@@ -182,7 +194,7 @@ function CleanupRow({
         {decision.memory_text_snapshot}
       </pre>
       <p className="text-muted-foreground mb-3 text-xs italic">
-        Reason: {decision.reason}
+        {t('web.cleanupInbox.reasonPrefix')} {decision.reason}
       </p>
       <div className="flex gap-2">
         <Button
@@ -198,7 +210,9 @@ function CleanupRow({
           ) : (
             <Trash2 className="mr-1 h-3 w-3" />
           )}
-          {decision.verdict === 'keep' ? 'Confirm keep' : 'Execute'}
+          {decision.verdict === 'keep'
+            ? t('web.cleanupInbox.confirmKeepButton')
+            : t('web.cleanupInbox.executeButton')}
         </Button>
         <Button
           size="sm"
@@ -207,7 +221,7 @@ function CleanupRow({
           disabled={approve.isPending || reject.isPending}
         >
           <X className="mr-1 h-3 w-3" />
-          Reject
+          {t('web.cleanupInbox.rejectButton')}
         </Button>
       </div>
     </div>

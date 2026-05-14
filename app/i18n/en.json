@@ -205,6 +205,92 @@
         "mkdirFailedToast": "Mkdir failed",
         "homeFailedToast": "Failed to read home"
       }
+    },
+    "memory": {
+      "title": "Memory",
+      "subtitle": "Browse, search and edit memories agents have stored via the opendray-memory MCP server.",
+      "navProject": "Project",
+      "navCleanupInbox": "Cleanup inbox",
+      "navWorkers": "Workers",
+      "navConfiguration": "Configuration →"
+    },
+    "memoryWorkers": {
+      "title": "Memory workers",
+      "loading": "Loading worker config…",
+      "errorTitle": "Endpoint not reachable.",
+      "errorDescription": "The /api/v1/memory/workers routes are new in M25 — the opendray binary may need a restart to mount them and run migration 0029.",
+      "intro": "Each memory-system LLM touchpoint can be served independently by the local <1>summarizer</1> endpoint (LM Studio / OpenAI-compat) or by spawning a headless <3>Claude / Gemini agent</3> in <5>--print</5> mode. High-quality narrative tasks (gitactivity, transcript) benefit from agent workers; high-frequency tasks (gatekeeper) stay on the local endpoint by design.",
+      "enabledBadge": "enabled",
+      "disabledBadge": "disabled",
+      "summarizerOnlyBadge": "summarizer-only",
+      "callsCount": "{count} calls · 24h",
+      "avgMs": "avg {ms}ms",
+      "errorsCount": "{count} errors",
+      "workerLabel": "Worker",
+      "summarizerHttp": "Summarizer (HTTP)",
+      "agentCliPrint": "Agent (CLI --print)",
+      "summarizerProviderLabel": "Summarizer provider",
+      "registryDefault": "Registry default",
+      "cliLabel": "CLI",
+      "selectPlaceholder": "Select",
+      "cliClaude": "Claude",
+      "cliGemini": "Gemini",
+      "claudeAccountLabel": "Claude account",
+      "claudeAccountDefault": "Default",
+      "agentWarning": "Agent mode spawns a headless CLI per call. Latency rises from <1>~1s</1> (summarizer) to <3>~5-15s</3>; cost shifts from CPU to your Claude/Gemini quota.",
+      "enabledCheckbox": "Enabled",
+      "testButton": "Test",
+      "saveButton": "Save",
+      "recentCalls": "Recent calls ({count})",
+      "tableWhen": "when",
+      "tableWorker": "worker",
+      "tableMs": "ms",
+      "tableOk": "ok",
+      "savedToast": "{label} updated",
+      "saveFailedToast": "Save failed",
+      "testOkToast": "{label} OK — {ms}ms",
+      "testFailedToast": "{label} failed",
+      "testCallFailedToast": "Test call failed",
+      "unknownError": "unknown error",
+      "tasks": {
+        "gatekeeper": {
+          "label": "Gatekeeper",
+          "description": "Pre-write filter on every memory_store. High frequency (<500ms target) — summarizer-only."
+        },
+        "cleaner": {
+          "label": "Cleaner librarian",
+          "description": "Periodic LLM librarian. Judges aged memories as keep / stale / duplicate."
+        },
+        "gitactivity": {
+          "label": "Git activity summariser",
+          "description": "git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker."
+        },
+        "transcript": {
+          "label": "Session transcript summariser",
+          "description": "Session-end \"what did the agent do\" summary. Naturally fits an agent worker."
+        }
+      }
+    },
+    "cleanupInbox": {
+      "loading": "Loading…",
+      "emptyTitle": "Cleanup inbox empty",
+      "emptyDescription": "No pending cleanup decisions across any project. The LLM librarian either hasn't run yet for the eligible memories, or it found everything load-bearing.",
+      "title": "Cleanup inbox",
+      "subtitle": "Cross-project pending decisions from the LLM memory librarian. Approving stale → deletes, approving duplicate → merges, approving keep → freezes the entry from being re-judged for a while.",
+      "globalScope": "(global)",
+      "orphanBadge": "orphan",
+      "orphanTitle": "Truncated scope_key (old mirror import). Not a navigable project.",
+      "openProject": "Open project",
+      "mergeIntoPrefix": "→ merge into",
+      "reasonPrefix": "Reason:",
+      "executeButton": "Execute",
+      "confirmKeepButton": "Confirm keep",
+      "rejectButton": "Reject",
+      "approvedKeptToast": "Kept",
+      "approvedExecutedToast": "{verdict} executed",
+      "approveFailedToast": "Approve failed",
+      "rejectedToast": "Rejected — memory kept",
+      "rejectFailedToast": "Reject failed"
     }
   },
   "more": {
