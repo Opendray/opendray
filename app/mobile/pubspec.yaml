@@ -10,6 +10,12 @@ environment:
 dependencies:
   cupertino_icons: ^1.0.8
   dio: ^5.7.0
+  # file_picker is required for backup restore + admin import:
+  # the operator must hand opendray a .tar.gz.enc bundle or a
+  # JSON export package from the phone's file system. The web
+  # client uses <input type=file>; mobile needs an explicit
+  # native picker since dart:html isn't available.
+  file_picker: ^8.1.6
   flutter:
     sdk: flutter
   flutter_localizations:

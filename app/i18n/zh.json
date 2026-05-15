@@ -2353,6 +2353,10 @@
         "title": "备份",
         "subtitle": "最新备份状态与立即运行"
       },
+      "dataExport": {
+        "title": "数据导出与导入",
+        "subtitle": "用户级数据包（记忆 / 集成 / 自定义任务）"
+      },
       "settings": {
         "title": "设置",
         "subtitle": "语言、外观、账户"
@@ -3028,6 +3032,56 @@
       "passphraseLabel": "你的密语",
       "passphraseHint": "至少 20 个字符",
       "passphraseCopied": "密语已复制到剪贴板"
+    },
+    "restoreFromFile": "从文件恢复",
+    "restore": {
+      "title": "从备份包恢复",
+      "subtitle": "将加密的 .tar.gz.enc 备份包重放到 Postgres 数据库。备份包将从本机上传 — 请选择此前生成的文件。",
+      "bundleLabel": "备份文件（.tar.gz.enc）",
+      "pickFile": "选择文件",
+      "fileSelected": "{name} · {size}",
+      "noFile": "未选择文件",
+      "targetDsnLabel": "目标 Postgres DSN",
+      "targetDsnHint": "留空表示恢复到 opendray 自身的数据库。",
+      "targetDsnPlaceholder": "postgres://user:pass@host:5432/dbname",
+      "cleanLabel": "pg_restore --clean --if-exists",
+      "cleanHint": "重新创建之前先删除已存在的对象。",
+      "auditNoteLabel": "审计备注（可选）",
+      "auditNotePlaceholder": "例如：恢复 #INC-481",
+      "ownDbWarning": "恢复到 opendray 自身的数据库将覆写本网关当前提供服务的数据。请输入 \"I understand\" 以确认。",
+      "confirmPlaceholder": "输入 \"I understand\"",
+      "confirmSentinel": "I understand",
+      "restoring": "恢复中…",
+      "restore": "恢复",
+      "succeededTitle": "恢复成功",
+      "succeededBody": "已从备份 {id} 重放 {bytes}。",
+      "failedTitle": "恢复失败",
+      "pickFileToast": "请先选择一个备份文件。",
+      "outputTitle": "pg_restore 输出",
+      "noPgRestoreOutput": "（空 — 恢复无声完成）",
+      "manifestTitle": "清单",
+      "manifestBackupId": "备份 ID",
+      "manifestVersion": "清单版本",
+      "manifestCreatedAt": "创建时间",
+      "manifestPgVersion": "pg_version",
+      "manifestOpendrayVersion": "opendray 版本",
+      "fingerprint": "密钥指纹",
+      "fingerprintOk": "已匹配",
+      "fingerprintMismatch": "不匹配",
+      "encryptionAlgo": "加密算法",
+      "bytesRead": "已读字节",
+      "targetDsnUsed": "目标 DSN",
+      "targetDsnSelfLabel": "（opendray 自身数据库）",
+      "done": "完成"
+    },
+    "inventory": {
+      "title": "备份里有什么",
+      "summary": "{rows} 行 · {tables} 表",
+      "description": "opendray Postgres 数据库的实时行数。备份会捕获以下所有行；磁盘上的二进制工件不包含在内。",
+      "rowsLabel": "行",
+      "loadFailedToast": "加载清单失败",
+      "loading": "加载中…",
+      "tap": "点击展开"
     }
   },
   "backupTargets": {
@@ -3438,6 +3492,120 @@
       "saveFailedApi": "保存失败：{error}",
       "saveFailedGeneric": "保存失败：{error}",
       "savedAt": "{time} 已保存"
+    }
+  },
+  "dataExport": {
+    "title": "数据导出与导入",
+    "subtitle": "面向用户的数据包，用于迁移或验证 — 与 /backups（灾难恢复）相互独立。",
+    "sections": {
+      "export": "导出",
+      "import": "导入"
+    },
+    "form": {
+      "scope": "范围",
+      "memories": "记忆",
+      "memoriesHint": "所有已持久化的记忆及其向量。",
+      "integrations": "集成",
+      "integrationOptions": {
+        "none": "跳过",
+        "noneHint": "不包含 /integrations 注册表。",
+        "metadata": "仅元数据（默认）",
+        "metadataHint": "每个集成的名称 + 端点，不含 API 密钥。",
+        "plaintext": "明文密钥",
+        "plaintextHint": "危险：包含原始 API 令牌。v1 仅存储 bcrypt 哈希，因此此选项当前实际为空操作；仍然提供以提示这一事实。"
+      },
+      "confirmWarning": "明文密钥导出包含可解密的机密。请输入 \"I understand\" 以确认。",
+      "confirmPlaceholder": "输入 \"I understand\"",
+      "confirmSentinel": "I understand",
+      "customTasks": "自定义任务",
+      "customTasksHint": "用户级任务定义（cron 计划 + 脚本主体）。",
+      "footnote": "数据包在创建后 7 天过期。下载链接为单次使用。",
+      "create": "创建数据包",
+      "building": "构建中…",
+      "readyToast": "数据包已就绪",
+      "readyDescription": "{bytes} 字节 — 在下方历史中下载。",
+      "failedToast": "数据包创建失败：{error}"
+    },
+    "history": {
+      "title": "导出历史",
+      "loading": "加载中…",
+      "empty": "暂无导出。",
+      "listFailedToast": "加载导出失败：{error}",
+      "downloadFailedToast": "获取下载令牌失败：{error}",
+      "noTokenToast": "该导出无可用的下载令牌（已消费或过期）。",
+      "deletedToast": "已删除导出。",
+      "deleteFailedToast": "删除导出失败：{error}",
+      "deleteConfirmTitle": "删除导出？",
+      "deleteConfirmBody": "移除数据包并撤销下载令牌。{id}",
+      "download": "下载",
+      "delete": "删除",
+      "downloadCopiedToast": "下载 URL 已复制到剪贴板。在浏览器中粘贴以获取（单次使用）。",
+      "columns": {
+        "scope": "范围",
+        "size": "大小",
+        "expires": "过期",
+        "actions": "操作"
+      },
+      "scopeEmpty": "（空）",
+      "scopeMemories": "记忆",
+      "scopeIntegrations": "集成({mode})",
+      "scopeCustomTasks": "自定义任务"
+    },
+    "import": {
+      "intro": "重放此前由「导出」生成的数据包。仅勾选的实体会被导入；数据包中其余内容会被忽略。",
+      "bundleLabel": "数据包文件（.zip）",
+      "pickFile": "选择文件",
+      "fileSelected": "{name} · {size}",
+      "noFile": "未选择文件",
+      "memoriesLabel": "记忆",
+      "integrationsLabel": "集成",
+      "customTasksLabel": "自定义任务",
+      "importBundle": "导入数据包",
+      "importing": "导入中…",
+      "pickFileToast": "请先选择数据包文件。",
+      "doneToast": "导入完成",
+      "finishedWithErrors": "导入完成但有错误",
+      "failedToast": "导入失败：{error}",
+      "summaryCard": {
+        "memories": "记忆",
+        "integrations": "集成",
+        "customTasks": "自定义任务",
+        "created": "创建",
+        "skipped": "跳过",
+        "failed": "失败"
+      }
+    },
+    "imports": {
+      "title": "导入历史",
+      "loading": "加载中…",
+      "empty": "暂无导入。",
+      "listFailedToast": "加载导入失败：{error}",
+      "noneCounts": "（无计数）",
+      "sourceUnknown": "（未知来源）",
+      "columns": {
+        "id": "ID",
+        "status": "状态",
+        "source": "来源",
+        "counts": "计数",
+        "when": "时间"
+      }
+    },
+    "relative": {
+      "inSeconds": "{n} 秒后",
+      "inMinutes": "{n} 分钟后",
+      "inHours": "{n} 小时后",
+      "inDays": "{n} 天后",
+      "secondsAgo": "{n} 秒前",
+      "minutesAgo": "{n} 分钟前",
+      "hoursAgo": "{n} 小时前"
+    },
+    "status": {
+      "pending": "等待",
+      "running": "运行中",
+      "ready": "就绪",
+      "failed": "失败",
+      "expired": "过期",
+      "succeeded": "成功"
     }
   },
   "memory": {

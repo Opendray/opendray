@@ -7,6 +7,7 @@ import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/backups/backups_screen.dart';
 import 'package:opendray/features/channels/channels_screen.dart';
 import 'package:opendray/features/custom_tasks/custom_tasks_screen.dart';
+import 'package:opendray/features/data_export/data_export_screen.dart';
 import 'package:opendray/features/githosts/githosts_screen.dart';
 import 'package:opendray/features/integrations/integrations_screen.dart';
 import 'package:opendray/features/mcp/mcp_screen.dart';
@@ -108,6 +109,12 @@ class MoreScreen extends ConsumerWidget {
             onTap: () => _push(context, const BackupsScreen()),
           ),
           _MenuTile(
+            icon: Icons.import_export_outlined,
+            title: t.more.items.dataExport.title,
+            subtitle: t.more.items.dataExport.subtitle,
+            onTap: () => _push(context, const DataExportScreen()),
+          ),
+          _MenuTile(
             icon: Icons.tune_outlined,
             title: t.more.items.settings.title,
             subtitle: t.more.items.settings.subtitle,
@@ -126,10 +133,9 @@ class MoreScreen extends ConsumerWidget {
               style: OutlinedButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.error,
                 side: BorderSide(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .error
-                      .withValues(alpha: 0.4),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.error.withValues(alpha: 0.4),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
@@ -144,9 +150,7 @@ class MoreScreen extends ConsumerWidget {
   }
 
   void _push(BuildContext context, Widget page) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => page),
-    );
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
   }
 }
 
@@ -201,12 +205,9 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         label.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              letterSpacing: 0.8,
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.6),
-            ),
+          letterSpacing: 0.8,
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+        ),
       ),
     );
   }
@@ -231,10 +232,7 @@ class _MenuTile extends StatelessWidget {
       onTap: onTap,
       leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
       title: Text(title),
-      subtitle: Text(
-        subtitle,
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
+      subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
       trailing: const Icon(Icons.chevron_right),
     );
   }

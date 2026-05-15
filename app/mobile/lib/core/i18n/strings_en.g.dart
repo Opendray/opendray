@@ -62,6 +62,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsSkillsEn skills = TranslationsSkillsEn.internal(_root);
 	late final TranslationsCustomTasksEn customTasks = TranslationsCustomTasksEn.internal(_root);
 	late final TranslationsNotesPageEn notesPage = TranslationsNotesPageEn.internal(_root);
+	late final TranslationsDataExportEn dataExport = TranslationsDataExportEn.internal(_root);
 	late final TranslationsMemoryEn memory = TranslationsMemoryEn.internal(_root);
 	late final TranslationsAboutEn about = TranslationsAboutEn.internal(_root);
 	late final TranslationsSettingsEn settings = TranslationsSettingsEn.internal(_root);
@@ -933,6 +934,12 @@ class TranslationsBackupsEn {
 	String get pgDumpMissing => 'pg_dump is not on PATH. Install postgresql-client and restart opendray.';
 
 	late final TranslationsBackupsEncryptionEn encryption = TranslationsBackupsEncryptionEn.internal(_root);
+
+	/// en: 'Restore from file'
+	String get restoreFromFile => 'Restore from file';
+
+	late final TranslationsBackupsRestoreEn restore = TranslationsBackupsRestoreEn.internal(_root);
+	late final TranslationsBackupsInventoryEn inventory = TranslationsBackupsInventoryEn.internal(_root);
 }
 
 // Path: backupTargets
@@ -1687,6 +1694,29 @@ class TranslationsNotesPageEn {
 	String get pathHelper => 'Auto-appends .md if missing.';
 
 	late final TranslationsNotesPageEditorEn editor = TranslationsNotesPageEditorEn.internal(_root);
+}
+
+// Path: dataExport
+class TranslationsDataExportEn {
+	TranslationsDataExportEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Data export & import'
+	String get title => 'Data export & import';
+
+	/// en: 'User-level bundles for migration or verification — separate from /backups (disaster recovery).'
+	String get subtitle => 'User-level bundles for migration or verification — separate from /backups (disaster recovery).';
+
+	late final TranslationsDataExportSectionsEn sections = TranslationsDataExportSectionsEn.internal(_root);
+	late final TranslationsDataExportFormEn form = TranslationsDataExportFormEn.internal(_root);
+	late final TranslationsDataExportHistoryEn history = TranslationsDataExportHistoryEn.internal(_root);
+	late final TranslationsDataExportImportEn import = TranslationsDataExportImportEn.internal(_root);
+	late final TranslationsDataExportImportsEn imports = TranslationsDataExportImportsEn.internal(_root);
+	late final TranslationsDataExportRelativeEn relative = TranslationsDataExportRelativeEn.internal(_root);
+	late final TranslationsDataExportStatusEn status = TranslationsDataExportStatusEn.internal(_root);
 }
 
 // Path: memory
@@ -2825,6 +2855,7 @@ class TranslationsMoreItemsEn {
 	late final TranslationsMoreItemsProjectMemoryEn projectMemory = TranslationsMoreItemsProjectMemoryEn.internal(_root);
 	late final TranslationsMoreItemsCleanupInboxEn cleanupInbox = TranslationsMoreItemsCleanupInboxEn.internal(_root);
 	late final TranslationsMoreItemsBackupsEn backups = TranslationsMoreItemsBackupsEn.internal(_root);
+	late final TranslationsMoreItemsDataExportEn dataExport = TranslationsMoreItemsDataExportEn.internal(_root);
 	late final TranslationsMoreItemsSettingsEn settings = TranslationsMoreItemsSettingsEn.internal(_root);
 	late final TranslationsMoreItemsAboutEn about = TranslationsMoreItemsAboutEn.internal(_root);
 }
@@ -3764,6 +3795,159 @@ class TranslationsBackupsEncryptionEn {
 	String get passphraseCopied => 'Passphrase copied to clipboard';
 }
 
+// Path: backups.restore
+class TranslationsBackupsRestoreEn {
+	TranslationsBackupsRestoreEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Restore from bundle'
+	String get title => 'Restore from bundle';
+
+	/// en: 'Replay an encrypted .tar.gz.enc bundle into a Postgres database. The bundle is uploaded from this phone — pick a file produced by a prior backup.'
+	String get subtitle => 'Replay an encrypted .tar.gz.enc bundle into a Postgres database. The bundle is uploaded from this phone — pick a file produced by a prior backup.';
+
+	/// en: 'Bundle file (.tar.gz.enc)'
+	String get bundleLabel => 'Bundle file (.tar.gz.enc)';
+
+	/// en: 'Pick file'
+	String get pickFile => 'Pick file';
+
+	/// en: '{name} · {size}'
+	String fileSelected({required Object name, required Object size}) => '${name} · ${size}';
+
+	/// en: 'No file selected'
+	String get noFile => 'No file selected';
+
+	/// en: 'Target Postgres DSN'
+	String get targetDsnLabel => 'Target Postgres DSN';
+
+	/// en: 'Leave empty to restore into opendray's own DB.'
+	String get targetDsnHint => 'Leave empty to restore into opendray\'s own DB.';
+
+	/// en: 'postgres://user:pass@host:5432/dbname'
+	String get targetDsnPlaceholder => 'postgres://user:pass@host:5432/dbname';
+
+	/// en: 'pg_restore --clean --if-exists'
+	String get cleanLabel => 'pg_restore --clean --if-exists';
+
+	/// en: 'Drops existing objects before recreating them.'
+	String get cleanHint => 'Drops existing objects before recreating them.';
+
+	/// en: 'Audit note (optional)'
+	String get auditNoteLabel => 'Audit note (optional)';
+
+	/// en: 'e.g. recovering from #INC-481'
+	String get auditNotePlaceholder => 'e.g. recovering from #INC-481';
+
+	/// en: 'Restoring into opendray's OWN database will rewrite the rows this gateway is currently serving. Type "I understand" to confirm.'
+	String get ownDbWarning => 'Restoring into opendray\'s OWN database will rewrite the rows this gateway is currently serving. Type "I understand" to confirm.';
+
+	/// en: 'Type "I understand"'
+	String get confirmPlaceholder => 'Type "I understand"';
+
+	/// en: 'I understand'
+	String get confirmSentinel => 'I understand';
+
+	/// en: 'Restoring…'
+	String get restoring => 'Restoring…';
+
+	/// en: 'Restore'
+	String get restore => 'Restore';
+
+	/// en: 'Restore succeeded'
+	String get succeededTitle => 'Restore succeeded';
+
+	/// en: 'Replayed {bytes} from backup {id}.'
+	String succeededBody({required Object bytes, required Object id}) => 'Replayed ${bytes} from backup ${id}.';
+
+	/// en: 'Restore failed'
+	String get failedTitle => 'Restore failed';
+
+	/// en: 'Pick a bundle file first.'
+	String get pickFileToast => 'Pick a bundle file first.';
+
+	/// en: 'pg_restore output'
+	String get outputTitle => 'pg_restore output';
+
+	/// en: '(empty — restore completed silently)'
+	String get noPgRestoreOutput => '(empty — restore completed silently)';
+
+	/// en: 'Manifest'
+	String get manifestTitle => 'Manifest';
+
+	/// en: 'Backup ID'
+	String get manifestBackupId => 'Backup ID';
+
+	/// en: 'Manifest version'
+	String get manifestVersion => 'Manifest version';
+
+	/// en: 'Created'
+	String get manifestCreatedAt => 'Created';
+
+	/// en: 'pg_version'
+	String get manifestPgVersion => 'pg_version';
+
+	/// en: 'opendray version'
+	String get manifestOpendrayVersion => 'opendray version';
+
+	/// en: 'Key fingerprint'
+	String get fingerprint => 'Key fingerprint';
+
+	/// en: 'matched'
+	String get fingerprintOk => 'matched';
+
+	/// en: 'MISMATCH'
+	String get fingerprintMismatch => 'MISMATCH';
+
+	/// en: 'Encryption'
+	String get encryptionAlgo => 'Encryption';
+
+	/// en: 'Bytes read'
+	String get bytesRead => 'Bytes read';
+
+	/// en: 'Target DSN'
+	String get targetDsnUsed => 'Target DSN';
+
+	/// en: '(opendray's own DB)'
+	String get targetDsnSelfLabel => '(opendray\'s own DB)';
+
+	/// en: 'Done'
+	String get done => 'Done';
+}
+
+// Path: backups.inventory
+class TranslationsBackupsInventoryEn {
+	TranslationsBackupsInventoryEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'What's in a backup'
+	String get title => 'What\'s in a backup';
+
+	/// en: '{rows} rows · {tables} tables'
+	String summary({required Object rows, required Object tables}) => '${rows} rows · ${tables} tables';
+
+	/// en: 'Live row counts from opendray's Postgres database. Backups capture every row below; binary artifacts on disk are not included.'
+	String get description => 'Live row counts from opendray\'s Postgres database. Backups capture every row below; binary artifacts on disk are not included.';
+
+	/// en: 'rows'
+	String get rowsLabel => 'rows';
+
+	/// en: 'Failed to load inventory'
+	String get loadFailedToast => 'Failed to load inventory';
+
+	/// en: 'Loading…'
+	String get loading => 'Loading…';
+
+	/// en: 'Tap to expand'
+	String get tap => 'Tap to expand';
+}
+
 // Path: backupTargetEditor.kinds
 class TranslationsBackupTargetEditorKindsEn {
 	TranslationsBackupTargetEditorKindsEn.internal(this._root);
@@ -4100,6 +4284,278 @@ class TranslationsNotesPageEditorEn {
 
 	/// en: 'Saved {time}'
 	String savedAt({required Object time}) => 'Saved ${time}';
+}
+
+// Path: dataExport.sections
+class TranslationsDataExportSectionsEn {
+	TranslationsDataExportSectionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Export'
+	String get export => 'Export';
+
+	/// en: 'Import'
+	String get import => 'Import';
+}
+
+// Path: dataExport.form
+class TranslationsDataExportFormEn {
+	TranslationsDataExportFormEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Scope'
+	String get scope => 'Scope';
+
+	/// en: 'Memories'
+	String get memories => 'Memories';
+
+	/// en: 'All persisted memories + their embeddings.'
+	String get memoriesHint => 'All persisted memories + their embeddings.';
+
+	/// en: 'Integrations'
+	String get integrations => 'Integrations';
+
+	late final TranslationsDataExportFormIntegrationOptionsEn integrationOptions = TranslationsDataExportFormIntegrationOptionsEn.internal(_root);
+
+	/// en: 'Plaintext key export contains decryptable secrets. Type "I understand" to confirm.'
+	String get confirmWarning => 'Plaintext key export contains decryptable secrets. Type "I understand" to confirm.';
+
+	/// en: 'Type "I understand"'
+	String get confirmPlaceholder => 'Type "I understand"';
+
+	/// en: 'I understand'
+	String get confirmSentinel => 'I understand';
+
+	/// en: 'Custom tasks'
+	String get customTasks => 'Custom tasks';
+
+	/// en: 'Per-user task definitions (cron schedules + script bodies).'
+	String get customTasksHint => 'Per-user task definitions (cron schedules + script bodies).';
+
+	/// en: 'Bundles expire 7 days after creation. Download link is single-use.'
+	String get footnote => 'Bundles expire 7 days after creation. Download link is single-use.';
+
+	/// en: 'Create bundle'
+	String get create => 'Create bundle';
+
+	/// en: 'Building…'
+	String get building => 'Building…';
+
+	/// en: 'Bundle ready'
+	String get readyToast => 'Bundle ready';
+
+	/// en: '{bytes} bytes — download from the history below.'
+	String readyDescription({required Object bytes}) => '${bytes} bytes — download from the history below.';
+
+	/// en: 'Bundle creation failed: {error}'
+	String failedToast({required Object error}) => 'Bundle creation failed: ${error}';
+}
+
+// Path: dataExport.history
+class TranslationsDataExportHistoryEn {
+	TranslationsDataExportHistoryEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Export history'
+	String get title => 'Export history';
+
+	/// en: 'Loading…'
+	String get loading => 'Loading…';
+
+	/// en: 'No exports yet.'
+	String get empty => 'No exports yet.';
+
+	/// en: 'Failed to load exports: {error}'
+	String listFailedToast({required Object error}) => 'Failed to load exports: ${error}';
+
+	/// en: 'Failed to fetch download token: {error}'
+	String downloadFailedToast({required Object error}) => 'Failed to fetch download token: ${error}';
+
+	/// en: 'This export has no usable download token (already consumed or expired).'
+	String get noTokenToast => 'This export has no usable download token (already consumed or expired).';
+
+	/// en: 'Export deleted.'
+	String get deletedToast => 'Export deleted.';
+
+	/// en: 'Failed to delete export: {error}'
+	String deleteFailedToast({required Object error}) => 'Failed to delete export: ${error}';
+
+	/// en: 'Delete export?'
+	String get deleteConfirmTitle => 'Delete export?';
+
+	/// en: 'Removes the bundle and revokes the download token. {id}'
+	String deleteConfirmBody({required Object id}) => 'Removes the bundle and revokes the download token. ${id}';
+
+	/// en: 'Download'
+	String get download => 'Download';
+
+	/// en: 'Delete'
+	String get delete => 'Delete';
+
+	/// en: 'Download URL copied to clipboard. Paste into a browser to fetch (single-use).'
+	String get downloadCopiedToast => 'Download URL copied to clipboard. Paste into a browser to fetch (single-use).';
+
+	late final TranslationsDataExportHistoryColumnsEn columns = TranslationsDataExportHistoryColumnsEn.internal(_root);
+
+	/// en: '(empty)'
+	String get scopeEmpty => '(empty)';
+
+	/// en: 'memories'
+	String get scopeMemories => 'memories';
+
+	/// en: 'integrations({mode})'
+	String scopeIntegrations({required Object mode}) => 'integrations(${mode})';
+
+	/// en: 'custom_tasks'
+	String get scopeCustomTasks => 'custom_tasks';
+}
+
+// Path: dataExport.import
+class TranslationsDataExportImportEn {
+	TranslationsDataExportImportEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Replays a bundle previously produced by Export. Only the entities you tick below are imported; everything else in the bundle is ignored.'
+	String get intro => 'Replays a bundle previously produced by Export. Only the entities you tick below are imported; everything else in the bundle is ignored.';
+
+	/// en: 'Bundle file (.zip)'
+	String get bundleLabel => 'Bundle file (.zip)';
+
+	/// en: 'Pick file'
+	String get pickFile => 'Pick file';
+
+	/// en: '{name} · {size}'
+	String fileSelected({required Object name, required Object size}) => '${name} · ${size}';
+
+	/// en: 'No file selected'
+	String get noFile => 'No file selected';
+
+	/// en: 'Memories'
+	String get memoriesLabel => 'Memories';
+
+	/// en: 'Integrations'
+	String get integrationsLabel => 'Integrations';
+
+	/// en: 'Custom tasks'
+	String get customTasksLabel => 'Custom tasks';
+
+	/// en: 'Import bundle'
+	String get importBundle => 'Import bundle';
+
+	/// en: 'Importing…'
+	String get importing => 'Importing…';
+
+	/// en: 'Pick a bundle file first.'
+	String get pickFileToast => 'Pick a bundle file first.';
+
+	/// en: 'Import done'
+	String get doneToast => 'Import done';
+
+	/// en: 'Import finished with errors'
+	String get finishedWithErrors => 'Import finished with errors';
+
+	/// en: 'Import failed: {error}'
+	String failedToast({required Object error}) => 'Import failed: ${error}';
+
+	late final TranslationsDataExportImportSummaryCardEn summaryCard = TranslationsDataExportImportSummaryCardEn.internal(_root);
+}
+
+// Path: dataExport.imports
+class TranslationsDataExportImportsEn {
+	TranslationsDataExportImportsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Import history'
+	String get title => 'Import history';
+
+	/// en: 'Loading…'
+	String get loading => 'Loading…';
+
+	/// en: 'No imports yet.'
+	String get empty => 'No imports yet.';
+
+	/// en: 'Failed to load imports: {error}'
+	String listFailedToast({required Object error}) => 'Failed to load imports: ${error}';
+
+	/// en: '(no counts)'
+	String get noneCounts => '(no counts)';
+
+	/// en: '(unknown source)'
+	String get sourceUnknown => '(unknown source)';
+
+	late final TranslationsDataExportImportsColumnsEn columns = TranslationsDataExportImportsColumnsEn.internal(_root);
+}
+
+// Path: dataExport.relative
+class TranslationsDataExportRelativeEn {
+	TranslationsDataExportRelativeEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'in {n}s'
+	String inSeconds({required Object n}) => 'in ${n}s';
+
+	/// en: 'in {n}m'
+	String inMinutes({required Object n}) => 'in ${n}m';
+
+	/// en: 'in {n}h'
+	String inHours({required Object n}) => 'in ${n}h';
+
+	/// en: 'in {n}d'
+	String inDays({required Object n}) => 'in ${n}d';
+
+	/// en: '{n}s ago'
+	String secondsAgo({required Object n}) => '${n}s ago';
+
+	/// en: '{n}m ago'
+	String minutesAgo({required Object n}) => '${n}m ago';
+
+	/// en: '{n}h ago'
+	String hoursAgo({required Object n}) => '${n}h ago';
+}
+
+// Path: dataExport.status
+class TranslationsDataExportStatusEn {
+	TranslationsDataExportStatusEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'pending'
+	String get pending => 'pending';
+
+	/// en: 'running'
+	String get running => 'running';
+
+	/// en: 'ready'
+	String get ready => 'ready';
+
+	/// en: 'failed'
+	String get failed => 'failed';
+
+	/// en: 'expired'
+	String get expired => 'expired';
+
+	/// en: 'succeeded'
+	String get succeeded => 'succeeded';
 }
 
 // Path: memory.rank
@@ -8942,6 +9398,21 @@ class TranslationsMoreItemsBackupsEn {
 	String get subtitle => 'Latest backup status & run-now';
 }
 
+// Path: more.items.dataExport
+class TranslationsMoreItemsDataExportEn {
+	TranslationsMoreItemsDataExportEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Data export & import'
+	String get title => 'Data export & import';
+
+	/// en: 'User-level data bundles (memories / integrations / custom tasks)'
+	String get subtitle => 'User-level data bundles (memories / integrations / custom tasks)';
+}
+
 // Path: more.items.settings
 class TranslationsMoreItemsSettingsEn {
 	TranslationsMoreItemsSettingsEn.internal(this._root);
@@ -9926,6 +10397,105 @@ class TranslationsChannelsKindsWechatEn {
 
 	/// en: 'When set, tapping the WeChat notification opens this page.'
 	String get urlHint => 'When set, tapping the WeChat notification opens this page.';
+}
+
+// Path: dataExport.form.integrationOptions
+class TranslationsDataExportFormIntegrationOptionsEn {
+	TranslationsDataExportFormIntegrationOptionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Skip'
+	String get none => 'Skip';
+
+	/// en: 'Don't include the /integrations registry.'
+	String get noneHint => 'Don\'t include the /integrations registry.';
+
+	/// en: 'Metadata only (default)'
+	String get metadata => 'Metadata only (default)';
+
+	/// en: 'Per-integration name + endpoint, no API keys.'
+	String get metadataHint => 'Per-integration name + endpoint, no API keys.';
+
+	/// en: 'Plaintext keys'
+	String get plaintext => 'Plaintext keys';
+
+	/// en: 'DANGEROUS: includes raw API tokens. v1 stores only bcrypt hashes, so this is effectively a no-op today; surface anyway.'
+	String get plaintextHint => 'DANGEROUS: includes raw API tokens. v1 stores only bcrypt hashes, so this is effectively a no-op today; surface anyway.';
+}
+
+// Path: dataExport.history.columns
+class TranslationsDataExportHistoryColumnsEn {
+	TranslationsDataExportHistoryColumnsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Scope'
+	String get scope => 'Scope';
+
+	/// en: 'Size'
+	String get size => 'Size';
+
+	/// en: 'Expires'
+	String get expires => 'Expires';
+
+	/// en: 'Actions'
+	String get actions => 'Actions';
+}
+
+// Path: dataExport.import.summaryCard
+class TranslationsDataExportImportSummaryCardEn {
+	TranslationsDataExportImportSummaryCardEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Memories'
+	String get memories => 'Memories';
+
+	/// en: 'Integrations'
+	String get integrations => 'Integrations';
+
+	/// en: 'Custom tasks'
+	String get customTasks => 'Custom tasks';
+
+	/// en: 'created'
+	String get created => 'created';
+
+	/// en: 'skipped'
+	String get skipped => 'skipped';
+
+	/// en: 'failed'
+	String get failed => 'failed';
+}
+
+// Path: dataExport.imports.columns
+class TranslationsDataExportImportsColumnsEn {
+	TranslationsDataExportImportsColumnsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'ID'
+	String get id => 'ID';
+
+	/// en: 'Status'
+	String get status => 'Status';
+
+	/// en: 'Source'
+	String get source => 'Source';
+
+	/// en: 'Counts'
+	String get counts => 'Counts';
+
+	/// en: 'When'
+	String get when => 'When';
 }
 
 // Path: settings.logViewer.levels
@@ -14738,6 +15308,8 @@ extension on Translations {
 			'more.items.cleanupInbox.subtitle' => 'LLM-proposed deletions / merges across all projects',
 			'more.items.backups.title' => 'Backups',
 			'more.items.backups.subtitle' => 'Latest backup status & run-now',
+			'more.items.dataExport.title' => 'Data export & import',
+			'more.items.dataExport.subtitle' => 'User-level data bundles (memories / integrations / custom tasks)',
 			'more.items.settings.title' => 'Settings',
 			'more.items.settings.subtitle' => 'Language, appearance, account',
 			'more.items.about.title' => 'About',
@@ -14952,10 +15524,10 @@ extension on Translations {
 			'mcp.editor.create' => 'Create',
 			'mcp.secret.keyLabel' => 'Key',
 			'mcp.secret.keyHint' => 'GITHUB_TOKEN, OPENAI_KEY, …',
-			'mcp.secret.valueLabel' => 'Value',
-			'mcp.secret.keyRequired' => 'Key is required.',
 			_ => null,
 		} ?? switch (path) {
+			'mcp.secret.valueLabel' => 'Value',
+			'mcp.secret.keyRequired' => 'Key is required.',
 			'mcp.secret.keyInvalid' => 'Key must match [A-Za-z_][A-Za-z0-9_]* — same rules as a shell env var.',
 			'mcp.secret.valueRequired' => 'Value is required.',
 			'mcp.secret.replaceTitle' => 'Replace secret value',
@@ -15287,6 +15859,52 @@ extension on Translations {
 			'backups.encryption.passphraseLabel' => 'Your passphrase',
 			'backups.encryption.passphraseHint' => 'At least 20 characters',
 			'backups.encryption.passphraseCopied' => 'Passphrase copied to clipboard',
+			'backups.restoreFromFile' => 'Restore from file',
+			'backups.restore.title' => 'Restore from bundle',
+			'backups.restore.subtitle' => 'Replay an encrypted .tar.gz.enc bundle into a Postgres database. The bundle is uploaded from this phone — pick a file produced by a prior backup.',
+			'backups.restore.bundleLabel' => 'Bundle file (.tar.gz.enc)',
+			'backups.restore.pickFile' => 'Pick file',
+			'backups.restore.fileSelected' => ({required Object name, required Object size}) => '${name} · ${size}',
+			'backups.restore.noFile' => 'No file selected',
+			'backups.restore.targetDsnLabel' => 'Target Postgres DSN',
+			'backups.restore.targetDsnHint' => 'Leave empty to restore into opendray\'s own DB.',
+			'backups.restore.targetDsnPlaceholder' => 'postgres://user:pass@host:5432/dbname',
+			'backups.restore.cleanLabel' => 'pg_restore --clean --if-exists',
+			'backups.restore.cleanHint' => 'Drops existing objects before recreating them.',
+			'backups.restore.auditNoteLabel' => 'Audit note (optional)',
+			'backups.restore.auditNotePlaceholder' => 'e.g. recovering from #INC-481',
+			'backups.restore.ownDbWarning' => 'Restoring into opendray\'s OWN database will rewrite the rows this gateway is currently serving. Type "I understand" to confirm.',
+			'backups.restore.confirmPlaceholder' => 'Type "I understand"',
+			'backups.restore.confirmSentinel' => 'I understand',
+			'backups.restore.restoring' => 'Restoring…',
+			'backups.restore.restore' => 'Restore',
+			'backups.restore.succeededTitle' => 'Restore succeeded',
+			'backups.restore.succeededBody' => ({required Object bytes, required Object id}) => 'Replayed ${bytes} from backup ${id}.',
+			'backups.restore.failedTitle' => 'Restore failed',
+			'backups.restore.pickFileToast' => 'Pick a bundle file first.',
+			'backups.restore.outputTitle' => 'pg_restore output',
+			'backups.restore.noPgRestoreOutput' => '(empty — restore completed silently)',
+			'backups.restore.manifestTitle' => 'Manifest',
+			'backups.restore.manifestBackupId' => 'Backup ID',
+			'backups.restore.manifestVersion' => 'Manifest version',
+			'backups.restore.manifestCreatedAt' => 'Created',
+			'backups.restore.manifestPgVersion' => 'pg_version',
+			'backups.restore.manifestOpendrayVersion' => 'opendray version',
+			'backups.restore.fingerprint' => 'Key fingerprint',
+			'backups.restore.fingerprintOk' => 'matched',
+			'backups.restore.fingerprintMismatch' => 'MISMATCH',
+			'backups.restore.encryptionAlgo' => 'Encryption',
+			'backups.restore.bytesRead' => 'Bytes read',
+			'backups.restore.targetDsnUsed' => 'Target DSN',
+			'backups.restore.targetDsnSelfLabel' => '(opendray\'s own DB)',
+			'backups.restore.done' => 'Done',
+			'backups.inventory.title' => 'What\'s in a backup',
+			'backups.inventory.summary' => ({required Object rows, required Object tables}) => '${rows} rows · ${tables} tables',
+			'backups.inventory.description' => 'Live row counts from opendray\'s Postgres database. Backups capture every row below; binary artifacts on disk are not included.',
+			'backups.inventory.rowsLabel' => 'rows',
+			'backups.inventory.loadFailedToast' => 'Failed to load inventory',
+			'backups.inventory.loading' => 'Loading…',
+			'backups.inventory.tap' => 'Tap to expand',
 			'backupTargets.title' => 'Backup targets',
 			'backupTargets.newTarget' => 'New target',
 			'backupTargets.testConnection' => 'Test connection',
@@ -15420,6 +16038,8 @@ extension on Translations {
 			'githosts.form.tokenHintNew' => 'Paste the personal access token.',
 			'githosts.form.enabledHelper' => 'Available to sessions for PR / remote lookups.',
 			'githosts.form.validateTokenRequired' => 'Token is required when adding a host.',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.form.appBarEdit' => ({required Object name}) => 'Edit ${name}',
 			'githosts.form.appBarNew' => 'Add git host',
 			'githosts.form.tokenPreviewHint' => ({required Object preview}) => 'Current preview: ${preview}',
@@ -15468,8 +16088,6 @@ extension on Translations {
 			'channels.popup.enable' => 'Enable',
 			'channels.popup.disable' => 'Disable',
 			'channels.popup.mute' => 'Mute',
-			_ => null,
-		} ?? switch (path) {
 			'channels.popup.unmute' => 'Unmute',
 			'channels.popup.deleteLabel' => 'Delete',
 			'channels.badges.running' => 'running',
@@ -15645,6 +16263,96 @@ extension on Translations {
 			'notesPage.editor.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
 			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
 			'notesPage.editor.savedAt' => ({required Object time}) => 'Saved ${time}',
+			'dataExport.title' => 'Data export & import',
+			'dataExport.subtitle' => 'User-level bundles for migration or verification — separate from /backups (disaster recovery).',
+			'dataExport.sections.export' => 'Export',
+			'dataExport.sections.import' => 'Import',
+			'dataExport.form.scope' => 'Scope',
+			'dataExport.form.memories' => 'Memories',
+			'dataExport.form.memoriesHint' => 'All persisted memories + their embeddings.',
+			'dataExport.form.integrations' => 'Integrations',
+			'dataExport.form.integrationOptions.none' => 'Skip',
+			'dataExport.form.integrationOptions.noneHint' => 'Don\'t include the /integrations registry.',
+			'dataExport.form.integrationOptions.metadata' => 'Metadata only (default)',
+			'dataExport.form.integrationOptions.metadataHint' => 'Per-integration name + endpoint, no API keys.',
+			'dataExport.form.integrationOptions.plaintext' => 'Plaintext keys',
+			'dataExport.form.integrationOptions.plaintextHint' => 'DANGEROUS: includes raw API tokens. v1 stores only bcrypt hashes, so this is effectively a no-op today; surface anyway.',
+			'dataExport.form.confirmWarning' => 'Plaintext key export contains decryptable secrets. Type "I understand" to confirm.',
+			'dataExport.form.confirmPlaceholder' => 'Type "I understand"',
+			'dataExport.form.confirmSentinel' => 'I understand',
+			'dataExport.form.customTasks' => 'Custom tasks',
+			'dataExport.form.customTasksHint' => 'Per-user task definitions (cron schedules + script bodies).',
+			'dataExport.form.footnote' => 'Bundles expire 7 days after creation. Download link is single-use.',
+			'dataExport.form.create' => 'Create bundle',
+			'dataExport.form.building' => 'Building…',
+			'dataExport.form.readyToast' => 'Bundle ready',
+			'dataExport.form.readyDescription' => ({required Object bytes}) => '${bytes} bytes — download from the history below.',
+			'dataExport.form.failedToast' => ({required Object error}) => 'Bundle creation failed: ${error}',
+			'dataExport.history.title' => 'Export history',
+			'dataExport.history.loading' => 'Loading…',
+			'dataExport.history.empty' => 'No exports yet.',
+			'dataExport.history.listFailedToast' => ({required Object error}) => 'Failed to load exports: ${error}',
+			'dataExport.history.downloadFailedToast' => ({required Object error}) => 'Failed to fetch download token: ${error}',
+			'dataExport.history.noTokenToast' => 'This export has no usable download token (already consumed or expired).',
+			'dataExport.history.deletedToast' => 'Export deleted.',
+			'dataExport.history.deleteFailedToast' => ({required Object error}) => 'Failed to delete export: ${error}',
+			'dataExport.history.deleteConfirmTitle' => 'Delete export?',
+			'dataExport.history.deleteConfirmBody' => ({required Object id}) => 'Removes the bundle and revokes the download token. ${id}',
+			'dataExport.history.download' => 'Download',
+			'dataExport.history.delete' => 'Delete',
+			'dataExport.history.downloadCopiedToast' => 'Download URL copied to clipboard. Paste into a browser to fetch (single-use).',
+			'dataExport.history.columns.scope' => 'Scope',
+			'dataExport.history.columns.size' => 'Size',
+			'dataExport.history.columns.expires' => 'Expires',
+			'dataExport.history.columns.actions' => 'Actions',
+			'dataExport.history.scopeEmpty' => '(empty)',
+			'dataExport.history.scopeMemories' => 'memories',
+			'dataExport.history.scopeIntegrations' => ({required Object mode}) => 'integrations(${mode})',
+			'dataExport.history.scopeCustomTasks' => 'custom_tasks',
+			'dataExport.import.intro' => 'Replays a bundle previously produced by Export. Only the entities you tick below are imported; everything else in the bundle is ignored.',
+			'dataExport.import.bundleLabel' => 'Bundle file (.zip)',
+			'dataExport.import.pickFile' => 'Pick file',
+			'dataExport.import.fileSelected' => ({required Object name, required Object size}) => '${name} · ${size}',
+			'dataExport.import.noFile' => 'No file selected',
+			'dataExport.import.memoriesLabel' => 'Memories',
+			'dataExport.import.integrationsLabel' => 'Integrations',
+			'dataExport.import.customTasksLabel' => 'Custom tasks',
+			'dataExport.import.importBundle' => 'Import bundle',
+			'dataExport.import.importing' => 'Importing…',
+			'dataExport.import.pickFileToast' => 'Pick a bundle file first.',
+			'dataExport.import.doneToast' => 'Import done',
+			'dataExport.import.finishedWithErrors' => 'Import finished with errors',
+			'dataExport.import.failedToast' => ({required Object error}) => 'Import failed: ${error}',
+			'dataExport.import.summaryCard.memories' => 'Memories',
+			'dataExport.import.summaryCard.integrations' => 'Integrations',
+			'dataExport.import.summaryCard.customTasks' => 'Custom tasks',
+			'dataExport.import.summaryCard.created' => 'created',
+			'dataExport.import.summaryCard.skipped' => 'skipped',
+			'dataExport.import.summaryCard.failed' => 'failed',
+			'dataExport.imports.title' => 'Import history',
+			'dataExport.imports.loading' => 'Loading…',
+			'dataExport.imports.empty' => 'No imports yet.',
+			'dataExport.imports.listFailedToast' => ({required Object error}) => 'Failed to load imports: ${error}',
+			'dataExport.imports.noneCounts' => '(no counts)',
+			'dataExport.imports.sourceUnknown' => '(unknown source)',
+			'dataExport.imports.columns.id' => 'ID',
+			'dataExport.imports.columns.status' => 'Status',
+			'dataExport.imports.columns.source' => 'Source',
+			'dataExport.imports.columns.counts' => 'Counts',
+			'dataExport.imports.columns.when' => 'When',
+			'dataExport.relative.inSeconds' => ({required Object n}) => 'in ${n}s',
+			'dataExport.relative.inMinutes' => ({required Object n}) => 'in ${n}m',
+			'dataExport.relative.inHours' => ({required Object n}) => 'in ${n}h',
+			'dataExport.relative.inDays' => ({required Object n}) => 'in ${n}d',
+			'dataExport.relative.secondsAgo' => ({required Object n}) => '${n}s ago',
+			'dataExport.relative.minutesAgo' => ({required Object n}) => '${n}m ago',
+			'dataExport.relative.hoursAgo' => ({required Object n}) => '${n}h ago',
+			'dataExport.status.pending' => 'pending',
+			'dataExport.status.running' => 'running',
+			'dataExport.status.ready' => 'ready',
+			'dataExport.status.failed' => 'failed',
+			'dataExport.status.expired' => 'expired',
+			'dataExport.status.succeeded' => 'succeeded',
 			'memory.title' => 'Memory',
 			'memory.more' => 'More',
 			'memory.workers' => 'Memory workers',

@@ -2353,6 +2353,10 @@
         "title": "Backups",
         "subtitle": "Latest backup status & run-now"
       },
+      "dataExport": {
+        "title": "Data export & import",
+        "subtitle": "User-level data bundles (memories / integrations / custom tasks)"
+      },
       "settings": {
         "title": "Settings",
         "subtitle": "Language, appearance, account"
@@ -3028,6 +3032,56 @@
       "passphraseLabel": "Your passphrase",
       "passphraseHint": "At least 20 characters",
       "passphraseCopied": "Passphrase copied to clipboard"
+    },
+    "restoreFromFile": "Restore from file",
+    "restore": {
+      "title": "Restore from bundle",
+      "subtitle": "Replay an encrypted .tar.gz.enc bundle into a Postgres database. The bundle is uploaded from this phone — pick a file produced by a prior backup.",
+      "bundleLabel": "Bundle file (.tar.gz.enc)",
+      "pickFile": "Pick file",
+      "fileSelected": "{name} · {size}",
+      "noFile": "No file selected",
+      "targetDsnLabel": "Target Postgres DSN",
+      "targetDsnHint": "Leave empty to restore into opendray's own DB.",
+      "targetDsnPlaceholder": "postgres://user:pass@host:5432/dbname",
+      "cleanLabel": "pg_restore --clean --if-exists",
+      "cleanHint": "Drops existing objects before recreating them.",
+      "auditNoteLabel": "Audit note (optional)",
+      "auditNotePlaceholder": "e.g. recovering from #INC-481",
+      "ownDbWarning": "Restoring into opendray's OWN database will rewrite the rows this gateway is currently serving. Type \"I understand\" to confirm.",
+      "confirmPlaceholder": "Type \"I understand\"",
+      "confirmSentinel": "I understand",
+      "restoring": "Restoring…",
+      "restore": "Restore",
+      "succeededTitle": "Restore succeeded",
+      "succeededBody": "Replayed {bytes} from backup {id}.",
+      "failedTitle": "Restore failed",
+      "pickFileToast": "Pick a bundle file first.",
+      "outputTitle": "pg_restore output",
+      "noPgRestoreOutput": "(empty — restore completed silently)",
+      "manifestTitle": "Manifest",
+      "manifestBackupId": "Backup ID",
+      "manifestVersion": "Manifest version",
+      "manifestCreatedAt": "Created",
+      "manifestPgVersion": "pg_version",
+      "manifestOpendrayVersion": "opendray version",
+      "fingerprint": "Key fingerprint",
+      "fingerprintOk": "matched",
+      "fingerprintMismatch": "MISMATCH",
+      "encryptionAlgo": "Encryption",
+      "bytesRead": "Bytes read",
+      "targetDsnUsed": "Target DSN",
+      "targetDsnSelfLabel": "(opendray's own DB)",
+      "done": "Done"
+    },
+    "inventory": {
+      "title": "What's in a backup",
+      "summary": "{rows} rows · {tables} tables",
+      "description": "Live row counts from opendray's Postgres database. Backups capture every row below; binary artifacts on disk are not included.",
+      "rowsLabel": "rows",
+      "loadFailedToast": "Failed to load inventory",
+      "loading": "Loading…",
+      "tap": "Tap to expand"
     }
   },
   "backupTargets": {
@@ -3438,6 +3492,120 @@
       "saveFailedApi": "Save failed: {error}",
       "saveFailedGeneric": "Save failed: {error}",
       "savedAt": "Saved {time}"
+    }
+  },
+  "dataExport": {
+    "title": "Data export & import",
+    "subtitle": "User-level bundles for migration or verification — separate from /backups (disaster recovery).",
+    "sections": {
+      "export": "Export",
+      "import": "Import"
+    },
+    "form": {
+      "scope": "Scope",
+      "memories": "Memories",
+      "memoriesHint": "All persisted memories + their embeddings.",
+      "integrations": "Integrations",
+      "integrationOptions": {
+        "none": "Skip",
+        "noneHint": "Don't include the /integrations registry.",
+        "metadata": "Metadata only (default)",
+        "metadataHint": "Per-integration name + endpoint, no API keys.",
+        "plaintext": "Plaintext keys",
+        "plaintextHint": "DANGEROUS: includes raw API tokens. v1 stores only bcrypt hashes, so this is effectively a no-op today; surface anyway."
+      },
+      "confirmWarning": "Plaintext key export contains decryptable secrets. Type \"I understand\" to confirm.",
+      "confirmPlaceholder": "Type \"I understand\"",
+      "confirmSentinel": "I understand",
+      "customTasks": "Custom tasks",
+      "customTasksHint": "Per-user task definitions (cron schedules + script bodies).",
+      "footnote": "Bundles expire 7 days after creation. Download link is single-use.",
+      "create": "Create bundle",
+      "building": "Building…",
+      "readyToast": "Bundle ready",
+      "readyDescription": "{bytes} bytes — download from the history below.",
+      "failedToast": "Bundle creation failed: {error}"
+    },
+    "history": {
+      "title": "Export history",
+      "loading": "Loading…",
+      "empty": "No exports yet.",
+      "listFailedToast": "Failed to load exports: {error}",
+      "downloadFailedToast": "Failed to fetch download token: {error}",
+      "noTokenToast": "This export has no usable download token (already consumed or expired).",
+      "deletedToast": "Export deleted.",
+      "deleteFailedToast": "Failed to delete export: {error}",
+      "deleteConfirmTitle": "Delete export?",
+      "deleteConfirmBody": "Removes the bundle and revokes the download token. {id}",
+      "download": "Download",
+      "delete": "Delete",
+      "downloadCopiedToast": "Download URL copied to clipboard. Paste into a browser to fetch (single-use).",
+      "columns": {
+        "scope": "Scope",
+        "size": "Size",
+        "expires": "Expires",
+        "actions": "Actions"
+      },
+      "scopeEmpty": "(empty)",
+      "scopeMemories": "memories",
+      "scopeIntegrations": "integrations({mode})",
+      "scopeCustomTasks": "custom_tasks"
+    },
+    "import": {
+      "intro": "Replays a bundle previously produced by Export. Only the entities you tick below are imported; everything else in the bundle is ignored.",
+      "bundleLabel": "Bundle file (.zip)",
+      "pickFile": "Pick file",
+      "fileSelected": "{name} · {size}",
+      "noFile": "No file selected",
+      "memoriesLabel": "Memories",
+      "integrationsLabel": "Integrations",
+      "customTasksLabel": "Custom tasks",
+      "importBundle": "Import bundle",
+      "importing": "Importing…",
+      "pickFileToast": "Pick a bundle file first.",
+      "doneToast": "Import done",
+      "finishedWithErrors": "Import finished with errors",
+      "failedToast": "Import failed: {error}",
+      "summaryCard": {
+        "memories": "Memories",
+        "integrations": "Integrations",
+        "customTasks": "Custom tasks",
+        "created": "created",
+        "skipped": "skipped",
+        "failed": "failed"
+      }
+    },
+    "imports": {
+      "title": "Import history",
+      "loading": "Loading…",
+      "empty": "No imports yet.",
+      "listFailedToast": "Failed to load imports: {error}",
+      "noneCounts": "(no counts)",
+      "sourceUnknown": "(unknown source)",
+      "columns": {
+        "id": "ID",
+        "status": "Status",
+        "source": "Source",
+        "counts": "Counts",
+        "when": "When"
+      }
+    },
+    "relative": {
+      "inSeconds": "in {n}s",
+      "inMinutes": "in {n}m",
+      "inHours": "in {n}h",
+      "inDays": "in {n}d",
+      "secondsAgo": "{n}s ago",
+      "minutesAgo": "{n}m ago",
+      "hoursAgo": "{n}h ago"
+    },
+    "status": {
+      "pending": "pending",
+      "running": "running",
+      "ready": "ready",
+      "failed": "failed",
+      "expired": "expired",
+      "succeeded": "succeeded"
     }
   },
   "memory": {
