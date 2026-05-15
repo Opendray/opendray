@@ -9,6 +9,7 @@ import 'package:opendray/core/api/memory_api.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/core/memory/ranking.dart';
 import 'package:opendray/features/memory_workers/memory_workers_screen.dart';
 import 'package:opendray/features/project/project_screen.dart';
 import 'package:path/path.dart' as p;
@@ -943,11 +944,83 @@ class _MemoryTile extends StatelessWidget {
                       ),
                 ),
               ],
+              // M-PD ranking badge — tap to see the breakdown.
+              // We always show this, even on browse rows with no
+              // active query (similarity = 1.0 baseline), because
+              // it tells operators which rows would survive the
+              // ranking filter at a glance.
+              const Text('  ·  '),
+              GestureDetector(
+                onTap: () => _showRankBreakdown(context, m, row.similarity),
+                child: Text(
+                  'rank ${rankingBreakdown(m, similarity: row.similarity ?? 1.0).effectiveScore.toStringAsFixed(2)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.secondary,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                        decorationStyle: TextDecorationStyle.dotted,
+                      ),
+                ),
+              ),
             ],
           ),
         ],
       ),
       trailing: const Icon(Icons.chevron_right),
+    );
+  }
+
+  static void _showRankBreakdown(
+    BuildContext context,
+    Memory m,
+    double? similarity,
+  ) {
+    final r = rankingBreakdown(m, similarity: similarity ?? 1.0);
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.memory.rank.title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              t.memory.rank.effective(
+                value: r.effectiveScore.toStringAsFixed(3),
+              ),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            _RankFactor(
+              label: t.memory.rank.similarity,
+              value: r.similarity.toStringAsFixed(3),
+            ),
+            _RankFactor(
+              label: t.memory.rank.ageMultiplier(days: r.ageDays),
+              value: r.ageMultiplier.toStringAsFixed(2),
+            ),
+            _RankFactor(
+              label: t.memory.rank.hitMultiplier(hits: m.hitCount),
+              value: r.hitMultiplier.toStringAsFixed(2),
+            ),
+            _RankFactor(
+              label: t.memory.rank.confidenceMultiplier,
+              value: r.confidenceMultiplier.toStringAsFixed(2),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              t.memory.rank.formula,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(t.memory.rank.close),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1000,6 +1073,37 @@ class _MemoryTile extends StatelessWidget {
       default:
         return scheme.outline;
     }
+  }
+}
+
+// _RankFactor renders one row in the rank-breakdown dialog —
+// label on the left, monospace value on the right. Used by
+// _MemoryTile._showRankBreakdown to expose the four multipliers
+// behind effective_score.
+class _RankFactor extends StatelessWidget {
+  const _RankFactor({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+          ),
+        ],
+      ),
+    );
   }
 }
 

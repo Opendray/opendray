@@ -457,11 +457,24 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
               Positioned(
                 right: 16,
                 bottom: 16,
-                child: FloatingActionButton.extended(
-                  heroTag: 'project_journal_fab',
-                  onPressed: _openAppendJournal,
-                  icon: const Icon(Icons.add),
-                  label: Text(t.project.append),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FloatingActionButton.small(
+                      heroTag: 'project_journal_prune',
+                      onPressed: _openStalePruneSheet,
+                      tooltip: t.project.journalPrune.title,
+                      child: const Icon(Icons.cleaning_services_outlined),
+                    ),
+                    const SizedBox(height: 12),
+                    FloatingActionButton.extended(
+                      heroTag: 'project_journal_fab',
+                      onPressed: _openAppendJournal,
+                      icon: const Icon(Icons.add),
+                      label: Text(t.project.append),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -469,6 +482,31 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
         );
       },
     );
+  }
+
+  // ── M-PD stale-prune sheet ────────────────────────────────────
+
+  Future<void> _openStalePruneSheet() async {
+    final cwd = _selectedKey;
+    if (cwd == null) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.7,
+          minChildSize: 0.4,
+          maxChildSize: 0.95,
+          builder: (_, scrollController) {
+            return _StalePrunePanel(cwd: cwd, scrollController: scrollController);
+          },
+        );
+      },
+    );
+    if (mounted && _selectedKey != null) {
+      await _loadAll(_selectedKey!);
+    }
   }
 
   Future<void> _openAppendJournal() async {
@@ -1103,6 +1141,9 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                       busy: _conflictDetectRunning,
                       onAccept: () => _decideConflict(c.id, 'accepted'),
                       onDismiss: () => _decideConflict(c.id, 'dismissed'),
+                      onRequestDeleteFact: (side) =>
+                          _openConflictDeleteConfirm(c, side),
+                      onJumpTab: _jumpToLayerTab,
                     )),
             ],
           ),
@@ -1136,6 +1177,142 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
     try {
       await ref.read(memoryConflictsApiProvider).decide(id, action);
       if (!mounted) return;
+      await _loadAll(_selectedKey!);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  // M-PD — switch the Project tab bar to plan / goal so the
+  // operator can edit the doc that's currently in conflict with
+  // a fact. Tab indices follow the order declared in build():
+  // Health(0) / Goal(1) / Plan(2) / Tech(3) / Activity(4) /
+  // Journal(5) / Inbox(6) / Conflicts(7) / Cleanup(8).
+  void _jumpToLayerTab(ConflictLayer layer) {
+    switch (layer) {
+      case ConflictLayer.plan:
+        _tabs.animateTo(2);
+      case ConflictLayer.goal:
+        _tabs.animateTo(1);
+      case ConflictLayer.journal:
+        _tabs.animateTo(5);
+      case ConflictLayer.fact:
+        // No project-screen tab for layer-5 facts; operator
+        // jumps to the Memory screen instead. Surface a hint
+        // rather than silently doing nothing.
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(t.project.conflicts.deleteNonFactOther(
+                  layer: ConflictLayer.fact.name))),
+        );
+    }
+  }
+
+  // M-PD delete-fact preview + confirm dialog. Fetches the two
+  // memory rows on dialog open so the operator can read both
+  // claims side-by-side before deciding which to remove. On
+  // confirm: deleteMemory(targetRef) + decide(accepted) — same
+  // contract as the web ConflictsPanel.
+  Future<void> _openConflictDeleteConfirm(
+      MemoryConflict conflict, String side) async {
+    final targetRef = side == 'A' ? conflict.refA : conflict.refB;
+    final otherRef = side == 'A' ? conflict.refB : conflict.refA;
+    final otherLayer = side == 'A' ? conflict.layerB : conflict.layerA;
+
+    final memApi = ref.read(memoryApiProvider);
+    Future<Memory?> safeGet(String id) =>
+        memApi.get(id).then<Memory?>((m) => m).catchError(
+              (_) => null as Memory?,
+            );
+    final otherFuture = otherLayer == ConflictLayer.fact
+        ? safeGet(otherRef)
+        : Future<Memory?>.value(null);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return FutureBuilder<List<Memory?>>(
+          future: Future.wait([safeGet(targetRef), otherFuture]),
+          builder: (context, snap) {
+            final loading = snap.connectionState != ConnectionState.done;
+            final target = loading ? null : snap.data?[0];
+            final other = loading ? null : snap.data?[1];
+            return AlertDialog(
+              title: Text(t.project.conflicts
+                  .deleteConfirmTitle(side: side)),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(t.project.conflicts.deleteConfirmBody),
+                    const SizedBox(height: 12),
+                    _DeletePreviewBox(
+                      label: t.project.conflicts
+                          .deleteWillDelete(side: side),
+                      content: loading
+                          ? t.project.conflicts.deleteLoading
+                          : (target?.text ?? '(?)'),
+                      tone: _PreviewTone.danger,
+                    ),
+                    const SizedBox(height: 8),
+                    _DeletePreviewBox(
+                      label: t.project.conflicts.deleteWillKeep(
+                          side: side == 'A' ? 'B' : 'A'),
+                      content: otherLayer == ConflictLayer.fact
+                          ? (loading
+                              ? t.project.conflicts.deleteLoading
+                              : (other?.text ?? '(?)'))
+                          : t.project.conflicts.deleteNonFactOther(
+                              layer: otherLayer.name),
+                      tone: _PreviewTone.muted,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      conflict.evidence,
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: Text(t.common.cancel),
+                ),
+                FilledButton.icon(
+                  onPressed: loading
+                      ? null
+                      : () => Navigator.of(ctx).pop(true),
+                  icon: const Icon(Icons.delete_outline, size: 16),
+                  label: Text(t.project.conflicts
+                      .deleteFactLabel(side: side)),
+                  style: FilledButton.styleFrom(
+                    backgroundColor:
+                        Theme.of(context).colorScheme.errorContainer,
+                    foregroundColor:
+                        Theme.of(context).colorScheme.onErrorContainer,
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (confirmed != true) return;
+    try {
+      await ref.read(memoryApiProvider).delete(targetRef);
+      await ref
+          .read(memoryConflictsApiProvider)
+          .decide(conflict.id, 'accepted');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.project.conflicts.deletedFact)),
+      );
       await _loadAll(_selectedKey!);
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -1212,12 +1389,19 @@ class _ConflictCard extends StatelessWidget {
     required this.busy,
     required this.onAccept,
     required this.onDismiss,
+    required this.onRequestDeleteFact,
+    required this.onJumpTab,
   });
 
   final MemoryConflict conflict;
   final bool busy;
   final VoidCallback onAccept;
   final VoidCallback onDismiss;
+  // Parent owns the dialog + mutation so the card stays a thin
+  // StatelessWidget. side = 'A' | 'B' picks which fact ref to
+  // delete; layer hints at which tab to jump to for plan/goal.
+  final void Function(String side) onRequestDeleteFact;
+  final void Function(ConflictLayer layer) onJumpTab;
 
   @override
   Widget build(BuildContext context) {
@@ -1284,14 +1468,339 @@ class _ConflictCard extends StatelessWidget {
                 ),
               ],
             ),
+            ..._buildFixActions(context),
           ],
         ),
       ),
     );
   }
 
+  // M-PD Fix row — when either side is a fact, render a delete
+  // shortcut keyed to the side; when either side is plan/goal,
+  // render a jump-to-editor shortcut deduped by layer.
+  List<Widget> _buildFixActions(BuildContext context) {
+    final actions = <Widget>[];
+    final seenLayers = <ConflictLayer>{};
+    for (final entry in [
+      _SideEntry('A', conflict.layerA, conflict.refA),
+      _SideEntry('B', conflict.layerB, conflict.refB),
+    ]) {
+      if (entry.layer == ConflictLayer.fact) {
+        actions.add(OutlinedButton(
+          onPressed: busy ? null : () => onRequestDeleteFact(entry.side),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            visualDensity: VisualDensity.compact,
+          ),
+          child: Text(
+            '${t.project.conflicts.deleteFactLabel(side: entry.side)}  '
+            '${_shortRef(entry.ref)}',
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+          ),
+        ));
+      } else if (entry.layer == ConflictLayer.plan ||
+          entry.layer == ConflictLayer.goal) {
+        if (seenLayers.contains(entry.layer)) continue;
+        seenLayers.add(entry.layer);
+        actions.add(TextButton(
+          onPressed: busy ? null : () => onJumpTab(entry.layer),
+          child: Text(
+            entry.layer == ConflictLayer.plan
+                ? t.project.conflicts.openPlanEditor
+                : t.project.conflicts.openGoalEditor,
+            style: const TextStyle(fontSize: 11),
+          ),
+        ));
+      }
+    }
+    if (actions.isEmpty) return const [];
+    return [
+      const Divider(height: 16),
+      Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+              '${t.project.conflicts.deleteConfirmBody.split('.').first}…',
+              style: Theme.of(context).textTheme.labelSmall),
+          ...actions,
+        ],
+      ),
+    ];
+  }
+
   String _shortRef(String ref) =>
       ref.length <= 12 ? ref : '${ref.substring(0, 8)}…';
+}
+
+class _SideEntry {
+  const _SideEntry(this.side, this.layer, this.ref);
+  final String side;
+  final ConflictLayer layer;
+  final String ref;
+}
+
+enum _PreviewTone { danger, muted }
+
+class _DeletePreviewBox extends StatelessWidget {
+  const _DeletePreviewBox({
+    required this.label,
+    required this.content,
+    required this.tone,
+  });
+
+  final String label;
+  final String content;
+  final _PreviewTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final bg = tone == _PreviewTone.danger
+        ? scheme.errorContainer.withValues(alpha: 0.45)
+        : scheme.surfaceContainerHighest.withValues(alpha: 0.55);
+    final border = tone == _PreviewTone.danger
+        ? scheme.error.withValues(alpha: 0.4)
+        : scheme.outline.withValues(alpha: 0.4);
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border.all(color: border),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.labelSmall),
+          const SizedBox(height: 4),
+          Text(
+            content,
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── M-PD Journal stale-prune bottom sheet ────────────────────────
+//
+// Lists session_summary rows older than `days` and not referenced
+// by any pending conflict. Checkbox multi-select + bulk delete.
+// Mirrors the web JournalStalePanel; phone-friendly form factor
+// (modal sheet instead of inline expand) because the Journal tab
+// itself is space-constrained.
+
+class _StalePrunePanel extends ConsumerStatefulWidget {
+  const _StalePrunePanel({
+    required this.cwd,
+    required this.scrollController,
+  });
+
+  final String cwd;
+  final ScrollController scrollController;
+
+  @override
+  ConsumerState<_StalePrunePanel> createState() => _StalePrunePanelState();
+}
+
+class _StalePrunePanelState extends ConsumerState<_StalePrunePanel> {
+  int _days = 90;
+  AsyncValue<List<SessionLogEntry>> _stale = const AsyncValue.loading();
+  final Set<String> _selected = {};
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _stale = const AsyncValue.loading();
+      _selected.clear();
+    });
+    try {
+      final entries = await ref
+          .read(projectDocsApiProvider)
+          .listStaleLogs(widget.cwd, days: _days);
+      if (!mounted) return;
+      setState(() => _stale = AsyncValue.data(entries));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _stale = AsyncValue.error(e, StackTrace.current));
+    }
+  }
+
+  Future<void> _bulkDelete() async {
+    if (_selected.isEmpty) return;
+    setState(() => _busy = true);
+    try {
+      // Sequential rather than parallel so a 5xx on one entry
+      // doesn't leave a half-completed visual state.
+      for (final id in _selected.toList()) {
+        await ref.read(projectDocsApiProvider).deleteLog(id);
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t.project.journalPrune.deleted(count: _selected.length),
+          ),
+        ),
+      );
+      await _load();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _stale.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(t.project.loadFailed(error: e.toString())),
+        ),
+      ),
+      data: (entries) {
+        final allChecked =
+            entries.isNotEmpty && _selected.length == entries.length;
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  t.project.journalPrune.title,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  t.project.journalPrune.subtitle(days: _days),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Text(t.project.journalPrune.daysLabel),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 80,
+                      child: TextFormField(
+                        initialValue: _days.toString(),
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          border: OutlineInputBorder(),
+                        ),
+                        onFieldSubmitted: (v) {
+                          final parsed = int.tryParse(v);
+                          if (parsed != null && parsed > 0) {
+                            setState(() => _days = parsed);
+                            _load();
+                          }
+                        },
+                      ),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: entries.isEmpty
+                          ? null
+                          : () => setState(() {
+                                if (allChecked) {
+                                  _selected.clear();
+                                } else {
+                                  _selected
+                                    ..clear()
+                                    ..addAll(entries.map((e) => e.id));
+                                }
+                              }),
+                      child: Text(
+                        allChecked
+                            ? t.project.journalPrune.deselectAll
+                            : t.project.journalPrune.selectAll,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: entries.isEmpty
+                      ? Center(
+                          child: Text(t.project.journalPrune.empty),
+                        )
+                      : ListView.builder(
+                          controller: widget.scrollController,
+                          itemCount: entries.length,
+                          itemBuilder: (_, i) {
+                            final e = entries[i];
+                            return CheckboxListTile(
+                              value: _selected.contains(e.id),
+                              onChanged: (v) => setState(() {
+                                if (v ?? false) {
+                                  _selected.add(e.id);
+                                } else {
+                                  _selected.remove(e.id);
+                                }
+                              }),
+                              dense: true,
+                              title: Text(
+                                e.title.isEmpty ? e.id : e.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                e.content,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style:
+                                    Theme.of(context).textTheme.bodySmall,
+                              ),
+                            );
+                          },
+                        ),
+                ),
+                const SizedBox(height: 8),
+                FilledButton.icon(
+                  onPressed: _selected.isEmpty || _busy ? null : _bulkDelete,
+                  icon: _busy
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.delete_outline),
+                  label: Text(
+                    t.project.journalPrune
+                        .deleteSelected(count: _selected.length),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor:
+                        Theme.of(context).colorScheme.errorContainer,
+                    foregroundColor:
+                        Theme.of(context).colorScheme.onErrorContainer,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _DocEditor extends StatefulWidget {
