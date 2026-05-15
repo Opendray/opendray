@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestMatchesClaudeProjectDir(t *testing.T) {
@@ -479,6 +480,82 @@ func TestResolveLatestClaudeJSONL_RealFile(t *testing.T) {
 	resp := claudeRecentResponse("/tmp/fake/cwd")
 	if !strings.Contains(resp, "hello from JSONL") {
 		t.Errorf("claudeRecentResponse = %q", resp)
+	}
+}
+
+// Multi-account routing: opendray spawns Claude under
+// ~/.claude-accounts/<acct>/ so the JSONL lands beneath
+// .claude-accounts, NOT .claude/projects. The resolver must walk
+// both roots and return whichever has the matching project dir.
+// This regression test pins the bug that made the idle-notification
+// snippet fall back to the virtual-terminal screen snapshot
+// (~1 screenful) instead of the full Claude turn.
+func TestResolveLatestClaudeJSONL_MultiAccountRouting(t *testing.T) {
+	tmpHome := t.TempDir()
+	encoded := "-tmp-fake-cwd"
+
+	// Only .claude-accounts/<acct>/projects exists — NOT
+	// .claude/projects. Old resolver returned "" here.
+	pdir := filepath.Join(tmpHome, ".claude-accounts", "shared", "projects", encoded)
+	if err := os.MkdirAll(pdir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	jsonl := filepath.Join(pdir, "session-shared.jsonl")
+	body := mustEntry(t, "assistant", "FULL_TURN_FROM_SHARED_ACCOUNT") + "\n"
+	if err := os.WriteFile(jsonl, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("HOME", tmpHome)
+	got := resolveLatestClaudeJSONL("/tmp/fake/cwd")
+	if got != jsonl {
+		t.Errorf("resolver missed .claude-accounts root\n got: %q\nwant: %q", got, jsonl)
+	}
+	resp := claudeRecentResponse("/tmp/fake/cwd")
+	if !strings.Contains(resp, "FULL_TURN_FROM_SHARED_ACCOUNT") {
+		t.Errorf("claudeRecentResponse() returned empty/wrong content for multi-account cwd: %q", resp)
+	}
+}
+
+// When BOTH roots have a matching project dir, the resolver should
+// return the JSONL with the most recent mtime. Without this rule a
+// stale ~/.claude/projects copy could shadow the live transcript
+// being written under .claude-accounts/<acct>/.
+func TestResolveLatestClaudeJSONL_PicksNewestAcrossRoots(t *testing.T) {
+	tmpHome := t.TempDir()
+	encoded := "-tmp-fake-cwd"
+
+	oldDir := filepath.Join(tmpHome, ".claude", "projects", encoded)
+	newDir := filepath.Join(tmpHome, ".claude-accounts", "shared", "projects", encoded)
+	for _, d := range []string{oldDir, newDir} {
+		if err := os.MkdirAll(d, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	oldPath := filepath.Join(oldDir, "stale.jsonl")
+	newPath := filepath.Join(newDir, "live.jsonl")
+	if err := os.WriteFile(oldPath, []byte(mustEntry(t, "assistant", "stale")+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(newPath, []byte(mustEntry(t, "assistant", "live")+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// Force newPath's mtime to be strictly later than oldPath's,
+	// since both files were written within the same tick on fast
+	// filesystems and the test would otherwise be flaky.
+	staleTime := time.Now().Add(-time.Hour)
+	liveTime := time.Now()
+	if err := os.Chtimes(oldPath, staleTime, staleTime); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(newPath, liveTime, liveTime); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("HOME", tmpHome)
+	got := resolveLatestClaudeJSONL("/tmp/fake/cwd")
+	if got != newPath {
+		t.Errorf("resolver picked stale copy:\n got: %q\nwant: %q (newer)", got, newPath)
 	}
 }
 
