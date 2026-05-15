@@ -48,7 +48,6 @@ import {
 import { TargetEditor, targetSummary } from '@/components/backup/TargetEditor'
 
 import { LogViewer } from './LogViewer'
-import { MemoryAmbientSection } from './MemoryAmbientSection'
 import { PathInput } from './PathInput'
 
 // SECTIONS describe every server-settings panel rendered to the right
@@ -932,7 +931,29 @@ function SectionForm({
       )
 
     case 'memory-ambient':
-      return <MemoryAmbientSection />
+      // M-PF — the four sub-sections that used to live here
+      // (providers / rules / profiles / costs) have moved to the
+      // unified /memory/workers page so operators don't have to
+      // hunt for related toggles in two places. We keep this slot
+      // alive as a redirect banner so existing bookmarks still
+      // land somewhere sensible.
+      return (
+        <div className="flex flex-col gap-3 rounded-md border border-border bg-card/30 p-4 text-[13px]">
+          <div className="font-medium">
+            {t('web.memoryConfig.moveBanner.title')}
+          </div>
+          <p className="text-muted-foreground text-[12px]">
+            {t('web.memoryConfig.moveBanner.body')}
+          </p>
+          <div>
+            <Button asChild variant="outline" size="sm" className="h-8 text-[11px]">
+              <Link to="/memory/workers">
+                {t('web.memoryConfig.moveBanner.openButton')}
+              </Link>
+            </Button>
+          </div>
+        </div>
+      )
 
     case 'backup':
       return <BackupSection draft={draft} setDraft={setDraft} visible={visible} />

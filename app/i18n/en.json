@@ -295,6 +295,29 @@
       "daysAgo_one": "{count} day ago",
       "daysAgo_other": "{count} days ago"
     },
+    "memoryConfig": {
+      "title": "Memory configuration",
+      "subtitle": "All memory-related knobs in one place: HTTP providers, per-task worker routing, capture triggers, spawn-time injection, and audit costs.",
+      "sections": {
+        "providers": "Providers",
+        "workers": "Workers",
+        "rules": "Capture rules",
+        "profiles": "Injection profiles",
+        "costs": "Token cost"
+      },
+      "sectionHints": {
+        "providers": "Registered HTTP endpoints (Ollama / LM Studio / Anthropic / OpenAI / Integration) that any task can dispatch to.",
+        "workers": "For each touchpoint pick HTTP provider (cheap, local) or headless Claude / Gemini Agent (higher quality, costs CLI tokens).",
+        "rules": "When the capture engine fires per session (after N messages / on idle / K characters / manual). Rules without a pinned provider follow the Capture worker setting above.",
+        "profiles": "How prior memories get injected into the agent's system prompt at session spawn (recency, relevance, hybrid, or off).",
+        "costs": "Aggregate spend reconstructed from memory_summarizer_calls. Local providers (Ollama, LM Studio, Integration) are free; cloud providers show real-world cost."
+      },
+      "moveBanner": {
+        "title": "Memory configuration has moved",
+        "body": "All memory-related settings (providers / capture rules / injection profiles / cost) now live alongside Workers in one page so related knobs sit together.",
+        "openButton": "Open Memory configuration →"
+      }
+    },
     "memoryWorkers": {
       "title": "Memory workers",
       "loading": "Loading worker config…",

@@ -295,6 +295,29 @@
       "daysAgo_one": "{count} 天前",
       "daysAgo_other": "{count} 天前"
     },
+    "memoryConfig": {
+      "title": "记忆配置",
+      "subtitle": "所有记忆相关开关汇总到这里：HTTP provider、每个任务的路由、capture 触发器、spawn 时注入策略、累计花费。",
+      "sections": {
+        "providers": "Provider 池",
+        "workers": "任务路由 (Workers)",
+        "rules": "Capture 规则",
+        "profiles": "注入策略 (Injection profiles)",
+        "costs": "Token 成本"
+      },
+      "sectionHints": {
+        "providers": "已注册的 HTTP endpoint 池 (Ollama / LM Studio / Anthropic / OpenAI / Integration)，所有任务都能引用。",
+        "workers": "每个 task 选用 HTTP provider（便宜、本地）或 headless Claude / Gemini Agent（质量更高，消耗 CLI 配额）。",
+        "rules": "Capture 引擎何时触发（每 N 条消息 / 闲置 / 累计 K 字符 / 手动）。规则若没固定 provider，会跟随上面 Capture 任务的 worker 设置。",
+        "profiles": "Session 启动时把哪些历史记忆塞进 agent system prompt（按最近、按相关度、混合、关闭）。",
+        "costs": "memory_summarizer_calls 重算的累计花费。本地 provider（Ollama / LM Studio / Integration）免费；云 provider 显示真实成本。"
+      },
+      "moveBanner": {
+        "title": "记忆配置已迁移",
+        "body": "所有记忆相关设置（providers / capture rules / injection profiles / cost）现在跟 Workers 在同一页面，相关开关聚在一起。",
+        "openButton": "打开 记忆配置 →"
+      }
+    },
     "memoryWorkers": {
       "title": "Memory workers",
       "loading": "正在加载 worker 配置…",

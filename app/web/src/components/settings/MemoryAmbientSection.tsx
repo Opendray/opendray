@@ -89,7 +89,7 @@ function SectionHeader() {
 
 // ── providers ────────────────────────────────────────────────────
 
-function ProvidersBlock() {
+export function ProvidersBlock() {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
@@ -395,7 +395,7 @@ function NewProviderDialog({ onCreated }: { onCreated: () => void }) {
 
 // ── capture rules ────────────────────────────────────────────────
 
-function RulesBlock() {
+export function RulesBlock() {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
@@ -674,7 +674,7 @@ function NewRuleDialog({ onCreated }: { onCreated: () => void }) {
 
 // ── injection profiles ───────────────────────────────────────────
 
-function ProfilesBlock() {
+export function ProfilesBlock() {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
@@ -851,7 +851,7 @@ function NewProfileDialog({ onCreated }: { onCreated: () => void }) {
 
 // ── token cost panel ─────────────────────────────────────────────
 
-function CostBlock() {
+export function CostBlock() {
   const { t } = useTranslation()
   const { data: providers } = useQuery({
     queryKey: ['memory-summarizer-providers'],

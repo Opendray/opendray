@@ -1,9 +1,17 @@
-// /memory/workers — M25 per-task worker settings.
+// /memory/workers — unified Memory configuration page.
 //
-// Surfaces the four memory-system LLM touchpoints (gatekeeper,
-// cleaner, gitactivity, transcript) as a configurable list:
-// each row picks summarizer vs agent + the underlying provider,
-// runs a connectivity test, and shows recent invocation latency.
+// Originally just per-task worker settings (M25); M-PF reworks
+// this into a single landing for every memory-related knob so
+// operators stop hunting between Settings → Memory.Ambient and
+// /memory/workers for related toggles:
+//
+//   1. Providers     — HTTP endpoint registry (was Settings)
+//   2. Workers       — per-task summarizer/agent routing (original)
+//   3. Capture rules — trigger config (was Settings)
+//   4. Injection     — spawn-time strategy (was Settings)
+//   5. Token cost    — all-time call audit (was Settings)
+//
+// Settings → Memory.Ambient becomes a thin redirect banner.
 
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -42,6 +50,12 @@ import {
 } from '@/lib/memoryWorkers'
 import { listProviders as listSummarizerProviders } from '@/lib/memoryAmbient'
 import { listClaudeAccounts } from '@/lib/claudeAccounts'
+import {
+  CostBlock,
+  ProfilesBlock,
+  ProvidersBlock,
+  RulesBlock,
+} from '@/components/settings/MemoryAmbientSection'
 
 function useTaskLabels() {
   const { t } = useTranslation()
@@ -110,31 +124,107 @@ export function MemoryWorkersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6">
+    <div className="mx-auto max-w-3xl space-y-10 p-6">
       <header>
         <h1 className="text-xl font-semibold">
-          {t('web.memoryWorkers.title')}
+          {t('web.memoryConfig.title')}
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
+          {t('web.memoryConfig.subtitle')}
+        </p>
+      </header>
+
+      {/* § 1. Providers — HTTP endpoint registry consumed by both
+          Workers and (legacy) Capture rule pins. */}
+      <section className="space-y-3">
+        <SectionTitle
+          step={1}
+          title={t('web.memoryConfig.sections.providers')}
+          hint={t('web.memoryConfig.sectionHints.providers')}
+        />
+        <ProvidersBlock />
+      </section>
+
+      {/* § 2. Workers — per-task routing decisions (summarizer
+          provider vs headless Claude/Gemini agent). */}
+      <section className="space-y-3">
+        <SectionTitle
+          step={2}
+          title={t('web.memoryConfig.sections.workers')}
+          hint={t('web.memoryConfig.sectionHints.workers')}
+        />
+        <p className="text-muted-foreground text-sm">
           <Trans
             i18nKey="web.memoryWorkers.intro"
             components={{ 1: <strong />, 3: <strong />, 5: <code /> }}
           />
         </p>
-      </header>
+        <div className="space-y-4">
+          {(workersQuery.data ?? []).map((w) => (
+            <WorkerCard
+              key={w.task}
+              config={w}
+              summarizers={summarizersQuery.data ?? []}
+              accounts={accountsQuery.data ?? []}
+              calls={(callsQuery.data ?? []).filter((c) => c.task === w.task)}
+              onSaved={refresh}
+            />
+          ))}
+        </div>
+      </section>
 
-      <div className="space-y-4">
-        {(workersQuery.data ?? []).map((w) => (
-          <WorkerCard
-            key={w.task}
-            config={w}
-            summarizers={summarizersQuery.data ?? []}
-            accounts={accountsQuery.data ?? []}
-            calls={(callsQuery.data ?? []).filter((c) => c.task === w.task)}
-            onSaved={refresh}
-          />
-        ))}
-      </div>
+      {/* § 3. Capture rules — when/how the capture engine fires. */}
+      <section className="space-y-3">
+        <SectionTitle
+          step={3}
+          title={t('web.memoryConfig.sections.rules')}
+          hint={t('web.memoryConfig.sectionHints.rules')}
+        />
+        <RulesBlock />
+      </section>
+
+      {/* § 4. Injection profiles — spawn-time memory banner
+          strategy (top_k_recent / relevant / hybrid / none). */}
+      <section className="space-y-3">
+        <SectionTitle
+          step={4}
+          title={t('web.memoryConfig.sections.profiles')}
+          hint={t('web.memoryConfig.sectionHints.profiles')}
+        />
+        <ProfilesBlock />
+      </section>
+
+      {/* § 5. Token cost — all-time audit summary across providers. */}
+      <section className="space-y-3">
+        <SectionTitle
+          step={5}
+          title={t('web.memoryConfig.sections.costs')}
+          hint={t('web.memoryConfig.sectionHints.costs')}
+        />
+        <CostBlock />
+      </section>
+    </div>
+  )
+}
+
+function SectionTitle({
+  step,
+  title,
+  hint,
+}: {
+  step: number
+  title: string
+  hint: string
+}) {
+  return (
+    <div className="border-border border-b pb-2">
+      <h2 className="text-base font-semibold">
+        <span className="text-muted-foreground mr-2 font-mono text-[12px]">
+          §{step}
+        </span>
+        {title}
+      </h2>
+      <p className="text-muted-foreground mt-0.5 text-[12px]">{hint}</p>
     </div>
   )
 }
