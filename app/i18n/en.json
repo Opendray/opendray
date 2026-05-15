@@ -247,6 +247,7 @@
       "deletedFact": "Fact deleted and conflict accepted",
       "quickActions": "Fix:",
       "deleteFact": "Delete fact",
+      "deleteFactSide": "Delete {side}: {ref}",
       "openLayer": {
         "plan": "Open plan editor",
         "goal": "Open goal editor"

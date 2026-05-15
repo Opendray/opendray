@@ -181,29 +181,37 @@ function ConflictCard({
         ? 'warn'
         : 'muted'
 
-  // Quick-action targets — first fact side gets a delete shortcut,
-  // first plan/goal side gets a jump-to-editor link. We don't show
-  // both for the same side (the action is unambiguous per layer).
+  // Quick-action targets — one button per conflicting side:
+  //   layer=fact   → "Delete fact A/B (mem_…)" (yanks the row +
+  //                  auto-accepts the conflict)
+  //   layer=plan   → "Open plan editor" (jumps to the Plan tab)
+  //   layer=goal   → "Open goal editor"
+  //   layer=journal → no quick-action; operator can dismiss
+  //
+  // When both sides are facts (the common case for hard
+  // contradictions like "DB is Postgres" vs "DB is SQLite"), we
+  // emit TWO delete buttons — one per fact id — so the operator
+  // can pick which side is wrong without leaving the panel. Same
+  // when both sides are plan/goal we'd dedupe the editor button.
   type QuickAction =
-    | { kind: 'delete-fact'; refId: string }
+    | { kind: 'delete-fact'; sideLabel: string; refId: string }
     | { kind: 'open-tab'; tab: string; label: string }
   const quick: QuickAction[] = []
+  const seenTabs = new Set<string>()
   ;[
-    { layer: conflict.layer_a, ref: conflict.ref_a },
-    { layer: conflict.layer_b, ref: conflict.ref_b },
-  ].forEach(({ layer, ref }) => {
+    { side: 'A', layer: conflict.layer_a, ref: conflict.ref_a },
+    { side: 'B', layer: conflict.layer_b, ref: conflict.ref_b },
+  ].forEach(({ side, layer, ref }) => {
     if (layer === 'fact') {
-      if (!quick.some((q) => q.kind === 'delete-fact')) {
-        quick.push({ kind: 'delete-fact', refId: ref })
-      }
+      quick.push({ kind: 'delete-fact', sideLabel: side, refId: ref })
     } else if (layer === 'plan' || layer === 'goal') {
-      if (!quick.some((q) => q.kind === 'open-tab' && q.tab === layer)) {
-        quick.push({
-          kind: 'open-tab',
-          tab: layer,
-          label: t(`web.conflicts.openLayer.${layer}`),
-        })
-      }
+      if (seenTabs.has(layer)) return
+      seenTabs.add(layer)
+      quick.push({
+        kind: 'open-tab',
+        tab: layer,
+        label: t(`web.conflicts.openLayer.${layer}`),
+      })
     }
   })
 
@@ -257,20 +265,24 @@ function ConflictCard({
             if (q.kind === 'delete-fact') {
               return (
                 <Button
-                  key={i}
+                  key={`del-${q.refId}`}
                   size="sm"
                   variant="outline"
                   onClick={() => onDeleteFact(q.refId)}
                   disabled={disabled}
-                  className="h-6 text-[10px]"
+                  className="h-6 text-[10px] font-mono"
+                  title={q.refId}
                 >
-                  {t('web.conflicts.deleteFact')}
+                  {t('web.conflicts.deleteFactSide', {
+                    side: q.sideLabel,
+                    ref: shortRef(q.refId),
+                  })}
                 </Button>
               )
             }
             return (
               <Button
-                key={i}
+                key={`tab-${q.tab}-${i}`}
                 size="sm"
                 variant="ghost"
                 onClick={() => onJumpTab?.(q.tab)}

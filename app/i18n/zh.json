@@ -247,6 +247,7 @@
       "deletedFact": "已删除 fact 并采纳冲突",
       "quickActions": "快速修复：",
       "deleteFact": "删除 fact",
+      "deleteFactSide": "删除 {side}: {ref}",
       "openLayer": {
         "plan": "打开计划编辑器",
         "goal": "打开目标编辑器"
