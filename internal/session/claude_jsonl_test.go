@@ -684,6 +684,109 @@ func userToolResultOnly(t *testing.T, toolUseID, ts string) map[string]any {
 	}
 }
 
+// claudeRecentResponse / renderClaudeTextReply: chat-notification
+// renderer is text-only. The verbose TUI-style renderer
+// (renderClaudeRecentTurn) is intentionally kept around for its
+// existing test coverage but is no longer wired into the
+// notification path — operators don't want a Telegram firehose of
+// "● Read(file.go)" / "  └ ..." lines, they want Claude's prose.
+
+func TestRenderClaudeTextReply_DropsToolNoise(t *testing.T) {
+	tmp := t.TempDir()
+	jsonl := filepath.Join(tmp, "session.jsonl")
+	lines := []string{
+		mustEntry(t, "user", "do many things"),
+		assistantWithTool(t, "我会先看一下文件结构。",
+			"tu_1", "Read", map[string]string{
+				"file_path": "internal/session/claude_jsonl.go",
+			}),
+		userToolResult(t, "tu_1", "Read 1000 lines from claude_jsonl.go"),
+		assistantWithTool(t, "现在搜索所有调用点。",
+			"tu_2", "Bash", map[string]string{
+				"command": "rg renderToolResultBody internal/",
+			}),
+		userToolResult(t, "tu_2", "3 matches"),
+		mustEntry(t, "assistant", "总结：函数只在 pump.go 被调用，安全删除。"),
+	}
+	if err := os.WriteFile(jsonl, []byte(strings.Join(lines, "\n")+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := renderClaudeTextReply(jsonl, 5000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Every assistant text block must survive, in order, separated
+	// by blank lines.
+	for _, want := range []string{
+		"我会先看一下文件结构。",
+		"现在搜索所有调用点。",
+		"总结：函数只在 pump.go 被调用，安全删除。",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("text dropped %q in:\n%s", want, got)
+		}
+	}
+	// No tool_use bullets, no tool_result bodies.
+	for _, banned := range []string{
+		"Read(", "Bash(", "rg renderToolResultBody",
+		"Read 1000 lines", "3 matches", "└ ", "● Read", "● Bash",
+	} {
+		if strings.Contains(got, banned) {
+			t.Errorf("tool noise leaked %q in:\n%s", banned, got)
+		}
+	}
+	// The bullet character "●" is from the verbose renderer; text-
+	// only mode should not use it at all.
+	if strings.Contains(got, "●") {
+		t.Errorf("text-only renderer should not emit bullets: %s", got)
+	}
+}
+
+func TestRenderClaudeTextReply_FallbackWhenToolOnly(t *testing.T) {
+	tmp := t.TempDir()
+	jsonl := filepath.Join(tmp, "session.jsonl")
+	lines := []string{
+		mustEntry(t, "user", "just run the linter"),
+	}
+	// Assistant runs 4 tools, no commentary.
+	for i := 0; i < 4; i++ {
+		useID := fmt.Sprintf("tu_%d", i)
+		lines = append(lines, assistantWithTool(t, "",
+			useID, "Bash", map[string]string{
+				"command": "go vet ./...",
+			}))
+		lines = append(lines, userToolResult(t, useID, "no issues"))
+	}
+	if err := os.WriteFile(jsonl, []byte(strings.Join(lines, "\n")+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := renderClaudeTextReply(jsonl, 5000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "(no text reply · 4 tools)"
+	if got != want {
+		t.Errorf("fallback summary wrong:\n got: %q\nwant: %q", got, want)
+	}
+}
+
+func TestRenderClaudeTextReply_EmptyTurnReturnsError(t *testing.T) {
+	tmp := t.TempDir()
+	jsonl := filepath.Join(tmp, "session.jsonl")
+	// User message only; assistant hasn't replied yet.
+	if err := os.WriteFile(jsonl,
+		[]byte(mustEntry(t, "user", "hello")+"\n"),
+		0o600); err != nil {
+		t.Fatal(err)
+	}
+	_, err := renderClaudeTextReply(jsonl, 5000)
+	if err == nil {
+		t.Error("expected error for turn-with-no-assistant-content")
+	}
+}
+
 // Regression guard: with "Unlimited — split into multiple messages"
 // chosen at the channel layer, the source-level snippet must NOT
 // silently truncate. These tests pin the new behaviour (full
