@@ -1677,7 +1677,6 @@
         "vault": { "title": "Vault", "desc": "Notes, skills, and git-versioned root." },
         "mcp": { "title": "MCP registry", "desc": "Server registry + secrets." },
         "memory": { "title": "Memory", "desc": "Cross-CLI persistent memory subsystem." },
-        "memoryAmbient": { "title": "Memory · Ambient", "desc": "Auto-capture conversations into memory + spawn-time injection." },
         "backup": { "title": "Backup", "desc": "Encrypted DB backups, restore, and admin data exports." },
         "claude": { "title": "Storage · Claude", "desc": "Where Claude transcripts live on disk." },
         "codex": { "title": "Storage · Codex", "desc": "Codex sessions root." },

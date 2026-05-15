@@ -28,20 +28,24 @@ injection profile).
     summarizer/           capture/                  injector/
 ```
 
-- **Provider** — which LLM extracts facts. v1 supports Anthropic,
-  OpenAI, LM Studio, Ollama, and a passthrough Integration kind
-  that lets ANY service speaking the documented `/summarize`
-  protocol act as a summarizer (zero-API-cost path).
-- **Capture rule** — when to fire. v1 ships 4 trigger kinds:
-  `after_messages`, `on_idle`, `k_chars`, `manual`.
+- **Provider** — which LLM extracts facts. Today supports Anthropic,
+  OpenAI, LM Studio, Ollama, a passthrough Integration kind (any
+  service speaking the documented `/summarize` protocol works
+  as a summarizer — zero-API-cost path), **and** the M-PE Agent
+  route which spawns a headless `claude --print` / `gemini --print`
+  for higher-quality fact extraction at the cost of CLI quota.
+- **Capture rule** — when to fire. 4 trigger kinds: `after_messages`,
+  `on_idle`, `k_chars`, `manual`.
 - **Injection profile** — how (or whether) to prepend memories to
   the agent's system prompt at spawn. 5 strategies:
   `none`, `top_k_recent`, `top_k_relevant`, `manual_only`, `hybrid`
-  (plus `on_keyword` reserved for v1.1).
+  (plus `on_keyword` reserved for a future release).
 
-Configure all three under
-**Settings → Memory · Ambient**. Per-session overrides live in the
-DB but currently UI manages the global default.
+Configure all three under **Memory → Workers** (sidebar) — that
+page, formerly just "Workers", was rebuilt as the single Memory
+configuration landing in M-PF and now hosts Providers / Workers /
+Capture rules / Injection profiles / Token cost together so related
+knobs sit next to each other instead of split across two pages.
 
 ## What you DON'T need
 

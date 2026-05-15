@@ -58,6 +58,26 @@ goal once via the Project → Goal tab; the next **Codex** spawn in
 the same cwd quotes it back to you on demand. This is the whole
 point of unified memory — no manual re-explanation per CLI switch.
 
+## Tabs you'll see on the Project page
+
+Beyond the 5 layers above, the Project page (`/memory/project`)
+shows three operator-facing inboxes that landed in Phase A-D:
+
+- **Health** *(Phase A)* — first tab. Aggregate signals across
+  both memory subsystems (new facts / journal entries this week,
+  capture engine fires, plan/goal age, pending proposals, top-hit
+  fact, zero-hit stale-fact count).
+- **Inbox** — agent-proposed goal/plan edits awaiting your
+  approval (file via the `project_goal_set` / `project_plan_set`
+  MCP tools).
+- **Conflicts** *(Phase C/D)* — cross-layer contradiction detector
+  inbox. Each row shows two conflicting claims + LLM evidence +
+  Accept / Dismiss buttons. Phase D added per-side "Delete A / B"
+  quick-actions with a preview-and-confirm dialog so you see the
+  full fact text before pulling the trigger.
+- **Cleanup** — LLM librarian's keep / stale / duplicate queue
+  for layer-5 facts (covered in section 11).
+
 ## Where to next
 
 - **02 — Day-to-day workflow** walks you through setting goal/plan,

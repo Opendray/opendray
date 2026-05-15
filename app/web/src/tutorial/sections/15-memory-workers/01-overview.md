@@ -1,9 +1,10 @@
 # Memory workers — overview
 
-M25 lets you pick **which LLM** powers each of opendray's four
+M25 lets you pick **which LLM** powers each of opendray's
 memory-system touchpoints — independently per touchpoint.
 
-The four touchpoints — refresher from section 14:
+The touchpoints (originally 4 in M25; grown to 7 across Phase A /
+C / E):
 
 | Touchpoint | Fires | What it does |
 |---|---|---|
@@ -11,6 +12,9 @@ The four touchpoints — refresher from section 14:
 | **Cleaner** | every 24h | LLM librarian — proposes keep/stale/duplicate verdicts on aged memories. |
 | **Git activity** | every 24h | Turns 7 days of `git log` into a 2-3 paragraph narrative for the spawn banner. |
 | **Transcript** | every session end | "What did the agent actually do this session" — 1-3 paragraph summary. |
+| **Plan drift** *(Phase A)* | every session end | Looks at the new transcript summary + current plan; files a proposal if plan needs updating. |
+| **Conflict detector** *(Phase C)* | every 24h | Cross-layer sweep — surfaces contradictions between facts / plan / goal / journal. |
+| **Capture engine** *(Phase E)* | per capture-rule trigger | Per-trigger fact extraction from session transcripts; lands rows in `memories`. |
 
 ## Two worker types
 
@@ -19,13 +23,13 @@ The four touchpoints — refresher from section 14:
 | **Summarizer** | HTTP POST to your local LM Studio / OpenAI-compat endpoint | ~0.5-2s | free (local) | medium (3-13B) |
 | **Agent** | Spawns `claude --print` or `gemini --print` headlessly | ~5-15s | Claude/Gemini quota | frontier-model |
 
-Default deployments seed all four touchpoints to **summarizer**.
+Default deployments seed every touchpoint to **summarizer**.
 Nothing changes until you flip a row.
 
 ## Why per-touchpoint config
 
-The four touchpoints have very different profiles. One global
-switch would force a bad compromise:
+The touchpoints have very different profiles. One global switch
+would force a bad compromise:
 
 - Gatekeeper runs hundreds of times a day. Even +5s/call makes
   `memory_store` feel broken. ⇒ summarizer only.
@@ -33,10 +37,13 @@ switch would force a bad compromise:
   and produces a banner every agent reads. Claude Opus here pays
   back the cost in better agent priming. ⇒ agent (Claude) makes
   sense.
-- Cleaner is somewhere in between — 24h batch but you'd run it
-  manually sometimes. Either works.
-- Transcript runs after every session end (could be many per day).
-  Latency is OK (background) but cost adds up.
+- Cleaner / Conflict detector are somewhere in between — 24h batch
+  but you'd run them manually sometimes. Either works.
+- Transcript / Plan drift run after every session end (could be
+  many per day). Latency is OK (background) but cost adds up.
+- Capture engine fires multiple times per session if you set a
+  short trigger (every 6 messages). Agent mode here gives the
+  best fact quality if your CLI quota allows it.
 
 The config table lets you pick per row, with per-row metrics so
 you can validate the tradeoff afterwards.
@@ -44,7 +51,16 @@ you can validate the tradeoff afterwards.
 ## Where it lives
 
 Open **Memory → Workers** (web sidebar) — or `/memory/workers`
-directly. You see four cards, one per touchpoint. Each card:
+directly. As of M-PF this page is the unified **Memory
+configuration** landing with five sections in one place:
+
+1. **Providers** — HTTP endpoint registry
+2. **Workers** — per-task summarizer/agent routing (this section)
+3. **Capture rules** — trigger config
+4. **Injection profiles** — spawn-time strategy
+5. **Token cost** — all-time call audit
+
+Each Worker card (in section 2) shows:
 
 - **Worker selector**: `Summarizer` ↔ `Agent` dropdown (gatekeeper
   is locked to Summarizer — see "Why gatekeeper stays put" below).

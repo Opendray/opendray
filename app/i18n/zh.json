@@ -1677,7 +1677,6 @@
         "vault": { "title": "Vault", "desc": "笔记、技能与 git 版本化根目录。" },
         "mcp": { "title": "MCP 注册表", "desc": "服务器注册表与密钥。" },
         "memory": { "title": "记忆", "desc": "跨 CLI 的持久化记忆子系统。" },
-        "memoryAmbient": { "title": "记忆 · 环境感知", "desc": "自动捕获对话进入记忆，并在 spawn 时注入。" },
         "backup": { "title": "备份", "desc": "加密数据库备份、恢复，以及管理员数据导出。" },
         "claude": { "title": "存储 · Claude", "desc": "Claude 会话记录在磁盘上的位置。" },
         "codex": { "title": "存储 · Codex", "desc": "Codex 会话根目录。" },

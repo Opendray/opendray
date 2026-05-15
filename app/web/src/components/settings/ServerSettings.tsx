@@ -60,7 +60,6 @@ export const SERVER_SECTIONS = [
   { id: 'vault' },
   { id: 'mcp' },
   { id: 'memory' },
-  { id: 'memory-ambient' },
   { id: 'backup' },
   { id: 'claude' },
   { id: 'codex' },
@@ -70,8 +69,10 @@ export const SERVER_SECTIONS = [
 export type ServerSectionId = (typeof SERVER_SECTIONS)[number]['id']
 
 // Map kebab-cased section id to the i18n key segment (camelCase).
+// Currently a no-op; kept around so we don't have to refactor call
+// sites if a future section reintroduces hyphenation.
 function sectionI18nKey(id: ServerSectionId): string {
-  return id === 'memory-ambient' ? 'memoryAmbient' : id
+  return id
 }
 
 // useServerSectionLabel returns translated title + desc for a section id.
@@ -93,7 +94,6 @@ const RESTART_REQUIRED_SECTIONS: Record<ServerSectionId, boolean> = {
   vault: true,
   mcp: true,
   memory: true, // backend / store wiring is read once at app.New
-  'memory-ambient': false, // CRUD via REST; no toml binding to restart
   backup: true, // pg_dump path + cipher are bound at NewService
   claude: false, // history paths are read on each request, no restart needed
   codex: false,
@@ -930,31 +930,6 @@ function SectionForm({
         </div>
       )
 
-    case 'memory-ambient':
-      // M-PF — the four sub-sections that used to live here
-      // (providers / rules / profiles / costs) have moved to the
-      // unified /memory/workers page so operators don't have to
-      // hunt for related toggles in two places. We keep this slot
-      // alive as a redirect banner so existing bookmarks still
-      // land somewhere sensible.
-      return (
-        <div className="flex flex-col gap-3 rounded-md border border-border bg-card/30 p-4 text-[13px]">
-          <div className="font-medium">
-            {t('web.memoryConfig.moveBanner.title')}
-          </div>
-          <p className="text-muted-foreground text-[12px]">
-            {t('web.memoryConfig.moveBanner.body')}
-          </p>
-          <div>
-            <Button asChild variant="outline" size="sm" className="h-8 text-[11px]">
-              <Link to="/memory/workers">
-                {t('web.memoryConfig.moveBanner.openButton')}
-              </Link>
-            </Button>
-          </div>
-        </div>
-      )
-
     case 'backup':
       return <BackupSection draft={draft} setDraft={setDraft} visible={visible} />
 
@@ -1325,10 +1300,6 @@ function mergeSection(
       break
     case 'memory':
       out.memory = src.memory
-      break
-    case 'memory-ambient':
-      // ambient memory has no toml-mergeable state — all CRUD goes
-      // through dedicated REST endpoints (/memory-summarizer-providers etc.)
       break
     case 'backup':
       out.backup = src.backup
