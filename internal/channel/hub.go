@@ -133,16 +133,16 @@ func (h *Hub) RegisterCommand(c Command) { h.cmds.Register(c) }
 //
 // What we DELETED and why:
 //   - /status   — channel-level diagnostic ("which capabilities does
-//                 this channel have"). Useful exactly once, then
-//                 noise in the /help output. The web admin shows
-//                 the same info with more context.
+//     this channel have"). Useful exactly once, then
+//     noise in the /help output. The web admin shows
+//     the same info with more context.
 //   - /select   — pin a chat to a specific session_id. The reply-
-//                 to-message routing (outboundIndex) covers the
-//                 multi-session case more naturally; the pin was a
-//                 power-user feature that nobody used.
+//     to-message routing (outboundIndex) covers the
+//     multi-session case more naturally; the pin was a
+//     power-user feature that nobody used.
 //   - /sessions — listed sessions that had previously NOTIFIED this
-//                 channel, not currently-active sessions. Confused
-//                 operators who expected /sessions == /list.
+//     channel, not currently-active sessions. Confused
+//     operators who expected /sessions == /list.
 //
 // The pinned-session machinery (activeSess + lookupActiveSession +
 // setActiveSession) is retained as dead-code-but-load-bearing — if

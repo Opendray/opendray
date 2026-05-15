@@ -33,9 +33,9 @@ type sessionOps interface {
 //
 //   - /list           — what's alive right now
 //   - /end <id>       — stop a running session (used by the End
-//                       inline button on the idle card as well)
+//     inline button on the idle card as well)
 //   - /resume <id>    — re-spawn a stopped/ended session under the
-//                       same id (used by the Resume inline button)
+//     same id (used by the Resume inline button)
 func registerChannelCommands(hub *channel.Hub, mgr sessionOps) {
 	hub.RegisterCommand(channel.Command{
 		Name:        "list",
