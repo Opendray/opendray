@@ -247,6 +247,19 @@
       "deletedFact": "Fact deleted and conflict accepted",
       "quickActions": "Fix:",
       "deleteFact": "Delete fact",
+      "deleteFactSide": "Delete {side}: {ref}",
+      "confirmDelete": {
+        "title": "Delete fact {side}?",
+        "description": "This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.",
+        "targetLabel": "Will delete (side {side}):",
+        "keepLabel": "Will keep (side {side}):",
+        "nonFactOther": "({layer} entry — open the corresponding tab to inspect)",
+        "evidenceLabel": "Detector evidence:",
+        "loading": "Loading fact text…",
+        "loadError": "Failed to load fact text. Inspect on the Memory page.",
+        "cancel": "Cancel",
+        "confirm": "Delete {side}"
+      },
       "openLayer": {
         "plan": "Open plan editor",
         "goal": "Open goal editor"
