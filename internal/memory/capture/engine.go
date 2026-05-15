@@ -20,8 +20,9 @@ const DefaultTickInterval = 10 * time.Second
 // practical N for after_messages triggers.
 const DefaultHistoryLimit = 200
 
-// Deps groups the dependencies the engine wires together. All
-// required.
+// Deps groups the dependencies the engine wires together. Rules /
+// Registry / Memory / Sessions / History / CallLog are required;
+// the rest are optional with sensible defaults.
 type Deps struct {
 	Rules    *RuleStore
 	Registry *summarizer.Registry
@@ -34,6 +35,13 @@ type Deps struct {
 	TickInterval time.Duration
 	// HistoryLimit — 0 falls back to DefaultHistoryLimit.
 	HistoryLimit int
+	// WorkerProvider is the M-PE worker-fabric-backed default
+	// provider. Nil keeps the pre-M-PE behaviour
+	// (summarizer.Registry.Default() for rules with no pinned
+	// SummarizerProviderID). When non-nil, no-pinning rules
+	// dispatch through the worker fabric so operators can choose
+	// Agent (CLI --print) for capture from the Memory → Workers UI.
+	WorkerProvider summarizer.Provider
 }
 
 // Engine drives the ambient capture loop: every TickInterval, list
@@ -82,14 +90,15 @@ func NewEngine(deps Deps) (*Engine, error) {
 	}
 	state := newStateMap()
 	r := &runner{
-		rules:        deps.Rules,
-		registry:     deps.Registry,
-		memory:       deps.Memory,
-		history:      deps.History,
-		callLog:      deps.CallLog,
-		state:        state,
-		historyLimit: deps.HistoryLimit,
-		log:          deps.Log.With("component", "capture-runner"),
+		rules:          deps.Rules,
+		registry:       deps.Registry,
+		workerProvider: deps.WorkerProvider,
+		memory:         deps.Memory,
+		history:        deps.History,
+		callLog:        deps.CallLog,
+		state:          state,
+		historyLimit:   deps.HistoryLimit,
+		log:            deps.Log.With("component", "capture-runner"),
 	}
 	return &Engine{
 		deps:   deps,

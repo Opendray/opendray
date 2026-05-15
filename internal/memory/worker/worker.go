@@ -48,6 +48,13 @@ const (
 	TaskTranscript       TaskKind = "transcript"
 	TaskPlanDrift        TaskKind = "plan_drift"
 	TaskConflictDetector TaskKind = "conflict_detector"
+	// TaskCapture is the capture-engine touchpoint. Pre-M-PE the
+	// capture engine talked to summarizer.Registry directly so it
+	// could only use HTTP summarizer providers. Routing through
+	// worker.Registry lets operators pick a headless Claude /
+	// Gemini agent for capture (higher quality but slower and
+	// more expensive), matching the other 5 touchpoints.
+	TaskCapture TaskKind = "capture"
 )
 
 // AllTasks returns every recognised TaskKind in a stable order.
@@ -56,7 +63,7 @@ const (
 func AllTasks() []TaskKind {
 	return []TaskKind{
 		TaskGatekeeper, TaskCleaner, TaskGitActivity, TaskTranscript,
-		TaskPlanDrift, TaskConflictDetector,
+		TaskPlanDrift, TaskConflictDetector, TaskCapture,
 	}
 }
 
@@ -165,7 +172,7 @@ type Config struct {
 func (c Config) Valid() error {
 	switch c.Task {
 	case TaskGatekeeper, TaskCleaner, TaskGitActivity, TaskTranscript,
-		TaskPlanDrift, TaskConflictDetector:
+		TaskPlanDrift, TaskConflictDetector, TaskCapture:
 	default:
 		return errors.New("memory worker: invalid task")
 	}

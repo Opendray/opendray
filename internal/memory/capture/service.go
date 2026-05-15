@@ -65,14 +65,22 @@ type SummarizerCallLogger interface {
 // Errors at step 3-5 don't abort the engine — they're logged into
 // the call log + bumped on the failure streak. Engine keeps ticking.
 type runner struct {
-	rules        *RuleStore
-	registry     *summarizer.Registry
-	memory       MemoryWriter
-	history      HistoryReader
-	callLog      SummarizerCallLogger
-	state        *stateMap
-	historyLimit int
-	log          *slog.Logger
+	rules    *RuleStore
+	registry *summarizer.Registry
+	// workerProvider is the M-PE worker-fabric-backed default. When
+	// non-nil and a rule doesn't pin SummarizerProviderID, the
+	// capture engine resolves its provider through the worker
+	// registry (so operators can pick Agent (CLI --print) for
+	// capture the same way they do for gitactivity / transcript /
+	// cleaner). Nil falls back to the pre-M-PE behaviour:
+	// summarizer.Registry.Default() returns an HTTP provider.
+	workerProvider summarizer.Provider
+	memory         MemoryWriter
+	history        HistoryReader
+	callLog        SummarizerCallLogger
+	state          *stateMap
+	historyLimit   int
+	log            *slog.Logger
 }
 
 // runForceForSession bypasses trigger evaluation and pause state,
@@ -258,11 +266,21 @@ func (r *runner) runForSessionWithForce(ctx context.Context, rule Rule, sess Ses
 }
 
 // pickProvider resolves the runtime provider:
-//  1. If rule pins SummarizerProviderID, build that.
-//  2. Else, registry.Default().
+//  1. If rule pins SummarizerProviderID, build that — explicit
+//     overrides win, so existing operator configurations don't
+//     change behaviour after M-PE.
+//  2. Else, if a worker-fabric provider is wired (M-PE default),
+//     dispatch through it. The worker registry decides
+//     summarizer-HTTP vs agent-CLI per task config.
+//  3. Else, fall back to summarizer.Registry.Default() — the
+//     pre-M-PE behaviour, preserved for installs that haven't
+//     wired the worker registry yet.
 func (r *runner) pickProvider(ctx context.Context, rule Rule) (summarizer.Provider, error) {
 	if rule.SummarizerProviderID != "" {
 		return r.registry.Build(ctx, rule.SummarizerProviderID)
+	}
+	if r.workerProvider != nil {
+		return r.workerProvider, nil
 	}
 	return r.registry.Default(ctx)
 }

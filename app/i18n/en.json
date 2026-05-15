@@ -349,6 +349,18 @@
         "transcript": {
           "label": "Session transcript summariser",
           "description": "Session-end \"what did the agent do\" summary. Naturally fits an agent worker."
+        },
+        "plan_drift": {
+          "label": "Plan drift detector",
+          "description": "After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning."
+        },
+        "conflict_detector": {
+          "label": "Cross-layer conflict detector",
+          "description": "Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives."
+        },
+        "capture": {
+          "label": "Capture engine",
+          "description": "Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local."
         }
       }
     },
