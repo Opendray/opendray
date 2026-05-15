@@ -140,6 +140,8 @@ class _TranslationsWebZh extends TranslationsWebEn {
 	@override late final _TranslationsWebTopbarZh topbar = _TranslationsWebTopbarZh._(_root);
 	@override late final _TranslationsWebSessionsZh sessions = _TranslationsWebSessionsZh._(_root);
 	@override late final _TranslationsWebMemoryZh memory = _TranslationsWebMemoryZh._(_root);
+	@override late final _TranslationsWebConflictsZh conflicts = _TranslationsWebConflictsZh._(_root);
+	@override late final _TranslationsWebMemoryHealthZh memoryHealth = _TranslationsWebMemoryHealthZh._(_root);
 	@override late final _TranslationsWebMemoryWorkersZh memoryWorkers = _TranslationsWebMemoryWorkersZh._(_root);
 	@override late final _TranslationsWebCleanupInboxZh cleanupInbox = _TranslationsWebCleanupInboxZh._(_root);
 	@override late final _TranslationsWebProjectZh project = _TranslationsWebProjectZh._(_root);
@@ -888,6 +890,59 @@ class _TranslationsWebMemoryZh extends TranslationsWebMemoryEn {
 	@override String get navCleanupInbox => '清理收件箱';
 	@override String get navWorkers => 'Workers';
 	@override String get navConfiguration => '配置 →';
+}
+
+// Path: web.conflicts
+class _TranslationsWebConflictsZh extends TranslationsWebConflictsEn {
+	_TranslationsWebConflictsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '跨层冲突';
+	@override String get subtitle => '每日 detector 在 facts/plan/goal/journal 之间发现的矛盾。';
+	@override String get loading => '正在加载冲突…';
+	@override String get empty => '无待处理冲突。点击"立即检测"运行一次按需扫描。';
+	@override String get pickCwd => '选一个项目查看其冲突。';
+	@override String get detectNow => '立即检测';
+	@override String detected({required Object count}) => '新发现 ${count} 条冲突';
+	@override String get accept => '采纳';
+	@override String get dismiss => '驳回';
+	@override String get accepted => '已采纳 — 别忘了实际修正';
+	@override String get dismissed => '已驳回';
+	@override late final _TranslationsWebConflictsSeverityZh severity = _TranslationsWebConflictsSeverityZh._(_root);
+}
+
+// Path: web.memoryHealth
+class _TranslationsWebMemoryHealthZh extends TranslationsWebMemoryHealthEn {
+	_TranslationsWebMemoryHealthZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String title({required Object days}) => '记忆健康 — 最近 ${days} 天';
+	@override String get subtitle => '本项目两套记忆子系统的运行情况聚合。';
+	@override String get loading => '正在加载健康快照…';
+	@override String get errorLoading => '加载健康快照失败。';
+	@override String get pickCwd => '选一个项目查看其记忆健康。';
+	@override String get newFacts => '新增 facts';
+	@override String newFactsHint({required Object total}) => '累计 ${total} 条';
+	@override String get captureFires => 'Capture 触发次数';
+	@override String captureFiresHint({required Object stored, required Object deduped}) => '存入 ${stored} · 去重 ${deduped}';
+	@override String get newJournal => '新增日志条目';
+	@override String newJournalHint({required Object total}) => '累计 ${total} 条';
+	@override String get planAge => '计划最近更新';
+	@override String planAgeHint({required Object count}) => '${count} 条 plan-drift 提案待审';
+	@override String get planAgeHintNone => '无 plan-drift 提案待审';
+	@override String get goalAge => '目标最近更新';
+	@override String get pending => '待审提案';
+	@override String pendingHint({required Object days}) => '最久 ${days} 天';
+	@override String topHit({required Object hits}) => '命中最多 · ${hits} 次';
+	@override String zeroHit({required Object count}) => '${count} 条超过 7 天未命中的 fact — 清理候选。';
+	@override String get never => '从未';
+	@override String get today => '今日';
+	@override String daysAgo_one({required Object count}) => '${count} 天前';
+	@override String daysAgo_other({required Object count}) => '${count} 天前';
 }
 
 // Path: web.memoryWorkers
@@ -2368,6 +2423,18 @@ class _TranslationsWebSessionsFileBrowserZh extends TranslationsWebSessionsFileB
 	@override String get homeFailedToast => '读取家目录失败';
 }
 
+// Path: web.conflicts.severity
+class _TranslationsWebConflictsSeverityZh extends TranslationsWebConflictsSeverityEn {
+	_TranslationsWebConflictsSeverityZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get low => '低';
+	@override String get medium => '中';
+	@override String get high => '高';
+}
+
 // Path: web.memoryWorkers.tasks
 class _TranslationsWebMemoryWorkersTasksZh extends TranslationsWebMemoryWorkersTasksEn {
 	_TranslationsWebMemoryWorkersTasksZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -2422,12 +2489,14 @@ class _TranslationsWebProjectTabsZh extends TranslationsWebProjectTabsEn {
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
+	@override String get health => '健康';
 	@override String get goal => '目标';
 	@override String get plan => '计划';
 	@override String get tech => '技术栈';
 	@override String get activity => '活动';
 	@override String get journal => '日志';
 	@override String get inbox => '收件箱';
+	@override String get conflicts => '冲突';
 	@override String get cleanup => '清理';
 }
 
@@ -6796,6 +6865,43 @@ extension on TranslationsZh {
 			'web.memory.navCleanupInbox' => '清理收件箱',
 			'web.memory.navWorkers' => 'Workers',
 			'web.memory.navConfiguration' => '配置 →',
+			'web.conflicts.title' => '跨层冲突',
+			'web.conflicts.subtitle' => '每日 detector 在 facts/plan/goal/journal 之间发现的矛盾。',
+			'web.conflicts.loading' => '正在加载冲突…',
+			'web.conflicts.empty' => '无待处理冲突。点击"立即检测"运行一次按需扫描。',
+			'web.conflicts.pickCwd' => '选一个项目查看其冲突。',
+			'web.conflicts.detectNow' => '立即检测',
+			'web.conflicts.detected' => ({required Object count}) => '新发现 ${count} 条冲突',
+			'web.conflicts.accept' => '采纳',
+			'web.conflicts.dismiss' => '驳回',
+			'web.conflicts.accepted' => '已采纳 — 别忘了实际修正',
+			'web.conflicts.dismissed' => '已驳回',
+			'web.conflicts.severity.low' => '低',
+			'web.conflicts.severity.medium' => '中',
+			'web.conflicts.severity.high' => '高',
+			'web.memoryHealth.title' => ({required Object days}) => '记忆健康 — 最近 ${days} 天',
+			'web.memoryHealth.subtitle' => '本项目两套记忆子系统的运行情况聚合。',
+			'web.memoryHealth.loading' => '正在加载健康快照…',
+			'web.memoryHealth.errorLoading' => '加载健康快照失败。',
+			'web.memoryHealth.pickCwd' => '选一个项目查看其记忆健康。',
+			'web.memoryHealth.newFacts' => '新增 facts',
+			'web.memoryHealth.newFactsHint' => ({required Object total}) => '累计 ${total} 条',
+			'web.memoryHealth.captureFires' => 'Capture 触发次数',
+			'web.memoryHealth.captureFiresHint' => ({required Object stored, required Object deduped}) => '存入 ${stored} · 去重 ${deduped}',
+			'web.memoryHealth.newJournal' => '新增日志条目',
+			'web.memoryHealth.newJournalHint' => ({required Object total}) => '累计 ${total} 条',
+			'web.memoryHealth.planAge' => '计划最近更新',
+			'web.memoryHealth.planAgeHint' => ({required Object count}) => '${count} 条 plan-drift 提案待审',
+			'web.memoryHealth.planAgeHintNone' => '无 plan-drift 提案待审',
+			'web.memoryHealth.goalAge' => '目标最近更新',
+			'web.memoryHealth.pending' => '待审提案',
+			'web.memoryHealth.pendingHint' => ({required Object days}) => '最久 ${days} 天',
+			'web.memoryHealth.topHit' => ({required Object hits}) => '命中最多 · ${hits} 次',
+			'web.memoryHealth.zeroHit' => ({required Object count}) => '${count} 条超过 7 天未命中的 fact — 清理候选。',
+			'web.memoryHealth.never' => '从未',
+			'web.memoryHealth.today' => '今日',
+			'web.memoryHealth.daysAgo_one' => ({required Object count}) => '${count} 天前',
+			'web.memoryHealth.daysAgo_other' => ({required Object count}) => '${count} 天前',
 			'web.memoryWorkers.title' => 'Memory workers',
 			'web.memoryWorkers.loading' => '正在加载 worker 配置…',
 			'web.memoryWorkers.errorTitle' => '无法访问该接口。',
@@ -6877,12 +6983,14 @@ extension on TranslationsZh {
 			'web.project.header.pendingProposals_one' => ({required Object count}) => '${count} 条待处理提案',
 			'web.project.header.pendingProposals_other' => ({required Object count}) => '${count} 条待处理提案',
 			'web.project.header.cleanupPending' => ({required Object count}) => '${count} 条待清理',
+			'web.project.tabs.health' => '健康',
 			'web.project.tabs.goal' => '目标',
 			'web.project.tabs.plan' => '计划',
 			'web.project.tabs.tech' => '技术栈',
 			'web.project.tabs.activity' => '活动',
 			'web.project.tabs.journal' => '日志',
 			'web.project.tabs.inbox' => '收件箱',
+			'web.project.tabs.conflicts' => '冲突',
 			'web.project.tabs.cleanup' => '清理',
 			'web.project.docLabel.goal' => '目标',
 			'web.project.docLabel.plan' => '计划',
@@ -7087,6 +7195,8 @@ extension on TranslationsZh {
 			'web.notes.left.clearTagTooltip' => '清除标签筛选',
 			'web.notes.left.expandAll' => '全部展开',
 			'web.notes.left.expandAllTooltip' => '展开全部文件夹',
+			_ => null,
+		} ?? switch (path) {
 			'web.notes.left.collapseAll' => '全部收起',
 			'web.notes.left.collapseAllTooltip' => '收起全部文件夹',
 			'web.notes.left.loading' => '加载中…',
@@ -7126,8 +7236,6 @@ extension on TranslationsZh {
 			'web.notes.vaultSync.action.push' => '推送',
 			'web.notes.vaultSync.action.pullTitleNoRemote' => '请先配置 remote',
 			'web.notes.vaultSync.action.pullTitleHasUpstream' => 'git pull --rebase --autostash',
-			_ => null,
-		} ?? switch (path) {
 			'web.notes.vaultSync.action.pullTitleNoUpstream' => '拉取 origin 的 HEAD；隐式建立 tracking',
 			'web.notes.vaultSync.action.pushTitleNoRemote' => '请先配置 remote',
 			'web.notes.vaultSync.action.pushTitleHasUpstream' => 'git push -u origin HEAD',
@@ -7601,6 +7709,8 @@ extension on TranslationsZh {
 			'web.plugins.skills.resetConfirm' => ({required Object id}) => '将 "${id}" 重置为内置版本? 这会删除你的 vault SKILL.md 并回退到嵌入副本。',
 			'web.plugins.skills.deleteConfirm' => ({required Object id}) => '从 vault 删除 skill "${id}"? 这会移除该 SKILL.md 文件。',
 			'web.plugins.skills.removedToast' => 'Skill 已移除',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.skills.deleteFailedToast' => '删除失败',
 			'web.plugins.skills.editor.createTitle' => '新建 skill',
 			'web.plugins.skills.editor.customizeTitle' => ({required Object id}) => '自定义内置：${id}',
@@ -7640,8 +7750,6 @@ extension on TranslationsZh {
 			'web.plugins.customTasks.dialog.cwdLabel' => 'cwd scope（可选）',
 			'web.plugins.customTasks.dialog.cwdPlaceholder' => '/Users/me/projects/foo（留空 = 全局）',
 			'web.plugins.customTasks.dialog.cwdHint' => '留空 = 在每个会话中都可见。否则只有当会话的 cwd 与此绝对路径匹配时才显示。',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.customTasks.dialog.addedToast' => '任务已添加',
 			'web.plugins.customTasks.dialog.updatedToast' => '任务已更新',
 			'web.plugins.customTasks.dialog.addFailedToast' => '添加失败',
@@ -8115,6 +8223,8 @@ extension on TranslationsZh {
 			'web.settings.font.options.comfy' => '舒适',
 			'web.settings.font.options.large' => '大',
 			'web.settings.account.title' => '账号',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.account.description' => '运维与当前 bearer token。',
 			'web.settings.account.username' => '用户名',
 			'web.settings.account.tokenExpires' => 'Token 过期',
@@ -8154,8 +8264,6 @@ extension on TranslationsZh {
 			'web.logViewer.pauseTooltip' => '暂停自动滚动',
 			'web.logViewer.resumeTooltip' => '恢复自动滚动',
 			'web.logViewer.clearTooltip' => '清空本地视图（服务端 ring 不受影响）',
-			_ => null,
-		} ?? switch (path) {
 			'web.logViewer.downloadTooltip' => '下载完整 ring 为 .log 文件',
 			'web.logViewer.emptyWaiting' => '等待日志记录…',
 			'web.logViewer.emptyFiltered' => ({required Object query}) => '没有匹配 "${query}" 的记录',
@@ -8629,6 +8737,8 @@ extension on TranslationsZh {
 			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'providers.accounts.rename' => '重命名',
 			'providers.accounts.renameTitle' => ({required Object name}) => '重命名 ${name}',
+			_ => null,
+		} ?? switch (path) {
 			'providers.accounts.displayNameLabel' => '显示名',
 			'providers.accounts.displayNameHint' => '工作账号',
 			'providers.accounts.deleteTitle' => '删除账号？',
@@ -8668,8 +8778,6 @@ extension on TranslationsZh {
 			'integrations.edit' => '编辑',
 			'integrations.editTitle' => ({required Object name}) => '编辑 ${name}',
 			'integrations.enabledLabel' => '已启用',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.iSavedIt' => '我已保存',
 			'integrations.apiKeyForName' => ({required Object name}) => '${name} 的 API key',
 			'integrations.apiKeySubtitleRegister' => ({required Object routePrefix}) => '将其交给集成方，使其能够通过 /api/v1/${routePrefix}/… 进行认证。',
@@ -9143,6 +9251,8 @@ extension on TranslationsZh {
 			'skills.deleteTooltip' => '删除',
 			'skills.saving' => '保存中…',
 			'skills.saveOverride' => '保存覆盖',
+			_ => null,
+		} ?? switch (path) {
 			'skills.overrideBanner' => '保存会以相同 id 创建一个库覆盖。会话将使用此正文而非内置版本，直到你重置。',
 			'skills.idHelper' => '小写字母 / 数字 / 横线。创建后锁定。',
 			'skills.emptyList' => '未配置任何技能。网关附带内置技能（planner、code-reviewer 等）。',
@@ -9182,8 +9292,6 @@ extension on TranslationsZh {
 			'customTasks.cwdHelper' => '绝对路径。以此 cwd 启动的会话将看到该任务。',
 			'customTasks.saving' => '保存中…',
 			'customTasks.save' => '保存',
-			_ => null,
-		} ?? switch (path) {
 			'customTasks.create' => '创建',
 			'customTasks.failedToLoad' => '加载自定义任务失败',
 			'notesPage.title' => '笔记',

@@ -216,6 +216,8 @@ class TranslationsWebEn {
 	late final TranslationsWebTopbarEn topbar = TranslationsWebTopbarEn.internal(_root);
 	late final TranslationsWebSessionsEn sessions = TranslationsWebSessionsEn.internal(_root);
 	late final TranslationsWebMemoryEn memory = TranslationsWebMemoryEn.internal(_root);
+	late final TranslationsWebConflictsEn conflicts = TranslationsWebConflictsEn.internal(_root);
+	late final TranslationsWebMemoryHealthEn memoryHealth = TranslationsWebMemoryHealthEn.internal(_root);
 	late final TranslationsWebMemoryWorkersEn memoryWorkers = TranslationsWebMemoryWorkersEn.internal(_root);
 	late final TranslationsWebCleanupInboxEn cleanupInbox = TranslationsWebCleanupInboxEn.internal(_root);
 	late final TranslationsWebProjectEn project = TranslationsWebProjectEn.internal(_root);
@@ -1886,6 +1888,128 @@ class TranslationsWebMemoryEn {
 
 	/// en: 'Configuration →'
 	String get navConfiguration => 'Configuration →';
+}
+
+// Path: web.conflicts
+class TranslationsWebConflictsEn {
+	TranslationsWebConflictsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Cross-layer conflicts'
+	String get title => 'Cross-layer conflicts';
+
+	/// en: 'Contradictions the daily detector found between facts, plan, goal, and journal entries.'
+	String get subtitle => 'Contradictions the daily detector found between facts, plan, goal, and journal entries.';
+
+	/// en: 'Loading conflicts…'
+	String get loading => 'Loading conflicts…';
+
+	/// en: 'No pending conflicts. Click "Detect now" to run an on-demand sweep.'
+	String get empty => 'No pending conflicts. Click "Detect now" to run an on-demand sweep.';
+
+	/// en: 'Pick a project to see its conflicts.'
+	String get pickCwd => 'Pick a project to see its conflicts.';
+
+	/// en: 'Detect now'
+	String get detectNow => 'Detect now';
+
+	/// en: '{count} new conflict(s) found'
+	String detected({required Object count}) => '${count} new conflict(s) found';
+
+	/// en: 'Accept'
+	String get accept => 'Accept';
+
+	/// en: 'Dismiss'
+	String get dismiss => 'Dismiss';
+
+	/// en: 'Conflict accepted — remember to apply the fix'
+	String get accepted => 'Conflict accepted — remember to apply the fix';
+
+	/// en: 'Conflict dismissed'
+	String get dismissed => 'Conflict dismissed';
+
+	late final TranslationsWebConflictsSeverityEn severity = TranslationsWebConflictsSeverityEn.internal(_root);
+}
+
+// Path: web.memoryHealth
+class TranslationsWebMemoryHealthEn {
+	TranslationsWebMemoryHealthEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Memory health — last {days} days'
+	String title({required Object days}) => 'Memory health — last ${days} days';
+
+	/// en: 'Aggregate signals across both memory subsystems for this project.'
+	String get subtitle => 'Aggregate signals across both memory subsystems for this project.';
+
+	/// en: 'Loading health snapshot…'
+	String get loading => 'Loading health snapshot…';
+
+	/// en: 'Failed to load health snapshot.'
+	String get errorLoading => 'Failed to load health snapshot.';
+
+	/// en: 'Pick a project to see its memory health.'
+	String get pickCwd => 'Pick a project to see its memory health.';
+
+	/// en: 'New facts'
+	String get newFacts => 'New facts';
+
+	/// en: '{total} stored in total'
+	String newFactsHint({required Object total}) => '${total} stored in total';
+
+	/// en: 'Capture fires'
+	String get captureFires => 'Capture fires';
+
+	/// en: '{stored} stored · {deduped} deduped'
+	String captureFiresHint({required Object stored, required Object deduped}) => '${stored} stored · ${deduped} deduped';
+
+	/// en: 'Journal entries'
+	String get newJournal => 'Journal entries';
+
+	/// en: '{total} in total'
+	String newJournalHint({required Object total}) => '${total} in total';
+
+	/// en: 'Plan last updated'
+	String get planAge => 'Plan last updated';
+
+	/// en: '{count} plan-drift proposal(s) pending'
+	String planAgeHint({required Object count}) => '${count} plan-drift proposal(s) pending';
+
+	/// en: 'No plan-drift proposals pending'
+	String get planAgeHintNone => 'No plan-drift proposals pending';
+
+	/// en: 'Goal last updated'
+	String get goalAge => 'Goal last updated';
+
+	/// en: 'Pending proposals'
+	String get pending => 'Pending proposals';
+
+	/// en: 'oldest {days}d old'
+	String pendingHint({required Object days}) => 'oldest ${days}d old';
+
+	/// en: 'Top hit · {hits} retrievals'
+	String topHit({required Object hits}) => 'Top hit · ${hits} retrievals';
+
+	/// en: '{count} facts older than 7d with zero retrievals — candidates for cleanup.'
+	String zeroHit({required Object count}) => '${count} facts older than 7d with zero retrievals — candidates for cleanup.';
+
+	/// en: 'never'
+	String get never => 'never';
+
+	/// en: 'today'
+	String get today => 'today';
+
+	/// en: '{count} day ago'
+	String daysAgo_one({required Object count}) => '${count} day ago';
+
+	/// en: '{count} days ago'
+	String daysAgo_other({required Object count}) => '${count} days ago';
 }
 
 // Path: web.memoryWorkers
@@ -4535,6 +4659,24 @@ class TranslationsWebSessionsFileBrowserEn {
 	String get homeFailedToast => 'Failed to read home';
 }
 
+// Path: web.conflicts.severity
+class TranslationsWebConflictsSeverityEn {
+	TranslationsWebConflictsSeverityEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'low'
+	String get low => 'low';
+
+	/// en: 'medium'
+	String get medium => 'medium';
+
+	/// en: 'high'
+	String get high => 'high';
+}
+
 // Path: web.memoryWorkers.tasks
 class TranslationsWebMemoryWorkersTasksEn {
 	TranslationsWebMemoryWorkersTasksEn.internal(this._root);
@@ -4622,6 +4764,9 @@ class TranslationsWebProjectTabsEn {
 
 	// Translations
 
+	/// en: 'Health'
+	String get health => 'Health';
+
 	/// en: 'Goal'
 	String get goal => 'Goal';
 
@@ -4639,6 +4784,9 @@ class TranslationsWebProjectTabsEn {
 
 	/// en: 'Inbox'
 	String get inbox => 'Inbox';
+
+	/// en: 'Conflicts'
+	String get conflicts => 'Conflicts';
 
 	/// en: 'Cleanup'
 	String get cleanup => 'Cleanup';
@@ -12430,6 +12578,43 @@ extension on Translations {
 			'web.memory.navCleanupInbox' => 'Cleanup inbox',
 			'web.memory.navWorkers' => 'Workers',
 			'web.memory.navConfiguration' => 'Configuration →',
+			'web.conflicts.title' => 'Cross-layer conflicts',
+			'web.conflicts.subtitle' => 'Contradictions the daily detector found between facts, plan, goal, and journal entries.',
+			'web.conflicts.loading' => 'Loading conflicts…',
+			'web.conflicts.empty' => 'No pending conflicts. Click "Detect now" to run an on-demand sweep.',
+			'web.conflicts.pickCwd' => 'Pick a project to see its conflicts.',
+			'web.conflicts.detectNow' => 'Detect now',
+			'web.conflicts.detected' => ({required Object count}) => '${count} new conflict(s) found',
+			'web.conflicts.accept' => 'Accept',
+			'web.conflicts.dismiss' => 'Dismiss',
+			'web.conflicts.accepted' => 'Conflict accepted — remember to apply the fix',
+			'web.conflicts.dismissed' => 'Conflict dismissed',
+			'web.conflicts.severity.low' => 'low',
+			'web.conflicts.severity.medium' => 'medium',
+			'web.conflicts.severity.high' => 'high',
+			'web.memoryHealth.title' => ({required Object days}) => 'Memory health — last ${days} days',
+			'web.memoryHealth.subtitle' => 'Aggregate signals across both memory subsystems for this project.',
+			'web.memoryHealth.loading' => 'Loading health snapshot…',
+			'web.memoryHealth.errorLoading' => 'Failed to load health snapshot.',
+			'web.memoryHealth.pickCwd' => 'Pick a project to see its memory health.',
+			'web.memoryHealth.newFacts' => 'New facts',
+			'web.memoryHealth.newFactsHint' => ({required Object total}) => '${total} stored in total',
+			'web.memoryHealth.captureFires' => 'Capture fires',
+			'web.memoryHealth.captureFiresHint' => ({required Object stored, required Object deduped}) => '${stored} stored · ${deduped} deduped',
+			'web.memoryHealth.newJournal' => 'Journal entries',
+			'web.memoryHealth.newJournalHint' => ({required Object total}) => '${total} in total',
+			'web.memoryHealth.planAge' => 'Plan last updated',
+			'web.memoryHealth.planAgeHint' => ({required Object count}) => '${count} plan-drift proposal(s) pending',
+			'web.memoryHealth.planAgeHintNone' => 'No plan-drift proposals pending',
+			'web.memoryHealth.goalAge' => 'Goal last updated',
+			'web.memoryHealth.pending' => 'Pending proposals',
+			'web.memoryHealth.pendingHint' => ({required Object days}) => 'oldest ${days}d old',
+			'web.memoryHealth.topHit' => ({required Object hits}) => 'Top hit · ${hits} retrievals',
+			'web.memoryHealth.zeroHit' => ({required Object count}) => '${count} facts older than 7d with zero retrievals — candidates for cleanup.',
+			'web.memoryHealth.never' => 'never',
+			'web.memoryHealth.today' => 'today',
+			'web.memoryHealth.daysAgo_one' => ({required Object count}) => '${count} day ago',
+			'web.memoryHealth.daysAgo_other' => ({required Object count}) => '${count} days ago',
 			'web.memoryWorkers.title' => 'Memory workers',
 			'web.memoryWorkers.loading' => 'Loading worker config…',
 			'web.memoryWorkers.errorTitle' => 'Endpoint not reachable.',
@@ -12511,12 +12696,14 @@ extension on Translations {
 			'web.project.header.pendingProposals_one' => ({required Object count}) => '${count} pending proposal',
 			'web.project.header.pendingProposals_other' => ({required Object count}) => '${count} pending proposals',
 			'web.project.header.cleanupPending' => ({required Object count}) => '${count} cleanup pending',
+			'web.project.tabs.health' => 'Health',
 			'web.project.tabs.goal' => 'Goal',
 			'web.project.tabs.plan' => 'Plan',
 			'web.project.tabs.tech' => 'Tech',
 			'web.project.tabs.activity' => 'Activity',
 			'web.project.tabs.journal' => 'Journal',
 			'web.project.tabs.inbox' => 'Inbox',
+			'web.project.tabs.conflicts' => 'Conflicts',
 			'web.project.tabs.cleanup' => 'Cleanup',
 			'web.project.docLabel.goal' => 'Goal',
 			'web.project.docLabel.plan' => 'Plan',
@@ -12721,6 +12908,8 @@ extension on Translations {
 			'web.notes.left.clearTagTooltip' => 'Clear tag filter',
 			'web.notes.left.expandAll' => 'Expand all',
 			'web.notes.left.expandAllTooltip' => 'Expand every folder',
+			_ => null,
+		} ?? switch (path) {
 			'web.notes.left.collapseAll' => 'Collapse all',
 			'web.notes.left.collapseAllTooltip' => 'Collapse every folder',
 			'web.notes.left.loading' => 'Loading…',
@@ -12760,8 +12949,6 @@ extension on Translations {
 			'web.notes.vaultSync.action.push' => 'Push',
 			'web.notes.vaultSync.action.pullTitleNoRemote' => 'Configure a remote first',
 			'web.notes.vaultSync.action.pullTitleHasUpstream' => 'git pull --rebase --autostash',
-			_ => null,
-		} ?? switch (path) {
 			'web.notes.vaultSync.action.pullTitleNoUpstream' => 'Pulls origin\'s HEAD; sets up tracking implicitly',
 			'web.notes.vaultSync.action.pushTitleNoRemote' => 'Configure a remote first',
 			'web.notes.vaultSync.action.pushTitleHasUpstream' => 'git push -u origin HEAD',
@@ -13235,6 +13422,8 @@ extension on Translations {
 			'web.plugins.skills.resetConfirm' => ({required Object id}) => 'Reset "${id}" to the built-in version? This deletes your vault SKILL.md and falls back to the embedded copy.',
 			'web.plugins.skills.deleteConfirm' => ({required Object id}) => 'Delete skill "${id}" from your vault? This removes the SKILL.md file.',
 			'web.plugins.skills.removedToast' => 'Skill removed',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.skills.deleteFailedToast' => 'Delete failed',
 			'web.plugins.skills.editor.createTitle' => 'New skill',
 			'web.plugins.skills.editor.customizeTitle' => ({required Object id}) => 'Customize built-in: ${id}',
@@ -13274,8 +13463,6 @@ extension on Translations {
 			'web.plugins.customTasks.dialog.cwdLabel' => 'Cwd scope (optional)',
 			'web.plugins.customTasks.dialog.cwdPlaceholder' => '/Users/me/projects/foo  (blank = global)',
 			'web.plugins.customTasks.dialog.cwdHint' => 'Blank = visible in every session. Otherwise the task only shows when the session\'s cwd matches this absolute path.',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.customTasks.dialog.addedToast' => 'Task added',
 			'web.plugins.customTasks.dialog.updatedToast' => 'Task updated',
 			'web.plugins.customTasks.dialog.addFailedToast' => 'Add failed',
@@ -13749,6 +13936,8 @@ extension on Translations {
 			'web.settings.font.options.comfy' => 'Comfy',
 			'web.settings.font.options.large' => 'Large',
 			'web.settings.account.title' => 'Account',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.account.description' => 'Operator and current bearer token.',
 			'web.settings.account.username' => 'Username',
 			'web.settings.account.tokenExpires' => 'Token expires',
@@ -13788,8 +13977,6 @@ extension on Translations {
 			'web.logViewer.pauseTooltip' => 'Pause auto-scroll',
 			'web.logViewer.resumeTooltip' => 'Resume auto-scroll',
 			'web.logViewer.clearTooltip' => 'Clear local view (server ring untouched)',
-			_ => null,
-		} ?? switch (path) {
 			'web.logViewer.downloadTooltip' => 'Download full ring as .log file',
 			'web.logViewer.emptyWaiting' => 'Waiting for log records…',
 			'web.logViewer.emptyFiltered' => ({required Object query}) => 'No records match "${query}"',
@@ -14263,6 +14450,8 @@ extension on Translations {
 			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'providers.accounts.rename' => 'Rename',
 			'providers.accounts.renameTitle' => ({required Object name}) => 'Rename ${name}',
+			_ => null,
+		} ?? switch (path) {
 			'providers.accounts.displayNameLabel' => 'Display name',
 			'providers.accounts.displayNameHint' => 'Work account',
 			'providers.accounts.deleteTitle' => 'Delete account?',
@@ -14302,8 +14491,6 @@ extension on Translations {
 			'integrations.edit' => 'Edit',
 			'integrations.editTitle' => ({required Object name}) => 'Edit ${name}',
 			'integrations.enabledLabel' => 'Enabled',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.iSavedIt' => 'I\'ve saved it',
 			'integrations.apiKeyForName' => ({required Object name}) => 'API key for ${name}',
 			'integrations.apiKeySubtitleRegister' => ({required Object routePrefix}) => 'Hand this to the integration so it can authenticate against /api/v1/${routePrefix}/…',
@@ -14777,6 +14964,8 @@ extension on Translations {
 			'skills.deleteTooltip' => 'Delete',
 			'skills.saving' => 'Saving…',
 			'skills.saveOverride' => 'Save override',
+			_ => null,
+		} ?? switch (path) {
 			'skills.overrideBanner' => 'Saving creates a vault override with the same id. Sessions will use this body instead of the built-in until you reset.',
 			'skills.idHelper' => 'Lowercase letters / digits / dash. Locked once created.',
 			'skills.emptyList' => 'No skills configured. The gateway ships with built-ins (planner, code-reviewer, etc.).',
@@ -14816,8 +15005,6 @@ extension on Translations {
 			'customTasks.cwdHelper' => 'Absolute path. Sessions spawned with this exact cwd will see the task.',
 			'customTasks.saving' => 'Saving…',
 			'customTasks.save' => 'Save',
-			_ => null,
-		} ?? switch (path) {
 			'customTasks.create' => 'Create',
 			'customTasks.failedToLoad' => 'Failed to load custom tasks',
 			'notesPage.title' => 'Notes',
