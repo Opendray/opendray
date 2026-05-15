@@ -665,6 +665,20 @@ func (m *Manager) Input(_ context.Context, id string, data []byte) error {
 	if terminal {
 		return ErrAlreadyEnded
 	}
+	// Strip terminal-emulator capability answers (Primary DA, CPR,
+	// Status Report) before they reach the CLI's stdin. These are
+	// auto-emitted by xterm.js and our Dart xterm fork when the CLI
+	// queries terminal state — they're protocol-level back-channel
+	// responses, not user input. Most TUIs absorb them as escape
+	// sequences and discard them silently, but Gemini's input
+	// parser leaks the trailing `1;2c` into the visible prompt and
+	// enters a broken state that swallows the next Enter. Filtering
+	// here is harmless for Claude/Codex (they fall back to defaults
+	// when no DA response arrives) and fixes Gemini cleanly.
+	data = stripTerminalCapabilityResponses(data)
+	if len(data) == 0 {
+		return nil
+	}
 	if _, err := rs.pty.Write(data); err != nil {
 		return fmt.Errorf("pty write: %w", err)
 	}
