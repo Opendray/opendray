@@ -41,7 +41,11 @@ func registerChannelCommands(hub *channel.Hub, mgr sessionOps) {
 		Name:        "list",
 		Description: "List active sessions",
 		Source:      "builtin",
-		Handler:     listSessionsHandler(mgr),
+		// CardHandler so Telegram (and other CardSender channels)
+		// can render tap-to-act buttons per session — the nano-id
+		// style session IDs are too long to retype on a phone, so
+		// the buttons are the *intended* operating interface.
+		CardHandler: listSessionsCardHandler(mgr),
 	})
 	hub.RegisterCommand(channel.Command{
 		Name:        "end",
@@ -57,20 +61,37 @@ func registerChannelCommands(hub *channel.Hub, mgr sessionOps) {
 	})
 }
 
-// listSessionsHandler returns up to `listSessionsMax` sessions
-// sorted by recency. Live states (pending/running/idle) come first
-// so the operator can quickly find what's chewing CPU; recently
-// terminated sessions follow so /resume <id> has visible targets.
+// listSessionsMax caps how many rows /list returns. Telegram's
+// inline keyboard supports ~100 buttons total; we emit at most 2
+// per session (End + Resume — though only one applies at a time),
+// so 12 sessions leaves comfortable headroom.
 const listSessionsMax = 12
 
-func listSessionsHandler(mgr sessionOps) channel.CommandHandler {
-	return func(ctx context.Context, _ channel.CommandContext) (string, error) {
+// sessionShortID returns the human-pronounceable head of a session
+// id. Full nano IDs (`ses_jwwDK7iAGqA-`) are awkward in chat button
+// labels; the first 6 chars after `ses_` are still distinctive
+// across a typical operator's active set.
+func sessionShortID(full string) string {
+	stripped := strings.TrimPrefix(full, "ses_")
+	const head = 6
+	if len(stripped) <= head {
+		return stripped
+	}
+	return stripped[:head] + "…"
+}
+
+func listSessionsCardHandler(mgr sessionOps) channel.CommandCardHandler {
+	return func(ctx context.Context, _ channel.CommandContext) (*channel.Card, error) {
 		all, err := mgr.List(ctx)
 		if err != nil {
-			return "", fmt.Errorf("list sessions: %w", err)
+			return nil, fmt.Errorf("list sessions: %w", err)
 		}
 		if len(all) == 0 {
-			return "No sessions yet.", nil
+			return &channel.Card{
+				Elements: []channel.CardElement{
+					channel.CardMarkdown{Content: "No sessions yet."},
+				},
+			}, nil
 		}
 		// Live first, then terminated; within each bucket newest first.
 		sort.Slice(all, func(i, j int) bool {
@@ -88,20 +109,78 @@ func listSessionsHandler(mgr sessionOps) channel.CommandHandler {
 				liveCount++
 			}
 		}
+
+		// Body: numbered list. The full id is shown so operators
+		// who want to type /end <full> can still copy it; the
+		// buttons below carry the full id in their callback data.
 		var b strings.Builder
 		fmt.Fprintf(&b, "%d session%s (showing %d):\n",
 			liveCount, plural(liveCount), len(all))
 		now := time.Now().UTC()
-		for _, s := range all {
-			fmt.Fprintf(&b, "  %s — %s — %s — %s\n",
+		for i, s := range all {
+			fmt.Fprintf(&b, "%d. %s — %s — %s — %s\n",
+				i+1,
 				s.ID,
 				s.ProviderID,
 				s.State,
 				relativeAge(sessionActivityTime(s), now),
 			)
 		}
-		return strings.TrimRight(b.String(), "\n"), nil
+
+		// Buttons: live sessions get an End row, terminated ones a
+		// Resume row. Two per row keeps tap targets large on mobile
+		// without forcing the keyboard taller than the screen.
+		var endRow, resumeRow []channel.ButtonOption
+		for i, s := range all {
+			label := fmt.Sprintf("%d %s", i+1, sessionShortID(s.ID))
+			if isLiveState(s.State) {
+				endRow = append(endRow, channel.ButtonOption{
+					Text:  "End " + label,
+					Value: "cmd:/end " + s.ID,
+					Style: "danger",
+				})
+			} else {
+				resumeRow = append(resumeRow, channel.ButtonOption{
+					Text:  "Resume " + label,
+					Value: "cmd:/resume " + s.ID,
+					Style: "primary",
+				})
+			}
+		}
+		buttons := make([][]channel.ButtonOption, 0, 4)
+		for _, row := range chunkButtons(endRow, 2) {
+			buttons = append(buttons, row)
+		}
+		for _, row := range chunkButtons(resumeRow, 2) {
+			buttons = append(buttons, row)
+		}
+
+		elements := []channel.CardElement{
+			channel.CardMarkdown{Content: strings.TrimRight(b.String(), "\n")},
+		}
+		if len(buttons) > 0 {
+			elements = append(elements, channel.CardActions{Buttons: buttons})
+		}
+		return &channel.Card{Elements: elements}, nil
 	}
+}
+
+// chunkButtons rolls a flat slice into rows of at most `per`
+// buttons each — Telegram's inline keyboard is a 2D matrix and
+// dense rows scale better on mobile than one-per-row stacks.
+func chunkButtons(in []channel.ButtonOption, per int) [][]channel.ButtonOption {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make([][]channel.ButtonOption, 0, (len(in)+per-1)/per)
+	for i := 0; i < len(in); i += per {
+		end := i + per
+		if end > len(in) {
+			end = len(in)
+		}
+		out = append(out, in[i:end])
+	}
+	return out
 }
 
 func endSessionHandler(mgr sessionOps) channel.CommandHandler {

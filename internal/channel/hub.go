@@ -383,6 +383,42 @@ func (h *Hub) handleCommand(ctx context.Context, msg ChannelMessage, mid int64, 
 		Channel: ch, Message: msg, Hub: h,
 		Command: name, Args: args, Raw: msg.Text,
 	}
+	// CardHandler wins when both are set — structured reply
+	// (buttons) is strictly more capable than plain text, and the
+	// CardSender adapters degrade to Card.RenderText() on channels
+	// that don't render buttons. We log the misconfig so future
+	// contributors notice they accidentally provided both.
+	if cmd.CardHandler != nil {
+		if cmd.Handler != nil {
+			h.log.Warn("command has both Handler and CardHandler; using CardHandler",
+				"command", name)
+		}
+		card, err := cmd.CardHandler(ctx, cc)
+		if err != nil {
+			h.log.Error("card command handler failed", "command", name, "err", err)
+			h.replyText(ctx, ch, msg,
+				fmt.Sprintf("Error running /%s: %s", name, err))
+			return
+		}
+		if card == nil {
+			return
+		}
+		out := ChannelMessage{
+			ChannelID: msg.ChannelID,
+			Direction: DirectionOutbound,
+			Text:      card.RenderText(),
+			Timestamp: time.Now().UTC(),
+			ReplyCtx:  msg.ReplyCtx,
+		}
+		if err := h.sendWithFallback(ctx, ch, out, card); err != nil {
+			h.log.Error("send card reply", "command", name, "err", err)
+		}
+		return
+	}
+	if cmd.Handler == nil {
+		h.log.Warn("command has no handler", "command", name)
+		return
+	}
 	reply, err := cmd.Handler(ctx, cc)
 	if err != nil {
 		h.log.Error("command handler failed", "command", name, "err", err)

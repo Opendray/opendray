@@ -8,12 +8,23 @@ import (
 	"sync"
 )
 
-// CommandHandler runs a registered command. Returns an optional reply
-// text — when non-empty the Hub posts it back to the originating
-// channel as an outbound message (with ReplyCtx preserved).
+// CommandHandler runs a registered command and returns plain text.
+// When the reply is non-empty the Hub posts it back to the
+// originating channel (with ReplyCtx preserved).
 //
 // Long-running handlers should respect ctx.Done() and return promptly.
 type CommandHandler func(ctx context.Context, cc CommandContext) (reply string, err error)
+
+// CommandCardHandler is the structured-reply alternative to
+// CommandHandler. Channels that implement CardSender (Telegram,
+// Slack, ...) render the returned Card natively — most usefully,
+// CardActions become inline-keyboard buttons so the user can
+// trigger follow-up commands by tapping rather than typing an
+// opaque session id. Channels without CardSender fall back to
+// Card.RenderText().
+//
+// Mutually exclusive with Handler — set exactly one per Command.
+type CommandCardHandler func(ctx context.Context, cc CommandContext) (*Card, error)
 
 // CommandContext is the dispatch envelope passed to each handler.
 type CommandContext struct {
@@ -25,12 +36,15 @@ type CommandContext struct {
 	Raw     string   // full original text (e.g. "/help arg1 arg2")
 }
 
-// Command describes one registered slash command.
+// Command describes one registered slash command. Exactly one of
+// Handler or CardHandler must be set; CardHandler takes precedence
+// when both are provided (config error — logged).
 type Command struct {
-	Name        string         // lowercased, no leading "/"
-	Description string         // shown in /help
-	Handler     CommandHandler // invoked when the command fires
-	Source      string         // "builtin" | "session" | "custom"
+	Name        string             // lowercased, no leading "/"
+	Description string             // shown in /help
+	Handler     CommandHandler     // plain-text reply
+	CardHandler CommandCardHandler // structured reply (cards + buttons)
+	Source      string             // "builtin" | "session" | "custom"
 }
 
 // CommandRegistry holds the set of available slash commands.
