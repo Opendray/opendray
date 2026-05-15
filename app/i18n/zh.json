@@ -349,6 +349,18 @@
         "transcript": {
           "label": "会话记录总结器",
           "description": "会话结束时的“agent 都做了什么”总结。天然适合 agent worker。"
+        },
+        "plan_drift": {
+          "label": "计划漂移检测",
+          "description": "每个 session 结束后判断项目 plan 是否需要更新并提出 proposal。用 agent 推理质量更高。"
+        },
+        "conflict_detector": {
+          "label": "跨层冲突检测",
+          "description": "每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。"
+        },
+        "capture": {
+          "label": "Capture 引擎",
+          "description": "按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。"
         }
       }
     },

@@ -461,6 +461,13 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		History:  captureHistoryAdapter,
 		CallLog:  summarizerStore,
 		Log:      log,
+		// M-PE — route the engine's default provider through the
+		// worker fabric so operators can switch capture between
+		// summarizer-HTTP and Agent (CLI --print) at runtime from
+		// /memory/workers. Rules that pin an explicit
+		// SummarizerProviderID still win (pre-M-PE behaviour).
+		WorkerProvider: memworker.NewSummarizerProvider(
+			memoryWorkerRegistry, memworker.TaskCapture),
 	})
 	if ceErr != nil {
 		st.Close()
