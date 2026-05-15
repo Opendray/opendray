@@ -1217,7 +1217,7 @@
           "value": "Value"
         },
         "editTooltip": "Overwrite the stored value",
-        "deleteConfirm": "Delete secret \"{key}\"? Any mcp.json that references ${'$'}{{key}} will fall back to the literal placeholder until you set a new value.",
+        "deleteConfirm": "Delete secret \"{key}\"? Any mcp.json that references ${key} will fall back to the literal placeholder until you set a new value.",
         "removedToast": "Secret removed",
         "deleteFailedToast": "Delete failed",
         "editor": {

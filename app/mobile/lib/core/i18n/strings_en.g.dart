@@ -6836,8 +6836,8 @@ class TranslationsWebPluginsMcpSecretsEn {
 	/// en: 'Overwrite the stored value'
 	String get editTooltip => 'Overwrite the stored value';
 
-	/// en: 'Delete secret "{key}"? Any mcp.json that references ${'$'}{{key}} will fall back to the literal placeholder until you set a new value.'
-	String deleteConfirm({required Object key, required Object \'\$\', required Object {key}) => 'Delete secret "${key}"? Any mcp.json that references \$${\'\$\'}${{key}} will fall back to the literal placeholder until you set a new value.';
+	/// en: 'Delete secret "{key}"? Any mcp.json that references ${key} will fall back to the literal placeholder until you set a new value.'
+	String deleteConfirm({required Object key}) => 'Delete secret "${key}"? Any mcp.json that references \$${key} will fall back to the literal placeholder until you set a new value.';
 
 	/// en: 'Secret removed'
 	String get removedToast => 'Secret removed';
@@ -13388,7 +13388,7 @@ extension on Translations {
 			'web.plugins.mcpSecrets.columns.key' => 'Key',
 			'web.plugins.mcpSecrets.columns.value' => 'Value',
 			'web.plugins.mcpSecrets.editTooltip' => 'Overwrite the stored value',
-			'web.plugins.mcpSecrets.deleteConfirm' => ({required Object key, required Object \'\$\', required Object {key}) => 'Delete secret "${key}"? Any mcp.json that references \$${\'\$\'}${{key}} will fall back to the literal placeholder until you set a new value.',
+			'web.plugins.mcpSecrets.deleteConfirm' => ({required Object key}) => 'Delete secret "${key}"? Any mcp.json that references \$${key} will fall back to the literal placeholder until you set a new value.',
 			'web.plugins.mcpSecrets.removedToast' => 'Secret removed',
 			'web.plugins.mcpSecrets.deleteFailedToast' => 'Delete failed',
 			'web.plugins.mcpSecrets.editor.addTitle' => 'Add secret',

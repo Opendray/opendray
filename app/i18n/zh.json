@@ -1217,7 +1217,7 @@
           "value": "Value"
         },
         "editTooltip": "覆盖已存的值",
-        "deleteConfirm": "删除密钥 \"{key}\"? 任何引用 ${'$'}{{key}} 的 mcp.json 在你重新设置之前都会回退到字面占位符。",
+        "deleteConfirm": "删除密钥 \"{key}\"? 任何引用 ${key} 的 mcp.json 在你重新设置之前都会回退到字面占位符。",
         "removedToast": "密钥已移除",
         "deleteFailedToast": "删除失败",
         "editor": {

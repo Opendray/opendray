@@ -3515,7 +3515,7 @@ class _TranslationsWebPluginsMcpSecretsZh extends TranslationsWebPluginsMcpSecre
 	@override String empty({required Object KEY}) => '暂无已存密钥。添加后即可在 MCP 服务器配置中以 <1>\$${KEY}</1> 引用。';
 	@override late final _TranslationsWebPluginsMcpSecretsColumnsZh columns = _TranslationsWebPluginsMcpSecretsColumnsZh._(_root);
 	@override String get editTooltip => '覆盖已存的值';
-	@override String deleteConfirm({required Object key, required Object \'\$\', required Object {key}) => '删除密钥 "${key}"? 任何引用 \$${\'\$\'}${{key}} 的 mcp.json 在你重新设置之前都会回退到字面占位符。';
+	@override String deleteConfirm({required Object key}) => '删除密钥 "${key}"? 任何引用 \$${key} 的 mcp.json 在你重新设置之前都会回退到字面占位符。';
 	@override String get removedToast => '密钥已移除';
 	@override String get deleteFailedToast => '删除失败';
 	@override late final _TranslationsWebPluginsMcpSecretsEditorZh editor = _TranslationsWebPluginsMcpSecretsEditorZh._(_root);
@@ -7673,7 +7673,7 @@ extension on TranslationsZh {
 			'web.plugins.mcpSecrets.columns.key' => 'Key',
 			'web.plugins.mcpSecrets.columns.value' => 'Value',
 			'web.plugins.mcpSecrets.editTooltip' => '覆盖已存的值',
-			'web.plugins.mcpSecrets.deleteConfirm' => ({required Object key, required Object \'\$\', required Object {key}) => '删除密钥 "${key}"? 任何引用 \$${\'\$\'}${{key}} 的 mcp.json 在你重新设置之前都会回退到字面占位符。',
+			'web.plugins.mcpSecrets.deleteConfirm' => ({required Object key}) => '删除密钥 "${key}"? 任何引用 \$${key} 的 mcp.json 在你重新设置之前都会回退到字面占位符。',
 			'web.plugins.mcpSecrets.removedToast' => '密钥已移除',
 			'web.plugins.mcpSecrets.deleteFailedToast' => '删除失败',
 			'web.plugins.mcpSecrets.editor.addTitle' => '添加密钥',
