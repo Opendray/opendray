@@ -315,10 +315,18 @@ func (b *claudeContentBlock) ToolResultText() string {
 	return strings.Join(parts, "\n")
 }
 
-// claudeRecentResponse returns the most recent Claude conversation
-// turn — assistant text + tool_use blocks + their tool_result
-// follow-ups — formatted to mimic Claude's TUI rendering. Empty
-// string when no usable transcript exists for `cwd`.
+// claudeRecentResponse returns Claude's PROSE reply for the most
+// recent conversation turn — only the assistant `text` blocks, in
+// order, joined with blank lines. Tool calls and tool results are
+// deliberately dropped: a chat notification should answer "what
+// did Claude say to me?", not "what did Claude do?". Operators who
+// want the full TUI-style transcript can use the web admin's
+// session view instead.
+//
+// When the turn produced no text reply (e.g. Claude only ran tools
+// and exited without commentary) we fall back to a one-line
+// summary `(no text reply · N tools)` so the operator sees that
+// something happened — better than an empty notification body.
 //
 // Errors are swallowed deliberately: this is a best-effort
 // enrichment for chat notifications, not a critical path.
@@ -327,16 +335,103 @@ func claudeRecentResponse(cwd string) string {
 	if jsonlPath == "" {
 		return ""
 	}
-	// 5000 entries is enough headroom for marathon turns with many
-	// tool calls — the previous 60-entry window silently dropped
-	// the start of any long turn. The channel layer (and any
-	// per-channel notify_snippet_max_chars cap) is the right place
-	// to constrain user-facing output; the source emits everything.
-	out, err := renderClaudeRecentTurn(jsonlPath, 5000)
+	// 5000 entries is enough headroom for marathon turns — the
+	// channel layer (notify_snippet_max_chars + per-platform
+	// chunking) is the right place to constrain user-facing output;
+	// the source emits everything within one turn.
+	out, err := renderClaudeTextReply(jsonlPath, 5000)
 	if err != nil {
 		return ""
 	}
 	return strings.TrimSpace(out)
+}
+
+// renderClaudeTextReply walks the same turn-boundary logic as
+// renderClaudeRecentTurn but only emits assistant `text` blocks;
+// `tool_use` blocks bump a counter so we can show a `(no text
+// reply · N tools)` fallback when the turn was tool-only.
+// `tool_result` blocks in user entries are ignored entirely.
+//
+// Returns "" only when neither text NOR tools were found (i.e. the
+// turn is empty or unreadable); any non-empty turn produces at
+// least the fallback line.
+func renderClaudeTextReply(path string, n int) (string, error) {
+	entries, err := readLastClaudeEntries(path, n)
+	if err != nil {
+		return "", err
+	}
+	if len(entries) == 0 {
+		return "", fmt.Errorf("empty transcript")
+	}
+	anchor := findTurnAnchor(entries)
+	if anchor < 0 {
+		return "", fmt.Errorf("no assistant turn in last %d entries", n)
+	}
+	var out strings.Builder
+	toolCount := 0
+	for i := anchor; i < len(entries); i++ {
+		e := entries[i]
+		if e.Type != "assistant" || e.Message == nil {
+			continue
+		}
+		blocks, err := parseClaudeContentBlocks(e.Message.Content)
+		if err != nil {
+			continue
+		}
+		for _, b := range blocks {
+			switch b.Type {
+			case "text":
+				t := strings.TrimSpace(b.Text)
+				if t == "" {
+					continue
+				}
+				if out.Len() > 0 {
+					out.WriteString("\n\n")
+				}
+				out.WriteString(t)
+			case "tool_use":
+				toolCount++
+			}
+		}
+	}
+	text := strings.TrimSpace(out.String())
+	if text != "" {
+		return text, nil
+	}
+	if toolCount > 0 {
+		return fmt.Sprintf("(no text reply · %d tools)", toolCount), nil
+	}
+	return "", fmt.Errorf("turn rendered empty")
+}
+
+// findTurnAnchor returns the index in `entries` where the most
+// recent turn begins (right after the last user-text message). When
+// the window doesn't contain a user-text boundary, it falls back
+// to the earliest assistant entry that has renderable content.
+// Returns -1 when neither path locates a usable anchor.
+func findTurnAnchor(entries []claudeJSONLEntry) int {
+	for i := len(entries) - 1; i >= 0; i-- {
+		e := entries[i]
+		if e.Type == "user" && hasUserText(e) {
+			anchor := i + 1
+			if anchor < len(entries) {
+				return anchor
+			}
+			break
+		}
+	}
+	for i := 0; i < len(entries); i++ {
+		e := entries[i]
+		if e.Type != "assistant" || e.Message == nil {
+			continue
+		}
+		blocks, err := parseClaudeContentBlocks(e.Message.Content)
+		if err != nil || !hasRenderableBlock(blocks) {
+			continue
+		}
+		return i
+	}
+	return -1
 }
 
 // resolveLatestClaudeJSONL finds the most recently modified .jsonl
