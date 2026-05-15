@@ -61,6 +61,7 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsSkillsZh skills = _TranslationsSkillsZh._(_root);
 	@override late final _TranslationsCustomTasksZh customTasks = _TranslationsCustomTasksZh._(_root);
 	@override late final _TranslationsNotesPageZh notesPage = _TranslationsNotesPageZh._(_root);
+	@override late final _TranslationsDataExportZh dataExport = _TranslationsDataExportZh._(_root);
 	@override late final _TranslationsMemoryZh memory = _TranslationsMemoryZh._(_root);
 	@override late final _TranslationsAboutZh about = _TranslationsAboutZh._(_root);
 	@override late final _TranslationsSettingsZh settings = _TranslationsSettingsZh._(_root);
@@ -464,6 +465,9 @@ class _TranslationsBackupsZh extends TranslationsBackupsEn {
 	@override String get savedConfirmCheckbox => '我已将密语保存到密码管理器';
 	@override String get pgDumpMissing => 'pg_dump 不在 PATH 中。请安装 postgresql-client 并重启 opendray。';
 	@override late final _TranslationsBackupsEncryptionZh encryption = _TranslationsBackupsEncryptionZh._(_root);
+	@override String get restoreFromFile => '从文件恢复';
+	@override late final _TranslationsBackupsRestoreZh restore = _TranslationsBackupsRestoreZh._(_root);
+	@override late final _TranslationsBackupsInventoryZh inventory = _TranslationsBackupsInventoryZh._(_root);
 }
 
 // Path: backupTargets
@@ -775,6 +779,24 @@ class _TranslationsNotesPageZh extends TranslationsNotesPageEn {
 	@override String get validatePathDots => '路径不能包含「..」';
 	@override String get pathHelper => '缺失时自动追加 .md。';
 	@override late final _TranslationsNotesPageEditorZh editor = _TranslationsNotesPageEditorZh._(_root);
+}
+
+// Path: dataExport
+class _TranslationsDataExportZh extends TranslationsDataExportEn {
+	_TranslationsDataExportZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '数据导出与导入';
+	@override String get subtitle => '面向用户的数据包，用于迁移或验证 — 与 /backups（灾难恢复）相互独立。';
+	@override late final _TranslationsDataExportSectionsZh sections = _TranslationsDataExportSectionsZh._(_root);
+	@override late final _TranslationsDataExportFormZh form = _TranslationsDataExportFormZh._(_root);
+	@override late final _TranslationsDataExportHistoryZh history = _TranslationsDataExportHistoryZh._(_root);
+	@override late final _TranslationsDataExportImportZh import = _TranslationsDataExportImportZh._(_root);
+	@override late final _TranslationsDataExportImportsZh imports = _TranslationsDataExportImportsZh._(_root);
+	@override late final _TranslationsDataExportRelativeZh relative = _TranslationsDataExportRelativeZh._(_root);
+	@override late final _TranslationsDataExportStatusZh status = _TranslationsDataExportStatusZh._(_root);
 }
 
 // Path: memory
@@ -1430,6 +1452,7 @@ class _TranslationsMoreItemsZh extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsProjectMemoryZh projectMemory = _TranslationsMoreItemsProjectMemoryZh._(_root);
 	@override late final _TranslationsMoreItemsCleanupInboxZh cleanupInbox = _TranslationsMoreItemsCleanupInboxZh._(_root);
 	@override late final _TranslationsMoreItemsBackupsZh backups = _TranslationsMoreItemsBackupsZh._(_root);
+	@override late final _TranslationsMoreItemsDataExportZh dataExport = _TranslationsMoreItemsDataExportZh._(_root);
 	@override late final _TranslationsMoreItemsSettingsZh settings = _TranslationsMoreItemsSettingsZh._(_root);
 	@override late final _TranslationsMoreItemsAboutZh about = _TranslationsMoreItemsAboutZh._(_root);
 }
@@ -1929,6 +1952,69 @@ class _TranslationsBackupsEncryptionZh extends TranslationsBackupsEncryptionEn {
 	@override String get passphraseCopied => '密语已复制到剪贴板';
 }
 
+// Path: backups.restore
+class _TranslationsBackupsRestoreZh extends TranslationsBackupsRestoreEn {
+	_TranslationsBackupsRestoreZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '从备份包恢复';
+	@override String get subtitle => '将加密的 .tar.gz.enc 备份包重放到 Postgres 数据库。备份包将从本机上传 — 请选择此前生成的文件。';
+	@override String get bundleLabel => '备份文件（.tar.gz.enc）';
+	@override String get pickFile => '选择文件';
+	@override String fileSelected({required Object name, required Object size}) => '${name} · ${size}';
+	@override String get noFile => '未选择文件';
+	@override String get targetDsnLabel => '目标 Postgres DSN';
+	@override String get targetDsnHint => '留空表示恢复到 opendray 自身的数据库。';
+	@override String get targetDsnPlaceholder => 'postgres://user:pass@host:5432/dbname';
+	@override String get cleanLabel => 'pg_restore --clean --if-exists';
+	@override String get cleanHint => '重新创建之前先删除已存在的对象。';
+	@override String get auditNoteLabel => '审计备注（可选）';
+	@override String get auditNotePlaceholder => '例如：恢复 #INC-481';
+	@override String get ownDbWarning => '恢复到 opendray 自身的数据库将覆写本网关当前提供服务的数据。请输入 "I understand" 以确认。';
+	@override String get confirmPlaceholder => '输入 "I understand"';
+	@override String get confirmSentinel => 'I understand';
+	@override String get restoring => '恢复中…';
+	@override String get restore => '恢复';
+	@override String get succeededTitle => '恢复成功';
+	@override String succeededBody({required Object id, required Object bytes}) => '已从备份 ${id} 重放 ${bytes}。';
+	@override String get failedTitle => '恢复失败';
+	@override String get pickFileToast => '请先选择一个备份文件。';
+	@override String get outputTitle => 'pg_restore 输出';
+	@override String get noPgRestoreOutput => '（空 — 恢复无声完成）';
+	@override String get manifestTitle => '清单';
+	@override String get manifestBackupId => '备份 ID';
+	@override String get manifestVersion => '清单版本';
+	@override String get manifestCreatedAt => '创建时间';
+	@override String get manifestPgVersion => 'pg_version';
+	@override String get manifestOpendrayVersion => 'opendray 版本';
+	@override String get fingerprint => '密钥指纹';
+	@override String get fingerprintOk => '已匹配';
+	@override String get fingerprintMismatch => '不匹配';
+	@override String get encryptionAlgo => '加密算法';
+	@override String get bytesRead => '已读字节';
+	@override String get targetDsnUsed => '目标 DSN';
+	@override String get targetDsnSelfLabel => '（opendray 自身数据库）';
+	@override String get done => '完成';
+}
+
+// Path: backups.inventory
+class _TranslationsBackupsInventoryZh extends TranslationsBackupsInventoryEn {
+	_TranslationsBackupsInventoryZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '备份里有什么';
+	@override String summary({required Object rows, required Object tables}) => '${rows} 行 · ${tables} 表';
+	@override String get description => 'opendray Postgres 数据库的实时行数。备份会捕获以下所有行；磁盘上的二进制工件不包含在内。';
+	@override String get rowsLabel => '行';
+	@override String get loadFailedToast => '加载清单失败';
+	@override String get loading => '加载中…';
+	@override String get tap => '点击展开';
+}
+
 // Path: backupTargetEditor.kinds
 class _TranslationsBackupTargetEditorKindsZh extends TranslationsBackupTargetEditorKindsEn {
 	_TranslationsBackupTargetEditorKindsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -2121,6 +2207,140 @@ class _TranslationsNotesPageEditorZh extends TranslationsNotesPageEditorEn {
 	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
 	@override String saveFailedGeneric({required Object error}) => '保存失败：${error}';
 	@override String savedAt({required Object time}) => '${time} 已保存';
+}
+
+// Path: dataExport.sections
+class _TranslationsDataExportSectionsZh extends TranslationsDataExportSectionsEn {
+	_TranslationsDataExportSectionsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get export => '导出';
+	@override String get import => '导入';
+}
+
+// Path: dataExport.form
+class _TranslationsDataExportFormZh extends TranslationsDataExportFormEn {
+	_TranslationsDataExportFormZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get scope => '范围';
+	@override String get memories => '记忆';
+	@override String get memoriesHint => '所有已持久化的记忆及其向量。';
+	@override String get integrations => '集成';
+	@override late final _TranslationsDataExportFormIntegrationOptionsZh integrationOptions = _TranslationsDataExportFormIntegrationOptionsZh._(_root);
+	@override String get confirmWarning => '明文密钥导出包含可解密的机密。请输入 "I understand" 以确认。';
+	@override String get confirmPlaceholder => '输入 "I understand"';
+	@override String get confirmSentinel => 'I understand';
+	@override String get customTasks => '自定义任务';
+	@override String get customTasksHint => '用户级任务定义（cron 计划 + 脚本主体）。';
+	@override String get footnote => '数据包在创建后 7 天过期。下载链接为单次使用。';
+	@override String get create => '创建数据包';
+	@override String get building => '构建中…';
+	@override String get readyToast => '数据包已就绪';
+	@override String readyDescription({required Object bytes}) => '${bytes} 字节 — 在下方历史中下载。';
+	@override String failedToast({required Object error}) => '数据包创建失败：${error}';
+}
+
+// Path: dataExport.history
+class _TranslationsDataExportHistoryZh extends TranslationsDataExportHistoryEn {
+	_TranslationsDataExportHistoryZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '导出历史';
+	@override String get loading => '加载中…';
+	@override String get empty => '暂无导出。';
+	@override String listFailedToast({required Object error}) => '加载导出失败：${error}';
+	@override String downloadFailedToast({required Object error}) => '获取下载令牌失败：${error}';
+	@override String get noTokenToast => '该导出无可用的下载令牌（已消费或过期）。';
+	@override String get deletedToast => '已删除导出。';
+	@override String deleteFailedToast({required Object error}) => '删除导出失败：${error}';
+	@override String get deleteConfirmTitle => '删除导出？';
+	@override String deleteConfirmBody({required Object id}) => '移除数据包并撤销下载令牌。${id}';
+	@override String get download => '下载';
+	@override String get delete => '删除';
+	@override String get downloadCopiedToast => '下载 URL 已复制到剪贴板。在浏览器中粘贴以获取（单次使用）。';
+	@override late final _TranslationsDataExportHistoryColumnsZh columns = _TranslationsDataExportHistoryColumnsZh._(_root);
+	@override String get scopeEmpty => '（空）';
+	@override String get scopeMemories => '记忆';
+	@override String scopeIntegrations({required Object mode}) => '集成(${mode})';
+	@override String get scopeCustomTasks => '自定义任务';
+}
+
+// Path: dataExport.import
+class _TranslationsDataExportImportZh extends TranslationsDataExportImportEn {
+	_TranslationsDataExportImportZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get intro => '重放此前由「导出」生成的数据包。仅勾选的实体会被导入；数据包中其余内容会被忽略。';
+	@override String get bundleLabel => '数据包文件（.zip）';
+	@override String get pickFile => '选择文件';
+	@override String fileSelected({required Object name, required Object size}) => '${name} · ${size}';
+	@override String get noFile => '未选择文件';
+	@override String get memoriesLabel => '记忆';
+	@override String get integrationsLabel => '集成';
+	@override String get customTasksLabel => '自定义任务';
+	@override String get importBundle => '导入数据包';
+	@override String get importing => '导入中…';
+	@override String get pickFileToast => '请先选择数据包文件。';
+	@override String get doneToast => '导入完成';
+	@override String get finishedWithErrors => '导入完成但有错误';
+	@override String failedToast({required Object error}) => '导入失败：${error}';
+	@override late final _TranslationsDataExportImportSummaryCardZh summaryCard = _TranslationsDataExportImportSummaryCardZh._(_root);
+}
+
+// Path: dataExport.imports
+class _TranslationsDataExportImportsZh extends TranslationsDataExportImportsEn {
+	_TranslationsDataExportImportsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '导入历史';
+	@override String get loading => '加载中…';
+	@override String get empty => '暂无导入。';
+	@override String listFailedToast({required Object error}) => '加载导入失败：${error}';
+	@override String get noneCounts => '（无计数）';
+	@override String get sourceUnknown => '（未知来源）';
+	@override late final _TranslationsDataExportImportsColumnsZh columns = _TranslationsDataExportImportsColumnsZh._(_root);
+}
+
+// Path: dataExport.relative
+class _TranslationsDataExportRelativeZh extends TranslationsDataExportRelativeEn {
+	_TranslationsDataExportRelativeZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String inSeconds({required Object n}) => '${n} 秒后';
+	@override String inMinutes({required Object n}) => '${n} 分钟后';
+	@override String inHours({required Object n}) => '${n} 小时后';
+	@override String inDays({required Object n}) => '${n} 天后';
+	@override String secondsAgo({required Object n}) => '${n} 秒前';
+	@override String minutesAgo({required Object n}) => '${n} 分钟前';
+	@override String hoursAgo({required Object n}) => '${n} 小时前';
+}
+
+// Path: dataExport.status
+class _TranslationsDataExportStatusZh extends TranslationsDataExportStatusEn {
+	_TranslationsDataExportStatusZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get pending => '等待';
+	@override String get running => '运行中';
+	@override String get ready => '就绪';
+	@override String get failed => '失败';
+	@override String get expired => '过期';
+	@override String get succeeded => '成功';
 }
 
 // Path: memory.rank
@@ -4683,6 +4903,17 @@ class _TranslationsMoreItemsBackupsZh extends TranslationsMoreItemsBackupsEn {
 	@override String get subtitle => '最新备份状态与立即运行';
 }
 
+// Path: more.items.dataExport
+class _TranslationsMoreItemsDataExportZh extends TranslationsMoreItemsDataExportEn {
+	_TranslationsMoreItemsDataExportZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '数据导出与导入';
+	@override String get subtitle => '用户级数据包（记忆 / 集成 / 自定义任务）';
+}
+
 // Path: more.items.settings
 class _TranslationsMoreItemsSettingsZh extends TranslationsMoreItemsSettingsEn {
 	_TranslationsMoreItemsSettingsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -5262,6 +5493,63 @@ class _TranslationsChannelsKindsWechatZh extends TranslationsChannelsKindsWechat
 	@override String get topicIdsLabel => 'Topic ID（每行一个）';
 	@override String get urlLabel => '点击跳转 URL';
 	@override String get urlHint => '设置后，点击微信通知会打开此页面。';
+}
+
+// Path: dataExport.form.integrationOptions
+class _TranslationsDataExportFormIntegrationOptionsZh extends TranslationsDataExportFormIntegrationOptionsEn {
+	_TranslationsDataExportFormIntegrationOptionsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get none => '跳过';
+	@override String get noneHint => '不包含 /integrations 注册表。';
+	@override String get metadata => '仅元数据（默认）';
+	@override String get metadataHint => '每个集成的名称 + 端点，不含 API 密钥。';
+	@override String get plaintext => '明文密钥';
+	@override String get plaintextHint => '危险：包含原始 API 令牌。v1 仅存储 bcrypt 哈希，因此此选项当前实际为空操作；仍然提供以提示这一事实。';
+}
+
+// Path: dataExport.history.columns
+class _TranslationsDataExportHistoryColumnsZh extends TranslationsDataExportHistoryColumnsEn {
+	_TranslationsDataExportHistoryColumnsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get scope => '范围';
+	@override String get size => '大小';
+	@override String get expires => '过期';
+	@override String get actions => '操作';
+}
+
+// Path: dataExport.import.summaryCard
+class _TranslationsDataExportImportSummaryCardZh extends TranslationsDataExportImportSummaryCardEn {
+	_TranslationsDataExportImportSummaryCardZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get memories => '记忆';
+	@override String get integrations => '集成';
+	@override String get customTasks => '自定义任务';
+	@override String get created => '创建';
+	@override String get skipped => '跳过';
+	@override String get failed => '失败';
+}
+
+// Path: dataExport.imports.columns
+class _TranslationsDataExportImportsColumnsZh extends TranslationsDataExportImportsColumnsEn {
+	_TranslationsDataExportImportsColumnsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get id => 'ID';
+	@override String get status => '状态';
+	@override String get source => '来源';
+	@override String get counts => '计数';
+	@override String get when => '时间';
 }
 
 // Path: settings.logViewer.levels
@@ -8801,6 +9089,8 @@ extension on TranslationsZh {
 			'more.items.cleanupInbox.subtitle' => '跨项目的 LLM 提议删除 / 合并',
 			'more.items.backups.title' => '备份',
 			'more.items.backups.subtitle' => '最新备份状态与立即运行',
+			'more.items.dataExport.title' => '数据导出与导入',
+			'more.items.dataExport.subtitle' => '用户级数据包（记忆 / 集成 / 自定义任务）',
 			'more.items.settings.title' => '设置',
 			'more.items.settings.subtitle' => '语言、外观、账户',
 			'more.items.about.title' => '关于',
@@ -9015,10 +9305,10 @@ extension on TranslationsZh {
 			'mcp.editor.create' => '创建',
 			'mcp.secret.keyLabel' => '键',
 			'mcp.secret.keyHint' => 'GITHUB_TOKEN、OPENAI_KEY、…',
-			'mcp.secret.valueLabel' => '值',
-			'mcp.secret.keyRequired' => '必须填写键。',
 			_ => null,
 		} ?? switch (path) {
+			'mcp.secret.valueLabel' => '值',
+			'mcp.secret.keyRequired' => '必须填写键。',
 			'mcp.secret.keyInvalid' => '键必须匹配 [A-Za-z_][A-Za-z0-9_]* — 与 shell 环境变量规则相同。',
 			'mcp.secret.valueRequired' => '必须填写值。',
 			'mcp.secret.replaceTitle' => '替换密钥值',
@@ -9350,6 +9640,52 @@ extension on TranslationsZh {
 			'backups.encryption.passphraseLabel' => '你的密语',
 			'backups.encryption.passphraseHint' => '至少 20 个字符',
 			'backups.encryption.passphraseCopied' => '密语已复制到剪贴板',
+			'backups.restoreFromFile' => '从文件恢复',
+			'backups.restore.title' => '从备份包恢复',
+			'backups.restore.subtitle' => '将加密的 .tar.gz.enc 备份包重放到 Postgres 数据库。备份包将从本机上传 — 请选择此前生成的文件。',
+			'backups.restore.bundleLabel' => '备份文件（.tar.gz.enc）',
+			'backups.restore.pickFile' => '选择文件',
+			'backups.restore.fileSelected' => ({required Object name, required Object size}) => '${name} · ${size}',
+			'backups.restore.noFile' => '未选择文件',
+			'backups.restore.targetDsnLabel' => '目标 Postgres DSN',
+			'backups.restore.targetDsnHint' => '留空表示恢复到 opendray 自身的数据库。',
+			'backups.restore.targetDsnPlaceholder' => 'postgres://user:pass@host:5432/dbname',
+			'backups.restore.cleanLabel' => 'pg_restore --clean --if-exists',
+			'backups.restore.cleanHint' => '重新创建之前先删除已存在的对象。',
+			'backups.restore.auditNoteLabel' => '审计备注（可选）',
+			'backups.restore.auditNotePlaceholder' => '例如：恢复 #INC-481',
+			'backups.restore.ownDbWarning' => '恢复到 opendray 自身的数据库将覆写本网关当前提供服务的数据。请输入 "I understand" 以确认。',
+			'backups.restore.confirmPlaceholder' => '输入 "I understand"',
+			'backups.restore.confirmSentinel' => 'I understand',
+			'backups.restore.restoring' => '恢复中…',
+			'backups.restore.restore' => '恢复',
+			'backups.restore.succeededTitle' => '恢复成功',
+			'backups.restore.succeededBody' => ({required Object id, required Object bytes}) => '已从备份 ${id} 重放 ${bytes}。',
+			'backups.restore.failedTitle' => '恢复失败',
+			'backups.restore.pickFileToast' => '请先选择一个备份文件。',
+			'backups.restore.outputTitle' => 'pg_restore 输出',
+			'backups.restore.noPgRestoreOutput' => '（空 — 恢复无声完成）',
+			'backups.restore.manifestTitle' => '清单',
+			'backups.restore.manifestBackupId' => '备份 ID',
+			'backups.restore.manifestVersion' => '清单版本',
+			'backups.restore.manifestCreatedAt' => '创建时间',
+			'backups.restore.manifestPgVersion' => 'pg_version',
+			'backups.restore.manifestOpendrayVersion' => 'opendray 版本',
+			'backups.restore.fingerprint' => '密钥指纹',
+			'backups.restore.fingerprintOk' => '已匹配',
+			'backups.restore.fingerprintMismatch' => '不匹配',
+			'backups.restore.encryptionAlgo' => '加密算法',
+			'backups.restore.bytesRead' => '已读字节',
+			'backups.restore.targetDsnUsed' => '目标 DSN',
+			'backups.restore.targetDsnSelfLabel' => '（opendray 自身数据库）',
+			'backups.restore.done' => '完成',
+			'backups.inventory.title' => '备份里有什么',
+			'backups.inventory.summary' => ({required Object rows, required Object tables}) => '${rows} 行 · ${tables} 表',
+			'backups.inventory.description' => 'opendray Postgres 数据库的实时行数。备份会捕获以下所有行；磁盘上的二进制工件不包含在内。',
+			'backups.inventory.rowsLabel' => '行',
+			'backups.inventory.loadFailedToast' => '加载清单失败',
+			'backups.inventory.loading' => '加载中…',
+			'backups.inventory.tap' => '点击展开',
 			'backupTargets.title' => '备份目标',
 			'backupTargets.newTarget' => '新建目标',
 			'backupTargets.testConnection' => '测试连接',
@@ -9483,6 +9819,8 @@ extension on TranslationsZh {
 			'githosts.form.tokenHintNew' => '粘贴个人访问令牌。',
 			'githosts.form.enabledHelper' => '可供会话用于 PR / 远端查找。',
 			'githosts.form.validateTokenRequired' => '添加主机时必须填写 Token。',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.form.appBarEdit' => ({required Object name}) => '编辑 ${name}',
 			'githosts.form.appBarNew' => '添加 Git 主机',
 			'githosts.form.tokenPreviewHint' => ({required Object preview}) => '当前预览：${preview}',
@@ -9531,8 +9869,6 @@ extension on TranslationsZh {
 			'channels.popup.enable' => '启用',
 			'channels.popup.disable' => '停用',
 			'channels.popup.mute' => '静音',
-			_ => null,
-		} ?? switch (path) {
 			'channels.popup.unmute' => '取消静音',
 			'channels.popup.deleteLabel' => '删除',
 			'channels.badges.running' => '运行中',
@@ -9708,6 +10044,96 @@ extension on TranslationsZh {
 			'notesPage.editor.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
 			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
 			'notesPage.editor.savedAt' => ({required Object time}) => '${time} 已保存',
+			'dataExport.title' => '数据导出与导入',
+			'dataExport.subtitle' => '面向用户的数据包，用于迁移或验证 — 与 /backups（灾难恢复）相互独立。',
+			'dataExport.sections.export' => '导出',
+			'dataExport.sections.import' => '导入',
+			'dataExport.form.scope' => '范围',
+			'dataExport.form.memories' => '记忆',
+			'dataExport.form.memoriesHint' => '所有已持久化的记忆及其向量。',
+			'dataExport.form.integrations' => '集成',
+			'dataExport.form.integrationOptions.none' => '跳过',
+			'dataExport.form.integrationOptions.noneHint' => '不包含 /integrations 注册表。',
+			'dataExport.form.integrationOptions.metadata' => '仅元数据（默认）',
+			'dataExport.form.integrationOptions.metadataHint' => '每个集成的名称 + 端点，不含 API 密钥。',
+			'dataExport.form.integrationOptions.plaintext' => '明文密钥',
+			'dataExport.form.integrationOptions.plaintextHint' => '危险：包含原始 API 令牌。v1 仅存储 bcrypt 哈希，因此此选项当前实际为空操作；仍然提供以提示这一事实。',
+			'dataExport.form.confirmWarning' => '明文密钥导出包含可解密的机密。请输入 "I understand" 以确认。',
+			'dataExport.form.confirmPlaceholder' => '输入 "I understand"',
+			'dataExport.form.confirmSentinel' => 'I understand',
+			'dataExport.form.customTasks' => '自定义任务',
+			'dataExport.form.customTasksHint' => '用户级任务定义（cron 计划 + 脚本主体）。',
+			'dataExport.form.footnote' => '数据包在创建后 7 天过期。下载链接为单次使用。',
+			'dataExport.form.create' => '创建数据包',
+			'dataExport.form.building' => '构建中…',
+			'dataExport.form.readyToast' => '数据包已就绪',
+			'dataExport.form.readyDescription' => ({required Object bytes}) => '${bytes} 字节 — 在下方历史中下载。',
+			'dataExport.form.failedToast' => ({required Object error}) => '数据包创建失败：${error}',
+			'dataExport.history.title' => '导出历史',
+			'dataExport.history.loading' => '加载中…',
+			'dataExport.history.empty' => '暂无导出。',
+			'dataExport.history.listFailedToast' => ({required Object error}) => '加载导出失败：${error}',
+			'dataExport.history.downloadFailedToast' => ({required Object error}) => '获取下载令牌失败：${error}',
+			'dataExport.history.noTokenToast' => '该导出无可用的下载令牌（已消费或过期）。',
+			'dataExport.history.deletedToast' => '已删除导出。',
+			'dataExport.history.deleteFailedToast' => ({required Object error}) => '删除导出失败：${error}',
+			'dataExport.history.deleteConfirmTitle' => '删除导出？',
+			'dataExport.history.deleteConfirmBody' => ({required Object id}) => '移除数据包并撤销下载令牌。${id}',
+			'dataExport.history.download' => '下载',
+			'dataExport.history.delete' => '删除',
+			'dataExport.history.downloadCopiedToast' => '下载 URL 已复制到剪贴板。在浏览器中粘贴以获取（单次使用）。',
+			'dataExport.history.columns.scope' => '范围',
+			'dataExport.history.columns.size' => '大小',
+			'dataExport.history.columns.expires' => '过期',
+			'dataExport.history.columns.actions' => '操作',
+			'dataExport.history.scopeEmpty' => '（空）',
+			'dataExport.history.scopeMemories' => '记忆',
+			'dataExport.history.scopeIntegrations' => ({required Object mode}) => '集成(${mode})',
+			'dataExport.history.scopeCustomTasks' => '自定义任务',
+			'dataExport.import.intro' => '重放此前由「导出」生成的数据包。仅勾选的实体会被导入；数据包中其余内容会被忽略。',
+			'dataExport.import.bundleLabel' => '数据包文件（.zip）',
+			'dataExport.import.pickFile' => '选择文件',
+			'dataExport.import.fileSelected' => ({required Object name, required Object size}) => '${name} · ${size}',
+			'dataExport.import.noFile' => '未选择文件',
+			'dataExport.import.memoriesLabel' => '记忆',
+			'dataExport.import.integrationsLabel' => '集成',
+			'dataExport.import.customTasksLabel' => '自定义任务',
+			'dataExport.import.importBundle' => '导入数据包',
+			'dataExport.import.importing' => '导入中…',
+			'dataExport.import.pickFileToast' => '请先选择数据包文件。',
+			'dataExport.import.doneToast' => '导入完成',
+			'dataExport.import.finishedWithErrors' => '导入完成但有错误',
+			'dataExport.import.failedToast' => ({required Object error}) => '导入失败：${error}',
+			'dataExport.import.summaryCard.memories' => '记忆',
+			'dataExport.import.summaryCard.integrations' => '集成',
+			'dataExport.import.summaryCard.customTasks' => '自定义任务',
+			'dataExport.import.summaryCard.created' => '创建',
+			'dataExport.import.summaryCard.skipped' => '跳过',
+			'dataExport.import.summaryCard.failed' => '失败',
+			'dataExport.imports.title' => '导入历史',
+			'dataExport.imports.loading' => '加载中…',
+			'dataExport.imports.empty' => '暂无导入。',
+			'dataExport.imports.listFailedToast' => ({required Object error}) => '加载导入失败：${error}',
+			'dataExport.imports.noneCounts' => '（无计数）',
+			'dataExport.imports.sourceUnknown' => '（未知来源）',
+			'dataExport.imports.columns.id' => 'ID',
+			'dataExport.imports.columns.status' => '状态',
+			'dataExport.imports.columns.source' => '来源',
+			'dataExport.imports.columns.counts' => '计数',
+			'dataExport.imports.columns.when' => '时间',
+			'dataExport.relative.inSeconds' => ({required Object n}) => '${n} 秒后',
+			'dataExport.relative.inMinutes' => ({required Object n}) => '${n} 分钟后',
+			'dataExport.relative.inHours' => ({required Object n}) => '${n} 小时后',
+			'dataExport.relative.inDays' => ({required Object n}) => '${n} 天后',
+			'dataExport.relative.secondsAgo' => ({required Object n}) => '${n} 秒前',
+			'dataExport.relative.minutesAgo' => ({required Object n}) => '${n} 分钟前',
+			'dataExport.relative.hoursAgo' => ({required Object n}) => '${n} 小时前',
+			'dataExport.status.pending' => '等待',
+			'dataExport.status.running' => '运行中',
+			'dataExport.status.ready' => '就绪',
+			'dataExport.status.failed' => '失败',
+			'dataExport.status.expired' => '过期',
+			'dataExport.status.succeeded' => '成功',
 			'memory.title' => '记忆',
 			'memory.more' => '更多',
 			'memory.workers' => '记忆工作器',

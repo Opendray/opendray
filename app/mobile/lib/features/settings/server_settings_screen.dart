@@ -364,12 +364,15 @@ List<_Section> _buildSections() => <_Section>[
         path: 'backup.local_dir',
         kind: _FieldKind.text,
         monospace: true,
+        // BackupConfig comment in internal/config/config.go.
+        placeholder: '~/.opendray/backups',
       ),
       _Field(
         label: t.settings.serverSettings.fields.backupExportDir,
         path: 'backup.export_dir',
         kind: _FieldKind.text,
         monospace: true,
+        placeholder: '~/.opendray/exports',
       ),
       _Field(
         label: t.settings.serverSettings.fields.pgDumpPath,
@@ -377,12 +380,15 @@ List<_Section> _buildSections() => <_Section>[
         kind: _FieldKind.text,
         monospace: true,
         helper: t.settings.serverSettings.fields.pathHelper,
+        // Resolved from PATH at startup when blank.
+        placeholder: 'pg_dump',
       ),
       _Field(
         label: t.settings.serverSettings.fields.pgRestorePath,
         path: 'backup.pg_restore_path',
         kind: _FieldKind.text,
         monospace: true,
+        placeholder: 'pg_restore',
       ),
     ],
   ),

@@ -1,12 +1,15 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/dio_provider.dart';
 
-// Wraps /api/v1/backups — list + run-now. Mobile is intentionally a
-// thin observability surface: schedule editing and download/restore
-// stay on the web admin where uploading multi-GB blobs from a phone
-// is neither practical nor safe.
+// Wraps /api/v1/backups — full feature parity with the web admin:
+// schedules + targets CRUD, restore from bundle, live inventory,
+// Plan-C exports + imports. The file-upload paths (restore +
+// imports) accept a phone-side File via file_picker; the web client
+// uses <input type=file>, which dart:html doesn't expose on mobile.
 
 class BackupRow {
   BackupRow({
@@ -24,21 +27,22 @@ class BackupRow {
   });
 
   factory BackupRow.fromJson(Map<String, dynamic> json) => BackupRow(
-        id: json['id'] as String? ?? '',
-        scheduleId: json['schedule_id'] as String?,
-        targetId: json['target_id'] as String? ?? '',
-        status: json['status'] as String? ?? '',
-        triggeredBy: json['triggered_by'] as String? ?? '',
-        startedAt:
-            DateTime.tryParse(json['started_at'] as String? ?? '')?.toUtc() ??
-                DateTime.now().toUtc(),
-        finishedAt:
-            DateTime.tryParse(json['finished_at'] as String? ?? '')?.toUtc(),
-        bytes: (json['bytes'] as num?)?.toInt() ?? 0,
-        encrypted: json['encrypted'] as bool? ?? false,
-        targetPath: json['target_path'] as String?,
-        error: json['error'] as String?,
-      );
+    id: json['id'] as String? ?? '',
+    scheduleId: json['schedule_id'] as String?,
+    targetId: json['target_id'] as String? ?? '',
+    status: json['status'] as String? ?? '',
+    triggeredBy: json['triggered_by'] as String? ?? '',
+    startedAt:
+        DateTime.tryParse(json['started_at'] as String? ?? '')?.toUtc() ??
+        DateTime.now().toUtc(),
+    finishedAt: DateTime.tryParse(
+      json['finished_at'] as String? ?? '',
+    )?.toUtc(),
+    bytes: (json['bytes'] as num?)?.toInt() ?? 0,
+    encrypted: json['encrypted'] as bool? ?? false,
+    targetPath: json['target_path'] as String?,
+    error: json['error'] as String?,
+  );
 
   final String id;
   final String? scheduleId;
@@ -67,22 +71,20 @@ class BackupSchedule {
     this.lastRunAt,
   });
 
-  factory BackupSchedule.fromJson(Map<String, dynamic> json) =>
-      BackupSchedule(
-        id: json['id'] as String? ?? '',
-        targetId: json['target_id'] as String? ?? '',
-        intervalSec: (json['interval_sec'] as num?)?.toInt() ?? 0,
-        retention: (json['retention'] as num?)?.toInt() ?? 0,
-        enabled: json['enabled'] as bool? ?? false,
-        lastRunAt:
-            DateTime.tryParse(json['last_run_at'] as String? ?? '')?.toUtc(),
-        nextRunAt:
-            DateTime.tryParse(json['next_run_at'] as String? ?? '')?.toUtc() ??
-                DateTime.now().toUtc(),
-        createdAt:
-            DateTime.tryParse(json['created_at'] as String? ?? '')?.toUtc() ??
-                DateTime.fromMillisecondsSinceEpoch(0),
-      );
+  factory BackupSchedule.fromJson(Map<String, dynamic> json) => BackupSchedule(
+    id: json['id'] as String? ?? '',
+    targetId: json['target_id'] as String? ?? '',
+    intervalSec: (json['interval_sec'] as num?)?.toInt() ?? 0,
+    retention: (json['retention'] as num?)?.toInt() ?? 0,
+    enabled: json['enabled'] as bool? ?? false,
+    lastRunAt: DateTime.tryParse(json['last_run_at'] as String? ?? '')?.toUtc(),
+    nextRunAt:
+        DateTime.tryParse(json['next_run_at'] as String? ?? '')?.toUtc() ??
+        DateTime.now().toUtc(),
+    createdAt:
+        DateTime.tryParse(json['created_at'] as String? ?? '')?.toUtc() ??
+        DateTime.fromMillisecondsSinceEpoch(0),
+  );
 
   final String id;
   final String targetId;
@@ -197,15 +199,14 @@ class BackupTarget {
     return BackupTarget(
       id: json['id'] as String? ?? '',
       kind: json['kind'] as String? ?? '',
-      config:
-          cfg is Map ? Map<String, dynamic>.from(cfg) : <String, dynamic>{},
+      config: cfg is Map ? Map<String, dynamic>.from(cfg) : <String, dynamic>{},
       enabled: json['enabled'] as bool? ?? false,
       createdAt:
           DateTime.tryParse(json['created_at'] as String? ?? '')?.toUtc() ??
-              DateTime.fromMillisecondsSinceEpoch(0),
+          DateTime.fromMillisecondsSinceEpoch(0),
       updatedAt:
           DateTime.tryParse(json['updated_at'] as String? ?? '')?.toUtc() ??
-              DateTime.fromMillisecondsSinceEpoch(0),
+          DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 
@@ -220,6 +221,325 @@ class BackupTarget {
   final DateTime updatedAt;
 }
 
+// ── restore ──────────────────────────────────────────────────────
+
+class RestoreManifest {
+  RestoreManifest({
+    required this.version,
+    required this.backupId,
+    required this.createdAt,
+    required this.encryptionAlgo,
+    required this.encryptionFingerprint,
+    this.opendrayVersion,
+    this.pgVersion,
+  });
+
+  factory RestoreManifest.fromJson(Map<String, dynamic> json) {
+    final enc = json['encryption'];
+    final encMap = enc is Map
+        ? Map<String, dynamic>.from(enc)
+        : <String, dynamic>{};
+    return RestoreManifest(
+      version: json['version'] as String? ?? '',
+      backupId: json['backup_id'] as String? ?? '',
+      createdAt:
+          DateTime.tryParse(json['created_at'] as String? ?? '')?.toUtc() ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      opendrayVersion: json['opendray_version'] as String?,
+      pgVersion: json['pg_version'] as String?,
+      encryptionAlgo: encMap['algo'] as String? ?? '',
+      encryptionFingerprint: encMap['fingerprint'] as String? ?? '',
+    );
+  }
+
+  final String version;
+  final String backupId;
+  final DateTime createdAt;
+  final String? opendrayVersion;
+  final String? pgVersion;
+  final String encryptionAlgo;
+  final String encryptionFingerprint;
+}
+
+// Result body returned by POST /backups/restore. On success the
+// fingerprint matched, pg_restore ran cleanly, and `bytesRead`
+// reflects how much of the bundle was processed. On partial
+// failure (mid-restore pg_restore exit) the server returns 500
+// with a nested `result` carrying this same shape; the API
+// client surfaces that as ApiException and the caller is on its
+// own to inspect the body.
+class RestoreResult {
+  RestoreResult({
+    required this.manifest,
+    required this.bytesRead,
+    required this.targetDsnUsed,
+    required this.fingerprintOk,
+    required this.pgRestoreOutput,
+    required this.startedAt,
+    required this.finishedAt,
+  });
+
+  factory RestoreResult.fromJson(Map<String, dynamic> json) {
+    final manifest = json['manifest'];
+    final manifestMap = manifest is Map
+        ? Map<String, dynamic>.from(manifest)
+        : <String, dynamic>{};
+    return RestoreResult(
+      manifest: RestoreManifest.fromJson(manifestMap),
+      bytesRead: (json['bytes_read'] as num?)?.toInt() ?? 0,
+      targetDsnUsed: json['target_dsn_used'] as String? ?? '',
+      fingerprintOk: json['fingerprint_ok'] as bool? ?? false,
+      pgRestoreOutput: json['pg_restore_output'] as String? ?? '',
+      startedAt:
+          DateTime.tryParse(json['started_at'] as String? ?? '')?.toUtc() ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      finishedAt:
+          DateTime.tryParse(json['finished_at'] as String? ?? '')?.toUtc() ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+    );
+  }
+
+  final RestoreManifest manifest;
+  final int bytesRead;
+  // Empty string when target_dsn was omitted (restored into
+  // opendray's own DB).
+  final String targetDsnUsed;
+  final bool fingerprintOk;
+  final String pgRestoreOutput;
+  final DateTime startedAt;
+  final DateTime finishedAt;
+}
+
+// ── inventory ────────────────────────────────────────────────────
+
+class InventoryTable {
+  InventoryTable({required this.name, required this.count});
+
+  factory InventoryTable.fromJson(Map<String, dynamic> json) => InventoryTable(
+    name: json['name'] as String? ?? '',
+    count: (json['count'] as num?)?.toInt() ?? 0,
+  );
+
+  final String name;
+  final int count;
+}
+
+class InventoryGroup {
+  InventoryGroup({
+    required this.id,
+    required this.label,
+    required this.description,
+    required this.tables,
+  });
+
+  factory InventoryGroup.fromJson(Map<String, dynamic> json) {
+    final raw = json['tables'];
+    final tables = raw is List
+        ? raw
+              .whereType<Map<String, dynamic>>()
+              .map(InventoryTable.fromJson)
+              .toList()
+        : <InventoryTable>[];
+    return InventoryGroup(
+      id: json['id'] as String? ?? '',
+      label: json['label'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      tables: tables,
+    );
+  }
+
+  final String id;
+  final String label;
+  final String description;
+  final List<InventoryTable> tables;
+}
+
+// ── exports (Plan C) ─────────────────────────────────────────────
+
+// Mode flag for the `integrations` scope on an export. Wire values
+// match the Go side and the web TS.
+enum IntegrationExportMode {
+  none('none'),
+  metadata('metadata'),
+  plaintext('plaintext');
+
+  const IntegrationExportMode(this.wire);
+  final String wire;
+
+  static IntegrationExportMode fromWire(String? wire) {
+    return switch (wire) {
+      'plaintext' => IntegrationExportMode.plaintext,
+      'metadata' => IntegrationExportMode.metadata,
+      _ => IntegrationExportMode.none,
+    };
+  }
+}
+
+class ExportScope {
+  ExportScope({
+    required this.memories,
+    required this.integrations,
+    required this.customTasks,
+  });
+
+  factory ExportScope.fromJson(Map<String, dynamic> json) => ExportScope(
+    memories: json['memories'] as bool? ?? false,
+    integrations: IntegrationExportMode.fromWire(
+      json['integrations'] as String?,
+    ),
+    customTasks: json['custom_tasks'] as bool? ?? false,
+  );
+
+  final bool memories;
+  final IntegrationExportMode integrations;
+  final bool customTasks;
+}
+
+class ExportRecord {
+  ExportRecord({
+    required this.id,
+    required this.status,
+    required this.requestedBy,
+    required this.scope,
+    required this.startedAt,
+    required this.expiresAt,
+    required this.bytes,
+    this.finishedAt,
+    this.sha256,
+    this.downloadToken,
+    this.error,
+  });
+
+  factory ExportRecord.fromJson(Map<String, dynamic> json) {
+    final scope = json['scope'];
+    final scopeMap = scope is Map
+        ? Map<String, dynamic>.from(scope)
+        : <String, dynamic>{};
+    return ExportRecord(
+      id: json['id'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      requestedBy: json['requested_by'] as String? ?? '',
+      scope: ExportScope.fromJson(scopeMap),
+      startedAt:
+          DateTime.tryParse(json['started_at'] as String? ?? '')?.toUtc() ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      finishedAt: DateTime.tryParse(
+        json['finished_at'] as String? ?? '',
+      )?.toUtc(),
+      expiresAt:
+          DateTime.tryParse(json['expires_at'] as String? ?? '')?.toUtc() ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      bytes: (json['bytes'] as num?)?.toInt() ?? 0,
+      sha256: json['sha256'] as String?,
+      downloadToken: json['download_token'] as String?,
+      error: json['error'] as String?,
+    );
+  }
+
+  final String id;
+  // pending | running | ready | failed | expired
+  final String status;
+  final String requestedBy;
+  final ExportScope scope;
+  final DateTime startedAt;
+  final DateTime? finishedAt;
+  final DateTime expiresAt;
+  final int bytes;
+  final String? sha256;
+  // Single-use bearer token for the download URL — only present
+  // once the export is in status==ready.
+  final String? downloadToken;
+  final String? error;
+}
+
+// ── imports (C reverse) ──────────────────────────────────────────
+
+class EntityCounts {
+  EntityCounts({
+    required this.created,
+    required this.skipped,
+    required this.failed,
+  });
+
+  factory EntityCounts.fromJson(Map<String, dynamic>? json) {
+    final m = json ?? <String, dynamic>{};
+    return EntityCounts(
+      created: (m['created'] as num?)?.toInt() ?? 0,
+      skipped: (m['skipped'] as num?)?.toInt() ?? 0,
+      failed: (m['failed'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  final int created;
+  final int skipped;
+  final int failed;
+}
+
+class ImportRecord {
+  ImportRecord({
+    required this.id,
+    required this.status,
+    required this.requestedBy,
+    required this.startedAt,
+    required this.sourceBytes,
+    required this.memories,
+    required this.integrations,
+    required this.customTasks,
+    this.finishedAt,
+    this.sourceFilename,
+    this.error,
+  });
+
+  factory ImportRecord.fromJson(Map<String, dynamic> json) {
+    final counts = json['counts'];
+    final countsMap = counts is Map
+        ? Map<String, dynamic>.from(counts)
+        : <String, dynamic>{};
+    return ImportRecord(
+      id: json['id'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      requestedBy: json['requested_by'] as String? ?? '',
+      startedAt:
+          DateTime.tryParse(json['started_at'] as String? ?? '')?.toUtc() ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      finishedAt: DateTime.tryParse(
+        json['finished_at'] as String? ?? '',
+      )?.toUtc(),
+      sourceFilename: json['source_filename'] as String?,
+      sourceBytes: (json['source_bytes'] as num?)?.toInt() ?? 0,
+      memories: EntityCounts.fromJson(
+        countsMap['memories'] is Map
+            ? Map<String, dynamic>.from(countsMap['memories'] as Map)
+            : null,
+      ),
+      integrations: EntityCounts.fromJson(
+        countsMap['integrations'] is Map
+            ? Map<String, dynamic>.from(countsMap['integrations'] as Map)
+            : null,
+      ),
+      customTasks: EntityCounts.fromJson(
+        countsMap['custom_tasks'] is Map
+            ? Map<String, dynamic>.from(countsMap['custom_tasks'] as Map)
+            : null,
+      ),
+      error: json['error'] as String?,
+    );
+  }
+
+  final String id;
+  // pending | running | succeeded | failed
+  final String status;
+  final String requestedBy;
+  final DateTime startedAt;
+  final DateTime? finishedAt;
+  final String? sourceFilename;
+  final int sourceBytes;
+  final EntityCounts memories;
+  final EntityCounts integrations;
+  final EntityCounts customTasks;
+  final String? error;
+}
+
 class BackupsApi {
   BackupsApi(this._dio);
   final Dio _dio;
@@ -230,8 +550,7 @@ class BackupsApi {
   // from HTTP error codes.
   Future<BackupStatusReport> status() async {
     try {
-      final res =
-          await _dio.get<Map<String, dynamic>>('/api/v1/backup-status');
+      final res = await _dio.get<Map<String, dynamic>>('/api/v1/backup-status');
       return BackupStatusReport.fromJson(res.data ?? {});
     } on Object catch (e) {
       throw toApiException(e);
@@ -249,10 +568,7 @@ class BackupsApi {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         '/api/v1/backup-setup',
-        data: {
-          'mode': mode,
-          if (passphrase != null) 'passphrase': passphrase,
-        },
+        data: {'mode': mode, if (passphrase != null) 'passphrase': passphrase},
       );
       return BackupSetupResult.fromJson(res.data ?? {});
     } on Object catch (e) {
@@ -322,8 +638,9 @@ class BackupsApi {
   // as the default target if you POST without specifying one.
   Future<List<BackupSchedule>> listSchedules() async {
     try {
-      final res =
-          await _dio.get<Map<String, dynamic>>('/api/v1/backup-schedules');
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/backup-schedules',
+      );
       final raw = res.data?['schedules'];
       if (raw is! List) return const [];
       return raw
@@ -394,8 +711,9 @@ class BackupsApi {
   // long secrets) stays web-only.
   Future<List<BackupTarget>> listTargets() async {
     try {
-      final res =
-          await _dio.get<Map<String, dynamic>>('/api/v1/backup-targets');
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/backup-targets',
+      );
       final raw = res.data?['targets'];
       if (raw is! List) return const [];
       return raw
@@ -485,6 +803,204 @@ class BackupsApi {
   Future<void> deleteTarget(String id) async {
     try {
       await _dio.delete<void>('/api/v1/backup-targets/$id');
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // ── restore ──────────────────────────────────────────────────
+
+  // POST /backups/restore — multipart bundle upload. When
+  // [targetDsn] is empty the server restores into opendray's own
+  // database and requires [confirm]=="I understand"; otherwise it
+  // dials [targetDsn] and runs pg_restore against that DSN.
+  //
+  // Cap is 256 MiB (server-side ParseMultipartForm); the mobile
+  // client honors that by streaming via MultipartFile.fromFile.
+  Future<RestoreResult> restore({
+    required File bundle,
+    String? targetDsn,
+    bool clean = false,
+    String? confirm,
+    String? note,
+  }) async {
+    try {
+      final form = FormData.fromMap({
+        'bundle': await MultipartFile.fromFile(
+          bundle.path,
+          filename: bundle.uri.pathSegments.isNotEmpty
+              ? bundle.uri.pathSegments.last
+              : 'bundle.tar.gz.enc',
+        ),
+        if (targetDsn != null && targetDsn.isNotEmpty) 'target_dsn': targetDsn,
+        'clean': clean ? 'true' : 'false',
+        if (confirm != null && confirm.isNotEmpty) 'confirm': confirm,
+        if (note != null && note.isNotEmpty) 'note': note,
+      });
+      // Restore can run for minutes on a large DB; the default
+      // dio receive timeout (the gateway's) is fine, but we
+      // explicitly disable any per-request timeout here so a
+      // long pg_restore doesn't get killed mid-stream.
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/backups/restore',
+        data: form,
+        options: Options(
+          sendTimeout: Duration.zero,
+          receiveTimeout: Duration.zero,
+        ),
+      );
+      return RestoreResult.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // ── inventory ────────────────────────────────────────────────
+
+  // GET /backup-inventory — live row counts grouped by feature
+  // area (memories, integrations, custom tasks, ...). Used by
+  // the main screen's "what's actually backed up" card.
+  Future<List<InventoryGroup>> inventory() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/backup-inventory',
+      );
+      final raw = res.data?['groups'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(InventoryGroup.fromJson)
+          .toList();
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // ── exports (Plan C) ─────────────────────────────────────────
+
+  Future<List<ExportRecord>> listExports() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/api/v1/exports');
+      final raw = res.data?['exports'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(ExportRecord.fromJson)
+          .toList();
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  Future<ExportRecord> getExport(String id) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/api/v1/exports/$id');
+      return ExportRecord.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /exports — kick off a new export. The server returns
+  // immediately with status=pending; the worker runs the actual
+  // bundling asynchronously. Client should poll list() (or
+  // getExport(id)) until status transitions to ready/failed.
+  Future<ExportRecord> createExport({
+    required bool memories,
+    required IntegrationExportMode integrations,
+    required bool customTasks,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/exports',
+        data: {
+          'memories': memories,
+          'integrations': integrations.wire,
+          'custom_tasks': customTasks,
+        },
+      );
+      return ExportRecord.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  Future<void> deleteExport(String id) async {
+    try {
+      await _dio.delete<void>('/api/v1/exports/$id');
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // Absolute URL for the export download endpoint. The token
+  // is a single-use bearer in the `download_token` field of a
+  // ready ExportRecord; the gateway invalidates it after one
+  // successful GET. Returns a relative path that
+  // url_launcher / dio download can resolve against baseUrl.
+  String exportDownloadUrl(String id, String token) {
+    final encId = Uri.encodeComponent(id);
+    final encTok = Uri.encodeComponent(token);
+    return '/api/v1/exports/$encId/download?token=$encTok';
+  }
+
+  // ── imports (C reverse) ──────────────────────────────────────
+
+  Future<List<ImportRecord>> listImports({int limit = 20}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/imports',
+        queryParameters: {'limit': limit},
+      );
+      final raw = res.data?['imports'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(ImportRecord.fromJson)
+          .toList();
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  Future<ImportRecord> getImport(String id) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/api/v1/imports/$id');
+      return ImportRecord.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /imports — multipart bundle upload. Bundle must be a
+  // .opd JSON package previously produced by /exports.
+  Future<ImportRecord> createImport({
+    required File bundle,
+    required bool memories,
+    required bool integrations,
+    required bool customTasks,
+  }) async {
+    try {
+      final form = FormData.fromMap({
+        'bundle': await MultipartFile.fromFile(
+          bundle.path,
+          filename: bundle.uri.pathSegments.isNotEmpty
+              ? bundle.uri.pathSegments.last
+              : 'bundle.opd',
+        ),
+        'memories': memories ? 'true' : 'false',
+        'integrations': integrations ? 'true' : 'false',
+        'custom_tasks': customTasks ? 'true' : 'false',
+      });
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/imports',
+        data: form,
+        options: Options(
+          sendTimeout: Duration.zero,
+          receiveTimeout: Duration.zero,
+        ),
+      );
+      return ImportRecord.fromJson(res.data ?? {});
     } on Object catch (e) {
       throw toApiException(e);
     }

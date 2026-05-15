@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -86,12 +88,16 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
       final status = await api.status();
       if (!mounted) return;
       if (!status.enabled) {
-        setState(() => _state = AsyncValue.data(_PageData(
+        setState(
+          () => _state = AsyncValue.data(
+            _PageData(
               status: status,
               rows: const [],
               targets: const [],
               schedules: const [],
-            )));
+            ),
+          ),
+        );
         return;
       }
       final results = await Future.wait<Object>([
@@ -102,12 +108,16 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
       if (!mounted) return;
       final rows = (results[0] as List<BackupRow>)
         ..sort((a, b) => b.startedAt.compareTo(a.startedAt));
-      setState(() => _state = AsyncValue.data(_PageData(
+      setState(
+        () => _state = AsyncValue.data(
+          _PageData(
             status: status,
             rows: rows,
             targets: results[1] as List<BackupTarget>,
             schedules: results[2] as List<BackupSchedule>,
-          )));
+          ),
+        ),
+      );
     } on ApiException catch (e) {
       if (mounted) {
         setState(() => _state = AsyncValue.error(e, StackTrace.current));
@@ -136,23 +146,31 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
         // (or this is the post-setup pre-restart window). Drop
         // back to the setup/restart view rather than keep stale
         // rows.
-        setState(() => _state = AsyncValue.data(_PageData(
+        setState(
+          () => _state = AsyncValue.data(
+            _PageData(
               status: status,
               rows: const [],
               targets: const [],
               schedules: const [],
-            )));
+            ),
+          ),
+        );
         return;
       }
       final list = await api.list(limit: 50);
       if (!mounted) return;
       list.sort((a, b) => b.startedAt.compareTo(a.startedAt));
-      setState(() => _state = AsyncValue.data(_PageData(
+      setState(
+        () => _state = AsyncValue.data(
+          _PageData(
             status: status,
             rows: list,
             targets: current.targets,
             schedules: current.schedules,
-          )));
+          ),
+        ),
+      );
     } on Object {
       // Swallow soft-refresh errors — the page is already
       // rendered, no point flashing a full-screen error.
@@ -199,9 +217,11 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
       );
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(
-        content: Text(t.backups.runFailedGeneric(error: e.toString())),
-      ));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(t.backups.runFailedGeneric(error: e.toString())),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _running = false);
     }
@@ -247,10 +267,13 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
         final ok = row.status == 'succeeded';
         messenger.showSnackBar(
           SnackBar(
-            content: Text(ok
-                ? t.backups.rowSucceededSnack(bytes: _formatBytes(row.bytes))
-                : t.backups.rowFailedSnack(
-                    error: row.error ?? t.backups.unknownError)),
+            content: Text(
+              ok
+                  ? t.backups.rowSucceededSnack(bytes: _formatBytes(row.bytes))
+                  : t.backups.rowFailedSnack(
+                      error: row.error ?? t.backups.unknownError,
+                    ),
+            ),
             duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
             backgroundColor: ok ? null : Theme.of(context).colorScheme.error,
@@ -291,13 +314,15 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
                 if (b.finishedAt != null)
                   _kv(
                     t.backups.kv.finished,
-                    DateFormat.yMMMd()
-                        .add_Hms()
-                        .format(b.finishedAt!.toLocal()),
+                    DateFormat.yMMMd().add_Hms().format(
+                      b.finishedAt!.toLocal(),
+                    ),
                   ),
                 _kv(t.backups.kv.size, _formatBytes(b.bytes)),
-                _kv(t.backups.kv.encrypted,
-                    b.encrypted ? t.backups.kv.yes : t.backups.kv.no),
+                _kv(
+                  t.backups.kv.encrypted,
+                  b.encrypted ? t.backups.kv.yes : t.backups.kv.no,
+                ),
                 if ((b.targetPath ?? '').isNotEmpty)
                   _kv(t.backups.kv.targetPath, b.targetPath!, mono: true),
                 if ((b.error ?? '').isNotEmpty) ...[
@@ -398,9 +423,11 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
       );
     } on Object catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(
-        content: Text(t.backups.deleteFailedGeneric(error: e.toString())),
-      ));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(t.backups.deleteFailedGeneric(error: e.toString())),
+        ),
+      );
     }
   }
 
@@ -450,9 +477,18 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
                       builder: (_) => const BackupTargetsScreen(),
                     ),
                   );
+                case _AppBarAction.restore:
+                  unawaited(_openRestoreSheet());
               }
             },
             itemBuilder: (_) => [
+              PopupMenuItem(
+                value: _AppBarAction.restore,
+                child: ListTile(
+                  leading: const Icon(Icons.restore_outlined),
+                  title: Text(t.backups.restoreFromFile),
+                ),
+              ),
               PopupMenuItem(
                 value: _AppBarAction.schedules,
                 child: ListTile(
@@ -509,15 +545,9 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
   Widget _buildBody(_PageData data) {
     if (data.featureOff) {
       if (data.awaitingRestart) {
-        return _RestartRequiredView(
-          status: data.status,
-          onRecheck: _load,
-        );
+        return _RestartRequiredView(status: data.status, onRecheck: _load);
       }
-      return _SetupWizardView(
-        status: data.status,
-        onComplete: _load,
-      );
+      return _SetupWizardView(status: data.status, onComplete: _load);
     }
     final status = data.status;
     final list = data.rows;
@@ -529,6 +559,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
           _StatusBanner(status: status),
+          const _InventoryCard(),
           _SummaryCard(
             targets: data.targets,
             schedules: data.schedules,
@@ -547,6 +578,141 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
             ),
           // Footer padding so the FAB doesn't cover the last row.
           const SizedBox(height: 96),
+        ],
+      ),
+    );
+  }
+
+  // ── restore (from uploaded bundle) ─────────────────────────────
+
+  // Opens the multi-step Restore bottom sheet. Pulled out of the
+  // PopupMenuButton's onSelected so the sheet itself owns its own
+  // state (file pick, target DSN, clean, audit note, confirm
+  // sentinel) without the parent rebuilding on every keystroke.
+  Future<void> _openRestoreSheet() async {
+    final res = await showModalBottomSheet<RestoreResult?>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: const _RestoreSheet(),
+      ),
+    );
+    if (res != null && mounted) {
+      await _showRestoreResult(res);
+      await _softRefresh();
+    }
+  }
+
+  Future<void> _showRestoreResult(RestoreResult res) async {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.backups.restore.succeededTitle),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.7,
+            maxWidth: 480,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t.backups.restore.succeededBody(
+                    bytes: _formatBytes(res.bytesRead),
+                    id: res.manifest.backupId,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  t.backups.restore.manifestTitle.toUpperCase(),
+                  style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
+                    letterSpacing: 0.8,
+                    color: Theme.of(ctx).colorScheme.outline,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                _kv(
+                  t.backups.restore.manifestBackupId,
+                  res.manifest.backupId,
+                  mono: true,
+                ),
+                _kv(t.backups.restore.manifestVersion, res.manifest.version),
+                _kv(
+                  t.backups.restore.manifestCreatedAt,
+                  DateFormat.yMMMd().add_Hms().format(
+                    res.manifest.createdAt.toLocal(),
+                  ),
+                ),
+                if ((res.manifest.pgVersion ?? '').isNotEmpty)
+                  _kv(
+                    t.backups.restore.manifestPgVersion,
+                    res.manifest.pgVersion!,
+                  ),
+                if ((res.manifest.opendrayVersion ?? '').isNotEmpty)
+                  _kv(
+                    t.backups.restore.manifestOpendrayVersion,
+                    res.manifest.opendrayVersion!,
+                  ),
+                _kv(
+                  t.backups.restore.fingerprint,
+                  res.fingerprintOk
+                      ? '${res.manifest.encryptionFingerprint} '
+                            '· ${t.backups.restore.fingerprintOk}'
+                      : '${res.manifest.encryptionFingerprint} '
+                            '· ${t.backups.restore.fingerprintMismatch}',
+                  mono: true,
+                ),
+                _kv(
+                  t.backups.restore.encryptionAlgo,
+                  res.manifest.encryptionAlgo,
+                ),
+                _kv(t.backups.restore.bytesRead, _formatBytes(res.bytesRead)),
+                _kv(
+                  t.backups.restore.targetDsnUsed,
+                  res.targetDsnUsed.isEmpty
+                      ? t.backups.restore.targetDsnSelfLabel
+                      : res.targetDsnUsed,
+                  mono: res.targetDsnUsed.isNotEmpty,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  t.backups.restore.outputTitle.toUpperCase(),
+                  style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
+                    letterSpacing: 0.8,
+                    color: Theme.of(ctx).colorScheme.outline,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: SelectableText(
+                    res.pgRestoreOutput.isEmpty
+                        ? t.backups.restore.noPgRestoreOutput
+                        : res.pgRestoreOutput,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(t.backups.restore.done),
+          ),
         ],
       ),
     );
@@ -578,13 +744,17 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
         children: [
           Icon(icon, size: 48, color: theme.colorScheme.outline),
           const SizedBox(height: 12),
-          Text(headline,
-              style: theme.textTheme.titleMedium,
-              textAlign: TextAlign.center),
+          Text(
+            headline,
+            style: theme.textTheme.titleMedium,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 6),
-          Text(body,
-              style: theme.textTheme.bodySmall,
-              textAlign: TextAlign.center),
+          Text(
+            body,
+            style: theme.textTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -593,7 +763,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
 
 enum _DetailAction { close, delete }
 
-enum _AppBarAction { schedules, targets }
+enum _AppBarAction { schedules, targets, restore }
 
 // Rendered when the operator has already set up a passphrase (env
 // var present OR key file on disk) but the feature isn't running
@@ -633,8 +803,11 @@ class _RestartRequiredView extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           if (status.configuredVia == 'file' && status.keyFilePath.isNotEmpty)
-            _kvBox(context,
-                label: t.backups.keyFileLabel, value: status.keyFilePath),
+            _kvBox(
+              context,
+              label: t.backups.keyFileLabel,
+              value: status.keyFilePath,
+            ),
           if (status.configuredVia == 'env')
             _kvBox(
               context,
@@ -654,8 +827,11 @@ class _RestartRequiredView extends StatelessWidget {
     );
   }
 
-  Widget _kvBox(BuildContext context,
-      {required String label, required String value}) {
+  Widget _kvBox(
+    BuildContext context, {
+    required String label,
+    required String value,
+  }) {
     final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(12),
@@ -667,9 +843,12 @@ class _RestartRequiredView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.outline)),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.outline,
+            ),
+          ),
           const SizedBox(height: 4),
           SelectableText(
             value,
@@ -728,10 +907,7 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
       final api = ref.read(backupsApiProvider);
       final result = _mode == _SetupMode.generate
           ? await api.setup(mode: 'generate')
-          : await api.setup(
-              mode: 'paste',
-              passphrase: _pasteCtrl.text.trim(),
-            );
+          : await api.setup(mode: 'paste', passphrase: _pasteCtrl.text.trim());
       if (!mounted) return;
       if (result.passphrase != null) {
         // Generate path — keep on this screen, show the passphrase
@@ -820,7 +996,8 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
               color: theme.colorScheme.error.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6),
               border: Border.all(
-                  color: theme.colorScheme.error.withValues(alpha: 0.4)),
+                color: theme.colorScheme.error.withValues(alpha: 0.4),
+              ),
             ),
             child: Text(
               _error!,
@@ -838,11 +1015,13 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.check, size: 18),
-          label: Text(_submitting
-              ? t.backups.wizard.saving
-              : _mode == _SetupMode.generate
-                  ? t.backups.wizard.generateAndSave
-                  : t.backups.wizard.savePassphrase),
+          label: Text(
+            _submitting
+                ? t.backups.wizard.saving
+                : _mode == _SetupMode.generate
+                ? t.backups.wizard.generateAndSave
+                : t.backups.wizard.savePassphrase,
+          ),
         ),
         const SizedBox(height: 20),
         if (widget.status.keyFilePath.isNotEmpty)
@@ -872,8 +1051,10 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
             children: [
               Icon(Icons.shield_outlined, size: 18, color: muted),
               const SizedBox(width: 8),
-              Text(t.backups.encryption.random256bit,
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(
+                t.backups.encryption.random256bit,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -913,8 +1094,11 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
       padding: const EdgeInsets.all(20),
       children: [
         const SizedBox(height: 16),
-        Icon(Icons.warning_amber_rounded,
-            size: 48, color: Colors.amber.shade700),
+        Icon(
+          Icons.warning_amber_rounded,
+          size: 48,
+          color: Colors.amber.shade700,
+        ),
         const SizedBox(height: 12),
         Text(
           t.backups.wizard.saveNowHeader,
@@ -931,11 +1115,13 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest
-                .withValues(alpha: 0.4),
+            color: theme.colorScheme.surfaceContainerHighest.withValues(
+              alpha: 0.4,
+            ),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-                color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+              color: theme.colorScheme.primary.withValues(alpha: 0.5),
+            ),
           ),
           child: SelectableText(
             pass,
@@ -1034,8 +1220,11 @@ class _StatusBanner extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(ok ? Icons.check_circle_outline : Icons.error_outline,
-                  size: 18, color: color),
+              Icon(
+                ok ? Icons.check_circle_outline : Icons.error_outline,
+                size: 18,
+                color: color,
+              ),
               const SizedBox(width: 8),
               Text(
                 ok ? t.backups.statusReady : t.backups.statusCannot,
@@ -1067,16 +1256,17 @@ class _StatusBanner extends StatelessWidget {
     );
   }
 
-  Widget _kvRow(BuildContext context, String label, String value,
-      {bool mono = false}) {
+  Widget _kvRow(
+    BuildContext context,
+    String label,
+    String value, {
+    bool mono = false,
+  }) {
     final muted = Theme.of(context).textTheme.bodySmall;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 110,
-          child: Text(label, style: muted),
-        ),
+        SizedBox(width: 110, child: Text(label, style: muted)),
         Expanded(
           child: SelectableText(
             value,
@@ -1110,8 +1300,10 @@ class _SummaryCard extends StatelessWidget {
     final targetsEnabled = targets.where((t) => t.enabled).length;
     final schedulesEnabled = schedules.where((s) => s.enabled).length;
     final liveRows = rows.where((r) => r.status != 'deleted').toList();
-    final totalBytes =
-        liveRows.fold<int>(0, (acc, r) => acc + (r.bytes > 0 ? r.bytes : 0));
+    final totalBytes = liveRows.fold<int>(
+      0,
+      (acc, r) => acc + (r.bytes > 0 ? r.bytes : 0),
+    );
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
       decoration: BoxDecoration(
@@ -1193,17 +1385,27 @@ class _SummaryTile extends StatelessWidget {
             children: [
               Icon(icon, size: 18, color: theme.colorScheme.outline),
               const SizedBox(height: 4),
-              Text(label,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: theme.colorScheme.outline)),
+              Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(value,
-                  style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600)),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               if (sub != null)
-                Text(sub!,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: theme.colorScheme.outline)),
+                Text(
+                  sub!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
+                ),
             ],
           ),
         ),
@@ -1235,11 +1437,7 @@ class _BackupTile extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           if (row.encrypted)
-            Icon(
-              Icons.lock_outline,
-              size: 13,
-              color: muted?.color,
-            ),
+            Icon(Icons.lock_outline, size: 13, color: muted?.color),
           const Spacer(),
           if (duration != null) Text(_formatDuration(duration), style: muted),
         ],
@@ -1328,6 +1526,477 @@ class _ErrorView extends StatelessWidget {
             const SizedBox(height: 16),
             FilledButton(onPressed: onRetry, child: Text(t.common.retry)),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// Collapsible "what's actually backed up" card. Mirrors web's
+// InventoryCard — defers loading until first tap so the main screen
+// still paints instantly on a slow network. Re-fetches every time
+// the operator collapses + re-expands (data is cheap; server-side
+// it's a single COUNT(*) over each table).
+class _InventoryCard extends ConsumerStatefulWidget {
+  const _InventoryCard();
+
+  @override
+  ConsumerState<_InventoryCard> createState() => _InventoryCardState();
+}
+
+class _InventoryCardState extends ConsumerState<_InventoryCard> {
+  bool _open = false;
+  bool _loading = false;
+  List<InventoryGroup>? _groups;
+
+  Future<void> _toggle() async {
+    setState(() => _open = !_open);
+    if (!_open || _groups != null || _loading) return;
+    setState(() => _loading = true);
+    try {
+      final groups = await ref.read(backupsApiProvider).inventory();
+      if (mounted) setState(() => _groups = groups);
+    } on Object catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${t.backups.inventory.loadFailedToast}: ${e is ApiException ? e.message : e}',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final groups = _groups;
+    final totalRows = groups?.fold<int>(
+      0,
+      (acc, g) => acc + g.tables.fold<int>(0, (a, tbl) => a + tbl.count),
+    );
+    final totalTables = groups?.fold<int>(0, (acc, g) => acc + g.tables.length);
+    final fmt = NumberFormat.decimalPattern();
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: _toggle,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    _open ? Icons.expand_more : Icons.chevron_right,
+                    size: 18,
+                    color: theme.colorScheme.outline,
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.inventory_2_outlined,
+                    size: 16,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      t.backups.inventory.title,
+                      style: theme.textTheme.titleSmall,
+                    ),
+                  ),
+                  if (totalRows != null && totalTables != null)
+                    Text(
+                      t.backups.inventory.summary(
+                        rows: fmt.format(totalRows),
+                        tables: totalTables.toString(),
+                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.outline,
+                      ),
+                    )
+                  else
+                    Text(
+                      t.backups.inventory.tap,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.outline,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          if (_open)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    t.backups.inventory.description,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  if (_loading)
+                    Text(
+                      t.backups.inventory.loading,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  if (groups != null)
+                    ...groups.map(
+                      (g) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  g.label,
+                                  style: theme.textTheme.titleSmall,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${fmt.format(g.tables.fold<int>(0, (a, t) => a + t.count))} '
+                                  '${t.backups.inventory.rowsLabel}',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.outline,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              g.description,
+                              style: theme.textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: g.tables.map((tbl) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: theme
+                                        .colorScheme
+                                        .surfaceContainerHighest,
+                                    border: Border.all(
+                                      color: theme.dividerColor,
+                                      width: 0.5,
+                                    ),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.baseline,
+                                    textBaseline: TextBaseline.alphabetic,
+                                    children: [
+                                      Text(
+                                        tbl.name,
+                                        style: const TextStyle(
+                                          fontFamily: 'monospace',
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        fmt.format(tbl.count),
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme.colorScheme.outline,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// Bottom-sheet form for /backups/restore — file pick, target DSN,
+// clean toggle, audit note, plus the "I understand" sentinel that's
+// required when target_dsn is empty (i.e. restoring into opendray's
+// own DB). Submits via api.restore() and pops with the RestoreResult
+// on success so the parent can show the manifest dialog.
+class _RestoreSheet extends ConsumerStatefulWidget {
+  const _RestoreSheet();
+
+  @override
+  ConsumerState<_RestoreSheet> createState() => _RestoreSheetState();
+}
+
+class _RestoreSheetState extends ConsumerState<_RestoreSheet> {
+  PlatformFile? _picked;
+  final _targetDsnCtrl = TextEditingController();
+  final _noteCtrl = TextEditingController();
+  final _confirmCtrl = TextEditingController();
+  bool _clean = true;
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _targetDsnCtrl.dispose();
+    _noteCtrl.dispose();
+    _confirmCtrl.dispose();
+    super.dispose();
+  }
+
+  bool get _restoringOwn => _targetDsnCtrl.text.trim().isEmpty;
+  bool get _confirmReady =>
+      !_restoringOwn ||
+      _confirmCtrl.text.trim() == t.backups.restore.confirmSentinel;
+
+  Future<void> _pickBundle() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+      withData: false,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final f = result.files.single;
+    if (f.path == null || f.path!.isEmpty) return;
+    setState(() => _picked = f);
+  }
+
+  Future<void> _submit() async {
+    final picked = _picked;
+    if (picked == null || picked.path == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t.backups.restore.pickFileToast)));
+      return;
+    }
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final res = await ref
+          .read(backupsApiProvider)
+          .restore(
+            bundle: File(picked.path!),
+            targetDsn: _targetDsnCtrl.text.trim().isEmpty
+                ? null
+                : _targetDsnCtrl.text.trim(),
+            clean: _clean,
+            confirm: _restoringOwn ? t.backups.restore.confirmSentinel : null,
+            note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
+          );
+      if (!mounted) return;
+      Navigator.of(context).pop(res);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('${t.backups.restore.failedTitle}: ${e.message}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } on Object catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('${t.backups.restore.failedTitle}: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.restore_outlined,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      t.backups.restore.title,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: _busy ? null : () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              Text(
+                t.backups.restore.subtitle,
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                t.backups.restore.bundleLabel,
+                style: theme.textTheme.labelMedium,
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _busy ? null : _pickBundle,
+                    icon: const Icon(Icons.attach_file, size: 16),
+                    label: Text(t.backups.restore.pickFile),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _picked == null
+                          ? t.backups.restore.noFile
+                          : t.backups.restore.fileSelected(
+                              name: _picked!.name,
+                              size: _formatBytes(_picked!.size),
+                            ),
+                      style: theme.textTheme.bodySmall,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                t.backups.restore.targetDsnLabel,
+                style: theme.textTheme.labelMedium,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                t.backups.restore.targetDsnHint,
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 4),
+              TextField(
+                controller: _targetDsnCtrl,
+                enabled: !_busy,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                decoration: InputDecoration(
+                  isDense: true,
+                  border: const OutlineInputBorder(),
+                  hintText: t.backups.restore.targetDsnPlaceholder,
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 12),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _clean,
+                onChanged: _busy ? null : (v) => setState(() => _clean = v),
+                title: Text(t.backups.restore.cleanLabel),
+                subtitle: Text(t.backups.restore.cleanHint),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                t.backups.restore.auditNoteLabel,
+                style: theme.textTheme.labelMedium,
+              ),
+              const SizedBox(height: 4),
+              TextField(
+                controller: _noteCtrl,
+                enabled: !_busy,
+                decoration: InputDecoration(
+                  isDense: true,
+                  border: const OutlineInputBorder(),
+                  hintText: t.backups.restore.auditNotePlaceholder,
+                ),
+              ),
+              if (_restoringOwn) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.errorContainer.withValues(
+                      alpha: 0.4,
+                    ),
+                    border: Border.all(color: theme.colorScheme.error),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.shield_outlined,
+                            size: 16,
+                            color: theme.colorScheme.error,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              t.backups.restore.ownDbWarning,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.error,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _confirmCtrl,
+                        enabled: !_busy,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          border: const OutlineInputBorder(),
+                          hintText: t.backups.restore.confirmPlaceholder,
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: theme.colorScheme.error,
+                  ),
+                  onPressed: _busy || _picked == null || !_confirmReady
+                      ? null
+                      : _submit,
+                  child: Text(
+                    _busy
+                        ? t.backups.restore.restoring
+                        : t.backups.restore.restore,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+            ],
+          ),
         ),
       ),
     );
