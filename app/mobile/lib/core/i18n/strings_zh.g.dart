@@ -5372,6 +5372,7 @@ class _TranslationsSettingsServerSettingsFieldsZh extends TranslationsSettingsSe
 	@override String get secretsHelper => 'AES-256-GCM 加密的密钥库。';
 	@override String get backendHelper => 'auto 选择最佳可用；local 需要 ONNX。';
 	@override String get similarityHelper => '0.0–1.0；低于此值的结果会被过滤。';
+	@override String defaultFallback({required Object value}) => '默认：${value}';
 	@override String get chromemPath => 'chromem 路径';
 	@override String get httpBaseUrl => 'HTTP base URL';
 	@override String get httpModel => 'HTTP model';
@@ -9884,6 +9885,7 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.secretsHelper' => 'AES-256-GCM 加密的密钥库。',
 			'settings.serverSettings.fields.backendHelper' => 'auto 选择最佳可用；local 需要 ONNX。',
 			'settings.serverSettings.fields.similarityHelper' => '0.0–1.0；低于此值的结果会被过滤。',
+			'settings.serverSettings.fields.defaultFallback' => ({required Object value}) => '默认：${value}',
 			'settings.serverSettings.fields.chromemPath' => 'chromem 路径',
 			'settings.serverSettings.fields.httpBaseUrl' => 'HTTP base URL',
 			'settings.serverSettings.fields.httpModel' => 'HTTP model',

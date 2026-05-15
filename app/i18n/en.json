@@ -3658,6 +3658,7 @@
         "secretsHelper": "AES-256-GCM encrypted secrets vault.",
         "backendHelper": "auto picks the best available; local needs ONNX.",
         "similarityHelper": "0.0–1.0; results under this are filtered out.",
+        "defaultFallback": "Default: {value}",
         "chromemPath": "chromem path",
         "httpBaseUrl": "HTTP base URL",
         "httpModel": "HTTP model",
