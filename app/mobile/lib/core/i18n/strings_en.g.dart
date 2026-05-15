@@ -8622,6 +8622,9 @@ class TranslationsSessionsTerminalKeyboardEn {
 
 	/// en: 'Attach image'
 	String get attachImage => 'Attach image';
+
+	/// en: 'Enter'
+	String get enter => 'Enter';
 }
 
 // Path: sessions.terminal.connection
@@ -14229,6 +14232,7 @@ extension on Translations {
 			'sessions.terminal.keyboard.copyBuffer' => 'Copy buffer',
 			'sessions.terminal.keyboard.paste' => 'Paste',
 			'sessions.terminal.keyboard.attachImage' => 'Attach image',
+			'sessions.terminal.keyboard.enter' => 'Enter',
 			'sessions.terminal.connection.connecting' => 'Connecting…',
 			'sessions.terminal.connection.connected' => 'Connected',
 			'sessions.terminal.connection.reconnecting' => 'Reconnecting…',
@@ -14449,9 +14453,9 @@ extension on Translations {
 			'providers.errorPrefix.delete' => 'Delete failed',
 			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'providers.accounts.rename' => 'Rename',
-			'providers.accounts.renameTitle' => ({required Object name}) => 'Rename ${name}',
 			_ => null,
 		} ?? switch (path) {
+			'providers.accounts.renameTitle' => ({required Object name}) => 'Rename ${name}',
 			'providers.accounts.displayNameLabel' => 'Display name',
 			'providers.accounts.displayNameHint' => 'Work account',
 			'providers.accounts.deleteTitle' => 'Delete account?',
@@ -14963,9 +14967,9 @@ extension on Translations {
 			'skills.resetTooltip' => 'Reset to built-in',
 			'skills.deleteTooltip' => 'Delete',
 			'skills.saving' => 'Saving…',
-			'skills.saveOverride' => 'Save override',
 			_ => null,
 		} ?? switch (path) {
+			'skills.saveOverride' => 'Save override',
 			'skills.overrideBanner' => 'Saving creates a vault override with the same id. Sessions will use this body instead of the built-in until you reset.',
 			'skills.idHelper' => 'Lowercase letters / digits / dash. Locked once created.',
 			'skills.emptyList' => 'No skills configured. The gateway ships with built-ins (planner, code-reviewer, etc.).',

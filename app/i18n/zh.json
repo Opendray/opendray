@@ -2349,7 +2349,8 @@
       "keyboard": {
         "copyBuffer": "复制缓冲",
         "paste": "粘贴",
-        "attachImage": "附加图片"
+        "attachImage": "附加图片",
+        "enter": "回车"
       },
       "connection": {
         "connecting": "连接中…",

@@ -2349,7 +2349,8 @@
       "keyboard": {
         "copyBuffer": "Copy buffer",
         "paste": "Paste",
-        "attachImage": "Attach image"
+        "attachImage": "Attach image",
+        "enter": "Enter"
       },
       "connection": {
         "connecting": "Connecting…",

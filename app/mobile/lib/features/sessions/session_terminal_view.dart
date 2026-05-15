@@ -696,6 +696,13 @@ class _MobileKeyboardBarState extends State<_MobileKeyboardBar> {
               },
             ),
             _Key(
+              label: t.sessions.terminal.keyboard.enter,
+              onTap: () {
+                _haptic();
+                _send('\r');
+              },
+            ),
+            _Key(
               icon: Icons.content_copy,
               tooltip: t.sessions.terminal.keyboard.copyBuffer,
               onTap: () {

@@ -4529,6 +4529,7 @@ class _TranslationsSessionsTerminalKeyboardZh extends TranslationsSessionsTermin
 	@override String get copyBuffer => '复制缓冲';
 	@override String get paste => '粘贴';
 	@override String get attachImage => '附加图片';
+	@override String get enter => '回车';
 }
 
 // Path: sessions.terminal.connection
@@ -8516,6 +8517,7 @@ extension on TranslationsZh {
 			'sessions.terminal.keyboard.copyBuffer' => '复制缓冲',
 			'sessions.terminal.keyboard.paste' => '粘贴',
 			'sessions.terminal.keyboard.attachImage' => '附加图片',
+			'sessions.terminal.keyboard.enter' => '回车',
 			'sessions.terminal.connection.connecting' => '连接中…',
 			'sessions.terminal.connection.connected' => '已连接',
 			'sessions.terminal.connection.reconnecting' => '重连中…',
@@ -8736,9 +8738,9 @@ extension on TranslationsZh {
 			'providers.errorPrefix.delete' => '删除失败',
 			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'providers.accounts.rename' => '重命名',
-			'providers.accounts.renameTitle' => ({required Object name}) => '重命名 ${name}',
 			_ => null,
 		} ?? switch (path) {
+			'providers.accounts.renameTitle' => ({required Object name}) => '重命名 ${name}',
 			'providers.accounts.displayNameLabel' => '显示名',
 			'providers.accounts.displayNameHint' => '工作账号',
 			'providers.accounts.deleteTitle' => '删除账号？',
@@ -9250,9 +9252,9 @@ extension on TranslationsZh {
 			'skills.resetTooltip' => '重置为内置',
 			'skills.deleteTooltip' => '删除',
 			'skills.saving' => '保存中…',
-			'skills.saveOverride' => '保存覆盖',
 			_ => null,
 		} ?? switch (path) {
+			'skills.saveOverride' => '保存覆盖',
 			'skills.overrideBanner' => '保存会以相同 id 创建一个库覆盖。会话将使用此正文而非内置版本，直到你重置。',
 			'skills.idHelper' => '小写字母 / 数字 / 横线。创建后锁定。',
 			'skills.emptyList' => '未配置任何技能。网关附带内置技能（planner、code-reviewer 等）。',
