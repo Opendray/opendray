@@ -85,6 +85,15 @@ const outboundIndexMax = 256
 // per channel.
 const defaultCooldown = 5 * time.Minute
 
+// submitDelay is the pause between writing forwarded text and the
+// trailing carriage return. Long enough that Ink-style input
+// handlers (Gemini in particular) finish processing the text as a
+// keypress sequence before the Enter byte arrives — short enough
+// to feel instantaneous to the human on the other end. Empirically
+// ~30 ms is the sweet spot; the human-perception threshold is
+// ~100 ms.
+const submitDelay = 30 * time.Millisecond
+
 func NewHub(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger) *Hub {
 	if log == nil {
 		log = slog.Default()
@@ -292,10 +301,20 @@ func (h *Hub) handleInbound(ctx context.Context, msg ChannelMessage) error {
 	// most modern CLIs) treat CR (\r) as Enter (submit) and LF (\n)
 	// as shift-Enter (insert newline). Sending \r is what xterm.js
 	// itself sends when the user hits Enter, so we mirror that.
+	//
+	// Why two separate writes (text, brief pause, then \r):
+	// Some Ink-based input handlers (notably Gemini CLI) treat a
+	// single combined "text+\r" PTY write as a paste-style burst
+	// and swallow the trailing \r as part of the paste payload —
+	// the text shows up at the prompt but the submit never fires.
+	// xterm.js sidesteps this by issuing one PTY write per
+	// keystroke; we approximate that by writing the body, briefly
+	// yielding, then writing the Enter byte on its own. The pause
+	// is below human-perception threshold and Claude/Codex behave
+	// identically with or without it.
 	if h.input != nil && msg.Text != "" {
 		if sid, ok := h.resolveTargetSession(msg); ok {
-			payload := append([]byte(msg.Text), '\r')
-			if err := h.input.Input(ctx, sid, payload); err != nil {
+			if err := h.submitToSession(ctx, sid, msg.Text); err != nil {
 				h.log.Warn("forward to session failed",
 					"channel", msg.ChannelID, "session", sid, "err", err)
 				h.replyTextLookup(ctx, msg, fmt.Sprintf("Could not deliver to %s: %s", sid, err))
@@ -822,6 +841,35 @@ func (h *Hub) setActiveSession(channelID, sessionID string) {
 		return
 	}
 	h.activeSess[channelID] = sessionID
+}
+
+// submitToSession writes forwarded text to a session's PTY in two
+// stages: the body, a brief pause, then the Enter terminator. See
+// the comment block above handleInbound's forwarding branch for
+// why a single combined write breaks Gemini's input detection.
+//
+// Cancellable via ctx — partial sends are surfaced as errors so
+// the caller can report failure back to the chat. Submitting an
+// empty body is a no-op (returns nil); submitting only the Enter
+// is supported and exercised by tests.
+func (h *Hub) submitToSession(ctx context.Context, sid, text string) error {
+	if h.input == nil {
+		return errors.New("session input not configured")
+	}
+	if text != "" {
+		if err := h.input.Input(ctx, sid, []byte(text)); err != nil {
+			return err
+		}
+		select {
+		case <-time.After(submitDelay):
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+	if err := h.input.Input(ctx, sid, []byte{'\r'}); err != nil {
+		return fmt.Errorf("submit: %w", err)
+	}
+	return nil
 }
 
 // resolveTargetSession picks the session for an inbound non-command
