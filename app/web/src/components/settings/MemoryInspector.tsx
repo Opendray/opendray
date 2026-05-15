@@ -52,6 +52,7 @@ import {
   type SearchHit,
   type Scope,
 } from '@/lib/memory'
+import { rankingBreakdown } from '@/lib/memoryRanking'
 import { listSessions } from '@/lib/sessions'
 
 // MemoryInspector shows the live state of opendray's memory
@@ -1002,6 +1003,14 @@ function Row({
   const [expanded, setExpanded] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(mem.text)
+  // M-PD — compute the same effective-score the backend ranking
+  // uses so operators can see WHY a row sits where it does. When
+  // there's no active similarity (browse view) we pass 1.0 to get
+  // the "this row's intrinsic boost" reading.
+  const rank = useMemo(
+    () => rankingBreakdown(mem, similarity ?? 1),
+    [mem, similarity],
+  )
   const [saving, setSaving] = useState(false)
   const source = (mem.metadata?.source as string | undefined) ?? null
   const sourcePath = (mem.metadata?.source_path as string | undefined) ?? null
@@ -1063,6 +1072,21 @@ function Row({
                 })}
               </span>
             )}
+            <span
+              className="text-[10px] px-1.5 py-0.5 rounded border border-border text-muted-foreground/80 font-mono"
+              title={t('web.memoryInspector.row.rankTooltip', {
+                similarity: rank.similarity.toFixed(3),
+                age: rank.ageMultiplier.toFixed(2),
+                hits: rank.hitMultiplier.toFixed(2),
+                confidence: rank.confidenceMultiplier.toFixed(2),
+                effective: rank.effectiveScore.toFixed(3),
+                days: Math.round(rank.ageDays),
+              })}
+            >
+              {t('web.memoryInspector.row.rankBadge', {
+                value: rank.effectiveScore.toFixed(2),
+              })}
+            </span>
             {source && (
               <span className="text-[10px] text-muted-foreground/60">
                 <CheckCircle2 className="inline size-2.5 mr-0.5" />

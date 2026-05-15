@@ -22,11 +22,20 @@ export interface MemoryRecord {
   hit_count: number
   /** Timestamp of the most recent hit, or null if never used. */
   last_hit_at?: string | null
+  /** Optional summarizer-supplied confidence in [0,1]; nil means "unknown". */
+  confidence?: number | null
 }
 
 export interface SearchHit {
   memory: MemoryRecord
   similarity: number
+  /**
+   * M-PC ranking signal — similarity dampened by age and lifted by
+   * hit_count + stored confidence. Used by Service.Search to order
+   * results. Omitted when the backend doesn't compute it
+   * (legacy callers).
+   */
+  effective_score?: number
 }
 
 export interface ProbeResult {

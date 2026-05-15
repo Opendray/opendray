@@ -22,12 +22,19 @@ import {
   detectMemoryConflicts,
   listMemoryConflicts,
 } from '@/lib/memoryConflicts'
+import { deleteMemory } from '@/lib/memory'
 
 interface ConflictsPanelProps {
   cwd: string
+  /**
+   * Optional callback the parent can pass so the panel's quick-
+   * actions can jump to another tab (e.g. "Open plan editor"
+   * navigates to the Plan tab). Omit to disable the jump button.
+   */
+  onJumpTab?: (tab: string) => void
 }
 
-export function ConflictsPanel({ cwd }: ConflictsPanelProps) {
+export function ConflictsPanel({ cwd, onJumpTab }: ConflictsPanelProps) {
   const { t } = useTranslation()
   const qc = useQueryClient()
 
@@ -61,6 +68,25 @@ export function ConflictsPanel({ cwd }: ConflictsPanelProps) {
     onSuccess: (n) => {
       toast.success(t('web.conflicts.detected', { count: n }))
       qc.invalidateQueries({ queryKey: ['memory-conflicts', cwd] })
+    },
+    onError: (err: unknown) => {
+      toast.error(`${err}`)
+    },
+  })
+
+  // M-PD quick-action: "Delete this fact" — yanks the offending
+  // memory row and auto-accepts the conflict so the inbox clears
+  // in one click. Plan/goal sides delegate to a tab-jump instead
+  // (we don't want one-click overwriting of operator-owned docs).
+  const deleteFactAndAccept = useMutation({
+    mutationFn: async (input: { conflictId: string; factId: string }) => {
+      await deleteMemory(input.factId)
+      await decideMemoryConflict(input.conflictId, 'accepted')
+    },
+    onSuccess: () => {
+      toast.success(t('web.conflicts.deletedFact'))
+      qc.invalidateQueries({ queryKey: ['memory-conflicts', cwd] })
+      qc.invalidateQueries({ queryKey: ['memories'] })
     },
     onError: (err: unknown) => {
       toast.error(`${err}`)
@@ -119,7 +145,11 @@ export function ConflictsPanel({ cwd }: ConflictsPanelProps) {
               key={c.id}
               conflict={c}
               onDecide={(action) => decide.mutate({ id: c.id, action })}
-              disabled={decide.isPending}
+              disabled={decide.isPending || deleteFactAndAccept.isPending}
+              onDeleteFact={(factId) =>
+                deleteFactAndAccept.mutate({ conflictId: c.id, factId })
+              }
+              onJumpTab={onJumpTab}
             />
           ))}
         </div>
@@ -131,10 +161,18 @@ export function ConflictsPanel({ cwd }: ConflictsPanelProps) {
 interface ConflictCardProps {
   conflict: MemoryConflict
   onDecide: (action: 'accepted' | 'dismissed') => void
+  onDeleteFact: (factId: string) => void
+  onJumpTab?: (tab: string) => void
   disabled: boolean
 }
 
-function ConflictCard({ conflict, onDecide, disabled }: ConflictCardProps) {
+function ConflictCard({
+  conflict,
+  onDecide,
+  onDeleteFact,
+  onJumpTab,
+  disabled,
+}: ConflictCardProps) {
   const { t } = useTranslation()
   const severityTone =
     conflict.severity === 'high'
@@ -142,6 +180,33 @@ function ConflictCard({ conflict, onDecide, disabled }: ConflictCardProps) {
       : conflict.severity === 'medium'
         ? 'warn'
         : 'muted'
+
+  // Quick-action targets — first fact side gets a delete shortcut,
+  // first plan/goal side gets a jump-to-editor link. We don't show
+  // both for the same side (the action is unambiguous per layer).
+  type QuickAction =
+    | { kind: 'delete-fact'; refId: string }
+    | { kind: 'open-tab'; tab: string; label: string }
+  const quick: QuickAction[] = []
+  ;[
+    { layer: conflict.layer_a, ref: conflict.ref_a },
+    { layer: conflict.layer_b, ref: conflict.ref_b },
+  ].forEach(({ layer, ref }) => {
+    if (layer === 'fact') {
+      if (!quick.some((q) => q.kind === 'delete-fact')) {
+        quick.push({ kind: 'delete-fact', refId: ref })
+      }
+    } else if (layer === 'plan' || layer === 'goal') {
+      if (!quick.some((q) => q.kind === 'open-tab' && q.tab === layer)) {
+        quick.push({
+          kind: 'open-tab',
+          tab: layer,
+          label: t(`web.conflicts.openLayer.${layer}`),
+        })
+      }
+    }
+  })
+
   return (
     <div className="bg-card/50 rounded-md border p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -183,6 +248,41 @@ function ConflictCard({ conflict, onDecide, disabled }: ConflictCardProps) {
         </div>
       </div>
       <p className="text-[12px] whitespace-pre-wrap">{conflict.evidence}</p>
+      {quick.length > 0 && (
+        <div className="border-border/50 mt-2 flex items-center gap-2 border-t pt-2 text-[11px]">
+          <span className="text-muted-foreground">
+            {t('web.conflicts.quickActions')}
+          </span>
+          {quick.map((q, i) => {
+            if (q.kind === 'delete-fact') {
+              return (
+                <Button
+                  key={i}
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onDeleteFact(q.refId)}
+                  disabled={disabled}
+                  className="h-6 text-[10px]"
+                >
+                  {t('web.conflicts.deleteFact')}
+                </Button>
+              )
+            }
+            return (
+              <Button
+                key={i}
+                size="sm"
+                variant="ghost"
+                onClick={() => onJumpTab?.(q.tab)}
+                disabled={!onJumpTab}
+                className="h-6 text-[10px]"
+              >
+                {q.label}
+              </Button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
