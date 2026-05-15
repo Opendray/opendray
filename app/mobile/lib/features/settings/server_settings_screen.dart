@@ -170,30 +170,39 @@ List<_Section> _buildSections() => <_Section>[
         kind: _FieldKind.text,
         monospace: true,
         helper: t.settings.serverSettings.fields.rootHelper,
+        // resolveVaultPaths falls back to ~/.opendray/vault.
+        placeholder: '~/.opendray/vault',
       ),
       _Field(
         label: t.settings.serverSettings.fields.notesPath,
         path: 'vault.notes',
         kind: _FieldKind.text,
         monospace: true,
+        // Defaults to <root>/notes when blank.
+        placeholder: '~/.opendray/vault/notes',
       ),
       _Field(
         label: t.settings.serverSettings.fields.skillsPath,
         path: 'vault.skills',
         kind: _FieldKind.text,
         monospace: true,
+        placeholder: '~/.opendray/vault/skills',
       ),
       _Field(
         label: t.settings.serverSettings.fields.gitRoot,
         path: 'vault.git_root',
         kind: _FieldKind.text,
         monospace: true,
+        // Defaults to vault.root (or vault.notes when notes is
+        // pinned to a custom Obsidian-style location).
+        placeholder: '~/.opendray/vault',
       ),
       _Field(
         label: t.settings.serverSettings.fields.personalPrefix,
         path: 'vault.personal_prefix',
         kind: _FieldKind.text,
         monospace: true,
+        // No implicit fallback; left empty by design when blank.
       ),
       _Field(
         label: t.settings.serverSettings.fields.projectsPrefix,
@@ -214,6 +223,8 @@ List<_Section> _buildSections() => <_Section>[
         path: 'mcp.root',
         kind: _FieldKind.text,
         monospace: true,
+        // resolveMCPPaths defaults to <vault root>/mcp.
+        placeholder: '~/.opendray/vault/mcp',
       ),
       _Field(
         label: t.settings.serverSettings.fields.secretsFile,
@@ -221,6 +232,9 @@ List<_Section> _buildSections() => <_Section>[
         kind: _FieldKind.text,
         monospace: true,
         helper: t.settings.serverSettings.fields.secretsHelper,
+        // Intentionally OUTSIDE the vault so `git add .` doesn't
+        // pick it up; see resolveMCPPaths.
+        placeholder: '~/.opendray/secrets.env',
       ),
     ],
   ),
@@ -384,6 +398,8 @@ List<_Section> _buildSections() => <_Section>[
         kind: _FieldKind.text,
         monospace: true,
         helper: t.settings.serverSettings.fields.accountsHelper,
+        // Auto-discovered under ~/.claude-accounts when blank.
+        placeholder: '~/.claude-accounts',
       ),
     ],
   ),
@@ -399,6 +415,8 @@ List<_Section> _buildSections() => <_Section>[
         kind: _FieldKind.text,
         monospace: true,
         helper: t.settings.serverSettings.fields.sessionsRootHelper,
+        // session/codex_jsonl.go falls back to ~/.codex/sessions.
+        placeholder: '~/.codex/sessions',
       ),
     ],
   ),
@@ -413,12 +431,16 @@ List<_Section> _buildSections() => <_Section>[
         path: 'providers.gemini.tmp_root',
         kind: _FieldKind.text,
         monospace: true,
+        // session/gemini_jsonl.go falls back to ~/.gemini/tmp.
+        placeholder: '~/.gemini/tmp',
       ),
       _Field(
         label: t.settings.serverSettings.fields.projectsJson,
         path: 'providers.gemini.projects_file',
         kind: _FieldKind.text,
         monospace: true,
+        // session/gemini_jsonl.go falls back to ~/.gemini/projects.json.
+        placeholder: '~/.gemini/projects.json',
       ),
     ],
   ),
