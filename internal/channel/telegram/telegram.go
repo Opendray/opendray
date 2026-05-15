@@ -114,8 +114,48 @@ func (t *Telegram) Start(_ context.Context, inbound channel.InboundFunc) error {
 	t.cancel = cancel
 	t.done = make(chan struct{})
 	go t.poll(pollCtx, inbound)
+	// Best-effort autocomplete registration — Telegram caches the
+	// command list per-bot and serves it on the "/" picker in every
+	// chat. Errors here are non-fatal (the bot still works without
+	// autocomplete) so we just log and proceed.
+	go t.publishCommands(pollCtx)
 	t.log.Info("telegram channel started")
 	return nil
+}
+
+// publishCommands tells Telegram which slash commands the bot
+// exposes, so the chat client's "/" picker autocompletes them. The
+// list is hardcoded against the channel package's actual registry
+// because the Channel interface doesn't (yet) carry a hook for the
+// hub to push command metadata down into transports — small,
+// stable set, easier to mirror by hand than to plumb through.
+//
+// If we ever extend the command set, update both this list and
+// the registrations in channel.Hub.registerBuiltinCommands +
+// internal/app/channel_commands.go.
+func (t *Telegram) publishCommands(ctx context.Context) {
+	type tgCmd struct {
+		Command     string `json:"command"`
+		Description string `json:"description"`
+	}
+	cmds := []tgCmd{
+		{Command: "help", Description: "List available commands"},
+		{Command: "list", Description: "List active sessions"},
+		{Command: "end", Description: "End a session: /end <session_id>"},
+		{Command: "resume", Description: "Resume a stopped session: /resume <session_id>"},
+		{Command: "notify", Description: "Toggle notifications: /notify on|off"},
+	}
+	body := map[string]any{"commands": cmds}
+	var resp struct {
+		Ok bool `json:"ok"`
+	}
+	if err := t.callAPI(ctx, "setMyCommands", body, &resp); err != nil {
+		t.log.Warn("telegram setMyCommands failed", "err", err)
+		return
+	}
+	if !resp.Ok {
+		t.log.Warn("telegram setMyCommands rejected", "resp", resp)
+	}
 }
 
 func (t *Telegram) Stop(ctx context.Context) error {

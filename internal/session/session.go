@@ -98,6 +98,7 @@ type SwitchAccountRequest struct {
 var (
 	ErrNotFound                 = errors.New("session not found")
 	ErrAlreadyEnded             = errors.New("session already ended")
+	ErrAlreadyRunning           = errors.New("session already running")
 	ErrUnknownProvider          = errors.New("unknown provider")
 	ErrProviderUnavailable      = errors.New("provider unavailable")
 	ErrAccountSwitchUnsupported = errors.New("account switch only supported for claude provider")

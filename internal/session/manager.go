@@ -283,7 +283,7 @@ func (m *Manager) Start(ctx context.Context, id string) (Session, error) {
 		out := rs.sess
 		rs.sessMu.RUnlock()
 		if !state.IsTerminal() {
-			return out, fmt.Errorf("session %s is %s — already running", id, state)
+			return out, fmt.Errorf("session %s is %s: %w", id, state, ErrAlreadyRunning)
 		}
 	}
 

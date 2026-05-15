@@ -117,6 +117,37 @@ func (h *Hub) Commands() *CommandRegistry { return h.cmds }
 // RegisterCommand is a convenience wrapper around Commands().Register().
 func (h *Hub) RegisterCommand(c Command) { h.cmds.Register(c) }
 
+// registerBuiltinCommands wires only the channel-scoped commands
+// that don't need session access. /list, /end, and /resume live in
+// the app layer (internal/app) so the channel package stays free of
+// the session dependency.
+//
+// Slash-command set (intentionally small — operators get tired of
+// long /help output and unmaintained shims):
+//
+//	/help    — list available commands (registered by NewCommandRegistry)
+//	/notify  — toggle channel notifications on/off
+//	/list    — active sessions (registered by app code)
+//	/end     — end a session (registered by app code)
+//	/resume  — resume a stopped/ended session (registered by app code)
+//
+// What we DELETED and why:
+//   - /status   — channel-level diagnostic ("which capabilities does
+//                 this channel have"). Useful exactly once, then
+//                 noise in the /help output. The web admin shows
+//                 the same info with more context.
+//   - /select   — pin a chat to a specific session_id. The reply-
+//                 to-message routing (outboundIndex) covers the
+//                 multi-session case more naturally; the pin was a
+//                 power-user feature that nobody used.
+//   - /sessions — listed sessions that had previously NOTIFIED this
+//                 channel, not currently-active sessions. Confused
+//                 operators who expected /sessions == /list.
+//
+// The pinned-session machinery (activeSess + lookupActiveSession +
+// setActiveSession) is retained as dead-code-but-load-bearing — if
+// we ever bring /select back the routing is already wired. Cheap
+// to keep; ripping it out would expand the diff for no gain.
 func (h *Hub) registerBuiltinCommands() {
 	h.cmds.Register(Command{
 		Name:        "notify",
@@ -137,95 +168,6 @@ func (h *Hub) registerBuiltinCommands() {
 				return "Notifications enabled.", nil
 			}
 			return "Notifications muted.", nil
-		},
-	})
-	h.cmds.Register(Command{
-		Name:        "status",
-		Description: "Show channel status and capabilities",
-		Source:      "builtin",
-		Handler: func(_ context.Context, cc CommandContext) (string, error) {
-			caps := Capabilities(cc.Channel)
-			parts := make([]string, len(caps))
-			for i, c := range caps {
-				parts[i] = string(c)
-			}
-			active := h.lookupActiveSession(cc.Channel.ID())
-			last := h.lookupLastSession(cc.Channel.ID())
-			lines := []string{
-				fmt.Sprintf("Channel: %s (%s)", cc.Channel.ID(), cc.Channel.Kind()),
-				fmt.Sprintf("Capabilities: %s", strings.Join(parts, ", ")),
-			}
-			if active != "" {
-				lines = append(lines, "Pinned session (/select): "+active)
-			}
-			if last != "" {
-				lines = append(lines, "Last-notified session: "+last)
-			}
-			return strings.Join(lines, "\n"), nil
-		},
-	})
-	h.cmds.Register(Command{
-		Name:        "select",
-		Description: "Pin a session for replies: /select <session_id> | /select clear",
-		Source:      "builtin",
-		Handler: func(_ context.Context, cc CommandContext) (string, error) {
-			if len(cc.Args) == 0 {
-				cur := h.lookupActiveSession(cc.Channel.ID())
-				if cur == "" {
-					return "No pinned session. Usage: /select <session_id>", nil
-				}
-				return "Pinned session: " + cur + "\nUse /select clear to unpin.", nil
-			}
-			arg := cc.Args[0]
-			if arg == "clear" || arg == "off" || arg == "none" {
-				h.setActiveSession(cc.Channel.ID(), "")
-				return "Pinned session cleared. Routing falls back to last-notified.", nil
-			}
-			h.setActiveSession(cc.Channel.ID(), arg)
-			return "Now routing replies to session " + arg + ".\nUse /select clear to unpin.", nil
-		},
-	})
-	h.cmds.Register(Command{
-		Name:        "sessions",
-		Description: "Show recently-notified sessions for this channel",
-		Source:      "builtin",
-		Handler: func(_ context.Context, cc CommandContext) (string, error) {
-			h.outboundMu.Lock()
-			chMap := h.outboundIndex[cc.Channel.ID()]
-			seen := make(map[string]time.Time, len(chMap))
-			for _, e := range chMap {
-				if t, ok := seen[e.sessionID]; !ok || e.ts.After(t) {
-					seen[e.sessionID] = e.ts
-				}
-			}
-			h.outboundMu.Unlock()
-			if len(seen) == 0 {
-				return "No sessions have notified this channel yet.", nil
-			}
-			type kv struct {
-				sid string
-				ts  time.Time
-			}
-			all := make([]kv, 0, len(seen))
-			for sid, t := range seen {
-				all = append(all, kv{sid, t})
-			}
-			sort.Slice(all, func(i, j int) bool { return all[i].ts.After(all[j].ts) })
-			active := h.lookupActiveSession(cc.Channel.ID())
-			last := h.lookupLastSession(cc.Channel.ID())
-			lines := []string{"Recently-notified sessions (most recent first):"}
-			for _, k := range all {
-				marker := ""
-				switch k.sid {
-				case active:
-					marker = "  ← /select"
-				case last:
-					marker = "  (last)"
-				}
-				lines = append(lines, fmt.Sprintf("  /select %s%s", k.sid, marker))
-			}
-			lines = append(lines, "", "Tip: replying to a notification routes to *that* session directly.")
-			return strings.Join(lines, "\n"), nil
 		},
 	})
 }
@@ -1141,9 +1083,13 @@ func buildSessionCard(ev eventbus.Event, snip snippetPrefs) *Card {
 			Header: &CardHeader{Title: "Session idle", Color: "yellow"},
 			Elements: []CardElement{
 				CardMarkdown{Content: body},
+				// Buttons emit slash-command payloads that the app
+				// wires via session.RegisterChannelCommands. Resume
+				// re-spawns a stopped/idle session; End stops a
+				// running one; Mute silences the channel.
 				CardActions{Buttons: [][]ButtonOption{{
 					{Text: "Resume", Value: "cmd:/resume " + sid, Style: "primary"},
-					{Text: "End", Value: "cmd:/cancel " + sid, Style: "danger"},
+					{Text: "End", Value: "cmd:/end " + sid, Style: "danger"},
 					{Text: "Mute", Value: "cmd:/notify off"},
 				}}},
 			},
@@ -1158,9 +1104,12 @@ func buildSessionCard(ev eventbus.Event, snip snippetPrefs) *Card {
 			Header: &CardHeader{Title: "Session ended", Color: color},
 			Elements: []CardElement{
 				CardMarkdown{Content: fmt.Sprintf("Session `%s` ended with exit_code=%d.", sid, exit)},
+				// Resume re-spawns the ended session under the same
+				// id. The legacy "Spawn similar" button was dropped
+				// because its /spawn-like handler was never wired.
 				CardActions{Buttons: [][]ButtonOption{{
+					{Text: "Resume", Value: "cmd:/resume " + sid, Style: "primary"},
 					{Text: "Open log", Value: "nav:/sessions/" + sid},
-					{Text: "Spawn similar", Value: "cmd:/spawn-like " + sid},
 				}}},
 			},
 		}

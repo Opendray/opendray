@@ -185,6 +185,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// notified that channel — letting the operator drive a running
 	// CLI from chat without opening the web UI.
 	channelHub.SetSessionInput(sessionMgr)
+	// Session-aware slash commands (/list, /end, /resume) live in
+	// this layer rather than internal/channel so the channel package
+	// stays free of the session dependency. The matching idle-card
+	// buttons (Resume / End) emit the same `cmd:/...` payloads.
+	registerChannelCommands(channelHub, sessionMgr)
 	channelHandlers := channel.NewHandlers(channelHub, log)
 	bridgeHandlers := bridge.NewHandlers(bridge.DefaultBroker(), log)
 
