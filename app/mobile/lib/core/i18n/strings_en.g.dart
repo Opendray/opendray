@@ -728,6 +728,7 @@ class TranslationsProjectEn {
 
 	late final TranslationsProjectHealthEn health = TranslationsProjectHealthEn.internal(_root);
 	late final TranslationsProjectConflictsEn conflicts = TranslationsProjectConflictsEn.internal(_root);
+	late final TranslationsProjectJournalPruneEn journalPrune = TranslationsProjectJournalPruneEn.internal(_root);
 
 	/// en: 'Failed to load: {error}'
 	String loadFailed({required Object error}) => 'Failed to load: ${error}';
@@ -1704,6 +1705,8 @@ class TranslationsMemoryEn {
 
 	/// en: 'Memory workers'
 	String get workers => 'Memory workers';
+
+	late final TranslationsMemoryRankEn rank = TranslationsMemoryRankEn.internal(_root);
 
 	/// en: 'New'
 	String get kNew => 'New';
@@ -3539,7 +3542,73 @@ class TranslationsProjectConflictsEn {
 	/// en: 'Dismiss'
 	String get dismiss => 'Dismiss';
 
+	/// en: 'Delete fact {side}'
+	String deleteFact({required Object side}) => 'Delete fact ${side}';
+
+	/// en: 'Delete fact {side}?'
+	String deleteConfirmTitle({required Object side}) => 'Delete fact ${side}?';
+
+	/// en: 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.'
+	String get deleteConfirmBody => 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.';
+
+	/// en: 'Will delete (side {side}):'
+	String deleteWillDelete({required Object side}) => 'Will delete (side ${side}):';
+
+	/// en: 'Will keep (side {side}):'
+	String deleteWillKeep({required Object side}) => 'Will keep (side ${side}):';
+
+	/// en: '({layer} entry — open the corresponding tab to inspect)'
+	String deleteNonFactOther({required Object layer}) => '(${layer} entry — open the corresponding tab to inspect)';
+
+	/// en: 'Loading fact text…'
+	String get deleteLoading => 'Loading fact text…';
+
+	/// en: 'Delete {side}'
+	String deleteFactLabel({required Object side}) => 'Delete ${side}';
+
+	/// en: 'Fact deleted and conflict accepted'
+	String get deletedFact => 'Fact deleted and conflict accepted';
+
+	/// en: 'Open plan editor'
+	String get openPlanEditor => 'Open plan editor';
+
+	/// en: 'Open goal editor'
+	String get openGoalEditor => 'Open goal editor';
+
 	late final TranslationsProjectConflictsSeverityEn severity = TranslationsProjectConflictsSeverityEn.internal(_root);
+}
+
+// Path: project.journalPrune
+class TranslationsProjectJournalPruneEn {
+	TranslationsProjectJournalPruneEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Prune stale journal entries'
+	String get title => 'Prune stale journal entries';
+
+	/// en: 'Older than {days} days, no pending conflicts.'
+	String subtitle({required Object days}) => 'Older than ${days} days, no pending conflicts.';
+
+	/// en: 'Older than (days):'
+	String get daysLabel => 'Older than (days):';
+
+	/// en: 'Nothing stale to prune.'
+	String get empty => 'Nothing stale to prune.';
+
+	/// en: 'Select all'
+	String get selectAll => 'Select all';
+
+	/// en: 'Deselect all'
+	String get deselectAll => 'Deselect all';
+
+	/// en: 'Delete ({count})'
+	String deleteSelected({required Object count}) => 'Delete (${count})';
+
+	/// en: '{count} entry/entries deleted'
+	String deleted({required Object count}) => '${count} entry/entries deleted';
 }
 
 // Path: backups.kv
@@ -4031,6 +4100,39 @@ class TranslationsNotesPageEditorEn {
 
 	/// en: 'Saved {time}'
 	String savedAt({required Object time}) => 'Saved ${time}';
+}
+
+// Path: memory.rank
+class TranslationsMemoryRankEn {
+	TranslationsMemoryRankEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Rank breakdown'
+	String get title => 'Rank breakdown';
+
+	/// en: 'Effective score: {value}'
+	String effective({required Object value}) => 'Effective score: ${value}';
+
+	/// en: 'Cosine similarity'
+	String get similarity => 'Cosine similarity';
+
+	/// en: 'Age multiplier ({days}d old)'
+	String ageMultiplier({required Object days}) => 'Age multiplier (${days}d old)';
+
+	/// en: 'Hit-count multiplier ({hits} hits)'
+	String hitMultiplier({required Object hits}) => 'Hit-count multiplier (${hits} hits)';
+
+	/// en: 'Confidence multiplier'
+	String get confidenceMultiplier => 'Confidence multiplier';
+
+	/// en: 'effective = similarity × age × hits × confidence'
+	String get formula => 'effective = similarity × age × hits × confidence';
+
+	/// en: 'Close'
+	String get close => 'Close';
 }
 
 // Path: memory.deleteAllConfirm
@@ -15065,9 +15167,28 @@ extension on Translations {
 			'project.conflicts.detected' => ({required Object count}) => '${count} new conflict(s) found',
 			'project.conflicts.accept' => 'Accept',
 			'project.conflicts.dismiss' => 'Dismiss',
+			'project.conflicts.deleteFact' => ({required Object side}) => 'Delete fact ${side}',
+			'project.conflicts.deleteConfirmTitle' => ({required Object side}) => 'Delete fact ${side}?',
+			'project.conflicts.deleteConfirmBody' => 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.',
+			'project.conflicts.deleteWillDelete' => ({required Object side}) => 'Will delete (side ${side}):',
+			'project.conflicts.deleteWillKeep' => ({required Object side}) => 'Will keep (side ${side}):',
+			'project.conflicts.deleteNonFactOther' => ({required Object layer}) => '(${layer} entry — open the corresponding tab to inspect)',
+			'project.conflicts.deleteLoading' => 'Loading fact text…',
+			'project.conflicts.deleteFactLabel' => ({required Object side}) => 'Delete ${side}',
+			'project.conflicts.deletedFact' => 'Fact deleted and conflict accepted',
+			'project.conflicts.openPlanEditor' => 'Open plan editor',
+			'project.conflicts.openGoalEditor' => 'Open goal editor',
 			'project.conflicts.severity.low' => 'low',
 			'project.conflicts.severity.medium' => 'medium',
 			'project.conflicts.severity.high' => 'high',
+			'project.journalPrune.title' => 'Prune stale journal entries',
+			'project.journalPrune.subtitle' => ({required Object days}) => 'Older than ${days} days, no pending conflicts.',
+			'project.journalPrune.daysLabel' => 'Older than (days):',
+			'project.journalPrune.empty' => 'Nothing stale to prune.',
+			'project.journalPrune.selectAll' => 'Select all',
+			'project.journalPrune.deselectAll' => 'Deselect all',
+			'project.journalPrune.deleteSelected' => ({required Object count}) => 'Delete (${count})',
+			'project.journalPrune.deleted' => ({required Object count}) => '${count} entry/entries deleted',
 			'project.loadFailed' => ({required Object error}) => 'Failed to load: ${error}',
 			'project.projectsLoadFailed' => ({required Object error}) => 'Failed to load projects: ${error}',
 			'project.projectLabel' => 'Project',
@@ -15344,6 +15465,8 @@ extension on Translations {
 			'channels.popup.enable' => 'Enable',
 			'channels.popup.disable' => 'Disable',
 			'channels.popup.mute' => 'Mute',
+			_ => null,
+		} ?? switch (path) {
 			'channels.popup.unmute' => 'Unmute',
 			'channels.popup.deleteLabel' => 'Delete',
 			'channels.badges.running' => 'running',
@@ -15363,8 +15486,6 @@ extension on Translations {
 			'channels.snacks.channelDeleted' => 'Channel deleted.',
 			'channels.errorPrefix.test' => 'Test failed',
 			'channels.errorPrefix.toggle' => 'Toggle failed',
-			_ => null,
-		} ?? switch (path) {
 			'channels.errorPrefix.muteToggle' => 'Mute toggle failed',
 			'channels.errorPrefix.update' => 'Update failed',
 			'channels.errorPrefix.delete' => 'Delete failed',
@@ -15524,6 +15645,14 @@ extension on Translations {
 			'memory.title' => 'Memory',
 			'memory.more' => 'More',
 			'memory.workers' => 'Memory workers',
+			'memory.rank.title' => 'Rank breakdown',
+			'memory.rank.effective' => ({required Object value}) => 'Effective score: ${value}',
+			'memory.rank.similarity' => 'Cosine similarity',
+			'memory.rank.ageMultiplier' => ({required Object days}) => 'Age multiplier (${days}d old)',
+			'memory.rank.hitMultiplier' => ({required Object hits}) => 'Hit-count multiplier (${hits} hits)',
+			'memory.rank.confidenceMultiplier' => 'Confidence multiplier',
+			'memory.rank.formula' => 'effective = similarity × age × hits × confidence',
+			'memory.rank.close' => 'Close',
 			'memory.kNew' => 'New',
 			'memory.searchHint' => 'Search…',
 			'memory.projectLabel' => 'Project',

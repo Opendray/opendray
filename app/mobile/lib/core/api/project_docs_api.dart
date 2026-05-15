@@ -178,6 +178,28 @@ class ProjectDocsApi {
       throw toApiException(e);
     }
   }
+
+  // M-PD stale journal helper — lists session_summary rows older
+  // than `days` (default 90) that aren't referenced by any pending
+  // memory_conflicts row. Used by the mobile Journal tab's bulk-
+  // prune panel.
+  Future<List<SessionLogEntry>> listStaleLogs(String cwd,
+      {int days = 90}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/session-logs/stale',
+        queryParameters: {'cwd': cwd, 'days': days},
+      );
+      final raw = res.data?['stale'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(SessionLogEntry.fromJson)
+          .toList();
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
 }
 
 // Server returns Doc{} for non-existent rows (so we always have a

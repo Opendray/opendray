@@ -386,6 +386,7 @@ class _TranslationsProjectZh extends TranslationsProjectEn {
 	@override String get pickFirst => '请先选择一个项目。';
 	@override late final _TranslationsProjectHealthZh health = _TranslationsProjectHealthZh._(_root);
 	@override late final _TranslationsProjectConflictsZh conflicts = _TranslationsProjectConflictsZh._(_root);
+	@override late final _TranslationsProjectJournalPruneZh journalPrune = _TranslationsProjectJournalPruneZh._(_root);
 	@override String loadFailed({required Object error}) => '加载失败：${error}';
 	@override String projectsLoadFailed({required Object error}) => '加载项目列表失败：${error}';
 	@override String get projectLabel => '项目';
@@ -786,6 +787,7 @@ class _TranslationsMemoryZh extends TranslationsMemoryEn {
 	@override String get title => '记忆';
 	@override String get more => '更多';
 	@override String get workers => '记忆工作器';
+	@override late final _TranslationsMemoryRankZh rank = _TranslationsMemoryRankZh._(_root);
 	@override String get kNew => '新建';
 	@override String get searchHint => '搜索…';
 	@override String get projectLabel => '项目';
@@ -1809,7 +1811,35 @@ class _TranslationsProjectConflictsZh extends TranslationsProjectConflictsEn {
 	@override String detected({required Object count}) => '新发现 ${count} 条冲突';
 	@override String get accept => '采纳';
 	@override String get dismiss => '驳回';
+	@override String deleteFact({required Object side}) => '删除 fact ${side}';
+	@override String deleteConfirmTitle({required Object side}) => '确认删除 fact ${side}?';
+	@override String get deleteConfirmBody => '永久删除此 fact 并采纳冲突。另一侧保留为最终采信版本。';
+	@override String deleteWillDelete({required Object side}) => '将删除（${side} 侧）：';
+	@override String deleteWillKeep({required Object side}) => '将保留（${side} 侧）：';
+	@override String deleteNonFactOther({required Object layer}) => '（${layer} 条目 — 请打开对应 tab 查看）';
+	@override String get deleteLoading => '加载中…';
+	@override String deleteFactLabel({required Object side}) => '删除 ${side}';
+	@override String get deletedFact => '已删除 fact 并采纳冲突';
+	@override String get openPlanEditor => '打开计划编辑器';
+	@override String get openGoalEditor => '打开目标编辑器';
 	@override late final _TranslationsProjectConflictsSeverityZh severity = _TranslationsProjectConflictsSeverityZh._(_root);
+}
+
+// Path: project.journalPrune
+class _TranslationsProjectJournalPruneZh extends TranslationsProjectJournalPruneEn {
+	_TranslationsProjectJournalPruneZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '清理陈旧日志条目';
+	@override String subtitle({required Object days}) => '超过 ${days} 天、无 pending 冲突引用。';
+	@override String get daysLabel => '超过（天）：';
+	@override String get empty => '没有可清理的陈旧条目。';
+	@override String get selectAll => '全选';
+	@override String get deselectAll => '取消全选';
+	@override String deleteSelected({required Object count}) => '删除 (${count})';
+	@override String deleted({required Object count}) => '已删除 ${count} 条';
 }
 
 // Path: backups.kv
@@ -2091,6 +2121,23 @@ class _TranslationsNotesPageEditorZh extends TranslationsNotesPageEditorEn {
 	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
 	@override String saveFailedGeneric({required Object error}) => '保存失败：${error}';
 	@override String savedAt({required Object time}) => '${time} 已保存';
+}
+
+// Path: memory.rank
+class _TranslationsMemoryRankZh extends TranslationsMemoryRankEn {
+	_TranslationsMemoryRankZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '排名分解';
+	@override String effective({required Object value}) => '有效分：${value}';
+	@override String get similarity => '余弦相似度';
+	@override String ageMultiplier({required Object days}) => '时效系数（${days} 天前）';
+	@override String hitMultiplier({required Object hits}) => '命中系数（${hits} 次命中）';
+	@override String get confidenceMultiplier => '置信度系数';
+	@override String get formula => '有效分 = 相似度 × 时效 × 命中 × 置信度';
+	@override String get close => '关闭';
 }
 
 // Path: memory.deleteAllConfirm
@@ -9185,9 +9232,28 @@ extension on TranslationsZh {
 			'project.conflicts.detected' => ({required Object count}) => '新发现 ${count} 条冲突',
 			'project.conflicts.accept' => '采纳',
 			'project.conflicts.dismiss' => '驳回',
+			'project.conflicts.deleteFact' => ({required Object side}) => '删除 fact ${side}',
+			'project.conflicts.deleteConfirmTitle' => ({required Object side}) => '确认删除 fact ${side}?',
+			'project.conflicts.deleteConfirmBody' => '永久删除此 fact 并采纳冲突。另一侧保留为最终采信版本。',
+			'project.conflicts.deleteWillDelete' => ({required Object side}) => '将删除（${side} 侧）：',
+			'project.conflicts.deleteWillKeep' => ({required Object side}) => '将保留（${side} 侧）：',
+			'project.conflicts.deleteNonFactOther' => ({required Object layer}) => '（${layer} 条目 — 请打开对应 tab 查看）',
+			'project.conflicts.deleteLoading' => '加载中…',
+			'project.conflicts.deleteFactLabel' => ({required Object side}) => '删除 ${side}',
+			'project.conflicts.deletedFact' => '已删除 fact 并采纳冲突',
+			'project.conflicts.openPlanEditor' => '打开计划编辑器',
+			'project.conflicts.openGoalEditor' => '打开目标编辑器',
 			'project.conflicts.severity.low' => '低',
 			'project.conflicts.severity.medium' => '中',
 			'project.conflicts.severity.high' => '高',
+			'project.journalPrune.title' => '清理陈旧日志条目',
+			'project.journalPrune.subtitle' => ({required Object days}) => '超过 ${days} 天、无 pending 冲突引用。',
+			'project.journalPrune.daysLabel' => '超过（天）：',
+			'project.journalPrune.empty' => '没有可清理的陈旧条目。',
+			'project.journalPrune.selectAll' => '全选',
+			'project.journalPrune.deselectAll' => '取消全选',
+			'project.journalPrune.deleteSelected' => ({required Object count}) => '删除 (${count})',
+			'project.journalPrune.deleted' => ({required Object count}) => '已删除 ${count} 条',
 			'project.loadFailed' => ({required Object error}) => '加载失败：${error}',
 			'project.projectsLoadFailed' => ({required Object error}) => '加载项目列表失败：${error}',
 			'project.projectLabel' => '项目',
@@ -9464,6 +9530,8 @@ extension on TranslationsZh {
 			'channels.popup.enable' => '启用',
 			'channels.popup.disable' => '停用',
 			'channels.popup.mute' => '静音',
+			_ => null,
+		} ?? switch (path) {
 			'channels.popup.unmute' => '取消静音',
 			'channels.popup.deleteLabel' => '删除',
 			'channels.badges.running' => '运行中',
@@ -9483,8 +9551,6 @@ extension on TranslationsZh {
 			'channels.snacks.channelDeleted' => '通道已删除。',
 			'channels.errorPrefix.test' => '测试失败',
 			'channels.errorPrefix.toggle' => '切换失败',
-			_ => null,
-		} ?? switch (path) {
 			'channels.errorPrefix.muteToggle' => '静音切换失败',
 			'channels.errorPrefix.update' => '更新失败',
 			'channels.errorPrefix.delete' => '删除失败',
@@ -9644,6 +9710,14 @@ extension on TranslationsZh {
 			'memory.title' => '记忆',
 			'memory.more' => '更多',
 			'memory.workers' => '记忆工作器',
+			'memory.rank.title' => '排名分解',
+			'memory.rank.effective' => ({required Object value}) => '有效分：${value}',
+			'memory.rank.similarity' => '余弦相似度',
+			'memory.rank.ageMultiplier' => ({required Object days}) => '时效系数（${days} 天前）',
+			'memory.rank.hitMultiplier' => ({required Object hits}) => '命中系数（${hits} 次命中）',
+			'memory.rank.confidenceMultiplier' => '置信度系数',
+			'memory.rank.formula' => '有效分 = 相似度 × 时效 × 命中 × 置信度',
+			'memory.rank.close' => '关闭',
 			'memory.kNew' => '新建',
 			'memory.searchHint' => '搜索…',
 			'memory.projectLabel' => '项目',
