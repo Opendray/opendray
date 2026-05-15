@@ -2840,6 +2840,18 @@
       "transcript": {
         "label": "会话记录摘要器",
         "description": "会话结束时的「agent 做了什么」摘要。天然适合 agent 工作器。"
+      },
+      "planDrift": {
+        "label": "计划漂移检测",
+        "description": "每个 session 结束后判断项目 plan 是否需要更新并提出 proposal。用 agent 推理质量更高。"
+      },
+      "conflictDetector": {
+        "label": "跨层冲突检测",
+        "description": "每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。"
+      },
+      "capture": {
+        "label": "Capture 引擎",
+        "description": "按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。"
       }
     }
   },
@@ -2853,6 +2865,40 @@
   "project": {
     "title": "项目",
     "pickFirst": "请先选择一个项目。",
+    "health": {
+      "title": "记忆健康 — 最近 {days} 天",
+      "subtitle": "本项目两套记忆子系统的运行情况聚合。",
+      "newFacts": "新增 facts",
+      "newFactsHint": "累计 {total} 条",
+      "captureFires": "Capture 触发次数",
+      "captureFiresHint": "存入 {stored} · 去重 {deduped}",
+      "newJournal": "新增日志条目",
+      "newJournalHint": "累计 {total} 条",
+      "planAge": "计划最近更新",
+      "planAgeHint": "{count} 条 plan-drift 提案待审",
+      "planAgeHintNone": "无 plan-drift 提案待审",
+      "goalAge": "目标最近更新",
+      "pending": "待审提案",
+      "pendingHint": "最久 {days} 天",
+      "topHit": "命中最多 · {hits} 次",
+      "zeroHit": "{count} 条超过 7 天未命中的 fact — 清理候选。",
+      "never": "从未",
+      "today": "今日",
+      "daysAgo": "{count} 天前"
+    },
+    "conflicts": {
+      "subtitle": "每日 detector 在 facts/plan/goal/journal 之间发现的矛盾。",
+      "empty": "无待处理冲突。点击「立即检测」运行一次按需扫描。",
+      "detectNow": "立即检测",
+      "detected": "新发现 {count} 条冲突",
+      "accept": "采纳",
+      "dismiss": "驳回",
+      "severity": {
+        "low": "低",
+        "medium": "中",
+        "high": "高"
+      }
+    },
     "loadFailed": "加载失败：{error}",
     "projectsLoadFailed": "加载项目列表失败：{error}",
     "projectLabel": "项目",

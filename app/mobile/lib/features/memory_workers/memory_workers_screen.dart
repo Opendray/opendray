@@ -253,13 +253,25 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
         WorkerTaskKind.cleaner => t.memoryWorkers.tasks.cleaner.label,
         WorkerTaskKind.gitactivity => t.memoryWorkers.tasks.gitactivity.label,
         WorkerTaskKind.transcript => t.memoryWorkers.tasks.transcript.label,
+        WorkerTaskKind.planDrift => t.memoryWorkers.tasks.planDrift.label,
+        WorkerTaskKind.conflictDetector =>
+          t.memoryWorkers.tasks.conflictDetector.label,
+        WorkerTaskKind.capture => t.memoryWorkers.tasks.capture.label,
       };
 
   String _taskDescription(WorkerTaskKind k) => switch (k) {
-        WorkerTaskKind.gatekeeper => t.memoryWorkers.tasks.gatekeeper.description,
+        WorkerTaskKind.gatekeeper =>
+          t.memoryWorkers.tasks.gatekeeper.description,
         WorkerTaskKind.cleaner => t.memoryWorkers.tasks.cleaner.description,
-        WorkerTaskKind.gitactivity => t.memoryWorkers.tasks.gitactivity.description,
-        WorkerTaskKind.transcript => t.memoryWorkers.tasks.transcript.description,
+        WorkerTaskKind.gitactivity =>
+          t.memoryWorkers.tasks.gitactivity.description,
+        WorkerTaskKind.transcript =>
+          t.memoryWorkers.tasks.transcript.description,
+        WorkerTaskKind.planDrift =>
+          t.memoryWorkers.tasks.planDrift.description,
+        WorkerTaskKind.conflictDetector =>
+          t.memoryWorkers.tasks.conflictDetector.description,
+        WorkerTaskKind.capture => t.memoryWorkers.tasks.capture.description,
       };
 
   @override

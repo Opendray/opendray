@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/memory_api.dart';
 import 'package:opendray/core/api/memory_cleanup_api.dart';
+import 'package:opendray/core/api/memory_conflicts_api.dart';
+import 'package:opendray/core/api/memory_health_api.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
@@ -42,12 +44,17 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
   AsyncValue<List<SessionLogEntry>> _logs = const AsyncValue.loading();
   AsyncValue<List<CleanupDecision>> _cleanupDecisions =
       const AsyncValue.loading();
+  AsyncValue<MemoryHealthSnapshot> _health = const AsyncValue.loading();
+  AsyncValue<List<MemoryConflict>> _conflicts = const AsyncValue.loading();
   bool _cleanupRunning = false;
+  bool _conflictDetectRunning = false;
 
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 7, vsync: this);
+    // Health + Goal + Plan + Tech + Activity + Journal + Inbox +
+    // Conflicts + Cleanup = 9 tabs (web parity).
+    _tabs = TabController(length: 9, vsync: this);
     _loadKeys();
   }
 
@@ -104,9 +111,13 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
       _proposals = const AsyncValue.loading();
       _logs = const AsyncValue.loading();
       _cleanupDecisions = const AsyncValue.loading();
+      _health = const AsyncValue.loading();
+      _conflicts = const AsyncValue.loading();
     });
     final api = ref.read(projectDocsApiProvider);
     final cleanupApi = ref.read(memoryCleanupApiProvider);
+    final healthApi = ref.read(memoryHealthApiProvider);
+    final conflictsApi = ref.read(memoryConflictsApiProvider);
     try {
       final docs = await api.listDocs(cwd);
       if (!mounted) return;
@@ -143,6 +154,23 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
       if (!mounted) return;
       setState(() =>
           _cleanupDecisions = AsyncValue.error(e, StackTrace.current));
+    }
+    try {
+      final snap = await healthApi.get(cwd);
+      if (!mounted) return;
+      setState(() => _health = AsyncValue.data(snap));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _health = AsyncValue.error(e, StackTrace.current));
+    }
+    try {
+      final conflicts =
+          await conflictsApi.list(cwd: cwd, status: ConflictStatus.pending);
+      if (!mounted) return;
+      setState(() => _conflicts = AsyncValue.data(conflicts));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _conflicts = AsyncValue.error(e, StackTrace.current));
     }
   }
 
@@ -246,12 +274,14 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
           controller: _tabs,
           isScrollable: true,
           tabs: const [
+            Tab(text: 'Health'),
             Tab(text: 'Goal'),
             Tab(text: 'Plan'),
             Tab(text: 'Tech'),
             Tab(text: 'Activity'),
             Tab(text: 'Journal'),
             Tab(text: 'Inbox'),
+            Tab(text: 'Conflicts'),
             Tab(text: 'Cleanup'),
           ],
         ),
@@ -264,6 +294,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
             child: TabBarView(
               controller: _tabs,
               children: [
+                _healthTab(),
                 _docTab('goal'),
                 _docTab('plan'),
                 _readonlyDocTab(
@@ -282,6 +313,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                 ),
                 _journalTab(),
                 _inboxTab(),
+                _conflictsTab(),
                 _cleanupTab(),
               ],
             ),
@@ -894,6 +926,372 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
       }
     }
   }
+
+  // ── M-PA Health tab ───────────────────────────────────────────
+
+  Widget _healthTab() {
+    if (_selectedKey == null) {
+      return Center(child: Text(t.project.pickFirst));
+    }
+    return _health.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) =>
+          Center(child: Text(t.project.loadFailed(error: e.toString()))),
+      data: (snap) {
+        return RefreshIndicator(
+          onRefresh: () async => _loadAll(_selectedKey!),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Text(
+                t.project.health.title(days: snap.lookbackDays),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                t.project.health.subtitle,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 16),
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 1.6,
+                children: [
+                  _HealthCard(
+                    label: t.project.health.newFacts,
+                    value: snap.newFactsCount.toString(),
+                    hint: t.project.health
+                        .newFactsHint(total: snap.totalFactsCount),
+                  ),
+                  _HealthCard(
+                    label: t.project.health.captureFires,
+                    value: snap.captureFires.toString(),
+                    hint: t.project.health.captureFiresHint(
+                      stored: snap.captureFactsStored,
+                      deduped: snap.captureFactsDeduped,
+                    ),
+                    tone: snap.captureFailedFires > 0
+                        ? _HealthCardTone.warn
+                        : _HealthCardTone.ok,
+                  ),
+                  _HealthCard(
+                    label: t.project.health.newJournal,
+                    value: snap.newJournalCount.toString(),
+                    hint: t.project.health
+                        .newJournalHint(total: snap.totalJournalCount),
+                  ),
+                  _HealthCard(
+                    label: t.project.health.planAge,
+                    value: _relativeAge(context, snap.planLastUpdatedAt),
+                    hint: snap.planDriftProposals > 0
+                        ? t.project.health.planAgeHint(
+                            count: snap.planDriftProposals)
+                        : t.project.health.planAgeHintNone,
+                  ),
+                  _HealthCard(
+                    label: t.project.health.goalAge,
+                    value: _relativeAge(context, snap.goalLastUpdatedAt),
+                  ),
+                  _HealthCard(
+                    label: t.project.health.pending,
+                    value: snap.pendingProposals.toString(),
+                    hint: snap.pendingProposals > 0 &&
+                            snap.oldestPendingDays > 0
+                        ? t.project.health.pendingHint(
+                            days: snap.oldestPendingDays)
+                        : null,
+                    tone: snap.oldestPendingDays >= 7
+                        ? _HealthCardTone.warn
+                        : _HealthCardTone.ok,
+                  ),
+                ],
+              ),
+              if (snap.topHitFactText.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          t.project.health
+                              .topHit(hits: snap.topHitFactHits),
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          snap.topHitFactText,
+                          style: const TextStyle(
+                              fontFamily: 'monospace', fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              if (snap.zeroHitFactsCount > 0) ...[
+                const SizedBox(height: 12),
+                Text(
+                  t.project.health
+                      .zeroHit(count: snap.zeroHitFactsCount),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ── M-PC Conflicts tab ────────────────────────────────────────
+
+  Widget _conflictsTab() {
+    if (_selectedKey == null) {
+      return Center(child: Text(t.project.pickFirst));
+    }
+    return _conflicts.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) =>
+          Center(child: Text(t.project.loadFailed(error: e.toString()))),
+      data: (conflicts) {
+        return RefreshIndicator(
+          onRefresh: () async => _loadAll(_selectedKey!),
+          child: ListView(
+            padding: const EdgeInsets.all(12),
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      t.project.conflicts.subtitle,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.tonalIcon(
+                    onPressed:
+                        _conflictDetectRunning ? null : _runConflictDetect,
+                    icon: _conflictDetectRunning
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.refresh, size: 16),
+                    label: Text(t.project.conflicts.detectNow),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (conflicts.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Center(
+                    child: Text(t.project.conflicts.empty),
+                  ),
+                )
+              else
+                ...conflicts.map((c) => _ConflictCard(
+                      conflict: c,
+                      busy: _conflictDetectRunning,
+                      onAccept: () => _decideConflict(c.id, 'accepted'),
+                      onDismiss: () => _decideConflict(c.id, 'dismissed'),
+                    )),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _runConflictDetect() async {
+    if (_selectedKey == null) return;
+    setState(() => _conflictDetectRunning = true);
+    try {
+      final n =
+          await ref.read(memoryConflictsApiProvider).detect(_selectedKey!);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.project.conflicts.detected(count: n))),
+      );
+      await _loadAll(_selectedKey!);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _conflictDetectRunning = false);
+    }
+  }
+
+  Future<void> _decideConflict(String id, String action) async {
+    try {
+      await ref.read(memoryConflictsApiProvider).decide(id, action);
+      if (!mounted) return;
+      await _loadAll(_selectedKey!);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+}
+
+// ── Helpers for the new tabs ─────────────────────────────────────
+
+enum _HealthCardTone { ok, warn }
+
+class _HealthCard extends StatelessWidget {
+  const _HealthCard({
+    required this.label,
+    required this.value,
+    this.hint,
+    this.tone = _HealthCardTone.ok,
+  });
+
+  final String label;
+  final String value;
+  final String? hint;
+  final _HealthCardTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = tone == _HealthCardTone.warn
+        ? Theme.of(context).colorScheme.tertiary
+        : Theme.of(context).colorScheme.onSurface;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: Theme.of(context).textTheme.labelSmall),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            if (hint != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                hint!,
+                style: Theme.of(context).textTheme.labelSmall,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _relativeAge(BuildContext context, DateTime? when) {
+  if (when == null) return t.project.health.never;
+  final days = DateTime.now().difference(when).inDays;
+  if (days <= 0) return t.project.health.today;
+  return t.project.health.daysAgo(count: days);
+}
+
+class _ConflictCard extends StatelessWidget {
+  const _ConflictCard({
+    required this.conflict,
+    required this.busy,
+    required this.onAccept,
+    required this.onDismiss,
+  });
+
+  final MemoryConflict conflict;
+  final bool busy;
+  final VoidCallback onAccept;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final severityLabel = switch (conflict.severity) {
+      ConflictSeverity.high => t.project.conflicts.severity.high,
+      ConflictSeverity.medium => t.project.conflicts.severity.medium,
+      ConflictSeverity.low => t.project.conflicts.severity.low,
+    };
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.warning_amber_rounded,
+                    size: 18,
+                    color: conflict.severity == ConflictSeverity.high
+                        ? Theme.of(context).colorScheme.error
+                        : null),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: conflict.severity == ConflictSeverity.high
+                        ? Theme.of(context).colorScheme.errorContainer
+                        : Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(severityLabel,
+                      style: Theme.of(context).textTheme.labelSmall),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${conflict.layerA.name}:${_shortRef(conflict.refA)} ⟷ '
+                    '${conflict.layerB.name}:${_shortRef(conflict.refB)}',
+                    style: const TextStyle(
+                        fontFamily: 'monospace', fontSize: 11),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(conflict.evidence,
+                style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: busy ? null : onDismiss,
+                  icon: const Icon(Icons.close, size: 16),
+                  label: Text(t.project.conflicts.dismiss),
+                ),
+                const SizedBox(width: 4),
+                FilledButton.tonalIcon(
+                  onPressed: busy ? null : onAccept,
+                  icon: const Icon(Icons.check, size: 16),
+                  label: Text(t.project.conflicts.accept),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _shortRef(String ref) =>
+      ref.length <= 12 ? ref : '${ref.substring(0, 8)}…';
 }
 
 class _DocEditor extends StatefulWidget {

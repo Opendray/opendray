@@ -7,10 +7,44 @@ import 'package:opendray/core/api/dio_provider.dart';
 // configuration + metrics surface. Mirrors web's
 // app/shared/src/lib/memoryWorkers.ts.
 
-enum WorkerTaskKind { gatekeeper, cleaner, gitactivity, transcript }
+// Mobile-side mirror of internal/memory/worker.TaskKind. Stays in
+// lockstep with that file — adding a 4th/5th/6th/7th touchpoint
+// here is purely a UI surface, the backend rows already exist
+// after the M-PA / M-PC / M-PE migrations.
+enum WorkerTaskKind {
+  gatekeeper,
+  cleaner,
+  gitactivity,
+  transcript,
+  planDrift,
+  conflictDetector,
+  capture,
+}
 
 extension WorkerTaskKindX on WorkerTaskKind {
-  String get wire => name;
+  // Persisted wire string. Matches memory_workers.task CHECK
+  // constraint values; uses snake_case where the camelCase Dart
+  // enum can't represent the spelling directly. Exhaustive switch
+  // (no default) so Dart will flag any future enum addition.
+  String get wire {
+    switch (this) {
+      case WorkerTaskKind.gatekeeper:
+        return 'gatekeeper';
+      case WorkerTaskKind.cleaner:
+        return 'cleaner';
+      case WorkerTaskKind.gitactivity:
+        return 'gitactivity';
+      case WorkerTaskKind.transcript:
+        return 'transcript';
+      case WorkerTaskKind.planDrift:
+        return 'plan_drift';
+      case WorkerTaskKind.conflictDetector:
+        return 'conflict_detector';
+      case WorkerTaskKind.capture:
+        return 'capture';
+    }
+  }
+
   String get label {
     switch (this) {
       case WorkerTaskKind.gatekeeper:
@@ -21,6 +55,12 @@ extension WorkerTaskKindX on WorkerTaskKind {
         return 'Git activity summariser';
       case WorkerTaskKind.transcript:
         return 'Session transcript summariser';
+      case WorkerTaskKind.planDrift:
+        return 'Plan drift detector';
+      case WorkerTaskKind.conflictDetector:
+        return 'Cross-layer conflict detector';
+      case WorkerTaskKind.capture:
+        return 'Capture engine';
     }
   }
 
@@ -34,9 +74,17 @@ extension WorkerTaskKindX on WorkerTaskKind {
         return 'git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker.';
       case WorkerTaskKind.transcript:
         return 'Session-end "what did the agent do" summary. Naturally fits an agent worker.';
+      case WorkerTaskKind.planDrift:
+        return 'After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning.';
+      case WorkerTaskKind.conflictDetector:
+        return 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.';
+      case WorkerTaskKind.capture:
+        return 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.';
     }
   }
 
+  // Gatekeeper stays summarizer-only (<500ms latency budget on the
+  // memory_store hot path). Every other task supports Agent mode.
   bool get agentSupported => this != WorkerTaskKind.gatekeeper;
 }
 
@@ -70,6 +118,12 @@ class WorkerConfig {
           return WorkerTaskKind.gitactivity;
         case 'transcript':
           return WorkerTaskKind.transcript;
+        case 'plan_drift':
+          return WorkerTaskKind.planDrift;
+        case 'conflict_detector':
+          return WorkerTaskKind.conflictDetector;
+        case 'capture':
+          return WorkerTaskKind.capture;
         default:
           return WorkerTaskKind.transcript;
       }
@@ -122,6 +176,12 @@ class CallSummary {
           return WorkerTaskKind.gitactivity;
         case 'transcript':
           return WorkerTaskKind.transcript;
+        case 'plan_drift':
+          return WorkerTaskKind.planDrift;
+        case 'conflict_detector':
+          return WorkerTaskKind.conflictDetector;
+        case 'capture':
+          return WorkerTaskKind.capture;
         default:
           return WorkerTaskKind.transcript;
       }

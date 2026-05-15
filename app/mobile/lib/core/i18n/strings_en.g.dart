@@ -726,6 +726,9 @@ class TranslationsProjectEn {
 	/// en: 'Pick a project first.'
 	String get pickFirst => 'Pick a project first.';
 
+	late final TranslationsProjectHealthEn health = TranslationsProjectHealthEn.internal(_root);
+	late final TranslationsProjectConflictsEn conflicts = TranslationsProjectConflictsEn.internal(_root);
+
 	/// en: 'Failed to load: {error}'
 	String loadFailed({required Object error}) => 'Failed to load: ${error}';
 
@@ -3439,6 +3442,104 @@ class TranslationsMemoryWorkersTasksEn {
 	late final TranslationsMemoryWorkersTasksCleanerEn cleaner = TranslationsMemoryWorkersTasksCleanerEn.internal(_root);
 	late final TranslationsMemoryWorkersTasksGitactivityEn gitactivity = TranslationsMemoryWorkersTasksGitactivityEn.internal(_root);
 	late final TranslationsMemoryWorkersTasksTranscriptEn transcript = TranslationsMemoryWorkersTasksTranscriptEn.internal(_root);
+	late final TranslationsMemoryWorkersTasksPlanDriftEn planDrift = TranslationsMemoryWorkersTasksPlanDriftEn.internal(_root);
+	late final TranslationsMemoryWorkersTasksConflictDetectorEn conflictDetector = TranslationsMemoryWorkersTasksConflictDetectorEn.internal(_root);
+	late final TranslationsMemoryWorkersTasksCaptureEn capture = TranslationsMemoryWorkersTasksCaptureEn.internal(_root);
+}
+
+// Path: project.health
+class TranslationsProjectHealthEn {
+	TranslationsProjectHealthEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Memory health — last {days} days'
+	String title({required Object days}) => 'Memory health — last ${days} days';
+
+	/// en: 'Aggregate signals across both memory subsystems for this project.'
+	String get subtitle => 'Aggregate signals across both memory subsystems for this project.';
+
+	/// en: 'New facts'
+	String get newFacts => 'New facts';
+
+	/// en: '{total} stored in total'
+	String newFactsHint({required Object total}) => '${total} stored in total';
+
+	/// en: 'Capture fires'
+	String get captureFires => 'Capture fires';
+
+	/// en: '{stored} stored · {deduped} deduped'
+	String captureFiresHint({required Object stored, required Object deduped}) => '${stored} stored · ${deduped} deduped';
+
+	/// en: 'Journal entries'
+	String get newJournal => 'Journal entries';
+
+	/// en: '{total} in total'
+	String newJournalHint({required Object total}) => '${total} in total';
+
+	/// en: 'Plan last updated'
+	String get planAge => 'Plan last updated';
+
+	/// en: '{count} plan-drift proposal(s) pending'
+	String planAgeHint({required Object count}) => '${count} plan-drift proposal(s) pending';
+
+	/// en: 'No plan-drift proposals pending'
+	String get planAgeHintNone => 'No plan-drift proposals pending';
+
+	/// en: 'Goal last updated'
+	String get goalAge => 'Goal last updated';
+
+	/// en: 'Pending proposals'
+	String get pending => 'Pending proposals';
+
+	/// en: 'oldest {days}d old'
+	String pendingHint({required Object days}) => 'oldest ${days}d old';
+
+	/// en: 'Top hit · {hits} retrievals'
+	String topHit({required Object hits}) => 'Top hit · ${hits} retrievals';
+
+	/// en: '{count} facts older than 7d with zero retrievals — candidates for cleanup.'
+	String zeroHit({required Object count}) => '${count} facts older than 7d with zero retrievals — candidates for cleanup.';
+
+	/// en: 'never'
+	String get never => 'never';
+
+	/// en: 'today'
+	String get today => 'today';
+
+	/// en: '{count}d ago'
+	String daysAgo({required Object count}) => '${count}d ago';
+}
+
+// Path: project.conflicts
+class TranslationsProjectConflictsEn {
+	TranslationsProjectConflictsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Contradictions the daily detector found between facts, plan, goal, and journal entries.'
+	String get subtitle => 'Contradictions the daily detector found between facts, plan, goal, and journal entries.';
+
+	/// en: 'No pending conflicts. Tap Detect now for an on-demand sweep.'
+	String get empty => 'No pending conflicts. Tap Detect now for an on-demand sweep.';
+
+	/// en: 'Detect now'
+	String get detectNow => 'Detect now';
+
+	/// en: '{count} new conflict(s) found'
+	String detected({required Object count}) => '${count} new conflict(s) found';
+
+	/// en: 'Accept'
+	String get accept => 'Accept';
+
+	/// en: 'Dismiss'
+	String get dismiss => 'Dismiss';
+
+	late final TranslationsProjectConflictsSeverityEn severity = TranslationsProjectConflictsSeverityEn.internal(_root);
 }
 
 // Path: backups.kv
@@ -9326,6 +9427,69 @@ class TranslationsMemoryWorkersTasksTranscriptEn {
 	String get description => 'Session-end \'what did the agent do\' summary. Naturally fits an agent worker.';
 }
 
+// Path: memoryWorkers.tasks.planDrift
+class TranslationsMemoryWorkersTasksPlanDriftEn {
+	TranslationsMemoryWorkersTasksPlanDriftEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Plan drift detector'
+	String get label => 'Plan drift detector';
+
+	/// en: 'After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning.'
+	String get description => 'After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning.';
+}
+
+// Path: memoryWorkers.tasks.conflictDetector
+class TranslationsMemoryWorkersTasksConflictDetectorEn {
+	TranslationsMemoryWorkersTasksConflictDetectorEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Cross-layer conflict detector'
+	String get label => 'Cross-layer conflict detector';
+
+	/// en: 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.'
+	String get description => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.';
+}
+
+// Path: memoryWorkers.tasks.capture
+class TranslationsMemoryWorkersTasksCaptureEn {
+	TranslationsMemoryWorkersTasksCaptureEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Capture engine'
+	String get label => 'Capture engine';
+
+	/// en: 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.'
+	String get description => 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.';
+}
+
+// Path: project.conflicts.severity
+class TranslationsProjectConflictsSeverityEn {
+	TranslationsProjectConflictsSeverityEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'low'
+	String get low => 'low';
+
+	/// en: 'medium'
+	String get medium => 'medium';
+
+	/// en: 'high'
+	String get high => 'high';
+}
+
 // Path: backupTargetEditor.kinds.local
 class TranslationsBackupTargetEditorKindsLocalEn {
 	TranslationsBackupTargetEditorKindsLocalEn.internal(this._root);
@@ -14863,6 +15027,12 @@ extension on Translations {
 			'memoryWorkers.tasks.gitactivity.description' => 'git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker.',
 			'memoryWorkers.tasks.transcript.label' => 'Session transcript summariser',
 			'memoryWorkers.tasks.transcript.description' => 'Session-end \'what did the agent do\' summary. Naturally fits an agent worker.',
+			'memoryWorkers.tasks.planDrift.label' => 'Plan drift detector',
+			'memoryWorkers.tasks.planDrift.description' => 'After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning.',
+			'memoryWorkers.tasks.conflictDetector.label' => 'Cross-layer conflict detector',
+			'memoryWorkers.tasks.conflictDetector.description' => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.',
+			'memoryWorkers.tasks.capture.label' => 'Capture engine',
+			'memoryWorkers.tasks.capture.description' => 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.',
 			'memoryCleanup.title' => 'Memory cleanup',
 			'memoryCleanup.approveFailed' => ({required Object error}) => 'Approve failed: ${error}',
 			'memoryCleanup.rejectFailed' => ({required Object error}) => 'Reject failed: ${error}',
@@ -14870,6 +15040,34 @@ extension on Translations {
 			'memoryCleanup.reject' => 'Reject',
 			'project.title' => 'Project',
 			'project.pickFirst' => 'Pick a project first.',
+			'project.health.title' => ({required Object days}) => 'Memory health — last ${days} days',
+			'project.health.subtitle' => 'Aggregate signals across both memory subsystems for this project.',
+			'project.health.newFacts' => 'New facts',
+			'project.health.newFactsHint' => ({required Object total}) => '${total} stored in total',
+			'project.health.captureFires' => 'Capture fires',
+			'project.health.captureFiresHint' => ({required Object stored, required Object deduped}) => '${stored} stored · ${deduped} deduped',
+			'project.health.newJournal' => 'Journal entries',
+			'project.health.newJournalHint' => ({required Object total}) => '${total} in total',
+			'project.health.planAge' => 'Plan last updated',
+			'project.health.planAgeHint' => ({required Object count}) => '${count} plan-drift proposal(s) pending',
+			'project.health.planAgeHintNone' => 'No plan-drift proposals pending',
+			'project.health.goalAge' => 'Goal last updated',
+			'project.health.pending' => 'Pending proposals',
+			'project.health.pendingHint' => ({required Object days}) => 'oldest ${days}d old',
+			'project.health.topHit' => ({required Object hits}) => 'Top hit · ${hits} retrievals',
+			'project.health.zeroHit' => ({required Object count}) => '${count} facts older than 7d with zero retrievals — candidates for cleanup.',
+			'project.health.never' => 'never',
+			'project.health.today' => 'today',
+			'project.health.daysAgo' => ({required Object count}) => '${count}d ago',
+			'project.conflicts.subtitle' => 'Contradictions the daily detector found between facts, plan, goal, and journal entries.',
+			'project.conflicts.empty' => 'No pending conflicts. Tap Detect now for an on-demand sweep.',
+			'project.conflicts.detectNow' => 'Detect now',
+			'project.conflicts.detected' => ({required Object count}) => '${count} new conflict(s) found',
+			'project.conflicts.accept' => 'Accept',
+			'project.conflicts.dismiss' => 'Dismiss',
+			'project.conflicts.severity.low' => 'low',
+			'project.conflicts.severity.medium' => 'medium',
+			'project.conflicts.severity.high' => 'high',
 			'project.loadFailed' => ({required Object error}) => 'Failed to load: ${error}',
 			'project.projectsLoadFailed' => ({required Object error}) => 'Failed to load projects: ${error}',
 			'project.projectLabel' => 'Project',
@@ -15165,6 +15363,8 @@ extension on Translations {
 			'channels.snacks.channelDeleted' => 'Channel deleted.',
 			'channels.errorPrefix.test' => 'Test failed',
 			'channels.errorPrefix.toggle' => 'Toggle failed',
+			_ => null,
+		} ?? switch (path) {
 			'channels.errorPrefix.muteToggle' => 'Mute toggle failed',
 			'channels.errorPrefix.update' => 'Update failed',
 			'channels.errorPrefix.delete' => 'Delete failed',
@@ -15199,8 +15399,6 @@ extension on Translations {
 			'channels.kinds.dingtalk.description' => 'Custom group robot. Outbound only. Group chat → Robots → Add → Sign mode → copy webhook + secret.',
 			'channels.kinds.dingtalk.webhookUrlLabel' => 'Webhook URL',
 			'channels.kinds.dingtalk.secretLabel' => 'Sign secret',
-			_ => null,
-		} ?? switch (path) {
 			'channels.kinds.dingtalk.secretHint' => 'When the robot is set to "Sign" security mode, copy the secret here. opendray adds the timestamp + sign params automatically.',
 			'channels.kinds.wecom.description' => 'Group robot webhook. Outbound only (text + markdown). Group settings → Group robots → Add → copy webhook URL.',
 			'channels.kinds.wecom.webhookKeyLabel' => 'Webhook key',

@@ -384,6 +384,8 @@ class _TranslationsProjectZh extends TranslationsProjectEn {
 	// Translations
 	@override String get title => '项目';
 	@override String get pickFirst => '请先选择一个项目。';
+	@override late final _TranslationsProjectHealthZh health = _TranslationsProjectHealthZh._(_root);
+	@override late final _TranslationsProjectConflictsZh conflicts = _TranslationsProjectConflictsZh._(_root);
 	@override String loadFailed({required Object error}) => '加载失败：${error}';
 	@override String projectsLoadFailed({required Object error}) => '加载项目列表失败：${error}';
 	@override String get projectLabel => '项目';
@@ -1761,6 +1763,53 @@ class _TranslationsMemoryWorkersTasksZh extends TranslationsMemoryWorkersTasksEn
 	@override late final _TranslationsMemoryWorkersTasksCleanerZh cleaner = _TranslationsMemoryWorkersTasksCleanerZh._(_root);
 	@override late final _TranslationsMemoryWorkersTasksGitactivityZh gitactivity = _TranslationsMemoryWorkersTasksGitactivityZh._(_root);
 	@override late final _TranslationsMemoryWorkersTasksTranscriptZh transcript = _TranslationsMemoryWorkersTasksTranscriptZh._(_root);
+	@override late final _TranslationsMemoryWorkersTasksPlanDriftZh planDrift = _TranslationsMemoryWorkersTasksPlanDriftZh._(_root);
+	@override late final _TranslationsMemoryWorkersTasksConflictDetectorZh conflictDetector = _TranslationsMemoryWorkersTasksConflictDetectorZh._(_root);
+	@override late final _TranslationsMemoryWorkersTasksCaptureZh capture = _TranslationsMemoryWorkersTasksCaptureZh._(_root);
+}
+
+// Path: project.health
+class _TranslationsProjectHealthZh extends TranslationsProjectHealthEn {
+	_TranslationsProjectHealthZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String title({required Object days}) => '记忆健康 — 最近 ${days} 天';
+	@override String get subtitle => '本项目两套记忆子系统的运行情况聚合。';
+	@override String get newFacts => '新增 facts';
+	@override String newFactsHint({required Object total}) => '累计 ${total} 条';
+	@override String get captureFires => 'Capture 触发次数';
+	@override String captureFiresHint({required Object stored, required Object deduped}) => '存入 ${stored} · 去重 ${deduped}';
+	@override String get newJournal => '新增日志条目';
+	@override String newJournalHint({required Object total}) => '累计 ${total} 条';
+	@override String get planAge => '计划最近更新';
+	@override String planAgeHint({required Object count}) => '${count} 条 plan-drift 提案待审';
+	@override String get planAgeHintNone => '无 plan-drift 提案待审';
+	@override String get goalAge => '目标最近更新';
+	@override String get pending => '待审提案';
+	@override String pendingHint({required Object days}) => '最久 ${days} 天';
+	@override String topHit({required Object hits}) => '命中最多 · ${hits} 次';
+	@override String zeroHit({required Object count}) => '${count} 条超过 7 天未命中的 fact — 清理候选。';
+	@override String get never => '从未';
+	@override String get today => '今日';
+	@override String daysAgo({required Object count}) => '${count} 天前';
+}
+
+// Path: project.conflicts
+class _TranslationsProjectConflictsZh extends TranslationsProjectConflictsEn {
+	_TranslationsProjectConflictsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get subtitle => '每日 detector 在 facts/plan/goal/journal 之间发现的矛盾。';
+	@override String get empty => '无待处理冲突。点击「立即检测」运行一次按需扫描。';
+	@override String get detectNow => '立即检测';
+	@override String detected({required Object count}) => '新发现 ${count} 条冲突';
+	@override String get accept => '采纳';
+	@override String get dismiss => '驳回';
+	@override late final _TranslationsProjectConflictsSeverityZh severity = _TranslationsProjectConflictsSeverityZh._(_root);
 }
 
 // Path: backups.kv
@@ -4919,6 +4968,51 @@ class _TranslationsMemoryWorkersTasksTranscriptZh extends TranslationsMemoryWork
 	// Translations
 	@override String get label => '会话记录摘要器';
 	@override String get description => '会话结束时的「agent 做了什么」摘要。天然适合 agent 工作器。';
+}
+
+// Path: memoryWorkers.tasks.planDrift
+class _TranslationsMemoryWorkersTasksPlanDriftZh extends TranslationsMemoryWorkersTasksPlanDriftEn {
+	_TranslationsMemoryWorkersTasksPlanDriftZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '计划漂移检测';
+	@override String get description => '每个 session 结束后判断项目 plan 是否需要更新并提出 proposal。用 agent 推理质量更高。';
+}
+
+// Path: memoryWorkers.tasks.conflictDetector
+class _TranslationsMemoryWorkersTasksConflictDetectorZh extends TranslationsMemoryWorkersTasksConflictDetectorEn {
+	_TranslationsMemoryWorkersTasksConflictDetectorZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '跨层冲突检测';
+	@override String get description => '每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。';
+}
+
+// Path: memoryWorkers.tasks.capture
+class _TranslationsMemoryWorkersTasksCaptureZh extends TranslationsMemoryWorkersTasksCaptureEn {
+	_TranslationsMemoryWorkersTasksCaptureZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Capture 引擎';
+	@override String get description => '按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。';
+}
+
+// Path: project.conflicts.severity
+class _TranslationsProjectConflictsSeverityZh extends TranslationsProjectConflictsSeverityEn {
+	_TranslationsProjectConflictsSeverityZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get low => '低';
+	@override String get medium => '中';
+	@override String get high => '高';
 }
 
 // Path: backupTargetEditor.kinds.local
@@ -9053,6 +9147,12 @@ extension on TranslationsZh {
 			'memoryWorkers.tasks.gitactivity.description' => 'git log → 每 24 小时的 2-3 段叙事。天然适合 agent 工作器。',
 			'memoryWorkers.tasks.transcript.label' => '会话记录摘要器',
 			'memoryWorkers.tasks.transcript.description' => '会话结束时的「agent 做了什么」摘要。天然适合 agent 工作器。',
+			'memoryWorkers.tasks.planDrift.label' => '计划漂移检测',
+			'memoryWorkers.tasks.planDrift.description' => '每个 session 结束后判断项目 plan 是否需要更新并提出 proposal。用 agent 推理质量更高。',
+			'memoryWorkers.tasks.conflictDetector.label' => '跨层冲突检测',
+			'memoryWorkers.tasks.conflictDetector.description' => '每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。',
+			'memoryWorkers.tasks.capture.label' => 'Capture 引擎',
+			'memoryWorkers.tasks.capture.description' => '按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。',
 			'memoryCleanup.title' => '记忆清理',
 			'memoryCleanup.approveFailed' => ({required Object error}) => '批准失败：${error}',
 			'memoryCleanup.rejectFailed' => ({required Object error}) => '拒绝失败：${error}',
@@ -9060,6 +9160,34 @@ extension on TranslationsZh {
 			'memoryCleanup.reject' => '拒绝',
 			'project.title' => '项目',
 			'project.pickFirst' => '请先选择一个项目。',
+			'project.health.title' => ({required Object days}) => '记忆健康 — 最近 ${days} 天',
+			'project.health.subtitle' => '本项目两套记忆子系统的运行情况聚合。',
+			'project.health.newFacts' => '新增 facts',
+			'project.health.newFactsHint' => ({required Object total}) => '累计 ${total} 条',
+			'project.health.captureFires' => 'Capture 触发次数',
+			'project.health.captureFiresHint' => ({required Object stored, required Object deduped}) => '存入 ${stored} · 去重 ${deduped}',
+			'project.health.newJournal' => '新增日志条目',
+			'project.health.newJournalHint' => ({required Object total}) => '累计 ${total} 条',
+			'project.health.planAge' => '计划最近更新',
+			'project.health.planAgeHint' => ({required Object count}) => '${count} 条 plan-drift 提案待审',
+			'project.health.planAgeHintNone' => '无 plan-drift 提案待审',
+			'project.health.goalAge' => '目标最近更新',
+			'project.health.pending' => '待审提案',
+			'project.health.pendingHint' => ({required Object days}) => '最久 ${days} 天',
+			'project.health.topHit' => ({required Object hits}) => '命中最多 · ${hits} 次',
+			'project.health.zeroHit' => ({required Object count}) => '${count} 条超过 7 天未命中的 fact — 清理候选。',
+			'project.health.never' => '从未',
+			'project.health.today' => '今日',
+			'project.health.daysAgo' => ({required Object count}) => '${count} 天前',
+			'project.conflicts.subtitle' => '每日 detector 在 facts/plan/goal/journal 之间发现的矛盾。',
+			'project.conflicts.empty' => '无待处理冲突。点击「立即检测」运行一次按需扫描。',
+			'project.conflicts.detectNow' => '立即检测',
+			'project.conflicts.detected' => ({required Object count}) => '新发现 ${count} 条冲突',
+			'project.conflicts.accept' => '采纳',
+			'project.conflicts.dismiss' => '驳回',
+			'project.conflicts.severity.low' => '低',
+			'project.conflicts.severity.medium' => '中',
+			'project.conflicts.severity.high' => '高',
 			'project.loadFailed' => ({required Object error}) => '加载失败：${error}',
 			'project.projectsLoadFailed' => ({required Object error}) => '加载项目列表失败：${error}',
 			'project.projectLabel' => '项目',
@@ -9355,6 +9483,8 @@ extension on TranslationsZh {
 			'channels.snacks.channelDeleted' => '通道已删除。',
 			'channels.errorPrefix.test' => '测试失败',
 			'channels.errorPrefix.toggle' => '切换失败',
+			_ => null,
+		} ?? switch (path) {
 			'channels.errorPrefix.muteToggle' => '静音切换失败',
 			'channels.errorPrefix.update' => '更新失败',
 			'channels.errorPrefix.delete' => '删除失败',
@@ -9389,8 +9519,6 @@ extension on TranslationsZh {
 			'channels.kinds.dingtalk.description' => '自定义群机器人。仅外发。群聊 → 机器人 → 添加 → 加签模式 → 复制 webhook + secret。',
 			'channels.kinds.dingtalk.webhookUrlLabel' => 'Webhook URL',
 			'channels.kinds.dingtalk.secretLabel' => '加签 secret',
-			_ => null,
-		} ?? switch (path) {
 			'channels.kinds.dingtalk.secretHint' => '当机器人为「加签」安全模式时，将 secret 复制到这里。opendray 自动添加 timestamp + sign 参数。',
 			'channels.kinds.wecom.description' => '群机器人 webhook。仅外发（文本 + markdown）。群设置 → 群机器人 → 添加 → 复制 webhook URL。',
 			'channels.kinds.wecom.webhookKeyLabel' => 'Webhook key',

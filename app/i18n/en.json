@@ -2840,6 +2840,18 @@
       "transcript": {
         "label": "Session transcript summariser",
         "description": "Session-end 'what did the agent do' summary. Naturally fits an agent worker."
+      },
+      "planDrift": {
+        "label": "Plan drift detector",
+        "description": "After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning."
+      },
+      "conflictDetector": {
+        "label": "Cross-layer conflict detector",
+        "description": "Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives."
+      },
+      "capture": {
+        "label": "Capture engine",
+        "description": "Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local."
       }
     }
   },
@@ -2853,6 +2865,40 @@
   "project": {
     "title": "Project",
     "pickFirst": "Pick a project first.",
+    "health": {
+      "title": "Memory health — last {days} days",
+      "subtitle": "Aggregate signals across both memory subsystems for this project.",
+      "newFacts": "New facts",
+      "newFactsHint": "{total} stored in total",
+      "captureFires": "Capture fires",
+      "captureFiresHint": "{stored} stored · {deduped} deduped",
+      "newJournal": "Journal entries",
+      "newJournalHint": "{total} in total",
+      "planAge": "Plan last updated",
+      "planAgeHint": "{count} plan-drift proposal(s) pending",
+      "planAgeHintNone": "No plan-drift proposals pending",
+      "goalAge": "Goal last updated",
+      "pending": "Pending proposals",
+      "pendingHint": "oldest {days}d old",
+      "topHit": "Top hit · {hits} retrievals",
+      "zeroHit": "{count} facts older than 7d with zero retrievals — candidates for cleanup.",
+      "never": "never",
+      "today": "today",
+      "daysAgo": "{count}d ago"
+    },
+    "conflicts": {
+      "subtitle": "Contradictions the daily detector found between facts, plan, goal, and journal entries.",
+      "empty": "No pending conflicts. Tap Detect now for an on-demand sweep.",
+      "detectNow": "Detect now",
+      "detected": "{count} new conflict(s) found",
+      "accept": "Accept",
+      "dismiss": "Dismiss",
+      "severity": {
+        "low": "low",
+        "medium": "medium",
+        "high": "high"
+      }
+    },
     "loadFailed": "Failed to load: {error}",
     "projectsLoadFailed": "Failed to load projects: {error}",
     "projectLabel": "Project",
