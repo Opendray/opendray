@@ -248,6 +248,18 @@
       "quickActions": "快速修复：",
       "deleteFact": "删除 fact",
       "deleteFactSide": "删除 {side}: {ref}",
+      "confirmDelete": {
+        "title": "确认删除 fact {side}?",
+        "description": "永久删除此 fact 并采纳冲突。另一侧保留为最终采信的版本。",
+        "targetLabel": "将删除（{side} 侧）：",
+        "keepLabel": "将保留（{side} 侧）：",
+        "nonFactOther": "（{layer} 条目 — 请打开对应 tab 查看完整内容）",
+        "evidenceLabel": "Detector 给出的证据：",
+        "loading": "加载 fact 内容中…",
+        "loadError": "无法加载 fact 内容，请在 Memory 页面手动查看。",
+        "cancel": "取消",
+        "confirm": "确认删除 {side}"
+      },
       "openLayer": {
         "plan": "打开计划编辑器",
         "goal": "打开目标编辑器"

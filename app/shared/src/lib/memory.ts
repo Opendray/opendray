@@ -99,6 +99,14 @@ export async function deleteMemory(id: string): Promise<void> {
   await api(`/api/v1/memory/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }
 
+// Fetch a single memory by id. Used by the Conflicts panel's delete
+// confirmation dialog so the operator can see the actual fact text
+// before yanking it. Returns 404 → throws so caller's useQuery flips
+// to error state.
+export async function getMemory(id: string): Promise<MemoryRecord> {
+  return api<MemoryRecord>(`/api/v1/memory/${encodeURIComponent(id)}`)
+}
+
 // deleteMemoriesByScope wipes every memory under (scope, scope_key)
 // in one server-side SQL operation. Returns the row count actually
 // removed. Server enforces:
