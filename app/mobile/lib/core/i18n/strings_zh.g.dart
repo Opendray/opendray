@@ -140,8 +140,10 @@ class _TranslationsWebZh extends TranslationsWebEn {
 	@override late final _TranslationsWebTopbarZh topbar = _TranslationsWebTopbarZh._(_root);
 	@override late final _TranslationsWebSessionsZh sessions = _TranslationsWebSessionsZh._(_root);
 	@override late final _TranslationsWebMemoryZh memory = _TranslationsWebMemoryZh._(_root);
+	@override late final _TranslationsWebJournalStaleZh journalStale = _TranslationsWebJournalStaleZh._(_root);
 	@override late final _TranslationsWebConflictsZh conflicts = _TranslationsWebConflictsZh._(_root);
 	@override late final _TranslationsWebMemoryHealthZh memoryHealth = _TranslationsWebMemoryHealthZh._(_root);
+	@override late final _TranslationsWebMemoryConfigZh memoryConfig = _TranslationsWebMemoryConfigZh._(_root);
 	@override late final _TranslationsWebMemoryWorkersZh memoryWorkers = _TranslationsWebMemoryWorkersZh._(_root);
 	@override late final _TranslationsWebCleanupInboxZh cleanupInbox = _TranslationsWebCleanupInboxZh._(_root);
 	@override late final _TranslationsWebProjectZh project = _TranslationsWebProjectZh._(_root);
@@ -892,6 +894,25 @@ class _TranslationsWebMemoryZh extends TranslationsWebMemoryEn {
 	@override String get navConfiguration => '配置 →';
 }
 
+// Path: web.journalStale
+class _TranslationsWebJournalStaleZh extends TranslationsWebJournalStaleEn {
+	_TranslationsWebJournalStaleZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '清理陈旧条目';
+	@override String subtitle({required Object days}) => '（超过 ${days} 天、无 pending 冲突引用）';
+	@override String get daysLabel => '超过（天）：';
+	@override String get loading => '扫描中…';
+	@override String get empty => '没有可清理的陈旧条目。';
+	@override String get selectAll => '全选';
+	@override String get deselectAll => '取消全选';
+	@override String deleteSelected({required Object count}) => '删除 (${count})';
+	@override String deleted_one({required Object count}) => '已删除 ${count} 条';
+	@override String deleted_other({required Object count}) => '已删除 ${count} 条';
+}
+
 // Path: web.conflicts
 class _TranslationsWebConflictsZh extends TranslationsWebConflictsEn {
 	_TranslationsWebConflictsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -910,6 +931,12 @@ class _TranslationsWebConflictsZh extends TranslationsWebConflictsEn {
 	@override String get dismiss => '驳回';
 	@override String get accepted => '已采纳 — 别忘了实际修正';
 	@override String get dismissed => '已驳回';
+	@override String get deletedFact => '已删除 fact 并采纳冲突';
+	@override String get quickActions => '快速修复：';
+	@override String get deleteFact => '删除 fact';
+	@override String deleteFactSide({required Object side, required Object ref}) => '删除 ${side}: ${ref}';
+	@override late final _TranslationsWebConflictsConfirmDeleteZh confirmDelete = _TranslationsWebConflictsConfirmDeleteZh._(_root);
+	@override late final _TranslationsWebConflictsOpenLayerZh openLayer = _TranslationsWebConflictsOpenLayerZh._(_root);
 	@override late final _TranslationsWebConflictsSeverityZh severity = _TranslationsWebConflictsSeverityZh._(_root);
 }
 
@@ -943,6 +970,20 @@ class _TranslationsWebMemoryHealthZh extends TranslationsWebMemoryHealthEn {
 	@override String get today => '今日';
 	@override String daysAgo_one({required Object count}) => '${count} 天前';
 	@override String daysAgo_other({required Object count}) => '${count} 天前';
+}
+
+// Path: web.memoryConfig
+class _TranslationsWebMemoryConfigZh extends TranslationsWebMemoryConfigEn {
+	_TranslationsWebMemoryConfigZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '记忆配置';
+	@override String get subtitle => '所有记忆相关开关汇总到这里：HTTP provider、每个任务的路由、capture 触发器、spawn 时注入策略、累计花费。';
+	@override late final _TranslationsWebMemoryConfigSectionsZh sections = _TranslationsWebMemoryConfigSectionsZh._(_root);
+	@override late final _TranslationsWebMemoryConfigSectionHintsZh sectionHints = _TranslationsWebMemoryConfigSectionHintsZh._(_root);
+	@override late final _TranslationsWebMemoryConfigMoveBannerZh moveBanner = _TranslationsWebMemoryConfigMoveBannerZh._(_root);
 }
 
 // Path: web.memoryWorkers
@@ -2423,6 +2464,36 @@ class _TranslationsWebSessionsFileBrowserZh extends TranslationsWebSessionsFileB
 	@override String get homeFailedToast => '读取家目录失败';
 }
 
+// Path: web.conflicts.confirmDelete
+class _TranslationsWebConflictsConfirmDeleteZh extends TranslationsWebConflictsConfirmDeleteEn {
+	_TranslationsWebConflictsConfirmDeleteZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String title({required Object side}) => '确认删除 fact ${side}?';
+	@override String get description => '永久删除此 fact 并采纳冲突。另一侧保留为最终采信的版本。';
+	@override String targetLabel({required Object side}) => '将删除（${side} 侧）：';
+	@override String keepLabel({required Object side}) => '将保留（${side} 侧）：';
+	@override String nonFactOther({required Object layer}) => '（${layer} 条目 — 请打开对应 tab 查看完整内容）';
+	@override String get evidenceLabel => 'Detector 给出的证据：';
+	@override String get loading => '加载 fact 内容中…';
+	@override String get loadError => '无法加载 fact 内容，请在 Memory 页面手动查看。';
+	@override String get cancel => '取消';
+	@override String confirm({required Object side}) => '确认删除 ${side}';
+}
+
+// Path: web.conflicts.openLayer
+class _TranslationsWebConflictsOpenLayerZh extends TranslationsWebConflictsOpenLayerEn {
+	_TranslationsWebConflictsOpenLayerZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get plan => '打开计划编辑器';
+	@override String get goal => '打开目标编辑器';
+}
+
 // Path: web.conflicts.severity
 class _TranslationsWebConflictsSeverityZh extends TranslationsWebConflictsSeverityEn {
 	_TranslationsWebConflictsSeverityZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -2433,6 +2504,46 @@ class _TranslationsWebConflictsSeverityZh extends TranslationsWebConflictsSeveri
 	@override String get low => '低';
 	@override String get medium => '中';
 	@override String get high => '高';
+}
+
+// Path: web.memoryConfig.sections
+class _TranslationsWebMemoryConfigSectionsZh extends TranslationsWebMemoryConfigSectionsEn {
+	_TranslationsWebMemoryConfigSectionsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get providers => 'Provider 池';
+	@override String get workers => '任务路由 (Workers)';
+	@override String get rules => 'Capture 规则';
+	@override String get profiles => '注入策略 (Injection profiles)';
+	@override String get costs => 'Token 成本';
+}
+
+// Path: web.memoryConfig.sectionHints
+class _TranslationsWebMemoryConfigSectionHintsZh extends TranslationsWebMemoryConfigSectionHintsEn {
+	_TranslationsWebMemoryConfigSectionHintsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get providers => '已注册的 HTTP endpoint 池 (Ollama / LM Studio / Anthropic / OpenAI / Integration)，所有任务都能引用。';
+	@override String get workers => '每个 task 选用 HTTP provider（便宜、本地）或 headless Claude / Gemini Agent（质量更高，消耗 CLI 配额）。';
+	@override String get rules => 'Capture 引擎何时触发（每 N 条消息 / 闲置 / 累计 K 字符 / 手动）。规则若没固定 provider，会跟随上面 Capture 任务的 worker 设置。';
+	@override String get profiles => 'Session 启动时把哪些历史记忆塞进 agent system prompt（按最近、按相关度、混合、关闭）。';
+	@override String get costs => 'memory_summarizer_calls 重算的累计花费。本地 provider（Ollama / LM Studio / Integration）免费；云 provider 显示真实成本。';
+}
+
+// Path: web.memoryConfig.moveBanner
+class _TranslationsWebMemoryConfigMoveBannerZh extends TranslationsWebMemoryConfigMoveBannerEn {
+	_TranslationsWebMemoryConfigMoveBannerZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '记忆配置已迁移';
+	@override String get body => '所有记忆相关设置（providers / capture rules / injection profiles / cost）现在跟 Workers 在同一页面，相关开关聚在一起。';
+	@override String get openButton => '打开 记忆配置 →';
 }
 
 // Path: web.memoryWorkers.tasks
@@ -2446,6 +2557,9 @@ class _TranslationsWebMemoryWorkersTasksZh extends TranslationsWebMemoryWorkersT
 	@override late final _TranslationsWebMemoryWorkersTasksCleanerZh cleaner = _TranslationsWebMemoryWorkersTasksCleanerZh._(_root);
 	@override late final _TranslationsWebMemoryWorkersTasksGitactivityZh gitactivity = _TranslationsWebMemoryWorkersTasksGitactivityZh._(_root);
 	@override late final _TranslationsWebMemoryWorkersTasksTranscriptZh transcript = _TranslationsWebMemoryWorkersTasksTranscriptZh._(_root);
+	@override late final _TranslationsWebMemoryWorkersTasksPlanDriftZh plan_drift = _TranslationsWebMemoryWorkersTasksPlanDriftZh._(_root);
+	@override late final _TranslationsWebMemoryWorkersTasksConflictDetectorZh conflict_detector = _TranslationsWebMemoryWorkersTasksConflictDetectorZh._(_root);
+	@override late final _TranslationsWebMemoryWorkersTasksCaptureZh capture = _TranslationsWebMemoryWorkersTasksCaptureZh._(_root);
 }
 
 // Path: web.project.picker
@@ -2721,6 +2835,8 @@ class _TranslationsWebMemoryInspectorRowZh extends TranslationsWebMemoryInspecto
 
 	// Translations
 	@override String simBadge({required Object value}) => '相似度 ${value}';
+	@override String rankBadge({required Object value}) => '排名分 ${value}';
+	@override String rankTooltip({required Object effective, required Object similarity, required Object age, required Object days, required Object hits, required Object confidence}) => '有效分 ${effective} = 相似度 ${similarity} × 时效 ${age} (${days}d) × 命中 ${hits} × 置信 ${confidence}';
 	@override String hits_one({required Object count}) => '命中 ${count} 次';
 	@override String hits_other({required Object count}) => '命中 ${count} 次';
 	@override String lastHitTooltip({required Object relative}) => '最近命中 ${relative}';
@@ -3834,7 +3950,6 @@ class _TranslationsWebServerSettingsSectionsZh extends TranslationsWebServerSett
 	@override late final _TranslationsWebServerSettingsSectionsVaultZh vault = _TranslationsWebServerSettingsSectionsVaultZh._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsMcpZh mcp = _TranslationsWebServerSettingsSectionsMcpZh._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsMemoryZh memory = _TranslationsWebServerSettingsSectionsMemoryZh._(_root);
-	@override late final _TranslationsWebServerSettingsSectionsMemoryAmbientZh memoryAmbient = _TranslationsWebServerSettingsSectionsMemoryAmbientZh._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsBackupZh backup = _TranslationsWebServerSettingsSectionsBackupZh._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsClaudeZh claude = _TranslationsWebServerSettingsSectionsClaudeZh._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsCodexZh codex = _TranslationsWebServerSettingsSectionsCodexZh._(_root);
@@ -5201,6 +5316,39 @@ class _TranslationsWebMemoryWorkersTasksTranscriptZh extends TranslationsWebMemo
 	@override String get description => '会话结束时的“agent 都做了什么”总结。天然适合 agent worker。';
 }
 
+// Path: web.memoryWorkers.tasks.plan_drift
+class _TranslationsWebMemoryWorkersTasksPlanDriftZh extends TranslationsWebMemoryWorkersTasksPlanDriftEn {
+	_TranslationsWebMemoryWorkersTasksPlanDriftZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '计划漂移检测';
+	@override String get description => '每个 session 结束后判断项目 plan 是否需要更新并提出 proposal。用 agent 推理质量更高。';
+}
+
+// Path: web.memoryWorkers.tasks.conflict_detector
+class _TranslationsWebMemoryWorkersTasksConflictDetectorZh extends TranslationsWebMemoryWorkersTasksConflictDetectorEn {
+	_TranslationsWebMemoryWorkersTasksConflictDetectorZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '跨层冲突检测';
+	@override String get description => '每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。';
+}
+
+// Path: web.memoryWorkers.tasks.capture
+class _TranslationsWebMemoryWorkersTasksCaptureZh extends TranslationsWebMemoryWorkersTasksCaptureEn {
+	_TranslationsWebMemoryWorkersTasksCaptureZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Capture 引擎';
+	@override String get description => '按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。';
+}
+
 // Path: web.project.readonly.tech_stack
 class _TranslationsWebProjectReadonlyTechStackZh extends TranslationsWebProjectReadonlyTechStackEn {
 	_TranslationsWebProjectReadonlyTechStackZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -5901,17 +6049,6 @@ class _TranslationsWebServerSettingsSectionsMemoryZh extends TranslationsWebServ
 	// Translations
 	@override String get title => '记忆';
 	@override String get desc => '跨 CLI 的持久化记忆子系统。';
-}
-
-// Path: web.serverSettings.sections.memoryAmbient
-class _TranslationsWebServerSettingsSectionsMemoryAmbientZh extends TranslationsWebServerSettingsSectionsMemoryAmbientEn {
-	_TranslationsWebServerSettingsSectionsMemoryAmbientZh._(TranslationsZh root) : this._root = root, super.internal(root);
-
-	final TranslationsZh _root; // ignore: unused_field
-
-	// Translations
-	@override String get title => '记忆 · 环境感知';
-	@override String get desc => '自动捕获对话进入记忆，并在 spawn 时注入。';
 }
 
 // Path: web.serverSettings.sections.backup
@@ -6866,6 +7003,16 @@ extension on TranslationsZh {
 			'web.memory.navCleanupInbox' => '清理收件箱',
 			'web.memory.navWorkers' => 'Workers',
 			'web.memory.navConfiguration' => '配置 →',
+			'web.journalStale.title' => '清理陈旧条目',
+			'web.journalStale.subtitle' => ({required Object days}) => '（超过 ${days} 天、无 pending 冲突引用）',
+			'web.journalStale.daysLabel' => '超过（天）：',
+			'web.journalStale.loading' => '扫描中…',
+			'web.journalStale.empty' => '没有可清理的陈旧条目。',
+			'web.journalStale.selectAll' => '全选',
+			'web.journalStale.deselectAll' => '取消全选',
+			'web.journalStale.deleteSelected' => ({required Object count}) => '删除 (${count})',
+			'web.journalStale.deleted_one' => ({required Object count}) => '已删除 ${count} 条',
+			'web.journalStale.deleted_other' => ({required Object count}) => '已删除 ${count} 条',
 			'web.conflicts.title' => '跨层冲突',
 			'web.conflicts.subtitle' => '每日 detector 在 facts/plan/goal/journal 之间发现的矛盾。',
 			'web.conflicts.loading' => '正在加载冲突…',
@@ -6877,6 +7024,22 @@ extension on TranslationsZh {
 			'web.conflicts.dismiss' => '驳回',
 			'web.conflicts.accepted' => '已采纳 — 别忘了实际修正',
 			'web.conflicts.dismissed' => '已驳回',
+			'web.conflicts.deletedFact' => '已删除 fact 并采纳冲突',
+			'web.conflicts.quickActions' => '快速修复：',
+			'web.conflicts.deleteFact' => '删除 fact',
+			'web.conflicts.deleteFactSide' => ({required Object side, required Object ref}) => '删除 ${side}: ${ref}',
+			'web.conflicts.confirmDelete.title' => ({required Object side}) => '确认删除 fact ${side}?',
+			'web.conflicts.confirmDelete.description' => '永久删除此 fact 并采纳冲突。另一侧保留为最终采信的版本。',
+			'web.conflicts.confirmDelete.targetLabel' => ({required Object side}) => '将删除（${side} 侧）：',
+			'web.conflicts.confirmDelete.keepLabel' => ({required Object side}) => '将保留（${side} 侧）：',
+			'web.conflicts.confirmDelete.nonFactOther' => ({required Object layer}) => '（${layer} 条目 — 请打开对应 tab 查看完整内容）',
+			'web.conflicts.confirmDelete.evidenceLabel' => 'Detector 给出的证据：',
+			'web.conflicts.confirmDelete.loading' => '加载 fact 内容中…',
+			'web.conflicts.confirmDelete.loadError' => '无法加载 fact 内容，请在 Memory 页面手动查看。',
+			'web.conflicts.confirmDelete.cancel' => '取消',
+			'web.conflicts.confirmDelete.confirm' => ({required Object side}) => '确认删除 ${side}',
+			'web.conflicts.openLayer.plan' => '打开计划编辑器',
+			'web.conflicts.openLayer.goal' => '打开目标编辑器',
 			'web.conflicts.severity.low' => '低',
 			'web.conflicts.severity.medium' => '中',
 			'web.conflicts.severity.high' => '高',
@@ -6903,6 +7066,21 @@ extension on TranslationsZh {
 			'web.memoryHealth.today' => '今日',
 			'web.memoryHealth.daysAgo_one' => ({required Object count}) => '${count} 天前',
 			'web.memoryHealth.daysAgo_other' => ({required Object count}) => '${count} 天前',
+			'web.memoryConfig.title' => '记忆配置',
+			'web.memoryConfig.subtitle' => '所有记忆相关开关汇总到这里：HTTP provider、每个任务的路由、capture 触发器、spawn 时注入策略、累计花费。',
+			'web.memoryConfig.sections.providers' => 'Provider 池',
+			'web.memoryConfig.sections.workers' => '任务路由 (Workers)',
+			'web.memoryConfig.sections.rules' => 'Capture 规则',
+			'web.memoryConfig.sections.profiles' => '注入策略 (Injection profiles)',
+			'web.memoryConfig.sections.costs' => 'Token 成本',
+			'web.memoryConfig.sectionHints.providers' => '已注册的 HTTP endpoint 池 (Ollama / LM Studio / Anthropic / OpenAI / Integration)，所有任务都能引用。',
+			'web.memoryConfig.sectionHints.workers' => '每个 task 选用 HTTP provider（便宜、本地）或 headless Claude / Gemini Agent（质量更高，消耗 CLI 配额）。',
+			'web.memoryConfig.sectionHints.rules' => 'Capture 引擎何时触发（每 N 条消息 / 闲置 / 累计 K 字符 / 手动）。规则若没固定 provider，会跟随上面 Capture 任务的 worker 设置。',
+			'web.memoryConfig.sectionHints.profiles' => 'Session 启动时把哪些历史记忆塞进 agent system prompt（按最近、按相关度、混合、关闭）。',
+			'web.memoryConfig.sectionHints.costs' => 'memory_summarizer_calls 重算的累计花费。本地 provider（Ollama / LM Studio / Integration）免费；云 provider 显示真实成本。',
+			'web.memoryConfig.moveBanner.title' => '记忆配置已迁移',
+			'web.memoryConfig.moveBanner.body' => '所有记忆相关设置（providers / capture rules / injection profiles / cost）现在跟 Workers 在同一页面，相关开关聚在一起。',
+			'web.memoryConfig.moveBanner.openButton' => '打开 记忆配置 →',
 			'web.memoryWorkers.title' => 'Memory workers',
 			'web.memoryWorkers.loading' => '正在加载 worker 配置…',
 			'web.memoryWorkers.errorTitle' => '无法访问该接口。',
@@ -6948,6 +7126,12 @@ extension on TranslationsZh {
 			'web.memoryWorkers.tasks.gitactivity.description' => 'git log → 每 24 小时生成 2-3 段叙事。天然适合 agent worker。',
 			'web.memoryWorkers.tasks.transcript.label' => '会话记录总结器',
 			'web.memoryWorkers.tasks.transcript.description' => '会话结束时的“agent 都做了什么”总结。天然适合 agent worker。',
+			'web.memoryWorkers.tasks.plan_drift.label' => '计划漂移检测',
+			'web.memoryWorkers.tasks.plan_drift.description' => '每个 session 结束后判断项目 plan 是否需要更新并提出 proposal。用 agent 推理质量更高。',
+			'web.memoryWorkers.tasks.conflict_detector.label' => '跨层冲突检测',
+			'web.memoryWorkers.tasks.conflict_detector.description' => '每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。',
+			'web.memoryWorkers.tasks.capture.label' => 'Capture 引擎',
+			'web.memoryWorkers.tasks.capture.description' => '按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。',
 			'web.cleanupInbox.loading' => '加载中…',
 			'web.cleanupInbox.emptyTitle' => '清理收件箱为空',
 			'web.cleanupInbox.emptyDescription' => '目前所有项目均无待处理的清理决策。LLM librarian 要么尚未跑过这些记忆，要么判断全部仍是关键内容。',
@@ -7110,6 +7294,8 @@ extension on TranslationsZh {
 			'web.memoryInspector.records.noMatchesForQuery' => ({required Object query}) => '未找到匹配 "${query}"',
 			'web.memoryInspector.records.noMemoriesInScope' => '此 scope 暂无记忆。',
 			'web.memoryInspector.row.simBadge' => ({required Object value}) => '相似度 ${value}',
+			'web.memoryInspector.row.rankBadge' => ({required Object value}) => '排名分 ${value}',
+			'web.memoryInspector.row.rankTooltip' => ({required Object effective, required Object similarity, required Object age, required Object days, required Object hits, required Object confidence}) => '有效分 ${effective} = 相似度 ${similarity} × 时效 ${age} (${days}d) × 命中 ${hits} × 置信 ${confidence}',
 			'web.memoryInspector.row.hits_one' => ({required Object count}) => '命中 ${count} 次',
 			'web.memoryInspector.row.hits_other' => ({required Object count}) => '命中 ${count} 次',
 			'web.memoryInspector.row.lastHitTooltip' => ({required Object relative}) => '最近命中 ${relative}',
@@ -7147,6 +7333,8 @@ extension on TranslationsZh {
 			'web.memoryInspector.bulkDelete.items_one' => ({required Object count}) => '${count} 条记忆',
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} 条记忆',
 			'web.memoryInspector.bulkDelete.cancel' => '取消',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.bulkDelete.deleteAll' => '全部删除',
 			'web.memoryInspector.addMem.title' => '添加记忆',
 			'web.memoryInspector.addMem.description' => '手动创建一条记忆。Agent 会通过 <1>memory_store</1> MCP 工具自动创建；此表单用于运维想跳过 agent 直接录入事实的场景。',
@@ -7196,8 +7384,6 @@ extension on TranslationsZh {
 			'web.notes.left.clearTagTooltip' => '清除标签筛选',
 			'web.notes.left.expandAll' => '全部展开',
 			'web.notes.left.expandAllTooltip' => '展开全部文件夹',
-			_ => null,
-		} ?? switch (path) {
 			'web.notes.left.collapseAll' => '全部收起',
 			'web.notes.left.collapseAllTooltip' => '收起全部文件夹',
 			'web.notes.left.loading' => '加载中…',
@@ -7661,6 +7847,8 @@ extension on TranslationsZh {
 			'web.plugins.mcp.editor.savedToast' => 'MCP 服务器已保存',
 			'web.plugins.mcp.editor.createFailedToast' => '创建失败',
 			'web.plugins.mcp.editor.saveFailedToast' => '保存失败',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.mcpSecrets.title' => 'MCP 密钥',
 			'web.plugins.mcpSecrets.encryptedBadge' => '已加密',
 			'web.plugins.mcpSecrets.plaintextBadge' => '明文',
@@ -7710,8 +7898,6 @@ extension on TranslationsZh {
 			'web.plugins.skills.resetConfirm' => ({required Object id}) => '将 "${id}" 重置为内置版本? 这会删除你的 vault SKILL.md 并回退到嵌入副本。',
 			'web.plugins.skills.deleteConfirm' => ({required Object id}) => '从 vault 删除 skill "${id}"? 这会移除该 SKILL.md 文件。',
 			'web.plugins.skills.removedToast' => 'Skill 已移除',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.skills.deleteFailedToast' => '删除失败',
 			'web.plugins.skills.editor.createTitle' => '新建 skill',
 			'web.plugins.skills.editor.customizeTitle' => ({required Object id}) => '自定义内置：${id}',
@@ -8004,8 +8190,6 @@ extension on TranslationsZh {
 			'web.serverSettings.sections.mcp.desc' => '服务器注册表与密钥。',
 			'web.serverSettings.sections.memory.title' => '记忆',
 			'web.serverSettings.sections.memory.desc' => '跨 CLI 的持久化记忆子系统。',
-			'web.serverSettings.sections.memoryAmbient.title' => '记忆 · 环境感知',
-			'web.serverSettings.sections.memoryAmbient.desc' => '自动捕获对话进入记忆，并在 spawn 时注入。',
 			'web.serverSettings.sections.backup.title' => '备份',
 			'web.serverSettings.sections.backup.desc' => '加密数据库备份、恢复，以及管理员数据导出。',
 			'web.serverSettings.sections.claude.title' => '存储 · Claude',
@@ -8177,6 +8361,8 @@ extension on TranslationsZh {
 			'web.serverSettings.backup.scheduleHeaders.keep' => '保留',
 			'web.serverSettings.backup.scheduleHeaders.state' => '状态',
 			'web.serverSettings.backup.every' => ({required Object interval}) => '每 ${interval}',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.backup.backupsKeep' => ({required Object count}) => '${count} 份备份',
 			'web.serverSettings.backup.stateEnabled' => '已启用',
 			'web.serverSettings.backup.statePaused' => '已暂停',
@@ -8224,8 +8410,6 @@ extension on TranslationsZh {
 			'web.settings.font.options.comfy' => '舒适',
 			'web.settings.font.options.large' => '大',
 			'web.settings.account.title' => '账号',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.account.description' => '运维与当前 bearer token。',
 			'web.settings.account.username' => '用户名',
 			'web.settings.account.tokenExpires' => 'Token 过期',
@@ -8691,6 +8875,8 @@ extension on TranslationsZh {
 			'mcp.secret.keyHint' => 'GITHUB_TOKEN、OPENAI_KEY、…',
 			'mcp.secret.valueLabel' => '值',
 			'mcp.secret.keyRequired' => '必须填写键。',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.secret.keyInvalid' => '键必须匹配 [A-Za-z_][A-Za-z0-9_]* — 与 shell 环境变量规则相同。',
 			'mcp.secret.valueRequired' => '必须填写值。',
 			'mcp.secret.replaceTitle' => '替换密钥值',
@@ -8738,8 +8924,6 @@ extension on TranslationsZh {
 			'providers.errorPrefix.delete' => '删除失败',
 			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'providers.accounts.rename' => '重命名',
-			_ => null,
-		} ?? switch (path) {
 			'providers.accounts.renameTitle' => ({required Object name}) => '重命名 ${name}',
 			'providers.accounts.displayNameLabel' => '显示名',
 			'providers.accounts.displayNameHint' => '工作账号',
@@ -9205,6 +9389,8 @@ extension on TranslationsZh {
 			'channels.kinds.dingtalk.description' => '自定义群机器人。仅外发。群聊 → 机器人 → 添加 → 加签模式 → 复制 webhook + secret。',
 			'channels.kinds.dingtalk.webhookUrlLabel' => 'Webhook URL',
 			'channels.kinds.dingtalk.secretLabel' => '加签 secret',
+			_ => null,
+		} ?? switch (path) {
 			'channels.kinds.dingtalk.secretHint' => '当机器人为「加签」安全模式时，将 secret 复制到这里。opendray 自动添加 timestamp + sign 参数。',
 			'channels.kinds.wecom.description' => '群机器人 webhook。仅外发（文本 + markdown）。群设置 → 群机器人 → 添加 → 复制 webhook URL。',
 			'channels.kinds.wecom.webhookKeyLabel' => 'Webhook key',
@@ -9252,8 +9438,6 @@ extension on TranslationsZh {
 			'skills.resetTooltip' => '重置为内置',
 			'skills.deleteTooltip' => '删除',
 			'skills.saving' => '保存中…',
-			_ => null,
-		} ?? switch (path) {
 			'skills.saveOverride' => '保存覆盖',
 			'skills.overrideBanner' => '保存会以相同 id 创建一个库覆盖。会话将使用此正文而非内置版本，直到你重置。',
 			'skills.idHelper' => '小写字母 / 数字 / 横线。创建后锁定。',

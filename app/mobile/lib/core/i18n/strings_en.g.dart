@@ -216,8 +216,10 @@ class TranslationsWebEn {
 	late final TranslationsWebTopbarEn topbar = TranslationsWebTopbarEn.internal(_root);
 	late final TranslationsWebSessionsEn sessions = TranslationsWebSessionsEn.internal(_root);
 	late final TranslationsWebMemoryEn memory = TranslationsWebMemoryEn.internal(_root);
+	late final TranslationsWebJournalStaleEn journalStale = TranslationsWebJournalStaleEn.internal(_root);
 	late final TranslationsWebConflictsEn conflicts = TranslationsWebConflictsEn.internal(_root);
 	late final TranslationsWebMemoryHealthEn memoryHealth = TranslationsWebMemoryHealthEn.internal(_root);
+	late final TranslationsWebMemoryConfigEn memoryConfig = TranslationsWebMemoryConfigEn.internal(_root);
 	late final TranslationsWebMemoryWorkersEn memoryWorkers = TranslationsWebMemoryWorkersEn.internal(_root);
 	late final TranslationsWebCleanupInboxEn cleanupInbox = TranslationsWebCleanupInboxEn.internal(_root);
 	late final TranslationsWebProjectEn project = TranslationsWebProjectEn.internal(_root);
@@ -1890,6 +1892,45 @@ class TranslationsWebMemoryEn {
 	String get navConfiguration => 'Configuration →';
 }
 
+// Path: web.journalStale
+class TranslationsWebJournalStaleEn {
+	TranslationsWebJournalStaleEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Prune stale entries'
+	String get title => 'Prune stale entries';
+
+	/// en: '(older than {days} days, no pending conflicts)'
+	String subtitle({required Object days}) => '(older than ${days} days, no pending conflicts)';
+
+	/// en: 'Older than (days):'
+	String get daysLabel => 'Older than (days):';
+
+	/// en: 'Scanning…'
+	String get loading => 'Scanning…';
+
+	/// en: 'Nothing stale to prune.'
+	String get empty => 'Nothing stale to prune.';
+
+	/// en: 'Select all'
+	String get selectAll => 'Select all';
+
+	/// en: 'Deselect all'
+	String get deselectAll => 'Deselect all';
+
+	/// en: 'Delete ({count})'
+	String deleteSelected({required Object count}) => 'Delete (${count})';
+
+	/// en: '{count} entry deleted'
+	String deleted_one({required Object count}) => '${count} entry deleted';
+
+	/// en: '{count} entries deleted'
+	String deleted_other({required Object count}) => '${count} entries deleted';
+}
+
 // Path: web.conflicts
 class TranslationsWebConflictsEn {
 	TranslationsWebConflictsEn.internal(this._root);
@@ -1931,6 +1972,20 @@ class TranslationsWebConflictsEn {
 	/// en: 'Conflict dismissed'
 	String get dismissed => 'Conflict dismissed';
 
+	/// en: 'Fact deleted and conflict accepted'
+	String get deletedFact => 'Fact deleted and conflict accepted';
+
+	/// en: 'Fix:'
+	String get quickActions => 'Fix:';
+
+	/// en: 'Delete fact'
+	String get deleteFact => 'Delete fact';
+
+	/// en: 'Delete {side}: {ref}'
+	String deleteFactSide({required Object side, required Object ref}) => 'Delete ${side}: ${ref}';
+
+	late final TranslationsWebConflictsConfirmDeleteEn confirmDelete = TranslationsWebConflictsConfirmDeleteEn.internal(_root);
+	late final TranslationsWebConflictsOpenLayerEn openLayer = TranslationsWebConflictsOpenLayerEn.internal(_root);
 	late final TranslationsWebConflictsSeverityEn severity = TranslationsWebConflictsSeverityEn.internal(_root);
 }
 
@@ -2010,6 +2065,25 @@ class TranslationsWebMemoryHealthEn {
 
 	/// en: '{count} days ago'
 	String daysAgo_other({required Object count}) => '${count} days ago';
+}
+
+// Path: web.memoryConfig
+class TranslationsWebMemoryConfigEn {
+	TranslationsWebMemoryConfigEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Memory configuration'
+	String get title => 'Memory configuration';
+
+	/// en: 'All memory-related knobs in one place: HTTP providers, per-task worker routing, capture triggers, spawn-time injection, and audit costs.'
+	String get subtitle => 'All memory-related knobs in one place: HTTP providers, per-task worker routing, capture triggers, spawn-time injection, and audit costs.';
+
+	late final TranslationsWebMemoryConfigSectionsEn sections = TranslationsWebMemoryConfigSectionsEn.internal(_root);
+	late final TranslationsWebMemoryConfigSectionHintsEn sectionHints = TranslationsWebMemoryConfigSectionHintsEn.internal(_root);
+	late final TranslationsWebMemoryConfigMoveBannerEn moveBanner = TranslationsWebMemoryConfigMoveBannerEn.internal(_root);
 }
 
 // Path: web.memoryWorkers
@@ -4659,6 +4733,60 @@ class TranslationsWebSessionsFileBrowserEn {
 	String get homeFailedToast => 'Failed to read home';
 }
 
+// Path: web.conflicts.confirmDelete
+class TranslationsWebConflictsConfirmDeleteEn {
+	TranslationsWebConflictsConfirmDeleteEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Delete fact {side}?'
+	String title({required Object side}) => 'Delete fact ${side}?';
+
+	/// en: 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.'
+	String get description => 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.';
+
+	/// en: 'Will delete (side {side}):'
+	String targetLabel({required Object side}) => 'Will delete (side ${side}):';
+
+	/// en: 'Will keep (side {side}):'
+	String keepLabel({required Object side}) => 'Will keep (side ${side}):';
+
+	/// en: '({layer} entry — open the corresponding tab to inspect)'
+	String nonFactOther({required Object layer}) => '(${layer} entry — open the corresponding tab to inspect)';
+
+	/// en: 'Detector evidence:'
+	String get evidenceLabel => 'Detector evidence:';
+
+	/// en: 'Loading fact text…'
+	String get loading => 'Loading fact text…';
+
+	/// en: 'Failed to load fact text. Inspect on the Memory page.'
+	String get loadError => 'Failed to load fact text. Inspect on the Memory page.';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+
+	/// en: 'Delete {side}'
+	String confirm({required Object side}) => 'Delete ${side}';
+}
+
+// Path: web.conflicts.openLayer
+class TranslationsWebConflictsOpenLayerEn {
+	TranslationsWebConflictsOpenLayerEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Open plan editor'
+	String get plan => 'Open plan editor';
+
+	/// en: 'Open goal editor'
+	String get goal => 'Open goal editor';
+}
+
 // Path: web.conflicts.severity
 class TranslationsWebConflictsSeverityEn {
 	TranslationsWebConflictsSeverityEn.internal(this._root);
@@ -4677,6 +4805,72 @@ class TranslationsWebConflictsSeverityEn {
 	String get high => 'high';
 }
 
+// Path: web.memoryConfig.sections
+class TranslationsWebMemoryConfigSectionsEn {
+	TranslationsWebMemoryConfigSectionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Providers'
+	String get providers => 'Providers';
+
+	/// en: 'Workers'
+	String get workers => 'Workers';
+
+	/// en: 'Capture rules'
+	String get rules => 'Capture rules';
+
+	/// en: 'Injection profiles'
+	String get profiles => 'Injection profiles';
+
+	/// en: 'Token cost'
+	String get costs => 'Token cost';
+}
+
+// Path: web.memoryConfig.sectionHints
+class TranslationsWebMemoryConfigSectionHintsEn {
+	TranslationsWebMemoryConfigSectionHintsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Registered HTTP endpoints (Ollama / LM Studio / Anthropic / OpenAI / Integration) that any task can dispatch to.'
+	String get providers => 'Registered HTTP endpoints (Ollama / LM Studio / Anthropic / OpenAI / Integration) that any task can dispatch to.';
+
+	/// en: 'For each touchpoint pick HTTP provider (cheap, local) or headless Claude / Gemini Agent (higher quality, costs CLI tokens).'
+	String get workers => 'For each touchpoint pick HTTP provider (cheap, local) or headless Claude / Gemini Agent (higher quality, costs CLI tokens).';
+
+	/// en: 'When the capture engine fires per session (after N messages / on idle / K characters / manual). Rules without a pinned provider follow the Capture worker setting above.'
+	String get rules => 'When the capture engine fires per session (after N messages / on idle / K characters / manual). Rules without a pinned provider follow the Capture worker setting above.';
+
+	/// en: 'How prior memories get injected into the agent's system prompt at session spawn (recency, relevance, hybrid, or off).'
+	String get profiles => 'How prior memories get injected into the agent\'s system prompt at session spawn (recency, relevance, hybrid, or off).';
+
+	/// en: 'Aggregate spend reconstructed from memory_summarizer_calls. Local providers (Ollama, LM Studio, Integration) are free; cloud providers show real-world cost.'
+	String get costs => 'Aggregate spend reconstructed from memory_summarizer_calls. Local providers (Ollama, LM Studio, Integration) are free; cloud providers show real-world cost.';
+}
+
+// Path: web.memoryConfig.moveBanner
+class TranslationsWebMemoryConfigMoveBannerEn {
+	TranslationsWebMemoryConfigMoveBannerEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Memory configuration has moved'
+	String get title => 'Memory configuration has moved';
+
+	/// en: 'All memory-related settings (providers / capture rules / injection profiles / cost) now live alongside Workers in one page so related knobs sit together.'
+	String get body => 'All memory-related settings (providers / capture rules / injection profiles / cost) now live alongside Workers in one page so related knobs sit together.';
+
+	/// en: 'Open Memory configuration →'
+	String get openButton => 'Open Memory configuration →';
+}
+
 // Path: web.memoryWorkers.tasks
 class TranslationsWebMemoryWorkersTasksEn {
 	TranslationsWebMemoryWorkersTasksEn.internal(this._root);
@@ -4688,6 +4882,9 @@ class TranslationsWebMemoryWorkersTasksEn {
 	late final TranslationsWebMemoryWorkersTasksCleanerEn cleaner = TranslationsWebMemoryWorkersTasksCleanerEn.internal(_root);
 	late final TranslationsWebMemoryWorkersTasksGitactivityEn gitactivity = TranslationsWebMemoryWorkersTasksGitactivityEn.internal(_root);
 	late final TranslationsWebMemoryWorkersTasksTranscriptEn transcript = TranslationsWebMemoryWorkersTasksTranscriptEn.internal(_root);
+	late final TranslationsWebMemoryWorkersTasksPlanDriftEn plan_drift = TranslationsWebMemoryWorkersTasksPlanDriftEn.internal(_root);
+	late final TranslationsWebMemoryWorkersTasksConflictDetectorEn conflict_detector = TranslationsWebMemoryWorkersTasksConflictDetectorEn.internal(_root);
+	late final TranslationsWebMemoryWorkersTasksCaptureEn capture = TranslationsWebMemoryWorkersTasksCaptureEn.internal(_root);
 }
 
 // Path: web.project.picker
@@ -5219,6 +5416,12 @@ class TranslationsWebMemoryInspectorRowEn {
 
 	/// en: 'sim {value}'
 	String simBadge({required Object value}) => 'sim ${value}';
+
+	/// en: 'rank {value}'
+	String rankBadge({required Object value}) => 'rank ${value}';
+
+	/// en: 'effective {effective} = sim {similarity} × age {age} ({days}d) × hits {hits} × conf {confidence}'
+	String rankTooltip({required Object effective, required Object similarity, required Object age, required Object days, required Object hits, required Object confidence}) => 'effective ${effective} = sim ${similarity} × age ${age} (${days}d) × hits ${hits} × conf ${confidence}';
 
 	/// en: '{count} hit'
 	String hits_one({required Object count}) => '${count} hit';
@@ -7471,7 +7674,6 @@ class TranslationsWebServerSettingsSectionsEn {
 	late final TranslationsWebServerSettingsSectionsVaultEn vault = TranslationsWebServerSettingsSectionsVaultEn.internal(_root);
 	late final TranslationsWebServerSettingsSectionsMcpEn mcp = TranslationsWebServerSettingsSectionsMcpEn.internal(_root);
 	late final TranslationsWebServerSettingsSectionsMemoryEn memory = TranslationsWebServerSettingsSectionsMemoryEn.internal(_root);
-	late final TranslationsWebServerSettingsSectionsMemoryAmbientEn memoryAmbient = TranslationsWebServerSettingsSectionsMemoryAmbientEn.internal(_root);
 	late final TranslationsWebServerSettingsSectionsBackupEn backup = TranslationsWebServerSettingsSectionsBackupEn.internal(_root);
 	late final TranslationsWebServerSettingsSectionsClaudeEn claude = TranslationsWebServerSettingsSectionsClaudeEn.internal(_root);
 	late final TranslationsWebServerSettingsSectionsCodexEn codex = TranslationsWebServerSettingsSectionsCodexEn.internal(_root);
@@ -9859,6 +10061,51 @@ class TranslationsWebMemoryWorkersTasksTranscriptEn {
 	String get description => 'Session-end "what did the agent do" summary. Naturally fits an agent worker.';
 }
 
+// Path: web.memoryWorkers.tasks.plan_drift
+class TranslationsWebMemoryWorkersTasksPlanDriftEn {
+	TranslationsWebMemoryWorkersTasksPlanDriftEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Plan drift detector'
+	String get label => 'Plan drift detector';
+
+	/// en: 'After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning.'
+	String get description => 'After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning.';
+}
+
+// Path: web.memoryWorkers.tasks.conflict_detector
+class TranslationsWebMemoryWorkersTasksConflictDetectorEn {
+	TranslationsWebMemoryWorkersTasksConflictDetectorEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Cross-layer conflict detector'
+	String get label => 'Cross-layer conflict detector';
+
+	/// en: 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.'
+	String get description => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.';
+}
+
+// Path: web.memoryWorkers.tasks.capture
+class TranslationsWebMemoryWorkersTasksCaptureEn {
+	TranslationsWebMemoryWorkersTasksCaptureEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Capture engine'
+	String get label => 'Capture engine';
+
+	/// en: 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.'
+	String get description => 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.';
+}
+
 // Path: web.project.readonly.tech_stack
 class TranslationsWebProjectReadonlyTechStackEn {
 	TranslationsWebProjectReadonlyTechStackEn.internal(this._root);
@@ -11187,21 +11434,6 @@ class TranslationsWebServerSettingsSectionsMemoryEn {
 
 	/// en: 'Cross-CLI persistent memory subsystem.'
 	String get desc => 'Cross-CLI persistent memory subsystem.';
-}
-
-// Path: web.serverSettings.sections.memoryAmbient
-class TranslationsWebServerSettingsSectionsMemoryAmbientEn {
-	TranslationsWebServerSettingsSectionsMemoryAmbientEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Memory · Ambient'
-	String get title => 'Memory · Ambient';
-
-	/// en: 'Auto-capture conversations into memory + spawn-time injection.'
-	String get desc => 'Auto-capture conversations into memory + spawn-time injection.';
 }
 
 // Path: web.serverSettings.sections.backup
@@ -12581,6 +12813,16 @@ extension on Translations {
 			'web.memory.navCleanupInbox' => 'Cleanup inbox',
 			'web.memory.navWorkers' => 'Workers',
 			'web.memory.navConfiguration' => 'Configuration →',
+			'web.journalStale.title' => 'Prune stale entries',
+			'web.journalStale.subtitle' => ({required Object days}) => '(older than ${days} days, no pending conflicts)',
+			'web.journalStale.daysLabel' => 'Older than (days):',
+			'web.journalStale.loading' => 'Scanning…',
+			'web.journalStale.empty' => 'Nothing stale to prune.',
+			'web.journalStale.selectAll' => 'Select all',
+			'web.journalStale.deselectAll' => 'Deselect all',
+			'web.journalStale.deleteSelected' => ({required Object count}) => 'Delete (${count})',
+			'web.journalStale.deleted_one' => ({required Object count}) => '${count} entry deleted',
+			'web.journalStale.deleted_other' => ({required Object count}) => '${count} entries deleted',
 			'web.conflicts.title' => 'Cross-layer conflicts',
 			'web.conflicts.subtitle' => 'Contradictions the daily detector found between facts, plan, goal, and journal entries.',
 			'web.conflicts.loading' => 'Loading conflicts…',
@@ -12592,6 +12834,22 @@ extension on Translations {
 			'web.conflicts.dismiss' => 'Dismiss',
 			'web.conflicts.accepted' => 'Conflict accepted — remember to apply the fix',
 			'web.conflicts.dismissed' => 'Conflict dismissed',
+			'web.conflicts.deletedFact' => 'Fact deleted and conflict accepted',
+			'web.conflicts.quickActions' => 'Fix:',
+			'web.conflicts.deleteFact' => 'Delete fact',
+			'web.conflicts.deleteFactSide' => ({required Object side, required Object ref}) => 'Delete ${side}: ${ref}',
+			'web.conflicts.confirmDelete.title' => ({required Object side}) => 'Delete fact ${side}?',
+			'web.conflicts.confirmDelete.description' => 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.',
+			'web.conflicts.confirmDelete.targetLabel' => ({required Object side}) => 'Will delete (side ${side}):',
+			'web.conflicts.confirmDelete.keepLabel' => ({required Object side}) => 'Will keep (side ${side}):',
+			'web.conflicts.confirmDelete.nonFactOther' => ({required Object layer}) => '(${layer} entry — open the corresponding tab to inspect)',
+			'web.conflicts.confirmDelete.evidenceLabel' => 'Detector evidence:',
+			'web.conflicts.confirmDelete.loading' => 'Loading fact text…',
+			'web.conflicts.confirmDelete.loadError' => 'Failed to load fact text. Inspect on the Memory page.',
+			'web.conflicts.confirmDelete.cancel' => 'Cancel',
+			'web.conflicts.confirmDelete.confirm' => ({required Object side}) => 'Delete ${side}',
+			'web.conflicts.openLayer.plan' => 'Open plan editor',
+			'web.conflicts.openLayer.goal' => 'Open goal editor',
 			'web.conflicts.severity.low' => 'low',
 			'web.conflicts.severity.medium' => 'medium',
 			'web.conflicts.severity.high' => 'high',
@@ -12618,6 +12876,21 @@ extension on Translations {
 			'web.memoryHealth.today' => 'today',
 			'web.memoryHealth.daysAgo_one' => ({required Object count}) => '${count} day ago',
 			'web.memoryHealth.daysAgo_other' => ({required Object count}) => '${count} days ago',
+			'web.memoryConfig.title' => 'Memory configuration',
+			'web.memoryConfig.subtitle' => 'All memory-related knobs in one place: HTTP providers, per-task worker routing, capture triggers, spawn-time injection, and audit costs.',
+			'web.memoryConfig.sections.providers' => 'Providers',
+			'web.memoryConfig.sections.workers' => 'Workers',
+			'web.memoryConfig.sections.rules' => 'Capture rules',
+			'web.memoryConfig.sections.profiles' => 'Injection profiles',
+			'web.memoryConfig.sections.costs' => 'Token cost',
+			'web.memoryConfig.sectionHints.providers' => 'Registered HTTP endpoints (Ollama / LM Studio / Anthropic / OpenAI / Integration) that any task can dispatch to.',
+			'web.memoryConfig.sectionHints.workers' => 'For each touchpoint pick HTTP provider (cheap, local) or headless Claude / Gemini Agent (higher quality, costs CLI tokens).',
+			'web.memoryConfig.sectionHints.rules' => 'When the capture engine fires per session (after N messages / on idle / K characters / manual). Rules without a pinned provider follow the Capture worker setting above.',
+			'web.memoryConfig.sectionHints.profiles' => 'How prior memories get injected into the agent\'s system prompt at session spawn (recency, relevance, hybrid, or off).',
+			'web.memoryConfig.sectionHints.costs' => 'Aggregate spend reconstructed from memory_summarizer_calls. Local providers (Ollama, LM Studio, Integration) are free; cloud providers show real-world cost.',
+			'web.memoryConfig.moveBanner.title' => 'Memory configuration has moved',
+			'web.memoryConfig.moveBanner.body' => 'All memory-related settings (providers / capture rules / injection profiles / cost) now live alongside Workers in one page so related knobs sit together.',
+			'web.memoryConfig.moveBanner.openButton' => 'Open Memory configuration →',
 			'web.memoryWorkers.title' => 'Memory workers',
 			'web.memoryWorkers.loading' => 'Loading worker config…',
 			'web.memoryWorkers.errorTitle' => 'Endpoint not reachable.',
@@ -12663,6 +12936,12 @@ extension on Translations {
 			'web.memoryWorkers.tasks.gitactivity.description' => 'git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker.',
 			'web.memoryWorkers.tasks.transcript.label' => 'Session transcript summariser',
 			'web.memoryWorkers.tasks.transcript.description' => 'Session-end "what did the agent do" summary. Naturally fits an agent worker.',
+			'web.memoryWorkers.tasks.plan_drift.label' => 'Plan drift detector',
+			'web.memoryWorkers.tasks.plan_drift.description' => 'After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning.',
+			'web.memoryWorkers.tasks.conflict_detector.label' => 'Cross-layer conflict detector',
+			'web.memoryWorkers.tasks.conflict_detector.description' => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.',
+			'web.memoryWorkers.tasks.capture.label' => 'Capture engine',
+			'web.memoryWorkers.tasks.capture.description' => 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.',
 			'web.cleanupInbox.loading' => 'Loading…',
 			'web.cleanupInbox.emptyTitle' => 'Cleanup inbox empty',
 			'web.cleanupInbox.emptyDescription' => 'No pending cleanup decisions across any project. The LLM librarian either hasn\'t run yet for the eligible memories, or it found everything load-bearing.',
@@ -12825,6 +13104,8 @@ extension on Translations {
 			'web.memoryInspector.records.noMatchesForQuery' => ({required Object query}) => 'No matches for "${query}"',
 			'web.memoryInspector.records.noMemoriesInScope' => 'No memories in this scope yet.',
 			'web.memoryInspector.row.simBadge' => ({required Object value}) => 'sim ${value}',
+			'web.memoryInspector.row.rankBadge' => ({required Object value}) => 'rank ${value}',
+			'web.memoryInspector.row.rankTooltip' => ({required Object effective, required Object similarity, required Object age, required Object days, required Object hits, required Object confidence}) => 'effective ${effective} = sim ${similarity} × age ${age} (${days}d) × hits ${hits} × conf ${confidence}',
 			'web.memoryInspector.row.hits_one' => ({required Object count}) => '${count} hit',
 			'web.memoryInspector.row.hits_other' => ({required Object count}) => '${count} hits',
 			'web.memoryInspector.row.lastHitTooltip' => ({required Object relative}) => 'Last hit ${relative}',
@@ -12862,6 +13143,8 @@ extension on Translations {
 			'web.memoryInspector.bulkDelete.items_one' => ({required Object count}) => '${count} memory item',
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} memory items',
 			'web.memoryInspector.bulkDelete.cancel' => 'Cancel',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.bulkDelete.deleteAll' => 'Delete all',
 			'web.memoryInspector.addMem.title' => 'Add memory',
 			'web.memoryInspector.addMem.description' => 'Manually create a memory. Agents create these automatically via the <1>memory_store</1> MCP tool — this form is for cases where the operator wants to seed a fact without going through an agent.',
@@ -12911,8 +13194,6 @@ extension on Translations {
 			'web.notes.left.clearTagTooltip' => 'Clear tag filter',
 			'web.notes.left.expandAll' => 'Expand all',
 			'web.notes.left.expandAllTooltip' => 'Expand every folder',
-			_ => null,
-		} ?? switch (path) {
 			'web.notes.left.collapseAll' => 'Collapse all',
 			'web.notes.left.collapseAllTooltip' => 'Collapse every folder',
 			'web.notes.left.loading' => 'Loading…',
@@ -13376,6 +13657,8 @@ extension on Translations {
 			'web.plugins.mcp.editor.savedToast' => 'MCP server saved',
 			'web.plugins.mcp.editor.createFailedToast' => 'Create failed',
 			'web.plugins.mcp.editor.saveFailedToast' => 'Save failed',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.mcpSecrets.title' => 'MCP secrets',
 			'web.plugins.mcpSecrets.encryptedBadge' => 'encrypted',
 			'web.plugins.mcpSecrets.plaintextBadge' => 'plaintext',
@@ -13425,8 +13708,6 @@ extension on Translations {
 			'web.plugins.skills.resetConfirm' => ({required Object id}) => 'Reset "${id}" to the built-in version? This deletes your vault SKILL.md and falls back to the embedded copy.',
 			'web.plugins.skills.deleteConfirm' => ({required Object id}) => 'Delete skill "${id}" from your vault? This removes the SKILL.md file.',
 			'web.plugins.skills.removedToast' => 'Skill removed',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.skills.deleteFailedToast' => 'Delete failed',
 			'web.plugins.skills.editor.createTitle' => 'New skill',
 			'web.plugins.skills.editor.customizeTitle' => ({required Object id}) => 'Customize built-in: ${id}',
@@ -13719,8 +14000,6 @@ extension on Translations {
 			'web.serverSettings.sections.mcp.desc' => 'Server registry + secrets.',
 			'web.serverSettings.sections.memory.title' => 'Memory',
 			'web.serverSettings.sections.memory.desc' => 'Cross-CLI persistent memory subsystem.',
-			'web.serverSettings.sections.memoryAmbient.title' => 'Memory · Ambient',
-			'web.serverSettings.sections.memoryAmbient.desc' => 'Auto-capture conversations into memory + spawn-time injection.',
 			'web.serverSettings.sections.backup.title' => 'Backup',
 			'web.serverSettings.sections.backup.desc' => 'Encrypted DB backups, restore, and admin data exports.',
 			'web.serverSettings.sections.claude.title' => 'Storage · Claude',
@@ -13892,6 +14171,8 @@ extension on Translations {
 			'web.serverSettings.backup.scheduleHeaders.keep' => 'Keep',
 			'web.serverSettings.backup.scheduleHeaders.state' => 'State',
 			'web.serverSettings.backup.every' => ({required Object interval}) => 'every ${interval}',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.backup.backupsKeep' => ({required Object count}) => '${count} backups',
 			'web.serverSettings.backup.stateEnabled' => 'enabled',
 			'web.serverSettings.backup.statePaused' => 'paused',
@@ -13939,8 +14220,6 @@ extension on Translations {
 			'web.settings.font.options.comfy' => 'Comfy',
 			'web.settings.font.options.large' => 'Large',
 			'web.settings.account.title' => 'Account',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.account.description' => 'Operator and current bearer token.',
 			'web.settings.account.username' => 'Username',
 			'web.settings.account.tokenExpires' => 'Token expires',
@@ -14406,6 +14685,8 @@ extension on Translations {
 			'mcp.secret.keyHint' => 'GITHUB_TOKEN, OPENAI_KEY, …',
 			'mcp.secret.valueLabel' => 'Value',
 			'mcp.secret.keyRequired' => 'Key is required.',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.secret.keyInvalid' => 'Key must match [A-Za-z_][A-Za-z0-9_]* — same rules as a shell env var.',
 			'mcp.secret.valueRequired' => 'Value is required.',
 			'mcp.secret.replaceTitle' => 'Replace secret value',
@@ -14453,8 +14734,6 @@ extension on Translations {
 			'providers.errorPrefix.delete' => 'Delete failed',
 			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'providers.accounts.rename' => 'Rename',
-			_ => null,
-		} ?? switch (path) {
 			'providers.accounts.renameTitle' => ({required Object name}) => 'Rename ${name}',
 			'providers.accounts.displayNameLabel' => 'Display name',
 			'providers.accounts.displayNameHint' => 'Work account',
@@ -14920,6 +15199,8 @@ extension on Translations {
 			'channels.kinds.dingtalk.description' => 'Custom group robot. Outbound only. Group chat → Robots → Add → Sign mode → copy webhook + secret.',
 			'channels.kinds.dingtalk.webhookUrlLabel' => 'Webhook URL',
 			'channels.kinds.dingtalk.secretLabel' => 'Sign secret',
+			_ => null,
+		} ?? switch (path) {
 			'channels.kinds.dingtalk.secretHint' => 'When the robot is set to "Sign" security mode, copy the secret here. opendray adds the timestamp + sign params automatically.',
 			'channels.kinds.wecom.description' => 'Group robot webhook. Outbound only (text + markdown). Group settings → Group robots → Add → copy webhook URL.',
 			'channels.kinds.wecom.webhookKeyLabel' => 'Webhook key',
@@ -14967,8 +15248,6 @@ extension on Translations {
 			'skills.resetTooltip' => 'Reset to built-in',
 			'skills.deleteTooltip' => 'Delete',
 			'skills.saving' => 'Saving…',
-			_ => null,
-		} ?? switch (path) {
 			'skills.saveOverride' => 'Save override',
 			'skills.overrideBanner' => 'Saving creates a vault override with the same id. Sessions will use this body instead of the built-in until you reset.',
 			'skills.idHelper' => 'Lowercase letters / digits / dash. Locked once created.',
