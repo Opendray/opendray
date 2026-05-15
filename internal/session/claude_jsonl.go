@@ -340,18 +340,44 @@ func claudeRecentResponse(cwd string) string {
 }
 
 // resolveLatestClaudeJSONL finds the most recently modified .jsonl
-// file inside the projects/<encoded-cwd>/ directory matching cwd.
+// across every Claude projects root visible to opendray. We scan
+// both ~/.claude/projects (the single-account default) and every
+// ~/.claude-accounts/<acct>/projects (the multi-account routing
+// opendray uses when CLAUDE_HOME is overridden per spawn).
+//
+// Single-account-only operators are unaffected: when ~/.claude-
+// accounts doesn't exist (or is empty), the function degrades to
+// the original behaviour. Multi-account operators previously got
+// an empty snippet because the JSONL lived under .claude-accounts
+// and we never looked there — which is what made the idle Telegram
+// alert fall back to the virtual-terminal screen snapshot (~1
+// screenful instead of the full turn).
 func resolveLatestClaudeJSONL(cwd string) string {
-	home := os.Getenv("HOME")
-	if home == "" {
+	roots := resolveClaudeRoots(ClaudeHistoryConfig{})
+	if len(roots) == 0 {
 		return ""
 	}
-	root := filepath.Join(home, ".claude", "projects")
-	dir := findClaudeProjectDir(root, cwd)
-	if dir == "" {
-		return ""
+	var best string
+	var bestTime time.Time
+	for _, root := range roots {
+		dir := findClaudeProjectDir(root, cwd)
+		if dir == "" {
+			continue
+		}
+		path := findLatestClaudeJSONL(dir)
+		if path == "" {
+			continue
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			continue
+		}
+		if info.ModTime().After(bestTime) {
+			best = path
+			bestTime = info.ModTime()
+		}
 	}
-	return findLatestClaudeJSONL(dir)
+	return best
 }
 
 // findClaudeProjectDir scans projectsRoot for a directory whose
