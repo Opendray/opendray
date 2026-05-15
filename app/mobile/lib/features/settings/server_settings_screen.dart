@@ -242,23 +242,34 @@ List<_Section> _buildSections() => <_Section>[
         path: 'memory.store',
         kind: _FieldKind.select,
         options: const ['pgvector', 'chromem'],
+        // Backend defaults to pgvector when empty — see
+        // internal/app/app.go:resolveMemoryService. We surface
+        // that fallback in the picker hint so the operator
+        // doesn't have to guess what blank means.
+        placeholder: 'pgvector',
       ),
       _Field(
         label: t.settings.serverSettings.fields.defaultTopK,
         path: 'memory.default_top_k',
         kind: _FieldKind.numberInt,
+        // memory.Service.NewOptions defaults to 5 when ≤ 0.
+        placeholder: '5',
       ),
       _Field(
         label: t.settings.serverSettings.fields.similarityThreshold,
         path: 'memory.similarity_threshold',
         kind: _FieldKind.numberDouble,
         helper: t.settings.serverSettings.fields.similarityHelper,
+        // memory.Service.NewOptions defaults to 0.1 when ≤ 0.
+        placeholder: '0.1',
       ),
       _Field(
         label: t.settings.serverSettings.fields.defaultScope,
         path: 'memory.scope.default',
         kind: _FieldKind.select,
         options: const ['project', 'session', 'global'],
+        // memory.Service.NewOptions defaults to ScopeProject.
+        placeholder: 'project',
       ),
       _Field(
         label: t.settings.serverSettings.fields.chromemPath,
@@ -919,6 +930,15 @@ class _SectionEditorScreenState
         final current = _readPath(_draft, f.path)?.toString() ?? '';
         final value =
             f.options?.contains(current) ?? false ? current : null;
+        // When the value is empty and we know the implicit default,
+        // surface it as the dropdown's hint so operators know what
+        // the backend will use. Without this the blank-row UX was
+        // ambiguous — looked like "nothing configured" but actually
+        // "the system falls back to <something>".
+        final hintText = value == null && f.placeholder != null
+            ? t.settings.serverSettings.fields
+                .defaultFallback(value: f.placeholder!)
+            : null;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -928,6 +948,15 @@ class _SectionEditorScreenState
             const SizedBox(height: 4),
             DropdownButtonFormField<String>(
               initialValue: value,
+              hint: hintText != null
+                  ? Text(
+                      hintText,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.outline,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    )
+                  : null,
               decoration: InputDecoration(
                 helperText: f.helper,
                 helperMaxLines: 3,

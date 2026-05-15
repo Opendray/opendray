@@ -10185,6 +10185,9 @@ class TranslationsSettingsServerSettingsFieldsEn {
 	/// en: '0.0–1.0; results under this are filtered out.'
 	String get similarityHelper => '0.0–1.0; results under this are filtered out.';
 
+	/// en: 'Default: {value}'
+	String defaultFallback({required Object value}) => 'Default: ${value}';
+
 	/// en: 'chromem path'
 	String get chromemPath => 'chromem path';
 
@@ -15819,6 +15822,7 @@ extension on Translations {
 			'settings.serverSettings.fields.secretsHelper' => 'AES-256-GCM encrypted secrets vault.',
 			'settings.serverSettings.fields.backendHelper' => 'auto picks the best available; local needs ONNX.',
 			'settings.serverSettings.fields.similarityHelper' => '0.0–1.0; results under this are filtered out.',
+			'settings.serverSettings.fields.defaultFallback' => ({required Object value}) => 'Default: ${value}',
 			'settings.serverSettings.fields.chromemPath' => 'chromem path',
 			'settings.serverSettings.fields.httpBaseUrl' => 'HTTP base URL',
 			'settings.serverSettings.fields.httpModel' => 'HTTP model',
