@@ -12,10 +12,14 @@ import (
 )
 
 // idleTailLines bounds how much of the recent stdout we ship inside
-// the session.idle event. Big enough to capture a typical Claude
-// response or interactive prompt; small enough to fit in a chat
-// notification without overwhelming the reader.
-const idleTailLines = 15
+// the session.idle event when no JSONL transcript is available
+// (Codex / Gemini / shell sessions). Generous on purpose — the
+// channel layer (notify_snippet_max_chars, Telegram chunking) is
+// the right place to clamp for any specific transport. Set high
+// enough that a marathon session's last interesting screenful
+// survives. The ring buffer is 1 MiB and most output averages
+// ~80 chars/line, so this cap rarely bites in practice.
+const idleTailLines = 1000
 
 // pumpStdout copies bytes from the PTY into the ring buffer + fanout
 // subscribers. Updates lastActivity so the idle watcher resets when
@@ -86,6 +90,14 @@ func (m *Manager) idleWatcher(rs *runningSession) {
 			//   2. Virtual-terminal screen snapshot — what the user
 			//      sees in the live web terminal right now
 			//   3. Raw ring-buffer tail — defensive fallback
+			//
+			// We deliberately do NOT cap byte / line counts at the
+			// source. The channel layer owns user-facing truncation
+			// (notify_snippet_max_chars + per-platform chunking, e.g.
+			// Telegram's 3800-rune splitter). Capping here means the
+			// operator-facing "Unlimited — split into messages"
+			// option silently loses content; let the source emit
+			// everything and let the channel decide.
 			snippet := ""
 			rs.sessMu.RLock()
 			provider := rs.sess.ProviderID

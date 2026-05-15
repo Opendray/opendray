@@ -606,3 +606,147 @@ func userToolResultOnly(t *testing.T, toolUseID, ts string) map[string]any {
 		},
 	}
 }
+
+// Regression guard: with "Unlimited — split into multiple messages"
+// chosen at the channel layer, the source-level snippet must NOT
+// silently truncate. These tests pin the new behaviour (full
+// tool_use args, full tool_result body, multi-line indentation,
+// generous JSONL window). If you reintroduce a cap, do it at the
+// channel layer (notify_snippet_max_chars) — never here.
+func TestFormatToolUse_LongBashCommandNotTruncated(t *testing.T) {
+	longCmd := strings.Repeat("very-long-flag --option=value ", 30) // ~900 chars
+	b := claudeContentBlock{
+		Type: "tool_use",
+		Name: "Bash",
+		Input: newToolInput(t, map[string]string{
+			"command": longCmd,
+		}),
+	}
+	got := formatToolUse(b)
+	if !strings.Contains(got, longCmd) {
+		t.Errorf("long bash command was truncated:\ninput:  %q\nresult: %q", longCmd, got)
+	}
+	if strings.Contains(got, "…") {
+		t.Errorf("unexpected truncation ellipsis for normal-length args: %q", got)
+	}
+}
+
+func TestFormatToolUse_HugeArgStillSoftCapped(t *testing.T) {
+	huge := strings.Repeat("X", toolUseArgSoftCap+1000)
+	b := claudeContentBlock{
+		Type:  "tool_use",
+		Name:  "Bash",
+		Input: newToolInput(t, map[string]string{"command": huge}),
+	}
+	got := formatToolUse(b)
+	// Pathological input still gets clamped; the cap is generous
+	// (>3× a typical 80-col terminal line) so normal flows never
+	// hit it.
+	if !strings.HasSuffix(got, "…)") {
+		t.Errorf("expected ellipsis on pathological input, got tail: %q", got[len(got)-50:])
+	}
+}
+
+func TestRenderToolResultBody_PreservesAllLines(t *testing.T) {
+	body := "Wrote 734 lines to file.dart\n  1 import 'package:flutter/material.dart';\n  2 import 'dart:async';\n  3 \n  4 void main() {\n  5   runApp(const MyApp());\n  6 }\n  7 \n  8 // ... 727 more lines ..."
+	got := renderToolResultBody(body)
+	// First line gets the bullet; rest gets continuation indent.
+	if !strings.HasPrefix(got, "  └ Wrote 734 lines") {
+		t.Errorf("first-line prefix missing:\n%s", got)
+	}
+	// Every original non-empty line must survive.
+	for _, want := range []string{
+		"import 'package:flutter/material.dart';",
+		"runApp(const MyApp());",
+		"// ... 727 more lines ...",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("line dropped %q in:\n%s", want, got)
+		}
+	}
+	// No 200-char cap → length should match the input plus prefixes.
+	if len(got) < len(body) {
+		t.Errorf("output shorter than input — content was lost; got %d bytes for %d-byte input",
+			len(got), len(body))
+	}
+}
+
+func TestRenderToolResultBody_EmptyAndWhitespaceOnly(t *testing.T) {
+	if renderToolResultBody("") != "" {
+		t.Error("empty input should produce empty output")
+	}
+	if renderToolResultBody("   \n   \n") != "" {
+		t.Error("whitespace-only input should produce empty output")
+	}
+}
+
+// Long turn = many tool_use/tool_result entries in a row.
+// Previously capped at 60 entries, which silently dropped the start
+// of any turn longer than that. Now bumped to 5000; the test
+// constructs a long turn and asserts the EARLIEST assistant text
+// survives the window.
+func TestRenderClaudeRecentTurn_LongTurnSurvivesWindow(t *testing.T) {
+	tmp := t.TempDir()
+	jsonl := filepath.Join(tmp, "session.jsonl")
+
+	lines := []string{
+		mustEntry(t, "user", "do many things"),
+		mustEntry(t, "assistant", "FIRST_REPLY_SENTINEL — kicking off a long turn"),
+	}
+	// 78 tool_use + tool_result pairs follow → 158 entries total
+	// in the turn. Old cap of 60 would have lost everything up to
+	// entry 98.
+	for i := 0; i < 78; i++ {
+		useID := fmt.Sprintf("tool_use_%d", i)
+		lines = append(lines, assistantWithTool(t, "",
+			useID, "Bash", map[string]string{
+				"command": fmt.Sprintf("echo step-%d", i),
+			}))
+		lines = append(lines, userToolResult(t, useID,
+			fmt.Sprintf("step-%d done", i)))
+	}
+	lines = append(lines, mustEntry(t, "assistant",
+		"LAST_REPLY_SENTINEL — wrapping up"))
+
+	if err := os.WriteFile(jsonl, []byte(strings.Join(lines, "\n")+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := renderClaudeRecentTurn(jsonl, 5000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(got, "FIRST_REPLY_SENTINEL") {
+		t.Errorf("start of long turn missing — entry window too small")
+	}
+	if !strings.Contains(got, "LAST_REPLY_SENTINEL") {
+		t.Errorf("end of long turn missing")
+	}
+}
+
+// Multi-line tool_result must render as "  └ first / 4-space rest",
+// preserving every line. Previously each result was compressed to
+// "  └ line1 · line2 · line3" with a 200-rune cap.
+func TestRenderToolResults_MultilineRespectsIndent(t *testing.T) {
+	useID := "tool_read"
+	summary := map[string]string{useID: "Read(big.go)"}
+	long := "Read 500 lines from big.go\n" + strings.Repeat("line content here\n", 60)
+	blocks := []claudeContentBlock{{
+		Type:       "tool_result",
+		ToolUseID:  useID,
+		RawContent: mustRawString(t, long),
+	}}
+	var b strings.Builder
+	renderToolResults(&b, blocks, summary)
+	out := b.String()
+	if !strings.Contains(out, "  └ Read 500 lines from big.go") {
+		t.Errorf("first-line bullet missing:\n%s", out)
+	}
+	if !strings.Contains(out, "\n    line content here") {
+		t.Errorf("continuation indent missing — multi-line was flattened or dropped:\n%s", out)
+	}
+	// All 60 "line content here" lines should be present.
+	if got := strings.Count(out, "line content here"); got != 60 {
+		t.Errorf("lines dropped: got %d, want 60", got)
+	}
+}

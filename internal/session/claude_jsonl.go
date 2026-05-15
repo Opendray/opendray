@@ -327,7 +327,12 @@ func claudeRecentResponse(cwd string) string {
 	if jsonlPath == "" {
 		return ""
 	}
-	out, err := renderClaudeRecentTurn(jsonlPath, 60)
+	// 5000 entries is enough headroom for marathon turns with many
+	// tool calls — the previous 60-entry window silently dropped
+	// the start of any long turn. The channel layer (and any
+	// per-channel notify_snippet_max_chars cap) is the right place
+	// to constrain user-facing output; the source emits everything.
+	out, err := renderClaudeRecentTurn(jsonlPath, 5000)
 	if err != nil {
 		return ""
 	}
@@ -648,8 +653,17 @@ func renderAssistantBlocks(out *strings.Builder, blocks []claudeContentBlock, to
 }
 
 // renderToolResults emits the textual content of any tool_result
-// blocks in this user entry. Each result is attached as "  └ <first
-// few lines>" so the reader sees the outcome of each tool call.
+// blocks in this user entry. The first line of each result gets a
+// "  └ " prefix; subsequent lines align with 4-space indent so
+// multi-line outputs (Read, Bash, web fetches) remain readable
+// inside the bullet-list flow.
+//
+// We deliberately emit the FULL result text — no 3-line / 200-rune
+// preview cap. The channel layer (notify_snippet_max_chars or
+// Telegram's per-message splitter) is the right place to constrain
+// transport-level limits. Capping here silently lost content even
+// when the operator explicitly opted into "Unlimited — split into
+// multiple messages".
 func renderToolResults(out *strings.Builder, blocks []claudeContentBlock, toolUseSummary map[string]string) {
 	for _, b := range blocks {
 		if b.Type != "tool_result" {
@@ -659,8 +673,12 @@ func renderToolResults(out *strings.Builder, blocks []claudeContentBlock, toolUs
 		if text == "" {
 			continue
 		}
-		preview := summariseToolResult(text)
-		fmt.Fprintf(out, "  └ %s\n\n", preview)
+		body := renderToolResultBody(text)
+		if body == "" {
+			continue
+		}
+		out.WriteString(body)
+		out.WriteString("\n\n")
 		// Track which tool calls have been answered.
 		delete(toolUseSummary, b.ToolUseID)
 	}
@@ -675,6 +693,14 @@ func renderToolResults(out *strings.Builder, blocks []claudeContentBlock, toolUs
 //	Edit(README.md)
 //	AskUserQuestion: choose a model
 //	WebFetch(https://example.com/api)
+//
+// Per-arg truncation here would silently lose meaningful content
+// from the chat snippet (long shell commands, web URLs, multi-line
+// question prompts). The channel layer is responsible for
+// platform-level chunking — see internal/channel/telegram. We keep
+// a generous safety cap (toolUseArgSoftCap) only to defang
+// pathological inputs like a multi-megabyte Bash blob; in normal
+// use this never fires.
 func formatToolUse(b claudeContentBlock) string {
 	name := b.Name
 	if name == "" {
@@ -690,51 +716,73 @@ func formatToolUse(b claudeContentBlock) string {
 	case in.Path != "":
 		return fmt.Sprintf("%s(%s)", name, in.Path)
 	case in.Command != "":
-		cmd := truncateRunes(in.Command, 80)
+		cmd := softTruncate(in.Command)
 		out := fmt.Sprintf("%s(%s)", name, cmd)
 		if in.Description != "" {
-			out += " — " + truncateRunes(in.Description, 60)
+			out += " — " + softTruncate(in.Description)
 		}
 		return out
 	case in.Pattern != "":
-		return fmt.Sprintf("%s(%s)", name, truncateRunes(in.Pattern, 60))
+		return fmt.Sprintf("%s(%s)", name, softTruncate(in.Pattern))
 	case in.Query != "":
-		return fmt.Sprintf("%s(%s)", name, truncateRunes(in.Query, 60))
+		return fmt.Sprintf("%s(%s)", name, softTruncate(in.Query))
 	case in.URL != "":
-		return fmt.Sprintf("%s(%s)", name, truncateRunes(in.URL, 80))
+		return fmt.Sprintf("%s(%s)", name, softTruncate(in.URL))
 	case in.Question != "":
-		return fmt.Sprintf("%s: %s", name, truncateRunes(in.Question, 80))
+		return fmt.Sprintf("%s: %s", name, softTruncate(in.Question))
 	case in.Prompt != "":
-		return fmt.Sprintf("%s: %s", name, truncateRunes(in.Prompt, 80))
+		return fmt.Sprintf("%s: %s", name, softTruncate(in.Prompt))
 	case in.Description != "":
-		return fmt.Sprintf("%s — %s", name, truncateRunes(in.Description, 80))
+		return fmt.Sprintf("%s — %s", name, softTruncate(in.Description))
 	}
 	return name
 }
 
-// summariseToolResult condenses a tool_result body to a 1–3 line
-// preview so the conversation stays scannable. For "Wrote N lines
-// to FILE" / "Read N lines" Claude's own summary lines we keep the
-// whole first line; otherwise we cap at the first ~3 non-empty
-// lines.
-func summariseToolResult(text string) string {
-	lines := strings.Split(strings.ReplaceAll(text, "\r", ""), "\n")
-	out := make([]string, 0, 3)
-	for _, l := range lines {
-		t := strings.TrimSpace(l)
-		if t == "" {
-			continue
-		}
-		out = append(out, t)
-		if len(out) >= 3 {
-			break
-		}
-	}
-	if len(out) == 0 {
+// toolUseArgSoftCap is the only place we still cap a tool_use arg.
+// Larger than any reasonable command line / URL / pattern / prompt;
+// trips only on adversarial input. The trailing "…" makes the
+// truncation obvious if it ever happens.
+const toolUseArgSoftCap = 4000
+
+func softTruncate(s string) string {
+	return truncateRunes(s, toolUseArgSoftCap)
+}
+
+// renderToolResultBody formats a tool_result for embedding under
+// its parent tool_use bullet. First non-empty line gets "  └ ";
+// subsequent lines align with a 4-space continuation indent so the
+// block reads as one logical unit:
+//
+//	● Read(file.go)
+//	  └ first matching line
+//	    second matching line
+//	    ...
+//
+// No content is dropped. CR characters are normalised; trailing
+// blank lines trimmed; that's it.
+func renderToolResultBody(text string) string {
+	if text == "" {
 		return ""
 	}
-	preview := strings.Join(out, " · ")
-	return truncateRunes(preview, 200)
+	lines := strings.Split(strings.ReplaceAll(text, "\r", ""), "\n")
+	// Trim trailing whitespace-only lines so the "\n\n" the caller
+	// appends doesn't snowball into 4+ blank lines.
+	for len(lines) > 0 && strings.TrimSpace(lines[len(lines)-1]) == "" {
+		lines = lines[:len(lines)-1]
+	}
+	if len(lines) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	for i, l := range lines {
+		if i == 0 {
+			b.WriteString("  └ ")
+		} else {
+			b.WriteString("\n    ")
+		}
+		b.WriteString(l)
+	}
+	return b.String()
 }
 
 func truncateRunes(s string, n int) string {
