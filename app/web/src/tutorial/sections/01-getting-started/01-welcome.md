@@ -11,7 +11,7 @@ it needs attention.
 | Page | What it's for |
 | --- | --- |
 | **Sessions** | Spawn / attach to / drive CLI sessions in a multi-tab terminal. The day-to-day workbench. |
-| **Channels** | Wire up Telegram / Slack / Discord / Feishu / DingTalk / WeCom / personal-WeChat push so you get notified when sessions go idle, and reply from your phone. |
+| **Channels** | Wire up Telegram / Slack / Discord / Feishu / DingTalk / WeCom so you get notified when sessions go idle, and reply from your phone. |
 | **Providers** | Configure CLI providers (Claude, Codex, …) — paths, env vars, default args. |
 | **Integrations** | Expose opendray itself as an HTTP gateway to third-party tools (managed reverse proxy, signed integration tokens). |
 | **Activity** | Live tail of every event on the bus — useful for debugging notification flow, channel inbound, etc. |

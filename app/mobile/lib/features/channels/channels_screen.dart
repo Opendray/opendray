@@ -10,6 +10,7 @@ import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/core/i18n/strings.g.dart' as i18n;
 import 'package:opendray/features/channels/channel_form_dialog.dart';
 import 'package:opendray/features/channels/channel_kinds.dart';
+import 'package:opendray/features/channels/channel_visual.dart';
 
 // Notification destinations (Slack / Feishu / DingTalk / WeCom /
 // bridge). Read-only list. Per-row actions: test-send, toggle
@@ -557,22 +558,7 @@ class _ChannelTile extends StatelessWidget {
     final muted = Theme.of(context).textTheme.bodySmall;
     return ListTile(
       onTap: busy ? null : onTap,
-      leading: Container(
-        width: 36,
-        height: 36,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          channel.kind.isNotEmpty ? channel.kind[0].toUpperCase() : '?',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.primary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
+      leading: ChannelBrandIcon(kind: channel.kind),
       title: Row(
         children: [
           Flexible(

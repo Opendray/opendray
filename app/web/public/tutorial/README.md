@@ -30,7 +30,6 @@ expected path so half-finished sections still read sensibly.
 - `feishu-channel-webhook.png` — opendray channel card displaying the webhook URL row
 - `dingtalk-robot-create.png` — DingTalk group robot create dialog with Sign secret
 - `wecom-robot-url.png` — WeCom group robot URL reveal
-- `wechat-wxpusher-app.png` — WxPusher 应用管理 with App Token
 - `bridge-create-form.png` — Bridge channel create form (token + capabilities)
 - `bridge-adapter-setup.png` — Bridge adapter setup dialog with Python/Node tabs
 

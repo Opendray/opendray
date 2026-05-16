@@ -3,10 +3,11 @@ import 'package:flutter/services.dart';
 
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/channels/channel_kinds.dart';
+import 'package:opendray/features/channels/channel_visual.dart';
 
 // ChannelFormScreen renders a kind-driven form for create or edit on
-// a full Scaffold so multi-field configs (slack, feishu, wechat) get
-// the whole screen above the keyboard rather than the cramped middle
+// a full Scaffold so multi-field configs (slack, feishu) get the
+// whole screen above the keyboard rather than the cramped middle
 // strip a dialog leaves them with on a phone.
 //
 // Field types map to TextField (text, password) or multi-line
@@ -258,25 +259,7 @@ class ChannelKindPickerSheet extends StatelessWidget {
                 itemBuilder: (_, i) {
                   final k = kinds[i];
                 return ListTile(
-                  leading: Container(
-                    width: 36,
-                    height: 36,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      k.kind[0].toUpperCase(),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                  leading: ChannelBrandIcon(kind: k.kind),
                   title: Text(k.label),
                   subtitle: Text(
                     k.description,

@@ -2189,7 +2189,6 @@ class _TranslationsChannelsKindsZh extends TranslationsChannelsKindsEn {
 	@override late final _TranslationsChannelsKindsFeishuZh feishu = _TranslationsChannelsKindsFeishuZh._(_root);
 	@override late final _TranslationsChannelsKindsDingtalkZh dingtalk = _TranslationsChannelsKindsDingtalkZh._(_root);
 	@override late final _TranslationsChannelsKindsWecomZh wecom = _TranslationsChannelsKindsWecomZh._(_root);
-	@override late final _TranslationsChannelsKindsWechatZh wechat = _TranslationsChannelsKindsWechatZh._(_root);
 }
 
 // Path: notesPage.editor
@@ -5476,23 +5475,6 @@ class _TranslationsChannelsKindsWecomZh extends TranslationsChannelsKindsWecomEn
 	@override String get webhookKeyPlaceholder => '「key=」查询参数值';
 	@override String get webhookKeyHint => '或将整个 webhook URL 粘贴到下方字段 — 任一即可。';
 	@override String get webhookUrlLabel => '或完整 webhook URL';
-}
-
-// Path: channels.kinds.wechat
-class _TranslationsChannelsKindsWechatZh extends TranslationsChannelsKindsWechatEn {
-	_TranslationsChannelsKindsWechatZh._(TranslationsZh root) : this._root = root, super.internal(root);
-
-	final TranslationsZh _root; // ignore: unused_field
-
-	// Translations
-	@override String get description => '通过 WxPusher 推送到个人微信。仅外发 — 推送服务不转发用户回复。每个接收方需通过二维码订阅一次。';
-	@override String get appTokenLabel => 'App token（AT_…）';
-	@override String get appTokenHint => 'WxPusher → 应用管理 → 创建应用 → 复制 App Token。';
-	@override String get uidsLabel => '接收方 UID（每行一个）';
-	@override String get uidsHint => 'UID 或 topic ID 至少需要一个。';
-	@override String get topicIdsLabel => 'Topic ID（每行一个）';
-	@override String get urlLabel => '点击跳转 URL';
-	@override String get urlHint => '设置后，点击微信通知会打开此页面。';
 }
 
 // Path: dataExport.form.integrationOptions
@@ -9928,14 +9910,6 @@ extension on TranslationsZh {
 			'channels.kinds.wecom.webhookKeyPlaceholder' => '「key=」查询参数值',
 			'channels.kinds.wecom.webhookKeyHint' => '或将整个 webhook URL 粘贴到下方字段 — 任一即可。',
 			'channels.kinds.wecom.webhookUrlLabel' => '或完整 webhook URL',
-			'channels.kinds.wechat.description' => '通过 WxPusher 推送到个人微信。仅外发 — 推送服务不转发用户回复。每个接收方需通过二维码订阅一次。',
-			'channels.kinds.wechat.appTokenLabel' => 'App token（AT_…）',
-			'channels.kinds.wechat.appTokenHint' => 'WxPusher → 应用管理 → 创建应用 → 复制 App Token。',
-			'channels.kinds.wechat.uidsLabel' => '接收方 UID（每行一个）',
-			'channels.kinds.wechat.uidsHint' => 'UID 或 topic ID 至少需要一个。',
-			'channels.kinds.wechat.topicIdsLabel' => 'Topic ID（每行一个）',
-			'channels.kinds.wechat.urlLabel' => '点击跳转 URL',
-			'channels.kinds.wechat.urlHint' => '设置后，点击微信通知会打开此页面。',
 			'onboarding.gatewayLabel' => '网关 URL',
 			'onboarding.gatewayHint' => 'https://opendray.example.com',
 			'onboarding.kContinue' => '继续',

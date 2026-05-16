@@ -98,7 +98,6 @@ Trimmed content shows a `[…]` prefix marker.
 | Feishu | Card v2 markdown with `lark_md` content type |
 | DingTalk | actionCard markdown |
 | WeCom | Markdown with WeCom's limited subset |
-| WeChat | WxPusher-flavoured CommonMark |
 | Bridge | Whatever the adapter decided to render |
 
 ## Mute toggle

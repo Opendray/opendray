@@ -3363,16 +3363,6 @@
         "webhookKeyPlaceholder": "The \"key=\" query value",
         "webhookKeyHint": "Or paste the whole webhook URL into the field below — either is enough.",
         "webhookUrlLabel": "Or full webhook URL"
-      },
-      "wechat": {
-        "description": "Push to personal WeChat via WxPusher. Outbound-only — push services do not relay user replies. Each recipient subscribes once via QR code.",
-        "appTokenLabel": "App token (AT_…)",
-        "appTokenHint": "WxPusher → 应用管理 → 创建应用 → 复制 App Token.",
-        "uidsLabel": "Recipient UIDs (one per line)",
-        "uidsHint": "Either UIDs or topic IDs is required.",
-        "topicIdsLabel": "Topic IDs (one per line)",
-        "urlLabel": "Tap-through URL",
-        "urlHint": "When set, tapping the WeChat notification opens this page."
       }
     }
   },

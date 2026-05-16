@@ -224,45 +224,9 @@ List<ChannelKind> channelKindsList() => [
           ),
         ],
       ),
-      ChannelKind(
-        kind: 'wechat',
-        label: 'WeChat (个人微信)',
-        description: t.channels.kinds.wechat.description,
-        tokenFields: const ['app_token'],
-        fields: [
-          ChannelField(
-            name: 'app_token',
-            label: t.channels.kinds.wechat.appTokenLabel,
-            type: ChannelFieldType.password,
-            required: true,
-            placeholder: 'AT_xxxxxxxxxxxxx',
-            hint: t.channels.kinds.wechat.appTokenHint,
-          ),
-          ChannelField(
-            name: 'uids',
-            label: t.channels.kinds.wechat.uidsLabel,
-            type: ChannelFieldType.textarea,
-            optional: true,
-            placeholder: 'UID_xxxxxxxxxxxx\nUID_yyyyyyyyyyyy',
-            hint: t.channels.kinds.wechat.uidsHint,
-          ),
-          ChannelField(
-            name: 'topic_ids',
-            label: t.channels.kinds.wechat.topicIdsLabel,
-            type: ChannelFieldType.textarea,
-            optional: true,
-            placeholder: '123\n456',
-          ),
-          ChannelField(
-            name: 'url',
-            label: t.channels.kinds.wechat.urlLabel,
-            type: ChannelFieldType.text,
-            optional: true,
-            placeholder: 'https://opendray.example/',
-            hint: t.channels.kinds.wechat.urlHint,
-          ),
-        ],
-      ),
+      // Personal-WeChat (WxPusher) entry removed from the create
+      // flow — see app/shared/src/lib/channelKinds.ts for the
+      // rationale. The server adapter remains for back-compat.
     ];
 
 ChannelKind? findKind(String kind) {

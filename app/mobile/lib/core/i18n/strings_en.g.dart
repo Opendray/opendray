@@ -4250,7 +4250,6 @@ class TranslationsChannelsKindsEn {
 	late final TranslationsChannelsKindsFeishuEn feishu = TranslationsChannelsKindsFeishuEn.internal(_root);
 	late final TranslationsChannelsKindsDingtalkEn dingtalk = TranslationsChannelsKindsDingtalkEn.internal(_root);
 	late final TranslationsChannelsKindsWecomEn wecom = TranslationsChannelsKindsWecomEn.internal(_root);
-	late final TranslationsChannelsKindsWechatEn wechat = TranslationsChannelsKindsWechatEn.internal(_root);
 }
 
 // Path: notesPage.editor
@@ -10366,39 +10365,6 @@ class TranslationsChannelsKindsWecomEn {
 	String get webhookUrlLabel => 'Or full webhook URL';
 }
 
-// Path: channels.kinds.wechat
-class TranslationsChannelsKindsWechatEn {
-	TranslationsChannelsKindsWechatEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Push to personal WeChat via WxPusher. Outbound-only — push services do not relay user replies. Each recipient subscribes once via QR code.'
-	String get description => 'Push to personal WeChat via WxPusher. Outbound-only — push services do not relay user replies. Each recipient subscribes once via QR code.';
-
-	/// en: 'App token (AT_…)'
-	String get appTokenLabel => 'App token (AT_…)';
-
-	/// en: 'WxPusher → 应用管理 → 创建应用 → 复制 App Token.'
-	String get appTokenHint => 'WxPusher → 应用管理 → 创建应用 → 复制 App Token.';
-
-	/// en: 'Recipient UIDs (one per line)'
-	String get uidsLabel => 'Recipient UIDs (one per line)';
-
-	/// en: 'Either UIDs or topic IDs is required.'
-	String get uidsHint => 'Either UIDs or topic IDs is required.';
-
-	/// en: 'Topic IDs (one per line)'
-	String get topicIdsLabel => 'Topic IDs (one per line)';
-
-	/// en: 'Tap-through URL'
-	String get urlLabel => 'Tap-through URL';
-
-	/// en: 'When set, tapping the WeChat notification opens this page.'
-	String get urlHint => 'When set, tapping the WeChat notification opens this page.';
-}
-
 // Path: dataExport.form.integrationOptions
 class TranslationsDataExportFormIntegrationOptionsEn {
 	TranslationsDataExportFormIntegrationOptionsEn.internal(this._root);
@@ -16147,14 +16113,6 @@ extension on Translations {
 			'channels.kinds.wecom.webhookKeyPlaceholder' => 'The "key=" query value',
 			'channels.kinds.wecom.webhookKeyHint' => 'Or paste the whole webhook URL into the field below — either is enough.',
 			'channels.kinds.wecom.webhookUrlLabel' => 'Or full webhook URL',
-			'channels.kinds.wechat.description' => 'Push to personal WeChat via WxPusher. Outbound-only — push services do not relay user replies. Each recipient subscribes once via QR code.',
-			'channels.kinds.wechat.appTokenLabel' => 'App token (AT_…)',
-			'channels.kinds.wechat.appTokenHint' => 'WxPusher → 应用管理 → 创建应用 → 复制 App Token.',
-			'channels.kinds.wechat.uidsLabel' => 'Recipient UIDs (one per line)',
-			'channels.kinds.wechat.uidsHint' => 'Either UIDs or topic IDs is required.',
-			'channels.kinds.wechat.topicIdsLabel' => 'Topic IDs (one per line)',
-			'channels.kinds.wechat.urlLabel' => 'Tap-through URL',
-			'channels.kinds.wechat.urlHint' => 'When set, tapping the WeChat notification opens this page.',
 			'onboarding.gatewayLabel' => 'Gateway URL',
 			'onboarding.gatewayHint' => 'https://opendray.example.com',
 			'onboarding.kContinue' => 'Continue',

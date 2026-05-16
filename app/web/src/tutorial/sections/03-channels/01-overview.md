@@ -25,18 +25,17 @@ shared, so once you've wired up one channel the rest is identical.
 | `feishu` | webhook | tenant API | **yes** | China / cross-org formal channels |
 | `dingtalk` | (none) | group robot | no | China enterprise group rooms |
 | `wecom` | (none) | group robot | no | WeCom (企业微信) group rooms |
-| `wechat` | (none, push) | wxpusher | no | personal WeChat phone alerts |
 | `bridge` | WebSocket | WebSocket | no (token-auth) | custom platforms (Line / KakaoTalk / your own) |
 
 ## Capability comparison
 
-| Capability | telegram | slack | discord | feishu | dingtalk | wecom | wechat | bridge |
-|---|---|---|---|---|---|---|---|---|
-| Receive user replies | ✓ | ✓ | ✓ | ✓ | — | — | — | ✓ |
-| Markdown body | ✓ HTML | ✓ blocks | ✓ embed | ✓ card | ✓ md | ✓ md | ✓ md | adapter |
-| Inline buttons | ✓ | ✓ | ✓ | ✓ | nav-only | nav-only | nav-only | adapter |
-| Reply-to-message routing | ✓ | ✓ thread | ✓ ref | ✓ reply | — | — | — | adapter |
-| Edit-in-place updates | ✓ | ✓ | ✓ | partial | — | — | — | adapter |
+| Capability | telegram | slack | discord | feishu | dingtalk | wecom | bridge |
+|---|---|---|---|---|---|---|---|
+| Receive user replies | ✓ | ✓ | ✓ | ✓ | — | — | ✓ |
+| Markdown body | ✓ HTML | ✓ blocks | ✓ embed | ✓ card | ✓ md | ✓ md | adapter |
+| Inline buttons | ✓ | ✓ | ✓ | ✓ | nav-only | nav-only | adapter |
+| Reply-to-message routing | ✓ | ✓ thread | ✓ ref | ✓ reply | — | — | adapter |
+| Edit-in-place updates | ✓ | ✓ | ✓ | partial | — | — | adapter |
 
 "nav-only" = group robots can't fire callback buttons, but URL links
 still render as tappable rows.
@@ -44,8 +43,8 @@ still render as tappable rows.
 ## Where to next
 
 - Pick your platform from the TOC: Telegram / Slack / Discord /
-  Feishu / DingTalk / WeCom / WeChat / Bridge — each has its own
-  setup section.
+  Feishu / DingTalk / WeCom / Bridge — each has its own setup
+  section.
 - After at least one channel is running, read **Notifications
   panel** (mode, topics, snippet cap) and **Multi-session routing**
   (reply-to-message, `/select`, `/sessions`) — they apply to every

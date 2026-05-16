@@ -3363,16 +3363,6 @@
         "webhookKeyPlaceholder": "「key=」查询参数值",
         "webhookKeyHint": "或将整个 webhook URL 粘贴到下方字段 — 任一即可。",
         "webhookUrlLabel": "或完整 webhook URL"
-      },
-      "wechat": {
-        "description": "通过 WxPusher 推送到个人微信。仅外发 — 推送服务不转发用户回复。每个接收方需通过二维码订阅一次。",
-        "appTokenLabel": "App token（AT_…）",
-        "appTokenHint": "WxPusher → 应用管理 → 创建应用 → 复制 App Token。",
-        "uidsLabel": "接收方 UID（每行一个）",
-        "uidsHint": "UID 或 topic ID 至少需要一个。",
-        "topicIdsLabel": "Topic ID（每行一个）",
-        "urlLabel": "点击跳转 URL",
-        "urlHint": "设置后，点击微信通知会打开此页面。"
       }
     }
   },

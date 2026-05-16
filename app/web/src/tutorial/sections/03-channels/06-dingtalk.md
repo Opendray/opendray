@@ -15,7 +15,6 @@ callbacks — but pairs well with the *Notify on session.idle* +
 |---|---|
 | Just notifications, no replies | DingTalk group robot |
 | Replies / interactive buttons | Feishu or bridge |
-| 个人微信 push to phone | wechat (wxpusher) |
 
 ## 1. Add a custom robot to a group
 

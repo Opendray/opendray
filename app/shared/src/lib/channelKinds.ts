@@ -236,49 +236,12 @@ export const KIND_DEFS: KindDef[] = [
       },
     ],
   },
-  {
-    kind: 'wechat',
-    label: 'WeChat (个人微信)',
-    emoji: '💚',
-    iconKey: 'wechat',
-    description:
-      'Push to personal WeChat via WxPusher (https://wxpusher.zjiecode.com). Outbound-only — push services do not relay user replies. Each recipient subscribes once via QR code.',
-    tokenFields: ['app_token'],
-    fields: [
-      {
-        name: 'app_token',
-        label: 'App token (AT_…)',
-        type: 'password',
-        required: true,
-        placeholder: 'AT_xxxxxxxxxxxxx',
-        hint: 'WxPusher → 应用管理 → 创建应用 → 复制 App Token.',
-      },
-      {
-        name: 'uids',
-        label: 'Recipient UIDs (one per line)',
-        type: 'textarea',
-        optional: true,
-        placeholder: 'UID_xxxxxxxxxxxx\nUID_yyyyyyyyyyyy',
-        hint: 'Each recipient scans your app\'s QR code in WeChat to obtain a UID. Either UIDs or topic IDs is required.',
-      },
-      {
-        name: 'topic_ids',
-        label: 'Topic IDs (one per line)',
-        type: 'textarea',
-        optional: true,
-        placeholder: '123\n456',
-        hint: 'WxPusher → 主题管理 → create a topic → anyone subscribed to it receives every push.',
-      },
-      {
-        name: 'url',
-        label: 'Tap-through URL (optional)',
-        type: 'text',
-        optional: true,
-        placeholder: 'https://opendray.example/',
-        hint: 'When set, tapping the WeChat notification opens this page.',
-      },
-    ],
-  },
+  // Personal-WeChat (WxPusher) used to live here. Removed as a
+  // create-flow option because it's outbound-only — operators
+  // expecting a two-way channel had a frustrating discovery
+  // experience. The server-side adapter stays so historical
+  // channels keep working; only the New Channel entry point and
+  // its tutorial are gone.
 ]
 
 export function getKindDef(kind: string): KindDef | undefined {
