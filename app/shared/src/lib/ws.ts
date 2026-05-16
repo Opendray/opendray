@@ -12,6 +12,15 @@ export function wsURL(path: string, token: string): string {
 
 export interface BinaryWSCallbacks {
   onMessage?: (data: Uint8Array) => void
+  /**
+   * Optional handler for TextMessage frames. opendray's session
+   * stream uses these for out-of-band control payloads (currently
+   * just `{"type":"pty_size","cols":N,"rows":M}` at handshake +
+   * future PTY-size pushes). When unset, text frames fall through
+   * to onMessage as UTF-8 bytes — preserving pre-existing
+   * behaviour for callers that don't care about the distinction.
+   */
+  onText?: (text: string) => void
   onOpen?: () => void
   onClose?: () => void
   onError?: (err: Event) => void
@@ -82,7 +91,13 @@ export class BinaryWS {
       if (ev.data instanceof ArrayBuffer) {
         this.cb.onMessage?.(new Uint8Array(ev.data))
       } else if (typeof ev.data === 'string') {
-        this.cb.onMessage?.(new TextEncoder().encode(ev.data))
+        if (this.cb.onText) {
+          this.cb.onText(ev.data)
+        } else {
+          // Legacy fallback: deliver text frames as UTF-8 bytes so
+          // callers that haven't opted into onText still see them.
+          this.cb.onMessage?.(new TextEncoder().encode(ev.data))
+        }
       }
     }
     ws.onerror = (ev) => {

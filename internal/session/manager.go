@@ -37,6 +37,16 @@ const (
 	// canvas. Cards rendering wider than this get clipped.
 	defaultVTCols = 120
 	defaultVTRows = 40
+
+	// defaultPTYCols / defaultPTYRows is the canvas the PTY is seeded
+	// to when a session spawns. The TUI uses this until a client
+	// connects and asks for a different size. 100x32 is roughly the
+	// middle ground between a typical desktop terminal (120-160) and
+	// a portrait-phone xterm (60-80) — wide enough that Claude /
+	// Gemini layouts don't truncate, narrow enough that mobile
+	// xterm-equivalent forks don't have to scroll.
+	defaultPTYCols = 100
+	defaultPTYRows = 32
 )
 
 // ClientKind tags a subscriber so the manager can gate resize
@@ -415,6 +425,12 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		_ = os.RemoveAll(tempDir)
 		return nil, fmt.Errorf("pty.Start: %w", err)
 	}
+	// Seed a default PTY canvas at spawn so the TUI has a sensible
+	// initial layout even before any client connects and resizes.
+	// Whoever attaches first (typically mobile) may then resize via
+	// Manager.Resize; whoever attaches second adapts its viewport
+	// (font scaling on web) rather than re-driving the canvas.
+	_ = pty.Setsize(ptmx, &pty.Winsize{Cols: defaultPTYCols, Rows: defaultPTYRows})
 
 	sess.PID = cmd.Process.Pid
 	sess.State = StateRunning
@@ -762,6 +778,23 @@ func (m *Manager) Resize(_ context.Context, id string, kind ClientKind, cols, ro
 		rs.vt.Resize(int(cols), int(rows))
 	}
 	return pty.Setsize(rs.pty, &pty.Winsize{Cols: cols, Rows: rows})
+}
+
+// PTYSize returns the current cols × rows of the session's PTY,
+// as the kernel sees it. Used by the WS handshake to tell web
+// clients what canvas size to render at — web's xterm grid
+// locks to this size and the client adjusts font scaling locally
+// to fill its window. Mobile clients drive the size via Resize.
+func (m *Manager) PTYSize(_ context.Context, id string) (cols, rows uint16, err error) {
+	rs := m.lookup(id)
+	if rs == nil {
+		return 0, 0, ErrNotFound
+	}
+	r, c, gerr := pty.Getsize(rs.pty)
+	if gerr != nil {
+		return 0, 0, fmt.Errorf("pty getsize: %w", gerr)
+	}
+	return uint16(c), uint16(r), nil
 }
 
 // Subscribe registers a channel that receives every chunk of stdout
