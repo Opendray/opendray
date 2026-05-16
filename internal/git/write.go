@@ -47,7 +47,10 @@ func (h *Handlers) MountWrite(r chi.Router) {
 		r.Get("/branches", h.listBranches)
 		r.Post("/branches", h.createBranch)
 		r.Post("/checkout", h.checkoutBranch)
-		r.Delete("/branches/{name}", h.deleteBranch)
+		// Branch names contain '/' (feat/foo) so we can't use a
+		// {name} path segment — chi reads each '/' as a path
+		// boundary and 404s. Query param keeps it unambiguous.
+		r.Delete("/branches", h.deleteBranch)
 		r.Post("/stage", h.stageFiles)
 		r.Post("/unstage", h.unstageFiles)
 		r.Post("/commit", h.commit)
@@ -278,7 +281,7 @@ func (h *Handlers) deleteBranch(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
-	name := chi.URLParam(r, "name")
+	name := strings.TrimSpace(r.URL.Query().Get("name"))
 	if !validBranchName(name) {
 		writeError(w, http.StatusBadRequest, errors.New("invalid branch name"))
 		return
@@ -292,7 +295,14 @@ func (h *Handlers) deleteBranch(w http.ResponseWriter, r *http.Request) {
 		flag = "-D"
 	}
 	if out, err := runCombined(r.Context(), dir, "branch", flag, name); err != nil {
-		writeError(w, http.StatusInternalServerError,
+		// "not fully merged" is git's safe-delete refusal — surface
+		// it as 409 Conflict so the client can offer a force-delete
+		// flow without string-matching the body.
+		status := http.StatusInternalServerError
+		if strings.Contains(strings.ToLower(out), "not fully merged") {
+			status = http.StatusConflict
+		}
+		writeError(w, status,
 			fmt.Errorf("delete branch: %w (%s)", err, out))
 		return
 	}

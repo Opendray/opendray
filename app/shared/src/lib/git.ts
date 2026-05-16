@@ -110,12 +110,13 @@ export async function deleteGitBranch(
   name: string,
   force = false,
 ): Promise<void> {
-  const params = new URLSearchParams({ path })
+  // Name in query (not path) because feat/foo-style branches
+  // break chi's single-segment {name} matcher and 404.
+  const params = new URLSearchParams({ path, name })
   if (force) params.set('force', 'true')
-  await api(
-    `/api/v1/git/write/branches/${encodeURIComponent(name)}?${params.toString()}`,
-    { method: 'DELETE' },
-  )
+  await api(`/api/v1/git/write/branches?${params.toString()}`, {
+    method: 'DELETE',
+  })
 }
 
 // Empty files[] stages all (`.`).

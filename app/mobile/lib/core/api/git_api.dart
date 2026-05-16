@@ -500,7 +500,9 @@ class GitApi {
     }
   }
 
-  // DELETE /git/write/branches/{name}. force=true upgrades the
+  // DELETE /git/write/branches?path=&name=&force=. Name lives in
+  // the query (not the path) because feat/foo-style branches break
+  // chi's single-segment {name} matcher. force=true upgrades the
   // safe -d to -D (forces deletion of unmerged branches).
   Future<void> deleteBranch({
     required String dir,
@@ -509,8 +511,12 @@ class GitApi {
   }) async {
     try {
       await _dio.delete<void>(
-        '/api/v1/git/write/branches/$name',
-        queryParameters: {'path': dir, if (force) 'force': 'true'},
+        '/api/v1/git/write/branches',
+        queryParameters: {
+          'path': dir,
+          'name': name,
+          if (force) 'force': 'true',
+        },
       );
     } on Object catch (e) {
       throw toApiException(e);
