@@ -95,13 +95,28 @@ export async function createGitBranch(
   await api('/api/v1/git/write/branches', { method: 'POST', body: req })
 }
 
+export interface CheckoutResult {
+  current: string
+  stashed?: boolean
+  stash_ref?: string
+}
+
+// 409 response body shape when the working tree is dirty. The
+// client should surface `dirty_files` to the operator and offer a
+// retry with `stash: true`.
+export interface DirtyTreeBody {
+  error: string
+  dirty_files?: string[]
+}
+
 export async function checkoutGitBranch(
   dir: string,
   name: string,
-): Promise<void> {
-  await api('/api/v1/git/write/checkout', {
+  stash = false,
+): Promise<CheckoutResult> {
+  return api<CheckoutResult>('/api/v1/git/write/checkout', {
     method: 'POST',
-    body: { dir, name },
+    body: { dir, name, ...(stash ? { stash: true } : {}) },
   })
 }
 

@@ -59,19 +59,41 @@ class _GitBranchControlsState extends ConsumerState<GitBranchControls> {
     }
   }
 
-  Future<void> _checkout(String name) async {
+  Future<void> _checkout(String name, {bool stash = false}) async {
     setState(() => _busy = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await ref
+      final res = await ref
           .read(gitApiProvider)
-          .checkoutBranch(dir: widget.cwd, name: name);
+          .checkoutBranch(dir: widget.cwd, name: name, stash: stash);
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('Switched to $name')));
+      final stashed = res['stashed'] == true;
+      final stashRef = (res['stash_ref'] as String?) ?? '';
+      final msg = stashed
+          ? 'Switched to $name (stashed${stashRef.isEmpty ? '' : ' as $stashRef'})'
+          : 'Switched to $name';
+      messenger.showSnackBar(SnackBar(content: Text(msg)));
       widget.onChanged();
       await _load();
     } on ApiException catch (e) {
       if (!mounted) return;
+      // 409 = dirty tree. Pull the file list out of the body and
+      // offer the operator a Stash & switch flow rather than just
+      // a dead-end toast.
+      if (e.statusCode == 409 && !stash) {
+        final body = e.body;
+        final files = <String>[];
+        if (body is Map && body['dirty_files'] is List) {
+          for (final f in body['dirty_files'] as List) {
+            if (f is String) files.add(f);
+          }
+        }
+        final go = await _confirmStashAndSwitch(name, files);
+        if ((go ?? false) && mounted) {
+          await _checkout(name, stash: true);
+        }
+        return;
+      }
       messenger.showSnackBar(
         SnackBar(
           content: Text('Checkout failed: ${e.message}'),
@@ -81,6 +103,73 @@ class _GitBranchControlsState extends ConsumerState<GitBranchControls> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<bool?> _confirmStashAndSwitch(String target, List<String> files) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Switch to $target?'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                files.isEmpty
+                    ? 'Working tree has uncommitted changes.'
+                    : '${files.length} file${files.length == 1 ? '' : 's'} '
+                          'will be stashed:',
+                style: const TextStyle(fontSize: 13),
+              ),
+              if (files.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 220),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final f in files)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Text(
+                              f,
+                              style: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              Text(
+                'Recover later with `git stash pop`.',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(ctx).textTheme.bodySmall?.color,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Stash & switch'),
+          ),
+        ],
+      ),
+    );
   }
 
   // _delete runs `git branch -d` first; if the branch is unmerged

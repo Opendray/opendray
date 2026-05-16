@@ -484,17 +484,23 @@ class GitApi {
     }
   }
 
-  // POST /git/write/checkout — refuses on dirty tree (server
-  // returns 409, surfaces as ApiException with that status).
-  Future<void> checkoutBranch({
+  // POST /git/write/checkout — refuses on dirty tree with 409 +
+  // `dirty_files` array in the body. stash=true asks the server to
+  // `git stash push -u` before checkout; the response then
+  // includes stashed=true + stash_ref for the operator to see what
+  // was saved. Returns the parsed JSON map so callers can read
+  // the stash ref.
+  Future<Map<String, dynamic>> checkoutBranch({
     required String dir,
     required String name,
+    bool stash = false,
   }) async {
     try {
-      await _dio.post<void>(
+      final res = await _dio.post<Map<String, dynamic>>(
         '/api/v1/git/write/checkout',
-        data: {'dir': dir, 'name': name},
+        data: {'dir': dir, 'name': name, if (stash) 'stash': true},
       );
+      return res.data ?? const {};
     } on Object catch (e) {
       throw toApiException(e);
     }

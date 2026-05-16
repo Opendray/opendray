@@ -14,6 +14,7 @@ go.work
 go.work.sum
 vendor/
 /opendray
+/opendray.log
 
 # embedded web bundle — produced by `cd app/web && pnpm build`
 internal/web/dist/

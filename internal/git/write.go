@@ -234,6 +234,11 @@ func (h *Handlers) createBranch(w http.ResponseWriter, r *http.Request) {
 type CheckoutRequest struct {
 	Dir  string `json:"dir"`
 	Name string `json:"name"`
+	// Stash=true asks the server to `git stash push -u` before
+	// checkout. The client typically sets this in response to a
+	// 409 returned from a stash=false attempt, after showing the
+	// operator the dirty file list.
+	Stash bool `json:"stash"`
 }
 
 func (h *Handlers) checkoutBranch(w http.ResponseWriter, r *http.Request) {
@@ -250,23 +255,49 @@ func (h *Handlers) checkoutBranch(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, errors.New("invalid branch name"))
 		return
 	}
-	// Refuse on dirty tree — checkout would either fail mid-flight
-	// (uncommitted changes block) or silently carry changes across,
-	// which is rarely what the operator wants from a click.
-	if dirty, err := isDirty(r.Context(), req.Dir); err != nil {
+	files, err := dirtyFiles(r.Context(), req.Dir)
+	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
-	} else if dirty {
-		writeError(w, http.StatusConflict,
-			errors.New("working tree has uncommitted changes; commit or stash first"))
-		return
+	}
+	stashed := false
+	stashRef := ""
+	if len(files) > 0 {
+		if !req.Stash {
+			// Surface the dirty file list so the client can show
+			// the operator exactly what's at stake before they
+			// hit "Stash & switch".
+			writeJSON(w, http.StatusConflict, map[string]any{
+				"error":       "working tree has uncommitted changes; commit or stash first",
+				"dirty_files": files,
+			})
+			return
+		}
+		msg := fmt.Sprintf("opendray-auto: switch to %s", req.Name)
+		if out, err := runCombined(r.Context(), req.Dir,
+			"stash", "push", "--include-untracked", "-m", msg); err != nil {
+			writeError(w, http.StatusInternalServerError,
+				fmt.Errorf("stash: %w (%s)", err, out))
+			return
+		}
+		stashed = true
+		// Read back the just-created stash ref (stash@{0}) so the
+		// client can show "stashed as X" and offer pop later.
+		if out, err := run(r.Context(), req.Dir,
+			"rev-parse", "--short", "refs/stash"); err == nil {
+			stashRef = strings.TrimSpace(string(out))
+		}
 	}
 	if out, err := runCombined(r.Context(), req.Dir, "checkout", req.Name); err != nil {
 		writeError(w, http.StatusInternalServerError,
 			fmt.Errorf("checkout: %w (%s)", err, out))
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"current": req.Name})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"current":   req.Name,
+		"stashed":   stashed,
+		"stash_ref": stashRef,
+	})
 }
 
 // ── Branch delete ──────────────────────────────────────────────
@@ -486,14 +517,26 @@ func runCombined(ctx context.Context, dir string, args ...string) (string, error
 	return strings.TrimSpace(string(out)), err
 }
 
-// isDirty asks git whether the working tree has uncommitted
-// changes. Used by checkout to block lossy switches.
-func isDirty(ctx context.Context, dir string) (bool, error) {
+// dirtyFiles returns the list of working-tree paths reported by
+// `git status --porcelain` (both staged and unstaged, plus
+// untracked). Empty slice means the tree is clean. Callers use it
+// to block lossy switches AND to render the dirty list to the
+// operator so they know what a stash would carry.
+func dirtyFiles(ctx context.Context, dir string) ([]string, error) {
 	out, err := run(ctx, dir, "status", "--porcelain")
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	return strings.TrimSpace(string(out)) != "", nil
+	var files []string
+	for _, line := range strings.Split(string(out), "\n") {
+		// Porcelain v1 format: XY␣path. Drop the 2-char status
+		// prefix + the single space separator.
+		if len(line) < 4 {
+			continue
+		}
+		files = append(files, strings.TrimSpace(line[3:]))
+	}
+	return files, nil
 }
 
 // validateWritePath enforces the same rules as dirParam for write

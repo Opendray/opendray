@@ -3,11 +3,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { GitBranchPlus, GitMerge, Loader2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { APIError } from '@/lib/api'
 import {
   checkoutGitBranch,
   createGitBranch,
   listGitBranches,
   pushGit,
+  type DirtyTreeBody,
 } from '@/lib/git'
 import { cn } from '@/lib/utils'
 
@@ -34,15 +36,49 @@ export function BranchControls({ cwd, ahead, upstream }: BranchControlsProps) {
     refetchInterval: 30_000,
   })
 
+  // On a clean tree we just checkout. On 409 (dirty tree) we
+  // surface the file list in a confirm-toast with a "Stash &
+  // switch" action that retries with stash=true. Web doesn't have
+  // a modal helper here so toast.action is the cheapest equivalent
+  // of the mobile dialog — clicking the action button performs the
+  // stash retry.
+  const doCheckout = async (name: string, stash: boolean) => {
+    const res = await checkoutGitBranch(cwd, name, stash)
+    const suffix = res.stashed
+      ? ` (stashed${res.stash_ref ? ` as ${res.stash_ref}` : ''})`
+      : ''
+    toast.success(`Switched to ${name}${suffix}`)
+    qc.invalidateQueries({ queryKey: ['git', 'status', cwd] })
+    qc.invalidateQueries({ queryKey: ['git', 'branches', cwd] })
+    qc.invalidateQueries({ queryKey: ['git', 'log', cwd] })
+  }
+
   const checkout = useMutation({
-    mutationFn: (name: string) => checkoutGitBranch(cwd, name),
-    onSuccess: (_, name) => {
-      toast.success(`Switched to ${name}`)
-      qc.invalidateQueries({ queryKey: ['git', 'status', cwd] })
-      qc.invalidateQueries({ queryKey: ['git', 'branches', cwd] })
-      qc.invalidateQueries({ queryKey: ['git', 'log', cwd] })
-    },
-    onError: (err) => {
+    mutationFn: (name: string) => doCheckout(name, false),
+    onError: (err, name) => {
+      if (err instanceof APIError && err.status === 409) {
+        const body = err.body as DirtyTreeBody | null
+        const files = body?.dirty_files ?? []
+        const preview = files.slice(0, 4).join(', ')
+        const more = files.length > 4 ? ` +${files.length - 4} more` : ''
+        toast.warning(`Uncommitted changes block switch to ${name}`, {
+          description: files.length
+            ? `${preview}${more}`
+            : 'Working tree has uncommitted changes.',
+          action: {
+            label: 'Stash & switch',
+            onClick: () => {
+              void doCheckout(name, true).catch((e) => {
+                toast.error('Stash & switch failed', {
+                  description: (e as Error).message,
+                })
+              })
+            },
+          },
+          duration: 10_000,
+        })
+        return
+      }
       toast.error('Checkout failed', { description: (err as Error).message })
     },
   })
