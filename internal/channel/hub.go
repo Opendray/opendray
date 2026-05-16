@@ -85,14 +85,22 @@ const outboundIndexMax = 256
 // per channel.
 const defaultCooldown = 5 * time.Minute
 
-// submitDelay is the pause between writing forwarded text and the
-// trailing carriage return. Long enough that Ink-style input
-// handlers (Gemini in particular) finish processing the text as a
-// keypress sequence before the Enter byte arrives — short enough
-// to feel instantaneous to the human on the other end. Empirically
-// ~30 ms is the sweet spot; the human-perception threshold is
-// ~100 ms.
+// submitDelay is the settle window between the final typed rune
+// and the carriage-return byte that fires Enter. Long enough that
+// Ink-style input handlers (Gemini in particular) process the
+// preceding text as keystrokes before the Enter arrives — short
+// enough to feel instantaneous to the human on the other end.
+// ~30 ms is the empirical sweet spot; the human-perception
+// threshold for unrelated chat interactions is ~100 ms.
 const submitDelay = 30 * time.Millisecond
+
+// perRuneDelay paces the rune-by-rune typing in submitToSession.
+// 5 ms is faster than any real human but slow enough that the
+// Ink event loop processes each rune as its own keystroke event
+// — i.e. the CLI cannot collapse the burst into a paste-mode
+// classification. A 20-rune chat message ends up taking ~100 ms
+// to "type", invisible against any chat round-trip.
+const perRuneDelay = 5 * time.Millisecond
 
 func NewHub(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger) *Hub {
 	if log == nil {
@@ -843,28 +851,53 @@ func (h *Hub) setActiveSession(channelID, sessionID string) {
 	h.activeSess[channelID] = sessionID
 }
 
-// submitToSession writes forwarded text to a session's PTY in two
-// stages: the body, a brief pause, then the Enter terminator. See
-// the comment block above handleInbound's forwarding branch for
-// why a single combined write breaks Gemini's input detection.
+// submitToSession types `text` into a session's PTY rune-by-rune,
+// mimicking what xterm.js does for keyboard input — each rune is
+// its own write, with a brief inter-key pause — then sends a
+// final \r on its own as the Enter keypress.
+//
+// Why not a single text+\r write: Gemini's Ink-based input handler
+// classifies any multi-byte PTY write as a paste burst. In paste
+// mode the trailing Enter is swallowed as part of the paste
+// payload (multi-line paste with embedded newline) instead of
+// firing the submit handler. xterm.js sidesteps this by emitting
+// one PTY write per real keystroke; we mirror that exactly so the
+// CLI cannot tell our input apart from a human typing.
+//
+// Cost: ~5 ms per rune means a 20-rune chat message takes ~100 ms
+// to "type" — at or below the human-perception threshold for
+// chat interactions, and trivial compared to the round-trip to a
+// remote Gemini API. Long pastes (a multi-KB blob) would degrade,
+// but operators paste those into the web admin, not Telegram.
 //
 // Cancellable via ctx — partial sends are surfaced as errors so
 // the caller can report failure back to the chat. Submitting an
-// empty body is a no-op (returns nil); submitting only the Enter
-// is supported and exercised by tests.
+// empty body is a no-op for the typing loop but still emits the
+// final Enter (useful for chat platforms that surface tap-Enter
+// gestures as empty submissions).
 func (h *Hub) submitToSession(ctx context.Context, sid, text string) error {
 	if h.input == nil {
 		return errors.New("session input not configured")
 	}
-	if text != "" {
-		if err := h.input.Input(ctx, sid, []byte(text)); err != nil {
+	for _, r := range text {
+		if err := h.input.Input(ctx, sid, []byte(string(r))); err != nil {
 			return err
 		}
 		select {
-		case <-time.After(submitDelay):
+		case <-time.After(perRuneDelay):
 		case <-ctx.Done():
 			return ctx.Err()
 		}
+	}
+	// A slightly larger settle window between the last keystroke
+	// and the Enter byte, mirroring the natural human pause before
+	// pressing Return. Empirically this is what makes Gemini fire
+	// the submit handler instead of treating Enter as part of the
+	// paste payload.
+	select {
+	case <-time.After(submitDelay):
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 	if err := h.input.Input(ctx, sid, []byte{'\r'}); err != nil {
 		return fmt.Errorf("submit: %w", err)
