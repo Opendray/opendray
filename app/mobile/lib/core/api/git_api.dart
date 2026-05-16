@@ -11,10 +11,10 @@ class GitStatusFile {
   GitStatusFile({required this.xy, required this.path, this.oldPath});
 
   factory GitStatusFile.fromJson(Map<String, dynamic> json) => GitStatusFile(
-        xy: json['xy'] as String? ?? '',
-        path: json['path'] as String? ?? '',
-        oldPath: json['old_path'] as String?,
-      );
+    xy: json['xy'] as String? ?? '',
+    path: json['path'] as String? ?? '',
+    oldPath: json['old_path'] as String?,
+  );
 
   // Two-letter porcelain code: index status + worktree status.
   // e.g. "M ", " M", "A ", "??", "MM", "R "
@@ -41,9 +41,9 @@ class GitStatusResponse {
     final raw = json['files'];
     final files = raw is List
         ? raw
-            .whereType<Map<String, dynamic>>()
-            .map(GitStatusFile.fromJson)
-            .toList()
+              .whereType<Map<String, dynamic>>()
+              .map(GitStatusFile.fromJson)
+              .toList()
         : <GitStatusFile>[];
     return GitStatusResponse(
       isRepo: json['is_repo'] as bool? ?? false,
@@ -73,12 +73,12 @@ class GitCommit {
   });
 
   factory GitCommit.fromJson(Map<String, dynamic> json) => GitCommit(
-        hash: json['hash'] as String? ?? '',
-        shortHash: json['short_hash'] as String? ?? '',
-        author: json['author'] as String? ?? '',
-        when: json['when'] as String? ?? '',
-        subject: json['subject'] as String? ?? '',
-      );
+    hash: json['hash'] as String? ?? '',
+    shortHash: json['short_hash'] as String? ?? '',
+    author: json['author'] as String? ?? '',
+    when: json['when'] as String? ?? '',
+    subject: json['subject'] as String? ?? '',
+  );
 
   final String hash;
   final String shortHash;
@@ -93,10 +93,7 @@ class GitLogResponse {
   factory GitLogResponse.fromJson(Map<String, dynamic> json) {
     final raw = json['commits'];
     final commits = raw is List
-        ? raw
-            .whereType<Map<String, dynamic>>()
-            .map(GitCommit.fromJson)
-            .toList()
+        ? raw.whereType<Map<String, dynamic>>().map(GitCommit.fromJson).toList()
         : <GitCommit>[];
     return GitLogResponse(
       isRepo: json['is_repo'] as bool? ?? false,
@@ -147,6 +144,95 @@ class GitPullRequest {
   final String url;
   final bool draft;
   final String updatedAt;
+}
+
+// Container for the /git/prs response: PRs plus repo metadata so
+// callers can render a "configure your token" hint when no host
+// row matches the detected remote.
+class GitPullRequestList {
+  GitPullRequestList({
+    required this.prs,
+    required this.needsToken,
+    required this.host,
+    required this.errorMessage,
+  });
+
+  factory GitPullRequestList.fromJson(Map<String, dynamic> json) {
+    final raw = json['prs'];
+    final prs = raw is List
+        ? raw
+              .whereType<Map<String, dynamic>>()
+              .map(GitPullRequest.fromJson)
+              .toList()
+        : <GitPullRequest>[];
+    final remote = json['remote'];
+    final host = remote is Map<String, dynamic>
+        ? (remote['host'] as String? ?? '')
+        : '';
+    return GitPullRequestList(
+      prs: prs,
+      needsToken: json['need_token'] as bool? ?? false,
+      host: host,
+      errorMessage: json['error'] as String? ?? '',
+    );
+  }
+
+  final List<GitPullRequest> prs;
+  // True when the remote is detected but no git_hosts row has a
+  // token for it. UI shows "Configure git host" deep link.
+  final bool needsToken;
+  final String host;
+  // Non-empty when upstream returned a transport error (e.g.
+  // rate limit). Distinct from needsToken which is a config gap.
+  final String errorMessage;
+}
+
+// One ref returned by GET /git/write/branches. Mirrors the web
+// shape: local + remote refs share the type, with is_remote +
+// remote name disambiguating.
+class GitBranchRef {
+  GitBranchRef({
+    required this.name,
+    required this.remote,
+    required this.isRemote,
+    required this.isCurrent,
+    required this.upstream,
+  });
+
+  factory GitBranchRef.fromJson(Map<String, dynamic> json) => GitBranchRef(
+    name: json['name'] as String? ?? '',
+    remote: json['remote'] as String? ?? '',
+    isRemote: json['is_remote'] as bool? ?? false,
+    isCurrent: json['is_current'] as bool? ?? false,
+    upstream: json['upstream'] as String? ?? '',
+  );
+
+  final String name;
+  final String remote; // populated only when isRemote
+  final bool isRemote;
+  final bool isCurrent;
+  final String upstream; // e.g. "origin/main" for local branches
+}
+
+class GitBranchList {
+  GitBranchList({required this.branches, required this.current});
+
+  factory GitBranchList.fromJson(Map<String, dynamic> json) {
+    final raw = json['branches'];
+    final branches = raw is List
+        ? raw
+              .whereType<Map<String, dynamic>>()
+              .map(GitBranchRef.fromJson)
+              .toList()
+        : <GitBranchRef>[];
+    return GitBranchList(
+      branches: branches,
+      current: json['current'] as String? ?? '',
+    );
+  }
+
+  final List<GitBranchRef> branches;
+  final String current;
 }
 
 class GitCheckRun {
@@ -321,7 +407,8 @@ class GitApi {
   }
 
   // GET /git/prs/{n}/checks — CI checks on the PR's head commit.
-  // GitHub-only in this iteration; other hosts return an empty list.
+  // Multi-platform after Phase 2 (GitHub native, Gitea + GitLab
+  // commit-status normalised). Other hosts still return empty.
   Future<List<GitCheckRun>> prChecks({
     required String dir,
     required int number,
@@ -341,6 +428,167 @@ class GitApi {
       throw toApiException(e);
     }
   }
+
+  // GET /git/prs?path=<dir>&state=<open|closed|all>. Mirrors the
+  // web /lib/githost listGitPRs surface. Wraps the response in a
+  // single GitPullRequestList because the server returns metadata
+  // (remote info + need_token signal) alongside the PR array.
+  Future<GitPullRequestList> listPullRequests({
+    required String dir,
+    String state = 'open',
+  }) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/git/prs',
+        queryParameters: {'path': dir, 'state': state},
+      );
+      return GitPullRequestList.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // ── Phase 4: branch / stage / commit / push ──────────────────
+
+  Future<GitBranchList> listBranches(String dir) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/git/write/branches',
+        queryParameters: {'path': dir},
+      );
+      return GitBranchList.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /git/write/branches — create + optional switch.
+  Future<void> createBranch({
+    required String dir,
+    required String name,
+    String? from,
+    bool switchTo = true,
+  }) async {
+    try {
+      await _dio.post<void>(
+        '/api/v1/git/write/branches',
+        data: {
+          'dir': dir,
+          'name': name,
+          if (from != null && from.isNotEmpty) 'from': from,
+          'switch': switchTo,
+        },
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /git/write/checkout — refuses on dirty tree (server
+  // returns 409, surfaces as ApiException with that status).
+  Future<void> checkoutBranch({
+    required String dir,
+    required String name,
+  }) async {
+    try {
+      await _dio.post<void>(
+        '/api/v1/git/write/checkout',
+        data: {'dir': dir, 'name': name},
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // DELETE /git/write/branches/{name}. force=true upgrades the
+  // safe -d to -D (forces deletion of unmerged branches).
+  Future<void> deleteBranch({
+    required String dir,
+    required String name,
+    bool force = false,
+  }) async {
+    try {
+      await _dio.delete<void>(
+        '/api/v1/git/write/branches/$name',
+        queryParameters: {'path': dir, if (force) 'force': 'true'},
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /git/write/stage. Empty files = stage all (`.`).
+  Future<void> stageFiles({
+    required String dir,
+    List<String> files = const [],
+  }) async {
+    try {
+      await _dio.post<void>(
+        '/api/v1/git/write/stage',
+        data: {'dir': dir, 'files': files},
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  Future<void> unstageFiles({
+    required String dir,
+    List<String> files = const [],
+  }) async {
+    try {
+      await _dio.post<void>(
+        '/api/v1/git/write/unstage',
+        data: {'dir': dir, 'files': files},
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /git/write/commit. Returns the new HEAD sha.
+  Future<String> commit({
+    required String dir,
+    required String message,
+    bool allowEmpty = false,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/git/write/commit',
+        data: {'dir': dir, 'message': message, 'allow_empty': allowEmpty},
+      );
+      return (res.data?['hash'] as String?) ?? '';
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /git/write/push. branch empty = current HEAD. force
+  // maps to --force-with-lease server-side. setUpstream wires
+  // origin/<branch> the first time you push a branch.
+  Future<String> push({
+    required String dir,
+    String? branch,
+    bool force = false,
+    bool setUpstream = false,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/git/write/push',
+        data: {
+          'dir': dir,
+          if (branch != null && branch.isNotEmpty) 'branch': branch,
+          'force': force,
+          'set_upstream': setUpstream,
+        },
+      );
+      return (res.data?['branch'] as String?) ?? '';
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
 }
 
-final gitApiProvider = Provider<GitApi>((ref) => GitApi(ref.watch(dioProvider)));
+final gitApiProvider = Provider<GitApi>(
+  (ref) => GitApi(ref.watch(dioProvider)),
+);
