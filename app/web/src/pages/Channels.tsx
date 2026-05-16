@@ -1101,8 +1101,19 @@ function buildConfigFromValues(
   return cfg
 }
 
+// Server-registered kinds that we explicitly hide from the
+// create-flow dropdown. Channels already in this state still
+// render in the channel list — only the *new channel* option is
+// suppressed. Used for kinds whose adapter still ships
+// server-side (so existing rows keep working) but whose UX we
+// no longer want operators to discover.
+const HIDDEN_KINDS = new Set(['wechat'])
+
 // orderKinds produces the dropdown order: native kinds first
 // (KIND_DEFS order), then unknown kinds, then bridge last.
+// Anything in HIDDEN_KINDS is dropped from the unknown bucket so
+// retired entries (e.g. personal-WeChat / WxPusher) don't reappear
+// just because the server still registers the adapter.
 function orderKinds(kinds: string[]): string[] {
   const known = KIND_DEFS.map((k) => k.kind)
   const set = new Set(kinds)
@@ -1111,7 +1122,9 @@ function orderKinds(kinds: string[]): string[] {
     if (set.has(k)) out.push(k)
   }
   for (const k of kinds) {
-    if (!known.includes(k) && k !== 'bridge') out.push(k)
+    if (!known.includes(k) && k !== 'bridge' && !HIDDEN_KINDS.has(k)) {
+      out.push(k)
+    }
   }
   if (set.has('bridge')) out.push('bridge')
   return out
