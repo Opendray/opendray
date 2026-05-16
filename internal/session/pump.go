@@ -85,11 +85,11 @@ func (m *Manager) idleWatcher(rs *runningSession) {
 				"idle_for_ms": m.idleThreshold.Milliseconds(),
 			}
 			// Snippet source priority:
-			//   1. Claude JSONL transcript — full clean assistant
-			//      response, no TUI chrome, no truncation
-			//   2. Virtual-terminal screen snapshot — what the user
+			//   1. Claude JSONL transcript (claude provider)
+			//   2. Gemini logs.json transcript (gemini provider)
+			//   3. Virtual-terminal screen snapshot — what the user
 			//      sees in the live web terminal right now
-			//   3. Raw ring-buffer tail — defensive fallback
+			//   4. Raw ring-buffer tail — defensive fallback
 			//
 			// We deliberately do NOT cap byte / line counts at the
 			// source. The channel layer owns user-facing truncation
@@ -105,6 +105,9 @@ func (m *Manager) idleWatcher(rs *runningSession) {
 			rs.sessMu.RUnlock()
 			if provider == "claude" && cwd != "" {
 				snippet = claudeRecentResponse(cwd)
+			}
+			if snippet == "" && provider == "gemini" && cwd != "" {
+				snippet = geminiRecentResponse(cwd)
 			}
 			if snippet == "" && rs.vt != nil {
 				snippet = ScreenSnapshot(rs.vt)

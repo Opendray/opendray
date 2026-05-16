@@ -99,6 +99,64 @@ func GeminiInputHistory(cfg GeminiHistoryConfig, cwd string, limit int) []Projec
 	return out
 }
 
+// geminiRecentResponse returns Gemini's most-recent "model" reply
+// for `cwd`, suitable for embedding in a chat-side idle-notification
+// snippet. Mirrors claudeRecentResponse for the Gemini provider so
+// the snippet doesn't degrade to the ScreenSnapshot fallback (which
+// is bounded by terminal grid size, ~1 screenful — the same "1/11
+// of the actual reply" problem that fixed-for-Claude in #143).
+//
+// Schema: ~/.gemini/tmp/<dir>/logs.json is a JSON array of entries
+// `{sessionId, messageId, type, message, timestamp}`. We pick the
+// model entry with the latest timestamp (the file isn't strictly
+// sorted; Gemini appends as messages arrive, but ordering within
+// the array is not contractual).
+//
+// Returns "" when no transcript exists, the file is unreadable, or
+// no model reply is present yet. Callers fall through to the
+// next snippet source in the priority chain.
+func geminiRecentResponse(cwd string) string {
+	home := os.Getenv("HOME")
+	if home == "" {
+		return ""
+	}
+	tmpRoot := filepath.Join(home, ".gemini", "tmp")
+	projectsFile := filepath.Join(home, ".gemini", "projects.json")
+	dir := findGeminiProjectDir(projectsFile, tmpRoot, cwd)
+	if dir == "" {
+		return ""
+	}
+	body, err := os.ReadFile(filepath.Join(dir, "logs.json"))
+	if err != nil {
+		return ""
+	}
+	var raw []geminiLogEntry
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return ""
+	}
+	// Walk all entries and remember the latest model reply. We
+	// compare by timestamp rather than trusting file order — a
+	// long-running session can have model entries interleaved with
+	// user prompts.
+	var latest *geminiLogEntry
+	for i := range raw {
+		e := &raw[i]
+		if e.Type != "model" {
+			continue
+		}
+		if strings.TrimSpace(e.Message) == "" {
+			continue
+		}
+		if latest == nil || e.Timestamp.After(latest.Timestamp) {
+			latest = e
+		}
+	}
+	if latest == nil {
+		return ""
+	}
+	return strings.TrimSpace(latest.Message)
+}
+
 // findGeminiProjectDir resolves cwd to the matching tmp/<dir>/
 // folder. Tries each strategy in order; returns "" when none hit.
 func findGeminiProjectDir(projectsFile, tmpRoot, cwd string) string {
