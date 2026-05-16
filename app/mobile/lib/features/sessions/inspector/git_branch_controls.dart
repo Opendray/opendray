@@ -7,10 +7,12 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/git_api.dart';
 
 // GitBranchControls is the per-status-pane action strip: current
-// branch + dropdown to switch + "+ New" + Push. Switching refuses
-// on a dirty tree (server returns 409 → friendly toast). Push uses
-// set-upstream on first push (no upstream tracked yet) and stays
-// disabled when nothing's ahead of an existing upstream.
+// branch chip → opens a bottom-sheet picker that shows every local
+// branch with its upstream tracking + delete affordance. The
+// dropdown shape we used initially hid all this info and gave
+// nowhere to delete from; on a phone screen a tappable chip plus a
+// full-height sheet is the only ergonomic option. "+ New" and
+// "Push" stay on the strip so the common ops are one tap away.
 class GitBranchControls extends ConsumerStatefulWidget {
   const GitBranchControls({
     required this.cwd,
@@ -81,6 +83,102 @@ class _GitBranchControlsState extends ConsumerState<GitBranchControls> {
     }
   }
 
+  // _delete runs `git branch -d` first; if the branch is unmerged
+  // git refuses with a 409 + "not fully merged" body. We surface
+  // that as a second confirmation that upgrades to -D (force).
+  // Keeping the two-step flow means a slip can't blow away work.
+  Future<void> _delete(GitBranchRef ref_) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Delete ${ref_.name}?'),
+        content: Text(
+          ref_.upstream.isEmpty
+              ? 'This branch has no upstream — make sure it has nothing you need.'
+              : 'Local branch only. Remote ${ref_.upstream} is untouched.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (!(confirmed ?? false) || !mounted) return;
+    await _doDelete(ref_, force: false);
+  }
+
+  Future<void> _doDelete(GitBranchRef ref_, {required bool force}) async {
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref
+          .read(gitApiProvider)
+          .deleteBranch(dir: widget.cwd, name: ref_.name, force: force);
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text('Deleted ${ref_.name}')));
+      widget.onChanged();
+      await _load();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      // git refuses unmerged branches with status 409 + a message
+      // mentioning "not fully merged". Treat that as a force-prompt
+      // signal so the operator gets a clear second confirm rather
+      // than an opaque toast.
+      final lower = e.message.toLowerCase();
+      final canForce =
+          !force &&
+          (e.statusCode == 409 ||
+              lower.contains('not fully merged') ||
+              lower.contains('not yet merged'));
+      if (canForce) {
+        final go = await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: Text('Force delete ${ref_.name}?'),
+            content: const Text(
+              'Branch is not fully merged. Forcing deletion will lose '
+              'any commits unique to this branch.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                ),
+                child: const Text('Force delete'),
+              ),
+            ],
+          ),
+        );
+        if ((go ?? false) && mounted) {
+          await _doDelete(ref_, force: true);
+        }
+      } else {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Delete failed: ${e.message}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _create() async {
     final name = await _promptForBranchName();
     if (name == null || name.isEmpty || !mounted) return;
@@ -146,14 +244,34 @@ class _GitBranchControlsState extends ConsumerState<GitBranchControls> {
     }
   }
 
+  Future<void> _openPicker() async {
+    final list = _branches;
+    if (list == null || _busy) return;
+    final picked = await showModalBottomSheet<_PickerResult>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetCtx) => _BranchPickerSheet(
+        branches: list.branches,
+        current: list.current,
+      ),
+    );
+    if (picked == null || !mounted) return;
+    if (picked.action == _PickerAction.checkout && picked.ref.name != list.current) {
+      await _checkout(picked.ref.name);
+    } else if (picked.action == _PickerAction.delete) {
+      await _delete(picked.ref);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final branches = _branches;
     if (branches == null) {
       return const SizedBox(height: 0);
     }
-    final local = branches.branches.where((b) => !b.isRemote).toList();
-    final current = branches.current;
+    final current = branches.current.isNotEmpty ? branches.current : '(detached)';
+    final localCount = branches.branches.where((b) => !b.isRemote).length;
     // Push is disabled when an upstream exists AND we're not ahead.
     // First push (no upstream) is always allowed; the operator
     // typically wants to publish the branch to start a PR.
@@ -164,30 +282,50 @@ class _GitBranchControlsState extends ConsumerState<GitBranchControls> {
       child: Row(
         children: [
           Expanded(
-            child: DropdownButtonFormField<String>(
-              initialValue: current.isNotEmpty ? current : null,
-              isDense: true,
-              decoration: const InputDecoration(
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
+            child: InkWell(
+              onTap: _busy ? null : _openPicker,
+              borderRadius: BorderRadius.circular(6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border.all(color: theme.dividerColor),
+                  borderRadius: BorderRadius.circular(6),
                 ),
-                border: OutlineInputBorder(),
-                labelText: 'Branch',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.account_tree_outlined,
+                      size: 16,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        current,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      '$localCount local',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.textTheme.bodySmall?.color,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.unfold_more,
+                      size: 16,
+                      color: theme.iconTheme.color?.withValues(alpha: 0.6),
+                    ),
+                  ],
+                ),
               ),
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-              items: [
-                for (final b in local)
-                  DropdownMenuItem(value: b.name, child: Text(b.name)),
-              ],
-              onChanged: _busy
-                  ? null
-                  : (v) {
-                      if (v != null && v != current) {
-                        unawaited(_checkout(v));
-                      }
-                    },
             ),
           ),
           const SizedBox(width: 6),
@@ -217,6 +355,184 @@ class _GitBranchControlsState extends ConsumerState<GitBranchControls> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// _BranchPickerSheet lists every local branch in a scrollable
+// sheet so each row has space for the upstream subtitle + delete
+// affordance — none of that fits in a DropdownButtonFormField on
+// a phone screen.
+enum _PickerAction { checkout, delete }
+
+class _PickerResult {
+  _PickerResult(this.action, this.ref);
+  final _PickerAction action;
+  final GitBranchRef ref;
+}
+
+class _BranchPickerSheet extends StatelessWidget {
+  const _BranchPickerSheet({required this.branches, required this.current});
+
+  final List<GitBranchRef> branches;
+  final String current;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final local = branches.where((b) => !b.isRemote).toList()
+      ..sort((a, b) {
+        if (a.isCurrent != b.isCurrent) return a.isCurrent ? -1 : 1;
+        return a.name.compareTo(b.name);
+      });
+    final remote = branches.where((b) => b.isRemote).toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.75,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: Row(
+                children: [
+                  Text(
+                    'Branches',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${local.length} local · ${remote.length} remote',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                children: [
+                  for (final b in local)
+                    _BranchRow(
+                      ref_: b,
+                      isCurrent: b.name == current,
+                      onTap: () => Navigator.of(
+                        context,
+                      ).pop(_PickerResult(_PickerAction.checkout, b)),
+                      onDelete: b.name == current
+                          ? null
+                          : () => Navigator.of(
+                              context,
+                            ).pop(_PickerResult(_PickerAction.delete, b)),
+                    ),
+                  if (remote.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                      child: Text(
+                        'Remote',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.textTheme.bodySmall?.color,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                    for (final b in remote)
+                      _BranchRow(
+                        ref_: b,
+                        isCurrent: false,
+                        // Tapping a remote ref checks out the local
+                        // branch of the same short name — same as
+                        // `git checkout <name>` resolving to the
+                        // remote-tracking branch on first switch.
+                        onTap: () => Navigator.of(context).pop(
+                          _PickerResult(
+                            _PickerAction.checkout,
+                            GitBranchRef(
+                              name: b.name,
+                              remote: '',
+                              isRemote: false,
+                              isCurrent: false,
+                              upstream: '${b.remote}/${b.name}',
+                            ),
+                          ),
+                        ),
+                        onDelete: null,
+                      ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BranchRow extends StatelessWidget {
+  const _BranchRow({
+    required this.ref_,
+    required this.isCurrent,
+    required this.onTap,
+    required this.onDelete,
+  });
+
+  final GitBranchRef ref_;
+  final bool isCurrent;
+  final VoidCallback onTap;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final subtitle = ref_.isRemote
+        ? '${ref_.remote}/${ref_.name}'
+        : (ref_.upstream.isEmpty ? 'no upstream' : '→ ${ref_.upstream}');
+    return ListTile(
+      onTap: onTap,
+      dense: true,
+      leading: Icon(
+        isCurrent
+            ? Icons.check_circle
+            : (ref_.isRemote
+                  ? Icons.cloud_outlined
+                  : Icons.account_tree_outlined),
+        size: 18,
+        color: isCurrent
+            ? theme.colorScheme.primary
+            : theme.iconTheme.color?.withValues(alpha: 0.6),
+      ),
+      title: Text(
+        ref_.name,
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 13,
+          fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 11,
+          color: theme.textTheme.bodySmall?.color,
+        ),
+      ),
+      trailing: onDelete == null
+          ? null
+          : IconButton(
+              tooltip: 'Delete branch',
+              icon: const Icon(Icons.delete_outline, size: 20),
+              color: theme.colorScheme.error,
+              onPressed: onDelete,
+            ),
     );
   }
 }
