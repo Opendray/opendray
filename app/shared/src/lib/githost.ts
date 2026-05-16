@@ -95,3 +95,64 @@ export async function listGitPRs(
   const params = new URLSearchParams({ path, state })
   return api<GitPullRequestsResponse>(`/api/v1/git/prs?${params.toString()}`)
 }
+
+// ── PR write ops ───────────────────────────────────────────────
+
+export interface CreatePRRequest {
+  dir: string
+  title: string
+  body?: string
+  head: string // source branch (required)
+  base?: string // target branch — server resolves default when omitted
+  draft?: boolean
+}
+
+export interface MergePRRequest {
+  dir: string
+  number: number
+  // GitHub merge methods. Gitea and GitLab adapters map these to
+  // their native vocabularies; squash is the default everywhere.
+  method?: 'squash' | 'merge' | 'rebase'
+  commit_title?: string
+  commit_message?: string
+  delete_branch?: boolean
+}
+
+export async function createGitPR(
+  req: CreatePRRequest,
+): Promise<GitPullRequest> {
+  return api<GitPullRequest>('/api/v1/git/prs', { method: 'POST', body: req })
+}
+
+export async function mergeGitPR(
+  req: MergePRRequest,
+): Promise<GitPullRequest> {
+  return api<GitPullRequest>(`/api/v1/git/prs/${req.number}/merge`, {
+    method: 'POST',
+    body: req,
+  })
+}
+
+// ── PR checks (CI) ─────────────────────────────────────────────
+
+export interface CheckRun {
+  name: string
+  // GitHub Checks API vocabulary: queued | in_progress | completed
+  status: string
+  // Filled when status === 'completed'. success | failure | neutral |
+  // cancelled | skipped | timed_out | action_required
+  conclusion: string
+  url: string
+  updated_at: string
+}
+
+export async function getPRChecks(
+  path: string,
+  number: number,
+): Promise<CheckRun[]> {
+  const params = new URLSearchParams({ path })
+  const res = await api<{ checks: CheckRun[] }>(
+    `/api/v1/git/prs/${number}/checks?${params.toString()}`,
+  )
+  return res.checks ?? []
+}

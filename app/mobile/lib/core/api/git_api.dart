@@ -110,6 +110,84 @@ class GitLogResponse {
 
 enum GitDiffScope { unstaged, staged, all }
 
+// ── PR write ops + checks ─────────────────────────────────────────
+
+class GitPullRequest {
+  GitPullRequest({
+    required this.number,
+    required this.title,
+    required this.state,
+    required this.author,
+    required this.head,
+    required this.base,
+    required this.url,
+    required this.draft,
+    required this.updatedAt,
+  });
+
+  factory GitPullRequest.fromJson(Map<String, dynamic> json) => GitPullRequest(
+    number: (json['number'] as num?)?.toInt() ?? 0,
+    title: json['title'] as String? ?? '',
+    state: json['state'] as String? ?? '',
+    author: json['author'] as String? ?? '',
+    head: json['head'] as String? ?? '',
+    base: json['base'] as String? ?? '',
+    url: json['url'] as String? ?? '',
+    draft: json['draft'] as bool? ?? false,
+    updatedAt: json['updated_at'] as String? ?? '',
+  );
+
+  final int number;
+  final String title;
+  // open | closed | merged
+  final String state;
+  final String author;
+  final String head;
+  final String base;
+  final String url;
+  final bool draft;
+  final String updatedAt;
+}
+
+class GitCheckRun {
+  GitCheckRun({
+    required this.name,
+    required this.status,
+    required this.conclusion,
+    required this.url,
+    required this.updatedAt,
+  });
+
+  factory GitCheckRun.fromJson(Map<String, dynamic> json) => GitCheckRun(
+    name: json['name'] as String? ?? '',
+    status: json['status'] as String? ?? '',
+    conclusion: json['conclusion'] as String? ?? '',
+    url: json['url'] as String? ?? '',
+    updatedAt: json['updated_at'] as String? ?? '',
+  );
+
+  // queued | in_progress | completed
+  final String status;
+  // success | failure | neutral | cancelled | skipped | timed_out |
+  // action_required (filled when status == completed)
+  final String conclusion;
+  final String name;
+  final String url;
+  final String updatedAt;
+
+  bool get passing =>
+      status == 'completed' &&
+      (conclusion == 'success' ||
+          conclusion == 'neutral' ||
+          conclusion == 'skipped');
+  bool get failing =>
+      status == 'completed' &&
+      (conclusion == 'failure' ||
+          conclusion == 'cancelled' ||
+          conclusion == 'timed_out' ||
+          conclusion == 'action_required');
+}
+
 class GitApi {
   GitApi(this._dio);
   final Dio _dio;
@@ -176,6 +254,89 @@ class GitApi {
         ),
       );
       return res.data ?? '';
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /git/prs — create a PR. `base` is optional; the server
+  // resolves the repo's default branch when omitted.
+  Future<GitPullRequest> createPullRequest({
+    required String dir,
+    required String title,
+    required String head,
+    String? base,
+    String? body,
+    bool draft = false,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/git/prs',
+        data: {
+          'dir': dir,
+          'title': title,
+          'head': head,
+          if (base != null && base.isNotEmpty) 'base': base,
+          if (body != null && body.isNotEmpty) 'body': body,
+          'draft': draft,
+        },
+      );
+      return GitPullRequest.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /git/prs/{n}/merge — merges with the requested method.
+  // `squash` is the default (matches the GitHub naming we use
+  // everywhere; Gitea/GitLab adapters map it natively). When
+  // `deleteBranch` is true the head branch is deleted after a
+  // successful merge.
+  Future<GitPullRequest> mergePullRequest({
+    required String dir,
+    required int number,
+    String method = 'squash',
+    String? commitTitle,
+    String? commitMessage,
+    bool deleteBranch = true,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/git/prs/$number/merge',
+        data: {
+          'dir': dir,
+          'number': number,
+          'method': method,
+          if (commitTitle != null && commitTitle.isNotEmpty)
+            'commit_title': commitTitle,
+          if (commitMessage != null && commitMessage.isNotEmpty)
+            'commit_message': commitMessage,
+          'delete_branch': deleteBranch,
+        },
+      );
+      return GitPullRequest.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // GET /git/prs/{n}/checks — CI checks on the PR's head commit.
+  // GitHub-only in this iteration; other hosts return an empty list.
+  Future<List<GitCheckRun>> prChecks({
+    required String dir,
+    required int number,
+  }) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/git/prs/$number/checks',
+        queryParameters: {'path': dir},
+      );
+      final raw = res.data?['checks'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(GitCheckRun.fromJson)
+          .toList();
     } on Object catch (e) {
       throw toApiException(e);
     }

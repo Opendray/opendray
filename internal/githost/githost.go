@@ -12,6 +12,7 @@
 package githost
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -22,6 +23,7 @@ import (
 	"net/url"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -401,6 +403,129 @@ func (s *Service) ListPullRequests(ctx context.Context, dir, state string) (Remo
 	}
 }
 
+// CreatePRRequest is the payload for a new pull request.
+type CreatePRRequest struct {
+	Dir   string `json:"dir"`
+	Title string `json:"title"`
+	Body  string `json:"body"`
+	Head  string `json:"head"` // source branch (required)
+	Base  string `json:"base"` // target branch — defaults to the repo's default branch when empty
+	Draft bool   `json:"draft"`
+}
+
+// MergePRRequest is the payload for merging an existing PR.
+type MergePRRequest struct {
+	Dir           string `json:"dir"`
+	Number        int    `json:"number"`
+	Method        string `json:"method"` // "squash" | "merge" | "rebase" (GitHub naming; mapped per platform)
+	CommitTitle   string `json:"commit_title"`
+	CommitMessage string `json:"commit_message"`
+	DeleteBranch  bool   `json:"delete_branch"`
+}
+
+// CheckRun is one CI/check entry attached to a PR's head commit.
+// Status/Conclusion follow the GitHub Checks API vocabulary so the
+// UI can render a single icon set across hosts; Gitea / GitLab
+// values are normalised in their respective adapters.
+type CheckRun struct {
+	Name       string    `json:"name"`
+	Status     string    `json:"status"`     // queued | in_progress | completed
+	Conclusion string    `json:"conclusion"` // success | failure | neutral | cancelled | skipped | timed_out | action_required
+	URL        string    `json:"url"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+// CreatePullRequest opens a PR on the host that owns dir's remote.
+// Returns the created PR's API representation. Token must exist for
+// the host (ErrNoTokenForHost otherwise).
+func (s *Service) CreatePullRequest(ctx context.Context, req CreatePRRequest) (PullRequest, error) {
+	rem, hostRow, err := s.resolveHost(ctx, req.Dir)
+	if err != nil {
+		return PullRequest{}, err
+	}
+	if req.Head == "" {
+		return PullRequest{}, errors.New("head branch required")
+	}
+	if req.Title == "" {
+		return PullRequest{}, errors.New("title required")
+	}
+	switch hostRow.Kind {
+	case KindGitHub:
+		return s.createGitHubPR(ctx, hostRow, rem, req)
+	case KindGitea:
+		return s.createGiteaPR(ctx, hostRow, rem, req)
+	case KindGitLab:
+		return s.createGitLabMR(ctx, hostRow, rem, req)
+	default:
+		return PullRequest{}, fmt.Errorf("unsupported host kind: %s", hostRow.Kind)
+	}
+}
+
+// MergePullRequest merges an existing PR with the requested method.
+// Squash is the default. When DeleteBranch is true the head branch
+// is removed after a successful merge (GitHub only — Gitea / GitLab
+// have their own delete flag in the merge call).
+func (s *Service) MergePullRequest(ctx context.Context, req MergePRRequest) (PullRequest, error) {
+	rem, hostRow, err := s.resolveHost(ctx, req.Dir)
+	if err != nil {
+		return PullRequest{}, err
+	}
+	if req.Number <= 0 {
+		return PullRequest{}, errors.New("number required")
+	}
+	if req.Method == "" {
+		req.Method = "squash"
+	}
+	switch hostRow.Kind {
+	case KindGitHub:
+		return s.mergeGitHubPR(ctx, hostRow, rem, req)
+	case KindGitea:
+		return s.mergeGiteaPR(ctx, hostRow, rem, req)
+	case KindGitLab:
+		return s.mergeGitLabMR(ctx, hostRow, rem, req)
+	default:
+		return PullRequest{}, fmt.Errorf("unsupported host kind: %s", hostRow.Kind)
+	}
+}
+
+// PRChecks returns the check runs attached to a PR's head commit.
+// GitHub-only in this iteration; Gitea / GitLab return an empty
+// slice with no error so the UI can degrade gracefully.
+func (s *Service) PRChecks(ctx context.Context, dir string, number int) ([]CheckRun, error) {
+	rem, hostRow, err := s.resolveHost(ctx, dir)
+	if err != nil {
+		return nil, err
+	}
+	if number <= 0 {
+		return nil, errors.New("number required")
+	}
+	if hostRow.Kind != KindGitHub {
+		// Gitea / GitLab have their own check APIs but the surface
+		// differs enough that we'd lose more in normalisation than
+		// we'd gain. Return empty rather than error so the UI hides
+		// the section gracefully.
+		return []CheckRun{}, nil
+	}
+	return s.githubChecks(ctx, hostRow, rem, number)
+}
+
+// resolveHost is the shared prelude for create / merge / checks:
+// detect the remote, confirm a token exists, fetch the host row.
+func (s *Service) resolveHost(ctx context.Context, dir string) (Remote, Host, error) {
+	rem, err := s.DetectRemote(ctx, dir)
+	if err != nil {
+		return Remote{}, Host{}, err
+	}
+	if !rem.HasToken {
+		return rem, Host{}, ErrNoTokenForHost
+	}
+	hostRow, err := s.GetByHost(ctx, rem.Host)
+	if err != nil {
+		return rem, Host{}, err
+	}
+	return rem, hostRow, nil
+}
+
 func (s *Service) listGitHubPRs(ctx context.Context, h Host, rem Remote, state string) ([]PullRequest, error) {
 	// github.com → api.github.com; GitHub Enterprise stays at the
 	// same host under /api/v3.
@@ -558,24 +683,482 @@ func normaliseGitlabState(s string) string {
 	}
 }
 
+// ── GitHub: create / merge / checks ────────────────────────────────
+
+// githubAPIBase returns the host's GitHub API base URL. github.com
+// uses api.github.com; GitHub Enterprise serves /api/v3 from the
+// same hostname.
+func githubAPIBase(host string) string {
+	if host == "github.com" {
+		return "https://api.github.com"
+	}
+	return "https://" + host + "/api/v3"
+}
+
+// pullRequestFromGitHubResponse normalises a single PR JSON envelope
+// returned by either /pulls or /pulls/{n}/merge into the unified
+// PullRequest shape the UI consumes.
+type githubPRResponse struct {
+	Number    int       `json:"number"`
+	Title     string    `json:"title"`
+	State     string    `json:"state"`
+	Draft     bool      `json:"draft"`
+	HTMLURL   string    `json:"html_url"`
+	UpdatedAt time.Time `json:"updated_at"`
+	User      struct {
+		Login string `json:"login"`
+	} `json:"user"`
+	Head struct {
+		Ref string `json:"ref"`
+	} `json:"head"`
+	Base struct {
+		Ref string `json:"ref"`
+	} `json:"base"`
+	MergedAt *time.Time `json:"merged_at"`
+}
+
+func (p githubPRResponse) toPullRequest() PullRequest {
+	st := p.State
+	if p.MergedAt != nil {
+		st = "merged"
+	}
+	return PullRequest{
+		Number:    p.Number,
+		Title:     p.Title,
+		State:     st,
+		Author:    p.User.Login,
+		Head:      p.Head.Ref,
+		Base:      p.Base.Ref,
+		URL:       p.HTMLURL,
+		Draft:     p.Draft,
+		UpdatedAt: p.UpdatedAt,
+	}
+}
+
+func (s *Service) createGitHubPR(ctx context.Context, h Host, rem Remote, req CreatePRRequest) (PullRequest, error) {
+	payload := map[string]any{
+		"title": req.Title,
+		"body":  req.Body,
+		"head":  req.Head,
+		"draft": req.Draft,
+	}
+	if req.Base != "" {
+		payload["base"] = req.Base
+	} else {
+		// Resolve default branch from the repo metadata so the
+		// caller doesn't have to know whether it's main / master /
+		// trunk. One extra request, cached implicitly via HTTP.
+		def, err := s.githubDefaultBranch(ctx, h, rem)
+		if err != nil {
+			return PullRequest{}, fmt.Errorf("resolve base: %w", err)
+		}
+		payload["base"] = def
+	}
+	u := fmt.Sprintf("%s/repos/%s/%s/pulls", githubAPIBase(h.Host), rem.Owner, rem.Repo)
+	body, err := s.do(ctx, http.MethodPost, u, "Bearer "+h.Token, "application/vnd.github+json", payload)
+	if err != nil {
+		return PullRequest{}, err
+	}
+	var raw githubPRResponse
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return PullRequest{}, fmt.Errorf("github decode: %w", err)
+	}
+	return raw.toPullRequest(), nil
+}
+
+func (s *Service) mergeGitHubPR(ctx context.Context, h Host, rem Remote, req MergePRRequest) (PullRequest, error) {
+	// GitHub: PUT /repos/{o}/{r}/pulls/{n}/merge. merge_method is
+	// "merge" | "squash" | "rebase". The endpoint returns a small
+	// status envelope, NOT the PR — we re-fetch the PR afterwards
+	// so the caller gets a complete record (and the post-merge
+	// state). Delete-branch is a separate DELETE call.
+	mergePayload := map[string]any{
+		"merge_method": req.Method,
+	}
+	if req.CommitTitle != "" {
+		mergePayload["commit_title"] = req.CommitTitle
+	}
+	if req.CommitMessage != "" {
+		mergePayload["commit_message"] = req.CommitMessage
+	}
+	mergeURL := fmt.Sprintf("%s/repos/%s/%s/pulls/%d/merge",
+		githubAPIBase(h.Host), rem.Owner, rem.Repo, req.Number)
+	if _, err := s.do(ctx, http.MethodPut, mergeURL, "Bearer "+h.Token, "application/vnd.github+json", mergePayload); err != nil {
+		return PullRequest{}, err
+	}
+	// Re-fetch the PR to capture merged_at + final state.
+	prURL := fmt.Sprintf("%s/repos/%s/%s/pulls/%d",
+		githubAPIBase(h.Host), rem.Owner, rem.Repo, req.Number)
+	prBody, err := s.do(ctx, http.MethodGet, prURL, "Bearer "+h.Token, "application/vnd.github+json", nil)
+	if err != nil {
+		// Merge succeeded; failing to refetch is non-fatal — caller
+		// gets a minimal PR record reflecting what we know.
+		return PullRequest{Number: req.Number, State: "merged"}, nil
+	}
+	var raw githubPRResponse
+	if err := json.Unmarshal(prBody, &raw); err != nil {
+		return PullRequest{Number: req.Number, State: "merged"}, nil
+	}
+	merged := raw.toPullRequest()
+	// Best-effort branch deletion after the merge. Errors are
+	// logged (via the caller) but never block the merge result.
+	if req.DeleteBranch && merged.Head != "" {
+		delURL := fmt.Sprintf("%s/repos/%s/%s/git/refs/heads/%s",
+			githubAPIBase(h.Host), rem.Owner, rem.Repo,
+			url.PathEscape(merged.Head))
+		_, _ = s.do(ctx, http.MethodDelete, delURL, "Bearer "+h.Token, "application/vnd.github+json", nil)
+	}
+	return merged, nil
+}
+
+// githubDefaultBranch returns the repo's configured default branch
+// (e.g. "main" or "master"). Used by CreatePR when the caller
+// omitted Base.
+func (s *Service) githubDefaultBranch(ctx context.Context, h Host, rem Remote) (string, error) {
+	u := fmt.Sprintf("%s/repos/%s/%s", githubAPIBase(h.Host), rem.Owner, rem.Repo)
+	body, err := s.do(ctx, http.MethodGet, u, "Bearer "+h.Token, "application/vnd.github+json", nil)
+	if err != nil {
+		return "", err
+	}
+	var raw struct {
+		DefaultBranch string `json:"default_branch"`
+	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return "", err
+	}
+	if raw.DefaultBranch == "" {
+		return "", errors.New("repo has no default_branch")
+	}
+	return raw.DefaultBranch, nil
+}
+
+func (s *Service) githubChecks(ctx context.Context, h Host, rem Remote, number int) ([]CheckRun, error) {
+	// GET the PR to learn the head SHA, then fetch its check runs.
+	// Two requests is wasteful vs storing PRs in DB, but we want
+	// fresh check state on every poll.
+	prURL := fmt.Sprintf("%s/repos/%s/%s/pulls/%d",
+		githubAPIBase(h.Host), rem.Owner, rem.Repo, number)
+	prBody, err := s.do(ctx, http.MethodGet, prURL, "Bearer "+h.Token, "application/vnd.github+json", nil)
+	if err != nil {
+		return nil, err
+	}
+	var pr struct {
+		Head struct {
+			SHA string `json:"sha"`
+		} `json:"head"`
+	}
+	if err := json.Unmarshal(prBody, &pr); err != nil {
+		return nil, fmt.Errorf("github decode pr: %w", err)
+	}
+	if pr.Head.SHA == "" {
+		return nil, errors.New("pr has no head sha")
+	}
+	checksURL := fmt.Sprintf("%s/repos/%s/%s/commits/%s/check-runs?per_page=50",
+		githubAPIBase(h.Host), rem.Owner, rem.Repo, pr.Head.SHA)
+	body, err := s.do(ctx, http.MethodGet, checksURL, "Bearer "+h.Token, "application/vnd.github+json", nil)
+	if err != nil {
+		return nil, err
+	}
+	var raw struct {
+		CheckRuns []struct {
+			Name        string     `json:"name"`
+			Status      string     `json:"status"`
+			Conclusion  string     `json:"conclusion"`
+			HTMLURL     string     `json:"html_url"`
+			CompletedAt *time.Time `json:"completed_at"`
+			StartedAt   *time.Time `json:"started_at"`
+		} `json:"check_runs"`
+	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return nil, fmt.Errorf("github decode checks: %w", err)
+	}
+	out := make([]CheckRun, 0, len(raw.CheckRuns))
+	for _, c := range raw.CheckRuns {
+		ts := time.Time{}
+		if c.CompletedAt != nil {
+			ts = *c.CompletedAt
+		} else if c.StartedAt != nil {
+			ts = *c.StartedAt
+		}
+		out = append(out, CheckRun{
+			Name:       c.Name,
+			Status:     c.Status,
+			Conclusion: c.Conclusion,
+			URL:        c.HTMLURL,
+			UpdatedAt:  ts,
+		})
+	}
+	return out, nil
+}
+
+// ── Gitea: create / merge ─────────────────────────────────────────
+
+func (s *Service) createGiteaPR(ctx context.Context, h Host, rem Remote, req CreatePRRequest) (PullRequest, error) {
+	payload := map[string]any{
+		"title": req.Title,
+		"body":  req.Body,
+		"head":  req.Head,
+	}
+	if req.Base != "" {
+		payload["base"] = req.Base
+	} else {
+		// Gitea exposes default_branch in the repo metadata too.
+		def, err := s.giteaDefaultBranch(ctx, h, rem)
+		if err != nil {
+			return PullRequest{}, fmt.Errorf("resolve base: %w", err)
+		}
+		payload["base"] = def
+	}
+	u := fmt.Sprintf("https://%s/api/v1/repos/%s/%s/pulls",
+		h.Host, rem.Owner, rem.Repo)
+	body, err := s.do(ctx, http.MethodPost, u, "token "+h.Token, "application/json", payload)
+	if err != nil {
+		return PullRequest{}, err
+	}
+	return decodeGiteaPR(body)
+}
+
+func (s *Service) mergeGiteaPR(ctx context.Context, h Host, rem Remote, req MergePRRequest) (PullRequest, error) {
+	// Gitea merge: POST /repos/{o}/{r}/pulls/{n}/merge with
+	// Do=squash|merge|rebase. delete_branch_after_merge is part
+	// of the same payload.
+	payload := map[string]any{
+		"Do":                        giteaMergeMethod(req.Method),
+		"delete_branch_after_merge": req.DeleteBranch,
+	}
+	if req.CommitTitle != "" {
+		payload["MergeTitleField"] = req.CommitTitle
+	}
+	if req.CommitMessage != "" {
+		payload["MergeMessageField"] = req.CommitMessage
+	}
+	mergeURL := fmt.Sprintf("https://%s/api/v1/repos/%s/%s/pulls/%d/merge",
+		h.Host, rem.Owner, rem.Repo, req.Number)
+	if _, err := s.do(ctx, http.MethodPost, mergeURL, "token "+h.Token, "application/json", payload); err != nil {
+		return PullRequest{}, err
+	}
+	// Re-fetch the PR like the GitHub path. Errors return a minimal
+	// record so the caller still knows the merge succeeded.
+	prURL := fmt.Sprintf("https://%s/api/v1/repos/%s/%s/pulls/%d",
+		h.Host, rem.Owner, rem.Repo, req.Number)
+	prBody, err := s.do(ctx, http.MethodGet, prURL, "token "+h.Token, "application/json", nil)
+	if err != nil {
+		return PullRequest{Number: req.Number, State: "merged"}, nil
+	}
+	pr, err := decodeGiteaPR(prBody)
+	if err != nil {
+		return PullRequest{Number: req.Number, State: "merged"}, nil
+	}
+	return pr, nil
+}
+
+func (s *Service) giteaDefaultBranch(ctx context.Context, h Host, rem Remote) (string, error) {
+	u := fmt.Sprintf("https://%s/api/v1/repos/%s/%s", h.Host, rem.Owner, rem.Repo)
+	body, err := s.do(ctx, http.MethodGet, u, "token "+h.Token, "application/json", nil)
+	if err != nil {
+		return "", err
+	}
+	var raw struct {
+		DefaultBranch string `json:"default_branch"`
+	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return "", err
+	}
+	if raw.DefaultBranch == "" {
+		return "", errors.New("repo has no default_branch")
+	}
+	return raw.DefaultBranch, nil
+}
+
+func giteaMergeMethod(m string) string {
+	switch m {
+	case "squash", "merge", "rebase":
+		return m
+	default:
+		return "squash"
+	}
+}
+
+func decodeGiteaPR(body []byte) (PullRequest, error) {
+	var p struct {
+		Number    int       `json:"number"`
+		Title     string    `json:"title"`
+		State     string    `json:"state"`
+		HTMLURL   string    `json:"html_url"`
+		UpdatedAt time.Time `json:"updated_at"`
+		User      struct {
+			Login string `json:"login"`
+		} `json:"user"`
+		Head struct {
+			Ref string `json:"ref"`
+		} `json:"head"`
+		Base struct {
+			Ref string `json:"ref"`
+		} `json:"base"`
+		Merged bool `json:"merged"`
+	}
+	if err := json.Unmarshal(body, &p); err != nil {
+		return PullRequest{}, fmt.Errorf("gitea decode: %w", err)
+	}
+	st := p.State
+	if p.Merged {
+		st = "merged"
+	}
+	return PullRequest{
+		Number:    p.Number,
+		Title:     p.Title,
+		State:     st,
+		Author:    p.User.Login,
+		Head:      p.Head.Ref,
+		Base:      p.Base.Ref,
+		URL:       p.HTMLURL,
+		UpdatedAt: p.UpdatedAt,
+	}, nil
+}
+
+// ── GitLab: create / merge (merge requests) ───────────────────────
+
+func (s *Service) createGitLabMR(ctx context.Context, h Host, rem Remote, req CreatePRRequest) (PullRequest, error) {
+	payload := map[string]any{
+		"source_branch": req.Head,
+		"title":         req.Title,
+		"description":   req.Body,
+	}
+	if req.Base != "" {
+		payload["target_branch"] = req.Base
+	} else {
+		def, err := s.gitlabDefaultBranch(ctx, h, rem)
+		if err != nil {
+			return PullRequest{}, fmt.Errorf("resolve target_branch: %w", err)
+		}
+		payload["target_branch"] = def
+	}
+	projectID := url.PathEscape(rem.Owner + "/" + rem.Repo)
+	u := fmt.Sprintf("https://%s/api/v4/projects/%s/merge_requests",
+		h.Host, projectID)
+	body, err := s.do(ctx, http.MethodPost, u, "Bearer "+h.Token, "application/json", payload)
+	if err != nil {
+		return PullRequest{}, err
+	}
+	return decodeGitLabMR(body)
+}
+
+func (s *Service) mergeGitLabMR(ctx context.Context, h Host, rem Remote, req MergePRRequest) (PullRequest, error) {
+	// PUT /projects/{id}/merge_requests/{iid}/merge. Squash and
+	// delete_branch are separate flags; method has no direct
+	// equivalent for "rebase" so we map: squash → squash=true,
+	// merge → squash=false, rebase falls back to squash=false +
+	// the caller doing a rebase separately.
+	payload := map[string]any{
+		"should_remove_source_branch": req.DeleteBranch,
+	}
+	if req.Method == "squash" {
+		payload["squash"] = true
+	}
+	if req.CommitMessage != "" {
+		payload["merge_commit_message"] = req.CommitMessage
+	}
+	if req.CommitTitle != "" && req.Method == "squash" {
+		payload["squash_commit_message"] = req.CommitTitle
+	}
+	projectID := url.PathEscape(rem.Owner + "/" + rem.Repo)
+	mergeURL := fmt.Sprintf("https://%s/api/v4/projects/%s/merge_requests/%d/merge",
+		h.Host, projectID, req.Number)
+	body, err := s.do(ctx, http.MethodPut, mergeURL, "Bearer "+h.Token, "application/json", payload)
+	if err != nil {
+		return PullRequest{}, err
+	}
+	// GitLab returns the updated MR directly from the merge call.
+	return decodeGitLabMR(body)
+}
+
+func (s *Service) gitlabDefaultBranch(ctx context.Context, h Host, rem Remote) (string, error) {
+	projectID := url.PathEscape(rem.Owner + "/" + rem.Repo)
+	u := fmt.Sprintf("https://%s/api/v4/projects/%s", h.Host, projectID)
+	body, err := s.do(ctx, http.MethodGet, u, "Bearer "+h.Token, "application/json", nil)
+	if err != nil {
+		return "", err
+	}
+	var raw struct {
+		DefaultBranch string `json:"default_branch"`
+	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return "", err
+	}
+	if raw.DefaultBranch == "" {
+		return "", errors.New("project has no default_branch")
+	}
+	return raw.DefaultBranch, nil
+}
+
+func decodeGitLabMR(body []byte) (PullRequest, error) {
+	var p struct {
+		IID       int       `json:"iid"`
+		Title     string    `json:"title"`
+		State     string    `json:"state"`
+		WebURL    string    `json:"web_url"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Author    struct {
+			Username string `json:"username"`
+		} `json:"author"`
+		SourceBranch string `json:"source_branch"`
+		TargetBranch string `json:"target_branch"`
+		Draft        bool   `json:"draft"`
+	}
+	if err := json.Unmarshal(body, &p); err != nil {
+		return PullRequest{}, fmt.Errorf("gitlab decode: %w", err)
+	}
+	return PullRequest{
+		Number:    p.IID,
+		Title:     p.Title,
+		State:     normaliseGitlabState(p.State),
+		Author:    p.Author.Username,
+		Head:      p.SourceBranch,
+		Base:      p.TargetBranch,
+		URL:       p.WebURL,
+		Draft:     p.Draft,
+		UpdatedAt: p.UpdatedAt,
+	}, nil
+}
+
 func (s *Service) fetch(ctx context.Context, u, auth, accept string) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+	return s.do(ctx, http.MethodGet, u, auth, accept, nil)
+}
+
+// do is the shared HTTP transport for read + write calls against
+// GitHub / Gitea / GitLab. Pass body=nil for GET / DELETE; supply a
+// JSON-serializable payload for POST / PUT / PATCH and we encode it.
+// The 2 MiB response cap matches the original fetch — sane upstream
+// payloads stay well under, runaway responses get rejected.
+func (s *Service) do(ctx context.Context, method, u, auth, accept string, body any) ([]byte, error) {
+	var reqBody io.Reader
+	if body != nil {
+		buf, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("marshal request: %w", err)
+		}
+		reqBody = bytes.NewReader(buf)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, u, reqBody)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Authorization", auth)
 	req.Header.Set("Accept", accept)
 	req.Header.Set("User-Agent", "opendray-inspector")
+	if reqBody != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
 	resp, err := s.http.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	body, _ := io.ReadAll(io.LimitReader(resp.Body, 2<<20)) // 2 MiB cap
+	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 2<<20))
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("upstream %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+		return nil, fmt.Errorf("upstream %d: %s", resp.StatusCode, strings.TrimSpace(string(respBody)))
 	}
-	return body, nil
+	return respBody, nil
 }
 
 // ── HTTP handlers ───────────────────────────────────────────────
@@ -606,6 +1189,87 @@ func (h *Handlers) Mount(r chi.Router) {
 	// the client side.
 	r.Get("/git/remote", h.remote)
 	r.Get("/git/prs", h.prs)
+	r.Post("/git/prs", h.createPR)
+	r.Post("/git/prs/{number}/merge", h.mergePR)
+	r.Get("/git/prs/{number}/checks", h.prChecks)
+}
+
+// createPR mounts POST /git/prs. Body matches CreatePRRequest.
+// Returns 201 with the created PR envelope on success.
+func (h *Handlers) createPR(w http.ResponseWriter, r *http.Request) {
+	var req CreatePRRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Errorf("decode body: %w", err))
+		return
+	}
+	if req.Dir == "" {
+		writeError(w, http.StatusBadRequest, errors.New("dir required"))
+		return
+	}
+	pr, err := h.svc.CreatePullRequest(r.Context(), req)
+	if err != nil {
+		writeError(w, statusFromGitErr(err), err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, pr)
+}
+
+// mergePR mounts POST /git/prs/{number}/merge. URL number wins
+// over body number when both are present.
+func (h *Handlers) mergePR(w http.ResponseWriter, r *http.Request) {
+	var req MergePRRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Errorf("decode body: %w", err))
+		return
+	}
+	if num := chi.URLParam(r, "number"); num != "" {
+		n, err := strconv.Atoi(num)
+		if err != nil || n <= 0 {
+			writeError(w, http.StatusBadRequest, errors.New("invalid number"))
+			return
+		}
+		req.Number = n
+	}
+	if req.Dir == "" {
+		writeError(w, http.StatusBadRequest, errors.New("dir required"))
+		return
+	}
+	pr, err := h.svc.MergePullRequest(r.Context(), req)
+	if err != nil {
+		writeError(w, statusFromGitErr(err), err)
+		return
+	}
+	writeJSON(w, http.StatusOK, pr)
+}
+
+// prChecks mounts GET /git/prs/{number}/checks?path=<dir>.
+func (h *Handlers) prChecks(w http.ResponseWriter, r *http.Request) {
+	dir := r.URL.Query().Get("path")
+	if dir == "" {
+		writeError(w, http.StatusBadRequest, errors.New("path required"))
+		return
+	}
+	num := chi.URLParam(r, "number")
+	n, err := strconv.Atoi(num)
+	if err != nil || n <= 0 {
+		writeError(w, http.StatusBadRequest, errors.New("invalid number"))
+		return
+	}
+	checks, err := h.svc.PRChecks(r.Context(), dir, n)
+	if err != nil {
+		writeError(w, statusFromGitErr(err), err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"checks": checks})
+}
+
+// statusFromGitErr maps the common sentinel errors to HTTP codes so
+// the UI can react (e.g. show "configure token" hint for 404).
+func statusFromGitErr(err error) int {
+	if errors.Is(err, ErrNoTokenForHost) {
+		return http.StatusUnauthorized
+	}
+	return http.StatusInternalServerError
 }
 
 func (h *Handlers) list(w http.ResponseWriter, r *http.Request) {
