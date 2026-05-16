@@ -35,6 +35,7 @@ type Service interface {
 	Input(ctx context.Context, id string, data []byte) error
 	Resize(ctx context.Context, id string, kind ClientKind, cols, rows uint16) error
 	Subscribe(ctx context.Context, id string, kind ClientKind) (<-chan []byte, func(), error)
+	PTYSize(ctx context.Context, id string) (cols, rows uint16, err error)
 	Buffer(ctx context.Context, id string, since int64) (Replay, error)
 	SwitchClaudeAccount(ctx context.Context, id, accountID string) (Session, error)
 	History(ctx context.Context, id string, limit int) (HistoryResponse, error)
@@ -255,6 +256,20 @@ func (h *Handlers) stream(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 	defer unsub()
+
+	// Send the current PTY canvas size as a JSON control frame
+	// (TextMessage) before any byte stream lands. Web clients use
+	// this to size their xterm grid to match the PTY and then
+	// adjust font size locally to fill the browser window — the
+	// alternative ("FitAddon makes the grid bigger than PTY")
+	// leaves vast empty cells on the right of the TUI. Mobile
+	// ignores this frame; it drives the PTY size itself.
+	if cols, rows, err := h.svc.PTYSize(r.Context(), id); err == nil {
+		ctrl := fmt.Sprintf(`{"type":"pty_size","cols":%d,"rows":%d}`, cols, rows)
+		if err := conn.WriteMessage(websocket.TextMessage, []byte(ctrl)); err != nil {
+			return
+		}
+	}
 
 	if rep, err := h.svc.Buffer(r.Context(), id, 0); err == nil && len(rep.Bytes) > 0 {
 		if err := conn.WriteMessage(websocket.BinaryMessage, rep.Bytes); err != nil {
