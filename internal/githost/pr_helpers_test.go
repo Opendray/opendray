@@ -118,3 +118,38 @@ func TestGithubPRResponse_ToPullRequest_MergedTimestamp(t *testing.T) {
 func jsonUnmarshalTestHelper(body []byte, v any) error {
 	return json.Unmarshal(body, v)
 }
+
+func TestCommitStatusState_MappingMatrix(t *testing.T) {
+	cases := []struct {
+		in             string
+		wantStatus     string
+		wantConclusion string
+	}{
+		// Gitea
+		{"success", "completed", "success"},
+		{"failure", "completed", "failure"},
+		{"error", "completed", "failure"},
+		{"warning", "completed", "neutral"},
+		{"pending", "queued", ""},
+		// GitLab
+		{"running", "in_progress", ""},
+		{"failed", "completed", "failure"},
+		{"canceled", "completed", "cancelled"},
+		{"cancelled", "completed", "cancelled"},
+		{"skipped", "completed", "skipped"},
+		{"manual", "completed", "action_required"},
+		{"scheduled", "queued", ""},
+		// Mixed case + unknowns
+		{"SUCCESS", "completed", "success"},
+		{"in_progress", "in_progress", ""},
+		{"weird", "completed", "neutral"},
+		{"", "completed", "neutral"},
+	}
+	for _, c := range cases {
+		gotStatus, gotConclusion := commitStatusState(c.in)
+		if gotStatus != c.wantStatus || gotConclusion != c.wantConclusion {
+			t.Errorf("commitStatusState(%q) = (%q, %q), want (%q, %q)",
+				c.in, gotStatus, gotConclusion, c.wantStatus, c.wantConclusion)
+		}
+	}
+}

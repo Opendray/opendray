@@ -489,8 +489,15 @@ func (s *Service) MergePullRequest(ctx context.Context, req MergePRRequest) (Pul
 }
 
 // PRChecks returns the check runs attached to a PR's head commit.
-// GitHub-only in this iteration; Gitea / GitLab return an empty
-// slice with no error so the UI can degrade gracefully.
+// Normalised to the GitHub Checks vocabulary (status/conclusion)
+// across all platforms so the UI renders one icon set:
+//
+//	GitHub  → /commits/{sha}/check-runs (native shape)
+//	Gitea   → /commits/{sha}/statuses (mapped from "success" /
+//	          "failure" / "pending" / "error" / "warning")
+//	GitLab  → /projects/{id}/repository/commits/{sha}/statuses
+//	          (mapped from "running" / "success" / "failed" /
+//	          "canceled" / "skipped" / "manual" / "pending")
 func (s *Service) PRChecks(ctx context.Context, dir string, number int) ([]CheckRun, error) {
 	rem, hostRow, err := s.resolveHost(ctx, dir)
 	if err != nil {
@@ -499,14 +506,16 @@ func (s *Service) PRChecks(ctx context.Context, dir string, number int) ([]Check
 	if number <= 0 {
 		return nil, errors.New("number required")
 	}
-	if hostRow.Kind != KindGitHub {
-		// Gitea / GitLab have their own check APIs but the surface
-		// differs enough that we'd lose more in normalisation than
-		// we'd gain. Return empty rather than error so the UI hides
-		// the section gracefully.
+	switch hostRow.Kind {
+	case KindGitHub:
+		return s.githubChecks(ctx, hostRow, rem, number)
+	case KindGitea:
+		return s.giteaChecks(ctx, hostRow, rem, number)
+	case KindGitLab:
+		return s.gitlabChecks(ctx, hostRow, rem, number)
+	default:
 		return []CheckRun{}, nil
 	}
-	return s.githubChecks(ctx, hostRow, rem, number)
 }
 
 // resolveHost is the shared prelude for create / merge / checks:
@@ -1119,6 +1128,184 @@ func decodeGitLabMR(body []byte) (PullRequest, error) {
 		Draft:     p.Draft,
 		UpdatedAt: p.UpdatedAt,
 	}, nil
+}
+
+// ── Cross-platform commit status mapping ──────────────────────────
+
+// commitStatusState normalises a host-specific status string into
+// (status, conclusion) using the GitHub Checks vocabulary so the
+// UI renders one icon set across platforms.
+//
+// Gitea statuses:    success / failure / pending / error / warning
+// GitLab statuses:   running / pending / success / failed / canceled
+//
+//	/ skipped / manual / scheduled
+//
+// Anything we don't recognise becomes ("completed", "neutral") so
+// the UI shows a neutral check rather than a spinner forever.
+func commitStatusState(host string) (status, conclusion string) {
+	switch strings.ToLower(host) {
+	case "success", "passed":
+		return "completed", "success"
+	case "failure", "failed":
+		return "completed", "failure"
+	case "error":
+		return "completed", "failure"
+	case "warning":
+		return "completed", "neutral"
+	case "pending", "scheduled":
+		return "queued", ""
+	case "running", "in_progress":
+		return "in_progress", ""
+	case "cancelled", "canceled":
+		return "completed", "cancelled"
+	case "skipped":
+		return "completed", "skipped"
+	case "manual":
+		return "completed", "action_required"
+	default:
+		return "completed", "neutral"
+	}
+}
+
+// ── Gitea: commit statuses for PR head ────────────────────────────
+
+func (s *Service) giteaChecks(ctx context.Context, h Host, rem Remote, number int) ([]CheckRun, error) {
+	// Two requests: GET the PR to learn the head SHA, then GET
+	// statuses. Mirrors the GitHub flow so timing characteristics
+	// match (one network round trip is hard to dodge without
+	// caching the PR row).
+	prURL := fmt.Sprintf("https://%s/api/v1/repos/%s/%s/pulls/%d",
+		h.Host, rem.Owner, rem.Repo, number)
+	prBody, err := s.do(ctx, http.MethodGet, prURL, "token "+h.Token, "application/json", nil)
+	if err != nil {
+		return nil, err
+	}
+	var pr struct {
+		Head struct {
+			SHA string `json:"sha"`
+		} `json:"head"`
+	}
+	if err := json.Unmarshal(prBody, &pr); err != nil {
+		return nil, fmt.Errorf("gitea decode pr: %w", err)
+	}
+	if pr.Head.SHA == "" {
+		return nil, errors.New("pr has no head sha")
+	}
+	statusURL := fmt.Sprintf("https://%s/api/v1/repos/%s/%s/commits/%s/statuses?limit=50",
+		h.Host, rem.Owner, rem.Repo, pr.Head.SHA)
+	body, err := s.do(ctx, http.MethodGet, statusURL, "token "+h.Token, "application/json", nil)
+	if err != nil {
+		return nil, err
+	}
+	var raw []struct {
+		Context     string    `json:"context"`
+		Description string    `json:"description"`
+		State       string    `json:"status"` // success | failure | pending | error | warning
+		TargetURL   string    `json:"target_url"`
+		UpdatedAt   time.Time `json:"updated_at"`
+	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return nil, fmt.Errorf("gitea decode statuses: %w", err)
+	}
+	// Gitea returns ALL historical statuses for a commit, often
+	// many duplicates per check name. Collapse by context (name),
+	// keeping the most-recently-updated entry.
+	latest := make(map[string]CheckRun, len(raw))
+	for _, st := range raw {
+		status, conclusion := commitStatusState(st.State)
+		name := st.Context
+		if name == "" {
+			name = st.Description
+		}
+		if name == "" {
+			name = "(unnamed)"
+		}
+		cur, exists := latest[name]
+		if exists && cur.UpdatedAt.After(st.UpdatedAt) {
+			continue
+		}
+		latest[name] = CheckRun{
+			Name:       name,
+			Status:     status,
+			Conclusion: conclusion,
+			URL:        st.TargetURL,
+			UpdatedAt:  st.UpdatedAt,
+		}
+	}
+	out := make([]CheckRun, 0, len(latest))
+	for _, c := range latest {
+		out = append(out, c)
+	}
+	return out, nil
+}
+
+// ── GitLab: commit statuses for MR head ───────────────────────────
+
+func (s *Service) gitlabChecks(ctx context.Context, h Host, rem Remote, number int) ([]CheckRun, error) {
+	projectID := url.PathEscape(rem.Owner + "/" + rem.Repo)
+	// GET the MR to learn the head SHA, then commit statuses.
+	mrURL := fmt.Sprintf("https://%s/api/v4/projects/%s/merge_requests/%d",
+		h.Host, projectID, number)
+	mrBody, err := s.do(ctx, http.MethodGet, mrURL, "Bearer "+h.Token, "application/json", nil)
+	if err != nil {
+		return nil, err
+	}
+	var mr struct {
+		SHA string `json:"sha"`
+	}
+	if err := json.Unmarshal(mrBody, &mr); err != nil {
+		return nil, fmt.Errorf("gitlab decode mr: %w", err)
+	}
+	if mr.SHA == "" {
+		return nil, errors.New("mr has no head sha")
+	}
+	statusURL := fmt.Sprintf("https://%s/api/v4/projects/%s/repository/commits/%s/statuses?per_page=50",
+		h.Host, projectID, mr.SHA)
+	body, err := s.do(ctx, http.MethodGet, statusURL, "Bearer "+h.Token, "application/json", nil)
+	if err != nil {
+		return nil, err
+	}
+	var raw []struct {
+		Name       string     `json:"name"`
+		Status     string     `json:"status"` // running | success | failed | etc.
+		TargetURL  string     `json:"target_url"`
+		FinishedAt *time.Time `json:"finished_at"`
+		CreatedAt  time.Time  `json:"created_at"`
+	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return nil, fmt.Errorf("gitlab decode statuses: %w", err)
+	}
+	// GitLab returns one entry per pipeline job; latest wins per
+	// name (same dedupe pattern as Gitea).
+	latest := make(map[string]CheckRun, len(raw))
+	for _, st := range raw {
+		ts := st.CreatedAt
+		if st.FinishedAt != nil && st.FinishedAt.After(ts) {
+			ts = *st.FinishedAt
+		}
+		status, conclusion := commitStatusState(st.Status)
+		name := st.Name
+		if name == "" {
+			name = "(unnamed)"
+		}
+		cur, exists := latest[name]
+		if exists && cur.UpdatedAt.After(ts) {
+			continue
+		}
+		latest[name] = CheckRun{
+			Name:       name,
+			Status:     status,
+			Conclusion: conclusion,
+			URL:        st.TargetURL,
+			UpdatedAt:  ts,
+		}
+	}
+	out := make([]CheckRun, 0, len(latest))
+	for _, c := range latest {
+		out = append(out, c)
+	}
+	return out, nil
 }
 
 func (s *Service) fetch(ctx context.Context, u, auth, accept string) ([]byte, error) {
