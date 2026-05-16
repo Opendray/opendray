@@ -625,6 +625,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				proxyHandlers.Mount(r)
 				fsHandlers.Mount(r)
 				gitHandlers.Mount(r)
+				gitHandlers.MountWrite(r)
 				gitHostHandlers.Mount(r)
 				customTaskHandlers.Mount(r)
 				searchHandlers.Mount(r)

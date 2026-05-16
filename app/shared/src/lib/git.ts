@@ -60,3 +60,108 @@ export async function getGitShow(path: string, hash: string): Promise<string> {
   const params = new URLSearchParams({ path, hash })
   return api<string>(`/api/v1/git/show?${params.toString()}`)
 }
+
+// ── Write ops (Phase 4) ────────────────────────────────────────
+
+export interface GitBranchRef {
+  name: string
+  remote?: string
+  is_remote: boolean
+  is_current: boolean
+  upstream?: string
+}
+
+export interface GitBranchList {
+  branches: GitBranchRef[]
+  current: string
+}
+
+export async function listGitBranches(path: string): Promise<GitBranchList> {
+  return api<GitBranchList>(
+    `/api/v1/git/write/branches?path=${encodeURIComponent(path)}`,
+  )
+}
+
+export interface CreateBranchRequest {
+  dir: string
+  name: string
+  from?: string
+  switch?: boolean
+}
+
+export async function createGitBranch(
+  req: CreateBranchRequest,
+): Promise<void> {
+  await api('/api/v1/git/write/branches', { method: 'POST', body: req })
+}
+
+export async function checkoutGitBranch(
+  dir: string,
+  name: string,
+): Promise<void> {
+  await api('/api/v1/git/write/checkout', {
+    method: 'POST',
+    body: { dir, name },
+  })
+}
+
+export async function deleteGitBranch(
+  path: string,
+  name: string,
+  force = false,
+): Promise<void> {
+  const params = new URLSearchParams({ path })
+  if (force) params.set('force', 'true')
+  await api(
+    `/api/v1/git/write/branches/${encodeURIComponent(name)}?${params.toString()}`,
+    { method: 'DELETE' },
+  )
+}
+
+// Empty files[] stages all (`.`).
+export async function stageGitFiles(
+  dir: string,
+  files: string[] = [],
+): Promise<void> {
+  await api('/api/v1/git/write/stage', {
+    method: 'POST',
+    body: { dir, files },
+  })
+}
+
+export async function unstageGitFiles(
+  dir: string,
+  files: string[] = [],
+): Promise<void> {
+  await api('/api/v1/git/write/unstage', {
+    method: 'POST',
+    body: { dir, files },
+  })
+}
+
+export async function commitGit(
+  dir: string,
+  message: string,
+  allowEmpty = false,
+): Promise<{ hash: string }> {
+  return api<{ hash: string }>('/api/v1/git/write/commit', {
+    method: 'POST',
+    body: { dir, message, allow_empty: allowEmpty },
+  })
+}
+
+export interface PushOptions {
+  branch?: string
+  force?: boolean
+  set_upstream?: boolean
+}
+
+export async function pushGit(
+  dir: string,
+  opts: PushOptions = {},
+): Promise<{ branch: string }> {
+  return api<{ branch: string }>('/api/v1/git/write/push', {
+    method: 'POST',
+    body: { dir, ...opts },
+  })
+}

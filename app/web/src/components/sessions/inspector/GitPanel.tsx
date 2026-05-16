@@ -12,6 +12,8 @@ import { getGitStatus, getGitLog } from '@/lib/git'
 import type { GitStatusFile } from '@/lib/git'
 import { cn } from '@/lib/utils'
 
+import { BranchControls } from './BranchControls'
+import { CommitForm } from './CommitForm'
 import { DiffViewer } from './DiffViewer'
 import { PullRequestsSection } from './PullRequestsSection'
 
@@ -97,6 +99,7 @@ export function GitPanel({ cwd }: GitPanelProps) {
           )}
         </div>
         <FileSummary files={s.files} />
+        <BranchControls cwd={cwd} ahead={s.ahead} upstream={s.upstream} />
       </section>
 
       {s.files.length > 0 && (
@@ -120,6 +123,7 @@ export function GitPanel({ cwd }: GitPanelProps) {
               </div>
             )}
           </div>
+          <CommitForm cwd={cwd} files={s.files} />
         </section>
       )}
 
