@@ -689,6 +689,12 @@ func (h *Hub) runOutbound(ctx context.Context) {
 	defer unsubI()
 	chEnded, unsubE := h.bus.Subscribe("session.ended", 64)
 	defer unsubE()
+	// PR check-completion events come from internal/prwatcher. They
+	// don't carry a session_id (the trigger is a repo's CI suite,
+	// not a session lifecycle), so suppressByPolicy keys on the PR
+	// URL instead — see sessionIDFromEvent.
+	chPRChecks, unsubPR := h.bus.Subscribe("pr.checks_completed", 64)
+	defer unsubPR()
 	for {
 		select {
 		case <-ctx.Done():
@@ -699,6 +705,11 @@ func (h *Hub) runOutbound(ctx context.Context) {
 			}
 			h.dispatch(ctx, ev)
 		case ev, ok := <-chEnded:
+			if !ok {
+				return
+			}
+			h.dispatch(ctx, ev)
+		case ev, ok := <-chPRChecks:
 			if !ok {
 				return
 			}
@@ -1229,6 +1240,47 @@ func buildSessionCard(ev eventbus.Event, snip snippetPrefs) *Card {
 					{Text: "Open log", Value: "nav:/sessions/" + sid},
 				}}},
 			},
+		}
+	case "pr.checks_completed":
+		// Sent by internal/prwatcher when a tracked PR's CI suite
+		// finishes. Conclusion is the aggregate verdict: "success",
+		// "failure", or "mixed". Card colour mirrors the verdict
+		// so the operator can recognise it at a glance in chat.
+		conclusion, _ := data["conclusion"].(string)
+		number := toInt64(data["pr_number"])
+		title, _ := data["pr_title"].(string)
+		prURL, _ := data["pr_url"].(string)
+		head, _ := data["pr_head"].(string)
+		base, _ := data["pr_base"].(string)
+		checks := toInt64(data["checks"])
+
+		color := "green"
+		verdict := "Passed"
+		switch conclusion {
+		case "failure":
+			color = "red"
+			verdict = "Failed"
+		case "mixed":
+			color = "yellow"
+			verdict = "Mixed"
+		}
+		body := fmt.Sprintf(
+			"PR #%d — *%s*  \n%s → %s · %s · %d checks",
+			number, title, head, base, verdict, checks,
+		)
+		elements := []CardElement{
+			CardMarkdown{Content: body},
+		}
+		if prURL != "" {
+			elements = append(elements, CardActions{
+				Buttons: [][]ButtonOption{{
+					{Text: "Open PR", Value: "nav:" + prURL, Style: "primary"},
+				}},
+			})
+		}
+		return &Card{
+			Header:   &CardHeader{Title: "CI checks complete", Color: color},
+			Elements: elements,
 		}
 	}
 	return &Card{

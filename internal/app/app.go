@@ -55,6 +55,7 @@ import (
 	notesapi "github.com/opendray/opendray-v2/internal/notes"
 	"github.com/opendray/opendray-v2/internal/projectdoc"
 	"github.com/opendray/opendray-v2/internal/projectscan"
+	"github.com/opendray/opendray-v2/internal/prwatcher"
 	searchapi "github.com/opendray/opendray-v2/internal/search"
 	"github.com/opendray/opendray-v2/internal/session"
 	"github.com/opendray/opendray-v2/internal/settings"
@@ -86,6 +87,7 @@ type App struct {
 	cleanerScheduler     *cleaner.Scheduler  // optional; nil when scheduler is off
 	gitActivityScheduler *gitactivity.Scheduler
 	conflictScheduler    *memconflict.Scheduler // M-PC daily cross-layer conflict scan
+	prWatcher            *prwatcher.Service     // polls open PRs' CI checks and emits pr.checks_completed
 	server               *http.Server
 }
 
@@ -568,6 +570,17 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		},
 		log,
 	)
+	// PR watcher — polls open PRs' CI checks every ~90s and emits
+	// pr.checks_completed when a suite finishes. The channel hub
+	// turns that into chat-side notifications. Built without a
+	// "start" call here; App.Run kicks it off alongside the
+	// channel hub.
+	prWatcher := prwatcher.New(
+		&prwatcherSessionAdapter{mgr: sessionMgr},
+		gitHostSvc,
+		bus,
+		log,
+	)
 	// Auto-journal: on every session.ended / session.stopped event
 	// the Journaler writes a session_logs row so future sessions see
 	// a chronological record of what just happened in this project.
@@ -692,6 +705,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		cleanerScheduler:     cleanerScheduler,
 		gitActivityScheduler: gitActivityScheduler,
 		conflictScheduler:    conflictScheduler,
+		prWatcher:            prWatcher,
 		server:               srv,
 	}, nil
 }
@@ -793,6 +807,13 @@ func (a *App) Run(ctx context.Context) error {
 		}
 		close(conflictDone)
 	}()
+
+	// PR watcher — polls open PRs' CI checks. Start() spawns its
+	// own goroutine internally, so there's no done channel to
+	// coordinate; the context cancellation drives shutdown.
+	if a.prWatcher != nil {
+		a.prWatcher.Start(ctx)
+	}
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -1297,6 +1318,29 @@ func (a *captureSessionAdapter) List(ctx context.Context) ([]capture.SessionInfo
 			ProviderID: r.ProviderID,
 			Cwd:        r.Cwd,
 			State:      string(r.State),
+		})
+	}
+	return out, nil
+}
+
+// prwatcherSessionAdapter satisfies prwatcher.SessionLister by
+// projecting session.Manager rows onto the smaller surface the
+// watcher needs (id / cwd / state).
+type prwatcherSessionAdapter struct {
+	mgr *session.Manager
+}
+
+func (a *prwatcherSessionAdapter) List(ctx context.Context) ([]prwatcher.SessionInfo, error) {
+	rows, err := a.mgr.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]prwatcher.SessionInfo, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, prwatcher.SessionInfo{
+			ID:    r.ID,
+			Cwd:   r.Cwd,
+			State: string(r.State),
 		})
 	}
 	return out, nil
