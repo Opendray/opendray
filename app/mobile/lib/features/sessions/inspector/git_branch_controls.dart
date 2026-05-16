@@ -109,34 +109,17 @@ class _GitBranchControlsState extends ConsumerState<GitBranchControls> {
   }
 
   Future<String?> _promptForBranchName() async {
-    final controller = TextEditingController();
-    final name = await showDialog<String>(
+    // Use an internal StatefulWidget so the TextEditingController
+    // is owned by the dialog's State and disposed at the right
+    // time (after the TextField is detached). Disposing it from
+    // the calling Future right after showDialog returns triggers
+    // a "_dependents.isEmpty" assertion in framework.dart because
+    // the TextField is still being torn down when we dispose its
+    // listener.
+    return showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New branch'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'feat/something',
-            border: OutlineInputBorder(),
-          ),
-          onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(null),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+      builder: (_) => const _BranchNameDialog(),
     );
-    controller.dispose();
-    return name;
   }
 
   Future<void> _push() async {
@@ -234,6 +217,61 @@ class _GitBranchControlsState extends ConsumerState<GitBranchControls> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// _BranchNameDialog owns its TextEditingController via its own
+// State so the dispose order is correct — the framework unmounts
+// the TextField first, then State.dispose() runs and tears down
+// the controller. Putting that controller in the caller (the
+// async function) instead would dispose it while the TextField
+// is still listening, tripping the _dependents.isEmpty assertion.
+class _BranchNameDialog extends StatefulWidget {
+  const _BranchNameDialog();
+
+  @override
+  State<_BranchNameDialog> createState() => _BranchNameDialogState();
+}
+
+class _BranchNameDialogState extends State<_BranchNameDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final name = _controller.text.trim();
+    if (name.isEmpty) {
+      Navigator.of(context).pop(null);
+      return;
+    }
+    Navigator.of(context).pop(name);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('New branch'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(
+          hintText: 'feat/something',
+          border: OutlineInputBorder(),
+        ),
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(onPressed: _submit, child: const Text('Create')),
+      ],
     );
   }
 }

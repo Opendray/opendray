@@ -45,18 +45,22 @@ func TestValidRelativePath(t *testing.T) {
 }
 
 func TestParseBranchRefs(t *testing.T) {
+	// Format: <short>|<full>|<upstream>|<head_marker>.
 	// Simulated for-each-ref output: local main (current) +
-	// feat/x with upstream + a remote ref (origin/main) + an
-	// origin/HEAD symref that should be filtered.
-	raw := `main|origin/main|*
-feat/x|origin/feat/x|
-origin/main||
-origin/feat/x||
-origin/HEAD||
+	// feat/x with upstream + remote refs (origin/main,
+	// origin/feat/x) + an origin/HEAD symref that should be
+	// filtered + a bare "origin" remote symref that some setups
+	// produce (also filtered).
+	raw := `main|refs/heads/main|origin/main|*
+feat/x|refs/heads/feat/x|origin/feat/x|
+origin/main|refs/remotes/origin/main||
+origin/feat/x|refs/remotes/origin/feat/x||
+origin/HEAD|refs/remotes/origin/HEAD||
+origin|refs/remotes/origin||
 `
 	got := parseBranchRefs(raw, "main")
 	if len(got) != 4 {
-		t.Fatalf("expected 4 refs (HEAD symref filtered), got %d: %+v", len(got), got)
+		t.Fatalf("expected 4 refs (HEAD + bare origin filtered), got %d: %+v", len(got), got)
 	}
 	// Find each by traits.
 	var mainRef, featRef, originMain, originFeat *BranchRef
@@ -89,25 +93,38 @@ origin/HEAD||
 	}
 }
 
+func TestParseBranchRefs_FiltersBareRemoteSymref(t *testing.T) {
+	// A bare "refs/remotes/origin" with no branch suffix should
+	// be dropped — it's a remote symref, not a switchable branch.
+	// This was the bug: it was rendering as a local branch
+	// called "origin" because the short form has no slash.
+	raw := `origin|refs/remotes/origin||
+`
+	got := parseBranchRefs(raw, "")
+	if len(got) != 0 {
+		t.Errorf("expected empty (bare origin symref filtered), got %+v", got)
+	}
+}
+
 func TestParseBranchRefs_HeadSymrefFiltered(t *testing.T) {
-	// HEAD symref alone — only entry; output must be empty.
-	got := parseBranchRefs("origin/HEAD||\n", "")
+	raw := `origin/HEAD|refs/remotes/origin/HEAD||
+`
+	got := parseBranchRefs(raw, "")
 	if len(got) != 0 {
 		t.Errorf("expected empty when only HEAD symref present, got %+v", got)
 	}
 }
 
-func TestIsLikelyRemote(t *testing.T) {
-	cases := map[string]bool{
-		"origin":   true,
-		"upstream": true,
-		"fork":     true,
-		"feat":     false, // local branch named "feat/..."
-		"":         false,
+func TestParseBranchRefs_LocalNamedOrigin(t *testing.T) {
+	// An operator can (regrettably) name a local branch "origin".
+	// `refname:full` disambiguates: refs/heads/origin is local.
+	raw := `origin|refs/heads/origin||
+`
+	got := parseBranchRefs(raw, "")
+	if len(got) != 1 || got[0].IsRemote {
+		t.Errorf("local branch named 'origin' misclassified: %+v", got)
 	}
-	for in, want := range cases {
-		if got := isLikelyRemote(in); got != want {
-			t.Errorf("isLikelyRemote(%q) = %v, want %v", in, got, want)
-		}
+	if got[0].Name != "origin" {
+		t.Errorf("name wrong: %q", got[0].Name)
 	}
 }

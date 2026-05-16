@@ -85,11 +85,14 @@ func (h *Handlers) listBranches(w http.ResponseWriter, r *http.Request) {
 		"symbolic-ref", "--quiet", "--short", "HEAD")
 	current := strings.TrimSpace(string(curBytes))
 
-	// Local + remote refs in one call, with upstream tracking
-	// info for local branches. Custom format keeps parsing cheap.
+	// Local + remote refs in one call. `refname:full` is the
+	// authoritative source of truth for local-vs-remote (we used
+	// to heuristic from the short form, which mis-classified bare
+	// `refs/remotes/origin` symrefs as local branches called
+	// "origin"). Upstream + HEAD marker round out the format.
 	out, err := run(r.Context(), dir,
 		"for-each-ref",
-		"--format=%(refname:short)|%(upstream:short)|%(HEAD)",
+		"--format=%(refname:short)|%(refname)|%(upstream:short)|%(HEAD)",
 		"refs/heads", "refs/remotes")
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -103,8 +106,15 @@ func (h *Handlers) listBranches(w http.ResponseWriter, r *http.Request) {
 }
 
 // parseBranchRefs splits the for-each-ref output. Each line is
-// "<name>|<upstream>|<head_marker>". remote refs start with the
-// remote name ("origin/foo") and are normalised into BranchRef.
+// "<short>|<full>|<upstream>|<head_marker>". Classification rule:
+//
+//   - refname:full starts with "refs/heads/"   → local
+//   - refname:full starts with "refs/remotes/" → remote
+//
+// The short refname might collide between local and remote (e.g.
+// a local branch literally named "origin" would have short
+// "origin" — same as a hypothetical bare remote HEAD symref); the
+// full refname disambiguates.
 func parseBranchRefs(out, current string) []BranchRef {
 	refs := []BranchRef{}
 	for _, line := range strings.Split(out, "\n") {
@@ -112,39 +122,51 @@ func parseBranchRefs(out, current string) []BranchRef {
 		if line == "" {
 			continue
 		}
-		parts := strings.SplitN(line, "|", 3)
-		name := parts[0]
-		upstream := ""
-		headMarker := ""
-		if len(parts) > 1 {
-			upstream = parts[1]
-		}
-		if len(parts) > 2 {
-			headMarker = strings.TrimSpace(parts[2])
-		}
-		// Filter the "origin/HEAD" symref — it points to the
-		// remote default branch, not an actual branch we'd
-		// want to switch to.
-		if strings.HasSuffix(name, "/HEAD") {
+		parts := strings.SplitN(line, "|", 4)
+		if len(parts) < 2 {
 			continue
 		}
-		isRemote := false
-		remote := ""
-		displayName := name
-		if i := strings.Index(name, "/"); i > 0 && !strings.HasPrefix(name, "refs/") {
-			// Cheap heuristic: ref names like "origin/foo" map to
-			// remote refs. Local branches can't contain "/" by
-			// convention, but git does allow it; the for-each-ref
-			// path differentiates via the refname structure though,
-			// so this only kicks in for refs/remotes/ entries.
-			head := name[:i]
-			tail := name[i+1:]
-			if isLikelyRemote(head) {
-				isRemote = true
-				remote = head
-				displayName = tail
+		shortName := parts[0]
+		fullName := parts[1]
+		upstream := ""
+		headMarker := ""
+		if len(parts) > 2 {
+			upstream = parts[2]
+		}
+		if len(parts) > 3 {
+			headMarker = strings.TrimSpace(parts[3])
+		}
+
+		// Filter:
+		//   - bare "refs/remotes/<remote>" symrefs (just the
+		//     remote head pointer, not a switchable branch).
+		//   - HEAD symrefs anywhere (origin/HEAD, etc.).
+		if strings.HasSuffix(fullName, "/HEAD") {
+			continue
+		}
+		// "refs/remotes/origin" with no further slash is the bare
+		// remote symref some setups produce. Skip it — it's not
+		// a branch.
+		if strings.HasPrefix(fullName, "refs/remotes/") {
+			trimmed := strings.TrimPrefix(fullName, "refs/remotes/")
+			if !strings.Contains(trimmed, "/") {
+				continue
 			}
 		}
+
+		isRemote := strings.HasPrefix(fullName, "refs/remotes/")
+		displayName := shortName
+		remote := ""
+		if isRemote {
+			// short form is "<remote>/<branch[/sub]*>". Split
+			// on the FIRST slash; everything after is the
+			// branch name (which itself may contain slashes).
+			if i := strings.Index(shortName, "/"); i > 0 {
+				remote = shortName[:i]
+				displayName = shortName[i+1:]
+			}
+		}
+
 		refs = append(refs, BranchRef{
 			Name:      displayName,
 			Remote:    remote,
@@ -154,16 +176,6 @@ func parseBranchRefs(out, current string) []BranchRef {
 		})
 	}
 	return refs
-}
-
-func isLikelyRemote(name string) bool {
-	// Bog-standard remote names; anything else gets treated as
-	// a local branch with a slash in its name (rare but legal).
-	switch name {
-	case "origin", "upstream", "fork":
-		return true
-	}
-	return false
 }
 
 // ── Branch create ──────────────────────────────────────────────
