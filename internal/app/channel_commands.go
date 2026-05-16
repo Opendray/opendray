@@ -148,12 +148,8 @@ func listSessionsCardHandler(mgr sessionOps) channel.CommandCardHandler {
 			}
 		}
 		buttons := make([][]channel.ButtonOption, 0, 4)
-		for _, row := range chunkButtons(endRow, 2) {
-			buttons = append(buttons, row)
-		}
-		for _, row := range chunkButtons(resumeRow, 2) {
-			buttons = append(buttons, row)
-		}
+		buttons = append(buttons, chunkButtons(endRow, 2)...)
+		buttons = append(buttons, chunkButtons(resumeRow, 2)...)
 
 		elements := []channel.CardElement{
 			channel.CardMarkdown{Content: strings.TrimRight(b.String(), "\n")},
