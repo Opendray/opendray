@@ -6,18 +6,19 @@ that doesn't fit inline in the terminal.
 
 ![Inspector panel tabs](/tutorial/sessions-inspector.png)
 
-Toggle the panel with the keyboard shortcut **`g i`** or the icon
-in the top-right of the terminal pane.
+Toggle the panel with the inspector-toggle icon in the top-right
+of the WorkbenchHeader (next to the session controls). The open
+state persists per-user across reloads.
 
 ## Sub-tabs
 
-The Inspector currently exposes six tabs in a 2×4 grid (top row
-of four + bottom row of two wider tabs):
+The Inspector exposes seven tabs in a 3-row grid (4 + 2 + 1):
 
 | Row | Tabs |
 |---|---|
 | 1 | Files · Git · Search · Tasks |
 | 2 | History · Notes |
+| 3 | Memory |
 
 All tabs scope to the **session's `cwd`** — there's nothing
 showing data outside that working directory.
@@ -37,10 +38,10 @@ subtrees on demand.
 
 ### Git
 
-Inline `git status` for the cwd: untracked / modified / staged
-files with diff previews on click. Only shown when the cwd is
-inside a git repo. Useful for the "what did the agent actually
-change?" review at the end of a session.
+A full Git workbench for the cwd: branch switching, staging,
+commits, push, and the in-panel pull-request command center.
+Only shown when the cwd is inside a git repo. See
+[Git workflow](#02-sessions-07-git-workflow) for the full tour.
 
 ### Search
 
@@ -121,14 +122,20 @@ file-based, not in-memory.
   here, since dropped. Use Search instead, or the agent's own
   scrollback.
 
-## Hiding the inspector
+## Sizing and hiding
 
-Two options:
+The panel anchors to the right edge of the workbench and is
+**user-resizable**:
 
-- **Toggle** with `g i` to slide the panel off-screen (state
-  per-user, persists across reloads).
-- **Collapse a single tab** by clicking its tab pill twice.
+- **Drag the left edge** to resize. A 6-pixel column on the
+  inspector's left edge highlights on hover; press and drag to
+  any width between **320 px** (default) and **900 px**.
+- **Double-click** the same edge to snap back to the default
+  width.
+- The width is persisted per-user (zustand `opendray.layout` in
+  `localStorage`), so it survives reloads and re-spawned
+  sessions.
 
-When opened, the panel takes ~360 px on the right. On narrow
-windows (<1200 px) it overlays the terminal instead of
-side-by-side.
+To hide the panel entirely, click the inspector-toggle icon in
+the WorkbenchHeader. The open/closed state is persisted the same
+way.
