@@ -168,7 +168,12 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     // 404 and browser logs it red in console even though we .catch().
     let alive = true
 
-    const ws = new BinaryWS(wsURL(`/api/v1/sessions/${sessionId}/stream`, token), {
+    // `?client=web` tags this subscriber so the server's
+    // Manager.Resize gate can suppress this client's resize
+    // requests while a mobile client is attached. Mobile picks the
+    // PTY size when both are connected; web adapts locally
+    // (letterboxing / scroll / browser zoom).
+    const ws = new BinaryWS(wsURL(`/api/v1/sessions/${sessionId}/stream?client=web`, token), {
       onMessage: (data) => term.write(data),
       onClose: () => {
         if (!alive) return

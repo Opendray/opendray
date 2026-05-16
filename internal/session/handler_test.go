@@ -95,14 +95,14 @@ func (f *fakeSvc) Input(_ context.Context, id string, _ []byte) error {
 	return nil
 }
 
-func (f *fakeSvc) Resize(_ context.Context, id string, _, _ uint16) error {
+func (f *fakeSvc) Resize(_ context.Context, id string, _ ClientKind, _, _ uint16) error {
 	if _, ok := f.sessions[id]; !ok {
 		return ErrNotFound
 	}
 	return nil
 }
 
-func (f *fakeSvc) Subscribe(_ context.Context, id string) (<-chan []byte, func(), error) {
+func (f *fakeSvc) Subscribe(_ context.Context, id string, _ ClientKind) (<-chan []byte, func(), error) {
 	if _, ok := f.sessions[id]; !ok {
 		return nil, nil, ErrNotFound
 	}

@@ -30,38 +30,46 @@ const (
 	defaultIdleThreshold = 30 * time.Second
 	defaultIdleInterval  = 5 * time.Second
 
-	// lockedPTYCols / lockedPTYRows: the fixed canvas size every
-	// session runs on. We intentionally lock it instead of letting
-	// client-side resize requests change it.
-	//
-	// Why: a PTY has exactly ONE size, but a session can have
-	// multiple clients attached at once (web + mobile + Telegram).
-	// When any client tells the gateway to resize, the TUI inside
-	// the PTY re-renders to that new size — corrupting the layout
-	// for every OTHER attached client. The web window getting
-	// dragged around shouldn't disrupt the operator's phone
-	// session, and vice versa.
-	//
-	// The chosen size is mobile-first: 100 cols is wide enough that
-	// Claude / Gemini layouts don't truncate or wrap unhelpfully,
-	// and narrow enough that portrait-phone xterms can render the
-	// full width with a comfortable font. Web clients with larger
-	// windows render the same canvas inside their viewport with
-	// the surrounding area letterboxed.
-	//
-	// Operators who need a different canvas can change these
-	// constants and rebuild; making them per-session config is a
-	// future enhancement.
-	lockedPTYCols = 100
-	lockedPTYRows = 32
+	// defaultVTCols / defaultVTRows seed the virtual terminal we keep
+	// for screen snapshots. Most modern CLIs query the real PTY size on
+	// startup and re-render to fit, so the actual width arrives via the
+	// first /resize call — these defaults just give a sane initial
+	// canvas. Cards rendering wider than this get clipped.
+	defaultVTCols = 120
+	defaultVTRows = 40
 )
 
-// Backwards-compatible aliases for the previous `defaultVT*`
-// constants, in case external code referenced them.
+// ClientKind tags a subscriber so the manager can gate resize
+// requests by source. The mobile-vs-web distinction is the only
+// one that matters today: web clients have flexible, draggable
+// viewports that should NOT disrupt the operator's phone session
+// when both are attached at once. The PTY itself still has one
+// canvas size; the gating just decides whose viewport "wins".
+//
+// Unknown is the safe default for legacy clients that don't pass
+// a ?client= query parameter — treated as web (the more common
+// caller, and the one whose resize we're willing to suppress).
+type ClientKind int
+
 const (
-	defaultVTCols = lockedPTYCols
-	defaultVTRows = lockedPTYRows
+	ClientUnknown ClientKind = iota
+	ClientWeb
+	ClientMobile
 )
+
+// ParseClientKind maps the ?client= query parameter to a kind.
+// Empty / unrecognised values become ClientUnknown (treated as
+// web at the gating layer). Casing is normalised.
+func ParseClientKind(s string) ClientKind {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "mobile":
+		return ClientMobile
+	case "web":
+		return ClientWeb
+	default:
+		return ClientUnknown
+	}
+}
 
 // ManagerOption mutates Manager defaults; pass to NewManager.
 type ManagerOption func(*Manager)
@@ -168,7 +176,7 @@ type runningSession struct {
 	tempDir string // per-session scratch dir, removed on session.ended
 
 	subsMu sync.Mutex
-	subs   map[chan []byte]struct{}
+	subs   map[chan []byte]ClientKind
 
 	activityMu   sync.Mutex
 	lastActivity time.Time
@@ -407,11 +415,6 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		_ = os.RemoveAll(tempDir)
 		return nil, fmt.Errorf("pty.Start: %w", err)
 	}
-	// Lock the PTY canvas size before any TUI inside it runs. Errors
-	// here are non-fatal — a misconfigured kernel would still let the
-	// session spawn at the PTY's default size, just slightly larger
-	// or smaller than we want. The TUI re-queries on first render.
-	_ = pty.Setsize(ptmx, &pty.Winsize{Cols: lockedPTYCols, Rows: lockedPTYRows})
 
 	sess.PID = cmd.Process.Pid
 	sess.State = StateRunning
@@ -448,7 +451,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		ring:         NewRing(DefaultRingSize),
 		vt:           vt10x.New(vt10x.WithSize(defaultVTCols, defaultVTRows)),
 		tempDir:      tempDir,
-		subs:         make(map[chan []byte]struct{}),
+		subs:         make(map[chan []byte]ClientKind),
 		lastActivity: sess.StartedAt,
 		endedCh:      make(chan struct{}),
 	}
@@ -717,32 +720,60 @@ func (m *Manager) Input(_ context.Context, id string, data []byte) error {
 	return nil
 }
 
-// Resize is intentionally a no-op. PTY canvas size is locked at
-// spawn (see lockedPTYCols / lockedPTYRows). The handler is kept
-// so existing clients (web xterm.js with FitAddon, mobile xterm)
-// don't see HTTP errors when they auto-fit on attach — we just
-// ignore the requested dimensions and let the TUI keep rendering
-// at the locked canvas size. Each client is responsible for
-// adapting its local viewport (letterboxing, font scaling,
-// scrolling) to the fixed canvas.
+// Resize updates the PTY size, with one gating rule: when at
+// least one MOBILE client is subscribed, resize requests from
+// WEB clients are silently dropped. The intent is to stop the
+// operator's draggable browser window from disrupting the
+// layout of their phone session — mobile is the primary
+// surface, web is the optional "peek" view.
 //
-// The error path is preserved so callers can still distinguish a
-// missing session ID from a successful no-op.
-func (m *Manager) Resize(_ context.Context, id string, _, _ uint16) error {
-	if m.lookup(id) == nil {
+// Mobile resize requests always go through (mobile's natural
+// viewport is what we want the PTY to match). When no mobile
+// is connected, web's resize works as before. Unknown / legacy
+// callers are treated as web for the purposes of gating.
+//
+// Returns ErrNotFound for missing sessions; nil for both a
+// successful resize and a gated no-op (the caller can't usefully
+// distinguish, and surfacing "your resize was ignored" as an
+// error would just spam logs).
+func (m *Manager) Resize(_ context.Context, id string, kind ClientKind, cols, rows uint16) error {
+	rs := m.lookup(id)
+	if rs == nil {
 		return ErrNotFound
 	}
-	return nil
+	// Gate: web (or unknown) resize is suppressed when any mobile
+	// client is attached. We check under subsMu so the count is
+	// consistent with the actual subscriber map.
+	if kind != ClientMobile {
+		rs.subsMu.Lock()
+		hasMobile := false
+		for _, k := range rs.subs {
+			if k == ClientMobile {
+				hasMobile = true
+				break
+			}
+		}
+		rs.subsMu.Unlock()
+		if hasMobile {
+			return nil
+		}
+	}
+	if rs.vt != nil && cols > 0 && rows > 0 {
+		rs.vt.Resize(int(cols), int(rows))
+	}
+	return pty.Setsize(rs.pty, &pty.Winsize{Cols: cols, Rows: rows})
 }
 
 // Subscribe registers a channel that receives every chunk of stdout
 // written after registration. The unsub function is idempotent.
+// `kind` tags the subscriber so Resize can decide whose resize
+// requests to honour when multiple client types are attached.
 //
 // Returns ErrAlreadyEnded if the session has already exited — the
 // pump goroutine is gone, so a fresh subscriber would never receive
 // data. Callers should fall back to Buffer() to read the ring
 // snapshot instead of opening a stream.
-func (m *Manager) Subscribe(_ context.Context, id string) (<-chan []byte, func(), error) {
+func (m *Manager) Subscribe(_ context.Context, id string, kind ClientKind) (<-chan []byte, func(), error) {
 	rs := m.lookup(id)
 	if rs == nil {
 		return nil, nil, ErrNotFound
@@ -761,7 +792,7 @@ func (m *Manager) Subscribe(_ context.Context, id string) (<-chan []byte, func()
 
 	ch := make(chan []byte, fanoutBuffer)
 	rs.subsMu.Lock()
-	rs.subs[ch] = struct{}{}
+	rs.subs[ch] = kind
 	rs.subsMu.Unlock()
 	unsub := func() {
 		rs.subsMu.Lock()

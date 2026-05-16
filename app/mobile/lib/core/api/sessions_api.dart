@@ -105,10 +105,16 @@ class SessionsApi {
     }
   }
 
+  // `?client=mobile` tags this resize so the server's gating
+  // layer always honours it — when a web client is also attached
+  // to the same session, the web client's resize requests are
+  // suppressed in favour of mobile's. Mobile is the primary
+  // surface; web is the optional peek view that adapts locally
+  // to whatever canvas mobile picked.
   Future<void> resize(String id, {required int cols, required int rows}) async {
     try {
       await _dio.post<void>(
-        '/api/v1/sessions/$id/resize',
+        '/api/v1/sessions/$id/resize?client=mobile',
         data: {'cols': cols, 'rows': rows},
       );
     } on Object catch (e) {

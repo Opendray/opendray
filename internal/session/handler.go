@@ -33,8 +33,8 @@ type Service interface {
 	Stop(ctx context.Context, id string) error
 	Remove(ctx context.Context, id string) error
 	Input(ctx context.Context, id string, data []byte) error
-	Resize(ctx context.Context, id string, cols, rows uint16) error
-	Subscribe(ctx context.Context, id string) (<-chan []byte, func(), error)
+	Resize(ctx context.Context, id string, kind ClientKind, cols, rows uint16) error
+	Subscribe(ctx context.Context, id string, kind ClientKind) (<-chan []byte, func(), error)
 	Buffer(ctx context.Context, id string, since int64) (Replay, error)
 	SwitchClaudeAccount(ctx context.Context, id, accountID string) (Session, error)
 	History(ctx context.Context, id string, limit int) (HistoryResponse, error)
@@ -190,7 +190,12 @@ func (h *Handlers) resize(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, errors.New("cols and rows must be > 0"))
 		return
 	}
-	if err := h.svc.Resize(r.Context(), id, req.Cols, req.Rows); err != nil {
+	// ?client=mobile|web tags the requester so Manager.Resize can
+	// gate web's requests when a mobile client is attached. Missing
+	// / unrecognised values become ClientUnknown (treated as web at
+	// the gating layer) — keeps legacy clients working unchanged.
+	kind := ParseClientKind(r.URL.Query().Get("client"))
+	if err := h.svc.Resize(r.Context(), id, kind, req.Cols, req.Rows); err != nil {
 		h.respondError(w, err)
 		return
 	}
@@ -222,7 +227,10 @@ func (h *Handlers) buffer(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) stream(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	ch, unsub, err := h.svc.Subscribe(r.Context(), id)
+	// ?client=mobile|web tags this subscriber so Resize-gating can
+	// suppress web's resize requests while a mobile client is on.
+	kind := ParseClientKind(r.URL.Query().Get("client"))
+	ch, unsub, err := h.svc.Subscribe(r.Context(), id, kind)
 	if err != nil {
 		// For ended/stopped sessions, complete the WebSocket handshake
 		// and send a clean close (1001 going-away) so the client's
