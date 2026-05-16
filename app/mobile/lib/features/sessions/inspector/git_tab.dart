@@ -5,6 +5,9 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/git_api.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/sessions/inspector/git_branch_controls.dart';
+import 'package:opendray/features/sessions/inspector/git_commit_form.dart';
+import 'package:opendray/features/sessions/inspector/git_pr_section.dart';
 
 // Git surface inside the session inspector. Two views toggle via a
 // segmented control:
@@ -61,7 +64,9 @@ class _GitTabState extends ConsumerState<GitTab>
       if (!mounted) return;
       setState(() => _log = AsyncValue.data(res));
     } on ApiException catch (e) {
-      if (mounted) setState(() => _log = AsyncValue.error(e, StackTrace.current));
+      if (mounted) {
+        setState(() => _log = AsyncValue.error(e, StackTrace.current));
+      }
     } on Object catch (e, st) {
       if (mounted) setState(() => _log = AsyncValue.error(e, st));
     }
@@ -93,7 +98,9 @@ class _GitTabState extends ConsumerState<GitTab>
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            t.sessions.inspector.shared.insertFailedGeneric(error: e.toString()),
+            t.sessions.inspector.shared.insertFailedGeneric(
+              error: e.toString(),
+            ),
           ),
         ),
       );
@@ -172,7 +179,9 @@ class _GitTabState extends ConsumerState<GitTab>
   Future<void> _showDiff(GitStatusFile file) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final body = await ref.read(gitApiProvider).diff(
+      final body = await ref
+          .read(gitApiProvider)
+          .diff(
             path: widget.cwd,
             file: file.path,
             scope: file.isStaged ? GitDiffScope.staged : GitDiffScope.unstaged,
@@ -268,10 +277,9 @@ class _GitTabState extends ConsumerState<GitTab>
   Future<void> _showCommit(GitCommit commit) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final body = await ref.read(gitApiProvider).show(
-            path: widget.cwd,
-            hash: commit.hash,
-          );
+      final body = await ref
+          .read(gitApiProvider)
+          .show(path: widget.cwd, hash: commit.hash);
       if (!mounted) return;
       await _showTextDialog(title: commit.shortHash, body: body);
     } on ApiException catch (e) {
@@ -364,11 +372,7 @@ class _GitTabState extends ConsumerState<GitTab>
           onRefresh: _pane == _Pane.status ? _loadStatus : _loadLog,
         ),
         const Divider(height: 1),
-        Expanded(
-          child: _pane == _Pane.status
-              ? _statusBody()
-              : _logBody(),
-        ),
+        Expanded(child: _pane == _Pane.status ? _statusBody() : _logBody()),
       ],
     );
   }
@@ -384,6 +388,18 @@ class _GitTabState extends ConsumerState<GitTab>
           child: ListView(
             children: [
               _BranchHeader(status: res),
+              // Phase 4: branch picker + create + push. Refreshes
+              // status / log when any branch op succeeds so the
+              // header stays in sync with the actual repo state.
+              GitBranchControls(
+                cwd: widget.cwd,
+                ahead: res.ahead,
+                upstream: res.upstream,
+                onChanged: () {
+                  _loadStatus();
+                  _loadLog();
+                },
+              ),
               const Divider(height: 1),
               if (res.files.isEmpty)
                 Padding(
@@ -395,7 +411,7 @@ class _GitTabState extends ConsumerState<GitTab>
                     ),
                   ),
                 )
-              else
+              else ...[
                 for (final f in res.files)
                   Column(
                     children: [
@@ -414,6 +430,22 @@ class _GitTabState extends ConsumerState<GitTab>
                       Divider(height: 1, color: Theme.of(context).dividerColor),
                     ],
                   ),
+                // Phase 4: commit form under the file list when
+                // there's anything to commit. Refreshes status +
+                // log on success so the new commit shows up.
+                GitCommitForm(
+                  cwd: widget.cwd,
+                  files: res.files,
+                  onChanged: () {
+                    _loadStatus();
+                    _loadLog();
+                  },
+                ),
+                const Divider(height: 1),
+              ],
+              // Phase 1+2: PR command-center. Always renders so
+              // operators can create a PR even on a clean tree.
+              GitPRSection(cwd: widget.cwd),
             ],
           ),
         );
@@ -444,10 +476,8 @@ class _GitTabState extends ConsumerState<GitTab>
           onRefresh: _loadLog,
           child: ListView.separated(
             itemCount: res.commits.length,
-            separatorBuilder: (_, __) => Divider(
-              height: 1,
-              color: Theme.of(context).dividerColor,
-            ),
+            separatorBuilder: (_, __) =>
+                Divider(height: 1, color: Theme.of(context).dividerColor),
             itemBuilder: (_, i) {
               final c = res.commits[i];
               return ListTile(
@@ -541,14 +571,18 @@ class _BranchHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.account_tree_outlined, size: 16, color: scheme.primary),
+              Icon(
+                Icons.account_tree_outlined,
+                size: 16,
+                color: scheme.primary,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   status.branch.isEmpty ? '(detached HEAD)' : status.branch,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
               if (status.ahead > 0)
@@ -566,10 +600,7 @@ class _BranchHeader extends StatelessWidget {
           if (status.upstream.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                'tracking ${status.upstream}',
-                style: muted,
-              ),
+              child: Text('tracking ${status.upstream}', style: muted),
             ),
         ],
       ),
@@ -621,7 +652,9 @@ class _NotARepoView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final muted = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5);
+    final muted = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.5);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
