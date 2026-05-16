@@ -8,21 +8,40 @@ interface LayoutState {
   sessionListCollapsed: boolean
   /** Right-side inspector panel (Plugins / MCP / Files / Logs). */
   inspectorOpen: boolean
+  /** Inspector width in CSS pixels. User-resizable via the drag
+   *  handle on the inspector's left edge. */
+  inspectorWidth: number
   /** UI scale applied via CSS zoom on <body>. 1 = default. */
   fontScale: number
 
   toggleSidebar: () => void
   toggleSessionList: () => void
   toggleInspector: () => void
+  setInspectorWidth: (v: number) => void
   setFontScale: (v: number) => void
 }
 
 const FONT_SCALE_MIN = 0.7
 const FONT_SCALE_MAX = 1.5
 
+// Inspector drag range. 320 matches the old hardcoded `w-80` so
+// existing sessions don't visibly shift on first load; 900 keeps
+// the terminal usable on a 1440px workspace.
+export const INSPECTOR_WIDTH_MIN = 320
+export const INSPECTOR_WIDTH_MAX = 900
+export const INSPECTOR_WIDTH_DEFAULT = 320
+
 function clampScale(v: number): number {
   if (!Number.isFinite(v)) return 1
   return Math.min(FONT_SCALE_MAX, Math.max(FONT_SCALE_MIN, v))
+}
+
+function clampInspectorWidth(v: number): number {
+  if (!Number.isFinite(v)) return INSPECTOR_WIDTH_DEFAULT
+  return Math.min(
+    INSPECTOR_WIDTH_MAX,
+    Math.max(INSPECTOR_WIDTH_MIN, Math.round(v)),
+  )
 }
 
 // Apply on <body> rather than <html>: keeps `100svh`/`100vh` correct
@@ -40,6 +59,7 @@ export const useLayout = create<LayoutState>()(
       sidebarCollapsed: false,
       sessionListCollapsed: false,
       inspectorOpen: true,
+      inspectorWidth: INSPECTOR_WIDTH_DEFAULT,
       fontScale: 1,
 
       toggleSidebar: () =>
@@ -48,6 +68,8 @@ export const useLayout = create<LayoutState>()(
         set({ sessionListCollapsed: !get().sessionListCollapsed }),
       toggleInspector: () =>
         set({ inspectorOpen: !get().inspectorOpen }),
+      setInspectorWidth: (v) =>
+        set({ inspectorWidth: clampInspectorWidth(v) }),
       setFontScale: (v) => {
         const next = clampScale(v)
         set({ fontScale: next })
