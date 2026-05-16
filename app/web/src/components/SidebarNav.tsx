@@ -10,6 +10,7 @@ import {
   Boxes,
   NotebookPen,
   BookOpen,
+  ExternalLink,
   Brain,
   Archive,
   type LucideIcon,
@@ -20,11 +21,19 @@ import { cn } from '@/lib/utils'
 import { useLayout } from '@/stores/layout'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
+// NavItem covers both in-app routes and external links. In-app items
+// set `to`; external items set `href` (rendered as `<a target="_blank">`).
+// The Tutorial entry stays in-app while the documentation site at
+// docs.opendray.dev ramps up; once it's the canonical reference, the
+// Tutorial entry will be retired and only the external Docs link
+// remains.
 interface NavItem {
-  to: string
   icon: LucideIcon
   labelKey: string
-  shortcut: string
+  shortcut?: string
+  to?: string
+  href?: string
+  external?: boolean
 }
 
 // Three semantic groups separated by a thin divider:
@@ -48,6 +57,12 @@ const groups: NavItem[][] = [
     { to: '/backups', icon: Archive, labelKey: 'nav.backups', shortcut: 'g b' },
     { to: '/settings', icon: Settings, labelKey: 'nav.settings', shortcut: 'g ,' },
     { to: '/tutorial', icon: BookOpen, labelKey: 'nav.tutorial', shortcut: 'g h' },
+    {
+      href: 'https://docs.opendray.dev',
+      external: true,
+      icon: ExternalLink,
+      labelKey: 'nav.docs',
+    },
   ],
 ]
 
@@ -78,43 +93,73 @@ export function SidebarNav() {
               aria-hidden
             />
           )}
-          {group.map(({ to, icon: Icon, labelKey, shortcut }) => {
+          {group.map((item) => {
+            const { icon: Icon, labelKey, shortcut, to, href, external } = item
             const label = t(labelKey)
-            const active =
-              to === '/sessions'
+            const key = to ?? href ?? labelKey
+            const active = to
+              ? to === '/sessions'
                 ? location.pathname.startsWith('/sessions') ||
                   location.pathname === '/'
                 : location.pathname.startsWith(to)
-            const link = (
-              <Link
-                key={to}
-                to={to}
-                aria-label={label}
-                className={cn(
-                  'flex items-center h-7 rounded-md text-[13px] transition-all duration-100',
-                  'text-muted-foreground hover:text-foreground hover:bg-card',
-                  active && 'bg-card text-foreground',
-                  collapsed ? 'justify-center px-0' : 'gap-2.5 px-2.5',
-                )}
-              >
+              : false
+
+            const linkClassName = cn(
+              'flex items-center h-7 rounded-md text-[13px] transition-all duration-100',
+              'text-muted-foreground hover:text-foreground hover:bg-card',
+              active && 'bg-card text-foreground',
+              collapsed ? 'justify-center px-0' : 'gap-2.5 px-2.5',
+            )
+
+            const inner = (
+              <>
                 <Icon className="size-3.5 shrink-0" />
                 {!collapsed && (
                   <>
                     <span className="flex-1">{label}</span>
-                    <kbd className="opacity-0 group-hover:opacity-100">
-                      {shortcut}
-                    </kbd>
+                    {shortcut && (
+                      <kbd className="opacity-0 group-hover:opacity-100">
+                        {shortcut}
+                      </kbd>
+                    )}
                   </>
                 )}
+              </>
+            )
+
+            const link = external ? (
+              <a
+                key={key}
+                href={href}
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label={label}
+                className={linkClassName}
+              >
+                {inner}
+              </a>
+            ) : (
+              <Link
+                key={key}
+                to={to as string}
+                aria-label={label}
+                className={linkClassName}
+              >
+                {inner}
               </Link>
             )
+
             if (!collapsed) return link
             return (
-              <Tooltip key={to}>
+              <Tooltip key={key}>
                 <TooltipTrigger asChild>{link}</TooltipTrigger>
                 <TooltipContent side="right">
                   {label}
-                  <span className="ml-2 text-muted-foreground">{shortcut}</span>
+                  {shortcut && (
+                    <span className="ml-2 text-muted-foreground">
+                      {shortcut}
+                    </span>
+                  )}
                 </TooltipContent>
               </Tooltip>
             )
