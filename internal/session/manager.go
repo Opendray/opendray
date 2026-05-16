@@ -37,49 +37,7 @@ const (
 	// canvas. Cards rendering wider than this get clipped.
 	defaultVTCols = 120
 	defaultVTRows = 40
-
-	// defaultPTYCols / defaultPTYRows is the canvas the PTY is seeded
-	// to when a session spawns. The TUI uses this until a client
-	// connects and asks for a different size. 100x32 is roughly the
-	// middle ground between a typical desktop terminal (120-160) and
-	// a portrait-phone xterm (60-80) — wide enough that Claude /
-	// Gemini layouts don't truncate, narrow enough that mobile
-	// xterm-equivalent forks don't have to scroll.
-	defaultPTYCols = 100
-	defaultPTYRows = 32
 )
-
-// ClientKind tags a subscriber so the manager can gate resize
-// requests by source. The mobile-vs-web distinction is the only
-// one that matters today: web clients have flexible, draggable
-// viewports that should NOT disrupt the operator's phone session
-// when both are attached at once. The PTY itself still has one
-// canvas size; the gating just decides whose viewport "wins".
-//
-// Unknown is the safe default for legacy clients that don't pass
-// a ?client= query parameter — treated as web (the more common
-// caller, and the one whose resize we're willing to suppress).
-type ClientKind int
-
-const (
-	ClientUnknown ClientKind = iota
-	ClientWeb
-	ClientMobile
-)
-
-// ParseClientKind maps the ?client= query parameter to a kind.
-// Empty / unrecognised values become ClientUnknown (treated as
-// web at the gating layer). Casing is normalised.
-func ParseClientKind(s string) ClientKind {
-	switch strings.ToLower(strings.TrimSpace(s)) {
-	case "mobile":
-		return ClientMobile
-	case "web":
-		return ClientWeb
-	default:
-		return ClientUnknown
-	}
-}
 
 // ManagerOption mutates Manager defaults; pass to NewManager.
 type ManagerOption func(*Manager)
@@ -186,7 +144,7 @@ type runningSession struct {
 	tempDir string // per-session scratch dir, removed on session.ended
 
 	subsMu sync.Mutex
-	subs   map[chan []byte]ClientKind
+	subs   map[chan []byte]struct{}
 
 	activityMu   sync.Mutex
 	lastActivity time.Time
@@ -425,12 +383,6 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		_ = os.RemoveAll(tempDir)
 		return nil, fmt.Errorf("pty.Start: %w", err)
 	}
-	// Seed a default PTY canvas at spawn so the TUI has a sensible
-	// initial layout even before any client connects and resizes.
-	// Whoever attaches first (typically mobile) may then resize via
-	// Manager.Resize; whoever attaches second adapts its viewport
-	// (font scaling on web) rather than re-driving the canvas.
-	_ = pty.Setsize(ptmx, &pty.Winsize{Cols: defaultPTYCols, Rows: defaultPTYRows})
 
 	sess.PID = cmd.Process.Pid
 	sess.State = StateRunning
@@ -467,7 +419,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		ring:         NewRing(DefaultRingSize),
 		vt:           vt10x.New(vt10x.WithSize(defaultVTCols, defaultVTRows)),
 		tempDir:      tempDir,
-		subs:         make(map[chan []byte]ClientKind),
+		subs:         make(map[chan []byte]struct{}),
 		lastActivity: sess.StartedAt,
 		endedCh:      make(chan struct{}),
 	}
@@ -736,43 +688,10 @@ func (m *Manager) Input(_ context.Context, id string, data []byte) error {
 	return nil
 }
 
-// Resize updates the PTY size, with one gating rule: when at
-// least one MOBILE client is subscribed, resize requests from
-// WEB clients are silently dropped. The intent is to stop the
-// operator's draggable browser window from disrupting the
-// layout of their phone session — mobile is the primary
-// surface, web is the optional "peek" view.
-//
-// Mobile resize requests always go through (mobile's natural
-// viewport is what we want the PTY to match). When no mobile
-// is connected, web's resize works as before. Unknown / legacy
-// callers are treated as web for the purposes of gating.
-//
-// Returns ErrNotFound for missing sessions; nil for both a
-// successful resize and a gated no-op (the caller can't usefully
-// distinguish, and surfacing "your resize was ignored" as an
-// error would just spam logs).
-func (m *Manager) Resize(_ context.Context, id string, kind ClientKind, cols, rows uint16) error {
+func (m *Manager) Resize(_ context.Context, id string, cols, rows uint16) error {
 	rs := m.lookup(id)
 	if rs == nil {
 		return ErrNotFound
-	}
-	// Gate: web (or unknown) resize is suppressed when any mobile
-	// client is attached. We check under subsMu so the count is
-	// consistent with the actual subscriber map.
-	if kind != ClientMobile {
-		rs.subsMu.Lock()
-		hasMobile := false
-		for _, k := range rs.subs {
-			if k == ClientMobile {
-				hasMobile = true
-				break
-			}
-		}
-		rs.subsMu.Unlock()
-		if hasMobile {
-			return nil
-		}
 	}
 	if rs.vt != nil && cols > 0 && rows > 0 {
 		rs.vt.Resize(int(cols), int(rows))
@@ -780,33 +699,14 @@ func (m *Manager) Resize(_ context.Context, id string, kind ClientKind, cols, ro
 	return pty.Setsize(rs.pty, &pty.Winsize{Cols: cols, Rows: rows})
 }
 
-// PTYSize returns the current cols × rows of the session's PTY,
-// as the kernel sees it. Used by the WS handshake to tell web
-// clients what canvas size to render at — web's xterm grid
-// locks to this size and the client adjusts font scaling locally
-// to fill its window. Mobile clients drive the size via Resize.
-func (m *Manager) PTYSize(_ context.Context, id string) (cols, rows uint16, err error) {
-	rs := m.lookup(id)
-	if rs == nil {
-		return 0, 0, ErrNotFound
-	}
-	r, c, gerr := pty.Getsize(rs.pty)
-	if gerr != nil {
-		return 0, 0, fmt.Errorf("pty getsize: %w", gerr)
-	}
-	return uint16(c), uint16(r), nil
-}
-
 // Subscribe registers a channel that receives every chunk of stdout
 // written after registration. The unsub function is idempotent.
-// `kind` tags the subscriber so Resize can decide whose resize
-// requests to honour when multiple client types are attached.
 //
 // Returns ErrAlreadyEnded if the session has already exited — the
 // pump goroutine is gone, so a fresh subscriber would never receive
 // data. Callers should fall back to Buffer() to read the ring
 // snapshot instead of opening a stream.
-func (m *Manager) Subscribe(_ context.Context, id string, kind ClientKind) (<-chan []byte, func(), error) {
+func (m *Manager) Subscribe(_ context.Context, id string) (<-chan []byte, func(), error) {
 	rs := m.lookup(id)
 	if rs == nil {
 		return nil, nil, ErrNotFound
@@ -825,7 +725,7 @@ func (m *Manager) Subscribe(_ context.Context, id string, kind ClientKind) (<-ch
 
 	ch := make(chan []byte, fanoutBuffer)
 	rs.subsMu.Lock()
-	rs.subs[ch] = kind
+	rs.subs[ch] = struct{}{}
 	rs.subsMu.Unlock()
 	unsub := func() {
 		rs.subsMu.Lock()

@@ -31,22 +31,12 @@ export async function startSession(id: string): Promise<Session> {
   return api<Session>(`/api/v1/sessions/${id}/start`, { method: 'POST' })
 }
 
-// Tags this caller's resize request with `?client=web` so the
-// server's gating layer can suppress it when a mobile client is
-// attached to the same session. The web window's draggable
-// viewport should NOT disrupt the operator's phone session.
-//
-// Mobile and other clients pass their own `?client=` value (see
-// the Dart xterm fork). Legacy callers omitting the param are
-// treated as web by the server, which is the safe default — we'd
-// rather over-suppress an unidentified caller than let it stomp
-// on mobile.
 export async function resizeSession(
   id: string,
   cols: number,
   rows: number,
 ): Promise<void> {
-  await api(`/api/v1/sessions/${id}/resize?client=web`, {
+  await api(`/api/v1/sessions/${id}/resize`, {
     method: 'POST',
     body: { cols, rows },
   })

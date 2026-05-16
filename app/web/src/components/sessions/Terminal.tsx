@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react'
 import { Terminal as XTerm } from '@xterm/xterm'
+import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import '@xterm/xterm/css/xterm.css'
 import { toast } from 'sonner'
@@ -15,40 +16,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/stores/auth'
 import { useTheme } from '@/stores/theme'
 import { BinaryWS, wsURL } from '@/lib/ws'
-import { uploadSessionFile } from '@/lib/sessions'
-
-// Heuristic monospace-cell aspect ratio for JetBrains Mono /
-// generic monospace. cellWidth ~= 0.6 × fontSize, cellHeight ~=
-// fontSize × lineHeight. Used by computeFontSize to fit a fixed
-// xterm grid into the container by scaling font alone.
-const CELL_W_RATIO = 0.6
-const LINE_HEIGHT = 1.25
-
-// Bounds keep font size sane on extreme container sizes:
-// minimum keeps text legible on a small split view; maximum keeps
-// the TUI from looking absurdly chunky on an ultrawide monitor.
-const MIN_FONT_SIZE = 9
-const MAX_FONT_SIZE = 28
-
-// computeFontSize returns the largest pixel font size such that a
-// `cols × rows` xterm grid fits inside a container of
-// `containerWidth × containerHeight`. Picks the limiting axis so
-// the grid fills one dimension entirely without overflowing the
-// other.
-function computeFontSize(
-  cols: number,
-  rows: number,
-  containerWidth: number,
-  containerHeight: number,
-): number {
-  if (cols <= 0 || rows <= 0) return 13
-  const cellWFromContainer = containerWidth / cols
-  const cellHFromContainer = containerHeight / rows
-  const fromWidth = cellWFromContainer / CELL_W_RATIO
-  const fromHeight = cellHFromContainer / LINE_HEIGHT
-  const raw = Math.floor(Math.min(fromWidth, fromHeight))
-  return Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, raw))
-}
+import { resizeSession, uploadSessionFile } from '@/lib/sessions'
 
 interface TerminalProps {
   sessionId: string
@@ -112,13 +80,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
 ) {
   const containerRef = useRef<HTMLDivElement>(null)
   const xtermRef = useRef<XTerm | null>(null)
-  // Grid dims locked to the server's PTY canvas (delivered via the
-  // first pty_size control frame). Container ResizeObserver scales
-  // fontSize against these to fill the browser viewport.
-  const gridRef = useRef<{ cols: number; rows: number }>({
-    cols: 100,
-    rows: 32,
-  })
+  const fitRef = useRef<FitAddon | null>(null)
   const wsRef = useRef<BinaryWS | null>(null)
   const token = useAuth((s) => s.token)
   const themeApplied = useTheme((s) => s.applied())
@@ -191,97 +153,58 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       allowProposedApi: true,
       convertEol: true,
     })
+    const fit = new FitAddon()
     const links = new WebLinksAddon()
+    term.loadAddon(fit)
     term.loadAddon(links)
     term.open(containerRef.current)
+    fit.fit()
     xtermRef.current = term
-    // Initial grid: matches the in-ref default; the server's first
-    // pty_size frame overrides as soon as the WS connects.
-    term.resize(gridRef.current.cols, gridRef.current.rows)
+    fitRef.current = fit
 
-    // alive flips false on cleanup so any straggler ResizeObserver
-    // / onOpen callbacks scheduled before unmount don't act on a
-    // disposed terminal.
+    // alive flips false on cleanup so any straggler resize/onOpen
+    // callbacks scheduled before unmount don't fire `/resize` against
+    // a session that's just transitioned to ended — server returns
+    // 404 and browser logs it red in console even though we .catch().
     let alive = true
 
-    // applyFontSize fits the locked grid into the current
-    // container by recomputing pixel font size. Pure-local: never
-    // touches the PTY. The server's pty_size frame already locked
-    // the grid; this just decides how big to render each cell.
-    const applyFontSize = () => {
-      if (!alive || !containerRef.current) return
-      const { cols, rows } = gridRef.current
-      const w = containerRef.current.clientWidth
-      const h = containerRef.current.clientHeight
-      if (w <= 0 || h <= 0) return
-      const size = computeFontSize(cols, rows, w, h)
-      if (term.options.fontSize !== size) {
-        term.options.fontSize = size
-      }
-      // term.resize is idempotent when dims haven't changed; the
-      // call ensures xterm reflows after font/size changes so the
-      // grid actually paints at the new cell dimensions.
-      term.resize(cols, rows)
-    }
-
-    // `?client=web` tags this subscriber so the server's
-    // Manager.Resize gate can suppress this client's resize
-    // requests while a mobile client is attached. With auto-
-    // fontSize the web grid is always pinned to the server's PTY
-    // size; the gate is now a safety net rather than a
-    // user-visible mechanism.
-    const ws = new BinaryWS(
-      wsURL(`/api/v1/sessions/${sessionId}/stream?client=web`, token),
-      {
-        onMessage: (data) => term.write(data),
-        onText: (text) => {
-          // Currently the only control frame is pty_size. Quietly
-          // ignore anything else — future server-pushed control
-          // payloads can land alongside.
-          try {
-            const msg = JSON.parse(text) as {
-              type?: string
-              cols?: number
-              rows?: number
-            }
-            if (
-              msg.type === 'pty_size' &&
-              typeof msg.cols === 'number' &&
-              typeof msg.rows === 'number' &&
-              msg.cols > 0 &&
-              msg.rows > 0
-            ) {
-              gridRef.current = { cols: msg.cols, rows: msg.rows }
-              term.resize(msg.cols, msg.rows)
-              applyFontSize()
-            }
-          } catch {
-            /* malformed control frame — ignore */
-          }
-        },
-        onClose: () => {
-          if (!alive) return
-          term.writeln('')
-          term.writeln('\x1b[33m[disconnected — reconnecting…]\x1b[0m')
-        },
+    const ws = new BinaryWS(wsURL(`/api/v1/sessions/${sessionId}/stream`, token), {
+      onMessage: (data) => term.write(data),
+      onClose: () => {
+        if (!alive) return
+        term.writeln('')
+        term.writeln('\x1b[33m[disconnected — reconnecting…]\x1b[0m')
       },
-    )
+      onOpen: () => {
+        // After (re)connect, push current dimensions so server sizes the PTY.
+        if (!alive) return
+        const { cols, rows } = term
+        if (cols && rows) {
+          resizeSession(sessionId, cols, rows).catch(() => {})
+        }
+      },
+    })
     wsRef.current = ws
     ws.start()
 
     term.onData((d) => {
       const enc = new TextEncoder().encode(d)
-      ws.send(
-        enc.buffer.slice(
-          enc.byteOffset,
-          enc.byteOffset + enc.byteLength,
-        ) as ArrayBuffer,
-      )
+      ws.send(enc.buffer.slice(enc.byteOffset, enc.byteOffset + enc.byteLength) as ArrayBuffer)
+    })
+    term.onResize(({ cols, rows }) => {
+      if (!alive) return
+      resizeSession(sessionId, cols, rows).catch(() => {})
     })
 
-    const ro = new ResizeObserver(applyFontSize)
+    const ro = new ResizeObserver(() => {
+      if (!alive) return
+      try {
+        fit.fit()
+      } catch {
+        /* element not measured yet */
+      }
+    })
     ro.observe(containerRef.current)
-    applyFontSize() // initial fit before first pty_size lands
 
     return () => {
       alive = false
@@ -289,6 +212,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       ws.close()
       term.dispose()
       xtermRef.current = null
+      fitRef.current = null
       wsRef.current = null
     }
   }, [sessionId, token])
@@ -377,13 +301,12 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     }
   }, [uploadFile, t])
 
-  // Refresh xterm theme when the site theme changes. No fit call
-  // here — the grid is server-pinned and font sizing is handled by
-  // the container ResizeObserver inside the mount effect.
+  // Refresh xterm theme when the site theme changes.
   useEffect(() => {
     const term = xtermRef.current
     if (!term) return
     term.options.theme = buildTheme(themeApplied)
+    fitRef.current?.fit()
   }, [themeApplied])
 
   return (

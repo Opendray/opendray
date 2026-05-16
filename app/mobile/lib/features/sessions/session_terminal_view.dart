@@ -182,14 +182,8 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
     final wsBase = trimmed.startsWith('https')
         ? trimmed.replaceFirst('https', 'wss')
         : trimmed.replaceFirst('http', 'ws');
-    // `client=mobile` tags this subscriber so the gateway's
-    // Manager.Resize gate knows a mobile is attached and
-    // suppresses web's resize requests for as long as we stay
-    // subscribed. Without this query parameter the server treats
-    // us as web (legacy default) and the gate doesn't fire.
     return Uri.parse(
-      '$wsBase/api/v1/sessions/$sessionId/stream'
-      '?token=${Uri.encodeQueryComponent(token)}&client=mobile',
+      '$wsBase/api/v1/sessions/$sessionId/stream?token=${Uri.encodeQueryComponent(token)}',
     );
   }
 

@@ -33,9 +33,8 @@ type Service interface {
 	Stop(ctx context.Context, id string) error
 	Remove(ctx context.Context, id string) error
 	Input(ctx context.Context, id string, data []byte) error
-	Resize(ctx context.Context, id string, kind ClientKind, cols, rows uint16) error
-	Subscribe(ctx context.Context, id string, kind ClientKind) (<-chan []byte, func(), error)
-	PTYSize(ctx context.Context, id string) (cols, rows uint16, err error)
+	Resize(ctx context.Context, id string, cols, rows uint16) error
+	Subscribe(ctx context.Context, id string) (<-chan []byte, func(), error)
 	Buffer(ctx context.Context, id string, since int64) (Replay, error)
 	SwitchClaudeAccount(ctx context.Context, id, accountID string) (Session, error)
 	History(ctx context.Context, id string, limit int) (HistoryResponse, error)
@@ -191,12 +190,7 @@ func (h *Handlers) resize(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, errors.New("cols and rows must be > 0"))
 		return
 	}
-	// ?client=mobile|web tags the requester so Manager.Resize can
-	// gate web's requests when a mobile client is attached. Missing
-	// / unrecognised values become ClientUnknown (treated as web at
-	// the gating layer) — keeps legacy clients working unchanged.
-	kind := ParseClientKind(r.URL.Query().Get("client"))
-	if err := h.svc.Resize(r.Context(), id, kind, req.Cols, req.Rows); err != nil {
+	if err := h.svc.Resize(r.Context(), id, req.Cols, req.Rows); err != nil {
 		h.respondError(w, err)
 		return
 	}
@@ -228,10 +222,7 @@ func (h *Handlers) buffer(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) stream(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	// ?client=mobile|web tags this subscriber so Resize-gating can
-	// suppress web's resize requests while a mobile client is on.
-	kind := ParseClientKind(r.URL.Query().Get("client"))
-	ch, unsub, err := h.svc.Subscribe(r.Context(), id, kind)
+	ch, unsub, err := h.svc.Subscribe(r.Context(), id)
 	if err != nil {
 		// For ended/stopped sessions, complete the WebSocket handshake
 		// and send a clean close (1001 going-away) so the client's
@@ -256,20 +247,6 @@ func (h *Handlers) stream(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 	defer unsub()
-
-	// Send the current PTY canvas size as a JSON control frame
-	// (TextMessage) before any byte stream lands. Web clients use
-	// this to size their xterm grid to match the PTY and then
-	// adjust font size locally to fill the browser window — the
-	// alternative ("FitAddon makes the grid bigger than PTY")
-	// leaves vast empty cells on the right of the TUI. Mobile
-	// ignores this frame; it drives the PTY size itself.
-	if cols, rows, err := h.svc.PTYSize(r.Context(), id); err == nil {
-		ctrl := fmt.Sprintf(`{"type":"pty_size","cols":%d,"rows":%d}`, cols, rows)
-		if err := conn.WriteMessage(websocket.TextMessage, []byte(ctrl)); err != nil {
-			return
-		}
-	}
 
 	if rep, err := h.svc.Buffer(r.Context(), id, 0); err == nil && len(rep.Bytes) > 0 {
 		if err := conn.WriteMessage(websocket.BinaryMessage, rep.Bytes); err != nil {

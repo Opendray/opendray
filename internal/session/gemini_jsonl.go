@@ -103,8 +103,7 @@ func GeminiInputHistory(cfg GeminiHistoryConfig, cwd string, limit int) []Projec
 // for `cwd`, suitable for embedding in a chat-side idle-notification
 // snippet. Mirrors claudeRecentResponse for the Gemini provider so
 // the snippet doesn't degrade to the ScreenSnapshot fallback (which
-// is bounded by terminal grid size, ~1 screenful — the same "1/11
-// of the actual reply" problem that fixed-for-Claude in #143).
+// is bounded by terminal grid size, ~1 screenful).
 //
 // Schema: ~/.gemini/tmp/<dir>/logs.json is a JSON array of entries
 // `{sessionId, messageId, type, message, timestamp}`. We pick the
