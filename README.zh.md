@@ -1,10 +1,43 @@
-# opendray v2
+<p align="center">
+  <img src="docs/assets/logo.png" alt="opendray" width="180">
+</p>
 
-> 🌐 **语言**: [English](README.md) · 简体中文
+<h1 align="center">opendray</h1>
 
-> AI 编程 CLI 的多路控制 + 集成网关。
-> 通过 Web + 移动端远程控制 Claude Code、Codex、Gemini、shell 会话。
-> 一份 Claude Pro 订阅就能服务整个个人应用生态,不必按 token 给 API 付费。
+<p align="center">
+  <strong>自托管的多 CLI 控制网关,为 AI 编程 Agent 而生。</strong>
+  <br/>
+  <sub>在 Web、移动端、或你喜欢的消息平台上远程操控 Claude Code · Codex · Gemini · shell。</sub>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Opendray/opendray_v2/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Opendray/opendray_v2?label=release&color=4f46e5"></a>
+  <a href="LICENSE"><img alt="License Apache 2.0" src="https://img.shields.io/github/license/Opendray/opendray_v2?color=blue"></a>
+  <a href="https://github.com/Opendray/opendray_v2/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Opendray/opendray_v2/ci.yml?branch=main&label=CI"></a>
+  <a href="https://github.com/Opendray/opendray_v2/pkgs/container/opendray"><img alt="GHCR" src="https://img.shields.io/badge/ghcr.io-opendray%2Fopendray-2496ED?logo=docker&logoColor=white"></a>
+  <a href="https://github.com/Opendray/opendray_v2/discussions"><img alt="Discussions" src="https://img.shields.io/github/discussions/Opendray/opendray_v2?color=ec4899"></a>
+  <br/>
+  <img alt="Go" src="https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go&logoColor=white">
+  <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black">
+  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-mobile-02569B?logo=flutter&logoColor=white">
+  <img alt="Postgres" src="https://img.shields.io/badge/PostgreSQL-15%2F16%2F17-336791?logo=postgresql&logoColor=white">
+</p>
+
+<p align="center">
+  🌐 <a href="README.md">English</a> · <strong>简体中文</strong>
+</p>
+
+---
+
+## opendray 是什么?
+
+**opendray** 把你已经在用的 AI 编程 CLI(Claude Code、Codex、Gemini,加上任意 shell)包起来,变成一个你能随处操控的东西。在家用服务器 / NAS / VPS 上跑会话,空闲时 Telegram 给你推送,在手机上回一句话就能把下一个 prompt 送回去 —— 整个网关你自己托管、端到端掌控。
+
+- 🛰 **一个后端,三个 surface** —— 单一 Go 二进制同时提供 React Web 后台和 Flutter 移动端,每个操作也通过 REST + WebSocket API 暴露给第三方集成。
+- 💬 **六大双向频道,不锁定平台** —— Telegram、Slack、Discord、飞书、钉钉、企业微信,外加 Bridge 适配器接入任意自定义协议。任意频道的回复都路由回正确的会话。
+- 🧠 **本地优先的记忆系统** —— ONNX / Ollama / LM Studio 嵌入向量,三层作用域(用户 · 项目 · 会话)智能检索 + 智能排序 + 跨层冲突检测。向量数据不出你的内网。
+- 🔌 **集成级 API** —— scope 化的 API key、每次调用审计日志、反向代理挂载。可以把 opendray 作为你产品后端的网关,也可以纯粹当个人指挥中心。
+- 🔒 **自托管 + 许可证清晰** —— Apache 2.0、单一静态二进制、distroless 容器、cosign 签名的 release 自带 SPDX SBOM。零遥测、不依赖云账号、无订阅。
 
 ## 当前状态
 
