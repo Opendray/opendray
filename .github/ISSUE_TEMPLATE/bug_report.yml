@@ -1,0 +1,91 @@
+name: 🐞 Bug report
+description: Something broken in opendray — reproducible behaviour that doesn't match the docs.
+title: "bug: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. The fields below let us
+        reproduce the issue without a back-and-forth.
+
+        Before filing:
+        - Check the [open Issues](https://github.com/Opendray/opendray_v2/issues) for a duplicate.
+        - For "how do I..." or "is this expected" questions, use
+          [Discussions](https://github.com/Opendray/opendray_v2/discussions) instead.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences. What did you expect, what actually happened?
+      placeholder: |
+        e.g. `docker compose up` exits with `relation "providers" does not exist`
+        on a fresh Postgres. README says it should auto-migrate.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: opendray version
+      description: Output of `opendray version` (or the release tag / docker image tag).
+      placeholder: "v2.0.0 (abc1234, 2026-05-17T...)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deploy
+    attributes:
+      label: Deployment method
+      options:
+        - Docker Compose (docker-compose.yml at repo root)
+        - systemd (deploy/systemd/opendray.service)
+        - macOS launchd (deploy/launchd/...)
+        - Direct binary + custom supervisor
+        - go run from source
+        - Other (please describe in additional context)
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Host OS / arch
+      placeholder: "Ubuntu 24.04 LXC, amd64 / macOS 14.5 Sonoma, arm64 / Debian 13, arm64"
+    validations:
+      required: true
+
+  - type: input
+    id: postgres
+    attributes:
+      label: Postgres version + pgvector
+      description: Output of `SELECT version();` and `SELECT * FROM pg_extension WHERE extname='vector';`. Skip if not DB-related.
+      placeholder: "PG 17.5, pgvector 0.8.0"
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Smallest possible sequence. Copy-paste commands or click paths.
+      placeholder: |
+        1. Fresh PG (or my existing PG with these credentials)
+        2. `cp .env.example .env` + set passwords
+        3. `docker compose up -d`
+        4. Wait for opendray-migrate to finish
+        5. Observe ... (what?)
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste `docker compose logs opendray`, `journalctl -u opendray -n 200`, or the browser console output. **Redact secrets before pasting.**
+      render: shell
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Anything else — screenshots, related issues, workarounds you've tried.
