@@ -70,7 +70,7 @@ func TestGeminiInputHistory_ShortNameFromProjectsJSON(t *testing.T) {
 	tmpHome := t.TempDir()
 	t.Setenv("HOME", tmpHome)
 
-	cwd := "/Users/linivek/Documents/HomeLab/KevinCui/Androidapp/PDFStream"
+	cwd := "/Users/alice/Documents/work/android/PDFStream"
 	// projects.json maps cwd → "pdfstream"; logs.json lives under
 	// tmp/pdfstream/, NOT under tmp/<sha256(cwd)>/.
 	if err := os.MkdirAll(filepath.Join(tmpHome, ".gemini"), 0o755); err != nil {
@@ -109,7 +109,7 @@ func TestGeminiInputHistory_ProjectRootScanFallback(t *testing.T) {
 	tmpHome := t.TempDir()
 	t.Setenv("HOME", tmpHome)
 
-	cwd := "/Users/linivek/some/project"
+	cwd := "/Users/alice/some/project"
 	// No projects.json, no SHA dir — only a randomly-named tmp dir
 	// with a .project_root file matching cwd.
 	dir := filepath.Join(tmpHome, ".gemini", "tmp", "random-name-xyz")

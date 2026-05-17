@@ -5898,7 +5898,7 @@ class _TranslationsWebNotesVaultSyncRemoteZh extends TranslationsWebNotesVaultSy
 	@override String get cancel => '取消';
 	@override String get change => '更换';
 	@override String get configure => '配置';
-	@override String get empty => '尚未设置 remote。添加一个 HTTPS 或 SSH URL（例如 <1>git@github.com:you/notes.git</1> 或 <3>https://tea.linivek.online/you/notes.git</3>）以启用 push / pull。';
+	@override String get empty => '尚未设置 remote。添加一个 HTTPS 或 SSH URL(例如 <1>git@github.com:you/notes.git</1> 或 <3>https://gitea.example.com/you/notes.git</3>)以启用 push / pull。';
 	@override String get urlLabel => 'URL（HTTPS 或 SSH）';
 	@override String get urlPlaceholder => 'git@host:owner/notes.git';
 	@override String get save => '保存';
@@ -7857,7 +7857,7 @@ extension on TranslationsZh {
 			'web.notes.vaultSync.remote.cancel' => '取消',
 			'web.notes.vaultSync.remote.change' => '更换',
 			'web.notes.vaultSync.remote.configure' => '配置',
-			'web.notes.vaultSync.remote.empty' => '尚未设置 remote。添加一个 HTTPS 或 SSH URL（例如 <1>git@github.com:you/notes.git</1> 或 <3>https://tea.linivek.online/you/notes.git</3>）以启用 push / pull。',
+			'web.notes.vaultSync.remote.empty' => '尚未设置 remote。添加一个 HTTPS 或 SSH URL(例如 <1>git@github.com:you/notes.git</1> 或 <3>https://gitea.example.com/you/notes.git</3>)以启用 push / pull。',
 			'web.notes.vaultSync.remote.urlLabel' => 'URL（HTTPS 或 SSH）',
 			'web.notes.vaultSync.remote.urlPlaceholder' => 'git@host:owner/notes.git',
 			'web.notes.vaultSync.remote.save' => '保存',

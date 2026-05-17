@@ -785,7 +785,7 @@
           "cancel": "Cancel",
           "change": "Change",
           "configure": "Configure",
-          "empty": "No remote set. Add an HTTPS or SSH URL (e.g. <1>git@github.com:you/notes.git</1> or <3>https://tea.linivek.online/you/notes.git</3>) to enable push / pull.",
+          "empty": "No remote set. Add an HTTPS or SSH URL (e.g. <1>git@github.com:you/notes.git</1> or <3>https://gitea.example.com/you/notes.git</3>) to enable push / pull.",
           "urlLabel": "URL (HTTPS or SSH)",
           "urlPlaceholder": "git@host:owner/notes.git",
           "save": "Save",

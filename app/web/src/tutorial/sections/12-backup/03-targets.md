@@ -51,7 +51,7 @@ or Docker container).
 | Host | `192.168.9.8` |
 | Port | `445` (default) |
 | Share | `Claude_Workspace` |
-| User | `linivek` |
+| User | `opendray` |
 | Password | stored AES-GCM-encrypted |
 | Path prefix | `opendray/backups` |
 

@@ -785,7 +785,7 @@
           "cancel": "取消",
           "change": "更换",
           "configure": "配置",
-          "empty": "尚未设置 remote。添加一个 HTTPS 或 SSH URL（例如 <1>git@github.com:you/notes.git</1> 或 <3>https://tea.linivek.online/you/notes.git</3>）以启用 push / pull。",
+          "empty": "尚未设置 remote。添加一个 HTTPS 或 SSH URL(例如 <1>git@github.com:you/notes.git</1> 或 <3>https://gitea.example.com/you/notes.git</3>)以启用 push / pull。",
           "urlLabel": "URL（HTTPS 或 SSH）",
           "urlPlaceholder": "git@host:owner/notes.git",
           "save": "保存",

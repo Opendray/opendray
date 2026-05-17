@@ -381,8 +381,8 @@ String _projectTitle(SessionSummary session) {
 }
 
 // Compact a long cwd to head-ellipsis + last two segments, e.g.
-// `/Users/linivek/Documents/HomeLab/Claude_Workspace/opendray-v2`
-// → `…/Claude_Workspace/opendray-v2`. Short paths pass through.
+// `/Users/alice/Documents/work/projects/my-app`
+// → `…/projects/my-app`. Short paths pass through.
 // Keeps the project-identifying tail visible inside the card's
 // fixed width.
 String _shortCwd(String cwd) {

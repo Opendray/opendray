@@ -34,7 +34,7 @@ func TestRenderForSpawn_Live(t *testing.T) {
 	defer pool.Close()
 
 	svc := NewService(pool, nil)
-	cwd := "/Users/linivek/Documents/HomeLab/Claude_Workspace/opendray-v2"
+	cwd := "/Users/alice/Documents/work/projects/opendray-v2"
 	out, err := svc.RenderForSpawn(ctx, cwd, 5)
 	if err != nil {
 		t.Fatalf("render: %v", err)

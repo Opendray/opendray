@@ -7,7 +7,7 @@
 //
 // On-disk schema is a single JSON object:
 //
-//	{"user":"linivek","password_hash":"$2a$..."}
+//	{"user":"admin","password_hash":"$2a$..."}
 //
 // Stored at ~/.opendray/secrets/admin.key with mode 0600 and
 // parent dir mode 0700. password_hash is bcrypt at the standard

@@ -11147,8 +11147,8 @@ class TranslationsWebNotesVaultSyncRemoteEn {
 	/// en: 'Configure'
 	String get configure => 'Configure';
 
-	/// en: 'No remote set. Add an HTTPS or SSH URL (e.g. <1>git@github.com:you/notes.git</1> or <3>https://tea.linivek.online/you/notes.git</3>) to enable push / pull.'
-	String get empty => 'No remote set. Add an HTTPS or SSH URL (e.g. <1>git@github.com:you/notes.git</1> or <3>https://tea.linivek.online/you/notes.git</3>) to enable push / pull.';
+	/// en: 'No remote set. Add an HTTPS or SSH URL (e.g. <1>git@github.com:you/notes.git</1> or <3>https://gitea.example.com/you/notes.git</3>) to enable push / pull.'
+	String get empty => 'No remote set. Add an HTTPS or SSH URL (e.g. <1>git@github.com:you/notes.git</1> or <3>https://gitea.example.com/you/notes.git</3>) to enable push / pull.';
 
 	/// en: 'URL (HTTPS or SSH)'
 	String get urlLabel => 'URL (HTTPS or SSH)';
@@ -14060,7 +14060,7 @@ extension on Translations {
 			'web.notes.vaultSync.remote.cancel' => 'Cancel',
 			'web.notes.vaultSync.remote.change' => 'Change',
 			'web.notes.vaultSync.remote.configure' => 'Configure',
-			'web.notes.vaultSync.remote.empty' => 'No remote set. Add an HTTPS or SSH URL (e.g. <1>git@github.com:you/notes.git</1> or <3>https://tea.linivek.online/you/notes.git</3>) to enable push / pull.',
+			'web.notes.vaultSync.remote.empty' => 'No remote set. Add an HTTPS or SSH URL (e.g. <1>git@github.com:you/notes.git</1> or <3>https://gitea.example.com/you/notes.git</3>) to enable push / pull.',
 			'web.notes.vaultSync.remote.urlLabel' => 'URL (HTTPS or SSH)',
 			'web.notes.vaultSync.remote.urlPlaceholder' => 'git@host:owner/notes.git',
 			'web.notes.vaultSync.remote.save' => 'Save',

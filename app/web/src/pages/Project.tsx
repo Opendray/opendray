@@ -125,7 +125,7 @@ export function ProjectPage() {
 }
 
 // Heuristic: a real opendray project cwd has at least two non-empty
-// path segments (`/tmp/foo`, `/Users/linivek/Documents/…`).
+// path segments (`/tmp/foo`, `/home/alice/projects/my-app`).
 // One-segment scope_keys like `/Users/` are bug data from old
 // mirror imports that truncated the source path; they shouldn't
 // be presented as live project navigation targets.
