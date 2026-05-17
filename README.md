@@ -41,8 +41,6 @@
 
 ## Status
 
-## Status
-
 **v2.0.0** — first release of the opendray v2 generation (2026-05-17).
 See [`VERSIONING.md`](VERSIONING.md) for the major-as-generation policy
 (major = product generation, not strict SemVer "breaking change").
@@ -71,6 +69,13 @@ See [`CHANGELOG.md`](CHANGELOG.md) for the v2.0.0 entry and the
 rolling Unreleased section for what's landing next.
 
 ## Install
+
+> **First time here?** Read [**docs/getting-started.md**](docs/getting-started.md)
+> for a 15-minute end-to-end walkthrough — installing the AI CLIs
+> opendray wraps, bootstrapping Postgres, deploying opendray, and
+> getting your first idle notification on Telegram. The table below
+> is for picking a deploy path; the guide stitches everything
+> around it.
 
 Pick the path that fits how you want to run it:
 
@@ -381,7 +386,8 @@ Zustand + xterm.js) and per-W milestone notes.
 
 ## Documentation
 
-- [`docs/quickstart.md`](docs/quickstart.md) — full quickstart with prereqs, troubleshooting, and the docker-compose dev DB
+- [`docs/getting-started.md`](docs/getting-started.md) — **start here** if you're new: zero to first session in 15 minutes, including installing the wrapped CLIs and bootstrapping Postgres
+- [`docs/quickstart.md`](docs/quickstart.md) — 5-minute dev environment (assumes you already know the moving parts)
 - [`docs/design.md`](docs/design.md) — mission, architecture, subsystems,
   API, data model, roadmap
 - [`docs/adr/`](docs/adr/) — every binding architecture decision, dated

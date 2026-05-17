@@ -68,6 +68,11 @@
 
 ## 安装
 
+> **第一次来?** 先看 [**docs/getting-started.zh.md**](docs/getting-started.zh.md)
+> —— 15 分钟端到端 walkthrough:装 opendray wrap 的 AI CLI、bootstrap
+> Postgres、部署 opendray、收到第一条 Telegram idle 通知。下面这个表
+> 只是挑部署路径,getting-started 把表前后的所有事情串起来。
+
 选一种最适合你环境的方式:
 
 | 方式 | 适合 | 功能 | 跳转到 |
@@ -365,7 +370,8 @@ Router/Query + Zustand + xterm.js)和每个 W 里程碑笔记见
 
 ## 文档
 
-- [`docs/quickstart.md`](docs/quickstart.md) — 完整 quickstart,含前置依赖、排错、docker-compose 开发 DB
+- [`docs/getting-started.zh.md`](docs/getting-started.zh.md) — **新手从这开始**:零到首次会话 15 分钟,含装 wrap 的 CLI + bootstrap Postgres + 收第一条 Telegram 通知
+- [`docs/quickstart.md`](docs/quickstart.md) — 5 分钟开发环境(假设你已经懂各组件)
 - [`docs/design.md`](docs/design.md) — 任务、架构、子系统、API、数据模型、路线图
 - [`docs/adr/`](docs/adr/) — 每个生效中的架构决策,按日期排序
 - [`docs/operator-guide.md`](docs/operator-guide.md) — 生产化部署 + 运维参考
