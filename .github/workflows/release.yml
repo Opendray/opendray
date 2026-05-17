@@ -75,7 +75,10 @@ jobs:
         with:
           node-version: "22"
           cache: pnpm
-          cache-dependency-path: app/web/pnpm-lock.yaml
+          # Monorepo lockfile lives at the repo root (see
+          # pnpm-workspace.yaml). The pre-monorepo path
+          # app/web/pnpm-lock.yaml no longer exists.
+          cache-dependency-path: pnpm-lock.yaml
 
       - uses: actions/setup-go@v6
         with:
