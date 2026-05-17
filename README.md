@@ -1,16 +1,40 @@
 # opendray v2
 
+> 🌐 **Languages**: English · [简体中文](README.zh.md)
+
 > Multiplexer + integration gateway for AI agent CLIs.
-> Web remote control of Claude Code, Codex, Gemini, shell sessions.
+> Web + mobile remote control of Claude Code, Codex, Gemini, shell sessions.
 > One shared Claude Pro subscription serves the whole personal app
 > ecosystem instead of per-token API billing.
 
 ## Status
 
-**v1.0.0** — first stable release tagged on 2026-05-09. Phase 1 (backend)
-+ Phase 2 (web frontend) feature-complete on `main`. Mobile + Slack
-inbound + automated release workflow deferred to v1.x per the
-post-v1.0 roadmap.
+**v2.0.0** — first release of the opendray v2 generation (2026-05-17).
+See [`VERSIONING.md`](VERSIONING.md) for the major-as-generation policy
+(major = product generation, not strict SemVer "breaking change").
+
+What's in this generation:
+
+- **Backend (Go)** — sessions, channels, providers, memory, backup,
+  integration API. Single static binary with the React SPA embedded
+  via `go:embed`.
+- **Web admin** (React 19 + Vite + Tailwind v4 + shadcn/ui + TanStack
+  Router/Query + Zustand + xterm.js)
+- **Mobile app** (Flutter, iOS + Android, in `app/mobile/`) — parity
+  with web on session control, channel management, memory, backups,
+  notes, and the integration API
+- **Six bidirectional channels** — Telegram · Slack · Discord ·
+  Feishu (飞书) · DingTalk (钉钉) · WeCom (企业微信) — plus
+  **Bridge** for custom WebSocket-bound platforms
+- **Local-first memory** — ONNX / Ollama / LM Studio embedding;
+  cross-layer retrieval (user · project · session) with smart ranking
+  and conflict detection; no data leaves your network
+- **Automated release pipeline** — goreleaser cross-compile
+  (linux/darwin × amd64/arm64), cosign keyless signing (Sigstore),
+  SPDX SBOM, GHCR multi-arch image
+
+See [`CHANGELOG.md`](CHANGELOG.md) for the v2.0.0 entry and the
+rolling Unreleased section for what's landing next.
 
 ## Quickstart
 
@@ -80,6 +104,7 @@ internal/
 └── web/             go:embed of the web bundle (W5)
 
 app/web/             React 19 + TypeScript + Vite SPA (Phase 2 W0-W5)
+app/mobile/          Flutter app (iOS + Android), feature parity with web
 docs/
 ├── design.md        SSOT north-star
 └── adr/             architecture decisions, dated
@@ -115,7 +140,8 @@ Zustand + xterm.js) and per-W milestone notes.
 - [`docs/adr/`](docs/adr/) — every binding architecture decision, dated
 - [`docs/operator-guide.md`](docs/operator-guide.md) — deploy + ops reference for production-ish setups
 - [`docs/integration-guide.md`](docs/integration-guide.md) — how to write an external integration in any language
-- `docs/api.md` — REST + WS reference (generated, lands post-v1.0)
+- [`VERSIONING.md`](VERSIONING.md) — versioning strategy (major-as-generation)
+- [`CHANGELOG.md`](CHANGELOG.md) — release history
 
 ## Tests
 
@@ -125,18 +151,17 @@ cd app/web && pnpm build   # web (TS strict + vite production build)
 ```
 
 End-to-end smoke flows are tracked in commit messages per milestone.
-Playwright e2e harness lands post-v1.0.
+A Playwright harness is a planned follow-up.
 
 ## Relationship to v1
 
-v1 (`../opendray`) keeps running in production. v2 reaches feature
-parity before the user-facing switchover. After v2 v1.0 release, v1 is
-archived for one quarter, then retired. ADR 0001 documents the
-greenfield decision; ADR 0004 documents which v1 builtins migrate
-(only 4 of 16) and which become client-side / channel / integration
-work in v2.
+v1 (`Opendray/opendray`) is the legacy codebase, now archived. v2 is
+the current and active generation — feature-complete and the only
+branch receiving development. ADR 0001 documents the greenfield
+decision; ADR 0004 explains which v1 builtins migrated (only 4 of
+16) and which became client-side / channel / integration work in v2.
 
 ## License
 
-Apache 2.0 — see [`LICENSE`](LICENSE). v2 is licensed independently of v1
-(which is MIT).
+Apache 2.0 — see [`LICENSE`](LICENSE). (v1 was MIT; v2 is licensed
+independently.)

@@ -22,8 +22,8 @@ user      = "admin"
 password  = "CHANGEME"
 token_ttl = "24h"  # browser bearer token absolute lifetime; empty = 24h default
 # Mobile bearer tokens (issued via /api/v1/auth/mobile-login from the
-# Capacitor app) live longer because the device gates access via
-# biometrics + secure storage. Empty = 30d default.
+# Flutter app in app/mobile/) live longer because the device gates
+# access via biometrics + secure storage. Empty = 30d default.
 # mobile_token_ttl = "30d"
 
 [log]
