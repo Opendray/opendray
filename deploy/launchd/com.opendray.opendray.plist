@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  opendray v2 LaunchDaemon for macOS (Apple Silicon / Intel).
+
+  Designed for "Mac mini / Mac Studio as a home server" — opendray
+  runs at boot before any user logs in, restarts on crash, and logs
+  to /usr/local/var/log/opendray/.
+
+  Install:
+    # 1. Place binary + config + state dirs (one-time).
+    sudo install -m 0755 ./opendray /usr/local/bin/opendray
+    sudo install -d -m 0755 /usr/local/etc/opendray /usr/local/var/lib/opendray /usr/local/var/log/opendray
+    sudo install -m 0640 config.example.toml /usr/local/etc/opendray/config.toml
+    sudo $EDITOR /usr/local/etc/opendray/config.toml
+
+    # 2. Apply migrations once before bootstrapping the daemon.
+    sudo /usr/local/bin/opendray migrate -config /usr/local/etc/opendray/config.toml
+
+    # 3. Install + load the daemon.
+    sudo cp deploy/launchd/com.opendray.opendray.plist /Library/LaunchDaemons/
+    sudo chown root:wheel /Library/LaunchDaemons/com.opendray.opendray.plist
+    sudo chmod 0644 /Library/LaunchDaemons/com.opendray.opendray.plist
+    sudo launchctl bootstrap system /Library/LaunchDaemons/com.opendray.opendray.plist
+
+  Inspect:
+    sudo launchctl print system/com.opendray.opendray
+    tail -f /usr/local/var/log/opendray/opendray.log
+
+  Restart / unload:
+    sudo launchctl kickstart -k system/com.opendray.opendray    # restart
+    sudo launchctl bootout    system/com.opendray.opendray      # unload entirely
+
+  Notes:
+    * Runs as root by default because system-wide LaunchDaemons start
+      at boot before any user login. For a less-privileged setup, add
+      a <key>UserName</key><string>_opendray</string> pair and create
+      that user first (see Apple Tech Note TN2083).
+    * Don't hardcode secrets in this plist — it's world-readable by
+      design. Instead either:
+        (a) wrap ProgramArguments in a small shell script that
+            sources an /etc/opendray/env file before exec, or
+        (b) rely on the keyfile-at-rest flow (admin password gets
+            bcrypt-hashed into $HOME/.opendray/secrets/admin.key the
+            first time you change it via the UI — see
+            docs/operator-guide.md §admin).
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.opendray.opendray</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/opendray</string>
+    <string>serve</string>
+    <string>-config</string>
+    <string>/usr/local/etc/opendray/config.toml</string>
+  </array>
+
+  <!-- Start immediately on launchctl bootstrap and on every boot. -->
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- Restart on failure (analogous to systemd Restart=on-failure).
+       NetworkState=true delays restart until the network is up,
+       matching the systemd unit's After=network-online.target. -->
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+    <key>NetworkState</key>
+    <true/>
+  </dict>
+
+  <!-- Throttle restart loop: matches systemd RestartSec=5s. -->
+  <key>ThrottleInterval</key>
+  <integer>5</integer>
+
+  <!-- Logs. Pre-create the directory with mode 0755 owned by the
+       user the daemon runs as (root by default). -->
+  <key>StandardOutPath</key>
+  <string>/usr/local/var/log/opendray/opendray.log</string>
+  <key>StandardErrorPath</key>
+  <string>/usr/local/var/log/opendray/opendray.err</string>
+
+  <!-- $HOME for the daemon — the admin keyfile and backup keyfile
+       both land under $HOME/.opendray/secrets/. Putting it in
+       /usr/local/var/lib/opendray/ keeps the secrets off Time
+       Machine if you exclude that path. -->
+  <key>WorkingDirectory</key>
+  <string>/usr/local/var/lib/opendray</string>
+</dict>
+</plist>

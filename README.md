@@ -36,6 +36,18 @@ What's in this generation:
 See [`CHANGELOG.md`](CHANGELOG.md) for the v2.0.0 entry and the
 rolling Unreleased section for what's landing next.
 
+## Install
+
+Pick the path that fits how you want to run it:
+
+| Path | Best for | Jump to |
+|---|---|---|
+| 📦 **Pre-built binary** | "Just run it" — Linux / macOS, any supervisor | [Releases page](https://github.com/Opendray/opendray_v2/releases) → see [Production deploy](#production-deploy) |
+| 🐳 **Docker Compose** | Home server / NAS / VPS / LXC with Docker | [Production deploy §A](#option-a--docker-compose-recommended-one-command) |
+| 🐧 **systemd unit** | Bare-metal / VM / LXC Linux box | [Production deploy §B](#option-b--systemd-bare-metal--vm--lxc) |
+| 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio as home server | [Production deploy §D](#option-d--macos-launchd-mac-mini--studio-as-home-server) |
+| 🛠 **Build from source** | Dev / contributing / custom builds | [Quickstart](#quickstart-5-minute-dev-path) below |
+
 ## Quickstart (5-minute dev path)
 
 For a full walkthrough with prereqs and troubleshooting, see [`docs/quickstart.md`](docs/quickstart.md). The condensed dev path:
@@ -65,9 +77,9 @@ daemon, see **Production deploy** below.
 
 ## Production deploy
 
-Three supported deploy paths, pick whichever fits your environment.
-Auto-restart on crash, persistent state, separation of secrets from
-config — all three give you those.
+Four supported deploy paths, pick whichever fits your environment.
+Each one gives you auto-restart on crash, persistent state, and
+separation of secrets from config.
 
 ### Option A — Docker Compose (recommended, one command)
 
@@ -123,8 +135,14 @@ with sandboxing (`ProtectSystem=strict`, `NoNewPrivileges`,
 `MemoryDenyWriteExecute`, capability scrub), `migrate`-then-`serve`
 boot, and a 20s graceful-stop window.
 
+**Get a binary first.** Either grab a pre-built archive from the
+[Releases page](https://github.com/Opendray/opendray_v2/releases)
+(`opendray_*_linux_<arch>.tar.gz` — unpacks to a single `opendray`
+binary), or build from source via the [Quickstart](#quickstart-5-minute-dev-path)
+above (`go build ./cmd/opendray`).
+
 ```bash
-# 1. Install the binary (or build from source; see Layout below).
+# 1. Install the binary you just grabbed (or built).
 sudo install -m 0755 /path/to/opendray /usr/local/bin/opendray
 
 # 2. Create the service user + state dir.
@@ -174,6 +192,46 @@ Then point your supervisor (s6, runit, supervisord, runwhen) at:
 Pre-flight: run `opendray migrate -config /etc/opendray/config.toml`
 once before the first `serve`, or as a pre-start hook in your
 supervisor of choice.
+
+### Option D — macOS launchd (Mac mini / Studio as home server)
+
+For Apple Silicon Mac mini / Mac Studio running 24/7. Ships a
+LaunchDaemon at
+[`deploy/launchd/com.opendray.opendray.plist`](deploy/launchd/com.opendray.opendray.plist)
+that starts at boot before any user login, restarts on crash with
+a 5s throttle, and logs to `/usr/local/var/log/opendray/`.
+
+```bash
+# 1. Install the darwin binary + config + state dirs.
+sudo install -m 0755 ./opendray /usr/local/bin/opendray
+sudo install -d -m 0755 \
+  /usr/local/etc/opendray \
+  /usr/local/var/lib/opendray \
+  /usr/local/var/log/opendray
+sudo install -m 0640 config.example.toml /usr/local/etc/opendray/config.toml
+sudo $EDITOR /usr/local/etc/opendray/config.toml    # set [database].url etc.
+
+# 2. Apply migrations once.
+sudo /usr/local/bin/opendray migrate \
+  -config /usr/local/etc/opendray/config.toml
+
+# 3. Install + load the LaunchDaemon.
+sudo cp deploy/launchd/com.opendray.opendray.plist /Library/LaunchDaemons/
+sudo chown root:wheel /Library/LaunchDaemons/com.opendray.opendray.plist
+sudo chmod 0644 /Library/LaunchDaemons/com.opendray.opendray.plist
+sudo launchctl bootstrap system /Library/LaunchDaemons/com.opendray.opendray.plist
+
+# 4. Verify.
+sudo launchctl print system/com.opendray.opendray
+tail -f /usr/local/var/log/opendray/opendray.log
+```
+
+Restart with `sudo launchctl kickstart -k system/com.opendray.opendray`;
+unload entirely with `sudo launchctl bootout system/com.opendray.opendray`.
+
+Postgres on macOS — install via Homebrew (`brew install postgresql@17 && brew services start postgresql@17`) and point `[database].url` at
+`postgres://$USER@127.0.0.1:5432/opendray`. Or just run a Postgres
+container alongside (`docker run -d --restart unless-stopped …`).
 
 ---
 
