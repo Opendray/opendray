@@ -1,0 +1,83 @@
+name: 💡 Feature request
+description: Propose a new capability or a non-trivial enhancement.
+title: "feat: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing:
+        - Check the [open Issues](https://github.com/Opendray/opendray_v2/issues?q=is%3Aissue+label%3Aenhancement) for a duplicate.
+        - For early-stage "what if we..." ideas, prefer
+          [Discussions → Ideas](https://github.com/Opendray/opendray_v2/discussions) —
+          formal issues are for ideas that already feel concrete.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Tell us the user-facing problem first, not the proposed solution.
+      placeholder: |
+        e.g. I run opendray on a Mac mini with multiple Claude accounts. When I switch
+        accounts via the UI, the spawn dialog forgets which account I last used for
+        each project — I have to re-pick every time.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How should opendray behave? Be concrete (UI flow, API shape, default values).
+      placeholder: |
+        e.g. Persist the last-used (account_id, cwd) pair per session-launch and
+        default the spawn dialog's account picker to it. Fall back to the global
+        default account if no per-cwd history exists.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What else would solve the same problem? Why did you reject them?
+      placeholder: |
+        - A `default_account_id` field in opendray config — rejected because it's
+          global, doesn't capture per-project context.
+        - A keyboard shortcut to repeat-last-spawn — narrower, doesn't solve the
+          dropdown ergonomics.
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Which surface(s)?
+      multiple: true
+      options:
+        - Backend (Go) — internal/*
+        - Web admin (React) — app/web/
+        - Mobile app (Flutter) — app/mobile/
+        - Channel adapter (Telegram / Slack / Discord / Feishu / DingTalk / WeCom / Bridge)
+        - Integration API (REST / WS)
+        - Memory subsystem
+        - Backup / restore
+        - Notes vault
+        - Plugins / Skills / MCP
+        - Documentation
+        - Other / Cross-cutting
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: willing_to_pr
+    attributes:
+      label: Are you willing to submit a PR?
+      options:
+        - label: I'm willing to draft the implementation in a PR.
+        - label: I can help with design discussion / review but not implementation.
+        - label: I'm only proposing; happy to wait for someone else to pick it up.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Screenshots, related issues, links to similar features in other tools.
