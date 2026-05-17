@@ -33,6 +33,18 @@
 查看 [`CHANGELOG.md`](CHANGELOG.md) 了解 v2.0.0 详情和后续 Unreleased
 段中即将落地的内容。
 
+## 安装
+
+选一种最适合你环境的方式:
+
+| 方式 | 适合 | 跳转到 |
+|---|---|---|
+| 📦 **预构建二进制** | "拿来就跑" — Linux / macOS,搭配任意进程管理器 | [Releases 页](https://github.com/Opendray/opendray_v2/releases) → 见下方 [生产部署](#生产部署) |
+| 🐳 **Docker Compose** | 家用服务器 / NAS / VPS / 装 Docker 的 LXC | [生产部署 §A](#方案-a--docker-compose推荐一条命令) |
+| 🐧 **systemd unit** | 裸机 / VM / Linux LXC | [生产部署 §B](#方案-b--systemd裸机--vm--lxc) |
+| 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio 当家用 server | [生产部署 §D](#方案-d--macos-launchdmac-mini--studio-当家用-server) |
+| 🛠 **从源码构建** | 开发 / 贡献代码 / 定制构建 | [快速开始](#快速开始5-分钟开发版) |
+
 ## 快速开始(5 分钟开发版)
 
 完整 walkthrough(含前置依赖、排错、docker-compose 开发 DB)见
@@ -63,7 +75,7 @@ go run ./cmd/opendray serve -config config.toml
 
 ## 生产部署
 
-三种受支持的部署路径,按你的环境挑一种。三种方案都提供:
+四种受支持的部署路径,按你的环境挑一种。每种都提供:
 崩溃后自动重启、状态持久化、secrets 跟 config 分离。
 
 ### 方案 A — Docker Compose(推荐,一条命令)
@@ -118,8 +130,14 @@ docker compose down -v             # 全删除,包括 DB
 `MemoryDenyWriteExecute`、capability 收紧)、先 `migrate` 后 `serve`
 的启动顺序、20 秒优雅退出窗口。
 
+**先拿一个二进制。** 要么从
+[Releases 页](https://github.com/Opendray/opendray_v2/releases)
+下载预构建归档(`opendray_*_linux_<arch>.tar.gz` — 解压就是
+单一 `opendray` 二进制),要么按上面 [快速开始](#快速开始5-分钟开发版)
+从源码 build(`go build ./cmd/opendray`)。
+
 ```bash
-# 1. 安装二进制(或从源码 build,见下方 Layout)。
+# 1. 安装刚拿到的(或刚 build 的)二进制。
 sudo install -m 0755 /path/to/opendray /usr/local/bin/opendray
 
 # 2. 创建服务用户和状态目录。
@@ -168,6 +186,45 @@ ls dist/                  # opendray_*_linux_amd64.tar.gz 等
 
 预先动作:首次 `serve` 之前跑一次 `opendray migrate -config /etc/opendray/config.toml`,
 或者把它做成进程管理器的 pre-start hook。
+
+### 方案 D — macOS launchd(Mac mini / Studio 当家用 server)
+
+适合 Apple Silicon 的 Mac mini / Mac Studio 24/7 跑。
+[`deploy/launchd/com.opendray.opendray.plist`](deploy/launchd/com.opendray.opendray.plist)
+是一个 LaunchDaemon:开机即启动(不需要用户登录),崩溃后 5 秒
+节流重启,日志写到 `/usr/local/var/log/opendray/`。
+
+```bash
+# 1. 安装 darwin 二进制 + 配置 + 状态目录。
+sudo install -m 0755 ./opendray /usr/local/bin/opendray
+sudo install -d -m 0755 \
+  /usr/local/etc/opendray \
+  /usr/local/var/lib/opendray \
+  /usr/local/var/log/opendray
+sudo install -m 0640 config.example.toml /usr/local/etc/opendray/config.toml
+sudo $EDITOR /usr/local/etc/opendray/config.toml    # 设置 [database].url 等
+
+# 2. 跑一次 migrate。
+sudo /usr/local/bin/opendray migrate \
+  -config /usr/local/etc/opendray/config.toml
+
+# 3. 安装并加载 LaunchDaemon。
+sudo cp deploy/launchd/com.opendray.opendray.plist /Library/LaunchDaemons/
+sudo chown root:wheel /Library/LaunchDaemons/com.opendray.opendray.plist
+sudo chmod 0644 /Library/LaunchDaemons/com.opendray.opendray.plist
+sudo launchctl bootstrap system /Library/LaunchDaemons/com.opendray.opendray.plist
+
+# 4. 验证。
+sudo launchctl print system/com.opendray.opendray
+tail -f /usr/local/var/log/opendray/opendray.log
+```
+
+重启:`sudo launchctl kickstart -k system/com.opendray.opendray`;
+完全卸载:`sudo launchctl bootout system/com.opendray.opendray`。
+
+macOS 上的 Postgres — 用 Homebrew 装(`brew install postgresql@17 && brew services start postgresql@17`),把 `[database].url` 指向
+`postgres://$USER@127.0.0.1:5432/opendray`。或者就跑一个 Postgres
+容器在旁边(`docker run -d --restart unless-stopped …`)。
 
 ---
 
