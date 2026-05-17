@@ -65,9 +65,12 @@ jobs:
       # ── Frontend tooling — goreleaser's pre-build hooks invoke
       #    `pnpm install --frozen-lockfile` and `pnpm build` so the
       #    React SPA is in internal/web/dist before the Go build.
+      #
+      #    pnpm version is read from `packageManager` in package.json
+      #    so the action-setup invocation stays version-less here.
+      #    Setting `version:` here too triggers ERR_PNPM_BAD_PM_VERSION
+      #    (pnpm/action-setup@v4 refuses multiple sources of truth).
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
