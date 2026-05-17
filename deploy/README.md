@@ -5,9 +5,10 @@ one path:
 
 | Artefact | When to use |
 |---|---|
-| [`systemd/opendray.service`](systemd/opendray.service) | Bare-metal, VM, or LXC where OpenDray is the only service. Standard Linux box. |
+| [`docker-compose.yml`](../docker-compose.yml) (repo root) | Daemonised opendray + Postgres in one command. Best default for home server / NAS / VPS / LXC-with-Docker. Optional bundled Cloudflare Tunnel via `--profile tunnel`. |
+| [`systemd/opendray.service`](systemd/opendray.service) | Bare-metal, VM, or LXC where OpenDray is the only service. Standard Linux box without Docker. |
 | [`lxc/proxmox-pty-notes.md`](lxc/proxmox-pty-notes.md) | Proxmox LXC specifics — PTY allocation in unprivileged containers, networking, secrets. |
-| [`Dockerfile`](../Dockerfile) (repo root) | Containerised. Build once, run anywhere with `docker run`. |
+| [`Dockerfile`](../Dockerfile) (repo root) | Single-container builds — used by `docker-compose.yml` above and by CI to push to GHCR. |
 | [`.goreleaser.yml`](../.goreleaser.yml) (repo root) | Cut a tagged release of pre-built binaries + checksums. |
 
 The systemd unit and the LXC notes are designed to compose: a Proxmox

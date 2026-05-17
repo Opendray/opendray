@@ -36,9 +36,9 @@ What's in this generation:
 See [`CHANGELOG.md`](CHANGELOG.md) for the v2.0.0 entry and the
 rolling Unreleased section for what's landing next.
 
-## Quickstart
+## Quickstart (5-minute dev path)
 
-For a full walkthrough with prereqs and troubleshooting, see [`docs/quickstart.md`](docs/quickstart.md). The condensed path:
+For a full walkthrough with prereqs and troubleshooting, see [`docs/quickstart.md`](docs/quickstart.md). The condensed dev path:
 
 ```bash
 # 1. Start a Postgres for local dev (or point [database].url at your own).
@@ -59,6 +59,129 @@ go run ./cmd/opendray serve -config config.toml
 # → REST + WS:  http://127.0.0.1:8770/api/v1/...
 # → Web admin:  http://127.0.0.1:8770/admin/
 ```
+
+This runs OpenDray in the foreground — Ctrl-C kills it. For a long-running
+daemon, see **Production deploy** below.
+
+## Production deploy
+
+Three supported deploy paths, pick whichever fits your environment.
+Auto-restart on crash, persistent state, separation of secrets from
+config — all three give you those.
+
+### Option A — Docker Compose (recommended, one command)
+
+The fastest way to "just keep it running" on a home server, NAS, VPS,
+or LXC with Docker. Bundled in the repo root:
+
+```bash
+# 1. Set passwords (file is gitignored).
+cp .env.example .env
+$EDITOR .env                # set POSTGRES_PASSWORD, OPENDRAY_ADMIN_PASSWORD
+
+# 2. (Optional) Drop your own config.toml at ./config.toml.
+#    Compose bind-mounts it read-only. Skip for pure env-mode.
+
+# 3. Start everything (opendray + postgres) as a long-running daemon.
+docker compose up -d
+
+# 4. Tail logs until "listening on …".
+docker compose logs -f opendray
+```
+
+OpenDray is reachable at `http://127.0.0.1:8770/admin/`. Both services
+auto-restart on crash or host reboot (`restart: unless-stopped`).
+Postgres data lives in the named volume `opendray-postgres-data`;
+OpenDray state (admin keyfile, backup keyfile, vault) lives in
+`opendray-state`.
+
+**Pin to a release image** in production by commenting out `build: .`
+and uncommenting `image: ghcr.io/opendray/opendray:v2.0.0` in
+`docker-compose.yml` — see the file header for details.
+
+**Add Cloudflare Tunnel** for internet-facing access without opening
+firewall ports — set `CLOUDFLARED_TOKEN` in `.env`, then:
+
+```bash
+docker compose --profile tunnel up -d
+```
+
+Stop / restart / fully reset:
+
+```bash
+docker compose down                # stop, keep data
+docker compose restart opendray    # restart just opendray
+docker compose down -v             # nuke everything including DB
+```
+
+### Option B — systemd (bare-metal / VM / LXC)
+
+For when OpenDray is the only service on a Linux box and you don't
+want Docker in the mix. Ships a hardened unit at
+[`deploy/systemd/opendray.service`](deploy/systemd/opendray.service)
+with sandboxing (`ProtectSystem=strict`, `NoNewPrivileges`,
+`MemoryDenyWriteExecute`, capability scrub), `migrate`-then-`serve`
+boot, and a 20s graceful-stop window.
+
+```bash
+# 1. Install the binary (or build from source; see Layout below).
+sudo install -m 0755 /path/to/opendray /usr/local/bin/opendray
+
+# 2. Create the service user + state dir.
+sudo useradd -r -s /usr/sbin/nologin -d /var/lib/opendray opendray
+sudo install -d -o opendray -g opendray -m 0700 /var/lib/opendray
+
+# 3. Drop config + secrets (root-owned; mode 0640).
+sudo install -D -m 0640 config.example.toml /etc/opendray/config.toml
+sudo $EDITOR /etc/opendray/config.toml             # set [database].url etc.
+sudo install -D -m 0640 -o root -g opendray /dev/null /etc/opendray/env.d/secrets
+sudo $EDITOR /etc/opendray/env.d/secrets           # OPENDRAY_ADMIN_PASSWORD=…
+
+# 4. Install + enable the unit.
+sudo cp deploy/systemd/opendray.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now opendray
+
+# 5. Verify.
+sudo systemctl status opendray
+sudo journalctl -u opendray -f --no-pager
+```
+
+The unit runs `opendray migrate` as `ExecStartPre`, so the first boot
+applies all migrations before `serve` ever starts. Restarts are
+`on-failure` with a 5s back-off and a 5-burst limit per minute.
+
+### Option C — Direct binary + your own process supervisor
+
+For LXC without systemd, FreeBSD `rc.d`, OpenRC, or anything else.
+Build once, run with whatever supervisor you already use:
+
+```bash
+# Cross-compile a release archive locally:
+goreleaser release --clean --snapshot
+ls dist/                  # opendray_*_linux_amd64.tar.gz etc.
+
+# Or grab a published release artefact (after v2.0.0 ships):
+# https://github.com/Opendray/opendray_v2/releases
+```
+
+Then point your supervisor (s6, runit, supervisord, runwhen) at:
+
+```
+/usr/local/bin/opendray serve -config /etc/opendray/config.toml
+```
+
+Pre-flight: run `opendray migrate -config /etc/opendray/config.toml`
+once before the first `serve`, or as a pre-start hook in your
+supervisor of choice.
+
+---
+
+For Proxmox-specific LXC notes (PTY in unprivileged containers,
+networking, cgroup tweaks), see [`deploy/lxc/proxmox-pty-notes.md`](deploy/lxc/proxmox-pty-notes.md).
+
+For reverse-proxy / TLS termination (nginx, Caddy, Traefik, Cloudflare
+Tunnel), see [`docs/operator-guide.md`](docs/operator-guide.md) §Topology.
 
 ### Optional: enable encrypted DB backups + data exports
 
