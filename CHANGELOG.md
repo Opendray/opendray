@@ -2,10 +2,26 @@
 
 All notable changes to OpenDray v2 are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+Version numbers follow this project's own **major-as-generation**
+strategy — major version = product generation, minor = feature
+iteration, patch = fix / polish. See [VERSIONING.md](./VERSIONING.md)
+for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
+
+## [v2.0.0] — 2026-05-17
+
+### Versioning realignment
+
+- **Re-tagged from the previous `v1.0.0` tag** (issue #165). The
+  major version now reflects this codebase's identity as the second
+  generation of the opendray product (`opendray_v2`). The previous
+  `v1.0.0` tag was deleted (had three duplicate draft releases on
+  GitHub, all deleted; no published release; no downstream
+  installers depend on it).
+- New [VERSIONING.md](./VERSIONING.md) documents the
+  major-as-generation policy and what triggers future bumps.
 
 ### Added
 
@@ -87,7 +103,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   resolve the duplicate-0011 collision with `0011-channel-rich-content-and-bridge.md`.
   Updated cross-references in README, ADR 0013, and the embed-onnx stub.
 
-## [v1.0.0] — 2026-05-09
+## [v1.0.0 — retracted] — 2026-05-09
+
+> **Note.** This tag was retracted on 2026-05-17 and the work it
+> covered is folded into [v2.0.0](#v200--2026-05-17) above. See
+> issue #165 and [VERSIONING.md](./VERSIONING.md) for the rationale.
+> Original section preserved verbatim below for historical context.
 
 First stable release. Tagged at commit `fe96fd8` on `main`. Web frontend
 + backend feature-complete; mobile + Slack inbound + automated release
