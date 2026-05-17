@@ -1,11 +1,45 @@
-# opendray v2
+<p align="center">
+  <img src="docs/assets/logo.png" alt="opendray" width="180">
+</p>
 
-> 🌐 **Languages**: English · [简体中文](README.zh.md)
+<h1 align="center">opendray</h1>
 
-> Multiplexer + integration gateway for AI agent CLIs.
-> Web + mobile remote control of Claude Code, Codex, Gemini, shell sessions.
-> One shared Claude Pro subscription serves the whole personal app
-> ecosystem instead of per-token API billing.
+<p align="center">
+  <strong>Self-hosted multi-CLI control gateway for AI coding agents.</strong>
+  <br/>
+  <sub>Remote-control Claude Code · Codex · Gemini · shell from web, mobile, or your favourite messaging app.</sub>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Opendray/opendray_v2/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Opendray/opendray_v2?label=release&color=4f46e5"></a>
+  <a href="LICENSE"><img alt="License Apache 2.0" src="https://img.shields.io/github/license/Opendray/opendray_v2?color=blue"></a>
+  <a href="https://github.com/Opendray/opendray_v2/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Opendray/opendray_v2/ci.yml?branch=main&label=CI"></a>
+  <a href="https://github.com/Opendray/opendray_v2/pkgs/container/opendray"><img alt="GHCR" src="https://img.shields.io/badge/ghcr.io-opendray%2Fopendray-2496ED?logo=docker&logoColor=white"></a>
+  <a href="https://github.com/Opendray/opendray_v2/discussions"><img alt="Discussions" src="https://img.shields.io/github/discussions/Opendray/opendray_v2?color=ec4899"></a>
+  <br/>
+  <img alt="Go" src="https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go&logoColor=white">
+  <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black">
+  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-mobile-02569B?logo=flutter&logoColor=white">
+  <img alt="Postgres" src="https://img.shields.io/badge/PostgreSQL-15%2F16%2F17-336791?logo=postgresql&logoColor=white">
+</p>
+
+<p align="center">
+  🌐 <strong>English</strong> · <a href="README.zh.md">简体中文</a>
+</p>
+
+---
+
+## What is opendray?
+
+**opendray** wraps the AI coding CLIs you already use — Claude Code, Codex, Gemini, plus any shell — and turns them into something you can drive from anywhere. Run sessions on your home server / NAS / VPS, get notified on Telegram when one goes idle, reply from your phone to feed the next prompt back in, all over a self-hosted gateway you control end to end.
+
+- 🛰 **One backend, three surfaces** — single Go binary serving a React web admin and a Flutter mobile app, with every action also exposed over a REST + WebSocket API for third-party integrations.
+- 💬 **Six bidirectional channels, no walled gardens** — Telegram, Slack, Discord, Feishu (飞书), DingTalk (钉钉), WeCom (企业微信), plus a Bridge adapter for anything custom. Replies on any channel get routed back into the right session.
+- 🧠 **Local-first memory** — ONNX / Ollama / LM Studio embeddings with three-scope retrieval (user · project · session), smart ranking, and cross-layer conflict detection. No vector data leaves your network.
+- 🔌 **Integration-grade API** — scoped API keys, per-call audit log, reverse-proxy mounts. Treat opendray as the gateway behind your own product or just as a personal command centre.
+- 🔒 **Self-hosted, license-clear** — Apache 2.0, one static binary, distroless container, cosign-signed releases with SPDX SBOM. No telemetry, no cloud account, no subscription.
+
+## Status
 
 ## Status
 
