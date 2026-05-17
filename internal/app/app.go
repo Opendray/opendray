@@ -711,11 +711,6 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}, nil
 }
 
-// Migrate applies pending DB migrations and returns. Used by `opendray migrate`.
-func (a *App) Migrate(ctx context.Context) error {
-	return a.store.Migrate(ctx, a.log)
-}
-
 // (buildTranscriptSummariser was removed in M25 — the transcript
 // summariser now routes through the memory worker registry
 // directly. See newTranscriptSummariser in transcript_summariser.go.)

@@ -35,10 +35,11 @@ func main() {
 	case "serve":
 		os.Exit(run(args, func(ctx context.Context, a *app.App) error { return a.Run(ctx) }))
 	case "migrate":
-		os.Exit(run(args, func(ctx context.Context, a *app.App) error {
-			defer a.Close()
-			return a.Migrate(ctx)
-		}))
+		// Deliberately not routed through `run` — migrate must
+		// bypass internal/app.New to work on a fresh database
+		// where the catalog seed step would otherwise fail
+		// against tables that don't exist yet (see #162).
+		os.Exit(runMigrate(args))
 	case "notes":
 		os.Exit(runNotes(args))
 	case "skill":
