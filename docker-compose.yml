@@ -1,0 +1,146 @@
+# Production docker compose for OpenDray v2.
+#
+# Starts a long-running OpenDray gateway plus its Postgres database,
+# both restarting automatically if they crash or the host reboots.
+# Use this for "I want OpenDray running on my home server / NAS / VPS
+# and never think about it again."
+#
+# ── Bootstrap ────────────────────────────────────────────────────────
+#
+#   # 1. Create the env file (kept out of git — sets passwords).
+#   cp .env.example .env
+#   # → Edit .env:
+#   #   * Pick OPENDRAY_ADMIN_PASSWORD (used for the first login;
+#   #     change it from the UI afterwards — see operator-guide.md).
+#   #   * Pick POSTGRES_PASSWORD (used by both Postgres and OpenDray).
+#   #   * Set OPENDRAY_BACKUP_KEY only if [backup].enabled = true
+#   #     in your config.
+#
+#   # 2. (Optional) drop your own config.toml into ./config.toml —
+#   #    the compose bind-mounts it read-only. Default behaviour is
+#   #    pure env-mode if config.toml is absent.
+#
+#   # 3. Bring it up.
+#   docker compose up -d
+#   docker compose logs -f opendray   # follow logs until "listening on …"
+#
+# ── Build options ────────────────────────────────────────────────────
+#
+# Default: build from local source (`build: .`). Good for development
+# loops and when you want to test PRs before publishing.
+#
+# To run a published release image instead, comment out `build: .`
+# and uncomment the `image:` line below. Pin to a specific tag
+# (e.g. v2.0.0) in production; `:latest` only for kicking the tyres.
+#
+# ── Reverse proxy ────────────────────────────────────────────────────
+#
+# OpenDray binds to 127.0.0.1 inside its container and exposes :8770
+# on the host loopback. For internet access, front it with one of:
+#
+#   * Cloudflare Tunnel (preferred — bundled cloudflared service
+#     below, opt-in via the `tunnel` profile)
+#   * nginx / Caddy / Traefik on the host
+#   * The host's existing reverse proxy
+#
+# See deploy/README.md and docs/operator-guide.md §Topology for the
+# full guidance.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: opendray-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: opendray
+      POSTGRES_DB: opendray
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    # Bind to loopback only — opendray service reaches it over the
+    # internal docker network, no need to expose to the host LAN.
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opendray -d opendray"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  opendray:
+    # Default: build locally so any source change is picked up on
+    # `docker compose up --build`. To pin a published release instead,
+    # comment out the build block and uncomment the image line.
+    build: .
+    # image: ghcr.io/opendray/opendray:v2.0.0
+    container_name: opendray
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database — points at the postgres service over the compose
+      # network, not the host. sslmode=disable is safe inside docker.
+      OPENDRAY_DATABASE_URL: "postgres://opendray:${POSTGRES_PASSWORD}@postgres:5432/opendray?sslmode=disable"
+
+      # Listen on all interfaces inside the container; the host port
+      # mapping below controls external exposure.
+      OPENDRAY_LISTEN: "0.0.0.0:8770"
+
+      # Bootstrap credentials. After first boot, change the password
+      # from the UI — the bcrypt keyfile in /var/lib/opendray/.opendray/
+      # secrets/admin.key takes precedence after that. See #163.
+      OPENDRAY_ADMIN_USER: ${OPENDRAY_ADMIN_USER:-admin}
+      OPENDRAY_ADMIN_PASSWORD: ${OPENDRAY_ADMIN_PASSWORD:?OPENDRAY_ADMIN_PASSWORD must be set in .env}
+
+      # Encrypted backups — uncomment + set OPENDRAY_BACKUP_KEY in .env.
+      # OPENDRAY_BACKUP_ENABLED: "true"
+      # OPENDRAY_BACKUP_KEY: ${OPENDRAY_BACKUP_KEY}
+    ports:
+      # Bind to loopback only by default. To expose on the LAN, change
+      # to "0.0.0.0:8770:8770" — but only do that behind a TLS-
+      # terminating reverse proxy (see file header).
+      - "127.0.0.1:8770:8770"
+    volumes:
+      # Optional config.toml — bind-mounts read-only if present.
+      # Comment out if you're running env-only.
+      - ./config.toml:/etc/opendray/config.toml:ro
+      # Persistent state: bcrypt admin keyfile, backup keyfile,
+      # vault root (when default), Claude account configs.
+      - opendray-state:/home/nonroot
+    # The bundled binary defaults to `serve`, but we explicitly pass
+    # the config flag so the bind-mounted config.toml is picked up
+    # when present.
+    command:
+      - "serve"
+      - "-config"
+      - "/etc/opendray/config.toml"
+    healthcheck:
+      test:
+        - "CMD"
+        - "/usr/local/bin/opendray"
+        - "version"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Optional Cloudflare Tunnel — opt in with `--profile tunnel`.
+  # Provision the tunnel token via Cloudflare Zero Trust dashboard,
+  # drop it in .env as CLOUDFLARED_TOKEN, then:
+  #
+  #   docker compose --profile tunnel up -d
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: opendray-cloudflared
+    restart: unless-stopped
+    profiles: [tunnel]
+    command: ["tunnel", "--no-autoupdate", "run", "--token", "${CLOUDFLARED_TOKEN:?CLOUDFLARED_TOKEN must be set in .env when --profile tunnel is used}"]
+    depends_on:
+      opendray:
+        condition: service_started
+
+volumes:
+  postgres-data:
+    name: opendray-postgres-data
+  opendray-state:
+    name: opendray-state

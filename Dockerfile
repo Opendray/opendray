@@ -18,20 +18,27 @@
 FROM node:22-alpine AS web
 
 # pnpm via corepack (ships with Node 22); pinned to v10 to match
-# CONTRIBUTING.md and the version action installs in CI.
+# the packageManager field in package.json and the version action
+# installs in CI.
 RUN corepack enable && corepack prepare pnpm@10 --activate
 
 WORKDIR /src
 
-# Cache deps independently of source changes.
-COPY app/web/package.json app/web/pnpm-lock.yaml ./app/web/
-RUN cd app/web && pnpm install --frozen-lockfile
+# Cache deps independently of source changes. The monorepo lockfile
+# and workspace manifest live at the repo root (see #45). Bringing
+# every workspace's package.json in first lets pnpm install resolve
+# the full dependency graph from the lock without pulling in source.
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY app/web/package.json ./app/web/
+COPY app/shared/package.json ./app/shared/
+COPY app/shared-ui/package.json ./app/shared-ui/
+RUN pnpm install --frozen-lockfile
 
-# Build the bundle. Output lands at internal/web/dist (vite.config.ts
-# writes there relative to app/web — internal/web/dist/ doesn't need
-# to be populated here, the gobuild stage copies it via --from=web).
-COPY app/web ./app/web
-RUN cd app/web && pnpm build
+# Bring source after lock install so changes here don't bust the
+# dependency layer. Build the web workspace — Vite writes
+# ../../internal/web/dist (the gobuild stage copies it from there).
+COPY app ./app
+RUN pnpm --filter web build
 
 # ── Stage 2: go binary ────────────────────────────────────────────────
 FROM golang:1.25-alpine AS gobuild
