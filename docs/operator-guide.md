@@ -71,10 +71,26 @@ over file.
 
 | Key | Env | Default | Notes |
 |---|---|---|---|
-| `user` | `OPENDRAY_ADMIN_USER` | `admin` | Single-admin model — there's no multi-user system in v1. |
-| `password` | `OPENDRAY_ADMIN_PASSWORD` | _(required)_ | Compared with `subtle.ConstantTimeCompare` against the request body. **Stored plaintext** in the config file or env — there is no hash-at-rest. |
+| `user` | `OPENDRAY_ADMIN_USER` | `admin` | Single-admin model — there's no multi-user system in v1. Used as the bootstrap username before the operator changes credentials via the UI; superseded by the keyfile thereafter. |
+| `password` | `OPENDRAY_ADMIN_PASSWORD` | _(required for first boot)_ | Bootstrap-only plaintext password. The first time the operator changes credentials via the UI (`/api/v1/auth/change-credentials`), opendray writes a bcrypt-hashed keyfile at `$HOME/.opendray/secrets/admin.key` (mode `0600`, parent dir `0700`). From that point on the keyfile is authoritative and this value is **ignored** even if you keep updating it. |
 | `token_ttl` | `OPENDRAY_ADMIN_TOKEN_TTL` | `24h` | Bearer token absolute lifetime for browser logins (`/api/v1/auth/login`). |
 | `mobile_token_ttl` | `OPENDRAY_ADMIN_MOBILE_TOKEN_TTL` | `30d` (`720h`) | Bearer token absolute lifetime for the Flutter mobile app (`/api/v1/auth/mobile-login`). Longer because the device gates access via biometrics + secure storage. |
+
+> **Where the password lives at rest** — credential precedence in
+> `LoadCreds` (`internal/auth/keyfile.go`):
+>
+> 1. If `OPENDRAY_ADMIN_KEY_FILE` is set, the file at that path is
+>    authoritative. Missing or unreadable here is a hard error
+>    (operator intended to use it).
+> 2. Otherwise, if `$HOME/.opendray/secrets/admin.key` exists, that
+>    keyfile is used (bcrypt-hashed credentials).
+> 3. Otherwise, fall back to `[admin].user` + `[admin].password` from
+>    config/env (plaintext, bootstrap only).
+>
+> For docker / systemd `LoadCredential` / k8s secret deployments,
+> point `OPENDRAY_ADMIN_KEY_FILE` at the injected file — this skips
+> step 2 entirely so a stale home-dir keyfile never wins over the
+> deployment's intent.
 
 ### `[log]`
 
@@ -256,8 +272,14 @@ Session states: `pending` → `running` → (`idle`?) → (`stopped` | `ended`).
 There's one human admin. The flow:
 
 1. Client `POST /api/v1/auth/login` with `{user, password}`
-2. opendray `subtle.ConstantTimeCompare`s both fields against the
-   configured pair (no hashing — config carries plaintext)
+2. opendray verifies the credentials against the active source
+   (see [`[admin]`](#admin) for precedence):
+   - **Keyfile source** — bcrypt-hashes the submitted password and
+     compares against the stored hash. A dummy bcrypt compare runs
+     even on username mismatch so the response time doesn't leak
+     "user exists" vs "user doesn't".
+   - **Config source** (bootstrap only) — constant-time compares the
+     plaintext password from `[admin].password` / env.
 3. On match, opendray issues a 32-byte random bearer token
 4. Token lives in process memory only (`map[string]TokenInfo`); it's
    **lost on restart** — every operator restart forces re-login on
@@ -268,6 +290,24 @@ There's one human admin. The flow:
 
 Failed and successful logins both publish events (`admin.login_failed`,
 `admin.login_success`) that the audit sink persists.
+
+### Rotating credentials from the UI
+
+`POST /api/v1/auth/change-credentials` (Settings → Admin → Change
+Password in the web UI, mirror form in the mobile app) atomically:
+
+- bcrypt-hashes the new password (min length 8) and writes a fresh
+  `admin.key` to `$HOME/.opendray/secrets/admin.key` via temp-file +
+  `rename` (so a crashed write leaves the previous keyfile intact)
+- hot-swaps the in-memory `AdminCreds` so the next login uses the
+  new pair without a restart
+- revokes every existing bearer token (every other open browser /
+  mobile session needs to log in again)
+
+The plaintext password never reaches disk and never appears in logs.
+After the first rotation, the `OPENDRAY_ADMIN_PASSWORD` env var is
+inert — change it all you want, opendray won't read it again until
+the keyfile is deleted.
 
 ## Unified memory subsystem
 
