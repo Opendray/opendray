@@ -1,28 +1,58 @@
 # Production docker compose for OpenDray v2.
 #
-# Starts a long-running OpenDray gateway plus its Postgres database,
+# Runs a long-running OpenDray gateway plus its Postgres database,
 # both restarting automatically if they crash or the host reboots.
-# Use this for "I want OpenDray running on my home server / NAS / VPS
-# and never think about it again."
+#
+# ⚠️  WHAT THIS DEPLOYMENT IS, AND WHAT IT ISN'T  ⚠️
+#
+# OpenDray's CLI session spawn feature (the Sessions page —
+# Claude Code / Codex / Gemini / shell) requires those CLI binaries
+# to be present on the SAME host as opendray, in opendray's $PATH.
+# This compose file builds a distroless image that bundles only the
+# opendray binary — no Node runtime, no Claude/Codex/Gemini CLIs, no
+# shell. So inside the container:
+#
+#   ✓ Channels (Telegram / Slack / Discord / Feishu / DingTalk / WeCom)
+#   ✓ Integrations API + reverse proxy + events WebSocket
+#   ✓ Notes vault + git sync
+#   ✓ Memory subsystem + ambient capture
+#   ✓ Web admin + mobile-app backend
+#   ✗ Spawning Claude / Codex / Gemini / shell sessions — the CLIs
+#     aren't in the image, and opendray's PTY wrapper can't reach a
+#     host binary from inside a container
+#   ✗ Encrypted backups via pg_dump — distroless has no pg_dump
+#
+# If you need session spawning or backups, deploy opendray on the
+# host directly: see Production deploy §B (systemd) or §D (macOS
+# launchd) in the README. opendray + AI CLIs naturally cohabit on
+# the same host because the CLIs already store credentials, project
+# state, and tool definitions there.
 #
 # ── Bootstrap ────────────────────────────────────────────────────────
 #
 #   # 1. Create the env file (kept out of git — sets passwords).
 #   cp .env.example .env
 #   # → Edit .env:
-#   #   * Pick OPENDRAY_ADMIN_PASSWORD (used for the first login;
-#   #     change it from the UI afterwards — see operator-guide.md).
-#   #   * Pick POSTGRES_PASSWORD (used by both Postgres and OpenDray).
-#   #   * Set OPENDRAY_BACKUP_KEY only if [backup].enabled = true
-#   #     in your config.
+#   #   * OPENDRAY_ADMIN_PASSWORD (used for the first login; change
+#   #     from the UI afterwards — see operator-guide.md §admin).
+#   #   * POSTGRES_PASSWORD (used by both Postgres and OpenDray).
 #
 #   # 2. (Optional) drop your own config.toml into ./config.toml —
-#   #    the compose bind-mounts it read-only. Default behaviour is
-#   #    pure env-mode if config.toml is absent.
+#   #    compose bind-mounts it read-only. Default behaviour is pure
+#   #    env-mode if config.toml is absent.
 #
-#   # 3. Bring it up.
+#   # 3. Bring it up. Migrations apply automatically before serve
+#   #    starts (the opendray-migrate service exits 0 on success,
+#   #    and opendray waits for that via service_completed_successfully).
 #   docker compose up -d
 #   docker compose logs -f opendray   # follow logs until "listening on …"
+#
+# ── Postgres image ───────────────────────────────────────────────────
+#
+# We use `pgvector/pgvector:pg17` (official pgvector image) instead
+# of plain postgres because opendray's memory subsystem requires the
+# pgvector extension. The image auto-loads `CREATE EXTENSION vector`
+# on first init.
 #
 # ── Build options ────────────────────────────────────────────────────
 #
@@ -35,8 +65,8 @@
 #
 # ── Reverse proxy ────────────────────────────────────────────────────
 #
-# OpenDray binds to 127.0.0.1 inside its container and exposes :8770
-# on the host loopback. For internet access, front it with one of:
+# OpenDray binds to 127.0.0.1 on the host loopback by default. For
+# internet access, front it with one of:
 #
 #   * Cloudflare Tunnel (preferred — bundled cloudflared service
 #     below, opt-in via the `tunnel` profile)
@@ -48,7 +78,13 @@
 
 services:
   postgres:
-    image: postgres:17-alpine
+    # pgvector/pgvector:pg17 = official Postgres 17 image with the
+    # pgvector extension preinstalled AND `CREATE EXTENSION vector`
+    # auto-run on first init. Required by opendray's memory layer
+    # (internal/store/migrations/0011_memory.sql) — vanilla
+    # postgres:17 would fail that migration with
+    # `type "vector" does not exist`.
+    image: pgvector/pgvector:pg17
     container_name: opendray-postgres
     restart: unless-stopped
     environment:
@@ -67,6 +103,33 @@ services:
       timeout: 3s
       retries: 10
 
+  # ── One-shot migration runner ──────────────────────────────────────
+  # Applies any pending DB migrations and exits. Runs before the main
+  # opendray service via service_completed_successfully so a fresh
+  # database gets its schema set up automatically (see issue #162 —
+  # `opendray migrate` is now safe to invoke on an empty database
+  # without crashing in catalog seeding).
+  #
+  # On subsequent boots this re-runs the migrator (idempotent — already
+  # applied versions are skipped), exits 0 immediately, and opendray
+  # starts. The overhead is ~100ms.
+  opendray-migrate:
+    build: .
+    # image: ghcr.io/opendray/opendray:v2.0.0
+    container_name: opendray-migrate
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      OPENDRAY_DATABASE_URL: "postgres://opendray:${POSTGRES_PASSWORD}@postgres:5432/opendray?sslmode=disable"
+    command:
+      - "migrate"
+      - "-config"
+      - "/etc/opendray/config.toml"
+    volumes:
+      - ./config.toml:/etc/opendray/config.toml:ro
+
   opendray:
     # Default: build locally so any source change is picked up on
     # `docker compose up --build`. To pin a published release instead,
@@ -76,8 +139,8 @@ services:
     container_name: opendray
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
+      opendray-migrate:
+        condition: service_completed_successfully
     environment:
       # Database — points at the postgres service over the compose
       # network, not the host. sslmode=disable is safe inside docker.
@@ -88,14 +151,14 @@ services:
       OPENDRAY_LISTEN: "0.0.0.0:8770"
 
       # Bootstrap credentials. After first boot, change the password
-      # from the UI — the bcrypt keyfile in /var/lib/opendray/.opendray/
+      # from the UI — the bcrypt keyfile in /home/nonroot/.opendray/
       # secrets/admin.key takes precedence after that. See #163.
       OPENDRAY_ADMIN_USER: ${OPENDRAY_ADMIN_USER:-admin}
       OPENDRAY_ADMIN_PASSWORD: ${OPENDRAY_ADMIN_PASSWORD:?OPENDRAY_ADMIN_PASSWORD must be set in .env}
 
-      # Encrypted backups — uncomment + set OPENDRAY_BACKUP_KEY in .env.
-      # OPENDRAY_BACKUP_ENABLED: "true"
-      # OPENDRAY_BACKUP_KEY: ${OPENDRAY_BACKUP_KEY}
+      # Encrypted backups are NOT supported in this Docker deploy —
+      # the distroless image has no pg_dump. Leave disabled here; use
+      # systemd / launchd / direct-binary on the host for backups.
     ports:
       # Bind to loopback only by default. To expose on the LAN, change
       # to "0.0.0.0:8770:8770" — but only do that behind a TLS-
@@ -105,8 +168,8 @@ services:
       # Optional config.toml — bind-mounts read-only if present.
       # Comment out if you're running env-only.
       - ./config.toml:/etc/opendray/config.toml:ro
-      # Persistent state: bcrypt admin keyfile, backup keyfile,
-      # vault root (when default), Claude account configs.
+      # Persistent state: bcrypt admin keyfile, vault root (when
+      # default), Claude account configs (when registered via UI).
       - opendray-state:/home/nonroot
     # The bundled binary defaults to `serve`, but we explicitly pass
     # the config flag so the bind-mounted config.toml is picked up

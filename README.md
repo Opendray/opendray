@@ -40,13 +40,24 @@ rolling Unreleased section for what's landing next.
 
 Pick the path that fits how you want to run it:
 
-| Path | Best for | Jump to |
-|---|---|---|
-| 📦 **Pre-built binary** | "Just run it" — Linux / macOS, any supervisor | [Releases page](https://github.com/Opendray/opendray_v2/releases) → see [Production deploy](#production-deploy) |
-| 🐳 **Docker Compose** | Home server / NAS / VPS / LXC with Docker | [Production deploy §A](#option-a--docker-compose-recommended-one-command) |
-| 🐧 **systemd unit** | Bare-metal / VM / LXC Linux box | [Production deploy §B](#option-b--systemd-bare-metal--vm--lxc) |
-| 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio as home server | [Production deploy §D](#option-d--macos-launchd-mac-mini--studio-as-home-server) |
-| 🛠 **Build from source** | Dev / contributing / custom builds | [Quickstart](#quickstart-5-minute-dev-path) below |
+| Path | Best for | Features | Jump to |
+|---|---|---|---|
+| 📦 **Pre-built binary** | "Just run it" — Linux / macOS, any supervisor | ✨ Full | [Releases page](https://github.com/Opendray/opendray_v2/releases) → see [Production deploy](#production-deploy) |
+| 🐳 **Docker Compose** | Gateway / channels / integrations / notes / API on a Docker host | ⚠️ No session spawn, no backups (see §A) | [Production deploy §A](#option-a--docker-compose-gateway-use-cases) |
+| 🐧 **systemd unit** | Bare-metal / VM / LXC Linux box | ✨ Full | [Production deploy §B](#option-b--systemd-bare-metal--vm--lxc) |
+| 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio as home server | ✨ Full | [Production deploy §D](#option-d--macos-launchd-mac-mini--studio-as-home-server) |
+| 🛠 **Build from source** | Dev / contributing / custom builds | ✨ Full | [Quickstart](#quickstart-5-minute-dev-path) below |
+
+> **Full vs gateway-only**: "Full" means everything including
+> spawning Claude / Codex / Gemini / shell sessions from the Sessions
+> page, and encrypted backups via `pg_dump`. Docker Compose ships a
+> minimal distroless image that bundles only the opendray binary —
+> no Node runtime, no AI CLIs, no `pg_dump` — so session spawn and
+> backup require deploying opendray directly on a host with those
+> tools installed (systemd / launchd / direct binary). The Docker
+> path is the right choice when you want opendray as a network
+> gateway for channels + integrations + notes + memory + API
+> consumers, without local CLI sessions.
 
 ## Quickstart (5-minute dev path)
 
@@ -81,10 +92,24 @@ Four supported deploy paths, pick whichever fits your environment.
 Each one gives you auto-restart on crash, persistent state, and
 separation of secrets from config.
 
-### Option A — Docker Compose (recommended, one command)
+### Option A — Docker Compose (gateway use cases)
 
-The fastest way to "just keep it running" on a home server, NAS, VPS,
-or LXC with Docker. Bundled in the repo root:
+> **What works inside the container** — channels (Telegram / Slack /
+> Discord / Feishu / DingTalk / WeCom), integrations API + reverse
+> proxy + events WebSocket, notes vault + git sync, memory subsystem,
+> web admin, mobile-app backend.
+>
+> **What doesn't** — spawning Claude / Codex / Gemini / shell
+> sessions, and encrypted backups via `pg_dump`. The bundled image
+> is distroless (no Node runtime, no AI CLIs, no `pg_dump`), and
+> opendray's PTY can't reach a host binary from inside a container.
+> If you need those, deploy on the host via Option B (systemd) or
+> Option D (macOS launchd) instead — opendray and the AI CLIs share
+> auth, project state, and tool definitions on the same host, so
+> they cohabit naturally there.
+
+For deployments that want opendray as a long-running gateway on a
+home server, NAS, VPS, or LXC with Docker:
 
 ```bash
 # 1. Set passwords (file is gitignored).
@@ -103,9 +128,16 @@ docker compose logs -f opendray
 
 OpenDray is reachable at `http://127.0.0.1:8770/admin/`. Both services
 auto-restart on crash or host reboot (`restart: unless-stopped`).
-Postgres data lives in the named volume `opendray-postgres-data`;
-OpenDray state (admin keyfile, backup keyfile, vault) lives in
-`opendray-state`.
+Database migrations apply automatically before opendray starts — a
+one-shot `opendray-migrate` service runs first, and the main
+`opendray` service waits for it via `service_completed_successfully`,
+so a fresh install just works.
+
+Postgres uses [`pgvector/pgvector:pg17`](https://hub.docker.com/r/pgvector/pgvector) — opendray's memory subsystem requires the
+pgvector extension, and this image preinstalls and auto-enables it
+on first init. Postgres data lives in the named volume
+`opendray-postgres-data`; OpenDray state (admin keyfile, vault)
+lives in `opendray-state`.
 
 **Pin to a release image** in production by commenting out `build: .`
 and uncommenting `image: ghcr.io/opendray/opendray:v2.0.0` in

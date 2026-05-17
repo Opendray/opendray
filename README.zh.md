@@ -37,13 +37,21 @@
 
 选一种最适合你环境的方式:
 
-| 方式 | 适合 | 跳转到 |
-|---|---|---|
-| 📦 **预构建二进制** | "拿来就跑" — Linux / macOS,搭配任意进程管理器 | [Releases 页](https://github.com/Opendray/opendray_v2/releases) → 见下方 [生产部署](#生产部署) |
-| 🐳 **Docker Compose** | 家用服务器 / NAS / VPS / 装 Docker 的 LXC | [生产部署 §A](#方案-a--docker-compose推荐一条命令) |
-| 🐧 **systemd unit** | 裸机 / VM / Linux LXC | [生产部署 §B](#方案-b--systemd裸机--vm--lxc) |
-| 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio 当家用 server | [生产部署 §D](#方案-d--macos-launchdmac-mini--studio-当家用-server) |
-| 🛠 **从源码构建** | 开发 / 贡献代码 / 定制构建 | [快速开始](#快速开始5-分钟开发版) |
+| 方式 | 适合 | 功能 | 跳转到 |
+|---|---|---|---|
+| 📦 **预构建二进制** | "拿来就跑" — Linux / macOS,搭配任意进程管理器 | ✨ 完整 | [Releases 页](https://github.com/Opendray/opendray_v2/releases) → 见下方 [生产部署](#生产部署) |
+| 🐳 **Docker Compose** | 把 opendray 当网关:channels / integrations / notes / API,跑在 Docker host 上 | ⚠️ 不支持 CLI 会话 spawn 与备份(见 §A) | [生产部署 §A](#方案-a--docker-composegateway-用例) |
+| 🐧 **systemd unit** | 裸机 / VM / Linux LXC | ✨ 完整 | [生产部署 §B](#方案-b--systemd裸机--vm--lxc) |
+| 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio 当家用 server | ✨ 完整 | [生产部署 §D](#方案-d--macos-launchdmac-mini--studio-当家用-server) |
+| 🛠 **从源码构建** | 开发 / 贡献代码 / 定制构建 | ✨ 完整 | [快速开始](#快速开始5-分钟开发版) |
+
+> **完整 vs 仅网关**:"完整"意味着所有功能 —— 包括从 Sessions 页 spawn
+> Claude / Codex / Gemini / shell 会话,以及通过 `pg_dump` 做加密备份。
+> Docker Compose 用的是 distroless 最小镜像,只打包了 opendray 二进制 —— 没有
+> Node 运行时、没有 AI CLI、没有 `pg_dump` —— 所以 session spawn 和 backup
+> 必须把 opendray 直接部署在装了那些工具的 host 上(systemd / launchd /
+> 直接二进制)。Docker 路径适合"把 opendray 当成 channels + integrations +
+> notes + memory + API 消费方的网络网关",不在本地 spawn CLI 会话的场景。
 
 ## 快速开始(5 分钟开发版)
 
@@ -78,10 +86,21 @@ go run ./cmd/opendray serve -config config.toml
 四种受支持的部署路径,按你的环境挑一种。每种都提供:
 崩溃后自动重启、状态持久化、secrets 跟 config 分离。
 
-### 方案 A — Docker Compose(推荐,一条命令)
+### 方案 A — Docker Compose(gateway 用例)
 
-在家用服务器、NAS、VPS 或装了 Docker 的 LXC 上,"让它一直跑着"
-最省事的方式。仓库根目录里已经备好:
+> **容器内能跑的** —— channels(Telegram / Slack / Discord / 飞书 /
+> 钉钉 / 企业微信)、integrations API + 反向代理 + events WebSocket、
+> notes vault + git 同步、memory 子系统、Web 后台、移动端后端。
+>
+> **容器内跑不了的** —— spawn Claude / Codex / Gemini / shell 会话,
+> 以及通过 `pg_dump` 的加密备份。打包的镜像是 distroless(没 Node 运行时、
+> 没 AI CLI、没 `pg_dump`),opendray 的 PTY 也无法从容器内访问 host 二进制。
+> 如果需要这些功能,改用方案 B(systemd)或 D(macOS launchd)直接在
+> host 上部署 —— opendray 跟 AI CLI 共享同一 host 上的认证、项目状态、
+> 工具定义,天然适合放一起。
+
+适合把 opendray 当成长期运行的网关,放在家用服务器、NAS、VPS 或装了
+Docker 的 LXC 上:
 
 ```bash
 # 1. 设置密码(文件已经 gitignored)。
@@ -99,9 +118,15 @@ docker compose logs -f opendray
 ```
 
 打开 `http://127.0.0.1:8770/admin/` 就能访问。两个 service 都是
-`restart: unless-stopped` —— 崩溃或主机重启后自动起来。
-Postgres 数据在命名 volume `opendray-postgres-data`,OpenDray 自己
-的状态(admin keyfile、backup keyfile、vault)在 `opendray-state`。
+`restart: unless-stopped` —— 崩溃或主机重启后自动起来。数据库 migration
+会在 opendray 启动之前自动应用 —— 一个 oneshot `opendray-migrate`
+service 先跑,主 `opendray` service 通过
+`service_completed_successfully` 等它完成,所以全新安装可以直接 work。
+
+Postgres 用 [`pgvector/pgvector:pg17`](https://hub.docker.com/r/pgvector/pgvector) —— opendray 的 memory 子系统需要
+pgvector 扩展,这个镜像在首次 init 时预装并自动启用了它。Postgres 数据在
+命名 volume `opendray-postgres-data`,OpenDray 自己的状态
+(admin keyfile、vault)在 `opendray-state`。
 
 **在生产环境钉到 release 镜像**:注释掉 `docker-compose.yml` 里的
 `build: .`,取消 `image: ghcr.io/opendray/opendray:v2.0.0` 那一行

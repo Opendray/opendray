@@ -81,10 +81,39 @@ If you already have a Postgres 15+ instance, skip step 1 and edit `config.toml` 
 url = "postgres://your_user:your_pass@your_host:5432/your_db?sslmode=disable"
 ```
 
-Recommendations:
-- Create a project-scoped role with only the CRUD privileges opendray needs — never use `postgres` / superuser.
+### Required: pgvector extension
+
+Opendray's memory subsystem needs the [`pgvector`](https://github.com/pgvector/pgvector)
+extension. The bundled `docker-compose.test.yml` uses the
+`pgvector/pgvector:pg17` image which preinstalls and auto-enables
+it, so no manual step there. For a BYO Postgres, install pgvector
+once with a superuser before running `opendray migrate`:
+
+```sh
+# 1. Install the OS package (only needed once per host).
+#    Ubuntu / Debian:
+sudo apt install postgresql-17-pgvector
+
+#    macOS (Homebrew):
+brew install pgvector
+
+#    Other OSes / source build: see https://github.com/pgvector/pgvector#installation
+
+# 2. Enable the extension in the opendray database (one-off, requires superuser).
+psql "postgres://postgres@your_host/opendray" -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+```
+
+After that, opendray's regular CRUD-only role can run migrations
+without needing further superuser access — migration `0011_memory`
+just creates the `memories` table (the extension is already
+present).
+
+### Recommendations
+
+- Create a project-scoped role with only the CRUD privileges opendray needs — never use `postgres` / superuser at runtime.
 - Rotate credentials out of band; don't commit them.
 - Connection pool size is configurable via `[database].max_conns` (default `16`).
+- Supported Postgres versions: **15, 16, 17**. The encrypted-backup subsystem additionally requires `pg_dump` / `pg_restore` matching the server's major version (see operator-guide.md `[backup]`).
 
 ## Running the test suite
 

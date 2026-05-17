@@ -16,7 +16,12 @@
 
 services:
   postgres:
-    image: postgres:17-alpine
+    # pgvector/pgvector:pg17 = Postgres 17 with the pgvector extension
+    # preinstalled and CREATE EXTENSION vector run on first init.
+    # Required by internal/store/migrations/0011_memory.sql — plain
+    # postgres:17 would fail that migration with
+    # `type "vector" does not exist`.
+    image: pgvector/pgvector:pg17
     container_name: opendray-test-pg
     restart: unless-stopped
     environment:
