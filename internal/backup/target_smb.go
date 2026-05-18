@@ -21,7 +21,7 @@ import (
 // reaching here. All fields are required except PathPrefix and
 // Port (defaults to 445).
 type SMBConfig struct {
-	Host       string // "192.168.9.8" or "fileserver.local"
+	Host       string // "192.168.1.20" or "fileserver.local"
 	Port       int    // default 445
 	Share      string // "Claude_Workspace"
 	User       string

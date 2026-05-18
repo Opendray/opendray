@@ -7370,8 +7370,8 @@ class TranslationsWebIntegrationsRegisterDialogEn {
 	/// en: '(optional)'
 	String get optionalSuffix => '(optional)';
 
-	/// en: 'http://192.168.3.42:8080'
-	String get baseUrlPlaceholder => 'http://192.168.3.42:8080';
+	/// en: 'http://192.168.1.10:8080'
+	String get baseUrlPlaceholder => 'http://192.168.1.10:8080';
 
 	/// en: 'Route prefix'
 	String get routePrefixLabel => 'Route prefix';
@@ -11928,8 +11928,8 @@ class TranslationsWebBackupsTargetEditorSmbEn {
 	/// en: 'Host'
 	String get hostLabel => 'Host';
 
-	/// en: '192.168.9.8'
-	String get hostPlaceholder => '192.168.9.8';
+	/// en: '192.168.1.20'
+	String get hostPlaceholder => '192.168.1.20';
 
 	/// en: 'Port'
 	String get portLabel => 'Port';
@@ -14365,7 +14365,7 @@ extension on Translations {
 			'web.integrations.register_dialog.modeHint' => 'Leave the next two fields blank for a <1>consumer-only</1> integration (third-party app that calls opendray\'s API but doesn\'t expose its own service). Fill both for a <3>reverse-proxy</3> integration.',
 			'web.integrations.register_dialog.baseUrlLabel' => 'Base URL',
 			'web.integrations.register_dialog.optionalSuffix' => '(optional)',
-			'web.integrations.register_dialog.baseUrlPlaceholder' => 'http://192.168.3.42:8080',
+			'web.integrations.register_dialog.baseUrlPlaceholder' => 'http://192.168.1.10:8080',
 			'web.integrations.register_dialog.routePrefixLabel' => 'Route prefix',
 			'web.integrations.register_dialog.routePrefixPlaceholder' => 'pet-tracker',
 			'web.integrations.register_dialog.routePrefixHint' => ({required Object prefix}) => 'Reachable at <1>/api/v1/proxy/${prefix}/*</1>.',
@@ -14731,7 +14731,7 @@ extension on Translations {
 			'web.backups.targetEditor.local.rootHint' => 'Empty = cfg.backup.local_dir (~/.opendray/backups)',
 			'web.backups.targetEditor.local.rootPlaceholder' => '~/backups/opendray  or  /mnt/external-hdd/opendray',
 			'web.backups.targetEditor.smb.hostLabel' => 'Host',
-			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.9.8',
+			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.1.20',
 			'web.backups.targetEditor.smb.portLabel' => 'Port',
 			'web.backups.targetEditor.smb.shareLabel' => 'Share',
 			'web.backups.targetEditor.smb.shareHint' => 'Top-level share name on the SMB server',

@@ -285,7 +285,7 @@ export OPENDRAY_BACKUP_PG_RESTORE_PATH=/opt/homebrew/opt/postgresql@17/bin/pg_re
 
 重启 opendray,侧栏会出现 Backups 页(`/backups`)用于加密的
 PostgreSQL 备份 + 恢复,以及 `/export` 用于 zip 包数据导出 + 导入。
-ADR 0012 有完整生命周期说明。
+[`docs/operator-guide.md`](docs/operator-guide.md) §Backup 有完整生命周期说明。
 
 一个 Go 二进制装着整个 web bundle —— 运行时不需要 Node,不需要单独的
 静态文件服务器,不需要 Caddy/nginx。Cloudflare Tunnel 在 `:8770`
@@ -299,15 +299,13 @@ internal/
 ├── app/             composition root(组装所有子系统)
 ├── audit/           订阅事件总线,持久化到 audit_log
 ├── auth/            admin bearer token(M2.5)
-├── backup/          加密 DB 备份 + admin 导出/导入(ADR 0012)
-├── catalog/         CLI provider manifest + 每个 id 的用户配置(M2)
+├── backup/          加密 DB 备份 + admin 导出/导入├── catalog/         CLI provider manifest + 每个 id 的用户配置(M2)
 ├── channel/         channel hub + telegram 实现(M4)
 ├── config/          TOML 加载器,支持 OPENDRAY_* env 覆盖
 ├── eventbus/        进程内 pub/sub
 ├── gateway/         chi HTTP 路由 + 中间件 + slog
 ├── integration/     外部应用注册表 + 反向代理 + events WS(M3)
-├── memory/          跨 CLI 持久化记忆(ADR 0014)
-├── session/         PTY 生命周期 + ring buffer + WS 流(M1)
+├── memory/          跨 CLI 持久化记忆├── session/         PTY 生命周期 + ring buffer + WS 流(M1)
 ├── store/           pgx pool + 自写迁移 runner(M0)
 ├── version/         build 时的身份标识
 └── web/             web bundle 的 go:embed(W5)
@@ -345,8 +343,6 @@ Router/Query + Zustand + xterm.js)和每个 W 里程碑笔记见
 
 - [`docs/getting-started.zh.md`](docs/getting-started.zh.md) — **新手从这开始**:零到首次会话 15 分钟,含装 wrap 的 CLI + bootstrap Postgres + 收第一条 Telegram 通知
 - [`docs/quickstart.md`](docs/quickstart.md) — 5 分钟开发环境(假设你已经懂各组件)
-- [`docs/design.md`](docs/design.md) — 任务、架构、子系统、API、数据模型、路线图
-- [`docs/adr/`](docs/adr/) — 每个生效中的架构决策,按日期排序
 - [`docs/operator-guide.md`](docs/operator-guide.md) — 生产化部署 + 运维参考
 - [`docs/integration-guide.md`](docs/integration-guide.md) — 用任意语言写外部集成
 - [`VERSIONING.md`](VERSIONING.md) — 版本策略(major-as-generation)
@@ -365,9 +361,9 @@ Playwright e2e harness 是计划中的后续工作。
 ## 跟 v1 的关系
 
 v1(`Opendray/opendray`)是上一代代码库,已归档。v2 是当前活跃的
-代号 —— 功能完整,是唯一接受开发的分支。ADR 0001 记录了 greenfield
-决策;ADR 0004 解释了哪些 v1 builtin 迁移过来(16 个里只迁了 4 个),
-哪些变成了 v2 里的客户端 / channel / 集成工作。
+代号 —— 功能完整,是唯一接受开发的分支。v1 的 16 个 builtin 里有
+4 个迁到了 v2 后端,其余的拆成了客户端功能、channel 适配器或集成
+API 消费方。
 
 ## 许可证
 

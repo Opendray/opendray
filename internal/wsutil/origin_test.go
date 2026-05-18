@@ -51,7 +51,7 @@ func TestSameOriginCheck(t *testing.T) {
 		{
 			name:      "RFC1918 192.168/16 allowed",
 			hostHdr:   "opendray.local:8770",
-			originHdr: "http://192.168.3.21:8770",
+			originHdr: "http://192.168.1.10:8770",
 			want:      true,
 		},
 		{

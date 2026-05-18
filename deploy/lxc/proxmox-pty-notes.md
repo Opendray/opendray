@@ -103,7 +103,7 @@ template work. Two things to confirm:
 
 ## Memory subsystem (pgvector)
 
-If you plan to use OpenDray's [Memory subsystem](../../docs/adr/0014-memory-subsystem.md),
+If you plan to use OpenDray's [Memory subsystem](../../docs/memory-system.md),
 the Postgres your `[database].url` points at must have the `pgvector`
 extension installed. Check:
 

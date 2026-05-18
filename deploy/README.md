@@ -26,8 +26,8 @@ the LXC notes for the host-side container config that lets PTYs work.
   see [`docs/operator-guide.md`](../docs/operator-guide.md) §Topology.
 - Postgres bootstrapping. OpenDray expects an external Postgres 15+;
   use whatever flow you already have.
-- Backups *of* the OpenDray host. The encrypted-DB-dump backup
-  subsystem documented in ADR 0012 is a different layer.
+- Backups *of* the OpenDray host. opendray's encrypted-DB-dump
+  backup subsystem is a different layer (see operator guide).
 
 ## Verifying the deploy
 

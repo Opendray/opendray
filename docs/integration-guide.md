@@ -21,8 +21,8 @@ opendray and consumes its capabilities:
 opendray itself does not embed integration code. Every integration is
 external; this keeps the gateway lean and language-agnostic.
 
-The full design is in [`docs/design.md`](design.md) §7–§11 and
-[`docs/adr/0006-integration-auth-and-paths.md`](adr/0006-integration-auth-and-paths.md).
+The full surface is documented in this guide and in
+[`docs/operator-guide.md`](operator-guide.md) §Integrations.
 
 ## Quick walk-through
 
@@ -326,10 +326,5 @@ node `fetch` + the `ws` library. Port to your language of choice.
 
 ## See also
 
-- [`docs/design.md`](design.md) §7–§12 — integration design rationale
-- [`docs/adr/0006-integration-auth-and-paths.md`](adr/0006-integration-auth-and-paths.md) —
-  dual-auth model, scope deferral, API-key format decisions
-- [`docs/adr/0010-integration-call-log.md`](adr/0010-integration-call-log.md) —
-  call-log audit trail
 - [`docs/operator-guide.md`](operator-guide.md) — running opendray
 - [`SECURITY.md`](../SECURITY.md) — vulnerability disclosure

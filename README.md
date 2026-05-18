@@ -290,7 +290,7 @@ export OPENDRAY_BACKUP_PG_RESTORE_PATH=/opt/homebrew/opt/postgresql@17/bin/pg_re
 
 Restart opendray; the sidebar grows a Backups page (`/backups`)
 for encrypted PostgreSQL dumps + restore, and `/export` for
-zip-bundle data exports + import. ADR 0012 has the full lifecycle.
+zip-bundle data exports + import. See [`docs/operator-guide.md`](docs/operator-guide.md) §Backup for the full lifecycle.
 
 A single Go binary carries the whole web bundle — no Node runtime
 required at runtime, no separate static-file server, no Caddy/nginx
@@ -304,15 +304,13 @@ internal/
 ├── app/             composition root (wires every subsystem)
 ├── audit/           subscribes to bus topics, persists to audit_log
 ├── auth/            admin bearer tokens (M2.5)
-├── backup/          encrypted DB dumps + admin export/import (ADR 0012)
-├── catalog/         CLI provider manifests + per-id user config (M2)
+├── backup/          encrypted DB dumps + admin export/import├── catalog/         CLI provider manifests + per-id user config (M2)
 ├── channel/         channel hub + telegram impl (M4)
 ├── config/          TOML loader with OPENDRAY_* env overrides
 ├── eventbus/        in-process pub/sub
 ├── gateway/         chi HTTP router + middleware + slog
 ├── integration/     external-app registry + reverse proxy + events WS (M3)
-├── memory/          cross-CLI persistent memory (ADR 0014)
-├── session/         PTY lifecycle + ring buffer + WS stream (M1)
+├── memory/          cross-CLI persistent memory├── session/         PTY lifecycle + ring buffer + WS stream (M1)
 ├── store/           pgx pool + hand-rolled migration runner (M0)
 ├── version/         build-time identification
 └── web/             go:embed of the web bundle (W5)
@@ -350,9 +348,6 @@ Zustand + xterm.js) and per-W milestone notes.
 
 - [`docs/getting-started.md`](docs/getting-started.md) — **start here** if you're new: zero to first session in 15 minutes, including installing the wrapped CLIs and bootstrapping Postgres
 - [`docs/quickstart.md`](docs/quickstart.md) — 5-minute dev environment (assumes you already know the moving parts)
-- [`docs/design.md`](docs/design.md) — mission, architecture, subsystems,
-  API, data model, roadmap
-- [`docs/adr/`](docs/adr/) — every binding architecture decision, dated
 - [`docs/operator-guide.md`](docs/operator-guide.md) — deploy + ops reference for production-ish setups
 - [`docs/integration-guide.md`](docs/integration-guide.md) — how to write an external integration in any language
 - [`VERSIONING.md`](VERSIONING.md) — versioning strategy (major-as-generation)
@@ -372,9 +367,9 @@ A Playwright harness is a planned follow-up.
 
 v1 (`Opendray/opendray`) is the legacy codebase, now archived. v2 is
 the current and active generation — feature-complete and the only
-branch receiving development. ADR 0001 documents the greenfield
-decision; ADR 0004 explains which v1 builtins migrated (only 4 of
-16) and which became client-side / channel / integration work in v2.
+branch receiving development. Of the 16 v1 builtins, four migrated
+into the v2 backend; the rest became client-side features, channel
+adapters, or integration-API consumers.
 
 ## License
 

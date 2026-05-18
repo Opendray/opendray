@@ -1169,7 +1169,7 @@
         "modeHint": "Leave the next two fields blank for a <1>consumer-only</1> integration (third-party app that calls opendray's API but doesn't expose its own service). Fill both for a <3>reverse-proxy</3> integration.",
         "baseUrlLabel": "Base URL",
         "optionalSuffix": "(optional)",
-        "baseUrlPlaceholder": "http://192.168.3.42:8080",
+        "baseUrlPlaceholder": "http://192.168.1.10:8080",
         "routePrefixLabel": "Route prefix",
         "routePrefixPlaceholder": "pet-tracker",
         "routePrefixHint": "Reachable at <1>/api/v1/proxy/{prefix}/*</1>.",
@@ -1608,7 +1608,7 @@
         },
         "smb": {
           "hostLabel": "Host",
-          "hostPlaceholder": "192.168.9.8",
+          "hostPlaceholder": "192.168.1.20",
           "portLabel": "Port",
           "shareLabel": "Share",
           "shareHint": "Top-level share name on the SMB server",

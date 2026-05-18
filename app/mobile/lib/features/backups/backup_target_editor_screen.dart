@@ -468,7 +468,7 @@ class _BackupTargetEditorScreenState
                 label: t.backupTargetEditor.hostLabel,
                 child: TextField(
                   controller: _ctrl('host'),
-                  decoration: _inputDeco(hint: '192.168.9.8'),
+                  decoration: _inputDeco(hint: '192.168.1.20'),
                   style: _monoStyle,
                   keyboardType: TextInputType.url,
                   autocorrect: false,

@@ -3,11 +3,11 @@
 // Smoke test that runs against the live dev database to verify the
 // spawn-time banner renders end-to-end. Gated behind the `smoke`
 // build tag so `go test ./...` in CI doesn't try to reach the
-// development DB at 192.168.3.88.
+// development DB.
 //
 // Run with:
 //
-//	OPENDRAY_DB_URL="postgres://opd2_user:...@192.168.3.88:5432/opendray_v2?sslmode=disable" \
+//	OPENDRAY_DB_URL="postgres://opendray_user:<password>@<host>:5432/opendray?sslmode=disable" \
 //	  go test -tags smoke -run TestRenderForSpawn_Live ./internal/projectdoc -v
 
 package projectdoc

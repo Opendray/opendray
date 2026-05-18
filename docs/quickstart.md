@@ -146,7 +146,7 @@ export OPENDRAY_BACKUP_PG_DUMP_PATH=/opt/homebrew/opt/postgresql@17/bin/pg_dump
 export OPENDRAY_BACKUP_PG_RESTORE_PATH=/opt/homebrew/opt/postgresql@17/bin/pg_restore
 ```
 
-Restart `opendray serve`; a Backups page appears in the admin sidebar (`/backups`) along with `/export` for zip-bundle data exports and imports. See `docs/adr/0012-*.md` and the in-app **Tutorial → Backups** section for the full lifecycle.
+Restart `opendray serve`; a Backups page appears in the admin sidebar (`/backups`) along with `/export` for zip-bundle data exports and imports. See `docs/operator-guide.md` §Backup for the full lifecycle.
 
 ## Building a single distributable binary
 
@@ -194,7 +194,5 @@ Kill the conflicting process or change the port:
 ## Next steps
 
 - [`README.md`](../README.md) — high-level project overview
-- [`docs/design.md`](design.md) — architecture, subsystems, data model, roadmap
-- [`docs/adr/`](adr/) — every binding architecture decision, dated
 - [`CONTRIBUTING.md`](../CONTRIBUTING.md) — how to send a PR
 - [`SECURITY.md`](../SECURITY.md) — vulnerability disclosure

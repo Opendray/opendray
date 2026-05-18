@@ -1168,7 +1168,7 @@
         "modeHint": "如果是 <1>仅消费型</1> 集成（第三方应用调用 opendray API 但不暴露自身服务），保留下面两个字段为空。两个都填则是 <3>反向代理型</3> 集成。",
         "baseUrlLabel": "Base URL",
         "optionalSuffix": "(可选)",
-        "baseUrlPlaceholder": "http://192.168.3.42:8080",
+        "baseUrlPlaceholder": "http://192.168.1.10:8080",
         "routePrefixLabel": "Route prefix",
         "routePrefixPlaceholder": "pet-tracker",
         "routePrefixHint": "可通过 <1>/api/v1/proxy/{prefix}/*</1> 访问。",
@@ -1607,7 +1607,7 @@
         },
         "smb": {
           "hostLabel": "主机",
-          "hostPlaceholder": "192.168.9.8",
+          "hostPlaceholder": "192.168.1.20",
           "portLabel": "端口",
           "shareLabel": "Share",
           "shareHint": "SMB 服务器上的顶层共享名",

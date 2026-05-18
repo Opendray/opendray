@@ -219,7 +219,7 @@ opendray serve -config config.toml
 
 The admin sidebar grows a Backups page (`/backups`) and an Export page
 (`/export`). The full lifecycle (target setup, schedules, restore
-flow) is documented in ADR 0012 and the in-app **Tutorial → Backups**
+flow) is documented in §Backup below
 section.
 
 State persists in three DB tables (created by migration `0014_backups.sql`):
@@ -325,7 +325,7 @@ Long-term facts an agent stores via the memory MCP are filtered by
 a server-side LLM gatekeeper, deduplicated by vector similarity,
 and periodically reviewed by an LLM librarian (operator approves
 deletions). Three layers of isolation defend against transcript
-leakage between projects (see ADR 0018).
+leakage between projects.
 
 UI surfaces:
 
@@ -345,6 +345,4 @@ Operator-facing detail and SQL recipes for validation are in
 - [`config.example.toml`](../config.example.toml) — full annotated config
 - [`docs/quickstart.md`](quickstart.md) — developer setup
 - [`docs/integration-guide.md`](integration-guide.md) — building external integrations
-- [`docs/adr/`](adr/) — architecture decisions (notably 0014 + 0018 for memory)
-- [`docs/design.md`](design.md) — full design spec
 - [`deploy/`](../deploy/) — systemd unit + Proxmox LXC notes for production install

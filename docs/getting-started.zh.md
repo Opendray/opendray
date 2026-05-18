@@ -217,8 +217,7 @@ Sessions → New session → 选 provider → 选工作目录(随便一个项目
 
 浏览器内开一个终端 pane。像在真实终端一样输入 prompt —— 每个字节都
 通过 opendray 的 PTY wrapper 中转。关掉浏览器 tab,session 在 host
-上继续跑;回头来,scrollback 完整(详见
-[ADR 0003](adr/0003-session-resume-client-reconnect.md))。
+上继续跑;回头来,scrollback 完整。
 
 ---
 

@@ -2,9 +2,6 @@
 
 This guide walks through what opendray's unified memory system
 does, how to use it day-to-day, and how to verify it's behaving.
-For the architectural rationale see
-[ADR 0018](adr/0018-unified-cross-cli-memory.md) and
-[ADR 0014](adr/0014-memory-subsystem.md).
 
 ## What it is
 
@@ -274,9 +271,8 @@ Gatekeeper stays summarizer-only by design — agent spawn (5-15s)
 violates its <500ms latency budget. Codex is unsupported (no
 `--print` mode).
 
-See ADR 0019 for the architecture, the **Memory → Workers**
-tutorial (sections 15.1-15.3) for operator workflow, and the
-implementation under `internal/memory/worker/`.
+See the **Memory → Workers** section in the admin UI for operator
+workflow, and the implementation under `internal/memory/worker/`.
 
 ## Plan-drift auto-proposals (M-PA, shipped)
 

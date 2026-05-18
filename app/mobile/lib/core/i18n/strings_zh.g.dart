@@ -3800,7 +3800,7 @@ class _TranslationsWebIntegrationsRegisterDialogZh extends TranslationsWebIntegr
 	@override String get modeHint => '如果是 <1>仅消费型</1> 集成（第三方应用调用 opendray API 但不暴露自身服务），保留下面两个字段为空。两个都填则是 <3>反向代理型</3> 集成。';
 	@override String get baseUrlLabel => 'Base URL';
 	@override String get optionalSuffix => '(可选)';
-	@override String get baseUrlPlaceholder => 'http://192.168.3.42:8080';
+	@override String get baseUrlPlaceholder => 'http://192.168.1.10:8080';
 	@override String get routePrefixLabel => 'Route prefix';
 	@override String get routePrefixPlaceholder => 'pet-tracker';
 	@override String routePrefixHint({required Object prefix}) => '可通过 <1>/api/v1/proxy/${prefix}/*</1> 访问。';
@@ -6297,7 +6297,7 @@ class _TranslationsWebBackupsTargetEditorSmbZh extends TranslationsWebBackupsTar
 
 	// Translations
 	@override String get hostLabel => '主机';
-	@override String get hostPlaceholder => '192.168.9.8';
+	@override String get hostPlaceholder => '192.168.1.20';
 	@override String get portLabel => '端口';
 	@override String get shareLabel => 'Share';
 	@override String get shareHint => 'SMB 服务器上的顶层共享名';
@@ -8162,7 +8162,7 @@ extension on TranslationsZh {
 			'web.integrations.register_dialog.modeHint' => '如果是 <1>仅消费型</1> 集成（第三方应用调用 opendray API 但不暴露自身服务），保留下面两个字段为空。两个都填则是 <3>反向代理型</3> 集成。',
 			'web.integrations.register_dialog.baseUrlLabel' => 'Base URL',
 			'web.integrations.register_dialog.optionalSuffix' => '(可选)',
-			'web.integrations.register_dialog.baseUrlPlaceholder' => 'http://192.168.3.42:8080',
+			'web.integrations.register_dialog.baseUrlPlaceholder' => 'http://192.168.1.10:8080',
 			'web.integrations.register_dialog.routePrefixLabel' => 'Route prefix',
 			'web.integrations.register_dialog.routePrefixPlaceholder' => 'pet-tracker',
 			'web.integrations.register_dialog.routePrefixHint' => ({required Object prefix}) => '可通过 <1>/api/v1/proxy/${prefix}/*</1> 访问。',
@@ -8528,7 +8528,7 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.local.rootHint' => '留空 = cfg.backup.local_dir (~/.opendray/backups)',
 			'web.backups.targetEditor.local.rootPlaceholder' => '~/backups/opendray  或  /mnt/external-hdd/opendray',
 			'web.backups.targetEditor.smb.hostLabel' => '主机',
-			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.9.8',
+			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.1.20',
 			'web.backups.targetEditor.smb.portLabel' => '端口',
 			'web.backups.targetEditor.smb.shareLabel' => 'Share',
 			'web.backups.targetEditor.smb.shareHint' => 'SMB 服务器上的顶层共享名',

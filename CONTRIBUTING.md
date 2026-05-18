@@ -47,9 +47,9 @@ go run ./cmd/opendray serve -config ../../config.toml   # in another terminal
 
 ## Project Structure
 
-See [`README.md`](README.md) for the layout. Subsystem responsibilities are
-described in [`docs/design.md`](docs/design.md); every binding decision lives
-in [`docs/adr/`](docs/adr/).
+See [`README.md`](README.md) for the layout. Subsystem responsibilities
+are documented inline in each `internal/<subsystem>/` package's
+`doc.go` file and in the operator / integration guides under `docs/`.
 
 ## Tests
 
@@ -95,9 +95,9 @@ scope in parens: `feat(memory):`, `fix(backup):`.
 ### Architecture changes
 
 Anything that crosses subsystem boundaries, changes a public API, or
-introduces a new external dependency needs an ADR in `docs/adr/`. Use the
-existing files as a template — short context, decision, consequences,
-optional code references.
+introduces a new external dependency needs a clear write-up in the
+PR description: context, decision, consequences. Reference any
+relevant operator / integration guide updates from the same PR.
 
 ## Code Style
 

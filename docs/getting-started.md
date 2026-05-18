@@ -228,8 +228,7 @@ directory (any project on your machine) → Spawn.
 
 A browser-side terminal opens. Type prompts as you would in a real
 terminal. Close the tab and the session keeps running on the host;
-come back, the scrollback is intact (per
-[ADR 0003](adr/0003-session-resume-client-reconnect.md)).
+come back, the scrollback is intact.
 
 ---
 
