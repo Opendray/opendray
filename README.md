@@ -77,6 +77,16 @@ rolling Unreleased section for what's landing next.
 > is for picking a deploy path; the guide stitches everything
 > around it.
 
+> **Or let the wizard do it.** On Linux (Ubuntu / Debian) or macOS:
+> ```sh
+> bash scripts/install-linux.sh    # or scripts/install-macos.sh
+> ```
+> Walks through Postgres setup, AI-CLI install, admin credentials,
+> and service registration — landing a running gateway in ~5 min.
+> See [`scripts/README.md`](scripts/README.md). Windows uses WSL2;
+> run [`scripts/install-windows.ps1`](scripts/install-windows.ps1)
+> for the setup helper.
+
 **👉 Before picking: do you want to spawn Claude / Codex / Gemini sessions from the web admin?**
 - **Yes** → choose a 🟢 **Full** path below (binary / systemd / launchd / source). **Skip Docker.**
 - **No, just channels + integrations + notes + API** → 🐳 Docker Compose is fine.

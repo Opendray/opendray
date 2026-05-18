@@ -1,0 +1,215 @@
+#!/usr/bin/env bash
+# scripts/lib/common.sh
+# Shared shell helpers for the opendray installer wizards.
+# Sourced by install-linux.sh and install-macos.sh.
+# Requires bash 4+ (for `printf -v`, `read -ra`, parameter expansion).
+
+# Detect colour-capable terminal once.
+if [ -t 1 ] && command -v tput >/dev/null 2>&1 && [ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]; then
+    C_RED='\033[0;31m'
+    C_GRN='\033[0;32m'
+    C_YEL='\033[1;33m'
+    C_BLU='\033[0;34m'
+    C_CYA='\033[0;36m'
+    C_DIM='\033[2m'
+    C_NC='\033[0m'
+else
+    C_RED='' C_GRN='' C_YEL='' C_BLU='' C_CYA='' C_DIM='' C_NC=''
+fi
+
+# ── Logging ──────────────────────────────────────────────────────────
+
+log_info()  { printf "${C_BLU}[*]${C_NC} %s\n" "$*"; }
+log_ok()    { printf "${C_GRN}[✓]${C_NC} %s\n" "$*"; }
+log_warn()  { printf "${C_YEL}[!]${C_NC} %s\n" "$*"; }
+log_err()   { printf "${C_RED}[✗]${C_NC} %s\n" "$*" >&2; }
+log_die()   { log_err "$*"; exit 1; }
+log_dim()   { printf "${C_DIM}%s${C_NC}\n" "$*"; }
+
+log_section() {
+    printf "\n${C_CYA}━━━ %s ━━━${C_NC}\n\n" "$*"
+}
+
+log_step() {
+    local n="$1"; shift
+    printf "\n${C_BLU}┌── Step %s ── %s${C_NC}\n" "$n" "$*"
+}
+
+# ── Prompts ──────────────────────────────────────────────────────────
+
+# ask_with_default <prompt> <default-or-empty> <out-var-name>
+ask_with_default() {
+    local prompt="$1"
+    local default="$2"
+    local var_name="$3"
+    local response
+    if [ -n "$default" ]; then
+        printf "${C_BLU}?${C_NC} %s ${C_DIM}[%s]${C_NC}: " "$prompt" "$default"
+    else
+        printf "${C_BLU}?${C_NC} %s: " "$prompt"
+    fi
+    read -r response
+    printf -v "$var_name" '%s' "${response:-$default}"
+}
+
+# ask_password <prompt> <out-var-name>
+ask_password() {
+    local prompt="$1"
+    local var_name="$2"
+    local response
+    printf "${C_BLU}?${C_NC} %s: " "$prompt"
+    read -rs response
+    echo
+    printf -v "$var_name" '%s' "$response"
+}
+
+# ask_yes_no <prompt> <default y|n> <out-var-name>
+ask_yes_no() {
+    local prompt="$1"
+    local default="${2:-n}"
+    local var_name="$3"
+    local hint response
+    if [ "$default" = "y" ]; then hint="[Y/n]"; else hint="[y/N]"; fi
+    while true; do
+        printf "${C_BLU}?${C_NC} %s %s: " "$prompt" "$hint"
+        read -r response
+        response="${response:-$default}"
+        case "${response,,}" in
+            y|yes) printf -v "$var_name" '%s' 'y'; return 0 ;;
+            n|no)  printf -v "$var_name" '%s' 'n'; return 0 ;;
+            *) log_warn "Please answer y or n" ;;
+        esac
+    done
+}
+
+# ask_menu <prompt> "Option A|Option B|..." <out-var-name>
+ask_menu() {
+    local prompt="$1"
+    local options_pipe="$2"
+    local var_name="$3"
+    local IFS='|'
+    read -ra _menu_opts <<< "$options_pipe"
+    local choice
+    printf "${C_BLU}?${C_NC} %s\n" "$prompt"
+    local i=1
+    for opt in "${_menu_opts[@]}"; do
+        printf "  ${C_BLU}%d)${C_NC} %s\n" "$i" "$opt"
+        i=$((i + 1))
+    done
+    while true; do
+        printf "  Enter 1-%d: " "${#_menu_opts[@]}"
+        read -r choice
+        if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#_menu_opts[@]}" ]; then
+            printf -v "$var_name" '%s' "${_menu_opts[$((choice - 1))]}"
+            return 0
+        fi
+        log_warn "Please pick a number between 1 and ${#_menu_opts[@]}"
+    done
+}
+
+# ── Random password generator ────────────────────────────────────────
+gen_password() {
+    local length="${1:-24}"
+    if command -v openssl >/dev/null 2>&1; then
+        openssl rand -base64 48 | tr -dc 'a-zA-Z0-9' | head -c "$length"
+    else
+        # Fallback when openssl is missing — /dev/urandom + base64 from coreutils.
+        LC_ALL=C tr -dc 'a-zA-Z0-9' </dev/urandom | head -c "$length"
+    fi
+}
+
+# ── Tool detection ───────────────────────────────────────────────────
+
+have_cmd() { command -v "$1" >/dev/null 2>&1; }
+
+require_cmds() {
+    local missing=()
+    for c in "$@"; do
+        have_cmd "$c" || missing+=("$c")
+    done
+    if [ "${#missing[@]}" -gt 0 ]; then
+        log_die "Missing required tools: ${missing[*]}"
+    fi
+}
+
+# Run as root, falling back to sudo if available.
+run_priv() {
+    if [ "$EUID" -eq 0 ]; then
+        "$@"
+    elif have_cmd sudo; then
+        sudo "$@"
+    else
+        log_die "This step needs root; please install sudo or rerun as root."
+    fi
+}
+
+# Ensure either root or sudo is reachable for later privileged steps.
+require_root_or_sudo() {
+    if [ "$EUID" -eq 0 ]; then return 0; fi
+    if have_cmd sudo; then
+        log_info "Some steps need root; sudo will prompt when used."
+        return 0
+    fi
+    log_die "Wizard needs root or sudo — install sudo or rerun as root."
+}
+
+# ── DSN helpers ──────────────────────────────────────────────────────
+
+# Build a Postgres DSN. URL-encodes the password so special chars survive.
+build_dsn() {
+    local user="$1" pw="$2" host="$3" port="$4" db="$5"
+    local pw_enc
+    pw_enc="$(printf '%s' "$pw" | python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.stdin.read(),safe=""))' 2>/dev/null || true)"
+    if [ -z "$pw_enc" ]; then
+        # python3 unavailable — fall back to perl, then to raw (warn).
+        pw_enc="$(printf '%s' "$pw" | perl -MURI::Escape -ne 'print uri_escape($_)' 2>/dev/null || true)"
+    fi
+    if [ -z "$pw_enc" ]; then
+        log_warn "Could not URL-encode the password (no python3/perl); the DSN may break on special chars."
+        pw_enc="$pw"
+    fi
+    printf 'postgres://%s:%s@%s:%s/%s?sslmode=disable' "$user" "$pw_enc" "$host" "$port" "$db"
+}
+
+# Test a Postgres DSN with a one-shot query. Returns 0 on success.
+test_pg_dsn() {
+    local user="$1" pw="$2" host="$3" port="$4" db="$5"
+    PGPASSWORD="$pw" psql -h "$host" -p "$port" -U "$user" -d "$db" \
+        -tAc "SELECT 1" >/dev/null 2>&1
+}
+
+# Check pgvector extension is installed in a given DB.
+test_pg_has_vector() {
+    local user="$1" pw="$2" host="$3" port="$4" db="$5"
+    local result
+    result="$(PGPASSWORD="$pw" psql -h "$host" -p "$port" -U "$user" -d "$db" \
+        -tAc "SELECT 1 FROM pg_extension WHERE extname='vector'" 2>/dev/null || true)"
+    [ "$result" = "1" ]
+}
+
+# ── Network helpers ──────────────────────────────────────────────────
+
+# Probe whether a TCP port is bound on localhost. Returns 0 if free.
+port_is_free() {
+    local port="$1"
+    if have_cmd ss; then
+        ! ss -ltn "sport = :$port" | grep -q ":$port "
+    elif have_cmd lsof; then
+        ! lsof -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1
+    else
+        # No tool — assume free and let the gateway fail loudly on bind.
+        return 0
+    fi
+}
+
+# ── Cleanup trap registration ────────────────────────────────────────
+
+_cleanup_files=()
+register_cleanup_file() { _cleanup_files+=("$1"); }
+_run_cleanup() {
+    local f
+    for f in "${_cleanup_files[@]}"; do
+        [ -f "$f" ] && rm -f -- "$f"
+    done
+}
+trap _run_cleanup EXIT
