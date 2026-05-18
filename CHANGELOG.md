@@ -10,6 +10,31 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.0.2] — 2026-05-18
+
+### Added
+
+- **Service-control subcommands**: `opendray start`, `opendray stop`,
+  `opendray restart`, `opendray status`. Thin wrappers over
+  `systemctl` (Linux) and `launchctl` (macOS) so operators don't
+  have to remember the platform-native incantation. On Linux, the
+  binary auto-prepends `sudo` if the caller isn't root. On macOS,
+  defaults to the user LaunchAgent (`gui/$UID/com.opendray.opendray`);
+  pass `--system` to target the LaunchDaemon scope.
+
+### Fixed
+
+- **One-tap link open for the OAuth URL badge.** When a session has
+  exactly one detected URL (the common AI-CLI auth case: `claude
+  login` / `gemini auth login` / `codex login` each print one OAuth
+  URL), the floating "🔗 1 link" badge is now itself an
+  `<a target="_blank">` — a single tap goes straight to the
+  browser, no intermediate dialog. The dialog still appears when
+  ≥ 2 URLs are detected, so multi-link sessions still get the
+  disambiguating UI. In the dialog, the "Open" button is also a
+  real anchor now, which avoids popup-blocker gating on some
+  mobile browsers.
+
 ## [v2.0.1] — 2026-05-18
 
 ### Removed

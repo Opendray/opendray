@@ -2,8 +2,12 @@
 //
 // Subcommands:
 //
-//	opendray serve     [-config FILE]   start the gateway
+//	opendray serve     [-config FILE]   start the gateway (foreground; for systemd/launchd ExecStart)
 //	opendray migrate   [-config FILE]   apply pending DB migrations and exit
+//	opendray start                      start the systemd/launchd service
+//	opendray stop                       stop the systemd/launchd service
+//	opendray restart                    restart the systemd/launchd service
+//	opendray status                     show service status
 //	opendray update    [--check] [--force] [--yes] [--restart]
 //	                                    check + apply the latest released opendray binary
 //	opendray providers <subcommand> ... list / update the AI CLIs opendray spawns
@@ -47,6 +51,14 @@ func main() {
 		os.Exit(runUpdate(args))
 	case "providers":
 		os.Exit(runProviders(args))
+	case "start":
+		os.Exit(runStart(args))
+	case "stop":
+		os.Exit(runStop(args))
+	case "restart":
+		os.Exit(runRestart(args))
+	case "status":
+		os.Exit(runStatus(args))
 	case "notes":
 		os.Exit(runNotes(args))
 	case "skill":
@@ -98,8 +110,12 @@ func usage() {
 	fmt.Fprintln(os.Stderr, `opendray — multiplexer + integration gateway for AI agent CLIs
 
 usage:
-  opendray serve     [-config FILE]
+  opendray serve     [-config FILE]       (foreground; what the service unit's ExecStart calls)
   opendray migrate   [-config FILE]
+  opendray start                          (start the systemd / launchd service)
+  opendray stop                           (stop the service)
+  opendray restart                        (stop + start)
+  opendray status                         (show service status)
   opendray update    [--check] [--force] [--yes] [--restart]
                                           (download + replace this binary with the latest release;
                                            "opendray update --check" for a no-op version probe)
