@@ -63,12 +63,17 @@
   <true/>
 
   <!-- Restart on failure (analogous to systemd Restart=on-failure).
+       Crashed=true makes restart-on-signal explicit so a SIGHUP-killed
+       daemon is reliably treated as a crash and restarted, regardless
+       of how a given launchd version interprets the exit.
        NetworkState=true delays restart until the network is up,
        matching the systemd unit's After=network-online.target. -->
   <key>KeepAlive</key>
   <dict>
     <key>SuccessfulExit</key>
     <false/>
+    <key>Crashed</key>
+    <true/>
     <key>NetworkState</key>
     <true/>
   </dict>
