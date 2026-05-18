@@ -9,7 +9,6 @@ import {
   Settings,
   Boxes,
   NotebookPen,
-  BookOpen,
   Brain,
   Archive,
   type LucideIcon,
@@ -47,7 +46,6 @@ const groups: NavItem[][] = [
     { to: '/plugins', icon: Boxes, labelKey: 'nav.plugins', shortcut: 'g l' },
     { to: '/backups', icon: Archive, labelKey: 'nav.backups', shortcut: 'g b' },
     { to: '/settings', icon: Settings, labelKey: 'nav.settings', shortcut: 'g ,' },
-    { to: '/tutorial', icon: BookOpen, labelKey: 'nav.tutorial', shortcut: 'g h' },
   ],
 ]
 

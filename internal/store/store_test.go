@@ -11,7 +11,7 @@ import (
 // devDSN returns the dev-DB DSN from OPENDRAY_DEV_DB_URL, or t.Skips
 // when unset. Never hardcode credentials — committed credentials are
 // forever. To run these tests locally, start the bundled Postgres
-// (`docker compose -f docker-compose.test.yml up -d`) and export
+// (any local Postgres 15+ with pgvector enabled) and export
 // OPENDRAY_DEV_DB_URL accordingly. See docs/quickstart.md.
 func devDSN(t *testing.T) string {
 	t.Helper()

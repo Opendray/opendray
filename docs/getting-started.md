@@ -151,7 +151,7 @@ feature (drive Claude / Codex / Gemini from the web Sessions page)?
 
 | Your host | Path | README section |
 |---|---|---|
-| Docker host (LXC / VPS / NAS) | Docker Compose | [Option A](../README.md#option-a--docker-compose-gateway-only-no-session-spawn) |
+|
 
 You can still receive messages on Telegram / Slack / etc., write
 notes, hit the integration API, and view the web admin. You just

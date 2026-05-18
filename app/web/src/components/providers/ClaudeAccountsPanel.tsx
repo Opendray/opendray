@@ -2,12 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   CircleDot,
   Download,
-  HelpCircle,
   KeyRound,
   Loader2,
   Trash2,
 } from 'lucide-react'
-import { Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { Trans, useTranslation } from 'react-i18next'
 
@@ -111,14 +109,6 @@ export function ClaudeAccountsPanel() {
           <span className="text-[10px] text-muted-foreground/60 font-mono">
             {accounts?.length ?? 0}
           </span>
-          <Link
-            to="/tutorial"
-            hash="providers-claude-accounts"
-            className="text-muted-foreground/70 hover:text-foreground inline-flex items-center"
-            title={t('web.providers.claudeAccounts.tutorialTooltip')}
-          >
-            <HelpCircle className="size-3.5" />
-          </Link>
         </div>
         <Button
           variant="ghost"
@@ -149,14 +139,7 @@ CLAUDE_CONFIG_DIR=~/.claude-accounts/<name> claude login`}
         <Trans
           i18nKey="web.providers.claudeAccounts.addingBodySuffix"
           components={{ 1: <span className="font-mono" /> }}
-        />{' '}
-        <Link
-          to="/tutorial"
-          hash="providers-claude-accounts"
-          className="underline hover:text-foreground"
-        >
-          {t('web.providers.claudeAccounts.architectureLink')}
-        </Link>
+        />
       </div>
 
       {isLoading && (

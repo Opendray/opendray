@@ -27,8 +27,8 @@ git clone https://github.com/Opendray/opendray_v2.git
 cd opendray_v2
 
 # 1. Start the bundled Postgres (or skip and use your own — see below).
-docker compose -f docker-compose.test.yml up -d
-docker compose -f docker-compose.test.yml ps   # postgres should be (healthy)
+apt install -y postgresql-16 postgresql-16-pgvector  # or brew install postgresql pgvector
+systemctl is-active postgresql  # should print active
 
 # 2. Local config — gitignored, safe to edit.
 cp config.example.toml config.toml
@@ -55,7 +55,7 @@ You should now have:
 | `http://127.0.0.1:8770/admin/` | Web admin SPA — log in with `admin` + the password you set |
 | `http://127.0.0.1:8770/api/v1/...` | REST + WebSocket API |
 
-Stop the server with `Ctrl-C`. Stop the Postgres with `docker compose -f docker-compose.test.yml down` (add `-v` to also delete data).
+Stop the server with `Ctrl-C`. Stop the Postgres with `systemctl stop postgresql       # or brew services stop postgresql
 
 ## Frontend hot-reload (optional)
 
@@ -84,7 +84,7 @@ url = "postgres://your_user:your_pass@your_host:5432/your_db?sslmode=disable"
 ### Required: pgvector extension
 
 Opendray's memory subsystem needs the [`pgvector`](https://github.com/pgvector/pgvector)
-extension. The bundled `docker-compose.test.yml` uses the
+extension. A locally-installed Postgres uses the
 `pgvector/pgvector:pg17` image which preinstalls and auto-enables
 it, so no manual step there. For a BYO Postgres, install pgvector
 once with a superuser before running `opendray migrate`:
@@ -122,7 +122,7 @@ present).
 go test -race ./...
 
 # Run the DB-backed integration tests (memory/summarizer + githost + store + app)
-# against the docker-compose Postgres:
+# against your locally-installed Postgres:
 export OPENDRAY_DEV_DB_URL='postgres://opendray:opendray@127.0.0.1:5432/opendray?sslmode=disable'
 go test -race ./...
 
@@ -150,7 +150,7 @@ Restart `opendray serve`; a Backups page appears in the admin sidebar (`/backups
 
 ## Building a single distributable binary
 
-The repo ships a `Dockerfile` (multi-stage, distroless, non-root) and a `goreleaser` config for cross-platform releases:
+The repo ships a `goreleaser` config for cross-platform release builds:
 
 ```bash
 # Snapshot release — builds linux/darwin × amd64/arm64 archives in dist/
@@ -174,7 +174,7 @@ The Go binary uses `//go:embed all:dist` and refuses to start with an empty `dis
 
 ### `go run ./cmd/opendray migrate` reports `connection refused`
 
-Postgres is not running, or the DSN in `config.toml` is wrong. Check `docker compose -f docker-compose.test.yml ps` — the `postgres` service should be `(healthy)`. If it's not, `docker compose -f docker-compose.test.yml logs postgres` will explain.
+Postgres is not running, or the DSN in `config.toml` is wrong. Check `systemctl is-active postgresql  # should print active
 
 ### `go test ./internal/memory/summarizer/...` says `--- SKIP`
 
@@ -188,7 +188,7 @@ lsof -i :8770
 ```
 
 Kill the conflicting process or change the port:
-- Postgres: edit `docker-compose.test.yml` (e.g. `"127.0.0.1:5433:5432"`) and update `config.toml`.
+- Postgres: edit your PG config (port in postgresql.conf) and update config.toml accordingly.
 - Gateway: edit `listen = "127.0.0.1:8770"` in `config.toml` (or set `OPENDRAY_LISTEN`).
 
 ## Next steps

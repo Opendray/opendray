@@ -21,7 +21,6 @@ import { ExportPage } from '@/pages/Export'
 import { NotesPage } from '@/pages/Notes'
 import { PluginsPage } from '@/pages/Plugins'
 import { SettingsPage } from '@/pages/Settings'
-import { TutorialPage } from '@/pages/Tutorial'
 import { useAuth } from '@/stores/auth'
 
 const rootRoute = createRootRoute({ component: () => <Outlet /> })
@@ -142,12 +141,6 @@ const exportRoute = createRoute({
   component: ExportPage,
 })
 
-const tutorialRoute = createRoute({
-  getParentRoute: () => protectedRoute,
-  path: '/tutorial',
-  component: TutorialPage,
-})
-
 const routeTree = rootRoute.addChildren([
   loginRoute,
   protectedRoute.addChildren([
@@ -166,7 +159,6 @@ const routeTree = rootRoute.addChildren([
     settingsRoute,
     backupsRoute,
     exportRoute,
-    tutorialRoute,
   ]),
 ])
 

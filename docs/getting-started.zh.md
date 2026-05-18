@@ -144,7 +144,7 @@ PGPASSWORD='<密码>' psql -h <pg-host> -U opendray_user -d opendray -c "SELECT 
 
 | 你的 host | 路径 | README 章节 |
 |---|---|---|
-| Docker host(LXC / VPS / NAS) | Docker Compose | [方案 A](../README.zh.md#方案-a--docker-compose仅网关不支持-session-spawn) |
+|
 
 仍然可以收 Telegram / Slack 等消息、写 notes、调集成 API、看 Web 后台。
 只是不能从这个部署里 spawn 本地 AI CLI 会话。
