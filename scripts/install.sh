@@ -15,6 +15,44 @@
 # from a real checkout — the bootstrap path just adds one git clone in
 # front.
 
+# ── bash 4+ preflight ────────────────────────────────────────────────
+# lib/common.sh uses ${var,,}, printf -v, read -ra and other bash 4+
+# features (see the `# Requires bash 4+` note at the top of that file).
+# macOS still ships bash 3.2 as /bin/bash — the last GPL2 release Apple
+# will ever ship — so `curl ... | bash` on macOS lands in 3.2 and
+# downstream scripts die with cryptic "bad substitution" / "unbound
+# variable" errors halfway through. Fail fast with an actionable
+# message instead.
+if [ -z "${BASH_VERSION:-}" ]; then
+    printf '[!] opendray installer must be run with bash, not %s.\n' \
+        "$(ps -p $$ -o comm= 2>/dev/null | tail -1 || echo sh)" >&2
+    exit 1
+fi
+_bash_major="${BASH_VERSION%%.*}"
+if [ "${_bash_major:-0}" -lt 4 ]; then
+    cat >&2 <<EOF
+[!] opendray installer requires bash 4.0 or newer.
+    Detected: bash ${BASH_VERSION}
+
+    macOS ships bash 3.2 as /bin/bash (Apple has not updated past
+    the last GPL2 release). Install a current bash and re-run via it:
+
+      Apple Silicon (M1/M2/M3/M4):
+        brew install bash
+        /opt/homebrew/bin/bash -c "\$(curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install.sh)"
+
+      Intel Mac:
+        brew install bash
+        /usr/local/bin/bash -c "\$(curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install.sh)"
+
+    On Linux: every supported distro ships bash 4+ already; if you
+    are still hitting this, your invocation is being downgraded to a
+    non-bash shell — re-run with: bash scripts/install.sh
+EOF
+    exit 1
+fi
+unset _bash_major
+
 set -euo pipefail
 
 # ── Locate ourselves on disk (or detect we're piped) ──────────────────

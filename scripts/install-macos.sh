@@ -6,6 +6,22 @@
 # for a personal Mac or a Mac mini home server. Re-run with --launchd-daemon to
 # install a system-wide LaunchDaemon instead.
 
+# lib/common.sh requires bash 4+ (uses ${var,,}, printf -v, read -ra).
+# When this script is invoked directly (e.g. from a checkout) macOS
+# users with /bin/bash 3.2 would otherwise die deep inside common.sh
+# with "bad substitution". Guard the entry point too — install.sh has
+# the same check for the curl|bash path.
+if [ -z "${BASH_VERSION:-}" ] || [ "${BASH_VERSION%%.*}" -lt 4 ]; then
+    cat >&2 <<EOF
+[!] install-macos.sh requires bash 4+ (detected: ${BASH_VERSION:-unknown}).
+    macOS ships /bin/bash 3.2; install a current bash and re-invoke:
+      brew install bash
+      /opt/homebrew/bin/bash scripts/install-macos.sh "\$@"
+    (Intel Mac: /usr/local/bin/bash)
+EOF
+    exit 1
+fi
+
 set -euo pipefail
 
 # Reattach stdin to the controlling terminal so prompts work even when
