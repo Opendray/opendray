@@ -177,11 +177,12 @@ func providersUpdate(args []string) int {
 			continue
 		}
 		after := cliVersion(p.Bin)
-		if after == "" {
+		switch after {
+		case "":
 			fmt.Printf("[✓] %s — upgraded (version probe failed; check `which %s`)\n", p.Display, p.Bin)
-		} else if after == current {
+		case current:
 			fmt.Printf("[✓] %s — already at npm-latest (%s)\n", p.Display, after)
-		} else {
+		default:
 			fmt.Printf("[✓] %s — %s → %s\n", p.Display, current, after)
 		}
 	}
