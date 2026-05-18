@@ -10,6 +10,131 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.1.0] — 2026-05-18
+
+### Added — install / uninstall / update tooling
+
+This release is dominated by lifecycle scripts and binary
+subcommands that grew out of a fresh-LXC end-to-end install test.
+Everything below is `curl | bash`–reachable, idempotent, and works
+on Linux (Ubuntu / Debian) + macOS; Windows is funneled through
+WSL2.
+
+- **One-line installer wizard** (#185 #186)
+  - `scripts/install.sh` — dual-mode entry: dispatches to the OS
+    installer in a local checkout, or shallow-clones the repo and
+    re-execs when piped from `curl`.
+  - `scripts/install-linux.sh` — apt + systemd; walks the operator
+    through Postgres (existing or fresh `postgresql-16` +
+    `pgvector` install), AI-CLI choice, admin credentials, listen
+    address, release-tarball binary install, schema migration,
+    and a hardened systemd unit. Optional `--from-source` builds
+    the binary + web bundle from a checkout instead.
+  - `scripts/install-macos.sh` — brew + LaunchAgent (or
+    `--launchd-daemon` for system-wide), same flow. Detects Apple
+    Silicon vs Intel for the right release asset.
+  - `scripts/install-windows.ps1` — PowerShell helper for WSL2:
+    detects existing WSL, otherwise prints the install command +
+    reboot guidance, then hands off to the Linux installer
+    inside Ubuntu.
+- **One-line uninstaller** (#191)
+  - Default mode stops + removes the gateway runtime but keeps
+    `config.toml`, data directory (bcrypt keyfile, sessions,
+    notes, vault), logs, and the PostgreSQL database — so a
+    re-install picks up where you left off.
+  - `--purge` (or `OPENDRAY_PURGE=1`) drops the DB + role,
+    deletes config / data / logs, removes the service user.
+  - Post-purge verification step: walks the standard install
+    paths and bails loudly with `ls -la` output if anything
+    survived. "No trace left" gets *checked*, not assumed.
+- **`opendray update` subcommand** (#194)
+  - Fetches the latest GitHub release, picks the goreleaser
+    asset matching this host's `GOOS/GOARCH`, verifies SHA-256
+    against the release's `SHA256SUMS`, then atomically replaces
+    `/proc/self/exe` via temp+rename.
+  - Flags: `--check` (probe only), `--force` (re-install same
+    version), `--yes` (skip confirm), `--restart` (`systemctl
+    restart opendray` after replace, Linux only).
+  - Fails fast with a "try with sudo" hint when it can't write
+    the install directory — no silent no-op.
+- **`opendray providers <list|update>`** (#194)
+  - Detects installed AI CLIs (`claude`, `gemini`, `codex`),
+    prints versions + paths.
+  - `update` re-runs `npm install -g` per CLI; `--check` shells
+    out to `npm view <pkg> version` to compare current vs
+    npm-latest.
+  - `--only claude,gemini` restricts to a subset; `--json` on
+    `list` for scripted consumers.
+
+### Security
+
+- **Secrets out of `config.toml`** (#192). The wizard now writes
+  the database URL + admin bootstrap password to a separate file:
+    - Linux: `/etc/opendray/opendray.env` (mode `0640 root:opendray`),
+      consumed by systemd via `EnvironmentFile=`.
+    - macOS: `~/.opendray/opendray.env` (mode `0600`), consumed
+      by a tiny launcher wrapper (`~/.opendray/bin/opendray-launcher.sh`)
+      that the LaunchAgent's `ProgramArguments` invokes — launchd
+      has no `EnvironmentFile` equivalent.
+  - `config.toml` is now `0644` and contains only non-secrets
+    (listen, log config, `[admin].user`, runtime data dir).
+  - Existing opendray env-var override layer
+    (`OPENDRAY_DATABASE_URL`, `OPENDRAY_ADMIN_PASSWORD`, etc.)
+    does the actual wiring — no Go changes needed.
+
+### Fixed (install wizard, all reported during the LXC walkthrough)
+
+- `curl | bash` prompts work — wizard re-attaches stdin to
+  `/dev/tty` so EOF on the pipe doesn't make every `read` fail
+  under `set -e` (#187).
+- `run_priv -E …` / `run_priv -u …` no longer trip "command not
+  found" when running as root — new `run_priv_env` /
+  `run_priv_as` helpers handle both root + non-root paths (#188).
+- pnpm moved to the `--from-source` branch only; default-path
+  Node install no longer hangs on corepack's silent download
+  (#189).
+- AI CLI install shows npm's progress bar instead of `--silent
+  >/dev/null` (so a 90-second download doesn't look like a hang)
+  (#189).
+- Admin login works after install: wizard writes `[admin].user`
+  in addition to the password; matches opendray's auth contract
+  (#190).
+- Customisable admin username (was hard-coded to "admin") (#190).
+- Final-summary URL resolves the host's LAN IP for `0.0.0.0`
+  listens instead of printing the `<this-host>` placeholder
+  (#190).
+- Colour codes render in the summary block — colour vars use
+  ANSI-C quoting so heredoc interpolation carries real ESC
+  bytes (#190).
+- `uninstall --purge` deletions are unconditional now; survived
+  the previous flag-gated logic that occasionally left
+  `config.toml` on disk (#192).
+- Env-var alternative for the purge flag (`OPENDRAY_PURGE=1
+  bash`) — survives `bash -s -- --flag` paste-newline weirdness
+  (#193).
+
+### Documentation
+
+- README hero: typographic v2 logo + status / license / CI /
+  GHCR badges + "What is opendray?" five-bullet section + paired
+  EN / ZH `README.md` / `README.zh.md` (#180 #181 #182).
+- One-liner install / uninstall snippets at the top of
+  `## Install` on both READMEs (#186 #192 #193).
+- `docs/getting-started.md` (+ `.zh.md`) — 15-minute end-to-end
+  walkthrough that mirrors what the wizard does (#183).
+- `docs/operator-guide.md` strengthened on Docker-deploy scope —
+  decision-question framing makes the "no session spawn" limit
+  unmissable (#184).
+- `scripts/README.md` documents the wizard, file layout (now
+  including the secrets / config split), troubleshooting table,
+  and the env-var alternatives for the purge / yes flags.
+
+### Branding
+
+- Unified launcher icons across web favicon, iOS
+  `AppIcon.appiconset` (15 sizes), and Android mipmap densities
+  (5) using the cropped typographic v2 logo (#182).
+
 ## [v2.0.0] — 2026-05-17
 
 ### Versioning realignment
