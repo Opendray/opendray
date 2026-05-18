@@ -10,6 +10,42 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.0.1] — 2026-05-18
+
+### Removed
+
+- **Docker deployment path.** opendray is a host-resident gateway —
+  it spawns AI CLIs via PTYs and shares process state (`~/.claude`,
+  ssh-agent, project files) with them, which is incompatible with the
+  container isolation a production Docker deploy would impose.
+  Removed `Dockerfile`, `docker-compose.yml`, `docker-compose.test.yml`,
+  `.dockerignore`, `.env.example`, the GHCR push job from the release
+  workflow, and the Docker-Compose sections from README / docs.
+- **In-app Tutorial page.** All 84 markdown sections plus
+  `Tutorial.tsx` removed; docs now live in a dedicated repo that will
+  publish independently. Sidebar entry, `/tutorial` route, and i18n
+  keys (`nav.tutorial`, `web.providers.claudeAccounts.tutorialTooltip`,
+  `web.providers.claudeAccounts.architectureLink`) removed in parallel.
+
+### Fixed
+
+- **"No Claude accounts" empty state** (Providers page + Spawn dialog,
+  web + mobile) now tells operators the actual setup path: spawn a
+  session and run `claude login` in the terminal. The previous wording
+  pointed at the gateway-host shell workflow (works only for SSH-
+  capable operators) and incorrectly implied a system
+  `ANTHROPIC_API_KEY` fallback. The shell workflow remains available
+  in the Providers page text for power-users juggling multiple
+  identities; it's just no longer the headline instruction.
+
+### Changed
+
+- Brand: web favicon, docs hero, iOS `AppIcon.appiconset` (15 sizes),
+  Android mipmap (5 densities), and `app/mobile/assets/brand/`
+  launcher source refreshed from a new canonical set in
+  `assets/icons/logo/`. Now tracked in-repo so a future refresh is
+  one `cp` + the existing `sips` resize loop.
+
 ### Added — install / uninstall / update tooling
 
 Lifecycle scripts and binary subcommands that grew out of a fresh-
