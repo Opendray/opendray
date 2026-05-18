@@ -5191,8 +5191,8 @@ class TranslationsWebSessionsSpawnEn {
 	/// en: 'Loading accounts…'
 	String get loadingAccounts => 'Loading accounts…';
 
-	/// en: 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY.'
-	String get noAccounts => 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY.';
+	/// en: 'No Claude accounts found. Spawn this session and run claude login in the terminal — credentials land in ~/.claude on the gateway and show up automatically next time.'
+	String get noAccounts => 'No Claude accounts found. Spawn this session and run claude login in the terminal — credentials land in ~/.claude on the gateway and show up automatically next time.';
 
 	/// en: 'Default'
 	String get kDefault => 'Default';
@@ -9932,8 +9932,8 @@ class TranslationsSessionsSpawnSheetClaudeAccountEn {
 	/// en: ' (no token)'
 	String get noTokenSuffix => ' (no token)';
 
-	/// en: 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY. Add accounts under Settings → Accounts on the web admin.'
-	String get noneHint => 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY. Add accounts under Settings → Accounts on the web admin.';
+	/// en: 'No Claude accounts found. Spawn this session and run claude login in the terminal — credentials land in ~/.claude on the gateway and show up automatically next time.'
+	String get noneHint => 'No Claude accounts found. Spawn this session and run claude login in the terminal — credentials land in ~/.claude on the gateway and show up automatically next time.';
 
 	/// en: 'Could not load Claude accounts ({error}). The session will spawn with the gateway default.'
 	String errorHint({required Object error}) => 'Could not load Claude accounts (${error}). The session will spawn with the gateway default.';
@@ -13551,7 +13551,7 @@ extension on Translations {
 			'web.sessions.spawn.provider' => 'Provider',
 			'web.sessions.spawn.claudeAccount' => 'Claude account',
 			'web.sessions.spawn.loadingAccounts' => 'Loading accounts…',
-			'web.sessions.spawn.noAccounts' => 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY.',
+			'web.sessions.spawn.noAccounts' => 'No Claude accounts found. Spawn this session and run claude login in the terminal — credentials land in ~/.claude on the gateway and show up automatically next time.',
 			'web.sessions.spawn.kDefault' => 'Default',
 			'web.sessions.spawn.defaultTooltip' => 'Use system keychain / env',
 			'web.sessions.spawn.tokenEmptyBadge' => '·empty',
@@ -15457,7 +15457,7 @@ extension on Translations {
 			'sessions.spawnSheet.claudeAccount.kDefault' => 'Default (env / system)',
 			'sessions.spawnSheet.claudeAccount.disabledSuffix' => ' (disabled)',
 			'sessions.spawnSheet.claudeAccount.noTokenSuffix' => ' (no token)',
-			'sessions.spawnSheet.claudeAccount.noneHint' => 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY. Add accounts under Settings → Accounts on the web admin.',
+			'sessions.spawnSheet.claudeAccount.noneHint' => 'No Claude accounts found. Spawn this session and run claude login in the terminal — credentials land in ~/.claude on the gateway and show up automatically next time.',
 			'sessions.spawnSheet.claudeAccount.errorHint' => ({required Object error}) => 'Could not load Claude accounts (${error}). The session will spawn with the gateway default.',
 			'mcp.title' => 'MCP',
 			'mcp.newServer' => 'New server',

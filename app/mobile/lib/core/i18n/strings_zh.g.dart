@@ -2686,7 +2686,7 @@ class _TranslationsWebSessionsSpawnZh extends TranslationsWebSessionsSpawnEn {
 	@override String get provider => 'Provider';
 	@override String get claudeAccount => 'Claude 账号';
 	@override String get loadingAccounts => '正在加载账号…';
-	@override String get noAccounts => '尚未配置 Claude 账号 — 网关将使用系统的 ANTHROPIC_API_KEY。';
+	@override String get noAccounts => '尚未检测到 Claude 账号。先 spawn 这个会话,在终端里运行 claude login —— 认证完成后凭据会落到网关的 ~/.claude,下次进 spawn 时自动出现。';
 	@override String get kDefault => '默认';
 	@override String get defaultTooltip => '使用系统 keychain / 环境变量';
 	@override String get tokenEmptyBadge => '·未填';
@@ -7348,7 +7348,7 @@ extension on TranslationsZh {
 			'web.sessions.spawn.provider' => 'Provider',
 			'web.sessions.spawn.claudeAccount' => 'Claude 账号',
 			'web.sessions.spawn.loadingAccounts' => '正在加载账号…',
-			'web.sessions.spawn.noAccounts' => '尚未配置 Claude 账号 — 网关将使用系统的 ANTHROPIC_API_KEY。',
+			'web.sessions.spawn.noAccounts' => '尚未检测到 Claude 账号。先 spawn 这个会话,在终端里运行 claude login —— 认证完成后凭据会落到网关的 ~/.claude,下次进 spawn 时自动出现。',
 			'web.sessions.spawn.kDefault' => '默认',
 			'web.sessions.spawn.defaultTooltip' => '使用系统 keychain / 环境变量',
 			'web.sessions.spawn.tokenEmptyBadge' => '·未填',
