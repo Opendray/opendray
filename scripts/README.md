@@ -171,25 +171,46 @@ restart opendray` / `launchctl kickstart -k …`.
 
 ```
 /usr/local/bin/opendray              # binary
-/etc/opendray/config.toml            # 0640, root:opendray
+/etc/opendray/config.toml            # 0644 — non-secret (listen, log, admin.user)
+/etc/opendray/opendray.env           # 0640 root:opendray — SECRETS (db URL, admin pw)
 /var/lib/opendray/                   # runtime data (bcrypt keyfile, sessions, …)
 /var/log/opendray/opendray.{log,err} # logs
-/etc/systemd/system/opendray.service # systemd unit
+/etc/systemd/system/opendray.service # systemd unit (loads opendray.env)
 ```
 
-A system user `opendray` owns runtime data and logs.
+A system user `opendray` owns runtime data and logs. The systemd
+unit's `EnvironmentFile=/etc/opendray/opendray.env` injects DB URL and
+admin password into the service environment at start, so `config.toml`
+stays safe to read.
 
 ### macOS
 
 ```
 ~/.opendray/bin/opendray
-~/.opendray/config.toml          # 0600
-~/.opendray/data/                # runtime data
+~/.opendray/bin/opendray-launcher.sh   # 0700 — sources env, exec opendray
+~/.opendray/config.toml                # 0644 — non-secret
+~/.opendray/opendray.env               # 0600 — SECRETS
+~/.opendray/data/                      # runtime data
 ~/.opendray/logs/opendray.{log,err}
 ~/Library/LaunchAgents/com.opendray.opendray.plist
 ```
 
 (`/Library/LaunchDaemons/...` instead, if you passed `--launchd-daemon`.)
+launchd doesn't support `EnvironmentFile`, so the plist runs
+`opendray-launcher.sh`, a tiny wrapper that sources `opendray.env`
+and execs the binary. Same security model as Linux: secrets in one
+strictly-permissioned file, never in the unit definition or
+`config.toml`.
+
+### Secrets model (both OSes)
+
+opendray's config loader treats `OPENDRAY_…` environment variables as
+overrides — see `internal/config/config.go`. The wizard takes
+advantage of this: `OPENDRAY_DATABASE_URL` and
+`OPENDRAY_ADMIN_PASSWORD` live in `opendray.env`, everything else
+lives in `config.toml`. If you ever need to rotate the DB password
+or the bootstrap admin password, edit `opendray.env` and restart the
+service — no `config.toml` touch required.
 
 ---
 

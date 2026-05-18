@@ -299,30 +299,52 @@ log_ok "Database + role dropped"
 # ───────────────────────────────────────────────────────────────────────
 # Phase 4 — Delete config / data / logs / user
 # ───────────────────────────────────────────────────────────────────────
+#
+# Deletions are unconditional in --purge mode. We don't gate on the
+# HAS_* flags from Phase 0 — those represent "was present at the start
+# of this run", but a previous partial run might have left a stray
+# config.toml that Phase 0 didn't see (e.g., when the script crashed
+# mid-execution). `rm -rf ...` is a no-op on already-absent paths
+# anyway, so always running it costs nothing.
 
 log_step 4 "Delete files + service account"
 
-if [ "$HAS_CONFIG" = "1" ]; then
-    run_priv rm -rf "$OPENDRAY_CONFIG_DIR"
-    log_ok "Removed $OPENDRAY_CONFIG_DIR"
-fi
+run_priv rm -rf "$OPENDRAY_CONFIG_DIR"
+log_ok "Removed $OPENDRAY_CONFIG_DIR (config.toml + opendray.env if present)"
 
-if [ "$HAS_DATA" = "1" ]; then
-    run_priv rm -rf "$OPENDRAY_DATA_DIR"
-    log_ok "Removed $OPENDRAY_DATA_DIR"
-fi
+run_priv rm -rf "$OPENDRAY_DATA_DIR"
+log_ok "Removed $OPENDRAY_DATA_DIR (data + bcrypt keyfile)"
 
-if [ "$HAS_LOGS" = "1" ]; then
-    run_priv rm -rf "$OPENDRAY_LOG_DIR"
-    log_ok "Removed $OPENDRAY_LOG_DIR"
-fi
+run_priv rm -rf "$OPENDRAY_LOG_DIR"
+log_ok "Removed $OPENDRAY_LOG_DIR (logs)"
 
-if [ "$HAS_USER" = "1" ]; then
+if id "$OPENDRAY_SERVICE_USER" >/dev/null 2>&1; then
     # `userdel -r` would also wipe the home dir; we've already nuked it
     # via OPENDRAY_DATA_DIR, so plain `userdel` is enough.
     run_priv userdel "$OPENDRAY_SERVICE_USER" 2>/dev/null || true
     log_ok "Removed service user '$OPENDRAY_SERVICE_USER'"
 fi
+
+# Post-delete verification — bail loudly if any of the standard paths
+# survived (e.g., bind mount, immutable flag, ENOENT race). The whole
+# point of --purge is "no trace left"; if something's still on disk,
+# the operator needs to know now, not when they re-install.
+log_info "Verifying nothing survived..."
+SURVIVORS=()
+for p in "$OPENDRAY_CONFIG_DIR" "$OPENDRAY_DATA_DIR" "$OPENDRAY_LOG_DIR" \
+         "/etc/systemd/system/${OPENDRAY_SERVICE_NAME}.service" \
+         "$OPENDRAY_PREFIX/bin/opendray"; do
+    [ -e "$p" ] && SURVIVORS+=("$p")
+done
+if [ "${#SURVIVORS[@]}" -gt 0 ]; then
+    log_err "Some paths still exist after --purge — manual cleanup needed:"
+    for p in "${SURVIVORS[@]}"; do
+        printf "  %s\n" "$p" >&2
+        ls -la "$p" 2>&1 | head -5 | sed 's/^/    /' >&2
+    done
+    exit 1
+fi
+log_ok "Verified — no opendray paths remain on disk"
 
 # ───────────────────────────────────────────────────────────────────────
 # Done

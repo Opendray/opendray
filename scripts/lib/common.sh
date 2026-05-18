@@ -187,6 +187,23 @@ run_priv_as() {
     fi
 }
 
+# Same as run_priv_as, but preserves the caller's environment across
+# the privilege transition. Used for `opendray migrate` in the wizard:
+# the service isn't running yet (so systemd's EnvironmentFile injection
+# hasn't happened), but we still want migrate to read
+# OPENDRAY_DATABASE_URL / OPENDRAY_ADMIN_PASSWORD from the wizard's
+# shell environment.
+run_priv_as_env() {
+    local target_user="$1"; shift
+    if have_cmd sudo; then
+        sudo -E -u "$target_user" "$@"
+    elif [ "$EUID" -eq 0 ] && have_cmd runuser; then
+        runuser --preserve-environment -u "$target_user" -- "$@"
+    else
+        log_die "Need sudo or runuser to run as $target_user (running as $(id -un))."
+    fi
+}
+
 # Ensure either root or sudo is reachable for later privileged steps.
 require_root_or_sudo() {
     if [ "$EUID" -eq 0 ]; then return 0; fi

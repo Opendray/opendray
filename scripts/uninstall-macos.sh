@@ -261,11 +261,29 @@ log_ok "Database + role dropped"
 # Phase 4 — Delete ~/.opendray
 # ───────────────────────────────────────────────────────────────────────
 
-if [ "$HAS_HOME" = "1" ]; then
-    log_step 4 "Delete $OPENDRAY_HOME"
-    rm -rf "$OPENDRAY_HOME"
-    log_ok "Removed $OPENDRAY_HOME"
+# Deletions are unconditional in --purge mode (see uninstall-linux.sh
+# for the rationale — Phase 0 detection is just a UX hint; the actual
+# cleanup is best-effort blanket rm -rf).
+
+log_step 4 "Delete $OPENDRAY_HOME"
+rm -rf "$OPENDRAY_HOME"
+log_ok "Removed $OPENDRAY_HOME (config.toml + opendray.env + launcher + data + logs)"
+
+# Post-delete verification.
+log_info "Verifying nothing survived..."
+SURVIVORS=()
+for p in "$OPENDRAY_HOME" "$USER_PLIST" "$SYS_PLIST"; do
+    [ -e "$p" ] && SURVIVORS+=("$p")
+done
+if [ "${#SURVIVORS[@]}" -gt 0 ]; then
+    log_err "Some paths still exist after --purge — manual cleanup needed:"
+    for p in "${SURVIVORS[@]}"; do
+        printf "  %s\n" "$p" >&2
+        ls -la "$p" 2>&1 | head -5 | sed 's/^/    /' >&2
+    done
+    exit 1
 fi
+log_ok "Verified — no opendray paths remain on disk"
 
 # ───────────────────────────────────────────────────────────────────────
 # Done
