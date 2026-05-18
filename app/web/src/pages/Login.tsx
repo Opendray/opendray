@@ -21,7 +21,10 @@ export function LoginPage() {
   const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { next?: string }
   const setSession = useAuth((s) => s.setSession)
-  const [username, setUsername] = useState('admin')
+  // Start empty — the wizard lets operators pick any username during
+  // install, so seeding "admin" is misleading and forces an extra
+  // backspace for everyone who didn't keep the default.
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)

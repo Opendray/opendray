@@ -35,6 +35,7 @@ dependencies:
   shared_preferences: ^2.3.4
   slang: ^4.14.0
   slang_flutter: ^4.14.0
+  url_launcher: ^6.3.1
   web_socket_channel: ^3.0.1
   xterm: ^4.0.0
   yaml: ^3.1.2

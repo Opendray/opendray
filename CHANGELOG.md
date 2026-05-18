@@ -10,6 +10,27 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.0.5] — 2026-05-18
+
+### Added
+
+- **Flutter mobile session terminal now has the URL detector
+  badge.** Same model as the web admin: the PTY byte stream is
+  scanned for http(s) URLs with the same state-machine extractor
+  that re-assembles CLI-soft-wrapped OAuth URLs. A floating pill
+  in the top-right corner of the terminal — primary tap opens the
+  most recent URL in the OS browser via `url_launcher`, secondary
+  `⋯` button opens a bottom-sheet with every URL (newest first)
+  for picking older ones. Closes the OAuth-on-Flutter-app gap
+  reported alongside the web fix.
+
+### Changed
+
+- **Web login no longer pre-fills the username with "admin".** The
+  install wizard lets operators pick any username, so seeding the
+  field forced everyone-who-didn't-keep-the-default to backspace
+  before typing. The field is now empty by default and autofocused.
+
 ## [v2.0.4] — 2026-05-18
 
 ### Fixed
