@@ -10,6 +10,31 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.0.4] — 2026-05-18
+
+### Fixed
+
+- **URL extractor now re-assembles CLI-soft-wrapped URLs.** AI CLIs
+  (claude-code, codex, gemini) hard-wrap long OAuth URLs at the
+  terminal column width by emitting literal `\n` characters every
+  ~55 chars. The v2.0.1 / v2.0.2 / v2.0.3 extractor used a `[^\s]+`
+  regex that stops at `\n`, so it captured only the first wrapped
+  segment (e.g. `https://...&client_`). Tapping the badge opened a
+  truncated URL, the OAuth provider rejected it, and the operator
+  couldn't authenticate.
+
+  The extractor is now a state-machine walker that anchors on
+  `https?://`, consumes URL-body characters, and treats a single
+  internal `\n` as a soft-wrap when the current line is ≥ 40 chars
+  long (matches real CLI wrap width; well above "<intro phrase>\n
+  <url>" prose patterns). Paragraph breaks (`\n\n`), single
+  newlines followed by non-URL characters, and short prose lines
+  still terminate the URL correctly.
+
+  Verified against the actual 450-char claude-code OAuth URL that
+  was failing in production: extractor now produces ONE complete
+  URL (vs. two truncated segments).
+
 ## [v2.0.3] — 2026-05-18
 
 ### Fixed
