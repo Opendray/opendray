@@ -166,7 +166,7 @@ fi
 
 if [ "$NODE_NEEDED" = "1" ]; then
     log_info "Installing Node.js 22 LTS via NodeSource..."
-    curl -fsSL https://deb.nodesource.com/setup_22.x | run_priv -E bash -
+    curl -fsSL https://deb.nodesource.com/setup_22.x | run_priv_env bash -
     DEBIAN_FRONTEND=noninteractive run_priv apt-get install -y -qq nodejs
     log_ok "Node.js $(node --version) installed"
 fi
@@ -340,7 +340,7 @@ ask_with_default "App DB password (Enter = random)" "$DEFAULT_DB_PW" OD_DB_PW
 run_psql_super() {
     local sql="$1"
     if [ "$PG_SUPER_PW_AUTH" = "peer" ]; then
-        run_priv -u postgres psql -v ON_ERROR_STOP=1 -d "$PG_SUPER_DB" -c "$sql"
+        run_priv_as postgres psql -v ON_ERROR_STOP=1 -d "$PG_SUPER_DB" -c "$sql"
     else
         PGPASSWORD="$PG_SUPER_PW" psql -v ON_ERROR_STOP=1 \
             -h "$PG_SUPER_HOST" -p "$PG_SUPER_PORT" -U "$PG_SUPER_USER" -d "$PG_SUPER_DB" \
@@ -369,7 +369,7 @@ run_psql_super "GRANT ALL PRIVILEGES ON DATABASE \"$OD_DB_NAME\" TO \"$OD_DB_USE
 run_psql_super_indb() {
     local sql="$1"
     if [ "$PG_SUPER_PW_AUTH" = "peer" ]; then
-        run_priv -u postgres psql -v ON_ERROR_STOP=1 -d "$OD_DB_NAME" -c "$sql"
+        run_priv_as postgres psql -v ON_ERROR_STOP=1 -d "$OD_DB_NAME" -c "$sql"
     else
         PGPASSWORD="$PG_SUPER_PW" psql -v ON_ERROR_STOP=1 \
             -h "$PG_SUPER_HOST" -p "$PG_SUPER_PORT" -U "$PG_SUPER_USER" -d "$OD_DB_NAME" \
@@ -548,7 +548,7 @@ run_priv chmod 0640 "$OD_CONFIG_PATH"
 log_ok "Config written: $OD_CONFIG_PATH (mode 0640, owned by root:$OPENDRAY_SERVICE_USER)"
 
 log_info "Applying migrations (idempotent)..."
-run_priv -u "$OPENDRAY_SERVICE_USER" "$OPENDRAY_PREFIX/bin/opendray" migrate -config "$OD_CONFIG_PATH"
+run_priv_as "$OPENDRAY_SERVICE_USER" "$OPENDRAY_PREFIX/bin/opendray" migrate -config "$OD_CONFIG_PATH"
 log_ok "Migrations applied"
 
 # ───────────────────────────────────────────────────────────────────────

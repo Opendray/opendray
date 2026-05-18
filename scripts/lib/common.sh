@@ -136,7 +136,11 @@ require_cmds() {
     fi
 }
 
-# Run as root, falling back to sudo if available.
+# Run a command with root privileges.
+#   - If we're already root: exec directly.
+#   - Otherwise, prefix with sudo.
+# Don't pass sudo-only flags (-E, -u, etc.) here — those have to go through
+# run_priv_env / run_priv_as so we don't leak them to root's direct exec.
 run_priv() {
     if [ "$EUID" -eq 0 ]; then
         "$@"
@@ -144,6 +148,38 @@ run_priv() {
         sudo "$@"
     else
         log_die "This step needs root; please install sudo or rerun as root."
+    fi
+}
+
+# Run a command with root privileges, preserving the caller's environment.
+#   - Root: env is already ours, just exec.
+#   - Non-root: `sudo -E …` (preserve env). `-E` is a sudo flag; can't
+#     pass it through run_priv when we're already root, because root
+#     would try to exec `-E` as a command (that was the v2.0.0 bug).
+run_priv_env() {
+    if [ "$EUID" -eq 0 ]; then
+        "$@"
+    elif have_cmd sudo; then
+        sudo -E "$@"
+    else
+        log_die "This step needs root; please install sudo or rerun as root."
+    fi
+}
+
+# Run a command AS a specific (non-self) user.
+#   - sudo available (root or not): `sudo -u <user> …` (works for both).
+#   - root, no sudo: fall back to `runuser -u <user> -- …`.
+#   - non-root, no sudo: dead end (can't switch user without privilege).
+# Same reasoning as run_priv_env — `-u <user>` is a sudo flag that
+# root's direct exec can't consume.
+run_priv_as() {
+    local target_user="$1"; shift
+    if have_cmd sudo; then
+        sudo -u "$target_user" "$@"
+    elif [ "$EUID" -eq 0 ] && have_cmd runuser; then
+        runuser -u "$target_user" -- "$@"
+    else
+        log_die "Need sudo or runuser to run as $target_user (running as $(id -un))."
     fi
 }
 
