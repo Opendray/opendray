@@ -2,13 +2,16 @@
 //
 // Subcommands:
 //
-//	opendray serve   [-config FILE]   start the gateway
-//	opendray migrate [-config FILE]   apply pending DB migrations and exit
-//	opendray notes   <subcommand> ... operate on the file-system notes vault (no gateway needed)
-//	opendray skill   <subcommand> ... inspect / load agent skills (no gateway needed)
-//	opendray mcp     <subcommand> ... inspect MCP server registry (no gateway needed)
-//	opendray mcp-memory               stdio MCP server bridging agents to opendray memory (run by Claude/Codex/etc.)
-//	opendray version                  print build info and exit
+//	opendray serve     [-config FILE]   start the gateway
+//	opendray migrate   [-config FILE]   apply pending DB migrations and exit
+//	opendray update    [--check] [--force] [--yes] [--restart]
+//	                                    check + apply the latest released opendray binary
+//	opendray providers <subcommand> ... list / update the AI CLIs opendray spawns
+//	opendray notes     <subcommand> ... operate on the file-system notes vault (no gateway needed)
+//	opendray skill     <subcommand> ... inspect / load agent skills (no gateway needed)
+//	opendray mcp       <subcommand> ... inspect MCP server registry (no gateway needed)
+//	opendray mcp-memory                 stdio MCP server bridging agents to opendray memory (run by Claude/Codex/etc.)
+//	opendray version                    print build info and exit
 package main
 
 import (
@@ -40,6 +43,10 @@ func main() {
 		// where the catalog seed step would otherwise fail
 		// against tables that don't exist yet (see #162).
 		os.Exit(runMigrate(args))
+	case "update":
+		os.Exit(runUpdate(args))
+	case "providers":
+		os.Exit(runProviders(args))
 	case "notes":
 		os.Exit(runNotes(args))
 	case "skill":
@@ -91,12 +98,16 @@ func usage() {
 	fmt.Fprintln(os.Stderr, `opendray — multiplexer + integration gateway for AI agent CLIs
 
 usage:
-  opendray serve   [-config FILE]
-  opendray migrate [-config FILE]
-  opendray notes   <subcommand> [args]   (run "opendray notes --help" for details)
-  opendray skill   <subcommand> [args]   (run "opendray skill --help" for details)
-  opendray mcp     <subcommand> [args]   (run "opendray mcp --help" for details)
+  opendray serve     [-config FILE]
+  opendray migrate   [-config FILE]
+  opendray update    [--check] [--force] [--yes] [--restart]
+                                          (download + replace this binary with the latest release;
+                                           "opendray update --check" for a no-op version probe)
+  opendray providers <subcommand> [args]  (run "opendray providers --help" — list / update AI CLIs)
+  opendray notes     <subcommand> [args]  (run "opendray notes --help" for details)
+  opendray skill     <subcommand> [args]  (run "opendray skill --help" for details)
+  opendray mcp       <subcommand> [args]  (run "opendray mcp --help" for details)
   opendray mcp-memory                     (stdio MCP server — invoked by an agent CLI, not by humans)
-  opendray hook    <event>                (Claude Code hook entry — auto-write journal entries; see "opendray hook --help")
+  opendray hook      <event>              (Claude Code hook entry — auto-write journal entries)
   opendray version`)
 }
