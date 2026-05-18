@@ -131,7 +131,19 @@
         "uploadedToast": "图片已附加",
         "uploadFailedToast": "上传失败",
         "uploadInvalidTypeToast": "仅支持图片文件",
-        "dropToAttach": "释放以附加图片"
+        "dropToAttach": "释放以附加图片",
+        "urls": {
+          "tooltip": "打开或复制本会话输出里出现的链接",
+          "buttonLabel": "{count} 个链接",
+          "buttonLabel_plural": "{count} 个链接",
+          "dialogTitle": "检测到的链接",
+          "dialogDesc": "本会话输出中出现过的 URL。点击「打开」即可在默认浏览器中跳转 —— 终端里的换行不会影响。",
+          "openButton": "打开",
+          "copyButton": "复制",
+          "copiedToast": "链接已复制",
+          "copyFailedToast": "复制失败 —— 请长按链接手动复制",
+          "noneHint": "暂未检测到链接。"
+        }
       },
       "spawn": {
         "title": "创建会话",

@@ -131,7 +131,19 @@
         "uploadedToast": "Image attached",
         "uploadFailedToast": "Upload failed",
         "uploadInvalidTypeToast": "Only image files can be attached",
-        "dropToAttach": "Drop image to attach"
+        "dropToAttach": "Drop image to attach",
+        "urls": {
+          "tooltip": "Open or copy a URL detected in this session's output",
+          "buttonLabel": "{count} link",
+          "buttonLabel_plural": "{count} links",
+          "dialogTitle": "Detected links",
+          "dialogDesc": "URLs printed in this session's output. Tap Open to launch in your default browser — works even when the URL is line-wrapped in the terminal.",
+          "openButton": "Open",
+          "copyButton": "Copy",
+          "copiedToast": "URL copied",
+          "copyFailedToast": "Couldn't copy — long-press the URL and copy manually",
+          "noneHint": "No links detected yet."
+        }
       },
       "spawn": {
         "title": "Spawn session",

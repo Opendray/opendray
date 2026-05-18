@@ -17,6 +17,22 @@ import { useAuth } from '@/stores/auth'
 import { useTheme } from '@/stores/theme'
 import { BinaryWS, wsURL } from '@/lib/ws'
 import { resizeSession, uploadSessionFile } from '@/lib/sessions'
+import { DetectedURLs } from './DetectedURLs'
+import { extractURLs, stripANSI } from './url-extractor'
+
+// Keep the last N URLs we've seen in this session. 50 is enough for
+// any realistic OAuth-heavy session (each CLI prints 1-2 auth URLs),
+// and bounds the dialog scroll length on a long-lived session that
+// keeps printing links (e.g. one with a notes vault git push hint).
+const MAX_DETECTED_URLS = 50
+
+// Sliding window the URL scanner keeps in-memory across PTY frames.
+// PTY frames are byte-arbitrary boundaries that can land mid-URL, so
+// we prepend this tail to each new chunk before regex-matching.
+// 4 KB is much larger than even claude-code's full OAuth URL (~600
+// chars), so any single URL fits entirely inside the window with
+// room to spare.
+const URL_SCAN_TAIL_BYTES = 4096
 
 interface TerminalProps {
   sessionId: string
@@ -86,6 +102,11 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   const themeApplied = useTheme((s) => s.applied())
   const { t } = useTranslation()
   const [dragActive, setDragActive] = useState(false)
+  // URLs spotted in this session's PTY output. Surfaced by the
+  // floating <DetectedURLs /> badge so the operator can tap one to
+  // open in a browser instead of fighting with line-wrapped text in
+  // the terminal — particularly useful for OAuth flows on mobile.
+  const [detectedURLs, setDetectedURLs] = useState<string[]>([])
 
   const sendInput = useCallback((data: string) => {
     const ws = wsRef.current
@@ -139,6 +160,11 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   useEffect(() => {
     if (!containerRef.current || !token) return
 
+    // URL scanner state. Lives inside the effect so it resets when
+    // the session changes (different session ID → fresh URL list).
+    const textDecoder = new TextDecoder('utf-8', { fatal: false })
+    let urlScanTail = ''
+
     const term = new XTerm({
       fontFamily:
         '"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace',
@@ -169,7 +195,43 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     let alive = true
 
     const ws = new BinaryWS(wsURL(`/api/v1/sessions/${sessionId}/stream`, token), {
-      onMessage: (data) => term.write(data),
+      onMessage: (data) => {
+        term.write(data)
+        // Scan the same bytes we just gave xterm. Strip ANSI so colour
+        // resets in the middle of a URL don't truncate it; combine
+        // with the carry-over tail so URLs spanning the boundary
+        // between WS frames still match.
+        try {
+          const chunk = textDecoder.decode(data, { stream: true })
+          const combined = urlScanTail + stripANSI(chunk)
+          const found = extractURLs(combined)
+          if (found.length > 0) {
+            setDetectedURLs((prev) => {
+              const seen = new Set(prev)
+              const next = [...prev]
+              for (const u of found) {
+                if (!seen.has(u)) {
+                  seen.add(u)
+                  next.push(u)
+                }
+              }
+              // Cap retention — newest at the tail; oldest get
+              // dropped first when we overflow.
+              return next.length > MAX_DETECTED_URLS
+                ? next.slice(next.length - MAX_DETECTED_URLS)
+                : next
+            })
+          }
+          urlScanTail =
+            combined.length > URL_SCAN_TAIL_BYTES
+              ? combined.slice(combined.length - URL_SCAN_TAIL_BYTES)
+              : combined
+        } catch {
+          // URL extraction is best-effort. If decode / regex throws
+          // (malformed UTF-8, weird ANSI), drop this chunk's scan
+          // and keep the terminal stream flowing.
+        }
+      },
       onClose: () => {
         if (!alive) return
         term.writeln('')
@@ -312,6 +374,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   return (
     <div className="h-full w-full bg-background relative">
       <div ref={containerRef} className="h-full w-full p-3" />
+      <DetectedURLs urls={detectedURLs} />
       {dragActive && (
         <div className="pointer-events-none absolute inset-2 rounded-md border-2 border-dashed border-accent/70 bg-accent/10 flex items-center justify-center">
           <div className="text-[12px] font-mono text-accent">
