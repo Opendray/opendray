@@ -10,15 +10,12 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
-## [v2.1.0] — 2026-05-18
-
 ### Added — install / uninstall / update tooling
 
-This release is dominated by lifecycle scripts and binary
-subcommands that grew out of a fresh-LXC end-to-end install test.
-Everything below is `curl | bash`–reachable, idempotent, and works
-on Linux (Ubuntu / Debian) + macOS; Windows is funneled through
-WSL2.
+Lifecycle scripts and binary subcommands that grew out of a fresh-
+LXC end-to-end install test. Everything below is `curl | bash`–
+reachable, idempotent, and works on Linux (Ubuntu / Debian) +
+macOS; Windows is funneled through WSL2.
 
 - **One-line installer wizard** (#185 #186)
   - `scripts/install.sh` — dual-mode entry: dispatches to the OS
