@@ -86,6 +86,14 @@ irm https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install-
 
 Walks through Postgres setup, AI-CLI install, admin credentials, and service registration — landing a running gateway in ~5–10 minutes. See [**`scripts/README.md`**](scripts/README.md) for what the wizard does, the file layout it creates, options, and troubleshooting.
 
+**Uninstall** (Linux / macOS) — keeps DB + data by default; add `--purge` to drop everything:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | bash
+# or, full purge (DB, role, config, data, logs):
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | bash -s -- --purge
+```
+
 > **Want the manual walkthrough?** Read [**docs/getting-started.md**](docs/getting-started.md) — a 15-minute end-to-end guide that mirrors what the wizard does so you can verify each step yourself.
 
 ### Deploy path picker

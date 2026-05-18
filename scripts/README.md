@@ -1,9 +1,13 @@
-# Install wizard
+# Install + uninstall wizards
 
-Interactive, guided opendray install for Linux, macOS, and Windows
-(WSL2 setup helper). Walks you through Postgres setup, AI-CLI
-install, admin credentials, and service registration — landing a
-running gateway in roughly 5–10 minutes.
+Interactive, guided opendray lifecycle scripts for Linux, macOS, and
+Windows (WSL2 setup helper).
+
+| Script | What it does | One-liner |
+|---|---|---|
+| `install.sh` | Install everything (Postgres, AI CLIs, admin creds, service). | `curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install.sh \| bash` |
+| `uninstall.sh` | Remove the gateway. Keeps DB + data by default. | `curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh \| bash` |
+| `uninstall.sh --purge` | Remove everything: DB, role, config, data, logs. | `curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh \| bash -s -- --purge` |
 
 > Want the manual deploy paths instead?
 > See [`docs/getting-started.md`](../docs/getting-started.md) and
@@ -11,7 +15,7 @@ running gateway in roughly 5–10 minutes.
 
 ---
 
-## What it covers
+## What the installer covers
 
 The wizard is **end-to-end**: by the time it returns, opendray is
 running under `systemd` / `launchd` and the admin UI is reachable.
@@ -186,6 +190,55 @@ A system user `opendray` owns runtime data and logs.
 ```
 
 (`/Library/LaunchDaemons/...` instead, if you passed `--launchd-daemon`.)
+
+---
+
+## Uninstall
+
+```sh
+# Linux / macOS — stops + removes the gateway, KEEPS DB + data
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | bash
+
+# Or from a checkout:
+bash scripts/uninstall.sh
+```
+
+Default mode (no flags) only removes the gateway runtime: stops the
+service, deletes the systemd unit / launchd plist, removes the binary.
+Your `config.toml`, `data/` directory (bcrypt keyfile, sessions, notes,
+vault), logs, and the PostgreSQL database all stay put. Re-running the
+installer later picks up where you left off.
+
+### Purge (delete everything)
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | bash -s -- --purge
+# or
+bash scripts/uninstall.sh --purge
+```
+
+Adds these destructive steps to the default flow:
+
+- `DROP DATABASE` for the opendray database
+- `DROP ROLE` for the app DB user
+- delete `/etc/opendray/` (Linux) or `~/.opendray` (macOS)
+- delete `/var/lib/opendray/` and `/var/log/opendray/` (Linux)
+- remove the `opendray` service account (Linux)
+
+The PG drop step prompts for a superuser (local peer auth or
+host/user/password). The uninstaller does **not** touch:
+
+- Homebrew, Node.js, pnpm
+- The Claude / Codex / Gemini CLIs or their credentials
+- PostgreSQL itself or any other databases on it
+- apt / brew packages
+
+### Other options
+
+| Flag | Effect |
+|---|---|
+| `--yes`, `-y` | Skip all confirmations. Combine with `--purge` for unattended cleanup. |
+| `-h`, `--help` | Built-in help. |
 
 ---
 

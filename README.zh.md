@@ -84,6 +84,14 @@ irm https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install-
 
 引导你完成 Postgres 设置、AI CLI 安装、admin 凭据、服务注册,5–10 分钟拉起一个运行中的网关。详见 [**`scripts/README.md`**](scripts/README.md):wizard 做什么、生成的文件布局、参数、排错。
 
+**卸载**(Linux / macOS)—— 默认保留 DB + 数据;加 `--purge` 全部清除:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | bash
+# 或者完整 purge(DB / role / config / 数据 / 日志):
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | bash -s -- --purge
+```
+
 > **想自己一步步来?** 看 [**docs/getting-started.zh.md**](docs/getting-started.zh.md) —— 15 分钟端到端 walkthrough,跟 wizard 做的是同样的事,但每一步你都自己确认。
 
 ### 选部署路径
