@@ -77,26 +77,19 @@ rolling Unreleased section for what's landing next.
 > is for picking a deploy path; the guide stitches everything
 > around it.
 
-Pick the path that fits how you want to run it:
+**👉 Before picking: do you want to spawn Claude / Codex / Gemini sessions from the web admin?**
+- **Yes** → choose a 🟢 **Full** path below (binary / systemd / launchd / source). **Skip Docker.**
+- **No, just channels + integrations + notes + API** → 🐳 Docker Compose is fine.
+
+Why: the Docker image is distroless (no Node, no AI CLIs, no `pg_dump`) and opendray's PTY can't reach a host binary from inside a container. See the §A callout for the full breakdown.
 
 | Path | Best for | Features | Jump to |
 |---|---|---|---|
-| 📦 **Pre-built binary** | "Just run it" — Linux / macOS, any supervisor | ✨ Full | [Releases page](https://github.com/Opendray/opendray_v2/releases) → see [Production deploy](#production-deploy) |
-| 🐳 **Docker Compose** | Gateway / channels / integrations / notes / API on a Docker host | ⚠️ No session spawn, no backups (see §A) | [Production deploy §A](#option-a--docker-compose-gateway-use-cases) |
-| 🐧 **systemd unit** | Bare-metal / VM / LXC Linux box | ✨ Full | [Production deploy §B](#option-b--systemd-bare-metal--vm--lxc) |
-| 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio as home server | ✨ Full | [Production deploy §D](#option-d--macos-launchd-mac-mini--studio-as-home-server) |
-| 🛠 **Build from source** | Dev / contributing / custom builds | ✨ Full | [Quickstart](#quickstart-5-minute-dev-path) below |
-
-> **Full vs gateway-only**: "Full" means everything including
-> spawning Claude / Codex / Gemini / shell sessions from the Sessions
-> page, and encrypted backups via `pg_dump`. Docker Compose ships a
-> minimal distroless image that bundles only the opendray binary —
-> no Node runtime, no AI CLIs, no `pg_dump` — so session spawn and
-> backup require deploying opendray directly on a host with those
-> tools installed (systemd / launchd / direct binary). The Docker
-> path is the right choice when you want opendray as a network
-> gateway for channels + integrations + notes + memory + API
-> consumers, without local CLI sessions.
+| 📦 **Pre-built binary** | "Just run it" — Linux / macOS, any supervisor | 🟢 Full | [Releases page](https://github.com/Opendray/opendray_v2/releases) → see [Production deploy](#production-deploy) |
+| 🐧 **systemd unit** | Bare-metal / VM / LXC Linux box | 🟢 Full | [Production deploy §B](#option-b--systemd-bare-metal--vm--lxc) |
+| 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio as home server | 🟢 Full | [Production deploy §D](#option-d--macos-launchd-mac-mini--studio-as-home-server) |
+| 🛠 **Build from source** | Dev / contributing / custom builds | 🟢 Full | [Quickstart](#quickstart-5-minute-dev-path) below |
+| 🐳 **Docker Compose** | Gateway / channels / integrations / notes / API on a Docker host | 🟡 **Gateway-only** — ❌ no session spawn, ❌ no backups | [Production deploy §A](#option-a--docker-compose-gateway-only-no-session-spawn) |
 
 ## Quickstart (5-minute dev path)
 
@@ -131,21 +124,33 @@ Four supported deploy paths, pick whichever fits your environment.
 Each one gives you auto-restart on crash, persistent state, and
 separation of secrets from config.
 
-### Option A — Docker Compose (gateway use cases)
+### Option A — Docker Compose (gateway-only, no session spawn)
 
-> **What works inside the container** — channels (Telegram / Slack /
+> ## ⚠️ Read this before you pick Docker
+>
+> This path **does not support session spawning**. If you want to
+> spawn Claude / Codex / Gemini / shell sessions from the Sessions
+> page, **stop and use [Option B](#option-b--systemd-bare-metal--vm--lxc)
+> (systemd) or [Option D](#option-d--macos-launchd-mac-mini--studio-as-home-server)
+> (macOS launchd) instead** — opendray and the AI CLIs share auth,
+> project state, and tool definitions on the same host, so they
+> cohabit naturally there. Trying to make Docker work for session
+> spawn means either (a) maintaining a custom fat image with Node +
+> every CLI baked in, or (b) accepting that the Sessions tab will
+> error out for every spawn click.
+>
+> **What works** inside the container — channels (Telegram / Slack /
 > Discord / Feishu / DingTalk / WeCom), integrations API + reverse
-> proxy + events WebSocket, notes vault + git sync, memory subsystem,
-> web admin, mobile-app backend.
+> proxy + events WebSocket, notes vault + git sync, memory
+> subsystem, web admin, mobile-app backend.
 >
 > **What doesn't** — spawning Claude / Codex / Gemini / shell
-> sessions, and encrypted backups via `pg_dump`. The bundled image
-> is distroless (no Node runtime, no AI CLIs, no `pg_dump`), and
-> opendray's PTY can't reach a host binary from inside a container.
-> If you need those, deploy on the host via Option B (systemd) or
-> Option D (macOS launchd) instead — opendray and the AI CLIs share
-> auth, project state, and tool definitions on the same host, so
-> they cohabit naturally there.
+> sessions (no Node, no AI CLIs, no host PATH bridging), and
+> encrypted backups via `pg_dump` (image is distroless, no
+> `pg_dump`).
+>
+> Pick Docker only when this LXC / VPS / NAS is a dedicated channel
+> + integration gateway and you run AI sessions somewhere else.
 
 For deployments that want opendray as a long-running gateway on a
 home server, NAS, VPS, or LXC with Docker:

@@ -125,15 +125,29 @@ PGPASSWORD='<密码>' psql -h <pg-host> -U opendray_user -d opendray -c "SELECT 
 
 ## 第 3 步 —— 选部署路径、装 opendray
 
-README 有完整表;新手最常见的选择:
+**先问自己**:你来这里是为了 session spawn 功能吗(在 web Sessions
+页 spawn Claude / Codex / Gemini)?
+
+### 如果是 —— 需要 "完整" 路径
 
 | 你的 host | 路径 | README 章节 |
 |---|---|---|
 | macOS 24/7 家用 server | macOS LaunchDaemon | [方案 D](../README.zh.md#方案-d--macos-launchdmac-mini--studio-当家用-server) |
 | Linux 机器 / VPS / LXC | systemd | [方案 B](../README.zh.md#方案-b--systemd裸机--vm--lxc) |
-| 装了 Docker 的 host(不需要 session spawn) | Docker Compose | [方案 A](../README.zh.md#方案-a--docker-composegateway-用例) —— 看 callout 里的限制 |
 | 前台测试 | 源码 `go run` | [快速开始](../README.zh.md#快速开始5-分钟开发版) |
 | 自己的进程管理器(s6 / runit / launchd Agent) | 直接二进制 | [方案 C](../README.zh.md#方案-c--直接跑二进制--你自己的进程管理器) |
+
+> 跳过 Docker。镜像是 distroless(没 Node、没 AI CLI、没 `pg_dump`),
+> Sessions tab 每次 spawn 都会报错。架构原因见 §A 的 callout。
+
+### 如果不是 —— 只需要 channels / integrations / notes / API
+
+| 你的 host | 路径 | README 章节 |
+|---|---|---|
+| Docker host(LXC / VPS / NAS) | Docker Compose | [方案 A](../README.zh.md#方案-a--docker-compose仅网关不支持-session-spawn) |
+
+仍然可以收 Telegram / Slack 等消息、写 notes、调集成 API、看 Web 后台。
+只是不能从这个部署里 spawn 本地 AI CLI 会话。
 
 每条路径都汇聚到这里:
 

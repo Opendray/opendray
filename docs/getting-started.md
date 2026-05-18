@@ -131,16 +131,31 @@ You should see `check: ok` and no errors.
 
 ## Step 3 — pick a deploy path and install opendray
 
-The README has the full table; the most common picks for a first
-try:
+**Decision question first**: are you here for the session spawn
+feature (drive Claude / Codex / Gemini from the web Sessions page)?
+
+### If YES — you need a "Full" path
 
 | Your host | Path | README section |
 |---|---|---|
 | macOS as 24/7 home server | macOS LaunchDaemon | [Option D](../README.md#option-d--macos-launchd-mac-mini--studio-as-home-server) |
 | Linux box / VPS / LXC | systemd | [Option B](../README.md#option-b--systemd-bare-metal--vm--lxc) |
-| Docker host (no CLI session spawn needed) | Docker Compose | [Option A](../README.md#option-a--docker-compose-gateway-use-cases) — read the limit callout |
 | Just testing in foreground | `go run` from source | [Quickstart](../README.md#quickstart-5-minute-dev-path) |
 | Hand-rolled supervisor (s6 / runit / launchd Agent) | Direct binary | [Option C](../README.md#option-c--direct-binary--your-own-process-supervisor) |
+
+> Skip Docker. The image is distroless (no Node, no AI CLIs, no
+> `pg_dump`), so the Sessions tab will error on every spawn click.
+> See the §A callout for the architectural reason.
+
+### If NO — you only need channels / integrations / notes / API
+
+| Your host | Path | README section |
+|---|---|---|
+| Docker host (LXC / VPS / NAS) | Docker Compose | [Option A](../README.md#option-a--docker-compose-gateway-only-no-session-spawn) |
+
+You can still receive messages on Telegram / Slack / etc., write
+notes, hit the integration API, and view the web admin. You just
+can't spawn local AI CLI sessions from this deployment.
 
 All paths converge on:
 

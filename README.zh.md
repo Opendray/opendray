@@ -73,23 +73,19 @@
 > Postgres、部署 opendray、收到第一条 Telegram idle 通知。下面这个表
 > 只是挑部署路径,getting-started 把表前后的所有事情串起来。
 
-选一种最适合你环境的方式:
+**👉 选之前先问自己:你要不要在 Web 后台 spawn Claude / Codex / Gemini 会话?**
+- **要** → 选下表 🟢 **完整** 路径(binary / systemd / launchd / 源码)。**跳过 Docker。**
+- **不要,只要 channels + integrations + notes + API 网关** → 🐳 Docker Compose 适合你。
+
+为什么:Docker 镜像是 distroless(没 Node、没 AI CLI、没 `pg_dump`),opendray 的 PTY 也无法从容器内访问 host 二进制。详见 §A 的 callout。
 
 | 方式 | 适合 | 功能 | 跳转到 |
 |---|---|---|---|
-| 📦 **预构建二进制** | "拿来就跑" — Linux / macOS,搭配任意进程管理器 | ✨ 完整 | [Releases 页](https://github.com/Opendray/opendray_v2/releases) → 见下方 [生产部署](#生产部署) |
-| 🐳 **Docker Compose** | 把 opendray 当网关:channels / integrations / notes / API,跑在 Docker host 上 | ⚠️ 不支持 CLI 会话 spawn 与备份(见 §A) | [生产部署 §A](#方案-a--docker-composegateway-用例) |
-| 🐧 **systemd unit** | 裸机 / VM / Linux LXC | ✨ 完整 | [生产部署 §B](#方案-b--systemd裸机--vm--lxc) |
-| 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio 当家用 server | ✨ 完整 | [生产部署 §D](#方案-d--macos-launchdmac-mini--studio-当家用-server) |
-| 🛠 **从源码构建** | 开发 / 贡献代码 / 定制构建 | ✨ 完整 | [快速开始](#快速开始5-分钟开发版) |
-
-> **完整 vs 仅网关**:"完整"意味着所有功能 —— 包括从 Sessions 页 spawn
-> Claude / Codex / Gemini / shell 会话,以及通过 `pg_dump` 做加密备份。
-> Docker Compose 用的是 distroless 最小镜像,只打包了 opendray 二进制 —— 没有
-> Node 运行时、没有 AI CLI、没有 `pg_dump` —— 所以 session spawn 和 backup
-> 必须把 opendray 直接部署在装了那些工具的 host 上(systemd / launchd /
-> 直接二进制)。Docker 路径适合"把 opendray 当成 channels + integrations +
-> notes + memory + API 消费方的网络网关",不在本地 spawn CLI 会话的场景。
+| 📦 **预构建二进制** | "拿来就跑" — Linux / macOS,搭配任意进程管理器 | 🟢 完整 | [Releases 页](https://github.com/Opendray/opendray_v2/releases) → 见下方 [生产部署](#生产部署) |
+| 🐧 **systemd unit** | 裸机 / VM / Linux LXC | 🟢 完整 | [生产部署 §B](#方案-b--systemd裸机--vm--lxc) |
+| 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio 当家用 server | 🟢 完整 | [生产部署 §D](#方案-d--macos-launchdmac-mini--studio-当家用-server) |
+| 🛠 **从源码构建** | 开发 / 贡献代码 / 定制构建 | 🟢 完整 | [快速开始](#快速开始5-分钟开发版) |
+| 🐳 **Docker Compose** | 把 opendray 当网关:channels / integrations / notes / API,跑在 Docker host 上 | 🟡 **仅网关** — ❌ 不支持 session spawn,❌ 不支持备份 | [生产部署 §A](#方案-a--docker-compose仅网关不支持-session-spawn) |
 
 ## 快速开始(5 分钟开发版)
 
@@ -124,18 +120,29 @@ go run ./cmd/opendray serve -config config.toml
 四种受支持的部署路径,按你的环境挑一种。每种都提供:
 崩溃后自动重启、状态持久化、secrets 跟 config 分离。
 
-### 方案 A — Docker Compose(gateway 用例)
+### 方案 A — Docker Compose(仅网关,不支持 session spawn)
 
+> ## ⚠️ 选 Docker 之前一定要读这一段
+>
+> 这条路径 **不支持 session spawn**。如果你要在 Sessions 页 spawn
+> Claude / Codex / Gemini / shell 会话,**立刻停下来,用
+> [方案 B](#方案-b--systemd裸机--vm--lxc)(systemd)或
+> [方案 D](#方案-d--macos-launchdmac-mini--studio-当家用-server)
+> (macOS launchd)** —— opendray 跟 AI CLI 共享同一 host 上的认证、
+> 项目状态、工具定义,天然适合放一起。硬要让 Docker 跑 session spawn,
+> 要么 (a) 自己维护一个塞 Node + 所有 CLI 的 fat image,要么
+> (b) 接受 Sessions tab 上每次 spawn 都报错。
+>
 > **容器内能跑的** —— channels(Telegram / Slack / Discord / 飞书 /
 > 钉钉 / 企业微信)、integrations API + 反向代理 + events WebSocket、
 > notes vault + git 同步、memory 子系统、Web 后台、移动端后端。
 >
-> **容器内跑不了的** —— spawn Claude / Codex / Gemini / shell 会话,
-> 以及通过 `pg_dump` 的加密备份。打包的镜像是 distroless(没 Node 运行时、
-> 没 AI CLI、没 `pg_dump`),opendray 的 PTY 也无法从容器内访问 host 二进制。
-> 如果需要这些功能,改用方案 B(systemd)或 D(macOS launchd)直接在
-> host 上部署 —— opendray 跟 AI CLI 共享同一 host 上的认证、项目状态、
-> 工具定义,天然适合放一起。
+> **容器内跑不了的** —— spawn Claude / Codex / Gemini / shell 会话
+> (没 Node、没 AI CLI、没法跨 container 边界调 host PATH),以及通过
+> `pg_dump` 的加密备份(镜像 distroless,没 `pg_dump`)。
+>
+> 只在这台 LXC / VPS / NAS 是**专用 channel + integration 网关**、
+> AI session 在别的地方跑的场景下,才选 Docker。
 
 适合把 opendray 当成长期运行的网关,放在家用服务器、NAS、VPS 或装了
 Docker 的 LXC 上:
