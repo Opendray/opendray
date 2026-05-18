@@ -26,8 +26,11 @@ source "$SCRIPT_DIR/lib/common.sh"
 : "${OPENDRAY_SERVICE_USER:=opendray}"
 : "${OPENDRAY_SERVICE_NAME:=opendray}"
 
-PURGE=0
-ASSUME_YES=0
+# Also accept env-var forms so `curl … | OPENDRAY_PURGE=1 bash` works,
+# bypassing the `bash -s -- --flag` syntax that's easy to mangle when
+# pasting a multi-line command into a terminal.
+PURGE="${OPENDRAY_PURGE:-0}"
+ASSUME_YES="${OPENDRAY_YES:-0}"
 
 for arg in "$@"; do
     case "$arg" in

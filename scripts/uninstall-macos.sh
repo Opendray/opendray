@@ -23,8 +23,8 @@ LABEL="com.opendray.opendray"
 USER_PLIST="$HOME/Library/LaunchAgents/${LABEL}.plist"
 SYS_PLIST="/Library/LaunchDaemons/${LABEL}.plist"
 
-PURGE=0
-ASSUME_YES=0
+PURGE="${OPENDRAY_PURGE:-0}"
+ASSUME_YES="${OPENDRAY_YES:-0}"
 
 for arg in "$@"; do
     case "$arg" in

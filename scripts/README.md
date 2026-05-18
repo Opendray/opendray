@@ -233,10 +233,23 @@ installer later picks up where you left off.
 ### Purge (delete everything)
 
 ```sh
+# Method 1: env var (safer for copy-paste — survives accidental newlines)
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | OPENDRAY_PURGE=1 bash
+
+# Method 2: flag via bash -s (must be one line, no manual line break!)
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | bash -s -- --purge
-# or
+
+# From a checkout:
 bash scripts/uninstall.sh --purge
 ```
+
+> **Heads up on `bash -s -- --purge`:** the `--` and `--purge` MUST
+> be on the same line as `bash -s`. If your terminal soft-wraps the
+> command across two lines and you actually paste a newline, the
+> shell parses it as two commands — the first one is `bash -s` with
+> no args (default-mode uninstall, keeps your data), the second is
+> `-- --purge` (which fails with `--: command not found`). The
+> env-var form (`OPENDRAY_PURGE=1`) doesn't have this footgun.
 
 Adds these destructive steps to the default flow:
 
@@ -256,10 +269,14 @@ host/user/password). The uninstaller does **not** touch:
 
 ### Other options
 
-| Flag | Effect |
-|---|---|
-| `--yes`, `-y` | Skip all confirmations. Combine with `--purge` for unattended cleanup. |
-| `-h`, `--help` | Built-in help. |
+| Flag | Env var | Effect |
+|---|---|---|
+| `--purge` | `OPENDRAY_PURGE=1` | Also drop the DB, role, config, data, logs, and the service user. |
+| `--yes`, `-y` | `OPENDRAY_YES=1` | Skip all confirmations. Combine with `--purge` for unattended cleanup. |
+| `-h`, `--help` | — | Built-in help. |
+
+Env-var forms are equivalent to the flag forms; pick whichever
+survives your copy-paste flow.
 
 ---
 
