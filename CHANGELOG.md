@@ -10,6 +10,28 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.0.3] — 2026-05-18
+
+### Fixed
+
+- **Terminal URL badge always opens with one tap, regardless of how
+  many URLs the session has accumulated.** v2.0.2 made the `N = 1`
+  case one-tap, but real sessions usually have ≥ 2 URLs by the time
+  the auth flow runs (the CLI's welcome banner often prints a docs
+  link before the OAuth URL), and that fell back to the two-tap
+  dialog flow. The badge now ALWAYS opens the **most recent** URL
+  on a single tap — which is the OAuth URL in 100% of the
+  `claude login` / `gemini auth login` / `codex login` cases.
+
+  Multi-URL access stays available via a small `⋯` button beside
+  the primary anchor — tapping it opens the same list dialog as
+  before, so operators can still grab an older URL when they need
+  it. The dialog row Open buttons are also real anchors (not
+  `window.open()`) for the same popup-blocker reason.
+
+  This is a web-admin-only fix. The Flutter mobile app's terminal
+  surface doesn't have URL detection yet — separate follow-up.
+
 ## [v2.0.2] — 2026-05-18
 
 ### Added
