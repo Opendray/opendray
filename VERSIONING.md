@@ -123,7 +123,7 @@ opendray vX.Y.Z (commit=<sha>, date=<iso>)
 ```
 
 The `-dev.<sha>` suffix is set automatically by the build pipeline
-(see `Dockerfile` and `.goreleaser.yml` for the `-ldflags -X` wiring
+(see `.goreleaser.yml` for the `-ldflags -X` wiring
 into `internal/version/`). Operators reading the banner should never
 mistake a `main` HEAD build for a frozen release.
 

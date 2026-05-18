@@ -62,15 +62,15 @@ A subset of tests in `internal/memory/summarizer/` exercises a real
 Postgres. They `t.Skip` when `OPENDRAY_DEV_DB_URL` is unset, so the
 default `go test ./...` is always green even without a database.
 
-To run them locally, start the bundled dev DB and export the DSN:
+To run them locally, point `OPENDRAY_DEV_DB_URL` at any Postgres 15+
+instance with `pgvector` available (e.g. an apt / brew install, or a
+remote PG you control):
 
 ```bash
-docker compose -f docker-compose.test.yml up -d
 export OPENDRAY_DEV_DB_URL='postgres://opendray:opendray@127.0.0.1:5432/opendray?sslmode=disable'
 go test -race ./internal/memory/summarizer/...
 ```
 
-Or point `OPENDRAY_DEV_DB_URL` at any Postgres 15+ instance you control.
 Never hard-code DSNs in source — they will leak via git history.
 
 ## Pull Request Process

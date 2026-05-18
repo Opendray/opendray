@@ -46,7 +46,7 @@ Closes #
 - [ ] Notes / vault — `internal/notes/*`, `internal/vaultgit/*`
 - [ ] Integration API — `internal/integration/*`, `internal/gateway/*`
 - [ ] DB migrations — `internal/store/migrations/*`
-- [ ] Deploy artefacts — `deploy/`, `Dockerfile`, `docker-compose*.yml`
+- [ ] Deploy artefacts — `deploy/`, `scripts/install*.sh`, `scripts/uninstall*.sh`
 - [ ] Docs — `README*`, `docs/`, `CHANGELOG.md`
 
 ## Test plan

@@ -9,8 +9,8 @@ listen = "127.0.0.1:8770"
 [database]
 # Point at any reachable Postgres 15+. Use a project-scoped role
 # (CRUD only, not a superuser) and rotate credentials out of band.
-# For local development, `docker compose -f docker-compose.test.yml up -d`
-# starts a Postgres on 127.0.0.1:5432 matching this DSN.
+# For local development, any local Postgres 15+ with pgvector enabled
+# on 127.0.0.1:5432 matches this DSN.
 url = "postgres://opendray:opendray@127.0.0.1:5432/opendray?sslmode=disable"
 # Optional: cap the pgx connection pool. Empty / 0 = 16 (store default).
 # Bump for high-fanout integration traffic; trim on shared PG instances.
