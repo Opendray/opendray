@@ -37,7 +37,6 @@
     "plugins": "Plugins",
     "backups": "Backups",
     "settings": "Settings",
-    "tutorial": "Tutorial",
     "workspace": "Workspace"
   },
   "web": {
@@ -973,9 +972,8 @@
       },
       "claudeAccounts": {
         "title": "Claude accounts",
-        "tutorialTooltip": "Open the multi-account tutorial section",
         "importLocal": "Import local",
-        "importLocalTooltip": "Scan ~/.claude-accounts/ on the gateway host and register any new directories. The button is gateway-host only — see the tutorial.",
+        "importLocalTooltip": "Scan ~/.claude-accounts/ on the gateway host and register any new directories. The button is gateway-host only.",
         "importedNothingToast": "Nothing to import — accounts already in sync.",
         "importedToast_one": "Imported {count} account from ~/.claude-accounts",
         "importedToast_other": "Imported {count} accounts from ~/.claude-accounts",
