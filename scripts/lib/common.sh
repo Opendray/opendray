@@ -5,14 +5,18 @@
 # Requires bash 4+ (for `printf -v`, `read -ra`, parameter expansion).
 
 # Detect colour-capable terminal once.
+# Use $'…' (ANSI-C quoting) so the vars hold *real* ESC bytes — that
+# lets `cat <<EOF` heredocs interpolate colours correctly, not just
+# printf. The old '\033[…]m' form only worked when fed through printf
+# (printf processes \033); heredocs printed the literal 4 characters.
 if [ -t 1 ] && command -v tput >/dev/null 2>&1 && [ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]; then
-    C_RED='\033[0;31m'
-    C_GRN='\033[0;32m'
-    C_YEL='\033[1;33m'
-    C_BLU='\033[0;34m'
-    C_CYA='\033[0;36m'
-    C_DIM='\033[2m'
-    C_NC='\033[0m'
+    C_RED=$'\033[0;31m'
+    C_GRN=$'\033[0;32m'
+    C_YEL=$'\033[1;33m'
+    C_BLU=$'\033[0;34m'
+    C_CYA=$'\033[0;36m'
+    C_DIM=$'\033[2m'
+    C_NC=$'\033[0m'
 else
     C_RED='' C_GRN='' C_YEL='' C_BLU='' C_CYA='' C_DIM='' C_NC=''
 fi

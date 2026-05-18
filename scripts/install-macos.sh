@@ -323,11 +323,13 @@ log_ok "App user can connect"
 log_step 6 "opendray admin credentials + network"
 
 cat <<'EOF'
-Initial admin password (you'll be forced to rotate it after first UI
-login — opendray writes a bcrypt keyfile, then the plaintext below
-becomes inert).
+Pick the initial admin login. You'll be forced to rotate the password
+after first UI login (opendray writes a bcrypt keyfile, after which
+the plaintext below becomes inert — `user` stays authoritative).
 
 EOF
+ask_with_default "Admin username" "admin" OD_ADMIN_USER
+
 DEFAULT_ADMIN_PW="$(gen_password 20)"
 ask_with_default "Initial admin password (Enter = random)" "$DEFAULT_ADMIN_PW" OD_ADMIN_PW
 
@@ -427,7 +429,11 @@ listen = "$OD_LISTEN"
 url = "$OD_DSN"
 
 [admin]
-# Initial bootstrap password. Rotate via the UI after first login.
+# Admin login. opendray validates {user, password} against this section
+# until you rotate the password via the UI — at which point a bcrypt
+# keyfile takes over and `password` here becomes inert. `user` stays
+# authoritative either way.
+user     = "$OD_ADMIN_USER"
 password = "$OD_ADMIN_PW"
 
 [log]
@@ -556,12 +562,30 @@ done
 
 log_section "Install complete"
 
-WEB_URL="http://${OD_LISTEN}/admin/"
-[[ "$OD_LISTEN" == 0.0.0.0:* ]] && WEB_URL="http://<this-Mac>:${OD_LISTEN##*:}/admin/"
+# Build a clickable URL. For 0.0.0.0 listens, resolve the Mac's primary
+# IP via `ipconfig getifaddr` (en0 = Wi-Fi / wired on most setups; en1 = fallback).
+PORT="${OD_LISTEN##*:}"
+HOST_PART="${OD_LISTEN%:*}"
+case "$HOST_PART" in
+    0.0.0.0|"")
+        LAN_IP=""
+        for iface in en0 en1 en2 en3; do
+            LAN_IP="$(ipconfig getifaddr "$iface" 2>/dev/null)"
+            [ -n "$LAN_IP" ] && break
+        done
+        [ -n "$LAN_IP" ] || LAN_IP="<this-Mac-ip>"
+        WEB_URL="http://${LAN_IP}:${PORT}/admin/"
+        WEB_URL_NOTE="  (LAN — reachable from any device on the same network)"
+        ;;
+    *)
+        WEB_URL="http://${OD_LISTEN}/admin/"
+        WEB_URL_NOTE=""
+        ;;
+esac
 
 cat <<EOF
-  ${C_BLU}Admin UI${C_NC}        ${WEB_URL}
-  ${C_BLU}Login as${C_NC}        admin
+  ${C_BLU}Admin UI${C_NC}        ${WEB_URL}${WEB_URL_NOTE}
+  ${C_BLU}Username${C_NC}        ${OD_ADMIN_USER}
   ${C_BLU}Password${C_NC}        ${OD_ADMIN_PW}   ${C_YEL}← rotate via Settings → Admin on first login${C_NC}
 
   ${C_BLU}Config${C_NC}          ${OD_CONFIG_PATH}
@@ -573,7 +597,8 @@ cat <<EOF
   ${C_BLU}DB password${C_NC}     ${OD_DB_PW}   ${C_YEL}← save this somewhere safe${C_NC}
 
   Next:
-    1. Open the admin UI, log in, rotate the admin password.
+    1. Open the admin UI (link above is clickable in most terminals),
+       log in as ${OD_ADMIN_USER}, rotate the admin password.
     2. Run 'claude login' / 'gemini auth login' / 'codex login' to finish CLI auth.
     3. Providers → register the CLI binary path (e.g. \$(which claude)).
     4. Sessions → New session → spawn your first session.
