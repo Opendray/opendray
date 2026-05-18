@@ -40,29 +40,22 @@
 
 ## 当前状态
 
-**v2.0.0** — opendray v2 这一代产品的首次发布(2026-05-17)。
+**v2.0.5**(最新)—— v2 代功能已完整,目前在按运维反馈滚动 patch 版本。
 参见 [`VERSIONING.md`](VERSIONING.md) 了解 major-as-generation 版本策略
-(major = 产品代号,而不是严格的 SemVer "破坏性变更" 标记)。
+(major = 产品代号,而不是严格的 SemVer "破坏性变更" 标记),
+[`CHANGELOG.md`](CHANGELOG.md) 有完整 release 历史。
 
 这一代产品包含:
 
-- **后端(Go)** — sessions、channels、providers、memory、backup、
-  集成 API。单一静态二进制,React SPA 通过 `go:embed` 嵌入。
-- **Web admin**(React 19 + Vite + Tailwind v4 + shadcn/ui + TanStack
-  Router/Query + Zustand + xterm.js)
-- **移动端**(Flutter,iOS + Android,在 `app/mobile/`)— 在会话控制、
-  频道管理、记忆、备份、笔记和集成 API 上跟 Web 完全对等
-- **六大双向频道** — Telegram · Slack · Discord · 飞书(Feishu)·
-  钉钉(DingTalk)· 企业微信(WeCom)— 外加 **Bridge** 用 WebSocket
-  接入自定义平台
-- **本地优先的记忆系统** — ONNX / Ollama / LM Studio 嵌入向量;
-  跨层检索(用户 · 项目 · 会话)+ 智能排序 + 冲突检测;
-  数据不出你的内网
-- **自动化 release 流水线** — goreleaser 交叉编译(linux/darwin ×
-  amd64/arm64)、cosign 无密钥签名(Sigstore)、SPDX SBOM
-
-查看 [`CHANGELOG.md`](CHANGELOG.md) 了解 v2.0.0 详情和后续 Unreleased
-段中即将落地的内容。
+- **一行命令安装/卸载 wizard**(Linux + macOS;Windows 经 WSL2)——
+  引导操作者完成 Postgres bootstrap、AI CLI 安装、admin 凭据、监听地址、
+  binary 安装、schema migration、service 注册。
+- **可自管理的 binary** —— `opendray update / start / stop /
+  restart / status / providers list / providers update`,日常运维
+  不用碰 `systemctl` / `launchctl`。
+- **goreleaser release 流水线** —— 交叉编译(linux/darwin ×
+  amd64/arm64)、cosign 无密钥签名(Sigstore)、SPDX SBOM、原子校验
+  自更新。
 
 ## 安装
 
@@ -82,15 +75,43 @@ irm https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install-
 
 引导你完成 Postgres 设置、AI CLI 安装、admin 凭据、服务注册,5–10 分钟拉起一个运行中的网关。详见 [**`scripts/README.md`**](scripts/README.md):wizard 做什么、生成的文件布局、参数、排错。
 
-**卸载**(Linux / macOS)—— 默认保留 DB + 数据;加 `OPENDRAY_PURGE=1` 全部清除:
+> **想自己一步步来?** 看 [**docs/getting-started.zh.md**](docs/getting-started.zh.md) —— 15 分钟端到端 walkthrough,跟 wizard 做的是同样的事,但每一步你都自己确认。
+
+### 卸载(Linux / macOS)
+
+**默认模式** —— 停掉网关、删 binary,但**保留** `config.toml`、数据目录(bcrypt keyfile、sessions、notes、vault)、日志、PostgreSQL 数据库。重装时直接接上,数据不丢:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | bash
-# 或者完整 purge(DB / role / config / 数据 / 日志):
+```
+
+**完整 purge** —— 还会 drop 数据库 + role、删 config / 数据 / 日志、移除服务用户。最后有 verification 步骤,有残留会大声报错:
+
+```sh
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | OPENDRAY_PURGE=1 bash
 ```
 
-> **想自己一步步来?** 看 [**docs/getting-started.zh.md**](docs/getting-started.zh.md) —— 15 分钟端到端 walkthrough,跟 wizard 做的是同样的事,但每一步你都自己确认。
+### 日常运维命令
+
+装完之后,`opendray` 二进制自己管自己的生命周期 —— 不用记 `systemctl` / `launchctl`:
+
+```sh
+sudo opendray update --restart   # 拉最新 release、SHA-256 校验、原子替换 + 重启
+```
+
+```sh
+sudo opendray providers update   # 升级 AI CLIs(claude / codex / gemini)到 npm 最新版
+```
+
+```sh
+opendray providers list          # 看装了哪些 AI CLI、各自版本
+```
+
+```sh
+sudo opendray start              # start | stop | restart | status —— 封装 systemd / launchd
+```
+
+完整子命令列表:`opendray --help`。
 
 ### 选部署路径
 
@@ -189,7 +210,7 @@ Unit 在 `ExecStartPre` 阶段跑 `opendray migrate`,首次启动会先把
 goreleaser release --clean --snapshot
 ls dist/                  # opendray_*_linux_amd64.tar.gz 等
 
-# 或者从已发布的 release 拿 artifact(v2.0.0 发布之后):
+# 或者从已发布的 release 拿 artifact:
 # https://github.com/Opendray/opendray_v2/releases
 ```
 
@@ -264,7 +285,7 @@ export OPENDRAY_BACKUP_PG_RESTORE_PATH=/opt/homebrew/opt/postgresql@17/bin/pg_re
 
 重启 opendray,侧栏会出现 Backups 页(`/backups`)用于加密的
 PostgreSQL 备份 + 恢复,以及 `/export` 用于 zip 包数据导出 + 导入。
-ADR 0012 和应用内的 **Tutorial → Backups** 章节有完整生命周期说明。
+ADR 0012 有完整生命周期说明。
 
 一个 Go 二进制装着整个 web bundle —— 运行时不需要 Node,不需要单独的
 静态文件服务器,不需要 Caddy/nginx。Cloudflare Tunnel 在 `:8770`

@@ -40,32 +40,24 @@
 
 ## Status
 
-**v2.0.0** — first release of the opendray v2 generation (2026-05-17).
-See [`VERSIONING.md`](VERSIONING.md) for the major-as-generation policy
-(major = product generation, not strict SemVer "breaking change").
+**v2.0.5** (latest) — the v2 generation is feature-complete and shipping
+patch releases as operators report polish items. See
+[`VERSIONING.md`](VERSIONING.md) for the major-as-generation policy
+(major = product generation, not strict SemVer "breaking change") and
+[`CHANGELOG.md`](CHANGELOG.md) for the full release history.
 
-What's in this generation:
+This generation ships:
 
-- **Backend (Go)** — sessions, channels, providers, memory, backup,
-  integration API. Single static binary with the React SPA embedded
-  via `go:embed`.
-- **Web admin** (React 19 + Vite + Tailwind v4 + shadcn/ui + TanStack
-  Router/Query + Zustand + xterm.js)
-- **Mobile app** (Flutter, iOS + Android, in `app/mobile/`) — parity
-  with web on session control, channel management, memory, backups,
-  notes, and the integration API
-- **Six bidirectional channels** — Telegram · Slack · Discord ·
-  Feishu (飞书) · DingTalk (钉钉) · WeCom (企业微信) — plus
-  **Bridge** for custom WebSocket-bound platforms
-- **Local-first memory** — ONNX / Ollama / LM Studio embedding;
-  cross-layer retrieval (user · project · session) with smart ranking
-  and conflict detection; no data leaves your network
-- **Automated release pipeline** — goreleaser cross-compile
+- **One-line installer + uninstaller wizards** (Linux + macOS;
+  Windows funnels through WSL2). Walks the operator through Postgres
+  bootstrap, AI-CLI install, admin credentials, listen address,
+  binary install, schema migration, and service registration.
+- **Self-managing binary** — `opendray update / start / stop /
+  restart / status / providers list / providers update` so operators
+  don't touch `systemctl` / `launchctl` for routine ops.
+- **Goreleaser release pipeline** — cross-compiled binaries
   (linux/darwin × amd64/arm64), cosign keyless signing (Sigstore),
-  SPDX SBOM
-
-See [`CHANGELOG.md`](CHANGELOG.md) for the v2.0.0 entry and the
-rolling Unreleased section for what's landing next.
+  SPDX SBOM, atomically verified self-update.
 
 ## Install
 
@@ -85,15 +77,43 @@ irm https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install-
 
 Walks through Postgres setup, AI-CLI install, admin credentials, and service registration — landing a running gateway in ~5–10 minutes. See [**`scripts/README.md`**](scripts/README.md) for what the wizard does, the file layout it creates, options, and troubleshooting.
 
-**Uninstall** (Linux / macOS) — keeps DB + data by default; pass `OPENDRAY_PURGE=1` to drop everything:
+> **Want the manual walkthrough?** Read [**docs/getting-started.md**](docs/getting-started.md) — a 15-minute end-to-end guide that mirrors what the wizard does so you can verify each step yourself.
+
+### Uninstall (Linux / macOS)
+
+**Default** — stops the gateway and removes the binary, but **keeps** your `config.toml`, data directory (bcrypt keyfile, sessions, notes, vault), logs, and the PostgreSQL database so a re-install resumes where you left off:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | bash
-# or, full purge (DB, role, config, data, logs):
+```
+
+**Full purge** — also drops the PG database + role, deletes config / data / logs, removes the service user. Includes a post-delete verification step that bails loudly if anything survived:
+
+```sh
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | OPENDRAY_PURGE=1 bash
 ```
 
-> **Want the manual walkthrough?** Read [**docs/getting-started.md**](docs/getting-started.md) — a 15-minute end-to-end guide that mirrors what the wizard does so you can verify each step yourself.
+### Day-to-day commands
+
+After install, the `opendray` binary handles its own lifecycle — no need to remember `systemctl` / `launchctl` incantations:
+
+```sh
+sudo opendray update --restart   # download latest release, verify SHA, atomic replace + restart
+```
+
+```sh
+sudo opendray providers update   # bump installed AI CLIs (claude / codex / gemini) to npm-latest
+```
+
+```sh
+opendray providers list          # see which AI CLIs are installed + their versions
+```
+
+```sh
+sudo opendray start              # start | stop | restart | status — wraps systemd / launchd
+```
+
+`opendray --help` lists the full subcommand set.
 
 ### Deploy path picker
 
@@ -192,7 +212,7 @@ Build once, run with whatever supervisor you already use:
 goreleaser release --clean --snapshot
 ls dist/                  # opendray_*_linux_amd64.tar.gz etc.
 
-# Or grab a published release artefact (after v2.0.0 ships):
+# Or grab a published release artefact:
 # https://github.com/Opendray/opendray_v2/releases
 ```
 
@@ -270,8 +290,7 @@ export OPENDRAY_BACKUP_PG_RESTORE_PATH=/opt/homebrew/opt/postgresql@17/bin/pg_re
 
 Restart opendray; the sidebar grows a Backups page (`/backups`)
 for encrypted PostgreSQL dumps + restore, and `/export` for
-zip-bundle data exports + import. ADR 0012 + the in-app
-Tutorial → Backups section have the full lifecycle.
+zip-bundle data exports + import. ADR 0012 has the full lifecycle.
 
 A single Go binary carries the whole web bundle — no Node runtime
 required at runtime, no separate static-file server, no Caddy/nginx
