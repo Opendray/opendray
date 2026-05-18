@@ -19,6 +19,13 @@
 
 set -euo pipefail
 
+# Reattach stdin to the controlling terminal so prompts work even when
+# we arrived here via `curl … | bash` (the inherited stdin is the curl
+# pipe at EOF, which makes every `read` fail immediately).
+if [ ! -t 0 ] && [ -r /dev/tty ]; then
+    exec </dev/tty
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/common.sh
 source "$SCRIPT_DIR/lib/common.sh"

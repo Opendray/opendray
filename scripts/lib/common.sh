@@ -42,13 +42,15 @@ ask_with_default() {
     local prompt="$1"
     local default="$2"
     local var_name="$3"
-    local response
+    local response=""
     if [ -n "$default" ]; then
         printf "${C_BLU}?${C_NC} %s ${C_DIM}[%s]${C_NC}: " "$prompt" "$default"
     else
         printf "${C_BLU}?${C_NC} %s: " "$prompt"
     fi
-    read -r response
+    # `|| response=""` — never trip `set -e` if stdin EOFs (curl|bash with
+    # no /dev/tty fallback, CI containers without a controlling terminal).
+    read -r response || response=""
     printf -v "$var_name" '%s' "${response:-$default}"
 }
 
@@ -56,9 +58,9 @@ ask_with_default() {
 ask_password() {
     local prompt="$1"
     local var_name="$2"
-    local response
+    local response=""
     printf "${C_BLU}?${C_NC} %s: " "$prompt"
-    read -rs response
+    read -rs response || response=""
     echo
     printf -v "$var_name" '%s' "$response"
 }
@@ -72,7 +74,8 @@ ask_yes_no() {
     if [ "$default" = "y" ]; then hint="[Y/n]"; else hint="[y/N]"; fi
     while true; do
         printf "${C_BLU}?${C_NC} %s %s: " "$prompt" "$hint"
-        read -r response
+        response=""
+        read -r response || response=""
         response="${response:-$default}"
         case "${response,,}" in
             y|yes) printf -v "$var_name" '%s' 'y'; return 0 ;;
@@ -98,7 +101,8 @@ ask_menu() {
     done
     while true; do
         printf "  Enter 1-%d: " "${#_menu_opts[@]}"
-        read -r choice
+        choice=""
+        read -r choice || choice=""
         if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#_menu_opts[@]}" ]; then
             printf -v "$var_name" '%s' "${_menu_opts[$((choice - 1))]}"
             return 0
