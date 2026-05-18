@@ -70,22 +70,25 @@ rolling Unreleased section for what's landing next.
 
 ## Install
 
-> **First time here?** Read [**docs/getting-started.md**](docs/getting-started.md)
-> for a 15-minute end-to-end walkthrough — installing the AI CLIs
-> opendray wraps, bootstrapping Postgres, deploying opendray, and
-> getting your first idle notification on Telegram. The table below
-> is for picking a deploy path; the guide stitches everything
-> around it.
+### One-line installer
 
-> **Or let the wizard do it.** On Linux (Ubuntu / Debian) or macOS:
-> ```sh
-> bash scripts/install-linux.sh    # or scripts/install-macos.sh
-> ```
-> Walks through Postgres setup, AI-CLI install, admin credentials,
-> and service registration — landing a running gateway in ~5 min.
-> See [`scripts/README.md`](scripts/README.md). Windows uses WSL2;
-> run [`scripts/install-windows.ps1`](scripts/install-windows.ps1)
-> for the setup helper.
+**Linux / macOS / WSL2**
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install.sh | bash
+```
+
+**Windows** — sets up WSL2 first, then runs the Linux installer inside it. [details →](scripts/README.md#windows)
+
+```powershell
+irm https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install-windows.ps1 | iex
+```
+
+Walks through Postgres setup, AI-CLI install, admin credentials, and service registration — landing a running gateway in ~5–10 minutes. See [**`scripts/README.md`**](scripts/README.md) for what the wizard does, the file layout it creates, options, and troubleshooting.
+
+> **Want the manual walkthrough?** Read [**docs/getting-started.md**](docs/getting-started.md) — a 15-minute end-to-end guide that mirrors what the wizard does so you can verify each step yourself.
+
+### Deploy path picker
 
 **👉 Before picking: do you want to spawn Claude / Codex / Gemini sessions from the web admin?**
 - **Yes** → choose a 🟢 **Full** path below (binary / systemd / launchd / source). **Skip Docker.**

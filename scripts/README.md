@@ -37,39 +37,56 @@ Those happen after the wizard, in the admin UI.
 
 ## Quick start
 
-### Linux (Ubuntu / Debian)
+### Linux / macOS / WSL2 — one-liner
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install.sh | bash
+```
+
+`install.sh` is dual-mode:
+
+- **Piped from curl** (no local checkout): it shallow-clones
+  `Opendray/opendray_v2` to `${TMPDIR:-/tmp}/opendray-install-$$`,
+  installs `git` first via `apt` / `brew` if it's missing, then
+  re-execs itself from the clone so the rest of the wizard sees a
+  real working directory.
+- **Run from a clone** (already inside the repo): it just `exec`s
+  the matching OS installer (`install-linux.sh` or
+  `install-macos.sh`).
+
+Either way you end up with `install-linux.sh` (or `install-macos.sh`)
+walking through the same wizard. The one-liner just removes the
+`git clone` + `cd` step.
+
+### Linux / macOS — from a checkout
+
+If you'd rather inspect the code before running anything:
 
 ```sh
 git clone https://github.com/Opendray/opendray_v2.git
 cd opendray_v2
-bash scripts/install-linux.sh
+bash scripts/install-linux.sh          # Linux (Ubuntu/Debian)
+# or:
+bash scripts/install-macos.sh          # macOS (Intel + Apple Silicon)
 ```
 
-Need `sudo` for `apt`, the `postgresql` service, and the systemd unit.
-The wizard prompts before each privileged step.
-
-### macOS (Intel + Apple Silicon)
-
-```sh
-git clone https://github.com/Opendray/opendray_v2.git
-cd opendray_v2
-bash scripts/install-macos.sh
-```
-
-Default scope is a **user LaunchAgent** (runs when you log in). Pass
-`--launchd-daemon` for a `/Library/LaunchDaemons` install (boot-time,
-all users — needs admin).
-
-Homebrew is required. If it's missing the wizard prints the install
-command and exits.
+The wizard prompts before each privileged step. macOS default scope
+is a **user LaunchAgent** (runs at login). Pass `--launchd-daemon` for
+`/Library/LaunchDaemons` (boot-time, all users — needs admin).
+Homebrew is required for the macOS path; if it's missing the wizard
+prints the install command and exits.
 
 ### Windows
 
 opendray does **not** support native Windows. The session subsystem
 spawns AI CLIs via Unix PTYs, which Windows does not expose to
-opendray.
+opendray. The PowerShell helper sets up WSL2 + Ubuntu for you:
 
-Run the PowerShell helper to set up WSL2 + Ubuntu:
+```powershell
+irm https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install-windows.ps1 | iex
+```
+
+Or, from a local checkout:
 
 ```powershell
 pwsh -ExecutionPolicy Bypass -File scripts/install-windows.ps1
@@ -81,7 +98,9 @@ It either:
 2. Installs WSL2 + Ubuntu via `wsl --install -d Ubuntu` (needs admin
    + reboot) and tells you to rerun afterwards.
 
-Inside the Ubuntu shell, run `scripts/install-linux.sh` as above.
+Inside the Ubuntu shell, run the Linux one-liner above — WSL2's
+loopback forwarding makes the admin UI reachable at
+`http://localhost:8770/admin/` from the Windows host.
 
 ---
 

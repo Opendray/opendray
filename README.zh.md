@@ -68,19 +68,25 @@
 
 ## 安装
 
-> **第一次来?** 先看 [**docs/getting-started.zh.md**](docs/getting-started.zh.md)
-> —— 15 分钟端到端 walkthrough:装 opendray wrap 的 AI CLI、bootstrap
-> Postgres、部署 opendray、收到第一条 Telegram idle 通知。下面这个表
-> 只是挑部署路径,getting-started 把表前后的所有事情串起来。
+### 一行命令安装
 
-> **或者让 wizard 自动完成。** 在 Linux(Ubuntu / Debian)或 macOS 上:
-> ```sh
-> bash scripts/install-linux.sh    # 或 scripts/install-macos.sh
-> ```
-> 引导你完成 Postgres 设置、AI CLI 安装、admin 凭据、服务注册,大约
-> 5 分钟拉起一个运行中的网关。详见 [`scripts/README.md`](scripts/README.md)。
-> Windows 走 WSL2,跑 [`scripts/install-windows.ps1`](scripts/install-windows.ps1)
-> 是设置 helper。
+**Linux / macOS / WSL2**
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install.sh | bash
+```
+
+**Windows** —— 先设置 WSL2,然后在 WSL2 里跑 Linux 安装器。[详情 →](scripts/README.md#windows)
+
+```powershell
+irm https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install-windows.ps1 | iex
+```
+
+引导你完成 Postgres 设置、AI CLI 安装、admin 凭据、服务注册,5–10 分钟拉起一个运行中的网关。详见 [**`scripts/README.md`**](scripts/README.md):wizard 做什么、生成的文件布局、参数、排错。
+
+> **想自己一步步来?** 看 [**docs/getting-started.zh.md**](docs/getting-started.zh.md) —— 15 分钟端到端 walkthrough,跟 wizard 做的是同样的事,但每一步你都自己确认。
+
+### 选部署路径
 
 **👉 选之前先问自己:你要不要在 Web 后台 spawn Claude / Codex / Gemini 会话?**
 - **要** → 选下表 🟢 **完整** 路径(binary / systemd / launchd / 源码)。**跳过 Docker。**
