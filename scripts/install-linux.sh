@@ -6,7 +6,7 @@
 #   0. Sanity: distro + arch + sudo
 #   1. Plan summary + confirmation
 #   2. Base tools (curl, ca-certificates, build essentials, postgresql-client)
-#   3. Node.js + pnpm (for AI CLIs)
+#   3. Node.js (for AI CLIs); pnpm only when --from-source
 #   4. AI CLI selection + install (Claude / Codex / Gemini)
 #   5. PostgreSQL path: use existing OR install locally
 #   6. Bootstrap opendray DB / user / pgvector
@@ -107,7 +107,7 @@ This installer walks through 6 interactive steps. You can ^C anytime
 before the systemd unit is started — nothing irreversible happens before that.
 
   1) Install base tools             (apt: curl, build-essential, postgresql-client)
-  2) Install Node.js + pnpm         (needed only for the AI CLIs)
+  2) Install Node.js                (needed for the AI CLIs)
   3) Choose & install AI CLIs       (Claude / Codex / Gemini — at least one required)
   4) Postgres path:
        (a) use an existing PostgreSQL host                     — recommended for prod
@@ -146,10 +146,18 @@ fi
 log_ok "Base tools ready"
 
 # ───────────────────────────────────────────────────────────────────────
-# Phase 3 — Node.js + pnpm (for AI CLIs)
+# Phase 3 — Node.js (for the AI CLIs)
 # ───────────────────────────────────────────────────────────────────────
+#
+# We deliberately do NOT install pnpm here. The default path (release-
+# tarball binary install) doesn't need pnpm at all — the AI CLIs are
+# installed via `npm install -g` and the opendray binary is downloaded
+# pre-built. pnpm is only required for `--from-source` builds (web bundle),
+# and that branch installs it lazily, with visible progress output.
+#
+# corepack's silent download path was hanging on slow networks here.
 
-log_step 2 "Install Node.js + pnpm"
+log_step 2 "Install Node.js"
 
 NODE_NEEDED=1
 if have_cmd node; then
@@ -170,13 +178,6 @@ if [ "$NODE_NEEDED" = "1" ]; then
     DEBIAN_FRONTEND=noninteractive run_priv apt-get install -y -qq nodejs
     log_ok "Node.js $(node --version) installed"
 fi
-
-if ! have_cmd pnpm; then
-    log_info "Installing pnpm via corepack..."
-    run_priv corepack enable
-    run_priv corepack prepare pnpm@latest --activate
-fi
-log_ok "pnpm $(pnpm --version 2>/dev/null || echo '?') ready"
 
 # ───────────────────────────────────────────────────────────────────────
 # Phase 4 — AI CLI selection
@@ -204,9 +205,11 @@ npm_install_global() {
         INSTALLED_ANY=1
         return 0
     fi
-    log_info "Installing $pkg ..."
+    log_info "Installing $pkg (~30–90 s — npm registry download)..."
     # `npm install -g` writes under /usr/lib/node_modules — needs root unless prefix is rewritten.
-    run_priv npm install -g --silent "$pkg" >/dev/null
+    # No --silent / no /dev/null redirect: AI CLI packages are 50–100 MB, and a silent install on a
+    # slow link looks indistinguishable from a hang. Let npm's progress bar through.
+    run_priv npm install -g "$pkg"
     if have_cmd "$bin"; then
         log_ok "$bin installed: $($bin --version 2>/dev/null | head -1 || echo 'version unknown')"
         INSTALLED_ANY=1
@@ -433,7 +436,17 @@ log_step 7 "Install opendray binary"
 if [ "$FROM_SOURCE" = "1" ]; then
     [ -d "$SCRIPT_DIR/../cmd/opendray" ] || log_die "--from-source given but no cmd/opendray dir found at $SCRIPT_DIR/.."
     have_cmd go || log_die "go toolchain required for --from-source. Install with: 'apt install golang-go' (or use a Go 1.25+ build)."
-    log_info "Building from source (this takes ~30s)..."
+
+    if ! have_cmd pnpm; then
+        log_info "Installing pnpm globally for the web build (~30 s — npm registry)..."
+        run_priv npm install -g pnpm@latest
+    fi
+    have_cmd pnpm || log_die "pnpm is required for --from-source builds (the React SPA goes into the Go binary via go:embed). Install pnpm and rerun."
+
+    log_info "Building web bundle (pnpm install + build)..."
+    ( cd "$SCRIPT_DIR/../app/web" && pnpm install --frozen-lockfile && pnpm build )
+
+    log_info "Building Go binary (this takes ~30 s)..."
     ( cd "$SCRIPT_DIR/.." && go build -trimpath -ldflags="-s -w" -o /tmp/opendray-binary ./cmd/opendray )
     run_priv install -m 0755 /tmp/opendray-binary "$OPENDRAY_PREFIX/bin/opendray"
     rm -f /tmp/opendray-binary

@@ -101,7 +101,7 @@ cat <<EOF
 irreversible until then.
 
   1) Verify base tools (curl, tar — should already be on macOS)
-  2) Install Node.js + pnpm via brew              (for AI CLIs)
+  2) Install Node.js via brew                     (for AI CLIs)
   3) Choose AI CLIs (Claude / Codex / Gemini)     (at least one)
   4) Postgres:
        (a) connect to an existing PG host                 — recommended for prod
@@ -127,10 +127,13 @@ log_ok "curl + tar present"
 # psql we'll get from postgresql brew (or expect from local PG install).
 
 # ───────────────────────────────────────────────────────────────────────
-# Phase 3 — Node + pnpm
+# Phase 3 — Node.js (for the AI CLIs)
 # ───────────────────────────────────────────────────────────────────────
+#
+# pnpm is intentionally NOT installed here. Default path needs only Node
+# (for `npm install -g` of the AI CLIs) — pnpm is `--from-source`-only.
 
-log_step 2 "Install Node.js + pnpm"
+log_step 2 "Install Node.js"
 
 if ! have_cmd node || [[ "$(node --version 2>/dev/null | sed 's/v//;s/\..*//')" -lt 20 ]]; then
     log_info "Installing node@22 via brew..."
@@ -138,13 +141,6 @@ if ! have_cmd node || [[ "$(node --version 2>/dev/null | sed 's/v//;s/\..*//')" 
     brew link --overwrite --force node@22 2>/dev/null || true
 fi
 log_ok "Node $(node --version)"
-
-if ! have_cmd pnpm; then
-    log_info "Installing pnpm via corepack..."
-    corepack enable
-    corepack prepare pnpm@latest --activate
-fi
-log_ok "pnpm $(pnpm --version 2>/dev/null || echo '?')"
 
 # ───────────────────────────────────────────────────────────────────────
 # Phase 4 — AI CLI selection
@@ -170,8 +166,10 @@ npm_install_global() {
         INSTALLED_ANY=1
         return
     fi
-    log_info "Installing $pkg ..."
-    npm install -g --silent "$pkg" >/dev/null
+    log_info "Installing $pkg (~30–90 s — npm registry download)..."
+    # No --silent / no /dev/null: 50–100 MB packages with a silent install look
+    # indistinguishable from a hang. Let npm's progress bar through.
+    npm install -g "$pkg"
     if have_cmd "$bin"; then
         log_ok "$bin installed: $($bin --version 2>/dev/null | head -1 || echo '?')"
         INSTALLED_ANY=1
@@ -354,7 +352,17 @@ mkdir -p "$OPENDRAY_HOME/bin" "$OPENDRAY_HOME/logs" "$OPENDRAY_HOME/data"
 if [ "$FROM_SOURCE" = "1" ]; then
     [ -d "$SCRIPT_DIR/../cmd/opendray" ] || log_die "--from-source given but no cmd/opendray dir at $SCRIPT_DIR/.."
     have_cmd go || log_die "go toolchain required for --from-source. Install: brew install go"
-    log_info "Building from source..."
+
+    if ! have_cmd pnpm; then
+        log_info "Installing pnpm globally for the web build (~30 s — npm registry)..."
+        npm install -g pnpm@latest
+    fi
+    have_cmd pnpm || log_die "pnpm is required for --from-source builds (the React SPA goes into the Go binary via go:embed). Install pnpm and rerun."
+
+    log_info "Building web bundle (pnpm install + build)..."
+    ( cd "$SCRIPT_DIR/../app/web" && pnpm install --frozen-lockfile && pnpm build )
+
+    log_info "Building Go binary..."
     ( cd "$SCRIPT_DIR/.." && go build -trimpath -ldflags="-s -w" -o "$OPENDRAY_BIN" ./cmd/opendray )
 else
     log_info "Fetching latest release tag..."
