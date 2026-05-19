@@ -15,6 +15,15 @@
 # from a real checkout — the bootstrap path just adds one git clone in
 # front.
 
+# Must run under bash (not sh/dash/zsh) — we use BASH_SOURCE, arrays,
+# [[ ]], and printf -v downstream. No version floor: bash 3.2 (macOS
+# /bin/bash) is supported. This only catches `curl ... | sh` mistakes.
+if [ -z "${BASH_VERSION:-}" ]; then
+    echo "[!] opendray installer must be run with bash, not sh. Re-run with:" >&2
+    echo "    curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install.sh | bash" >&2
+    exit 1
+fi
+
 set -euo pipefail
 
 # ── Locate ourselves on disk (or detect we're piped) ──────────────────
