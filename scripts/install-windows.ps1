@@ -54,7 +54,7 @@ Write-Banner
 # Store" dance, which this script does not implement.
 $build = [int]([System.Environment]::OSVersion.Version.Build)
 if ($build -lt 19041) {
-    Write-Err "This Windows build ($build) is too old for `wsl --install`."
+    Write-Err ("This Windows build ($build) is too old for 'wsl --install'.")
     Write-Host "  Required: Windows 10 build 19041 (version 2004) or newer, Windows 11, or Server 2022+."
     Write-Host "  Update Windows, or follow the manual WSL2 setup at https://learn.microsoft.com/windows/wsl/install-manual"
     exit 1
