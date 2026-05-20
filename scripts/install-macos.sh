@@ -241,7 +241,7 @@ if [ "$PG_MODE" = "local" ]; then
     if [ -n "$PG_VER" ]; then
         log_info "Reusing already-installed, pgvector-supported PostgreSQL $PG_VER"
     else
-        PG_VER="$(printf '%s\n' $_supported | sort -rn | uniq | head -1)"
+        PG_VER="$(printf '%s\n' $_supported | sort -rn | uniq | head -1 || true)"
         log_info "pgvector supports PostgreSQL $PG_VER — installing postgresql@$PG_VER"
     fi
     PG_FORMULA="postgresql@$PG_VER"
@@ -257,7 +257,10 @@ if [ "$PG_MODE" = "local" ]; then
     # a leftover cluster), don't let the new server crash-loop on a bind
     # conflict. Offer an alternate port and write it into postgresql.conf.
     PG_SUPER_PORT=5432
-    _busy_pid="$(lsof -nP -iTCP:5432 -sTCP:LISTEN -t 2>/dev/null | head -1)"
+    # `|| true`: lsof exits non-zero when nothing is listening (the common
+    # fresh-install case). Without it, `set -o pipefail` + `set -e` would
+    # abort the installer right here on a free port.
+    _busy_pid="$(lsof -nP -iTCP:5432 -sTCP:LISTEN -t 2>/dev/null | head -1 || true)"
     if [ -n "$_busy_pid" ]; then
         log_warn "Port 5432 is already in use by PID $_busy_pid ($(ps -p "$_busy_pid" -o comm= 2>/dev/null | tail -1))."
         ask_with_default "Port for opendray's PostgreSQL ($PG_FORMULA)" "5433" PG_SUPER_PORT
