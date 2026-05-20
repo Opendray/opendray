@@ -65,7 +65,7 @@ issues within 7 days.
 | Version | Supported |
 |---|---|
 | v1.0-rc onward | ✅ |
-| v1 (`Opendray/opendray`) | Maintenance only — security fixes for the cutover quarter, then archived per ADR 0001. |
+| v1 (`Opendray/opendray`) | Archived — no further fixes. Migrate to v2. |
 
 ## CVE History
 
