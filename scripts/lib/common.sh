@@ -60,6 +60,28 @@ ask_with_default() {
     printf -v "$var_name" '%s' "${response:-$default}"
 }
 
+# ask_pg_identifier <prompt> <default> <out-var-name>
+# Like ask_with_default, but only accepts a safe, unquoted PostgreSQL
+# identifier: a letter or underscore, then letters/digits/underscores,
+# 1–63 chars. Re-prompts on anything else. This is what keeps a stray
+# quote or space out of the bootstrap SQL (the DB name / role name are
+# interpolated into CREATE DATABASE / CREATE USER), so a value like `'`
+# can never break or inject into those statements.
+ask_pg_identifier() {
+    local prompt="$1" default="$2" var_name="$3" _val=""
+    while true; do
+        ask_with_default "$prompt" "$default" _val
+        case "$_val" in
+            [A-Za-z_]*)
+                if printf '%s' "$_val" | LC_ALL=C grep -Eq '^[A-Za-z_][A-Za-z0-9_]{0,62}$'; then
+                    printf -v "$var_name" '%s' "$_val"
+                    return 0
+                fi ;;
+        esac
+        log_warn "Invalid name '$_val' — use letters, digits and underscores only, starting with a letter or underscore (max 63 chars)."
+    done
+}
+
 # ask_password <prompt> <out-var-name>
 ask_password() {
     local prompt="$1"

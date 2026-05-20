@@ -331,8 +331,8 @@ fi
 
 log_step 5 "Bootstrap opendray database"
 
-ask_with_default "Database name"                    "opendray"        OD_DB_NAME
-ask_with_default "Application DB user (CRUD only)"  "opendray_user"   OD_DB_USER
+ask_pg_identifier "Database name"                    "opendray"        OD_DB_NAME
+ask_pg_identifier "Application DB user (CRUD only)"  "opendray_user"   OD_DB_USER
 
 DEFAULT_DB_PW="$(gen_password 24)"
 ask_with_default "App DB password (Enter = random)" "$DEFAULT_DB_PW" OD_DB_PW
