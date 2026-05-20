@@ -215,24 +215,91 @@ case "$PG_PATH_CHOICE" in
 esac
 
 if [ "$PG_MODE" = "local" ]; then
-    log_info "Installing postgresql@16 + pgvector via brew..."
-    brew install postgresql@16 pgvector
-    brew services start postgresql@16
+    # pgvector's Homebrew bottle only ships the extension for specific
+    # PG majors (currently 17 + 18 — NOT 16). Install pgvector first,
+    # then provision the newest PG major it actually supports. Never
+    # hardcode a version pgvector may not cover, or CREATE EXTENSION
+    # vector fails after the DB is already bootstrapped.
+    log_info "Installing pgvector via brew..."
+    brew install pgvector
 
-    # Brew links postgresql@16's binaries via keg-only by default — make psql available.
-    if ! have_cmd psql; then
-        export PATH="$BREW_PREFIX/opt/postgresql@16/bin:$PATH"
+    # Collect the PG majors pgvector actually ships an extension for.
+    _supported=""
+    for _ctl in "$BREW_PREFIX"/opt/pgvector/share/postgresql@*/extension/vector.control; do
+        [ -e "$_ctl" ] || continue
+        _supported="$_supported $(printf '%s' "$_ctl" | sed -E 's#.*/postgresql@([0-9]+)/.*#\1#')"
+    done
+    [ -n "$_supported" ] || log_die "pgvector installed but no supported PostgreSQL major detected (check 'brew list pgvector')."
+
+    # Prefer a supported version that's ALREADY installed — avoids adding
+    # yet another Postgres on machines that already run one. Fall back to
+    # the newest supported version on a clean machine.
+    PG_VER=""
+    for _v in $(printf '%s\n' $_supported | sort -rn | uniq); do
+        if [ -d "$BREW_PREFIX/opt/postgresql@$_v" ]; then PG_VER="$_v"; break; fi
+    done
+    if [ -n "$PG_VER" ]; then
+        log_info "Reusing already-installed, pgvector-supported PostgreSQL $PG_VER"
+    else
+        PG_VER="$(printf '%s\n' $_supported | sort -rn | uniq | head -1)"
+        log_info "pgvector supports PostgreSQL $PG_VER — installing postgresql@$PG_VER"
+    fi
+    PG_FORMULA="postgresql@$PG_VER"
+    brew install "$PG_FORMULA"   # no-op if already present
+
+    # Always reference THIS PG's bins explicitly + put them first on PATH.
+    # Another linked postgresql@NN (common on multi-version Macs) otherwise
+    # shadows psql / pg_isready / pg_config and you talk to the wrong server.
+    PG_BIN="$BREW_PREFIX/opt/$PG_FORMULA/bin"
+    export PATH="$PG_BIN:$PATH"
+
+    # Port selection — if something already holds 5432 (another Postgres,
+    # a leftover cluster), don't let the new server crash-loop on a bind
+    # conflict. Offer an alternate port and write it into postgresql.conf.
+    PG_SUPER_PORT=5432
+    _busy_pid="$(lsof -nP -iTCP:5432 -sTCP:LISTEN -t 2>/dev/null | head -1)"
+    if [ -n "$_busy_pid" ]; then
+        log_warn "Port 5432 is already in use by PID $_busy_pid ($(ps -p "$_busy_pid" -o comm= 2>/dev/null | tail -1))."
+        ask_with_default "Port for opendray's PostgreSQL ($PG_FORMULA)" "5433" PG_SUPER_PORT
+        if [ "$PG_SUPER_PORT" != "5432" ]; then
+            _pgconf="$BREW_PREFIX/var/$PG_FORMULA/postgresql.conf"
+            if [ -f "$_pgconf" ] && ! grep -qE "^port = $PG_SUPER_PORT([^0-9]|$)" "$_pgconf"; then
+                printf '\n# set by opendray installer (5432 was already in use)\nport = %s\n' "$PG_SUPER_PORT" >> "$_pgconf"
+            fi
+        fi
     fi
 
-    # Give PG a moment to come up.
-    sleep 2
+    # Idempotent service start — reuse if healthy, recover from an error
+    # state via bootout, else start. Avoids `launchctl bootstrap exited 5`
+    # when the service is already loaded.
+    case "$(brew services list | awk -v f="$PG_FORMULA" '$1==f {print $2}')" in
+        started) log_info "$PG_FORMULA already loaded — restarting to apply config"; brew services restart "$PG_FORMULA" ;;
+        error)   launchctl bootout "gui/$(id -u)/homebrew.mxcl.$PG_FORMULA" 2>/dev/null || true; brew services restart "$PG_FORMULA" ;;
+        *)       brew services start "$PG_FORMULA" ;;
+    esac
+
+    # Readiness probe instead of a blind `sleep 2`.
+    log_info "Waiting for PostgreSQL on 127.0.0.1:$PG_SUPER_PORT ..."
+    _tries=30
+    while [ "$_tries" -gt 0 ]; do
+        "$PG_BIN/pg_isready" -h 127.0.0.1 -p "$PG_SUPER_PORT" >/dev/null 2>&1 && break
+        sleep 1; _tries=$((_tries - 1))
+    done
+    "$PG_BIN/pg_isready" -h 127.0.0.1 -p "$PG_SUPER_PORT" >/dev/null 2>&1 \
+        || log_die "PostgreSQL did not become ready on :$PG_SUPER_PORT — check: tail $BREW_PREFIX/var/log/$PG_FORMULA.log"
 
     PG_SUPER_HOST="127.0.0.1"
-    PG_SUPER_PORT="5432"
     PG_SUPER_USER="$USER"       # brew PG creates the superuser as $USER
     PG_SUPER_DB="postgres"
-    PG_SUPER_PW=""              # brew PG default: no password, trust auth via socket
-    log_ok "Local Postgres up; superuser = $USER (trust auth on socket)"
+    PG_SUPER_PW=""              # brew PG default: no password, trust auth on loopback
+
+    # Validate pgvector is actually visible to THIS server before relying
+    # on CREATE EXTENSION downstream — fail loud and early, not mid-bootstrap.
+    if ! "$PG_BIN/psql" -h 127.0.0.1 -p "$PG_SUPER_PORT" -U "$PG_SUPER_USER" -d postgres \
+            -tAc "SELECT 1 FROM pg_available_extensions WHERE name='vector'" 2>/dev/null | grep -q 1; then
+        log_die "pgvector not visible to $PG_FORMULA despite install — aborting before bootstrap."
+    fi
+    log_ok "Local PostgreSQL $PG_VER ready on :$PG_SUPER_PORT (superuser=$USER, trust auth) + pgvector"
 else
     cat <<'EOF'
 
