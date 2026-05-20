@@ -42,7 +42,23 @@ function Test-IsAdmin {
 # WSL emits UTF-16; WSL_UTF8 makes its output parseable.
 $env:WSL_UTF8 = "1"
 
+# Self URL — used to auto-resume the install after the WSL-enable reboot.
+$SelfUrl = "https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install-windows.ps1"
+
 Write-Banner
+
+# -- Step 0: Windows build supports `wsl --install` ------------------
+# `wsl --install` (the modern in-box installer) requires Windows 10
+# version 2004 (build 19041) or newer, Windows 11, or Server 2022+.
+# Older builds need the legacy "Enable feature + download distro from
+# Store" dance, which this script does not implement.
+$build = [int]([System.Environment]::OSVersion.Version.Build)
+if ($build -lt 19041) {
+    Write-Err "This Windows build ($build) is too old for `wsl --install`."
+    Write-Host "  Required: Windows 10 build 19041 (version 2004) or newer, Windows 11, or Server 2022+."
+    Write-Host "  Update Windows, or follow the manual WSL2 setup at https://learn.microsoft.com/windows/wsl/install-manual"
+    exit 1
+}
 
 # -- Step 1: ensure the WSL2 feature ---------------------------------
 $wslReady = $false
@@ -57,7 +73,19 @@ if (-not $wslReady) {
     }
     Write-Info "Enabling WSL2 (this is a one-time step)..."
     & wsl.exe --install --no-distribution
-    Write-Ok "WSL2 enabled. REBOOT, then re-run this same command to finish."
+    # Auto-resume after the reboot: a RunOnce entry re-runs the same
+    # one-liner at next logon, so the user reboots once and the install
+    # continues by itself — closing the "one command, walk away" gap.
+    try {
+        $runOnceCmd = "powershell -NoProfile -ExecutionPolicy Bypass -Command `"irm $SelfUrl | iex`""
+        New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce' -Force | Out-Null
+        Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce' `
+            -Name 'opendray-resume-install' -Value $runOnceCmd
+        Write-Ok "WSL2 enabled. REBOOT now — the install will resume automatically when you log back in."
+    } catch {
+        Write-Warn "Could not register auto-resume ($($_.Exception.Message))."
+        Write-Ok "WSL2 enabled. REBOOT, then re-run this same command to finish."
+    }
     exit 0
 }
 Write-Ok "WSL2 is available."
