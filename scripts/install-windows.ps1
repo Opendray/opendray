@@ -1,22 +1,22 @@
 # scripts/install-windows.ps1
 # Windows entry point for the opendray installer.
 #
-# opendray does NOT run as a native Windows process — the session
+# opendray does NOT run as a native Windows process -- the session
 # subsystem spawns AI CLIs through Unix PTYs, which the Windows kernel
 # doesn't expose to opendray. So the Windows install is: set up WSL2 +
 # Ubuntu, then run the Linux installer inside it.
 #
 # Unlike a manual guide, this script does the whole thing for you:
-#   1) Ensures the WSL2 feature is present (enables it if missing —
+#   1) Ensures the WSL2 feature is present (enables it if missing --
 #      that one path needs admin + a reboot, then re-run).
 #   2) Ensures a usable Ubuntu/Debian distro exists (installs
-#      Ubuntu-24.04 if there isn't one — a Docker/Podman WSL distro
+#      Ubuntu-24.04 if there isn't one -- a Docker/Podman WSL distro
 #      does NOT count).
 #   3) Ensures systemd is enabled inside the distro (opendray runs as a
 #      systemd service).
 #   4) Runs the opendray Linux installer inside WSL.
 #   5) Registers a logon task so the distro (and the gateway) comes back
-#      up after idle/reboot — WSL stops idle distros otherwise.
+#      up after idle/reboot -- WSL stops idle distros otherwise.
 #
 # Usage (from PowerShell; elevate if WSL isn't installed yet):
 #   irm https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install-windows.ps1 | iex
@@ -42,7 +42,7 @@ function Test-IsAdmin {
 # WSL emits UTF-16; WSL_UTF8 makes its output parseable.
 $env:WSL_UTF8 = "1"
 
-# Self URL — used to auto-resume the install after the WSL-enable reboot.
+# Self URL -- used to auto-resume the install after the WSL-enable reboot.
 $SelfUrl = "https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install-windows.ps1"
 
 Write-Banner
@@ -75,14 +75,14 @@ if (-not $wslReady) {
     & wsl.exe --install --no-distribution
     # Auto-resume after the reboot: a RunOnce entry re-runs the same
     # one-liner at next logon, so the user reboots once and the install
-    # continues by itself — closing the "one command, walk away" gap.
+    # continues by itself -- closing the "one command, walk away" gap.
     try {
         $tmpl = 'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm {0} | iex"'
         $runOnceCmd = $tmpl -f $SelfUrl
         New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce' -Force | Out-Null
         Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce' `
             -Name 'opendray-resume-install' -Value $runOnceCmd
-        Write-Ok "WSL2 enabled. REBOOT now — the install will resume automatically when you log back in."
+        Write-Ok "WSL2 enabled. REBOOT now -- the install will resume automatically when you log back in."
     } catch {
         Write-Warn "Could not register auto-resume ($($_.Exception.Message))."
         Write-Ok "WSL2 enabled. REBOOT, then re-run this same command to finish."
