@@ -2,7 +2,9 @@
 # scripts/lib/common.sh
 # Shared shell helpers for the opendray installer wizards.
 # Sourced by install-linux.sh and install-macos.sh.
-# Requires bash 4+ (for `printf -v`, `read -ra`, parameter expansion).
+# Compatible with bash 3.2+ (macOS ships 3.2 as /bin/bash). `printf -v`
+# (bash 3.1+) and `read -ra` (bash 3.x) are fine; the only 4.0-only
+# construct was ${var,,} case-conversion, replaced with tr.
 
 # Detect colour-capable terminal once.
 # Use $'…' (ANSI-C quoting) so the vars hold *real* ESC bytes — that
@@ -81,7 +83,9 @@ ask_yes_no() {
         response=""
         read -r response || response=""
         response="${response:-$default}"
-        case "${response,,}" in
+        # tr instead of ${response,,} — the latter is bash 4.0+ and macOS
+        # ships bash 3.2 as /bin/bash.
+        case "$(printf '%s' "$response" | tr '[:upper:]' '[:lower:]')" in
             y|yes) printf -v "$var_name" '%s' 'y'; return 0 ;;
             n|no)  printf -v "$var_name" '%s' 'n'; return 0 ;;
             *) log_warn "Please answer y or n" ;;
@@ -269,6 +273,11 @@ _cleanup_files=()
 register_cleanup_file() { _cleanup_files+=("$1"); }
 _run_cleanup() {
     local f
+    # Guard the expansion: under `set -u`, bash 3.2 (macOS /bin/bash)
+    # errors on "${arr[@]}" when the array is empty — which it usually
+    # is here, since most runs register no cleanup files. ${#arr[@]} is
+    # safe to read when empty; only iterate when there's something.
+    [ "${#_cleanup_files[@]}" -gt 0 ] || return 0
     for f in "${_cleanup_files[@]}"; do
         [ -f "$f" ] && rm -f -- "$f"
     done
