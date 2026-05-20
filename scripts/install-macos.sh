@@ -630,18 +630,36 @@ cat > "$TMP_PLIST" <<EOF
 </plist>
 EOF
 
+# (Re)load a launchd unit, tolerant of an already-loaded label.
+# `launchctl bootout` is asynchronous: a naive `bootout || true; bootstrap`
+# races on a re-install — the old instance is still draining when bootstrap
+# runs, which fails with "Bootstrap failed: 5: Input/output error". Wait for
+# the old instance to actually disappear, then bootstrap; if it still won't
+# load (already-loaded / transient EIO), bootout + retry once. A genuinely
+# broken load is caught by the health check that follows.
+reload_launchd_unit() {
+    local domain="$1" label="$2" plist="$3" priv="${4:-}"
+    local i
+    $priv launchctl bootout "$domain/$label" 2>/dev/null || true
+    for i in 1 2 3 4 5 6 7 8 9 10; do
+        $priv launchctl print "$domain/$label" >/dev/null 2>&1 || break
+        sleep 1
+    done
+    if ! $priv launchctl bootstrap "$domain" "$plist" 2>/dev/null; then
+        $priv launchctl bootout "$domain/$label" 2>/dev/null || true
+        sleep 2
+        $priv launchctl bootstrap "$domain" "$plist" 2>/dev/null || true
+    fi
+    $priv launchctl enable    "$domain/$label" 2>/dev/null || true
+    $priv launchctl kickstart -k "$domain/$label" 2>/dev/null || true
+}
+
 if [ "$LAUNCHD_SCOPE" = "daemon" ]; then
     run_priv install -m 0644 -o root -g wheel "$TMP_PLIST" "$PLIST_PATH"
-    run_priv launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
-    run_priv launchctl bootstrap "$DOMAIN" "$PLIST_PATH"
-    run_priv launchctl enable    "$DOMAIN/$LABEL"
-    run_priv launchctl kickstart -k "$DOMAIN/$LABEL"
+    reload_launchd_unit "$DOMAIN" "$LABEL" "$PLIST_PATH" run_priv
 else
     install -m 0644 "$TMP_PLIST" "$PLIST_PATH"
-    launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
-    launchctl bootstrap "$DOMAIN" "$PLIST_PATH"
-    launchctl enable    "$DOMAIN/$LABEL"
-    launchctl kickstart -k "$DOMAIN/$LABEL"
+    reload_launchd_unit "$DOMAIN" "$LABEL" "$PLIST_PATH"
 fi
 log_ok "launchd unit loaded: $PLIST_PATH"
 
