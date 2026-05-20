@@ -253,22 +253,28 @@ if [ "$PG_MODE" = "local" ]; then
     PG_BIN="$BREW_PREFIX/opt/$PG_FORMULA/bin"
     export PATH="$PG_BIN:$PATH"
 
-    # Port selection — if something already holds 5432 (another Postgres,
-    # a leftover cluster), don't let the new server crash-loop on a bind
-    # conflict. Offer an alternate port and write it into postgresql.conf.
-    PG_SUPER_PORT=5432
-    # `|| true`: lsof exits non-zero when nothing is listening (the common
-    # fresh-install case). Without it, `set -o pipefail` + `set -e` would
-    # abort the installer right here on a free port.
-    _busy_pid="$(lsof -nP -iTCP:5432 -sTCP:LISTEN -t 2>/dev/null | head -1 || true)"
-    if [ -n "$_busy_pid" ]; then
-        log_warn "Port 5432 is already in use by PID $_busy_pid ($(ps -p "$_busy_pid" -o comm= 2>/dev/null | tail -1))."
-        ask_with_default "Port for opendray's PostgreSQL ($PG_FORMULA)" "5433" PG_SUPER_PORT
-        if [ "$PG_SUPER_PORT" != "5432" ]; then
-            _pgconf="$BREW_PREFIX/var/$PG_FORMULA/postgresql.conf"
-            if [ -f "$_pgconf" ] && ! grep -qE "^port = $PG_SUPER_PORT([^0-9]|$)" "$_pgconf"; then
-                printf '\n# set by opendray installer (5432 was already in use)\nport = %s\n' "$PG_SUPER_PORT" >> "$_pgconf"
-            fi
+    # Port selection. Use the port THIS instance is actually configured
+    # for — postgresql.conf carries the 5432 default, or a non-default
+    # port a previous installer run wrote. A `brew services restart`
+    # picks up whatever the conf says regardless of what's free, so we
+    # must probe the same port we'll actually bind (otherwise the
+    # readiness check below waits on the wrong port and times out).
+    _pgconf="$BREW_PREFIX/var/$PG_FORMULA/postgresql.conf"
+    PG_SUPER_PORT="$(grep -E '^[[:space:]]*port[[:space:]]*=' "$_pgconf" 2>/dev/null | tail -1 | sed -E 's/^[^=]*=[[:space:]]*([0-9]+).*/\1/')"
+    PG_SUPER_PORT="${PG_SUPER_PORT:-5432}"
+
+    # A conflict only if that port is held by a process that ISN'T this
+    # instance's own server (matched by its data dir on the command line).
+    # `|| true`: lsof exits non-zero on a free port (the common fresh
+    # case) and set -o pipefail + set -e would otherwise abort here.
+    _busy_pid="$(lsof -nP -iTCP:"$PG_SUPER_PORT" -sTCP:LISTEN -t 2>/dev/null | head -1 || true)"
+    if [ -n "$_busy_pid" ] && ! ps -p "$_busy_pid" -o command= 2>/dev/null | grep -qF "$BREW_PREFIX/var/$PG_FORMULA"; then
+        log_warn "Port $PG_SUPER_PORT is in use by PID $_busy_pid ($(ps -p "$_busy_pid" -o comm= 2>/dev/null | tail -1))."
+        _alt=$((PG_SUPER_PORT + 1))
+        while lsof -nP -iTCP:"$_alt" -sTCP:LISTEN -t >/dev/null 2>&1; do _alt=$((_alt + 1)); done
+        ask_with_default "Port for opendray's PostgreSQL ($PG_FORMULA)" "$_alt" PG_SUPER_PORT
+        if ! grep -qE "^[[:space:]]*port[[:space:]]*=[[:space:]]*$PG_SUPER_PORT([^0-9]|$)" "$_pgconf" 2>/dev/null; then
+            printf '\n# set by opendray installer (port conflict)\nport = %s\n' "$PG_SUPER_PORT" >> "$_pgconf"
         fi
     fi
 
