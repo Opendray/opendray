@@ -77,7 +77,8 @@ if (-not $wslReady) {
     # one-liner at next logon, so the user reboots once and the install
     # continues by itself — closing the "one command, walk away" gap.
     try {
-        $runOnceCmd = "powershell -NoProfile -ExecutionPolicy Bypass -Command `"irm $SelfUrl | iex`""
+        $tmpl = 'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm {0} | iex"'
+        $runOnceCmd = $tmpl -f $SelfUrl
         New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce' -Force | Out-Null
         Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce' `
             -Name 'opendray-resume-install' -Value $runOnceCmd
