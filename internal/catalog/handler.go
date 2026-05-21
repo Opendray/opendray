@@ -3,13 +3,44 @@ package catalog
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 
 	"github.com/opendray/opendray-v2/internal/eventbus"
+	"github.com/opendray/opendray-v2/internal/integration"
 )
+
+// Scopes gating the provider *mutation* endpoints. Reads (list / get /
+// update-check) stay open to any authenticated principal; writes and the
+// code-running update require admin, or an integration key explicitly
+// granted the scope. This keeps a plain integration key from changing
+// what executes on the box (config.command override, npm install).
+const (
+	scopeProvidersWrite  = "providers:write"  // config / toggle
+	scopeProvidersUpdate = "providers:update" // npm install -g
+)
+
+// requirePrivileged allows admins unconditionally, and integration keys
+// only when they hold `scope`. Returns false (and writes the response)
+// when denied. Mirrors the admin-or-scope check in integration/events.go.
+func (h *Handlers) requirePrivileged(w http.ResponseWriter, r *http.Request, scope string) bool {
+	p, ok := integration.CurrentPrincipal(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return false
+	}
+	if p.Kind == integration.KindAdmin || integration.HasScope(p.Scopes, scope) {
+		return true
+	}
+	h.log.Warn("provider mutation denied",
+		"principal", p.ID, "kind", p.Kind, "scope", scope)
+	writeError(w, http.StatusForbidden,
+		fmt.Errorf("requires admin or the %q scope", scope))
+	return false
+}
 
 // Handlers serves the /providers REST surface. Mount under /api/v1.
 type Handlers struct {
@@ -97,6 +128,9 @@ func (h *Handlers) updateCheck(w http.ResponseWriter, r *http.Request) {
 // there's no arbitrary-package vector. The outcome is published to the
 // audit log via the event bus.
 func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
+	if !h.requirePrivileged(w, r, scopeProvidersUpdate) {
+		return
+	}
 	id := chi.URLParam(r, "id")
 	p, err := h.cat.Get(r.Context(), id)
 	if errors.Is(err, ErrNotFound) {
@@ -146,6 +180,9 @@ func (h *Handlers) publishUpdate(id string, res UpdateResult, ok bool, errMsg st
 }
 
 func (h *Handlers) updateConfig(w http.ResponseWriter, r *http.Request) {
+	if !h.requirePrivileged(w, r, scopeProvidersWrite) {
+		return
+	}
 	id := chi.URLParam(r, "id")
 	var cfg map[string]any
 	if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
@@ -165,6 +202,9 @@ func (h *Handlers) updateConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) toggle(w http.ResponseWriter, r *http.Request) {
+	if !h.requirePrivileged(w, r, scopeProvidersWrite) {
+		return
+	}
 	id := chi.URLParam(r, "id")
 	var req struct {
 		Enabled bool `json:"enabled"`
