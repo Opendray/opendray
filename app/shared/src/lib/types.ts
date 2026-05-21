@@ -111,6 +111,7 @@ export interface ProviderManifest {
   version: string
   kind: 'cli' | 'shell'
   executable: string
+  npmPackage?: string
   defaultArgs?: string[]
   capabilities: {
     supportsResume: boolean
@@ -121,11 +122,24 @@ export interface ProviderManifest {
   configSchema?: ConfigField[]
 }
 
+// ProviderRuntime is the live, probed CLI state (not from the manifest):
+// whether the binary is installed and its real `--version`, plus the
+// latest npm version when an update-check has run.
+export interface ProviderRuntime {
+  installed: boolean
+  installedVersion?: string
+  path?: string
+  latestVersion?: string
+  updateAvailable: boolean
+  checkedAt?: string
+}
+
 export interface Provider {
   manifest: ProviderManifest
   manifest_hash: string
   config: Record<string, unknown>
   enabled: boolean
+  runtime?: ProviderRuntime
 }
 
 // ── Channels ────────────────────────────────────────────────

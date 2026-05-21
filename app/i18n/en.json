@@ -962,7 +962,10 @@
           "stream": "stream",
           "images": "images",
           "mcp": "mcp"
-        }
+        },
+        "notInstalled": "not installed",
+        "updateAvailable": "update available → {{version}}",
+        "upToDate": "up to date"
       },
       "configForm": {
         "selectPlaceholder": "Select…",
@@ -1683,16 +1686,46 @@
     },
     "serverSettings": {
       "sections": {
-        "general": { "title": "General", "desc": "Listen address, operator account, token TTL." },
-        "logging": { "title": "Logging", "desc": "Verbosity, format, and live tail." },
-        "sessions": { "title": "Sessions", "desc": "Idle detection thresholds." },
-        "vault": { "title": "Vault", "desc": "Notes, skills, and git-versioned root." },
-        "mcp": { "title": "MCP registry", "desc": "Server registry + secrets." },
-        "memory": { "title": "Memory", "desc": "Cross-CLI persistent memory subsystem." },
-        "backup": { "title": "Backup", "desc": "Encrypted DB backups, restore, and admin data exports." },
-        "claude": { "title": "Storage · Claude", "desc": "Where Claude transcripts live on disk." },
-        "codex": { "title": "Storage · Codex", "desc": "Codex sessions root." },
-        "gemini": { "title": "Storage · Gemini", "desc": "Gemini per-project tmp + projects.json." }
+        "general": {
+          "title": "General",
+          "desc": "Listen address, operator account, token TTL."
+        },
+        "logging": {
+          "title": "Logging",
+          "desc": "Verbosity, format, and live tail."
+        },
+        "sessions": {
+          "title": "Sessions",
+          "desc": "Idle detection thresholds."
+        },
+        "vault": {
+          "title": "Vault",
+          "desc": "Notes, skills, and git-versioned root."
+        },
+        "mcp": {
+          "title": "MCP registry",
+          "desc": "Server registry + secrets."
+        },
+        "memory": {
+          "title": "Memory",
+          "desc": "Cross-CLI persistent memory subsystem."
+        },
+        "backup": {
+          "title": "Backup",
+          "desc": "Encrypted DB backups, restore, and admin data exports."
+        },
+        "claude": {
+          "title": "Storage · Claude",
+          "desc": "Where Claude transcripts live on disk."
+        },
+        "codex": {
+          "title": "Storage · Codex",
+          "desc": "Codex sessions root."
+        },
+        "gemini": {
+          "title": "Storage · Gemini",
+          "desc": "Gemini per-project tmp + projects.json."
+        }
       },
       "loading": "Loading server settings…",
       "loadFailed": "Failed to load: {message}",
@@ -3144,12 +3177,30 @@
     "pathStyle": "Path-style addressing",
     "pathStyleSubtitle": "Legacy / MinIO",
     "kinds": {
-      "local": { "label": "Local disk", "description": "Folder on the machine running opendray" },
-      "smb": { "label": "SMB share", "description": "Windows shares + most home NAS appliances" },
-      "webdav": { "label": "WebDAV", "description": "Self-hosted clouds + file-sharing services" },
-      "sftp": { "label": "SFTP", "description": "Any SSH-accessible server" },
-      "s3": { "label": "S3 / compatible", "description": "Amazon S3 + S3-compatible buckets (MinIO, R2, B2)" },
-      "rclone": { "label": "rclone (any)", "description": "OneDrive, Google Drive, Dropbox via the rclone CLI" }
+      "local": {
+        "label": "Local disk",
+        "description": "Folder on the machine running opendray"
+      },
+      "smb": {
+        "label": "SMB share",
+        "description": "Windows shares + most home NAS appliances"
+      },
+      "webdav": {
+        "label": "WebDAV",
+        "description": "Self-hosted clouds + file-sharing services"
+      },
+      "sftp": {
+        "label": "SFTP",
+        "description": "Any SSH-accessible server"
+      },
+      "s3": {
+        "label": "S3 / compatible",
+        "description": "Amazon S3 + S3-compatible buckets (MinIO, R2, B2)"
+      },
+      "rclone": {
+        "label": "rclone (any)",
+        "description": "OneDrive, Google Drive, Dropbox via the rclone CLI"
+      }
     },
     "formTitleEdit": "Edit target",
     "formTitleNew": "New backup target",
