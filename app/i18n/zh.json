@@ -965,7 +965,12 @@
         },
         "notInstalled": "未安装",
         "updateAvailable": "有可用更新 → {{version}}",
-        "upToDate": "已是最新"
+        "upToDate": "已是最新",
+        "update": "更新到 {{version}}",
+        "updating": "更新中…",
+        "updatedToast": "已更新 {{from}} → {{to}}",
+        "alreadyLatestToast": "已是最新",
+        "updateFailedToast": "更新失败"
       },
       "configForm": {
         "selectPlaceholder": "选择…",

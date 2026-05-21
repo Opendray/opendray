@@ -965,7 +965,12 @@
         },
         "notInstalled": "not installed",
         "updateAvailable": "update available → {{version}}",
-        "upToDate": "up to date"
+        "upToDate": "up to date",
+        "update": "Update to {{version}}",
+        "updating": "Updating…",
+        "updatedToast": "Updated {{from}} → {{to}}",
+        "alreadyLatestToast": "Already up to date",
+        "updateFailedToast": "Update failed"
       },
       "configForm": {
         "selectPlaceholder": "Select…",

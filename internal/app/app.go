@@ -117,7 +117,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		st.Close()
 		return nil, err
 	}
-	catalogHandlers := catalog.NewHandlers(cat, log)
+	catalogHandlers := catalog.NewHandlers(cat, bus, log)
 
 	var cliacctOpts []cliacct.Option
 	if d := strings.TrimSpace(cfg.Providers.Claude.AccountsDir); d != "" {

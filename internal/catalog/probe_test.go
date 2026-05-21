@@ -76,3 +76,48 @@ func TestProber_CheckUpdate(t *testing.T) {
 		t.Errorf("no-package provider should not report updates: %+v", none)
 	}
 }
+
+func TestProber_Update(t *testing.T) {
+	versions := []string{"0.132.0", "0.140.0"} // before, after
+	call := 0
+	installs := 0
+	p := NewProber()
+	p.lookPath = func(string) (string, error) { return "/usr/bin/codex", nil }
+	p.runVer = func(context.Context, string) (string, error) {
+		v := versions[call]
+		if call < len(versions)-1 {
+			call++
+		}
+		return "codex-cli " + v, nil
+	}
+	p.npmInstall = func(_ context.Context, pkg string) (string, error) {
+		installs++
+		if pkg != "@openai/codex" {
+			t.Errorf("npm install got wrong package: %q", pkg)
+		}
+		return "+ @openai/codex@0.140.0\nadded 1 package", nil
+	}
+	m := Manifest{ID: "codex", Executable: "codex", NpmPackage: "@openai/codex"}
+
+	res, err := p.Update(context.Background(), m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if installs != 1 {
+		t.Errorf("expected one npm install, got %d", installs)
+	}
+	if res.BeforeVersion != "codex-cli 0.132.0" || res.AfterVersion != "codex-cli 0.140.0" || !res.Changed {
+		t.Errorf("unexpected result: %+v", res)
+	}
+	if res.Output == "" {
+		t.Error("expected npm output tail")
+	}
+}
+
+func TestProber_UpdateNoPackage(t *testing.T) {
+	p := NewProber()
+	_, err := p.Update(context.Background(), Manifest{ID: "shell", Executable: "bash"})
+	if err == nil {
+		t.Error("update of a provider without an npm package should error")
+	}
+}
