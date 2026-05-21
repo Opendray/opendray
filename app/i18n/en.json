@@ -962,7 +962,10 @@
           "stream": "stream",
           "images": "images",
           "mcp": "mcp"
-        }
+        },
+        "notInstalled": "not installed",
+        "updateAvailable": "update available → {{version}}",
+        "upToDate": "up to date"
       },
       "configForm": {
         "selectPlaceholder": "Select…",
