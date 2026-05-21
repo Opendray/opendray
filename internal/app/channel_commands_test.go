@@ -109,8 +109,8 @@ func TestListSessionsCardHandler_LiveFirstThenTerminated(t *testing.T) {
 		t.Fatal(err)
 	}
 	body := cardText(t, got)
-	// Header counts active sessions only.
-	if !strings.HasPrefix(body, "2 sessions") {
+	// Mixed live + terminated: header leads with the active count.
+	if !strings.HasPrefix(body, "2 active · 3 shown") {
 		t.Errorf("header wrong:\n%s", body)
 	}
 	// Live first (sorted by recency), terminated last.

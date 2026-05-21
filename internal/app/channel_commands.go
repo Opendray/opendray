@@ -124,8 +124,15 @@ func listSessionsCardHandler(mgr sessionOps) channel.CommandCardHandler {
 		// their callback data. Sessions started without a name fall
 		// back to the bare id (there's nothing friendlier to show).
 		var b strings.Builder
-		fmt.Fprintf(&b, "%d session%s (showing %d):\n",
-			liveCount, plural(liveCount), len(all))
+		// Header reads naturally whether or not terminated sessions are
+		// mixed in: "3 sessions:" when all shown are live, otherwise
+		// "0 active · 4 shown (incl. ended):" so "0 ... showing 4" can't
+		// look like a contradiction.
+		if liveCount == len(all) {
+			fmt.Fprintf(&b, "%d session%s:\n", liveCount, plural(liveCount))
+		} else {
+			fmt.Fprintf(&b, "%d active · %d shown (incl. ended):\n", liveCount, len(all))
+		}
 		now := time.Now().UTC()
 		for i, s := range all {
 			label := s.ID
