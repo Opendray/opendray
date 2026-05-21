@@ -15,6 +15,25 @@ export async function checkProviderUpdate(
   return api<ProviderRuntime>(`/api/v1/providers/${id}/update-check`)
 }
 
+export interface ProviderUpdateResult {
+  package: string
+  beforeVersion?: string
+  afterVersion?: string
+  changed: boolean
+  output?: string
+}
+
+// updateProvider patches the CLI to the latest npm version (admin-only,
+// audited server-side). The npm package is taken from the trusted
+// manifest, not the request — no arbitrary-package vector.
+export async function updateProvider(
+  id: string,
+): Promise<ProviderUpdateResult> {
+  return api<ProviderUpdateResult>(`/api/v1/providers/${id}/update`, {
+    method: 'POST',
+  })
+}
+
 export async function getProvider(id: string): Promise<Provider> {
   return api<Provider>(`/api/v1/providers/${id}`)
 }

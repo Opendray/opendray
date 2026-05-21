@@ -18,6 +18,7 @@ import {
   toggleProvider,
   updateProviderConfig,
   checkProviderUpdate,
+  updateProvider,
 } from '@/lib/catalog'
 import type { Provider } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -173,6 +174,7 @@ function ProviderDetail({
   onToggle: (enabled: boolean) => void
 }) {
   const { t } = useTranslation()
+  const qc = useQueryClient()
   const m = provider.manifest
   const rt = provider.runtime
   // Latest-version check is a network (npm) call, so it runs on its own
@@ -182,6 +184,27 @@ function ProviderDetail({
     queryFn: () => checkProviderUpdate(m.id),
     enabled: m.kind === 'cli' && !!rt?.installed,
     staleTime: 60_000,
+  })
+  const updateMut = useMutation({
+    mutationFn: () => updateProvider(m.id),
+    onSuccess: (res) => {
+      if (res.changed) {
+        toast.success(
+          t('web.providers.detail.updatedToast', {
+            from: res.beforeVersion,
+            to: res.afterVersion,
+          }),
+        )
+      } else {
+        toast.info(t('web.providers.detail.alreadyLatestToast'))
+      }
+      qc.invalidateQueries({ queryKey: ['providers'] })
+      qc.invalidateQueries({ queryKey: ['provider-update', m.id] })
+    },
+    onError: (e: Error) =>
+      toast.error(t('web.providers.detail.updateFailedToast'), {
+        description: e.message,
+      }),
   })
   const caps: { key: keyof typeof m.capabilities; labelKey: string }[] = [
     { key: 'supportsResume', labelKey: 'web.providers.detail.caps.resume' },
@@ -222,11 +245,29 @@ function ProviderDetail({
               </Badge>
             )}
             {upd?.updateAvailable && upd.latestVersion ? (
-              <Badge variant="accent" className="font-mono normal-case">
-                {t('web.providers.detail.updateAvailable', {
-                  version: upd.latestVersion,
-                })}
-              </Badge>
+              <>
+                <Badge variant="accent" className="font-mono normal-case">
+                  {t('web.providers.detail.updateAvailable', {
+                    version: upd.latestVersion,
+                  })}
+                </Badge>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-2 text-[11px]"
+                  disabled={updateMut.isPending}
+                  onClick={() => updateMut.mutate()}
+                >
+                  {updateMut.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : null}
+                  {updateMut.isPending
+                    ? t('web.providers.detail.updating')
+                    : t('web.providers.detail.update', {
+                        version: upd.latestVersion,
+                      })}
+                </Button>
+              </>
             ) : null}
           </div>
           <p className="text-[12px] text-muted-foreground mt-1 max-w-[60ch]">

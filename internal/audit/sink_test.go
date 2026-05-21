@@ -42,7 +42,10 @@ func TestSubscribedPatterns_Allowlist(t *testing.T) {
 			"admin.login_success", "admin.login_failed", "admin.logout",
 			"channel.message_sent", "channel.message_received",
 			"integration.registered", "integration.deregistered",
-			"integration.key_rotated", "integration.health_changed":
+			"integration.key_rotated", "integration.health_changed",
+			// provider.updated carries only provider id + version
+			// strings + npm output tail — no PII.
+			"provider.updated":
 		default:
 			t.Errorf("audit subscribes to %q — confirm it is PII-free and update this test", p)
 		}

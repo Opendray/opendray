@@ -3,6 +3,7 @@ package catalog
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"regexp"
@@ -53,20 +54,26 @@ type Prober struct {
 	installed map[string]cachedInstalled // executable -> info
 	latest    map[string]cachedLatest    // npm package -> version
 
-	lookPath func(string) (string, error)
-	runVer   func(ctx context.Context, bin string) (string, error)
-	npmView  func(ctx context.Context, pkg string) (string, error)
-	now      func() time.Time
+	// updateMu serialises Update() so two concurrent npm installs can't
+	// stomp the same global prefix.
+	updateMu sync.Mutex
+
+	lookPath   func(string) (string, error)
+	runVer     func(ctx context.Context, bin string) (string, error)
+	npmView    func(ctx context.Context, pkg string) (string, error)
+	npmInstall func(ctx context.Context, pkg string) (string, error)
+	now        func() time.Time
 }
 
 func NewProber() *Prober {
 	return &Prober{
-		installed: map[string]cachedInstalled{},
-		latest:    map[string]cachedLatest{},
-		lookPath:  exec.LookPath,
-		runVer:    defaultCliVersion,
-		npmView:   defaultNpmLatest,
-		now:       time.Now,
+		installed:  map[string]cachedInstalled{},
+		latest:     map[string]cachedLatest{},
+		lookPath:   exec.LookPath,
+		runVer:     defaultCliVersion,
+		npmView:    defaultNpmLatest,
+		npmInstall: defaultNpmInstall,
+		now:        time.Now,
 	}
 }
 
@@ -126,6 +133,62 @@ func (p *Prober) CheckUpdate(ctx context.Context, m Manifest) RuntimeInfo {
 	info.CheckedAt = p.now().UTC().Format(time.RFC3339)
 	info.UpdateAvailable = updateAvailable(info.InstalledVersion, latest)
 	return info
+}
+
+// UpdateResult reports the outcome of a provider CLI update.
+type UpdateResult struct {
+	Package       string `json:"package"`
+	BeforeVersion string `json:"beforeVersion,omitempty"`
+	AfterVersion  string `json:"afterVersion,omitempty"`
+	Changed       bool   `json:"changed"`
+	Output        string `json:"output,omitempty"` // tail of the npm output
+}
+
+// Update runs `npm install -g <pkg>` for the provider's CLI, then
+// re-probes the version. Serialised across calls. The npm package name
+// comes from the trusted manifest (never user input) — that is the
+// whitelist. Whether the install succeeds depends on the npm global
+// prefix being writable by the daemon's user; on a hardened deploy that
+// means an opendray-owned prefix, otherwise this returns a permission
+// error rather than escalating.
+func (p *Prober) Update(ctx context.Context, m Manifest) (UpdateResult, error) {
+	if m.NpmPackage == "" {
+		return UpdateResult{}, fmt.Errorf("provider %q is not updatable via npm", m.ID)
+	}
+
+	p.updateMu.Lock()
+	defer p.updateMu.Unlock()
+
+	before := p.Installed(ctx, m).InstalledVersion
+	out, err := p.npmInstall(ctx, m.NpmPackage)
+
+	// The install may have changed what's on disk even on partial
+	// failure, so always drop the cached install state.
+	p.mu.Lock()
+	delete(p.installed, m.Executable)
+	p.mu.Unlock()
+
+	res := UpdateResult{Package: m.NpmPackage, BeforeVersion: before, Output: tailLines(out, 40)}
+	if err != nil {
+		return res, fmt.Errorf("npm install -g %s: %w", m.NpmPackage, err)
+	}
+	res.AfterVersion = p.Installed(ctx, m).InstalledVersion
+	res.Changed = res.AfterVersion != before
+	return res, nil
+}
+
+// tailLines returns the last n lines of s (npm output can be long;
+// callers only want the tail for diagnostics).
+func tailLines(s string, n int) string {
+	s = strings.TrimRight(s, "\n")
+	if s == "" {
+		return ""
+	}
+	lines := strings.Split(s, "\n")
+	if len(lines) > n {
+		lines = lines[len(lines)-n:]
+	}
+	return strings.Join(lines, "\n")
 }
 
 // ── version comparison ───────────────────────────────────────────────
@@ -191,4 +254,16 @@ func defaultNpmLatest(ctx context.Context, pkg string) (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(string(out)), nil
+}
+
+func defaultNpmInstall(ctx context.Context, pkg string) (string, error) {
+	if _, err := exec.LookPath("npm"); err != nil {
+		return "", err
+	}
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+	// CombinedOutput so npm's progress/errors (incl. EACCES on a
+	// non-writable prefix) come back to the operator.
+	out, err := exec.CommandContext(ctx, "npm", "install", "-g", pkg).CombinedOutput()
+	return string(out), err
 }
