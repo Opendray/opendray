@@ -66,7 +66,7 @@ func TestRegistry_RegisterLookupList(t *testing.T) {
 		names = append(names, c.Name)
 	}
 	got := strings.Join(names, ",")
-	if got != "cancel,help" {
+	if got != "cancel,help,start" {
 		t.Errorf("List sorted: %s", got)
 	}
 }
@@ -84,6 +84,24 @@ func TestHelpHandler_ListsCommands(t *testing.T) {
 	for _, want := range []string{"/help", "/cancel — End a session", "/status — Show session status"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("help output missing %q\n--full--\n%s", want, out)
+		}
+	}
+}
+
+func TestStartHandler_GreetsAndListsCommands(t *testing.T) {
+	r := NewCommandRegistry()
+	cmd, ok := r.Lookup("start")
+	if !ok {
+		t.Fatal("/start should be registered by default")
+	}
+	out, err := cmd.Handler(context.Background(), CommandContext{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Greeting up top, then the same command list as /help (incl. itself).
+	for _, want := range []string{"opendray is connected", "/help", "/start"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("/start output missing %q\n--full--\n%s", want, out)
 		}
 	}
 }
