@@ -175,16 +175,17 @@ func TestListSessionsCardHandler_CapsAtMax(t *testing.T) {
 		t.Errorf("want %d lines (cap + header), got %d\n%s",
 			listSessionsMax+1, lines, body)
 	}
-	// Every shown session contributed exactly one button.
-	if got := len(cardButtonValues(got)); got != listSessionsMax {
-		t.Errorf("want %d buttons (one per shown session), got %d",
-			listSessionsMax, got)
+	// Every shown session is live here, so each contributes two
+	// buttons: "Talk to" + End.
+	if got := len(cardButtonValues(got)); got != listSessionsMax*2 {
+		t.Errorf("want %d buttons (Talk+End per live session), got %d",
+			listSessionsMax*2, got)
 	}
 }
 
-// The whole point of this PR: each session row in /list produces a
-// tappable button whose callback value carries the FULL session id,
-// so the operator never has to type it. Live sessions get an /end
+// Each session row in /list produces tappable buttons whose callback
+// value carries the FULL session id, so the operator never has to type
+// it. Live sessions get a "Talk to" (/select) button and an /end
 // button; terminated ones get /resume.
 func TestListSessionsCardHandler_ButtonsCarryFullIdAndCorrectVerb(t *testing.T) {
 	now := time.Now().UTC()
@@ -206,6 +207,8 @@ func TestListSessionsCardHandler_ButtonsCarryFullIdAndCorrectVerb(t *testing.T) 
 	}
 	values := cardButtonValues(got)
 	want := []string{
+		"cmd:/select ses_running1",
+		"cmd:/select ses_idle1",
 		"cmd:/end ses_running1",
 		"cmd:/end ses_idle1",
 		"cmd:/resume ses_ended1",
@@ -214,8 +217,8 @@ func TestListSessionsCardHandler_ButtonsCarryFullIdAndCorrectVerb(t *testing.T) 
 	if len(values) != len(want) {
 		t.Fatalf("got %d buttons, want %d\nvalues: %v", len(values), len(want), values)
 	}
-	// Order: end buttons first (live sessions, in input recency
-	// order), then resume buttons (terminated sessions).
+	// Order: Talk-to (live) first, then End (live), then Resume
+	// (terminated) — each group in input recency order.
 	for i, w := range want {
 		if values[i] != w {
 			t.Errorf("button[%d] = %q, want %q\nall: %v", i, values[i], w, values)
@@ -378,5 +381,64 @@ func TestRelativeAge_Buckets(t *testing.T) {
 		if got := relativeAge(c.ts, base); got != c.want {
 			t.Errorf("ts=%v got %q want %q", c.ts, got, c.want)
 		}
+	}
+}
+
+// fakeChannel is a minimal channel.Channel for exercising command
+// handlers that only need Channel.ID().
+type fakeChannel struct{ id string }
+
+func (f *fakeChannel) Kind() string                                       { return "test" }
+func (f *fakeChannel) ID() string                                         { return f.id }
+func (f *fakeChannel) Start(context.Context, channel.InboundFunc) error   { return nil }
+func (f *fakeChannel) Stop(context.Context) error                         { return nil }
+func (f *fakeChannel) Send(context.Context, channel.ChannelMessage) error { return nil }
+
+func TestSelectSessionHandler(t *testing.T) {
+	hub := channel.NewHub(nil, nil, nil)
+	ch := &fakeChannel{id: "ch_test"}
+	mgr := &fakeSessionOps{sessions: []session.Session{
+		{ID: "ses_live1", Name: "deploy", ProviderID: "claude", State: session.StateRunning},
+		{ID: "ses_dead1", ProviderID: "gemini", State: session.StateEnded},
+	}}
+	h := selectSessionHandler(mgr)
+	mk := func(args ...string) channel.CommandContext {
+		return channel.CommandContext{Channel: ch, Hub: hub, Args: args}
+	}
+
+	// Pin a live session — confirmation names it, routing is set.
+	resp, err := h(context.Background(), mk("ses_live1"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(resp, "deploy (ses_live1)") {
+		t.Errorf("expected confirmation naming the session, got %q", resp)
+	}
+	if got := hub.ActiveSession("ch_test"); got != "ses_live1" {
+		t.Errorf("active session = %q, want ses_live1", got)
+	}
+
+	// No-arg reports the current pin.
+	if resp, _ = h(context.Background(), mk()); !strings.Contains(resp, "ses_live1") {
+		t.Errorf("no-arg should report current pin, got %q", resp)
+	}
+
+	// "off" clears the pin.
+	if _, _ = h(context.Background(), mk("off")); hub.ActiveSession("ch_test") != "" {
+		t.Errorf("/select off should clear the active session")
+	}
+
+	// Unknown id is rejected and must not change an existing pin.
+	hub.SetActiveSession("ch_test", "ses_live1")
+	if resp, _ = h(context.Background(), mk("ses_nope")); !strings.Contains(resp, "not found") {
+		t.Errorf("unknown id should report not found, got %q", resp)
+	}
+	if hub.ActiveSession("ch_test") != "ses_live1" {
+		t.Errorf("unknown id must not change the pin")
+	}
+
+	// A terminated session is rejected with a resume hint.
+	if resp, _ = h(context.Background(), mk("ses_dead1")); !strings.Contains(resp, "resume") {
+		t.Errorf("terminated session should suggest /resume, got %q", resp)
 	}
 }
