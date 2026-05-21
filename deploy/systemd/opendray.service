@@ -78,7 +78,21 @@ ProtectControlGroups=true
 RestrictRealtime=true
 RestrictSUIDSGID=true
 LockPersonality=true
-MemoryDenyWriteExecute=true
+# NOTE: MemoryDenyWriteExecute is intentionally NOT enabled.
+#
+# It enforces W^X on the process AND all its children via seccomp.
+# Codex and Gemini are V8/Node.js-based CLIs whose JIT needs to flip
+# JIT pages from RW→RX via mprotect, which the W^X filter blocks
+# (SIGSYS). The child dies within ~50 ms of pty.Start and the user
+# sees a "[session ended — read-only buffer]" banner with no other
+# diagnostic.
+#
+# (Claude survives because anthropic-ai/claude-code falls back to an
+# interpreter-only path when it detects the constraint; codex and
+# gemini don't have that fallback.)
+#
+# If you want this hardening back, you'd have to spawn child CLIs in
+# a different unit/cgroup so the seccomp filter doesn't inherit.
 SystemCallArchitectures=native
 ReadWritePaths=/var/lib/opendray
 
