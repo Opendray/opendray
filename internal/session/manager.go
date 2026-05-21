@@ -218,6 +218,21 @@ func (m *Manager) ReconcileStartup(ctx context.Context) error {
 	return nil
 }
 
+// defaultSessionName derives a friendly label for sessions created
+// without an explicit name, so channel surfaces (/list, idle cards)
+// show something operators recognise instead of a bare nano id. The
+// working-directory basename is the most meaningful default; we fall
+// back to the provider id when the cwd has no usable basename (root,
+// empty, ".").
+func defaultSessionName(providerID, cwd string) string {
+	base := filepath.Base(strings.TrimRight(cwd, string(filepath.Separator)))
+	switch base {
+	case "", ".", string(filepath.Separator):
+		return providerID
+	}
+	return base
+}
+
 // Create resolves the provider, spawns a PTY, persists the row, and
 // starts the stdout pump + exit detector goroutines. Returns the
 // persisted Session view.
@@ -234,9 +249,13 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 	m.mu.RUnlock()
 
 	sessID := newID()
+	name := req.Name
+	if name == "" {
+		name = defaultSessionName(req.ProviderID, req.Cwd)
+	}
 	sess := Session{
 		ID:              sessID,
-		Name:            req.Name,
+		Name:            name,
 		ProviderID:      req.ProviderID,
 		Cwd:             req.Cwd,
 		Args:            req.Args,
