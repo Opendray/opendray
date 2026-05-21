@@ -112,6 +112,8 @@ export interface ProviderManifest {
   kind: 'cli' | 'shell'
   executable: string
   npmPackage?: string
+  modelFlag?: string
+  knownModels?: string[]
   defaultArgs?: string[]
   capabilities: {
     supportsResume: boolean

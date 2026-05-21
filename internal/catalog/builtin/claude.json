@@ -10,6 +10,12 @@
   "kind": "cli",
   "executable": "claude",
   "npmPackage": "@anthropic-ai/claude-code",
+  "modelFlag": "--model",
+  "knownModels": [
+    "opus",
+    "sonnet",
+    "haiku"
+  ],
   "capabilities": {
     "supportsResume": true,
     "supportsStream": true,

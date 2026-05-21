@@ -10,6 +10,12 @@
   "kind": "cli",
   "executable": "codex",
   "npmPackage": "@openai/codex",
+  "modelFlag": "--model",
+  "knownModels": [
+    "gpt-5-codex",
+    "o3",
+    "o4-mini"
+  ],
   "capabilities": {
     "supportsResume": false,
     "supportsStream": true,

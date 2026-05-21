@@ -1002,6 +1002,18 @@
         "removeFailedToast": "移除失败",
         "toggleAria": "切换 {name}",
         "removeAria": "移除 {name}"
+      },
+      "models": {
+        "title": "模型",
+        "help": "该提供方可用的模型。默认模型会通过 model 参数传给每个会话；会话仍可覆盖。",
+        "empty": "尚未配置任何模型。",
+        "add": "添加",
+        "addPlaceholder": "模型 ID（如 sonnet）",
+        "suggested": "建议（{{count}}）",
+        "default": "默认",
+        "makeDefault": "设为默认",
+        "setDefault": "用作默认模型",
+        "remove": "移除 {{model}}"
       }
     },
     "channels": {

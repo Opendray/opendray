@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { ConfigForm } from '@/components/providers/ConfigForm'
+import { ProviderModelsSection } from '@/components/providers/ProviderModelsSection'
 import { BrandAvatar } from '@/components/BrandAvatar'
 import { providerIconKey } from '@/lib/providerIcons'
 import { ClaudeAccountsPanel } from '@/components/providers/ClaudeAccountsPanel'
@@ -157,6 +158,7 @@ export function ProvidersPage() {
 
 function ProviderDetail({
   provider,
+  draft,
   onChange,
   dirty,
   saving,
@@ -315,6 +317,16 @@ function ProviderDetail({
               {t('web.providers.detail.noConfig')}
             </p>
           )}
+          {m.modelFlag ? (
+            <>
+              <Separator className="my-6" />
+              <ProviderModelsSection
+                manifest={m}
+                value={draft}
+                onChange={onChange}
+              />
+            </>
+          ) : null}
           {m.id === 'claude' && (
             <>
               <Separator className="my-6" />

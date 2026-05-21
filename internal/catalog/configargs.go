@@ -26,6 +26,22 @@ import (
 // dependsOn / dependsVal: a field is skipped when cfg[dependsOn] is
 // missing or unequal to dependsVal — lets fields like apiKey only apply
 // when authType=="custom".
+//
+// modelArgs renders the per-provider default model into CLI args when
+// the operator has set one (config["model"]) and the manifest declares a
+// model flag. A per-session --model in the spawn args still wins — the
+// session manager drops provider-derived flags the user re-specifies.
+func modelArgs(m Manifest, cfg map[string]any) []string {
+	if m.ModelFlag == "" {
+		return nil
+	}
+	model, _ := cfg["model"].(string)
+	if model == "" {
+		return nil
+	}
+	return []string{m.ModelFlag, model}
+}
+
 func applyConfigSchema(schema []ConfigField, cfg map[string]any) ([]string, map[string]string) {
 	if len(schema) == 0 || len(cfg) == 0 {
 		return nil, nil

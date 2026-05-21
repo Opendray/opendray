@@ -29,7 +29,16 @@ type Manifest struct {
 	// NpmPackage is the npm package the executable ships in, used to
 	// probe the latest published version (and, in Phase 2, to update
 	// the CLI). Empty for non-npm providers such as the builtin shell.
-	NpmPackage   string        `json:"npmPackage,omitempty"`
+	NpmPackage string `json:"npmPackage,omitempty"`
+	// ModelFlag is the CLI flag used to select a model (e.g. "--model").
+	// When set and the operator has configured a default `model`, it is
+	// passed on every spawn. Empty for providers with no model concept.
+	ModelFlag string `json:"modelFlag,omitempty"`
+	// KnownModels is a maintained suggestion list (kept current per
+	// release) the UI offers as "Suggested" — the CLIs expose no live
+	// model-list command, so this is the auto-populate source. Operators
+	// edit the actual list (provider config `models`) on top.
+	KnownModels  []string      `json:"knownModels,omitempty"`
 	DefaultArgs  []string      `json:"defaultArgs,omitempty"`
 	Capabilities Capabilities  `json:"capabilities"`
 	ConfigSchema []ConfigField `json:"configSchema,omitempty"`
