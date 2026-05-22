@@ -66,6 +66,16 @@ func NewCommandRegistry() *CommandRegistry {
 		Source:      "builtin",
 		Handler:     helpHandler(r),
 	})
+	// /start is what Telegram (and most chat platforms) send when a
+	// user first opens the bot, so it must resolve to something
+	// friendly instead of "Unknown command". It greets, then prints
+	// the same command list as /help.
+	r.Register(Command{
+		Name:        "start",
+		Description: "Welcome message + command list",
+		Source:      "builtin",
+		Handler:     startHandler(r),
+	})
 	return r
 }
 
@@ -138,5 +148,19 @@ func helpHandler(r *CommandRegistry) CommandHandler {
 			fmt.Fprintf(&b, "  /%s — %s\n", c.Name, c.Description)
 		}
 		return strings.TrimRight(b.String(), "\n"), nil
+	}
+}
+
+// startHandler greets the user and appends the /help command list.
+// Wired to /start so the bot's first-contact command is never an
+// "Unknown command" error.
+func startHandler(r *CommandRegistry) CommandHandler {
+	help := helpHandler(r)
+	return func(ctx context.Context, cc CommandContext) (string, error) {
+		body, err := help(ctx, cc)
+		if err != nil {
+			return "", err
+		}
+		return "👋 opendray is connected. Use /list to see sessions, then tap “💬 Talk to” to pick one.\n\n" + body, nil
 	}
 }

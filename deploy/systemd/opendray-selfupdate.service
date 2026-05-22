@@ -1,0 +1,21 @@
+# Privileged oneshot that applies a queued opendray upgrade. Activated by
+# opendray-selfupdate.path when the daemon drops a request file — NOT
+# enabled to run on its own. Runs as root because it replaces
+# /usr/local/bin/opendray, refreshes the unit's W^X drop-in, and restarts
+# the service. It re-resolves "latest" from the canonical repo and verifies
+# the download, so the request file can't point it at arbitrary code.
+[Unit]
+Description=Apply a queued opendray upgrade (privileged)
+After=network-online.target opendray.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/opendray self-update --apply
+# If the daemon uses a non-default state dir, set it here too so this
+# oneshot reads the request from the same place:
+# Environment=OPENDRAY_STATE_DIR=/var/lib/opendray
+
+# Minimal hardening — this is short-lived and must write /usr/local/bin
+# and /etc/systemd/system, so it can't be locked down like the daemon.
+ProtectHome=yes

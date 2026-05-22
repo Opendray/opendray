@@ -32,6 +32,13 @@ func CurrentPrincipal(ctx context.Context) (Principal, bool) {
 	return p, ok
 }
 
+// WithPrincipal attaches a principal to ctx. The middlewares use this on
+// the request path; it's also the supported way for other packages and
+// tests to set up a principal-bearing context.
+func WithPrincipal(ctx context.Context, p Principal) context.Context {
+	return context.WithValue(ctx, principalCtxKey{}, p)
+}
+
 // CombinedMiddleware accepts an admin bearer OR an integration API key
 // on the same route. Used to wrap business endpoints (sessions /
 // providers / channels / catalog / auth/me / auth/logout) so that

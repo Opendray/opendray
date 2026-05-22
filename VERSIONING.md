@@ -9,7 +9,7 @@ release-pipeline behaviour.
 
 - **Major version = product generation.** v1 is the legacy
   `Opendray/opendray` codebase (archived). v2 is this codebase
-  (`Opendray/opendray_v2`). v3 is reserved for a future cross-
+  (`Opendray/opendray`). v3 is reserved for a future cross-
   architecture rewrite.
 - **Minor version = feature iteration.** New channels, new providers,
   new memory subsystems, new API endpoints — anything additive within

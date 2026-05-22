@@ -9,6 +9,13 @@
   "version": "1.0.0",
   "kind": "cli",
   "executable": "codex",
+  "npmPackage": "@openai/codex",
+  "modelFlag": "--model",
+  "knownModels": [
+    "gpt-5-codex",
+    "o3",
+    "o4-mini"
+  ],
   "capabilities": {
     "supportsResume": false,
     "supportsStream": true,
@@ -22,7 +29,10 @@
       "label_zh": "认证",
       "type": "select",
       "group": "auth",
-      "options": ["env", "custom"],
+      "options": [
+        "env",
+        "custom"
+      ],
       "default": "env",
       "description": "env = read OPENAI_API_KEY from system; custom = use the key below",
       "description_zh": "env = 从系统读取 OPENAI_API_KEY；custom = 使用下方自定义密钥"
@@ -44,7 +54,11 @@
       "label_zh": "审批模式",
       "type": "select",
       "group": "runtime",
-      "options": ["untrusted", "on-request", "never"],
+      "options": [
+        "untrusted",
+        "on-request",
+        "never"
+      ],
       "default": "on-request",
       "cliFlag": "--ask-for-approval",
       "cliValue": true,
@@ -57,7 +71,11 @@
       "label_zh": "沙盒策略",
       "type": "select",
       "group": "runtime",
-      "options": ["read-only", "workspace-write", "danger-full-access"],
+      "options": [
+        "read-only",
+        "workspace-write",
+        "danger-full-access"
+      ],
       "default": "workspace-write",
       "cliFlag": "-s",
       "cliValue": true,
@@ -91,6 +109,10 @@
     }
   ],
   "ui": {
-    "activityBar": { "id": "codex", "icon": "🤖", "title": "Codex" }
+    "activityBar": {
+      "id": "codex",
+      "icon": "🤖",
+      "title": "Codex"
+    }
   }
 }

@@ -67,4 +67,4 @@ release:
   prerelease: auto
   name_template: "v{{ .Version }}"
   header: |
-    See [CHANGELOG.md](https://github.com/Opendray/opendray_v2/blob/main/CHANGELOG.md) for the full release notes.
+    See [CHANGELOG.md](https://github.com/Opendray/opendray/blob/main/CHANGELOG.md) for the full release notes.

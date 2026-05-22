@@ -11,10 +11,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Opendray/opendray_v2/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Opendray/opendray_v2?label=release&color=4f46e5"></a>
-  <a href="LICENSE"><img alt="License Apache 2.0" src="https://img.shields.io/github/license/Opendray/opendray_v2?color=blue"></a>
-  <a href="https://github.com/Opendray/opendray_v2/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Opendray/opendray_v2/ci.yml?branch=main&label=CI"></a>
-  <a href="https://github.com/Opendray/opendray_v2/discussions"><img alt="Discussions" src="https://img.shields.io/github/discussions/Opendray/opendray_v2?color=ec4899"></a>
+  <a href="https://github.com/Opendray/opendray/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Opendray/opendray?label=release&color=4f46e5"></a>
+  <a href="LICENSE"><img alt="License Apache 2.0" src="https://img.shields.io/github/license/Opendray/opendray?color=blue"></a>
+  <a href="https://github.com/Opendray/opendray/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Opendray/opendray/ci.yml?branch=main&label=CI"></a>
+  <a href="https://github.com/Opendray/opendray/discussions"><img alt="Discussions" src="https://img.shields.io/github/discussions/Opendray/opendray?color=ec4899"></a>
   <br/>
   <img alt="Go" src="https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go&logoColor=white">
   <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black">
@@ -64,13 +64,13 @@
 **Linux / macOS / WSL2**
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install.sh | bash
 ```
 
 **Windows** —— 先设置 WSL2,然后在 WSL2 里跑 Linux 安装器。[详情 →](scripts/README.md#windows)
 
 ```powershell
-irm https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install-windows.ps1 | iex
+irm https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install-windows.ps1 | iex
 ```
 
 引导你完成 Postgres 设置、AI CLI 安装、admin 凭据、服务注册,5–10 分钟拉起一个运行中的网关。详见 [**`scripts/README.md`**](scripts/README.md):wizard 做什么、生成的文件布局、参数、排错。
@@ -82,13 +82,13 @@ irm https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install-
 **默认模式** —— 停掉网关、删 binary,但**保留** `config.toml`、数据目录(bcrypt keyfile、sessions、notes、vault)、日志、PostgreSQL 数据库。重装时直接接上,数据不丢:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh | bash
 ```
 
 **完整 purge** —— 还会 drop 数据库 + role、删 config / 数据 / 日志、移除服务用户。最后有 verification 步骤,有残留会大声报错:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | OPENDRAY_PURGE=1 bash
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh | OPENDRAY_PURGE=1 bash
 ```
 
 ### 日常运维命令
@@ -119,7 +119,7 @@ sudo opendray start              # start | stop | restart | status —— 封装
 
 | 方式 | 适合 | 跳转到 |
 |---|---|---|
-| 📦 **预构建二进制** | "拿来就跑" — Linux / macOS,搭配任意进程管理器 | [Releases 页](https://github.com/Opendray/opendray_v2/releases) → 见下方 [生产部署](#生产部署) |
+| 📦 **预构建二进制** | "拿来就跑" — Linux / macOS,搭配任意进程管理器 | [Releases 页](https://github.com/Opendray/opendray/releases) → 见下方 [生产部署](#生产部署) |
 | 🐧 **systemd unit** | 裸机 / VM / Linux LXC | [生产部署 §A](#方案-a--systemd裸机--vm--lxc) |
 | 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio 当家用 server | [生产部署 §B](#方案-b--macos-launchdmac-mini--studio-当家用-server) |
 | 🛠 **从源码构建** | 开发 / 贡献代码 / 定制构建 | [快速开始](#快速开始5-分钟开发版) |
@@ -167,7 +167,7 @@ Linux 推荐部署路径。
 的启动顺序、20 秒优雅退出窗口。
 
 **先拿一个二进制。** 要么从
-[Releases 页](https://github.com/Opendray/opendray_v2/releases)
+[Releases 页](https://github.com/Opendray/opendray/releases)
 下载预构建归档(`opendray_*_linux_<arch>.tar.gz` — 解压就是
 单一 `opendray` 二进制),要么按上面 [快速开始](#快速开始5-分钟开发版)
 从源码 build(`go build ./cmd/opendray`)。
@@ -211,7 +211,7 @@ goreleaser release --clean --snapshot
 ls dist/                  # opendray_*_linux_amd64.tar.gz 等
 
 # 或者从已发布的 release 拿 artifact:
-# https://github.com/Opendray/opendray_v2/releases
+# https://github.com/Opendray/opendray/releases
 ```
 
 让你的进程管理器(s6、runit、supervisord、runwhen)指向:

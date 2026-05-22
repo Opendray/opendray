@@ -23,8 +23,8 @@ docker --version        # 24.x or newer
 ## 5-minute path
 
 ```bash
-git clone https://github.com/Opendray/opendray_v2.git
-cd opendray_v2
+git clone https://github.com/Opendray/opendray.git
+cd opendray
 
 # 1. Start the bundled Postgres (or skip and use your own — see below).
 apt install -y postgresql-16 postgresql-16-pgvector  # or brew install postgresql pgvector
