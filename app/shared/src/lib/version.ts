@@ -30,6 +30,9 @@ export async function getVersionInfo(): Promise<VersionInfo> {
   return api<VersionInfo>('/version')
 }
 
-export async function requestSelfUpdate(): Promise<SelfUpdateResponse> {
-  return api<SelfUpdateResponse>('/version/update', { method: 'POST' })
+export async function requestSelfUpdate(
+  force = false,
+): Promise<SelfUpdateResponse> {
+  const q = force ? '?force=true' : ''
+  return api<SelfUpdateResponse>(`/version/update${q}`, { method: 'POST' })
 }

@@ -2129,7 +2129,10 @@
         "upgradeSlow": "Upgrade is taking a while — check the service logs if it doesn't come back.",
         "guidedHint": "In-app upgrade isn't available here. Run on the server:",
         "checkFailed": "Couldn't check for updates (offline or rate-limited).",
-        "upToDate": "You're on the latest release."
+        "upToDate": "You're on the latest release.",
+        "checkUpdates": "Check for updates",
+        "checking": "Checking…",
+        "reinstall": "Re-install"
       }
     },
     "logViewer": {

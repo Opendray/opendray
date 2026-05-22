@@ -2128,7 +2128,10 @@
         "upgradeSlow": "升级耗时较长——如果服务未恢复，请检查日志。",
         "guidedHint": "此处不支持应用内升级。请在服务器上运行：",
         "checkFailed": "无法检查更新（离线或受限）。",
-        "upToDate": "已是最新版本。"
+        "upToDate": "已是最新版本。",
+        "checkUpdates": "检查更新",
+        "checking": "检查中…",
+        "reinstall": "重新安装"
       }
     },
     "logViewer": {

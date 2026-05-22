@@ -102,12 +102,14 @@ func (h *versionHandlers) requestUpdate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	force := r.URL.Query().Get("force") == "true" || r.URL.Query().Get("force") == "1"
+
 	st, err := selfupdate.Check(r.Context(), version.Version)
 	if err != nil {
 		writeVersionJSON(w, http.StatusBadGateway, map[string]any{"error": "couldn't reach the release feed: " + err.Error()})
 		return
 	}
-	if !st.Available {
+	if !st.Available && !force {
 		writeVersionJSON(w, http.StatusOK, map[string]any{"error": "already on the latest release.", "current": st.Current})
 		return
 	}
@@ -116,23 +118,23 @@ func (h *versionHandlers) requestUpdate(w http.ResponseWriter, r *http.Request) 
 	if p, ok := integration.CurrentPrincipal(r.Context()); ok && p.ID != "" {
 		by = p.ID
 	}
-	req := selfupdate.Request{Version: st.Latest, RequestedBy: by, RequestedAt: time.Now().UTC()}
+	req := selfupdate.Request{Version: st.Latest, RequestedBy: by, RequestedAt: time.Now().UTC(), Force: force}
 	if err := selfupdate.WriteRequest(h.dataDir, req); err != nil {
 		writeVersionJSON(w, http.StatusInternalServerError, map[string]any{"error": "couldn't queue the upgrade: " + err.Error()})
 		return
 	}
 	// Privileged action — leave a loud trail in the journal + audit bus.
-	h.log.Warn("self-update requested", "from", st.Current, "to", st.Latest, "by", by)
+	h.log.Warn("self-update requested", "from", st.Current, "to", st.Latest, "force", force, "by", by)
 	if h.bus != nil {
 		h.bus.Publish(eventbus.Event{Topic: "selfupdate.requested", Data: map[string]any{
-			"from": st.Current, "to": st.Latest, "requestedBy": by,
+			"from": st.Current, "to": st.Latest, "force": force, "requestedBy": by,
 		}})
 	}
 	// 202: the root oneshot will pick up the request, upgrade, and restart
 	// the daemon — so the client should poll GET /version afterward and
 	// expect the connection to drop during the restart.
 	writeVersionJSON(w, http.StatusAccepted, map[string]any{
-		"queued": true, "from": st.Current, "to": st.Latest,
+		"queued": true, "from": st.Current, "to": st.Latest, "force": force,
 		"note": "Upgrading in the background; the service will restart and running sessions will reconnect.",
 	})
 }
