@@ -22,7 +22,7 @@ condensed paths in README Production deploy are a better fit.
 |---|---|---|
 | At least one of: Claude Code / Codex CLI / Gemini CLI | opendray is a **wrapper**, not a model — it spawns a CLI on your host | Step 1 below |
 | PostgreSQL 15 / 16 / 17 + **pgvector** extension | State, sessions, memory vectors | Step 2 below |
-| `go` 1.25+ and `pnpm` 10+ — *only* if you build from source | Skip if you grab a release binary | [Releases page](https://github.com/Opendray/opendray_v2/releases) |
+| `go` 1.25+ and `pnpm` 10+ — *only* if you build from source | Skip if you grab a release binary | [Releases page](https://github.com/Opendray/opendray/releases) |
 | A reachable network port (default `:8770`) for the web admin | UI + API + WebSockets | Bind to `127.0.0.1` unless behind a reverse proxy |
 
 ---

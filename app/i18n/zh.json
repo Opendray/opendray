@@ -962,7 +962,16 @@
           "stream": "stream",
           "images": "images",
           "mcp": "mcp"
-        }
+        },
+        "notInstalled": "未安装",
+        "updateAvailable": "有可用更新 → {{version}}",
+        "upToDate": "已是最新",
+        "update": "更新到 {{version}}",
+        "updating": "更新中…",
+        "updatedToast": "已更新 {{from}} → {{to}}",
+        "alreadyLatestToast": "已是最新",
+        "updateFailedToast": "更新失败",
+        "updateUnavailable": "此处无法在应用内更新"
       },
       "configForm": {
         "selectPlaceholder": "选择…",
@@ -994,6 +1003,18 @@
         "removeFailedToast": "移除失败",
         "toggleAria": "切换 {name}",
         "removeAria": "移除 {name}"
+      },
+      "models": {
+        "title": "模型",
+        "help": "该提供方可用的模型。默认模型会通过 model 参数传给每个会话；会话仍可覆盖。",
+        "empty": "尚未配置任何模型。",
+        "add": "添加",
+        "addPlaceholder": "模型 ID（如 sonnet）",
+        "suggested": "建议（{{count}}）",
+        "default": "默认",
+        "makeDefault": "设为默认",
+        "setDefault": "用作默认模型",
+        "remove": "移除 {{model}}"
       }
     },
     "channels": {
@@ -1280,6 +1301,13 @@
           "savedToast": "MCP 服务器已保存",
           "createFailedToast": "创建失败",
           "saveFailedToast": "保存失败"
+        },
+        "test": {
+          "button": "测试",
+          "title": "从守护进程验证此 MCP 服务器",
+          "connected": "已连接 · {{count}} 个工具",
+          "reachable": "可达",
+          "failed": "测试失败"
         }
       },
       "mcpSecrets": {
@@ -1682,16 +1710,46 @@
     },
     "serverSettings": {
       "sections": {
-        "general": { "title": "通用", "desc": "监听地址、操作员账号、令牌 TTL。" },
-        "logging": { "title": "日志", "desc": "日志级别、格式与实时跟踪。" },
-        "sessions": { "title": "会话", "desc": "空闲检测阈值。" },
-        "vault": { "title": "Vault", "desc": "笔记、技能与 git 版本化根目录。" },
-        "mcp": { "title": "MCP 注册表", "desc": "服务器注册表与密钥。" },
-        "memory": { "title": "记忆", "desc": "跨 CLI 的持久化记忆子系统。" },
-        "backup": { "title": "备份", "desc": "加密数据库备份、恢复，以及管理员数据导出。" },
-        "claude": { "title": "存储 · Claude", "desc": "Claude 会话记录在磁盘上的位置。" },
-        "codex": { "title": "存储 · Codex", "desc": "Codex 会话根目录。" },
-        "gemini": { "title": "存储 · Gemini", "desc": "Gemini 每项目 tmp 与 projects.json。" }
+        "general": {
+          "title": "通用",
+          "desc": "监听地址、操作员账号、令牌 TTL。"
+        },
+        "logging": {
+          "title": "日志",
+          "desc": "日志级别、格式与实时跟踪。"
+        },
+        "sessions": {
+          "title": "会话",
+          "desc": "空闲检测阈值。"
+        },
+        "vault": {
+          "title": "Vault",
+          "desc": "笔记、技能与 git 版本化根目录。"
+        },
+        "mcp": {
+          "title": "MCP 注册表",
+          "desc": "服务器注册表与密钥。"
+        },
+        "memory": {
+          "title": "记忆",
+          "desc": "跨 CLI 的持久化记忆子系统。"
+        },
+        "backup": {
+          "title": "备份",
+          "desc": "加密数据库备份、恢复，以及管理员数据导出。"
+        },
+        "claude": {
+          "title": "存储 · Claude",
+          "desc": "Claude 会话记录在磁盘上的位置。"
+        },
+        "codex": {
+          "title": "存储 · Codex",
+          "desc": "Codex 会话根目录。"
+        },
+        "gemini": {
+          "title": "存储 · Gemini",
+          "desc": "Gemini 每项目 tmp 与 projects.json。"
+        }
       },
       "loading": "正在加载服务器设置…",
       "loadFailed": "加载失败：{message}",
@@ -2056,7 +2114,21 @@
       },
       "about": {
         "title": "关于",
-        "description": "opendray v2 — 面向 AI agent CLI 的多路复用 + 集成网关。源码采用 Apache 2.0 协议。"
+        "description": "opendray v2 — 面向 AI agent CLI 的多路复用 + 集成网关。源码采用 Apache 2.0 协议。",
+        "version": "版本",
+        "commit": "提交",
+        "updateAvailable": "有可用更新：{{version}}",
+        "releaseNotes": "发行说明 ↗",
+        "updateNow": "立即更新",
+        "upgradingShort": "更新中…",
+        "confirmRestart": "这将重启服务，正在运行的会话会重新连接。",
+        "confirmUpgrade": "升级并重启",
+        "upgrading": "正在升级到 {{version}}…",
+        "upgraded": "已更新到 {{version}}。",
+        "upgradeSlow": "升级耗时较长——如果服务未恢复，请检查日志。",
+        "guidedHint": "此处不支持应用内升级。请在服务器上运行：",
+        "checkFailed": "无法检查更新（离线或受限）。",
+        "upToDate": "已是最新版本。"
       }
     },
     "logViewer": {
@@ -3143,12 +3215,30 @@
     "pathStyle": "路径风格寻址",
     "pathStyleSubtitle": "旧版 / MinIO",
     "kinds": {
-      "local": { "label": "本地磁盘", "description": "运行 opendray 的机器上的文件夹" },
-      "smb": { "label": "SMB 共享", "description": "Windows 共享 + 多数家用 NAS 设备" },
-      "webdav": { "label": "WebDAV", "description": "自托管云盘 + 文件共享服务" },
-      "sftp": { "label": "SFTP", "description": "任何可 SSH 访问的服务器" },
-      "s3": { "label": "S3 / 兼容", "description": "Amazon S3 + S3 兼容存储桶（MinIO、R2、B2）" },
-      "rclone": { "label": "rclone（任意）", "description": "通过 rclone CLI 访问 OneDrive、Google Drive、Dropbox" }
+      "local": {
+        "label": "本地磁盘",
+        "description": "运行 opendray 的机器上的文件夹"
+      },
+      "smb": {
+        "label": "SMB 共享",
+        "description": "Windows 共享 + 多数家用 NAS 设备"
+      },
+      "webdav": {
+        "label": "WebDAV",
+        "description": "自托管云盘 + 文件共享服务"
+      },
+      "sftp": {
+        "label": "SFTP",
+        "description": "任何可 SSH 访问的服务器"
+      },
+      "s3": {
+        "label": "S3 / 兼容",
+        "description": "Amazon S3 + S3 兼容存储桶（MinIO、R2、B2）"
+      },
+      "rclone": {
+        "label": "rclone（任意）",
+        "description": "通过 rclone CLI 访问 OneDrive、Google Drive、Dropbox"
+      }
     },
     "formTitleEdit": "编辑目标",
     "formTitleNew": "新建备份目标",
@@ -3674,7 +3764,7 @@
       "version": "版本",
       "serverUrl": "服务器 URL"
     },
-    "tagline": "opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray_v2"
+    "tagline": "opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray"
   },
   "settings": {
     "title": "设置",

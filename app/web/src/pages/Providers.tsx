@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { ConfigForm } from '@/components/providers/ConfigForm'
+import { ProviderModelsSection } from '@/components/providers/ProviderModelsSection'
 import { BrandAvatar } from '@/components/BrandAvatar'
 import { providerIconKey } from '@/lib/providerIcons'
 import { ClaudeAccountsPanel } from '@/components/providers/ClaudeAccountsPanel'
@@ -17,6 +18,8 @@ import {
   listProviders,
   toggleProvider,
   updateProviderConfig,
+  checkProviderUpdate,
+  updateProvider,
 } from '@/lib/catalog'
 import type { Provider } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -155,6 +158,7 @@ export function ProvidersPage() {
 
 function ProviderDetail({
   provider,
+  draft,
   onChange,
   dirty,
   saving,
@@ -172,7 +176,45 @@ function ProviderDetail({
   onToggle: (enabled: boolean) => void
 }) {
   const { t } = useTranslation()
+  const qc = useQueryClient()
   const m = provider.manifest
+  const rt = provider.runtime
+  // Latest-version check is a network (npm) call, so it runs on its own
+  // endpoint and only for installed CLI providers.
+  const { data: upd } = useQuery({
+    queryKey: ['provider-update', m.id],
+    queryFn: () => checkProviderUpdate(m.id),
+    enabled: m.kind === 'cli' && !!rt?.installed,
+    staleTime: 60_000,
+  })
+  const updateMut = useMutation({
+    mutationFn: () => updateProvider(m.id),
+    onSuccess: (res) => {
+      if (!res.available) {
+        // Can't update here (e.g. read-only npm prefix) — guidance, not error.
+        toast.info(t('web.providers.detail.updateUnavailable'), {
+          description: res.reason,
+        })
+        return
+      }
+      if (res.changed) {
+        toast.success(
+          t('web.providers.detail.updatedToast', {
+            from: res.beforeVersion,
+            to: res.afterVersion,
+          }),
+        )
+      } else {
+        toast.info(t('web.providers.detail.alreadyLatestToast'))
+      }
+      qc.invalidateQueries({ queryKey: ['providers'] })
+      qc.invalidateQueries({ queryKey: ['provider-update', m.id] })
+    },
+    onError: (e: Error) =>
+      toast.error(t('web.providers.detail.updateFailedToast'), {
+        description: e.message,
+      }),
+  })
   const caps: { key: keyof typeof m.capabilities; labelKey: string }[] = [
     { key: 'supportsResume', labelKey: 'web.providers.detail.caps.resume' },
     { key: 'supportsStream', labelKey: 'web.providers.detail.caps.stream' },
@@ -197,9 +239,45 @@ function ProviderDetail({
             <Badge variant="outline" className="font-mono normal-case">
               {m.kind}
             </Badge>
-            <Badge variant="outline" className="font-mono normal-case">
-              v{m.version}
-            </Badge>
+            {rt && !rt.installed ? (
+              <Badge
+                variant="outline"
+                className="font-mono normal-case text-muted-foreground"
+              >
+                {t('web.providers.detail.notInstalled')}
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="font-mono normal-case">
+                {/* Real installed CLI version when known; falls back to
+                    the manifest's schema version only if unprobed. */}
+                {rt?.installedVersion ?? `v${m.version}`}
+              </Badge>
+            )}
+            {upd?.updateAvailable && upd.latestVersion ? (
+              <>
+                <Badge variant="accent" className="font-mono normal-case">
+                  {t('web.providers.detail.updateAvailable', {
+                    version: upd.latestVersion,
+                  })}
+                </Badge>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-2 text-[11px]"
+                  disabled={updateMut.isPending}
+                  onClick={() => updateMut.mutate()}
+                >
+                  {updateMut.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : null}
+                  {updateMut.isPending
+                    ? t('web.providers.detail.updating')
+                    : t('web.providers.detail.update', {
+                        version: upd.latestVersion,
+                      })}
+                </Button>
+              </>
+            ) : null}
           </div>
           <p className="text-[12px] text-muted-foreground mt-1 max-w-[60ch]">
             {m.description}
@@ -246,6 +324,16 @@ function ProviderDetail({
               {t('web.providers.detail.noConfig')}
             </p>
           )}
+          {m.modelFlag ? (
+            <>
+              <Separator className="my-6" />
+              <ProviderModelsSection
+                manifest={m}
+                value={draft}
+                onChange={onChange}
+              />
+            </>
+          ) : null}
           {m.id === 'claude' && (
             <>
               <Separator className="my-6" />

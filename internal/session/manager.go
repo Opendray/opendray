@@ -218,6 +218,21 @@ func (m *Manager) ReconcileStartup(ctx context.Context) error {
 	return nil
 }
 
+// defaultSessionName derives a friendly label for sessions created
+// without an explicit name, so channel surfaces (/list, idle cards)
+// show something operators recognise instead of a bare nano id. The
+// working-directory basename is the most meaningful default; we fall
+// back to the provider id when the cwd has no usable basename (root,
+// empty, ".").
+func defaultSessionName(providerID, cwd string) string {
+	base := filepath.Base(strings.TrimRight(cwd, string(filepath.Separator)))
+	switch base {
+	case "", ".", string(filepath.Separator):
+		return providerID
+	}
+	return base
+}
+
 // Create resolves the provider, spawns a PTY, persists the row, and
 // starts the stdout pump + exit detector goroutines. Returns the
 // persisted Session view.
@@ -234,9 +249,13 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 	m.mu.RUnlock()
 
 	sessID := newID()
+	name := req.Name
+	if name == "" {
+		name = defaultSessionName(req.ProviderID, req.Cwd)
+	}
 	sess := Session{
 		ID:              sessID,
-		Name:            req.Name,
+		Name:            name,
 		ProviderID:      req.ProviderID,
 		Cwd:             req.Cwd,
 		Args:            req.Args,
@@ -376,7 +395,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 
 	cmd := exec.Command(p.Executable, args...)
 	cmd.Dir = sess.Cwd
-	cmd.Env = mergeEnv(os.Environ(), extraEnv)
+	cmd.Env = mergeEnv(ensureColorTerm(os.Environ()), extraEnv)
 
 	ptmx, err := pty.Start(cmd)
 	if err != nil {
@@ -464,6 +483,34 @@ func (m *Manager) RecentScreen(id string) string {
 // mergeEnv overlays `overrides` onto a base "K=V" slice. Keys present
 // in both win for `overrides`. Used so PrepareFunc can inject env vars
 // like CODEX_HOME without losing the inherited environment.
+// ensureColorTerm guarantees child CLIs see a color-capable terminal.
+// opendray always allocates a real PTY (pty.Start), so the CLIs'
+// isatty() check passes — but systemd starts the daemon with no TERM,
+// and Node/ink-based CLIs (claude, codex, gemini) fall back to
+// monochrome output when TERM is unset. We inject xterm-256color +
+// truecolor as defaults only; an explicit TERM/COLORTERM already in
+// the environment (or set later by provider config, which mergeEnv
+// applies as an override) still wins, and we never touch NO_COLOR so
+// an operator who opted out stays opted out.
+func ensureColorTerm(env []string) []string {
+	var hasTERM, hasCOLORTERM bool
+	for _, kv := range env {
+		switch {
+		case strings.HasPrefix(kv, "TERM="):
+			hasTERM = true
+		case strings.HasPrefix(kv, "COLORTERM="):
+			hasCOLORTERM = true
+		}
+	}
+	if !hasTERM {
+		env = append(env, "TERM=xterm-256color")
+	}
+	if !hasCOLORTERM {
+		env = append(env, "COLORTERM=truecolor")
+	}
+	return env
+}
+
 func mergeEnv(base []string, overrides map[string]string) []string {
 	if len(overrides) == 0 {
 		return base

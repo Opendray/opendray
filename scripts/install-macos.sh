@@ -20,7 +20,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
 # ── Defaults ─────────────────────────────────────────────────────────
-: "${OPENDRAY_REPO:=Opendray/opendray_v2}"
+: "${OPENDRAY_REPO:=Opendray/opendray}"
 : "${OPENDRAY_HOME:=$HOME/.opendray}"
 
 LAUNCHD_SCOPE="agent"     # "agent" (user) or "daemon" (system)
@@ -260,7 +260,13 @@ if [ "$PG_MODE" = "local" ]; then
     # must probe the same port we'll actually bind (otherwise the
     # readiness check below waits on the wrong port and times out).
     _pgconf="$BREW_PREFIX/var/$PG_FORMULA/postgresql.conf"
-    PG_SUPER_PORT="$(grep -E '^[[:space:]]*port[[:space:]]*=' "$_pgconf" 2>/dev/null | tail -1 | sed -E 's/^[^=]*=[[:space:]]*([0-9]+).*/\1/')"
+    # A fresh postgresql.conf ships the port line COMMENTED ("#port = 5432"),
+    # so this grep finds no match and exits 1. Under `set -euo pipefail`
+    # that aborts the whole installer right after the Postgres install —
+    # before the `${PG_SUPER_PORT:-5432}` fallback below can apply. The
+    # `|| true` keeps the no-match case from tripping errexit (same guard
+    # the lsof probe just below already uses).
+    PG_SUPER_PORT="$(grep -E '^[[:space:]]*port[[:space:]]*=' "$_pgconf" 2>/dev/null | tail -1 | sed -E 's/^[^=]*=[[:space:]]*([0-9]+).*/\1/' || true)"
     PG_SUPER_PORT="${PG_SUPER_PORT:-5432}"
 
     # A conflict only if that port is held by a process that ISN'T this
@@ -596,6 +602,22 @@ else
     USER_KV=""
 fi
 
+# Build the service PATH. launchd does NOT read shell rc files, so the
+# daemon only sees this PATH — if an AI CLI lives somewhere else (e.g.
+# Claude Code's native installer puts `claude` in ~/.local/bin, not the
+# brew bin), opendray can't spawn it and sessions fail with the CLI "not
+# found". Seed the standard dirs, then prepend wherever each installed
+# CLI actually resolves right now, plus the native-installer location.
+SVC_PATH="${BREW_PREFIX}/bin:/usr/local/bin:/usr/bin:/bin"
+for _cli in claude gemini codex; do
+    _clipath="$(command -v "$_cli" 2>/dev/null || true)"
+    [ -n "$_clipath" ] || continue
+    _clidir="$(cd "$(dirname "$_clipath")" 2>/dev/null && pwd || true)"
+    [ -n "$_clidir" ] || continue
+    case ":$SVC_PATH:" in *":$_clidir:"*) ;; *) SVC_PATH="$_clidir:$SVC_PATH" ;; esac
+done
+case ":$SVC_PATH:" in *":$HOME/.local/bin:"*) ;; *) SVC_PATH="$HOME/.local/bin:$SVC_PATH" ;; esac
+
 # Render plist via a tmp file (Daemon path writes via run_priv).
 TMP_PLIST="$(mktemp -t opendray-plist.XXXXXX)"
 register_cleanup_file "$TMP_PLIST"
@@ -628,7 +650,7 @@ cat > "$TMP_PLIST" <<EOF
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>${BREW_PREFIX}/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <string>${SVC_PATH}</string>
         <key>HOME</key>
         <string>${HOME}</string>
     </dict>

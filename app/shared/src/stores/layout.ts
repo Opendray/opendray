@@ -17,6 +17,9 @@ interface LayoutState {
   toggleSidebar: () => void
   toggleSessionList: () => void
   toggleInspector: () => void
+  setSidebarCollapsed: (v: boolean) => void
+  setSessionListCollapsed: (v: boolean) => void
+  setInspectorOpen: (v: boolean) => void
   setInspectorWidth: (v: number) => void
   setFontScale: (v: number) => void
 }
@@ -68,6 +71,9 @@ export const useLayout = create<LayoutState>()(
         set({ sessionListCollapsed: !get().sessionListCollapsed }),
       toggleInspector: () =>
         set({ inspectorOpen: !get().inspectorOpen }),
+      setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
+      setSessionListCollapsed: (v) => set({ sessionListCollapsed: v }),
+      setInspectorOpen: (v) => set({ inspectorOpen: v }),
       setInspectorWidth: (v) =>
         set({ inspectorWidth: clampInspectorWidth(v) }),
       setFontScale: (v) => {

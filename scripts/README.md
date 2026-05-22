@@ -5,9 +5,9 @@ Windows (WSL2 setup helper).
 
 | Script | What it does | One-liner |
 |---|---|---|
-| `install.sh` | Install everything (Postgres, AI CLIs, admin creds, service). | `curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install.sh \| bash` |
-| `uninstall.sh` | Remove the gateway. Keeps DB + data by default. | `curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh \| bash` |
-| `uninstall.sh --purge` | Remove everything: DB, role, config, data, logs. | `curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh \| bash -s -- --purge` |
+| `install.sh` | Install everything (Postgres, AI CLIs, admin creds, service). | `curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install.sh \| bash` |
+| `uninstall.sh` | Remove the gateway. Keeps DB + data by default. | `curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh \| bash` |
+| `uninstall.sh --purge` | Remove everything: DB, role, config, data, logs. | `curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh \| bash -s -- --purge` |
 
 > Want the manual deploy paths instead?
 > See [`docs/getting-started.md`](../docs/getting-started.md) and
@@ -44,13 +44,13 @@ Those happen after the wizard, in the admin UI.
 ### Linux / macOS / WSL2 — one-liner
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install.sh | bash
 ```
 
 `install.sh` is dual-mode:
 
 - **Piped from curl** (no local checkout): it shallow-clones
-  `Opendray/opendray_v2` to `${TMPDIR:-/tmp}/opendray-install-$$`,
+  `Opendray/opendray` to `${TMPDIR:-/tmp}/opendray-install-$$`,
   installs `git` first via `apt` / `brew` if it's missing, then
   re-execs itself from the clone so the rest of the wizard sees a
   real working directory.
@@ -67,8 +67,8 @@ walking through the same wizard. The one-liner just removes the
 If you'd rather inspect the code before running anything:
 
 ```sh
-git clone https://github.com/Opendray/opendray_v2.git
-cd opendray_v2
+git clone https://github.com/Opendray/opendray.git
+cd opendray
 bash scripts/install-linux.sh          # Linux (Ubuntu/Debian)
 # or:
 bash scripts/install-macos.sh          # macOS (Intel + Apple Silicon)
@@ -87,7 +87,7 @@ spawns AI CLIs via Unix PTYs, which Windows does not expose to
 opendray. The PowerShell helper sets up WSL2 + Ubuntu for you:
 
 ```powershell
-irm https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install-windows.ps1 | iex
+irm https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install-windows.ps1 | iex
 ```
 
 Or, from a local checkout:
@@ -218,7 +218,7 @@ service — no `config.toml` touch required.
 
 ```sh
 # Linux / macOS — stops + removes the gateway, KEEPS DB + data
-curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh | bash
 
 # Or from a checkout:
 bash scripts/uninstall.sh
@@ -234,10 +234,10 @@ installer later picks up where you left off.
 
 ```sh
 # Method 1: env var (safer for copy-paste — survives accidental newlines)
-curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | OPENDRAY_PURGE=1 bash
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh | OPENDRAY_PURGE=1 bash
 
 # Method 2: flag via bash -s (must be one line, no manual line break!)
-curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | bash -s -- --purge
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh | bash -s -- --purge
 
 # From a checkout:
 bash scripts/uninstall.sh --purge

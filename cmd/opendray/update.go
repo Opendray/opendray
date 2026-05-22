@@ -42,7 +42,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/version"
 )
 
-const updateReleasesAPI = "https://api.github.com/repos/Opendray/opendray_v2/releases/latest"
+const updateReleasesAPI = "https://api.github.com/repos/Opendray/opendray/releases/latest"
 
 type ghReleaseAsset struct {
 	Name        string `json:"name"`
@@ -183,6 +183,16 @@ func runUpdate(args []string) int {
 		fmt.Println("\nIf this release contains schema migrations, also run:")
 		fmt.Println("  sudo -u opendray opendray migrate -config /etc/opendray/config.toml   # Linux")
 		fmt.Println("  opendray migrate -config ~/.opendray/config.toml                       # macOS")
+	}
+
+	// `opendray update` swaps only the binary — it does not regenerate the
+	// service unit. Releases that change the unit (e.g. the W^X /
+	// MemoryDenyWriteExecute fix) won't take effect until the unit is
+	// refreshed, which silently re-breaks codex/gemini on upgraders.
+	if runtime.GOOS == "linux" {
+		fmt.Println("\nNote: this updates the binary only, not the systemd unit. If a release")
+		fmt.Println("changed the unit and codex/gemini sessions crash, refresh it by re-running")
+		fmt.Println("the installer, then `sudo systemctl daemon-reload && sudo systemctl restart opendray`.")
 	}
 
 	return 0

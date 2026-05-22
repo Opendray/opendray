@@ -62,6 +62,9 @@ type Provider struct {
 	ManifestHash string         `json:"manifest_hash"`
 	Config       map[string]any `json:"config"`
 	Enabled      bool           `json:"enabled"`
+	// Runtime is the live probed CLI state (installed?, real version).
+	// Set by the HTTP handler, not the store — nil when not probed.
+	Runtime *RuntimeInfo `json:"runtime,omitempty"`
 }
 
 func (c *Catalog) Get(ctx context.Context, id string) (Provider, error) {

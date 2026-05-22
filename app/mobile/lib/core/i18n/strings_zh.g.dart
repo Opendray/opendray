@@ -840,7 +840,7 @@ class _TranslationsAboutZh extends TranslationsAboutEn {
 	@override String copied({required Object label}) => '已复制 ${label}';
 	@override String get copyTooltip => '复制';
 	@override late final _TranslationsAboutCopyLabelsZh copyLabels = _TranslationsAboutCopyLabelsZh._(_root);
-	@override String get tagline => 'opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray_v2';
+	@override String get tagline => 'opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray';
 }
 
 // Path: settings
@@ -10154,7 +10154,7 @@ extension on TranslationsZh {
 			'about.copyTooltip' => '复制',
 			'about.copyLabels.version' => '版本',
 			'about.copyLabels.serverUrl' => '服务器 URL',
-			'about.tagline' => 'opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray_v2',
+			'about.tagline' => 'opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray',
 			'settings.title' => '设置',
 			'settings.language.section' => '语言',
 			'settings.language.system' => '跟随系统',
