@@ -754,9 +754,28 @@ function AboutSection() {
     return () => clearInterval(id)
   }, [phase, data?.latest, refetch, t])
 
-  async function startUpgrade() {
+  const [checking, setChecking] = useState(false)
+  // confirmForce distinguishes a normal upgrade from a force re-install
+  // (the "Re-install" action shown when already on the latest).
+  const [confirmForce, setConfirmForce] = useState(false)
+
+  async function checkNow() {
+    setChecking(true)
     try {
-      const res = await requestSelfUpdate()
+      const r = await refetch()
+      const info = r.data
+      if (info?.checkError) toast.error(t('web.settings.about.checkFailed'))
+      else if (info?.updateAvailable)
+        toast.success(t('web.settings.about.updateAvailable', { version: info.latest }))
+      else toast.message(t('web.settings.about.upToDate'))
+    } finally {
+      setChecking(false)
+    }
+  }
+
+  async function startUpgrade(force = false) {
+    try {
+      const res = await requestSelfUpdate(force)
       if (res.error) {
         toast.error(res.error)
         setPhase('idle')
@@ -772,7 +791,8 @@ function AboutSection() {
     }
   }
 
-  const busy = phase === 'upgrading' || data?.pending
+  const busy = phase === 'upgrading' || !!data?.pending
+  const canSelfUpdate = !!data?.selfUpdate
   return (
     <div>
       <SectionHeader title={t('web.settings.about.title')} />
@@ -785,69 +805,102 @@ function AboutSection() {
         <Field label={t('web.settings.about.commit')} value={data.commit} monospace />
       )}
 
-      {data?.updateAvailable ? (
-        <div className="mt-3 rounded-md border border-primary/40 bg-primary/5 p-3">
-          <div className="text-[12px] font-medium">
-            {t('web.settings.about.updateAvailable', { version: data.latest })}
-          </div>
-          {data.notesUrl && (
-            <a
-              href={data.notesUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[11px] text-primary underline"
-            >
-              {t('web.settings.about.releaseNotes')}
-            </a>
-          )}
-          <div className="mt-2">
-            {data.selfUpdate ? (
-              phase === 'confirming' ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-muted-foreground">
-                    {t('web.settings.about.confirmRestart')}
-                  </span>
-                  <button
-                    onClick={startUpgrade}
-                    className="rounded bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground"
-                  >
-                    {t('web.settings.about.confirmUpgrade')}
-                  </button>
-                  <button
-                    onClick={() => setPhase('idle')}
-                    className="rounded border border-border px-2.5 py-1 text-[11px]"
-                  >
-                    {t('common.cancel')}
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setPhase('confirming')}
-                  disabled={!!busy}
-                  className="rounded bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground disabled:opacity-50"
-                >
-                  {busy
-                    ? t('web.settings.about.upgradingShort')
-                    : t('web.settings.about.updateNow')}
-                </button>
-              )
-            ) : (
-              <div className="text-[11px] text-muted-foreground">
-                {t('web.settings.about.guidedHint')}
-                <code className="ml-1 font-mono text-foreground">opendray update</code>
-              </div>
+      {/* Status line — always shown */}
+      <div className="mt-3 text-[12px]">
+        {data?.updateAvailable ? (
+          <span className="font-medium">
+            {t('web.settings.about.updateAvailable', { version: data.latest })}{' '}
+            {data.notesUrl && (
+              <a
+                href={data.notesUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] text-primary underline"
+              >
+                {t('web.settings.about.releaseNotes')}
+              </a>
             )}
-          </div>
+          </span>
+        ) : data?.checkError ? (
+          <span className="text-muted-foreground">
+            {t('web.settings.about.checkFailed')}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">
+            {t('web.settings.about.upToDate')}
+          </span>
+        )}
+      </div>
+
+      {/* Controls — always visible */}
+      {phase === 'confirming' ? (
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-[11px] text-muted-foreground">
+            {t('web.settings.about.confirmRestart')}
+          </span>
+          <button
+            onClick={() => startUpgrade(confirmForce)}
+            className="rounded bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground"
+          >
+            {t('web.settings.about.confirmUpgrade')}
+          </button>
+          <button
+            onClick={() => setPhase('idle')}
+            className="rounded border border-border px-2.5 py-1 text-[11px]"
+          >
+            {t('common.cancel')}
+          </button>
         </div>
-      ) : data?.checkError ? (
-        <p className="mt-3 text-[11px] text-muted-foreground">
-          {t('web.settings.about.checkFailed')}
-        </p>
-      ) : data?.latest ? (
-        <p className="mt-3 text-[11px] text-muted-foreground">
-          {t('web.settings.about.upToDate')}
-        </p>
-      ) : null}
+      ) : (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button
+            onClick={checkNow}
+            disabled={checking || busy}
+            className="rounded border border-border px-2.5 py-1 text-[11px] disabled:opacity-50"
+          >
+            {checking
+              ? t('web.settings.about.checking')
+              : t('web.settings.about.checkUpdates')}
+          </button>
+
+          {data?.updateAvailable && canSelfUpdate && (
+            <button
+              onClick={() => {
+                setConfirmForce(false)
+                setPhase('confirming')
+              }}
+              disabled={busy}
+              className="rounded bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground disabled:opacity-50"
+            >
+              {busy
+                ? t('web.settings.about.upgradingShort')
+                : t('web.settings.about.updateNow')}
+            </button>
+          )}
+
+          {!data?.updateAvailable && !data?.checkError && canSelfUpdate && (
+            <button
+              onClick={() => {
+                setConfirmForce(true)
+                setPhase('confirming')
+              }}
+              disabled={busy}
+              className="rounded border border-border px-2.5 py-1 text-[11px] disabled:opacity-50"
+            >
+              {busy
+                ? t('web.settings.about.upgradingShort')
+                : t('web.settings.about.reinstall')}
+            </button>
+          )}
+
+          {data?.updateAvailable && !canSelfUpdate && (
+            <span className="text-[11px] text-muted-foreground">
+              {t('web.settings.about.guidedHint')}
+              <code className="ml-1 font-mono text-foreground">opendray update</code>
+            </span>
+          )}
+        </div>
+      )}
     </div>
   )
 }

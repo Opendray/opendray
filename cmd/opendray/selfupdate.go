@@ -61,7 +61,11 @@ func runSelfUpdate(args []string) int {
 	// root (the oneshot) the /usr/local/bin write and systemctl restart
 	// both succeed. It re-resolves "latest" from the canonical repo and
 	// verifies the download, so the request can't redirect it elsewhere.
-	return runUpdate([]string{"--yes", "--restart"})
+	updateArgs := []string{"--yes", "--restart"}
+	if req.Force {
+		updateArgs = append(updateArgs, "--force") // re-install even when current
+	}
+	return runUpdate(updateArgs)
 }
 
 // ensureNoMdwxDropIn writes the W^X override if absent (idempotent;
