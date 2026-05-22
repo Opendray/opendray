@@ -12,6 +12,7 @@ import {
   PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
+  ChevronLeft,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Trans, useTranslation } from 'react-i18next'
@@ -41,6 +42,7 @@ import {
 } from '@/lib/sessions'
 import { useSessionTabs } from '@/stores/sessionTabs'
 import { useLayout } from '@/stores/layout'
+import { useIsMobile } from '../lib/useIsMobile'
 import { cn } from '@/lib/utils'
 import { isTerminalSessionState, type Session } from '@/lib/types'
 
@@ -173,6 +175,18 @@ export function SessionsPage() {
   const toggleList = useLayout((s) => s.toggleSessionList)
   const inspectorOpen = useLayout((s) => s.inspectorOpen)
   const toggleInspector = useLayout((s) => s.toggleInspector)
+  const setListCollapsed = useLayout((s) => s.setSessionListCollapsed)
+  const setInspectorOpen = useLayout((s) => s.setInspectorOpen)
+
+  const isMobile = useIsMobile()
+  // On phones the list + inspector are slide-overs; collapse both on
+  // entry so the terminal/workbench gets the full, usable width.
+  useEffect(() => {
+    if (isMobile) {
+      setListCollapsed(true)
+      setInspectorOpen(false)
+    }
+  }, [isMobile, setListCollapsed, setInspectorOpen])
 
   const termRef = useRef<TerminalHandle>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -264,9 +278,39 @@ export function SessionsPage() {
         )}
       </div>
 
-      {inspectorOpen && currentSession && (
-        <InspectorPanel session={currentSession} />
-      )}
+      {/* Inspector: inline column on desktop, slide-over drawer on mobile. */}
+      {currentSession &&
+        (isMobile ? (
+          <>
+            <div
+              className={cn(
+                'fixed inset-y-0 right-0 z-50 flex transition-transform duration-200 ease-out',
+                inspectorOpen ? 'translate-x-0' : 'translate-x-full',
+              )}
+            >
+              <InspectorPanel session={currentSession} />
+            </div>
+            {inspectorOpen && (
+              <div
+                className="fixed inset-0 z-40 bg-black/50"
+                onClick={() => setInspectorOpen(false)}
+                aria-hidden
+              />
+            )}
+            {!inspectorOpen && (
+              <button
+                type="button"
+                onClick={() => setInspectorOpen(true)}
+                aria-label="Open inspector"
+                className="fixed right-0 top-1/2 -translate-y-1/2 z-30 h-12 w-5 rounded-l-md border border-r-0 border-border bg-card/90 text-muted-foreground flex items-center justify-center shadow-sm active:bg-card"
+              >
+                <ChevronLeft className="size-3.5" />
+              </button>
+            )}
+          </>
+        ) : (
+          inspectorOpen && <InspectorPanel session={currentSession} />
+        ))}
 
       <input
         ref={fileInputRef}

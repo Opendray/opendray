@@ -162,9 +162,9 @@ func (h *Hub) RegisterCommand(c Command) { h.cmds.Register(c) }
 //     operators who expected /sessions == /list.
 //
 // The pinned-session machinery (activeSess + lookupActiveSession +
-// setActiveSession) is retained as dead-code-but-load-bearing — if
-// we ever bring /select back the routing is already wired. Cheap
-// to keep; ripping it out would expand the diff for no gain.
+// setActiveSession) is driven by the /select command and the "Talk
+// to" buttons on /list (registered in internal/app), via the public
+// SetActiveSession / ActiveSession methods below.
 func (h *Hub) registerBuiltinCommands() {
 	h.cmds.Register(Command{
 		Name:        "notify",
@@ -860,6 +860,20 @@ func (h *Hub) setActiveSession(channelID, sessionID string) {
 		return
 	}
 	h.activeSess[channelID] = sessionID
+}
+
+// SetActiveSession pins (or clears, when sessionID is "") the session
+// that non-reply inbound messages from this channel route to. This is
+// the public entry point for the /select command and the "Talk to"
+// buttons on /list; routing precedence stays reply-to > active > last.
+func (h *Hub) SetActiveSession(channelID, sessionID string) {
+	h.setActiveSession(channelID, sessionID)
+}
+
+// ActiveSession returns the session currently pinned for a channel, or
+// "" when none is set.
+func (h *Hub) ActiveSession(channelID string) string {
+	return h.lookupActiveSession(channelID)
 }
 
 // submitToSession types `text` into a session's PTY rune-by-rune,

@@ -49,6 +49,9 @@ func (h *Handlers) Mount(r chi.Router) {
 			r.Get("/", h.get)
 			r.Put("/", h.update)
 			r.Delete("/", h.delete)
+			// Validate the server from the daemon: stdio → live MCP
+			// handshake; sse/http → config-sanity + reachability.
+			r.Post("/test", h.test)
 		})
 	})
 }
@@ -93,6 +96,31 @@ func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, s)
 }
 
+// test validates one MCP server from the daemon. ${SECRET} placeholders
+// are resolved (best-effort) so the handshake uses real credentials.
+// Admin-only via the route group it's mounted under.
+func (h *Handlers) test(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if !ValidID(id) {
+		writeError(w, http.StatusBadRequest, errors.New("invalid id"))
+		return
+	}
+	s, err := h.loader.Get(id)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	var missing []string
+	if sec, serr := LoadSecrets(h.secretsPath); serr == nil {
+		s, missing = sec.Resolve(s)
+	}
+	writeJSON(w, http.StatusOK, Validate(r.Context(), s, missing))
+}
+
 func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 	var req writeReq
 	if err := json.NewDecoder(io.LimitReader(r.Body, 1<<20)).Decode(&req); err != nil {
@@ -120,14 +148,18 @@ func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 			fmt.Errorf("MCP server %s already exists", id))
 		return
 	}
-	if err := os.MkdirAll(dest, 0o700); err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
 	srv := *req.Server
 	srv.ID = id
 	if strings.TrimSpace(srv.Name) == "" {
 		srv.Name = id
+	}
+	if err := prepareServerForWrite(&srv); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if err := os.MkdirAll(dest, 0o700); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
 	}
 	if err := writeServer(dest, srv); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -162,14 +194,18 @@ func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	dest := filepath.Join(h.loader.VaultRoot(), id)
-	if err := os.MkdirAll(dest, 0o700); err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
 	srv := *req.Server
 	srv.ID = id
 	if strings.TrimSpace(srv.Name) == "" {
 		srv.Name = id
+	}
+	if err := prepareServerForWrite(&srv); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if err := os.MkdirAll(dest, 0o700); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
 	}
 	if err := writeServer(dest, srv); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -331,6 +367,14 @@ func (h *Handlers) loadState() (secretsState, error) {
 	state.Encrypted = secrets.Encrypted()
 	state.Keys = secrets.Keys()
 	return state, nil
+}
+
+func prepareServerForWrite(s *Server) error {
+	normalizeServer(s)
+	if (s.Transport == "sse" || s.Transport == "http") && strings.TrimSpace(s.URL) == "" {
+		return errors.New("remote MCP servers require url for sse/http transport")
+	}
+	return nil
 }
 
 func writeServer(dir string, s Server) error {

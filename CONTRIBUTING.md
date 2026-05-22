@@ -19,8 +19,8 @@ this release ships.
 
 
 ```bash
-git clone https://github.com/Opendray/opendray_v2.git
-cd opendray_v2
+git clone https://github.com/Opendray/opendray.git
+cd opendray
 
 # 1. Postgres reachable; credentials in your secret manager.
 cp config.example.toml config.toml

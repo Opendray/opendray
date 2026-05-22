@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -144,8 +145,31 @@ func loadOne(root, id string) (Server, error) {
 	if s.Transport == "" {
 		s.Transport = "stdio"
 	}
+	normalizeServer(&s)
 	s.SourcePath = filepath.Join(root, id)
 	return s, nil
+}
+
+func normalizeServer(s *Server) {
+	s.Transport = strings.TrimSpace(s.Transport)
+	if s.Transport == "" {
+		s.Transport = "stdio"
+	}
+	if s.Transport != "sse" && s.Transport != "http" {
+		return
+	}
+
+	s.URL = strings.TrimSpace(s.URL)
+	command := strings.TrimSpace(s.Command)
+	if s.URL == "" && isHTTPURL(command) {
+		s.URL = command
+		s.Command = ""
+	}
+}
+
+func isHTTPURL(raw string) bool {
+	u, err := url.Parse(raw)
+	return err == nil && u.Host != "" && (u.Scheme == "http" || u.Scheme == "https")
 }
 
 // ValidID enforces the directory naming rules: lowercase alphanumeric,
@@ -171,6 +195,7 @@ func Marshal(s Server) ([]byte, error) {
 	// Strip computed / non-persisted fields before writing so the file
 	// only contains user-authored content.
 	clean := s
+	normalizeServer(&clean)
 	clean.SourcePath = ""
 	if strings.TrimSpace(clean.Transport) == "stdio" {
 		clean.Transport = ""

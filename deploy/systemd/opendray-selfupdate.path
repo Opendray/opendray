@@ -1,0 +1,17 @@
+# Watches for an in-dashboard upgrade request. The unprivileged opendray
+# daemon (uid 999) can't replace its own binary or restart the unit, so the
+# dashboard's "Update now" only drops a request file here; this path unit
+# activates the privileged opendray-selfupdate.service oneshot in response.
+#
+# Install: place alongside opendray.service, then
+#   systemctl daemon-reload && systemctl enable --now opendray-selfupdate.path
+[Unit]
+Description=Watch for an opendray in-dashboard upgrade request
+
+[Path]
+# Must match the daemon's OPENDRAY_STATE_DIR (default /var/lib/opendray).
+PathExists=/var/lib/opendray/selfupdate.request
+Unit=opendray-selfupdate.service
+
+[Install]
+WantedBy=multi-user.target

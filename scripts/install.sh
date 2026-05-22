@@ -7,13 +7,22 @@
 #
 # Mode 2: curl | bash bootstrap
 #   Invoked over a pipe with no on-disk script directory:
-#     curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install.sh | bash
+#     curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install.sh | bash
 #   We install git if missing, shallow-clone the repo to a working
 #   directory, then re-execute scripts/install.sh from the clone.
 #
 # Either way the user ends up running install-linux.sh / install-macos.sh
 # from a real checkout — the bootstrap path just adds one git clone in
 # front.
+
+# Must run under bash (not sh/dash/zsh) — we use BASH_SOURCE, arrays,
+# [[ ]], and printf -v downstream. No version floor: bash 3.2 (macOS
+# /bin/bash) is supported. This only catches `curl ... | sh` mistakes.
+if [ -z "${BASH_VERSION:-}" ]; then
+    echo "[!] opendray installer must be run with bash, not sh. Re-run with:" >&2
+    echo "    curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install.sh | bash" >&2
+    exit 1
+fi
 
 set -euo pipefail
 
@@ -61,7 +70,7 @@ ok()   { printf "${C_GRN}[✓]${C_NC} %s\n" "$*"; }
 warn() { printf "${C_YEL}[!]${C_NC} %s\n" "$*"; }
 die()  { printf "${C_RED}[✗]${C_NC} %s\n" "$*" >&2; exit 1; }
 
-REPO_URL="${OPENDRAY_INSTALL_REPO:-https://github.com/Opendray/opendray_v2.git}"
+REPO_URL="${OPENDRAY_INSTALL_REPO:-https://github.com/Opendray/opendray.git}"
 REF="${OPENDRAY_INSTALL_REF:-main}"
 INSTALL_DIR="${OPENDRAY_INSTALL_DIR:-${TMPDIR:-/tmp}/opendray-install-$$}"
 
@@ -73,7 +82,7 @@ ${C_BLU}━━━ opendray installer — bootstrap ━━━${C_NC}
 
 This bootstrap step:
   1. Ensures git is installed (apt / brew if missing — needs sudo).
-  2. Shallow-clones opendray_v2 to the workdir above.
+  2. Shallow-clones opendray to the workdir above.
   3. Hands off to scripts/install-<os>.sh, which is the real wizard.
 
 After the wizard completes, the workdir is left on disk for re-runs.

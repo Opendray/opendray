@@ -34,6 +34,7 @@ var subscribedPatterns = []string{
 	"integration.deregistered",
 	"integration.key_rotated",
 	"integration.health_changed",
+	"provider.updated",
 }
 
 const subscriberBuffer = 256
@@ -122,6 +123,9 @@ func extractSubject(data any) (kind, id string) {
 	}
 	if v, ok := m["channel_id"].(string); ok {
 		return "channel", v
+	}
+	if v, ok := m["provider_id"].(string); ok {
+		return "provider", v
 	}
 	if v, ok := m["user"].(string); ok {
 		return "admin", v

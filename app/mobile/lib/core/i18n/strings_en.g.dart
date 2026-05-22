@@ -1800,8 +1800,8 @@ class TranslationsAboutEn {
 
 	late final TranslationsAboutCopyLabelsEn copyLabels = TranslationsAboutCopyLabelsEn.internal(_root);
 
-	/// en: 'opendray mobile — multi-CLI gateway control. Source: github.com/Opendray/opendray_v2'
-	String get tagline => 'opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray_v2';
+	/// en: 'opendray mobile — multi-CLI gateway control. Source: github.com/Opendray/opendray'
+	String get tagline => 'opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray';
 }
 
 // Path: settings
@@ -16357,7 +16357,7 @@ extension on Translations {
 			'about.copyTooltip' => 'Copy',
 			'about.copyLabels.version' => 'version',
 			'about.copyLabels.serverUrl' => 'server URL',
-			'about.tagline' => 'opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray_v2',
+			'about.tagline' => 'opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray',
 			'settings.title' => 'Settings',
 			'settings.language.section' => 'Language',
 			'settings.language.system' => 'System',

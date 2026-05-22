@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 import { useLayout } from '@/stores/layout'
+import { useIsMobile } from '../lib/useIsMobile'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface NavItem {
@@ -52,7 +53,11 @@ const groups: NavItem[][] = [
 export function SidebarNav() {
   const { t } = useTranslation()
   const { location } = useRouterState()
-  const collapsed = useLayout((s) => s.sidebarCollapsed)
+  const collapsedState = useLayout((s) => s.sidebarCollapsed)
+  const isMobile = useIsMobile()
+  // On mobile the nav is a full-width slide-over (positioned by AppShell),
+  // so never collapse it to the icon rail there.
+  const collapsed = collapsedState && !isMobile
   return (
     <nav
       className={cn(

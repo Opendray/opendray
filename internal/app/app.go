@@ -117,7 +117,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		st.Close()
 		return nil, err
 	}
-	catalogHandlers := catalog.NewHandlers(cat, log)
+	catalogHandlers := catalog.NewHandlers(cat, bus, log)
 
 	var cliacctOpts []cliacct.Option
 	if d := strings.TrimSpace(cfg.Providers.Claude.AccountsDir); d != "" {
@@ -637,6 +637,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				auditHandlers.Mount(r)
 				intgrCallLogHandlers.Mount(r)
 				settingsHandlers.Mount(r)
+				newVersionHandlers(selfUpdateStateDir(), bus, log).Mount(r)
 				// SetupHandlers (status + setup + disable) is always
 				// mounted — that's the whole point of PR #49 / #50.
 				// Handlers (the data routes) is also always mounted
@@ -728,6 +729,21 @@ func (a *App) Run(ctx context.Context) error {
 		"listen", a.cfg.Listen,
 		"version", version.Version,
 		"commit", version.Commit)
+
+	// W^X preflight: if executable memory can't be mapped, the V8-based
+	// CLIs (codex, gemini) will crash with a fatal SetPermissions error on
+	// spawn while Claude keeps working. Surface it loudly here instead of
+	// leaving operators to decode a V8 stack trace inside a dead session.
+	// Common cause after an in-place `opendray update`: the systemd unit
+	// still carries MemoryDenyWriteExecute=true (the unit isn't refreshed
+	// by a binary update).
+	if err := canMapExecutable(); err != nil {
+		a.log.Warn("executable memory mapping is blocked — codex/gemini sessions will crash on spawn (Claude is unaffected). "+
+			"Likely MemoryDenyWriteExecute=true on the opendray systemd unit, or an exhausted vm.max_map_count. "+
+			"Fix: drop MemoryDenyWriteExecute (e.g. a no-mdwx.conf drop-in or re-run the installer), then `systemctl daemon-reload && systemctl restart opendray`; "+
+			"if it's already off, raise vm.max_map_count.",
+			"err", err)
+	}
 
 	if err := a.channels.Start(ctx); err != nil {
 		a.log.Error("channel hub start", "err", err)

@@ -1,0 +1,26 @@
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# CODEOWNERS auto-assigns reviewers when a PR touches matching paths.
+# The LAST matching pattern wins, so put broad patterns first and
+# narrower ones below.
+
+# Default reviewer for any change.
+*                          @linivek
+
+# Installers + service units — the installer pass added a lot here and is
+# co-owned. Anything that affects how the gateway gets onto a machine.
+/install.sh                @linivek @navidrast
+/scripts/                  @linivek @navidrast
+/deploy/                   @linivek @navidrast
+/uninstall.sh              @linivek @navidrast
+
+# Release / packaging surfaces.
+/.goreleaser.yaml          @linivek
+/.goreleaser.yml           @linivek
+/Dockerfile                @linivek
+
+# Repo meta / governance.
+/.github/                  @linivek
+/CONTRIBUTING.md           @linivek
+/SECURITY.md               @linivek
+/LICENSE                   @linivek

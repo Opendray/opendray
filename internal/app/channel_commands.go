@@ -59,6 +59,13 @@ func registerChannelCommands(hub *channel.Hub, mgr sessionOps) {
 		Source:      "builtin",
 		Handler:     resumeSessionHandler(mgr),
 	})
+	hub.RegisterCommand(channel.Command{
+		Name: "select",
+		Description: "Talk to a session: /select <session_id> " +
+			"(pin where your messages go; /select off to clear)",
+		Source:  "builtin",
+		Handler: selectSessionHandler(mgr),
+	})
 }
 
 // listSessionsMax caps how many rows /list returns. Telegram's
@@ -110,30 +117,51 @@ func listSessionsCardHandler(mgr sessionOps) channel.CommandCardHandler {
 			}
 		}
 
-		// Body: numbered list. The full id is shown so operators
-		// who want to type /end <full> can still copy it; the
-		// buttons below carry the full id in their callback data.
+		// Body: numbered list. We lead with the human-given name
+		// when one exists — operators think in names, not nano ids —
+		// and keep the full id on the line so it stays copyable for
+		// `/end <full>`. The buttons below also carry the full id in
+		// their callback data. Sessions started without a name fall
+		// back to the bare id (there's nothing friendlier to show).
 		var b strings.Builder
-		fmt.Fprintf(&b, "%d session%s (showing %d):\n",
-			liveCount, plural(liveCount), len(all))
+		// Header reads naturally whether or not terminated sessions are
+		// mixed in: "3 sessions:" when all shown are live, otherwise
+		// "0 active · 4 shown (incl. ended):" so "0 ... showing 4" can't
+		// look like a contradiction.
+		if liveCount == len(all) {
+			fmt.Fprintf(&b, "%d session%s:\n", liveCount, plural(liveCount))
+		} else {
+			fmt.Fprintf(&b, "%d active · %d shown (incl. ended):\n", liveCount, len(all))
+		}
 		now := time.Now().UTC()
 		for i, s := range all {
+			label := s.ID
+			if s.Name != "" {
+				label = fmt.Sprintf("%s (%s)", s.Name, s.ID)
+			}
 			fmt.Fprintf(&b, "%d. %s — %s — %s — %s\n",
 				i+1,
-				s.ID,
+				label,
 				s.ProviderID,
 				s.State,
 				relativeAge(sessionActivityTime(s), now),
 			)
 		}
 
-		// Buttons: live sessions get an End row, terminated ones a
-		// Resume row. Two per row keeps tap targets large on mobile
-		// without forcing the keyboard taller than the screen.
-		var endRow, resumeRow []channel.ButtonOption
+		// Buttons: live sessions get a "Talk to" row (pins this chat's
+		// active session so plain messages route there) and an End
+		// row; terminated ones get a Resume row. Two per row keeps tap
+		// targets large on mobile without forcing the keyboard taller
+		// than the screen.
+		var talkRow, endRow, resumeRow []channel.ButtonOption
 		for i, s := range all {
 			label := fmt.Sprintf("%d %s", i+1, sessionShortID(s.ID))
 			if isLiveState(s.State) {
+				talkRow = append(talkRow, channel.ButtonOption{
+					Text:  "💬 Talk to " + label,
+					Value: "cmd:/select " + s.ID,
+					Style: "primary",
+				})
 				endRow = append(endRow, channel.ButtonOption{
 					Text:  "End " + label,
 					Value: "cmd:/end " + s.ID,
@@ -147,7 +175,8 @@ func listSessionsCardHandler(mgr sessionOps) channel.CommandCardHandler {
 				})
 			}
 		}
-		buttons := make([][]channel.ButtonOption, 0, 4)
+		buttons := make([][]channel.ButtonOption, 0, 6)
+		buttons = append(buttons, chunkButtons(talkRow, 2)...)
 		buttons = append(buttons, chunkButtons(endRow, 2)...)
 		buttons = append(buttons, chunkButtons(resumeRow, 2)...)
 
@@ -219,6 +248,89 @@ func resumeSessionHandler(mgr sessionOps) channel.CommandHandler {
 		}
 		return fmt.Sprintf("Session %s resumed (state=%s).", sid, s.State), nil
 	}
+}
+
+// selectSessionHandler pins the chat's active session so plain
+// (non-reply) messages route to it — the interactive way to switch
+// between sessions. Backs the /select command and the "💬 Talk to"
+// buttons on /list. No argument reports the current pin; "off"
+// (or clear/none) removes it.
+func selectSessionHandler(mgr sessionOps) channel.CommandHandler {
+	return func(ctx context.Context, cc channel.CommandContext) (string, error) {
+		chID := ""
+		if cc.Channel != nil {
+			chID = cc.Channel.ID()
+		}
+		if cc.Hub == nil || chID == "" {
+			return "Session selection isn't available on this channel.", nil
+		}
+
+		arg, ok := singleSessionArg(cc.Args)
+		if !ok {
+			cur := cc.Hub.ActiveSession(chID)
+			if cur == "" {
+				return "No session selected. Use /list and tap “💬 Talk to”, or /select <session_id>.", nil
+			}
+			return fmt.Sprintf("Currently talking to %s. Send /select off to clear.",
+				sessionDisplay(ctx, mgr, cur)), nil
+		}
+
+		switch strings.ToLower(arg) {
+		case "off", "clear", "none":
+			cc.Hub.SetActiveSession(chID, "")
+			return "Cleared — messages now follow the most recent session again.", nil
+		}
+
+		// Validate against the live set so we never pin a stale/typo'd id
+		// that would silently swallow the chat's messages.
+		sess, found, err := findSession(ctx, mgr, arg)
+		if err != nil {
+			return "", fmt.Errorf("select %s: %w", arg, err)
+		}
+		if !found {
+			return "Session " + arg + " not found — /list shows current sessions.", nil
+		}
+		if !isLiveState(sess.State) {
+			return fmt.Sprintf("Session %s is %s — /resume it first.",
+				sessionLabel(sess), sess.State), nil
+		}
+		cc.Hub.SetActiveSession(chID, sess.ID)
+		return fmt.Sprintf("✅ Now talking to %s. Your messages go here until you /select another (or /select off).",
+			sessionLabel(sess)), nil
+	}
+}
+
+// findSession returns the session with the given id from the manager's
+// current list.
+func findSession(ctx context.Context, mgr sessionOps, id string) (session.Session, bool, error) {
+	all, err := mgr.List(ctx)
+	if err != nil {
+		return session.Session{}, false, err
+	}
+	for _, s := range all {
+		if s.ID == id {
+			return s, true, nil
+		}
+	}
+	return session.Session{}, false, nil
+}
+
+// sessionLabel renders a session as "name (id)", or the bare id when
+// it has no name — matching how /list presents sessions.
+func sessionLabel(s session.Session) string {
+	if s.Name != "" {
+		return fmt.Sprintf("%s (%s)", s.Name, s.ID)
+	}
+	return s.ID
+}
+
+// sessionDisplay looks a session up by id for display, falling back to
+// the bare id when it's no longer listed.
+func sessionDisplay(ctx context.Context, mgr sessionOps, id string) string {
+	if s, ok, err := findSession(ctx, mgr, id); err == nil && ok {
+		return sessionLabel(s)
+	}
+	return id
 }
 
 // ── helpers ──────────────────────────────────────────────────────

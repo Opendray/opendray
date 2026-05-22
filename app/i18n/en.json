@@ -962,7 +962,16 @@
           "stream": "stream",
           "images": "images",
           "mcp": "mcp"
-        }
+        },
+        "notInstalled": "not installed",
+        "updateAvailable": "update available → {{version}}",
+        "upToDate": "up to date",
+        "update": "Update to {{version}}",
+        "updating": "Updating…",
+        "updatedToast": "Updated {{from}} → {{to}}",
+        "alreadyLatestToast": "Already up to date",
+        "updateFailedToast": "Update failed",
+        "updateUnavailable": "In-app update not available here"
       },
       "configForm": {
         "selectPlaceholder": "Select…",
@@ -995,6 +1004,18 @@
         "removeFailedToast": "Remove failed",
         "toggleAria": "Toggle {name}",
         "removeAria": "Remove {name}"
+      },
+      "models": {
+        "title": "Models",
+        "help": "Models offered for this provider. The default is passed to every session via the model flag; sessions can still override it.",
+        "empty": "No models configured yet.",
+        "add": "Add",
+        "addPlaceholder": "model id (e.g. sonnet)",
+        "suggested": "Suggested ({{count}})",
+        "default": "default",
+        "makeDefault": "set default",
+        "setDefault": "Use as the default model",
+        "remove": "Remove {{model}}"
       }
     },
     "channels": {
@@ -1281,6 +1302,13 @@
           "savedToast": "MCP server saved",
           "createFailedToast": "Create failed",
           "saveFailedToast": "Save failed"
+        },
+        "test": {
+          "button": "Test",
+          "title": "Validate this MCP server from the daemon",
+          "connected": "connected · {{count}} tools",
+          "reachable": "reachable",
+          "failed": "test failed"
         }
       },
       "mcpSecrets": {
@@ -1683,16 +1711,46 @@
     },
     "serverSettings": {
       "sections": {
-        "general": { "title": "General", "desc": "Listen address, operator account, token TTL." },
-        "logging": { "title": "Logging", "desc": "Verbosity, format, and live tail." },
-        "sessions": { "title": "Sessions", "desc": "Idle detection thresholds." },
-        "vault": { "title": "Vault", "desc": "Notes, skills, and git-versioned root." },
-        "mcp": { "title": "MCP registry", "desc": "Server registry + secrets." },
-        "memory": { "title": "Memory", "desc": "Cross-CLI persistent memory subsystem." },
-        "backup": { "title": "Backup", "desc": "Encrypted DB backups, restore, and admin data exports." },
-        "claude": { "title": "Storage · Claude", "desc": "Where Claude transcripts live on disk." },
-        "codex": { "title": "Storage · Codex", "desc": "Codex sessions root." },
-        "gemini": { "title": "Storage · Gemini", "desc": "Gemini per-project tmp + projects.json." }
+        "general": {
+          "title": "General",
+          "desc": "Listen address, operator account, token TTL."
+        },
+        "logging": {
+          "title": "Logging",
+          "desc": "Verbosity, format, and live tail."
+        },
+        "sessions": {
+          "title": "Sessions",
+          "desc": "Idle detection thresholds."
+        },
+        "vault": {
+          "title": "Vault",
+          "desc": "Notes, skills, and git-versioned root."
+        },
+        "mcp": {
+          "title": "MCP registry",
+          "desc": "Server registry + secrets."
+        },
+        "memory": {
+          "title": "Memory",
+          "desc": "Cross-CLI persistent memory subsystem."
+        },
+        "backup": {
+          "title": "Backup",
+          "desc": "Encrypted DB backups, restore, and admin data exports."
+        },
+        "claude": {
+          "title": "Storage · Claude",
+          "desc": "Where Claude transcripts live on disk."
+        },
+        "codex": {
+          "title": "Storage · Codex",
+          "desc": "Codex sessions root."
+        },
+        "gemini": {
+          "title": "Storage · Gemini",
+          "desc": "Gemini per-project tmp + projects.json."
+        }
       },
       "loading": "Loading server settings…",
       "loadFailed": "Failed to load: {message}",
@@ -2057,7 +2115,21 @@
       },
       "about": {
         "title": "About",
-        "description": "opendray v2 — the multiplexer + integration gateway for AI agent CLIs. Source under Apache 2.0."
+        "description": "opendray v2 — the multiplexer + integration gateway for AI agent CLIs. Source under Apache 2.0.",
+        "version": "Version",
+        "commit": "Commit",
+        "updateAvailable": "Update available: {{version}}",
+        "releaseNotes": "Release notes ↗",
+        "updateNow": "Update now",
+        "upgradingShort": "Upgrading…",
+        "confirmRestart": "This restarts the service; running sessions reconnect.",
+        "confirmUpgrade": "Upgrade & restart",
+        "upgrading": "Upgrading to {{version}}…",
+        "upgraded": "Updated to {{version}}.",
+        "upgradeSlow": "Upgrade is taking a while — check the service logs if it doesn't come back.",
+        "guidedHint": "In-app upgrade isn't available here. Run on the server:",
+        "checkFailed": "Couldn't check for updates (offline or rate-limited).",
+        "upToDate": "You're on the latest release."
       }
     },
     "logViewer": {
@@ -3144,12 +3216,30 @@
     "pathStyle": "Path-style addressing",
     "pathStyleSubtitle": "Legacy / MinIO",
     "kinds": {
-      "local": { "label": "Local disk", "description": "Folder on the machine running opendray" },
-      "smb": { "label": "SMB share", "description": "Windows shares + most home NAS appliances" },
-      "webdav": { "label": "WebDAV", "description": "Self-hosted clouds + file-sharing services" },
-      "sftp": { "label": "SFTP", "description": "Any SSH-accessible server" },
-      "s3": { "label": "S3 / compatible", "description": "Amazon S3 + S3-compatible buckets (MinIO, R2, B2)" },
-      "rclone": { "label": "rclone (any)", "description": "OneDrive, Google Drive, Dropbox via the rclone CLI" }
+      "local": {
+        "label": "Local disk",
+        "description": "Folder on the machine running opendray"
+      },
+      "smb": {
+        "label": "SMB share",
+        "description": "Windows shares + most home NAS appliances"
+      },
+      "webdav": {
+        "label": "WebDAV",
+        "description": "Self-hosted clouds + file-sharing services"
+      },
+      "sftp": {
+        "label": "SFTP",
+        "description": "Any SSH-accessible server"
+      },
+      "s3": {
+        "label": "S3 / compatible",
+        "description": "Amazon S3 + S3-compatible buckets (MinIO, R2, B2)"
+      },
+      "rclone": {
+        "label": "rclone (any)",
+        "description": "OneDrive, Google Drive, Dropbox via the rclone CLI"
+      }
     },
     "formTitleEdit": "Edit target",
     "formTitleNew": "New backup target",
@@ -3675,7 +3765,7 @@
       "version": "version",
       "serverUrl": "server URL"
     },
-    "tagline": "opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray_v2"
+    "tagline": "opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray"
   },
   "settings": {
     "title": "Settings",

@@ -20,7 +20,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
 # ── Defaults ─────────────────────────────────────────────────────────
-: "${OPENDRAY_REPO:=Opendray/opendray_v2}"
+: "${OPENDRAY_REPO:=Opendray/opendray}"
 : "${OPENDRAY_HOME:=$HOME/.opendray}"
 
 LAUNCHD_SCOPE="agent"     # "agent" (user) or "daemon" (system)
@@ -215,24 +215,106 @@ case "$PG_PATH_CHOICE" in
 esac
 
 if [ "$PG_MODE" = "local" ]; then
-    log_info "Installing postgresql@16 + pgvector via brew..."
-    brew install postgresql@16 pgvector
-    brew services start postgresql@16
+    # pgvector's Homebrew bottle only ships the extension for specific
+    # PG majors (currently 17 + 18 — NOT 16). Install pgvector first,
+    # then provision the newest PG major it actually supports. Never
+    # hardcode a version pgvector may not cover, or CREATE EXTENSION
+    # vector fails after the DB is already bootstrapped.
+    log_info "Installing pgvector via brew..."
+    brew install pgvector
 
-    # Brew links postgresql@16's binaries via keg-only by default — make psql available.
-    if ! have_cmd psql; then
-        export PATH="$BREW_PREFIX/opt/postgresql@16/bin:$PATH"
+    # Collect the PG majors pgvector actually ships an extension for.
+    _supported=""
+    for _ctl in "$BREW_PREFIX"/opt/pgvector/share/postgresql@*/extension/vector.control; do
+        [ -e "$_ctl" ] || continue
+        _supported="$_supported $(printf '%s' "$_ctl" | sed -E 's#.*/postgresql@([0-9]+)/.*#\1#')"
+    done
+    [ -n "$_supported" ] || log_die "pgvector installed but no supported PostgreSQL major detected (check 'brew list pgvector')."
+
+    # Prefer a supported version that's ALREADY installed — avoids adding
+    # yet another Postgres on machines that already run one. Fall back to
+    # the newest supported version on a clean machine.
+    PG_VER=""
+    for _v in $(printf '%s\n' $_supported | sort -rn | uniq); do
+        if [ -d "$BREW_PREFIX/opt/postgresql@$_v" ]; then PG_VER="$_v"; break; fi
+    done
+    if [ -n "$PG_VER" ]; then
+        log_info "Reusing already-installed, pgvector-supported PostgreSQL $PG_VER"
+    else
+        PG_VER="$(printf '%s\n' $_supported | sort -rn | uniq | head -1 || true)"
+        log_info "pgvector supports PostgreSQL $PG_VER — installing postgresql@$PG_VER"
+    fi
+    PG_FORMULA="postgresql@$PG_VER"
+    brew install "$PG_FORMULA"   # no-op if already present
+
+    # Always reference THIS PG's bins explicitly + put them first on PATH.
+    # Another linked postgresql@NN (common on multi-version Macs) otherwise
+    # shadows psql / pg_isready / pg_config and you talk to the wrong server.
+    PG_BIN="$BREW_PREFIX/opt/$PG_FORMULA/bin"
+    export PATH="$PG_BIN:$PATH"
+
+    # Port selection. Use the port THIS instance is actually configured
+    # for — postgresql.conf carries the 5432 default, or a non-default
+    # port a previous installer run wrote. A `brew services restart`
+    # picks up whatever the conf says regardless of what's free, so we
+    # must probe the same port we'll actually bind (otherwise the
+    # readiness check below waits on the wrong port and times out).
+    _pgconf="$BREW_PREFIX/var/$PG_FORMULA/postgresql.conf"
+    # A fresh postgresql.conf ships the port line COMMENTED ("#port = 5432"),
+    # so this grep finds no match and exits 1. Under `set -euo pipefail`
+    # that aborts the whole installer right after the Postgres install —
+    # before the `${PG_SUPER_PORT:-5432}` fallback below can apply. The
+    # `|| true` keeps the no-match case from tripping errexit (same guard
+    # the lsof probe just below already uses).
+    PG_SUPER_PORT="$(grep -E '^[[:space:]]*port[[:space:]]*=' "$_pgconf" 2>/dev/null | tail -1 | sed -E 's/^[^=]*=[[:space:]]*([0-9]+).*/\1/' || true)"
+    PG_SUPER_PORT="${PG_SUPER_PORT:-5432}"
+
+    # A conflict only if that port is held by a process that ISN'T this
+    # instance's own server (matched by its data dir on the command line).
+    # `|| true`: lsof exits non-zero on a free port (the common fresh
+    # case) and set -o pipefail + set -e would otherwise abort here.
+    _busy_pid="$(lsof -nP -iTCP:"$PG_SUPER_PORT" -sTCP:LISTEN -t 2>/dev/null | head -1 || true)"
+    if [ -n "$_busy_pid" ] && ! ps -p "$_busy_pid" -o command= 2>/dev/null | grep -qF "$BREW_PREFIX/var/$PG_FORMULA"; then
+        log_warn "Port $PG_SUPER_PORT is in use by PID $_busy_pid ($(ps -p "$_busy_pid" -o comm= 2>/dev/null | tail -1))."
+        _alt=$((PG_SUPER_PORT + 1))
+        while lsof -nP -iTCP:"$_alt" -sTCP:LISTEN -t >/dev/null 2>&1; do _alt=$((_alt + 1)); done
+        ask_with_default "Port for opendray's PostgreSQL ($PG_FORMULA)" "$_alt" PG_SUPER_PORT
+        if ! grep -qE "^[[:space:]]*port[[:space:]]*=[[:space:]]*$PG_SUPER_PORT([^0-9]|$)" "$_pgconf" 2>/dev/null; then
+            printf '\n# set by opendray installer (port conflict)\nport = %s\n' "$PG_SUPER_PORT" >> "$_pgconf"
+        fi
     fi
 
-    # Give PG a moment to come up.
-    sleep 2
+    # Idempotent service start — reuse if healthy, recover from an error
+    # state via bootout, else start. Avoids `launchctl bootstrap exited 5`
+    # when the service is already loaded.
+    case "$(brew services list | awk -v f="$PG_FORMULA" '$1==f {print $2}')" in
+        started) log_info "$PG_FORMULA already loaded — restarting to apply config"; brew services restart "$PG_FORMULA" ;;
+        error)   launchctl bootout "gui/$(id -u)/homebrew.mxcl.$PG_FORMULA" 2>/dev/null || true; brew services restart "$PG_FORMULA" ;;
+        *)       brew services start "$PG_FORMULA" ;;
+    esac
+
+    # Readiness probe instead of a blind `sleep 2`.
+    log_info "Waiting for PostgreSQL on 127.0.0.1:$PG_SUPER_PORT ..."
+    _tries=30
+    while [ "$_tries" -gt 0 ]; do
+        "$PG_BIN/pg_isready" -h 127.0.0.1 -p "$PG_SUPER_PORT" >/dev/null 2>&1 && break
+        sleep 1; _tries=$((_tries - 1))
+    done
+    "$PG_BIN/pg_isready" -h 127.0.0.1 -p "$PG_SUPER_PORT" >/dev/null 2>&1 \
+        || log_die "PostgreSQL did not become ready on :$PG_SUPER_PORT — check: tail $BREW_PREFIX/var/log/$PG_FORMULA.log"
 
     PG_SUPER_HOST="127.0.0.1"
-    PG_SUPER_PORT="5432"
     PG_SUPER_USER="$USER"       # brew PG creates the superuser as $USER
     PG_SUPER_DB="postgres"
-    PG_SUPER_PW=""              # brew PG default: no password, trust auth via socket
-    log_ok "Local Postgres up; superuser = $USER (trust auth on socket)"
+    PG_SUPER_PW=""              # brew PG default: no password, trust auth on loopback
+
+    # Validate pgvector is actually visible to THIS server before relying
+    # on CREATE EXTENSION downstream — fail loud and early, not mid-bootstrap.
+    if ! "$PG_BIN/psql" -h 127.0.0.1 -p "$PG_SUPER_PORT" -U "$PG_SUPER_USER" -d postgres \
+            -tAc "SELECT 1 FROM pg_available_extensions WHERE name='vector'" 2>/dev/null | grep -q 1; then
+        log_die "pgvector not visible to $PG_FORMULA despite install — aborting before bootstrap."
+    fi
+    log_ok "Local PostgreSQL $PG_VER ready on :$PG_SUPER_PORT (superuser=$USER, trust auth) + pgvector"
 else
     cat <<'EOF'
 
@@ -270,8 +352,8 @@ fi
 
 log_step 5 "Bootstrap opendray database"
 
-ask_with_default "Database name"                   "opendray"      OD_DB_NAME
-ask_with_default "App DB user (CRUD only)"         "opendray_user" OD_DB_USER
+ask_pg_identifier "Database name"                   "opendray"      OD_DB_NAME
+ask_pg_identifier "App DB user (CRUD only)"         "opendray_user" OD_DB_USER
 
 DEFAULT_DB_PW="$(gen_password 24)"
 ask_with_default "App DB password (Enter = random)" "$DEFAULT_DB_PW" OD_DB_PW
@@ -520,6 +602,22 @@ else
     USER_KV=""
 fi
 
+# Build the service PATH. launchd does NOT read shell rc files, so the
+# daemon only sees this PATH — if an AI CLI lives somewhere else (e.g.
+# Claude Code's native installer puts `claude` in ~/.local/bin, not the
+# brew bin), opendray can't spawn it and sessions fail with the CLI "not
+# found". Seed the standard dirs, then prepend wherever each installed
+# CLI actually resolves right now, plus the native-installer location.
+SVC_PATH="${BREW_PREFIX}/bin:/usr/local/bin:/usr/bin:/bin"
+for _cli in claude gemini codex; do
+    _clipath="$(command -v "$_cli" 2>/dev/null || true)"
+    [ -n "$_clipath" ] || continue
+    _clidir="$(cd "$(dirname "$_clipath")" 2>/dev/null && pwd || true)"
+    [ -n "$_clidir" ] || continue
+    case ":$SVC_PATH:" in *":$_clidir:"*) ;; *) SVC_PATH="$_clidir:$SVC_PATH" ;; esac
+done
+case ":$SVC_PATH:" in *":$HOME/.local/bin:"*) ;; *) SVC_PATH="$HOME/.local/bin:$SVC_PATH" ;; esac
+
 # Render plist via a tmp file (Daemon path writes via run_priv).
 TMP_PLIST="$(mktemp -t opendray-plist.XXXXXX)"
 register_cleanup_file "$TMP_PLIST"
@@ -552,7 +650,7 @@ cat > "$TMP_PLIST" <<EOF
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>${BREW_PREFIX}/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <string>${SVC_PATH}</string>
         <key>HOME</key>
         <string>${HOME}</string>
     </dict>
@@ -560,18 +658,36 @@ cat > "$TMP_PLIST" <<EOF
 </plist>
 EOF
 
+# (Re)load a launchd unit, tolerant of an already-loaded label.
+# `launchctl bootout` is asynchronous: a naive `bootout || true; bootstrap`
+# races on a re-install — the old instance is still draining when bootstrap
+# runs, which fails with "Bootstrap failed: 5: Input/output error". Wait for
+# the old instance to actually disappear, then bootstrap; if it still won't
+# load (already-loaded / transient EIO), bootout + retry once. A genuinely
+# broken load is caught by the health check that follows.
+reload_launchd_unit() {
+    local domain="$1" label="$2" plist="$3" priv="${4:-}"
+    local i
+    $priv launchctl bootout "$domain/$label" 2>/dev/null || true
+    for i in 1 2 3 4 5 6 7 8 9 10; do
+        $priv launchctl print "$domain/$label" >/dev/null 2>&1 || break
+        sleep 1
+    done
+    if ! $priv launchctl bootstrap "$domain" "$plist" 2>/dev/null; then
+        $priv launchctl bootout "$domain/$label" 2>/dev/null || true
+        sleep 2
+        $priv launchctl bootstrap "$domain" "$plist" 2>/dev/null || true
+    fi
+    $priv launchctl enable    "$domain/$label" 2>/dev/null || true
+    $priv launchctl kickstart -k "$domain/$label" 2>/dev/null || true
+}
+
 if [ "$LAUNCHD_SCOPE" = "daemon" ]; then
     run_priv install -m 0644 -o root -g wheel "$TMP_PLIST" "$PLIST_PATH"
-    run_priv launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
-    run_priv launchctl bootstrap "$DOMAIN" "$PLIST_PATH"
-    run_priv launchctl enable    "$DOMAIN/$LABEL"
-    run_priv launchctl kickstart -k "$DOMAIN/$LABEL"
+    reload_launchd_unit "$DOMAIN" "$LABEL" "$PLIST_PATH" run_priv
 else
     install -m 0644 "$TMP_PLIST" "$PLIST_PATH"
-    launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
-    launchctl bootstrap "$DOMAIN" "$PLIST_PATH"
-    launchctl enable    "$DOMAIN/$LABEL"
-    launchctl kickstart -k "$DOMAIN/$LABEL"
+    reload_launchd_unit "$DOMAIN" "$LABEL" "$PLIST_PATH"
 fi
 log_ok "launchd unit loaded: $PLIST_PATH"
 
