@@ -602,6 +602,22 @@ else
     USER_KV=""
 fi
 
+# Build the service PATH. launchd does NOT read shell rc files, so the
+# daemon only sees this PATH — if an AI CLI lives somewhere else (e.g.
+# Claude Code's native installer puts `claude` in ~/.local/bin, not the
+# brew bin), opendray can't spawn it and sessions fail with the CLI "not
+# found". Seed the standard dirs, then prepend wherever each installed
+# CLI actually resolves right now, plus the native-installer location.
+SVC_PATH="${BREW_PREFIX}/bin:/usr/local/bin:/usr/bin:/bin"
+for _cli in claude gemini codex; do
+    _clipath="$(command -v "$_cli" 2>/dev/null || true)"
+    [ -n "$_clipath" ] || continue
+    _clidir="$(cd "$(dirname "$_clipath")" 2>/dev/null && pwd || true)"
+    [ -n "$_clidir" ] || continue
+    case ":$SVC_PATH:" in *":$_clidir:"*) ;; *) SVC_PATH="$_clidir:$SVC_PATH" ;; esac
+done
+case ":$SVC_PATH:" in *":$HOME/.local/bin:"*) ;; *) SVC_PATH="$HOME/.local/bin:$SVC_PATH" ;; esac
+
 # Render plist via a tmp file (Daemon path writes via run_priv).
 TMP_PLIST="$(mktemp -t opendray-plist.XXXXXX)"
 register_cleanup_file "$TMP_PLIST"
@@ -634,7 +650,7 @@ cat > "$TMP_PLIST" <<EOF
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>${BREW_PREFIX}/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <string>${SVC_PATH}</string>
         <key>HOME</key>
         <string>${HOME}</string>
     </dict>
