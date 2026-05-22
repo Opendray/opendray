@@ -19,12 +19,12 @@
 #      up after idle/reboot -- WSL stops idle distros otherwise.
 #
 # Usage (from PowerShell; elevate if WSL isn't installed yet):
-#   irm https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install-windows.ps1 | iex
+#   irm https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install-windows.ps1 | iex
 
 $ErrorActionPreference = "Stop"
 
 $Distro    = "Ubuntu-24.04"
-$InstallSh = "https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install.sh"
+$InstallSh = "https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install.sh"
 $TaskName  = "opendray-wsl-keepalive"
 
 function Write-Banner { Write-Host ""; Write-Host "+-- opendray installer - Windows entry --+" -ForegroundColor Cyan; Write-Host "" }
@@ -43,7 +43,7 @@ function Test-IsAdmin {
 $env:WSL_UTF8 = "1"
 
 # Self URL -- used to auto-resume the install after the WSL-enable reboot.
-$SelfUrl = "https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install-windows.ps1"
+$SelfUrl = "https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install-windows.ps1"
 
 Write-Banner
 

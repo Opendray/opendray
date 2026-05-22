@@ -304,5 +304,5 @@ cat <<EOF
     · PostgreSQL server itself + any other databases
 
   Re-install any time with:
-    curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install.sh | bash
+    curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install.sh | bash
 EOF

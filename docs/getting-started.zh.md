@@ -20,7 +20,7 @@ wrap 的 CLI、bootstrap Postgres)跟 README 里的部署路径串到一起。
 |---|---|---|
 | 至少一个:Claude Code / Codex CLI / Gemini CLI | opendray 是 **wrapper**,不是模型 —— 它在 host 上 spawn 你装好的 CLI | 第 1 步 |
 | PostgreSQL 15 / 16 / 17 + **pgvector** 扩展 | 状态、会话、记忆向量 | 第 2 步 |
-| `go` 1.25+ 和 `pnpm` 10+ —— *只在* 从源码 build 时需要 | 用 release binary 的话跳过 | [Releases 页](https://github.com/Opendray/opendray_v2/releases) |
+| `go` 1.25+ 和 `pnpm` 10+ —— *只在* 从源码 build 时需要 | 用 release binary 的话跳过 | [Releases 页](https://github.com/Opendray/opendray/releases) |
 | 一个可达的端口(默认 `:8770`)给 Web 后台 | UI + API + WebSocket | 没反向代理就绑 `127.0.0.1` |
 
 ---
