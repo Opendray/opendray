@@ -260,7 +260,13 @@ if [ "$PG_MODE" = "local" ]; then
     # must probe the same port we'll actually bind (otherwise the
     # readiness check below waits on the wrong port and times out).
     _pgconf="$BREW_PREFIX/var/$PG_FORMULA/postgresql.conf"
-    PG_SUPER_PORT="$(grep -E '^[[:space:]]*port[[:space:]]*=' "$_pgconf" 2>/dev/null | tail -1 | sed -E 's/^[^=]*=[[:space:]]*([0-9]+).*/\1/')"
+    # A fresh postgresql.conf ships the port line COMMENTED ("#port = 5432"),
+    # so this grep finds no match and exits 1. Under `set -euo pipefail`
+    # that aborts the whole installer right after the Postgres install —
+    # before the `${PG_SUPER_PORT:-5432}` fallback below can apply. The
+    # `|| true` keeps the no-match case from tripping errexit (same guard
+    # the lsof probe just below already uses).
+    PG_SUPER_PORT="$(grep -E '^[[:space:]]*port[[:space:]]*=' "$_pgconf" 2>/dev/null | tail -1 | sed -E 's/^[^=]*=[[:space:]]*([0-9]+).*/\1/' || true)"
     PG_SUPER_PORT="${PG_SUPER_PORT:-5432}"
 
     # A conflict only if that port is held by a process that ISN'T this
