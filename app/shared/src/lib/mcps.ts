@@ -113,18 +113,35 @@ export async function testMcp(id: string): Promise<McpTestResult> {
   return api<McpTestResult>(`/api/v1/mcps/${id}/test`, { method: 'POST' })
 }
 
-// defaultMcpServer returns a starter template for the New dialog —
-// stdio transport with a placeholder command so the user has the
-// shape in front of them.
-export function defaultMcpServer(): McpServer {
-  return {
+// McpTransport mirrors McpServer.transport. Exported so the Plugins
+// editor can drive the transport selector that picks which template
+// shape defaultMcpServer returns.
+export type McpTransport = NonNullable<McpServer['transport']>
+
+// defaultMcpServer returns a starter template for the New dialog.
+// The shape depends on transport: stdio servers need command/args/env,
+// while sse/http remote servers need url/headers — the backend rejects
+// sse/http without a url (see internal/mcp/handler.go,
+// prepareServerForWrite, added in #230).
+export function defaultMcpServer(transport: McpTransport = 'stdio'): McpServer {
+  const base: McpServer = {
     id: '',
     name: '',
     description: '',
-    transport: 'stdio',
+    transport,
+    enabled: true,
+  }
+  if (transport === 'sse' || transport === 'http') {
+    return {
+      ...base,
+      url: 'https://example.com/mcp',
+      headers: {},
+    }
+  }
+  return {
+    ...base,
     command: 'npx',
     args: ['-y', '@modelcontextprotocol/server-filesystem', '/path/to/expose'],
     env: {},
-    enabled: true,
   }
 }

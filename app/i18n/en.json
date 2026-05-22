@@ -1289,6 +1289,8 @@
         "removedToast": "MCP server removed",
         "deleteFailedToast": "Delete failed",
         "toggleFailedToast": "Toggle failed",
+        "codexUnsupportedBadge": "Codex: unsupported",
+        "codexUnsupportedTooltip": "The codex CLI supports stdio transport only. This server will be skipped for codex sessions; claude and gemini will still use it.",
         "editor": {
           "createTitle": "New MCP server",
           "editTitle": "Edit MCP: {id}",
@@ -1301,7 +1303,12 @@
           "createdToast": "MCP server created",
           "savedToast": "MCP server saved",
           "createFailedToast": "Create failed",
-          "saveFailedToast": "Save failed"
+          "saveFailedToast": "Save failed",
+          "transportLabel": "Transport",
+          "transportHint": "Switching transport replaces the JSON template with a starter shape appropriate for the new transport.",
+          "transportStdio": "stdio (local subprocess)",
+          "transportSse": "sse (remote server)",
+          "transportHttp": "http (remote server)"
         },
         "test": {
           "button": "Test",
