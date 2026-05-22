@@ -26,7 +26,7 @@
 
 [Unit]
 Description=opendray v2 — multiplexer + integration gateway for AI agent CLIs
-Documentation=https://github.com/Opendray/opendray_v2/blob/main/docs/operator-guide.md
+Documentation=https://github.com/Opendray/opendray/blob/main/docs/operator-guide.md
 After=network-online.target
 Wants=network-online.target
 

@@ -3751,7 +3751,7 @@
       "version": "version",
       "serverUrl": "server URL"
     },
-    "tagline": "opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray_v2"
+    "tagline": "opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray"
   },
   "settings": {
     "title": "Settings",

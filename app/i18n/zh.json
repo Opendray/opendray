@@ -3750,7 +3750,7 @@
       "version": "版本",
       "serverUrl": "服务器 URL"
     },
-    "tagline": "opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray_v2"
+    "tagline": "opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray"
   },
   "settings": {
     "title": "设置",

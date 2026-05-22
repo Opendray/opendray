@@ -42,7 +42,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/version"
 )
 
-const updateReleasesAPI = "https://api.github.com/repos/Opendray/opendray_v2/releases/latest"
+const updateReleasesAPI = "https://api.github.com/repos/Opendray/opendray/releases/latest"
 
 type ghReleaseAsset struct {
 	Name        string `json:"name"`
