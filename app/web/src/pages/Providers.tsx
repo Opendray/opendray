@@ -188,6 +188,13 @@ function ProviderDetail({
   const updateMut = useMutation({
     mutationFn: () => updateProvider(m.id),
     onSuccess: (res) => {
+      if (!res.available) {
+        // Can't update here (e.g. read-only npm prefix) — guidance, not error.
+        toast.info(t('web.providers.detail.updateUnavailable'), {
+          description: res.reason,
+        })
+        return
+      }
       if (res.changed) {
         toast.success(
           t('web.providers.detail.updatedToast', {

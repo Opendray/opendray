@@ -970,7 +970,8 @@
         "updating": "Updating…",
         "updatedToast": "Updated {{from}} → {{to}}",
         "alreadyLatestToast": "Already up to date",
-        "updateFailedToast": "Update failed"
+        "updateFailedToast": "Update failed",
+        "updateUnavailable": "In-app update not available here"
       },
       "configForm": {
         "selectPlaceholder": "Select…",

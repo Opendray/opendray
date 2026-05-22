@@ -3,6 +3,7 @@ package catalog
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -62,6 +63,7 @@ type Prober struct {
 	runVer     func(ctx context.Context, bin string) (string, error)
 	npmView    func(ctx context.Context, pkg string) (string, error)
 	npmInstall func(ctx context.Context, pkg string) (string, error)
+	npmRoot    func(ctx context.Context) (string, error)
 	now        func() time.Time
 }
 
@@ -73,9 +75,17 @@ func NewProber() *Prober {
 		runVer:     defaultCliVersion,
 		npmView:    defaultNpmLatest,
 		npmInstall: defaultNpmInstall,
+		npmRoot:    defaultNpmRoot,
 		now:        time.Now,
 	}
 }
+
+// ErrUpdatePrefixReadonly means the npm global prefix isn't writable by
+// the service user, so an in-app `npm install -g` would fail with EACCES.
+// We detect this up front and report "unavailable" rather than letting
+// the install error out — the daemon runs unprivileged, so updates only
+// work when the CLIs live in an opendray-owned npm prefix.
+var ErrUpdatePrefixReadonly = errors.New("npm global prefix is not writable by the opendray service")
 
 // Installed reports whether the manifest's executable is on PATH and its
 // `--version` string. Fast (local exec), cached for installedTTL.
@@ -142,6 +152,11 @@ type UpdateResult struct {
 	AfterVersion  string `json:"afterVersion,omitempty"`
 	Changed       bool   `json:"changed"`
 	Output        string `json:"output,omitempty"` // tail of the npm output
+	// Available is false when an in-app update can't run here (e.g. the
+	// npm prefix isn't writable by the service); Reason explains why.
+	// Set by the HTTP handler.
+	Available bool   `json:"available"`
+	Reason    string `json:"reason,omitempty"`
 }
 
 // Update runs `npm install -g <pkg>` for the provider's CLI, then
@@ -160,6 +175,13 @@ func (p *Prober) Update(ctx context.Context, m Manifest) (UpdateResult, error) {
 	defer p.updateMu.Unlock()
 
 	before := p.Installed(ctx, m).InstalledVersion
+
+	// Preflight: if the npm global dir isn't writable by this (unprivileged)
+	// process, an install would just EACCES — report it cleanly instead.
+	if dir, derr := p.npmRoot(ctx); derr == nil && dir != "" && !dirWritable(dir) {
+		return UpdateResult{Package: m.NpmPackage, BeforeVersion: before}, ErrUpdatePrefixReadonly
+	}
+
 	out, err := p.npmInstall(ctx, m.NpmPackage)
 
 	// The install may have changed what's on disk even on partial
@@ -254,6 +276,34 @@ func defaultNpmLatest(ctx context.Context, pkg string) (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(string(out)), nil
+}
+
+// defaultNpmRoot returns the global node_modules dir (`npm root -g`) —
+// where `npm install -g` writes — so we can check writability up front.
+func defaultNpmRoot(ctx context.Context) (string, error) {
+	if _, err := exec.LookPath("npm"); err != nil {
+		return "", err
+	}
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	out, err := exec.CommandContext(ctx, "npm", "root", "-g").Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+// dirWritable reports whether dir exists and the current process can
+// create files in it (catches the root-owned-prefix case).
+func dirWritable(dir string) bool {
+	f, err := os.CreateTemp(dir, ".opendray-write-probe-*")
+	if err != nil {
+		return false
+	}
+	name := f.Name()
+	_ = f.Close()
+	_ = os.Remove(name)
+	return true
 }
 
 func defaultNpmInstall(ctx context.Context, pkg string) (string, error) {
