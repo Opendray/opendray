@@ -1280,6 +1280,13 @@
           "savedToast": "MCP 服务器已保存",
           "createFailedToast": "创建失败",
           "saveFailedToast": "保存失败"
+        },
+        "test": {
+          "button": "测试",
+          "title": "从守护进程验证此 MCP 服务器",
+          "connected": "已连接 · {{count}} 个工具",
+          "reachable": "可达",
+          "failed": "测试失败"
         }
       },
       "mcpSecrets": {
@@ -1682,16 +1689,46 @@
     },
     "serverSettings": {
       "sections": {
-        "general": { "title": "通用", "desc": "监听地址、操作员账号、令牌 TTL。" },
-        "logging": { "title": "日志", "desc": "日志级别、格式与实时跟踪。" },
-        "sessions": { "title": "会话", "desc": "空闲检测阈值。" },
-        "vault": { "title": "Vault", "desc": "笔记、技能与 git 版本化根目录。" },
-        "mcp": { "title": "MCP 注册表", "desc": "服务器注册表与密钥。" },
-        "memory": { "title": "记忆", "desc": "跨 CLI 的持久化记忆子系统。" },
-        "backup": { "title": "备份", "desc": "加密数据库备份、恢复，以及管理员数据导出。" },
-        "claude": { "title": "存储 · Claude", "desc": "Claude 会话记录在磁盘上的位置。" },
-        "codex": { "title": "存储 · Codex", "desc": "Codex 会话根目录。" },
-        "gemini": { "title": "存储 · Gemini", "desc": "Gemini 每项目 tmp 与 projects.json。" }
+        "general": {
+          "title": "通用",
+          "desc": "监听地址、操作员账号、令牌 TTL。"
+        },
+        "logging": {
+          "title": "日志",
+          "desc": "日志级别、格式与实时跟踪。"
+        },
+        "sessions": {
+          "title": "会话",
+          "desc": "空闲检测阈值。"
+        },
+        "vault": {
+          "title": "Vault",
+          "desc": "笔记、技能与 git 版本化根目录。"
+        },
+        "mcp": {
+          "title": "MCP 注册表",
+          "desc": "服务器注册表与密钥。"
+        },
+        "memory": {
+          "title": "记忆",
+          "desc": "跨 CLI 的持久化记忆子系统。"
+        },
+        "backup": {
+          "title": "备份",
+          "desc": "加密数据库备份、恢复，以及管理员数据导出。"
+        },
+        "claude": {
+          "title": "存储 · Claude",
+          "desc": "Claude 会话记录在磁盘上的位置。"
+        },
+        "codex": {
+          "title": "存储 · Codex",
+          "desc": "Codex 会话根目录。"
+        },
+        "gemini": {
+          "title": "存储 · Gemini",
+          "desc": "Gemini 每项目 tmp 与 projects.json。"
+        }
       },
       "loading": "正在加载服务器设置…",
       "loadFailed": "加载失败：{message}",
@@ -3143,12 +3180,30 @@
     "pathStyle": "路径风格寻址",
     "pathStyleSubtitle": "旧版 / MinIO",
     "kinds": {
-      "local": { "label": "本地磁盘", "description": "运行 opendray 的机器上的文件夹" },
-      "smb": { "label": "SMB 共享", "description": "Windows 共享 + 多数家用 NAS 设备" },
-      "webdav": { "label": "WebDAV", "description": "自托管云盘 + 文件共享服务" },
-      "sftp": { "label": "SFTP", "description": "任何可 SSH 访问的服务器" },
-      "s3": { "label": "S3 / 兼容", "description": "Amazon S3 + S3 兼容存储桶（MinIO、R2、B2）" },
-      "rclone": { "label": "rclone（任意）", "description": "通过 rclone CLI 访问 OneDrive、Google Drive、Dropbox" }
+      "local": {
+        "label": "本地磁盘",
+        "description": "运行 opendray 的机器上的文件夹"
+      },
+      "smb": {
+        "label": "SMB 共享",
+        "description": "Windows 共享 + 多数家用 NAS 设备"
+      },
+      "webdav": {
+        "label": "WebDAV",
+        "description": "自托管云盘 + 文件共享服务"
+      },
+      "sftp": {
+        "label": "SFTP",
+        "description": "任何可 SSH 访问的服务器"
+      },
+      "s3": {
+        "label": "S3 / 兼容",
+        "description": "Amazon S3 + S3 兼容存储桶（MinIO、R2、B2）"
+      },
+      "rclone": {
+        "label": "rclone（任意）",
+        "description": "通过 rclone CLI 访问 OneDrive、Google Drive、Dropbox"
+      }
     },
     "formTitleEdit": "编辑目标",
     "formTitleNew": "新建备份目标",
