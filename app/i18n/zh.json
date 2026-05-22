@@ -1288,6 +1288,8 @@
         "removedToast": "MCP 服务器已移除",
         "deleteFailedToast": "删除失败",
         "toggleFailedToast": "切换失败",
+        "codexUnsupportedBadge": "Codex: 不支持",
+        "codexUnsupportedTooltip": "Codex CLI 仅支持 stdio 传输方式。Codex 会话将跳过此服务器；claude 和 gemini 仍会使用。",
         "editor": {
           "createTitle": "新建 MCP 服务器",
           "editTitle": "编辑 MCP: {id}",
@@ -1300,7 +1302,12 @@
           "createdToast": "MCP 服务器已创建",
           "savedToast": "MCP 服务器已保存",
           "createFailedToast": "创建失败",
-          "saveFailedToast": "保存失败"
+          "saveFailedToast": "保存失败",
+          "transportLabel": "传输方式",
+          "transportHint": "切换传输方式会将 JSON 模板替换为对应的新模板。",
+          "transportStdio": "stdio (本地子进程)",
+          "transportSse": "sse (远程服务器)",
+          "transportHttp": "http (远程服务器)"
         },
         "test": {
           "button": "测试",

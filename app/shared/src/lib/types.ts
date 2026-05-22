@@ -211,6 +211,8 @@ export const ALL_SCOPES = [
   'event:subscribe:channel.*',
   'event:subscribe:integration.*',
   'provider:read',
+  'memory:read',
+  'memory:write',
 ] as const
 
 export type Scope = (typeof ALL_SCOPES)[number] | string
