@@ -5,8 +5,8 @@
 #   bash scripts/uninstall.sh [--purge]
 #
 # Mode 2: curl | bash
-#   curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | bash
-#   curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | bash -s -- --purge
+#   curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh | bash -s -- --purge
 #
 # Default (no --purge):
 #   Stops + removes the running gateway (binary, systemd unit / launchd
@@ -44,7 +44,7 @@ fi
 say() { printf "${C_BLU}[*]${C_NC} %s\n" "$*"; }
 die() { printf "${C_RED}[✗]${C_NC} %s\n" "$*" >&2; exit 1; }
 
-REPO_URL="${OPENDRAY_INSTALL_REPO:-https://github.com/Opendray/opendray_v2.git}"
+REPO_URL="${OPENDRAY_INSTALL_REPO:-https://github.com/Opendray/opendray.git}"
 REF="${OPENDRAY_INSTALL_REF:-main}"
 INSTALL_DIR="${OPENDRAY_INSTALL_DIR:-${TMPDIR:-/tmp}/opendray-uninstall-$$}"
 

@@ -11,10 +11,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Opendray/opendray_v2/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Opendray/opendray_v2?label=release&color=4f46e5"></a>
-  <a href="LICENSE"><img alt="License Apache 2.0" src="https://img.shields.io/github/license/Opendray/opendray_v2?color=blue"></a>
-  <a href="https://github.com/Opendray/opendray_v2/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Opendray/opendray_v2/ci.yml?branch=main&label=CI"></a>
-  <a href="https://github.com/Opendray/opendray_v2/discussions"><img alt="Discussions" src="https://img.shields.io/github/discussions/Opendray/opendray_v2?color=ec4899"></a>
+  <a href="https://github.com/Opendray/opendray/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Opendray/opendray?label=release&color=4f46e5"></a>
+  <a href="LICENSE"><img alt="License Apache 2.0" src="https://img.shields.io/github/license/Opendray/opendray?color=blue"></a>
+  <a href="https://github.com/Opendray/opendray/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Opendray/opendray/ci.yml?branch=main&label=CI"></a>
+  <a href="https://github.com/Opendray/opendray/discussions"><img alt="Discussions" src="https://img.shields.io/github/discussions/Opendray/opendray?color=ec4899"></a>
   <br/>
   <img alt="Go" src="https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go&logoColor=white">
   <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black">
@@ -66,13 +66,13 @@ This generation ships:
 **Linux / macOS / WSL2**
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install.sh | bash
 ```
 
 **Windows** — sets up WSL2 first, then runs the Linux installer inside it. [details →](scripts/README.md#windows)
 
 ```powershell
-irm https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/install-windows.ps1 | iex
+irm https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install-windows.ps1 | iex
 ```
 
 Walks through Postgres setup, AI-CLI install, admin credentials, and service registration — landing a running gateway in ~5–10 minutes. See [**`scripts/README.md`**](scripts/README.md) for what the wizard does, the file layout it creates, options, and troubleshooting.
@@ -84,13 +84,13 @@ Walks through Postgres setup, AI-CLI install, admin credentials, and service reg
 **Default** — stops the gateway and removes the binary, but **keeps** your `config.toml`, data directory (bcrypt keyfile, sessions, notes, vault), logs, and the PostgreSQL database so a re-install resumes where you left off:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh | bash
 ```
 
 **Full purge** — also drops the PG database + role, deletes config / data / logs, removes the service user. Includes a post-delete verification step that bails loudly if anything survived:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Opendray/opendray_v2/main/scripts/uninstall.sh | OPENDRAY_PURGE=1 bash
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh | OPENDRAY_PURGE=1 bash
 ```
 
 ### Day-to-day commands
@@ -121,7 +121,7 @@ Every supported path includes session spawn, AI-CLI access, encrypted backups, a
 
 | Path | Best for | Jump to |
 |---|---|---|
-| 📦 **Pre-built binary** | "Just run it" — Linux / macOS, any supervisor | [Releases page](https://github.com/Opendray/opendray_v2/releases) → see [Production deploy](#production-deploy) |
+| 📦 **Pre-built binary** | "Just run it" — Linux / macOS, any supervisor | [Releases page](https://github.com/Opendray/opendray/releases) → see [Production deploy](#production-deploy) |
 | 🐧 **systemd unit** | Bare-metal / VM / LXC Linux box | [Production deploy §A](#option-a--systemd-bare-metal--vm--lxc) |
 | 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio as home server | [Production deploy §B](#option-b--macos-launchd-mac-mini--studio-as-home-server) |
 | 🛠 **Build from source** | Dev / contributing / custom builds | [Quickstart](#quickstart-5-minute-dev-path) below |
@@ -169,7 +169,7 @@ with sandboxing (`ProtectSystem=strict`, `NoNewPrivileges`,
 boot, and a 20s graceful-stop window.
 
 **Get a binary first.** Either grab a pre-built archive from the
-[Releases page](https://github.com/Opendray/opendray_v2/releases)
+[Releases page](https://github.com/Opendray/opendray/releases)
 (`opendray_*_linux_<arch>.tar.gz` — unpacks to a single `opendray`
 binary), or build from source via the [Quickstart](#quickstart-5-minute-dev-path)
 above (`go build ./cmd/opendray`).
@@ -213,7 +213,7 @@ goreleaser release --clean --snapshot
 ls dist/                  # opendray_*_linux_amd64.tar.gz etc.
 
 # Or grab a published release artefact:
-# https://github.com/Opendray/opendray_v2/releases
+# https://github.com/Opendray/opendray/releases
 ```
 
 Then point your supervisor (s6, runit, supervisord, runwhen) at:

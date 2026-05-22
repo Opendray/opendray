@@ -20,7 +20,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
 # ── Defaults ─────────────────────────────────────────────────────────
-: "${OPENDRAY_REPO:=Opendray/opendray_v2}"
+: "${OPENDRAY_REPO:=Opendray/opendray}"
 : "${OPENDRAY_HOME:=$HOME/.opendray}"
 
 LAUNCHD_SCOPE="agent"     # "agent" (user) or "daemon" (system)

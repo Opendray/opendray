@@ -31,7 +31,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
 # ── Defaults (can be overridden by env or prompts) ───────────────────
-: "${OPENDRAY_REPO:=Opendray/opendray_v2}"
+: "${OPENDRAY_REPO:=Opendray/opendray}"
 : "${OPENDRAY_PREFIX:=/usr/local}"             # binary install prefix
 : "${OPENDRAY_CONFIG_DIR:=/etc/opendray}"
 : "${OPENDRAY_DATA_DIR:=/var/lib/opendray}"
