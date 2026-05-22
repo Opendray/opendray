@@ -9,7 +9,7 @@ import { CommandPalette, useCommandPaletteHotkey } from './CommandPalette'
 import { HealthBanner } from './HealthBanner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useLayout } from '@/stores/layout'
-import { useIsMobile } from '@/lib/useIsMobile'
+import { useIsMobile } from '../lib/useIsMobile'
 import { cn } from '@/lib/utils'
 
 export function AppShell() {

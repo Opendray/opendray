@@ -42,7 +42,7 @@ import {
 } from '@/lib/sessions'
 import { useSessionTabs } from '@/stores/sessionTabs'
 import { useLayout } from '@/stores/layout'
-import { useIsMobile } from '@/lib/useIsMobile'
+import { useIsMobile } from '../lib/useIsMobile'
 import { cn } from '@/lib/utils'
 import { isTerminalSessionState, type Session } from '@/lib/types'
 

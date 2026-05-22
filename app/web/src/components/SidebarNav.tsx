@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 import { useLayout } from '@/stores/layout'
-import { useIsMobile } from '@/lib/useIsMobile'
+import { useIsMobile } from '../lib/useIsMobile'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface NavItem {
