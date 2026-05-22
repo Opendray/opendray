@@ -3,6 +3,8 @@ package catalog
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -97,6 +99,8 @@ func TestProber_Update(t *testing.T) {
 		}
 		return "+ @openai/codex@0.140.0\nadded 1 package", nil
 	}
+	// Preflight: point npm root at a writable temp dir so Update proceeds.
+	p.npmRoot = func(context.Context) (string, error) { return t.TempDir(), nil }
 	m := Manifest{ID: "codex", Executable: "codex", NpmPackage: "@openai/codex"}
 
 	res, err := p.Update(context.Background(), m)
@@ -119,5 +123,28 @@ func TestProber_UpdateNoPackage(t *testing.T) {
 	_, err := p.Update(context.Background(), Manifest{ID: "shell", Executable: "bash"})
 	if err == nil {
 		t.Error("update of a provider without an npm package should error")
+	}
+}
+
+func TestProber_UpdateReadonlyPrefix(t *testing.T) {
+	installed := false
+	p := NewProber()
+	p.lookPath = func(string) (string, error) { return "/usr/bin/codex", nil }
+	p.runVer = func(context.Context, string) (string, error) { return "codex-cli 0.132.0", nil }
+	p.npmInstall = func(context.Context, string) (string, error) { installed = true; return "", nil }
+	// Point npm root at a path that can't be written (a file, not a dir).
+	ro := filepath.Join(t.TempDir(), "not-a-dir")
+	if err := os.WriteFile(ro, []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	p.npmRoot = func(context.Context) (string, error) { return ro, nil }
+
+	_, err := p.Update(context.Background(),
+		Manifest{ID: "codex", Executable: "codex", NpmPackage: "@openai/codex"})
+	if !errors.Is(err, ErrUpdatePrefixReadonly) {
+		t.Fatalf("expected ErrUpdatePrefixReadonly, got %v", err)
+	}
+	if installed {
+		t.Error("npm install must NOT run when the prefix is read-only")
 	}
 }

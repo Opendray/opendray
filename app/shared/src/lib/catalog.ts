@@ -21,6 +21,10 @@ export interface ProviderUpdateResult {
   afterVersion?: string
   changed: boolean
   output?: string
+  // available=false when an in-app update can't run here (e.g. the npm
+  // prefix isn't writable by the service); reason explains why.
+  available: boolean
+  reason?: string
 }
 
 // updateProvider patches the CLI to the latest npm version (admin-only,
