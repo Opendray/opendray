@@ -970,7 +970,8 @@
         "updating": "更新中…",
         "updatedToast": "已更新 {{from}} → {{to}}",
         "alreadyLatestToast": "已是最新",
-        "updateFailedToast": "更新失败"
+        "updateFailedToast": "更新失败",
+        "updateUnavailable": "此处无法在应用内更新"
       },
       "configForm": {
         "selectPlaceholder": "选择…",

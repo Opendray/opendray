@@ -143,17 +143,31 @@ func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res, err := h.prober.Update(r.Context(), p.Manifest)
-	if err != nil {
+	switch {
+	case errors.Is(err, ErrUpdatePrefixReadonly):
+		// Not an error condition the operator can act on by retrying:
+		// the daemon is unprivileged and the npm prefix is root-owned.
+		// Report "unavailable" so the UI shows guidance, not a failure.
+		res.Available = false
+		res.Reason = "In-app updates aren't available here — the npm global prefix isn't writable by the opendray service. " +
+			"Install the CLI into an opendray-owned npm prefix (on the service PATH) to enable one-tap updates."
+		h.log.Info("provider update unavailable (read-only prefix)", "provider", id)
+		h.publishUpdate(id, res, false, "prefix-readonly")
+		writeJSON(w, http.StatusOK, res)
+		return
+	case err != nil:
 		h.log.Warn("provider update failed", "provider", id, "package", res.Package, "err", err)
+		res.Available = true
 		h.publishUpdate(id, res, false, err.Error())
-		// 502: the npm install itself failed (e.g. non-writable prefix),
-		// not a bad request. Surface the npm output for diagnosis.
+		// 502: the npm install itself failed (registry error, bad package,
+		// …). Surface the npm output for diagnosis.
 		writeJSON(w, http.StatusBadGateway, map[string]any{
 			"error":  err.Error(),
 			"result": res,
 		})
 		return
 	}
+	res.Available = true
 	h.log.Info("provider updated", "provider", id, "package", res.Package,
 		"before", res.BeforeVersion, "after", res.AfterVersion, "changed", res.Changed)
 	h.publishUpdate(id, res, true, "")
