@@ -148,14 +148,18 @@ func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 			fmt.Errorf("MCP server %s already exists", id))
 		return
 	}
-	if err := os.MkdirAll(dest, 0o700); err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
 	srv := *req.Server
 	srv.ID = id
 	if strings.TrimSpace(srv.Name) == "" {
 		srv.Name = id
+	}
+	if err := prepareServerForWrite(&srv); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if err := os.MkdirAll(dest, 0o700); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
 	}
 	if err := writeServer(dest, srv); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -190,14 +194,18 @@ func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	dest := filepath.Join(h.loader.VaultRoot(), id)
-	if err := os.MkdirAll(dest, 0o700); err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
 	srv := *req.Server
 	srv.ID = id
 	if strings.TrimSpace(srv.Name) == "" {
 		srv.Name = id
+	}
+	if err := prepareServerForWrite(&srv); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if err := os.MkdirAll(dest, 0o700); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
 	}
 	if err := writeServer(dest, srv); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
@@ -359,6 +367,14 @@ func (h *Handlers) loadState() (secretsState, error) {
 	state.Encrypted = secrets.Encrypted()
 	state.Keys = secrets.Keys()
 	return state, nil
+}
+
+func prepareServerForWrite(s *Server) error {
+	normalizeServer(s)
+	if (s.Transport == "sse" || s.Transport == "http") && strings.TrimSpace(s.URL) == "" {
+		return errors.New("remote MCP servers require url for sse/http transport")
+	}
+	return nil
 }
 
 func writeServer(dir string, s Server) error {
