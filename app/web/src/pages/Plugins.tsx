@@ -66,6 +66,7 @@ import {
   createMcp,
   updateMcp,
   deleteMcp,
+  testMcp,
   getMcpSecrets,
   setMcpSecret,
   deleteMcpSecret,
@@ -196,6 +197,33 @@ function McpSection() {
       }),
   })
 
+  const test = useMutation({
+    mutationFn: (id: string) => testMcp(id),
+    onSuccess: (res, id) => {
+      if (res.ok) {
+        const summary =
+          res.transport === 'stdio'
+            ? t('web.plugins.mcp.test.connected', { count: res.toolCount ?? 0 })
+            : t('web.plugins.mcp.test.reachable')
+        toast.success(`${id}: ${summary}`, {
+          description:
+            (res.tools?.length ? res.tools.join(', ') : res.note) || undefined,
+        })
+      } else {
+        const failed = res.checks.find((c) => !c.ok)
+        toast.error(`${id}: ${t('web.plugins.mcp.test.failed')}`, {
+          description: failed
+            ? `${failed.name}: ${failed.detail ?? ''}`
+            : res.note,
+        })
+      }
+    },
+    onError: (err: Error, id) =>
+      toast.error(`${id}: ${t('web.plugins.mcp.test.failed')}`, {
+        description: err.message,
+      }),
+  })
+
   const toggle = useMutation({
     mutationFn: async (s: McpServer) =>
       updateMcp(s.id, { ...s, enabled: !s.enabled }),
@@ -301,6 +329,21 @@ function McpSection() {
                   </td>
                   <td className="px-3 py-2 text-right">
                     <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => test.mutate(s.id)}
+                        disabled={test.isPending && test.variables === s.id}
+                        className="h-7 px-2 text-[11px] gap-1"
+                        title={t('web.plugins.mcp.test.title')}
+                      >
+                        {test.isPending && test.variables === s.id ? (
+                          <Loader2 className="size-3 animate-spin" />
+                        ) : (
+                          <Plug className="size-3" />
+                        )}
+                        {t('web.plugins.mcp.test.button')}
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"

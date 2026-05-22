@@ -49,6 +49,9 @@ func (h *Handlers) Mount(r chi.Router) {
 			r.Get("/", h.get)
 			r.Put("/", h.update)
 			r.Delete("/", h.delete)
+			// Validate the server from the daemon: stdio → live MCP
+			// handshake; sse/http → config-sanity + reachability.
+			r.Post("/test", h.test)
 		})
 	})
 }
@@ -91,6 +94,31 @@ func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
 	}
 	s.SourcePath = ""
 	writeJSON(w, http.StatusOK, s)
+}
+
+// test validates one MCP server from the daemon. ${SECRET} placeholders
+// are resolved (best-effort) so the handshake uses real credentials.
+// Admin-only via the route group it's mounted under.
+func (h *Handlers) test(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if !ValidID(id) {
+		writeError(w, http.StatusBadRequest, errors.New("invalid id"))
+		return
+	}
+	s, err := h.loader.Get(id)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	var missing []string
+	if sec, serr := LoadSecrets(h.secretsPath); serr == nil {
+		s, missing = sec.Resolve(s)
+	}
+	writeJSON(w, http.StatusOK, Validate(r.Context(), s, missing))
 }
 
 func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {

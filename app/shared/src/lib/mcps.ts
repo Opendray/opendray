@@ -86,6 +86,33 @@ export async function deleteMcpSecret(key: string): Promise<void> {
   })
 }
 
+// McpCheck is one validation step; McpTestResult is the whole outcome
+// of POST /mcps/{id}/test (mirrors internal/mcp/validate.go).
+export interface McpCheck {
+  name: string
+  ok: boolean
+  detail?: string
+}
+
+export interface McpTestResult {
+  ok: boolean
+  transport: string
+  checks: McpCheck[]
+  toolCount?: number
+  tools?: string[]
+  serverName?: string
+  serverVersion?: string
+  note?: string
+  missingEnv?: string[]
+  latencyMs?: number
+}
+
+// testMcp validates a server from the daemon: stdio → live MCP
+// handshake (real tool count); sse/http → config-sanity + reachability.
+export async function testMcp(id: string): Promise<McpTestResult> {
+  return api<McpTestResult>(`/api/v1/mcps/${id}/test`, { method: 'POST' })
+}
+
 // defaultMcpServer returns a starter template for the New dialog —
 // stdio transport with a placeholder command so the user has the
 // shape in front of them.
