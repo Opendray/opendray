@@ -7,9 +7,9 @@ body:
     attributes:
       value: |
         Before filing:
-        - Check the [open Issues](https://github.com/Opendray/opendray_v2/issues?q=is%3Aissue+label%3Aenhancement) for a duplicate.
+        - Check the [open Issues](https://github.com/Opendray/opendray/issues?q=is%3Aissue+label%3Aenhancement) for a duplicate.
         - For early-stage "what if we..." ideas, prefer
-          [Discussions → Ideas](https://github.com/Opendray/opendray_v2/discussions) —
+          [Discussions → Ideas](https://github.com/Opendray/opendray/discussions) —
           formal issues are for ideas that already feel concrete.
 
   - type: textarea

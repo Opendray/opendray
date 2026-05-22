@@ -10,9 +10,9 @@ body:
         reproduce the issue without a back-and-forth.
 
         Before filing:
-        - Check the [open Issues](https://github.com/Opendray/opendray_v2/issues) for a duplicate.
+        - Check the [open Issues](https://github.com/Opendray/opendray/issues) for a duplicate.
         - For "how do I..." or "is this expected" questions, use
-          [Discussions](https://github.com/Opendray/opendray_v2/discussions) instead.
+          [Discussions](https://github.com/Opendray/opendray/discussions) instead.
 
   - type: textarea
     id: summary

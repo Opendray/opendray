@@ -54,7 +54,7 @@ every login attempt** rather than booting with no auth.
 If you discover a security vulnerability in OpenDray, please report it
 privately. Do **not** open a public GitHub issue.
 
-- **GitHub Security Advisories:** [Open a private advisory](https://github.com/Opendray/opendray_v2/security/advisories)
+- **GitHub Security Advisories:** [Open a private advisory](https://github.com/Opendray/opendray/security/advisories)
 - **Email:** security@opendray.dev
 
 We aim to acknowledge reports within 48 hours and ship fixes for critical
