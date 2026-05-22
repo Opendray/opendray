@@ -635,6 +635,9 @@ Group=$OPENDRAY_SERVICE_USER
 # the database URL and admin bootstrap password never appear in
 # config.toml on disk or in 'ps aux' / journalctl output.
 EnvironmentFile=$OD_ENV_PATH
+# Where the dashboard's "Update now" drops its request file for the
+# privileged self-update oneshot to act on (must match the .path unit).
+Environment=OPENDRAY_STATE_DIR=$OPENDRAY_DATA_DIR
 ExecStart=$OPENDRAY_PREFIX/bin/opendray serve -config $OD_CONFIG_PATH
 Restart=on-failure
 RestartSec=5s
@@ -654,16 +657,58 @@ ProtectControlGroups=true
 RestrictNamespaces=true
 RestrictRealtime=true
 LockPersonality=true
-MemoryDenyWriteExecute=true
+# MemoryDenyWriteExecute is intentionally NOT enabled: the V8/Node-based
+# CLIs (codex, gemini) JIT-compile and must flip pages RW->RX via mprotect,
+# which a W^X filter blocks (SIGSYS → the child dies on spawn). Claude
+# survives via an interpreter-only fallback; codex/gemini do not. The
+# blast radius without it is the unprivileged $OPENDRAY_SERVICE_USER user.
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
 run_priv install -m 0644 "$TMP_UNIT" "$UNIT_PATH"
+
+# ── Self-update units (in-dashboard "Update now") ────────────────────
+# The daemon is unprivileged and can't replace its own binary or restart
+# the unit, so "Update now" only drops a request file; this root oneshot,
+# activated by the path unit when the file appears, does the privileged
+# work. It installs the official latest (checksum-verified) and clears the
+# request.
+TMP_SU_SVC="$(mktemp)"; register_cleanup_file "$TMP_SU_SVC"
+cat > "$TMP_SU_SVC" <<EOF
+[Unit]
+Description=Apply a queued opendray upgrade (privileged)
+After=network-online.target ${OPENDRAY_SERVICE_NAME}.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=OPENDRAY_STATE_DIR=$OPENDRAY_DATA_DIR
+ExecStart=$OPENDRAY_PREFIX/bin/opendray self-update --apply
+ProtectHome=yes
+EOF
+
+TMP_SU_PATH="$(mktemp)"; register_cleanup_file "$TMP_SU_PATH"
+cat > "$TMP_SU_PATH" <<EOF
+[Unit]
+Description=Watch for an opendray in-dashboard upgrade request
+
+[Path]
+PathExists=$OPENDRAY_DATA_DIR/selfupdate.request
+Unit=opendray-selfupdate.service
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+run_priv install -m 0644 "$TMP_SU_SVC" "/etc/systemd/system/opendray-selfupdate.service"
+run_priv install -m 0644 "$TMP_SU_PATH" "/etc/systemd/system/opendray-selfupdate.path"
+
 run_priv systemctl daemon-reload
 run_priv systemctl enable --now "$OPENDRAY_SERVICE_NAME"
-log_ok "Service '$OPENDRAY_SERVICE_NAME' enabled and started"
+run_priv systemctl enable --now opendray-selfupdate.path
+log_ok "Service '$OPENDRAY_SERVICE_NAME' enabled and started (+ self-update watcher)"
 
 # Health check loop.
 log_info "Waiting for the gateway to respond..."

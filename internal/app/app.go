@@ -637,6 +637,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				auditHandlers.Mount(r)
 				intgrCallLogHandlers.Mount(r)
 				settingsHandlers.Mount(r)
+				newVersionHandlers(selfUpdateStateDir(), bus, log).Mount(r)
 				// SetupHandlers (status + setup + disable) is always
 				// mounted — that's the whole point of PR #49 / #50.
 				// Handlers (the data routes) is also always mounted

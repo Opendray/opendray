@@ -49,6 +49,8 @@ func main() {
 		os.Exit(runMigrate(args))
 	case "update":
 		os.Exit(runUpdate(args))
+	case "self-update":
+		os.Exit(runSelfUpdate(args))
 	case "providers":
 		os.Exit(runProviders(args))
 	case "start":

@@ -17,7 +17,10 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
+import { toast } from 'sonner'
+
 import { api } from '@/lib/api'
+import { getVersionInfo, requestSelfUpdate, type VersionInfo } from '@/lib/version'
 import { useTheme, type ThemeMode } from '@/stores/theme'
 import { useAuth } from '@/stores/auth'
 import { useLayout } from '@/stores/layout'
@@ -713,12 +716,138 @@ function SystemSection({ health }: { health: HealthResponse | undefined }) {
 
 function AboutSection() {
   const { t } = useTranslation()
+  const { data, refetch } = useQuery<VersionInfo>({
+    queryKey: ['version'],
+    queryFn: getVersionInfo,
+  })
+  // phase: idle → confirming (inline confirm) → upgrading (polling for the
+  // restarted daemon to come back on the new version).
+  const [phase, setPhase] = useState<'idle' | 'confirming' | 'upgrading'>('idle')
+
+  // While upgrading, the daemon downloads + swaps + restarts, so requests
+  // fail mid-flight. Poll until `current` reaches `latest` (or give up).
+  useEffect(() => {
+    if (phase !== 'upgrading') return
+    const target = data?.latest
+    let tries = 0
+    const id = setInterval(async () => {
+      tries++
+      try {
+        const v = await getVersionInfo()
+        if (!v.updateAvailable || (target && v.current === target)) {
+          clearInterval(id)
+          setPhase('idle')
+          toast.success(t('web.settings.about.upgraded', { version: v.current }))
+          void refetch()
+          return
+        }
+      } catch {
+        /* expected during the restart window — keep polling */
+      }
+      if (tries > 30) {
+        clearInterval(id)
+        setPhase('idle')
+        toast.message(t('web.settings.about.upgradeSlow'))
+        void refetch()
+      }
+    }, 4000)
+    return () => clearInterval(id)
+  }, [phase, data?.latest, refetch, t])
+
+  async function startUpgrade() {
+    try {
+      const res = await requestSelfUpdate()
+      if (res.error) {
+        toast.error(res.error)
+        setPhase('idle')
+        return
+      }
+      toast.success(t('web.settings.about.upgrading', { version: res.to ?? '' }), {
+        description: res.note,
+      })
+      setPhase('upgrading')
+    } catch (e) {
+      toast.error(String(e))
+      setPhase('idle')
+    }
+  }
+
+  const busy = phase === 'upgrading' || data?.pending
   return (
     <div>
       <SectionHeader title={t('web.settings.about.title')} />
-      <p className="text-[12px] text-muted-foreground leading-relaxed">
+      <p className="text-[12px] text-muted-foreground leading-relaxed mb-3">
         {t('web.settings.about.description')}
       </p>
+
+      <Field label={t('web.settings.about.version')} value={data?.current ?? '…'} monospace />
+      {data?.commit && (
+        <Field label={t('web.settings.about.commit')} value={data.commit} monospace />
+      )}
+
+      {data?.updateAvailable ? (
+        <div className="mt-3 rounded-md border border-primary/40 bg-primary/5 p-3">
+          <div className="text-[12px] font-medium">
+            {t('web.settings.about.updateAvailable', { version: data.latest })}
+          </div>
+          {data.notesUrl && (
+            <a
+              href={data.notesUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[11px] text-primary underline"
+            >
+              {t('web.settings.about.releaseNotes')}
+            </a>
+          )}
+          <div className="mt-2">
+            {data.selfUpdate ? (
+              phase === 'confirming' ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-muted-foreground">
+                    {t('web.settings.about.confirmRestart')}
+                  </span>
+                  <button
+                    onClick={startUpgrade}
+                    className="rounded bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground"
+                  >
+                    {t('web.settings.about.confirmUpgrade')}
+                  </button>
+                  <button
+                    onClick={() => setPhase('idle')}
+                    className="rounded border border-border px-2.5 py-1 text-[11px]"
+                  >
+                    {t('common.cancel')}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setPhase('confirming')}
+                  disabled={!!busy}
+                  className="rounded bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground disabled:opacity-50"
+                >
+                  {busy
+                    ? t('web.settings.about.upgradingShort')
+                    : t('web.settings.about.updateNow')}
+                </button>
+              )
+            ) : (
+              <div className="text-[11px] text-muted-foreground">
+                {t('web.settings.about.guidedHint')}
+                <code className="ml-1 font-mono text-foreground">opendray update</code>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : data?.checkError ? (
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          {t('web.settings.about.checkFailed')}
+        </p>
+      ) : data?.latest ? (
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          {t('web.settings.about.upToDate')}
+        </p>
+      ) : null}
     </div>
   )
 }
