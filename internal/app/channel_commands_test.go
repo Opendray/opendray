@@ -128,6 +128,30 @@ func TestListSessionsCardHandler_LiveFirstThenTerminated(t *testing.T) {
 	}
 }
 
+func TestListSessionsCardHandler_LeadsWithName(t *testing.T) {
+	now := time.Now().UTC()
+	sessions := []session.Session{
+		{ID: "ses_named01", Name: "deploy-bot", ProviderID: "claude",
+			State: session.StateIdle, StartedAt: now.Add(-time.Minute)},
+		{ID: "ses_unnamed1", ProviderID: "gemini",
+			State: session.StateIdle, StartedAt: now.Add(-2 * time.Minute)},
+	}
+	h := listSessionsCardHandler(&fakeSessionOps{sessions: sessions})
+	got, err := h(context.Background(), channel.CommandContext{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := cardText(t, got)
+	// Named session: name leads, full id retained in parens for copy.
+	if !strings.Contains(body, "deploy-bot (ses_named01)") {
+		t.Errorf("named session should render \"name (id)\":\n%s", body)
+	}
+	// Unnamed session: bare id, no empty parens.
+	if !strings.Contains(body, "ses_unnamed1 —") || strings.Contains(body, "()") {
+		t.Errorf("unnamed session should render the bare id:\n%s", body)
+	}
+}
+
 func TestListSessionsCardHandler_CapsAtMax(t *testing.T) {
 	now := time.Now().UTC()
 	sessions := make([]session.Session, 0, listSessionsMax+5)

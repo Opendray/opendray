@@ -110,17 +110,24 @@ func listSessionsCardHandler(mgr sessionOps) channel.CommandCardHandler {
 			}
 		}
 
-		// Body: numbered list. The full id is shown so operators
-		// who want to type /end <full> can still copy it; the
-		// buttons below carry the full id in their callback data.
+		// Body: numbered list. We lead with the human-given name
+		// when one exists — operators think in names, not nano ids —
+		// and keep the full id on the line so it stays copyable for
+		// `/end <full>`. The buttons below also carry the full id in
+		// their callback data. Sessions started without a name fall
+		// back to the bare id (there's nothing friendlier to show).
 		var b strings.Builder
 		fmt.Fprintf(&b, "%d session%s (showing %d):\n",
 			liveCount, plural(liveCount), len(all))
 		now := time.Now().UTC()
 		for i, s := range all {
+			label := s.ID
+			if s.Name != "" {
+				label = fmt.Sprintf("%s (%s)", s.Name, s.ID)
+			}
 			fmt.Fprintf(&b, "%d. %s — %s — %s — %s\n",
 				i+1,
-				s.ID,
+				label,
 				s.ProviderID,
 				s.State,
 				relativeAge(sessionActivityTime(s), now),
