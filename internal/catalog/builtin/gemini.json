@@ -9,6 +9,7 @@
   "version": "1.0.0",
   "kind": "cli",
   "executable": "gemini",
+  "npmPackage": "@google/gemini-cli",
   "capabilities": {
     "supportsResume": false,
     "supportsStream": true,
@@ -22,7 +23,10 @@
       "label_zh": "认证",
       "type": "select",
       "group": "auth",
-      "options": ["env", "custom"],
+      "options": [
+        "env",
+        "custom"
+      ],
       "default": "env",
       "description": "env = read GOOGLE_API_KEY from system; custom = use the key below",
       "description_zh": "env = 从系统读取 GOOGLE_API_KEY；custom = 使用下方自定义密钥"
@@ -55,7 +59,10 @@
       "label_zh": "沙盒",
       "type": "select",
       "group": "runtime",
-      "options": ["", "none"],
+      "options": [
+        "",
+        "none"
+      ],
       "default": "",
       "cliFlag": "-s",
       "cliValue": true,
@@ -89,6 +96,10 @@
     }
   ],
   "ui": {
-    "activityBar": { "id": "gemini", "icon": "✨", "title": "Gemini" }
+    "activityBar": {
+      "id": "gemini",
+      "icon": "✨",
+      "title": "Gemini"
+    }
   }
 }

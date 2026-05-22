@@ -962,7 +962,10 @@
           "stream": "stream",
           "images": "images",
           "mcp": "mcp"
-        }
+        },
+        "notInstalled": "未安装",
+        "updateAvailable": "有可用更新 → {{version}}",
+        "upToDate": "已是最新"
       },
       "configForm": {
         "selectPlaceholder": "选择…",

@@ -17,6 +17,7 @@ import {
   listProviders,
   toggleProvider,
   updateProviderConfig,
+  checkProviderUpdate,
 } from '@/lib/catalog'
 import type { Provider } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -173,6 +174,15 @@ function ProviderDetail({
 }) {
   const { t } = useTranslation()
   const m = provider.manifest
+  const rt = provider.runtime
+  // Latest-version check is a network (npm) call, so it runs on its own
+  // endpoint and only for installed CLI providers.
+  const { data: upd } = useQuery({
+    queryKey: ['provider-update', m.id],
+    queryFn: () => checkProviderUpdate(m.id),
+    enabled: m.kind === 'cli' && !!rt?.installed,
+    staleTime: 60_000,
+  })
   const caps: { key: keyof typeof m.capabilities; labelKey: string }[] = [
     { key: 'supportsResume', labelKey: 'web.providers.detail.caps.resume' },
     { key: 'supportsStream', labelKey: 'web.providers.detail.caps.stream' },
@@ -197,9 +207,27 @@ function ProviderDetail({
             <Badge variant="outline" className="font-mono normal-case">
               {m.kind}
             </Badge>
-            <Badge variant="outline" className="font-mono normal-case">
-              v{m.version}
-            </Badge>
+            {rt && !rt.installed ? (
+              <Badge
+                variant="outline"
+                className="font-mono normal-case text-muted-foreground"
+              >
+                {t('web.providers.detail.notInstalled')}
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="font-mono normal-case">
+                {/* Real installed CLI version when known; falls back to
+                    the manifest's schema version only if unprobed. */}
+                {rt?.installedVersion ?? `v${m.version}`}
+              </Badge>
+            )}
+            {upd?.updateAvailable && upd.latestVersion ? (
+              <Badge variant="accent" className="font-mono normal-case">
+                {t('web.providers.detail.updateAvailable', {
+                  version: upd.latestVersion,
+                })}
+              </Badge>
+            ) : null}
           </div>
           <p className="text-[12px] text-muted-foreground mt-1 max-w-[60ch]">
             {m.description}

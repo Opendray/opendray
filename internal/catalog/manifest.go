@@ -17,19 +17,23 @@ package catalog
 // config* (not a manifest field) since MCP injection is a session
 // spawn-time hook, not a separate plugin.
 type Manifest struct {
-	ID            string        `json:"id"`
-	DisplayName   string        `json:"displayName"`
-	DisplayNameZh string        `json:"displayName_zh,omitempty"`
-	Description   string        `json:"description"`
-	DescriptionZh string        `json:"description_zh,omitempty"`
-	Icon          string        `json:"icon"`
-	Version       string        `json:"version"`
-	Kind          string        `json:"kind"` // "cli" | "shell"
-	Executable    string        `json:"executable"`
-	DefaultArgs   []string      `json:"defaultArgs,omitempty"`
-	Capabilities  Capabilities  `json:"capabilities"`
-	ConfigSchema  []ConfigField `json:"configSchema,omitempty"`
-	UI            *UI           `json:"ui,omitempty"`
+	ID            string `json:"id"`
+	DisplayName   string `json:"displayName"`
+	DisplayNameZh string `json:"displayName_zh,omitempty"`
+	Description   string `json:"description"`
+	DescriptionZh string `json:"description_zh,omitempty"`
+	Icon          string `json:"icon"`
+	Version       string `json:"version"`
+	Kind          string `json:"kind"` // "cli" | "shell"
+	Executable    string `json:"executable"`
+	// NpmPackage is the npm package the executable ships in, used to
+	// probe the latest published version (and, in Phase 2, to update
+	// the CLI). Empty for non-npm providers such as the builtin shell.
+	NpmPackage   string        `json:"npmPackage,omitempty"`
+	DefaultArgs  []string      `json:"defaultArgs,omitempty"`
+	Capabilities Capabilities  `json:"capabilities"`
+	ConfigSchema []ConfigField `json:"configSchema,omitempty"`
+	UI           *UI           `json:"ui,omitempty"`
 }
 
 // Capabilities is descriptive metadata used by clients to render the
