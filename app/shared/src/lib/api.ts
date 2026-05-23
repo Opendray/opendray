@@ -49,10 +49,16 @@ export async function api<T = unknown>(
           description: 'Please sign in again.',
         })
       }
-      const next = encodeURIComponent(
-        window.location.pathname + window.location.search,
-      )
-      window.location.assign(`/login?next=${next}`)
+      // The SPA is mounted under Vite's base path (e.g. "/admin/"), so a
+      // bare "/login" hits the server's 404 instead of the login route.
+      // Build the redirect under the base, and make `next` router-relative
+      // (strip the base) so post-login restore doesn't double-prefix it.
+      const base = import.meta.env.BASE_URL.replace(/\/$/, '') // "" dev, "/admin" prod
+      const path = window.location.pathname
+      const rel =
+        base && path.startsWith(base) ? path.slice(base.length) || '/' : path
+      const next = encodeURIComponent(rel + window.location.search)
+      window.location.assign(`${base}/login?next=${next}`)
     }
   }
 
