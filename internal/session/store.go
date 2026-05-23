@@ -162,6 +162,33 @@ func (s *sessionStore) MarkRunningAsInterrupted(ctx context.Context) ([]string, 
 	return ids, rows.Err()
 }
 
+// ListInterrupted returns the ids of every row currently in the
+// 'interrupted' state, newest first. These are sessions a prior gateway
+// left for resume: either flipped by MarkRunningAsInterrupted (the
+// daemon crashed before the exit detector ran) or recorded directly by
+// waitExit during a clean shutdown. Startup reconciliation re-spawns
+// them; once resumed they leave this state, so the set only ever holds
+// sessions still awaiting a successful resume.
+func (s *sessionStore) ListInterrupted(ctx context.Context) ([]string, error) {
+	rows, err := s.pool.Query(ctx, `
+        SELECT id FROM sessions
+        WHERE state='interrupted'
+        ORDER BY started_at DESC`)
+	if err != nil {
+		return nil, fmt.Errorf("list interrupted: %w", err)
+	}
+	defer rows.Close()
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("scan interrupted id: %w", err)
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
 // UpdateClaudeAccount rebinds the session's claude_account_id without
 // touching state/pid/etc. Used by Manager.SwitchClaudeAccount after a
 // successful respawn under a new credential.

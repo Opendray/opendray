@@ -156,12 +156,17 @@ func (m *Manager) waitExit(rs *runningSession) {
 	}
 
 	rs.endOnce.Do(func() {
-		// Distinguish user-initiated stops (Manager.Stop set
-		// stopRequested) from spontaneous exits. The DB row
-		// persists either way so the user can Restart.
+		// Classify the exit:
+		//   - user-initiated stop (Manager.Stop set stopRequested) → stopped
+		//   - daemon shutting down (Shutdown SIGTERMed us) → interrupted,
+		//     so startup reconciliation resumes it via claude_session_id
+		//   - otherwise the agent exited on its own → ended
+		// The DB row persists in every case so the user can Restart.
 		state := StateEnded
 		if m.consumeStopRequest(rs.sess.ID) {
 			state = StateStopped
+		} else if m.isClosing() {
+			state = StateInterrupted
 		}
 
 		dbCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -194,8 +199,11 @@ func (m *Manager) waitExit(rs *runningSession) {
 		m.mu.Unlock()
 
 		topic := "session.ended"
-		if state == StateStopped {
+		switch state {
+		case StateStopped:
 			topic = "session.stopped"
+		case StateInterrupted:
+			topic = "session.interrupted"
 		}
 		m.bus.Publish(eventbus.Event{
 			Topic: topic,

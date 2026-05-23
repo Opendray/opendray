@@ -124,6 +124,15 @@ func (m *Manager) consumeStopRequest(id string) bool {
 	return v
 }
 
+// isClosing reports whether Shutdown has begun. waitExit uses it to
+// record a daemon-driven exit as 'interrupted' (resume on next start)
+// rather than 'ended' (a real, agent-initiated exit).
+func (m *Manager) isClosing() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.closed
+}
+
 // runningSession holds the runtime state for one active PTY-backed
 // session. The exported view (Manager.Get returns Session) snapshots
 // `sess` under sessMu.
@@ -210,7 +219,17 @@ func NewManager(pool *pgxpool.Pool, bus *eventbus.Hub, providers ProviderResolve
 // after NewManager and before serving traffic; failures to resume a
 // single session are logged and skipped, never fatal.
 func (m *Manager) ReconcileStartup(ctx context.Context) error {
-	ids, err := m.store.MarkRunningAsInterrupted(ctx)
+	// Crash path: a daemon that was SIGKILLed (or died hard) never ran
+	// waitExit, so its sessions are still 'running'/'idle'/'pending'.
+	// Flip them to 'interrupted'. A clean shutdown already marked its
+	// sessions 'interrupted' from waitExit, so nothing to flip there.
+	if _, err := m.store.MarkRunningAsInterrupted(ctx); err != nil {
+		return err
+	}
+	// Resume everything left in 'interrupted' — both the rows just
+	// flipped above (crash) and those recorded by waitExit during a
+	// graceful restart. This is the set that must come back live.
+	ids, err := m.store.ListInterrupted(ctx)
 	if err != nil {
 		return err
 	}
@@ -218,7 +237,7 @@ func (m *Manager) ReconcileStartup(ctx context.Context) error {
 		return nil
 	}
 	if os.Getenv("OPENDRAY_NO_AUTO_RESUME") != "" {
-		m.log.Info("marked interrupted sessions on startup; auto-resume disabled",
+		m.log.Info("interrupted sessions present on startup; auto-resume disabled",
 			"count", len(ids), "reason", "OPENDRAY_NO_AUTO_RESUME set")
 		return nil
 	}
