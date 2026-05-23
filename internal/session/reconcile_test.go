@@ -50,12 +50,12 @@ func TestAutoResumeMaxFromEnv(t *testing.T) {
 		val  string
 		want int
 	}{
-		{"", 0},      // unset -> no cap
-		{"0", 0},     // explicit 0 -> no cap
-		{"5", 5},     // positive cap
+		{"", 0},       // unset -> no cap
+		{"0", 0},      // explicit 0 -> no cap
+		{"5", 5},      // positive cap
 		{"  12 ", 12}, // trimmed
-		{"-3", 0},    // negative -> no cap
-		{"abc", 0},   // garbage -> no cap
+		{"-3", 0},     // negative -> no cap
+		{"abc", 0},    // garbage -> no cap
 	}
 	for _, c := range cases {
 		t.Setenv("OPENDRAY_AUTO_RESUME_MAX", c.val)
