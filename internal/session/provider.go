@@ -128,3 +128,29 @@ func SessionIDFromContext(ctx context.Context) string {
 	}
 	return ""
 }
+
+// resumeClaudeSessionIDCtxKey carries the agent-side session UUID that
+// a reactivated (resumed) session should continue, so the provider's
+// Prepare emits `--resume <id>` instead of minting a fresh
+// `--session-id`. Without this, "resuming" a session spawned a brand
+// new agent conversation and orphaned the original transcript.
+type resumeClaudeSessionIDCtxKey struct{}
+
+// WithResumeClaudeSessionID returns a derived context carrying the
+// agent-side session UUID to resume. Empty is a no-op so call sites
+// (fresh spawns) needn't guard.
+func WithResumeClaudeSessionID(ctx context.Context, id string) context.Context {
+	if id == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, resumeClaudeSessionIDCtxKey{}, id)
+}
+
+// ResumeClaudeSessionIDFromContext returns the UUID set by
+// WithResumeClaudeSessionID, or "" when this is a fresh spawn.
+func ResumeClaudeSessionIDFromContext(ctx context.Context) string {
+	if v, ok := ctx.Value(resumeClaudeSessionIDCtxKey{}).(string); ok {
+		return v
+	}
+	return ""
+}

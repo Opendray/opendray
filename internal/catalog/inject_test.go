@@ -1,6 +1,7 @@
 package catalog
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -125,7 +126,7 @@ func TestInjectAmbientMemory_UnknownProviderSilent(t *testing.T) {
 
 func TestInjectSessionID_Claude(t *testing.T) {
 	out := &session.PrepareOutput{}
-	if !injectSessionIDFor("claude", out) {
+	if !injectSessionIDFor(context.Background(), "claude", out) {
 		t.Fatal("expected injection to fire for claude")
 	}
 	if out.ClaudeSessionID == "" {
@@ -136,9 +137,28 @@ func TestInjectSessionID_Claude(t *testing.T) {
 	}
 }
 
+func TestInjectSessionID_ClaudeResume(t *testing.T) {
+	// On reactivation the manager threads the existing agent UUID via
+	// ctx; claude must continue it with --resume, NOT mint a fresh
+	// --session-id (which would start a blank conversation and orphan
+	// the original transcript). Regression for the 2026-05-23 incident.
+	const prior = "d3cca926-5e55-4d6b-8920-392e990347a1"
+	out := &session.PrepareOutput{}
+	ctx := session.WithResumeClaudeSessionID(context.Background(), prior)
+	if !injectSessionIDFor(ctx, "claude", out) {
+		t.Fatal("expected injection to fire for claude resume")
+	}
+	if out.ClaudeSessionID != prior {
+		t.Errorf("resume: ClaudeSessionID = %q, want preserved %q", out.ClaudeSessionID, prior)
+	}
+	if len(out.Args) != 2 || out.Args[0] != "--resume" || out.Args[1] != prior {
+		t.Errorf("resume: expected --resume %s, got %+v", prior, out.Args)
+	}
+}
+
 func TestInjectSessionID_Gemini(t *testing.T) {
 	out := &session.PrepareOutput{}
-	if !injectSessionIDFor("gemini", out) {
+	if !injectSessionIDFor(context.Background(), "gemini", out) {
 		t.Fatal("expected injection to fire for gemini")
 	}
 	if out.ClaudeSessionID == "" {
@@ -153,7 +173,7 @@ func TestInjectSessionID_CodexSkipped(t *testing.T) {
 	// Codex has no --session-id flag — must skip rather than emit a
 	// bogus arg that codex would reject.
 	out := &session.PrepareOutput{}
-	if injectSessionIDFor("codex", out) {
+	if injectSessionIDFor(context.Background(), "codex", out) {
 		t.Errorf("codex: injection should not fire (no --session-id support)")
 	}
 	if len(out.Args) != 0 || out.ClaudeSessionID != "" {
@@ -166,8 +186,8 @@ func TestInjectSessionID_FreshUUIDsAcrossSpawns(t *testing.T) {
 	// Claude sessions would race for the same *.jsonl.
 	out1 := &session.PrepareOutput{}
 	out2 := &session.PrepareOutput{}
-	injectSessionIDFor("claude", out1)
-	injectSessionIDFor("claude", out2)
+	injectSessionIDFor(context.Background(), "claude", out1)
+	injectSessionIDFor(context.Background(), "claude", out2)
 	if out1.ClaudeSessionID == out2.ClaudeSessionID {
 		t.Errorf("expected distinct UUIDs across spawns, got %q twice", out1.ClaudeSessionID)
 	}

@@ -22,12 +22,34 @@ const (
 	// StateEnded — process exited on its own (clean exit or crash).
 	// Row preserved; user can Restart or Remove.
 	StateEnded State = "ended"
+	// StateInterrupted — the session was live when the gateway process
+	// exited (e.g. a self-update restart), so its PTY died with no
+	// clean exit of its own. Distinct from 'ended' so startup
+	// reconciliation can tell "the daemon killed this" apart from "the
+	// agent exited", and auto-resume it. Terminal for Restart/resume.
+	StateInterrupted State = "interrupted"
 )
 
-// IsTerminal reports whether the session is no longer running. Both
-// stopped and ended are terminal.
+// IsTerminal reports whether the session is no longer running. Stopped,
+// ended, and interrupted are all terminal (the PTY is gone); each can
+// be re-spawned via Start.
 func (s State) IsTerminal() bool {
-	return s == StateStopped || s == StateEnded
+	return s == StateStopped || s == StateEnded || s == StateInterrupted
+}
+
+// classifyExitState decides which terminal state to record for a session
+// whose process just exited. Precedence: an explicit user stop wins;
+// otherwise a gateway shutdown makes it 'interrupted' (so startup
+// reconciliation resumes it); a spontaneous exit is a normal 'ended'.
+func classifyExitState(stopRequested, closing bool) State {
+	switch {
+	case stopRequested:
+		return StateStopped
+	case closing:
+		return StateInterrupted
+	default:
+		return StateEnded
+	}
 }
 
 // Session is the public view of a PTY-backed CLI session. Runtime
