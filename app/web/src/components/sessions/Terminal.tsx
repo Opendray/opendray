@@ -117,10 +117,14 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   // open in a browser instead of fighting with line-wrapped text in
   // the terminal — particularly useful for OAuth flows on mobile.
   const [detectedURLs, setDetectedURLs] = useState<string[]>([])
-  // True while the user has a non-empty text selection in the terminal.
-  // Drives the contextual "Copy selection" pill so there's no button
-  // cluttering the surface when nothing is selected.
-  const [hasSelection, setHasSelection] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  // Position (root-relative px) of the contextual copy pill, anchored
+  // at where the selection ended. null = no selection, pill hidden.
+  // `below` flips the pill under the point when selecting near the top
+  // edge so it never clips off-screen.
+  const [pill, setPill] = useState<{ x: number; y: number; below: boolean } | null>(
+    null,
+  )
 
   const sendInput = useCallback((data: string) => {
     const ws = wsRef.current
@@ -242,9 +246,13 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     xtermRef.current = term
     fitRef.current = fit
 
-    // Surface the contextual copy pill only while a selection exists.
-    // term.dispose() (cleanup below) tears this listener down with it.
-    term.onSelectionChange(() => setHasSelection(term.hasSelection()))
+    // Hide the copy pill the moment a selection is cleared (click
+    // elsewhere, typing, scroll-reset). Showing/positioning it happens
+    // on pointerup — see the pill-anchor effect. term.dispose() (cleanup
+    // below) tears this listener down with it.
+    term.onSelectionChange(() => {
+      if (!term.hasSelection()) setPill(null)
+    })
 
     // alive flips false on cleanup so any straggler resize/onOpen
     // callbacks scheduled before unmount don't fire `/resize` against
@@ -429,21 +437,53 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     fitRef.current?.fit()
   }, [themeApplied])
 
+  // Anchor the copy pill where the selection ended. pointerup covers
+  // both mouse-drag and touch; we defer one frame so xterm finalizes
+  // the selection first, then place the pill at the pointer (clamped
+  // inside the box, flipped below the point near the top edge).
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+    const onPointerUp = (e: PointerEvent) => {
+      requestAnimationFrame(() => {
+        const term = xtermRef.current
+        if (!term || !term.hasSelection()) {
+          setPill(null)
+          return
+        }
+        const rect = root.getBoundingClientRect()
+        const rawY = e.clientY - rect.top
+        setPill({
+          x: Math.min(Math.max(e.clientX - rect.left, 48), rect.width - 48),
+          y: rawY,
+          below: rawY < 44,
+        })
+      })
+    }
+    root.addEventListener('pointerup', onPointerUp)
+    return () => root.removeEventListener('pointerup', onPointerUp)
+  }, [])
+
   return (
-    <div className="h-full w-full bg-background relative">
+    <div ref={rootRef} className="h-full w-full bg-background relative">
       <div ref={containerRef} className="h-full w-full p-3" />
       <DetectedURLs urls={detectedURLs} />
-      {hasSelection && (
+      {pill && (
         <Button
           type="button"
-          variant="accent"
+          variant="secondary"
           size="sm"
           // preventDefault on mousedown so clicking the pill doesn't
           // blur/clear the xterm selection before copySelection reads it.
           onMouseDown={(e) => e.preventDefault()}
           onClick={copySelection}
           title={t('web.sessions.terminal.copySelectionTooltip')}
-          className="absolute top-2 left-1/2 -translate-x-1/2 z-20 h-7 gap-1.5 px-2.5 text-[11px] shadow-md"
+          style={{
+            left: pill.x,
+            top: pill.y,
+            transform: `translate(-50%, ${pill.below ? '8px' : 'calc(-100% - 8px)'})`,
+          }}
+          className="absolute z-20 h-7 gap-1.5 px-2.5 text-[11px] border border-border shadow-md"
         >
           <Copy className="size-3.5" />
           {t('web.sessions.terminal.copySelection')}
