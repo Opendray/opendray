@@ -362,7 +362,15 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	)
 	var preparedClaudeSessionID string
 	if p.Prepare != nil {
-		out, err := p.Prepare(WithSessionID(WithCwd(ctx, sess.Cwd), sess.ID), sess.ID, tempDir)
+		// On reactivation (Start/resume) carry the existing agent-side
+		// UUID into Prepare so the provider emits `--resume <id>` and
+		// the prior transcript continues, instead of minting a fresh
+		// session and orphaning history.
+		prepareCtx := WithSessionID(WithCwd(ctx, sess.Cwd), sess.ID)
+		if reactivate {
+			prepareCtx = WithResumeClaudeSessionID(prepareCtx, sess.ClaudeSessionID)
+		}
+		out, err := p.Prepare(prepareCtx, sess.ID, tempDir)
 		if err != nil {
 			_ = os.RemoveAll(tempDir)
 			return nil, fmt.Errorf("provider prepare: %w", err)
