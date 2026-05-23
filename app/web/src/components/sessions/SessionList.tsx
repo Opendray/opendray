@@ -21,12 +21,17 @@ interface SessionListProps {
   onOpen: (session: Session) => void
 }
 
-function order(a: Session, b: Session): number {
-  // Live sessions first, then by started_at desc.
-  const aLive = isTerminalSessionState(a.state) ? 1 : 0
-  const bLive = isTerminalSessionState(b.state) ? 1 : 0
-  if (aLive !== bLive) return aLive - bLive
-  return new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
+// orderBy ranks sessions most-recently-used first: by last-opened time
+// (recorded per browser when you open a session), falling back to
+// started_at for sessions this browser has never opened. Live/ended
+// grouping is applied separately by the caller, so this is pure recency.
+function orderBy(recents: Record<string, number>) {
+  return (a: Session, b: Session): number => {
+    const ra = recents[a.id] ?? 0
+    const rb = recents[b.id] ?? 0
+    if (ra !== rb) return rb - ra
+    return new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
+  }
 }
 
 // Group sessions by parent. A parent_session_id pointing at a row no
@@ -81,10 +86,11 @@ export function SessionList({ onSpawn, onOpen }: SessionListProps) {
 
   const currentId = useSessionTabs((s) => s.currentId)
   const closeTab = useSessionTabs((s) => s.close)
+  const recents = useSessionTabs((s) => s.recents)
 
   const all = sessions ?? []
   const { tops, childrenOf } = buildTree(all)
-  const sortedTops = tops.slice().sort(order)
+  const sortedTops = tops.slice().sort(orderBy(recents))
   const liveTops = sortedTops.filter((s) => !isTerminalSessionState(s.state))
   const endedTops = sortedTops.filter((s) => isTerminalSessionState(s.state))
   const liveCount = all.filter((s) => !isTerminalSessionState(s.state)).length
