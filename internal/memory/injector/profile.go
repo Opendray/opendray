@@ -148,9 +148,13 @@ func (s *ProfileStore) Resolve(ctx context.Context, sessionID string) Profile {
 	if p, err := scanProfile(row); err == nil {
 		return p
 	}
+	// Default to top_k_recent (not top_k_relevant): recency is less
+	// cwd-dependent, and renderTopKRecent falls back to global scope when
+	// the cwd has no project memories — so cross-session recall works out
+	// of the box without an operator configuring a profile.
 	return Profile{
-		ID:           "synthetic-default-top-k-relevant",
-		StrategyKind: "top_k_relevant",
+		ID:           "synthetic-default-top-k-recent",
+		StrategyKind: "top_k_recent",
 		Config:       map[string]any{"k": float64(5)},
 	}
 }

@@ -12,7 +12,8 @@ import (
 )
 
 type fakeMemoryReader struct {
-	mems       []memory.Memory
+	mems       []memory.Memory // returned for project scope
+	globalMems []memory.Memory // returned for global scope (fallback)
 	searchHits []memory.SearchHit
 	err        error
 }
@@ -21,10 +22,14 @@ func (f *fakeMemoryReader) List(ctx context.Context, scope memory.Scope, scopeKe
 	if f.err != nil {
 		return nil, f.err
 	}
-	if len(f.mems) > limit {
-		return f.mems[:limit], nil
+	out := f.mems
+	if scope == memory.ScopeGlobal {
+		out = f.globalMems
 	}
-	return f.mems, nil
+	if len(out) > limit {
+		return out[:limit], nil
+	}
+	return out, nil
 }
 
 func (f *fakeMemoryReader) Search(ctx context.Context, req memory.SearchRequest) ([]memory.SearchHit, error) {
@@ -140,13 +145,28 @@ func TestRender_TopKRecent_ListErrorSkipsGracefully(t *testing.T) {
 	}
 }
 
-func TestRender_TopKRecent_EmptyCwdReturnsEmpty(t *testing.T) {
-	mem := &fakeMemoryReader{mems: []memory.Memory{{ID: "1", Text: "x"}}}
+func TestRender_TopKRecent_EmptyEverywhereReturnsEmpty(t *testing.T) {
+	mem := &fakeMemoryReader{} // no project, no global
 	inj := &Injector{memory: mem, log: silentLog()}
 	out, _ := inj.renderTopKRecent(context.Background(),
 		Profile{StrategyKind: "top_k_recent"}, "")
 	if out != "" {
-		t.Errorf("empty cwd should yield empty preface, got %q", out)
+		t.Errorf("no memories anywhere should yield empty preface, got %q", out)
+	}
+}
+
+func TestRender_TopKRecent_FallsBackToGlobal(t *testing.T) {
+	// No project memories for this cwd, but a global memory exists — it
+	// should surface (cross-session recall regardless of cwd).
+	mem := &fakeMemoryReader{
+		mems:       nil,
+		globalMems: []memory.Memory{{ID: "g1", Text: "global fact"}},
+	}
+	inj := &Injector{memory: mem, log: silentLog()}
+	out, _ := inj.renderTopKRecent(context.Background(),
+		Profile{StrategyKind: "top_k_recent"}, "/some/fresh/cwd")
+	if !strings.Contains(out, "global fact") {
+		t.Errorf("expected global memory in preface, got %q", out)
 	}
 }
 

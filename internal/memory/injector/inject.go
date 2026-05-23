@@ -154,14 +154,26 @@ func readK(cfg map[string]any, fallback, max int) int {
 // list returns "" (no banner is better than a blank one).
 func (i *Injector) renderTopKRecent(ctx context.Context, profile Profile, cwd string) (string, error) {
 	k := readK(profile.Config, 5, 50)
-	if cwd == "" {
-		i.log.Debug("injector: empty cwd, skipping top_k_recent")
-		return "", nil
+	var mems []memory.Memory
+	if cwd != "" {
+		m, err := i.memory.List(ctx, memory.ScopeProject, cwd, k)
+		if err != nil {
+			i.log.Warn("injector: list memories failed", "cwd", cwd, "err", err)
+		} else {
+			mems = m
+		}
 	}
-	mems, err := i.memory.List(ctx, memory.ScopeProject, cwd, k)
-	if err != nil {
-		i.log.Warn("injector: list memories failed", "cwd", cwd, "err", err)
-		return "", nil // non-fatal — skip injection rather than block spawn
+	// Cross-session fallback: a session in a fresh cwd has no project-scoped
+	// memories, but global-scope memories (e.g. stored via the memory MCP at
+	// OPENDRAY_MEMORY_SCOPE=global) should still surface so "told one
+	// session, recalled in another" works regardless of cwd.
+	if len(mems) == 0 {
+		g, err := i.memory.List(ctx, memory.ScopeGlobal, "", k)
+		if err != nil {
+			i.log.Warn("injector: global list failed", "err", err)
+			return "", nil // non-fatal — skip injection rather than block spawn
+		}
+		mems = g
 	}
 	if len(mems) == 0 {
 		return "", nil

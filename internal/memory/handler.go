@@ -3,12 +3,55 @@ package memory
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+
+	"github.com/opendray/opendray-v2/internal/integration"
 )
+
+// Memory scopes for integration keys. Reads (search/list/get/scope-keys/
+// status) need ScopeMemoryRead; store needs ScopeMemoryWrite. Admins pass
+// either unconditionally. The destructive/management endpoints stay
+// admin-only regardless of scope.
+const (
+	ScopeMemoryRead  = "memory:read"
+	ScopeMemoryWrite = "memory:write"
+)
+
+// requireScope allows admins, and integration keys holding `scope`.
+// Mounted under integration.CombinedMiddleware, which sets the principal.
+func (h *Handlers) requireScope(scope string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			p, ok := integration.CurrentPrincipal(r.Context())
+			if !ok {
+				writeError(w, http.StatusUnauthorized, errors.New("unauthorized"))
+				return
+			}
+			if p.Kind == integration.KindAdmin || integration.HasScope(p.Scopes, scope) {
+				next.ServeHTTP(w, r)
+				return
+			}
+			writeError(w, http.StatusForbidden, fmt.Errorf("requires admin or the %q scope", scope))
+		})
+	}
+}
+
+// requireAdmin allows only admin principals (integration keys are rejected
+// regardless of scope) — for the destructive / management memory endpoints.
+func (h *Handlers) requireAdmin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if p, ok := integration.CurrentPrincipal(r.Context()); !ok || p.Kind != integration.KindAdmin {
+			writeError(w, http.StatusForbidden, errors.New("requires admin"))
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
 
 // Handlers exposes the memory subsystem over HTTP under /memory/*.
 // Mount under the dual-auth route group (admin OR integration) so
@@ -43,20 +86,26 @@ func NewHandlers(svc *Service, log *slog.Logger) *Handlers {
 // dual-auth middleware (admin OR integration) applied.
 func (h *Handlers) Mount(r chi.Router) {
 	r.Route("/memory", func(r chi.Router) {
-		r.Get("/status", h.status)
-		r.Post("/store", h.store)
-		r.Post("/search", h.search)
-		r.Get("/list", h.list)
-		r.Get("/scope-keys", h.scopeKeys)
-		r.Get("/{id}", h.getOne)
-		r.Patch("/{id}", h.update)
-		r.Delete("/{id}", h.delete)
-		r.Post("/delete-by-scope", h.deleteByScope)
-		r.Post("/test", h.test)
-		r.Post("/probe", h.probe)
-		r.Get("/embedder-stats", h.embedderStats)
-		r.Post("/reembed", h.reembed)
-		r.Post("/mirror", h.mirror)
+		// Recall surface — admin OR integration key with the scope. This is
+		// what `opendray mcp-memory` calls, so a long-lived integration key
+		// can drive live cross-session recall.
+		read := h.requireScope(ScopeMemoryRead)
+		r.With(read).Get("/status", h.status)
+		r.With(read).Post("/search", h.search)
+		r.With(read).Get("/list", h.list)
+		r.With(read).Get("/scope-keys", h.scopeKeys)
+		r.With(read).Get("/{id}", h.getOne)
+		r.With(h.requireScope(ScopeMemoryWrite)).Post("/store", h.store)
+
+		// Management / destructive — admin only, never an integration key.
+		r.With(h.requireAdmin).Patch("/{id}", h.update)
+		r.With(h.requireAdmin).Delete("/{id}", h.delete)
+		r.With(h.requireAdmin).Post("/delete-by-scope", h.deleteByScope)
+		r.With(h.requireAdmin).Post("/test", h.test)
+		r.With(h.requireAdmin).Post("/probe", h.probe)
+		r.With(h.requireAdmin).Get("/embedder-stats", h.embedderStats)
+		r.With(h.requireAdmin).Post("/reembed", h.reembed)
+		r.With(h.requireAdmin).Post("/mirror", h.mirror)
 	})
 }
 
