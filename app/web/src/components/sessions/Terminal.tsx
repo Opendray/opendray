@@ -54,6 +54,13 @@ export interface TerminalHandle {
    * as context. Used by the header "attach image" button.
    */
   uploadFile: (file: File) => Promise<void>
+  /**
+   * Copy the current selection, or the whole buffer when nothing is
+   * selected, to the clipboard. Used by the header "Copy output"
+   * button — the always-available path for touch devices that can't
+   * tap-select the canvas.
+   */
+  copyAll: () => void
 }
 
 function readVar(name: string): string {
@@ -110,6 +117,10 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   // open in a browser instead of fighting with line-wrapped text in
   // the terminal — particularly useful for OAuth flows on mobile.
   const [detectedURLs, setDetectedURLs] = useState<string[]>([])
+  // True while the user has a non-empty text selection in the terminal.
+  // Drives the contextual "Copy selection" pill so there's no button
+  // cluttering the surface when nothing is selected.
+  const [hasSelection, setHasSelection] = useState(false)
 
   const sendInput = useCallback((data: string) => {
     const ws = wsRef.current
@@ -154,18 +165,30 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     [sessionId, sendInput, t],
   )
 
-  useImperativeHandle(ref, () => ({ sendInput, uploadFile }), [
-    sendInput,
-    uploadFile,
-  ])
+  const writeClip = useCallback(
+    async (text: string) => {
+      if (await copyText(text)) {
+        toast.success(t('web.sessions.terminal.copiedToast'))
+      } else {
+        toast.error(t('web.sessions.terminal.copyFailedToast'))
+      }
+    },
+    [t],
+  )
 
-  // Copy terminal text to the clipboard. iOS Safari can't tap-hold
-  // select on xterm's canvas, and over a plain-http LAN dashboard the
-  // async Clipboard API is unavailable — so a dedicated button + the
-  // execCommand fallback (see copyText) is the only reliable way to
-  // get terminal output off the screen on an iPad. Copies the active
-  // selection when there is one, otherwise the whole buffer.
-  const copyTerminal = useCallback(async () => {
+  // Copy the current selection — triggered by the contextual pill that
+  // only appears while text is selected.
+  const copySelection = useCallback(() => {
+    const text = xtermRef.current?.getSelection() ?? ''
+    if (text.trim()) void writeClip(text)
+  }, [writeClip])
+
+  // Copy the selection if present, otherwise the whole buffer. Exposed
+  // on the handle for the session header's "Copy output" button — the
+  // reliable path on iOS, where tap-selecting xterm's canvas doesn't
+  // work and the async Clipboard API is unavailable over plain-http LAN
+  // (copyText falls back to execCommand).
+  const copyAll = useCallback(() => {
     const term = xtermRef.current
     if (!term) return
     let text = term.getSelection()
@@ -178,12 +201,14 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       toast(t('web.sessions.terminal.copyEmptyToast'))
       return
     }
-    if (await copyText(text)) {
-      toast.success(t('web.sessions.terminal.copiedToast'))
-    } else {
-      toast.error(t('web.sessions.terminal.copyFailedToast'))
-    }
-  }, [t])
+    void writeClip(text)
+  }, [writeClip, t])
+
+  useImperativeHandle(ref, () => ({ sendInput, uploadFile, copyAll }), [
+    sendInput,
+    uploadFile,
+    copyAll,
+  ])
 
   // Mount xterm + WS once per session id.
   useEffect(() => {
@@ -216,6 +241,10 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     fit.fit()
     xtermRef.current = term
     fitRef.current = fit
+
+    // Surface the contextual copy pill only while a selection exists.
+    // term.dispose() (cleanup below) tears this listener down with it.
+    term.onSelectionChange(() => setHasSelection(term.hasSelection()))
 
     // alive flips false on cleanup so any straggler resize/onOpen
     // callbacks scheduled before unmount don't fire `/resize` against
@@ -404,17 +433,22 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     <div className="h-full w-full bg-background relative">
       <div ref={containerRef} className="h-full w-full p-3" />
       <DetectedURLs urls={detectedURLs} />
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => void copyTerminal()}
-        title={t('web.sessions.terminal.copyAllTooltip')}
-        className="absolute bottom-2 right-2 z-10 h-7 gap-1.5 px-2 text-[11px] opacity-70 hover:opacity-100"
-      >
-        <Copy className="size-3.5" />
-        {t('web.sessions.terminal.copyButton')}
-      </Button>
+      {hasSelection && (
+        <Button
+          type="button"
+          variant="accent"
+          size="sm"
+          // preventDefault on mousedown so clicking the pill doesn't
+          // blur/clear the xterm selection before copySelection reads it.
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={copySelection}
+          title={t('web.sessions.terminal.copySelectionTooltip')}
+          className="absolute top-2 left-1/2 -translate-x-1/2 z-20 h-7 gap-1.5 px-2.5 text-[11px] shadow-md"
+        >
+          <Copy className="size-3.5" />
+          {t('web.sessions.terminal.copySelection')}
+        </Button>
+      )}
       {dragActive && (
         <div className="pointer-events-none absolute inset-2 rounded-md border-2 border-dashed border-accent/70 bg-accent/10 flex items-center justify-center">
           <div className="text-[12px] font-mono text-accent">

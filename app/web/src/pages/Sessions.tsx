@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  ClipboardCopy,
   ImagePlus,
   Layers,
   Plus,
@@ -255,6 +256,11 @@ export function SessionsPage() {
                 !isTerminalSessionState(currentSession.state)
               }
               onAttachImage={handlePickImage}
+              copyEnabled={
+                !!currentSession &&
+                !isTerminalSessionState(currentSession.state)
+              }
+              onCopyOutput={() => termRef.current?.copyAll()}
               inspectorOpen={inspectorOpen}
               onToggleInspector={toggleInspector}
             />
@@ -370,6 +376,8 @@ function WorkbenchHeader({
   onToggleList,
   attachImageEnabled,
   onAttachImage,
+  copyEnabled,
+  onCopyOutput,
   inspectorOpen,
   onToggleInspector,
 }: {
@@ -384,6 +392,8 @@ function WorkbenchHeader({
   onToggleList: () => void
   attachImageEnabled: boolean
   onAttachImage: () => void
+  copyEnabled: boolean
+  onCopyOutput: () => void
   inspectorOpen: boolean
   onToggleInspector: () => void
 }) {
@@ -405,6 +415,8 @@ function WorkbenchHeader({
     : t('web.sessions.header.showInspector')
   const attachLabel = t('web.sessions.header.attachImage')
   const attachTooltip = t('web.sessions.header.attachImageTooltip')
+  const copyLabel = t('web.sessions.header.copyOutput')
+  const copyTooltip = t('web.sessions.header.copyOutputTooltip')
   return (
     <div className="h-14 border-b border-border flex items-center px-3 gap-3">
       <Tooltip>
@@ -463,6 +475,21 @@ function WorkbenchHeader({
           </Button>
         </TooltipTrigger>
         <TooltipContent>{attachTooltip}</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onCopyOutput}
+            disabled={!copyEnabled}
+            aria-label={copyLabel}
+            className="size-7 shrink-0"
+          >
+            <ClipboardCopy className="size-3.5" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{copyTooltip}</TooltipContent>
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
