@@ -28,7 +28,13 @@ const (
 	pumpBufSize     = 4096
 	terminateGrace  = 3 * time.Second
 
-	defaultIdleThreshold = 30 * time.Second
+	// defaultIdleThreshold is deliberately generous: "idle" is only a
+	// soft notification/label — the session process keeps running and
+	// flips back to running on the next output — so a short value just
+	// makes healthy sessions look idle during normal think/tool pauses.
+	// Override per-deploy via [session] idle_threshold or the
+	// OPENDRAY_SESSION_IDLE_THRESHOLD env var.
+	defaultIdleThreshold = 5 * time.Minute
 	defaultIdleInterval  = 5 * time.Second
 
 	// autoResumeConcurrency bounds how many interrupted sessions are
