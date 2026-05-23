@@ -134,6 +134,34 @@ func (s *sessionStore) MarkAllRunningAsEnded(ctx context.Context) (int64, error)
 	return res.RowsAffected(), nil
 }
 
+// MarkRunningAsInterrupted flips every non-terminal row to
+// 'interrupted' (exit_code=-1) and returns the affected session ids,
+// newest first. Unlike MarkAllRunningAsEnded it records that the
+// gateway — not the agent — killed these PTYs, so startup
+// reconciliation can auto-resume them via their preserved
+// claude_session_id. Rows that the user explicitly stopped/ended are
+// already terminal and untouched.
+func (s *sessionStore) MarkRunningAsInterrupted(ctx context.Context) ([]string, error) {
+	rows, err := s.pool.Query(ctx, `
+        UPDATE sessions
+        SET state='interrupted', ended_at=NOW(), exit_code=-1
+        WHERE state IN ('pending', 'running', 'idle')
+        RETURNING id`)
+	if err != nil {
+		return nil, fmt.Errorf("mark interrupted: %w", err)
+	}
+	defer rows.Close()
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("scan interrupted id: %w", err)
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
 // UpdateClaudeAccount rebinds the session's claude_account_id without
 // touching state/pid/etc. Used by Manager.SwitchClaudeAccount after a
 // successful respawn under a new credential.

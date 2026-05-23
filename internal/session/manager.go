@@ -201,20 +201,40 @@ func NewManager(pool *pgxpool.Pool, bus *eventbus.Hub, providers ProviderResolve
 	return m
 }
 
-// ReconcileStartup marks any DB rows in non-terminal states as
-// 'ended' (exit_code=-1). Call once after NewManager and before
-// serving traffic — otherwise WS clients reconnect forever to
-// sessions whose PTYs died with the old gateway process.
+// ReconcileStartup reconciles DB rows left non-terminal by a prior
+// gateway process (their PTYs died with it). Each such row is marked
+// 'interrupted', then — unless OPENDRAY_NO_AUTO_RESUME is set — the
+// session is re-spawned via Start, which for claude resumes the
+// original transcript (--resume <claude_session_id>) so a daemon
+// restart (e.g. a self-update) no longer destroys live work. Call once
+// after NewManager and before serving traffic; failures to resume a
+// single session are logged and skipped, never fatal.
 func (m *Manager) ReconcileStartup(ctx context.Context) error {
-	n, err := m.store.MarkAllRunningAsEnded(ctx)
+	ids, err := m.store.MarkRunningAsInterrupted(ctx)
 	if err != nil {
 		return err
 	}
-	if n > 0 {
-		m.log.Info("reconciled stale sessions on startup",
-			"count", n,
-			"reason", "previous gateway process exited; PTYs gone")
+	if len(ids) == 0 {
+		return nil
 	}
+	if os.Getenv("OPENDRAY_NO_AUTO_RESUME") != "" {
+		m.log.Info("marked interrupted sessions on startup; auto-resume disabled",
+			"count", len(ids), "reason", "OPENDRAY_NO_AUTO_RESUME set")
+		return nil
+	}
+	m.log.Info("resuming sessions interrupted by a prior gateway exit",
+		"count", len(ids))
+	var resumed, failed int
+	for _, id := range ids {
+		if _, err := m.Start(ctx, id); err != nil {
+			m.log.Warn("startup auto-resume failed; session left interrupted",
+				"session_id", id, "err", err)
+			failed++
+			continue
+		}
+		resumed++
+	}
+	m.log.Info("startup auto-resume complete", "resumed", resumed, "failed", failed)
 	return nil
 }
 
