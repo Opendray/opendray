@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -29,6 +30,14 @@ const (
 
 	defaultIdleThreshold = 30 * time.Second
 	defaultIdleInterval  = 5 * time.Second
+
+	// autoResumeConcurrency bounds how many interrupted sessions are
+	// re-spawned in parallel at startup. Each resume runs a provider
+	// Prepare (token reads, MCP config) + pty.Start, so we throttle to
+	// avoid a thundering herd on a box that just (re)booted. The total
+	// count is unbounded by default — the throttle, not a cap, keeps the
+	// spike bounded; OPENDRAY_AUTO_RESUME_MAX adds an optional hard cap.
+	autoResumeConcurrency = 4
 
 	// defaultVTCols / defaultVTRows seed the virtual terminal we keep
 	// for screen snapshots. Most modern CLIs query the real PTY size on
@@ -124,6 +133,15 @@ func (m *Manager) consumeStopRequest(id string) bool {
 	return v
 }
 
+// isClosing reports whether Shutdown has begun. waitExit uses it to
+// record a daemon-driven exit as 'interrupted' (resume on next start)
+// rather than 'ended' (a real, agent-initiated exit).
+func (m *Manager) isClosing() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.closed
+}
+
 // runningSession holds the runtime state for one active PTY-backed
 // session. The exported view (Manager.Get returns Session) snapshots
 // `sess` under sessMu.
@@ -201,21 +219,100 @@ func NewManager(pool *pgxpool.Pool, bus *eventbus.Hub, providers ProviderResolve
 	return m
 }
 
-// ReconcileStartup marks any DB rows in non-terminal states as
-// 'ended' (exit_code=-1). Call once after NewManager and before
-// serving traffic — otherwise WS clients reconnect forever to
-// sessions whose PTYs died with the old gateway process.
+// ReconcileStartup reconciles DB rows left non-terminal by a prior
+// gateway process (their PTYs died with it). Each such row is marked
+// 'interrupted', then — unless OPENDRAY_NO_AUTO_RESUME is set — the
+// session is re-spawned via Start, which for claude resumes the
+// original transcript (--resume <claude_session_id>) so a daemon
+// restart (e.g. a self-update) no longer destroys live work. Call once
+// after NewManager and before serving traffic; failures to resume a
+// single session are logged and skipped, never fatal.
 func (m *Manager) ReconcileStartup(ctx context.Context) error {
-	n, err := m.store.MarkAllRunningAsEnded(ctx)
+	// Crash path: a daemon that was SIGKILLed (or died hard) never ran
+	// waitExit, so its sessions are still 'running'/'idle'/'pending'.
+	// Flip them to 'interrupted'. A clean shutdown already marked its
+	// sessions 'interrupted' from waitExit, so nothing to flip there.
+	if _, err := m.store.MarkRunningAsInterrupted(ctx); err != nil {
+		return err
+	}
+	// Resume everything left in 'interrupted' — both the rows just
+	// flipped above (crash) and those recorded by waitExit during a
+	// graceful restart. This is the set that must come back live.
+	ids, err := m.store.ListInterrupted(ctx)
 	if err != nil {
 		return err
 	}
-	if n > 0 {
-		m.log.Info("reconciled stale sessions on startup",
-			"count", n,
-			"reason", "previous gateway process exited; PTYs gone")
+	if len(ids) == 0 {
+		return nil
 	}
+	if os.Getenv("OPENDRAY_NO_AUTO_RESUME") != "" {
+		m.log.Info("interrupted sessions present on startup; auto-resume disabled",
+			"count", len(ids), "reason", "OPENDRAY_NO_AUTO_RESUME set")
+		return nil
+	}
+
+	// Optional hard cap. ids are newest-first, so a cap keeps the most
+	// recent and leaves the rest 'interrupted' (recoverable via an
+	// explicit Start). 0 / unset = no cap.
+	var skipped int
+	if max := autoResumeMaxFromEnv(); max > 0 && len(ids) > max {
+		skipped = len(ids) - max
+		ids = ids[:max]
+	}
+
+	// Resume in the background with bounded concurrency: startup must
+	// not block on N PTY spawns, and we must not fan out an unbounded
+	// burst at boot. Per-session failures are logged and leave the row
+	// 'interrupted' for a later manual / next-boot resume.
+	m.log.Info("auto-resuming interrupted sessions in background",
+		"count", len(ids), "skipped_over_cap", skipped,
+		"concurrency", autoResumeConcurrency)
+	go m.resumeInterrupted(ctx, ids)
 	return nil
+}
+
+// resumeInterrupted re-spawns the given sessions, at most
+// autoResumeConcurrency at a time, stopping early if ctx is cancelled
+// (gateway shutting down). Runs in its own goroutine off ReconcileStartup.
+func (m *Manager) resumeInterrupted(ctx context.Context, ids []string) {
+	sem := make(chan struct{}, autoResumeConcurrency)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var resumed, failed int
+	for _, id := range ids {
+		if ctx.Err() != nil {
+			break // shutting down — stop launching more resumes
+		}
+		sem <- struct{}{}
+		wg.Add(1)
+		go func(id string) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			if _, err := m.Start(ctx, id); err != nil {
+				m.log.Warn("startup auto-resume failed; session left interrupted",
+					"session_id", id, "err", err)
+				mu.Lock()
+				failed++
+				mu.Unlock()
+				return
+			}
+			mu.Lock()
+			resumed++
+			mu.Unlock()
+		}(id)
+	}
+	wg.Wait()
+	m.log.Info("startup auto-resume complete", "resumed", resumed, "failed", failed)
+}
+
+// autoResumeMaxFromEnv reads OPENDRAY_AUTO_RESUME_MAX; 0/unset/invalid
+// means no cap.
+func autoResumeMaxFromEnv() int {
+	n, err := strconv.Atoi(strings.TrimSpace(os.Getenv("OPENDRAY_AUTO_RESUME_MAX")))
+	if err != nil || n < 0 {
+		return 0
+	}
+	return n
 }
 
 // defaultSessionName derives a friendly label for sessions created
@@ -362,7 +459,15 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	)
 	var preparedClaudeSessionID string
 	if p.Prepare != nil {
-		out, err := p.Prepare(WithSessionID(WithCwd(ctx, sess.Cwd), sess.ID), sess.ID, tempDir)
+		// On reactivation (Start/resume) carry the existing agent-side
+		// UUID into Prepare so the provider emits `--resume <id>` and
+		// the prior transcript continues, instead of minting a fresh
+		// session and orphaning history.
+		prepareCtx := WithSessionID(WithCwd(ctx, sess.Cwd), sess.ID)
+		if reactivate {
+			prepareCtx = WithResumeClaudeSessionID(prepareCtx, sess.ClaudeSessionID)
+		}
+		out, err := p.Prepare(prepareCtx, sess.ID, tempDir)
 		if err != nil {
 			_ = os.RemoveAll(tempDir)
 			return nil, fmt.Errorf("provider prepare: %w", err)
