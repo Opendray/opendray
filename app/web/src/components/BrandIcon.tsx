@@ -166,8 +166,12 @@ export function BrandIcon({
 	const k = iconKey?.toLowerCase()
 
 	// Curated SVG path — use the operator-supplied asset under
-	// /admin/icons/<key>.svg. Skips colour/tone overrides because the
-	// asset's own colours are the point of using it.
+	// <base>icons/<key>.svg. import.meta.env.BASE_URL is "/admin/" in
+	// the embedded production build and "/" under the dev server, so
+	// the asset resolves correctly regardless of mount path. A hardcoded
+	// "/admin/" 404s under any other base → SPA fallback HTML → broken
+	// <img>. Skips colour/tone overrides because the asset's own colours
+	// are the point of using it.
 	if (k && CURATED.has(k)) {
 		const invert = CURATED_MONOCHROME_DARK_INVERT.has(k)
 		const opacity = tone === 'muted' ? 0.72 : 1
@@ -180,7 +184,7 @@ export function BrandIcon({
 			.join(' ')
 		return (
 			<img
-				src={`/admin/icons/${k}.svg`}
+				src={`${import.meta.env.BASE_URL}icons/${k}.svg`}
 				width={size}
 				height={size}
 				alt={title ?? k}
