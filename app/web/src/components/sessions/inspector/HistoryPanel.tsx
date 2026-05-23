@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { fetchSessionHistory, resendInput, type HistoryEntry } from '@/lib/sessions'
 import type { Session } from '@/lib/types'
+import { copyText } from '@/lib/clipboard'
 
 // HistoryPanel — Inspector tab. Lists every prompt the operator has
 // sent in this *project* (cwd), pooled across every Claude session
@@ -112,7 +113,7 @@ function HistoryRow({ entry, sessionID }: RowProps) {
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(entry.text)
+      if (!(await copyText(entry.text))) throw new Error('clipboard unavailable')
       toast.success('Copied prompt to clipboard')
     } catch (err) {
       toast.error('Copy failed', {

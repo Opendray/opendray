@@ -13,6 +13,7 @@ import {
   Pencil,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { copyText } from '@/lib/clipboard'
 import { Trans, useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 
@@ -308,8 +309,10 @@ function ChannelCard({
                 size="sm"
                 className="h-6 px-2 text-[11px]"
                 onClick={() => {
-                  navigator.clipboard.writeText(webhookURL)
-                  toast.success(t('web.channels.card.webhookCopiedToast'))
+                  void copyText(webhookURL).then((ok) => {
+                    if (ok) toast.success(t('web.channels.card.webhookCopiedToast'))
+                    else toast.error(t('web.sessions.terminal.copyFailedToast'))
+                  })
                 }}
                 title={t('web.channels.card.copyWebhookTooltip')}
               >
@@ -1189,8 +1192,10 @@ function BridgeFields({
             variant="outline"
             size="sm"
             onClick={() => {
-              navigator.clipboard.writeText(token)
-              toast.success(t('web.channels.bridge.tokenCopiedToast'))
+              void copyText(token).then((ok) => {
+                if (ok) toast.success(t('web.channels.bridge.tokenCopiedToast'))
+                else toast.error(t('web.sessions.terminal.copyFailedToast'))
+              })
             }}
             title={t('web.channels.bridge.copyTooltip')}
           >
@@ -1401,10 +1406,15 @@ function CopyRow({
           variant="outline"
           size="sm"
           onClick={() => {
-            navigator.clipboard.writeText(value)
-            setCopied(true)
-            setTimeout(() => setCopied(false), 1500)
-            toast.success(t('web.channels.setup.copyLabelToast', { label }))
+            void copyText(value).then((ok) => {
+              if (!ok) {
+                toast.error(t('web.sessions.terminal.copyFailedToast'))
+                return
+              }
+              setCopied(true)
+              setTimeout(() => setCopied(false), 1500)
+              toast.success(t('web.channels.setup.copyLabelToast', { label }))
+            })
           }}
         >
           {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
@@ -1429,10 +1439,15 @@ function CodeBlock({ filename, code }: { filename: string; code: string }) {
           size="sm"
           className="h-7 text-[11px]"
           onClick={() => {
-            navigator.clipboard.writeText(code)
-            setCopied(true)
-            setTimeout(() => setCopied(false), 1500)
-            toast.success(t('web.channels.setup.codeCopiedToast'))
+            void copyText(code).then((ok) => {
+              if (!ok) {
+                toast.error(t('web.sessions.terminal.copyFailedToast'))
+                return
+              }
+              setCopied(true)
+              setTimeout(() => setCopied(false), 1500)
+              toast.success(t('web.channels.setup.codeCopiedToast'))
+            })
           }}
         >
           {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
