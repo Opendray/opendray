@@ -101,6 +101,35 @@ func TestRender_TopKRecent_Renders(t *testing.T) {
 	}
 }
 
+func TestRender_TopKRecent_StripsFrontmatter(t *testing.T) {
+	// Memories authored with YAML frontmatter must not render their
+	// "---" delimiter as the bullet (the 2026-05-23 bug: every bullet
+	// came out as "- ---"). Prefer the description; fall back to the
+	// first body line.
+	mem := &fakeMemoryReader{
+		mems: []memory.Memory{
+			{ID: "1", Text: "---\nname: ct128-guard\ndescription: \"CT128 self-update disabled\"\nmetadata:\n  type: project\n---\n\nLong body that must NOT be the bullet."},
+			{ID: "2", Text: "---\nname: no-desc\n---\n\nBody first line is the bullet."},
+		},
+	}
+	inj := &Injector{memory: mem, log: silentLog()}
+	out, err := inj.renderTopKRecent(context.Background(),
+		Profile{StrategyKind: "top_k_recent", Config: map[string]any{"k": float64(2)}},
+		"/proj")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(out, "- ---") {
+		t.Errorf("frontmatter delimiter leaked as a bullet: %q", out)
+	}
+	if !strings.Contains(out, "CT128 self-update disabled") {
+		t.Errorf("description not surfaced: %q", out)
+	}
+	if !strings.Contains(out, "Body first line is the bullet.") {
+		t.Errorf("body fallback not surfaced: %q", out)
+	}
+}
+
 func TestRender_TopKRecent_EmptyMemoriesReturnsEmpty(t *testing.T) {
 	mem := &fakeMemoryReader{mems: nil}
 	inj := &Injector{memory: mem, log: silentLog()}
