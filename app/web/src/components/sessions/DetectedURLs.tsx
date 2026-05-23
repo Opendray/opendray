@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { Button } from 'shared-ui/primitives/button'
+import { copyText } from '@/lib/clipboard'
 import {
   Dialog,
   DialogContent,
@@ -90,7 +91,7 @@ export function DetectedURLs({ urls }: DetectedURLsProps) {
   // ── N ≥ 2: primary anchor (open latest) + secondary ⋯ (open dialog) ──
   const handleCopy = async (url: string) => {
     try {
-      await navigator.clipboard.writeText(url)
+      if (!(await copyText(url))) throw new Error('clipboard unavailable')
       toast.success(t('web.sessions.terminal.urls.copiedToast'))
     } catch {
       toast.error(t('web.sessions.terminal.urls.copyFailedToast'))
