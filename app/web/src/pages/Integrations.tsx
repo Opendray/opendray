@@ -268,14 +268,16 @@ function IntegrationCard({
     <div
       className={cn(
         'border rounded-md p-4 bg-card/30 flex flex-col gap-3',
+        // System/managed cards get a calm neutral surface (not the
+        // brand rose, which reads like a danger/error state).
         managed
-          ? 'border-accent/30 bg-accent/[0.04]'
+          ? 'border-border bg-muted/40'
           : 'border-border',
       )}
     >
       <div className="flex items-start gap-3">
         {managed ? (
-          <Lock className="size-4 text-accent mt-0.5" />
+          <Lock className="size-4 text-muted-foreground mt-0.5" />
         ) : (
           <Plug className="size-4 text-accent mt-0.5" />
         )}
@@ -287,8 +289,8 @@ function IntegrationCard({
             </Badge>
             {managed && (
               <Badge
-                variant="outline"
-                className="border-accent/40 text-accent normal-case"
+                variant="muted"
+                className="normal-case"
                 title={t('web.integrations.card.managedTooltip')}
               >
                 <Lock className="size-2.5" />

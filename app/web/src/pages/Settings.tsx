@@ -14,6 +14,7 @@ import {
   Info,
   Activity,
   ChevronRight,
+  ExternalLink,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -25,6 +26,8 @@ import { useTheme, type ThemeMode } from '@/stores/theme'
 import { useAuth } from '@/stores/auth'
 import { useLayout } from '@/stores/layout'
 import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   ServerSettings,
   SettingsSearchInput,
@@ -793,116 +796,256 @@ function AboutSection() {
 
   const busy = phase === 'upgrading' || !!data?.pending
   const canSelfUpdate = !!data?.selfUpdate
+  const buildDate = formatBuildDate(data?.date)
+  const channel = deriveChannel(data?.current)
   return (
-    <div>
-      <SectionHeader title={t('web.settings.about.title')} />
-      <p className="text-[12px] text-muted-foreground leading-relaxed mb-3">
-        {t('web.settings.about.description')}
-      </p>
+    <div className="space-y-5">
+      <SectionHeader
+        title={t('web.settings.about.title')}
+        description={t('web.settings.about.description')}
+      />
 
-      <Field label={t('web.settings.about.version')} value={data?.current ?? '…'} monospace />
-      {data?.commit && (
-        <Field label={t('web.settings.about.commit')} value={data.commit} monospace />
-      )}
-
-      {/* Status line — always shown */}
-      <div className="mt-3 text-[12px]">
-        {data?.updateAvailable ? (
-          <span className="font-medium">
-            {t('web.settings.about.updateAvailable', { version: data.latest })}{' '}
-            {data.notesUrl && (
-              <a
-                href={data.notesUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-[11px] text-primary underline"
-              >
-                {t('web.settings.about.releaseNotes')}
-              </a>
-            )}
-          </span>
-        ) : data?.checkError ? (
-          <span className="text-muted-foreground">
-            {t('web.settings.about.checkFailed')}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">
-            {t('web.settings.about.upToDate')}
-          </span>
-        )}
+      {/* Product identity — flat, matching the System/Server section rhythm */}
+      <div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-baseline gap-2">
+            <span className="text-[15px] font-semibold tracking-tight text-foreground">
+              OpenDray
+            </span>
+            <span className="font-mono text-[12px] text-muted-foreground">
+              {data?.current ?? '…'}
+            </span>
+          </div>
+          <AboutStatusBadge data={data} />
+        </div>
+        <p className="mt-0.5 text-[12px] text-muted-foreground">
+          {t('web.settings.about.tagline')}
+        </p>
       </div>
 
-      {/* Controls — always visible */}
-      {phase === 'confirming' ? (
-        <div className="mt-2 flex items-center gap-2">
-          <span className="text-[11px] text-muted-foreground">
-            {t('web.settings.about.confirmRestart')}
+      {/* Build & legal details */}
+      <div className="flex flex-col gap-1.5">
+        <Field
+          label={t('web.settings.about.version')}
+          value={data?.current ?? '…'}
+          monospace
+        />
+        {data?.commit && (
+          <Field label={t('web.settings.about.commit')} value={data.commit} monospace />
+        )}
+        {buildDate && (
+          <Field label={t('web.settings.about.buildDate')} value={buildDate} monospace />
+        )}
+        {data?.platform && (
+          <Field label={t('web.settings.about.platform')} value={data.platform} monospace />
+        )}
+        <Field label={t('web.settings.about.channel')} value={channel} monospace />
+        <Field label={t('web.settings.about.license')} value="Apache-2.0" monospace />
+      </div>
+
+      {/* Resources */}
+      <div>
+        <div className="mb-3 flex items-center gap-3">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            {t('web.settings.about.resourcesHeading')}
           </span>
-          <button
-            onClick={() => startUpgrade(confirmForce)}
-            className="rounded bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground"
-          >
-            {t('web.settings.about.confirmUpgrade')}
-          </button>
-          <button
-            onClick={() => setPhase('idle')}
-            className="rounded border border-border px-2.5 py-1 text-[11px]"
-          >
-            {t('common.cancel')}
-          </button>
+          <span className="h-px flex-1 bg-border" />
         </div>
-      ) : (
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <button
-            onClick={checkNow}
-            disabled={checking || busy}
-            className="rounded border border-border px-2.5 py-1 text-[11px] disabled:opacity-50"
-          >
-            {checking
-              ? t('web.settings.about.checking')
-              : t('web.settings.about.checkUpdates')}
-          </button>
-
-          {data?.updateAvailable && canSelfUpdate && (
-            <button
-              onClick={() => {
-                setConfirmForce(false)
-                setPhase('confirming')
-              }}
-              disabled={busy}
-              className="rounded bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground disabled:opacity-50"
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+          {RESOURCE_LINKS.map((l) => (
+            <a
+              key={l.key}
+              href={l.href}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-[12px] text-accent underline-offset-4 hover:underline"
             >
-              {busy
-                ? t('web.settings.about.upgradingShort')
-                : t('web.settings.about.updateNow')}
-            </button>
-          )}
+              {t(l.label)}
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          ))}
+        </div>
+      </div>
 
-          {!data?.updateAvailable && !data?.checkError && canSelfUpdate && (
-            <button
-              onClick={() => {
-                setConfirmForce(true)
-                setPhase('confirming')
-              }}
-              disabled={busy}
-              className="rounded border border-border px-2.5 py-1 text-[11px] disabled:opacity-50"
-            >
-              {busy
-                ? t('web.settings.about.upgradingShort')
-                : t('web.settings.about.reinstall')}
-            </button>
-          )}
+      {/* Software updates */}
+      <div className="pt-1">
+        <div className="mb-3 flex items-center gap-3">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            {t('web.settings.about.updatesHeading')}
+          </span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
 
-          {data?.updateAvailable && !canSelfUpdate && (
-            <span className="text-[11px] text-muted-foreground">
-              {t('web.settings.about.guidedHint')}
-              <code className="ml-1 font-mono text-foreground">opendray update</code>
-            </span>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[12px] text-muted-foreground">
+            {data?.updateAvailable ? (
+              <>
+                <span className="font-medium text-foreground">
+                  {t('web.settings.about.updateAvailable', { version: data.latest })}
+                </span>
+                {data.notesUrl && (
+                  <a
+                    href={data.notesUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="ml-2 inline-flex items-center gap-1 text-accent underline-offset-4 hover:underline"
+                  >
+                    {t('web.settings.about.releaseNotes')}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </>
+            ) : data?.checkError ? (
+              t('web.settings.about.checkFailed')
+            ) : (
+              t('web.settings.about.upToDate')
+            )}
+          </p>
+
+          {phase === 'confirming' ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] text-muted-foreground">
+                {t('web.settings.about.confirmRestart')}
+              </span>
+              <Button size="sm" onClick={() => startUpgrade(confirmForce)}>
+                {t('web.settings.about.confirmUpgrade')}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setPhase('idle')}>
+                {t('common.cancel')}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={checkNow}
+                disabled={checking || busy}
+              >
+                {checking
+                  ? t('web.settings.about.checking')
+                  : t('web.settings.about.checkUpdates')}
+              </Button>
+
+              {data?.updateAvailable && canSelfUpdate && (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setConfirmForce(false)
+                    setPhase('confirming')
+                  }}
+                  disabled={busy}
+                >
+                  {busy
+                    ? t('web.settings.about.upgradingShort')
+                    : t('web.settings.about.updateNow')}
+                </Button>
+              )}
+
+              {!data?.updateAvailable && !data?.checkError && canSelfUpdate && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setConfirmForce(true)
+                    setPhase('confirming')
+                  }}
+                  disabled={busy}
+                >
+                  {busy
+                    ? t('web.settings.about.upgradingShort')
+                    : t('web.settings.about.reinstall')}
+                </Button>
+              )}
+            </div>
           )}
         </div>
-      )}
+
+        {data?.updateAvailable && !canSelfUpdate && (
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            {t('web.settings.about.guidedHint')}
+            <code className="ml-1 font-mono text-foreground">opendray update</code>
+          </p>
+        )}
+      </div>
     </div>
   )
+}
+
+// Compact status pill for the About identity card. Mirrors the version
+// feed: update-available → warning, check failed → muted, else success.
+function AboutStatusBadge({ data }: { data?: VersionInfo }) {
+  const { t } = useTranslation()
+  const dot = <span className="h-1.5 w-1.5 rounded-full bg-current" />
+  if (!data)
+    return (
+      <Badge variant="muted">
+        <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />…
+      </Badge>
+    )
+  if (data.updateAvailable)
+    return (
+      <Badge variant="warning">
+        {dot}
+        {t('web.settings.about.statusUpdate')}
+      </Badge>
+    )
+  if (data.checkError)
+    return (
+      <Badge variant="muted">
+        {dot}
+        {t('web.settings.about.statusOffline')}
+      </Badge>
+    )
+  return (
+    <Badge variant="success">
+      {dot}
+      {t('web.settings.about.statusCurrent')}
+    </Badge>
+  )
+}
+
+// External resources shown in the About section. Labels are i18n keys.
+const RESOURCE_LINKS = [
+  { key: 'docs', label: 'web.settings.about.linkDocs', href: 'https://opendray.dev' },
+  {
+    key: 'releases',
+    label: 'web.settings.about.releaseNotes',
+    href: 'https://github.com/Opendray/opendray/releases',
+  },
+  {
+    key: 'source',
+    label: 'web.settings.about.linkSource',
+    href: 'https://github.com/Opendray/opendray',
+  },
+  {
+    key: 'security',
+    label: 'web.settings.about.linkSecurity',
+    href: 'https://github.com/Opendray/opendray/security/policy',
+  },
+] as const
+
+// formatBuildDate renders the release build timestamp as a short local date,
+// or "" when absent / a dev build (so the row is hidden).
+function formatBuildDate(date?: string): string {
+  if (!date || date === 'unknown') return ''
+  const d = new Date(date)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+// deriveChannel infers the release channel from the version string:
+// a "+build" suffix (e.g. "2.2.0+ct128") is a custom build, "-dev"/"snapshot"
+// is a pre-release, everything else is a tagged stable release.
+function deriveChannel(current?: string): string {
+  if (!current) return '…'
+  if (/dev|snapshot/i.test(current)) return 'dev'
+  if (current.includes('+')) return 'custom'
+  return 'stable'
 }
 
 function Field({

@@ -68,6 +68,8 @@ func (h *versionHandlers) get(w http.ResponseWriter, r *http.Request) {
 	resp := map[string]any{
 		"current":         selfupdate.NormalizeVersion(version.Version),
 		"commit":          version.Commit,
+		"date":            version.Date,
+		"platform":        runtime.GOOS + "/" + runtime.GOARCH,
 		"updateAvailable": false,
 		"selfUpdate":      h.selfUpdateCapable(),
 		"pending":         selfupdate.PendingRequest(h.dataDir),

@@ -2122,11 +2122,11 @@
       },
       "about": {
         "title": "About",
-        "description": "opendray v2 — the multiplexer + integration gateway for AI agent CLIs. Source under Apache 2.0.",
+        "description": "Version, build, and software updates for this instance.",
         "version": "Version",
         "commit": "Commit",
         "updateAvailable": "Update available: {{version}}",
-        "releaseNotes": "Release notes ↗",
+        "releaseNotes": "Release notes",
         "updateNow": "Update now",
         "upgradingShort": "Upgrading…",
         "confirmRestart": "This restarts the service; running sessions reconnect.",
@@ -2139,7 +2139,20 @@
         "upToDate": "You're on the latest release.",
         "checkUpdates": "Check for updates",
         "checking": "Checking…",
-        "reinstall": "Re-install"
+        "reinstall": "Re-install",
+        "tagline": "Self-hosted cockpit for AI agent CLIs",
+        "license": "License",
+        "buildDate": "Build date",
+        "platform": "Platform",
+        "channel": "Channel",
+        "updatesHeading": "Software updates",
+        "resourcesHeading": "Resources",
+        "linkDocs": "Documentation",
+        "linkSource": "Source",
+        "linkSecurity": "Security policy",
+        "statusCurrent": "Up to date",
+        "statusUpdate": "Update ready",
+        "statusOffline": "Offline"
       }
     },
     "logViewer": {

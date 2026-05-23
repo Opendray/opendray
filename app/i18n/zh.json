@@ -2121,11 +2121,11 @@
       },
       "about": {
         "title": "关于",
-        "description": "opendray v2 — 面向 AI agent CLI 的多路复用 + 集成网关。源码采用 Apache 2.0 协议。",
+        "description": "本实例的版本、构建与软件更新。",
         "version": "版本",
         "commit": "提交",
         "updateAvailable": "有可用更新：{{version}}",
-        "releaseNotes": "发行说明 ↗",
+        "releaseNotes": "发行说明",
         "updateNow": "立即更新",
         "upgradingShort": "更新中…",
         "confirmRestart": "这将重启服务，正在运行的会话会重新连接。",
@@ -2138,7 +2138,20 @@
         "upToDate": "已是最新版本。",
         "checkUpdates": "检查更新",
         "checking": "检查中…",
-        "reinstall": "重新安装"
+        "reinstall": "重新安装",
+        "tagline": "面向 AI agent CLI 的自托管座舱",
+        "license": "许可证",
+        "buildDate": "构建日期",
+        "platform": "平台",
+        "channel": "渠道",
+        "updatesHeading": "软件更新",
+        "resourcesHeading": "资源",
+        "linkDocs": "文档",
+        "linkSource": "源代码",
+        "linkSecurity": "安全策略",
+        "statusCurrent": "已是最新",
+        "statusUpdate": "有更新",
+        "statusOffline": "离线"
       }
     },
     "logViewer": {

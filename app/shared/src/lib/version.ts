@@ -3,6 +3,10 @@ import { api } from './api'
 export interface VersionInfo {
   current: string
   commit?: string
+  // date: build timestamp (RFC3339) injected at release; "unknown" for dev.
+  date?: string
+  // platform: "os/arch" of the running binary (e.g. "linux/amd64").
+  platform?: string
   latest?: string
   updateAvailable: boolean
   notesUrl?: string
