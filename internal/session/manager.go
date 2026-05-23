@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -29,6 +30,14 @@ const (
 
 	defaultIdleThreshold = 30 * time.Second
 	defaultIdleInterval  = 5 * time.Second
+
+	// autoResumeConcurrency bounds how many interrupted sessions are
+	// re-spawned in parallel at startup. Each resume runs a provider
+	// Prepare (token reads, MCP config) + pty.Start, so we throttle to
+	// avoid a thundering herd on a box that just (re)booted. The total
+	// count is unbounded by default — the throttle, not a cap, keeps the
+	// spike bounded; OPENDRAY_AUTO_RESUME_MAX adds an optional hard cap.
+	autoResumeConcurrency = 4
 
 	// defaultVTCols / defaultVTRows seed the virtual terminal we keep
 	// for screen snapshots. Most modern CLIs query the real PTY size on
@@ -241,20 +250,69 @@ func (m *Manager) ReconcileStartup(ctx context.Context) error {
 			"count", len(ids), "reason", "OPENDRAY_NO_AUTO_RESUME set")
 		return nil
 	}
-	m.log.Info("resuming sessions interrupted by a prior gateway exit",
-		"count", len(ids))
+
+	// Optional hard cap. ids are newest-first, so a cap keeps the most
+	// recent and leaves the rest 'interrupted' (recoverable via an
+	// explicit Start). 0 / unset = no cap.
+	var skipped int
+	if max := autoResumeMaxFromEnv(); max > 0 && len(ids) > max {
+		skipped = len(ids) - max
+		ids = ids[:max]
+	}
+
+	// Resume in the background with bounded concurrency: startup must
+	// not block on N PTY spawns, and we must not fan out an unbounded
+	// burst at boot. Per-session failures are logged and leave the row
+	// 'interrupted' for a later manual / next-boot resume.
+	m.log.Info("auto-resuming interrupted sessions in background",
+		"count", len(ids), "skipped_over_cap", skipped,
+		"concurrency", autoResumeConcurrency)
+	go m.resumeInterrupted(ctx, ids)
+	return nil
+}
+
+// resumeInterrupted re-spawns the given sessions, at most
+// autoResumeConcurrency at a time, stopping early if ctx is cancelled
+// (gateway shutting down). Runs in its own goroutine off ReconcileStartup.
+func (m *Manager) resumeInterrupted(ctx context.Context, ids []string) {
+	sem := make(chan struct{}, autoResumeConcurrency)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
 	var resumed, failed int
 	for _, id := range ids {
-		if _, err := m.Start(ctx, id); err != nil {
-			m.log.Warn("startup auto-resume failed; session left interrupted",
-				"session_id", id, "err", err)
-			failed++
-			continue
+		if ctx.Err() != nil {
+			break // shutting down — stop launching more resumes
 		}
-		resumed++
+		sem <- struct{}{}
+		wg.Add(1)
+		go func(id string) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			if _, err := m.Start(ctx, id); err != nil {
+				m.log.Warn("startup auto-resume failed; session left interrupted",
+					"session_id", id, "err", err)
+				mu.Lock()
+				failed++
+				mu.Unlock()
+				return
+			}
+			mu.Lock()
+			resumed++
+			mu.Unlock()
+		}(id)
 	}
+	wg.Wait()
 	m.log.Info("startup auto-resume complete", "resumed", resumed, "failed", failed)
-	return nil
+}
+
+// autoResumeMaxFromEnv reads OPENDRAY_AUTO_RESUME_MAX; 0/unset/invalid
+// means no cap.
+func autoResumeMaxFromEnv() int {
+	n, err := strconv.Atoi(strings.TrimSpace(os.Getenv("OPENDRAY_AUTO_RESUME_MAX")))
+	if err != nil || n < 0 {
+		return 0
+	}
+	return n
 }
 
 // defaultSessionName derives a friendly label for sessions created

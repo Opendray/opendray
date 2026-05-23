@@ -45,6 +45,26 @@ func TestStateIsTerminal(t *testing.T) {
 	}
 }
 
+func TestAutoResumeMaxFromEnv(t *testing.T) {
+	cases := []struct {
+		val  string
+		want int
+	}{
+		{"", 0},      // unset -> no cap
+		{"0", 0},     // explicit 0 -> no cap
+		{"5", 5},     // positive cap
+		{"  12 ", 12}, // trimmed
+		{"-3", 0},    // negative -> no cap
+		{"abc", 0},   // garbage -> no cap
+	}
+	for _, c := range cases {
+		t.Setenv("OPENDRAY_AUTO_RESUME_MAX", c.val)
+		if got := autoResumeMaxFromEnv(); got != c.want {
+			t.Errorf("OPENDRAY_AUTO_RESUME_MAX=%q -> %d, want %d", c.val, got, c.want)
+		}
+	}
+}
+
 // devDB returns a pool against OPENDRAY_DEV_DB_URL, skipping when unset
 // or unreachable (CI default until a Postgres service lands). Mirrors
 // internal/githost's helper.
