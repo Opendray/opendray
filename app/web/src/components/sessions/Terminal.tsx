@@ -12,11 +12,14 @@ import { WebLinksAddon } from '@xterm/addon-web-links'
 import '@xterm/xterm/css/xterm.css'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
+import { Copy } from 'lucide-react'
 
+import { Button } from 'shared-ui/primitives/button'
 import { useAuth } from '@/stores/auth'
 import { useTheme } from '@/stores/theme'
 import { BinaryWS, wsURL } from '@/lib/ws'
 import { resizeSession, uploadSessionFile } from '@/lib/sessions'
+import { copyText } from '@/lib/clipboard'
 import { DetectedURLs } from './DetectedURLs'
 import { extractURLs, stripANSI } from './url-extractor'
 
@@ -155,6 +158,32 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     sendInput,
     uploadFile,
   ])
+
+  // Copy terminal text to the clipboard. iOS Safari can't tap-hold
+  // select on xterm's canvas, and over a plain-http LAN dashboard the
+  // async Clipboard API is unavailable — so a dedicated button + the
+  // execCommand fallback (see copyText) is the only reliable way to
+  // get terminal output off the screen on an iPad. Copies the active
+  // selection when there is one, otherwise the whole buffer.
+  const copyTerminal = useCallback(async () => {
+    const term = xtermRef.current
+    if (!term) return
+    let text = term.getSelection()
+    if (!text) {
+      term.selectAll()
+      text = term.getSelection()
+      term.clearSelection()
+    }
+    if (!text.trim()) {
+      toast(t('web.sessions.terminal.copyEmptyToast'))
+      return
+    }
+    if (await copyText(text)) {
+      toast.success(t('web.sessions.terminal.copiedToast'))
+    } else {
+      toast.error(t('web.sessions.terminal.copyFailedToast'))
+    }
+  }, [t])
 
   // Mount xterm + WS once per session id.
   useEffect(() => {
@@ -375,6 +404,17 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     <div className="h-full w-full bg-background relative">
       <div ref={containerRef} className="h-full w-full p-3" />
       <DetectedURLs urls={detectedURLs} />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => void copyTerminal()}
+        title={t('web.sessions.terminal.copyAllTooltip')}
+        className="absolute bottom-2 right-2 z-10 h-7 gap-1.5 px-2 text-[11px] opacity-70 hover:opacity-100"
+      >
+        <Copy className="size-3.5" />
+        {t('web.sessions.terminal.copyButton')}
+      </Button>
       {dragActive && (
         <div className="pointer-events-none absolute inset-2 rounded-md border-2 border-dashed border-accent/70 bg-accent/10 flex items-center justify-center">
           <div className="text-[12px] font-mono text-accent">

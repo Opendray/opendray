@@ -131,6 +131,11 @@
         "uploadFailedToast": "上传失败",
         "uploadInvalidTypeToast": "仅支持图片文件",
         "dropToAttach": "释放以附加图片",
+        "copyButton": "复制",
+        "copyAllTooltip": "复制终端输出到剪贴板(若有选区则复制选区,否则复制全部)",
+        "copiedToast": "已复制终端输出",
+        "copyEmptyToast": "暂无可复制内容",
+        "copyFailedToast": "无法复制到剪贴板",
         "urls": {
           "tooltip": "打开本会话最新检测到的链接",
           "tapToOpenLatest": "点击打开最新链接(通常是 OAuth URL)",
