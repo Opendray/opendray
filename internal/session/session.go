@@ -37,6 +37,21 @@ func (s State) IsTerminal() bool {
 	return s == StateStopped || s == StateEnded || s == StateInterrupted
 }
 
+// classifyExitState decides which terminal state to record for a session
+// whose process just exited. Precedence: an explicit user stop wins;
+// otherwise a gateway shutdown makes it 'interrupted' (so startup
+// reconciliation resumes it); a spontaneous exit is a normal 'ended'.
+func classifyExitState(stopRequested, closing bool) State {
+	switch {
+	case stopRequested:
+		return StateStopped
+	case closing:
+		return StateInterrupted
+	default:
+		return StateEnded
+	}
+}
+
 // Session is the public view of a PTY-backed CLI session. Runtime
 // resources (PTY fd, ring buffer, subscribers) live on the Manager's
 // internal struct, not here.

@@ -156,18 +156,11 @@ func (m *Manager) waitExit(rs *runningSession) {
 	}
 
 	rs.endOnce.Do(func() {
-		// Classify the exit:
-		//   - user-initiated stop (Manager.Stop set stopRequested) → stopped
-		//   - daemon shutting down (Shutdown SIGTERMed us) → interrupted,
-		//     so startup reconciliation resumes it via claude_session_id
-		//   - otherwise the agent exited on its own → ended
-		// The DB row persists in every case so the user can Restart.
-		state := StateEnded
-		if m.consumeStopRequest(rs.sess.ID) {
-			state = StateStopped
-		} else if m.isClosing() {
-			state = StateInterrupted
-		}
+		// Classify the exit (see classifyExitState): a user stop wins,
+		// else a gateway shutdown is an interruption to auto-resume, else
+		// a normal end. The DB row persists in every case so the user can
+		// Restart. consumeStopRequest must run regardless to clear the flag.
+		state := classifyExitState(m.consumeStopRequest(rs.sess.ID), m.isClosing())
 
 		dbCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
