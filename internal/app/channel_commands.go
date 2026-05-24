@@ -15,22 +15,25 @@ import (
 )
 
 // controlOwnerEnv names the env var holding the Telegram user id
-// allowed to control sessions from chat (Stop/Restart/Switch and the
-// /confirm gate). Unset or empty disables the gate (all senders
-// allowed) — the single-user / trusted-deployment default.
+// allowed to interact with the bot at all — sending text to a session,
+// running commands, and tapping control buttons. Unset or empty
+// disables the gate (all senders allowed) — the single-user /
+// trusted-deployment default.
 const controlOwnerEnv = "OPENDRAY_CONTROL_OWNER"
 
-// controlAuthorizerFromEnv builds the session-control authorizer from
+// senderAuthorizerFromEnv builds the inbound sender authorizer from
 // controlOwnerEnv. Returns nil when no owner is configured (open).
 // When configured it fails closed: a message must carry a matching
-// tg_user_id, so any channel that can't prove the sender's identity is
-// denied control actions.
-func controlAuthorizerFromEnv(log *slog.Logger) func(channel.ChannelMessage) bool {
+// tg_user_id, so any sender that can't prove its identity (or any
+// channel that doesn't supply one) is dropped. This is what makes the
+// Telegram bot single-owner — a bot receives DMs from anyone, so
+// without this gate a stranger's text would reach a session's stdin.
+func senderAuthorizerFromEnv(log *slog.Logger) func(channel.ChannelMessage) bool {
 	owner := strings.TrimSpace(os.Getenv(controlOwnerEnv))
 	if owner == "" {
 		return nil
 	}
-	log.Info("session-control gate enabled", "owner_telegram_id", owner)
+	log.Info("inbound sender gate enabled (single-owner)", "owner_telegram_id", owner)
 	return func(msg channel.ChannelMessage) bool {
 		if msg.Metadata == nil {
 			return false

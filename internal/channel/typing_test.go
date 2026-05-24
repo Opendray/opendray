@@ -6,44 +6,40 @@ import (
 	"testing"
 )
 
-// TestAuthorizeControl pins the single-owner gate: control commands
-// are gated by the authorizer when one is set, read-only commands
-// never are, and an unset authorizer allows everything (preserving the
-// open default).
-func TestAuthorizeControl(t *testing.T) {
+// TestAuthorizeSender pins the single-owner inbound gate: with no
+// authorizer everything is allowed (open default); with one configured,
+// only a matching sender passes and anyone else — including a message
+// with no identity metadata — is rejected (fail-closed). The gate
+// covers ALL inbound, so plain text bound for a session's stdin is
+// rejected just like a command would be.
+func TestAuthorizeSender(t *testing.T) {
 	owner := ChannelMessage{Metadata: map[string]any{"tg_user_id": "111"}}
 	stranger := ChannelMessage{Metadata: map[string]any{"tg_user_id": "999"}}
+	anon := ChannelMessage{} // no metadata at all
 
 	t.Run("nil authorizer allows all", func(t *testing.T) {
 		h := NewHub(nil, nil, nil)
-		if !h.authorizeControl("end", stranger) {
-			t.Error("nil authorizer must allow control commands")
-		}
-	})
-
-	t.Run("read-only commands are never gated", func(t *testing.T) {
-		h := NewHub(nil, nil, nil)
-		h.SetControlAuthorizer(func(ChannelMessage) bool { return false })
-		for _, name := range []string{"list", "help", "notify", "start"} {
-			if !h.authorizeControl(name, stranger) {
-				t.Errorf("%s should not be gated", name)
+		for _, m := range []ChannelMessage{owner, stranger, anon} {
+			if !h.authorizeSender(m) {
+				t.Error("nil authorizer must allow every sender")
 			}
 		}
 	})
 
-	t.Run("control commands honor the authorizer", func(t *testing.T) {
+	t.Run("configured authorizer is fail-closed", func(t *testing.T) {
 		h := NewHub(nil, nil, nil)
-		h.SetControlAuthorizer(func(m ChannelMessage) bool {
+		h.SetSenderAuthorizer(func(m ChannelMessage) bool {
 			id, _ := m.Metadata["tg_user_id"].(string)
 			return id == "111"
 		})
-		for _, name := range []string{"end", "resume", "select", "confirm"} {
-			if !h.authorizeControl(name, owner) {
-				t.Errorf("%s should be allowed for owner", name)
-			}
-			if h.authorizeControl(name, stranger) {
-				t.Errorf("%s should be denied for stranger", name)
-			}
+		if !h.authorizeSender(owner) {
+			t.Error("owner should be allowed")
+		}
+		if h.authorizeSender(stranger) {
+			t.Error("stranger should be denied")
+		}
+		if h.authorizeSender(anon) {
+			t.Error("identity-less message should be denied (fail-closed)")
 		}
 	})
 }

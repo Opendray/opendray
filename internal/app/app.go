@@ -198,10 +198,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// buttons (Resume / End) emit the same `cmd:/...` payloads.
 	registerChannelCommands(channelHub, sessionMgr)
 	// Optional single-owner gate: when OPENDRAY_CONTROL_OWNER is set to
-	// a Telegram user id, only that account may stop/restart/redirect
-	// sessions from chat. Unset = open (single-user/trusted default).
-	if authz := controlAuthorizerFromEnv(log); authz != nil {
-		channelHub.SetControlAuthorizer(authz)
+	// a Telegram user id, only that account may interact with the bot at
+	// all — send text to a session, run commands, or tap controls.
+	// Unset = open (single-user/trusted default).
+	if authz := senderAuthorizerFromEnv(log); authz != nil {
+		channelHub.SetSenderAuthorizer(authz)
 	}
 	channelHandlers := channel.NewHandlers(channelHub, log)
 	bridgeHandlers := bridge.NewHandlers(bridge.DefaultBroker(), log)

@@ -79,11 +79,12 @@ type Hub struct {
 	lastDeliveredMu sync.Mutex
 	lastDelivered   map[string]string
 
-	// controlAuthz, when set, gates the session-control commands
-	// (/end, /resume, /select, /confirm) to authorized senders only.
-	// nil = allow all (preserves behavior for deployments that don't
-	// configure an owner). See SetControlAuthorizer.
-	controlAuthz func(msg ChannelMessage) bool
+	// senderAuthz, when set, gates ALL inbound (plain text that reaches
+	// a session's stdin, slash commands, and button taps) to authorized
+	// senders only — unauthorized messages are dropped at the door. nil
+	// = allow all (preserves behavior for deployments that don't
+	// configure an owner). See SetSenderAuthorizer.
+	senderAuthz func(msg ChannelMessage) bool
 }
 
 // outboundEntry tracks a sent notification message so reply-to
@@ -149,35 +150,27 @@ func NewHub(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger) *Hub {
 // via its Input method).
 func (h *Hub) SetSessionInput(in SessionInputter) { h.input = in }
 
-// SetControlAuthorizer installs a predicate the Hub consults before
-// running a session-control command (Stop/Restart/Resume/Switch and
-// the /confirm gate). Returning false rejects the action with a short
-// notice. Pass nil (or never call this) to allow all senders — the
-// default, preserving behavior for single-user / trusted deployments
-// that don't configure an owner.
-func (h *Hub) SetControlAuthorizer(fn func(msg ChannelMessage) bool) { h.controlAuthz = fn }
+// SetSenderAuthorizer installs a predicate the Hub consults for EVERY
+// inbound message before any routing — plain text bound for a session's
+// stdin, slash commands, and inline-button taps alike. Returning false
+// drops the message silently (logged + audited, never acted on). Pass
+// nil (or never call this) to allow all senders — the default,
+// preserving behavior for single-user / trusted deployments that don't
+// configure an owner.
+//
+// This is the real security boundary for "who can drive my agent":
+// gating only control commands would still let an unauthorized sender
+// type instructions into a session, since plain text goes straight to
+// the PTY. So the gate sits at the inbound door, not per-command.
+func (h *Hub) SetSenderAuthorizer(fn func(msg ChannelMessage) bool) { h.senderAuthz = fn }
 
-// controlCommands are the commands gated by controlAuthz: anything
-// that can stop, restart, or redirect a session. Read-only commands
-// (/list, /help, /notify) are intentionally ungated.
-var controlCommands = map[string]bool{
-	"end":     true,
-	"resume":  true,
-	"select":  true,
-	"confirm": true,
-}
-
-// authorizeControl reports whether msg may run command `name`. Non-
-// control commands are always allowed; control commands require the
-// authorizer (when set) to approve the sender.
-func (h *Hub) authorizeControl(name string, msg ChannelMessage) bool {
-	if !controlCommands[name] {
+// authorizeSender reports whether msg may be processed at all. Allows
+// everything when no authorizer is configured.
+func (h *Hub) authorizeSender(msg ChannelMessage) bool {
+	if h.senderAuthz == nil {
 		return true
 	}
-	if h.controlAuthz == nil {
-		return true
-	}
-	return h.controlAuthz(msg)
+	return h.senderAuthz(msg)
 }
 
 // Commands returns the command registry so app code can wire additional
@@ -390,6 +383,24 @@ func (h *Hub) handleInbound(ctx context.Context, msg ChannelMessage) error {
 	if msg.Timestamp.IsZero() {
 		msg.Timestamp = time.Now().UTC()
 	}
+	// Sender gate: when an owner is configured, only authorized senders
+	// may interact at all. Drop silently before persisting or routing —
+	// a Telegram bot receives DMs from anyone, and unauthorized text
+	// would otherwise reach a session's stdin. Silent (no reply) so a
+	// hostile sender gets no confirmation the bot is live; the attempt
+	// is logged + published for monitoring.
+	if !h.authorizeSender(msg) {
+		h.log.Warn("inbound from unauthorized sender dropped",
+			"channel", msg.ChannelID, "author", msg.Author)
+		h.bus.Publish(eventbus.Event{
+			Topic: "channel.inbound_denied",
+			Data: map[string]any{
+				"channel_id": msg.ChannelID,
+				"author":     msg.Author,
+			},
+		})
+		return nil
+	}
 	id, err := h.store.InsertMessage(ctx, msg)
 	if err != nil {
 		h.log.Error("inbound persist failed", "channel", msg.ChannelID, "err", err)
@@ -502,22 +513,9 @@ func (h *Hub) handleCommand(ctx context.Context, msg ChannelMessage, mid int64, 
 		}
 		return
 	}
-	if !h.authorizeControl(name, msg) {
-		h.bus.Publish(eventbus.Event{
-			Topic: "channel.command_denied",
-			Data: map[string]any{
-				"channel_id":         msg.ChannelID,
-				"channel_message_id": mid,
-				"command":            name,
-				"author":             msg.Author,
-			},
-		})
-		h.log.Warn("control command denied", "channel", msg.ChannelID, "command", name, "author", msg.Author)
-		if ch != nil {
-			h.replyText(ctx, ch, msg, "🚫 Not authorized to control sessions from this account.")
-		}
-		return
-	}
+	// Note: sender authorization is enforced once, at the inbound door
+	// (handleInbound → authorizeSender), so every command reaching here
+	// is already from an authorized sender — no per-command re-check.
 	h.bus.Publish(eventbus.Event{
 		Topic: "channel.command_received",
 		Data: map[string]any{
