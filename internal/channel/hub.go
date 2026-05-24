@@ -64,6 +64,26 @@ type Hub struct {
 	// reply-to > activeSess > lastSess.
 	activeSessMu sync.RWMutex
 	activeSess   map[string]string
+
+	// pending tracks chat messages awaiting an agent reply so we can
+	// show a live "typing…" indicator and deliver the reply the moment
+	// the session's turn settles (session.turn_completed). Keyed by
+	// pendingKey(channelID, sessionID). See typing.go.
+	pendingMu sync.Mutex
+	pending   map[string]*pendingReply
+
+	// lastDelivered records the most recent reply text sent for a
+	// session (via the turn-complete fast path or an idle card), so the
+	// follow-up idle card doesn't echo a reply the chat already saw.
+	// Keyed by session_id.
+	lastDeliveredMu sync.Mutex
+	lastDelivered   map[string]string
+
+	// controlAuthz, when set, gates the session-control commands
+	// (/end, /resume, /select, /confirm) to authorized senders only.
+	// nil = allow all (preserves behavior for deployments that don't
+	// configure an owner). See SetControlAuthorizer.
+	controlAuthz func(msg ChannelMessage) bool
 }
 
 // outboundEntry tracks a sent notification message so reply-to
@@ -116,6 +136,8 @@ func NewHub(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger) *Hub {
 		lastSess:      make(map[string]string),
 		outboundIndex: make(map[string]map[string]outboundEntry),
 		activeSess:    make(map[string]string),
+		pending:       make(map[string]*pendingReply),
+		lastDelivered: make(map[string]string),
 	}
 	h.registerBuiltinCommands()
 	return h
@@ -126,6 +148,37 @@ func NewHub(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger) *Hub {
 // stdin. Pass the session.Manager (which satisfies SessionInputter
 // via its Input method).
 func (h *Hub) SetSessionInput(in SessionInputter) { h.input = in }
+
+// SetControlAuthorizer installs a predicate the Hub consults before
+// running a session-control command (Stop/Restart/Resume/Switch and
+// the /confirm gate). Returning false rejects the action with a short
+// notice. Pass nil (or never call this) to allow all senders — the
+// default, preserving behavior for single-user / trusted deployments
+// that don't configure an owner.
+func (h *Hub) SetControlAuthorizer(fn func(msg ChannelMessage) bool) { h.controlAuthz = fn }
+
+// controlCommands are the commands gated by controlAuthz: anything
+// that can stop, restart, or redirect a session. Read-only commands
+// (/list, /help, /notify) are intentionally ungated.
+var controlCommands = map[string]bool{
+	"end":     true,
+	"resume":  true,
+	"select":  true,
+	"confirm": true,
+}
+
+// authorizeControl reports whether msg may run command `name`. Non-
+// control commands are always allowed; control commands require the
+// authorizer (when set) to approve the sender.
+func (h *Hub) authorizeControl(name string, msg ChannelMessage) bool {
+	if !controlCommands[name] {
+		return true
+	}
+	if h.controlAuthz == nil {
+		return true
+	}
+	return h.controlAuthz(msg)
+}
 
 // Commands returns the command registry so app code can wire additional
 // session-aware commands (cancel, resume, status, ...) at startup.
@@ -187,6 +240,54 @@ func (h *Hub) registerBuiltinCommands() {
 			return "Notifications muted.", nil
 		},
 	})
+	// /confirm gates the destructive control buttons (Stop/Restart) on
+	// a reply card: tapping one opens this two-button confirmation
+	// instead of acting immediately, so a stray tap on a phone can't
+	// interrupt a live session. The Yes button carries the real command
+	// (/end or /resume); Cancel just reopens the session list.
+	h.cmds.Register(Command{
+		Name:        "confirm",
+		Description: "Confirm a session action (used by inline buttons)",
+		Source:      "builtin",
+		CardHandler: confirmCardHandler,
+	})
+}
+
+// confirmCardHandler renders the Yes/Cancel card for a destructive
+// control action. Args are [verb, sessionID]; verb is "stop" or
+// "restart". Unknown input degrades to a harmless hint.
+func confirmCardHandler(_ context.Context, cc CommandContext) (*Card, error) {
+	if len(cc.Args) < 2 {
+		return &Card{Elements: []CardElement{
+			CardMarkdown{Content: "Nothing to confirm."},
+		}}, nil
+	}
+	verb, sid := strings.ToLower(cc.Args[0]), cc.Args[1]
+	var title, body, yesText, yesCmd string
+	switch verb {
+	case "stop":
+		title = "Stop session?"
+		body = fmt.Sprintf("Stop session `%s`? This interrupts the running agent.", sid)
+		yesText, yesCmd = "✓ Yes, stop", "cmd:/end "+sid
+	case "restart":
+		title = "Restart session?"
+		body = fmt.Sprintf("Restart session `%s`? It re-spawns under the same id.", sid)
+		yesText, yesCmd = "✓ Yes, restart", "cmd:/resume "+sid
+	default:
+		return &Card{Elements: []CardElement{
+			CardMarkdown{Content: "Unknown action to confirm."},
+		}}, nil
+	}
+	return &Card{
+		Header: &CardHeader{Title: title, Color: "orange"},
+		Elements: []CardElement{
+			CardMarkdown{Content: body},
+			CardActions{Buttons: [][]ButtonOption{{
+				{Text: yesText, Value: yesCmd, Style: "danger"},
+				{Text: "✗ Cancel", Value: "cmd:/list"},
+			}}},
+		},
+	}, nil
 }
 
 // Start loads enabled channels from DB, instantiates each via its
@@ -329,6 +430,14 @@ func (h *Hub) handleInbound(ctx context.Context, msg ChannelMessage) error {
 				return nil
 			}
 			h.forgetNotifyForSession(msg.ChannelID, sid)
+			// Show "typing…" and arm turn detection so the agent's
+			// reply lands as a prompt chat message (see typing.go).
+			h.mu.RLock()
+			ch := h.channels[msg.ChannelID]
+			h.mu.RUnlock()
+			if ch != nil {
+				h.beginReplyWait(ch, msg, sid)
+			}
 			h.bus.Publish(eventbus.Event{
 				Topic: "channel.message_forwarded",
 				Data: map[string]any{
@@ -390,6 +499,22 @@ func (h *Hub) handleCommand(ctx context.Context, msg ChannelMessage, mid int64, 
 		})
 		if ch != nil {
 			h.replyText(ctx, ch, msg, fmt.Sprintf("Unknown command /%s — try /help", name))
+		}
+		return
+	}
+	if !h.authorizeControl(name, msg) {
+		h.bus.Publish(eventbus.Event{
+			Topic: "channel.command_denied",
+			Data: map[string]any{
+				"channel_id":         msg.ChannelID,
+				"channel_message_id": mid,
+				"command":            name,
+				"author":             msg.Author,
+			},
+		})
+		h.log.Warn("control command denied", "channel", msg.ChannelID, "command", name, "author", msg.Author)
+		if ch != nil {
+			h.replyText(ctx, ch, msg, "🚫 Not authorized to control sessions from this account.")
 		}
 		return
 	}
@@ -695,6 +820,19 @@ func (h *Hub) runOutbound(ctx context.Context) {
 	// URL instead — see sessionIDFromEvent.
 	chPRChecks, unsubPR := h.bus.Subscribe("pr.checks_completed", 64)
 	defer unsubPR()
+	// Turn-complete drives the chat "reply" path (typing.go): it only
+	// fires for sessions a chat message armed via ExpectTurn, so it's
+	// delivered straight to the waiting chat — NOT through the
+	// notify-policy dispatch used for idle/ended broadcast cards.
+	chTurn, unsubT := h.bus.Subscribe("session.turn_completed", 64)
+	defer unsubT()
+	// Stopped/interrupted don't broadcast cards (only ended does), but
+	// they must still tear down any "typing…" left waiting on a reply
+	// from that session — otherwise the indicator runs until the cap.
+	chStopped, unsubS := h.bus.Subscribe("session.stopped", 64)
+	defer unsubS()
+	chInterrupted, unsubInt := h.bus.Subscribe("session.interrupted", 64)
+	defer unsubInt()
 	for {
 		select {
 		case <-ctx.Done():
@@ -708,12 +846,28 @@ func (h *Hub) runOutbound(ctx context.Context) {
 			if !ok {
 				return
 			}
+			h.cancelReplyWait(ctx, sessionIDFromEvent(ev))
 			h.dispatch(ctx, ev)
 		case ev, ok := <-chPRChecks:
 			if !ok {
 				return
 			}
 			h.dispatch(ctx, ev)
+		case ev, ok := <-chTurn:
+			if !ok {
+				return
+			}
+			h.deliverTurnReply(ctx, ev)
+		case ev, ok := <-chStopped:
+			if !ok {
+				return
+			}
+			h.cancelReplyWait(ctx, sessionIDFromEvent(ev))
+		case ev, ok := <-chInterrupted:
+			if !ok {
+				return
+			}
+			h.cancelReplyWait(ctx, sessionIDFromEvent(ev))
 		}
 	}
 }
@@ -727,6 +881,18 @@ func (h *Hub) dispatch(ctx context.Context, ev eventbus.Event) {
 	h.mu.RUnlock()
 
 	sessionID := sessionIDFromEvent(ev)
+
+	// Suppress an idle card that would merely echo a reply the
+	// turn-complete fast path already delivered to the chat. The agent
+	// went quiet, the idle watcher re-reads the same last response — no
+	// need to show it twice.
+	if ev.Topic == "session.idle" {
+		if data, ok := ev.Data.(map[string]any); ok {
+			if out, _ := data["recent_output"].(string); h.alreadyDelivered(sessionID, strings.TrimSpace(out)) {
+				return
+			}
+		}
+	}
 
 	for _, c := range chs {
 		if h.isMuted(ctx, c.ID()) {

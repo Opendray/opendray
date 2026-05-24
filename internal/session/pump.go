@@ -84,47 +84,87 @@ func (m *Manager) idleWatcher(rs *runningSession) {
 				"session_id":  rs.sess.ID,
 				"idle_for_ms": m.idleThreshold.Milliseconds(),
 			}
-			// Snippet source priority:
-			//   1. Claude JSONL transcript (claude provider)
-			//   2. Gemini logs.json transcript (gemini provider)
-			//   3. Virtual-terminal screen snapshot — what the user
-			//      sees in the live web terminal right now
-			//   4. Raw ring-buffer tail — defensive fallback
-			//
-			// We deliberately do NOT cap byte / line counts at the
-			// source. The channel layer owns user-facing truncation
-			// (notify_snippet_max_chars + per-platform chunking, e.g.
-			// Telegram's 3800-rune splitter). Capping here means the
-			// operator-facing "Unlimited — split into messages"
-			// option silently loses content; let the source emit
-			// everything and let the channel decide.
-			snippet := ""
-			rs.sessMu.RLock()
-			provider := rs.sess.ProviderID
-			cwd := rs.sess.Cwd
-			rs.sessMu.RUnlock()
-			if provider == "claude" && cwd != "" {
-				snippet = claudeRecentResponse(cwd)
-			}
-			if snippet == "" && provider == "gemini" && cwd != "" {
-				snippet = geminiRecentResponse(cwd)
-			}
-			if snippet == "" && rs.vt != nil {
-				snippet = ScreenSnapshot(rs.vt)
-				// Screen snapshots still need TUI chrome stripping
-				// (model bar, bypass-permissions hint, separator runs,
-				// status spinners). JSONL output is already clean.
-				snippet = FilterClaudeChrome(snippet)
-			}
-			if snippet == "" {
-				snippet = CleanTerminalOutput(string(rs.ring.Snapshot()), idleTailLines)
-				snippet = FilterClaudeChrome(snippet)
-			}
-			if snippet != "" {
+			if snippet := m.recentResponseSnippet(rs); snippet != "" {
 				data["recent_output"] = snippet
 			}
 			m.bus.Publish(eventbus.Event{
 				Topic: "session.idle",
+				Data:  data,
+			})
+		}
+	}
+}
+
+// recentResponseSnippet extracts the agent's most recent visible
+// output for a notification card. Source priority:
+//
+//  1. Claude JSONL transcript (claude provider)
+//  2. Gemini logs.json transcript (gemini provider)
+//  3. Virtual-terminal screen snapshot — what the user sees in the
+//     live web terminal right now
+//  4. Raw ring-buffer tail — defensive fallback
+//
+// We deliberately do NOT cap byte / line counts here. The channel
+// layer owns user-facing truncation (notify_snippet_max_chars +
+// per-platform chunking, e.g. Telegram's splitter); capping at the
+// source would silently defeat the operator's "Unlimited — split into
+// messages" option. Shared by the idle watcher and the turn watcher.
+func (m *Manager) recentResponseSnippet(rs *runningSession) string {
+	rs.sessMu.RLock()
+	provider := rs.sess.ProviderID
+	cwd := rs.sess.Cwd
+	rs.sessMu.RUnlock()
+
+	snippet := ""
+	if provider == "claude" && cwd != "" {
+		snippet = claudeRecentResponse(cwd)
+	}
+	if snippet == "" && provider == "gemini" && cwd != "" {
+		snippet = geminiRecentResponse(cwd)
+	}
+	if snippet == "" && rs.vt != nil {
+		snippet = ScreenSnapshot(rs.vt)
+		// Screen snapshots still need TUI chrome stripping (model bar,
+		// bypass-permissions hint, separator runs, status spinners).
+		// JSONL output is already clean.
+		snippet = FilterClaudeChrome(snippet)
+	}
+	if snippet == "" {
+		snippet = CleanTerminalOutput(string(rs.ring.Snapshot()), idleTailLines)
+		snippet = FilterClaudeChrome(snippet)
+	}
+	return snippet
+}
+
+// turnWatcher polls an armed session and fires session.turn_completed
+// once when the agent's reply settles (see checkTurnComplete). Only
+// sessions armed via ExpectTurn produce events, so the bus stays quiet
+// during ordinary work; the watcher itself just ticks cheaply. Exits
+// when the session ends.
+func (m *Manager) turnWatcher(rs *runningSession) {
+	defer m.wg.Done()
+	ticker := time.NewTicker(m.turnInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-rs.endedCh:
+			return
+		case now := <-ticker.C:
+			if !rs.checkTurnComplete(now, m.turnThreshold) {
+				continue
+			}
+			rs.sessMu.RLock()
+			terminal := rs.sess.State.IsTerminal()
+			rs.sessMu.RUnlock()
+			if terminal {
+				return
+			}
+			data := map[string]any{"session_id": rs.sess.ID}
+			if snippet := m.recentResponseSnippet(rs); snippet != "" {
+				data["recent_output"] = snippet
+			}
+			m.bus.Publish(eventbus.Event{
+				Topic: "session.turn_completed",
 				Data:  data,
 			})
 		}

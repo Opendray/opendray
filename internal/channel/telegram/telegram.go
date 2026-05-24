@@ -470,6 +470,11 @@ func (t *Telegram) deliverMessage(ctx context.Context, inbound channel.InboundFu
 		"telegram_message_id": m.MessageID,
 		"chat_type":           m.Chat.Type,
 	}
+	// Numeric sender id — the stable identity the hub's control-action
+	// authorizer keys on (usernames are mutable and optional).
+	if m.From != nil {
+		meta["tg_user_id"] = strconv.FormatInt(m.From.ID, 10)
+	}
 	// When this message is a reply to one of our outbound notifications,
 	// surface the original message_id so the Hub can route the reply
 	// to the *specific* session that notification was about, instead
@@ -515,6 +520,9 @@ func (t *Telegram) deliverCallback(ctx context.Context, inbound channel.InboundF
 			"telegram_message_id": cq.Message.MessageID,
 			"action":              cq.Data,
 		},
+	}
+	if cq.From != nil {
+		msg.Metadata["tg_user_id"] = strconv.FormatInt(cq.From.ID, 10)
 	}
 	if err := inbound(ctx, msg); err != nil {
 		t.log.Error("inbound callback handler failed", "err", err)

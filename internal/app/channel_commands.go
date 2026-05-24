@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -11,6 +13,32 @@ import (
 	"github.com/opendray/opendray-v2/internal/channel"
 	"github.com/opendray/opendray-v2/internal/session"
 )
+
+// controlOwnerEnv names the env var holding the Telegram user id
+// allowed to control sessions from chat (Stop/Restart/Switch and the
+// /confirm gate). Unset or empty disables the gate (all senders
+// allowed) — the single-user / trusted-deployment default.
+const controlOwnerEnv = "OPENDRAY_CONTROL_OWNER"
+
+// controlAuthorizerFromEnv builds the session-control authorizer from
+// controlOwnerEnv. Returns nil when no owner is configured (open).
+// When configured it fails closed: a message must carry a matching
+// tg_user_id, so any channel that can't prove the sender's identity is
+// denied control actions.
+func controlAuthorizerFromEnv(log *slog.Logger) func(channel.ChannelMessage) bool {
+	owner := strings.TrimSpace(os.Getenv(controlOwnerEnv))
+	if owner == "" {
+		return nil
+	}
+	log.Info("session-control gate enabled", "owner_telegram_id", owner)
+	return func(msg channel.ChannelMessage) bool {
+		if msg.Metadata == nil {
+			return false
+		}
+		id, _ := msg.Metadata["tg_user_id"].(string)
+		return id != "" && id == owner
+	}
+}
 
 // sessionOps is the small slice of session.Manager that the chat
 // commands need. Extracted as an interface so tests can stand in a

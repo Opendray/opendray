@@ -37,6 +37,16 @@ const (
 	defaultIdleThreshold = 5 * time.Minute
 	defaultIdleInterval  = 5 * time.Second
 
+	// defaultTurnThreshold / defaultTurnInterval drive turn-complete
+	// detection: a short quiescence after observed output that means
+	// "the agent likely finished replying". Distinct from idle (which
+	// is a much longer "nobody's home" window) — a turn fires in
+	// seconds so a chat channel can stop its "typing…" indicator and
+	// deliver the reply promptly. Only armed sessions (ExpectTurn) are
+	// watched, so the bus stays quiet during ordinary work.
+	defaultTurnThreshold = 3 * time.Second
+	defaultTurnInterval  = 1 * time.Second
+
 	// autoResumeConcurrency bounds how many interrupted sessions are
 	// re-spawned in parallel at startup. Each resume runs a provider
 	// Prepare (token reads, MCP config) + pty.Start, so we throttle to
@@ -69,6 +79,15 @@ func WithIdleInterval(d time.Duration) ManagerOption {
 	return func(m *Manager) { m.idleInterval = d }
 }
 
+// WithTurnThreshold sets how long a session must be silent (after
+// producing output) before session.turn_completed fires for an armed
+// (ExpectTurn) session. Pass 0 to disable turn detection. Keep this
+// well below the idle threshold — it's a "reply settled" signal, not
+// an "abandoned" one.
+func WithTurnThreshold(d time.Duration) ManagerOption {
+	return func(m *Manager) { m.turnThreshold = d }
+}
+
 // WithClaudeHistoryConfig overrides the Claude transcript discovery
 // paths used by Manager.History. Empty config = built-in HOME defaults.
 func WithClaudeHistoryConfig(cfg ClaudeHistoryConfig) ManagerOption {
@@ -98,6 +117,8 @@ type Manager struct {
 
 	idleThreshold time.Duration
 	idleInterval  time.Duration
+	turnThreshold time.Duration
+	turnInterval  time.Duration
 
 	claudeHistoryCfg ClaudeHistoryConfig
 	codexHistoryCfg  CodexHistoryConfig
@@ -173,6 +194,13 @@ type runningSession struct {
 	activityMu   sync.Mutex
 	lastActivity time.Time
 	isIdle       bool
+	// expectTurn arms turn-complete detection: set by ExpectTurn when a
+	// channel forwards a message into this session and wants to know
+	// when the agent's reply settles. expectAt is the arming instant —
+	// a turn only fires once we've seen output at or after it, so a
+	// no-op submit can't trip an instant false "turn done".
+	expectTurn bool
+	expectAt   time.Time
 
 	endOnce sync.Once
 	endedCh chan struct{}
@@ -187,6 +215,40 @@ func (rs *runningSession) markActive(t time.Time) bool {
 	wasIdle := rs.isIdle
 	rs.isIdle = false
 	return wasIdle
+}
+
+// arm marks the session as awaiting a reply turn as of t. The next
+// active→quiet transition (see checkTurnComplete) fires exactly one
+// session.turn_completed. Idempotent re-arming just moves the marker.
+func (rs *runningSession) arm(t time.Time) {
+	rs.activityMu.Lock()
+	defer rs.activityMu.Unlock()
+	rs.expectTurn = true
+	rs.expectAt = t
+}
+
+// checkTurnComplete reports whether an armed session has just settled
+// into a completed reply turn: it's armed, has produced output at or
+// after the arming instant, and has now been quiet for >= threshold.
+// Returns true exactly once per arming (it disarms on fire) so the
+// caller emits a single session.turn_completed.
+func (rs *runningSession) checkTurnComplete(now time.Time, threshold time.Duration) bool {
+	rs.activityMu.Lock()
+	defer rs.activityMu.Unlock()
+	if !rs.expectTurn {
+		return false
+	}
+	// No output seen since we armed → the agent hasn't started
+	// replying yet; keep waiting (the channel layer's own cap stops a
+	// never-answering session from showing "typing…" forever).
+	if rs.lastActivity.Before(rs.expectAt) {
+		return false
+	}
+	if now.Sub(rs.lastActivity) >= threshold {
+		rs.expectTurn = false
+		return true
+	}
+	return false
 }
 
 // checkIdle returns true if the session has just transitioned from
@@ -218,6 +280,8 @@ func NewManager(pool *pgxpool.Pool, bus *eventbus.Hub, providers ProviderResolve
 		sessions:      make(map[string]*runningSession),
 		idleThreshold: defaultIdleThreshold,
 		idleInterval:  defaultIdleInterval,
+		turnThreshold: defaultTurnThreshold,
+		turnInterval:  defaultTurnInterval,
 	}
 	for _, opt := range opts {
 		opt(m)
@@ -565,6 +629,10 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		m.wg.Add(1)
 		go m.idleWatcher(rs)
 	}
+	if m.turnThreshold > 0 {
+		m.wg.Add(1)
+		go m.turnWatcher(rs)
+	}
 
 	return rs, nil
 }
@@ -833,6 +901,31 @@ func (m *Manager) Remove(ctx context.Context, id string) error {
 		return err
 	}
 	return m.store.Delete(ctx, id)
+}
+
+// ExpectTurn arms turn-complete detection for a live session: after
+// the caller has submitted a message into the session's stdin, the
+// next time the agent produces output and then falls quiet for
+// turnThreshold, the manager publishes session.turn_completed. This is
+// the seam the channel hub uses to drive a chat "typing…" indicator
+// and deliver the reply promptly (rather than waiting for the long
+// idle window). No-op on an unknown / terminal session, or when turn
+// detection is disabled.
+func (m *Manager) ExpectTurn(id string) {
+	if m.turnThreshold <= 0 {
+		return
+	}
+	rs := m.lookup(id)
+	if rs == nil {
+		return
+	}
+	rs.sessMu.RLock()
+	terminal := rs.sess.State.IsTerminal()
+	rs.sessMu.RUnlock()
+	if terminal {
+		return
+	}
+	rs.arm(time.Now())
 }
 
 func (m *Manager) Input(_ context.Context, id string, data []byte) error {
