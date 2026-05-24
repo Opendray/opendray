@@ -10,6 +10,144 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.3.3] — 2026-05-24
+
+### Fixed
+
+- **About panel showed no version and the self-update button did
+  nothing.** The dashboard called the version / self-update API at
+  `/version` and `/version/update` instead of `/api/v1/...`, so the
+  requests 404'd. Added the `/api/v1` prefix (#251).
+
+## [v2.3.2] — 2026-05-24
+
+### Fixed
+
+- **Cross-session memory injection rendered every fact as `- ---`.**
+  The "Recent project memory" banner took the first line of each
+  memory, which for frontmatter-authored facts is the `---` YAML
+  delimiter. It now skips the frontmatter and surfaces the
+  `description` (falling back to the first body line) (#250).
+
+## [v2.3.1] — 2026-05-24
+
+### Fixed
+
+- **Copy buttons silently failed over plain HTTP (LAN IP / mobile).**
+  `navigator.clipboard` is only exposed in a secure context. Added a
+  shared `copyText()` helper that falls back to `execCommand('copy')`
+  and routed the existing copy callsites through it (#249).
+
+## [v2.3.0] — 2026-05-23
+
+### Fixed
+
+- **Live sessions were destroyed by a daemon restart (e.g. a
+  self-update).** Sessions are now marked `interrupted` on a gateway
+  shutdown and auto-resumed on the next startup via their stored agent
+  session id (`--resume`), with bounded-concurrency spawning and an
+  optional `OPENDRAY_AUTO_RESUME_MAX` cap. A drain gate warns before a
+  self-update interrupts running work (#247).
+- **404 page instead of the login screen after a restart.** The 401
+  redirect now respects the dashboard base path (→ `/admin/login`)
+  and keeps `next` router-relative (#248).
+- **Brand icons broke under a non-`/admin` base path** (#246).
+
+## [v2.2.2] — 2026-05-23
+
+### Added
+
+- **Memory: global-scope injection fallback + recency default** — a
+  fact told to one session surfaces in another regardless of cwd
+  (#244).
+- **Transport-aware MCP editor template + "unsupported" badge for
+  Codex** (#242).
+
+### Fixed
+
+- **Memory endpoints are now scope-gated** (admin or
+  `memory:read` / `memory:write`) (#245).
+
+## [v2.2.1] — 2026-05-22
+
+### Added
+
+- **Always-visible "Check for updates" + re-install action in the
+  About panel** (#243).
+
+### Fixed
+
+- **Remote MCP URL normalization** (#230).
+
+## [v2.2.0] — 2026-05-22
+
+### Added
+
+- **In-dashboard update notification + one-click background
+  self-update** (#241).
+- **Startup warning when W^X (MemoryDenyWriteExecute) blocks
+  executable memory** (#240).
+
+### Changed
+
+- **Repository renamed `opendray_v2` → `opendray`** across
+  code/config/docs; install / uninstall URLs updated (#238, #237).
+
+### Fixed
+
+- **Dropped `MemoryDenyWriteExecute`** from the systemd unit — it
+  broke Codex / Gemini sessions (#218).
+
+## [v2.1.1] — 2026-05-22
+
+### Added
+
+- **Responsive mobile web layout** — slide-over nav + inspector with
+  edge handles (#236).
+
+### Fixed
+
+- **Telegram channel:** handle `/start`, and a clearer `/list` header
+  for terminated sessions (#235).
+
+## [v2.1.0] — 2026-05-22
+
+### Added
+
+- **Per-provider model management from the dashboard** (#229).
+- **Real CLI version + "update available" surfaced in the providers
+  API/UI** (#227).
+- **Interactive session switching via `/select` + Talk-to buttons**
+  in channels (#226).
+- **Validate MCP servers from the Plugins page** (#233).
+- **Windows installer: a true one-liner** — auto-installs WSL2 +
+  Ubuntu, runs the installer, and persists across reboot (#213).
+
+### Changed
+
+- **Hardened the merged Update action** — provider mutations are gated
+  and the update path degrades gracefully (#234).
+
+### Fixed
+
+- **Session list shows session names in `/list` instead of bare ids**
+  (#224).
+- **Spawned CLIs get a color-capable `TERM`** so Claude/Codex/Gemini
+  render in color (#225).
+- **macOS installer hardening** — robust local Postgres provisioning,
+  configured-port binding, idempotent launchd reload, bash 3.2
+  compatibility, and a launchd PATH that finds brew-installed CLIs
+  (#208, #209, #211, #212, #231, #232).
+- **Windows installer:** OS-build guard, auto-resume after a WSL
+  reboot, PowerShell 5.1 compatibility (#214).
+- **Installer:** validate DB identifiers and don't abort on a free /
+  commented-out Postgres port (#210).
+
+### Security
+
+- **Scrubbed dev-internal docs + personal-network references from the
+  public repository** (#204).
+
 ## [v2.0.5] — 2026-05-18
 
 ### Added
