@@ -22,6 +22,12 @@ type chatConfig struct {
 	// ChatTyping shows the "typing…" indicator while awaiting a reply.
 	// nil/absent = enabled.
 	ChatTyping *bool `json:"chat_typing"`
+	// NotifyEnabled controls the idle / ended / PR broadcast cards. When
+	// two-way chat is on these are pure noise (every session dumps its
+	// running output every idle window), so the default is OFF whenever
+	// chat is enabled. nil/absent = default-by-mode; set true to opt back
+	// in to activity notifications.
+	NotifyEnabled *bool `json:"notify_enabled"`
 }
 
 // chatConfigFor reads the chat-related config for a channel. A single
@@ -47,6 +53,17 @@ func (c chatConfig) chatEnabled() bool { return c.ChatEnabled == nil || *c.ChatE
 // typingEnabled reports whether to show the typing indicator (default
 // true).
 func (c chatConfig) typingEnabled() bool { return c.ChatTyping == nil || *c.ChatTyping }
+
+// notificationsEnabled reports whether idle/ended/PR broadcast cards
+// should be sent. Explicit setting wins; otherwise notifications are on
+// only when two-way chat is OFF — so a chat channel stays clean unless
+// the operator opts in.
+func (c chatConfig) notificationsEnabled() bool {
+	if c.NotifyEnabled != nil {
+		return *c.NotifyEnabled
+	}
+	return !c.chatEnabled()
+}
 
 // ownerSet parses OwnerUserIDs into a lookup set. Empty when no owners
 // are configured.

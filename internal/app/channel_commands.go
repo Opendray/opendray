@@ -97,6 +97,37 @@ func registerChannelCommands(hub *channel.Hub, mgr sessionOps) {
 		Source:  "builtin",
 		Handler: selectSessionHandler(mgr),
 	})
+	// /panel (alias /menu) is the friendly home: the session list with
+	// tap-to-act buttons plus a one-line how-to. It's what we point new
+	// users at, so it's first in the native command menu.
+	for _, name := range []string{"panel", "menu"} {
+		hub.RegisterCommand(channel.Command{
+			Name:        name,
+			Description: "Control panel — sessions + actions",
+			Source:      "builtin",
+			CardHandler: panelCardHandler(mgr),
+		})
+	}
+}
+
+// panelCardHandler renders the control-panel home: the session list
+// (reusing the /list card) with a short how-to header prepended, so a
+// first-time user sees what to do without reading docs.
+func panelCardHandler(mgr sessionOps) channel.CommandCardHandler {
+	list := listSessionsCardHandler(mgr)
+	return func(ctx context.Context, cc channel.CommandContext) (*channel.Card, error) {
+		card, err := list(ctx, cc)
+		if err != nil {
+			return nil, err
+		}
+		header := channel.CardMarkdown{
+			Content: "🎛 Opendray control panel\n" +
+				"Tap “💬 Talk to” a session, then just type to chat with it. " +
+				"Use End / Resume to control it.",
+		}
+		card.Elements = append([]channel.CardElement{header}, card.Elements...)
+		return card, nil
+	}
 }
 
 // listSessionsMax caps how many rows /list returns. Telegram's

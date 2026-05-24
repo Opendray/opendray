@@ -905,6 +905,13 @@ func (h *Hub) dispatch(ctx context.Context, ev eventbus.Event) {
 		if h.isMuted(ctx, c.ID()) {
 			continue
 		}
+		// Quiet-by-default: a two-way-chat channel suppresses idle/ended/PR
+		// broadcast cards unless the operator opts in (notify_enabled). The
+		// chat reply path (deliverTurnReply) is unaffected — you still get
+		// replies to your messages, just not the firehose.
+		if !h.chatConfigFor(ctx, c.ID()).notificationsEnabled() {
+			continue
+		}
 		topics, err := h.notifyTopicsFor(ctx, c.ID())
 		if err != nil {
 			continue

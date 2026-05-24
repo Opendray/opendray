@@ -139,11 +139,12 @@ func (t *Telegram) publishCommands(ctx context.Context) {
 		Description string `json:"description"`
 	}
 	cmds := []tgCmd{
-		{Command: "help", Description: "List available commands"},
+		{Command: "panel", Description: "Control panel — sessions + actions"},
 		{Command: "list", Description: "List active sessions"},
+		{Command: "help", Description: "List available commands"},
 		{Command: "end", Description: "End a session: /end <session_id>"},
 		{Command: "resume", Description: "Resume a stopped session: /resume <session_id>"},
-		{Command: "notify", Description: "Toggle notifications: /notify on|off"},
+		{Command: "notify", Description: "Toggle activity notifications: /notify on|off"},
 	}
 	body := map[string]any{"commands": cmds}
 	var resp struct {
