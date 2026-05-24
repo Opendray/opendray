@@ -69,26 +69,31 @@ func buildReplyCard(sessionID, reply string) *Card {
 
 // beginReplyWait is called right after a chat message has been
 // submitted into a session's stdin. If the backend supports turn
-// detection and the channel supports a typing indicator, it arms the
-// session, starts "typing…", and registers a pending reply with a cap
-// timer. A no-op (returns cleanly) when either capability is absent —
-// the session still runs, the reply just arrives via the idle card.
-func (h *Hub) beginReplyWait(ch Channel, src ChannelMessage, sessionID string) {
+// detection it arms the session and registers a pending reply (with a
+// cap timer) so the agent's reply is delivered as a prompt chat
+// message. When typingOn and the channel supports it, a "typing…"
+// indicator runs until the reply settles. A no-op when the backend
+// can't report turn completion — the reply then arrives via the idle
+// card, as before.
+func (h *Hub) beginReplyWait(ch Channel, src ChannelMessage, sessionID string, typingOn bool) {
 	expecter, ok := h.input.(TurnExpecter)
-	if !ok {
-		return
-	}
-	typer, ok := ch.(TypingIndicator)
 	if !ok {
 		return
 	}
 
 	expecter.ExpectTurn(sessionID)
 
-	// context.Background (not the inbound request ctx): the indicator
-	// must outlive the delivery of the inbound message and is torn down
-	// explicitly via stopTyping on turn-complete / cap / session end.
-	stop := typer.StartTyping(context.Background(), src)
+	// Typing indicator is optional (per-channel chat_typing). Default to
+	// a no-op stop so teardown is uniform whether or not it's running.
+	stop := func() {}
+	if typingOn {
+		if typer, ok := ch.(TypingIndicator); ok {
+			// context.Background (not the inbound request ctx): the
+			// indicator must outlive delivery of the inbound message and
+			// is torn down explicitly on turn-complete / cap / session end.
+			stop = typer.StartTyping(context.Background(), src)
+		}
+	}
 
 	key := pendingKey(ch.ID(), sessionID)
 	h.pendingMu.Lock()

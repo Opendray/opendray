@@ -150,27 +150,33 @@ func NewHub(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger) *Hub {
 // via its Input method).
 func (h *Hub) SetSessionInput(in SessionInputter) { h.input = in }
 
-// SetSenderAuthorizer installs a predicate the Hub consults for EVERY
-// inbound message before any routing — plain text bound for a session's
-// stdin, slash commands, and inline-button taps alike. Returning false
-// drops the message silently (logged + audited, never acted on). Pass
-// nil (or never call this) to allow all senders — the default,
-// preserving behavior for single-user / trusted deployments that don't
-// configure an owner.
+// SetSenderAuthorizer installs a GLOBAL fallback predicate the Hub
+// consults when a channel has no per-channel owner allowlist configured.
+// Per-channel `owner_user_ids` (set from the dashboard) takes
+// precedence; this env-driven predicate is the deployment-wide default.
+// Pass nil (or never call this) to allow all senders when no owner is
+// configured anywhere.
 //
-// This is the real security boundary for "who can drive my agent":
+// The gate sits at the inbound door (handleInbound), not per-command:
 // gating only control commands would still let an unauthorized sender
 // type instructions into a session, since plain text goes straight to
-// the PTY. So the gate sits at the inbound door, not per-command.
+// the PTY.
 func (h *Hub) SetSenderAuthorizer(fn func(msg ChannelMessage) bool) { h.senderAuthz = fn }
 
-// authorizeSender reports whether msg may be processed at all. Allows
-// everything when no authorizer is configured.
-func (h *Hub) authorizeSender(msg ChannelMessage) bool {
-	if h.senderAuthz == nil {
-		return true
+// authorizeSender reports whether msg may be processed at all, given the
+// channel's chat config. Precedence: a per-channel owner allowlist (from
+// the dashboard) wins; otherwise the global env predicate; otherwise
+// open. When owners are configured the check is fail-closed — the sender
+// must present a matching id.
+func (h *Hub) authorizeSender(cc chatConfig, msg ChannelMessage) bool {
+	if owners := cc.ownerSet(); len(owners) > 0 {
+		id, _ := msg.Metadata["tg_user_id"].(string)
+		return id != "" && owners[id]
 	}
-	return h.senderAuthz(msg)
+	if h.senderAuthz != nil {
+		return h.senderAuthz(msg)
+	}
+	return true
 }
 
 // Commands returns the command registry so app code can wire additional
@@ -383,13 +389,16 @@ func (h *Hub) handleInbound(ctx context.Context, msg ChannelMessage) error {
 	if msg.Timestamp.IsZero() {
 		msg.Timestamp = time.Now().UTC()
 	}
+	// Read the channel's chat config once (owner allowlist + chat/typing
+	// toggles), then reuse it for the gate and routing below.
+	cc := h.chatConfigFor(ctx, msg.ChannelID)
 	// Sender gate: when an owner is configured, only authorized senders
 	// may interact at all. Drop silently before persisting or routing —
 	// a Telegram bot receives DMs from anyone, and unauthorized text
 	// would otherwise reach a session's stdin. Silent (no reply) so a
 	// hostile sender gets no confirmation the bot is live; the attempt
 	// is logged + published for monitoring.
-	if !h.authorizeSender(msg) {
+	if !h.authorizeSender(cc, msg) {
 		h.log.Warn("inbound from unauthorized sender dropped",
 			"channel", msg.ChannelID, "author", msg.Author)
 		h.bus.Publish(eventbus.Event{
@@ -432,7 +441,7 @@ func (h *Hub) handleInbound(ctx context.Context, msg ChannelMessage) error {
 	// yielding, then writing the Enter byte on its own. The pause
 	// is below human-perception threshold and Claude/Codex behave
 	// identically with or without it.
-	if h.input != nil && msg.Text != "" {
+	if h.input != nil && msg.Text != "" && cc.chatEnabled() {
 		if sid, ok := h.resolveTargetSession(msg); ok {
 			if err := h.submitToSession(ctx, sid, msg.Text); err != nil {
 				h.log.Warn("forward to session failed",
@@ -441,13 +450,13 @@ func (h *Hub) handleInbound(ctx context.Context, msg ChannelMessage) error {
 				return nil
 			}
 			h.forgetNotifyForSession(msg.ChannelID, sid)
-			// Show "typing…" and arm turn detection so the agent's
-			// reply lands as a prompt chat message (see typing.go).
+			// Arm turn detection (+ "typing…" when enabled) so the
+			// agent's reply lands as a prompt chat message (see typing.go).
 			h.mu.RLock()
 			ch := h.channels[msg.ChannelID]
 			h.mu.RUnlock()
 			if ch != nil {
-				h.beginReplyWait(ch, msg, sid)
+				h.beginReplyWait(ch, msg, sid, cc.typingEnabled())
 			}
 			h.bus.Publish(eventbus.Event{
 				Topic: "channel.message_forwarded",

@@ -470,6 +470,13 @@ function ChannelDialog({
       notify_cooldown_s: DEFAULT_COOLDOWN,
       notify_include_snippet: 'true',
       notify_snippet_max_chars: DEFAULT_SNIPPET_CAP,
+      // Seed boolean field defaults so toggles render in their intended
+      // (usually on) state for a brand-new channel.
+      ...Object.fromEntries(
+        def.fields
+          .filter((f) => f.type === 'boolean')
+          .map((f) => [f.name, String(f.default ?? false)]),
+      ),
     })
   }, [def, isEdit])
 
@@ -693,7 +700,13 @@ function valuesFromConfig(
   const out: Record<string, string> = {}
   for (const field of def.fields) {
     const raw = config[field.name]
-    if (raw == null) continue
+    if (raw == null) {
+      // Boolean fields absent from stored config (new field on an
+      // existing channel) fall back to their declared default so the
+      // toggle reflects the backend's effective behavior.
+      if (field.type === 'boolean') out[field.name] = String(field.default ?? false)
+      continue
+    }
     if (Array.isArray(raw)) {
       out[field.name] = raw.map((v) => String(v)).join('\n')
     } else if (typeof raw === 'number' || typeof raw === 'string' || typeof raw === 'boolean') {
@@ -1003,6 +1016,23 @@ function KindFieldRow({
 }) {
   const id = `field_${field.name}`
   const isMono = field.type === 'password' || field.name.endsWith('_id') || field.name.endsWith('_token')
+  if (field.type === 'boolean') {
+    return (
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between gap-3">
+          <Label htmlFor={id}>{field.label}</Label>
+          <Switch
+            id={id}
+            checked={value === 'true'}
+            onCheckedChange={(c) => onChange(c ? 'true' : 'false')}
+          />
+        </div>
+        {field.hint && (
+          <p className="text-[11px] text-muted-foreground/80">{field.hint}</p>
+        )}
+      </div>
+    )
+  }
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{field.label}</Label>
@@ -1088,6 +1118,10 @@ function buildConfigFromValues(
     if (field.name === 'chat_id') {
       const n = Number(raw)
       cfg.chat_id = Number.isFinite(n) && /^-?\d+$/.test(raw) ? n : raw
+      continue
+    }
+    if (field.type === 'boolean') {
+      cfg[field.name] = raw === 'true'
       continue
     }
     cfg[field.name] = raw

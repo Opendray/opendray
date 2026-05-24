@@ -7,7 +7,7 @@
 // (token generator, capability multiselect, post-create adapter
 // setup dialog) wired in Channels.tsx.
 
-export type FieldType = 'text' | 'password' | 'textarea'
+export type FieldType = 'text' | 'password' | 'textarea' | 'boolean'
 
 export interface KindField {
   name: string
@@ -19,6 +19,10 @@ export interface KindField {
   /** When true and not provided by the user, the field is omitted from
    * the submitted config (so server defaults apply). */
   optional?: boolean
+  /** Initial value for `boolean` fields when the channel config has no
+   * stored value (new channel, or a field added after the channel was
+   * created). Ignored for non-boolean fields. */
+  default?: boolean
 }
 
 export interface KindDef {
@@ -79,6 +83,28 @@ export const KIND_DEFS: KindDef[] = [
         type: 'text',
         placeholder: '42 (optional — used for outbound when no ReplyCtx)',
         optional: true,
+      },
+      {
+        name: 'owner_user_ids',
+        label: 'Owner Telegram user ID(s)',
+        type: 'text',
+        optional: true,
+        placeholder: '123456789 (comma-separated for more than one)',
+        hint: 'Only these numeric Telegram user IDs may drive sessions, run commands, or tap buttons; everyone else is ignored. Leave blank to allow anyone (not recommended for two-way chat). Get yours by DMing @userinfobot.',
+      },
+      {
+        name: 'chat_enabled',
+        label: 'Two-way chat (route messages into the session)',
+        type: 'boolean',
+        default: true,
+        hint: 'When on, your messages are typed into the selected session and the agent replies here. Turn off for notifications only.',
+      },
+      {
+        name: 'chat_typing',
+        label: 'Show “typing…” while the agent works',
+        type: 'boolean',
+        default: true,
+        hint: 'Displays a typing indicator until the agent’s reply settles.',
       },
     ],
   },
