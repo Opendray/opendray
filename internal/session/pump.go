@@ -123,15 +123,17 @@ func (m *Manager) recentResponseSnippet(rs *runningSession) string {
 		snippet = geminiRecentResponse(cwd)
 	}
 	if snippet == "" && rs.vt != nil {
-		snippet = ScreenSnapshot(rs.vt)
-		// Screen snapshots still need TUI chrome stripping (model bar,
-		// bypass-permissions hint, separator runs, status spinners).
-		// JSONL output is already clean.
-		snippet = FilterClaudeChrome(snippet)
+		// Screen snapshots still need chrome stripping. Claude's busy TUI
+		// gets the aggressive FilterClaudeChrome (model bar, permission
+		// hint, separator runs, spinners); a shell — and the codex /
+		// gemini snapshot fallback — gets the light FilterShellChrome,
+		// which preserves short / symbol-only output the Claude filter
+		// would mistake for debris. JSONL output (handled above) is
+		// already clean.
+		snippet = stripScreenChrome(provider, ScreenSnapshot(rs.vt))
 	}
 	if snippet == "" {
-		snippet = CleanTerminalOutput(string(rs.ring.Snapshot()), idleTailLines)
-		snippet = FilterClaudeChrome(snippet)
+		snippet = stripScreenChrome(provider, CleanTerminalOutput(string(rs.ring.Snapshot()), idleTailLines))
 	}
 	return snippet
 }
