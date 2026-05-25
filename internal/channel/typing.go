@@ -2,6 +2,7 @@ package channel
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -53,6 +54,34 @@ func sessionControlButtons(sessionID string) []ButtonOption {
 		{Text: "🔄 Restart", Value: "cmd:/confirm restart " + sessionID},
 		{Text: "🔀 Switch", Value: "cmd:/list"},
 	}
+}
+
+// trimReply caps an agent turn reply at max characters, keeping the
+// HEAD of the reply (it reads top-to-bottom, unlike idle cards which
+// keep the most-recent tail) and cutting on a line boundary when one is
+// reasonably close to the cap. Returns the trimmed body and a footer
+// note describing how much was dropped (empty when nothing was). max<=0
+// means unlimited — the reply is left whole for the per-platform
+// chunker to split.
+func trimReply(s string, max int) (body, footer string) {
+	s = strings.TrimSpace(s)
+	if max <= 0 {
+		return s, ""
+	}
+	runes := []rune(s)
+	if len(runes) <= max {
+		return s, ""
+	}
+	cut := string(runes[:max])
+	// Prefer a line boundary so we don't slice mid-sentence, but only
+	// when one exists past the halfway mark (else we'd drop too much).
+	if i := strings.LastIndexByte(cut, '\n'); i > max/2 {
+		cut = cut[:i]
+	}
+	cut = strings.TrimRight(cut, "\n ")
+	omitted := len(runes) - len([]rune(cut))
+	footer = fmt.Sprintf("\n\n… (truncated %d more characters — open the dashboard for the full reply)", omitted)
+	return cut, footer
 }
 
 // buildReplyCard renders an agent turn as a chat-style reply: the
@@ -198,8 +227,12 @@ func (h *Hub) deliverTurnReply(ctx context.Context, ev eventbus.Event) {
 			h.replyText(ctx, ch, pr.src, "✅ Done — no text output for that turn.")
 			continue
 		}
+		// Record the full reply for idle-card dedup (the follow-up idle
+		// card echoes the same untrimmed output), then trim what we
+		// actually post per the channel's reply_max_chars.
 		h.markDelivered(sessionID, reply)
-		card := buildReplyCard(sessionID, reply)
+		body, footer := trimReply(reply, h.chatConfigFor(ctx, pr.channelID).replyMaxChars())
+		card := buildReplyCard(sessionID, body+footer)
 		out := ChannelMessage{
 			ChannelID:      pr.channelID,
 			Direction:      DirectionOutbound,

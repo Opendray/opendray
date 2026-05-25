@@ -3,6 +3,7 @@ package channel
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"strings"
 )
 
@@ -28,7 +29,20 @@ type chatConfig struct {
 	// chat is enabled. nil/absent = default-by-mode; set true to opt back
 	// in to activity notifications.
 	NotifyEnabled *bool `json:"notify_enabled"`
+	// ReplyMaxChars caps how much of an agent's turn reply is sent to the
+	// chat before it's trimmed with a "…(truncated)" footer. Kept as raw
+	// JSON because the dashboard form submits it as a string ("3500") but
+	// a hand-edited config may store a number — replyMaxChars() parses
+	// either. Absent = defaultReplyMaxChars; "0" = unlimited (the reply is
+	// chunked into multiple messages instead).
+	ReplyMaxChars json.RawMessage `json:"reply_max_chars,omitempty"`
 }
+
+// defaultReplyMaxChars trims a turn reply to roughly one Telegram
+// message by default, so a runaway agent response can't dump dozens of
+// chunks into the chat. Operators raise it (or set 0 for unlimited)
+// from the dashboard.
+const defaultReplyMaxChars = 3500
 
 // chatConfigFor reads the chat-related config for a channel. A single
 // DB read per inbound message — callers pass the result down rather
@@ -63,6 +77,34 @@ func (c chatConfig) notificationsEnabled() bool {
 		return *c.NotifyEnabled
 	}
 	return !c.chatEnabled()
+}
+
+// replyMaxChars returns the configured turn-reply cap in characters.
+// Accepts either a JSON number or a numeric string (the dashboard form
+// submits text). Absent / unparesable → defaultReplyMaxChars; a
+// negative value is treated as the default; 0 means unlimited.
+func (c chatConfig) replyMaxChars() int {
+	if len(c.ReplyMaxChars) == 0 {
+		return defaultReplyMaxChars
+	}
+	var n int
+	if err := json.Unmarshal(c.ReplyMaxChars, &n); err == nil {
+		if n < 0 {
+			return defaultReplyMaxChars
+		}
+		return n
+	}
+	var s string
+	if err := json.Unmarshal(c.ReplyMaxChars, &s); err == nil {
+		s = strings.TrimSpace(s)
+		if s == "" {
+			return defaultReplyMaxChars
+		}
+		if v, err := strconv.Atoi(s); err == nil && v >= 0 {
+			return v
+		}
+	}
+	return defaultReplyMaxChars
 }
 
 // ownerSet parses OwnerUserIDs into a lookup set. Empty when no owners

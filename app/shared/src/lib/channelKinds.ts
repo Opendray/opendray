@@ -113,6 +113,14 @@ export const KIND_DEFS: KindDef[] = [
         default: false,
         hint: 'Off keeps the chat clean — you still get replies to your messages. Turn on to also get a card when a session goes idle or finishes.',
       },
+      {
+        name: 'reply_max_chars',
+        label: 'Max reply length (characters)',
+        type: 'text',
+        optional: true,
+        placeholder: '3500 (blank = 3500, 0 = unlimited)',
+        hint: 'Caps how much of the agent’s reply is sent before it’s trimmed with a “…(truncated)” note. Blank uses the 3500 default (~one message); set 0 to send the whole reply, split across multiple messages.',
+      },
     ],
   },
   {
