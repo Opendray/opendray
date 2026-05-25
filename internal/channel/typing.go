@@ -220,11 +220,20 @@ func (h *Hub) deliverTurnReply(ctx context.Context, ev eventbus.Event) {
 		if ch == nil {
 			continue
 		}
+		// This session is now the chat's current target, so a bare
+		// keyboard tap (Stop/Restart) and a reply-to-bubble both resolve
+		// to it. In a chat-only flow (notifications off) nothing else
+		// records this — the broadcast path that normally sets lastSess
+		// never runs.
+		h.lastSessMu.Lock()
+		h.lastSess[pr.channelID] = sessionID
+		h.lastSessMu.Unlock()
+
 		if reply == "" {
 			// Turn settled but produced no extractable text (e.g. a
 			// pure tool run). Acknowledge rather than leave the user
 			// hanging after the typing indicator vanishes.
-			h.replyText(ctx, ch, pr.src, "✅ Done — no text output for that turn.")
+			h.replyControlText(ctx, ch, pr.src, "✅ Done — no text output for that turn.")
 			continue
 		}
 		// Record the full reply for idle-card dedup (the follow-up idle
@@ -240,12 +249,18 @@ func (h *Hub) deliverTurnReply(ctx context.Context, ev eventbus.Event) {
 			Text:           card.RenderText(),
 			Timestamp:      time.Now().UTC(),
 			ReplyCtx:       pr.src.ReplyCtx,
-			Metadata:       map[string]any{},
+			// Ask Telegram to attach its persistent control keyboard (and
+			// drop the card's inline row); other channels ignore the flag
+			// and render the inline buttons from buildReplyCard.
+			Metadata: map[string]any{MetaControlKeyboard: true},
 		}
 		if err := h.sendWithFallback(ctx, ch, out, card); err != nil {
 			h.log.Error("turn reply send failed", "channel", pr.channelID, "session", sessionID, "err", err)
 			continue
 		}
+		// Index the reply bubble so a reply *to it* routes back to this
+		// session (the transport stamped outbound_msg_id during send).
+		h.recordOutbound(pr.channelID, out.Metadata, sessionID)
 		if h.store != nil {
 			if _, err := h.store.InsertMessage(ctx, out); err != nil {
 				h.log.Warn("turn reply persist failed", "err", err)

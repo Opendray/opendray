@@ -420,6 +420,21 @@ func (h *Hub) handleInbound(ctx context.Context, msg ChannelMessage) error {
 		return nil
 	}
 
+	// Persistent control-keyboard taps arrive as the button's literal
+	// label text (Telegram reply keyboards can't carry callback data),
+	// so they look like ordinary messages. Translate a tapped label into
+	// its command — filling the verb with the chat's current session —
+	// before it falls through to stdin forwarding, which would otherwise
+	// type the label into the agent.
+	if name, args, hint, isButton := h.controlButtonAction(msg); isButton {
+		if hint != "" {
+			h.replyTextLookup(ctx, msg, hint)
+		} else {
+			h.handleCommand(ctx, msg, id, name, args)
+		}
+		return nil
+	}
+
 	// Route plain text to the right session. Priority is:
 	//   1) explicit reply-to-message in the chat platform → that
 	//      specific notification's session (multi-session friendly)
@@ -610,6 +625,57 @@ func (h *Hub) replyText(ctx context.Context, ch Channel, src ChannelMessage, tex
 	}
 	if _, err := h.store.InsertMessage(ctx, out); err != nil {
 		h.log.Warn("command reply persist failed", "err", err)
+	}
+}
+
+// controlButtonAction resolves a persistent-keyboard tap (whose inbound
+// text is the button's literal label) into the command to dispatch.
+//
+//   - isButton=false → msg.Text is not a control label; the caller falls
+//     through to normal command / plain-text routing.
+//   - isButton=true, hint!="" → the button targets a session but none is
+//     active; the caller should post hint and stop.
+//   - isButton=true, hint=="" → dispatch (name, args) as a command.
+func (h *Hub) controlButtonAction(msg ChannelMessage) (name string, args []string, hint string, isButton bool) {
+	btn, ok := MatchControlButton(msg.Text)
+	if !ok {
+		return "", nil, "", false
+	}
+	cmdText := btn.Command
+	if btn.NeedsSession() {
+		sid, ok := h.resolveTargetSession(msg)
+		if !ok {
+			return "", nil, "No active session — tap 🔀 Switch to pick one.", true
+		}
+		cmdText = btn.Resolve(sid)
+	}
+	n, a, _ := ParseCommand(cmdText)
+	return n, a, "", true
+}
+
+// replyControlText is replyText that also flags the message for the
+// persistent control keyboard, so a plain-text chat reply (e.g. the
+// "no text output" acknowledgement) still establishes / refreshes the
+// keyboard on transports that support it.
+func (h *Hub) replyControlText(ctx context.Context, ch Channel, src ChannelMessage, text string) {
+	out := ChannelMessage{
+		ChannelID:      src.ChannelID,
+		Direction:      DirectionOutbound,
+		ConversationID: src.ConversationID,
+		Text:           text,
+		Timestamp:      time.Now().UTC(),
+		ReplyCtx:       src.ReplyCtx,
+		Metadata:       map[string]any{MetaControlKeyboard: true},
+	}
+	if err := ch.Send(ctx, out); err != nil {
+		h.log.Error("control reply send failed", "channel", ch.ID(), "err", err)
+		return
+	}
+	if h.store == nil {
+		return
+	}
+	if _, err := h.store.InsertMessage(ctx, out); err != nil {
+		h.log.Warn("control reply persist failed", "err", err)
 	}
 }
 

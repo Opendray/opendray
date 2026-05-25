@@ -193,6 +193,9 @@ func (t *Telegram) Send(ctx context.Context, msg channel.ChannelMessage) error {
 	if replyTo != 0 {
 		body["reply_parameters"] = map[string]any{"message_id": replyTo}
 	}
+	if wantsControlKeyboard(msg) {
+		body["reply_markup"] = controlReplyKeyboard()
+	}
 	var resp tgSendResp
 	if err := t.callAPI(ctx, "sendMessage", body, &resp); err != nil {
 		return err
@@ -219,6 +222,14 @@ func (t *Telegram) SendCard(ctx context.Context, msg channel.ChannelMessage, car
 		return fmt.Errorf("telegram: no chat_id configured")
 	}
 	text, keyboard := renderCard(card)
+	// When the hub flags a message for the persistent control keyboard
+	// (chat turn replies), it replaces the card's inline row: a message
+	// can carry only one reply_markup, and the docked keyboard is the
+	// chosen control surface on Telegram.
+	useControlKb := wantsControlKeyboard(msg)
+	if useControlKb {
+		keyboard = nil
+	}
 	htmlBody := formatForTelegram(text)
 	chunks := splitForTelegram(htmlBody)
 	chunks = rebalanceHTMLChunks(chunks)
@@ -232,12 +243,16 @@ func (t *Telegram) SendCard(ctx context.Context, msg channel.ChannelMessage, car
 		}
 		// Only the first chunk is rendered as a "reply to" the
 		// originating message — chained replies on every chunk just
-		// produce noise. Buttons only on the last chunk.
+		// produce noise. Buttons/keyboard only on the last chunk.
 		if i == 0 && replyTo != 0 {
 			body["reply_parameters"] = map[string]any{"message_id": replyTo}
 		}
-		if i == len(chunks)-1 && len(keyboard) > 0 {
-			body["reply_markup"] = map[string]any{"inline_keyboard": keyboard}
+		if i == len(chunks)-1 {
+			if useControlKb {
+				body["reply_markup"] = controlReplyKeyboard()
+			} else if len(keyboard) > 0 {
+				body["reply_markup"] = map[string]any{"inline_keyboard": keyboard}
+			}
 		}
 		var resp tgSendResp
 		if err := t.callAPI(ctx, "sendMessage", body, &resp); err != nil {
@@ -589,6 +604,39 @@ func btnToTG(b channel.ButtonOption) map[string]any {
 	return map[string]any{
 		"text":          b.Text,
 		"callback_data": b.Value,
+	}
+}
+
+// wantsControlKeyboard reports whether the hub asked us to attach the
+// persistent session-control keyboard to this outbound message.
+func wantsControlKeyboard(msg channel.ChannelMessage) bool {
+	if msg.Metadata == nil {
+		return false
+	}
+	v, _ := msg.Metadata[channel.MetaControlKeyboard].(bool)
+	return v
+}
+
+// controlReplyKeyboard renders the shared ControlKeyboardLayout as a
+// Telegram ReplyKeyboardMarkup: a persistent keyboard docked above the
+// text input. Unlike an inline keyboard its buttons send their label as
+// a normal message (no callback data) — the hub matches those labels
+// back to commands (see channel.MatchControlButton). is_persistent keeps
+// it visible; resize_keyboard fits it to the rows.
+func controlReplyKeyboard() map[string]any {
+	rows := channel.ControlKeyboardLayout()
+	kb := make([][]map[string]any, 0, len(rows))
+	for _, row := range rows {
+		r := make([]map[string]any, 0, len(row))
+		for _, b := range row {
+			r = append(r, map[string]any{"text": b.Label})
+		}
+		kb = append(kb, r)
+	}
+	return map[string]any{
+		"keyboard":        kb,
+		"is_persistent":   true,
+		"resize_keyboard": true,
 	}
 }
 
