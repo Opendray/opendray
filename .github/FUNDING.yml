@@ -1,0 +1,17 @@
+# Funding sources for opendray — drives the "Sponsor" button GitHub
+# shows on the repo and on every release/issue. Mirrors the layout
+# popular OSS projects (Vite, Astro, Zod) use: one line per platform,
+# unused platforms left commented so they're easy to enable later.
+
+github: [navidrast]
+
+# --- enable as accounts are set up (uncomment + set the real handle) ---
+# open_collective: opendray
+# ko_fi: navidrast
+# buy_me_a_coffee: navidrast
+# patreon: navidrast
+# liberapay: navidrast
+# tidelift: npm/opendray
+# polar: navidrast
+# thanks_dev: navidrast
+# custom: ["https://opendray.dev/sponsor"]
