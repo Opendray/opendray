@@ -148,6 +148,20 @@ if [ "$HAS_BIN" = "1" ]; then
     log_ok "Removed $OPENDRAY_HOME/bin/opendray"
 fi
 
+# Remove the PATH symlink the installer created in Homebrew's bin
+# (either arch). Only unlink when it points back into our install, so
+# an unrelated `opendray` on PATH is never touched. readlink still
+# returns the stored target even after the binary above is gone.
+for _link in "/usr/local/bin/opendray" "/opt/homebrew/bin/opendray"; do
+    if [ -L "$_link" ]; then
+        case "$(readlink "$_link" 2>/dev/null || true)" in
+            "$OPENDRAY_HOME"/*)
+                rm -f "$_link" && log_ok "Removed PATH symlink $_link"
+                ;;
+        esac
+    fi
+done
+
 # ───────────────────────────────────────────────────────────────────────
 # Phase 3 — Purge
 # ───────────────────────────────────────────────────────────────────────

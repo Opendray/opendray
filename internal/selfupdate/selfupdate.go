@@ -51,6 +51,9 @@ type Request struct {
 	Version     string    `json:"version"`
 	RequestedBy string    `json:"requestedBy"`
 	RequestedAt time.Time `json:"requestedAt"`
+	// Force re-installs the latest even when already current (the
+	// dashboard's "Re-install" action). Maps to `opendray update --force`.
+	Force bool `json:"force,omitempty"`
 }
 
 type ghRelease struct {

@@ -377,8 +377,10 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		// Gemini both accept `--session-id <uuid>`; Codex does not,
 		// so it stays on the cwd-based reader path. injectSessionIDFor
 		// mutates out.Args + out.ClaudeSessionID directly, and the
-		// session manager picks up the UUID for persistence.
-		injectSessionIDFor(providerID, &out)
+		// session manager picks up the UUID for persistence. When this
+		// is a reactivation carrying an existing agent UUID, it emits
+		// `--resume <id>` instead so the prior transcript continues.
+		injectSessionIDFor(prepareCtx, providerID, &out)
 
 		if wantClaudeAccount {
 			acct, token, err := sp.accounts.ReadToken(prepareCtx, claudeAccountID)
@@ -1089,9 +1091,28 @@ sessions will still want to retrieve months from now.
 // (Args ordering puts provider-baseline → out.Args → sess.Args, so
 // a user-supplied flag wins anyway, but we skip injection too to
 // avoid emitting a duplicate flag.)
-func injectSessionIDFor(providerID string, out *session.PrepareOutput) bool {
+//
+// Resume path: when ctx carries a resume UUID (set by the session
+// manager on reactivation), claude continues that conversation via
+// `--resume <id>` rather than starting a fresh `--session-id`. We
+// preserve the original UUID on out.ClaudeSessionID so the row keeps
+// pointing at the same transcript. Gemini has no verified resume flag,
+// so it falls back to a fresh session-id (a new turn, history intact
+// on disk) until that's confirmed.
+func injectSessionIDFor(ctx context.Context, providerID string, out *session.PrepareOutput) bool {
+	resumeID := session.ResumeClaudeSessionIDFromContext(ctx)
 	switch providerID {
-	case "claude", "gemini":
+	case "claude":
+		if resumeID != "" {
+			out.Args = append(out.Args, "--resume", resumeID)
+			out.ClaudeSessionID = resumeID
+			return true
+		}
+		id := uuid.NewString()
+		out.Args = append(out.Args, "--session-id", id)
+		out.ClaudeSessionID = id
+		return true
+	case "gemini":
 		id := uuid.NewString()
 		out.Args = append(out.Args, "--session-id", id)
 		out.ClaudeSessionID = id

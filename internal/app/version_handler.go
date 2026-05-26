@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -30,10 +31,15 @@ type versionHandlers struct {
 	dataDir string // daemon-writable dir the privileged oneshot watches
 	bus     *eventbus.Hub
 	log     *slog.Logger
+	// liveSessions reports how many sessions are currently live. When
+	// >0, a self-update is gated behind force=true so the operator
+	// confirms the restart (sessions auto-resume, but the connection
+	// drops). nil disables the gate.
+	liveSessions func() int
 }
 
-func newVersionHandlers(dataDir string, bus *eventbus.Hub, log *slog.Logger) *versionHandlers {
-	return &versionHandlers{dataDir: dataDir, bus: bus, log: log.With("component", "version.http")}
+func newVersionHandlers(dataDir string, bus *eventbus.Hub, log *slog.Logger, liveSessions func() int) *versionHandlers {
+	return &versionHandlers{dataDir: dataDir, bus: bus, log: log.With("component", "version.http"), liveSessions: liveSessions}
 }
 
 // selfUpdateStateDir is the daemon-writable directory the privileged
@@ -102,12 +108,28 @@ func (h *versionHandlers) requestUpdate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	force := r.URL.Query().Get("force") == "true" || r.URL.Query().Get("force") == "1"
+
+	// Drain gate: the upgrade restarts the daemon, dropping every live
+	// PTY. Sessions auto-resume on restart, but the operator should
+	// confirm rather than have running work interrupted silently.
+	if !force && h.liveSessions != nil {
+		if n := h.liveSessions(); n > 0 {
+			writeVersionJSON(w, http.StatusConflict, map[string]any{
+				"error": fmt.Sprintf("%d live session(s) would be interrupted by the upgrade restart "+
+					"(they auto-resume afterward). Re-request with force=true to proceed.", n),
+				"liveSessions": n, "needsForce": true,
+			})
+			return
+		}
+	}
+
 	st, err := selfupdate.Check(r.Context(), version.Version)
 	if err != nil {
 		writeVersionJSON(w, http.StatusBadGateway, map[string]any{"error": "couldn't reach the release feed: " + err.Error()})
 		return
 	}
-	if !st.Available {
+	if !st.Available && !force {
 		writeVersionJSON(w, http.StatusOK, map[string]any{"error": "already on the latest release.", "current": st.Current})
 		return
 	}
@@ -116,24 +138,24 @@ func (h *versionHandlers) requestUpdate(w http.ResponseWriter, r *http.Request) 
 	if p, ok := integration.CurrentPrincipal(r.Context()); ok && p.ID != "" {
 		by = p.ID
 	}
-	req := selfupdate.Request{Version: st.Latest, RequestedBy: by, RequestedAt: time.Now().UTC()}
+	req := selfupdate.Request{Version: st.Latest, RequestedBy: by, RequestedAt: time.Now().UTC(), Force: force}
 	if err := selfupdate.WriteRequest(h.dataDir, req); err != nil {
 		writeVersionJSON(w, http.StatusInternalServerError, map[string]any{"error": "couldn't queue the upgrade: " + err.Error()})
 		return
 	}
 	// Privileged action — leave a loud trail in the journal + audit bus.
-	h.log.Warn("self-update requested", "from", st.Current, "to", st.Latest, "by", by)
+	h.log.Warn("self-update requested", "from", st.Current, "to", st.Latest, "force", force, "by", by)
 	if h.bus != nil {
 		h.bus.Publish(eventbus.Event{Topic: "selfupdate.requested", Data: map[string]any{
-			"from": st.Current, "to": st.Latest, "requestedBy": by,
+			"from": st.Current, "to": st.Latest, "force": force, "requestedBy": by,
 		}})
 	}
 	// 202: the root oneshot will pick up the request, upgrade, and restart
 	// the daemon — so the client should poll GET /version afterward and
 	// expect the connection to drop during the restart.
 	writeVersionJSON(w, http.StatusAccepted, map[string]any{
-		"queued": true, "from": st.Current, "to": st.Latest,
-		"note": "Upgrading in the background; the service will restart and running sessions will reconnect.",
+		"queued": true, "from": st.Current, "to": st.Latest, "force": force,
+		"note": "Upgrading in the background; the service will restart and interrupted sessions will auto-resume.",
 	})
 }
 

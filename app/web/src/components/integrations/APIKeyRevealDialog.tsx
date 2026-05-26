@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Copy, AlertTriangle, Check, X } from 'lucide-react'
 import { Trans, useTranslation } from 'react-i18next'
 
+import { copyText } from '@/lib/clipboard'
+
 import {
   Dialog,
   DialogContent,
@@ -64,7 +66,7 @@ export function APIKeyRevealDialog({
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(apiKey)
+      if (!(await copyText(apiKey))) throw new Error('clipboard unavailable')
       setCopied(true)
       // Successful copy implies the operator has the key. Auto-ack
       // so they don't also need to click the checkbox.

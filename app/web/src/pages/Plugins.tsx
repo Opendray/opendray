@@ -72,6 +72,7 @@ import {
   deleteMcpSecret,
   defaultMcpServer,
   type McpServer,
+  type McpTransport,
 } from '@/lib/mcps'
 import { cn } from '@/lib/utils'
 
@@ -304,6 +305,14 @@ function McpSection() {
                   </td>
                   <td className="px-3 py-2 font-mono text-[10.5px]">
                     {s.transport ?? 'stdio'}
+                    {(s.transport === 'sse' || s.transport === 'http') && (
+                      <div
+                        className="mt-1 inline-flex items-center text-[9.5px] px-1.5 py-px rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 font-sans"
+                        title={t('web.plugins.mcp.codexUnsupportedTooltip')}
+                      >
+                        {t('web.plugins.mcp.codexUnsupportedBadge')}
+                      </div>
+                    )}
                   </td>
                   <td className="px-3 py-2 font-mono text-[10.5px] break-all max-w-[260px]">
                     {s.transport === 'sse' || s.transport === 'http'
@@ -406,6 +415,7 @@ function McpEditor({ open, onOpenChange, mode, editingId }: McpEditorProps) {
   const [id, setId] = useState('')
   const [body, setBody] = useState('')
   const [parseError, setParseError] = useState<string | null>(null)
+  const [transport, setTransport] = useState<McpTransport>('stdio')
 
   const { data: existing, isLoading } = useQuery({
     queryKey: ['mcp', editingId],
@@ -416,15 +426,30 @@ function McpEditor({ open, onOpenChange, mode, editingId }: McpEditorProps) {
   useEffect(() => {
     if (mode === 'create' && open) {
       setId('')
-      setBody(prettyMcp(defaultMcpServer()))
+      setTransport('stdio')
+      setBody(prettyMcp(defaultMcpServer('stdio')))
       setParseError(null)
     } else if (mode === 'edit' && existing) {
       setId(existing.id)
+      setTransport((existing.transport ?? 'stdio') as McpTransport)
       setBody(prettyMcp(existing))
       setParseError(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, existing?.id, open])
+
+  // Switching transport in create mode swaps the JSON template so the
+  // user sees fields appropriate for the chosen transport — sse/http
+  // need url/headers, stdio needs command/args/env. Edit mode keeps
+  // the user's hand-tuned body intact; changing transport there is a
+  // raw-JSON edit by design.
+  const handleTransportChange = (next: McpTransport) => {
+    setTransport(next)
+    if (mode === 'create') {
+      setBody(prettyMcp(defaultMcpServer(next)))
+      setParseError(null)
+    }
+  }
 
   const create = useMutation({
     mutationFn: async () => {
@@ -523,6 +548,37 @@ function McpEditor({ open, onOpenChange, mode, editingId }: McpEditorProps) {
                     i18nKey="web.plugins.mcp.editor.idHint"
                     components={{ 1: <code /> }}
                   />
+                </p>
+              </div>
+            )}
+            {mode === 'create' && (
+              <div className="space-y-1.5">
+                <Label htmlFor="mcp-transport">
+                  {t('web.plugins.mcp.editor.transportLabel')}
+                </Label>
+                <Select
+                  value={transport}
+                  onValueChange={(v) =>
+                    handleTransportChange(v as McpTransport)
+                  }
+                >
+                  <SelectTrigger id="mcp-transport">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="stdio">
+                      {t('web.plugins.mcp.editor.transportStdio')}
+                    </SelectItem>
+                    <SelectItem value="sse">
+                      {t('web.plugins.mcp.editor.transportSse')}
+                    </SelectItem>
+                    <SelectItem value="http">
+                      {t('web.plugins.mcp.editor.transportHttp')}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[10.5px] text-muted-foreground/80">
+                  {t('web.plugins.mcp.editor.transportHint')}
                 </p>
               </div>
             )}

@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { readFile } from '@/lib/fs'
 import { cn } from '@/lib/utils'
+import { copyText } from '@/lib/clipboard'
 
 interface FileViewerDialogProps {
   path: string | null
@@ -57,7 +58,7 @@ export function FileViewerDialog({
   const copy = async () => {
     if (!data) return
     try {
-      await navigator.clipboard.writeText(data)
+      if (!(await copyText(data))) throw new Error('clipboard unavailable')
       toast.success('Copied to clipboard')
     } catch (e) {
       toast.error('Copy failed', { description: (e as Error).message })

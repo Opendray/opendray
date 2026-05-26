@@ -75,6 +75,18 @@ const RAW: Record<string, Omit<ScopeInfo, 'id'>> = {
       'List installed agent providers (claude, codex, gemini, shell) and their catalog metadata.',
     group: 'misc',
   },
+  'memory:read': {
+    title: 'Read memory',
+    description:
+      'Search, list, and read stored memories. Used by the memory MCP for live cross-session recall. Does not grant delete/re-embed (admin only).',
+    group: 'misc',
+  },
+  'memory:write': {
+    title: 'Write memory',
+    description:
+      'Store new memories. Used by the memory MCP so agents can persist durable facts. Does not grant delete/re-embed (admin only).',
+    group: 'misc',
+  },
 }
 
 export const SCOPE_INFO: ScopeInfo[] = ALL_SCOPES.map((id) => {

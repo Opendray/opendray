@@ -17,6 +17,7 @@ import {
   type DiffScope,
 } from '@/lib/git'
 import { cn } from '@/lib/utils'
+import { copyText } from '@/lib/clipboard'
 
 interface DiffViewerProps {
   open: boolean
@@ -59,7 +60,7 @@ export function DiffViewer({ open, onOpenChange, target }: DiffViewerProps) {
   const copy = async () => {
     if (!data) return
     try {
-      await navigator.clipboard.writeText(data)
+      if (!(await copyText(data))) throw new Error('clipboard unavailable')
       toast.success('Diff copied')
     } catch (e) {
       toast.error('Copy failed', { description: (e as Error).message })
