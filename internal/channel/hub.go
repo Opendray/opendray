@@ -736,7 +736,7 @@ func (h *Hub) dispatch(ctx context.Context, ev eventbus.Event) {
 		if err != nil {
 			continue
 		}
-		if len(topics) > 0 && !contains(topics, ev.Topic) {
+		if !shouldDispatchTopic(topics, ev.Topic) {
 			continue
 		}
 		if h.suppressByPolicy(ctx, c.ID(), ev.Topic, sessionID) {
@@ -980,6 +980,28 @@ func (h *Hub) notifyTopicsFor(ctx context.Context, channelID string) ([]string, 
 	}
 	_ = json.Unmarshal(row.Config, &cfg)
 	return cfg.NotifyOn, nil
+}
+
+// NotifyTopicNone is the sentinel that, when stored as the sole entry of
+// notify_on, marks an *explicit* opt-out of every topic — distinct from
+// notify_on=[] (the historical "match all" default). The UI needs this
+// to express "no topics selected" without rendering as "everything
+// selected" on the next read, see [shouldDispatchTopic].
+const NotifyTopicNone = "__none__"
+
+// shouldDispatchTopic decides whether a dispatched event passes a
+// channel's notify_on filter. Semantics:
+//   - len==0           → match all (no filter configured)
+//   - == [NotifyTopicNone] → match none (explicit opt-out)
+//   - otherwise        → match only the listed topics
+func shouldDispatchTopic(topics []string, eventTopic string) bool {
+	if len(topics) == 0 {
+		return true
+	}
+	if len(topics) == 1 && topics[0] == NotifyTopicNone {
+		return false
+	}
+	return contains(topics, eventTopic)
 }
 
 // CreateChannel registers a new channel and starts it if enabled.
