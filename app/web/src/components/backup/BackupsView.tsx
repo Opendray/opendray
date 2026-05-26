@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Trans, useTranslation } from 'react-i18next'
+import { copyText } from '@/lib/clipboard'
 import {
   ChevronDown,
   ChevronRight,
@@ -456,7 +457,7 @@ function GeneratedPassphrasePanel({
   const pass = result.passphrase ?? ''
   async function copy() {
     try {
-      await navigator.clipboard.writeText(pass)
+      if (!(await copyText(pass))) throw new Error('clipboard unavailable')
       toast.success(t('web.backups.generated.copiedToast'))
     } catch {
       toast.error(t('web.backups.generated.copyFailedToast'))

@@ -493,6 +493,28 @@ fi
 log_ok "Installed: $OPENDRAY_BIN"
 "$OPENDRAY_BIN" version
 
+# ── Put `opendray` on the interactive PATH ───────────────────────────
+# The binary lives under $OPENDRAY_HOME/bin (default ~/.opendray/bin),
+# which is NOT on the default macOS PATH — the launchd service runs via
+# the absolute path, but an interactive `opendray …` wouldn't resolve.
+# Link it into Homebrew's bin: it's already on PATH for any working brew
+# setup and user-writable (no sudo), and resolves on both Intel
+# (/usr/local/bin) and Apple Silicon (/opt/homebrew/bin).
+OD_PATH_NOTE=""
+if [ "$(command -v opendray 2>/dev/null || true)" = "$OPENDRAY_BIN" ]; then
+    log_ok "opendray already on PATH"
+else
+    OD_LINK_DIR="$BREW_PREFIX/bin"
+    if mkdir -p "$OD_LINK_DIR" 2>/dev/null && [ -w "$OD_LINK_DIR" ]; then
+        ln -sf "$OPENDRAY_BIN" "$OD_LINK_DIR/opendray"
+        log_ok "Linked opendray → $OD_LINK_DIR/opendray (on PATH)"
+    else
+        OD_PATH_NOTE="$OPENDRAY_HOME/bin"
+        log_warn "Could not link into $OD_LINK_DIR — add opendray to PATH yourself:"
+        log_warn "    echo 'export PATH=\"$OD_PATH_NOTE:\$PATH\"' >> ~/.zshrc && source ~/.zshrc"
+    fi
+fi
+
 # ───────────────────────────────────────────────────────────────────────
 # Phase 9 — Config + migrate
 # ───────────────────────────────────────────────────────────────────────
@@ -737,11 +759,18 @@ case "$HOST_PART" in
         ;;
 esac
 
+if [ -n "$OD_PATH_NOTE" ]; then
+    OD_CLI_LINE="opendray   ${C_YEL}← add ${OD_PATH_NOTE} to PATH first (see above)${C_NC}"
+else
+    OD_CLI_LINE="opendray version"
+fi
+
 cat <<EOF
   ${C_BLU}Admin UI${C_NC}        ${WEB_URL}${WEB_URL_NOTE}
   ${C_BLU}Username${C_NC}        ${OD_ADMIN_USER}
   ${C_BLU}Password${C_NC}        ${OD_ADMIN_PW}   ${C_YEL}← rotate via Settings → Admin on first login${C_NC}
 
+  ${C_BLU}CLI${C_NC}             ${OD_CLI_LINE}
   ${C_BLU}Config${C_NC}          ${OD_CONFIG_PATH}
   ${C_BLU}Logs${C_NC}            ${OPENDRAY_HOME}/logs/opendray.{log,err}
   ${C_BLU}Service${C_NC}         launchctl kickstart -k ${DOMAIN}/${LABEL}     # restart

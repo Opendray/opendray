@@ -154,14 +154,26 @@ func readK(cfg map[string]any, fallback, max int) int {
 // list returns "" (no banner is better than a blank one).
 func (i *Injector) renderTopKRecent(ctx context.Context, profile Profile, cwd string) (string, error) {
 	k := readK(profile.Config, 5, 50)
-	if cwd == "" {
-		i.log.Debug("injector: empty cwd, skipping top_k_recent")
-		return "", nil
+	var mems []memory.Memory
+	if cwd != "" {
+		m, err := i.memory.List(ctx, memory.ScopeProject, cwd, k)
+		if err != nil {
+			i.log.Warn("injector: list memories failed", "cwd", cwd, "err", err)
+		} else {
+			mems = m
+		}
 	}
-	mems, err := i.memory.List(ctx, memory.ScopeProject, cwd, k)
-	if err != nil {
-		i.log.Warn("injector: list memories failed", "cwd", cwd, "err", err)
-		return "", nil // non-fatal — skip injection rather than block spawn
+	// Cross-session fallback: a session in a fresh cwd has no project-scoped
+	// memories, but global-scope memories (e.g. stored via the memory MCP at
+	// OPENDRAY_MEMORY_SCOPE=global) should still surface so "told one
+	// session, recalled in another" works regardless of cwd.
+	if len(mems) == 0 {
+		g, err := i.memory.List(ctx, memory.ScopeGlobal, "", k)
+		if err != nil {
+			i.log.Warn("injector: global list failed", "err", err)
+			return "", nil // non-fatal — skip injection rather than block spawn
+		}
+		mems = g
 	}
 	if len(mems) == 0 {
 		return "", nil
@@ -178,21 +190,69 @@ func renderTopKPreface(mems []memory.Memory) string {
 	b.WriteString("\n## Recent project memory\n\n")
 	b.WriteString("opendray injected the following durable facts from prior sessions in this project:\n\n")
 	for _, m := range mems {
-		text := strings.TrimSpace(m.Text)
-		if text == "" {
+		line := bulletFor(m.Text)
+		if line == "" {
 			continue
 		}
-		// Take only the first line of multi-line memories — keeps
-		// the prefix compact even if a memory was a fenced block.
-		if i := strings.IndexByte(text, '\n'); i >= 0 {
-			text = text[:i]
-		}
 		b.WriteString("- ")
-		b.WriteString(text)
+		b.WriteString(line)
 		b.WriteString("\n")
 	}
 	b.WriteString("\nEnd of memory preface.\n")
 	return b.String()
+}
+
+const maxBulletLen = 200
+
+// bulletFor extracts a compact one-line summary of a memory for the
+// injection banner. Memories are commonly authored with YAML
+// frontmatter (---\n…\n---\n<body>); naively taking the first line then
+// yields the bare "---" delimiter (every bullet renders as "- ---"), so
+// we strip the frontmatter and prefer its `description:` field, falling
+// back to the first non-empty body line. Frontmatter-less memories keep
+// the original behaviour: their first non-empty line.
+func bulletFor(text string) string {
+	text = strings.TrimSpace(text)
+	body := text
+	if strings.HasPrefix(text, "---") {
+		rest := text[len("---"):]
+		if end := strings.Index(rest, "\n---"); end >= 0 {
+			front := rest[:end]
+			if d := yamlScalar(front, "description"); d != "" {
+				return clip(d)
+			}
+			body = strings.TrimSpace(rest[end+len("\n---"):])
+		}
+	}
+	return clip(firstNonEmptyLine(body))
+}
+
+func firstNonEmptyLine(s string) string {
+	for _, ln := range strings.Split(s, "\n") {
+		if t := strings.TrimSpace(ln); t != "" {
+			return t
+		}
+	}
+	return ""
+}
+
+// yamlScalar pulls a top-level "key: value" scalar out of a frontmatter
+// block, trimming surrounding quotes. Deliberately avoids a YAML
+// dependency for a single field.
+func yamlScalar(front, key string) string {
+	for _, ln := range strings.Split(front, "\n") {
+		if rest, ok := strings.CutPrefix(strings.TrimSpace(ln), key+":"); ok {
+			return strings.Trim(strings.TrimSpace(rest), `"'`)
+		}
+	}
+	return ""
+}
+
+func clip(s string) string {
+	if len(s) > maxBulletLen {
+		return strings.TrimSpace(s[:maxBulletLen]) + "…"
+	}
+	return s
 }
 
 // silence unused import

@@ -27,9 +27,12 @@ export interface SelfUpdateResponse {
 }
 
 export async function getVersionInfo(): Promise<VersionInfo> {
-  return api<VersionInfo>('/version')
+  return api<VersionInfo>('/api/v1/version')
 }
 
-export async function requestSelfUpdate(): Promise<SelfUpdateResponse> {
-  return api<SelfUpdateResponse>('/version/update', { method: 'POST' })
+export async function requestSelfUpdate(
+  force = false,
+): Promise<SelfUpdateResponse> {
+  const q = force ? '?force=true' : ''
+  return api<SelfUpdateResponse>(`/api/v1/version/update${q}`, { method: 'POST' })
 }
