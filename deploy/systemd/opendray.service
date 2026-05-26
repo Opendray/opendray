@@ -51,10 +51,23 @@ ExecStart=/usr/local/bin/opendray serve -config /etc/opendray/config.toml
 # Restart policy — opendray returns non-zero on fatal errors, never
 # on graceful shutdown. on-failure restarts only when something
 # actually broke; SIGTERM/SIGINT exits cleanly with status 0.
+#
+# RestartForceExitStatus adds SIGHUP/SIGPIPE to the restart set.
+# systemd treats SIGHUP/SIGINT/SIGTERM/SIGPIPE as "clean exit" by
+# default — opendray catches SIGTERM/SIGINT for graceful shutdown,
+# but HUP/PIPE arriving unhandled means something killed us we
+# didn't expect (rogue cleanup script, parent shell on logout,
+# misconfigured tool). Treat those as failures and restart.
 Restart=on-failure
 RestartSec=5s
+RestartForceExitStatus=SIGHUP SIGPIPE
 StartLimitIntervalSec=60
 StartLimitBurst=5
+
+# Resource ceilings — the default ulimit (1024 fds) is easy to
+# exhaust with concurrent PTY sessions + DB pool + WS clients.
+LimitNOFILE=65536
+TasksMax=4096
 
 # Graceful shutdown window — opendray's internal supervisor budgets
 # 15s for HTTP drain + subsystem stop. Give systemd 20s before
