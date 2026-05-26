@@ -198,42 +198,41 @@ func (s *Service) SetToken(ctx context.Context, id, token string) error {
 	return writeToken(a.TokenPath, token)
 }
 
-// ImportLocal scans ~/.claude-accounts/tokens/*.token on the gateway
-// host and registers a row for any token file that doesn't already
-// have one. Returns the list of newly-created accounts.
+// ImportLocal registers an account row for every Claude account found
+// on the gateway host that doesn't already have one. It looks in two
+// places under the accounts dir (default ~/.claude-accounts):
 //
-// Mirrors v1's behavior: zero-arg adoption flow for operators who set
-// up `claude-acc` before plugging into the gateway.
+//  1. Per-account CONFIG_DIRs — <accountsDir>/<name>/.credentials.json,
+//     produced by the documented `CLAUDE_CONFIG_DIR=<dir> claude login`
+//     flow. This is the primary, self-refreshing layout the provider
+//     panel instructs operators to use.
+//  2. Legacy flat tokens — <accountsDir>/tokens/<name>.token, produced
+//     by the older `claude-acc` tool.
+//
+// A missing directory is not an error (an operator may use only one
+// layout, or none yet) — the result is simply empty. Returns the list
+// of newly-created accounts.
 func (s *Service) ImportLocal(ctx context.Context) ([]Account, error) {
 	accountsDir := s.resolveAccountsDir()
 	if accountsDir == "" {
 		return nil, fmt.Errorf("resolve accounts dir: HOME unset and no accounts_dir configured")
 	}
-	tokensDir := filepath.Join(accountsDir, "tokens")
-	entries, err := os.ReadDir(tokensDir)
+
+	names, err := discoverLocalAccountNames(accountsDir)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("no %s — run `claude-acc init` on the host first", tokensDir)
-		}
-		return nil, fmt.Errorf("read %s: %w", tokensDir, err)
+		return nil, err
 	}
 
 	created := []Account{}
-	for _, e := range entries {
-		if e.IsDir() || !strings.HasSuffix(e.Name(), ".token") {
-			continue
-		}
-		name := strings.TrimSuffix(e.Name(), ".token")
+	for _, name := range names {
 		if _, err := s.store.GetByName(ctx, name); err == nil {
-			continue
+			continue // already registered
 		} else if !errors.Is(err, ErrNotFound) {
 			return nil, err
 		}
-		acct, err := s.Create(ctx, CreateRequest{
-			Name: name,
-			// Description left blank so the operator can rename
-			// later without us guessing intent.
-		})
+		// Best-effort: a single bad entry logs and is skipped rather
+		// than failing the whole import.
+		acct, err := s.Create(ctx, CreateRequest{Name: name})
 		if err != nil {
 			s.log.Warn("import-local: create failed", "name", name, "err", err)
 			continue
@@ -241,6 +240,53 @@ func (s *Service) ImportLocal(ctx context.Context) ([]Account, error) {
 		created = append(created, acct)
 	}
 	return created, nil
+}
+
+// discoverLocalAccountNames returns the unique account names found on
+// disk under accountsDir, config-dir layout first then legacy tokens,
+// preserving discovery order. Missing directories yield no entries (not
+// an error). Pure filesystem — no DB — so it's unit-testable.
+func discoverLocalAccountNames(accountsDir string) ([]string, error) {
+	var names []string
+	seen := map[string]bool{}
+	addName := func(name string) {
+		if name == "" || seen[name] {
+			return
+		}
+		seen[name] = true
+		names = append(names, name)
+	}
+
+	// 1) Per-account CONFIG_DIRs — <accountsDir>/<name>/.credentials.json
+	//    (the documented `CLAUDE_CONFIG_DIR=<dir> claude login` flow).
+	dirEntries, err := os.ReadDir(accountsDir)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("read %s: %w", accountsDir, err)
+	}
+	for _, e := range dirEntries {
+		if !e.IsDir() || e.Name() == "tokens" {
+			continue
+		}
+		if !fileExists(filepath.Join(accountsDir, e.Name(), ".credentials.json")) {
+			continue // not a Claude Code config dir
+		}
+		addName(e.Name())
+	}
+
+	// 2) Legacy <accountsDir>/tokens/*.token (the older claude-acc tool).
+	tokensDir := filepath.Join(accountsDir, "tokens")
+	tokEntries, err := os.ReadDir(tokensDir)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("read %s: %w", tokensDir, err)
+	}
+	for _, e := range tokEntries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".token") {
+			continue
+		}
+		addName(strings.TrimSuffix(e.Name(), ".token"))
+	}
+
+	return names, nil
 }
 
 func tokenFileFilled(path string) bool {
@@ -269,26 +315,54 @@ func writeToken(path, token string) error {
 	return nil
 }
 
-// ReadToken loads the OAuth token for an account. Used at session
-// spawn time by SessionProvider; not exposed over HTTP.
-func (s *Service) ReadToken(ctx context.Context, id string) (Account, string, error) {
+// ResolveSpawnCreds returns the credentials to inject when spawning a
+// process for account id:
+//
+//   - configDir → CLAUDE_CONFIG_DIR, the account's persistent dir where
+//     Claude Code reads and *refreshes* .credentials.json itself.
+//   - token → CLAUDE_CODE_OAUTH_TOKEN, a static OAuth token, set ONLY
+//     for legacy accounts that carry a token file. For the documented
+//     config-dir flow it is intentionally empty: pinning a static token
+//     would expire in ~1h, whereas the config dir self-refreshes.
+//
+// Errors when the account is disabled or has neither a non-empty token
+// file nor a config dir containing .credentials.json. Used at session
+// spawn time (catalog adapter + memory worker); not exposed over HTTP.
+func (s *Service) ResolveSpawnCreds(ctx context.Context, id string) (configDir, token string, err error) {
 	a, err := s.store.Get(ctx, id)
 	if err != nil {
-		return Account{}, "", err
+		return "", "", err
 	}
 	if !a.Enabled {
-		return a, "", ErrDisabled
+		return "", "", ErrDisabled
 	}
-	if a.TokenPath == "" {
-		return a, "", errors.New("account has no token_path")
+	return selectSpawnCreds(a.Name, a.ConfigDir, a.TokenPath)
+}
+
+// selectSpawnCreds is the pure filesystem half of ResolveSpawnCreds: it
+// reads the legacy token file (if any) and validates the config dir's
+// credentials, without touching the DB. Returns the static token only
+// when a token file is present; config-dir accounts get an empty token
+// and rely on CLAUDE_CONFIG_DIR.
+func selectSpawnCreds(name, configDir, tokenPath string) (string, string, error) {
+	token := ""
+	if tokenPath != "" {
+		if body, err := os.ReadFile(tokenPath); err == nil {
+			token = strings.TrimSpace(string(body))
+		}
 	}
-	body, err := os.ReadFile(a.TokenPath)
-	if err != nil {
-		return a, "", fmt.Errorf("read %s: %w", a.TokenPath, err)
+	if token == "" {
+		if configDir == "" || !fileExists(filepath.Join(configDir, ".credentials.json")) {
+			return "", "", fmt.Errorf(
+				"account %q has no usable credentials: no token file at %q and no %s/.credentials.json — run `CLAUDE_CONFIG_DIR=%s claude login` on the host",
+				name, tokenPath, configDir, configDir)
+		}
 	}
-	tok := strings.TrimSpace(string(body))
-	if tok == "" {
-		return a, "", fmt.Errorf("token file %s is empty", a.TokenPath)
-	}
-	return a, tok, nil
+	return configDir, token, nil
+}
+
+// fileExists reports whether path exists and is a regular file.
+func fileExists(path string) bool {
+	st, err := os.Stat(path)
+	return err == nil && !st.IsDir()
 }

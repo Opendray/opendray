@@ -383,12 +383,17 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		injectSessionIDFor(prepareCtx, providerID, &out)
 
 		if wantClaudeAccount {
-			acct, token, err := sp.accounts.ReadToken(prepareCtx, claudeAccountID)
+			configDir, token, err := sp.accounts.ResolveSpawnCreds(prepareCtx, claudeAccountID)
 			if err != nil {
 				return session.PrepareOutput{}, fmt.Errorf("claude account %s: %w", claudeAccountID, err)
 			}
-			out.Env["CLAUDE_CODE_OAUTH_TOKEN"] = token
-			if acct.ConfigDir != "" {
+			// Static token only for legacy token-file accounts; config-dir
+			// accounts authenticate via CLAUDE_CONFIG_DIR/.credentials.json,
+			// which Claude Code refreshes on its own.
+			if token != "" {
+				out.Env["CLAUDE_CODE_OAUTH_TOKEN"] = token
+			}
+			if configDir != "" {
 				// Point Claude Code at the account's persistent config
 				// dir directly. Earlier attempts to materialise skills
 				// here via symlinks broke first-run / auth state because
@@ -396,7 +401,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 				// any symlink with a fresh small file). We now keep the
 				// account dir untouched and inject skills purely via the
 				// --append-system-prompt CLI flag below.
-				out.Env["CLAUDE_CONFIG_DIR"] = acct.ConfigDir
+				out.Env["CLAUDE_CONFIG_DIR"] = configDir
 			}
 		}
 

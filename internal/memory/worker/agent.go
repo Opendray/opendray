@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/opendray/opendray-v2/internal/cliacct"
 )
 
 // AgentWorker spawns a headless Claude or Gemini CLI in --print
@@ -53,7 +52,7 @@ type AgentWorker struct {
 // needs. Kept minimal so the worker package doesn't pull the full
 // service surface — easier to mock in tests.
 type AccountReader interface {
-	ReadToken(ctx context.Context, id string) (cliacct.Account, string, error)
+	ResolveSpawnCreds(ctx context.Context, id string) (configDir, token string, err error)
 }
 
 // NewAgentWorker constructs a worker that will spawn the agent CLI
@@ -194,14 +193,16 @@ func (w *AgentWorker) buildCommand(req Request, sessionID string) ([]string, []s
 			// session manager uses in catalog/adapter.go.
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
-			acct, token, err := w.accounts.ReadToken(ctx, w.cfg.AccountID)
+			configDir, token, err := w.accounts.ResolveSpawnCreds(ctx, w.cfg.AccountID)
 			if err != nil {
 				return nil, nil, fmt.Errorf("agent worker: read claude account %s: %w",
 					w.cfg.AccountID, err)
 			}
-			env = append(env, "CLAUDE_CODE_OAUTH_TOKEN="+token)
-			if acct.ConfigDir != "" {
-				env = append(env, "CLAUDE_CONFIG_DIR="+acct.ConfigDir)
+			if token != "" {
+				env = append(env, "CLAUDE_CODE_OAUTH_TOKEN="+token)
+			}
+			if configDir != "" {
+				env = append(env, "CLAUDE_CONFIG_DIR="+configDir)
 			}
 		}
 		return args, env, nil
