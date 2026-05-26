@@ -5,9 +5,9 @@
 <h1 align="center">opendray</h1>
 
 <p align="center">
-  <strong>自托管的多 CLI 控制网关,为 AI 编程 Agent 而生。</strong>
+  <strong>自托管网关，统一接入 Claude Code · Codex · Gemini · shell —— 跨 CLI 共享的本地优先记忆层。</strong>
   <br/>
-  <sub>在 Web、移动端、或你喜欢的消息平台上远程操控 Claude Code · Codex · Gemini · shell。</sub>
+  <sub>在自己的服务器上运行会话。Web、移动端、聊天工具任意驾驭。开放 REST + WebSocket API 供集成。</sub>
 </p>
 
 <p align="center">

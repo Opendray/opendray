@@ -5,9 +5,9 @@
 <h1 align="center">opendray</h1>
 
 <p align="center">
-  <strong>Self-hosted multi-CLI control gateway for AI coding agents.</strong>
+  <strong>Self-hosted gateway for Claude Code · Codex · Gemini · shell — with one shared local-first memory layer across them.</strong>
   <br/>
-  <sub>Remote-control Claude Code · Codex · Gemini · shell from web, mobile, or your favourite messaging app.</sub>
+  <sub>Run sessions on your own infra. Drive from web, mobile, or chat. Open REST + WebSocket API for integrations.</sub>
 </p>
 
 <p align="center">
