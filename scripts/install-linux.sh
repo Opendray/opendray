@@ -234,14 +234,19 @@ cat <<'EOF'
 
   ┌─ Heads up ──────────────────────────────────────────────────────┐
   │ The CLIs are installed but NOT logged in. After this wizard,    │
-  │ run their login command interactively at least once:            │
+  │ run each login command as the opendray service user so the      │
+  │ daemon can read the resulting credentials:                      │
   │                                                                 │
-  │   claude login    # opens browser OAuth                         │
-  │   gemini auth login                                             │
-  │   codex login     # check CLI's own docs                        │
+  │   sudo -u opendray -H claude auth login                         │
+  │   sudo -u opendray -H codex login --device-auth                 │
+  │   sudo -u opendray -H GEMINI_CLI_NO_BROWSER=true gemini         │
+  │     (gemini has no `login` subcommand; run it once,             │
+  │      paste the device code from codeassist.google.com/          │
+  │      authcode at the prompt, then ^C to exit)                   │
   │                                                                 │
-  │ Credentials live in your user homedir and opendray picks them   │
-  │ up automatically when it spawns sessions.                       │
+  │ Credentials are written under                                   │
+  │   /var/lib/opendray/.{codex,gemini,claude}/                     │
+  │ which is where the daemon reads them at session spawn time.     │
   └─────────────────────────────────────────────────────────────────┘
 EOF
 
@@ -776,7 +781,15 @@ cat <<EOF
   Next:
     1. Open the admin UI (link above is clickable in most terminals),
        log in as ${OD_ADMIN_USER}, rotate the admin password.
-    2. Finish logging your AI CLI(s) in (claude login / gemini auth login / codex login).
+    2. Finish logging your AI CLI(s) in as the opendray service user so
+       the daemon can read the resulting credentials under
+       /var/lib/opendray/.{codex,gemini,claude}/ :
+         sudo -u opendray -H claude auth login
+         sudo -u opendray -H codex login --device-auth
+         sudo -u opendray -H GEMINI_CLI_NO_BROWSER=true gemini
+       (gemini has no 'login' subcommand — run it once interactively,
+        paste the device code from codeassist.google.com/authcode at
+        the prompt, then ^C to exit.)
     3. Providers → register the CLI binary path (e.g. \$(which claude)).
     4. Sessions → New session → spawn your first session.
 
