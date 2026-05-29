@@ -125,7 +125,6 @@ class _TranslationsNavZh extends TranslationsNavEn {
 	@override String get plugins => '插件';
 	@override String get backups => '备份';
 	@override String get settings => '设置';
-	@override String get tutorial => '教程';
 	@override String get workspace => '工作区';
 }
 
@@ -1180,6 +1179,7 @@ class _TranslationsWebProvidersZh extends TranslationsWebProvidersEn {
 	@override late final _TranslationsWebProvidersDetailZh detail = _TranslationsWebProvidersDetailZh._(_root);
 	@override late final _TranslationsWebProvidersConfigFormZh configForm = _TranslationsWebProvidersConfigFormZh._(_root);
 	@override late final _TranslationsWebProvidersClaudeAccountsZh claudeAccounts = _TranslationsWebProvidersClaudeAccountsZh._(_root);
+	@override late final _TranslationsWebProvidersModelsZh models = _TranslationsWebProvidersModelsZh._(_root);
 }
 
 // Path: web.channels
@@ -2672,6 +2672,7 @@ class _TranslationsWebSessionsTerminalZh extends TranslationsWebSessionsTerminal
 	@override String get uploadFailedToast => '上传失败';
 	@override String get uploadInvalidTypeToast => '仅支持图片文件';
 	@override String get dropToAttach => '释放以附加图片';
+	@override late final _TranslationsWebSessionsTerminalUrlsZh urls = _TranslationsWebSessionsTerminalUrlsZh._(_root);
 }
 
 // Path: web.sessions.spawn
@@ -2686,7 +2687,7 @@ class _TranslationsWebSessionsSpawnZh extends TranslationsWebSessionsSpawnEn {
 	@override String get provider => 'Provider';
 	@override String get claudeAccount => 'Claude 账号';
 	@override String get loadingAccounts => '正在加载账号…';
-	@override String get noAccounts => '尚未检测到 Claude 账号。先 spawn 这个会话,在终端里运行 claude login —— 认证完成后凭据会落到网关的 ~/.claude,下次进 spawn 时自动出现。';
+	@override String get noAccounts => '尚未检测到 Claude 账号。先 spawn 这个会话,在终端里运行 <1>claude login</1> —— 认证完成后凭据会落到网关的 <3>~/.claude</3>,下次进 spawn 时自动出现。';
 	@override String get kDefault => '默认';
 	@override String get defaultTooltip => '使用系统 keychain / 环境变量';
 	@override String get tokenEmptyBadge => '·未填';
@@ -3535,6 +3536,15 @@ class _TranslationsWebProvidersDetailZh extends TranslationsWebProvidersDetailEn
 	@override String get saveFailedToast => '保存失败';
 	@override String get toggleFailedToast => '切换失败';
 	@override late final _TranslationsWebProvidersDetailCapsZh caps = _TranslationsWebProvidersDetailCapsZh._(_root);
+	@override String get notInstalled => '未安装';
+	@override String updateAvailable({required Object version}) => '有可用更新 → ${version}';
+	@override String get upToDate => '已是最新';
+	@override String update({required Object version}) => '更新到 ${version}';
+	@override String get updating => '更新中…';
+	@override String updatedToast({required Object from, required Object to}) => '已更新 ${from} → ${to}';
+	@override String get alreadyLatestToast => '已是最新';
+	@override String get updateFailedToast => '更新失败';
+	@override String get updateUnavailable => '此处无法在应用内更新';
 }
 
 // Path: web.providers.configForm
@@ -3560,9 +3570,8 @@ class _TranslationsWebProvidersClaudeAccountsZh extends TranslationsWebProviders
 
 	// Translations
 	@override String get title => 'Claude 账号';
-	@override String get tutorialTooltip => '打开多账号教程章节';
 	@override String get importLocal => '导入本地';
-	@override String get importLocalTooltip => '扫描网关主机上的 ~/.claude-accounts/ 目录并注册新的目录。该按钮仅在网关主机环境下工作 — 详见教程。';
+	@override String get importLocalTooltip => '扫描网关主机上的 ~/.claude-accounts/ 目录并注册新的目录。该按钮仅在网关主机环境下工作。';
 	@override String get importedNothingToast => '无需导入 — 账号已同步。';
 	@override String importedToast_one({required Object count}) => '已从 ~/.claude-accounts 导入 ${count} 个账号';
 	@override String importedToast_other({required Object count}) => '已从 ~/.claude-accounts 导入 ${count} 个账号';
@@ -3570,9 +3579,8 @@ class _TranslationsWebProvidersClaudeAccountsZh extends TranslationsWebProviders
 	@override String get addingTitle => '添加新账号。';
 	@override String get addingBodyPrefix => '在网关主机执行：';
 	@override String get addingBodySuffix => 'opendray 的文件系统监听会自动注册新目录，或点击 <1>导入本地</1> 立即扫描。';
-	@override String get architectureLink => '架构与完整指南 →';
 	@override String get loading => '加载中…';
-	@override String get empty => '尚无 Claude 账号。在网关主机执行上面的 shell 命令，然后点击 <1>导入本地</1> 扫描。';
+	@override String get empty => '暂无 Claude 账号。最简单的方式:打开会话页,spawn 一个 Claude 会话,在终端里运行 <1>claude login</1> —— 完成 OAuth 后,凭据会落到网关的 <3>~/.claude</3>,自动出现在这里。需要管理多账号身份时,可改用上方的 shell 工作流。';
 	@override String get noTokenYet => '尚无 token';
 	@override String get configDir => 'config_dir:';
 	@override String get tokenPath => 'token_path:';
@@ -3582,6 +3590,25 @@ class _TranslationsWebProvidersClaudeAccountsZh extends TranslationsWebProviders
 	@override String get removeFailedToast => '移除失败';
 	@override String toggleAria({required Object name}) => '切换 ${name}';
 	@override String removeAria({required Object name}) => '移除 ${name}';
+}
+
+// Path: web.providers.models
+class _TranslationsWebProvidersModelsZh extends TranslationsWebProvidersModelsEn {
+	_TranslationsWebProvidersModelsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '模型';
+	@override String get help => '该提供方可用的模型。默认模型会通过 model 参数传给每个会话；会话仍可覆盖。';
+	@override String get empty => '尚未配置任何模型。';
+	@override String get add => '添加';
+	@override String get addPlaceholder => '模型 ID（如 sonnet）';
+	@override String suggested({required Object count}) => '建议（${count}）';
+	@override String get kDefault => '默认';
+	@override String get makeDefault => '设为默认';
+	@override String get setDefault => '用作默认模型';
+	@override String remove({required Object model}) => '移除 ${model}';
 }
 
 // Path: web.channels.empty
@@ -3925,7 +3952,10 @@ class _TranslationsWebPluginsMcpZh extends TranslationsWebPluginsMcpEn {
 	@override String get removedToast => 'MCP 服务器已移除';
 	@override String get deleteFailedToast => '删除失败';
 	@override String get toggleFailedToast => '切换失败';
+	@override String get codexUnsupportedBadge => 'Codex: 不支持';
+	@override String get codexUnsupportedTooltip => 'Codex CLI 仅支持 stdio 传输方式。Codex 会话将跳过此服务器；claude 和 gemini 仍会使用。';
 	@override late final _TranslationsWebPluginsMcpEditorZh editor = _TranslationsWebPluginsMcpEditorZh._(_root);
+	@override late final _TranslationsWebPluginsMcpTestZh test = _TranslationsWebPluginsMcpTestZh._(_root);
 }
 
 // Path: web.plugins.mcpSecrets
@@ -4612,6 +4642,23 @@ class _TranslationsWebSettingsAboutZh extends TranslationsWebSettingsAboutEn {
 	// Translations
 	@override String get title => '关于';
 	@override String get description => 'opendray v2 — 面向 AI agent CLI 的多路复用 + 集成网关。源码采用 Apache 2.0 协议。';
+	@override String get version => '版本';
+	@override String get commit => '提交';
+	@override String updateAvailable({required Object version}) => '有可用更新：${version}';
+	@override String get releaseNotes => '发行说明 ↗';
+	@override String get updateNow => '立即更新';
+	@override String get upgradingShort => '更新中…';
+	@override String get confirmRestart => '这将重启服务，正在运行的会话会重新连接。';
+	@override String get confirmUpgrade => '升级并重启';
+	@override String upgrading({required Object version}) => '正在升级到 ${version}…';
+	@override String upgraded({required Object version}) => '已更新到 ${version}。';
+	@override String get upgradeSlow => '升级耗时较长——如果服务未恢复，请检查日志。';
+	@override String get guidedHint => '此处不支持应用内升级。请在服务器上运行：';
+	@override String get checkFailed => '无法检查更新（离线或受限）。';
+	@override String get upToDate => '已是最新版本。';
+	@override String get checkUpdates => '检查更新';
+	@override String get checking => '检查中…';
+	@override String get reinstall => '重新安装';
 }
 
 // Path: web.memoryAmbient.header
@@ -5668,6 +5715,27 @@ class _TranslationsWebSessionsListRowZh extends TranslationsWebSessionsListRowEn
 	@override String claudeAccountTitle({required Object label}) => 'Claude 账号：${label}';
 }
 
+// Path: web.sessions.terminal.urls
+class _TranslationsWebSessionsTerminalUrlsZh extends TranslationsWebSessionsTerminalUrlsEn {
+	_TranslationsWebSessionsTerminalUrlsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get tooltip => '打开本会话最新检测到的链接';
+	@override String get tapToOpenLatest => '点击打开最新链接(通常是 OAuth URL)';
+	@override String get openListTooltip => '显示所有链接';
+	@override String buttonLabel({required Object count}) => '${count} 个链接';
+	@override String buttonLabel_plural({required Object count}) => '${count} 个链接';
+	@override String get dialogTitle => '检测到的链接';
+	@override String get dialogDesc => '本会话输出中出现过的 URL,最新的在最上面。点击「打开」即可在默认浏览器中跳转 —— 终端里的换行不会影响。';
+	@override String get openButton => '打开';
+	@override String get copyButton => '复制';
+	@override String get copiedToast => '链接已复制';
+	@override String get copyFailedToast => '复制失败 —— 请长按链接手动复制';
+	@override String get noneHint => '暂未检测到链接。';
+}
+
 // Path: web.sessions.inspector.tabs
 class _TranslationsWebSessionsInspectorTabsZh extends TranslationsWebSessionsInspectorTabsEn {
 	_TranslationsWebSessionsInspectorTabsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -6081,6 +6149,25 @@ class _TranslationsWebPluginsMcpEditorZh extends TranslationsWebPluginsMcpEditor
 	@override String get savedToast => 'MCP 服务器已保存';
 	@override String get createFailedToast => '创建失败';
 	@override String get saveFailedToast => '保存失败';
+	@override String get transportLabel => '传输方式';
+	@override String get transportHint => '切换传输方式会将 JSON 模板替换为对应的新模板。';
+	@override String get transportStdio => 'stdio (本地子进程)';
+	@override String get transportSse => 'sse (远程服务器)';
+	@override String get transportHttp => 'http (远程服务器)';
+}
+
+// Path: web.plugins.mcp.test
+class _TranslationsWebPluginsMcpTestZh extends TranslationsWebPluginsMcpTestEn {
+	_TranslationsWebPluginsMcpTestZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get button => '测试';
+	@override String get title => '从守护进程验证此 MCP 服务器';
+	@override String connected({required Object count}) => '已连接 · ${count} 个工具';
+	@override String get reachable => '可达';
+	@override String get failed => '测试失败';
 }
 
 // Path: web.plugins.mcpSecrets.columns
@@ -7266,7 +7353,6 @@ extension on TranslationsZh {
 			'nav.plugins' => '插件',
 			'nav.backups' => '备份',
 			'nav.settings' => '设置',
-			'nav.tutorial' => '教程',
 			'nav.workspace' => '工作区',
 			'web.brand' => 'opendray',
 			'web.loading' => '加载中…',
@@ -7343,12 +7429,24 @@ extension on TranslationsZh {
 			'web.sessions.terminal.uploadFailedToast' => '上传失败',
 			'web.sessions.terminal.uploadInvalidTypeToast' => '仅支持图片文件',
 			'web.sessions.terminal.dropToAttach' => '释放以附加图片',
+			'web.sessions.terminal.urls.tooltip' => '打开本会话最新检测到的链接',
+			'web.sessions.terminal.urls.tapToOpenLatest' => '点击打开最新链接(通常是 OAuth URL)',
+			'web.sessions.terminal.urls.openListTooltip' => '显示所有链接',
+			'web.sessions.terminal.urls.buttonLabel' => ({required Object count}) => '${count} 个链接',
+			'web.sessions.terminal.urls.buttonLabel_plural' => ({required Object count}) => '${count} 个链接',
+			'web.sessions.terminal.urls.dialogTitle' => '检测到的链接',
+			'web.sessions.terminal.urls.dialogDesc' => '本会话输出中出现过的 URL,最新的在最上面。点击「打开」即可在默认浏览器中跳转 —— 终端里的换行不会影响。',
+			'web.sessions.terminal.urls.openButton' => '打开',
+			'web.sessions.terminal.urls.copyButton' => '复制',
+			'web.sessions.terminal.urls.copiedToast' => '链接已复制',
+			'web.sessions.terminal.urls.copyFailedToast' => '复制失败 —— 请长按链接手动复制',
+			'web.sessions.terminal.urls.noneHint' => '暂未检测到链接。',
 			'web.sessions.spawn.title' => '创建会话',
 			'web.sessions.spawn.description' => '在已注册的 Provider 下启动一个 CLI 会话。',
 			'web.sessions.spawn.provider' => 'Provider',
 			'web.sessions.spawn.claudeAccount' => 'Claude 账号',
 			'web.sessions.spawn.loadingAccounts' => '正在加载账号…',
-			'web.sessions.spawn.noAccounts' => '尚未检测到 Claude 账号。先 spawn 这个会话,在终端里运行 claude login —— 认证完成后凭据会落到网关的 ~/.claude,下次进 spawn 时自动出现。',
+			'web.sessions.spawn.noAccounts' => '尚未检测到 Claude 账号。先 spawn 这个会话,在终端里运行 <1>claude login</1> —— 认证完成后凭据会落到网关的 <3>~/.claude</3>,下次进 spawn 时自动出现。',
 			'web.sessions.spawn.kDefault' => '默认',
 			'web.sessions.spawn.defaultTooltip' => '使用系统 keychain / 环境变量',
 			'web.sessions.spawn.tokenEmptyBadge' => '·未填',
@@ -7734,6 +7832,8 @@ extension on TranslationsZh {
 			'web.memoryInspector.toasts.syncEmpty' => '没有需要同步的新 .md 文件',
 			'web.memoryInspector.toasts.syncEmptyDescription' => '已是最新，或该 cwd 没有 Claude memory 目录。',
 			'web.memoryInspector.toasts.syncFailed' => '同步失败',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.toasts.testOk' => ({required Object embedder, required Object dim}) => 'Embedder OK：${embedder} · ${dim} 维',
 			'web.memoryInspector.toasts.testOkDescription' => ({required Object preview}) => 'vector_preview = [${preview}…]',
 			'web.memoryInspector.toasts.testFailed' => 'Embedder 探测失败',
@@ -7745,8 +7845,6 @@ extension on TranslationsZh {
 			'web.memoryInspector.bulkDelete.items_one' => ({required Object count}) => '${count} 条记忆',
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} 条记忆',
 			'web.memoryInspector.bulkDelete.cancel' => '取消',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.bulkDelete.deleteAll' => '全部删除',
 			'web.memoryInspector.addMem.title' => '添加记忆',
 			'web.memoryInspector.addMem.description' => '手动创建一条记忆。Agent 会通过 <1>memory_store</1> MCP 工具自动创建；此表单用于运维想跳过 agent 直接录入事实的场景。',
@@ -7991,6 +8089,15 @@ extension on TranslationsZh {
 			'web.providers.detail.caps.stream' => 'stream',
 			'web.providers.detail.caps.images' => 'images',
 			'web.providers.detail.caps.mcp' => 'mcp',
+			'web.providers.detail.notInstalled' => '未安装',
+			'web.providers.detail.updateAvailable' => ({required Object version}) => '有可用更新 → ${version}',
+			'web.providers.detail.upToDate' => '已是最新',
+			'web.providers.detail.update' => ({required Object version}) => '更新到 ${version}',
+			'web.providers.detail.updating' => '更新中…',
+			'web.providers.detail.updatedToast' => ({required Object from, required Object to}) => '已更新 ${from} → ${to}',
+			'web.providers.detail.alreadyLatestToast' => '已是最新',
+			'web.providers.detail.updateFailedToast' => '更新失败',
+			'web.providers.detail.updateUnavailable' => '此处无法在应用内更新',
 			'web.providers.configForm.selectPlaceholder' => '选择…',
 			'web.providers.configForm.defaultOption' => '(默认)',
 			'web.providers.configForm.switchOn' => '开',
@@ -7998,9 +8105,8 @@ extension on TranslationsZh {
 			'web.providers.configForm.showSecret' => '显示密钥',
 			'web.providers.configForm.hideSecret' => '隐藏密钥',
 			'web.providers.claudeAccounts.title' => 'Claude 账号',
-			'web.providers.claudeAccounts.tutorialTooltip' => '打开多账号教程章节',
 			'web.providers.claudeAccounts.importLocal' => '导入本地',
-			'web.providers.claudeAccounts.importLocalTooltip' => '扫描网关主机上的 ~/.claude-accounts/ 目录并注册新的目录。该按钮仅在网关主机环境下工作 — 详见教程。',
+			'web.providers.claudeAccounts.importLocalTooltip' => '扫描网关主机上的 ~/.claude-accounts/ 目录并注册新的目录。该按钮仅在网关主机环境下工作。',
 			'web.providers.claudeAccounts.importedNothingToast' => '无需导入 — 账号已同步。',
 			'web.providers.claudeAccounts.importedToast_one' => ({required Object count}) => '已从 ~/.claude-accounts 导入 ${count} 个账号',
 			'web.providers.claudeAccounts.importedToast_other' => ({required Object count}) => '已从 ~/.claude-accounts 导入 ${count} 个账号',
@@ -8008,9 +8114,8 @@ extension on TranslationsZh {
 			'web.providers.claudeAccounts.addingTitle' => '添加新账号。',
 			'web.providers.claudeAccounts.addingBodyPrefix' => '在网关主机执行：',
 			'web.providers.claudeAccounts.addingBodySuffix' => 'opendray 的文件系统监听会自动注册新目录，或点击 <1>导入本地</1> 立即扫描。',
-			'web.providers.claudeAccounts.architectureLink' => '架构与完整指南 →',
 			'web.providers.claudeAccounts.loading' => '加载中…',
-			'web.providers.claudeAccounts.empty' => '尚无 Claude 账号。在网关主机执行上面的 shell 命令，然后点击 <1>导入本地</1> 扫描。',
+			'web.providers.claudeAccounts.empty' => '暂无 Claude 账号。最简单的方式:打开会话页,spawn 一个 Claude 会话,在终端里运行 <1>claude login</1> —— 完成 OAuth 后,凭据会落到网关的 <3>~/.claude</3>,自动出现在这里。需要管理多账号身份时,可改用上方的 shell 工作流。',
 			'web.providers.claudeAccounts.noTokenYet' => '尚无 token',
 			'web.providers.claudeAccounts.configDir' => 'config_dir:',
 			'web.providers.claudeAccounts.tokenPath' => 'token_path:',
@@ -8020,6 +8125,16 @@ extension on TranslationsZh {
 			'web.providers.claudeAccounts.removeFailedToast' => '移除失败',
 			'web.providers.claudeAccounts.toggleAria' => ({required Object name}) => '切换 ${name}',
 			'web.providers.claudeAccounts.removeAria' => ({required Object name}) => '移除 ${name}',
+			'web.providers.models.title' => '模型',
+			'web.providers.models.help' => '该提供方可用的模型。默认模型会通过 model 参数传给每个会话；会话仍可覆盖。',
+			'web.providers.models.empty' => '尚未配置任何模型。',
+			'web.providers.models.add' => '添加',
+			'web.providers.models.addPlaceholder' => '模型 ID（如 sonnet）',
+			'web.providers.models.suggested' => ({required Object count}) => '建议（${count}）',
+			'web.providers.models.kDefault' => '默认',
+			'web.providers.models.makeDefault' => '设为默认',
+			'web.providers.models.setDefault' => '用作默认模型',
+			'web.providers.models.remove' => ({required Object model}) => '移除 ${model}',
 			'web.channels.title' => '频道',
 			'web.channels.subtitle' => '双向消息集成。每个频道的出站通知按其 <1>notify_on</1> 过滤。',
 			'web.channels.newButton' => '新建频道',
@@ -8231,6 +8346,8 @@ extension on TranslationsZh {
 			'web.plugins.common.cancel' => '取消',
 			'web.plugins.common.edit' => '编辑',
 			'web.plugins.common.add' => '添加',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.common.save' => '保存',
 			'web.plugins.common.create' => '创建',
 			'web.plugins.mcp.title' => 'MCP 服务器',
@@ -8247,6 +8364,8 @@ extension on TranslationsZh {
 			'web.plugins.mcp.removedToast' => 'MCP 服务器已移除',
 			'web.plugins.mcp.deleteFailedToast' => '删除失败',
 			'web.plugins.mcp.toggleFailedToast' => '切换失败',
+			'web.plugins.mcp.codexUnsupportedBadge' => 'Codex: 不支持',
+			'web.plugins.mcp.codexUnsupportedTooltip' => 'Codex CLI 仅支持 stdio 传输方式。Codex 会话将跳过此服务器；claude 和 gemini 仍会使用。',
 			'web.plugins.mcp.editor.createTitle' => '新建 MCP 服务器',
 			'web.plugins.mcp.editor.editTitle' => ({required Object id}) => '编辑 MCP: ${id}',
 			'web.plugins.mcp.editor.description' => ({required Object API_KEY}) => 'JSON 结构：stdio（默认）使用 <1>command</1>+<3>args</3>+<5>env</5>；sse / http 使用 <7>transport</7> +<9> url</9>+<11>headers</11>。以 <13>\$${API_KEY}</13> 引用密钥 — spawn 时会从密钥文件替换。',
@@ -8259,8 +8378,16 @@ extension on TranslationsZh {
 			'web.plugins.mcp.editor.savedToast' => 'MCP 服务器已保存',
 			'web.plugins.mcp.editor.createFailedToast' => '创建失败',
 			'web.plugins.mcp.editor.saveFailedToast' => '保存失败',
-			_ => null,
-		} ?? switch (path) {
+			'web.plugins.mcp.editor.transportLabel' => '传输方式',
+			'web.plugins.mcp.editor.transportHint' => '切换传输方式会将 JSON 模板替换为对应的新模板。',
+			'web.plugins.mcp.editor.transportStdio' => 'stdio (本地子进程)',
+			'web.plugins.mcp.editor.transportSse' => 'sse (远程服务器)',
+			'web.plugins.mcp.editor.transportHttp' => 'http (远程服务器)',
+			'web.plugins.mcp.test.button' => '测试',
+			'web.plugins.mcp.test.title' => '从守护进程验证此 MCP 服务器',
+			'web.plugins.mcp.test.connected' => ({required Object count}) => '已连接 · ${count} 个工具',
+			'web.plugins.mcp.test.reachable' => '可达',
+			'web.plugins.mcp.test.failed' => '测试失败',
 			'web.plugins.mcpSecrets.title' => 'MCP 密钥',
 			'web.plugins.mcpSecrets.encryptedBadge' => '已加密',
 			'web.plugins.mcpSecrets.plaintextBadge' => '明文',
@@ -8733,6 +8860,8 @@ extension on TranslationsZh {
 			'web.serverSettings.stringList.noneDefault' => '（无 — 使用内置默认值）',
 			'web.serverSettings.stringList.addPath' => '添加路径',
 			'web.serverSettings.stringList.removeTitle' => '移除',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.httpHelpers.autoDetected' => '启动时自动检测到',
 			'web.serverSettings.httpHelpers.modelCount' => ({required Object count}) => '${count} 个模型 — 点击使用',
 			'web.serverSettings.httpHelpers.presets' => '预设：',
@@ -8773,8 +8902,6 @@ extension on TranslationsZh {
 			'web.serverSettings.backup.scheduleHeaders.keep' => '保留',
 			'web.serverSettings.backup.scheduleHeaders.state' => '状态',
 			'web.serverSettings.backup.every' => ({required Object interval}) => '每 ${interval}',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.backup.backupsKeep' => ({required Object count}) => '${count} 份备份',
 			'web.serverSettings.backup.stateEnabled' => '已启用',
 			'web.serverSettings.backup.statePaused' => '已暂停',
@@ -8849,6 +8976,23 @@ extension on TranslationsZh {
 			'web.settings.system.unreachable' => '不可达',
 			'web.settings.about.title' => '关于',
 			'web.settings.about.description' => 'opendray v2 — 面向 AI agent CLI 的多路复用 + 集成网关。源码采用 Apache 2.0 协议。',
+			'web.settings.about.version' => '版本',
+			'web.settings.about.commit' => '提交',
+			'web.settings.about.updateAvailable' => ({required Object version}) => '有可用更新：${version}',
+			'web.settings.about.releaseNotes' => '发行说明 ↗',
+			'web.settings.about.updateNow' => '立即更新',
+			'web.settings.about.upgradingShort' => '更新中…',
+			'web.settings.about.confirmRestart' => '这将重启服务，正在运行的会话会重新连接。',
+			'web.settings.about.confirmUpgrade' => '升级并重启',
+			'web.settings.about.upgrading' => ({required Object version}) => '正在升级到 ${version}…',
+			'web.settings.about.upgraded' => ({required Object version}) => '已更新到 ${version}。',
+			'web.settings.about.upgradeSlow' => '升级耗时较长——如果服务未恢复，请检查日志。',
+			'web.settings.about.guidedHint' => '此处不支持应用内升级。请在服务器上运行：',
+			'web.settings.about.checkFailed' => '无法检查更新（离线或受限）。',
+			'web.settings.about.upToDate' => '已是最新版本。',
+			'web.settings.about.checkUpdates' => '检查更新',
+			'web.settings.about.checking' => '检查中…',
+			'web.settings.about.reinstall' => '重新安装',
 			'web.logViewer.filterPlaceholder' => '过滤…',
 			'web.logViewer.debugTooltip' => 'Debug 计数',
 			'web.logViewer.infoTooltip' => 'Info 计数',
@@ -9230,6 +9374,8 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.cwdLabel' => '工作目录',
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
 			'sessions.spawnSheet.cwdHelper' => '网关主机上的绝对路径。',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.browse' => '浏览',
 			'sessions.spawnSheet.nameLabel' => '名称（可选）',
 			'sessions.spawnSheet.nameHint' => '例如：backend-refactor',
@@ -9287,8 +9433,6 @@ extension on TranslationsZh {
 			'mcp.editor.create' => '创建',
 			'mcp.secret.keyLabel' => '键',
 			'mcp.secret.keyHint' => 'GITHUB_TOKEN、OPENAI_KEY、…',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.secret.valueLabel' => '值',
 			'mcp.secret.keyRequired' => '必须填写键。',
 			'mcp.secret.keyInvalid' => '键必须匹配 [A-Za-z_][A-Za-z0-9_]* — 与 shell 环境变量规则相同。',
@@ -9744,6 +9888,8 @@ extension on TranslationsZh {
 			'backupTargetEditor.pathPrefixLabel' => '路径前缀',
 			'backupTargetEditor.pathPrefixHintShareRoot' => '共享根下的子文件夹（可选）',
 			'backupTargetEditor.pathPrefixHintBaseUrl' => 'Base URL 下的子文件夹（可选）',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.pathPrefixHintObjectKey' => '对象键前缀（可选）',
 			'backupTargetEditor.pathPrefixHintSshFolder' => '绝对路径或相对用户主目录（可选）',
 			'backupTargetEditor.pathPrefixHintRemoteRoot' => '远端根下的子文件夹（可选）',
@@ -9801,8 +9947,6 @@ extension on TranslationsZh {
 			'githosts.form.tokenHintNew' => '粘贴个人访问令牌。',
 			'githosts.form.enabledHelper' => '可供会话用于 PR / 远端查找。',
 			'githosts.form.validateTokenRequired' => '添加主机时必须填写 Token。',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.form.appBarEdit' => ({required Object name}) => '编辑 ${name}',
 			'githosts.form.appBarNew' => '添加 Git 主机',
 			'githosts.form.tokenPreviewHint' => ({required Object preview}) => '当前预览：${preview}',
@@ -10258,6 +10402,8 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.gitRoot' => 'Git 根',
 			'settings.serverSettings.fields.personalPrefix' => '个人前缀',
 			'settings.serverSettings.fields.projectsPrefix' => '项目前缀',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.registryRoot' => '注册表根',
 			'settings.serverSettings.fields.secretsFile' => '密钥文件',
 			'settings.serverSettings.fields.backend' => '后端',
