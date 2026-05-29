@@ -11,6 +11,6 @@ translate_var: t
 enum_name: AppLocale
 class_name: Translations
 translation_class_visibility: private
-# {name} placeholder syntax — matches react-i18next default, keeps
-# the JSON keys portable when web joins the same translation source.
+# {name} placeholder syntax. Mobile uses single-brace consistently;
+# any {{name}} appearing in JSON is a typo that breaks codegen.
 string_interpolation: braces

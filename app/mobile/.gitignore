@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local release script (machine-specific, uses local Keychain secrets)
+build_android.sh
+

@@ -964,11 +964,11 @@
           "mcp": "mcp"
         },
         "notInstalled": "not installed",
-        "updateAvailable": "update available → {{version}}",
+        "updateAvailable": "update available → {version}",
         "upToDate": "up to date",
-        "update": "Update to {{version}}",
+        "update": "Update to {version}",
         "updating": "Updating…",
-        "updatedToast": "Updated {{from}} → {{to}}",
+        "updatedToast": "Updated {from} → {to}",
         "alreadyLatestToast": "Already up to date",
         "updateFailedToast": "Update failed",
         "updateUnavailable": "In-app update not available here"
@@ -1011,11 +1011,11 @@
         "empty": "No models configured yet.",
         "add": "Add",
         "addPlaceholder": "model id (e.g. sonnet)",
-        "suggested": "Suggested ({{count}})",
+        "suggested": "Suggested ({count})",
         "default": "default",
         "makeDefault": "set default",
         "setDefault": "Use as the default model",
-        "remove": "Remove {{model}}"
+        "remove": "Remove {model}"
       }
     },
     "channels": {
@@ -1313,7 +1313,7 @@
         "test": {
           "button": "Test",
           "title": "Validate this MCP server from the daemon",
-          "connected": "connected · {{count}} tools",
+          "connected": "connected · {count} tools",
           "reachable": "reachable",
           "failed": "test failed"
         }
@@ -2125,14 +2125,14 @@
         "description": "opendray v2 — the multiplexer + integration gateway for AI agent CLIs. Source under Apache 2.0.",
         "version": "Version",
         "commit": "Commit",
-        "updateAvailable": "Update available: {{version}}",
+        "updateAvailable": "Update available: {version}",
         "releaseNotes": "Release notes ↗",
         "updateNow": "Update now",
         "upgradingShort": "Upgrading…",
         "confirmRestart": "This restarts the service; running sessions reconnect.",
         "confirmUpgrade": "Upgrade & restart",
-        "upgrading": "Upgrading to {{version}}…",
-        "upgraded": "Updated to {{version}}.",
+        "upgrading": "Upgrading to {version}…",
+        "upgraded": "Updated to {version}.",
         "upgradeSlow": "Upgrade is taking a while — check the service logs if it doesn't come back.",
         "guidedHint": "In-app upgrade isn't available here. Run on the server:",
         "checkFailed": "Couldn't check for updates (offline or rate-limited).",

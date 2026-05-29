@@ -193,9 +193,6 @@ class TranslationsNavEn {
 	/// en: 'Settings'
 	String get settings => 'Settings';
 
-	/// en: 'Tutorial'
-	String get tutorial => 'Tutorial';
-
 	/// en: 'Workspace'
 	String get workspace => 'Workspace';
 }
@@ -2428,6 +2425,7 @@ class TranslationsWebProvidersEn {
 	late final TranslationsWebProvidersDetailEn detail = TranslationsWebProvidersDetailEn.internal(_root);
 	late final TranslationsWebProvidersConfigFormEn configForm = TranslationsWebProvidersConfigFormEn.internal(_root);
 	late final TranslationsWebProvidersClaudeAccountsEn claudeAccounts = TranslationsWebProvidersClaudeAccountsEn.internal(_root);
+	late final TranslationsWebProvidersModelsEn models = TranslationsWebProvidersModelsEn.internal(_root);
 }
 
 // Path: web.channels
@@ -5166,6 +5164,8 @@ class TranslationsWebSessionsTerminalEn {
 
 	/// en: 'Drop image to attach'
 	String get dropToAttach => 'Drop image to attach';
+
+	late final TranslationsWebSessionsTerminalUrlsEn urls = TranslationsWebSessionsTerminalUrlsEn.internal(_root);
 }
 
 // Path: web.sessions.spawn
@@ -5191,8 +5191,8 @@ class TranslationsWebSessionsSpawnEn {
 	/// en: 'Loading accounts…'
 	String get loadingAccounts => 'Loading accounts…';
 
-	/// en: 'No Claude accounts found. Spawn this session and run claude login in the terminal — credentials land in ~/.claude on the gateway and show up automatically next time.'
-	String get noAccounts => 'No Claude accounts found. Spawn this session and run claude login in the terminal — credentials land in ~/.claude on the gateway and show up automatically next time.';
+	/// en: 'No Claude accounts found. Spawn this session and run <1>claude login</1> in the terminal — credentials land in <3>~/.claude</3> on the gateway and show up automatically next time.'
+	String get noAccounts => 'No Claude accounts found. Spawn this session and run <1>claude login</1> in the terminal — credentials land in <3>~/.claude</3> on the gateway and show up automatically next time.';
 
 	/// en: 'Default'
 	String get kDefault => 'Default';
@@ -6813,6 +6813,33 @@ class TranslationsWebProvidersDetailEn {
 	String get toggleFailedToast => 'Toggle failed';
 
 	late final TranslationsWebProvidersDetailCapsEn caps = TranslationsWebProvidersDetailCapsEn.internal(_root);
+
+	/// en: 'not installed'
+	String get notInstalled => 'not installed';
+
+	/// en: 'update available → {version}'
+	String updateAvailable({required Object version}) => 'update available → ${version}';
+
+	/// en: 'up to date'
+	String get upToDate => 'up to date';
+
+	/// en: 'Update to {version}'
+	String update({required Object version}) => 'Update to ${version}';
+
+	/// en: 'Updating…'
+	String get updating => 'Updating…';
+
+	/// en: 'Updated {from} → {to}'
+	String updatedToast({required Object from, required Object to}) => 'Updated ${from} → ${to}';
+
+	/// en: 'Already up to date'
+	String get alreadyLatestToast => 'Already up to date';
+
+	/// en: 'Update failed'
+	String get updateFailedToast => 'Update failed';
+
+	/// en: 'In-app update not available here'
+	String get updateUnavailable => 'In-app update not available here';
 }
 
 // Path: web.providers.configForm
@@ -6853,14 +6880,11 @@ class TranslationsWebProvidersClaudeAccountsEn {
 	/// en: 'Claude accounts'
 	String get title => 'Claude accounts';
 
-	/// en: 'Open the multi-account tutorial section'
-	String get tutorialTooltip => 'Open the multi-account tutorial section';
-
 	/// en: 'Import local'
 	String get importLocal => 'Import local';
 
-	/// en: 'Scan ~/.claude-accounts/ on the gateway host and register any new directories. The button is gateway-host only — see the tutorial.'
-	String get importLocalTooltip => 'Scan ~/.claude-accounts/ on the gateway host and register any new directories. The button is gateway-host only — see the tutorial.';
+	/// en: 'Scan ~/.claude-accounts/ on the gateway host and register any new directories. The button is gateway-host only.'
+	String get importLocalTooltip => 'Scan ~/.claude-accounts/ on the gateway host and register any new directories. The button is gateway-host only.';
 
 	/// en: 'Nothing to import — accounts already in sync.'
 	String get importedNothingToast => 'Nothing to import — accounts already in sync.';
@@ -6889,8 +6913,8 @@ class TranslationsWebProvidersClaudeAccountsEn {
 	/// en: 'Loading…'
 	String get loading => 'Loading…';
 
-	/// en: 'No Claude accounts yet. Run the shell command above on the gateway host, then click <1>Import local</1> to scan.'
-	String get empty => 'No Claude accounts yet. Run the shell command above on the gateway host, then click <1>Import local</1> to scan.';
+	/// en: 'No Claude accounts yet. Easiest path: open Sessions, spawn a Claude session, and run <1>claude login</1> in the terminal — your OAuth credentials land in <3>~/.claude</3> on the gateway and show up here automatically. Power users juggling multiple identities can use the shell workflow above instead.'
+	String get empty => 'No Claude accounts yet. Easiest path: open Sessions, spawn a Claude session, and run <1>claude login</1> in the terminal — your OAuth credentials land in <3>~/.claude</3> on the gateway and show up here automatically. Power users juggling multiple identities can use the shell workflow above instead.';
 
 	/// en: 'no token yet'
 	String get noTokenYet => 'no token yet';
@@ -6918,6 +6942,45 @@ class TranslationsWebProvidersClaudeAccountsEn {
 
 	/// en: 'Remove {name}'
 	String removeAria({required Object name}) => 'Remove ${name}';
+}
+
+// Path: web.providers.models
+class TranslationsWebProvidersModelsEn {
+	TranslationsWebProvidersModelsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Models'
+	String get title => 'Models';
+
+	/// en: 'Models offered for this provider. The default is passed to every session via the model flag; sessions can still override it.'
+	String get help => 'Models offered for this provider. The default is passed to every session via the model flag; sessions can still override it.';
+
+	/// en: 'No models configured yet.'
+	String get empty => 'No models configured yet.';
+
+	/// en: 'Add'
+	String get add => 'Add';
+
+	/// en: 'model id (e.g. sonnet)'
+	String get addPlaceholder => 'model id (e.g. sonnet)';
+
+	/// en: 'Suggested ({count})'
+	String suggested({required Object count}) => 'Suggested (${count})';
+
+	/// en: 'default'
+	String get kDefault => 'default';
+
+	/// en: 'set default'
+	String get makeDefault => 'set default';
+
+	/// en: 'Use as the default model'
+	String get setDefault => 'Use as the default model';
+
+	/// en: 'Remove {model}'
+	String remove({required Object model}) => 'Remove ${model}';
 }
 
 // Path: web.channels.empty
@@ -7654,7 +7717,14 @@ class TranslationsWebPluginsMcpEn {
 	/// en: 'Toggle failed'
 	String get toggleFailedToast => 'Toggle failed';
 
+	/// en: 'Codex: unsupported'
+	String get codexUnsupportedBadge => 'Codex: unsupported';
+
+	/// en: 'The codex CLI supports stdio transport only. This server will be skipped for codex sessions; claude and gemini will still use it.'
+	String get codexUnsupportedTooltip => 'The codex CLI supports stdio transport only. This server will be skipped for codex sessions; claude and gemini will still use it.';
+
 	late final TranslationsWebPluginsMcpEditorEn editor = TranslationsWebPluginsMcpEditorEn.internal(_root);
+	late final TranslationsWebPluginsMcpTestEn test = TranslationsWebPluginsMcpTestEn.internal(_root);
 }
 
 // Path: web.plugins.mcpSecrets
@@ -8923,6 +8993,57 @@ class TranslationsWebSettingsAboutEn {
 
 	/// en: 'opendray v2 — the multiplexer + integration gateway for AI agent CLIs. Source under Apache 2.0.'
 	String get description => 'opendray v2 — the multiplexer + integration gateway for AI agent CLIs. Source under Apache 2.0.';
+
+	/// en: 'Version'
+	String get version => 'Version';
+
+	/// en: 'Commit'
+	String get commit => 'Commit';
+
+	/// en: 'Update available: {version}'
+	String updateAvailable({required Object version}) => 'Update available: ${version}';
+
+	/// en: 'Release notes ↗'
+	String get releaseNotes => 'Release notes ↗';
+
+	/// en: 'Update now'
+	String get updateNow => 'Update now';
+
+	/// en: 'Upgrading…'
+	String get upgradingShort => 'Upgrading…';
+
+	/// en: 'This restarts the service; running sessions reconnect.'
+	String get confirmRestart => 'This restarts the service; running sessions reconnect.';
+
+	/// en: 'Upgrade & restart'
+	String get confirmUpgrade => 'Upgrade & restart';
+
+	/// en: 'Upgrading to {version}…'
+	String upgrading({required Object version}) => 'Upgrading to ${version}…';
+
+	/// en: 'Updated to {version}.'
+	String upgraded({required Object version}) => 'Updated to ${version}.';
+
+	/// en: 'Upgrade is taking a while — check the service logs if it doesn't come back.'
+	String get upgradeSlow => 'Upgrade is taking a while — check the service logs if it doesn\'t come back.';
+
+	/// en: 'In-app upgrade isn't available here. Run on the server:'
+	String get guidedHint => 'In-app upgrade isn\'t available here. Run on the server:';
+
+	/// en: 'Couldn't check for updates (offline or rate-limited).'
+	String get checkFailed => 'Couldn\'t check for updates (offline or rate-limited).';
+
+	/// en: 'You're on the latest release.'
+	String get upToDate => 'You\'re on the latest release.';
+
+	/// en: 'Check for updates'
+	String get checkUpdates => 'Check for updates';
+
+	/// en: 'Checking…'
+	String get checking => 'Checking…';
+
+	/// en: 'Re-install'
+	String get reinstall => 'Re-install';
 }
 
 // Path: web.memoryAmbient.header
@@ -9932,8 +10053,8 @@ class TranslationsSessionsSpawnSheetClaudeAccountEn {
 	/// en: ' (no token)'
 	String get noTokenSuffix => ' (no token)';
 
-	/// en: 'No Claude accounts found. Spawn this session and run claude login in the terminal — credentials land in ~/.claude on the gateway and show up automatically next time.'
-	String get noneHint => 'No Claude accounts found. Spawn this session and run claude login in the terminal — credentials land in ~/.claude on the gateway and show up automatically next time.';
+	/// en: 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY. Add accounts under Settings → Accounts on the web admin.'
+	String get noneHint => 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY. Add accounts under Settings → Accounts on the web admin.';
 
 	/// en: 'Could not load Claude accounts ({error}). The session will spawn with the gateway default.'
 	String errorHint({required Object error}) => 'Could not load Claude accounts (${error}). The session will spawn with the gateway default.';
@@ -10776,6 +10897,51 @@ class TranslationsWebSessionsListRowEn {
 	String claudeAccountTitle({required Object label}) => 'Claude account: ${label}';
 }
 
+// Path: web.sessions.terminal.urls
+class TranslationsWebSessionsTerminalUrlsEn {
+	TranslationsWebSessionsTerminalUrlsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Open the latest link detected in this session'
+	String get tooltip => 'Open the latest link detected in this session';
+
+	/// en: 'Tap to open the latest link (most recent OAuth URL)'
+	String get tapToOpenLatest => 'Tap to open the latest link (most recent OAuth URL)';
+
+	/// en: 'Show all links'
+	String get openListTooltip => 'Show all links';
+
+	/// en: '{count} link'
+	String buttonLabel({required Object count}) => '${count} link';
+
+	/// en: '{count} links'
+	String buttonLabel_plural({required Object count}) => '${count} links';
+
+	/// en: 'Detected links'
+	String get dialogTitle => 'Detected links';
+
+	/// en: 'URLs printed in this session's output, newest first. Tap Open to launch in your default browser — works even when the URL is line-wrapped in the terminal.'
+	String get dialogDesc => 'URLs printed in this session\'s output, newest first. Tap Open to launch in your default browser — works even when the URL is line-wrapped in the terminal.';
+
+	/// en: 'Open'
+	String get openButton => 'Open';
+
+	/// en: 'Copy'
+	String get copyButton => 'Copy';
+
+	/// en: 'URL copied'
+	String get copiedToast => 'URL copied';
+
+	/// en: 'Couldn't copy — long-press the URL and copy manually'
+	String get copyFailedToast => 'Couldn\'t copy — long-press the URL and copy manually';
+
+	/// en: 'No links detected yet.'
+	String get noneHint => 'No links detected yet.';
+}
+
 // Path: web.sessions.inspector.tabs
 class TranslationsWebSessionsInspectorTabsEn {
 	TranslationsWebSessionsInspectorTabsEn.internal(this._root);
@@ -11513,6 +11679,45 @@ class TranslationsWebPluginsMcpEditorEn {
 
 	/// en: 'Save failed'
 	String get saveFailedToast => 'Save failed';
+
+	/// en: 'Transport'
+	String get transportLabel => 'Transport';
+
+	/// en: 'Switching transport replaces the JSON template with a starter shape appropriate for the new transport.'
+	String get transportHint => 'Switching transport replaces the JSON template with a starter shape appropriate for the new transport.';
+
+	/// en: 'stdio (local subprocess)'
+	String get transportStdio => 'stdio (local subprocess)';
+
+	/// en: 'sse (remote server)'
+	String get transportSse => 'sse (remote server)';
+
+	/// en: 'http (remote server)'
+	String get transportHttp => 'http (remote server)';
+}
+
+// Path: web.plugins.mcp.test
+class TranslationsWebPluginsMcpTestEn {
+	TranslationsWebPluginsMcpTestEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Test'
+	String get button => 'Test';
+
+	/// en: 'Validate this MCP server from the daemon'
+	String get title => 'Validate this MCP server from the daemon';
+
+	/// en: 'connected · {count} tools'
+	String connected({required Object count}) => 'connected · ${count} tools';
+
+	/// en: 'reachable'
+	String get reachable => 'reachable';
+
+	/// en: 'test failed'
+	String get failed => 'test failed';
 }
 
 // Path: web.plugins.mcpSecrets.columns
@@ -13469,7 +13674,6 @@ extension on Translations {
 			'nav.plugins' => 'Plugins',
 			'nav.backups' => 'Backups',
 			'nav.settings' => 'Settings',
-			'nav.tutorial' => 'Tutorial',
 			'nav.workspace' => 'Workspace',
 			'web.brand' => 'opendray',
 			'web.loading' => 'Loading…',
@@ -13546,12 +13750,24 @@ extension on Translations {
 			'web.sessions.terminal.uploadFailedToast' => 'Upload failed',
 			'web.sessions.terminal.uploadInvalidTypeToast' => 'Only image files can be attached',
 			'web.sessions.terminal.dropToAttach' => 'Drop image to attach',
+			'web.sessions.terminal.urls.tooltip' => 'Open the latest link detected in this session',
+			'web.sessions.terminal.urls.tapToOpenLatest' => 'Tap to open the latest link (most recent OAuth URL)',
+			'web.sessions.terminal.urls.openListTooltip' => 'Show all links',
+			'web.sessions.terminal.urls.buttonLabel' => ({required Object count}) => '${count} link',
+			'web.sessions.terminal.urls.buttonLabel_plural' => ({required Object count}) => '${count} links',
+			'web.sessions.terminal.urls.dialogTitle' => 'Detected links',
+			'web.sessions.terminal.urls.dialogDesc' => 'URLs printed in this session\'s output, newest first. Tap Open to launch in your default browser — works even when the URL is line-wrapped in the terminal.',
+			'web.sessions.terminal.urls.openButton' => 'Open',
+			'web.sessions.terminal.urls.copyButton' => 'Copy',
+			'web.sessions.terminal.urls.copiedToast' => 'URL copied',
+			'web.sessions.terminal.urls.copyFailedToast' => 'Couldn\'t copy — long-press the URL and copy manually',
+			'web.sessions.terminal.urls.noneHint' => 'No links detected yet.',
 			'web.sessions.spawn.title' => 'Spawn session',
 			'web.sessions.spawn.description' => 'Start a CLI session under a registered provider.',
 			'web.sessions.spawn.provider' => 'Provider',
 			'web.sessions.spawn.claudeAccount' => 'Claude account',
 			'web.sessions.spawn.loadingAccounts' => 'Loading accounts…',
-			'web.sessions.spawn.noAccounts' => 'No Claude accounts found. Spawn this session and run claude login in the terminal — credentials land in ~/.claude on the gateway and show up automatically next time.',
+			'web.sessions.spawn.noAccounts' => 'No Claude accounts found. Spawn this session and run <1>claude login</1> in the terminal — credentials land in <3>~/.claude</3> on the gateway and show up automatically next time.',
 			'web.sessions.spawn.kDefault' => 'Default',
 			'web.sessions.spawn.defaultTooltip' => 'Use system keychain / env',
 			'web.sessions.spawn.tokenEmptyBadge' => '·empty',
@@ -13937,6 +14153,8 @@ extension on Translations {
 			'web.memoryInspector.toasts.syncEmpty' => 'No new .md files to sync',
 			'web.memoryInspector.toasts.syncEmptyDescription' => 'Already in sync, or no Claude memory dir for this cwd.',
 			'web.memoryInspector.toasts.syncFailed' => 'Sync failed',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.toasts.testOk' => ({required Object embedder, required Object dim}) => 'Embedder OK: ${embedder} · ${dim} dimensions',
 			'web.memoryInspector.toasts.testOkDescription' => ({required Object preview}) => 'vector_preview = [${preview}…]',
 			'web.memoryInspector.toasts.testFailed' => 'Embedder probe failed',
@@ -13948,8 +14166,6 @@ extension on Translations {
 			'web.memoryInspector.bulkDelete.items_one' => ({required Object count}) => '${count} memory item',
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} memory items',
 			'web.memoryInspector.bulkDelete.cancel' => 'Cancel',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.bulkDelete.deleteAll' => 'Delete all',
 			'web.memoryInspector.addMem.title' => 'Add memory',
 			'web.memoryInspector.addMem.description' => 'Manually create a memory. Agents create these automatically via the <1>memory_store</1> MCP tool — this form is for cases where the operator wants to seed a fact without going through an agent.',
@@ -14194,6 +14410,15 @@ extension on Translations {
 			'web.providers.detail.caps.stream' => 'stream',
 			'web.providers.detail.caps.images' => 'images',
 			'web.providers.detail.caps.mcp' => 'mcp',
+			'web.providers.detail.notInstalled' => 'not installed',
+			'web.providers.detail.updateAvailable' => ({required Object version}) => 'update available → ${version}',
+			'web.providers.detail.upToDate' => 'up to date',
+			'web.providers.detail.update' => ({required Object version}) => 'Update to ${version}',
+			'web.providers.detail.updating' => 'Updating…',
+			'web.providers.detail.updatedToast' => ({required Object from, required Object to}) => 'Updated ${from} → ${to}',
+			'web.providers.detail.alreadyLatestToast' => 'Already up to date',
+			'web.providers.detail.updateFailedToast' => 'Update failed',
+			'web.providers.detail.updateUnavailable' => 'In-app update not available here',
 			'web.providers.configForm.selectPlaceholder' => 'Select…',
 			'web.providers.configForm.defaultOption' => '(default)',
 			'web.providers.configForm.switchOn' => 'On',
@@ -14201,9 +14426,8 @@ extension on Translations {
 			'web.providers.configForm.showSecret' => 'Show secret',
 			'web.providers.configForm.hideSecret' => 'Hide secret',
 			'web.providers.claudeAccounts.title' => 'Claude accounts',
-			'web.providers.claudeAccounts.tutorialTooltip' => 'Open the multi-account tutorial section',
 			'web.providers.claudeAccounts.importLocal' => 'Import local',
-			'web.providers.claudeAccounts.importLocalTooltip' => 'Scan ~/.claude-accounts/ on the gateway host and register any new directories. The button is gateway-host only — see the tutorial.',
+			'web.providers.claudeAccounts.importLocalTooltip' => 'Scan ~/.claude-accounts/ on the gateway host and register any new directories. The button is gateway-host only.',
 			'web.providers.claudeAccounts.importedNothingToast' => 'Nothing to import — accounts already in sync.',
 			'web.providers.claudeAccounts.importedToast_one' => ({required Object count}) => 'Imported ${count} account from ~/.claude-accounts',
 			'web.providers.claudeAccounts.importedToast_other' => ({required Object count}) => 'Imported ${count} accounts from ~/.claude-accounts',
@@ -14213,7 +14437,7 @@ extension on Translations {
 			'web.providers.claudeAccounts.addingBodySuffix' => 'opendray\'s filesystem watcher will register the new directory automatically, or click <1>Import local</1> to scan immediately.',
 			'web.providers.claudeAccounts.architectureLink' => 'Architecture & full guide →',
 			'web.providers.claudeAccounts.loading' => 'Loading…',
-			'web.providers.claudeAccounts.empty' => 'No Claude accounts yet. Run the shell command above on the gateway host, then click <1>Import local</1> to scan.',
+			'web.providers.claudeAccounts.empty' => 'No Claude accounts yet. Easiest path: open Sessions, spawn a Claude session, and run <1>claude login</1> in the terminal — your OAuth credentials land in <3>~/.claude</3> on the gateway and show up here automatically. Power users juggling multiple identities can use the shell workflow above instead.',
 			'web.providers.claudeAccounts.noTokenYet' => 'no token yet',
 			'web.providers.claudeAccounts.configDir' => 'config_dir:',
 			'web.providers.claudeAccounts.tokenPath' => 'token_path:',
@@ -14223,6 +14447,16 @@ extension on Translations {
 			'web.providers.claudeAccounts.removeFailedToast' => 'Remove failed',
 			'web.providers.claudeAccounts.toggleAria' => ({required Object name}) => 'Toggle ${name}',
 			'web.providers.claudeAccounts.removeAria' => ({required Object name}) => 'Remove ${name}',
+			'web.providers.models.title' => 'Models',
+			'web.providers.models.help' => 'Models offered for this provider. The default is passed to every session via the model flag; sessions can still override it.',
+			'web.providers.models.empty' => 'No models configured yet.',
+			'web.providers.models.add' => 'Add',
+			'web.providers.models.addPlaceholder' => 'model id (e.g. sonnet)',
+			'web.providers.models.suggested' => ({required Object count}) => 'Suggested (${count})',
+			'web.providers.models.kDefault' => 'default',
+			'web.providers.models.makeDefault' => 'set default',
+			'web.providers.models.setDefault' => 'Use as the default model',
+			'web.providers.models.remove' => ({required Object model}) => 'Remove ${model}',
 			'web.channels.title' => 'Channels',
 			'web.channels.subtitle' => 'Bidirectional messaging integrations. Outbound notifications are filtered by each channel\'s <1>notify_on</1>.',
 			'web.channels.newButton' => 'New channel',
@@ -14433,6 +14667,8 @@ extension on Translations {
 			'web.plugins.common.loading' => 'Loading…',
 			'web.plugins.common.cancel' => 'Cancel',
 			'web.plugins.common.edit' => 'Edit',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.common.add' => 'Add',
 			'web.plugins.common.save' => 'Save',
 			'web.plugins.common.create' => 'Create',
@@ -14450,6 +14686,8 @@ extension on Translations {
 			'web.plugins.mcp.removedToast' => 'MCP server removed',
 			'web.plugins.mcp.deleteFailedToast' => 'Delete failed',
 			'web.plugins.mcp.toggleFailedToast' => 'Toggle failed',
+			'web.plugins.mcp.codexUnsupportedBadge' => 'Codex: unsupported',
+			'web.plugins.mcp.codexUnsupportedTooltip' => 'The codex CLI supports stdio transport only. This server will be skipped for codex sessions; claude and gemini will still use it.',
 			'web.plugins.mcp.editor.createTitle' => 'New MCP server',
 			'web.plugins.mcp.editor.editTitle' => ({required Object id}) => 'Edit MCP: ${id}',
 			'web.plugins.mcp.editor.description' => ({required Object API_KEY}) => 'JSON shape: <1>command</1>+<3>args</3>+<5>env</5> for stdio (default), or <7>transport</7> +<9> url</9>+<11>headers</11> for sse / http. Reference secrets as <13>\$${API_KEY}</13> — they get substituted at spawn time from the secrets file.',
@@ -14462,8 +14700,16 @@ extension on Translations {
 			'web.plugins.mcp.editor.savedToast' => 'MCP server saved',
 			'web.plugins.mcp.editor.createFailedToast' => 'Create failed',
 			'web.plugins.mcp.editor.saveFailedToast' => 'Save failed',
-			_ => null,
-		} ?? switch (path) {
+			'web.plugins.mcp.editor.transportLabel' => 'Transport',
+			'web.plugins.mcp.editor.transportHint' => 'Switching transport replaces the JSON template with a starter shape appropriate for the new transport.',
+			'web.plugins.mcp.editor.transportStdio' => 'stdio (local subprocess)',
+			'web.plugins.mcp.editor.transportSse' => 'sse (remote server)',
+			'web.plugins.mcp.editor.transportHttp' => 'http (remote server)',
+			'web.plugins.mcp.test.button' => 'Test',
+			'web.plugins.mcp.test.title' => 'Validate this MCP server from the daemon',
+			'web.plugins.mcp.test.connected' => ({required Object count}) => 'connected · ${count} tools',
+			'web.plugins.mcp.test.reachable' => 'reachable',
+			'web.plugins.mcp.test.failed' => 'test failed',
 			'web.plugins.mcpSecrets.title' => 'MCP secrets',
 			'web.plugins.mcpSecrets.encryptedBadge' => 'encrypted',
 			'web.plugins.mcpSecrets.plaintextBadge' => 'plaintext',
@@ -14935,6 +15181,8 @@ extension on Translations {
 			'web.serverSettings.localOnnxBanner' => 'Requires the binary to be compiled with <1>-tags local_onnx</1>. The standard build returns a clear stub error when this backend is selected. See <3>Memory → Local ONNX</3> tutorial for setup steps.',
 			'web.serverSettings.stringList.noneDefault' => '(none — using built-in defaults)',
 			'web.serverSettings.stringList.addPath' => 'Add path',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.stringList.removeTitle' => 'Remove',
 			'web.serverSettings.httpHelpers.autoDetected' => 'Auto-detected at startup',
 			'web.serverSettings.httpHelpers.modelCount' => ({required Object count}) => '${count} model(s) — click to use',
@@ -14976,8 +15224,6 @@ extension on Translations {
 			'web.serverSettings.backup.scheduleHeaders.keep' => 'Keep',
 			'web.serverSettings.backup.scheduleHeaders.state' => 'State',
 			'web.serverSettings.backup.every' => ({required Object interval}) => 'every ${interval}',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.backup.backupsKeep' => ({required Object count}) => '${count} backups',
 			'web.serverSettings.backup.stateEnabled' => 'enabled',
 			'web.serverSettings.backup.statePaused' => 'paused',
@@ -15052,6 +15298,23 @@ extension on Translations {
 			'web.settings.system.unreachable' => 'unreachable',
 			'web.settings.about.title' => 'About',
 			'web.settings.about.description' => 'opendray v2 — the multiplexer + integration gateway for AI agent CLIs. Source under Apache 2.0.',
+			'web.settings.about.version' => 'Version',
+			'web.settings.about.commit' => 'Commit',
+			'web.settings.about.updateAvailable' => ({required Object version}) => 'Update available: ${version}',
+			'web.settings.about.releaseNotes' => 'Release notes ↗',
+			'web.settings.about.updateNow' => 'Update now',
+			'web.settings.about.upgradingShort' => 'Upgrading…',
+			'web.settings.about.confirmRestart' => 'This restarts the service; running sessions reconnect.',
+			'web.settings.about.confirmUpgrade' => 'Upgrade & restart',
+			'web.settings.about.upgrading' => ({required Object version}) => 'Upgrading to ${version}…',
+			'web.settings.about.upgraded' => ({required Object version}) => 'Updated to ${version}.',
+			'web.settings.about.upgradeSlow' => 'Upgrade is taking a while — check the service logs if it doesn\'t come back.',
+			'web.settings.about.guidedHint' => 'In-app upgrade isn\'t available here. Run on the server:',
+			'web.settings.about.checkFailed' => 'Couldn\'t check for updates (offline or rate-limited).',
+			'web.settings.about.upToDate' => 'You\'re on the latest release.',
+			'web.settings.about.checkUpdates' => 'Check for updates',
+			'web.settings.about.checking' => 'Checking…',
+			'web.settings.about.reinstall' => 'Re-install',
 			'web.logViewer.filterPlaceholder' => 'Filter…',
 			'web.logViewer.debugTooltip' => 'Debug count',
 			'web.logViewer.infoTooltip' => 'Info count',
@@ -15432,6 +15695,8 @@ extension on Translations {
 			'sessions.spawnSheet.disabledSuffix' => ' (disabled)',
 			'sessions.spawnSheet.cwdLabel' => 'Working directory',
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.cwdHelper' => 'Absolute path on the gateway host.',
 			'sessions.spawnSheet.browse' => 'Browse',
 			'sessions.spawnSheet.nameLabel' => 'Name (optional)',
@@ -15457,7 +15722,7 @@ extension on Translations {
 			'sessions.spawnSheet.claudeAccount.kDefault' => 'Default (env / system)',
 			'sessions.spawnSheet.claudeAccount.disabledSuffix' => ' (disabled)',
 			'sessions.spawnSheet.claudeAccount.noTokenSuffix' => ' (no token)',
-			'sessions.spawnSheet.claudeAccount.noneHint' => 'No Claude accounts found. Spawn this session and run claude login in the terminal — credentials land in ~/.claude on the gateway and show up automatically next time.',
+			'sessions.spawnSheet.claudeAccount.noneHint' => 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY. Add accounts under Settings → Accounts on the web admin.',
 			'sessions.spawnSheet.claudeAccount.errorHint' => ({required Object error}) => 'Could not load Claude accounts (${error}). The session will spawn with the gateway default.',
 			'mcp.title' => 'MCP',
 			'mcp.newServer' => 'New server',
@@ -15490,8 +15755,6 @@ extension on Translations {
 			'mcp.editor.create' => 'Create',
 			'mcp.secret.keyLabel' => 'Key',
 			'mcp.secret.keyHint' => 'GITHUB_TOKEN, OPENAI_KEY, …',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.secret.valueLabel' => 'Value',
 			'mcp.secret.keyRequired' => 'Key is required.',
 			'mcp.secret.keyInvalid' => 'Key must match [A-Za-z_][A-Za-z0-9_]* — same rules as a shell env var.',
@@ -15946,6 +16209,8 @@ extension on Translations {
 			'backupTargetEditor.passwordHintKeep' => 'Leave blank to keep',
 			'backupTargetEditor.pathPrefixLabel' => 'Path prefix',
 			'backupTargetEditor.pathPrefixHintShareRoot' => 'Sub-folder under the share root (optional)',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.pathPrefixHintBaseUrl' => 'Sub-folder under the base URL (optional)',
 			'backupTargetEditor.pathPrefixHintObjectKey' => 'Object-key prefix (optional)',
 			'backupTargetEditor.pathPrefixHintSshFolder' => 'Absolute or relative to user home (optional)',
@@ -16004,8 +16269,6 @@ extension on Translations {
 			'githosts.form.tokenHintNew' => 'Paste the personal access token.',
 			'githosts.form.enabledHelper' => 'Available to sessions for PR / remote lookups.',
 			'githosts.form.validateTokenRequired' => 'Token is required when adding a host.',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.form.appBarEdit' => ({required Object name}) => 'Edit ${name}',
 			'githosts.form.appBarNew' => 'Add git host',
 			'githosts.form.tokenPreviewHint' => ({required Object preview}) => 'Current preview: ${preview}',
@@ -16460,6 +16723,8 @@ extension on Translations {
 			'settings.serverSettings.fields.skillsPath' => 'Skills path',
 			'settings.serverSettings.fields.gitRoot' => 'Git root',
 			'settings.serverSettings.fields.personalPrefix' => 'Personal prefix',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.projectsPrefix' => 'Projects prefix',
 			'settings.serverSettings.fields.registryRoot' => 'Registry root',
 			'settings.serverSettings.fields.secretsFile' => 'Secrets file',
