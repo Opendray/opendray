@@ -134,6 +134,10 @@ export interface ProviderRuntime {
   latestVersion?: string
   updateAvailable: boolean
   checkedAt?: string
+  // Non-terminal sessions currently using this provider's CLI. Used by
+  // the Providers page to warn before upgrading a CLI that running
+  // sessions are on it. 0 when the server didn't populate the counter.
+  activeSessions: number
 }
 
 export interface Provider {

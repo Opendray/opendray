@@ -26,6 +26,12 @@ type RuntimeInfo struct {
 	LatestVersion    string `json:"latestVersion,omitempty"`
 	UpdateAvailable  bool   `json:"updateAvailable"`
 	CheckedAt        string `json:"checkedAt,omitempty"` // RFC3339; when LatestVersion was fetched
+	// ActiveSessions is the number of non-terminal sessions currently
+	// using this provider's CLI. Populated by the handler from the
+	// session manager (0 when the counter isn't wired). Surfaced so the
+	// dashboard can warn before upgrading a CLI that running sessions
+	// are using.
+	ActiveSessions int `json:"activeSessions"`
 }
 
 // Cache TTLs: installed state is cheap (local exec) so a short TTL keeps

@@ -180,6 +180,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		log.Warn("session reconcile on startup failed", "err", err)
 	}
 	sessionHandlers := session.NewHandlers(sessionMgr, log)
+	// Now that the session manager exists, let the catalog handler
+	// populate RuntimeInfo.ActiveSessions on update-check responses so
+	// the UI can warn the operator before upgrading a CLI that running
+	// sessions are using.
+	catalogHandlers.WithSessionCounter(sessionMgr.ActiveCountByProvider)
 
 	channelHub := channel.NewHub(st.Pool(), bus, log)
 	// Plain-text inbound from a channel (e.g. a Telegram reply that

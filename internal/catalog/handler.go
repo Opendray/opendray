@@ -48,6 +48,10 @@ type Handlers struct {
 	prober *Prober
 	bus    *eventbus.Hub
 	log    *slog.Logger
+	// activeCountFor returns the count of currently non-terminal
+	// sessions on a provider, used to populate RuntimeInfo.ActiveSessions
+	// for the upgrade UI. Optional; nil → ActiveSessions is left at 0.
+	activeCountFor func(providerID string) int
 }
 
 func NewHandlers(cat *Catalog, bus *eventbus.Hub, log *slog.Logger) *Handlers {
@@ -55,6 +59,14 @@ func NewHandlers(cat *Catalog, bus *eventbus.Hub, log *slog.Logger) *Handlers {
 		log = slog.Default()
 	}
 	return &Handlers{cat: cat, prober: NewProber(), bus: bus, log: log.With("component", "catalog.http")}
+}
+
+// WithSessionCounter wires in a per-provider active-session counter so
+// the update-check response includes how many live sessions are using
+// the provider's CLI. Returns the receiver so it chains off the ctor.
+func (h *Handlers) WithSessionCounter(f func(providerID string) int) *Handlers {
+	h.activeCountFor = f
+	return h
 }
 
 func (h *Handlers) Mount(r chi.Router) {
@@ -119,6 +131,9 @@ func (h *Handlers) updateCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	info := h.prober.CheckUpdate(r.Context(), p.Manifest)
+	if h.activeCountFor != nil {
+		info.ActiveSessions = h.activeCountFor(id)
+	}
 	writeJSON(w, http.StatusOK, info)
 }
 

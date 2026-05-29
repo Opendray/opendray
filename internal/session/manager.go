@@ -675,6 +675,29 @@ func (m *Manager) List(ctx context.Context) ([]Session, error) {
 	return list, nil
 }
 
+// ActiveCountByProvider returns the number of currently non-terminal
+// sessions backed by providerID. Iterates the in-memory live map only,
+// so it's O(live sessions) and lock-cheap — designed for the catalog
+// update-check path that surfaces "N session(s) running on claude" so
+// the operator can confirm before swapping the CLI binary underneath
+// them.
+func (m *Manager) ActiveCountByProvider(providerID string) int {
+	if providerID == "" {
+		return 0
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	n := 0
+	for _, rs := range m.sessions {
+		rs.sessMu.RLock()
+		if rs.sess.ProviderID == providerID && !rs.sess.State.IsTerminal() {
+			n++
+		}
+		rs.sessMu.RUnlock()
+	}
+	return n
+}
+
 // Stop terminates the running process for a session but preserves
 // the DB row. The user can subsequently call Start to re-spawn.
 // For an already-terminal session it succeeds as a no-op.
