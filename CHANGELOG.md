@@ -10,6 +10,65 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.3.4] — 2026-05-29
+
+### Fixed
+
+- **Language toggle in the web Topbar moved its checkmark but UI
+  strings didn't switch.** The zustand → i18next bridge ran as a
+  module-level `useLocale.subscribe(...)` in `i18n.ts` that mounted
+  before React. Under React 19 StrictMode + Vite HMR + zustand persist
+  hydration the subscription could end up registered against a store
+  snapshot React never re-reconciled with, so picking a language moved
+  the dropdown's checkmark (which reads from the store) without
+  triggering `i18n.changeLanguage()`. Moved the bridge into a
+  `<LocaleSync />` React effect under `QueryClientProvider` so it
+  shares the same lifecycle as every other `useTranslation()`
+  consumer and they update in lockstep (#267).
+
+- **Nine UI strings rendered their placeholders literally** —
+  "update available → {{version}}", "Suggested ({{count}})", "Updated
+  {{from}} → {{to}}", "connected · {{count}} tools", and the three
+  About-panel version-toaster lines all showed the `{{var}}` template
+  instead of the substituted value. The web i18next interpolation is
+  configured for single-brace `{name}` but those particular keys were
+  authored with the i18next default `{{name}}`. Normalized them across
+  both locales (#261).
+
+- **Mobile `flutter build apk` failed with hundreds of parser errors
+  after slang codegen.** Mobile's slang config uses
+  `string_interpolation: braces` (matching the web) but the same
+  `{{var}}` typos that produced literal placeholders on web produced
+  invalid Dart on mobile — `({required Object {version})` and
+  `${{version}}` — that wouldn't compile. Same normalization as #261,
+  plus a refresh of the generated `strings*.g.dart` outputs and
+  alignment of `app/mobile/pubspec.yaml` to the product version
+  (#264).
+
+### Changed
+
+- **App icons now show the new wooden-cart wordmark glyph instead of
+  the old pink-gradient "D".** README was already updated to the
+  opendray.dev wordmark, but the running surfaces — web favicon,
+  Android launcher mipmaps, the full iOS `AppIcon.appiconset`, and
+  the repo-root `assets/icons/logo/` set — hadn't caught up, so a
+  fresh install showed the new brand on GitHub and the old brand on
+  the device. Regenerated every square icon surface from a single
+  1024×1024 source so proportions stay consistent across sizes
+  (#266).
+
+- **The Providers page now asks for confirmation before upgrading a
+  CLI that has live sessions on it.** Linux file-replacement
+  semantics mean an already-loaded session keeps the old binary in
+  memory, but a long session with lazy / dynamic imports or in-flight
+  subprocess work can pick up new code mid-run. When `n > 0`
+  non-terminal sessions are using the provider, clicking Update opens
+  a dialog with the count and an honest explanation of the trade-off;
+  with no live sessions Update still fires immediately, as before.
+  Update-check responses also stay fresh for an hour now (matching
+  the server-side npm cache) instead of being re-fetched on every tab
+  switch (#263).
+
 ## [v2.3.3] — 2026-05-24
 
 ### Fixed
