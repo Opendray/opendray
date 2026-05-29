@@ -3,8 +3,12 @@ import { initReactI18next } from 'react-i18next'
 
 import en from '../../i18n/en.json'
 import zh from '../../i18n/zh.json'
-import { useLocale, type Locale } from '@/stores/locale'
+import { useLocale } from '@/stores/locale'
 
+// Initialise with the persisted (or detected) locale. After this point
+// the running language is owned by i18next and kept in sync with the
+// zustand store through <LocaleSync /> in the React tree — see
+// components/LocaleSync.tsx for the rationale.
 void i18n
   .use(initReactI18next)
   .init({
@@ -21,15 +25,5 @@ void i18n
     },
     returnNull: false,
   })
-
-useLocale.subscribe((s) => {
-  if (i18n.language !== s.locale) {
-    void i18n.changeLanguage(s.locale)
-  }
-})
-
-export function setLocale(l: Locale) {
-  useLocale.getState().setLocale(l)
-}
 
 export default i18n
