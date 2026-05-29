@@ -6,6 +6,7 @@ import { RouterProvider } from '@tanstack/react-router'
 import './index.css'
 import './i18n' // side-effect: initialise i18next before render
 import { router } from './router'
+import { LocaleSync } from '@/components/LocaleSync'
 import { Toaster } from '@/components/ui/sonner'
 import '@/stores/theme' // side-effect: apply persisted theme
 
@@ -32,6 +33,7 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
+      <LocaleSync />
       <RouterProvider router={router} />
       <Toaster />
     </QueryClientProvider>
