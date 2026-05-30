@@ -1,0 +1,39 @@
+name: Notify site on release
+
+# When a GitHub release is flipped from draft to published, ping
+# Opendray/opendray.dev so it rebuilds and the changelog/version card
+# updates immediately. Without this, opendray.dev only rebuilds on its
+# own push-to-main, so new releases can sit unseen on the site for days.
+#
+# Required secret:
+#   ODSITE_DISPATCH_PAT — fine-grained PAT scoped to Opendray/opendray.dev
+#                         with `Actions: read & write` (Repository permission)
+#                         and nothing else. Rotate annually.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger opendray.dev rebuild
+        env:
+          PAT: ${{ secrets.ODSITE_DISPATCH_PAT }}
+          TAG: ${{ github.event.release.tag_name || 'manual' }}
+        run: |
+          if [ -z "$PAT" ]; then
+            echo "ODSITE_DISPATCH_PAT not set — skipping dispatch."
+            echo "Add a fine-grained PAT (Opendray/opendray.dev, Actions: read & write)."
+            exit 0
+          fi
+          curl -sSf -X POST \
+            -H "Authorization: token $PAT" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/Opendray/opendray.dev/dispatches" \
+            -d "{\"event_type\":\"opendray-release\",\"client_payload\":{\"tag\":\"$TAG\"}}"
+          echo "Dispatched opendray-release for $TAG"
