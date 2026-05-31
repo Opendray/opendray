@@ -1,6 +1,7 @@
 package cliacct
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -235,4 +236,22 @@ func TestSelectSpawnCreds(t *testing.T) {
 			t.Error("expected error when neither token nor config-dir creds exist")
 		}
 	})
+}
+
+func TestResolveClaudeConfigDir_EmptyIDReturnsHomeClaude(t *testing.T) {
+	// Sessions with no pinned account use the Claude CLI's own
+	// ~/.claude home. The transcript-migration path needs that
+	// concrete dir (not "") so the source JSONL can be located when
+	// switching from "no pin" to a named account.
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	svc := &Service{} // store not needed for empty-id path
+	got, err := svc.ResolveClaudeConfigDir(context.Background(), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(home, ".claude")
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
 }

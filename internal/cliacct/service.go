@@ -382,14 +382,25 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 }
 
 // ResolveClaudeConfigDir implements session.ClaudeAccountResolver —
-// returns the CLAUDE_CONFIG_DIR that would be injected when spawning
-// for the given account id. The empty id is the synthetic "use CLI
-// default" case for which there is no per-account configDir (Claude
-// reads its own ~/.claude); we return "" + nil so the caller can
-// treat it specially.
+// returns the CLAUDE_CONFIG_DIR Claude reads under for the given
+// account id. Two cases:
+//
+//   - Non-empty id → look up the row and return its ConfigDir.
+//   - Empty id ("use CLI default" — the historical pre-multi-account
+//     state) → the CLI reads HOME/.claude. We return THAT path so the
+//     transcript-migration callers can locate the source file. (The
+//     spawn code path does NOT inject CLAUDE_CONFIG_DIR in that case;
+//     this is purely a resolver for "where does Claude's data live?")
+//
+// Returns "" + nil when even HOME is unset (only in degenerate test
+// environments).
 func (s *Service) ResolveClaudeConfigDir(ctx context.Context, id string) (string, error) {
 	if id == "" {
-		return "", nil
+		home, err := os.UserHomeDir()
+		if err != nil || home == "" {
+			return "", nil
+		}
+		return filepath.Join(home, ".claude"), nil
 	}
 	a, err := s.store.Get(ctx, id)
 	if err != nil {
