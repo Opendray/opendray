@@ -1012,7 +1012,9 @@
         "removedToast": "Account removed",
         "removeFailedToast": "Remove failed",
         "toggleAria": "Toggle {name}",
-        "removeAria": "Remove {name}"
+        "removeAria": "Remove {name}",
+        "identityAcceptedToast": "New identity recorded",
+        "identityAcceptFailedToast": "Could not accept identity"
       },
       "models": {
         "title": "Models",

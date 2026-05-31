@@ -23,6 +23,7 @@ type Service struct {
 	store       *store
 	bus         *eventbus.Hub
 	accountsDir string // root for default ConfigDir/TokenPath; "" → ~/.claude-accounts
+	identity    *identityStore
 
 	// importMu serializes ImportLocal() so concurrent invocations
 	// (startup scan + fsnotify watcher event + UI "Import local" click)
@@ -42,6 +43,15 @@ func WithAccountsDir(dir string) Option {
 	return func(s *Service) { s.accountsDir = dir }
 }
 
+// WithStateDir injects the directory used for tiny persistent state
+// the cliacct subsystem owns — currently the identity-drift store at
+// <stateDir>/cliacct-identity.json. Empty value uses ~/.opendray.
+// Allows the App.New wiring to point at the configured runtime dir
+// instead of HOME.
+func WithStateDir(dir string) Option {
+	return func(s *Service) { s.identity = newIdentityStore(dir) }
+}
+
 func NewService(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger, opts ...Option) *Service {
 	if log == nil {
 		log = slog.Default()
@@ -53,6 +63,17 @@ func NewService(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger, opts ..
 	}
 	for _, opt := range opts {
 		opt(s)
+	}
+	if s.identity == nil {
+		// Default state dir: ~/.opendray (next to the other gateway
+		// state — GOAL.md, vault/, etc). Falls back to a per-process
+		// tmp dir when HOME is unset so tests don't need to set it
+		// explicitly.
+		home, _ := os.UserHomeDir()
+		if home == "" {
+			home = os.TempDir()
+		}
+		s.identity = newIdentityStore(filepath.Join(home, ".opendray"))
 	}
 	return s
 }
@@ -120,6 +141,69 @@ func (s *Service) decorate(a *Account, stats sessionStats) {
 	}
 	a.ActiveSessions = stats.ActiveSessions
 	a.LastUsedAt = stats.LastUsedAt
+
+	// Identity drift detection. We read the current oauthAccount email
+	// from .claude.json (which Claude Code writes alongside its
+	// credentials), compare against the first-seen email recorded in
+	// the identity store, and surface the drift on the Account JSON.
+	if email := readOAuthEmail(a.ConfigDir); email != "" {
+		a.OAuthEmail = email
+		if s.identity != nil && a.ID != "" {
+			if prev, ok := s.identity.Known(a.ID); ok {
+				if prev != email {
+					a.PreviousEmail = prev
+					a.IdentityDrift = true
+				}
+			} else {
+				// First observation — record it. Errors are logged
+				// and swallowed so a single failed write never blocks
+				// a List response.
+				if err := s.identity.Record(a.ID, email); err != nil {
+					s.log.Warn("identity-store record failed", "id", a.ID, "err", err)
+				}
+			}
+		}
+	}
+}
+
+// readOAuthEmail extracts oauthAccount.emailAddress from the .claude.json
+// metadata Claude Code writes alongside its credentials. For named
+// accounts (CLAUDE_CONFIG_DIR=<configDir>) the file lives at
+// <configDir>/.claude.json; for the synthetic 'default' the file lives
+// in HOME root (one level up from <configDir>), so we try both. Lstat
+// before parsing so a symlinked .claude.json can't redirect us.
+// Returns "" on any failure — drift detection silently degrades to
+// "no drift" rather than failing the whole List.
+func readOAuthEmail(configDir string) string {
+	if configDir == "" {
+		return ""
+	}
+	candidates := []string{
+		filepath.Join(configDir, ".claude.json"),
+		filepath.Join(filepath.Dir(configDir), ".claude.json"),
+	}
+	for _, p := range candidates {
+		st, err := os.Lstat(p)
+		if err != nil || !st.Mode().IsRegular() {
+			continue
+		}
+		body, err := os.ReadFile(p)
+		if err != nil {
+			continue
+		}
+		var doc struct {
+			OAuthAccount struct {
+				EmailAddress string `json:"emailAddress"`
+			} `json:"oauthAccount"`
+		}
+		if err := json.Unmarshal(body, &doc); err != nil {
+			continue
+		}
+		if doc.OAuthAccount.EmailAddress != "" {
+			return doc.OAuthAccount.EmailAddress
+		}
+	}
+	return ""
 }
 
 // readCredentialsMeta pulls (subscriptionType, rateLimitTier) out of
@@ -280,11 +364,46 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	if err := s.store.Delete(ctx, id); err != nil {
 		return err
 	}
+	// Forget identity-drift baseline so a recreate doesn't carry
+	// stale drift across deletion. Best-effort: a missing file or
+	// a no-entry id both return nil; other errors just get logged.
+	if s.identity != nil {
+		if err := s.identity.Forget(id); err != nil {
+			s.log.Warn("identity-store forget failed", "id", id, "err", err)
+		}
+	}
 	if s.bus != nil {
 		s.bus.Publish(eventbus.Event{
 			Topic: "claude_account.deleted",
 			Data:  map[string]any{"id": id},
 		})
+	}
+	return nil
+}
+
+// AcceptIdentity replaces the identity baseline for an account with
+// the email currently on disk. Used by the operator-visible "I know,
+// this swap is intentional" action. After acceptance, IdentityDrift
+// reads false until the on-disk email changes again. Returns
+// ErrNotFound when there is no current oauthAccount on disk for the
+// account; an explicit "accept" with no live email makes no sense.
+func (s *Service) AcceptIdentity(ctx context.Context, id string) error {
+	a, err := s.store.Get(ctx, id)
+	if err != nil {
+		return err
+	}
+	email := readOAuthEmail(a.ConfigDir)
+	if email == "" {
+		return errors.New("no oauthAccount email on disk to accept")
+	}
+	if s.identity == nil {
+		return nil // identity store disabled
+	}
+	if err := s.identity.Accept(id, email); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return s.identity.Record(id, email)
+		}
+		return err
 	}
 	return nil
 }

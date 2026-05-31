@@ -32,6 +32,9 @@ func (h *Handlers) Mount(r chi.Router) {
 			r.Patch("/toggle", h.toggle)
 			r.Put("/token", h.setToken)
 			r.Delete("/", h.del)
+			// Accept the current on-disk identity as the new baseline,
+			// clearing IdentityDrift on this row. Idempotent.
+			r.Post("/accept-identity", h.acceptIdentity)
 		})
 	})
 }
@@ -140,6 +143,25 @@ func (h *Handlers) importLocal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"created": created, "count": len(created)})
+}
+
+// acceptIdentity handles POST /api/v1/claude-accounts/{id}/accept-identity.
+// The operator-visible action behind the "Accept new identity" button
+// the UI surfaces when an account's on-disk oauthAccount email diverges
+// from the recorded baseline. Returns the freshly-decorated account
+// so the UI can flip the row state in one round trip.
+func (h *Handlers) acceptIdentity(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if err := h.svc.AcceptIdentity(r.Context(), id); err != nil {
+		h.respondError(w, err)
+		return
+	}
+	a, err := h.svc.Get(r.Context(), id)
+	if err != nil {
+		h.respondError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, a)
 }
 
 func (h *Handlers) respondError(w http.ResponseWriter, err error) {

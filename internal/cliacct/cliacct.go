@@ -48,6 +48,19 @@ type Account struct {
 	// least-loaded auto-assign heuristic. Always emitted (never omitted)
 	// so the UI can render "0 sessions" without special-casing.
 	ActiveSessions int `json:"active_sessions"`
+	// OAuthEmail is the Anthropic account currently logged in at this
+	// account's configDir, read from <configDir>/.claude.json (or
+	// <home>/.claude.json for the synthetic 'default'). Empty when the
+	// metadata file is missing or the account is unauthenticated.
+	OAuthEmail string `json:"oauth_email,omitempty"`
+	// PreviousEmail + IdentityDrift fire when the on-disk OAuthEmail
+	// differs from the one we first recorded for this account id —
+	// catching the dangerous case where the operator runs
+	// `claude login` (no CLAUDE_CONFIG_DIR) and silently swaps the
+	// underlying identity of the default account. Cleared when the
+	// operator accepts the new identity via the accept-identity API.
+	PreviousEmail string `json:"previous_email,omitempty"`
+	IdentityDrift bool   `json:"identity_drift,omitempty"`
 }
 
 // CreateRequest is the body for POST /api/v1/claude-accounts.

@@ -1011,7 +1011,9 @@
         "removedToast": "账号已移除",
         "removeFailedToast": "移除失败",
         "toggleAria": "切换 {name}",
-        "removeAria": "移除 {name}"
+        "removeAria": "移除 {name}",
+        "identityAcceptedToast": "已接受新身份",
+        "identityAcceptFailedToast": "无法接受新身份"
       },
       "models": {
         "title": "模型",

@@ -58,6 +58,14 @@ export interface ClaudeAccount {
   rate_limit_tier?: string // e.g. "default_claude_max_5x"
   last_used_at?: string // ISO timestamp of the most recent session pinned to this account
   active_sessions?: number // count of sessions currently pinned and in a non-terminal state
+  // Anthropic identity now logged in at the account's configDir,
+  // read from <configDir>/.claude.json (oauthAccount.emailAddress).
+  oauth_email?: string
+  // When the current oauth_email differs from the first-seen baseline
+  // for this account id, identity_drift=true and previous_email is
+  // populated. Cleared by POST /accept-identity.
+  previous_email?: string
+  identity_drift?: boolean
 }
 
 export interface CreateClaudeAccountRequest {

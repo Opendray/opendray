@@ -12,6 +12,7 @@ import { Trans, useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
+  acceptClaudeIdentity,
   deleteClaudeAccount,
   importLocalClaudeAccounts,
   listClaudeAccounts,
@@ -239,6 +240,50 @@ CLAUDE_CONFIG_DIR=~/.claude-accounts/<name> claude login`}
                       title={`last session: ${a.last_used_at}`}
                     >
                       used {relativeAgo(a.last_used_at)}
+                    </span>
+                  )}
+                  {/* Current OAuth identity. Always rendered when known
+                      so the operator can see WHICH Anthropic account
+                      this row actually authenticates as. */}
+                  {a.oauth_email && (
+                    <span
+                      className="text-[10px] text-muted-foreground/80"
+                      title="oauthAccount.emailAddress (from .claude.json)"
+                    >
+                      {a.oauth_email}
+                    </span>
+                  )}
+                  {/* Identity drift banner. Shows when the on-disk email
+                      doesn't match the first-seen baseline — the user
+                      ran `claude login` without CLAUDE_CONFIG_DIR and
+                      silently swapped this row's identity. The button
+                      acknowledges the swap as intentional. */}
+                  {a.identity_drift && (
+                    <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-wide rounded px-1.5 py-0.5 bg-red-500/10 text-red-500 border border-red-500/30">
+                      <CircleDot className="size-2.5" />
+                      <span>
+                        identity changed: was {a.previous_email || '?'}
+                      </span>
+                      <button
+                        type="button"
+                        className="underline hover:text-red-400"
+                        onClick={async () => {
+                          try {
+                            await acceptClaudeIdentity(a.id)
+                            qc.invalidateQueries({ queryKey: ['claude-accounts'] })
+                            toast.success(
+                              t('web.providers.claudeAccounts.identityAcceptedToast'),
+                            )
+                          } catch (e) {
+                            toast.error(
+                              t('web.providers.claudeAccounts.identityAcceptFailedToast'),
+                              { description: (e as Error).message },
+                            )
+                          }
+                        }}
+                      >
+                        accept
+                      </button>
                     </span>
                   )}
                 </div>
