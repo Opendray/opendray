@@ -241,9 +241,24 @@ type ProvidersConfig struct {
 //	                 Set to false to disable the watcher; the UI's
 //	                 "Import local" button still works.
 type ClaudeProviderConfig struct {
-	HistoryRoots   []string `toml:"history_roots" json:"history_roots"`
-	AccountsDir    string   `toml:"accounts_dir" json:"accounts_dir"`
-	WatcherEnabled *bool    `toml:"watcher_enabled" json:"watcher_enabled"`
+	HistoryRoots        []string `toml:"history_roots" json:"history_roots"`
+	AccountsDir         string   `toml:"accounts_dir" json:"accounts_dir"`
+	WatcherEnabled      *bool    `toml:"watcher_enabled" json:"watcher_enabled"`
+	AutoFailoverEnabled *bool    `toml:"auto_failover_enabled" json:"auto_failover_enabled"`
+}
+
+// AutoFailoverIsEnabled returns the effective state of the rate-limit-
+// auto-failover feature (Phase 2 Tier A): nil pointer (omitted in config)
+// or explicit false → disabled; explicit true → enabled. Disabled by
+// default because the behavior — silently switching a live session to
+// a different Anthropic identity when it hits a rate limit — needs an
+// operator opt-in: it changes billing attribution and rate-limit pool
+// without the user clicking anything.
+func (c ClaudeProviderConfig) AutoFailoverIsEnabled() bool {
+	if c.AutoFailoverEnabled == nil {
+		return false
+	}
+	return *c.AutoFailoverEnabled
 }
 
 // WatcherIsEnabled returns the effective accounts-watcher state:

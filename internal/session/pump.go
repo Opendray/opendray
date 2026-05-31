@@ -43,8 +43,24 @@ func (m *Manager) pumpStdout(rs *runningSession) {
 				_, _ = rs.vt.Write(chunk)
 			}
 			rs.fanout(chunk)
-			if rs.markActive(time.Now()) {
+			now := time.Now()
+			if rs.markActive(now) {
 				m.flipBackToRunning(rs)
+			}
+			// Rate-limit auto-failover (Phase 2 Tier A) — gated by
+			// config + provider == "claude" + a resolver being wired.
+			// appendRateLimitWindow returns true at most once per
+			// rateLimitScanCooldown, so the regex below isn't run on
+			// every chunk.
+			if m.claudeAccounts != nil && m.autoFailoverEnabled {
+				if rs.appendRateLimitWindow(chunk, now) {
+					rs.sessMu.RLock()
+					isClaude := rs.sess.ProviderID == "claude"
+					rs.sessMu.RUnlock()
+					if isClaude {
+						m.tryRateLimitFailover(rs, now)
+					}
+				}
 			}
 		}
 		if err != nil {

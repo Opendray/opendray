@@ -80,6 +80,19 @@ type ClaudeAccountResolver interface {
 	// be injected for the given account id, or "" + nil when the
 	// account is the synthetic empty-id default (CLI's own ~/.claude).
 	ResolveClaudeConfigDir(ctx context.Context, accountID string) (string, error)
+	// MarkClaudeAccountThrottled records that an account is rate-
+	// limited until the given time. Called by the rate-limit scanner
+	// hooked into pumpStdout when a session's PTY surfaces the
+	// "session limit · resets HH:MM" banner.
+	MarkClaudeAccountThrottled(accountID string, until time.Time)
+	// IsClaudeAccountThrottled reports whether an account is in the
+	// throttle map right now. Used to short-circuit repeat scans on
+	// the same banner so failover only fires once per rate-limit hit.
+	IsClaudeAccountThrottled(accountID string) bool
+	// PickFailoverClaudeAccount picks the next account to switch a
+	// throttled session to. Returns "" + nil when no non-throttled
+	// enabled account is available.
+	PickFailoverClaudeAccount(ctx context.Context, currentAccountID string) (string, error)
 }
 
 // WithClaudeAccountResolver injects the cliacct resolver SwitchClaudeAccount
@@ -88,6 +101,18 @@ type ClaudeAccountResolver interface {
 // nil (no migration) so existing callers keep working unchanged.
 func WithClaudeAccountResolver(r ClaudeAccountResolver) ManagerOption {
 	return func(m *Manager) { m.claudeAccounts = r }
+}
+
+// WithAutoFailoverEnabled flips on the rate-limit-aware auto-failover
+// behavior: pumpStdout scans each Claude session's PTY output for the
+// "session limit · resets HH:MM" banner and, on a match, marks the
+// current account throttled and switches the session to the next
+// non-throttled enabled account (via SwitchClaudeAccount with full
+// transcript migration). Requires WithClaudeAccountResolver to also
+// be wired. Default false so existing operators aren't surprised by
+// silent account switches.
+func WithAutoFailoverEnabled(enabled bool) ManagerOption {
+	return func(m *Manager) { m.autoFailoverEnabled = enabled }
 }
 
 func WithIdleThreshold(d time.Duration) ManagerOption {
@@ -131,11 +156,12 @@ func WithGeminiHistoryConfig(cfg GeminiHistoryConfig) ManagerOption {
 // Sessions are persisted in postgres for visibility / audit, but the
 // authoritative state for a running session is the in-memory map here.
 type Manager struct {
-	log            *slog.Logger
-	bus            *eventbus.Hub
-	store          *sessionStore
-	providers      ProviderResolver
-	claudeAccounts ClaudeAccountResolver // optional; nil disables transcript migration on switch
+	log                 *slog.Logger
+	bus                 *eventbus.Hub
+	store               *sessionStore
+	providers           ProviderResolver
+	claudeAccounts      ClaudeAccountResolver // optional; nil disables transcript migration + failover
+	autoFailoverEnabled bool                  // when true + claudeAccounts != nil, rate-limit scanner is hot
 
 	idleThreshold time.Duration
 	idleInterval  time.Duration
@@ -224,8 +250,67 @@ type runningSession struct {
 	expectTurn bool
 	expectAt   time.Time
 
+	// rlMu protects rlWindow + rlLastScan. The window is a small
+	// rolling buffer (≤rateLimitWindowBytes) populated from the same
+	// chunk stream pumpStdout writes to the ring + fanout. Used by
+	// the rate-limit scanner to detect the Claude "session limit"
+	// banner without re-reading the full 1 MiB ring.
+	rlMu        sync.Mutex
+	rlWindow    []byte
+	rlLastScan  time.Time
+
 	endOnce sync.Once
 	endedCh chan struct{}
+}
+
+const (
+	// rateLimitWindowBytes is the rolling buffer size the rate-limit
+	// scanner sees. The banner is ≤80 bytes; 4 KiB gives plenty of
+	// room for it to remain visible across several ANSI redraws.
+	rateLimitWindowBytes = 4 * 1024
+	// rateLimitScanCooldown bounds how often a single session re-runs
+	// the regex. Without this, a banner that persists in PTY output
+	// would drive the scanner on every chunk; with it, we scan at
+	// most once per 5 seconds per session.
+	rateLimitScanCooldown = 5 * time.Second
+)
+
+// appendRateLimitWindow appends chunk to the rolling rate-limit
+// window, truncating from the front when the size exceeds the cap.
+// Returns true if enough time has elapsed since the last scan that
+// the caller should now run ScanForRateLimitBanner against rlWindow.
+func (rs *runningSession) appendRateLimitWindow(chunk []byte, now time.Time) bool {
+	rs.rlMu.Lock()
+	defer rs.rlMu.Unlock()
+	rs.rlWindow = append(rs.rlWindow, chunk...)
+	if len(rs.rlWindow) > rateLimitWindowBytes {
+		// Slide: keep the most recent rateLimitWindowBytes.
+		rs.rlWindow = rs.rlWindow[len(rs.rlWindow)-rateLimitWindowBytes:]
+	}
+	if now.Sub(rs.rlLastScan) < rateLimitScanCooldown {
+		return false
+	}
+	rs.rlLastScan = now
+	return true
+}
+
+// rateLimitWindow returns a copy of the current rolling window so the
+// scanner can run without holding rlMu during regex evaluation.
+func (rs *runningSession) rateLimitWindow() []byte {
+	rs.rlMu.Lock()
+	defer rs.rlMu.Unlock()
+	cp := make([]byte, len(rs.rlWindow))
+	copy(cp, rs.rlWindow)
+	return cp
+}
+
+// clearRateLimitWindow drops the rolling buffer — called after a
+// successful failover so the same banner can't be matched twice from
+// the bytes that were already in the window before the switch.
+func (rs *runningSession) clearRateLimitWindow() {
+	rs.rlMu.Lock()
+	defer rs.rlMu.Unlock()
+	rs.rlWindow = nil
 }
 
 // markActive records new activity and reports whether the session was

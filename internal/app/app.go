@@ -182,6 +182,12 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// conversation and the dialog's "state will be lost" warning
 		// stops being a self-fulfilling prophecy.
 		session.WithClaudeAccountResolver(cliacctSvc),
+		// Phase 2 Tier A: when [providers.claude] auto_failover_enabled
+		// is true, pumpStdout scans each Claude session's PTY output
+		// for the "session limit · resets HH:MM" banner and, on a
+		// match, automatically switches the session to the next
+		// non-throttled enabled account.
+		session.WithAutoFailoverEnabled(cfg.Providers.Claude.AutoFailoverIsEnabled()),
 	)
 	sessionProvider := catalog.NewSessionProvider(cat, cliacctSvc, skillsLoader, mcpLoader, secretsFile, log)
 	sessionMgr := session.NewManager(

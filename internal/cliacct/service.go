@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -24,6 +25,13 @@ type Service struct {
 	bus         *eventbus.Hub
 	accountsDir string // root for default ConfigDir/TokenPath; "" → ~/.claude-accounts
 	identity    *identityStore
+
+	// throttles tracks accounts currently rate-limited at the
+	// Anthropic side so the auto-failover path (Phase 2 Tier A) can
+	// skip them when picking the next account for a session whose
+	// current account just hit a limit. In-memory only — see
+	// throttle.go for the rationale.
+	throttles *ThrottleStore
 
 	// importMu serializes ImportLocal() so concurrent invocations
 	// (startup scan + fsnotify watcher event + UI "Import local" click)
@@ -57,9 +65,10 @@ func NewService(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger, opts ..
 		log = slog.Default()
 	}
 	s := &Service{
-		log:   log.With("component", "cliacct"),
-		store: newStore(pool),
-		bus:   bus,
+		log:       log.With("component", "cliacct"),
+		store:     newStore(pool),
+		bus:       bus,
+		throttles: NewThrottleStore(),
 	}
 	for _, opt := range opts {
 		opt(s)
@@ -246,28 +255,105 @@ func readCredentialsMeta(configDir string) (subscriptionType, rateLimitTier stri
 // the session handler when POST /sessions sends provider=claude with
 // no claude_account_id pinned and ≥2 enabled accounts exist. Returns
 // "" + nil when there are <2 enabled accounts (no point picking).
+//
+// Currently-throttled accounts (rate-limit auto-failover) are excluded
+// from the candidate set so a fresh session never lands on a known-
+// exhausted account.
 func (s *Service) PickAutoAssignClaudeAccount(ctx context.Context) (string, error) {
-	// Count enabled accounts first; with 0 or 1 the assignment is
-	// either invalid or trivially the only choice, so we let the
-	// caller's fallback (empty id → CLI default) handle it.
+	return s.pickClaudeAccount(ctx, "")
+}
+
+// PickFailoverClaudeAccount is the auto-failover variant: same
+// least-loaded heuristic as PickAutoAssignClaudeAccount, but also
+// excludes the caller-provided 'currentAccountID' (which is presumed
+// to have just been marked throttled). Returns "" + nil when there is
+// no other enabled, non-throttled account available — caller should
+// log and wait.
+func (s *Service) PickFailoverClaudeAccount(ctx context.Context, currentAccountID string) (string, error) {
+	return s.pickClaudeAccount(ctx, currentAccountID)
+}
+
+// pickClaudeAccount is the shared core for the two pick variants.
+// Excludes throttled accounts AND optionally the caller's 'avoid' id.
+func (s *Service) pickClaudeAccount(ctx context.Context, avoid string) (string, error) {
 	rows, err := s.store.List(ctx)
 	if err != nil {
 		return "", err
 	}
-	enabled := 0
-	for _, a := range rows {
-		if a.Enabled {
-			enabled++
+	throttled := map[string]bool{}
+	if s.throttles != nil {
+		for _, id := range s.throttles.ThrottledIDs() {
+			throttled[id] = true
 		}
 	}
-	if enabled < 2 {
+	if avoid != "" {
+		throttled[avoid] = true
+	}
+	// Count viable enabled accounts (enabled AND not throttled AND
+	// not the avoid id). With <2 there's no balancing to do — leave
+	// the empty-id fallback to the caller.
+	viable := 0
+	for _, a := range rows {
+		if a.Enabled && !throttled[a.ID] {
+			viable++
+		}
+	}
+	// For PickAutoAssign we want ≥2 viable so the choice is meaningful.
+	// For PickFailover we want ≥1 viable so any switch is possible.
+	minViable := 2
+	if avoid != "" {
+		minViable = 1
+	}
+	if viable < minViable {
 		return "", nil
 	}
-	id, err := s.store.pickLeastLoaded(ctx)
+	excludes := make([]string, 0, len(throttled))
+	for id := range throttled {
+		excludes = append(excludes, id)
+	}
+	id, err := s.store.pickLeastLoaded(ctx, excludes...)
 	if errors.Is(err, ErrNotFound) {
-		return "", nil // none enabled (shouldn't happen given count above, but be safe)
+		return "", nil
 	}
 	return id, err
+}
+
+// MarkClaudeAccountThrottled records that an account is rate-limited
+// until the given time. Public so the rate-limit scanner in the
+// session package can call it through the ClaudeAccountResolver
+// interface. Idempotent — same call twice is fine, and a later expiry
+// extends an earlier one.
+func (s *Service) MarkClaudeAccountThrottled(accountID string, until time.Time) {
+	if s.throttles != nil {
+		s.throttles.MarkThrottled(accountID, until)
+	}
+	if s.bus != nil {
+		s.bus.Publish(eventbus.Event{
+			Topic: "claude_account.throttled",
+			Data:  map[string]any{"id": accountID, "until": until.UTC().Format(time.RFC3339)},
+		})
+	}
+}
+
+// IsClaudeAccountThrottled reports whether the given account is
+// currently throttled. Used by the failover decision path and by
+// observability surfaces.
+func (s *Service) IsClaudeAccountThrottled(accountID string) bool {
+	if s.throttles == nil {
+		return false
+	}
+	return s.throttles.IsThrottled(accountID)
+}
+
+// ClaudeAccountThrottleUntil returns the throttle expiry for the
+// given account, or zero time + false if not throttled. Used by the
+// API decoration so the operator can see "throttled until 10:20am
+// UTC" in the panel.
+func (s *Service) ClaudeAccountThrottleUntil(accountID string) (time.Time, bool) {
+	if s.throttles == nil {
+		return time.Time{}, false
+	}
+	return s.throttles.Until(accountID)
 }
 
 // Create inserts a new account. ConfigDir/TokenPath default to the

@@ -130,17 +130,22 @@ func (s *store) sessionLoad(ctx context.Context) (map[string]sessionStats, error
 // pickLeastLoaded returns the enabled account with the smallest count
 // of non-terminal sessions; ties broken by name (lexical, ascending)
 // so the choice is deterministic and the operator can predict it.
-// Returns ErrNotFound when no enabled account exists.
-func (s *store) pickLeastLoaded(ctx context.Context) (string, error) {
+// Variadic 'exclude' lets the caller pass currently-throttled account
+// ids (and/or the one we're failing AWAY from) so they don't get
+// picked. Returns ErrNotFound when no eligible account exists.
+func (s *store) pickLeastLoaded(ctx context.Context, exclude ...string) (string, error) {
+	// Use ANY($2::text[]) so an empty exclude list works (the array is
+	// just zero-length). Parameterized — never string-interpolated.
 	row := s.pool.QueryRow(ctx, `
         SELECT ca.id
           FROM claude_accounts ca
           LEFT JOIN sessions s ON s.claude_account_id = ca.id
                               AND s.state IN `+nonTerminalStates+`
          WHERE ca.enabled = true
+           AND NOT (ca.id = ANY($1::text[]))
          GROUP BY ca.id, ca.name
          ORDER BY COUNT(s.id) ASC, ca.name ASC
-         LIMIT 1`)
+         LIMIT 1`, exclude)
 	var id string
 	if err := row.Scan(&id); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
