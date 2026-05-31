@@ -194,7 +194,7 @@
         "defaultName": "Default",
         "defaultSubtitle": "CLI's system keychain / env",
         "tokenEmpty": "·empty",
-        "confirmSwitch": "Switching account will restart the Claude CLI process. In-progress conversation state inside the CLI will be lost. Continue?",
+        "confirmSwitch": "Switching account will restart the Claude CLI. The conversation history is preserved (transcript is migrated and --resume replays it under the new account), but any in-flight tool execution or unsent input will be lost. Continue?",
         "switchedToast": "Account switched",
         "switchedDescription": "Now using @{account} · pid {pid}",
         "switchedDefault": "default",

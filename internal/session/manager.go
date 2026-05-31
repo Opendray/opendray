@@ -69,6 +69,27 @@ type ManagerOption func(*Manager)
 
 // WithIdleThreshold sets how long a session must be silent before
 // session.idle fires. Pass 0 to disable idle detection.
+// ClaudeAccountResolver is the minimum cliacct surface SwitchClaudeAccount
+// needs to migrate the conversation transcript when an operator switches
+// a live session to a different account. Wiring it as a small interface
+// keeps session free of the cliacct ↔ session cyclic-dep risk and lets
+// tests inject a fake. Nil → no migration is attempted, behavior matches
+// the pre-2026-05-31 "resume starts a fresh conversation" semantics.
+type ClaudeAccountResolver interface {
+	// ResolveClaudeConfigDir returns the CLAUDE_CONFIG_DIR that would
+	// be injected for the given account id, or "" + nil when the
+	// account is the synthetic empty-id default (CLI's own ~/.claude).
+	ResolveClaudeConfigDir(ctx context.Context, accountID string) (string, error)
+}
+
+// WithClaudeAccountResolver injects the cliacct resolver SwitchClaudeAccount
+// uses to migrate the transcript JSONL across accounts so --resume
+// finds the conversation under the new CLAUDE_CONFIG_DIR. Defaults to
+// nil (no migration) so existing callers keep working unchanged.
+func WithClaudeAccountResolver(r ClaudeAccountResolver) ManagerOption {
+	return func(m *Manager) { m.claudeAccounts = r }
+}
+
 func WithIdleThreshold(d time.Duration) ManagerOption {
 	return func(m *Manager) { m.idleThreshold = d }
 }
@@ -110,10 +131,11 @@ func WithGeminiHistoryConfig(cfg GeminiHistoryConfig) ManagerOption {
 // Sessions are persisted in postgres for visibility / audit, but the
 // authoritative state for a running session is the in-memory map here.
 type Manager struct {
-	log       *slog.Logger
-	bus       *eventbus.Hub
-	store     *sessionStore
-	providers ProviderResolver
+	log            *slog.Logger
+	bus            *eventbus.Hub
+	store          *sessionStore
+	providers      ProviderResolver
+	claudeAccounts ClaudeAccountResolver // optional; nil disables transcript migration on switch
 
 	idleThreshold time.Duration
 	idleInterval  time.Duration
@@ -859,6 +881,33 @@ func (m *Manager) SwitchClaudeAccount(ctx context.Context, id, newAccountID stri
 	if err != nil {
 		return Session{}, err
 	}
+
+	// Transcript migration: Claude stores per-config-dir transcripts at
+	// <CLAUDE_CONFIG_DIR>/projects/<workspace>/<session_id>.jsonl. The
+	// respawn below renders a different CLAUDE_CONFIG_DIR than the one
+	// the conversation was authored under, so --resume would find
+	// nothing and the conversation would start fresh — exactly the
+	// "in-progress state lost" UX the dialog warns about.
+	//
+	// We hard-link the JSONL into the new config dir's projects tree
+	// before respawn. Hard-link keeps both views pointing at one inode
+	// so future writes by the new account are visible if the operator
+	// switches back later. Cross-fs hard-link or missing source falls
+	// back to a one-shot copy. Errors are non-fatal: the worst case is
+	// what we had before — fresh conversation — and we still bring the
+	// session up under the new account so rate-limit-driven switches
+	// keep working.
+	if m.claudeAccounts != nil && sess.ClaudeSessionID != "" {
+		oldCfg, errOld := m.claudeAccounts.ResolveClaudeConfigDir(ctx, current.ClaudeAccountID)
+		newCfg, errNew := m.claudeAccounts.ResolveClaudeConfigDir(ctx, newAccountID)
+		if errOld == nil && errNew == nil && oldCfg != newCfg {
+			if err := migrateClaudeTranscript(oldCfg, newCfg, sess.ClaudeSessionID); err != nil {
+				m.log.Warn("claude transcript migration failed; switch will start fresh conversation",
+					"session", id, "old_cfg", oldCfg, "new_cfg", newCfg, "err", err)
+			}
+		}
+	}
+
 	sess.ClaudeAccountID = newAccountID
 	sess.State = StateRunning
 	sess.EndedAt = nil

@@ -381,6 +381,23 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
+// ResolveClaudeConfigDir implements session.ClaudeAccountResolver —
+// returns the CLAUDE_CONFIG_DIR that would be injected when spawning
+// for the given account id. The empty id is the synthetic "use CLI
+// default" case for which there is no per-account configDir (Claude
+// reads its own ~/.claude); we return "" + nil so the caller can
+// treat it specially.
+func (s *Service) ResolveClaudeConfigDir(ctx context.Context, id string) (string, error) {
+	if id == "" {
+		return "", nil
+	}
+	a, err := s.store.Get(ctx, id)
+	if err != nil {
+		return "", err
+	}
+	return a.ConfigDir, nil
+}
+
 // AcceptIdentity replaces the identity baseline for an account with
 // the email currently on disk. Used by the operator-visible "I know,
 // this swap is intentional" action. After acceptance, IdentityDrift

@@ -194,7 +194,7 @@
         "defaultName": "默认",
         "defaultSubtitle": "CLI 的系统 keychain / 环境变量",
         "tokenEmpty": "·未填",
-        "confirmSwitch": "切换账号将重启 Claude CLI 进程。CLI 内部进行中的对话状态将丢失。继续？",
+        "confirmSwitch": "切换账户将重启 Claude CLI。对话历史会被保留（脚本会迁移并通过 --resume 恢复），但正在进行的工具调用或未发送的输入会丢失。是否继续？",
         "switchedToast": "账号已切换",
         "switchedDescription": "当前使用 @{account} · pid {pid}",
         "switchedDefault": "默认",

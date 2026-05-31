@@ -21,15 +21,22 @@ import (
 // chmod 0600. Schema: {"<account_id>": {"email": "...", "first_seen_at": "..."}}.
 // Created on first decorate; never deleted automatically (the operator
 // can wipe entries by deleting the file or by hitting the per-account
-// "accept new identity" endpoint — TODO).
+// "accept new identity" endpoint).
 //
 // We intentionally keep this small: no SQL, no migration. The state
 // file lives next to other gateway state under ~/.opendray/.
+//
+// Concurrency model: every Known/Record/Accept/Forget call reads the
+// file fresh from disk under s.mu, then (for mutating ops) rewrites
+// it atomically via tmp+rename. There is intentionally NO in-memory
+// cache — the file is small (≤1 KB per account, ≤a few accounts),
+// the read cost is negligible, and the lack of caching means
+// out-of-band tampering with the state file (e.g. an operator
+// editing it directly to reset a baseline) propagates on the next
+// API call instead of being shadowed by stale memory.
 type identityStore struct {
-	path  string
-	mu    sync.Mutex
-	cache map[string]identityEntry // lazily loaded on first Get/Set
-	loaded bool
+	path string
+	mu   sync.Mutex
 }
 
 type identityEntry struct {
@@ -38,108 +45,36 @@ type identityEntry struct {
 }
 
 // newIdentityStore returns an identityStore rooted at the given state
-// dir. The file is not touched until Get or Set is called.
+// dir. The file is not touched until Known/Record/Accept/Forget is
+// called.
 func newIdentityStore(stateDir string) *identityStore {
-	return &identityStore{
-		path:  filepath.Join(stateDir, "cliacct-identity.json"),
-		cache: map[string]identityEntry{},
-	}
+	return &identityStore{path: filepath.Join(stateDir, "cliacct-identity.json")}
 }
 
-// Known returns the previously-recorded email for an account id and
-// whether it had ever been recorded. A missing or unreadable state
-// file is treated as "nothing recorded yet" so decorate() degrades
-// to "no drift" rather than failing the whole list.
-func (s *identityStore) Known(id string) (string, bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.loadLocked()
-	e, ok := s.cache[id]
-	if !ok {
-		return "", false
-	}
-	return e.Email, true
-}
-
-// Record stores the email as the known identity for account id. If the
-// account already has a recorded email this is a no-op (callers use
-// Known() to decide what to record); the first observation wins, so a
-// subsequent identity change still shows up as drift.
-func (s *identityStore) Record(id, email string) error {
-	if id == "" || email == "" {
-		return nil
-	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.loadLocked()
-	if _, ok := s.cache[id]; ok {
-		return nil // first observation wins
-	}
-	s.cache[id] = identityEntry{Email: email, FirstSeenAt: time.Now().UTC()}
-	return s.persistLocked()
-}
-
-// Forget removes the recorded entry, used by Delete(account) so a
-// recreate-then-relogin cycle starts fresh rather than carrying stale
-// drift across a deletion.
-func (s *identityStore) Forget(id string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.loadLocked()
-	if _, ok := s.cache[id]; !ok {
-		return nil
-	}
-	delete(s.cache, id)
-	return s.persistLocked()
-}
-
-// Accept replaces the recorded email with the new one — used by an
-// "I know, this swap is intentional" admin action. Returns ErrNotFound
-// when the account isn't tracked yet (caller can call Record instead).
-func (s *identityStore) Accept(id, email string) error {
-	if id == "" || email == "" {
-		return errors.New("id and email required")
-	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.loadLocked()
-	e, ok := s.cache[id]
-	if !ok {
-		return ErrNotFound
-	}
-	e.Email = email
-	s.cache[id] = e
-	return s.persistLocked()
-}
-
-// loadLocked reads the state file into cache. Must be called with s.mu
-// held. Idempotent: only reads disk on the first call. A missing file
-// is fine (cache starts empty); a corrupt file logs nothing and is
-// also treated as empty so a single bad write doesn't kill startup.
-func (s *identityStore) loadLocked() {
-	if s.loaded {
-		return
-	}
-	s.loaded = true
+// readLocked returns the current on-disk map. A missing or corrupt
+// file yields an empty map (and no error) so a single bad write or
+// an out-of-band edit can't crash the whole accounts API. Must be
+// called with s.mu held.
+func (s *identityStore) readLocked() map[string]identityEntry {
+	out := map[string]identityEntry{}
 	body, err := os.ReadFile(s.path)
 	if err != nil {
-		return
+		return out
 	}
-	var disk map[string]identityEntry
-	if err := json.Unmarshal(body, &disk); err != nil {
-		return
+	if err := json.Unmarshal(body, &out); err != nil {
+		return map[string]identityEntry{}
 	}
-	s.cache = disk
+	return out
 }
 
-// persistLocked atomically rewrites the state file. Must be called
-// with s.mu held. Uses the standard "write to .tmp + os.Rename"
-// pattern so a concurrent reader never sees a half-written file.
-func (s *identityStore) persistLocked() error {
+// persistLocked atomically rewrites the state file with the given
+// snapshot. Must be called with s.mu held. tmp+rename so a concurrent
+// reader never sees a half-written file.
+func (s *identityStore) persistLocked(snapshot map[string]identityEntry) error {
 	if err := os.MkdirAll(filepath.Dir(s.path), 0o700); err != nil {
 		return err
 	}
-	body, err := json.MarshalIndent(s.cache, "", "  ")
+	body, err := json.MarshalIndent(snapshot, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -148,4 +83,69 @@ func (s *identityStore) persistLocked() error {
 		return err
 	}
 	return os.Rename(tmp, s.path)
+}
+
+// Known returns the previously-recorded email for an account id and
+// whether it had ever been recorded. Reads fresh from disk on every
+// call so an out-of-band edit propagates immediately.
+func (s *identityStore) Known(id string) (string, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	e, ok := s.readLocked()[id]
+	if !ok {
+		return "", false
+	}
+	return e.Email, true
+}
+
+// Record stores the email as the known identity for account id. If the
+// account already has a recorded email this is a no-op — the first
+// observation wins, so a subsequent identity change still shows up
+// as drift.
+func (s *identityStore) Record(id, email string) error {
+	if id == "" || email == "" {
+		return nil
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	cur := s.readLocked()
+	if _, ok := cur[id]; ok {
+		return nil
+	}
+	cur[id] = identityEntry{Email: email, FirstSeenAt: time.Now().UTC()}
+	return s.persistLocked(cur)
+}
+
+// Forget removes the recorded entry, used by Delete(account) so a
+// recreate-then-relogin cycle starts fresh rather than carrying stale
+// drift across a deletion.
+func (s *identityStore) Forget(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	cur := s.readLocked()
+	if _, ok := cur[id]; !ok {
+		return nil
+	}
+	delete(cur, id)
+	return s.persistLocked(cur)
+}
+
+// Accept replaces the recorded email with the new one — used by the
+// operator-visible "I know, this swap is intentional" action. Returns
+// ErrNotFound when the account isn't tracked yet (caller can call
+// Record instead).
+func (s *identityStore) Accept(id, email string) error {
+	if id == "" || email == "" {
+		return errors.New("id and email required")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	cur := s.readLocked()
+	e, ok := cur[id]
+	if !ok {
+		return ErrNotFound
+	}
+	e.Email = email
+	cur[id] = e
+	return s.persistLocked(cur)
 }

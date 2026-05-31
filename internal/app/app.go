@@ -176,6 +176,12 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		session.WithClaudeHistoryConfig(resolveClaudeHistoryConfig(cfg.Providers.Claude)),
 		session.WithCodexHistoryConfig(resolveCodexHistoryConfig(cfg.Providers.Codex)),
 		session.WithGeminiHistoryConfig(resolveGeminiHistoryConfig(cfg.Providers.Gemini)),
+		// Lets Manager.SwitchClaudeAccount migrate the conversation
+		// transcript JSONL into the new account's projects/ tree
+		// before respawning, so --resume actually finds the
+		// conversation and the dialog's "state will be lost" warning
+		// stops being a self-fulfilling prophecy.
+		session.WithClaudeAccountResolver(cliacctSvc),
 	)
 	sessionProvider := catalog.NewSessionProvider(cat, cliacctSvc, skillsLoader, mcpLoader, secretsFile, log)
 	sessionMgr := session.NewManager(
