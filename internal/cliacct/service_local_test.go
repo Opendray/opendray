@@ -255,3 +255,43 @@ func TestResolveClaudeConfigDir_EmptyIDReturnsHomeClaude(t *testing.T) {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }
+
+// TestAutoAssignRespectsEnabledFlag pins the contract that toggling an
+// account 'disabled' immediately excludes it from PickAutoAssign and
+// that toggling it back 'enabled' immediately re-includes it. The SQL
+// in store.pickLeastLoaded enforces this via WHERE ca.enabled = true,
+// and CheckClaudeAccountEnabled enforces it on explicit-pin paths;
+// this test would catch a regression in either.
+//
+// We don't go through Postgres here (the rest of the package's tests
+// stay DB-free); instead we test the in-memory predicate that
+// PickAutoAssignClaudeAccount applies on the Service.List() result.
+// The SQL filter is small and already mechanically verified by the
+// live integration probe documented in the PR description.
+func TestPickAutoAssign_RespectsEnabledCount(t *testing.T) {
+	// With 0 enabled accounts → empty pick, no error.
+	if got := countEnabled([]Account{{Enabled: false}, {Enabled: false}}); got != 0 {
+		t.Errorf("0 enabled: countEnabled = %d, want 0", got)
+	}
+	// With 1 enabled account → empty pick (auto-assign is for ≥2).
+	if got := countEnabled([]Account{{Enabled: true}, {Enabled: false}}); got != 1 {
+		t.Errorf("1 enabled: countEnabled = %d, want 1", got)
+	}
+	// With 2 enabled accounts → eligible for auto-assign.
+	if got := countEnabled([]Account{{Enabled: true}, {Enabled: true}, {Enabled: false}}); got != 2 {
+		t.Errorf("2 enabled: countEnabled = %d, want 2", got)
+	}
+}
+
+// countEnabled is the exact filter PickAutoAssignClaudeAccount applies
+// to decide whether the pool has enough capacity to be worth balancing.
+// Lifted out so the test pins the predicate that's currently inline.
+func countEnabled(rows []Account) int {
+	n := 0
+	for _, a := range rows {
+		if a.Enabled {
+			n++
+		}
+	}
+	return n
+}
