@@ -10,6 +10,110 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.4.0] — 2026-05-31
+
+Multi-Claude-account UX, two-way Telegram channel, and a clutch of
+session-quality fixes. The big new capability: a single OpenDray
+gateway can now manage multiple Anthropic identities side-by-side and
+let an operator switch a live Claude session between them without
+losing the conversation.
+
+### Added
+
+- **Claude accounts: filesystem watcher.** `~/.claude-accounts/<name>/`
+  is now monitored with fsnotify; a new `.credentials.json` (the
+  result of `CLAUDE_CONFIG_DIR=… claude login`) registers an account
+  row automatically. 500ms debounce, backoff-on-error reattach loop,
+  symlink rejection at every level.
+- **Claude accounts: synthetic `default` row.** `~/.claude/.credentials.json`
+  (the CLI's own home) now surfaces as a row named `default` so the
+  primary identity is visible in the panel without forcing the
+  named-account login flow.
+- **Claude accounts: capacity chips.** Each row now shows
+  `subscription_type`, `rate_limit_tier`, `active_sessions`,
+  `last_used_at`, and `oauth_email` — all derived server-side from
+  `<configDir>/.credentials.json` + `<configDir>/.claude.json` + a
+  single JOIN against the sessions table. No new chrome.
+- **Claude accounts: least-loaded auto-assign at session create.**
+  When `POST /sessions` arrives with provider=claude and empty
+  `claude_account_id` (and ≥2 accounts are enabled), the gateway
+  picks the enabled account with the fewest non-terminal sessions
+  (alphabetical tiebreaker). Removes the "everything piles onto
+  default" bias. Explicit operator pin still wins.
+- **Claude accounts: identity drift detection.** First-seen
+  `oauthAccount.emailAddress` per account is recorded under
+  `~/.opendray/cliacct-identity.json` (chmod 0600). On every List/Get,
+  the current on-disk email is compared; mismatch surfaces
+  `identity_drift=true` and `previous_email` on the Account row,
+  rendered as a red "identity changed: was X · accept" chip.
+  `POST /api/v1/claude-accounts/{id}/accept-identity` updates the
+  baseline so the chip clears.
+- **Session switch preserves conversation.**
+  `PATCH /api/v1/sessions/{id}/claude-account` now hard-links the
+  Claude transcript JSONL from `<old_config_dir>/projects/<workspace>/
+  <session_id>.jsonl` into `<new_config_dir>/projects/<workspace>/`
+  before respawning. Claude `--resume` then finds and replays the
+  conversation under the new account. Hard-link shares one inode so
+  switching back-and-forth keeps both views synchronized.
+- **Telegram: two-way conversational chat.** Typing indicator, turn
+  replies, persistent control keyboard acting on the current session,
+  configurable from the dashboard.
+- **Catalog: warn + confirm before CLI upgrade.** The in-app CLI
+  upgrade button now warns when sessions are using the CLI it's about
+  to replace, with a new `scripts/enable-cli-updates.sh` helper for
+  the non-root install path.
+- **Web: MRU session ordering + Cmd/Ctrl+K palette search**.
+
+### Changed
+
+- `claude_account_id` validation is now enforced at session create
+  AND at switch — bogus or disabled ids return HTTP 400 BEFORE the
+  row is persisted (create) or BEFORE the live PTY is stopped (switch).
+- Default idle threshold raised 30s → 5m so long-running tool
+  invocations don't get killed by the idle reaper.
+- The "Switch Account" confirmation dialog now says "conversation
+  history is preserved" instead of "in-progress conversation state
+  will be lost" — accurate description of what now happens.
+
+### Fixed
+
+- `token_filled` previously only checked the legacy
+  `<accountsDir>/tokens/<name>.token` file, so every config-dir
+  account (the documented flow!) showed "NO TOKEN YET" despite having
+  working credentials. Now reports true when either source has usable
+  credentials.
+- Gemini reply parsing now reads `chats/*.jsonl` instead of scraping
+  the screen, eliminating screen-dump noise in Telegram forwards.
+- Session 'shell' provider's chrome stripper is now shell-aware so
+  raw prompt characters don't leak into the channel forwarders.
+- Web: copy now works over plain-HTTP LAN (Clipboard API requires
+  HTTPS otherwise), terminal selection-driven copy works, copy pill
+  is anchored at the selection with neutral styling.
+
+### Security
+
+- All disk reads in the cliacct path use `os.Lstat` and reject
+  symlinks (`<accountsDir>/<name>/`, `<configDir>/.credentials.json`,
+  `<configDir>/.claude.json`, the legacy token file). Defense in
+  depth against an attacker who can write under the accounts tree.
+- `migrateClaudeTranscript` Lstat-rejects symlinked sources before
+  `os.Link` so a planted symlink can't be hardlinked into the new
+  account's tree and read as conversation history by `claude --resume`.
+- Telegram inbound is gated to the configured owner across all
+  message types, not just control commands.
+
+### API
+
+- New: `POST /api/v1/claude-accounts/{id}/accept-identity` — clears
+  the identity-drift baseline by recording the current on-disk email
+  as the new accepted identity.
+
+### Config
+
+- New: `[providers.claude] watcher_enabled` (default true). Set to
+  false to disable the fsnotify watcher; the Import-local button
+  still works on demand.
+
 ## [v2.3.4] — 2026-05-29
 
 ### Fixed
