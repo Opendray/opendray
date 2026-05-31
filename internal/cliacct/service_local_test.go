@@ -17,7 +17,23 @@ func writeFile(t *testing.T, path, body string) {
 	}
 }
 
-func TestDiscoverLocalAccountNames(t *testing.T) {
+// collectNames is a small helper so existing assertions still read
+// against a name-set even though discoverLocalAccounts now returns
+// richer entries.
+func collectNames(in []discoveredAccount) []string {
+	out := make([]string, 0, len(in))
+	for _, d := range in {
+		out = append(out, d.name)
+	}
+	return out
+}
+
+func TestDiscoverLocalAccounts(t *testing.T) {
+	// Isolate HOME so the test never sees the host's real ~/.claude
+	// (which would change the result based on which machine you run
+	// the suite on).
+	t.Setenv("HOME", t.TempDir())
+
 	dir := t.TempDir()
 
 	// Config-dir accounts (the documented claude-login flow).
@@ -31,10 +47,11 @@ func TestDiscoverLocalAccountNames(t *testing.T) {
 	writeFile(t, filepath.Join(dir, "tokens", "legacy.token"), "sk-ant-oat01-xxx")
 	writeFile(t, filepath.Join(dir, "tokens", "kevin.token"), "sk-ant-oat01-dup")
 
-	names, err := discoverLocalAccountNames(dir)
+	discovered, err := discoverLocalAccounts(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
+	names := collectNames(discovered)
 
 	got := map[string]bool{}
 	for _, n := range names {
@@ -54,20 +71,79 @@ func TestDiscoverLocalAccountNames(t *testing.T) {
 	if got["tokens"] {
 		t.Error("the tokens dir itself must not be imported as an account")
 	}
+	if got["default"] {
+		t.Error("no ~/.claude/.credentials.json was created — 'default' must not be emitted")
+	}
 	if len(names) != 3 {
 		t.Errorf("expected 3 unique accounts, got %d: %v", len(names), names)
 	}
 }
 
-func TestDiscoverLocalAccountNames_MissingDirIsNotError(t *testing.T) {
+func TestDiscoverLocalAccounts_MissingDirIsNotError(t *testing.T) {
 	// Nonexistent accounts dir → empty result, no error (this is the bug
 	// that produced "run `claude-acc init`").
-	names, err := discoverLocalAccountNames(filepath.Join(t.TempDir(), "does-not-exist"))
+	t.Setenv("HOME", t.TempDir())
+	got, err := discoverLocalAccounts(filepath.Join(t.TempDir(), "does-not-exist"))
 	if err != nil {
 		t.Fatalf("missing dir should not error: %v", err)
 	}
-	if len(names) != 0 {
-		t.Errorf("expected no names, got %v", names)
+	if len(got) != 0 {
+		t.Errorf("expected no entries, got %v", collectNames(got))
+	}
+}
+
+func TestDiscoverLocalAccounts_EmitsDefaultWhenClaudeHomeHasCreds(t *testing.T) {
+	// Set HOME to a tempdir and stage a ~/.claude/.credentials.json there.
+	// The synthetic "default" entry should surface, pointing at HOME/.claude.
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	writeFile(t, filepath.Join(home, ".claude", ".credentials.json"), `{"claudeAiOauth":{}}`)
+
+	// Empty accountsDir (no named accounts) → only 'default' should appear.
+	got, err := discoverLocalAccounts(filepath.Join(t.TempDir(), "accounts-empty"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("expected exactly 1 entry (default), got %d: %v", len(got), collectNames(got))
+	}
+	if got[0].name != "default" {
+		t.Errorf("name = %q, want 'default'", got[0].name)
+	}
+	if got[0].configDir != filepath.Join(home, ".claude") {
+		t.Errorf("configDir = %q, want %q", got[0].configDir, filepath.Join(home, ".claude"))
+	}
+	if got[0].tokenPath != "" {
+		t.Errorf("tokenPath = %q, want empty (default account has no legacy token file)",
+			got[0].tokenPath)
+	}
+	if got[0].displayName == "" {
+		t.Error("displayName should be set so the UI can render a friendly label")
+	}
+}
+
+func TestDiscoverLocalAccounts_DefaultEmittedAlongsideNamedAccounts(t *testing.T) {
+	// Mixed: a real ~/.claude/ default AND a named ~/.claude-accounts/kevin/
+	// should both surface, default first.
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	writeFile(t, filepath.Join(home, ".claude", ".credentials.json"), `{"claudeAiOauth":{}}`)
+	accountsDir := filepath.Join(t.TempDir(), "accounts")
+	writeFile(t, filepath.Join(accountsDir, "kevin", ".credentials.json"), `{"claudeAiOauth":{}}`)
+
+	got, err := discoverLocalAccounts(accountsDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	names := collectNames(got)
+	if len(names) != 2 {
+		t.Fatalf("expected 2 entries, got %d: %v", len(names), names)
+	}
+	if names[0] != "default" {
+		t.Errorf("default should come first; got %v", names)
+	}
+	if names[1] != "kevin" {
+		t.Errorf("kevin should come second; got %v", names)
 	}
 }
 

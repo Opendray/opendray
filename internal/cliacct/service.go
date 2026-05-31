@@ -234,23 +234,33 @@ func (s *Service) ImportLocal(ctx context.Context) ([]Account, error) {
 		return nil, fmt.Errorf("resolve accounts dir: HOME unset and no accounts_dir configured")
 	}
 
-	names, err := discoverLocalAccountNames(accountsDir)
+	discovered, err := discoverLocalAccounts(accountsDir)
 	if err != nil {
 		return nil, err
 	}
 
 	created := []Account{}
-	for _, name := range names {
-		if _, err := s.store.GetByName(ctx, name); err == nil {
+	for _, d := range discovered {
+		if _, err := s.store.GetByName(ctx, d.name); err == nil {
 			continue // already registered
 		} else if !errors.Is(err, ErrNotFound) {
 			return nil, err
 		}
 		// Best-effort: a single bad entry logs and is skipped rather
-		// than failing the whole import.
-		acct, err := s.Create(ctx, CreateRequest{Name: name})
+		// than failing the whole import. The d.configDir / d.tokenPath
+		// are passed explicitly so the virtual "default" entry
+		// (pointing at ~/.claude rather than ~/.claude-accounts/default)
+		// is honored; for named accounts both are empty and Create()
+		// derives the standard claude-acc layout from the name.
+		req := CreateRequest{
+			Name:        d.name,
+			DisplayName: d.displayName,
+			ConfigDir:   d.configDir,
+			TokenPath:   d.tokenPath,
+		}
+		acct, err := s.Create(ctx, req)
 		if err != nil {
-			s.log.Warn("import-local: create failed", "name", name, "err", err)
+			s.log.Warn("import-local: create failed", "name", d.name, "err", err)
 			continue
 		}
 		created = append(created, acct)
@@ -258,23 +268,65 @@ func (s *Service) ImportLocal(ctx context.Context) ([]Account, error) {
 	return created, nil
 }
 
-// discoverLocalAccountNames returns the unique account names found on
-// disk under accountsDir, config-dir layout first then legacy tokens,
-// preserving discovery order. Missing directories yield no entries (not
-// an error). Pure filesystem — no DB — so it's unit-testable.
-func discoverLocalAccountNames(accountsDir string) ([]string, error) {
-	var names []string
+// discoveredAccount carries the minimum metadata needed to register
+// one account row found on disk. Named accounts under accountsDir
+// leave configDir/tokenPath empty so Create() applies its standard
+// derivation; the synthetic "default" entry that surfaces the Claude
+// CLI's own ~/.claude/ home sets configDir explicitly because its
+// path does NOT match the accountsDir/<name> layout.
+type discoveredAccount struct {
+	name        string
+	displayName string
+	configDir   string // explicit when non-empty; otherwise Create derives
+	tokenPath   string // same semantics
+}
+
+// discoverLocalAccounts returns every account that should be surfaced
+// in the Claude Accounts panel, in discovery order. Three sources:
+//
+//  1. ~/.claude/.credentials.json — the Claude CLI's default config
+//     dir. We yield it as a synthetic entry named "default" so the
+//     operator can see the primary account (the one used when no
+//     claude_account_id is set on a session) the same way they see
+//     named accounts. This is the gap that 'info@paygear.io is
+//     authenticated, why isn't it in the panel?' was hitting.
+//  2. <accountsDir>/<name>/.credentials.json — the documented
+//     `CLAUDE_CONFIG_DIR=<dir> claude login` flow (config-dir layout).
+//  3. <accountsDir>/tokens/<name>.token — legacy `claude-acc` flow.
+//
+// Symlinks are rejected at every step. A missing dir is not an error
+// (fresh installs yield zero entries).
+func discoverLocalAccounts(accountsDir string) ([]discoveredAccount, error) {
+	var out []discoveredAccount
 	seen := map[string]bool{}
-	addName := func(name string) {
-		if name == "" || seen[name] {
+	emit := func(d discoveredAccount) {
+		if d.name == "" || seen[d.name] {
 			return
 		}
-		seen[name] = true
-		names = append(names, name)
+		seen[d.name] = true
+		out = append(out, d)
 	}
 
-	// 1) Per-account CONFIG_DIRs — <accountsDir>/<name>/.credentials.json
-	//    (the documented `CLAUDE_CONFIG_DIR=<dir> claude login` flow).
+	// 1) Synthetic "default" — the Claude CLI's own home. Only emitted
+	//    when ~/.claude/.credentials.json actually exists, so a fresh
+	//    install (no `claude login` ever run) doesn't surface a dead
+	//    row. The path is rooted at HOME/.claude, not accountsDir, so
+	//    we pass it explicitly so Create() does not derive a wrong
+	//    accountsDir/default path.
+	if home, err := os.UserHomeDir(); err == nil && home != "" {
+		defaultDir := filepath.Join(home, ".claude")
+		if fileExists(filepath.Join(defaultDir, ".credentials.json")) {
+			emit(discoveredAccount{
+				name:        "default",
+				displayName: "Default (~/.claude)",
+				configDir:   defaultDir,
+				// no tokenPath: the .credentials.json file self-refreshes
+				// and is read by Claude Code via CLAUDE_CONFIG_DIR.
+			})
+		}
+	}
+
+	// 2) Per-account CONFIG_DIRs — <accountsDir>/<name>/.credentials.json
 	dirEntries, err := os.ReadDir(accountsDir)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, fmt.Errorf("read %s: %w", accountsDir, err)
@@ -294,10 +346,10 @@ func discoverLocalAccountNames(accountsDir string) ([]string, error) {
 		if !fileExists(filepath.Join(accountsDir, e.Name(), ".credentials.json")) {
 			continue // not a Claude Code config dir
 		}
-		addName(e.Name())
+		emit(discoveredAccount{name: e.Name()})
 	}
 
-	// 2) Legacy <accountsDir>/tokens/*.token (the older claude-acc tool).
+	// 3) Legacy <accountsDir>/tokens/*.token (the older claude-acc tool).
 	tokensDir := filepath.Join(accountsDir, "tokens")
 	tokEntries, err := os.ReadDir(tokensDir)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -307,10 +359,10 @@ func discoverLocalAccountNames(accountsDir string) ([]string, error) {
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".token") {
 			continue
 		}
-		addName(strings.TrimSuffix(e.Name(), ".token"))
+		emit(discoveredAccount{name: strings.TrimSuffix(e.Name(), ".token")})
 	}
 
-	return names, nil
+	return out, nil
 }
 
 func tokenFileFilled(path string) bool {
