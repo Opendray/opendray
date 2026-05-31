@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/logo.png" alt="opendray" width="180">
+  <a href="https://opendray.dev"><img src="docs/assets/logo.png" alt="opendray" width="180"></a>
 </p>
 
 <h1 align="center">opendray</h1>
@@ -11,6 +11,11 @@
 </p>
 
 <p align="center">
+  <strong><a href="https://opendray.dev">🌐 opendray.dev</a></strong>
+</p>
+
+<p align="center">
+  <a href="https://opendray.dev"><img alt="Website" src="https://img.shields.io/badge/website-opendray.dev-F43F5E"></a>
   <a href="https://github.com/Opendray/opendray/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Opendray/opendray?label=release&color=4f46e5"></a>
   <a href="LICENSE"><img alt="License Apache 2.0" src="https://img.shields.io/github/license/Opendray/opendray?color=blue"></a>
   <a href="https://github.com/Opendray/opendray/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Opendray/opendray/ci.yml?branch=main&label=CI"></a>
