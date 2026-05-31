@@ -255,9 +255,9 @@ type runningSession struct {
 	// chunk stream pumpStdout writes to the ring + fanout. Used by
 	// the rate-limit scanner to detect the Claude "session limit"
 	// banner without re-reading the full 1 MiB ring.
-	rlMu        sync.Mutex
-	rlWindow    []byte
-	rlLastScan  time.Time
+	rlMu       sync.Mutex
+	rlWindow   []byte
+	rlLastScan time.Time
 
 	endOnce sync.Once
 	endedCh chan struct{}
