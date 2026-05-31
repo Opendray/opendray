@@ -78,6 +78,27 @@ func migrateClaudeTranscript(oldConfigDir, newConfigDir, sessionID string) error
 		return fmt.Errorf("stat new transcript: %w", err)
 	}
 
+	// Defense in depth: reject any source that isn't a plain regular
+	// file before linking. On Linux, os.Link() creates a hard-link to
+	// the *symlink itself*, which means dst would also resolve to
+	// whatever the symlink targets — a planted symlink at
+	// <projects>/<ws>/<sid>.jsonl → /var/.../memory.key (or any other
+	// file the opendray user can read) would be migrated into the
+	// new account's tree and then read by `claude --resume` as
+	// "conversation history", potentially exfiltrating its contents
+	// to anthropic.com on the next agent message. Lstat-reject
+	// non-regular files (symlinks, devices, fifos) up front.
+	srcStat, err := os.Lstat(src)
+	if err != nil {
+		return fmt.Errorf("lstat src: %w", err)
+	}
+	if srcStat.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("refusing to migrate symlinked transcript at %s", src)
+	}
+	if !srcStat.Mode().IsRegular() {
+		return fmt.Errorf("refusing to migrate non-regular file at %s", src)
+	}
+
 	// Hard-link first. Both accounts' projects/ trees then reference
 	// one inode, so further writes are mutually visible — switching
 	// BACK preserves whatever the new account added.

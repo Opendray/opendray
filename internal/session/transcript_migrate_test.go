@@ -131,6 +131,46 @@ func TestMigrateClaudeTranscript_PicksNewestSource(t *testing.T) {
 	}
 }
 
+func TestMigrateClaudeTranscript_RejectsSymlinkedSource(t *testing.T) {
+	// A symlinked source must NOT be migrated — see the security
+	// rationale comment in migrateClaudeTranscript. os.Link to a
+	// symlink would create a same-symlink hardlink whose target the
+	// new account would then read as conversation history.
+	tmp := t.TempDir()
+	oldCfg := filepath.Join(tmp, "old")
+	newCfg := filepath.Join(tmp, "new")
+	id := "sym-id"
+	// Stage a real "victim" file outside the projects tree.
+	victim := filepath.Join(tmp, "victim-secret.txt")
+	if err := os.WriteFile(victim, []byte("SECRET"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// Plant a symlink where the legitimate transcript would live.
+	workspace := "-var-lib-test"
+	dir := filepath.Join(oldCfg, "projects", workspace)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	src := filepath.Join(dir, id+".jsonl")
+	if err := os.Symlink(victim, src); err != nil {
+		t.Fatal(err)
+	}
+
+	err := migrateClaudeTranscript(oldCfg, newCfg, id)
+	if err == nil {
+		t.Fatal("expected migration to refuse a symlinked source")
+	}
+	if !strings.Contains(err.Error(), "symlink") {
+		t.Errorf("expected error to mention symlink; got %v", err)
+	}
+	// And the destination must NOT have been created — neither as a
+	// link, a copy, nor an empty file.
+	dst := filepath.Join(newCfg, "projects", workspace, id+".jsonl")
+	if _, statErr := os.Lstat(dst); !os.IsNotExist(statErr) {
+		t.Errorf("destination must not exist after symlink-source refusal; stat err=%v", statErr)
+	}
+}
+
 func mustStat(t *testing.T, p string) os.FileInfo {
 	t.Helper()
 	fi, err := os.Stat(p)
