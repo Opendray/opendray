@@ -32,6 +32,20 @@ import type { ClaudeAccount } from '@/lib/types'
 // ~1 hour, while the canonical claude-login flow produces a
 // self-managed credentials file. Forcing the host-shell flow keeps
 // the affordance honest.
+
+// relativeAgo turns an ISO timestamp into a tight "12m ago" / "3h ago"
+// / "2d ago" label suitable for a per-row chip. We deliberately keep
+// the granularity coarse so the chip stays narrow.
+function relativeAgo(iso: string): string {
+  const t = new Date(iso).getTime()
+  if (!Number.isFinite(t)) return ''
+  const dsec = Math.max(0, Math.floor((Date.now() - t) / 1000))
+  if (dsec < 60) return `${dsec}s ago`
+  if (dsec < 3600) return `${Math.floor(dsec / 60)}m ago`
+  if (dsec < 86400) return `${Math.floor(dsec / 3600)}h ago`
+  return `${Math.floor(dsec / 86400)}d ago`
+}
+
 export function ClaudeAccountsPanel() {
   const { t } = useTranslation()
   const qc = useQueryClient()
@@ -188,6 +202,43 @@ CLAUDE_CONFIG_DIR=~/.claude-accounts/<name> claude login`}
                     <span className="text-[10px] uppercase tracking-wide text-amber-500/90 inline-flex items-center gap-1">
                       <CircleDot className="size-2.5" />
                       {t('web.providers.claudeAccounts.noTokenYet')}
+                    </span>
+                  )}
+                  {/*
+                    Capacity-at-a-glance chips. These all come from the
+                    backend's already-decorated Account JSON — no extra
+                    queries on the client side. We render them inline
+                    next to the name so the operator can pick the
+                    right account without drilling in.
+                  */}
+                  {a.subscription_type && (
+                    <span
+                      className="text-[10px] uppercase tracking-wide rounded px-1.5 py-0.5 bg-foreground/5 text-foreground/70"
+                      title="subscriptionType (from .credentials.json)"
+                    >
+                      {a.subscription_type}
+                    </span>
+                  )}
+                  {a.rate_limit_tier && (
+                    <span
+                      className="text-[10px] font-mono rounded px-1.5 py-0.5 bg-foreground/5 text-muted-foreground/80"
+                      title="rateLimitTier (from .credentials.json)"
+                    >
+                      {a.rate_limit_tier}
+                    </span>
+                  )}
+                  <span
+                    className="text-[10px] rounded px-1.5 py-0.5 bg-foreground/5 text-muted-foreground/80"
+                    title="sessions currently pinned to this account"
+                  >
+                    {a.active_sessions ?? 0} active
+                  </span>
+                  {a.last_used_at && (
+                    <span
+                      className="text-[10px] text-muted-foreground/60"
+                      title={`last session: ${a.last_used_at}`}
+                    >
+                      used {relativeAgo(a.last_used_at)}
                     </span>
                   )}
                 </div>

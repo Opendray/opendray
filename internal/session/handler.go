@@ -41,20 +41,30 @@ type Service interface {
 }
 
 // ClaudeAccountChecker is the minimal cliacct surface the session
-// handler needs to validate `claude_account_id` early — before the row
-// is persisted (create) or mutated (switch). Wiring this as an
-// interface, rather than importing cliacct directly, keeps the session
-// package free of the cliacct ↔ session cyclic-dep risk and makes the
-// handler trivially testable with a fake.
+// handler needs to (a) validate `claude_account_id` early — before
+// the row is persisted (create) or mutated (switch) — and (b) auto-
+// assign the least-loaded enabled account when the caller omits it.
+// Wiring this as an interface, rather than importing cliacct directly,
+// keeps the session package free of the cliacct ↔ session cyclic-dep
+// risk and makes the handler trivially testable with a fake.
 //
-// A nil checker disables validation; existing callers that don't wire
-// one keep their previous behavior (deferred error at spawn time).
+// A nil checker disables both validation and auto-assign; existing
+// callers that don't wire one keep their previous behavior (deferred
+// error at spawn time, always-CLI-default for unpinned sessions).
 type ClaudeAccountChecker interface {
 	// CheckClaudeAccountEnabled returns nil when id refers to an
 	// existing, enabled account; an error otherwise. Implementations
 	// should distinguish "not found" from "disabled" via the returned
 	// error so the handler can map both to 400 with a useful message.
 	CheckClaudeAccountEnabled(ctx context.Context, id string) error
+
+	// PickAutoAssignClaudeAccount returns the id of the enabled
+	// account that should receive the next session, or "" when
+	// auto-assign should be skipped (fewer than 2 enabled accounts,
+	// no enabled accounts at all, etc.). Implementations are free to
+	// pick by least-loaded, round-robin, or any other policy — the
+	// handler treats the returned id as opaque.
+	PickAutoAssignClaudeAccount(ctx context.Context) (string, error)
 }
 
 type Handlers struct {
@@ -139,6 +149,19 @@ func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, fmt.Errorf("claude_account_id: %w", err))
 			return
 		}
+	}
+	// Auto-assign: when caller didn't pin an account and the provider
+	// is "claude", let the checker pick the least-loaded enabled
+	// account so multi-account setups balance traffic without the
+	// operator having to touch the spawn dialog. Empty return means
+	// "no auto-assign" (e.g. <2 enabled accounts) — fall through to
+	// the existing CLI-default behavior.
+	if h.acct != nil && req.ClaudeAccountID == "" && req.ProviderID == "claude" {
+		if id, err := h.acct.PickAutoAssignClaudeAccount(r.Context()); err == nil && id != "" {
+			req.ClaudeAccountID = id
+		}
+		// Auto-assign errors are non-fatal: we still try to spawn
+		// with the CLI default rather than failing the create call.
 	}
 	sess, err := h.svc.Create(r.Context(), req)
 	if err != nil {

@@ -27,6 +27,27 @@ type Account struct {
 	TokenFilled bool      `json:"token_filled"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+
+	// Derived fields below are computed on each read, never persisted.
+	// They give the panel enough signal to answer "which account is
+	// safe to use right now?" without needing Phase-2 usage probes.
+	// JSON omitempty so older clients keep working.
+
+	// SubscriptionType comes from <configDir>/.credentials.json:
+	// claudeAiOauth.subscriptionType — e.g. "max", "pro", "free".
+	SubscriptionType string `json:"subscription_type,omitempty"`
+	// RateLimitTier comes from the same file:
+	// claudeAiOauth.rateLimitTier — e.g. "default_claude_max_5x".
+	RateLimitTier string `json:"rate_limit_tier,omitempty"`
+	// LastUsedAt is MAX(sessions.started_at) where claude_account_id
+	// matches; nil when this account has never been pinned to a
+	// session. Drives the "last used …" chip.
+	LastUsedAt *time.Time `json:"last_used_at,omitempty"`
+	// ActiveSessions counts sessions currently in a non-terminal state
+	// pinned to this account. Powers BOTH the "N sessions" chip and the
+	// least-loaded auto-assign heuristic. Always emitted (never omitted)
+	// so the UI can render "0 sessions" without special-casing.
+	ActiveSessions int `json:"active_sessions"`
 }
 
 // CreateRequest is the body for POST /api/v1/claude-accounts.

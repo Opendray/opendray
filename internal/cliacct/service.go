@@ -2,6 +2,7 @@ package cliacct
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -75,14 +76,25 @@ func (s *Service) resolveAccountsDir() string {
 // reaching into Service internals.
 func (s *Service) AccountsDir() string { return s.resolveAccountsDir() }
 
-// List returns all accounts, with TokenFilled set per account.
+// List returns all accounts, fully decorated with on-the-fly fields:
+// TokenFilled (creds present), SubscriptionType/RateLimitTier (from
+// .credentials.json), and ActiveSessions/LastUsedAt (from a single
+// JOIN against the sessions table). Cheap enough to run on every
+// 5s panel poll: two SQL queries + one tiny fs read per account.
 func (s *Service) List(ctx context.Context) ([]Account, error) {
 	out, err := s.store.List(ctx)
 	if err != nil {
 		return nil, err
 	}
+	stats, err := s.store.sessionLoad(ctx)
+	if err != nil {
+		// Don't fail the whole list on a stats hiccup — the operator
+		// still wants to see the accounts. Log and degrade gracefully.
+		s.log.Warn("session-load failed; account list will lack usage signal", "err", err)
+		stats = map[string]sessionStats{}
+	}
 	for i := range out {
-		out[i].TokenFilled = accountHasCredentials(out[i].ConfigDir, out[i].TokenPath)
+		s.decorate(&out[i], stats[out[i].ID])
 	}
 	return out, nil
 }
@@ -92,8 +104,86 @@ func (s *Service) Get(ctx context.Context, id string) (Account, error) {
 	if err != nil {
 		return Account{}, err
 	}
-	a.TokenFilled = accountHasCredentials(a.ConfigDir, a.TokenPath)
+	stats, _ := s.store.sessionLoad(ctx) // best-effort
+	s.decorate(&a, stats[a.ID])
 	return a, nil
+}
+
+// decorate fills in all derived fields on an Account in place.
+// Centralized so List/Get/Create/Update stay in sync — there's only
+// one place to remember to add a new computed field.
+func (s *Service) decorate(a *Account, stats sessionStats) {
+	a.TokenFilled = accountHasCredentials(a.ConfigDir, a.TokenPath)
+	if sub, tier := readCredentialsMeta(a.ConfigDir); sub != "" || tier != "" {
+		a.SubscriptionType = sub
+		a.RateLimitTier = tier
+	}
+	a.ActiveSessions = stats.ActiveSessions
+	a.LastUsedAt = stats.LastUsedAt
+}
+
+// readCredentialsMeta pulls (subscriptionType, rateLimitTier) out of
+// the account's <configDir>/.credentials.json claudeAiOauth block.
+// Returns empty strings for either field that is missing; never
+// errors (a malformed file just means we can't show that signal).
+// Tokens and any other sensitive fields are NOT returned by this
+// helper — the caller can't accidentally leak them through Account.
+func readCredentialsMeta(configDir string) (subscriptionType, rateLimitTier string) {
+	if configDir == "" {
+		return "", ""
+	}
+	p := filepath.Join(configDir, ".credentials.json")
+	// Lstat first so a symlinked credentials file doesn't get us to
+	// open and parse some other file — matches the safety pattern in
+	// selectSpawnCreds.
+	st, err := os.Lstat(p)
+	if err != nil || !st.Mode().IsRegular() {
+		return "", ""
+	}
+	body, err := os.ReadFile(p)
+	if err != nil {
+		return "", ""
+	}
+	// The file is small (a few KB at most). Parse only the bit we need.
+	var doc struct {
+		ClaudeAiOauth struct {
+			SubscriptionType string `json:"subscriptionType"`
+			RateLimitTier    string `json:"rateLimitTier"`
+		} `json:"claudeAiOauth"`
+	}
+	if err := json.Unmarshal(body, &doc); err != nil {
+		return "", ""
+	}
+	return doc.ClaudeAiOauth.SubscriptionType, doc.ClaudeAiOauth.RateLimitTier
+}
+
+// PickAutoAssignClaudeAccount returns the id of the enabled account
+// with the fewest active sessions (lexical-name tiebreaker). Used by
+// the session handler when POST /sessions sends provider=claude with
+// no claude_account_id pinned and ≥2 enabled accounts exist. Returns
+// "" + nil when there are <2 enabled accounts (no point picking).
+func (s *Service) PickAutoAssignClaudeAccount(ctx context.Context) (string, error) {
+	// Count enabled accounts first; with 0 or 1 the assignment is
+	// either invalid or trivially the only choice, so we let the
+	// caller's fallback (empty id → CLI default) handle it.
+	rows, err := s.store.List(ctx)
+	if err != nil {
+		return "", err
+	}
+	enabled := 0
+	for _, a := range rows {
+		if a.Enabled {
+			enabled++
+		}
+	}
+	if enabled < 2 {
+		return "", nil
+	}
+	id, err := s.store.pickLeastLoaded(ctx)
+	if errors.Is(err, ErrNotFound) {
+		return "", nil // none enabled (shouldn't happen given count above, but be safe)
+	}
+	return id, err
 }
 
 // Create inserts a new account. ConfigDir/TokenPath default to the
@@ -144,7 +234,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (Account, error
 	if err != nil {
 		return Account{}, err
 	}
-	created.TokenFilled = accountHasCredentials(created.ConfigDir, created.TokenPath)
+	s.decorate(&created, sessionStats{}) // brand-new row → no sessions yet
 	if s.bus != nil {
 		s.bus.Publish(eventbus.Event{
 			Topic: "claude_account.created",
@@ -181,7 +271,8 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Acc
 	if err != nil {
 		return Account{}, err
 	}
-	updated.TokenFilled = accountHasCredentials(updated.ConfigDir, updated.TokenPath)
+	stats, _ := s.store.sessionLoad(ctx) // best-effort
+	s.decorate(&updated, stats[updated.ID])
 	return updated, nil
 }
 

@@ -52,6 +52,12 @@ export interface ClaudeAccount {
   token_filled: boolean
   created_at: string
   updated_at: string
+  // Derived fields the backend decorates on read. Optional so older
+  // gateways (without the decorator) continue to deserialize cleanly.
+  subscription_type?: string // e.g. "max", "pro"
+  rate_limit_tier?: string // e.g. "default_claude_max_5x"
+  last_used_at?: string // ISO timestamp of the most recent session pinned to this account
+  active_sessions?: number // count of sessions currently pinned and in a non-terminal state
 }
 
 export interface CreateClaudeAccountRequest {
