@@ -38,6 +38,11 @@ export function ClaudeAccountsPanel() {
   const { data: accounts, isLoading } = useQuery({
     queryKey: ['claude-accounts'],
     queryFn: listClaudeAccounts,
+    // Poll every 5s so accounts registered by the gateway's fs-watcher
+    // (after `claude login` writes ~/.claude-accounts/<name>/.credentials.json)
+    // appear in the UI without a manual refresh. Cheap: one GET on a
+    // small table; refetch only fires while this panel is mounted.
+    refetchInterval: 5000,
   })
 
   const importLocal = useMutation({

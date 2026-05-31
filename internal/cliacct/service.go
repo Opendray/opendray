@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -21,6 +22,13 @@ type Service struct {
 	store       *store
 	bus         *eventbus.Hub
 	accountsDir string // root for default ConfigDir/TokenPath; "" → ~/.claude-accounts
+
+	// importMu serializes ImportLocal() so concurrent invocations
+	// (startup scan + fsnotify watcher event + UI "Import local" click)
+	// don't race on the GetByName/Create check-then-insert window.
+	// Held only for the duration of one scan; UI requests still queue
+	// quickly because each scan is O(accounts on disk).
+	importMu sync.Mutex
 }
 
 // Option mutates Service defaults.
@@ -61,6 +69,11 @@ func (s *Service) resolveAccountsDir() string {
 	}
 	return filepath.Join(home, ".claude-accounts")
 }
+
+// AccountsDir is the public version of resolveAccountsDir, exposed so
+// the cliacct.Watcher (constructed in App.New) can be wired without
+// reaching into Service internals.
+func (s *Service) AccountsDir() string { return s.resolveAccountsDir() }
 
 // List returns all accounts, with TokenFilled set per account.
 func (s *Service) List(ctx context.Context) ([]Account, error) {
@@ -213,6 +226,9 @@ func (s *Service) SetToken(ctx context.Context, id, token string) error {
 // layout, or none yet) — the result is simply empty. Returns the list
 // of newly-created accounts.
 func (s *Service) ImportLocal(ctx context.Context) ([]Account, error) {
+	s.importMu.Lock()
+	defer s.importMu.Unlock()
+
 	accountsDir := s.resolveAccountsDir()
 	if accountsDir == "" {
 		return nil, fmt.Errorf("resolve accounts dir: HOME unset and no accounts_dir configured")
@@ -267,6 +283,14 @@ func discoverLocalAccountNames(accountsDir string) ([]string, error) {
 		if !e.IsDir() || e.Name() == "tokens" {
 			continue
 		}
+		// Reject symlinked account dirs: a malicious symlink at
+		// ~/.claude-accounts/foo → /etc would otherwise let the
+		// watcher feed arbitrary paths to selectSpawnCreds.
+		// fs.DirEntry.Type() returns the type bits *without* following
+		// symlinks, so this is the right check.
+		if e.Type()&os.ModeSymlink != 0 {
+			continue
+		}
 		if !fileExists(filepath.Join(accountsDir, e.Name(), ".credentials.json")) {
 			continue // not a Claude Code config dir
 		}
@@ -315,6 +339,22 @@ func writeToken(path, token string) error {
 	return nil
 }
 
+// CheckClaudeAccountEnabled implements session.ClaudeAccountChecker —
+// the upstream validator used by session handlers (create / switch)
+// so a bogus or disabled id fails with 400 before the session row is
+// touched. Returns ErrNotFound if the account is missing or ErrDisabled
+// if present-but-toggled-off; callers map both to a clean error.
+func (s *Service) CheckClaudeAccountEnabled(ctx context.Context, id string) error {
+	a, err := s.store.Get(ctx, id)
+	if err != nil {
+		return err // store wraps to ErrNotFound on missing row
+	}
+	if !a.Enabled {
+		return ErrDisabled
+	}
+	return nil
+}
+
 // ResolveSpawnCreds returns the credentials to inject when spawning a
 // process for account id:
 //
@@ -347,8 +387,17 @@ func (s *Service) ResolveSpawnCreds(ctx context.Context, id string) (configDir, 
 func selectSpawnCreds(name, configDir, tokenPath string) (string, string, error) {
 	token := ""
 	if tokenPath != "" {
-		if body, err := os.ReadFile(tokenPath); err == nil {
-			token = strings.TrimSpace(string(body))
+		// Lstat first so a symlink at tokenPath doesn't trick us into
+		// reading some other file the opendray user can reach. Pair
+		// with fileExists() which also rejects symlinks. Defense in
+		// depth: a path that survived ImportLocal's symlink check
+		// could still be substituted later (delete-rename race), and
+		// catching it here means we never spawn with a token sourced
+		// from outside the accounts tree.
+		if st, err := os.Lstat(tokenPath); err == nil && st.Mode().IsRegular() {
+			if body, err := os.ReadFile(tokenPath); err == nil {
+				token = strings.TrimSpace(string(body))
+			}
 		}
 	}
 	if token == "" {
@@ -361,8 +410,15 @@ func selectSpawnCreds(name, configDir, tokenPath string) (string, string, error)
 	return configDir, token, nil
 }
 
-// fileExists reports whether path exists and is a regular file.
+// fileExists reports whether path exists and is a regular file. Uses
+// Lstat so symlinks (even those pointing at real files) return false —
+// callers want to reach exactly the file at `path`, not whatever the
+// symlink resolves to. Defense in depth against an attacker who can
+// write under the accounts dir.
 func fileExists(path string) bool {
-	st, err := os.Stat(path)
-	return err == nil && !st.IsDir()
+	st, err := os.Lstat(path)
+	if err != nil {
+		return false
+	}
+	return st.Mode().IsRegular()
 }

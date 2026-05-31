@@ -40,17 +40,47 @@ type Service interface {
 	History(ctx context.Context, id string, limit int) (HistoryResponse, error)
 }
 
+// ClaudeAccountChecker is the minimal cliacct surface the session
+// handler needs to validate `claude_account_id` early — before the row
+// is persisted (create) or mutated (switch). Wiring this as an
+// interface, rather than importing cliacct directly, keeps the session
+// package free of the cliacct ↔ session cyclic-dep risk and makes the
+// handler trivially testable with a fake.
+//
+// A nil checker disables validation; existing callers that don't wire
+// one keep their previous behavior (deferred error at spawn time).
+type ClaudeAccountChecker interface {
+	// CheckClaudeAccountEnabled returns nil when id refers to an
+	// existing, enabled account; an error otherwise. Implementations
+	// should distinguish "not found" from "disabled" via the returned
+	// error so the handler can map both to 400 with a useful message.
+	CheckClaudeAccountEnabled(ctx context.Context, id string) error
+}
+
 type Handlers struct {
 	svc      Service
+	acct     ClaudeAccountChecker // optional; nil disables early validation
 	log      *slog.Logger
 	upgrader websocket.Upgrader
 }
 
-func NewHandlers(svc Service, log *slog.Logger) *Handlers {
+// HandlerOption mutates Handlers at construction time. Used so adding
+// new optional deps (the account checker, future per-provider checks)
+// doesn't break NewHandlers' positional signature.
+type HandlerOption func(*Handlers)
+
+// WithClaudeAccountChecker wires the cliacct surface used to validate
+// claude_account_id in create() and switchClaudeAccount(). Passing nil
+// is equivalent to omitting the option (validation is skipped).
+func WithClaudeAccountChecker(c ClaudeAccountChecker) HandlerOption {
+	return func(h *Handlers) { h.acct = c }
+}
+
+func NewHandlers(svc Service, log *slog.Logger, opts ...HandlerOption) *Handlers {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &Handlers{
+	h := &Handlers{
 		svc: svc,
 		log: log.With("component", "session.http"),
 		upgrader: websocket.Upgrader{
@@ -62,6 +92,10 @@ func NewHandlers(svc Service, log *slog.Logger) *Handlers {
 			CheckOrigin: wsutil.SameOriginCheck(),
 		},
 	}
+	for _, opt := range opts {
+		opt(h)
+	}
+	return h
 }
 
 // Mount adds the session routes to the given chi.Router. Caller mounts
@@ -95,6 +129,16 @@ func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
+	}
+	// Validate claude_account_id up front so the operator gets a clean
+	// 400 instead of a 500 on the deferred spawn-time error. We only
+	// check when an id was actually supplied; empty means "use the
+	// CLI's keychain default" and stays the supported fallback.
+	if h.acct != nil && req.ClaudeAccountID != "" {
+		if err := h.acct.CheckClaudeAccountEnabled(r.Context(), req.ClaudeAccountID); err != nil {
+			writeError(w, http.StatusBadRequest, fmt.Errorf("claude_account_id: %w", err))
+			return
+		}
 	}
 	sess, err := h.svc.Create(r.Context(), req)
 	if err != nil {
@@ -431,6 +475,19 @@ func (h *Handlers) switchClaudeAccount(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
+	}
+	// Mirror create()'s up-front check so a switch to a deleted or
+	// disabled account fails BEFORE we stop the live session. Without
+	// this, Manager.SwitchClaudeAccount would stop the PTY, then
+	// discover the bad id at spawn time, leaving the session stopped
+	// with the *original* account preserved on the row — surprising
+	// state for the operator. Empty AccountID is the valid "clear
+	// pinning, use CLI default" intent, so we skip validation there.
+	if h.acct != nil && req.AccountID != "" {
+		if err := h.acct.CheckClaudeAccountEnabled(r.Context(), req.AccountID); err != nil {
+			writeError(w, http.StatusBadRequest, fmt.Errorf("account_id: %w", err))
+			return
+		}
 	}
 	sess, err := h.svc.SwitchClaudeAccount(r.Context(), id, req.AccountID)
 	if err != nil {
