@@ -147,6 +147,56 @@ func TestDiscoverLocalAccounts_DefaultEmittedAlongsideNamedAccounts(t *testing.T
 	}
 }
 
+func TestAccountHasCredentials(t *testing.T) {
+	dir := t.TempDir()
+
+	t.Run("config-dir account with .credentials.json → true", func(t *testing.T) {
+		cdir := filepath.Join(dir, "cfgdir")
+		writeFile(t, filepath.Join(cdir, ".credentials.json"), `{"claudeAiOauth":{}}`)
+		if !accountHasCredentials(cdir, filepath.Join(dir, "no-such.token")) {
+			t.Error("expected true for config-dir account with .credentials.json")
+		}
+	})
+
+	t.Run("legacy token file present and non-empty → true", func(t *testing.T) {
+		tp := filepath.Join(dir, "legacy.token")
+		writeFile(t, tp, "sk-ant-oat01-x")
+		if !accountHasCredentials("", tp) {
+			t.Error("expected true for non-empty legacy token file")
+		}
+	})
+
+	t.Run("legacy token file empty → fall through to config-dir check", func(t *testing.T) {
+		tp := filepath.Join(dir, "empty.token")
+		writeFile(t, tp, "")
+		// Empty token file alone is not credentials, and no config-dir → false.
+		if accountHasCredentials("", tp) {
+			t.Error("empty token file with no config-dir should report false")
+		}
+	})
+
+	t.Run("nothing at all → false", func(t *testing.T) {
+		if accountHasCredentials(filepath.Join(dir, "no-cdir"), filepath.Join(dir, "no.token")) {
+			t.Error("expected false when neither source has credentials")
+		}
+	})
+
+	t.Run("default account: tokenPath nonexistent but config-dir has creds → true", func(t *testing.T) {
+		// This is the regression that motivated the change. The
+		// 'default' account's TokenPath points at <accountsDir>/tokens/default.token
+		// which doesn't exist, but its ConfigDir points at ~/.claude
+		// which DOES have .credentials.json. Should report true.
+		home := filepath.Join(dir, "home")
+		writeFile(t, filepath.Join(home, ".claude", ".credentials.json"), `{"claudeAiOauth":{}}`)
+		if !accountHasCredentials(
+			filepath.Join(home, ".claude"),
+			filepath.Join(dir, "accounts", "tokens", "default.token"), // never written
+		) {
+			t.Error("default account with creds in config-dir must report token_filled=true")
+		}
+	})
+}
+
 func TestSelectSpawnCreds(t *testing.T) {
 	dir := t.TempDir()
 	configDir := filepath.Join(dir, "kevin")

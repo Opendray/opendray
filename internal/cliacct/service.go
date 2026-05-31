@@ -82,7 +82,7 @@ func (s *Service) List(ctx context.Context) ([]Account, error) {
 		return nil, err
 	}
 	for i := range out {
-		out[i].TokenFilled = tokenFileFilled(out[i].TokenPath)
+		out[i].TokenFilled = accountHasCredentials(out[i].ConfigDir, out[i].TokenPath)
 	}
 	return out, nil
 }
@@ -92,7 +92,7 @@ func (s *Service) Get(ctx context.Context, id string) (Account, error) {
 	if err != nil {
 		return Account{}, err
 	}
-	a.TokenFilled = tokenFileFilled(a.TokenPath)
+	a.TokenFilled = accountHasCredentials(a.ConfigDir, a.TokenPath)
 	return a, nil
 }
 
@@ -144,7 +144,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (Account, error
 	if err != nil {
 		return Account{}, err
 	}
-	created.TokenFilled = tokenFileFilled(created.TokenPath)
+	created.TokenFilled = accountHasCredentials(created.ConfigDir, created.TokenPath)
 	if s.bus != nil {
 		s.bus.Publish(eventbus.Event{
 			Topic: "claude_account.created",
@@ -181,7 +181,7 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Acc
 	if err != nil {
 		return Account{}, err
 	}
-	updated.TokenFilled = tokenFileFilled(updated.TokenPath)
+	updated.TokenFilled = accountHasCredentials(updated.ConfigDir, updated.TokenPath)
 	return updated, nil
 }
 
@@ -365,15 +365,34 @@ func discoverLocalAccounts(accountsDir string) ([]discoveredAccount, error) {
 	return out, nil
 }
 
-func tokenFileFilled(path string) bool {
-	if path == "" {
-		return false
+// accountHasCredentials reports whether an account has usable
+// credentials on disk via EITHER form opendray supports:
+//
+//   - a legacy <accountsDir>/tokens/<name>.token file (the
+//     `claude-acc` flow; static OAuth token, expires ~1h)
+//   - a config-dir <configDir>/.credentials.json file (the
+//     documented `CLAUDE_CONFIG_DIR=… claude login` flow; Claude
+//     Code self-refreshes)
+//
+// The public Account.TokenFilled JSON field reflects this — the name
+// is historical (predates the config-dir flow); semantically it now
+// means "has usable creds." The UI uses it to decide whether to show
+// the "no token yet" badge, so config-dir accounts (which have no
+// legacy token file but do have a working .credentials.json) must
+// also return true here. Uses Lstat for the same symlink-safety
+// reasons as fileExists.
+func accountHasCredentials(configDir, tokenPath string) bool {
+	if tokenPath != "" {
+		if st, err := os.Lstat(tokenPath); err == nil && st.Mode().IsRegular() && st.Size() > 0 {
+			return true
+		}
 	}
-	st, err := os.Stat(path)
-	if err != nil {
-		return false
+	if configDir != "" {
+		if fileExists(filepath.Join(configDir, ".credentials.json")) {
+			return true
+		}
 	}
-	return st.Size() > 0
+	return false
 }
 
 // writeToken writes the OAuth token to path with chmod 600. The
