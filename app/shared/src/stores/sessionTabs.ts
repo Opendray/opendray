@@ -9,6 +9,9 @@ export interface OpenTab {
 interface SessionTabsState {
   tabs: OpenTab[]
   currentId: string | null
+  // recents maps session id -> last-opened epoch ms (this browser).
+  // Drives "most recently used on top" ordering in the session list.
+  recents: Record<string, number>
   open: (tab: OpenTab) => void
   close: (id: string) => void
   closeAll: () => void
@@ -21,13 +24,15 @@ export const useSessionTabs = create<SessionTabsState>()(
     (set, get) => ({
       tabs: [],
       currentId: null,
+      recents: {},
 
       open: (tab) =>
         set((s) => {
+          const recents = { ...s.recents, [tab.id]: Date.now() }
           if (s.tabs.some((t) => t.id === tab.id)) {
-            return { currentId: tab.id }
+            return { currentId: tab.id, recents }
           }
-          return { tabs: [...s.tabs, tab], currentId: tab.id }
+          return { tabs: [...s.tabs, tab], currentId: tab.id, recents }
         }),
 
       close: (id) =>
@@ -48,7 +53,10 @@ export const useSessionTabs = create<SessionTabsState>()(
       setCurrent: (id) => {
         const tab = get().tabs.find((t) => t.id === id)
         if (!tab && id !== null) return
-        set({ currentId: id })
+        set((s) => ({
+          currentId: id,
+          recents: id ? { ...s.recents, [id]: Date.now() } : s.recents,
+        }))
       },
 
       setTabName: (id, name) =>
@@ -58,7 +66,11 @@ export const useSessionTabs = create<SessionTabsState>()(
     }),
     {
       name: 'opendray.sessionTabs',
-      partialize: (s) => ({ tabs: s.tabs, currentId: s.currentId }),
+      partialize: (s) => ({
+        tabs: s.tabs,
+        currentId: s.currentId,
+        recents: s.recents,
+      }),
     },
   ),
 )

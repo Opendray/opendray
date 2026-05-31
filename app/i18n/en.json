@@ -117,6 +117,8 @@
         "hideInspector": "Hide inspector",
         "attachImage": "Attach image",
         "attachImageTooltip": "Attach image (or paste / drop into terminal)",
+        "copyOutput": "Copy output",
+        "copyOutputTooltip": "Copy the terminal output (selection if any, otherwise everything)",
         "restart": "Restart",
         "restarting": "Restarting…",
         "remove": "Remove",
@@ -131,6 +133,13 @@
         "uploadFailedToast": "Upload failed",
         "uploadInvalidTypeToast": "Only image files can be attached",
         "dropToAttach": "Drop image to attach",
+        "copyButton": "Copy",
+        "copyAllTooltip": "Copy terminal output to clipboard (selection if any, otherwise everything)",
+        "copySelection": "Copy",
+        "copySelectionTooltip": "Copy selected text",
+        "copiedToast": "Copied to clipboard",
+        "copyEmptyToast": "Nothing to copy yet",
+        "copyFailedToast": "Couldn't copy to clipboard",
         "urls": {
           "tooltip": "Open the latest link detected in this session",
           "tapToOpenLatest": "Tap to open the latest link (most recent OAuth URL)",
@@ -185,7 +194,7 @@
         "defaultName": "Default",
         "defaultSubtitle": "CLI's system keychain / env",
         "tokenEmpty": "·empty",
-        "confirmSwitch": "Switching account will restart the Claude CLI process. In-progress conversation state inside the CLI will be lost. Continue?",
+        "confirmSwitch": "Switching account will restart the Claude CLI. The conversation history is preserved (transcript is migrated and --resume replays it under the new account), but any in-flight tool execution or unsent input will be lost. Continue?",
         "switchedToast": "Account switched",
         "switchedDescription": "Now using @{account} · pid {pid}",
         "switchedDefault": "default",
@@ -1003,7 +1012,9 @@
         "removedToast": "Account removed",
         "removeFailedToast": "Remove failed",
         "toggleAria": "Toggle {name}",
-        "removeAria": "Remove {name}"
+        "removeAria": "Remove {name}",
+        "identityAcceptedToast": "New identity recorded",
+        "identityAcceptFailedToast": "Could not accept identity"
       },
       "models": {
         "title": "Models",

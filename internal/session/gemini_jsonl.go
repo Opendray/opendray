@@ -1,6 +1,7 @@
 package session
 
 import (
+	"bufio"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -125,6 +126,16 @@ func geminiRecentResponse(cwd string) string {
 	if dir == "" {
 		return ""
 	}
+	// Newer gemini-cli (Gemini 2.x/3) writes model replies to
+	// chats/session-*.jsonl as {type:"gemini", content:"…"}, leaving
+	// logs.json with user prompts only. Prefer the chats transcript;
+	// it's the clean assistant text (no TUI chrome), which is what
+	// keeps a chat reply from degrading to a raw screen dump.
+	if r := geminiChatRecentResponse(dir); r != "" {
+		return r
+	}
+	// Fallback: older gemini-cli logged model replies in logs.json as
+	// {type:"model", message:"…"}.
 	body, err := os.ReadFile(filepath.Join(dir, "logs.json"))
 	if err != nil {
 		return ""
@@ -154,6 +165,66 @@ func geminiRecentResponse(cwd string) string {
 		return ""
 	}
 	return strings.TrimSpace(latest.Message)
+}
+
+// geminiChatEntry is one line of a chats/session-*.jsonl transcript.
+// Model replies are type=="gemini" with the text in Content; user
+// turns are type=="user"; metadata lines (e.g. {"$set":{…}}) have
+// neither and are skipped.
+type geminiChatEntry struct {
+	Type    string `json:"type"`
+	Content string `json:"content"`
+}
+
+// geminiChatRecentResponse returns the latest model reply from the
+// most-recently-modified chats/session-*.jsonl under the project dir,
+// or "" when there's no chats transcript. The last "gemini" line in
+// the active session file is the newest reply (files are append-only).
+func geminiChatRecentResponse(dir string) string {
+	chatsDir := filepath.Join(dir, "chats")
+	entries, err := os.ReadDir(chatsDir)
+	if err != nil {
+		return ""
+	}
+	var newest string
+	var newestMod time.Time
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".jsonl") {
+			continue
+		}
+		info, err := e.Info()
+		if err != nil {
+			continue
+		}
+		if newest == "" || info.ModTime().After(newestMod) {
+			newest = filepath.Join(chatsDir, e.Name())
+			newestMod = info.ModTime()
+		}
+	}
+	if newest == "" {
+		return ""
+	}
+	f, err := os.Open(newest)
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
+
+	last := ""
+	sc := bufio.NewScanner(f)
+	// Replies can be large; raise the line cap well above the 64 KiB
+	// default so a long answer isn't silently truncated/dropped.
+	sc.Buffer(make([]byte, 0, 64*1024), 8*1024*1024)
+	for sc.Scan() {
+		var ce geminiChatEntry
+		if err := json.Unmarshal(sc.Bytes(), &ce); err != nil {
+			continue
+		}
+		if ce.Type == "gemini" && strings.TrimSpace(ce.Content) != "" {
+			last = ce.Content
+		}
+	}
+	return strings.TrimSpace(last)
 }
 
 // findGeminiProjectDir resolves cwd to the matching tmp/<dir>/

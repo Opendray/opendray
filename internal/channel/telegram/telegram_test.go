@@ -266,6 +266,57 @@ func TestSendCard_ProducesInlineKeyboard(t *testing.T) {
 	}
 }
 
+// When the hub flags a message for the persistent control keyboard, the
+// card's inline row is replaced by a ReplyKeyboardMarkup (keyboard +
+// is_persistent), and the labels mirror channel.ControlKeyboardLayout.
+func TestSendCard_ControlKeyboardReplacesInline(t *testing.T) {
+	srv := newTelegramServer(nil)
+	defer srv.close()
+	patchAPIBase(t, srv.srv.URL)
+
+	tg, _ := New("ch_x", json.RawMessage(`{"bot_token":"t","chat_id":1}`), nil)
+	cs := tg.(channel.CardSender)
+	card := &channel.Card{
+		Elements: []channel.CardElement{
+			channel.CardMarkdown{Content: "agent reply text"},
+			// An inline row the flag must suppress.
+			channel.CardActions{Buttons: [][]channel.ButtonOption{{
+				{Text: "⏸ Stop", Value: "cmd:/confirm stop abc"},
+			}}},
+		},
+	}
+	err := cs.SendCard(context.Background(), channel.ChannelMessage{
+		ChannelID: "ch_x", ConversationID: "1",
+		Metadata: map[string]any{channel.MetaControlKeyboard: true},
+	}, card)
+	if err != nil {
+		t.Fatal(err)
+	}
+	calls := srv.callsFor("sendMessage")
+	if len(calls) != 1 {
+		t.Fatalf("sendMessage calls = %d", len(calls))
+	}
+	rm, ok := calls[0]["reply_markup"].(map[string]any)
+	if !ok {
+		t.Fatalf("reply_markup missing: %v", calls[0])
+	}
+	if _, isInline := rm["inline_keyboard"]; isInline {
+		t.Error("inline_keyboard should be suppressed when control keyboard is requested")
+	}
+	if persistent, _ := rm["is_persistent"].(bool); !persistent {
+		t.Errorf("expected is_persistent=true, got %v", rm["is_persistent"])
+	}
+	rows, _ := rm["keyboard"].([]any)
+	if len(rows) != len(channel.ControlKeyboardLayout()) {
+		t.Fatalf("keyboard rows = %d, want %d", len(rows), len(channel.ControlKeyboardLayout()))
+	}
+	first, _ := rows[0].([]any)
+	btn, _ := first[0].(map[string]any)
+	if btn["text"] != "⏸ Stop" {
+		t.Errorf("first key = %v, want label %q", btn, "⏸ Stop")
+	}
+}
+
 func TestCallbackQuery_DeliveredAsAction(t *testing.T) {
 	srv := newTelegramServer([]tgUpdate{
 		{UpdateID: 7, CallbackQuery: &tgCallbackQuery{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -79,6 +80,75 @@ func (s *store) Delete(ctx context.Context, id string) error {
 		return ErrNotFound
 	}
 	return nil
+}
+
+// nonTerminalStates are the session states that count toward
+// ActiveSessions and the least-loaded auto-assign heuristic. Stays
+// in sync with session.IsTerminal() — anything that returns false
+// there should appear here.
+const nonTerminalStates = `('running', 'starting', 'idle')`
+
+// sessionStats is the per-account result of sessionLoad. Local to the
+// store; Service copies fields into Account before returning.
+type sessionStats struct {
+	ActiveSessions int
+	LastUsedAt     *time.Time // nil = no session ever pinned to this id
+}
+
+// sessionLoad returns one row per claude_accounts entry with active-
+// session count and the most recent started_at for any session ever
+// pinned to it. LEFT JOIN so accounts with zero sessions still appear
+// (count = 0, max = NULL). Used by Service.List so we make one DB
+// round-trip per List instead of N+1.
+func (s *store) sessionLoad(ctx context.Context) (map[string]sessionStats, error) {
+	rows, err := s.pool.Query(ctx, `
+        SELECT ca.id,
+               COUNT(s.id) FILTER (WHERE s.state IN `+nonTerminalStates+`) AS active_sessions,
+               MAX(s.started_at)                                            AS last_used_at
+          FROM claude_accounts ca
+          LEFT JOIN sessions s ON s.claude_account_id = ca.id
+         GROUP BY ca.id`)
+	if err != nil {
+		return nil, fmt.Errorf("session-load query: %w", err)
+	}
+	defer rows.Close()
+	out := make(map[string]sessionStats)
+	for rows.Next() {
+		var (
+			id     string
+			active int
+			last   *time.Time // pgx scans nullable TIMESTAMPTZ into a *time.Time directly
+		)
+		if err := rows.Scan(&id, &active, &last); err != nil {
+			return nil, fmt.Errorf("scan session-load row: %w", err)
+		}
+		out[id] = sessionStats{ActiveSessions: active, LastUsedAt: last}
+	}
+	return out, rows.Err()
+}
+
+// pickLeastLoaded returns the enabled account with the smallest count
+// of non-terminal sessions; ties broken by name (lexical, ascending)
+// so the choice is deterministic and the operator can predict it.
+// Returns ErrNotFound when no enabled account exists.
+func (s *store) pickLeastLoaded(ctx context.Context) (string, error) {
+	row := s.pool.QueryRow(ctx, `
+        SELECT ca.id
+          FROM claude_accounts ca
+          LEFT JOIN sessions s ON s.claude_account_id = ca.id
+                              AND s.state IN `+nonTerminalStates+`
+         WHERE ca.enabled = true
+         GROUP BY ca.id, ca.name
+         ORDER BY COUNT(s.id) ASC, ca.name ASC
+         LIMIT 1`)
+	var id string
+	if err := row.Scan(&id); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", ErrNotFound
+		}
+		return "", fmt.Errorf("pick least-loaded account: %w", err)
+	}
+	return id, nil
 }
 
 type scanner interface {

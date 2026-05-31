@@ -161,6 +161,6 @@ func startHandler(r *CommandRegistry) CommandHandler {
 		if err != nil {
 			return "", err
 		}
-		return "👋 opendray is connected. Use /list to see sessions, then tap “💬 Talk to” to pick one.\n\n" + body, nil
+		return "👋 opendray is connected. Send /panel for the control panel — tap “💬 Talk to” a session, then just type to chat with it.\n\n" + body, nil
 	}
 }

@@ -27,6 +27,40 @@ type Account struct {
 	TokenFilled bool      `json:"token_filled"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+
+	// Derived fields below are computed on each read, never persisted.
+	// They give the panel enough signal to answer "which account is
+	// safe to use right now?" without needing Phase-2 usage probes.
+	// JSON omitempty so older clients keep working.
+
+	// SubscriptionType comes from <configDir>/.credentials.json:
+	// claudeAiOauth.subscriptionType — e.g. "max", "pro", "free".
+	SubscriptionType string `json:"subscription_type,omitempty"`
+	// RateLimitTier comes from the same file:
+	// claudeAiOauth.rateLimitTier — e.g. "default_claude_max_5x".
+	RateLimitTier string `json:"rate_limit_tier,omitempty"`
+	// LastUsedAt is MAX(sessions.started_at) where claude_account_id
+	// matches; nil when this account has never been pinned to a
+	// session. Drives the "last used …" chip.
+	LastUsedAt *time.Time `json:"last_used_at,omitempty"`
+	// ActiveSessions counts sessions currently in a non-terminal state
+	// pinned to this account. Powers BOTH the "N sessions" chip and the
+	// least-loaded auto-assign heuristic. Always emitted (never omitted)
+	// so the UI can render "0 sessions" without special-casing.
+	ActiveSessions int `json:"active_sessions"`
+	// OAuthEmail is the Anthropic account currently logged in at this
+	// account's configDir, read from <configDir>/.claude.json (or
+	// <home>/.claude.json for the synthetic 'default'). Empty when the
+	// metadata file is missing or the account is unauthenticated.
+	OAuthEmail string `json:"oauth_email,omitempty"`
+	// PreviousEmail + IdentityDrift fire when the on-disk OAuthEmail
+	// differs from the one we first recorded for this account id —
+	// catching the dangerous case where the operator runs
+	// `claude login` (no CLAUDE_CONFIG_DIR) and silently swaps the
+	// underlying identity of the default account. Cleared when the
+	// operator accepts the new identity via the accept-identity API.
+	PreviousEmail string `json:"previous_email,omitempty"`
+	IdentityDrift bool   `json:"identity_drift,omitempty"`
 }
 
 // CreateRequest is the body for POST /api/v1/claude-accounts.

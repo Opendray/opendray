@@ -88,6 +88,7 @@ type App struct {
 	gitActivityScheduler *gitactivity.Scheduler
 	conflictScheduler    *memconflict.Scheduler // M-PC daily cross-layer conflict scan
 	prWatcher            *prwatcher.Service     // polls open PRs' CI checks and emits pr.checks_completed
+	cliacctWatcher       *cliacct.Watcher       // optional; nil when [providers.claude] watcher_enabled = false
 	server               *http.Server
 }
 
@@ -125,6 +126,17 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}
 	cliacctSvc := cliacct.NewService(st.Pool(), bus, log, cliacctOpts...)
 	cliacctHandlers := cliacct.NewHandlers(cliacctSvc, log)
+	// Accounts watcher: auto-registers a new account row when
+	// ~/.claude-accounts/<name>/.credentials.json appears after a
+	// `CLAUDE_CONFIG_DIR=… claude login` on the host. Construction
+	// is cheap (no goroutines until Run); Run is started inside
+	// App.Run with the other background services so its lifetime
+	// tracks the gateway's. cliacctWatcher == nil when the operator
+	// has set `[providers.claude] watcher_enabled = false`.
+	var cliacctWatcher *cliacct.Watcher
+	if cfg.Providers.Claude.WatcherIsEnabled() {
+		cliacctWatcher = cliacct.NewWatcher(cliacctSvc, cliacctSvc.AccountsDir(), log)
+	}
 
 	// Vault + skills are needed by the SessionProvider so spawn-time
 	// injection has them available. Constructed here (before the
@@ -164,6 +176,12 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		session.WithClaudeHistoryConfig(resolveClaudeHistoryConfig(cfg.Providers.Claude)),
 		session.WithCodexHistoryConfig(resolveCodexHistoryConfig(cfg.Providers.Codex)),
 		session.WithGeminiHistoryConfig(resolveGeminiHistoryConfig(cfg.Providers.Gemini)),
+		// Lets Manager.SwitchClaudeAccount migrate the conversation
+		// transcript JSONL into the new account's projects/ tree
+		// before respawning, so --resume actually finds the
+		// conversation and the dialog's "state will be lost" warning
+		// stops being a self-fulfilling prophecy.
+		session.WithClaudeAccountResolver(cliacctSvc),
 	)
 	sessionProvider := catalog.NewSessionProvider(cat, cliacctSvc, skillsLoader, mcpLoader, secretsFile, log)
 	sessionMgr := session.NewManager(
@@ -179,7 +197,14 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	if err := sessionMgr.ReconcileStartup(ctx); err != nil {
 		log.Warn("session reconcile on startup failed", "err", err)
 	}
-	sessionHandlers := session.NewHandlers(sessionMgr, log)
+	sessionHandlers := session.NewHandlers(sessionMgr, log,
+		// Inject the cliacct validator so POST /sessions and
+		// PATCH /sessions/{id}/claude-account fail fast with 400
+		// when claude_account_id is bogus or disabled, instead of
+		// letting the row be persisted/mutated and then erroring
+		// at spawn time with 500.
+		session.WithClaudeAccountChecker(cliacctSvc),
+	)
 	// Now that the session manager exists, let the catalog handler
 	// populate RuntimeInfo.ActiveSessions on update-check responses so
 	// the UI can warn the operator before upgrading a CLI that running
@@ -197,6 +222,13 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// stays free of the session dependency. The matching idle-card
 	// buttons (Resume / End) emit the same `cmd:/...` payloads.
 	registerChannelCommands(channelHub, sessionMgr)
+	// Optional single-owner gate: when OPENDRAY_CONTROL_OWNER is set to
+	// a Telegram user id, only that account may interact with the bot at
+	// all — send text to a session, run commands, or tap controls.
+	// Unset = open (single-user/trusted default).
+	if authz := senderAuthorizerFromEnv(log); authz != nil {
+		channelHub.SetSenderAuthorizer(authz)
+	}
 	channelHandlers := channel.NewHandlers(channelHub, log)
 	bridgeHandlers := bridge.NewHandlers(bridge.DefaultBroker(), log)
 
@@ -725,6 +757,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		gitActivityScheduler: gitActivityScheduler,
 		conflictScheduler:    conflictScheduler,
 		prWatcher:            prWatcher,
+		cliacctWatcher:       cliacctWatcher,
 		server:               srv,
 	}, nil
 }
@@ -844,6 +877,19 @@ func (a *App) Run(ctx context.Context) error {
 		a.prWatcher.Start(ctx)
 	}
 
+	// Claude accounts fsnotify watcher — runs a startup
+	// ImportLocal scan (catches accounts added while the gateway was
+	// down) then watches AccountsDir for new credentials files.
+	// Nil-safe: when [providers.claude] watcher_enabled = false the
+	// field is nil and we skip cleanly.
+	cliacctWatcherDone := make(chan struct{})
+	go func() {
+		if a.cliacctWatcher != nil {
+			a.cliacctWatcher.Run(ctx)
+		}
+		close(cliacctWatcherDone)
+	}()
+
 	errCh := make(chan error, 1)
 	go func() {
 		if err := a.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -921,6 +967,12 @@ func (a *App) Run(ctx context.Context) error {
 	case <-gitActivityDone:
 	case <-time.After(2 * time.Second):
 		a.log.Warn("git activity scheduler shutdown timed out")
+	}
+
+	select {
+	case <-cliacctWatcherDone:
+	case <-time.After(2 * time.Second):
+		a.log.Warn("cliacct watcher shutdown timed out")
 	}
 
 	a.bus.Close()

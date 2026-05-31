@@ -12,6 +12,7 @@ import { Trans, useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
+  acceptClaudeIdentity,
   deleteClaudeAccount,
   importLocalClaudeAccounts,
   listClaudeAccounts,
@@ -32,12 +33,31 @@ import type { ClaudeAccount } from '@/lib/types'
 // ~1 hour, while the canonical claude-login flow produces a
 // self-managed credentials file. Forcing the host-shell flow keeps
 // the affordance honest.
+
+// relativeAgo turns an ISO timestamp into a tight "12m ago" / "3h ago"
+// / "2d ago" label suitable for a per-row chip. We deliberately keep
+// the granularity coarse so the chip stays narrow.
+function relativeAgo(iso: string): string {
+  const t = new Date(iso).getTime()
+  if (!Number.isFinite(t)) return ''
+  const dsec = Math.max(0, Math.floor((Date.now() - t) / 1000))
+  if (dsec < 60) return `${dsec}s ago`
+  if (dsec < 3600) return `${Math.floor(dsec / 60)}m ago`
+  if (dsec < 86400) return `${Math.floor(dsec / 3600)}h ago`
+  return `${Math.floor(dsec / 86400)}d ago`
+}
+
 export function ClaudeAccountsPanel() {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const { data: accounts, isLoading } = useQuery({
     queryKey: ['claude-accounts'],
     queryFn: listClaudeAccounts,
+    // Poll every 5s so accounts registered by the gateway's fs-watcher
+    // (after `claude login` writes ~/.claude-accounts/<name>/.credentials.json)
+    // appear in the UI without a manual refresh. Cheap: one GET on a
+    // small table; refetch only fires while this panel is mounted.
+    refetchInterval: 5000,
   })
 
   const importLocal = useMutation({
@@ -183,6 +203,87 @@ CLAUDE_CONFIG_DIR=~/.claude-accounts/<name> claude login`}
                     <span className="text-[10px] uppercase tracking-wide text-amber-500/90 inline-flex items-center gap-1">
                       <CircleDot className="size-2.5" />
                       {t('web.providers.claudeAccounts.noTokenYet')}
+                    </span>
+                  )}
+                  {/*
+                    Capacity-at-a-glance chips. These all come from the
+                    backend's already-decorated Account JSON — no extra
+                    queries on the client side. We render them inline
+                    next to the name so the operator can pick the
+                    right account without drilling in.
+                  */}
+                  {a.subscription_type && (
+                    <span
+                      className="text-[10px] uppercase tracking-wide rounded px-1.5 py-0.5 bg-foreground/5 text-foreground/70"
+                      title="subscriptionType (from .credentials.json)"
+                    >
+                      {a.subscription_type}
+                    </span>
+                  )}
+                  {a.rate_limit_tier && (
+                    <span
+                      className="text-[10px] font-mono rounded px-1.5 py-0.5 bg-foreground/5 text-muted-foreground/80"
+                      title="rateLimitTier (from .credentials.json)"
+                    >
+                      {a.rate_limit_tier}
+                    </span>
+                  )}
+                  <span
+                    className="text-[10px] rounded px-1.5 py-0.5 bg-foreground/5 text-muted-foreground/80"
+                    title="sessions currently pinned to this account"
+                  >
+                    {a.active_sessions ?? 0} active
+                  </span>
+                  {a.last_used_at && (
+                    <span
+                      className="text-[10px] text-muted-foreground/60"
+                      title={`last session: ${a.last_used_at}`}
+                    >
+                      used {relativeAgo(a.last_used_at)}
+                    </span>
+                  )}
+                  {/* Current OAuth identity. Always rendered when known
+                      so the operator can see WHICH Anthropic account
+                      this row actually authenticates as. */}
+                  {a.oauth_email && (
+                    <span
+                      className="text-[10px] text-muted-foreground/80"
+                      title="oauthAccount.emailAddress (from .claude.json)"
+                    >
+                      {a.oauth_email}
+                    </span>
+                  )}
+                  {/* Identity drift banner. Shows when the on-disk email
+                      doesn't match the first-seen baseline — the user
+                      ran `claude login` without CLAUDE_CONFIG_DIR and
+                      silently swapped this row's identity. The button
+                      acknowledges the swap as intentional. */}
+                  {a.identity_drift && (
+                    <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-wide rounded px-1.5 py-0.5 bg-red-500/10 text-red-500 border border-red-500/30">
+                      <CircleDot className="size-2.5" />
+                      <span>
+                        identity changed: was {a.previous_email || '?'}
+                      </span>
+                      <button
+                        type="button"
+                        className="underline hover:text-red-400"
+                        onClick={async () => {
+                          try {
+                            await acceptClaudeIdentity(a.id)
+                            qc.invalidateQueries({ queryKey: ['claude-accounts'] })
+                            toast.success(
+                              t('web.providers.claudeAccounts.identityAcceptedToast'),
+                            )
+                          } catch (e) {
+                            toast.error(
+                              t('web.providers.claudeAccounts.identityAcceptFailedToast'),
+                              { description: (e as Error).message },
+                            )
+                          }
+                        }}
+                      >
+                        accept
+                      </button>
                     </span>
                   )}
                 </div>

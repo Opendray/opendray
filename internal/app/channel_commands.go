@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -11,6 +13,35 @@ import (
 	"github.com/opendray/opendray-v2/internal/channel"
 	"github.com/opendray/opendray-v2/internal/session"
 )
+
+// controlOwnerEnv names the env var holding the Telegram user id
+// allowed to interact with the bot at all — sending text to a session,
+// running commands, and tapping control buttons. Unset or empty
+// disables the gate (all senders allowed) — the single-user /
+// trusted-deployment default.
+const controlOwnerEnv = "OPENDRAY_CONTROL_OWNER"
+
+// senderAuthorizerFromEnv builds the inbound sender authorizer from
+// controlOwnerEnv. Returns nil when no owner is configured (open).
+// When configured it fails closed: a message must carry a matching
+// tg_user_id, so any sender that can't prove its identity (or any
+// channel that doesn't supply one) is dropped. This is what makes the
+// Telegram bot single-owner — a bot receives DMs from anyone, so
+// without this gate a stranger's text would reach a session's stdin.
+func senderAuthorizerFromEnv(log *slog.Logger) func(channel.ChannelMessage) bool {
+	owner := strings.TrimSpace(os.Getenv(controlOwnerEnv))
+	if owner == "" {
+		return nil
+	}
+	log.Info("inbound sender gate enabled (single-owner)", "owner_telegram_id", owner)
+	return func(msg channel.ChannelMessage) bool {
+		if msg.Metadata == nil {
+			return false
+		}
+		id, _ := msg.Metadata["tg_user_id"].(string)
+		return id != "" && id == owner
+	}
+}
 
 // sessionOps is the small slice of session.Manager that the chat
 // commands need. Extracted as an interface so tests can stand in a
@@ -66,6 +97,37 @@ func registerChannelCommands(hub *channel.Hub, mgr sessionOps) {
 		Source:  "builtin",
 		Handler: selectSessionHandler(mgr),
 	})
+	// /panel (alias /menu) is the friendly home: the session list with
+	// tap-to-act buttons plus a one-line how-to. It's what we point new
+	// users at, so it's first in the native command menu.
+	for _, name := range []string{"panel", "menu"} {
+		hub.RegisterCommand(channel.Command{
+			Name:        name,
+			Description: "Control panel — sessions + actions",
+			Source:      "builtin",
+			CardHandler: panelCardHandler(mgr),
+		})
+	}
+}
+
+// panelCardHandler renders the control-panel home: the session list
+// (reusing the /list card) with a short how-to header prepended, so a
+// first-time user sees what to do without reading docs.
+func panelCardHandler(mgr sessionOps) channel.CommandCardHandler {
+	list := listSessionsCardHandler(mgr)
+	return func(ctx context.Context, cc channel.CommandContext) (*channel.Card, error) {
+		card, err := list(ctx, cc)
+		if err != nil {
+			return nil, err
+		}
+		header := channel.CardMarkdown{
+			Content: "🎛 Opendray control panel\n" +
+				"Tap “💬 Talk to” a session, then just type to chat with it. " +
+				"Use End / Resume to control it.",
+		}
+		card.Elements = append([]channel.CardElement{header}, card.Elements...)
+		return card, nil
+	}
 }
 
 // listSessionsMax caps how many rows /list returns. Telegram's

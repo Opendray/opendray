@@ -28,8 +28,24 @@ const (
 	pumpBufSize     = 4096
 	terminateGrace  = 3 * time.Second
 
-	defaultIdleThreshold = 30 * time.Second
+	// defaultIdleThreshold is deliberately generous: "idle" is only a
+	// soft notification/label — the session process keeps running and
+	// flips back to running on the next output — so a short value just
+	// makes healthy sessions look idle during normal think/tool pauses.
+	// Override per-deploy via [session] idle_threshold or the
+	// OPENDRAY_SESSION_IDLE_THRESHOLD env var.
+	defaultIdleThreshold = 5 * time.Minute
 	defaultIdleInterval  = 5 * time.Second
+
+	// defaultTurnThreshold / defaultTurnInterval drive turn-complete
+	// detection: a short quiescence after observed output that means
+	// "the agent likely finished replying". Distinct from idle (which
+	// is a much longer "nobody's home" window) — a turn fires in
+	// seconds so a chat channel can stop its "typing…" indicator and
+	// deliver the reply promptly. Only armed sessions (ExpectTurn) are
+	// watched, so the bus stays quiet during ordinary work.
+	defaultTurnThreshold = 3 * time.Second
+	defaultTurnInterval  = 1 * time.Second
 
 	// autoResumeConcurrency bounds how many interrupted sessions are
 	// re-spawned in parallel at startup. Each resume runs a provider
@@ -53,6 +69,27 @@ type ManagerOption func(*Manager)
 
 // WithIdleThreshold sets how long a session must be silent before
 // session.idle fires. Pass 0 to disable idle detection.
+// ClaudeAccountResolver is the minimum cliacct surface SwitchClaudeAccount
+// needs to migrate the conversation transcript when an operator switches
+// a live session to a different account. Wiring it as a small interface
+// keeps session free of the cliacct ↔ session cyclic-dep risk and lets
+// tests inject a fake. Nil → no migration is attempted, behavior matches
+// the pre-2026-05-31 "resume starts a fresh conversation" semantics.
+type ClaudeAccountResolver interface {
+	// ResolveClaudeConfigDir returns the CLAUDE_CONFIG_DIR that would
+	// be injected for the given account id, or "" + nil when the
+	// account is the synthetic empty-id default (CLI's own ~/.claude).
+	ResolveClaudeConfigDir(ctx context.Context, accountID string) (string, error)
+}
+
+// WithClaudeAccountResolver injects the cliacct resolver SwitchClaudeAccount
+// uses to migrate the transcript JSONL across accounts so --resume
+// finds the conversation under the new CLAUDE_CONFIG_DIR. Defaults to
+// nil (no migration) so existing callers keep working unchanged.
+func WithClaudeAccountResolver(r ClaudeAccountResolver) ManagerOption {
+	return func(m *Manager) { m.claudeAccounts = r }
+}
+
 func WithIdleThreshold(d time.Duration) ManagerOption {
 	return func(m *Manager) { m.idleThreshold = d }
 }
@@ -61,6 +98,15 @@ func WithIdleThreshold(d time.Duration) ManagerOption {
 // improve latency; higher values reduce wakeups.
 func WithIdleInterval(d time.Duration) ManagerOption {
 	return func(m *Manager) { m.idleInterval = d }
+}
+
+// WithTurnThreshold sets how long a session must be silent (after
+// producing output) before session.turn_completed fires for an armed
+// (ExpectTurn) session. Pass 0 to disable turn detection. Keep this
+// well below the idle threshold — it's a "reply settled" signal, not
+// an "abandoned" one.
+func WithTurnThreshold(d time.Duration) ManagerOption {
+	return func(m *Manager) { m.turnThreshold = d }
 }
 
 // WithClaudeHistoryConfig overrides the Claude transcript discovery
@@ -85,13 +131,16 @@ func WithGeminiHistoryConfig(cfg GeminiHistoryConfig) ManagerOption {
 // Sessions are persisted in postgres for visibility / audit, but the
 // authoritative state for a running session is the in-memory map here.
 type Manager struct {
-	log       *slog.Logger
-	bus       *eventbus.Hub
-	store     *sessionStore
-	providers ProviderResolver
+	log            *slog.Logger
+	bus            *eventbus.Hub
+	store          *sessionStore
+	providers      ProviderResolver
+	claudeAccounts ClaudeAccountResolver // optional; nil disables transcript migration on switch
 
 	idleThreshold time.Duration
 	idleInterval  time.Duration
+	turnThreshold time.Duration
+	turnInterval  time.Duration
 
 	claudeHistoryCfg ClaudeHistoryConfig
 	codexHistoryCfg  CodexHistoryConfig
@@ -167,6 +216,13 @@ type runningSession struct {
 	activityMu   sync.Mutex
 	lastActivity time.Time
 	isIdle       bool
+	// expectTurn arms turn-complete detection: set by ExpectTurn when a
+	// channel forwards a message into this session and wants to know
+	// when the agent's reply settles. expectAt is the arming instant —
+	// a turn only fires once we've seen output at or after it, so a
+	// no-op submit can't trip an instant false "turn done".
+	expectTurn bool
+	expectAt   time.Time
 
 	endOnce sync.Once
 	endedCh chan struct{}
@@ -181,6 +237,40 @@ func (rs *runningSession) markActive(t time.Time) bool {
 	wasIdle := rs.isIdle
 	rs.isIdle = false
 	return wasIdle
+}
+
+// arm marks the session as awaiting a reply turn as of t. The next
+// active→quiet transition (see checkTurnComplete) fires exactly one
+// session.turn_completed. Idempotent re-arming just moves the marker.
+func (rs *runningSession) arm(t time.Time) {
+	rs.activityMu.Lock()
+	defer rs.activityMu.Unlock()
+	rs.expectTurn = true
+	rs.expectAt = t
+}
+
+// checkTurnComplete reports whether an armed session has just settled
+// into a completed reply turn: it's armed, has produced output at or
+// after the arming instant, and has now been quiet for >= threshold.
+// Returns true exactly once per arming (it disarms on fire) so the
+// caller emits a single session.turn_completed.
+func (rs *runningSession) checkTurnComplete(now time.Time, threshold time.Duration) bool {
+	rs.activityMu.Lock()
+	defer rs.activityMu.Unlock()
+	if !rs.expectTurn {
+		return false
+	}
+	// No output seen since we armed → the agent hasn't started
+	// replying yet; keep waiting (the channel layer's own cap stops a
+	// never-answering session from showing "typing…" forever).
+	if rs.lastActivity.Before(rs.expectAt) {
+		return false
+	}
+	if now.Sub(rs.lastActivity) >= threshold {
+		rs.expectTurn = false
+		return true
+	}
+	return false
 }
 
 // checkIdle returns true if the session has just transitioned from
@@ -212,6 +302,8 @@ func NewManager(pool *pgxpool.Pool, bus *eventbus.Hub, providers ProviderResolve
 		sessions:      make(map[string]*runningSession),
 		idleThreshold: defaultIdleThreshold,
 		idleInterval:  defaultIdleInterval,
+		turnThreshold: defaultTurnThreshold,
+		turnInterval:  defaultTurnInterval,
 	}
 	for _, opt := range opts {
 		opt(m)
@@ -559,6 +651,10 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		m.wg.Add(1)
 		go m.idleWatcher(rs)
 	}
+	if m.turnThreshold > 0 {
+		m.wg.Add(1)
+		go m.turnWatcher(rs)
+	}
 
 	return rs, nil
 }
@@ -785,6 +881,33 @@ func (m *Manager) SwitchClaudeAccount(ctx context.Context, id, newAccountID stri
 	if err != nil {
 		return Session{}, err
 	}
+
+	// Transcript migration: Claude stores per-config-dir transcripts at
+	// <CLAUDE_CONFIG_DIR>/projects/<workspace>/<session_id>.jsonl. The
+	// respawn below renders a different CLAUDE_CONFIG_DIR than the one
+	// the conversation was authored under, so --resume would find
+	// nothing and the conversation would start fresh — exactly the
+	// "in-progress state lost" UX the dialog warns about.
+	//
+	// We hard-link the JSONL into the new config dir's projects tree
+	// before respawn. Hard-link keeps both views pointing at one inode
+	// so future writes by the new account are visible if the operator
+	// switches back later. Cross-fs hard-link or missing source falls
+	// back to a one-shot copy. Errors are non-fatal: the worst case is
+	// what we had before — fresh conversation — and we still bring the
+	// session up under the new account so rate-limit-driven switches
+	// keep working.
+	if m.claudeAccounts != nil && sess.ClaudeSessionID != "" {
+		oldCfg, errOld := m.claudeAccounts.ResolveClaudeConfigDir(ctx, current.ClaudeAccountID)
+		newCfg, errNew := m.claudeAccounts.ResolveClaudeConfigDir(ctx, newAccountID)
+		if errOld == nil && errNew == nil && oldCfg != newCfg {
+			if err := migrateClaudeTranscript(oldCfg, newCfg, sess.ClaudeSessionID); err != nil {
+				m.log.Warn("claude transcript migration failed; switch will start fresh conversation",
+					"session", id, "old_cfg", oldCfg, "new_cfg", newCfg, "err", err)
+			}
+		}
+	}
+
 	sess.ClaudeAccountID = newAccountID
 	sess.State = StateRunning
 	sess.EndedAt = nil
@@ -827,6 +950,31 @@ func (m *Manager) Remove(ctx context.Context, id string) error {
 		return err
 	}
 	return m.store.Delete(ctx, id)
+}
+
+// ExpectTurn arms turn-complete detection for a live session: after
+// the caller has submitted a message into the session's stdin, the
+// next time the agent produces output and then falls quiet for
+// turnThreshold, the manager publishes session.turn_completed. This is
+// the seam the channel hub uses to drive a chat "typing…" indicator
+// and deliver the reply promptly (rather than waiting for the long
+// idle window). No-op on an unknown / terminal session, or when turn
+// detection is disabled.
+func (m *Manager) ExpectTurn(id string) {
+	if m.turnThreshold <= 0 {
+		return
+	}
+	rs := m.lookup(id)
+	if rs == nil {
+		return
+	}
+	rs.sessMu.RLock()
+	terminal := rs.sess.State.IsTerminal()
+	rs.sessMu.RUnlock()
+	if terminal {
+		return
+	}
+	rs.arm(time.Now())
 }
 
 func (m *Manager) Input(_ context.Context, id string, data []byte) error {

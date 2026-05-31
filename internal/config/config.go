@@ -228,14 +228,33 @@ type ProvidersConfig struct {
 //
 // Defaults (when fields are empty):
 //
-//	HistoryRoots: [~/.claude/projects, ~/.claude-accounts/*/projects]
-//	             — both are scanned and deduped via EvalSymlinks
-//	AccountsDir : ~/.claude-accounts
-//	             — root used when creating a new account without an
-//	               explicit ConfigDir
+//	HistoryRoots:   [~/.claude/projects, ~/.claude-accounts/*/projects]
+//	               — both are scanned and deduped via EvalSymlinks
+//	AccountsDir:    ~/.claude-accounts
+//	               — root used when creating a new account without an
+//	                 explicit ConfigDir
+//	WatcherEnabled: true (zero value is "watch")
+//	               — when true, an fsnotify-backed watcher under
+//	                 AccountsDir auto-registers a new account row when
+//	                 `<dir>/<name>/.credentials.json` appears (the
+//	                 result of `CLAUDE_CONFIG_DIR=<dir> claude login`).
+//	                 Set to false to disable the watcher; the UI's
+//	                 "Import local" button still works.
 type ClaudeProviderConfig struct {
-	HistoryRoots []string `toml:"history_roots" json:"history_roots"`
-	AccountsDir  string   `toml:"accounts_dir" json:"accounts_dir"`
+	HistoryRoots   []string `toml:"history_roots" json:"history_roots"`
+	AccountsDir    string   `toml:"accounts_dir" json:"accounts_dir"`
+	WatcherEnabled *bool    `toml:"watcher_enabled" json:"watcher_enabled"`
+}
+
+// WatcherIsEnabled returns the effective accounts-watcher state:
+// nil pointer (omitted in config) → true; explicit false → disabled.
+// Keeps the zero value of ClaudeProviderConfig in "watch" mode so a
+// fresh install Just Works.
+func (c ClaudeProviderConfig) WatcherIsEnabled() bool {
+	if c.WatcherEnabled == nil {
+		return true
+	}
+	return *c.WatcherEnabled
 }
 
 // CodexProviderConfig points at the OpenAI Codex CLI's session

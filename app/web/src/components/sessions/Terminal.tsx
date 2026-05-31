@@ -12,11 +12,14 @@ import { WebLinksAddon } from '@xterm/addon-web-links'
 import '@xterm/xterm/css/xterm.css'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
+import { Copy } from 'lucide-react'
 
+import { Button } from 'shared-ui/primitives/button'
 import { useAuth } from '@/stores/auth'
 import { useTheme } from '@/stores/theme'
 import { BinaryWS, wsURL } from '@/lib/ws'
 import { resizeSession, uploadSessionFile } from '@/lib/sessions'
+import { copyText } from '@/lib/clipboard'
 import { DetectedURLs } from './DetectedURLs'
 import { extractURLs, stripANSI } from './url-extractor'
 
@@ -51,6 +54,13 @@ export interface TerminalHandle {
    * as context. Used by the header "attach image" button.
    */
   uploadFile: (file: File) => Promise<void>
+  /**
+   * Copy the current selection, or the whole buffer when nothing is
+   * selected, to the clipboard. Used by the header "Copy output"
+   * button — the always-available path for touch devices that can't
+   * tap-select the canvas.
+   */
+  copyAll: () => void
 }
 
 function readVar(name: string): string {
@@ -107,6 +117,14 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   // open in a browser instead of fighting with line-wrapped text in
   // the terminal — particularly useful for OAuth flows on mobile.
   const [detectedURLs, setDetectedURLs] = useState<string[]>([])
+  const rootRef = useRef<HTMLDivElement>(null)
+  // Position (root-relative px) of the contextual copy pill, anchored
+  // at where the selection ended. null = no selection, pill hidden.
+  // `below` flips the pill under the point when selecting near the top
+  // edge so it never clips off-screen.
+  const [pill, setPill] = useState<{ x: number; y: number; below: boolean } | null>(
+    null,
+  )
 
   const sendInput = useCallback((data: string) => {
     const ws = wsRef.current
@@ -151,9 +169,49 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     [sessionId, sendInput, t],
   )
 
-  useImperativeHandle(ref, () => ({ sendInput, uploadFile }), [
+  const writeClip = useCallback(
+    async (text: string) => {
+      if (await copyText(text)) {
+        toast.success(t('web.sessions.terminal.copiedToast'))
+      } else {
+        toast.error(t('web.sessions.terminal.copyFailedToast'))
+      }
+    },
+    [t],
+  )
+
+  // Copy the current selection — triggered by the contextual pill that
+  // only appears while text is selected.
+  const copySelection = useCallback(() => {
+    const text = xtermRef.current?.getSelection() ?? ''
+    if (text.trim()) void writeClip(text)
+  }, [writeClip])
+
+  // Copy the selection if present, otherwise the whole buffer. Exposed
+  // on the handle for the session header's "Copy output" button — the
+  // reliable path on iOS, where tap-selecting xterm's canvas doesn't
+  // work and the async Clipboard API is unavailable over plain-http LAN
+  // (copyText falls back to execCommand).
+  const copyAll = useCallback(() => {
+    const term = xtermRef.current
+    if (!term) return
+    let text = term.getSelection()
+    if (!text) {
+      term.selectAll()
+      text = term.getSelection()
+      term.clearSelection()
+    }
+    if (!text.trim()) {
+      toast(t('web.sessions.terminal.copyEmptyToast'))
+      return
+    }
+    void writeClip(text)
+  }, [writeClip, t])
+
+  useImperativeHandle(ref, () => ({ sendInput, uploadFile, copyAll }), [
     sendInput,
     uploadFile,
+    copyAll,
   ])
 
   // Mount xterm + WS once per session id.
@@ -187,6 +245,14 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     fit.fit()
     xtermRef.current = term
     fitRef.current = fit
+
+    // Hide the copy pill the moment a selection is cleared (click
+    // elsewhere, typing, scroll-reset). Showing/positioning it happens
+    // on pointerup — see the pill-anchor effect. term.dispose() (cleanup
+    // below) tears this listener down with it.
+    term.onSelectionChange(() => {
+      if (!term.hasSelection()) setPill(null)
+    })
 
     // alive flips false on cleanup so any straggler resize/onOpen
     // callbacks scheduled before unmount don't fire `/resize` against
@@ -371,10 +437,58 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     fitRef.current?.fit()
   }, [themeApplied])
 
+  // Anchor the copy pill where the selection ended. pointerup covers
+  // both mouse-drag and touch; we defer one frame so xterm finalizes
+  // the selection first, then place the pill at the pointer (clamped
+  // inside the box, flipped below the point near the top edge).
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+    const onPointerUp = (e: PointerEvent) => {
+      requestAnimationFrame(() => {
+        const term = xtermRef.current
+        if (!term || !term.hasSelection()) {
+          setPill(null)
+          return
+        }
+        const rect = root.getBoundingClientRect()
+        const rawY = e.clientY - rect.top
+        setPill({
+          x: Math.min(Math.max(e.clientX - rect.left, 48), rect.width - 48),
+          y: rawY,
+          below: rawY < 44,
+        })
+      })
+    }
+    root.addEventListener('pointerup', onPointerUp)
+    return () => root.removeEventListener('pointerup', onPointerUp)
+  }, [])
+
   return (
-    <div className="h-full w-full bg-background relative">
+    <div ref={rootRef} className="h-full w-full bg-background relative">
       <div ref={containerRef} className="h-full w-full p-3" />
       <DetectedURLs urls={detectedURLs} />
+      {pill && (
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          // preventDefault on mousedown so clicking the pill doesn't
+          // blur/clear the xterm selection before copySelection reads it.
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={copySelection}
+          title={t('web.sessions.terminal.copySelectionTooltip')}
+          style={{
+            left: pill.x,
+            top: pill.y,
+            transform: `translate(-50%, ${pill.below ? '8px' : 'calc(-100% - 8px)'})`,
+          }}
+          className="absolute z-20 h-7 gap-1.5 px-2.5 text-[11px] border border-border shadow-md"
+        >
+          <Copy className="size-3.5" />
+          {t('web.sessions.terminal.copySelection')}
+        </Button>
+      )}
       {dragActive && (
         <div className="pointer-events-none absolute inset-2 rounded-md border-2 border-dashed border-accent/70 bg-accent/10 flex items-center justify-center">
           <div className="text-[12px] font-mono text-accent">

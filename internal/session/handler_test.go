@@ -29,7 +29,9 @@ func (f *fakeSvc) Create(_ context.Context, req CreateRequest) (Session, error) 
 	}
 	s := Session{
 		ID: "ses_test", ProviderID: req.ProviderID, Cwd: req.Cwd,
-		Args: req.Args, State: StateRunning,
+		Args:            req.Args,
+		State:           StateRunning,
+		ClaudeAccountID: req.ClaudeAccountID, // surface the field so auto-assign tests can assert it
 	}
 	f.sessions[s.ID] = s
 	return s, nil
@@ -158,6 +160,37 @@ func newRouter(svc Service) http.Handler {
 	return r
 }
 
+// fakeAcctChecker is a stand-in for the cliacct.Service surface used
+// by the handler's claude_account_id validation. The known map lets a
+// test enumerate which ids the checker considers valid; disabled holds
+// the ids that should fail with ErrDisabled-equivalent. Anything not
+// in either map → ErrNotFound-equivalent.
+type fakeAcctChecker struct {
+	known        map[string]bool
+	disabled     map[string]bool
+	autoAssignTo string // if set, PickAutoAssign returns this id; empty otherwise
+}
+
+func (f *fakeAcctChecker) CheckClaudeAccountEnabled(_ context.Context, id string) error {
+	if f.disabled[id] {
+		return fmt.Errorf("account %q disabled", id)
+	}
+	if !f.known[id] {
+		return fmt.Errorf("account %q not found", id)
+	}
+	return nil
+}
+
+func (f *fakeAcctChecker) PickAutoAssignClaudeAccount(_ context.Context) (string, error) {
+	return f.autoAssignTo, nil
+}
+
+func newRouterWithChecker(svc Service, c ClaudeAccountChecker) http.Handler {
+	r := chi.NewRouter()
+	NewHandlers(svc, nil, WithClaudeAccountChecker(c)).Mount(r)
+	return r
+}
+
 func TestCreate_Created(t *testing.T) {
 	svc := newFakeSvc()
 	body := bytes.NewBufferString(`{"provider_id":"shell","cwd":"/tmp"}`)
@@ -183,6 +216,144 @@ func TestCreate_BadJSON(t *testing.T) {
 	newRouter(newFakeSvc()).ServeHTTP(rr, req)
 	if rr.Code != http.StatusBadRequest {
 		t.Fatalf("status=%d", rr.Code)
+	}
+}
+
+func TestCreate_InvalidClaudeAccountID(t *testing.T) {
+	// Bogus id is rejected with 400 BEFORE Service.Create() is called.
+	svc := newFakeSvc()
+	checker := &fakeAcctChecker{known: map[string]bool{"cla_real": true}}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/sessions",
+		bytes.NewBufferString(`{"provider_id":"claude","cwd":"/tmp","claude_account_id":"cla_bogus"}`))
+	newRouterWithChecker(svc, checker).ServeHTTP(rr, req)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("status=%d body=%s; want 400", rr.Code, rr.Body)
+	}
+	if len(svc.sessions) != 0 {
+		t.Errorf("session was created despite invalid account id: %d rows", len(svc.sessions))
+	}
+}
+
+func TestCreate_DisabledClaudeAccountID(t *testing.T) {
+	svc := newFakeSvc()
+	checker := &fakeAcctChecker{
+		known:    map[string]bool{"cla_off": true},
+		disabled: map[string]bool{"cla_off": true},
+	}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/sessions",
+		bytes.NewBufferString(`{"provider_id":"claude","cwd":"/tmp","claude_account_id":"cla_off"}`))
+	newRouterWithChecker(svc, checker).ServeHTTP(rr, req)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("status=%d body=%s; want 400", rr.Code, rr.Body)
+	}
+}
+
+func TestCreate_EmptyClaudeAccountID_Skipped(t *testing.T) {
+	// Empty id means "use the CLI's keychain default" — checker must
+	// NOT be invoked. We pin this by setting an empty known map and a
+	// fakeSvc with a happy create; an over-eager validator would 400.
+	svc := newFakeSvc()
+	checker := &fakeAcctChecker{}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/sessions",
+		bytes.NewBufferString(`{"provider_id":"claude","cwd":"/tmp"}`))
+	newRouterWithChecker(svc, checker).ServeHTTP(rr, req)
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("empty claude_account_id should pass validation; status=%d body=%s",
+			rr.Code, rr.Body)
+	}
+}
+
+func TestCreate_AutoAssignPicksAccountForClaudeWithEmptyID(t *testing.T) {
+	// When the caller omits claude_account_id on a Claude session and
+	// the checker returns a pick, the handler MUST inject it into the
+	// request so the spawned PTY uses that account.
+	svc := newFakeSvc()
+	checker := &fakeAcctChecker{
+		known:        map[string]bool{"cla_picked": true},
+		autoAssignTo: "cla_picked",
+	}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/sessions",
+		bytes.NewBufferString(`{"provider_id":"claude","cwd":"/tmp"}`))
+	newRouterWithChecker(svc, checker).ServeHTTP(rr, req)
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status=%d body=%s; want 201", rr.Code, rr.Body)
+	}
+	var s Session
+	if err := json.Unmarshal(rr.Body.Bytes(), &s); err != nil {
+		t.Fatal(err)
+	}
+	// The fakeSvc.Create echoes back req.ClaudeAccountID — so this
+	// pins the contract that auto-assign actually wrote into req
+	// before svc.Create ran.
+	if s.ClaudeAccountID != "cla_picked" {
+		t.Errorf("expected handler to auto-assign 'cla_picked', got %q", s.ClaudeAccountID)
+	}
+}
+
+func TestCreate_AutoAssignSkippedForNonClaudeProviders(t *testing.T) {
+	// Auto-assign is Claude-specific (other providers don't even have
+	// the column). A shell session must NOT have an auto-assigned
+	// claude_account_id even when the checker would offer one.
+	svc := newFakeSvc()
+	checker := &fakeAcctChecker{autoAssignTo: "cla_wrong"}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/sessions",
+		bytes.NewBufferString(`{"provider_id":"shell","cwd":"/tmp"}`))
+	newRouterWithChecker(svc, checker).ServeHTTP(rr, req)
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status=%d", rr.Code)
+	}
+	var s Session
+	if err := json.Unmarshal(rr.Body.Bytes(), &s); err != nil {
+		t.Fatal(err)
+	}
+	if s.ClaudeAccountID != "" {
+		t.Errorf("shell session should not have claude_account_id; got %q", s.ClaudeAccountID)
+	}
+}
+
+func TestCreate_AutoAssignSkippedWhenCallerPinnedAnAccount(t *testing.T) {
+	// Explicit user choice trumps auto-assign. The pinned id has to
+	// pass validation; the checker's auto-assign hint is ignored.
+	svc := newFakeSvc()
+	checker := &fakeAcctChecker{
+		known:        map[string]bool{"cla_pinned": true, "cla_picked": true},
+		autoAssignTo: "cla_picked",
+	}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/sessions",
+		bytes.NewBufferString(`{"provider_id":"claude","cwd":"/tmp","claude_account_id":"cla_pinned"}`))
+	newRouterWithChecker(svc, checker).ServeHTTP(rr, req)
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status=%d body=%s", rr.Code, rr.Body)
+	}
+	var s Session
+	if err := json.Unmarshal(rr.Body.Bytes(), &s); err != nil {
+		t.Fatal(err)
+	}
+	if s.ClaudeAccountID != "cla_pinned" {
+		t.Errorf("operator's pinned id must win; got %q", s.ClaudeAccountID)
+	}
+}
+
+func TestSwitchClaudeAccount_InvalidID(t *testing.T) {
+	svc := newFakeSvc()
+	svc.sessions["ses_live"] = Session{ID: "ses_live", ProviderID: "claude", State: StateRunning}
+	checker := &fakeAcctChecker{known: map[string]bool{"cla_real": true}}
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPatch, "/sessions/ses_live/claude-account",
+		bytes.NewBufferString(`{"account_id":"cla_does_not_exist"}`))
+	newRouterWithChecker(svc, checker).ServeHTTP(rr, req)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("status=%d body=%s; want 400", rr.Code, rr.Body)
+	}
+	// Session must NOT have been stopped or mutated by the rejected switch.
+	if s := svc.sessions["ses_live"]; s.State != StateRunning {
+		t.Errorf("session state changed despite rejected switch: %s", s.State)
 	}
 }
 
