@@ -10,6 +10,79 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.5.0] — 2026-05-31
+
+Phase 2 Tier A of the multi-Claude-account work: rate-limit-aware
+auto-failover. A Claude session that hits its account quota can now
+automatically switch itself to the next non-throttled enabled account,
+with the conversation continuing seamlessly on the new identity. Plus
+documentation polish around the release ceremony so the next operator
+cutting a release doesn't have to re-discover today's gotchas.
+
+### Added
+
+- **Rate-limit auto-failover for Claude sessions** ([providers.claude]
+  `auto_failover_enabled`, default false). `pumpStdout` scans each
+  Claude session's PTY for the `You've hit your session limit · resets
+  HH:MM (UTC)` banner. On a match:
+  1. The current account is marked throttled-until-reset in an
+     in-memory `ThrottleStore` (lazy GC of expired entries).
+  2. `PickFailoverClaudeAccount` picks the next enabled non-throttled
+     account by the same least-loaded heuristic auto-assign already
+     uses.
+  3. `SwitchClaudeAccount` runs end-to-end — transcript JSONL
+     hard-linked, PTY respawned with `--resume`, conversation
+     continues on the new identity.
+  4. Bus events for observability: `session.auto_switched` on
+     success, `session.auto_failover_no_target` when the fleet is
+     exhausted, `session.auto_failover_failed` when the switch
+     itself errors.
+  5s cooldown per session + 4 KiB rolling window so a persistent
+  banner can't drive the regex on every chunk. Opt-in by design —
+  defaults off so existing operators aren't surprised by silent
+  account switches.
+- **`RELEASING.md` runbook at the repo root** documenting the release
+  ceremony end-to-end: the chain diagram, the "tag-after-changelog-
+  merges" gotcha, recovery procedures (empty release body, pulled-
+  back release), pre/post-release checklists, roadmap to
+  release-please automation and pre-release `-rc.N` channels.
+
+### Tests
+
+- **Pinned contract: disabled accounts are excluded from auto-assign.**
+  A regression-safety unit test for the `enabled<2` guard in
+  `PickAutoAssignClaudeAccount`. The SQL filter
+  (`WHERE ca.enabled = true`) and the explicit-pin validation path
+  were already covered by live integration + handler tests; this
+  closes the last gap.
+
+### Internal
+
+- New `ClaudeAccountResolver` interface methods:
+  `MarkClaudeAccountThrottled`, `IsClaudeAccountThrottled`,
+  `PickFailoverClaudeAccount`. `pickLeastLoaded` SQL gains variadic
+  `exclude ...string` (parameterized via `NOT (ca.id = ANY($1::text[]))`).
+
+### Config
+
+- New: `[providers.claude] auto_failover_enabled` (default false).
+  Opt-in for the runtime rate-limit-driven account switching.
+
+### Honest limitations of Tier A
+
+- Banner-text fragile — if Claude rephrases the limit message, the
+  regex needs updating. Fallback separators (`-`, `|`) for the middle
+  bullet are already covered.
+- No predictive load spread — only reacts to hard limits. Tiers B
+  (active probing) and C (local HTTPS proxy) from the design
+  discussion remain available as upgrades.
+- Sessions running on the empty-id default (`~/.claude`) are skipped
+  by the failover path for the MVP — mapping the default to a real
+  account row needs a resolver round-trip we haven't exposed yet.
+  After auto-assign kicks in for ≥2 enabled accounts, most new
+  sessions are pinned to a named account anyway, so this gap shrinks
+  to zero in practice.
+
 ## [v2.4.0] — 2026-05-31
 
 Multi-Claude-account UX, two-way Telegram channel, and a clutch of

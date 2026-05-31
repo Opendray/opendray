@@ -46,7 +46,7 @@
 
 ## 当前状态
 
-**v2.4.0**(最新)—— v2 代持续迭代。
+**v2.5.0**(最新)—— v2 代持续迭代。
 参见 [`VERSIONING.md`](VERSIONING.md) 了解 major-as-generation 版本策略
 (major = 产品代号,而不是严格的 SemVer "破坏性变更" 标记),
 [`CHANGELOG.md`](CHANGELOG.md) 有完整 release 历史。
