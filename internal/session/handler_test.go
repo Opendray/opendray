@@ -166,8 +166,8 @@ func newRouter(svc Service) http.Handler {
 // the ids that should fail with ErrDisabled-equivalent. Anything not
 // in either map → ErrNotFound-equivalent.
 type fakeAcctChecker struct {
-	known       map[string]bool
-	disabled    map[string]bool
+	known        map[string]bool
+	disabled     map[string]bool
 	autoAssignTo string // if set, PickAutoAssign returns this id; empty otherwise
 }
 

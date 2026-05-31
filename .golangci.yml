@@ -25,6 +25,7 @@ linters:
         - (*github.com/gorilla/websocket.Conn).Close
         - (*compress/gzip.Reader).Close
         - (*archive/zip.ReadCloser).Close
+        - (*github.com/fsnotify/fsnotify.Watcher).Close
         - (github.com/jackc/pgx/v5.Tx).Rollback
         - fmt.Fprintf
         - fmt.Fprintln
