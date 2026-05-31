@@ -41,12 +41,12 @@
 - 💬 **Six bidirectional channels, no walled gardens** — Telegram, Slack, Discord, Feishu (飞书), DingTalk (钉钉), WeCom (企业微信), plus a Bridge adapter for anything custom. Replies on any channel get routed back into the right session.
 - 🧠 **Local-first memory** — ONNX / Ollama / LM Studio embeddings with three-scope retrieval (user · project · session), smart ranking, and cross-layer conflict detection. No vector data leaves your network.
 - 🔌 **Integration-grade API** — scoped API keys, per-call audit log, reverse-proxy mounts. Treat opendray as the gateway behind your own product or just as a personal command centre.
+- 🔑 **Multi-Claude-account fleet** — drop multiple `claude login` accounts into the gateway; the panel auto-discovers them via a filesystem watcher, balances new sessions across enabled accounts, and lets you switch a live session between accounts **without losing the conversation** (transcript is migrated under the hood). Each account row shows live capacity (subscription tier, rate-limit tier, active sessions, last-used, current Anthropic email) so you can pick the right one at a glance.
 - 🔒 **Self-hosted, license-clear** — Apache 2.0, one static binary, cosign-signed releases with SPDX SBOM. No telemetry, no cloud account, no subscription.
 
 ## Status
 
-**v2.0.5** (latest) — the v2 generation is feature-complete and shipping
-patch releases as operators report polish items. See
+**v2.4.0** (latest) — the v2 generation continues to iterate. See
 [`VERSIONING.md`](VERSIONING.md) for the major-as-generation policy
 (major = product generation, not strict SemVer "breaking change") and
 [`CHANGELOG.md`](CHANGELOG.md) for the full release history.

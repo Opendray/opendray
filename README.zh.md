@@ -41,11 +41,12 @@
 - 💬 **六大双向频道,不锁定平台** —— Telegram、Slack、Discord、飞书、钉钉、企业微信,外加 Bridge 适配器接入任意自定义协议。任意频道的回复都路由回正确的会话。
 - 🧠 **本地优先的记忆系统** —— ONNX / Ollama / LM Studio 嵌入向量,三层作用域(用户 · 项目 · 会话)智能检索 + 智能排序 + 跨层冲突检测。向量数据不出你的内网。
 - 🔌 **集成级 API** —— scope 化的 API key、每次调用审计日志、反向代理挂载。可以把 opendray 作为你产品后端的网关,也可以纯粹当个人指挥中心。
+- 🔑 **多 Claude 账户调度** —— 把多个 `claude login` 账户丢进网关,面板通过文件系统 watcher 自动发现;新会话在已启用的账户间均衡分配,**切换正在运行的会话到另一个账户也不会丢失对话**(后台自动迁移 transcript)。每行会显示该账户的实时容量(订阅套餐、限速档位、活动会话数、最近使用时间、当前 Anthropic 邮箱),一眼就能挑对账户。
 - 🔒 **自托管 + 许可证清晰** —— Apache 2.0、单一静态二进制、cosign 签名的 release 自带 SPDX SBOM。零遥测、不依赖云账号、无订阅。
 
 ## 当前状态
 
-**v2.0.5**(最新)—— v2 代功能已完整,目前在按运维反馈滚动 patch 版本。
+**v2.4.0**(最新)—— v2 代持续迭代。
 参见 [`VERSIONING.md`](VERSIONING.md) 了解 major-as-generation 版本策略
 (major = 产品代号,而不是严格的 SemVer "破坏性变更" 标记),
 [`CHANGELOG.md`](CHANGELOG.md) 有完整 release 历史。
