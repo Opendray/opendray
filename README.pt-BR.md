@@ -86,13 +86,19 @@ Passa pela configuração do Postgres, instalação das AI-CLIs, credenciais de 
 
 ### npm / npx (Node ≥ 18)
 
+Instala globalmente e coloca `opendray` no `PATH`:
+
 ```sh
-npm install -g opendray   # adiciona `opendray` ao PATH
-# ou
-npx opendray --help       # zero install, baixa sob demanda
+npm install -g opendray
 ```
 
-Pra quando você quer só o binário estático no `PATH` — sem wizard, sem registro de serviço, sem setup de Postgres. Útil em ambientes com scripts, runners efêmeros, ou se você já tem seu próprio sistema de deploy. O pacote traz o binário de plataforma correspondente (`opendray-{linux,darwin}-{x64,arm64}`) via `optionalDependencies` (o padrão do esbuild / Biome — sem `postinstall`, sem chamada de rede durante a instalação).
+Ou roda sob demanda sem instalar:
+
+```sh
+npx opendray
+```
+
+Pra quando você quer só o binário estático — sem wizard, sem registro de serviço, sem setup de Postgres. Útil em ambientes com scripts, runners efêmeros, ou se você já tem seu próprio sistema de deploy. O pacote traz o binário de plataforma correspondente (`opendray-{linux,darwin}-{x64,arm64}`) via `optionalDependencies` (o padrão do esbuild / Biome — sem `postinstall`, sem chamada de rede durante a instalação).
 
 ### Desinstalação (Linux / macOS)
 

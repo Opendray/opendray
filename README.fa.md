@@ -86,13 +86,19 @@ irm https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install-win
 
 ### npm / npx (Node ≥ 18)
 
+نصب global و اضافه کردن `opendray` به `PATH`:
+
 ```sh
-npm install -g opendray   # `opendray` را به PATH اضافه می‌کند
-# یا
-npx opendray --help       # بدون نصب، on-demand دانلود می‌شود
+npm install -g opendray
 ```
 
-وقتی فقط می‌خواهید باینری static روی `PATH` بنشیند — بدون wizard، بدون service registration، بدون setup Postgres. در محیط‌های scripted، runnerهای ephemeral، یا وقتی deployment system مخصوص خودتان را دارید مفید است. این پکیج باینری پلتفرم متناظر (`opendray-{linux,darwin}-{x64,arm64}`) را از طریق `optionalDependencies` می‌آورد (همان الگوی esbuild / Biome — بدون `postinstall`، بدون network call هنگام نصب).
+یا اجرای on-demand بدون نصب:
+
+```sh
+npx opendray
+```
+
+وقتی فقط باینری static می‌خواهید — بدون wizard، بدون service registration، بدون setup Postgres. در محیط‌های scripted، runnerهای ephemeral، یا وقتی deployment system مخصوص خودتان را دارید مفید است. این پکیج باینری پلتفرم متناظر (`opendray-{linux,darwin}-{x64,arm64}`) را از طریق `optionalDependencies` می‌آورد (همان الگوی esbuild / Biome — بدون `postinstall`، بدون network call هنگام نصب).
 
 ### حذف نصب (لینوکس / مک)
 

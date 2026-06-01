@@ -85,13 +85,19 @@ irm https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install-win
 
 ### npm / npx (Node ≥ 18)
 
+全局安装,把 `opendray` 加进 `PATH`:
+
 ```sh
-npm install -g opendray   # 把 `opendray` 加进 PATH
-# 或者
-npx opendray --help       # 不装,按需下载
+npm install -g opendray
 ```
 
-只想把静态二进制塞到 `PATH` 里时用这个 —— 没 wizard,没服务注册,没 Postgres 设置。脚本化环境、临时 runner、或者你已经有自己的部署系统时合适。包通过 `optionalDependencies` 拉对应的平台二进制(`opendray-{linux,darwin}-{x64,arm64}`),用的是 esbuild / Biome 那套(没有 `postinstall`,安装时不会发网络请求)。
+或者不装,按需运行:
+
+```sh
+npx opendray
+```
+
+只想要静态二进制时用这个 —— 没 wizard,没服务注册,没 Postgres 设置。脚本化环境、临时 runner、或者你已经有自己的部署系统时合适。包通过 `optionalDependencies` 拉对应的平台二进制(`opendray-{linux,darwin}-{x64,arm64}`),用的是 esbuild / Biome 那套(没有 `postinstall`,安装时不会发网络请求)。
 
 ### 卸载(Linux / macOS)
 

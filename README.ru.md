@@ -86,13 +86,19 @@ irm https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install-win
 
 ### npm / npx (Node ≥ 18)
 
+Установить глобально и добавить `opendray` в `PATH`:
+
 ```sh
-npm install -g opendray   # добавляет `opendray` в PATH
-# или
-npx opendray --help       # без установки, скачивается по требованию
+npm install -g opendray
 ```
 
-Когда нужен просто статический бинарь на `PATH` — без мастера, без регистрации сервиса, без настройки Postgres. Полезно в скриптовых окружениях, эфемерных runner-ах, или если у вас уже есть своя система деплоя. Пакет подтягивает соответствующий платформенный бинарь (`opendray-{linux,darwin}-{x64,arm64}`) через `optionalDependencies` (паттерн esbuild / Biome — никакого `postinstall`, никаких сетевых вызовов на момент установки).
+Или запустить по требованию без установки:
+
+```sh
+npx opendray
+```
+
+Когда нужен просто статический бинарь — без мастера, без регистрации сервиса, без настройки Postgres. Полезно в скриптовых окружениях, эфемерных runner-ах, или если у вас уже есть своя система деплоя. Пакет подтягивает соответствующий платформенный бинарь (`opendray-{linux,darwin}-{x64,arm64}`) через `optionalDependencies` (паттерн esbuild / Biome — никакого `postinstall`, никаких сетевых вызовов на момент установки).
 
 ### Удаление (Linux / macOS)
 
