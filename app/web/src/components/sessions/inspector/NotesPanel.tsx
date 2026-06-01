@@ -205,7 +205,7 @@ function ProjectDocsSection({
       <SectionHeader
         icon={<Sparkles className="size-3 text-muted-foreground" />}
         title="Project docs"
-        subtitle={prefix.replace(/\/$/, '/')}
+        subtitle={prefix.endsWith('/') ? prefix : prefix + '/'}
         hint={
           mapping?.custom
             ? `Pinned to ${prefix} (overrides the auto-derived ${mapping.default_path}/). AI agents authoring docs go here too — click ⚙ to change.`
@@ -402,9 +402,17 @@ function cwdBasename(cwd: string): string {
 }
 
 function sanitiseFilename(input: string): string {
-  // Strip leading slashes / parent traversal so the name stays inside
-  // the project folder. Append .md if missing.
-  let name = input.trim().replace(/^\/+/, '').replace(/\.\.\/+/g, '')
+  // Strip leading slashes and drop any `..` / `.` segments so the name
+  // can't escape the project folder. Split/filter/join avoids the
+  // overlap bypass that a single `.replace(/\.\.\//g)` is vulnerable to
+  // (e.g. `....//` collapses to `../` after one pass). Append .md if
+  // missing.
+  let name = input
+    .trim()
+    .replace(/^\/+/, '')
+    .split('/')
+    .filter((seg) => seg !== '' && seg !== '..' && seg !== '.')
+    .join('/')
   if (!name.toLowerCase().endsWith('.md')) name = name + '.md'
   return name
 }
