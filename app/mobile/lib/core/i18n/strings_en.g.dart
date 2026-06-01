@@ -1799,6 +1799,8 @@ class TranslationsAboutEn {
 
 	/// en: 'opendray mobile — multi-CLI gateway control. Source: github.com/Opendray/opendray'
 	String get tagline => 'opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray';
+
+	late final TranslationsAboutGatewayEn gateway = TranslationsAboutGatewayEn.internal(_root);
 }
 
 // Path: settings
@@ -3404,6 +3406,27 @@ class TranslationsProvidersAccountsEn {
 
 	/// en: 'Renamed to {name}.'
 	String renamedSnack({required Object name}) => 'Renamed to ${name}.';
+
+	/// en: '{count} active'
+	String activeSessions({required Object count}) => '${count} active';
+
+	/// en: 'used {when}'
+	String usedAgo({required Object when}) => 'used ${when}';
+
+	/// en: 'Identity changed'
+	String get identityChanged => 'Identity changed';
+
+	/// en: 'was {email}'
+	String identityWas({required Object email}) => 'was ${email}';
+
+	/// en: 'Accept'
+	String get acceptIdentity => 'Accept';
+
+	/// en: 'Identity change accepted'
+	String get identityAcceptedSnack => 'Identity change accepted';
+
+	/// en: 'Accept failed'
+	String get identityAcceptFailed => 'Accept failed';
 }
 
 // Path: integrations.form
@@ -4667,6 +4690,9 @@ class TranslationsAboutSectionsEn {
 
 	/// en: 'Server'
 	String get server => 'Server';
+
+	/// en: 'Gateway'
+	String get gateway => 'Gateway';
 }
 
 // Path: about.fields
@@ -4712,6 +4738,36 @@ class TranslationsAboutCopyLabelsEn {
 
 	/// en: 'server URL'
 	String get serverUrl => 'server URL';
+}
+
+// Path: about.gateway
+class TranslationsAboutGatewayEn {
+	TranslationsAboutGatewayEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Version'
+	String get version => 'Version';
+
+	/// en: 'Commit'
+	String get commit => 'Commit';
+
+	/// en: 'Checking for updates…'
+	String get checking => 'Checking for updates…';
+
+	/// en: 'Up to date'
+	String get upToDate => 'Up to date';
+
+	/// en: 'Update available: {version}'
+	String updateAvailable({required Object version}) => 'Update available: ${version}';
+
+	/// en: 'Release notes'
+	String get releaseNotes => 'Release notes';
+
+	/// en: 'Update check unavailable'
+	String get checkFailed => 'Update check unavailable';
 }
 
 // Path: settings.language
@@ -5120,6 +5176,12 @@ class TranslationsWebSessionsHeaderEn {
 	/// en: 'Attach image (or paste / drop into terminal)'
 	String get attachImageTooltip => 'Attach image (or paste / drop into terminal)';
 
+	/// en: 'Copy output'
+	String get copyOutput => 'Copy output';
+
+	/// en: 'Copy the terminal output (selection if any, otherwise everything)'
+	String get copyOutputTooltip => 'Copy the terminal output (selection if any, otherwise everything)';
+
 	/// en: 'Restart'
 	String get restart => 'Restart';
 
@@ -5164,6 +5226,27 @@ class TranslationsWebSessionsTerminalEn {
 
 	/// en: 'Drop image to attach'
 	String get dropToAttach => 'Drop image to attach';
+
+	/// en: 'Copy'
+	String get copyButton => 'Copy';
+
+	/// en: 'Copy terminal output to clipboard (selection if any, otherwise everything)'
+	String get copyAllTooltip => 'Copy terminal output to clipboard (selection if any, otherwise everything)';
+
+	/// en: 'Copy'
+	String get copySelection => 'Copy';
+
+	/// en: 'Copy selected text'
+	String get copySelectionTooltip => 'Copy selected text';
+
+	/// en: 'Copied to clipboard'
+	String get copiedToast => 'Copied to clipboard';
+
+	/// en: 'Nothing to copy yet'
+	String get copyEmptyToast => 'Nothing to copy yet';
+
+	/// en: 'Couldn't copy to clipboard'
+	String get copyFailedToast => 'Couldn\'t copy to clipboard';
 
 	late final TranslationsWebSessionsTerminalUrlsEn urls = TranslationsWebSessionsTerminalUrlsEn.internal(_root);
 }
@@ -5293,8 +5376,8 @@ class TranslationsWebSessionsAccountSwitcherEn {
 	/// en: '·empty'
 	String get tokenEmpty => '·empty';
 
-	/// en: 'Switching account will restart the Claude CLI process. In-progress conversation state inside the CLI will be lost. Continue?'
-	String get confirmSwitch => 'Switching account will restart the Claude CLI process. In-progress conversation state inside the CLI will be lost. Continue?';
+	/// en: 'Switching account will restart the Claude CLI. The conversation history is preserved (transcript is migrated and --resume replays it under the new account), but any in-flight tool execution or unsent input will be lost. Continue?'
+	String get confirmSwitch => 'Switching account will restart the Claude CLI. The conversation history is preserved (transcript is migrated and --resume replays it under the new account), but any in-flight tool execution or unsent input will be lost. Continue?';
 
 	/// en: 'Account switched'
 	String get switchedToast => 'Account switched';
@@ -6942,6 +7025,12 @@ class TranslationsWebProvidersClaudeAccountsEn {
 
 	/// en: 'Remove {name}'
 	String removeAria({required Object name}) => 'Remove ${name}';
+
+	/// en: 'New identity recorded'
+	String get identityAcceptedToast => 'New identity recorded';
+
+	/// en: 'Could not accept identity'
+	String get identityAcceptFailedToast => 'Could not accept identity';
 }
 
 // Path: web.providers.models
@@ -10346,6 +10435,42 @@ class TranslationsChannelsKindsTelegramEn {
 
 	/// en: '42 (optional — used when no ReplyCtx)'
 	String get chatIdPlaceholder => '42 (optional — used when no ReplyCtx)';
+
+	/// en: 'Owner Telegram user ID(s)'
+	String get ownerUserIdsLabel => 'Owner Telegram user ID(s)';
+
+	/// en: '123456789 (comma-separated for more than one)'
+	String get ownerUserIdsPlaceholder => '123456789 (comma-separated for more than one)';
+
+	/// en: 'Only these numeric Telegram user IDs may drive sessions, run commands, or tap buttons; everyone else is ignored. Leave blank to allow anyone (not recommended for two-way chat). Get yours by DMing @userinfobot.'
+	String get ownerUserIdsHint => 'Only these numeric Telegram user IDs may drive sessions, run commands, or tap buttons; everyone else is ignored. Leave blank to allow anyone (not recommended for two-way chat). Get yours by DMing @userinfobot.';
+
+	/// en: 'Two-way chat (route messages into the session)'
+	String get chatEnabledLabel => 'Two-way chat (route messages into the session)';
+
+	/// en: 'When on, your messages are typed into the selected session and the agent replies here. Turn off for notifications only.'
+	String get chatEnabledHint => 'When on, your messages are typed into the selected session and the agent replies here. Turn off for notifications only.';
+
+	/// en: 'Show “typing…” while the agent works'
+	String get chatTypingLabel => 'Show “typing…” while the agent works';
+
+	/// en: 'Displays a typing indicator until the agent’s reply settles.'
+	String get chatTypingHint => 'Displays a typing indicator until the agent’s reply settles.';
+
+	/// en: 'Activity notifications (idle / finished cards)'
+	String get notifyEnabledLabel => 'Activity notifications (idle / finished cards)';
+
+	/// en: 'Off keeps the chat clean — you still get replies to your messages. Turn on to also get a card when a session goes idle or finishes.'
+	String get notifyEnabledHint => 'Off keeps the chat clean — you still get replies to your messages. Turn on to also get a card when a session goes idle or finishes.';
+
+	/// en: 'Max reply length (characters)'
+	String get replyMaxCharsLabel => 'Max reply length (characters)';
+
+	/// en: '3500 (blank = 3500, 0 = unlimited)'
+	String get replyMaxCharsPlaceholder => '3500 (blank = 3500, 0 = unlimited)';
+
+	/// en: 'Caps how much of the agent’s reply is sent before it’s trimmed with a “…(truncated)” note. Blank uses the 3500 default (~one message); set 0 to send the whole reply, split across multiple messages.'
+	String get replyMaxCharsHint => 'Caps how much of the agent’s reply is sent before it’s trimmed with a “…(truncated)” note. Blank uses the 3500 default (~one message); set 0 to send the whole reply, split across multiple messages.';
 }
 
 // Path: channels.kinds.slack
@@ -13738,6 +13863,8 @@ extension on Translations {
 			'web.sessions.header.hideInspector' => 'Hide inspector',
 			'web.sessions.header.attachImage' => 'Attach image',
 			'web.sessions.header.attachImageTooltip' => 'Attach image (or paste / drop into terminal)',
+			'web.sessions.header.copyOutput' => 'Copy output',
+			'web.sessions.header.copyOutputTooltip' => 'Copy the terminal output (selection if any, otherwise everything)',
 			'web.sessions.header.restart' => 'Restart',
 			'web.sessions.header.restarting' => 'Restarting…',
 			'web.sessions.header.remove' => 'Remove',
@@ -13750,6 +13877,13 @@ extension on Translations {
 			'web.sessions.terminal.uploadFailedToast' => 'Upload failed',
 			'web.sessions.terminal.uploadInvalidTypeToast' => 'Only image files can be attached',
 			'web.sessions.terminal.dropToAttach' => 'Drop image to attach',
+			'web.sessions.terminal.copyButton' => 'Copy',
+			'web.sessions.terminal.copyAllTooltip' => 'Copy terminal output to clipboard (selection if any, otherwise everything)',
+			'web.sessions.terminal.copySelection' => 'Copy',
+			'web.sessions.terminal.copySelectionTooltip' => 'Copy selected text',
+			'web.sessions.terminal.copiedToast' => 'Copied to clipboard',
+			'web.sessions.terminal.copyEmptyToast' => 'Nothing to copy yet',
+			'web.sessions.terminal.copyFailedToast' => 'Couldn\'t copy to clipboard',
 			'web.sessions.terminal.urls.tooltip' => 'Open the latest link detected in this session',
 			'web.sessions.terminal.urls.tapToOpenLatest' => 'Tap to open the latest link (most recent OAuth URL)',
 			'web.sessions.terminal.urls.openListTooltip' => 'Show all links',
@@ -13798,7 +13932,7 @@ extension on Translations {
 			'web.sessions.accountSwitcher.defaultName' => 'Default',
 			'web.sessions.accountSwitcher.defaultSubtitle' => 'CLI\'s system keychain / env',
 			'web.sessions.accountSwitcher.tokenEmpty' => '·empty',
-			'web.sessions.accountSwitcher.confirmSwitch' => 'Switching account will restart the Claude CLI process. In-progress conversation state inside the CLI will be lost. Continue?',
+			'web.sessions.accountSwitcher.confirmSwitch' => 'Switching account will restart the Claude CLI. The conversation history is preserved (transcript is migrated and --resume replays it under the new account), but any in-flight tool execution or unsent input will be lost. Continue?',
 			'web.sessions.accountSwitcher.switchedToast' => 'Account switched',
 			'web.sessions.accountSwitcher.switchedDescription' => ({required Object account, required Object pid}) => 'Now using @${account} · pid ${pid}',
 			'web.sessions.accountSwitcher.switchedDefault' => 'default',
@@ -14144,6 +14278,8 @@ extension on Translations {
 			'web.memoryInspector.toasts.bulkDeleteFailed' => 'Bulk delete failed',
 			'web.memoryInspector.toasts.created' => 'Memory created',
 			'web.memoryInspector.toasts.createFailed' => 'Create failed',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.toasts.updated' => 'Memory updated',
 			'web.memoryInspector.toasts.updateFailed' => 'Update failed',
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => 'Migrated ${reembed}/${examined} memories to ${to}',
@@ -14153,8 +14289,6 @@ extension on Translations {
 			'web.memoryInspector.toasts.syncEmpty' => 'No new .md files to sync',
 			'web.memoryInspector.toasts.syncEmptyDescription' => 'Already in sync, or no Claude memory dir for this cwd.',
 			'web.memoryInspector.toasts.syncFailed' => 'Sync failed',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.toasts.testOk' => ({required Object embedder, required Object dim}) => 'Embedder OK: ${embedder} · ${dim} dimensions',
 			'web.memoryInspector.toasts.testOkDescription' => ({required Object preview}) => 'vector_preview = [${preview}…]',
 			'web.memoryInspector.toasts.testFailed' => 'Embedder probe failed',
@@ -14447,6 +14581,8 @@ extension on Translations {
 			'web.providers.claudeAccounts.removeFailedToast' => 'Remove failed',
 			'web.providers.claudeAccounts.toggleAria' => ({required Object name}) => 'Toggle ${name}',
 			'web.providers.claudeAccounts.removeAria' => ({required Object name}) => 'Remove ${name}',
+			'web.providers.claudeAccounts.identityAcceptedToast' => 'New identity recorded',
+			'web.providers.claudeAccounts.identityAcceptFailedToast' => 'Could not accept identity',
 			'web.providers.models.title' => 'Models',
 			'web.providers.models.help' => 'Models offered for this provider. The default is passed to every session via the model flag; sessions can still override it.',
 			'web.providers.models.empty' => 'No models configured yet.',
@@ -14656,6 +14792,8 @@ extension on Translations {
 			'web.integrations.proxy.extraHeadersLabel' => 'Extra headers (one per line, Name: Value)',
 			'web.integrations.proxy.bodyLabel' => 'Body',
 			'web.integrations.proxy.headers' => 'Headers',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.proxy.body' => 'Body',
 			'web.integrations.proxy.emptyBody' => '(empty)',
 			'web.integrations.proxy.requestFailed' => 'request failed',
@@ -14667,8 +14805,6 @@ extension on Translations {
 			'web.plugins.common.loading' => 'Loading…',
 			'web.plugins.common.cancel' => 'Cancel',
 			'web.plugins.common.edit' => 'Edit',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.common.add' => 'Add',
 			'web.plugins.common.save' => 'Save',
 			'web.plugins.common.create' => 'Create',
@@ -15170,6 +15306,8 @@ extension on Translations {
 			'web.serverSettings.fields.backupExportDir.label' => 'Export directory',
 			'web.serverSettings.fields.backupExportDir.hint' => 'Where one-shot export zips are staged on disk. Empty = ~/.opendray/exports. Bundles auto-expire after 24h. Restart required.',
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump path',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'Absolute path to pg_dump. Major version must be ≥ the server\'s. Empty = first pg_dump on PATH.',
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'pg_restore path',
 			'web.serverSettings.fields.backupPgRestorePath.hint' => 'Absolute path to pg_restore for the /backups/restore flow. Same major-version rule.',
@@ -15181,8 +15319,6 @@ extension on Translations {
 			'web.serverSettings.localOnnxBanner' => 'Requires the binary to be compiled with <1>-tags local_onnx</1>. The standard build returns a clear stub error when this backend is selected. See <3>Memory → Local ONNX</3> tutorial for setup steps.',
 			'web.serverSettings.stringList.noneDefault' => '(none — using built-in defaults)',
 			'web.serverSettings.stringList.addPath' => 'Add path',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.stringList.removeTitle' => 'Remove',
 			'web.serverSettings.httpHelpers.autoDetected' => 'Auto-detected at startup',
 			'web.serverSettings.httpHelpers.modelCount' => ({required Object count}) => '${count} model(s) — click to use',
@@ -15684,6 +15820,8 @@ extension on Translations {
 			'sessions.inspector.notes.locationStoredHint' => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
 			'sessions.inspector.notes.noProjectMapping2' => '(no project mapping)',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.clearOverride' => 'Clear override',
 			'sessions.inspector.notes.save' => 'Save',
 			'sessions.spawnSheet.title' => 'New session',
@@ -15695,8 +15833,6 @@ extension on Translations {
 			'sessions.spawnSheet.disabledSuffix' => ' (disabled)',
 			'sessions.spawnSheet.cwdLabel' => 'Working directory',
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.cwdHelper' => 'Absolute path on the gateway host.',
 			'sessions.spawnSheet.browse' => 'Browse',
 			'sessions.spawnSheet.nameLabel' => 'Name (optional)',
@@ -15827,6 +15963,13 @@ extension on Translations {
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} enabled.',
 			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} disabled.',
 			'providers.accounts.renamedSnack' => ({required Object name}) => 'Renamed to ${name}.',
+			'providers.accounts.activeSessions' => ({required Object count}) => '${count} active',
+			'providers.accounts.usedAgo' => ({required Object when}) => 'used ${when}',
+			'providers.accounts.identityChanged' => 'Identity changed',
+			'providers.accounts.identityWas' => ({required Object email}) => 'was ${email}',
+			'providers.accounts.acceptIdentity' => 'Accept',
+			'providers.accounts.identityAcceptedSnack' => 'Identity change accepted',
+			'providers.accounts.identityAcceptFailed' => 'Accept failed',
 			'providers.configFallbackTitle' => 'Provider config',
 			'providers.saving' => 'Saving…',
 			'providers.save' => 'Save',
@@ -16191,6 +16334,8 @@ extension on Translations {
 			'backupTargetEditor.formTitleEdit' => 'Edit target',
 			'backupTargetEditor.formTitleNew' => 'New backup target',
 			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => 'Auto: ${prefix}-1',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.idHelper' => 'Lower-case letters, digits, dashes. Defaults to the next available slot.',
 			'backupTargetEditor.enabledOn' => 'Scheduled and ad-hoc backups can target this.',
 			'backupTargetEditor.enabledOff' => 'Server will refuse to write backups here.',
@@ -16209,8 +16354,6 @@ extension on Translations {
 			'backupTargetEditor.passwordHintKeep' => 'Leave blank to keep',
 			'backupTargetEditor.pathPrefixLabel' => 'Path prefix',
 			'backupTargetEditor.pathPrefixHintShareRoot' => 'Sub-folder under the share root (optional)',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.pathPrefixHintBaseUrl' => 'Sub-folder under the base URL (optional)',
 			'backupTargetEditor.pathPrefixHintObjectKey' => 'Object-key prefix (optional)',
 			'backupTargetEditor.pathPrefixHintSshFolder' => 'Absolute or relative to user home (optional)',
@@ -16345,6 +16488,18 @@ extension on Translations {
 			'channels.kinds.telegram.botTokenHint' => 'From @BotFather. Stored in channel config; admin-only API.',
 			'channels.kinds.telegram.chatIdLabel' => 'Default chat ID',
 			'channels.kinds.telegram.chatIdPlaceholder' => '42 (optional — used when no ReplyCtx)',
+			'channels.kinds.telegram.ownerUserIdsLabel' => 'Owner Telegram user ID(s)',
+			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789 (comma-separated for more than one)',
+			'channels.kinds.telegram.ownerUserIdsHint' => 'Only these numeric Telegram user IDs may drive sessions, run commands, or tap buttons; everyone else is ignored. Leave blank to allow anyone (not recommended for two-way chat). Get yours by DMing @userinfobot.',
+			'channels.kinds.telegram.chatEnabledLabel' => 'Two-way chat (route messages into the session)',
+			'channels.kinds.telegram.chatEnabledHint' => 'When on, your messages are typed into the selected session and the agent replies here. Turn off for notifications only.',
+			'channels.kinds.telegram.chatTypingLabel' => 'Show “typing…” while the agent works',
+			'channels.kinds.telegram.chatTypingHint' => 'Displays a typing indicator until the agent’s reply settles.',
+			'channels.kinds.telegram.notifyEnabledLabel' => 'Activity notifications (idle / finished cards)',
+			'channels.kinds.telegram.notifyEnabledHint' => 'Off keeps the chat clean — you still get replies to your messages. Turn on to also get a card when a session goes idle or finishes.',
+			'channels.kinds.telegram.replyMaxCharsLabel' => 'Max reply length (characters)',
+			'channels.kinds.telegram.replyMaxCharsPlaceholder' => '3500 (blank = 3500, 0 = unlimited)',
+			'channels.kinds.telegram.replyMaxCharsHint' => 'Caps how much of the agent’s reply is sent before it’s trimmed with a “…(truncated)” note. Blank uses the 3500 default (~one message); set 0 to send the whole reply, split across multiple messages.',
 			'channels.kinds.slack.description' => 'Socket Mode — no public webhook needed. Requires a bot OAuth token (xoxb-) and an app-level token (xapp-) with connections:write.',
 			'channels.kinds.slack.botTokenLabel' => 'Bot token (xoxb-…)',
 			'channels.kinds.slack.botTokenHint' => 'OAuth & Permissions → Bot User OAuth Token. Needs chat:write.',
@@ -16609,6 +16764,7 @@ extension on Translations {
 			'about.loading' => 'Loading…',
 			'about.sections.app' => 'App',
 			'about.sections.server' => 'Server',
+			'about.sections.gateway' => 'Gateway',
 			'about.fields.app' => 'App',
 			'about.fields.version' => 'Version',
 			'about.fields.versionFormat' => ({required Object version, required Object build}) => '${version} (build ${build})',
@@ -16621,6 +16777,13 @@ extension on Translations {
 			'about.copyLabels.version' => 'version',
 			'about.copyLabels.serverUrl' => 'server URL',
 			'about.tagline' => 'opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray',
+			'about.gateway.version' => 'Version',
+			'about.gateway.commit' => 'Commit',
+			'about.gateway.checking' => 'Checking for updates…',
+			'about.gateway.upToDate' => 'Up to date',
+			'about.gateway.updateAvailable' => ({required Object version}) => 'Update available: ${version}',
+			'about.gateway.releaseNotes' => 'Release notes',
+			'about.gateway.checkFailed' => 'Update check unavailable',
 			'settings.title' => 'Settings',
 			'settings.language.section' => 'Language',
 			'settings.language.system' => 'System',
@@ -16685,6 +16848,8 @@ extension on Translations {
 			'settings.serverSettings.sections.general' => 'General',
 			'settings.serverSettings.sections.logging' => 'Logging',
 			'settings.serverSettings.sections.sessions' => 'Sessions',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.sections.vault' => 'Vault',
 			'settings.serverSettings.sections.mcpRegistry' => 'MCP registry',
 			'settings.serverSettings.sections.memory' => 'Memory',
@@ -16723,8 +16888,6 @@ extension on Translations {
 			'settings.serverSettings.fields.skillsPath' => 'Skills path',
 			'settings.serverSettings.fields.gitRoot' => 'Git root',
 			'settings.serverSettings.fields.personalPrefix' => 'Personal prefix',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.projectsPrefix' => 'Projects prefix',
 			'settings.serverSettings.fields.registryRoot' => 'Registry root',
 			'settings.serverSettings.fields.secretsFile' => 'Secrets file',

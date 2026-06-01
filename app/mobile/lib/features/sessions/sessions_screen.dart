@@ -8,6 +8,7 @@ import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/core/providers/provider_visual.dart';
+import 'package:opendray/core/session_recents/recents_controller.dart';
 import 'package:opendray/core/widgets/brand_avatar.dart';
 import 'package:opendray/features/sessions/session_action_sheet.dart';
 import 'package:opendray/features/sessions/spawn_session_sheet.dart';
@@ -49,7 +50,7 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final async = ref.watch(sessionsListProvider);
+    final async = ref.watch(sortedSessionsListProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -72,7 +73,7 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
         ),
       ),
       body: RefreshIndicator(
-        onRefresh: () async => ref.refresh(sessionsListProvider.future),
+        onRefresh: () async => ref.refresh(sortedSessionsListProvider.future),
         child: async.when(
           data: (sessions) {
             final visible =
@@ -91,7 +92,10 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
                 final s = visible[i];
                 return _SessionCard(
                   session: s,
-                  onTap: () => context.push('/session/${s.id}'),
+                  onTap: () {
+                    ref.read(recentsProvider.notifier).markOpened(s.id);
+                    context.push('/session/${s.id}');
+                  },
                   onLongPress: () => _onAction(s),
                   onMore: () => _onAction(s),
                 );

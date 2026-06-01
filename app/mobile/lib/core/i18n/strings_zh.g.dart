@@ -840,6 +840,7 @@ class _TranslationsAboutZh extends TranslationsAboutEn {
 	@override String get copyTooltip => '复制';
 	@override late final _TranslationsAboutCopyLabelsZh copyLabels = _TranslationsAboutCopyLabelsZh._(_root);
 	@override String get tagline => 'opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray';
+	@override late final _TranslationsAboutGatewayZh gateway = _TranslationsAboutGatewayZh._(_root);
 }
 
 // Path: settings
@@ -1750,6 +1751,13 @@ class _TranslationsProvidersAccountsZh extends TranslationsProvidersAccountsEn {
 	@override String enabledSnack({required Object name}) => '${name} 已启用。';
 	@override String disabledSnack({required Object name}) => '${name} 已停用。';
 	@override String renamedSnack({required Object name}) => '已重命名为 ${name}。';
+	@override String activeSessions({required Object count}) => '${count} 个活跃';
+	@override String usedAgo({required Object when}) => '${when}使用';
+	@override String get identityChanged => '身份已变更';
+	@override String identityWas({required Object email}) => '原为 ${email}';
+	@override String get acceptIdentity => '接受';
+	@override String get identityAcceptedSnack => '已接受身份变更';
+	@override String get identityAcceptFailed => '接受失败';
 }
 
 // Path: integrations.form
@@ -2414,6 +2422,7 @@ class _TranslationsAboutSectionsZh extends TranslationsAboutSectionsEn {
 	// Translations
 	@override String get app => '应用';
 	@override String get server => '服务器';
+	@override String get gateway => '网关';
 }
 
 // Path: about.fields
@@ -2441,6 +2450,22 @@ class _TranslationsAboutCopyLabelsZh extends TranslationsAboutCopyLabelsEn {
 	// Translations
 	@override String get version => '版本';
 	@override String get serverUrl => '服务器 URL';
+}
+
+// Path: about.gateway
+class _TranslationsAboutGatewayZh extends TranslationsAboutGatewayEn {
+	_TranslationsAboutGatewayZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get version => '版本';
+	@override String get commit => '提交';
+	@override String get checking => '正在检查更新…';
+	@override String get upToDate => '已是最新';
+	@override String updateAvailable({required Object version}) => '有可用更新：${version}';
+	@override String get releaseNotes => '更新说明';
+	@override String get checkFailed => '无法检查更新';
 }
 
 // Path: settings.language
@@ -2651,6 +2676,8 @@ class _TranslationsWebSessionsHeaderZh extends TranslationsWebSessionsHeaderEn {
 	@override String get hideInspector => '隐藏检查器';
 	@override String get attachImage => '附加图片';
 	@override String get attachImageTooltip => '附加图片（或直接粘贴 / 拖入终端）';
+	@override String get copyOutput => '复制输出';
+	@override String get copyOutputTooltip => '复制终端输出（若有选区则复制选区，否则复制全部）';
 	@override String get restart => '重启';
 	@override String get restarting => '重启中…';
 	@override String get remove => '移除';
@@ -2672,6 +2699,13 @@ class _TranslationsWebSessionsTerminalZh extends TranslationsWebSessionsTerminal
 	@override String get uploadFailedToast => '上传失败';
 	@override String get uploadInvalidTypeToast => '仅支持图片文件';
 	@override String get dropToAttach => '释放以附加图片';
+	@override String get copyButton => '复制';
+	@override String get copyAllTooltip => '复制终端输出到剪贴板(若有选区则复制选区,否则复制全部)';
+	@override String get copySelection => '复制';
+	@override String get copySelectionTooltip => '复制选中的文本';
+	@override String get copiedToast => '已复制到剪贴板';
+	@override String get copyEmptyToast => '暂无可复制内容';
+	@override String get copyFailedToast => '无法复制到剪贴板';
 	@override late final _TranslationsWebSessionsTerminalUrlsZh urls = _TranslationsWebSessionsTerminalUrlsZh._(_root);
 }
 
@@ -2727,7 +2761,7 @@ class _TranslationsWebSessionsAccountSwitcherZh extends TranslationsWebSessionsA
 	@override String get defaultName => '默认';
 	@override String get defaultSubtitle => 'CLI 的系统 keychain / 环境变量';
 	@override String get tokenEmpty => '·未填';
-	@override String get confirmSwitch => '切换账号将重启 Claude CLI 进程。CLI 内部进行中的对话状态将丢失。继续？';
+	@override String get confirmSwitch => '切换账户将重启 Claude CLI。对话历史会被保留（脚本会迁移并通过 --resume 恢复），但正在进行的工具调用或未发送的输入会丢失。是否继续？';
 	@override String get switchedToast => '账号已切换';
 	@override String switchedDescription({required Object account, required Object pid}) => '当前使用 @${account} · pid ${pid}';
 	@override String get switchedDefault => '默认';
@@ -3590,6 +3624,8 @@ class _TranslationsWebProvidersClaudeAccountsZh extends TranslationsWebProviders
 	@override String get removeFailedToast => '移除失败';
 	@override String toggleAria({required Object name}) => '切换 ${name}';
 	@override String removeAria({required Object name}) => '移除 ${name}';
+	@override String get identityAcceptedToast => '已接受新身份';
+	@override String get identityAcceptFailedToast => '无法接受新身份';
 }
 
 // Path: web.providers.models
@@ -5446,6 +5482,18 @@ class _TranslationsChannelsKindsTelegramZh extends TranslationsChannelsKindsTele
 	@override String get botTokenHint => '从 @BotFather 获取。存储于通道配置；仅管理员 API 可见。';
 	@override String get chatIdLabel => '默认 chat ID';
 	@override String get chatIdPlaceholder => '42（可选 — 没有 ReplyCtx 时使用）';
+	@override String get ownerUserIdsLabel => 'Telegram 拥有者用户 ID';
+	@override String get ownerUserIdsPlaceholder => '123456789（多个用逗号分隔）';
+	@override String get ownerUserIdsHint => '只有这些数字 Telegram 用户 ID 才能驱动会话、运行命令或点击按钮；其他人一律忽略。留空则允许任何人（双向聊天不推荐）。私聊 @userinfobot 获取你的 ID。';
+	@override String get chatEnabledLabel => '双向聊天（将消息路由进会话）';
+	@override String get chatEnabledHint => '开启后，你的消息会被输入选定会话，agent 在此回复。仅需通知时关闭。';
+	@override String get chatTypingLabel => 'agent 工作时显示“正在输入…”';
+	@override String get chatTypingHint => '在 agent 回复稳定前显示正在输入指示。';
+	@override String get notifyEnabledLabel => '活动通知（空闲 / 完成卡片）';
+	@override String get notifyEnabledHint => '关闭可保持聊天整洁 — 你仍会收到对消息的回复。开启后会话空闲或完成时也会收到卡片。';
+	@override String get replyMaxCharsLabel => '回复最大长度（字符）';
+	@override String get replyMaxCharsPlaceholder => '3500（留空 = 3500，0 = 不限）';
+	@override String get replyMaxCharsHint => '限制 agent 回复发送多少字符后被截断并附“…(已截断)”。留空使用 3500 默认（约一条消息）；设为 0 则发送完整回复，跨多条消息拆分。';
 }
 
 // Path: channels.kinds.slack
@@ -7417,6 +7465,8 @@ extension on TranslationsZh {
 			'web.sessions.header.hideInspector' => '隐藏检查器',
 			'web.sessions.header.attachImage' => '附加图片',
 			'web.sessions.header.attachImageTooltip' => '附加图片（或直接粘贴 / 拖入终端）',
+			'web.sessions.header.copyOutput' => '复制输出',
+			'web.sessions.header.copyOutputTooltip' => '复制终端输出（若有选区则复制选区，否则复制全部）',
 			'web.sessions.header.restart' => '重启',
 			'web.sessions.header.restarting' => '重启中…',
 			'web.sessions.header.remove' => '移除',
@@ -7429,6 +7479,13 @@ extension on TranslationsZh {
 			'web.sessions.terminal.uploadFailedToast' => '上传失败',
 			'web.sessions.terminal.uploadInvalidTypeToast' => '仅支持图片文件',
 			'web.sessions.terminal.dropToAttach' => '释放以附加图片',
+			'web.sessions.terminal.copyButton' => '复制',
+			'web.sessions.terminal.copyAllTooltip' => '复制终端输出到剪贴板(若有选区则复制选区,否则复制全部)',
+			'web.sessions.terminal.copySelection' => '复制',
+			'web.sessions.terminal.copySelectionTooltip' => '复制选中的文本',
+			'web.sessions.terminal.copiedToast' => '已复制到剪贴板',
+			'web.sessions.terminal.copyEmptyToast' => '暂无可复制内容',
+			'web.sessions.terminal.copyFailedToast' => '无法复制到剪贴板',
 			'web.sessions.terminal.urls.tooltip' => '打开本会话最新检测到的链接',
 			'web.sessions.terminal.urls.tapToOpenLatest' => '点击打开最新链接(通常是 OAuth URL)',
 			'web.sessions.terminal.urls.openListTooltip' => '显示所有链接',
@@ -7477,7 +7534,7 @@ extension on TranslationsZh {
 			'web.sessions.accountSwitcher.defaultName' => '默认',
 			'web.sessions.accountSwitcher.defaultSubtitle' => 'CLI 的系统 keychain / 环境变量',
 			'web.sessions.accountSwitcher.tokenEmpty' => '·未填',
-			'web.sessions.accountSwitcher.confirmSwitch' => '切换账号将重启 Claude CLI 进程。CLI 内部进行中的对话状态将丢失。继续？',
+			'web.sessions.accountSwitcher.confirmSwitch' => '切换账户将重启 Claude CLI。对话历史会被保留（脚本会迁移并通过 --resume 恢复），但正在进行的工具调用或未发送的输入会丢失。是否继续？',
 			'web.sessions.accountSwitcher.switchedToast' => '账号已切换',
 			'web.sessions.accountSwitcher.switchedDescription' => ({required Object account, required Object pid}) => '当前使用 @${account} · pid ${pid}',
 			'web.sessions.accountSwitcher.switchedDefault' => '默认',
@@ -7823,6 +7880,8 @@ extension on TranslationsZh {
 			'web.memoryInspector.toasts.bulkDeleteFailed' => '批量删除失败',
 			'web.memoryInspector.toasts.created' => '记忆已创建',
 			'web.memoryInspector.toasts.createFailed' => '创建失败',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.toasts.updated' => '记忆已更新',
 			'web.memoryInspector.toasts.updateFailed' => '更新失败',
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => '已迁移 ${reembed}/${examined} 条记忆到 ${to}',
@@ -7832,8 +7891,6 @@ extension on TranslationsZh {
 			'web.memoryInspector.toasts.syncEmpty' => '没有需要同步的新 .md 文件',
 			'web.memoryInspector.toasts.syncEmptyDescription' => '已是最新，或该 cwd 没有 Claude memory 目录。',
 			'web.memoryInspector.toasts.syncFailed' => '同步失败',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.toasts.testOk' => ({required Object embedder, required Object dim}) => 'Embedder OK：${embedder} · ${dim} 维',
 			'web.memoryInspector.toasts.testOkDescription' => ({required Object preview}) => 'vector_preview = [${preview}…]',
 			'web.memoryInspector.toasts.testFailed' => 'Embedder 探测失败',
@@ -8125,6 +8182,8 @@ extension on TranslationsZh {
 			'web.providers.claudeAccounts.removeFailedToast' => '移除失败',
 			'web.providers.claudeAccounts.toggleAria' => ({required Object name}) => '切换 ${name}',
 			'web.providers.claudeAccounts.removeAria' => ({required Object name}) => '移除 ${name}',
+			'web.providers.claudeAccounts.identityAcceptedToast' => '已接受新身份',
+			'web.providers.claudeAccounts.identityAcceptFailedToast' => '无法接受新身份',
 			'web.providers.models.title' => '模型',
 			'web.providers.models.help' => '该提供方可用的模型。默认模型会通过 model 参数传给每个会话；会话仍可覆盖。',
 			'web.providers.models.empty' => '尚未配置任何模型。',
@@ -8335,6 +8394,8 @@ extension on TranslationsZh {
 			'web.integrations.proxy.bodyLabel' => 'Body',
 			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.proxy.emptyBody' => '(空)',
 			'web.integrations.proxy.requestFailed' => '请求失败',
 			'web.integrations.proxy.stubText' => '发送一个请求即可查看上游响应。',
@@ -8346,8 +8407,6 @@ extension on TranslationsZh {
 			'web.plugins.common.cancel' => '取消',
 			'web.plugins.common.edit' => '编辑',
 			'web.plugins.common.add' => '添加',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.common.save' => '保存',
 			'web.plugins.common.create' => '创建',
 			'web.plugins.mcp.title' => 'MCP 服务器',
@@ -8849,6 +8908,8 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.backupExportDir.hint' => '一次性导出 zip 在磁盘上的暂存位置。留空 = ~/.opendray/exports。包将在 24 小时后自动过期。需要重启。',
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump 路径',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'pg_dump 的绝对路径。主版本号必须 ≥ 服务器的。留空 = PATH 上的第一个 pg_dump。',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'pg_restore 路径',
 			'web.serverSettings.fields.backupPgRestorePath.hint' => '/backups/restore 流程使用的 pg_restore 绝对路径。同样的主版本号规则。',
 			'web.serverSettings.liveTail.heading' => '实时日志',
@@ -8860,8 +8921,6 @@ extension on TranslationsZh {
 			'web.serverSettings.stringList.noneDefault' => '（无 — 使用内置默认值）',
 			'web.serverSettings.stringList.addPath' => '添加路径',
 			'web.serverSettings.stringList.removeTitle' => '移除',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.httpHelpers.autoDetected' => '启动时自动检测到',
 			'web.serverSettings.httpHelpers.modelCount' => ({required Object count}) => '${count} 个模型 — 点击使用',
 			'web.serverSettings.httpHelpers.presets' => '预设：',
@@ -9363,6 +9422,8 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
 			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
 			'sessions.inspector.notes.clearOverride' => '清除覆盖',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.save' => '保存',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
@@ -9374,8 +9435,6 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.cwdLabel' => '工作目录',
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
 			'sessions.spawnSheet.cwdHelper' => '网关主机上的绝对路径。',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.browse' => '浏览',
 			'sessions.spawnSheet.nameLabel' => '名称（可选）',
 			'sessions.spawnSheet.nameHint' => '例如：backend-refactor',
@@ -9505,6 +9564,13 @@ extension on TranslationsZh {
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
 			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} 已停用。',
 			'providers.accounts.renamedSnack' => ({required Object name}) => '已重命名为 ${name}。',
+			'providers.accounts.activeSessions' => ({required Object count}) => '${count} 个活跃',
+			'providers.accounts.usedAgo' => ({required Object when}) => '${when}使用',
+			'providers.accounts.identityChanged' => '身份已变更',
+			'providers.accounts.identityWas' => ({required Object email}) => '原为 ${email}',
+			'providers.accounts.acceptIdentity' => '接受',
+			'providers.accounts.identityAcceptedSnack' => '已接受身份变更',
+			'providers.accounts.identityAcceptFailed' => '接受失败',
 			'providers.configFallbackTitle' => '提供商配置',
 			'providers.saving' => '保存中…',
 			'providers.save' => '保存',
@@ -9870,6 +9936,8 @@ extension on TranslationsZh {
 			'backupTargetEditor.formTitleNew' => '新建备份目标',
 			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => '自动：${prefix}-1',
 			'backupTargetEditor.idHelper' => '小写字母、数字、连字符。默认为下一个可用槽。',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.enabledOn' => '定期和临时备份可使用此目标。',
 			'backupTargetEditor.enabledOff' => '服务器将拒绝向此处写入备份。',
 			'backupTargetEditor.saving' => '保存中…',
@@ -9888,8 +9956,6 @@ extension on TranslationsZh {
 			'backupTargetEditor.pathPrefixLabel' => '路径前缀',
 			'backupTargetEditor.pathPrefixHintShareRoot' => '共享根下的子文件夹（可选）',
 			'backupTargetEditor.pathPrefixHintBaseUrl' => 'Base URL 下的子文件夹（可选）',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.pathPrefixHintObjectKey' => '对象键前缀（可选）',
 			'backupTargetEditor.pathPrefixHintSshFolder' => '绝对路径或相对用户主目录（可选）',
 			'backupTargetEditor.pathPrefixHintRemoteRoot' => '远端根下的子文件夹（可选）',
@@ -10023,6 +10089,18 @@ extension on TranslationsZh {
 			'channels.kinds.telegram.botTokenHint' => '从 @BotFather 获取。存储于通道配置；仅管理员 API 可见。',
 			'channels.kinds.telegram.chatIdLabel' => '默认 chat ID',
 			'channels.kinds.telegram.chatIdPlaceholder' => '42（可选 — 没有 ReplyCtx 时使用）',
+			'channels.kinds.telegram.ownerUserIdsLabel' => 'Telegram 拥有者用户 ID',
+			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789（多个用逗号分隔）',
+			'channels.kinds.telegram.ownerUserIdsHint' => '只有这些数字 Telegram 用户 ID 才能驱动会话、运行命令或点击按钮；其他人一律忽略。留空则允许任何人（双向聊天不推荐）。私聊 @userinfobot 获取你的 ID。',
+			'channels.kinds.telegram.chatEnabledLabel' => '双向聊天（将消息路由进会话）',
+			'channels.kinds.telegram.chatEnabledHint' => '开启后，你的消息会被输入选定会话，agent 在此回复。仅需通知时关闭。',
+			'channels.kinds.telegram.chatTypingLabel' => 'agent 工作时显示“正在输入…”',
+			'channels.kinds.telegram.chatTypingHint' => '在 agent 回复稳定前显示正在输入指示。',
+			'channels.kinds.telegram.notifyEnabledLabel' => '活动通知（空闲 / 完成卡片）',
+			'channels.kinds.telegram.notifyEnabledHint' => '关闭可保持聊天整洁 — 你仍会收到对消息的回复。开启后会话空闲或完成时也会收到卡片。',
+			'channels.kinds.telegram.replyMaxCharsLabel' => '回复最大长度（字符）',
+			'channels.kinds.telegram.replyMaxCharsPlaceholder' => '3500（留空 = 3500，0 = 不限）',
+			'channels.kinds.telegram.replyMaxCharsHint' => '限制 agent 回复发送多少字符后被截断并附“…(已截断)”。留空使用 3500 默认（约一条消息）；设为 0 则发送完整回复，跨多条消息拆分。',
 			'channels.kinds.slack.description' => 'Socket Mode — 无需公网 webhook。需要 bot OAuth token（xoxb-）和带 connections:write 的 app-level token（xapp-）。',
 			'channels.kinds.slack.botTokenLabel' => 'Bot token（xoxb-…）',
 			'channels.kinds.slack.botTokenHint' => 'OAuth & Permissions → Bot User OAuth Token。需要 chat:write。',
@@ -10287,6 +10365,7 @@ extension on TranslationsZh {
 			'about.loading' => '加载中…',
 			'about.sections.app' => '应用',
 			'about.sections.server' => '服务器',
+			'about.sections.gateway' => '网关',
 			'about.fields.app' => '应用',
 			'about.fields.version' => '版本',
 			'about.fields.versionFormat' => ({required Object version, required Object build}) => '${version}（build ${build}）',
@@ -10299,6 +10378,13 @@ extension on TranslationsZh {
 			'about.copyLabels.version' => '版本',
 			'about.copyLabels.serverUrl' => '服务器 URL',
 			'about.tagline' => 'opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray',
+			'about.gateway.version' => '版本',
+			'about.gateway.commit' => '提交',
+			'about.gateway.checking' => '正在检查更新…',
+			'about.gateway.upToDate' => '已是最新',
+			'about.gateway.updateAvailable' => ({required Object version}) => '有可用更新：${version}',
+			'about.gateway.releaseNotes' => '更新说明',
+			'about.gateway.checkFailed' => '无法检查更新',
 			'settings.title' => '设置',
 			'settings.language.section' => '语言',
 			'settings.language.system' => '跟随系统',
@@ -10364,6 +10450,8 @@ extension on TranslationsZh {
 			'settings.serverSettings.sections.logging' => '日志',
 			'settings.serverSettings.sections.sessions' => '会话',
 			'settings.serverSettings.sections.vault' => '凭据库',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.sections.mcpRegistry' => 'MCP 注册表',
 			'settings.serverSettings.sections.memory' => '记忆',
 			'settings.serverSettings.sections.backup' => '备份',
@@ -10402,8 +10490,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.gitRoot' => 'Git 根',
 			'settings.serverSettings.fields.personalPrefix' => '个人前缀',
 			'settings.serverSettings.fields.projectsPrefix' => '项目前缀',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.registryRoot' => '注册表根',
 			'settings.serverSettings.fields.secretsFile' => '密钥文件',
 			'settings.serverSettings.fields.backend' => '后端',

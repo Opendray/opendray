@@ -409,12 +409,24 @@ class ClaudeAccountSummary {
     required this.displayName,
     required this.enabled,
     required this.tokenFilled,
+    this.subscriptionType,
+    this.rateLimitTier,
+    this.lastUsedAt,
+    this.activeSessions,
+    this.oauthEmail,
+    this.previousEmail,
+    this.identityDrift = false,
   });
 
   factory ClaudeAccountSummary.fromJson(Map<String, dynamic> json) {
     final id = json['id'] as String? ?? '';
     final name = json['name'] as String? ?? '';
     final display = json['display_name'] as String? ?? '';
+    String? str(String key) {
+      final v = json[key];
+      return v is String && v.isNotEmpty ? v : null;
+    }
+
     return ClaudeAccountSummary(
       id: id,
       name: name,
@@ -424,6 +436,14 @@ class ClaudeAccountSummary {
           display.isNotEmpty ? display : (name.isNotEmpty ? name : id),
       enabled: json['enabled'] as bool? ?? false,
       tokenFilled: json['token_filled'] as bool? ?? false,
+      // Decorated metadata — optional; older gateways omit these.
+      subscriptionType: str('subscription_type'),
+      rateLimitTier: str('rate_limit_tier'),
+      lastUsedAt: str('last_used_at'),
+      activeSessions: (json['active_sessions'] as num?)?.toInt(),
+      oauthEmail: str('oauth_email'),
+      previousEmail: str('previous_email'),
+      identityDrift: json['identity_drift'] as bool? ?? false,
     );
   }
 
@@ -432,6 +452,15 @@ class ClaudeAccountSummary {
   final String displayName;
   final bool enabled;
   final bool tokenFilled;
+  // Decorated fields from the gateway's account JSON (see web
+  // app/shared/src/lib/types.ts ClaudeAccount). All optional.
+  final String? subscriptionType;
+  final String? rateLimitTier;
+  final String? lastUsedAt; // ISO timestamp
+  final int? activeSessions;
+  final String? oauthEmail; // current Anthropic account email
+  final String? previousEmail; // prior email when drift detected
+  final bool identityDrift; // oauth_email differs from baseline
 
   bool get isUsable => enabled && tokenFilled;
 }

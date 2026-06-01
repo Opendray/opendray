@@ -2827,7 +2827,14 @@
       "intro": "Sessions spawned with the Claude provider pick from these accounts (or fall back to env).",
       "enabledSnack": "{name} enabled.",
       "disabledSnack": "{name} disabled.",
-      "renamedSnack": "Renamed to {name}."
+      "renamedSnack": "Renamed to {name}.",
+      "activeSessions": "{count} active",
+      "usedAgo": "used {when}",
+      "identityChanged": "Identity changed",
+      "identityWas": "was {email}",
+      "acceptIdentity": "Accept",
+      "identityAcceptedSnack": "Identity change accepted",
+      "identityAcceptFailed": "Accept failed"
     },
     "configFallbackTitle": "Provider config",
     "saving": "Saving…",
@@ -3444,7 +3451,19 @@
         "botTokenLabel": "Bot token",
         "botTokenHint": "From @BotFather. Stored in channel config; admin-only API.",
         "chatIdLabel": "Default chat ID",
-        "chatIdPlaceholder": "42 (optional — used when no ReplyCtx)"
+        "chatIdPlaceholder": "42 (optional — used when no ReplyCtx)",
+        "ownerUserIdsLabel": "Owner Telegram user ID(s)",
+        "ownerUserIdsPlaceholder": "123456789 (comma-separated for more than one)",
+        "ownerUserIdsHint": "Only these numeric Telegram user IDs may drive sessions, run commands, or tap buttons; everyone else is ignored. Leave blank to allow anyone (not recommended for two-way chat). Get yours by DMing @userinfobot.",
+        "chatEnabledLabel": "Two-way chat (route messages into the session)",
+        "chatEnabledHint": "When on, your messages are typed into the selected session and the agent replies here. Turn off for notifications only.",
+        "chatTypingLabel": "Show “typing…” while the agent works",
+        "chatTypingHint": "Displays a typing indicator until the agent’s reply settles.",
+        "notifyEnabledLabel": "Activity notifications (idle / finished cards)",
+        "notifyEnabledHint": "Off keeps the chat clean — you still get replies to your messages. Turn on to also get a card when a session goes idle or finishes.",
+        "replyMaxCharsLabel": "Max reply length (characters)",
+        "replyMaxCharsPlaceholder": "3500 (blank = 3500, 0 = unlimited)",
+        "replyMaxCharsHint": "Caps how much of the agent’s reply is sent before it’s trimmed with a “…(truncated)” note. Blank uses the 3500 default (~one message); set 0 to send the whole reply, split across multiple messages."
       },
       "slack": {
         "description": "Socket Mode — no public webhook needed. Requires a bot OAuth token (xoxb-) and an app-level token (xapp-) with connections:write.",
@@ -3769,7 +3788,8 @@
     "loading": "Loading…",
     "sections": {
       "app": "App",
-      "server": "Server"
+      "server": "Server",
+      "gateway": "Gateway"
     },
     "fields": {
       "app": "App",
@@ -3786,7 +3806,16 @@
       "version": "version",
       "serverUrl": "server URL"
     },
-    "tagline": "opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray"
+    "tagline": "opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray",
+    "gateway": {
+      "version": "Version",
+      "commit": "Commit",
+      "checking": "Checking for updates…",
+      "upToDate": "Up to date",
+      "updateAvailable": "Update available: {version}",
+      "releaseNotes": "Release notes",
+      "checkFailed": "Update check unavailable"
+    }
   },
   "settings": {
     "title": "Settings",
