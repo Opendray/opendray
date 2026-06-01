@@ -171,3 +171,66 @@ export async function getPRChecks(
   )
   return res.checks ?? []
 }
+
+// ── PR detail tabs: commits / files / conversation ─────────────
+
+export interface PRCommit {
+  sha: string
+  short_sha: string
+  message: string // full message; UI shows the first line
+  author: string
+  date: string
+  url: string
+}
+
+export interface PRFile {
+  filename: string
+  // added | modified | removed | renamed
+  status: string
+  additions: number
+  deletions: number
+  // Unified diff; absent when the host doesn't return it inline.
+  patch?: string
+}
+
+export interface PRComment {
+  author: string
+  body: string
+  created_at: string
+  // Set only for review summaries: approved | changes_requested | commented
+  state?: string
+  url?: string
+}
+
+export async function getPRCommits(
+  path: string,
+  number: number,
+): Promise<PRCommit[]> {
+  const params = new URLSearchParams({ path })
+  const res = await api<{ commits: PRCommit[] }>(
+    `/api/v1/git/prs/${number}/commits?${params.toString()}`,
+  )
+  return res.commits ?? []
+}
+
+export async function getPRFiles(
+  path: string,
+  number: number,
+): Promise<PRFile[]> {
+  const params = new URLSearchParams({ path })
+  const res = await api<{ files: PRFile[] }>(
+    `/api/v1/git/prs/${number}/files?${params.toString()}`,
+  )
+  return res.files ?? []
+}
+
+export async function getPRComments(
+  path: string,
+  number: number,
+): Promise<PRComment[]> {
+  const params = new URLSearchParams({ path })
+  const res = await api<{ comments: PRComment[] }>(
+    `/api/v1/git/prs/${number}/comments?${params.toString()}`,
+  )
+  return res.comments ?? []
+}

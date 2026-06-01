@@ -279,6 +279,91 @@ class GitCheckRun {
           conclusion == 'action_required');
 }
 
+// One commit in a pull request (Commits tab).
+class GitPRCommit {
+  GitPRCommit({
+    required this.sha,
+    required this.shortSha,
+    required this.message,
+    required this.author,
+    required this.date,
+    required this.url,
+  });
+
+  factory GitPRCommit.fromJson(Map<String, dynamic> json) => GitPRCommit(
+    sha: json['sha'] as String? ?? '',
+    shortSha: json['short_sha'] as String? ?? '',
+    message: json['message'] as String? ?? '',
+    author: json['author'] as String? ?? '',
+    date: json['date'] as String? ?? '',
+    url: json['url'] as String? ?? '',
+  );
+
+  final String sha;
+  final String shortSha;
+  final String message;
+  final String author;
+  final String date;
+  final String url;
+
+  // First line of the commit message — shown as the subject.
+  String get subject => message.split('\n').first;
+}
+
+// One changed file in a pull request (Files changed tab). Patch may be
+// empty when the host doesn't return it inline.
+class GitPRFile {
+  GitPRFile({
+    required this.filename,
+    required this.status,
+    required this.additions,
+    required this.deletions,
+    required this.patch,
+  });
+
+  factory GitPRFile.fromJson(Map<String, dynamic> json) => GitPRFile(
+    filename: json['filename'] as String? ?? '',
+    status: json['status'] as String? ?? '',
+    additions: (json['additions'] as num?)?.toInt() ?? 0,
+    deletions: (json['deletions'] as num?)?.toInt() ?? 0,
+    patch: json['patch'] as String? ?? '',
+  );
+
+  final String filename;
+  // added | modified | removed | renamed
+  final String status;
+  final int additions;
+  final int deletions;
+  final String patch;
+}
+
+// One conversation entry: an issue/MR comment or a review summary
+// (Conversation tab). State is set only for review summaries.
+class GitPRComment {
+  GitPRComment({
+    required this.author,
+    required this.body,
+    required this.createdAt,
+    required this.state,
+    required this.url,
+  });
+
+  factory GitPRComment.fromJson(Map<String, dynamic> json) => GitPRComment(
+    author: json['author'] as String? ?? '',
+    body: json['body'] as String? ?? '',
+    createdAt: json['created_at'] as String? ?? '',
+    state: json['state'] as String? ?? '',
+    url: json['url'] as String? ?? '',
+  );
+
+  final String author;
+  final String body;
+  final String createdAt;
+  // approved | changes_requested | commented (reviews only; else empty)
+  final String state;
+  final String url;
+}
+
 class GitApi {
   GitApi(this._dio);
   final Dio _dio;
@@ -428,6 +513,69 @@ class GitApi {
       return raw
           .whereType<Map<String, dynamic>>()
           .map(GitCheckRun.fromJson)
+          .toList();
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // GET /git/prs/{n}/commits — commits in the PR (Commits tab).
+  Future<List<GitPRCommit>> prCommits({
+    required String dir,
+    required int number,
+  }) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/git/prs/$number/commits',
+        queryParameters: {'path': dir},
+      );
+      final raw = res.data?['commits'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(GitPRCommit.fromJson)
+          .toList();
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // GET /git/prs/{n}/files — changed files + patches (Files tab).
+  Future<List<GitPRFile>> prFiles({
+    required String dir,
+    required int number,
+  }) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/git/prs/$number/files',
+        queryParameters: {'path': dir},
+      );
+      final raw = res.data?['files'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(GitPRFile.fromJson)
+          .toList();
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // GET /git/prs/{n}/comments — conversation (Conversation tab).
+  Future<List<GitPRComment>> prComments({
+    required String dir,
+    required int number,
+  }) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/git/prs/$number/comments',
+        queryParameters: {'path': dir},
+      );
+      final raw = res.data?['comments'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(GitPRComment.fromJson)
           .toList();
     } on Object catch (e) {
       throw toApiException(e);

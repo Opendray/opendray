@@ -13,6 +13,7 @@ import {
   CircleDashed,
   Plus,
   GitMerge,
+  GitCommit,
   X,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
@@ -23,9 +24,13 @@ import remarkGfm from 'remark-gfm'
 import {
   type CheckRun,
   type GitPullRequest as PR,
+  type PRComment,
   createGitPR,
   getGitPR,
   getPRChecks,
+  getPRComments,
+  getPRCommits,
+  getPRFiles,
   listGitPRs,
   mergeGitPR,
 } from '@/lib/githost'
@@ -376,6 +381,7 @@ function PRDetailDrawer({
   onClose: () => void
   onMerged: () => void
 }) {
+  const [tab, setTab] = useState<DetailTab>('conversation')
   const [method, setMethod] = useState<'squash' | 'merge' | 'rebase'>('squash')
   const [deleteBranch, setDeleteBranch] = useState(true)
 
@@ -402,12 +408,6 @@ function PRDetailDrawer({
   })
   const full = detail.data ?? pr
 
-  const checks = useQuery({
-    queryKey: ['git-pr-checks', cwd, pr.number],
-    queryFn: () => getPRChecks(cwd, pr.number),
-    refetchInterval: 30_000,
-  })
-
   const merge = useMutation({
     mutationFn: () =>
       mergeGitPR({
@@ -429,16 +429,12 @@ function PRDetailDrawer({
     },
   })
 
-  // Aggregate check status for the headline summary. Pending while any
-  // check is still queued / in_progress; failed if any concluded with
-  // anything other than success / neutral / skipped.
-  const checkSummary = aggregateChecks(checks.data ?? [])
   // body is undefined until the detail fetch resolves; '' means the PR
-  // genuinely has no description.
+  // genuinely has no description. While the query still serves the
+  // seeded list row (isPlaceholderData), the body fetch is in flight.
   const body = full.body?.trim() ?? ''
-  // While the query is still serving the seeded list row, the body
-  // hasn't been fetched yet — drives the description loading state.
   const bodyPending = detail.isPlaceholderData
+  const detailError = detail.isError ? (detail.error as Error).message : null
 
   return createPortal(
     <div className="fixed inset-0 z-[60] flex justify-end">
@@ -450,7 +446,7 @@ function PRDetailDrawer({
       <div
         role="dialog"
         aria-modal="true"
-        className="relative h-full w-full max-w-md bg-background border-l border-border shadow-2xl flex flex-col"
+        className="relative h-full w-full max-w-2xl bg-background border-l border-border shadow-2xl flex flex-col"
       >
         {/* Header */}
         <div className="flex items-start gap-2 px-3 py-2.5 border-b border-border">
@@ -493,161 +489,443 @@ function PRDetailDrawer({
           </span>
         </div>
 
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-4">
-          {/* Description */}
-          <section className="flex flex-col gap-1.5">
-            <h3 className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
-              Description
-            </h3>
-            {detail.isError ? (
-              <div className="text-[11px] text-state-failed">
-                Couldn't load details: {(detail.error as Error).message}
-              </div>
-            ) : bodyPending ? (
-              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <Loader2 className="size-3 animate-spin" />
-                Loading…
-              </div>
-            ) : body ? (
-              <div className="prose-md text-[12px] leading-relaxed break-words">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={mdComponents}
-                >
-                  {body}
-                </ReactMarkdown>
-              </div>
-            ) : (
-              <div className="text-[11px] text-muted-foreground/60 italic">
-                No description provided.
-              </div>
-            )}
-          </section>
-
-          {/* Checks — shown for every state, not just open */}
-          <section className="flex flex-col gap-1.5">
-            <h3 className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
-              Checks
-            </h3>
-            {checks.isLoading && (
-              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <Loader2 className="size-3 animate-spin" />
-                Loading checks…
-              </div>
-            )}
-            {checks.error && (
-              <div className="text-[11px] text-state-failed">
-                checks unavailable: {(checks.error as Error).message}
-              </div>
-            )}
-            {!checks.isLoading && !checks.error && (
-              <div className="flex flex-col gap-0.5 text-[11px]">
-                {(checks.data ?? []).length === 0 ? (
-                  <div className="text-muted-foreground/60">
-                    No checks configured for this PR.
-                  </div>
-                ) : (
-                  <>
-                    <div
-                      className={cn(
-                        'flex items-center gap-1.5',
-                        checkSummary.allPassing && 'text-state-running',
-                        checkSummary.anyFailed && 'text-state-failed',
-                        checkSummary.pending && 'text-muted-foreground',
-                      )}
-                    >
-                      {checkSummary.allPassing && (
-                        <CheckCircle2 className="size-3" />
-                      )}
-                      {checkSummary.anyFailed && <XCircle className="size-3" />}
-                      {checkSummary.pending && (
-                        <CircleDashed className="size-3 animate-spin" />
-                      )}
-                      <span>{checkSummary.label}</span>
-                    </div>
-                    <div className="pl-4 flex flex-col gap-0.5 text-muted-foreground/80">
-                      {(checks.data ?? []).map((c) => (
-                        <a
-                          key={c.name + c.url}
-                          href={c.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 hover:text-foreground"
-                        >
-                          <CheckIcon check={c} />
-                          <span className="truncate">{c.name}</span>
-                        </a>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </section>
-
-          {/* Merge — only while the PR is open */}
-          {full.state === 'open' && (
-            <section className="flex flex-col gap-1.5">
-              <h3 className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
-                Merge
-              </h3>
-              <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                <select
-                  value={method}
-                  onChange={(e) =>
-                    setMethod(e.target.value as 'squash' | 'merge' | 'rebase')
-                  }
-                  className="text-[11px] bg-transparent border border-border rounded px-1.5 py-0.5"
-                >
-                  <option value="squash">squash</option>
-                  <option value="merge">merge</option>
-                  <option value="rebase">rebase</option>
-                </select>
-                <label className="flex items-center gap-1 text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    checked={deleteBranch}
-                    onChange={(e) => setDeleteBranch(e.target.checked)}
-                  />
-                  Delete branch
-                </label>
-                <button
-                  type="button"
-                  disabled={merge.isPending}
-                  onClick={() => {
-                    if (
-                      !window.confirm(
-                        `Merge PR #${full.number} (${method})${
-                          deleteBranch ? ' and delete branch' : ''
-                        }?`,
-                      )
-                    ) {
-                      return
-                    }
-                    merge.mutate()
-                  }}
-                  className={cn(
-                    'ml-auto text-[11px] px-2 py-0.5 rounded transition-colors flex items-center gap-1',
-                    merge.isPending
-                      ? 'bg-muted/30 text-muted-foreground/50'
-                      : 'bg-purple-500/80 text-background hover:bg-purple-500',
-                  )}
-                >
-                  {merge.isPending ? (
-                    <Loader2 className="size-3 animate-spin" />
-                  ) : (
-                    <GitMerge className="size-3" />
-                  )}
-                  Merge
-                </button>
-              </div>
-            </section>
-          )}
+        {/* Tabs */}
+        <div className="flex items-center gap-1 px-2 border-b border-border text-[11px]">
+          {DETAIL_TABS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setTab(t.key)}
+              className={cn(
+                'px-2.5 py-1.5 -mb-px border-b-2 transition-colors',
+                tab === t.key
+                  ? 'border-state-running text-foreground'
+                  : 'border-transparent text-muted-foreground/60 hover:text-foreground',
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
+
+        {/* Active tab — each tab fetches lazily on first view (react-query
+            caches by key, so switching back is instant). */}
+        <div className="flex-1 overflow-y-auto px-3 py-3">
+          {tab === 'conversation' && (
+            <ConversationTab
+              cwd={cwd}
+              number={full.number}
+              author={full.author}
+              body={body}
+              bodyPending={bodyPending}
+              detailError={detailError}
+            />
+          )}
+          {tab === 'commits' && <CommitsTab cwd={cwd} number={full.number} />}
+          {tab === 'checks' && <ChecksTab cwd={cwd} number={full.number} />}
+          {tab === 'files' && <FilesTab cwd={cwd} number={full.number} />}
+        </div>
+
+        {/* Merge — footer, only while the PR is open (visible on any tab) */}
+        {full.state === 'open' && (
+          <div className="border-t border-border px-3 py-2 flex flex-wrap items-center gap-2 text-[11px]">
+            <select
+              value={method}
+              onChange={(e) =>
+                setMethod(e.target.value as 'squash' | 'merge' | 'rebase')
+              }
+              className="text-[11px] bg-transparent border border-border rounded px-1.5 py-0.5"
+            >
+              <option value="squash">squash</option>
+              <option value="merge">merge</option>
+              <option value="rebase">rebase</option>
+            </select>
+            <label className="flex items-center gap-1 text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={deleteBranch}
+                onChange={(e) => setDeleteBranch(e.target.checked)}
+              />
+              Delete branch
+            </label>
+            <button
+              type="button"
+              disabled={merge.isPending}
+              onClick={() => {
+                if (
+                  !window.confirm(
+                    `Merge PR #${full.number} (${method})${
+                      deleteBranch ? ' and delete branch' : ''
+                    }?`,
+                  )
+                ) {
+                  return
+                }
+                merge.mutate()
+              }}
+              className={cn(
+                'ml-auto text-[11px] px-2 py-0.5 rounded transition-colors flex items-center gap-1',
+                merge.isPending
+                  ? 'bg-muted/30 text-muted-foreground/50'
+                  : 'bg-purple-500/80 text-background hover:bg-purple-500',
+              )}
+            >
+              {merge.isPending ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                <GitMerge className="size-3" />
+              )}
+              Merge
+            </button>
+          </div>
+        )}
       </div>
     </div>,
     document.body,
+  )
+}
+
+type DetailTab = 'conversation' | 'commits' | 'checks' | 'files'
+
+const DETAIL_TABS: { key: DetailTab; label: string }[] = [
+  { key: 'conversation', label: 'Conversation' },
+  { key: 'commits', label: 'Commits' },
+  { key: 'checks', label: 'Checks' },
+  { key: 'files', label: 'Files changed' },
+]
+
+function firstLine(s: string): string {
+  return s.split('\n', 1)[0]
+}
+
+function TabLoading({ text = 'Loading…' }: { text?: string }) {
+  return (
+    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground py-2">
+      <Loader2 className="size-3 animate-spin" />
+      {text}
+    </div>
+  )
+}
+
+function TabError({ message }: { message: string }) {
+  return (
+    <div className="text-[11px] text-state-failed py-2 break-words">{message}</div>
+  )
+}
+
+function TabEmpty({ text }: { text: string }) {
+  return <div className="text-[11px] text-muted-foreground/60 py-2">{text}</div>
+}
+
+// ConversationTab: the PR description followed by the comment thread.
+function ConversationTab({
+  cwd,
+  number,
+  author,
+  body,
+  bodyPending,
+  detailError,
+}: {
+  cwd: string
+  number: number
+  author: string
+  body: string
+  bodyPending: boolean
+  detailError: string | null
+}) {
+  const comments = useQuery({
+    queryKey: ['git-pr-comments', cwd, number],
+    queryFn: () => getPRComments(cwd, number),
+    // Tabs unmount on switch; treat the conversation as fresh for a few
+    // minutes so flipping back doesn't refetch every time.
+    staleTime: 5 * 60 * 1000,
+  })
+  const list = comments.data ?? []
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="rounded border border-border/50 bg-card/30">
+        <div className="px-2.5 py-1.5 border-b border-border/40 text-[10px] text-muted-foreground/80">
+          <span className="font-mono text-foreground/90">{author}</span> opened
+          this pull request
+        </div>
+        <div className="px-2.5 py-2">
+          {detailError ? (
+            <div className="text-[11px] text-state-failed">
+              Couldn't load details: {detailError}
+            </div>
+          ) : bodyPending ? (
+            <TabLoading />
+          ) : body ? (
+            <div className="prose-md text-[12px] leading-relaxed break-words">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={mdComponents}
+              >
+                {body}
+              </ReactMarkdown>
+            </div>
+          ) : (
+            <div className="text-[11px] text-muted-foreground/60 italic">
+              No description provided.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {comments.isLoading && <TabLoading text="Loading comments…" />}
+      {comments.error && (
+        <TabError
+          message={`comments unavailable: ${(comments.error as Error).message}`}
+        />
+      )}
+      {!comments.isLoading && !comments.error && list.length === 0 && (
+        <TabEmpty text="No comments yet." />
+      )}
+      {list.map((c, i) => (
+        <CommentItem key={c.url ?? `${c.author}-${c.created_at}-${i}`} c={c} />
+      ))}
+    </div>
+  )
+}
+
+function CommentItem({ c }: { c: PRComment }) {
+  return (
+    <div className="rounded border border-border/50 bg-card/30">
+      <div className="flex items-center gap-2 px-2.5 py-1.5 border-b border-border/40 text-[10px] text-muted-foreground/80">
+        <span className="font-mono text-foreground/90">{c.author}</span>
+        {c.state && <ReviewStateBadge state={c.state} />}
+        <span className="ml-auto">{relTime(c.created_at)}</span>
+      </div>
+      <div className="prose-md text-[12px] leading-relaxed break-words px-2.5 py-2">
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+          {c.body}
+        </ReactMarkdown>
+      </div>
+    </div>
+  )
+}
+
+function ReviewStateBadge({ state }: { state: string }) {
+  const cls =
+    state === 'approved'
+      ? 'text-state-running border-state-running/40'
+      : state === 'changes_requested'
+        ? 'text-state-failed border-state-failed/40'
+        : 'text-muted-foreground/70 border-border'
+  return (
+    <span
+      className={cn(
+        'text-[9px] uppercase tracking-wide px-1 py-px rounded border',
+        cls,
+      )}
+    >
+      {state.replaceAll('_', ' ')}
+    </span>
+  )
+}
+
+function CommitsTab({ cwd, number }: { cwd: string; number: number }) {
+  const q = useQuery({
+    queryKey: ['git-pr-commits', cwd, number],
+    queryFn: () => getPRCommits(cwd, number),
+    staleTime: 5 * 60 * 1000,
+  })
+  if (q.isLoading) return <TabLoading text="Loading commits…" />
+  if (q.error)
+    return (
+      <TabError message={`commits unavailable: ${(q.error as Error).message}`} />
+    )
+  const commits = q.data ?? []
+  if (commits.length === 0) return <TabEmpty text="No commits." />
+  return (
+    <div className="flex flex-col">
+      {commits.map((c, i) => (
+        <div
+          key={c.sha || `commit-${i}`}
+          className="flex items-start gap-2 py-1.5 border-b border-border/30 last:border-b-0"
+        >
+          <GitCommit className="size-3.5 mt-0.5 text-muted-foreground/60 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <div className="text-[12px] truncate">{firstLine(c.message)}</div>
+            <div className="text-[10px] text-muted-foreground/60 font-mono">
+              {c.author} · {relTime(c.date)}
+            </div>
+          </div>
+          {c.url ? (
+            <a
+              href={c.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-[10px] text-muted-foreground/60 hover:text-foreground mt-0.5 shrink-0"
+            >
+              {c.short_sha}
+            </a>
+          ) : (
+            <span className="font-mono text-[10px] text-muted-foreground/40 mt-0.5 shrink-0">
+              {c.short_sha}
+            </span>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ChecksTab owns the checks query (was inline in the drawer before the
+// tab split). Polls every 30s while the tab is mounted.
+function ChecksTab({ cwd, number }: { cwd: string; number: number }) {
+  const checks = useQuery({
+    queryKey: ['git-pr-checks', cwd, number],
+    queryFn: () => getPRChecks(cwd, number),
+    refetchInterval: 30_000,
+  })
+  if (checks.isLoading) return <TabLoading text="Loading checks…" />
+  if (checks.error)
+    return (
+      <TabError
+        message={`checks unavailable: ${(checks.error as Error).message}`}
+      />
+    )
+  const data = checks.data ?? []
+  if (data.length === 0)
+    return <TabEmpty text="No checks configured for this PR." />
+  const summary = aggregateChecks(data)
+  return (
+    <div className="flex flex-col gap-0.5 text-[11px]">
+      <div
+        className={cn(
+          'flex items-center gap-1.5',
+          summary.allPassing && 'text-state-running',
+          summary.anyFailed && 'text-state-failed',
+          summary.pending && 'text-muted-foreground',
+        )}
+      >
+        {summary.allPassing && <CheckCircle2 className="size-3" />}
+        {summary.anyFailed && <XCircle className="size-3" />}
+        {summary.pending && <CircleDashed className="size-3 animate-spin" />}
+        <span>{summary.label}</span>
+      </div>
+      <div className="pl-4 flex flex-col gap-0.5 text-muted-foreground/80">
+        {data.map((c) => (
+          <a
+            key={c.name + c.url}
+            href={c.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 hover:text-foreground"
+          >
+            <CheckIcon check={c} />
+            <span className="truncate">{c.name}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function FilesTab({ cwd, number }: { cwd: string; number: number }) {
+  const q = useQuery({
+    queryKey: ['git-pr-files', cwd, number],
+    queryFn: () => getPRFiles(cwd, number),
+    staleTime: 5 * 60 * 1000,
+  })
+  const [open, setOpen] = useState<Set<string>>(() => new Set())
+  if (q.isLoading) return <TabLoading text="Loading files…" />
+  if (q.error)
+    return <TabError message={`files unavailable: ${(q.error as Error).message}`} />
+  const files = q.data ?? []
+  if (files.length === 0) return <TabEmpty text="No changed files." />
+  const toggle = (name: string) => {
+    // Functional updater so rapid taps don't read a stale `open`.
+    setOpen((prev) => {
+      const next = new Set(prev)
+      if (next.has(name)) next.delete(name)
+      else next.add(name)
+      return next
+    })
+  }
+  return (
+    <div className="flex flex-col gap-1">
+      {files.map((f) => {
+        const isOpen = open.has(f.filename)
+        return (
+          <div
+            key={f.filename}
+            className="border border-border/40 rounded overflow-hidden"
+          >
+            <button
+              type="button"
+              onClick={() => toggle(f.filename)}
+              className="w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-card"
+            >
+              <FileStatusIcon status={f.status} />
+              <span className="text-[11px] font-mono truncate flex-1">
+                {f.filename}
+              </span>
+              <span className="text-[10px] text-state-running shrink-0">
+                +{f.additions}
+              </span>
+              <span className="text-[10px] text-state-failed shrink-0">
+                -{f.deletions}
+              </span>
+            </button>
+            {isOpen &&
+              (f.patch ? (
+                <DiffView patch={f.patch} />
+              ) : (
+                <div className="px-2 py-1.5 text-[10px] text-muted-foreground/50 border-t border-border/40">
+                  No inline diff available.
+                </div>
+              ))}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function FileStatusIcon({ status }: { status: string }) {
+  const { ch, cls } =
+    status === 'added'
+      ? { ch: 'A', cls: 'text-state-running' }
+      : status === 'removed'
+        ? { ch: 'D', cls: 'text-state-failed' }
+        : status === 'renamed'
+          ? { ch: 'R', cls: 'text-purple-400' }
+          : { ch: 'M', cls: 'text-muted-foreground/70' }
+  return (
+    <span className={cn('font-mono text-[10px] w-3 text-center shrink-0', cls)}>
+      {ch}
+    </span>
+  )
+}
+
+// DiffView renders a unified-diff patch with +/- line coloring.
+// Intentionally light — no syntax highlighting (see PR scope).
+function DiffView({ patch }: { patch: string }) {
+  return (
+    <div className="overflow-x-auto border-t border-border/40 bg-card/30">
+      <pre className="text-[10px] leading-relaxed font-mono w-max min-w-full">
+        {patch.split('\n').map((line, i) => {
+          const add = line.startsWith('+') && !line.startsWith('+++')
+          const del = line.startsWith('-') && !line.startsWith('---')
+          const hunk = line.startsWith('@@')
+          return (
+            <div
+              key={`${i}:${line}`}
+              className={cn(
+                'px-2',
+                add && 'bg-state-running/10 text-state-running',
+                del && 'bg-state-failed/10 text-state-failed',
+                hunk && 'bg-card/60 text-muted-foreground/70',
+              )}
+            >
+              {line || ' '}
+            </div>
+          )
+        })}
+      </pre>
+    </div>
   )
 }
 

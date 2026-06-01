@@ -23,6 +23,7 @@ import (
 	"net/url"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -462,6 +463,40 @@ type CheckRun struct {
 	Conclusion string    `json:"conclusion"` // success | failure | neutral | cancelled | skipped | timed_out | action_required
 	URL        string    `json:"url"`
 	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+// PRCommit is one commit belonging to a pull request. Message is the
+// full commit message; the UI shows its first line as the subject.
+type PRCommit struct {
+	SHA      string    `json:"sha"`
+	ShortSHA string    `json:"short_sha"`
+	Message  string    `json:"message"`
+	Author   string    `json:"author"`
+	Date     time.Time `json:"date"`
+	URL      string    `json:"url"`
+}
+
+// PRFile is one changed file in a pull request. Patch is the unified
+// diff for the file; it may be empty when the host doesn't return
+// per-file patches inline (some Gitea versions), in which case the UI
+// shows the +/- counts without an expandable diff.
+type PRFile struct {
+	Filename  string `json:"filename"`
+	Status    string `json:"status"` // added | modified | removed | renamed
+	Additions int    `json:"additions"`
+	Deletions int    `json:"deletions"`
+	Patch     string `json:"patch,omitempty"`
+}
+
+// PRComment is one conversation entry: an issue/MR comment or a review
+// summary. State is set only for review summaries (approved |
+// changes_requested | commented).
+type PRComment struct {
+	Author    string    `json:"author"`
+	Body      string    `json:"body"`
+	CreatedAt time.Time `json:"created_at"`
+	State     string    `json:"state,omitempty"`
+	URL       string    `json:"url,omitempty"`
 }
 
 // CreatePullRequest opens a PR on the host that owns dir's remote.
@@ -1381,6 +1416,506 @@ func (s *Service) gitlabChecks(ctx context.Context, h Host, rem Remote, number i
 	return out, nil
 }
 
+// ── PR commits / files / comments (read-only detail tabs) ─────────
+
+// PRCommits returns the commits in a pull request, oldest first.
+func (s *Service) PRCommits(ctx context.Context, dir string, number int) ([]PRCommit, error) {
+	rem, hostRow, err := s.resolveHost(ctx, dir)
+	if err != nil {
+		return nil, err
+	}
+	if number <= 0 {
+		return nil, errors.New("number required")
+	}
+	switch hostRow.Kind {
+	case KindGitHub:
+		return s.githubPRCommits(ctx, hostRow, rem, number)
+	case KindGitea:
+		return s.giteaPRCommits(ctx, hostRow, rem, number)
+	case KindGitLab:
+		return s.gitlabPRCommits(ctx, hostRow, rem, number)
+	default:
+		return []PRCommit{}, nil
+	}
+}
+
+// PRFiles returns the changed files, with per-file patches where the
+// host provides them inline. Capped at the host's first ~100 files (no
+// pagination follow-up), consistent with the other PR endpoints.
+func (s *Service) PRFiles(ctx context.Context, dir string, number int) ([]PRFile, error) {
+	rem, hostRow, err := s.resolveHost(ctx, dir)
+	if err != nil {
+		return nil, err
+	}
+	if number <= 0 {
+		return nil, errors.New("number required")
+	}
+	switch hostRow.Kind {
+	case KindGitHub:
+		return s.githubPRFiles(ctx, hostRow, rem, number)
+	case KindGitea:
+		return s.giteaPRFiles(ctx, hostRow, rem, number)
+	case KindGitLab:
+		return s.gitlabPRFiles(ctx, hostRow, rem, number)
+	default:
+		return []PRFile{}, nil
+	}
+}
+
+// PRComments returns the conversation — issue/MR comments plus review
+// summaries — oldest first.
+func (s *Service) PRComments(ctx context.Context, dir string, number int) ([]PRComment, error) {
+	rem, hostRow, err := s.resolveHost(ctx, dir)
+	if err != nil {
+		return nil, err
+	}
+	if number <= 0 {
+		return nil, errors.New("number required")
+	}
+	switch hostRow.Kind {
+	case KindGitHub:
+		return s.githubPRComments(ctx, hostRow, rem, number)
+	case KindGitea:
+		return s.giteaPRComments(ctx, hostRow, rem, number)
+	case KindGitLab:
+		return s.gitlabPRComments(ctx, hostRow, rem, number)
+	default:
+		return []PRComment{}, nil
+	}
+}
+
+// ── commits ──
+
+func (s *Service) githubPRCommits(ctx context.Context, h Host, rem Remote, number int) ([]PRCommit, error) {
+	u := fmt.Sprintf("%s/repos/%s/%s/pulls/%d/commits?per_page=100",
+		githubAPIBase(h.Host), rem.Owner, rem.Repo, number)
+	body, err := s.do(ctx, http.MethodGet, u, "Bearer "+h.Token, "application/vnd.github+json", nil)
+	if err != nil {
+		return nil, err
+	}
+	return decodeGitHubStyleCommits(body)
+}
+
+func (s *Service) giteaPRCommits(ctx context.Context, h Host, rem Remote, number int) ([]PRCommit, error) {
+	u := fmt.Sprintf("https://%s/api/v1/repos/%s/%s/pulls/%d/commits?limit=100",
+		h.Host, rem.Owner, rem.Repo, number)
+	body, err := s.do(ctx, http.MethodGet, u, "token "+h.Token, "application/json", nil)
+	if err != nil {
+		return nil, err
+	}
+	return decodeGitHubStyleCommits(body)
+}
+
+func (s *Service) gitlabPRCommits(ctx context.Context, h Host, rem Remote, number int) ([]PRCommit, error) {
+	projectID := url.PathEscape(rem.Owner + "/" + rem.Repo)
+	u := fmt.Sprintf("https://%s/api/v4/projects/%s/merge_requests/%d/commits?per_page=100",
+		h.Host, projectID, number)
+	body, err := s.do(ctx, http.MethodGet, u, "Bearer "+h.Token, "application/json", nil)
+	if err != nil {
+		return nil, err
+	}
+	return decodeGitLabCommits(body)
+}
+
+// decodeGitHubStyleCommits handles the GitHub and Gitea commit shapes
+// (identical): {sha, html_url, commit:{message, author:{name,date}},
+// author:{login}}.
+func decodeGitHubStyleCommits(body []byte) ([]PRCommit, error) {
+	var raw []struct {
+		SHA     string `json:"sha"`
+		HTMLURL string `json:"html_url"`
+		Commit  struct {
+			Message string `json:"message"`
+			Author  struct {
+				Name string    `json:"name"`
+				Date time.Time `json:"date"`
+			} `json:"author"`
+		} `json:"commit"`
+		Author struct {
+			Login string `json:"login"`
+		} `json:"author"`
+	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return nil, fmt.Errorf("commits decode: %w", err)
+	}
+	out := make([]PRCommit, 0, len(raw))
+	for _, c := range raw {
+		author := c.Author.Login
+		if author == "" {
+			author = c.Commit.Author.Name
+		}
+		out = append(out, PRCommit{
+			SHA:      c.SHA,
+			ShortSHA: shortSHA(c.SHA),
+			Message:  c.Commit.Message,
+			Author:   author,
+			Date:     c.Commit.Author.Date,
+			URL:      c.HTMLURL,
+		})
+	}
+	return out, nil
+}
+
+func decodeGitLabCommits(body []byte) ([]PRCommit, error) {
+	var raw []struct {
+		ID         string    `json:"id"`
+		ShortID    string    `json:"short_id"`
+		Title      string    `json:"title"`
+		Message    string    `json:"message"`
+		AuthorName string    `json:"author_name"`
+		CreatedAt  time.Time `json:"created_at"`
+		WebURL     string    `json:"web_url"`
+	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return nil, fmt.Errorf("gitlab commits decode: %w", err)
+	}
+	out := make([]PRCommit, 0, len(raw))
+	for _, c := range raw {
+		msg := c.Message
+		if msg == "" {
+			msg = c.Title
+		}
+		short := c.ShortID
+		if short == "" {
+			short = shortSHA(c.ID)
+		}
+		out = append(out, PRCommit{
+			SHA:      c.ID,
+			ShortSHA: short,
+			Message:  msg,
+			Author:   c.AuthorName,
+			Date:     c.CreatedAt,
+			URL:      c.WebURL,
+		})
+	}
+	return out, nil
+}
+
+// ── files ──
+
+func (s *Service) githubPRFiles(ctx context.Context, h Host, rem Remote, number int) ([]PRFile, error) {
+	u := fmt.Sprintf("%s/repos/%s/%s/pulls/%d/files?per_page=100",
+		githubAPIBase(h.Host), rem.Owner, rem.Repo, number)
+	body, err := s.do(ctx, http.MethodGet, u, "Bearer "+h.Token, "application/vnd.github+json", nil)
+	if err != nil {
+		return nil, err
+	}
+	return decodeGitHubStyleFiles(body)
+}
+
+func (s *Service) giteaPRFiles(ctx context.Context, h Host, rem Remote, number int) ([]PRFile, error) {
+	u := fmt.Sprintf("https://%s/api/v1/repos/%s/%s/pulls/%d/files?limit=100",
+		h.Host, rem.Owner, rem.Repo, number)
+	body, err := s.do(ctx, http.MethodGet, u, "token "+h.Token, "application/json", nil)
+	if err != nil {
+		return nil, err
+	}
+	// Gitea's files endpoint returns names + counts but no inline
+	// patch, so Patch stays empty (UI shows the +/- counts only).
+	return decodeGitHubStyleFiles(body)
+}
+
+func (s *Service) gitlabPRFiles(ctx context.Context, h Host, rem Remote, number int) ([]PRFile, error) {
+	projectID := url.PathEscape(rem.Owner + "/" + rem.Repo)
+	u := fmt.Sprintf("https://%s/api/v4/projects/%s/merge_requests/%d/diffs?per_page=100",
+		h.Host, projectID, number)
+	body, err := s.do(ctx, http.MethodGet, u, "Bearer "+h.Token, "application/json", nil)
+	if err != nil {
+		return nil, err
+	}
+	return decodeGitLabDiffs(body)
+}
+
+// decodeGitHubStyleFiles handles GitHub and Gitea file shapes. GitHub
+// returns a per-file `patch`; Gitea omits it (Patch ends up empty).
+func decodeGitHubStyleFiles(body []byte) ([]PRFile, error) {
+	var raw []struct {
+		Filename  string `json:"filename"`
+		Status    string `json:"status"`
+		Additions int    `json:"additions"`
+		Deletions int    `json:"deletions"`
+		Patch     string `json:"patch"`
+	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return nil, fmt.Errorf("files decode: %w", err)
+	}
+	out := make([]PRFile, 0, len(raw))
+	for _, f := range raw {
+		out = append(out, PRFile{
+			Filename:  f.Filename,
+			Status:    normalizeFileStatus(f.Status),
+			Additions: f.Additions,
+			Deletions: f.Deletions,
+			Patch:     f.Patch,
+		})
+	}
+	return out, nil
+}
+
+func decodeGitLabDiffs(body []byte) ([]PRFile, error) {
+	var raw []struct {
+		OldPath     string `json:"old_path"`
+		NewPath     string `json:"new_path"`
+		Diff        string `json:"diff"`
+		NewFile     bool   `json:"new_file"`
+		RenamedFile bool   `json:"renamed_file"`
+		DeletedFile bool   `json:"deleted_file"`
+	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return nil, fmt.Errorf("gitlab diffs decode: %w", err)
+	}
+	out := make([]PRFile, 0, len(raw))
+	for _, d := range raw {
+		name := d.NewPath
+		status := "modified"
+		switch {
+		case d.NewFile:
+			status = "added"
+		case d.DeletedFile:
+			status = "removed"
+			name = d.OldPath
+		case d.RenamedFile:
+			status = "renamed"
+		}
+		add, del := countDiffLines(d.Diff)
+		out = append(out, PRFile{
+			Filename:  name,
+			Status:    status,
+			Additions: add,
+			Deletions: del,
+			Patch:     d.Diff,
+		})
+	}
+	return out, nil
+}
+
+// ── comments / conversation ──
+
+func (s *Service) githubPRComments(ctx context.Context, h Host, rem Remote, number int) ([]PRComment, error) {
+	base := githubAPIBase(h.Host)
+	icURL := fmt.Sprintf("%s/repos/%s/%s/issues/%d/comments?per_page=100",
+		base, rem.Owner, rem.Repo, number)
+	icBody, err := s.do(ctx, http.MethodGet, icURL, "Bearer "+h.Token, "application/vnd.github+json", nil)
+	if err != nil {
+		return nil, err
+	}
+	comments, err := decodeGitHubStyleComments(icBody)
+	if err != nil {
+		return nil, err
+	}
+	// Review summaries are best-effort: a failure here shouldn't drop
+	// the issue comments we already decoded.
+	rvURL := fmt.Sprintf("%s/repos/%s/%s/pulls/%d/reviews?per_page=100",
+		base, rem.Owner, rem.Repo, number)
+	if rvBody, rerr := s.do(ctx, http.MethodGet, rvURL, "Bearer "+h.Token, "application/vnd.github+json", nil); rerr == nil {
+		if reviews, derr := decodeGitHubStyleReviews(rvBody); derr == nil {
+			comments = append(comments, reviews...)
+		} else {
+			s.log.Warn("github pr reviews decode failed", "err", derr)
+		}
+	} else {
+		s.log.Warn("github pr reviews fetch failed", "err", rerr)
+	}
+	sortPRComments(comments)
+	return comments, nil
+}
+
+func (s *Service) giteaPRComments(ctx context.Context, h Host, rem Remote, number int) ([]PRComment, error) {
+	icURL := fmt.Sprintf("https://%s/api/v1/repos/%s/%s/issues/%d/comments?limit=100",
+		h.Host, rem.Owner, rem.Repo, number)
+	icBody, err := s.do(ctx, http.MethodGet, icURL, "token "+h.Token, "application/json", nil)
+	if err != nil {
+		return nil, err
+	}
+	comments, err := decodeGitHubStyleComments(icBody)
+	if err != nil {
+		return nil, err
+	}
+	rvURL := fmt.Sprintf("https://%s/api/v1/repos/%s/%s/pulls/%d/reviews?limit=100",
+		h.Host, rem.Owner, rem.Repo, number)
+	if rvBody, rerr := s.do(ctx, http.MethodGet, rvURL, "token "+h.Token, "application/json", nil); rerr == nil {
+		if reviews, derr := decodeGitHubStyleReviews(rvBody); derr == nil {
+			comments = append(comments, reviews...)
+		} else {
+			s.log.Warn("gitea pr reviews decode failed", "err", derr)
+		}
+	} else {
+		s.log.Warn("gitea pr reviews fetch failed", "err", rerr)
+	}
+	sortPRComments(comments)
+	return comments, nil
+}
+
+func (s *Service) gitlabPRComments(ctx context.Context, h Host, rem Remote, number int) ([]PRComment, error) {
+	projectID := url.PathEscape(rem.Owner + "/" + rem.Repo)
+	u := fmt.Sprintf("https://%s/api/v4/projects/%s/merge_requests/%d/notes?sort=asc&per_page=100",
+		h.Host, projectID, number)
+	body, err := s.do(ctx, http.MethodGet, u, "Bearer "+h.Token, "application/json", nil)
+	if err != nil {
+		return nil, err
+	}
+	comments, err := decodeGitLabNotes(body)
+	if err != nil {
+		return nil, err
+	}
+	sortPRComments(comments)
+	return comments, nil
+}
+
+// decodeGitHubStyleComments handles GitHub and Gitea issue comments:
+// {user:{login}, body, created_at, html_url}.
+func decodeGitHubStyleComments(body []byte) ([]PRComment, error) {
+	var raw []struct {
+		Body      string    `json:"body"`
+		CreatedAt time.Time `json:"created_at"`
+		HTMLURL   string    `json:"html_url"`
+		User      struct {
+			Login string `json:"login"`
+		} `json:"user"`
+	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return nil, fmt.Errorf("comments decode: %w", err)
+	}
+	out := make([]PRComment, 0, len(raw))
+	for _, c := range raw {
+		out = append(out, PRComment{
+			Author:    c.User.Login,
+			Body:      c.Body,
+			CreatedAt: c.CreatedAt,
+			URL:       c.HTMLURL,
+		})
+	}
+	return out, nil
+}
+
+// decodeGitHubStyleReviews handles GitHub and Gitea review summaries.
+// Only reviews carrying a body are surfaced in the conversation; a
+// bodyless APPROVED review is conveyed by the checks/merge UI. State is
+// normalised across the two vocabularies.
+func decodeGitHubStyleReviews(body []byte) ([]PRComment, error) {
+	var raw []struct {
+		Body        string    `json:"body"`
+		State       string    `json:"state"`
+		SubmittedAt time.Time `json:"submitted_at"`
+		HTMLURL     string    `json:"html_url"`
+		User        struct {
+			Login string `json:"login"`
+		} `json:"user"`
+	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return nil, fmt.Errorf("reviews decode: %w", err)
+	}
+	out := make([]PRComment, 0, len(raw))
+	for _, r := range raw {
+		if strings.TrimSpace(r.Body) == "" {
+			continue
+		}
+		out = append(out, PRComment{
+			Author:    r.User.Login,
+			Body:      r.Body,
+			CreatedAt: r.SubmittedAt,
+			State:     normalizeReviewState(r.State),
+			URL:       r.HTMLURL,
+		})
+	}
+	return out, nil
+}
+
+// decodeGitLabNotes maps MR notes to comments, dropping system notes
+// (label / assignee / milestone churn) so only human comments remain.
+func decodeGitLabNotes(body []byte) ([]PRComment, error) {
+	var raw []struct {
+		Body      string    `json:"body"`
+		CreatedAt time.Time `json:"created_at"`
+		System    bool      `json:"system"`
+		Author    struct {
+			Username string `json:"username"`
+		} `json:"author"`
+	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return nil, fmt.Errorf("gitlab notes decode: %w", err)
+	}
+	out := make([]PRComment, 0, len(raw))
+	for _, n := range raw {
+		if n.System {
+			continue
+		}
+		out = append(out, PRComment{
+			Author:    n.Author.Username,
+			Body:      n.Body,
+			CreatedAt: n.CreatedAt,
+		})
+	}
+	return out, nil
+}
+
+// ── small helpers ──
+
+func shortSHA(s string) string {
+	if len(s) <= 7 {
+		return s
+	}
+	return s[:7]
+}
+
+// countDiffLines counts added / removed lines in a unified diff,
+// skipping the +++ / --- file headers and the "\ No newline at end of
+// file" marker — none of which are real content changes. Hunk headers
+// (@@ … @@) start with neither + nor - so they fall through untouched.
+func countDiffLines(patch string) (add, del int) {
+	for _, line := range strings.Split(patch, "\n") {
+		switch {
+		case strings.HasPrefix(line, "+++"),
+			strings.HasPrefix(line, "---"),
+			strings.HasPrefix(line, `\`):
+			continue
+		case strings.HasPrefix(line, "+"):
+			add++
+		case strings.HasPrefix(line, "-"):
+			del++
+		}
+	}
+	return add, del
+}
+
+func normalizeFileStatus(s string) string {
+	switch strings.ToLower(s) {
+	case "added", "new":
+		return "added"
+	case "removed", "deleted":
+		return "removed"
+	case "renamed":
+		return "renamed"
+	case "":
+		return "modified"
+	default:
+		return strings.ToLower(s)
+	}
+}
+
+// normalizeReviewState maps GitHub (CHANGES_REQUESTED) and Gitea
+// (REQUEST_CHANGES) review vocabularies onto one set.
+func normalizeReviewState(s string) string {
+	switch strings.ToUpper(s) {
+	case "APPROVED":
+		return "approved"
+	case "CHANGES_REQUESTED", "REQUEST_CHANGES":
+		return "changes_requested"
+	case "COMMENTED", "COMMENT":
+		return "commented"
+	case "DISMISSED":
+		return "dismissed"
+	default:
+		return strings.ToLower(s)
+	}
+}
+
+func sortPRComments(c []PRComment) {
+	sort.SliceStable(c, func(i, j int) bool {
+		return c[i].CreatedAt.Before(c[j].CreatedAt)
+	})
+}
+
 func (s *Service) fetch(ctx context.Context, u, auth, accept string) ([]byte, error) {
 	return s.do(ctx, http.MethodGet, u, auth, accept, nil)
 }
@@ -1453,6 +1988,9 @@ func (h *Handlers) Mount(r chi.Router) {
 	r.Get("/git/prs/{number}", h.prDetail)
 	r.Post("/git/prs/{number}/merge", h.mergePR)
 	r.Get("/git/prs/{number}/checks", h.prChecks)
+	r.Get("/git/prs/{number}/commits", h.prCommits)
+	r.Get("/git/prs/{number}/files", h.prFiles)
+	r.Get("/git/prs/{number}/comments", h.prComments)
 }
 
 // createPR mounts POST /git/prs. Body matches CreatePRRequest.
@@ -1544,6 +2082,65 @@ func (h *Handlers) prDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, pr)
+}
+
+// prTabParams extracts the shared ?path=<dir> + {number} inputs for the
+// read-only detail-tab handlers, writing a 400 and returning ok=false
+// on bad input.
+func (h *Handlers) prTabParams(w http.ResponseWriter, r *http.Request) (string, int, bool) {
+	dir := strings.TrimSpace(r.URL.Query().Get("path"))
+	if dir == "" {
+		writeError(w, http.StatusBadRequest, errors.New("path required"))
+		return "", 0, false
+	}
+	n, err := strconv.Atoi(chi.URLParam(r, "number"))
+	if err != nil || n <= 0 {
+		writeError(w, http.StatusBadRequest, errors.New("invalid number"))
+		return "", 0, false
+	}
+	return dir, n, true
+}
+
+// prCommits mounts GET /git/prs/{number}/commits?path=<dir>.
+func (h *Handlers) prCommits(w http.ResponseWriter, r *http.Request) {
+	dir, n, ok := h.prTabParams(w, r)
+	if !ok {
+		return
+	}
+	commits, err := h.svc.PRCommits(r.Context(), dir, n)
+	if err != nil {
+		writeError(w, statusFromGitErr(err), err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"commits": commits})
+}
+
+// prFiles mounts GET /git/prs/{number}/files?path=<dir>.
+func (h *Handlers) prFiles(w http.ResponseWriter, r *http.Request) {
+	dir, n, ok := h.prTabParams(w, r)
+	if !ok {
+		return
+	}
+	files, err := h.svc.PRFiles(r.Context(), dir, n)
+	if err != nil {
+		writeError(w, statusFromGitErr(err), err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"files": files})
+}
+
+// prComments mounts GET /git/prs/{number}/comments?path=<dir>.
+func (h *Handlers) prComments(w http.ResponseWriter, r *http.Request) {
+	dir, n, ok := h.prTabParams(w, r)
+	if !ok {
+		return
+	}
+	comments, err := h.svc.PRComments(r.Context(), dir, n)
+	if err != nil {
+		writeError(w, statusFromGitErr(err), err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"comments": comments})
 }
 
 // statusFromGitErr maps the common sentinel errors to HTTP codes so
