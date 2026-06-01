@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/dio_provider.dart';
 import 'package:opendray/core/api/models.dart';
+import 'package:opendray/core/session_recents/recents_controller.dart';
 
 // Sessions endpoint surface. F2 covers full CRUD: list, fetch one,
 // create, stop, start (re-spawn), delete.
@@ -159,4 +160,26 @@ final sessionsListProvider =
 final sessionByIdProvider =
     FutureProvider.autoDispose.family<SessionSummary, String>((ref, id) {
   return ref.watch(sessionsApiProvider).getById(id);
+});
+
+// Sessions ordered most-recently-used first, then live before ended.
+// Mirrors web SessionList.orderBy: recency (per-device, recorded on
+// open) wins; sessions this device never opened fall back to
+// started_at. Live/ended grouping is applied after the recency sort.
+final sortedSessionsListProvider =
+    FutureProvider.autoDispose<List<SessionSummary>>((ref) async {
+  final sessions = await ref.watch(sessionsListProvider.future);
+  final recents = ref.watch(recentsProvider);
+
+  int byRecency(SessionSummary a, SessionSummary b) {
+    final ra = recents[a.id] ?? 0;
+    final rb = recents[b.id] ?? 0;
+    if (ra != rb) return rb.compareTo(ra);
+    return b.startedAt.compareTo(a.startedAt);
+  }
+
+  final sorted = [...sessions]..sort(byRecency);
+  final live = sorted.where((s) => !s.isFinished).toList();
+  final ended = sorted.where((s) => s.isFinished).toList();
+  return [...live, ...ended];
 });
