@@ -33,7 +33,9 @@ func TestDiscoverLocalAccounts(t *testing.T) {
 	// Isolate HOME so the test never sees the host's real ~/.claude
 	// (which would change the result based on which machine you run
 	// the suite on).
-	t.Setenv("HOME", t.TempDir())
+	tmpHome := t.TempDir()
+	t.Setenv("HOME", tmpHome)
+	t.Setenv("USERPROFILE", tmpHome) // Windows: os.UserHomeDir reads USERPROFILE
 
 	dir := t.TempDir()
 
@@ -83,7 +85,9 @@ func TestDiscoverLocalAccounts(t *testing.T) {
 func TestDiscoverLocalAccounts_MissingDirIsNotError(t *testing.T) {
 	// Nonexistent accounts dir → empty result, no error (this is the bug
 	// that produced "run `claude-acc init`").
-	t.Setenv("HOME", t.TempDir())
+	tmpHome := t.TempDir()
+	t.Setenv("HOME", tmpHome)
+	t.Setenv("USERPROFILE", tmpHome) // Windows: os.UserHomeDir reads USERPROFILE
 	got, err := discoverLocalAccounts(filepath.Join(t.TempDir(), "does-not-exist"))
 	if err != nil {
 		t.Fatalf("missing dir should not error: %v", err)
@@ -98,6 +102,7 @@ func TestDiscoverLocalAccounts_EmitsDefaultWhenClaudeHomeHasCreds(t *testing.T) 
 	// The synthetic "default" entry should surface, pointing at HOME/.claude.
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home) // Windows: os.UserHomeDir reads USERPROFILE
 	writeFile(t, filepath.Join(home, ".claude", ".credentials.json"), `{"claudeAiOauth":{}}`)
 
 	// Empty accountsDir (no named accounts) → only 'default' should appear.
@@ -128,6 +133,7 @@ func TestDiscoverLocalAccounts_DefaultEmittedAlongsideNamedAccounts(t *testing.T
 	// should both surface, default first.
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home) // Windows: os.UserHomeDir reads USERPROFILE
 	writeFile(t, filepath.Join(home, ".claude", ".credentials.json"), `{"claudeAiOauth":{}}`)
 	accountsDir := filepath.Join(t.TempDir(), "accounts")
 	writeFile(t, filepath.Join(accountsDir, "kevin", ".credentials.json"), `{"claudeAiOauth":{}}`)
@@ -245,6 +251,7 @@ func TestResolveClaudeConfigDir_EmptyIDReturnsHomeClaude(t *testing.T) {
 	// switching from "no pin" to a named account.
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home) // Windows: os.UserHomeDir reads USERPROFILE
 	svc := &Service{} // store not needed for empty-id path
 	got, err := svc.ResolveClaudeConfigDir(context.Background(), "")
 	if err != nil {

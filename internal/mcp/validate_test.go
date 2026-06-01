@@ -1,12 +1,32 @@
 package mcp
 
 import (
+	"bufio"
 	"context"
+	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
+
+// TestMain intercepts the test binary when used as a fake MCP server.
+// When OPENDRAY_TEST_FAKE_MCP=1, the process acts as a minimal stdio
+// MCP server and exits instead of running tests.
+func TestMain(m *testing.M) {
+	if os.Getenv("OPENDRAY_TEST_FAKE_MCP") == "1" {
+		scanner := bufio.NewScanner(os.Stdin)
+		// initialize request
+		scanner.Scan()
+		fmt.Fprintln(os.Stdout, `{"jsonrpc":"2.0","id":1,"result":{"serverInfo":{"name":"fake-vault","version":"9.9"},"capabilities":{}}}`)
+		// initialized notification
+		scanner.Scan()
+		// tools/list request
+		scanner.Scan()
+		fmt.Fprintln(os.Stdout, `{"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"read_secret"},{"name":"list_mounts"}]}}`)
+		return
+	}
+	os.Exit(m.Run())
+}
 
 func checkByName(res ValidationResult, name string) (Check, bool) {
 	for _, c := range res.Checks {
@@ -51,23 +71,19 @@ func TestValidate_SSEReachability_Unreachable(t *testing.T) {
 }
 
 func TestValidate_StdioHandshake(t *testing.T) {
-	dir := t.TempDir()
-	script := filepath.Join(dir, "fakemcp.sh")
-	// Minimal MCP server: the validator writes initialize, then the
-	// initialized notification, then tools/list — in that order. Reply
-	// to the two requests with canned JSON-RPC results.
-	body := `#!/bin/sh
-read _init
-printf '{"jsonrpc":"2.0","id":1,"result":{"serverInfo":{"name":"fake-vault","version":"9.9"},"capabilities":{}}}\n'
-read _initialized
-read _toolslist
-printf '{"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"read_secret"},{"name":"list_mounts"}]}}\n'
-`
-	if err := os.WriteFile(script, []byte(body), 0o755); err != nil {
+	// Use the test binary itself as the fake MCP server (cross-platform).
+	// When invoked with OPENDRAY_TEST_FAKE_MCP=1, TestMain handles the
+	// MCP handshake and exits before running any tests.
+	exe, err := os.Executable()
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	res := Validate(context.Background(), Server{Transport: "stdio", Command: script}, nil)
+	res := Validate(context.Background(), Server{
+		Transport: "stdio",
+		Command:   exe,
+		Env:       map[string]string{"OPENDRAY_TEST_FAKE_MCP": "1"},
+	}, nil)
 	if !res.OK {
 		t.Fatalf("handshake should succeed: %+v", res.Checks)
 	}

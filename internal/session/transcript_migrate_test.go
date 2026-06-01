@@ -3,6 +3,7 @@ package session
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -153,6 +154,9 @@ func TestMigrateClaudeTranscript_RejectsSymlinkedSource(t *testing.T) {
 	}
 	src := filepath.Join(dir, id+".jsonl")
 	if err := os.Symlink(victim, src); err != nil {
+		if runtime.GOOS == "windows" {
+			t.Skip("symlink creation requires elevated privileges on Windows: " + err.Error())
+		}
 		t.Fatal(err)
 	}
 

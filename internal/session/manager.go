@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/creack/pty"
@@ -906,7 +905,7 @@ func (m *Manager) Stop(ctx context.Context, id string) error {
 	}
 
 	m.markStopRequested(id)
-	if err := syscall.Kill(pid, syscall.SIGTERM); err != nil && !errors.Is(err, syscall.ESRCH) {
+	if err := termProcess(pid); err != nil {
 		return fmt.Errorf("sigterm: %w", err)
 	}
 
@@ -914,7 +913,7 @@ func (m *Manager) Stop(ctx context.Context, id string) error {
 	case <-rs.endedCh:
 		return nil
 	case <-time.After(terminateGrace):
-		_ = syscall.Kill(pid, syscall.SIGKILL)
+		killProcess(pid)
 	case <-ctx.Done():
 		return ctx.Err()
 	}
@@ -1213,7 +1212,7 @@ func (m *Manager) Shutdown(ctx context.Context) error {
 		terminal := rs.sess.State.IsTerminal()
 		rs.sessMu.RUnlock()
 		if !terminal {
-			_ = syscall.Kill(pid, syscall.SIGTERM)
+			_ = termProcess(pid)
 		}
 	}
 
@@ -1234,7 +1233,7 @@ func (m *Manager) Shutdown(ctx context.Context) error {
 			ended := rs.sess.State == StateEnded
 			rs.sessMu.RUnlock()
 			if !ended {
-				_ = syscall.Kill(pid, syscall.SIGKILL)
+				killProcess(pid)
 			}
 		}
 		select {

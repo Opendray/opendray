@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -294,6 +295,9 @@ func TestMirrorCodexHome_SkipsDanglingSymlinks(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := os.Symlink(filepath.Join(src, "nonexistent-target"), filepath.Join(skillsDir, "broken")); err != nil {
+		if runtime.GOOS == "windows" {
+			t.Skip("symlink creation requires elevated privileges on Windows: " + err.Error())
+		}
 		t.Fatal(err)
 	}
 
