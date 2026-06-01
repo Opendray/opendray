@@ -84,6 +84,16 @@ Déroule la mise en place de Postgres, l'installation des AI-CLI, les credential
 
 > **Tu préfères la procédure manuelle ?** Lis [**docs/getting-started.md**](docs/getting-started.md) — un guide end-to-end de 15 minutes qui reproduit ce que fait l'assistant pour que tu puisses vérifier chaque étape toi-même.
 
+### npm / npx (Node ≥ 18)
+
+```sh
+npm install -g opendray   # ajoute `opendray` au PATH
+# ou
+npx opendray --help       # zéro install, téléchargé à la demande
+```
+
+Pour quand tu veux juste le binaire statique sur le `PATH` — sans assistant, sans enregistrement de service, sans setup Postgres. Utile en environnements scriptés, runners éphémères, ou si tu as déjà ton propre système de déploiement. Le paquet récupère le binaire de plateforme correspondant (`opendray-{linux,darwin}-{x64,arm64}`) via `optionalDependencies` (le pattern esbuild / Biome — pas de `postinstall`, pas d'appel réseau au moment de l'install).
+
 ### Désinstallation (Linux / macOS)
 
 **Par défaut** — arrête le gateway et supprime le binaire, mais **conserve** ton `config.toml`, le répertoire de données (keyfile bcrypt, sessions, notes, vault), les logs et la base PostgreSQL pour qu'une réinstallation reprenne là où tu en étais :

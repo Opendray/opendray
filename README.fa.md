@@ -84,6 +84,16 @@ irm https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install-win
 
 > **راهنمای گام‌به‌گام دستی می‌خواهید؟** [**docs/getting-started.md**](docs/getting-started.md) را بخوانید: یک راهنمای سرتاسری پانزده‌دقیقه‌ای که همان مسیر ویزارد را قدم‌به‌قدم باز می‌کند تا خودتان هر مرحله را چک کنید.
 
+### npm / npx (Node ≥ 18)
+
+```sh
+npm install -g opendray   # `opendray` را به PATH اضافه می‌کند
+# یا
+npx opendray --help       # بدون نصب، on-demand دانلود می‌شود
+```
+
+وقتی فقط می‌خواهید باینری static روی `PATH` بنشیند — بدون wizard، بدون service registration، بدون setup Postgres. در محیط‌های scripted، runnerهای ephemeral، یا وقتی deployment system مخصوص خودتان را دارید مفید است. این پکیج باینری پلتفرم متناظر (`opendray-{linux,darwin}-{x64,arm64}`) را از طریق `optionalDependencies` می‌آورد (همان الگوی esbuild / Biome — بدون `postinstall`، بدون network call هنگام نصب).
+
 ### حذف نصب (لینوکس / مک)
 
 **پیش‌فرض:** درگاه را متوقف می‌کند و باینری را حذف می‌کند، اما `config.toml`، data directory شما (bcrypt keyfile، sessions، notes، vault)، logs، و PostgreSQL دیتابیس را **نگه می‌دارد** تا نصب مجدد از همان‌جایی که رها کرده بودید ادامه پیدا کند:

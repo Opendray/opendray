@@ -84,6 +84,16 @@ Führt dich durch Postgres-Setup, AI-CLI-Installation, Admin-Credentials und Ser
 
 > **Lieber den manuellen Walkthrough?** Lies [**docs/getting-started.md**](docs/getting-started.md) — eine 15-minütige End-to-End-Anleitung, die dasselbe wie der Wizard macht, sodass du jeden Schritt selbst nachvollziehen kannst.
 
+### npm / npx (Node ≥ 18)
+
+```sh
+npm install -g opendray   # legt `opendray` ins PATH
+# oder
+npx opendray --help       # ohne Install, lädt on-demand
+```
+
+Für den Fall, dass du nur das statische Binary auf dem `PATH` willst — kein Wizard, keine Service-Registrierung, kein Postgres-Setup. Nützlich in geskripteten Umgebungen, ephemeren Runnern, oder wenn du schon dein eigenes Deployment-System hast. Das Paket zieht das passende Plattform-Binary (`opendray-{linux,darwin}-{x64,arm64}`) via `optionalDependencies` (das esbuild / Biome-Pattern — kein `postinstall`, kein Netzwerk-Call beim Install).
+
 ### Uninstall (Linux / macOS)
 
 **Standard** — stoppt das Gateway und entfernt das Binary, **behält** aber deine `config.toml`, das Data-Verzeichnis (bcrypt-Keyfile, Sessions, Notes, Vault), die Logs und die PostgreSQL-Datenbank, sodass eine Neuinstallation dort weitermacht, wo du aufgehört hast:

@@ -83,6 +83,16 @@ irm https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install-win
 
 > **想自己一步步来?** 看 [**docs/getting-started.zh.md**](docs/getting-started.zh.md) —— 15 分钟端到端 walkthrough,跟 wizard 做的是同样的事,但每一步你都自己确认。
 
+### npm / npx (Node ≥ 18)
+
+```sh
+npm install -g opendray   # 把 `opendray` 加进 PATH
+# 或者
+npx opendray --help       # 不装,按需下载
+```
+
+只想把静态二进制塞到 `PATH` 里时用这个 —— 没 wizard,没服务注册,没 Postgres 设置。脚本化环境、临时 runner、或者你已经有自己的部署系统时合适。包通过 `optionalDependencies` 拉对应的平台二进制(`opendray-{linux,darwin}-{x64,arm64}`),用的是 esbuild / Biome 那套(没有 `postinstall`,安装时不会发网络请求)。
+
 ### 卸载(Linux / macOS)
 
 **默认模式** —— 停掉网关、删 binary,但**保留** `config.toml`、数据目录(bcrypt keyfile、sessions、notes、vault)、日志、PostgreSQL 数据库。重装时直接接上,数据不丢:
