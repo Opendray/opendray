@@ -1,0 +1,42 @@
+{
+  "name": "opendray",
+  "version": "0.0.0",
+  "description": "Self-hosted gateway that runs Claude Code / Codex / Gemini / shell sessions on your own infrastructure. CLI installer wrapper around the official Go release binary.",
+  "license": "Apache-2.0",
+  "homepage": "https://opendray.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Opendray/opendray.git",
+    "directory": "npm/opendray"
+  },
+  "bugs": "https://github.com/Opendray/opendray/issues",
+  "keywords": [
+    "opendray",
+    "claude-code",
+    "codex",
+    "gemini",
+    "ai-coding-agent",
+    "self-hosted",
+    "gateway",
+    "cli",
+    "telegram",
+    "slack"
+  ],
+  "bin": {
+    "opendray": "bin/opendray.js"
+  },
+  "files": [
+    "bin/opendray.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "optionalDependencies": {
+    "opendray-darwin-arm64": "0.0.0",
+    "opendray-darwin-x64": "0.0.0",
+    "opendray-linux-arm64": "0.0.0",
+    "opendray-linux-x64": "0.0.0"
+  }
+}
