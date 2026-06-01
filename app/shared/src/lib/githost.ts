@@ -74,6 +74,9 @@ export interface GitPullRequest {
   base: string
   url: string
   draft: boolean
+  // Description (markdown). Only populated by getGitPR (the single-PR
+  // detail fetch); the list endpoint omits it to stay lean.
+  body?: string
   updated_at: string
 }
 
@@ -94,6 +97,18 @@ export async function listGitPRs(
 ): Promise<GitPullRequestsResponse> {
   const params = new URLSearchParams({ path, state })
   return api<GitPullRequestsResponse>(`/api/v1/git/prs?${params.toString()}`)
+}
+
+// getGitPR fetches a single PR including its body/description. Use this
+// for the detail surface; listGitPRs leaves body empty.
+export async function getGitPR(
+  path: string,
+  number: number,
+): Promise<GitPullRequest> {
+  const params = new URLSearchParams({ path })
+  return api<GitPullRequest>(
+    `/api/v1/git/prs/${number}?${params.toString()}`,
+  )
 }
 
 // ── PR write ops ───────────────────────────────────────────────
@@ -155,4 +170,127 @@ export async function getPRChecks(
     `/api/v1/git/prs/${number}/checks?${params.toString()}`,
   )
   return res.checks ?? []
+}
+
+// ── PR detail tabs: commits / files / conversation ─────────────
+
+export interface PRCommit {
+  sha: string
+  short_sha: string
+  message: string // full message; UI shows the first line
+  author: string
+  date: string
+  url: string
+}
+
+export interface PRFile {
+  filename: string
+  // added | modified | removed | renamed
+  status: string
+  additions: number
+  deletions: number
+  // Unified diff; absent when the host doesn't return it inline.
+  patch?: string
+}
+
+export interface PRComment {
+  author: string
+  body: string
+  created_at: string
+  // Set only for review summaries: approved | changes_requested | commented
+  state?: string
+  url?: string
+}
+
+export async function getPRCommits(
+  path: string,
+  number: number,
+): Promise<PRCommit[]> {
+  const params = new URLSearchParams({ path })
+  const res = await api<{ commits: PRCommit[] }>(
+    `/api/v1/git/prs/${number}/commits?${params.toString()}`,
+  )
+  return res.commits ?? []
+}
+
+export async function getPRFiles(
+  path: string,
+  number: number,
+): Promise<PRFile[]> {
+  const params = new URLSearchParams({ path })
+  const res = await api<{ files: PRFile[] }>(
+    `/api/v1/git/prs/${number}/files?${params.toString()}`,
+  )
+  return res.files ?? []
+}
+
+export async function getPRComments(
+  path: string,
+  number: number,
+): Promise<PRComment[]> {
+  const params = new URLSearchParams({ path })
+  const res = await api<{ comments: PRComment[] }>(
+    `/api/v1/git/prs/${number}/comments?${params.toString()}`,
+  )
+  return res.comments ?? []
+}
+
+// ── Issues (read-only) ─────────────────────────────────────────
+
+export interface GitLabel {
+  name: string
+  // Hex colour without the leading '#'. May be empty (GitLab issue
+  // payloads carry only the label name).
+  color: string
+}
+
+export interface GitIssue {
+  number: number
+  title: string
+  state: 'open' | 'closed'
+  author: string
+  url: string
+  // Description (markdown). Only populated by getGitIssue (the single-
+  // issue detail fetch); the list endpoint omits it to stay lean.
+  body?: string
+  labels: GitLabel[]
+  updated_at: string
+}
+
+export interface GitIssuesResponse {
+  remote: GitRemote
+  issues: GitIssue[]
+  need_token?: boolean
+  error?: string
+}
+
+export async function listGitIssues(
+  path: string,
+  state: 'open' | 'closed' | 'all' = 'open',
+): Promise<GitIssuesResponse> {
+  const params = new URLSearchParams({ path, state })
+  return api<GitIssuesResponse>(`/api/v1/git/issues?${params.toString()}`)
+}
+
+// getGitIssue fetches a single issue including its body/description. Use
+// this for the detail surface; listGitIssues leaves body empty.
+export async function getGitIssue(
+  path: string,
+  number: number,
+): Promise<GitIssue> {
+  const params = new URLSearchParams({ path })
+  return api<GitIssue>(`/api/v1/git/issues/${number}?${params.toString()}`)
+}
+
+// Issue comments reuse PRComment — the conversation shape is identical
+// (issues never carry a review state, so it stays empty).
+export async function getIssueComments(
+  path: string,
+  number: number,
+): Promise<PRComment[]> {
+  const params = new URLSearchParams({ path })
+  const res = await api<{ comments: PRComment[] }>(
+    `/api/v1/git/issues/${number}/comments?${params.toString()}`,
+  )
+  return res.comments ?? []
 }

@@ -7,6 +7,7 @@ import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/sessions/inspector/git_branch_controls.dart';
 import 'package:opendray/features/sessions/inspector/git_commit_form.dart';
+import 'package:opendray/features/sessions/inspector/git_issue_section.dart';
 import 'package:opendray/features/sessions/inspector/git_pr_section.dart';
 
 // Git surface inside the session inspector. Two views toggle via a
@@ -446,6 +447,8 @@ class _GitTabState extends ConsumerState<GitTab>
               // Phase 1+2: PR command-center. Always renders so
               // operators can create a PR even on a clean tree.
               GitPRSection(cwd: widget.cwd),
+              // Issues — read-only sibling of the PR section.
+              GitIssueSection(cwd: widget.cwd),
             ],
           ),
         );
