@@ -31,6 +31,7 @@
 // the next run starts from scratch.
 
 import 'dotenv/config'
+import { createHash } from 'node:crypto'
 import { setTimeout as sleep } from 'node:timers/promises'
 
 import {
@@ -50,7 +51,7 @@ async function main() {
   step(2, 'Load credentials')
   const auth = await authenticate()
   ok(
-    `${auth.source} · integration ${auth.integrationId} · key …${auth.apiKey.slice(-4)}`,
+    `${auth.source} · integration ${auth.integrationId} · key fp:${keyFingerprint(auth.apiKey)}`,
   )
 
   // From here on the demo stops using any admin token (if we
@@ -244,7 +245,7 @@ async function rotateAndSave(prev: DemoState): Promise<DemoState> {
   }
   saveState(next)
   console.log(
-    `   ✓ rotated and saved new key (…${api_key.slice(-4)}) to ${STATE_PATH}`,
+    `   ✓ rotated and saved new key (fp:${keyFingerprint(api_key)}) to ${STATE_PATH}`,
   )
   return next
 }
@@ -366,4 +367,11 @@ function oneLine(o: Record<string, unknown>): string {
 function stringify(v: unknown): string {
   if (typeof v === 'string') return v.length > 40 ? `${v.slice(0, 37)}…` : v
   return String(v)
+}
+
+// keyFingerprint returns an 8-hex-char SHA-256 prefix of an API key
+// — used to correlate log lines across rotations without ever
+// emitting bytes from the secret itself.
+function keyFingerprint(key: string): string {
+  return createHash('sha256').update(key).digest('hex').slice(0, 8)
 }
