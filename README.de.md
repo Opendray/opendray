@@ -160,6 +160,8 @@ Jeder unterstützte Pfad enthält Session-Spawn, AI-CLI-Zugriff, verschlüsselte
 | 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio als Heimserver | [Produktions-Deployment §C](#option-c--macos-launchd-mac-mini--studio-as-home-server) |
 | 🛠 **Build from Source** | Dev / Contributing / Custom Builds | [Quickstart](#quickstart-5-minute-dev-path) weiter unten |
 
+<a id="quickstart-5-minute-dev-path"></a>
+
 ## Quickstart (5-Minuten-Dev-Path)
 
 Den kompletten Walkthrough mit Voraussetzungen und Troubleshooting findest du in [`docs/quickstart.md`](docs/quickstart.md). Der verdichtete Dev-Path:
@@ -187,6 +189,8 @@ go run ./cmd/opendray serve -config config.toml
 
 Damit läuft OpenDray im Vordergrund — Ctrl-C beendet es. Für einen langlaufenden
 Daemon siehe **Produktions-Deployment** unten.
+
+<a id="production-deploy"></a>
 
 ## Produktions-Deployment
 
@@ -259,6 +263,8 @@ Dann zeigt dein Supervisor (s6, runit, supervisord, runwhen) auf:
 Pre-Flight: führe `opendray migrate -config /etc/opendray/config.toml`
 einmal vor dem ersten `serve` aus, oder als Pre-Start-Hook im
 Supervisor deiner Wahl.
+
+<a id="option-c--macos-launchd-mac-mini--studio-as-home-server"></a>
 
 ### Option C — macOS launchd (Mac mini / Studio als Heimserver)
 

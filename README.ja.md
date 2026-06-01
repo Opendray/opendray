@@ -159,6 +159,8 @@ sudo opendray start              # start | stop | restart | status — wraps sys
 | 🍎 **macOS LaunchDaemon** | 自宅サーバーとして使う Mac mini / Mac Studio | [本番環境へのデプロイ §C](#option-c--macos-launchd-mac-mini--studio-as-home-server) |
 | 🛠 **ソースからビルド** | 開発 / コントリビューション / カスタムビルド | 下記の [Quickstart](#quickstart-5-minute-dev-path) |
 
+<a id="quickstart-5-minute-dev-path"></a>
+
 ## Quickstart（5 分で動かす開発用経路）
 
 前提条件やトラブルシューティングを含む完全な手順は [`docs/quickstart.md`](docs/quickstart.md) を参照してください。凝縮した開発用経路は以下のとおりです:
@@ -186,11 +188,15 @@ go run ./cmd/opendray serve -config config.toml
 
 これは OpenDray をフォアグラウンドで実行します — Ctrl-C で停止します。常駐デーモンとして動かしたい場合は、下記の **本番環境へのデプロイ** を参照してください。
 
+<a id="production-deploy"></a>
+
 ## 本番環境へのデプロイ
 
 サポートされているデプロイ経路は 4 つあります。自分の環境に合うものを選んでください。
 いずれの経路でも、クラッシュ時の自動再起動、永続的な状態管理、
 シークレットと設定の分離が得られます。
+
+<a id="option-a--systemd-bare-metal--vm--lxc"></a>
 
 ### Option A — systemd（ベアメタル / VM / LXC）
 
@@ -258,6 +264,8 @@ ls dist/                  # opendray_*_linux_amd64.tar.gz etc.
 事前準備として、初回の `serve` の前に一度だけ
 `opendray migrate -config /etc/opendray/config.toml` を実行するか、
 お使いのスーパーバイザーの pre-start フックとして組み込んでください。
+
+<a id="option-c--macos-launchd-mac-mini--studio-as-home-server"></a>
 
 ### Option C — macOS launchd（自宅サーバーとしての Mac mini / Studio）
 

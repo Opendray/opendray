@@ -160,6 +160,8 @@ sudo opendray start              # start | stop | restart | status — wraps sys
 | 🍎 **LaunchDaemon на macOS** | Mac mini / Mac Studio как домашний сервер | [Развёртывание в продакшене §C](#option-c--macos-launchd-mac-mini--studio-as-home-server) |
 | 🛠 **Сборка из исходников** | Разработка / контрибьют / кастомные сборки | [Quickstart](#quickstart-5-minute-dev-path) ниже |
 
+<a id="quickstart-5-minute-dev-path"></a>
+
 ## Quickstart (dev-путь за 5 минут)
 
 Полный walkthrough с пререквизитами и troubleshooting — в [`docs/quickstart.md`](docs/quickstart.md). Сжатый dev-путь:
@@ -187,11 +189,15 @@ go run ./cmd/opendray serve -config config.toml
 
 Так OpenDray работает на переднем плане — Ctrl-C его убивает. Для долгоживущего демона смотрите **Развёртывание в продакшене** ниже.
 
+<a id="production-deploy"></a>
+
 ## Развёртывание в продакшене
 
 Четыре поддерживаемых способа развёртывания, выбирайте подходящий под ваше окружение.
 Каждый даёт авто-рестарт при крэше, персистентное состояние и
 разделение секретов и конфига.
+
+<a id="option-a--systemd-bare-metal--vm--lxc"></a>
 
 ### Вариант A — systemd (bare-metal / VM / LXC)
 
@@ -258,6 +264,8 @@ ls dist/                  # opendray_*_linux_amd64.tar.gz etc.
 Pre-flight: один раз перед первым `serve` запустите
 `opendray migrate -config /etc/opendray/config.toml`, либо повесьте
 это в pre-start хук вашего супервизора.
+
+<a id="option-c--macos-launchd-mac-mini--studio-as-home-server"></a>
 
 ### Вариант C — macOS launchd (Mac mini / Studio как домашний сервер)
 

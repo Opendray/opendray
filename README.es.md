@@ -160,6 +160,8 @@ Cada ruta soportada incluye spawn de sesiones, acceso a AI-CLI, backups cifrados
 | 🍎 **LaunchDaemon de macOS** | Mac mini / Mac Studio como servidor doméstico | [Despliegue de producción §C](#option-c--macos-launchd-mac-mini--studio-as-home-server) |
 | 🛠 **Build desde el código fuente** | Desarrollo / contribución / builds personalizados | [Quickstart](#quickstart-5-minute-dev-path) abajo |
 
+<a id="quickstart-5-minute-dev-path"></a>
+
 ## Quickstart (ruta dev de 5 minutos)
 
 Para una guía completa con prerrequisitos y troubleshooting, consulta [`docs/quickstart.md`](docs/quickstart.md). La ruta de desarrollo condensada:
@@ -187,11 +189,15 @@ go run ./cmd/opendray serve -config config.toml
 
 Esto ejecuta OpenDray en primer plano — Ctrl-C lo detiene. Para un demonio de larga duración, consulta **Despliegue de producción** abajo.
 
+<a id="production-deploy"></a>
+
 ## Despliegue de producción
 
 Cuatro rutas de despliegue soportadas; elige la que encaje con tu entorno.
 Cada una te da auto-restart en caso de crash, estado persistente y
 separación de secretos respecto al config.
+
+<a id="option-a--systemd-bare-metal--vm--lxc"></a>
 
 ### Opción A — systemd (bare-metal / VM / LXC)
 
@@ -258,6 +264,8 @@ Luego apunta tu supervisor (s6, runit, supervisord, runwhen) a:
 Pre-flight: ejecuta `opendray migrate -config /etc/opendray/config.toml`
 una vez antes del primer `serve`, o como hook pre-start en el supervisor
 que prefieras.
+
+<a id="option-c--macos-launchd-mac-mini--studio-as-home-server"></a>
 
 ### Opción C — launchd de macOS (Mac mini / Studio como servidor doméstico)
 

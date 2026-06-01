@@ -160,6 +160,8 @@ sudo opendray start              # start | stop | restart | status — wraps sys
 | 🍎 **macOS LaunchDaemon** | 홈 서버용 Mac mini / Mac Studio | [프로덕션 deploy §C](#option-c--macos-launchd-mac-mini--studio-as-home-server) |
 | 🛠 **소스에서 빌드** | 개발 / 기여 / 커스텀 빌드 | 아래의 [Quickstart](#quickstart-5-minute-dev-path) |
 
+<a id="quickstart-5-minute-dev-path"></a>
+
 ## Quickstart (5분 개발 경로)
 
 사전 준비물과 트러블슈팅이 포함된 전체 가이드는 [`docs/quickstart.md`](docs/quickstart.md)를 참고하세요. 압축된 개발 경로는 다음과 같습니다:
@@ -187,11 +189,15 @@ go run ./cmd/opendray serve -config config.toml
 
 이 방식은 OpenDray를 포그라운드에서 실행합니다 — Ctrl-C로 종료됩니다. 장기 실행 데몬으로 띄우려면 아래의 **프로덕션 deploy**를 참고하세요.
 
+<a id="production-deploy"></a>
+
 ## 프로덕션 deploy
 
 지원되는 deploy 경로는 네 가지이며, 각자의 환경에 맞는 것을 고르면 됩니다.
 어느 쪽이든 crash 시 auto-restart, 영구 상태 유지, 시크릿과 config의
 분리를 보장합니다.
+
+<a id="option-a--systemd-bare-metal--vm--lxc"></a>
 
 ### Option A — systemd (베어메탈 / VM / LXC)
 
@@ -256,6 +262,8 @@ ls dist/                  # opendray_*_linux_amd64.tar.gz etc.
 
 Pre-flight: 최초 `serve` 이전에 `opendray migrate -config /etc/opendray/config.toml`을
 한 번 실행하거나, 사용 중인 supervisor의 pre-start 훅으로 걸어두세요.
+
+<a id="option-c--macos-launchd-mac-mini--studio-as-home-server"></a>
 
 ### Option C — macOS launchd (홈 서버용 Mac mini / Studio)
 
