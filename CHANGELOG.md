@@ -10,6 +10,36 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.7.0] — 2026-06-01
+
+The Flutter mobile app catches up to web. Features that landed on the
+web dashboard but never reached mobile are now at parity: Telegram
+two-way channel config, Claude account metadata, a gateway version
+check, and most-recently-used session ordering.
+
+### Added
+
+- **Telegram two-way channel config on mobile** (#290). The mobile
+  channel form gained the five Telegram fields the web form already
+  had: owner allow-list (`owner_user_ids`), two-way chat toggle
+  (`chat_enabled`), typing indicator (`chat_typing`), activity
+  notifications (`notify_enabled`), and reply length cap
+  (`reply_max_chars`). Booleans render as switches and serialize to
+  the same config shape the gateway expects.
+- **Claude account metadata on mobile** (#290). The provider page now
+  surfaces the gateway-decorated account fields — subscription tier,
+  rate-limit tier, active session count, last-used time, and OAuth
+  email — as inline chips, plus an identity-drift banner with an
+  Accept action when the on-disk OAuth identity changed.
+- **Gateway version check on mobile** (#290). The About screen shows
+  the running gateway's version, commit, and whether an update is
+  available, with a release-notes link. Read-only — the in-app
+  self-update stays on web / the host shell.
+- **Most-recently-used session ordering on mobile** (#290). The
+  sessions list now sorts most-recently-opened first (recorded
+  per-device, persisted across restarts), mirroring the web list;
+  live sessions still group ahead of ended ones.
+
 ## [v2.6.0] — 2026-06-01
 
 Web/mobile gain a real PR detail surface and a read-only Issues
