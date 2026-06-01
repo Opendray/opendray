@@ -1750,6 +1750,13 @@ class _TranslationsProvidersAccountsZh extends TranslationsProvidersAccountsEn {
 	@override String enabledSnack({required Object name}) => '${name} 已启用。';
 	@override String disabledSnack({required Object name}) => '${name} 已停用。';
 	@override String renamedSnack({required Object name}) => '已重命名为 ${name}。';
+	@override String activeSessions({required Object count}) => '${count} 个活跃';
+	@override String usedAgo({required Object when}) => '${when}使用';
+	@override String get identityChanged => '身份已变更';
+	@override String identityWas({required Object email}) => '原为 ${email}';
+	@override String get acceptIdentity => '接受';
+	@override String get identityAcceptedSnack => '已接受身份变更';
+	@override String get identityAcceptFailed => '接受失败';
 }
 
 // Path: integrations.form
@@ -9539,6 +9546,13 @@ extension on TranslationsZh {
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
 			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} 已停用。',
 			'providers.accounts.renamedSnack' => ({required Object name}) => '已重命名为 ${name}。',
+			'providers.accounts.activeSessions' => ({required Object count}) => '${count} 个活跃',
+			'providers.accounts.usedAgo' => ({required Object when}) => '${when}使用',
+			'providers.accounts.identityChanged' => '身份已变更',
+			'providers.accounts.identityWas' => ({required Object email}) => '原为 ${email}',
+			'providers.accounts.acceptIdentity' => '接受',
+			'providers.accounts.identityAcceptedSnack' => '已接受身份变更',
+			'providers.accounts.identityAcceptFailed' => '接受失败',
 			'providers.configFallbackTitle' => '提供商配置',
 			'providers.saving' => '保存中…',
 			'providers.save' => '保存',
@@ -9904,6 +9918,8 @@ extension on TranslationsZh {
 			'backupTargetEditor.formTitleNew' => '新建备份目标',
 			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => '自动：${prefix}-1',
 			'backupTargetEditor.idHelper' => '小写字母、数字、连字符。默认为下一个可用槽。',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.enabledOn' => '定期和临时备份可使用此目标。',
 			'backupTargetEditor.enabledOff' => '服务器将拒绝向此处写入备份。',
 			'backupTargetEditor.saving' => '保存中…',
@@ -9911,8 +9927,6 @@ extension on TranslationsZh {
 			'backupTargetEditor.rootDirLabel' => '根目录',
 			'backupTargetEditor.rootDirHint' => '留空 = cfg.backup.local_dir (~/.opendray/backups)',
 			'backupTargetEditor.hostLabel' => '主机',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.portLabel' => '端口',
 			'backupTargetEditor.shareLabel' => '共享',
 			'backupTargetEditor.shareHint' => '顶层共享名',
@@ -10418,6 +10432,8 @@ extension on TranslationsZh {
 			'settings.serverSettings.sections.storageGemini' => '存储 · Gemini',
 			'settings.serverSettings.sectionDescriptions.general' => '监听地址、管理员账号、令牌 TTL。',
 			'settings.serverSettings.sectionDescriptions.logging' => '详细程度、格式、磁盘日志路径。',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.sectionDescriptions.sessions' => '空闲检测阈值。',
 			'settings.serverSettings.sectionDescriptions.vault' => '笔记、技能、git 版本化的根目录。',
 			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'MCP 服务器 + 密钥文件的凭据库路径。',
@@ -10425,8 +10441,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.sectionDescriptions.backup' => '加密的数据库备份 + 管理数据导出。密语保存在密钥文件（设置 → 备份）。',
 			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Claude 会话记录在磁盘的存放位置。',
 			'settings.serverSettings.sectionDescriptions.storageCodex' => 'Codex 会话根目录。',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.sectionDescriptions.storageGemini' => '按项目的临时目录 + projects.json 路径。',
 			'settings.serverSettings.fields.listenAddress' => '监听地址',
 			'settings.serverSettings.fields.adminUser' => '管理员用户',

@@ -113,6 +113,18 @@ class ClaudeAccountsApi {
     }
   }
 
+  // POST /claude-accounts/{id}/accept-identity — acknowledges that the
+  // on-disk OAuth identity legitimately changed (clears identity_drift).
+  Future<void> acceptIdentity(String id) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/api/v1/claude-accounts/$id/accept-identity',
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   // POST /claude-accounts/import-local — gateway scans
   // ~/.claude-accounts/ on its own host filesystem and registers any
   // directory it finds that doesn't already have a matching DB row.

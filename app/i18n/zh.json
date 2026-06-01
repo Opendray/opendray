@@ -2826,7 +2826,14 @@
       "intro": "以 Claude 提供商启动的会话会从这些账号中选择（或回退到环境变量）。",
       "enabledSnack": "{name} 已启用。",
       "disabledSnack": "{name} 已停用。",
-      "renamedSnack": "已重命名为 {name}。"
+      "renamedSnack": "已重命名为 {name}。",
+      "activeSessions": "{count} 个活跃",
+      "usedAgo": "{when}使用",
+      "identityChanged": "身份已变更",
+      "identityWas": "原为 {email}",
+      "acceptIdentity": "接受",
+      "identityAcceptedSnack": "已接受身份变更",
+      "identityAcceptFailed": "接受失败"
     },
     "configFallbackTitle": "提供商配置",
     "saving": "保存中…",

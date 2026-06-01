@@ -3404,6 +3404,27 @@ class TranslationsProvidersAccountsEn {
 
 	/// en: 'Renamed to {name}.'
 	String renamedSnack({required Object name}) => 'Renamed to ${name}.';
+
+	/// en: '{count} active'
+	String activeSessions({required Object count}) => '${count} active';
+
+	/// en: 'used {when}'
+	String usedAgo({required Object when}) => 'used ${when}';
+
+	/// en: 'Identity changed'
+	String get identityChanged => 'Identity changed';
+
+	/// en: 'was {email}'
+	String identityWas({required Object email}) => 'was ${email}';
+
+	/// en: 'Accept'
+	String get acceptIdentity => 'Accept';
+
+	/// en: 'Identity change accepted'
+	String get identityAcceptedSnack => 'Identity change accepted';
+
+	/// en: 'Accept failed'
+	String get identityAcceptFailed => 'Accept failed';
 }
 
 // Path: integrations.form
@@ -15907,6 +15928,13 @@ extension on Translations {
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} enabled.',
 			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} disabled.',
 			'providers.accounts.renamedSnack' => ({required Object name}) => 'Renamed to ${name}.',
+			'providers.accounts.activeSessions' => ({required Object count}) => '${count} active',
+			'providers.accounts.usedAgo' => ({required Object when}) => 'used ${when}',
+			'providers.accounts.identityChanged' => 'Identity changed',
+			'providers.accounts.identityWas' => ({required Object email}) => 'was ${email}',
+			'providers.accounts.acceptIdentity' => 'Accept',
+			'providers.accounts.identityAcceptedSnack' => 'Identity change accepted',
+			'providers.accounts.identityAcceptFailed' => 'Accept failed',
 			'providers.configFallbackTitle' => 'Provider config',
 			'providers.saving' => 'Saving…',
 			'providers.save' => 'Save',
@@ -16271,6 +16299,8 @@ extension on Translations {
 			'backupTargetEditor.formTitleEdit' => 'Edit target',
 			'backupTargetEditor.formTitleNew' => 'New backup target',
 			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => 'Auto: ${prefix}-1',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.idHelper' => 'Lower-case letters, digits, dashes. Defaults to the next available slot.',
 			'backupTargetEditor.enabledOn' => 'Scheduled and ad-hoc backups can target this.',
 			'backupTargetEditor.enabledOff' => 'Server will refuse to write backups here.',
@@ -16278,8 +16308,6 @@ extension on Translations {
 			'backupTargetEditor.create' => 'Create',
 			'backupTargetEditor.rootDirLabel' => 'Root directory',
 			'backupTargetEditor.rootDirHint' => 'Empty = cfg.backup.local_dir (~/.opendray/backups)',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.hostLabel' => 'Host',
 			'backupTargetEditor.portLabel' => 'Port',
 			'backupTargetEditor.shareLabel' => 'Share',
@@ -16785,6 +16813,8 @@ extension on Translations {
 			'settings.serverSettings.sections.storageCodex' => 'Storage · Codex',
 			'settings.serverSettings.sections.storageGemini' => 'Storage · Gemini',
 			'settings.serverSettings.sectionDescriptions.general' => 'Listen address, operator account, token TTL.',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.sectionDescriptions.logging' => 'Verbosity, format, and on-disk log path.',
 			'settings.serverSettings.sectionDescriptions.sessions' => 'Idle detection thresholds.',
 			'settings.serverSettings.sectionDescriptions.vault' => 'Notes, skills, and git-versioned root.',
@@ -16792,8 +16822,6 @@ extension on Translations {
 			'settings.serverSettings.sectionDescriptions.memory' => 'Cross-CLI persistent memory subsystem.',
 			'settings.serverSettings.sectionDescriptions.backup' => 'Encrypted DB backups + admin data exports. Passphrase lives in the keyfile (Settings → Backups).',
 			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Where Claude transcripts live on disk.',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.sectionDescriptions.storageCodex' => 'Codex sessions root.',
 			'settings.serverSettings.sectionDescriptions.storageGemini' => 'Per-project tmp + projects.json paths.',
 			'settings.serverSettings.fields.listenAddress' => 'Listen address',

@@ -2827,7 +2827,14 @@
       "intro": "Sessions spawned with the Claude provider pick from these accounts (or fall back to env).",
       "enabledSnack": "{name} enabled.",
       "disabledSnack": "{name} disabled.",
-      "renamedSnack": "Renamed to {name}."
+      "renamedSnack": "Renamed to {name}.",
+      "activeSessions": "{count} active",
+      "usedAgo": "used {when}",
+      "identityChanged": "Identity changed",
+      "identityWas": "was {email}",
+      "acceptIdentity": "Accept",
+      "identityAcceptedSnack": "Identity change accepted",
+      "identityAcceptFailed": "Accept failed"
     },
     "configFallbackTitle": "Provider config",
     "saving": "Saving…",
