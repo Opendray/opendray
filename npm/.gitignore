@@ -4,5 +4,10 @@ opendray-*/bin/opendray
 # LICENSE files are copied from the repo root by scripts/publish-npm.mjs.
 */LICENSE
 
+# SDK build output
+sdk/dist/
+sdk/node_modules/
+sdk/package-lock.json
+
 # npm pack output
 *.tgz

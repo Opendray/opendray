@@ -1,0 +1,51 @@
+{
+  "name": "@opendray/sdk",
+  "version": "0.0.0",
+  "description": "TypeScript client for the opendray gateway: REST + WebSocket access to sessions, channels, integrations, and events.",
+  "license": "Apache-2.0",
+  "homepage": "https://opendray.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Opendray/opendray.git",
+    "directory": "npm/sdk"
+  },
+  "bugs": "https://github.com/Opendray/opendray/issues",
+  "keywords": [
+    "opendray",
+    "sdk",
+    "claude-code",
+    "codex",
+    "gemini",
+    "ai-coding-agent",
+    "self-hosted"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0"
+  }
+}

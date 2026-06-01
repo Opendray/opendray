@@ -12,8 +12,11 @@
 //
 // Once all four platform packages are published it bumps the main
 // `opendray` package (matching `optionalDependencies` to the new version)
-// and publishes it last. Order matters: the main package's
+// and publishes it. Order matters: the main package's
 // optionalDependencies must resolve at install time.
+//
+// Finally builds and publishes @opendray/sdk at the same version, so
+// the TS SDK always ships in lockstep with the gateway.
 //
 // Required env:
 //   NODE_AUTH_TOKEN  — npm automation token with publish for `opendray`
@@ -143,6 +146,17 @@ function npmPublish(pkgDir) {
   run("npm", ["publish", "--provenance", "--access", "public"], { cwd: pkgDir });
 }
 
+function prepareSdk(version) {
+  const sdkDir = join(NPM_ROOT, "sdk");
+  console.log(`\n=== @opendray/sdk: building ===`);
+  run("npm", ["install", "--no-audit", "--no-fund"], { cwd: sdkDir });
+  run("npm", ["run", "build"], { cwd: sdkDir });
+  setPkgVersion(sdkDir, version);
+  copyLicenseInto(sdkDir);
+  console.log(`  staged ${sdkDir} at ${version}`);
+  return sdkDir;
+}
+
 async function main() {
   const { tag, version } = parseArgs();
   const ghToken = process.env.GITHUB_TOKEN || "";
@@ -167,15 +181,17 @@ async function main() {
   }
 
   const mainDir = join(NPM_ROOT, "opendray");
-  const mainPkg = JSON.parse(readFileSync(join(mainDir, "package.json"), "utf-8"));
   const optDeps = {};
   for (const { pkg } of PLATFORMS) optDeps[pkg] = version;
   setPkgVersion(mainDir, version, { optionalDependencies: optDeps });
   copyLicenseInto(mainDir);
   npmPublish(mainDir);
 
-  console.log(`\nopendray @ ${version} published.`);
-  console.log(`Verify: npm view opendray version`);
+  const sdkDir = prepareSdk(version);
+  npmPublish(sdkDir);
+
+  console.log(`\nopendray @ ${version} + @opendray/sdk @ ${version} published.`);
+  console.log(`Verify: npm view opendray version && npm view @opendray/sdk version`);
 }
 
 main().catch((err) => die(err.stack || err.message));
