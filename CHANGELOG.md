@@ -10,6 +10,10 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Credits
+
+- Farsi (Persian) README translation by [Majid Allahverdi](https://github.com/devwithmj) — originally contributed in #278, brought to `main` via #283 after a rebase-conflict workaround.
+
 ## [v2.5.0] — 2026-05-31
 
 Phase 2 Tier A of the multi-Claude-account work: rate-limit-aware
