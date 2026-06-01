@@ -364,6 +364,100 @@ class GitPRComment {
   final String url;
 }
 
+// One issue label. color is a hex string without the leading '#'; it
+// may be empty (GitLab issue payloads carry only the label name).
+class GitLabel {
+  GitLabel({required this.name, required this.color});
+
+  factory GitLabel.fromJson(Map<String, dynamic> json) => GitLabel(
+    name: json['name'] as String? ?? '',
+    color: json['color'] as String? ?? '',
+  );
+
+  final String name;
+  final String color;
+}
+
+// An issue (read-only). Mirrors GitPullRequest minus the PR-only
+// fields; adds labels. body is empty on list responses — only the
+// single-issue detail fetch (getIssue) populates it.
+class GitIssue {
+  GitIssue({
+    required this.number,
+    required this.title,
+    required this.state,
+    required this.author,
+    required this.url,
+    required this.updatedAt,
+    required this.labels,
+    this.body = '',
+  });
+
+  factory GitIssue.fromJson(Map<String, dynamic> json) {
+    final rawLabels = json['labels'];
+    final labels = rawLabels is List
+        ? rawLabels
+              .whereType<Map<String, dynamic>>()
+              .map(GitLabel.fromJson)
+              .toList()
+        : <GitLabel>[];
+    return GitIssue(
+      number: (json['number'] as num?)?.toInt() ?? 0,
+      title: json['title'] as String? ?? '',
+      state: json['state'] as String? ?? '',
+      author: json['author'] as String? ?? '',
+      url: json['url'] as String? ?? '',
+      updatedAt: json['updated_at'] as String? ?? '',
+      labels: labels,
+      body: json['body'] as String? ?? '',
+    );
+  }
+
+  final int number;
+  // open | closed
+  final String state;
+  final String title;
+  final String author;
+  final String url;
+  final String updatedAt;
+  final List<GitLabel> labels;
+  final String body;
+}
+
+// Container for the /git/issues response: issues plus repo metadata so
+// callers can render a "configure your token" hint. Mirrors
+// GitPullRequestList.
+class GitIssueList {
+  GitIssueList({
+    required this.issues,
+    required this.needsToken,
+    required this.host,
+    required this.errorMessage,
+  });
+
+  factory GitIssueList.fromJson(Map<String, dynamic> json) {
+    final raw = json['issues'];
+    final issues = raw is List
+        ? raw.whereType<Map<String, dynamic>>().map(GitIssue.fromJson).toList()
+        : <GitIssue>[];
+    final remote = json['remote'];
+    final host = remote is Map<String, dynamic>
+        ? (remote['host'] as String? ?? '')
+        : '';
+    return GitIssueList(
+      issues: issues,
+      needsToken: json['need_token'] as bool? ?? false,
+      host: host,
+      errorMessage: json['error'] as String? ?? '',
+    );
+  }
+
+  final List<GitIssue> issues;
+  final bool needsToken;
+  final String host;
+  final String errorMessage;
+}
+
 class GitApi {
   GitApi(this._dio);
   final Dio _dio;
@@ -614,6 +708,62 @@ class GitApi {
         queryParameters: {'path': dir},
       );
       return GitPullRequest.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // ── Issues (read-only) ───────────────────────────────────────
+
+  // GET /git/issues?path=<dir>&state=<open|closed|all>. Mirrors
+  // listPullRequests; the server returns metadata (remote + need_token)
+  // alongside the issue array. PRs are filtered out server-side.
+  Future<GitIssueList> listIssues({
+    required String dir,
+    String state = 'open',
+  }) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/git/issues',
+        queryParameters: {'path': dir, 'state': state},
+      );
+      return GitIssueList.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // GET /git/issues/{n}?path=<dir> — a single issue including its body.
+  // The list endpoint omits body to stay lean.
+  Future<GitIssue> getIssue({required String dir, required int number}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/git/issues/$number',
+        queryParameters: {'path': dir},
+      );
+      return GitIssue.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // GET /git/issues/{n}/comments — conversation. Reuses GitPRComment
+  // (issues never carry a review state, so it stays empty).
+  Future<List<GitPRComment>> issueComments({
+    required String dir,
+    required int number,
+  }) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/git/issues/$number/comments',
+        queryParameters: {'path': dir},
+      );
+      final raw = res.data?['comments'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(GitPRComment.fromJson)
+          .toList();
     } on Object catch (e) {
       throw toApiException(e);
     }

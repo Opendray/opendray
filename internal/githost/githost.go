@@ -1991,6 +1991,10 @@ func (h *Handlers) Mount(r chi.Router) {
 	r.Get("/git/prs/{number}/commits", h.prCommits)
 	r.Get("/git/prs/{number}/files", h.prFiles)
 	r.Get("/git/prs/{number}/comments", h.prComments)
+	// Issues — read-only sibling of the PR surface (see issues.go).
+	r.Get("/git/issues", h.issues)
+	r.Get("/git/issues/{number}", h.issueDetail)
+	r.Get("/git/issues/{number}/comments", h.issueComments)
 }
 
 // createPR mounts POST /git/prs. Body matches CreatePRRequest.

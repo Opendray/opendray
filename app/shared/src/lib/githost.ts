@@ -234,3 +234,63 @@ export async function getPRComments(
   )
   return res.comments ?? []
 }
+
+// ── Issues (read-only) ─────────────────────────────────────────
+
+export interface GitLabel {
+  name: string
+  // Hex colour without the leading '#'. May be empty (GitLab issue
+  // payloads carry only the label name).
+  color: string
+}
+
+export interface GitIssue {
+  number: number
+  title: string
+  state: 'open' | 'closed'
+  author: string
+  url: string
+  // Description (markdown). Only populated by getGitIssue (the single-
+  // issue detail fetch); the list endpoint omits it to stay lean.
+  body?: string
+  labels: GitLabel[]
+  updated_at: string
+}
+
+export interface GitIssuesResponse {
+  remote: GitRemote
+  issues: GitIssue[]
+  need_token?: boolean
+  error?: string
+}
+
+export async function listGitIssues(
+  path: string,
+  state: 'open' | 'closed' | 'all' = 'open',
+): Promise<GitIssuesResponse> {
+  const params = new URLSearchParams({ path, state })
+  return api<GitIssuesResponse>(`/api/v1/git/issues?${params.toString()}`)
+}
+
+// getGitIssue fetches a single issue including its body/description. Use
+// this for the detail surface; listGitIssues leaves body empty.
+export async function getGitIssue(
+  path: string,
+  number: number,
+): Promise<GitIssue> {
+  const params = new URLSearchParams({ path })
+  return api<GitIssue>(`/api/v1/git/issues/${number}?${params.toString()}`)
+}
+
+// Issue comments reuse PRComment — the conversation shape is identical
+// (issues never carry a review state, so it stays empty).
+export async function getIssueComments(
+  path: string,
+  number: number,
+): Promise<PRComment[]> {
+  const params = new URLSearchParams({ path })
+  const res = await api<{ comments: PRComment[] }>(
+    `/api/v1/git/issues/${number}/comments?${params.toString()}`,
+  )
+  return res.comments ?? []
+}
