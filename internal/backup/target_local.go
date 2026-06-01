@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -61,8 +62,16 @@ func (t *LocalTarget) resolve(p string) (string, error) {
 	if strings.ContainsRune(p, 0) {
 		return "", fmt.Errorf("%w: null byte", ErrTargetRejectedPath)
 	}
-	if filepath.IsAbs(p) {
+	if filepath.IsAbs(p) || strings.HasPrefix(p, "/") || strings.HasPrefix(p, `\`) {
 		return "", fmt.Errorf("%w: absolute path %q", ErrTargetRejectedPath, p)
+	}
+	// Windows drive-relative paths (`C:foo`, `C:..\evil`) are NOT
+	// caught by filepath.IsAbs but resolve against the current
+	// directory of that drive, so they can escape `root`. Reject
+	// any colon on Windows — colons are never valid in cleaned
+	// relative paths on that platform.
+	if runtime.GOOS == "windows" && strings.ContainsRune(p, ':') {
+		return "", fmt.Errorf("%w: drive-relative path %q", ErrTargetRejectedPath, p)
 	}
 	cleaned := filepath.Clean(p)
 	if cleaned == ".." || strings.HasPrefix(cleaned, ".."+string(filepath.Separator)) {

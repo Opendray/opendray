@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -174,6 +175,9 @@ func TestWatcher_RefusesSymlinkedRoot(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := os.Symlink(real, link); err != nil {
+		if runtime.GOOS == "windows" {
+			t.Skip("symlink creation requires elevated privileges on Windows: " + err.Error())
+		}
 		t.Fatal(err)
 	}
 

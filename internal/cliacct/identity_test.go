@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -61,7 +62,7 @@ func TestIdentityStore_PersistsToDisk(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if fi != 0o600 {
+	if fi != 0o600 && runtime.GOOS != "windows" {
 		t.Errorf("perm = %o, want 0600", fi)
 	}
 }
