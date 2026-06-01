@@ -73,7 +73,7 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
         ),
       ),
       body: RefreshIndicator(
-        onRefresh: () async => ref.refresh(sessionsListProvider.future),
+        onRefresh: () async => ref.refresh(sortedSessionsListProvider.future),
         child: async.when(
           data: (sessions) {
             final visible =

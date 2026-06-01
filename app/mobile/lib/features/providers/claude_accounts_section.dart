@@ -480,21 +480,11 @@ class _AccountTile extends StatelessWidget {
               ],
             ],
           ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                account.id,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(fontFamily: 'monospace'),
-              ),
-              if (_hasMeta) ...[
-                const SizedBox(height: 4),
-                _metaChips(context, muted),
-              ],
-            ],
+          subtitle: Text(
+            account.id,
+            style:
+                theme.textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
           ),
-          isThreeLine: _hasMeta,
           trailing: busy
               ? const SizedBox(
                   width: 18,
@@ -503,6 +493,14 @@ class _AccountTile extends StatelessWidget {
                 )
               : const Icon(Icons.more_vert),
         ),
+        // Metadata chips live below the ListTile (not in its subtitle
+        // slot, which clips to a fixed height) so a fully-populated
+        // account with all chips + a long OAuth email never gets cut off.
+        if (_hasMeta)
+          Padding(
+            padding: const EdgeInsets.only(left: 40, bottom: 8),
+            child: _metaChips(context, muted),
+          ),
         if (account.identityDrift) _identityBanner(context),
       ],
     );
