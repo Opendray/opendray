@@ -68,6 +68,35 @@ Recovery if you tagged first: PATCH the release body via the GitHub
 API with the changelog section after the fact. Annoying, single-use
 mistake — better to do it in the right order.
 
+## Repository secrets (one-time setup)
+
+The release pipeline reads two repository secrets. `GITHUB_TOKEN` is
+provided automatically by Actions — you don't manage it. The other:
+
+- **`NPM_TOKEN`** — npm Automation token with publish permission for
+  `opendray`, `opendray-{linux,darwin}-{x64,arm64}`, and
+  `@opendray/sdk`. Used by the `Publish to npm` job in `release.yml`.
+
+  Generate at https://www.npmjs.com/settings/~/tokens → "Generate New
+  Token" → Classic → **Automation** (not Read-only, not Publish).
+  Automation tokens bypass 2FA challenges in CI.
+
+  Add at
+  https://github.com/Opendray/opendray/settings/secrets/actions/new
+  with the name `NPM_TOKEN`.
+
+  If the secret is missing, `scripts/publish-npm.mjs` skips cleanly
+  with a clear log message — the GitHub release tarballs still ship,
+  just without the npm channel. To recover after adding the secret:
+  re-run the failed `Publish to npm` job on the existing workflow
+  run, or trigger `workflow_dispatch` on `release.yml` with the
+  existing tag.
+
+  Operational note: never paste an npm token into a chat transcript,
+  PR comment, issue, or any persisted log. If you do, treat it as
+  compromised — revoke immediately at the npm tokens page above and
+  rotate the secret value.
+
 ## Picking the version number
 
 The rules from [`VERSIONING.md`](VERSIONING.md):
@@ -275,6 +304,10 @@ After publishing:
 - [ ] `https://opendray.dev/changelog/` shows the new entry within
       ~2 minutes
 - [ ] `opendray update --check` on a host reports the new version
+- [ ] `npm view opendray version` returns the new version (and the
+      four `opendray-{linux,darwin}-{x64,arm64}` packages match —
+      one-liner:
+      `for p in opendray opendray-linux-x64 opendray-linux-arm64 opendray-darwin-x64 opendray-darwin-arm64 @opendray/sdk; do npm view "$p" version; done`)
 
 ## Skipped today, on the roadmap
 

@@ -160,7 +160,26 @@ function prepareSdk(version) {
 async function main() {
   const { tag, version } = parseArgs();
   const ghToken = process.env.GITHUB_TOKEN || "";
-  if (!process.env.NODE_AUTH_TOKEN) die("NODE_AUTH_TOKEN not set");
+
+  if (!process.env.NODE_AUTH_TOKEN) {
+    console.log("publish-npm: SKIPPED — NODE_AUTH_TOKEN is empty.");
+    console.log("");
+    console.log("The NPM_TOKEN repository secret is not configured, so the");
+    console.log("npm distribution channel is skipped for this release. The");
+    console.log("GitHub release tarballs are unaffected.");
+    console.log("");
+    console.log("To enable npm publishing:");
+    console.log("  1. Generate an npm Automation token at");
+    console.log("     https://www.npmjs.com/settings/~/tokens");
+    console.log("  2. Add it as the NPM_TOKEN repository secret at");
+    console.log("     https://github.com/Opendray/opendray/settings/secrets/actions/new");
+    console.log("  3. Re-run this workflow (workflow_dispatch against the");
+    console.log(`     existing tag ${tag}) — npm publish will pick up the secret`);
+    console.log("     on the next attempt.");
+    console.log("");
+    console.log("See RELEASING.md for details.");
+    process.exit(0);
+  }
 
   console.log(`Publishing opendray @ ${version} (tag ${tag})`);
 
