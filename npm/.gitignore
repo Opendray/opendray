@@ -1,0 +1,8 @@
+# Platform binaries are dropped in by CI during publish; never commit them.
+opendray-*/bin/opendray
+
+# LICENSE files are copied from the repo root by scripts/publish-npm.mjs.
+*/LICENSE
+
+# npm pack output
+*.tgz

@@ -1,0 +1,19 @@
+{
+  "name": "opendray-darwin-arm64",
+  "version": "0.0.0",
+  "description": "macOS arm64 binary for the `opendray` CLI. Installed automatically as an optional dependency of `opendray`.",
+  "license": "Apache-2.0",
+  "homepage": "https://opendray.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Opendray/opendray.git",
+    "directory": "npm/opendray-darwin-arm64"
+  },
+  "bugs": "https://github.com/Opendray/opendray/issues",
+  "os": ["darwin"],
+  "cpu": ["arm64"],
+  "files": [
+    "bin/opendray",
+    "LICENSE"
+  ]
+}

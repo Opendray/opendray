@@ -1,0 +1,19 @@
+{
+  "name": "opendray-linux-arm64",
+  "version": "0.0.0",
+  "description": "Linux arm64 binary for the `opendray` CLI. Installed automatically as an optional dependency of `opendray`.",
+  "license": "Apache-2.0",
+  "homepage": "https://opendray.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Opendray/opendray.git",
+    "directory": "npm/opendray-linux-arm64"
+  },
+  "bugs": "https://github.com/Opendray/opendray/issues",
+  "os": ["linux"],
+  "cpu": ["arm64"],
+  "files": [
+    "bin/opendray",
+    "LICENSE"
+  ]
+}
