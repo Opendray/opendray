@@ -3787,7 +3787,8 @@
     "loading": "加载中…",
     "sections": {
       "app": "应用",
-      "server": "服务器"
+      "server": "服务器",
+      "gateway": "网关"
     },
     "fields": {
       "app": "应用",
@@ -3804,7 +3805,16 @@
       "version": "版本",
       "serverUrl": "服务器 URL"
     },
-    "tagline": "opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray"
+    "tagline": "opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray",
+    "gateway": {
+      "version": "版本",
+      "commit": "提交",
+      "checking": "正在检查更新…",
+      "upToDate": "已是最新",
+      "updateAvailable": "有可用更新：{version}",
+      "releaseNotes": "更新说明",
+      "checkFailed": "无法检查更新"
+    }
   },
   "settings": {
     "title": "设置",

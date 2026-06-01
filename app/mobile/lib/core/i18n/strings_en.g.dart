@@ -1799,6 +1799,8 @@ class TranslationsAboutEn {
 
 	/// en: 'opendray mobile — multi-CLI gateway control. Source: github.com/Opendray/opendray'
 	String get tagline => 'opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray';
+
+	late final TranslationsAboutGatewayEn gateway = TranslationsAboutGatewayEn.internal(_root);
 }
 
 // Path: settings
@@ -4688,6 +4690,9 @@ class TranslationsAboutSectionsEn {
 
 	/// en: 'Server'
 	String get server => 'Server';
+
+	/// en: 'Gateway'
+	String get gateway => 'Gateway';
 }
 
 // Path: about.fields
@@ -4733,6 +4738,36 @@ class TranslationsAboutCopyLabelsEn {
 
 	/// en: 'server URL'
 	String get serverUrl => 'server URL';
+}
+
+// Path: about.gateway
+class TranslationsAboutGatewayEn {
+	TranslationsAboutGatewayEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Version'
+	String get version => 'Version';
+
+	/// en: 'Commit'
+	String get commit => 'Commit';
+
+	/// en: 'Checking for updates…'
+	String get checking => 'Checking for updates…';
+
+	/// en: 'Up to date'
+	String get upToDate => 'Up to date';
+
+	/// en: 'Update available: {version}'
+	String updateAvailable({required Object version}) => 'Update available: ${version}';
+
+	/// en: 'Release notes'
+	String get releaseNotes => 'Release notes';
+
+	/// en: 'Update check unavailable'
+	String get checkFailed => 'Update check unavailable';
 }
 
 // Path: settings.language
@@ -16729,6 +16764,7 @@ extension on Translations {
 			'about.loading' => 'Loading…',
 			'about.sections.app' => 'App',
 			'about.sections.server' => 'Server',
+			'about.sections.gateway' => 'Gateway',
 			'about.fields.app' => 'App',
 			'about.fields.version' => 'Version',
 			'about.fields.versionFormat' => ({required Object version, required Object build}) => '${version} (build ${build})',
@@ -16741,6 +16777,13 @@ extension on Translations {
 			'about.copyLabels.version' => 'version',
 			'about.copyLabels.serverUrl' => 'server URL',
 			'about.tagline' => 'opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray',
+			'about.gateway.version' => 'Version',
+			'about.gateway.commit' => 'Commit',
+			'about.gateway.checking' => 'Checking for updates…',
+			'about.gateway.upToDate' => 'Up to date',
+			'about.gateway.updateAvailable' => ({required Object version}) => 'Update available: ${version}',
+			'about.gateway.releaseNotes' => 'Release notes',
+			'about.gateway.checkFailed' => 'Update check unavailable',
 			'settings.title' => 'Settings',
 			'settings.language.section' => 'Language',
 			'settings.language.system' => 'System',
@@ -16805,6 +16848,8 @@ extension on Translations {
 			'settings.serverSettings.sections.general' => 'General',
 			'settings.serverSettings.sections.logging' => 'Logging',
 			'settings.serverSettings.sections.sessions' => 'Sessions',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.sections.vault' => 'Vault',
 			'settings.serverSettings.sections.mcpRegistry' => 'MCP registry',
 			'settings.serverSettings.sections.memory' => 'Memory',
@@ -16813,8 +16858,6 @@ extension on Translations {
 			'settings.serverSettings.sections.storageCodex' => 'Storage · Codex',
 			'settings.serverSettings.sections.storageGemini' => 'Storage · Gemini',
 			'settings.serverSettings.sectionDescriptions.general' => 'Listen address, operator account, token TTL.',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.sectionDescriptions.logging' => 'Verbosity, format, and on-disk log path.',
 			'settings.serverSettings.sectionDescriptions.sessions' => 'Idle detection thresholds.',
 			'settings.serverSettings.sectionDescriptions.vault' => 'Notes, skills, and git-versioned root.',

@@ -840,6 +840,7 @@ class _TranslationsAboutZh extends TranslationsAboutEn {
 	@override String get copyTooltip => '复制';
 	@override late final _TranslationsAboutCopyLabelsZh copyLabels = _TranslationsAboutCopyLabelsZh._(_root);
 	@override String get tagline => 'opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray';
+	@override late final _TranslationsAboutGatewayZh gateway = _TranslationsAboutGatewayZh._(_root);
 }
 
 // Path: settings
@@ -2421,6 +2422,7 @@ class _TranslationsAboutSectionsZh extends TranslationsAboutSectionsEn {
 	// Translations
 	@override String get app => '应用';
 	@override String get server => '服务器';
+	@override String get gateway => '网关';
 }
 
 // Path: about.fields
@@ -2448,6 +2450,22 @@ class _TranslationsAboutCopyLabelsZh extends TranslationsAboutCopyLabelsEn {
 	// Translations
 	@override String get version => '版本';
 	@override String get serverUrl => '服务器 URL';
+}
+
+// Path: about.gateway
+class _TranslationsAboutGatewayZh extends TranslationsAboutGatewayEn {
+	_TranslationsAboutGatewayZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get version => '版本';
+	@override String get commit => '提交';
+	@override String get checking => '正在检查更新…';
+	@override String get upToDate => '已是最新';
+	@override String updateAvailable({required Object version}) => '有可用更新：${version}';
+	@override String get releaseNotes => '更新说明';
+	@override String get checkFailed => '无法检查更新';
 }
 
 // Path: settings.language
@@ -10347,6 +10365,7 @@ extension on TranslationsZh {
 			'about.loading' => '加载中…',
 			'about.sections.app' => '应用',
 			'about.sections.server' => '服务器',
+			'about.sections.gateway' => '网关',
 			'about.fields.app' => '应用',
 			'about.fields.version' => '版本',
 			'about.fields.versionFormat' => ({required Object version, required Object build}) => '${version}（build ${build}）',
@@ -10359,6 +10378,13 @@ extension on TranslationsZh {
 			'about.copyLabels.version' => '版本',
 			'about.copyLabels.serverUrl' => '服务器 URL',
 			'about.tagline' => 'opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray',
+			'about.gateway.version' => '版本',
+			'about.gateway.commit' => '提交',
+			'about.gateway.checking' => '正在检查更新…',
+			'about.gateway.upToDate' => '已是最新',
+			'about.gateway.updateAvailable' => ({required Object version}) => '有可用更新：${version}',
+			'about.gateway.releaseNotes' => '更新说明',
+			'about.gateway.checkFailed' => '无法检查更新',
 			'settings.title' => '设置',
 			'settings.language.section' => '语言',
 			'settings.language.system' => '跟随系统',
@@ -10424,6 +10450,8 @@ extension on TranslationsZh {
 			'settings.serverSettings.sections.logging' => '日志',
 			'settings.serverSettings.sections.sessions' => '会话',
 			'settings.serverSettings.sections.vault' => '凭据库',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.sections.mcpRegistry' => 'MCP 注册表',
 			'settings.serverSettings.sections.memory' => '记忆',
 			'settings.serverSettings.sections.backup' => '备份',
@@ -10432,8 +10460,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.sections.storageGemini' => '存储 · Gemini',
 			'settings.serverSettings.sectionDescriptions.general' => '监听地址、管理员账号、令牌 TTL。',
 			'settings.serverSettings.sectionDescriptions.logging' => '详细程度、格式、磁盘日志路径。',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.sectionDescriptions.sessions' => '空闲检测阈值。',
 			'settings.serverSettings.sectionDescriptions.vault' => '笔记、技能、git 版本化的根目录。',
 			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'MCP 服务器 + 密钥文件的凭据库路径。',

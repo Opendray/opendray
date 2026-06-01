@@ -3788,7 +3788,8 @@
     "loading": "Loading…",
     "sections": {
       "app": "App",
-      "server": "Server"
+      "server": "Server",
+      "gateway": "Gateway"
     },
     "fields": {
       "app": "App",
@@ -3805,7 +3806,16 @@
       "version": "version",
       "serverUrl": "server URL"
     },
-    "tagline": "opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray"
+    "tagline": "opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray",
+    "gateway": {
+      "version": "Version",
+      "commit": "Commit",
+      "checking": "Checking for updates…",
+      "upToDate": "Up to date",
+      "updateAvailable": "Update available: {version}",
+      "releaseNotes": "Release notes",
+      "checkFailed": "Update check unavailable"
+    }
   },
   "settings": {
     "title": "Settings",
