@@ -43,7 +43,9 @@ export class Client {
   constructor(opts: ClientOptions) {
     if (!opts.baseUrl) throw new Error("Client: baseUrl is required");
     if (!opts.token) throw new Error("Client: token is required");
-    this.baseUrl = opts.baseUrl.replace(/\/+$/, "");
+    let trimmed = opts.baseUrl;
+    while (trimmed.endsWith("/")) trimmed = trimmed.slice(0, -1);
+    this.baseUrl = trimmed;
     this.token = opts.token;
     this.fetchImpl = opts.fetch ?? globalThis.fetch;
     if (!this.fetchImpl) {
