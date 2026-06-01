@@ -46,7 +46,7 @@ O **opendray** encapsula as CLIs de coding com IA que você já usa — Claude C
 
 ## Status
 
-**v2.5.0** (último) — a geração v2 segue iterando. Veja
+**v2.6.0** (último) — a geração v2 segue iterando. Veja
 [`VERSIONING.md`](VERSIONING.md) pra política major-como-geração
 (major = geração de produto, não "breaking change" estrito ao estilo SemVer) e
 [`CHANGELOG.md`](CHANGELOG.md) pro histórico completo de releases.

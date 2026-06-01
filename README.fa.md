@@ -48,7 +48,7 @@
 
 ## وضعیت
 
-نسخه ۲٫۵٫۰ (آخرین انتشار): توسعه v2 همچنان ادامه دارد. برای policy مربوط به major-as-generation به [`VERSIONING.md`](VERSIONING.md) مراجعه کنید؛ اینجا ماژور به معنی نسل محصول است، نه لزوماً یک "breaking change" به معنای سخت‌گیرانه SemVer. برای تاریخچه کامل انتشارها هم [`CHANGELOG.md`](CHANGELOG.md) را ببینید.
+نسخه ۲٫۶٫۰ (آخرین انتشار): توسعه v2 همچنان ادامه دارد. برای policy مربوط به major-as-generation به [`VERSIONING.md`](VERSIONING.md) مراجعه کنید؛ اینجا ماژور به معنی نسل محصول است، نه لزوماً یک "breaking change" به معنای سخت‌گیرانه SemVer. برای تاریخچه کامل انتشارها هم [`CHANGELOG.md`](CHANGELOG.md) را ببینید.
 
 این نسل شامل موارد زیر است:
 

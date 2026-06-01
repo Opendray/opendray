@@ -10,6 +10,54 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.6.0] — 2026-06-01
+
+Web/mobile gain a real PR detail surface and a read-only Issues
+surface, both backed by the existing git provider plumbing. The
+gateway binary is now also distributable via npm — `npx opendray`
+runs without a Go toolchain on the box. Plus a small dropdown-
+positioning fix and a handful of new README translations.
+
+### Added
+
+- **PR detail surface on web + mobile** (#279). Click into a pull
+  request from the PR list to get description, status (open /
+  merged / closed), CI check summary, head/base branches, author,
+  and last-updated timestamp. Backed by the same `git.PullRequests`
+  provider interface the list view already uses — no new API
+  surface for the host, just a deeper read against what the
+  provider returns.
+- **Read-only Issues surface on web + mobile** (#281). List and
+  detail views for repo issues, mirroring the PR layout: title,
+  state, labels, assignee, body, comments thread. Read-only by
+  design — issue creation/edit stays out of scope until the
+  permission model around it is settled.
+- **Distribute `opendray` as an npm package** (#280). `npm i -g
+  opendray` or `npx opendray` now works — the package wraps the
+  platform-appropriate binary from the GitHub release. Useful for
+  operators on Node-heavy fleets who'd rather not script a curl
+  install. The binary itself is unchanged; npm is just another
+  delivery channel alongside the existing tarballs.
+
+### Fixed
+
+- **Dropdown menus clamped to the viewport** (#284). The account
+  switcher and the session-action menu could overflow off the
+  right edge of narrow viewports (sub-400px mobile, or a
+  side-by-side desktop layout). Both now flip / clamp so the
+  trailing edge stays inside the visible area.
+
+### Docs
+
+- **Seven additional README translations** (#282): Spanish, Brazilian
+  Portuguese, Japanese, Korean, French, German, Russian. The README
+  switcher row at the top of every translation now lists ten
+  languages.
+- **Farsi (Persian) README translation** (#283), originally
+  contributed by [Majid Allahverdi](https://github.com/devwithmj)
+  in #278; brought to `main` via #283 after a cross-fork
+  rebase-conflict workaround. See Credits.
+
 ### Credits
 
 - Farsi (Persian) README translation by [Majid Allahverdi](https://github.com/devwithmj) — originally contributed in #278, brought to `main` via #283 after a rebase-conflict workaround.

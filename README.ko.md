@@ -46,7 +46,7 @@
 
 ## 현황
 
-**v2.5.0** (최신) — v2 세대는 계속 이터레이션 중입니다.
+**v2.6.0** (최신) — v2 세대는 계속 이터레이션 중입니다.
 [`VERSIONING.md`](VERSIONING.md)에서 major-as-generation 정책
 (major = 제품 세대, 엄격한 SemVer "breaking change"가 아님)을,
 [`CHANGELOG.md`](CHANGELOG.md)에서 전체 release 이력을 확인하세요.

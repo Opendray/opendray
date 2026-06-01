@@ -46,7 +46,7 @@
 
 ## État
 
-**v2.5.0** (dernière) — la génération v2 continue d'itérer. Voir
+**v2.6.0** (dernière) — la génération v2 continue d'itérer. Voir
 [`VERSIONING.md`](VERSIONING.md) pour la politique major-comme-génération
 (major = génération de produit, pas un « breaking change » strict au sens SemVer) et
 [`CHANGELOG.md`](CHANGELOG.md) pour l'historique complet des releases.
