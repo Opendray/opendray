@@ -3443,7 +3443,19 @@
         "botTokenLabel": "机器人 Token",
         "botTokenHint": "从 @BotFather 获取。存储于通道配置；仅管理员 API 可见。",
         "chatIdLabel": "默认 chat ID",
-        "chatIdPlaceholder": "42（可选 — 没有 ReplyCtx 时使用）"
+        "chatIdPlaceholder": "42（可选 — 没有 ReplyCtx 时使用）",
+        "ownerUserIdsLabel": "Telegram 拥有者用户 ID",
+        "ownerUserIdsPlaceholder": "123456789（多个用逗号分隔）",
+        "ownerUserIdsHint": "只有这些数字 Telegram 用户 ID 才能驱动会话、运行命令或点击按钮；其他人一律忽略。留空则允许任何人（双向聊天不推荐）。私聊 @userinfobot 获取你的 ID。",
+        "chatEnabledLabel": "双向聊天（将消息路由进会话）",
+        "chatEnabledHint": "开启后，你的消息会被输入选定会话，agent 在此回复。仅需通知时关闭。",
+        "chatTypingLabel": "agent 工作时显示“正在输入…”",
+        "chatTypingHint": "在 agent 回复稳定前显示正在输入指示。",
+        "notifyEnabledLabel": "活动通知（空闲 / 完成卡片）",
+        "notifyEnabledHint": "关闭可保持聊天整洁 — 你仍会收到对消息的回复。开启后会话空闲或完成时也会收到卡片。",
+        "replyMaxCharsLabel": "回复最大长度（字符）",
+        "replyMaxCharsPlaceholder": "3500（留空 = 3500，0 = 不限）",
+        "replyMaxCharsHint": "限制 agent 回复发送多少字符后被截断并附“…(已截断)”。留空使用 3500 默认（约一条消息）；设为 0 则发送完整回复，跨多条消息拆分。"
       },
       "slack": {
         "description": "Socket Mode — 无需公网 webhook。需要 bot OAuth token（xoxb-）和带 connections:write 的 app-level token（xapp-）。",

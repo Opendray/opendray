@@ -48,6 +48,9 @@ class ChannelFormScreen extends StatefulWidget {
 
 class _ChannelFormScreenState extends State<ChannelFormScreen> {
   final _ctrls = <String, TextEditingController>{};
+  // Boolean fields render as a Switch rather than a text input; their
+  // state lives here so _submit can serialise a real bool into config.
+  final _bools = <String, bool>{};
   String? _error;
 
   @override
@@ -55,8 +58,16 @@ class _ChannelFormScreenState extends State<ChannelFormScreen> {
     super.initState();
     final init = widget.initial ?? const {};
     for (final f in widget.kind.fields) {
-      final v = init[f.name];
-      _ctrls[f.name] = TextEditingController(text: v is String ? v : '');
+      if (f.type == ChannelFieldType.boolean) {
+        // Seed from the stored config; fall back to the field default so
+        // a new channel (or an old one missing this field) toggles into
+        // its intended state. Mirrors the web default-seeding.
+        final v = init[f.name];
+        _bools[f.name] = v is bool ? v : (f.defaultValue ?? false);
+      } else {
+        final v = init[f.name];
+        _ctrls[f.name] = TextEditingController(text: v is String ? v : '');
+      }
     }
   }
 
@@ -71,6 +82,10 @@ class _ChannelFormScreenState extends State<ChannelFormScreen> {
   void _submit() {
     final cfg = <String, dynamic>{};
     for (final f in widget.kind.fields) {
+      if (f.type == ChannelFieldType.boolean) {
+        cfg[f.name] = _bools[f.name] ?? f.defaultValue ?? false;
+        continue;
+      }
       final raw = _ctrls[f.name]?.text.trim() ?? '';
       if (raw.isEmpty) {
         if (f.required) {
@@ -110,10 +125,17 @@ class _ChannelFormScreenState extends State<ChannelFormScreen> {
             ),
           ),
           for (final f in widget.kind.fields)
-            _ChannelFieldEditor(
-              field: f,
-              controller: _ctrls[f.name]!,
-            ),
+            if (f.type == ChannelFieldType.boolean)
+              _ChannelBoolField(
+                field: f,
+                value: _bools[f.name] ?? f.defaultValue ?? false,
+                onChanged: (v) => setState(() => _bools[f.name] = v),
+              )
+            else
+              _ChannelFieldEditor(
+                field: f,
+                controller: _ctrls[f.name]!,
+              ),
           if (_error != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -208,6 +230,46 @@ class _ChannelFieldEditorState extends State<_ChannelFieldEditor> {
                 )
               : null,
         ),
+      ),
+    );
+  }
+}
+
+// _ChannelBoolField renders a boolean channel field as a labelled Switch
+// with the field's hint underneath. Mirrors the web Switch row.
+class _ChannelBoolField extends StatelessWidget {
+  const _ChannelBoolField({
+    required this.field,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final ChannelField field;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(field.label, style: theme.textTheme.bodyMedium),
+            value: value,
+            onChanged: onChanged,
+          ),
+          if (field.hint != null)
+            Text(
+              field.hint!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+        ],
       ),
     );
   }

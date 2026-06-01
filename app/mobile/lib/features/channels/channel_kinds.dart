@@ -7,7 +7,7 @@
 
 import 'package:opendray/core/i18n/strings.g.dart';
 
-enum ChannelFieldType { text, password, textarea }
+enum ChannelFieldType { text, password, textarea, boolean }
 
 class ChannelField {
   const ChannelField({
@@ -18,6 +18,7 @@ class ChannelField {
     this.placeholder,
     this.hint,
     this.optional = false,
+    this.defaultValue,
   });
 
   final String name;
@@ -30,6 +31,9 @@ class ChannelField {
   // omit it from the submitted config so server defaults apply
   // (rather than persisting an empty string).
   final bool optional;
+  // Initial value for `boolean` fields when the channel config has no
+  // stored value. (`default` is a Dart reserved word, hence the name.)
+  final bool? defaultValue;
 }
 
 class ChannelKind {
@@ -83,6 +87,43 @@ List<ChannelKind> channelKindsList() => [
             type: ChannelFieldType.text,
             placeholder: t.channels.kinds.telegram.chatIdPlaceholder,
             optional: true,
+          ),
+          ChannelField(
+            name: 'owner_user_ids',
+            label: t.channels.kinds.telegram.ownerUserIdsLabel,
+            type: ChannelFieldType.text,
+            optional: true,
+            placeholder: t.channels.kinds.telegram.ownerUserIdsPlaceholder,
+            hint: t.channels.kinds.telegram.ownerUserIdsHint,
+          ),
+          ChannelField(
+            name: 'chat_enabled',
+            label: t.channels.kinds.telegram.chatEnabledLabel,
+            type: ChannelFieldType.boolean,
+            defaultValue: true,
+            hint: t.channels.kinds.telegram.chatEnabledHint,
+          ),
+          ChannelField(
+            name: 'chat_typing',
+            label: t.channels.kinds.telegram.chatTypingLabel,
+            type: ChannelFieldType.boolean,
+            defaultValue: true,
+            hint: t.channels.kinds.telegram.chatTypingHint,
+          ),
+          ChannelField(
+            name: 'notify_enabled',
+            label: t.channels.kinds.telegram.notifyEnabledLabel,
+            type: ChannelFieldType.boolean,
+            defaultValue: false,
+            hint: t.channels.kinds.telegram.notifyEnabledHint,
+          ),
+          ChannelField(
+            name: 'reply_max_chars',
+            label: t.channels.kinds.telegram.replyMaxCharsLabel,
+            type: ChannelFieldType.text,
+            optional: true,
+            placeholder: t.channels.kinds.telegram.replyMaxCharsPlaceholder,
+            hint: t.channels.kinds.telegram.replyMaxCharsHint,
           ),
         ],
       ),
