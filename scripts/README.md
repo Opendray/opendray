@@ -314,3 +314,32 @@ psql "<your DSN>" -tAc \
 If all three pass, the wizard did its job. Open the admin UI and
 proceed with [docs/getting-started.md § Step 4 — first login](
 ../docs/getting-started.md#step-4--first-login--change-admin-password).
+
+
+## `enable-cli-updates.sh` — one-shot helper to enable in-app CLI updates
+
+On a non-root install the opendray service user can't write to the global
+npm prefix (`/usr/lib/node_modules` or similar), so the per-provider
+**Update** button on the Providers page returns *"In-app updates aren't
+available here — npm global prefix isn't writable."*
+
+`scripts/enable-cli-updates.sh` flips that by creating an opendray-owned
+npm prefix at `$OPENDRAY_DATA_DIR/.npm-global`, dropping a systemd unit
+fragment that pins `NPM_CONFIG_PREFIX` + prepends the prefix's `bin` onto
+`PATH`, reinstalling `@anthropic-ai/claude-code` / `@google/gemini-cli` /
+`@openai/codex` into it as the service user, and restarting the daemon.
+
+```sh
+sudo bash scripts/enable-cli-updates.sh
+```
+
+Idempotent — re-running just refreshes the CLIs in the prefix.
+
+**Skip individual providers** with env vars:
+
+```sh
+sudo SKIP_GEMINI=1 SKIP_CODEX=1 bash scripts/enable-cli-updates.sh
+```
+
+After it finishes, **Providers → Update** on each CLI writes into the
+new prefix and one-tap upgrades work as designed.

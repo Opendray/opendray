@@ -165,7 +165,7 @@ func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 		// Report "unavailable" so the UI shows guidance, not a failure.
 		res.Available = false
 		res.Reason = "In-app updates aren't available here — the npm global prefix isn't writable by the opendray service. " +
-			"Install the CLI into an opendray-owned npm prefix (on the service PATH) to enable one-tap updates."
+			"Run `sudo bash scripts/enable-cli-updates.sh` on the host to set up an opendray-owned prefix and enable one-tap updates."
 		h.log.Info("provider update unavailable (read-only prefix)", "provider", id)
 		h.publishUpdate(id, res, false, "prefix-readonly")
 		writeJSON(w, http.StatusOK, res)
