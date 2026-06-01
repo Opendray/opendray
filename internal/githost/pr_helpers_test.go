@@ -153,3 +153,111 @@ func TestCommitStatusState_MappingMatrix(t *testing.T) {
 		}
 	}
 }
+
+// ── PR body / description capture ──────────────────────────────────
+// The detail surface (web drawer / mobile screen) needs the PR body.
+// Each host adapter must surface it on PullRequest.Body: GitHub and
+// Gitea call it "body"; GitLab calls it "description".
+
+func TestDecodeGiteaPR_Body(t *testing.T) {
+	body := []byte(`{
+		"number": 7,
+		"title": "feat: x",
+		"state": "open",
+		"body": "## Summary\nDoes the thing.",
+		"html_url": "https://git.example.com/o/r/pulls/7",
+		"updated_at": "2026-05-04T10:00:00Z",
+		"user": {"login": "alice"},
+		"head": {"ref": "feat/x"},
+		"base": {"ref": "main"}
+	}`)
+	got, err := decodeGiteaPR(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Body != "## Summary\nDoes the thing." {
+		t.Errorf("gitea body not captured, got %q", got.Body)
+	}
+}
+
+func TestDecodeGitLabMR_DescriptionToBody(t *testing.T) {
+	body := []byte(`{
+		"iid": 9,
+		"title": "feat: y",
+		"state": "opened",
+		"description": "Closes #1. Adds the widget.",
+		"web_url": "https://gitlab.com/g/r/-/merge_requests/9",
+		"updated_at": "2026-05-04T10:00:00Z",
+		"author": {"username": "bob"},
+		"source_branch": "feat/y",
+		"target_branch": "main"
+	}`)
+	got, err := decodeGitLabMR(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Body != "Closes #1. Adds the widget." {
+		t.Errorf("gitlab description should map to body, got %q", got.Body)
+	}
+}
+
+func TestGithubPRResponse_BodyPassthrough(t *testing.T) {
+	body := []byte(`{
+		"number": 11,
+		"title": "fix: z",
+		"state": "open",
+		"body": "Fixes the crash on startup.",
+		"html_url": "https://github.com/o/r/pull/11",
+		"updated_at": "2026-05-04T10:00:00Z",
+		"user": {"login": "carol"},
+		"head": {"ref": "fix/z"},
+		"base": {"ref": "main"}
+	}`)
+	var raw githubPRResponse
+	if err := jsonUnmarshalTestHelper(body, &raw); err != nil {
+		t.Fatal(err)
+	}
+	got := raw.toPullRequest()
+	if got.Body != "Fixes the crash on startup." {
+		t.Errorf("github body should pass through toPullRequest, got %q", got.Body)
+	}
+}
+
+// A description-less PR comes back with "body": null (GitHub) or the
+// field omitted (Gitea / GitLab). All three must decode to an empty
+// Body, never the literal "null".
+func TestDecoders_NullOrMissingBody(t *testing.T) {
+	var gh githubPRResponse
+	if err := jsonUnmarshalTestHelper([]byte(`{
+		"number": 1, "title": "t", "state": "open", "body": null,
+		"user": {"login": "a"}, "head": {"ref": "x"}, "base": {"ref": "main"}
+	}`), &gh); err != nil {
+		t.Fatal(err)
+	}
+	if got := gh.toPullRequest(); got.Body != "" {
+		t.Errorf("github null body should decode to empty, got %q", got.Body)
+	}
+
+	gitea, err := decodeGiteaPR([]byte(`{
+		"number": 1, "title": "t", "state": "open",
+		"user": {"login": "a"}, "head": {"ref": "x"}, "base": {"ref": "main"}
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gitea.Body != "" {
+		t.Errorf("gitea missing body should be empty, got %q", gitea.Body)
+	}
+
+	gitlab, err := decodeGitLabMR([]byte(`{
+		"iid": 1, "title": "t", "state": "opened",
+		"author": {"username": "a"},
+		"source_branch": "x", "target_branch": "main"
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gitlab.Body != "" {
+		t.Errorf("gitlab missing description should be empty, got %q", gitlab.Body)
+	}
+}

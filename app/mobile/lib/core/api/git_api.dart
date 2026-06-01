@@ -120,6 +120,7 @@ class GitPullRequest {
     required this.url,
     required this.draft,
     required this.updatedAt,
+    this.body = '',
   });
 
   factory GitPullRequest.fromJson(Map<String, dynamic> json) => GitPullRequest(
@@ -132,6 +133,7 @@ class GitPullRequest {
     url: json['url'] as String? ?? '',
     draft: json['draft'] as bool? ?? false,
     updatedAt: json['updated_at'] as String? ?? '',
+    body: json['body'] as String? ?? '',
   );
 
   final int number;
@@ -144,6 +146,9 @@ class GitPullRequest {
   final String url;
   final bool draft;
   final String updatedAt;
+  // PR description (markdown). Empty on list responses — only the
+  // single-PR detail fetch (getPullRequest) populates it.
+  final String body;
 }
 
 // Container for the /git/prs response: PRs plus repo metadata so
@@ -443,6 +448,24 @@ class GitApi {
         queryParameters: {'path': dir, 'state': state},
       );
       return GitPullRequestList.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // GET /git/prs/{n}?path=<dir> — a single PR including its
+  // body/description. The list endpoint omits body to stay lean, so
+  // the detail screen calls this to render the description.
+  Future<GitPullRequest> getPullRequest({
+    required String dir,
+    required int number,
+  }) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/git/prs/$number',
+        queryParameters: {'path': dir},
+      );
+      return GitPullRequest.fromJson(res.data ?? {});
     } on Object catch (e) {
       throw toApiException(e);
     }

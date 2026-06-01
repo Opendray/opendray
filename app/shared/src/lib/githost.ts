@@ -74,6 +74,9 @@ export interface GitPullRequest {
   base: string
   url: string
   draft: boolean
+  // Description (markdown). Only populated by getGitPR (the single-PR
+  // detail fetch); the list endpoint omits it to stay lean.
+  body?: string
   updated_at: string
 }
 
@@ -94,6 +97,18 @@ export async function listGitPRs(
 ): Promise<GitPullRequestsResponse> {
   const params = new URLSearchParams({ path, state })
   return api<GitPullRequestsResponse>(`/api/v1/git/prs?${params.toString()}`)
+}
+
+// getGitPR fetches a single PR including its body/description. Use this
+// for the detail surface; listGitPRs leaves body empty.
+export async function getGitPR(
+  path: string,
+  number: number,
+): Promise<GitPullRequest> {
+  const params = new URLSearchParams({ path })
+  return api<GitPullRequest>(
+    `/api/v1/git/prs/${number}?${params.toString()}`,
+  )
 }
 
 // ── PR write ops ───────────────────────────────────────────────

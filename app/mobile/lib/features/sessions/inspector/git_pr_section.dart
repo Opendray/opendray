@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/git_api.dart';
+import 'package:opendray/features/sessions/inspector/pr_detail_screen.dart';
 
 // GitPRSection sits at the bottom of the status pane and exposes
 // the PR command-center surface on mobile. Mirrors the web's
@@ -25,7 +26,6 @@ class _GitPRSectionState extends ConsumerState<GitPRSection> {
   GitPullRequestList? _list;
   bool _loading = true;
   Object? _error;
-  int? _expandedPR;
   Timer? _refreshTimer;
 
   @override
@@ -153,329 +153,83 @@ class _GitPRSectionState extends ConsumerState<GitPRSection> {
             )
           else
             for (final pr in _list!.prs)
-              _PRRow(
-                pr: pr,
-                cwd: widget.cwd,
-                expanded: _expandedPR == pr.number,
-                onToggle: () => setState(
-                  () =>
-                      _expandedPR = _expandedPR == pr.number ? null : pr.number,
-                ),
-                onMerged: () {
-                  setState(() => _expandedPR = null);
-                  unawaited(_load());
-                },
-              ),
+              _PRRow(pr: pr, onTap: () => unawaited(_openDetail(pr))),
         ],
       ),
     );
   }
+
+  Future<void> _openDetail(GitPullRequest pr) async {
+    final merged = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => PRDetailScreen(cwd: widget.cwd, pr: pr),
+      ),
+    );
+    // The detail screen pops `true` after a successful merge; refresh
+    // the list so the merged PR drops out of the open view.
+    if ((merged ?? false) && mounted) {
+      await _load();
+    }
+  }
 }
 
-class _PRRow extends ConsumerWidget {
-  const _PRRow({
-    required this.pr,
-    required this.cwd,
-    required this.expanded,
-    required this.onToggle,
-    required this.onMerged,
-  });
+class _PRRow extends StatelessWidget {
+  const _PRRow({required this.pr, required this.onTap});
 
   final GitPullRequest pr;
-  final String cwd;
-  final bool expanded;
-  final VoidCallback onToggle;
-  final VoidCallback onMerged;
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final stateColor = switch (pr.state) {
-      'merged' => Colors.purple,
-      'closed' => theme.colorScheme.error,
-      _ => Colors.green,
-    };
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        InkWell(
-          onTap: onToggle,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-            child: Row(
-              children: [
-                Icon(Icons.merge, size: 14, color: stateColor),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        pr.title,
-                        style: theme.textTheme.bodyMedium,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        '#${pr.number} · ${pr.author} · ${pr.head} → ${pr.base}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
-                          fontFamily: 'monospace',
-                          fontSize: 10,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+    final stateColor = pr.draft
+        ? theme.colorScheme.outline
+        : switch (pr.state) {
+            'merged' => Colors.purple,
+            'closed' => theme.colorScheme.error,
+            _ => Colors.green,
+          };
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        child: Row(
+          children: [
+            Icon(
+              pr.draft ? Icons.merge_outlined : Icons.merge,
+              size: 14,
+              color: stateColor,
             ),
-          ),
-        ),
-        if (expanded && pr.state == 'open')
-          _PRExpandedPanel(pr: pr, cwd: cwd, onMerged: onMerged),
-      ],
-    );
-  }
-}
-
-class _PRExpandedPanel extends ConsumerStatefulWidget {
-  const _PRExpandedPanel({
-    required this.pr,
-    required this.cwd,
-    required this.onMerged,
-  });
-
-  final GitPullRequest pr;
-  final String cwd;
-  final VoidCallback onMerged;
-
-  @override
-  ConsumerState<_PRExpandedPanel> createState() => _PRExpandedPanelState();
-}
-
-class _PRExpandedPanelState extends ConsumerState<_PRExpandedPanel> {
-  List<GitCheckRun>? _checks;
-  Object? _checksError;
-  bool _busy = false;
-  String _method = 'squash';
-  bool _deleteBranch = true;
-  Timer? _refreshTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_loadChecks());
-    _refreshTimer = Timer.periodic(
-      const Duration(seconds: 30),
-      (_) => unawaited(_loadChecks()),
-    );
-  }
-
-  @override
-  void dispose() {
-    _refreshTimer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _loadChecks() async {
-    try {
-      final c = await ref
-          .read(gitApiProvider)
-          .prChecks(dir: widget.cwd, number: widget.pr.number);
-      if (!mounted) return;
-      setState(() {
-        _checks = c;
-        _checksError = null;
-      });
-    } on Object catch (e) {
-      if (!mounted) return;
-      setState(() => _checksError = e);
-    }
-  }
-
-  Future<void> _merge() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Merge PR #${widget.pr.number}?'),
-        content: Text(
-          '$_method${_deleteBranch ? " · delete branch" : ""}\n\n${widget.pr.title}',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Merge'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-    setState(() => _busy = true);
-    final messenger = ScaffoldMessenger.of(context);
-    final errorColor = Theme.of(context).colorScheme.error;
-    try {
-      await ref
-          .read(gitApiProvider)
-          .mergePullRequest(
-            dir: widget.cwd,
-            number: widget.pr.number,
-            method: _method,
-            deleteBranch: _deleteBranch,
-          );
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text('Merged PR #${widget.pr.number}')),
-      );
-      widget.onMerged();
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Merge failed: ${e.message}'),
-          backgroundColor: errorColor,
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.only(left: 22, right: 4, bottom: 6),
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (_checksError != null)
-            Text(
-              'Checks unavailable',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.outline,
-              ),
-            )
-          else if (_checks == null)
-            const SizedBox(
-              height: 18,
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-            )
-          else if (_checks!.isEmpty)
-            Text(
-              'No checks configured.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.outline,
-              ),
-            )
-          else
-            _ChecksSummary(checks: _checks!),
-          const Divider(height: 16),
-          Row(
-            children: [
-              DropdownButton<String>(
-                value: _method,
-                isDense: true,
-                items: const [
-                  DropdownMenuItem(value: 'squash', child: Text('squash')),
-                  DropdownMenuItem(value: 'merge', child: Text('merge')),
-                  DropdownMenuItem(value: 'rebase', child: Text('rebase')),
-                ],
-                onChanged: _busy
-                    ? null
-                    : (v) {
-                        if (v != null) setState(() => _method = v);
-                      },
-              ),
-              const SizedBox(width: 8),
-              Row(
-                mainAxisSize: MainAxisSize.min,
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Checkbox(
-                    value: _deleteBranch,
-                    onChanged: _busy
-                        ? null
-                        : (v) => setState(() => _deleteBranch = v ?? false),
-                    visualDensity: VisualDensity.compact,
+                  Text(
+                    pr.title,
+                    style: theme.textTheme.bodyMedium,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  Text('Delete branch', style: theme.textTheme.bodySmall),
+                  Text(
+                    '#${pr.number} · ${pr.author} · ${pr.head} → ${pr.base}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.outline,
+                      fontFamily: 'monospace',
+                      fontSize: 10,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
-              const Spacer(),
-              FilledButton.icon(
-                onPressed: _busy ? null : _merge,
-                icon: _busy
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.merge, size: 16),
-                label: const Text('Merge'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ChecksSummary extends StatelessWidget {
-  const _ChecksSummary({required this.checks});
-  final List<GitCheckRun> checks;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    var pending = 0;
-    var passed = 0;
-    var failed = 0;
-    for (final c in checks) {
-      if (c.passing) {
-        passed++;
-      } else if (c.failing) {
-        failed++;
-      } else {
-        pending++;
-      }
-    }
-    IconData icon;
-    Color color;
-    String label;
-    if (pending > 0) {
-      icon = Icons.circle_outlined;
-      color = theme.colorScheme.outline;
-      label =
-          '$pending pending · $passed passed${failed > 0 ? " · $failed failed" : ""}';
-    } else if (failed > 0) {
-      icon = Icons.cancel_outlined;
-      color = theme.colorScheme.error;
-      label = '$failed failed · $passed passed';
-    } else {
-      icon = Icons.check_circle_outlined;
-      color = Colors.green;
-      label = 'All $passed passed';
-    }
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(color: color),
-          ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              size: 16,
+              color: theme.colorScheme.outline,
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

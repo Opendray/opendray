@@ -361,6 +361,10 @@ func splitOwnerRepo(path string) (string, string, error) {
 // ── Pull request listing ────────────────────────────────────────
 
 // PullRequest is the trimmed-down view we surface in the panel.
+//
+// Body is the PR description (markdown). It is only populated by the
+// single-PR detail fetch (GetPullRequest); the list endpoints leave
+// it empty to keep their payloads lean, hence omitempty.
 type PullRequest struct {
 	Number    int       `json:"number"`
 	Title     string    `json:"title"`
@@ -370,6 +374,7 @@ type PullRequest struct {
 	Base      string    `json:"base"` // target branch
 	URL       string    `json:"url"`  // web URL
 	Draft     bool      `json:"draft"`
+	Body      string    `json:"body,omitempty"` // description (detail fetch only)
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
@@ -400,6 +405,30 @@ func (s *Service) ListPullRequests(ctx context.Context, dir, state string) (Remo
 		return rem, prs, err
 	default:
 		return rem, nil, fmt.Errorf("unsupported host kind: %s", hostRow.Kind)
+	}
+}
+
+// GetPullRequest fetches a single PR — including its body/description —
+// from the host that owns dir's remote. Unlike ListPullRequests this
+// populates PullRequest.Body, so the detail surface (web drawer /
+// mobile screen) can render the description for any PR state.
+func (s *Service) GetPullRequest(ctx context.Context, dir string, number int) (PullRequest, error) {
+	rem, hostRow, err := s.resolveHost(ctx, dir)
+	if err != nil {
+		return PullRequest{}, err
+	}
+	if number <= 0 {
+		return PullRequest{}, errors.New("number required")
+	}
+	switch hostRow.Kind {
+	case KindGitHub:
+		return s.getGitHubPR(ctx, hostRow, rem, number)
+	case KindGitea:
+		return s.getGiteaPR(ctx, hostRow, rem, number)
+	case KindGitLab:
+		return s.getGitLabMR(ctx, hostRow, rem, number)
+	default:
+		return PullRequest{}, fmt.Errorf("unsupported host kind: %s", hostRow.Kind)
 	}
 }
 
@@ -723,6 +752,7 @@ type githubPRResponse struct {
 	Base struct {
 		Ref string `json:"ref"`
 	} `json:"base"`
+	Body     string     `json:"body"`
 	MergedAt *time.Time `json:"merged_at"`
 }
 
@@ -740,6 +770,7 @@ func (p githubPRResponse) toPullRequest() PullRequest {
 		Base:      p.Base.Ref,
 		URL:       p.HTMLURL,
 		Draft:     p.Draft,
+		Body:      p.Body,
 		UpdatedAt: p.UpdatedAt,
 	}
 }
@@ -839,6 +870,21 @@ func (s *Service) githubDefaultBranch(ctx context.Context, h Host, rem Remote) (
 		return "", errors.New("repo has no default_branch")
 	}
 	return raw.DefaultBranch, nil
+}
+
+// getGitHubPR fetches a single PR (incl. body) for the detail view.
+func (s *Service) getGitHubPR(ctx context.Context, h Host, rem Remote, number int) (PullRequest, error) {
+	u := fmt.Sprintf("%s/repos/%s/%s/pulls/%d",
+		githubAPIBase(h.Host), rem.Owner, rem.Repo, number)
+	body, err := s.do(ctx, http.MethodGet, u, "Bearer "+h.Token, "application/vnd.github+json", nil)
+	if err != nil {
+		return PullRequest{}, err
+	}
+	var raw githubPRResponse
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return PullRequest{}, fmt.Errorf("github decode: %w", err)
+	}
+	return raw.toPullRequest(), nil
 }
 
 func (s *Service) githubChecks(ctx context.Context, h Host, rem Remote, number int) ([]CheckRun, error) {
@@ -1004,7 +1050,8 @@ func decodeGiteaPR(body []byte) (PullRequest, error) {
 		Base struct {
 			Ref string `json:"ref"`
 		} `json:"base"`
-		Merged bool `json:"merged"`
+		Body   string `json:"body"`
+		Merged bool   `json:"merged"`
 	}
 	if err := json.Unmarshal(body, &p); err != nil {
 		return PullRequest{}, fmt.Errorf("gitea decode: %w", err)
@@ -1021,8 +1068,20 @@ func decodeGiteaPR(body []byte) (PullRequest, error) {
 		Head:      p.Head.Ref,
 		Base:      p.Base.Ref,
 		URL:       p.HTMLURL,
+		Body:      p.Body,
 		UpdatedAt: p.UpdatedAt,
 	}, nil
+}
+
+// getGiteaPR fetches a single PR (incl. body) for the detail view.
+func (s *Service) getGiteaPR(ctx context.Context, h Host, rem Remote, number int) (PullRequest, error) {
+	u := fmt.Sprintf("https://%s/api/v1/repos/%s/%s/pulls/%d",
+		h.Host, rem.Owner, rem.Repo, number)
+	body, err := s.do(ctx, http.MethodGet, u, "token "+h.Token, "application/json", nil)
+	if err != nil {
+		return PullRequest{}, err
+	}
+	return decodeGiteaPR(body)
 }
 
 // ── GitLab: create / merge (merge requests) ───────────────────────
@@ -1112,6 +1171,7 @@ func decodeGitLabMR(body []byte) (PullRequest, error) {
 		} `json:"author"`
 		SourceBranch string `json:"source_branch"`
 		TargetBranch string `json:"target_branch"`
+		Description  string `json:"description"`
 		Draft        bool   `json:"draft"`
 	}
 	if err := json.Unmarshal(body, &p); err != nil {
@@ -1126,8 +1186,21 @@ func decodeGitLabMR(body []byte) (PullRequest, error) {
 		Base:      p.TargetBranch,
 		URL:       p.WebURL,
 		Draft:     p.Draft,
+		Body:      p.Description,
 		UpdatedAt: p.UpdatedAt,
 	}, nil
+}
+
+// getGitLabMR fetches a single MR (incl. description) for the detail view.
+func (s *Service) getGitLabMR(ctx context.Context, h Host, rem Remote, number int) (PullRequest, error) {
+	projectID := url.PathEscape(rem.Owner + "/" + rem.Repo)
+	u := fmt.Sprintf("https://%s/api/v4/projects/%s/merge_requests/%d",
+		h.Host, projectID, number)
+	body, err := s.do(ctx, http.MethodGet, u, "Bearer "+h.Token, "application/json", nil)
+	if err != nil {
+		return PullRequest{}, err
+	}
+	return decodeGitLabMR(body)
 }
 
 // ── Cross-platform commit status mapping ──────────────────────────
@@ -1377,6 +1450,7 @@ func (h *Handlers) Mount(r chi.Router) {
 	r.Get("/git/remote", h.remote)
 	r.Get("/git/prs", h.prs)
 	r.Post("/git/prs", h.createPR)
+	r.Get("/git/prs/{number}", h.prDetail)
 	r.Post("/git/prs/{number}/merge", h.mergePR)
 	r.Get("/git/prs/{number}/checks", h.prChecks)
 }
@@ -1448,6 +1522,28 @@ func (h *Handlers) prChecks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"checks": checks})
+}
+
+// prDetail mounts GET /git/prs/{number}?path=<dir>. Returns the full
+// PullRequest envelope — including body — for the detail surface.
+func (h *Handlers) prDetail(w http.ResponseWriter, r *http.Request) {
+	dir := strings.TrimSpace(r.URL.Query().Get("path"))
+	if dir == "" {
+		writeError(w, http.StatusBadRequest, errors.New("path required"))
+		return
+	}
+	num := chi.URLParam(r, "number")
+	n, err := strconv.Atoi(num)
+	if err != nil || n <= 0 {
+		writeError(w, http.StatusBadRequest, errors.New("invalid number"))
+		return
+	}
+	pr, err := h.svc.GetPullRequest(r.Context(), dir, n)
+	if err != nil {
+		writeError(w, statusFromGitErr(err), err)
+		return
+	}
+	writeJSON(w, http.StatusOK, pr)
 }
 
 // statusFromGitErr maps the common sentinel errors to HTTP codes so
