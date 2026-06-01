@@ -30,7 +30,7 @@
 </p>
 
 <p align="center">
-  🌐 <strong>فارسی</strong> · <a href="README.zh.md">简体中文</a> · <a href="README.md">English</a>
+  🌐 <a href="README.md">English</a> · <a href="README.zh.md">简体中文</a> · <strong>فارسی</strong> · <a href="README.es.md">Español</a> · <a href="README.pt-BR.md">Português</a> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a> · <a href="README.fr.md">Français</a> · <a href="README.de.md">Deutsch</a> · <a href="README.ru.md">Русский</a>
 </p>
 
 ---
@@ -98,7 +98,24 @@ npm install -g opendray
 npx opendray
 ```
 
-وقتی فقط باینری static می‌خواهید — بدون wizard، بدون service registration، بدون setup Postgres. در محیط‌های scripted، runnerهای ephemeral، یا وقتی deployment system مخصوص خودتان را دارید مفید است. این پکیج باینری پلتفرم متناظر (`opendray-{linux,darwin}-{x64,arm64}`) را از طریق `optionalDependencies` می‌آورد (همان الگوی esbuild / Biome — بدون `postinstall`، بدون network call هنگام نصب).
+این فقط **باینری** را نصب می‌کند — نه wizard، نه service، نه Postgres. پکیج باینری پلتفرم متناظر (`opendray-{linux,darwin}-{x64,arm64}`) را از طریق `optionalDependencies` می‌آورد (همان الگوی esbuild / Biome — بدون `postinstall`، بدون network call هنگام نصب). مناسب برای محیط‌های scripted، runnerهای ephemeral، یا وقتی از قبل Postgres و process supervisor خودتان را دارید.
+
+دیتابیس را خودتان می‌آورید و gateway را خودتان راه‌اندازی می‌کنید:
+
+<div dir="ltr">
+
+```sh
+# 1. PostgreSQL 15+ با pgvector — یک DSN به آن اشاره دهید و یک admin password تنظیم کنید.
+export OPENDRAY_DATABASE_URL="postgres://opendray:pw@127.0.0.1:5432/opendray?sslmode=disable"
+export OPENDRAY_ADMIN_PASSWORD="$(openssl rand -base64 24)"
+# 2. schema را اعمال کنید، سپس اجرا کنید (foreground).
+opendray migrate
+opendray serve        # → http://127.0.0.1:8770/admin/
+```
+
+</div>
+
+راهنمای کامل — راه‌اندازی pgvector، `config.toml`، اجرا به‌عنوان systemd / launchd service، و به‌روزرسانی — در [**docs/install-binary.fa.md**](docs/install-binary.fa.md).
 
 ### حذف نصب (لینوکس / مک)
 
@@ -432,6 +449,7 @@ go build ./cmd/opendray               # bakes dist into the binary
 ## مستندات
 
 - [`docs/getting-started.md`](docs/getting-started.md): **اگر تازه‌کارید، از اینجا شروع کنید**؛ از صفر تا اولین سشن در ۱۵ دقیقه، شامل نصب CLIهای دربرگرفته‌شده و bootstrap کردن Postgres
+- [`docs/install-binary.fa.md`](docs/install-binary.fa.md): نصب از پکیج npm یا باینری release (Postgres را خودتان می‌آورید) و اجرا به‌عنوان systemd / launchd service
 - [`docs/quickstart.md`](docs/quickstart.md): محیط dev پنج‌دقیقه‌ای (فرض می‌کند از قبل moving parts را می‌شناسید)
 - [`docs/operator-guide.md`](docs/operator-guide.md): مرجع deploy + ops برای setupهای production-ish
 - [`docs/integration-guide.md`](docs/integration-guide.md): چطور یک integration خارجی را در هر زبانی بنویسید

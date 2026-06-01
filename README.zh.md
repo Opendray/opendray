@@ -97,7 +97,20 @@ npm install -g opendray
 npx opendray
 ```
 
-只想要静态二进制时用这个 —— 没 wizard,没服务注册,没 Postgres 设置。脚本化环境、临时 runner、或者你已经有自己的部署系统时合适。包通过 `optionalDependencies` 拉对应的平台二进制(`opendray-{linux,darwin}-{x64,arm64}`),用的是 esbuild / Biome 那套(没有 `postinstall`,安装时不会发网络请求)。
+这只安装**二进制本身** —— 没 wizard,没服务注册,没 Postgres 设置。包通过 `optionalDependencies` 拉对应平台的 `opendray-{linux,darwin}-{x64,arm64}` 二进制，用的是 esbuild / Biome 那套模式（没有 `postinstall`，安装时不会发网络请求）。适合脚本化环境、临时 runner，或者你已经有自己的 Postgres 和进程管理器的场景。
+
+你还需要自备数据库，并自己启动 gateway：
+
+```sh
+# 1. PostgreSQL 15+（含 pgvector）—— 把 DSN 指向它，设置 admin 密码。
+export OPENDRAY_DATABASE_URL="postgres://opendray:pw@127.0.0.1:5432/opendray?sslmode=disable"
+export OPENDRAY_ADMIN_PASSWORD="$(openssl rand -base64 24)"
+# 2. 应用 schema，然后运行（前台）。
+opendray migrate
+opendray serve        # → http://127.0.0.1:8770/admin/
+```
+
+完整 walkthrough —— pgvector 安装、`config.toml`、用 systemd / launchd 跑成服务、以及更新方式 —— 见 [**docs/install-binary.zh.md**](docs/install-binary.zh.md)。
 
 ### 卸载(Linux / macOS)
 
@@ -364,6 +377,7 @@ Router/Query + Zustand + xterm.js)和每个 W 里程碑笔记见
 ## 文档
 
 - [`docs/getting-started.zh.md`](docs/getting-started.zh.md) — **新手从这开始**:零到首次会话 15 分钟,含装 wrap 的 CLI + bootstrap Postgres + 收第一条 Telegram 通知
+- [`docs/install-binary.zh.md`](docs/install-binary.zh.md) — 从 npm 包或 release 二进制安装（自备 Postgres），以 systemd / launchd 服务方式运行
 - [`docs/quickstart.md`](docs/quickstart.md) — 5 分钟开发环境(假设你已经懂各组件)
 - [`docs/operator-guide.md`](docs/operator-guide.md) — 生产化部署 + 运维参考
 - [`docs/integration-guide.md`](docs/integration-guide.md) — 用任意语言写外部集成

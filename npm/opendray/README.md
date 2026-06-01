@@ -25,13 +25,20 @@ automatically via `optionalDependencies` — no post-install network call.
 
 ## Usage
 
+`opendray` ships the whole gateway — the web admin is embedded, so there is no
+Node runtime or separate web server at deploy time. You bring a PostgreSQL 15+
+database (with the `pgvector` extension) and start it yourself:
+
 ```sh
-opendray --help
-opendray serve --config /etc/opendray/config.toml
+export OPENDRAY_DATABASE_URL="postgres://opendray:pw@127.0.0.1:5432/opendray?sslmode=disable"
+export OPENDRAY_ADMIN_PASSWORD="$(openssl rand -base64 24)"
+opendray migrate        # apply schema (idempotent)
+opendray serve          # run in foreground → http://127.0.0.1:8770/admin/
 ```
 
-See the [quickstart](https://github.com/Opendray/opendray/blob/main/docs/quickstart.md)
-for first-run setup (Postgres, admin credentials, channel configuration).
+See the [binary install guide](https://github.com/Opendray/opendray/blob/main/docs/install-binary.md)
+for the full first-run walkthrough — pgvector setup, `config.toml`, and running
+as a systemd / launchd service.
 
 ## Supported platforms
 

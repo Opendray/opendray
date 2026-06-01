@@ -98,7 +98,20 @@ Or run on demand without installing:
 npx opendray
 ```
 
-For when you want just the static binary — no wizard, no service registration, no Postgres setup. Useful in scripted environments, ephemeral runners, or if you already have your own deployment system. The package pulls in the matching `opendray-{linux,darwin}-{x64,arm64}` platform binary via `optionalDependencies` (the esbuild / Biome pattern — no `postinstall`, no network call at install time).
+This installs **just the binary** — no wizard, no service, no Postgres. The package pulls the matching `opendray-{linux,darwin}-{x64,arm64}` platform binary via `optionalDependencies` (the esbuild / Biome pattern — no `postinstall`, no network call at install time). Good for scripted environments, ephemeral runners, or when you already run your own Postgres and process supervisor.
+
+You still bring a database and start the gateway yourself:
+
+```sh
+# 1. PostgreSQL 15+ with pgvector — point a DSN at it, set an admin password.
+export OPENDRAY_DATABASE_URL="postgres://opendray:pw@127.0.0.1:5432/opendray?sslmode=disable"
+export OPENDRAY_ADMIN_PASSWORD="$(openssl rand -base64 24)"
+# 2. Apply the schema, then run (foreground).
+opendray migrate
+opendray serve        # → http://127.0.0.1:8770/admin/
+```
+
+Full walkthrough — pgvector setup, `config.toml`, running as a systemd / launchd service, and updating — in [**docs/install-binary.md**](docs/install-binary.md).
 
 ### Uninstall (Linux / macOS)
 
@@ -368,6 +381,7 @@ Zustand + xterm.js) and per-W milestone notes.
 ## Documentation
 
 - [`docs/getting-started.md`](docs/getting-started.md) — **start here** if you're new: zero to first session in 15 minutes, including installing the wrapped CLIs and bootstrapping Postgres
+- [`docs/install-binary.md`](docs/install-binary.md) — install from the npm package or a release binary (bring your own Postgres) and run it as a systemd / launchd service
 - [`docs/quickstart.md`](docs/quickstart.md) — 5-minute dev environment (assumes you already know the moving parts)
 - [`docs/operator-guide.md`](docs/operator-guide.md) — deploy + ops reference for production-ish setups
 - [`docs/integration-guide.md`](docs/integration-guide.md) — how to write an external integration in any language
