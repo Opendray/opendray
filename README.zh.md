@@ -28,7 +28,7 @@
 </p>
 
 <p align="center">
-  🌐 <a href="README.md">English</a> · <strong>简体中文</strong>
+  🌐 <a href="README.md">English</a> · <strong>简体中文</strong> · <a href="README.fa.md">فارسی</a> · <a href="README.es.md">Español</a> · <a href="README.pt-BR.md">Português</a> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a> · <a href="README.fr.md">Français</a> · <a href="README.de.md">Deutsch</a> · <a href="README.ru.md">Русский</a>
 </p>
 
 ---
@@ -127,7 +127,7 @@ sudo opendray start              # start | stop | restart | status —— 封装
 |---|---|---|
 | 📦 **预构建二进制** | "拿来就跑" — Linux / macOS,搭配任意进程管理器 | [Releases 页](https://github.com/Opendray/opendray/releases) → 见下方 [生产部署](#生产部署) |
 | 🐧 **systemd unit** | 裸机 / VM / Linux LXC | [生产部署 §A](#方案-a--systemd裸机--vm--lxc) |
-| 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio 当家用 server | [生产部署 §B](#方案-b--macos-launchdmac-mini--studio-当家用-server) |
+| 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio 当家用 server | [生产部署 §C](#方案-c--macos-launchdmac-mini--studio-当家用-server) |
 | 🛠 **从源码构建** | 开发 / 贡献代码 / 定制构建 | [快速开始](#快速开始5-分钟开发版) |
 
 ## 快速开始(5 分钟开发版)
