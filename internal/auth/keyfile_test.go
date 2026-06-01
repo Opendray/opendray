@@ -3,6 +3,7 @@ package auth
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -16,6 +17,7 @@ func setTempHome(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	t.Setenv("HOME", dir)
+	t.Setenv("USERPROFILE", dir) // Windows: os.UserHomeDir reads USERPROFILE
 	t.Setenv(envOverride, "")
 	return dir
 }
@@ -105,14 +107,18 @@ func TestWriteKeyFile_PermsAndAtomicity(t *testing.T) {
 		t.Fatal(err)
 	}
 	if mode := info.Mode().Perm(); mode != 0o600 {
-		t.Errorf("file perms: got %#o want 0600", mode)
+		if runtime.GOOS != "windows" {
+			t.Errorf("file perms: got %#o want 0600", mode)
+		}
 	}
 	dirInfo, err := os.Stat(filepath.Dir(path))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if mode := dirInfo.Mode().Perm(); mode != 0o700 {
-		t.Errorf("dir perms: got %#o want 0700", mode)
+		if runtime.GOOS != "windows" {
+			t.Errorf("dir perms: got %#o want 0700", mode)
+		}
 	}
 	// No stray tempfile after a successful write.
 	entries, _ := os.ReadDir(filepath.Dir(path))

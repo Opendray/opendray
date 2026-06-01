@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -163,13 +164,13 @@ func NewFileWriter(opt FileWriterOption) (io.Writer, error) {
 	}, nil
 }
 
-// filepathDir is filepath.Dir but tolerates the empty / current-dir
-// case so callers don't need to handle os.MkdirAll("./", ...).
+// filepathDir returns the parent directory of p, using filepath.Dir
+// so it handles both Unix (/) and Windows (\) path separators.
+// Returns "" when there is no meaningful parent (equivalent to ".").
 func filepathDir(p string) string {
-	for i := len(p) - 1; i >= 0; i-- {
-		if p[i] == '/' {
-			return p[:i]
-		}
+	dir := filepath.Dir(p)
+	if dir == "." {
+		return ""
 	}
-	return ""
+	return dir
 }

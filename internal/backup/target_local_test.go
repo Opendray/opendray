@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -142,6 +143,9 @@ func TestLocalTarget_HealthCheck_OK(t *testing.T) {
 }
 
 func TestLocalTarget_HealthCheck_ReadOnly(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("os.Chmod does not restrict writes on Windows")
+	}
 	dir := t.TempDir()
 	if err := os.Chmod(dir, 0o500); err != nil {
 		t.Fatalf("chmod: %v", err)

@@ -61,7 +61,7 @@ func (t *LocalTarget) resolve(p string) (string, error) {
 	if strings.ContainsRune(p, 0) {
 		return "", fmt.Errorf("%w: null byte", ErrTargetRejectedPath)
 	}
-	if filepath.IsAbs(p) {
+	if filepath.IsAbs(p) || strings.HasPrefix(p, "/") || strings.HasPrefix(p, `\`) {
 		return "", fmt.Errorf("%w: absolute path %q", ErrTargetRejectedPath, p)
 	}
 	cleaned := filepath.Clean(p)

@@ -3,6 +3,7 @@ package backup
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -15,6 +16,7 @@ func setTempHome(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	t.Setenv("HOME", dir)
+	t.Setenv("USERPROFILE", dir) // Windows: os.UserHomeDir reads USERPROFILE
 	// Clear the two env-var inputs so individual tests can opt
 	// them back in deterministically.
 	t.Setenv(envKey, "")
@@ -35,7 +37,7 @@ func TestLoadPassphrase_None(t *testing.T) {
 	if got.Source != KeySourceNone {
 		t.Fatalf("expected KeySourceNone, got %q", got.Source)
 	}
-	if !strings.HasSuffix(got.Path, "/.opendray/secrets/backup.key") {
+	if !strings.HasSuffix(filepath.ToSlash(got.Path), "/.opendray/secrets/backup.key") {
 		t.Fatalf("expected default path under fake home, got %q", got.Path)
 	}
 }
@@ -133,7 +135,9 @@ func TestWriteKeyFile_PermsAndAtomicity(t *testing.T) {
 		t.Fatal(err)
 	}
 	if mode := info.Mode().Perm(); mode != 0o600 {
-		t.Errorf("file perms: got %#o want 0600", mode)
+		if runtime.GOOS != "windows" {
+			t.Errorf("file perms: got %#o want 0600", mode)
+		}
 	}
 	// Parent dir 0700 for the same reason — a 0755 dir
 	// containing a 0600 file is fine in theory but tightening
@@ -143,7 +147,9 @@ func TestWriteKeyFile_PermsAndAtomicity(t *testing.T) {
 		t.Fatal(err)
 	}
 	if mode := dirInfo.Mode().Perm(); mode != 0o700 {
-		t.Errorf("dir perms: got %#o want 0700", mode)
+		if runtime.GOOS != "windows" {
+			t.Errorf("dir perms: got %#o want 0700", mode)
+		}
 	}
 
 	// No stray tempfile from the atomic write — defer-cleanup
