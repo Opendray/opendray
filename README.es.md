@@ -98,7 +98,20 @@ O ejecútalo bajo demanda sin instalar:
 npx opendray
 ```
 
-Para cuando solo quieres el binario estático — sin asistente, sin registro de servicio, sin configuración de Postgres. Útil en entornos con scripts, runners efímeros, o si ya tienes tu propio sistema de despliegue. El paquete trae el binario de plataforma correspondiente (`opendray-{linux,darwin}-{x64,arm64}`) vía `optionalDependencies` (el patrón de esbuild / Biome — sin `postinstall`, sin llamadas de red durante la instalación).
+Esto instala **solo el binario** — sin asistente, sin servicio, sin Postgres. El paquete trae el binario de plataforma correspondiente (`opendray-{linux,darwin}-{x64,arm64}`) vía `optionalDependencies` (el patrón de esbuild / Biome — sin `postinstall`, sin llamadas de red durante la instalación). Ideal para entornos con scripts, runners efímeros, o cuando ya ejecutas tu propio Postgres y supervisor de procesos.
+
+Tú aportas la base de datos e inicias el gateway por tu cuenta:
+
+```sh
+# 1. PostgreSQL 15+ con pgvector — apunta un DSN a él y establece una contraseña de administración.
+export OPENDRAY_DATABASE_URL="postgres://opendray:pw@127.0.0.1:5432/opendray?sslmode=disable"
+export OPENDRAY_ADMIN_PASSWORD="$(openssl rand -base64 24)"
+# 2. Aplica el esquema y luego ejecuta (primer plano).
+opendray migrate
+opendray serve        # → http://127.0.0.1:8770/admin/
+```
+
+Guía completa — configuración de pgvector, `config.toml`, ejecución como servicio systemd / launchd y actualización — en [**docs/install-binary.es.md**](docs/install-binary.es.md).
 
 ### Desinstalación (Linux / macOS)
 
@@ -367,6 +380,7 @@ Zustand + xterm.js) y notas por milestone W.
 ## Documentación
 
 - [`docs/getting-started.md`](docs/getting-started.md) — **empieza aquí** si eres nuevo: de cero a tu primera sesión en 15 minutos, incluyendo la instalación de las CLIs envueltas y el bootstrap de Postgres
+- [`docs/install-binary.es.md`](docs/install-binary.es.md) — instala desde el paquete npm o un binario de release (aporta tu propio Postgres) y ejecútalo como servicio systemd / launchd
 - [`docs/quickstart.md`](docs/quickstart.md) — entorno de desarrollo de 5 minutos (asume que ya conoces las piezas en movimiento)
 - [`docs/operator-guide.md`](docs/operator-guide.md) — referencia de despliegue + ops para setups de producción
 - [`docs/integration-guide.md`](docs/integration-guide.md) — cómo escribir una integración externa en cualquier lenguaje

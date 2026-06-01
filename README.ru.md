@@ -98,7 +98,20 @@ npm install -g opendray
 npx opendray
 ```
 
-Когда нужен просто статический бинарь — без мастера, без регистрации сервиса, без настройки Postgres. Полезно в скриптовых окружениях, эфемерных runner-ах, или если у вас уже есть своя система деплоя. Пакет подтягивает соответствующий платформенный бинарь (`opendray-{linux,darwin}-{x64,arm64}`) через `optionalDependencies` (паттерн esbuild / Biome — никакого `postinstall`, никаких сетевых вызовов на момент установки).
+Устанавливает **только бинарник** — без мастера, без регистрации сервиса, без настройки Postgres. Пакет подтягивает соответствующий платформенный бинарь (`opendray-{linux,darwin}-{x64,arm64}`) через `optionalDependencies` (паттерн esbuild / Biome — никакого `postinstall`, никаких сетевых вызовов на момент установки). Подходит для скриптовых окружений, эфемерных runner-ов или когда у вас уже есть собственный Postgres и супервизор процессов.
+
+Базу данных и запуск шлюза вы берёте на себя:
+
+```sh
+# 1. PostgreSQL 15+ с pgvector — укажите DSN, задайте пароль администратора.
+export OPENDRAY_DATABASE_URL="postgres://opendray:pw@127.0.0.1:5432/opendray?sslmode=disable"
+export OPENDRAY_ADMIN_PASSWORD="$(openssl rand -base64 24)"
+# 2. Примените схему, затем запустите (на переднем плане).
+opendray migrate
+opendray serve        # → http://127.0.0.1:8770/admin/
+```
+
+Подробный гайд — настройка pgvector, `config.toml`, запуск как systemd / launchd-сервис и обновление — в [**docs/install-binary.ru.md**](docs/install-binary.ru.md).
 
 ### Удаление (Linux / macOS)
 
@@ -369,6 +382,7 @@ Zustand + xterm.js) и заметки по W-майлстоунам.
 ## Документация
 
 - [`docs/getting-started.md`](docs/getting-started.md) — **начинайте отсюда**, если вы новичок: от нуля до первой сессии за 15 минут, включая установку оборачиваемых CLI и bootstrap Postgres
+- [`docs/install-binary.ru.md`](docs/install-binary.ru.md) — установка из npm-пакета или release-бинарника (собственный Postgres) и запуск как systemd / launchd-сервис
 - [`docs/quickstart.md`](docs/quickstart.md) — dev-окружение за 5 минут (предполагается, что вы уже знаете, из чего всё состоит)
 - [`docs/operator-guide.md`](docs/operator-guide.md) — справочник по деплою и эксплуатации для околопродакшен-сетапов
 - [`docs/integration-guide.md`](docs/integration-guide.md) — как написать внешнюю интеграцию на любом языке

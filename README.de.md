@@ -98,7 +98,20 @@ Oder on-demand ausführen, ohne zu installieren:
 npx opendray
 ```
 
-Für den Fall, dass du nur das statische Binary willst — kein Wizard, keine Service-Registrierung, kein Postgres-Setup. Nützlich in geskripteten Umgebungen, ephemeren Runnern, oder wenn du schon dein eigenes Deployment-System hast. Das Paket zieht das passende Plattform-Binary (`opendray-{linux,darwin}-{x64,arm64}`) via `optionalDependencies` (das esbuild / Biome-Pattern — kein `postinstall`, kein Netzwerk-Call beim Install).
+Damit wird **nur das Binary** installiert — kein Wizard, kein Service, kein Postgres. Das Paket zieht das passende `opendray-{linux,darwin}-{x64,arm64}`-Plattform-Binary via `optionalDependencies` (das esbuild / Biome-Pattern — kein `postinstall`, kein Netzwerk-Call beim Install). Gut für geskriptete Umgebungen, ephemere Runner oder wenn du schon dein eigenes Postgres und deinen eigenen Process-Supervisor betreibst.
+
+Du bringst nach wie vor selbst eine Datenbank mit und startest das Gateway selbst:
+
+```sh
+# 1. PostgreSQL 15+ mit pgvector — zeige einen DSN darauf, setze ein Admin-Passwort.
+export OPENDRAY_DATABASE_URL="postgres://opendray:pw@127.0.0.1:5432/opendray?sslmode=disable"
+export OPENDRAY_ADMIN_PASSWORD="$(openssl rand -base64 24)"
+# 2. Schema anwenden, dann ausführen (Vordergrund).
+opendray migrate
+opendray serve        # → http://127.0.0.1:8770/admin/
+```
+
+Vollständiger Walkthrough — pgvector-Setup, `config.toml`, Betrieb als systemd- / launchd-Service und Aktualisieren — in [**docs/install-binary.de.md**](docs/install-binary.de.md).
 
 ### Uninstall (Linux / macOS)
 
@@ -368,6 +381,7 @@ Router/Query + Zustand + xterm.js) und Notes pro W-Milestone findest du in
 ## Dokumentation
 
 - [`docs/getting-started.md`](docs/getting-started.md) — **fang hier an**, wenn du neu bist: von null bis zur ersten Session in 15 Minuten, inklusive Installation der gewrappten CLIs und Postgres-Bootstrap
+- [`docs/install-binary.de.md`](docs/install-binary.de.md) — Installation aus dem npm-Paket oder einem Release-Binary (eigenes Postgres mitbringen) und Betrieb als systemd- / launchd-Service
 - [`docs/quickstart.md`](docs/quickstart.md) — 5-Minuten-Dev-Umgebung (setzt voraus, dass du die beweglichen Teile schon kennst)
 - [`docs/operator-guide.md`](docs/operator-guide.md) — Deploy- und Ops-Referenz für produktionsnahe Setups
 - [`docs/integration-guide.md`](docs/integration-guide.md) — wie du eine externe Integration in beliebiger Sprache schreibst

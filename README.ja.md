@@ -97,7 +97,20 @@ npm install -g opendray
 npx opendray
 ```
 
-スタティックバイナリだけが欲しいとき向けです — ウィザードなし、サービス登録なし、Postgres セットアップなし。スクリプト化された環境、エフェメラルランナー、または既に独自のデプロイシステムを持っている場合に便利です。パッケージは対応するプラットフォームバイナリ (`opendray-{linux,darwin}-{x64,arm64}`) を `optionalDependencies` 経由で取り込みます（esbuild / Biome と同じパターン — `postinstall` なし、インストール時のネットワーク呼び出しなし）。
+**バイナリだけを** インストールします — ウィザードなし、サービス登録なし、Postgres セットアップなし。パッケージは対応するプラットフォームバイナリ (`opendray-{linux,darwin}-{x64,arm64}`) を `optionalDependencies` 経由で取り込みます（esbuild / Biome と同じパターン — `postinstall` なし、インストール時のネットワーク呼び出しなし）。スクリプト化された環境、エフェメラルランナー、または独自の Postgres とプロセススーパーバイザーをすでに運用している場合に便利です。
+
+データベースを自分で用意してゲートウェイを起動します:
+
+```sh
+# 1. PostgreSQL 15+ と pgvector — DSN を向け、管理者パスワードを設定。
+export OPENDRAY_DATABASE_URL="postgres://opendray:pw@127.0.0.1:5432/opendray?sslmode=disable"
+export OPENDRAY_ADMIN_PASSWORD="$(openssl rand -base64 24)"
+# 2. スキーマを適用してから実行（フォアグラウンド）。
+opendray migrate
+opendray serve        # → http://127.0.0.1:8770/admin/
+```
+
+pgvector のセットアップ、`config.toml`、systemd / launchd サービスとしての実行、更新方法など、完全なガイドは [**docs/install-binary.ja.md**](docs/install-binary.ja.md) を参照してください。
 
 ### アンインストール（Linux / macOS）
 
@@ -366,6 +379,7 @@ Zustand + xterm.js）や、W マイルストーンごとのノートについて
 ## ドキュメント
 
 - [`docs/getting-started.md`](docs/getting-started.md) — はじめての方は **まずここから**。ラップ対象の CLI のインストールや Postgres のブートストラップも含めて、ゼロから最初のセッションまでを 15 分で
+- [`docs/install-binary.ja.md`](docs/install-binary.ja.md) — npm パッケージまたはリリースバイナリからインストールし（Postgres は自分で用意）、systemd / launchd サービスとして実行する
 - [`docs/quickstart.md`](docs/quickstart.md) — 5 分で動かす開発環境（構成要素は既に把握している前提）
 - [`docs/operator-guide.md`](docs/operator-guide.md) — 本番寄りの構成向けのデプロイ + 運用リファレンス
 - [`docs/integration-guide.md`](docs/integration-guide.md) — 任意の言語で外部連携を書くためのガイド

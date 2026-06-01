@@ -98,7 +98,20 @@ npm install -g opendray
 npx opendray
 ```
 
-정적 바이너리만 원할 때 — 마법사 없음, 서비스 등록 없음, Postgres 설정 없음. 스크립트 환경, 일회성 러너, 또는 이미 자체 배포 시스템이 있는 경우에 유용합니다. 패키지는 `optionalDependencies`를 통해 해당 플랫폼 바이너리 (`opendray-{linux,darwin}-{x64,arm64}`)를 가져옵니다 (esbuild / Biome 와 동일한 패턴 — `postinstall` 없음, 설치 시 네트워크 호출 없음).
+**바이너리만** 설치됩니다 — 마법사 없음, 서비스 등록 없음, Postgres 설정 없음. 패키지는 `optionalDependencies`를 통해 해당 플랫폼 바이너리(`opendray-{linux,darwin}-{x64,arm64}`)를 가져옵니다(esbuild / Biome와 동일한 패턴 — `postinstall` 없음, 설치 시 네트워크 호출 없음). 스크립트 환경, 일회성 러너, 또는 이미 자체 Postgres와 프로세스 supervisor를 운영 중인 경우에 유용합니다.
+
+데이터베이스와 게이트웨이 시작은 직접 해야 합니다:
+
+```sh
+# 1. pgvector가 설치된 PostgreSQL 15+ — DSN을 지정하고 어드민 비밀번호를 설정합니다.
+export OPENDRAY_DATABASE_URL="postgres://opendray:pw@127.0.0.1:5432/opendray?sslmode=disable"
+export OPENDRAY_ADMIN_PASSWORD="$(openssl rand -base64 24)"
+# 2. 스키마를 적용한 뒤 실행합니다 (포그라운드).
+opendray migrate
+opendray serve        # → http://127.0.0.1:8770/admin/
+```
+
+전체 안내 — pgvector 설정, `config.toml`, systemd / launchd 서비스로 실행, 업데이트 방법 — 은 [**docs/install-binary.ko.md**](docs/install-binary.ko.md)에서 확인할 수 있습니다.
 
 ### 제거 (Linux / macOS)
 
@@ -364,6 +377,7 @@ Zustand + xterm.js) 및 W 마일스톤별 노트는 [`app/web/README.md`](app/we
 ## 문서
 
 - [`docs/getting-started.md`](docs/getting-started.md) — 처음이라면 **여기서 시작**: 감싸는 CLI 설치와 Postgres 부트스트랩을 포함해 15분 만에 첫 세션까지
+- [`docs/install-binary.ko.md`](docs/install-binary.ko.md) — npm 패키지 또는 릴리즈 바이너리로 설치하고(Postgres는 직접 제공) systemd / launchd 서비스로 실행
 - [`docs/quickstart.md`](docs/quickstart.md) — 5분 개발 환경 (구성 요소를 이미 안다고 가정)
 - [`docs/operator-guide.md`](docs/operator-guide.md) — 프로덕션급 셋업을 위한 deploy + 운영 레퍼런스
 - [`docs/integration-guide.md`](docs/integration-guide.md) — 어떤 언어로든 외부 통합을 작성하는 방법
