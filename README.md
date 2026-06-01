@@ -28,7 +28,7 @@
 </p>
 
 <p align="center">
-  🌐 <strong>English</strong> · <a href="README.zh.md">简体中文</a>
+  🌐 <strong>English</strong> · <a href="README.zh.md">简体中文</a> · <a href="README.fa.md">فارسی</a> · <a href="README.es.md">Español</a> · <a href="README.pt-BR.md">Português</a> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a> · <a href="README.fr.md">Français</a> · <a href="README.de.md">Deutsch</a> · <a href="README.ru.md">Русский</a>
 </p>
 
 ---
@@ -128,7 +128,7 @@ Every supported path includes session spawn, AI-CLI access, encrypted backups, a
 |---|---|---|
 | 📦 **Pre-built binary** | "Just run it" — Linux / macOS, any supervisor | [Releases page](https://github.com/Opendray/opendray/releases) → see [Production deploy](#production-deploy) |
 | 🐧 **systemd unit** | Bare-metal / VM / LXC Linux box | [Production deploy §A](#option-a--systemd-bare-metal--vm--lxc) |
-| 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio as home server | [Production deploy §B](#option-b--macos-launchd-mac-mini--studio-as-home-server) |
+| 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio as home server | [Production deploy §C](#option-c--macos-launchd-mac-mini--studio-as-home-server) |
 | 🛠 **Build from source** | Dev / contributing / custom builds | [Quickstart](#quickstart-5-minute-dev-path) below |
 
 ## Quickstart (5-minute dev path)
