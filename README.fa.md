@@ -30,7 +30,7 @@
 </p>
 
 <p align="center">
-  🌐 <strong>فارسی</strong> · <a href="README.zh.md">简体中文</a> · <a href="README.md">English</a> 
+  🌐 <strong>فارسی</strong> · <a href="README.zh.md">简体中文</a> · <a href="README.md">English</a>
 </p>
 
 ---
@@ -153,7 +153,7 @@ sudo opendray start              # start | stop | restart | status: wraps system
 | 📦 **نسخهٔ باینری آماده** | کافی است اجرا کنید؛ روی لینوکس و مک با هر ابزار مدیریت فرایند | [صفحه انتشارها](https://github.com/Opendray/opendray/releases) → ببینید [انتشار عملیاتی](#production-deploy) |
 | 🐧 **systemd unit** | bare-metal / VM / LXC Linux box | [انتشار عملیاتی §A](#option-a--systemd-bare-metal--vm--lxc) |
 | 🍎 **مک LaunchDaemon** | مک مینی / مک استودیو به‌عنوان سرور خانگی | [انتشار عملیاتی §C](#option-c--macos-launchd-mac-mini--studio-as-home-server) |
-| 🛠 *ایجاد نسخه از کد منبع** | dev / مشارکت / نسخهٔ سفارشی | [راه‌اندازی سریع](#quickstart-5-minute-dev-path) در ادامه |
+| 🛠 **ایجاد نسخه از کد منبع** | dev / مشارکت / نسخهٔ سفارشی | [راه‌اندازی سریع](#quickstart-5-minute-dev-path) در ادامه |
 
 ## Quickstart (5-minute dev path)
 
