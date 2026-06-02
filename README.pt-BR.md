@@ -5,7 +5,7 @@
 <h1 align="center">opendray</h1>
 
 <p align="center">
-  <strong>Gateway self-hosted para Claude Code · Codex · Gemini · shell — com uma camada de memória local-first compartilhada entre todos eles.</strong>
+  <strong>Gateway self-hosted para Claude Code · Codex · Gemini · shell, com uma camada de memória local-first compartilhada entre todos eles.</strong>
   <br/>
   <sub>Rode sessões na sua própria infra. Controle pelo navegador, celular ou chat. API aberta REST + WebSocket para integrações.</sub>
 </p>
@@ -47,14 +47,14 @@ Três incômodos do dia a dia com CLIs de IA para programação que o opendray f
 
 ## O que é o opendray?
 
-O **opendray** encapsula as CLIs de coding com IA que você já usa — Claude Code, Codex, Gemini, mais qualquer shell — e transforma elas em algo que dá pra controlar de qualquer lugar. Rode sessões no seu servidor de casa / NAS / VPS, receba uma notificação no Telegram quando uma delas ficar ociosa, responda do celular pra mandar o próximo prompt — tudo isso através de um gateway self-hosted que você controla de ponta a ponta.
+O **opendray** encapsula as CLIs de coding com IA que você já usa (Claude Code, Codex, Gemini, mais qualquer shell) e transforma elas em algo que dá pra controlar de qualquer lugar. Rode sessões no seu servidor de casa / NAS / VPS, receba uma notificação no Telegram quando uma delas ficar ociosa, responda do celular pra mandar o próximo prompt. Tudo isso através de um gateway self-hosted que você controla de ponta a ponta.
 
-- 🛰 **Um backend, três superfícies** — um único binário Go que serve um painel web em React e um app mobile em Flutter, com toda ação também exposta numa API REST + WebSocket pra integrações de terceiros.
-- 💬 **Seis canais bidirecionais, sem jardim murado** — Telegram, Slack, Discord, Feishu (飞书), DingTalk (钉钉), WeCom (企业微信), mais um adaptador Bridge pra qualquer coisa custom. Respostas em qualquer canal são roteadas de volta pra sessão certa.
-- 🧠 **Memória local-first** — embeddings via ONNX / Ollama / LM Studio, retrieval em três escopos (usuário · projeto · sessão), ranking inteligente e detecção de conflito entre camadas. Nenhum dado vetorial sai da sua rede.
-- 🔌 **API de nível integração** — API keys com scope, audit log por chamada, mounts de reverse-proxy. Trate o opendray como o gateway por trás do seu próprio produto, ou só como uma central de comando pessoal.
-- 🔑 **Frota multi-conta do Claude** — coloque várias contas de `claude login` no gateway; o painel descobre elas automaticamente via filesystem watcher, balanceia as novas sessões entre as contas habilitadas, e te deixa trocar a conta de uma sessão em execução **sem perder a conversa** (o transcript é migrado por baixo dos panos). Cada linha de conta mostra a capacidade em tempo real (subscription tier, rate-limit tier, sessões ativas, último uso, email do Anthropic atual) pra você escolher a certa de bate-pronto.
-- 🔒 **Self-hosted, licença clara** — Apache 2.0, um único binário estático, releases assinadas com cosign e SBOM SPDX. Sem telemetria, sem conta na nuvem, sem assinatura.
+- 🛰 **Um backend, três superfícies.** Um único binário Go que serve um painel web em React e um app mobile em Flutter, com toda ação também exposta numa API REST + WebSocket pra integrações de terceiros.
+- 💬 **Seis canais bidirecionais, sem jardim murado.** Telegram, Slack, Discord, Feishu (飞书), DingTalk (钉钉), WeCom (企业微信), mais um adaptador Bridge pra qualquer coisa custom. Respostas em qualquer canal são roteadas de volta pra sessão certa.
+- 🧠 **Memória local-first.** Embeddings via ONNX / Ollama / LM Studio, retrieval em três escopos (usuário · projeto · sessão), ranking inteligente e detecção de conflito entre camadas. Nenhum dado vetorial sai da sua rede.
+- 🔌 **API de nível integração.** API keys com scope, audit log por chamada, mounts de reverse-proxy. Trate o opendray como o gateway por trás do seu próprio produto, ou só como uma central de comando pessoal.
+- 🔑 **Frota multi-conta do Claude.** Coloque várias contas de `claude login` no gateway; o painel descobre elas automaticamente via filesystem watcher, balanceia as novas sessões entre as contas habilitadas, e te deixa trocar a conta de uma sessão em execução **sem perder a conversa** (o transcript é migrado por baixo dos panos). Cada linha de conta mostra a capacidade em tempo real (subscription tier, rate-limit tier, sessões ativas, último uso, email do Anthropic atual) pra você escolher a certa de bate-pronto.
+- 🔒 **Self-hosted, licença clara.** Apache 2.0, um único binário estático, releases assinadas com cosign e SBOM SPDX. Sem telemetria, sem conta na nuvem, sem assinatura.
 
 ## Arquitetura em um relance
 
@@ -106,7 +106,7 @@ Tudo o que está no diagrama roda na sua rede. Sem dependências de cloud, sem i
 
 ## Status
 
-**v2.7.0** (último) — a geração v2 segue iterando. Veja
+**v2.7.0** (último). A geração v2 segue iterando. Veja
 [`VERSIONING.md`](VERSIONING.md) pra política major-como-geração
 (major = geração de produto, não "breaking change" estrito ao estilo SemVer) e
 [`CHANGELOG.md`](CHANGELOG.md) pro histórico completo de releases.
@@ -117,10 +117,10 @@ Esta geração entrega:
   Windows passa por WSL2). Guiam o operador pelo bootstrap do Postgres,
   instalação das AI-CLIs, credenciais de admin, endereço de escuta,
   instalação do binário, migração do schema e registro do serviço.
-- **Binário autogerenciável** — `opendray update / start / stop /
+- **Binário autogerenciável.** `opendray update / start / stop /
   restart / status / providers list / providers update`, pra que os operadores
   não precisem encostar em `systemctl` / `launchctl` no dia a dia.
-- **Pipeline de release com Goreleaser** — binários cross-compilados
+- **Pipeline de release com Goreleaser.** Binários cross-compilados
   (linux/darwin × amd64/arm64), assinatura keyless com cosign (Sigstore),
   SBOM SPDX, self-update verificado atomicamente.
 
@@ -134,15 +134,15 @@ Esta geração entrega:
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install.sh | bash
 ```
 
-**Windows** — configura o WSL2 primeiro e depois roda o instalador do Linux por dentro. [detalhes →](scripts/README.md#windows)
+**Windows**: configura o WSL2 primeiro e depois roda o instalador do Linux por dentro. [detalhes →](scripts/README.md#windows)
 
 ```powershell
 irm https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install-windows.ps1 | iex
 ```
 
-Passa pela configuração do Postgres, instalação das AI-CLIs, credenciais de admin e registro do serviço — deixando o gateway rodando em ~5-10 minutos. Veja [**`scripts/README.md`**](scripts/README.md) pra entender o que o wizard faz, o layout de arquivos que ele cria, as opções e troubleshooting.
+Passa pela configuração do Postgres, instalação das AI-CLIs, credenciais de admin e registro do serviço, deixando o gateway rodando em ~5 a 10 minutos. Veja [**`scripts/README.md`**](scripts/README.md) pra entender o que o wizard faz, o layout de arquivos que ele cria, as opções e troubleshooting.
 
-> **Prefere fazer o passo a passo manual?** Leia [**docs/getting-started.md**](docs/getting-started.md) — um guia de 15 minutos de ponta a ponta que espelha o que o wizard faz, pra você conferir cada etapa por conta própria.
+> **Prefere fazer o passo a passo manual?** Leia [**docs/getting-started.md**](docs/getting-started.md), um guia de 15 minutos de ponta a ponta que espelha o que o wizard faz, pra você conferir cada etapa por conta própria.
 
 ### npm / npx (Node ≥ 18)
 
@@ -158,12 +158,12 @@ Ou roda sob demanda sem instalar:
 npx opendray
 ```
 
-Instala **só o binário** — sem wizard, sem serviço, sem Postgres. O pacote traz o binário de plataforma correspondente (`opendray-{linux,darwin}-{x64,arm64}`) via `optionalDependencies` (o padrão do esbuild / Biome — sem `postinstall`, sem chamada de rede durante a instalação). Bom para ambientes com scripts, runners efêmeros, ou quando você já roda seu próprio Postgres e supervisor de processos.
+Instala **só o binário**: sem wizard, sem serviço, sem Postgres. O pacote traz o binário de plataforma correspondente (`opendray-{linux,darwin}-{x64,arm64}`) via `optionalDependencies` (o padrão do esbuild / Biome, sem `postinstall`, sem chamada de rede durante a instalação). Bom para ambientes com scripts, runners efêmeros, ou quando você já roda seu próprio Postgres e supervisor de processos.
 
 Você ainda traz um banco e sobe o gateway por conta própria:
 
 ```sh
-# 1. PostgreSQL 15+ com pgvector — aponte um DSN para ele, defina uma senha de admin.
+# 1. PostgreSQL 15+ com pgvector. Aponte um DSN para ele, defina uma senha de admin.
 export OPENDRAY_DATABASE_URL="postgres://opendray:pw@127.0.0.1:5432/opendray?sslmode=disable"
 export OPENDRAY_ADMIN_PASSWORD="$(openssl rand -base64 24)"
 # 2. Aplique o schema, depois rode (foreground).
@@ -171,17 +171,17 @@ opendray migrate
 opendray serve        # → http://127.0.0.1:8770/admin/
 ```
 
-Passo a passo completo — setup do pgvector, `config.toml`, rodar como serviço systemd / launchd e atualizar — em [**docs/install-binary.pt-BR.md**](docs/install-binary.pt-BR.md).
+Passo a passo completo (setup do pgvector, `config.toml`, rodar como serviço systemd / launchd e atualizar) em [**docs/install-binary.pt-BR.md**](docs/install-binary.pt-BR.md).
 
 ### Desinstalação (Linux / macOS)
 
-**Padrão** — para o gateway e remove o binário, mas **mantém** seu `config.toml`, o diretório de dados (keyfile bcrypt, sessões, notas, vault), os logs e o banco PostgreSQL pra que uma reinstalação retome de onde você parou:
+**Padrão.** Para o gateway e remove o binário, mas **mantém** seu `config.toml`, o diretório de dados (keyfile bcrypt, sessões, notas, vault), os logs e o banco PostgreSQL pra que uma reinstalação retome de onde você parou:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh | bash
 ```
 
-**Purge completo** — também dropa o banco PG + a role, apaga config / data / logs e remove o service user. Inclui um passo de verificação pós-remoção que falha barulhento se algo sobreviver:
+**Purge completo.** Também dropa o banco PG + a role, apaga config / data / logs e remove o service user. Inclui um passo de verificação pós-remoção que falha barulhento se algo sobreviver:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh | OPENDRAY_PURGE=1 bash
@@ -189,7 +189,7 @@ curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/unin
 
 ### Comandos do dia a dia
 
-Depois da instalação, o binário `opendray` cuida do próprio ciclo de vida — sem precisar decorar os encantamentos de `systemctl` / `launchctl`:
+Depois da instalação, o binário `opendray` cuida do próprio ciclo de vida, sem precisar decorar os encantamentos de `systemctl` / `launchctl`:
 
 ```sh
 sudo opendray update --restart   # download latest release, verify SHA, atomic replace + restart
@@ -204,18 +204,18 @@ opendray providers list          # see which AI CLIs are installed + their versi
 ```
 
 ```sh
-sudo opendray start              # start | stop | restart | status — wraps systemd / launchd
+sudo opendray start              # start | stop | restart | status, wraps systemd / launchd
 ```
 
 `opendray --help` lista o conjunto completo de subcomandos.
 
 ### Escolha do caminho de deploy
 
-Todo caminho suportado inclui spawn de sessões, acesso às AI-CLIs, backups criptografados e a API de integração completa. O opendray é um gateway host-resident — ele spawna as AI CLIs via PTYs e compartilha estado de processo (`~/.claude`, ssh-agent, arquivos do projeto) com elas. Esse modelo é incompatível com o isolamento de container que o Docker de produção imporia, então o Docker não é um caminho de deploy suportado na v2.x.
+Todo caminho suportado inclui spawn de sessões, acesso às AI-CLIs, backups criptografados e a API de integração completa. O opendray é um gateway host-resident: ele spawna as AI CLIs via PTYs e compartilha estado de processo (`~/.claude`, ssh-agent, arquivos do projeto) com elas. Esse modelo é incompatível com o isolamento de container que o Docker de produção imporia, então o Docker não é um caminho de deploy suportado na v2.x.
 
 | Caminho | Recomendado pra | Ir pra |
 |---|---|---|
-| 📦 **Binário pré-buildado** | "Só rodar" — Linux / macOS, qualquer supervisor | [Página de releases](https://github.com/Opendray/opendray/releases) → veja [Deploy de produção](#production-deploy) |
+| 📦 **Binário pré-buildado** | "Só rodar" (Linux / macOS, qualquer supervisor) | [Página de releases](https://github.com/Opendray/opendray/releases) → veja [Deploy de produção](#production-deploy) |
 | 🐧 **Unit systemd** | Linux bare-metal / VM / LXC | [Deploy de produção §A](#option-a--systemd-bare-metal--vm--lxc) |
 | 🍎 **LaunchDaemon do macOS** | Mac mini / Mac Studio como servidor doméstico | [Deploy de produção §C](#option-c--macos-launchd-mac-mini--studio-as-home-server) |
 | 🛠 **Build a partir do código-fonte** | Desenvolvimento / contribuição / builds custom | [Quickstart](#quickstart-5-minute-dev-path) abaixo |
@@ -231,7 +231,7 @@ Pra um passo a passo completo com pré-requisitos e troubleshooting, veja [`docs
 #    (apt install postgresql-16 postgresql-16-pgvector / brew install postgresql@16 pgvector).
 #    Point [database].url at any other DSN if you'd rather use a remote PG.
 
-# 2. Local config — already gitignored.
+# 2. Local config (already gitignored).
 cp config.example.toml config.toml
 $EDITOR config.toml          # set [database].url, [admin].password
 
@@ -247,7 +247,7 @@ go run ./cmd/opendray serve -config config.toml
 # → Web admin:  http://127.0.0.1:8770/admin/
 ```
 
-Isso roda o OpenDray em foreground — Ctrl-C derruba. Pra um daemon de longa duração, veja **Deploy de produção** abaixo.
+Isso roda o OpenDray em foreground (Ctrl-C derruba). Pra um daemon de longa duração, veja **Deploy de produção** abaixo.
 
 <a id="production-deploy"></a>
 
@@ -259,7 +259,7 @@ separação dos segredos em relação ao config.
 
 <a id="option-a--systemd-bare-metal--vm--lxc"></a>
 
-### Opção A — systemd (bare-metal / VM / LXC)
+### Opção A. systemd (bare-metal / VM / LXC)
 
 O caminho de deploy recomendado no Linux. Vem com uma unit endurecida em
 [`deploy/systemd/opendray.service`](deploy/systemd/opendray.service)
@@ -269,7 +269,7 @@ com sandboxing (`ProtectSystem=strict`, `NoNewPrivileges`,
 
 **Pegue um binário primeiro.** Ou baixe um arquivo pré-buildado da
 [página de releases](https://github.com/Opendray/opendray/releases)
-(`opendray_*_linux_<arch>.tar.gz` — descompacta num único binário `opendray`),
+(`opendray_*_linux_<arch>.tar.gz`, que descompacta num único binário `opendray`),
 ou builde do código-fonte pelo [Quickstart](#quickstart-5-minute-dev-path)
 acima (`go build ./cmd/opendray`).
 
@@ -301,7 +301,7 @@ A unit roda `opendray migrate` como `ExecStartPre`, então o primeiro boot
 aplica todas as migrations antes de o `serve` subir. Os restarts são
 `on-failure` com back-off de 5s e limite de 5 rajadas por minuto.
 
-### Opção B — Binário direto + seu próprio supervisor de processos
+### Opção B. Binário direto + seu próprio supervisor de processos
 
 Pra LXC sem systemd, FreeBSD `rc.d`, OpenRC, ou qualquer outra coisa.
 Builde uma vez, rode com o supervisor que você já usa:
@@ -327,7 +327,7 @@ que você preferir.
 
 <a id="option-c--macos-launchd-mac-mini--studio-as-home-server"></a>
 
-### Opção C — launchd no macOS (Mac mini / Studio como servidor doméstico)
+### Opção C. launchd no macOS (Mac mini / Studio como servidor doméstico)
 
 Pra Mac mini / Mac Studio com Apple Silicon rodando 24/7. Vem com um
 LaunchDaemon em
@@ -363,7 +363,7 @@ tail -f /usr/local/var/log/opendray/opendray.log
 Reinicie com `sudo launchctl kickstart -k system/com.opendray.opendray`;
 desmonte por completo com `sudo launchctl bootout system/com.opendray.opendray`.
 
-Postgres no macOS — instale via Homebrew (`brew install postgresql@17 && brew services start postgresql@17`) e aponte `[database].url` pra
+Postgres no macOS: instale via Homebrew (`brew install postgresql@17 && brew services start postgresql@17`) e aponte `[database].url` pra
 `postgres://$USER@127.0.0.1:5432/opendray`. Adicione o `pgvector` com
 `brew install pgvector` e rode `CREATE EXTENSION vector` dentro do banco
 do opendray.
@@ -379,7 +379,7 @@ Tunnel), veja [`docs/operator-guide.md`](docs/operator-guide.md) §Topology.
 ### Opcional: habilitar backups criptografados do DB + exports de dados
 
 ```bash
-# Master passphrase (env-only — never write into config.toml).
+# Master passphrase (env-only, never write into config.toml).
 export OPENDRAY_BACKUP_KEY="$(openssl rand -base64 32)"
 export OPENDRAY_BACKUP_ENABLED=1
 
@@ -393,7 +393,7 @@ Reinicie o opendray; o sidebar ganha uma página de Backups (`/backups`)
 pra dumps criptografados do PostgreSQL + restore, e `/export` pra
 exports de dados em bundle zip + import. Veja [`docs/operator-guide.md`](docs/operator-guide.md) §Backup pro ciclo completo.
 
-Um único binário Go carrega o bundle web inteiro — sem runtime de Node em
+Um único binário Go carrega o bundle web inteiro: sem runtime de Node em
 runtime, sem servidor de arquivos estáticos separado, sem Caddy/nginx
 necessários. O Cloudflare Tunnel termina TLS na frente do `:8770`.
 
@@ -405,13 +405,15 @@ internal/
 ├── app/             composition root (wires every subsystem)
 ├── audit/           subscribes to bus topics, persists to audit_log
 ├── auth/            admin bearer tokens (M2.5)
-├── backup/          encrypted DB dumps + admin export/import├── catalog/         CLI provider manifests + per-id user config (M2)
+├── backup/          encrypted DB dumps + admin export/import
+├── catalog/         CLI provider manifests + per-id user config (M2)
 ├── channel/         channel hub + telegram impl (M4)
 ├── config/          TOML loader with OPENDRAY_* env overrides
 ├── eventbus/        in-process pub/sub
 ├── gateway/         chi HTTP router + middleware + slog
 ├── integration/     external-app registry + reverse proxy + events WS (M3)
-├── memory/          cross-CLI persistent memory├── session/         PTY lifecycle + ring buffer + WS stream (M1)
+├── memory/          cross-CLI persistent memory
+├── session/         PTY lifecycle + ring buffer + WS stream (M1)
 ├── store/           pgx pool + hand-rolled migration runner (M0)
 ├── version/         build-time identification
 └── web/             go:embed of the web bundle (W5)
@@ -447,13 +449,13 @@ Zustand + xterm.js) e notas por milestone W.
 
 ## Documentação
 
-- [`docs/getting-started.md`](docs/getting-started.md) — **comece por aqui** se você é novo: do zero até a primeira sessão em 15 minutos, incluindo a instalação das CLIs encapsuladas e o bootstrap do Postgres
-- [`docs/install-binary.pt-BR.md`](docs/install-binary.pt-BR.md) — instale pelo pacote npm ou um binário de release (traga seu próprio Postgres) e rode como serviço systemd / launchd
-- [`docs/quickstart.md`](docs/quickstart.md) — ambiente de dev em 5 minutos (assume que você já conhece as peças)
-- [`docs/operator-guide.md`](docs/operator-guide.md) — referência de deploy + ops pra setups mais próximos de produção
-- [`docs/integration-guide.md`](docs/integration-guide.md) — como escrever uma integração externa em qualquer linguagem
-- [`VERSIONING.md`](VERSIONING.md) — estratégia de versionamento (major-as-generation)
-- [`CHANGELOG.md`](CHANGELOG.md) — histórico de releases
+- [`docs/getting-started.md`](docs/getting-started.md): **comece por aqui** se você é novo. Do zero até a primeira sessão em 15 minutos, incluindo a instalação das CLIs encapsuladas e o bootstrap do Postgres
+- [`docs/install-binary.pt-BR.md`](docs/install-binary.pt-BR.md): instale pelo pacote npm ou um binário de release (traga seu próprio Postgres) e rode como serviço systemd / launchd
+- [`docs/quickstart.md`](docs/quickstart.md): ambiente de dev em 5 minutos (assume que você já conhece as peças)
+- [`docs/operator-guide.md`](docs/operator-guide.md): referência de deploy + ops pra setups mais próximos de produção
+- [`docs/integration-guide.md`](docs/integration-guide.md): como escrever uma integração externa em qualquer linguagem
+- [`VERSIONING.md`](VERSIONING.md): estratégia de versionamento (major-as-generation)
+- [`CHANGELOG.md`](CHANGELOG.md): histórico de releases
 
 ## Tests
 
@@ -468,12 +470,12 @@ Um harness Playwright está planejado como follow-up.
 ## Relação com a v1
 
 A v1 (`Opendray/opendray`) é o codebase legado, agora arquivado. A v2 é
-a geração atual e ativa — feature-complete e o único branch recebendo
+a geração atual e ativa, feature-complete e o único branch recebendo
 desenvolvimento. Dos 16 builtins da v1, quatro migraram pro backend da
 v2; o resto virou feature client-side, adaptador de canal ou consumidor
 da API de integração.
 
 ## Licença
 
-Apache 2.0 — veja [`LICENSE`](LICENSE). (A v1 era MIT; a v2 é licenciada
+Apache 2.0. Veja [`LICENSE`](LICENSE). (A v1 era MIT; a v2 é licenciada
 de forma independente.)
