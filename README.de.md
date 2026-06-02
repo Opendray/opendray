@@ -33,6 +33,18 @@
 
 ---
 
+## Warum es opendray gibt
+
+Drei Reibungspunkte im Alltag mit AI-Coding-CLIs, die opendray beheben will.
+
+**Sessions sterben, sobald dein Laptop schlafen geht.** Wer Claude Code oder Codex über SSH laufen lässt, verliert den Agenten in dem Moment, in dem der Deckel zuklappt oder das Wi-Fi wegbricht. Kontext, laufende Tool-Calls, das halbfertige Diff, das du gerade reviewen wolltest – alles weg. opendray lässt den Agenten auf einem Host laufen, der nicht schläft (ein Mac mini unter dem Schreibtisch, ein NAS, ein VPS), und du klinkst dich aus einem Web-Admin, einer Flutter-Mobile-App oder per Chat-Nachricht wieder ein. Die Session läuft weiter – egal, ob gerade jemand verbunden ist oder nicht.
+
+**Ein Rate-Limit sollte nicht beenden, was du gerade tust.** Hast du mehrere Anthropic-Accounts (Arbeit + privat, Family Plan + Pro), behandelt opendray sie als Pool – es zeigt Tier, Quota und Anzahl aktiver Sessions pro Account, verteilt neue Sessions darüber und lässt dich eine laufende Session auf einen anderen Account umziehen, ohne dass das Gespräch verloren geht. Der Transcript wandert mit. Genauso für Codex- und Gemini-Accounts.
+
+**Memory ist eine First-Class-Schicht, kein nachträglicher Aufsatz.** Die meisten AI-CLIs indexieren den Projektkontext in jeder Session von vorne und verbrennen Tokens für wiederholtes Retrieval. opendray bringt einen local-first Vector Store mit (Embeddings via ONNX / Ollama / LM Studio) – mit Retrieval über drei Domänen (User, Projekt, Session) und Drift-Erkennung zwischen den Ebenen. Jedes Byte bleibt in deinem Netzwerk.
+
+---
+
 ## Was ist opendray?
 
 **opendray** umschließt die KI-Coding-CLIs, die du eh schon nutzt — Claude Code, Codex, Gemini und jede beliebige Shell — und macht sie zu etwas, das du von überall aus steuern kannst. Lass Sessions auf deinem Heimserver / NAS / VPS laufen, lass dich per Telegram benachrichtigen, wenn eine in den Idle-Zustand geht, und antworte vom Handy aus, um den nächsten Prompt einzufüttern — alles über ein Self-hosted Gateway, das du Ende zu Ende kontrollierst.

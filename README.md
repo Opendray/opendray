@@ -33,6 +33,18 @@
 
 ---
 
+## Why opendray exists
+
+Three frictions in day-to-day work with AI coding CLIs that opendray is built to fix.
+
+**Sessions die when your laptop sleeps.** Running Claude Code or Codex over SSH means the agent dies the moment your machine closes the lid or drops Wi-Fi. Context, in-flight tool calls, the partial diff you were about to review — gone. opendray runs the agent on a host that doesn't sleep (a Mac mini under your desk, a NAS, a VPS) and lets you reattach from a web admin, a Flutter mobile app, or a chat message. The session keeps executing whether or not anyone's connected.
+
+**Hitting a rate limit shouldn't kill what you were doing.** If you have multiple Anthropic accounts (work + personal, family plan + Pro), opendray treats them as a pool — it surfaces tier, quota and active-session count per account, balances new sessions across them, and lets you swap a live session to a different account without losing the conversation. The transcript moves with you. Same model for Codex and Gemini accounts.
+
+**Memory is a first-class layer, not an afterthought.** Most AI CLIs re-index project context from scratch every session, burning tokens on repeated retrieval. opendray ships a local-first vector store (ONNX / Ollama / LM Studio embeddings) with three-domain retrieval — user, project, session — plus drift detection across layers. Every byte stays on your network.
+
+---
+
 ## What is opendray?
 
 **opendray** wraps the AI coding CLIs you already use — Claude Code, Codex, Gemini, plus any shell — and turns them into something you can drive from anywhere. Run sessions on your home server / NAS / VPS, get notified on Telegram when one goes idle, reply from your phone to feed the next prompt back in, all over a self-hosted gateway you control end to end.

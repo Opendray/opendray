@@ -33,6 +33,18 @@
 
 ---
 
+## Por qué existe opendray
+
+Tres fricciones del día a día con las CLIs de IA para programar que opendray viene a resolver.
+
+**Las sesiones mueren cuando tu portátil se suspende.** Ejecutar Claude Code o Codex por SSH significa que el agente muere en el momento en que cierras la tapa o se cae el Wi-Fi. El contexto, las llamadas a herramientas en curso, el diff parcial que estabas a punto de revisar: todo se pierde. opendray ejecuta el agente en un host que no se suspende (un Mac mini debajo de tu escritorio, un NAS, un VPS) y te deja reconectarte desde un panel web, una app móvil en Flutter o un mensaje de chat. La sesión sigue ejecutándose esté quien esté conectado o no.
+
+**Toparte con un rate limit no debería cargarse lo que estabas haciendo.** Si tienes varias cuentas de Anthropic (trabajo + personal, plan familiar + Pro), opendray las trata como un pool: te muestra el tier, la cuota y el número de sesiones activas por cuenta, reparte las nuevas sesiones entre ellas y te permite mover una sesión en vivo a otra cuenta sin perder la conversación. El transcript se va contigo. Mismo planteamiento para las cuentas de Codex y Gemini.
+
+**La memoria es una capa de primera clase, no un parche.** La mayoría de las CLIs de IA reindexan el contexto del proyecto desde cero en cada sesión, quemando tokens en recuperaciones repetidas. opendray incluye un vector store local-first (embeddings con ONNX / Ollama / LM Studio) con recuperación en tres dominios —usuario, proyecto, sesión— más detección de drift entre capas. Cada byte se queda en tu red.
+
+---
+
 ## ¿Qué es opendray?
 
 **opendray** envuelve las CLIs de coding con IA que ya usas — Claude Code, Codex, Gemini y cualquier shell — y las convierte en algo que puedes controlar desde cualquier lugar. Ejecuta sesiones en tu servidor doméstico / NAS / VPS, recibe una notificación en Telegram cuando una queda inactiva y responde desde tu teléfono para alimentar el siguiente prompt — todo a través de un gateway autohospedado que controlas de extremo a extremo.

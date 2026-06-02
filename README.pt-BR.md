@@ -33,6 +33,18 @@
 
 ---
 
+## Por que o opendray existe
+
+Três incômodos do dia a dia com CLIs de IA para programação que o opendray foi feito para resolver.
+
+**Sessões morrem quando seu notebook dorme.** Rodar o Claude Code ou o Codex via SSH significa que o agente morre no instante em que você fecha a tampa da máquina ou o Wi-Fi cai. Contexto, chamadas de ferramentas no meio do caminho, aquele diff parcial que você ia revisar — tudo perdido. O opendray roda o agente em um host que não dorme (um Mac mini debaixo da sua mesa, um NAS, um VPS) e te deixa reconectar pelo admin web, por um app mobile em Flutter ou por uma mensagem de chat. A sessão segue executando, esteja alguém conectado ou não.
+
+**Bater no rate limit não deveria matar o que você estava fazendo.** Se você tem várias contas Anthropic (trabalho + pessoal, plano família + Pro), o opendray trata elas como um pool — mostra tier, cota e número de sessões ativas por conta, distribui novas sessões entre elas e deixa você trocar uma sessão em andamento para outra conta sem perder o fio da conversa. O transcript vai junto. Mesma coisa para contas Codex e Gemini.
+
+**Memória é uma camada de primeira classe, não algo enfiado depois.** A maioria das CLIs de IA reindexa o contexto do projeto do zero a cada sessão, queimando tokens em recuperação repetida. O opendray vem com um vector store local-first (embeddings via ONNX / Ollama / LM Studio) com recuperação em três domínios — usuário, projeto, sessão — mais detecção de drift entre as camadas. Cada byte fica na sua rede.
+
+---
+
 ## O que é o opendray?
 
 O **opendray** encapsula as CLIs de coding com IA que você já usa — Claude Code, Codex, Gemini, mais qualquer shell — e transforma elas em algo que dá pra controlar de qualquer lugar. Rode sessões no seu servidor de casa / NAS / VPS, receba uma notificação no Telegram quando uma delas ficar ociosa, responda do celular pra mandar o próximo prompt — tudo isso através de um gateway self-hosted que você controla de ponta a ponta.

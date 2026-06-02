@@ -33,6 +33,18 @@
 
 ---
 
+## Pourquoi opendray existe
+
+Trois frictions du quotidien avec les CLI d'IA pour le code que opendray vient corriger.
+
+**Tes sessions meurent quand ton laptop se met en veille.** Faire tourner Claude Code ou Codex via SSH, c'est voir l'agent mourir à la seconde où tu rabats l'écran ou perds le Wi-Fi. Le contexte, les tool calls en cours, le diff partiel que tu allais relire — envolés. opendray exécute l'agent sur un host qui ne dort jamais (un Mac mini sous ton bureau, un NAS, un VPS) et te laisse t'y rattacher depuis une admin web, une app mobile Flutter ou un message de chat. La session continue de s'exécuter, que quelqu'un soit connecté ou non.
+
+**Atteindre une rate limit ne devrait pas tuer ce que tu étais en train de faire.** Si tu as plusieurs comptes Anthropic (pro + perso, plan famille + Pro), opendray les traite comme un pool — il expose tier, quota et nombre de sessions actives par compte, équilibre les nouvelles sessions entre eux, et te permet de basculer une session en cours vers un autre compte sans perdre la conversation. Le transcript te suit. Même logique pour les comptes Codex et Gemini.
+
+**La mémoire est une couche de premier ordre, pas un ajout après coup.** La plupart des CLI d'IA ré-indexent le contexte projet à zéro à chaque session, brûlant des tokens en retrieval répété. opendray embarque un vector store local-first (embeddings ONNX / Ollama / LM Studio) avec un retrieval sur trois domaines — utilisateur, projet, session — plus une détection de drift entre les couches. Chaque octet reste sur ton réseau.
+
+---
+
 ## C'est quoi opendray ?
 
 **opendray** enveloppe les CLI de coding IA que tu utilises déjà — Claude Code, Codex, Gemini, plus n'importe quel shell — et les transforme en quelque chose que tu peux piloter depuis n'importe où. Fais tourner tes sessions sur ton home server / NAS / VPS, reçois une notification Telegram quand l'une d'elles devient inactive, réponds depuis ton téléphone pour relancer le prochain prompt, le tout via un gateway self-hosted que tu contrôles de bout en bout.
