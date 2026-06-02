@@ -399,29 +399,13 @@ nécessaire. Cloudflare Tunnel termine TLS devant `:8770`.
 ## Layout
 
 ```
-cmd/opendray/        binary entry point (≤100 LOC per design §14)
-internal/
-├── app/             composition root (wires every subsystem)
-├── audit/           subscribes to bus topics, persists to audit_log
-├── auth/            admin bearer tokens (M2.5)
-├── backup/          encrypted DB dumps + admin export/import
-├── catalog/         CLI provider manifests + per-id user config (M2)
-├── channel/         channel hub + telegram impl (M4)
-├── config/          TOML loader with OPENDRAY_* env overrides
-├── eventbus/        in-process pub/sub
-├── gateway/         chi HTTP router + middleware + slog
-├── integration/     external-app registry + reverse proxy + events WS (M3)
-├── memory/          cross-CLI persistent memory
-├── session/         PTY lifecycle + ring buffer + WS stream (M1)
-├── store/           pgx pool + hand-rolled migration runner (M0)
-├── version/         build-time identification
-└── web/             go:embed of the web bundle (W5)
-
-app/web/             React 19 + TypeScript + Vite SPA (Phase 2 W0-W5)
-app/mobile/          Flutter app (iOS + Android), feature parity with web
-docs/
-├── design.md        SSOT north-star
-└── adr/             architecture decisions, dated
+cmd/opendray/   point d'entrée du binaire
+internal/       backend Go — gateway, sessions, mémoire, canaux, intégrations, git, recherche, … (un paquet par domaine)
+app/web/        SPA d'administration React + Vite (embarquée dans le binaire)
+app/mobile/     application Flutter (iOS + Android)
+app/shared*/    UI partagée inter-surfaces + chaînes i18n
+docs/           guides : installation, prise en main, intégration, exploitation
+deploy/         unités systemd / launchd / LXC + scripts d'installation
 ```
 
 ## Frontend web

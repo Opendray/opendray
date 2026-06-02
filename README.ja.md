@@ -399,29 +399,13 @@ TLS 終端は `:8770` の手前で Cloudflare Tunnel に任せられます。
 ## レイアウト
 
 ```
-cmd/opendray/        binary entry point (≤100 LOC per design §14)
-internal/
-├── app/             composition root (wires every subsystem)
-├── audit/           subscribes to bus topics, persists to audit_log
-├── auth/            admin bearer tokens (M2.5)
-├── backup/          encrypted DB dumps + admin export/import
-├── catalog/         CLI provider manifests + per-id user config (M2)
-├── channel/         channel hub + telegram impl (M4)
-├── config/          TOML loader with OPENDRAY_* env overrides
-├── eventbus/        in-process pub/sub
-├── gateway/         chi HTTP router + middleware + slog
-├── integration/     external-app registry + reverse proxy + events WS (M3)
-├── memory/          cross-CLI persistent memory
-├── session/         PTY lifecycle + ring buffer + WS stream (M1)
-├── store/           pgx pool + hand-rolled migration runner (M0)
-├── version/         build-time identification
-└── web/             go:embed of the web bundle (W5)
-
-app/web/             React 19 + TypeScript + Vite SPA (Phase 2 W0-W5)
-app/mobile/          Flutter app (iOS + Android), feature parity with web
-docs/
-├── design.md        SSOT north-star
-└── adr/             architecture decisions, dated
+cmd/opendray/   バイナリのエントリポイント
+internal/       Go バックエンド — gateway, sessions, memory, channels, integrations, git, search, … （ドメインごとに 1 パッケージ）
+app/web/        React + Vite の管理 SPA（バイナリに埋め込み）
+app/mobile/     Flutter アプリ（iOS + Android）
+app/shared*/    サーフェス横断で共有する UI + i18n 文字列
+docs/           ガイド: install, getting-started, integration, ops
+deploy/         systemd / launchd / LXC ユニット + インストールスクリプト
 ```
 
 ## Web フロントエンド
