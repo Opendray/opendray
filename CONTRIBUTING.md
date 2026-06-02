@@ -20,7 +20,7 @@ If you'd rather just open a PR for something not in the issue tracker (a small f
 |---|---|---|
 | Go | 1.25+ | Backend + embedded web bundle |
 | pnpm | 10+ | Web SPA build (`app/web/`) |
-| Node.js | 22+ | pnpm runtime (build only — not needed at deploy) |
+| Node.js | 22+ | pnpm runtime (build only, not needed at deploy) |
 | PostgreSQL | 15+ | Required at runtime; v2 has no bundled mode |
 
 ## Development Setup
@@ -81,12 +81,12 @@ export OPENDRAY_DEV_DB_URL='postgres://opendray:opendray@127.0.0.1:5432/opendray
 go test -race ./internal/memory/summarizer/...
 ```
 
-Never hard-code DSNs in source — they will leak via git history.
+Never hard-code DSNs in source. They will leak via git history.
 
 ## Pull Request Process
 
 1. Fork or branch from `main`.
-2. Make focused changes — one PR, one concern.
+2. Make focused changes. One PR, one concern.
 3. Run checks locally:
    ```bash
    go vet ./...
@@ -130,7 +130,7 @@ Translation contributions land in two places.
 - RU: lowercase impersonal "вы" (Habr-style), with the project-wide override of no em-dash тире.
 - FA: heavy Latin-English borrowing, RTL-wrapped body.
 
-**Style rule that applies to every language:** no em-dashes (`—`) or prose en-dashes (`–`) anywhere in user-facing text. Use periods, commas, parentheses, or colons instead. Compound-noun hyphens in code identifiers (`local-first`, `--from-source`, `AI-Coding-CLIs`) are fine.
+**Style rule that applies to every language:** no em-dashes or prose en-dashes anywhere in user-facing text (the `U+2014` and `U+2013` Unicode characters used as prose punctuation). Use periods, commas, parentheses, or colons instead. Compound-noun hyphens in code identifiers (`local-first`, `--from-source`, `AI-Coding-CLIs`) are the regular hyphen-minus `U+002D` and stay.
 
 **Admin UI translations.** The Flutter / React app reads from `app/i18n/<lang>.json`. Currently shipped: `en.json` (canonical, ~4 k keys) and `zh.json`. Adding a new language means copying `en.json` to `<lang>.json`, translating the values, and wiring it into the i18next config. See the open good-first-issue for the canonical walkthrough.
 
