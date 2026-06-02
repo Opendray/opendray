@@ -5,7 +5,7 @@
 <h1 align="center">opendray</h1>
 
 <p align="center">
-  <strong>Self-hosted шлюз для Claude Code · Codex · Gemini · shell — с единым local-first слоем памяти, общим для всех инструментов.</strong>
+  <strong>Self-hosted шлюз для Claude Code · Codex · Gemini · shell, с единым local-first слоем памяти, общим для всех инструментов.</strong>
   <br/>
   <sub>Запускайте сессии на собственной инфраструктуре. Управляйте из веба, с мобильного или из чата. Открытый REST + WebSocket API для интеграций.</sub>
 </p>
@@ -47,14 +47,14 @@
 
 ## Что такое opendray?
 
-**opendray** оборачивает AI-CLI для кодинга, которыми вы уже пользуетесь — Claude Code, Codex, Gemini, плюс любой shell — и превращает их в то, чем можно управлять откуда угодно. Запускайте сессии на домашнем сервере / NAS / VPS, получайте уведомление в Telegram, когда сессия простаивает, отвечайте с телефона, чтобы скормить следующий промпт обратно — всё через self-hosted шлюз, который вы контролируете от и до.
+**opendray** оборачивает AI-CLI для кодинга, которыми вы уже пользуетесь (Claude Code, Codex, Gemini, плюс любой shell), и превращает их в то, чем можно управлять откуда угодно. Запускайте сессии на домашнем сервере / NAS / VPS, получайте уведомление в Telegram, когда сессия простаивает, отвечайте с телефона, чтобы скормить следующий промпт обратно. Всё через self-hosted шлюз, который вы контролируете от и до.
 
-- 🛰 **Один бэкенд, три поверхности** — единый Go-бинарник раздаёт React-админку и Flutter-приложение, а каждое действие также доступно через REST + WebSocket API для сторонних интеграций.
-- 💬 **Шесть двусторонних каналов, без огороженных садов** — Telegram, Slack, Discord, Feishu (飞书), DingTalk (钉钉), WeCom (企业微信), плюс адаптер Bridge для чего угодно кастомного. Ответы в любом канале маршрутизируются обратно в нужную сессию.
-- 🧠 **Local-first память** — эмбеддинги через ONNX / Ollama / LM Studio, поиск в трёх скоупах (пользователь · проект · сессия), умный ranking и детект конфликтов между слоями. Векторные данные не покидают вашу сеть.
-- 🔌 **API уровня интеграции** — scoped API-ключи, аудит-лог по каждому вызову, маунты через reverse-proxy. Используйте opendray как шлюз за вашим собственным продуктом или просто как личный командный центр.
-- 🔑 **Флот из нескольких Claude-аккаунтов** — подкладывайте в шлюз несколько аккаунтов `claude login`; панель автоматически подхватывает их через filesystem watcher, балансирует новые сессии между активными аккаунтами и позволяет переключить живую сессию между аккаунтами **без потери разговора** (транскрипт мигрируется под капотом). В каждой строке аккаунта видна актуальная загрузка (subscription tier, rate-limit tier, активные сессии, время последнего использования, текущий email Anthropic), чтобы выбрать нужный одним взглядом.
-- 🔒 **Self-hosted, лицензия прозрачная** — Apache 2.0, один статический бинарник, релизы подписаны cosign, плюс SPDX SBOM. Без телеметрии, без облачного аккаунта, без подписки.
+- 🛰 **Один бэкенд, три поверхности.** Единый Go-бинарник раздаёт React-админку и Flutter-приложение, а каждое действие также доступно через REST + WebSocket API для сторонних интеграций.
+- 💬 **Шесть двусторонних каналов, без огороженных садов.** Telegram, Slack, Discord, Feishu (飞书), DingTalk (钉钉), WeCom (企业微信), плюс адаптер Bridge для чего угодно кастомного. Ответы в любом канале маршрутизируются обратно в нужную сессию.
+- 🧠 **Local-first память.** Эмбеддинги через ONNX / Ollama / LM Studio, поиск в трёх скоупах (пользователь · проект · сессия), умный ranking и детект конфликтов между слоями. Векторные данные не покидают вашу сеть.
+- 🔌 **API уровня интеграции.** Scoped API-ключи, аудит-лог по каждому вызову, маунты через reverse-proxy. Используйте opendray как шлюз за вашим собственным продуктом или просто как личный командный центр.
+- 🔑 **Флот из нескольких Claude-аккаунтов.** Подкладывайте в шлюз несколько аккаунтов `claude login`; панель автоматически подхватывает их через filesystem watcher, балансирует новые сессии между активными аккаунтами и позволяет переключить живую сессию между аккаунтами **без потери разговора** (транскрипт мигрируется под капотом). В каждой строке аккаунта видна актуальная загрузка (subscription tier, rate-limit tier, активные сессии, время последнего использования, текущий email Anthropic), чтобы выбрать нужный одним взглядом.
+- 🔒 **Self-hosted, лицензия прозрачная.** Apache 2.0, один статический бинарник, релизы подписаны cosign, плюс SPDX SBOM. Без телеметрии, без облачного аккаунта, без подписки.
 
 ## Архитектура с высоты птичьего полёта
 
@@ -106,7 +106,7 @@ flowchart LR
 
 ## Статус
 
-**v2.7.0** (последний) — поколение v2 продолжает итерироваться. См.
+**v2.7.0** (последний). Поколение v2 продолжает итерироваться. См.
 [`VERSIONING.md`](VERSIONING.md) для политики major-как-поколение
 (major = поколение продукта, а не строгий SemVer "breaking change") и
 [`CHANGELOG.md`](CHANGELOG.md) для полной истории релизов.
@@ -117,10 +117,10 @@ flowchart LR
   Windows проходит через WSL2). Проводят оператора через bootstrap
   Postgres, установку AI-CLI, учётные данные админа, адрес прослушивания,
   установку бинарника, миграцию схемы и регистрацию сервиса.
-- **Самообслуживаемый бинарник** — `opendray update / start / stop /
+- **Самообслуживаемый бинарник:** `opendray update / start / stop /
   restart / status / providers list / providers update`, чтобы операторы
   не лезли в `systemctl` / `launchctl` ради рутинных операций.
-- **Релизный пайплайн на Goreleaser** — кросс-компилируемые бинарники
+- **Релизный пайплайн на Goreleaser:** кросс-компилируемые бинарники
   (linux/darwin × amd64/arm64), keyless-подпись cosign (Sigstore),
   SPDX SBOM, атомарно верифицируемый self-update.
 
@@ -134,15 +134,15 @@ flowchart LR
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install.sh | bash
 ```
 
-**Windows** — сначала поднимает WSL2, а затем запускает Linux-инсталлятор внутри него. [подробнее →](scripts/README.md#windows)
+**Windows.** Сначала поднимает WSL2, а затем запускает Linux-инсталлятор внутри него. [подробнее →](scripts/README.md#windows)
 
 ```powershell
 irm https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install-windows.ps1 | iex
 ```
 
-Проводит через настройку Postgres, установку AI-CLI, учётные данные админа и регистрацию сервиса — поднимает рабочий шлюз примерно за 5–10 минут. См. [**`scripts/README.md`**](scripts/README.md) — что именно делает мастер, какую раскладку файлов он создаёт, доступные опции и troubleshooting.
+Проводит через настройку Postgres, установку AI-CLI, учётные данные админа и регистрацию сервиса, поднимает рабочий шлюз примерно за 5 до 10 минут. См. [**`scripts/README.md`**](scripts/README.md) с подробностями о том, что именно делает мастер, какую раскладку файлов он создаёт, доступные опции и troubleshooting.
 
-> **Хотите пройти всё руками?** Прочитайте [**docs/getting-started.md**](docs/getting-started.md) — 15-минутный сквозной гайд, который повторяет действия мастера, чтобы вы могли проверить каждый шаг самостоятельно.
+> **Хотите пройти всё руками?** Прочитайте [**docs/getting-started.md**](docs/getting-started.md), 15-минутный сквозной гайд, который повторяет действия мастера, чтобы вы могли проверить каждый шаг самостоятельно.
 
 ### npm / npx (Node ≥ 18)
 
@@ -158,12 +158,12 @@ npm install -g opendray
 npx opendray
 ```
 
-Устанавливает **только бинарник** — без мастера, без регистрации сервиса, без настройки Postgres. Пакет подтягивает соответствующий платформенный бинарь (`opendray-{linux,darwin}-{x64,arm64}`) через `optionalDependencies` (паттерн esbuild / Biome — никакого `postinstall`, никаких сетевых вызовов на момент установки). Подходит для скриптовых окружений, эфемерных runner-ов или когда у вас уже есть собственный Postgres и супервизор процессов.
+Устанавливает **только бинарник**: без мастера, без регистрации сервиса, без настройки Postgres. Пакет подтягивает соответствующий платформенный бинарь (`opendray-{linux,darwin}-{x64,arm64}`) через `optionalDependencies` (паттерн esbuild / Biome, никакого `postinstall`, никаких сетевых вызовов на момент установки). Подходит для скриптовых окружений, эфемерных runner-ов или когда у вас уже есть собственный Postgres и супервизор процессов.
 
 Базу данных и запуск шлюза вы берёте на себя:
 
 ```sh
-# 1. PostgreSQL 15+ с pgvector — укажите DSN, задайте пароль администратора.
+# 1. PostgreSQL 15+ с pgvector. Укажите DSN, задайте пароль администратора.
 export OPENDRAY_DATABASE_URL="postgres://opendray:pw@127.0.0.1:5432/opendray?sslmode=disable"
 export OPENDRAY_ADMIN_PASSWORD="$(openssl rand -base64 24)"
 # 2. Примените схему, затем запустите (на переднем плане).
@@ -171,17 +171,17 @@ opendray migrate
 opendray serve        # → http://127.0.0.1:8770/admin/
 ```
 
-Подробный гайд — настройка pgvector, `config.toml`, запуск как systemd / launchd-сервис и обновление — в [**docs/install-binary.ru.md**](docs/install-binary.ru.md).
+Подробный гайд по настройке pgvector, `config.toml`, запуску как systemd / launchd-сервис и обновлению лежит в [**docs/install-binary.ru.md**](docs/install-binary.ru.md).
 
 ### Удаление (Linux / macOS)
 
-**По умолчанию** — останавливает шлюз и удаляет бинарник, но **сохраняет** ваш `config.toml`, директорию с данными (bcrypt keyfile, сессии, заметки, vault), логи и базу PostgreSQL, чтобы переустановка продолжила с того же места:
+**По умолчанию:** останавливает шлюз и удаляет бинарник, но **сохраняет** ваш `config.toml`, директорию с данными (bcrypt keyfile, сессии, заметки, vault), логи и базу PostgreSQL, чтобы переустановка продолжила с того же места:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh | bash
 ```
 
-**Полная очистка** — дополнительно сносит базу PG и роль, удаляет config / data / logs, убирает сервисного пользователя. Включает пост-проверку, которая громко падает, если что-то выжило:
+**Полная очистка:** дополнительно сносит базу PG и роль, удаляет config / data / logs, убирает сервисного пользователя. Включает пост-проверку, которая громко падает, если что-то выжило:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh | OPENDRAY_PURGE=1 bash
@@ -189,7 +189,7 @@ curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/unin
 
 ### Повседневные команды
 
-После установки бинарник `opendray` сам управляет своим жизненным циклом — не нужно вспоминать заклинания `systemctl` / `launchctl`:
+После установки бинарник `opendray` сам управляет своим жизненным циклом, и не нужно вспоминать заклинания `systemctl` / `launchctl`:
 
 ```sh
 sudo opendray update --restart   # download latest release, verify SHA, atomic replace + restart
@@ -204,18 +204,18 @@ opendray providers list          # see which AI CLIs are installed + their versi
 ```
 
 ```sh
-sudo opendray start              # start | stop | restart | status — wraps systemd / launchd
+sudo opendray start              # start | stop | restart | status, wraps systemd / launchd
 ```
 
 `opendray --help` показывает полный набор подкоманд.
 
 ### Выбор способа развёртывания
 
-Любой поддерживаемый путь включает спавн сессий, доступ к AI-CLI, шифрованные бэкапы и полный API интеграций. opendray — это host-resident шлюз: он спавнит AI-CLI через PTY и делит состояние процесса (`~/.claude`, ssh-agent, файлы проекта) с ними. Такая модель несовместима с изоляцией контейнеров, которую навязал бы продакшен Docker, поэтому Docker не является поддерживаемым способом развёртывания в v2.x.
+Любой поддерживаемый путь включает спавн сессий, доступ к AI-CLI, шифрованные бэкапы и полный API интеграций. opendray это host-resident шлюз: он спавнит AI-CLI через PTY и делит состояние процесса (`~/.claude`, ssh-agent, файлы проекта) с ними. Такая модель несовместима с изоляцией контейнеров, которую навязал бы продакшен Docker, поэтому Docker не является поддерживаемым способом развёртывания в v2.x.
 
 | Путь | Подходит для | Перейти к |
 |---|---|---|
-| 📦 **Готовый бинарник** | "Просто запусти" — Linux / macOS, любой супервизор | [Страница релизов](https://github.com/Opendray/opendray/releases) → см. [Развёртывание в продакшене](#production-deploy) |
+| 📦 **Готовый бинарник** | "Просто запусти" на Linux / macOS, любой супервизор | [Страница релизов](https://github.com/Opendray/opendray/releases) → см. [Развёртывание в продакшене](#production-deploy) |
 | 🐧 **systemd-юнит** | Bare-metal / VM / LXC-машина на Linux | [Развёртывание в продакшене §A](#option-a--systemd-bare-metal--vm--lxc) |
 | 🍎 **LaunchDaemon на macOS** | Mac mini / Mac Studio как домашний сервер | [Развёртывание в продакшене §C](#option-c--macos-launchd-mac-mini--studio-as-home-server) |
 | 🛠 **Сборка из исходников** | Разработка / контрибьют / кастомные сборки | [Quickstart](#quickstart-5-minute-dev-path) ниже |
@@ -224,14 +224,14 @@ sudo opendray start              # start | stop | restart | status — wraps sys
 
 ## Quickstart (dev-путь за 5 минут)
 
-Полный walkthrough с пререквизитами и troubleshooting — в [`docs/quickstart.md`](docs/quickstart.md). Сжатый dev-путь:
+Полный walkthrough с пререквизитами и troubleshooting находится в [`docs/quickstart.md`](docs/quickstart.md). Сжатый dev-путь:
 
 ```bash
 # 1. Have a Postgres 15+ running on 127.0.0.1:5432 with pgvector enabled
 #    (apt install postgresql-16 postgresql-16-pgvector / brew install postgresql@16 pgvector).
 #    Point [database].url at any other DSN if you'd rather use a remote PG.
 
-# 2. Local config — already gitignored.
+# 2. Local config (already gitignored).
 cp config.example.toml config.toml
 $EDITOR config.toml          # set [database].url, [admin].password
 
@@ -247,7 +247,7 @@ go run ./cmd/opendray serve -config config.toml
 # → Web admin:  http://127.0.0.1:8770/admin/
 ```
 
-Так OpenDray работает на переднем плане — Ctrl-C его убивает. Для долгоживущего демона смотрите **Развёртывание в продакшене** ниже.
+Так OpenDray работает на переднем плане, и Ctrl-C его убивает. Для долгоживущего демона смотрите **Развёртывание в продакшене** ниже.
 
 <a id="production-deploy"></a>
 
@@ -259,7 +259,7 @@ go run ./cmd/opendray serve -config config.toml
 
 <a id="option-a--systemd-bare-metal--vm--lxc"></a>
 
-### Вариант A — systemd (bare-metal / VM / LXC)
+### Вариант A. systemd (bare-metal / VM / LXC)
 
 Рекомендуемый способ деплоя в Linux. Поставляется захардененный юнит в
 [`deploy/systemd/opendray.service`](deploy/systemd/opendray.service)
@@ -269,7 +269,7 @@ go run ./cmd/opendray serve -config config.toml
 
 **Сначала добудьте бинарник.** Либо скачайте готовый архив со
 [страницы релизов](https://github.com/Opendray/opendray/releases)
-(`opendray_*_linux_<arch>.tar.gz` — распаковывается в единственный
+(`opendray_*_linux_<arch>.tar.gz`, распаковывается в единственный
 бинарник `opendray`), либо соберите из исходников через [Quickstart](#quickstart-5-minute-dev-path)
 выше (`go build ./cmd/opendray`).
 
@@ -299,12 +299,12 @@ sudo journalctl -u opendray -f --no-pager
 
 Юнит запускает `opendray migrate` в `ExecStartPre`, так что первый
 старт применит все миграции до того, как `serve` вообще начнёт работать.
-Рестарты — `on-failure` с back-off 5 секунд и лимитом 5 попыток в минуту.
+Рестарты идут как `on-failure` с back-off 5 секунд и лимитом 5 попыток в минуту.
 
-### Вариант B — Прямой бинарник + ваш собственный супервизор процессов
+### Вариант B. Прямой бинарник + ваш собственный супервизор процессов
 
 Для LXC без systemd, FreeBSD `rc.d`, OpenRC или чего угодно ещё.
-Собрали один раз — запускайте под тем супервизором, которым уже пользуетесь:
+Собрали один раз, запускайте под тем супервизором, которым уже пользуетесь:
 
 ```bash
 # Cross-compile a release archive locally:
@@ -327,7 +327,7 @@ Pre-flight: один раз перед первым `serve` запустите
 
 <a id="option-c--macos-launchd-mac-mini--studio-as-home-server"></a>
 
-### Вариант C — macOS launchd (Mac mini / Studio как домашний сервер)
+### Вариант C. macOS launchd (Mac mini / Studio как домашний сервер)
 
 Для Mac mini / Mac Studio на Apple Silicon, работающих 24/7. Поставляется
 LaunchDaemon в
@@ -361,10 +361,10 @@ sudo launchctl print system/com.opendray.opendray
 tail -f /usr/local/var/log/opendray/opendray.log
 ```
 
-Рестарт — `sudo launchctl kickstart -k system/com.opendray.opendray`;
-полная выгрузка — `sudo launchctl bootout system/com.opendray.opendray`.
+Рестарт делается через `sudo launchctl kickstart -k system/com.opendray.opendray`;
+полная выгрузка через `sudo launchctl bootout system/com.opendray.opendray`.
 
-Postgres на macOS — ставится через Homebrew (`brew install postgresql@17 && brew services start postgresql@17`), а `[database].url` направляется на
+Postgres на macOS ставится через Homebrew (`brew install postgresql@17 && brew services start postgresql@17`), а `[database].url` направляется на
 `postgres://$USER@127.0.0.1:5432/opendray`. Добавьте `pgvector` командой
 `brew install pgvector` и выполните `CREATE EXTENSION vector` внутри
 базы opendray.
@@ -372,15 +372,15 @@ Postgres на macOS — ставится через Homebrew (`brew install post
 ---
 
 По специфике LXC в Proxmox (PTY в unprivileged-контейнерах,
-сеть, тюнинг cgroup) — см. [`deploy/lxc/proxmox-pty-notes.md`](deploy/lxc/proxmox-pty-notes.md).
+сеть, тюнинг cgroup) см. [`deploy/lxc/proxmox-pty-notes.md`](deploy/lxc/proxmox-pty-notes.md).
 
 По reverse-proxy / терминации TLS (nginx, Caddy, Traefik, Cloudflare
-Tunnel) — см. [`docs/operator-guide.md`](docs/operator-guide.md) §Topology.
+Tunnel) см. [`docs/operator-guide.md`](docs/operator-guide.md) §Topology.
 
 ### Опционально: включить шифрованные бэкапы БД + экспорт данных
 
 ```bash
-# Master passphrase (env-only — never write into config.toml).
+# Master passphrase (env-only, never write into config.toml).
 export OPENDRAY_BACKUP_KEY="$(openssl rand -base64 32)"
 export OPENDRAY_BACKUP_ENABLED=1
 
@@ -392,10 +392,10 @@ export OPENDRAY_BACKUP_PG_RESTORE_PATH=/opt/homebrew/opt/postgresql@17/bin/pg_re
 
 Перезапустите opendray; в сайдбаре появится страница Backups (`/backups`)
 для шифрованных дампов PostgreSQL и restore, а также `/export` для
-экспорта данных в zip-bundle и импорта. Полный жизненный цикл — в
+экспорта данных в zip-bundle и импорта. Полный жизненный цикл описан в
 [`docs/operator-guide.md`](docs/operator-guide.md) §Backup.
 
-Один Go-бинарник несёт весь веб-бандл — никакого Node-рантайма во время
+Один Go-бинарник несёт весь веб-бандл, никакого Node-рантайма во время
 работы, отдельного сервера статики или Caddy/nginx не требуется.
 Cloudflare Tunnel терминирует TLS перед `:8770`.
 
@@ -407,13 +407,15 @@ internal/
 ├── app/             composition root (wires every subsystem)
 ├── audit/           subscribes to bus topics, persists to audit_log
 ├── auth/            admin bearer tokens (M2.5)
-├── backup/          encrypted DB dumps + admin export/import├── catalog/         CLI provider manifests + per-id user config (M2)
+├── backup/          encrypted DB dumps + admin export/import
+├── catalog/         CLI provider manifests + per-id user config (M2)
 ├── channel/         channel hub + telegram impl (M4)
 ├── config/          TOML loader with OPENDRAY_* env overrides
 ├── eventbus/        in-process pub/sub
 ├── gateway/         chi HTTP router + middleware + slog
 ├── integration/     external-app registry + reverse proxy + events WS (M3)
-├── memory/          cross-CLI persistent memory├── session/         PTY lifecycle + ring buffer + WS stream (M1)
+├── memory/          cross-CLI persistent memory
+├── session/         PTY lifecycle + ring buffer + WS stream (M1)
 ├── store/           pgx pool + hand-rolled migration runner (M0)
 ├── version/         build-time identification
 └── web/             go:embed of the web bundle (W5)
@@ -443,19 +445,19 @@ go build ./cmd/opendray               # bakes dist into the binary
 ./opendray serve -config config.toml
 ```
 
-См. [`app/web/README.md`](app/web/README.md) — там стек фронтенда
+См. [`app/web/README.md`](app/web/README.md), где описан стек фронтенда
 (React + Vite + Tailwind v4 + shadcn/ui + TanStack Router/Query +
 Zustand + xterm.js) и заметки по W-майлстоунам.
 
 ## Документация
 
-- [`docs/getting-started.md`](docs/getting-started.md) — **начинайте отсюда**, если вы новичок: от нуля до первой сессии за 15 минут, включая установку оборачиваемых CLI и bootstrap Postgres
-- [`docs/install-binary.ru.md`](docs/install-binary.ru.md) — установка из npm-пакета или release-бинарника (собственный Postgres) и запуск как systemd / launchd-сервис
-- [`docs/quickstart.md`](docs/quickstart.md) — dev-окружение за 5 минут (предполагается, что вы уже знаете, из чего всё состоит)
-- [`docs/operator-guide.md`](docs/operator-guide.md) — справочник по деплою и эксплуатации для околопродакшен-сетапов
-- [`docs/integration-guide.md`](docs/integration-guide.md) — как написать внешнюю интеграцию на любом языке
-- [`VERSIONING.md`](VERSIONING.md) — стратегия версионирования (major-as-generation)
-- [`CHANGELOG.md`](CHANGELOG.md) — история релизов
+- [`docs/getting-started.md`](docs/getting-started.md): **начинайте отсюда**, если вы новичок: от нуля до первой сессии за 15 минут, включая установку оборачиваемых CLI и bootstrap Postgres
+- [`docs/install-binary.ru.md`](docs/install-binary.ru.md): установка из npm-пакета или release-бинарника (собственный Postgres) и запуск как systemd / launchd-сервис
+- [`docs/quickstart.md`](docs/quickstart.md): dev-окружение за 5 минут (предполагается, что вы уже знаете, из чего всё состоит)
+- [`docs/operator-guide.md`](docs/operator-guide.md): справочник по деплою и эксплуатации для околопродакшен-сетапов
+- [`docs/integration-guide.md`](docs/integration-guide.md): как написать внешнюю интеграцию на любом языке
+- [`VERSIONING.md`](VERSIONING.md): стратегия версионирования (major-as-generation)
+- [`CHANGELOG.md`](CHANGELOG.md): история релизов
 
 ## Тесты
 
@@ -469,7 +471,7 @@ Playwright-harness запланирован как follow-up.
 
 ## Связь с v1
 
-v1 (`Opendray/opendray`) — это легаси-кодбейс, теперь архивный. v2 —
+v1 (`Opendray/opendray`) это легаси-кодбейс, теперь архивный. v2 это
 текущее и активное поколение, feature-complete и единственная ветка,
 в которой ведётся разработка. Из 16 builtin'ов v1 четыре переехали в
 бэкенд v2; остальные стали клиентскими фичами, channel-адаптерами или
@@ -477,5 +479,5 @@ v1 (`Opendray/opendray`) — это легаси-кодбейс, теперь а
 
 ## Лицензия
 
-Apache 2.0 — см. [`LICENSE`](LICENSE). (v1 был под MIT; v2 лицензирован
+Apache 2.0, см. [`LICENSE`](LICENSE). (v1 был под MIT; v2 лицензирован
 независимо.)
