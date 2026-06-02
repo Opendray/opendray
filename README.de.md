@@ -446,6 +446,12 @@ Den Frontend-Stack (React + Vite + Tailwind v4 + shadcn/ui + TanStack
 Router/Query + Zustand + xterm.js) und Notes pro W-Milestone findest du in
 [`app/web/README.md`](app/web/README.md).
 
+## Mobile-App
+
+`app/mobile/` ist eine Flutter-App für **iOS und Android** mit Feature-Parität zum Web-Admin. Sie klinkt sich über HTTPS in ein laufendes Gateway ein — gib beim ersten Start die **Gateway URL** + die Admin-Anmeldedaten ein, und du bekommst dieselben Sessions- / Channels- / Integrations- / Memory- / Git-Oberflächen. Einen App-Store- / Play-Store-Build gibt es bewusst nicht (Self-hosted, Single-Tenant): Du baust sie selbst und signierst sie mit deiner eigenen Identität.
+
+**[→ Bau- & Installationsanleitung](docs/mobile-app.de.md)** — mach das Gateway vom Smartphone aus erreichbar, dann ein Android-APK sideloaden oder per Xcode aufs iPhone installieren.
+
 ## Dokumentation
 
 - [`docs/getting-started.md`](docs/getting-started.md): **fang hier an**, wenn du neu bist. Von null bis zur ersten Session in 15 Minuten, inklusive Installation der gewrappten CLIs und Postgres-Bootstrap

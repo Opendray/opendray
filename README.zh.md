@@ -436,6 +436,12 @@ go build ./cmd/opendray               # 把 dist 打进二进制
 Router/Query + Zustand + xterm.js)和每个 W 里程碑笔记见
 [`app/web/README.md`](app/web/README.md)。
 
+## 移动 App
+
+`app/mobile/` 是一个面向 **iOS 和 Android** 的 Flutter app，功能与网页后台完全对齐。它通过 HTTPS 连接到运行中的网关 —— 首次启动时填入 **Gateway URL** + admin 登录信息，即可获得同样的会话 / Channel / Integration / Memory / Git 各个 surface。按设计没有 App Store / Play Store 构建（自托管、单租户）：由你自己构建，并用你自己的身份签名。
+
+**[→ 构建与安装指南](docs/mobile-app.zh.md)** —— 让手机能访问到网关，然后旁加载 Android APK，或通过 Xcode 装到 iPhone 上。
+
 ## 文档
 
 - [`docs/getting-started.zh.md`](docs/getting-started.zh.md)：**新手从这开始**,零到首次会话 15 分钟,含装 wrap 的 CLI + bootstrap Postgres + 收第一条 Telegram 通知

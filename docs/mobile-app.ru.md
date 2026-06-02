@@ -1,5 +1,7 @@
 # Мобильное приложение — сборка и установка
 
+🌐 [English](mobile-app.md) · [简体中文](mobile-app.zh.md) · [فارسی](mobile-app.fa.md) · [Español](mobile-app.es.md) · [Português](mobile-app.pt-BR.md) · [日本語](mobile-app.ja.md) · [한국어](mobile-app.ko.md) · [Français](mobile-app.fr.md) · [Deutsch](mobile-app.de.md) · **Русский**
+
 Мобильное приложение opendray (`app/mobile/`) — это **клиент управления**, а
 не второй шлюз. Оно выполняет ту же работу, что и веб-админка по адресу
 `/admin/`: запускает и ведёт сессии, управляет каналами и интеграциями,

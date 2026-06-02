@@ -446,6 +446,12 @@ go build ./cmd/opendray               # bakes dist into the binary
 Zustand + xterm.js）や、W マイルストーンごとのノートについては
 [`app/web/README.md`](app/web/README.md) を参照してください。
 
+## モバイルアプリ
+
+`app/mobile/` は **iOS と Android** 向けの Flutter アプリで、web 管理画面と同等の機能を備えています。HTTPS 経由で稼働中のゲートウェイに接続し、初回起動時に **Gateway URL** と管理者ログインを入力すると、同じ Sessions / Channels / Integrations / Memory / Git のサーフェスがそのまま使えます。App Store / Play Store 向けのビルドは設計上あえて用意していません（セルフホスト、シングルテナント）。自分でビルドし、自分の identity で署名してください。
+
+**[→ ビルドとインストールのガイド](docs/mobile-app.ja.md)** — まずゲートウェイをスマートフォンから到達可能にし、そのうえで Android APK をサイドロードするか、Xcode で iPhone にインストールします。
+
 ## ドキュメント
 
 - [`docs/getting-started.md`](docs/getting-started.md): はじめての方は **まずここから**。ラップ対象の CLI のインストールや Postgres のブートストラップも含めて、ゼロから最初のセッションまでを 15 分で

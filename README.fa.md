@@ -600,6 +600,18 @@ go build ./cmd/opendray      # bakes dist into the binary
 
 ---
 
+<h2 dir="rtl" align="right">اپ موبایل</h2>
+
+<p dir="rtl" align="right">
+<code>app/mobile/</code> یک Flutter app برای iOS و Android است که از نظر featureها با web admin برابری دارد. از طریق HTTPS به یک gateway فعال وصل می‌شود — در اولین اجرا <code>Gateway URL</code> و اطلاعات ورود admin را وارد می‌کنید و همان surfaceهای Sessions / Channels / Integrations / Memory / Git را در اختیار می‌گیرید. به‌صورت عمدی هیچ build مربوط به App Store / Play Store وجود ندارد (self-hosted و single-tenant): خودتان آن را build می‌کنید و با هویت خودتان امضایش می‌کنید.
+</p>
+
+<p dir="rtl" align="right">
+<strong>← <a href="docs/mobile-app.fa.md">راهنمای build و نصب</a></strong> — کاری کنید gateway از گوشی در دسترس باشد، بعد یک Android APK را sideload کنید یا با Xcode روی iPhone نصبش کنید.
+</p>
+
+---
+
 <h2 dir="rtl" align="right">مستندات</h2>
 
 <ul dir="rtl" align="right">

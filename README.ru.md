@@ -449,6 +449,19 @@ go build ./cmd/opendray               # bakes dist into the binary
 (React + Vite + Tailwind v4 + shadcn/ui + TanStack Router/Query +
 Zustand + xterm.js) и заметки по W-майлстоунам.
 
+## Мобильное приложение
+
+`app/mobile/` — это Flutter-приложение для **iOS и Android** с полным паритетом
+функций с веб-админкой. Оно подключается к работающему шлюзу по HTTPS — укажите
+**Gateway URL** и логин администратора при первом запуске, и вы получаете те же
+поверхности Sessions / Channels / Integrations / Memory / Git. Сборки в App Store /
+Play Store нет by design (self-hosted, single-tenant): вы собираете приложение сами
+и подписываете его собственной идентичностью.
+
+**[→ Гайд по сборке и установке](docs/mobile-app.ru.md)** — сделайте шлюз доступным
+с телефона, затем установите Android-APK через sideload или поставьте на iPhone
+через Xcode.
+
 ## Документация
 
 - [`docs/getting-started.md`](docs/getting-started.md): **начинайте отсюда**, если вы новичок: от нуля до первой сессии за 15 минут, включая установку оборачиваемых CLI и bootstrap Postgres

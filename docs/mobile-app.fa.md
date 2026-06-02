@@ -2,6 +2,10 @@
 
 # اپ موبایل — build و نصب
 
+<p dir="ltr" align="center">
+🌐 <a href="mobile-app.md">English</a> · <a href="mobile-app.zh.md">简体中文</a> · <strong>فارسی</strong> · <a href="mobile-app.es.md">Español</a> · <a href="mobile-app.pt-BR.md">Português</a> · <a href="mobile-app.ja.md">日本語</a> · <a href="mobile-app.ko.md">한국어</a> · <a href="mobile-app.fr.md">Français</a> · <a href="mobile-app.de.md">Deutsch</a> · <a href="mobile-app.ru.md">Русский</a>
+</p>
+
 اپ موبایل opendray (`app/mobile/`) یک **کلاینت کنترل** است، نه یک gateway دوم. همان کاری را می‌کند که web admin روی `/admin/` انجام می‌دهد: ساختن و راندن سشن‌ها، مدیریت channelها و integrationها، مرور حافظه، خواندن git hostها. خودِ agentها همچنان روی gateway host شما در حال اجرا می‌مانند — گوشی فقط به آن‌ها وصل می‌شود.
 
 به همین خاطر، اپ به‌تنهایی به‌دردنخور است: از طریق HTTPS به یک **gateway فعالِ opendray** وصل می‌شود. اول gateway را بالا بیاورید ([getting-started](getting-started.md))، بعد اپ را build کنید و آن را به URL gateway خودتان نشانه بگیرید.

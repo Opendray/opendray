@@ -10,8 +10,11 @@ itself.
 Full walkthrough — Android APK sideload and iOS install via Xcode,
 plus making the gateway reachable from the phone:
 
-- [`docs/mobile-app.md`](../../docs/mobile-app.md) (English)
-- [`docs/mobile-app.zh.md`](../../docs/mobile-app.zh.md) (简体中文)
+**[→ `docs/mobile-app.md`](../../docs/mobile-app.md)**
+
+Available in 10 languages (English, 简体中文, فارسی, Español, Português,
+日本語, 한국어, Français, Deutsch, Русский) — use the language switcher at
+the top of the guide.
 
 ## Quick reference
 

@@ -1,5 +1,7 @@
 # App mobile — build e instalação
 
+🌐 [English](mobile-app.md) · [简体中文](mobile-app.zh.md) · [فارسی](mobile-app.fa.md) · [Español](mobile-app.es.md) · **Português** · [日本語](mobile-app.ja.md) · [한국어](mobile-app.ko.md) · [Français](mobile-app.fr.md) · [Deutsch](mobile-app.de.md) · [Русский](mobile-app.ru.md)
+
 O app mobile do opendray (`app/mobile/`) é um **cliente de controle**, não um
 segundo gateway. Ele faz o mesmo trabalho do admin web em `/admin/`: cria e
 conduz sessões, gerencia canais e integrações, navega pela memória, lê hosts
