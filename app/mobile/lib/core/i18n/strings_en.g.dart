@@ -9929,12 +9929,6 @@ class TranslationsSessionsInspectorTasksEn {
 	/// en: 'Runs in a new shell session and switches to it'
 	String get runCommandSubtitle => 'Runs in a new shell session and switches to it';
 
-	/// en: 'Insert command'
-	String get insertCommand => 'Insert command';
-
-	/// en: 'Pastes without return so you can edit'
-	String get insertCommandSubtitle => 'Pastes without return so you can edit';
-
 	/// en: 'Filter tasks…'
 	String get filterHint => 'Filter tasks…';
 
@@ -15802,8 +15796,6 @@ extension on Translations {
 			'sessions.inspector.git.tabLog' => 'Log',
 			'sessions.inspector.tasks.runCommand' => 'Run command',
 			'sessions.inspector.tasks.runCommandSubtitle' => 'Runs in a new shell session and switches to it',
-			'sessions.inspector.tasks.insertCommand' => 'Insert command',
-			'sessions.inspector.tasks.insertCommandSubtitle' => 'Pastes without return so you can edit',
 			'sessions.inspector.tasks.filterHint' => 'Filter tasks…',
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => 'No tasks match "${query}"',
 			'sessions.inspector.tasks.emptyTitle' => 'No tasks in this folder',
@@ -15838,10 +15830,10 @@ extension on Translations {
 			'sessions.inspector.notes.noProjectMapping' => 'Could not resolve a project mapping for this session. Check that the gateway has a notes vault configured and that the session cwd is set.',
 			'sessions.inspector.notes.emptyProjectDocs' => 'No project docs yet. Tap + to create one, or let an AI agent generate from a prompt.',
 			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => 'No matches for "${query}".',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.locationDialogHelp' => 'Pin this session\'s cwd to a specific folder under your notes vault. Leave blank to reset.',
 			'sessions.inspector.notes.sessionCwd' => 'Session cwd',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.projectDocsPath' => 'Vault-relative project docs path',
 			'sessions.inspector.notes.locationStoredHint' => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
@@ -16352,10 +16344,10 @@ extension on Translations {
 			'backupTargetEditor.kinds.sftp.label' => 'SFTP',
 			'backupTargetEditor.kinds.sftp.description' => 'Any SSH-accessible server',
 			'backupTargetEditor.kinds.s3.label' => 'S3 / compatible',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.kinds.s3.description' => 'Amazon S3 + S3-compatible buckets (MinIO, R2, B2)',
 			'backupTargetEditor.kinds.rclone.label' => 'rclone (any)',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.kinds.rclone.description' => 'OneDrive, Google Drive, Dropbox via the rclone CLI',
 			'backupTargetEditor.formTitleEdit' => 'Edit target',
 			'backupTargetEditor.formTitleNew' => 'New backup target',
@@ -16866,10 +16858,10 @@ extension on Translations {
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => 'Loaded from: ${path}',
 			'settings.serverSettings.restartHint' => 'Most sections need a gateway restart to take effect. The restart button is in the AppBar.',
 			'settings.serverSettings.savedNeedsRestart' => 'Saved. Restart the gateway to apply.',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.savedSimple' => 'Saved.',
 			'settings.serverSettings.changesNeedRestart' => 'Changes to this section need a gateway restart.',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.loadFailed' => 'Failed to load server settings',
 			'settings.serverSettings.sections.general' => 'General',
 			'settings.serverSettings.sections.logging' => 'Logging',

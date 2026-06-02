@@ -28,14 +28,12 @@ import 'package:yaml/yaml.dart';
 //   • custom tasks                (/api/v1/custom-tasks, global + cwd-scoped)
 //
 // Manifest contents are pulled via /fs/read and parsed on-device.
-// Tapping a task offers two actions:
-//
-//   • Run command — spawns a new shell session nested under this one
-//     (cwd inherited), runs the command there, and navigates to it.
-//     Matches the web Task Runner: the command hits a real shell, not
-//     whatever CLI is sitting in the current session's prompt.
-//   • Insert command — pastes the command (no newline) into the
-//     current session so the user can edit before sending.
+// Tapping a task spawns a new shell session nested under the current
+// one (cwd inherited), runs the command there, and navigates to it —
+// exactly like the web Task Runner. We deliberately never paste into
+// the current session: it's usually a cloud agent (claude/codex/…),
+// not a shell, so the command would just land in that CLI's prompt
+// instead of executing.
 //
 // Parsing is intentionally lightweight: we only resolve the flat
 // `tasks: <name>: cmds: …` Taskfile shape, presence-detect Cargo/Go,
@@ -295,7 +293,7 @@ class _TasksTabState extends ConsumerState<TasksTab>
   }
 
   Future<void> _onTaskTap(_Task task) async {
-    final action = await showModalBottomSheet<_TaskAction>(
+    final confirmed = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
@@ -338,25 +336,15 @@ class _TasksTabState extends ConsumerState<TasksTab>
               leading: const Icon(Icons.play_arrow),
               title: Text(t.sessions.inspector.tasks.runCommand),
               subtitle: Text(t.sessions.inspector.tasks.runCommandSubtitle),
-              onTap: () => Navigator.of(sheetCtx).pop(_TaskAction.run),
-            ),
-            ListTile(
-              leading: const Icon(Icons.content_paste_go),
-              title: Text(t.sessions.inspector.tasks.insertCommand),
-              subtitle: Text(t.sessions.inspector.tasks.insertCommandSubtitle),
-              onTap: () => Navigator.of(sheetCtx).pop(_TaskAction.insert),
+              onTap: () => Navigator.of(sheetCtx).pop(true),
             ),
             const SizedBox(height: 4),
           ],
         ),
       ),
     );
-    if (action == null || !mounted) return;
-    if (action == _TaskAction.run) {
-      await _runInNewShell(task);
-    } else {
-      await _insertIntoCurrent(task.runCommand);
-    }
+    if (confirmed != true || !mounted) return;
+    await _runInNewShell(task);
   }
 
   // Run a task the way the web Task Runner does: spawn a fresh shell
@@ -390,43 +378,6 @@ class _TasksTabState extends ConsumerState<TasksTab>
         ),
       );
       unawaited(context.push('/session/${created.id}'));
-    } on ApiException catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            t.sessions.inspector.shared.insertFailedApi(
-              status: e.statusCode.toString(),
-              message: e.message,
-            ),
-          ),
-        ),
-      );
-    } on Object catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            t.sessions.inspector.shared.insertFailedGeneric(error: e.toString()),
-          ),
-        ),
-      );
-    }
-  }
-
-  // Insert the command (no newline) into the current session's PTY so
-  // the operator can tweak it before sending — the mobile-only escape
-  // hatch the web panel doesn't offer.
-  Future<void> _insertIntoCurrent(String cmd) async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await ref.read(sessionsApiProvider).input(widget.sessionId, cmd);
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Inserted: $cmd'),
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
     } on ApiException catch (e) {
       messenger.showSnackBar(
         SnackBar(
@@ -535,8 +486,6 @@ class _TasksTabState extends ConsumerState<TasksTab>
     );
   }
 }
-
-enum _TaskAction { run, insert }
 
 class _Header extends StatelessWidget {
   const _Header({required this.cwd, required this.onRefresh});

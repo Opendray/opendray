@@ -2620,8 +2620,6 @@
       "tasks": {
         "runCommand": "Run command",
         "runCommandSubtitle": "Runs in a new shell session and switches to it",
-        "insertCommand": "Insert command",
-        "insertCommandSubtitle": "Pastes without return so you can edit",
         "filterHint": "Filter tasks…",
         "noMatch": "No tasks match \"{query}\"",
         "emptyTitle": "No tasks in this folder",

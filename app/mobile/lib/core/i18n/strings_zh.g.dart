@@ -5181,8 +5181,6 @@ class _TranslationsSessionsInspectorTasksZh extends TranslationsSessionsInspecto
 	// Translations
 	@override String get runCommand => '运行命令';
 	@override String get runCommandSubtitle => '在新的 shell 会话中运行并切换过去';
-	@override String get insertCommand => '插入命令';
-	@override String get insertCommandSubtitle => '粘贴但不回车，方便编辑';
 	@override String get filterHint => '筛选任务…';
 	@override String noMatch({required Object query}) => '没有匹配“${query}”的任务';
 	@override String get emptyTitle => '此目录没有任务';
@@ -9391,8 +9389,6 @@ extension on TranslationsZh {
 			'sessions.inspector.git.tabLog' => '日志',
 			'sessions.inspector.tasks.runCommand' => '运行命令',
 			'sessions.inspector.tasks.runCommandSubtitle' => '在新的 shell 会话中运行并切换过去',
-			'sessions.inspector.tasks.insertCommand' => '插入命令',
-			'sessions.inspector.tasks.insertCommandSubtitle' => '粘贴但不回车，方便编辑',
 			'sessions.inspector.tasks.filterHint' => '筛选任务…',
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => '没有匹配“${query}”的任务',
 			'sessions.inspector.tasks.emptyTitle' => '此目录没有任务',
@@ -9428,10 +9424,10 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.emptyProjectDocs' => '暂无项目文档。点击 + 创建一个，或让 AI agent 根据提示生成。',
 			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => '未找到匹配「${query}」的内容。',
 			'sessions.inspector.notes.locationDialogHelp' => '将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.sessionCwd' => '会话 cwd',
 			'sessions.inspector.notes.projectDocsPath' => '相对笔记库的项目文档路径',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
 			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
@@ -9942,10 +9938,10 @@ extension on TranslationsZh {
 			'backupTargetEditor.kinds.sftp.description' => '任何可 SSH 访问的服务器',
 			'backupTargetEditor.kinds.s3.label' => 'S3 / 兼容',
 			'backupTargetEditor.kinds.s3.description' => 'Amazon S3 + S3 兼容存储桶（MinIO、R2、B2）',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.kinds.rclone.label' => 'rclone（任意）',
 			'backupTargetEditor.kinds.rclone.description' => '通过 rclone CLI 访问 OneDrive、Google Drive、Dropbox',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.formTitleEdit' => '编辑目标',
 			'backupTargetEditor.formTitleNew' => '新建备份目标',
 			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => '自动：${prefix}-1',
@@ -10456,10 +10452,10 @@ extension on TranslationsZh {
 			'settings.serverSettings.restartHint' => '大部分配置需要重启网关后生效。重启按钮在 AppBar 中。',
 			'settings.serverSettings.savedNeedsRestart' => '已保存。重启网关以生效。',
 			'settings.serverSettings.savedSimple' => '已保存。',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.changesNeedRestart' => '此配置的修改需重启网关。',
 			'settings.serverSettings.loadFailed' => '加载服务器设置失败',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.sections.general' => '通用',
 			'settings.serverSettings.sections.logging' => '日志',
 			'settings.serverSettings.sections.sessions' => '会话',
