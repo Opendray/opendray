@@ -56,6 +56,54 @@ AI 코딩 CLI를 매일 사용하면서 마주치는 세 가지 불편함, opend
 - 🔑 **Multi-Claude 계정 플릿** — 여러 `claude login` 계정을 게이트웨이에 넣어두면, 패널이 파일시스템 워처로 자동 감지하고 활성화된 계정들 사이에서 새 세션을 균형 있게 분배합니다. 실행 중인 세션을 **대화 흐름을 잃지 않고** 다른 계정으로 전환할 수도 있습니다(transcript가 내부적으로 마이그레이션됩니다). 각 계정 행에는 현재 capacity(subscription tier, rate-limit tier, 활성 세션 수, 마지막 사용 시각, 현재 Anthropic 이메일)가 실시간으로 표시되어 한눈에 적절한 계정을 고를 수 있습니다.
 - 🔒 **Self-hosted, 명확한 라이선스** — Apache 2.0, 단일 정적 바이너리, cosign 서명된 release와 SPDX SBOM을 제공합니다. 텔레메트리 없음, 클라우드 계정 없음, 구독 없음.
 
+## 한눈에 보는 아키텍처
+
+하나의 Go 바이너리가 호스트에서 모든 것을 처리합니다. 클라이언트는 HTTP/WebSocket을 통해 세션을 제어하고, 세션 매니저는 각 AI CLI를 독립된 PTY에서 실행하며, 메모리 레이어는 공유 상태를 Postgres에 저장하고 벡터 임베딩은 사용자가 선택한 프로바이더에서 가져옵니다.
+
+```mermaid
+flowchart LR
+    subgraph clients [Clients]
+        web[Web admin<br/>React SPA]
+        mob[Mobile app<br/>Flutter]
+        chat[Chat<br/>Telegram, Slack,<br/>Discord, Feishu,<br/>DingTalk, WeCom]
+        api[Third-party apps<br/>REST + WS]
+    end
+
+    subgraph gw [opendray gateway · single Go binary on your host]
+        direction TB
+        http[HTTP + WS<br/>chi · auth · audit]
+        sess[Session manager<br/>PTY · ring buffer]
+        mem[Memory layer<br/>three-domain retrieval]
+    end
+
+    subgraph cli [AI CLIs · spawned via PTY]
+        cc[Claude Code]
+        co[Codex]
+        ge[Gemini]
+        sh[Shell]
+    end
+
+    subgraph data [Persistence · stays on your network]
+        pg[(PostgreSQL<br/>+ pgvector)]
+        em[ONNX · Ollama<br/>LM Studio embeddings]
+    end
+
+    clients --> http
+    http --> sess
+    http --> mem
+    sess --> cc
+    sess --> co
+    sess --> ge
+    sess --> sh
+    sess -.-> mem
+    mem --> pg
+    mem --> em
+```
+
+다이어그램의 모든 요소는 사용자 네트워크 안에서 동작합니다. 클라우드 의존성 없음, 네트워크 밖 추론 없음.
+
+---
+
 ## 현황
 
 **v2.7.0** (최신) — v2 세대는 계속 이터레이션 중입니다.

@@ -56,6 +56,54 @@
 - 🔑 **多 Claude 账户调度** —— 把多个 `claude login` 账户丢进网关,面板通过文件系统 watcher 自动发现;新会话在已启用的账户间均衡分配,**切换正在运行的会话到另一个账户也不会丢失对话**(后台自动迁移 transcript)。每行会显示该账户的实时容量(订阅套餐、限速档位、活动会话数、最近使用时间、当前 Anthropic 邮箱),一眼就能挑对账户。
 - 🔒 **自托管 + 许可证清晰** —— Apache 2.0、单一静态二进制、cosign 签名的 release 自带 SPDX SBOM。零遥测、不依赖云账号、无订阅。
 
+## 架构一览
+
+一个 Go binary 跑在你的 host 上撑起整个系统。clients 通过 HTTP/WebSocket 驱动 session，session manager 用独立 PTY 拉起每个 AI CLI，memory layer 把共享 state 存进 Postgres，并通过你自己的 provider 计算 vector embeddings。
+
+```mermaid
+flowchart LR
+    subgraph clients [Clients]
+        web[Web admin<br/>React SPA]
+        mob[Mobile app<br/>Flutter]
+        chat[Chat<br/>Telegram, Slack,<br/>Discord, Feishu,<br/>DingTalk, WeCom]
+        api[Third-party apps<br/>REST + WS]
+    end
+
+    subgraph gw [opendray gateway · single Go binary on your host]
+        direction TB
+        http[HTTP + WS<br/>chi · auth · audit]
+        sess[Session manager<br/>PTY · ring buffer]
+        mem[Memory layer<br/>three-domain retrieval]
+    end
+
+    subgraph cli [AI CLIs · spawned via PTY]
+        cc[Claude Code]
+        co[Codex]
+        ge[Gemini]
+        sh[Shell]
+    end
+
+    subgraph data [Persistence · stays on your network]
+        pg[(PostgreSQL<br/>+ pgvector)]
+        em[ONNX · Ollama<br/>LM Studio embeddings]
+    end
+
+    clients --> http
+    http --> sess
+    http --> mem
+    sess --> cc
+    sess --> co
+    sess --> ge
+    sess --> sh
+    sess -.-> mem
+    mem --> pg
+    mem --> em
+```
+
+整张图里的所有组件都跑在你自己的 network 上。没有 cloud 依赖，也没有任何 inference 跑出你的网络。
+
+---
+
 ## 当前状态
 
 **v2.7.0**(最新)—— v2 代持续迭代。

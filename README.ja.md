@@ -56,6 +56,54 @@ AI コーディング CLI を日々使う中で生じる 3 つの摩擦を解消
 - 🔑 **複数 Claude アカウントによるフリート運用** — 複数の `claude login` アカウントをゲートウェイに登録すると、パネルがファイルシステムウォッチャーで自動検出し、新規セッションを有効なアカウント間で負荷分散します。さらに、動作中のセッションを別のアカウントへ **会話を失わずに** 切り替えることも可能です（裏側でトランスクリプトを移行します）。各アカウントの行には、現在のキャパシティ（subscription tier、rate-limit tier、アクティブセッション数、最終使用日時、現在の Anthropic メールアドレス）がライブで表示され、適切なものを一目で選べます。
 - 🔒 **セルフホスト、ライセンスも明快** — Apache 2.0、単一の静的バイナリ、cosign 署名済みリリースと SPDX SBOM 付き。テレメトリ、クラウドアカウント、サブスクリプションは一切ありません。
 
+## アーキテクチャ概観
+
+1 つの Go バイナリがホスト上ですべてを動かします。クライアントは HTTP/WebSocket を通じてセッションを操作し、セッションマネージャーは各 AI CLI を独立した PTY で起動し、メモリレイヤーは共有ステートを Postgres に保存しつつ、ベクトル埋め込みは自前のプロバイダーから取得します。
+
+```mermaid
+flowchart LR
+    subgraph clients [Clients]
+        web[Web admin<br/>React SPA]
+        mob[Mobile app<br/>Flutter]
+        chat[Chat<br/>Telegram, Slack,<br/>Discord, Feishu,<br/>DingTalk, WeCom]
+        api[Third-party apps<br/>REST + WS]
+    end
+
+    subgraph gw [opendray gateway · single Go binary on your host]
+        direction TB
+        http[HTTP + WS<br/>chi · auth · audit]
+        sess[Session manager<br/>PTY · ring buffer]
+        mem[Memory layer<br/>three-domain retrieval]
+    end
+
+    subgraph cli [AI CLIs · spawned via PTY]
+        cc[Claude Code]
+        co[Codex]
+        ge[Gemini]
+        sh[Shell]
+    end
+
+    subgraph data [Persistence · stays on your network]
+        pg[(PostgreSQL<br/>+ pgvector)]
+        em[ONNX · Ollama<br/>LM Studio embeddings]
+    end
+
+    clients --> http
+    http --> sess
+    http --> mem
+    sess --> cc
+    sess --> co
+    sess --> ge
+    sess --> sh
+    sess -.-> mem
+    mem --> pg
+    mem --> em
+```
+
+図に出てくるものはすべて自前のネットワーク内で動作します。クラウド依存もなく、推論もネットワーク外には出ません。
+
+---
+
 ## ステータス
 
 **v2.7.0**（最新）— v2 世代は引き続き進化を続けています。major-as-generation（major = 製品世代であり、SemVer 厳密な意味での「破壊的変更」ではない）方針については
