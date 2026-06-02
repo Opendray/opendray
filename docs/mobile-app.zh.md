@@ -1,5 +1,7 @@
 # 移动 App —— 构建与安装
 
+🌐 [English](mobile-app.md) · **简体中文** · [فارسی](mobile-app.fa.md) · [Español](mobile-app.es.md) · [Português](mobile-app.pt-BR.md) · [日本語](mobile-app.ja.md) · [한국어](mobile-app.ko.md) · [Français](mobile-app.fr.md) · [Deutsch](mobile-app.de.md) · [Русский](mobile-app.ru.md)
+
 opendray 移动 App（`app/mobile/`）是一个**控制端客户端**，并不是第二个网关。
 它和网页后台 `/admin/` 做的是同一件事：创建并驱动会话、管理 channel 与
 integration、浏览 memory、查看 git host。Agent 本身始终运行在你的网关主机上 ——

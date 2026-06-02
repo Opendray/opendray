@@ -1,5 +1,7 @@
 # モバイルアプリ — ビルドとインストール
 
+🌐 [English](mobile-app.md) · [简体中文](mobile-app.zh.md) · [فارسی](mobile-app.fa.md) · [Español](mobile-app.es.md) · [Português](mobile-app.pt-BR.md) · **日本語** · [한국어](mobile-app.ko.md) · [Français](mobile-app.fr.md) · [Deutsch](mobile-app.de.md) · [Русский](mobile-app.ru.md)
+
 opendray モバイルアプリ（`app/mobile/`）は **コントロールクライアント** であり、
 2 台目のゲートウェイではありません。`/admin/` の web 管理画面と同じ仕事をします:
 セッションの起動と操作、チャンネルと連携の管理、メモリの閲覧、

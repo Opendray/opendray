@@ -1,5 +1,7 @@
 # 모바일 앱 — 빌드 및 설치
 
+🌐 [English](mobile-app.md) · [简体中文](mobile-app.zh.md) · [فارسی](mobile-app.fa.md) · [Español](mobile-app.es.md) · [Português](mobile-app.pt-BR.md) · [日本語](mobile-app.ja.md) · **한국어** · [Français](mobile-app.fr.md) · [Deutsch](mobile-app.de.md) · [Русский](mobile-app.ru.md)
+
 opendray 모바일 앱(`app/mobile/`)은 **컨트롤 클라이언트**이며,
 두 번째 게이트웨이가 아닙니다. `/admin/`의 웹 어드민과 동일한 일을 합니다:
 세션을 spawn하고 조작하며, 채널과 통합을 관리하고, 메모리를 탐색하고,

@@ -440,6 +440,20 @@ See [`app/web/README.md`](app/web/README.md) for the frontend stack
 (React + Vite + Tailwind v4 + shadcn/ui + TanStack Router/Query +
 Zustand + xterm.js) and per-W milestone notes.
 
+## Mobile app
+
+`app/mobile/` is a Flutter app for **iOS and Android** with feature
+parity with the web admin. It attaches to a running gateway over HTTPS —
+enter the **Gateway URL** + admin login on first launch and you get the
+same Sessions / Channels / Integrations / Memory / Git surfaces. There's
+no App Store / Play Store build by design (self-hosted, single-tenant):
+you build it yourself and sign it with your own identity.
+
+**[→ Build & install guide](docs/mobile-app.md)** — make the gateway
+reachable from the phone, then sideload an Android APK or install on
+iPhone via Xcode. ([all 10 languages](docs/mobile-app.md) — switch at the
+top of the guide.)
+
 ## Documentation
 
 - [`docs/getting-started.md`](docs/getting-started.md): **start here** if you're new. Zero to first session in 15 minutes, including installing the wrapped CLIs and bootstrapping Postgres.

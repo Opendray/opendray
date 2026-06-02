@@ -444,6 +444,12 @@ go build ./cmd/opendray               # bakes dist into the binary
 Zustand + xterm.js) 및 W 마일스톤별 노트는 [`app/web/README.md`](app/web/README.md)에서
 확인할 수 있습니다.
 
+## 모바일 앱
+
+`app/mobile/`은 **iOS와 Android**를 위한 Flutter 앱으로, 웹 어드민과 동일한 기능을 제공합니다. 실행 중인 게이트웨이에 HTTPS로 접속합니다 — 최초 실행 시 **Gateway URL** + 어드민 로그인을 입력하면, 동일한 Sessions / Channels / Integrations / Memory / Git 표면을 그대로 사용할 수 있습니다. 설계상 App Store / Play Store 빌드는 제공하지 않습니다(self-hosted, single-tenant). 직접 빌드하고 본인의 인증서로 서명합니다.
+
+**[→ 빌드 및 설치 가이드](docs/mobile-app.ko.md)** — 휴대폰에서 게이트웨이에 접근할 수 있게 한 뒤, Android APK를 사이드로드하거나 Xcode로 iPhone에 설치하세요.
+
 ## 문서
 
 - [`docs/getting-started.md`](docs/getting-started.md): 처음이라면 **여기서 시작**. 감싸는 CLI 설치와 Postgres 부트스트랩을 포함해 15분 만에 첫 세션까지

@@ -1,5 +1,7 @@
 # App móvil — compilar e instalar
 
+🌐 [English](mobile-app.md) · [简体中文](mobile-app.zh.md) · [فارسی](mobile-app.fa.md) · **Español** · [Português](mobile-app.pt-BR.md) · [日本語](mobile-app.ja.md) · [한국어](mobile-app.ko.md) · [Français](mobile-app.fr.md) · [Deutsch](mobile-app.de.md) · [Русский](mobile-app.ru.md)
+
 La app móvil de opendray (`app/mobile/`) es un **cliente de control**, no un
 segundo gateway. Hace el mismo trabajo que el panel de administración web en `/admin/`:
 lanzar y dirigir sesiones, gestionar canales e integraciones, explorar
