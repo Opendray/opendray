@@ -98,7 +98,20 @@ npm install -g opendray
 npx opendray
 ```
 
-정적 바이너리만 원할 때 — 마법사 없음, 서비스 등록 없음, Postgres 설정 없음. 스크립트 환경, 일회성 러너, 또는 이미 자체 배포 시스템이 있는 경우에 유용합니다. 패키지는 `optionalDependencies`를 통해 해당 플랫폼 바이너리 (`opendray-{linux,darwin}-{x64,arm64}`)를 가져옵니다 (esbuild / Biome 와 동일한 패턴 — `postinstall` 없음, 설치 시 네트워크 호출 없음).
+**바이너리만** 설치됩니다 — 마법사 없음, 서비스 등록 없음, Postgres 설정 없음. 패키지는 `optionalDependencies`를 통해 해당 플랫폼 바이너리(`opendray-{linux,darwin}-{x64,arm64}`)를 가져옵니다(esbuild / Biome와 동일한 패턴 — `postinstall` 없음, 설치 시 네트워크 호출 없음). 스크립트 환경, 일회성 러너, 또는 이미 자체 Postgres와 프로세스 supervisor를 운영 중인 경우에 유용합니다.
+
+데이터베이스와 게이트웨이 시작은 직접 해야 합니다:
+
+```sh
+# 1. pgvector가 설치된 PostgreSQL 15+ — DSN을 지정하고 어드민 비밀번호를 설정합니다.
+export OPENDRAY_DATABASE_URL="postgres://opendray:pw@127.0.0.1:5432/opendray?sslmode=disable"
+export OPENDRAY_ADMIN_PASSWORD="$(openssl rand -base64 24)"
+# 2. 스키마를 적용한 뒤 실행합니다 (포그라운드).
+opendray migrate
+opendray serve        # → http://127.0.0.1:8770/admin/
+```
+
+전체 안내 — pgvector 설정, `config.toml`, systemd / launchd 서비스로 실행, 업데이트 방법 — 은 [**docs/install-binary.ko.md**](docs/install-binary.ko.md)에서 확인할 수 있습니다.
 
 ### 제거 (Linux / macOS)
 
@@ -147,6 +160,8 @@ sudo opendray start              # start | stop | restart | status — wraps sys
 | 🍎 **macOS LaunchDaemon** | 홈 서버용 Mac mini / Mac Studio | [프로덕션 deploy §C](#option-c--macos-launchd-mac-mini--studio-as-home-server) |
 | 🛠 **소스에서 빌드** | 개발 / 기여 / 커스텀 빌드 | 아래의 [Quickstart](#quickstart-5-minute-dev-path) |
 
+<a id="quickstart-5-minute-dev-path"></a>
+
 ## Quickstart (5분 개발 경로)
 
 사전 준비물과 트러블슈팅이 포함된 전체 가이드는 [`docs/quickstart.md`](docs/quickstart.md)를 참고하세요. 압축된 개발 경로는 다음과 같습니다:
@@ -174,11 +189,15 @@ go run ./cmd/opendray serve -config config.toml
 
 이 방식은 OpenDray를 포그라운드에서 실행합니다 — Ctrl-C로 종료됩니다. 장기 실행 데몬으로 띄우려면 아래의 **프로덕션 deploy**를 참고하세요.
 
+<a id="production-deploy"></a>
+
 ## 프로덕션 deploy
 
 지원되는 deploy 경로는 네 가지이며, 각자의 환경에 맞는 것을 고르면 됩니다.
 어느 쪽이든 crash 시 auto-restart, 영구 상태 유지, 시크릿과 config의
 분리를 보장합니다.
+
+<a id="option-a--systemd-bare-metal--vm--lxc"></a>
 
 ### Option A — systemd (베어메탈 / VM / LXC)
 
@@ -243,6 +262,8 @@ ls dist/                  # opendray_*_linux_amd64.tar.gz etc.
 
 Pre-flight: 최초 `serve` 이전에 `opendray migrate -config /etc/opendray/config.toml`을
 한 번 실행하거나, 사용 중인 supervisor의 pre-start 훅으로 걸어두세요.
+
+<a id="option-c--macos-launchd-mac-mini--studio-as-home-server"></a>
 
 ### Option C — macOS launchd (홈 서버용 Mac mini / Studio)
 
@@ -364,6 +385,7 @@ Zustand + xterm.js) 및 W 마일스톤별 노트는 [`app/web/README.md`](app/we
 ## 문서
 
 - [`docs/getting-started.md`](docs/getting-started.md) — 처음이라면 **여기서 시작**: 감싸는 CLI 설치와 Postgres 부트스트랩을 포함해 15분 만에 첫 세션까지
+- [`docs/install-binary.ko.md`](docs/install-binary.ko.md) — npm 패키지 또는 릴리즈 바이너리로 설치하고(Postgres는 직접 제공) systemd / launchd 서비스로 실행
 - [`docs/quickstart.md`](docs/quickstart.md) — 5분 개발 환경 (구성 요소를 이미 안다고 가정)
 - [`docs/operator-guide.md`](docs/operator-guide.md) — 프로덕션급 셋업을 위한 deploy + 운영 레퍼런스
 - [`docs/integration-guide.md`](docs/integration-guide.md) — 어떤 언어로든 외부 통합을 작성하는 방법

@@ -23,6 +23,7 @@ func TestMain(m *testing.M) {
 	}
 	defer func() { _ = os.RemoveAll(tmp) }()
 	_ = os.Setenv("HOME", tmp)
+	_ = os.Setenv("USERPROFILE", tmp) // Windows: os.UserHomeDir reads USERPROFILE
 	_ = os.Unsetenv(envOverride)
 	os.Exit(m.Run())
 }

@@ -187,7 +187,9 @@ export function NotesPage() {
     const cleaned = input
       .trim()
       .replace(/^\/+/, '')
-      .replace(/\.\.\/+/g, '')
+      .split('/')
+      .filter((seg) => seg !== '' && seg !== '..' && seg !== '.')
+      .join('/')
     if (!cleaned.toLowerCase().endsWith('.md')) {
       toast.error(t('web.notes.newNote.errorMustEndMd'))
       return

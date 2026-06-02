@@ -98,7 +98,20 @@ Ou roda sob demanda sem instalar:
 npx opendray
 ```
 
-Pra quando você quer só o binário estático — sem wizard, sem registro de serviço, sem setup de Postgres. Útil em ambientes com scripts, runners efêmeros, ou se você já tem seu próprio sistema de deploy. O pacote traz o binário de plataforma correspondente (`opendray-{linux,darwin}-{x64,arm64}`) via `optionalDependencies` (o padrão do esbuild / Biome — sem `postinstall`, sem chamada de rede durante a instalação).
+Instala **só o binário** — sem wizard, sem serviço, sem Postgres. O pacote traz o binário de plataforma correspondente (`opendray-{linux,darwin}-{x64,arm64}`) via `optionalDependencies` (o padrão do esbuild / Biome — sem `postinstall`, sem chamada de rede durante a instalação). Bom para ambientes com scripts, runners efêmeros, ou quando você já roda seu próprio Postgres e supervisor de processos.
+
+Você ainda traz um banco e sobe o gateway por conta própria:
+
+```sh
+# 1. PostgreSQL 15+ com pgvector — aponte um DSN para ele, defina uma senha de admin.
+export OPENDRAY_DATABASE_URL="postgres://opendray:pw@127.0.0.1:5432/opendray?sslmode=disable"
+export OPENDRAY_ADMIN_PASSWORD="$(openssl rand -base64 24)"
+# 2. Aplique o schema, depois rode (foreground).
+opendray migrate
+opendray serve        # → http://127.0.0.1:8770/admin/
+```
+
+Passo a passo completo — setup do pgvector, `config.toml`, rodar como serviço systemd / launchd e atualizar — em [**docs/install-binary.pt-BR.md**](docs/install-binary.pt-BR.md).
 
 ### Desinstalação (Linux / macOS)
 
@@ -147,6 +160,8 @@ Todo caminho suportado inclui spawn de sessões, acesso às AI-CLIs, backups cri
 | 🍎 **LaunchDaemon do macOS** | Mac mini / Mac Studio como servidor doméstico | [Deploy de produção §C](#option-c--macos-launchd-mac-mini--studio-as-home-server) |
 | 🛠 **Build a partir do código-fonte** | Desenvolvimento / contribuição / builds custom | [Quickstart](#quickstart-5-minute-dev-path) abaixo |
 
+<a id="quickstart-5-minute-dev-path"></a>
+
 ## Quickstart (caminho dev de 5 minutos)
 
 Pra um passo a passo completo com pré-requisitos e troubleshooting, veja [`docs/quickstart.md`](docs/quickstart.md). A versão condensada do caminho de dev:
@@ -174,11 +189,15 @@ go run ./cmd/opendray serve -config config.toml
 
 Isso roda o OpenDray em foreground — Ctrl-C derruba. Pra um daemon de longa duração, veja **Deploy de produção** abaixo.
 
+<a id="production-deploy"></a>
+
 ## Deploy de produção
 
 Quatro caminhos de deploy suportados; escolha o que casar com o seu ambiente.
 Cada um te dá auto-restart em caso de crash, estado persistente e
 separação dos segredos em relação ao config.
+
+<a id="option-a--systemd-bare-metal--vm--lxc"></a>
 
 ### Opção A — systemd (bare-metal / VM / LXC)
 
@@ -245,6 +264,8 @@ Depois aponta seu supervisor (s6, runit, supervisord, runwhen) pra:
 Pré-flight: rode `opendray migrate -config /etc/opendray/config.toml`
 uma vez antes do primeiro `serve`, ou como hook de pre-start no supervisor
 que você preferir.
+
+<a id="option-c--macos-launchd-mac-mini--studio-as-home-server"></a>
 
 ### Opção C — launchd no macOS (Mac mini / Studio como servidor doméstico)
 
@@ -367,6 +388,7 @@ Zustand + xterm.js) e notas por milestone W.
 ## Documentação
 
 - [`docs/getting-started.md`](docs/getting-started.md) — **comece por aqui** se você é novo: do zero até a primeira sessão em 15 minutos, incluindo a instalação das CLIs encapsuladas e o bootstrap do Postgres
+- [`docs/install-binary.pt-BR.md`](docs/install-binary.pt-BR.md) — instale pelo pacote npm ou um binário de release (traga seu próprio Postgres) e rode como serviço systemd / launchd
 - [`docs/quickstart.md`](docs/quickstart.md) — ambiente de dev em 5 minutos (assume que você já conhece as peças)
 - [`docs/operator-guide.md`](docs/operator-guide.md) — referência de deploy + ops pra setups mais próximos de produção
 - [`docs/integration-guide.md`](docs/integration-guide.md) — como escrever uma integração externa em qualquer linguagem

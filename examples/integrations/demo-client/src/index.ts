@@ -50,7 +50,7 @@ async function main() {
   step(2, 'Load credentials')
   const auth = await authenticate()
   ok(
-    `${auth.source} · integration ${auth.integrationId} · key ${truncateMid(auth.apiKey, 24)}`,
+    `${auth.source} · integration ${auth.integrationId}`,
   )
 
   // From here on the demo stops using any admin token (if we
@@ -244,7 +244,7 @@ async function rotateAndSave(prev: DemoState): Promise<DemoState> {
   }
   saveState(next)
   console.log(
-    `   ✓ rotated and saved new key (${truncateMid(api_key, 24)}) to ${STATE_PATH}`,
+    `   ✓ rotated and saved new key to ${STATE_PATH}`,
   )
   return next
 }
@@ -354,11 +354,6 @@ function step(n: number, title: string, detail?: string) {
 
 function ok(msg: string) {
   console.log(`   \x1b[32m✓\x1b[0m ${msg}`)
-}
-
-function truncateMid(s: string, head: number) {
-  if (s.length <= head) return s
-  return `${s.slice(0, head)}…${s.slice(-4)}`
 }
 
 function oneLine(o: Record<string, unknown>): string {

@@ -10,6 +10,62 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.7.1] — 2026-06-01
+
+Security + bug-fix rollup on top of v2.7.0. No API, config, or schema
+changes — drop in.
+
+### Security
+
+- **Path-traversal sanitiser bypass in NotesPanel** (#294).
+  `replace(/\.\.\/+/g, '')` was bypassable by overlap (`....//`
+  collapses to `../` after one pass). Replaced with split-on-slash +
+  filter-out `..`/`.` + rejoin, which cannot be bypassed that way.
+- **Windows path-traversal gap in `backup` local target** (#296).
+  `filepath.IsAbs("/foo")` returns `false` on Windows, so the prior
+  absolute-path reject left a gap. `LocalTarget.resolve()` now also
+  rejects paths with a leading `/` or `\`, and rejects any colon on
+  Windows to catch drive-relative forms like `C:foo` / `C:..\evil`.
+- **Demo-client API key in log lines** (#294). The integration-key
+  fingerprint embedded in two log sites was emitting bytes from the
+  secret through `console.log`. Dropped the fingerprint entirely;
+  `integration_id` already identifies which credential is in use.
+
+### Fixed
+
+- **Windows build failure in `internal/session`** (#296).
+  `syscall.SIGTERM` / `syscall.SIGKILL` are undefined on Windows.
+  New build-tagged `signals_{unix,windows}.go` helpers abstract the
+  difference — Unix preserves the prior `SIGTERM → grace → SIGKILL`
+  ladder; Windows falls through to `proc.Kill()` (TerminateProcess)
+  since the platform has no SIGTERM equivalent. Documented in code.
+- **`go test -race ./...` failing on Windows** (#296). Test compat
+  across `auth`, `backup`, `cliacct`, `catalog`, `mcp`, `session`,
+  `app` packages: `USERPROFILE` setenv alongside `HOME` for
+  `os.UserHomeDir`, Unix-perm asserts skipped on Windows
+  (`os.Chmod` doesn't enforce them there), symlink tests skip when
+  `os.Symlink` lacks privilege, shell-script fake MCP server
+  replaced with `TestMain`-as-fake-server pattern, `app_test.go`
+  uses an existing file as fake parent dir for cross-platform
+  `os.MkdirAll` failure. Full suite now passes on Windows
+  (44 packages, 0 failures).
+- **Identity-replacement no-op in NotesPanel** (#294).
+  `prefix.replace(/\/$/, '/')` stripped a trailing slash and
+  replaced it with the same slash — the author meant to *ensure* a
+  trailing slash. Rewrote as
+  `endsWith('/') ? prefix : prefix + '/'`.
+
+### Docs
+
+- **`README.fa.md` 10-way language switcher backfill** (#293). The
+  Persian README still listed only English / 简体中文 / فارسی; now
+  matches the ten-way switcher the other nine READMEs got via #282.
+- **`enable-cli-updates.sh` discoverable from the failure path**
+  (#297). The in-app guidance toast (returned when the npm global
+  prefix is read-only by the service user) and `scripts/README.md`
+  now name the helper script that resolves the situation, so
+  operators don't have to grep for it. Closes #262.
+
 ## [v2.7.0] — 2026-06-01
 
 The Flutter mobile app catches up to web. Features that landed on the

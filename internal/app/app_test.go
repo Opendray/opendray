@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -90,11 +92,16 @@ func TestNewLogger_JSONFormat(t *testing.T) {
 }
 
 func TestNewLogger_BadFilePath(t *testing.T) {
-	// A file path under a missing directory should surface a real
-	// error instead of silently returning a no-op writer.
+	// Use an existing regular file as the supposed parent directory.
+	// os.MkdirAll will fail on all platforms (including Windows) when
+	// a path component already exists as a file instead of a directory.
+	blocker := filepath.Join(t.TempDir(), "notadir")
+	if err := os.WriteFile(blocker, []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	_, _, err := newLogger(config.LogConfig{
 		Level: "info",
-		File:  "/nonexistent-dir-" + t.Name() + "/opendray.log",
+		File:  filepath.Join(blocker, "opendray.log"),
 	})
 	if err == nil {
 		t.Error("expected error for unwritable log path, got nil")
