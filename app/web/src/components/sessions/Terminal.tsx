@@ -324,18 +324,40 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       resizeSession(sessionId, cols, rows).catch(() => {})
     })
 
-    const ro = new ResizeObserver(() => {
-      if (!alive) return
-      try {
-        fit.fit()
-      } catch {
-        /* element not measured yet */
-      }
-    })
+    // Coalesce resize bursts into one fit per animation frame. Calling
+    // fit() synchronously inside the ResizeObserver callback mutates
+    // the DOM mid-notification ("ResizeObserver loop completed with
+    // undelivered notifications") and, at some widths, oscillates;
+    // deferring to rAF lets the frame's layout settle first and folds
+    // a window-drag storm of notifications into a single fit.
+    let fitRaf = 0
+    const scheduleFit = () => {
+      if (!alive || fitRaf) return
+      fitRaf = requestAnimationFrame(() => {
+        fitRaf = 0
+        if (!alive) return
+        try {
+          fit.fit()
+        } catch {
+          /* element not measured yet */
+        }
+      })
+    }
+    const ro = new ResizeObserver(scheduleFit)
     ro.observe(containerRef.current)
+
+    // The synchronous fit() at open ran before the first post-mount
+    // layout had settled (and before a webfont monospace face, on
+    // deployments that ship one, has loaded) — both shift the measured
+    // cell width, so re-fit once each has settled. A PTY left a few
+    // columns too wide is exactly what reads as "long input doesn't
+    // wrap, it runs off the right edge until I resize the window."
+    scheduleFit()
+    void document.fonts?.ready?.then(scheduleFit)
 
     return () => {
       alive = false
+      if (fitRaf) cancelAnimationFrame(fitRaf)
       ro.disconnect()
       ws.close()
       term.dispose()
@@ -465,8 +487,16 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   }, [])
 
   return (
-    <div ref={rootRef} className="h-full w-full bg-background relative">
-      <div ref={containerRef} className="h-full w-full p-3" />
+    <div ref={rootRef} className="h-full w-full bg-background relative overflow-hidden">
+      {/* The xterm host is absolutely positioned + clipped so its size
+          is driven SOLELY by this (flex/viewport-sized) pane and never
+          by its own rendered content. Without the clip, a line wider
+          than the pane escapes up to the scrollable <main>, toggling
+          its scrollbar, which re-measures the pane and re-runs fit() —
+          a feedback loop that reads as the terminal "jittering" as you
+          type a long line. Clipping breaks the loop at the source and
+          forces xterm to wrap at the real visible width. */}
+      <div ref={containerRef} className="absolute inset-0 p-3 overflow-hidden" />
       <DetectedURLs urls={detectedURLs} />
       {pill && (
         <Button

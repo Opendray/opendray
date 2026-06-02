@@ -100,17 +100,29 @@ export function EndedSessionView({ sessionId }: EndedSessionViewProps) {
         }
       })
 
-    const ro = new ResizeObserver(() => {
-      try {
-        fit.fit()
-      } catch {
-        /* not measured yet */
-      }
-    })
+    // rAF-coalesced fit — see Terminal.tsx for the full rationale
+    // (mid-notification DOM mutation + scrollbar-toggle oscillation).
+    let fitRaf = 0
+    const scheduleFit = () => {
+      if (cancelled || fitRaf) return
+      fitRaf = requestAnimationFrame(() => {
+        fitRaf = 0
+        if (cancelled) return
+        try {
+          fit.fit()
+        } catch {
+          /* not measured yet */
+        }
+      })
+    }
+    const ro = new ResizeObserver(scheduleFit)
     ro.observe(containerRef.current)
+    scheduleFit()
+    void document.fonts?.ready?.then(scheduleFit)
 
     return () => {
       cancelled = true
+      if (fitRaf) cancelAnimationFrame(fitRaf)
       ro.disconnect()
       term.dispose()
       xtermRef.current = null
@@ -119,8 +131,11 @@ export function EndedSessionView({ sessionId }: EndedSessionViewProps) {
   }, [sessionId, themeApplied, t])
 
   return (
-    <div className="h-full w-full bg-background">
-      <div ref={containerRef} className="h-full w-full p-2" />
+    <div className="h-full w-full bg-background relative overflow-hidden">
+      {/* Clipped + absolutely sized so replay content can't escape to
+          the scrollable <main> and start a fit()/scrollbar feedback
+          loop — same isolation as the live Terminal. */}
+      <div ref={containerRef} className="absolute inset-0 p-2 overflow-hidden" />
     </div>
   )
 }
