@@ -41,7 +41,7 @@ Tres fricciones del día a día con las CLIs de IA para programar que opendray v
 
 **Toparte con un rate limit no debería cargarse lo que estabas haciendo.** Si tienes varias cuentas de Anthropic (trabajo + personal, plan familiar + Pro), opendray las trata como un pool: te muestra el tier, la cuota y el número de sesiones activas por cuenta, reparte las nuevas sesiones entre ellas y te permite mover una sesión en vivo a otra cuenta sin perder la conversación. El transcript se va contigo. Mismo planteamiento para las cuentas de Codex y Gemini.
 
-**La memoria es una capa de primera clase, no un parche.** La mayoría de las CLIs de IA reindexan el contexto del proyecto desde cero en cada sesión, quemando tokens en recuperaciones repetidas. opendray incluye un vector store local-first (embeddings con ONNX / Ollama / LM Studio) con recuperación en tres dominios —usuario, proyecto, sesión— más detección de drift entre capas. Cada byte se queda en tu red.
+**La memoria es una capa de primera clase, no un parche.** La mayoría de las CLIs de IA reindexan el contexto del proyecto desde cero en cada sesión, quemando tokens en recuperaciones repetidas. opendray incluye un vector store local-first (embeddings con ONNX / Ollama / LM Studio) con recuperación en tres dominios (usuario, proyecto, sesión) más detección de drift entre capas. Cada byte se queda en tu red.
 
 ---
 

@@ -37,11 +37,11 @@
 
 Three frictions in day-to-day work with AI coding CLIs that opendray is built to fix.
 
-**Sessions die when your laptop sleeps.** Running Claude Code or Codex over SSH means the agent dies the moment your machine closes the lid or drops Wi-Fi. Context, in-flight tool calls, the partial diff you were about to review — gone. opendray runs the agent on a host that doesn't sleep (a Mac mini under your desk, a NAS, a VPS) and lets you reattach from a web admin, a Flutter mobile app, or a chat message. The session keeps executing whether or not anyone's connected.
+**Sessions die when your laptop sleeps.** Running Claude Code or Codex over SSH means the agent dies the moment your machine closes the lid or drops Wi-Fi. Context, in-flight tool calls, the partial diff you were about to review. Gone. opendray runs the agent on a host that doesn't sleep (a Mac mini under your desk, a NAS, a VPS) and lets you reattach from a web admin, a Flutter mobile app, or a chat message. The session keeps executing whether or not anyone's connected.
 
-**Hitting a rate limit shouldn't kill what you were doing.** If you have multiple Anthropic accounts (work + personal, family plan + Pro), opendray treats them as a pool — it surfaces tier, quota and active-session count per account, balances new sessions across them, and lets you swap a live session to a different account without losing the conversation. The transcript moves with you. Same model for Codex and Gemini accounts.
+**Hitting a rate limit shouldn't kill what you were doing.** If you have multiple Anthropic accounts (work + personal, family plan + Pro), opendray treats them as a pool. It surfaces tier, quota and active-session count per account, balances new sessions across them, and lets you swap a live session to a different account without losing the conversation. The transcript moves with you. Same model for Codex and Gemini accounts.
 
-**Memory is a first-class layer, not an afterthought.** Most AI CLIs re-index project context from scratch every session, burning tokens on repeated retrieval. opendray ships a local-first vector store (ONNX / Ollama / LM Studio embeddings) with three-domain retrieval — user, project, session — plus drift detection across layers. Every byte stays on your network.
+**Memory is a first-class layer, not an afterthought.** Most AI CLIs re-index project context from scratch every session, burning tokens on repeated retrieval. opendray ships a local-first vector store (ONNX / Ollama / LM Studio embeddings) with three-domain retrieval across user, project, and session, plus drift detection across layers. Every byte stays on your network.
 
 ---
 
