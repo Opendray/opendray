@@ -540,35 +540,13 @@ opendray را restart کنید. sidebar یک صفحه Backups در مسیر <cod
 <h2 dir="rtl" align="right">ساختار پروژه</h2>
 
 ```text
-cmd/opendray/
-  entrypoint اصلی binary
-
-internal/
-├── app/           bootstrap و اتصال componentهای اصلی برنامه
-├── audit/         دریافت eventها از bus و ذخیره در audit_log
-├── auth/          admin Bearer tokenها
-├── backup/        encrypted DB backup و data import/export
-├── catalog/       provider manifestها و per-user config
-├── channel/       channel management و Telegram integration
-├── config/        load کردن TOML config و OPENDRAY_* environment variables
-├── eventbus/      internal Pub/Sub
-├── gateway/       HTTP routing با chi، middleware و slog
-├── integration/   external app registration، Reverse Proxy و WebSocket eventها
-├── memory/        shared persistent memory بین CLIها
-├── session/       session management، PTY، ring buffer و WebSocket stream
-├── store/         PostgreSQL connection با pgx و migrationها
-├── version/       version و build metadata
-└── web/           embedded web UI با go:embed
-
-app/web/
-  React 19 + TypeScript + Vite single-page app
-
-app/mobile/
-  Flutter app برای Android و iOS با featureهای مشابه web version
-
-docs/
-├── design.md      سند اصلی طراحی و مرجع پروژه
-└── adr/           Architecture Decision Recordها
+cmd/opendray/   entrypoint اصلی binary
+internal/       Go backend — gateway، sessions، memory، channels، integrations، git، search، … (یک package برای هر domain)
+app/web/        React + Vite admin SPA (در binary embed شده)
+app/mobile/     Flutter app (iOS + Android)
+app/shared*/    shared UI و i18n stringها بین surfaceها
+docs/           راهنماها: install، getting-started، integration، ops
+deploy/         systemd / launchd / LXC unitها + install scriptها
 ```
 
 ---
