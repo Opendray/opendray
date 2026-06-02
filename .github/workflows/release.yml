@@ -1,10 +1,9 @@
 name: Release
 
-# Triggered automatically on tag push (v*) — produces a draft GitHub
-# release with goreleaser archives, cosign-signed checksums, and an
-# anchore-generated SBOM. The release lands as DRAFT (per
-# .goreleaser.yml release.draft: true) so a human reviews notes before
-# flipping it to public.
+# Triggered automatically on tag push (v*) — produces a published GitHub
+# release with goreleaser archives, cosign-signed checksums, an anchore-
+# generated SBOM, and release notes extracted from the matching section
+# of CHANGELOG.md. The CHANGELOG bump PR is the review gate.
 #
 # workflow_dispatch is wired for two scenarios:
 #   * Re-running the pipeline against an existing tag (e.g. v1.0.0,
@@ -80,15 +79,39 @@ jobs:
         with:
           go-version: "1.25"
 
-      # ── Goreleaser: archives + checksums in ./dist, draft release on GH.
-      #    SHA-pinned for supply-chain integrity. Intentionally pinned
-      #    on v6 (not v7) to avoid the v7 ESM/Node 24 breaking change
-      #    until we explicitly validate it.
+      # ── Extract the matching CHANGELOG section into release-notes.md
+      #    so goreleaser uses it as the release body instead of the
+      #    static "See CHANGELOG.md" placeholder. Falls back to that
+      #    placeholder if the tag has no section yet (re-running an
+      #    old tag via workflow_dispatch).
+      - name: Extract release notes from CHANGELOG.md
+        env:
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          ver="${TAG#v}"
+          awk -v ver="$ver" '
+            $0 ~ "^## \\[v" ver "\\]" { capture = 1; next }
+            capture && /^## \[/ { exit }
+            capture { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "(no CHANGELOG section found for $TAG — using fallback notes)"
+            echo "See [CHANGELOG.md](https://github.com/Opendray/opendray/blob/main/CHANGELOG.md) for the full release notes." > release-notes.md
+          fi
+          echo "--- release-notes.md ($(wc -l < release-notes.md) lines) ---"
+          head -30 release-notes.md
+
+      # ── Goreleaser: archives + checksums in ./dist, published release on GH.
+      #    --release-notes overrides the static header in .goreleaser.yml
+      #    with the extracted CHANGELOG section. SHA-pinned for supply-
+      #    chain integrity. Intentionally pinned on v6 (not v7) to
+      #    avoid the v7 ESM/Node 24 breaking change until we explicitly
+      #    validate it.
       - name: Run goreleaser
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a  # v6
         with:
           version: latest
-          args: release --clean
+          args: release --clean --release-notes=release-notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
