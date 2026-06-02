@@ -10,6 +10,24 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Removed
+
+- **`ghcr.io/Opendray/opendray` container image (all 370 versions / 84
+  tags).** The image was orphaned — the most recent tag was `v2.1.0`
+  (five releases behind), no workflow in `.github/` was building it
+  any more, no docs / installer scripts / discussions referenced it.
+  More importantly, a pullable container contradicted the host-
+  resident-only deploy policy (Discussion #300, README "Choose how
+  to run it" table): opendray runs AI CLIs through PTYs and shares
+  filesystem state (`~/.claude`, ssh-agent, project files) with
+  them, which container isolation breaks. Operators who landed on
+  the GHCR page following stale links from external blog posts
+  would have pulled v2.1.0 and hit exactly that failure mode.
+  Supported install paths remain the
+  [one-line installer](https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install.sh),
+  the [from-source quickstart](docs/quickstart.md), and
+  `npm install -g opendray`.
+
 ## [v2.7.1] — 2026-06-01
 
 Security + bug-fix rollup on top of v2.7.0. No API, config, or schema
