@@ -11,7 +11,8 @@
     "retry": "重试",
     "copy": "复制",
     "enabled": "已启用",
-    "refresh": "刷新"
+    "refresh": "刷新",
+    "clear": "清除"
   },
   "auth": {
     "signInTitle": "登录",
@@ -2617,8 +2618,11 @@
       },
       "tasks": {
         "runCommand": "运行命令",
-        "insertCommand": "插入命令",
-        "insertCommandSubtitle": "粘贴但不回车，方便编辑"
+        "runCommandSubtitle": "在新的 shell 会话中运行并切换过去",
+        "filterHint": "筛选任务…",
+        "noMatch": "没有匹配“{query}”的任务",
+        "emptyTitle": "此目录没有任务",
+        "emptyHint": "正在查找 package.json、Makefile、Taskfile、justfile、Cargo.toml、go.mod、pyproject.toml 或 shell 脚本"
       },
       "notes": {
         "insertedAt": "已插入：@{path}",

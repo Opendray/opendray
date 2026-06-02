@@ -111,6 +111,9 @@ class TranslationsCommonEn {
 
 	/// en: 'Refresh'
 	String get refresh => 'Refresh';
+
+	/// en: 'Clear'
+	String get clear => 'Clear';
 }
 
 // Path: auth
@@ -9923,11 +9926,20 @@ class TranslationsSessionsInspectorTasksEn {
 	/// en: 'Run command'
 	String get runCommand => 'Run command';
 
-	/// en: 'Insert command'
-	String get insertCommand => 'Insert command';
+	/// en: 'Runs in a new shell session and switches to it'
+	String get runCommandSubtitle => 'Runs in a new shell session and switches to it';
 
-	/// en: 'Pastes without return so you can edit'
-	String get insertCommandSubtitle => 'Pastes without return so you can edit';
+	/// en: 'Filter tasks…'
+	String get filterHint => 'Filter tasks…';
+
+	/// en: 'No tasks match "{query}"'
+	String noMatch({required Object query}) => 'No tasks match "${query}"';
+
+	/// en: 'No tasks in this folder'
+	String get emptyTitle => 'No tasks in this folder';
+
+	/// en: 'Looking for package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml, or shell scripts'
+	String get emptyHint => 'Looking for package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml, or shell scripts';
 }
 
 // Path: sessions.inspector.notes
@@ -13778,6 +13790,7 @@ extension on Translations {
 			'common.copy' => 'Copy',
 			'common.enabled' => 'Enabled',
 			'common.refresh' => 'Refresh',
+			'common.clear' => 'Clear',
 			'auth.signInTitle' => 'Sign in',
 			'auth.changeServer' => 'Change',
 			'auth.username' => 'Username',
@@ -14277,9 +14290,9 @@ extension on Translations {
 			'web.memoryInspector.toasts.bulkDeleted_other' => ({required Object count}) => 'Deleted ${count} memories from this scope',
 			'web.memoryInspector.toasts.bulkDeleteFailed' => 'Bulk delete failed',
 			'web.memoryInspector.toasts.created' => 'Memory created',
-			'web.memoryInspector.toasts.createFailed' => 'Create failed',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryInspector.toasts.createFailed' => 'Create failed',
 			'web.memoryInspector.toasts.updated' => 'Memory updated',
 			'web.memoryInspector.toasts.updateFailed' => 'Update failed',
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => 'Migrated ${reembed}/${examined} memories to ${to}',
@@ -14791,9 +14804,9 @@ extension on Translations {
 			'web.integrations.proxy.sending' => 'Sending…',
 			'web.integrations.proxy.extraHeadersLabel' => 'Extra headers (one per line, Name: Value)',
 			'web.integrations.proxy.bodyLabel' => 'Body',
-			'web.integrations.proxy.headers' => 'Headers',
 			_ => null,
 		} ?? switch (path) {
+			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
 			'web.integrations.proxy.emptyBody' => '(empty)',
 			'web.integrations.proxy.requestFailed' => 'request failed',
@@ -15305,9 +15318,9 @@ extension on Translations {
 			'web.serverSettings.fields.backupLocalDir.hint' => 'Default root for the auto-created `local` target. Empty = ~/.opendray/backups. Restart required.',
 			'web.serverSettings.fields.backupExportDir.label' => 'Export directory',
 			'web.serverSettings.fields.backupExportDir.hint' => 'Where one-shot export zips are staged on disk. Empty = ~/.opendray/exports. Bundles auto-expire after 24h. Restart required.',
-			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump path',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump path',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'Absolute path to pg_dump. Major version must be ≥ the server\'s. Empty = first pg_dump on PATH.',
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'pg_restore path',
 			'web.serverSettings.fields.backupPgRestorePath.hint' => 'Absolute path to pg_restore for the /backups/restore flow. Same major-version rule.',
@@ -15782,8 +15795,11 @@ extension on Translations {
 			'sessions.inspector.git.tabStatus' => 'Status',
 			'sessions.inspector.git.tabLog' => 'Log',
 			'sessions.inspector.tasks.runCommand' => 'Run command',
-			'sessions.inspector.tasks.insertCommand' => 'Insert command',
-			'sessions.inspector.tasks.insertCommandSubtitle' => 'Pastes without return so you can edit',
+			'sessions.inspector.tasks.runCommandSubtitle' => 'Runs in a new shell session and switches to it',
+			'sessions.inspector.tasks.filterHint' => 'Filter tasks…',
+			'sessions.inspector.tasks.noMatch' => ({required Object query}) => 'No tasks match "${query}"',
+			'sessions.inspector.tasks.emptyTitle' => 'No tasks in this folder',
+			'sessions.inspector.tasks.emptyHint' => 'Looking for package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml, or shell scripts',
 			'sessions.inspector.notes.insertedAt' => ({required Object path}) => 'Inserted: @${path}',
 			'sessions.inspector.notes.myNotes' => 'My notes',
 			'sessions.inspector.notes.projectDocs' => 'Project docs',
@@ -15816,12 +15832,12 @@ extension on Translations {
 			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => 'No matches for "${query}".',
 			'sessions.inspector.notes.locationDialogHelp' => 'Pin this session\'s cwd to a specific folder under your notes vault. Leave blank to reset.',
 			'sessions.inspector.notes.sessionCwd' => 'Session cwd',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.projectDocsPath' => 'Vault-relative project docs path',
 			'sessions.inspector.notes.locationStoredHint' => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
 			'sessions.inspector.notes.noProjectMapping2' => '(no project mapping)',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.clearOverride' => 'Clear override',
 			'sessions.inspector.notes.save' => 'Save',
 			'sessions.spawnSheet.title' => 'New session',
@@ -16330,12 +16346,12 @@ extension on Translations {
 			'backupTargetEditor.kinds.s3.label' => 'S3 / compatible',
 			'backupTargetEditor.kinds.s3.description' => 'Amazon S3 + S3-compatible buckets (MinIO, R2, B2)',
 			'backupTargetEditor.kinds.rclone.label' => 'rclone (any)',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.kinds.rclone.description' => 'OneDrive, Google Drive, Dropbox via the rclone CLI',
 			'backupTargetEditor.formTitleEdit' => 'Edit target',
 			'backupTargetEditor.formTitleNew' => 'New backup target',
 			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => 'Auto: ${prefix}-1',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.idHelper' => 'Lower-case letters, digits, dashes. Defaults to the next available slot.',
 			'backupTargetEditor.enabledOn' => 'Scheduled and ad-hoc backups can target this.',
 			'backupTargetEditor.enabledOff' => 'Server will refuse to write backups here.',
@@ -16844,12 +16860,12 @@ extension on Translations {
 			'settings.serverSettings.savedNeedsRestart' => 'Saved. Restart the gateway to apply.',
 			'settings.serverSettings.savedSimple' => 'Saved.',
 			'settings.serverSettings.changesNeedRestart' => 'Changes to this section need a gateway restart.',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.loadFailed' => 'Failed to load server settings',
 			'settings.serverSettings.sections.general' => 'General',
 			'settings.serverSettings.sections.logging' => 'Logging',
 			'settings.serverSettings.sections.sessions' => 'Sessions',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.sections.vault' => 'Vault',
 			'settings.serverSettings.sections.mcpRegistry' => 'MCP registry',
 			'settings.serverSettings.sections.memory' => 'Memory',

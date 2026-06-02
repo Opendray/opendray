@@ -86,6 +86,7 @@ class _TranslationsCommonZh extends TranslationsCommonEn {
 	@override String get copy => '复制';
 	@override String get enabled => '已启用';
 	@override String get refresh => '刷新';
+	@override String get clear => '清除';
 }
 
 // Path: auth
@@ -5179,8 +5180,11 @@ class _TranslationsSessionsInspectorTasksZh extends TranslationsSessionsInspecto
 
 	// Translations
 	@override String get runCommand => '运行命令';
-	@override String get insertCommand => '插入命令';
-	@override String get insertCommandSubtitle => '粘贴但不回车，方便编辑';
+	@override String get runCommandSubtitle => '在新的 shell 会话中运行并切换过去';
+	@override String get filterHint => '筛选任务…';
+	@override String noMatch({required Object query}) => '没有匹配“${query}”的任务';
+	@override String get emptyTitle => '此目录没有任务';
+	@override String get emptyHint => '正在查找 package.json、Makefile、Taskfile、justfile、Cargo.toml、go.mod、pyproject.toml 或 shell 脚本';
 }
 
 // Path: sessions.inspector.notes
@@ -7380,6 +7384,7 @@ extension on TranslationsZh {
 			'common.copy' => '复制',
 			'common.enabled' => '已启用',
 			'common.refresh' => '刷新',
+			'common.clear' => '清除',
 			'auth.signInTitle' => '登录',
 			'auth.changeServer' => '更换',
 			'auth.username' => '用户名',
@@ -7879,9 +7884,9 @@ extension on TranslationsZh {
 			'web.memoryInspector.toasts.bulkDeleted_other' => ({required Object count}) => '已从此 scope 删除 ${count} 条记忆',
 			'web.memoryInspector.toasts.bulkDeleteFailed' => '批量删除失败',
 			'web.memoryInspector.toasts.created' => '记忆已创建',
-			'web.memoryInspector.toasts.createFailed' => '创建失败',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryInspector.toasts.createFailed' => '创建失败',
 			'web.memoryInspector.toasts.updated' => '记忆已更新',
 			'web.memoryInspector.toasts.updateFailed' => '更新失败',
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => '已迁移 ${reembed}/${examined} 条记忆到 ${to}',
@@ -8393,9 +8398,9 @@ extension on TranslationsZh {
 			'web.integrations.proxy.extraHeadersLabel' => '额外 header（每行一条，Name: Value）',
 			'web.integrations.proxy.bodyLabel' => 'Body',
 			'web.integrations.proxy.headers' => 'Headers',
-			'web.integrations.proxy.body' => 'Body',
 			_ => null,
 		} ?? switch (path) {
+			'web.integrations.proxy.body' => 'Body',
 			'web.integrations.proxy.emptyBody' => '(空)',
 			'web.integrations.proxy.requestFailed' => '请求失败',
 			'web.integrations.proxy.stubText' => '发送一个请求即可查看上游响应。',
@@ -8907,9 +8912,9 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.backupExportDir.label' => '导出目录',
 			'web.serverSettings.fields.backupExportDir.hint' => '一次性导出 zip 在磁盘上的暂存位置。留空 = ~/.opendray/exports。包将在 24 小时后自动过期。需要重启。',
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump 路径',
-			'web.serverSettings.fields.backupPgDumpPath.hint' => 'pg_dump 的绝对路径。主版本号必须 ≥ 服务器的。留空 = PATH 上的第一个 pg_dump。',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.fields.backupPgDumpPath.hint' => 'pg_dump 的绝对路径。主版本号必须 ≥ 服务器的。留空 = PATH 上的第一个 pg_dump。',
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'pg_restore 路径',
 			'web.serverSettings.fields.backupPgRestorePath.hint' => '/backups/restore 流程使用的 pg_restore 绝对路径。同样的主版本号规则。',
 			'web.serverSettings.liveTail.heading' => '实时日志',
@@ -9383,8 +9388,11 @@ extension on TranslationsZh {
 			'sessions.inspector.git.tabStatus' => '状态',
 			'sessions.inspector.git.tabLog' => '日志',
 			'sessions.inspector.tasks.runCommand' => '运行命令',
-			'sessions.inspector.tasks.insertCommand' => '插入命令',
-			'sessions.inspector.tasks.insertCommandSubtitle' => '粘贴但不回车，方便编辑',
+			'sessions.inspector.tasks.runCommandSubtitle' => '在新的 shell 会话中运行并切换过去',
+			'sessions.inspector.tasks.filterHint' => '筛选任务…',
+			'sessions.inspector.tasks.noMatch' => ({required Object query}) => '没有匹配“${query}”的任务',
+			'sessions.inspector.tasks.emptyTitle' => '此目录没有任务',
+			'sessions.inspector.tasks.emptyHint' => '正在查找 package.json、Makefile、Taskfile、justfile、Cargo.toml、go.mod、pyproject.toml 或 shell 脚本',
 			'sessions.inspector.notes.insertedAt' => ({required Object path}) => '已插入：@${path}',
 			'sessions.inspector.notes.myNotes' => '我的笔记',
 			'sessions.inspector.notes.projectDocs' => '项目文档',
@@ -9418,12 +9426,12 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.locationDialogHelp' => '将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。',
 			'sessions.inspector.notes.sessionCwd' => '会话 cwd',
 			'sessions.inspector.notes.projectDocsPath' => '相对笔记库的项目文档路径',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
 			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
 			'sessions.inspector.notes.clearOverride' => '清除覆盖',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.save' => '保存',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
@@ -9932,12 +9940,12 @@ extension on TranslationsZh {
 			'backupTargetEditor.kinds.s3.description' => 'Amazon S3 + S3 兼容存储桶（MinIO、R2、B2）',
 			'backupTargetEditor.kinds.rclone.label' => 'rclone（任意）',
 			'backupTargetEditor.kinds.rclone.description' => '通过 rclone CLI 访问 OneDrive、Google Drive、Dropbox',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.formTitleEdit' => '编辑目标',
 			'backupTargetEditor.formTitleNew' => '新建备份目标',
 			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => '自动：${prefix}-1',
 			'backupTargetEditor.idHelper' => '小写字母、数字、连字符。默认为下一个可用槽。',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.enabledOn' => '定期和临时备份可使用此目标。',
 			'backupTargetEditor.enabledOff' => '服务器将拒绝向此处写入备份。',
 			'backupTargetEditor.saving' => '保存中…',
@@ -10446,12 +10454,12 @@ extension on TranslationsZh {
 			'settings.serverSettings.savedSimple' => '已保存。',
 			'settings.serverSettings.changesNeedRestart' => '此配置的修改需重启网关。',
 			'settings.serverSettings.loadFailed' => '加载服务器设置失败',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.sections.general' => '通用',
 			'settings.serverSettings.sections.logging' => '日志',
 			'settings.serverSettings.sections.sessions' => '会话',
 			'settings.serverSettings.sections.vault' => '凭据库',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.sections.mcpRegistry' => 'MCP 注册表',
 			'settings.serverSettings.sections.memory' => '记忆',
 			'settings.serverSettings.sections.backup' => '备份',

@@ -11,7 +11,8 @@
     "retry": "Retry",
     "copy": "Copy",
     "enabled": "Enabled",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "clear": "Clear"
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -2618,8 +2619,11 @@
       },
       "tasks": {
         "runCommand": "Run command",
-        "insertCommand": "Insert command",
-        "insertCommandSubtitle": "Pastes without return so you can edit"
+        "runCommandSubtitle": "Runs in a new shell session and switches to it",
+        "filterHint": "Filter tasks…",
+        "noMatch": "No tasks match \"{query}\"",
+        "emptyTitle": "No tasks in this folder",
+        "emptyHint": "Looking for package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml, or shell scripts"
       },
       "notes": {
         "insertedAt": "Inserted: @{path}",
