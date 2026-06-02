@@ -454,6 +454,7 @@ Zustand + xterm.js) и заметки по W-майлстоунам.
 - [`docs/getting-started.md`](docs/getting-started.md): **начинайте отсюда**, если вы новичок: от нуля до первой сессии за 15 минут, включая установку оборачиваемых CLI и bootstrap Postgres
 - [`docs/install-binary.ru.md`](docs/install-binary.ru.md): установка из npm-пакета или release-бинарника (собственный Postgres) и запуск как systemd / launchd-сервис
 - [`docs/quickstart.md`](docs/quickstart.md): dev-окружение за 5 минут (предполагается, что вы уже знаете, из чего всё состоит)
+- [`docs/mobile-app.ru.md`](docs/mobile-app.ru.md): сборка и установка мобильного приложения на Flutter — sideload Android-APK или установка на iPhone через Xcode, затем укажите ему адрес вашего gateway
 - [`docs/operator-guide.md`](docs/operator-guide.md): справочник по деплою и эксплуатации для околопродакшен-сетапов
 - [`docs/integration-guide.md`](docs/integration-guide.md): как написать внешнюю интеграцию на любом языке
 - [`VERSIONING.md`](VERSIONING.md): стратегия версионирования (major-as-generation)

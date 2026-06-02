@@ -451,6 +451,7 @@ Zustand + xterm.js）や、W マイルストーンごとのノートについて
 - [`docs/getting-started.md`](docs/getting-started.md): はじめての方は **まずここから**。ラップ対象の CLI のインストールや Postgres のブートストラップも含めて、ゼロから最初のセッションまでを 15 分で
 - [`docs/install-binary.ja.md`](docs/install-binary.ja.md): npm パッケージまたはリリースバイナリからインストールし（Postgres は自分で用意）、systemd / launchd サービスとして実行する
 - [`docs/quickstart.md`](docs/quickstart.md): 5 分で動かす開発環境（構成要素は既に把握している前提）
+- [`docs/mobile-app.ja.md`](docs/mobile-app.ja.md): Flutter モバイルアプリのビルドとインストール — Android APK をサイドロードするか Xcode で iPhone に入れ、ゲートウェイに向ける
 - [`docs/operator-guide.md`](docs/operator-guide.md): 本番寄りの構成向けのデプロイ + 運用リファレンス
 - [`docs/integration-guide.md`](docs/integration-guide.md): 任意の言語で外部連携を書くためのガイド
 - [`VERSIONING.md`](VERSIONING.md): バージョニング戦略（major-as-generation）

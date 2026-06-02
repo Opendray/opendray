@@ -449,6 +449,7 @@ Zustand + xterm.js) 및 W 마일스톤별 노트는 [`app/web/README.md`](app/we
 - [`docs/getting-started.md`](docs/getting-started.md): 처음이라면 **여기서 시작**. 감싸는 CLI 설치와 Postgres 부트스트랩을 포함해 15분 만에 첫 세션까지
 - [`docs/install-binary.ko.md`](docs/install-binary.ko.md): npm 패키지 또는 릴리즈 바이너리로 설치하고(Postgres는 직접 제공) systemd / launchd 서비스로 실행
 - [`docs/quickstart.md`](docs/quickstart.md): 5분 개발 환경 (구성 요소를 이미 안다고 가정)
+- [`docs/mobile-app.ko.md`](docs/mobile-app.ko.md): Flutter 모바일 앱 빌드 및 설치 — Android APK를 사이드로드하거나 Xcode로 iPhone에 설치한 뒤 게이트웨이로 연결
 - [`docs/operator-guide.md`](docs/operator-guide.md): 프로덕션급 셋업을 위한 deploy + 운영 레퍼런스
 - [`docs/integration-guide.md`](docs/integration-guide.md): 어떤 언어로든 외부 통합을 작성하는 방법
 - [`VERSIONING.md`](VERSIONING.md): 버저닝 전략 (major-as-generation)

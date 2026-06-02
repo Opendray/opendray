@@ -441,6 +441,7 @@ Router/Query + Zustand + xterm.js)和每个 W 里程碑笔记见
 - [`docs/getting-started.zh.md`](docs/getting-started.zh.md)：**新手从这开始**,零到首次会话 15 分钟,含装 wrap 的 CLI + bootstrap Postgres + 收第一条 Telegram 通知
 - [`docs/install-binary.zh.md`](docs/install-binary.zh.md)：从 npm 包或 release 二进制安装（自备 Postgres），以 systemd / launchd 服务方式运行
 - [`docs/quickstart.md`](docs/quickstart.md)：5 分钟开发环境(假设你已经懂各组件)
+- [`docs/mobile-app.zh.md`](docs/mobile-app.zh.md)：构建并安装 Flutter 移动 App —— 旁加载 Android APK 或用 Xcode 装到 iPhone，再指向你的网关
 - [`docs/operator-guide.md`](docs/operator-guide.md)：生产化部署 + 运维参考
 - [`docs/integration-guide.md`](docs/integration-guide.md)：用任意语言写外部集成
 - [`VERSIONING.md`](VERSIONING.md)：版本策略(major-as-generation)

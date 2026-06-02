@@ -452,6 +452,7 @@ Zustand + xterm.js) e notas por milestone W.
 - [`docs/getting-started.md`](docs/getting-started.md): **comece por aqui** se você é novo. Do zero até a primeira sessão em 15 minutos, incluindo a instalação das CLIs encapsuladas e o bootstrap do Postgres
 - [`docs/install-binary.pt-BR.md`](docs/install-binary.pt-BR.md): instale pelo pacote npm ou um binário de release (traga seu próprio Postgres) e rode como serviço systemd / launchd
 - [`docs/quickstart.md`](docs/quickstart.md): ambiente de dev em 5 minutos (assume que você já conhece as peças)
+- [`docs/mobile-app.pt-BR.md`](docs/mobile-app.pt-BR.md): compile e instale o app móvel Flutter — faça sideload de um APK Android ou instale no iPhone via Xcode e aponte para o seu gateway
 - [`docs/operator-guide.md`](docs/operator-guide.md): referência de deploy + ops pra setups mais próximos de produção
 - [`docs/integration-guide.md`](docs/integration-guide.md): como escrever uma integração externa em qualquer linguagem
 - [`VERSIONING.md`](VERSIONING.md): estratégia de versionamento (major-as-generation)

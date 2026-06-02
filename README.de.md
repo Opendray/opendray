@@ -451,6 +451,7 @@ Router/Query + Zustand + xterm.js) und Notes pro W-Milestone findest du in
 - [`docs/getting-started.md`](docs/getting-started.md): **fang hier an**, wenn du neu bist. Von null bis zur ersten Session in 15 Minuten, inklusive Installation der gewrappten CLIs und Postgres-Bootstrap
 - [`docs/install-binary.de.md`](docs/install-binary.de.md): Installation aus dem npm-Paket oder einem Release-Binary (eigenes Postgres mitbringen) und Betrieb als systemd- / launchd-Service
 - [`docs/quickstart.md`](docs/quickstart.md): 5-Minuten-Dev-Umgebung (setzt voraus, dass du die beweglichen Teile schon kennst)
+- [`docs/mobile-app.de.md`](docs/mobile-app.de.md): die Flutter-Mobile-App bauen & installieren — ein Android-APK sideloaden oder per Xcode aufs iPhone bringen und dann auf dein Gateway zeigen lassen
 - [`docs/operator-guide.md`](docs/operator-guide.md): Deploy- und Ops-Referenz für produktionsnahe Setups
 - [`docs/integration-guide.md`](docs/integration-guide.md): wie du eine externe Integration in beliebiger Sprache schreibst
 - [`VERSIONING.md`](VERSIONING.md): Versioning-Strategie (Major-als-Generation)
