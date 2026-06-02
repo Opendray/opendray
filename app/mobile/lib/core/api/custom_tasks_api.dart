@@ -70,6 +70,29 @@ class CustomTasksApi {
     }
   }
 
+  // GET /custom-tasks?cwd=<path> — globals plus tasks scoped to this
+  // cwd. This is what the session inspector's task picker uses: an
+  // operator running tasks from inside a session wants the global
+  // catalogue and anything pinned to the project they're sitting in,
+  // not every scoped task across all projects (that's what list() is
+  // for, on the management page).
+  Future<List<CustomTask>> listForCwd(String cwd) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/custom-tasks',
+        queryParameters: {if (cwd.isNotEmpty) 'cwd': cwd},
+      );
+      final raw = res.data?['tasks'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(CustomTask.fromJson)
+          .toList();
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   Future<CustomTask> create({
     required String name,
     required String command,

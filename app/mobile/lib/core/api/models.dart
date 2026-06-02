@@ -472,6 +472,7 @@ class CreateSessionRequest {
     this.name,
     this.args,
     this.claudeAccountId,
+    this.parentSessionId,
   });
 
   final String providerId;
@@ -479,6 +480,9 @@ class CreateSessionRequest {
   final String? name;
   final List<String>? args;
   final String? claudeAccountId;
+  // Links a session spawned on behalf of another (e.g. a Task Runner
+  // shell session) so the gateway can group it under its originator.
+  final String? parentSessionId;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         'provider_id': providerId,
@@ -487,5 +491,7 @@ class CreateSessionRequest {
         if (args != null && args!.isNotEmpty) 'args': args,
         if (claudeAccountId != null && claudeAccountId!.isNotEmpty)
           'claude_account_id': claudeAccountId,
+        if (parentSessionId != null && parentSessionId!.isNotEmpty)
+          'parent_session_id': parentSessionId,
       };
 }
