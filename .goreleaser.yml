@@ -63,7 +63,11 @@ changelog:
   disable: true
 
 release:
-  draft: true
+  # Publish directly (not as draft). The publish-npm job in
+  # release.yml fetches SHA256SUMS via the public release
+  # download URL — that path only exists once the release is
+  # published, so a draft release breaks the npm publish chain.
+  draft: false
   prerelease: auto
   name_template: "v{{ .Version }}"
   header: |
