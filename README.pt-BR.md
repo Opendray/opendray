@@ -56,6 +56,54 @@ O **opendray** encapsula as CLIs de coding com IA que você já usa — Claude C
 - 🔑 **Frota multi-conta do Claude** — coloque várias contas de `claude login` no gateway; o painel descobre elas automaticamente via filesystem watcher, balanceia as novas sessões entre as contas habilitadas, e te deixa trocar a conta de uma sessão em execução **sem perder a conversa** (o transcript é migrado por baixo dos panos). Cada linha de conta mostra a capacidade em tempo real (subscription tier, rate-limit tier, sessões ativas, último uso, email do Anthropic atual) pra você escolher a certa de bate-pronto.
 - 🔒 **Self-hosted, licença clara** — Apache 2.0, um único binário estático, releases assinadas com cosign e SBOM SPDX. Sem telemetria, sem conta na nuvem, sem assinatura.
 
+## Arquitetura em um relance
+
+Um único binário Go no seu host toca a orquestra. Os clients manejam as sessões via HTTP/WebSocket, o session manager lança cada AI CLI no seu próprio PTY, e a camada de memory guarda o estado compartilhado no Postgres com vector embeddings do seu próprio provider.
+
+```mermaid
+flowchart LR
+    subgraph clients [Clients]
+        web[Web admin<br/>React SPA]
+        mob[Mobile app<br/>Flutter]
+        chat[Chat<br/>Telegram, Slack,<br/>Discord, Feishu,<br/>DingTalk, WeCom]
+        api[Third-party apps<br/>REST + WS]
+    end
+
+    subgraph gw [opendray gateway · single Go binary on your host]
+        direction TB
+        http[HTTP + WS<br/>chi · auth · audit]
+        sess[Session manager<br/>PTY · ring buffer]
+        mem[Memory layer<br/>three-domain retrieval]
+    end
+
+    subgraph cli [AI CLIs · spawned via PTY]
+        cc[Claude Code]
+        co[Codex]
+        ge[Gemini]
+        sh[Shell]
+    end
+
+    subgraph data [Persistence · stays on your network]
+        pg[(PostgreSQL<br/>+ pgvector)]
+        em[ONNX · Ollama<br/>LM Studio embeddings]
+    end
+
+    clients --> http
+    http --> sess
+    http --> mem
+    sess --> cc
+    sess --> co
+    sess --> ge
+    sess --> sh
+    sess -.-> mem
+    mem --> pg
+    mem --> em
+```
+
+Tudo o que está no diagrama roda na sua rede. Sem dependências de cloud, sem inference fora do seu controle.
+
+---
+
 ## Status
 
 **v2.7.0** (último) — a geração v2 segue iterando. Veja

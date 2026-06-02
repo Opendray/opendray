@@ -56,6 +56,54 @@ Three frictions in day-to-day work with AI coding CLIs that opendray is built to
 - 🔑 **Multi-Claude-account fleet** — drop multiple `claude login` accounts into the gateway; the panel auto-discovers them via a filesystem watcher, balances new sessions across enabled accounts, and lets you switch a live session between accounts **without losing the conversation** (transcript is migrated under the hood). Each account row shows live capacity (subscription tier, rate-limit tier, active sessions, last-used, current Anthropic email) so you can pick the right one at a glance.
 - 🔒 **Self-hosted, license-clear** — Apache 2.0, one static binary, cosign-signed releases with SPDX SBOM. No telemetry, no cloud account, no subscription.
 
+## Architecture at a glance
+
+A single Go binary on your host runs the show. Clients drive sessions through HTTP/WebSocket, the session manager spawns each AI CLI in its own PTY, and the memory layer keeps shared state in Postgres with vector embeddings from your own provider.
+
+```mermaid
+flowchart LR
+    subgraph clients [Clients]
+        web[Web admin<br/>React SPA]
+        mob[Mobile app<br/>Flutter]
+        chat[Chat<br/>Telegram, Slack,<br/>Discord, Feishu,<br/>DingTalk, WeCom]
+        api[Third-party apps<br/>REST + WS]
+    end
+
+    subgraph gw [opendray gateway · single Go binary on your host]
+        direction TB
+        http[HTTP + WS<br/>chi · auth · audit]
+        sess[Session manager<br/>PTY · ring buffer]
+        mem[Memory layer<br/>three-domain retrieval]
+    end
+
+    subgraph cli [AI CLIs · spawned via PTY]
+        cc[Claude Code]
+        co[Codex]
+        ge[Gemini]
+        sh[Shell]
+    end
+
+    subgraph data [Persistence · stays on your network]
+        pg[(PostgreSQL<br/>+ pgvector)]
+        em[ONNX · Ollama<br/>LM Studio embeddings]
+    end
+
+    clients --> http
+    http --> sess
+    http --> mem
+    sess --> cc
+    sess --> co
+    sess --> ge
+    sess --> sh
+    sess -.-> mem
+    mem --> pg
+    mem --> em
+```
+
+Everything in the diagram runs on your network. No cloud dependencies, no inference outside your control.
+
+---
+
 ## Status
 
 **v2.7.0** (latest) — the v2 generation continues to iterate. See

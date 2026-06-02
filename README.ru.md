@@ -56,6 +56,54 @@
 - 🔑 **Флот из нескольких Claude-аккаунтов** — подкладывайте в шлюз несколько аккаунтов `claude login`; панель автоматически подхватывает их через filesystem watcher, балансирует новые сессии между активными аккаунтами и позволяет переключить живую сессию между аккаунтами **без потери разговора** (транскрипт мигрируется под капотом). В каждой строке аккаунта видна актуальная загрузка (subscription tier, rate-limit tier, активные сессии, время последнего использования, текущий email Anthropic), чтобы выбрать нужный одним взглядом.
 - 🔒 **Self-hosted, лицензия прозрачная** — Apache 2.0, один статический бинарник, релизы подписаны cosign, плюс SPDX SBOM. Без телеметрии, без облачного аккаунта, без подписки.
 
+## Архитектура с высоты птичьего полёта
+
+Один Go-бинарь на вашем хосте крутит всё. Клиенты управляют сессиями через HTTP/WebSocket, session manager запускает каждый AI CLI в собственном PTY, а слой memory хранит общее состояние в Postgres с vector embeddings от вашего собственного провайдера.
+
+```mermaid
+flowchart LR
+    subgraph clients [Clients]
+        web[Web admin<br/>React SPA]
+        mob[Mobile app<br/>Flutter]
+        chat[Chat<br/>Telegram, Slack,<br/>Discord, Feishu,<br/>DingTalk, WeCom]
+        api[Third-party apps<br/>REST + WS]
+    end
+
+    subgraph gw [opendray gateway · single Go binary on your host]
+        direction TB
+        http[HTTP + WS<br/>chi · auth · audit]
+        sess[Session manager<br/>PTY · ring buffer]
+        mem[Memory layer<br/>three-domain retrieval]
+    end
+
+    subgraph cli [AI CLIs · spawned via PTY]
+        cc[Claude Code]
+        co[Codex]
+        ge[Gemini]
+        sh[Shell]
+    end
+
+    subgraph data [Persistence · stays on your network]
+        pg[(PostgreSQL<br/>+ pgvector)]
+        em[ONNX · Ollama<br/>LM Studio embeddings]
+    end
+
+    clients --> http
+    http --> sess
+    http --> mem
+    sess --> cc
+    sess --> co
+    sess --> ge
+    sess --> sh
+    sess -.-> mem
+    mem --> pg
+    mem --> em
+```
+
+Всё, что есть на диаграмме, работает в вашей сети. Никакой облачной зависимости, никакого inference за пределами вашего контроля.
+
+---
+
 ## Статус
 
 **v2.7.0** (последний) — поколение v2 продолжает итерироваться. См.
