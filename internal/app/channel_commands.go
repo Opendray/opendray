@@ -102,6 +102,11 @@ func registerChannelCommands(hub *channel.Hub, mgr sessionOps) {
 			"(pin where your messages go; /select off to clear)",
 		Source:  "builtin",
 		Handler: selectSessionHandler(mgr),
+		// "💬 Talk to" on /list resolves to /select, so docking the
+		// keyboard here refreshes it on the most common tap in the flow —
+		// the operator picks a session and immediately has the current
+		// control layout.
+		DocksControlKeyboard: true,
 	})
 	// /peek re-pushes the current (selected) session's latest output on
 	// demand — for when the notification scrolled away or arrived while

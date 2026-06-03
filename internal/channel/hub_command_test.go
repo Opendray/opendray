@@ -97,6 +97,33 @@ func TestHub_HandleCommand_UnknownReplies(t *testing.T) {
 	}
 }
 
+func TestHub_HandleCommand_DocksControlKeyboard(t *testing.T) {
+	h := newTestHub(t)
+	fc := &fakeChannel{id: "ch_test", kind: "stub"}
+	h.mu.Lock()
+	h.channels[fc.id] = fc
+	h.mu.Unlock()
+
+	reply := func(_ context.Context, _ CommandContext) (string, error) { return "ok", nil }
+	h.RegisterCommand(Command{Name: "dock", Handler: reply, DocksControlKeyboard: true})
+	h.RegisterCommand(Command{Name: "plain", Handler: reply})
+
+	h.dispatchCommandForTest(t, ChannelMessage{ChannelID: "ch_test", Text: "/dock"}, "dock", nil)
+	h.dispatchCommandForTest(t, ChannelMessage{ChannelID: "ch_test", Text: "/plain"}, "plain", nil)
+
+	fc.mu.Lock()
+	defer fc.mu.Unlock()
+	if len(fc.sent) != 2 {
+		t.Fatalf("want 2 sends, got %d", len(fc.sent))
+	}
+	if v, _ := fc.sent[0].Metadata[MetaControlKeyboard].(bool); !v {
+		t.Error("DocksControlKeyboard command reply should carry MetaControlKeyboard")
+	}
+	if _, has := fc.sent[1].Metadata[MetaControlKeyboard]; has {
+		t.Error("plain command reply must not carry MetaControlKeyboard")
+	}
+}
+
 // dispatchCommandForTest runs handleCommand without touching the DB.
 // Tests insert channels directly into Hub.channels via the lock above
 // and then exercise the lookup → handler → reply path.
@@ -120,7 +147,12 @@ func (h *Hub) dispatchCommandForTest(t *testing.T, msg ChannelMessage, name stri
 		t.Fatalf("handler err: %v", err)
 	}
 	if reply != "" {
-		h.replyText(context.Background(), ch, msg, reply)
+		// Mirror handleCommand's DocksControlKeyboard branch.
+		if cmd.DocksControlKeyboard {
+			h.replyControlText(context.Background(), ch, msg, reply)
+		} else {
+			h.replyText(context.Background(), ch, msg, reply)
+		}
 	}
 }
 
