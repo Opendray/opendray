@@ -1873,6 +1873,9 @@ class TranslationsWebTopbarEn {
 	/// en: '中文'
 	String get languageChinese => '中文';
 
+	/// en: 'Español'
+	String get languageSpanish => 'Español';
+
 	/// en: 'Signed in as'
 	String get signedInAs => 'Signed in as';
 
@@ -4795,6 +4798,9 @@ class TranslationsSettingsLanguageEn {
 
 	/// en: '中文'
 	String get chinese => '中文';
+
+	/// en: 'Español'
+	String get spanish => 'Español';
 }
 
 // Path: settings.appearance
@@ -13828,6 +13834,7 @@ extension on Translations {
 			'web.topbar.language' => 'Language',
 			'web.topbar.languageEnglish' => 'English',
 			'web.topbar.languageChinese' => '中文',
+			'web.topbar.languageSpanish' => 'Español',
 			'web.topbar.signedInAs' => 'Signed in as',
 			'web.topbar.tokenExpires' => 'Token expires',
 			'web.topbar.signOut' => 'Sign out',
@@ -14289,9 +14296,9 @@ extension on Translations {
 			'web.memoryInspector.toasts.bulkDeleted_one' => ({required Object count}) => 'Deleted ${count} memory from this scope',
 			'web.memoryInspector.toasts.bulkDeleted_other' => ({required Object count}) => 'Deleted ${count} memories from this scope',
 			'web.memoryInspector.toasts.bulkDeleteFailed' => 'Bulk delete failed',
-			'web.memoryInspector.toasts.created' => 'Memory created',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryInspector.toasts.created' => 'Memory created',
 			'web.memoryInspector.toasts.createFailed' => 'Create failed',
 			'web.memoryInspector.toasts.updated' => 'Memory updated',
 			'web.memoryInspector.toasts.updateFailed' => 'Update failed',
@@ -14803,9 +14810,9 @@ extension on Translations {
 			'web.integrations.proxy.send' => 'Send',
 			'web.integrations.proxy.sending' => 'Sending…',
 			'web.integrations.proxy.extraHeadersLabel' => 'Extra headers (one per line, Name: Value)',
-			'web.integrations.proxy.bodyLabel' => 'Body',
 			_ => null,
 		} ?? switch (path) {
+			'web.integrations.proxy.bodyLabel' => 'Body',
 			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
 			'web.integrations.proxy.emptyBody' => '(empty)',
@@ -15317,9 +15324,9 @@ extension on Translations {
 			'web.serverSettings.fields.backupLocalDir.label' => 'Local backup directory',
 			'web.serverSettings.fields.backupLocalDir.hint' => 'Default root for the auto-created `local` target. Empty = ~/.opendray/backups. Restart required.',
 			'web.serverSettings.fields.backupExportDir.label' => 'Export directory',
-			'web.serverSettings.fields.backupExportDir.hint' => 'Where one-shot export zips are staged on disk. Empty = ~/.opendray/exports. Bundles auto-expire after 24h. Restart required.',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.fields.backupExportDir.hint' => 'Where one-shot export zips are staged on disk. Empty = ~/.opendray/exports. Bundles auto-expire after 24h. Restart required.',
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump path',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'Absolute path to pg_dump. Major version must be ≥ the server\'s. Empty = first pg_dump on PATH.',
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'pg_restore path',
@@ -15831,9 +15838,9 @@ extension on Translations {
 			'sessions.inspector.notes.emptyProjectDocs' => 'No project docs yet. Tap + to create one, or let an AI agent generate from a prompt.',
 			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => 'No matches for "${query}".',
 			'sessions.inspector.notes.locationDialogHelp' => 'Pin this session\'s cwd to a specific folder under your notes vault. Leave blank to reset.',
-			'sessions.inspector.notes.sessionCwd' => 'Session cwd',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.sessionCwd' => 'Session cwd',
 			'sessions.inspector.notes.projectDocsPath' => 'Vault-relative project docs path',
 			'sessions.inspector.notes.locationStoredHint' => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
@@ -16345,9 +16352,9 @@ extension on Translations {
 			'backupTargetEditor.kinds.sftp.description' => 'Any SSH-accessible server',
 			'backupTargetEditor.kinds.s3.label' => 'S3 / compatible',
 			'backupTargetEditor.kinds.s3.description' => 'Amazon S3 + S3-compatible buckets (MinIO, R2, B2)',
-			'backupTargetEditor.kinds.rclone.label' => 'rclone (any)',
 			_ => null,
 		} ?? switch (path) {
+			'backupTargetEditor.kinds.rclone.label' => 'rclone (any)',
 			'backupTargetEditor.kinds.rclone.description' => 'OneDrive, Google Drive, Dropbox via the rclone CLI',
 			'backupTargetEditor.formTitleEdit' => 'Edit target',
 			'backupTargetEditor.formTitleNew' => 'New backup target',
@@ -16806,6 +16813,7 @@ extension on Translations {
 			'settings.language.systemSubtitle' => 'Follow your phone\'s language setting',
 			'settings.language.english' => 'English',
 			'settings.language.chinese' => '中文',
+			'settings.language.spanish' => 'Español',
 			'settings.appearance.section' => 'Appearance',
 			'settings.appearance.system' => 'System',
 			'settings.appearance.systemSubtitle' => 'Follow your phone\'s appearance setting',
@@ -16858,10 +16866,10 @@ extension on Translations {
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => 'Loaded from: ${path}',
 			'settings.serverSettings.restartHint' => 'Most sections need a gateway restart to take effect. The restart button is in the AppBar.',
 			'settings.serverSettings.savedNeedsRestart' => 'Saved. Restart the gateway to apply.',
-			'settings.serverSettings.savedSimple' => 'Saved.',
-			'settings.serverSettings.changesNeedRestart' => 'Changes to this section need a gateway restart.',
 			_ => null,
 		} ?? switch (path) {
+			'settings.serverSettings.savedSimple' => 'Saved.',
+			'settings.serverSettings.changesNeedRestart' => 'Changes to this section need a gateway restart.',
 			'settings.serverSettings.loadFailed' => 'Failed to load server settings',
 			'settings.serverSettings.sections.general' => 'General',
 			'settings.serverSettings.sections.logging' => 'Logging',

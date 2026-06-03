@@ -3,6 +3,7 @@ import { initReactI18next } from 'react-i18next'
 
 import en from '../../i18n/en.json'
 import zh from '../../i18n/zh.json'
+import es from '../../i18n/es.json'
 import { useLocale } from '@/stores/locale'
 
 // Initialise with the persisted (or detected) locale. After this point
@@ -15,6 +16,7 @@ void i18n
     resources: {
       en: { translation: en },
       zh: { translation: zh },
+      es: { translation: es },
     },
     lng: useLocale.getState().locale,
     fallbackLng: 'en',

@@ -57,6 +57,7 @@
       "language": "语言",
       "languageEnglish": "English",
       "languageChinese": "中文",
+      "languageSpanish": "Español",
       "signedInAs": "登录账号",
       "tokenExpires": "令牌到期",
       "signOut": "退出登录"
@@ -3827,7 +3828,8 @@
       "system": "跟随系统",
       "systemSubtitle": "跟随手机的语言设置",
       "english": "English",
-      "chinese": "中文"
+      "chinese": "中文",
+      "spanish": "Español"
     },
     "appearance": {
       "section": "外观",
