@@ -11,6 +11,8 @@ import {
   Code2,
   Check,
   Pencil,
+  Bell,
+  BellOff,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { copyText } from '@/lib/clipboard'
@@ -163,6 +165,26 @@ export function ChannelsPage() {
                   .then(() => qc.invalidateQueries({ queryKey: ['channels'] }))
                   .catch((err: Error) => toast.error(err.message))
               }}
+              onToggleMute={() => {
+                // Mute is a config flag, and the server's PATCH config does
+                // a full replace — merge against the channel's current
+                // config so we don't drop the other keys. Mirrors mobile's
+                // setMuted (channels_api.dart).
+                const cfg = (c.config ?? {}) as Record<string, unknown>
+                const next = !c.muted
+                updateChannel(c.id, { config: { ...cfg, muted: next } })
+                  .then(() => {
+                    qc.invalidateQueries({ queryKey: ['channels'] })
+                    toast.success(
+                      t(
+                        next
+                          ? 'web.channels.toasts.muted'
+                          : 'web.channels.toasts.unmuted',
+                      ),
+                    )
+                  })
+                  .catch((err: Error) => toast.error(err.message))
+              }}
               onDelete={() => {
                 if (
                   !confirm(t('web.channels.toasts.deleteConfirm', { id: c.id }))
@@ -211,6 +233,7 @@ function ChannelCard({
   channel,
   onTest,
   onToggle,
+  onToggleMute,
   onDelete,
   onSetup,
   onEdit,
@@ -218,6 +241,7 @@ function ChannelCard({
   channel: Channel
   onTest: () => void
   onToggle: (enabled: boolean) => void
+  onToggleMute: () => void
   onDelete: () => void
   onSetup: () => void
   onEdit: () => void
@@ -359,6 +383,24 @@ function ChannelCard({
             }
           >
             <Send className="size-3.5" /> {t('web.channels.card.test')}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleMute}
+            aria-label={t('web.channels.card.muteAria')}
+            title={t(
+              channel.muted
+                ? 'web.channels.card.unmuteTooltip'
+                : 'web.channels.card.muteTooltip',
+            )}
+            className={cn(channel.muted && 'text-amber-500')}
+          >
+            {channel.muted ? (
+              <BellOff className="size-3.5" />
+            ) : (
+              <Bell className="size-3.5" />
+            )}
           </Button>
           <Button
             variant="ghost"

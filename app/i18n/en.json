@@ -1060,6 +1060,9 @@
         "editAria": "Edit channel",
         "editTooltip": "Edit channel config",
         "deleteAria": "Delete channel",
+        "muteAria": "Mute or unmute channel",
+        "muteTooltip": "Mute notifications (two-way chat keeps working)",
+        "unmuteTooltip": "Unmute notifications",
         "bridgeSuffix": "(bridge)"
       },
       "toasts": {
@@ -1068,7 +1071,9 @@
         "deleteConfirm": "Delete channel {id}?",
         "deleted": "Channel deleted",
         "created": "Channel created",
-        "updated": "Channel updated"
+        "updated": "Channel updated",
+        "muted": "Channel muted",
+        "unmuted": "Channel unmuted"
       },
       "dialog": {
         "editTitle": "Edit channel",

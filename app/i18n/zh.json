@@ -1060,6 +1060,9 @@
         "editAria": "编辑频道",
         "editTooltip": "编辑频道配置",
         "deleteAria": "删除频道",
+        "muteAria": "静音或取消静音频道",
+        "muteTooltip": "静音通知(双向聊天仍可用)",
+        "unmuteTooltip": "取消静音通知",
         "bridgeSuffix": "(bridge)"
       },
       "toasts": {
@@ -1068,7 +1071,9 @@
         "deleteConfirm": "删除频道 {id}?",
         "deleted": "频道已删除",
         "created": "频道已创建",
-        "updated": "频道已更新"
+        "updated": "频道已更新",
+        "muted": "频道已静音",
+        "unmuted": "频道已取消静音"
       },
       "dialog": {
         "editTitle": "编辑频道",

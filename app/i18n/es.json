@@ -1060,6 +1060,9 @@
         "editAria": "Editar canal",
         "editTooltip": "Editar la configuración del canal",
         "deleteAria": "Eliminar canal",
+        "muteAria": "Silenciar o reactivar el canal",
+        "muteTooltip": "Silenciar notificaciones (el chat bidireccional sigue funcionando)",
+        "unmuteTooltip": "Reactivar notificaciones",
         "bridgeSuffix": "(bridge)"
       },
       "toasts": {
@@ -1068,7 +1071,9 @@
         "deleteConfirm": "¿Eliminar el canal {id}?",
         "deleted": "Canal eliminado",
         "created": "Canal creado",
-        "updated": "Canal actualizado"
+        "updated": "Canal actualizado",
+        "muted": "Canal silenciado",
+        "unmuted": "Canal reactivado"
       },
       "dialog": {
         "editTitle": "Editar canal",
