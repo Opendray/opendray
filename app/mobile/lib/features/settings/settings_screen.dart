@@ -60,6 +60,12 @@ class SettingsScreen extends ConsumerWidget {
                     icon: Icons.translate_outlined,
                     value: LocalePreference.chinese,
                   ),
+                  _LocaleOption(
+                    title: t.settings.language.spanish,
+                    subtitle: 'Español',
+                    icon: Icons.translate_outlined,
+                    value: LocalePreference.spanish,
+                  ),
                 ],
               ),
             ),

@@ -881,6 +881,7 @@ class _TranslationsWebTopbarZh extends TranslationsWebTopbarEn {
 	@override String get language => '语言';
 	@override String get languageEnglish => 'English';
 	@override String get languageChinese => '中文';
+	@override String get languageSpanish => 'Español';
 	@override String get signedInAs => '登录账号';
 	@override String get tokenExpires => '令牌到期';
 	@override String get signOut => '退出登录';
@@ -2481,6 +2482,7 @@ class _TranslationsSettingsLanguageZh extends TranslationsSettingsLanguageEn {
 	@override String get systemSubtitle => '跟随手机的语言设置';
 	@override String get english => 'English';
 	@override String get chinese => '中文';
+	@override String get spanish => 'Español';
 }
 
 // Path: settings.appearance
@@ -7422,6 +7424,7 @@ extension on TranslationsZh {
 			'web.topbar.language' => '语言',
 			'web.topbar.languageEnglish' => 'English',
 			'web.topbar.languageChinese' => '中文',
+			'web.topbar.languageSpanish' => 'Español',
 			'web.topbar.signedInAs' => '登录账号',
 			'web.topbar.tokenExpires' => '令牌到期',
 			'web.topbar.signOut' => '退出登录',
@@ -7883,9 +7886,9 @@ extension on TranslationsZh {
 			'web.memoryInspector.toasts.bulkDeleted_one' => ({required Object count}) => '已从此 scope 删除 ${count} 条记忆',
 			'web.memoryInspector.toasts.bulkDeleted_other' => ({required Object count}) => '已从此 scope 删除 ${count} 条记忆',
 			'web.memoryInspector.toasts.bulkDeleteFailed' => '批量删除失败',
-			'web.memoryInspector.toasts.created' => '记忆已创建',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryInspector.toasts.created' => '记忆已创建',
 			'web.memoryInspector.toasts.createFailed' => '创建失败',
 			'web.memoryInspector.toasts.updated' => '记忆已更新',
 			'web.memoryInspector.toasts.updateFailed' => '更新失败',
@@ -8397,9 +8400,9 @@ extension on TranslationsZh {
 			'web.integrations.proxy.sending' => '发送中…',
 			'web.integrations.proxy.extraHeadersLabel' => '额外 header（每行一条，Name: Value）',
 			'web.integrations.proxy.bodyLabel' => 'Body',
-			'web.integrations.proxy.headers' => 'Headers',
 			_ => null,
 		} ?? switch (path) {
+			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
 			'web.integrations.proxy.emptyBody' => '(空)',
 			'web.integrations.proxy.requestFailed' => '请求失败',
@@ -8911,9 +8914,9 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.backupLocalDir.hint' => '自动创建的 `local` 目标的默认根目录。留空 = ~/.opendray/backups。需要重启。',
 			'web.serverSettings.fields.backupExportDir.label' => '导出目录',
 			'web.serverSettings.fields.backupExportDir.hint' => '一次性导出 zip 在磁盘上的暂存位置。留空 = ~/.opendray/exports。包将在 24 小时后自动过期。需要重启。',
-			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump 路径',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump 路径',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'pg_dump 的绝对路径。主版本号必须 ≥ 服务器的。留空 = PATH 上的第一个 pg_dump。',
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'pg_restore 路径',
 			'web.serverSettings.fields.backupPgRestorePath.hint' => '/backups/restore 流程使用的 pg_restore 绝对路径。同样的主版本号规则。',
@@ -9425,9 +9428,9 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => '未找到匹配「${query}」的内容。',
 			'sessions.inspector.notes.locationDialogHelp' => '将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。',
 			'sessions.inspector.notes.sessionCwd' => '会话 cwd',
-			'sessions.inspector.notes.projectDocsPath' => '相对笔记库的项目文档路径',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.projectDocsPath' => '相对笔记库的项目文档路径',
 			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
 			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
@@ -9939,9 +9942,9 @@ extension on TranslationsZh {
 			'backupTargetEditor.kinds.s3.label' => 'S3 / 兼容',
 			'backupTargetEditor.kinds.s3.description' => 'Amazon S3 + S3 兼容存储桶（MinIO、R2、B2）',
 			'backupTargetEditor.kinds.rclone.label' => 'rclone（任意）',
-			'backupTargetEditor.kinds.rclone.description' => '通过 rclone CLI 访问 OneDrive、Google Drive、Dropbox',
 			_ => null,
 		} ?? switch (path) {
+			'backupTargetEditor.kinds.rclone.description' => '通过 rclone CLI 访问 OneDrive、Google Drive、Dropbox',
 			'backupTargetEditor.formTitleEdit' => '编辑目标',
 			'backupTargetEditor.formTitleNew' => '新建备份目标',
 			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => '自动：${prefix}-1',
@@ -10399,6 +10402,7 @@ extension on TranslationsZh {
 			'settings.language.systemSubtitle' => '跟随手机的语言设置',
 			'settings.language.english' => 'English',
 			'settings.language.chinese' => '中文',
+			'settings.language.spanish' => 'Español',
 			'settings.appearance.section' => '外观',
 			'settings.appearance.system' => '跟随系统',
 			'settings.appearance.systemSubtitle' => '跟随手机的外观设置',
@@ -10452,10 +10456,10 @@ extension on TranslationsZh {
 			'settings.serverSettings.restartHint' => '大部分配置需要重启网关后生效。重启按钮在 AppBar 中。',
 			'settings.serverSettings.savedNeedsRestart' => '已保存。重启网关以生效。',
 			'settings.serverSettings.savedSimple' => '已保存。',
-			'settings.serverSettings.changesNeedRestart' => '此配置的修改需重启网关。',
-			'settings.serverSettings.loadFailed' => '加载服务器设置失败',
 			_ => null,
 		} ?? switch (path) {
+			'settings.serverSettings.changesNeedRestart' => '此配置的修改需重启网关。',
+			'settings.serverSettings.loadFailed' => '加载服务器设置失败',
 			'settings.serverSettings.sections.general' => '通用',
 			'settings.serverSettings.sections.logging' => '日志',
 			'settings.serverSettings.sections.sessions' => '会话',

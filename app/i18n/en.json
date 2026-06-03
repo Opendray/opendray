@@ -57,6 +57,7 @@
       "language": "Language",
       "languageEnglish": "English",
       "languageChinese": "中文",
+      "languageSpanish": "Español",
       "signedInAs": "Signed in as",
       "tokenExpires": "Token expires",
       "signOut": "Sign out"
@@ -3828,7 +3829,8 @@
       "system": "System",
       "systemSubtitle": "Follow your phone's language setting",
       "english": "English",
-      "chinese": "中文"
+      "chinese": "中文",
+      "spanish": "Español"
     },
     "appearance": {
       "section": "Appearance",

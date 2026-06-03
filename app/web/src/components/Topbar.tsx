@@ -42,6 +42,7 @@ const themeOptions: { mode: ThemeMode; labelKey: string; icon: typeof Sun }[] = 
 const localeOptions: { locale: Locale; labelKey: string }[] = [
   { locale: 'en', labelKey: 'web.topbar.languageEnglish' },
   { locale: 'zh', labelKey: 'web.topbar.languageChinese' },
+  { locale: 'es', labelKey: 'web.topbar.languageSpanish' },
 ]
 
 export function Topbar({ onOpenPalette }: TopbarProps) {

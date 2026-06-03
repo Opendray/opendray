@@ -11,7 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum LocalePreference { system, english, chinese }
+enum LocalePreference { system, english, chinese, spanish }
 
 const _prefsKey = 'opendray.locale.preference.v1';
 
@@ -52,6 +52,8 @@ class LocaleController extends StateNotifier<LocalePreference> {
         LocaleSettings.setLocale(AppLocale.en);
       case LocalePreference.chinese:
         LocaleSettings.setLocale(AppLocale.zh);
+      case LocalePreference.spanish:
+        LocaleSettings.setLocale(AppLocale.es);
     }
   }
 
@@ -59,12 +61,14 @@ class LocaleController extends StateNotifier<LocalePreference> {
         LocalePreference.system => 'system',
         LocalePreference.english => 'english',
         LocalePreference.chinese => 'chinese',
+        LocalePreference.spanish => 'spanish',
       };
 
   static LocalePreference? _parse(String? raw) => switch (raw) {
         'system' => LocalePreference.system,
         'english' => LocalePreference.english,
         'chinese' => LocalePreference.chinese,
+        'spanish' => LocalePreference.spanish,
         _ => null,
       };
 }
