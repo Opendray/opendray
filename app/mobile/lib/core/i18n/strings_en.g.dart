@@ -10475,12 +10475,6 @@ class TranslationsChannelsKindsTelegramEn {
 	/// en: 'Displays a typing indicator until the agent’s reply settles.'
 	String get chatTypingHint => 'Displays a typing indicator until the agent’s reply settles.';
 
-	/// en: 'Activity notifications (idle / finished cards)'
-	String get notifyEnabledLabel => 'Activity notifications (idle / finished cards)';
-
-	/// en: 'Off keeps the chat clean — you still get replies to your messages. Turn on to also get a card when a session goes idle or finishes.'
-	String get notifyEnabledHint => 'Off keeps the chat clean — you still get replies to your messages. Turn on to also get a card when a session goes idle or finishes.';
-
 	/// en: 'Max reply length (characters)'
 	String get replyMaxCharsLabel => 'Max reply length (characters)';
 
@@ -16518,8 +16512,6 @@ extension on Translations {
 			'channels.kinds.telegram.chatEnabledHint' => 'When on, your messages are typed into the selected session and the agent replies here. Turn off for notifications only.',
 			'channels.kinds.telegram.chatTypingLabel' => 'Show “typing…” while the agent works',
 			'channels.kinds.telegram.chatTypingHint' => 'Displays a typing indicator until the agent’s reply settles.',
-			'channels.kinds.telegram.notifyEnabledLabel' => 'Activity notifications (idle / finished cards)',
-			'channels.kinds.telegram.notifyEnabledHint' => 'Off keeps the chat clean — you still get replies to your messages. Turn on to also get a card when a session goes idle or finishes.',
 			'channels.kinds.telegram.replyMaxCharsLabel' => 'Max reply length (characters)',
 			'channels.kinds.telegram.replyMaxCharsPlaceholder' => '3500 (blank = 3500, 0 = unlimited)',
 			'channels.kinds.telegram.replyMaxCharsHint' => 'Caps how much of the agent’s reply is sent before it’s trimmed with a “…(truncated)” note. Blank uses the 3500 default (~one message); set 0 to send the whole reply, split across multiple messages.',
@@ -16866,10 +16858,10 @@ extension on Translations {
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => 'Loaded from: ${path}',
 			'settings.serverSettings.restartHint' => 'Most sections need a gateway restart to take effect. The restart button is in the AppBar.',
 			'settings.serverSettings.savedNeedsRestart' => 'Saved. Restart the gateway to apply.',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.savedSimple' => 'Saved.',
 			'settings.serverSettings.changesNeedRestart' => 'Changes to this section need a gateway restart.',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.loadFailed' => 'Failed to load server settings',
 			'settings.serverSettings.sections.general' => 'General',
 			'settings.serverSettings.sections.logging' => 'Logging',

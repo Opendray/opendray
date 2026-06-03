@@ -3464,8 +3464,6 @@
         "chatEnabledHint": "Cuando está activado, tus mensajes se escriben en la session seleccionada y el agente responde aquí. Desactívalo solo para notificaciones.",
         "chatTypingLabel": "Mostrar “escribiendo…” mientras el agente trabaja",
         "chatTypingHint": "Muestra un indicador de escritura hasta que la respuesta del agente se asienta.",
-        "notifyEnabledLabel": "Notificaciones de actividad (tarjetas de inactiva / finalizada)",
-        "notifyEnabledHint": "Desactivado mantiene el chat limpio: aun así recibes respuestas a tus mensajes. Actívalo para recibir además una tarjeta cuando una session quede inactiva o finalice.",
         "replyMaxCharsLabel": "Longitud máxima de la respuesta (caracteres)",
         "replyMaxCharsPlaceholder": "3500 (en blanco = 3500, 0 = sin límite)",
         "replyMaxCharsHint": "Limita cuánto de la respuesta del agente se envía antes de recortarla con una nota “…(truncado)”. En blanco usa el valor por defecto de 3500 (~un mensaje); pon 0 para enviar la respuesta completa, dividida en varios mensajes."

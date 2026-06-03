@@ -5496,8 +5496,6 @@ class _TranslationsChannelsKindsTelegramEs extends TranslationsChannelsKindsTele
 	@override String get chatEnabledHint => 'Cuando está activado, tus mensajes se escriben en la session seleccionada y el agente responde aquí. Desactívalo solo para notificaciones.';
 	@override String get chatTypingLabel => 'Mostrar “escribiendo…” mientras el agente trabaja';
 	@override String get chatTypingHint => 'Muestra un indicador de escritura hasta que la respuesta del agente se asienta.';
-	@override String get notifyEnabledLabel => 'Notificaciones de actividad (tarjetas de inactiva / finalizada)';
-	@override String get notifyEnabledHint => 'Desactivado mantiene el chat limpio: aun así recibes respuestas a tus mensajes. Actívalo para recibir además una tarjeta cuando una session quede inactiva o finalice.';
 	@override String get replyMaxCharsLabel => 'Longitud máxima de la respuesta (caracteres)';
 	@override String get replyMaxCharsPlaceholder => '3500 (en blanco = 3500, 0 = sin límite)';
 	@override String get replyMaxCharsHint => 'Limita cuánto de la respuesta del agente se envía antes de recortarla con una nota “…(truncado)”. En blanco usa el valor por defecto de 3500 (~un mensaje); pon 0 para enviar la respuesta completa, dividida en varios mensajes.';
@@ -10109,8 +10107,6 @@ extension on TranslationsEs {
 			'channels.kinds.telegram.chatEnabledHint' => 'Cuando está activado, tus mensajes se escriben en la session seleccionada y el agente responde aquí. Desactívalo solo para notificaciones.',
 			'channels.kinds.telegram.chatTypingLabel' => 'Mostrar “escribiendo…” mientras el agente trabaja',
 			'channels.kinds.telegram.chatTypingHint' => 'Muestra un indicador de escritura hasta que la respuesta del agente se asienta.',
-			'channels.kinds.telegram.notifyEnabledLabel' => 'Notificaciones de actividad (tarjetas de inactiva / finalizada)',
-			'channels.kinds.telegram.notifyEnabledHint' => 'Desactivado mantiene el chat limpio: aun así recibes respuestas a tus mensajes. Actívalo para recibir además una tarjeta cuando una session quede inactiva o finalice.',
 			'channels.kinds.telegram.replyMaxCharsLabel' => 'Longitud máxima de la respuesta (caracteres)',
 			'channels.kinds.telegram.replyMaxCharsPlaceholder' => '3500 (en blanco = 3500, 0 = sin límite)',
 			'channels.kinds.telegram.replyMaxCharsHint' => 'Limita cuánto de la respuesta del agente se envía antes de recortarla con una nota “…(truncado)”. En blanco usa el valor por defecto de 3500 (~un mensaje); pon 0 para enviar la respuesta completa, dividida en varios mensajes.',
@@ -10457,10 +10453,10 @@ extension on TranslationsEs {
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => 'Cargado desde: ${path}',
 			'settings.serverSettings.restartHint' => 'La mayoría de las secciones necesitan un reinicio del gateway para surtir efecto. El botón de reinicio está en la AppBar.',
 			'settings.serverSettings.savedNeedsRestart' => 'Guardado. Reinicia el gateway para aplicar.',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.savedSimple' => 'Guardado.',
 			'settings.serverSettings.changesNeedRestart' => 'Los cambios en esta sección necesitan un reinicio del gateway.',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.loadFailed' => 'No se pudieron cargar los ajustes del servidor',
 			'settings.serverSettings.sections.general' => 'General',
 			'settings.serverSettings.sections.logging' => 'Registro',

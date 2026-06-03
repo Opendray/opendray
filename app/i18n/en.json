@@ -3464,8 +3464,6 @@
         "chatEnabledHint": "When on, your messages are typed into the selected session and the agent replies here. Turn off for notifications only.",
         "chatTypingLabel": "Show “typing…” while the agent works",
         "chatTypingHint": "Displays a typing indicator until the agent’s reply settles.",
-        "notifyEnabledLabel": "Activity notifications (idle / finished cards)",
-        "notifyEnabledHint": "Off keeps the chat clean — you still get replies to your messages. Turn on to also get a card when a session goes idle or finishes.",
         "replyMaxCharsLabel": "Max reply length (characters)",
         "replyMaxCharsPlaceholder": "3500 (blank = 3500, 0 = unlimited)",
         "replyMaxCharsHint": "Caps how much of the agent’s reply is sent before it’s trimmed with a “…(truncated)” note. Blank uses the 3500 default (~one message); set 0 to send the whole reply, split across multiple messages."

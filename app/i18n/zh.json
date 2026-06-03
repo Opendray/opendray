@@ -3464,8 +3464,6 @@
         "chatEnabledHint": "开启后，你的消息会被输入选定会话，agent 在此回复。仅需通知时关闭。",
         "chatTypingLabel": "agent 工作时显示“正在输入…”",
         "chatTypingHint": "在 agent 回复稳定前显示正在输入指示。",
-        "notifyEnabledLabel": "活动通知（空闲 / 完成卡片）",
-        "notifyEnabledHint": "关闭可保持聊天整洁 — 你仍会收到对消息的回复。开启后会话空闲或完成时也会收到卡片。",
         "replyMaxCharsLabel": "回复最大长度（字符）",
         "replyMaxCharsPlaceholder": "3500（留空 = 3500，0 = 不限）",
         "replyMaxCharsHint": "限制 agent 回复发送多少字符后被截断并附“…(已截断)”。留空使用 3500 默认（约一条消息）；设为 0 则发送完整回复，跨多条消息拆分。"

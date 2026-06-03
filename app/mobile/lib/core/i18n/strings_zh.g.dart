@@ -5496,8 +5496,6 @@ class _TranslationsChannelsKindsTelegramZh extends TranslationsChannelsKindsTele
 	@override String get chatEnabledHint => '开启后，你的消息会被输入选定会话，agent 在此回复。仅需通知时关闭。';
 	@override String get chatTypingLabel => 'agent 工作时显示“正在输入…”';
 	@override String get chatTypingHint => '在 agent 回复稳定前显示正在输入指示。';
-	@override String get notifyEnabledLabel => '活动通知（空闲 / 完成卡片）';
-	@override String get notifyEnabledHint => '关闭可保持聊天整洁 — 你仍会收到对消息的回复。开启后会话空闲或完成时也会收到卡片。';
 	@override String get replyMaxCharsLabel => '回复最大长度（字符）';
 	@override String get replyMaxCharsPlaceholder => '3500（留空 = 3500，0 = 不限）';
 	@override String get replyMaxCharsHint => '限制 agent 回复发送多少字符后被截断并附“…(已截断)”。留空使用 3500 默认（约一条消息）；设为 0 则发送完整回复，跨多条消息拆分。';
@@ -10109,8 +10107,6 @@ extension on TranslationsZh {
 			'channels.kinds.telegram.chatEnabledHint' => '开启后，你的消息会被输入选定会话，agent 在此回复。仅需通知时关闭。',
 			'channels.kinds.telegram.chatTypingLabel' => 'agent 工作时显示“正在输入…”',
 			'channels.kinds.telegram.chatTypingHint' => '在 agent 回复稳定前显示正在输入指示。',
-			'channels.kinds.telegram.notifyEnabledLabel' => '活动通知（空闲 / 完成卡片）',
-			'channels.kinds.telegram.notifyEnabledHint' => '关闭可保持聊天整洁 — 你仍会收到对消息的回复。开启后会话空闲或完成时也会收到卡片。',
 			'channels.kinds.telegram.replyMaxCharsLabel' => '回复最大长度（字符）',
 			'channels.kinds.telegram.replyMaxCharsPlaceholder' => '3500（留空 = 3500，0 = 不限）',
 			'channels.kinds.telegram.replyMaxCharsHint' => '限制 agent 回复发送多少字符后被截断并附“…(已截断)”。留空使用 3500 默认（约一条消息）；设为 0 则发送完整回复，跨多条消息拆分。',
@@ -10457,10 +10453,10 @@ extension on TranslationsZh {
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => '加载自：${path}',
 			'settings.serverSettings.restartHint' => '大部分配置需要重启网关后生效。重启按钮在 AppBar 中。',
 			'settings.serverSettings.savedNeedsRestart' => '已保存。重启网关以生效。',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.savedSimple' => '已保存。',
 			'settings.serverSettings.changesNeedRestart' => '此配置的修改需重启网关。',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.loadFailed' => '加载服务器设置失败',
 			'settings.serverSettings.sections.general' => '通用',
 			'settings.serverSettings.sections.logging' => '日志',

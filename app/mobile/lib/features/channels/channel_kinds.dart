@@ -111,13 +111,6 @@ List<ChannelKind> channelKindsList() => [
             hint: t.channels.kinds.telegram.chatTypingHint,
           ),
           ChannelField(
-            name: 'notify_enabled',
-            label: t.channels.kinds.telegram.notifyEnabledLabel,
-            type: ChannelFieldType.boolean,
-            defaultValue: false,
-            hint: t.channels.kinds.telegram.notifyEnabledHint,
-          ),
-          ChannelField(
             name: 'reply_max_chars',
             label: t.channels.kinds.telegram.replyMaxCharsLabel,
             type: ChannelFieldType.text,
