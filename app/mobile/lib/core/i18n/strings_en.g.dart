@@ -418,6 +418,7 @@ class TranslationsProvidersEn {
 	/// en: '{prefix}: {error}'
 	String errorWithMessage({required Object prefix, required Object error}) => '${prefix}: ${error}';
 
+	late final TranslationsProvidersUpdateCheckEn updateCheck = TranslationsProvidersUpdateCheckEn.internal(_root);
 	late final TranslationsProvidersAccountsEn accounts = TranslationsProvidersAccountsEn.internal(_root);
 
 	/// en: 'Provider config'
@@ -2975,6 +2976,8 @@ class TranslationsSessionsDetailEn {
 
 	/// en: 'Failed to load session'
 	String get errorTitle => 'Failed to load session';
+
+	late final TranslationsSessionsDetailAccountSwitcherEn accountSwitcher = TranslationsSessionsDetailAccountSwitcherEn.internal(_root);
 }
 
 // Path: sessions.terminal
@@ -3331,6 +3334,60 @@ class TranslationsProvidersErrorPrefixEn {
 
 	/// en: 'Delete failed'
 	String get delete => 'Delete failed';
+}
+
+// Path: providers.updateCheck
+class TranslationsProvidersUpdateCheckEn {
+	TranslationsProvidersUpdateCheckEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'CLI version'
+	String get sectionTitle => 'CLI version';
+
+	/// en: 'Checking for updates…'
+	String get checking => 'Checking for updates…';
+
+	/// en: 'Couldn't check for updates'
+	String get checkFailed => 'Couldn\'t check for updates';
+
+	/// en: 'Not installed on the gateway host'
+	String get notInstalled => 'Not installed on the gateway host';
+
+	/// en: 'Installed: {version}'
+	String installed({required Object version}) => 'Installed: ${version}';
+
+	/// en: 'Up to date'
+	String get upToDate => 'Up to date';
+
+	/// en: 'Update available: {version}'
+	String updateAvailable({required Object version}) => 'Update available: ${version}';
+
+	/// en: 'latest {version}'
+	String latest({required Object version}) => 'latest ${version}';
+
+	/// en: 'Update CLI'
+	String get updateButton => 'Update CLI';
+
+	/// en: 'Updating…'
+	String get updating => 'Updating…';
+
+	/// en: 'Updated to {version}.'
+	String updatedSnack({required Object version}) => 'Updated to ${version}.';
+
+	/// en: 'Already on the latest version.'
+	String get noChangeSnack => 'Already on the latest version.';
+
+	/// en: 'Update failed: {error}'
+	String updateFailed({required Object error}) => 'Update failed: ${error}';
+
+	/// en: 'In-app update isn't available on this host: {reason}'
+	String notAvailableHere({required Object reason}) => 'In-app update isn\'t available on this host: ${reason}';
+
+	/// en: '{n} active session(s) are using this CLI — updating won't interrupt them, but they keep the old version until restarted.'
+	String activeSessionsWarning({required Object n}) => '${n} active session(s) are using this CLI — updating won\'t interrupt them, but they keep the old version until restarted.';
 }
 
 // Path: providers.accounts
@@ -9652,6 +9709,57 @@ class TranslationsMoreItemsAboutEn {
 	String get subtitle => 'Build version & server info';
 }
 
+// Path: sessions.detail.accountSwitcher
+class TranslationsSessionsDetailAccountSwitcherEn {
+	TranslationsSessionsDetailAccountSwitcherEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Switch Claude account'
+	String get tooltip => 'Switch Claude account';
+
+	/// en: 'Switch Claude account'
+	String get sheetTitle => 'Switch Claude account';
+
+	/// en: 'Currently: {account}'
+	String current({required Object account}) => 'Currently: ${account}';
+
+	/// en: 'Default (system credential)'
+	String get defaultName => 'Default (system credential)';
+
+	/// en: 'Use the CLI's own login, no specific account'
+	String get defaultSubtitle => 'Use the CLI\'s own login, no specific account';
+
+	/// en: 'default'
+	String get defaultShort => 'default';
+
+	/// en: 'no token'
+	String get tokenEmpty => 'no token';
+
+	/// en: 'Switch account?'
+	String get confirmTitle => 'Switch account?';
+
+	/// en: 'This restarts the CLI under the new account — the current in-CLI conversation context is lost (the session tab is kept).'
+	String get confirmBody => 'This restarts the CLI under the new account — the current in-CLI conversation context is lost (the session tab is kept).';
+
+	/// en: 'Switch'
+	String get confirmAction => 'Switch';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+
+	/// en: 'Switched to {account}'
+	String switchedSnack({required Object account}) => 'Switched to ${account}';
+
+	/// en: 'Switch failed: {error}'
+	String switchFailed({required Object error}) => 'Switch failed: ${error}';
+
+	/// en: 'No Claude accounts configured. Add them in More → Providers → Claude.'
+	String get noneHint => 'No Claude accounts configured. Add them in More → Providers → Claude.';
+}
+
 // Path: sessions.terminal.snackbar
 class TranslationsSessionsTerminalSnackbarEn {
 	TranslationsSessionsTerminalSnackbarEn.internal(this._root);
@@ -15712,6 +15820,20 @@ extension on Translations {
 			'sessions.detail.startedEnded' => ({required Object started, required Object ended}) => 'started ${started}  ·  ended ${ended}',
 			'sessions.detail.idPrefix' => ({required Object id}) => 'id: ${id}',
 			'sessions.detail.errorTitle' => 'Failed to load session',
+			'sessions.detail.accountSwitcher.tooltip' => 'Switch Claude account',
+			'sessions.detail.accountSwitcher.sheetTitle' => 'Switch Claude account',
+			'sessions.detail.accountSwitcher.current' => ({required Object account}) => 'Currently: ${account}',
+			'sessions.detail.accountSwitcher.defaultName' => 'Default (system credential)',
+			'sessions.detail.accountSwitcher.defaultSubtitle' => 'Use the CLI\'s own login, no specific account',
+			'sessions.detail.accountSwitcher.defaultShort' => 'default',
+			'sessions.detail.accountSwitcher.tokenEmpty' => 'no token',
+			'sessions.detail.accountSwitcher.confirmTitle' => 'Switch account?',
+			'sessions.detail.accountSwitcher.confirmBody' => 'This restarts the CLI under the new account — the current in-CLI conversation context is lost (the session tab is kept).',
+			'sessions.detail.accountSwitcher.confirmAction' => 'Switch',
+			'sessions.detail.accountSwitcher.cancel' => 'Cancel',
+			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => 'Switched to ${account}',
+			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => 'Switch failed: ${error}',
+			'sessions.detail.accountSwitcher.noneHint' => 'No Claude accounts configured. Add them in More → Providers → Claude.',
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => 'Image picker failed: ${error}',
 			'sessions.terminal.snackbar.uploadingImage' => 'Uploading image…',
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => 'Image attached: ${path}',
@@ -15809,6 +15931,8 @@ extension on Translations {
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
@@ -15823,8 +15947,6 @@ extension on Translations {
 			'sessions.inspector.notes.emptyProjectDocs' => 'No project docs yet. Tap + to create one, or let an AI agent generate from a prompt.',
 			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => 'No matches for "${query}".',
 			'sessions.inspector.notes.locationDialogHelp' => 'Pin this session\'s cwd to a specific folder under your notes vault. Leave blank to reset.',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.sessionCwd' => 'Session cwd',
 			'sessions.inspector.notes.projectDocsPath' => 'Vault-relative project docs path',
 			'sessions.inspector.notes.locationStoredHint' => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.',
@@ -15947,6 +16069,21 @@ extension on Translations {
 			'providers.errorPrefix.rename' => 'Rename failed',
 			'providers.errorPrefix.delete' => 'Delete failed',
 			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
+			'providers.updateCheck.sectionTitle' => 'CLI version',
+			'providers.updateCheck.checking' => 'Checking for updates…',
+			'providers.updateCheck.checkFailed' => 'Couldn\'t check for updates',
+			'providers.updateCheck.notInstalled' => 'Not installed on the gateway host',
+			'providers.updateCheck.installed' => ({required Object version}) => 'Installed: ${version}',
+			'providers.updateCheck.upToDate' => 'Up to date',
+			'providers.updateCheck.updateAvailable' => ({required Object version}) => 'Update available: ${version}',
+			'providers.updateCheck.latest' => ({required Object version}) => 'latest ${version}',
+			'providers.updateCheck.updateButton' => 'Update CLI',
+			'providers.updateCheck.updating' => 'Updating…',
+			'providers.updateCheck.updatedSnack' => ({required Object version}) => 'Updated to ${version}.',
+			'providers.updateCheck.noChangeSnack' => 'Already on the latest version.',
+			'providers.updateCheck.updateFailed' => ({required Object error}) => 'Update failed: ${error}',
+			'providers.updateCheck.notAvailableHere' => ({required Object reason}) => 'In-app update isn\'t available on this host: ${reason}',
+			'providers.updateCheck.activeSessionsWarning' => ({required Object n}) => '${n} active session(s) are using this CLI — updating won\'t interrupt them, but they keep the old version until restarted.',
 			'providers.accounts.rename' => 'Rename',
 			'providers.accounts.renameTitle' => ({required Object name}) => 'Rename ${name}',
 			'providers.accounts.displayNameLabel' => 'Display name',
@@ -16308,6 +16445,8 @@ extension on Translations {
 			'backupSchedules.errorPrefixUpdate' => 'Update failed',
 			'backupSchedules.errorPrefixDelete' => 'Delete failed',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Removes the recurring spec for target ${targetId}. Existing backup blobs are not touched.',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.emptyList' => 'No schedules yet.\nTap "New" to create one.',
 			'backupSchedules.validatePickTarget' => 'Pick a target.',
 			'backupSchedules.validateInterval' => 'Interval must be > 0.',
@@ -16337,8 +16476,6 @@ extension on Translations {
 			'backupTargetEditor.kinds.sftp.description' => 'Any SSH-accessible server',
 			'backupTargetEditor.kinds.s3.label' => 'S3 / compatible',
 			'backupTargetEditor.kinds.s3.description' => 'Amazon S3 + S3-compatible buckets (MinIO, R2, B2)',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.kinds.rclone.label' => 'rclone (any)',
 			'backupTargetEditor.kinds.rclone.description' => 'OneDrive, Google Drive, Dropbox via the rclone CLI',
 			'backupTargetEditor.formTitleEdit' => 'Edit target',
@@ -16822,6 +16959,8 @@ extension on Translations {
 			'settings.changeCredentials.updatedSnack' => 'Credentials updated.',
 			'settings.changeCredentials.wrongCurrent' => 'Current password is wrong.',
 			'settings.changeCredentials.saving' => 'Saving…',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.update' => 'Update',
 			'settings.logViewer.title' => 'Live logs',
 			'settings.logViewer.reconnect' => 'Reconnect',
@@ -16851,8 +16990,6 @@ extension on Translations {
 			'settings.serverSettings.loadFailed' => 'Failed to load server settings',
 			'settings.serverSettings.sections.general' => 'General',
 			'settings.serverSettings.sections.logging' => 'Logging',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.sections.sessions' => 'Sessions',
 			'settings.serverSettings.sections.vault' => 'Vault',
 			'settings.serverSettings.sections.mcpRegistry' => 'MCP registry',

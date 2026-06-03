@@ -117,6 +117,27 @@ class SessionsApi {
     }
   }
 
+  // PATCH /api/v1/sessions/:id/claude-account — rebind a running Claude
+  // session to a different OAuth account. The gateway terminates the
+  // current child process and respawns it under the new credential, so
+  // the in-CLI conversation context is lost (the session id / tab is
+  // preserved). `accountId == ''` clears the binding (system default).
+  // Mirrors web switchClaudeAccount (app/shared/src/lib/sessions.ts).
+  Future<SessionSummary> switchClaudeAccount(
+    String id,
+    String accountId,
+  ) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/api/v1/sessions/$id/claude-account',
+        data: {'account_id': accountId},
+      );
+      return SessionSummary.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   // Upload a file (typically an image) and let the gateway hand
   // back the absolute path it landed at on the server's tempdir.
   // The caller pastes that path into the live PTY so the running
