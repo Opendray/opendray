@@ -257,6 +257,7 @@ class _TranslationsProvidersEs extends TranslationsProvidersEn {
 	@override String get reload => 'Recargar';
 	@override late final _TranslationsProvidersErrorPrefixEs errorPrefix = _TranslationsProvidersErrorPrefixEs._(_root);
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}: ${error}';
+	@override late final _TranslationsProvidersUpdateCheckEs updateCheck = _TranslationsProvidersUpdateCheckEs._(_root);
 	@override late final _TranslationsProvidersAccountsEs accounts = _TranslationsProvidersAccountsEs._(_root);
 	@override String get configFallbackTitle => 'Configuración del proveedor';
 	@override String get saving => 'Guardando…';
@@ -1525,6 +1526,7 @@ class _TranslationsSessionsDetailEs extends TranslationsSessionsDetailEn {
 	@override String startedEnded({required Object started, required Object ended}) => 'iniciada ${started}  ·  finalizada ${ended}';
 	@override String idPrefix({required Object id}) => 'id: ${id}';
 	@override String get errorTitle => 'No se pudo cargar la sesión';
+	@override late final _TranslationsSessionsDetailAccountSwitcherEs accountSwitcher = _TranslationsSessionsDetailAccountSwitcherEs._(_root);
 }
 
 // Path: sessions.terminal
@@ -1720,6 +1722,30 @@ class _TranslationsProvidersErrorPrefixEs extends TranslationsProvidersErrorPref
 	@override String get toggle => 'Error al alternar';
 	@override String get rename => 'Error al renombrar';
 	@override String get delete => 'Error al eliminar';
+}
+
+// Path: providers.updateCheck
+class _TranslationsProvidersUpdateCheckEs extends TranslationsProvidersUpdateCheckEn {
+	_TranslationsProvidersUpdateCheckEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get sectionTitle => 'Versión del CLI';
+	@override String get checking => 'Buscando actualizaciones…';
+	@override String get checkFailed => 'No se pudo buscar actualizaciones';
+	@override String get notInstalled => 'No instalado en el host del gateway';
+	@override String installed({required Object version}) => 'Instalado: ${version}';
+	@override String get upToDate => 'Actualizado';
+	@override String updateAvailable({required Object version}) => 'Actualización disponible: ${version}';
+	@override String latest({required Object version}) => 'última ${version}';
+	@override String get updateButton => 'Actualizar CLI';
+	@override String get updating => 'Actualizando…';
+	@override String updatedSnack({required Object version}) => 'Actualizado a ${version}.';
+	@override String get noChangeSnack => 'Ya está en la última versión.';
+	@override String updateFailed({required Object error}) => 'Actualización fallida: ${error}';
+	@override String notAvailableHere({required Object reason}) => 'La actualización en la app no está disponible en este host: ${reason}';
+	@override String activeSessionsWarning({required Object n}) => '${n} sesión(es) activa(s) usan este CLI — actualizar no las interrumpe, pero mantienen la versión anterior hasta reiniciarse.';
 }
 
 // Path: providers.accounts
@@ -5017,6 +5043,29 @@ class _TranslationsMoreItemsAboutEs extends TranslationsMoreItemsAboutEn {
 	// Translations
 	@override String get title => 'Acerca de';
 	@override String get subtitle => 'Versión de compilación e información del servidor';
+}
+
+// Path: sessions.detail.accountSwitcher
+class _TranslationsSessionsDetailAccountSwitcherEs extends TranslationsSessionsDetailAccountSwitcherEn {
+	_TranslationsSessionsDetailAccountSwitcherEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get tooltip => 'Cambiar de cuenta de Claude';
+	@override String get sheetTitle => 'Cambiar de cuenta de Claude';
+	@override String current({required Object account}) => 'Actual: ${account}';
+	@override String get defaultName => 'Predeterminada (credencial del sistema)';
+	@override String get defaultSubtitle => 'Usa el propio inicio de sesión del CLI, sin cuenta específica';
+	@override String get defaultShort => 'predeterminada';
+	@override String get tokenEmpty => 'sin token';
+	@override String get confirmTitle => '¿Cambiar de cuenta?';
+	@override String get confirmBody => 'Esto reinicia el CLI con la nueva cuenta — se pierde el contexto de conversación actual dentro del CLI (la pestaña de la sesión se conserva).';
+	@override String get confirmAction => 'Cambiar';
+	@override String get cancel => 'Cancelar';
+	@override String switchedSnack({required Object account}) => 'Cambiado a ${account}';
+	@override String switchFailed({required Object error}) => 'Cambio fallido: ${error}';
+	@override String get noneHint => 'No hay cuentas de Claude configuradas. Agrégalas en Más → Providers → Claude.';
 }
 
 // Path: sessions.terminal.snackbar
@@ -9313,6 +9362,20 @@ extension on TranslationsEs {
 			'sessions.detail.startedEnded' => ({required Object started, required Object ended}) => 'iniciada ${started}  ·  finalizada ${ended}',
 			'sessions.detail.idPrefix' => ({required Object id}) => 'id: ${id}',
 			'sessions.detail.errorTitle' => 'No se pudo cargar la sesión',
+			'sessions.detail.accountSwitcher.tooltip' => 'Cambiar de cuenta de Claude',
+			'sessions.detail.accountSwitcher.sheetTitle' => 'Cambiar de cuenta de Claude',
+			'sessions.detail.accountSwitcher.current' => ({required Object account}) => 'Actual: ${account}',
+			'sessions.detail.accountSwitcher.defaultName' => 'Predeterminada (credencial del sistema)',
+			'sessions.detail.accountSwitcher.defaultSubtitle' => 'Usa el propio inicio de sesión del CLI, sin cuenta específica',
+			'sessions.detail.accountSwitcher.defaultShort' => 'predeterminada',
+			'sessions.detail.accountSwitcher.tokenEmpty' => 'sin token',
+			'sessions.detail.accountSwitcher.confirmTitle' => '¿Cambiar de cuenta?',
+			'sessions.detail.accountSwitcher.confirmBody' => 'Esto reinicia el CLI con la nueva cuenta — se pierde el contexto de conversación actual dentro del CLI (la pestaña de la sesión se conserva).',
+			'sessions.detail.accountSwitcher.confirmAction' => 'Cambiar',
+			'sessions.detail.accountSwitcher.cancel' => 'Cancelar',
+			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => 'Cambiado a ${account}',
+			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => 'Cambio fallido: ${error}',
+			'sessions.detail.accountSwitcher.noneHint' => 'No hay cuentas de Claude configuradas. Agrégalas en Más → Providers → Claude.',
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => 'Falló el selector de imágenes: ${error}',
 			'sessions.terminal.snackbar.uploadingImage' => 'Subiendo imagen…',
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => 'Imagen adjuntada: ${path}',
@@ -9410,6 +9473,8 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Falló la carga: ${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Falló al guardar: ${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Falló al guardar: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Falló al crear: ${error}',
@@ -9424,8 +9489,6 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.emptyProjectDocs' => 'Aún no hay documentos del proyecto. Toca + para crear uno o deja que un agente de IA lo genere a partir de un prompt.',
 			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => 'No hay coincidencias para "${query}".',
 			'sessions.inspector.notes.locationDialogHelp' => 'Fija el cwd de esta session a una carpeta específica dentro de tu almacén de notas. Déjalo en blanco para restablecer.',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.sessionCwd' => 'cwd de la session',
 			'sessions.inspector.notes.projectDocsPath' => 'Ruta de los documentos del proyecto relativa al almacén',
 			'sessions.inspector.notes.locationStoredHint' => 'Almacenado en <vault>/.opendray-projects.json. Se sincroniza con git junto con el resto del almacén.',
@@ -9548,6 +9611,21 @@ extension on TranslationsEs {
 			'providers.errorPrefix.rename' => 'Error al renombrar',
 			'providers.errorPrefix.delete' => 'Error al eliminar',
 			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
+			'providers.updateCheck.sectionTitle' => 'Versión del CLI',
+			'providers.updateCheck.checking' => 'Buscando actualizaciones…',
+			'providers.updateCheck.checkFailed' => 'No se pudo buscar actualizaciones',
+			'providers.updateCheck.notInstalled' => 'No instalado en el host del gateway',
+			'providers.updateCheck.installed' => ({required Object version}) => 'Instalado: ${version}',
+			'providers.updateCheck.upToDate' => 'Actualizado',
+			'providers.updateCheck.updateAvailable' => ({required Object version}) => 'Actualización disponible: ${version}',
+			'providers.updateCheck.latest' => ({required Object version}) => 'última ${version}',
+			'providers.updateCheck.updateButton' => 'Actualizar CLI',
+			'providers.updateCheck.updating' => 'Actualizando…',
+			'providers.updateCheck.updatedSnack' => ({required Object version}) => 'Actualizado a ${version}.',
+			'providers.updateCheck.noChangeSnack' => 'Ya está en la última versión.',
+			'providers.updateCheck.updateFailed' => ({required Object error}) => 'Actualización fallida: ${error}',
+			'providers.updateCheck.notAvailableHere' => ({required Object reason}) => 'La actualización en la app no está disponible en este host: ${reason}',
+			'providers.updateCheck.activeSessionsWarning' => ({required Object n}) => '${n} sesión(es) activa(s) usan este CLI — actualizar no las interrumpe, pero mantienen la versión anterior hasta reiniciarse.',
 			'providers.accounts.rename' => 'Renombrar',
 			'providers.accounts.renameTitle' => ({required Object name}) => 'Renombrar ${name}',
 			'providers.accounts.displayNameLabel' => 'Nombre visible',
@@ -9909,6 +9987,8 @@ extension on TranslationsEs {
 			'backupSchedules.errorPrefixUpdate' => 'Error al actualizar',
 			'backupSchedules.errorPrefixDelete' => 'Error al eliminar',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Elimina la especificación recurrente para el destino ${targetId}. Los blobs de copia de seguridad existentes no se modifican.',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.emptyList' => 'Aún no hay programaciones.\nToca "Nueva" para crear una.',
 			'backupSchedules.validatePickTarget' => 'Elige un destino.',
 			'backupSchedules.validateInterval' => 'El intervalo debe ser > 0.',
@@ -9938,8 +10018,6 @@ extension on TranslationsEs {
 			'backupTargetEditor.kinds.sftp.description' => 'Cualquier servidor accesible por SSH',
 			'backupTargetEditor.kinds.s3.label' => 'S3 / compatible',
 			'backupTargetEditor.kinds.s3.description' => 'Amazon S3 y buckets compatibles con S3 (MinIO, R2, B2)',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.kinds.rclone.label' => 'rclone (cualquiera)',
 			'backupTargetEditor.kinds.rclone.description' => 'OneDrive, Google Drive, Dropbox a través de la CLI de rclone',
 			'backupTargetEditor.formTitleEdit' => 'Editar destino',
@@ -10423,6 +10501,8 @@ extension on TranslationsEs {
 			'settings.changeCredentials.updatedSnack' => 'Credenciales actualizadas.',
 			'settings.changeCredentials.wrongCurrent' => 'La contraseña actual es incorrecta.',
 			'settings.changeCredentials.saving' => 'Guardando…',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.update' => 'Actualizar',
 			'settings.logViewer.title' => 'Logs en vivo',
 			'settings.logViewer.reconnect' => 'Reconectar',
@@ -10452,8 +10532,6 @@ extension on TranslationsEs {
 			'settings.serverSettings.loadFailed' => 'No se pudieron cargar los ajustes del servidor',
 			'settings.serverSettings.sections.general' => 'General',
 			'settings.serverSettings.sections.logging' => 'Registro',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.sections.sessions' => 'Sessions',
 			'settings.serverSettings.sections.vault' => 'Vault',
 			'settings.serverSettings.sections.mcpRegistry' => 'Registro de MCP',
