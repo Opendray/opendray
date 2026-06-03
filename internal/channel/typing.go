@@ -23,8 +23,10 @@ type TurnExpecter interface {
 // turn-complete signal. A turn normally settles in seconds; the cap is
 // the safety net for a session that never replies (hung, waiting on a
 // human, crashed mid-turn) so the chat doesn't show a perpetual fake
-// "typing…". On expiry we stop the indicator and post a short note;
-// the eventual output still arrives via the normal idle card.
+// "typing…". On expiry we stop the indicator and post a short note but
+// KEEP the pending entry, so the reply is still delivered when the turn
+// finally settles (see onReplyTimeout) — only a session end / supersede
+// tears it down.
 const typingCap = 90 * time.Second
 
 // pendingReply is a chat message awaiting its agent reply. One per
@@ -178,8 +180,17 @@ func (h *Hub) onReplyTimeout(key string) {
 		h.pendingMu.Unlock()
 		return
 	}
-	delete(h.pending, key)
-	pr.stop()
+	// Do NOT drop the pending here: a long turn that merely exceeded the
+	// typing cap still settles eventually, and deliverTurnReply must find
+	// this entry to post the reply. Dropping it (the old behaviour) lost
+	// the reply for any turn longer than typingCap, because the idle-card
+	// fallback is unreliable under once-mode. We only stop the visual
+	// "typing…" indicator here (the cap timer has already fired); swap
+	// stopTyping for a no-op so a later pr.stop() doesn't double-cancel.
+	if pr.stopTyping != nil {
+		pr.stopTyping()
+		pr.stopTyping = func() {}
+	}
 	h.pendingMu.Unlock()
 
 	h.mu.RLock()

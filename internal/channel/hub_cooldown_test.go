@@ -73,6 +73,34 @@ func TestForgetNotifyState_ClearsCooldown(t *testing.T) {
 	}
 }
 
+// forgetNotifyAllForSession (driven by the session.input signal) must
+// re-arm a session across EVERY channel, while leaving other sessions
+// untouched — this is what makes a web/CLI reply count like a chat reply.
+func TestForgetNotifyAllForSession_ClearsAcrossChannels(t *testing.T) {
+	h := &Hub{
+		log:         slog.New(slog.NewTextHandler(io.Discard, nil)),
+		notifyState: make(map[string]map[string]time.Time),
+	}
+	now := time.Now()
+	cd := time.Hour
+	// Two channels notified about session A; c1 also about B.
+	suppress(h, "c1", "session.idle", "A", now, cd)
+	suppress(h, "c2", "session.idle", "A", now, cd)
+	suppress(h, "c1", "session.idle", "B", now, cd)
+
+	h.forgetNotifyAllForSession("A")
+
+	if suppress(h, "c1", "session.idle", "A", now, cd) {
+		t.Error("c1/A should be re-armed across channels")
+	}
+	if suppress(h, "c2", "session.idle", "A", now, cd) {
+		t.Error("c2/A should be re-armed across channels")
+	}
+	if !suppress(h, "c1", "session.idle", "B", now, cd) {
+		t.Error("session B must be unaffected by re-arming session A")
+	}
+}
+
 func TestSuppressByCooldown_RaceFree(t *testing.T) {
 	h := &Hub{
 		log:         slog.New(slog.NewTextHandler(io.Discard, nil)),

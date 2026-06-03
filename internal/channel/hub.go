@@ -867,6 +867,27 @@ func (h *Hub) forgetNotifyForSession(channelID, sessionID string) {
 	}
 }
 
+// forgetNotifyAllForSession clears the suppression entries for a session
+// across EVERY channel. Driven by the session.input signal: input may
+// arrive from the web terminal / CLI with no specific channel context, so
+// any channel that would notify about this session must re-arm. Topic is
+// matched by the "|sessionID" suffix, so idle/started/ended all clear.
+func (h *Hub) forgetNotifyAllForSession(sessionID string) {
+	if sessionID == "" {
+		return
+	}
+	h.notifyMu.Lock()
+	defer h.notifyMu.Unlock()
+	suffix := "|" + sessionID
+	for _, chState := range h.notifyState {
+		for k := range chState {
+			if strings.HasSuffix(k, suffix) {
+				delete(chState, k)
+			}
+		}
+	}
+}
+
 // sessionIDFromEvent pulls the session_id field out of an event's
 // data payload (best effort). Empty string when the topic doesn't
 // carry one.
@@ -906,6 +927,13 @@ func (h *Hub) runOutbound(ctx context.Context) {
 	defer unsubS()
 	chInterrupted, unsubInt := h.bus.Subscribe("session.interrupted", 64)
 	defer unsubInt()
+	// User input (from ANY source — web terminal, mobile, or a chat
+	// channel; all flow through session.Manager.Input) re-arms the
+	// notifier: clear once/cooldown suppression for that session so the
+	// next idle/turn notifies again. This makes a reply typed in the web
+	// UI count exactly like a Telegram reply.
+	chInput, unsubIn := h.bus.Subscribe("session.input", 64)
+	defer unsubIn()
 	for {
 		select {
 		case <-ctx.Done():
@@ -941,6 +969,11 @@ func (h *Hub) runOutbound(ctx context.Context) {
 				return
 			}
 			h.cancelReplyWait(ctx, sessionIDFromEvent(ev))
+		case ev, ok := <-chInput:
+			if !ok {
+				return
+			}
+			h.forgetNotifyAllForSession(sessionIDFromEvent(ev))
 		}
 	}
 }
