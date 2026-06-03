@@ -107,13 +107,6 @@ export const KIND_DEFS: KindDef[] = [
         hint: 'Displays a typing indicator until the agent’s reply settles.',
       },
       {
-        name: 'notify_enabled',
-        label: 'Activity notifications (idle / finished cards)',
-        type: 'boolean',
-        default: false,
-        hint: 'Off keeps the chat clean — you still get replies to your messages. Turn on to also get a card when a session goes idle or finishes.',
-      },
-      {
         name: 'reply_max_chars',
         label: 'Max reply length (characters)',
         type: 'text',

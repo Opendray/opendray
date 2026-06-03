@@ -23,12 +23,6 @@ type chatConfig struct {
 	// ChatTyping shows the "typing…" indicator while awaiting a reply.
 	// nil/absent = enabled.
 	ChatTyping *bool `json:"chat_typing"`
-	// NotifyEnabled controls the idle / ended / PR broadcast cards. When
-	// two-way chat is on these are pure noise (every session dumps its
-	// running output every idle window), so the default is OFF whenever
-	// chat is enabled. nil/absent = default-by-mode; set true to opt back
-	// in to activity notifications.
-	NotifyEnabled *bool `json:"notify_enabled"`
 	// ReplyMaxChars caps how much of an agent's turn reply is sent to the
 	// chat before it's trimmed with a "…(truncated)" footer. Kept as raw
 	// JSON because the dashboard form submits it as a string ("3500") but
@@ -67,17 +61,6 @@ func (c chatConfig) chatEnabled() bool { return c.ChatEnabled == nil || *c.ChatE
 // typingEnabled reports whether to show the typing indicator (default
 // true).
 func (c chatConfig) typingEnabled() bool { return c.ChatTyping == nil || *c.ChatTyping }
-
-// notificationsEnabled reports whether idle/ended/PR broadcast cards
-// should be sent. Explicit setting wins; otherwise notifications are on
-// only when two-way chat is OFF — so a chat channel stays clean unless
-// the operator opts in.
-func (c chatConfig) notificationsEnabled() bool {
-	if c.NotifyEnabled != nil {
-		return *c.NotifyEnabled
-	}
-	return !c.chatEnabled()
-}
 
 // replyMaxChars returns the configured turn-reply cap in characters.
 // Accepts either a JSON number or a numeric string (the dashboard form

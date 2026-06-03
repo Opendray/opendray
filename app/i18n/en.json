@@ -1033,7 +1033,7 @@
     },
     "channels": {
       "title": "Channels",
-      "subtitle": "Bidirectional messaging integrations. Outbound notifications are filtered by each channel's <1>notify_on</1>.",
+      "subtitle": "Bidirectional messaging integrations. Every enabled, unmuted channel receives session notifications.",
       "newButton": "New channel",
       "loading": "Loading…",
       "empty": {
@@ -1048,7 +1048,6 @@
         "tokenLabel": "token:",
         "chatIdLabel": "chat_id:",
         "channelIdLabel": "channel_id:",
-        "notifyOnLabel": "notify_on:",
         "webhookLabel": "webhook:",
         "copyWebhookTooltip": "Copy webhook URL",
         "webhookCopiedToast": "Webhook URL copied",
@@ -1060,6 +1059,9 @@
         "editAria": "Edit channel",
         "editTooltip": "Edit channel config",
         "deleteAria": "Delete channel",
+        "muteAria": "Mute or unmute channel",
+        "muteTooltip": "Mute notifications (two-way chat keeps working)",
+        "unmuteTooltip": "Unmute notifications",
         "bridgeSuffix": "(bridge)"
       },
       "toasts": {
@@ -1068,7 +1070,9 @@
         "deleteConfirm": "Delete channel {id}?",
         "deleted": "Channel deleted",
         "created": "Channel created",
-        "updated": "Channel updated"
+        "updated": "Channel updated",
+        "muted": "Channel muted",
+        "unmuted": "Channel unmuted"
       },
       "dialog": {
         "editTitle": "Edit channel",
@@ -1096,10 +1100,6 @@
       },
       "notifications": {
         "sectionTitle": "Session notifications",
-        "notifyOnLabel": "Notify on",
-        "hintAll": "Receiving every session event. Click a tag to opt out.",
-        "hintNone": "No events selected — outbound notifications muted.",
-        "hintSome": "Only {selected} of {total} topics selected.",
         "repeatPolicyLabel": "Repeat policy",
         "cooldownLabel": "Cooldown duration",
         "onceReplyHint": "Replying with non-command text in this chat resets the suppression — opendray forwards your reply to the session's stdin and re-arms the notifier.",
@@ -3396,13 +3396,10 @@
     "errorWithMessage": "{prefix}: {error}",
     "notifications": {
       "title": "Notification preferences",
-      "notifyOn": "Notify on",
       "repeatPolicy": "Repeat policy",
       "cooldownWindow": "Cooldown window",
       "includeSnippet": "Include terminal snippet",
       "snippetLengthCap": "Snippet length cap",
-      "notifyOnAll": "All session events.",
-      "notifyOnEmpty": "No events selected — outbound notifications muted.",
       "snippetHelper": "Embeds the recent terminal tail in each notification.",
       "snippetNoCap": "no cap",
       "snippetChars": "{n} chars",
@@ -3464,8 +3461,6 @@
         "chatEnabledHint": "When on, your messages are typed into the selected session and the agent replies here. Turn off for notifications only.",
         "chatTypingLabel": "Show “typing…” while the agent works",
         "chatTypingHint": "Displays a typing indicator until the agent’s reply settles.",
-        "notifyEnabledLabel": "Activity notifications (idle / finished cards)",
-        "notifyEnabledHint": "Off keeps the chat clean — you still get replies to your messages. Turn on to also get a card when a session goes idle or finishes.",
         "replyMaxCharsLabel": "Max reply length (characters)",
         "replyMaxCharsPlaceholder": "3500 (blank = 3500, 0 = unlimited)",
         "replyMaxCharsHint": "Caps how much of the agent’s reply is sent before it’s trimmed with a “…(truncated)” note. Blank uses the 3500 default (~one message); set 0 to send the whole reply, split across multiple messages."

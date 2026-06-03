@@ -1033,7 +1033,7 @@
     },
     "channels": {
       "title": "Canales",
-      "subtitle": "Integraciones de mensajería bidireccional. Las notificaciones salientes se filtran según el <1>notify_on</1> de cada canal.",
+      "subtitle": "Integraciones de mensajería bidireccional. Cada canal habilitado y no silenciado recibe notificaciones de sesión.",
       "newButton": "Nuevo canal",
       "loading": "Cargando…",
       "empty": {
@@ -1048,7 +1048,6 @@
         "tokenLabel": "token:",
         "chatIdLabel": "chat_id:",
         "channelIdLabel": "channel_id:",
-        "notifyOnLabel": "notify_on:",
         "webhookLabel": "webhook:",
         "copyWebhookTooltip": "Copiar la URL del webhook",
         "webhookCopiedToast": "URL del webhook copiada",
@@ -1060,6 +1059,9 @@
         "editAria": "Editar canal",
         "editTooltip": "Editar la configuración del canal",
         "deleteAria": "Eliminar canal",
+        "muteAria": "Silenciar o reactivar el canal",
+        "muteTooltip": "Silenciar notificaciones (el chat bidireccional sigue funcionando)",
+        "unmuteTooltip": "Reactivar notificaciones",
         "bridgeSuffix": "(bridge)"
       },
       "toasts": {
@@ -1068,7 +1070,9 @@
         "deleteConfirm": "¿Eliminar el canal {id}?",
         "deleted": "Canal eliminado",
         "created": "Canal creado",
-        "updated": "Canal actualizado"
+        "updated": "Canal actualizado",
+        "muted": "Canal silenciado",
+        "unmuted": "Canal reactivado"
       },
       "dialog": {
         "editTitle": "Editar canal",
@@ -1096,10 +1100,6 @@
       },
       "notifications": {
         "sectionTitle": "Notificaciones de session",
-        "notifyOnLabel": "Notificar en",
-        "hintAll": "Recibiendo todos los eventos de session. Haz clic en una etiqueta para excluirlo.",
-        "hintNone": "Ningún evento seleccionado, notificaciones salientes silenciadas.",
-        "hintSome": "Solo {selected} de {total} temas seleccionados.",
         "repeatPolicyLabel": "Política de repetición",
         "cooldownLabel": "Duración del cooldown",
         "onceReplyHint": "Responder con texto que no sea un comando en este chat restablece la supresión, opendray reenvía tu respuesta al stdin de la session y rearma el notificador.",
@@ -3396,13 +3396,10 @@
     "errorWithMessage": "{prefix}: {error}",
     "notifications": {
       "title": "Preferencias de notificación",
-      "notifyOn": "Notificar en",
       "repeatPolicy": "Política de repetición",
       "cooldownWindow": "Ventana de cooldown",
       "includeSnippet": "Incluir fragmento del terminal",
       "snippetLengthCap": "Límite de longitud del fragmento",
-      "notifyOnAll": "Todos los eventos de la session.",
-      "notifyOnEmpty": "Ningún evento seleccionado. Notificaciones salientes silenciadas.",
       "snippetHelper": "Incrusta el final reciente del terminal en cada notificación.",
       "snippetNoCap": "sin límite",
       "snippetChars": "{n} caracteres",
@@ -3464,8 +3461,6 @@
         "chatEnabledHint": "Cuando está activado, tus mensajes se escriben en la session seleccionada y el agente responde aquí. Desactívalo solo para notificaciones.",
         "chatTypingLabel": "Mostrar “escribiendo…” mientras el agente trabaja",
         "chatTypingHint": "Muestra un indicador de escritura hasta que la respuesta del agente se asienta.",
-        "notifyEnabledLabel": "Notificaciones de actividad (tarjetas de inactiva / finalizada)",
-        "notifyEnabledHint": "Desactivado mantiene el chat limpio: aun así recibes respuestas a tus mensajes. Actívalo para recibir además una tarjeta cuando una session quede inactiva o finalice.",
         "replyMaxCharsLabel": "Longitud máxima de la respuesta (caracteres)",
         "replyMaxCharsPlaceholder": "3500 (en blanco = 3500, 0 = sin límite)",
         "replyMaxCharsHint": "Limita cuánto de la respuesta del agente se envía antes de recortarla con una nota “…(truncado)”. En blanco usa el valor por defecto de 3500 (~un mensaje); pon 0 para enviar la respuesta completa, dividida en varios mensajes."

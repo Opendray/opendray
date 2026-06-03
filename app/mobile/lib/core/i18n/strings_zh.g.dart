@@ -1193,7 +1193,7 @@ class _TranslationsWebChannelsZh extends TranslationsWebChannelsEn {
 
 	// Translations
 	@override String get title => '频道';
-	@override String get subtitle => '双向消息集成。每个频道的出站通知按其 <1>notify_on</1> 过滤。';
+	@override String get subtitle => '双向消息集成。每个已启用且未静音的频道都会接收会话通知。';
 	@override String get newButton => '新建频道';
 	@override String get loading => '加载中…';
 	@override late final _TranslationsWebChannelsEmptyZh empty = _TranslationsWebChannelsEmptyZh._(_root);
@@ -2115,13 +2115,10 @@ class _TranslationsChannelsNotificationsZh extends TranslationsChannelsNotificat
 
 	// Translations
 	@override String get title => '通知偏好';
-	@override String get notifyOn => '通知时机';
 	@override String get repeatPolicy => '重复策略';
 	@override String get cooldownWindow => '冷却时间';
 	@override String get includeSnippet => '包含终端片段';
 	@override String get snippetLengthCap => '片段长度上限';
-	@override String get notifyOnAll => '所有会话事件。';
-	@override String get notifyOnEmpty => '未选择事件 — 已静音外发通知。';
 	@override String get snippetHelper => '在每条通知中嵌入终端最近的内容。';
 	@override String get snippetNoCap => '无上限';
 	@override String snippetChars({required Object n}) => '${n} 字符';
@@ -3676,7 +3673,6 @@ class _TranslationsWebChannelsCardZh extends TranslationsWebChannelsCardEn {
 	@override String get tokenLabel => 'token:';
 	@override String get chatIdLabel => 'chat_id:';
 	@override String get channelIdLabel => 'channel_id:';
-	@override String get notifyOnLabel => 'notify_on:';
 	@override String get webhookLabel => 'webhook:';
 	@override String get copyWebhookTooltip => '复制 webhook URL';
 	@override String get webhookCopiedToast => '已复制 webhook URL';
@@ -3688,6 +3684,9 @@ class _TranslationsWebChannelsCardZh extends TranslationsWebChannelsCardEn {
 	@override String get editAria => '编辑频道';
 	@override String get editTooltip => '编辑频道配置';
 	@override String get deleteAria => '删除频道';
+	@override String get muteAria => '静音或取消静音频道';
+	@override String get muteTooltip => '静音通知(双向聊天仍可用)';
+	@override String get unmuteTooltip => '取消静音通知';
 	@override String get bridgeSuffix => '(bridge)';
 }
 
@@ -3704,6 +3703,8 @@ class _TranslationsWebChannelsToastsZh extends TranslationsWebChannelsToastsEn {
 	@override String get deleted => '频道已删除';
 	@override String get created => '频道已创建';
 	@override String get updated => '频道已更新';
+	@override String get muted => '频道已静音';
+	@override String get unmuted => '频道已取消静音';
 }
 
 // Path: web.channels.dialog
@@ -3745,10 +3746,6 @@ class _TranslationsWebChannelsNotificationsZh extends TranslationsWebChannelsNot
 
 	// Translations
 	@override String get sectionTitle => '会话通知';
-	@override String get notifyOnLabel => '通知触发条件';
-	@override String get hintAll => '接收全部会话事件。点击标签可退订。';
-	@override String get hintNone => '未选择任何事件 — 出站通知已静音。';
-	@override String hintSome({required Object total, required Object selected}) => '只选择了 ${total} 中的 ${selected} 个 topic。';
 	@override String get repeatPolicyLabel => '重复策略';
 	@override String get cooldownLabel => '冷却时长';
 	@override String get onceReplyHint => '在该聊天中以非命令文本回复会重置抑制 — opendray 会把你的回复转发到会话的 stdin 并重新启用通知。';
@@ -5496,8 +5493,6 @@ class _TranslationsChannelsKindsTelegramZh extends TranslationsChannelsKindsTele
 	@override String get chatEnabledHint => '开启后，你的消息会被输入选定会话，agent 在此回复。仅需通知时关闭。';
 	@override String get chatTypingLabel => 'agent 工作时显示“正在输入…”';
 	@override String get chatTypingHint => '在 agent 回复稳定前显示正在输入指示。';
-	@override String get notifyEnabledLabel => '活动通知（空闲 / 完成卡片）';
-	@override String get notifyEnabledHint => '关闭可保持聊天整洁 — 你仍会收到对消息的回复。开启后会话空闲或完成时也会收到卡片。';
 	@override String get replyMaxCharsLabel => '回复最大长度（字符）';
 	@override String get replyMaxCharsPlaceholder => '3500（留空 = 3500，0 = 不限）';
 	@override String get replyMaxCharsHint => '限制 agent 回复发送多少字符后被截断并附“…(已截断)”。留空使用 3500 默认（约一条消息）；设为 0 则发送完整回复，跨多条消息拆分。';
@@ -8205,7 +8200,7 @@ extension on TranslationsZh {
 			'web.providers.models.setDefault' => '用作默认模型',
 			'web.providers.models.remove' => ({required Object model}) => '移除 ${model}',
 			'web.channels.title' => '频道',
-			'web.channels.subtitle' => '双向消息集成。每个频道的出站通知按其 <1>notify_on</1> 过滤。',
+			'web.channels.subtitle' => '双向消息集成。每个已启用且未静音的频道都会接收会话通知。',
 			'web.channels.newButton' => '新建频道',
 			'web.channels.loading' => '加载中…',
 			'web.channels.empty.title' => '暂无频道',
@@ -8217,7 +8212,6 @@ extension on TranslationsZh {
 			'web.channels.card.tokenLabel' => 'token:',
 			'web.channels.card.chatIdLabel' => 'chat_id:',
 			'web.channels.card.channelIdLabel' => 'channel_id:',
-			'web.channels.card.notifyOnLabel' => 'notify_on:',
 			'web.channels.card.webhookLabel' => 'webhook:',
 			'web.channels.card.copyWebhookTooltip' => '复制 webhook URL',
 			'web.channels.card.webhookCopiedToast' => '已复制 webhook URL',
@@ -8229,6 +8223,9 @@ extension on TranslationsZh {
 			'web.channels.card.editAria' => '编辑频道',
 			'web.channels.card.editTooltip' => '编辑频道配置',
 			'web.channels.card.deleteAria' => '删除频道',
+			'web.channels.card.muteAria' => '静音或取消静音频道',
+			'web.channels.card.muteTooltip' => '静音通知(双向聊天仍可用)',
+			'web.channels.card.unmuteTooltip' => '取消静音通知',
 			'web.channels.card.bridgeSuffix' => '(bridge)',
 			'web.channels.toasts.testSent' => '测试消息已发送',
 			'web.channels.toasts.testFailed' => '测试失败',
@@ -8236,6 +8233,8 @@ extension on TranslationsZh {
 			'web.channels.toasts.deleted' => '频道已删除',
 			'web.channels.toasts.created' => '频道已创建',
 			'web.channels.toasts.updated' => '频道已更新',
+			'web.channels.toasts.muted' => '频道已静音',
+			'web.channels.toasts.unmuted' => '频道已取消静音',
 			'web.channels.dialog.editTitle' => '编辑频道',
 			'web.channels.dialog.createTitle' => '注册频道',
 			'web.channels.dialog.descriptionBridge' => '外部适配器（Python/Node/...）通过 WebSocket 连接并出示此 token。',
@@ -8259,10 +8258,6 @@ extension on TranslationsZh {
 			'web.channels.dialog.cooldownInvalid' => 'Cooldown 必须是非负整数秒',
 			'web.channels.dialog.snippetCapInvalid' => 'Snippet cap 必须是非负数字',
 			'web.channels.notifications.sectionTitle' => '会话通知',
-			'web.channels.notifications.notifyOnLabel' => '通知触发条件',
-			'web.channels.notifications.hintAll' => '接收全部会话事件。点击标签可退订。',
-			'web.channels.notifications.hintNone' => '未选择任何事件 — 出站通知已静音。',
-			'web.channels.notifications.hintSome' => ({required Object total, required Object selected}) => '只选择了 ${total} 中的 ${selected} 个 topic。',
 			'web.channels.notifications.repeatPolicyLabel' => '重复策略',
 			'web.channels.notifications.cooldownLabel' => '冷却时长',
 			'web.channels.notifications.onceReplyHint' => '在该聊天中以非命令文本回复会重置抑制 — opendray 会把你的回复转发到会话的 stdin 并重新启用通知。',
@@ -10054,13 +10049,10 @@ extension on TranslationsZh {
 			'channels.webhookDialog.copiedSnack' => '已复制 Webhook URL。',
 			'channels.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'channels.notifications.title' => '通知偏好',
-			'channels.notifications.notifyOn' => '通知时机',
 			'channels.notifications.repeatPolicy' => '重复策略',
 			'channels.notifications.cooldownWindow' => '冷却时间',
 			'channels.notifications.includeSnippet' => '包含终端片段',
 			'channels.notifications.snippetLengthCap' => '片段长度上限',
-			'channels.notifications.notifyOnAll' => '所有会话事件。',
-			'channels.notifications.notifyOnEmpty' => '未选择事件 — 已静音外发通知。',
 			'channels.notifications.snippetHelper' => '在每条通知中嵌入终端最近的内容。',
 			'channels.notifications.snippetNoCap' => '无上限',
 			'channels.notifications.snippetChars' => ({required Object n}) => '${n} 字符',
@@ -10109,8 +10101,6 @@ extension on TranslationsZh {
 			'channels.kinds.telegram.chatEnabledHint' => '开启后，你的消息会被输入选定会话，agent 在此回复。仅需通知时关闭。',
 			'channels.kinds.telegram.chatTypingLabel' => 'agent 工作时显示“正在输入…”',
 			'channels.kinds.telegram.chatTypingHint' => '在 agent 回复稳定前显示正在输入指示。',
-			'channels.kinds.telegram.notifyEnabledLabel' => '活动通知（空闲 / 完成卡片）',
-			'channels.kinds.telegram.notifyEnabledHint' => '关闭可保持聊天整洁 — 你仍会收到对消息的回复。开启后会话空闲或完成时也会收到卡片。',
 			'channels.kinds.telegram.replyMaxCharsLabel' => '回复最大长度（字符）',
 			'channels.kinds.telegram.replyMaxCharsPlaceholder' => '3500（留空 = 3500，0 = 不限）',
 			'channels.kinds.telegram.replyMaxCharsHint' => '限制 agent 回复发送多少字符后被截断并附“…(已截断)”。留空使用 3500 默认（约一条消息）；设为 0 则发送完整回复，跨多条消息拆分。',
@@ -10457,13 +10447,13 @@ extension on TranslationsZh {
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => '加载自：${path}',
 			'settings.serverSettings.restartHint' => '大部分配置需要重启网关后生效。重启按钮在 AppBar 中。',
 			'settings.serverSettings.savedNeedsRestart' => '已保存。重启网关以生效。',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.savedSimple' => '已保存。',
 			'settings.serverSettings.changesNeedRestart' => '此配置的修改需重启网关。',
 			'settings.serverSettings.loadFailed' => '加载服务器设置失败',
 			'settings.serverSettings.sections.general' => '通用',
 			'settings.serverSettings.sections.logging' => '日志',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.sections.sessions' => '会话',
 			'settings.serverSettings.sections.vault' => '凭据库',
 			'settings.serverSettings.sections.mcpRegistry' => 'MCP 注册表',

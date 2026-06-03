@@ -2447,8 +2447,8 @@ class TranslationsWebChannelsEn {
 	/// en: 'Channels'
 	String get title => 'Channels';
 
-	/// en: 'Bidirectional messaging integrations. Outbound notifications are filtered by each channel's <1>notify_on</1>.'
-	String get subtitle => 'Bidirectional messaging integrations. Outbound notifications are filtered by each channel\'s <1>notify_on</1>.';
+	/// en: 'Bidirectional messaging integrations. Every enabled, unmuted channel receives session notifications.'
+	String get subtitle => 'Bidirectional messaging integrations. Every enabled, unmuted channel receives session notifications.';
 
 	/// en: 'New channel'
 	String get newButton => 'New channel';
@@ -4129,9 +4129,6 @@ class TranslationsChannelsNotificationsEn {
 	/// en: 'Notification preferences'
 	String get title => 'Notification preferences';
 
-	/// en: 'Notify on'
-	String get notifyOn => 'Notify on';
-
 	/// en: 'Repeat policy'
 	String get repeatPolicy => 'Repeat policy';
 
@@ -4143,12 +4140,6 @@ class TranslationsChannelsNotificationsEn {
 
 	/// en: 'Snippet length cap'
 	String get snippetLengthCap => 'Snippet length cap';
-
-	/// en: 'All session events.'
-	String get notifyOnAll => 'All session events.';
-
-	/// en: 'No events selected — outbound notifications muted.'
-	String get notifyOnEmpty => 'No events selected — outbound notifications muted.';
 
 	/// en: 'Embeds the recent terminal tail in each notification.'
 	String get snippetHelper => 'Embeds the recent terminal tail in each notification.';
@@ -7125,9 +7116,6 @@ class TranslationsWebChannelsCardEn {
 	/// en: 'channel_id:'
 	String get channelIdLabel => 'channel_id:';
 
-	/// en: 'notify_on:'
-	String get notifyOnLabel => 'notify_on:';
-
 	/// en: 'webhook:'
 	String get webhookLabel => 'webhook:';
 
@@ -7161,6 +7149,15 @@ class TranslationsWebChannelsCardEn {
 	/// en: 'Delete channel'
 	String get deleteAria => 'Delete channel';
 
+	/// en: 'Mute or unmute channel'
+	String get muteAria => 'Mute or unmute channel';
+
+	/// en: 'Mute notifications (two-way chat keeps working)'
+	String get muteTooltip => 'Mute notifications (two-way chat keeps working)';
+
+	/// en: 'Unmute notifications'
+	String get unmuteTooltip => 'Unmute notifications';
+
 	/// en: '(bridge)'
 	String get bridgeSuffix => '(bridge)';
 }
@@ -7190,6 +7187,12 @@ class TranslationsWebChannelsToastsEn {
 
 	/// en: 'Channel updated'
 	String get updated => 'Channel updated';
+
+	/// en: 'Channel muted'
+	String get muted => 'Channel muted';
+
+	/// en: 'Channel unmuted'
+	String get unmuted => 'Channel unmuted';
 }
 
 // Path: web.channels.dialog
@@ -7277,18 +7280,6 @@ class TranslationsWebChannelsNotificationsEn {
 
 	/// en: 'Session notifications'
 	String get sectionTitle => 'Session notifications';
-
-	/// en: 'Notify on'
-	String get notifyOnLabel => 'Notify on';
-
-	/// en: 'Receiving every session event. Click a tag to opt out.'
-	String get hintAll => 'Receiving every session event. Click a tag to opt out.';
-
-	/// en: 'No events selected — outbound notifications muted.'
-	String get hintNone => 'No events selected — outbound notifications muted.';
-
-	/// en: 'Only {selected} of {total} topics selected.'
-	String hintSome({required Object selected, required Object total}) => 'Only ${selected} of ${total} topics selected.';
 
 	/// en: 'Repeat policy'
 	String get repeatPolicyLabel => 'Repeat policy';
@@ -10474,12 +10465,6 @@ class TranslationsChannelsKindsTelegramEn {
 
 	/// en: 'Displays a typing indicator until the agent’s reply settles.'
 	String get chatTypingHint => 'Displays a typing indicator until the agent’s reply settles.';
-
-	/// en: 'Activity notifications (idle / finished cards)'
-	String get notifyEnabledLabel => 'Activity notifications (idle / finished cards)';
-
-	/// en: 'Off keeps the chat clean — you still get replies to your messages. Turn on to also get a card when a session goes idle or finishes.'
-	String get notifyEnabledHint => 'Off keeps the chat clean — you still get replies to your messages. Turn on to also get a card when a session goes idle or finishes.';
 
 	/// en: 'Max reply length (characters)'
 	String get replyMaxCharsLabel => 'Max reply length (characters)';
@@ -14614,7 +14599,7 @@ extension on Translations {
 			'web.providers.models.setDefault' => 'Use as the default model',
 			'web.providers.models.remove' => ({required Object model}) => 'Remove ${model}',
 			'web.channels.title' => 'Channels',
-			'web.channels.subtitle' => 'Bidirectional messaging integrations. Outbound notifications are filtered by each channel\'s <1>notify_on</1>.',
+			'web.channels.subtitle' => 'Bidirectional messaging integrations. Every enabled, unmuted channel receives session notifications.',
 			'web.channels.newButton' => 'New channel',
 			'web.channels.loading' => 'Loading…',
 			'web.channels.empty.title' => 'No channels yet',
@@ -14626,7 +14611,6 @@ extension on Translations {
 			'web.channels.card.tokenLabel' => 'token:',
 			'web.channels.card.chatIdLabel' => 'chat_id:',
 			'web.channels.card.channelIdLabel' => 'channel_id:',
-			'web.channels.card.notifyOnLabel' => 'notify_on:',
 			'web.channels.card.webhookLabel' => 'webhook:',
 			'web.channels.card.copyWebhookTooltip' => 'Copy webhook URL',
 			'web.channels.card.webhookCopiedToast' => 'Webhook URL copied',
@@ -14638,6 +14622,9 @@ extension on Translations {
 			'web.channels.card.editAria' => 'Edit channel',
 			'web.channels.card.editTooltip' => 'Edit channel config',
 			'web.channels.card.deleteAria' => 'Delete channel',
+			'web.channels.card.muteAria' => 'Mute or unmute channel',
+			'web.channels.card.muteTooltip' => 'Mute notifications (two-way chat keeps working)',
+			'web.channels.card.unmuteTooltip' => 'Unmute notifications',
 			'web.channels.card.bridgeSuffix' => '(bridge)',
 			'web.channels.toasts.testSent' => 'Test message sent',
 			'web.channels.toasts.testFailed' => 'Test failed',
@@ -14645,6 +14632,8 @@ extension on Translations {
 			'web.channels.toasts.deleted' => 'Channel deleted',
 			'web.channels.toasts.created' => 'Channel created',
 			'web.channels.toasts.updated' => 'Channel updated',
+			'web.channels.toasts.muted' => 'Channel muted',
+			'web.channels.toasts.unmuted' => 'Channel unmuted',
 			'web.channels.dialog.editTitle' => 'Edit channel',
 			'web.channels.dialog.createTitle' => 'Register channel',
 			'web.channels.dialog.descriptionBridge' => 'External adapter (Python/Node/...) connects via WebSocket and presents this token.',
@@ -14668,10 +14657,6 @@ extension on Translations {
 			'web.channels.dialog.cooldownInvalid' => 'Cooldown must be a non-negative number of seconds',
 			'web.channels.dialog.snippetCapInvalid' => 'Snippet cap must be a non-negative number',
 			'web.channels.notifications.sectionTitle' => 'Session notifications',
-			'web.channels.notifications.notifyOnLabel' => 'Notify on',
-			'web.channels.notifications.hintAll' => 'Receiving every session event. Click a tag to opt out.',
-			'web.channels.notifications.hintNone' => 'No events selected — outbound notifications muted.',
-			'web.channels.notifications.hintSome' => ({required Object selected, required Object total}) => 'Only ${selected} of ${total} topics selected.',
 			'web.channels.notifications.repeatPolicyLabel' => 'Repeat policy',
 			'web.channels.notifications.cooldownLabel' => 'Cooldown duration',
 			'web.channels.notifications.onceReplyHint' => 'Replying with non-command text in this chat resets the suppression — opendray forwards your reply to the session\'s stdin and re-arms the notifier.',
@@ -16463,13 +16448,10 @@ extension on Translations {
 			'channels.webhookDialog.copiedSnack' => 'Copied webhook URL.',
 			'channels.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'channels.notifications.title' => 'Notification preferences',
-			'channels.notifications.notifyOn' => 'Notify on',
 			'channels.notifications.repeatPolicy' => 'Repeat policy',
 			'channels.notifications.cooldownWindow' => 'Cooldown window',
 			'channels.notifications.includeSnippet' => 'Include terminal snippet',
 			'channels.notifications.snippetLengthCap' => 'Snippet length cap',
-			'channels.notifications.notifyOnAll' => 'All session events.',
-			'channels.notifications.notifyOnEmpty' => 'No events selected — outbound notifications muted.',
 			'channels.notifications.snippetHelper' => 'Embeds the recent terminal tail in each notification.',
 			'channels.notifications.snippetNoCap' => 'no cap',
 			'channels.notifications.snippetChars' => ({required Object n}) => '${n} chars',
@@ -16518,8 +16500,6 @@ extension on Translations {
 			'channels.kinds.telegram.chatEnabledHint' => 'When on, your messages are typed into the selected session and the agent replies here. Turn off for notifications only.',
 			'channels.kinds.telegram.chatTypingLabel' => 'Show “typing…” while the agent works',
 			'channels.kinds.telegram.chatTypingHint' => 'Displays a typing indicator until the agent’s reply settles.',
-			'channels.kinds.telegram.notifyEnabledLabel' => 'Activity notifications (idle / finished cards)',
-			'channels.kinds.telegram.notifyEnabledHint' => 'Off keeps the chat clean — you still get replies to your messages. Turn on to also get a card when a session goes idle or finishes.',
 			'channels.kinds.telegram.replyMaxCharsLabel' => 'Max reply length (characters)',
 			'channels.kinds.telegram.replyMaxCharsPlaceholder' => '3500 (blank = 3500, 0 = unlimited)',
 			'channels.kinds.telegram.replyMaxCharsHint' => 'Caps how much of the agent’s reply is sent before it’s trimmed with a “…(truncated)” note. Blank uses the 3500 default (~one message); set 0 to send the whole reply, split across multiple messages.',
@@ -16866,13 +16846,13 @@ extension on Translations {
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => 'Loaded from: ${path}',
 			'settings.serverSettings.restartHint' => 'Most sections need a gateway restart to take effect. The restart button is in the AppBar.',
 			'settings.serverSettings.savedNeedsRestart' => 'Saved. Restart the gateway to apply.',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.savedSimple' => 'Saved.',
 			'settings.serverSettings.changesNeedRestart' => 'Changes to this section need a gateway restart.',
 			'settings.serverSettings.loadFailed' => 'Failed to load server settings',
 			'settings.serverSettings.sections.general' => 'General',
 			'settings.serverSettings.sections.logging' => 'Logging',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.sections.sessions' => 'Sessions',
 			'settings.serverSettings.sections.vault' => 'Vault',
 			'settings.serverSettings.sections.mcpRegistry' => 'MCP registry',
