@@ -50,6 +50,12 @@ type sessionOps interface {
 	List(ctx context.Context) ([]session.Session, error)
 	Start(ctx context.Context, id string) (session.Session, error)
 	Stop(ctx context.Context, id string) error
+	// RecentSnippet is the live, notification-grade preview of a
+	// running session's latest output (backs /peek). "" when not live.
+	RecentSnippet(id string) string
+	// TranscriptText is the /peek fallback for a session that isn't
+	// running anymore — the recorded conversation tail.
+	TranscriptText(ctx context.Context, id string, maxBytes int) (string, error)
 }
 
 // registerChannelCommands wires the session-aware slash commands
@@ -96,6 +102,16 @@ func registerChannelCommands(hub *channel.Hub, mgr sessionOps) {
 			"(pin where your messages go; /select off to clear)",
 		Source:  "builtin",
 		Handler: selectSessionHandler(mgr),
+	})
+	// /peek re-pushes the current (selected) session's latest output on
+	// demand — for when the notification scrolled away or arrived while
+	// the operator was elsewhere. Reads the same content a notification
+	// would carry; takes no argument (operates on the chat's /select pin).
+	hub.RegisterCommand(channel.Command{
+		Name:        "peek",
+		Description: "Re-send the selected session's latest output",
+		Source:      "builtin",
+		Handler:     peekSessionHandler(mgr),
 	})
 	// /panel (alias /menu) is the friendly home: the session list with
 	// tap-to-act buttons plus a one-line how-to. It's what we point new
@@ -359,6 +375,52 @@ func selectSessionHandler(mgr sessionOps) channel.CommandHandler {
 		cc.Hub.SetActiveSession(chID, sess.ID)
 		return fmt.Sprintf("✅ Now talking to %s. Your messages go here until you /select another (or /select off).",
 			sessionLabel(sess)), nil
+	}
+}
+
+// peekTranscriptMaxBytes caps the transcript fallback so an ended
+// session's whole conversation can't flood the chat. The channel
+// layer still splits anything past the platform's per-message limit.
+const peekTranscriptMaxBytes = 4000
+
+// peekSessionHandler re-sends the current (selected) session's latest
+// output on demand. It resolves the chat's /select pin, pulls the live
+// notification-grade snippet (the same content a notification carries),
+// and falls back to the recorded transcript tail when the session is no
+// longer running. Takes no argument — it operates on the active pin so
+// it pairs naturally with the /list → "💬 Talk to" flow.
+func peekSessionHandler(mgr sessionOps) channel.CommandHandler {
+	return func(ctx context.Context, cc channel.CommandContext) (string, error) {
+		chID := ""
+		if cc.Channel != nil {
+			chID = cc.Channel.ID()
+		}
+		if cc.Hub == nil || chID == "" {
+			return "Peek isn't available on this channel.", nil
+		}
+		sid := cc.Hub.ActiveSession(chID)
+		if sid == "" {
+			return "No session selected. Use /list and tap “💬 Talk to”, or /select <session_id>, then /peek.", nil
+		}
+		sess, found, err := findSession(ctx, mgr, sid)
+		if err != nil {
+			return "", fmt.Errorf("peek %s: %w", sid, err)
+		}
+		if !found {
+			return "Session " + sid + " not found — /list shows current sessions.", nil
+		}
+		content := strings.TrimSpace(mgr.RecentSnippet(sid))
+		if content == "" {
+			// Not running (or no live screen) — fall back to the recorded
+			// conversation tail so an ended session can still be peeked.
+			if txt, terr := mgr.TranscriptText(ctx, sid, peekTranscriptMaxBytes); terr == nil {
+				content = strings.TrimSpace(txt)
+			}
+		}
+		if content == "" {
+			return fmt.Sprintf("No recent output for %s.", sessionLabel(sess)), nil
+		}
+		return fmt.Sprintf("📄 %s — latest output:\n\n%s", sessionLabel(sess), content), nil
 	}
 }
 

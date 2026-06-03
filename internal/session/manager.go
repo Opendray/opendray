@@ -765,6 +765,24 @@ func (m *Manager) RecentScreen(id string) string {
 	return ScreenSnapshot(rs.vt)
 }
 
+// RecentSnippet returns the notification-grade preview of a running
+// session's latest output — the same content the idle / turn cards
+// carry. Unlike RecentScreen it is provider-aware: claude / gemini
+// prefer their JSONL recent-response (clean assistant text), and
+// anything else falls back to the chrome-stripped visible screen.
+// This is what an on-demand "show me the current output" affordance
+// (e.g. the Telegram /peek command) should surface so it matches what
+// a notification would have pushed.
+//
+// Returns "" when the session is not currently running.
+func (m *Manager) RecentSnippet(id string) string {
+	rs := m.lookup(id)
+	if rs == nil {
+		return ""
+	}
+	return m.recentResponseSnippet(rs)
+}
+
 // mergeEnv overlays `overrides` onto a base "K=V" slice. Keys present
 // in both win for `overrides`. Used so PrepareFunc can inject env vars
 // like CODEX_HOME without losing the inherited environment.
