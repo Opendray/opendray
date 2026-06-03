@@ -6,8 +6,8 @@
 //     internal/channel/<kind>/.
 //   - A Hub that loads enabled rows from the channels table at
 //     startup, drives each impl's lifecycle, and dispatches outbound
-//     event-bus topics (session.idle, session.ended) to channels
-//     whose config opts in via notify_on.
+//     event-bus topics (session.idle, session.ended) to every enabled,
+//     unmuted channel (deduped by each channel's repeat policy).
 //   - Inbound persistence + event publishing — but NOT inbound→session
 //     routing, which is delegated to event-bus consumers per ADR 0005.
 //

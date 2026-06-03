@@ -55,10 +55,9 @@ func init() {
 }
 
 type config struct {
-	BotToken  string   `json:"bot_token"`
-	AppToken  string   `json:"app_token"`
-	ChannelID string   `json:"channel_id"`
-	NotifyOn  []string `json:"notify_on,omitempty"`
+	BotToken  string `json:"bot_token"`
+	AppToken  string `json:"app_token"`
+	ChannelID string `json:"channel_id"`
 }
 
 // ReplyCtx threads a Slack outbound back to the right conversation.

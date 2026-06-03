@@ -100,10 +100,7 @@ export function ChannelsPage() {
             {t('web.channels.title')}
           </h1>
           <p className="text-[12px] text-muted-foreground">
-            <Trans
-              i18nKey="web.channels.subtitle"
-              components={{ 1: <code /> }}
-            />
+            {t('web.channels.subtitle')}
           </p>
         </div>
         <Button
@@ -315,15 +312,6 @@ function ChannelCard({
                 {t('web.channels.card.channelIdLabel')} {String(cfg.channel_id)}
               </span>
             ) : null}
-            {Array.isArray(cfg.notify_on) && (cfg.notify_on as string[]).length > 0 && (
-              <span>
-                {t('web.channels.card.notifyOnLabel')}{' '}
-                {(cfg.notify_on as string[]).length === 1 &&
-                (cfg.notify_on as string[])[0] === NOTIFY_TOPIC_NONE
-                  ? t('web.channels.notifications.hintNone')
-                  : (cfg.notify_on as string[]).join(', ')}
-              </span>
-            )}
           </div>
           {webhookURL && (
             <div className="mt-2 flex items-center gap-2 text-[11px] font-mono">
@@ -503,9 +491,6 @@ function ChannelDialog({
   useEffect(() => {
     if (isEdit || !def) return
     setValues({
-      // Empty notify_on = "all topics" — explicit per-channel filter
-      // is the user's job.
-      notify_on: '',
       // Default mode `once` matches the backend default and is what
       // the user expects ("notify me once when work needs me").
       notify_mode: DEFAULT_NOTIFY_MODE,
@@ -755,23 +740,8 @@ function valuesFromConfig(
       out[field.name] = String(raw)
     }
   }
-  // Populate synthetic notification fields. Backend stores notify_on
-  // as a string array (or absent); cooldown as a number (or absent
-  // → DEFAULT_COOLDOWN).
-  if (Array.isArray(config.notify_on)) {
-    const arr = (config.notify_on as unknown[])
-      .map((v) => String(v))
-      .filter((s) => s.length > 0)
-    if (arr.length === 1 && arr[0] === NOTIFY_TOPIC_NONE) {
-      // Round-trip the explicit-mute state back into the form so the
-      // checkboxes render "all unchecked" instead of "all checked".
-      out.notify_on = NOTIFY_TOPIC_NONE
-    } else {
-      out.notify_on = arr.join(',')
-    }
-  } else {
-    out.notify_on = ''
-  }
+  // Populate synthetic notification fields. cooldown is stored as a
+  // number (or absent → DEFAULT_COOLDOWN).
   if (typeof config.notify_mode === 'string' && config.notify_mode !== '') {
     out.notify_mode = config.notify_mode as string
   } else if (typeof config.notify_cooldown_s === 'number' && config.notify_cooldown_s > 0) {
@@ -796,17 +766,6 @@ function valuesFromConfig(
   return out
 }
 
-// SESSION_TOPICS is the canonical list users can opt in/out of.
-// Order matches the order they're rendered as checkboxes.
-const SESSION_TOPICS = ['session.started', 'session.idle', 'session.ended'] as const
-
-// Sentinel stored in notify_on to express "explicitly opt out of every
-// topic". Distinct from notify_on=[], which means "no filter, match
-// all" — that ambiguity was the source of issues #222 and #223 (last
-// deselected topic silently re-enabled all three on the next render).
-// Mirrors NotifyTopicNone in internal/channel/hub.go — keep in sync.
-const NOTIFY_TOPIC_NONE = '__none__'
-
 const NOTIFY_MODE_VALUES = ['once', 'cooldown', 'every'] as const
 const COOLDOWN_VALUES = ['60', '300', '900', '1800', '3600'] as const
 const SNIPPET_CAP_VALUES = ['0', '1000', '3000', '6000', '12000'] as const
@@ -816,10 +775,11 @@ const DEFAULT_COOLDOWN = '300'
 const DEFAULT_SNIPPET_CAP = '0'
 
 // NotificationFields renders the per-channel notification controls
-// shared by every non-bridge kind: a checkbox row to choose which
-// session.* topics to forward, plus a cooldown select that throttles
-// duplicate notifications for the same (topic, session) within the
-// chosen window.
+// shared by every non-bridge kind: a repeat-policy select (once /
+// cooldown / every) plus the snippet options. Whether a channel
+// notifies at all is governed by enabled + the mute toggle, not a
+// per-topic filter — the old notify_on picker was redundant with mute
+// and two of its three topics never fired.
 function NotificationFields({
   values,
   setValue,
@@ -828,21 +788,6 @@ function NotificationFields({
   setValue: (name: string, val: string) => void
 }) {
   const { t } = useTranslation()
-  // Three-state encoding for notify_on, kept in sync with the backend:
-  //   ''               → "all topics" (no filter, the default for new
-  //                      channels and the historical empty-array value)
-  //   NOTIFY_TOPIC_NONE→ explicit opt-out of every topic (muted via
-  //                      the topic filter, without disabling the channel)
-  //   'a,b'            → only the listed topics
-  // Pre-fix this row collapsed states 1 and 2, so deselecting the last
-  // badge silently re-enabled all three (#223) and made the configured
-  // value drift in ways that masked #222.
-  const rawNotify = (values.notify_on ?? '').trim()
-  const isExplicitNone = rawNotify === NOTIFY_TOPIC_NONE
-  const selected = isExplicitNone ? [] : parseTopicList(rawNotify)
-  const isAllSelected =
-    !isExplicitNone && (rawNotify === '' || selected.length === SESSION_TOPICS.length)
-
   const mode = values.notify_mode ?? DEFAULT_NOTIFY_MODE
   const cooldown = values.notify_cooldown_s ?? DEFAULT_COOLDOWN
   // Snippet stored as the literal string "false" when off, anything
@@ -862,62 +807,10 @@ function NotificationFields({
   }
   const modeHint = modeHintMap[mode] ?? ''
 
-  const toggleTopic = (topic: string) => {
-    // First click on a default-state channel: materialise the implicit
-    // "all" into an explicit list so we can subtract from it.
-    const base = isAllSelected ? [...SESSION_TOPICS] : selected
-    const next = base.includes(topic)
-      ? base.filter((t) => t !== topic)
-      : [...base, topic]
-    if (next.length === SESSION_TOPICS.length) {
-      // All three selected → collapse back to "match all" so future
-      // topics added to SESSION_TOPICS keep flowing without re-edits.
-      setValue('notify_on', '')
-    } else if (next.length === 0) {
-      // Zero selected → the explicit-mute state. Storing the sentinel
-      // (instead of '') preserves the user's intent across renders;
-      // backend dispatch drops every event for channels in this state.
-      setValue('notify_on', NOTIFY_TOPIC_NONE)
-    } else {
-      setValue('notify_on', next.join(','))
-    }
-  }
-
   return (
     <div className="space-y-2 border border-border rounded-md p-3 bg-muted/10">
       <div className="text-[12px] font-semibold text-muted-foreground/90">
         {t('web.channels.notifications.sectionTitle')}
-      </div>
-
-      <div className="space-y-1.5">
-        <Label className="!text-[11px] text-muted-foreground/80">
-          {t('web.channels.notifications.notifyOnLabel')}
-        </Label>
-        <div className="flex flex-wrap gap-1.5">
-          {SESSION_TOPICS.map((topic) => {
-            const checked = isAllSelected || selected.includes(topic)
-            return (
-              <Badge
-                key={topic}
-                variant={checked ? 'success' : 'outline'}
-                className="cursor-pointer font-mono text-[11px]"
-                onClick={() => toggleTopic(topic)}
-              >
-                {checked ? <Check className="size-3" /> : null} {topic}
-              </Badge>
-            )
-          })}
-        </div>
-        <p className="text-[11px] text-muted-foreground/80">
-          {isAllSelected
-            ? t('web.channels.notifications.hintAll')
-            : selected.length === 0
-              ? t('web.channels.notifications.hintNone')
-              : t('web.channels.notifications.hintSome', {
-                  selected: selected.length,
-                  total: SESSION_TOPICS.length,
-                })}
-        </p>
       </div>
 
       <div className="space-y-1.5">
@@ -1010,13 +903,6 @@ function NotificationFields({
       </div>
     </div>
   )
-}
-
-function parseTopicList(raw: string): string[] {
-  return raw
-    .split(/[\n,]/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0)
 }
 
 // KindFields renders the form fields for a non-bridge channel kind
@@ -1114,7 +1000,6 @@ function KindFieldRow({
 //   - uids                       → string[]    (split on newline)
 //   - topic_ids                  → number[]    (split on newline, parse int)
 //   - chat_id                    → number when numeric, else string
-//   - notify_on (synthetic)      → string[]    (split on , or \n)
 //   - notify_cooldown_s (synth)  → number (seconds)
 function buildConfigFromValues(
   def: KindDef,
@@ -1170,19 +1055,6 @@ function buildConfigFromValues(
   }
   // Synthetic notification fields — every non-bridge channel receives
   // these, regardless of whether they're declared in def.fields.
-  const rawNotify = (values.notify_on ?? '').trim()
-  if (rawNotify === NOTIFY_TOPIC_NONE) {
-    // Explicit opt-out: persist the sentinel so dispatch drops every
-    // event for this channel (issue #223 fix).
-    cfg.notify_on = [NOTIFY_TOPIC_NONE]
-  } else {
-    const topics = parseTopicList(rawNotify)
-    if (topics.length > 0 && topics.length < SESSION_TOPICS.length) {
-      // Persist explicit selection. All-three-selected is omitted to
-      // mean "any topic" (matches the backend default).
-      cfg.notify_on = topics
-    }
-  }
   // Repeat policy: persist mode unless it's the default ("once" = no
   // emit so existing channels picked up by the new code keep their
   // implicit default behavior).

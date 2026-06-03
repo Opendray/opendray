@@ -1033,7 +1033,7 @@
     },
     "channels": {
       "title": "频道",
-      "subtitle": "双向消息集成。每个频道的出站通知按其 <1>notify_on</1> 过滤。",
+      "subtitle": "双向消息集成。每个已启用且未静音的频道都会接收会话通知。",
       "newButton": "新建频道",
       "loading": "加载中…",
       "empty": {
@@ -1048,7 +1048,6 @@
         "tokenLabel": "token:",
         "chatIdLabel": "chat_id:",
         "channelIdLabel": "channel_id:",
-        "notifyOnLabel": "notify_on:",
         "webhookLabel": "webhook:",
         "copyWebhookTooltip": "复制 webhook URL",
         "webhookCopiedToast": "已复制 webhook URL",
@@ -1101,10 +1100,6 @@
       },
       "notifications": {
         "sectionTitle": "会话通知",
-        "notifyOnLabel": "通知触发条件",
-        "hintAll": "接收全部会话事件。点击标签可退订。",
-        "hintNone": "未选择任何事件 — 出站通知已静音。",
-        "hintSome": "只选择了 {total} 中的 {selected} 个 topic。",
         "repeatPolicyLabel": "重复策略",
         "cooldownLabel": "冷却时长",
         "onceReplyHint": "在该聊天中以非命令文本回复会重置抑制 — opendray 会把你的回复转发到会话的 stdin 并重新启用通知。",
@@ -3401,13 +3396,10 @@
     "errorWithMessage": "{prefix}：{error}",
     "notifications": {
       "title": "通知偏好",
-      "notifyOn": "通知时机",
       "repeatPolicy": "重复策略",
       "cooldownWindow": "冷却时间",
       "includeSnippet": "包含终端片段",
       "snippetLengthCap": "片段长度上限",
-      "notifyOnAll": "所有会话事件。",
-      "notifyOnEmpty": "未选择事件 — 已静音外发通知。",
       "snippetHelper": "在每条通知中嵌入终端最近的内容。",
       "snippetNoCap": "无上限",
       "snippetChars": "{n} 字符",

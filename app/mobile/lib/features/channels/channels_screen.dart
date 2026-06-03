@@ -671,11 +671,6 @@ class _NotifyPrefsScreen extends StatefulWidget {
 }
 
 class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
-  static const _allTopics = [
-    'session.started',
-    'session.idle',
-    'session.ended',
-  ];
   static List<(String, String, String)> _modes() => [
     (
       'once',
@@ -701,7 +696,6 @@ class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
     (3600, '1h'),
   ];
 
-  late Set<String> _topics;
   // 'once' is the server default; UI shows it but emits a remove
   // sentinel so the saved config doesn't pin an explicit override.
   late String _mode;
@@ -713,11 +707,6 @@ class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
   void initState() {
     super.initState();
     final cfg = widget.channel.config;
-    final topicsRaw = cfg['notify_on'];
-    _topics = topicsRaw is List
-        ? Set<String>.from(topicsRaw.whereType<String>())
-        : <String>{..._allTopics};
-    if (_topics.isEmpty) _topics = {..._allTopics};
     _mode = (cfg['notify_mode'] as String?) ?? 'once';
     _cooldownSec = (cfg['notify_cooldown_s'] as num?)?.toInt() ?? 300;
     _includeSnippet = cfg['notify_include_snippet'] as bool? ?? true;
@@ -726,14 +715,6 @@ class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
 
   Map<String, Object?> _buildPatch() {
     final patch = <String, Object?>{};
-
-    // Topics: persist only when partial selection. All-three or empty
-    // means "any topic" (server default), so drop the key.
-    if (_topics.length == _allTopics.length || _topics.isEmpty) {
-      patch['notify_on'] = removeChannelConfigKey;
-    } else {
-      patch['notify_on'] = _allTopics.where(_topics.contains).toList();
-    }
 
     if (_mode == 'once') {
       patch['notify_mode'] = removeChannelConfigKey;
@@ -778,44 +759,6 @@ class _NotifyPrefsScreenState extends State<_NotifyPrefsScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          Text(i18n.t.channels.notifications.notifyOn, style: muted),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children: [
-              for (final t in _allTopics)
-                FilterChip(
-                  label: Text(
-                    t,
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 12,
-                    ),
-                  ),
-                  selected: _topics.contains(t),
-                  onSelected: (v) => setState(() {
-                    if (v) {
-                      _topics.add(t);
-                    } else {
-                      _topics.remove(t);
-                    }
-                  }),
-                ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              _topics.length == _allTopics.length
-                  ? i18n.t.channels.notifications.notifyOnAll
-                  : _topics.isEmpty
-                  ? i18n.t.channels.notifications.notifyOnEmpty
-                  : '${_topics.length} of ${_allTopics.length} selected.',
-              style: muted,
-            ),
-          ),
-          const SizedBox(height: 24),
           Text(i18n.t.channels.notifications.repeatPolicy, style: muted),
           const SizedBox(height: 6),
           RadioGroup<String>(

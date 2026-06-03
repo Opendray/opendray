@@ -1193,7 +1193,7 @@ class _TranslationsWebChannelsEs extends TranslationsWebChannelsEn {
 
 	// Translations
 	@override String get title => 'Canales';
-	@override String get subtitle => 'Integraciones de mensajería bidireccional. Las notificaciones salientes se filtran según el <1>notify_on</1> de cada canal.';
+	@override String get subtitle => 'Integraciones de mensajería bidireccional. Cada canal habilitado y no silenciado recibe notificaciones de sesión.';
 	@override String get newButton => 'Nuevo canal';
 	@override String get loading => 'Cargando…';
 	@override late final _TranslationsWebChannelsEmptyEs empty = _TranslationsWebChannelsEmptyEs._(_root);
@@ -2115,13 +2115,10 @@ class _TranslationsChannelsNotificationsEs extends TranslationsChannelsNotificat
 
 	// Translations
 	@override String get title => 'Preferencias de notificación';
-	@override String get notifyOn => 'Notificar en';
 	@override String get repeatPolicy => 'Política de repetición';
 	@override String get cooldownWindow => 'Ventana de cooldown';
 	@override String get includeSnippet => 'Incluir fragmento del terminal';
 	@override String get snippetLengthCap => 'Límite de longitud del fragmento';
-	@override String get notifyOnAll => 'Todos los eventos de la session.';
-	@override String get notifyOnEmpty => 'Ningún evento seleccionado. Notificaciones salientes silenciadas.';
 	@override String get snippetHelper => 'Incrusta el final reciente del terminal en cada notificación.';
 	@override String get snippetNoCap => 'sin límite';
 	@override String snippetChars({required Object n}) => '${n} caracteres';
@@ -3676,7 +3673,6 @@ class _TranslationsWebChannelsCardEs extends TranslationsWebChannelsCardEn {
 	@override String get tokenLabel => 'token:';
 	@override String get chatIdLabel => 'chat_id:';
 	@override String get channelIdLabel => 'channel_id:';
-	@override String get notifyOnLabel => 'notify_on:';
 	@override String get webhookLabel => 'webhook:';
 	@override String get copyWebhookTooltip => 'Copiar la URL del webhook';
 	@override String get webhookCopiedToast => 'URL del webhook copiada';
@@ -3688,6 +3684,9 @@ class _TranslationsWebChannelsCardEs extends TranslationsWebChannelsCardEn {
 	@override String get editAria => 'Editar canal';
 	@override String get editTooltip => 'Editar la configuración del canal';
 	@override String get deleteAria => 'Eliminar canal';
+	@override String get muteAria => 'Silenciar o reactivar el canal';
+	@override String get muteTooltip => 'Silenciar notificaciones (el chat bidireccional sigue funcionando)';
+	@override String get unmuteTooltip => 'Reactivar notificaciones';
 	@override String get bridgeSuffix => '(bridge)';
 }
 
@@ -3704,6 +3703,8 @@ class _TranslationsWebChannelsToastsEs extends TranslationsWebChannelsToastsEn {
 	@override String get deleted => 'Canal eliminado';
 	@override String get created => 'Canal creado';
 	@override String get updated => 'Canal actualizado';
+	@override String get muted => 'Canal silenciado';
+	@override String get unmuted => 'Canal reactivado';
 }
 
 // Path: web.channels.dialog
@@ -3745,10 +3746,6 @@ class _TranslationsWebChannelsNotificationsEs extends TranslationsWebChannelsNot
 
 	// Translations
 	@override String get sectionTitle => 'Notificaciones de session';
-	@override String get notifyOnLabel => 'Notificar en';
-	@override String get hintAll => 'Recibiendo todos los eventos de session. Haz clic en una etiqueta para excluirlo.';
-	@override String get hintNone => 'Ningún evento seleccionado, notificaciones salientes silenciadas.';
-	@override String hintSome({required Object selected, required Object total}) => 'Solo ${selected} de ${total} temas seleccionados.';
 	@override String get repeatPolicyLabel => 'Política de repetición';
 	@override String get cooldownLabel => 'Duración del cooldown';
 	@override String get onceReplyHint => 'Responder con texto que no sea un comando en este chat restablece la supresión, opendray reenvía tu respuesta al stdin de la session y rearma el notificador.';
@@ -8203,7 +8200,7 @@ extension on TranslationsEs {
 			'web.providers.models.setDefault' => 'Usar como modelo predeterminado',
 			'web.providers.models.remove' => ({required Object model}) => 'Quitar ${model}',
 			'web.channels.title' => 'Canales',
-			'web.channels.subtitle' => 'Integraciones de mensajería bidireccional. Las notificaciones salientes se filtran según el <1>notify_on</1> de cada canal.',
+			'web.channels.subtitle' => 'Integraciones de mensajería bidireccional. Cada canal habilitado y no silenciado recibe notificaciones de sesión.',
 			'web.channels.newButton' => 'Nuevo canal',
 			'web.channels.loading' => 'Cargando…',
 			'web.channels.empty.title' => 'Aún no hay canales',
@@ -8215,7 +8212,6 @@ extension on TranslationsEs {
 			'web.channels.card.tokenLabel' => 'token:',
 			'web.channels.card.chatIdLabel' => 'chat_id:',
 			'web.channels.card.channelIdLabel' => 'channel_id:',
-			'web.channels.card.notifyOnLabel' => 'notify_on:',
 			'web.channels.card.webhookLabel' => 'webhook:',
 			'web.channels.card.copyWebhookTooltip' => 'Copiar la URL del webhook',
 			'web.channels.card.webhookCopiedToast' => 'URL del webhook copiada',
@@ -8227,6 +8223,9 @@ extension on TranslationsEs {
 			'web.channels.card.editAria' => 'Editar canal',
 			'web.channels.card.editTooltip' => 'Editar la configuración del canal',
 			'web.channels.card.deleteAria' => 'Eliminar canal',
+			'web.channels.card.muteAria' => 'Silenciar o reactivar el canal',
+			'web.channels.card.muteTooltip' => 'Silenciar notificaciones (el chat bidireccional sigue funcionando)',
+			'web.channels.card.unmuteTooltip' => 'Reactivar notificaciones',
 			'web.channels.card.bridgeSuffix' => '(bridge)',
 			'web.channels.toasts.testSent' => 'Mensaje de prueba enviado',
 			'web.channels.toasts.testFailed' => 'La prueba falló',
@@ -8234,6 +8233,8 @@ extension on TranslationsEs {
 			'web.channels.toasts.deleted' => 'Canal eliminado',
 			'web.channels.toasts.created' => 'Canal creado',
 			'web.channels.toasts.updated' => 'Canal actualizado',
+			'web.channels.toasts.muted' => 'Canal silenciado',
+			'web.channels.toasts.unmuted' => 'Canal reactivado',
 			'web.channels.dialog.editTitle' => 'Editar canal',
 			'web.channels.dialog.createTitle' => 'Registrar canal',
 			'web.channels.dialog.descriptionBridge' => 'Un adaptador externo (Python/Node/...) se conecta vía WebSocket y presenta este token.',
@@ -8257,10 +8258,6 @@ extension on TranslationsEs {
 			'web.channels.dialog.cooldownInvalid' => 'El cooldown debe ser un número de segundos no negativo',
 			'web.channels.dialog.snippetCapInvalid' => 'El límite del fragmento debe ser un número no negativo',
 			'web.channels.notifications.sectionTitle' => 'Notificaciones de session',
-			'web.channels.notifications.notifyOnLabel' => 'Notificar en',
-			'web.channels.notifications.hintAll' => 'Recibiendo todos los eventos de session. Haz clic en una etiqueta para excluirlo.',
-			'web.channels.notifications.hintNone' => 'Ningún evento seleccionado, notificaciones salientes silenciadas.',
-			'web.channels.notifications.hintSome' => ({required Object selected, required Object total}) => 'Solo ${selected} de ${total} temas seleccionados.',
 			'web.channels.notifications.repeatPolicyLabel' => 'Política de repetición',
 			'web.channels.notifications.cooldownLabel' => 'Duración del cooldown',
 			'web.channels.notifications.onceReplyHint' => 'Responder con texto que no sea un comando en este chat restablece la supresión, opendray reenvía tu respuesta al stdin de la session y rearma el notificador.',
@@ -10052,13 +10049,10 @@ extension on TranslationsEs {
 			'channels.webhookDialog.copiedSnack' => 'URL del webhook copiada.',
 			'channels.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'channels.notifications.title' => 'Preferencias de notificación',
-			'channels.notifications.notifyOn' => 'Notificar en',
 			'channels.notifications.repeatPolicy' => 'Política de repetición',
 			'channels.notifications.cooldownWindow' => 'Ventana de cooldown',
 			'channels.notifications.includeSnippet' => 'Incluir fragmento del terminal',
 			'channels.notifications.snippetLengthCap' => 'Límite de longitud del fragmento',
-			'channels.notifications.notifyOnAll' => 'Todos los eventos de la session.',
-			'channels.notifications.notifyOnEmpty' => 'Ningún evento seleccionado. Notificaciones salientes silenciadas.',
 			'channels.notifications.snippetHelper' => 'Incrusta el final reciente del terminal en cada notificación.',
 			'channels.notifications.snippetNoCap' => 'sin límite',
 			'channels.notifications.snippetChars' => ({required Object n}) => '${n} caracteres',
@@ -10455,11 +10449,11 @@ extension on TranslationsEs {
 			'settings.serverSettings.savedNeedsRestart' => 'Guardado. Reinicia el gateway para aplicar.',
 			'settings.serverSettings.savedSimple' => 'Guardado.',
 			'settings.serverSettings.changesNeedRestart' => 'Los cambios en esta sección necesitan un reinicio del gateway.',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.loadFailed' => 'No se pudieron cargar los ajustes del servidor',
 			'settings.serverSettings.sections.general' => 'General',
 			'settings.serverSettings.sections.logging' => 'Registro',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.sections.sessions' => 'Sessions',
 			'settings.serverSettings.sections.vault' => 'Vault',
 			'settings.serverSettings.sections.mcpRegistry' => 'Registro de MCP',

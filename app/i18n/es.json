@@ -1033,7 +1033,7 @@
     },
     "channels": {
       "title": "Canales",
-      "subtitle": "Integraciones de mensajería bidireccional. Las notificaciones salientes se filtran según el <1>notify_on</1> de cada canal.",
+      "subtitle": "Integraciones de mensajería bidireccional. Cada canal habilitado y no silenciado recibe notificaciones de sesión.",
       "newButton": "Nuevo canal",
       "loading": "Cargando…",
       "empty": {
@@ -1048,7 +1048,6 @@
         "tokenLabel": "token:",
         "chatIdLabel": "chat_id:",
         "channelIdLabel": "channel_id:",
-        "notifyOnLabel": "notify_on:",
         "webhookLabel": "webhook:",
         "copyWebhookTooltip": "Copiar la URL del webhook",
         "webhookCopiedToast": "URL del webhook copiada",
@@ -1101,10 +1100,6 @@
       },
       "notifications": {
         "sectionTitle": "Notificaciones de session",
-        "notifyOnLabel": "Notificar en",
-        "hintAll": "Recibiendo todos los eventos de session. Haz clic en una etiqueta para excluirlo.",
-        "hintNone": "Ningún evento seleccionado, notificaciones salientes silenciadas.",
-        "hintSome": "Solo {selected} de {total} temas seleccionados.",
         "repeatPolicyLabel": "Política de repetición",
         "cooldownLabel": "Duración del cooldown",
         "onceReplyHint": "Responder con texto que no sea un comando en este chat restablece la supresión, opendray reenvía tu respuesta al stdin de la session y rearma el notificador.",
@@ -3401,13 +3396,10 @@
     "errorWithMessage": "{prefix}: {error}",
     "notifications": {
       "title": "Preferencias de notificación",
-      "notifyOn": "Notificar en",
       "repeatPolicy": "Política de repetición",
       "cooldownWindow": "Ventana de cooldown",
       "includeSnippet": "Incluir fragmento del terminal",
       "snippetLengthCap": "Límite de longitud del fragmento",
-      "notifyOnAll": "Todos los eventos de la session.",
-      "notifyOnEmpty": "Ningún evento seleccionado. Notificaciones salientes silenciadas.",
       "snippetHelper": "Incrusta el final reciente del terminal en cada notificación.",
       "snippetNoCap": "sin límite",
       "snippetChars": "{n} caracteres",

@@ -1004,18 +1004,12 @@ func (h *Hub) dispatch(ctx context.Context, ev eventbus.Event) {
 		if h.isMuted(ctx, c.ID()) {
 			continue
 		}
-		// Notifications are controlled by enabled + notify_on (deselect
-		// every topic = muted) + the repeat policy — there's no separate
-		// notify_enabled gate. An enabled, unmuted channel notifies per its
-		// notify_on selection, so "channel on" implies notifications on
-		// unless the operator mutes via the topic tags.
-		topics, err := h.notifyTopicsFor(ctx, c.ID())
-		if err != nil {
-			continue
-		}
-		if !shouldDispatchTopic(topics, ev.Topic) {
-			continue
-		}
+		// Notifications are controlled by enabled + muted + the repeat
+		// policy. "Channel on, not muted" implies notifications on — there's
+		// no per-topic notify_on filter (the picker was redundant with mute
+		// and two of its three topics never fired). The hub only dispatches
+		// the events that matter (session.idle / session.ended), so every
+		// enabled, unmuted channel gets them, deduped by the repeat policy.
 		if h.suppressByPolicy(ctx, c.ID(), ev.Topic, sessionID) {
 			continue
 		}
@@ -1247,40 +1241,6 @@ func (h *Hub) sendWithFallback(ctx context.Context, c Channel, msg ChannelMessag
 	return c.Send(ctx, msg)
 }
 
-func (h *Hub) notifyTopicsFor(ctx context.Context, channelID string) ([]string, error) {
-	row, err := h.store.Get(ctx, channelID)
-	if err != nil {
-		return nil, err
-	}
-	var cfg struct {
-		NotifyOn []string `json:"notify_on"`
-	}
-	_ = json.Unmarshal(row.Config, &cfg)
-	return cfg.NotifyOn, nil
-}
-
-// NotifyTopicNone is the sentinel that, when stored as the sole entry of
-// notify_on, marks an *explicit* opt-out of every topic — distinct from
-// notify_on=[] (the historical "match all" default). The UI needs this
-// to express "no topics selected" without rendering as "everything
-// selected" on the next read, see [shouldDispatchTopic].
-const NotifyTopicNone = "__none__"
-
-// shouldDispatchTopic decides whether a dispatched event passes a
-// channel's notify_on filter. Semantics:
-//   - len==0           → match all (no filter configured)
-//   - == [NotifyTopicNone] → match none (explicit opt-out)
-//   - otherwise        → match only the listed topics
-func shouldDispatchTopic(topics []string, eventTopic string) bool {
-	if len(topics) == 0 {
-		return true
-	}
-	if len(topics) == 1 && topics[0] == NotifyTopicNone {
-		return false
-	}
-	return contains(topics, eventTopic)
-}
-
 // CreateChannel registers a new channel and starts it if enabled.
 func (h *Hub) CreateChannel(ctx context.Context, kind string, config json.RawMessage, enabled bool) (string, error) {
 	if Lookup(kind) == nil {
@@ -1440,15 +1400,6 @@ func (h *Hub) isStarted() bool {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return h.started
-}
-
-func contains(ss []string, s string) bool {
-	for _, v := range ss {
-		if v == s {
-			return true
-		}
-	}
-	return false
 }
 
 // snippetPrefs is the per-channel preference for embedding the
