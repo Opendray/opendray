@@ -111,13 +111,6 @@ List<ChannelKind> channelKindsList() => [
             hint: t.channels.kinds.telegram.chatTypingHint,
           ),
           ChannelField(
-            name: 'notify_enabled',
-            label: t.channels.kinds.telegram.notifyEnabledLabel,
-            type: ChannelFieldType.boolean,
-            defaultValue: false,
-            hint: t.channels.kinds.telegram.notifyEnabledHint,
-          ),
-          ChannelField(
             name: 'reply_max_chars',
             label: t.channels.kinds.telegram.replyMaxCharsLabel,
             type: ChannelFieldType.text,
@@ -290,4 +283,49 @@ String? extractTokenPreview(ChannelKind kind, Map<String, dynamic> config) {
 String maskToken(String raw) {
   if (raw.length <= 10) return '••••';
   return '${raw.substring(0, 6)}…${raw.substring(raw.length - 4)}';
+}
+
+/// Serialize a channel-config field's (already-trimmed) text value to the
+/// JSON type the gateway expects, mirroring the web form
+/// (app/web/src/pages/Channels.tsx → buildConfigFromValues).
+///
+/// Only `chat_id` needs coercion among the kinds the mobile form
+/// supports: Telegram persists it as an `int64`, so submitting it as a
+/// string makes the server reject the whole config —
+/// "json: cannot unmarshal string into Go struct field config.chat_id
+/// of type int64" — which is why a Telegram channel configured from the
+/// phone failed to start. The numeric guard leaves every other value a
+/// string, exactly as the web form submits it:
+///   - Feishu's `oc_…` chat_id (non-numeric, stays a string),
+///   - Slack/Discord `channel_id` snowflakes (18-digit IDs that must NOT
+///     be narrowed to a number — precision loss; note this is a
+///     different field name, so it is never matched here anyway),
+///   - `owner_user_ids` / `reply_max_chars` / tokens (the server reads
+///     reply_max_chars from a number or a numeric string, so a string is
+///     fine).
+///
+/// The mobile form exposes no `topic_ids` / `uids` fields, so — unlike
+/// the web builder — those need no handling here.
+Object coerceChannelConfigValue(String name, String raw) {
+  if (name == 'chat_id' && _bareIntPattern.hasMatch(raw)) {
+    return int.tryParse(raw) ?? raw;
+  }
+  return raw;
+}
+
+// A bare integer with an optional leading '-' (Telegram group /
+// supergroup ids look like -1001234567890). Mirrors the web guard
+// /^-?\d+$/ so numeric-looking-but-not-numeric values stay strings.
+final RegExp _bareIntPattern = RegExp(r'^-?\d+$');
+
+/// Render a stored config value as the text its TextField should show
+/// when editing — the inverse of [coerceChannelConfigValue]. A numeric
+/// chat_id (persisted as a JSON number) must round-trip back to its
+/// digits; without this the edit form seeds the field empty and the next
+/// save silently drops the chat_id (losing outbound notifications).
+/// Absent / non-scalar values seed empty.
+String channelConfigFieldText(Object? value) {
+  if (value is String) return value;
+  if (value is num) return value.toString();
+  return '';
 }

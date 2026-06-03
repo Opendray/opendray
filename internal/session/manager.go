@@ -1092,6 +1092,19 @@ func (m *Manager) Input(_ context.Context, id string, data []byte) error {
 	if rs.markActive(time.Now()) {
 		m.flipBackToRunning(rs)
 	}
+	// A submitted line (Enter) re-arms the channel notifier: the hub
+	// clears its once/cooldown suppression for this session so the next
+	// idle/turn notifies again. Every input source — web terminal,
+	// mobile, or a chat channel — flows through Input, so a reply typed
+	// in the web UI counts exactly like a Telegram reply (previously only
+	// channel-side replies re-armed, which silenced web/CLI-driven
+	// sessions after their first notification).
+	if strings.ContainsAny(string(data), "\r\n") {
+		m.bus.Publish(eventbus.Event{
+			Topic: "session.input",
+			Data:  map[string]any{"session_id": id},
+		})
+	}
 	return nil
 }
 

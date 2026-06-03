@@ -867,6 +867,27 @@ func (h *Hub) forgetNotifyForSession(channelID, sessionID string) {
 	}
 }
 
+// forgetNotifyAllForSession clears the suppression entries for a session
+// across EVERY channel. Driven by the session.input signal: input may
+// arrive from the web terminal / CLI with no specific channel context, so
+// any channel that would notify about this session must re-arm. Topic is
+// matched by the "|sessionID" suffix, so idle/started/ended all clear.
+func (h *Hub) forgetNotifyAllForSession(sessionID string) {
+	if sessionID == "" {
+		return
+	}
+	h.notifyMu.Lock()
+	defer h.notifyMu.Unlock()
+	suffix := "|" + sessionID
+	for _, chState := range h.notifyState {
+		for k := range chState {
+			if strings.HasSuffix(k, suffix) {
+				delete(chState, k)
+			}
+		}
+	}
+}
+
 // sessionIDFromEvent pulls the session_id field out of an event's
 // data payload (best effort). Empty string when the topic doesn't
 // carry one.
@@ -906,6 +927,13 @@ func (h *Hub) runOutbound(ctx context.Context) {
 	defer unsubS()
 	chInterrupted, unsubInt := h.bus.Subscribe("session.interrupted", 64)
 	defer unsubInt()
+	// User input (from ANY source — web terminal, mobile, or a chat
+	// channel; all flow through session.Manager.Input) re-arms the
+	// notifier: clear once/cooldown suppression for that session so the
+	// next idle/turn notifies again. This makes a reply typed in the web
+	// UI count exactly like a Telegram reply.
+	chInput, unsubIn := h.bus.Subscribe("session.input", 64)
+	defer unsubIn()
 	for {
 		select {
 		case <-ctx.Done():
@@ -941,6 +969,11 @@ func (h *Hub) runOutbound(ctx context.Context) {
 				return
 			}
 			h.cancelReplyWait(ctx, sessionIDFromEvent(ev))
+		case ev, ok := <-chInput:
+			if !ok {
+				return
+			}
+			h.forgetNotifyAllForSession(sessionIDFromEvent(ev))
 		}
 	}
 }
@@ -971,20 +1004,12 @@ func (h *Hub) dispatch(ctx context.Context, ev eventbus.Event) {
 		if h.isMuted(ctx, c.ID()) {
 			continue
 		}
-		// Quiet-by-default: a two-way-chat channel suppresses idle/ended/PR
-		// broadcast cards unless the operator opts in (notify_enabled). The
-		// chat reply path (deliverTurnReply) is unaffected — you still get
-		// replies to your messages, just not the firehose.
-		if !h.chatConfigFor(ctx, c.ID()).notificationsEnabled() {
-			continue
-		}
-		topics, err := h.notifyTopicsFor(ctx, c.ID())
-		if err != nil {
-			continue
-		}
-		if !shouldDispatchTopic(topics, ev.Topic) {
-			continue
-		}
+		// Notifications are controlled by enabled + muted + the repeat
+		// policy. "Channel on, not muted" implies notifications on — there's
+		// no per-topic notify_on filter (the picker was redundant with mute
+		// and two of its three topics never fired). The hub only dispatches
+		// the events that matter (session.idle / session.ended), so every
+		// enabled, unmuted channel gets them, deduped by the repeat policy.
 		if h.suppressByPolicy(ctx, c.ID(), ev.Topic, sessionID) {
 			continue
 		}
@@ -1216,40 +1241,6 @@ func (h *Hub) sendWithFallback(ctx context.Context, c Channel, msg ChannelMessag
 	return c.Send(ctx, msg)
 }
 
-func (h *Hub) notifyTopicsFor(ctx context.Context, channelID string) ([]string, error) {
-	row, err := h.store.Get(ctx, channelID)
-	if err != nil {
-		return nil, err
-	}
-	var cfg struct {
-		NotifyOn []string `json:"notify_on"`
-	}
-	_ = json.Unmarshal(row.Config, &cfg)
-	return cfg.NotifyOn, nil
-}
-
-// NotifyTopicNone is the sentinel that, when stored as the sole entry of
-// notify_on, marks an *explicit* opt-out of every topic — distinct from
-// notify_on=[] (the historical "match all" default). The UI needs this
-// to express "no topics selected" without rendering as "everything
-// selected" on the next read, see [shouldDispatchTopic].
-const NotifyTopicNone = "__none__"
-
-// shouldDispatchTopic decides whether a dispatched event passes a
-// channel's notify_on filter. Semantics:
-//   - len==0           → match all (no filter configured)
-//   - == [NotifyTopicNone] → match none (explicit opt-out)
-//   - otherwise        → match only the listed topics
-func shouldDispatchTopic(topics []string, eventTopic string) bool {
-	if len(topics) == 0 {
-		return true
-	}
-	if len(topics) == 1 && topics[0] == NotifyTopicNone {
-		return false
-	}
-	return contains(topics, eventTopic)
-}
-
 // CreateChannel registers a new channel and starts it if enabled.
 func (h *Hub) CreateChannel(ctx context.Context, kind string, config json.RawMessage, enabled bool) (string, error) {
 	if Lookup(kind) == nil {
@@ -1409,15 +1400,6 @@ func (h *Hub) isStarted() bool {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return h.started
-}
-
-func contains(ss []string, s string) bool {
-	for _, v := range ss {
-		if v == s {
-			return true
-		}
-	}
-	return false
 }
 
 // snippetPrefs is the per-channel preference for embedding the

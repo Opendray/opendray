@@ -53,9 +53,8 @@ func init() {
 }
 
 type config struct {
-	BotToken string   `json:"bot_token"`
-	ChatID   int64    `json:"chat_id"`
-	NotifyOn []string `json:"notify_on,omitempty"`
+	BotToken string `json:"bot_token"`
+	ChatID   int64  `json:"chat_id"`
 }
 
 // Telegram implements channel.Channel + several capability interfaces.

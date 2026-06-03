@@ -65,8 +65,11 @@ class _ChannelFormScreenState extends State<ChannelFormScreen> {
         final v = init[f.name];
         _bools[f.name] = v is bool ? v : (f.defaultValue ?? false);
       } else {
-        final v = init[f.name];
-        _ctrls[f.name] = TextEditingController(text: v is String ? v : '');
+        // Seed the text field from the stored config, rendering a numeric
+        // value (e.g. an int64 chat_id) back to its digits so editing
+        // never blanks — and then drops — it. Mirrors _submit's coercion.
+        _ctrls[f.name] =
+            TextEditingController(text: channelConfigFieldText(init[f.name]));
       }
     }
   }
@@ -94,7 +97,9 @@ class _ChannelFormScreenState extends State<ChannelFormScreen> {
         }
         if (f.optional) continue; // server default
       }
-      cfg[f.name] = raw;
+      // Serialize to the JSON type the gateway expects (e.g. Telegram
+      // chat_id must be an int64, not a string) — matches the web form.
+      cfg[f.name] = coerceChannelConfigValue(f.name, raw);
     }
     Navigator.of(context).pop(cfg);
   }
