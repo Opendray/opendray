@@ -88,6 +88,14 @@ func TestControlButtonAction(t *testing.T) {
 	if !isBtn || hint != "" || name != "list" {
 		t.Errorf("Switch → isBtn=%v hint=%q name=%q, want list", isBtn, hint, name)
 	}
+
+	// Peek is session-agnostic too: it carries no "%s", so it dispatches
+	// even with no active session (the /peek handler reports the no-pin
+	// case itself rather than being gated here like Stop).
+	name, _, hint, isBtn = h.controlButtonAction(ChannelMessage{ChannelID: "ch_empty", Text: "👀 Peek"})
+	if !isBtn || hint != "" || name != "peek" {
+		t.Errorf("Peek → isBtn=%v hint=%q name=%q, want peek", isBtn, hint, name)
+	}
 }
 
 func TestControlCommandsAreParseable(t *testing.T) {

@@ -600,7 +600,16 @@ func (h *Hub) handleCommand(ctx context.Context, msg ChannelMessage, mid int64, 
 		return
 	}
 	if reply != "" {
-		h.replyText(ctx, ch, msg, reply)
+		// Commands flagged DocksControlKeyboard refresh the persistent
+		// keyboard alongside their text reply (e.g. /select, /start), so a
+		// layout change shows up at a natural tap point rather than only on
+		// the next agent reply. replyControlText falls back to plain text
+		// on transports without a docked keyboard.
+		if cmd.DocksControlKeyboard {
+			h.replyControlText(ctx, ch, msg, reply)
+		} else {
+			h.replyText(ctx, ch, msg, reply)
+		}
 	}
 }
 
