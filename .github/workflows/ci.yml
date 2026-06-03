@@ -103,3 +103,20 @@ jobs:
           # Pin to a specific version. Bumps go through a PR so a
           # surprise lint regression can be reviewed, not absorbed.
           version: v2.12.1
+
+  i18n:
+    name: i18n parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Zero-dependency Node script, so no pnpm install needed. Compares
+      # every app/i18n/<locale>.json against the canonical en.json. Fails
+      # only on token mismatch / invalid JSON; missing keys are advisory
+      # (they fall back to English at runtime). See the script header.
+      - name: Translation parity check
+        run: node scripts/check-i18n-parity.mjs

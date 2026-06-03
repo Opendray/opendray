@@ -3616,6 +3616,7 @@ class _TranslationsWebProvidersClaudeAccountsZh extends TranslationsWebProviders
 	@override String get addingTitle => '添加新账号。';
 	@override String get addingBodyPrefix => '在网关主机执行：';
 	@override String get addingBodySuffix => 'opendray 的文件系统监听会自动注册新目录，或点击 <1>导入本地</1> 立即扫描。';
+	@override String get architectureLink => '架构与完整指南 →';
 	@override String get loading => '加载中…';
 	@override String get empty => '暂无 Claude 账号。最简单的方式:打开会话页,spawn 一个 Claude 会话,在终端里运行 <1>claude login</1> —— 完成 OAuth 后,凭据会落到网关的 <3>~/.claude</3>,自动出现在这里。需要管理多账号身份时,可改用上方的 shell 工作流。';
 	@override String get noTokenYet => '尚无 token';
@@ -8179,6 +8180,7 @@ extension on TranslationsZh {
 			'web.providers.claudeAccounts.addingTitle' => '添加新账号。',
 			'web.providers.claudeAccounts.addingBodyPrefix' => '在网关主机执行：',
 			'web.providers.claudeAccounts.addingBodySuffix' => 'opendray 的文件系统监听会自动注册新目录，或点击 <1>导入本地</1> 立即扫描。',
+			'web.providers.claudeAccounts.architectureLink' => '架构与完整指南 →',
 			'web.providers.claudeAccounts.loading' => '加载中…',
 			'web.providers.claudeAccounts.empty' => '暂无 Claude 账号。最简单的方式:打开会话页,spawn 一个 Claude 会话,在终端里运行 <1>claude login</1> —— 完成 OAuth 后,凭据会落到网关的 <3>~/.claude</3>,自动出现在这里。需要管理多账号身份时,可改用上方的 shell 工作流。',
 			'web.providers.claudeAccounts.noTokenYet' => '尚无 token',
@@ -8399,9 +8401,9 @@ extension on TranslationsZh {
 			'web.integrations.proxy.send' => '发送',
 			'web.integrations.proxy.sending' => '发送中…',
 			'web.integrations.proxy.extraHeadersLabel' => '额外 header（每行一条，Name: Value）',
-			'web.integrations.proxy.bodyLabel' => 'Body',
 			_ => null,
 		} ?? switch (path) {
+			'web.integrations.proxy.bodyLabel' => 'Body',
 			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
 			'web.integrations.proxy.emptyBody' => '(空)',
@@ -8913,9 +8915,9 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.backupLocalDir.label' => '本地备份目录',
 			'web.serverSettings.fields.backupLocalDir.hint' => '自动创建的 `local` 目标的默认根目录。留空 = ~/.opendray/backups。需要重启。',
 			'web.serverSettings.fields.backupExportDir.label' => '导出目录',
-			'web.serverSettings.fields.backupExportDir.hint' => '一次性导出 zip 在磁盘上的暂存位置。留空 = ~/.opendray/exports。包将在 24 小时后自动过期。需要重启。',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.fields.backupExportDir.hint' => '一次性导出 zip 在磁盘上的暂存位置。留空 = ~/.opendray/exports。包将在 24 小时后自动过期。需要重启。',
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump 路径',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'pg_dump 的绝对路径。主版本号必须 ≥ 服务器的。留空 = PATH 上的第一个 pg_dump。',
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'pg_restore 路径',
@@ -9427,9 +9429,9 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.emptyProjectDocs' => '暂无项目文档。点击 + 创建一个，或让 AI agent 根据提示生成。',
 			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => '未找到匹配「${query}」的内容。',
 			'sessions.inspector.notes.locationDialogHelp' => '将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。',
-			'sessions.inspector.notes.sessionCwd' => '会话 cwd',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.sessionCwd' => '会话 cwd',
 			'sessions.inspector.notes.projectDocsPath' => '相对笔记库的项目文档路径',
 			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
@@ -9941,9 +9943,9 @@ extension on TranslationsZh {
 			'backupTargetEditor.kinds.sftp.description' => '任何可 SSH 访问的服务器',
 			'backupTargetEditor.kinds.s3.label' => 'S3 / 兼容',
 			'backupTargetEditor.kinds.s3.description' => 'Amazon S3 + S3 兼容存储桶（MinIO、R2、B2）',
-			'backupTargetEditor.kinds.rclone.label' => 'rclone（任意）',
 			_ => null,
 		} ?? switch (path) {
+			'backupTargetEditor.kinds.rclone.label' => 'rclone（任意）',
 			'backupTargetEditor.kinds.rclone.description' => '通过 rclone CLI 访问 OneDrive、Google Drive、Dropbox',
 			'backupTargetEditor.formTitleEdit' => '编辑目标',
 			'backupTargetEditor.formTitleNew' => '新建备份目标',
@@ -10455,9 +10457,9 @@ extension on TranslationsZh {
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => '加载自：${path}',
 			'settings.serverSettings.restartHint' => '大部分配置需要重启网关后生效。重启按钮在 AppBar 中。',
 			'settings.serverSettings.savedNeedsRestart' => '已保存。重启网关以生效。',
-			'settings.serverSettings.savedSimple' => '已保存。',
 			_ => null,
 		} ?? switch (path) {
+			'settings.serverSettings.savedSimple' => '已保存。',
 			'settings.serverSettings.changesNeedRestart' => '此配置的修改需重启网关。',
 			'settings.serverSettings.loadFailed' => '加载服务器设置失败',
 			'settings.serverSettings.sections.general' => '通用',
