@@ -68,17 +68,12 @@ type ManagerOption func(*Manager)
 
 // WithIdleThreshold sets how long a session must be silent before
 // session.idle fires. Pass 0 to disable idle detection.
-// ClaudeAccountResolver is the minimum cliacct surface SwitchClaudeAccount
-// needs to migrate the conversation transcript when an operator switches
-// a live session to a different account. Wiring it as a small interface
-// keeps session free of the cliacct ↔ session cyclic-dep risk and lets
-// tests inject a fake. Nil → no migration is attempted, behavior matches
-// the pre-2026-05-31 "resume starts a fresh conversation" semantics.
+// ClaudeAccountResolver is the minimum cliacct surface the manager needs
+// for rate-limit auto-failover: marking/checking throttled accounts and
+// picking the next account to switch a throttled session to. Wiring it as
+// a small interface keeps session free of the cliacct ↔ session
+// cyclic-dep risk and lets tests inject a fake. Nil disables failover.
 type ClaudeAccountResolver interface {
-	// ResolveClaudeConfigDir returns the CLAUDE_CONFIG_DIR that would
-	// be injected for the given account id, or "" + nil when the
-	// account is the synthetic empty-id default (CLI's own ~/.claude).
-	ResolveClaudeConfigDir(ctx context.Context, accountID string) (string, error)
 	// MarkClaudeAccountThrottled records that an account is rate-
 	// limited until the given time. Called by the rate-limit scanner
 	// hooked into pumpStdout when a session's PTY surfaces the
@@ -94,10 +89,10 @@ type ClaudeAccountResolver interface {
 	PickFailoverClaudeAccount(ctx context.Context, currentAccountID string) (string, error)
 }
 
-// WithClaudeAccountResolver injects the cliacct resolver SwitchClaudeAccount
-// uses to migrate the transcript JSONL across accounts so --resume
-// finds the conversation under the new CLAUDE_CONFIG_DIR. Defaults to
-// nil (no migration) so existing callers keep working unchanged.
+// WithClaudeAccountResolver injects the cliacct resolver the manager uses
+// for rate-limit auto-failover (throttle tracking + next-account
+// selection). Defaults to nil (failover disabled) so existing callers
+// keep working unchanged.
 func WithClaudeAccountResolver(r ClaudeAccountResolver) ManagerOption {
 	return func(m *Manager) { m.claudeAccounts = r }
 }
@@ -984,32 +979,19 @@ func (m *Manager) SwitchClaudeAccount(ctx context.Context, id, newAccountID stri
 		return Session{}, err
 	}
 
-	// Transcript migration: Claude stores per-config-dir transcripts at
-	// <CLAUDE_CONFIG_DIR>/projects/<workspace>/<session_id>.jsonl. The
-	// respawn below renders a different CLAUDE_CONFIG_DIR than the one
-	// the conversation was authored under, so --resume would find
-	// nothing and the conversation would start fresh — exactly the
-	// "in-progress state lost" UX the dialog warns about.
-	//
-	// We hard-link the JSONL into the new config dir's projects tree
-	// before respawn. Hard-link keeps both views pointing at one inode
-	// so future writes by the new account are visible if the operator
-	// switches back later. Cross-fs hard-link or missing source falls
-	// back to a one-shot copy. Errors are non-fatal: the worst case is
-	// what we had before — fresh conversation — and we still bring the
-	// session up under the new account so rate-limit-driven switches
-	// keep working.
-	if m.claudeAccounts != nil && sess.ClaudeSessionID != "" {
-		oldCfg, errOld := m.claudeAccounts.ResolveClaudeConfigDir(ctx, current.ClaudeAccountID)
-		newCfg, errNew := m.claudeAccounts.ResolveClaudeConfigDir(ctx, newAccountID)
-		if errOld == nil && errNew == nil && oldCfg != newCfg {
-			if err := migrateClaudeTranscript(oldCfg, newCfg, sess.ClaudeSessionID); err != nil {
-				m.log.Warn("claude transcript migration failed; switch will start fresh conversation",
-					"session", id, "old_cfg", oldCfg, "new_cfg", newCfg, "err", err)
-			}
-		}
-	}
-
+	// Switching account starts a FRESH conversation under the new
+	// credential. We can't carry the old one across: `claude --resume
+	// <uuid>` validates the UUID against the *target* account's own
+	// session registry (not just a transcript file), so resuming a UUID
+	// minted under the previous account fails with "No conversation
+	// found" and the CLI exits immediately — which left the session
+	// stopped AND unrestartable, since every Start retried the same
+	// doomed --resume. Clearing ClaudeSessionID makes the respawn mint a
+	// new `--session-id` under the new account (a session that account
+	// *does* know), so the switch comes up and later restarts resume it
+	// cleanly. This matches the UI's "in-CLI context is lost on switch"
+	// warning. The new UUID is captured + persisted by spawn().
+	sess.ClaudeSessionID = ""
 	sess.ClaudeAccountID = newAccountID
 	sess.State = StateRunning
 	sess.EndedAt = nil
