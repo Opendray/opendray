@@ -296,7 +296,7 @@ opendray یک host-resident gateway است. AI CLIها را از طریق PTY ا
 <h2 dir="rtl" align="right">Quickstart: مسیر ۵ دقیقه‌ای برای dev</h2>
 
 <p dir="rtl" align="right">
-برای راهنمای کامل، همراه با prerequisiteها و troubleshooting، فایل <a href="docs/quickstart.md"><code>docs/quickstart.md</code></a> را ببینید.
+برای راهنمای کامل، همراه با prerequisiteها و troubleshooting، فایل <a href="docs/quickstart.fa.md"><code>docs/quickstart.fa.md</code></a> را ببینید.
 </p>
 
 <p dir="rtl" align="right">
@@ -595,7 +595,7 @@ go build ./cmd/opendray      # bakes dist into the binary
 <ul dir="rtl" align="right">
 <li><a href="docs/getting-started.md"><code>docs/getting-started.md</code></a>: اگر تازه شروع کرده‌اید، از اینجا شروع کنید؛ از صفر تا اولین session در حدود ۱۵ دقیقه، شامل نصب CLIهای موردنیاز و bootstrap کردن Postgres.</li>
 <li><a href="docs/install-binary.fa.md"><code>docs/install-binary.fa.md</code></a>: نصب از npm package یا release binary، با فرض این‌که Postgres را خودتان آماده می‌کنید، و اجرا به‌عنوان systemd یا launchd service.</li>
-<li><a href="docs/quickstart.md"><code>docs/quickstart.md</code></a>: مسیر پنج‌دقیقه‌ای برای dev environment؛ مناسب وقتی که moving partها را از قبل می‌شناسید.</li>
+<li><a href="docs/quickstart.fa.md"><code>docs/quickstart.fa.md</code></a>: مسیر پنج‌دقیقه‌ای برای dev environment؛ مناسب وقتی که moving partها را از قبل می‌شناسید.</li>
 <li><a href="docs/mobile-app.fa.md"><code>docs/mobile-app.fa.md</code></a>: ساخت و نصب اپ موبایل Flutter — یک Android APK را sideload کنید یا با Xcode روی iPhone نصب کنید، و بعد آن را به gateway خودتان وصل کنید.</li>
 <li><a href="docs/operator-guide.md"><code>docs/operator-guide.md</code></a>: مرجع deploy و ops برای production-like setupها.</li>
 <li><a href="docs/integration-guide.md"><code>docs/integration-guide.md</code></a>: راهنمای نوشتن external integration با هر زبان برنامه‌نویسی.</li>

@@ -10,7 +10,7 @@
 
 باینری همان *کل* gateway است — web admin SPA داخلش embed شده، پس نه Node runtime لازم است، نه static server جداگانه، و نه چیزی برای build کردن. آنچه **نمی‌کند** این است که چیزی را برای شما setup نکند. این همان معامله است: شما یک دیتابیس PostgreSQL و روشی برای نگه‌داشتن فرایند می‌آورید، و در عوض هیچ‌چیزی بدون اطلاع شما نصب، تنظیم، یا ثبت نمی‌شود.
 
-> **می‌خواهید همه‌چیز برایتان انجام شود؟** روی یک Linux / macOS تازه، installer تک‌خطی Postgres را provision می‌کند، AI CLIها را نصب می‌کند، config را می‌نویسد، و یک service را در ۵ تا ۱۰ دقیقه ثبت می‌کند. ببینید [README → نصب‌کننده تک‌خطی](../README.fa.md#نصب) یا راهنمای دستی [getting-started.md](getting-started.md).
+**می‌خواهید همه‌چیز برایتان انجام شود؟** روی یک Linux / macOS تازه، installer تک‌خطی Postgres را provision می‌کند، AI CLIها را نصب می‌کند، config را می‌نویسد، و یک service را در ۵ تا ۱۰ دقیقه ثبت می‌کند. ببینید [README → نصب‌کننده تک‌خطی](../README.fa.md#نصب) یا راهنمای دستی [getting-started.fa.md](getting-started.fa.md).
 
 این راهنما شما را از «باینری روی PATH» به «gateway در حال اجرا» در پنج گام می‌رساند، سپس نشان می‌دهد چطور آن را به‌صورت یک service اجرا کنید.
 
@@ -318,6 +318,6 @@ Extension روی server نصب نشده، یا داخل دیتابیس opendray 
 - [README → انتشار عملیاتی](../README.fa.md#production-deploy) — مرجع کامل deploy (systemd / launchd / own-supervisor، hardening، reverse proxy)
 - [`docs/operator-guide.md`](operator-guide.md) — ops: توپولوژی reverse-proxy/TLS، backupهای رمزنگاری‌شده DB، data export/import
 - [`docs/integration-guide.md`](integration-guide.md) — ساختن یک integration خارجی با REST + WebSocket API
-- [`docs/getting-started.md`](getting-started.md) — راه‌اندازی راهنما و all-in-one اگر ترجیح می‌دهید قطعات را خودتان سر هم نکنید
+- [`docs/getting-started.fa.md`](getting-started.fa.md) — راه‌اندازی راهنما و all-in-one اگر ترجیح می‌دهید قطعات را خودتان سر هم نکنید
 
 </div>
