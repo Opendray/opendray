@@ -37,6 +37,16 @@ builds:
       - -X github.com/opendray/opendray-v2/internal/version.Version={{.Version}}
       - -X github.com/opendray/opendray-v2/internal/version.Commit={{.ShortCommit}}
       - -X github.com/opendray/opendray-v2/internal/version.Date={{.Date}}
+    hooks:
+      # Per-binary post hook: Developer ID sign + notarize the macOS
+      # artifacts via quill (runs on the Linux runner). The script is a
+      # no-op for non-darwin targets and when no signing creds are
+      # configured (QUILL_SIGN_P12 empty) — so Linux/Windows builds and
+      # unsigned snapshot/PR builds are unaffected. Reads QUILL_* /
+      # MACOS_NOTARY_KEY_P8 from the inherited (workflow) environment.
+      post:
+        - cmd: ./scripts/macos-sign.sh "{{ .Path }}" "{{ .Os }}"
+          output: true
 
 archives:
   - id: default
