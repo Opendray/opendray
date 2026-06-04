@@ -97,6 +97,58 @@ provided automatically by Actions — you don't manage it. The other:
   compromised — revoke immediately at the npm tokens page above and
   rotate the secret value.
 
+### macOS Developer ID signing + notarization (optional)
+
+When configured, the Release workflow Developer ID-signs and notarizes
+the macOS binaries via [quill](https://github.com/anchore/quill) on the
+Linux runner (no macOS runner needed). The payoff: a signed release keeps
+a **stable code-signing identity across versions**, so a user's macOS
+Full Disk Access grant survives `opendray update`, and notarization
+clears Gatekeeper for browser-downloaded assets.
+
+This is **opt-in and gated**: with no cert secret set, the signing step is
+skipped and the release is exactly what it is today (ad-hoc macOS
+binaries). Nothing breaks for contributors or non-macOS users, and the
+signing job only runs on tag/dispatch in this repo — never on fork PRs, so
+the cert can't leak.
+
+One-time setup (maintainer with an Apple Developer account):
+
+1. **Create a _Developer ID Application_ certificate** (distinct from the
+   "Apple Development" cert). Easiest path: Xcode → Settings → Accounts →
+   select your team → Manage Certificates → ➕ → *Developer ID
+   Application*. Then in Keychain Access, right-click that certificate →
+   **Export** as a `.p12` (this bundles the private key); set an export
+   password.
+
+2. **Add the secrets** (run in your own terminal — the private keys never
+   touch the repo, a PR, or a chat; `gh secret set` reads from a file/stdin
+   without echoing):
+
+   ```sh
+   # Developer ID Application cert (private key) + its export password
+   base64 -i DeveloperID.p12 | gh secret set MACOS_CERT_P12_BASE64 -R Opendray/opendray
+   printf '%s' '<p12-export-password>' | gh secret set MACOS_CERT_PASSWORD -R Opendray/opendray
+
+   # App Store Connect API key (.p8) for notarization — reuse the existing
+   # TestFlight key. Optional: omit to sign without notarizing.
+   gh secret set MACOS_NOTARY_KEY_P8 -R Opendray/opendray < AuthKey_BPL8QFJ8M2.p8
+   ```
+
+   The ASC **key id** (`BPL8QFJ8M2`) and **issuer id** are non-secret
+   identifiers and are set directly in `release.yml` (`QUILL_NOTARY_KEY_ID`
+   / `QUILL_NOTARY_ISSUER`) — edit them there if you rotate keys.
+
+3. **Cut a release** as usual. The `Install quill` step and the build's
+   sign hook (`scripts/macos-sign.sh`) activate automatically once
+   `MACOS_CERT_P12_BASE64` exists. Verify on a Mac with
+   `codesign -dvvv $(which opendray)` (should show `Authority=Developer ID
+   Application: …`, not `adhoc`) and `spctl -a -vv` / `stapler validate`.
+
+   Same operational rule as the npm token: never paste the `.p12` / `.p8`
+   contents anywhere persisted. If leaked, revoke the cert/key in the Apple
+   Developer portal and rotate the secrets.
+
 ## Picking the version number
 
 The rules from [`VERSIONING.md`](VERSIONING.md):
