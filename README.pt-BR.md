@@ -106,7 +106,7 @@ Tudo o que está no diagrama roda na sua rede. Sem dependências de cloud, sem i
 
 ## Status
 
-**v2.7.0** (último). A geração v2 segue iterando. Veja
+**v2.7.2** (último). A geração v2 segue iterando. Veja
 [`VERSIONING.md`](VERSIONING.md) pra política major-como-geração
 (major = geração de produto, não "breaking change" estrito ao estilo SemVer) e
 [`CHANGELOG.md`](CHANGELOG.md) pro histórico completo de releases.

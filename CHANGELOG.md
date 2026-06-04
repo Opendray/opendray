@@ -10,6 +10,56 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.7.2] — 2026-06-04
+
+### Added
+
+- **`opendray doctor` + `opendray setup-macos` (macOS).** `setup-macos`
+  gives the binary a stable, per-machine self-signed code-signing
+  identity (in a dedicated keychain, fully non-interactive) and re-signs
+  it, so a one-time Full Disk Access grant survives rebuilds/updates
+  instead of macOS re-prompting on every version change. `doctor` is a
+  read-only health check that flags an ad-hoc signature or a config
+  living in a TCC-protected folder. `opendray serve` with no `-config`
+  now falls back to `~/.opendray/config.toml` — outside the protected
+  folders — so a fresh install's gateway starts without a privacy prompt.
+- **macOS release binaries are now Developer ID-signed + notarized**
+  (when the signing secrets are configured), so a user's Full Disk
+  Access grant persists across `opendray update`. Signing runs via quill
+  on the Linux release runner and is a no-op when unconfigured.
+- **Telegram `/peek` command + control-keyboard button** to re-send the
+  selected session's latest output on demand; the docked control keyboard
+  now refreshes on `/select` and `/start`.
+- **Mobile: switch a running Claude session's account + agent-CLI update
+  awareness.** Rebind a live session to a different account from the
+  session screen (web parity), and see when a provider CLI has an npm
+  update available. The session Tasks tab also reached web parity.
+- **Spanish (es) translation** across web + mobile with in-app language
+  switching, plus a CI translation-parity guard that fails the build on
+  missing/extra keys.
+
+### Changed
+
+- **Telegram notifications consolidated** on `enabled` + `muted` + the
+  repeat policy. The redundant `notify_enabled` switch and the
+  per-topic `notify_on` picker were removed — an enabled, unmuted
+  channel notifies once per round, and the web channel card gained the
+  mute toggle that mobile already had.
+
+### Fixed
+
+- **Switching a Claude session's account no longer leaves it stopped and
+  unrestartable.** The switch now starts a fresh conversation under the
+  new account (a session UUID that account's CLI actually knows) instead
+  of `--resume`-ing a UUID minted under the previous account, which
+  failed with "No conversation found" and exited the process.
+- Web terminal jitter caused by the page's scrollbar — the terminal pane
+  is now isolated from `<main>`.
+- Mobile: numeric Telegram `chat_id` is submitted as a number, not a
+  string, so a Telegram channel configured from the phone starts.
+- Release pipeline: release notes are written outside the work tree so
+  goreleaser's dirty-tree check passes.
+
 ### Removed
 
 - **`ghcr.io/Opendray/opendray` container image (all 370 versions / 84
