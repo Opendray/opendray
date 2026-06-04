@@ -4,13 +4,13 @@
 
 برای وقتی که فقط باینری `opendray` را می‌خواهید — بدون wizard نصب‌کننده که دست به تنظیمات ماشین شما بزند. این مسیر مناسب است برای:
 
-- **`npm install -g opendray` / `npx opendray`** — پکیج npm باینری رسمی Go release را شامل می‌شود (ببینید [README → npm / npx](../README.fa.md#نصب)).
+- **`npm install -g opendray` / `npx opendray`** — پکیج npm باینری رسمی Go release را شامل می‌شود (ببینید [README → npm / npx](../README.fa.md)).
 - **دانلود Release** — فایل `opendray_*_<os>_<arch>.tar.gz` را از [صفحه Releases](https://github.com/Opendray/opendray/releases) بردارید.
 - **محیط‌های scripted / ephemeral** — CI runnerها، golden imageها، config management (Ansible، Nix، Docker)، یا هر hostی که Postgres و process supervisor خودتان را دارید.
 
 باینری همان *کل* gateway است — web admin SPA داخلش embed شده، پس نه Node runtime لازم است، نه static server جداگانه، و نه چیزی برای build کردن. آنچه **نمی‌کند** این است که چیزی را برای شما setup نکند. این همان معامله است: شما یک دیتابیس PostgreSQL و روشی برای نگه‌داشتن فرایند می‌آورید، و در عوض هیچ‌چیزی بدون اطلاع شما نصب، تنظیم، یا ثبت نمی‌شود.
 
-**می‌خواهید همه‌چیز برایتان انجام شود؟** روی یک Linux / macOS تازه، installer تک‌خطی Postgres را provision می‌کند، AI CLIها را نصب می‌کند، config را می‌نویسد، و یک service را در ۵ تا ۱۰ دقیقه ثبت می‌کند. ببینید [README → نصب‌کننده تک‌خطی](../README.fa.md#نصب) یا راهنمای دستی [getting-started.fa.md](getting-started.fa.md).
+> **می‌خواهید همه‌چیز برایتان انجام شود؟** روی یک Linux / macOS تازه، installer تک‌خطی Postgres را provision می‌کند، AI CLIها را نصب می‌کند، config را می‌نویسد، و یک service را در ۵ تا ۱۰ دقیقه ثبت می‌کند. ببینید [README → نصب‌کننده تک‌خطی](../README.fa.md) یا راهنمای دستی [getting-started.fa.md](getting-started.fa.md).
 
 این راهنما شما را از «باینری روی PATH» به «gateway در حال اجرا» در پنج گام می‌رساند، سپس نشان می‌دهد چطور آن را به‌صورت یک service اجرا کنید.
 
