@@ -36,6 +36,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      # Developer ID signing is opt-in: it activates only once the
+      # MACOS_CERT_P12_BASE64 secret is configured. Until then every step
+      # below that depends on it is skipped and the release is byte-for-byte
+      # what it is today (ad-hoc macOS binaries).
+      HAS_MACOS_SIGNING: ${{ secrets.MACOS_CERT_P12_BASE64 != '' }}
     steps:
       # ── Validate the tag input on manual dispatch BEFORE doing any
       #    heavy work (checkout, setup-go, goreleaser). A typo like
@@ -79,27 +84,43 @@ jobs:
         with:
           go-version: "1.25"
 
+      # ── quill: signs + notarizes Mach-O binaries with a Developer ID
+      #    from a Linux runner (no macOS runner / Xcode). Installed only
+      #    when signing is configured; goreleaser's per-build post hook
+      #    (scripts/macos-sign.sh) calls it for the darwin artifacts.
+      - name: Install quill (macOS Developer ID signing)
+        if: env.HAS_MACOS_SIGNING == 'true'
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/quill/main/install.sh | sh -s -- -b /usr/local/bin
+          quill version
+
       # ── Extract the matching CHANGELOG section into release-notes.md
       #    so goreleaser uses it as the release body instead of the
       #    static "See CHANGELOG.md" placeholder. Falls back to that
       #    placeholder if the tag has no section yet (re-running an
       #    old tag via workflow_dispatch).
+      # Write the extracted notes OUTSIDE the work tree ($RUNNER_TEMP).
+      # goreleaser's `release` aborts on a dirty tree, and a notes file
+      # under the repo root shows up as an untracked file ("git is in a
+      # dirty state ?? release-notes.md"). Keeping it in the temp dir
+      # leaves the tree clean.
       - name: Extract release notes from CHANGELOG.md
         env:
           TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
+          notes="$RUNNER_TEMP/release-notes.md"
           ver="${TAG#v}"
           awk -v ver="$ver" '
             $0 ~ "^## \\[v" ver "\\]" { capture = 1; next }
             capture && /^## \[/ { exit }
             capture { print }
-          ' CHANGELOG.md > release-notes.md
-          if [ ! -s release-notes.md ]; then
+          ' CHANGELOG.md > "$notes"
+          if [ ! -s "$notes" ]; then
             echo "(no CHANGELOG section found for $TAG — using fallback notes)"
-            echo "See [CHANGELOG.md](https://github.com/Opendray/opendray/blob/main/CHANGELOG.md) for the full release notes." > release-notes.md
+            echo "See [CHANGELOG.md](https://github.com/Opendray/opendray/blob/main/CHANGELOG.md) for the full release notes." > "$notes"
           fi
-          echo "--- release-notes.md ($(wc -l < release-notes.md) lines) ---"
-          head -30 release-notes.md
+          echo "--- release-notes.md ($(wc -l < "$notes") lines) ---"
+          head -30 "$notes"
 
       # ── Goreleaser: archives + checksums in ./dist, published release on GH.
       #    --release-notes overrides the static header in .goreleaser.yml
@@ -111,9 +132,19 @@ jobs:
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a  # v6
         with:
           version: latest
-          args: release --clean --release-notes=release-notes.md
+          args: release --clean --release-notes=${{ runner.temp }}/release-notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # macOS Developer ID signing + notarization (consumed by the
+          # build's post hook → scripts/macos-sign.sh → quill). All empty
+          # until the secrets are set, in which case the hook is a no-op.
+          # The .p12 / .p8 are secrets; the ASC key id + issuer are plain
+          # identifiers (also embedded in the signed binary).
+          QUILL_SIGN_P12: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          QUILL_SIGN_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          MACOS_NOTARY_KEY_P8: ${{ secrets.MACOS_NOTARY_KEY_P8 }}
+          QUILL_NOTARY_KEY_ID: BPL8QFJ8M2
+          QUILL_NOTARY_ISSUER: d2ec008d-9e90-49a5-82f5-d5dfbdeff726
 
       # ── Cosign keyless: sign the SHA256SUMS produced by goreleaser.
       #    No long-lived signing key — Sigstore Fulcio mints a short-
