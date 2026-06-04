@@ -121,6 +121,21 @@ export const KIND_DEFS: KindDef[] = [
         placeholder: '3500 (blank = 3500, 0 = unlimited)',
         hint: 'Caps how much of the agent’s reply is sent before it’s trimmed with a “…(truncated)” note. Blank uses the 3500 default (~one message); set 0 to send the whole reply, split across multiple messages.',
       },
+      {
+        name: 'voice_transcription_enabled',
+        label: 'Voice notes → text (Deepgram)',
+        type: 'boolean',
+        default: false,
+        hint: 'When on, voice messages sent to the bot are transcribed with Deepgram and forwarded to the session as text. Requires an API key below.',
+      },
+      {
+        name: 'voice_transcription_api_key',
+        label: 'Deepgram API key',
+        type: 'password',
+        optional: true,
+        placeholder: 'Token from console.deepgram.com',
+        hint: 'Only used when voice transcription is on. Stored alongside the bot token.',
+      },
     ],
   },
   {

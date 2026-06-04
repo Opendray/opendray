@@ -56,6 +56,16 @@ type config struct {
 	BotToken string   `json:"bot_token"`
 	ChatID   int64    `json:"chat_id"`
 	NotifyOn []string `json:"notify_on,omitempty"`
+
+	// VoiceTranscriptionEnabled opts the channel in to converting
+	// inbound voice notes into text via Deepgram before the message
+	// reaches the session. Default off — the operator must paste an
+	// API key for it to actually run.
+	VoiceTranscriptionEnabled bool `json:"voice_transcription_enabled,omitempty"`
+	// VoiceTranscriptionAPIKey is the Deepgram API key used for STT.
+	// Stored alongside the bot token in the channel config blob —
+	// same trust boundary, same admin-only API surface.
+	VoiceTranscriptionAPIKey string `json:"voice_transcription_api_key,omitempty"`
 }
 
 // Telegram implements channel.Channel + several capability interfaces.
@@ -498,18 +508,58 @@ func (t *Telegram) deliverMessage(ctx context.Context, inbound channel.InboundFu
 	if m.ReplyToMessage != nil && m.ReplyToMessage.MessageID != 0 {
 		meta["reply_to_outbound_msg_id"] = strconv.Itoa(m.ReplyToMessage.MessageID)
 	}
+
+	text := m.Text
+
+	// Voice notes: when transcription is enabled, replace empty Text
+	// with the Deepgram transcript before handing off to the Hub.
+	// Failure modes are surfaced to the user as a short reply so a
+	// silent drop never leaves them wondering whether the bot got it.
+	if m.Voice != nil && text == "" {
+		if !t.cfg.VoiceTranscriptionEnabled {
+			t.replyVoiceError(ctx, rc, "Voice messages aren't enabled for this bot. Send text instead.")
+			return
+		}
+		transcript, err := t.transcribeVoice(ctx, m.Voice)
+		if err != nil {
+			t.log.Warn("voice transcription failed", "err", err, "duration_s", m.Voice.Duration)
+			t.replyVoiceError(ctx, rc, "Couldn't transcribe that voice note — try again or send text.")
+			return
+		}
+		text = transcript
+		meta["transcribed_by"] = "deepgram"
+		meta["voice_duration_s"] = m.Voice.Duration
+	}
+
 	msg := channel.ChannelMessage{
 		ChannelID:      t.id,
 		Direction:      channel.DirectionInbound,
 		ConversationID: strconv.FormatInt(m.Chat.ID, 10),
 		Author:         m.From.username(),
-		Text:           m.Text,
+		Text:           text,
 		Timestamp:      time.Unix(m.Date, 0).UTC(),
 		ReplyCtx:       rc,
 		Metadata:       meta,
 	}
 	if err := inbound(ctx, msg); err != nil {
 		t.log.Error("inbound handler failed", "err", err)
+	}
+}
+
+// replyVoiceError sends a one-shot apology back to the chat when the
+// transcription path can't deliver — disabled, network error, empty
+// transcript, etc. Best-effort: a send failure here is logged but
+// doesn't escalate, since we're already on an error branch.
+func (t *Telegram) replyVoiceError(ctx context.Context, rc ReplyCtx, text string) {
+	body := map[string]any{
+		"chat_id": rc.ChatID,
+		"text":    text,
+	}
+	if rc.MessageID != 0 {
+		body["reply_parameters"] = map[string]any{"message_id": rc.MessageID}
+	}
+	if err := t.callAPI(ctx, "sendMessage", body, nil); err != nil {
+		t.log.Warn("voice error reply failed", "err", err)
 	}
 }
 
@@ -677,6 +727,17 @@ type tgMessage struct {
 	Date           int64      `json:"date"`
 	Text           string     `json:"text"`
 	ReplyToMessage *tgMessage `json:"reply_to_message,omitempty"`
+	Voice          *tgVoice   `json:"voice,omitempty"`
+}
+
+// tgVoice is Telegram's voice-note payload — OGG/Opus by default.
+// FileID is the opaque handle the getFile API resolves to a download
+// path; Duration is whole seconds; MimeType is normally "audio/ogg".
+type tgVoice struct {
+	FileID   string `json:"file_id"`
+	Duration int    `json:"duration"`
+	MimeType string `json:"mime_type,omitempty"`
+	FileSize int64  `json:"file_size,omitempty"`
 }
 
 type tgCallbackQuery struct {
