@@ -786,5 +786,11 @@ cat <<EOF
     3. Providers → register the CLI binary path (e.g. \$(which claude)).
     4. Sessions → New session → spawn your first session.
 
+  macOS privacy: config lives under ~/.opendray (outside protected folders),
+  so the service starts cleanly. If you run sessions inside ~/Documents /
+  ~/Desktop or on a mounted volume, run once:
+    opendray setup-macos     # stable code signature + Full Disk Access grant
+  so macOS stops re-prompting on every update. 'opendray doctor' diagnoses.
+
   See docs/getting-started.md for the post-install walkthrough.
 EOF

@@ -257,6 +257,7 @@ class _TranslationsProvidersZh extends TranslationsProvidersEn {
 	@override String get reload => '重新加载';
 	@override late final _TranslationsProvidersErrorPrefixZh errorPrefix = _TranslationsProvidersErrorPrefixZh._(_root);
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
+	@override late final _TranslationsProvidersUpdateCheckZh updateCheck = _TranslationsProvidersUpdateCheckZh._(_root);
 	@override late final _TranslationsProvidersAccountsZh accounts = _TranslationsProvidersAccountsZh._(_root);
 	@override String get configFallbackTitle => '提供商配置';
 	@override String get saving => '保存中…';
@@ -1525,6 +1526,7 @@ class _TranslationsSessionsDetailZh extends TranslationsSessionsDetailEn {
 	@override String startedEnded({required Object started, required Object ended}) => '${started} 启动  ·  ${ended} 结束';
 	@override String idPrefix({required Object id}) => 'id: ${id}';
 	@override String get errorTitle => '加载会话失败';
+	@override late final _TranslationsSessionsDetailAccountSwitcherZh accountSwitcher = _TranslationsSessionsDetailAccountSwitcherZh._(_root);
 }
 
 // Path: sessions.terminal
@@ -1720,6 +1722,30 @@ class _TranslationsProvidersErrorPrefixZh extends TranslationsProvidersErrorPref
 	@override String get toggle => '切换失败';
 	@override String get rename => '重命名失败';
 	@override String get delete => '删除失败';
+}
+
+// Path: providers.updateCheck
+class _TranslationsProvidersUpdateCheckZh extends TranslationsProvidersUpdateCheckEn {
+	_TranslationsProvidersUpdateCheckZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get sectionTitle => 'CLI 版本';
+	@override String get checking => '正在检查更新…';
+	@override String get checkFailed => '无法检查更新';
+	@override String get notInstalled => '网关主机上未安装';
+	@override String installed({required Object version}) => '已安装：${version}';
+	@override String get upToDate => '已是最新';
+	@override String updateAvailable({required Object version}) => '有可用更新：${version}';
+	@override String latest({required Object version}) => '最新 ${version}';
+	@override String get updateButton => '更新 CLI';
+	@override String get updating => '正在更新…';
+	@override String updatedSnack({required Object version}) => '已更新到 ${version}。';
+	@override String get noChangeSnack => '已是最新版本。';
+	@override String updateFailed({required Object error}) => '更新失败：${error}';
+	@override String notAvailableHere({required Object reason}) => '此主机不支持应用内更新：${reason}';
+	@override String activeSessionsWarning({required Object n}) => '有 ${n} 个活跃会话正在使用此 CLI——更新不会中断它们，但它们在重启前仍使用旧版本。';
 }
 
 // Path: providers.accounts
@@ -5017,6 +5043,29 @@ class _TranslationsMoreItemsAboutZh extends TranslationsMoreItemsAboutEn {
 	// Translations
 	@override String get title => '关于';
 	@override String get subtitle => '构建版本与服务器信息';
+}
+
+// Path: sessions.detail.accountSwitcher
+class _TranslationsSessionsDetailAccountSwitcherZh extends TranslationsSessionsDetailAccountSwitcherEn {
+	_TranslationsSessionsDetailAccountSwitcherZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get tooltip => '切换 Claude 账号';
+	@override String get sheetTitle => '切换 Claude 账号';
+	@override String current({required Object account}) => '当前：${account}';
+	@override String get defaultName => '默认（系统凭据）';
+	@override String get defaultSubtitle => '使用 CLI 自身的登录，不指定具体账号';
+	@override String get defaultShort => '默认';
+	@override String get tokenEmpty => '无 token';
+	@override String get confirmTitle => '切换账号？';
+	@override String get confirmBody => '这会用新账号重启 CLI——当前 CLI 内的对话上下文会丢失（会话标签保留）。';
+	@override String get confirmAction => '切换';
+	@override String get cancel => '取消';
+	@override String switchedSnack({required Object account}) => '已切换到 ${account}';
+	@override String switchFailed({required Object error}) => '切换失败：${error}';
+	@override String get noneHint => '未配置 Claude 账号。请在 更多 → Providers → Claude 中添加。';
 }
 
 // Path: sessions.terminal.snackbar
@@ -9313,6 +9362,20 @@ extension on TranslationsZh {
 			'sessions.detail.startedEnded' => ({required Object started, required Object ended}) => '${started} 启动  ·  ${ended} 结束',
 			'sessions.detail.idPrefix' => ({required Object id}) => 'id: ${id}',
 			'sessions.detail.errorTitle' => '加载会话失败',
+			'sessions.detail.accountSwitcher.tooltip' => '切换 Claude 账号',
+			'sessions.detail.accountSwitcher.sheetTitle' => '切换 Claude 账号',
+			'sessions.detail.accountSwitcher.current' => ({required Object account}) => '当前：${account}',
+			'sessions.detail.accountSwitcher.defaultName' => '默认（系统凭据）',
+			'sessions.detail.accountSwitcher.defaultSubtitle' => '使用 CLI 自身的登录，不指定具体账号',
+			'sessions.detail.accountSwitcher.defaultShort' => '默认',
+			'sessions.detail.accountSwitcher.tokenEmpty' => '无 token',
+			'sessions.detail.accountSwitcher.confirmTitle' => '切换账号？',
+			'sessions.detail.accountSwitcher.confirmBody' => '这会用新账号重启 CLI——当前 CLI 内的对话上下文会丢失（会话标签保留）。',
+			'sessions.detail.accountSwitcher.confirmAction' => '切换',
+			'sessions.detail.accountSwitcher.cancel' => '取消',
+			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => '已切换到 ${account}',
+			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => '切换失败：${error}',
+			'sessions.detail.accountSwitcher.noneHint' => '未配置 Claude 账号。请在 更多 → Providers → Claude 中添加。',
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => '图片选择失败：${error}',
 			'sessions.terminal.snackbar.uploadingImage' => '正在上传图片…',
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => '已附加图片：${path}',
@@ -9410,6 +9473,8 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => '创建失败：${error}',
@@ -9424,8 +9489,6 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.emptyProjectDocs' => '暂无项目文档。点击 + 创建一个，或让 AI agent 根据提示生成。',
 			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => '未找到匹配「${query}」的内容。',
 			'sessions.inspector.notes.locationDialogHelp' => '将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.sessionCwd' => '会话 cwd',
 			'sessions.inspector.notes.projectDocsPath' => '相对笔记库的项目文档路径',
 			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
@@ -9548,6 +9611,21 @@ extension on TranslationsZh {
 			'providers.errorPrefix.rename' => '重命名失败',
 			'providers.errorPrefix.delete' => '删除失败',
 			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
+			'providers.updateCheck.sectionTitle' => 'CLI 版本',
+			'providers.updateCheck.checking' => '正在检查更新…',
+			'providers.updateCheck.checkFailed' => '无法检查更新',
+			'providers.updateCheck.notInstalled' => '网关主机上未安装',
+			'providers.updateCheck.installed' => ({required Object version}) => '已安装：${version}',
+			'providers.updateCheck.upToDate' => '已是最新',
+			'providers.updateCheck.updateAvailable' => ({required Object version}) => '有可用更新：${version}',
+			'providers.updateCheck.latest' => ({required Object version}) => '最新 ${version}',
+			'providers.updateCheck.updateButton' => '更新 CLI',
+			'providers.updateCheck.updating' => '正在更新…',
+			'providers.updateCheck.updatedSnack' => ({required Object version}) => '已更新到 ${version}。',
+			'providers.updateCheck.noChangeSnack' => '已是最新版本。',
+			'providers.updateCheck.updateFailed' => ({required Object error}) => '更新失败：${error}',
+			'providers.updateCheck.notAvailableHere' => ({required Object reason}) => '此主机不支持应用内更新：${reason}',
+			'providers.updateCheck.activeSessionsWarning' => ({required Object n}) => '有 ${n} 个活跃会话正在使用此 CLI——更新不会中断它们，但它们在重启前仍使用旧版本。',
 			'providers.accounts.rename' => '重命名',
 			'providers.accounts.renameTitle' => ({required Object name}) => '重命名 ${name}',
 			'providers.accounts.displayNameLabel' => '显示名',
@@ -9909,6 +9987,8 @@ extension on TranslationsZh {
 			'backupSchedules.errorPrefixUpdate' => '更新失败',
 			'backupSchedules.errorPrefixDelete' => '删除失败',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => '移除目标 ${targetId} 的定期规格。已存在的备份不受影响。',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.emptyList' => '暂无计划。\n点击「新建」创建一个。',
 			'backupSchedules.validatePickTarget' => '请选择一个目标。',
 			'backupSchedules.validateInterval' => '间隔必须大于 0。',
@@ -9938,8 +10018,6 @@ extension on TranslationsZh {
 			'backupTargetEditor.kinds.sftp.description' => '任何可 SSH 访问的服务器',
 			'backupTargetEditor.kinds.s3.label' => 'S3 / 兼容',
 			'backupTargetEditor.kinds.s3.description' => 'Amazon S3 + S3 兼容存储桶（MinIO、R2、B2）',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.kinds.rclone.label' => 'rclone（任意）',
 			'backupTargetEditor.kinds.rclone.description' => '通过 rclone CLI 访问 OneDrive、Google Drive、Dropbox',
 			'backupTargetEditor.formTitleEdit' => '编辑目标',
@@ -10423,6 +10501,8 @@ extension on TranslationsZh {
 			'settings.changeCredentials.updatedSnack' => '凭据已更新。',
 			'settings.changeCredentials.wrongCurrent' => '当前密码不正确。',
 			'settings.changeCredentials.saving' => '保存中…',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.update' => '更新',
 			'settings.logViewer.title' => '实时日志',
 			'settings.logViewer.reconnect' => '重新连接',
@@ -10452,8 +10532,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.loadFailed' => '加载服务器设置失败',
 			'settings.serverSettings.sections.general' => '通用',
 			'settings.serverSettings.sections.logging' => '日志',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.sections.sessions' => '会话',
 			'settings.serverSettings.sections.vault' => '凭据库',
 			'settings.serverSettings.sections.mcpRegistry' => 'MCP 注册表',

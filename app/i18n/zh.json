@@ -2511,7 +2511,23 @@
       "started": "{when} 启动",
       "startedEnded": "{started} 启动  ·  {ended} 结束",
       "idPrefix": "id: {id}",
-      "errorTitle": "加载会话失败"
+      "errorTitle": "加载会话失败",
+      "accountSwitcher": {
+        "tooltip": "切换 Claude 账号",
+        "sheetTitle": "切换 Claude 账号",
+        "current": "当前：{account}",
+        "defaultName": "默认（系统凭据）",
+        "defaultSubtitle": "使用 CLI 自身的登录，不指定具体账号",
+        "defaultShort": "默认",
+        "tokenEmpty": "无 token",
+        "confirmTitle": "切换账号？",
+        "confirmBody": "这会用新账号重启 CLI——当前 CLI 内的对话上下文会丢失（会话标签保留）。",
+        "confirmAction": "切换",
+        "cancel": "取消",
+        "switchedSnack": "已切换到 {account}",
+        "switchFailed": "切换失败：{error}",
+        "noneHint": "未配置 Claude 账号。请在 更多 → Providers → Claude 中添加。"
+      }
     },
     "terminal": {
       "snackbar": {
@@ -2808,6 +2824,23 @@
       "delete": "删除失败"
     },
     "errorWithMessage": "{prefix}：{error}",
+    "updateCheck": {
+      "sectionTitle": "CLI 版本",
+      "checking": "正在检查更新…",
+      "checkFailed": "无法检查更新",
+      "notInstalled": "网关主机上未安装",
+      "installed": "已安装：{version}",
+      "upToDate": "已是最新",
+      "updateAvailable": "有可用更新：{version}",
+      "latest": "最新 {version}",
+      "updateButton": "更新 CLI",
+      "updating": "正在更新…",
+      "updatedSnack": "已更新到 {version}。",
+      "noChangeSnack": "已是最新版本。",
+      "updateFailed": "更新失败：{error}",
+      "notAvailableHere": "此主机不支持应用内更新：{reason}",
+      "activeSessionsWarning": "有 {n} 个活跃会话正在使用此 CLI——更新不会中断它们，但它们在重启前仍使用旧版本。"
+    },
     "accounts": {
       "rename": "重命名",
       "renameTitle": "重命名 {name}",

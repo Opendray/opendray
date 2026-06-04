@@ -2511,7 +2511,23 @@
       "started": "started {when}",
       "startedEnded": "started {started}  ·  ended {ended}",
       "idPrefix": "id: {id}",
-      "errorTitle": "Failed to load session"
+      "errorTitle": "Failed to load session",
+      "accountSwitcher": {
+        "tooltip": "Switch Claude account",
+        "sheetTitle": "Switch Claude account",
+        "current": "Currently: {account}",
+        "defaultName": "Default (system credential)",
+        "defaultSubtitle": "Use the CLI's own login, no specific account",
+        "defaultShort": "default",
+        "tokenEmpty": "no token",
+        "confirmTitle": "Switch account?",
+        "confirmBody": "This restarts the CLI under the new account — the current in-CLI conversation context is lost (the session tab is kept).",
+        "confirmAction": "Switch",
+        "cancel": "Cancel",
+        "switchedSnack": "Switched to {account}",
+        "switchFailed": "Switch failed: {error}",
+        "noneHint": "No Claude accounts configured. Add them in More → Providers → Claude."
+      }
     },
     "terminal": {
       "snackbar": {
@@ -2808,6 +2824,23 @@
       "delete": "Delete failed"
     },
     "errorWithMessage": "{prefix}: {error}",
+    "updateCheck": {
+      "sectionTitle": "CLI version",
+      "checking": "Checking for updates…",
+      "checkFailed": "Couldn't check for updates",
+      "notInstalled": "Not installed on the gateway host",
+      "installed": "Installed: {version}",
+      "upToDate": "Up to date",
+      "updateAvailable": "Update available: {version}",
+      "latest": "latest {version}",
+      "updateButton": "Update CLI",
+      "updating": "Updating…",
+      "updatedSnack": "Updated to {version}.",
+      "noChangeSnack": "Already on the latest version.",
+      "updateFailed": "Update failed: {error}",
+      "notAvailableHere": "In-app update isn't available on this host: {reason}",
+      "activeSessionsWarning": "{n} active session(s) are using this CLI — updating won't interrupt them, but they keep the old version until restarted."
+    },
     "accounts": {
       "rename": "Rename",
       "renameTitle": "Rename {name}",

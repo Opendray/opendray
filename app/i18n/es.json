@@ -2511,7 +2511,23 @@
       "started": "iniciada {when}",
       "startedEnded": "iniciada {started}  ·  finalizada {ended}",
       "idPrefix": "id: {id}",
-      "errorTitle": "No se pudo cargar la sesión"
+      "errorTitle": "No se pudo cargar la sesión",
+      "accountSwitcher": {
+        "tooltip": "Cambiar de cuenta de Claude",
+        "sheetTitle": "Cambiar de cuenta de Claude",
+        "current": "Actual: {account}",
+        "defaultName": "Predeterminada (credencial del sistema)",
+        "defaultSubtitle": "Usa el propio inicio de sesión del CLI, sin cuenta específica",
+        "defaultShort": "predeterminada",
+        "tokenEmpty": "sin token",
+        "confirmTitle": "¿Cambiar de cuenta?",
+        "confirmBody": "Esto reinicia el CLI con la nueva cuenta — se pierde el contexto de conversación actual dentro del CLI (la pestaña de la sesión se conserva).",
+        "confirmAction": "Cambiar",
+        "cancel": "Cancelar",
+        "switchedSnack": "Cambiado a {account}",
+        "switchFailed": "Cambio fallido: {error}",
+        "noneHint": "No hay cuentas de Claude configuradas. Agrégalas en Más → Providers → Claude."
+      }
     },
     "terminal": {
       "snackbar": {
@@ -2808,6 +2824,23 @@
       "delete": "Error al eliminar"
     },
     "errorWithMessage": "{prefix}: {error}",
+    "updateCheck": {
+      "sectionTitle": "Versión del CLI",
+      "checking": "Buscando actualizaciones…",
+      "checkFailed": "No se pudo buscar actualizaciones",
+      "notInstalled": "No instalado en el host del gateway",
+      "installed": "Instalado: {version}",
+      "upToDate": "Actualizado",
+      "updateAvailable": "Actualización disponible: {version}",
+      "latest": "última {version}",
+      "updateButton": "Actualizar CLI",
+      "updating": "Actualizando…",
+      "updatedSnack": "Actualizado a {version}.",
+      "noChangeSnack": "Ya está en la última versión.",
+      "updateFailed": "Actualización fallida: {error}",
+      "notAvailableHere": "La actualización en la app no está disponible en este host: {reason}",
+      "activeSessionsWarning": "{n} sesión(es) activa(s) usan este CLI — actualizar no las interrumpe, pero mantienen la versión anterior hasta reiniciarse."
+    },
     "accounts": {
       "rename": "Renombrar",
       "renameTitle": "Renombrar {name}",

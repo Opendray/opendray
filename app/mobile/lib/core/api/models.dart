@@ -89,6 +89,7 @@ class SessionSummary {
     required this.startedAt,
     this.name,
     this.endedAt,
+    this.claudeAccountId,
   });
 
   factory SessionSummary.fromJson(Map<String, dynamic> json) => SessionSummary(
@@ -102,6 +103,10 @@ class SessionSummary {
         endedAt: (json['ended_at'] is String)
             ? DateTime.tryParse(json['ended_at'] as String)
             : null,
+        claudeAccountId:
+            (json['claude_account_id'] as String?)?.isNotEmpty ?? false
+                ? json['claude_account_id'] as String
+                : null,
       );
 
   final String id;
@@ -111,6 +116,10 @@ class SessionSummary {
   final SessionState state;
   final DateTime startedAt;
   final DateTime? endedAt;
+  // Which Claude OAuth account this session is bound to (null = the
+  // CLI's system-default credential). Only meaningful for Claude
+  // sessions; drives the in-session account switcher.
+  final String? claudeAccountId;
 
   String get displayName => name?.isNotEmpty ?? false ? name! : id;
 

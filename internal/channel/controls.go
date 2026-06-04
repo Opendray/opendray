@@ -44,7 +44,10 @@ func (b ControlButton) Resolve(sid string) string {
 //
 // Stop/Restart route through /confirm (a fat-fingered tap must never
 // interrupt a live session); Switch opens /list to retarget which
-// session the chat talks to; Panel opens the /panel home.
+// session the chat talks to; Peek re-sends the current session's latest
+// output; Panel opens the /panel home. Peek carries no "%s" so it isn't
+// session-templated — the /peek handler resolves the chat's active pin
+// itself and reports cleanly when none is selected.
 func ControlKeyboardLayout() [][]ControlButton {
 	return [][]ControlButton{
 		{
@@ -53,6 +56,7 @@ func ControlKeyboardLayout() [][]ControlButton {
 		},
 		{
 			{Label: "🔀 Switch", Command: "/list"},
+			{Label: "👀 Peek", Command: "/peek"},
 			{Label: "🎛 Panel", Command: "/panel"},
 		},
 	}

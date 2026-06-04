@@ -200,6 +200,10 @@ class _ProviderConfigScreenState
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
+        // CLI version + update awareness (installed vs latest npm),
+        // mirroring the web Providers page. Shell has no npm package, so
+        // the card only renders for CLIs the gateway can probe.
+        _UpdateCheckCard(providerId: p.id),
         if (hasFields) ...[
           for (final entry in groups.entries) ...[
             if (entry.key.isNotEmpty) _SectionHeader(label: entry.key),
@@ -469,6 +473,183 @@ class _TextFieldState extends State<_TextField> {
               ),
       ),
       onChanged: _onChanged,
+    );
+  }
+}
+
+// _UpdateCheckCard surfaces the CLI's installed version, whether an
+// update is available (probed vs latest npm), and an in-app Update
+// action — the mobile mirror of the web Providers update-check. It
+// collapses to nothing for non-versioned providers (e.g. Shell), so the
+// editor stays calm for CLIs there's nothing to check.
+class _UpdateCheckCard extends ConsumerStatefulWidget {
+  const _UpdateCheckCard({required this.providerId});
+
+  final String providerId;
+
+  @override
+  ConsumerState<_UpdateCheckCard> createState() => _UpdateCheckCardState();
+}
+
+class _UpdateCheckCardState extends ConsumerState<_UpdateCheckCard> {
+  bool _updating = false;
+
+  Future<void> _runUpdate() async {
+    final tr = t.providers.updateCheck;
+    setState(() => _updating = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final res =
+          await ref.read(providersApiProvider).update(widget.providerId);
+      if (!mounted) return;
+      if (!res.available) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(tr.notAvailableHere(reason: res.reason ?? '')),
+          ),
+        );
+      } else {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              res.changed
+                  ? tr.updatedSnack(version: res.afterVersion ?? '')
+                  : tr.noChangeSnack,
+            ),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      ref.invalidate(providerUpdateCheckProvider(widget.providerId));
+    } on Object catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            tr.updateFailed(
+              error: e is ApiException ? e.message : e.toString(),
+            ),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _updating = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tr = t.providers.updateCheck;
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.6);
+    final async = ref.watch(providerUpdateCheckProvider(widget.providerId));
+
+    return async.when(
+      loading: () => _wrap(
+        theme,
+        Row(
+          children: [
+            const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 10),
+            Text(tr.checking, style: theme.textTheme.bodySmall),
+          ],
+        ),
+      ),
+      error: (_, __) => _wrap(
+        theme,
+        Text(
+          tr.checkFailed,
+          style: theme.textTheme.bodySmall?.copyWith(color: muted),
+        ),
+      ),
+      data: (rt) {
+        // Non-versioned provider (e.g. Shell — no npm package): nothing
+        // useful to show, so collapse the card entirely.
+        if (!rt.installed && rt.latestVersion == null) {
+          return const SizedBox.shrink();
+        }
+        final hasUpdate = rt.updateAvailable && rt.latestVersion != null;
+        final statusText = hasUpdate
+            ? tr.updateAvailable(version: rt.latestVersion!)
+            : tr.upToDate;
+        final statusColor = hasUpdate ? theme.colorScheme.primary : muted;
+        return _wrap(
+          theme,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      rt.installed
+                          ? tr.installed(version: rt.installedVersion ?? '?')
+                          : tr.notInstalled,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ),
+                  Text(
+                    statusText,
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: statusColor),
+                  ),
+                ],
+              ),
+              if (hasUpdate && rt.activeSessions > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    tr.activeSessionsWarning(n: rt.activeSessions),
+                    style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                  ),
+                ),
+              if (hasUpdate)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: FilledButton.tonalIcon(
+                      onPressed: _updating ? null : _runUpdate,
+                      icon: _updating
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.download, size: 16),
+                      label:
+                          Text(_updating ? tr.updating : tr.updateButton),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _wrap(ThemeData theme, Widget child) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: theme.colorScheme.outlineVariant),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: child,
+      ),
     );
   }
 }

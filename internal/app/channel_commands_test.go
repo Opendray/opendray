@@ -26,6 +26,11 @@ type fakeSessionOps struct {
 	startCalls []string
 	startResp  session.Session
 	startErr   error
+
+	// snippet keyed by session id (live notification-grade preview);
+	// transcript keyed by session id (the ended-session fallback).
+	snippet    map[string]string
+	transcript map[string]string
 }
 
 func (f *fakeSessionOps) List(_ context.Context) ([]session.Session, error) {
@@ -38,6 +43,12 @@ func (f *fakeSessionOps) Stop(_ context.Context, id string) error {
 func (f *fakeSessionOps) Start(_ context.Context, id string) (session.Session, error) {
 	f.startCalls = append(f.startCalls, id)
 	return f.startResp, f.startErr
+}
+func (f *fakeSessionOps) RecentSnippet(id string) string {
+	return f.snippet[id]
+}
+func (f *fakeSessionOps) TranscriptText(_ context.Context, id string, _ int) (string, error) {
+	return f.transcript[id], nil
 }
 
 // cardText extracts the markdown body from a /list card so the
@@ -440,5 +451,57 @@ func TestSelectSessionHandler(t *testing.T) {
 	// A terminated session is rejected with a resume hint.
 	if resp, _ = h(context.Background(), mk("ses_dead1")); !strings.Contains(resp, "resume") {
 		t.Errorf("terminated session should suggest /resume, got %q", resp)
+	}
+}
+
+func TestPeekSessionHandler(t *testing.T) {
+	hub := channel.NewHub(nil, nil, nil)
+	ch := &fakeChannel{id: "ch_test"}
+	mgr := &fakeSessionOps{
+		sessions: []session.Session{
+			{ID: "ses_live1", Name: "deploy", ProviderID: "claude", State: session.StateRunning},
+			{ID: "ses_dead1", ProviderID: "gemini", State: session.StateEnded},
+		},
+		snippet:    map[string]string{"ses_live1": "Build passed ✓"},
+		transcript: map[string]string{"ses_dead1": "USER: ship it\nASSISTANT: shipped"},
+	}
+	h := peekSessionHandler(mgr)
+	ctx := context.Background()
+	mk := func() channel.CommandContext {
+		return channel.CommandContext{Channel: ch, Hub: hub}
+	}
+
+	// No pin → guidance pointing at /list + /select.
+	if resp, _ := h(ctx, mk()); !strings.Contains(resp, "No session selected") {
+		t.Errorf("expected no-pin guidance, got %q", resp)
+	}
+
+	// Live session → the notification-grade snippet, labelled.
+	hub.SetActiveSession("ch_test", "ses_live1")
+	resp, err := h(ctx, mk())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(resp, "Build passed ✓") || !strings.Contains(resp, "deploy (ses_live1)") {
+		t.Errorf("expected live snippet for the labelled session, got %q", resp)
+	}
+
+	// Ended session with no live snippet → transcript fallback.
+	hub.SetActiveSession("ch_test", "ses_dead1")
+	if resp, _ = h(ctx, mk()); !strings.Contains(resp, "ASSISTANT: shipped") {
+		t.Errorf("expected transcript fallback for ended session, got %q", resp)
+	}
+
+	// Pinned id no longer in the live set → not-found, no panic.
+	hub.SetActiveSession("ch_test", "ses_ghost")
+	if resp, _ = h(ctx, mk()); !strings.Contains(resp, "not found") {
+		t.Errorf("stale pin should report not found, got %q", resp)
+	}
+
+	// Live session present but no output anywhere → friendly empty note.
+	mgr.snippet["ses_live1"] = ""
+	hub.SetActiveSession("ch_test", "ses_live1")
+	if resp, _ = h(ctx, mk()); !strings.Contains(resp, "No recent output") {
+		t.Errorf("empty output should report a friendly note, got %q", resp)
 	}
 }

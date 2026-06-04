@@ -45,6 +45,14 @@ type Command struct {
 	Handler     CommandHandler     // plain-text reply
 	CardHandler CommandCardHandler // structured reply (cards + buttons)
 	Source      string             // "builtin" | "session" | "custom"
+	// DocksControlKeyboard, when set on a plain-text (Handler) command,
+	// makes its reply also (re)dock the persistent control keyboard on
+	// transports that support one. Use it for text-only commands at a
+	// natural refresh point (e.g. /select, /start) so the docked keyboard
+	// picks up layout changes without waiting for the next agent reply.
+	// Ignored for CardHandler commands — their inline buttons and the
+	// docked keyboard are mutually exclusive per message on Telegram.
+	DocksControlKeyboard bool
 }
 
 // CommandRegistry holds the set of available slash commands.
@@ -75,6 +83,10 @@ func NewCommandRegistry() *CommandRegistry {
 		Description: "Welcome message + command list",
 		Source:      "builtin",
 		Handler:     startHandler(r),
+		// /start is the natural "(re)initialise my bot UI" command, so
+		// dock the control keyboard here — a one-command way to refresh it
+		// (e.g. after a layout change) without waiting for an agent reply.
+		DocksControlKeyboard: true,
 	})
 	return r
 }

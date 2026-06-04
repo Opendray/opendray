@@ -71,6 +71,10 @@ func main() {
 		os.Exit(runMcpMemory(args))
 	case "hook":
 		os.Exit(runHook(args))
+	case "doctor":
+		os.Exit(runDoctor(args))
+	case "setup-macos":
+		os.Exit(runSetupMacos(args))
 	case "version":
 		fmt.Printf("opendray %s (%s, %s)\n", version.Version, version.Commit, version.Date)
 	case "-h", "--help", "help":
@@ -87,7 +91,20 @@ func run(args []string, fn func(context.Context, *app.App) error) int {
 	cfgPath := fs.String("config", "", "path to config.toml (env-only mode if empty)")
 	_ = fs.Parse(args)
 
-	cfg, err := config.Load(*cfgPath)
+	// Layer 0: when no -config is given, prefer ~/.opendray/config.toml if it
+	// exists. That keeps the gateway's startup read OUT of TCC-protected
+	// folders (~/Documents etc.), so a fresh install boots without a macOS
+	// privacy prompt. Empty + no default file falls through to env-only mode.
+	resolved := *cfgPath
+	if resolved == "" {
+		if d := defaultConfigPath(); d != "" {
+			if _, statErr := os.Stat(d); statErr == nil {
+				resolved = d
+			}
+		}
+	}
+
+	cfg, err := config.Load(resolved)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -127,5 +144,8 @@ usage:
   opendray mcp       <subcommand> [args]  (run "opendray mcp --help" for details)
   opendray mcp-memory                     (stdio MCP server — invoked by an agent CLI, not by humans)
   opendray hook      <event>              (Claude Code hook entry — auto-write journal entries)
+  opendray doctor                         (read-only health check: signature stability, config location)
+  opendray setup-macos                    (macOS: stabilise the code signature so a one-time Full Disk
+                                           Access grant survives rebuilds/updates)
   opendray version`)
 }
