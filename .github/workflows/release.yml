@@ -99,22 +99,28 @@ jobs:
       #    static "See CHANGELOG.md" placeholder. Falls back to that
       #    placeholder if the tag has no section yet (re-running an
       #    old tag via workflow_dispatch).
+      # Write the extracted notes OUTSIDE the work tree ($RUNNER_TEMP).
+      # goreleaser's `release` aborts on a dirty tree, and a notes file
+      # under the repo root shows up as an untracked file ("git is in a
+      # dirty state ?? release-notes.md"). Keeping it in the temp dir
+      # leaves the tree clean.
       - name: Extract release notes from CHANGELOG.md
         env:
           TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
+          notes="$RUNNER_TEMP/release-notes.md"
           ver="${TAG#v}"
           awk -v ver="$ver" '
             $0 ~ "^## \\[v" ver "\\]" { capture = 1; next }
             capture && /^## \[/ { exit }
             capture { print }
-          ' CHANGELOG.md > release-notes.md
-          if [ ! -s release-notes.md ]; then
+          ' CHANGELOG.md > "$notes"
+          if [ ! -s "$notes" ]; then
             echo "(no CHANGELOG section found for $TAG — using fallback notes)"
-            echo "See [CHANGELOG.md](https://github.com/Opendray/opendray/blob/main/CHANGELOG.md) for the full release notes." > release-notes.md
+            echo "See [CHANGELOG.md](https://github.com/Opendray/opendray/blob/main/CHANGELOG.md) for the full release notes." > "$notes"
           fi
-          echo "--- release-notes.md ($(wc -l < release-notes.md) lines) ---"
-          head -30 release-notes.md
+          echo "--- release-notes.md ($(wc -l < "$notes") lines) ---"
+          head -30 "$notes"
 
       # ── Goreleaser: archives + checksums in ./dist, published release on GH.
       #    --release-notes overrides the static header in .goreleaser.yml
@@ -126,7 +132,7 @@ jobs:
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a  # v6
         with:
           version: latest
-          args: release --clean --release-notes=release-notes.md
+          args: release --clean --release-notes=${{ runner.temp }}/release-notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # macOS Developer ID signing + notarization (consumed by the
