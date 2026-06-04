@@ -36,6 +36,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      # Developer ID signing is opt-in: it activates only once the
+      # MACOS_CERT_P12_BASE64 secret is configured. Until then every step
+      # below that depends on it is skipped and the release is byte-for-byte
+      # what it is today (ad-hoc macOS binaries).
+      HAS_MACOS_SIGNING: ${{ secrets.MACOS_CERT_P12_BASE64 != '' }}
     steps:
       # ── Validate the tag input on manual dispatch BEFORE doing any
       #    heavy work (checkout, setup-go, goreleaser). A typo like
@@ -79,6 +84,16 @@ jobs:
         with:
           go-version: "1.25"
 
+      # ── quill: signs + notarizes Mach-O binaries with a Developer ID
+      #    from a Linux runner (no macOS runner / Xcode). Installed only
+      #    when signing is configured; goreleaser's per-build post hook
+      #    (scripts/macos-sign.sh) calls it for the darwin artifacts.
+      - name: Install quill (macOS Developer ID signing)
+        if: env.HAS_MACOS_SIGNING == 'true'
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/quill/main/install.sh | sh -s -- -b /usr/local/bin
+          quill version
+
       # ── Extract the matching CHANGELOG section into release-notes.md
       #    so goreleaser uses it as the release body instead of the
       #    static "See CHANGELOG.md" placeholder. Falls back to that
@@ -114,6 +129,16 @@ jobs:
           args: release --clean --release-notes=release-notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # macOS Developer ID signing + notarization (consumed by the
+          # build's post hook → scripts/macos-sign.sh → quill). All empty
+          # until the secrets are set, in which case the hook is a no-op.
+          # The .p12 / .p8 are secrets; the ASC key id + issuer are plain
+          # identifiers (also embedded in the signed binary).
+          QUILL_SIGN_P12: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          QUILL_SIGN_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          MACOS_NOTARY_KEY_P8: ${{ secrets.MACOS_NOTARY_KEY_P8 }}
+          QUILL_NOTARY_KEY_ID: BPL8QFJ8M2
+          QUILL_NOTARY_ISSUER: d2ec008d-9e90-49a5-82f5-d5dfbdeff726
 
       # ── Cosign keyless: sign the SHA256SUMS produced by goreleaser.
       #    No long-lived signing key — Sigstore Fulcio mints a short-
