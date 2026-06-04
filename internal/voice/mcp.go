@@ -33,7 +33,7 @@ const mcpProtocolVersion = "2025-06-18"
 // which is acceptable for voice-note traffic. If usage justifies it,
 // a future iteration can keep one process warm per server.
 type Client struct {
-	srv mcp.Server     // resolved server config from the vault
+	srv mcp.Server // resolved server config from the vault
 	log *slog.Logger
 }
 

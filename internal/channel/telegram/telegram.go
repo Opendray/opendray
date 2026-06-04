@@ -209,6 +209,11 @@ func (t *Telegram) Send(ctx context.Context, msg channel.ChannelMessage) error {
 		return err
 	}
 	t.recordHandle(&msg, resp.Result.MessageID)
+	// Voice reply augmentation — when the channel has voice_reply_enabled
+	// and a bound MCP voice provider, synthesize msg.Text and post it
+	// as a voice note alongside the text. Best-effort: any failure is
+	// logged but the text reply (already delivered above) stands.
+	t.maybeVoiceReply(ctx, msg)
 	return nil
 }
 
@@ -269,6 +274,10 @@ func (t *Telegram) SendCard(ctx context.Context, msg channel.ChannelMessage, car
 		lastID = resp.Result.MessageID
 	}
 	t.recordHandle(&msg, lastID)
+	// Voice reply augmentation — see Send's note. Uses the card's
+	// rendered plain text (msg.Text set by the Hub in deliverTurnReply)
+	// rather than the HTML chunk body so TTS gets clean prose.
+	t.maybeVoiceReply(ctx, msg)
 	return nil
 }
 
