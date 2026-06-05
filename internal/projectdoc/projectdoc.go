@@ -260,17 +260,24 @@ func (s *Service) PutDoc(ctx context.Context, cwd string, kind Kind, content str
 		author = AuthorOperator
 	}
 	id := newID("pd_")
+	// Clear the embedding on a content change so a stale vector never
+	// lingers: embedDocBestEffort repopulates it synchronously below, and
+	// if that fails the NULL makes the backfill loop retry.
 	row := s.pool.QueryRow(ctx, `
 		INSERT INTO project_docs (id, cwd, kind, content, updated_by)
 		VALUES ($1, $2, $3, $4, $5)
 		ON CONFLICT (cwd, kind) DO UPDATE
-		   SET content    = EXCLUDED.content,
-		       updated_by = EXCLUDED.updated_by,
-		       updated_at = NOW()
+		   SET content      = EXCLUDED.content,
+		       updated_by   = EXCLUDED.updated_by,
+		       updated_at   = NOW(),
+		       embedding    = NULL,
+		       embedder     = NULL,
+		       embedding_at = NULL
 		RETURNING id, cwd, kind, content, updated_by, created_at, updated_at`,
 		id, cwd, string(kind), content, string(author))
 	d, err := scanDoc(row)
 	if err == nil {
+		s.embedDocBestEffort(ctx, d)
 		s.mirrorBestEffort(ctx, cwd)
 	}
 	return d, err
@@ -383,9 +390,12 @@ func (s *Service) ApproveProposal(ctx context.Context, id string) (Doc, error) {
 		INSERT INTO project_docs (id, cwd, kind, content, updated_by)
 		VALUES ($1, $2, $3, $4, 'agent')
 		ON CONFLICT (cwd, kind) DO UPDATE
-		   SET content    = EXCLUDED.content,
-		       updated_by = 'agent',
-		       updated_at = NOW()
+		   SET content      = EXCLUDED.content,
+		       updated_by   = 'agent',
+		       updated_at   = NOW(),
+		       embedding    = NULL,
+		       embedder     = NULL,
+		       embedding_at = NULL
 		RETURNING id, cwd, kind, content, updated_by, created_at, updated_at`,
 		newDocID, p.Cwd, string(p.Kind), p.ProposedContent)
 	d, err := scanDoc(docRow)
@@ -404,6 +414,7 @@ func (s *Service) ApproveProposal(ctx context.Context, id string) (Doc, error) {
 	if err := tx.Commit(ctx); err != nil {
 		return Doc{}, fmt.Errorf("projectdoc: commit: %w", err)
 	}
+	s.embedDocBestEffort(ctx, d)
 	s.mirrorBestEffort(ctx, d.Cwd)
 	return d, nil
 }
@@ -508,6 +519,41 @@ func (s *Service) embedLogBestEffort(ctx context.Context, e LogEntry) {
 		 WHERE id = $3`, pgvecString(vecs[0]), name, e.ID); err != nil {
 		s.log.Debug("projectdoc: log embed write-back failed",
 			"log_id", e.ID, "err", err)
+	}
+}
+
+// embedDocBestEffort computes + persists an embedding for a goal /
+// plan doc so cross-layer search can match them semantically instead of
+// by substring. No-op for non-searchable kinds (tech_stack /
+// recent_activity) and when no embedder is wired. Soft-fails: on error
+// the embedding stays NULL and the backfill loop retries. The vector
+// lives in the same space as memories.embedding / session_logs.embedding
+// (same embedder), so cosines are directly comparable across layers.
+func (s *Service) embedDocBestEffort(ctx context.Context, d Doc) {
+	if s.embedder == nil {
+		return
+	}
+	if d.Kind != KindGoal && d.Kind != KindPlan {
+		return
+	}
+	text := strings.TrimSpace(d.Content)
+	if text == "" {
+		return
+	}
+	vecs, err := s.embedder.Embed(ctx, []string{text})
+	if err != nil || len(vecs) == 0 || len(vecs[0]) == 0 {
+		s.log.Debug("projectdoc: doc embed at write-time failed (will retry via backfill)",
+			"doc_id", d.ID, "kind", d.Kind, "err", err)
+		return
+	}
+	if _, err := s.pool.Exec(ctx, `
+		UPDATE project_docs
+		   SET embedding = $1,
+		       embedder = $2,
+		       embedding_at = NOW()
+		 WHERE id = $3`, pgvecString(vecs[0]), s.embedder.Name(), d.ID); err != nil {
+		s.log.Debug("projectdoc: doc embed write-back failed",
+			"doc_id", d.ID, "err", err)
 	}
 }
 

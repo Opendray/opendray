@@ -48,12 +48,24 @@ const (
 // roughly in [0, 1.5] for cosine inputs in [-1, 1], which keeps
 // the threshold comparison intuitive.
 func RankingScore(similarity float32, m Memory, now time.Time) float32 {
+	return RankingScoreFields(similarity, m.CreatedAt, m.HitCount, m.Confidence, now)
+}
+
+// RankingScoreFields is RankingScore over raw fields rather than a
+// Memory. memquery uses it to score cross-layer hits (journal / goal /
+// plan rows that aren't Memory structs) through the exact same formula:
+// a journal row simply passes hitCount=0 and confidence=nil, so its
+// hit/confidence multipliers are 1 and the score reduces to
+// similarity × ageDecay — while fact rows get the full treatment. This
+// is what lets one ranker serve both the single-layer and cross-layer
+// search paths.
+func RankingScoreFields(similarity float32, createdAt time.Time, hitCount int64, confidence *float32, now time.Time) float32 {
 	if similarity <= 0 {
 		return 0
 	}
-	age := ageMultiplier(now.Sub(m.CreatedAt))
-	hits := hitMultiplier(m.HitCount)
-	conf := confidenceMultiplier(m.Confidence)
+	age := ageMultiplier(now.Sub(createdAt))
+	hits := hitMultiplier(hitCount)
+	conf := confidenceMultiplier(confidence)
 	return similarity * age * hits * conf
 }
 

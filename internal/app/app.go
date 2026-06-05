@@ -849,6 +849,16 @@ func (a *App) Run(ctx context.Context) error {
 		close(logEmbedBackfillDone)
 	}()
 
+	// M-U Phase 2 — same catch-up loop for goal/plan docs so historical
+	// projects get their goal/plan embedded and join semantic search,
+	// not just docs written after this release. Self-skips without an
+	// embedder.
+	docEmbedBackfillDone := make(chan struct{})
+	go func() {
+		a.projectDocSvc.RunDocEmbedBackfill(ctx, projectdoc.LogEmbedBackfillConfig{})
+		close(docEmbedBackfillDone)
+	}()
+
 	cleanerDone := make(chan struct{})
 	go func() {
 		if a.cleanerScheduler != nil {
