@@ -275,7 +275,8 @@ HNSW → stable recall.
 
 New migrations (`0033+`). Exact column names to be finalised in each PR.
 
-1. **Scope collapse** (`0033_memory_drop_session_scope.sql`)
+1. **Scope collapse** (`0034_memory_drop_session_scope.sql` — 0033 was
+   already taken by `0033_memory_workers_capture.sql`)
    - Migrate existing `scope='session'` rows → `scope='project'`,
      setting `scope_key` to the session's cwd
      (`UPDATE … SET scope='project', scope_key=(SELECT cwd FROM sessions
@@ -333,21 +334,26 @@ on a copy of real data. Order is dependency-driven.
   Unit tests for `scopesCover` + `globalWriteAllowed`; packages pass
   `-race`.
 
-### Phase 1 — Scope unification
+### Phase 1 — Scope unification — DONE
 
-- Migration `0033`. Remove `session` from every read/write/inject path
-  (`internal/memory/`, `injector`, `memquery`, `mcp_memory.go`).
+- Migration `0034`. `session` removed from the scope model; a
+  `normalizeScope` boundary coerces the legacy literal to project
+  (lossless) so old config / API callers / pre-migration rows never
+  error. Capture rules coerce `target_scope='session'` to project.
+  Web + mobile UI and i18n drop the session option; slang strings
+  regenerated.
 - **Lossless fold:** every `scope='session'` row becomes `scope='project'`
-  keyed by the session's cwd (joined via `sessions`). Rows whose session
-  no longer exists are **not dropped** — they are recovered via the
-  session's cwd in `session_logs` if available, else **soft-archived**
-  (Phase 4's `archived_at`, restorable) rather than deleted. No session
-  memory is hard-deleted by this migration.
-- **Acceptance:** no code references `ScopeSession`; every pre-migration
-  session row is accounted for (folded or archived, count-reconciled to
-  zero loss); search/inject return identical results for project queries.
-- **Risk:** medium (data migration). Mitigate with a counted dry-run, a
-  pre-migration backup export, and the no-hard-delete rule above.
+  keyed by the session's cwd (joined via `sessions`). Orphans (session
+  gone) are **soft-archived** (`archived_at`, restorable) rather than
+  deleted. **No `DELETE`.**
+- **Validated:** the fold ran on an ephemeral Postgres — 4 rows in, 4 out
+  (zero loss), 0 session rows remain, live-session row folded to its cwd,
+  orphan archived, new CHECK rejects session. Go `normalizeScope` /
+  `Scope.Validate` table tests; web `tsc -b && vite build` clean; mobile
+  `dart analyze lib` clean; i18n parity 100%.
+- **Risk:** medium (data migration), retired by the no-hard-delete rule +
+  the ephemeral-Postgres validation above; full-data replay still happens
+  at arc-final validation.
 
 ### Phase 2 — Retrieval unification
 
