@@ -8,22 +8,39 @@ import (
 	"time"
 )
 
-// Scope is the visibility band a memory belongs to. The MCP
-// `memory.search` tool defaults to retrieving across the calling
-// session's project but a caller can override per-query.
+// Scope is the visibility band a memory belongs to. There are two:
+// `project` (default; keyed by cwd) and `global` (operator-curated;
+// empty key). A memory is shared across every cloud-agent CLI working
+// in the same project, which is the whole point of the store.
 type Scope string
 
 const (
-	ScopeSession Scope = "session"
 	ScopeProject Scope = "project"
 	ScopeGlobal  Scope = "global"
+
+	// legacyScopeSession is the retired "session" scope. session ≡
+	// project, so it was removed in the M-U unification. We still
+	// recognise the literal so old config / API callers / pre-migration
+	// rows coerce to project instead of erroring — see normalizeScope.
+	legacyScopeSession Scope = "session"
 )
 
-// Validate normalises and rejects unknown scopes. Empty input
-// returns ErrInvalidScope so callers default explicitly.
+// normalizeScope folds the retired "session" scope into "project".
+// Lossless and idempotent: any other value passes through unchanged so
+// Validate can still reject genuinely unknown scopes.
+func normalizeScope(s Scope) Scope {
+	if s == legacyScopeSession {
+		return ScopeProject
+	}
+	return s
+}
+
+// Validate rejects unknown scopes. Empty input returns ErrInvalidScope
+// so callers default explicitly. Callers should normalizeScope first if
+// they want legacy "session" accepted as project.
 func (s Scope) Validate() error {
 	switch s {
-	case ScopeSession, ScopeProject, ScopeGlobal:
+	case ScopeProject, ScopeGlobal:
 		return nil
 	}
 	return ErrInvalidScope
@@ -31,7 +48,8 @@ func (s Scope) Validate() error {
 
 var (
 	// ErrInvalidScope means the caller passed something other than
-	// session / project / global.
+	// project / global (the retired "session" scope is coerced to
+	// project before validation, so it never reaches here).
 	ErrInvalidScope = errors.New("memory: invalid scope")
 	// ErrNotFound means a Get or Delete by id missed.
 	ErrNotFound = errors.New("memory: not found")

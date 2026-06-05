@@ -57,7 +57,7 @@ func TestGlobalWriteAllowed(t *testing.T) {
 		{"integration writes global denied", ScopeGlobal, integration.Principal{Kind: integration.KindIntegration, Scopes: []string{ScopeMemoryWrite}}, false},
 		{"unauthenticated writes global denied", ScopeGlobal, integration.Principal{}, false},
 		{"integration writes project", ScopeProject, integration.Principal{Kind: integration.KindIntegration}, true},
-		{"integration writes session", ScopeSession, integration.Principal{Kind: integration.KindIntegration}, true},
+		{"legacy session literal still non-global", legacyScopeSession, integration.Principal{Kind: integration.KindIntegration}, true},
 		{"empty scope allowed (defaults to project)", Scope(""), integration.Principal{Kind: integration.KindIntegration}, true},
 	}
 	for _, c := range cases {

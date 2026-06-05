@@ -147,6 +147,9 @@ func New(opts Options) (*Service, error) {
 	if opts.Scope.Default == "" {
 		opts.Scope.Default = ScopeProject
 	}
+	// A config that still says default scope = "session" coerces to
+	// project rather than poisoning every write with a retired scope.
+	opts.Scope.Default = normalizeScope(opts.Scope.Default)
 	if opts.DedupThreshold < 0 {
 		opts.DedupThreshold = 0
 	}
@@ -246,6 +249,7 @@ func (s *Service) Store(ctx context.Context, req StoreRequest) (string, error) {
 	if req.Scope == "" {
 		req.Scope = s.scope.Default
 	}
+	req.Scope = normalizeScope(req.Scope)
 	if err := req.Scope.Validate(); err != nil {
 		return "", err
 	}
@@ -384,6 +388,7 @@ func (s *Service) Search(ctx context.Context, req SearchRequest) ([]SearchHit, e
 	if req.Scope == "" {
 		req.Scope = s.scope.Default
 	}
+	req.Scope = normalizeScope(req.Scope)
 	if err := req.Scope.Validate(); err != nil {
 		return nil, err
 	}
@@ -463,6 +468,7 @@ func (s *Service) List(ctx context.Context, scope Scope, scopeKey string, limit 
 	if scope == "" {
 		scope = s.scope.Default
 	}
+	scope = normalizeScope(scope)
 	return s.store.List(ctx, scope, scopeKey, limit)
 }
 
@@ -483,6 +489,7 @@ func (s *Service) DeleteByScope(
 	scope Scope,
 	scopeKey string,
 ) (int64, error) {
+	scope = normalizeScope(scope)
 	if err := scope.Validate(); err != nil {
 		return 0, err
 	}

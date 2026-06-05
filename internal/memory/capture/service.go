@@ -308,12 +308,11 @@ func (r *runner) isDuplicate(ctx context.Context, fact summarizer.Fact, rule Rul
 }
 
 // scopeKeyForRule decides the scope_key written into memory rows.
-// 'project' targets use the session's cwd; 'session' uses the
-// session id; 'global' uses an operator-style placeholder.
+// 'project' targets (and the retired 'session', which now folds to
+// project) use the session's cwd; 'global' uses an operator-style
+// placeholder.
 func scopeKeyForRule(rule Rule, sess SessionInfo) string {
 	switch rule.TargetScope {
-	case "session":
-		return sess.ID
 	case "global":
 		return "operator"
 	default:
