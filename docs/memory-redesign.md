@@ -70,6 +70,17 @@ the cleaner foundation.
    human intervention point is **conflict detection**.
 4. No patching. Each phase is a self-contained, coherent unit that
    leaves the system simpler than it found it.
+5. **Lossless, automatic upgrade for existing users.** Operators already
+   running opendray must reach the new system by a normal `opendray
+   update` with **no data loss and no manual SQL**. Every migration is
+   forward-only, idempotent, and **never hard-deletes existing user
+   data** — rows are folded, archived, or re-embedded, never dropped.
+   See §7.
+6. **Ship as one change, merge after validation.** Because this is a
+   large, cross-cutting redesign, the whole arc (Phase 0-6) is built on
+   a single branch and lands as **one PR**, opened only when every phase
+   is complete and the migration has been test-validated end-to-end on a
+   copy of real data. No phase merges to `main` on its own.
 
 ### Non-goals
 
@@ -269,14 +280,21 @@ New migrations (`0033+`). Exact column names to be finalised in each PR.
      setting `scope_key` to the session's cwd
      (`UPDATE … SET scope='project', scope_key=(SELECT cwd FROM sessions
      WHERE id = memories.scope_key) WHERE scope='session'`).
-   - Rows whose session no longer exists: drop (orphan WIP noise).
-   - Replace the CHECK constraint with `scope IN ('project','global')`.
+   - Adds the `archived_at` / `archived_reason` columns up front (the
+     soft-delete primitive, see item 2) so the fold has a lossless place
+     to put orphans.
+   - Orphans (session row gone): recover cwd from `session_logs` if
+     possible; otherwise set `archived_at = now()` (lossless — restorable,
+     not dropped). **No `DELETE` in this migration.**
+   - Replace the CHECK constraint with `scope IN ('project','global')`
+     only after the fold, so no row violates it mid-migration.
 
-2. **Soft delete** (`0034_memory_soft_delete.sql`)
-   - Add `archived_at TIMESTAMPTZ NULL`, `archived_reason TEXT NULL`.
+2. **Soft delete** (`0034_memory_soft_delete.sql`) — *column may be
+   co-introduced in 0033 (item 1); 0034 then only adds the behaviour.*
+   - `archived_at TIMESTAMPTZ NULL`, `archived_reason TEXT NULL`.
    - All search/injection queries gain `AND archived_at IS NULL`.
    - A purge job hard-deletes rows where
-     `archived_at < now() - grace_interval`.
+     `archived_at < now() - grace_interval` (grace = 30 days, §8.2).
 
 3. **Consolidation accounting** (`0035_memory_consolidation.sql`)
    - Add `frequency BIGINT NOT NULL DEFAULT 1` (writes that consolidated
@@ -295,29 +313,41 @@ read-only for audit history, no new rows after Phase 4.
 
 ## 6. Phased delivery
 
-Each phase is an independent PR with its own tests and acceptance
-criteria. Order is dependency-driven.
+Phases are **commits on one arc branch**, not separate PRs (constraint
+§2.6). Each is a self-contained, tested unit so the branch stays green
+commit-by-commit, but the whole arc lands as a **single PR** opened only
+after every phase is complete and the migration is validated end-to-end
+on a copy of real data. Order is dependency-driven.
 
-### Phase 0 — Turn the write path on  *(unblocks everything)*
+### Phase 0 — Turn the write path on  *(unblocks everything)* — DONE
 
-- Fix `internal/app/app.go:1129`: grant the memory integration key
-  `memory:write` (and keep agents bounded to `project`/`global` data
-  scopes; `global` write requires explicit operator intent).
+- Granted the `opendray-memory` integration key `memory:read` +
+  `memory:write`; reconcile scopes on existing installs so the fix
+  reaches users who registered the key before these scopes existed
+  (`scopesCover` in `internal/app/app.go`). `global` writes stay
+  admin-only, enforced at the store handler (`globalWriteAllowed`).
 - **Acceptance:** an agent `memory_store` succeeds (no 403); the row
-  lands in `memories` with `scope='project'`, `scope_key=cwd`.
-- **Risk:** low. Behaviour change = agents can now write. This is the
-  intended behaviour. Tests: integration key scope assignment unit test
-  + an end-to-end MCP store smoke test.
+  lands in `memories` with `scope='project'`, `scope_key=cwd`. Verified
+  the diagnosis live (read path 403s under pre-fix code).
+- **Risk:** low. Behaviour change = agents can now write (intended).
+  Unit tests for `scopesCover` + `globalWriteAllowed`; packages pass
+  `-race`.
 
 ### Phase 1 — Scope unification
 
 - Migration `0033`. Remove `session` from every read/write/inject path
   (`internal/memory/`, `injector`, `memquery`, `mcp_memory.go`).
-- **Acceptance:** no code references `ScopeSession`; existing
-  session-scoped rows are folded into their project; search/inject
-  return identical results for project queries.
-- **Risk:** medium (data migration). Mitigate with a dry-run count and a
-  reversible backup export before the CHECK swap.
+- **Lossless fold:** every `scope='session'` row becomes `scope='project'`
+  keyed by the session's cwd (joined via `sessions`). Rows whose session
+  no longer exists are **not dropped** — they are recovered via the
+  session's cwd in `session_logs` if available, else **soft-archived**
+  (Phase 4's `archived_at`, restorable) rather than deleted. No session
+  memory is hard-deleted by this migration.
+- **Acceptance:** no code references `ScopeSession`; every pre-migration
+  session row is accounted for (folded or archived, count-reconciled to
+  zero loss); search/inject return identical results for project queries.
+- **Risk:** medium (data migration). Mitigate with a counted dry-run, a
+  pre-migration backup export, and the no-hard-delete rule above.
 
 ### Phase 2 — Retrieval unification
 
@@ -386,18 +416,44 @@ criteria. Order is dependency-driven.
 
 ## 7. Migration & backward compatibility
 
-- Every destructive migration ships with a counted dry-run and a
-  pre-migration `opendray` memory export (the backup/restore path
-  already exists, `backup/service_import.go`).
-- Phases 0–3 are behaviour-compatible for the operator (writes start
-  working; rankings unify; dedup tightens). Phase 4–5 are the
-  operator-visible changes (cleanup inbox disappears; file memory
-  retires) and ship behind flags with conservative defaults.
-- `memory-system.md` is updated **per phase** to keep the operator guide
-  truthful; the **superseded** sections are: five-layer/three-scope
-  model (§"The five layers", §"Project isolation"), Gatekeeper as the
-  primary quality gate (§"Quality gates"), and the manual Cleanup inbox
-  (§"Cleanup inbox").
+Constraint §2.5 is a hard requirement: an existing operator reaches the
+new system by a normal `opendray update`, with **no data loss and no
+manual SQL**. Concretely:
+
+**Lossless.** No M-U migration runs a `DELETE` against user data. The
+session→project collapse *folds* rows (orphans are archived, not
+dropped); cleanup uses *soft-delete + 30-day grace* (restorable); the
+file layer is *imported before* it is retired; an embedder change
+*re-embeds*, never discards. Every destructive-looking step is a
+reversible state change, not a deletion. Each data migration ships with
+a counted dry-run and a pre-migration `opendray` memory export (the
+backup/restore path already exists, `backup/service_import.go`) so even
+operator error is recoverable.
+
+**Automatic on upgrade — the gap to close.** Migrations today are
+**not** auto-applied on startup; they run only via the explicit
+`opendray migrate` (`internal/store/migrate.go` is invoked solely from
+`cmd/opendray/migrate.go`). So an operator who runs `opendray update`
+gets the new binary against the **old schema** until they separately run
+`opendray migrate` — unacceptable for a "smooth upgrade". The arc must
+therefore make M-U migrations apply automatically on the upgrade path:
+either the service runs pending migrations on start (fail-closed if they
+error), or `opendray update` chains `opendray migrate`. Migrations are
+already idempotent, forward-only, and transactional (tracked in
+`schema_migrations`), so auto-apply is safe. **This is a required
+deliverable of the arc, not optional.**
+
+**Compatibility staging.** Phases 0–3 are behaviour-compatible for the
+operator (writes start working; rankings unify; dedup tightens). Phases
+4–5 are the operator-visible changes (cleanup inbox disappears; file
+memory retires) and ship behind flags with conservative defaults so the
+first upgraded run behaves like the old one until the operator opts in.
+
+`memory-system.md` is updated in the same PR to keep the operator guide
+truthful; the **superseded** sections are: five-layer/three-scope model
+(§"The five layers", §"Project isolation"), Gatekeeper as the primary
+quality gate (§"Quality gates"), and the manual Cleanup inbox
+(§"Cleanup inbox").
 
 ---
 
@@ -469,5 +525,9 @@ write hot path** (decisions 5–6).
   test in `memory-system.md` extended to a write→switch→read loop.
 - The operator's recurring inbox work is **conflicts only**; routine
   staleness and duplicates are handled automatically and reversibly.
+- An existing operator upgrades via a single `opendray update` and lands
+  on the new system with **zero data loss and zero manual SQL** —
+  validated by replaying the full migration on a copy of real
+  pre-upgrade data and reconciling row counts to no loss.
 - Net negative line count in `internal/memory*` after the arc (the
   redesign removes more than it adds).
