@@ -94,6 +94,12 @@ type Memory struct {
 	SourceRef         string   `json:"source_ref,omitempty"`
 	SummarizerSession string   `json:"summarizer_session,omitempty"`
 	Confidence        *float32 `json:"confidence,omitempty"`
+
+	// Archive state — populated by ListArchived for the restorable
+	// "Archived" view. Nil/empty on active rows (every other read query
+	// filters archived rows out entirely).
+	ArchivedAt     *time.Time `json:"archived_at,omitempty"`
+	ArchivedReason string     `json:"archived_reason,omitempty"`
 }
 
 // SearchHit is one match returned by Store.Search, paired with its
@@ -220,6 +226,10 @@ type Store interface {
 	// out on their own — and it leaves hit (useful) facts untouched.
 	// Returns the count archived.
 	ArchiveDormantStale(ctx context.Context, scope Scope, scopeKey string, agedBefore, dormantBefore time.Time, reason string) (int64, error)
+	// ListArchived returns archived (soft-deleted) memories for a scope,
+	// newest-archived first. Powers the read-only "Archived (restorable)"
+	// view so operators can see and undo what auto-archive removed.
+	ListArchived(ctx context.Context, scope Scope, scopeKey string, limit int) ([]Memory, error)
 	// Restore clears the archive flag, returning a memory to active use.
 	// Returns ErrNotFound when the id isn't an archived row.
 	Restore(ctx context.Context, id string) error

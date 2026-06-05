@@ -89,6 +89,9 @@ func (s *fakeStore) PurgeArchived(context.Context, time.Time) (int64, error) { r
 func (s *fakeStore) ArchiveDormantStale(context.Context, Scope, string, time.Time, time.Time, string) (int64, error) {
 	return 0, nil
 }
+func (s *fakeStore) ListArchived(context.Context, Scope, string, int) ([]Memory, error) {
+	return nil, nil
+}
 func (s *fakeStore) Close() error { return nil }
 
 // stubEmbedder is a name-only Embedder for tests that only exercise

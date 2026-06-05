@@ -301,6 +301,60 @@ func (s *PgvectorStore) List(ctx context.Context, scope Scope, scopeKey string, 
 	return out, rows.Err()
 }
 
+// ListArchived returns soft-archived memories for a scope, newest
+// archived first, including archived_at / archived_reason so the
+// restorable view can show when + why each row was archived.
+func (s *PgvectorStore) ListArchived(ctx context.Context, scope Scope, scopeKey string, limit int) ([]Memory, error) {
+	if err := scope.Validate(); err != nil {
+		return nil, err
+	}
+	if limit <= 0 {
+		limit = 100
+	}
+	args := []interface{}{string(scope), scopeKey, limit}
+	where := `scope = $1 AND scope_key = $2`
+	if scope == ScopeGlobal {
+		where = `scope = $1`
+		args = []interface{}{string(scope), limit}
+	}
+	query := fmt.Sprintf(`
+		SELECT id, scope, scope_key, text, embedder, metadata,
+		       created_at, updated_at, hit_count, last_hit_at,
+		       archived_at, archived_reason
+		FROM memories
+		WHERE archived_at IS NOT NULL AND %s
+		ORDER BY archived_at DESC
+		LIMIT $%d
+	`, where, len(args))
+
+	rows, err := s.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("memory: list archived: %w", err)
+	}
+	defer rows.Close()
+
+	var out []Memory
+	for rows.Next() {
+		var (
+			m      Memory
+			meta   []byte
+			reason sql.NullString
+		)
+		if err := rows.Scan(&m.ID, &m.Scope, &m.ScopeKey, &m.Text, &m.Embedder, &meta,
+			&m.CreatedAt, &m.UpdatedAt, &m.HitCount, &m.LastHitAt, &m.ArchivedAt, &reason); err != nil {
+			return nil, err
+		}
+		if len(meta) > 0 {
+			_ = json.Unmarshal(meta, &m.Metadata)
+		}
+		if reason.Valid {
+			m.ArchivedReason = reason.String
+		}
+		out = append(out, m)
+	}
+	return out, rows.Err()
+}
+
 // Get returns one Memory row by id, including provenance fields.
 // Used by the memory_get_provenance MCP tool + future "show
 // details" UI affordances.

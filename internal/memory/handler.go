@@ -105,6 +105,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.With(read).Get("/status", h.status)
 		r.With(read).Post("/search", h.search)
 		r.With(read).Get("/list", h.list)
+		r.With(read).Get("/archived", h.listArchived)
 		r.With(read).Get("/scope-keys", h.scopeKeys)
 		r.With(read).Get("/{id}", h.getOne)
 		r.With(h.requireScope(ScopeMemoryWrite)).Post("/store", h.store)
@@ -112,6 +113,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		// Management / destructive — admin only, never an integration key.
 		r.With(h.requireAdmin).Patch("/{id}", h.update)
 		r.With(h.requireAdmin).Delete("/{id}", h.delete)
+		r.With(h.requireAdmin).Post("/{id}/restore", h.restore)
 		r.With(h.requireAdmin).Post("/delete-by-scope", h.deleteByScope)
 		r.With(h.requireAdmin).Post("/test", h.test)
 		r.With(h.requireAdmin).Post("/probe", h.probe)
@@ -318,6 +320,53 @@ func (h *Handlers) list(w http.ResponseWriter, r *http.Request) {
 		out = []Memory{}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"memories": out})
+}
+
+// listArchived backs the read-only "Archived (restorable)" view: the
+// soft-archived memories the auto-cleaner / lifecycle pass removed, which
+// the operator can restore until the grace window purges them.
+func (h *Handlers) listArchived(w http.ResponseWriter, r *http.Request) {
+	if !h.ensure(w) {
+		return
+	}
+	scope := Scope(r.URL.Query().Get("scope"))
+	if scope == "" {
+		scope = ScopeProject
+	}
+	scopeKey := r.URL.Query().Get("scope_key")
+	limit := 100
+	if v := r.URL.Query().Get("n"); v != "" {
+		if x, err := strconv.Atoi(v); err == nil && x > 0 {
+			limit = x
+		}
+	}
+	out, err := h.svc.ListArchived(r.Context(), scope, scopeKey, limit)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if out == nil {
+		out = []Memory{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"memories": out})
+}
+
+// restore un-archives a soft-deleted memory (admin only). Returns 404
+// when the id isn't an archived row.
+func (h *Handlers) restore(w http.ResponseWriter, r *http.Request) {
+	if !h.ensure(w) {
+		return
+	}
+	id := chi.URLParam(r, "id")
+	if err := h.svc.Restore(r.Context(), id); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"restored": id})
 }
 
 // scopeKeys returns distinct scope_key values stored under the given

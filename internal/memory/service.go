@@ -549,6 +549,15 @@ func (s *Service) Restore(ctx context.Context, id string) error {
 	return s.store.Restore(ctx, id)
 }
 
+// ListArchived returns archived (restorable) memories for a scope.
+func (s *Service) ListArchived(ctx context.Context, scope Scope, scopeKey string, limit int) ([]Memory, error) {
+	scope = normalizeScope(scope)
+	if scope == "" {
+		scope = s.scope.Default
+	}
+	return s.store.ListArchived(ctx, scope, scopeKey, limit)
+}
+
 // ArchiveDormantStale soft-archives never-hit aged facts of a dormant
 // project (the lifecycle signal). Thin proxy.
 func (s *Service) ArchiveDormantStale(ctx context.Context, scope Scope, scopeKey string, agedBefore, dormantBefore time.Time, reason string) (int64, error) {
