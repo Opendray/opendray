@@ -236,7 +236,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// this layer rather than internal/channel so the channel package
 	// stays free of the session dependency. The matching idle-card
 	// buttons (Resume / End) emit the same `cmd:/...` payloads.
-	registerChannelCommands(channelHub, sessionMgr)
+	registerChannelCommands(channelHub, sessionMgr, cat, cliacctSvc)
 	// Optional single-owner gate: when OPENDRAY_CONTROL_OWNER is set to
 	// a Telegram user id, only that account may interact with the bot at
 	// all — send text to a session, run commands, or tap controls.

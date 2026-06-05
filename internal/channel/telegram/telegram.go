@@ -147,6 +147,7 @@ func (t *Telegram) publishCommands(ctx context.Context) {
 	}
 	cmds := []tgCmd{
 		{Command: "panel", Description: "Control panel — sessions + actions"},
+		{Command: "new", Description: "Start a new session (provider picker)"},
 		{Command: "list", Description: "List active sessions"},
 		{Command: "peek", Description: "Re-send the selected session's latest output"},
 		{Command: "help", Description: "List available commands"},
