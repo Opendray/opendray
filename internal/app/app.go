@@ -106,6 +106,21 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		return nil, err
 	}
 
+	// Auto-apply pending migrations on startup, fail-closed (M-U §7).
+	// Previously migrations ran only via the explicit `opendray migrate`
+	// command, so `opendray update` landed the new binary against the
+	// old schema until the operator separately migrated — unacceptable
+	// for a smooth upgrade. Migrations are idempotent, forward-only, and
+	// transactional (tracked in schema_migrations), so running them here
+	// is a no-op once applied. This must run BEFORE catalog.New below,
+	// which upserts seed rows into tables migration 0001 creates (the
+	// fresh-DB ordering bug from #162). `opendray migrate` stays as a
+	// standalone command for operators who prefer to migrate explicitly.
+	if err := st.Migrate(ctx, log); err != nil {
+		st.Close()
+		return nil, fmt.Errorf("apply migrations: %w", err)
+	}
+
 	bus := eventbus.New(log)
 
 	authSvc := auth.New(cfg.Admin, bus, log)

@@ -561,18 +561,17 @@ a counted dry-run and a pre-migration `opendray` memory export (the
 backup/restore path already exists, `backup/service_import.go`) so even
 operator error is recoverable.
 
-**Automatic on upgrade — the gap to close.** Migrations today are
-**not** auto-applied on startup; they run only via the explicit
-`opendray migrate` (`internal/store/migrate.go` is invoked solely from
-`cmd/opendray/migrate.go`). So an operator who runs `opendray update`
-gets the new binary against the **old schema** until they separately run
-`opendray migrate` — unacceptable for a "smooth upgrade". The arc must
-therefore make M-U migrations apply automatically on the upgrade path:
-either the service runs pending migrations on start (fail-closed if they
-error), or `opendray update` chains `opendray migrate`. Migrations are
-already idempotent, forward-only, and transactional (tracked in
-`schema_migrations`), so auto-apply is safe. **This is a required
-deliverable of the arc, not optional.**
+**Automatic on upgrade — DONE.** Migrations now auto-apply on startup,
+fail-closed. `app.New` (`internal/app/app.go`) calls `st.Migrate` right
+after `store.Open` and **before** `catalog.New` (which seeds tables
+migration 0001 creates — preserving the #162 fresh-DB ordering). A
+migration error aborts boot rather than running the new binary against
+the old schema. So `opendray update` + restart reaches the new schema
+with no separate step; `opendray migrate` stays as a standalone command
+for operators who prefer explicit control. Migrations are idempotent,
+forward-only, and transactional (tracked in `schema_migrations`), and
+the serve path was previously the one place that did **not** migrate, so
+this only adds a no-op once everything is applied.
 
 **Compatibility staging.** Phases 0–3 are behaviour-compatible for the
 operator (writes start working; rankings unify; dedup tightens). Phases

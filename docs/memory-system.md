@@ -3,6 +3,33 @@
 This guide walks through what opendray's unified memory system
 does, how to use it day-to-day, and how to verify it's behaving.
 
+> **⚠️ Partially superseded by the M-U unification arc.** Several
+> behaviours below changed in the memory-unification redesign
+> ([`memory-redesign.md`](./memory-redesign.md)). The sections flagged
+> **[Superseded — M-U]** describe the *pre-M-U* system; the deltas are:
+>
+> - **Two scopes, not three.** `session` was removed — a session ≡ its
+>   project. Memory is `project` (default, keyed by cwd) or `global`
+>   (operator-only). See [Project isolation](#project-isolation-guarantees).
+> - **Writes are free; cleanup is automatic.** The manual Cleanup inbox
+>   (approve/reject each librarian verdict) is gone. The cleaner now
+>   auto-applies its verdicts as **reversible soft-archives**; the
+>   operator inbox keeps **conflicts only**. What was archived is
+>   restorable from the **Archived** view for a 30-day grace window.
+>   See [Cleanup inbox](#cleanup-inbox).
+> - **Quality comes from fold + ranking + maintenance, not a write
+>   gate.** Write-time semantic dedup folds near-duplicates by default;
+>   the Gatekeeper is now an optional, off-by-default knob rather than
+>   the primary quality gate. See [Quality gates](#quality-gates-anti-noise-mechanisms).
+> - **One store.** The Claude file-memory layer is retired: existing
+>   files are imported into the DB and agents are told to write
+>   `memory_store`, not local memory files (the one-way mirror stays as
+>   a transition capture net).
+> - **Embedder changes self-heal.** Switching the configured embedder
+>   triggers an automatic background re-embed; no manual "Migrate" click.
+> - **Migrations auto-apply on startup** (fail-closed), so `opendray
+>   update` reaches the new schema without a separate `opendray migrate`.
+
 ## What it is
 
 Every Claude / Codex / Gemini session you spawn through opendray
@@ -54,6 +81,13 @@ overwrite your hand-written goal with their interpretation.
 
 ### Cleanup inbox
 
+> **[Superseded — M-U]** The manual approve/reject Cleanup inbox below
+> is removed. The cleaner now **auto-applies** keep/stale/duplicate
+> verdicts as **reversible soft-archives** (no queue to triage). What it
+> archived is restorable from **Memory → Archived** for a 30-day grace
+> window, then hard-purged. The operator inbox now surfaces **conflicts
+> only**. The rest of this subsection describes the old flow.
+
 When the LLM librarian runs (default: every 24h), it judges aged-
 eligible memories as **keep** / **stale** / **duplicate** and
 writes decisions to the queue. Open **Memory → Cleanup inbox** to
@@ -89,6 +123,14 @@ If either step fails, check the spawn injection channel:
 
 ## Project isolation guarantees
 
+> **[Superseded — M-U]** Scope model is now **two** scopes, not three:
+> `project` (default, keyed by cwd) and `global` (operator-only).
+> `session` was removed — a session is always its project's cwd, so
+> session-scoped memory was a redundant partition. Existing
+> `session` rows were folded to `project` (keyed by the session's cwd)
+> by migration 0034; the isolation guarantees below still hold per
+> project cwd.
+
 opendray promises that **project A's records will never appear in
 project B's agent context**. The reader implementation in
 `internal/session/transcript.go` enforces three checks:
@@ -110,6 +152,16 @@ When any defense triggers, the journaler degrades to metadata-only
 correct failure mode — never a confidently-wrong summary.
 
 ## Quality gates (anti-noise mechanisms)
+
+> **[Superseded — M-U]** Quality is now carried by **write-time
+> semantic fold + ranking + the background maintenance loop**, not by a
+> write gate. The Gatekeeper described next is now an **optional,
+> off-by-default** knob (writes are free by design — the only human
+> gate is conflict detection). Server-side dedup is on the write hot
+> path by default and **folds** near-duplicates losslessly
+> (`merged_from` audit) rather than just merging counts. The LLM
+> librarian still runs, but auto-archives instead of queuing for
+> approval (see [Cleanup inbox](#cleanup-inbox)).
 
 ### Gatekeeper (write-time filter)
 
