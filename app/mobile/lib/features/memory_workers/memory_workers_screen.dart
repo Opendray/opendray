@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/claude_accounts_api.dart';
+import 'package:opendray/core/api/memory_summarizers_api.dart';
 import 'package:opendray/core/api/memory_workers_api.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
@@ -26,6 +27,7 @@ class _MemoryWorkersScreenState extends ConsumerState<MemoryWorkersScreen> {
   late Future<List<WorkerConfig>> _workersFuture;
   late Future<List<CallSummary>> _callsFuture;
   late Future<List<ClaudeAccountSummary>> _accountsFuture;
+  late Future<List<SummarizerProvider>> _summarizersFuture;
 
   @override
   void initState() {
@@ -39,6 +41,7 @@ class _MemoryWorkersScreenState extends ConsumerState<MemoryWorkersScreen> {
       _callsFuture =
           ref.read(memoryWorkersApiProvider).calls(limit: 200);
       _accountsFuture = ref.read(claudeAccountsApiProvider).list();
+      _summarizersFuture = ref.read(memorySummarizersApiProvider).list();
     });
   }
 
@@ -113,6 +116,7 @@ class _MemoryWorkersScreenState extends ConsumerState<MemoryWorkersScreen> {
                   config: w,
                   callsFuture: _callsFuture,
                   accountsFuture: _accountsFuture,
+                  summarizersFuture: _summarizersFuture,
                   onChanged: _reload,
                 ),
             ],
@@ -128,12 +132,14 @@ class _WorkerCard extends ConsumerStatefulWidget {
     required this.config,
     required this.callsFuture,
     required this.accountsFuture,
+    required this.summarizersFuture,
     required this.onChanged,
   });
 
   final WorkerConfig config;
   final Future<List<CallSummary>> callsFuture;
   final Future<List<ClaudeAccountSummary>> accountsFuture;
+  final Future<List<SummarizerProvider>> summarizersFuture;
   final VoidCallback onChanged;
 
   @override
@@ -392,29 +398,29 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
   }
 
   Widget _summarizerSelector() {
-    // Mobile keeps it simple: always uses the registry default
-    // summarizer provider. Operator who wants to pin a specific
-    // row uses the web UI. Display informational text instead of
-    // a dropdown to avoid the round-trip to fetch provider rows
-    // that mobile doesn't otherwise need.
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.info_outline, size: 14),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              t.memoryWorkers.summarizerInfo,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+    return FutureBuilder<List<SummarizerProvider>>(
+      future: widget.summarizersFuture,
+      builder: (_, snap) {
+        final providers = snap.data ?? const <SummarizerProvider>[];
+        return DropdownButtonFormField<String>(
+          initialValue: _summarizerId.isEmpty ? '__default__' : _summarizerId,
+          decoration: InputDecoration(
+            labelText: t.memoryWorkers.summarizerProviderLabel,
+            border: const OutlineInputBorder(),
+            isDense: true,
           ),
-        ],
-      ),
+          items: [
+            DropdownMenuItem(
+              value: '__default__',
+              child: Text(t.memoryWorkers.registryDefault),
+            ),
+            for (final p in providers)
+              DropdownMenuItem(value: p.id, child: Text(p.label)),
+          ],
+          onChanged: (v) => setState(
+              () => _summarizerId = v == '__default__' ? '' : (v ?? '')),
+        );
+      },
     );
   }
 

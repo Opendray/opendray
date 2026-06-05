@@ -500,11 +500,13 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		cleanerSvc = cleaner.NewService(
 			st.Pool(), memorySvc, memoryWorkerRegistry,
 			cleaner.Config{
-				SummarizerID:        cc.SummarizerID,
-				BatchSize:           cc.BatchSize,
-				MinAge:              time.Duration(cc.MinAgeHours) * time.Hour,
-				SkipIfDecidedWithin: time.Duration(cc.SkipIfDecidedWithinHours) * time.Hour,
-				CallTimeout:         time.Duration(cc.CallTimeoutMs) * time.Millisecond,
+				SummarizerID:         cc.SummarizerID,
+				BatchSize:            cc.BatchSize,
+				MinAge:               time.Duration(cc.MinAgeHours) * time.Hour,
+				SkipIfDecidedWithin:  time.Duration(cc.SkipIfDecidedWithinHours) * time.Hour,
+				CallTimeout:          time.Duration(cc.CallTimeoutMs) * time.Millisecond,
+				GracePeriod:          time.Duration(cc.GraceDays) * 24 * time.Hour,
+				LifecycleDormantDays: cc.LifecycleDormantDays,
 			},
 			log,
 		)
@@ -1341,26 +1343,23 @@ func listenLoopback(listen string) string {
 //
 // Choice matrix:
 //
-//	backend = ""   | "auto"          → BM25 + pgvector store
-//	backend = "bm25"                 → BM25 + pgvector store
-//	backend = "http"                 → HTTP embedder + pgvector store
-//	store   = "pgvector" (default)   → opendray's existing PG with vector ext
-//	store   = "chromem"              → not yet implemented in v1
+//	backend = ""   | "auto"          → tiered: configured dense if reachable, else BM25 (upgrade-only)
+//	backend = "bm25"                 → BM25 keyword floor
+//	backend = "http"                 → HTTP dense embedder ([memory.http])
+//	backend = "local"                → cgo ONNX embedder ([memory.local], -tags local_onnx)
+//	store: pgvector only — the single supported vector store
 func resolveMemoryService(
 	ctx context.Context,
 	cfg config.MemoryConfig,
 	st *store.Store,
 	log *slog.Logger,
 ) (*memory.Service, error) {
-	emb, err := buildEmbedder(cfg)
-	if err != nil {
-		return nil, err
-	}
 	storeKind := strings.ToLower(strings.TrimSpace(cfg.Store))
 	if storeKind == "" {
 		storeKind = "pgvector"
 	}
 	var memStore memory.Store
+	var err error
 	switch storeKind {
 	case "pgvector":
 		memStore, err = memory.OpenPgvectorStore(ctx, st.Pool())
@@ -1369,6 +1368,14 @@ func resolveMemoryService(
 		}
 	default:
 		return nil, fmt.Errorf("unknown memory.store=%q (valid: pgvector)", storeKind)
+	}
+
+	// Resolve the embedder AFTER the store is open: backend="auto" is
+	// store-aware — it inspects existing rows so it never silently drops
+	// below the tier the data already uses (M-U Phase 7 §11.2).
+	emb, err := resolveAutoEmbedder(ctx, cfg, memStore, log)
+	if err != nil {
+		return nil, err
 	}
 
 	opts := memory.Options{
@@ -1382,7 +1389,15 @@ func resolveMemoryService(
 		},
 		Logger: log,
 	}
-	return memory.New(opts)
+	svc, err := memory.New(opts)
+	if err != nil {
+		return nil, err
+	}
+	// Record the configured embedder so EmbedderHealth can report the
+	// effective-vs-configured tier and live-probe the dense endpoint for
+	// the settings UI (even when "auto" has degraded to the BM25 floor).
+	svc.SetEmbedderConfig(cfg.Backend, cfg.HTTP.BaseURL, cfg.HTTP.Model, cfg.HTTP.APIKey)
+	return svc, nil
 }
 
 // buildEmbedder picks the live Embedder per cfg.Backend.
@@ -1419,6 +1434,132 @@ func buildEmbedder(cfg config.MemoryConfig) (memory.Embedder, error) {
 		})
 	}
 	return nil, fmt.Errorf("unknown memory.backend=%q (valid: auto, bm25, http, local)", cfg.Backend)
+}
+
+// embedderDecision is the outcome of the backend="auto" tiering table.
+type embedderDecision int
+
+const (
+	// decideDenseHTTP — use the configured [memory.http] dense embedder.
+	decideDenseHTTP embedderDecision = iota
+	// decideBM25Floor — use the pure-Go BM25 keyword floor.
+	decideBM25Floor
+	// decideFailClosed — the store holds dense rows but no dense endpoint
+	// is configured; refuse to start rather than silently churn to BM25.
+	decideFailClosed
+)
+
+// decideAutoEmbedder is the pure decision table for backend="auto"
+// (availability-tiered, upgrade-only — M-U Phase 7 §11.2). It is kept free
+// of I/O so it can be table-tested exhaustively; resolveAutoEmbedder
+// gathers the live inputs (endpoint probe + per-embedder row counts) and
+// acts on the verdict.
+//
+//	httpConfigured | httpReachable | intentDense | verdict
+//	---------------+---------------+-------------+-------------------------------
+//	     true      |     true      |      *      | dense  (steady state / upgrade)
+//	     true      |     false     |     true    | dense  (degrade-keep-dense, no churn)
+//	     true      |     false     |     false   | bm25   (floor; upgrades on a later boot)
+//	     false     |      *        |     true    | fail-closed (can't reconstruct dense)
+//	     false     |      *        |     false   | bm25   (fresh install, no model)
+func decideAutoEmbedder(httpConfigured, httpReachable, intentDense bool) embedderDecision {
+	if httpConfigured {
+		if httpReachable || intentDense {
+			return decideDenseHTTP
+		}
+		return decideBM25Floor
+	}
+	if intentDense {
+		return decideFailClosed
+	}
+	return decideBM25Floor
+}
+
+// denseIntent inspects the per-embedder row counts and reports whether the
+// store already holds rows from a dense (non-BM25) embedder, and which one
+// has the most rows. That embedder is the "intended" tier: backend="auto"
+// must never silently drop below it, because doing so would hide those
+// rows behind the WHERE embedder=$active predicate and trigger a lossy
+// re-embed (M-U Phase 7 §11.2).
+func denseIntent(counts map[string]int) (name string, dense bool) {
+	bestN := 0
+	for n, c := range counts {
+		if c <= 0 || strings.HasPrefix(strings.ToLower(n), "bm25") {
+			continue
+		}
+		if c > bestN {
+			name, bestN = n, c
+		}
+	}
+	return name, name != ""
+}
+
+// resolveAutoEmbedder resolves the live Embedder, applying the smart
+// backend="auto" tiering (M-U Phase 7 §11.2). Any explicit backend
+// (bm25 / http / local) defers to buildEmbedder unchanged.
+func resolveAutoEmbedder(ctx context.Context, cfg config.MemoryConfig, st memory.Store, log *slog.Logger) (memory.Embedder, error) {
+	backend := strings.ToLower(strings.TrimSpace(cfg.Backend))
+	if backend != "" && backend != "auto" {
+		return buildEmbedder(cfg)
+	}
+
+	httpConfigured := strings.TrimSpace(cfg.HTTP.BaseURL) != "" && strings.TrimSpace(cfg.HTTP.Model) != ""
+
+	// Derive the intended tier from existing rows. Best-effort: a count
+	// error is treated as "no dense rows" so a transient DB hiccup cannot
+	// flip an install into fail-closed.
+	intentName, intentDense := "", false
+	if counts, cErr := st.CountByEmbedder(ctx); cErr == nil {
+		intentName, intentDense = denseIntent(counts)
+	} else {
+		log.Warn("memory: could not read embedder row counts; assuming no dense rows", "err", cErr)
+	}
+
+	// Probe the configured dense endpoint (bounded so a hung endpoint
+	// can't stall startup).
+	httpReachable := false
+	if httpConfigured {
+		probeCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+		httpReachable = memory.ProbeEndpoint(probeCtx, cfg.HTTP.BaseURL, cfg.HTTP.APIKey).Reachable
+		cancel()
+	}
+
+	switch decideAutoEmbedder(httpConfigured, httpReachable, intentDense) {
+	case decideDenseHTTP:
+		emb, err := memory.NewOpenAICompatibleEmbedder(memory.HTTPEmbedderConfig{
+			BaseURL:    cfg.HTTP.BaseURL,
+			Model:      cfg.HTTP.Model,
+			APIKey:     cfg.HTTP.APIKey,
+			Dimensions: cfg.HTTP.Dimensions,
+		})
+		if err != nil {
+			// base_url+model were non-empty, so this is unexpected; fall
+			// back to the floor rather than disabling memory entirely.
+			log.Warn("memory: auto could not build the configured dense embedder; using BM25 floor", "err", err)
+			return memory.NewBM25Embedder(384), nil
+		}
+		if httpReachable {
+			log.Info("memory: auto selected the configured dense embedder",
+				"embedder", emb.Name(), "base_url", cfg.HTTP.BaseURL)
+		} else {
+			log.Warn("memory: configured dense endpoint unreachable — keeping dense active (degraded). Reads/injection keep working and existing vectors are preserved (no re-embed); new writes and similarity search pause until the endpoint responds.",
+				"embedder", emb.Name(), "base_url", cfg.HTTP.BaseURL)
+		}
+		return emb, nil
+
+	case decideFailClosed:
+		return nil, fmt.Errorf("memory: the store holds rows embedded with %q but [memory.http] is not configured; restore the dense endpoint config, or set memory.backend=%q to abandon dense vectors (they will be re-embedded to BM25)", intentName, "bm25")
+
+	default: // decideBM25Floor
+		switch {
+		case httpConfigured && !httpReachable:
+			log.Warn("memory: configured dense endpoint unreachable and the store has no dense rows yet — using the BM25 floor; it will auto-upgrade to dense on a restart once the endpoint responds.",
+				"base_url", cfg.HTTP.BaseURL)
+		case !httpConfigured:
+			log.Info("memory: no dense embedder configured — using the BM25 keyword floor (semantic memory off). Configure [memory.http] to enable dense retrieval.")
+		}
+		return memory.NewBM25Embedder(384), nil
+	}
 }
 
 // resolveClaudeHistoryConfig translates the operator's

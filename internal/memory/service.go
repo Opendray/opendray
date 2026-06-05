@@ -46,6 +46,17 @@ type Service struct {
 	// memory/*.md files. Wired by the app at startup; nil means the
 	// HTTP "Sync now" endpoint returns 503.
 	mirror *Mirror
+
+	// Configured embedder echo (set post-construction by the app via
+	// SetEmbedderConfig) — used only by EmbedderHealth to report the
+	// effective-vs-configured tier and live-probe the dense endpoint.
+	// Distinct from the active emb: when backend="auto" degrades to the
+	// BM25 floor, emb is BM25 while these still describe the dense
+	// endpoint the operator configured.
+	cfgBackend   string
+	denseBaseURL string
+	denseModel   string
+	denseAPIKey  string
 }
 
 // Gatekeeper is the contract a pre-write LLM judge satisfies (M12).
@@ -72,6 +83,71 @@ func (s *Service) SetAutoDetected(hits []ProbeResult) { s.autoDetected = hits }
 // AutoDetected returns the captured probe results. Empty when no
 // service responded (BM25 fallback is the default).
 func (s *Service) AutoDetected() []ProbeResult { return s.autoDetected }
+
+// SetEmbedderConfig records the configured embedder backend + dense
+// endpoint so EmbedderHealth can report effective-vs-configured state.
+// Called once by the app after construction (the Service itself only
+// holds the live Embedder, which may have degraded to the BM25 floor).
+func (s *Service) SetEmbedderConfig(backend, denseBaseURL, denseModel, denseAPIKey string) {
+	s.cfgBackend = backend
+	s.denseBaseURL = denseBaseURL
+	s.denseModel = denseModel
+	s.denseAPIKey = denseAPIKey
+}
+
+// DenseEndpoint is the configured dense embedding endpoint (if any).
+type DenseEndpoint struct {
+	BaseURL string `json:"base_url"`
+	Model   string `json:"model"`
+}
+
+// EmbedderHealth is the status pane's view of the memory embedder: what
+// tier is actually serving, what the operator configured, whether a
+// configured dense endpoint is reachable right now, and how many rows
+// still need re-embedding to converge on the active embedder.
+type EmbedderHealth struct {
+	Backend         string         `json:"backend"`          // configured: auto/bm25/http/local
+	Effective       string         `json:"effective"`        // embedder actually serving
+	Dimensions      int            `json:"dimensions"`       // effective embedder's vector dim
+	IsFloor         bool           `json:"is_floor"`         // effective is the BM25 keyword floor
+	ConfiguredDense *DenseEndpoint `json:"configured_dense"` // nil when none configured
+	DenseReachable  *bool          `json:"dense_reachable"`  // live probe; nil when none configured
+	Degraded        bool           `json:"degraded"`         // dense configured but not healthily serving
+	Drift           int            `json:"drift"`            // rows not on the effective embedder (converge backlog)
+}
+
+// EmbedderHealth assembles the status view. It runs a short live probe of
+// the configured dense endpoint, so callers should treat it as a
+// settings-page operation (not a hot path). Best-effort: a count error
+// reports Drift=0 rather than failing.
+func (s *Service) EmbedderHealth(ctx context.Context) EmbedderHealth {
+	effective := s.emb.Name()
+	h := EmbedderHealth{
+		Backend:    s.cfgBackend,
+		Effective:  effective,
+		Dimensions: s.emb.Dimensions(),
+		IsFloor:    strings.HasPrefix(strings.ToLower(effective), "bm25"),
+	}
+	if counts, err := s.store.CountByEmbedder(ctx); err == nil {
+		for name, c := range counts {
+			if name != effective {
+				h.Drift += c
+			}
+		}
+	}
+	if strings.TrimSpace(s.denseBaseURL) != "" && strings.TrimSpace(s.denseModel) != "" {
+		h.ConfiguredDense = &DenseEndpoint{BaseURL: s.denseBaseURL, Model: s.denseModel}
+		probeCtx, cancel := context.WithTimeout(ctx, 1500*time.Millisecond)
+		reachable := ProbeEndpoint(probeCtx, s.denseBaseURL, s.denseAPIKey).Reachable
+		cancel()
+		h.DenseReachable = &reachable
+		// Degraded when a dense endpoint is configured but is not the
+		// healthy serving tier: either we fell back to the BM25 floor,
+		// or the dense endpoint is unreachable right now.
+		h.Degraded = h.IsFloor || !reachable
+	}
+	return h
+}
 
 // SetMirror wires a Mirror so the HTTP "Sync .md files now" button
 // can trigger an on-demand ingest from outside the spawn-time path.

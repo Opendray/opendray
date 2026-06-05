@@ -44,7 +44,6 @@ import {
   reembedAll,
   searchMemories,
   storeMemory,
-  testEmbedder,
   updateMemory,
   type EmbedderStats,
   type MemoryRecord,
@@ -274,29 +273,6 @@ export function MemoryInspector() {
       }),
   })
 
-  const test = useMutation({
-    mutationFn: () => testEmbedder('opendray memory subsystem self-test'),
-    onSuccess: (r) =>
-      toast.success(
-        t('web.memoryInspector.toasts.testOk', {
-          embedder: r.embedder,
-          dim: r.dim,
-        }),
-        {
-          description: t('web.memoryInspector.toasts.testOkDescription', {
-            preview: r.vector_preview
-              .slice(0, 4)
-              .map((v) => v.toFixed(3))
-              .join(', '),
-          }),
-        },
-      ),
-    onError: (err: Error) =>
-      toast.error(t('web.memoryInspector.toasts.testFailed'), {
-        description: err.message,
-      }),
-  })
-
   const records = useMemo(() => {
     if (searchHits) return searchHits.map((h) => ({ memory: h.memory, similarity: h.similarity }))
     return (browse.data ?? []).map((m) => ({ memory: m as MemoryRecord, similarity: undefined }))
@@ -319,7 +295,7 @@ export function MemoryInspector() {
             ) : status ? (
               <>
                 <Badge variant="success" className="font-mono">
-                  {status.embedder}
+                  {status.effective_embedder ?? status.embedder}
                 </Badge>
                 <span className="text-[11px] text-muted-foreground">
                   {t('web.memoryInspector.status.dimensions', {
@@ -336,30 +312,33 @@ export function MemoryInspector() {
               </span>
             )}
           </div>
-          <p className="text-[10px] text-muted-foreground/70 leading-snug">
-            <Trans
-              i18nKey="web.memoryInspector.statusBody"
-              components={{
-                1: <code className="font-mono mx-1" />,
-                3: <code className="font-mono mx-1" />,
-              }}
-            />
-          </p>
+          {status &&
+            (status.is_floor || status.degraded) &&
+            (() => {
+              const model = status.configured_dense?.model ?? ''
+              let msg = ''
+              if (status.is_floor && status.configured_dense) {
+                msg =
+                  status.dense_reachable === false
+                    ? t('web.memoryInspector.status.denseUnreachableFloor', {
+                        model,
+                      })
+                    : t(
+                        'web.memoryInspector.status.denseConfiguredPendingRestart',
+                        { model },
+                      )
+              } else if (status.is_floor) {
+                msg = t('web.memoryInspector.status.floorNoModel')
+              } else {
+                msg = t('web.memoryInspector.status.denseDegraded')
+              }
+              return (
+                <p className="text-[10px] text-amber-400/90 leading-snug">
+                  {msg}
+                </p>
+              )
+            })()}
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-7 text-[11px]"
-          onClick={() => test.mutate()}
-          disabled={test.isPending}
-        >
-          {test.isPending ? (
-            <Loader2 className="size-3 animate-spin" />
-          ) : (
-            t('web.memoryInspector.status.testButton')
-          )}
-        </Button>
       </div>
 
       {/* Cross-embedder migration banner — only shown when there are

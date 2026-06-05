@@ -354,7 +354,8 @@ class _TranslationsMemoryWorkersZh extends TranslationsMemoryWorkersEn {
 	@override String get errorTitle => '端点不可达';
 	@override String get errorDetail => '/api/v1/memory/workers 路由在 M25 中是新增的 — opendray 二进制可能需要重启以挂载这些路由并运行迁移 0029。';
 	@override String get summarizerOnlyBadge => '仅 summarizer';
-	@override String get summarizerInfo => '使用注册表默认 summarizer 提供商。在 Web 管理端选择具体行。';
+	@override String get summarizerProviderLabel => 'Summarizer 提供商';
+	@override String get registryDefault => '注册表默认';
 	@override String get agentWarning => 'Agent 模式每次调用都会生成无头 CLI。延迟约 5-15 秒（相比 summarizer 约 1 秒）；成本从 CPU 转移到你的 Claude / Gemini 配额。';
 	@override String get noCalls24h => '过去 24 小时没有调用。';
 	@override String testOkSnack({required Object label, required Object duration}) => '${label} OK — ${duration}ms';
@@ -808,6 +809,7 @@ class _TranslationsMemoryZh extends TranslationsMemoryEn {
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
+	@override late final _TranslationsMemoryStatusZh status = _TranslationsMemoryStatusZh._(_root);
 	@override String get title => '记忆';
 	@override String get more => '更多';
 	@override String get workers => '记忆工作器';
@@ -1111,7 +1113,6 @@ class _TranslationsWebMemoryInspectorZh extends TranslationsWebMemoryInspectorEn
 
 	// Translations
 	@override late final _TranslationsWebMemoryInspectorStatusZh status = _TranslationsWebMemoryInspectorStatusZh._(_root);
-	@override String get statusBody => '这是网关当前用于每次 <1>memory_search</1> / <3>memory_store</3> 调用的 embedder。如果与上方配置不一致，说明有未保存的更改 — 点击 Save 后重启服务即可生效。';
 	@override late final _TranslationsWebMemoryInspectorScopeZh scope = _TranslationsWebMemoryInspectorScopeZh._(_root);
 	@override late final _TranslationsWebMemoryInspectorSearchZh search = _TranslationsWebMemoryInspectorSearchZh._(_root);
 	@override late final _TranslationsWebMemoryInspectorRecordsZh records = _TranslationsWebMemoryInspectorRecordsZh._(_root);
@@ -2380,6 +2381,23 @@ class _TranslationsDataExportStatusZh extends TranslationsDataExportStatusEn {
 	@override String get succeeded => '成功';
 }
 
+// Path: memory.status
+class _TranslationsMemoryStatusZh extends TranslationsMemoryStatusEn {
+	_TranslationsMemoryStatusZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '当前生效 embedder';
+	@override String dimensions({required Object dim, required Object state}) => '${dim} 维 · ${state}';
+	@override String get enabled => '已启用';
+	@override String get disabled => '已禁用';
+	@override String get floorNoModel => '仅关键词（BM25）检索 — 未配置 embedding 模型。在 Settings 配置 dense 端点即可启用语义记忆。';
+	@override String denseConfiguredPendingRestart({required Object model}) => '已配置 ${model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。';
+	@override String denseUnreachableFloor({required Object model}) => '已配置 ${model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。';
+	@override String get denseDegraded => 'dense embedder 已激活，但其端点当前不可达 — 现有向量已保留；新写入与相似度检索暂停，直到端点恢复。';
+}
+
 // Path: memory.rank
 class _TranslationsMemoryRankZh extends TranslationsMemoryRankEn {
 	_TranslationsMemoryRankZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -3129,7 +3147,10 @@ class _TranslationsWebMemoryInspectorStatusZh extends TranslationsWebMemoryInspe
 	@override String dimensions({required Object dim, required Object state}) => '${dim} 维 · ${state}';
 	@override String get enabled => '已启用';
 	@override String get disabled => '已禁用';
-	@override String get testButton => '测试 embedder';
+	@override String get floorNoModel => '仅关键词（BM25）检索 — 未配置 embedding 模型。在 Settings 配置 dense 的 [memory.http] 端点即可启用语义记忆。';
+	@override String denseConfiguredPendingRestart({required Object model}) => '已配置 ${model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。';
+	@override String denseUnreachableFloor({required Object model}) => '已配置 ${model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。';
+	@override String get denseDegraded => 'dense embedder 已激活，但其端点当前不可达 — 现有向量已保留；新写入与相似度检索暂停，直到端点恢复。';
 }
 
 // Path: web.memoryInspector.scope
@@ -3231,9 +3252,6 @@ class _TranslationsWebMemoryInspectorToastsZh extends TranslationsWebMemoryInspe
 	@override String get syncEmpty => '没有需要同步的新 .md 文件';
 	@override String get syncEmptyDescription => '已是最新，或该 cwd 没有 Claude memory 目录。';
 	@override String get syncFailed => '同步失败';
-	@override String testOk({required Object embedder, required Object dim}) => 'Embedder OK：${embedder} · ${dim} 维';
-	@override String testOkDescription({required Object preview}) => 'vector_preview = [${preview}…]';
-	@override String get testFailed => 'Embedder 探测失败';
 }
 
 // Path: web.memoryInspector.bulkDelete
@@ -5751,7 +5769,6 @@ class _TranslationsSettingsServerSettingsFieldsZh extends TranslationsSettingsSe
 	@override String get defaultTopK => '默认 top-k';
 	@override String get similarityThreshold => '相似度阈值';
 	@override String get defaultScope => '默认范围';
-	@override String get chromemHelper => '当 store=chromem 时。';
 	@override String get preserveHelper => '留空 = 保留当前值。';
 	@override String get localModelName => '本地模型名';
 	@override String get localLibraryPath => '本地库路径';
@@ -5772,7 +5789,6 @@ class _TranslationsSettingsServerSettingsFieldsZh extends TranslationsSettingsSe
 	@override String get backendHelper => 'auto 选择最佳可用；local 需要 ONNX。';
 	@override String get similarityHelper => '0.0–1.0；低于此值的结果会被过滤。';
 	@override String defaultFallback({required Object value}) => '默认：${value}';
-	@override String get chromemPath => 'chromem 路径';
 	@override String get httpBaseUrl => 'HTTP base URL';
 	@override String get httpModel => 'HTTP model';
 	@override String get httpApiKey => 'HTTP api key';
@@ -7842,8 +7858,10 @@ extension on TranslationsZh {
 			'web.memoryInspector.status.dimensions' => ({required Object dim, required Object state}) => '${dim} 维 · ${state}',
 			'web.memoryInspector.status.enabled' => '已启用',
 			'web.memoryInspector.status.disabled' => '已禁用',
-			'web.memoryInspector.status.testButton' => '测试 embedder',
-			'web.memoryInspector.statusBody' => '这是网关当前用于每次 <1>memory_search</1> / <3>memory_store</3> 调用的 embedder。如果与上方配置不一致，说明有未保存的更改 — 点击 Save 后重启服务即可生效。',
+			'web.memoryInspector.status.floorNoModel' => '仅关键词（BM25）检索 — 未配置 embedding 模型。在 Settings 配置 dense 的 [memory.http] 端点即可启用语义记忆。',
+			'web.memoryInspector.status.denseConfiguredPendingRestart' => ({required Object model}) => '已配置 ${model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。',
+			'web.memoryInspector.status.denseUnreachableFloor' => ({required Object model}) => '已配置 ${model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。',
+			'web.memoryInspector.status.denseDegraded' => 'dense embedder 已激活，但其端点当前不可达 — 现有向量已保留；新写入与相似度检索暂停，直到端点恢复。',
 			'web.memoryInspector.scope.label' => 'Scope',
 			'web.memoryInspector.scope.scopeKey' => 'Scope key',
 			'web.memoryInspector.scope.scopeKeyIgnored' => '(global 时忽略)',
@@ -7901,9 +7919,6 @@ extension on TranslationsZh {
 			'web.memoryInspector.toasts.syncEmpty' => '没有需要同步的新 .md 文件',
 			'web.memoryInspector.toasts.syncEmptyDescription' => '已是最新，或该 cwd 没有 Claude memory 目录。',
 			'web.memoryInspector.toasts.syncFailed' => '同步失败',
-			'web.memoryInspector.toasts.testOk' => ({required Object embedder, required Object dim}) => 'Embedder OK：${embedder} · ${dim} 维',
-			'web.memoryInspector.toasts.testOkDescription' => ({required Object preview}) => 'vector_preview = [${preview}…]',
-			'web.memoryInspector.toasts.testFailed' => 'Embedder 探测失败',
 			'web.memoryInspector.bulkDelete.title' => '删除此 scope 的全部记忆?',
 			'web.memoryInspector.bulkDelete.description' => '这是一次 SQL 操作 — 该 scope 下全部记忆将被原子性删除。通过 Claude 镜像摄取的记忆会在下次 <1>同步 .md</1> 时重新出现；其余内容永久消失。',
 			'web.memoryInspector.bulkDelete.scope' => 'Scope',
@@ -7912,9 +7927,9 @@ extension on TranslationsZh {
 			'web.memoryInspector.bulkDelete.items_one' => ({required Object count}) => '${count} 条记忆',
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} 条记忆',
 			'web.memoryInspector.bulkDelete.cancel' => '取消',
+			'web.memoryInspector.bulkDelete.deleteAll' => '全部删除',
 			_ => null,
 		} ?? switch (path) {
-			'web.memoryInspector.bulkDelete.deleteAll' => '全部删除',
 			'web.memoryInspector.addMem.title' => '添加记忆',
 			'web.memoryInspector.addMem.description' => '手动创建一条记忆。Agent 会通过 <1>memory_store</1> MCP 工具自动创建；此表单用于运维想跳过 agent 直接录入事实的场景。',
 			'web.memoryInspector.addMem.textLabel' => '文本',
@@ -8426,9 +8441,9 @@ extension on TranslationsZh {
 			'web.plugins.mcp.empty' => '尚无 MCP 服务器。添加一个以为 agent 会话暴露额外工具。',
 			'web.plugins.mcp.columns.name' => '名称',
 			'web.plugins.mcp.columns.transport' => 'Transport',
+			'web.plugins.mcp.columns.spec' => '规范',
 			_ => null,
 		} ?? switch (path) {
-			'web.plugins.mcp.columns.spec' => '规范',
 			'web.plugins.mcp.columns.enabled' => '启用',
 			'web.plugins.mcp.noUrl' => '无 URL',
 			'web.plugins.mcp.noCommand' => '无 command',
@@ -8940,9 +8955,9 @@ extension on TranslationsZh {
 			'web.serverSettings.httpHelpers.presetTip.lmStudio' => 'LM Studio 本地服务',
 			'web.serverSettings.httpHelpers.presetTip.openai' => 'OpenAI 云端（需要 API key）',
 			'web.serverSettings.probe.unreachable' => ({required Object error}) => '✗ 不可达：${error}',
+			'web.serverSettings.probe.connectionFailed' => '连接失败',
 			_ => null,
 		} ?? switch (path) {
-			'web.serverSettings.probe.connectionFailed' => '连接失败',
 			'web.serverSettings.probe.reachable' => ({required Object detected, required Object total, required Object embedding}) => '✓ 可达 ${detected}· 共 ${total} 个模型 · ${embedding} 个嵌入',
 			'web.serverSettings.probe.modelMissing' => ({required Object model}) => '⚠ 配置的模型 ${model} 不在列表中。从下方嵌入模型中选一个，或修正名称。',
 			'web.serverSettings.probe.embeddingModelsLabel' => '嵌入模型：',
@@ -9454,9 +9469,9 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.save' => '保存',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
+			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
 			_ => null,
 		} ?? switch (path) {
-			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
 			'sessions.spawnSheet.cancel' => '取消',
 			'sessions.spawnSheet.spawn' => '创建',
 			'sessions.spawnSheet.providerLabel' => '提供商',
@@ -9707,7 +9722,8 @@ extension on TranslationsZh {
 			'memoryWorkers.errorTitle' => '端点不可达',
 			'memoryWorkers.errorDetail' => '/api/v1/memory/workers 路由在 M25 中是新增的 — opendray 二进制可能需要重启以挂载这些路由并运行迁移 0029。',
 			'memoryWorkers.summarizerOnlyBadge' => '仅 summarizer',
-			'memoryWorkers.summarizerInfo' => '使用注册表默认 summarizer 提供商。在 Web 管理端选择具体行。',
+			'memoryWorkers.summarizerProviderLabel' => 'Summarizer 提供商',
+			'memoryWorkers.registryDefault' => '注册表默认',
 			'memoryWorkers.agentWarning' => 'Agent 模式每次调用都会生成无头 CLI。延迟约 5-15 秒（相比 summarizer 约 1 秒）；成本从 CPU 转移到你的 Claude / Gemini 配额。',
 			'memoryWorkers.noCalls24h' => '过去 24 小时没有调用。',
 			'memoryWorkers.testOkSnack' => ({required Object label, required Object duration}) => '${label} OK — ${duration}ms',
@@ -10373,6 +10389,14 @@ extension on TranslationsZh {
 			'dataExport.status.failed' => '失败',
 			'dataExport.status.expired' => '过期',
 			'dataExport.status.succeeded' => '成功',
+			'memory.status.label' => '当前生效 embedder',
+			'memory.status.dimensions' => ({required Object dim, required Object state}) => '${dim} 维 · ${state}',
+			'memory.status.enabled' => '已启用',
+			'memory.status.disabled' => '已禁用',
+			'memory.status.floorNoModel' => '仅关键词（BM25）检索 — 未配置 embedding 模型。在 Settings 配置 dense 端点即可启用语义记忆。',
+			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => '已配置 ${model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。',
+			'memory.status.denseUnreachableFloor' => ({required Object model}) => '已配置 ${model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。',
+			'memory.status.denseDegraded' => 'dense embedder 已激活，但其端点当前不可达 — 现有向量已保留；新写入与相似度检索暂停，直到端点恢复。',
 			'memory.title' => '记忆',
 			'memory.more' => '更多',
 			'memory.workers' => '记忆工作器',
@@ -10474,6 +10498,8 @@ extension on TranslationsZh {
 			'settings.logViewer.levels.debug' => '调试',
 			'settings.logViewer.levels.info' => '信息',
 			'settings.logViewer.levels.warn' => '警告',
+			_ => null,
+		} ?? switch (path) {
 			'settings.logViewer.levels.error' => '错误',
 			'settings.serverSettings.title' => '服务器设置',
 			'settings.serverSettings.reloadTooltip' => '从服务器重新加载',
@@ -10482,8 +10508,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.restartConfirmBody' => '网关将自我 exec。手机应用可能短暂断开连接。',
 			'settings.serverSettings.restart' => '重启',
 			'settings.serverSettings.restartQueuedSnack' => '已请求重启。稍后下拉刷新。',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.restartFailedApi' => ({required Object error}) => '重启失败：${error}',
 			'settings.serverSettings.restartFailedGeneric' => ({required Object error}) => '重启失败：${error}',
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => '加载自：${path}',
@@ -10541,7 +10565,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.defaultTopK' => '默认 top-k',
 			'settings.serverSettings.fields.similarityThreshold' => '相似度阈值',
 			'settings.serverSettings.fields.defaultScope' => '默认范围',
-			'settings.serverSettings.fields.chromemHelper' => '当 store=chromem 时。',
 			'settings.serverSettings.fields.preserveHelper' => '留空 = 保留当前值。',
 			'settings.serverSettings.fields.localModelName' => '本地模型名',
 			'settings.serverSettings.fields.localLibraryPath' => '本地库路径',
@@ -10562,7 +10585,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.backendHelper' => 'auto 选择最佳可用；local 需要 ONNX。',
 			'settings.serverSettings.fields.similarityHelper' => '0.0–1.0；低于此值的结果会被过滤。',
 			'settings.serverSettings.fields.defaultFallback' => ({required Object value}) => '默认：${value}',
-			'settings.serverSettings.fields.chromemPath' => 'chromem 路径',
 			'settings.serverSettings.fields.httpBaseUrl' => 'HTTP base URL',
 			'settings.serverSettings.fields.httpModel' => 'HTTP model',
 			'settings.serverSettings.fields.httpApiKey' => 'HTTP api key',

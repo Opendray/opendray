@@ -552,9 +552,11 @@
         "dimensions": "{dim}-dim · {state}",
         "enabled": "enabled",
         "disabled": "disabled",
-        "testButton": "Test embedder"
+        "floorNoModel": "Keyword (BM25) retrieval only — no embedding model configured. Add a dense [memory.http] endpoint in Settings to enable semantic memory.",
+        "denseConfiguredPendingRestart": "Configured {model} (dense) — restart the gateway to activate semantic memory and re-embed existing memories.",
+        "denseUnreachableFloor": "Configured {model} (dense) but the endpoint is unreachable — using the keyword floor until it responds (auto-upgrades on restart).",
+        "denseDegraded": "Dense embedder active but its endpoint is unreachable right now — existing vectors are preserved; new writes and similarity search pause until it responds."
       },
-      "statusBody": "This is the embedder the gateway is currently using for every <1>memory_search</1> / <3>memory_store</3> call. If this doesn't match the configuration above, you have unsaved changes — click Save then Restart server to apply.",
       "scope": {
         "label": "Scope",
         "scopeKey": "Scope key",
@@ -622,10 +624,7 @@
         "syncIngested_other": "Ingested {count} new memory files",
         "syncEmpty": "No new .md files to sync",
         "syncEmptyDescription": "Already in sync, or no Claude memory dir for this cwd.",
-        "syncFailed": "Sync failed",
-        "testOk": "Embedder OK: {embedder} · {dim} dimensions",
-        "testOkDescription": "vector_preview = [{preview}…]",
-        "testFailed": "Embedder probe failed"
+        "syncFailed": "Sync failed"
       },
       "bulkDelete": {
         "title": "Delete every memory in this scope?",
@@ -2947,7 +2946,8 @@
     "errorTitle": "Endpoint not reachable",
     "errorDetail": "The /api/v1/memory/workers routes are new in M25 — the opendray binary may need a restart to mount them and run migration 0029.",
     "summarizerOnlyBadge": "summarizer-only",
-    "summarizerInfo": "Uses the registry default summarizer provider. Pick a specific row on the web admin.",
+    "summarizerProviderLabel": "Summarizer provider",
+    "registryDefault": "Registry default",
     "agentWarning": "Agent mode spawns a headless CLI per call. Latency ~5-15s (vs ~1s summarizer); cost shifts from CPU to your Claude/Gemini quota.",
     "noCalls24h": "No calls in last 24h.",
     "testOkSnack": "{label} OK — {duration}ms",
@@ -3755,6 +3755,16 @@
     }
   },
   "memory": {
+    "status": {
+      "label": "Active embedder",
+      "dimensions": "{dim}-dim · {state}",
+      "enabled": "enabled",
+      "disabled": "disabled",
+      "floorNoModel": "Keyword (BM25) retrieval only — no embedding model configured. Configure a dense endpoint in Settings to enable semantic memory.",
+      "denseConfiguredPendingRestart": "Configured {model} (dense) — restart the gateway to activate semantic memory and re-embed existing memories.",
+      "denseUnreachableFloor": "Configured {model} (dense) but the endpoint is unreachable — using the keyword floor until it responds (auto-upgrades on restart).",
+      "denseDegraded": "Dense embedder active but its endpoint is unreachable right now — existing vectors are preserved; new writes and similarity search pause until it responds."
+    },
     "title": "Memory",
     "more": "More",
     "workers": "Memory workers",
@@ -3963,7 +3973,6 @@
         "defaultTopK": "Default top-k",
         "similarityThreshold": "Similarity threshold",
         "defaultScope": "Default scope",
-        "chromemHelper": "When store=chromem.",
         "preserveHelper": "Blank to preserve current.",
         "localModelName": "Local model name",
         "localLibraryPath": "Local library path",
@@ -3984,7 +3993,6 @@
         "backendHelper": "auto picks the best available; local needs ONNX.",
         "similarityHelper": "0.0–1.0; results under this are filtered out.",
         "defaultFallback": "Default: {value}",
-        "chromemPath": "chromem path",
         "httpBaseUrl": "HTTP base URL",
         "httpModel": "HTTP model",
         "httpApiKey": "HTTP api key",

@@ -661,3 +661,123 @@ write hot path** (decisions 5–6).
   pre-upgrade data and reconciling row counts to no loss.
 - Net negative line count in `internal/memory*` after the arc (the
   redesign removes more than it adds).
+
+---
+
+## 11. Phase 7 — Config/settings consistency + universal `auto` embedder
+
+> **Status:** Approved (owner-confirmed 2026-06-06). A follow-on arc that
+> closes the gap between the M-U *implementation* (Phases 0–6) and the
+> *settings surface* operators actually see, and turns `backend = "auto"`
+> into a truly universal, self-configuring choice. Delivered on the same
+> `feat/memory-unification` branch.
+
+### 11.1 Why
+
+The M-U arc unified the engine but left the **config/settings surface**
+describing the pre-M-U world, and left one UX trap that only the designer
+could see through:
+
+- **Leftover deprecated keys/features.** The `session` scope (removed in
+  Phase 1) is still offered in the server-settings *default-scope*
+  selector on **both** web (`ServerSettings.tsx`) and mobile
+  (`server_settings_screen.dart`) — Phase 1 dropped session from the
+  memory read/write UI but missed the settings selector. `config.go` doc
+  comments still describe the cleaner as a *proposal* queue (Phase 4 made
+  it auto-apply), still list `session` as a valid scope, still frame
+  ONNX as "Phase 2 will add", and still present `chromem` as a real store
+  even though `buildStore` only implements pgvector and **errors on
+  `store="chromem"`** (a config that bricks boot). `[memory.cleaner].
+  summarizer_id` is a dead key since M25 (dispatch moved to the worker
+  registry).
+- **New features with no config surface.** `LifecycleDormantDays` (Phase
+  4.3) and `GracePeriod` (Phase 4.2) exist on `cleaner.Config` with
+  hardcoded defaults (90d / 30d) but are **not wired from `config.toml`**
+  — operators cannot tune or disable dormant auto-archive or the restore
+  window. `config.example.toml` has **no `[memory]` block at all**.
+- **The `auto` trap.** `buildEmbedder` returns BM25 unconditionally for
+  `backend="auto"` and never consults the `AutoDetect` probe or the
+  configured `[memory.http]` endpoint. So an operator who configures a
+  dense endpoint but leaves the default `backend="auto"` silently runs
+  BM25 with their dense model dormant — and a fresh operator who never
+  installed an embedding model has no signal that semantic memory is off.
+  Phase 6 *deliberately* kept `auto`=BM25 to avoid a surprise re-embed on
+  upgrade — but that fear is now obsolete: **the Phase 6 converge loop
+  already makes re-embed safe, automatic, resumable, and rate-limited.**
+
+### 11.2 Universal `auto` embedder (supersedes the Phase 6 "auto never auto-promotes" decision)
+
+`backend = "auto"` (the default) now resolves by **availability tiering,
+upgrade-only**, in `resolveMemoryService` (which has both the config and
+the store, so it can probe + read `CountByEmbedder`):
+
+1. **Explicit backends unchanged.** `bm25` / `http` / `local` behave
+   exactly as before. Only `auto` (and empty) gains intelligence.
+2. **`[memory.http]` configured + reachable** (`ProbeEndpoint` succeeds)
+   → use the dense HTTP embedder. The converge loop re-embeds any BM25
+   rows → dense automatically. *Kills the "configured but dormant" trap.*
+3. **Nothing configured / not reachable, and no dense rows yet** → BM25
+   floor. *A fresh install with no embedding model Just Works.*
+4. **Upgrade-only, never churn (the owner-chosen posture).** Intent is
+   derived from `CountByEmbedder`: if the DB already holds rows from a
+   dense embedder, that is the intended tier.
+   - Dense intent + endpoint reachable → dense (steady state).
+   - Dense intent + endpoint **unreachable at boot** → **keep the dense
+     embedder active** (its `Name()` matches the existing rows, so reads
+     by importance×recency / spawn injection keep working, and the
+     converge loop sees **no drift → no re-embed → no churn**). Query
+     *similarity search* and new *writes* degrade with a loud WARN until
+     the endpoint responds, then auto-resume. The system **never
+     downgrades dense→BM25**, because that would both hide every dense
+     row (`WHERE embedder=$active`) and trigger a lossy re-embed.
+   - **Edge — dense rows but `[memory.http]` removed from config** →
+     **fail-closed** with a remediation message ("restore the endpoint,
+     or set `backend=\"bm25\"` to abandon dense"), because we cannot
+     reconstruct the dense embedder and must not silently churn.
+5. **`local` (ONNX) stays explicit.** `auto` covers the common
+   HTTP-dense + BM25-floor cases; an operator who wants the cgo ONNX path
+   sets `backend="local"` explicitly (it depends on a build tag + on-disk
+   model files, so silent adoption is inappropriate).
+
+**Status surfacing (the "operator can't see it" fix).** `/memory/status`
+(and the web/mobile Memory settings) now show the **effective** embedder,
+the **configured** embedder, and a **degraded** flag, e.g. "Active: BM25
+keyword (no embedding model configured — semantic memory off)", "Active:
+BM25 (a dense endpoint is configured but unreachable — using BM25 until it
+responds)", or "Active: Qwen3 dense (converging N rows…)".
+
+### 11.3 Settings/config cleanup (subtractive, matches §2.4)
+
+- Drop the `session` option from the web + mobile default-scope selectors
+  (→ `project | global`); regen slang; i18n parity.
+- Remove `chromem` from `config.go` docs, `config.toml`, `settings.ts`,
+  and the mobile field list (single pgvector store, §Pillar 1). `Store`
+  stays as a pgvector-only, forward-compat key.
+- Rewrite the stale `config.go` doc comments (cleaner "proposes" →
+  auto-apply soft-archive; scope drops session; ONNX/chromem framing;
+  `similarity_threshold` default is **0.1**, not 0.7).
+- Remove the orphaned cleaner approval-queue routes (`/memory/cleanup/
+  decisions`, `/approve`, `/reject`) — no frontend caller after Phase 4.4;
+  the `memory_cleanup_decisions` table stays read-only for audit.
+
+### 11.4 New config knobs (close the §11.1 omissions)
+
+- `[memory.cleaner].lifecycle_dormant_days` → wired into
+  `cleaner.Config.LifecycleDormantDays` (default 90; negative disables).
+  The §8.4 "60 days" figure is **superseded** by the 90-day value that
+  Phase 4.3 shipped and validated; the doc is reconciled to 90.
+- `[memory.cleaner].grace_days` → wired into `cleaner.Config.GracePeriod`
+  (default 30; decision §8.2).
+- `config.example.toml` gains a fully-documented `[memory]` block (auto
+  tiering, gatekeeper off-by-default, cleaner, lifecycle/grace).
+
+### 11.5 Acceptance
+
+- A fresh install with no embedding model runs BM25 and the UI says so.
+- Configuring `[memory.http]` and restarting switches to dense with no
+  manual `backend` edit and no data loss (converge handles the re-embed).
+- A dense endpoint outage never downgrades or churns; it degrades and
+  auto-recovers.
+- No removed feature (`session`, chromem, approval queue) remains
+  selectable/dead in any settings surface; every shipped maintenance
+  knob (dormancy, grace) is reachable from `config.toml`.

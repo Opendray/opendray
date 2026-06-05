@@ -354,7 +354,8 @@ class _TranslationsMemoryWorkersEs extends TranslationsMemoryWorkersEn {
 	@override String get errorTitle => 'Endpoint no accesible';
 	@override String get errorDetail => 'Las rutas /api/v1/memory/workers son nuevas en M25. Puede que el binario de opendray necesite un reinicio para montarlas y ejecutar la migración 0029.';
 	@override String get summarizerOnlyBadge => 'solo resumidor';
-	@override String get summarizerInfo => 'Usa el proveedor de resumidor predeterminado del registro. Elige una fila específica en el panel de administración web.';
+	@override String get summarizerProviderLabel => 'Proveedor de resumidor';
+	@override String get registryDefault => 'Predeterminado del registro';
 	@override String get agentWarning => 'El modo agente lanza un CLI headless por cada llamada. Latencia ~5-15s (frente a ~1s del resumidor); el coste pasa de la CPU a tu quota de Claude/Gemini.';
 	@override String get noCalls24h => 'Sin llamadas en las últimas 24h.';
 	@override String testOkSnack({required Object label, required Object duration}) => '${label} OK, ${duration}ms';
@@ -808,6 +809,7 @@ class _TranslationsMemoryEs extends TranslationsMemoryEn {
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
+	@override late final _TranslationsMemoryStatusEs status = _TranslationsMemoryStatusEs._(_root);
 	@override String get title => 'Memoria';
 	@override String get more => 'Más';
 	@override String get workers => 'Workers de memoria';
@@ -1111,7 +1113,6 @@ class _TranslationsWebMemoryInspectorEs extends TranslationsWebMemoryInspectorEn
 
 	// Translations
 	@override late final _TranslationsWebMemoryInspectorStatusEs status = _TranslationsWebMemoryInspectorStatusEs._(_root);
-	@override String get statusBody => 'Este es el embedder que el gateway está usando actualmente para cada llamada a <1>memory_search</1> / <3>memory_store</3>. Si esto no coincide con la configuración de arriba, tienes cambios sin guardar. Haz clic en Guardar y luego en Reiniciar servidor para aplicarlos.';
 	@override late final _TranslationsWebMemoryInspectorScopeEs scope = _TranslationsWebMemoryInspectorScopeEs._(_root);
 	@override late final _TranslationsWebMemoryInspectorSearchEs search = _TranslationsWebMemoryInspectorSearchEs._(_root);
 	@override late final _TranslationsWebMemoryInspectorRecordsEs records = _TranslationsWebMemoryInspectorRecordsEs._(_root);
@@ -2380,6 +2381,23 @@ class _TranslationsDataExportStatusEs extends TranslationsDataExportStatusEn {
 	@override String get succeeded => 'completado';
 }
 
+// Path: memory.status
+class _TranslationsMemoryStatusEs extends TranslationsMemoryStatusEn {
+	_TranslationsMemoryStatusEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Embedder activo';
+	@override String dimensions({required Object dim, required Object state}) => '${dim}-dim · ${state}';
+	@override String get enabled => 'habilitado';
+	@override String get disabled => 'deshabilitado';
+	@override String get floorNoModel => 'Solo recuperación por palabras clave (BM25) — no hay modelo de embedding configurado. Configura un endpoint denso en Settings para habilitar la memoria semántica.';
+	@override String denseConfiguredPendingRestart({required Object model}) => 'Configurado ${model} (denso) — reinicia el gateway para activar la memoria semántica y re-embeber las memorias existentes.';
+	@override String denseUnreachableFloor({required Object model}) => 'Configurado ${model} (denso) pero el endpoint está inalcanzable — se usa el piso de palabras clave hasta que responda (se actualiza al reiniciar).';
+	@override String get denseDegraded => 'Embedder denso activo pero su endpoint está inalcanzable ahora — los vectores existentes se conservan; las nuevas escrituras y la búsqueda por similitud se pausan hasta que responda.';
+}
+
 // Path: memory.rank
 class _TranslationsMemoryRankEs extends TranslationsMemoryRankEn {
 	_TranslationsMemoryRankEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -3129,7 +3147,10 @@ class _TranslationsWebMemoryInspectorStatusEs extends TranslationsWebMemoryInspe
 	@override String dimensions({required Object dim, required Object state}) => '${dim}-dim · ${state}';
 	@override String get enabled => 'habilitado';
 	@override String get disabled => 'deshabilitado';
-	@override String get testButton => 'Probar embedder';
+	@override String get floorNoModel => 'Solo recuperación por palabras clave (BM25) — no hay modelo de embedding configurado. Añade un endpoint denso [memory.http] en Settings para habilitar la memoria semántica.';
+	@override String denseConfiguredPendingRestart({required Object model}) => 'Configurado ${model} (denso) — reinicia el gateway para activar la memoria semántica y re-embeber las memorias existentes.';
+	@override String denseUnreachableFloor({required Object model}) => 'Configurado ${model} (denso) pero el endpoint está inalcanzable — se usa el piso de palabras clave hasta que responda (se actualiza al reiniciar).';
+	@override String get denseDegraded => 'Embedder denso activo pero su endpoint está inalcanzable ahora — los vectores existentes se conservan; las nuevas escrituras y la búsqueda por similitud se pausan hasta que responda.';
 }
 
 // Path: web.memoryInspector.scope
@@ -3231,9 +3252,6 @@ class _TranslationsWebMemoryInspectorToastsEs extends TranslationsWebMemoryInspe
 	@override String get syncEmpty => 'No hay nuevos archivos .md que sincronizar';
 	@override String get syncEmptyDescription => 'Ya está sincronizado, o no hay directorio de memoria de Claude para este cwd.';
 	@override String get syncFailed => 'La sincronización falló';
-	@override String testOk({required Object embedder, required Object dim}) => 'Embedder OK: ${embedder} · ${dim} dimensiones';
-	@override String testOkDescription({required Object preview}) => 'vector_preview = [${preview}…]';
-	@override String get testFailed => 'El sondeo del embedder falló';
 }
 
 // Path: web.memoryInspector.bulkDelete
@@ -5751,7 +5769,6 @@ class _TranslationsSettingsServerSettingsFieldsEs extends TranslationsSettingsSe
 	@override String get defaultTopK => 'Top-k por defecto';
 	@override String get similarityThreshold => 'Umbral de similitud';
 	@override String get defaultScope => 'Ámbito por defecto';
-	@override String get chromemHelper => 'Cuando store=chromem.';
 	@override String get preserveHelper => 'En blanco para conservar el actual.';
 	@override String get localModelName => 'Nombre del modelo local';
 	@override String get localLibraryPath => 'Ruta de la biblioteca local';
@@ -5772,7 +5789,6 @@ class _TranslationsSettingsServerSettingsFieldsEs extends TranslationsSettingsSe
 	@override String get backendHelper => 'auto elige el mejor disponible; local necesita ONNX.';
 	@override String get similarityHelper => '0.0-1.0; los resultados por debajo de esto se filtran.';
 	@override String defaultFallback({required Object value}) => 'Por defecto: ${value}';
-	@override String get chromemPath => 'Ruta de chromem';
 	@override String get httpBaseUrl => 'URL base HTTP';
 	@override String get httpModel => 'Modelo HTTP';
 	@override String get httpApiKey => 'API key HTTP';
@@ -7842,8 +7858,10 @@ extension on TranslationsEs {
 			'web.memoryInspector.status.dimensions' => ({required Object dim, required Object state}) => '${dim}-dim · ${state}',
 			'web.memoryInspector.status.enabled' => 'habilitado',
 			'web.memoryInspector.status.disabled' => 'deshabilitado',
-			'web.memoryInspector.status.testButton' => 'Probar embedder',
-			'web.memoryInspector.statusBody' => 'Este es el embedder que el gateway está usando actualmente para cada llamada a <1>memory_search</1> / <3>memory_store</3>. Si esto no coincide con la configuración de arriba, tienes cambios sin guardar. Haz clic en Guardar y luego en Reiniciar servidor para aplicarlos.',
+			'web.memoryInspector.status.floorNoModel' => 'Solo recuperación por palabras clave (BM25) — no hay modelo de embedding configurado. Añade un endpoint denso [memory.http] en Settings para habilitar la memoria semántica.',
+			'web.memoryInspector.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configurado ${model} (denso) — reinicia el gateway para activar la memoria semántica y re-embeber las memorias existentes.',
+			'web.memoryInspector.status.denseUnreachableFloor' => ({required Object model}) => 'Configurado ${model} (denso) pero el endpoint está inalcanzable — se usa el piso de palabras clave hasta que responda (se actualiza al reiniciar).',
+			'web.memoryInspector.status.denseDegraded' => 'Embedder denso activo pero su endpoint está inalcanzable ahora — los vectores existentes se conservan; las nuevas escrituras y la búsqueda por similitud se pausan hasta que responda.',
 			'web.memoryInspector.scope.label' => 'Scope',
 			'web.memoryInspector.scope.scopeKey' => 'Clave de scope',
 			'web.memoryInspector.scope.scopeKeyIgnored' => '(ignorado para global)',
@@ -7901,9 +7919,6 @@ extension on TranslationsEs {
 			'web.memoryInspector.toasts.syncEmpty' => 'No hay nuevos archivos .md que sincronizar',
 			'web.memoryInspector.toasts.syncEmptyDescription' => 'Ya está sincronizado, o no hay directorio de memoria de Claude para este cwd.',
 			'web.memoryInspector.toasts.syncFailed' => 'La sincronización falló',
-			'web.memoryInspector.toasts.testOk' => ({required Object embedder, required Object dim}) => 'Embedder OK: ${embedder} · ${dim} dimensiones',
-			'web.memoryInspector.toasts.testOkDescription' => ({required Object preview}) => 'vector_preview = [${preview}…]',
-			'web.memoryInspector.toasts.testFailed' => 'El sondeo del embedder falló',
 			'web.memoryInspector.bulkDelete.title' => '¿Eliminar todas las memorias de este scope?',
 			'web.memoryInspector.bulkDelete.description' => 'Esto es una única operación SQL: todas las memorias del scope especificado se eliminan de forma atómica. Las memorias que se importaron a través del mirror de Claude reaparecen en la siguiente ejecución de <1>Sincronizar .md</1>; todo lo demás se pierde para siempre.',
 			'web.memoryInspector.bulkDelete.scope' => 'Scope',
@@ -7912,9 +7927,9 @@ extension on TranslationsEs {
 			'web.memoryInspector.bulkDelete.items_one' => ({required Object count}) => '${count} elemento de memoria',
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} elementos de memoria',
 			'web.memoryInspector.bulkDelete.cancel' => 'Cancelar',
+			'web.memoryInspector.bulkDelete.deleteAll' => 'Eliminar todo',
 			_ => null,
 		} ?? switch (path) {
-			'web.memoryInspector.bulkDelete.deleteAll' => 'Eliminar todo',
 			'web.memoryInspector.addMem.title' => 'Añadir memoria',
 			'web.memoryInspector.addMem.description' => 'Crea manualmente una memoria. Los agentes las crean automáticamente mediante la herramienta MCP <1>memory_store</1>. Este formulario es para los casos en que el operador quiere insertar un hecho sin pasar por un agente.',
 			'web.memoryInspector.addMem.textLabel' => 'Texto',
@@ -8426,9 +8441,9 @@ extension on TranslationsEs {
 			'web.plugins.mcp.empty' => 'Aún no hay servidores MCP. Añade uno para exponer herramientas adicionales a tus sessions de agente.',
 			'web.plugins.mcp.columns.name' => 'Nombre',
 			'web.plugins.mcp.columns.transport' => 'Transport',
+			'web.plugins.mcp.columns.spec' => 'Spec',
 			_ => null,
 		} ?? switch (path) {
-			'web.plugins.mcp.columns.spec' => 'Spec',
 			'web.plugins.mcp.columns.enabled' => 'Habilitado',
 			'web.plugins.mcp.noUrl' => 'sin url',
 			'web.plugins.mcp.noCommand' => 'sin comando',
@@ -8940,9 +8955,9 @@ extension on TranslationsEs {
 			'web.serverSettings.httpHelpers.presetTip.lmStudio' => 'Servidor local de LM Studio',
 			'web.serverSettings.httpHelpers.presetTip.openai' => 'Nube de OpenAI (necesita API key)',
 			'web.serverSettings.probe.unreachable' => ({required Object error}) => '✗ inaccesible: ${error}',
+			'web.serverSettings.probe.connectionFailed' => 'conexión fallida',
 			_ => null,
 		} ?? switch (path) {
-			'web.serverSettings.probe.connectionFailed' => 'conexión fallida',
 			'web.serverSettings.probe.reachable' => ({required Object detected, required Object total, required Object embedding}) => '✓ accesible ${detected}· ${total} modelo(s) en total · ${embedding} embedding',
 			'web.serverSettings.probe.modelMissing' => ({required Object model}) => '⚠ El modelo configurado ${model} no está en la lista. Elige uno de los modelos de embedding de abajo o corrige el nombre.',
 			'web.serverSettings.probe.embeddingModelsLabel' => 'modelos de embedding:',
@@ -9454,9 +9469,9 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.save' => 'Guardar',
 			'sessions.spawnSheet.title' => 'Nueva session',
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
+			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
 			_ => null,
 		} ?? switch (path) {
-			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
 			'sessions.spawnSheet.cancel' => 'Cancelar',
 			'sessions.spawnSheet.spawn' => 'Crear',
 			'sessions.spawnSheet.providerLabel' => 'Proveedor',
@@ -9707,7 +9722,8 @@ extension on TranslationsEs {
 			'memoryWorkers.errorTitle' => 'Endpoint no accesible',
 			'memoryWorkers.errorDetail' => 'Las rutas /api/v1/memory/workers son nuevas en M25. Puede que el binario de opendray necesite un reinicio para montarlas y ejecutar la migración 0029.',
 			'memoryWorkers.summarizerOnlyBadge' => 'solo resumidor',
-			'memoryWorkers.summarizerInfo' => 'Usa el proveedor de resumidor predeterminado del registro. Elige una fila específica en el panel de administración web.',
+			'memoryWorkers.summarizerProviderLabel' => 'Proveedor de resumidor',
+			'memoryWorkers.registryDefault' => 'Predeterminado del registro',
 			'memoryWorkers.agentWarning' => 'El modo agente lanza un CLI headless por cada llamada. Latencia ~5-15s (frente a ~1s del resumidor); el coste pasa de la CPU a tu quota de Claude/Gemini.',
 			'memoryWorkers.noCalls24h' => 'Sin llamadas en las últimas 24h.',
 			'memoryWorkers.testOkSnack' => ({required Object label, required Object duration}) => '${label} OK, ${duration}ms',
@@ -10373,6 +10389,14 @@ extension on TranslationsEs {
 			'dataExport.status.failed' => 'fallido',
 			'dataExport.status.expired' => 'caducado',
 			'dataExport.status.succeeded' => 'completado',
+			'memory.status.label' => 'Embedder activo',
+			'memory.status.dimensions' => ({required Object dim, required Object state}) => '${dim}-dim · ${state}',
+			'memory.status.enabled' => 'habilitado',
+			'memory.status.disabled' => 'deshabilitado',
+			'memory.status.floorNoModel' => 'Solo recuperación por palabras clave (BM25) — no hay modelo de embedding configurado. Configura un endpoint denso en Settings para habilitar la memoria semántica.',
+			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configurado ${model} (denso) — reinicia el gateway para activar la memoria semántica y re-embeber las memorias existentes.',
+			'memory.status.denseUnreachableFloor' => ({required Object model}) => 'Configurado ${model} (denso) pero el endpoint está inalcanzable — se usa el piso de palabras clave hasta que responda (se actualiza al reiniciar).',
+			'memory.status.denseDegraded' => 'Embedder denso activo pero su endpoint está inalcanzable ahora — los vectores existentes se conservan; las nuevas escrituras y la búsqueda por similitud se pausan hasta que responda.',
 			'memory.title' => 'Memoria',
 			'memory.more' => 'Más',
 			'memory.workers' => 'Workers de memoria',
@@ -10474,6 +10498,8 @@ extension on TranslationsEs {
 			'settings.logViewer.levels.debug' => 'Debug',
 			'settings.logViewer.levels.info' => 'Info',
 			'settings.logViewer.levels.warn' => 'Warn',
+			_ => null,
+		} ?? switch (path) {
 			'settings.logViewer.levels.error' => 'Error',
 			'settings.serverSettings.title' => 'Ajustes del servidor',
 			'settings.serverSettings.reloadTooltip' => 'Recargar desde el servidor',
@@ -10482,8 +10508,6 @@ extension on TranslationsEs {
 			'settings.serverSettings.restartConfirmBody' => 'El gateway se ejecutará de nuevo a sí mismo. La app móvil puede perder la conexión brevemente.',
 			'settings.serverSettings.restart' => 'Reiniciar',
 			'settings.serverSettings.restartQueuedSnack' => 'Reinicio solicitado. Desliza para actualizar en un momento.',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.restartFailedApi' => ({required Object error}) => 'Falló el reinicio: ${error}',
 			'settings.serverSettings.restartFailedGeneric' => ({required Object error}) => 'Falló el reinicio: ${error}',
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => 'Cargado desde: ${path}',
@@ -10541,7 +10565,6 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.defaultTopK' => 'Top-k por defecto',
 			'settings.serverSettings.fields.similarityThreshold' => 'Umbral de similitud',
 			'settings.serverSettings.fields.defaultScope' => 'Ámbito por defecto',
-			'settings.serverSettings.fields.chromemHelper' => 'Cuando store=chromem.',
 			'settings.serverSettings.fields.preserveHelper' => 'En blanco para conservar el actual.',
 			'settings.serverSettings.fields.localModelName' => 'Nombre del modelo local',
 			'settings.serverSettings.fields.localLibraryPath' => 'Ruta de la biblioteca local',
@@ -10562,7 +10585,6 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.backendHelper' => 'auto elige el mejor disponible; local necesita ONNX.',
 			'settings.serverSettings.fields.similarityHelper' => '0.0-1.0; los resultados por debajo de esto se filtran.',
 			'settings.serverSettings.fields.defaultFallback' => ({required Object value}) => 'Por defecto: ${value}',
-			'settings.serverSettings.fields.chromemPath' => 'Ruta de chromem',
 			'settings.serverSettings.fields.httpBaseUrl' => 'URL base HTTP',
 			'settings.serverSettings.fields.httpModel' => 'Modelo HTTP',
 			'settings.serverSettings.fields.httpApiKey' => 'API key HTTP',

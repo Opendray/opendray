@@ -63,6 +63,20 @@ export interface MemoryStatus {
   dimensions: number
   enabled: boolean
   auto_detected?: ProbeResult[]
+  /** Configured backend: "auto" | "bm25" | "http" | "local". */
+  backend?: string
+  /** Embedder actually serving (alias of `embedder`). */
+  effective_embedder?: string
+  /** True when the BM25 keyword floor is active (no dense/semantic retrieval). */
+  is_floor?: boolean
+  /** The configured dense endpoint, if any (null when none configured). */
+  configured_dense?: { base_url: string; model: string } | null
+  /** Live probe of the configured dense endpoint (null when none configured). */
+  dense_reachable?: boolean | null
+  /** A dense endpoint is configured but is not the healthy serving tier right now. */
+  degraded?: boolean
+  /** Rows not yet on the active embedder (the background converge backlog). */
+  drift?: number
 }
 
 export interface TestEmbedResponse {

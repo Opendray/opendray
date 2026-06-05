@@ -346,25 +346,75 @@ class MemoryHit {
   final double similarity;
 }
 
+/// The configured dense embedding endpoint (when one is configured).
+class ConfiguredDense {
+  const ConfiguredDense({required this.baseUrl, required this.model});
+
+  factory ConfiguredDense.fromJson(Map<String, dynamic> json) =>
+      ConfiguredDense(
+        baseUrl: json['base_url'] as String? ?? '',
+        model: json['model'] as String? ?? '',
+      );
+
+  final String baseUrl;
+  final String model;
+}
+
 class MemoryStatus {
   MemoryStatus({
     required this.embedder,
+    required this.effectiveEmbedder,
     required this.dimensions,
     required this.enabled,
-    required this.autoDetected,
+    required this.isFloor,
+    required this.backend,
+    required this.configuredDense,
+    required this.denseReachable,
+    required this.degraded,
+    required this.drift,
   });
 
   factory MemoryStatus.fromJson(Map<String, dynamic> json) => MemoryStatus(
         embedder: json['embedder'] as String? ?? '',
+        effectiveEmbedder: json['effective_embedder'] as String?,
         dimensions: (json['dimensions'] as num?)?.toInt() ?? 0,
         enabled: json['enabled'] as bool? ?? false,
-        autoDetected: json['auto_detected'] as bool? ?? false,
+        isFloor: json['is_floor'] as bool? ?? false,
+        backend: json['backend'] as String?,
+        configuredDense: json['configured_dense'] is Map<String, dynamic>
+            ? ConfiguredDense.fromJson(
+                json['configured_dense'] as Map<String, dynamic>)
+            : null,
+        denseReachable: json['dense_reachable'] as bool?,
+        degraded: json['degraded'] as bool? ?? false,
+        drift: (json['drift'] as num?)?.toInt() ?? 0,
       );
 
+  /// The embedder actually serving reads/writes.
   final String embedder;
+
+  /// Explicit effective embedder name; falls back to [embedder].
+  final String? effectiveEmbedder;
   final int dimensions;
   final bool enabled;
-  final bool autoDetected;
+
+  /// True when the BM25 keyword floor is active (no dense/semantic retrieval).
+  final bool isFloor;
+
+  /// Configured backend: "auto" | "bm25" | "http" | "local".
+  final String? backend;
+
+  /// The configured dense endpoint, or null when none is configured.
+  final ConfiguredDense? configuredDense;
+
+  /// Live probe of the configured dense endpoint (null when none configured).
+  final bool? denseReachable;
+
+  /// A dense endpoint is configured but is not the healthy serving tier now.
+  final bool degraded;
+
+  /// Rows not yet on the active embedder (the background converge backlog).
+  final int drift;
 }
 
 // One past prompt entry pulled from the running session's

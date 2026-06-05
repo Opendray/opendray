@@ -287,33 +287,6 @@ func (s *Service) Get(ctx context.Context, id string) (Decision, error) {
 	return s.store.Get(ctx, id)
 }
 
-// Approve marks the decision approved AND executes it in the same
-// call. We don't separate the two states because the operator's
-// "Approve" click implies "do it now"; deferred execution would
-// just add a state to babysit.
-func (s *Service) Approve(ctx context.Context, id string) error {
-	if err := s.store.SetStatus(ctx, id, StatusApproved, StatusPending); err != nil {
-		return err
-	}
-	d, err := s.store.Get(ctx, id)
-	if err != nil {
-		return err
-	}
-	if err := s.execute(ctx, d); err != nil {
-		// Mark expired so the inbox stops showing this as actionable.
-		// The original approval still has decided_at set; expired
-		// tells the UI "we tried but couldn't apply".
-		_ = s.store.SetStatus(ctx, id, StatusExpired, StatusApproved)
-		return err
-	}
-	return s.store.SetStatus(ctx, id, StatusExecuted, StatusApproved)
-}
-
-// Reject closes the decision without touching the memory store.
-func (s *Service) Reject(ctx context.Context, id string) error {
-	return s.store.SetStatus(ctx, id, StatusRejected, StatusPending)
-}
-
 // execute applies one verdict by SOFT-ARCHIVING (not hard-deleting), so
 // every action is reversible within the grace window. A "duplicate" is
 // archived with the survivor noted in archived_reason — because the row

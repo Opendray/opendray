@@ -46,26 +46,38 @@ type Config struct {
 // MemoryConfig drives the optional opendray-native memory subsystem
 // (the "remember things across sessions" RAG layer exposed as an
 // in-process MCP server). Every field is optional; the zero-value
-// config is the documented default — BM25 keyword retrieval over
+// config is the documented default — keyword (BM25) retrieval over
 // pgvector storage, project-scoped, no API keys.
 //
 // The architecture uses two replaceable subsystems:
 //
-//   - Embedder: turns text into vectors. Built-in BM25 (no model)
-//     or HTTP (OpenAI-compatible: ollama / OpenAI / LocalAI / etc.).
-//     Phase 2 will add a built-in ONNX model (bge-m3) — operators
-//     who want it today can point an HTTP backend at ollama.
-//   - Store: persists vectors. pgvector (default, reuses the
-//     opendray PG) or chromem-go (single-file, opt-in for setups
-//     without pgvector).
+//   - Embedder: turns text into vectors. Availability-tiered (M-U
+//     Pillar 6): a dense model when one is configured + reachable
+//     (HTTP OpenAI-compatible — ollama / LM Studio / vLLM / LocalAI /
+//     OpenAI — or the cgo ONNX backend), else the pure-Go BM25 floor
+//     that is always present. With backend="auto" the tier is chosen
+//     automatically and upgrade-only (see Backend).
+//   - Store: persists vectors. pgvector — the single supported store,
+//     reusing the existing opendray PG.
 type MemoryConfig struct {
-	// Backend selects the embedder. "auto" = BM25 with future ONNX
-	// upgrade; "bm25" = forced keyword; "http" = OpenAI-compatible
-	// HTTP endpoint (configured via [memory.http]).
+	// Backend selects the embedder.
+	//   "auto" (default) — availability-tiered, upgrade-only: use the
+	//     configured [memory.http] dense endpoint when it is reachable
+	//     at startup, else fall back to the BM25 floor. If the DB
+	//     already holds dense rows but the endpoint is unreachable, the
+	//     dense embedder is kept active (reads/injection keep working,
+	//     no re-embed churn) while writes/search degrade until it
+	//     responds — auto never silently downgrades dense→BM25.
+	//   "bm25" — force the pure-Go keyword floor.
+	//   "http" — force the OpenAI-compatible endpoint in [memory.http].
+	//   "local" — force the cgo ONNX embedder in [memory.local]
+	//     (needs a build with -tags local_onnx + on-disk model files).
 	Backend string `toml:"backend" json:"backend"`
 
-	// Store selects the vector store. "pgvector" (default; reuses
-	// the existing PG) or "chromem" (single-file, no PG dependency).
+	// Store selects the vector store. "pgvector" is the only supported
+	// value (default; reuses the existing opendray PG). Kept as an
+	// explicit field for forward-compatibility; any other value is
+	// rejected at startup.
 	Store string `toml:"store" json:"store"`
 
 	// DefaultTopK is the K returned by memory.search when callers
@@ -73,8 +85,10 @@ type MemoryConfig struct {
 	DefaultTopK int `toml:"default_top_k" json:"default_top_k"`
 
 	// SimilarityThreshold (0..1) — minimum cosine similarity for a
-	// candidate to count as a match (used both for retrieval cutoff
-	// and dedupe-on-insert). Empty → 0.7.
+	// candidate to count as a match (the retrieval cutoff). Empty/0 →
+	// 0.1, a permissive default: BM25 hash-bucket vectors score low, so
+	// a high cutoff would suppress otherwise-good keyword hits. (Dedupe
+	// on insert uses DedupThreshold below, not this value.)
 	SimilarityThreshold float64 `toml:"similarity_threshold" json:"similarity_threshold"`
 
 	// DedupThreshold (0..1) — M11 / M-U write-time fold. When
@@ -102,10 +116,6 @@ type MemoryConfig struct {
 
 	// Scope rules for newly stored memories.
 	Scope MemoryScopeConfig `toml:"scope" json:"scope"`
-
-	// Chromem path. Only consulted when Store == "chromem". Empty
-	// → ~/.opendray/memory/chromem.gob.
-	ChromemPath string `toml:"chromem_path" json:"chromem_path"`
 }
 
 // MemoryLocalConfig points the LocalONNX embedder at on-disk
@@ -147,24 +157,30 @@ type MemoryHTTPConfig struct {
 // MemoryScopeConfig governs the visibility model for stored memories.
 type MemoryScopeConfig struct {
 	// Default scope for memory.store calls when the agent doesn't
-	// pass one explicitly. "session" / "project" / "global".
-	// Empty → "project".
+	// pass one explicitly. "project" (default) or "global". The legacy
+	// "session" scope was removed in M-U Phase 1 (session ≡ project); a
+	// "session" literal here is coerced to "project". Empty → "project".
 	Default string `toml:"default" json:"default"`
 }
 
-// MemoryCleanerConfig (M13) — the periodic LLM librarian. Off by
-// default; flip Enabled when an operator wants automated review.
-// The HTTP endpoints (/memory/cleanup/*) work without the
-// scheduler so operators can run one-off cleanups by hand even
-// when auto-runs are off.
+// MemoryCleanerConfig (M13 → M-U Phase 4) — the periodic LLM librarian.
+// Off by default; flip Enabled when an operator wants automated review.
+//
+// Since M-U Phase 4 the cleaner **auto-applies**: its keep/stale/
+// duplicate verdicts are written as reversible **soft-archives** (there
+// is no approval queue). Archived rows are hidden from reads, stay
+// restorable from the Archived view for GraceDays, then are hard-purged.
+// The only operator-inbox producer is conflict detection, not this.
 type MemoryCleanerConfig struct {
-	// Enabled toggles the auto-run scheduler. The HTTP endpoints
-	// (manual /memory/cleanup/run) work either way.
+	// Enabled toggles the auto-run scheduler (periodic sweep +
+	// dormant-archive + purge). The on-demand POST /memory/cleanup/run
+	// works either way.
 	Enabled bool `toml:"enabled" json:"enabled"`
 
-	// SummarizerID pins which configured summarizer provider runs
-	// the librarian judgement. Empty → registry default. Same field
-	// shape as the gatekeeper.
+	// SummarizerID is DEPRECATED and ignored since M25 — cleaner
+	// dispatch now goes through the memory worker registry instead
+	// (memory_workers.cleaner.summarizer_id). Kept only so existing
+	// configs still decode without error.
 	SummarizerID string `toml:"summarizer_id" json:"summarizer_id"`
 
 	// IntervalSeconds between automatic sweeps. Empty / 0 → 86400
@@ -198,6 +214,18 @@ type MemoryCleanerConfig struct {
 	// operator-curated and a librarian sweep there feels invasive
 	// until the operator has trust in the cleaner.
 	IncludeGlobalScope bool `toml:"include_global_scope" json:"include_global_scope"`
+
+	// LifecycleDormantDays (M-U Phase 4.3) — when a project's memory has
+	// had no new write or retrieval for this many days, the project is
+	// treated as finished and its never-hit, aged facts are auto-archived
+	// (reversible). Empty / 0 → 90; a NEGATIVE value disables the
+	// lifecycle pass entirely.
+	LifecycleDormantDays int `toml:"lifecycle_dormant_days" json:"lifecycle_dormant_days"`
+
+	// GraceDays (M-U Phase 4.2) — how long a soft-archived memory stays
+	// restorable from the Archived view before the purge job hard-deletes
+	// it. Empty / 0 → 30 (decision §8.2).
+	GraceDays int `toml:"grace_days" json:"grace_days"`
 }
 
 // MemoryGatekeeperConfig (M12) — pre-write LLM judge that decides

@@ -27,6 +27,18 @@ does, how to use it day-to-day, and how to verify it's behaving.
 >   a transition capture net).
 > - **Embedder changes self-heal.** Switching the configured embedder
 >   triggers an automatic background re-embed; no manual "Migrate" click.
+> - **`backend = "auto"` is self-configuring (Phase 7).** It uses your
+>   configured dense `[memory.http]` endpoint when reachable (semantic
+>   memory) and otherwise falls back to the always-present BM25 keyword
+>   floor — a fresh install with no model still works. It is
+>   *upgrade-only*: if the store already holds dense rows but the endpoint
+>   is down at startup, the dense tier is kept active (existing vectors
+>   stay visible, nothing is re-embedded) and writes/search degrade until
+>   it responds — `auto` never silently downgrades to BM25. The Memory
+>   settings status strip shows the effective embedder and warns when a
+>   configured dense endpoint is unreachable or only the floor is active.
+>   New cleaner knobs `lifecycle_dormant_days` (90) and `grace_days` (30)
+>   are now configurable under `[memory.cleaner]`.
 > - **Migrations auto-apply on startup** (fail-closed), so `opendray
 >   update` reaches the new schema without a separate `opendray migrate`.
 

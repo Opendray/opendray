@@ -213,11 +213,19 @@ func (h *Handlers) status(w http.ResponseWriter, r *http.Request) {
 	if !h.ensure(w) {
 		return
 	}
+	hl := h.svc.EmbedderHealth(r.Context())
 	writeJSON(w, http.StatusOK, map[string]any{
-		"embedder":      h.svc.EmbedderName(),
-		"dimensions":    h.svc.Dimensions(),
-		"enabled":       true,
-		"auto_detected": h.svc.AutoDetected(),
+		"embedder":           hl.Effective, // back-compat key (== effective_embedder)
+		"dimensions":         hl.Dimensions,
+		"enabled":            true,
+		"auto_detected":      h.svc.AutoDetected(),
+		"backend":            hl.Backend,
+		"effective_embedder": hl.Effective,
+		"is_floor":           hl.IsFloor,
+		"configured_dense":   hl.ConfiguredDense,
+		"dense_reachable":    hl.DenseReachable,
+		"degraded":           hl.Degraded,
+		"drift":              hl.Drift,
 	})
 }
 
