@@ -355,15 +355,25 @@ on a copy of real data. Order is dependency-driven.
   the ephemeral-Postgres validation above; full-data replay still happens
   at arc-final validation.
 
-### Phase 2 — Retrieval unification
+### Phase 2 — Retrieval unification — DONE
 
-- One scorer (`ranking.go`) used by `memory.Service` and `memquery`;
-  delete `decayScore`. Embed goal/plan as first-class vectors; keep
-  journal embedding synchronous. Parallelise `project_search`.
-- **Acceptance:** `memory_search` and `project_search` return the same
-  ordering for the same fact set; goal/plan appear in semantic results;
-  `project_search` p95 latency drops measurably vs sequential baseline.
-- **Risk:** low/medium. Golden-file ranking tests pin the formula.
+- One scorer: `memory.RankingScoreFields` (M-PC formula over raw fields)
+  now serves both `memory.Service` and `memquery`; `decayScore` deleted.
+  A fact ranks identically in `memory_search` and `project_search`.
+- goal/plan are first-class vectors: migration `0035` adds embedding
+  columns to `project_docs` (copy of 0031); `PutDoc`/`ApproveProposal`
+  embed synchronously and null the vector on content change;
+  `RunDocEmbedBackfill` catches up history; `searchDocs` scores by cosine
+  with a lexical 0.6 fallback only for not-yet-embedded docs.
+- `project_search` fans its three sub-searches out over a WaitGroup
+  (wall-clock = slowest layer, not the sum).
+- **Backend-only.** The web/mobile ranking mirrors already track
+  `ranking.go` (unchanged) and the Hit DTO additions are additive, so no
+  client change was required — verified.
+- **Validated:** `-race` across memory/memquery/projectdoc/app; the 0035
+  index predicates exercised on an ephemeral Postgres (full vector replay
+  is the arc-final step on the real pgvector DB).
+- **Risk:** low/medium, retired by the ranking table tests + race pass.
 
 ### Phase 3 — Write-time fold (cheap, no LLM)
 
