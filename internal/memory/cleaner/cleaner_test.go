@@ -15,9 +15,10 @@ import (
 // reports whether a merge_into target exists, so we can assert the
 // auto-apply path soft-archives instead of hard-deleting.
 type archiveSpyMem struct {
-	archived map[string]string // id -> reason
-	deleted  []string
-	exists   map[string]bool // ids Get should find
+	archived     map[string]string // id -> reason
+	deleted      []string
+	exists       map[string]bool // ids Get should find
+	dormantCalls []string        // scope_keys passed to ArchiveDormantStale
 }
 
 func (m *archiveSpyMem) List(context.Context, memory.Scope, string, int) ([]memory.Memory, error) {
@@ -41,6 +42,10 @@ func (m *archiveSpyMem) Archive(_ context.Context, id, reason string) error {
 	return nil
 }
 func (m *archiveSpyMem) PurgeArchived(context.Context, time.Time) (int64, error) { return 0, nil }
+func (m *archiveSpyMem) ArchiveDormantStale(_ context.Context, _ memory.Scope, scopeKey string, _, _ time.Time, _ string) (int64, error) {
+	m.dormantCalls = append(m.dormantCalls, scopeKey)
+	return 0, nil
+}
 
 func TestExecute_SoftArchivesNotDeletes(t *testing.T) {
 	mem := &archiveSpyMem{exists: map[string]bool{"mem_survivor": true}}
@@ -71,6 +76,38 @@ func TestExecute_SoftArchivesNotDeletes(t *testing.T) {
 	}
 	if _, ok := mem.archived["mem_keep"]; ok {
 		t.Error("kept memory must not be archived")
+	}
+}
+
+func TestArchiveDormant_Gating(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	ctx := context.Background()
+
+	// Disabled (negative days): never calls the store.
+	off := &archiveSpyMem{}
+	svcOff := &Service{mem: off, log: logger, cfg: Config{LifecycleDormantDays: -1}.applyDefaults()}
+	if _, err := svcOff.ArchiveDormant(ctx, "/proj/a"); err != nil {
+		t.Fatal(err)
+	}
+	if len(off.dormantCalls) != 0 {
+		t.Errorf("disabled lifecycle must not touch the store, got %v", off.dormantCalls)
+	}
+
+	// Enabled (default 90): calls the store for the project.
+	on := &archiveSpyMem{}
+	svcOn := &Service{mem: on, log: logger, cfg: Config{}.applyDefaults()}
+	if _, err := svcOn.ArchiveDormant(ctx, "/proj/a"); err != nil {
+		t.Fatal(err)
+	}
+	if len(on.dormantCalls) != 1 || on.dormantCalls[0] != "/proj/a" {
+		t.Errorf("enabled lifecycle should archive-dormant /proj/a, got %v", on.dormantCalls)
+	}
+	// Empty scope_key is a no-op (global scope has no lifecycle).
+	if _, err := svcOn.ArchiveDormant(ctx, ""); err != nil {
+		t.Fatal(err)
+	}
+	if len(on.dormantCalls) != 1 {
+		t.Errorf("empty scope_key must be a no-op, got %v", on.dormantCalls)
 	}
 }
 

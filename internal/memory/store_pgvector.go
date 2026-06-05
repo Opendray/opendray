@@ -581,6 +581,31 @@ func (s *PgvectorStore) ArchiveByScope(ctx context.Context, scope Scope, scopeKe
 	return tag.RowsAffected(), nil
 }
 
+// ArchiveDormantStale archives never-hit, aged facts of a dormant
+// project. The dormancy gate (the scope's newest activity predates
+// dormantBefore) is evaluated in the same statement so the whole thing
+// is atomic and there's no read-then-write race.
+func (s *PgvectorStore) ArchiveDormantStale(ctx context.Context, scope Scope, scopeKey string, agedBefore, dormantBefore time.Time, reason string) (int64, error) {
+	tag, err := s.pool.Exec(ctx, `
+		WITH activity AS (
+		    SELECT MAX(GREATEST(created_at, COALESCE(last_hit_at, created_at))) AS last_active
+		      FROM memories
+		     WHERE scope = $1 AND scope_key = $2 AND archived_at IS NULL
+		)
+		UPDATE memories m
+		   SET archived_at = NOW(), archived_reason = $5, updated_at = NOW()
+		 WHERE m.scope = $1 AND m.scope_key = $2
+		   AND m.archived_at IS NULL
+		   AND m.hit_count = 0
+		   AND m.created_at < $3
+		   AND (SELECT last_active FROM activity) < $4`,
+		string(scope), scopeKey, agedBefore, dormantBefore, reason)
+	if err != nil {
+		return 0, fmt.Errorf("memory: archive dormant stale: %w", err)
+	}
+	return tag.RowsAffected(), nil
+}
+
 // Restore clears the archive flag on a previously archived memory.
 func (s *PgvectorStore) Restore(ctx context.Context, id string) error {
 	tag, err := s.pool.Exec(ctx, `

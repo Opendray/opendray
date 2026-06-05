@@ -549,6 +549,16 @@ func (s *Service) Restore(ctx context.Context, id string) error {
 	return s.store.Restore(ctx, id)
 }
 
+// ArchiveDormantStale soft-archives never-hit aged facts of a dormant
+// project (the lifecycle signal). Thin proxy.
+func (s *Service) ArchiveDormantStale(ctx context.Context, scope Scope, scopeKey string, agedBefore, dormantBefore time.Time, reason string) (int64, error) {
+	scope = normalizeScope(scope)
+	if err := scope.Validate(); err != nil {
+		return 0, err
+	}
+	return s.store.ArchiveDormantStale(ctx, scope, scopeKey, agedBefore, dormantBefore, reason)
+}
+
 // PurgeArchived hard-deletes rows whose grace window has passed.
 func (s *Service) PurgeArchived(ctx context.Context, cutoff time.Time) (int64, error) {
 	return s.store.PurgeArchived(ctx, cutoff)

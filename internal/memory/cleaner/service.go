@@ -45,6 +45,13 @@ type Config struct {
 	// §8.2). The window the operator has to undo an auto-archive from
 	// the Archived view.
 	GracePeriod time.Duration
+
+	// LifecycleDormantDays is the project-lifecycle signal: when a
+	// project's memory has had no new write or retrieval for this many
+	// days, the project is treated as finished and its never-hit, aged
+	// facts are auto-archived (reversible). Unset (0) defaults to 90; a
+	// NEGATIVE value disables the lifecycle pass entirely.
+	LifecycleDormantDays int
 }
 
 // applyDefaults fills zero values with the documented defaults.
@@ -64,6 +71,9 @@ func (c Config) applyDefaults() Config {
 	if c.GracePeriod <= 0 {
 		c.GracePeriod = 30 * 24 * time.Hour
 	}
+	if c.LifecycleDormantDays == 0 {
+		c.LifecycleDormantDays = 90
+	}
 	return c
 }
 
@@ -79,6 +89,9 @@ type MemoryAdapter interface {
 	Archive(ctx context.Context, id, reason string) error
 	// PurgeArchived hard-deletes archived rows past the grace cutoff.
 	PurgeArchived(ctx context.Context, cutoff time.Time) (int64, error)
+	// ArchiveDormantStale soft-archives never-hit aged facts of a dormant
+	// project (the lifecycle signal). Returns the count archived.
+	ArchiveDormantStale(ctx context.Context, scope memory.Scope, scopeKey string, agedBefore, dormantBefore time.Time, reason string) (int64, error)
 }
 
 // (ProviderFetcher was removed in M25 — provider selection now
@@ -335,6 +348,28 @@ func (s *Service) execute(ctx context.Context, d Decision) error {
 	default:
 		return fmt.Errorf("cleaner: unknown verdict %q", d.Verdict)
 	}
+}
+
+// ArchiveDormant applies the project-lifecycle signal for one project:
+// if its memory has gone quiet for LifecycleDormantDays, its never-hit
+// aged facts are soft-archived (reversible). No-op when disabled
+// (negative days) or the project is still active. Returns count archived.
+func (s *Service) ArchiveDormant(ctx context.Context, scopeKey string) (int64, error) {
+	if s.cfg.LifecycleDormantDays < 0 || strings.TrimSpace(scopeKey) == "" {
+		return 0, nil
+	}
+	now := time.Now()
+	agedBefore := now.Add(-s.cfg.MinAge)
+	dormantBefore := now.AddDate(0, 0, -s.cfg.LifecycleDormantDays)
+	reason := fmt.Sprintf("lifecycle: project dormant >%dd", s.cfg.LifecycleDormantDays)
+	n, err := s.mem.ArchiveDormantStale(ctx, memory.ScopeProject, scopeKey, agedBefore, dormantBefore, reason)
+	if err != nil {
+		return 0, fmt.Errorf("cleaner: archive dormant: %w", err)
+	}
+	if n > 0 {
+		s.log.Info("cleaner.archived_dormant", "scope_key", scopeKey, "count", n, "dormant_days", s.cfg.LifecycleDormantDays)
+	}
+	return n, nil
 }
 
 // PurgeExpired hard-deletes memories whose soft-archive grace window has

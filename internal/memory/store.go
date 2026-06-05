@@ -211,6 +211,15 @@ type Store interface {
 	// scopeKey). Returns the count archived. Used by lifecycle-driven
 	// auto-archive of inactive projects.
 	ArchiveByScope(ctx context.Context, scope Scope, scopeKey, reason string) (int64, error)
+	// ArchiveDormantStale soft-archives the never-hit, aged facts of a
+	// DORMANT project in one statement: it only fires when the scope's
+	// most recent activity (newest created_at / last_hit_at among active
+	// rows) predates dormantBefore, and then archives only rows with
+	// hit_count = 0 and created_at < agedBefore. This is the
+	// project-lifecycle signal — a finished project's unused facts age
+	// out on their own — and it leaves hit (useful) facts untouched.
+	// Returns the count archived.
+	ArchiveDormantStale(ctx context.Context, scope Scope, scopeKey string, agedBefore, dormantBefore time.Time, reason string) (int64, error)
 	// Restore clears the archive flag, returning a memory to active use.
 	// Returns ErrNotFound when the id isn't an archived row.
 	Restore(ctx context.Context, id string) error
