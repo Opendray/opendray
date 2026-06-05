@@ -403,21 +403,31 @@ on a copy of real data. Order is dependency-driven.
 - **Risk:** low. Default-on is behaviour-compatible (lossless) and the
   threshold is tunable; covered by boundary tests.
 
-### Phase 4 — Self-maintaining cleanup
+### Phase 4 — Self-maintaining cleanup — backend DONE (4.1–4.3); UI (4.4) pending
 
-- Migrations `0034`, `0036`. Soft-delete + grace purge job. Auto-archive
-  worker (never-hit+aged, and lifecycle-driven). Retroactive
-  consolidation sweep — this is where the **LLM text merge** runs
-  (pluggable worker: any local OpenAI-compatible runtime → cloud-agent
-  worker), off the hot path. **Remove** the manual cleanup-approval
-  queue; operator inbox = conflicts only.
-- **Acceptance:** a finished project's stale facts (e.g. tech_stack)
-  auto-archive without operator action and are restorable within the
-  grace window; the cleanup-approval inbox is empty by design; conflict
-  inbox still works.
-- **Risk:** medium. Soft-delete + grace makes it reversible; ship behind
-  a config flag with conservative defaults (long grace, conservative
-  archive predicate) and widen after observation.
+Owner-confirmed shape: keep the LLM judge, auto-apply its verdicts as
+**reversible soft-archives** (no approval queue); remove the cleanup
+inbox UI and replace it with a read-only **Archived (restorable)** view +
+one-click restore; operator inbox keeps conflicts only.
+
+- **4.1 (done):** all 8 memory read queries filter `archived_at IS NULL`;
+  Archive / ArchiveByScope / Restore / PurgeArchived primitives (no
+  migration — the columns landed in 0034).
+- **4.2 (done):** cleaner auto-applies verdicts as soft-archive (a
+  "duplicate" is archived noting the survivor — soft-delete preserves it,
+  so the old merge-metadata gap is moot); `PurgeExpired` hard-deletes
+  past the 30d grace each tick.
+- **4.3 (done):** `ArchiveDormantStale` — a dormant project's never-hit
+  aged facts auto-archive (hit facts and active projects untouched).
+  `LifecycleDormantDays` (90d default, negative disables).
+- **4.4 (pending):** remove the cleanup-approval inbox (web + mobile +
+  i18n), add the Archived/restore view + a `GET archived` / `POST
+  restore` endpoint, regenerate slang.
+- **Validated:** the soft-archive read-filtering, auto-archive, purge,
+  and dormancy SQL all exercised on an ephemeral Postgres + unit tests;
+  `-race` green across memory/cleaner/app.
+- **Risk:** medium, retired by reversibility (soft-delete + 30d grace)
+  and conservative defaults (90d dormancy, never-hit only).
 
 ### Phase 5 — Retire the file layer
 
