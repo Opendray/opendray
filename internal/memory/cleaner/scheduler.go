@@ -153,4 +153,9 @@ func (s *Scheduler) tick(ctx context.Context) {
 				"decisions_out", res.DecisionsOut)
 		}
 	}
+
+	// Hard-delete soft-archived rows whose grace window has elapsed.
+	if _, err := s.svc.PurgeExpired(ctx); err != nil {
+		s.log.Warn("scheduler.purge_expired_failed", "err", err)
+	}
 }
