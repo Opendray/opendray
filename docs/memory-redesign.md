@@ -297,12 +297,18 @@ New migrations (`0033+`). Exact column names to be finalised in each PR.
    - A purge job hard-deletes rows where
      `archived_at < now() - grace_interval` (grace = 30 days, §8.2).
 
-3. **Consolidation accounting** (`0035_memory_consolidation.sql`)
-   - Add `frequency BIGINT NOT NULL DEFAULT 1` (writes that consolidated
-     into this row), `merged_from JSONB` (audit of absorbed ids — fixes
-     the existing merge that never recorded its sources).
+3. **Consolidation accounting** — *no migration (done in Phase 3).* The
+   fold count (`deduped_count`) and the lossless audit (`merged_from`)
+   live in the existing `metadata` JSONB; a dedicated `frequency` column
+   was dropped from the plan as redundant with `deduped_count`, which
+   already backs the UI.
 
-4. **Lifecycle signal** (`0036_project_lifecycle.sql`)
+   > Migration numbering note: the filenames in this section were
+   > indicative. Actuals so far: `0034` = scope collapse (Phase 1),
+   > `0035` = project_docs embedding (Phase 2). Phase 4's soft-delete +
+   > lifecycle land at `0036`+ when written.
+
+4. **Lifecycle signal** (`00NN_project_lifecycle.sql`, Phase 4)
    - `project_docs` (or a small `project_state` table): add
      `last_git_activity_at TIMESTAMPTZ`, `status TEXT CHECK (active |
      archived) DEFAULT 'active'`. Drives staleness auto-archive.
@@ -375,19 +381,27 @@ on a copy of real data. Order is dependency-driven.
   is the arc-final step on the real pgvector DB).
 - **Risk:** low/medium, retired by the ranking table tests + race pass.
 
-### Phase 3 — Write-time fold (cheap, no LLM)
+### Phase 3 — Write-time fold (cheap, no LLM) — DONE
 
-- Migration `0035`. Make semantic dedup the default write path with an
-  embedder-relative `consolidate_threshold`; on a hit, **fold**
-  (rule-based: keep canonical + bump `frequency` + record `merged_from`,
-  fixing the latent merge-metadata bug). **No LLM call on the write
-  path** — text refinement is deferred to Phase 4's background sweep
-  (decisions §8.5, §8.6).
-- **Acceptance:** storing two paraphrases of one fact yields one row
-  with `frequency=2` and a populated `merged_from`, with sub-100ms added
-  write latency (no LLM round-trip).
-- **Risk:** low. Threshold mis-set → over/under-fold; tunable + covered
-  by tests at the boundary.
+- **No migration.** The fold accounting (`deduped_count` + the new
+  `merged_from` audit) lives in the existing `metadata` JSONB rather than
+  a redundant `frequency` column — `deduped_count` already backs the
+  mobile "merged ×N" badge.
+- Semantic dedup is now the **default** write path: an unset
+  `dedup_threshold` resolves to an embedder-relative default (~0.85
+  dense, ~0.2 BM25); a **negative** value is the explicit off switch. On
+  a hit the write **folds** rule-based (no LLM): newer text becomes
+  canonical, the superseded text is preserved in `merged_from` (capped
+  20) so the fold is **lossless**, `deduped_count` bumps. LLM refinement
+  of the canonical is deferred to Phase 4's background sweep.
+- **Acceptance (met):** two paraphrases yield one row with
+  `deduped_count=1` and `merged_from` carrying the superseded text;
+  negative threshold disables; no LLM on the write path.
+- **Deferred to Phase 4:** the *cleaner's* duplicate-merge metadata bug
+  (it deletes a dup without recording `merged_from` on the survivor) is
+  fixed when Phase 4 overhauls the cleaner.
+- **Risk:** low. Default-on is behaviour-compatible (lossless) and the
+  threshold is tunable; covered by boundary tests.
 
 ### Phase 4 — Self-maintaining cleanup
 
