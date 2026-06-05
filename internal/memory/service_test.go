@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 )
 
 // fakeStore is a minimal in-memory Store for service unit tests.
@@ -79,7 +80,13 @@ func (s *fakeStore) Get(_ context.Context, id string) (Memory, error) {
 }
 func (s *fakeStore) Delete(context.Context, string) error                        { return nil }
 func (s *fakeStore) DeleteByScope(context.Context, Scope, string) (int64, error) { return 0, nil }
-func (s *fakeStore) Close() error                                                { return nil }
+func (s *fakeStore) Archive(context.Context, string, string) error               { return nil }
+func (s *fakeStore) ArchiveByScope(context.Context, Scope, string, string) (int64, error) {
+	return 0, nil
+}
+func (s *fakeStore) Restore(context.Context, string) error                   { return nil }
+func (s *fakeStore) PurgeArchived(context.Context, time.Time) (int64, error) { return 0, nil }
+func (s *fakeStore) Close() error                                            { return nil }
 
 // stubEmbedder is a name-only Embedder for tests that only exercise
 // threshold selection (defaultDedupThreshold reads Name()).

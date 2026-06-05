@@ -202,6 +202,22 @@ type Store interface {
 	// scope_key) pair in a single SQL operation. Returns the row
 	// count actually removed; zero is not an error.
 	DeleteByScope(ctx context.Context, scope Scope, scopeKey string) (int64, error)
+	// Archive soft-deletes a memory: sets archived_at + archived_reason
+	// so it drops out of every read query but stays restorable until the
+	// grace window passes and PurgeArchived removes it. No-op (no error)
+	// if the row is already archived or missing.
+	Archive(ctx context.Context, id, reason string) error
+	// ArchiveByScope soft-deletes every active memory under (scope,
+	// scopeKey). Returns the count archived. Used by lifecycle-driven
+	// auto-archive of inactive projects.
+	ArchiveByScope(ctx context.Context, scope Scope, scopeKey, reason string) (int64, error)
+	// Restore clears the archive flag, returning a memory to active use.
+	// Returns ErrNotFound when the id isn't an archived row.
+	Restore(ctx context.Context, id string) error
+	// PurgeArchived hard-deletes memories archived strictly before
+	// cutoff (the end of the grace window). Returns the row count
+	// removed; zero is not an error.
+	PurgeArchived(ctx context.Context, cutoff time.Time) (int64, error)
 	// Close releases store-level resources (DB conns, files).
 	// Safe to call multiple times.
 	Close() error

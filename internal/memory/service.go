@@ -530,6 +530,30 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	return s.store.Delete(ctx, id)
 }
 
+// Archive soft-deletes a memory (reversible until purged). Thin proxy.
+func (s *Service) Archive(ctx context.Context, id, reason string) error {
+	return s.store.Archive(ctx, id, reason)
+}
+
+// ArchiveByScope soft-deletes every active memory under (scope, scopeKey).
+func (s *Service) ArchiveByScope(ctx context.Context, scope Scope, scopeKey, reason string) (int64, error) {
+	scope = normalizeScope(scope)
+	if err := scope.Validate(); err != nil {
+		return 0, err
+	}
+	return s.store.ArchiveByScope(ctx, scope, scopeKey, reason)
+}
+
+// Restore un-archives a memory. Thin proxy.
+func (s *Service) Restore(ctx context.Context, id string) error {
+	return s.store.Restore(ctx, id)
+}
+
+// PurgeArchived hard-deletes rows whose grace window has passed.
+func (s *Service) PurgeArchived(ctx context.Context, cutoff time.Time) (int64, error) {
+	return s.store.PurgeArchived(ctx, cutoff)
+}
+
 // DeleteByScope wipes every memory under (scope, scopeKey).
 // Refuses to fire on non-global scopes with an empty scope_key —
 // otherwise a typo would clear every project / session at once.
