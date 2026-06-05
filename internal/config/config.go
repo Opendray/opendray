@@ -77,13 +77,16 @@ type MemoryConfig struct {
 	// and dedupe-on-insert). Empty → 0.7.
 	SimilarityThreshold float64 `toml:"similarity_threshold" json:"similarity_threshold"`
 
-	// DedupThreshold (0..1) — M11. When memory_store finds an
-	// existing memory in the same scope with cosine similarity ≥
-	// this value, it merges into that row (re-embed + bump
-	// metadata.deduped_count) instead of inserting a new one.
-	// 0 disables dedup; sensible values: ~0.85 for dense embedders
-	// (bge-m3 / ada-002), ~0.4 for BM25. Empty → 0 (off — preserves
-	// historical behaviour for fresh installs).
+	// DedupThreshold (0..1) — M11 / M-U write-time fold. When
+	// memory_store finds an existing memory in the same scope with
+	// cosine similarity ≥ this value, it folds the new write into that
+	// row (newer text becomes canonical, the superseded text is kept in
+	// metadata.merged_from so the fold is lossless, and deduped_count is
+	// bumped) instead of inserting a near-duplicate.
+	//
+	// Default-on in the M-U redesign: an unset/empty value (0) resolves
+	// to an embedder-relative default (~0.85 dense, ~0.2 BM25). Set a
+	// NEGATIVE value to disable folding entirely (every write inserts).
 	DedupThreshold float64 `toml:"dedup_threshold" json:"dedup_threshold"`
 
 	// Gatekeeper (M12) — pre-write LLM judge.

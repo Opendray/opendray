@@ -150,8 +150,16 @@ func New(opts Options) (*Service, error) {
 	// A config that still says default scope = "session" coerces to
 	// project rather than poisoning every write with a retired scope.
 	opts.Scope.Default = normalizeScope(opts.Scope.Default)
-	if opts.DedupThreshold < 0 {
-		opts.DedupThreshold = 0
+	// Write-time fold (consolidation) is ON by default in the M-U
+	// redesign: an unset threshold (0) resolves to an embedder-relative
+	// default so near-duplicate writes fold into the canonical row
+	// instead of accumulating. A NEGATIVE threshold is the explicit
+	// "off" switch for operators who want every write to insert.
+	switch {
+	case opts.DedupThreshold < 0:
+		opts.DedupThreshold = 0 // gate below is `> 0`, so this disables it
+	case opts.DedupThreshold == 0:
+		opts.DedupThreshold = defaultDedupThreshold(opts.Embedder)
 	}
 	return &Service{
 		emb:            opts.Embedder,
@@ -305,6 +313,12 @@ func (s *Service) Store(ctx context.Context, req StoreRequest) (string, error) {
 			merged := mergeMetadata(existing.Metadata, req.Metadata)
 			merged["deduped_count"] = dedupedCount(existing.Metadata) + 1
 			merged["deduped_last_at"] = time.Now().UTC().Format(time.RFC3339)
+			// The newer text becomes canonical, but the superseded text is
+			// preserved in merged_from so the fold is LOSSLESS (the old
+			// code discarded it) and the Phase 4 background sweep can later
+			// refine the canonical from the full set. Capped so a heavily
+			// folded row can't bloat its metadata unbounded.
+			merged["merged_from"] = appendMergedFrom(existing.Metadata, existing.Text, hits[0].Similarity)
 			if uErr := s.store.Update(ctx, UpdateRequest{
 				ID:        existing.ID,
 				Text:      req.Text,
@@ -376,6 +390,45 @@ func dedupedCount(meta map[string]any) int {
 		return int(v)
 	}
 	return 0
+}
+
+// mergedFromCap bounds how many absorbed texts a folded row keeps so
+// metadata can't grow without limit. deduped_count still records the
+// true total even once the list is trimmed to the most recent entries.
+const mergedFromCap = 20
+
+// defaultDedupThreshold picks the embedder-relative fold threshold used
+// when the operator hasn't set one. BM25's hashed-TF cosine sits much
+// lower than a dense embedder's for the same "these say the same thing"
+// judgement, so it gets a lower bar. Values match the original M11
+// tuning documented in the operator guide.
+func defaultDedupThreshold(emb Embedder) float32 {
+	if emb != nil && strings.HasPrefix(strings.ToLower(emb.Name()), "bm25") {
+		return 0.2
+	}
+	return 0.85
+}
+
+// appendMergedFrom returns the new merged_from audit list: the prior
+// merged_from entries (if any) plus one for the text being absorbed,
+// trimmed to the most recent mergedFromCap. Each entry records the
+// superseded text, the cosine that triggered the fold, and a timestamp.
+func appendMergedFrom(meta map[string]any, absorbedText string, similarity float32) []any {
+	var arr []any
+	if meta != nil {
+		if prev, ok := meta["merged_from"].([]any); ok {
+			arr = append(arr, prev...)
+		}
+	}
+	arr = append(arr, map[string]any{
+		"text":       absorbedText,
+		"similarity": similarity,
+		"at":         time.Now().UTC().Format(time.RFC3339),
+	})
+	if len(arr) > mergedFromCap {
+		arr = arr[len(arr)-mergedFromCap:]
+	}
+	return arr
 }
 
 // Search embeds the query and asks the store for top-K similar

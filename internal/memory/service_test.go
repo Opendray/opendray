@@ -81,6 +81,16 @@ func (s *fakeStore) Delete(context.Context, string) error                       
 func (s *fakeStore) DeleteByScope(context.Context, Scope, string) (int64, error) { return 0, nil }
 func (s *fakeStore) Close() error                                                { return nil }
 
+// stubEmbedder is a name-only Embedder for tests that only exercise
+// threshold selection (defaultDedupThreshold reads Name()).
+type stubEmbedder struct{ name string }
+
+func (e stubEmbedder) Embed(context.Context, []string) ([][]float32, error) {
+	return [][]float32{{1}}, nil
+}
+func (e stubEmbedder) Dimensions() int { return 1 }
+func (e stubEmbedder) Name() string    { return e.name }
+
 func newTestService(t *testing.T, store Store, opts Options) *Service {
 	t.Helper()
 	opts.Embedder = NewBM25Embedder(64)
@@ -92,10 +102,16 @@ func newTestService(t *testing.T, store Store, opts Options) *Service {
 	return svc
 }
 
-func TestStore_NoDedupWhenDisabled(t *testing.T) {
-	store := &fakeStore{}
+func TestStore_NegativeThresholdDisablesFold(t *testing.T) {
+	// A would-be near-duplicate is present, but a negative threshold is
+	// the explicit "off" switch, so the write must insert a new row.
+	store := &fakeStore{
+		hits: []SearchHit{
+			{Memory: Memory{ID: "mem_existing", Text: "use pnpm"}, Similarity: 0.99},
+		},
+	}
 	svc := newTestService(t, store, Options{
-		DedupThreshold: 0, // off
+		DedupThreshold: -1, // explicitly disabled
 	})
 	id, err := svc.Store(context.Background(), StoreRequest{
 		Text: "use pnpm not npm", Scope: ScopeProject, ScopeKey: "/proj/a",
@@ -107,10 +123,44 @@ func TestStore_NoDedupWhenDisabled(t *testing.T) {
 		t.Errorf("empty id")
 	}
 	if len(store.inserted) != 1 {
-		t.Errorf("expected 1 insert, got %d", len(store.inserted))
+		t.Errorf("expected 1 insert (fold disabled), got %d", len(store.inserted))
 	}
 	if len(store.updated) != 0 {
 		t.Errorf("expected 0 updates, got %d", len(store.updated))
+	}
+}
+
+func TestDefaultDedupThreshold(t *testing.T) {
+	if got := defaultDedupThreshold(NewBM25Embedder(64)); got != 0.2 {
+		t.Errorf("BM25 default = %v, want 0.2", got)
+	}
+	// A non-BM25 (dense) embedder name should get the dense default.
+	if got := defaultDedupThreshold(stubEmbedder{name: "http:bge-m3"}); got != 0.85 {
+		t.Errorf("dense default = %v, want 0.85", got)
+	}
+}
+
+// TestStore_UnsetThresholdFoldsByDefault pins the M-U default-on
+// behaviour: DedupThreshold 0 resolves to the embedder default (BM25 →
+// 0.2), so a sufficiently similar write folds instead of inserting.
+func TestStore_UnsetThresholdFoldsByDefault(t *testing.T) {
+	store := &fakeStore{
+		hits: []SearchHit{
+			{Memory: Memory{ID: "mem_existing", Text: "use pnpm"}, Similarity: 0.5},
+		},
+	}
+	svc := newTestService(t, store, Options{DedupThreshold: 0}) // unset → default-on
+	id, err := svc.Store(context.Background(), StoreRequest{
+		Text: "use pnpm not npm", Scope: ScopeProject, ScopeKey: "/proj/a",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if id != "mem_existing" {
+		t.Errorf("expected fold into mem_existing (default-on), got %q", id)
+	}
+	if len(store.inserted) != 0 || len(store.updated) != 1 {
+		t.Errorf("expected fold (0 insert, 1 update), got %d insert %d update", len(store.inserted), len(store.updated))
 	}
 }
 
@@ -153,6 +203,15 @@ func TestStore_DedupMergesWhenSimilarEnough(t *testing.T) {
 	}
 	if dc, ok := got.Metadata["deduped_count"].(int); !ok || dc != 1 {
 		t.Errorf("expected deduped_count=1, got %v (%T)", got.Metadata["deduped_count"], got.Metadata["deduped_count"])
+	}
+	// Fold must be lossless: the superseded text lands in merged_from.
+	mf, ok := got.Metadata["merged_from"].([]any)
+	if !ok || len(mf) != 1 {
+		t.Fatalf("expected merged_from with 1 entry, got %v (%T)", got.Metadata["merged_from"], got.Metadata["merged_from"])
+	}
+	entry, _ := mf[0].(map[string]any)
+	if entry["text"] != "use pnpm" {
+		t.Errorf("merged_from should preserve the superseded text %q, got %v", "use pnpm", entry["text"])
 	}
 }
 
