@@ -420,9 +420,29 @@ one-click restore; operator inbox keeps conflicts only.
 - **4.3 (done):** `ArchiveDormantStale` — a dormant project's never-hit
   aged facts auto-archive (hit facts and active projects untouched).
   `LifecycleDormantDays` (90d default, negative disables).
-- **4.4 (pending):** remove the cleanup-approval inbox (web + mobile +
-  i18n), add the Archived/restore view + a `GET archived` / `POST
-  restore` endpoint, regenerate slang.
+- **4.4 backend (done):** `GET /api/v1/memory/archived` (read) + `POST
+  /api/v1/memory/{id}/restore` (admin); `ListArchived` store primitive;
+  `Memory.ArchivedAt/ArchivedReason`.
+- **4.4 frontend (pending — bigger than one page).** The cleanup-approval
+  UI is woven across FIVE web surfaces + mobile + i18n, so this is a
+  focused refactor for a fresh session:
+  - `router.tsx` (`/memory/cleanup` route), `pages/CleanupInbox.tsx`
+    (repurpose → `Archived.tsx` calling the new endpoints),
+    `components/project/ProjectScreen.tsx` (inline `cleanupPending` count
+    + `runCleanup` button + per-decision `approveDecision` — rip out),
+    `components/sessions/inspector/MemoryPanel.tsx` (pending count),
+    `pages/Memory.tsx` nav link + `CommandPalette.tsx` entry.
+  - `app/shared/src/lib/memoryCleanup.ts` → replace decision API with
+    archived/restore in `memory.ts`.
+  - Mobile: `cleanup_inbox_screen.dart` → archived screen, `more_screen`
+    tile, `memory_cleanup_api.dart`.
+  - i18n en/es/zh: remove `web.cleanupInbox.*`,
+    `web.memory.navCleanupInbox`, `web.project.header.cleanupPending`,
+    `more.items.cleanupInbox.*`, `memoryCleanup.*`; add archived-view
+    keys; regen slang.
+  - **Not urgent:** auto-apply (4.2) means no pending decisions
+    accumulate, so these surfaces already show empty — 4.4-fe tidies
+    vestigial UI + adds the restore view, it doesn't fix a regression.
 - **Validated:** the soft-archive read-filtering, auto-archive, purge,
   and dormancy SQL all exercised on an ephemeral Postgres + unit tests;
   `-race` green across memory/cleaner/app.
