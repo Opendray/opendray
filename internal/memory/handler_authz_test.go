@@ -46,6 +46,29 @@ func TestRequireScope(t *testing.T) {
 	}
 }
 
+func TestGlobalWriteAllowed(t *testing.T) {
+	cases := []struct {
+		name  string
+		scope Scope
+		p     integration.Principal
+		want  bool
+	}{
+		{"admin writes global", ScopeGlobal, integration.Principal{Kind: integration.KindAdmin}, true},
+		{"integration writes global denied", ScopeGlobal, integration.Principal{Kind: integration.KindIntegration, Scopes: []string{ScopeMemoryWrite}}, false},
+		{"unauthenticated writes global denied", ScopeGlobal, integration.Principal{}, false},
+		{"integration writes project", ScopeProject, integration.Principal{Kind: integration.KindIntegration}, true},
+		{"integration writes session", ScopeSession, integration.Principal{Kind: integration.KindIntegration}, true},
+		{"empty scope allowed (defaults to project)", Scope(""), integration.Principal{Kind: integration.KindIntegration}, true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := globalWriteAllowed(c.scope, c.p); got != c.want {
+				t.Errorf("globalWriteAllowed(%q, %+v) = %v, want %v", c.scope, c.p, got, c.want)
+			}
+		})
+	}
+}
+
 func TestRequireAdmin(t *testing.T) {
 	h := &Handlers{}
 	cases := []struct {

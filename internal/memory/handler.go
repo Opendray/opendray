@@ -53,6 +53,18 @@ func (h *Handlers) requireAdmin(next http.Handler) http.Handler {
 	})
 }
 
+// globalWriteAllowed reports whether principal p may write to scope.
+// Global memory is operator-curated, so only an admin principal may write
+// it; every other scope (project/session, or empty — which defaults to
+// project downstream) is allowed. A zero-value principal (unauthenticated)
+// is not admin, so it cannot write global.
+func globalWriteAllowed(scope Scope, p integration.Principal) bool {
+	if scope != ScopeGlobal {
+		return true
+	}
+	return p.Kind == integration.KindAdmin
+}
+
 // Handlers exposes the memory subsystem over HTTP under /memory/*.
 // Mount under the dual-auth route group (admin OR integration) so
 // the auto-attached opendray-memory MCP subprocess can reach it
@@ -234,6 +246,17 @@ func (h *Handlers) store(w http.ResponseWriter, r *http.Request) {
 	var req StoreRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	// Global memory is operator-curated. An integration key (an agent's
+	// memory MCP) may write project/session memory freely, but the global
+	// scope requires admin — i.e. the operator acting through the UI. This
+	// enforces "global only on explicit operator intent" at the boundary
+	// rather than trusting agent behaviour. An empty scope defaults to
+	// project downstream, so it is not affected.
+	p, _ := integration.CurrentPrincipal(r.Context())
+	if !globalWriteAllowed(req.Scope, p) {
+		writeError(w, http.StatusForbidden, errors.New("global memory writes require admin"))
 		return
 	}
 	id, err := h.svc.Store(r.Context(), req)

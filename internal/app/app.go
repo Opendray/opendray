@@ -1128,6 +1128,13 @@ func ensureMemoryIntegration(ctx context.Context, svc *integration.Service) (str
 	const name = "opendray-memory"
 	scopes := []string{
 		"session:read", // session metadata visibility (future)
+		// The auto-attached opendray-memory MCP runs as this key, so it
+		// needs the memory read+write scopes — otherwise every agent
+		// memory_search/memory_store returns 403 and the cross-agent
+		// shared brain never accumulates anything. Writing to the global
+		// scope is still admin-only, enforced at the store handler.
+		"memory:read",
+		"memory:write",
 	}
 
 	// 1. Locate (or create) the integration row.
@@ -1135,14 +1142,14 @@ func ensureMemoryIntegration(ctx context.Context, svc *integration.Service) (str
 	if err != nil {
 		return "", fmt.Errorf("list integrations: %w", err)
 	}
-	var id string
-	for _, i := range all {
-		if i.Name == name {
-			id = i.ID
+	var existing *integration.Integration
+	for i := range all {
+		if all[i].Name == name {
+			existing = &all[i]
 			break
 		}
 	}
-	if id == "" {
+	if existing == nil {
 		// Brand-new install or migrated DB. Register + cache the key
 		// — no rotate needed because Register itself returns a fresh
 		// plaintext.
@@ -1157,6 +1164,17 @@ func ensureMemoryIntegration(ctx context.Context, svc *integration.Service) (str
 		}
 		_ = writeMemoryKey(res.APIKey)
 		return res.APIKey, nil
+	}
+	id := existing.ID
+
+	// Reconcile scopes. Installs that registered this key before
+	// memory:read/write were required are stuck on the old scope set,
+	// so every agent memory_search/memory_store 403s. Patch the row up
+	// to the desired scopes if any are missing. Cheap no-op once aligned.
+	if !scopesCover(existing.Scopes, scopes) {
+		if _, err := svc.Update(ctx, id, integration.UpdatePatch{Scopes: &scopes}); err != nil {
+			return "", fmt.Errorf("update %s scopes: %w", name, err)
+		}
 	}
 
 	// 2. Row exists. Reuse cache if present — the ONE thing we know
@@ -1177,6 +1195,17 @@ func ensureMemoryIntegration(ctx context.Context, svc *integration.Service) (str
 	}
 	_ = writeMemoryKey(res.APIKey)
 	return res.APIKey, nil
+}
+
+// scopesCover reports whether every scope in want is granted by have
+// (honouring integration.HasScope wildcard semantics).
+func scopesCover(have, want []string) bool {
+	for _, w := range want {
+		if !integration.HasScope(have, w) {
+			return false
+		}
+	}
+	return true
 }
 
 // readMemoryKey loads the cached plaintext key from
