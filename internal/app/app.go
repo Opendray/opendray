@@ -83,6 +83,7 @@ type App struct {
 	liveBackup           *backup.LiveBackup
 	captureEngine        *capture.Engine // ambient memory capture loop
 	journaler            *projectdoc.Journaler
+	memorySvc            *memory.Service     // shared pgvector memory; nil when memory disabled
 	memoryMirror         *memory.Mirror      // M-U Phase 5 one-time file-memory import; nil when disabled
 	projectDocSvc        *projectdoc.Service // owns the M-PB journal embed backfill loop
 	cleanerScheduler     *cleaner.Scheduler  // optional; nil when scheduler is off
@@ -764,6 +765,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		liveBackup:           liveBackup,
 		captureEngine:        captureEngine,
 		journaler:            journaler,
+		memorySvc:            memorySvc,
 		memoryMirror:         memoryMirror,
 		projectDocSvc:        projectDocSvc,
 		cleanerScheduler:     cleanerScheduler,
@@ -882,6 +884,21 @@ func (a *App) Run(ctx context.Context) error {
 		if _, _, err := a.memoryMirror.BackfillAll(ctx); err != nil {
 			a.log.Warn("memory: file-memory backfill import failed", "err", err)
 		}
+	}()
+
+	// M-U Phase 6 — auto-converge re-embed loop. When the operator
+	// switches the configured embedder, rows still carrying the old
+	// embedder are invisible to search (pgvector partitions similarity
+	// by (embedder, dim)). This loop detects the drift and re-embeds in
+	// the background until every row is back on the current embedder —
+	// no manual "Migrate" click. Self-skips in steady state.
+	reembedConvergeDone := make(chan struct{})
+	go func() {
+		defer close(reembedConvergeDone)
+		if a.memorySvc == nil {
+			return
+		}
+		a.memorySvc.RunReembedConverge(ctx, memory.ReembedConvergeConfig{})
 	}()
 
 	cleanerDone := make(chan struct{})

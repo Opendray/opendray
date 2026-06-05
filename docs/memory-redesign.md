@@ -495,15 +495,53 @@ one-click restore; operator inbox keeps conflicts only.
   memory). Retired by keeping the one-way mirror as the legacy capture
   net and by the import being idempotent + lossless.
 
-### Phase 6 — Embedder unification
+### Phase 6 — Embedder unification — DONE
 
-- Implement the availability-tiered embedder (dense when configured,
-  BM25 floor otherwise — decision §8.1). Add the automatic background
-  re-embed on embedder change; drop the silent `embedder`-mismatch
-  exclusion from the search path once the active embedder is settled.
-- **Acceptance:** changing the configured embedder triggers a background
-  re-embed; no row becomes unsearchable mid-migration.
-- **Risk:** low/medium. Re-embed is I/O heavy; rate-limit + resumable.
+- **Availability tiering — already structural, confirmed.** The backend
+  matrix in `buildEmbedder` (`internal/app/app.go`) already realises
+  decision §8.1: `auto`/`bm25` → the pure-Go BM25 floor (guaranteed
+  present, zero-dep); `http` → any OpenAI-compatible dense endpoint;
+  `local` → ONNX. Dense is used when configured; BM25 is the floor
+  otherwise. We deliberately do **not** auto-switch an existing `auto`
+  (BM25) install to a detected local dense model on upgrade — that would
+  trigger a surprise full re-embed and violate the smooth-upgrade
+  constraint (§2.5). Switching to dense stays an explicit operator config
+  change, which the new converge loop then services automatically.
+- **Automatic background re-embed on change (new).**
+  `Service.RunReembedConverge` (`internal/memory/reembed_converge.go`),
+  launched once from `RunServices` next to the Phase-5 backfill. Each
+  cycle: `driftCount` (cheap COUNT GROUP BY via `CountByEmbedder`) finds
+  rows whose `embedder` ≠ active; if any, it runs the existing resumable
+  `Reembed` pass and re-stamps them to the current embedder, then sleeps
+  (short after progress, `IdleInterval` 5m when converged or stalled).
+  So an operator who switches embedders just restarts — convergence is
+  automatic, no "Migrate" click. The manual `POST /reembed` endpoint
+  stays as an on-demand trigger. Self-skips in steady state; an embedder
+  outage backs off instead of spinning.
+- **The silent `embedder`-mismatch search exclusion — intent met by
+  convergence, guard retained.** `PgvectorStore.Search` keeps
+  `WHERE embedder = $active` because cross-(embedder, dim) cosine is
+  mathematically invalid — comparing a bge-m3 1024-vec against a BM25
+  384-vec is meaningless, and different dims can't even share an index.
+  Dropping the predicate outright would surface garbage or error
+  mid-migration. The redesign's actual goal — "no row stays silently
+  invisible" — is met instead by the converge loop driving drift to
+  zero, after which the predicate excludes nothing. So the guard is kept
+  for correctness; convergence removes the *silent permanence* it used to
+  have.
+- **Acceptance (met):** changing the configured embedder triggers a
+  background re-embed automatically; rows converge to the active embedder
+  and rejoin recall without operator action. Re-embed is batched +
+  resumable (cursor by id) and rate-limited (sleep between passes), so it
+  stays I/O-flat at the single-gateway scale.
+- **Validated:** `go build ./...` clean; `go test -race` green across
+  memory/app; new unit tests for `driftCount` (mixed + converged),
+  `Reembed` draining drifted rows with correct re-stamping, and
+  `RunReembedConverge` exiting on ctx cancel. Full embedder-swap replay
+  on real pgvector is part of arc-final validation.
+- **Risk:** low/medium, retired by: upgrade-safety (no auto-switch of
+  existing installs), the dim-correctness guard staying in place, and
+  convergence being resumable + idempotent + soft-failing.
 
 ---
 

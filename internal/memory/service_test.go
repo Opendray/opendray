@@ -19,6 +19,11 @@ type fakeStore struct {
 	insertErr error
 	updateErr error
 	searchErr error
+
+	// Phase 6 reembed-converge knobs. byEmbedder backs CountByEmbedder;
+	// needReembed (must be sorted by ID) backs ListNeedingReembed.
+	byEmbedder  map[string]int
+	needReembed []Memory
 }
 
 func (s *fakeStore) Insert(_ context.Context, req InsertRequest) (string, error) {
@@ -66,10 +71,26 @@ func (s *fakeStore) ListScopeKeys(context.Context, Scope) ([]string, error) {
 	panic("ListScopeKeys not used")
 }
 func (s *fakeStore) CountByEmbedder(context.Context) (map[string]int, error) {
-	panic("CountByEmbedder not used")
+	if s.byEmbedder == nil {
+		return map[string]int{}, nil
+	}
+	return s.byEmbedder, nil
 }
-func (s *fakeStore) ListNeedingReembed(context.Context, string, int, string) ([]Memory, error) {
-	panic("ListNeedingReembed not used")
+func (s *fakeStore) ListNeedingReembed(_ context.Context, current string, limit int, afterID string) ([]Memory, error) {
+	out := make([]Memory, 0, limit)
+	for _, m := range s.needReembed { // assumed sorted by ID
+		if m.Embedder == current {
+			continue
+		}
+		if afterID != "" && m.ID <= afterID {
+			continue
+		}
+		out = append(out, m)
+		if len(out) >= limit {
+			break
+		}
+	}
+	return out, nil
 }
 func (s *fakeStore) RecordHits(context.Context, []string) error { return nil }
 func (s *fakeStore) Get(_ context.Context, id string) (Memory, error) {
