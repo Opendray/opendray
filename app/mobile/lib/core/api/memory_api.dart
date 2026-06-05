@@ -52,6 +52,44 @@ class MemoryApi {
     }
   }
 
+  // GET /memory/archived?scope=&scope_key=&n=  — soft-archived rows
+  // the auto-cleaner / lifecycle pass removed. Restorable until the
+  // 30-day grace window purges them. Pass an empty scopeKey to list
+  // every archived row under the scope (cross-project).
+  Future<List<Memory>> listArchived({
+    MemoryScope scope = MemoryScope.project,
+    String? scopeKey,
+    int limit = 200,
+  }) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/memory/archived',
+        queryParameters: {
+          'scope': scope.wire,
+          if (scopeKey != null && scopeKey.isNotEmpty) 'scope_key': scopeKey,
+          'n': limit,
+        },
+      );
+      final raw = res.data?['memories'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(Memory.fromJson)
+          .toList();
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /memory/{id}/restore — un-archives a soft-deleted memory.
+  Future<void> restore(String id) async {
+    try {
+      await _dio.post<void>('/api/v1/memory/$id/restore');
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   // GET /memory/scope-keys?scope=  — distinct scope_key values for
   // populating the cwd picker in the Project view.
   Future<List<String>> scopeKeys(MemoryScope scope) async {

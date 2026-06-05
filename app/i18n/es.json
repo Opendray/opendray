@@ -240,7 +240,7 @@
       "title": "Memoria",
       "subtitle": "Explora, busca y edita las memorias que los agentes han almacenado a través del servidor MCP opendray-memory.",
       "navProject": "Proyecto",
-      "navCleanupInbox": "Bandeja de limpieza",
+      "navArchived": "Archivadas",
       "navWorkers": "Workers",
       "navConfiguration": "Configuración →"
     },
@@ -411,26 +411,18 @@
         }
       }
     },
-    "cleanupInbox": {
+    "archived": {
       "loading": "Cargando…",
-      "emptyTitle": "Bandeja de limpieza vacía",
-      "emptyDescription": "No hay decisiones de limpieza pendientes en ningún proyecto. El bibliotecario LLM aún no se ha ejecutado para las memorias elegibles, o ha encontrado que todo es esencial.",
-      "title": "Bandeja de limpieza",
-      "subtitle": "Decisiones pendientes entre proyectos del bibliotecario de memoria LLM. Aprobar obsoleto borra, aprobar duplicado fusiona, aprobar conservar congela la entrada para que no se vuelva a evaluar durante un tiempo.",
+      "emptyTitle": "Nada archivado",
+      "emptyDescription": "No hay memorias archivadas en ningún proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados (restaurables durante 30 días); todavía no se ha eliminado nada.",
+      "title": "Memorias archivadas",
+      "subtitle": "Memorias que el limpiador automático y el barrido de ciclo de vida archivaron en todos los proyectos. Se excluyen de la recuperación pero son restaurables hasta que la ventana de gracia de 30 días las purgue. Restaura cualquier falso positivo abajo.",
       "globalScope": "(global)",
-      "orphanBadge": "huérfano",
-      "orphanTitle": "scope_key truncado (importación antigua de réplica). No es un proyecto navegable.",
       "openProject": "Abrir proyecto",
-      "mergeIntoPrefix": "→ fusionar en",
-      "reasonPrefix": "Motivo:",
-      "executeButton": "Ejecutar",
-      "confirmKeepButton": "Confirmar conservar",
-      "rejectButton": "Rechazar",
-      "approvedKeptToast": "Conservado",
-      "approvedExecutedToast": "{verdict} ejecutado",
-      "approveFailedToast": "Error al aprobar",
-      "rejectedToast": "Rechazado, memoria conservada",
-      "rejectFailedToast": "Error al rechazar"
+      "archivedAtPrefix": "Archivado",
+      "restoreButton": "Restaurar",
+      "restoredToast": "Restaurado",
+      "restoreFailedToast": "Error al restaurar"
     },
     "project": {
       "picker": {
@@ -452,7 +444,7 @@
         "journalEntries_other": "{count} entradas del diario",
         "pendingProposals_one": "{count} propuesta pendiente",
         "pendingProposals_other": "{count} propuestas pendientes",
-        "cleanupPending": "{count} limpieza pendiente"
+        "archivedCount": "{count} archivadas"
       },
       "tabs": {
         "health": "Estado",
@@ -463,18 +455,13 @@
         "journal": "Diario",
         "inbox": "Bandeja de entrada",
         "conflicts": "Conflictos",
-        "cleanup": "Limpieza"
+        "archived": "Archivadas"
       },
       "docLabel": {
         "goal": "Objetivo",
         "plan": "Plan",
         "tech_stack": "Stack tecnológico",
         "recent_activity": "Actividad reciente"
-      },
-      "verdictLabel": {
-        "stale": "Eliminar",
-        "duplicate": "Fusionar",
-        "keep": "Conservar"
       },
       "editor": {
         "updatedBy": "Actualizado por",
@@ -523,21 +510,13 @@
         "confirmCancel": "Cancelar",
         "confirmReplace": "Confirmar reemplazo"
       },
-      "cleanup": {
-        "hint": "El bibliotecario LLM propone veredictos de conservar / obsoleto / duplicado para las memorias de este proyecto. Tú apruebas antes de que se elimine nada.",
-        "runNow": "Ejecutar limpieza ahora",
-        "runSucceededToast": "Ejecución de limpieza: {decided} decisiones en cola ({scanned} analizadas)",
-        "runFailedToast": "Error en la ejecución de limpieza",
-        "empty": "No hay decisiones pendientes. O no había nada que cumpliera los requisitos por antigüedad, o la última ejecución encontró que todo era esencial.",
-        "mergeIntoPrefix": "→ fusionar en",
-        "reasonPrefix": "Motivo:",
-        "executeButton": "Ejecutar",
-        "confirmKeepButton": "Confirmar conservar",
-        "rejectButton": "Rechazar",
-        "approvedExecutedToast": "{label} ejecutado",
-        "approveFailedToast": "Error al aprobar",
-        "rejectedToast": "Rechazado: memoria conservada",
-        "rejectFailedToast": "Error al rechazar"
+      "archived": {
+        "hint": "Memorias que el limpiador automático archivó para este proyecto. Se excluyen de la recuperación pero son restaurables hasta que la ventana de gracia de 30 días las purgue.",
+        "empty": "Nada archivado para este proyecto. El limpiador archiva aquí los hechos obsoletos y duplicados automáticamente; todavía ninguno.",
+        "archivedAtPrefix": "Archivado",
+        "restoreButton": "Restaurar",
+        "restoredToast": "Restaurado",
+        "restoreFailedToast": "Error al restaurar"
       },
       "reset": {
         "button": "Restablecer",
@@ -2448,9 +2427,9 @@
         "title": "Objetivo / plan / diario del proyecto",
         "subtitle": "Capas de memoria 2-4 por cwd + propuestas del agente"
       },
-      "cleanupInbox": {
-        "title": "Bandeja de limpieza",
-        "subtitle": "Eliminaciones / fusiones propuestas por el LLM en todos los proyectos"
+      "archived": {
+        "title": "Memorias archivadas",
+        "subtitle": "Restaura memorias que el limpiador automático archivó (gracia de 30 días)"
       },
       "backups": {
         "title": "Copias de seguridad",
@@ -3005,12 +2984,15 @@
       }
     }
   },
-  "memoryCleanup": {
-    "title": "Limpieza de memoria",
-    "approveFailed": "Error al aprobar: {error}",
-    "rejectFailed": "Error al rechazar: {error}",
+  "memoryArchived": {
+    "title": "Memorias archivadas",
     "loadFailed": "Error al cargar: {error}",
-    "reject": "Rechazar"
+    "restoreFailed": "Error al restaurar: {error}",
+    "emptyTitle": "Nada archivado",
+    "emptyBody": "No hay memorias archivadas en ningún proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados (restaurables durante 30 días); todavía no se ha eliminado nada.",
+    "globalScope": "(global)",
+    "countBadge": "{count} archivadas",
+    "restore": "Restaurar"
   },
   "project": {
     "title": "Proyecto",
@@ -3081,7 +3063,6 @@
     "appendFailed": "Error: {error}",
     "approveFailed": "Error al aprobar: {error}",
     "rejectFailed": "Error al rechazar: {error}",
-    "cleanupFailed": "Error en la limpieza: {error}",
     "resetConfirmTitle": "¿Restablecer la memoria del proyecto?",
     "alsoDeleteScanner": "Eliminar también los documentos del scanner",
     "alsoDeletePgvector": "Eliminar también las memorias de pgvector",
@@ -3097,8 +3078,12 @@
     "approve": "Aprobar",
     "replaceConfirmTitle": "¿Reemplazar el {kind} actual?",
     "replaceKind": "Reemplazar {kind}",
-    "reason": "Motivo",
-    "willMergeInto": "Se fusionará en"
+    "archived": {
+      "emptyTitle": "Nada archivado",
+      "emptyBody": "No hay memorias archivadas para este proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados automáticamente; todavía ninguno.",
+      "restoreFailed": "Error al restaurar: {error}",
+      "restore": "Restaurar"
+    }
   },
   "backups": {
     "title": "Copias de seguridad",

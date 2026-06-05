@@ -240,7 +240,7 @@
       "title": "Memory",
       "subtitle": "Browse, search and edit memories agents have stored via the opendray-memory MCP server.",
       "navProject": "Project",
-      "navCleanupInbox": "Cleanup inbox",
+      "navArchived": "Archived",
       "navWorkers": "Workers",
       "navConfiguration": "Configuration →"
     },
@@ -411,26 +411,18 @@
         }
       }
     },
-    "cleanupInbox": {
+    "archived": {
       "loading": "Loading…",
-      "emptyTitle": "Cleanup inbox empty",
-      "emptyDescription": "No pending cleanup decisions across any project. The LLM librarian either hasn't run yet for the eligible memories, or it found everything load-bearing.",
-      "title": "Cleanup inbox",
-      "subtitle": "Cross-project pending decisions from the LLM memory librarian. Approving stale → deletes, approving duplicate → merges, approving keep → freezes the entry from being re-judged for a while.",
+      "emptyTitle": "Nothing archived",
+      "emptyDescription": "No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.",
+      "title": "Archived memories",
+      "subtitle": "Memories the auto-cleaner and lifecycle pass soft-archived across every project. They are excluded from recall but restorable until the 30-day grace window purges them. Restore any false positive below.",
       "globalScope": "(global)",
-      "orphanBadge": "orphan",
-      "orphanTitle": "Truncated scope_key (old mirror import). Not a navigable project.",
       "openProject": "Open project",
-      "mergeIntoPrefix": "→ merge into",
-      "reasonPrefix": "Reason:",
-      "executeButton": "Execute",
-      "confirmKeepButton": "Confirm keep",
-      "rejectButton": "Reject",
-      "approvedKeptToast": "Kept",
-      "approvedExecutedToast": "{verdict} executed",
-      "approveFailedToast": "Approve failed",
-      "rejectedToast": "Rejected — memory kept",
-      "rejectFailedToast": "Reject failed"
+      "archivedAtPrefix": "Archived",
+      "restoreButton": "Restore",
+      "restoredToast": "Restored",
+      "restoreFailedToast": "Restore failed"
     },
     "project": {
       "picker": {
@@ -452,7 +444,7 @@
         "journalEntries_other": "{count} journal entries",
         "pendingProposals_one": "{count} pending proposal",
         "pendingProposals_other": "{count} pending proposals",
-        "cleanupPending": "{count} cleanup pending"
+        "archivedCount": "{count} archived"
       },
       "tabs": {
         "health": "Health",
@@ -463,18 +455,13 @@
         "journal": "Journal",
         "inbox": "Inbox",
         "conflicts": "Conflicts",
-        "cleanup": "Cleanup"
+        "archived": "Archived"
       },
       "docLabel": {
         "goal": "Goal",
         "plan": "Plan",
         "tech_stack": "Tech stack",
         "recent_activity": "Recent activity"
-      },
-      "verdictLabel": {
-        "stale": "Delete",
-        "duplicate": "Merge",
-        "keep": "Keep"
       },
       "editor": {
         "updatedBy": "Updated by",
@@ -523,21 +510,13 @@
         "confirmCancel": "Cancel",
         "confirmReplace": "Confirm replace"
       },
-      "cleanup": {
-        "hint": "The LLM librarian proposes keep / stale / duplicate verdicts for this project's memories. You approve before anything is deleted.",
-        "runNow": "Run cleanup now",
-        "runSucceededToast": "Cleanup run: {decided} decisions queued ({scanned} scanned)",
-        "runFailedToast": "Cleanup run failed",
-        "empty": "No pending decisions. Either nothing aged into eligibility or the last run found everything load-bearing.",
-        "mergeIntoPrefix": "→ merge into",
-        "reasonPrefix": "Reason:",
-        "executeButton": "Execute",
-        "confirmKeepButton": "Confirm keep",
-        "rejectButton": "Reject",
-        "approvedExecutedToast": "{label} executed",
-        "approveFailedToast": "Approve failed",
-        "rejectedToast": "Rejected — memory kept",
-        "rejectFailedToast": "Reject failed"
+      "archived": {
+        "hint": "Memories the auto-cleaner soft-archived for this project. They're excluded from recall but restorable until the 30-day grace window purges them.",
+        "empty": "Nothing archived for this project. The cleaner soft-archives stale and duplicate facts here automatically — none yet.",
+        "archivedAtPrefix": "Archived",
+        "restoreButton": "Restore",
+        "restoredToast": "Restored",
+        "restoreFailedToast": "Restore failed"
       },
       "reset": {
         "button": "Reset",
@@ -2448,9 +2427,9 @@
         "title": "Project goal / plan / journal",
         "subtitle": "Per-cwd memory layers 2-4 + agent proposals"
       },
-      "cleanupInbox": {
-        "title": "Cleanup inbox",
-        "subtitle": "LLM-proposed deletions / merges across all projects"
+      "archived": {
+        "title": "Archived memories",
+        "subtitle": "Restore memories the auto-cleaner soft-archived (30-day grace)"
       },
       "backups": {
         "title": "Backups",
@@ -3005,12 +2984,15 @@
       }
     }
   },
-  "memoryCleanup": {
-    "title": "Memory cleanup",
-    "approveFailed": "Approve failed: {error}",
-    "rejectFailed": "Reject failed: {error}",
+  "memoryArchived": {
+    "title": "Archived memories",
     "loadFailed": "Failed to load: {error}",
-    "reject": "Reject"
+    "restoreFailed": "Restore failed: {error}",
+    "emptyTitle": "Nothing archived",
+    "emptyBody": "No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.",
+    "globalScope": "(global)",
+    "countBadge": "{count} archived",
+    "restore": "Restore"
   },
   "project": {
     "title": "Project",
@@ -3081,7 +3063,6 @@
     "appendFailed": "Failed: {error}",
     "approveFailed": "Approve failed: {error}",
     "rejectFailed": "Reject failed: {error}",
-    "cleanupFailed": "Cleanup failed: {error}",
     "resetConfirmTitle": "Reset project memory?",
     "alsoDeleteScanner": "Also delete scanner docs",
     "alsoDeletePgvector": "Also delete pgvector memories",
@@ -3097,8 +3078,12 @@
     "approve": "Approve",
     "replaceConfirmTitle": "Replace current {kind}?",
     "replaceKind": "Replace {kind}",
-    "reason": "Reason",
-    "willMergeInto": "Will merge into"
+    "archived": {
+      "emptyTitle": "Nothing archived",
+      "emptyBody": "No archived memories for this project. The auto-cleaner soft-archives stale and duplicate facts here automatically — none yet.",
+      "restoreFailed": "Restore failed: {error}",
+      "restore": "Restore"
+    }
   },
   "backups": {
     "title": "Backups",

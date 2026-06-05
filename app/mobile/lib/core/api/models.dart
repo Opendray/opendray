@@ -277,6 +277,8 @@ class Memory {
     this.sourceRef,
     this.summarizerSession,
     this.confidence,
+    this.archivedAt,
+    this.archivedReason,
   });
 
   factory Memory.fromJson(Map<String, dynamic> json) => Memory(
@@ -302,6 +304,10 @@ class Memory {
         sourceRef: json['source_ref'] as String?,
         summarizerSession: json['summarizer_session'] as String?,
         confidence: (json['confidence'] as num?)?.toDouble(),
+        archivedAt: (json['archived_at'] is String)
+            ? DateTime.tryParse(json['archived_at'] as String)
+            : null,
+        archivedReason: json['archived_reason'] as String?,
       );
 
   final String id;
@@ -318,6 +324,10 @@ class Memory {
   final String? sourceRef;
   final String? summarizerSession;
   final double? confidence;
+  // Soft-delete metadata, only populated by the Archived view. Normal
+  // list/search never returns archived rows.
+  final DateTime? archivedAt;
+  final String? archivedReason;
 }
 
 // SearchHit pairs a Memory with its cosine similarity score so the

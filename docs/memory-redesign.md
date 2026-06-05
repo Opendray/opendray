@@ -403,7 +403,7 @@ on a copy of real data. Order is dependency-driven.
 - **Risk:** low. Default-on is behaviour-compatible (lossless) and the
   threshold is tunable; covered by boundary tests.
 
-### Phase 4 — Self-maintaining cleanup — backend DONE (4.1–4.3); UI (4.4) pending
+### Phase 4 — Self-maintaining cleanup — DONE (backend 4.1–4.3 + 4.4 UI)
 
 Owner-confirmed shape: keep the LLM judge, auto-apply its verdicts as
 **reversible soft-archives** (no approval queue); remove the cleanup
@@ -423,26 +423,35 @@ one-click restore; operator inbox keeps conflicts only.
 - **4.4 backend (done):** `GET /api/v1/memory/archived` (read) + `POST
   /api/v1/memory/{id}/restore` (admin); `ListArchived` store primitive;
   `Memory.ArchivedAt/ArchivedReason`.
-- **4.4 frontend (pending — bigger than one page).** The cleanup-approval
-  UI is woven across FIVE web surfaces + mobile + i18n, so this is a
-  focused refactor for a fresh session:
-  - `router.tsx` (`/memory/cleanup` route), `pages/CleanupInbox.tsx`
-    (repurpose → `Archived.tsx` calling the new endpoints),
-    `components/project/ProjectScreen.tsx` (inline `cleanupPending` count
-    + `runCleanup` button + per-decision `approveDecision` — rip out),
-    `components/sessions/inspector/MemoryPanel.tsx` (pending count),
-    `pages/Memory.tsx` nav link + `CommandPalette.tsx` entry.
-  - `app/shared/src/lib/memoryCleanup.ts` → replace decision API with
-    archived/restore in `memory.ts`.
-  - Mobile: `cleanup_inbox_screen.dart` → archived screen, `more_screen`
-    tile, `memory_cleanup_api.dart`.
-  - i18n en/es/zh: remove `web.cleanupInbox.*`,
-    `web.memory.navCleanupInbox`, `web.project.header.cleanupPending`,
-    `more.items.cleanupInbox.*`, `memoryCleanup.*`; add archived-view
-    keys; regen slang.
-  - **Not urgent:** auto-apply (4.2) means no pending decisions
-    accumulate, so these surfaces already show empty — 4.4-fe tidies
-    vestigial UI + adds the restore view, it doesn't fix a regression.
+- **4.4 frontend (done).** The cleanup-approval UI is fully removed and
+  replaced by the read-only **Archived (restorable)** view across web +
+  mobile + i18n:
+  - Web: `pages/CleanupInbox.tsx` → new `pages/Archived.tsx`
+    (cross-project list grouped by scope + restore); `router.tsx`
+    `/memory/cleanup` → `/memory/archived`; `pages/Memory.tsx` nav +
+    `CommandPalette.tsx` entry retargeted; `ProjectScreen.tsx` Cleanup
+    tab → Archived tab (header badge, query, card all swapped, run/approve/
+    reject ripped out); `MemoryPanel.tsx` stat → archived count.
+  - Shared API: deleted `app/shared/src/lib/memoryCleanup.ts`; added
+    `listArchived` + `restoreMemory` (+ `archived_at` / `archived_reason`
+    on `MemoryRecord`) to `memory.ts`.
+  - Mobile: deleted `memory_cleanup_api.dart` +
+    `features/memory_cleanup/`; new `features/memory_archived/
+    archived_screen.dart`; `memory_api.dart` += `listArchived` /
+    `restore`; `models.dart` Memory += `archivedAt` / `archivedReason`;
+    `more_screen.dart` tile + `project_screen.dart` tab swapped.
+  - i18n en/es/zh: removed `web.cleanupInbox.*`, `web.memory.navCleanupInbox`,
+    `web.project.header.cleanupPending`, `web.project.tabs.cleanup`,
+    `web.project.verdictLabel.*`, `web.project.cleanup.*`,
+    `more.items.cleanupInbox.*`, `memoryCleanup.*`,
+    `project.cleanupFailed/reason/willMergeInto`; added `web.archived.*`,
+    `web.memory.navArchived`, `web.project.tabs.archived`,
+    `web.project.archived.*`, `web.project.header.archivedCount`,
+    `more.items.archived.*`, `memoryArchived.*`, `project.archived.*`;
+    slang regenerated. The `memory_cleanup_decisions` reset-audit path is
+    retained (table kept read-only).
+  - **Validated:** web `tsc -b` + `vite build` clean; mobile `dart analyze
+    lib` clean (0 issues); i18n parity 100% (es/zh, 0 missing/extra/token).
 - **Validated:** the soft-archive read-filtering, auto-archive, purge,
   and dormancy SQL all exercised on an ephemeral Postgres + unit tests;
   `-race` green across memory/cleaner/app.

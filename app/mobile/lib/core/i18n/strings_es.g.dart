@@ -49,7 +49,7 @@ class TranslationsEs extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsProvidersEs providers = _TranslationsProvidersEs._(_root);
 	@override late final _TranslationsIntegrationsEs integrations = _TranslationsIntegrationsEs._(_root);
 	@override late final _TranslationsMemoryWorkersEs memoryWorkers = _TranslationsMemoryWorkersEs._(_root);
-	@override late final _TranslationsMemoryCleanupEs memoryCleanup = _TranslationsMemoryCleanupEs._(_root);
+	@override late final _TranslationsMemoryArchivedEs memoryArchived = _TranslationsMemoryArchivedEs._(_root);
 	@override late final _TranslationsProjectEs project = _TranslationsProjectEs._(_root);
 	@override late final _TranslationsBackupsEs backups = _TranslationsBackupsEs._(_root);
 	@override late final _TranslationsBackupTargetsEs backupTargets = _TranslationsBackupTargetsEs._(_root);
@@ -146,7 +146,7 @@ class _TranslationsWebEs extends TranslationsWebEn {
 	@override late final _TranslationsWebMemoryHealthEs memoryHealth = _TranslationsWebMemoryHealthEs._(_root);
 	@override late final _TranslationsWebMemoryConfigEs memoryConfig = _TranslationsWebMemoryConfigEs._(_root);
 	@override late final _TranslationsWebMemoryWorkersEs memoryWorkers = _TranslationsWebMemoryWorkersEs._(_root);
-	@override late final _TranslationsWebCleanupInboxEs cleanupInbox = _TranslationsWebCleanupInboxEs._(_root);
+	@override late final _TranslationsWebArchivedEs archived = _TranslationsWebArchivedEs._(_root);
 	@override late final _TranslationsWebProjectEs project = _TranslationsWebProjectEs._(_root);
 	@override late final _TranslationsWebMemoryInspectorEs memoryInspector = _TranslationsWebMemoryInspectorEs._(_root);
 	@override late final _TranslationsWebNotesEs notes = _TranslationsWebNotesEs._(_root);
@@ -363,18 +363,21 @@ class _TranslationsMemoryWorkersEs extends TranslationsMemoryWorkersEn {
 	@override late final _TranslationsMemoryWorkersTasksEs tasks = _TranslationsMemoryWorkersTasksEs._(_root);
 }
 
-// Path: memoryCleanup
-class _TranslationsMemoryCleanupEs extends TranslationsMemoryCleanupEn {
-	_TranslationsMemoryCleanupEs._(TranslationsEs root) : this._root = root, super.internal(root);
+// Path: memoryArchived
+class _TranslationsMemoryArchivedEs extends TranslationsMemoryArchivedEn {
+	_TranslationsMemoryArchivedEs._(TranslationsEs root) : this._root = root, super.internal(root);
 
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Limpieza de memoria';
-	@override String approveFailed({required Object error}) => 'Error al aprobar: ${error}';
-	@override String rejectFailed({required Object error}) => 'Error al rechazar: ${error}';
+	@override String get title => 'Memorias archivadas';
 	@override String loadFailed({required Object error}) => 'Error al cargar: ${error}';
-	@override String get reject => 'Rechazar';
+	@override String restoreFailed({required Object error}) => 'Error al restaurar: ${error}';
+	@override String get emptyTitle => 'Nada archivado';
+	@override String get emptyBody => 'No hay memorias archivadas en ningún proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados (restaurables durante 30 días); todavía no se ha eliminado nada.';
+	@override String get globalScope => '(global)';
+	@override String countBadge({required Object count}) => '${count} archivadas';
+	@override String get restore => 'Restaurar';
 }
 
 // Path: project
@@ -400,7 +403,6 @@ class _TranslationsProjectEs extends TranslationsProjectEn {
 	@override String appendFailed({required Object error}) => 'Error: ${error}';
 	@override String approveFailed({required Object error}) => 'Error al aprobar: ${error}';
 	@override String rejectFailed({required Object error}) => 'Error al rechazar: ${error}';
-	@override String cleanupFailed({required Object error}) => 'Error en la limpieza: ${error}';
 	@override String get resetConfirmTitle => '¿Restablecer la memoria del proyecto?';
 	@override String get alsoDeleteScanner => 'Eliminar también los documentos del scanner';
 	@override String get alsoDeletePgvector => 'Eliminar también las memorias de pgvector';
@@ -416,8 +418,7 @@ class _TranslationsProjectEs extends TranslationsProjectEn {
 	@override String get approve => 'Aprobar';
 	@override String replaceConfirmTitle({required Object kind}) => '¿Reemplazar el ${kind} actual?';
 	@override String replaceKind({required Object kind}) => 'Reemplazar ${kind}';
-	@override String get reason => 'Motivo';
-	@override String get willMergeInto => 'Se fusionará en';
+	@override late final _TranslationsProjectArchivedEs archived = _TranslationsProjectArchivedEs._(_root);
 }
 
 // Path: backups
@@ -918,7 +919,7 @@ class _TranslationsWebMemoryEs extends TranslationsWebMemoryEn {
 	@override String get title => 'Memoria';
 	@override String get subtitle => 'Explora, busca y edita las memorias que los agentes han almacenado a través del servidor MCP opendray-memory.';
 	@override String get navProject => 'Proyecto';
-	@override String get navCleanupInbox => 'Bandeja de limpieza';
+	@override String get navArchived => 'Archivadas';
 	@override String get navWorkers => 'Workers';
 	@override String get navConfiguration => 'Configuración →';
 }
@@ -1062,32 +1063,24 @@ class _TranslationsWebMemoryWorkersEs extends TranslationsWebMemoryWorkersEn {
 	@override late final _TranslationsWebMemoryWorkersTasksEs tasks = _TranslationsWebMemoryWorkersTasksEs._(_root);
 }
 
-// Path: web.cleanupInbox
-class _TranslationsWebCleanupInboxEs extends TranslationsWebCleanupInboxEn {
-	_TranslationsWebCleanupInboxEs._(TranslationsEs root) : this._root = root, super.internal(root);
+// Path: web.archived
+class _TranslationsWebArchivedEs extends TranslationsWebArchivedEn {
+	_TranslationsWebArchivedEs._(TranslationsEs root) : this._root = root, super.internal(root);
 
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
 	@override String get loading => 'Cargando…';
-	@override String get emptyTitle => 'Bandeja de limpieza vacía';
-	@override String get emptyDescription => 'No hay decisiones de limpieza pendientes en ningún proyecto. El bibliotecario LLM aún no se ha ejecutado para las memorias elegibles, o ha encontrado que todo es esencial.';
-	@override String get title => 'Bandeja de limpieza';
-	@override String get subtitle => 'Decisiones pendientes entre proyectos del bibliotecario de memoria LLM. Aprobar obsoleto borra, aprobar duplicado fusiona, aprobar conservar congela la entrada para que no se vuelva a evaluar durante un tiempo.';
+	@override String get emptyTitle => 'Nada archivado';
+	@override String get emptyDescription => 'No hay memorias archivadas en ningún proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados (restaurables durante 30 días); todavía no se ha eliminado nada.';
+	@override String get title => 'Memorias archivadas';
+	@override String get subtitle => 'Memorias que el limpiador automático y el barrido de ciclo de vida archivaron en todos los proyectos. Se excluyen de la recuperación pero son restaurables hasta que la ventana de gracia de 30 días las purgue. Restaura cualquier falso positivo abajo.';
 	@override String get globalScope => '(global)';
-	@override String get orphanBadge => 'huérfano';
-	@override String get orphanTitle => 'scope_key truncado (importación antigua de réplica). No es un proyecto navegable.';
 	@override String get openProject => 'Abrir proyecto';
-	@override String get mergeIntoPrefix => '→ fusionar en';
-	@override String get reasonPrefix => 'Motivo:';
-	@override String get executeButton => 'Ejecutar';
-	@override String get confirmKeepButton => 'Confirmar conservar';
-	@override String get rejectButton => 'Rechazar';
-	@override String get approvedKeptToast => 'Conservado';
-	@override String approvedExecutedToast({required Object verdict}) => '${verdict} ejecutado';
-	@override String get approveFailedToast => 'Error al aprobar';
-	@override String get rejectedToast => 'Rechazado, memoria conservada';
-	@override String get rejectFailedToast => 'Error al rechazar';
+	@override String get archivedAtPrefix => 'Archivado';
+	@override String get restoreButton => 'Restaurar';
+	@override String get restoredToast => 'Restaurado';
+	@override String get restoreFailedToast => 'Error al restaurar';
 }
 
 // Path: web.project
@@ -1102,12 +1095,11 @@ class _TranslationsWebProjectEs extends TranslationsWebProjectEn {
 	@override late final _TranslationsWebProjectHeaderEs header = _TranslationsWebProjectHeaderEs._(_root);
 	@override late final _TranslationsWebProjectTabsEs tabs = _TranslationsWebProjectTabsEs._(_root);
 	@override late final _TranslationsWebProjectDocLabelEs docLabel = _TranslationsWebProjectDocLabelEs._(_root);
-	@override late final _TranslationsWebProjectVerdictLabelEs verdictLabel = _TranslationsWebProjectVerdictLabelEs._(_root);
 	@override late final _TranslationsWebProjectEditorEs editor = _TranslationsWebProjectEditorEs._(_root);
 	@override late final _TranslationsWebProjectReadonlyEs readonly = _TranslationsWebProjectReadonlyEs._(_root);
 	@override late final _TranslationsWebProjectJournalEs journal = _TranslationsWebProjectJournalEs._(_root);
 	@override late final _TranslationsWebProjectInboxEs inbox = _TranslationsWebProjectInboxEs._(_root);
-	@override late final _TranslationsWebProjectCleanupEs cleanup = _TranslationsWebProjectCleanupEs._(_root);
+	@override late final _TranslationsWebProjectArchivedEs archived = _TranslationsWebProjectArchivedEs._(_root);
 	@override late final _TranslationsWebProjectResetEs reset = _TranslationsWebProjectResetEs._(_root);
 }
 
@@ -1454,7 +1446,7 @@ class _TranslationsMoreItemsEs extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsGitHostsEs gitHosts = _TranslationsMoreItemsGitHostsEs._(_root);
 	@override late final _TranslationsMoreItemsCustomTasksEs customTasks = _TranslationsMoreItemsCustomTasksEs._(_root);
 	@override late final _TranslationsMoreItemsProjectMemoryEs projectMemory = _TranslationsMoreItemsProjectMemoryEs._(_root);
-	@override late final _TranslationsMoreItemsCleanupInboxEs cleanupInbox = _TranslationsMoreItemsCleanupInboxEs._(_root);
+	@override late final _TranslationsMoreItemsArchivedEs archived = _TranslationsMoreItemsArchivedEs._(_root);
 	@override late final _TranslationsMoreItemsBackupsEs backups = _TranslationsMoreItemsBackupsEs._(_root);
 	@override late final _TranslationsMoreItemsDataExportEs dataExport = _TranslationsMoreItemsDataExportEs._(_root);
 	@override late final _TranslationsMoreItemsSettingsEs settings = _TranslationsMoreItemsSettingsEs._(_root);
@@ -1899,6 +1891,19 @@ class _TranslationsProjectJournalPruneEs extends TranslationsProjectJournalPrune
 	@override String get deselectAll => 'Deseleccionar todo';
 	@override String deleteSelected({required Object count}) => 'Eliminar (${count})';
 	@override String deleted({required Object count}) => '${count} entrada(s) eliminada(s)';
+}
+
+// Path: project.archived
+class _TranslationsProjectArchivedEs extends TranslationsProjectArchivedEn {
+	_TranslationsProjectArchivedEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get emptyTitle => 'Nada archivado';
+	@override String get emptyBody => 'No hay memorias archivadas para este proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados automáticamente; todavía ninguno.';
+	@override String restoreFailed({required Object error}) => 'Error al restaurar: ${error}';
+	@override String get restore => 'Restaurar';
 }
 
 // Path: backups.kv
@@ -2969,7 +2974,7 @@ class _TranslationsWebProjectHeaderEs extends TranslationsWebProjectHeaderEn {
 	@override String journalEntries_other({required Object count}) => '${count} entradas del diario';
 	@override String pendingProposals_one({required Object count}) => '${count} propuesta pendiente';
 	@override String pendingProposals_other({required Object count}) => '${count} propuestas pendientes';
-	@override String cleanupPending({required Object count}) => '${count} limpieza pendiente';
+	@override String archivedCount({required Object count}) => '${count} archivadas';
 }
 
 // Path: web.project.tabs
@@ -2987,7 +2992,7 @@ class _TranslationsWebProjectTabsEs extends TranslationsWebProjectTabsEn {
 	@override String get journal => 'Diario';
 	@override String get inbox => 'Bandeja de entrada';
 	@override String get conflicts => 'Conflictos';
-	@override String get cleanup => 'Limpieza';
+	@override String get archived => 'Archivadas';
 }
 
 // Path: web.project.docLabel
@@ -3001,18 +3006,6 @@ class _TranslationsWebProjectDocLabelEs extends TranslationsWebProjectDocLabelEn
 	@override String get plan => 'Plan';
 	@override String get tech_stack => 'Stack tecnológico';
 	@override String get recent_activity => 'Actividad reciente';
-}
-
-// Path: web.project.verdictLabel
-class _TranslationsWebProjectVerdictLabelEs extends TranslationsWebProjectVerdictLabelEn {
-	_TranslationsWebProjectVerdictLabelEs._(TranslationsEs root) : this._root = root, super.internal(root);
-
-	final TranslationsEs _root; // ignore: unused_field
-
-	// Translations
-	@override String get stale => 'Eliminar';
-	@override String get duplicate => 'Fusionar';
-	@override String get keep => 'Conservar';
 }
 
 // Path: web.project.editor
@@ -3084,27 +3077,19 @@ class _TranslationsWebProjectInboxEs extends TranslationsWebProjectInboxEn {
 	@override String get confirmReplace => 'Confirmar reemplazo';
 }
 
-// Path: web.project.cleanup
-class _TranslationsWebProjectCleanupEs extends TranslationsWebProjectCleanupEn {
-	_TranslationsWebProjectCleanupEs._(TranslationsEs root) : this._root = root, super.internal(root);
+// Path: web.project.archived
+class _TranslationsWebProjectArchivedEs extends TranslationsWebProjectArchivedEn {
+	_TranslationsWebProjectArchivedEs._(TranslationsEs root) : this._root = root, super.internal(root);
 
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String get hint => 'El bibliotecario LLM propone veredictos de conservar / obsoleto / duplicado para las memorias de este proyecto. Tú apruebas antes de que se elimine nada.';
-	@override String get runNow => 'Ejecutar limpieza ahora';
-	@override String runSucceededToast({required Object decided, required Object scanned}) => 'Ejecución de limpieza: ${decided} decisiones en cola (${scanned} analizadas)';
-	@override String get runFailedToast => 'Error en la ejecución de limpieza';
-	@override String get empty => 'No hay decisiones pendientes. O no había nada que cumpliera los requisitos por antigüedad, o la última ejecución encontró que todo era esencial.';
-	@override String get mergeIntoPrefix => '→ fusionar en';
-	@override String get reasonPrefix => 'Motivo:';
-	@override String get executeButton => 'Ejecutar';
-	@override String get confirmKeepButton => 'Confirmar conservar';
-	@override String get rejectButton => 'Rechazar';
-	@override String approvedExecutedToast({required Object label}) => '${label} ejecutado';
-	@override String get approveFailedToast => 'Error al aprobar';
-	@override String get rejectedToast => 'Rechazado: memoria conservada';
-	@override String get rejectFailedToast => 'Error al rechazar';
+	@override String get hint => 'Memorias que el limpiador automático archivó para este proyecto. Se excluyen de la recuperación pero son restaurables hasta que la ventana de gracia de 30 días las purgue.';
+	@override String get empty => 'Nada archivado para este proyecto. El limpiador archiva aquí los hechos obsoletos y duplicados automáticamente; todavía ninguno.';
+	@override String get archivedAtPrefix => 'Archivado';
+	@override String get restoreButton => 'Restaurar';
+	@override String get restoredToast => 'Restaurado';
+	@override String get restoreFailedToast => 'Error al restaurar';
 }
 
 // Path: web.project.reset
@@ -4988,15 +4973,15 @@ class _TranslationsMoreItemsProjectMemoryEs extends TranslationsMoreItemsProject
 	@override String get subtitle => 'Capas de memoria 2-4 por cwd + propuestas del agente';
 }
 
-// Path: more.items.cleanupInbox
-class _TranslationsMoreItemsCleanupInboxEs extends TranslationsMoreItemsCleanupInboxEn {
-	_TranslationsMoreItemsCleanupInboxEs._(TranslationsEs root) : this._root = root, super.internal(root);
+// Path: more.items.archived
+class _TranslationsMoreItemsArchivedEs extends TranslationsMoreItemsArchivedEn {
+	_TranslationsMoreItemsArchivedEs._(TranslationsEs root) : this._root = root, super.internal(root);
 
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Bandeja de limpieza';
-	@override String get subtitle => 'Eliminaciones / fusiones propuestas por el LLM en todos los proyectos';
+	@override String get title => 'Memorias archivadas';
+	@override String get subtitle => 'Restaura memorias que el limpiador automático archivó (gracia de 30 días)';
 }
 
 // Path: more.items.backups
@@ -7616,7 +7601,7 @@ extension on TranslationsEs {
 			'web.memory.title' => 'Memoria',
 			'web.memory.subtitle' => 'Explora, busca y edita las memorias que los agentes han almacenado a través del servidor MCP opendray-memory.',
 			'web.memory.navProject' => 'Proyecto',
-			'web.memory.navCleanupInbox' => 'Bandeja de limpieza',
+			'web.memory.navArchived' => 'Archivadas',
 			'web.memory.navWorkers' => 'Workers',
 			'web.memory.navConfiguration' => 'Configuración →',
 			'web.journalStale.title' => 'Purgar entradas obsoletas',
@@ -7748,25 +7733,17 @@ extension on TranslationsEs {
 			'web.memoryWorkers.tasks.conflict_detector.description' => 'Escaneo diario que encuentra contradicciones entre hechos / plan / objetivo / diario. Un modelo de mayor calidad = menos falsos positivos.',
 			'web.memoryWorkers.tasks.capture.label' => 'Motor de captura',
 			'web.memoryWorkers.tasks.capture.description' => 'Extracción de hechos por cada trigger a partir de los transcripts de sesión. El modo agente ofrece hechos notablemente mejores en sesiones largas; el modo summarizer es barato y local.',
-			'web.cleanupInbox.loading' => 'Cargando…',
-			'web.cleanupInbox.emptyTitle' => 'Bandeja de limpieza vacía',
-			'web.cleanupInbox.emptyDescription' => 'No hay decisiones de limpieza pendientes en ningún proyecto. El bibliotecario LLM aún no se ha ejecutado para las memorias elegibles, o ha encontrado que todo es esencial.',
-			'web.cleanupInbox.title' => 'Bandeja de limpieza',
-			'web.cleanupInbox.subtitle' => 'Decisiones pendientes entre proyectos del bibliotecario de memoria LLM. Aprobar obsoleto borra, aprobar duplicado fusiona, aprobar conservar congela la entrada para que no se vuelva a evaluar durante un tiempo.',
-			'web.cleanupInbox.globalScope' => '(global)',
-			'web.cleanupInbox.orphanBadge' => 'huérfano',
-			'web.cleanupInbox.orphanTitle' => 'scope_key truncado (importación antigua de réplica). No es un proyecto navegable.',
-			'web.cleanupInbox.openProject' => 'Abrir proyecto',
-			'web.cleanupInbox.mergeIntoPrefix' => '→ fusionar en',
-			'web.cleanupInbox.reasonPrefix' => 'Motivo:',
-			'web.cleanupInbox.executeButton' => 'Ejecutar',
-			'web.cleanupInbox.confirmKeepButton' => 'Confirmar conservar',
-			'web.cleanupInbox.rejectButton' => 'Rechazar',
-			'web.cleanupInbox.approvedKeptToast' => 'Conservado',
-			'web.cleanupInbox.approvedExecutedToast' => ({required Object verdict}) => '${verdict} ejecutado',
-			'web.cleanupInbox.approveFailedToast' => 'Error al aprobar',
-			'web.cleanupInbox.rejectedToast' => 'Rechazado, memoria conservada',
-			'web.cleanupInbox.rejectFailedToast' => 'Error al rechazar',
+			'web.archived.loading' => 'Cargando…',
+			'web.archived.emptyTitle' => 'Nada archivado',
+			'web.archived.emptyDescription' => 'No hay memorias archivadas en ningún proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados (restaurables durante 30 días); todavía no se ha eliminado nada.',
+			'web.archived.title' => 'Memorias archivadas',
+			'web.archived.subtitle' => 'Memorias que el limpiador automático y el barrido de ciclo de vida archivaron en todos los proyectos. Se excluyen de la recuperación pero son restaurables hasta que la ventana de gracia de 30 días las purgue. Restaura cualquier falso positivo abajo.',
+			'web.archived.globalScope' => '(global)',
+			'web.archived.openProject' => 'Abrir proyecto',
+			'web.archived.archivedAtPrefix' => 'Archivado',
+			'web.archived.restoreButton' => 'Restaurar',
+			'web.archived.restoredToast' => 'Restaurado',
+			'web.archived.restoreFailedToast' => 'Error al restaurar',
 			'web.project.picker.title' => 'Elige un proyecto',
 			'web.project.picker.subtitle' => 'La memoria del proyecto se delimita por el directorio de trabajo. Elige uno para gestionar su objetivo, plan, diario y cola de limpieza.',
 			'web.project.picker.pathPlaceholder' => '/path/to/your/project',
@@ -7783,7 +7760,7 @@ extension on TranslationsEs {
 			'web.project.header.journalEntries_other' => ({required Object count}) => '${count} entradas del diario',
 			'web.project.header.pendingProposals_one' => ({required Object count}) => '${count} propuesta pendiente',
 			'web.project.header.pendingProposals_other' => ({required Object count}) => '${count} propuestas pendientes',
-			'web.project.header.cleanupPending' => ({required Object count}) => '${count} limpieza pendiente',
+			'web.project.header.archivedCount' => ({required Object count}) => '${count} archivadas',
 			'web.project.tabs.health' => 'Estado',
 			'web.project.tabs.goal' => 'Objetivo',
 			'web.project.tabs.plan' => 'Plan',
@@ -7792,14 +7769,11 @@ extension on TranslationsEs {
 			'web.project.tabs.journal' => 'Diario',
 			'web.project.tabs.inbox' => 'Bandeja de entrada',
 			'web.project.tabs.conflicts' => 'Conflictos',
-			'web.project.tabs.cleanup' => 'Limpieza',
+			'web.project.tabs.archived' => 'Archivadas',
 			'web.project.docLabel.goal' => 'Objetivo',
 			'web.project.docLabel.plan' => 'Plan',
 			'web.project.docLabel.tech_stack' => 'Stack tecnológico',
 			'web.project.docLabel.recent_activity' => 'Actividad reciente',
-			'web.project.verdictLabel.stale' => 'Eliminar',
-			'web.project.verdictLabel.duplicate' => 'Fusionar',
-			'web.project.verdictLabel.keep' => 'Conservar',
 			'web.project.editor.updatedBy' => 'Actualizado por',
 			'web.project.editor.noDocSet' => ({required Object label}) => 'Aún no se ha definido ningún ${label}.',
 			'web.project.editor.save' => 'Guardar',
@@ -7835,20 +7809,12 @@ extension on TranslationsEs {
 			'web.project.inbox.confirmDialogDescription' => ({required Object label}) => 'El ${label} actual se sobrescribirá con el contenido propuesto. Esto no se puede deshacer desde esta interfaz (puedes volver a editarlo manualmente).',
 			'web.project.inbox.confirmCancel' => 'Cancelar',
 			'web.project.inbox.confirmReplace' => 'Confirmar reemplazo',
-			'web.project.cleanup.hint' => 'El bibliotecario LLM propone veredictos de conservar / obsoleto / duplicado para las memorias de este proyecto. Tú apruebas antes de que se elimine nada.',
-			'web.project.cleanup.runNow' => 'Ejecutar limpieza ahora',
-			'web.project.cleanup.runSucceededToast' => ({required Object decided, required Object scanned}) => 'Ejecución de limpieza: ${decided} decisiones en cola (${scanned} analizadas)',
-			'web.project.cleanup.runFailedToast' => 'Error en la ejecución de limpieza',
-			'web.project.cleanup.empty' => 'No hay decisiones pendientes. O no había nada que cumpliera los requisitos por antigüedad, o la última ejecución encontró que todo era esencial.',
-			'web.project.cleanup.mergeIntoPrefix' => '→ fusionar en',
-			'web.project.cleanup.reasonPrefix' => 'Motivo:',
-			'web.project.cleanup.executeButton' => 'Ejecutar',
-			'web.project.cleanup.confirmKeepButton' => 'Confirmar conservar',
-			'web.project.cleanup.rejectButton' => 'Rechazar',
-			'web.project.cleanup.approvedExecutedToast' => ({required Object label}) => '${label} ejecutado',
-			'web.project.cleanup.approveFailedToast' => 'Error al aprobar',
-			'web.project.cleanup.rejectedToast' => 'Rechazado: memoria conservada',
-			'web.project.cleanup.rejectFailedToast' => 'Error al rechazar',
+			'web.project.archived.hint' => 'Memorias que el limpiador automático archivó para este proyecto. Se excluyen de la recuperación pero son restaurables hasta que la ventana de gracia de 30 días las purgue.',
+			'web.project.archived.empty' => 'Nada archivado para este proyecto. El limpiador archiva aquí los hechos obsoletos y duplicados automáticamente; todavía ninguno.',
+			'web.project.archived.archivedAtPrefix' => 'Archivado',
+			'web.project.archived.restoreButton' => 'Restaurar',
+			'web.project.archived.restoredToast' => 'Restaurado',
+			'web.project.archived.restoreFailedToast' => 'Error al restaurar',
 			'web.project.reset.button' => 'Restablecer',
 			'web.project.reset.dialogTitle' => '¿Restablecer la memoria del proyecto?',
 			'web.project.reset.dialogDescription' => 'Elimina todo el contexto de proyecto almacenado para este cwd. Esto no se puede deshacer.',
@@ -7927,8 +7893,6 @@ extension on TranslationsEs {
 			'web.memoryInspector.toasts.created' => 'Memoria creada',
 			'web.memoryInspector.toasts.createFailed' => 'La creación falló',
 			'web.memoryInspector.toasts.updated' => 'Memoria actualizada',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.toasts.updateFailed' => 'La actualización falló',
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => 'Se migraron ${reembed}/${examined} memorias a ${to}',
 			'web.memoryInspector.toasts.migrationFailed' => 'La migración falló',
@@ -7948,6 +7912,8 @@ extension on TranslationsEs {
 			'web.memoryInspector.bulkDelete.items_one' => ({required Object count}) => '${count} elemento de memoria',
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} elementos de memoria',
 			'web.memoryInspector.bulkDelete.cancel' => 'Cancelar',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.bulkDelete.deleteAll' => 'Eliminar todo',
 			'web.memoryInspector.addMem.title' => 'Añadir memoria',
 			'web.memoryInspector.addMem.description' => 'Crea manualmente una memoria. Los agentes las crean automáticamente mediante la herramienta MCP <1>memory_store</1>. Este formulario es para los casos en que el operador quiere insertar un hecho sin pasar por un agente.',
@@ -8441,8 +8407,6 @@ extension on TranslationsEs {
 			'web.integrations.proxy.bodyLabel' => 'Body',
 			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.proxy.emptyBody' => '(vacío)',
 			'web.integrations.proxy.requestFailed' => 'la petición falló',
 			'web.integrations.proxy.stubText' => 'Envía una petición para ver la respuesta del upstream.',
@@ -8462,6 +8426,8 @@ extension on TranslationsEs {
 			'web.plugins.mcp.empty' => 'Aún no hay servidores MCP. Añade uno para exponer herramientas adicionales a tus sessions de agente.',
 			'web.plugins.mcp.columns.name' => 'Nombre',
 			'web.plugins.mcp.columns.transport' => 'Transport',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.mcp.columns.spec' => 'Spec',
 			'web.plugins.mcp.columns.enabled' => 'Habilitado',
 			'web.plugins.mcp.noUrl' => 'sin url',
@@ -8955,8 +8921,6 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.backupExportDir.hint' => 'Dónde se preparan en disco los zips de exportación puntual. Vacío = ~/.opendray/exports. Los paquetes expiran automáticamente tras 24h. Requiere reinicio.',
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'Ruta de pg_dump',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'Ruta absoluta a pg_dump. La versión mayor debe ser ≥ la del servidor. Vacío = el primer pg_dump en el PATH.',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'Ruta de pg_restore',
 			'web.serverSettings.fields.backupPgRestorePath.hint' => 'Ruta absoluta a pg_restore para el flujo /backups/restore. Misma regla de versión mayor.',
 			'web.serverSettings.liveTail.heading' => 'Seguimiento en vivo',
@@ -8976,6 +8940,8 @@ extension on TranslationsEs {
 			'web.serverSettings.httpHelpers.presetTip.lmStudio' => 'Servidor local de LM Studio',
 			'web.serverSettings.httpHelpers.presetTip.openai' => 'Nube de OpenAI (necesita API key)',
 			'web.serverSettings.probe.unreachable' => ({required Object error}) => '✗ inaccesible: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.probe.connectionFailed' => 'conexión fallida',
 			'web.serverSettings.probe.reachable' => ({required Object detected, required Object total, required Object embedding}) => '✓ accesible ${detected}· ${total} modelo(s) en total · ${embedding} embedding',
 			'web.serverSettings.probe.modelMissing' => ({required Object model}) => '⚠ El modelo configurado ${model} no está en la lista. Elige uno de los modelos de embedding de abajo o corrige el nombre.',
@@ -9316,8 +9282,8 @@ extension on TranslationsEs {
 			'more.items.customTasks.subtitle' => 'Comandos slash que se muestran en el selector de tareas de la session',
 			'more.items.projectMemory.title' => 'Objetivo / plan / diario del proyecto',
 			'more.items.projectMemory.subtitle' => 'Capas de memoria 2-4 por cwd + propuestas del agente',
-			'more.items.cleanupInbox.title' => 'Bandeja de limpieza',
-			'more.items.cleanupInbox.subtitle' => 'Eliminaciones / fusiones propuestas por el LLM en todos los proyectos',
+			'more.items.archived.title' => 'Memorias archivadas',
+			'more.items.archived.subtitle' => 'Restaura memorias que el limpiador automático archivó (gracia de 30 días)',
 			'more.items.backups.title' => 'Copias de seguridad',
 			'more.items.backups.subtitle' => 'Estado de la última copia de seguridad y ejecución inmediata',
 			'more.items.dataExport.title' => 'Exportación e importación de datos',
@@ -9469,8 +9435,6 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Falló al crear: ${error}',
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => 'Falló al crear: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.personalHint' => 'Bloc de notas personal. Se guarda automáticamente mientras escribes. Los agentes de IA no escriben aquí.',
 			'sessions.inspector.notes.projectDocsHint' => 'Arquitectura / spec / decisiones / plan / retrospectivas. Normalmente redactados o mantenidos por un agente.',
 			'sessions.inspector.notes.mappingCleared' => 'Asignación borrada. Usando el valor predeterminado',
@@ -9490,6 +9454,8 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.save' => 'Guardar',
 			'sessions.spawnSheet.title' => 'Nueva session',
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
 			'sessions.spawnSheet.cancel' => 'Cancelar',
 			'sessions.spawnSheet.spawn' => 'Crear',
@@ -9761,11 +9727,14 @@ extension on TranslationsEs {
 			'memoryWorkers.tasks.conflictDetector.description' => 'Escaneo diario que encuentra contradicciones entre hechos / plan / objetivo / journal. Un modelo de mayor calidad implica menos falsos positivos.',
 			'memoryWorkers.tasks.capture.label' => 'Motor de captura',
 			'memoryWorkers.tasks.capture.description' => 'Extracción de hechos por cada trigger desde las transcripciones de sesión. El modo agente da hechos notablemente mejores en sesiones largas; el modo resumidor es barato y local.',
-			'memoryCleanup.title' => 'Limpieza de memoria',
-			'memoryCleanup.approveFailed' => ({required Object error}) => 'Error al aprobar: ${error}',
-			'memoryCleanup.rejectFailed' => ({required Object error}) => 'Error al rechazar: ${error}',
-			'memoryCleanup.loadFailed' => ({required Object error}) => 'Error al cargar: ${error}',
-			'memoryCleanup.reject' => 'Rechazar',
+			'memoryArchived.title' => 'Memorias archivadas',
+			'memoryArchived.loadFailed' => ({required Object error}) => 'Error al cargar: ${error}',
+			'memoryArchived.restoreFailed' => ({required Object error}) => 'Error al restaurar: ${error}',
+			'memoryArchived.emptyTitle' => 'Nada archivado',
+			'memoryArchived.emptyBody' => 'No hay memorias archivadas en ningún proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados (restaurables durante 30 días); todavía no se ha eliminado nada.',
+			'memoryArchived.globalScope' => '(global)',
+			'memoryArchived.countBadge' => ({required Object count}) => '${count} archivadas',
+			'memoryArchived.restore' => 'Restaurar',
 			'project.title' => 'Proyecto',
 			'project.pickFirst' => 'Elige primero un proyecto.',
 			'project.health.title' => ({required Object days}) => 'Salud de la memoria, últimos ${days} días',
@@ -9826,7 +9795,6 @@ extension on TranslationsEs {
 			'project.appendFailed' => ({required Object error}) => 'Error: ${error}',
 			'project.approveFailed' => ({required Object error}) => 'Error al aprobar: ${error}',
 			'project.rejectFailed' => ({required Object error}) => 'Error al rechazar: ${error}',
-			'project.cleanupFailed' => ({required Object error}) => 'Error en la limpieza: ${error}',
 			'project.resetConfirmTitle' => '¿Restablecer la memoria del proyecto?',
 			'project.alsoDeleteScanner' => 'Eliminar también los documentos del scanner',
 			'project.alsoDeletePgvector' => 'Eliminar también las memorias de pgvector',
@@ -9842,8 +9810,10 @@ extension on TranslationsEs {
 			'project.approve' => 'Aprobar',
 			'project.replaceConfirmTitle' => ({required Object kind}) => '¿Reemplazar el ${kind} actual?',
 			'project.replaceKind' => ({required Object kind}) => 'Reemplazar ${kind}',
-			'project.reason' => 'Motivo',
-			'project.willMergeInto' => 'Se fusionará en',
+			'project.archived.emptyTitle' => 'Nada archivado',
+			'project.archived.emptyBody' => 'No hay memorias archivadas para este proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados automáticamente; todavía ninguno.',
+			'project.archived.restoreFailed' => ({required Object error}) => 'Error al restaurar: ${error}',
+			'project.archived.restore' => 'Restaurar',
 			'backups.title' => 'Copias de seguridad',
 			'backups.runConfirmTitle' => '¿Ejecutar copia de seguridad ahora?',
 			'backups.runConfirmBody' => 'Lanza un nuevo volcado contra el destino local. El trabajo se ejecuta en el servidor; esta lista se actualizará a medida que avance.',
@@ -9983,8 +9953,6 @@ extension on TranslationsEs {
 			'backupSchedules.validatePickTarget' => 'Elige un destino.',
 			'backupSchedules.validateInterval' => 'El intervalo debe ser > 0.',
 			'backupSchedules.formTitleEdit' => 'Editar programación',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.formTitleNew' => 'Nueva programación',
 			'backupSchedules.saveButtonEdit' => 'Guardar',
 			'backupSchedules.saveButtonNew' => 'Crear',
@@ -10000,6 +9968,8 @@ extension on TranslationsEs {
 			'backupTargetEditor.useHttps' => 'Usar HTTPS',
 			'backupTargetEditor.pathStyle' => 'Direccionamiento por ruta (path-style)',
 			'backupTargetEditor.pathStyleSubtitle' => 'Heredado / MinIO',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.kinds.local.label' => 'Disco local',
 			'backupTargetEditor.kinds.local.description' => 'Carpeta en la máquina que ejecuta opendray',
 			'backupTargetEditor.kinds.smb.label' => 'Recurso compartido SMB',
@@ -10497,8 +10467,6 @@ extension on TranslationsEs {
 			'settings.logViewer.title' => 'Logs en vivo',
 			'settings.logViewer.reconnect' => 'Reconectar',
 			'settings.logViewer.copyBuffer' => 'Copiar búfer',
-			_ => null,
-		} ?? switch (path) {
 			'settings.logViewer.clearLocal' => 'Borrar vista local',
 			'settings.logViewer.copiedSnack' => 'Búfer copiado al portapapeles',
 			'settings.logViewer.filterHint' => 'Filtrar subcadena…',
@@ -10514,6 +10482,8 @@ extension on TranslationsEs {
 			'settings.serverSettings.restartConfirmBody' => 'El gateway se ejecutará de nuevo a sí mismo. La app móvil puede perder la conexión brevemente.',
 			'settings.serverSettings.restart' => 'Reiniciar',
 			'settings.serverSettings.restartQueuedSnack' => 'Reinicio solicitado. Desliza para actualizar en un momento.',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.restartFailedApi' => ({required Object error}) => 'Falló el reinicio: ${error}',
 			'settings.serverSettings.restartFailedGeneric' => ({required Object error}) => 'Falló el reinicio: ${error}',
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => 'Cargado desde: ${path}',

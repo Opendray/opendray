@@ -50,7 +50,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsProvidersEn providers = TranslationsProvidersEn.internal(_root);
 	late final TranslationsIntegrationsEn integrations = TranslationsIntegrationsEn.internal(_root);
 	late final TranslationsMemoryWorkersEn memoryWorkers = TranslationsMemoryWorkersEn.internal(_root);
-	late final TranslationsMemoryCleanupEn memoryCleanup = TranslationsMemoryCleanupEn.internal(_root);
+	late final TranslationsMemoryArchivedEn memoryArchived = TranslationsMemoryArchivedEn.internal(_root);
 	late final TranslationsProjectEn project = TranslationsProjectEn.internal(_root);
 	late final TranslationsBackupsEn backups = TranslationsBackupsEn.internal(_root);
 	late final TranslationsBackupTargetsEn backupTargets = TranslationsBackupTargetsEn.internal(_root);
@@ -222,7 +222,7 @@ class TranslationsWebEn {
 	late final TranslationsWebMemoryHealthEn memoryHealth = TranslationsWebMemoryHealthEn.internal(_root);
 	late final TranslationsWebMemoryConfigEn memoryConfig = TranslationsWebMemoryConfigEn.internal(_root);
 	late final TranslationsWebMemoryWorkersEn memoryWorkers = TranslationsWebMemoryWorkersEn.internal(_root);
-	late final TranslationsWebCleanupInboxEn cleanupInbox = TranslationsWebCleanupInboxEn.internal(_root);
+	late final TranslationsWebArchivedEn archived = TranslationsWebArchivedEn.internal(_root);
 	late final TranslationsWebProjectEn project = TranslationsWebProjectEn.internal(_root);
 	late final TranslationsWebMemoryInspectorEn memoryInspector = TranslationsWebMemoryInspectorEn.internal(_root);
 	late final TranslationsWebNotesEn notes = TranslationsWebNotesEn.internal(_root);
@@ -690,28 +690,37 @@ class TranslationsMemoryWorkersEn {
 	late final TranslationsMemoryWorkersTasksEn tasks = TranslationsMemoryWorkersTasksEn.internal(_root);
 }
 
-// Path: memoryCleanup
-class TranslationsMemoryCleanupEn {
-	TranslationsMemoryCleanupEn.internal(this._root);
+// Path: memoryArchived
+class TranslationsMemoryArchivedEn {
+	TranslationsMemoryArchivedEn.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
 
-	/// en: 'Memory cleanup'
-	String get title => 'Memory cleanup';
-
-	/// en: 'Approve failed: {error}'
-	String approveFailed({required Object error}) => 'Approve failed: ${error}';
-
-	/// en: 'Reject failed: {error}'
-	String rejectFailed({required Object error}) => 'Reject failed: ${error}';
+	/// en: 'Archived memories'
+	String get title => 'Archived memories';
 
 	/// en: 'Failed to load: {error}'
 	String loadFailed({required Object error}) => 'Failed to load: ${error}';
 
-	/// en: 'Reject'
-	String get reject => 'Reject';
+	/// en: 'Restore failed: {error}'
+	String restoreFailed({required Object error}) => 'Restore failed: ${error}';
+
+	/// en: 'Nothing archived'
+	String get emptyTitle => 'Nothing archived';
+
+	/// en: 'No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.'
+	String get emptyBody => 'No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.';
+
+	/// en: '(global)'
+	String get globalScope => '(global)';
+
+	/// en: '{count} archived'
+	String countBadge({required Object count}) => '${count} archived';
+
+	/// en: 'Restore'
+	String get restore => 'Restore';
 }
 
 // Path: project
@@ -765,9 +774,6 @@ class TranslationsProjectEn {
 	/// en: 'Reject failed: {error}'
 	String rejectFailed({required Object error}) => 'Reject failed: ${error}';
 
-	/// en: 'Cleanup failed: {error}'
-	String cleanupFailed({required Object error}) => 'Cleanup failed: ${error}';
-
 	/// en: 'Reset project memory?'
 	String get resetConfirmTitle => 'Reset project memory?';
 
@@ -813,11 +819,7 @@ class TranslationsProjectEn {
 	/// en: 'Replace {kind}'
 	String replaceKind({required Object kind}) => 'Replace ${kind}';
 
-	/// en: 'Reason'
-	String get reason => 'Reason';
-
-	/// en: 'Will merge into'
-	String get willMergeInto => 'Will merge into';
+	late final TranslationsProjectArchivedEn archived = TranslationsProjectArchivedEn.internal(_root);
 }
 
 // Path: backups
@@ -1924,8 +1926,8 @@ class TranslationsWebMemoryEn {
 	/// en: 'Project'
 	String get navProject => 'Project';
 
-	/// en: 'Cleanup inbox'
-	String get navCleanupInbox => 'Cleanup inbox';
+	/// en: 'Archived'
+	String get navArchived => 'Archived';
 
 	/// en: 'Workers'
 	String get navWorkers => 'Workers';
@@ -2250,9 +2252,9 @@ class TranslationsWebMemoryWorkersEn {
 	late final TranslationsWebMemoryWorkersTasksEn tasks = TranslationsWebMemoryWorkersTasksEn.internal(_root);
 }
 
-// Path: web.cleanupInbox
-class TranslationsWebCleanupInboxEn {
-	TranslationsWebCleanupInboxEn.internal(this._root);
+// Path: web.archived
+class TranslationsWebArchivedEn {
+	TranslationsWebArchivedEn.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2261,59 +2263,35 @@ class TranslationsWebCleanupInboxEn {
 	/// en: 'Loading…'
 	String get loading => 'Loading…';
 
-	/// en: 'Cleanup inbox empty'
-	String get emptyTitle => 'Cleanup inbox empty';
+	/// en: 'Nothing archived'
+	String get emptyTitle => 'Nothing archived';
 
-	/// en: 'No pending cleanup decisions across any project. The LLM librarian either hasn't run yet for the eligible memories, or it found everything load-bearing.'
-	String get emptyDescription => 'No pending cleanup decisions across any project. The LLM librarian either hasn\'t run yet for the eligible memories, or it found everything load-bearing.';
+	/// en: 'No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.'
+	String get emptyDescription => 'No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.';
 
-	/// en: 'Cleanup inbox'
-	String get title => 'Cleanup inbox';
+	/// en: 'Archived memories'
+	String get title => 'Archived memories';
 
-	/// en: 'Cross-project pending decisions from the LLM memory librarian. Approving stale → deletes, approving duplicate → merges, approving keep → freezes the entry from being re-judged for a while.'
-	String get subtitle => 'Cross-project pending decisions from the LLM memory librarian. Approving stale → deletes, approving duplicate → merges, approving keep → freezes the entry from being re-judged for a while.';
+	/// en: 'Memories the auto-cleaner and lifecycle pass soft-archived across every project. They are excluded from recall but restorable until the 30-day grace window purges them. Restore any false positive below.'
+	String get subtitle => 'Memories the auto-cleaner and lifecycle pass soft-archived across every project. They are excluded from recall but restorable until the 30-day grace window purges them. Restore any false positive below.';
 
 	/// en: '(global)'
 	String get globalScope => '(global)';
 
-	/// en: 'orphan'
-	String get orphanBadge => 'orphan';
-
-	/// en: 'Truncated scope_key (old mirror import). Not a navigable project.'
-	String get orphanTitle => 'Truncated scope_key (old mirror import). Not a navigable project.';
-
 	/// en: 'Open project'
 	String get openProject => 'Open project';
 
-	/// en: '→ merge into'
-	String get mergeIntoPrefix => '→ merge into';
+	/// en: 'Archived'
+	String get archivedAtPrefix => 'Archived';
 
-	/// en: 'Reason:'
-	String get reasonPrefix => 'Reason:';
+	/// en: 'Restore'
+	String get restoreButton => 'Restore';
 
-	/// en: 'Execute'
-	String get executeButton => 'Execute';
+	/// en: 'Restored'
+	String get restoredToast => 'Restored';
 
-	/// en: 'Confirm keep'
-	String get confirmKeepButton => 'Confirm keep';
-
-	/// en: 'Reject'
-	String get rejectButton => 'Reject';
-
-	/// en: 'Kept'
-	String get approvedKeptToast => 'Kept';
-
-	/// en: '{verdict} executed'
-	String approvedExecutedToast({required Object verdict}) => '${verdict} executed';
-
-	/// en: 'Approve failed'
-	String get approveFailedToast => 'Approve failed';
-
-	/// en: 'Rejected — memory kept'
-	String get rejectedToast => 'Rejected — memory kept';
-
-	/// en: 'Reject failed'
-	String get rejectFailedToast => 'Reject failed';
+	/// en: 'Restore failed'
+	String get restoreFailedToast => 'Restore failed';
 }
 
 // Path: web.project
@@ -2331,12 +2309,11 @@ class TranslationsWebProjectEn {
 	late final TranslationsWebProjectHeaderEn header = TranslationsWebProjectHeaderEn.internal(_root);
 	late final TranslationsWebProjectTabsEn tabs = TranslationsWebProjectTabsEn.internal(_root);
 	late final TranslationsWebProjectDocLabelEn docLabel = TranslationsWebProjectDocLabelEn.internal(_root);
-	late final TranslationsWebProjectVerdictLabelEn verdictLabel = TranslationsWebProjectVerdictLabelEn.internal(_root);
 	late final TranslationsWebProjectEditorEn editor = TranslationsWebProjectEditorEn.internal(_root);
 	late final TranslationsWebProjectReadonlyEn readonly = TranslationsWebProjectReadonlyEn.internal(_root);
 	late final TranslationsWebProjectJournalEn journal = TranslationsWebProjectJournalEn.internal(_root);
 	late final TranslationsWebProjectInboxEn inbox = TranslationsWebProjectInboxEn.internal(_root);
-	late final TranslationsWebProjectCleanupEn cleanup = TranslationsWebProjectCleanupEn.internal(_root);
+	late final TranslationsWebProjectArchivedEn archived = TranslationsWebProjectArchivedEn.internal(_root);
 	late final TranslationsWebProjectResetEn reset = TranslationsWebProjectResetEn.internal(_root);
 }
 
@@ -2860,7 +2837,7 @@ class TranslationsMoreItemsEn {
 	late final TranslationsMoreItemsGitHostsEn gitHosts = TranslationsMoreItemsGitHostsEn.internal(_root);
 	late final TranslationsMoreItemsCustomTasksEn customTasks = TranslationsMoreItemsCustomTasksEn.internal(_root);
 	late final TranslationsMoreItemsProjectMemoryEn projectMemory = TranslationsMoreItemsProjectMemoryEn.internal(_root);
-	late final TranslationsMoreItemsCleanupInboxEn cleanupInbox = TranslationsMoreItemsCleanupInboxEn.internal(_root);
+	late final TranslationsMoreItemsArchivedEn archived = TranslationsMoreItemsArchivedEn.internal(_root);
 	late final TranslationsMoreItemsBackupsEn backups = TranslationsMoreItemsBackupsEn.internal(_root);
 	late final TranslationsMoreItemsDataExportEn dataExport = TranslationsMoreItemsDataExportEn.internal(_root);
 	late final TranslationsMoreItemsSettingsEn settings = TranslationsMoreItemsSettingsEn.internal(_root);
@@ -3724,6 +3701,27 @@ class TranslationsProjectJournalPruneEn {
 
 	/// en: '{count} entry/entries deleted'
 	String deleted({required Object count}) => '${count} entry/entries deleted';
+}
+
+// Path: project.archived
+class TranslationsProjectArchivedEn {
+	TranslationsProjectArchivedEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Nothing archived'
+	String get emptyTitle => 'Nothing archived';
+
+	/// en: 'No archived memories for this project. The auto-cleaner soft-archives stale and duplicate facts here automatically — none yet.'
+	String get emptyBody => 'No archived memories for this project. The auto-cleaner soft-archives stale and duplicate facts here automatically — none yet.';
+
+	/// en: 'Restore failed: {error}'
+	String restoreFailed({required Object error}) => 'Restore failed: ${error}';
+
+	/// en: 'Restore'
+	String get restore => 'Restore';
 }
 
 // Path: backups.kv
@@ -5747,8 +5745,8 @@ class TranslationsWebProjectHeaderEn {
 	/// en: '{count} pending proposals'
 	String pendingProposals_other({required Object count}) => '${count} pending proposals';
 
-	/// en: '{count} cleanup pending'
-	String cleanupPending({required Object count}) => '${count} cleanup pending';
+	/// en: '{count} archived'
+	String archivedCount({required Object count}) => '${count} archived';
 }
 
 // Path: web.project.tabs
@@ -5783,8 +5781,8 @@ class TranslationsWebProjectTabsEn {
 	/// en: 'Conflicts'
 	String get conflicts => 'Conflicts';
 
-	/// en: 'Cleanup'
-	String get cleanup => 'Cleanup';
+	/// en: 'Archived'
+	String get archived => 'Archived';
 }
 
 // Path: web.project.docLabel
@@ -5806,24 +5804,6 @@ class TranslationsWebProjectDocLabelEn {
 
 	/// en: 'Recent activity'
 	String get recent_activity => 'Recent activity';
-}
-
-// Path: web.project.verdictLabel
-class TranslationsWebProjectVerdictLabelEn {
-	TranslationsWebProjectVerdictLabelEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Delete'
-	String get stale => 'Delete';
-
-	/// en: 'Merge'
-	String get duplicate => 'Merge';
-
-	/// en: 'Keep'
-	String get keep => 'Keep';
 }
 
 // Path: web.project.editor
@@ -5957,55 +5937,31 @@ class TranslationsWebProjectInboxEn {
 	String get confirmReplace => 'Confirm replace';
 }
 
-// Path: web.project.cleanup
-class TranslationsWebProjectCleanupEn {
-	TranslationsWebProjectCleanupEn.internal(this._root);
+// Path: web.project.archived
+class TranslationsWebProjectArchivedEn {
+	TranslationsWebProjectArchivedEn.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
 
-	/// en: 'The LLM librarian proposes keep / stale / duplicate verdicts for this project's memories. You approve before anything is deleted.'
-	String get hint => 'The LLM librarian proposes keep / stale / duplicate verdicts for this project\'s memories. You approve before anything is deleted.';
+	/// en: 'Memories the auto-cleaner soft-archived for this project. They're excluded from recall but restorable until the 30-day grace window purges them.'
+	String get hint => 'Memories the auto-cleaner soft-archived for this project. They\'re excluded from recall but restorable until the 30-day grace window purges them.';
 
-	/// en: 'Run cleanup now'
-	String get runNow => 'Run cleanup now';
+	/// en: 'Nothing archived for this project. The cleaner soft-archives stale and duplicate facts here automatically — none yet.'
+	String get empty => 'Nothing archived for this project. The cleaner soft-archives stale and duplicate facts here automatically — none yet.';
 
-	/// en: 'Cleanup run: {decided} decisions queued ({scanned} scanned)'
-	String runSucceededToast({required Object decided, required Object scanned}) => 'Cleanup run: ${decided} decisions queued (${scanned} scanned)';
+	/// en: 'Archived'
+	String get archivedAtPrefix => 'Archived';
 
-	/// en: 'Cleanup run failed'
-	String get runFailedToast => 'Cleanup run failed';
+	/// en: 'Restore'
+	String get restoreButton => 'Restore';
 
-	/// en: 'No pending decisions. Either nothing aged into eligibility or the last run found everything load-bearing.'
-	String get empty => 'No pending decisions. Either nothing aged into eligibility or the last run found everything load-bearing.';
+	/// en: 'Restored'
+	String get restoredToast => 'Restored';
 
-	/// en: '→ merge into'
-	String get mergeIntoPrefix => '→ merge into';
-
-	/// en: 'Reason:'
-	String get reasonPrefix => 'Reason:';
-
-	/// en: 'Execute'
-	String get executeButton => 'Execute';
-
-	/// en: 'Confirm keep'
-	String get confirmKeepButton => 'Confirm keep';
-
-	/// en: 'Reject'
-	String get rejectButton => 'Reject';
-
-	/// en: '{label} executed'
-	String approvedExecutedToast({required Object label}) => '${label} executed';
-
-	/// en: 'Approve failed'
-	String get approveFailedToast => 'Approve failed';
-
-	/// en: 'Rejected — memory kept'
-	String get rejectedToast => 'Rejected — memory kept';
-
-	/// en: 'Reject failed'
-	String get rejectFailedToast => 'Reject failed';
+	/// en: 'Restore failed'
+	String get restoreFailedToast => 'Restore failed';
 }
 
 // Path: web.project.reset
@@ -9628,19 +9584,19 @@ class TranslationsMoreItemsProjectMemoryEn {
 	String get subtitle => 'Per-cwd memory layers 2-4 + agent proposals';
 }
 
-// Path: more.items.cleanupInbox
-class TranslationsMoreItemsCleanupInboxEn {
-	TranslationsMoreItemsCleanupInboxEn.internal(this._root);
+// Path: more.items.archived
+class TranslationsMoreItemsArchivedEn {
+	TranslationsMoreItemsArchivedEn.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
 
-	/// en: 'Cleanup inbox'
-	String get title => 'Cleanup inbox';
+	/// en: 'Archived memories'
+	String get title => 'Archived memories';
 
-	/// en: 'LLM-proposed deletions / merges across all projects'
-	String get subtitle => 'LLM-proposed deletions / merges across all projects';
+	/// en: 'Restore memories the auto-cleaner soft-archived (30-day grace)'
+	String get subtitle => 'Restore memories the auto-cleaner soft-archived (30-day grace)';
 }
 
 // Path: more.items.backups
@@ -14066,7 +14022,7 @@ extension on Translations {
 			'web.memory.title' => 'Memory',
 			'web.memory.subtitle' => 'Browse, search and edit memories agents have stored via the opendray-memory MCP server.',
 			'web.memory.navProject' => 'Project',
-			'web.memory.navCleanupInbox' => 'Cleanup inbox',
+			'web.memory.navArchived' => 'Archived',
 			'web.memory.navWorkers' => 'Workers',
 			'web.memory.navConfiguration' => 'Configuration →',
 			'web.journalStale.title' => 'Prune stale entries',
@@ -14198,25 +14154,17 @@ extension on Translations {
 			'web.memoryWorkers.tasks.conflict_detector.description' => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.',
 			'web.memoryWorkers.tasks.capture.label' => 'Capture engine',
 			'web.memoryWorkers.tasks.capture.description' => 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.',
-			'web.cleanupInbox.loading' => 'Loading…',
-			'web.cleanupInbox.emptyTitle' => 'Cleanup inbox empty',
-			'web.cleanupInbox.emptyDescription' => 'No pending cleanup decisions across any project. The LLM librarian either hasn\'t run yet for the eligible memories, or it found everything load-bearing.',
-			'web.cleanupInbox.title' => 'Cleanup inbox',
-			'web.cleanupInbox.subtitle' => 'Cross-project pending decisions from the LLM memory librarian. Approving stale → deletes, approving duplicate → merges, approving keep → freezes the entry from being re-judged for a while.',
-			'web.cleanupInbox.globalScope' => '(global)',
-			'web.cleanupInbox.orphanBadge' => 'orphan',
-			'web.cleanupInbox.orphanTitle' => 'Truncated scope_key (old mirror import). Not a navigable project.',
-			'web.cleanupInbox.openProject' => 'Open project',
-			'web.cleanupInbox.mergeIntoPrefix' => '→ merge into',
-			'web.cleanupInbox.reasonPrefix' => 'Reason:',
-			'web.cleanupInbox.executeButton' => 'Execute',
-			'web.cleanupInbox.confirmKeepButton' => 'Confirm keep',
-			'web.cleanupInbox.rejectButton' => 'Reject',
-			'web.cleanupInbox.approvedKeptToast' => 'Kept',
-			'web.cleanupInbox.approvedExecutedToast' => ({required Object verdict}) => '${verdict} executed',
-			'web.cleanupInbox.approveFailedToast' => 'Approve failed',
-			'web.cleanupInbox.rejectedToast' => 'Rejected — memory kept',
-			'web.cleanupInbox.rejectFailedToast' => 'Reject failed',
+			'web.archived.loading' => 'Loading…',
+			'web.archived.emptyTitle' => 'Nothing archived',
+			'web.archived.emptyDescription' => 'No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.',
+			'web.archived.title' => 'Archived memories',
+			'web.archived.subtitle' => 'Memories the auto-cleaner and lifecycle pass soft-archived across every project. They are excluded from recall but restorable until the 30-day grace window purges them. Restore any false positive below.',
+			'web.archived.globalScope' => '(global)',
+			'web.archived.openProject' => 'Open project',
+			'web.archived.archivedAtPrefix' => 'Archived',
+			'web.archived.restoreButton' => 'Restore',
+			'web.archived.restoredToast' => 'Restored',
+			'web.archived.restoreFailedToast' => 'Restore failed',
 			'web.project.picker.title' => 'Pick a project',
 			'web.project.picker.subtitle' => 'Project memory is scoped by working directory. Pick one to manage its goal, plan, journal, and cleanup queue.',
 			'web.project.picker.pathPlaceholder' => '/path/to/your/project',
@@ -14233,7 +14181,7 @@ extension on Translations {
 			'web.project.header.journalEntries_other' => ({required Object count}) => '${count} journal entries',
 			'web.project.header.pendingProposals_one' => ({required Object count}) => '${count} pending proposal',
 			'web.project.header.pendingProposals_other' => ({required Object count}) => '${count} pending proposals',
-			'web.project.header.cleanupPending' => ({required Object count}) => '${count} cleanup pending',
+			'web.project.header.archivedCount' => ({required Object count}) => '${count} archived',
 			'web.project.tabs.health' => 'Health',
 			'web.project.tabs.goal' => 'Goal',
 			'web.project.tabs.plan' => 'Plan',
@@ -14242,14 +14190,11 @@ extension on Translations {
 			'web.project.tabs.journal' => 'Journal',
 			'web.project.tabs.inbox' => 'Inbox',
 			'web.project.tabs.conflicts' => 'Conflicts',
-			'web.project.tabs.cleanup' => 'Cleanup',
+			'web.project.tabs.archived' => 'Archived',
 			'web.project.docLabel.goal' => 'Goal',
 			'web.project.docLabel.plan' => 'Plan',
 			'web.project.docLabel.tech_stack' => 'Tech stack',
 			'web.project.docLabel.recent_activity' => 'Recent activity',
-			'web.project.verdictLabel.stale' => 'Delete',
-			'web.project.verdictLabel.duplicate' => 'Merge',
-			'web.project.verdictLabel.keep' => 'Keep',
 			'web.project.editor.updatedBy' => 'Updated by',
 			'web.project.editor.noDocSet' => ({required Object label}) => 'No ${label} set yet.',
 			'web.project.editor.save' => 'Save',
@@ -14285,20 +14230,12 @@ extension on Translations {
 			'web.project.inbox.confirmDialogDescription' => ({required Object label}) => 'The current ${label} will be overwritten with the proposed content. This cannot be undone via this UI (you can manually edit it back).',
 			'web.project.inbox.confirmCancel' => 'Cancel',
 			'web.project.inbox.confirmReplace' => 'Confirm replace',
-			'web.project.cleanup.hint' => 'The LLM librarian proposes keep / stale / duplicate verdicts for this project\'s memories. You approve before anything is deleted.',
-			'web.project.cleanup.runNow' => 'Run cleanup now',
-			'web.project.cleanup.runSucceededToast' => ({required Object decided, required Object scanned}) => 'Cleanup run: ${decided} decisions queued (${scanned} scanned)',
-			'web.project.cleanup.runFailedToast' => 'Cleanup run failed',
-			'web.project.cleanup.empty' => 'No pending decisions. Either nothing aged into eligibility or the last run found everything load-bearing.',
-			'web.project.cleanup.mergeIntoPrefix' => '→ merge into',
-			'web.project.cleanup.reasonPrefix' => 'Reason:',
-			'web.project.cleanup.executeButton' => 'Execute',
-			'web.project.cleanup.confirmKeepButton' => 'Confirm keep',
-			'web.project.cleanup.rejectButton' => 'Reject',
-			'web.project.cleanup.approvedExecutedToast' => ({required Object label}) => '${label} executed',
-			'web.project.cleanup.approveFailedToast' => 'Approve failed',
-			'web.project.cleanup.rejectedToast' => 'Rejected — memory kept',
-			'web.project.cleanup.rejectFailedToast' => 'Reject failed',
+			'web.project.archived.hint' => 'Memories the auto-cleaner soft-archived for this project. They\'re excluded from recall but restorable until the 30-day grace window purges them.',
+			'web.project.archived.empty' => 'Nothing archived for this project. The cleaner soft-archives stale and duplicate facts here automatically — none yet.',
+			'web.project.archived.archivedAtPrefix' => 'Archived',
+			'web.project.archived.restoreButton' => 'Restore',
+			'web.project.archived.restoredToast' => 'Restored',
+			'web.project.archived.restoreFailedToast' => 'Restore failed',
 			'web.project.reset.button' => 'Reset',
 			'web.project.reset.dialogTitle' => 'Reset project memory?',
 			'web.project.reset.dialogDescription' => 'Deletes all stored project context for this cwd. This cannot be undone.',
@@ -14377,8 +14314,6 @@ extension on Translations {
 			'web.memoryInspector.toasts.created' => 'Memory created',
 			'web.memoryInspector.toasts.createFailed' => 'Create failed',
 			'web.memoryInspector.toasts.updated' => 'Memory updated',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.toasts.updateFailed' => 'Update failed',
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => 'Migrated ${reembed}/${examined} memories to ${to}',
 			'web.memoryInspector.toasts.migrationFailed' => 'Migration failed',
@@ -14398,6 +14333,8 @@ extension on Translations {
 			'web.memoryInspector.bulkDelete.items_one' => ({required Object count}) => '${count} memory item',
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} memory items',
 			'web.memoryInspector.bulkDelete.cancel' => 'Cancel',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.bulkDelete.deleteAll' => 'Delete all',
 			'web.memoryInspector.addMem.title' => 'Add memory',
 			'web.memoryInspector.addMem.description' => 'Manually create a memory. Agents create these automatically via the <1>memory_store</1> MCP tool — this form is for cases where the operator wants to seed a fact without going through an agent.',
@@ -14891,8 +14828,6 @@ extension on Translations {
 			'web.integrations.proxy.bodyLabel' => 'Body',
 			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.proxy.emptyBody' => '(empty)',
 			'web.integrations.proxy.requestFailed' => 'request failed',
 			'web.integrations.proxy.stubText' => 'Send a request to see the upstream response.',
@@ -14912,6 +14847,8 @@ extension on Translations {
 			'web.plugins.mcp.empty' => 'No MCP servers yet. Add one to expose extra tools to your agent sessions.',
 			'web.plugins.mcp.columns.name' => 'Name',
 			'web.plugins.mcp.columns.transport' => 'Transport',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.mcp.columns.spec' => 'Spec',
 			'web.plugins.mcp.columns.enabled' => 'Enabled',
 			'web.plugins.mcp.noUrl' => 'no url',
@@ -15405,8 +15342,6 @@ extension on Translations {
 			'web.serverSettings.fields.backupExportDir.hint' => 'Where one-shot export zips are staged on disk. Empty = ~/.opendray/exports. Bundles auto-expire after 24h. Restart required.',
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump path',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'Absolute path to pg_dump. Major version must be ≥ the server\'s. Empty = first pg_dump on PATH.',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'pg_restore path',
 			'web.serverSettings.fields.backupPgRestorePath.hint' => 'Absolute path to pg_restore for the /backups/restore flow. Same major-version rule.',
 			'web.serverSettings.liveTail.heading' => 'Live tail',
@@ -15426,6 +15361,8 @@ extension on Translations {
 			'web.serverSettings.httpHelpers.presetTip.lmStudio' => 'LM Studio local server',
 			'web.serverSettings.httpHelpers.presetTip.openai' => 'OpenAI cloud (needs API key)',
 			'web.serverSettings.probe.unreachable' => ({required Object error}) => '✗ unreachable: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.probe.connectionFailed' => 'connection failed',
 			'web.serverSettings.probe.reachable' => ({required Object detected, required Object total, required Object embedding}) => '✓ reachable ${detected}· ${total} model(s) total · ${embedding} embedding',
 			'web.serverSettings.probe.modelMissing' => ({required Object model}) => '⚠ Configured model ${model} isn\'t in the list. Pick one of the embedding models below or fix the name.',
@@ -15766,8 +15703,8 @@ extension on Translations {
 			'more.items.customTasks.subtitle' => 'Slash commands shown in the session task picker',
 			'more.items.projectMemory.title' => 'Project goal / plan / journal',
 			'more.items.projectMemory.subtitle' => 'Per-cwd memory layers 2-4 + agent proposals',
-			'more.items.cleanupInbox.title' => 'Cleanup inbox',
-			'more.items.cleanupInbox.subtitle' => 'LLM-proposed deletions / merges across all projects',
+			'more.items.archived.title' => 'Archived memories',
+			'more.items.archived.subtitle' => 'Restore memories the auto-cleaner soft-archived (30-day grace)',
 			'more.items.backups.title' => 'Backups',
 			'more.items.backups.subtitle' => 'Latest backup status & run-now',
 			'more.items.dataExport.title' => 'Data export & import',
@@ -15919,8 +15856,6 @@ extension on Translations {
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => 'Create failed: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.personalHint' => 'Personal scratchpad — auto-saves as you type. AI agents do not write here.',
 			'sessions.inspector.notes.projectDocsHint' => 'Architecture / spec / decisions / plan / retros — typically authored or maintained by an agent.',
 			'sessions.inspector.notes.mappingCleared' => 'Mapping cleared — using default',
@@ -15940,6 +15875,8 @@ extension on Translations {
 			'sessions.inspector.notes.save' => 'Save',
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
 			'sessions.spawnSheet.cancel' => 'Cancel',
 			'sessions.spawnSheet.spawn' => 'Spawn',
@@ -16211,11 +16148,14 @@ extension on Translations {
 			'memoryWorkers.tasks.conflictDetector.description' => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.',
 			'memoryWorkers.tasks.capture.label' => 'Capture engine',
 			'memoryWorkers.tasks.capture.description' => 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.',
-			'memoryCleanup.title' => 'Memory cleanup',
-			'memoryCleanup.approveFailed' => ({required Object error}) => 'Approve failed: ${error}',
-			'memoryCleanup.rejectFailed' => ({required Object error}) => 'Reject failed: ${error}',
-			'memoryCleanup.loadFailed' => ({required Object error}) => 'Failed to load: ${error}',
-			'memoryCleanup.reject' => 'Reject',
+			'memoryArchived.title' => 'Archived memories',
+			'memoryArchived.loadFailed' => ({required Object error}) => 'Failed to load: ${error}',
+			'memoryArchived.restoreFailed' => ({required Object error}) => 'Restore failed: ${error}',
+			'memoryArchived.emptyTitle' => 'Nothing archived',
+			'memoryArchived.emptyBody' => 'No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.',
+			'memoryArchived.globalScope' => '(global)',
+			'memoryArchived.countBadge' => ({required Object count}) => '${count} archived',
+			'memoryArchived.restore' => 'Restore',
 			'project.title' => 'Project',
 			'project.pickFirst' => 'Pick a project first.',
 			'project.health.title' => ({required Object days}) => 'Memory health — last ${days} days',
@@ -16276,7 +16216,6 @@ extension on Translations {
 			'project.appendFailed' => ({required Object error}) => 'Failed: ${error}',
 			'project.approveFailed' => ({required Object error}) => 'Approve failed: ${error}',
 			'project.rejectFailed' => ({required Object error}) => 'Reject failed: ${error}',
-			'project.cleanupFailed' => ({required Object error}) => 'Cleanup failed: ${error}',
 			'project.resetConfirmTitle' => 'Reset project memory?',
 			'project.alsoDeleteScanner' => 'Also delete scanner docs',
 			'project.alsoDeletePgvector' => 'Also delete pgvector memories',
@@ -16292,8 +16231,10 @@ extension on Translations {
 			'project.approve' => 'Approve',
 			'project.replaceConfirmTitle' => ({required Object kind}) => 'Replace current ${kind}?',
 			'project.replaceKind' => ({required Object kind}) => 'Replace ${kind}',
-			'project.reason' => 'Reason',
-			'project.willMergeInto' => 'Will merge into',
+			'project.archived.emptyTitle' => 'Nothing archived',
+			'project.archived.emptyBody' => 'No archived memories for this project. The auto-cleaner soft-archives stale and duplicate facts here automatically — none yet.',
+			'project.archived.restoreFailed' => ({required Object error}) => 'Restore failed: ${error}',
+			'project.archived.restore' => 'Restore',
 			'backups.title' => 'Backups',
 			'backups.runConfirmTitle' => 'Run backup now?',
 			'backups.runConfirmBody' => 'Triggers a fresh dump against the local target. The job runs server-side; this list will refresh as it progresses.',
@@ -16433,8 +16374,6 @@ extension on Translations {
 			'backupSchedules.validatePickTarget' => 'Pick a target.',
 			'backupSchedules.validateInterval' => 'Interval must be > 0.',
 			'backupSchedules.formTitleEdit' => 'Edit schedule',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.formTitleNew' => 'New schedule',
 			'backupSchedules.saveButtonEdit' => 'Save',
 			'backupSchedules.saveButtonNew' => 'Create',
@@ -16450,6 +16389,8 @@ extension on Translations {
 			'backupTargetEditor.useHttps' => 'Use HTTPS',
 			'backupTargetEditor.pathStyle' => 'Path-style addressing',
 			'backupTargetEditor.pathStyleSubtitle' => 'Legacy / MinIO',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.kinds.local.label' => 'Local disk',
 			'backupTargetEditor.kinds.local.description' => 'Folder on the machine running opendray',
 			'backupTargetEditor.kinds.smb.label' => 'SMB share',
@@ -16947,8 +16888,6 @@ extension on Translations {
 			'settings.logViewer.title' => 'Live logs',
 			'settings.logViewer.reconnect' => 'Reconnect',
 			'settings.logViewer.copyBuffer' => 'Copy buffer',
-			_ => null,
-		} ?? switch (path) {
 			'settings.logViewer.clearLocal' => 'Clear local view',
 			'settings.logViewer.copiedSnack' => 'Copied buffer to clipboard',
 			'settings.logViewer.filterHint' => 'Filter substring…',
@@ -16964,6 +16903,8 @@ extension on Translations {
 			'settings.serverSettings.restartConfirmBody' => 'The gateway will exec itself. The mobile app may briefly lose connection.',
 			'settings.serverSettings.restart' => 'Restart',
 			'settings.serverSettings.restartQueuedSnack' => 'Restart requested. Pull-to-refresh in a moment.',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.restartFailedApi' => ({required Object error}) => 'Restart failed: ${error}',
 			'settings.serverSettings.restartFailedGeneric' => ({required Object error}) => 'Restart failed: ${error}',
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => 'Loaded from: ${path}',
