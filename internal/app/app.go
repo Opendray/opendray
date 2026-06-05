@@ -83,6 +83,7 @@ type App struct {
 	liveBackup           *backup.LiveBackup
 	captureEngine        *capture.Engine // ambient memory capture loop
 	journaler            *projectdoc.Journaler
+	memoryMirror         *memory.Mirror      // M-U Phase 5 one-time file-memory import; nil when disabled
 	projectDocSvc        *projectdoc.Service // owns the M-PB journal embed backfill loop
 	cleanerScheduler     *cleaner.Scheduler  // optional; nil when scheduler is off
 	gitActivityScheduler *gitactivity.Scheduler
@@ -286,6 +287,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		st.Close()
 		return nil, fmt.Errorf("init memory: %w", err)
 	}
+	// memoryMirror is hoisted out of the block below so RunServices can
+	// run the one-time M-U Phase 5 file-memory backfill import against
+	// it. Nil when memory is disabled or the mirror wasn't wired.
+	var memoryMirror *memory.Mirror
 	if memorySvc != nil {
 		log.Info("memory ready",
 			"embedder", memorySvc.EmbedderName(),
@@ -340,6 +345,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				// "Sync now" HTTP endpoint + UI button can trigger an
 				// on-demand ingest without waiting for the next spawn.
 				memorySvc.SetMirror(mirror)
+				memoryMirror = mirror
 			}
 		}
 	}
@@ -758,6 +764,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		liveBackup:           liveBackup,
 		captureEngine:        captureEngine,
 		journaler:            journaler,
+		memoryMirror:         memoryMirror,
 		projectDocSvc:        projectDocSvc,
 		cleanerScheduler:     cleanerScheduler,
 		gitActivityScheduler: gitActivityScheduler,
@@ -857,6 +864,24 @@ func (a *App) Run(ctx context.Context) error {
 	go func() {
 		a.projectDocSvc.RunDocEmbedBackfill(ctx, projectdoc.LogEmbedBackfillConfig{})
 		close(docEmbedBackfillDone)
+	}()
+
+	// M-U Phase 5 — one-time import of pre-existing Claude file memories
+	// into the single DB store, so an upgrading operator lands them
+	// immediately rather than only after each project's next spawn. The
+	// per-spawn mirror (WithMemoryMirror) stays wired as the ongoing
+	// capture net, so file memory keeps flowing into the DB during the
+	// transition; this just front-loads what's already on disk.
+	// Idempotent (SyncCwd dedupes), so it self-skips once caught up.
+	mirrorBackfillDone := make(chan struct{})
+	go func() {
+		defer close(mirrorBackfillDone)
+		if a.memoryMirror == nil {
+			return
+		}
+		if _, _, err := a.memoryMirror.BackfillAll(ctx); err != nil {
+			a.log.Warn("memory: file-memory backfill import failed", "err", err)
+		}
 	}()
 
 	cleanerDone := make(chan struct{})

@@ -458,18 +458,42 @@ one-click restore; operator inbox keeps conflicts only.
 - **Risk:** medium, retired by reversibility (soft-delete + 30d grace)
   and conservative defaults (90d dormancy, never-hit only).
 
-### Phase 5 — Retire the file layer
+### Phase 5 — Retire the file layer — DONE
 
-- One-time mirror import of existing file memories → DB. Suppress the
-  now-redundant file-memory injection for Claude (DB injection already
-  covers it). Update agent instructions to use `memory_store` instead of
-  writing memory files.
+- **One-time import (done).** `Mirror.BackfillAll` enumerates every
+  project scope_key already in the store and `SyncCwd`s each, launched
+  once from `RunServices` (`internal/app/app.go`) next to the M-PB/Phase-2
+  embed backfills. So an upgrading operator's pre-existing Claude file
+  memories fold into the single DB store on first boot, not only after
+  each project's next spawn. Idempotent (SyncCwd dedupes by
+  source_path+mtime), so it self-skips once caught up.
+- **File layer suppressed via guidance (done).** opendray can't disable a
+  CLI's built-in file memory directly, so the lever is the spawn
+  system-prompt: `memoryGuidanceText` (`internal/catalog/adapter.go`) now
+  has a "**Use this, not your built-in file memory**" section telling
+  every agent to route durable facts through `memory_store` and **not**
+  write Claude's `# Memory`/`MEMORY.md` (CLI-local → invisible to the
+  next Codex/Gemini), noting opendray already imports existing files and
+  injects project memory at startup, so the file layer is redundant.
+- **Capture net kept (done).** The per-spawn mirror (`WithMemoryMirror`)
+  stays wired, so any file memory an agent still writes during the
+  transition keeps flowing into the DB. A project that has file memory
+  but no DB rows yet imports on its first spawn (the backfill only
+  front-loads already-known projects) — nothing is lost, only the timing
+  of the import differs.
 - **Acceptance:** a Claude session with no local memory files still
-  receives full project memory at spawn (from DB); agent-authored
-  memories land in DB and are visible to a subsequent Codex/Gemini
+  receives full project memory at spawn — already true via the ambient +
+  projectdoc DB injectors (unchanged here); agent-authored memories land
+  in DB (Phase 0 scope fix) and are visible to a subsequent Codex/Gemini
   session in the same cwd.
-- **Risk:** medium (operator-visible behaviour change). Keep the
-  one-way mirror as a legacy capture net during transition.
+- **Validated:** `go build ./...` clean; `go test -race` green across
+  memory/catalog/app; new DB-free unit tests for `matchesEncodedCwd`,
+  `findClaudeMemoryDirs` (temp-HOME, symlink-resolved), and the
+  `BackfillAll` nil guard. Full file→DB import over real data is part of
+  the arc-final replay validation.
+- **Risk:** low/medium (operator-visible: agents stop writing file
+  memory). Retired by keeping the one-way mirror as the legacy capture
+  net and by the import being idempotent + lossless.
 
 ### Phase 6 — Embedder unification
 

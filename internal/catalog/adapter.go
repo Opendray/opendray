@@ -973,6 +973,21 @@ Gemini session in the same project reads and writes the same
 store.** What you save here is what the next session sees, no
 matter which CLI it runs under.
 
+### Use this, not your built-in file memory
+
+` + "`opendray-memory`" + ` is the **only** memory you should write. Do
+**not** use your CLI's own built-in memory feature (Claude's
+` + "`# Memory` / `MEMORY.md`" + ` auto-memory files, or any local
+per-project memory file you'd normally create). Those files are
+**CLI-local** — a memory you write to a file is invisible to the
+next Codex or Gemini session in this project, which defeats the
+entire point of a shared brain. opendray already imports any
+pre-existing local memory files into this store for you, and
+injects the relevant project memory into your context at startup,
+so the file layer is redundant. Always route durable facts through
+` + "`memory_store`" + ` (and project state through the ` + "`project_*`" + ` /
+` + "`session_log_append`" + ` tools below).
+
 ### At session start
 
 Call ` + "`opendray-memory.memory_load_context()`" + ` once for the project
