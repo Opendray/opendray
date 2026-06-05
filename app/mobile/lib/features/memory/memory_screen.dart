@@ -1523,7 +1523,6 @@ class _ScopeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (scope) {
-      MemoryScope.session => Colors.amberAccent,
       MemoryScope.project => Colors.blueAccent,
       MemoryScope.global => Colors.greenAccent,
       MemoryScope.unknown => Colors.grey,

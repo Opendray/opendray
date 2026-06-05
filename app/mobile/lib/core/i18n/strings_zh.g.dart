@@ -3158,9 +3158,7 @@ class _TranslationsWebMemoryInspectorScopeZh extends TranslationsWebMemoryInspec
 	@override String get scopeKey => 'Scope key';
 	@override String get scopeKeyIgnored => '(global 时忽略)';
 	@override String get scopeKeyCwd => '(项目的 cwd)';
-	@override String get scopeKeySession => '(session id)';
 	@override String get placeholderProject => '/path/to/project (cwd)';
-	@override String get placeholderSession => 'session id';
 	@override String get syncMd => '同步 .md';
 	@override String get syncTooltip => '把 Claude 的 <cwd>/.claude/memory/*.md 重新摄取到 pgvector';
 	@override late final _TranslationsWebMemoryInspectorScopeValuesZh values = _TranslationsWebMemoryInspectorScopeValuesZh._(_root);
@@ -5974,7 +5972,6 @@ class _TranslationsWebMemoryInspectorScopeValuesZh extends TranslationsWebMemory
 
 	// Translations
 	@override String get project => 'project';
-	@override String get session => 'session';
 	@override String get global => 'global';
 }
 
@@ -6934,7 +6931,7 @@ class _TranslationsWebServerSettingsFieldsMemoryScopeZh extends TranslationsWebS
 
 	// Translations
 	@override String get label => '默认作用域';
-	@override String get hint => 'agent 未指定时 memory_store 使用的作用域。"project"（推荐）按 cwd 分组；"session" 按会话隔离；"global" 跨 cwd 共享。';
+	@override String get hint => 'agent 未指定时 memory_store 使用的作用域。"project"（推荐）按 cwd 分组；"global" 跨 cwd 共享。';
 }
 
 // Path: web.serverSettings.fields.memoryBaseUrl
@@ -7257,7 +7254,6 @@ class _TranslationsWebMemoryAmbientRulesDialogZh extends TranslationsWebMemoryAm
 	@override String get idleLabel => 'Idle 秒数';
 	@override String get kLabel => 'K（字符数）';
 	@override String get scopeLabel => '目标 scope';
-	@override String get scopeSession => 'session';
 	@override String get scopeProject => 'project（推荐）';
 	@override String get scopeGlobal => 'global';
 	@override String get dedupLabel => '去重阈值（0.0 – 1.0）';
@@ -7886,13 +7882,10 @@ extension on TranslationsZh {
 			'web.memoryInspector.scope.scopeKey' => 'Scope key',
 			'web.memoryInspector.scope.scopeKeyIgnored' => '(global 时忽略)',
 			'web.memoryInspector.scope.scopeKeyCwd' => '(项目的 cwd)',
-			'web.memoryInspector.scope.scopeKeySession' => '(session id)',
 			'web.memoryInspector.scope.placeholderProject' => '/path/to/project (cwd)',
-			'web.memoryInspector.scope.placeholderSession' => 'session id',
 			'web.memoryInspector.scope.syncMd' => '同步 .md',
 			'web.memoryInspector.scope.syncTooltip' => '把 Claude 的 <cwd>/.claude/memory/*.md 重新摄取到 pgvector',
 			'web.memoryInspector.scope.values.project' => 'project',
-			'web.memoryInspector.scope.values.session' => 'session',
 			'web.memoryInspector.scope.values.global' => 'global',
 			'web.memoryInspector.search.placeholder' => '语义搜索查询（Enter 运行；为空则浏览）',
 			'web.memoryInspector.search.run' => '搜索',
@@ -7931,11 +7924,11 @@ extension on TranslationsZh {
 			'web.memoryInspector.toasts.bulkDeleted_one' => ({required Object count}) => '已从此 scope 删除 ${count} 条记忆',
 			'web.memoryInspector.toasts.bulkDeleted_other' => ({required Object count}) => '已从此 scope 删除 ${count} 条记忆',
 			'web.memoryInspector.toasts.bulkDeleteFailed' => '批量删除失败',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.toasts.created' => '记忆已创建',
 			'web.memoryInspector.toasts.createFailed' => '创建失败',
 			'web.memoryInspector.toasts.updated' => '记忆已更新',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.toasts.updateFailed' => '更新失败',
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => '已迁移 ${reembed}/${examined} 条记忆到 ${to}',
 			'web.memoryInspector.toasts.migrationFailed' => '迁移失败',
@@ -8445,11 +8438,11 @@ extension on TranslationsZh {
 			'web.integrations.proxy.send' => '发送',
 			'web.integrations.proxy.sending' => '发送中…',
 			'web.integrations.proxy.extraHeadersLabel' => '额外 header（每行一条，Name: Value）',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.proxy.bodyLabel' => 'Body',
 			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.proxy.emptyBody' => '(空)',
 			'web.integrations.proxy.requestFailed' => '请求失败',
 			'web.integrations.proxy.stubText' => '发送一个请求即可查看上游响应。',
@@ -8929,7 +8922,7 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.memoryThreshold.label' => '相似度阈值',
 			'web.serverSettings.fields.memoryThreshold.hint' => '分数低于此值的命中将被丢弃。留空 = 0.1（宽松 — BM25 稀疏向量很少超过 0.5）。',
 			'web.serverSettings.fields.memoryScope.label' => '默认作用域',
-			'web.serverSettings.fields.memoryScope.hint' => 'agent 未指定时 memory_store 使用的作用域。"project"（推荐）按 cwd 分组；"session" 按会话隔离；"global" 跨 cwd 共享。',
+			'web.serverSettings.fields.memoryScope.hint' => 'agent 未指定时 memory_store 使用的作用域。"project"（推荐）按 cwd 分组；"global" 跨 cwd 共享。',
 			'web.serverSettings.fields.memoryBaseUrl.label' => 'Base URL',
 			'web.serverSettings.fields.memoryBaseUrl.hint' => '如 ollama 用 "http://localhost:11434/v1"，OpenAI 用 "https://api.openai.com/v1"。',
 			'web.serverSettings.fields.memoryModel.label' => '模型',
@@ -8959,11 +8952,11 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.backupLocalDir.label' => '本地备份目录',
 			'web.serverSettings.fields.backupLocalDir.hint' => '自动创建的 `local` 目标的默认根目录。留空 = ~/.opendray/backups。需要重启。',
 			'web.serverSettings.fields.backupExportDir.label' => '导出目录',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.backupExportDir.hint' => '一次性导出 zip 在磁盘上的暂存位置。留空 = ~/.opendray/exports。包将在 24 小时后自动过期。需要重启。',
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump 路径',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'pg_dump 的绝对路径。主版本号必须 ≥ 服务器的。留空 = PATH 上的第一个 pg_dump。',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'pg_restore 路径',
 			'web.serverSettings.fields.backupPgRestorePath.hint' => '/backups/restore 流程使用的 pg_restore 绝对路径。同样的主版本号规则。',
 			'web.serverSettings.liveTail.heading' => '实时日志',
@@ -9185,7 +9178,6 @@ extension on TranslationsZh {
 			'web.memoryAmbient.rules.dialog.idleLabel' => 'Idle 秒数',
 			'web.memoryAmbient.rules.dialog.kLabel' => 'K（字符数）',
 			'web.memoryAmbient.rules.dialog.scopeLabel' => '目标 scope',
-			'web.memoryAmbient.rules.dialog.scopeSession' => 'session',
 			'web.memoryAmbient.rules.dialog.scopeProject' => 'project（推荐）',
 			'web.memoryAmbient.rules.dialog.scopeGlobal' => 'global',
 			'web.memoryAmbient.rules.dialog.dedupLabel' => '去重阈值（0.0 – 1.0）',
@@ -9473,12 +9465,12 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => '创建失败：${error}',
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.personalHint' => '个人草稿 — 随输入自动保存。AI agent 不会写入这里。',
 			'sessions.inspector.notes.projectDocsHint' => '架构 / 规范 / 决策 / 计划 / 回顾 — 通常由 agent 撰写或维护。',
 			'sessions.inspector.notes.mappingCleared' => '映射已清除 — 使用默认值',
@@ -9987,12 +9979,12 @@ extension on TranslationsZh {
 			'backupSchedules.errorPrefixUpdate' => '更新失败',
 			'backupSchedules.errorPrefixDelete' => '删除失败',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => '移除目标 ${targetId} 的定期规格。已存在的备份不受影响。',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.emptyList' => '暂无计划。\n点击「新建」创建一个。',
 			'backupSchedules.validatePickTarget' => '请选择一个目标。',
 			'backupSchedules.validateInterval' => '间隔必须大于 0。',
 			'backupSchedules.formTitleEdit' => '编辑计划',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.formTitleNew' => '新建计划',
 			'backupSchedules.saveButtonEdit' => '保存',
 			'backupSchedules.saveButtonNew' => '创建',
@@ -10501,12 +10493,12 @@ extension on TranslationsZh {
 			'settings.changeCredentials.updatedSnack' => '凭据已更新。',
 			'settings.changeCredentials.wrongCurrent' => '当前密码不正确。',
 			'settings.changeCredentials.saving' => '保存中…',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.update' => '更新',
 			'settings.logViewer.title' => '实时日志',
 			'settings.logViewer.reconnect' => '重新连接',
 			'settings.logViewer.copyBuffer' => '复制缓冲',
+			_ => null,
+		} ?? switch (path) {
 			'settings.logViewer.clearLocal' => '清除本地视图',
 			'settings.logViewer.copiedSnack' => '已将缓冲复制到剪贴板',
 			'settings.logViewer.filterHint' => '筛选子串…',

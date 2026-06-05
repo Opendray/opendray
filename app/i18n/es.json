@@ -581,14 +581,11 @@
         "scopeKey": "Clave de scope",
         "scopeKeyIgnored": "(ignorado para global)",
         "scopeKeyCwd": "(cwd del proyecto)",
-        "scopeKeySession": "(id de session)",
         "placeholderProject": "/path/to/project (cwd)",
-        "placeholderSession": "id de session",
         "syncMd": "Sincronizar .md",
         "syncTooltip": "Reimportar los archivos <cwd>/.claude/memory/*.md de Claude a pgvector",
         "values": {
           "project": "proyecto",
-          "session": "session",
           "global": "global"
         }
       },
@@ -1899,7 +1896,7 @@
         },
         "memoryScope": {
           "label": "Ámbito por defecto",
-          "hint": "Lo que usa memory_store cuando el agente no lo especifica. \"project\" (recomendado) agrupa por cwd; \"session\" aísla por session; \"global\" comparte entre cwds."
+          "hint": "Lo que usa memory_store cuando el agente no lo especifica. \"project\" (recomendado) agrupa por cwd; \"global\" comparte entre cwds."
         },
         "memoryBaseUrl": {
           "label": "URL base",
@@ -2253,7 +2250,6 @@
           "idleLabel": "Segundos de inactividad",
           "kLabel": "K (caracteres)",
           "scopeLabel": "Ámbito objetivo",
-          "scopeSession": "session",
           "scopeProject": "proyecto (recomendado)",
           "scopeGlobal": "global",
           "dedupLabel": "Umbral de dedup (0.0 a 1.0)",

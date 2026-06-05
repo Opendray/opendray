@@ -234,28 +234,27 @@ class AuditPage {
 }
 
 // Memory scope band — mirrors internal/memory/store.go.
+// 'session' was retired in the M-U unification (session ≡ project); the
+// wire value 'session' coerces to project so old rows/payloads still parse.
 enum MemoryScope {
-  session,
   project,
   global,
   unknown;
 
   String get wire => switch (this) {
-        MemoryScope.session => 'session',
         MemoryScope.project => 'project',
         MemoryScope.global => 'global',
         MemoryScope.unknown => '',
       };
 
   static MemoryScope parse(String? raw) => switch (raw) {
-        'session' => MemoryScope.session,
+        'session' => MemoryScope.project, // retired scope folds to project
         'project' => MemoryScope.project,
         'global' => MemoryScope.global,
         _ => MemoryScope.unknown,
       };
 
   String get label => switch (this) {
-        MemoryScope.session => 'Session',
         MemoryScope.project => 'Project',
         MemoryScope.global => 'Global',
         MemoryScope.unknown => 'Unknown',

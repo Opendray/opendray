@@ -3158,9 +3158,7 @@ class _TranslationsWebMemoryInspectorScopeEs extends TranslationsWebMemoryInspec
 	@override String get scopeKey => 'Clave de scope';
 	@override String get scopeKeyIgnored => '(ignorado para global)';
 	@override String get scopeKeyCwd => '(cwd del proyecto)';
-	@override String get scopeKeySession => '(id de session)';
 	@override String get placeholderProject => '/path/to/project (cwd)';
-	@override String get placeholderSession => 'id de session';
 	@override String get syncMd => 'Sincronizar .md';
 	@override String get syncTooltip => 'Reimportar los archivos <cwd>/.claude/memory/*.md de Claude a pgvector';
 	@override late final _TranslationsWebMemoryInspectorScopeValuesEs values = _TranslationsWebMemoryInspectorScopeValuesEs._(_root);
@@ -5974,7 +5972,6 @@ class _TranslationsWebMemoryInspectorScopeValuesEs extends TranslationsWebMemory
 
 	// Translations
 	@override String get project => 'proyecto';
-	@override String get session => 'session';
 	@override String get global => 'global';
 }
 
@@ -6934,7 +6931,7 @@ class _TranslationsWebServerSettingsFieldsMemoryScopeEs extends TranslationsWebS
 
 	// Translations
 	@override String get label => 'Ámbito por defecto';
-	@override String get hint => 'Lo que usa memory_store cuando el agente no lo especifica. "project" (recomendado) agrupa por cwd; "session" aísla por session; "global" comparte entre cwds.';
+	@override String get hint => 'Lo que usa memory_store cuando el agente no lo especifica. "project" (recomendado) agrupa por cwd; "global" comparte entre cwds.';
 }
 
 // Path: web.serverSettings.fields.memoryBaseUrl
@@ -7257,7 +7254,6 @@ class _TranslationsWebMemoryAmbientRulesDialogEs extends TranslationsWebMemoryAm
 	@override String get idleLabel => 'Segundos de inactividad';
 	@override String get kLabel => 'K (caracteres)';
 	@override String get scopeLabel => 'Ámbito objetivo';
-	@override String get scopeSession => 'session';
 	@override String get scopeProject => 'proyecto (recomendado)';
 	@override String get scopeGlobal => 'global';
 	@override String get dedupLabel => 'Umbral de dedup (0.0 a 1.0)';
@@ -7886,13 +7882,10 @@ extension on TranslationsEs {
 			'web.memoryInspector.scope.scopeKey' => 'Clave de scope',
 			'web.memoryInspector.scope.scopeKeyIgnored' => '(ignorado para global)',
 			'web.memoryInspector.scope.scopeKeyCwd' => '(cwd del proyecto)',
-			'web.memoryInspector.scope.scopeKeySession' => '(id de session)',
 			'web.memoryInspector.scope.placeholderProject' => '/path/to/project (cwd)',
-			'web.memoryInspector.scope.placeholderSession' => 'id de session',
 			'web.memoryInspector.scope.syncMd' => 'Sincronizar .md',
 			'web.memoryInspector.scope.syncTooltip' => 'Reimportar los archivos <cwd>/.claude/memory/*.md de Claude a pgvector',
 			'web.memoryInspector.scope.values.project' => 'proyecto',
-			'web.memoryInspector.scope.values.session' => 'session',
 			'web.memoryInspector.scope.values.global' => 'global',
 			'web.memoryInspector.search.placeholder' => 'Consulta de búsqueda semántica (Enter para ejecutar; vacío = explorar)',
 			'web.memoryInspector.search.run' => 'Buscar',
@@ -7931,11 +7924,11 @@ extension on TranslationsEs {
 			'web.memoryInspector.toasts.bulkDeleted_one' => ({required Object count}) => 'Se eliminó ${count} memoria de este scope',
 			'web.memoryInspector.toasts.bulkDeleted_other' => ({required Object count}) => 'Se eliminaron ${count} memorias de este scope',
 			'web.memoryInspector.toasts.bulkDeleteFailed' => 'La eliminación masiva falló',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.toasts.created' => 'Memoria creada',
 			'web.memoryInspector.toasts.createFailed' => 'La creación falló',
 			'web.memoryInspector.toasts.updated' => 'Memoria actualizada',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.toasts.updateFailed' => 'La actualización falló',
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => 'Se migraron ${reembed}/${examined} memorias a ${to}',
 			'web.memoryInspector.toasts.migrationFailed' => 'La migración falló',
@@ -8445,11 +8438,11 @@ extension on TranslationsEs {
 			'web.integrations.proxy.send' => 'Enviar',
 			'web.integrations.proxy.sending' => 'Enviando…',
 			'web.integrations.proxy.extraHeadersLabel' => 'Headers adicionales (uno por línea, Nombre: Valor)',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.proxy.bodyLabel' => 'Body',
 			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.proxy.emptyBody' => '(vacío)',
 			'web.integrations.proxy.requestFailed' => 'la petición falló',
 			'web.integrations.proxy.stubText' => 'Envía una petición para ver la respuesta del upstream.',
@@ -8929,7 +8922,7 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.memoryThreshold.label' => 'Umbral de similitud',
 			'web.serverSettings.fields.memoryThreshold.hint' => 'Los resultados por debajo de esta puntuación se descartan. Vacío = 0.1 (permisivo, los vectores dispersos de BM25 rara vez superan 0.5).',
 			'web.serverSettings.fields.memoryScope.label' => 'Ámbito por defecto',
-			'web.serverSettings.fields.memoryScope.hint' => 'Lo que usa memory_store cuando el agente no lo especifica. "project" (recomendado) agrupa por cwd; "session" aísla por session; "global" comparte entre cwds.',
+			'web.serverSettings.fields.memoryScope.hint' => 'Lo que usa memory_store cuando el agente no lo especifica. "project" (recomendado) agrupa por cwd; "global" comparte entre cwds.',
 			'web.serverSettings.fields.memoryBaseUrl.label' => 'URL base',
 			'web.serverSettings.fields.memoryBaseUrl.hint' => 'p. ej. "http://localhost:11434/v1" para ollama, "https://api.openai.com/v1" para OpenAI.',
 			'web.serverSettings.fields.memoryModel.label' => 'Modelo',
@@ -8959,11 +8952,11 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.backupLocalDir.label' => 'Directorio local de copias de seguridad',
 			'web.serverSettings.fields.backupLocalDir.hint' => 'Raíz por defecto para el destino `local` creado automáticamente. Vacío = ~/.opendray/backups. Requiere reinicio.',
 			'web.serverSettings.fields.backupExportDir.label' => 'Directorio de exportación',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.backupExportDir.hint' => 'Dónde se preparan en disco los zips de exportación puntual. Vacío = ~/.opendray/exports. Los paquetes expiran automáticamente tras 24h. Requiere reinicio.',
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'Ruta de pg_dump',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'Ruta absoluta a pg_dump. La versión mayor debe ser ≥ la del servidor. Vacío = el primer pg_dump en el PATH.',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'Ruta de pg_restore',
 			'web.serverSettings.fields.backupPgRestorePath.hint' => 'Ruta absoluta a pg_restore para el flujo /backups/restore. Misma regla de versión mayor.',
 			'web.serverSettings.liveTail.heading' => 'Seguimiento en vivo',
@@ -9185,7 +9178,6 @@ extension on TranslationsEs {
 			'web.memoryAmbient.rules.dialog.idleLabel' => 'Segundos de inactividad',
 			'web.memoryAmbient.rules.dialog.kLabel' => 'K (caracteres)',
 			'web.memoryAmbient.rules.dialog.scopeLabel' => 'Ámbito objetivo',
-			'web.memoryAmbient.rules.dialog.scopeSession' => 'session',
 			'web.memoryAmbient.rules.dialog.scopeProject' => 'proyecto (recomendado)',
 			'web.memoryAmbient.rules.dialog.scopeGlobal' => 'global',
 			'web.memoryAmbient.rules.dialog.dedupLabel' => 'Umbral de dedup (0.0 a 1.0)',
@@ -9473,12 +9465,12 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Falló la carga: ${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Falló al guardar: ${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Falló al guardar: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Falló al crear: ${error}',
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => 'Falló al crear: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.personalHint' => 'Bloc de notas personal. Se guarda automáticamente mientras escribes. Los agentes de IA no escriben aquí.',
 			'sessions.inspector.notes.projectDocsHint' => 'Arquitectura / spec / decisiones / plan / retrospectivas. Normalmente redactados o mantenidos por un agente.',
 			'sessions.inspector.notes.mappingCleared' => 'Asignación borrada. Usando el valor predeterminado',
@@ -9987,12 +9979,12 @@ extension on TranslationsEs {
 			'backupSchedules.errorPrefixUpdate' => 'Error al actualizar',
 			'backupSchedules.errorPrefixDelete' => 'Error al eliminar',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Elimina la especificación recurrente para el destino ${targetId}. Los blobs de copia de seguridad existentes no se modifican.',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.emptyList' => 'Aún no hay programaciones.\nToca "Nueva" para crear una.',
 			'backupSchedules.validatePickTarget' => 'Elige un destino.',
 			'backupSchedules.validateInterval' => 'El intervalo debe ser > 0.',
 			'backupSchedules.formTitleEdit' => 'Editar programación',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.formTitleNew' => 'Nueva programación',
 			'backupSchedules.saveButtonEdit' => 'Guardar',
 			'backupSchedules.saveButtonNew' => 'Crear',
@@ -10501,12 +10493,12 @@ extension on TranslationsEs {
 			'settings.changeCredentials.updatedSnack' => 'Credenciales actualizadas.',
 			'settings.changeCredentials.wrongCurrent' => 'La contraseña actual es incorrecta.',
 			'settings.changeCredentials.saving' => 'Guardando…',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.update' => 'Actualizar',
 			'settings.logViewer.title' => 'Logs en vivo',
 			'settings.logViewer.reconnect' => 'Reconectar',
 			'settings.logViewer.copyBuffer' => 'Copiar búfer',
+			_ => null,
+		} ?? switch (path) {
 			'settings.logViewer.clearLocal' => 'Borrar vista local',
 			'settings.logViewer.copiedSnack' => 'Búfer copiado al portapapeles',
 			'settings.logViewer.filterHint' => 'Filtrar subcadena…',

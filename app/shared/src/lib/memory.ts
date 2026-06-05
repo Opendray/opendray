@@ -7,7 +7,8 @@
 
 import { api } from './api'
 
-export type Scope = 'session' | 'project' | 'global'
+// 'session' was retired in the M-U unification (session ≡ project).
+export type Scope = 'project' | 'global'
 
 export interface MemoryRecord {
   id: string

@@ -581,14 +581,11 @@
         "scopeKey": "Scope key",
         "scopeKeyIgnored": "(ignored for global)",
         "scopeKeyCwd": "(cwd of the project)",
-        "scopeKeySession": "(session id)",
         "placeholderProject": "/path/to/project (cwd)",
-        "placeholderSession": "session id",
         "syncMd": "Sync .md",
         "syncTooltip": "Re-ingest Claude's <cwd>/.claude/memory/*.md files into pgvector",
         "values": {
           "project": "project",
-          "session": "session",
           "global": "global"
         }
       },
@@ -1899,7 +1896,7 @@
         },
         "memoryScope": {
           "label": "Default scope",
-          "hint": "What memory_store uses when the agent doesn't specify. \"project\" (recommended) groups by cwd; \"session\" isolates per session; \"global\" shares across cwds."
+          "hint": "What memory_store uses when the agent doesn't specify. \"project\" (recommended) groups by cwd; \"global\" shares across cwds."
         },
         "memoryBaseUrl": {
           "label": "Base URL",
@@ -2253,7 +2250,6 @@
           "idleLabel": "Idle seconds",
           "kLabel": "K (characters)",
           "scopeLabel": "Target scope",
-          "scopeSession": "session",
           "scopeProject": "project (recommended)",
           "scopeGlobal": "global",
           "dedupLabel": "Dedup threshold (0.0 – 1.0)",

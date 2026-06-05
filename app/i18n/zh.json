@@ -581,14 +581,11 @@
         "scopeKey": "Scope key",
         "scopeKeyIgnored": "(global 时忽略)",
         "scopeKeyCwd": "(项目的 cwd)",
-        "scopeKeySession": "(session id)",
         "placeholderProject": "/path/to/project (cwd)",
-        "placeholderSession": "session id",
         "syncMd": "同步 .md",
         "syncTooltip": "把 Claude 的 <cwd>/.claude/memory/*.md 重新摄取到 pgvector",
         "values": {
           "project": "project",
-          "session": "session",
           "global": "global"
         }
       },
@@ -1899,7 +1896,7 @@
         },
         "memoryScope": {
           "label": "默认作用域",
-          "hint": "agent 未指定时 memory_store 使用的作用域。\"project\"（推荐）按 cwd 分组；\"session\" 按会话隔离；\"global\" 跨 cwd 共享。"
+          "hint": "agent 未指定时 memory_store 使用的作用域。\"project\"（推荐）按 cwd 分组；\"global\" 跨 cwd 共享。"
         },
         "memoryBaseUrl": {
           "label": "Base URL",
@@ -2253,7 +2250,6 @@
           "idleLabel": "Idle 秒数",
           "kLabel": "K（字符数）",
           "scopeLabel": "目标 scope",
-          "scopeSession": "session",
           "scopeProject": "project（推荐）",
           "scopeGlobal": "global",
           "dedupLabel": "去重阈值（0.0 – 1.0）",

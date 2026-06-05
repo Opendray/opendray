@@ -6111,14 +6111,8 @@ class TranslationsWebMemoryInspectorScopeEn {
 	/// en: '(cwd of the project)'
 	String get scopeKeyCwd => '(cwd of the project)';
 
-	/// en: '(session id)'
-	String get scopeKeySession => '(session id)';
-
 	/// en: '/path/to/project (cwd)'
 	String get placeholderProject => '/path/to/project (cwd)';
-
-	/// en: 'session id'
-	String get placeholderSession => 'session id';
 
 	/// en: 'Sync .md'
 	String get syncMd => 'Sync .md';
@@ -11384,9 +11378,6 @@ class TranslationsWebMemoryInspectorScopeValuesEn {
 	/// en: 'project'
 	String get project => 'project';
 
-	/// en: 'session'
-	String get session => 'session';
-
 	/// en: 'global'
 	String get global => 'global';
 }
@@ -13074,8 +13065,8 @@ class TranslationsWebServerSettingsFieldsMemoryScopeEn {
 	/// en: 'Default scope'
 	String get label => 'Default scope';
 
-	/// en: 'What memory_store uses when the agent doesn't specify. "project" (recommended) groups by cwd; "session" isolates per session; "global" shares across cwds.'
-	String get hint => 'What memory_store uses when the agent doesn\'t specify. "project" (recommended) groups by cwd; "session" isolates per session; "global" shares across cwds.';
+	/// en: 'What memory_store uses when the agent doesn't specify. "project" (recommended) groups by cwd; "global" shares across cwds.'
+	String get hint => 'What memory_store uses when the agent doesn\'t specify. "project" (recommended) groups by cwd; "global" shares across cwds.';
 }
 
 // Path: web.serverSettings.fields.memoryBaseUrl
@@ -13591,9 +13582,6 @@ class TranslationsWebMemoryAmbientRulesDialogEn {
 
 	/// en: 'Target scope'
 	String get scopeLabel => 'Target scope';
-
-	/// en: 'session'
-	String get scopeSession => 'session';
 
 	/// en: 'project (recommended)'
 	String get scopeProject => 'project (recommended)';
@@ -14344,13 +14332,10 @@ extension on Translations {
 			'web.memoryInspector.scope.scopeKey' => 'Scope key',
 			'web.memoryInspector.scope.scopeKeyIgnored' => '(ignored for global)',
 			'web.memoryInspector.scope.scopeKeyCwd' => '(cwd of the project)',
-			'web.memoryInspector.scope.scopeKeySession' => '(session id)',
 			'web.memoryInspector.scope.placeholderProject' => '/path/to/project (cwd)',
-			'web.memoryInspector.scope.placeholderSession' => 'session id',
 			'web.memoryInspector.scope.syncMd' => 'Sync .md',
 			'web.memoryInspector.scope.syncTooltip' => 'Re-ingest Claude\'s <cwd>/.claude/memory/*.md files into pgvector',
 			'web.memoryInspector.scope.values.project' => 'project',
-			'web.memoryInspector.scope.values.session' => 'session',
 			'web.memoryInspector.scope.values.global' => 'global',
 			'web.memoryInspector.search.placeholder' => 'Semantic search query (Enter to run; empty = browse)',
 			'web.memoryInspector.search.run' => 'Search',
@@ -14389,11 +14374,11 @@ extension on Translations {
 			'web.memoryInspector.toasts.bulkDeleted_one' => ({required Object count}) => 'Deleted ${count} memory from this scope',
 			'web.memoryInspector.toasts.bulkDeleted_other' => ({required Object count}) => 'Deleted ${count} memories from this scope',
 			'web.memoryInspector.toasts.bulkDeleteFailed' => 'Bulk delete failed',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.toasts.created' => 'Memory created',
 			'web.memoryInspector.toasts.createFailed' => 'Create failed',
 			'web.memoryInspector.toasts.updated' => 'Memory updated',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.toasts.updateFailed' => 'Update failed',
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => 'Migrated ${reembed}/${examined} memories to ${to}',
 			'web.memoryInspector.toasts.migrationFailed' => 'Migration failed',
@@ -14903,11 +14888,11 @@ extension on Translations {
 			'web.integrations.proxy.send' => 'Send',
 			'web.integrations.proxy.sending' => 'Sending…',
 			'web.integrations.proxy.extraHeadersLabel' => 'Extra headers (one per line, Name: Value)',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.proxy.bodyLabel' => 'Body',
 			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.proxy.emptyBody' => '(empty)',
 			'web.integrations.proxy.requestFailed' => 'request failed',
 			'web.integrations.proxy.stubText' => 'Send a request to see the upstream response.',
@@ -15387,7 +15372,7 @@ extension on Translations {
 			'web.serverSettings.fields.memoryThreshold.label' => 'Similarity threshold',
 			'web.serverSettings.fields.memoryThreshold.hint' => 'Hits below this score are dropped. Empty = 0.1 (permissive — BM25 sparse vectors rarely break 0.5).',
 			'web.serverSettings.fields.memoryScope.label' => 'Default scope',
-			'web.serverSettings.fields.memoryScope.hint' => 'What memory_store uses when the agent doesn\'t specify. "project" (recommended) groups by cwd; "session" isolates per session; "global" shares across cwds.',
+			'web.serverSettings.fields.memoryScope.hint' => 'What memory_store uses when the agent doesn\'t specify. "project" (recommended) groups by cwd; "global" shares across cwds.',
 			'web.serverSettings.fields.memoryBaseUrl.label' => 'Base URL',
 			'web.serverSettings.fields.memoryBaseUrl.hint' => 'e.g. "http://localhost:11434/v1" for ollama, "https://api.openai.com/v1" for OpenAI.',
 			'web.serverSettings.fields.memoryModel.label' => 'Model',
@@ -15417,11 +15402,11 @@ extension on Translations {
 			'web.serverSettings.fields.backupLocalDir.label' => 'Local backup directory',
 			'web.serverSettings.fields.backupLocalDir.hint' => 'Default root for the auto-created `local` target. Empty = ~/.opendray/backups. Restart required.',
 			'web.serverSettings.fields.backupExportDir.label' => 'Export directory',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.backupExportDir.hint' => 'Where one-shot export zips are staged on disk. Empty = ~/.opendray/exports. Bundles auto-expire after 24h. Restart required.',
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump path',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'Absolute path to pg_dump. Major version must be ≥ the server\'s. Empty = first pg_dump on PATH.',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'pg_restore path',
 			'web.serverSettings.fields.backupPgRestorePath.hint' => 'Absolute path to pg_restore for the /backups/restore flow. Same major-version rule.',
 			'web.serverSettings.liveTail.heading' => 'Live tail',
@@ -15643,7 +15628,6 @@ extension on Translations {
 			'web.memoryAmbient.rules.dialog.idleLabel' => 'Idle seconds',
 			'web.memoryAmbient.rules.dialog.kLabel' => 'K (characters)',
 			'web.memoryAmbient.rules.dialog.scopeLabel' => 'Target scope',
-			'web.memoryAmbient.rules.dialog.scopeSession' => 'session',
 			'web.memoryAmbient.rules.dialog.scopeProject' => 'project (recommended)',
 			'web.memoryAmbient.rules.dialog.scopeGlobal' => 'global',
 			'web.memoryAmbient.rules.dialog.dedupLabel' => 'Dedup threshold (0.0 – 1.0)',
@@ -15931,12 +15915,12 @@ extension on Translations {
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => 'Create failed: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.personalHint' => 'Personal scratchpad — auto-saves as you type. AI agents do not write here.',
 			'sessions.inspector.notes.projectDocsHint' => 'Architecture / spec / decisions / plan / retros — typically authored or maintained by an agent.',
 			'sessions.inspector.notes.mappingCleared' => 'Mapping cleared — using default',
@@ -16445,12 +16429,12 @@ extension on Translations {
 			'backupSchedules.errorPrefixUpdate' => 'Update failed',
 			'backupSchedules.errorPrefixDelete' => 'Delete failed',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Removes the recurring spec for target ${targetId}. Existing backup blobs are not touched.',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.emptyList' => 'No schedules yet.\nTap "New" to create one.',
 			'backupSchedules.validatePickTarget' => 'Pick a target.',
 			'backupSchedules.validateInterval' => 'Interval must be > 0.',
 			'backupSchedules.formTitleEdit' => 'Edit schedule',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.formTitleNew' => 'New schedule',
 			'backupSchedules.saveButtonEdit' => 'Save',
 			'backupSchedules.saveButtonNew' => 'Create',
@@ -16959,12 +16943,12 @@ extension on Translations {
 			'settings.changeCredentials.updatedSnack' => 'Credentials updated.',
 			'settings.changeCredentials.wrongCurrent' => 'Current password is wrong.',
 			'settings.changeCredentials.saving' => 'Saving…',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.update' => 'Update',
 			'settings.logViewer.title' => 'Live logs',
 			'settings.logViewer.reconnect' => 'Reconnect',
 			'settings.logViewer.copyBuffer' => 'Copy buffer',
+			_ => null,
+		} ?? switch (path) {
 			'settings.logViewer.clearLocal' => 'Clear local view',
 			'settings.logViewer.copiedSnack' => 'Copied buffer to clipboard',
 			'settings.logViewer.filterHint' => 'Filter substring…',
