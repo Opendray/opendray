@@ -7,6 +7,7 @@ import {
   Play,
   NotebookPen,
   History as HistoryIcon,
+  MessageSquare,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -23,6 +24,7 @@ import type { Session } from '@/lib/types'
 import { FilesPanel } from './inspector/FilesPanel'
 import { GitPanel } from './inspector/GitPanel'
 import { HistoryPanel } from './inspector/HistoryPanel'
+import { TranscriptPanel } from './inspector/TranscriptPanel'
 import { MemoryPanel } from './inspector/MemoryPanel'
 import { NotesPanel } from './inspector/NotesPanel'
 import { SearchPanel } from './inspector/SearchPanel'
@@ -145,6 +147,13 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
               {t('web.sessions.inspector.tabs.history')}
             </TabsTrigger>
             <TabsTrigger
+              value="conversation"
+              className="flex items-center justify-center gap-1.5 col-span-2 data-[state=active]:bg-card"
+            >
+              <MessageSquare className="size-3" />
+              {t('web.sessions.inspector.tabs.conversation')}
+            </TabsTrigger>
+            <TabsTrigger
               value="notes"
               className="flex items-center justify-center gap-1.5 col-span-2 data-[state=active]:bg-card"
             >
@@ -153,7 +162,7 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
             </TabsTrigger>
             <TabsTrigger
               value="memory"
-              className="flex items-center justify-center gap-1.5 col-span-4 data-[state=active]:bg-card"
+              className="flex items-center justify-center gap-1.5 col-span-2 data-[state=active]:bg-card"
             >
               <Brain className="size-3" />
               {t('web.sessions.inspector.tabs.memory')}
@@ -176,6 +185,9 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
           </TabsContent>
           <TabsContent value="history" className="m-0 p-3">
             <HistoryPanel session={session} />
+          </TabsContent>
+          <TabsContent value="conversation" className="m-0 p-3">
+            <TranscriptPanel session={session} />
           </TabsContent>
           <TabsContent value="notes" className="m-0 p-3">
             <NotesPanel cwd={session.cwd} />

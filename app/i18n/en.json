@@ -210,7 +210,15 @@
           "tasks": "Tasks",
           "history": "History",
           "notes": "Notes",
-          "memory": "Memory"
+          "memory": "Memory",
+          "conversation": "Conversation"
+        },
+        "transcript": {
+          "empty": "No conversation yet.",
+          "loadFailed": "Couldn't load the conversation.",
+          "copyAll": "Copy all",
+          "copied": "Conversation copied",
+          "count": "{count} turns"
         }
       },
       "ended": {

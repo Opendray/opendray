@@ -80,6 +80,26 @@ export async function fetchSessionHistory(
   )
 }
 
+export interface TranscriptTurn {
+  ts: string
+  role: string // "user" | "assistant"
+  text: string
+}
+
+export interface TranscriptResponse {
+  turns: TranscriptTurn[]
+}
+
+// fetchSessionTranscript returns the session's conversation (user prompts
+// + assistant prose) reconstructed from the CLI's JSONL — the scrollable
+// history the live alternate-screen terminal can't offer. Claude / Codex /
+// Gemini are supported; other providers return an empty list.
+export async function fetchSessionTranscript(
+  id: string,
+): Promise<TranscriptResponse> {
+  return api<TranscriptResponse>(`/api/v1/sessions/${id}/transcript`)
+}
+
 // resendInput re-submits a prompt to the live session. Claude runs
 // the PTY in raw mode where Enter is `\r`, not `\n` — using `\n`
 // produces a literal newline in the prompt instead of submitting.

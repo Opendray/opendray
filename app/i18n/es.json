@@ -210,7 +210,15 @@
           "tasks": "Tareas",
           "history": "Historial",
           "notes": "Notas",
-          "memory": "Memoria"
+          "memory": "Memoria",
+          "conversation": "Conversación"
+        },
+        "transcript": {
+          "empty": "Aún no hay conversación.",
+          "loadFailed": "No se pudo cargar la conversación.",
+          "copyAll": "Copiar todo",
+          "copied": "Conversación copiada",
+          "count": "{count} turnos"
         }
       },
       "ended": {

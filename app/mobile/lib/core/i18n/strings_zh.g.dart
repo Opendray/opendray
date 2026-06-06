@@ -2802,6 +2802,7 @@ class _TranslationsWebSessionsInspectorZh extends TranslationsWebSessionsInspect
 
 	// Translations
 	@override late final _TranslationsWebSessionsInspectorTabsZh tabs = _TranslationsWebSessionsInspectorTabsZh._(_root);
+	@override late final _TranslationsWebSessionsInspectorTranscriptZh transcript = _TranslationsWebSessionsInspectorTranscriptZh._(_root);
 }
 
 // Path: web.sessions.ended
@@ -5849,6 +5850,21 @@ class _TranslationsWebSessionsInspectorTabsZh extends TranslationsWebSessionsIns
 	@override String get history => '历史';
 	@override String get notes => '笔记';
 	@override String get memory => '记忆';
+	@override String get conversation => '对话';
+}
+
+// Path: web.sessions.inspector.transcript
+class _TranslationsWebSessionsInspectorTranscriptZh extends TranslationsWebSessionsInspectorTranscriptEn {
+	_TranslationsWebSessionsInspectorTranscriptZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get empty => '暂无对话。';
+	@override String get loadFailed => '无法加载对话。';
+	@override String get copyAll => '复制全部';
+	@override String get copied => '已复制对话';
+	@override String count({required Object count}) => '${count} 轮';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -7599,6 +7615,12 @@ extension on TranslationsZh {
 			'web.sessions.inspector.tabs.history' => '历史',
 			'web.sessions.inspector.tabs.notes' => '笔记',
 			'web.sessions.inspector.tabs.memory' => '记忆',
+			'web.sessions.inspector.tabs.conversation' => '对话',
+			'web.sessions.inspector.transcript.empty' => '暂无对话。',
+			'web.sessions.inspector.transcript.loadFailed' => '无法加载对话。',
+			'web.sessions.inspector.transcript.copyAll' => '复制全部',
+			'web.sessions.inspector.transcript.copied' => '已复制对话',
+			'web.sessions.inspector.transcript.count' => ({required Object count}) => '${count} 轮',
 			'web.sessions.ended.bufferUnavailable' => '[缓冲区不可用]',
 			'web.sessions.ended.readOnlyBanner' => '[会话已结束 — 只读缓冲区]',
 			'web.sessions.fileBrowser.title' => '选择工作目录',
@@ -7925,14 +7947,14 @@ extension on TranslationsZh {
 			'web.memoryInspector.row.editTooltip' => '编辑该记忆',
 			'web.memoryInspector.row.deleteTooltip' => '删除该记忆',
 			'web.memoryInspector.row.emptyError' => '记忆文本不能为空',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.row.deleteConfirm' => ({required Object id}) => '删除记忆 ${id}? 不可恢复。',
 			'web.memoryInspector.toasts.deleted' => '记忆已删除',
 			'web.memoryInspector.toasts.deleteFailed' => '删除失败',
 			'web.memoryInspector.toasts.bulkDeleted_one' => ({required Object count}) => '已从此 scope 删除 ${count} 条记忆',
 			'web.memoryInspector.toasts.bulkDeleted_other' => ({required Object count}) => '已从此 scope 删除 ${count} 条记忆',
 			'web.memoryInspector.toasts.bulkDeleteFailed' => '批量删除失败',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.toasts.created' => '记忆已创建',
 			'web.memoryInspector.toasts.createFailed' => '创建失败',
 			'web.memoryInspector.toasts.updated' => '记忆已更新',
@@ -8439,14 +8461,14 @@ extension on TranslationsZh {
 			'web.integrations.proxy.emptyDescription' => ({required Object prefix}) => '请先注册一个集成；控制台通过 /api/v1/proxy/${prefix}/* 以 admin token 代理请求。',
 			'web.integrations.proxy.targetLabel' => '目标',
 			'web.integrations.proxy.selectPlaceholder' => '选择集成…',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.proxy.baseLabel' => 'base:',
 			'web.integrations.proxy.history' => '历史',
 			'web.integrations.proxy.historyEmpty' => '此集成尚无历史请求',
 			'web.integrations.proxy.send' => '发送',
 			'web.integrations.proxy.sending' => '发送中…',
 			'web.integrations.proxy.extraHeadersLabel' => '额外 header（每行一条，Name: Value）',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.proxy.bodyLabel' => 'Body',
 			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
@@ -8953,14 +8975,14 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.codexSessionsRoot.label' => '会话根目录',
 			'web.serverSettings.fields.codexSessionsRoot.hint' => '遍历 Codex rollout JSONL 文件的目录。默认 ~/.codex/sessions。',
 			'web.serverSettings.fields.geminiTmpRoot.label' => 'tmp 目录',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.geminiTmpRoot.hint' => '存放 Gemini 每项目 tmp 文件夹的根目录。默认 ~/.gemini/tmp。',
 			'web.serverSettings.fields.geminiProjectsFile.label' => 'projects.json',
 			'web.serverSettings.fields.geminiProjectsFile.hint' => 'Gemini cwd→短名映射文件的路径。默认 ~/.gemini/projects.json。',
 			'web.serverSettings.fields.backupLocalDir.label' => '本地备份目录',
 			'web.serverSettings.fields.backupLocalDir.hint' => '自动创建的 `local` 目标的默认根目录。留空 = ~/.opendray/backups。需要重启。',
 			'web.serverSettings.fields.backupExportDir.label' => '导出目录',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.backupExportDir.hint' => '一次性导出 zip 在磁盘上的暂存位置。留空 = ~/.opendray/exports。包将在 24 小时后自动过期。需要重启。',
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump 路径',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'pg_dump 的绝对路径。主版本号必须 ≥ 服务器的。留空 = PATH 上的第一个 pg_dump。',
@@ -9467,14 +9489,14 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.changeLocationTooltip' => '更改项目文档位置',
 			'sessions.inspector.notes.filenameHint' => '文件名（例如：spec 或 design.md）',
 			'sessions.inspector.notes.create' => '创建',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.filterHint' => '筛选…',
 			'sessions.inspector.notes.locationDialogTitle' => '项目文档位置',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => '创建失败：${error}',
@@ -9981,14 +10003,14 @@ extension on TranslationsZh {
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'backupSchedules.noTargets' => '未配置任何备份目标。请从 Web 管理端或「目标」屏添加。',
 			'backupSchedules.okMsgCreate' => '计划已创建。',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.okMsgUpdate' => '计划已更新。',
 			'backupSchedules.okMsgDelete' => '计划已删除。',
 			'backupSchedules.errorPrefixCreate' => '创建失败',
 			'backupSchedules.errorPrefixUpdate' => '更新失败',
 			'backupSchedules.errorPrefixDelete' => '删除失败',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => '移除目标 ${targetId} 的定期规格。已存在的备份不受影响。',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.emptyList' => '暂无计划。\n点击「新建」创建一个。',
 			'backupSchedules.validatePickTarget' => '请选择一个目标。',
 			'backupSchedules.validateInterval' => '间隔必须大于 0。',
@@ -10495,14 +10517,14 @@ extension on TranslationsZh {
 			'settings.changeCredentials.newPassword' => '新密码',
 			'settings.changeCredentials.confirmPassword' => '确认新密码',
 			'settings.changeCredentials.validatorRequired' => '必填',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.passwordHelper' => '至少 8 个字符',
 			'settings.changeCredentials.passwordTooShort' => '至少需要 8 个字符',
 			'settings.changeCredentials.passwordMismatch' => '与新密码不一致',
 			'settings.changeCredentials.updatedSnack' => '凭据已更新。',
 			'settings.changeCredentials.wrongCurrent' => '当前密码不正确。',
 			'settings.changeCredentials.saving' => '保存中…',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.update' => '更新',
 			'settings.logViewer.title' => '实时日志',
 			'settings.logViewer.reconnect' => '重新连接',

@@ -210,7 +210,15 @@
           "tasks": "任务",
           "history": "历史",
           "notes": "笔记",
-          "memory": "记忆"
+          "memory": "记忆",
+          "conversation": "对话"
+        },
+        "transcript": {
+          "empty": "暂无对话。",
+          "loadFailed": "无法加载对话。",
+          "copyAll": "复制全部",
+          "copied": "已复制对话",
+          "count": "{count} 轮"
         }
       },
       "ended": {

@@ -5457,6 +5457,7 @@ class TranslationsWebSessionsInspectorEn {
 
 	// Translations
 	late final TranslationsWebSessionsInspectorTabsEn tabs = TranslationsWebSessionsInspectorTabsEn.internal(_root);
+	late final TranslationsWebSessionsInspectorTranscriptEn transcript = TranslationsWebSessionsInspectorTranscriptEn.internal(_root);
 }
 
 // Path: web.sessions.ended
@@ -11206,6 +11207,33 @@ class TranslationsWebSessionsInspectorTabsEn {
 
 	/// en: 'Memory'
 	String get memory => 'Memory';
+
+	/// en: 'Conversation'
+	String get conversation => 'Conversation';
+}
+
+// Path: web.sessions.inspector.transcript
+class TranslationsWebSessionsInspectorTranscriptEn {
+	TranslationsWebSessionsInspectorTranscriptEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'No conversation yet.'
+	String get empty => 'No conversation yet.';
+
+	/// en: 'Couldn't load the conversation.'
+	String get loadFailed => 'Couldn\'t load the conversation.';
+
+	/// en: 'Copy all'
+	String get copyAll => 'Copy all';
+
+	/// en: 'Conversation copied'
+	String get copied => 'Conversation copied';
+
+	/// en: '{count} turns'
+	String count({required Object count}) => '${count} turns';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -14057,6 +14085,12 @@ extension on Translations {
 			'web.sessions.inspector.tabs.history' => 'History',
 			'web.sessions.inspector.tabs.notes' => 'Notes',
 			'web.sessions.inspector.tabs.memory' => 'Memory',
+			'web.sessions.inspector.tabs.conversation' => 'Conversation',
+			'web.sessions.inspector.transcript.empty' => 'No conversation yet.',
+			'web.sessions.inspector.transcript.loadFailed' => 'Couldn\'t load the conversation.',
+			'web.sessions.inspector.transcript.copyAll' => 'Copy all',
+			'web.sessions.inspector.transcript.copied' => 'Conversation copied',
+			'web.sessions.inspector.transcript.count' => ({required Object count}) => '${count} turns',
 			'web.sessions.ended.bufferUnavailable' => '[buffer unavailable]',
 			'web.sessions.ended.readOnlyBanner' => '[session ended — read-only buffer]',
 			'web.sessions.fileBrowser.title' => 'Choose working directory',
@@ -14383,14 +14417,14 @@ extension on Translations {
 			'web.memoryInspector.row.editTooltip' => 'Edit this memory',
 			'web.memoryInspector.row.deleteTooltip' => 'Delete this memory',
 			'web.memoryInspector.row.emptyError' => 'Memory text cannot be empty',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.row.deleteConfirm' => ({required Object id}) => 'Delete memory ${id}? This is permanent.',
 			'web.memoryInspector.toasts.deleted' => 'Memory deleted',
 			'web.memoryInspector.toasts.deleteFailed' => 'Delete failed',
 			'web.memoryInspector.toasts.bulkDeleted_one' => ({required Object count}) => 'Deleted ${count} memory from this scope',
 			'web.memoryInspector.toasts.bulkDeleted_other' => ({required Object count}) => 'Deleted ${count} memories from this scope',
 			'web.memoryInspector.toasts.bulkDeleteFailed' => 'Bulk delete failed',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.toasts.created' => 'Memory created',
 			'web.memoryInspector.toasts.createFailed' => 'Create failed',
 			'web.memoryInspector.toasts.updated' => 'Memory updated',
@@ -14897,14 +14931,14 @@ extension on Translations {
 			'web.integrations.proxy.emptyDescription' => ({required Object prefix}) => 'Register an integration first; the console proxies through /api/v1/proxy/${prefix}/* using the admin token.',
 			'web.integrations.proxy.targetLabel' => 'Target',
 			'web.integrations.proxy.selectPlaceholder' => 'Select integration…',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.proxy.baseLabel' => 'base:',
 			'web.integrations.proxy.history' => 'History',
 			'web.integrations.proxy.historyEmpty' => 'no past requests for this integration',
 			'web.integrations.proxy.send' => 'Send',
 			'web.integrations.proxy.sending' => 'Sending…',
 			'web.integrations.proxy.extraHeadersLabel' => 'Extra headers (one per line, Name: Value)',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.proxy.bodyLabel' => 'Body',
 			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
@@ -15411,14 +15445,14 @@ extension on Translations {
 			'web.serverSettings.fields.codexSessionsRoot.label' => 'Sessions root',
 			'web.serverSettings.fields.codexSessionsRoot.hint' => 'Directory walked for Codex rollout JSONL files. Default ~/.codex/sessions.',
 			'web.serverSettings.fields.geminiTmpRoot.label' => 'Tmp directory',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.geminiTmpRoot.hint' => 'Root holding Gemini per-project tmp folders. Default ~/.gemini/tmp.',
 			'web.serverSettings.fields.geminiProjectsFile.label' => 'projects.json',
 			'web.serverSettings.fields.geminiProjectsFile.hint' => 'Path to Gemini\'s cwd→short-name mapping file. Default ~/.gemini/projects.json.',
 			'web.serverSettings.fields.backupLocalDir.label' => 'Local backup directory',
 			'web.serverSettings.fields.backupLocalDir.hint' => 'Default root for the auto-created `local` target. Empty = ~/.opendray/backups. Restart required.',
 			'web.serverSettings.fields.backupExportDir.label' => 'Export directory',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.backupExportDir.hint' => 'Where one-shot export zips are staged on disk. Empty = ~/.opendray/exports. Bundles auto-expire after 24h. Restart required.',
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump path',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'Absolute path to pg_dump. Major version must be ≥ the server\'s. Empty = first pg_dump on PATH.',
@@ -15925,14 +15959,14 @@ extension on Translations {
 			'sessions.inspector.notes.changeLocationTooltip' => 'Change project docs location',
 			'sessions.inspector.notes.filenameHint' => 'filename (e.g. spec or design.md)',
 			'sessions.inspector.notes.create' => 'Create',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.filterHint' => 'Filter…',
 			'sessions.inspector.notes.locationDialogTitle' => 'Project docs location',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
@@ -16439,14 +16473,14 @@ extension on Translations {
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No backup targets configured. Add one from the web admin or the Targets screen.',
 			'backupSchedules.okMsgCreate' => 'Schedule created.',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.okMsgUpdate' => 'Schedule updated.',
 			'backupSchedules.okMsgDelete' => 'Schedule deleted.',
 			'backupSchedules.errorPrefixCreate' => 'Create failed',
 			'backupSchedules.errorPrefixUpdate' => 'Update failed',
 			'backupSchedules.errorPrefixDelete' => 'Delete failed',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Removes the recurring spec for target ${targetId}. Existing backup blobs are not touched.',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.emptyList' => 'No schedules yet.\nTap "New" to create one.',
 			'backupSchedules.validatePickTarget' => 'Pick a target.',
 			'backupSchedules.validateInterval' => 'Interval must be > 0.',
@@ -16953,14 +16987,14 @@ extension on Translations {
 			'settings.changeCredentials.newPassword' => 'New password',
 			'settings.changeCredentials.confirmPassword' => 'Confirm new password',
 			'settings.changeCredentials.validatorRequired' => 'Required',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.passwordHelper' => 'At least 8 characters',
 			'settings.changeCredentials.passwordTooShort' => 'Must be at least 8 characters',
 			'settings.changeCredentials.passwordMismatch' => 'Doesn\'t match the new password',
 			'settings.changeCredentials.updatedSnack' => 'Credentials updated.',
 			'settings.changeCredentials.wrongCurrent' => 'Current password is wrong.',
 			'settings.changeCredentials.saving' => 'Saving…',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.update' => 'Update',
 			'settings.logViewer.title' => 'Live logs',
 			'settings.logViewer.reconnect' => 'Reconnect',
