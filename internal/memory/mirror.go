@@ -145,6 +145,52 @@ func (m *Mirror) SyncCwd(ctx context.Context, cwd string) (int, error) {
 	return ingested, nil
 }
 
+// BackfillAll runs a one-time import of every known project's Claude
+// memory files into the DB. It is the M-U Phase 5 upgrade step: an
+// operator who updates opendray gets their pre-existing file memories
+// folded into the single pgvector store immediately, instead of only
+// after each project's next session spawn.
+//
+// It enumerates the project scope_keys already present in the store
+// (every cwd opendray has memory for) and SyncCwd's each. A project
+// that has file memory but no DB memory yet — i.e. opendray has never
+// spawned a session in it — is not enumerated here; it imports on its
+// first spawn through the per-spawn mirror (WithMemoryMirror), which
+// stays wired as the ongoing capture net. So nothing is lost; this
+// only changes *when* already-known projects get imported (now, vs
+// their next spawn).
+//
+// Idempotent: SyncCwd dedupes by source_path + mtime, so running this
+// on every startup is safe and becomes a no-op once import is caught
+// up. Soft-fails per cwd so one unreadable project dir can't abort the
+// whole import. Returns (projects scanned, memories ingested).
+func (m *Mirror) BackfillAll(ctx context.Context) (projects, ingested int, err error) {
+	if m == nil || m.svc == nil {
+		return 0, 0, errors.New("memory: mirror not initialised")
+	}
+	keys, err := m.svc.ListScopeKeys(ctx, ScopeProject)
+	if err != nil {
+		return 0, 0, fmt.Errorf("list project scope keys: %w", err)
+	}
+	for _, cwd := range keys {
+		if strings.TrimSpace(cwd) == "" {
+			continue
+		}
+		n, serr := m.SyncCwd(ctx, cwd)
+		if serr != nil {
+			m.log.Debug("backfill sync", "cwd", cwd, "err", serr)
+			continue
+		}
+		projects++
+		ingested += n
+	}
+	if ingested > 0 {
+		m.log.Info("file-memory backfill import complete",
+			"projects", projects, "ingested", ingested)
+	}
+	return projects, ingested, nil
+}
+
 // findClaudeMemoryDirs returns every existing
 // `<root>/projects/<encoded-cwd>/memory` directory, scanning both
 // the standard ~/.claude root and every per-account root under

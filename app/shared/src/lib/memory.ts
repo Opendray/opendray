@@ -7,7 +7,8 @@
 
 import { api } from './api'
 
-export type Scope = 'session' | 'project' | 'global'
+// 'session' was retired in the M-U unification (session ≡ project).
+export type Scope = 'project' | 'global'
 
 export interface MemoryRecord {
   id: string
@@ -24,6 +25,15 @@ export interface MemoryRecord {
   last_hit_at?: string | null
   /** Optional summarizer-supplied confidence in [0,1]; nil means "unknown". */
   confidence?: number | null
+  /**
+   * Soft-delete timestamp. Set by the auto-cleaner / lifecycle pass.
+   * Archived rows are excluded from search/list and are restorable
+   * until the grace window purges them. Only populated by the
+   * Archived view (`listArchived`); normal reads never return them.
+   */
+  archived_at?: string | null
+  /** Why the row was archived (e.g. "duplicate", "stale", "dormant-project"). */
+  archived_reason?: string
 }
 
 export interface SearchHit {
@@ -53,6 +63,20 @@ export interface MemoryStatus {
   dimensions: number
   enabled: boolean
   auto_detected?: ProbeResult[]
+  /** Configured backend: "auto" | "bm25" | "http" | "local". */
+  backend?: string
+  /** Embedder actually serving (alias of `embedder`). */
+  effective_embedder?: string
+  /** True when the BM25 keyword floor is active (no dense/semantic retrieval). */
+  is_floor?: boolean
+  /** The configured dense endpoint, if any (null when none configured). */
+  configured_dense?: { base_url: string; model: string } | null
+  /** Live probe of the configured dense endpoint (null when none configured). */
+  dense_reachable?: boolean | null
+  /** A dense endpoint is configured but is not the healthy serving tier right now. */
+  degraded?: boolean
+  /** Rows not yet on the active embedder (the background converge backlog). */
+  drift?: number
 }
 
 export interface TestEmbedResponse {
@@ -199,6 +223,32 @@ export async function probeEmbeddingEndpoint(
   return api<ProbeResult>('/api/v1/memory/probe', {
     method: 'POST',
     body: { base_url: baseURL, api_key: apiKey },
+  })
+}
+
+// listArchived backs the read-only "Archived (restorable)" view: the
+// soft-archived memories the auto-cleaner / lifecycle pass removed,
+// which the operator can restore until the 30-day grace window purges
+// them. Pass an empty scopeKey to list every archived row under the
+// scope (cross-project). Mirrors GET /api/v1/memory/archived.
+export async function listArchived(
+  scope: Scope,
+  scopeKey = '',
+  n = 200,
+): Promise<MemoryRecord[]> {
+  const q = new URLSearchParams({ scope, n: String(n) })
+  if (scopeKey) q.set('scope_key', scopeKey)
+  const res = await api<{ memories: MemoryRecord[] }>(
+    `/api/v1/memory/archived?${q.toString()}`,
+  )
+  return res.memories ?? []
+}
+
+// restoreMemory un-archives a soft-deleted memory (admin only).
+// Mirrors POST /api/v1/memory/{id}/restore.
+export async function restoreMemory(id: string): Promise<void> {
+  await api(`/api/v1/memory/${encodeURIComponent(id)}/restore`, {
+    method: 'POST',
   })
 }
 

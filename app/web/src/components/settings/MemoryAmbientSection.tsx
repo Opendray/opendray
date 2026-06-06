@@ -646,7 +646,6 @@ function NewRuleDialog({ onCreated }: { onCreated: () => void }) {
           onChange={(e) => setTargetScope(e.target.value as TargetScope)}
           className="h-8 rounded-md border border-border bg-background px-2"
         >
-          <option value="session">{t('web.memoryAmbient.rules.dialog.scopeSession')}</option>
           <option value="project">{t('web.memoryAmbient.rules.dialog.scopeProject')}</option>
           <option value="global">{t('web.memoryAmbient.rules.dialog.scopeGlobal')}</option>
         </select>

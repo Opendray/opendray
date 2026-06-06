@@ -720,7 +720,6 @@ function SectionForm({
                 value={c.memory.scope.default || 'project'}
                 options={[
                   { value: 'project', label: 'project' },
-                  { value: 'session', label: 'session' },
                   { value: 'global', label: 'global' },
                 ]}
                 onChange={(v) =>

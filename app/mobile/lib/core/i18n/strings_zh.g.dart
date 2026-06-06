@@ -49,7 +49,7 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsProvidersZh providers = _TranslationsProvidersZh._(_root);
 	@override late final _TranslationsIntegrationsZh integrations = _TranslationsIntegrationsZh._(_root);
 	@override late final _TranslationsMemoryWorkersZh memoryWorkers = _TranslationsMemoryWorkersZh._(_root);
-	@override late final _TranslationsMemoryCleanupZh memoryCleanup = _TranslationsMemoryCleanupZh._(_root);
+	@override late final _TranslationsMemoryArchivedZh memoryArchived = _TranslationsMemoryArchivedZh._(_root);
 	@override late final _TranslationsProjectZh project = _TranslationsProjectZh._(_root);
 	@override late final _TranslationsBackupsZh backups = _TranslationsBackupsZh._(_root);
 	@override late final _TranslationsBackupTargetsZh backupTargets = _TranslationsBackupTargetsZh._(_root);
@@ -146,7 +146,7 @@ class _TranslationsWebZh extends TranslationsWebEn {
 	@override late final _TranslationsWebMemoryHealthZh memoryHealth = _TranslationsWebMemoryHealthZh._(_root);
 	@override late final _TranslationsWebMemoryConfigZh memoryConfig = _TranslationsWebMemoryConfigZh._(_root);
 	@override late final _TranslationsWebMemoryWorkersZh memoryWorkers = _TranslationsWebMemoryWorkersZh._(_root);
-	@override late final _TranslationsWebCleanupInboxZh cleanupInbox = _TranslationsWebCleanupInboxZh._(_root);
+	@override late final _TranslationsWebArchivedZh archived = _TranslationsWebArchivedZh._(_root);
 	@override late final _TranslationsWebProjectZh project = _TranslationsWebProjectZh._(_root);
 	@override late final _TranslationsWebMemoryInspectorZh memoryInspector = _TranslationsWebMemoryInspectorZh._(_root);
 	@override late final _TranslationsWebNotesZh notes = _TranslationsWebNotesZh._(_root);
@@ -354,7 +354,8 @@ class _TranslationsMemoryWorkersZh extends TranslationsMemoryWorkersEn {
 	@override String get errorTitle => '端点不可达';
 	@override String get errorDetail => '/api/v1/memory/workers 路由在 M25 中是新增的 — opendray 二进制可能需要重启以挂载这些路由并运行迁移 0029。';
 	@override String get summarizerOnlyBadge => '仅 summarizer';
-	@override String get summarizerInfo => '使用注册表默认 summarizer 提供商。在 Web 管理端选择具体行。';
+	@override String get summarizerProviderLabel => 'Summarizer 提供商';
+	@override String get registryDefault => '注册表默认';
 	@override String get agentWarning => 'Agent 模式每次调用都会生成无头 CLI。延迟约 5-15 秒（相比 summarizer 约 1 秒）；成本从 CPU 转移到你的 Claude / Gemini 配额。';
 	@override String get noCalls24h => '过去 24 小时没有调用。';
 	@override String testOkSnack({required Object label, required Object duration}) => '${label} OK — ${duration}ms';
@@ -363,18 +364,21 @@ class _TranslationsMemoryWorkersZh extends TranslationsMemoryWorkersEn {
 	@override late final _TranslationsMemoryWorkersTasksZh tasks = _TranslationsMemoryWorkersTasksZh._(_root);
 }
 
-// Path: memoryCleanup
-class _TranslationsMemoryCleanupZh extends TranslationsMemoryCleanupEn {
-	_TranslationsMemoryCleanupZh._(TranslationsZh root) : this._root = root, super.internal(root);
+// Path: memoryArchived
+class _TranslationsMemoryArchivedZh extends TranslationsMemoryArchivedEn {
+	_TranslationsMemoryArchivedZh._(TranslationsZh root) : this._root = root, super.internal(root);
 
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => '记忆清理';
-	@override String approveFailed({required Object error}) => '批准失败：${error}';
-	@override String rejectFailed({required Object error}) => '拒绝失败：${error}';
+	@override String get title => '已归档记忆';
 	@override String loadFailed({required Object error}) => '加载失败：${error}';
-	@override String get reject => '拒绝';
+	@override String restoreFailed({required Object error}) => '恢复失败：${error}';
+	@override String get emptyTitle => '暂无归档';
+	@override String get emptyBody => '所有项目均无已归档记忆。自动清理器会把过时和重复的事实软归档到这里（30 天内可恢复）——目前尚未移除任何内容。';
+	@override String get globalScope => '(全局)';
+	@override String countBadge({required Object count}) => '${count} 条已归档';
+	@override String get restore => '恢复';
 }
 
 // Path: project
@@ -400,7 +404,6 @@ class _TranslationsProjectZh extends TranslationsProjectEn {
 	@override String appendFailed({required Object error}) => '失败：${error}';
 	@override String approveFailed({required Object error}) => '批准失败：${error}';
 	@override String rejectFailed({required Object error}) => '拒绝失败：${error}';
-	@override String cleanupFailed({required Object error}) => '清理失败：${error}';
 	@override String get resetConfirmTitle => '重置项目记忆？';
 	@override String get alsoDeleteScanner => '同时删除扫描器文档';
 	@override String get alsoDeletePgvector => '同时删除 pgvector 记忆';
@@ -416,8 +419,7 @@ class _TranslationsProjectZh extends TranslationsProjectEn {
 	@override String get approve => '批准';
 	@override String replaceConfirmTitle({required Object kind}) => '替换当前 ${kind}？';
 	@override String replaceKind({required Object kind}) => '替换 ${kind}';
-	@override String get reason => '原因';
-	@override String get willMergeInto => '将合并到';
+	@override late final _TranslationsProjectArchivedZh archived = _TranslationsProjectArchivedZh._(_root);
 }
 
 // Path: backups
@@ -807,6 +809,7 @@ class _TranslationsMemoryZh extends TranslationsMemoryEn {
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
+	@override late final _TranslationsMemoryStatusZh status = _TranslationsMemoryStatusZh._(_root);
 	@override String get title => '记忆';
 	@override String get more => '更多';
 	@override String get workers => '记忆工作器';
@@ -918,7 +921,7 @@ class _TranslationsWebMemoryZh extends TranslationsWebMemoryEn {
 	@override String get title => '记忆';
 	@override String get subtitle => '浏览、搜索并编辑 Agent 通过 opendray-memory MCP 服务器存储的记忆。';
 	@override String get navProject => '项目';
-	@override String get navCleanupInbox => '清理收件箱';
+	@override String get navArchived => '已归档';
 	@override String get navWorkers => 'Workers';
 	@override String get navConfiguration => '配置 →';
 }
@@ -1062,32 +1065,24 @@ class _TranslationsWebMemoryWorkersZh extends TranslationsWebMemoryWorkersEn {
 	@override late final _TranslationsWebMemoryWorkersTasksZh tasks = _TranslationsWebMemoryWorkersTasksZh._(_root);
 }
 
-// Path: web.cleanupInbox
-class _TranslationsWebCleanupInboxZh extends TranslationsWebCleanupInboxEn {
-	_TranslationsWebCleanupInboxZh._(TranslationsZh root) : this._root = root, super.internal(root);
+// Path: web.archived
+class _TranslationsWebArchivedZh extends TranslationsWebArchivedEn {
+	_TranslationsWebArchivedZh._(TranslationsZh root) : this._root = root, super.internal(root);
 
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
 	@override String get loading => '加载中…';
-	@override String get emptyTitle => '清理收件箱为空';
-	@override String get emptyDescription => '目前所有项目均无待处理的清理决策。LLM librarian 要么尚未跑过这些记忆，要么判断全部仍是关键内容。';
-	@override String get title => '清理收件箱';
-	@override String get subtitle => 'LLM memory librarian 的跨项目待处理决策。批准 stale → 删除，批准 duplicate → 合并，批准 keep → 一段时间内冻结该条目不再被重新判断。';
+	@override String get emptyTitle => '暂无归档';
+	@override String get emptyDescription => '所有项目均无已归档记忆。自动清理器会把过时和重复的事实软归档到这里（30 天内可恢复）——目前尚未移除任何内容。';
+	@override String get title => '已归档记忆';
+	@override String get subtitle => '自动清理器与生命周期扫描在所有项目中软归档的记忆。它们已从检索中排除，但在 30 天宽限期清除前均可恢复。如有误判可在下方恢复。';
 	@override String get globalScope => '(全局)';
-	@override String get orphanBadge => '孤立';
-	@override String get orphanTitle => 'scope_key 被截断（老旧的镜像导入数据）。不是可导航的项目。';
 	@override String get openProject => '打开项目';
-	@override String get mergeIntoPrefix => '→ 合并到';
-	@override String get reasonPrefix => '原因：';
-	@override String get executeButton => '执行';
-	@override String get confirmKeepButton => '确认保留';
-	@override String get rejectButton => '驳回';
-	@override String get approvedKeptToast => '已保留';
-	@override String approvedExecutedToast({required Object verdict}) => '已执行 ${verdict}';
-	@override String get approveFailedToast => '批准失败';
-	@override String get rejectedToast => '已驳回 — 记忆保留';
-	@override String get rejectFailedToast => '驳回失败';
+	@override String get archivedAtPrefix => '归档于';
+	@override String get restoreButton => '恢复';
+	@override String get restoredToast => '已恢复';
+	@override String get restoreFailedToast => '恢复失败';
 }
 
 // Path: web.project
@@ -1102,12 +1097,11 @@ class _TranslationsWebProjectZh extends TranslationsWebProjectEn {
 	@override late final _TranslationsWebProjectHeaderZh header = _TranslationsWebProjectHeaderZh._(_root);
 	@override late final _TranslationsWebProjectTabsZh tabs = _TranslationsWebProjectTabsZh._(_root);
 	@override late final _TranslationsWebProjectDocLabelZh docLabel = _TranslationsWebProjectDocLabelZh._(_root);
-	@override late final _TranslationsWebProjectVerdictLabelZh verdictLabel = _TranslationsWebProjectVerdictLabelZh._(_root);
 	@override late final _TranslationsWebProjectEditorZh editor = _TranslationsWebProjectEditorZh._(_root);
 	@override late final _TranslationsWebProjectReadonlyZh readonly = _TranslationsWebProjectReadonlyZh._(_root);
 	@override late final _TranslationsWebProjectJournalZh journal = _TranslationsWebProjectJournalZh._(_root);
 	@override late final _TranslationsWebProjectInboxZh inbox = _TranslationsWebProjectInboxZh._(_root);
-	@override late final _TranslationsWebProjectCleanupZh cleanup = _TranslationsWebProjectCleanupZh._(_root);
+	@override late final _TranslationsWebProjectArchivedZh archived = _TranslationsWebProjectArchivedZh._(_root);
 	@override late final _TranslationsWebProjectResetZh reset = _TranslationsWebProjectResetZh._(_root);
 }
 
@@ -1119,7 +1113,6 @@ class _TranslationsWebMemoryInspectorZh extends TranslationsWebMemoryInspectorEn
 
 	// Translations
 	@override late final _TranslationsWebMemoryInspectorStatusZh status = _TranslationsWebMemoryInspectorStatusZh._(_root);
-	@override String get statusBody => '这是网关当前用于每次 <1>memory_search</1> / <3>memory_store</3> 调用的 embedder。如果与上方配置不一致，说明有未保存的更改 — 点击 Save 后重启服务即可生效。';
 	@override late final _TranslationsWebMemoryInspectorScopeZh scope = _TranslationsWebMemoryInspectorScopeZh._(_root);
 	@override late final _TranslationsWebMemoryInspectorSearchZh search = _TranslationsWebMemoryInspectorSearchZh._(_root);
 	@override late final _TranslationsWebMemoryInspectorRecordsZh records = _TranslationsWebMemoryInspectorRecordsZh._(_root);
@@ -1454,7 +1447,7 @@ class _TranslationsMoreItemsZh extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsGitHostsZh gitHosts = _TranslationsMoreItemsGitHostsZh._(_root);
 	@override late final _TranslationsMoreItemsCustomTasksZh customTasks = _TranslationsMoreItemsCustomTasksZh._(_root);
 	@override late final _TranslationsMoreItemsProjectMemoryZh projectMemory = _TranslationsMoreItemsProjectMemoryZh._(_root);
-	@override late final _TranslationsMoreItemsCleanupInboxZh cleanupInbox = _TranslationsMoreItemsCleanupInboxZh._(_root);
+	@override late final _TranslationsMoreItemsArchivedZh archived = _TranslationsMoreItemsArchivedZh._(_root);
 	@override late final _TranslationsMoreItemsBackupsZh backups = _TranslationsMoreItemsBackupsZh._(_root);
 	@override late final _TranslationsMoreItemsDataExportZh dataExport = _TranslationsMoreItemsDataExportZh._(_root);
 	@override late final _TranslationsMoreItemsSettingsZh settings = _TranslationsMoreItemsSettingsZh._(_root);
@@ -1899,6 +1892,19 @@ class _TranslationsProjectJournalPruneZh extends TranslationsProjectJournalPrune
 	@override String get deselectAll => '取消全选';
 	@override String deleteSelected({required Object count}) => '删除 (${count})';
 	@override String deleted({required Object count}) => '已删除 ${count} 条';
+}
+
+// Path: project.archived
+class _TranslationsProjectArchivedZh extends TranslationsProjectArchivedEn {
+	_TranslationsProjectArchivedZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get emptyTitle => '暂无归档';
+	@override String get emptyBody => '该项目暂无归档记忆。自动清理器会把过时和重复的事实软归档到这里——目前还没有。';
+	@override String restoreFailed({required Object error}) => '恢复失败：${error}';
+	@override String get restore => '恢复';
 }
 
 // Path: backups.kv
@@ -2373,6 +2379,23 @@ class _TranslationsDataExportStatusZh extends TranslationsDataExportStatusEn {
 	@override String get failed => '失败';
 	@override String get expired => '过期';
 	@override String get succeeded => '成功';
+}
+
+// Path: memory.status
+class _TranslationsMemoryStatusZh extends TranslationsMemoryStatusEn {
+	_TranslationsMemoryStatusZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '当前生效 embedder';
+	@override String dimensions({required Object dim, required Object state}) => '${dim} 维 · ${state}';
+	@override String get enabled => '已启用';
+	@override String get disabled => '已禁用';
+	@override String get floorNoModel => '仅关键词（BM25）检索 — 未配置 embedding 模型。在 Settings 配置 dense 端点即可启用语义记忆。';
+	@override String denseConfiguredPendingRestart({required Object model}) => '已配置 ${model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。';
+	@override String denseUnreachableFloor({required Object model}) => '已配置 ${model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。';
+	@override String get denseDegraded => 'dense embedder 已激活，但其端点当前不可达 — 现有向量已保留；新写入与相似度检索暂停，直到端点恢复。';
 }
 
 // Path: memory.rank
@@ -2969,7 +2992,7 @@ class _TranslationsWebProjectHeaderZh extends TranslationsWebProjectHeaderEn {
 	@override String journalEntries_other({required Object count}) => '${count} 条日志';
 	@override String pendingProposals_one({required Object count}) => '${count} 条待处理提案';
 	@override String pendingProposals_other({required Object count}) => '${count} 条待处理提案';
-	@override String cleanupPending({required Object count}) => '${count} 条待清理';
+	@override String archivedCount({required Object count}) => '${count} 条已归档';
 }
 
 // Path: web.project.tabs
@@ -2987,7 +3010,7 @@ class _TranslationsWebProjectTabsZh extends TranslationsWebProjectTabsEn {
 	@override String get journal => '日志';
 	@override String get inbox => '收件箱';
 	@override String get conflicts => '冲突';
-	@override String get cleanup => '清理';
+	@override String get archived => '已归档';
 }
 
 // Path: web.project.docLabel
@@ -3001,18 +3024,6 @@ class _TranslationsWebProjectDocLabelZh extends TranslationsWebProjectDocLabelEn
 	@override String get plan => '计划';
 	@override String get tech_stack => '技术栈';
 	@override String get recent_activity => '最近活动';
-}
-
-// Path: web.project.verdictLabel
-class _TranslationsWebProjectVerdictLabelZh extends TranslationsWebProjectVerdictLabelEn {
-	_TranslationsWebProjectVerdictLabelZh._(TranslationsZh root) : this._root = root, super.internal(root);
-
-	final TranslationsZh _root; // ignore: unused_field
-
-	// Translations
-	@override String get stale => '删除';
-	@override String get duplicate => '合并';
-	@override String get keep => '保留';
 }
 
 // Path: web.project.editor
@@ -3084,27 +3095,19 @@ class _TranslationsWebProjectInboxZh extends TranslationsWebProjectInboxEn {
 	@override String get confirmReplace => '确认替换';
 }
 
-// Path: web.project.cleanup
-class _TranslationsWebProjectCleanupZh extends TranslationsWebProjectCleanupEn {
-	_TranslationsWebProjectCleanupZh._(TranslationsZh root) : this._root = root, super.internal(root);
+// Path: web.project.archived
+class _TranslationsWebProjectArchivedZh extends TranslationsWebProjectArchivedEn {
+	_TranslationsWebProjectArchivedZh._(TranslationsZh root) : this._root = root, super.internal(root);
 
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String get hint => 'LLM librarian 为该项目的记忆提出保留 / 过期 / 重复 的判定。删除前需你批准。';
-	@override String get runNow => '立即运行清理';
-	@override String runSucceededToast({required Object decided, required Object scanned}) => '清理已运行：${decided} 条决策入队（扫描了 ${scanned} 条）';
-	@override String get runFailedToast => '清理运行失败';
-	@override String get empty => '暂无待处理决策。要么没有记忆达到判定年龄，要么上次运行判断全部仍是关键内容。';
-	@override String get mergeIntoPrefix => '→ 合并到';
-	@override String get reasonPrefix => '原因：';
-	@override String get executeButton => '执行';
-	@override String get confirmKeepButton => '确认保留';
-	@override String get rejectButton => '驳回';
-	@override String approvedExecutedToast({required Object label}) => '已执行${label}';
-	@override String get approveFailedToast => '批准失败';
-	@override String get rejectedToast => '已驳回 — 记忆保留';
-	@override String get rejectFailedToast => '驳回失败';
+	@override String get hint => '自动清理器为该项目软归档的记忆。它们已从检索中排除，但在 30 天宽限期清除前均可恢复。';
+	@override String get empty => '该项目暂无归档。清理器会自动把过时和重复的事实软归档到这里——目前还没有。';
+	@override String get archivedAtPrefix => '归档于';
+	@override String get restoreButton => '恢复';
+	@override String get restoredToast => '已恢复';
+	@override String get restoreFailedToast => '恢复失败';
 }
 
 // Path: web.project.reset
@@ -3144,7 +3147,10 @@ class _TranslationsWebMemoryInspectorStatusZh extends TranslationsWebMemoryInspe
 	@override String dimensions({required Object dim, required Object state}) => '${dim} 维 · ${state}';
 	@override String get enabled => '已启用';
 	@override String get disabled => '已禁用';
-	@override String get testButton => '测试 embedder';
+	@override String get floorNoModel => '仅关键词（BM25）检索 — 未配置 embedding 模型。在 Settings 配置 dense 的 [memory.http] 端点即可启用语义记忆。';
+	@override String denseConfiguredPendingRestart({required Object model}) => '已配置 ${model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。';
+	@override String denseUnreachableFloor({required Object model}) => '已配置 ${model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。';
+	@override String get denseDegraded => 'dense embedder 已激活，但其端点当前不可达 — 现有向量已保留；新写入与相似度检索暂停，直到端点恢复。';
 }
 
 // Path: web.memoryInspector.scope
@@ -3158,9 +3164,7 @@ class _TranslationsWebMemoryInspectorScopeZh extends TranslationsWebMemoryInspec
 	@override String get scopeKey => 'Scope key';
 	@override String get scopeKeyIgnored => '(global 时忽略)';
 	@override String get scopeKeyCwd => '(项目的 cwd)';
-	@override String get scopeKeySession => '(session id)';
 	@override String get placeholderProject => '/path/to/project (cwd)';
-	@override String get placeholderSession => 'session id';
 	@override String get syncMd => '同步 .md';
 	@override String get syncTooltip => '把 Claude 的 <cwd>/.claude/memory/*.md 重新摄取到 pgvector';
 	@override late final _TranslationsWebMemoryInspectorScopeValuesZh values = _TranslationsWebMemoryInspectorScopeValuesZh._(_root);
@@ -3248,9 +3252,6 @@ class _TranslationsWebMemoryInspectorToastsZh extends TranslationsWebMemoryInspe
 	@override String get syncEmpty => '没有需要同步的新 .md 文件';
 	@override String get syncEmptyDescription => '已是最新，或该 cwd 没有 Claude memory 目录。';
 	@override String get syncFailed => '同步失败';
-	@override String testOk({required Object embedder, required Object dim}) => 'Embedder OK：${embedder} · ${dim} 维';
-	@override String testOkDescription({required Object preview}) => 'vector_preview = [${preview}…]';
-	@override String get testFailed => 'Embedder 探测失败';
 }
 
 // Path: web.memoryInspector.bulkDelete
@@ -4990,15 +4991,15 @@ class _TranslationsMoreItemsProjectMemoryZh extends TranslationsMoreItemsProject
 	@override String get subtitle => '按 cwd 的记忆层 2-4 + 代理提案';
 }
 
-// Path: more.items.cleanupInbox
-class _TranslationsMoreItemsCleanupInboxZh extends TranslationsMoreItemsCleanupInboxEn {
-	_TranslationsMoreItemsCleanupInboxZh._(TranslationsZh root) : this._root = root, super.internal(root);
+// Path: more.items.archived
+class _TranslationsMoreItemsArchivedZh extends TranslationsMoreItemsArchivedEn {
+	_TranslationsMoreItemsArchivedZh._(TranslationsZh root) : this._root = root, super.internal(root);
 
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => '清理收件箱';
-	@override String get subtitle => '跨项目的 LLM 提议删除 / 合并';
+	@override String get title => '已归档记忆';
+	@override String get subtitle => '恢复自动清理器软归档的记忆（30 天宽限期）';
 }
 
 // Path: more.items.backups
@@ -5768,7 +5769,6 @@ class _TranslationsSettingsServerSettingsFieldsZh extends TranslationsSettingsSe
 	@override String get defaultTopK => '默认 top-k';
 	@override String get similarityThreshold => '相似度阈值';
 	@override String get defaultScope => '默认范围';
-	@override String get chromemHelper => '当 store=chromem 时。';
 	@override String get preserveHelper => '留空 = 保留当前值。';
 	@override String get localModelName => '本地模型名';
 	@override String get localLibraryPath => '本地库路径';
@@ -5789,7 +5789,6 @@ class _TranslationsSettingsServerSettingsFieldsZh extends TranslationsSettingsSe
 	@override String get backendHelper => 'auto 选择最佳可用；local 需要 ONNX。';
 	@override String get similarityHelper => '0.0–1.0；低于此值的结果会被过滤。';
 	@override String defaultFallback({required Object value}) => '默认：${value}';
-	@override String get chromemPath => 'chromem 路径';
 	@override String get httpBaseUrl => 'HTTP base URL';
 	@override String get httpModel => 'HTTP model';
 	@override String get httpApiKey => 'HTTP api key';
@@ -5974,7 +5973,6 @@ class _TranslationsWebMemoryInspectorScopeValuesZh extends TranslationsWebMemory
 
 	// Translations
 	@override String get project => 'project';
-	@override String get session => 'session';
 	@override String get global => 'global';
 }
 
@@ -6934,7 +6932,7 @@ class _TranslationsWebServerSettingsFieldsMemoryScopeZh extends TranslationsWebS
 
 	// Translations
 	@override String get label => '默认作用域';
-	@override String get hint => 'agent 未指定时 memory_store 使用的作用域。"project"（推荐）按 cwd 分组；"session" 按会话隔离；"global" 跨 cwd 共享。';
+	@override String get hint => 'agent 未指定时 memory_store 使用的作用域。"project"（推荐）按 cwd 分组；"global" 跨 cwd 共享。';
 }
 
 // Path: web.serverSettings.fields.memoryBaseUrl
@@ -7257,7 +7255,6 @@ class _TranslationsWebMemoryAmbientRulesDialogZh extends TranslationsWebMemoryAm
 	@override String get idleLabel => 'Idle 秒数';
 	@override String get kLabel => 'K（字符数）';
 	@override String get scopeLabel => '目标 scope';
-	@override String get scopeSession => 'session';
 	@override String get scopeProject => 'project（推荐）';
 	@override String get scopeGlobal => 'global';
 	@override String get dedupLabel => '去重阈值（0.0 – 1.0）';
@@ -7620,7 +7617,7 @@ extension on TranslationsZh {
 			'web.memory.title' => '记忆',
 			'web.memory.subtitle' => '浏览、搜索并编辑 Agent 通过 opendray-memory MCP 服务器存储的记忆。',
 			'web.memory.navProject' => '项目',
-			'web.memory.navCleanupInbox' => '清理收件箱',
+			'web.memory.navArchived' => '已归档',
 			'web.memory.navWorkers' => 'Workers',
 			'web.memory.navConfiguration' => '配置 →',
 			'web.journalStale.title' => '清理陈旧条目',
@@ -7752,25 +7749,17 @@ extension on TranslationsZh {
 			'web.memoryWorkers.tasks.conflict_detector.description' => '每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。',
 			'web.memoryWorkers.tasks.capture.label' => 'Capture 引擎',
 			'web.memoryWorkers.tasks.capture.description' => '按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。',
-			'web.cleanupInbox.loading' => '加载中…',
-			'web.cleanupInbox.emptyTitle' => '清理收件箱为空',
-			'web.cleanupInbox.emptyDescription' => '目前所有项目均无待处理的清理决策。LLM librarian 要么尚未跑过这些记忆，要么判断全部仍是关键内容。',
-			'web.cleanupInbox.title' => '清理收件箱',
-			'web.cleanupInbox.subtitle' => 'LLM memory librarian 的跨项目待处理决策。批准 stale → 删除，批准 duplicate → 合并，批准 keep → 一段时间内冻结该条目不再被重新判断。',
-			'web.cleanupInbox.globalScope' => '(全局)',
-			'web.cleanupInbox.orphanBadge' => '孤立',
-			'web.cleanupInbox.orphanTitle' => 'scope_key 被截断（老旧的镜像导入数据）。不是可导航的项目。',
-			'web.cleanupInbox.openProject' => '打开项目',
-			'web.cleanupInbox.mergeIntoPrefix' => '→ 合并到',
-			'web.cleanupInbox.reasonPrefix' => '原因：',
-			'web.cleanupInbox.executeButton' => '执行',
-			'web.cleanupInbox.confirmKeepButton' => '确认保留',
-			'web.cleanupInbox.rejectButton' => '驳回',
-			'web.cleanupInbox.approvedKeptToast' => '已保留',
-			'web.cleanupInbox.approvedExecutedToast' => ({required Object verdict}) => '已执行 ${verdict}',
-			'web.cleanupInbox.approveFailedToast' => '批准失败',
-			'web.cleanupInbox.rejectedToast' => '已驳回 — 记忆保留',
-			'web.cleanupInbox.rejectFailedToast' => '驳回失败',
+			'web.archived.loading' => '加载中…',
+			'web.archived.emptyTitle' => '暂无归档',
+			'web.archived.emptyDescription' => '所有项目均无已归档记忆。自动清理器会把过时和重复的事实软归档到这里（30 天内可恢复）——目前尚未移除任何内容。',
+			'web.archived.title' => '已归档记忆',
+			'web.archived.subtitle' => '自动清理器与生命周期扫描在所有项目中软归档的记忆。它们已从检索中排除，但在 30 天宽限期清除前均可恢复。如有误判可在下方恢复。',
+			'web.archived.globalScope' => '(全局)',
+			'web.archived.openProject' => '打开项目',
+			'web.archived.archivedAtPrefix' => '归档于',
+			'web.archived.restoreButton' => '恢复',
+			'web.archived.restoredToast' => '已恢复',
+			'web.archived.restoreFailedToast' => '恢复失败',
 			'web.project.picker.title' => '选择项目',
 			'web.project.picker.subtitle' => '项目记忆按工作目录划分。选择一个以管理它的目标、计划、日志和清理队列。',
 			'web.project.picker.pathPlaceholder' => '/path/to/your/project',
@@ -7787,7 +7776,7 @@ extension on TranslationsZh {
 			'web.project.header.journalEntries_other' => ({required Object count}) => '${count} 条日志',
 			'web.project.header.pendingProposals_one' => ({required Object count}) => '${count} 条待处理提案',
 			'web.project.header.pendingProposals_other' => ({required Object count}) => '${count} 条待处理提案',
-			'web.project.header.cleanupPending' => ({required Object count}) => '${count} 条待清理',
+			'web.project.header.archivedCount' => ({required Object count}) => '${count} 条已归档',
 			'web.project.tabs.health' => '健康',
 			'web.project.tabs.goal' => '目标',
 			'web.project.tabs.plan' => '计划',
@@ -7796,14 +7785,11 @@ extension on TranslationsZh {
 			'web.project.tabs.journal' => '日志',
 			'web.project.tabs.inbox' => '收件箱',
 			'web.project.tabs.conflicts' => '冲突',
-			'web.project.tabs.cleanup' => '清理',
+			'web.project.tabs.archived' => '已归档',
 			'web.project.docLabel.goal' => '目标',
 			'web.project.docLabel.plan' => '计划',
 			'web.project.docLabel.tech_stack' => '技术栈',
 			'web.project.docLabel.recent_activity' => '最近活动',
-			'web.project.verdictLabel.stale' => '删除',
-			'web.project.verdictLabel.duplicate' => '合并',
-			'web.project.verdictLabel.keep' => '保留',
 			'web.project.editor.updatedBy' => '更新者',
 			'web.project.editor.noDocSet' => ({required Object label}) => '尚未设置${label}。',
 			'web.project.editor.save' => '保存',
@@ -7839,20 +7825,12 @@ extension on TranslationsZh {
 			'web.project.inbox.confirmDialogDescription' => ({required Object label}) => '当前${label}将被提议内容覆盖。无法通过本界面撤销（可手动改回）。',
 			'web.project.inbox.confirmCancel' => '取消',
 			'web.project.inbox.confirmReplace' => '确认替换',
-			'web.project.cleanup.hint' => 'LLM librarian 为该项目的记忆提出保留 / 过期 / 重复 的判定。删除前需你批准。',
-			'web.project.cleanup.runNow' => '立即运行清理',
-			'web.project.cleanup.runSucceededToast' => ({required Object decided, required Object scanned}) => '清理已运行：${decided} 条决策入队（扫描了 ${scanned} 条）',
-			'web.project.cleanup.runFailedToast' => '清理运行失败',
-			'web.project.cleanup.empty' => '暂无待处理决策。要么没有记忆达到判定年龄，要么上次运行判断全部仍是关键内容。',
-			'web.project.cleanup.mergeIntoPrefix' => '→ 合并到',
-			'web.project.cleanup.reasonPrefix' => '原因：',
-			'web.project.cleanup.executeButton' => '执行',
-			'web.project.cleanup.confirmKeepButton' => '确认保留',
-			'web.project.cleanup.rejectButton' => '驳回',
-			'web.project.cleanup.approvedExecutedToast' => ({required Object label}) => '已执行${label}',
-			'web.project.cleanup.approveFailedToast' => '批准失败',
-			'web.project.cleanup.rejectedToast' => '已驳回 — 记忆保留',
-			'web.project.cleanup.rejectFailedToast' => '驳回失败',
+			'web.project.archived.hint' => '自动清理器为该项目软归档的记忆。它们已从检索中排除，但在 30 天宽限期清除前均可恢复。',
+			'web.project.archived.empty' => '该项目暂无归档。清理器会自动把过时和重复的事实软归档到这里——目前还没有。',
+			'web.project.archived.archivedAtPrefix' => '归档于',
+			'web.project.archived.restoreButton' => '恢复',
+			'web.project.archived.restoredToast' => '已恢复',
+			'web.project.archived.restoreFailedToast' => '恢复失败',
 			'web.project.reset.button' => '重置',
 			'web.project.reset.dialogTitle' => '重置项目记忆?',
 			'web.project.reset.dialogDescription' => '删除该 cwd 下存储的所有项目上下文。不可撤销。',
@@ -7880,19 +7858,18 @@ extension on TranslationsZh {
 			'web.memoryInspector.status.dimensions' => ({required Object dim, required Object state}) => '${dim} 维 · ${state}',
 			'web.memoryInspector.status.enabled' => '已启用',
 			'web.memoryInspector.status.disabled' => '已禁用',
-			'web.memoryInspector.status.testButton' => '测试 embedder',
-			'web.memoryInspector.statusBody' => '这是网关当前用于每次 <1>memory_search</1> / <3>memory_store</3> 调用的 embedder。如果与上方配置不一致，说明有未保存的更改 — 点击 Save 后重启服务即可生效。',
+			'web.memoryInspector.status.floorNoModel' => '仅关键词（BM25）检索 — 未配置 embedding 模型。在 Settings 配置 dense 的 [memory.http] 端点即可启用语义记忆。',
+			'web.memoryInspector.status.denseConfiguredPendingRestart' => ({required Object model}) => '已配置 ${model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。',
+			'web.memoryInspector.status.denseUnreachableFloor' => ({required Object model}) => '已配置 ${model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。',
+			'web.memoryInspector.status.denseDegraded' => 'dense embedder 已激活，但其端点当前不可达 — 现有向量已保留；新写入与相似度检索暂停，直到端点恢复。',
 			'web.memoryInspector.scope.label' => 'Scope',
 			'web.memoryInspector.scope.scopeKey' => 'Scope key',
 			'web.memoryInspector.scope.scopeKeyIgnored' => '(global 时忽略)',
 			'web.memoryInspector.scope.scopeKeyCwd' => '(项目的 cwd)',
-			'web.memoryInspector.scope.scopeKeySession' => '(session id)',
 			'web.memoryInspector.scope.placeholderProject' => '/path/to/project (cwd)',
-			'web.memoryInspector.scope.placeholderSession' => 'session id',
 			'web.memoryInspector.scope.syncMd' => '同步 .md',
 			'web.memoryInspector.scope.syncTooltip' => '把 Claude 的 <cwd>/.claude/memory/*.md 重新摄取到 pgvector',
 			'web.memoryInspector.scope.values.project' => 'project',
-			'web.memoryInspector.scope.values.session' => 'session',
 			'web.memoryInspector.scope.values.global' => 'global',
 			'web.memoryInspector.search.placeholder' => '语义搜索查询（Enter 运行；为空则浏览）',
 			'web.memoryInspector.search.run' => '搜索',
@@ -7931,8 +7908,6 @@ extension on TranslationsZh {
 			'web.memoryInspector.toasts.bulkDeleted_one' => ({required Object count}) => '已从此 scope 删除 ${count} 条记忆',
 			'web.memoryInspector.toasts.bulkDeleted_other' => ({required Object count}) => '已从此 scope 删除 ${count} 条记忆',
 			'web.memoryInspector.toasts.bulkDeleteFailed' => '批量删除失败',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.toasts.created' => '记忆已创建',
 			'web.memoryInspector.toasts.createFailed' => '创建失败',
 			'web.memoryInspector.toasts.updated' => '记忆已更新',
@@ -7944,9 +7919,6 @@ extension on TranslationsZh {
 			'web.memoryInspector.toasts.syncEmpty' => '没有需要同步的新 .md 文件',
 			'web.memoryInspector.toasts.syncEmptyDescription' => '已是最新，或该 cwd 没有 Claude memory 目录。',
 			'web.memoryInspector.toasts.syncFailed' => '同步失败',
-			'web.memoryInspector.toasts.testOk' => ({required Object embedder, required Object dim}) => 'Embedder OK：${embedder} · ${dim} 维',
-			'web.memoryInspector.toasts.testOkDescription' => ({required Object preview}) => 'vector_preview = [${preview}…]',
-			'web.memoryInspector.toasts.testFailed' => 'Embedder 探测失败',
 			'web.memoryInspector.bulkDelete.title' => '删除此 scope 的全部记忆?',
 			'web.memoryInspector.bulkDelete.description' => '这是一次 SQL 操作 — 该 scope 下全部记忆将被原子性删除。通过 Claude 镜像摄取的记忆会在下次 <1>同步 .md</1> 时重新出现；其余内容永久消失。',
 			'web.memoryInspector.bulkDelete.scope' => 'Scope',
@@ -7956,6 +7928,8 @@ extension on TranslationsZh {
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} 条记忆',
 			'web.memoryInspector.bulkDelete.cancel' => '取消',
 			'web.memoryInspector.bulkDelete.deleteAll' => '全部删除',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.addMem.title' => '添加记忆',
 			'web.memoryInspector.addMem.description' => '手动创建一条记忆。Agent 会通过 <1>memory_store</1> MCP 工具自动创建；此表单用于运维想跳过 agent 直接录入事实的场景。',
 			'web.memoryInspector.addMem.textLabel' => '文本',
@@ -8445,8 +8419,6 @@ extension on TranslationsZh {
 			'web.integrations.proxy.send' => '发送',
 			'web.integrations.proxy.sending' => '发送中…',
 			'web.integrations.proxy.extraHeadersLabel' => '额外 header（每行一条，Name: Value）',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.proxy.bodyLabel' => 'Body',
 			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
@@ -8470,6 +8442,8 @@ extension on TranslationsZh {
 			'web.plugins.mcp.columns.name' => '名称',
 			'web.plugins.mcp.columns.transport' => 'Transport',
 			'web.plugins.mcp.columns.spec' => '规范',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.mcp.columns.enabled' => '启用',
 			'web.plugins.mcp.noUrl' => '无 URL',
 			'web.plugins.mcp.noCommand' => '无 command',
@@ -8929,7 +8903,7 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.memoryThreshold.label' => '相似度阈值',
 			'web.serverSettings.fields.memoryThreshold.hint' => '分数低于此值的命中将被丢弃。留空 = 0.1（宽松 — BM25 稀疏向量很少超过 0.5）。',
 			'web.serverSettings.fields.memoryScope.label' => '默认作用域',
-			'web.serverSettings.fields.memoryScope.hint' => 'agent 未指定时 memory_store 使用的作用域。"project"（推荐）按 cwd 分组；"session" 按会话隔离；"global" 跨 cwd 共享。',
+			'web.serverSettings.fields.memoryScope.hint' => 'agent 未指定时 memory_store 使用的作用域。"project"（推荐）按 cwd 分组；"global" 跨 cwd 共享。',
 			'web.serverSettings.fields.memoryBaseUrl.label' => 'Base URL',
 			'web.serverSettings.fields.memoryBaseUrl.hint' => '如 ollama 用 "http://localhost:11434/v1"，OpenAI 用 "https://api.openai.com/v1"。',
 			'web.serverSettings.fields.memoryModel.label' => '模型',
@@ -8959,8 +8933,6 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.backupLocalDir.label' => '本地备份目录',
 			'web.serverSettings.fields.backupLocalDir.hint' => '自动创建的 `local` 目标的默认根目录。留空 = ~/.opendray/backups。需要重启。',
 			'web.serverSettings.fields.backupExportDir.label' => '导出目录',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.backupExportDir.hint' => '一次性导出 zip 在磁盘上的暂存位置。留空 = ~/.opendray/exports。包将在 24 小时后自动过期。需要重启。',
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump 路径',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'pg_dump 的绝对路径。主版本号必须 ≥ 服务器的。留空 = PATH 上的第一个 pg_dump。',
@@ -8984,6 +8956,8 @@ extension on TranslationsZh {
 			'web.serverSettings.httpHelpers.presetTip.openai' => 'OpenAI 云端（需要 API key）',
 			'web.serverSettings.probe.unreachable' => ({required Object error}) => '✗ 不可达：${error}',
 			'web.serverSettings.probe.connectionFailed' => '连接失败',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.probe.reachable' => ({required Object detected, required Object total, required Object embedding}) => '✓ 可达 ${detected}· 共 ${total} 个模型 · ${embedding} 个嵌入',
 			'web.serverSettings.probe.modelMissing' => ({required Object model}) => '⚠ 配置的模型 ${model} 不在列表中。从下方嵌入模型中选一个，或修正名称。',
 			'web.serverSettings.probe.embeddingModelsLabel' => '嵌入模型：',
@@ -9185,7 +9159,6 @@ extension on TranslationsZh {
 			'web.memoryAmbient.rules.dialog.idleLabel' => 'Idle 秒数',
 			'web.memoryAmbient.rules.dialog.kLabel' => 'K（字符数）',
 			'web.memoryAmbient.rules.dialog.scopeLabel' => '目标 scope',
-			'web.memoryAmbient.rules.dialog.scopeSession' => 'session',
 			'web.memoryAmbient.rules.dialog.scopeProject' => 'project（推荐）',
 			'web.memoryAmbient.rules.dialog.scopeGlobal' => 'global',
 			'web.memoryAmbient.rules.dialog.dedupLabel' => '去重阈值（0.0 – 1.0）',
@@ -9324,8 +9297,8 @@ extension on TranslationsZh {
 			'more.items.customTasks.subtitle' => '会话任务选择器中显示的斜杠命令',
 			'more.items.projectMemory.title' => '项目目标 / 计划 / 日志',
 			'more.items.projectMemory.subtitle' => '按 cwd 的记忆层 2-4 + 代理提案',
-			'more.items.cleanupInbox.title' => '清理收件箱',
-			'more.items.cleanupInbox.subtitle' => '跨项目的 LLM 提议删除 / 合并',
+			'more.items.archived.title' => '已归档记忆',
+			'more.items.archived.subtitle' => '恢复自动清理器软归档的记忆（30 天宽限期）',
 			'more.items.backups.title' => '备份',
 			'more.items.backups.subtitle' => '最新备份状态与立即运行',
 			'more.items.dataExport.title' => '数据导出与导入',
@@ -9473,8 +9446,6 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => '创建失败：${error}',
@@ -9499,6 +9470,8 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.cancel' => '取消',
 			'sessions.spawnSheet.spawn' => '创建',
 			'sessions.spawnSheet.providerLabel' => '提供商',
@@ -9749,7 +9722,8 @@ extension on TranslationsZh {
 			'memoryWorkers.errorTitle' => '端点不可达',
 			'memoryWorkers.errorDetail' => '/api/v1/memory/workers 路由在 M25 中是新增的 — opendray 二进制可能需要重启以挂载这些路由并运行迁移 0029。',
 			'memoryWorkers.summarizerOnlyBadge' => '仅 summarizer',
-			'memoryWorkers.summarizerInfo' => '使用注册表默认 summarizer 提供商。在 Web 管理端选择具体行。',
+			'memoryWorkers.summarizerProviderLabel' => 'Summarizer 提供商',
+			'memoryWorkers.registryDefault' => '注册表默认',
 			'memoryWorkers.agentWarning' => 'Agent 模式每次调用都会生成无头 CLI。延迟约 5-15 秒（相比 summarizer 约 1 秒）；成本从 CPU 转移到你的 Claude / Gemini 配额。',
 			'memoryWorkers.noCalls24h' => '过去 24 小时没有调用。',
 			'memoryWorkers.testOkSnack' => ({required Object label, required Object duration}) => '${label} OK — ${duration}ms',
@@ -9769,11 +9743,14 @@ extension on TranslationsZh {
 			'memoryWorkers.tasks.conflictDetector.description' => '每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。',
 			'memoryWorkers.tasks.capture.label' => 'Capture 引擎',
 			'memoryWorkers.tasks.capture.description' => '按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。',
-			'memoryCleanup.title' => '记忆清理',
-			'memoryCleanup.approveFailed' => ({required Object error}) => '批准失败：${error}',
-			'memoryCleanup.rejectFailed' => ({required Object error}) => '拒绝失败：${error}',
-			'memoryCleanup.loadFailed' => ({required Object error}) => '加载失败：${error}',
-			'memoryCleanup.reject' => '拒绝',
+			'memoryArchived.title' => '已归档记忆',
+			'memoryArchived.loadFailed' => ({required Object error}) => '加载失败：${error}',
+			'memoryArchived.restoreFailed' => ({required Object error}) => '恢复失败：${error}',
+			'memoryArchived.emptyTitle' => '暂无归档',
+			'memoryArchived.emptyBody' => '所有项目均无已归档记忆。自动清理器会把过时和重复的事实软归档到这里（30 天内可恢复）——目前尚未移除任何内容。',
+			'memoryArchived.globalScope' => '(全局)',
+			'memoryArchived.countBadge' => ({required Object count}) => '${count} 条已归档',
+			'memoryArchived.restore' => '恢复',
 			'project.title' => '项目',
 			'project.pickFirst' => '请先选择一个项目。',
 			'project.health.title' => ({required Object days}) => '记忆健康 — 最近 ${days} 天',
@@ -9834,7 +9811,6 @@ extension on TranslationsZh {
 			'project.appendFailed' => ({required Object error}) => '失败：${error}',
 			'project.approveFailed' => ({required Object error}) => '批准失败：${error}',
 			'project.rejectFailed' => ({required Object error}) => '拒绝失败：${error}',
-			'project.cleanupFailed' => ({required Object error}) => '清理失败：${error}',
 			'project.resetConfirmTitle' => '重置项目记忆？',
 			'project.alsoDeleteScanner' => '同时删除扫描器文档',
 			'project.alsoDeletePgvector' => '同时删除 pgvector 记忆',
@@ -9850,8 +9826,10 @@ extension on TranslationsZh {
 			'project.approve' => '批准',
 			'project.replaceConfirmTitle' => ({required Object kind}) => '替换当前 ${kind}？',
 			'project.replaceKind' => ({required Object kind}) => '替换 ${kind}',
-			'project.reason' => '原因',
-			'project.willMergeInto' => '将合并到',
+			'project.archived.emptyTitle' => '暂无归档',
+			'project.archived.emptyBody' => '该项目暂无归档记忆。自动清理器会把过时和重复的事实软归档到这里——目前还没有。',
+			'project.archived.restoreFailed' => ({required Object error}) => '恢复失败：${error}',
+			'project.archived.restore' => '恢复',
 			'backups.title' => '备份',
 			'backups.runConfirmTitle' => '立即运行备份？',
 			'backups.runConfirmBody' => '向本地目标触发一次新的转储。任务在服务端运行；此列表会随进度刷新。',
@@ -9987,8 +9965,6 @@ extension on TranslationsZh {
 			'backupSchedules.errorPrefixUpdate' => '更新失败',
 			'backupSchedules.errorPrefixDelete' => '删除失败',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => '移除目标 ${targetId} 的定期规格。已存在的备份不受影响。',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.emptyList' => '暂无计划。\n点击「新建」创建一个。',
 			'backupSchedules.validatePickTarget' => '请选择一个目标。',
 			'backupSchedules.validateInterval' => '间隔必须大于 0。',
@@ -10008,6 +9984,8 @@ extension on TranslationsZh {
 			'backupTargetEditor.useHttps' => '使用 HTTPS',
 			'backupTargetEditor.pathStyle' => '路径风格寻址',
 			'backupTargetEditor.pathStyleSubtitle' => '旧版 / MinIO',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.kinds.local.label' => '本地磁盘',
 			'backupTargetEditor.kinds.local.description' => '运行 opendray 的机器上的文件夹',
 			'backupTargetEditor.kinds.smb.label' => 'SMB 共享',
@@ -10411,6 +10389,14 @@ extension on TranslationsZh {
 			'dataExport.status.failed' => '失败',
 			'dataExport.status.expired' => '过期',
 			'dataExport.status.succeeded' => '成功',
+			'memory.status.label' => '当前生效 embedder',
+			'memory.status.dimensions' => ({required Object dim, required Object state}) => '${dim} 维 · ${state}',
+			'memory.status.enabled' => '已启用',
+			'memory.status.disabled' => '已禁用',
+			'memory.status.floorNoModel' => '仅关键词（BM25）检索 — 未配置 embedding 模型。在 Settings 配置 dense 端点即可启用语义记忆。',
+			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => '已配置 ${model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。',
+			'memory.status.denseUnreachableFloor' => ({required Object model}) => '已配置 ${model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。',
+			'memory.status.denseDegraded' => 'dense embedder 已激活，但其端点当前不可达 — 现有向量已保留；新写入与相似度检索暂停，直到端点恢复。',
 			'memory.title' => '记忆',
 			'memory.more' => '更多',
 			'memory.workers' => '记忆工作器',
@@ -10501,8 +10487,6 @@ extension on TranslationsZh {
 			'settings.changeCredentials.updatedSnack' => '凭据已更新。',
 			'settings.changeCredentials.wrongCurrent' => '当前密码不正确。',
 			'settings.changeCredentials.saving' => '保存中…',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.update' => '更新',
 			'settings.logViewer.title' => '实时日志',
 			'settings.logViewer.reconnect' => '重新连接',
@@ -10514,6 +10498,8 @@ extension on TranslationsZh {
 			'settings.logViewer.levels.debug' => '调试',
 			'settings.logViewer.levels.info' => '信息',
 			'settings.logViewer.levels.warn' => '警告',
+			_ => null,
+		} ?? switch (path) {
 			'settings.logViewer.levels.error' => '错误',
 			'settings.serverSettings.title' => '服务器设置',
 			'settings.serverSettings.reloadTooltip' => '从服务器重新加载',
@@ -10579,7 +10565,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.defaultTopK' => '默认 top-k',
 			'settings.serverSettings.fields.similarityThreshold' => '相似度阈值',
 			'settings.serverSettings.fields.defaultScope' => '默认范围',
-			'settings.serverSettings.fields.chromemHelper' => '当 store=chromem 时。',
 			'settings.serverSettings.fields.preserveHelper' => '留空 = 保留当前值。',
 			'settings.serverSettings.fields.localModelName' => '本地模型名',
 			'settings.serverSettings.fields.localLibraryPath' => '本地库路径',
@@ -10600,7 +10585,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.backendHelper' => 'auto 选择最佳可用；local 需要 ONNX。',
 			'settings.serverSettings.fields.similarityHelper' => '0.0–1.0；低于此值的结果会被过滤。',
 			'settings.serverSettings.fields.defaultFallback' => ({required Object value}) => '默认：${value}',
-			'settings.serverSettings.fields.chromemPath' => 'chromem 路径',
 			'settings.serverSettings.fields.httpBaseUrl' => 'HTTP base URL',
 			'settings.serverSettings.fields.httpModel' => 'HTTP model',
 			'settings.serverSettings.fields.httpApiKey' => 'HTTP api key',

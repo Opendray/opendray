@@ -234,28 +234,27 @@ class AuditPage {
 }
 
 // Memory scope band — mirrors internal/memory/store.go.
+// 'session' was retired in the M-U unification (session ≡ project); the
+// wire value 'session' coerces to project so old rows/payloads still parse.
 enum MemoryScope {
-  session,
   project,
   global,
   unknown;
 
   String get wire => switch (this) {
-        MemoryScope.session => 'session',
         MemoryScope.project => 'project',
         MemoryScope.global => 'global',
         MemoryScope.unknown => '',
       };
 
   static MemoryScope parse(String? raw) => switch (raw) {
-        'session' => MemoryScope.session,
+        'session' => MemoryScope.project, // retired scope folds to project
         'project' => MemoryScope.project,
         'global' => MemoryScope.global,
         _ => MemoryScope.unknown,
       };
 
   String get label => switch (this) {
-        MemoryScope.session => 'Session',
         MemoryScope.project => 'Project',
         MemoryScope.global => 'Global',
         MemoryScope.unknown => 'Unknown',
@@ -278,6 +277,8 @@ class Memory {
     this.sourceRef,
     this.summarizerSession,
     this.confidence,
+    this.archivedAt,
+    this.archivedReason,
   });
 
   factory Memory.fromJson(Map<String, dynamic> json) => Memory(
@@ -303,6 +304,10 @@ class Memory {
         sourceRef: json['source_ref'] as String?,
         summarizerSession: json['summarizer_session'] as String?,
         confidence: (json['confidence'] as num?)?.toDouble(),
+        archivedAt: (json['archived_at'] is String)
+            ? DateTime.tryParse(json['archived_at'] as String)
+            : null,
+        archivedReason: json['archived_reason'] as String?,
       );
 
   final String id;
@@ -319,6 +324,10 @@ class Memory {
   final String? sourceRef;
   final String? summarizerSession;
   final double? confidence;
+  // Soft-delete metadata, only populated by the Archived view. Normal
+  // list/search never returns archived rows.
+  final DateTime? archivedAt;
+  final String? archivedReason;
 }
 
 // SearchHit pairs a Memory with its cosine similarity score so the
@@ -337,25 +346,75 @@ class MemoryHit {
   final double similarity;
 }
 
+/// The configured dense embedding endpoint (when one is configured).
+class ConfiguredDense {
+  const ConfiguredDense({required this.baseUrl, required this.model});
+
+  factory ConfiguredDense.fromJson(Map<String, dynamic> json) =>
+      ConfiguredDense(
+        baseUrl: json['base_url'] as String? ?? '',
+        model: json['model'] as String? ?? '',
+      );
+
+  final String baseUrl;
+  final String model;
+}
+
 class MemoryStatus {
   MemoryStatus({
     required this.embedder,
+    required this.effectiveEmbedder,
     required this.dimensions,
     required this.enabled,
-    required this.autoDetected,
+    required this.isFloor,
+    required this.backend,
+    required this.configuredDense,
+    required this.denseReachable,
+    required this.degraded,
+    required this.drift,
   });
 
   factory MemoryStatus.fromJson(Map<String, dynamic> json) => MemoryStatus(
         embedder: json['embedder'] as String? ?? '',
+        effectiveEmbedder: json['effective_embedder'] as String?,
         dimensions: (json['dimensions'] as num?)?.toInt() ?? 0,
         enabled: json['enabled'] as bool? ?? false,
-        autoDetected: json['auto_detected'] as bool? ?? false,
+        isFloor: json['is_floor'] as bool? ?? false,
+        backend: json['backend'] as String?,
+        configuredDense: json['configured_dense'] is Map<String, dynamic>
+            ? ConfiguredDense.fromJson(
+                json['configured_dense'] as Map<String, dynamic>)
+            : null,
+        denseReachable: json['dense_reachable'] as bool?,
+        degraded: json['degraded'] as bool? ?? false,
+        drift: (json['drift'] as num?)?.toInt() ?? 0,
       );
 
+  /// The embedder actually serving reads/writes.
   final String embedder;
+
+  /// Explicit effective embedder name; falls back to [embedder].
+  final String? effectiveEmbedder;
   final int dimensions;
   final bool enabled;
-  final bool autoDetected;
+
+  /// True when the BM25 keyword floor is active (no dense/semantic retrieval).
+  final bool isFloor;
+
+  /// Configured backend: "auto" | "bm25" | "http" | "local".
+  final String? backend;
+
+  /// The configured dense endpoint, or null when none is configured.
+  final ConfiguredDense? configuredDense;
+
+  /// Live probe of the configured dense endpoint (null when none configured).
+  final bool? denseReachable;
+
+  /// A dense endpoint is configured but is not the healthy serving tier now.
+  final bool degraded;
+
+  /// Rows not yet on the active embedder (the background converge backlog).
+  final int drift;
 }
 
 // One past prompt entry pulled from the running session's

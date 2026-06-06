@@ -240,7 +240,7 @@
       "title": "Memoria",
       "subtitle": "Explora, busca y edita las memorias que los agentes han almacenado a través del servidor MCP opendray-memory.",
       "navProject": "Proyecto",
-      "navCleanupInbox": "Bandeja de limpieza",
+      "navArchived": "Archivadas",
       "navWorkers": "Workers",
       "navConfiguration": "Configuración →"
     },
@@ -411,26 +411,18 @@
         }
       }
     },
-    "cleanupInbox": {
+    "archived": {
       "loading": "Cargando…",
-      "emptyTitle": "Bandeja de limpieza vacía",
-      "emptyDescription": "No hay decisiones de limpieza pendientes en ningún proyecto. El bibliotecario LLM aún no se ha ejecutado para las memorias elegibles, o ha encontrado que todo es esencial.",
-      "title": "Bandeja de limpieza",
-      "subtitle": "Decisiones pendientes entre proyectos del bibliotecario de memoria LLM. Aprobar obsoleto borra, aprobar duplicado fusiona, aprobar conservar congela la entrada para que no se vuelva a evaluar durante un tiempo.",
+      "emptyTitle": "Nada archivado",
+      "emptyDescription": "No hay memorias archivadas en ningún proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados (restaurables durante 30 días); todavía no se ha eliminado nada.",
+      "title": "Memorias archivadas",
+      "subtitle": "Memorias que el limpiador automático y el barrido de ciclo de vida archivaron en todos los proyectos. Se excluyen de la recuperación pero son restaurables hasta que la ventana de gracia de 30 días las purgue. Restaura cualquier falso positivo abajo.",
       "globalScope": "(global)",
-      "orphanBadge": "huérfano",
-      "orphanTitle": "scope_key truncado (importación antigua de réplica). No es un proyecto navegable.",
       "openProject": "Abrir proyecto",
-      "mergeIntoPrefix": "→ fusionar en",
-      "reasonPrefix": "Motivo:",
-      "executeButton": "Ejecutar",
-      "confirmKeepButton": "Confirmar conservar",
-      "rejectButton": "Rechazar",
-      "approvedKeptToast": "Conservado",
-      "approvedExecutedToast": "{verdict} ejecutado",
-      "approveFailedToast": "Error al aprobar",
-      "rejectedToast": "Rechazado, memoria conservada",
-      "rejectFailedToast": "Error al rechazar"
+      "archivedAtPrefix": "Archivado",
+      "restoreButton": "Restaurar",
+      "restoredToast": "Restaurado",
+      "restoreFailedToast": "Error al restaurar"
     },
     "project": {
       "picker": {
@@ -452,7 +444,7 @@
         "journalEntries_other": "{count} entradas del diario",
         "pendingProposals_one": "{count} propuesta pendiente",
         "pendingProposals_other": "{count} propuestas pendientes",
-        "cleanupPending": "{count} limpieza pendiente"
+        "archivedCount": "{count} archivadas"
       },
       "tabs": {
         "health": "Estado",
@@ -463,18 +455,13 @@
         "journal": "Diario",
         "inbox": "Bandeja de entrada",
         "conflicts": "Conflictos",
-        "cleanup": "Limpieza"
+        "archived": "Archivadas"
       },
       "docLabel": {
         "goal": "Objetivo",
         "plan": "Plan",
         "tech_stack": "Stack tecnológico",
         "recent_activity": "Actividad reciente"
-      },
-      "verdictLabel": {
-        "stale": "Eliminar",
-        "duplicate": "Fusionar",
-        "keep": "Conservar"
       },
       "editor": {
         "updatedBy": "Actualizado por",
@@ -523,21 +510,13 @@
         "confirmCancel": "Cancelar",
         "confirmReplace": "Confirmar reemplazo"
       },
-      "cleanup": {
-        "hint": "El bibliotecario LLM propone veredictos de conservar / obsoleto / duplicado para las memorias de este proyecto. Tú apruebas antes de que se elimine nada.",
-        "runNow": "Ejecutar limpieza ahora",
-        "runSucceededToast": "Ejecución de limpieza: {decided} decisiones en cola ({scanned} analizadas)",
-        "runFailedToast": "Error en la ejecución de limpieza",
-        "empty": "No hay decisiones pendientes. O no había nada que cumpliera los requisitos por antigüedad, o la última ejecución encontró que todo era esencial.",
-        "mergeIntoPrefix": "→ fusionar en",
-        "reasonPrefix": "Motivo:",
-        "executeButton": "Ejecutar",
-        "confirmKeepButton": "Confirmar conservar",
-        "rejectButton": "Rechazar",
-        "approvedExecutedToast": "{label} ejecutado",
-        "approveFailedToast": "Error al aprobar",
-        "rejectedToast": "Rechazado: memoria conservada",
-        "rejectFailedToast": "Error al rechazar"
+      "archived": {
+        "hint": "Memorias que el limpiador automático archivó para este proyecto. Se excluyen de la recuperación pero son restaurables hasta que la ventana de gracia de 30 días las purgue.",
+        "empty": "Nada archivado para este proyecto. El limpiador archiva aquí los hechos obsoletos y duplicados automáticamente; todavía ninguno.",
+        "archivedAtPrefix": "Archivado",
+        "restoreButton": "Restaurar",
+        "restoredToast": "Restaurado",
+        "restoreFailedToast": "Error al restaurar"
       },
       "reset": {
         "button": "Restablecer",
@@ -573,22 +552,21 @@
         "dimensions": "{dim}-dim · {state}",
         "enabled": "habilitado",
         "disabled": "deshabilitado",
-        "testButton": "Probar embedder"
+        "floorNoModel": "Solo recuperación por palabras clave (BM25) — no hay modelo de embedding configurado. Añade un endpoint denso [memory.http] en Settings para habilitar la memoria semántica.",
+        "denseConfiguredPendingRestart": "Configurado {model} (denso) — reinicia el gateway para activar la memoria semántica y re-embeber las memorias existentes.",
+        "denseUnreachableFloor": "Configurado {model} (denso) pero el endpoint está inalcanzable — se usa el piso de palabras clave hasta que responda (se actualiza al reiniciar).",
+        "denseDegraded": "Embedder denso activo pero su endpoint está inalcanzable ahora — los vectores existentes se conservan; las nuevas escrituras y la búsqueda por similitud se pausan hasta que responda."
       },
-      "statusBody": "Este es el embedder que el gateway está usando actualmente para cada llamada a <1>memory_search</1> / <3>memory_store</3>. Si esto no coincide con la configuración de arriba, tienes cambios sin guardar. Haz clic en Guardar y luego en Reiniciar servidor para aplicarlos.",
       "scope": {
         "label": "Scope",
         "scopeKey": "Clave de scope",
         "scopeKeyIgnored": "(ignorado para global)",
         "scopeKeyCwd": "(cwd del proyecto)",
-        "scopeKeySession": "(id de session)",
         "placeholderProject": "/path/to/project (cwd)",
-        "placeholderSession": "id de session",
         "syncMd": "Sincronizar .md",
         "syncTooltip": "Reimportar los archivos <cwd>/.claude/memory/*.md de Claude a pgvector",
         "values": {
           "project": "proyecto",
-          "session": "session",
           "global": "global"
         }
       },
@@ -646,10 +624,7 @@
         "syncIngested_other": "Se importaron {count} nuevos archivos de memoria",
         "syncEmpty": "No hay nuevos archivos .md que sincronizar",
         "syncEmptyDescription": "Ya está sincronizado, o no hay directorio de memoria de Claude para este cwd.",
-        "syncFailed": "La sincronización falló",
-        "testOk": "Embedder OK: {embedder} · {dim} dimensiones",
-        "testOkDescription": "vector_preview = [{preview}…]",
-        "testFailed": "El sondeo del embedder falló"
+        "syncFailed": "La sincronización falló"
       },
       "bulkDelete": {
         "title": "¿Eliminar todas las memorias de este scope?",
@@ -1899,7 +1874,7 @@
         },
         "memoryScope": {
           "label": "Ámbito por defecto",
-          "hint": "Lo que usa memory_store cuando el agente no lo especifica. \"project\" (recomendado) agrupa por cwd; \"session\" aísla por session; \"global\" comparte entre cwds."
+          "hint": "Lo que usa memory_store cuando el agente no lo especifica. \"project\" (recomendado) agrupa por cwd; \"global\" comparte entre cwds."
         },
         "memoryBaseUrl": {
           "label": "URL base",
@@ -2253,7 +2228,6 @@
           "idleLabel": "Segundos de inactividad",
           "kLabel": "K (caracteres)",
           "scopeLabel": "Ámbito objetivo",
-          "scopeSession": "session",
           "scopeProject": "proyecto (recomendado)",
           "scopeGlobal": "global",
           "dedupLabel": "Umbral de dedup (0.0 a 1.0)",
@@ -2452,9 +2426,9 @@
         "title": "Objetivo / plan / diario del proyecto",
         "subtitle": "Capas de memoria 2-4 por cwd + propuestas del agente"
       },
-      "cleanupInbox": {
-        "title": "Bandeja de limpieza",
-        "subtitle": "Eliminaciones / fusiones propuestas por el LLM en todos los proyectos"
+      "archived": {
+        "title": "Memorias archivadas",
+        "subtitle": "Restaura memorias que el limpiador automático archivó (gracia de 30 días)"
       },
       "backups": {
         "title": "Copias de seguridad",
@@ -2972,7 +2946,8 @@
     "errorTitle": "Endpoint no accesible",
     "errorDetail": "Las rutas /api/v1/memory/workers son nuevas en M25. Puede que el binario de opendray necesite un reinicio para montarlas y ejecutar la migración 0029.",
     "summarizerOnlyBadge": "solo resumidor",
-    "summarizerInfo": "Usa el proveedor de resumidor predeterminado del registro. Elige una fila específica en el panel de administración web.",
+    "summarizerProviderLabel": "Proveedor de resumidor",
+    "registryDefault": "Predeterminado del registro",
     "agentWarning": "El modo agente lanza un CLI headless por cada llamada. Latencia ~5-15s (frente a ~1s del resumidor); el coste pasa de la CPU a tu quota de Claude/Gemini.",
     "noCalls24h": "Sin llamadas en las últimas 24h.",
     "testOkSnack": "{label} OK, {duration}ms",
@@ -3009,12 +2984,15 @@
       }
     }
   },
-  "memoryCleanup": {
-    "title": "Limpieza de memoria",
-    "approveFailed": "Error al aprobar: {error}",
-    "rejectFailed": "Error al rechazar: {error}",
+  "memoryArchived": {
+    "title": "Memorias archivadas",
     "loadFailed": "Error al cargar: {error}",
-    "reject": "Rechazar"
+    "restoreFailed": "Error al restaurar: {error}",
+    "emptyTitle": "Nada archivado",
+    "emptyBody": "No hay memorias archivadas en ningún proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados (restaurables durante 30 días); todavía no se ha eliminado nada.",
+    "globalScope": "(global)",
+    "countBadge": "{count} archivadas",
+    "restore": "Restaurar"
   },
   "project": {
     "title": "Proyecto",
@@ -3085,7 +3063,6 @@
     "appendFailed": "Error: {error}",
     "approveFailed": "Error al aprobar: {error}",
     "rejectFailed": "Error al rechazar: {error}",
-    "cleanupFailed": "Error en la limpieza: {error}",
     "resetConfirmTitle": "¿Restablecer la memoria del proyecto?",
     "alsoDeleteScanner": "Eliminar también los documentos del scanner",
     "alsoDeletePgvector": "Eliminar también las memorias de pgvector",
@@ -3101,8 +3078,12 @@
     "approve": "Aprobar",
     "replaceConfirmTitle": "¿Reemplazar el {kind} actual?",
     "replaceKind": "Reemplazar {kind}",
-    "reason": "Motivo",
-    "willMergeInto": "Se fusionará en"
+    "archived": {
+      "emptyTitle": "Nada archivado",
+      "emptyBody": "No hay memorias archivadas para este proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados automáticamente; todavía ninguno.",
+      "restoreFailed": "Error al restaurar: {error}",
+      "restore": "Restaurar"
+    }
   },
   "backups": {
     "title": "Copias de seguridad",
@@ -3774,6 +3755,16 @@
     }
   },
   "memory": {
+    "status": {
+      "label": "Embedder activo",
+      "dimensions": "{dim}-dim · {state}",
+      "enabled": "habilitado",
+      "disabled": "deshabilitado",
+      "floorNoModel": "Solo recuperación por palabras clave (BM25) — no hay modelo de embedding configurado. Configura un endpoint denso en Settings para habilitar la memoria semántica.",
+      "denseConfiguredPendingRestart": "Configurado {model} (denso) — reinicia el gateway para activar la memoria semántica y re-embeber las memorias existentes.",
+      "denseUnreachableFloor": "Configurado {model} (denso) pero el endpoint está inalcanzable — se usa el piso de palabras clave hasta que responda (se actualiza al reiniciar).",
+      "denseDegraded": "Embedder denso activo pero su endpoint está inalcanzable ahora — los vectores existentes se conservan; las nuevas escrituras y la búsqueda por similitud se pausan hasta que responda."
+    },
     "title": "Memoria",
     "more": "Más",
     "workers": "Workers de memoria",
@@ -3982,7 +3973,6 @@
         "defaultTopK": "Top-k por defecto",
         "similarityThreshold": "Umbral de similitud",
         "defaultScope": "Ámbito por defecto",
-        "chromemHelper": "Cuando store=chromem.",
         "preserveHelper": "En blanco para conservar el actual.",
         "localModelName": "Nombre del modelo local",
         "localLibraryPath": "Ruta de la biblioteca local",
@@ -4003,7 +3993,6 @@
         "backendHelper": "auto elige el mejor disponible; local necesita ONNX.",
         "similarityHelper": "0.0-1.0; los resultados por debajo de esto se filtran.",
         "defaultFallback": "Por defecto: {value}",
-        "chromemPath": "Ruta de chromem",
         "httpBaseUrl": "URL base HTTP",
         "httpModel": "Modelo HTTP",
         "httpApiKey": "API key HTTP",

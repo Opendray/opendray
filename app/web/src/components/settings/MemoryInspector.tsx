@@ -44,7 +44,6 @@ import {
   reembedAll,
   searchMemories,
   storeMemory,
-  testEmbedder,
   updateMemory,
   type EmbedderStats,
   type MemoryRecord,
@@ -274,29 +273,6 @@ export function MemoryInspector() {
       }),
   })
 
-  const test = useMutation({
-    mutationFn: () => testEmbedder('opendray memory subsystem self-test'),
-    onSuccess: (r) =>
-      toast.success(
-        t('web.memoryInspector.toasts.testOk', {
-          embedder: r.embedder,
-          dim: r.dim,
-        }),
-        {
-          description: t('web.memoryInspector.toasts.testOkDescription', {
-            preview: r.vector_preview
-              .slice(0, 4)
-              .map((v) => v.toFixed(3))
-              .join(', '),
-          }),
-        },
-      ),
-    onError: (err: Error) =>
-      toast.error(t('web.memoryInspector.toasts.testFailed'), {
-        description: err.message,
-      }),
-  })
-
   const records = useMemo(() => {
     if (searchHits) return searchHits.map((h) => ({ memory: h.memory, similarity: h.similarity }))
     return (browse.data ?? []).map((m) => ({ memory: m as MemoryRecord, similarity: undefined }))
@@ -319,7 +295,7 @@ export function MemoryInspector() {
             ) : status ? (
               <>
                 <Badge variant="success" className="font-mono">
-                  {status.embedder}
+                  {status.effective_embedder ?? status.embedder}
                 </Badge>
                 <span className="text-[11px] text-muted-foreground">
                   {t('web.memoryInspector.status.dimensions', {
@@ -336,30 +312,33 @@ export function MemoryInspector() {
               </span>
             )}
           </div>
-          <p className="text-[10px] text-muted-foreground/70 leading-snug">
-            <Trans
-              i18nKey="web.memoryInspector.statusBody"
-              components={{
-                1: <code className="font-mono mx-1" />,
-                3: <code className="font-mono mx-1" />,
-              }}
-            />
-          </p>
+          {status &&
+            (status.is_floor || status.degraded) &&
+            (() => {
+              const model = status.configured_dense?.model ?? ''
+              let msg = ''
+              if (status.is_floor && status.configured_dense) {
+                msg =
+                  status.dense_reachable === false
+                    ? t('web.memoryInspector.status.denseUnreachableFloor', {
+                        model,
+                      })
+                    : t(
+                        'web.memoryInspector.status.denseConfiguredPendingRestart',
+                        { model },
+                      )
+              } else if (status.is_floor) {
+                msg = t('web.memoryInspector.status.floorNoModel')
+              } else {
+                msg = t('web.memoryInspector.status.denseDegraded')
+              }
+              return (
+                <p className="text-[10px] text-amber-400/90 leading-snug">
+                  {msg}
+                </p>
+              )
+            })()}
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-7 text-[11px]"
-          onClick={() => test.mutate()}
-          disabled={test.isPending}
-        >
-          {test.isPending ? (
-            <Loader2 className="size-3 animate-spin" />
-          ) : (
-            t('web.memoryInspector.status.testButton')
-          )}
-        </Button>
       </div>
 
       {/* Cross-embedder migration banner — only shown when there are
@@ -405,9 +384,6 @@ export function MemoryInspector() {
             <option value="project">
               {t('web.memoryInspector.scope.values.project')}
             </option>
-            <option value="session">
-              {t('web.memoryInspector.scope.values.session')}
-            </option>
             <option value="global">
               {t('web.memoryInspector.scope.values.global')}
             </option>
@@ -422,9 +398,7 @@ export function MemoryInspector() {
               </span>
             ) : (
               <span className="opacity-60">
-                {scope === 'project'
-                  ? t('web.memoryInspector.scope.scopeKeyCwd')
-                  : t('web.memoryInspector.scope.scopeKeySession')}
+                {t('web.memoryInspector.scope.scopeKeyCwd')}
               </span>
             )}
           </label>
@@ -435,11 +409,7 @@ export function MemoryInspector() {
                 setScopeKey(e.target.value)
                 setSearchHits(null)
               }}
-              placeholder={
-                scope === 'project'
-                  ? t('web.memoryInspector.scope.placeholderProject')
-                  : t('web.memoryInspector.scope.placeholderSession')
-              }
+              placeholder={t('web.memoryInspector.scope.placeholderProject')}
               disabled={scope === 'global'}
               className="h-8 font-mono text-xs flex-1"
             />
@@ -729,9 +699,6 @@ export function MemoryInspector() {
                   <option value="project">
                     {t('web.memoryInspector.scope.values.project')}
                   </option>
-                  <option value="session">
-                    {t('web.memoryInspector.scope.values.session')}
-                  </option>
                   <option value="global">
                     {t('web.memoryInspector.scope.values.global')}
                   </option>
@@ -746,20 +713,14 @@ export function MemoryInspector() {
                     </span>
                   ) : (
                     <span className="opacity-60">
-                      {addMemScope === 'project'
-                        ? t('web.memoryInspector.scope.scopeKeyCwd')
-                        : t('web.memoryInspector.scope.scopeKeySession')}
+                      {t('web.memoryInspector.scope.scopeKeyCwd')}
                     </span>
                   )}
                 </label>
                 <Input
                   value={addMemScope === 'global' ? '' : addMemScopeKey}
                   onChange={(e) => setAddMemScopeKey(e.target.value)}
-                  placeholder={
-                    addMemScope === 'project'
-                      ? t('web.memoryInspector.scope.placeholderProject')
-                      : t('web.memoryInspector.scope.placeholderSession')
-                  }
+                  placeholder={t('web.memoryInspector.scope.placeholderProject')}
                   disabled={addMemScope === 'global' || addMem.isPending}
                   className="h-8 font-mono text-xs"
                 />
@@ -839,9 +800,9 @@ function ScopeKeyPicker({
   // Two data sources, both opt-in (only fire when picker is open):
   //   1. Distinct scope_keys we've already stored memories under
   //      (the "Saved" group — definitive but starts empty).
-  //   2. Active sessions — their cwd (for scope=project) or id
-  //      (for scope=session). Lets the operator pick a project they
-  //      *intend to* store memories for, even if none are saved yet.
+  //   2. Active sessions — their cwd (for scope=project). Lets the
+  //      operator pick a project they *intend to* store memories for,
+  //      even if none are saved yet.
   const savedKeys = useQuery({
     queryKey: ['memory-scope-keys', scope],
     queryFn: () => listScopeKeys(scope),
@@ -865,14 +826,7 @@ function ScopeKeyPicker({
               .filter((cwd) => !!cwd && !savedSet.has(cwd)),
           ),
         ).sort()
-      : scope === 'session'
-        ? (sessions.data ?? [])
-            .filter((s) => !savedSet.has(s.id))
-            .map((s) => ({
-              key: s.id,
-              hint: `${s.provider_id ?? '?'} · ${(s.cwd ?? '').replace(/.*\//, '') || '/'}`,
-            }))
-        : []
+      : []
 
   // Close on outside click.
   useEffect(() => {
@@ -944,41 +898,20 @@ function ScopeKeyPicker({
                 <div className="px-2 pt-1.5 pb-0.5 text-[10px] uppercase tracking-wider text-muted-foreground/60">
                   {t('web.memoryInspector.picker.activeHeader')}
                 </div>
-                {scope === 'project' &&
-                  (sessionCandidates as string[]).map((cwd) => (
-                    <button
-                      key={`sess-${cwd}`}
-                      type="button"
-                      onClick={() => {
-                        onPick(cwd)
-                        setOpen(false)
-                      }}
-                      className="block w-full text-left px-2 py-1 rounded text-[11px] font-mono hover:bg-accent/30 truncate"
-                      title={cwd}
-                    >
-                      {cwd}
-                    </button>
-                  ))}
-                {scope === 'session' &&
-                  (sessionCandidates as { key: string; hint: string }[]).map(
-                    ({ key, hint }) => (
-                      <button
-                        key={`sess-${key}`}
-                        type="button"
-                        onClick={() => {
-                          onPick(key)
-                          setOpen(false)
-                        }}
-                        className="flex w-full text-left px-2 py-1 rounded text-[11px] hover:bg-accent/30 items-center gap-2"
-                        title={key}
-                      >
-                        <span className="font-mono truncate flex-1">{key}</span>
-                        <span className="text-muted-foreground/60 shrink-0">
-                          {hint}
-                        </span>
-                      </button>
-                    ),
-                  )}
+                {sessionCandidates.map((cwd) => (
+                  <button
+                    key={`sess-${cwd}`}
+                    type="button"
+                    onClick={() => {
+                      onPick(cwd)
+                      setOpen(false)
+                    }}
+                    className="block w-full text-left px-2 py-1 rounded text-[11px] font-mono hover:bg-accent/30 truncate"
+                    title={cwd}
+                  >
+                    {cwd}
+                  </button>
+                ))}
               </>
             )}
           </div>

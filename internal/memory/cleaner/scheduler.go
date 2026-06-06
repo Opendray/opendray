@@ -143,6 +143,10 @@ func (s *Scheduler) tick(ctx context.Context) {
 				"memories_in", res.MemoriesIn,
 				"decisions_out", res.DecisionsOut)
 		}
+		// Project-lifecycle pass: dormant projects' unused facts age out.
+		if _, err := s.svc.ArchiveDormant(ctx, k); err != nil {
+			s.log.Warn("scheduler.archive_dormant_failed", "scope_key", k, "err", err)
+		}
 	}
 	if s.cfg.IncludeGlobalScope {
 		if res, err := s.svc.Run(ctx, memory.ScopeGlobal, ""); err != nil {
@@ -152,5 +156,10 @@ func (s *Scheduler) tick(ctx context.Context) {
 				"memories_in", res.MemoriesIn,
 				"decisions_out", res.DecisionsOut)
 		}
+	}
+
+	// Hard-delete soft-archived rows whose grace window has elapsed.
+	if _, err := s.svc.PurgeExpired(ctx); err != nil {
+		s.log.Warn("scheduler.purge_expired_failed", "err", err)
 	}
 }

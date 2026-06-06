@@ -53,6 +53,18 @@ func (h *Handlers) requireAdmin(next http.Handler) http.Handler {
 	})
 }
 
+// globalWriteAllowed reports whether principal p may write to scope.
+// Global memory is operator-curated, so only an admin principal may write
+// it; every other scope (project/session, or empty — which defaults to
+// project downstream) is allowed. A zero-value principal (unauthenticated)
+// is not admin, so it cannot write global.
+func globalWriteAllowed(scope Scope, p integration.Principal) bool {
+	if scope != ScopeGlobal {
+		return true
+	}
+	return p.Kind == integration.KindAdmin
+}
+
 // Handlers exposes the memory subsystem over HTTP under /memory/*.
 // Mount under the dual-auth route group (admin OR integration) so
 // the auto-attached opendray-memory MCP subprocess can reach it
@@ -93,6 +105,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.With(read).Get("/status", h.status)
 		r.With(read).Post("/search", h.search)
 		r.With(read).Get("/list", h.list)
+		r.With(read).Get("/archived", h.listArchived)
 		r.With(read).Get("/scope-keys", h.scopeKeys)
 		r.With(read).Get("/{id}", h.getOne)
 		r.With(h.requireScope(ScopeMemoryWrite)).Post("/store", h.store)
@@ -100,6 +113,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		// Management / destructive — admin only, never an integration key.
 		r.With(h.requireAdmin).Patch("/{id}", h.update)
 		r.With(h.requireAdmin).Delete("/{id}", h.delete)
+		r.With(h.requireAdmin).Post("/{id}/restore", h.restore)
 		r.With(h.requireAdmin).Post("/delete-by-scope", h.deleteByScope)
 		r.With(h.requireAdmin).Post("/test", h.test)
 		r.With(h.requireAdmin).Post("/probe", h.probe)
@@ -199,11 +213,19 @@ func (h *Handlers) status(w http.ResponseWriter, r *http.Request) {
 	if !h.ensure(w) {
 		return
 	}
+	hl := h.svc.EmbedderHealth(r.Context())
 	writeJSON(w, http.StatusOK, map[string]any{
-		"embedder":      h.svc.EmbedderName(),
-		"dimensions":    h.svc.Dimensions(),
-		"enabled":       true,
-		"auto_detected": h.svc.AutoDetected(),
+		"embedder":           hl.Effective, // back-compat key (== effective_embedder)
+		"dimensions":         hl.Dimensions,
+		"enabled":            true,
+		"auto_detected":      h.svc.AutoDetected(),
+		"backend":            hl.Backend,
+		"effective_embedder": hl.Effective,
+		"is_floor":           hl.IsFloor,
+		"configured_dense":   hl.ConfiguredDense,
+		"dense_reachable":    hl.DenseReachable,
+		"degraded":           hl.Degraded,
+		"drift":              hl.Drift,
 	})
 }
 
@@ -234,6 +256,17 @@ func (h *Handlers) store(w http.ResponseWriter, r *http.Request) {
 	var req StoreRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	// Global memory is operator-curated. An integration key (an agent's
+	// memory MCP) may write project/session memory freely, but the global
+	// scope requires admin — i.e. the operator acting through the UI. This
+	// enforces "global only on explicit operator intent" at the boundary
+	// rather than trusting agent behaviour. An empty scope defaults to
+	// project downstream, so it is not affected.
+	p, _ := integration.CurrentPrincipal(r.Context())
+	if !globalWriteAllowed(req.Scope, p) {
+		writeError(w, http.StatusForbidden, errors.New("global memory writes require admin"))
 		return
 	}
 	id, err := h.svc.Store(r.Context(), req)
@@ -295,6 +328,53 @@ func (h *Handlers) list(w http.ResponseWriter, r *http.Request) {
 		out = []Memory{}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"memories": out})
+}
+
+// listArchived backs the read-only "Archived (restorable)" view: the
+// soft-archived memories the auto-cleaner / lifecycle pass removed, which
+// the operator can restore until the grace window purges them.
+func (h *Handlers) listArchived(w http.ResponseWriter, r *http.Request) {
+	if !h.ensure(w) {
+		return
+	}
+	scope := Scope(r.URL.Query().Get("scope"))
+	if scope == "" {
+		scope = ScopeProject
+	}
+	scopeKey := r.URL.Query().Get("scope_key")
+	limit := 100
+	if v := r.URL.Query().Get("n"); v != "" {
+		if x, err := strconv.Atoi(v); err == nil && x > 0 {
+			limit = x
+		}
+	}
+	out, err := h.svc.ListArchived(r.Context(), scope, scopeKey, limit)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if out == nil {
+		out = []Memory{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"memories": out})
+}
+
+// restore un-archives a soft-deleted memory (admin only). Returns 404
+// when the id isn't an archived row.
+func (h *Handlers) restore(w http.ResponseWriter, r *http.Request) {
+	if !h.ensure(w) {
+		return
+	}
+	id := chi.URLParam(r, "id")
+	if err := h.svc.Restore(r.Context(), id); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"restored": id})
 }
 
 // scopeKeys returns distinct scope_key values stored under the given

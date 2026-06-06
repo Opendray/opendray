@@ -46,6 +46,17 @@ type Service struct {
 	// memory/*.md files. Wired by the app at startup; nil means the
 	// HTTP "Sync now" endpoint returns 503.
 	mirror *Mirror
+
+	// Configured embedder echo (set post-construction by the app via
+	// SetEmbedderConfig) — used only by EmbedderHealth to report the
+	// effective-vs-configured tier and live-probe the dense endpoint.
+	// Distinct from the active emb: when backend="auto" degrades to the
+	// BM25 floor, emb is BM25 while these still describe the dense
+	// endpoint the operator configured.
+	cfgBackend   string
+	denseBaseURL string
+	denseModel   string
+	denseAPIKey  string
 }
 
 // Gatekeeper is the contract a pre-write LLM judge satisfies (M12).
@@ -72,6 +83,71 @@ func (s *Service) SetAutoDetected(hits []ProbeResult) { s.autoDetected = hits }
 // AutoDetected returns the captured probe results. Empty when no
 // service responded (BM25 fallback is the default).
 func (s *Service) AutoDetected() []ProbeResult { return s.autoDetected }
+
+// SetEmbedderConfig records the configured embedder backend + dense
+// endpoint so EmbedderHealth can report effective-vs-configured state.
+// Called once by the app after construction (the Service itself only
+// holds the live Embedder, which may have degraded to the BM25 floor).
+func (s *Service) SetEmbedderConfig(backend, denseBaseURL, denseModel, denseAPIKey string) {
+	s.cfgBackend = backend
+	s.denseBaseURL = denseBaseURL
+	s.denseModel = denseModel
+	s.denseAPIKey = denseAPIKey
+}
+
+// DenseEndpoint is the configured dense embedding endpoint (if any).
+type DenseEndpoint struct {
+	BaseURL string `json:"base_url"`
+	Model   string `json:"model"`
+}
+
+// EmbedderHealth is the status pane's view of the memory embedder: what
+// tier is actually serving, what the operator configured, whether a
+// configured dense endpoint is reachable right now, and how many rows
+// still need re-embedding to converge on the active embedder.
+type EmbedderHealth struct {
+	Backend         string         `json:"backend"`          // configured: auto/bm25/http/local
+	Effective       string         `json:"effective"`        // embedder actually serving
+	Dimensions      int            `json:"dimensions"`       // effective embedder's vector dim
+	IsFloor         bool           `json:"is_floor"`         // effective is the BM25 keyword floor
+	ConfiguredDense *DenseEndpoint `json:"configured_dense"` // nil when none configured
+	DenseReachable  *bool          `json:"dense_reachable"`  // live probe; nil when none configured
+	Degraded        bool           `json:"degraded"`         // dense configured but not healthily serving
+	Drift           int            `json:"drift"`            // rows not on the effective embedder (converge backlog)
+}
+
+// EmbedderHealth assembles the status view. It runs a short live probe of
+// the configured dense endpoint, so callers should treat it as a
+// settings-page operation (not a hot path). Best-effort: a count error
+// reports Drift=0 rather than failing.
+func (s *Service) EmbedderHealth(ctx context.Context) EmbedderHealth {
+	effective := s.emb.Name()
+	h := EmbedderHealth{
+		Backend:    s.cfgBackend,
+		Effective:  effective,
+		Dimensions: s.emb.Dimensions(),
+		IsFloor:    strings.HasPrefix(strings.ToLower(effective), "bm25"),
+	}
+	if counts, err := s.store.CountByEmbedder(ctx); err == nil {
+		for name, c := range counts {
+			if name != effective {
+				h.Drift += c
+			}
+		}
+	}
+	if strings.TrimSpace(s.denseBaseURL) != "" && strings.TrimSpace(s.denseModel) != "" {
+		h.ConfiguredDense = &DenseEndpoint{BaseURL: s.denseBaseURL, Model: s.denseModel}
+		probeCtx, cancel := context.WithTimeout(ctx, 1500*time.Millisecond)
+		reachable := ProbeEndpoint(probeCtx, s.denseBaseURL, s.denseAPIKey).Reachable
+		cancel()
+		h.DenseReachable = &reachable
+		// Degraded when a dense endpoint is configured but is not the
+		// healthy serving tier: either we fell back to the BM25 floor,
+		// or the dense endpoint is unreachable right now.
+		h.Degraded = h.IsFloor || !reachable
+	}
+	return h
+}
 
 // SetMirror wires a Mirror so the HTTP "Sync .md files now" button
 // can trigger an on-demand ingest from outside the spawn-time path.
@@ -147,8 +223,19 @@ func New(opts Options) (*Service, error) {
 	if opts.Scope.Default == "" {
 		opts.Scope.Default = ScopeProject
 	}
-	if opts.DedupThreshold < 0 {
-		opts.DedupThreshold = 0
+	// A config that still says default scope = "session" coerces to
+	// project rather than poisoning every write with a retired scope.
+	opts.Scope.Default = normalizeScope(opts.Scope.Default)
+	// Write-time fold (consolidation) is ON by default in the M-U
+	// redesign: an unset threshold (0) resolves to an embedder-relative
+	// default so near-duplicate writes fold into the canonical row
+	// instead of accumulating. A NEGATIVE threshold is the explicit
+	// "off" switch for operators who want every write to insert.
+	switch {
+	case opts.DedupThreshold < 0:
+		opts.DedupThreshold = 0 // gate below is `> 0`, so this disables it
+	case opts.DedupThreshold == 0:
+		opts.DedupThreshold = defaultDedupThreshold(opts.Embedder)
 	}
 	return &Service{
 		emb:            opts.Embedder,
@@ -246,6 +333,7 @@ func (s *Service) Store(ctx context.Context, req StoreRequest) (string, error) {
 	if req.Scope == "" {
 		req.Scope = s.scope.Default
 	}
+	req.Scope = normalizeScope(req.Scope)
 	if err := req.Scope.Validate(); err != nil {
 		return "", err
 	}
@@ -301,6 +389,12 @@ func (s *Service) Store(ctx context.Context, req StoreRequest) (string, error) {
 			merged := mergeMetadata(existing.Metadata, req.Metadata)
 			merged["deduped_count"] = dedupedCount(existing.Metadata) + 1
 			merged["deduped_last_at"] = time.Now().UTC().Format(time.RFC3339)
+			// The newer text becomes canonical, but the superseded text is
+			// preserved in merged_from so the fold is LOSSLESS (the old
+			// code discarded it) and the Phase 4 background sweep can later
+			// refine the canonical from the full set. Capped so a heavily
+			// folded row can't bloat its metadata unbounded.
+			merged["merged_from"] = appendMergedFrom(existing.Metadata, existing.Text, hits[0].Similarity)
 			if uErr := s.store.Update(ctx, UpdateRequest{
 				ID:        existing.ID,
 				Text:      req.Text,
@@ -374,6 +468,45 @@ func dedupedCount(meta map[string]any) int {
 	return 0
 }
 
+// mergedFromCap bounds how many absorbed texts a folded row keeps so
+// metadata can't grow without limit. deduped_count still records the
+// true total even once the list is trimmed to the most recent entries.
+const mergedFromCap = 20
+
+// defaultDedupThreshold picks the embedder-relative fold threshold used
+// when the operator hasn't set one. BM25's hashed-TF cosine sits much
+// lower than a dense embedder's for the same "these say the same thing"
+// judgement, so it gets a lower bar. Values match the original M11
+// tuning documented in the operator guide.
+func defaultDedupThreshold(emb Embedder) float32 {
+	if emb != nil && strings.HasPrefix(strings.ToLower(emb.Name()), "bm25") {
+		return 0.2
+	}
+	return 0.85
+}
+
+// appendMergedFrom returns the new merged_from audit list: the prior
+// merged_from entries (if any) plus one for the text being absorbed,
+// trimmed to the most recent mergedFromCap. Each entry records the
+// superseded text, the cosine that triggered the fold, and a timestamp.
+func appendMergedFrom(meta map[string]any, absorbedText string, similarity float32) []any {
+	var arr []any
+	if meta != nil {
+		if prev, ok := meta["merged_from"].([]any); ok {
+			arr = append(arr, prev...)
+		}
+	}
+	arr = append(arr, map[string]any{
+		"text":       absorbedText,
+		"similarity": similarity,
+		"at":         time.Now().UTC().Format(time.RFC3339),
+	})
+	if len(arr) > mergedFromCap {
+		arr = arr[len(arr)-mergedFromCap:]
+	}
+	return arr
+}
+
 // Search embeds the query and asks the store for top-K similar
 // memories, then drops anything below threshold so callers see only
 // likely matches.
@@ -384,6 +517,7 @@ func (s *Service) Search(ctx context.Context, req SearchRequest) ([]SearchHit, e
 	if req.Scope == "" {
 		req.Scope = s.scope.Default
 	}
+	req.Scope = normalizeScope(req.Scope)
 	if err := req.Scope.Validate(); err != nil {
 		return nil, err
 	}
@@ -463,12 +597,56 @@ func (s *Service) List(ctx context.Context, scope Scope, scopeKey string, limit 
 	if scope == "" {
 		scope = s.scope.Default
 	}
+	scope = normalizeScope(scope)
 	return s.store.List(ctx, scope, scopeKey, limit)
 }
 
 // Delete proxies straight through.
 func (s *Service) Delete(ctx context.Context, id string) error {
 	return s.store.Delete(ctx, id)
+}
+
+// Archive soft-deletes a memory (reversible until purged). Thin proxy.
+func (s *Service) Archive(ctx context.Context, id, reason string) error {
+	return s.store.Archive(ctx, id, reason)
+}
+
+// ArchiveByScope soft-deletes every active memory under (scope, scopeKey).
+func (s *Service) ArchiveByScope(ctx context.Context, scope Scope, scopeKey, reason string) (int64, error) {
+	scope = normalizeScope(scope)
+	if err := scope.Validate(); err != nil {
+		return 0, err
+	}
+	return s.store.ArchiveByScope(ctx, scope, scopeKey, reason)
+}
+
+// Restore un-archives a memory. Thin proxy.
+func (s *Service) Restore(ctx context.Context, id string) error {
+	return s.store.Restore(ctx, id)
+}
+
+// ListArchived returns archived (restorable) memories for a scope.
+func (s *Service) ListArchived(ctx context.Context, scope Scope, scopeKey string, limit int) ([]Memory, error) {
+	scope = normalizeScope(scope)
+	if scope == "" {
+		scope = s.scope.Default
+	}
+	return s.store.ListArchived(ctx, scope, scopeKey, limit)
+}
+
+// ArchiveDormantStale soft-archives never-hit aged facts of a dormant
+// project (the lifecycle signal). Thin proxy.
+func (s *Service) ArchiveDormantStale(ctx context.Context, scope Scope, scopeKey string, agedBefore, dormantBefore time.Time, reason string) (int64, error) {
+	scope = normalizeScope(scope)
+	if err := scope.Validate(); err != nil {
+		return 0, err
+	}
+	return s.store.ArchiveDormantStale(ctx, scope, scopeKey, agedBefore, dormantBefore, reason)
+}
+
+// PurgeArchived hard-deletes rows whose grace window has passed.
+func (s *Service) PurgeArchived(ctx context.Context, cutoff time.Time) (int64, error) {
+	return s.store.PurgeArchived(ctx, cutoff)
 }
 
 // DeleteByScope wipes every memory under (scope, scopeKey).
@@ -483,6 +661,7 @@ func (s *Service) DeleteByScope(
 	scope Scope,
 	scopeKey string,
 ) (int64, error) {
+	scope = normalizeScope(scope)
 	if err := scope.Validate(); err != nil {
 		return 0, err
 	}

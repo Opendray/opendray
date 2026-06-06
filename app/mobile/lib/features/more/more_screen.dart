@@ -11,7 +11,7 @@ import 'package:opendray/features/data_export/data_export_screen.dart';
 import 'package:opendray/features/githosts/githosts_screen.dart';
 import 'package:opendray/features/integrations/integrations_screen.dart';
 import 'package:opendray/features/mcp/mcp_screen.dart';
-import 'package:opendray/features/memory_cleanup/cleanup_inbox_screen.dart';
+import 'package:opendray/features/memory_archived/archived_screen.dart';
 import 'package:opendray/features/more/about_screen.dart';
 import 'package:opendray/features/project/project_screen.dart';
 import 'package:opendray/features/providers/providers_screen.dart';
@@ -95,10 +95,10 @@ class MoreScreen extends ConsumerWidget {
             onTap: () => _push(context, const ProjectScreen()),
           ),
           _MenuTile(
-            icon: Icons.cleaning_services_outlined,
-            title: t.more.items.cleanupInbox.title,
-            subtitle: t.more.items.cleanupInbox.subtitle,
-            onTap: () => _push(context, const CleanupInboxScreen()),
+            icon: Icons.inventory_2_outlined,
+            title: t.more.items.archived.title,
+            subtitle: t.more.items.archived.subtitle,
+            onTap: () => _push(context, const ArchivedMemoriesScreen()),
           ),
           const SizedBox(height: 8),
           _SectionHeader(label: t.more.sections.system),

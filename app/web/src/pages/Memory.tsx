@@ -1,12 +1,9 @@
-import { Brain, FolderTree, Inbox, Workflow } from 'lucide-react'
+import { Archive, Brain, FolderTree, Workflow } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { MemoryInspector } from '@/components/settings/MemoryInspector'
-import { listCleanupDecisions } from '@/lib/memoryCleanup'
 
 // MemoryPage is the top-level browser/editor for the cross-CLI
 // persistent memory store. Configuration (which embedder, dim,
@@ -14,19 +11,12 @@ import { listCleanupDecisions } from '@/lib/memoryCleanup'
 // page is the *runtime* view: browse / search / edit / delete
 // what's actually stored.
 //
-// M9b+M14b: surfaces shortcuts to project-scoped memory (goal /
-// plan / journal / inbox / cleanup) and the cross-project cleanup
-// inbox, so the operator doesn't have to dig through scope dropdowns
-// to find the new unified-memory surfaces.
+// Surfaces shortcuts to project-scoped memory (goal / plan / journal
+// / inbox) and the cross-project Archived (restorable) view, so the
+// operator doesn't have to dig through scope dropdowns to find the
+// unified-memory surfaces.
 export function MemoryPage() {
   const { t } = useTranslation()
-  const pendingDecisions = useQuery({
-    queryKey: ['cleanup-decisions', 'pending-count'],
-    queryFn: () =>
-      listCleanupDecisions({ status: 'pending', limit: 200 }),
-    staleTime: 30_000,
-  })
-  const pendingCount = pendingDecisions.data?.length ?? 0
 
   return (
     <div className="flex flex-1 flex-col min-h-0">
@@ -59,14 +49,9 @@ export function MemoryPage() {
               size="sm"
               className="h-8 text-[11px]"
             >
-              <Link to="/memory/cleanup">
-                <Inbox className="mr-1 size-3" />
-                {t('web.memory.navCleanupInbox')}
-                {pendingCount > 0 && (
-                  <Badge variant="danger" className="ml-1 text-[9px]">
-                    {pendingCount}
-                  </Badge>
-                )}
+              <Link to="/memory/archived">
+                <Archive className="mr-1 size-3" />
+                {t('web.memory.navArchived')}
               </Link>
             </Button>
             <Button

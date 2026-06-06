@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -222,7 +223,7 @@ func (s *PgvectorStore) Search(ctx context.Context, q SearchQuery) ([]SearchHit,
 		       created_at, updated_at, hit_count, last_hit_at,
 		       1 - (embedding <=> $1::vector) AS similarity
 		FROM memories
-		WHERE embedder = $2 AND %s
+		WHERE embedder = $2 AND archived_at IS NULL AND %s
 		ORDER BY embedding <=> $1::vector ASC
 		LIMIT $%d
 	`, whereScope, len(args))
@@ -271,7 +272,7 @@ func (s *PgvectorStore) List(ctx context.Context, scope Scope, scopeKey string, 
 		SELECT id, scope, scope_key, text, embedder, metadata,
 		       created_at, updated_at, hit_count, last_hit_at
 		FROM memories
-		WHERE %s
+		WHERE archived_at IS NULL AND %s
 		ORDER BY created_at DESC
 		LIMIT $%d
 	`, where, len(args))
@@ -300,6 +301,60 @@ func (s *PgvectorStore) List(ctx context.Context, scope Scope, scopeKey string, 
 	return out, rows.Err()
 }
 
+// ListArchived returns soft-archived memories for a scope, newest
+// archived first, including archived_at / archived_reason so the
+// restorable view can show when + why each row was archived.
+func (s *PgvectorStore) ListArchived(ctx context.Context, scope Scope, scopeKey string, limit int) ([]Memory, error) {
+	if err := scope.Validate(); err != nil {
+		return nil, err
+	}
+	if limit <= 0 {
+		limit = 100
+	}
+	args := []interface{}{string(scope), scopeKey, limit}
+	where := `scope = $1 AND scope_key = $2`
+	if scope == ScopeGlobal {
+		where = `scope = $1`
+		args = []interface{}{string(scope), limit}
+	}
+	query := fmt.Sprintf(`
+		SELECT id, scope, scope_key, text, embedder, metadata,
+		       created_at, updated_at, hit_count, last_hit_at,
+		       archived_at, archived_reason
+		FROM memories
+		WHERE archived_at IS NOT NULL AND %s
+		ORDER BY archived_at DESC
+		LIMIT $%d
+	`, where, len(args))
+
+	rows, err := s.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("memory: list archived: %w", err)
+	}
+	defer rows.Close()
+
+	var out []Memory
+	for rows.Next() {
+		var (
+			m      Memory
+			meta   []byte
+			reason sql.NullString
+		)
+		if err := rows.Scan(&m.ID, &m.Scope, &m.ScopeKey, &m.Text, &m.Embedder, &meta,
+			&m.CreatedAt, &m.UpdatedAt, &m.HitCount, &m.LastHitAt, &m.ArchivedAt, &reason); err != nil {
+			return nil, err
+		}
+		if len(meta) > 0 {
+			_ = json.Unmarshal(meta, &m.Metadata)
+		}
+		if reason.Valid {
+			m.ArchivedReason = reason.String
+		}
+		out = append(out, m)
+	}
+	return out, rows.Err()
+}
+
 // Get returns one Memory row by id, including provenance fields.
 // Used by the memory_get_provenance MCP tool + future "show
 // details" UI affordances.
@@ -317,7 +372,7 @@ func (s *PgvectorStore) Get(ctx context.Context, id string) (Memory, error) {
 		       created_at, updated_at, hit_count, last_hit_at,
 		       source_kind, source_ref, summarizer_session, confidence
 		  FROM memories
-		 WHERE id = $1`, id,
+		 WHERE id = $1 AND archived_at IS NULL`, id,
 	).Scan(&m.ID, &m.Scope, &m.ScopeKey, &m.Text, &m.Embedder, &meta,
 		&m.CreatedAt, &m.UpdatedAt, &m.HitCount, &m.LastHitAt,
 		&srcKind, &srcRef, &summSes, &conf)
@@ -375,7 +430,7 @@ func (s *PgvectorStore) Update(ctx context.Context, req UpdateRequest) error {
 			UPDATE memories
 			SET text = $1, embedding = $2::vector, metadata = $3::jsonb,
 			    updated_at = NOW()
-			WHERE id = $4
+			WHERE id = $4 AND archived_at IS NULL
 		`, req.Text, vectorLiteral(req.Embedding), metaJSON, req.ID)
 	} else {
 		// Reembed path: also overwrite the embedder column. The new
@@ -385,7 +440,7 @@ func (s *PgvectorStore) Update(ctx context.Context, req UpdateRequest) error {
 			UPDATE memories
 			SET text = $1, embedding = $2::vector, metadata = $3::jsonb,
 			    embedder = $4, updated_at = NOW()
-			WHERE id = $5
+			WHERE id = $5 AND archived_at IS NULL
 		`, req.Text, vectorLiteral(req.Embedding), metaJSON, req.Embedder, req.ID)
 		if err == nil && tag.RowsAffected() > 0 {
 			s.ensureIndex(ctx, req.Embedder, len(req.Embedding))
@@ -405,7 +460,7 @@ func (s *PgvectorStore) Update(ctx context.Context, req UpdateRequest) error {
 // pre-migration stats.
 func (s *PgvectorStore) CountByEmbedder(ctx context.Context) (map[string]int, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT embedder, COUNT(*) FROM memories GROUP BY embedder ORDER BY embedder
+		SELECT embedder, COUNT(*) FROM memories WHERE archived_at IS NULL GROUP BY embedder ORDER BY embedder
 	`)
 	if err != nil {
 		// Tolerate "table doesn't exist yet" the same way loadIndexed
@@ -446,7 +501,7 @@ func (s *PgvectorStore) ListNeedingReembed(ctx context.Context, current string, 
 		SELECT id, scope, scope_key, text, embedder, metadata,
 		       created_at, updated_at, hit_count, last_hit_at
 		FROM memories
-		WHERE embedder <> $1%s
+		WHERE embedder <> $1 AND archived_at IS NULL%s
 		ORDER BY id ASC
 		LIMIT $2
 	`, cursor)
@@ -484,7 +539,7 @@ func (s *PgvectorStore) RecordHits(ctx context.Context, ids []string) error {
 	_, err := s.pool.Exec(ctx, `
 		UPDATE memories
 		SET hit_count = hit_count + 1, last_hit_at = NOW()
-		WHERE id = ANY($1::text[])
+		WHERE id = ANY($1::text[]) AND archived_at IS NULL
 	`, ids)
 	if err != nil {
 		return fmt.Errorf("memory: record hits: %w", err)
@@ -501,7 +556,7 @@ func (s *PgvectorStore) ListScopeKeys(ctx context.Context, scope Scope) ([]strin
 	}
 	rows, err := s.pool.Query(ctx, `
 		SELECT DISTINCT scope_key FROM memories
-		WHERE scope = $1 AND scope_key <> ''
+		WHERE scope = $1 AND scope_key <> '' AND archived_at IS NULL
 		ORDER BY scope_key
 	`, string(scope))
 	if err != nil {
@@ -549,6 +604,84 @@ func (s *PgvectorStore) DeleteByScope(
 	)
 	if err != nil {
 		return 0, fmt.Errorf("memory: delete by scope: %w", err)
+	}
+	return tag.RowsAffected(), nil
+}
+
+// Archive soft-deletes one memory. Idempotent: re-archiving an already
+// archived row keeps the original archived_at (the WHERE guards it) so
+// the grace window isn't reset.
+func (s *PgvectorStore) Archive(ctx context.Context, id, reason string) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE memories
+		   SET archived_at = NOW(), archived_reason = $2, updated_at = NOW()
+		 WHERE id = $1 AND archived_at IS NULL`, id, reason)
+	if err != nil {
+		return fmt.Errorf("memory: archive: %w", err)
+	}
+	return nil
+}
+
+// ArchiveByScope soft-deletes every active memory under (scope, scopeKey).
+func (s *PgvectorStore) ArchiveByScope(ctx context.Context, scope Scope, scopeKey, reason string) (int64, error) {
+	tag, err := s.pool.Exec(ctx, `
+		UPDATE memories
+		   SET archived_at = NOW(), archived_reason = $3, updated_at = NOW()
+		 WHERE scope = $1 AND scope_key = $2 AND archived_at IS NULL`,
+		string(scope), scopeKey, reason)
+	if err != nil {
+		return 0, fmt.Errorf("memory: archive by scope: %w", err)
+	}
+	return tag.RowsAffected(), nil
+}
+
+// ArchiveDormantStale archives never-hit, aged facts of a dormant
+// project. The dormancy gate (the scope's newest activity predates
+// dormantBefore) is evaluated in the same statement so the whole thing
+// is atomic and there's no read-then-write race.
+func (s *PgvectorStore) ArchiveDormantStale(ctx context.Context, scope Scope, scopeKey string, agedBefore, dormantBefore time.Time, reason string) (int64, error) {
+	tag, err := s.pool.Exec(ctx, `
+		WITH activity AS (
+		    SELECT MAX(GREATEST(created_at, COALESCE(last_hit_at, created_at))) AS last_active
+		      FROM memories
+		     WHERE scope = $1 AND scope_key = $2 AND archived_at IS NULL
+		)
+		UPDATE memories m
+		   SET archived_at = NOW(), archived_reason = $5, updated_at = NOW()
+		 WHERE m.scope = $1 AND m.scope_key = $2
+		   AND m.archived_at IS NULL
+		   AND m.hit_count = 0
+		   AND m.created_at < $3
+		   AND (SELECT last_active FROM activity) < $4`,
+		string(scope), scopeKey, agedBefore, dormantBefore, reason)
+	if err != nil {
+		return 0, fmt.Errorf("memory: archive dormant stale: %w", err)
+	}
+	return tag.RowsAffected(), nil
+}
+
+// Restore clears the archive flag on a previously archived memory.
+func (s *PgvectorStore) Restore(ctx context.Context, id string) error {
+	tag, err := s.pool.Exec(ctx, `
+		UPDATE memories
+		   SET archived_at = NULL, archived_reason = NULL, updated_at = NOW()
+		 WHERE id = $1 AND archived_at IS NOT NULL`, id)
+	if err != nil {
+		return fmt.Errorf("memory: restore: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// PurgeArchived hard-deletes rows archived before cutoff (grace expired).
+func (s *PgvectorStore) PurgeArchived(ctx context.Context, cutoff time.Time) (int64, error) {
+	tag, err := s.pool.Exec(ctx, `
+		DELETE FROM memories
+		 WHERE archived_at IS NOT NULL AND archived_at < $1`, cutoff)
+	if err != nil {
+		return 0, fmt.Errorf("memory: purge archived: %w", err)
 	}
 	return tag.RowsAffected(), nil
 }
