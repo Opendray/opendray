@@ -90,3 +90,9 @@ scripts/node_modules/
 .air.toml
 tmp/
 .cache/
+
+# ── Local-only dev helpers (never synced to GitHub) ──────────
+# update-local.sh rebuilds + Developer-ID-signs + installs unreleased local
+# code; it's a maintainer-machine helper, not a shipped script. Keep it under
+# ~/.opendray/scripts/ on the dev box.
+scripts/update-local.sh
