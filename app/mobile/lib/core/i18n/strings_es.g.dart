@@ -873,16 +873,6 @@ class _TranslationsWebTopbarEs extends TranslationsWebTopbarEn {
 	@override String get collapseSidebar => 'Contraer barra lateral';
 	@override String get search => 'Buscar';
 	@override String get openPalette => 'Abrir paleta de comandos';
-	@override String get theme => 'Tema';
-	@override String themeLabel({required Object mode}) => 'Tema: ${mode}';
-	@override String get appearance => 'Apariencia';
-	@override String get themeLight => 'Claro';
-	@override String get themeDark => 'Oscuro';
-	@override String get themeSystem => 'Sistema';
-	@override String get language => 'Idioma';
-	@override String get languageEnglish => 'English';
-	@override String get languageChinese => '中文';
-	@override String get languageSpanish => 'Español';
 	@override String get signedInAs => 'Sesión iniciada como';
 	@override String get tokenExpires => 'El token caduca';
 	@override String get signOut => 'Cerrar sesión';
@@ -1327,6 +1317,7 @@ class _TranslationsWebSettingsEs extends TranslationsWebSettingsEn {
 	@override late final _TranslationsWebSettingsChangeCredentialsEs changeCredentials = _TranslationsWebSettingsChangeCredentialsEs._(_root);
 	@override late final _TranslationsWebSettingsSystemEs system = _TranslationsWebSettingsSystemEs._(_root);
 	@override late final _TranslationsWebSettingsAboutEs about = _TranslationsWebSettingsAboutEs._(_root);
+	@override late final _TranslationsWebSettingsLanguageEs language = _TranslationsWebSettingsLanguageEs._(_root);
 }
 
 // Path: web.logViewer
@@ -4725,6 +4716,18 @@ class _TranslationsWebSettingsAboutEs extends TranslationsWebSettingsAboutEn {
 	@override String get reinstall => 'Reinstalar';
 }
 
+// Path: web.settings.language
+class _TranslationsWebSettingsLanguageEs extends TranslationsWebSettingsLanguageEn {
+	_TranslationsWebSettingsLanguageEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Idioma';
+	@override String get description => 'Elige el idioma de la interfaz.';
+	@override late final _TranslationsWebSettingsLanguageOptionsEs options = _TranslationsWebSettingsLanguageOptionsEs._(_root);
+}
+
 // Path: web.memoryAmbient.header
 class _TranslationsWebMemoryAmbientHeaderEs extends TranslationsWebMemoryAmbientHeaderEn {
 	_TranslationsWebMemoryAmbientHeaderEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -7194,6 +7197,18 @@ class _TranslationsWebSettingsFontOptionsEs extends TranslationsWebSettingsFontO
 	@override String get large => 'Grande';
 }
 
+// Path: web.settings.language.options
+class _TranslationsWebSettingsLanguageOptionsEs extends TranslationsWebSettingsLanguageOptionsEn {
+	_TranslationsWebSettingsLanguageOptionsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get en => 'English';
+	@override String get zh => '中文';
+	@override String get es => 'Español';
+}
+
 // Path: web.memoryAmbient.providers.row
 class _TranslationsWebMemoryAmbientProvidersRowEs extends TranslationsWebMemoryAmbientProvidersRowEn {
 	_TranslationsWebMemoryAmbientProvidersRowEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -7476,16 +7491,6 @@ extension on TranslationsEs {
 			'web.topbar.collapseSidebar' => 'Contraer barra lateral',
 			'web.topbar.search' => 'Buscar',
 			'web.topbar.openPalette' => 'Abrir paleta de comandos',
-			'web.topbar.theme' => 'Tema',
-			'web.topbar.themeLabel' => ({required Object mode}) => 'Tema: ${mode}',
-			'web.topbar.appearance' => 'Apariencia',
-			'web.topbar.themeLight' => 'Claro',
-			'web.topbar.themeDark' => 'Oscuro',
-			'web.topbar.themeSystem' => 'Sistema',
-			'web.topbar.language' => 'Idioma',
-			'web.topbar.languageEnglish' => 'English',
-			'web.topbar.languageChinese' => '中文',
-			'web.topbar.languageSpanish' => 'Español',
 			'web.topbar.signedInAs' => 'Sesión iniciada como',
 			'web.topbar.tokenExpires' => 'El token caduca',
 			'web.topbar.signOut' => 'Cerrar sesión',
@@ -7947,8 +7952,6 @@ extension on TranslationsEs {
 			'web.memoryInspector.row.editTooltip' => 'Editar esta memoria',
 			'web.memoryInspector.row.deleteTooltip' => 'Eliminar esta memoria',
 			'web.memoryInspector.row.emptyError' => 'El texto de la memoria no puede estar vacío',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.row.deleteConfirm' => ({required Object id}) => '¿Eliminar la memoria ${id}? Esto es permanente.',
 			'web.memoryInspector.toasts.deleted' => 'Memoria eliminada',
 			'web.memoryInspector.toasts.deleteFailed' => 'La eliminación falló',
@@ -7959,6 +7962,8 @@ extension on TranslationsEs {
 			'web.memoryInspector.toasts.createFailed' => 'La creación falló',
 			'web.memoryInspector.toasts.updated' => 'Memoria actualizada',
 			'web.memoryInspector.toasts.updateFailed' => 'La actualización falló',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => 'Se migraron ${reembed}/${examined} memorias a ${to}',
 			'web.memoryInspector.toasts.migrationFailed' => 'La migración falló',
 			'web.memoryInspector.toasts.syncIngested_one' => ({required Object count}) => 'Se importó ${count} nuevo archivo de memoria',
@@ -8461,8 +8466,6 @@ extension on TranslationsEs {
 			'web.integrations.proxy.emptyDescription' => ({required Object prefix}) => 'Registra primero una integración; la consola hace de proxy a través de /api/v1/proxy/${prefix}/* usando el token de administrador.',
 			'web.integrations.proxy.targetLabel' => 'Destino',
 			'web.integrations.proxy.selectPlaceholder' => 'Selecciona una integración…',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.proxy.baseLabel' => 'base:',
 			'web.integrations.proxy.history' => 'Historial',
 			'web.integrations.proxy.historyEmpty' => 'no hay peticiones anteriores para esta integración',
@@ -8473,6 +8476,8 @@ extension on TranslationsEs {
 			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
 			'web.integrations.proxy.emptyBody' => '(vacío)',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.proxy.requestFailed' => 'la petición falló',
 			'web.integrations.proxy.stubText' => 'Envía una petición para ver la respuesta del upstream.',
 			'web.integrations.proxy.stubInjects' => 'opendray inyecta <1>X-Integration-ID</1> y elimina tu header <3>Authorization</3>.',
@@ -8975,8 +8980,6 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.codexSessionsRoot.label' => 'Raíz de sesiones',
 			'web.serverSettings.fields.codexSessionsRoot.hint' => 'Directorio que se recorre en busca de los archivos JSONL de rollout de Codex. Por defecto ~/.codex/sessions.',
 			'web.serverSettings.fields.geminiTmpRoot.label' => 'Directorio tmp',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.geminiTmpRoot.hint' => 'Raíz que contiene las carpetas tmp por proyecto de Gemini. Por defecto ~/.gemini/tmp.',
 			'web.serverSettings.fields.geminiProjectsFile.label' => 'projects.json',
 			'web.serverSettings.fields.geminiProjectsFile.hint' => 'Ruta al archivo de mapeo cwd→nombre-corto de Gemini. Por defecto ~/.gemini/projects.json.',
@@ -8987,6 +8990,8 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'Ruta de pg_dump',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'Ruta absoluta a pg_dump. La versión mayor debe ser ≥ la del servidor. Vacío = el primer pg_dump en el PATH.',
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'Ruta de pg_restore',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.backupPgRestorePath.hint' => 'Ruta absoluta a pg_restore para el flujo /backups/restore. Misma regla de versión mayor.',
 			'web.serverSettings.liveTail.heading' => 'Seguimiento en vivo',
 			'web.serverSettings.liveTail.description' => 'Búfer circular en memoria (los últimos ~2.000 registros). Se reinicia al reiniciar.',
@@ -9128,6 +9133,11 @@ extension on TranslationsEs {
 			'web.settings.about.checkUpdates' => 'Comprobar actualizaciones',
 			'web.settings.about.checking' => 'Comprobando…',
 			'web.settings.about.reinstall' => 'Reinstalar',
+			'web.settings.language.title' => 'Idioma',
+			'web.settings.language.description' => 'Elige el idioma de la interfaz.',
+			'web.settings.language.options.en' => 'English',
+			'web.settings.language.options.zh' => '中文',
+			'web.settings.language.options.es' => 'Español',
 			'web.logViewer.filterPlaceholder' => 'Filtrar…',
 			'web.logViewer.debugTooltip' => 'Recuento de debug',
 			'web.logViewer.infoTooltip' => 'Recuento de info',
@@ -9489,13 +9499,13 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.changeLocationTooltip' => 'Cambiar la ubicación de los documentos del proyecto',
 			'sessions.inspector.notes.filenameHint' => 'nombre de archivo (p. ej. spec o design.md)',
 			'sessions.inspector.notes.create' => 'Crear',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.filterHint' => 'Filtrar…',
 			'sessions.inspector.notes.locationDialogTitle' => 'Ubicación de los documentos del proyecto',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => 'Falló la carga: ${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Falló la carga: ${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Falló al guardar: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Falló al guardar: ${error}',
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Falló la inserción: ${error}',
@@ -10003,13 +10013,13 @@ extension on TranslationsEs {
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No hay destinos de copia de seguridad configurados. Añade uno desde el panel de administración web o la pantalla de Destinos.',
 			'backupSchedules.okMsgCreate' => 'Programación creada.',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.okMsgUpdate' => 'Programación actualizada.',
 			'backupSchedules.okMsgDelete' => 'Programación eliminada.',
 			'backupSchedules.errorPrefixCreate' => 'Error al crear',
 			'backupSchedules.errorPrefixUpdate' => 'Error al actualizar',
 			'backupSchedules.errorPrefixDelete' => 'Error al eliminar',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Elimina la especificación recurrente para el destino ${targetId}. Los blobs de copia de seguridad existentes no se modifican.',
 			'backupSchedules.emptyList' => 'Aún no hay programaciones.\nToca "Nueva" para crear una.',
 			'backupSchedules.validatePickTarget' => 'Elige un destino.',
@@ -10517,13 +10527,13 @@ extension on TranslationsEs {
 			'settings.changeCredentials.newPassword' => 'Nueva contraseña',
 			'settings.changeCredentials.confirmPassword' => 'Confirma la nueva contraseña',
 			'settings.changeCredentials.validatorRequired' => 'Obligatorio',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.passwordHelper' => 'Al menos 8 caracteres',
 			'settings.changeCredentials.passwordTooShort' => 'Debe tener al menos 8 caracteres',
 			'settings.changeCredentials.passwordMismatch' => 'No coincide con la nueva contraseña',
 			'settings.changeCredentials.updatedSnack' => 'Credenciales actualizadas.',
 			'settings.changeCredentials.wrongCurrent' => 'La contraseña actual es incorrecta.',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.saving' => 'Guardando…',
 			'settings.changeCredentials.update' => 'Actualizar',
 			'settings.logViewer.title' => 'Logs en vivo',

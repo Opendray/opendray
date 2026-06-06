@@ -873,16 +873,6 @@ class _TranslationsWebTopbarZh extends TranslationsWebTopbarEn {
 	@override String get collapseSidebar => '收起侧边栏';
 	@override String get search => '搜索';
 	@override String get openPalette => '打开命令面板';
-	@override String get theme => '主题';
-	@override String themeLabel({required Object mode}) => '主题：${mode}';
-	@override String get appearance => '外观';
-	@override String get themeLight => '浅色';
-	@override String get themeDark => '深色';
-	@override String get themeSystem => '跟随系统';
-	@override String get language => '语言';
-	@override String get languageEnglish => 'English';
-	@override String get languageChinese => '中文';
-	@override String get languageSpanish => 'Español';
 	@override String get signedInAs => '登录账号';
 	@override String get tokenExpires => '令牌到期';
 	@override String get signOut => '退出登录';
@@ -1327,6 +1317,7 @@ class _TranslationsWebSettingsZh extends TranslationsWebSettingsEn {
 	@override late final _TranslationsWebSettingsChangeCredentialsZh changeCredentials = _TranslationsWebSettingsChangeCredentialsZh._(_root);
 	@override late final _TranslationsWebSettingsSystemZh system = _TranslationsWebSettingsSystemZh._(_root);
 	@override late final _TranslationsWebSettingsAboutZh about = _TranslationsWebSettingsAboutZh._(_root);
+	@override late final _TranslationsWebSettingsLanguageZh language = _TranslationsWebSettingsLanguageZh._(_root);
 }
 
 // Path: web.logViewer
@@ -4725,6 +4716,18 @@ class _TranslationsWebSettingsAboutZh extends TranslationsWebSettingsAboutEn {
 	@override String get reinstall => '重新安装';
 }
 
+// Path: web.settings.language
+class _TranslationsWebSettingsLanguageZh extends TranslationsWebSettingsLanguageEn {
+	_TranslationsWebSettingsLanguageZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '语言';
+	@override String get description => '选择界面语言。';
+	@override late final _TranslationsWebSettingsLanguageOptionsZh options = _TranslationsWebSettingsLanguageOptionsZh._(_root);
+}
+
 // Path: web.memoryAmbient.header
 class _TranslationsWebMemoryAmbientHeaderZh extends TranslationsWebMemoryAmbientHeaderEn {
 	_TranslationsWebMemoryAmbientHeaderZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7194,6 +7197,18 @@ class _TranslationsWebSettingsFontOptionsZh extends TranslationsWebSettingsFontO
 	@override String get large => '大';
 }
 
+// Path: web.settings.language.options
+class _TranslationsWebSettingsLanguageOptionsZh extends TranslationsWebSettingsLanguageOptionsEn {
+	_TranslationsWebSettingsLanguageOptionsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get en => 'English';
+	@override String get zh => '中文';
+	@override String get es => 'Español';
+}
+
 // Path: web.memoryAmbient.providers.row
 class _TranslationsWebMemoryAmbientProvidersRowZh extends TranslationsWebMemoryAmbientProvidersRowEn {
 	_TranslationsWebMemoryAmbientProvidersRowZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7476,16 +7491,6 @@ extension on TranslationsZh {
 			'web.topbar.collapseSidebar' => '收起侧边栏',
 			'web.topbar.search' => '搜索',
 			'web.topbar.openPalette' => '打开命令面板',
-			'web.topbar.theme' => '主题',
-			'web.topbar.themeLabel' => ({required Object mode}) => '主题：${mode}',
-			'web.topbar.appearance' => '外观',
-			'web.topbar.themeLight' => '浅色',
-			'web.topbar.themeDark' => '深色',
-			'web.topbar.themeSystem' => '跟随系统',
-			'web.topbar.language' => '语言',
-			'web.topbar.languageEnglish' => 'English',
-			'web.topbar.languageChinese' => '中文',
-			'web.topbar.languageSpanish' => 'Español',
 			'web.topbar.signedInAs' => '登录账号',
 			'web.topbar.tokenExpires' => '令牌到期',
 			'web.topbar.signOut' => '退出登录',
@@ -7947,8 +7952,6 @@ extension on TranslationsZh {
 			'web.memoryInspector.row.editTooltip' => '编辑该记忆',
 			'web.memoryInspector.row.deleteTooltip' => '删除该记忆',
 			'web.memoryInspector.row.emptyError' => '记忆文本不能为空',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.row.deleteConfirm' => ({required Object id}) => '删除记忆 ${id}? 不可恢复。',
 			'web.memoryInspector.toasts.deleted' => '记忆已删除',
 			'web.memoryInspector.toasts.deleteFailed' => '删除失败',
@@ -7959,6 +7962,8 @@ extension on TranslationsZh {
 			'web.memoryInspector.toasts.createFailed' => '创建失败',
 			'web.memoryInspector.toasts.updated' => '记忆已更新',
 			'web.memoryInspector.toasts.updateFailed' => '更新失败',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => '已迁移 ${reembed}/${examined} 条记忆到 ${to}',
 			'web.memoryInspector.toasts.migrationFailed' => '迁移失败',
 			'web.memoryInspector.toasts.syncIngested_one' => ({required Object count}) => '已摄取 ${count} 个新记忆文件',
@@ -8461,8 +8466,6 @@ extension on TranslationsZh {
 			'web.integrations.proxy.emptyDescription' => ({required Object prefix}) => '请先注册一个集成；控制台通过 /api/v1/proxy/${prefix}/* 以 admin token 代理请求。',
 			'web.integrations.proxy.targetLabel' => '目标',
 			'web.integrations.proxy.selectPlaceholder' => '选择集成…',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.proxy.baseLabel' => 'base:',
 			'web.integrations.proxy.history' => '历史',
 			'web.integrations.proxy.historyEmpty' => '此集成尚无历史请求',
@@ -8473,6 +8476,8 @@ extension on TranslationsZh {
 			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
 			'web.integrations.proxy.emptyBody' => '(空)',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.proxy.requestFailed' => '请求失败',
 			'web.integrations.proxy.stubText' => '发送一个请求即可查看上游响应。',
 			'web.integrations.proxy.stubInjects' => 'opendray 会注入 <1>X-Integration-ID</1>，并剥离你的 <3>Authorization</3> header。',
@@ -8975,8 +8980,6 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.codexSessionsRoot.label' => '会话根目录',
 			'web.serverSettings.fields.codexSessionsRoot.hint' => '遍历 Codex rollout JSONL 文件的目录。默认 ~/.codex/sessions。',
 			'web.serverSettings.fields.geminiTmpRoot.label' => 'tmp 目录',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.geminiTmpRoot.hint' => '存放 Gemini 每项目 tmp 文件夹的根目录。默认 ~/.gemini/tmp。',
 			'web.serverSettings.fields.geminiProjectsFile.label' => 'projects.json',
 			'web.serverSettings.fields.geminiProjectsFile.hint' => 'Gemini cwd→短名映射文件的路径。默认 ~/.gemini/projects.json。',
@@ -8987,6 +8990,8 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump 路径',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'pg_dump 的绝对路径。主版本号必须 ≥ 服务器的。留空 = PATH 上的第一个 pg_dump。',
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'pg_restore 路径',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.backupPgRestorePath.hint' => '/backups/restore 流程使用的 pg_restore 绝对路径。同样的主版本号规则。',
 			'web.serverSettings.liveTail.heading' => '实时日志',
 			'web.serverSettings.liveTail.description' => '内存中的环形缓冲区（最近约 2,000 条）。重启后清空。',
@@ -9128,6 +9133,11 @@ extension on TranslationsZh {
 			'web.settings.about.checkUpdates' => '检查更新',
 			'web.settings.about.checking' => '检查中…',
 			'web.settings.about.reinstall' => '重新安装',
+			'web.settings.language.title' => '语言',
+			'web.settings.language.description' => '选择界面语言。',
+			'web.settings.language.options.en' => 'English',
+			'web.settings.language.options.zh' => '中文',
+			'web.settings.language.options.es' => 'Español',
 			'web.logViewer.filterPlaceholder' => '过滤…',
 			'web.logViewer.debugTooltip' => 'Debug 计数',
 			'web.logViewer.infoTooltip' => 'Info 计数',
@@ -9489,13 +9499,13 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.changeLocationTooltip' => '更改项目文档位置',
 			'sessions.inspector.notes.filenameHint' => '文件名（例如：spec 或 design.md）',
 			'sessions.inspector.notes.create' => '创建',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.filterHint' => '筛选…',
 			'sessions.inspector.notes.locationDialogTitle' => '项目文档位置',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
@@ -10003,13 +10013,13 @@ extension on TranslationsZh {
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'backupSchedules.noTargets' => '未配置任何备份目标。请从 Web 管理端或「目标」屏添加。',
 			'backupSchedules.okMsgCreate' => '计划已创建。',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.okMsgUpdate' => '计划已更新。',
 			'backupSchedules.okMsgDelete' => '计划已删除。',
 			'backupSchedules.errorPrefixCreate' => '创建失败',
 			'backupSchedules.errorPrefixUpdate' => '更新失败',
 			'backupSchedules.errorPrefixDelete' => '删除失败',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.deleteBody' => ({required Object targetId}) => '移除目标 ${targetId} 的定期规格。已存在的备份不受影响。',
 			'backupSchedules.emptyList' => '暂无计划。\n点击「新建」创建一个。',
 			'backupSchedules.validatePickTarget' => '请选择一个目标。',
@@ -10517,13 +10527,13 @@ extension on TranslationsZh {
 			'settings.changeCredentials.newPassword' => '新密码',
 			'settings.changeCredentials.confirmPassword' => '确认新密码',
 			'settings.changeCredentials.validatorRequired' => '必填',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.passwordHelper' => '至少 8 个字符',
 			'settings.changeCredentials.passwordTooShort' => '至少需要 8 个字符',
 			'settings.changeCredentials.passwordMismatch' => '与新密码不一致',
 			'settings.changeCredentials.updatedSnack' => '凭据已更新。',
 			'settings.changeCredentials.wrongCurrent' => '当前密码不正确。',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.saving' => '保存中…',
 			'settings.changeCredentials.update' => '更新',
 			'settings.logViewer.title' => '实时日志',

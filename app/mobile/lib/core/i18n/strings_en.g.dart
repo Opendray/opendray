@@ -1847,36 +1847,6 @@ class TranslationsWebTopbarEn {
 	/// en: 'Open command palette'
 	String get openPalette => 'Open command palette';
 
-	/// en: 'Theme'
-	String get theme => 'Theme';
-
-	/// en: 'Theme: {mode}'
-	String themeLabel({required Object mode}) => 'Theme: ${mode}';
-
-	/// en: 'Appearance'
-	String get appearance => 'Appearance';
-
-	/// en: 'Light'
-	String get themeLight => 'Light';
-
-	/// en: 'Dark'
-	String get themeDark => 'Dark';
-
-	/// en: 'System'
-	String get themeSystem => 'System';
-
-	/// en: 'Language'
-	String get language => 'Language';
-
-	/// en: 'English'
-	String get languageEnglish => 'English';
-
-	/// en: '中文'
-	String get languageChinese => '中文';
-
-	/// en: 'Español'
-	String get languageSpanish => 'Español';
-
 	/// en: 'Signed in as'
 	String get signedInAs => 'Signed in as';
 
@@ -2658,6 +2628,7 @@ class TranslationsWebSettingsEn {
 	late final TranslationsWebSettingsChangeCredentialsEn changeCredentials = TranslationsWebSettingsChangeCredentialsEn.internal(_root);
 	late final TranslationsWebSettingsSystemEn system = TranslationsWebSettingsSystemEn.internal(_root);
 	late final TranslationsWebSettingsAboutEn about = TranslationsWebSettingsAboutEn.internal(_root);
+	late final TranslationsWebSettingsLanguageEn language = TranslationsWebSettingsLanguageEn.internal(_root);
 }
 
 // Path: web.logViewer
@@ -9193,6 +9164,23 @@ class TranslationsWebSettingsAboutEn {
 	String get reinstall => 'Re-install';
 }
 
+// Path: web.settings.language
+class TranslationsWebSettingsLanguageEn {
+	TranslationsWebSettingsLanguageEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Language'
+	String get title => 'Language';
+
+	/// en: 'Choose the interface language.'
+	String get description => 'Choose the interface language.';
+
+	late final TranslationsWebSettingsLanguageOptionsEn options = TranslationsWebSettingsLanguageOptionsEn.internal(_root);
+}
+
 // Path: web.memoryAmbient.header
 class TranslationsWebMemoryAmbientHeaderEn {
 	TranslationsWebMemoryAmbientHeaderEn.internal(this._root);
@@ -13451,6 +13439,24 @@ class TranslationsWebSettingsFontOptionsEn {
 	String get large => 'Large';
 }
 
+// Path: web.settings.language.options
+class TranslationsWebSettingsLanguageOptionsEn {
+	TranslationsWebSettingsLanguageOptionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'English'
+	String get en => 'English';
+
+	/// en: '中文'
+	String get zh => '中文';
+
+	/// en: 'Español'
+	String get es => 'Español';
+}
+
 // Path: web.memoryAmbient.providers.row
 class TranslationsWebMemoryAmbientProvidersRowEn {
 	TranslationsWebMemoryAmbientProvidersRowEn.internal(this._root);
@@ -13946,16 +13952,6 @@ extension on Translations {
 			'web.topbar.collapseSidebar' => 'Collapse sidebar',
 			'web.topbar.search' => 'Search',
 			'web.topbar.openPalette' => 'Open command palette',
-			'web.topbar.theme' => 'Theme',
-			'web.topbar.themeLabel' => ({required Object mode}) => 'Theme: ${mode}',
-			'web.topbar.appearance' => 'Appearance',
-			'web.topbar.themeLight' => 'Light',
-			'web.topbar.themeDark' => 'Dark',
-			'web.topbar.themeSystem' => 'System',
-			'web.topbar.language' => 'Language',
-			'web.topbar.languageEnglish' => 'English',
-			'web.topbar.languageChinese' => '中文',
-			'web.topbar.languageSpanish' => 'Español',
 			'web.topbar.signedInAs' => 'Signed in as',
 			'web.topbar.tokenExpires' => 'Token expires',
 			'web.topbar.signOut' => 'Sign out',
@@ -14417,8 +14413,6 @@ extension on Translations {
 			'web.memoryInspector.row.editTooltip' => 'Edit this memory',
 			'web.memoryInspector.row.deleteTooltip' => 'Delete this memory',
 			'web.memoryInspector.row.emptyError' => 'Memory text cannot be empty',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.row.deleteConfirm' => ({required Object id}) => 'Delete memory ${id}? This is permanent.',
 			'web.memoryInspector.toasts.deleted' => 'Memory deleted',
 			'web.memoryInspector.toasts.deleteFailed' => 'Delete failed',
@@ -14429,6 +14423,8 @@ extension on Translations {
 			'web.memoryInspector.toasts.createFailed' => 'Create failed',
 			'web.memoryInspector.toasts.updated' => 'Memory updated',
 			'web.memoryInspector.toasts.updateFailed' => 'Update failed',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => 'Migrated ${reembed}/${examined} memories to ${to}',
 			'web.memoryInspector.toasts.migrationFailed' => 'Migration failed',
 			'web.memoryInspector.toasts.syncIngested_one' => ({required Object count}) => 'Ingested ${count} new memory file',
@@ -14931,8 +14927,6 @@ extension on Translations {
 			'web.integrations.proxy.emptyDescription' => ({required Object prefix}) => 'Register an integration first; the console proxies through /api/v1/proxy/${prefix}/* using the admin token.',
 			'web.integrations.proxy.targetLabel' => 'Target',
 			'web.integrations.proxy.selectPlaceholder' => 'Select integration…',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.proxy.baseLabel' => 'base:',
 			'web.integrations.proxy.history' => 'History',
 			'web.integrations.proxy.historyEmpty' => 'no past requests for this integration',
@@ -14943,6 +14937,8 @@ extension on Translations {
 			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
 			'web.integrations.proxy.emptyBody' => '(empty)',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.proxy.requestFailed' => 'request failed',
 			'web.integrations.proxy.stubText' => 'Send a request to see the upstream response.',
 			'web.integrations.proxy.stubInjects' => 'opendray injects <1>X-Integration-ID</1> and strips your <3>Authorization</3> header.',
@@ -15445,8 +15441,6 @@ extension on Translations {
 			'web.serverSettings.fields.codexSessionsRoot.label' => 'Sessions root',
 			'web.serverSettings.fields.codexSessionsRoot.hint' => 'Directory walked for Codex rollout JSONL files. Default ~/.codex/sessions.',
 			'web.serverSettings.fields.geminiTmpRoot.label' => 'Tmp directory',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.geminiTmpRoot.hint' => 'Root holding Gemini per-project tmp folders. Default ~/.gemini/tmp.',
 			'web.serverSettings.fields.geminiProjectsFile.label' => 'projects.json',
 			'web.serverSettings.fields.geminiProjectsFile.hint' => 'Path to Gemini\'s cwd→short-name mapping file. Default ~/.gemini/projects.json.',
@@ -15457,6 +15451,8 @@ extension on Translations {
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump path',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'Absolute path to pg_dump. Major version must be ≥ the server\'s. Empty = first pg_dump on PATH.',
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'pg_restore path',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.backupPgRestorePath.hint' => 'Absolute path to pg_restore for the /backups/restore flow. Same major-version rule.',
 			'web.serverSettings.liveTail.heading' => 'Live tail',
 			'web.serverSettings.liveTail.description' => 'In-memory ring buffer (last ~2,000 records). Resets on restart.',
@@ -15598,6 +15594,11 @@ extension on Translations {
 			'web.settings.about.checkUpdates' => 'Check for updates',
 			'web.settings.about.checking' => 'Checking…',
 			'web.settings.about.reinstall' => 'Re-install',
+			'web.settings.language.title' => 'Language',
+			'web.settings.language.description' => 'Choose the interface language.',
+			'web.settings.language.options.en' => 'English',
+			'web.settings.language.options.zh' => '中文',
+			'web.settings.language.options.es' => 'Español',
 			'web.logViewer.filterPlaceholder' => 'Filter…',
 			'web.logViewer.debugTooltip' => 'Debug count',
 			'web.logViewer.infoTooltip' => 'Info count',
@@ -15959,13 +15960,13 @@ extension on Translations {
 			'sessions.inspector.notes.changeLocationTooltip' => 'Change project docs location',
 			'sessions.inspector.notes.filenameHint' => 'filename (e.g. spec or design.md)',
 			'sessions.inspector.notes.create' => 'Create',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.filterHint' => 'Filter…',
 			'sessions.inspector.notes.locationDialogTitle' => 'Project docs location',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Insert failed: ${error}',
@@ -16473,13 +16474,13 @@ extension on Translations {
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No backup targets configured. Add one from the web admin or the Targets screen.',
 			'backupSchedules.okMsgCreate' => 'Schedule created.',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.okMsgUpdate' => 'Schedule updated.',
 			'backupSchedules.okMsgDelete' => 'Schedule deleted.',
 			'backupSchedules.errorPrefixCreate' => 'Create failed',
 			'backupSchedules.errorPrefixUpdate' => 'Update failed',
 			'backupSchedules.errorPrefixDelete' => 'Delete failed',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Removes the recurring spec for target ${targetId}. Existing backup blobs are not touched.',
 			'backupSchedules.emptyList' => 'No schedules yet.\nTap "New" to create one.',
 			'backupSchedules.validatePickTarget' => 'Pick a target.',
@@ -16987,13 +16988,13 @@ extension on Translations {
 			'settings.changeCredentials.newPassword' => 'New password',
 			'settings.changeCredentials.confirmPassword' => 'Confirm new password',
 			'settings.changeCredentials.validatorRequired' => 'Required',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.passwordHelper' => 'At least 8 characters',
 			'settings.changeCredentials.passwordTooShort' => 'Must be at least 8 characters',
 			'settings.changeCredentials.passwordMismatch' => 'Doesn\'t match the new password',
 			'settings.changeCredentials.updatedSnack' => 'Credentials updated.',
 			'settings.changeCredentials.wrongCurrent' => 'Current password is wrong.',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.saving' => 'Saving…',
 			'settings.changeCredentials.update' => 'Update',
 			'settings.logViewer.title' => 'Live logs',

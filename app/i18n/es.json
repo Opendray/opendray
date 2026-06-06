@@ -48,16 +48,6 @@
       "collapseSidebar": "Contraer barra lateral",
       "search": "Buscar",
       "openPalette": "Abrir paleta de comandos",
-      "theme": "Tema",
-      "themeLabel": "Tema: {mode}",
-      "appearance": "Apariencia",
-      "themeLight": "Claro",
-      "themeDark": "Oscuro",
-      "themeSystem": "Sistema",
-      "language": "Idioma",
-      "languageEnglish": "English",
-      "languageChinese": "中文",
-      "languageSpanish": "Español",
       "signedInAs": "Sesión iniciada como",
       "tokenExpires": "El token caduca",
       "signOut": "Cerrar sesión"
@@ -2161,6 +2151,15 @@
         "checkUpdates": "Comprobar actualizaciones",
         "checking": "Comprobando…",
         "reinstall": "Reinstalar"
+      },
+      "language": {
+        "title": "Idioma",
+        "description": "Elige el idioma de la interfaz.",
+        "options": {
+          "en": "English",
+          "zh": "中文",
+          "es": "Español"
+        }
       }
     },
     "logViewer": {

@@ -1,15 +1,10 @@
 import { useNavigate } from '@tanstack/react-router'
 import {
-  Sun,
-  Moon,
-  Monitor,
   Terminal as TerminalIcon,
   LogOut,
   Search,
-  Check,
   PanelLeftClose,
   PanelLeftOpen,
-  Languages,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -24,42 +19,21 @@ import {
   DropdownMenuShortcut,
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useTheme, type ThemeMode } from '@/stores/theme'
 import { useAuth } from '@/stores/auth'
 import { useLayout } from '@/stores/layout'
-import { useLocale, type Locale } from '@/stores/locale'
 
 interface TopbarProps {
   onOpenPalette?: () => void
 }
 
-const themeOptions: { mode: ThemeMode; labelKey: string; icon: typeof Sun }[] = [
-  { mode: 'light', labelKey: 'web.topbar.themeLight', icon: Sun },
-  { mode: 'dark', labelKey: 'web.topbar.themeDark', icon: Moon },
-  { mode: 'system', labelKey: 'web.topbar.themeSystem', icon: Monitor },
-]
-
-const localeOptions: { locale: Locale; labelKey: string }[] = [
-  { locale: 'en', labelKey: 'web.topbar.languageEnglish' },
-  { locale: 'zh', labelKey: 'web.topbar.languageChinese' },
-  { locale: 'es', labelKey: 'web.topbar.languageSpanish' },
-]
-
 export function Topbar({ onOpenPalette }: TopbarProps) {
   const { t } = useTranslation()
-  const mode = useTheme((s) => s.mode)
-  const setMode = useTheme((s) => s.setMode)
-  const locale = useLocale((s) => s.locale)
-  const setLocale = useLocale((s) => s.setLocale)
   const username = useAuth((s) => s.username)
   const expiresAt = useAuth((s) => s.expiresAt)
   const clear = useAuth((s) => s.clear)
   const navigate = useNavigate()
   const sidebarCollapsed = useLayout((s) => s.sidebarCollapsed)
   const toggleSidebar = useLayout((s) => s.toggleSidebar)
-
-  const ThemeIcon =
-    mode === 'dark' ? Moon : mode === 'light' ? Sun : Monitor
 
   const sidebarToggleLabel = sidebarCollapsed
     ? t('web.topbar.expandSidebar')
@@ -113,59 +87,6 @@ export function Topbar({ onOpenPalette }: TopbarProps) {
           <TooltipContent>{t('web.topbar.openPalette')}</TooltipContent>
         </Tooltip>
       )}
-
-      <DropdownMenu>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={t('web.topbar.language')}
-              >
-                <Languages className="size-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent>{t('web.topbar.language')}</TooltipContent>
-        </Tooltip>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>{t('web.topbar.language')}</DropdownMenuLabel>
-          {localeOptions.map(({ locale: l, labelKey }) => (
-            <DropdownMenuItem key={l} onSelect={() => setLocale(l)}>
-              <span>{t(labelKey)}</span>
-              {locale === l && <Check className="ml-auto size-3" />}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <DropdownMenu>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={t('web.topbar.themeLabel', { mode })}
-              >
-                <ThemeIcon className="size-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent>{t('web.topbar.theme')}</TooltipContent>
-        </Tooltip>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>{t('web.topbar.appearance')}</DropdownMenuLabel>
-          {themeOptions.map(({ mode: m, labelKey, icon: Icon }) => (
-            <DropdownMenuItem key={m} onSelect={() => setMode(m)}>
-              <Icon />
-              <span>{t(labelKey)}</span>
-              {mode === m && <Check className="ml-auto size-3" />}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
 
       {username && (
         <DropdownMenu>
