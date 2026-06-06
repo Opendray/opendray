@@ -876,16 +876,6 @@ class _TranslationsWebTopbarZh extends TranslationsWebTopbarEn {
 	@override String get collapseSidebar => '收起侧边栏';
 	@override String get search => '搜索';
 	@override String get openPalette => '打开命令面板';
-	@override String get theme => '主题';
-	@override String themeLabel({required Object mode}) => '主题：${mode}';
-	@override String get appearance => '外观';
-	@override String get themeLight => '浅色';
-	@override String get themeDark => '深色';
-	@override String get themeSystem => '跟随系统';
-	@override String get language => '语言';
-	@override String get languageEnglish => 'English';
-	@override String get languageChinese => '中文';
-	@override String get languageSpanish => 'Español';
 	@override String get signedInAs => '登录账号';
 	@override String get tokenExpires => '令牌到期';
 	@override String get signOut => '退出登录';
@@ -1320,6 +1310,7 @@ class _TranslationsWebSettingsZh extends TranslationsWebSettingsEn {
 	@override late final _TranslationsWebSettingsChangeCredentialsZh changeCredentials = _TranslationsWebSettingsChangeCredentialsZh._(_root);
 	@override late final _TranslationsWebSettingsSystemZh system = _TranslationsWebSettingsSystemZh._(_root);
 	@override late final _TranslationsWebSettingsAboutZh about = _TranslationsWebSettingsAboutZh._(_root);
+	@override late final _TranslationsWebSettingsLanguageZh language = _TranslationsWebSettingsLanguageZh._(_root);
 }
 
 // Path: web.logViewer
@@ -4725,6 +4716,18 @@ class _TranslationsWebSettingsAboutZh extends TranslationsWebSettingsAboutEn {
 	@override String get reinstall => '重新安装';
 }
 
+// Path: web.settings.language
+class _TranslationsWebSettingsLanguageZh extends TranslationsWebSettingsLanguageEn {
+	_TranslationsWebSettingsLanguageZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '语言';
+	@override String get description => '选择界面语言。';
+	@override late final _TranslationsWebSettingsLanguageOptionsZh options = _TranslationsWebSettingsLanguageOptionsZh._(_root);
+}
+
 // Path: web.memoryAmbient.header
 class _TranslationsWebMemoryAmbientHeaderZh extends TranslationsWebMemoryAmbientHeaderEn {
 	_TranslationsWebMemoryAmbientHeaderZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7176,6 +7179,18 @@ class _TranslationsWebSettingsFontOptionsZh extends TranslationsWebSettingsFontO
 	@override String get large => '大';
 }
 
+// Path: web.settings.language.options
+class _TranslationsWebSettingsLanguageOptionsZh extends TranslationsWebSettingsLanguageOptionsEn {
+	_TranslationsWebSettingsLanguageOptionsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get en => 'English';
+	@override String get zh => '中文';
+	@override String get es => 'Español';
+}
+
 // Path: web.memoryAmbient.providers.row
 class _TranslationsWebMemoryAmbientProvidersRowZh extends TranslationsWebMemoryAmbientProvidersRowEn {
 	_TranslationsWebMemoryAmbientProvidersRowZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7457,16 +7472,6 @@ extension on TranslationsZh {
 			'web.topbar.collapseSidebar' => '收起侧边栏',
 			'web.topbar.search' => '搜索',
 			'web.topbar.openPalette' => '打开命令面板',
-			'web.topbar.theme' => '主题',
-			'web.topbar.themeLabel' => ({required Object mode}) => '主题：${mode}',
-			'web.topbar.appearance' => '外观',
-			'web.topbar.themeLight' => '浅色',
-			'web.topbar.themeDark' => '深色',
-			'web.topbar.themeSystem' => '跟随系统',
-			'web.topbar.language' => '语言',
-			'web.topbar.languageEnglish' => 'English',
-			'web.topbar.languageChinese' => '中文',
-			'web.topbar.languageSpanish' => 'Español',
 			'web.topbar.signedInAs' => '登录账号',
 			'web.topbar.tokenExpires' => '令牌到期',
 			'web.topbar.signOut' => '退出登录',
@@ -7928,8 +7933,6 @@ extension on TranslationsZh {
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} 条记忆',
 			'web.memoryInspector.bulkDelete.cancel' => '取消',
 			'web.memoryInspector.bulkDelete.deleteAll' => '全部删除',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.addMem.title' => '添加记忆',
 			'web.memoryInspector.addMem.description' => '手动创建一条记忆。Agent 会通过 <1>memory_store</1> MCP 工具自动创建；此表单用于运维想跳过 agent 直接录入事实的场景。',
 			'web.memoryInspector.addMem.textLabel' => '文本',
@@ -7940,6 +7943,8 @@ extension on TranslationsZh {
 			'web.memoryInspector.picker.buttonTooltip' => '从已保存的 scope key 或活跃会话中选择',
 			'web.memoryInspector.picker.loading' => '加载中…',
 			'web.memoryInspector.picker.empty' => ({required Object scope}) => '${scope} 暂无已保存的 key 或活跃会话。',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.picker.savedHeader' => '已保存的记忆',
 			'web.memoryInspector.picker.activeHeader' => '活跃会话',
 			'web.memoryInspector.migrationBanner.headline_one' => ({required Object count}) => '${count} 条记忆不会出现在搜索结果中',
@@ -8442,8 +8447,6 @@ extension on TranslationsZh {
 			'web.plugins.mcp.columns.name' => '名称',
 			'web.plugins.mcp.columns.transport' => 'Transport',
 			'web.plugins.mcp.columns.spec' => '规范',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.mcp.columns.enabled' => '启用',
 			'web.plugins.mcp.noUrl' => '无 URL',
 			'web.plugins.mcp.noCommand' => '无 command',
@@ -8454,6 +8457,8 @@ extension on TranslationsZh {
 			'web.plugins.mcp.codexUnsupportedBadge' => 'Codex: 不支持',
 			'web.plugins.mcp.codexUnsupportedTooltip' => 'Codex CLI 仅支持 stdio 传输方式。Codex 会话将跳过此服务器；claude 和 gemini 仍会使用。',
 			'web.plugins.mcp.editor.createTitle' => '新建 MCP 服务器',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.mcp.editor.editTitle' => ({required Object id}) => '编辑 MCP: ${id}',
 			'web.plugins.mcp.editor.description' => ({required Object API_KEY}) => 'JSON 结构：stdio（默认）使用 <1>command</1>+<3>args</3>+<5>env</5>；sse / http 使用 <7>transport</7> +<9> url</9>+<11>headers</11>。以 <13>\$${API_KEY}</13> 引用密钥 — spawn 时会从密钥文件替换。',
 			'web.plugins.mcp.editor.idLabel' => 'ID',
@@ -8956,8 +8961,6 @@ extension on TranslationsZh {
 			'web.serverSettings.httpHelpers.presetTip.openai' => 'OpenAI 云端（需要 API key）',
 			'web.serverSettings.probe.unreachable' => ({required Object error}) => '✗ 不可达：${error}',
 			'web.serverSettings.probe.connectionFailed' => '连接失败',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.probe.reachable' => ({required Object detected, required Object total, required Object embedding}) => '✓ 可达 ${detected}· 共 ${total} 个模型 · ${embedding} 个嵌入',
 			'web.serverSettings.probe.modelMissing' => ({required Object model}) => '⚠ 配置的模型 ${model} 不在列表中。从下方嵌入模型中选一个，或修正名称。',
 			'web.serverSettings.probe.embeddingModelsLabel' => '嵌入模型：',
@@ -8968,6 +8971,8 @@ extension on TranslationsZh {
 			'web.serverSettings.backup.featureDisabledTitle' => '功能已禁用',
 			'web.serverSettings.backup.featureDisabledHint' => '在 opendray 的环境变量中设置 <1>OPENDRAY_BACKUP_ENABLED=1</1> + <3>OPENDRAY_BACKUP_KEY=&lt;passphrase&gt;</3>，然后重启。主密码仅来自环境变量 — 永不写入 config.toml。',
 			'web.serverSettings.backup.statusRowLabel' => '状态',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.backup.enabledHealthy' => '已启用 · 健康',
 			'web.serverSettings.backup.enabledDegraded' => '已启用 · 异常',
 			'web.serverSettings.backup.keyFingerprintLabel' => '密钥指纹',
@@ -9080,6 +9085,11 @@ extension on TranslationsZh {
 			'web.settings.about.checkUpdates' => '检查更新',
 			'web.settings.about.checking' => '检查中…',
 			'web.settings.about.reinstall' => '重新安装',
+			'web.settings.language.title' => '语言',
+			'web.settings.language.description' => '选择界面语言。',
+			'web.settings.language.options.en' => 'English',
+			'web.settings.language.options.zh' => '中文',
+			'web.settings.language.options.es' => 'Español',
 			'web.logViewer.filterPlaceholder' => '过滤…',
 			'web.logViewer.debugTooltip' => 'Debug 计数',
 			'web.logViewer.infoTooltip' => 'Info 计数',
@@ -9470,13 +9480,13 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.cancel' => '取消',
 			'sessions.spawnSheet.spawn' => '创建',
 			'sessions.spawnSheet.providerLabel' => '提供商',
 			'sessions.spawnSheet.disabledSuffix' => '（已停用）',
 			'sessions.spawnSheet.cwdLabel' => '工作目录',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
 			'sessions.spawnSheet.cwdHelper' => '网关主机上的绝对路径。',
 			'sessions.spawnSheet.browse' => '浏览',
@@ -9984,13 +9994,13 @@ extension on TranslationsZh {
 			'backupTargetEditor.useHttps' => '使用 HTTPS',
 			'backupTargetEditor.pathStyle' => '路径风格寻址',
 			'backupTargetEditor.pathStyleSubtitle' => '旧版 / MinIO',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.kinds.local.label' => '本地磁盘',
 			'backupTargetEditor.kinds.local.description' => '运行 opendray 的机器上的文件夹',
 			'backupTargetEditor.kinds.smb.label' => 'SMB 共享',
 			'backupTargetEditor.kinds.smb.description' => 'Windows 共享 + 多数家用 NAS 设备',
 			'backupTargetEditor.kinds.webdav.label' => 'WebDAV',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.kinds.webdav.description' => '自托管云盘 + 文件共享服务',
 			'backupTargetEditor.kinds.sftp.label' => 'SFTP',
 			'backupTargetEditor.kinds.sftp.description' => '任何可 SSH 访问的服务器',
@@ -10498,13 +10508,13 @@ extension on TranslationsZh {
 			'settings.logViewer.levels.debug' => '调试',
 			'settings.logViewer.levels.info' => '信息',
 			'settings.logViewer.levels.warn' => '警告',
-			_ => null,
-		} ?? switch (path) {
 			'settings.logViewer.levels.error' => '错误',
 			'settings.serverSettings.title' => '服务器设置',
 			'settings.serverSettings.reloadTooltip' => '从服务器重新加载',
 			'settings.serverSettings.restartTooltip' => '重启网关',
 			'settings.serverSettings.restartConfirmTitle' => '重启 opendray？',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.restartConfirmBody' => '网关将自我 exec。手机应用可能短暂断开连接。',
 			'settings.serverSettings.restart' => '重启',
 			'settings.serverSettings.restartQueuedSnack' => '已请求重启。稍后下拉刷新。',
