@@ -3048,6 +3048,7 @@ class TranslationsSessionsInspectorEn {
 	late final TranslationsSessionsInspectorGitEn git = TranslationsSessionsInspectorGitEn.internal(_root);
 	late final TranslationsSessionsInspectorTasksEn tasks = TranslationsSessionsInspectorTasksEn.internal(_root);
 	late final TranslationsSessionsInspectorNotesEn notes = TranslationsSessionsInspectorNotesEn.internal(_root);
+	late final TranslationsSessionsInspectorConversationEn conversation = TranslationsSessionsInspectorConversationEn.internal(_root);
 }
 
 // Path: sessions.spawnSheet
@@ -10159,6 +10160,30 @@ class TranslationsSessionsInspectorNotesEn {
 	String get save => 'Save';
 }
 
+// Path: sessions.inspector.conversation
+class TranslationsSessionsInspectorConversationEn {
+	TranslationsSessionsInspectorConversationEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'No conversation yet.'
+	String get empty => 'No conversation yet.';
+
+	/// en: 'Couldn’t load the conversation.'
+	String get loadFailed => 'Couldn’t load the conversation.';
+
+	/// en: 'Copy all'
+	String get copyAll => 'Copy all';
+
+	/// en: 'Conversation copied'
+	String get copied => 'Conversation copied';
+
+	/// en: '{count} turns'
+	String count({required Object count}) => '${count} turns';
+}
+
 // Path: sessions.spawnSheet.bypass
 class TranslationsSessionsSpawnSheetBypassEn {
 	TranslationsSessionsSpawnSheetBypassEn.internal(this._root);
@@ -13859,6 +13884,9 @@ class TranslationsSessionsInspectorShellTabsEn {
 
 	/// en: 'Notes'
 	String get notes => 'Notes';
+
+	/// en: 'Conversation'
+	String get conversation => 'Conversation';
 }
 
 // Path: web.notes.vaultSync.conflict.kinds
@@ -15916,6 +15944,7 @@ extension on Translations {
 			'sessions.inspector.shell.tabs.tasks' => 'Tasks',
 			'sessions.inspector.shell.tabs.history' => 'History',
 			'sessions.inspector.shell.tabs.notes' => 'Notes',
+			'sessions.inspector.shell.tabs.conversation' => 'Conversation',
 			'sessions.inspector.shared.refresh' => 'Refresh',
 			'sessions.inspector.shared.inserted' => ({required Object text}) => 'Inserted: ${text}',
 			'sessions.inspector.shared.insertFailedApi' => ({required Object status, required Object message}) => 'Insert failed (${status}): ${message}',
@@ -15964,9 +15993,9 @@ extension on Translations {
 			'sessions.inspector.notes.locationDialogTitle' => 'Project docs location',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
-			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Insert failed: ${error}',
@@ -15989,6 +16018,11 @@ extension on Translations {
 			'sessions.inspector.notes.noProjectMapping2' => '(no project mapping)',
 			'sessions.inspector.notes.clearOverride' => 'Clear override',
 			'sessions.inspector.notes.save' => 'Save',
+			'sessions.inspector.conversation.empty' => 'No conversation yet.',
+			'sessions.inspector.conversation.loadFailed' => 'Couldn’t load the conversation.',
+			'sessions.inspector.conversation.copyAll' => 'Copy all',
+			'sessions.inspector.conversation.copied' => 'Conversation copied',
+			'sessions.inspector.conversation.count' => ({required Object count}) => '${count} turns',
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
@@ -16473,14 +16507,14 @@ extension on Translations {
 			'backupSchedules.retentionLabel' => 'Retention (keep N most recent)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No backup targets configured. Add one from the web admin or the Targets screen.',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.okMsgCreate' => 'Schedule created.',
 			'backupSchedules.okMsgUpdate' => 'Schedule updated.',
 			'backupSchedules.okMsgDelete' => 'Schedule deleted.',
 			'backupSchedules.errorPrefixCreate' => 'Create failed',
 			'backupSchedules.errorPrefixUpdate' => 'Update failed',
 			'backupSchedules.errorPrefixDelete' => 'Delete failed',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Removes the recurring spec for target ${targetId}. Existing backup blobs are not touched.',
 			'backupSchedules.emptyList' => 'No schedules yet.\nTap "New" to create one.',
 			'backupSchedules.validatePickTarget' => 'Pick a target.',
@@ -16987,14 +17021,14 @@ extension on Translations {
 			'settings.changeCredentials.newUsername' => 'New username',
 			'settings.changeCredentials.newPassword' => 'New password',
 			'settings.changeCredentials.confirmPassword' => 'Confirm new password',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.validatorRequired' => 'Required',
 			'settings.changeCredentials.passwordHelper' => 'At least 8 characters',
 			'settings.changeCredentials.passwordTooShort' => 'Must be at least 8 characters',
 			'settings.changeCredentials.passwordMismatch' => 'Doesn\'t match the new password',
 			'settings.changeCredentials.updatedSnack' => 'Credentials updated.',
 			'settings.changeCredentials.wrongCurrent' => 'Current password is wrong.',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.saving' => 'Saving…',
 			'settings.changeCredentials.update' => 'Update',
 			'settings.logViewer.title' => 'Live logs',

@@ -90,6 +90,21 @@ class SessionsApi {
     }
   }
 
+  // GET /api/v1/sessions/:id/transcript?max_bytes=N — the session's
+  // reconstructed conversation (user prompts + assistant prose) from
+  // the CLI's JSONL. The scrollback the live alt-screen TUI lacks.
+  Future<TranscriptResponse> transcript(String id, {int maxBytes = 1 << 20}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/sessions/$id/transcript',
+        queryParameters: {'max_bytes': maxBytes},
+      );
+      return TranscriptResponse.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   // POST /api/v1/sessions/:id/input — sends raw bytes to the PTY
   // stdin. Used by the inspector "push to terminal" actions to
   // inject things like `@/path/to/file` or a recalled prompt

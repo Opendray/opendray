@@ -8,6 +8,7 @@ import 'package:opendray/features/sessions/inspector/git_tab.dart';
 import 'package:opendray/features/sessions/inspector/history_tab.dart';
 import 'package:opendray/features/sessions/inspector/notes_tab.dart';
 import 'package:opendray/features/sessions/inspector/tasks_tab.dart';
+import 'package:opendray/features/sessions/inspector/transcript_tab.dart';
 import 'package:path/path.dart' as p;
 
 // Per-session inspector screen. Mirrors the cwd-scoped panels the
@@ -40,7 +41,7 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     final lastSegment = p.basename(session.cwd);
     return DefaultTabController(
-      length: 5,
+      length: 6,
       child: Scaffold(
         appBar: AppBar(
           title: Column(
@@ -79,6 +80,10 @@ class _Body extends StatelessWidget {
                 text: t.sessions.inspector.shell.tabs.history,
               ),
               Tab(
+                icon: const Icon(Icons.forum_outlined),
+                text: t.sessions.inspector.shell.tabs.conversation,
+              ),
+              Tab(
                 icon: const Icon(Icons.description_outlined),
                 text: t.sessions.inspector.shell.tabs.notes,
               ),
@@ -91,6 +96,7 @@ class _Body extends StatelessWidget {
             GitTab(sessionId: session.id, cwd: session.cwd),
             TasksTab(sessionId: session.id, cwd: session.cwd),
             HistoryTab(sessionId: session.id),
+            TranscriptTab(sessionId: session.id),
             NotesTab(sessionId: session.id, cwd: session.cwd),
           ],
         ),

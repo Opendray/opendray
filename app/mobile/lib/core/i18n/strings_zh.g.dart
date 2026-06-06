@@ -1583,6 +1583,7 @@ class _TranslationsSessionsInspectorZh extends TranslationsSessionsInspectorEn {
 	@override late final _TranslationsSessionsInspectorGitZh git = _TranslationsSessionsInspectorGitZh._(_root);
 	@override late final _TranslationsSessionsInspectorTasksZh tasks = _TranslationsSessionsInspectorTasksZh._(_root);
 	@override late final _TranslationsSessionsInspectorNotesZh notes = _TranslationsSessionsInspectorNotesZh._(_root);
+	@override late final _TranslationsSessionsInspectorConversationZh conversation = _TranslationsSessionsInspectorConversationZh._(_root);
 }
 
 // Path: sessions.spawnSheet
@@ -5287,6 +5288,20 @@ class _TranslationsSessionsInspectorNotesZh extends TranslationsSessionsInspecto
 	@override String get save => '保存';
 }
 
+// Path: sessions.inspector.conversation
+class _TranslationsSessionsInspectorConversationZh extends TranslationsSessionsInspectorConversationEn {
+	_TranslationsSessionsInspectorConversationZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get empty => '暂无对话。';
+	@override String get loadFailed => '无法加载对话。';
+	@override String get copyAll => '复制全部';
+	@override String get copied => '已复制对话';
+	@override String count({required Object count}) => '${count} 轮';
+}
+
 // Path: sessions.spawnSheet.bypass
 class _TranslationsSessionsSpawnSheetBypassZh extends TranslationsSessionsSpawnSheetBypassEn {
 	_TranslationsSessionsSpawnSheetBypassZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7414,6 +7429,7 @@ class _TranslationsSessionsInspectorShellTabsZh extends TranslationsSessionsInsp
 	@override String get tasks => '任务';
 	@override String get history => '历史';
 	@override String get notes => '笔记';
+	@override String get conversation => '对话';
 }
 
 // Path: web.notes.vaultSync.conflict.kinds
@@ -9455,6 +9471,7 @@ extension on TranslationsZh {
 			'sessions.inspector.shell.tabs.tasks' => '任务',
 			'sessions.inspector.shell.tabs.history' => '历史',
 			'sessions.inspector.shell.tabs.notes' => '笔记',
+			'sessions.inspector.shell.tabs.conversation' => '对话',
 			'sessions.inspector.shared.refresh' => '刷新',
 			'sessions.inspector.shared.inserted' => ({required Object text}) => '已插入：${text}',
 			'sessions.inspector.shared.insertFailedApi' => ({required Object status, required Object message}) => '插入失败（${status}）：${message}',
@@ -9503,9 +9520,9 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.locationDialogTitle' => '项目文档位置',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
-			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
@@ -9528,6 +9545,11 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
 			'sessions.inspector.notes.clearOverride' => '清除覆盖',
 			'sessions.inspector.notes.save' => '保存',
+			'sessions.inspector.conversation.empty' => '暂无对话。',
+			'sessions.inspector.conversation.loadFailed' => '无法加载对话。',
+			'sessions.inspector.conversation.copyAll' => '复制全部',
+			'sessions.inspector.conversation.copied' => '已复制对话',
+			'sessions.inspector.conversation.count' => ({required Object count}) => '${count} 轮',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
@@ -10012,14 +10034,14 @@ extension on TranslationsZh {
 			'backupSchedules.retentionLabel' => '保留（最近 N 个）',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'backupSchedules.noTargets' => '未配置任何备份目标。请从 Web 管理端或「目标」屏添加。',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.okMsgCreate' => '计划已创建。',
 			'backupSchedules.okMsgUpdate' => '计划已更新。',
 			'backupSchedules.okMsgDelete' => '计划已删除。',
 			'backupSchedules.errorPrefixCreate' => '创建失败',
 			'backupSchedules.errorPrefixUpdate' => '更新失败',
 			'backupSchedules.errorPrefixDelete' => '删除失败',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.deleteBody' => ({required Object targetId}) => '移除目标 ${targetId} 的定期规格。已存在的备份不受影响。',
 			'backupSchedules.emptyList' => '暂无计划。\n点击「新建」创建一个。',
 			'backupSchedules.validatePickTarget' => '请选择一个目标。',
@@ -10526,14 +10548,14 @@ extension on TranslationsZh {
 			'settings.changeCredentials.newUsername' => '新用户名',
 			'settings.changeCredentials.newPassword' => '新密码',
 			'settings.changeCredentials.confirmPassword' => '确认新密码',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.validatorRequired' => '必填',
 			'settings.changeCredentials.passwordHelper' => '至少 8 个字符',
 			'settings.changeCredentials.passwordTooShort' => '至少需要 8 个字符',
 			'settings.changeCredentials.passwordMismatch' => '与新密码不一致',
 			'settings.changeCredentials.updatedSnack' => '凭据已更新。',
 			'settings.changeCredentials.wrongCurrent' => '当前密码不正确。',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.saving' => '保存中…',
 			'settings.changeCredentials.update' => '更新',
 			'settings.logViewer.title' => '实时日志',

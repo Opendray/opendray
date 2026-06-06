@@ -408,6 +408,46 @@ class HistoryResponse {
   final bool unsupportedProvider;
 }
 
+// One turn of a session's reconstructed conversation — a user prompt
+// or a chunk of assistant prose parsed from the CLI's JSONL. This is
+// the scrollback the live alternate-screen TUI terminal can't provide.
+class TranscriptTurn {
+  TranscriptTurn({
+    required this.role,
+    required this.text,
+    this.timestamp,
+  });
+
+  factory TranscriptTurn.fromJson(Map<String, dynamic> json) => TranscriptTurn(
+        role: json['role'] as String? ?? '',
+        text: json['text'] as String? ?? '',
+        timestamp: DateTime.tryParse(json['ts'] as String? ?? '')?.toUtc(),
+      );
+
+  // "user" | "assistant".
+  final String role;
+  final String text;
+  // When the turn was emitted (UTC), when the source records it.
+  final DateTime? timestamp;
+}
+
+class TranscriptResponse {
+  TranscriptResponse({required this.turns});
+
+  factory TranscriptResponse.fromJson(Map<String, dynamic> json) {
+    final raw = json['turns'];
+    final turns = raw is List
+        ? raw
+            .whereType<Map<String, dynamic>>()
+            .map(TranscriptTurn.fromJson)
+            .toList()
+        : <TranscriptTurn>[];
+    return TranscriptResponse(turns: turns);
+  }
+
+  final List<TranscriptTurn> turns;
+}
+
 // Multi-account picker option for the Claude provider. Mirrors the
 // fields the spawn-session form actually renders; the full
 // account record lives in /api/v1/claude-accounts.

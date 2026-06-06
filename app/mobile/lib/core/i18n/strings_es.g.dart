@@ -1583,6 +1583,7 @@ class _TranslationsSessionsInspectorEs extends TranslationsSessionsInspectorEn {
 	@override late final _TranslationsSessionsInspectorGitEs git = _TranslationsSessionsInspectorGitEs._(_root);
 	@override late final _TranslationsSessionsInspectorTasksEs tasks = _TranslationsSessionsInspectorTasksEs._(_root);
 	@override late final _TranslationsSessionsInspectorNotesEs notes = _TranslationsSessionsInspectorNotesEs._(_root);
+	@override late final _TranslationsSessionsInspectorConversationEs conversation = _TranslationsSessionsInspectorConversationEs._(_root);
 }
 
 // Path: sessions.spawnSheet
@@ -5287,6 +5288,20 @@ class _TranslationsSessionsInspectorNotesEs extends TranslationsSessionsInspecto
 	@override String get save => 'Guardar';
 }
 
+// Path: sessions.inspector.conversation
+class _TranslationsSessionsInspectorConversationEs extends TranslationsSessionsInspectorConversationEn {
+	_TranslationsSessionsInspectorConversationEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get empty => 'Aún no hay conversación.';
+	@override String get loadFailed => 'No se pudo cargar la conversación.';
+	@override String get copyAll => 'Copiar todo';
+	@override String get copied => 'Conversación copiada';
+	@override String count({required Object count}) => '${count} turnos';
+}
+
 // Path: sessions.spawnSheet.bypass
 class _TranslationsSessionsSpawnSheetBypassEs extends TranslationsSessionsSpawnSheetBypassEn {
 	_TranslationsSessionsSpawnSheetBypassEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -7414,6 +7429,7 @@ class _TranslationsSessionsInspectorShellTabsEs extends TranslationsSessionsInsp
 	@override String get tasks => 'Tareas';
 	@override String get history => 'Historial';
 	@override String get notes => 'Notas';
+	@override String get conversation => 'Conversación';
 }
 
 // Path: web.notes.vaultSync.conflict.kinds
@@ -9455,6 +9471,7 @@ extension on TranslationsEs {
 			'sessions.inspector.shell.tabs.tasks' => 'Tareas',
 			'sessions.inspector.shell.tabs.history' => 'Historial',
 			'sessions.inspector.shell.tabs.notes' => 'Notas',
+			'sessions.inspector.shell.tabs.conversation' => 'Conversación',
 			'sessions.inspector.shared.refresh' => 'Actualizar',
 			'sessions.inspector.shared.inserted' => ({required Object text}) => 'Insertado: ${text}',
 			'sessions.inspector.shared.insertFailedApi' => ({required Object status, required Object message}) => 'Falló la inserción (${status}): ${message}',
@@ -9503,9 +9520,9 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.locationDialogTitle' => 'Ubicación de los documentos del proyecto',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => 'Falló la carga: ${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Falló la carga: ${error}',
-			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Falló al guardar: ${error}',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Falló al guardar: ${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Falló al guardar: ${error}',
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Falló la inserción: ${error}',
@@ -9528,6 +9545,11 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.noProjectMapping2' => '(sin asignación de proyecto)',
 			'sessions.inspector.notes.clearOverride' => 'Borrar anulación',
 			'sessions.inspector.notes.save' => 'Guardar',
+			'sessions.inspector.conversation.empty' => 'Aún no hay conversación.',
+			'sessions.inspector.conversation.loadFailed' => 'No se pudo cargar la conversación.',
+			'sessions.inspector.conversation.copyAll' => 'Copiar todo',
+			'sessions.inspector.conversation.copied' => 'Conversación copiada',
+			'sessions.inspector.conversation.count' => ({required Object count}) => '${count} turnos',
 			'sessions.spawnSheet.title' => 'Nueva session',
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
@@ -10012,14 +10034,14 @@ extension on TranslationsEs {
 			'backupSchedules.retentionLabel' => 'Retención (conservar las N más recientes)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No hay destinos de copia de seguridad configurados. Añade uno desde el panel de administración web o la pantalla de Destinos.',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.okMsgCreate' => 'Programación creada.',
 			'backupSchedules.okMsgUpdate' => 'Programación actualizada.',
 			'backupSchedules.okMsgDelete' => 'Programación eliminada.',
 			'backupSchedules.errorPrefixCreate' => 'Error al crear',
 			'backupSchedules.errorPrefixUpdate' => 'Error al actualizar',
 			'backupSchedules.errorPrefixDelete' => 'Error al eliminar',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Elimina la especificación recurrente para el destino ${targetId}. Los blobs de copia de seguridad existentes no se modifican.',
 			'backupSchedules.emptyList' => 'Aún no hay programaciones.\nToca "Nueva" para crear una.',
 			'backupSchedules.validatePickTarget' => 'Elige un destino.',
@@ -10526,14 +10548,14 @@ extension on TranslationsEs {
 			'settings.changeCredentials.newUsername' => 'Nuevo usuario',
 			'settings.changeCredentials.newPassword' => 'Nueva contraseña',
 			'settings.changeCredentials.confirmPassword' => 'Confirma la nueva contraseña',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.validatorRequired' => 'Obligatorio',
 			'settings.changeCredentials.passwordHelper' => 'Al menos 8 caracteres',
 			'settings.changeCredentials.passwordTooShort' => 'Debe tener al menos 8 caracteres',
 			'settings.changeCredentials.passwordMismatch' => 'No coincide con la nueva contraseña',
 			'settings.changeCredentials.updatedSnack' => 'Credenciales actualizadas.',
 			'settings.changeCredentials.wrongCurrent' => 'La contraseña actual es incorrecta.',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.saving' => 'Guardando…',
 			'settings.changeCredentials.update' => 'Actualizar',
 			'settings.logViewer.title' => 'Logs en vivo',

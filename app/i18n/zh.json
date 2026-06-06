@@ -2603,7 +2603,8 @@
           "git": "Git",
           "tasks": "任务",
           "history": "历史",
-          "notes": "笔记"
+          "notes": "笔记",
+          "conversation": "对话"
         }
       },
       "shared": {
@@ -2688,6 +2689,13 @@
         "noProjectMapping2": "（无项目映射）",
         "clearOverride": "清除覆盖",
         "save": "保存"
+      },
+      "conversation": {
+        "empty": "暂无对话。",
+        "loadFailed": "无法加载对话。",
+        "copyAll": "复制全部",
+        "copied": "已复制对话",
+        "count": "{count} 轮"
       }
     },
     "spawnSheet": {

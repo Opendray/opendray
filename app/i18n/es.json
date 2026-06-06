@@ -2603,7 +2603,8 @@
           "git": "Git",
           "tasks": "Tareas",
           "history": "Historial",
-          "notes": "Notas"
+          "notes": "Notas",
+          "conversation": "Conversación"
         }
       },
       "shared": {
@@ -2688,6 +2689,13 @@
         "noProjectMapping2": "(sin asignación de proyecto)",
         "clearOverride": "Borrar anulación",
         "save": "Guardar"
+      },
+      "conversation": {
+        "empty": "Aún no hay conversación.",
+        "loadFailed": "No se pudo cargar la conversación.",
+        "copyAll": "Copiar todo",
+        "copied": "Conversación copiada",
+        "count": "{count} turnos"
       }
     },
     "spawnSheet": {
