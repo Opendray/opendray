@@ -47,13 +47,23 @@ function clampInspectorWidth(v: number): number {
   )
 }
 
-// Apply on <body> rather than <html>: keeps `100svh`/`100vh` correct
-// (zoom on <html> shifts the viewport math), but still scales every
-// descendant — including hardcoded `text-[12px]`-style px values that
-// won't respond to root font-size changes.
+// Apply the zoom on the app root (#root), NOT <body>/<html>:
+//  - scales every descendant, including hardcoded `text-[12px]`-style px
+//    values that won't respond to a root font-size change;
+//  - keeps `100svh`/`100vh` correct (zoom on <html> shifts viewport math);
+//  - and — critically — leaves Radix portals untouched. Dropdowns / tooltips
+//    / popovers mount at <body>, OUTSIDE #root, so a <body> zoom double-
+//    scaled their floating-ui positions (trigger rect already in zoomed
+//    coords, then the portal got scaled again) and pushed them off-screen at
+//    any scale > 1. With the zoom on #root the portals stay at scale 1, where
+//    floating-ui positions them correctly against the zoom-scaled trigger.
 function applyFontScale(scale: number) {
   if (typeof document === 'undefined') return
-  document.body.style.zoom = String(scale)
+  const target = document.getElementById('root') ?? document.body
+  // Clear any legacy zoom left on <body> by a previous build so the two
+  // don't compound.
+  if (target !== document.body) document.body.style.zoom = ''
+  target.style.zoom = String(scale)
 }
 
 export const useLayout = create<LayoutState>()(
