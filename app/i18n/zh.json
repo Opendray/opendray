@@ -48,6 +48,16 @@
       "collapseSidebar": "收起侧边栏",
       "search": "搜索",
       "openPalette": "打开命令面板",
+      "theme": "主题",
+      "themeLabel": "主题：{mode}",
+      "appearance": "外观",
+      "themeLight": "浅色",
+      "themeDark": "深色",
+      "themeSystem": "跟随系统",
+      "language": "语言",
+      "languageEnglish": "English",
+      "languageChinese": "中文",
+      "languageSpanish": "Español",
       "signedInAs": "登录账号",
       "tokenExpires": "令牌到期",
       "signOut": "退出登录"
@@ -2118,15 +2128,6 @@
         "checkUpdates": "检查更新",
         "checking": "检查中…",
         "reinstall": "重新安装"
-      },
-      "language": {
-        "title": "语言",
-        "description": "选择界面语言。",
-        "options": {
-          "en": "English",
-          "zh": "中文",
-          "es": "Español"
-        }
       }
     },
     "logViewer": {
