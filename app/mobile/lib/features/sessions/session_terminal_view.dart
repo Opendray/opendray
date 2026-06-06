@@ -637,6 +637,11 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
                   controller: _controller,
                   autofocus: true,
                   backgroundOpacity: 1,
+                  // A swipe in the alternate buffer is forwarded to the app
+                  // as mouse-wheel input (see TerminalScrollGestureHandler);
+                  // never fall back to arrow keys, which a phone TUI reads
+                  // as cursor moves, not scrolling.
+                  simulateScroll: false,
                   theme: const TerminalTheme(
                     cursor: Color(0xFFE6AE57),
                     selection: Color(0x66E6AE57),

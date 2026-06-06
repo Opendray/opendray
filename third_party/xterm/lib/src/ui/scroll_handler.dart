@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/src/ui/infinite_scroll_view.dart';
@@ -49,6 +50,10 @@ class _TerminalScrollGestureHandlerState
   /// This variable tracks the last offset where the scroll gesture started.
   /// Used to calculate the cell offset of the terminal mouse event.
   var lastPointerPosition = Offset.zero;
+
+  /// Accumulated vertical travel (px) of an in-progress touch drag, used to
+  /// emit one scroll event per line of finger movement. See [_onPointerMove].
+  var _touchScrollAccum = 0.0;
 
   @override
   void initState() {
@@ -111,6 +116,29 @@ class _TerminalScrollGestureHandlerState
     lastLineOffset = currentLineOffset;
   }
 
+  /// Translate a one-finger touch drag into scroll events. The
+  /// [InfiniteScrollView] below already turns a mouse wheel
+  /// ([PointerScrollEvent]) into [_onScroll], but a *touch* drag in the
+  /// alternate buffer is swallowed by the inner viewport [Scrollable]
+  /// (which has nothing to scroll there), so on a phone the gesture never
+  /// reaches [_onScroll] and the application never receives wheel input.
+  /// A [Listener] observes the raw pointer stream regardless of the gesture
+  /// arena, so we emit one scroll event per line of finger travel here.
+  /// Mouse drags are left alone (they drive text selection).
+  void _onPointerMove(PointerMoveEvent event) {
+    if (event.kind != PointerDeviceKind.touch) return;
+    final lineHeight = widget.getLineHeight();
+    if (lineHeight <= 0) return;
+    lastPointerPosition = event.position;
+    _touchScrollAccum += event.delta.dy;
+    while (_touchScrollAccum.abs() >= lineHeight) {
+      // Finger moving down (positive dy) reveals earlier content → scroll up.
+      final up = _touchScrollAccum > 0;
+      _sendScrollEvent(up);
+      _touchScrollAccum += up ? -lineHeight : lineHeight;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!isAltBuffer) {
@@ -123,7 +151,9 @@ class _TerminalScrollGestureHandlerState
       },
       onPointerDown: (event) {
         lastPointerPosition = event.position;
+        _touchScrollAccum = 0;
       },
+      onPointerMove: _onPointerMove,
       child: InfiniteScrollView(
         onScroll: _onScroll,
         child: widget.child,
