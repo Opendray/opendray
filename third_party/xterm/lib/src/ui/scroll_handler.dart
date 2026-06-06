@@ -85,23 +85,23 @@ class _TerminalScrollGestureHandlerState
     }
   }
 
-  /// Send a single scroll event to the terminal. If [simulateScroll] is true,
-  /// then if the application doesn't recognize mouse wheel events, this method
-  /// will simulate scroll events by sending up/down arrow keys.
+  /// Send a single wheel-scroll event to the application.
+  ///
+  /// Mirrors the (working) web terminal: write an SGR (1006) mouse-wheel
+  /// report straight to the app. We deliberately do NOT route through
+  /// `terminal.mouseInput` — that emits a report only when xterm's own DECSET
+  /// mouse-mode parse matched the app's enable sequence, which can miss after
+  /// a WebSocket reconnect / buffer replay, leaving a touch swipe silently
+  /// doing nothing (and the old arrow-key fallback just moved the TUI cursor).
+  /// A full-screen TUI in the alternate buffer — the only place this handler
+  /// is active — drives its own scrollback from wheel input and speaks SGR
+  /// mouse reporting, so this reaches it directly and deterministically.
   void _sendScrollEvent(bool up) {
     final position = widget.getCellOffset(lastPointerPosition);
-
-    final handled = widget.terminal.mouseInput(
-      up ? TerminalMouseButton.wheelUp : TerminalMouseButton.wheelDown,
-      TerminalMouseButtonState.down,
-      position,
-    );
-
-    if (!handled && widget.simulateScroll) {
-      widget.terminal.keyInput(
-        up ? TerminalKey.arrowUp : TerminalKey.arrowDown,
-      );
-    }
+    final col = position.x + 1; // SGR coordinates are 1-based
+    final row = position.y + 1;
+    final btn = up ? 64 : 65; // SGR wheel up (64) / down (65), press
+    widget.terminal.onOutput?.call('\x1b[<$btn;$col;${row}M');
   }
 
   void _onScroll(double offset) {
