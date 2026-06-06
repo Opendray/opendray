@@ -8,7 +8,6 @@ import {
   Monitor,
   Check,
   Type,
-  Languages,
   User as UserIcon,
   Server,
   Settings2,
@@ -23,7 +22,6 @@ import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import { getVersionInfo, requestSelfUpdate, type VersionInfo } from '@/lib/version'
 import { useTheme, type ThemeMode } from '@/stores/theme'
-import { useLocale, SUPPORTED_LOCALES, type Locale } from '@/stores/locale'
 import { useAuth } from '@/stores/auth'
 import { useLayout } from '@/stores/layout'
 import { cn } from '@/lib/utils'
@@ -269,12 +267,7 @@ function ContentRouter({
 
   switch (active) {
     case 'appearance':
-      return (
-        <div className="space-y-8">
-          <AppearanceSection mode={mode} setMode={setMode} />
-          <LanguageSection />
-        </div>
-      )
+      return <AppearanceSection mode={mode} setMode={setMode} />
     case 'font':
       return (
         <FontSection fontScale={fontScale} setFontScale={setFontScale} />
@@ -411,49 +404,6 @@ function AppearanceSection({
                   {t(descKey)}
                 </span>
               </div>
-              {active && (
-                <Check className="absolute right-2 top-2 size-3 text-accent" />
-              )}
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-function LanguageSection() {
-  const { t } = useTranslation()
-  const locale = useLocale((s) => s.locale)
-  const setLocale = useLocale((s) => s.setLocale)
-  const labels: Record<Locale, string> = {
-    en: t('web.settings.language.options.en'),
-    zh: t('web.settings.language.options.zh'),
-    es: t('web.settings.language.options.es'),
-  }
-  return (
-    <div>
-      <SectionHeader
-        title={t('web.settings.language.title')}
-        description={t('web.settings.language.description')}
-      />
-      <div className="grid grid-cols-3 gap-2">
-        {SUPPORTED_LOCALES.map((l) => {
-          const active = locale === l
-          return (
-            <button
-              key={l}
-              type="button"
-              onClick={() => setLocale(l)}
-              className={cn(
-                'relative flex flex-col gap-2 items-start text-left p-3 rounded-md border transition-colors',
-                active
-                  ? 'border-foreground/30 bg-card'
-                  : 'border-border hover:bg-card hover:border-foreground/20',
-              )}
-            >
-              <Languages className="size-4 text-muted-foreground" />
-              <span className="text-[13px] font-medium">{labels[l]}</span>
               {active && (
                 <Check className="absolute right-2 top-2 size-3 text-accent" />
               )}

@@ -1853,6 +1853,36 @@ class TranslationsWebTopbarEn {
 	/// en: 'Open command palette'
 	String get openPalette => 'Open command palette';
 
+	/// en: 'Theme'
+	String get theme => 'Theme';
+
+	/// en: 'Theme: {mode}'
+	String themeLabel({required Object mode}) => 'Theme: ${mode}';
+
+	/// en: 'Appearance'
+	String get appearance => 'Appearance';
+
+	/// en: 'Light'
+	String get themeLight => 'Light';
+
+	/// en: 'Dark'
+	String get themeDark => 'Dark';
+
+	/// en: 'System'
+	String get themeSystem => 'System';
+
+	/// en: 'Language'
+	String get language => 'Language';
+
+	/// en: 'English'
+	String get languageEnglish => 'English';
+
+	/// en: '中文'
+	String get languageChinese => '中文';
+
+	/// en: 'Español'
+	String get languageSpanish => 'Español';
+
 	/// en: 'Signed in as'
 	String get signedInAs => 'Signed in as';
 
@@ -2605,7 +2635,6 @@ class TranslationsWebSettingsEn {
 	late final TranslationsWebSettingsChangeCredentialsEn changeCredentials = TranslationsWebSettingsChangeCredentialsEn.internal(_root);
 	late final TranslationsWebSettingsSystemEn system = TranslationsWebSettingsSystemEn.internal(_root);
 	late final TranslationsWebSettingsAboutEn about = TranslationsWebSettingsAboutEn.internal(_root);
-	late final TranslationsWebSettingsLanguageEn language = TranslationsWebSettingsLanguageEn.internal(_root);
 }
 
 // Path: web.logViewer
@@ -9146,23 +9175,6 @@ class TranslationsWebSettingsAboutEn {
 	String get reinstall => 'Re-install';
 }
 
-// Path: web.settings.language
-class TranslationsWebSettingsLanguageEn {
-	TranslationsWebSettingsLanguageEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Language'
-	String get title => 'Language';
-
-	/// en: 'Choose the interface language.'
-	String get description => 'Choose the interface language.';
-
-	late final TranslationsWebSettingsLanguageOptionsEn options = TranslationsWebSettingsLanguageOptionsEn.internal(_root);
-}
-
 // Path: web.memoryAmbient.header
 class TranslationsWebMemoryAmbientHeaderEn {
 	TranslationsWebMemoryAmbientHeaderEn.internal(this._root);
@@ -13385,24 +13397,6 @@ class TranslationsWebSettingsFontOptionsEn {
 	String get large => 'Large';
 }
 
-// Path: web.settings.language.options
-class TranslationsWebSettingsLanguageOptionsEn {
-	TranslationsWebSettingsLanguageOptionsEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'English'
-	String get en => 'English';
-
-	/// en: '中文'
-	String get zh => '中文';
-
-	/// en: 'Español'
-	String get es => 'Español';
-}
-
 // Path: web.memoryAmbient.providers.row
 class TranslationsWebMemoryAmbientProvidersRowEn {
 	TranslationsWebMemoryAmbientProvidersRowEn.internal(this._root);
@@ -13895,6 +13889,16 @@ extension on Translations {
 			'web.topbar.collapseSidebar' => 'Collapse sidebar',
 			'web.topbar.search' => 'Search',
 			'web.topbar.openPalette' => 'Open command palette',
+			'web.topbar.theme' => 'Theme',
+			'web.topbar.themeLabel' => ({required Object mode}) => 'Theme: ${mode}',
+			'web.topbar.appearance' => 'Appearance',
+			'web.topbar.themeLight' => 'Light',
+			'web.topbar.themeDark' => 'Dark',
+			'web.topbar.themeSystem' => 'System',
+			'web.topbar.language' => 'Language',
+			'web.topbar.languageEnglish' => 'English',
+			'web.topbar.languageChinese' => '中文',
+			'web.topbar.languageSpanish' => 'Español',
 			'web.topbar.signedInAs' => 'Signed in as',
 			'web.topbar.tokenExpires' => 'Token expires',
 			'web.topbar.signOut' => 'Sign out',
@@ -14356,6 +14360,8 @@ extension on Translations {
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} memory items',
 			'web.memoryInspector.bulkDelete.cancel' => 'Cancel',
 			'web.memoryInspector.bulkDelete.deleteAll' => 'Delete all',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.addMem.title' => 'Add memory',
 			'web.memoryInspector.addMem.description' => 'Manually create a memory. Agents create these automatically via the <1>memory_store</1> MCP tool — this form is for cases where the operator wants to seed a fact without going through an agent.',
 			'web.memoryInspector.addMem.textLabel' => 'Text',
@@ -14366,8 +14372,6 @@ extension on Translations {
 			'web.memoryInspector.picker.buttonTooltip' => 'Pick from saved scope keys or active sessions',
 			'web.memoryInspector.picker.loading' => 'Loading…',
 			'web.memoryInspector.picker.empty' => ({required Object scope}) => 'No saved keys or active sessions for ${scope}.',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.picker.savedHeader' => 'Saved memories',
 			'web.memoryInspector.picker.activeHeader' => 'Active sessions',
 			'web.memoryInspector.migrationBanner.headline_one' => ({required Object count}) => '${count} memory won\'t appear in searches',
@@ -14870,6 +14874,8 @@ extension on Translations {
 			'web.plugins.mcp.columns.name' => 'Name',
 			'web.plugins.mcp.columns.transport' => 'Transport',
 			'web.plugins.mcp.columns.spec' => 'Spec',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.mcp.columns.enabled' => 'Enabled',
 			'web.plugins.mcp.noUrl' => 'no url',
 			'web.plugins.mcp.noCommand' => 'no command',
@@ -14880,8 +14886,6 @@ extension on Translations {
 			'web.plugins.mcp.codexUnsupportedBadge' => 'Codex: unsupported',
 			'web.plugins.mcp.codexUnsupportedTooltip' => 'The codex CLI supports stdio transport only. This server will be skipped for codex sessions; claude and gemini will still use it.',
 			'web.plugins.mcp.editor.createTitle' => 'New MCP server',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.mcp.editor.editTitle' => ({required Object id}) => 'Edit MCP: ${id}',
 			'web.plugins.mcp.editor.description' => ({required Object API_KEY}) => 'JSON shape: <1>command</1>+<3>args</3>+<5>env</5> for stdio (default), or <7>transport</7> +<9> url</9>+<11>headers</11> for sse / http. Reference secrets as <13>\$${API_KEY}</13> — they get substituted at spawn time from the secrets file.',
 			'web.plugins.mcp.editor.idLabel' => 'ID',
@@ -15384,6 +15388,8 @@ extension on Translations {
 			'web.serverSettings.httpHelpers.presetTip.openai' => 'OpenAI cloud (needs API key)',
 			'web.serverSettings.probe.unreachable' => ({required Object error}) => '✗ unreachable: ${error}',
 			'web.serverSettings.probe.connectionFailed' => 'connection failed',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.probe.reachable' => ({required Object detected, required Object total, required Object embedding}) => '✓ reachable ${detected}· ${total} model(s) total · ${embedding} embedding',
 			'web.serverSettings.probe.modelMissing' => ({required Object model}) => '⚠ Configured model ${model} isn\'t in the list. Pick one of the embedding models below or fix the name.',
 			'web.serverSettings.probe.embeddingModelsLabel' => 'embedding models:',
@@ -15394,8 +15400,6 @@ extension on Translations {
 			'web.serverSettings.backup.featureDisabledTitle' => 'Feature disabled',
 			'web.serverSettings.backup.featureDisabledHint' => 'Set <1>OPENDRAY_BACKUP_ENABLED=1</1> + <3>OPENDRAY_BACKUP_KEY=&lt;passphrase&gt;</3> in opendray\'s environment, then restart. The master passphrase is env-only — it never touches config.toml.',
 			'web.serverSettings.backup.statusRowLabel' => 'Status',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.backup.enabledHealthy' => 'enabled · healthy',
 			'web.serverSettings.backup.enabledDegraded' => 'enabled · degraded',
 			'web.serverSettings.backup.keyFingerprintLabel' => 'Key fingerprint',
@@ -15508,11 +15512,6 @@ extension on Translations {
 			'web.settings.about.checkUpdates' => 'Check for updates',
 			'web.settings.about.checking' => 'Checking…',
 			'web.settings.about.reinstall' => 'Re-install',
-			'web.settings.language.title' => 'Language',
-			'web.settings.language.description' => 'Choose the interface language.',
-			'web.settings.language.options.en' => 'English',
-			'web.settings.language.options.zh' => '中文',
-			'web.settings.language.options.es' => 'Español',
 			'web.logViewer.filterPlaceholder' => 'Filter…',
 			'web.logViewer.debugTooltip' => 'Debug count',
 			'web.logViewer.infoTooltip' => 'Info count',
@@ -15903,13 +15902,13 @@ extension on Translations {
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.cancel' => 'Cancel',
 			'sessions.spawnSheet.spawn' => 'Spawn',
 			'sessions.spawnSheet.providerLabel' => 'Provider',
 			'sessions.spawnSheet.disabledSuffix' => ' (disabled)',
 			'sessions.spawnSheet.cwdLabel' => 'Working directory',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
 			'sessions.spawnSheet.cwdHelper' => 'Absolute path on the gateway host.',
 			'sessions.spawnSheet.browse' => 'Browse',
@@ -16417,13 +16416,13 @@ extension on Translations {
 			'backupTargetEditor.useHttps' => 'Use HTTPS',
 			'backupTargetEditor.pathStyle' => 'Path-style addressing',
 			'backupTargetEditor.pathStyleSubtitle' => 'Legacy / MinIO',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.kinds.local.label' => 'Local disk',
 			'backupTargetEditor.kinds.local.description' => 'Folder on the machine running opendray',
 			'backupTargetEditor.kinds.smb.label' => 'SMB share',
 			'backupTargetEditor.kinds.smb.description' => 'Windows shares + most home NAS appliances',
 			'backupTargetEditor.kinds.webdav.label' => 'WebDAV',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.kinds.webdav.description' => 'Self-hosted clouds + file-sharing services',
 			'backupTargetEditor.kinds.sftp.label' => 'SFTP',
 			'backupTargetEditor.kinds.sftp.description' => 'Any SSH-accessible server',
@@ -16931,13 +16930,13 @@ extension on Translations {
 			'settings.logViewer.levels.debug' => 'Debug',
 			'settings.logViewer.levels.info' => 'Info',
 			'settings.logViewer.levels.warn' => 'Warn',
+			_ => null,
+		} ?? switch (path) {
 			'settings.logViewer.levels.error' => 'Error',
 			'settings.serverSettings.title' => 'Server settings',
 			'settings.serverSettings.reloadTooltip' => 'Reload from server',
 			'settings.serverSettings.restartTooltip' => 'Restart gateway',
 			'settings.serverSettings.restartConfirmTitle' => 'Restart opendray?',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.restartConfirmBody' => 'The gateway will exec itself. The mobile app may briefly lose connection.',
 			'settings.serverSettings.restart' => 'Restart',
 			'settings.serverSettings.restartQueuedSnack' => 'Restart requested. Pull-to-refresh in a moment.',
