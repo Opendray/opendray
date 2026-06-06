@@ -154,6 +154,13 @@ func (f *fakeSvc) History(_ context.Context, id string, _ int) (HistoryResponse,
 	return HistoryResponse{Entries: []ProjectInput{}}, nil
 }
 
+func (f *fakeSvc) Transcript(_ context.Context, id string, _ int) ([]Turn, error) {
+	if _, ok := f.sessions[id]; !ok {
+		return nil, ErrNotFound
+	}
+	return []Turn{}, nil
+}
+
 func newRouter(svc Service) http.Handler {
 	r := chi.NewRouter()
 	NewHandlers(svc, nil).Mount(r)

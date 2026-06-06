@@ -16,9 +16,9 @@ import (
 // — no tool-use JSON blobs, no system messages, no thinking. This
 // is what the M18 journaler feeds to an LLM summariser.
 type Turn struct {
-	Role string    // "user" | "assistant"
-	Text string    // already trimmed
-	Ts   time.Time // when this turn was emitted, when available
+	Role string    `json:"role"` // "user" | "assistant"
+	Text string    `json:"text"` // already trimmed
+	Ts   time.Time `json:"ts"`   // when this turn was emitted, when available
 }
 
 // Transcript returns the latest CLI conversation as ordered turns.

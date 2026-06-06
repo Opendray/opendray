@@ -38,6 +38,7 @@ type Service interface {
 	Buffer(ctx context.Context, id string, since int64) (Replay, error)
 	SwitchClaudeAccount(ctx context.Context, id, accountID string) (Session, error)
 	History(ctx context.Context, id string, limit int) (HistoryResponse, error)
+	Transcript(ctx context.Context, sessionID string, maxBytes int) ([]Turn, error)
 }
 
 // ClaudeAccountChecker is the minimal cliacct surface the session
@@ -128,6 +129,7 @@ func (h *Handlers) Mount(r chi.Router) {
 			r.Get("/buffer", h.buffer)
 			r.Get("/stream", h.stream)
 			r.Get("/history", h.history)
+			r.Get("/transcript", h.transcript)
 			r.Patch("/claude-account", h.switchClaudeAccount)
 			r.Post("/uploads", h.upload)
 		})
@@ -486,6 +488,36 @@ func (h *Handlers) history(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, res)
+}
+
+// transcript handles GET /sessions/{id}/transcript. Returns the session's
+// conversation reconstructed from the CLI's JSONL as ordered turns (user
+// prompts + assistant prose) — the scrollable history the live
+// alternate-screen TUI terminal cannot offer. Claude / Codex / Gemini are
+// supported; other providers return {turns: []}.
+func (h *Handlers) transcript(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	maxBytes := 1 << 20 // 1 MiB of conversation text — plenty for scrollback
+	if v := r.URL.Query().Get("max_bytes"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 0 {
+			writeError(w, http.StatusBadRequest, errors.New("invalid max_bytes: must be non-negative integer"))
+			return
+		}
+		if n > 4<<20 {
+			n = 4 << 20
+		}
+		maxBytes = n
+	}
+	turns, err := h.svc.Transcript(r.Context(), id, maxBytes)
+	if err != nil {
+		h.respondError(w, err)
+		return
+	}
+	if turns == nil {
+		turns = []Turn{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"turns": turns})
 }
 
 // switchClaudeAccount handles PATCH /sessions/{id}/claude-account.
