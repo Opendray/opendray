@@ -37,6 +37,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Get("/nodes/{id}/edges", h.listEdges)
 		r.Get("/nodes/{id}/graph", h.neighborhood)
 		r.Post("/nodes/{id}/promote", h.promote)
+		r.Post("/nodes/{id}/skillify", h.skillify)
 		r.Post("/edges", h.createEdge)
 		r.Get("/brain", h.projectBrain)
 		r.Get("/search", h.search)
@@ -156,6 +157,19 @@ func (h *Handlers) promote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handlers) skillify(w http.ResponseWriter, r *http.Request) {
+	skill, err := h.svc.Skillify(r.Context(), chi.URLParam(r, "id"))
+	if errors.Is(err, ErrNotFound) {
+		writeError(w, http.StatusNotFound, err)
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, skill)
 }
 
 func (h *Handlers) search(w http.ResponseWriter, r *http.Request) {

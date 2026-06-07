@@ -141,6 +141,19 @@ func (a knowledgeLLM) Complete(ctx context.Context, system, user string) (string
 	return resp.Content, nil
 }
 
+// knowledgeSkillSink writes a rendered SKILL.md into the vault skills dir so
+// the skills loader picks up AI-promoted skills (one-way: knowledge owns the
+// SkillSink interface; the app provides this filesystem impl).
+type knowledgeSkillSink struct{ dir string }
+
+func (s knowledgeSkillSink) WriteSkill(_ context.Context, id, markdown string) error {
+	d := filepath.Join(s.dir, id)
+	if err := os.MkdirAll(d, 0o700); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(d, "SKILL.md"), []byte(markdown), 0o600)
+}
+
 // New wires the runtime dependencies but does not start any goroutines.
 // Caller is responsible for calling Run or Close.
 func New(ctx context.Context, cfg config.Config) (*App, error) {
@@ -646,6 +659,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	var knowledgeSvc *knowledge.Service
 	if cfg.Knowledge.Enabled {
 		knowledgeSvc = knowledge.NewService(st.Pool(), log)
+		knowledgeSvc.WithSkillSink(knowledgeSkillSink{dir: skillsRoot}) // Phase 4 — render promoted skills
 		if memorySvc != nil {
 			// Phase 1 — the anchorer reads episodic memory and lifts facts
 			// into the graph. Needs memory; without it we still serve CRUD.

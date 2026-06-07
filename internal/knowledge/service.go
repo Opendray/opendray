@@ -3,6 +3,7 @@ package knowledge
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -13,9 +14,10 @@ import (
 // later phases hang the consolidation / graduation engine off this type
 // (and give it a read-only handle to internal/memory as its feedstock).
 type Service struct {
-	store *Store
-	emb   Embedder // optional; set via WithEmbedder for semantic search + backfill
-	log   *slog.Logger
+	store     *Store
+	emb       Embedder  // optional; set via WithEmbedder for semantic search + backfill
+	skillSink SkillSink // optional; set via WithSkillSink to render promoted skills
+	log       *slog.Logger
 }
 
 // NewService matches the projectdoc.NewService(pool, log) shape used at the
@@ -110,6 +112,51 @@ func (s *Service) SearchNodes(ctx context.Context, query, scopeKey string, topK 
 // knowledge transfers to other projects' searches.
 func (s *Service) PromoteNode(ctx context.Context, id string, scope Scope, scopeKey string) error {
 	return s.store.PromoteNode(ctx, id, scope, scopeKey)
+}
+
+// WithSkillSink enables Phase 4 skill rendering (playbook -> skill -> SKILL.md).
+func (s *Service) WithSkillSink(sink SkillSink) *Service {
+	s.skillSink = sink
+	return s
+}
+
+// Skillify promotes a playbook to a skill: it creates a skill node (the final
+// rung of the fact->playbook->skill maturity axis), links it to the source
+// playbook, and renders a SKILL.md the skills loader can pick up. Conservative
+// by design — promotion is explicit (operator/agent-triggered), not automatic;
+// evidence-based auto-promotion needs the runtime usage-feedback loop.
+func (s *Service) Skillify(ctx context.Context, playbookID string) (Node, error) {
+	if s.skillSink == nil {
+		return Node{}, errors.New("knowledge: skill rendering is not configured")
+	}
+	pb, err := s.store.GetNode(ctx, playbookID)
+	if err != nil {
+		return Node{}, err
+	}
+	if pb.Kind != KindPlaybook {
+		return Node{}, fmt.Errorf("knowledge: can only skillify a playbook, got %q", pb.Kind)
+	}
+	slug := skillSlug(pb.Title)
+	skill, err := s.store.CreateNode(ctx, Node{
+		Kind:       KindSkill,
+		Title:      pb.Title,
+		Body:       pb.Body,
+		Scope:      pb.Scope,
+		ScopeKey:   pb.ScopeKey,
+		Maturity:   MaturitySkill,
+		Provenance: map[string]any{"source": "skillify", "from_playbook": pb.ID, "skill_id": slug},
+	})
+	if err != nil {
+		return Node{}, err
+	}
+	if err := s.store.CreateEdge(ctx, Edge{SrcID: skill.ID, EdgeType: EdgeDerivedFrom, DstID: pb.ID}); err != nil {
+		s.log.Warn("skill derived_from edge failed", "err", err)
+	}
+	md := renderSkillMarkdown(slug, skillDescription(pb.Title, pb.Body), pb.Body)
+	if err := s.skillSink.WriteSkill(ctx, slug, md); err != nil {
+		return skill, fmt.Errorf("knowledge: write SKILL.md: %w", err)
+	}
+	return skill, nil
 }
 
 // EmbedBackfillConfig tunes the background node-embedding loop.
