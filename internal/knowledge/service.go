@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -13,6 +14,7 @@ import (
 // (and give it a read-only handle to internal/memory as its feedstock).
 type Service struct {
 	store *Store
+	emb   Embedder // optional; set via WithEmbedder for semantic search + backfill
 	log   *slog.Logger
 }
 
@@ -81,4 +83,100 @@ func (s *Service) ProjectBrain(ctx context.Context, cwd string) (BrainView, erro
 		}
 	}
 	return view, nil
+}
+
+// WithEmbedder enables semantic search + the embed backfill (Phase 6).
+func (s *Service) WithEmbedder(emb Embedder) *Service {
+	s.emb = emb
+	return s
+}
+
+// SearchNodes embeds the query and returns the top-K most similar nodes.
+func (s *Service) SearchNodes(ctx context.Context, query string, topK int) ([]SearchHit, error) {
+	if s.emb == nil {
+		return nil, errors.New("knowledge: semantic search requires an embedder")
+	}
+	vecs, err := s.emb.Embed(ctx, []string{query})
+	if err != nil {
+		return nil, err
+	}
+	if len(vecs) == 0 || len(vecs[0]) == 0 {
+		return nil, errors.New("knowledge: embedder returned no vector")
+	}
+	return s.store.SearchNodes(ctx, s.emb.Name(), vecs[0], topK)
+}
+
+// EmbedBackfillConfig tunes the background node-embedding loop.
+type EmbedBackfillConfig struct {
+	Interval     time.Duration
+	InitialDelay time.Duration
+	Batch        int
+}
+
+func (c EmbedBackfillConfig) withDefaults() EmbedBackfillConfig {
+	if c.Interval <= 0 {
+		c.Interval = 5 * time.Minute
+	}
+	if c.InitialDelay <= 0 {
+		c.InitialDelay = 90 * time.Second
+	}
+	if c.Batch <= 0 {
+		c.Batch = 64
+	}
+	return c
+}
+
+// RunEmbedBackfill blocks until ctx is cancelled, embedding nodes that lack a
+// vector for the active embedder. No-op without an embedder. Mirrors the
+// projectdoc embed-backfill loop.
+func (s *Service) RunEmbedBackfill(ctx context.Context, cfg EmbedBackfillConfig) {
+	if s.emb == nil {
+		return
+	}
+	cfg = cfg.withDefaults()
+	s.log.Info("knowledge embed backfill running", "embedder", s.emb.Name())
+	timer := time.NewTimer(cfg.InitialDelay)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+		}
+		if err := s.embedOnce(ctx, cfg.Batch); err != nil && !errors.Is(err, context.Canceled) {
+			s.log.Warn("embed backfill cycle failed", "err", err)
+		}
+		timer.Reset(cfg.Interval)
+	}
+}
+
+func (s *Service) embedOnce(ctx context.Context, batch int) error {
+	nodes, err := s.store.ListNodesNeedingEmbedding(ctx, s.emb.Name(), batch)
+	if err != nil || len(nodes) == 0 {
+		return err
+	}
+	texts := make([]string, len(nodes))
+	for i, n := range nodes {
+		texts[i] = embedText(n)
+	}
+	vecs, err := s.emb.Embed(ctx, texts)
+	if err != nil {
+		return err
+	}
+	if len(vecs) != len(nodes) {
+		return nil
+	}
+	for i, n := range nodes {
+		if err := s.store.SetEmbedding(ctx, n.ID, s.emb.Name(), vecs[i]); err != nil {
+			s.log.Warn("set embedding failed", "id", n.ID, "err", err)
+		}
+	}
+	return nil
+}
+
+func embedText(n Node) string {
+	if n.Body == "" {
+		return n.Title
+	}
+	return n.Title + "\n" + n.Body
 }

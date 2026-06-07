@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -37,6 +38,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Get("/nodes/{id}/graph", h.neighborhood)
 		r.Post("/edges", h.createEdge)
 		r.Get("/brain", h.projectBrain)
+		r.Get("/search", h.search)
 	})
 }
 
@@ -128,6 +130,21 @@ func (h *Handlers) projectBrain(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, view)
+}
+
+func (h *Handlers) search(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query().Get("q")
+	if q == "" {
+		writeError(w, http.StatusBadRequest, errors.New("q is required"))
+		return
+	}
+	topK, _ := strconv.Atoi(r.URL.Query().Get("top_k"))
+	hits, err := h.svc.SearchNodes(r.Context(), q, topK)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"hits": hits})
 }
 
 func writeJSON(w http.ResponseWriter, code int, body any) {

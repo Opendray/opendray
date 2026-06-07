@@ -95,6 +95,7 @@ type App struct {
 	server               *http.Server
 	knowledgeAnchorer    *knowledge.Anchorer  // M-KG Phase 1 anchor sweep; nil when [knowledge] disabled
 	knowledgeReflector   *knowledge.Reflector // M-KG Phase 3 fact->playbook sweep; nil when disabled
+	knowledgeSvc         *knowledge.Service   // M-KG Phase 6 embed backfill; nil when disabled
 }
 
 // knowledgeMemorySource adapts *memory.Service to knowledge.MemorySource so
@@ -642,16 +643,19 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	var knowledgeHandlers *knowledge.Handlers
 	var knowledgeAnchorer *knowledge.Anchorer
 	var knowledgeReflector *knowledge.Reflector
+	var knowledgeSvc *knowledge.Service
 	if cfg.Knowledge.Enabled {
-		knowledgeHandlers = knowledge.NewHandlers(knowledge.NewService(st.Pool(), log), log)
+		knowledgeSvc = knowledge.NewService(st.Pool(), log)
 		if memorySvc != nil {
 			// Phase 1 — the anchorer reads episodic memory and lifts facts
 			// into the graph. Needs memory; without it we still serve CRUD.
+			knowledgeSvc.WithEmbedder(memorySvc.Embedder()) // Phase 6 — reuse memory's embedder
 			kgLLM := knowledgeLLM{reg: memoryWorkerRegistry}
 			knowledgeAnchorer = knowledge.NewAnchorer(st.Pool(), knowledgeMemorySource{mem: memorySvc}, log).
 				WithLLM(kgLLM)
 			knowledgeReflector = knowledge.NewReflector(st.Pool(), kgLLM, log)
 		}
+		knowledgeHandlers = knowledge.NewHandlers(knowledgeSvc, log)
 		log.Info("knowledge graph (M-KG) enabled", "anchorer", knowledgeAnchorer != nil)
 	}
 	// Inject the cross-agent goal+plan+journal banner into every
@@ -860,6 +864,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		server:               srv,
 		knowledgeAnchorer:    knowledgeAnchorer,
 		knowledgeReflector:   knowledgeReflector,
+		knowledgeSvc:         knowledgeSvc,
 	}, nil
 }
 
@@ -942,6 +947,9 @@ func (a *App) Run(ctx context.Context) error {
 	}
 	if a.knowledgeReflector != nil {
 		go a.knowledgeReflector.RunReflectSweep(ctx, knowledge.ReflectSweepConfig{})
+	}
+	if a.knowledgeSvc != nil {
+		go a.knowledgeSvc.RunEmbedBackfill(ctx, knowledge.EmbedBackfillConfig{})
 	}
 
 	// M-PB — backfill missing embeddings on the journal so the new

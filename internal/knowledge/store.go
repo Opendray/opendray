@@ -337,6 +337,92 @@ func (s *Store) ListProjectScopeKeys(ctx context.Context) ([]string, error) {
 	return out, rows.Err()
 }
 
+// SetEmbedding stores a node's vector + the embedder that produced it.
+func (s *Store) SetEmbedding(ctx context.Context, id, embedder string, vec []float32) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE knowledge_nodes
+		SET embedding = $1::vector, embedder = $2, embedding_at = now()
+		WHERE id = $3`, vectorLiteral(vec), embedder, id)
+	if err != nil {
+		return fmt.Errorf("knowledge: set embedding: %w", err)
+	}
+	return nil
+}
+
+// ListNodesNeedingEmbedding returns live nodes not yet embedded by embedder
+// (NULL vector, or embedded by a different embedder — drives convergence).
+func (s *Store) ListNodesNeedingEmbedding(ctx context.Context, embedder string, limit int) ([]Node, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+	rows, err := s.pool.Query(ctx, selectNodeSQL+`
+		WHERE archived_at IS NULL AND (embedding IS NULL OR embedder IS DISTINCT FROM $1)
+		ORDER BY updated_at DESC LIMIT $2`, embedder, limit)
+	if err != nil {
+		return nil, fmt.Errorf("knowledge: list nodes needing embedding: %w", err)
+	}
+	defer rows.Close()
+	out := []Node{}
+	for rows.Next() {
+		n, err := scanNode(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, n)
+	}
+	return out, rows.Err()
+}
+
+// SearchHit is a node plus its cosine similarity to a query vector.
+type SearchHit struct {
+	Node       Node    `json:"node"`
+	Similarity float64 `json:"similarity"`
+}
+
+// SearchNodes runs a cosine search over nodes embedded by the given embedder.
+func (s *Store) SearchNodes(ctx context.Context, embedder string, vec []float32, topK int) ([]SearchHit, error) {
+	if topK <= 0 {
+		topK = 10
+	}
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, kind, COALESCE(entity_type, ''), title, body, scope, scope_key,
+		       maturity, confidence, provenance, created_at, updated_at, archived_at,
+		       1 - (embedding <=> $1::vector) AS similarity
+		FROM knowledge_nodes
+		WHERE archived_at IS NULL AND embedding IS NOT NULL AND embedder = $2
+		ORDER BY embedding <=> $1::vector ASC
+		LIMIT $3`, vectorLiteral(vec), embedder, topK)
+	if err != nil {
+		return nil, fmt.Errorf("knowledge: search nodes: %w", err)
+	}
+	defer rows.Close()
+	out := []SearchHit{}
+	for rows.Next() {
+		var n Node
+		var kind, entityType, scope, maturity string
+		var confidence *float64
+		var provJSON []byte
+		var archivedAt *time.Time
+		var sim float64
+		if err := rows.Scan(&n.ID, &kind, &entityType, &n.Title, &n.Body, &scope,
+			&n.ScopeKey, &maturity, &confidence, &provJSON,
+			&n.CreatedAt, &n.UpdatedAt, &archivedAt, &sim); err != nil {
+			return nil, err
+		}
+		n.Kind = NodeKind(kind)
+		n.EntityType = EntityType(entityType)
+		n.Scope = Scope(scope)
+		n.Maturity = Maturity(maturity)
+		n.Confidence = confidence
+		n.ArchivedAt = archivedAt
+		if len(provJSON) > 0 {
+			_ = json.Unmarshal(provJSON, &n.Provenance)
+		}
+		out = append(out, SearchHit{Node: n, Similarity: sim})
+	}
+	return out, rows.Err()
+}
+
 const selectNodeSQL = `
 	SELECT id, kind, COALESCE(entity_type, ''), title, body, scope,
 	       scope_key, maturity, confidence, provenance,
