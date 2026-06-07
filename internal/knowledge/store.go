@@ -446,21 +446,24 @@ func (s *Store) PromoteNode(ctx context.Context, id string, scope Scope, scopeKe
 	return nil
 }
 
-// MergeDuplicateGlobalEntities collapses tech/tool entities (which are
-// inherently cross-project — npm, Go, PostgreSQL) that were created per-project
-// into a single global canonical, re-pointing edges onto it. Lone project-
-// scoped tech/tool entities are simply promoted to global. Idempotent (a clean
-// graph is a no-op), so it is safe to run on every anchor sweep. Returns the
-// number of duplicate nodes merged away.
+// MergeDuplicateGlobalEntities collapses entities that denote the same thing
+// into one canonical node, re-pointing edges onto it. Entities are grouped by
+// normalised title (NOT entity_type): the extractor assigns inconsistent types
+// to the same named entity — "opendray" as tool / service / project — so the
+// name is the identity. A group with duplicates (cross-project) collapses to a
+// single global node; a lone tech/tool entity is promoted to global (inherently
+// cross-project); other lone entities keep their project scope. Cwd anchor
+// entities are titled by path, hence unique → never merged. Idempotent (a clean
+// graph is a no-op). Returns the number of duplicate nodes merged away.
 func (s *Store) MergeDuplicateGlobalEntities(ctx context.Context) (int, error) {
 	type ent struct{ id, etype, title, scope string }
 	rows, err := s.pool.Query(ctx, `
 		SELECT id, entity_type, title, scope
 		FROM knowledge_nodes
-		WHERE kind = 'entity' AND entity_type IN ('tech','tool') AND archived_at IS NULL
+		WHERE kind = 'entity' AND archived_at IS NULL
 		ORDER BY created_at`)
 	if err != nil {
-		return 0, fmt.Errorf("knowledge: scan tech/tool entities: %w", err)
+		return 0, fmt.Errorf("knowledge: scan entities: %w", err)
 	}
 	var all []ent
 	for rows.Next() {
@@ -478,12 +481,22 @@ func (s *Store) MergeDuplicateGlobalEntities(ctx context.Context) (int, error) {
 
 	groups := map[string][]ent{}
 	for _, e := range all {
-		k := e.etype + "\x00" + strings.ToLower(strings.TrimSpace(e.title))
+		k := strings.ToLower(strings.TrimSpace(e.title))
+		if k == "" {
+			continue
+		}
 		groups[k] = append(groups[k], e)
 	}
 
 	merged := 0
 	for _, g := range groups {
+		lone := len(g) == 1
+		// A lone non-tech/tool entity keeps its project scope (it may be
+		// project-specific); only cross-project duplicates or inherently-global
+		// tech/tool entities collapse to global.
+		if lone && g[0].etype != "tech" && g[0].etype != "tool" {
+			continue
+		}
 		canonical := ""
 		for _, e := range g {
 			if e.scope == "global" {
@@ -491,7 +504,7 @@ func (s *Store) MergeDuplicateGlobalEntities(ctx context.Context) (int, error) {
 				break
 			}
 		}
-		if canonical != "" && len(g) == 1 {
+		if canonical != "" && lone {
 			continue // already a lone global entity — nothing to do
 		}
 		if canonical == "" {
@@ -501,8 +514,8 @@ func (s *Store) MergeDuplicateGlobalEntities(ctx context.Context) (int, error) {
 				WHERE id = $1`, canonical); err != nil {
 				return merged, fmt.Errorf("knowledge: promote canonical entity: %w", err)
 			}
-			if len(g) == 1 {
-				continue // single project node, now global — done
+			if lone {
+				continue // single entity, now global — done
 			}
 		}
 		for _, e := range g {
