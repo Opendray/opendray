@@ -55,10 +55,10 @@ func NewAnchorer(pool *pgxpool.Pool, mem MemorySource, log *slog.Logger) *Anchor
 
 const projectEntityIDPrefix = "ent-project-"
 
-// projectEntityID is a deterministic, idempotent id for a cwd's project
+// ProjectEntityID is a deterministic, idempotent id for a cwd's project
 // entity, so EnsureEntity is a no-op on repeat sweeps. The full cwd is kept
 // in scope_key + title; the id only needs to be stable and collision-free.
-func projectEntityID(cwd string) string {
+func ProjectEntityID(cwd string) string {
 	sum := sha256.Sum256([]byte(cwd))
 	return projectEntityIDPrefix + hex.EncodeToString(sum[:8])
 }
@@ -66,7 +66,7 @@ func projectEntityID(cwd string) string {
 // EnsureProjectEntity idempotently creates the canonical project entity for a
 // cwd and returns its node id.
 func (a *Anchorer) EnsureProjectEntity(ctx context.Context, cwd string) (string, error) {
-	id := projectEntityID(cwd)
+	id := ProjectEntityID(cwd)
 	if _, err := a.store.EnsureEntity(ctx, Node{
 		ID:         id,
 		Kind:       KindEntity,

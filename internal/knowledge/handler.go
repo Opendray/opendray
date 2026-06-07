@@ -34,7 +34,9 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Post("/nodes", h.createNode)
 		r.Get("/nodes/{id}", h.getNode)
 		r.Get("/nodes/{id}/edges", h.listEdges)
+		r.Get("/nodes/{id}/graph", h.neighborhood)
 		r.Post("/edges", h.createEdge)
+		r.Get("/brain", h.projectBrain)
 	})
 }
 
@@ -99,6 +101,33 @@ func (h *Handlers) createEdge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handlers) neighborhood(w http.ResponseWriter, r *http.Request) {
+	center, neighbors, err := h.svc.Neighborhood(r.Context(), chi.URLParam(r, "id"))
+	if errors.Is(err, ErrNotFound) {
+		writeError(w, http.StatusNotFound, err)
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"node": center, "neighbors": neighbors})
+}
+
+func (h *Handlers) projectBrain(w http.ResponseWriter, r *http.Request) {
+	cwd := r.URL.Query().Get("cwd")
+	if cwd == "" {
+		writeError(w, http.StatusBadRequest, errors.New("cwd is required"))
+		return
+	}
+	view, err := h.svc.ProjectBrain(r.Context(), cwd)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, view)
 }
 
 func writeJSON(w http.ResponseWriter, code int, body any) {

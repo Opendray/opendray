@@ -237,6 +237,69 @@ func (s *Store) AnchoredMemoryIDs(ctx context.Context, scopeKey string) (map[str
 	return out, rows.Err()
 }
 
+// Neighbor is a node reached from a center node via one edge.
+type Neighbor struct {
+	Node      Node     `json:"node"`
+	EdgeType  EdgeType `json:"edge_type"`
+	Direction string   `json:"direction"` // "out" = center->neighbor, "in" = neighbor->center
+}
+
+// Neighborhood returns a node plus its live 1-hop neighbors (both directions).
+// Powers the project-brain / graph views (Phase 2).
+func (s *Store) Neighborhood(ctx context.Context, id string) (Node, []Neighbor, error) {
+	center, err := s.GetNode(ctx, id)
+	if err != nil {
+		return Node{}, nil, err
+	}
+	edges, err := s.ListEdges(ctx, id)
+	if err != nil {
+		return Node{}, nil, err
+	}
+	ids := make([]string, 0, len(edges))
+	seen := map[string]struct{}{}
+	for _, e := range edges {
+		other := e.DstID
+		if e.DstID == id {
+			other = e.SrcID
+		}
+		if _, ok := seen[other]; !ok {
+			seen[other] = struct{}{}
+			ids = append(ids, other)
+		}
+	}
+	byID := map[string]Node{}
+	if len(ids) > 0 {
+		rows, err := s.pool.Query(ctx, selectNodeSQL+` WHERE archived_at IS NULL AND id = ANY($1)`, ids)
+		if err != nil {
+			return Node{}, nil, fmt.Errorf("knowledge: neighborhood nodes: %w", err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			n, err := scanNode(rows)
+			if err != nil {
+				return Node{}, nil, err
+			}
+			byID[n.ID] = n
+		}
+		if err := rows.Err(); err != nil {
+			return Node{}, nil, err
+		}
+	}
+	neighbors := make([]Neighbor, 0, len(edges))
+	for _, e := range edges {
+		other, dir := e.DstID, "out"
+		if e.DstID == id {
+			other, dir = e.SrcID, "in"
+		}
+		n, ok := byID[other]
+		if !ok {
+			continue // neighbor archived or missing
+		}
+		neighbors = append(neighbors, Neighbor{Node: n, EdgeType: e.EdgeType, Direction: dir})
+	}
+	return center, neighbors, nil
+}
+
 const selectNodeSQL = `
 	SELECT id, kind, COALESCE(entity_type, ''), title, body, scope,
 	       scope_key, maturity, confidence, provenance,
