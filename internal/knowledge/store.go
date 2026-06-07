@@ -534,6 +534,35 @@ func (s *Store) MergeDuplicateGlobalEntities(ctx context.Context) (int, error) {
 	return merged, nil
 }
 
+// FactIDByTitle returns the id of a live fact with the exact title in a project
+// scope — used to dedup identical anchored facts.
+func (s *Store) FactIDByTitle(ctx context.Context, scopeKey, title string) (string, bool, error) {
+	var id string
+	err := s.pool.QueryRow(ctx, `
+		SELECT id FROM knowledge_nodes
+		WHERE kind = 'fact' AND scope_key = $1 AND title = $2 AND archived_at IS NULL
+		LIMIT 1`, scopeKey, title).Scan(&id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, fmt.Errorf("knowledge: fact by title: %w", err)
+	}
+	return id, true, nil
+}
+
+// Reset wipes the entire knowledge graph. The graph is fully derived from
+// episodic memory, so the next anchor sweep rebuilds it from scratch with the
+// current logic. Destructive — exposed only on the admin/dual-auth surface.
+func (s *Store) Reset(ctx context.Context) error {
+	_, err := s.pool.Exec(ctx,
+		`TRUNCATE knowledge_edges, knowledge_fact_sources, knowledge_nodes CASCADE`)
+	if err != nil {
+		return fmt.Errorf("knowledge: reset: %w", err)
+	}
+	return nil
+}
+
 const selectNodeSQL = `
 	SELECT id, kind, COALESCE(entity_type, ''), title, body, scope,
 	       scope_key, maturity, confidence, provenance,

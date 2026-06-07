@@ -41,6 +41,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Post("/edges", h.createEdge)
 		r.Get("/brain", h.projectBrain)
 		r.Get("/search", h.search)
+		r.Post("/reset", h.reset)
 	})
 }
 
@@ -185,6 +186,14 @@ func (h *Handlers) search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"hits": hits})
+}
+
+func (h *Handlers) reset(w http.ResponseWriter, r *http.Request) {
+	if err := h.svc.Reset(r.Context()); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func writeJSON(w http.ResponseWriter, code int, body any) {

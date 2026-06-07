@@ -93,6 +93,9 @@ func (a *Anchorer) EnsureProjectEntity(ctx context.Context, cwd string) (string,
 // AnchorProject lifts not-yet-anchored memory facts for one cwd into the
 // graph. Returns the number of facts newly anchored this call.
 func (a *Anchorer) AnchorProject(ctx context.Context, cwd string, limit int) (int, error) {
+	if isEphemeralCwd(cwd) {
+		return 0, nil // skip throwaway /tmp-style cwds
+	}
 	projID, err := a.EnsureProjectEntity(ctx, cwd)
 	if err != nil {
 		return 0, err
@@ -121,9 +124,15 @@ func (a *Anchorer) AnchorProject(ctx context.Context, cwd string, limit int) (in
 
 func (a *Anchorer) anchorOne(ctx context.Context, projID string, row MemoryRow) error {
 	scopeKey := row.ScopeKey
+	title := factTitle(row.Text)
+	// Dedup: an identical fact already in this project → attach this memory to
+	// it instead of creating a duplicate node.
+	if existingID, ok, err := a.store.FactIDByTitle(ctx, scopeKey, title); err == nil && ok {
+		return a.store.LinkFactSource(ctx, existingID, row.ID)
+	}
 	node, err := a.store.CreateNode(ctx, Node{
 		Kind:       KindFact,
-		Title:      factTitle(row.Text),
+		Title:      title,
 		Scope:      ScopeProject,
 		ScopeKey:   scopeKey,
 		Maturity:   MaturityFact,
@@ -204,8 +213,18 @@ func entityScopeFor(t EntityType, cwd string) (Scope, string) {
 
 // factTitle makes a short display label from a memory fact. The full text is
 // NOT copied — it stays in memory, reachable via knowledge_fact_sources.
+// Imported .md memories carry a leading YAML frontmatter block (--- … ---);
+// we strip it so the title is the actual content, not "--- name: …".
 func factTitle(text string) string {
-	t := strings.TrimSpace(strings.ReplaceAll(text, "\n", " "))
+	t := strings.TrimSpace(text)
+	if strings.HasPrefix(t, "---") {
+		if i := strings.Index(t[3:], "\n---"); i >= 0 {
+			if body := strings.TrimSpace(t[3+i+4:]); body != "" {
+				t = body
+			}
+		}
+	}
+	t = strings.TrimSpace(strings.ReplaceAll(t, "\n", " "))
 	if len(t) > 120 {
 		t = strings.TrimSpace(t[:120]) + "…"
 	}
@@ -213,6 +232,23 @@ func factTitle(text string) string {
 		t = "(empty fact)"
 	}
 	return t
+}
+
+// isEphemeralCwd reports whether a cwd is a throwaway/temp dir (sessions run
+// from /tmp, /var/folders, etc.) — we don't want a project entity + facts for
+// those polluting the graph.
+func isEphemeralCwd(cwd string) bool {
+	if cwd == "" {
+		return true
+	}
+	c := strings.ToLower(cwd)
+	return c == "/tmp" ||
+		strings.HasPrefix(c, "/tmp/") ||
+		strings.HasPrefix(c, "/private/tmp") ||
+		strings.HasPrefix(c, "/var/folders/") ||
+		strings.HasPrefix(c, "/private/var/folders/") ||
+		strings.Contains(c, "/tmp.") ||
+		strings.Contains(c, "/.cache/")
 }
 
 // AnchorSweepConfig tunes the background sweep.

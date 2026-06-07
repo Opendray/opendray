@@ -193,6 +193,12 @@ func (s *Service) RenderForSpawn(ctx context.Context, cwd string, maxBytes int) 
 	return b.String(), nil
 }
 
+// Reset wipes the knowledge graph; the next anchor sweep re-derives it from
+// episodic memory with the current logic.
+func (s *Service) Reset(ctx context.Context) error {
+	return s.store.Reset(ctx)
+}
+
 func (s *Service) gatherForSpawn(ctx context.Context, kind NodeKind, cwd string) []Node {
 	proj, _ := s.store.ListNodes(ctx, NodeFilter{Kind: kind, Scope: ScopeProject, ScopeKey: cwd, Limit: 50})
 	global, _ := s.store.ListNodes(ctx, NodeFilter{Kind: kind, Scope: ScopeGlobal, Limit: 50})
