@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -443,6 +444,94 @@ func (s *Store) PromoteNode(ctx context.Context, id string, scope Scope, scopeKe
 		return ErrNotFound
 	}
 	return nil
+}
+
+// MergeDuplicateGlobalEntities collapses tech/tool entities (which are
+// inherently cross-project — npm, Go, PostgreSQL) that were created per-project
+// into a single global canonical, re-pointing edges onto it. Lone project-
+// scoped tech/tool entities are simply promoted to global. Idempotent (a clean
+// graph is a no-op), so it is safe to run on every anchor sweep. Returns the
+// number of duplicate nodes merged away.
+func (s *Store) MergeDuplicateGlobalEntities(ctx context.Context) (int, error) {
+	type ent struct{ id, etype, title, scope string }
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, entity_type, title, scope
+		FROM knowledge_nodes
+		WHERE kind = 'entity' AND entity_type IN ('tech','tool') AND archived_at IS NULL
+		ORDER BY created_at`)
+	if err != nil {
+		return 0, fmt.Errorf("knowledge: scan tech/tool entities: %w", err)
+	}
+	var all []ent
+	for rows.Next() {
+		var e ent
+		if err := rows.Scan(&e.id, &e.etype, &e.title, &e.scope); err != nil {
+			rows.Close()
+			return 0, err
+		}
+		all = append(all, e)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return 0, err
+	}
+
+	groups := map[string][]ent{}
+	for _, e := range all {
+		k := e.etype + "\x00" + strings.ToLower(strings.TrimSpace(e.title))
+		groups[k] = append(groups[k], e)
+	}
+
+	merged := 0
+	for _, g := range groups {
+		canonical := ""
+		for _, e := range g {
+			if e.scope == "global" {
+				canonical = e.id
+				break
+			}
+		}
+		if canonical != "" && len(g) == 1 {
+			continue // already a lone global entity — nothing to do
+		}
+		if canonical == "" {
+			canonical = g[0].id
+			if _, err := s.pool.Exec(ctx, `
+				UPDATE knowledge_nodes SET scope = 'global', scope_key = '', updated_at = now()
+				WHERE id = $1`, canonical); err != nil {
+				return merged, fmt.Errorf("knowledge: promote canonical entity: %w", err)
+			}
+			if len(g) == 1 {
+				continue // single project node, now global — done
+			}
+		}
+		for _, e := range g {
+			if e.id == canonical {
+				continue
+			}
+			edges, err := s.ListEdges(ctx, e.id)
+			if err != nil {
+				return merged, err
+			}
+			for _, ed := range edges {
+				src, dst := ed.SrcID, ed.DstID
+				if src == e.id {
+					src = canonical
+				}
+				if dst == e.id {
+					dst = canonical
+				}
+				// Re-point onto the canonical; CreateEdge validates (skips
+				// self-edges) + ON CONFLICT DO NOTHING (skips collisions).
+				_ = s.CreateEdge(ctx, Edge{SrcID: src, EdgeType: ed.EdgeType, DstID: dst})
+			}
+			if _, err := s.pool.Exec(ctx, `DELETE FROM knowledge_nodes WHERE id = $1`, e.id); err != nil {
+				return merged, fmt.Errorf("knowledge: delete duplicate entity: %w", err)
+			}
+			merged++
+		}
+	}
+	return merged, nil
 }
 
 const selectNodeSQL = `

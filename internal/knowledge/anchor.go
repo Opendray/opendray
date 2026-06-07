@@ -169,7 +169,8 @@ func (a *Anchorer) linkEntities(ctx context.Context, factID string, row MemoryRo
 // findOrCreateEntity canonicalises an extracted entity within the project
 // (exact, case-insensitive) and creates it when new.
 func (a *Anchorer) findOrCreateEntity(ctx context.Context, e ExtractedEntity, scopeKey string) (string, error) {
-	if existing, err := a.store.FindEntityByName(ctx, e.Type, e.Name, scopeKey); err == nil {
+	scope, key := entityScopeFor(e.Type, scopeKey)
+	if existing, err := a.store.FindEntityByName(ctx, e.Type, e.Name, key); err == nil {
 		return existing.ID, nil
 	} else if !errors.Is(err, ErrNotFound) {
 		return "", err
@@ -178,8 +179,8 @@ func (a *Anchorer) findOrCreateEntity(ctx context.Context, e ExtractedEntity, sc
 		Kind:       KindEntity,
 		EntityType: e.Type,
 		Title:      e.Name,
-		Scope:      ScopeProject,
-		ScopeKey:   scopeKey,
+		Scope:      scope,
+		ScopeKey:   key,
 		Maturity:   MaturityFact,
 		Provenance: map[string]any{"source": "extractor"},
 	})
@@ -187,6 +188,18 @@ func (a *Anchorer) findOrCreateEntity(ctx context.Context, e ExtractedEntity, sc
 		return "", err
 	}
 	return node.ID, nil
+}
+
+// entityScopeFor decides where an extracted entity lives. tech + tool are
+// inherently cross-project (npm, Go, PostgreSQL) → global singletons so they
+// are not duplicated per project; everything else stays project-scoped.
+func entityScopeFor(t EntityType, cwd string) (Scope, string) {
+	switch t {
+	case EntityTech, EntityTool:
+		return ScopeGlobal, ""
+	default:
+		return ScopeProject, cwd
+	}
 }
 
 // factTitle makes a short display label from a memory fact. The full text is
@@ -264,6 +277,13 @@ func (a *Anchorer) sweepOnce(ctx context.Context, perProject int) error {
 	}
 	if total > 0 {
 		a.log.Info("anchor sweep done", "anchored", total, "projects", len(cwds))
+	}
+	// Collapse cross-project duplicate tech/tool entities into global
+	// singletons (idempotent — a clean graph is a no-op).
+	if n, err := a.store.MergeDuplicateGlobalEntities(ctx); err != nil {
+		a.log.Warn("merge duplicate entities failed", "err", err)
+	} else if n > 0 {
+		a.log.Info("merged cross-project duplicate entities", "merged", n)
 	}
 	return nil
 }
