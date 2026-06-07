@@ -12,6 +12,7 @@ import {
   skillifyKnowledgeNode,
   type KnowledgeNode,
   type KnowledgeSearchHit,
+  type KnowledgeKind,
 } from '@/lib/knowledge'
 
 const KIND_STYLES: Record<string, string> = {
@@ -40,10 +41,15 @@ export function KnowledgePage() {
   const [cwd, setCwd] = useState('')
   const [hits, setHits] = useState<KnowledgeSearchHit[] | null>(null)
   const [selected, setSelected] = useState<KnowledgeNode | null>(null)
+  const [kind, setKind] = useState<'all' | KnowledgeKind>('entity')
 
   const browse = useQuery({
-    queryKey: ['knowledge-nodes'],
-    queryFn: () => listKnowledgeNodes(),
+    queryKey: ['knowledge-nodes', kind, cwd],
+    queryFn: () =>
+      listKnowledgeNodes({
+        kind: kind === 'all' ? undefined : kind,
+        scopeKey: cwd.trim() || undefined,
+      }),
   })
 
   const graph = useQuery({
@@ -122,6 +128,21 @@ export function KnowledgePage() {
               {t('web.knowledge.browse')}
             </button>
           )}
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1">
+          {(['all', 'entity', 'fact', 'playbook', 'skill'] as const).map((k) => (
+            <button
+              key={k}
+              onClick={() => setKind(k)}
+              className={`rounded px-2 py-1 text-xs ${
+                kind === k
+                  ? 'bg-primary text-primary-foreground'
+                  : 'border border-border text-muted-foreground'
+              }`}
+            >
+              {t(`web.knowledge.kinds.${k}`)}
+            </button>
+          ))}
         </div>
       </header>
 

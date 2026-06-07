@@ -2396,7 +2396,14 @@
       "promoted": "已提升为全局",
       "skillified": "已生成技能:{title}",
       "actionFailed": "操作失败",
-      "selectHint": "选择一个节点查看详情。"
+      "selectHint": "选择一个节点查看详情。",
+      "kinds": {
+        "all": "全部",
+        "entity": "实体",
+        "fact": "事实",
+        "playbook": "Playbook",
+        "skill": "技能"
+      }
     }
   },
   "more": {

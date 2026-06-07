@@ -1432,6 +1432,7 @@ class _TranslationsWebKnowledgeZh extends TranslationsWebKnowledgeEn {
 	@override String skillified({required Object title}) => '已生成技能:${title}';
 	@override String get actionFailed => '操作失败';
 	@override String get selectHint => '选择一个节点查看详情。';
+	@override late final _TranslationsWebKnowledgeKindsZh kinds = _TranslationsWebKnowledgeKindsZh._(_root);
 }
 
 // Path: more.identity
@@ -4927,6 +4928,20 @@ class _TranslationsWebExportImportsZh extends TranslationsWebExportImportsEn {
 	@override late final _TranslationsWebExportImportsColumnsZh columns = _TranslationsWebExportImportsColumnsZh._(_root);
 	@override String get noneCounts => '(无)';
 	@override String get listFailedToast => '加载导入列表失败';
+}
+
+// Path: web.knowledge.kinds
+class _TranslationsWebKnowledgeKindsZh extends TranslationsWebKnowledgeKindsEn {
+	_TranslationsWebKnowledgeKindsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get all => '全部';
+	@override String get entity => '实体';
+	@override String get fact => '事实';
+	@override String get playbook => 'Playbook';
+	@override String get skill => '技能';
 }
 
 // Path: more.items.integrations
@@ -9316,6 +9331,11 @@ extension on TranslationsZh {
 			'web.knowledge.skillified' => ({required Object title}) => '已生成技能:${title}',
 			'web.knowledge.actionFailed' => '操作失败',
 			'web.knowledge.selectHint' => '选择一个节点查看详情。',
+			'web.knowledge.kinds.all' => '全部',
+			'web.knowledge.kinds.entity' => '实体',
+			'web.knowledge.kinds.fact' => '事实',
+			'web.knowledge.kinds.playbook' => 'Playbook',
+			'web.knowledge.kinds.skill' => '技能',
 			'more.title' => '更多',
 			'more.identity.signedInAs' => '登录账号',
 			'more.identity.server' => '服务器',
@@ -9491,13 +9511,13 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => '创建失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',
 			'sessions.inspector.notes.personalHint' => '个人草稿 — 随输入自动保存。AI agent 不会写入这里。',
 			'sessions.inspector.notes.projectDocsHint' => '架构 / 规范 / 决策 / 计划 / 回顾 — 通常由 agent 撰写或维护。',
 			'sessions.inspector.notes.mappingCleared' => '映射已清除 — 使用默认值',
 			'sessions.inspector.notes.mappedTo' => ({required Object path}) => '已映射到 ${path}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.cancelTooltip' => '取消',
 			'sessions.inspector.notes.newDocTooltip' => '新建文档',
 			'sessions.inspector.notes.noProjectMapping' => '无法为此会话解析项目映射。检查网关是否配置了笔记库，以及会话的 cwd 是否已设置。',
@@ -10005,13 +10025,13 @@ extension on TranslationsZh {
 			'backupSchedules.okMsgDelete' => '计划已删除。',
 			'backupSchedules.errorPrefixCreate' => '创建失败',
 			'backupSchedules.errorPrefixUpdate' => '更新失败',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.errorPrefixDelete' => '删除失败',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => '移除目标 ${targetId} 的定期规格。已存在的备份不受影响。',
 			'backupSchedules.emptyList' => '暂无计划。\n点击「新建」创建一个。',
 			'backupSchedules.validatePickTarget' => '请选择一个目标。',
 			'backupSchedules.validateInterval' => '间隔必须大于 0。',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.formTitleEdit' => '编辑计划',
 			'backupSchedules.formTitleNew' => '新建计划',
 			'backupSchedules.saveButtonEdit' => '保存',
@@ -10519,13 +10539,13 @@ extension on TranslationsZh {
 			'settings.changeCredentials.title' => '修改凭据',
 			'settings.changeCredentials.explanation' => '验证当前密码，然后选择新凭据。其他已登录会话将全部失效。',
 			'settings.changeCredentials.currentPassword' => '当前密码',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.newUsername' => '新用户名',
 			'settings.changeCredentials.newPassword' => '新密码',
 			'settings.changeCredentials.confirmPassword' => '确认新密码',
 			'settings.changeCredentials.validatorRequired' => '必填',
 			'settings.changeCredentials.passwordHelper' => '至少 8 个字符',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.passwordTooShort' => '至少需要 8 个字符',
 			'settings.changeCredentials.passwordMismatch' => '与新密码不一致',
 			'settings.changeCredentials.updatedSnack' => '凭据已更新。',

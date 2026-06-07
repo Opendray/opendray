@@ -1432,6 +1432,7 @@ class _TranslationsWebKnowledgeEs extends TranslationsWebKnowledgeEn {
 	@override String skillified({required Object title}) => 'Habilidad creada: ${title}';
 	@override String get actionFailed => 'La acción falló';
 	@override String get selectHint => 'Selecciona un nodo para ver los detalles.';
+	@override late final _TranslationsWebKnowledgeKindsEs kinds = _TranslationsWebKnowledgeKindsEs._(_root);
 }
 
 // Path: more.identity
@@ -4927,6 +4928,20 @@ class _TranslationsWebExportImportsEs extends TranslationsWebExportImportsEn {
 	@override late final _TranslationsWebExportImportsColumnsEs columns = _TranslationsWebExportImportsColumnsEs._(_root);
 	@override String get noneCounts => '(ninguno)';
 	@override String get listFailedToast => 'No se pudieron listar las importaciones';
+}
+
+// Path: web.knowledge.kinds
+class _TranslationsWebKnowledgeKindsEs extends TranslationsWebKnowledgeKindsEn {
+	_TranslationsWebKnowledgeKindsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get all => 'Todos';
+	@override String get entity => 'Entidades';
+	@override String get fact => 'Hechos';
+	@override String get playbook => 'Guías';
+	@override String get skill => 'Habilidades';
 }
 
 // Path: more.items.integrations
@@ -9316,6 +9331,11 @@ extension on TranslationsEs {
 			'web.knowledge.skillified' => ({required Object title}) => 'Habilidad creada: ${title}',
 			'web.knowledge.actionFailed' => 'La acción falló',
 			'web.knowledge.selectHint' => 'Selecciona un nodo para ver los detalles.',
+			'web.knowledge.kinds.all' => 'Todos',
+			'web.knowledge.kinds.entity' => 'Entidades',
+			'web.knowledge.kinds.fact' => 'Hechos',
+			'web.knowledge.kinds.playbook' => 'Guías',
+			'web.knowledge.kinds.skill' => 'Habilidades',
 			'more.title' => 'Más',
 			'more.identity.signedInAs' => 'Sesión iniciada como',
 			'more.identity.server' => 'Servidor',
@@ -9491,13 +9511,13 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Falló al crear: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => 'Falló al crear: ${error}',
 			'sessions.inspector.notes.personalHint' => 'Bloc de notas personal. Se guarda automáticamente mientras escribes. Los agentes de IA no escriben aquí.',
 			'sessions.inspector.notes.projectDocsHint' => 'Arquitectura / spec / decisiones / plan / retrospectivas. Normalmente redactados o mantenidos por un agente.',
 			'sessions.inspector.notes.mappingCleared' => 'Asignación borrada. Usando el valor predeterminado',
 			'sessions.inspector.notes.mappedTo' => ({required Object path}) => 'Asignado a ${path}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.cancelTooltip' => 'Cancelar',
 			'sessions.inspector.notes.newDocTooltip' => 'Nuevo documento',
 			'sessions.inspector.notes.noProjectMapping' => 'No se pudo resolver una asignación de proyecto para esta session. Comprueba que el gateway tenga configurado un almacén de notas y que el cwd de la session esté establecido.',
@@ -10005,13 +10025,13 @@ extension on TranslationsEs {
 			'backupSchedules.okMsgDelete' => 'Programación eliminada.',
 			'backupSchedules.errorPrefixCreate' => 'Error al crear',
 			'backupSchedules.errorPrefixUpdate' => 'Error al actualizar',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.errorPrefixDelete' => 'Error al eliminar',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Elimina la especificación recurrente para el destino ${targetId}. Los blobs de copia de seguridad existentes no se modifican.',
 			'backupSchedules.emptyList' => 'Aún no hay programaciones.\nToca "Nueva" para crear una.',
 			'backupSchedules.validatePickTarget' => 'Elige un destino.',
 			'backupSchedules.validateInterval' => 'El intervalo debe ser > 0.',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.formTitleEdit' => 'Editar programación',
 			'backupSchedules.formTitleNew' => 'Nueva programación',
 			'backupSchedules.saveButtonEdit' => 'Guardar',
@@ -10519,13 +10539,13 @@ extension on TranslationsEs {
 			'settings.changeCredentials.title' => 'Cambiar credenciales',
 			'settings.changeCredentials.explanation' => 'Verifica tu contraseña actual y luego elige nuevas credenciales. Todas las demás sessions con sesión iniciada se revocarán.',
 			'settings.changeCredentials.currentPassword' => 'Contraseña actual',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.newUsername' => 'Nuevo usuario',
 			'settings.changeCredentials.newPassword' => 'Nueva contraseña',
 			'settings.changeCredentials.confirmPassword' => 'Confirma la nueva contraseña',
 			'settings.changeCredentials.validatorRequired' => 'Obligatorio',
 			'settings.changeCredentials.passwordHelper' => 'Al menos 8 caracteres',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.passwordTooShort' => 'Debe tener al menos 8 caracteres',
 			'settings.changeCredentials.passwordMismatch' => 'No coincide con la nueva contraseña',
 			'settings.changeCredentials.updatedSnack' => 'Credenciales actualizadas.',

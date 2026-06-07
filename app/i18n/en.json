@@ -2396,7 +2396,14 @@
       "promoted": "Promoted to global",
       "skillified": "Skill created: {title}",
       "actionFailed": "Action failed",
-      "selectHint": "Select a node to see details."
+      "selectHint": "Select a node to see details.",
+      "kinds": {
+        "all": "All",
+        "entity": "Entities",
+        "fact": "Facts",
+        "playbook": "Playbooks",
+        "skill": "Skills"
+      }
     }
   },
   "more": {

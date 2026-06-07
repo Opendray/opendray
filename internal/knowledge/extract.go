@@ -20,12 +20,15 @@ type ExtractedEntity struct {
 	Type EntityType
 }
 
-const entityExtractSystem = `You extract canonical entities from a single project knowledge fact.
+const entityExtractSystem = `You extract the few CANONICAL, REUSABLE entities named in one project fact.
 Return ONLY compact JSON: {"entities":[{"name":"...","type":"..."}]}
 "type" MUST be exactly one of: service, host, project, tool, decision, tech, person.
 Rules:
-- name = the canonical proper name (e.g. "PostgreSQL", "kv01") — never "the postgres db".
-- Prefer few, high-confidence entities; omit vague mentions.
+- AT MOST 3 entities; fewer is better. If the fact names none, return {"entities":[]}.
+- Only NAMED, specific things (e.g. "PostgreSQL", "kv01", "pnpm"). Do NOT extract
+  generic concepts, features, adjectives, or activities (skip "app", "feature",
+  "AR", "measurement", "the database", "industrial-grade").
+- name = the canonical proper name only, never a phrase.
 - Output JSON only: no prose, no markdown fences.`
 
 // ExtractEntities asks the LLM to pull entities from a fact and returns the
@@ -73,6 +76,11 @@ func parseExtracted(raw string) []ExtractedEntity {
 		}
 		seen[key] = struct{}{}
 		out = append(out, ExtractedEntity{Name: name, Type: et})
+	}
+	// Hard cap as a guard against an over-eager model, even if the prompt
+	// is ignored — keeps the graph from bloating with low-value entities.
+	if len(out) > 4 {
+		out = out[:4]
 	}
 	return out
 }

@@ -2396,7 +2396,14 @@
       "promoted": "Promovido a global",
       "skillified": "Habilidad creada: {title}",
       "actionFailed": "La acción falló",
-      "selectHint": "Selecciona un nodo para ver los detalles."
+      "selectHint": "Selecciona un nodo para ver los detalles.",
+      "kinds": {
+        "all": "Todos",
+        "entity": "Entidades",
+        "fact": "Hechos",
+        "playbook": "Guías",
+        "skill": "Habilidades"
+      }
     }
   },
   "more": {

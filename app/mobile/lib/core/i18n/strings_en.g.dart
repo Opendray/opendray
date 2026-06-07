@@ -2842,6 +2842,8 @@ class TranslationsWebKnowledgeEn {
 
 	/// en: 'Select a node to see details.'
 	String get selectHint => 'Select a node to see details.';
+
+	late final TranslationsWebKnowledgeKindsEn kinds = TranslationsWebKnowledgeKindsEn.internal(_root);
 }
 
 // Path: more.identity
@@ -9555,6 +9557,30 @@ class TranslationsWebExportImportsEn {
 	String get listFailedToast => 'Failed to list imports';
 }
 
+// Path: web.knowledge.kinds
+class TranslationsWebKnowledgeKindsEn {
+	TranslationsWebKnowledgeKindsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'All'
+	String get all => 'All';
+
+	/// en: 'Entities'
+	String get entity => 'Entities';
+
+	/// en: 'Facts'
+	String get fact => 'Facts';
+
+	/// en: 'Playbooks'
+	String get playbook => 'Playbooks';
+
+	/// en: 'Skills'
+	String get skill => 'Skills';
+}
+
 // Path: more.items.integrations
 class TranslationsMoreItemsIntegrationsEn {
 	TranslationsMoreItemsIntegrationsEn.internal(this._root);
@@ -15780,6 +15806,11 @@ extension on Translations {
 			'web.knowledge.skillified' => ({required Object title}) => 'Skill created: ${title}',
 			'web.knowledge.actionFailed' => 'Action failed',
 			'web.knowledge.selectHint' => 'Select a node to see details.',
+			'web.knowledge.kinds.all' => 'All',
+			'web.knowledge.kinds.entity' => 'Entities',
+			'web.knowledge.kinds.fact' => 'Facts',
+			'web.knowledge.kinds.playbook' => 'Playbooks',
+			'web.knowledge.kinds.skill' => 'Skills',
 			'more.title' => 'More',
 			'more.identity.signedInAs' => 'Signed in as',
 			'more.identity.server' => 'Server',
@@ -15955,13 +15986,13 @@ extension on Translations {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => 'Create failed: ${error}',
 			'sessions.inspector.notes.personalHint' => 'Personal scratchpad — auto-saves as you type. AI agents do not write here.',
 			'sessions.inspector.notes.projectDocsHint' => 'Architecture / spec / decisions / plan / retros — typically authored or maintained by an agent.',
 			'sessions.inspector.notes.mappingCleared' => 'Mapping cleared — using default',
 			'sessions.inspector.notes.mappedTo' => ({required Object path}) => 'Mapped to ${path}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.cancelTooltip' => 'Cancel',
 			'sessions.inspector.notes.newDocTooltip' => 'New doc',
 			'sessions.inspector.notes.noProjectMapping' => 'Could not resolve a project mapping for this session. Check that the gateway has a notes vault configured and that the session cwd is set.',
@@ -16469,13 +16500,13 @@ extension on Translations {
 			'backupSchedules.okMsgDelete' => 'Schedule deleted.',
 			'backupSchedules.errorPrefixCreate' => 'Create failed',
 			'backupSchedules.errorPrefixUpdate' => 'Update failed',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.errorPrefixDelete' => 'Delete failed',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Removes the recurring spec for target ${targetId}. Existing backup blobs are not touched.',
 			'backupSchedules.emptyList' => 'No schedules yet.\nTap "New" to create one.',
 			'backupSchedules.validatePickTarget' => 'Pick a target.',
 			'backupSchedules.validateInterval' => 'Interval must be > 0.',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.formTitleEdit' => 'Edit schedule',
 			'backupSchedules.formTitleNew' => 'New schedule',
 			'backupSchedules.saveButtonEdit' => 'Save',
@@ -16983,13 +17014,13 @@ extension on Translations {
 			'settings.changeCredentials.title' => 'Change credentials',
 			'settings.changeCredentials.explanation' => 'Verify your current password, then pick new credentials. All other signed-in sessions will be revoked.',
 			'settings.changeCredentials.currentPassword' => 'Current password',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.newUsername' => 'New username',
 			'settings.changeCredentials.newPassword' => 'New password',
 			'settings.changeCredentials.confirmPassword' => 'Confirm new password',
 			'settings.changeCredentials.validatorRequired' => 'Required',
 			'settings.changeCredentials.passwordHelper' => 'At least 8 characters',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.passwordTooShort' => 'Must be at least 8 characters',
 			'settings.changeCredentials.passwordMismatch' => 'Doesn\'t match the new password',
 			'settings.changeCredentials.updatedSnack' => 'Credentials updated.',

@@ -19,6 +19,7 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
   AsyncValue<List<KnowledgeNode>> _state = const AsyncValue.loading();
   final _searchCtrl = TextEditingController();
   bool _searching = false;
+  String _kind = 'entity';
 
   @override
   void initState() {
@@ -38,7 +39,9 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
       _searching = false;
     });
     try {
-      final nodes = await ref.read(knowledgeApiProvider).list();
+      final nodes = await ref
+          .read(knowledgeApiProvider)
+          .list(kind: _kind == 'all' ? null : _kind);
       if (!mounted) return;
       setState(() => _state = AsyncValue.data(nodes));
     } on ApiException catch (e) {
@@ -81,6 +84,21 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
     );
   }
 
+  String _kindLabel(String k) {
+    switch (k) {
+      case 'entity':
+        return t.web.knowledge.kinds.entity;
+      case 'fact':
+        return t.web.knowledge.kinds.fact;
+      case 'playbook':
+        return t.web.knowledge.kinds.playbook;
+      case 'skill':
+        return t.web.knowledge.kinds.skill;
+      default:
+        return t.web.knowledge.kinds.all;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,6 +125,35 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
                     : null,
                 border: const OutlineInputBorder(),
                 isDense: true,
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 44,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  for (final k in const [
+                    'all',
+                    'entity',
+                    'fact',
+                    'playbook',
+                    'skill',
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ChoiceChip(
+                        label: Text(_kindLabel(k)),
+                        selected: _kind == k,
+                        onSelected: (_) {
+                          setState(() => _kind = k);
+                          if (!_searching) _load();
+                        },
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
