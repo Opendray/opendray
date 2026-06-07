@@ -669,6 +669,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			knowledgeAnchorer = knowledge.NewAnchorer(st.Pool(), knowledgeMemorySource{mem: memorySvc}, log).
 				WithLLM(kgLLM)
 			knowledgeReflector = knowledge.NewReflector(st.Pool(), kgLLM, log)
+			knowledgeSvc.WithReanchor(func(c context.Context) error {
+				return knowledgeAnchorer.AnchorAll(c, 500)
+			})
 		}
 		knowledgeHandlers = knowledge.NewHandlers(knowledgeSvc, log)
 		log.Info("knowledge graph (M-KG) enabled", "anchorer", knowledgeAnchorer != nil)

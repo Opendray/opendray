@@ -285,14 +285,17 @@ func (a *Anchorer) RunAnchorSweep(ctx context.Context, cfg AnchorSweepConfig) {
 			return
 		case <-timer.C:
 		}
-		if err := a.sweepOnce(ctx, cfg.PerProject); err != nil && !errors.Is(err, context.Canceled) {
+		if err := a.AnchorAll(ctx, cfg.PerProject); err != nil && !errors.Is(err, context.Canceled) {
 			a.log.Warn("anchor sweep cycle failed", "err", err)
 		}
 		timer.Reset(cfg.Interval)
 	}
 }
 
-func (a *Anchorer) sweepOnce(ctx context.Context, perProject int) error {
+// AnchorAll runs one full anchoring pass across all projects. Exported so the
+// reset path can re-derive the graph immediately instead of waiting for the
+// next scheduled sweep.
+func (a *Anchorer) AnchorAll(ctx context.Context, perProject int) error {
 	cwds, err := a.mem.ListProjectKeys(ctx)
 	if err != nil {
 		return err

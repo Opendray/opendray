@@ -16,8 +16,9 @@ import (
 // (and give it a read-only handle to internal/memory as its feedstock).
 type Service struct {
 	store     *Store
-	emb       Embedder  // optional; set via WithEmbedder for semantic search + backfill
-	skillSink SkillSink // optional; set via WithSkillSink to render promoted skills
+	emb       Embedder                    // optional; semantic search + backfill
+	skillSink SkillSink                   // optional; render promoted skills
+	reanchor  func(context.Context) error // optional; re-derive the graph after reset
 	log       *slog.Logger
 }
 
@@ -193,10 +194,28 @@ func (s *Service) RenderForSpawn(ctx context.Context, cwd string, maxBytes int) 
 	return b.String(), nil
 }
 
-// Reset wipes the knowledge graph; the next anchor sweep re-derives it from
-// episodic memory with the current logic.
+// WithReanchor wires a re-derive trigger used after Reset so the graph rebuilds
+// immediately rather than waiting for the next scheduled sweep.
+func (s *Service) WithReanchor(fn func(context.Context) error) *Service {
+	s.reanchor = fn
+	return s
+}
+
+// Reset wipes the knowledge graph and kicks off a background re-derive from
+// episodic memory (with the current logic). The re-derive runs detached so the
+// HTTP response returns immediately.
 func (s *Service) Reset(ctx context.Context) error {
-	return s.store.Reset(ctx)
+	if err := s.store.Reset(ctx); err != nil {
+		return err
+	}
+	if s.reanchor != nil {
+		go func() {
+			if err := s.reanchor(context.Background()); err != nil {
+				s.log.Warn("re-anchor after reset failed", "err", err)
+			}
+		}()
+	}
+	return nil
 }
 
 func (s *Service) gatherForSpawn(ctx context.Context, kind NodeKind, cwd string) []Node {
