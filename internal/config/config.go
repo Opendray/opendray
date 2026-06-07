@@ -24,6 +24,7 @@ type Config struct {
 	Providers ProvidersConfig `toml:"providers" json:"providers"`
 	Memory    MemoryConfig    `toml:"memory" json:"memory"`
 	Backup    BackupConfig    `toml:"backup" json:"backup"`
+	Knowledge KnowledgeConfig `toml:"knowledge" json:"knowledge"`
 
 	// FilePath is the path config.toml was loaded from. Set by Load
 	// after a successful read so the runtime can find the same file
@@ -395,6 +396,18 @@ type BackupConfig struct {
 	PgRestorePath string `toml:"pg_restore_path" json:"pg_restore_path"`
 }
 
+// KnowledgeConfig gates the M-KG structured knowledge graph (see
+// docs/knowledge-graph-redesign.md). The tier is DB-native and grows on top
+// of the memory system; it is OFF by default, so when disabled the gateway
+// behaves exactly like the memory-only (M-U) build. Decoupling rule:
+// internal/knowledge reads internal/memory, never the reverse.
+type KnowledgeConfig struct {
+	// Enabled turns the whole knowledge tier on. When false the
+	// knowledge_* tables exist but stay empty and no routes are mounted.
+	// Default false.
+	Enabled bool `toml:"enabled" json:"enabled"`
+}
+
 type AdminConfig struct {
 	User     string `toml:"user" json:"user"`
 	Password string `toml:"password" json:"password"`
@@ -540,6 +553,9 @@ func applyEnv(cfg *Config) {
 	}
 	if v := os.Getenv("OPENDRAY_BACKUP_PG_RESTORE_PATH"); v != "" {
 		cfg.Backup.PgRestorePath = v
+	}
+	if v := os.Getenv("OPENDRAY_KNOWLEDGE_ENABLED"); v == "1" || v == "true" {
+		cfg.Knowledge.Enabled = true
 	}
 }
 

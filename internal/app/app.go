@@ -42,6 +42,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/gitactivity"
 	githost "github.com/opendray/opendray-v2/internal/githost"
 	"github.com/opendray/opendray-v2/internal/integration"
+	"github.com/opendray/opendray-v2/internal/knowledge"
 	mcpapi "github.com/opendray/opendray-v2/internal/mcp"
 	"github.com/opendray/opendray-v2/internal/memconflict"
 	"github.com/opendray/opendray-v2/internal/memhealth"
@@ -590,6 +591,14 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		memconflict.SchedulerConfig{},
 	)
 	projectDocHandlers := projectdoc.NewHandlers(projectDocSvc, log)
+	// M-KG Phase 0 — structured knowledge graph (arc: knowledge-graph-redesign).
+	// OFF by default. Decoupled: reads memory, never the reverse; disabling
+	// returns exact memory-only (M-U) behaviour.
+	var knowledgeHandlers *knowledge.Handlers
+	if cfg.Knowledge.Enabled {
+		knowledgeHandlers = knowledge.NewHandlers(knowledge.NewService(st.Pool(), log), log)
+		log.Info("knowledge graph (M-KG) enabled")
+	}
 	// Inject the cross-agent goal+plan+journal banner into every
 	// spawned session's system prompt. Composed alongside the
 	// memory-layer-5 banner (ambient injector) inside the catalog
@@ -756,6 +765,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				channelHandlers.Mount(r)
 				memoryHandlers.Mount(r)
 				projectDocHandlers.Mount(r)
+				if knowledgeHandlers != nil {
+					knowledgeHandlers.Mount(r)
+				}
 				r.Get("/integrations/_events", eventsHandler.Serve)
 			})
 		},
