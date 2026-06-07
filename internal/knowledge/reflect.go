@@ -15,10 +15,27 @@ import (
 // when a repeatable how-to emerges, drafts a playbook node — the fact ->
 // playbook step on the maturity axis (the literal "self-evolution"). LLM-
 // driven and best-effort; a no-op without an LLM or below the fact threshold.
+// JournalEntry is one project work-trace (a session journal entry) — the real
+// record of what was done / fixed / learned. It is the PRIMARY feedstock for
+// distilling procedural playbooks (declarative facts alone are too thin).
+type JournalEntry struct {
+	Title     string
+	Content   string
+	Kind      string
+	CreatedAt time.Time
+}
+
+// JournalSource is the read-only view of the project journal the reflector
+// needs. The app wires a projectdoc-backed adapter (one-way dependency rule).
+type JournalSource interface {
+	ListJournal(ctx context.Context, scopeKey string, limit int) ([]JournalEntry, error)
+}
+
 type Reflector struct {
-	store *Store
-	llm   LLM
-	log   *slog.Logger
+	store   *Store
+	llm     LLM
+	journal JournalSource // optional; work-trace feedstock for playbooks
+	log     *slog.Logger
 }
 
 // NewReflector builds a Reflector over the shared pool and an LLM.
@@ -29,6 +46,13 @@ func NewReflector(pool *pgxpool.Pool, llm LLM, log *slog.Logger) *Reflector {
 	return &Reflector{store: NewStore(pool), llm: llm, log: log.With("component", "knowledge.reflect")}
 }
 
+// WithJournal wires the project journal as the primary reflection feedstock so
+// playbooks are distilled from real work-traces, not just declarative facts.
+func (r *Reflector) WithJournal(src JournalSource) *Reflector {
+	r.journal = src
+	return r
+}
+
 type draftPlaybook struct {
 	Title       string   `json:"title"`
 	AppliesWhen string   `json:"applies_when"`
@@ -36,14 +60,16 @@ type draftPlaybook struct {
 	Pitfalls    []string `json:"pitfalls"`
 }
 
-const reflectSystem = `You distill durable PROCEDURAL knowledge (playbooks) from a project's facts.
-Given the facts and the titles of playbooks that already exist, output ONLY new, genuinely reusable playbooks as JSON:
+const reflectSystem = `You distill durable, reusable PROCEDURAL knowledge (playbooks) from a project's work log.
+The WORK LOG holds real session traces — what was built, how a bug was root-caused and fixed, what was decided. Mine it for repeatable how-tos.
+Output ONLY new, genuinely reusable playbooks as JSON:
 {"playbooks":[{"title":"...","applies_when":"...","steps":["..."],"pitfalls":["..."]}]}
 Rules:
-- Emit a playbook ONLY when the facts support a repeatable how-to. If none, return {"playbooks":[]}.
+- Emit a playbook ONLY when the log supports a CONCRETE, repeatable procedure someone could follow next time. If nothing rises to that bar, return {"playbooks":[]}.
+- Prefer fix-with-root-cause and multi-step how-tos. NEVER turn a single declarative fact (a preference, a value, a config) into a playbook.
+- title = short imperative, e.g. "Ship an unreleased build to the local Mac".
+- applies_when = the trigger/situation. steps = concrete + ordered, reusing the real commands / paths / file names from the log. pitfalls = the actual failure modes that were hit.
 - Never duplicate an existing playbook title.
-- title = short imperative, e.g. "Deploy a Go service to Proxmox LXC".
-- steps = concrete + ordered; pitfalls = known failure modes.
 - JSON only: no prose, no markdown fences.`
 
 // ReflectProject drafts new playbooks for one project from its facts. Returns
@@ -53,14 +79,30 @@ func (r *Reflector) ReflectProject(ctx context.Context, scopeKey string, minFact
 	if err != nil {
 		return 0, err
 	}
-	if len(facts) < minFacts {
+	var journal []JournalEntry
+	if r.journal != nil {
+		if js, jerr := r.journal.ListJournal(ctx, scopeKey, 50); jerr != nil {
+			r.log.Warn("reflect: list journal failed", "cwd", scopeKey, "err", jerr)
+		} else {
+			journal = js
+		}
+	}
+	// Need real signal: a work-trace journal OR a minimum number of facts.
+	if len(journal) == 0 && len(facts) < minFacts {
+		return 0, nil
+	}
+	projID := ProjectEntityID(scopeKey)
+	// Dirty-check — skip the (paid) LLM call when the feedstock is unchanged
+	// since the last reflection. This is the main steady-state token saving.
+	sig := reflectSignature(facts, journal)
+	if prev, _ := r.store.ReflectSig(ctx, projID); prev != "" && prev == sig {
 		return 0, nil
 	}
 	existing, err := r.store.ListNodes(ctx, NodeFilter{Kind: KindPlaybook, Scope: ScopeProject, ScopeKey: scopeKey, Limit: 200})
 	if err != nil {
 		return 0, err
 	}
-	raw, err := r.llm.Complete(ctx, reflectSystem, buildReflectInput(facts, existing))
+	raw, err := r.llm.Complete(ctx, reflectSystem, buildReflectInput(journal, facts, existing))
 	if err != nil {
 		return 0, err
 	}
@@ -68,7 +110,6 @@ func (r *Reflector) ReflectProject(ctx context.Context, scopeKey string, minFact
 	for _, p := range existing {
 		existingTitles[strings.ToLower(strings.TrimSpace(p.Title))] = struct{}{}
 	}
-	projID := ProjectEntityID(scopeKey)
 	n := 0
 	for _, d := range parsePlaybooks(raw) {
 		title := strings.TrimSpace(d.Title)
@@ -95,16 +136,50 @@ func (r *Reflector) ReflectProject(ctx context.Context, scopeKey string, minFact
 		existingTitles[strings.ToLower(title)] = struct{}{}
 		n++
 	}
+	// Record the feedstock signature so an unchanged project is skipped next sweep.
+	if err := r.store.SetReflectSig(ctx, projID, sig); err != nil {
+		r.log.Warn("reflect: set sig failed", "cwd", scopeKey, "err", err)
+	}
 	return n, nil
 }
 
-func buildReflectInput(facts, existing []Node) string {
+// reflectSignature fingerprints a project's feedstock so an unchanged project
+// can be skipped (counts + newest journal time catch new facts / journal).
+func reflectSignature(facts []Node, journal []JournalEntry) string {
+	var newest int64
+	for _, j := range journal {
+		if u := j.CreatedAt.Unix(); u > newest {
+			newest = u
+		}
+	}
+	return fmt.Sprintf("f%d:j%d:%d", len(facts), len(journal), newest)
+}
+
+func buildReflectInput(journal []JournalEntry, facts, existing []Node) string {
 	var b strings.Builder
-	b.WriteString("FACTS:\n")
-	for _, f := range facts {
-		b.WriteString("- ")
-		b.WriteString(f.Title)
-		b.WriteByte('\n')
+	if len(journal) > 0 {
+		b.WriteString("WORK LOG (real session traces — what was built, root-caused, fixed, decided; the primary source for procedures):\n")
+		for _, j := range journal {
+			b.WriteString("- ")
+			if t := strings.TrimSpace(j.Title); t != "" {
+				b.WriteString(t)
+				b.WriteString(": ")
+			}
+			c := strings.TrimSpace(j.Content)
+			if len(c) > 600 {
+				c = c[:600] + "…"
+			}
+			b.WriteString(strings.ReplaceAll(c, "\n", " "))
+			b.WriteByte('\n')
+		}
+	}
+	if len(facts) > 0 {
+		b.WriteString("\nKNOWN FACTS (supporting context — do not turn a lone fact into a playbook):\n")
+		for _, f := range facts {
+			b.WriteString("- ")
+			b.WriteString(f.Title)
+			b.WriteByte('\n')
+		}
 	}
 	if len(existing) > 0 {
 		b.WriteString("\nEXISTING PLAYBOOK TITLES (do not duplicate):\n")

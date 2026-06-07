@@ -119,6 +119,29 @@ func (a knowledgeMemorySource) ListProjectMemories(ctx context.Context, scopeKey
 	return out, nil
 }
 
+// knowledgeJournalSource adapts *projectdoc.Service to knowledge.JournalSource
+// so reflection distills playbooks from real session work-traces (the project
+// journal), not just declarative memory facts. One-way dependency: knowledge
+// owns the interface; the app adapts projectdoc to it.
+type knowledgeJournalSource struct{ pd *projectdoc.Service }
+
+func (a knowledgeJournalSource) ListJournal(ctx context.Context, scopeKey string, limit int) ([]knowledge.JournalEntry, error) {
+	logs, err := a.pd.ListLogs(ctx, scopeKey, limit)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]knowledge.JournalEntry, 0, len(logs))
+	for _, l := range logs {
+		out = append(out, knowledge.JournalEntry{
+			Title:     l.Title,
+			Content:   l.Content,
+			Kind:      string(l.Kind),
+			CreatedAt: l.CreatedAt,
+		})
+	}
+	return out, nil
+}
+
 // knowledgeLLM adapts the memory worker registry to knowledge.LLM so the
 // Phase 1B entity extractor gets a general completion path. It borrows the
 // TaskCapture worker config (the closest existing touchpoint: extract
@@ -675,7 +698,8 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			kgLLM := knowledgeLLM{reg: memoryWorkerRegistry}
 			knowledgeAnchorer = knowledge.NewAnchorer(st.Pool(), knowledgeMemorySource{mem: memorySvc}, log).
 				WithLLM(kgLLM)
-			knowledgeReflector = knowledge.NewReflector(st.Pool(), kgLLM, log)
+			knowledgeReflector = knowledge.NewReflector(st.Pool(), kgLLM, log).
+				WithJournal(knowledgeJournalSource{pd: projectDocSvc})
 			knowledgeSvc.WithReanchor(func(c context.Context) error {
 				return knowledgeAnchorer.AnchorAll(c, 500)
 			})

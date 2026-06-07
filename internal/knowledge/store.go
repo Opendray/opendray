@@ -547,6 +547,35 @@ func (s *Store) MergeDuplicateGlobalEntities(ctx context.Context) (int, error) {
 	return merged, nil
 }
 
+// ReflectSig returns the stored reflection signature for a project entity
+// (empty when none / node missing) — used to skip re-reflecting unchanged input.
+func (s *Store) ReflectSig(ctx context.Context, projID string) (string, error) {
+	var sig string
+	err := s.pool.QueryRow(ctx,
+		`SELECT COALESCE(provenance->>'reflect_sig','') FROM knowledge_nodes WHERE id = $1`,
+		projID).Scan(&sig)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("knowledge: reflect sig: %w", err)
+	}
+	return sig, nil
+}
+
+// SetReflectSig records the reflection feedstock signature on a project entity.
+func (s *Store) SetReflectSig(ctx context.Context, projID, sig string) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE knowledge_nodes
+		   SET provenance = jsonb_set(COALESCE(provenance, '{}'::jsonb), '{reflect_sig}', to_jsonb($2::text)),
+		       updated_at = now()
+		 WHERE id = $1`, projID, sig)
+	if err != nil {
+		return fmt.Errorf("knowledge: set reflect sig: %w", err)
+	}
+	return nil
+}
+
 // DeleteNode removes a node (and, via FK cascade, its edges + fact sources).
 // Returns ErrNotFound when nothing matched.
 func (s *Store) DeleteNode(ctx context.Context, id string) error {
