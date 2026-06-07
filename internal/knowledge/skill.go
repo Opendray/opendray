@@ -11,6 +11,7 @@ import (
 // internal/skills (the one-way dependency rule).
 type SkillSink interface {
 	WriteSkill(ctx context.Context, id, markdown string) error
+	DeleteSkill(ctx context.Context, id string) error
 }
 
 // skillSlug turns a title into a skills-loader id / dirname (lowercase,

@@ -534,6 +534,19 @@ func (s *Store) MergeDuplicateGlobalEntities(ctx context.Context) (int, error) {
 	return merged, nil
 }
 
+// DeleteNode removes a node (and, via FK cascade, its edges + fact sources).
+// Returns ErrNotFound when nothing matched.
+func (s *Store) DeleteNode(ctx context.Context, id string) error {
+	ct, err := s.pool.Exec(ctx, `DELETE FROM knowledge_nodes WHERE id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("knowledge: delete node: %w", err)
+	}
+	if ct.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // FactIDByTitle returns the id of a live fact with the exact title in a project
 // scope — used to dedup identical anchored facts.
 func (s *Store) FactIDByTitle(ctx context.Context, scopeKey, title string) (string, bool, error) {

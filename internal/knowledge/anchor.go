@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"log/slog"
+	"regexp"
 	"strings"
 	"time"
 
@@ -123,6 +124,9 @@ func (a *Anchorer) AnchorProject(ctx context.Context, cwd string, limit int) (in
 }
 
 func (a *Anchorer) anchorOne(ctx context.Context, projID string, row MemoryRow) error {
+	if looksLikeSecret(row.Text) {
+		return nil // never lift secrets into the searchable knowledge graph
+	}
 	scopeKey := row.ScopeKey
 	title := factTitle(row.Text)
 	// Dedup: an identical fact already in this project → attach this memory to
@@ -249,6 +253,18 @@ func isEphemeralCwd(cwd string) bool {
 		strings.HasPrefix(c, "/private/var/folders/") ||
 		strings.Contains(c, "/tmp.") ||
 		strings.Contains(c, "/.cache/")
+}
+
+var (
+	secretHintRe = regexp.MustCompile(`(?i)(api[\s_-]?key|secret|token|password|passwd|bearer|private[\s_-]?key|access[\s_-]?key|credential)`)
+	longTokenRe  = regexp.MustCompile(`[A-Za-z0-9_\-/+]{24,}`)
+)
+
+// looksLikeSecret flags facts that carry a credential (a secret-ish keyword +
+// a long opaque token), so we never lift them into the searchable/exportable
+// knowledge graph. Defence-in-depth — the secret should also not be in memory.
+func looksLikeSecret(text string) bool {
+	return secretHintRe.MatchString(text) && longTokenRe.MatchString(text)
 }
 
 // AnchorSweepConfig tunes the background sweep.

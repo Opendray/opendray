@@ -154,6 +154,13 @@ func (s knowledgeSkillSink) WriteSkill(_ context.Context, id, markdown string) e
 	return os.WriteFile(filepath.Join(d, "SKILL.md"), []byte(markdown), 0o600)
 }
 
+func (s knowledgeSkillSink) DeleteSkill(_ context.Context, id string) error {
+	if id == "" {
+		return nil
+	}
+	return os.RemoveAll(filepath.Join(s.dir, id))
+}
+
 // New wires the runtime dependencies but does not start any goroutines.
 // Caller is responsible for calling Run or Close.
 func New(ctx context.Context, cfg config.Config) (*App, error) {

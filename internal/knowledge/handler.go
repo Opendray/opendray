@@ -34,6 +34,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Get("/nodes", h.listNodes)
 		r.Post("/nodes", h.createNode)
 		r.Get("/nodes/{id}", h.getNode)
+		r.Delete("/nodes/{id}", h.deleteNode)
 		r.Get("/nodes/{id}/edges", h.listEdges)
 		r.Get("/nodes/{id}/graph", h.neighborhood)
 		r.Post("/nodes/{id}/promote", h.promote)
@@ -186,6 +187,18 @@ func (h *Handlers) search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"hits": hits})
+}
+
+func (h *Handlers) deleteNode(w http.ResponseWriter, r *http.Request) {
+	if err := h.svc.DeleteNode(r.Context(), chi.URLParam(r, "id")); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *Handlers) reset(w http.ResponseWriter, r *http.Request) {

@@ -218,6 +218,19 @@ func (s *Service) Reset(ctx context.Context) error {
 	return nil
 }
 
+// DeleteNode removes a node — used to undo a mis-click (an accidental skillify
+// or promote). For skills it also deletes the rendered SKILL.md. Note:
+// auto-derived facts/entities re-appear on the next anchor sweep; skills
+// (explicitly created) stay deleted.
+func (s *Service) DeleteNode(ctx context.Context, id string) error {
+	if n, err := s.store.GetNode(ctx, id); err == nil && n.Kind == KindSkill && s.skillSink != nil {
+		if slug, ok := n.Provenance["skill_id"].(string); ok && slug != "" {
+			_ = s.skillSink.DeleteSkill(ctx, slug)
+		}
+	}
+	return s.store.DeleteNode(ctx, id)
+}
+
 func (s *Service) gatherForSpawn(ctx context.Context, kind NodeKind, cwd string) []Node {
 	proj, _ := s.store.ListNodes(ctx, NodeFilter{Kind: kind, Scope: ScopeProject, ScopeKey: cwd, Limit: 50})
 	global, _ := s.store.ListNodes(ctx, NodeFilter{Kind: kind, Scope: ScopeGlobal, Limit: 50})
