@@ -324,6 +324,66 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       resizeSession(sessionId, cols, rows).catch(() => {})
     })
 
+    // Touch-scroll forwarding. A phone has no mouse wheel, and a
+    // full-screen TUI that has grabbed the mouse (Claude Code / Codex /
+    // Gemini all enable mouse tracking, so modes.mouseTrackingMode is
+    // not 'none') runs in the alternate screen — which has no xterm
+    // scrollback to scroll, AND xterm doesn't translate a finger swipe
+    // into the wheel events the app is waiting for. The conversation is
+    // scrolled by the APP itself in response to wheel input, exactly
+    // like a desktop mouse wheel. So translate a one-finger vertical
+    // swipe into SGR (1006) wheel events sent straight to the PTY. For
+    // a plain shell (mouseTrackingMode 'none') we leave the event alone
+    // so xterm's own viewport scroll / native behaviour still works.
+    const SWIPE_STEP = 18 // px of finger travel per wheel tick
+    const touchHost = containerRef.current
+    let touchActive = false
+    let lastTouchY = 0
+    let touchAccum = 0
+    const sendWheel = (up: boolean) => {
+      // SGR mouse: button 64 = wheel up, 65 = wheel down; press ('M').
+      // Report the pointer at screen centre so the app treats it as a
+      // scroll over its content region.
+      const col = Math.max(1, Math.floor(term.cols / 2))
+      const row = Math.max(1, Math.floor(term.rows / 2))
+      const seq = `\x1b[<${up ? 64 : 65};${col};${row}M`
+      const enc = new TextEncoder().encode(seq)
+      ws.send(
+        enc.buffer.slice(enc.byteOffset, enc.byteOffset + enc.byteLength) as ArrayBuffer,
+      )
+    }
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1 || term.modes.mouseTrackingMode === 'none') {
+        touchActive = false
+        return
+      }
+      touchActive = true
+      lastTouchY = e.touches[0].clientY
+      touchAccum = 0
+    }
+    const onTouchMove = (e: TouchEvent) => {
+      if (!touchActive || e.touches.length !== 1) return
+      if (term.modes.mouseTrackingMode === 'none') return
+      e.preventDefault() // stop the page/pane from scrolling instead
+      const y = e.touches[0].clientY
+      touchAccum += y - lastTouchY
+      lastTouchY = y
+      // Finger moving DOWN (positive delta) reveals earlier content →
+      // wheel up; finger up → wheel down.
+      while (Math.abs(touchAccum) >= SWIPE_STEP) {
+        const up = touchAccum > 0
+        sendWheel(up)
+        touchAccum += up ? -SWIPE_STEP : SWIPE_STEP
+      }
+    }
+    const onTouchEnd = () => {
+      touchActive = false
+    }
+    touchHost?.addEventListener('touchstart', onTouchStart, { passive: true })
+    touchHost?.addEventListener('touchmove', onTouchMove, { passive: false })
+    touchHost?.addEventListener('touchend', onTouchEnd, { passive: true })
+    touchHost?.addEventListener('touchcancel', onTouchEnd, { passive: true })
+
     // Coalesce resize bursts into one fit per animation frame. Calling
     // fit() synchronously inside the ResizeObserver callback mutates
     // the DOM mid-notification ("ResizeObserver loop completed with
@@ -358,6 +418,10 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     return () => {
       alive = false
       if (fitRaf) cancelAnimationFrame(fitRaf)
+      touchHost?.removeEventListener('touchstart', onTouchStart)
+      touchHost?.removeEventListener('touchmove', onTouchMove)
+      touchHost?.removeEventListener('touchend', onTouchEnd)
+      touchHost?.removeEventListener('touchcancel', onTouchEnd)
       ro.disconnect()
       ws.close()
       term.dispose()

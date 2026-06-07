@@ -37,3 +37,57 @@ format = "text"   # text | json
 # manager defaults (30s / 5s).
 idle_threshold = "30s"
 idle_interval  = "5s"
+
+[memory]
+# The cross-session / cross-CLI memory layer. Every field is optional;
+# the whole section can be omitted to run the zero-config default
+# (keyword/BM25 retrieval over pgvector, project-scoped).
+#
+# backend — how text is turned into vectors:
+#   "auto"  (default) availability-tiered, upgrade-only. If a dense
+#           [memory.http] endpoint is configured AND reachable at
+#           startup it is used (semantic memory); otherwise the pure-Go
+#           BM25 keyword floor runs so memory always works even with no
+#           model installed. If the store already holds dense rows but
+#           the endpoint is down, the dense embedder is kept active
+#           (existing vectors stay visible, nothing is re-embedded) and
+#           writes/search degrade until it responds — "auto" never
+#           silently downgrades dense→BM25.
+#   "bm25"  force the keyword floor.
+#   "http"  force the [memory.http] dense endpoint.
+#   "local" force the cgo ONNX embedder ([memory.local], -tags local_onnx).
+backend = "auto"
+# similarity_threshold — retrieval cutoff (0..1). Empty/0 → 0.1.
+# similarity_threshold = 0.1
+# dedup_threshold — write-time fold: a new write whose cosine similarity
+# to an existing memory in the same scope is ≥ this folds into it
+# (lossless). Empty/0 → an embedder-relative default (~0.85 dense /
+# ~0.2 BM25); a NEGATIVE value disables folding.
+# dedup_threshold = 0.0
+
+# Dense embedder — any OpenAI-compatible /v1/embeddings endpoint
+# (ollama, LM Studio, vLLM, LocalAI, OpenAI…). With backend="auto" this
+# is used automatically when reachable; no need to also set backend="http".
+[memory.http]
+# base_url = "http://localhost:11434/v1"
+# model    = "nomic-embed-text"
+# api_key  = ""          # required for cloud endpoints (e.g. OpenAI)
+# dimensions = 0          # 0 = discover from the first response
+
+# Optional pre-write LLM judge. Off by default — write quality is carried
+# by folding + ranking + the maintenance loop, not a write-path gate.
+[memory.gatekeeper]
+enabled = false
+
+# Background librarian: auto-applies keep/stale/duplicate verdicts as
+# reversible soft-archives (no approval queue). Conflicts are the only
+# thing that reaches the operator inbox.
+[memory.cleaner]
+enabled = false
+# min_age_hours = 24              # never review memories younger than this
+# lifecycle_dormant_days = 90     # auto-archive a dormant project's never-hit aged facts; negative disables
+# grace_days = 30                 # how long a soft-archived row stays restorable before purge
+
+# Default scope for stored memories: "project" (default) or "global".
+[memory.scope]
+default = "project"

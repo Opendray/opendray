@@ -27,6 +27,87 @@ import 'package:path/path.dart' as p;
 // reached via the Sessions tab → Inspector (future). They're not
 // browsable here because picking the right session id without
 // session context is a worse UX than just opening the session.
+// Read-only "what embedder is live right now" strip, shown atop the Memory
+// screen. Mirrors the web MemoryInspector status strip: it reports the
+// effective embedder and, when relevant, an advisory explaining the
+// relationship to the configured dense model. Configuration + the
+// connection test live in Settings, not here.
+final _embedderStatusProvider = FutureProvider.autoDispose<MemoryStatus>(
+  (ref) => ref.read(memoryApiProvider).status(),
+);
+
+String? _embedderAdvisory(MemoryStatus s) {
+  final model = s.configuredDense?.model ?? '';
+  if (s.isFloor && s.configuredDense != null) {
+    return s.denseReachable == false
+        ? t.memory.status.denseUnreachableFloor(model: model)
+        : t.memory.status.denseConfiguredPendingRestart(model: model);
+  }
+  if (s.isFloor) return t.memory.status.floorNoModel;
+  if (s.degraded) return t.memory.status.denseDegraded;
+  return null;
+}
+
+class _EmbedderStatusStrip extends ConsumerWidget {
+  const _EmbedderStatusStrip();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ref.watch(_embedderStatusProvider).maybeWhen(
+          orElse: () => const SizedBox.shrink(),
+          data: (s) {
+            final theme = Theme.of(context);
+            final advisory = _embedderAdvisory(s);
+            return Card(
+              margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.psychology_outlined,
+                            size: 16, color: theme.colorScheme.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text.rich(
+                            TextSpan(children: [
+                              TextSpan(text: '${t.memory.status.label}: '),
+                              TextSpan(
+                                text: s.effectiveEmbedder ?? s.embedder,
+                                style:
+                                    const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              TextSpan(
+                                text:
+                                    '  ${t.memory.status.dimensions(dim: s.dimensions, state: s.enabled ? t.memory.status.enabled : t.memory.status.disabled)}',
+                                style: TextStyle(
+                                    color: theme.colorScheme.onSurfaceVariant),
+                              ),
+                            ]),
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (advisory != null) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        advisory,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: Colors.amber.shade700),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+  }
+}
+
 class MemoryScreen extends ConsumerStatefulWidget {
   const MemoryScreen({super.key});
 
@@ -402,9 +483,16 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
           tabs: const [Tab(text: 'Project'), Tab(text: 'Global')],
         ),
       ),
-      body: TabBarView(
-        controller: _tabs,
-        children: [_projectTab(), _globalTab()],
+      body: Column(
+        children: [
+          const _EmbedderStatusStrip(),
+          Expanded(
+            child: TabBarView(
+              controller: _tabs,
+              children: [_projectTab(), _globalTab()],
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'memory_fab',
@@ -1523,7 +1611,6 @@ class _ScopeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (scope) {
-      MemoryScope.session => Colors.amberAccent,
       MemoryScope.project => Colors.blueAccent,
       MemoryScope.global => Colors.greenAccent,
       MemoryScope.unknown => Colors.grey,

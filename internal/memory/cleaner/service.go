@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -38,6 +39,19 @@ type Config struct {
 	// LM Studio can take 10-30s for a 30-row batch, so allow plenty.
 	// Default 60s.
 	CallTimeout time.Duration
+
+	// GracePeriod is how long a soft-archived memory stays restorable
+	// before PurgeExpired hard-deletes it. Default 30 days (decision
+	// §8.2). The window the operator has to undo an auto-archive from
+	// the Archived view.
+	GracePeriod time.Duration
+
+	// LifecycleDormantDays is the project-lifecycle signal: when a
+	// project's memory has had no new write or retrieval for this many
+	// days, the project is treated as finished and its never-hit, aged
+	// facts are auto-archived (reversible). Unset (0) defaults to 90; a
+	// NEGATIVE value disables the lifecycle pass entirely.
+	LifecycleDormantDays int
 }
 
 // applyDefaults fills zero values with the documented defaults.
@@ -54,6 +68,12 @@ func (c Config) applyDefaults() Config {
 	if c.CallTimeout <= 0 {
 		c.CallTimeout = 60 * time.Second
 	}
+	if c.GracePeriod <= 0 {
+		c.GracePeriod = 30 * 24 * time.Hour
+	}
+	if c.LifecycleDormantDays == 0 {
+		c.LifecycleDormantDays = 90
+	}
 	return c
 }
 
@@ -63,6 +83,15 @@ type MemoryAdapter interface {
 	List(ctx context.Context, scope memory.Scope, scopeKey string, limit int) ([]memory.Memory, error)
 	Get(ctx context.Context, id string) (memory.Memory, error)
 	Delete(ctx context.Context, id string) error
+	// Archive soft-deletes a memory (reversible) — the cleaner's
+	// auto-apply path uses this instead of Delete so a wrong call is
+	// undoable within the grace window.
+	Archive(ctx context.Context, id, reason string) error
+	// PurgeArchived hard-deletes archived rows past the grace cutoff.
+	PurgeArchived(ctx context.Context, cutoff time.Time) (int64, error)
+	// ArchiveDormantStale soft-archives never-hit aged facts of a dormant
+	// project (the lifecycle signal). Returns the count archived.
+	ArchiveDormantStale(ctx context.Context, scope memory.Scope, scopeKey string, agedBefore, dormantBefore time.Time, reason string) (int64, error)
 }
 
 // (ProviderFetcher was removed in M25 — provider selection now
@@ -215,11 +244,25 @@ func (s *Service) Run(ctx context.Context, scope memory.Scope, scopeKey string) 
 			RunID:                runID,
 			SummarizerProviderID: providerID,
 		}
-		if _, err := s.store.Insert(ctx, dec); err != nil {
+		inserted, err := s.store.Insert(ctx, dec)
+		if err != nil {
 			s.log.Warn("cleaner.insert_decision_failed", "memory_id", orig.ID, "err", err)
 			continue
 		}
 		written++
+
+		// Auto-apply (M-U Phase 4): no manual approval queue. The verdict
+		// is executed immediately as a reversible soft-archive; the
+		// decision row is the audit trail. Operators review only
+		// conflicts now — routine staleness/dupes are handled here and
+		// undoable from the Archived view within the grace window.
+		if execErr := s.execute(ctx, inserted); execErr != nil {
+			s.log.Warn("cleaner.auto_execute_failed",
+				"decision_id", inserted.ID, "verdict", inserted.Verdict, "err", execErr)
+			_ = s.store.SetStatus(ctx, inserted.ID, StatusExpired, StatusPending)
+			continue
+		}
+		_ = s.store.SetStatus(ctx, inserted.ID, StatusExecuted, StatusPending)
 	}
 	s.log.Info("cleaner.run_complete",
 		"run_id", runID, "scope", scope, "scope_key", scopeKey,
@@ -244,63 +287,89 @@ func (s *Service) Get(ctx context.Context, id string) (Decision, error) {
 	return s.store.Get(ctx, id)
 }
 
-// Approve marks the decision approved AND executes it in the same
-// call. We don't separate the two states because the operator's
-// "Approve" click implies "do it now"; deferred execution would
-// just add a state to babysit.
-func (s *Service) Approve(ctx context.Context, id string) error {
-	if err := s.store.SetStatus(ctx, id, StatusApproved, StatusPending); err != nil {
-		return err
-	}
-	d, err := s.store.Get(ctx, id)
-	if err != nil {
-		return err
-	}
-	if err := s.execute(ctx, d); err != nil {
-		// Mark expired so the inbox stops showing this as actionable.
-		// The original approval still has decided_at set; expired
-		// tells the UI "we tried but couldn't apply".
-		_ = s.store.SetStatus(ctx, id, StatusExpired, StatusApproved)
-		return err
-	}
-	return s.store.SetStatus(ctx, id, StatusExecuted, StatusApproved)
-}
-
-// Reject closes the decision without touching the memory store.
-func (s *Service) Reject(ctx context.Context, id string) error {
-	return s.store.SetStatus(ctx, id, StatusRejected, StatusPending)
-}
-
-// execute performs the actual memory mutation per verdict.
+// execute applies one verdict by SOFT-ARCHIVING (not hard-deleting), so
+// every action is reversible within the grace window. A "duplicate" is
+// archived with the survivor noted in archived_reason — because the row
+// is preserved (not destroyed), there's no need to mutate the survivor's
+// metadata, which retires the old merge-metadata gap.
 func (s *Service) execute(ctx context.Context, d Decision) error {
 	switch d.Verdict {
 	case VerdictKeep:
-		// Nothing to do. Approving a keep is a "noted, no-op" gesture.
+		// Nothing to do — the LLM judged this worth keeping.
 		return nil
 	case VerdictStale:
-		if err := s.mem.Delete(ctx, d.MemoryID); err != nil {
-			return fmt.Errorf("cleaner: delete stale: %w", err)
+		if err := s.mem.Archive(ctx, d.MemoryID, archiveReason("stale", d.Reason)); err != nil {
+			return fmt.Errorf("cleaner: archive stale: %w", err)
 		}
-		s.log.Info("cleaner.executed_stale", "memory_id", d.MemoryID, "decision_id", d.ID)
+		s.log.Info("cleaner.archived_stale", "memory_id", d.MemoryID, "decision_id", d.ID)
 		return nil
 	case VerdictDuplicate:
 		if d.MergeInto == "" {
 			return errors.New("cleaner: duplicate with no merge_into")
 		}
-		// Verify merge_into still exists — otherwise we'd delete the
-		// duplicate without preserving the canonical row.
+		// Survivor must still be active — otherwise skip rather than
+		// archive the only remaining copy.
 		if _, err := s.mem.Get(ctx, d.MergeInto); err != nil {
 			return fmt.Errorf("cleaner: merge_into %s missing: %w", d.MergeInto, err)
 		}
-		if err := s.mem.Delete(ctx, d.MemoryID); err != nil {
-			return fmt.Errorf("cleaner: delete duplicate: %w", err)
+		if err := s.mem.Archive(ctx, d.MemoryID, "duplicate of "+d.MergeInto); err != nil {
+			return fmt.Errorf("cleaner: archive duplicate: %w", err)
 		}
-		s.log.Info("cleaner.executed_duplicate",
+		s.log.Info("cleaner.archived_duplicate",
 			"memory_id", d.MemoryID, "merged_into", d.MergeInto, "decision_id", d.ID)
 		return nil
 	default:
 		return fmt.Errorf("cleaner: unknown verdict %q", d.Verdict)
 	}
+}
+
+// ArchiveDormant applies the project-lifecycle signal for one project:
+// if its memory has gone quiet for LifecycleDormantDays, its never-hit
+// aged facts are soft-archived (reversible). No-op when disabled
+// (negative days) or the project is still active. Returns count archived.
+func (s *Service) ArchiveDormant(ctx context.Context, scopeKey string) (int64, error) {
+	if s.cfg.LifecycleDormantDays < 0 || strings.TrimSpace(scopeKey) == "" {
+		return 0, nil
+	}
+	now := time.Now()
+	agedBefore := now.Add(-s.cfg.MinAge)
+	dormantBefore := now.AddDate(0, 0, -s.cfg.LifecycleDormantDays)
+	reason := fmt.Sprintf("lifecycle: project dormant >%dd", s.cfg.LifecycleDormantDays)
+	n, err := s.mem.ArchiveDormantStale(ctx, memory.ScopeProject, scopeKey, agedBefore, dormantBefore, reason)
+	if err != nil {
+		return 0, fmt.Errorf("cleaner: archive dormant: %w", err)
+	}
+	if n > 0 {
+		s.log.Info("cleaner.archived_dormant", "scope_key", scopeKey, "count", n, "dormant_days", s.cfg.LifecycleDormantDays)
+	}
+	return n, nil
+}
+
+// PurgeExpired hard-deletes memories whose soft-archive grace window has
+// elapsed. Called once per scheduler tick. Returns the count purged.
+func (s *Service) PurgeExpired(ctx context.Context) (int64, error) {
+	cutoff := time.Now().Add(-s.cfg.GracePeriod)
+	n, err := s.mem.PurgeArchived(ctx, cutoff)
+	if err != nil {
+		return 0, fmt.Errorf("cleaner: purge expired: %w", err)
+	}
+	if n > 0 {
+		s.log.Info("cleaner.purged_expired", "count", n, "grace", s.cfg.GracePeriod)
+	}
+	return n, nil
+}
+
+// archiveReason builds a short archived_reason from a verdict label and
+// the LLM's justification, bounded so the column stays compact.
+func archiveReason(label, reason string) string {
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
+		return "cleaner: " + label
+	}
+	if len(reason) > 160 {
+		reason = reason[:160]
+	}
+	return "cleaner: " + label + " — " + reason
 }
 
 // filterEligible drops memories younger than MinAge and memories

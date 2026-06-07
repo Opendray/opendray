@@ -15,7 +15,7 @@ import { ActivityPage } from '@/pages/Activity'
 import { MemoryPage } from '@/pages/Memory'
 import { MemoryWorkersPage } from '@/pages/MemoryWorkers'
 import { ProjectPage } from '@/pages/Project'
-import { CleanupInboxPage } from '@/pages/CleanupInbox'
+import { ArchivedPage } from '@/pages/Archived'
 import { BackupsPage } from '@/pages/Backups'
 import { ExportPage } from '@/pages/Export'
 import { NotesPage } from '@/pages/Notes'
@@ -102,10 +102,10 @@ const memoryProjectRoute = createRoute({
   }),
 })
 
-const memoryCleanupRoute = createRoute({
+const memoryArchivedRoute = createRoute({
   getParentRoute: () => protectedRoute,
-  path: '/memory/cleanup',
-  component: CleanupInboxPage,
+  path: '/memory/archived',
+  component: ArchivedPage,
 })
 
 const memoryWorkersRoute = createRoute({
@@ -153,7 +153,7 @@ const routeTree = rootRoute.addChildren([
     notesRoute,
     memoryRoute,
     memoryProjectRoute,
-    memoryCleanupRoute,
+    memoryArchivedRoute,
     memoryWorkersRoute,
     pluginsRoute,
     settingsRoute,

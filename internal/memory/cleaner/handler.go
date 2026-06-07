@@ -34,11 +34,15 @@ func NewHandlers(svc *Service, log *slog.Logger) *Handlers {
 // applied.
 func (h *Handlers) Mount(r chi.Router) {
 	r.Route("/memory/cleanup", func(r chi.Router) {
+		// M-U Phase 4 made the cleaner auto-apply its verdicts as
+		// reversible soft-archives — there is no approval queue. /run
+		// triggers an on-demand auto-apply sweep; /decisions is the
+		// read-only audit of past verdicts. The old approve/reject
+		// mutation endpoints were removed (no caller; they contradicted
+		// the auto-apply model).
 		r.Post("/run", h.run)
 		r.Get("/decisions", h.list)
 		r.Get("/decisions/{id}", h.get)
-		r.Post("/decisions/{id}/approve", h.approve)
-		r.Post("/decisions/{id}/reject", h.reject)
 	})
 }
 
@@ -117,52 +121,6 @@ func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, d)
-}
-
-// approve marks the decision approved AND executes it. Returns the
-// updated decision so the UI sees status=executed (or status=expired
-// when the executor couldn't apply).
-func (h *Handlers) approve(w http.ResponseWriter, r *http.Request) {
-	if !h.ensure(w) {
-		return
-	}
-	id := chi.URLParam(r, "id")
-	if err := h.svc.Approve(r.Context(), id); err != nil {
-		switch {
-		case errors.Is(err, ErrNotFound):
-			writeError(w, http.StatusNotFound, err)
-		case errors.Is(err, ErrAlreadyClosed):
-			writeError(w, http.StatusConflict, err)
-		default:
-			writeError(w, http.StatusInternalServerError, err)
-		}
-		return
-	}
-	d, err := h.svc.Get(r.Context(), id)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-	writeJSON(w, http.StatusOK, d)
-}
-
-func (h *Handlers) reject(w http.ResponseWriter, r *http.Request) {
-	if !h.ensure(w) {
-		return
-	}
-	id := chi.URLParam(r, "id")
-	if err := h.svc.Reject(r.Context(), id); err != nil {
-		switch {
-		case errors.Is(err, ErrNotFound):
-			writeError(w, http.StatusNotFound, err)
-		case errors.Is(err, ErrAlreadyClosed):
-			writeError(w, http.StatusConflict, err)
-		default:
-			writeError(w, http.StatusInternalServerError, err)
-		}
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *Handlers) ensure(w http.ResponseWriter) bool {

@@ -8,22 +8,39 @@ import (
 	"time"
 )
 
-// Scope is the visibility band a memory belongs to. The MCP
-// `memory.search` tool defaults to retrieving across the calling
-// session's project but a caller can override per-query.
+// Scope is the visibility band a memory belongs to. There are two:
+// `project` (default; keyed by cwd) and `global` (operator-curated;
+// empty key). A memory is shared across every cloud-agent CLI working
+// in the same project, which is the whole point of the store.
 type Scope string
 
 const (
-	ScopeSession Scope = "session"
 	ScopeProject Scope = "project"
 	ScopeGlobal  Scope = "global"
+
+	// legacyScopeSession is the retired "session" scope. session ≡
+	// project, so it was removed in the M-U unification. We still
+	// recognise the literal so old config / API callers / pre-migration
+	// rows coerce to project instead of erroring — see normalizeScope.
+	legacyScopeSession Scope = "session"
 )
 
-// Validate normalises and rejects unknown scopes. Empty input
-// returns ErrInvalidScope so callers default explicitly.
+// normalizeScope folds the retired "session" scope into "project".
+// Lossless and idempotent: any other value passes through unchanged so
+// Validate can still reject genuinely unknown scopes.
+func normalizeScope(s Scope) Scope {
+	if s == legacyScopeSession {
+		return ScopeProject
+	}
+	return s
+}
+
+// Validate rejects unknown scopes. Empty input returns ErrInvalidScope
+// so callers default explicitly. Callers should normalizeScope first if
+// they want legacy "session" accepted as project.
 func (s Scope) Validate() error {
 	switch s {
-	case ScopeSession, ScopeProject, ScopeGlobal:
+	case ScopeProject, ScopeGlobal:
 		return nil
 	}
 	return ErrInvalidScope
@@ -31,7 +48,8 @@ func (s Scope) Validate() error {
 
 var (
 	// ErrInvalidScope means the caller passed something other than
-	// session / project / global.
+	// project / global (the retired "session" scope is coerced to
+	// project before validation, so it never reaches here).
 	ErrInvalidScope = errors.New("memory: invalid scope")
 	// ErrNotFound means a Get or Delete by id missed.
 	ErrNotFound = errors.New("memory: not found")
@@ -76,6 +94,12 @@ type Memory struct {
 	SourceRef         string   `json:"source_ref,omitempty"`
 	SummarizerSession string   `json:"summarizer_session,omitempty"`
 	Confidence        *float32 `json:"confidence,omitempty"`
+
+	// Archive state — populated by ListArchived for the restorable
+	// "Archived" view. Nil/empty on active rows (every other read query
+	// filters archived rows out entirely).
+	ArchivedAt     *time.Time `json:"archived_at,omitempty"`
+	ArchivedReason string     `json:"archived_reason,omitempty"`
 }
 
 // SearchHit is one match returned by Store.Search, paired with its
@@ -184,6 +208,35 @@ type Store interface {
 	// scope_key) pair in a single SQL operation. Returns the row
 	// count actually removed; zero is not an error.
 	DeleteByScope(ctx context.Context, scope Scope, scopeKey string) (int64, error)
+	// Archive soft-deletes a memory: sets archived_at + archived_reason
+	// so it drops out of every read query but stays restorable until the
+	// grace window passes and PurgeArchived removes it. No-op (no error)
+	// if the row is already archived or missing.
+	Archive(ctx context.Context, id, reason string) error
+	// ArchiveByScope soft-deletes every active memory under (scope,
+	// scopeKey). Returns the count archived. Used by lifecycle-driven
+	// auto-archive of inactive projects.
+	ArchiveByScope(ctx context.Context, scope Scope, scopeKey, reason string) (int64, error)
+	// ArchiveDormantStale soft-archives the never-hit, aged facts of a
+	// DORMANT project in one statement: it only fires when the scope's
+	// most recent activity (newest created_at / last_hit_at among active
+	// rows) predates dormantBefore, and then archives only rows with
+	// hit_count = 0 and created_at < agedBefore. This is the
+	// project-lifecycle signal — a finished project's unused facts age
+	// out on their own — and it leaves hit (useful) facts untouched.
+	// Returns the count archived.
+	ArchiveDormantStale(ctx context.Context, scope Scope, scopeKey string, agedBefore, dormantBefore time.Time, reason string) (int64, error)
+	// ListArchived returns archived (soft-deleted) memories for a scope,
+	// newest-archived first. Powers the read-only "Archived (restorable)"
+	// view so operators can see and undo what auto-archive removed.
+	ListArchived(ctx context.Context, scope Scope, scopeKey string, limit int) ([]Memory, error)
+	// Restore clears the archive flag, returning a memory to active use.
+	// Returns ErrNotFound when the id isn't an archived row.
+	Restore(ctx context.Context, id string) error
+	// PurgeArchived hard-deletes memories archived strictly before
+	// cutoff (the end of the grace window). Returns the row count
+	// removed; zero is not an error.
+	PurgeArchived(ctx context.Context, cutoff time.Time) (int64, error)
 	// Close releases store-level resources (DB conns, files).
 	// Safe to call multiple times.
 	Close() error

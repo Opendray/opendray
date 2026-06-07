@@ -1,11 +1,23 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/src/ui/infinite_scroll_view.dart';
 
-/// Handles scrolling gestures in the alternate screen buffer. In alternate
-/// screen buffer, the terminal don't have a scrollback buffer, instead, the
-/// scroll gestures are converted to escape sequences based on the current
-/// report mode declared by the application.
+/// Handles scrolling gestures for applications that have grabbed the mouse
+/// (i.e. [Terminal.mouseMode] is not [MouseMode.none] — Claude Code, Codex,
+/// Gemini, vim, …). Such an app runs in the alternate screen, which has no
+/// xterm scrollback to scroll; instead it drives its own viewport from wheel
+/// input, so a finger swipe is converted to mouse-wheel escape sequences and
+/// sent to the app.
+///
+/// The gate is the app's mouse mode, NOT [Terminal.isUsingAltBuffer]: those
+/// two diverge mid-session (a CLI can sit in the alternate buffer while it has
+/// momentarily turned mouse reporting off, e.g. a sub-pager or a modal), and a
+/// wheel report sent to an app that isn't listening for the mouse just
+/// vanishes — leaving a swipe silently doing nothing. Gating on mouse mode is
+/// exactly what the (working) web terminal does (`mouseTrackingMode !== 'none'`):
+/// when the app isn't tracking the mouse we do nothing here and let the inner
+/// viewport's native scroll handle the scrollback.
 class TerminalScrollGestureHandler extends StatefulWidget {
   const TerminalScrollGestureHandler({
     super.key,
@@ -38,9 +50,11 @@ class TerminalScrollGestureHandler extends StatefulWidget {
 
 class _TerminalScrollGestureHandlerState
     extends State<TerminalScrollGestureHandler> {
-  /// Whether the application is in alternate screen buffer. If false, then this
-  /// widget does nothing.
-  var isAltBuffer = false;
+  /// Whether the application has mouse reporting enabled (any mode other than
+  /// [MouseMode.none]). When false this widget does nothing and the swipe falls
+  /// through to the inner viewport's native scroll. Mirrors the web terminal's
+  /// `mouseTrackingMode !== 'none'` gate.
+  var mouseActive = false;
 
   /// The variable that tracks the line offset in last scroll event. Used to
   /// determine how many the scroll events should be sent to the terminal.
@@ -50,10 +64,14 @@ class _TerminalScrollGestureHandlerState
   /// Used to calculate the cell offset of the terminal mouse event.
   var lastPointerPosition = Offset.zero;
 
+  /// Accumulated vertical travel (px) of an in-progress touch drag, used to
+  /// emit one scroll event per line of finger movement. See [_onPointerMove].
+  var _touchScrollAccum = 0.0;
+
   @override
   void initState() {
     widget.terminal.addListener(_onTerminalUpdated);
-    isAltBuffer = widget.terminal.isUsingAltBuffer;
+    mouseActive = widget.terminal.mouseMode != MouseMode.none;
     super.initState();
   }
 
@@ -68,35 +86,36 @@ class _TerminalScrollGestureHandlerState
     if (oldWidget.terminal != widget.terminal) {
       oldWidget.terminal.removeListener(_onTerminalUpdated);
       widget.terminal.addListener(_onTerminalUpdated);
-      isAltBuffer = widget.terminal.isUsingAltBuffer;
+      mouseActive = widget.terminal.mouseMode != MouseMode.none;
     }
     super.didUpdateWidget(oldWidget);
   }
 
   void _onTerminalUpdated() {
-    if (isAltBuffer != widget.terminal.isUsingAltBuffer) {
-      isAltBuffer = widget.terminal.isUsingAltBuffer;
-      setState(() {});
+    final active = widget.terminal.mouseMode != MouseMode.none;
+    if (active != mouseActive) {
+      mouseActive = active;
+      if (mounted) setState(() {});
     }
   }
 
-  /// Send a single scroll event to the terminal. If [simulateScroll] is true,
-  /// then if the application doesn't recognize mouse wheel events, this method
-  /// will simulate scroll events by sending up/down arrow keys.
+  /// Send a single wheel-scroll event to the application.
+  ///
+  /// Mirrors the (working) web terminal: write an SGR (1006) mouse-wheel
+  /// report straight to the app. We deliberately do NOT route through
+  /// `terminal.mouseInput` — that emits a report only when xterm's own DECSET
+  /// mouse-mode parse matched the app's enable sequence, which can miss after
+  /// a WebSocket reconnect / buffer replay, leaving a touch swipe silently
+  /// doing nothing (and the old arrow-key fallback just moved the TUI cursor).
+  /// A full-screen TUI in the alternate buffer — the only place this handler
+  /// is active — drives its own scrollback from wheel input and speaks SGR
+  /// mouse reporting, so this reaches it directly and deterministically.
   void _sendScrollEvent(bool up) {
     final position = widget.getCellOffset(lastPointerPosition);
-
-    final handled = widget.terminal.mouseInput(
-      up ? TerminalMouseButton.wheelUp : TerminalMouseButton.wheelDown,
-      TerminalMouseButtonState.down,
-      position,
-    );
-
-    if (!handled && widget.simulateScroll) {
-      widget.terminal.keyInput(
-        up ? TerminalKey.arrowUp : TerminalKey.arrowDown,
-      );
-    }
+    final col = position.x + 1; // SGR coordinates are 1-based
+    final row = position.y + 1;
+    final btn = up ? 64 : 65; // SGR wheel up (64) / down (65), press
+    widget.terminal.onOutput?.call('\x1b[<$btn;$col;${row}M');
   }
 
   void _onScroll(double offset) {
@@ -111,9 +130,36 @@ class _TerminalScrollGestureHandlerState
     lastLineOffset = currentLineOffset;
   }
 
+  /// Translate a one-finger touch drag into scroll events. The
+  /// [InfiniteScrollView] below already turns a mouse wheel
+  /// ([PointerScrollEvent]) into [_onScroll], but a *touch* drag in the
+  /// alternate buffer is swallowed by the inner viewport [Scrollable]
+  /// (which has nothing to scroll there), so on a phone the gesture never
+  /// reaches [_onScroll] and the application never receives wheel input.
+  /// A [Listener] observes the raw pointer stream regardless of the gesture
+  /// arena, so we emit one scroll event per line of finger travel here.
+  /// Mouse drags are left alone (they drive text selection).
+  void _onPointerMove(PointerMoveEvent event) {
+    if (event.kind != PointerDeviceKind.touch) return;
+    // Re-check live: the mode can flip between the setState that built this
+    // Listener and the pointer event arriving. Don't fire a wheel report at an
+    // app that has since dropped mouse tracking.
+    if (widget.terminal.mouseMode == MouseMode.none) return;
+    final lineHeight = widget.getLineHeight();
+    if (lineHeight <= 0) return;
+    lastPointerPosition = event.position;
+    _touchScrollAccum += event.delta.dy;
+    while (_touchScrollAccum.abs() >= lineHeight) {
+      // Finger moving down (positive dy) reveals earlier content → scroll up.
+      final up = _touchScrollAccum > 0;
+      _sendScrollEvent(up);
+      _touchScrollAccum += up ? -lineHeight : lineHeight;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (!isAltBuffer) {
+    if (!mouseActive) {
       return widget.child;
     }
 
@@ -123,7 +169,9 @@ class _TerminalScrollGestureHandlerState
       },
       onPointerDown: (event) {
         lastPointerPosition = event.position;
+        _touchScrollAccum = 0;
       },
+      onPointerMove: _onPointerMove,
       child: InfiniteScrollView(
         onScroll: _onScroll,
         child: widget.child,

@@ -19,7 +19,7 @@ import {
   type DocKind,
   type ProjectDoc,
 } from '@/lib/projectDocs'
-import { listCleanupDecisions } from '@/lib/memoryCleanup'
+import { listArchived } from '@/lib/memory'
 
 interface MemoryPanelProps {
   cwd: string
@@ -44,15 +44,9 @@ export function MemoryPanel({ cwd }: MemoryPanelProps) {
     enabled: !!cwd,
     staleTime: 30_000,
   })
-  const cleanupQ = useQuery({
-    queryKey: ['cleanup-decisions', 'project', cwd],
-    queryFn: () =>
-      listCleanupDecisions({
-        status: 'pending',
-        scope: 'project',
-        scope_key: cwd,
-        limit: 100,
-      }),
+  const archivedQ = useQuery({
+    queryKey: ['archived-memories', 'project', cwd],
+    queryFn: () => listArchived('project', cwd, 200),
     enabled: !!cwd,
     staleTime: 30_000,
   })
@@ -72,7 +66,7 @@ export function MemoryPanel({ cwd }: MemoryPanelProps) {
   const plan = docsByKind.plan?.content?.trim() ?? ''
   const journalCount = logsQ.data?.length ?? 0
   const inboxCount = proposalsQ.data?.length ?? 0
-  const cleanupCount = cleanupQ.data?.length ?? 0
+  const archivedCount = archivedQ.data?.length ?? 0
   const latestJournal = logsQ.data?.[0]
 
   return (
@@ -105,10 +99,9 @@ export function MemoryPanel({ cwd }: MemoryPanelProps) {
           danger={inboxCount > 0}
         />
         <StatCell
-          label="Cleanup"
-          value={cleanupCount}
-          loading={cleanupQ.isLoading}
-          danger={cleanupCount > 0}
+          label="Archived"
+          value={archivedCount}
+          loading={archivedQ.isLoading}
         />
       </div>
 

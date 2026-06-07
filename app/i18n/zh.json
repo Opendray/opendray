@@ -240,7 +240,7 @@
       "title": "记忆",
       "subtitle": "浏览、搜索并编辑 Agent 通过 opendray-memory MCP 服务器存储的记忆。",
       "navProject": "项目",
-      "navCleanupInbox": "清理收件箱",
+      "navArchived": "已归档",
       "navWorkers": "Workers",
       "navConfiguration": "配置 →"
     },
@@ -411,26 +411,18 @@
         }
       }
     },
-    "cleanupInbox": {
+    "archived": {
       "loading": "加载中…",
-      "emptyTitle": "清理收件箱为空",
-      "emptyDescription": "目前所有项目均无待处理的清理决策。LLM librarian 要么尚未跑过这些记忆，要么判断全部仍是关键内容。",
-      "title": "清理收件箱",
-      "subtitle": "LLM memory librarian 的跨项目待处理决策。批准 stale → 删除，批准 duplicate → 合并，批准 keep → 一段时间内冻结该条目不再被重新判断。",
+      "emptyTitle": "暂无归档",
+      "emptyDescription": "所有项目均无已归档记忆。自动清理器会把过时和重复的事实软归档到这里（30 天内可恢复）——目前尚未移除任何内容。",
+      "title": "已归档记忆",
+      "subtitle": "自动清理器与生命周期扫描在所有项目中软归档的记忆。它们已从检索中排除，但在 30 天宽限期清除前均可恢复。如有误判可在下方恢复。",
       "globalScope": "(全局)",
-      "orphanBadge": "孤立",
-      "orphanTitle": "scope_key 被截断（老旧的镜像导入数据）。不是可导航的项目。",
       "openProject": "打开项目",
-      "mergeIntoPrefix": "→ 合并到",
-      "reasonPrefix": "原因：",
-      "executeButton": "执行",
-      "confirmKeepButton": "确认保留",
-      "rejectButton": "驳回",
-      "approvedKeptToast": "已保留",
-      "approvedExecutedToast": "已执行 {verdict}",
-      "approveFailedToast": "批准失败",
-      "rejectedToast": "已驳回 — 记忆保留",
-      "rejectFailedToast": "驳回失败"
+      "archivedAtPrefix": "归档于",
+      "restoreButton": "恢复",
+      "restoredToast": "已恢复",
+      "restoreFailedToast": "恢复失败"
     },
     "project": {
       "picker": {
@@ -452,7 +444,7 @@
         "journalEntries_other": "{count} 条日志",
         "pendingProposals_one": "{count} 条待处理提案",
         "pendingProposals_other": "{count} 条待处理提案",
-        "cleanupPending": "{count} 条待清理"
+        "archivedCount": "{count} 条已归档"
       },
       "tabs": {
         "health": "健康",
@@ -463,18 +455,13 @@
         "journal": "日志",
         "inbox": "收件箱",
         "conflicts": "冲突",
-        "cleanup": "清理"
+        "archived": "已归档"
       },
       "docLabel": {
         "goal": "目标",
         "plan": "计划",
         "tech_stack": "技术栈",
         "recent_activity": "最近活动"
-      },
-      "verdictLabel": {
-        "stale": "删除",
-        "duplicate": "合并",
-        "keep": "保留"
       },
       "editor": {
         "updatedBy": "更新者",
@@ -523,21 +510,13 @@
         "confirmCancel": "取消",
         "confirmReplace": "确认替换"
       },
-      "cleanup": {
-        "hint": "LLM librarian 为该项目的记忆提出保留 / 过期 / 重复 的判定。删除前需你批准。",
-        "runNow": "立即运行清理",
-        "runSucceededToast": "清理已运行：{decided} 条决策入队（扫描了 {scanned} 条）",
-        "runFailedToast": "清理运行失败",
-        "empty": "暂无待处理决策。要么没有记忆达到判定年龄，要么上次运行判断全部仍是关键内容。",
-        "mergeIntoPrefix": "→ 合并到",
-        "reasonPrefix": "原因：",
-        "executeButton": "执行",
-        "confirmKeepButton": "确认保留",
-        "rejectButton": "驳回",
-        "approvedExecutedToast": "已执行{label}",
-        "approveFailedToast": "批准失败",
-        "rejectedToast": "已驳回 — 记忆保留",
-        "rejectFailedToast": "驳回失败"
+      "archived": {
+        "hint": "自动清理器为该项目软归档的记忆。它们已从检索中排除，但在 30 天宽限期清除前均可恢复。",
+        "empty": "该项目暂无归档。清理器会自动把过时和重复的事实软归档到这里——目前还没有。",
+        "archivedAtPrefix": "归档于",
+        "restoreButton": "恢复",
+        "restoredToast": "已恢复",
+        "restoreFailedToast": "恢复失败"
       },
       "reset": {
         "button": "重置",
@@ -573,22 +552,21 @@
         "dimensions": "{dim} 维 · {state}",
         "enabled": "已启用",
         "disabled": "已禁用",
-        "testButton": "测试 embedder"
+        "floorNoModel": "仅关键词（BM25）检索 — 未配置 embedding 模型。在 Settings 配置 dense 的 [memory.http] 端点即可启用语义记忆。",
+        "denseConfiguredPendingRestart": "已配置 {model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。",
+        "denseUnreachableFloor": "已配置 {model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。",
+        "denseDegraded": "dense embedder 已激活，但其端点当前不可达 — 现有向量已保留；新写入与相似度检索暂停，直到端点恢复。"
       },
-      "statusBody": "这是网关当前用于每次 <1>memory_search</1> / <3>memory_store</3> 调用的 embedder。如果与上方配置不一致，说明有未保存的更改 — 点击 Save 后重启服务即可生效。",
       "scope": {
         "label": "Scope",
         "scopeKey": "Scope key",
         "scopeKeyIgnored": "(global 时忽略)",
         "scopeKeyCwd": "(项目的 cwd)",
-        "scopeKeySession": "(session id)",
         "placeholderProject": "/path/to/project (cwd)",
-        "placeholderSession": "session id",
         "syncMd": "同步 .md",
         "syncTooltip": "把 Claude 的 <cwd>/.claude/memory/*.md 重新摄取到 pgvector",
         "values": {
           "project": "project",
-          "session": "session",
           "global": "global"
         }
       },
@@ -646,10 +624,7 @@
         "syncIngested_other": "已摄取 {count} 个新记忆文件",
         "syncEmpty": "没有需要同步的新 .md 文件",
         "syncEmptyDescription": "已是最新，或该 cwd 没有 Claude memory 目录。",
-        "syncFailed": "同步失败",
-        "testOk": "Embedder OK：{embedder} · {dim} 维",
-        "testOkDescription": "vector_preview = [{preview}…]",
-        "testFailed": "Embedder 探测失败"
+        "syncFailed": "同步失败"
       },
       "bulkDelete": {
         "title": "删除此 scope 的全部记忆?",
@@ -1899,7 +1874,7 @@
         },
         "memoryScope": {
           "label": "默认作用域",
-          "hint": "agent 未指定时 memory_store 使用的作用域。\"project\"（推荐）按 cwd 分组；\"session\" 按会话隔离；\"global\" 跨 cwd 共享。"
+          "hint": "agent 未指定时 memory_store 使用的作用域。\"project\"（推荐）按 cwd 分组；\"global\" 跨 cwd 共享。"
         },
         "memoryBaseUrl": {
           "label": "Base URL",
@@ -2253,7 +2228,6 @@
           "idleLabel": "Idle 秒数",
           "kLabel": "K（字符数）",
           "scopeLabel": "目标 scope",
-          "scopeSession": "session",
           "scopeProject": "project（推荐）",
           "scopeGlobal": "global",
           "dedupLabel": "去重阈值（0.0 – 1.0）",
@@ -2452,9 +2426,9 @@
         "title": "项目目标 / 计划 / 日志",
         "subtitle": "按 cwd 的记忆层 2-4 + 代理提案"
       },
-      "cleanupInbox": {
-        "title": "清理收件箱",
-        "subtitle": "跨项目的 LLM 提议删除 / 合并"
+      "archived": {
+        "title": "已归档记忆",
+        "subtitle": "恢复自动清理器软归档的记忆（30 天宽限期）"
       },
       "backups": {
         "title": "备份",
@@ -2972,7 +2946,8 @@
     "errorTitle": "端点不可达",
     "errorDetail": "/api/v1/memory/workers 路由在 M25 中是新增的 — opendray 二进制可能需要重启以挂载这些路由并运行迁移 0029。",
     "summarizerOnlyBadge": "仅 summarizer",
-    "summarizerInfo": "使用注册表默认 summarizer 提供商。在 Web 管理端选择具体行。",
+    "summarizerProviderLabel": "Summarizer 提供商",
+    "registryDefault": "注册表默认",
     "agentWarning": "Agent 模式每次调用都会生成无头 CLI。延迟约 5-15 秒（相比 summarizer 约 1 秒）；成本从 CPU 转移到你的 Claude / Gemini 配额。",
     "noCalls24h": "过去 24 小时没有调用。",
     "testOkSnack": "{label} OK — {duration}ms",
@@ -3009,12 +2984,15 @@
       }
     }
   },
-  "memoryCleanup": {
-    "title": "记忆清理",
-    "approveFailed": "批准失败：{error}",
-    "rejectFailed": "拒绝失败：{error}",
+  "memoryArchived": {
+    "title": "已归档记忆",
     "loadFailed": "加载失败：{error}",
-    "reject": "拒绝"
+    "restoreFailed": "恢复失败：{error}",
+    "emptyTitle": "暂无归档",
+    "emptyBody": "所有项目均无已归档记忆。自动清理器会把过时和重复的事实软归档到这里（30 天内可恢复）——目前尚未移除任何内容。",
+    "globalScope": "(全局)",
+    "countBadge": "{count} 条已归档",
+    "restore": "恢复"
   },
   "project": {
     "title": "项目",
@@ -3085,7 +3063,6 @@
     "appendFailed": "失败：{error}",
     "approveFailed": "批准失败：{error}",
     "rejectFailed": "拒绝失败：{error}",
-    "cleanupFailed": "清理失败：{error}",
     "resetConfirmTitle": "重置项目记忆？",
     "alsoDeleteScanner": "同时删除扫描器文档",
     "alsoDeletePgvector": "同时删除 pgvector 记忆",
@@ -3101,8 +3078,12 @@
     "approve": "批准",
     "replaceConfirmTitle": "替换当前 {kind}？",
     "replaceKind": "替换 {kind}",
-    "reason": "原因",
-    "willMergeInto": "将合并到"
+    "archived": {
+      "emptyTitle": "暂无归档",
+      "emptyBody": "该项目暂无归档记忆。自动清理器会把过时和重复的事实软归档到这里——目前还没有。",
+      "restoreFailed": "恢复失败：{error}",
+      "restore": "恢复"
+    }
   },
   "backups": {
     "title": "备份",
@@ -3774,6 +3755,16 @@
     }
   },
   "memory": {
+    "status": {
+      "label": "当前生效 embedder",
+      "dimensions": "{dim} 维 · {state}",
+      "enabled": "已启用",
+      "disabled": "已禁用",
+      "floorNoModel": "仅关键词（BM25）检索 — 未配置 embedding 模型。在 Settings 配置 dense 端点即可启用语义记忆。",
+      "denseConfiguredPendingRestart": "已配置 {model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。",
+      "denseUnreachableFloor": "已配置 {model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。",
+      "denseDegraded": "dense embedder 已激活，但其端点当前不可达 — 现有向量已保留；新写入与相似度检索暂停，直到端点恢复。"
+    },
     "title": "记忆",
     "more": "更多",
     "workers": "记忆工作器",
@@ -3982,7 +3973,6 @@
         "defaultTopK": "默认 top-k",
         "similarityThreshold": "相似度阈值",
         "defaultScope": "默认范围",
-        "chromemHelper": "当 store=chromem 时。",
         "preserveHelper": "留空 = 保留当前值。",
         "localModelName": "本地模型名",
         "localLibraryPath": "本地库路径",
@@ -4003,7 +3993,6 @@
         "backendHelper": "auto 选择最佳可用；local 需要 ONNX。",
         "similarityHelper": "0.0–1.0；低于此值的结果会被过滤。",
         "defaultFallback": "默认：{value}",
-        "chromemPath": "chromem 路径",
         "httpBaseUrl": "HTTP base URL",
         "httpModel": "HTTP model",
         "httpApiKey": "HTTP api key",

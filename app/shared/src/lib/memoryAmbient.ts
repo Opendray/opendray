@@ -122,7 +122,8 @@ export async function providerCost(
 // ── capture rules ────────────────────────────────────────────────
 
 export type TriggerKind = 'after_messages' | 'on_idle' | 'k_chars' | 'manual'
-export type TargetScope = 'session' | 'project' | 'global'
+// 'session' was retired in the M-U unification (session ≡ project).
+export type TargetScope = 'project' | 'global'
 
 export interface CaptureRule {
   id: string

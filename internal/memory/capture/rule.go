@@ -101,8 +101,13 @@ func (s *RuleStore) Insert(ctx context.Context, r Rule) (Rule, error) {
 	if r.TargetScope == "" {
 		r.TargetScope = "project"
 	}
+	// "session" is the retired scope (session ≡ project). Coerce so old
+	// rules and old API callers keep working, writing project memory.
+	if r.TargetScope == "session" {
+		r.TargetScope = "project"
+	}
 	switch r.TargetScope {
-	case "session", "project", "global":
+	case "project", "global":
 	default:
 		return Rule{}, fmt.Errorf("capture: invalid target_scope %q", r.TargetScope)
 	}
@@ -250,8 +255,12 @@ func (s *RuleStore) Update(ctx context.Context, id string, p RulePatch) (Rule, e
 		}
 	}
 	if p.TargetScope != nil {
+		if *p.TargetScope == "session" {
+			project := "project"
+			p.TargetScope = &project
+		}
 		switch *p.TargetScope {
-		case "session", "project", "global":
+		case "project", "global":
 		default:
 			return Rule{}, fmt.Errorf("capture: invalid target_scope %q", *p.TargetScope)
 		}

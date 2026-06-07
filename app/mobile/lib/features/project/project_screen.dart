@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/memory_api.dart';
-import 'package:opendray/core/api/memory_cleanup_api.dart';
 import 'package:opendray/core/api/memory_conflicts_api.dart';
 import 'package:opendray/core/api/memory_health_api.dart';
 import 'package:opendray/core/api/models.dart';
@@ -42,18 +41,16 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
   AsyncValue<List<ProjectDoc>> _docs = const AsyncValue.loading();
   AsyncValue<List<DocProposal>> _proposals = const AsyncValue.loading();
   AsyncValue<List<SessionLogEntry>> _logs = const AsyncValue.loading();
-  AsyncValue<List<CleanupDecision>> _cleanupDecisions =
-      const AsyncValue.loading();
+  AsyncValue<List<Memory>> _archived = const AsyncValue.loading();
   AsyncValue<MemoryHealthSnapshot> _health = const AsyncValue.loading();
   AsyncValue<List<MemoryConflict>> _conflicts = const AsyncValue.loading();
-  bool _cleanupRunning = false;
   bool _conflictDetectRunning = false;
 
   @override
   void initState() {
     super.initState();
     // Health + Goal + Plan + Tech + Activity + Journal + Inbox +
-    // Conflicts + Cleanup = 9 tabs (web parity).
+    // Conflicts + Archived = 9 tabs (web parity).
     _tabs = TabController(length: 9, vsync: this);
     _loadKeys();
   }
@@ -110,12 +107,12 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
       _docs = const AsyncValue.loading();
       _proposals = const AsyncValue.loading();
       _logs = const AsyncValue.loading();
-      _cleanupDecisions = const AsyncValue.loading();
+      _archived = const AsyncValue.loading();
       _health = const AsyncValue.loading();
       _conflicts = const AsyncValue.loading();
     });
     final api = ref.read(projectDocsApiProvider);
-    final cleanupApi = ref.read(memoryCleanupApiProvider);
+    final memApi = ref.read(memoryApiProvider);
     final healthApi = ref.read(memoryHealthApiProvider);
     final conflictsApi = ref.read(memoryConflictsApiProvider);
     try {
@@ -143,17 +140,15 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
       setState(() => _logs = AsyncValue.error(e, StackTrace.current));
     }
     try {
-      final decisions = await cleanupApi.list(
-        scope: 'project',
+      final archived = await memApi.listArchived(
+        scope: MemoryScope.project,
         scopeKey: cwd,
-        status: 'pending',
       );
       if (!mounted) return;
-      setState(() => _cleanupDecisions = AsyncValue.data(decisions));
+      setState(() => _archived = AsyncValue.data(archived));
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() =>
-          _cleanupDecisions = AsyncValue.error(e, StackTrace.current));
+      setState(() => _archived = AsyncValue.error(e, StackTrace.current));
     }
     try {
       final snap = await healthApi.get(cwd);
@@ -282,7 +277,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
             Tab(text: 'Journal'),
             Tab(text: 'Inbox'),
             Tab(text: 'Conflicts'),
-            Tab(text: 'Cleanup'),
+            Tab(text: 'Archived'),
           ],
         ),
       ),
@@ -314,7 +309,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                 _journalTab(),
                 _inboxTab(),
                 _conflictsTab(),
-                _cleanupTab(),
+                _archivedTab(),
               ],
             ),
           ),
@@ -675,23 +670,26 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
     );
   }
 
-  // ── Cleanup tab ───────────────────────────────────────────────
+  // ── Archived tab (read-only + restore) ───────────────────────
+  //
+  // The cleaner auto-applies its keep/stale/duplicate verdicts as
+  // reversible soft-archives — no approval queue. This tab shows what
+  // was auto-removed for this project and lets the operator restore a
+  // false positive before the 30-day grace window purges it.
 
-  Widget _cleanupTab() {
+  Widget _archivedTab() {
     if (_selectedKey == null) {
       return Center(child: Text(t.project.pickFirst));
     }
-    return _cleanupDecisions.when(
+    return _archived.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) =>
           Center(child: Text(t.project.loadFailed(error: e.toString()))),
-      data: (decisions) {
+      data: (rows) {
         return RefreshIndicator(
           onRefresh: () async => _loadAll(_selectedKey!),
-          child: Stack(
-            children: [
-              if (decisions.isEmpty)
-                ListView(
+          child: rows.isEmpty
+              ? ListView(
                   children: [
                     const SizedBox(height: 60),
                     Padding(
@@ -699,7 +697,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                       child: Column(
                         children: [
                           Icon(
-                            Icons.cleaning_services_outlined,
+                            Icons.inventory_2_outlined,
                             size: 48,
                             color: Theme.of(context)
                                 .colorScheme
@@ -708,16 +706,13 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'No pending cleanup decisions.',
+                            t.project.archived.emptyTitle,
                             style: Theme.of(context).textTheme.titleMedium,
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Tap Run cleanup below to have the LLM '
-                            "librarian review this project's memories and "
-                            'propose deletions / merges. Each proposal '
-                            'lands here for your approval.',
+                            t.project.archived.emptyBody,
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
@@ -725,98 +720,30 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                       ),
                     ),
                   ],
-                ),
-              if (decisions.isNotEmpty)
-                ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 96),
-                  itemCount: decisions.length,
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
+                  itemCount: rows.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 4),
-                  itemBuilder: (_, i) => _CleanupCard(
-                    decision: decisions[i],
-                    onApprove: () => _approveCleanup(decisions[i].id),
-                    onReject: () => _rejectCleanup(decisions[i].id),
+                  itemBuilder: (_, i) => _ArchivedCard(
+                    memory: rows[i],
+                    onRestore: () => _restoreArchived(rows[i].id),
                   ),
                 ),
-              Positioned(
-                right: 16,
-                bottom: 16,
-                child: FloatingActionButton.extended(
-                  heroTag: 'project_cleanup_fab',
-                  onPressed: _cleanupRunning ? null : _runCleanup,
-                  icon: _cleanupRunning
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.play_arrow_outlined),
-                  label: Text(_cleanupRunning ? 'Running…' : 'Run cleanup'),
-                ),
-              ),
-            ],
-          ),
         );
       },
     );
   }
 
-  Future<void> _runCleanup() async {
-    final cwd = _selectedKey;
-    if (cwd == null) return;
-    setState(() => _cleanupRunning = true);
+  Future<void> _restoreArchived(String id) async {
     try {
-      final res = await ref.read(memoryCleanupApiProvider).run(
-            scope: 'project',
-            scopeKey: cwd,
-          );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Cleanup run: ${res.memoriesIn} reviewed, '
-            '${res.decisionsOut} decisions filed.',
-          ),
-        ),
-      );
-      await _loadAll(cwd);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(t.project.cleanupFailed(error: e.toString())),
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _cleanupRunning = false);
-    }
-  }
-
-  Future<void> _approveCleanup(String id) async {
-    try {
-      await ref.read(memoryCleanupApiProvider).approve(id);
+      await ref.read(memoryApiProvider).restore(id);
       if (mounted) await _loadAll(_selectedKey!);
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(t.project.approveFailed(error: e.toString())),
-          ),
-        );
-        // Stale UI — re-pull to show the real status.
-        await _loadAll(_selectedKey!);
-      }
-    }
-  }
-
-  Future<void> _rejectCleanup(String id) async {
-    try {
-      await ref.read(memoryCleanupApiProvider).reject(id);
-      if (mounted) await _loadAll(_selectedKey!);
-    } on ApiException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(t.project.rejectFailed(error: e.toString())),
+            content: Text(t.project.archived.restoreFailed(error: e.toString())),
           ),
         );
         await _loadAll(_selectedKey!);
@@ -1190,7 +1117,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
   // operator can edit the doc that's currently in conflict with
   // a fact. Tab indices follow the order declared in build():
   // Health(0) / Goal(1) / Plan(2) / Tech(3) / Activity(4) /
-  // Journal(5) / Inbox(6) / Conflicts(7) / Cleanup(8).
+  // Journal(5) / Inbox(6) / Conflicts(7) / Archived(8).
   void _jumpToLayerTab(ConflictLayer layer) {
     switch (layer) {
       case ConflictLayer.plan:
@@ -2224,38 +2151,23 @@ class _DiffBlock extends StatelessWidget {
   }
 }
 
-// _CleanupCard renders one pending memory_cleanup_decisions row.
-// Color-codes the verdict so operators can skim a long list and
-// approve "stale" / "duplicate" rows quickly without reading every
-// reason field.
-class _CleanupCard extends StatelessWidget {
-  const _CleanupCard({
-    required this.decision,
-    required this.onApprove,
-    required this.onReject,
+// _ArchivedCard renders one soft-archived memory row with the reason
+// it was auto-removed and a one-click restore. Read-only otherwise —
+// the operator only ever undoes a false positive here.
+class _ArchivedCard extends StatelessWidget {
+  const _ArchivedCard({
+    required this.memory,
+    required this.onRestore,
   });
 
-  final CleanupDecision decision;
-  final VoidCallback onApprove;
-  final VoidCallback onReject;
-
-  Color _verdictColor(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    switch (decision.verdict) {
-      case 'keep':
-        return scheme.primary;
-      case 'stale':
-        return scheme.error;
-      case 'duplicate':
-        return scheme.tertiary;
-      default:
-        return scheme.outline;
-    }
-  }
+  final Memory memory;
+  final VoidCallback onRestore;
 
   @override
   Widget build(BuildContext context) {
     final muted = Theme.of(context).textTheme.bodySmall;
+    final scheme = Theme.of(context).colorScheme;
+    final reason = memory.archivedReason ?? '';
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -2264,70 +2176,52 @@ class _CleanupCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Chip(
-                  label: Text(
-                    decision.verdict.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: _verdictColor(context),
-                      fontWeight: FontWeight.w600,
+                if (reason.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      reason.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: scheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                  visualDensity: VisualDensity.compact,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    decision.memoryId,
-                    style: muted?.copyWith(
-                      fontFamily: 'monospace',
-                      fontFeatures: const [FontFeature.tabularFigures()],
+                  const SizedBox(width: 8),
+                ],
+                if (memory.archivedAt != null)
+                  Expanded(
+                    child: Text(
+                      DateFormat.MMMd()
+                          .add_jm()
+                          .format(memory.archivedAt!.toLocal()),
+                      style: muted,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              decision.memoryTextSnapshot,
+              memory.text,
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
-            if (decision.reason.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(t.project.reason, style: muted),
-              const SizedBox(height: 2),
-              Text(decision.reason),
-            ],
-            if (decision.mergeInto.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(t.project.willMergeInto, style: muted),
-              const SizedBox(height: 2),
-              Text(
-                decision.mergeInto,
-                style: const TextStyle(fontFamily: 'monospace'),
-              ),
-            ],
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                TextButton(
-                  onPressed: onReject,
-                  child: Text(t.project.reject),
-                ),
-                const SizedBox(width: 8),
-                FilledButton(
-                  onPressed: onApprove,
-                  child: Text(
-                    decision.verdict == 'keep'
-                        ? 'Confirm keep'
-                        : decision.verdict == 'stale'
-                            ? 'Delete'
-                            : 'Merge',
-                  ),
+                FilledButton.tonalIcon(
+                  onPressed: onRestore,
+                  icon: const Icon(Icons.restore, size: 18),
+                  label: Text(t.project.archived.restore),
                 ),
               ],
             ),

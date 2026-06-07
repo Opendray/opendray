@@ -255,7 +255,7 @@ List<_Section> _buildSections() => <_Section>[
         label: t.settings.serverSettings.fields.store,
         path: 'memory.store',
         kind: _FieldKind.select,
-        options: const ['pgvector', 'chromem'],
+        options: const ['pgvector'],
         // Backend defaults to pgvector when empty — see
         // internal/app/app.go:resolveMemoryService. We surface
         // that fallback in the picker hint so the operator
@@ -281,16 +281,10 @@ List<_Section> _buildSections() => <_Section>[
         label: t.settings.serverSettings.fields.defaultScope,
         path: 'memory.scope.default',
         kind: _FieldKind.select,
-        options: const ['project', 'session', 'global'],
-        // memory.Service.NewOptions defaults to ScopeProject.
+        options: const ['project', 'global'],
+        // memory.Service.NewOptions defaults to ScopeProject. The legacy
+        // "session" scope was removed in M-U Phase 1 (session ≡ project).
         placeholder: 'project',
-      ),
-      _Field(
-        label: t.settings.serverSettings.fields.chromemPath,
-        path: 'memory.chromem_path',
-        kind: _FieldKind.text,
-        monospace: true,
-        helper: t.settings.serverSettings.fields.chromemHelper,
       ),
       _Field(
         label: t.settings.serverSettings.fields.httpBaseUrl,

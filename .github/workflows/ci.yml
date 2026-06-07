@@ -120,3 +120,32 @@ jobs:
       # (they fall back to English at runtime). See the script header.
       - name: Translation parity check
         run: node scripts/check-i18n-parity.mjs
+
+  readme-drift:
+    name: README translation drift (advisory)
+    # PR-only: there is no PR to comment on for a push to main. Advisory
+    # job, so it never blocks the merge; it just posts/updates a single
+    # comment when README.md changed but its translations did not. See
+    # scripts/check-readme-drift.sh for the full behaviour.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      # Needs write to post/edit the advisory comment. Scoped to this job
+      # so the rest of CI keeps the read-only top-level default.
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Zero-dependency Node script (shells out to the gh CLI), so no pnpm
+      # install needed. Same style as scripts/check-i18n-parity.mjs. See the
+      # script header for the full upsert/idempotency behaviour.
+      - name: README translation drift check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: node scripts/check-readme-drift.mjs

@@ -49,7 +49,7 @@ class TranslationsEs extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsProvidersEs providers = _TranslationsProvidersEs._(_root);
 	@override late final _TranslationsIntegrationsEs integrations = _TranslationsIntegrationsEs._(_root);
 	@override late final _TranslationsMemoryWorkersEs memoryWorkers = _TranslationsMemoryWorkersEs._(_root);
-	@override late final _TranslationsMemoryCleanupEs memoryCleanup = _TranslationsMemoryCleanupEs._(_root);
+	@override late final _TranslationsMemoryArchivedEs memoryArchived = _TranslationsMemoryArchivedEs._(_root);
 	@override late final _TranslationsProjectEs project = _TranslationsProjectEs._(_root);
 	@override late final _TranslationsBackupsEs backups = _TranslationsBackupsEs._(_root);
 	@override late final _TranslationsBackupTargetsEs backupTargets = _TranslationsBackupTargetsEs._(_root);
@@ -146,7 +146,7 @@ class _TranslationsWebEs extends TranslationsWebEn {
 	@override late final _TranslationsWebMemoryHealthEs memoryHealth = _TranslationsWebMemoryHealthEs._(_root);
 	@override late final _TranslationsWebMemoryConfigEs memoryConfig = _TranslationsWebMemoryConfigEs._(_root);
 	@override late final _TranslationsWebMemoryWorkersEs memoryWorkers = _TranslationsWebMemoryWorkersEs._(_root);
-	@override late final _TranslationsWebCleanupInboxEs cleanupInbox = _TranslationsWebCleanupInboxEs._(_root);
+	@override late final _TranslationsWebArchivedEs archived = _TranslationsWebArchivedEs._(_root);
 	@override late final _TranslationsWebProjectEs project = _TranslationsWebProjectEs._(_root);
 	@override late final _TranslationsWebMemoryInspectorEs memoryInspector = _TranslationsWebMemoryInspectorEs._(_root);
 	@override late final _TranslationsWebNotesEs notes = _TranslationsWebNotesEs._(_root);
@@ -354,7 +354,8 @@ class _TranslationsMemoryWorkersEs extends TranslationsMemoryWorkersEn {
 	@override String get errorTitle => 'Endpoint no accesible';
 	@override String get errorDetail => 'Las rutas /api/v1/memory/workers son nuevas en M25. Puede que el binario de opendray necesite un reinicio para montarlas y ejecutar la migración 0029.';
 	@override String get summarizerOnlyBadge => 'solo resumidor';
-	@override String get summarizerInfo => 'Usa el proveedor de resumidor predeterminado del registro. Elige una fila específica en el panel de administración web.';
+	@override String get summarizerProviderLabel => 'Proveedor de resumidor';
+	@override String get registryDefault => 'Predeterminado del registro';
 	@override String get agentWarning => 'El modo agente lanza un CLI headless por cada llamada. Latencia ~5-15s (frente a ~1s del resumidor); el coste pasa de la CPU a tu quota de Claude/Gemini.';
 	@override String get noCalls24h => 'Sin llamadas en las últimas 24h.';
 	@override String testOkSnack({required Object label, required Object duration}) => '${label} OK, ${duration}ms';
@@ -363,18 +364,21 @@ class _TranslationsMemoryWorkersEs extends TranslationsMemoryWorkersEn {
 	@override late final _TranslationsMemoryWorkersTasksEs tasks = _TranslationsMemoryWorkersTasksEs._(_root);
 }
 
-// Path: memoryCleanup
-class _TranslationsMemoryCleanupEs extends TranslationsMemoryCleanupEn {
-	_TranslationsMemoryCleanupEs._(TranslationsEs root) : this._root = root, super.internal(root);
+// Path: memoryArchived
+class _TranslationsMemoryArchivedEs extends TranslationsMemoryArchivedEn {
+	_TranslationsMemoryArchivedEs._(TranslationsEs root) : this._root = root, super.internal(root);
 
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Limpieza de memoria';
-	@override String approveFailed({required Object error}) => 'Error al aprobar: ${error}';
-	@override String rejectFailed({required Object error}) => 'Error al rechazar: ${error}';
+	@override String get title => 'Memorias archivadas';
 	@override String loadFailed({required Object error}) => 'Error al cargar: ${error}';
-	@override String get reject => 'Rechazar';
+	@override String restoreFailed({required Object error}) => 'Error al restaurar: ${error}';
+	@override String get emptyTitle => 'Nada archivado';
+	@override String get emptyBody => 'No hay memorias archivadas en ningún proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados (restaurables durante 30 días); todavía no se ha eliminado nada.';
+	@override String get globalScope => '(global)';
+	@override String countBadge({required Object count}) => '${count} archivadas';
+	@override String get restore => 'Restaurar';
 }
 
 // Path: project
@@ -400,7 +404,6 @@ class _TranslationsProjectEs extends TranslationsProjectEn {
 	@override String appendFailed({required Object error}) => 'Error: ${error}';
 	@override String approveFailed({required Object error}) => 'Error al aprobar: ${error}';
 	@override String rejectFailed({required Object error}) => 'Error al rechazar: ${error}';
-	@override String cleanupFailed({required Object error}) => 'Error en la limpieza: ${error}';
 	@override String get resetConfirmTitle => '¿Restablecer la memoria del proyecto?';
 	@override String get alsoDeleteScanner => 'Eliminar también los documentos del scanner';
 	@override String get alsoDeletePgvector => 'Eliminar también las memorias de pgvector';
@@ -416,8 +419,7 @@ class _TranslationsProjectEs extends TranslationsProjectEn {
 	@override String get approve => 'Aprobar';
 	@override String replaceConfirmTitle({required Object kind}) => '¿Reemplazar el ${kind} actual?';
 	@override String replaceKind({required Object kind}) => 'Reemplazar ${kind}';
-	@override String get reason => 'Motivo';
-	@override String get willMergeInto => 'Se fusionará en';
+	@override late final _TranslationsProjectArchivedEs archived = _TranslationsProjectArchivedEs._(_root);
 }
 
 // Path: backups
@@ -807,6 +809,7 @@ class _TranslationsMemoryEs extends TranslationsMemoryEn {
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
+	@override late final _TranslationsMemoryStatusEs status = _TranslationsMemoryStatusEs._(_root);
 	@override String get title => 'Memoria';
 	@override String get more => 'Más';
 	@override String get workers => 'Workers de memoria';
@@ -918,7 +921,7 @@ class _TranslationsWebMemoryEs extends TranslationsWebMemoryEn {
 	@override String get title => 'Memoria';
 	@override String get subtitle => 'Explora, busca y edita las memorias que los agentes han almacenado a través del servidor MCP opendray-memory.';
 	@override String get navProject => 'Proyecto';
-	@override String get navCleanupInbox => 'Bandeja de limpieza';
+	@override String get navArchived => 'Archivadas';
 	@override String get navWorkers => 'Workers';
 	@override String get navConfiguration => 'Configuración →';
 }
@@ -1062,32 +1065,24 @@ class _TranslationsWebMemoryWorkersEs extends TranslationsWebMemoryWorkersEn {
 	@override late final _TranslationsWebMemoryWorkersTasksEs tasks = _TranslationsWebMemoryWorkersTasksEs._(_root);
 }
 
-// Path: web.cleanupInbox
-class _TranslationsWebCleanupInboxEs extends TranslationsWebCleanupInboxEn {
-	_TranslationsWebCleanupInboxEs._(TranslationsEs root) : this._root = root, super.internal(root);
+// Path: web.archived
+class _TranslationsWebArchivedEs extends TranslationsWebArchivedEn {
+	_TranslationsWebArchivedEs._(TranslationsEs root) : this._root = root, super.internal(root);
 
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
 	@override String get loading => 'Cargando…';
-	@override String get emptyTitle => 'Bandeja de limpieza vacía';
-	@override String get emptyDescription => 'No hay decisiones de limpieza pendientes en ningún proyecto. El bibliotecario LLM aún no se ha ejecutado para las memorias elegibles, o ha encontrado que todo es esencial.';
-	@override String get title => 'Bandeja de limpieza';
-	@override String get subtitle => 'Decisiones pendientes entre proyectos del bibliotecario de memoria LLM. Aprobar obsoleto borra, aprobar duplicado fusiona, aprobar conservar congela la entrada para que no se vuelva a evaluar durante un tiempo.';
+	@override String get emptyTitle => 'Nada archivado';
+	@override String get emptyDescription => 'No hay memorias archivadas en ningún proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados (restaurables durante 30 días); todavía no se ha eliminado nada.';
+	@override String get title => 'Memorias archivadas';
+	@override String get subtitle => 'Memorias que el limpiador automático y el barrido de ciclo de vida archivaron en todos los proyectos. Se excluyen de la recuperación pero son restaurables hasta que la ventana de gracia de 30 días las purgue. Restaura cualquier falso positivo abajo.';
 	@override String get globalScope => '(global)';
-	@override String get orphanBadge => 'huérfano';
-	@override String get orphanTitle => 'scope_key truncado (importación antigua de réplica). No es un proyecto navegable.';
 	@override String get openProject => 'Abrir proyecto';
-	@override String get mergeIntoPrefix => '→ fusionar en';
-	@override String get reasonPrefix => 'Motivo:';
-	@override String get executeButton => 'Ejecutar';
-	@override String get confirmKeepButton => 'Confirmar conservar';
-	@override String get rejectButton => 'Rechazar';
-	@override String get approvedKeptToast => 'Conservado';
-	@override String approvedExecutedToast({required Object verdict}) => '${verdict} ejecutado';
-	@override String get approveFailedToast => 'Error al aprobar';
-	@override String get rejectedToast => 'Rechazado, memoria conservada';
-	@override String get rejectFailedToast => 'Error al rechazar';
+	@override String get archivedAtPrefix => 'Archivado';
+	@override String get restoreButton => 'Restaurar';
+	@override String get restoredToast => 'Restaurado';
+	@override String get restoreFailedToast => 'Error al restaurar';
 }
 
 // Path: web.project
@@ -1102,12 +1097,11 @@ class _TranslationsWebProjectEs extends TranslationsWebProjectEn {
 	@override late final _TranslationsWebProjectHeaderEs header = _TranslationsWebProjectHeaderEs._(_root);
 	@override late final _TranslationsWebProjectTabsEs tabs = _TranslationsWebProjectTabsEs._(_root);
 	@override late final _TranslationsWebProjectDocLabelEs docLabel = _TranslationsWebProjectDocLabelEs._(_root);
-	@override late final _TranslationsWebProjectVerdictLabelEs verdictLabel = _TranslationsWebProjectVerdictLabelEs._(_root);
 	@override late final _TranslationsWebProjectEditorEs editor = _TranslationsWebProjectEditorEs._(_root);
 	@override late final _TranslationsWebProjectReadonlyEs readonly = _TranslationsWebProjectReadonlyEs._(_root);
 	@override late final _TranslationsWebProjectJournalEs journal = _TranslationsWebProjectJournalEs._(_root);
 	@override late final _TranslationsWebProjectInboxEs inbox = _TranslationsWebProjectInboxEs._(_root);
-	@override late final _TranslationsWebProjectCleanupEs cleanup = _TranslationsWebProjectCleanupEs._(_root);
+	@override late final _TranslationsWebProjectArchivedEs archived = _TranslationsWebProjectArchivedEs._(_root);
 	@override late final _TranslationsWebProjectResetEs reset = _TranslationsWebProjectResetEs._(_root);
 }
 
@@ -1119,7 +1113,6 @@ class _TranslationsWebMemoryInspectorEs extends TranslationsWebMemoryInspectorEn
 
 	// Translations
 	@override late final _TranslationsWebMemoryInspectorStatusEs status = _TranslationsWebMemoryInspectorStatusEs._(_root);
-	@override String get statusBody => 'Este es el embedder que el gateway está usando actualmente para cada llamada a <1>memory_search</1> / <3>memory_store</3>. Si esto no coincide con la configuración de arriba, tienes cambios sin guardar. Haz clic en Guardar y luego en Reiniciar servidor para aplicarlos.';
 	@override late final _TranslationsWebMemoryInspectorScopeEs scope = _TranslationsWebMemoryInspectorScopeEs._(_root);
 	@override late final _TranslationsWebMemoryInspectorSearchEs search = _TranslationsWebMemoryInspectorSearchEs._(_root);
 	@override late final _TranslationsWebMemoryInspectorRecordsEs records = _TranslationsWebMemoryInspectorRecordsEs._(_root);
@@ -1454,7 +1447,7 @@ class _TranslationsMoreItemsEs extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsGitHostsEs gitHosts = _TranslationsMoreItemsGitHostsEs._(_root);
 	@override late final _TranslationsMoreItemsCustomTasksEs customTasks = _TranslationsMoreItemsCustomTasksEs._(_root);
 	@override late final _TranslationsMoreItemsProjectMemoryEs projectMemory = _TranslationsMoreItemsProjectMemoryEs._(_root);
-	@override late final _TranslationsMoreItemsCleanupInboxEs cleanupInbox = _TranslationsMoreItemsCleanupInboxEs._(_root);
+	@override late final _TranslationsMoreItemsArchivedEs archived = _TranslationsMoreItemsArchivedEs._(_root);
 	@override late final _TranslationsMoreItemsBackupsEs backups = _TranslationsMoreItemsBackupsEs._(_root);
 	@override late final _TranslationsMoreItemsDataExportEs dataExport = _TranslationsMoreItemsDataExportEs._(_root);
 	@override late final _TranslationsMoreItemsSettingsEs settings = _TranslationsMoreItemsSettingsEs._(_root);
@@ -1899,6 +1892,19 @@ class _TranslationsProjectJournalPruneEs extends TranslationsProjectJournalPrune
 	@override String get deselectAll => 'Deseleccionar todo';
 	@override String deleteSelected({required Object count}) => 'Eliminar (${count})';
 	@override String deleted({required Object count}) => '${count} entrada(s) eliminada(s)';
+}
+
+// Path: project.archived
+class _TranslationsProjectArchivedEs extends TranslationsProjectArchivedEn {
+	_TranslationsProjectArchivedEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get emptyTitle => 'Nada archivado';
+	@override String get emptyBody => 'No hay memorias archivadas para este proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados automáticamente; todavía ninguno.';
+	@override String restoreFailed({required Object error}) => 'Error al restaurar: ${error}';
+	@override String get restore => 'Restaurar';
 }
 
 // Path: backups.kv
@@ -2373,6 +2379,23 @@ class _TranslationsDataExportStatusEs extends TranslationsDataExportStatusEn {
 	@override String get failed => 'fallido';
 	@override String get expired => 'caducado';
 	@override String get succeeded => 'completado';
+}
+
+// Path: memory.status
+class _TranslationsMemoryStatusEs extends TranslationsMemoryStatusEn {
+	_TranslationsMemoryStatusEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Embedder activo';
+	@override String dimensions({required Object dim, required Object state}) => '${dim}-dim · ${state}';
+	@override String get enabled => 'habilitado';
+	@override String get disabled => 'deshabilitado';
+	@override String get floorNoModel => 'Solo recuperación por palabras clave (BM25) — no hay modelo de embedding configurado. Configura un endpoint denso en Settings para habilitar la memoria semántica.';
+	@override String denseConfiguredPendingRestart({required Object model}) => 'Configurado ${model} (denso) — reinicia el gateway para activar la memoria semántica y re-embeber las memorias existentes.';
+	@override String denseUnreachableFloor({required Object model}) => 'Configurado ${model} (denso) pero el endpoint está inalcanzable — se usa el piso de palabras clave hasta que responda (se actualiza al reiniciar).';
+	@override String get denseDegraded => 'Embedder denso activo pero su endpoint está inalcanzable ahora — los vectores existentes se conservan; las nuevas escrituras y la búsqueda por similitud se pausan hasta que responda.';
 }
 
 // Path: memory.rank
@@ -2969,7 +2992,7 @@ class _TranslationsWebProjectHeaderEs extends TranslationsWebProjectHeaderEn {
 	@override String journalEntries_other({required Object count}) => '${count} entradas del diario';
 	@override String pendingProposals_one({required Object count}) => '${count} propuesta pendiente';
 	@override String pendingProposals_other({required Object count}) => '${count} propuestas pendientes';
-	@override String cleanupPending({required Object count}) => '${count} limpieza pendiente';
+	@override String archivedCount({required Object count}) => '${count} archivadas';
 }
 
 // Path: web.project.tabs
@@ -2987,7 +3010,7 @@ class _TranslationsWebProjectTabsEs extends TranslationsWebProjectTabsEn {
 	@override String get journal => 'Diario';
 	@override String get inbox => 'Bandeja de entrada';
 	@override String get conflicts => 'Conflictos';
-	@override String get cleanup => 'Limpieza';
+	@override String get archived => 'Archivadas';
 }
 
 // Path: web.project.docLabel
@@ -3001,18 +3024,6 @@ class _TranslationsWebProjectDocLabelEs extends TranslationsWebProjectDocLabelEn
 	@override String get plan => 'Plan';
 	@override String get tech_stack => 'Stack tecnológico';
 	@override String get recent_activity => 'Actividad reciente';
-}
-
-// Path: web.project.verdictLabel
-class _TranslationsWebProjectVerdictLabelEs extends TranslationsWebProjectVerdictLabelEn {
-	_TranslationsWebProjectVerdictLabelEs._(TranslationsEs root) : this._root = root, super.internal(root);
-
-	final TranslationsEs _root; // ignore: unused_field
-
-	// Translations
-	@override String get stale => 'Eliminar';
-	@override String get duplicate => 'Fusionar';
-	@override String get keep => 'Conservar';
 }
 
 // Path: web.project.editor
@@ -3084,27 +3095,19 @@ class _TranslationsWebProjectInboxEs extends TranslationsWebProjectInboxEn {
 	@override String get confirmReplace => 'Confirmar reemplazo';
 }
 
-// Path: web.project.cleanup
-class _TranslationsWebProjectCleanupEs extends TranslationsWebProjectCleanupEn {
-	_TranslationsWebProjectCleanupEs._(TranslationsEs root) : this._root = root, super.internal(root);
+// Path: web.project.archived
+class _TranslationsWebProjectArchivedEs extends TranslationsWebProjectArchivedEn {
+	_TranslationsWebProjectArchivedEs._(TranslationsEs root) : this._root = root, super.internal(root);
 
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String get hint => 'El bibliotecario LLM propone veredictos de conservar / obsoleto / duplicado para las memorias de este proyecto. Tú apruebas antes de que se elimine nada.';
-	@override String get runNow => 'Ejecutar limpieza ahora';
-	@override String runSucceededToast({required Object decided, required Object scanned}) => 'Ejecución de limpieza: ${decided} decisiones en cola (${scanned} analizadas)';
-	@override String get runFailedToast => 'Error en la ejecución de limpieza';
-	@override String get empty => 'No hay decisiones pendientes. O no había nada que cumpliera los requisitos por antigüedad, o la última ejecución encontró que todo era esencial.';
-	@override String get mergeIntoPrefix => '→ fusionar en';
-	@override String get reasonPrefix => 'Motivo:';
-	@override String get executeButton => 'Ejecutar';
-	@override String get confirmKeepButton => 'Confirmar conservar';
-	@override String get rejectButton => 'Rechazar';
-	@override String approvedExecutedToast({required Object label}) => '${label} ejecutado';
-	@override String get approveFailedToast => 'Error al aprobar';
-	@override String get rejectedToast => 'Rechazado: memoria conservada';
-	@override String get rejectFailedToast => 'Error al rechazar';
+	@override String get hint => 'Memorias que el limpiador automático archivó para este proyecto. Se excluyen de la recuperación pero son restaurables hasta que la ventana de gracia de 30 días las purgue.';
+	@override String get empty => 'Nada archivado para este proyecto. El limpiador archiva aquí los hechos obsoletos y duplicados automáticamente; todavía ninguno.';
+	@override String get archivedAtPrefix => 'Archivado';
+	@override String get restoreButton => 'Restaurar';
+	@override String get restoredToast => 'Restaurado';
+	@override String get restoreFailedToast => 'Error al restaurar';
 }
 
 // Path: web.project.reset
@@ -3144,7 +3147,10 @@ class _TranslationsWebMemoryInspectorStatusEs extends TranslationsWebMemoryInspe
 	@override String dimensions({required Object dim, required Object state}) => '${dim}-dim · ${state}';
 	@override String get enabled => 'habilitado';
 	@override String get disabled => 'deshabilitado';
-	@override String get testButton => 'Probar embedder';
+	@override String get floorNoModel => 'Solo recuperación por palabras clave (BM25) — no hay modelo de embedding configurado. Añade un endpoint denso [memory.http] en Settings para habilitar la memoria semántica.';
+	@override String denseConfiguredPendingRestart({required Object model}) => 'Configurado ${model} (denso) — reinicia el gateway para activar la memoria semántica y re-embeber las memorias existentes.';
+	@override String denseUnreachableFloor({required Object model}) => 'Configurado ${model} (denso) pero el endpoint está inalcanzable — se usa el piso de palabras clave hasta que responda (se actualiza al reiniciar).';
+	@override String get denseDegraded => 'Embedder denso activo pero su endpoint está inalcanzable ahora — los vectores existentes se conservan; las nuevas escrituras y la búsqueda por similitud se pausan hasta que responda.';
 }
 
 // Path: web.memoryInspector.scope
@@ -3158,9 +3164,7 @@ class _TranslationsWebMemoryInspectorScopeEs extends TranslationsWebMemoryInspec
 	@override String get scopeKey => 'Clave de scope';
 	@override String get scopeKeyIgnored => '(ignorado para global)';
 	@override String get scopeKeyCwd => '(cwd del proyecto)';
-	@override String get scopeKeySession => '(id de session)';
 	@override String get placeholderProject => '/path/to/project (cwd)';
-	@override String get placeholderSession => 'id de session';
 	@override String get syncMd => 'Sincronizar .md';
 	@override String get syncTooltip => 'Reimportar los archivos <cwd>/.claude/memory/*.md de Claude a pgvector';
 	@override late final _TranslationsWebMemoryInspectorScopeValuesEs values = _TranslationsWebMemoryInspectorScopeValuesEs._(_root);
@@ -3248,9 +3252,6 @@ class _TranslationsWebMemoryInspectorToastsEs extends TranslationsWebMemoryInspe
 	@override String get syncEmpty => 'No hay nuevos archivos .md que sincronizar';
 	@override String get syncEmptyDescription => 'Ya está sincronizado, o no hay directorio de memoria de Claude para este cwd.';
 	@override String get syncFailed => 'La sincronización falló';
-	@override String testOk({required Object embedder, required Object dim}) => 'Embedder OK: ${embedder} · ${dim} dimensiones';
-	@override String testOkDescription({required Object preview}) => 'vector_preview = [${preview}…]';
-	@override String get testFailed => 'El sondeo del embedder falló';
 }
 
 // Path: web.memoryInspector.bulkDelete
@@ -4990,15 +4991,15 @@ class _TranslationsMoreItemsProjectMemoryEs extends TranslationsMoreItemsProject
 	@override String get subtitle => 'Capas de memoria 2-4 por cwd + propuestas del agente';
 }
 
-// Path: more.items.cleanupInbox
-class _TranslationsMoreItemsCleanupInboxEs extends TranslationsMoreItemsCleanupInboxEn {
-	_TranslationsMoreItemsCleanupInboxEs._(TranslationsEs root) : this._root = root, super.internal(root);
+// Path: more.items.archived
+class _TranslationsMoreItemsArchivedEs extends TranslationsMoreItemsArchivedEn {
+	_TranslationsMoreItemsArchivedEs._(TranslationsEs root) : this._root = root, super.internal(root);
 
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Bandeja de limpieza';
-	@override String get subtitle => 'Eliminaciones / fusiones propuestas por el LLM en todos los proyectos';
+	@override String get title => 'Memorias archivadas';
+	@override String get subtitle => 'Restaura memorias que el limpiador automático archivó (gracia de 30 días)';
 }
 
 // Path: more.items.backups
@@ -5768,7 +5769,6 @@ class _TranslationsSettingsServerSettingsFieldsEs extends TranslationsSettingsSe
 	@override String get defaultTopK => 'Top-k por defecto';
 	@override String get similarityThreshold => 'Umbral de similitud';
 	@override String get defaultScope => 'Ámbito por defecto';
-	@override String get chromemHelper => 'Cuando store=chromem.';
 	@override String get preserveHelper => 'En blanco para conservar el actual.';
 	@override String get localModelName => 'Nombre del modelo local';
 	@override String get localLibraryPath => 'Ruta de la biblioteca local';
@@ -5789,7 +5789,6 @@ class _TranslationsSettingsServerSettingsFieldsEs extends TranslationsSettingsSe
 	@override String get backendHelper => 'auto elige el mejor disponible; local necesita ONNX.';
 	@override String get similarityHelper => '0.0-1.0; los resultados por debajo de esto se filtran.';
 	@override String defaultFallback({required Object value}) => 'Por defecto: ${value}';
-	@override String get chromemPath => 'Ruta de chromem';
 	@override String get httpBaseUrl => 'URL base HTTP';
 	@override String get httpModel => 'Modelo HTTP';
 	@override String get httpApiKey => 'API key HTTP';
@@ -5974,7 +5973,6 @@ class _TranslationsWebMemoryInspectorScopeValuesEs extends TranslationsWebMemory
 
 	// Translations
 	@override String get project => 'proyecto';
-	@override String get session => 'session';
 	@override String get global => 'global';
 }
 
@@ -6934,7 +6932,7 @@ class _TranslationsWebServerSettingsFieldsMemoryScopeEs extends TranslationsWebS
 
 	// Translations
 	@override String get label => 'Ámbito por defecto';
-	@override String get hint => 'Lo que usa memory_store cuando el agente no lo especifica. "project" (recomendado) agrupa por cwd; "session" aísla por session; "global" comparte entre cwds.';
+	@override String get hint => 'Lo que usa memory_store cuando el agente no lo especifica. "project" (recomendado) agrupa por cwd; "global" comparte entre cwds.';
 }
 
 // Path: web.serverSettings.fields.memoryBaseUrl
@@ -7257,7 +7255,6 @@ class _TranslationsWebMemoryAmbientRulesDialogEs extends TranslationsWebMemoryAm
 	@override String get idleLabel => 'Segundos de inactividad';
 	@override String get kLabel => 'K (caracteres)';
 	@override String get scopeLabel => 'Ámbito objetivo';
-	@override String get scopeSession => 'session';
 	@override String get scopeProject => 'proyecto (recomendado)';
 	@override String get scopeGlobal => 'global';
 	@override String get dedupLabel => 'Umbral de dedup (0.0 a 1.0)';
@@ -7620,7 +7617,7 @@ extension on TranslationsEs {
 			'web.memory.title' => 'Memoria',
 			'web.memory.subtitle' => 'Explora, busca y edita las memorias que los agentes han almacenado a través del servidor MCP opendray-memory.',
 			'web.memory.navProject' => 'Proyecto',
-			'web.memory.navCleanupInbox' => 'Bandeja de limpieza',
+			'web.memory.navArchived' => 'Archivadas',
 			'web.memory.navWorkers' => 'Workers',
 			'web.memory.navConfiguration' => 'Configuración →',
 			'web.journalStale.title' => 'Purgar entradas obsoletas',
@@ -7752,25 +7749,17 @@ extension on TranslationsEs {
 			'web.memoryWorkers.tasks.conflict_detector.description' => 'Escaneo diario que encuentra contradicciones entre hechos / plan / objetivo / diario. Un modelo de mayor calidad = menos falsos positivos.',
 			'web.memoryWorkers.tasks.capture.label' => 'Motor de captura',
 			'web.memoryWorkers.tasks.capture.description' => 'Extracción de hechos por cada trigger a partir de los transcripts de sesión. El modo agente ofrece hechos notablemente mejores en sesiones largas; el modo summarizer es barato y local.',
-			'web.cleanupInbox.loading' => 'Cargando…',
-			'web.cleanupInbox.emptyTitle' => 'Bandeja de limpieza vacía',
-			'web.cleanupInbox.emptyDescription' => 'No hay decisiones de limpieza pendientes en ningún proyecto. El bibliotecario LLM aún no se ha ejecutado para las memorias elegibles, o ha encontrado que todo es esencial.',
-			'web.cleanupInbox.title' => 'Bandeja de limpieza',
-			'web.cleanupInbox.subtitle' => 'Decisiones pendientes entre proyectos del bibliotecario de memoria LLM. Aprobar obsoleto borra, aprobar duplicado fusiona, aprobar conservar congela la entrada para que no se vuelva a evaluar durante un tiempo.',
-			'web.cleanupInbox.globalScope' => '(global)',
-			'web.cleanupInbox.orphanBadge' => 'huérfano',
-			'web.cleanupInbox.orphanTitle' => 'scope_key truncado (importación antigua de réplica). No es un proyecto navegable.',
-			'web.cleanupInbox.openProject' => 'Abrir proyecto',
-			'web.cleanupInbox.mergeIntoPrefix' => '→ fusionar en',
-			'web.cleanupInbox.reasonPrefix' => 'Motivo:',
-			'web.cleanupInbox.executeButton' => 'Ejecutar',
-			'web.cleanupInbox.confirmKeepButton' => 'Confirmar conservar',
-			'web.cleanupInbox.rejectButton' => 'Rechazar',
-			'web.cleanupInbox.approvedKeptToast' => 'Conservado',
-			'web.cleanupInbox.approvedExecutedToast' => ({required Object verdict}) => '${verdict} ejecutado',
-			'web.cleanupInbox.approveFailedToast' => 'Error al aprobar',
-			'web.cleanupInbox.rejectedToast' => 'Rechazado, memoria conservada',
-			'web.cleanupInbox.rejectFailedToast' => 'Error al rechazar',
+			'web.archived.loading' => 'Cargando…',
+			'web.archived.emptyTitle' => 'Nada archivado',
+			'web.archived.emptyDescription' => 'No hay memorias archivadas en ningún proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados (restaurables durante 30 días); todavía no se ha eliminado nada.',
+			'web.archived.title' => 'Memorias archivadas',
+			'web.archived.subtitle' => 'Memorias que el limpiador automático y el barrido de ciclo de vida archivaron en todos los proyectos. Se excluyen de la recuperación pero son restaurables hasta que la ventana de gracia de 30 días las purgue. Restaura cualquier falso positivo abajo.',
+			'web.archived.globalScope' => '(global)',
+			'web.archived.openProject' => 'Abrir proyecto',
+			'web.archived.archivedAtPrefix' => 'Archivado',
+			'web.archived.restoreButton' => 'Restaurar',
+			'web.archived.restoredToast' => 'Restaurado',
+			'web.archived.restoreFailedToast' => 'Error al restaurar',
 			'web.project.picker.title' => 'Elige un proyecto',
 			'web.project.picker.subtitle' => 'La memoria del proyecto se delimita por el directorio de trabajo. Elige uno para gestionar su objetivo, plan, diario y cola de limpieza.',
 			'web.project.picker.pathPlaceholder' => '/path/to/your/project',
@@ -7787,7 +7776,7 @@ extension on TranslationsEs {
 			'web.project.header.journalEntries_other' => ({required Object count}) => '${count} entradas del diario',
 			'web.project.header.pendingProposals_one' => ({required Object count}) => '${count} propuesta pendiente',
 			'web.project.header.pendingProposals_other' => ({required Object count}) => '${count} propuestas pendientes',
-			'web.project.header.cleanupPending' => ({required Object count}) => '${count} limpieza pendiente',
+			'web.project.header.archivedCount' => ({required Object count}) => '${count} archivadas',
 			'web.project.tabs.health' => 'Estado',
 			'web.project.tabs.goal' => 'Objetivo',
 			'web.project.tabs.plan' => 'Plan',
@@ -7796,14 +7785,11 @@ extension on TranslationsEs {
 			'web.project.tabs.journal' => 'Diario',
 			'web.project.tabs.inbox' => 'Bandeja de entrada',
 			'web.project.tabs.conflicts' => 'Conflictos',
-			'web.project.tabs.cleanup' => 'Limpieza',
+			'web.project.tabs.archived' => 'Archivadas',
 			'web.project.docLabel.goal' => 'Objetivo',
 			'web.project.docLabel.plan' => 'Plan',
 			'web.project.docLabel.tech_stack' => 'Stack tecnológico',
 			'web.project.docLabel.recent_activity' => 'Actividad reciente',
-			'web.project.verdictLabel.stale' => 'Eliminar',
-			'web.project.verdictLabel.duplicate' => 'Fusionar',
-			'web.project.verdictLabel.keep' => 'Conservar',
 			'web.project.editor.updatedBy' => 'Actualizado por',
 			'web.project.editor.noDocSet' => ({required Object label}) => 'Aún no se ha definido ningún ${label}.',
 			'web.project.editor.save' => 'Guardar',
@@ -7839,20 +7825,12 @@ extension on TranslationsEs {
 			'web.project.inbox.confirmDialogDescription' => ({required Object label}) => 'El ${label} actual se sobrescribirá con el contenido propuesto. Esto no se puede deshacer desde esta interfaz (puedes volver a editarlo manualmente).',
 			'web.project.inbox.confirmCancel' => 'Cancelar',
 			'web.project.inbox.confirmReplace' => 'Confirmar reemplazo',
-			'web.project.cleanup.hint' => 'El bibliotecario LLM propone veredictos de conservar / obsoleto / duplicado para las memorias de este proyecto. Tú apruebas antes de que se elimine nada.',
-			'web.project.cleanup.runNow' => 'Ejecutar limpieza ahora',
-			'web.project.cleanup.runSucceededToast' => ({required Object decided, required Object scanned}) => 'Ejecución de limpieza: ${decided} decisiones en cola (${scanned} analizadas)',
-			'web.project.cleanup.runFailedToast' => 'Error en la ejecución de limpieza',
-			'web.project.cleanup.empty' => 'No hay decisiones pendientes. O no había nada que cumpliera los requisitos por antigüedad, o la última ejecución encontró que todo era esencial.',
-			'web.project.cleanup.mergeIntoPrefix' => '→ fusionar en',
-			'web.project.cleanup.reasonPrefix' => 'Motivo:',
-			'web.project.cleanup.executeButton' => 'Ejecutar',
-			'web.project.cleanup.confirmKeepButton' => 'Confirmar conservar',
-			'web.project.cleanup.rejectButton' => 'Rechazar',
-			'web.project.cleanup.approvedExecutedToast' => ({required Object label}) => '${label} ejecutado',
-			'web.project.cleanup.approveFailedToast' => 'Error al aprobar',
-			'web.project.cleanup.rejectedToast' => 'Rechazado: memoria conservada',
-			'web.project.cleanup.rejectFailedToast' => 'Error al rechazar',
+			'web.project.archived.hint' => 'Memorias que el limpiador automático archivó para este proyecto. Se excluyen de la recuperación pero son restaurables hasta que la ventana de gracia de 30 días las purgue.',
+			'web.project.archived.empty' => 'Nada archivado para este proyecto. El limpiador archiva aquí los hechos obsoletos y duplicados automáticamente; todavía ninguno.',
+			'web.project.archived.archivedAtPrefix' => 'Archivado',
+			'web.project.archived.restoreButton' => 'Restaurar',
+			'web.project.archived.restoredToast' => 'Restaurado',
+			'web.project.archived.restoreFailedToast' => 'Error al restaurar',
 			'web.project.reset.button' => 'Restablecer',
 			'web.project.reset.dialogTitle' => '¿Restablecer la memoria del proyecto?',
 			'web.project.reset.dialogDescription' => 'Elimina todo el contexto de proyecto almacenado para este cwd. Esto no se puede deshacer.',
@@ -7880,19 +7858,18 @@ extension on TranslationsEs {
 			'web.memoryInspector.status.dimensions' => ({required Object dim, required Object state}) => '${dim}-dim · ${state}',
 			'web.memoryInspector.status.enabled' => 'habilitado',
 			'web.memoryInspector.status.disabled' => 'deshabilitado',
-			'web.memoryInspector.status.testButton' => 'Probar embedder',
-			'web.memoryInspector.statusBody' => 'Este es el embedder que el gateway está usando actualmente para cada llamada a <1>memory_search</1> / <3>memory_store</3>. Si esto no coincide con la configuración de arriba, tienes cambios sin guardar. Haz clic en Guardar y luego en Reiniciar servidor para aplicarlos.',
+			'web.memoryInspector.status.floorNoModel' => 'Solo recuperación por palabras clave (BM25) — no hay modelo de embedding configurado. Añade un endpoint denso [memory.http] en Settings para habilitar la memoria semántica.',
+			'web.memoryInspector.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configurado ${model} (denso) — reinicia el gateway para activar la memoria semántica y re-embeber las memorias existentes.',
+			'web.memoryInspector.status.denseUnreachableFloor' => ({required Object model}) => 'Configurado ${model} (denso) pero el endpoint está inalcanzable — se usa el piso de palabras clave hasta que responda (se actualiza al reiniciar).',
+			'web.memoryInspector.status.denseDegraded' => 'Embedder denso activo pero su endpoint está inalcanzable ahora — los vectores existentes se conservan; las nuevas escrituras y la búsqueda por similitud se pausan hasta que responda.',
 			'web.memoryInspector.scope.label' => 'Scope',
 			'web.memoryInspector.scope.scopeKey' => 'Clave de scope',
 			'web.memoryInspector.scope.scopeKeyIgnored' => '(ignorado para global)',
 			'web.memoryInspector.scope.scopeKeyCwd' => '(cwd del proyecto)',
-			'web.memoryInspector.scope.scopeKeySession' => '(id de session)',
 			'web.memoryInspector.scope.placeholderProject' => '/path/to/project (cwd)',
-			'web.memoryInspector.scope.placeholderSession' => 'id de session',
 			'web.memoryInspector.scope.syncMd' => 'Sincronizar .md',
 			'web.memoryInspector.scope.syncTooltip' => 'Reimportar los archivos <cwd>/.claude/memory/*.md de Claude a pgvector',
 			'web.memoryInspector.scope.values.project' => 'proyecto',
-			'web.memoryInspector.scope.values.session' => 'session',
 			'web.memoryInspector.scope.values.global' => 'global',
 			'web.memoryInspector.search.placeholder' => 'Consulta de búsqueda semántica (Enter para ejecutar; vacío = explorar)',
 			'web.memoryInspector.search.run' => 'Buscar',
@@ -7931,8 +7908,6 @@ extension on TranslationsEs {
 			'web.memoryInspector.toasts.bulkDeleted_one' => ({required Object count}) => 'Se eliminó ${count} memoria de este scope',
 			'web.memoryInspector.toasts.bulkDeleted_other' => ({required Object count}) => 'Se eliminaron ${count} memorias de este scope',
 			'web.memoryInspector.toasts.bulkDeleteFailed' => 'La eliminación masiva falló',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.toasts.created' => 'Memoria creada',
 			'web.memoryInspector.toasts.createFailed' => 'La creación falló',
 			'web.memoryInspector.toasts.updated' => 'Memoria actualizada',
@@ -7944,9 +7919,6 @@ extension on TranslationsEs {
 			'web.memoryInspector.toasts.syncEmpty' => 'No hay nuevos archivos .md que sincronizar',
 			'web.memoryInspector.toasts.syncEmptyDescription' => 'Ya está sincronizado, o no hay directorio de memoria de Claude para este cwd.',
 			'web.memoryInspector.toasts.syncFailed' => 'La sincronización falló',
-			'web.memoryInspector.toasts.testOk' => ({required Object embedder, required Object dim}) => 'Embedder OK: ${embedder} · ${dim} dimensiones',
-			'web.memoryInspector.toasts.testOkDescription' => ({required Object preview}) => 'vector_preview = [${preview}…]',
-			'web.memoryInspector.toasts.testFailed' => 'El sondeo del embedder falló',
 			'web.memoryInspector.bulkDelete.title' => '¿Eliminar todas las memorias de este scope?',
 			'web.memoryInspector.bulkDelete.description' => 'Esto es una única operación SQL: todas las memorias del scope especificado se eliminan de forma atómica. Las memorias que se importaron a través del mirror de Claude reaparecen en la siguiente ejecución de <1>Sincronizar .md</1>; todo lo demás se pierde para siempre.',
 			'web.memoryInspector.bulkDelete.scope' => 'Scope',
@@ -7956,6 +7928,8 @@ extension on TranslationsEs {
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} elementos de memoria',
 			'web.memoryInspector.bulkDelete.cancel' => 'Cancelar',
 			'web.memoryInspector.bulkDelete.deleteAll' => 'Eliminar todo',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.addMem.title' => 'Añadir memoria',
 			'web.memoryInspector.addMem.description' => 'Crea manualmente una memoria. Los agentes las crean automáticamente mediante la herramienta MCP <1>memory_store</1>. Este formulario es para los casos en que el operador quiere insertar un hecho sin pasar por un agente.',
 			'web.memoryInspector.addMem.textLabel' => 'Texto',
@@ -8445,8 +8419,6 @@ extension on TranslationsEs {
 			'web.integrations.proxy.send' => 'Enviar',
 			'web.integrations.proxy.sending' => 'Enviando…',
 			'web.integrations.proxy.extraHeadersLabel' => 'Headers adicionales (uno por línea, Nombre: Valor)',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.proxy.bodyLabel' => 'Body',
 			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
@@ -8470,6 +8442,8 @@ extension on TranslationsEs {
 			'web.plugins.mcp.columns.name' => 'Nombre',
 			'web.plugins.mcp.columns.transport' => 'Transport',
 			'web.plugins.mcp.columns.spec' => 'Spec',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.mcp.columns.enabled' => 'Habilitado',
 			'web.plugins.mcp.noUrl' => 'sin url',
 			'web.plugins.mcp.noCommand' => 'sin comando',
@@ -8929,7 +8903,7 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.memoryThreshold.label' => 'Umbral de similitud',
 			'web.serverSettings.fields.memoryThreshold.hint' => 'Los resultados por debajo de esta puntuación se descartan. Vacío = 0.1 (permisivo, los vectores dispersos de BM25 rara vez superan 0.5).',
 			'web.serverSettings.fields.memoryScope.label' => 'Ámbito por defecto',
-			'web.serverSettings.fields.memoryScope.hint' => 'Lo que usa memory_store cuando el agente no lo especifica. "project" (recomendado) agrupa por cwd; "session" aísla por session; "global" comparte entre cwds.',
+			'web.serverSettings.fields.memoryScope.hint' => 'Lo que usa memory_store cuando el agente no lo especifica. "project" (recomendado) agrupa por cwd; "global" comparte entre cwds.',
 			'web.serverSettings.fields.memoryBaseUrl.label' => 'URL base',
 			'web.serverSettings.fields.memoryBaseUrl.hint' => 'p. ej. "http://localhost:11434/v1" para ollama, "https://api.openai.com/v1" para OpenAI.',
 			'web.serverSettings.fields.memoryModel.label' => 'Modelo',
@@ -8959,8 +8933,6 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.backupLocalDir.label' => 'Directorio local de copias de seguridad',
 			'web.serverSettings.fields.backupLocalDir.hint' => 'Raíz por defecto para el destino `local` creado automáticamente. Vacío = ~/.opendray/backups. Requiere reinicio.',
 			'web.serverSettings.fields.backupExportDir.label' => 'Directorio de exportación',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.backupExportDir.hint' => 'Dónde se preparan en disco los zips de exportación puntual. Vacío = ~/.opendray/exports. Los paquetes expiran automáticamente tras 24h. Requiere reinicio.',
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'Ruta de pg_dump',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'Ruta absoluta a pg_dump. La versión mayor debe ser ≥ la del servidor. Vacío = el primer pg_dump en el PATH.',
@@ -8984,6 +8956,8 @@ extension on TranslationsEs {
 			'web.serverSettings.httpHelpers.presetTip.openai' => 'Nube de OpenAI (necesita API key)',
 			'web.serverSettings.probe.unreachable' => ({required Object error}) => '✗ inaccesible: ${error}',
 			'web.serverSettings.probe.connectionFailed' => 'conexión fallida',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.probe.reachable' => ({required Object detected, required Object total, required Object embedding}) => '✓ accesible ${detected}· ${total} modelo(s) en total · ${embedding} embedding',
 			'web.serverSettings.probe.modelMissing' => ({required Object model}) => '⚠ El modelo configurado ${model} no está en la lista. Elige uno de los modelos de embedding de abajo o corrige el nombre.',
 			'web.serverSettings.probe.embeddingModelsLabel' => 'modelos de embedding:',
@@ -9185,7 +9159,6 @@ extension on TranslationsEs {
 			'web.memoryAmbient.rules.dialog.idleLabel' => 'Segundos de inactividad',
 			'web.memoryAmbient.rules.dialog.kLabel' => 'K (caracteres)',
 			'web.memoryAmbient.rules.dialog.scopeLabel' => 'Ámbito objetivo',
-			'web.memoryAmbient.rules.dialog.scopeSession' => 'session',
 			'web.memoryAmbient.rules.dialog.scopeProject' => 'proyecto (recomendado)',
 			'web.memoryAmbient.rules.dialog.scopeGlobal' => 'global',
 			'web.memoryAmbient.rules.dialog.dedupLabel' => 'Umbral de dedup (0.0 a 1.0)',
@@ -9324,8 +9297,8 @@ extension on TranslationsEs {
 			'more.items.customTasks.subtitle' => 'Comandos slash que se muestran en el selector de tareas de la session',
 			'more.items.projectMemory.title' => 'Objetivo / plan / diario del proyecto',
 			'more.items.projectMemory.subtitle' => 'Capas de memoria 2-4 por cwd + propuestas del agente',
-			'more.items.cleanupInbox.title' => 'Bandeja de limpieza',
-			'more.items.cleanupInbox.subtitle' => 'Eliminaciones / fusiones propuestas por el LLM en todos los proyectos',
+			'more.items.archived.title' => 'Memorias archivadas',
+			'more.items.archived.subtitle' => 'Restaura memorias que el limpiador automático archivó (gracia de 30 días)',
 			'more.items.backups.title' => 'Copias de seguridad',
 			'more.items.backups.subtitle' => 'Estado de la última copia de seguridad y ejecución inmediata',
 			'more.items.dataExport.title' => 'Exportación e importación de datos',
@@ -9473,8 +9446,6 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Falló la carga: ${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Falló al guardar: ${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Falló al guardar: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Falló al crear: ${error}',
@@ -9499,6 +9470,8 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.title' => 'Nueva session',
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.cancel' => 'Cancelar',
 			'sessions.spawnSheet.spawn' => 'Crear',
 			'sessions.spawnSheet.providerLabel' => 'Proveedor',
@@ -9749,7 +9722,8 @@ extension on TranslationsEs {
 			'memoryWorkers.errorTitle' => 'Endpoint no accesible',
 			'memoryWorkers.errorDetail' => 'Las rutas /api/v1/memory/workers son nuevas en M25. Puede que el binario de opendray necesite un reinicio para montarlas y ejecutar la migración 0029.',
 			'memoryWorkers.summarizerOnlyBadge' => 'solo resumidor',
-			'memoryWorkers.summarizerInfo' => 'Usa el proveedor de resumidor predeterminado del registro. Elige una fila específica en el panel de administración web.',
+			'memoryWorkers.summarizerProviderLabel' => 'Proveedor de resumidor',
+			'memoryWorkers.registryDefault' => 'Predeterminado del registro',
 			'memoryWorkers.agentWarning' => 'El modo agente lanza un CLI headless por cada llamada. Latencia ~5-15s (frente a ~1s del resumidor); el coste pasa de la CPU a tu quota de Claude/Gemini.',
 			'memoryWorkers.noCalls24h' => 'Sin llamadas en las últimas 24h.',
 			'memoryWorkers.testOkSnack' => ({required Object label, required Object duration}) => '${label} OK, ${duration}ms',
@@ -9769,11 +9743,14 @@ extension on TranslationsEs {
 			'memoryWorkers.tasks.conflictDetector.description' => 'Escaneo diario que encuentra contradicciones entre hechos / plan / objetivo / journal. Un modelo de mayor calidad implica menos falsos positivos.',
 			'memoryWorkers.tasks.capture.label' => 'Motor de captura',
 			'memoryWorkers.tasks.capture.description' => 'Extracción de hechos por cada trigger desde las transcripciones de sesión. El modo agente da hechos notablemente mejores en sesiones largas; el modo resumidor es barato y local.',
-			'memoryCleanup.title' => 'Limpieza de memoria',
-			'memoryCleanup.approveFailed' => ({required Object error}) => 'Error al aprobar: ${error}',
-			'memoryCleanup.rejectFailed' => ({required Object error}) => 'Error al rechazar: ${error}',
-			'memoryCleanup.loadFailed' => ({required Object error}) => 'Error al cargar: ${error}',
-			'memoryCleanup.reject' => 'Rechazar',
+			'memoryArchived.title' => 'Memorias archivadas',
+			'memoryArchived.loadFailed' => ({required Object error}) => 'Error al cargar: ${error}',
+			'memoryArchived.restoreFailed' => ({required Object error}) => 'Error al restaurar: ${error}',
+			'memoryArchived.emptyTitle' => 'Nada archivado',
+			'memoryArchived.emptyBody' => 'No hay memorias archivadas en ningún proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados (restaurables durante 30 días); todavía no se ha eliminado nada.',
+			'memoryArchived.globalScope' => '(global)',
+			'memoryArchived.countBadge' => ({required Object count}) => '${count} archivadas',
+			'memoryArchived.restore' => 'Restaurar',
 			'project.title' => 'Proyecto',
 			'project.pickFirst' => 'Elige primero un proyecto.',
 			'project.health.title' => ({required Object days}) => 'Salud de la memoria, últimos ${days} días',
@@ -9834,7 +9811,6 @@ extension on TranslationsEs {
 			'project.appendFailed' => ({required Object error}) => 'Error: ${error}',
 			'project.approveFailed' => ({required Object error}) => 'Error al aprobar: ${error}',
 			'project.rejectFailed' => ({required Object error}) => 'Error al rechazar: ${error}',
-			'project.cleanupFailed' => ({required Object error}) => 'Error en la limpieza: ${error}',
 			'project.resetConfirmTitle' => '¿Restablecer la memoria del proyecto?',
 			'project.alsoDeleteScanner' => 'Eliminar también los documentos del scanner',
 			'project.alsoDeletePgvector' => 'Eliminar también las memorias de pgvector',
@@ -9850,8 +9826,10 @@ extension on TranslationsEs {
 			'project.approve' => 'Aprobar',
 			'project.replaceConfirmTitle' => ({required Object kind}) => '¿Reemplazar el ${kind} actual?',
 			'project.replaceKind' => ({required Object kind}) => 'Reemplazar ${kind}',
-			'project.reason' => 'Motivo',
-			'project.willMergeInto' => 'Se fusionará en',
+			'project.archived.emptyTitle' => 'Nada archivado',
+			'project.archived.emptyBody' => 'No hay memorias archivadas para este proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados automáticamente; todavía ninguno.',
+			'project.archived.restoreFailed' => ({required Object error}) => 'Error al restaurar: ${error}',
+			'project.archived.restore' => 'Restaurar',
 			'backups.title' => 'Copias de seguridad',
 			'backups.runConfirmTitle' => '¿Ejecutar copia de seguridad ahora?',
 			'backups.runConfirmBody' => 'Lanza un nuevo volcado contra el destino local. El trabajo se ejecuta en el servidor; esta lista se actualizará a medida que avance.',
@@ -9987,8 +9965,6 @@ extension on TranslationsEs {
 			'backupSchedules.errorPrefixUpdate' => 'Error al actualizar',
 			'backupSchedules.errorPrefixDelete' => 'Error al eliminar',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Elimina la especificación recurrente para el destino ${targetId}. Los blobs de copia de seguridad existentes no se modifican.',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.emptyList' => 'Aún no hay programaciones.\nToca "Nueva" para crear una.',
 			'backupSchedules.validatePickTarget' => 'Elige un destino.',
 			'backupSchedules.validateInterval' => 'El intervalo debe ser > 0.',
@@ -10008,6 +9984,8 @@ extension on TranslationsEs {
 			'backupTargetEditor.useHttps' => 'Usar HTTPS',
 			'backupTargetEditor.pathStyle' => 'Direccionamiento por ruta (path-style)',
 			'backupTargetEditor.pathStyleSubtitle' => 'Heredado / MinIO',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.kinds.local.label' => 'Disco local',
 			'backupTargetEditor.kinds.local.description' => 'Carpeta en la máquina que ejecuta opendray',
 			'backupTargetEditor.kinds.smb.label' => 'Recurso compartido SMB',
@@ -10411,6 +10389,14 @@ extension on TranslationsEs {
 			'dataExport.status.failed' => 'fallido',
 			'dataExport.status.expired' => 'caducado',
 			'dataExport.status.succeeded' => 'completado',
+			'memory.status.label' => 'Embedder activo',
+			'memory.status.dimensions' => ({required Object dim, required Object state}) => '${dim}-dim · ${state}',
+			'memory.status.enabled' => 'habilitado',
+			'memory.status.disabled' => 'deshabilitado',
+			'memory.status.floorNoModel' => 'Solo recuperación por palabras clave (BM25) — no hay modelo de embedding configurado. Configura un endpoint denso en Settings para habilitar la memoria semántica.',
+			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configurado ${model} (denso) — reinicia el gateway para activar la memoria semántica y re-embeber las memorias existentes.',
+			'memory.status.denseUnreachableFloor' => ({required Object model}) => 'Configurado ${model} (denso) pero el endpoint está inalcanzable — se usa el piso de palabras clave hasta que responda (se actualiza al reiniciar).',
+			'memory.status.denseDegraded' => 'Embedder denso activo pero su endpoint está inalcanzable ahora — los vectores existentes se conservan; las nuevas escrituras y la búsqueda por similitud se pausan hasta que responda.',
 			'memory.title' => 'Memoria',
 			'memory.more' => 'Más',
 			'memory.workers' => 'Workers de memoria',
@@ -10501,8 +10487,6 @@ extension on TranslationsEs {
 			'settings.changeCredentials.updatedSnack' => 'Credenciales actualizadas.',
 			'settings.changeCredentials.wrongCurrent' => 'La contraseña actual es incorrecta.',
 			'settings.changeCredentials.saving' => 'Guardando…',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.update' => 'Actualizar',
 			'settings.logViewer.title' => 'Logs en vivo',
 			'settings.logViewer.reconnect' => 'Reconectar',
@@ -10514,6 +10498,8 @@ extension on TranslationsEs {
 			'settings.logViewer.levels.debug' => 'Debug',
 			'settings.logViewer.levels.info' => 'Info',
 			'settings.logViewer.levels.warn' => 'Warn',
+			_ => null,
+		} ?? switch (path) {
 			'settings.logViewer.levels.error' => 'Error',
 			'settings.serverSettings.title' => 'Ajustes del servidor',
 			'settings.serverSettings.reloadTooltip' => 'Recargar desde el servidor',
@@ -10579,7 +10565,6 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.defaultTopK' => 'Top-k por defecto',
 			'settings.serverSettings.fields.similarityThreshold' => 'Umbral de similitud',
 			'settings.serverSettings.fields.defaultScope' => 'Ámbito por defecto',
-			'settings.serverSettings.fields.chromemHelper' => 'Cuando store=chromem.',
 			'settings.serverSettings.fields.preserveHelper' => 'En blanco para conservar el actual.',
 			'settings.serverSettings.fields.localModelName' => 'Nombre del modelo local',
 			'settings.serverSettings.fields.localLibraryPath' => 'Ruta de la biblioteca local',
@@ -10600,7 +10585,6 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.backendHelper' => 'auto elige el mejor disponible; local necesita ONNX.',
 			'settings.serverSettings.fields.similarityHelper' => '0.0-1.0; los resultados por debajo de esto se filtran.',
 			'settings.serverSettings.fields.defaultFallback' => ({required Object value}) => 'Por defecto: ${value}',
-			'settings.serverSettings.fields.chromemPath' => 'Ruta de chromem',
 			'settings.serverSettings.fields.httpBaseUrl' => 'URL base HTTP',
 			'settings.serverSettings.fields.httpModel' => 'Modelo HTTP',
 			'settings.serverSettings.fields.httpApiKey' => 'API key HTTP',

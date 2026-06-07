@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -37,9 +38,13 @@ const (
 	SourcePlan    SourceLayer = "plan"    // project_docs.kind='plan'
 )
 
-// Hit is one merged search result. Cosine similarity gets time-
-// decayed into EffectiveScore which is what the final ordering
-// uses; raw Similarity is preserved for debugging / UI display.
+// Hit is one merged search result. Raw cosine Similarity is run
+// through the shared memory ranker into EffectiveScore (the final
+// ordering key); Similarity is preserved for debugging / UI display.
+// HitCount / Confidence feed the ranker: fact rows carry the real
+// values so a popular fact outranks an equal-cosine journal line;
+// journal / goal / plan rows leave them zero/nil so they score on
+// similarity × recency alone.
 type Hit struct {
 	Source         SourceLayer `json:"source"`
 	ID             string      `json:"id"`
@@ -48,6 +53,8 @@ type Hit struct {
 	CreatedAt      time.Time   `json:"created_at"`
 	Similarity     float32     `json:"similarity"`
 	EffectiveScore float32     `json:"effective_score"`
+	HitCount       int64       `json:"hit_count,omitempty"`
+	Confidence     *float32    `json:"confidence,omitempty"`
 }
 
 // SearchRequest scopes one cross-layer query.
@@ -85,11 +92,13 @@ func New(mem *memory.Service, docs *projectdoc.Service, pool *pgxpool.Pool) (*Se
 	return &Service{mem: mem, docs: docs, pool: pool}, nil
 }
 
-// Search runs the three sub-searches sequentially, merges the
-// results with time decay applied, and returns the top-K by
-// effective score. Per-layer failures degrade gracefully — a
-// broken journal index doesn't stop fact + plan hits from
-// surfacing.
+// Search runs the three sub-searches concurrently, merges the results
+// through the one shared ranker, and returns the top-K by effective
+// score. Per-layer failures degrade gracefully — a broken journal index
+// doesn't stop fact + plan hits from surfacing. The layers hit
+// independent tables (memories / session_logs / project_docs), so
+// fanning them out makes the wall-clock the slowest single layer rather
+// than the sum.
 func (s *Service) Search(ctx context.Context, req SearchRequest) ([]Hit, error) {
 	if strings.TrimSpace(req.Cwd) == "" {
 		return nil, errors.New("memquery: cwd required")
@@ -105,15 +114,31 @@ func (s *Service) Search(ctx context.Context, req SearchRequest) ([]Hit, error) 
 		topK = 100
 	}
 
-	var all []Hit
-	all = append(all, s.searchFacts(ctx, req, topK)...)
-	all = append(all, s.searchJournal(ctx, req, topK)...)
-	all = append(all, s.searchDocs(ctx, req)...)
+	var (
+		facts, journal, docs []Hit
+		wg                   sync.WaitGroup
+	)
+	wg.Add(3)
+	go func() { defer wg.Done(); facts = s.searchFacts(ctx, req, topK) }()
+	go func() { defer wg.Done(); journal = s.searchJournal(ctx, req, topK) }()
+	go func() { defer wg.Done(); docs = s.searchDocs(ctx, req, topK) }()
+	wg.Wait()
 
-	// Apply time decay then sort by effective score descending.
+	all := make([]Hit, 0, len(facts)+len(journal)+len(docs))
+	all = append(all, facts...)
+	all = append(all, journal...)
+	all = append(all, docs...)
+
+	// Score every layer through the one shared ranker (the same
+	// memory.RankingScoreFields the single-layer memory.Search uses), so
+	// a fact ranks identically here and in memory_search. Journal / goal
+	// / plan rows pass hitCount=0 / confidence=nil, reducing their score
+	// to similarity × age — no second formula to drift.
 	now := time.Now().UTC()
 	for i := range all {
-		all[i].EffectiveScore = decayScore(all[i].Similarity, now.Sub(all[i].CreatedAt))
+		all[i].EffectiveScore = memory.RankingScoreFields(
+			all[i].Similarity, all[i].CreatedAt, all[i].HitCount, all[i].Confidence, now,
+		)
 	}
 	sort.SliceStable(all, func(i, j int) bool {
 		return all[i].EffectiveScore > all[j].EffectiveScore
@@ -145,6 +170,8 @@ func (s *Service) searchFacts(ctx context.Context, req SearchRequest, topK int) 
 			Text:       h.Memory.Text,
 			CreatedAt:  h.Memory.CreatedAt,
 			Similarity: h.Similarity,
+			HitCount:   h.Memory.HitCount,
+			Confidence: h.Memory.Confidence,
 		})
 	}
 	return out
@@ -202,35 +229,83 @@ func (s *Service) searchJournal(ctx context.Context, req SearchRequest, topK int
 	return out
 }
 
-// searchDocs lexically matches the query against goal + plan
-// content. project_docs is a tiny set per cwd (one row per kind)
-// so the cost of scanning + Lower-comparing both is negligible —
-// no embedding needed. If a match exists we attach a fixed
-// similarity of 0.6 so the doc shows up alongside vector hits
-// without dominating them.
-func (s *Service) searchDocs(ctx context.Context, req SearchRequest) []Hit {
+// searchDocs matches the query against goal + plan docs. Embedded docs
+// (the common case after Phase 2) are scored semantically by cosine,
+// exactly like facts and journal, so a goal can rank by meaning rather
+// than by literal substring. Docs not yet embedded (embedder outage, or
+// the brief backfill window) fall back to a lexical substring match at a
+// fixed 0.6 similarity so a fresh edit is still findable. project_docs
+// is tiny per cwd (one row per kind), so doing both passes is cheap.
+func (s *Service) searchDocs(ctx context.Context, req SearchRequest, topK int) []Hit {
+	docLayer := func(kind projectdoc.Kind) SourceLayer {
+		if kind == projectdoc.KindPlan {
+			return SourcePlan
+		}
+		return SourceGoal
+	}
+
+	var out []Hit
+	embedded := map[string]bool{} // doc ids covered by the semantic pass
+
+	// Semantic pass over embedded goal/plan docs.
+	if embedder := s.docs.Embedder(); embedder != nil {
+		if vecs, err := embedder.Embed(ctx, []string{req.Query}); err == nil && len(vecs) > 0 && len(vecs[0]) > 0 {
+			rows, err := s.pool.Query(ctx, `
+				SELECT id, kind, content, updated_at,
+				       1 - (embedding <=> $1::vector) AS similarity
+				  FROM project_docs
+				 WHERE cwd = $2
+				   AND kind IN ('goal', 'plan')
+				   AND embedder = $3
+				   AND embedding IS NOT NULL
+				 ORDER BY embedding <=> $1::vector
+				 LIMIT $4`,
+				pgvecLiteral(vecs[0]), req.Cwd, embedder.Name(), topK)
+			if err == nil {
+				for rows.Next() {
+					var (
+						id, kind, content string
+						updatedAt         time.Time
+						similarity        float64
+					)
+					if err := rows.Scan(&id, &kind, &content, &updatedAt, &similarity); err != nil {
+						break
+					}
+					embedded[id] = true
+					out = append(out, Hit{
+						Source:     docLayer(projectdoc.Kind(kind)),
+						ID:         id,
+						Text:       content,
+						CreatedAt:  updatedAt,
+						Similarity: float32(similarity),
+					})
+				}
+				rows.Close()
+			}
+		}
+	}
+
+	// Lexical fallback for goal/plan docs the semantic pass didn't cover.
 	docs, err := s.docs.ListDocsForCwd(ctx, req.Cwd)
 	if err != nil {
-		return nil
+		return out
 	}
 	q := strings.ToLower(strings.TrimSpace(req.Query))
 	if q == "" {
-		return nil
+		return out
 	}
-	var out []Hit
 	for _, d := range docs {
 		if d.Kind != projectdoc.KindGoal && d.Kind != projectdoc.KindPlan {
+			continue
+		}
+		if embedded[d.ID] {
 			continue
 		}
 		if !strings.Contains(strings.ToLower(d.Content), q) {
 			continue
 		}
-		layer := SourceGoal
-		if d.Kind == projectdoc.KindPlan {
-			layer = SourcePlan
-		}
 		out = append(out, Hit{
-			Source:     layer,
+			Source:     docLayer(d.Kind),
 			ID:         d.ID,
 			Text:       d.Content,
 			CreatedAt:  d.UpdatedAt,
@@ -238,22 +313,6 @@ func (s *Service) searchDocs(ctx context.Context, req SearchRequest) []Hit {
 		})
 	}
 	return out
-}
-
-// decayScore applies a gentle linear decay so a 6-month-old
-// memory ranks ~50% of a brand-new one at the same cosine, but a
-// brand-new mediocre match doesn't crowd out a year-old gem. The
-// 0.5 floor means recency can never outweigh relevance entirely.
-func decayScore(similarity float32, age time.Duration) float32 {
-	days := float32(age.Hours()) / 24
-	if days < 0 {
-		days = 0
-	}
-	decay := 1 - days/180
-	if decay < 0.5 {
-		decay = 0.5
-	}
-	return similarity * decay
 }
 
 // pgvecLiteral mirrors projectdoc.pgvecString. Duplicated rather

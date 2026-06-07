@@ -51,7 +51,6 @@ export interface ServerConfig {
     store: string
     default_top_k: number
     similarity_threshold: number
-    chromem_path: string
     local: {
       model: string
       library_path: string
@@ -136,7 +135,6 @@ export function emptyConfig(): ServerConfig {
       store: '',
       default_top_k: 0,
       similarity_threshold: 0,
-      chromem_path: '',
       local: {
         model: '',
         library_path: '',

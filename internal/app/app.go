@@ -83,6 +83,8 @@ type App struct {
 	liveBackup           *backup.LiveBackup
 	captureEngine        *capture.Engine // ambient memory capture loop
 	journaler            *projectdoc.Journaler
+	memorySvc            *memory.Service     // shared pgvector memory; nil when memory disabled
+	memoryMirror         *memory.Mirror      // M-U Phase 5 one-time file-memory import; nil when disabled
 	projectDocSvc        *projectdoc.Service // owns the M-PB journal embed backfill loop
 	cleanerScheduler     *cleaner.Scheduler  // optional; nil when scheduler is off
 	gitActivityScheduler *gitactivity.Scheduler
@@ -102,6 +104,21 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	st, err := store.Open(ctx, cfg.Database.URL, cfg.Database.MaxConns)
 	if err != nil {
 		return nil, err
+	}
+
+	// Auto-apply pending migrations on startup, fail-closed (M-U §7).
+	// Previously migrations ran only via the explicit `opendray migrate`
+	// command, so `opendray update` landed the new binary against the
+	// old schema until the operator separately migrated — unacceptable
+	// for a smooth upgrade. Migrations are idempotent, forward-only, and
+	// transactional (tracked in schema_migrations), so running them here
+	// is a no-op once applied. This must run BEFORE catalog.New below,
+	// which upserts seed rows into tables migration 0001 creates (the
+	// fresh-DB ordering bug from #162). `opendray migrate` stays as a
+	// standalone command for operators who prefer to migrate explicitly.
+	if err := st.Migrate(ctx, log); err != nil {
+		st.Close()
+		return nil, fmt.Errorf("apply migrations: %w", err)
 	}
 
 	bus := eventbus.New(log)
@@ -286,6 +303,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		st.Close()
 		return nil, fmt.Errorf("init memory: %w", err)
 	}
+	// memoryMirror is hoisted out of the block below so RunServices can
+	// run the one-time M-U Phase 5 file-memory backfill import against
+	// it. Nil when memory is disabled or the mirror wasn't wired.
+	var memoryMirror *memory.Mirror
 	if memorySvc != nil {
 		log.Info("memory ready",
 			"embedder", memorySvc.EmbedderName(),
@@ -340,6 +361,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				// "Sync now" HTTP endpoint + UI button can trigger an
 				// on-demand ingest without waiting for the next spawn.
 				memorySvc.SetMirror(mirror)
+				memoryMirror = mirror
 			}
 		}
 	}
@@ -478,11 +500,13 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		cleanerSvc = cleaner.NewService(
 			st.Pool(), memorySvc, memoryWorkerRegistry,
 			cleaner.Config{
-				SummarizerID:        cc.SummarizerID,
-				BatchSize:           cc.BatchSize,
-				MinAge:              time.Duration(cc.MinAgeHours) * time.Hour,
-				SkipIfDecidedWithin: time.Duration(cc.SkipIfDecidedWithinHours) * time.Hour,
-				CallTimeout:         time.Duration(cc.CallTimeoutMs) * time.Millisecond,
+				SummarizerID:         cc.SummarizerID,
+				BatchSize:            cc.BatchSize,
+				MinAge:               time.Duration(cc.MinAgeHours) * time.Hour,
+				SkipIfDecidedWithin:  time.Duration(cc.SkipIfDecidedWithinHours) * time.Hour,
+				CallTimeout:          time.Duration(cc.CallTimeoutMs) * time.Millisecond,
+				GracePeriod:          time.Duration(cc.GraceDays) * 24 * time.Hour,
+				LifecycleDormantDays: cc.LifecycleDormantDays,
 			},
 			log,
 		)
@@ -758,6 +782,8 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		liveBackup:           liveBackup,
 		captureEngine:        captureEngine,
 		journaler:            journaler,
+		memorySvc:            memorySvc,
+		memoryMirror:         memoryMirror,
 		projectDocSvc:        projectDocSvc,
 		cleanerScheduler:     cleanerScheduler,
 		gitActivityScheduler: gitActivityScheduler,
@@ -847,6 +873,49 @@ func (a *App) Run(ctx context.Context) error {
 	go func() {
 		a.projectDocSvc.RunLogEmbedBackfill(ctx, projectdoc.LogEmbedBackfillConfig{})
 		close(logEmbedBackfillDone)
+	}()
+
+	// M-U Phase 2 — same catch-up loop for goal/plan docs so historical
+	// projects get their goal/plan embedded and join semantic search,
+	// not just docs written after this release. Self-skips without an
+	// embedder.
+	docEmbedBackfillDone := make(chan struct{})
+	go func() {
+		a.projectDocSvc.RunDocEmbedBackfill(ctx, projectdoc.LogEmbedBackfillConfig{})
+		close(docEmbedBackfillDone)
+	}()
+
+	// M-U Phase 5 — one-time import of pre-existing Claude file memories
+	// into the single DB store, so an upgrading operator lands them
+	// immediately rather than only after each project's next spawn. The
+	// per-spawn mirror (WithMemoryMirror) stays wired as the ongoing
+	// capture net, so file memory keeps flowing into the DB during the
+	// transition; this just front-loads what's already on disk.
+	// Idempotent (SyncCwd dedupes), so it self-skips once caught up.
+	mirrorBackfillDone := make(chan struct{})
+	go func() {
+		defer close(mirrorBackfillDone)
+		if a.memoryMirror == nil {
+			return
+		}
+		if _, _, err := a.memoryMirror.BackfillAll(ctx); err != nil {
+			a.log.Warn("memory: file-memory backfill import failed", "err", err)
+		}
+	}()
+
+	// M-U Phase 6 — auto-converge re-embed loop. When the operator
+	// switches the configured embedder, rows still carrying the old
+	// embedder are invisible to search (pgvector partitions similarity
+	// by (embedder, dim)). This loop detects the drift and re-embeds in
+	// the background until every row is back on the current embedder —
+	// no manual "Migrate" click. Self-skips in steady state.
+	reembedConvergeDone := make(chan struct{})
+	go func() {
+		defer close(reembedConvergeDone)
+		if a.memorySvc == nil {
+			return
+		}
+		a.memorySvc.RunReembedConverge(ctx, memory.ReembedConvergeConfig{})
 	}()
 
 	cleanerDone := make(chan struct{})
@@ -1128,6 +1197,13 @@ func ensureMemoryIntegration(ctx context.Context, svc *integration.Service) (str
 	const name = "opendray-memory"
 	scopes := []string{
 		"session:read", // session metadata visibility (future)
+		// The auto-attached opendray-memory MCP runs as this key, so it
+		// needs the memory read+write scopes — otherwise every agent
+		// memory_search/memory_store returns 403 and the cross-agent
+		// shared brain never accumulates anything. Writing to the global
+		// scope is still admin-only, enforced at the store handler.
+		"memory:read",
+		"memory:write",
 	}
 
 	// 1. Locate (or create) the integration row.
@@ -1135,14 +1211,14 @@ func ensureMemoryIntegration(ctx context.Context, svc *integration.Service) (str
 	if err != nil {
 		return "", fmt.Errorf("list integrations: %w", err)
 	}
-	var id string
-	for _, i := range all {
-		if i.Name == name {
-			id = i.ID
+	var existing *integration.Integration
+	for i := range all {
+		if all[i].Name == name {
+			existing = &all[i]
 			break
 		}
 	}
-	if id == "" {
+	if existing == nil {
 		// Brand-new install or migrated DB. Register + cache the key
 		// — no rotate needed because Register itself returns a fresh
 		// plaintext.
@@ -1157,6 +1233,17 @@ func ensureMemoryIntegration(ctx context.Context, svc *integration.Service) (str
 		}
 		_ = writeMemoryKey(res.APIKey)
 		return res.APIKey, nil
+	}
+	id := existing.ID
+
+	// Reconcile scopes. Installs that registered this key before
+	// memory:read/write were required are stuck on the old scope set,
+	// so every agent memory_search/memory_store 403s. Patch the row up
+	// to the desired scopes if any are missing. Cheap no-op once aligned.
+	if !scopesCover(existing.Scopes, scopes) {
+		if _, err := svc.Update(ctx, id, integration.UpdatePatch{Scopes: &scopes}); err != nil {
+			return "", fmt.Errorf("update %s scopes: %w", name, err)
+		}
 	}
 
 	// 2. Row exists. Reuse cache if present — the ONE thing we know
@@ -1177,6 +1264,17 @@ func ensureMemoryIntegration(ctx context.Context, svc *integration.Service) (str
 	}
 	_ = writeMemoryKey(res.APIKey)
 	return res.APIKey, nil
+}
+
+// scopesCover reports whether every scope in want is granted by have
+// (honouring integration.HasScope wildcard semantics).
+func scopesCover(have, want []string) bool {
+	for _, w := range want {
+		if !integration.HasScope(have, w) {
+			return false
+		}
+	}
+	return true
 }
 
 // readMemoryKey loads the cached plaintext key from
@@ -1245,26 +1343,23 @@ func listenLoopback(listen string) string {
 //
 // Choice matrix:
 //
-//	backend = ""   | "auto"          → BM25 + pgvector store
-//	backend = "bm25"                 → BM25 + pgvector store
-//	backend = "http"                 → HTTP embedder + pgvector store
-//	store   = "pgvector" (default)   → opendray's existing PG with vector ext
-//	store   = "chromem"              → not yet implemented in v1
+//	backend = ""   | "auto"          → tiered: configured dense if reachable, else BM25 (upgrade-only)
+//	backend = "bm25"                 → BM25 keyword floor
+//	backend = "http"                 → HTTP dense embedder ([memory.http])
+//	backend = "local"                → cgo ONNX embedder ([memory.local], -tags local_onnx)
+//	store: pgvector only — the single supported vector store
 func resolveMemoryService(
 	ctx context.Context,
 	cfg config.MemoryConfig,
 	st *store.Store,
 	log *slog.Logger,
 ) (*memory.Service, error) {
-	emb, err := buildEmbedder(cfg)
-	if err != nil {
-		return nil, err
-	}
 	storeKind := strings.ToLower(strings.TrimSpace(cfg.Store))
 	if storeKind == "" {
 		storeKind = "pgvector"
 	}
 	var memStore memory.Store
+	var err error
 	switch storeKind {
 	case "pgvector":
 		memStore, err = memory.OpenPgvectorStore(ctx, st.Pool())
@@ -1273,6 +1368,14 @@ func resolveMemoryService(
 		}
 	default:
 		return nil, fmt.Errorf("unknown memory.store=%q (valid: pgvector)", storeKind)
+	}
+
+	// Resolve the embedder AFTER the store is open: backend="auto" is
+	// store-aware — it inspects existing rows so it never silently drops
+	// below the tier the data already uses (M-U Phase 7 §11.2).
+	emb, err := resolveAutoEmbedder(ctx, cfg, memStore, log)
+	if err != nil {
+		return nil, err
 	}
 
 	opts := memory.Options{
@@ -1286,7 +1389,15 @@ func resolveMemoryService(
 		},
 		Logger: log,
 	}
-	return memory.New(opts)
+	svc, err := memory.New(opts)
+	if err != nil {
+		return nil, err
+	}
+	// Record the configured embedder so EmbedderHealth can report the
+	// effective-vs-configured tier and live-probe the dense endpoint for
+	// the settings UI (even when "auto" has degraded to the BM25 floor).
+	svc.SetEmbedderConfig(cfg.Backend, cfg.HTTP.BaseURL, cfg.HTTP.Model, cfg.HTTP.APIKey)
+	return svc, nil
 }
 
 // buildEmbedder picks the live Embedder per cfg.Backend.
@@ -1323,6 +1434,132 @@ func buildEmbedder(cfg config.MemoryConfig) (memory.Embedder, error) {
 		})
 	}
 	return nil, fmt.Errorf("unknown memory.backend=%q (valid: auto, bm25, http, local)", cfg.Backend)
+}
+
+// embedderDecision is the outcome of the backend="auto" tiering table.
+type embedderDecision int
+
+const (
+	// decideDenseHTTP — use the configured [memory.http] dense embedder.
+	decideDenseHTTP embedderDecision = iota
+	// decideBM25Floor — use the pure-Go BM25 keyword floor.
+	decideBM25Floor
+	// decideFailClosed — the store holds dense rows but no dense endpoint
+	// is configured; refuse to start rather than silently churn to BM25.
+	decideFailClosed
+)
+
+// decideAutoEmbedder is the pure decision table for backend="auto"
+// (availability-tiered, upgrade-only — M-U Phase 7 §11.2). It is kept free
+// of I/O so it can be table-tested exhaustively; resolveAutoEmbedder
+// gathers the live inputs (endpoint probe + per-embedder row counts) and
+// acts on the verdict.
+//
+//	httpConfigured | httpReachable | intentDense | verdict
+//	---------------+---------------+-------------+-------------------------------
+//	     true      |     true      |      *      | dense  (steady state / upgrade)
+//	     true      |     false     |     true    | dense  (degrade-keep-dense, no churn)
+//	     true      |     false     |     false   | bm25   (floor; upgrades on a later boot)
+//	     false     |      *        |     true    | fail-closed (can't reconstruct dense)
+//	     false     |      *        |     false   | bm25   (fresh install, no model)
+func decideAutoEmbedder(httpConfigured, httpReachable, intentDense bool) embedderDecision {
+	if httpConfigured {
+		if httpReachable || intentDense {
+			return decideDenseHTTP
+		}
+		return decideBM25Floor
+	}
+	if intentDense {
+		return decideFailClosed
+	}
+	return decideBM25Floor
+}
+
+// denseIntent inspects the per-embedder row counts and reports whether the
+// store already holds rows from a dense (non-BM25) embedder, and which one
+// has the most rows. That embedder is the "intended" tier: backend="auto"
+// must never silently drop below it, because doing so would hide those
+// rows behind the WHERE embedder=$active predicate and trigger a lossy
+// re-embed (M-U Phase 7 §11.2).
+func denseIntent(counts map[string]int) (name string, dense bool) {
+	bestN := 0
+	for n, c := range counts {
+		if c <= 0 || strings.HasPrefix(strings.ToLower(n), "bm25") {
+			continue
+		}
+		if c > bestN {
+			name, bestN = n, c
+		}
+	}
+	return name, name != ""
+}
+
+// resolveAutoEmbedder resolves the live Embedder, applying the smart
+// backend="auto" tiering (M-U Phase 7 §11.2). Any explicit backend
+// (bm25 / http / local) defers to buildEmbedder unchanged.
+func resolveAutoEmbedder(ctx context.Context, cfg config.MemoryConfig, st memory.Store, log *slog.Logger) (memory.Embedder, error) {
+	backend := strings.ToLower(strings.TrimSpace(cfg.Backend))
+	if backend != "" && backend != "auto" {
+		return buildEmbedder(cfg)
+	}
+
+	httpConfigured := strings.TrimSpace(cfg.HTTP.BaseURL) != "" && strings.TrimSpace(cfg.HTTP.Model) != ""
+
+	// Derive the intended tier from existing rows. Best-effort: a count
+	// error is treated as "no dense rows" so a transient DB hiccup cannot
+	// flip an install into fail-closed.
+	intentName, intentDense := "", false
+	if counts, cErr := st.CountByEmbedder(ctx); cErr == nil {
+		intentName, intentDense = denseIntent(counts)
+	} else {
+		log.Warn("memory: could not read embedder row counts; assuming no dense rows", "err", cErr)
+	}
+
+	// Probe the configured dense endpoint (bounded so a hung endpoint
+	// can't stall startup).
+	httpReachable := false
+	if httpConfigured {
+		probeCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+		httpReachable = memory.ProbeEndpoint(probeCtx, cfg.HTTP.BaseURL, cfg.HTTP.APIKey).Reachable
+		cancel()
+	}
+
+	switch decideAutoEmbedder(httpConfigured, httpReachable, intentDense) {
+	case decideDenseHTTP:
+		emb, err := memory.NewOpenAICompatibleEmbedder(memory.HTTPEmbedderConfig{
+			BaseURL:    cfg.HTTP.BaseURL,
+			Model:      cfg.HTTP.Model,
+			APIKey:     cfg.HTTP.APIKey,
+			Dimensions: cfg.HTTP.Dimensions,
+		})
+		if err != nil {
+			// base_url+model were non-empty, so this is unexpected; fall
+			// back to the floor rather than disabling memory entirely.
+			log.Warn("memory: auto could not build the configured dense embedder; using BM25 floor", "err", err)
+			return memory.NewBM25Embedder(384), nil
+		}
+		if httpReachable {
+			log.Info("memory: auto selected the configured dense embedder",
+				"embedder", emb.Name(), "base_url", cfg.HTTP.BaseURL)
+		} else {
+			log.Warn("memory: configured dense endpoint unreachable — keeping dense active (degraded). Reads/injection keep working and existing vectors are preserved (no re-embed); new writes and similarity search pause until the endpoint responds.",
+				"embedder", emb.Name(), "base_url", cfg.HTTP.BaseURL)
+		}
+		return emb, nil
+
+	case decideFailClosed:
+		return nil, fmt.Errorf("memory: the store holds rows embedded with %q but [memory.http] is not configured; restore the dense endpoint config, or set memory.backend=%q to abandon dense vectors (they will be re-embedded to BM25)", intentName, "bm25")
+
+	default: // decideBM25Floor
+		switch {
+		case httpConfigured && !httpReachable:
+			log.Warn("memory: configured dense endpoint unreachable and the store has no dense rows yet — using the BM25 floor; it will auto-upgrade to dense on a restart once the endpoint responds.",
+				"base_url", cfg.HTTP.BaseURL)
+		case !httpConfigured:
+			log.Info("memory: no dense embedder configured — using the BM25 keyword floor (semantic memory off). Configure [memory.http] to enable dense retrieval.")
+		}
+		return memory.NewBM25Embedder(384), nil
+	}
 }
 
 // resolveClaudeHistoryConfig translates the operator's

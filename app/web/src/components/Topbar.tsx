@@ -179,7 +179,17 @@ export function Topbar({ onOpenPalette }: TopbarProps) {
               {username}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-[220px]">
+          <DropdownMenuContent
+            align="end"
+            side="bottom"
+            sideOffset={6}
+            // The trigger sits in the top-right corner. Opening down-and-left
+            // from the right edge is always on-screen, so pin it: collision
+            // avoidance was mis-flipping this menu to open rightward, pushing
+            // it off the right edge of the window.
+            avoidCollisions={false}
+            className="min-w-[220px]"
+          >
             <DropdownMenuLabel>{t('web.topbar.signedInAs')}</DropdownMenuLabel>
             <div className="px-2 pb-1.5 text-[12px]">{username}</div>
             {expiresAt && (

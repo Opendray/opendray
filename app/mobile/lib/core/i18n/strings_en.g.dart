@@ -50,7 +50,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsProvidersEn providers = TranslationsProvidersEn.internal(_root);
 	late final TranslationsIntegrationsEn integrations = TranslationsIntegrationsEn.internal(_root);
 	late final TranslationsMemoryWorkersEn memoryWorkers = TranslationsMemoryWorkersEn.internal(_root);
-	late final TranslationsMemoryCleanupEn memoryCleanup = TranslationsMemoryCleanupEn.internal(_root);
+	late final TranslationsMemoryArchivedEn memoryArchived = TranslationsMemoryArchivedEn.internal(_root);
 	late final TranslationsProjectEn project = TranslationsProjectEn.internal(_root);
 	late final TranslationsBackupsEn backups = TranslationsBackupsEn.internal(_root);
 	late final TranslationsBackupTargetsEn backupTargets = TranslationsBackupTargetsEn.internal(_root);
@@ -222,7 +222,7 @@ class TranslationsWebEn {
 	late final TranslationsWebMemoryHealthEn memoryHealth = TranslationsWebMemoryHealthEn.internal(_root);
 	late final TranslationsWebMemoryConfigEn memoryConfig = TranslationsWebMemoryConfigEn.internal(_root);
 	late final TranslationsWebMemoryWorkersEn memoryWorkers = TranslationsWebMemoryWorkersEn.internal(_root);
-	late final TranslationsWebCleanupInboxEn cleanupInbox = TranslationsWebCleanupInboxEn.internal(_root);
+	late final TranslationsWebArchivedEn archived = TranslationsWebArchivedEn.internal(_root);
 	late final TranslationsWebProjectEn project = TranslationsWebProjectEn.internal(_root);
 	late final TranslationsWebMemoryInspectorEn memoryInspector = TranslationsWebMemoryInspectorEn.internal(_root);
 	late final TranslationsWebNotesEn notes = TranslationsWebNotesEn.internal(_root);
@@ -669,8 +669,11 @@ class TranslationsMemoryWorkersEn {
 	/// en: 'summarizer-only'
 	String get summarizerOnlyBadge => 'summarizer-only';
 
-	/// en: 'Uses the registry default summarizer provider. Pick a specific row on the web admin.'
-	String get summarizerInfo => 'Uses the registry default summarizer provider. Pick a specific row on the web admin.';
+	/// en: 'Summarizer provider'
+	String get summarizerProviderLabel => 'Summarizer provider';
+
+	/// en: 'Registry default'
+	String get registryDefault => 'Registry default';
 
 	/// en: 'Agent mode spawns a headless CLI per call. Latency ~5-15s (vs ~1s summarizer); cost shifts from CPU to your Claude/Gemini quota.'
 	String get agentWarning => 'Agent mode spawns a headless CLI per call. Latency ~5-15s (vs ~1s summarizer); cost shifts from CPU to your Claude/Gemini quota.';
@@ -690,28 +693,37 @@ class TranslationsMemoryWorkersEn {
 	late final TranslationsMemoryWorkersTasksEn tasks = TranslationsMemoryWorkersTasksEn.internal(_root);
 }
 
-// Path: memoryCleanup
-class TranslationsMemoryCleanupEn {
-	TranslationsMemoryCleanupEn.internal(this._root);
+// Path: memoryArchived
+class TranslationsMemoryArchivedEn {
+	TranslationsMemoryArchivedEn.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
 
-	/// en: 'Memory cleanup'
-	String get title => 'Memory cleanup';
-
-	/// en: 'Approve failed: {error}'
-	String approveFailed({required Object error}) => 'Approve failed: ${error}';
-
-	/// en: 'Reject failed: {error}'
-	String rejectFailed({required Object error}) => 'Reject failed: ${error}';
+	/// en: 'Archived memories'
+	String get title => 'Archived memories';
 
 	/// en: 'Failed to load: {error}'
 	String loadFailed({required Object error}) => 'Failed to load: ${error}';
 
-	/// en: 'Reject'
-	String get reject => 'Reject';
+	/// en: 'Restore failed: {error}'
+	String restoreFailed({required Object error}) => 'Restore failed: ${error}';
+
+	/// en: 'Nothing archived'
+	String get emptyTitle => 'Nothing archived';
+
+	/// en: 'No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.'
+	String get emptyBody => 'No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.';
+
+	/// en: '(global)'
+	String get globalScope => '(global)';
+
+	/// en: '{count} archived'
+	String countBadge({required Object count}) => '${count} archived';
+
+	/// en: 'Restore'
+	String get restore => 'Restore';
 }
 
 // Path: project
@@ -765,9 +777,6 @@ class TranslationsProjectEn {
 	/// en: 'Reject failed: {error}'
 	String rejectFailed({required Object error}) => 'Reject failed: ${error}';
 
-	/// en: 'Cleanup failed: {error}'
-	String cleanupFailed({required Object error}) => 'Cleanup failed: ${error}';
-
 	/// en: 'Reset project memory?'
 	String get resetConfirmTitle => 'Reset project memory?';
 
@@ -813,11 +822,7 @@ class TranslationsProjectEn {
 	/// en: 'Replace {kind}'
 	String replaceKind({required Object kind}) => 'Replace ${kind}';
 
-	/// en: 'Reason'
-	String get reason => 'Reason';
-
-	/// en: 'Will merge into'
-	String get willMergeInto => 'Will merge into';
+	late final TranslationsProjectArchivedEn archived = TranslationsProjectArchivedEn.internal(_root);
 }
 
 // Path: backups
@@ -1727,6 +1732,7 @@ class TranslationsMemoryEn {
 	final Translations _root; // ignore: unused_field
 
 	// Translations
+	late final TranslationsMemoryStatusEn status = TranslationsMemoryStatusEn.internal(_root);
 
 	/// en: 'Memory'
 	String get title => 'Memory';
@@ -1924,8 +1930,8 @@ class TranslationsWebMemoryEn {
 	/// en: 'Project'
 	String get navProject => 'Project';
 
-	/// en: 'Cleanup inbox'
-	String get navCleanupInbox => 'Cleanup inbox';
+	/// en: 'Archived'
+	String get navArchived => 'Archived';
 
 	/// en: 'Workers'
 	String get navWorkers => 'Workers';
@@ -2250,9 +2256,9 @@ class TranslationsWebMemoryWorkersEn {
 	late final TranslationsWebMemoryWorkersTasksEn tasks = TranslationsWebMemoryWorkersTasksEn.internal(_root);
 }
 
-// Path: web.cleanupInbox
-class TranslationsWebCleanupInboxEn {
-	TranslationsWebCleanupInboxEn.internal(this._root);
+// Path: web.archived
+class TranslationsWebArchivedEn {
+	TranslationsWebArchivedEn.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -2261,59 +2267,35 @@ class TranslationsWebCleanupInboxEn {
 	/// en: 'Loading…'
 	String get loading => 'Loading…';
 
-	/// en: 'Cleanup inbox empty'
-	String get emptyTitle => 'Cleanup inbox empty';
+	/// en: 'Nothing archived'
+	String get emptyTitle => 'Nothing archived';
 
-	/// en: 'No pending cleanup decisions across any project. The LLM librarian either hasn't run yet for the eligible memories, or it found everything load-bearing.'
-	String get emptyDescription => 'No pending cleanup decisions across any project. The LLM librarian either hasn\'t run yet for the eligible memories, or it found everything load-bearing.';
+	/// en: 'No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.'
+	String get emptyDescription => 'No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.';
 
-	/// en: 'Cleanup inbox'
-	String get title => 'Cleanup inbox';
+	/// en: 'Archived memories'
+	String get title => 'Archived memories';
 
-	/// en: 'Cross-project pending decisions from the LLM memory librarian. Approving stale → deletes, approving duplicate → merges, approving keep → freezes the entry from being re-judged for a while.'
-	String get subtitle => 'Cross-project pending decisions from the LLM memory librarian. Approving stale → deletes, approving duplicate → merges, approving keep → freezes the entry from being re-judged for a while.';
+	/// en: 'Memories the auto-cleaner and lifecycle pass soft-archived across every project. They are excluded from recall but restorable until the 30-day grace window purges them. Restore any false positive below.'
+	String get subtitle => 'Memories the auto-cleaner and lifecycle pass soft-archived across every project. They are excluded from recall but restorable until the 30-day grace window purges them. Restore any false positive below.';
 
 	/// en: '(global)'
 	String get globalScope => '(global)';
 
-	/// en: 'orphan'
-	String get orphanBadge => 'orphan';
-
-	/// en: 'Truncated scope_key (old mirror import). Not a navigable project.'
-	String get orphanTitle => 'Truncated scope_key (old mirror import). Not a navigable project.';
-
 	/// en: 'Open project'
 	String get openProject => 'Open project';
 
-	/// en: '→ merge into'
-	String get mergeIntoPrefix => '→ merge into';
+	/// en: 'Archived'
+	String get archivedAtPrefix => 'Archived';
 
-	/// en: 'Reason:'
-	String get reasonPrefix => 'Reason:';
+	/// en: 'Restore'
+	String get restoreButton => 'Restore';
 
-	/// en: 'Execute'
-	String get executeButton => 'Execute';
+	/// en: 'Restored'
+	String get restoredToast => 'Restored';
 
-	/// en: 'Confirm keep'
-	String get confirmKeepButton => 'Confirm keep';
-
-	/// en: 'Reject'
-	String get rejectButton => 'Reject';
-
-	/// en: 'Kept'
-	String get approvedKeptToast => 'Kept';
-
-	/// en: '{verdict} executed'
-	String approvedExecutedToast({required Object verdict}) => '${verdict} executed';
-
-	/// en: 'Approve failed'
-	String get approveFailedToast => 'Approve failed';
-
-	/// en: 'Rejected — memory kept'
-	String get rejectedToast => 'Rejected — memory kept';
-
-	/// en: 'Reject failed'
-	String get rejectFailedToast => 'Reject failed';
+	/// en: 'Restore failed'
+	String get restoreFailedToast => 'Restore failed';
 }
 
 // Path: web.project
@@ -2331,12 +2313,11 @@ class TranslationsWebProjectEn {
 	late final TranslationsWebProjectHeaderEn header = TranslationsWebProjectHeaderEn.internal(_root);
 	late final TranslationsWebProjectTabsEn tabs = TranslationsWebProjectTabsEn.internal(_root);
 	late final TranslationsWebProjectDocLabelEn docLabel = TranslationsWebProjectDocLabelEn.internal(_root);
-	late final TranslationsWebProjectVerdictLabelEn verdictLabel = TranslationsWebProjectVerdictLabelEn.internal(_root);
 	late final TranslationsWebProjectEditorEn editor = TranslationsWebProjectEditorEn.internal(_root);
 	late final TranslationsWebProjectReadonlyEn readonly = TranslationsWebProjectReadonlyEn.internal(_root);
 	late final TranslationsWebProjectJournalEn journal = TranslationsWebProjectJournalEn.internal(_root);
 	late final TranslationsWebProjectInboxEn inbox = TranslationsWebProjectInboxEn.internal(_root);
-	late final TranslationsWebProjectCleanupEn cleanup = TranslationsWebProjectCleanupEn.internal(_root);
+	late final TranslationsWebProjectArchivedEn archived = TranslationsWebProjectArchivedEn.internal(_root);
 	late final TranslationsWebProjectResetEn reset = TranslationsWebProjectResetEn.internal(_root);
 }
 
@@ -2348,10 +2329,6 @@ class TranslationsWebMemoryInspectorEn {
 
 	// Translations
 	late final TranslationsWebMemoryInspectorStatusEn status = TranslationsWebMemoryInspectorStatusEn.internal(_root);
-
-	/// en: 'This is the embedder the gateway is currently using for every <1>memory_search</1> / <3>memory_store</3> call. If this doesn't match the configuration above, you have unsaved changes — click Save then Restart server to apply.'
-	String get statusBody => 'This is the embedder the gateway is currently using for every <1>memory_search</1> / <3>memory_store</3> call. If this doesn\'t match the configuration above, you have unsaved changes — click Save then Restart server to apply.';
-
 	late final TranslationsWebMemoryInspectorScopeEn scope = TranslationsWebMemoryInspectorScopeEn.internal(_root);
 	late final TranslationsWebMemoryInspectorSearchEn search = TranslationsWebMemoryInspectorSearchEn.internal(_root);
 	late final TranslationsWebMemoryInspectorRecordsEn records = TranslationsWebMemoryInspectorRecordsEn.internal(_root);
@@ -2860,7 +2837,7 @@ class TranslationsMoreItemsEn {
 	late final TranslationsMoreItemsGitHostsEn gitHosts = TranslationsMoreItemsGitHostsEn.internal(_root);
 	late final TranslationsMoreItemsCustomTasksEn customTasks = TranslationsMoreItemsCustomTasksEn.internal(_root);
 	late final TranslationsMoreItemsProjectMemoryEn projectMemory = TranslationsMoreItemsProjectMemoryEn.internal(_root);
-	late final TranslationsMoreItemsCleanupInboxEn cleanupInbox = TranslationsMoreItemsCleanupInboxEn.internal(_root);
+	late final TranslationsMoreItemsArchivedEn archived = TranslationsMoreItemsArchivedEn.internal(_root);
 	late final TranslationsMoreItemsBackupsEn backups = TranslationsMoreItemsBackupsEn.internal(_root);
 	late final TranslationsMoreItemsDataExportEn dataExport = TranslationsMoreItemsDataExportEn.internal(_root);
 	late final TranslationsMoreItemsSettingsEn settings = TranslationsMoreItemsSettingsEn.internal(_root);
@@ -3724,6 +3701,27 @@ class TranslationsProjectJournalPruneEn {
 
 	/// en: '{count} entry/entries deleted'
 	String deleted({required Object count}) => '${count} entry/entries deleted';
+}
+
+// Path: project.archived
+class TranslationsProjectArchivedEn {
+	TranslationsProjectArchivedEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Nothing archived'
+	String get emptyTitle => 'Nothing archived';
+
+	/// en: 'No archived memories for this project. The auto-cleaner soft-archives stale and duplicate facts here automatically — none yet.'
+	String get emptyBody => 'No archived memories for this project. The auto-cleaner soft-archives stale and duplicate facts here automatically — none yet.';
+
+	/// en: 'Restore failed: {error}'
+	String restoreFailed({required Object error}) => 'Restore failed: ${error}';
+
+	/// en: 'Restore'
+	String get restore => 'Restore';
 }
 
 // Path: backups.kv
@@ -4630,6 +4628,39 @@ class TranslationsDataExportStatusEn {
 
 	/// en: 'succeeded'
 	String get succeeded => 'succeeded';
+}
+
+// Path: memory.status
+class TranslationsMemoryStatusEn {
+	TranslationsMemoryStatusEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Active embedder'
+	String get label => 'Active embedder';
+
+	/// en: '{dim}-dim · {state}'
+	String dimensions({required Object dim, required Object state}) => '${dim}-dim · ${state}';
+
+	/// en: 'enabled'
+	String get enabled => 'enabled';
+
+	/// en: 'disabled'
+	String get disabled => 'disabled';
+
+	/// en: 'Keyword (BM25) retrieval only — no embedding model configured. Configure a dense endpoint in Settings to enable semantic memory.'
+	String get floorNoModel => 'Keyword (BM25) retrieval only — no embedding model configured. Configure a dense endpoint in Settings to enable semantic memory.';
+
+	/// en: 'Configured {model} (dense) — restart the gateway to activate semantic memory and re-embed existing memories.'
+	String denseConfiguredPendingRestart({required Object model}) => 'Configured ${model} (dense) — restart the gateway to activate semantic memory and re-embed existing memories.';
+
+	/// en: 'Configured {model} (dense) but the endpoint is unreachable — using the keyword floor until it responds (auto-upgrades on restart).'
+	String denseUnreachableFloor({required Object model}) => 'Configured ${model} (dense) but the endpoint is unreachable — using the keyword floor until it responds (auto-upgrades on restart).';
+
+	/// en: 'Dense embedder active but its endpoint is unreachable right now — existing vectors are preserved; new writes and similarity search pause until it responds.'
+	String get denseDegraded => 'Dense embedder active but its endpoint is unreachable right now — existing vectors are preserved; new writes and similarity search pause until it responds.';
 }
 
 // Path: memory.rank
@@ -5747,8 +5778,8 @@ class TranslationsWebProjectHeaderEn {
 	/// en: '{count} pending proposals'
 	String pendingProposals_other({required Object count}) => '${count} pending proposals';
 
-	/// en: '{count} cleanup pending'
-	String cleanupPending({required Object count}) => '${count} cleanup pending';
+	/// en: '{count} archived'
+	String archivedCount({required Object count}) => '${count} archived';
 }
 
 // Path: web.project.tabs
@@ -5783,8 +5814,8 @@ class TranslationsWebProjectTabsEn {
 	/// en: 'Conflicts'
 	String get conflicts => 'Conflicts';
 
-	/// en: 'Cleanup'
-	String get cleanup => 'Cleanup';
+	/// en: 'Archived'
+	String get archived => 'Archived';
 }
 
 // Path: web.project.docLabel
@@ -5806,24 +5837,6 @@ class TranslationsWebProjectDocLabelEn {
 
 	/// en: 'Recent activity'
 	String get recent_activity => 'Recent activity';
-}
-
-// Path: web.project.verdictLabel
-class TranslationsWebProjectVerdictLabelEn {
-	TranslationsWebProjectVerdictLabelEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Delete'
-	String get stale => 'Delete';
-
-	/// en: 'Merge'
-	String get duplicate => 'Merge';
-
-	/// en: 'Keep'
-	String get keep => 'Keep';
 }
 
 // Path: web.project.editor
@@ -5957,55 +5970,31 @@ class TranslationsWebProjectInboxEn {
 	String get confirmReplace => 'Confirm replace';
 }
 
-// Path: web.project.cleanup
-class TranslationsWebProjectCleanupEn {
-	TranslationsWebProjectCleanupEn.internal(this._root);
+// Path: web.project.archived
+class TranslationsWebProjectArchivedEn {
+	TranslationsWebProjectArchivedEn.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
 
-	/// en: 'The LLM librarian proposes keep / stale / duplicate verdicts for this project's memories. You approve before anything is deleted.'
-	String get hint => 'The LLM librarian proposes keep / stale / duplicate verdicts for this project\'s memories. You approve before anything is deleted.';
+	/// en: 'Memories the auto-cleaner soft-archived for this project. They're excluded from recall but restorable until the 30-day grace window purges them.'
+	String get hint => 'Memories the auto-cleaner soft-archived for this project. They\'re excluded from recall but restorable until the 30-day grace window purges them.';
 
-	/// en: 'Run cleanup now'
-	String get runNow => 'Run cleanup now';
+	/// en: 'Nothing archived for this project. The cleaner soft-archives stale and duplicate facts here automatically — none yet.'
+	String get empty => 'Nothing archived for this project. The cleaner soft-archives stale and duplicate facts here automatically — none yet.';
 
-	/// en: 'Cleanup run: {decided} decisions queued ({scanned} scanned)'
-	String runSucceededToast({required Object decided, required Object scanned}) => 'Cleanup run: ${decided} decisions queued (${scanned} scanned)';
+	/// en: 'Archived'
+	String get archivedAtPrefix => 'Archived';
 
-	/// en: 'Cleanup run failed'
-	String get runFailedToast => 'Cleanup run failed';
+	/// en: 'Restore'
+	String get restoreButton => 'Restore';
 
-	/// en: 'No pending decisions. Either nothing aged into eligibility or the last run found everything load-bearing.'
-	String get empty => 'No pending decisions. Either nothing aged into eligibility or the last run found everything load-bearing.';
+	/// en: 'Restored'
+	String get restoredToast => 'Restored';
 
-	/// en: '→ merge into'
-	String get mergeIntoPrefix => '→ merge into';
-
-	/// en: 'Reason:'
-	String get reasonPrefix => 'Reason:';
-
-	/// en: 'Execute'
-	String get executeButton => 'Execute';
-
-	/// en: 'Confirm keep'
-	String get confirmKeepButton => 'Confirm keep';
-
-	/// en: 'Reject'
-	String get rejectButton => 'Reject';
-
-	/// en: '{label} executed'
-	String approvedExecutedToast({required Object label}) => '${label} executed';
-
-	/// en: 'Approve failed'
-	String get approveFailedToast => 'Approve failed';
-
-	/// en: 'Rejected — memory kept'
-	String get rejectedToast => 'Rejected — memory kept';
-
-	/// en: 'Reject failed'
-	String get rejectFailedToast => 'Reject failed';
+	/// en: 'Restore failed'
+	String get restoreFailedToast => 'Restore failed';
 }
 
 // Path: web.project.reset
@@ -6087,8 +6076,17 @@ class TranslationsWebMemoryInspectorStatusEn {
 	/// en: 'disabled'
 	String get disabled => 'disabled';
 
-	/// en: 'Test embedder'
-	String get testButton => 'Test embedder';
+	/// en: 'Keyword (BM25) retrieval only — no embedding model configured. Add a dense [memory.http] endpoint in Settings to enable semantic memory.'
+	String get floorNoModel => 'Keyword (BM25) retrieval only — no embedding model configured. Add a dense [memory.http] endpoint in Settings to enable semantic memory.';
+
+	/// en: 'Configured {model} (dense) — restart the gateway to activate semantic memory and re-embed existing memories.'
+	String denseConfiguredPendingRestart({required Object model}) => 'Configured ${model} (dense) — restart the gateway to activate semantic memory and re-embed existing memories.';
+
+	/// en: 'Configured {model} (dense) but the endpoint is unreachable — using the keyword floor until it responds (auto-upgrades on restart).'
+	String denseUnreachableFloor({required Object model}) => 'Configured ${model} (dense) but the endpoint is unreachable — using the keyword floor until it responds (auto-upgrades on restart).';
+
+	/// en: 'Dense embedder active but its endpoint is unreachable right now — existing vectors are preserved; new writes and similarity search pause until it responds.'
+	String get denseDegraded => 'Dense embedder active but its endpoint is unreachable right now — existing vectors are preserved; new writes and similarity search pause until it responds.';
 }
 
 // Path: web.memoryInspector.scope
@@ -6111,14 +6109,8 @@ class TranslationsWebMemoryInspectorScopeEn {
 	/// en: '(cwd of the project)'
 	String get scopeKeyCwd => '(cwd of the project)';
 
-	/// en: '(session id)'
-	String get scopeKeySession => '(session id)';
-
 	/// en: '/path/to/project (cwd)'
 	String get placeholderProject => '/path/to/project (cwd)';
-
-	/// en: 'session id'
-	String get placeholderSession => 'session id';
 
 	/// en: 'Sync .md'
 	String get syncMd => 'Sync .md';
@@ -6307,15 +6299,6 @@ class TranslationsWebMemoryInspectorToastsEn {
 
 	/// en: 'Sync failed'
 	String get syncFailed => 'Sync failed';
-
-	/// en: 'Embedder OK: {embedder} · {dim} dimensions'
-	String testOk({required Object embedder, required Object dim}) => 'Embedder OK: ${embedder} · ${dim} dimensions';
-
-	/// en: 'vector_preview = [{preview}…]'
-	String testOkDescription({required Object preview}) => 'vector_preview = [${preview}…]';
-
-	/// en: 'Embedder probe failed'
-	String get testFailed => 'Embedder probe failed';
 }
 
 // Path: web.memoryInspector.bulkDelete
@@ -9634,19 +9617,19 @@ class TranslationsMoreItemsProjectMemoryEn {
 	String get subtitle => 'Per-cwd memory layers 2-4 + agent proposals';
 }
 
-// Path: more.items.cleanupInbox
-class TranslationsMoreItemsCleanupInboxEn {
-	TranslationsMoreItemsCleanupInboxEn.internal(this._root);
+// Path: more.items.archived
+class TranslationsMoreItemsArchivedEn {
+	TranslationsMoreItemsArchivedEn.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
 
-	/// en: 'Cleanup inbox'
-	String get title => 'Cleanup inbox';
+	/// en: 'Archived memories'
+	String get title => 'Archived memories';
 
-	/// en: 'LLM-proposed deletions / merges across all projects'
-	String get subtitle => 'LLM-proposed deletions / merges across all projects';
+	/// en: 'Restore memories the auto-cleaner soft-archived (30-day grace)'
+	String get subtitle => 'Restore memories the auto-cleaner soft-archived (30-day grace)';
 }
 
 // Path: more.items.backups
@@ -11018,9 +11001,6 @@ class TranslationsSettingsServerSettingsFieldsEn {
 	/// en: 'Default scope'
 	String get defaultScope => 'Default scope';
 
-	/// en: 'When store=chromem.'
-	String get chromemHelper => 'When store=chromem.';
-
 	/// en: 'Blank to preserve current.'
 	String get preserveHelper => 'Blank to preserve current.';
 
@@ -11080,9 +11060,6 @@ class TranslationsSettingsServerSettingsFieldsEn {
 
 	/// en: 'Default: {value}'
 	String defaultFallback({required Object value}) => 'Default: ${value}';
-
-	/// en: 'chromem path'
-	String get chromemPath => 'chromem path';
 
 	/// en: 'HTTP base URL'
 	String get httpBaseUrl => 'HTTP base URL';
@@ -11383,9 +11360,6 @@ class TranslationsWebMemoryInspectorScopeValuesEn {
 
 	/// en: 'project'
 	String get project => 'project';
-
-	/// en: 'session'
-	String get session => 'session';
 
 	/// en: 'global'
 	String get global => 'global';
@@ -13074,8 +13048,8 @@ class TranslationsWebServerSettingsFieldsMemoryScopeEn {
 	/// en: 'Default scope'
 	String get label => 'Default scope';
 
-	/// en: 'What memory_store uses when the agent doesn't specify. "project" (recommended) groups by cwd; "session" isolates per session; "global" shares across cwds.'
-	String get hint => 'What memory_store uses when the agent doesn\'t specify. "project" (recommended) groups by cwd; "session" isolates per session; "global" shares across cwds.';
+	/// en: 'What memory_store uses when the agent doesn't specify. "project" (recommended) groups by cwd; "global" shares across cwds.'
+	String get hint => 'What memory_store uses when the agent doesn\'t specify. "project" (recommended) groups by cwd; "global" shares across cwds.';
 }
 
 // Path: web.serverSettings.fields.memoryBaseUrl
@@ -13592,9 +13566,6 @@ class TranslationsWebMemoryAmbientRulesDialogEn {
 	/// en: 'Target scope'
 	String get scopeLabel => 'Target scope';
 
-	/// en: 'session'
-	String get scopeSession => 'session';
-
 	/// en: 'project (recommended)'
 	String get scopeProject => 'project (recommended)';
 
@@ -14078,7 +14049,7 @@ extension on Translations {
 			'web.memory.title' => 'Memory',
 			'web.memory.subtitle' => 'Browse, search and edit memories agents have stored via the opendray-memory MCP server.',
 			'web.memory.navProject' => 'Project',
-			'web.memory.navCleanupInbox' => 'Cleanup inbox',
+			'web.memory.navArchived' => 'Archived',
 			'web.memory.navWorkers' => 'Workers',
 			'web.memory.navConfiguration' => 'Configuration →',
 			'web.journalStale.title' => 'Prune stale entries',
@@ -14210,25 +14181,17 @@ extension on Translations {
 			'web.memoryWorkers.tasks.conflict_detector.description' => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.',
 			'web.memoryWorkers.tasks.capture.label' => 'Capture engine',
 			'web.memoryWorkers.tasks.capture.description' => 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.',
-			'web.cleanupInbox.loading' => 'Loading…',
-			'web.cleanupInbox.emptyTitle' => 'Cleanup inbox empty',
-			'web.cleanupInbox.emptyDescription' => 'No pending cleanup decisions across any project. The LLM librarian either hasn\'t run yet for the eligible memories, or it found everything load-bearing.',
-			'web.cleanupInbox.title' => 'Cleanup inbox',
-			'web.cleanupInbox.subtitle' => 'Cross-project pending decisions from the LLM memory librarian. Approving stale → deletes, approving duplicate → merges, approving keep → freezes the entry from being re-judged for a while.',
-			'web.cleanupInbox.globalScope' => '(global)',
-			'web.cleanupInbox.orphanBadge' => 'orphan',
-			'web.cleanupInbox.orphanTitle' => 'Truncated scope_key (old mirror import). Not a navigable project.',
-			'web.cleanupInbox.openProject' => 'Open project',
-			'web.cleanupInbox.mergeIntoPrefix' => '→ merge into',
-			'web.cleanupInbox.reasonPrefix' => 'Reason:',
-			'web.cleanupInbox.executeButton' => 'Execute',
-			'web.cleanupInbox.confirmKeepButton' => 'Confirm keep',
-			'web.cleanupInbox.rejectButton' => 'Reject',
-			'web.cleanupInbox.approvedKeptToast' => 'Kept',
-			'web.cleanupInbox.approvedExecutedToast' => ({required Object verdict}) => '${verdict} executed',
-			'web.cleanupInbox.approveFailedToast' => 'Approve failed',
-			'web.cleanupInbox.rejectedToast' => 'Rejected — memory kept',
-			'web.cleanupInbox.rejectFailedToast' => 'Reject failed',
+			'web.archived.loading' => 'Loading…',
+			'web.archived.emptyTitle' => 'Nothing archived',
+			'web.archived.emptyDescription' => 'No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.',
+			'web.archived.title' => 'Archived memories',
+			'web.archived.subtitle' => 'Memories the auto-cleaner and lifecycle pass soft-archived across every project. They are excluded from recall but restorable until the 30-day grace window purges them. Restore any false positive below.',
+			'web.archived.globalScope' => '(global)',
+			'web.archived.openProject' => 'Open project',
+			'web.archived.archivedAtPrefix' => 'Archived',
+			'web.archived.restoreButton' => 'Restore',
+			'web.archived.restoredToast' => 'Restored',
+			'web.archived.restoreFailedToast' => 'Restore failed',
 			'web.project.picker.title' => 'Pick a project',
 			'web.project.picker.subtitle' => 'Project memory is scoped by working directory. Pick one to manage its goal, plan, journal, and cleanup queue.',
 			'web.project.picker.pathPlaceholder' => '/path/to/your/project',
@@ -14245,7 +14208,7 @@ extension on Translations {
 			'web.project.header.journalEntries_other' => ({required Object count}) => '${count} journal entries',
 			'web.project.header.pendingProposals_one' => ({required Object count}) => '${count} pending proposal',
 			'web.project.header.pendingProposals_other' => ({required Object count}) => '${count} pending proposals',
-			'web.project.header.cleanupPending' => ({required Object count}) => '${count} cleanup pending',
+			'web.project.header.archivedCount' => ({required Object count}) => '${count} archived',
 			'web.project.tabs.health' => 'Health',
 			'web.project.tabs.goal' => 'Goal',
 			'web.project.tabs.plan' => 'Plan',
@@ -14254,14 +14217,11 @@ extension on Translations {
 			'web.project.tabs.journal' => 'Journal',
 			'web.project.tabs.inbox' => 'Inbox',
 			'web.project.tabs.conflicts' => 'Conflicts',
-			'web.project.tabs.cleanup' => 'Cleanup',
+			'web.project.tabs.archived' => 'Archived',
 			'web.project.docLabel.goal' => 'Goal',
 			'web.project.docLabel.plan' => 'Plan',
 			'web.project.docLabel.tech_stack' => 'Tech stack',
 			'web.project.docLabel.recent_activity' => 'Recent activity',
-			'web.project.verdictLabel.stale' => 'Delete',
-			'web.project.verdictLabel.duplicate' => 'Merge',
-			'web.project.verdictLabel.keep' => 'Keep',
 			'web.project.editor.updatedBy' => 'Updated by',
 			'web.project.editor.noDocSet' => ({required Object label}) => 'No ${label} set yet.',
 			'web.project.editor.save' => 'Save',
@@ -14297,20 +14257,12 @@ extension on Translations {
 			'web.project.inbox.confirmDialogDescription' => ({required Object label}) => 'The current ${label} will be overwritten with the proposed content. This cannot be undone via this UI (you can manually edit it back).',
 			'web.project.inbox.confirmCancel' => 'Cancel',
 			'web.project.inbox.confirmReplace' => 'Confirm replace',
-			'web.project.cleanup.hint' => 'The LLM librarian proposes keep / stale / duplicate verdicts for this project\'s memories. You approve before anything is deleted.',
-			'web.project.cleanup.runNow' => 'Run cleanup now',
-			'web.project.cleanup.runSucceededToast' => ({required Object decided, required Object scanned}) => 'Cleanup run: ${decided} decisions queued (${scanned} scanned)',
-			'web.project.cleanup.runFailedToast' => 'Cleanup run failed',
-			'web.project.cleanup.empty' => 'No pending decisions. Either nothing aged into eligibility or the last run found everything load-bearing.',
-			'web.project.cleanup.mergeIntoPrefix' => '→ merge into',
-			'web.project.cleanup.reasonPrefix' => 'Reason:',
-			'web.project.cleanup.executeButton' => 'Execute',
-			'web.project.cleanup.confirmKeepButton' => 'Confirm keep',
-			'web.project.cleanup.rejectButton' => 'Reject',
-			'web.project.cleanup.approvedExecutedToast' => ({required Object label}) => '${label} executed',
-			'web.project.cleanup.approveFailedToast' => 'Approve failed',
-			'web.project.cleanup.rejectedToast' => 'Rejected — memory kept',
-			'web.project.cleanup.rejectFailedToast' => 'Reject failed',
+			'web.project.archived.hint' => 'Memories the auto-cleaner soft-archived for this project. They\'re excluded from recall but restorable until the 30-day grace window purges them.',
+			'web.project.archived.empty' => 'Nothing archived for this project. The cleaner soft-archives stale and duplicate facts here automatically — none yet.',
+			'web.project.archived.archivedAtPrefix' => 'Archived',
+			'web.project.archived.restoreButton' => 'Restore',
+			'web.project.archived.restoredToast' => 'Restored',
+			'web.project.archived.restoreFailedToast' => 'Restore failed',
 			'web.project.reset.button' => 'Reset',
 			'web.project.reset.dialogTitle' => 'Reset project memory?',
 			'web.project.reset.dialogDescription' => 'Deletes all stored project context for this cwd. This cannot be undone.',
@@ -14338,19 +14290,18 @@ extension on Translations {
 			'web.memoryInspector.status.dimensions' => ({required Object dim, required Object state}) => '${dim}-dim · ${state}',
 			'web.memoryInspector.status.enabled' => 'enabled',
 			'web.memoryInspector.status.disabled' => 'disabled',
-			'web.memoryInspector.status.testButton' => 'Test embedder',
-			'web.memoryInspector.statusBody' => 'This is the embedder the gateway is currently using for every <1>memory_search</1> / <3>memory_store</3> call. If this doesn\'t match the configuration above, you have unsaved changes — click Save then Restart server to apply.',
+			'web.memoryInspector.status.floorNoModel' => 'Keyword (BM25) retrieval only — no embedding model configured. Add a dense [memory.http] endpoint in Settings to enable semantic memory.',
+			'web.memoryInspector.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configured ${model} (dense) — restart the gateway to activate semantic memory and re-embed existing memories.',
+			'web.memoryInspector.status.denseUnreachableFloor' => ({required Object model}) => 'Configured ${model} (dense) but the endpoint is unreachable — using the keyword floor until it responds (auto-upgrades on restart).',
+			'web.memoryInspector.status.denseDegraded' => 'Dense embedder active but its endpoint is unreachable right now — existing vectors are preserved; new writes and similarity search pause until it responds.',
 			'web.memoryInspector.scope.label' => 'Scope',
 			'web.memoryInspector.scope.scopeKey' => 'Scope key',
 			'web.memoryInspector.scope.scopeKeyIgnored' => '(ignored for global)',
 			'web.memoryInspector.scope.scopeKeyCwd' => '(cwd of the project)',
-			'web.memoryInspector.scope.scopeKeySession' => '(session id)',
 			'web.memoryInspector.scope.placeholderProject' => '/path/to/project (cwd)',
-			'web.memoryInspector.scope.placeholderSession' => 'session id',
 			'web.memoryInspector.scope.syncMd' => 'Sync .md',
 			'web.memoryInspector.scope.syncTooltip' => 'Re-ingest Claude\'s <cwd>/.claude/memory/*.md files into pgvector',
 			'web.memoryInspector.scope.values.project' => 'project',
-			'web.memoryInspector.scope.values.session' => 'session',
 			'web.memoryInspector.scope.values.global' => 'global',
 			'web.memoryInspector.search.placeholder' => 'Semantic search query (Enter to run; empty = browse)',
 			'web.memoryInspector.search.run' => 'Search',
@@ -14389,8 +14340,6 @@ extension on Translations {
 			'web.memoryInspector.toasts.bulkDeleted_one' => ({required Object count}) => 'Deleted ${count} memory from this scope',
 			'web.memoryInspector.toasts.bulkDeleted_other' => ({required Object count}) => 'Deleted ${count} memories from this scope',
 			'web.memoryInspector.toasts.bulkDeleteFailed' => 'Bulk delete failed',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.toasts.created' => 'Memory created',
 			'web.memoryInspector.toasts.createFailed' => 'Create failed',
 			'web.memoryInspector.toasts.updated' => 'Memory updated',
@@ -14402,9 +14351,6 @@ extension on Translations {
 			'web.memoryInspector.toasts.syncEmpty' => 'No new .md files to sync',
 			'web.memoryInspector.toasts.syncEmptyDescription' => 'Already in sync, or no Claude memory dir for this cwd.',
 			'web.memoryInspector.toasts.syncFailed' => 'Sync failed',
-			'web.memoryInspector.toasts.testOk' => ({required Object embedder, required Object dim}) => 'Embedder OK: ${embedder} · ${dim} dimensions',
-			'web.memoryInspector.toasts.testOkDescription' => ({required Object preview}) => 'vector_preview = [${preview}…]',
-			'web.memoryInspector.toasts.testFailed' => 'Embedder probe failed',
 			'web.memoryInspector.bulkDelete.title' => 'Delete every memory in this scope?',
 			'web.memoryInspector.bulkDelete.description' => 'This is a single SQL operation — all memories under the specified scope are removed atomically. Memories that were ingested via the Claude mirror reappear on the next <1>Sync .md</1> run; everything else is gone for good.',
 			'web.memoryInspector.bulkDelete.scope' => 'Scope',
@@ -14414,6 +14360,8 @@ extension on Translations {
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} memory items',
 			'web.memoryInspector.bulkDelete.cancel' => 'Cancel',
 			'web.memoryInspector.bulkDelete.deleteAll' => 'Delete all',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.addMem.title' => 'Add memory',
 			'web.memoryInspector.addMem.description' => 'Manually create a memory. Agents create these automatically via the <1>memory_store</1> MCP tool — this form is for cases where the operator wants to seed a fact without going through an agent.',
 			'web.memoryInspector.addMem.textLabel' => 'Text',
@@ -14903,8 +14851,6 @@ extension on Translations {
 			'web.integrations.proxy.send' => 'Send',
 			'web.integrations.proxy.sending' => 'Sending…',
 			'web.integrations.proxy.extraHeadersLabel' => 'Extra headers (one per line, Name: Value)',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.proxy.bodyLabel' => 'Body',
 			'web.integrations.proxy.headers' => 'Headers',
 			'web.integrations.proxy.body' => 'Body',
@@ -14928,6 +14874,8 @@ extension on Translations {
 			'web.plugins.mcp.columns.name' => 'Name',
 			'web.plugins.mcp.columns.transport' => 'Transport',
 			'web.plugins.mcp.columns.spec' => 'Spec',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.mcp.columns.enabled' => 'Enabled',
 			'web.plugins.mcp.noUrl' => 'no url',
 			'web.plugins.mcp.noCommand' => 'no command',
@@ -15387,7 +15335,7 @@ extension on Translations {
 			'web.serverSettings.fields.memoryThreshold.label' => 'Similarity threshold',
 			'web.serverSettings.fields.memoryThreshold.hint' => 'Hits below this score are dropped. Empty = 0.1 (permissive — BM25 sparse vectors rarely break 0.5).',
 			'web.serverSettings.fields.memoryScope.label' => 'Default scope',
-			'web.serverSettings.fields.memoryScope.hint' => 'What memory_store uses when the agent doesn\'t specify. "project" (recommended) groups by cwd; "session" isolates per session; "global" shares across cwds.',
+			'web.serverSettings.fields.memoryScope.hint' => 'What memory_store uses when the agent doesn\'t specify. "project" (recommended) groups by cwd; "global" shares across cwds.',
 			'web.serverSettings.fields.memoryBaseUrl.label' => 'Base URL',
 			'web.serverSettings.fields.memoryBaseUrl.hint' => 'e.g. "http://localhost:11434/v1" for ollama, "https://api.openai.com/v1" for OpenAI.',
 			'web.serverSettings.fields.memoryModel.label' => 'Model',
@@ -15417,8 +15365,6 @@ extension on Translations {
 			'web.serverSettings.fields.backupLocalDir.label' => 'Local backup directory',
 			'web.serverSettings.fields.backupLocalDir.hint' => 'Default root for the auto-created `local` target. Empty = ~/.opendray/backups. Restart required.',
 			'web.serverSettings.fields.backupExportDir.label' => 'Export directory',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.backupExportDir.hint' => 'Where one-shot export zips are staged on disk. Empty = ~/.opendray/exports. Bundles auto-expire after 24h. Restart required.',
 			'web.serverSettings.fields.backupPgDumpPath.label' => 'pg_dump path',
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'Absolute path to pg_dump. Major version must be ≥ the server\'s. Empty = first pg_dump on PATH.',
@@ -15442,6 +15388,8 @@ extension on Translations {
 			'web.serverSettings.httpHelpers.presetTip.openai' => 'OpenAI cloud (needs API key)',
 			'web.serverSettings.probe.unreachable' => ({required Object error}) => '✗ unreachable: ${error}',
 			'web.serverSettings.probe.connectionFailed' => 'connection failed',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.probe.reachable' => ({required Object detected, required Object total, required Object embedding}) => '✓ reachable ${detected}· ${total} model(s) total · ${embedding} embedding',
 			'web.serverSettings.probe.modelMissing' => ({required Object model}) => '⚠ Configured model ${model} isn\'t in the list. Pick one of the embedding models below or fix the name.',
 			'web.serverSettings.probe.embeddingModelsLabel' => 'embedding models:',
@@ -15643,7 +15591,6 @@ extension on Translations {
 			'web.memoryAmbient.rules.dialog.idleLabel' => 'Idle seconds',
 			'web.memoryAmbient.rules.dialog.kLabel' => 'K (characters)',
 			'web.memoryAmbient.rules.dialog.scopeLabel' => 'Target scope',
-			'web.memoryAmbient.rules.dialog.scopeSession' => 'session',
 			'web.memoryAmbient.rules.dialog.scopeProject' => 'project (recommended)',
 			'web.memoryAmbient.rules.dialog.scopeGlobal' => 'global',
 			'web.memoryAmbient.rules.dialog.dedupLabel' => 'Dedup threshold (0.0 – 1.0)',
@@ -15782,8 +15729,8 @@ extension on Translations {
 			'more.items.customTasks.subtitle' => 'Slash commands shown in the session task picker',
 			'more.items.projectMemory.title' => 'Project goal / plan / journal',
 			'more.items.projectMemory.subtitle' => 'Per-cwd memory layers 2-4 + agent proposals',
-			'more.items.cleanupInbox.title' => 'Cleanup inbox',
-			'more.items.cleanupInbox.subtitle' => 'LLM-proposed deletions / merges across all projects',
+			'more.items.archived.title' => 'Archived memories',
+			'more.items.archived.subtitle' => 'Restore memories the auto-cleaner soft-archived (30-day grace)',
 			'more.items.backups.title' => 'Backups',
 			'more.items.backups.subtitle' => 'Latest backup status & run-now',
 			'more.items.dataExport.title' => 'Data export & import',
@@ -15931,8 +15878,6 @@ extension on Translations {
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
@@ -15957,6 +15902,8 @@ extension on Translations {
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.cancel' => 'Cancel',
 			'sessions.spawnSheet.spawn' => 'Spawn',
 			'sessions.spawnSheet.providerLabel' => 'Provider',
@@ -16207,7 +16154,8 @@ extension on Translations {
 			'memoryWorkers.errorTitle' => 'Endpoint not reachable',
 			'memoryWorkers.errorDetail' => 'The /api/v1/memory/workers routes are new in M25 — the opendray binary may need a restart to mount them and run migration 0029.',
 			'memoryWorkers.summarizerOnlyBadge' => 'summarizer-only',
-			'memoryWorkers.summarizerInfo' => 'Uses the registry default summarizer provider. Pick a specific row on the web admin.',
+			'memoryWorkers.summarizerProviderLabel' => 'Summarizer provider',
+			'memoryWorkers.registryDefault' => 'Registry default',
 			'memoryWorkers.agentWarning' => 'Agent mode spawns a headless CLI per call. Latency ~5-15s (vs ~1s summarizer); cost shifts from CPU to your Claude/Gemini quota.',
 			'memoryWorkers.noCalls24h' => 'No calls in last 24h.',
 			'memoryWorkers.testOkSnack' => ({required Object label, required Object duration}) => '${label} OK — ${duration}ms',
@@ -16227,11 +16175,14 @@ extension on Translations {
 			'memoryWorkers.tasks.conflictDetector.description' => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.',
 			'memoryWorkers.tasks.capture.label' => 'Capture engine',
 			'memoryWorkers.tasks.capture.description' => 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.',
-			'memoryCleanup.title' => 'Memory cleanup',
-			'memoryCleanup.approveFailed' => ({required Object error}) => 'Approve failed: ${error}',
-			'memoryCleanup.rejectFailed' => ({required Object error}) => 'Reject failed: ${error}',
-			'memoryCleanup.loadFailed' => ({required Object error}) => 'Failed to load: ${error}',
-			'memoryCleanup.reject' => 'Reject',
+			'memoryArchived.title' => 'Archived memories',
+			'memoryArchived.loadFailed' => ({required Object error}) => 'Failed to load: ${error}',
+			'memoryArchived.restoreFailed' => ({required Object error}) => 'Restore failed: ${error}',
+			'memoryArchived.emptyTitle' => 'Nothing archived',
+			'memoryArchived.emptyBody' => 'No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.',
+			'memoryArchived.globalScope' => '(global)',
+			'memoryArchived.countBadge' => ({required Object count}) => '${count} archived',
+			'memoryArchived.restore' => 'Restore',
 			'project.title' => 'Project',
 			'project.pickFirst' => 'Pick a project first.',
 			'project.health.title' => ({required Object days}) => 'Memory health — last ${days} days',
@@ -16292,7 +16243,6 @@ extension on Translations {
 			'project.appendFailed' => ({required Object error}) => 'Failed: ${error}',
 			'project.approveFailed' => ({required Object error}) => 'Approve failed: ${error}',
 			'project.rejectFailed' => ({required Object error}) => 'Reject failed: ${error}',
-			'project.cleanupFailed' => ({required Object error}) => 'Cleanup failed: ${error}',
 			'project.resetConfirmTitle' => 'Reset project memory?',
 			'project.alsoDeleteScanner' => 'Also delete scanner docs',
 			'project.alsoDeletePgvector' => 'Also delete pgvector memories',
@@ -16308,8 +16258,10 @@ extension on Translations {
 			'project.approve' => 'Approve',
 			'project.replaceConfirmTitle' => ({required Object kind}) => 'Replace current ${kind}?',
 			'project.replaceKind' => ({required Object kind}) => 'Replace ${kind}',
-			'project.reason' => 'Reason',
-			'project.willMergeInto' => 'Will merge into',
+			'project.archived.emptyTitle' => 'Nothing archived',
+			'project.archived.emptyBody' => 'No archived memories for this project. The auto-cleaner soft-archives stale and duplicate facts here automatically — none yet.',
+			'project.archived.restoreFailed' => ({required Object error}) => 'Restore failed: ${error}',
+			'project.archived.restore' => 'Restore',
 			'backups.title' => 'Backups',
 			'backups.runConfirmTitle' => 'Run backup now?',
 			'backups.runConfirmBody' => 'Triggers a fresh dump against the local target. The job runs server-side; this list will refresh as it progresses.',
@@ -16445,8 +16397,6 @@ extension on Translations {
 			'backupSchedules.errorPrefixUpdate' => 'Update failed',
 			'backupSchedules.errorPrefixDelete' => 'Delete failed',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Removes the recurring spec for target ${targetId}. Existing backup blobs are not touched.',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.emptyList' => 'No schedules yet.\nTap "New" to create one.',
 			'backupSchedules.validatePickTarget' => 'Pick a target.',
 			'backupSchedules.validateInterval' => 'Interval must be > 0.',
@@ -16466,6 +16416,8 @@ extension on Translations {
 			'backupTargetEditor.useHttps' => 'Use HTTPS',
 			'backupTargetEditor.pathStyle' => 'Path-style addressing',
 			'backupTargetEditor.pathStyleSubtitle' => 'Legacy / MinIO',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.kinds.local.label' => 'Local disk',
 			'backupTargetEditor.kinds.local.description' => 'Folder on the machine running opendray',
 			'backupTargetEditor.kinds.smb.label' => 'SMB share',
@@ -16869,6 +16821,14 @@ extension on Translations {
 			'dataExport.status.failed' => 'failed',
 			'dataExport.status.expired' => 'expired',
 			'dataExport.status.succeeded' => 'succeeded',
+			'memory.status.label' => 'Active embedder',
+			'memory.status.dimensions' => ({required Object dim, required Object state}) => '${dim}-dim · ${state}',
+			'memory.status.enabled' => 'enabled',
+			'memory.status.disabled' => 'disabled',
+			'memory.status.floorNoModel' => 'Keyword (BM25) retrieval only — no embedding model configured. Configure a dense endpoint in Settings to enable semantic memory.',
+			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configured ${model} (dense) — restart the gateway to activate semantic memory and re-embed existing memories.',
+			'memory.status.denseUnreachableFloor' => ({required Object model}) => 'Configured ${model} (dense) but the endpoint is unreachable — using the keyword floor until it responds (auto-upgrades on restart).',
+			'memory.status.denseDegraded' => 'Dense embedder active but its endpoint is unreachable right now — existing vectors are preserved; new writes and similarity search pause until it responds.',
 			'memory.title' => 'Memory',
 			'memory.more' => 'More',
 			'memory.workers' => 'Memory workers',
@@ -16959,8 +16919,6 @@ extension on Translations {
 			'settings.changeCredentials.updatedSnack' => 'Credentials updated.',
 			'settings.changeCredentials.wrongCurrent' => 'Current password is wrong.',
 			'settings.changeCredentials.saving' => 'Saving…',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.update' => 'Update',
 			'settings.logViewer.title' => 'Live logs',
 			'settings.logViewer.reconnect' => 'Reconnect',
@@ -16972,6 +16930,8 @@ extension on Translations {
 			'settings.logViewer.levels.debug' => 'Debug',
 			'settings.logViewer.levels.info' => 'Info',
 			'settings.logViewer.levels.warn' => 'Warn',
+			_ => null,
+		} ?? switch (path) {
 			'settings.logViewer.levels.error' => 'Error',
 			'settings.serverSettings.title' => 'Server settings',
 			'settings.serverSettings.reloadTooltip' => 'Reload from server',
@@ -17037,7 +16997,6 @@ extension on Translations {
 			'settings.serverSettings.fields.defaultTopK' => 'Default top-k',
 			'settings.serverSettings.fields.similarityThreshold' => 'Similarity threshold',
 			'settings.serverSettings.fields.defaultScope' => 'Default scope',
-			'settings.serverSettings.fields.chromemHelper' => 'When store=chromem.',
 			'settings.serverSettings.fields.preserveHelper' => 'Blank to preserve current.',
 			'settings.serverSettings.fields.localModelName' => 'Local model name',
 			'settings.serverSettings.fields.localLibraryPath' => 'Local library path',
@@ -17058,7 +17017,6 @@ extension on Translations {
 			'settings.serverSettings.fields.backendHelper' => 'auto picks the best available; local needs ONNX.',
 			'settings.serverSettings.fields.similarityHelper' => '0.0–1.0; results under this are filtered out.',
 			'settings.serverSettings.fields.defaultFallback' => ({required Object value}) => 'Default: ${value}',
-			'settings.serverSettings.fields.chromemPath' => 'chromem path',
 			'settings.serverSettings.fields.httpBaseUrl' => 'HTTP base URL',
 			'settings.serverSettings.fields.httpModel' => 'HTTP model',
 			'settings.serverSettings.fields.httpApiKey' => 'HTTP api key',

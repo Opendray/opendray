@@ -1,13 +1,14 @@
 // ProjectScreen — web parity with app/mobile/lib/features/project/
 // project_screen.dart. Hosts the cross-CLI project memory UI:
 //
-//   Goal / Plan / Tech / Activity / Journal / Inbox / Cleanup
+//   Goal / Plan / Tech / Activity / Journal / Inbox / Conflicts / Archived
 //
 // Goal + Plan are operator-editable; Tech (project scanner output)
 // and Activity (git activity LLM summary) are scanner-managed and
 // read-only; Journal is the auto-appended session-end log; Inbox
-// queues agent-proposed goal/plan edits for approval; Cleanup
-// holds the M13 librarian's pending verdicts.
+// queues agent-proposed goal/plan edits for approval; Conflicts is
+// the only operator gate left; Archived is the read-only restorable
+// view of what the auto-cleaner soft-deleted.
 
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -19,7 +20,6 @@ import {
   Loader2,
   RotateCcw,
   Save,
-  Sparkles,
   Trash2,
   X,
 } from 'lucide-react'
@@ -52,13 +52,11 @@ import {
   resetProjectMemory,
 } from '@/lib/projectDocs'
 import {
-  type CleanupDecision,
-  approveDecision,
-  listCleanupDecisions,
-  rejectDecision,
-  runCleanup,
-} from '@/lib/memoryCleanup'
-import { deleteMemoriesByScope } from '@/lib/memory'
+  type MemoryRecord,
+  deleteMemoriesByScope,
+  listArchived,
+  restoreMemory,
+} from '@/lib/memory'
 import { MemoryHealthCard } from '@/components/project/MemoryHealthCard'
 import { ConflictsPanel } from '@/components/project/ConflictsPanel'
 import { JournalStalePanel } from '@/components/project/JournalStalePanel'
@@ -71,15 +69,6 @@ function useDocLabel() {
   const { t } = useTranslation()
   return (kind: DocKind | 'goal' | 'plan'): string =>
     t(`web.project.docLabel.${kind}`)
-}
-
-function useVerdictLabel() {
-  const { t } = useTranslation()
-  return (v: string): string => {
-    if (v === 'stale') return t('web.project.verdictLabel.stale')
-    if (v === 'duplicate') return t('web.project.verdictLabel.duplicate')
-    return t('web.project.verdictLabel.keep')
-  }
 }
 
 export function ProjectScreen({ cwd }: ProjectScreenProps) {
@@ -105,15 +94,9 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
     queryFn: () => listSessionLogs(cwd, 50),
     enabled: !!cwd,
   })
-  const decisionsQuery = useQuery({
-    queryKey: ['cleanup-decisions', 'project', cwd],
-    queryFn: () =>
-      listCleanupDecisions({
-        status: 'pending',
-        scope: 'project',
-        scope_key: cwd,
-        limit: 100,
-      }),
+  const archivedQuery = useQuery({
+    queryKey: ['archived-memories', 'project', cwd],
+    queryFn: () => listArchived('project', cwd, 200),
     enabled: !!cwd,
   })
 
@@ -129,7 +112,7 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
   }, [docsQuery.data])
 
   const inboxCount = proposalsQuery.data?.length ?? 0
-  const cleanupCount = decisionsQuery.data?.length ?? 0
+  const archivedCount = archivedQuery.data?.length ?? 0
   const docsCount = (docsQuery.data ?? []).length
   const journalCount = (logsQuery.data ?? []).length
 
@@ -165,12 +148,12 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
                   </Badge>
                 </>
               )}
-              {cleanupCount > 0 && (
+              {archivedCount > 0 && (
                 <>
                   <span>·</span>
                   <Badge variant="muted" className="text-[10px]">
-                    {t('web.project.header.cleanupPending', {
-                      count: cleanupCount,
+                    {t('web.project.header.archivedCount', {
+                      count: archivedCount,
                     })}
                   </Badge>
                 </>
@@ -183,7 +166,7 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
               qc.invalidateQueries({ queryKey: ['project-docs', cwd] })
               qc.invalidateQueries({ queryKey: ['project-doc-proposals', cwd] })
               qc.invalidateQueries({ queryKey: ['session-logs', cwd] })
-              qc.invalidateQueries({ queryKey: ['cleanup-decisions'] })
+              qc.invalidateQueries({ queryKey: ['archived-memories'] })
               qc.invalidateQueries({ queryKey: ['memories'] })
             }}
           />
@@ -217,11 +200,11 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
           <TabsTrigger value="conflicts">
             {t('web.project.tabs.conflicts')}
           </TabsTrigger>
-          <TabsTrigger value="cleanup" className="relative">
-            {t('web.project.tabs.cleanup')}
-            {cleanupCount > 0 && (
+          <TabsTrigger value="archived" className="relative">
+            {t('web.project.tabs.archived')}
+            {archivedCount > 0 && (
               <span className="bg-secondary absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold">
-                {cleanupCount}
+                {archivedCount}
               </span>
             )}
           </TabsTrigger>
@@ -277,14 +260,13 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
           <ConflictsPanel cwd={cwd} onJumpTab={setActiveTab} />
         </TabsContent>
 
-        <TabsContent value="cleanup" className="flex-1 overflow-auto p-4">
-          <CleanupTab
-            cwd={cwd}
-            decisions={decisionsQuery.data ?? []}
-            loading={decisionsQuery.isLoading}
+        <TabsContent value="archived" className="flex-1 overflow-auto p-4">
+          <ArchivedTab
+            records={archivedQuery.data ?? []}
+            loading={archivedQuery.isLoading}
             onChange={() =>
               qc.invalidateQueries({
-                queryKey: ['cleanup-decisions', 'project', cwd],
+                queryKey: ['archived-memories', 'project', cwd],
               })
             }
           />
@@ -664,169 +646,96 @@ function DiffBlock({
   )
 }
 
-// ─── Cleanup tab ─────────────────────────────────────────────
+// ─── Archived tab (read-only + restore) ──────────────────────
+//
+// The cleaner auto-applies its keep/stale/duplicate verdicts as
+// reversible soft-archives — there is no approval queue anymore. This
+// tab is where the operator sees what was auto-removed for this
+// project and restores any false positive before the 30-day grace
+// window hard-purges it.
 
-function CleanupTab({
-  cwd,
-  decisions,
+function ArchivedTab({
+  records,
   loading,
   onChange,
 }: {
-  cwd: string
-  decisions: CleanupDecision[]
+  records: MemoryRecord[]
   loading: boolean
   onChange: () => void
 }) {
   const { t } = useTranslation()
-  const runMutation = useMutation({
-    mutationFn: () => runCleanup({ scope: 'project', scope_key: cwd }),
-    onSuccess: (res) => {
-      toast.success(
-        t('web.project.cleanup.runSucceededToast', {
-          decided: res.decided,
-          scanned: res.scanned,
-        }),
-      )
-      onChange()
-    },
-    onError: (e: Error) =>
-      toast.error(t('web.project.cleanup.runFailedToast'), {
-        description: e.message,
-      }),
-  })
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-xs">
-          {t('web.project.cleanup.hint')}
-        </p>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => runMutation.mutate()}
-          disabled={runMutation.isPending}
-        >
-          {runMutation.isPending ? (
-            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-          ) : (
-            <Sparkles className="mr-1 h-3 w-3" />
-          )}
-          {t('web.project.cleanup.runNow')}
-        </Button>
-      </div>
+      <p className="text-muted-foreground text-xs">
+        {t('web.project.archived.hint')}
+      </p>
       {loading ? (
         <Loader2 className="h-3 w-3 animate-spin" />
-      ) : decisions.length === 0 ? (
+      ) : records.length === 0 ? (
         <p className="text-muted-foreground py-8 text-center text-sm">
-          {t('web.project.cleanup.empty')}
+          {t('web.project.archived.empty')}
         </p>
       ) : (
-        decisions.map((d) => (
-          <CleanupDecisionCard key={d.id} decision={d} onChange={onChange} />
+        records.map((r) => (
+          <ArchivedCard key={r.id} record={r} onChange={onChange} />
         ))
       )}
     </div>
   )
 }
 
-function CleanupDecisionCard({
-  decision,
+function ArchivedCard({
+  record,
   onChange,
 }: {
-  decision: CleanupDecision
+  record: MemoryRecord
   onChange: () => void
 }) {
   const { t } = useTranslation()
-  const labelForVerdict = useVerdictLabel()
-  const approve = useMutation({
-    mutationFn: () => approveDecision(decision.id),
+  const restore = useMutation({
+    mutationFn: () => restoreMemory(record.id),
     onSuccess: () => {
-      toast.success(
-        t('web.project.cleanup.approvedExecutedToast', {
-          label: labelForVerdict(decision.verdict),
-        }),
-      )
+      toast.success(t('web.project.archived.restoredToast'))
       onChange()
     },
     onError: (e: Error) => {
-      toast.error(t('web.project.cleanup.approveFailedToast'), {
+      toast.error(t('web.project.archived.restoreFailedToast'), {
         description: e.message,
       })
       onChange()
     },
   })
-  const reject = useMutation({
-    mutationFn: () => rejectDecision(decision.id),
-    onSuccess: () => {
-      toast.success(t('web.project.cleanup.rejectedToast'))
-      onChange()
-    },
-    onError: (e: Error) => {
-      toast.error(t('web.project.cleanup.rejectFailedToast'), {
-        description: e.message,
-      })
-      onChange()
-    },
-  })
-
-  const verdictColor =
-    decision.verdict === 'stale'
-      ? 'danger'
-      : decision.verdict === 'duplicate'
-        ? 'muted'
-        : 'outline'
 
   return (
     <div className="bg-card rounded-md border p-3">
       <div className="mb-2 flex items-center gap-2">
-        <Badge variant={verdictColor as 'danger' | 'muted' | 'outline'}>
-          {decision.verdict}
-        </Badge>
-        <span className="text-muted-foreground text-[11px]">
-          {new Date(decision.created_at).toLocaleString()}
-        </span>
-        {decision.merge_into && (
-          <span className="text-muted-foreground font-mono text-[10px]">
-            {t('web.project.cleanup.mergeIntoPrefix')}{' '}
-            {decision.merge_into.slice(-8)}
+        {record.archived_reason && (
+          <Badge variant="muted">{record.archived_reason}</Badge>
+        )}
+        {record.archived_at && (
+          <span className="text-muted-foreground text-[11px]">
+            {t('web.project.archived.archivedAtPrefix')}{' '}
+            {new Date(record.archived_at).toLocaleString()}
           </span>
         )}
       </div>
-      <pre className="bg-muted/20 mb-2 max-h-32 overflow-auto rounded p-2 font-mono text-[11px] whitespace-pre-wrap">
-        {decision.memory_text_snapshot}
+      <pre className="bg-muted/20 mb-3 max-h-32 overflow-auto rounded p-2 font-mono text-[11px] whitespace-pre-wrap">
+        {record.text}
       </pre>
-      <p className="text-muted-foreground mb-3 text-xs italic">
-        {t('web.project.cleanup.reasonPrefix')} {decision.reason}
-      </p>
-      <div className="flex gap-2">
-        <Button
-          size="sm"
-          variant="default"
-          onClick={() => approve.mutate()}
-          disabled={approve.isPending || reject.isPending}
-        >
-          {approve.isPending ? (
-            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-          ) : decision.verdict === 'keep' ? (
-            <Check className="mr-1 h-3 w-3" />
-          ) : (
-            <Trash2 className="mr-1 h-3 w-3" />
-          )}
-          {decision.verdict === 'keep'
-            ? t('web.project.cleanup.confirmKeepButton')
-            : t('web.project.cleanup.executeButton')}
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => reject.mutate()}
-          disabled={approve.isPending || reject.isPending}
-        >
-          <X className="mr-1 h-3 w-3" />
-          {t('web.project.cleanup.rejectButton')}
-        </Button>
-      </div>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => restore.mutate()}
+        disabled={restore.isPending}
+      >
+        {restore.isPending ? (
+          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+        ) : (
+          <RotateCcw className="mr-1 h-3 w-3" />
+        )}
+        {t('web.project.archived.restoreButton')}
+      </Button>
     </div>
   )
 }
