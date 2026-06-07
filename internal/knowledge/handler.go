@@ -36,6 +36,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Get("/nodes/{id}", h.getNode)
 		r.Get("/nodes/{id}/edges", h.listEdges)
 		r.Get("/nodes/{id}/graph", h.neighborhood)
+		r.Post("/nodes/{id}/promote", h.promote)
 		r.Post("/edges", h.createEdge)
 		r.Get("/brain", h.projectBrain)
 		r.Get("/search", h.search)
@@ -132,6 +133,31 @@ func (h *Handlers) projectBrain(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, view)
 }
 
+func (h *Handlers) promote(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Scope    string `json:"scope"`
+		ScopeKey string `json:"scope_key"`
+	}
+	if err := json.NewDecoder(io.LimitReader(r.Body, 8<<10)).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	scope := Scope(req.Scope)
+	if !scope.Valid() {
+		writeError(w, http.StatusBadRequest, errors.New("invalid scope (project|domain|global)"))
+		return
+	}
+	if err := h.svc.PromoteNode(r.Context(), chi.URLParam(r, "id"), scope, req.ScopeKey); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *Handlers) search(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
 	if q == "" {
@@ -139,7 +165,7 @@ func (h *Handlers) search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	topK, _ := strconv.Atoi(r.URL.Query().Get("top_k"))
-	hits, err := h.svc.SearchNodes(r.Context(), q, topK)
+	hits, err := h.svc.SearchNodes(r.Context(), q, r.URL.Query().Get("cwd"), topK)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return

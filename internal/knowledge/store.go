@@ -380,18 +380,21 @@ type SearchHit struct {
 }
 
 // SearchNodes runs a cosine search over nodes embedded by the given embedder.
-func (s *Store) SearchNodes(ctx context.Context, embedder string, vec []float32, topK int) ([]SearchHit, error) {
+func (s *Store) SearchNodes(ctx context.Context, embedder string, vec []float32, scopeKey string, topK int) ([]SearchHit, error) {
 	if topK <= 0 {
 		topK = 10
 	}
+	// Scope-aware: a project ($3 set) sees its own nodes + all global nodes,
+	// and never other projects' nodes (isolation). Empty $3 = search all.
 	rows, err := s.pool.Query(ctx, `
 		SELECT id, kind, COALESCE(entity_type, ''), title, body, scope, scope_key,
 		       maturity, confidence, provenance, created_at, updated_at, archived_at,
 		       1 - (embedding <=> $1::vector) AS similarity
 		FROM knowledge_nodes
 		WHERE archived_at IS NULL AND embedding IS NOT NULL AND embedder = $2
+		  AND ($3 = '' OR scope = 'global' OR scope_key = $3)
 		ORDER BY embedding <=> $1::vector ASC
-		LIMIT $3`, vectorLiteral(vec), embedder, topK)
+		LIMIT $4`, vectorLiteral(vec), embedder, scopeKey, topK)
 	if err != nil {
 		return nil, fmt.Errorf("knowledge: search nodes: %w", err)
 	}
@@ -421,6 +424,25 @@ func (s *Store) SearchNodes(ctx context.Context, embedder string, vec []float32,
 		out = append(out, SearchHit{Node: n, Similarity: sim})
 	}
 	return out, rows.Err()
+}
+
+// PromoteNode lifts a node to a wider scope (e.g. project -> global) so its
+// knowledge transfers to other projects' searches. scopeKey is the new key
+// (” for global).
+func (s *Store) PromoteNode(ctx context.Context, id string, scope Scope, scopeKey string) error {
+	if !scope.Valid() {
+		return fmt.Errorf("knowledge: invalid scope %q", scope)
+	}
+	ct, err := s.pool.Exec(ctx, `
+		UPDATE knowledge_nodes SET scope = $1, scope_key = $2, updated_at = now()
+		WHERE id = $3 AND archived_at IS NULL`, string(scope), scopeKey, id)
+	if err != nil {
+		return fmt.Errorf("knowledge: promote node: %w", err)
+	}
+	if ct.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 const selectNodeSQL = `

@@ -92,7 +92,7 @@ func (s *Service) WithEmbedder(emb Embedder) *Service {
 }
 
 // SearchNodes embeds the query and returns the top-K most similar nodes.
-func (s *Service) SearchNodes(ctx context.Context, query string, topK int) ([]SearchHit, error) {
+func (s *Service) SearchNodes(ctx context.Context, query, scopeKey string, topK int) ([]SearchHit, error) {
 	if s.emb == nil {
 		return nil, errors.New("knowledge: semantic search requires an embedder")
 	}
@@ -103,7 +103,13 @@ func (s *Service) SearchNodes(ctx context.Context, query string, topK int) ([]Se
 	if len(vecs) == 0 || len(vecs[0]) == 0 {
 		return nil, errors.New("knowledge: embedder returned no vector")
 	}
-	return s.store.SearchNodes(ctx, s.emb.Name(), vecs[0], topK)
+	return s.store.SearchNodes(ctx, s.emb.Name(), vecs[0], scopeKey, topK)
+}
+
+// PromoteNode lifts a node to a wider scope (project -> domain/global) so its
+// knowledge transfers to other projects' searches.
+func (s *Service) PromoteNode(ctx context.Context, id string, scope Scope, scopeKey string) error {
+	return s.store.PromoteNode(ctx, id, scope, scopeKey)
 }
 
 // EmbedBackfillConfig tunes the background node-embedding loop.
