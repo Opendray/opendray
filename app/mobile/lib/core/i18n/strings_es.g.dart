@@ -127,6 +127,7 @@ class _TranslationsNavEs extends TranslationsNavEn {
 	@override String get backups => 'Copias de seguridad';
 	@override String get settings => 'Ajustes';
 	@override String get workspace => 'Espacio de trabajo';
+	@override String get knowledge => 'Conocimiento';
 }
 
 // Path: web
@@ -163,6 +164,7 @@ class _TranslationsWebEs extends TranslationsWebEn {
 	@override late final _TranslationsWebMemoryAmbientEs memoryAmbient = _TranslationsWebMemoryAmbientEs._(_root);
 	@override late final _TranslationsWebNoteEditorEs noteEditor = _TranslationsWebNoteEditorEs._(_root);
 	@override late final _TranslationsWebExportEs export = _TranslationsWebExportEs._(_root);
+	@override late final _TranslationsWebKnowledgeEs knowledge = _TranslationsWebKnowledgeEs._(_root);
 }
 
 // Path: more
@@ -1406,6 +1408,30 @@ class _TranslationsWebExportEs extends TranslationsWebExportEn {
 	@override late final _TranslationsWebExportHistoryEs history = _TranslationsWebExportHistoryEs._(_root);
 	@override late final _TranslationsWebExportImportEs import = _TranslationsWebExportImportEs._(_root);
 	@override late final _TranslationsWebExportImportsEs imports = _TranslationsWebExportImportsEs._(_root);
+}
+
+// Path: web.knowledge
+class _TranslationsWebKnowledgeEs extends TranslationsWebKnowledgeEn {
+	_TranslationsWebKnowledgeEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Conocimiento';
+	@override String get subtitle => 'El grafo de conocimiento autoevolutivo: entidades, hechos, guías y habilidades destiladas de tu trabajo.';
+	@override String get searchPlaceholder => 'Buscar conocimiento…';
+	@override String get search => 'Buscar';
+	@override String get browse => 'Explorar';
+	@override String get cwdPlaceholder => 'Ruta del proyecto (cwd) para búsqueda con ámbito';
+	@override String get noResults => 'Sin resultados.';
+	@override String get empty => 'Aún no hay nada. El conocimiento se destila automáticamente mientras trabajas.';
+	@override String get neighbors => 'Conexiones';
+	@override String get promote => 'Promover a global';
+	@override String get skillify => 'Crear habilidad';
+	@override String get promoted => 'Promovido a global';
+	@override String skillified({required Object title}) => 'Habilidad creada: ${title}';
+	@override String get actionFailed => 'La acción falló';
+	@override String get selectHint => 'Selecciona un nodo para ver los detalles.';
 }
 
 // Path: more.identity
@@ -7451,6 +7477,7 @@ extension on TranslationsEs {
 			'nav.backups' => 'Copias de seguridad',
 			'nav.settings' => 'Ajustes',
 			'nav.workspace' => 'Espacio de trabajo',
+			'nav.knowledge' => 'Conocimiento',
 			'web.brand' => 'opendray',
 			'web.loading' => 'Cargando…',
 			'web.topbar.expandSidebar' => 'Expandir barra lateral',
@@ -7927,9 +7954,9 @@ extension on TranslationsEs {
 			'web.memoryInspector.bulkDelete.items_one' => ({required Object count}) => '${count} elemento de memoria',
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} elementos de memoria',
 			'web.memoryInspector.bulkDelete.cancel' => 'Cancelar',
-			'web.memoryInspector.bulkDelete.deleteAll' => 'Eliminar todo',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryInspector.bulkDelete.deleteAll' => 'Eliminar todo',
 			'web.memoryInspector.addMem.title' => 'Añadir memoria',
 			'web.memoryInspector.addMem.description' => 'Crea manualmente una memoria. Los agentes las crean automáticamente mediante la herramienta MCP <1>memory_store</1>. Este formulario es para los casos en que el operador quiere insertar un hecho sin pasar por un agente.',
 			'web.memoryInspector.addMem.textLabel' => 'Texto',
@@ -8441,9 +8468,9 @@ extension on TranslationsEs {
 			'web.plugins.mcp.empty' => 'Aún no hay servidores MCP. Añade uno para exponer herramientas adicionales a tus sessions de agente.',
 			'web.plugins.mcp.columns.name' => 'Nombre',
 			'web.plugins.mcp.columns.transport' => 'Transport',
-			'web.plugins.mcp.columns.spec' => 'Spec',
 			_ => null,
 		} ?? switch (path) {
+			'web.plugins.mcp.columns.spec' => 'Spec',
 			'web.plugins.mcp.columns.enabled' => 'Habilitado',
 			'web.plugins.mcp.noUrl' => 'sin url',
 			'web.plugins.mcp.noCommand' => 'sin comando',
@@ -8955,9 +8982,9 @@ extension on TranslationsEs {
 			'web.serverSettings.httpHelpers.presetTip.lmStudio' => 'Servidor local de LM Studio',
 			'web.serverSettings.httpHelpers.presetTip.openai' => 'Nube de OpenAI (necesita API key)',
 			'web.serverSettings.probe.unreachable' => ({required Object error}) => '✗ inaccesible: ${error}',
-			'web.serverSettings.probe.connectionFailed' => 'conexión fallida',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.probe.connectionFailed' => 'conexión fallida',
 			'web.serverSettings.probe.reachable' => ({required Object detected, required Object total, required Object embedding}) => '✓ accesible ${detected}· ${total} modelo(s) en total · ${embedding} embedding',
 			'web.serverSettings.probe.modelMissing' => ({required Object model}) => '⚠ El modelo configurado ${model} no está en la lista. Elige uno de los modelos de embedding de abajo o corrige el nombre.',
 			'web.serverSettings.probe.embeddingModelsLabel' => 'modelos de embedding:',
@@ -9274,6 +9301,21 @@ extension on TranslationsEs {
 			'web.export.imports.columns.when' => 'Cuándo',
 			'web.export.imports.noneCounts' => '(ninguno)',
 			'web.export.imports.listFailedToast' => 'No se pudieron listar las importaciones',
+			'web.knowledge.title' => 'Conocimiento',
+			'web.knowledge.subtitle' => 'El grafo de conocimiento autoevolutivo: entidades, hechos, guías y habilidades destiladas de tu trabajo.',
+			'web.knowledge.searchPlaceholder' => 'Buscar conocimiento…',
+			'web.knowledge.search' => 'Buscar',
+			'web.knowledge.browse' => 'Explorar',
+			'web.knowledge.cwdPlaceholder' => 'Ruta del proyecto (cwd) para búsqueda con ámbito',
+			'web.knowledge.noResults' => 'Sin resultados.',
+			'web.knowledge.empty' => 'Aún no hay nada. El conocimiento se destila automáticamente mientras trabajas.',
+			'web.knowledge.neighbors' => 'Conexiones',
+			'web.knowledge.promote' => 'Promover a global',
+			'web.knowledge.skillify' => 'Crear habilidad',
+			'web.knowledge.promoted' => 'Promovido a global',
+			'web.knowledge.skillified' => ({required Object title}) => 'Habilidad creada: ${title}',
+			'web.knowledge.actionFailed' => 'La acción falló',
+			'web.knowledge.selectHint' => 'Selecciona un nodo para ver los detalles.',
 			'more.title' => 'Más',
 			'more.identity.signedInAs' => 'Sesión iniciada como',
 			'more.identity.server' => 'Servidor',
@@ -9454,6 +9496,8 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.projectDocsHint' => 'Arquitectura / spec / decisiones / plan / retrospectivas. Normalmente redactados o mantenidos por un agente.',
 			'sessions.inspector.notes.mappingCleared' => 'Asignación borrada. Usando el valor predeterminado',
 			'sessions.inspector.notes.mappedTo' => ({required Object path}) => 'Asignado a ${path}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.cancelTooltip' => 'Cancelar',
 			'sessions.inspector.notes.newDocTooltip' => 'Nuevo documento',
 			'sessions.inspector.notes.noProjectMapping' => 'No se pudo resolver una asignación de proyecto para esta session. Comprueba que el gateway tenga configurado un almacén de notas y que el cwd de la session esté establecido.',
@@ -9470,8 +9514,6 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.title' => 'Nueva session',
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.cancel' => 'Cancelar',
 			'sessions.spawnSheet.spawn' => 'Crear',
 			'sessions.spawnSheet.providerLabel' => 'Proveedor',
@@ -9968,6 +10010,8 @@ extension on TranslationsEs {
 			'backupSchedules.emptyList' => 'Aún no hay programaciones.\nToca "Nueva" para crear una.',
 			'backupSchedules.validatePickTarget' => 'Elige un destino.',
 			'backupSchedules.validateInterval' => 'El intervalo debe ser > 0.',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.formTitleEdit' => 'Editar programación',
 			'backupSchedules.formTitleNew' => 'Nueva programación',
 			'backupSchedules.saveButtonEdit' => 'Guardar',
@@ -9984,8 +10028,6 @@ extension on TranslationsEs {
 			'backupTargetEditor.useHttps' => 'Usar HTTPS',
 			'backupTargetEditor.pathStyle' => 'Direccionamiento por ruta (path-style)',
 			'backupTargetEditor.pathStyleSubtitle' => 'Heredado / MinIO',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.kinds.local.label' => 'Disco local',
 			'backupTargetEditor.kinds.local.description' => 'Carpeta en la máquina que ejecuta opendray',
 			'backupTargetEditor.kinds.smb.label' => 'Recurso compartido SMB',
@@ -10482,6 +10524,8 @@ extension on TranslationsEs {
 			'settings.changeCredentials.confirmPassword' => 'Confirma la nueva contraseña',
 			'settings.changeCredentials.validatorRequired' => 'Obligatorio',
 			'settings.changeCredentials.passwordHelper' => 'Al menos 8 caracteres',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.passwordTooShort' => 'Debe tener al menos 8 caracteres',
 			'settings.changeCredentials.passwordMismatch' => 'No coincide con la nueva contraseña',
 			'settings.changeCredentials.updatedSnack' => 'Credenciales actualizadas.',
@@ -10498,8 +10542,6 @@ extension on TranslationsEs {
 			'settings.logViewer.levels.debug' => 'Debug',
 			'settings.logViewer.levels.info' => 'Info',
 			'settings.logViewer.levels.warn' => 'Warn',
-			_ => null,
-		} ?? switch (path) {
 			'settings.logViewer.levels.error' => 'Error',
 			'settings.serverSettings.title' => 'Ajustes del servidor',
 			'settings.serverSettings.reloadTooltip' => 'Recargar desde el servidor',

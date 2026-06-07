@@ -127,6 +127,7 @@ class _TranslationsNavZh extends TranslationsNavEn {
 	@override String get backups => '备份';
 	@override String get settings => '设置';
 	@override String get workspace => '工作区';
+	@override String get knowledge => '知识';
 }
 
 // Path: web
@@ -163,6 +164,7 @@ class _TranslationsWebZh extends TranslationsWebEn {
 	@override late final _TranslationsWebMemoryAmbientZh memoryAmbient = _TranslationsWebMemoryAmbientZh._(_root);
 	@override late final _TranslationsWebNoteEditorZh noteEditor = _TranslationsWebNoteEditorZh._(_root);
 	@override late final _TranslationsWebExportZh export = _TranslationsWebExportZh._(_root);
+	@override late final _TranslationsWebKnowledgeZh knowledge = _TranslationsWebKnowledgeZh._(_root);
 }
 
 // Path: more
@@ -1406,6 +1408,30 @@ class _TranslationsWebExportZh extends TranslationsWebExportEn {
 	@override late final _TranslationsWebExportHistoryZh history = _TranslationsWebExportHistoryZh._(_root);
 	@override late final _TranslationsWebExportImportZh import = _TranslationsWebExportImportZh._(_root);
 	@override late final _TranslationsWebExportImportsZh imports = _TranslationsWebExportImportsZh._(_root);
+}
+
+// Path: web.knowledge
+class _TranslationsWebKnowledgeZh extends TranslationsWebKnowledgeEn {
+	_TranslationsWebKnowledgeZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '知识';
+	@override String get subtitle => '自我进化的知识图谱——从你的工作中蒸馏出的实体、事实、playbook 与技能。';
+	@override String get searchPlaceholder => '搜索知识…';
+	@override String get search => '搜索';
+	@override String get browse => '浏览';
+	@override String get cwdPlaceholder => '项目路径(cwd),用于按范围搜索';
+	@override String get noResults => '无结果。';
+	@override String get empty => '暂无内容。知识会在你工作时自动蒸馏。';
+	@override String get neighbors => '关联';
+	@override String get promote => '提升为全局';
+	@override String get skillify => '生成技能';
+	@override String get promoted => '已提升为全局';
+	@override String skillified({required Object title}) => '已生成技能:${title}';
+	@override String get actionFailed => '操作失败';
+	@override String get selectHint => '选择一个节点查看详情。';
 }
 
 // Path: more.identity
@@ -7451,6 +7477,7 @@ extension on TranslationsZh {
 			'nav.backups' => '备份',
 			'nav.settings' => '设置',
 			'nav.workspace' => '工作区',
+			'nav.knowledge' => '知识',
 			'web.brand' => 'opendray',
 			'web.loading' => '加载中…',
 			'web.topbar.expandSidebar' => '展开侧边栏',
@@ -7927,9 +7954,9 @@ extension on TranslationsZh {
 			'web.memoryInspector.bulkDelete.items_one' => ({required Object count}) => '${count} 条记忆',
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} 条记忆',
 			'web.memoryInspector.bulkDelete.cancel' => '取消',
-			'web.memoryInspector.bulkDelete.deleteAll' => '全部删除',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryInspector.bulkDelete.deleteAll' => '全部删除',
 			'web.memoryInspector.addMem.title' => '添加记忆',
 			'web.memoryInspector.addMem.description' => '手动创建一条记忆。Agent 会通过 <1>memory_store</1> MCP 工具自动创建；此表单用于运维想跳过 agent 直接录入事实的场景。',
 			'web.memoryInspector.addMem.textLabel' => '文本',
@@ -8441,9 +8468,9 @@ extension on TranslationsZh {
 			'web.plugins.mcp.empty' => '尚无 MCP 服务器。添加一个以为 agent 会话暴露额外工具。',
 			'web.plugins.mcp.columns.name' => '名称',
 			'web.plugins.mcp.columns.transport' => 'Transport',
-			'web.plugins.mcp.columns.spec' => '规范',
 			_ => null,
 		} ?? switch (path) {
+			'web.plugins.mcp.columns.spec' => '规范',
 			'web.plugins.mcp.columns.enabled' => '启用',
 			'web.plugins.mcp.noUrl' => '无 URL',
 			'web.plugins.mcp.noCommand' => '无 command',
@@ -8955,9 +8982,9 @@ extension on TranslationsZh {
 			'web.serverSettings.httpHelpers.presetTip.lmStudio' => 'LM Studio 本地服务',
 			'web.serverSettings.httpHelpers.presetTip.openai' => 'OpenAI 云端（需要 API key）',
 			'web.serverSettings.probe.unreachable' => ({required Object error}) => '✗ 不可达：${error}',
-			'web.serverSettings.probe.connectionFailed' => '连接失败',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.probe.connectionFailed' => '连接失败',
 			'web.serverSettings.probe.reachable' => ({required Object detected, required Object total, required Object embedding}) => '✓ 可达 ${detected}· 共 ${total} 个模型 · ${embedding} 个嵌入',
 			'web.serverSettings.probe.modelMissing' => ({required Object model}) => '⚠ 配置的模型 ${model} 不在列表中。从下方嵌入模型中选一个，或修正名称。',
 			'web.serverSettings.probe.embeddingModelsLabel' => '嵌入模型：',
@@ -9274,6 +9301,21 @@ extension on TranslationsZh {
 			'web.export.imports.columns.when' => '时间',
 			'web.export.imports.noneCounts' => '(无)',
 			'web.export.imports.listFailedToast' => '加载导入列表失败',
+			'web.knowledge.title' => '知识',
+			'web.knowledge.subtitle' => '自我进化的知识图谱——从你的工作中蒸馏出的实体、事实、playbook 与技能。',
+			'web.knowledge.searchPlaceholder' => '搜索知识…',
+			'web.knowledge.search' => '搜索',
+			'web.knowledge.browse' => '浏览',
+			'web.knowledge.cwdPlaceholder' => '项目路径(cwd),用于按范围搜索',
+			'web.knowledge.noResults' => '无结果。',
+			'web.knowledge.empty' => '暂无内容。知识会在你工作时自动蒸馏。',
+			'web.knowledge.neighbors' => '关联',
+			'web.knowledge.promote' => '提升为全局',
+			'web.knowledge.skillify' => '生成技能',
+			'web.knowledge.promoted' => '已提升为全局',
+			'web.knowledge.skillified' => ({required Object title}) => '已生成技能:${title}',
+			'web.knowledge.actionFailed' => '操作失败',
+			'web.knowledge.selectHint' => '选择一个节点查看详情。',
 			'more.title' => '更多',
 			'more.identity.signedInAs' => '登录账号',
 			'more.identity.server' => '服务器',
@@ -9454,6 +9496,8 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.projectDocsHint' => '架构 / 规范 / 决策 / 计划 / 回顾 — 通常由 agent 撰写或维护。',
 			'sessions.inspector.notes.mappingCleared' => '映射已清除 — 使用默认值',
 			'sessions.inspector.notes.mappedTo' => ({required Object path}) => '已映射到 ${path}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.cancelTooltip' => '取消',
 			'sessions.inspector.notes.newDocTooltip' => '新建文档',
 			'sessions.inspector.notes.noProjectMapping' => '无法为此会话解析项目映射。检查网关是否配置了笔记库，以及会话的 cwd 是否已设置。',
@@ -9470,8 +9514,6 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.cancel' => '取消',
 			'sessions.spawnSheet.spawn' => '创建',
 			'sessions.spawnSheet.providerLabel' => '提供商',
@@ -9968,6 +10010,8 @@ extension on TranslationsZh {
 			'backupSchedules.emptyList' => '暂无计划。\n点击「新建」创建一个。',
 			'backupSchedules.validatePickTarget' => '请选择一个目标。',
 			'backupSchedules.validateInterval' => '间隔必须大于 0。',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.formTitleEdit' => '编辑计划',
 			'backupSchedules.formTitleNew' => '新建计划',
 			'backupSchedules.saveButtonEdit' => '保存',
@@ -9984,8 +10028,6 @@ extension on TranslationsZh {
 			'backupTargetEditor.useHttps' => '使用 HTTPS',
 			'backupTargetEditor.pathStyle' => '路径风格寻址',
 			'backupTargetEditor.pathStyleSubtitle' => '旧版 / MinIO',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.kinds.local.label' => '本地磁盘',
 			'backupTargetEditor.kinds.local.description' => '运行 opendray 的机器上的文件夹',
 			'backupTargetEditor.kinds.smb.label' => 'SMB 共享',
@@ -10482,6 +10524,8 @@ extension on TranslationsZh {
 			'settings.changeCredentials.confirmPassword' => '确认新密码',
 			'settings.changeCredentials.validatorRequired' => '必填',
 			'settings.changeCredentials.passwordHelper' => '至少 8 个字符',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.passwordTooShort' => '至少需要 8 个字符',
 			'settings.changeCredentials.passwordMismatch' => '与新密码不一致',
 			'settings.changeCredentials.updatedSnack' => '凭据已更新。',
@@ -10498,8 +10542,6 @@ extension on TranslationsZh {
 			'settings.logViewer.levels.debug' => '调试',
 			'settings.logViewer.levels.info' => '信息',
 			'settings.logViewer.levels.warn' => '警告',
-			_ => null,
-		} ?? switch (path) {
 			'settings.logViewer.levels.error' => '错误',
 			'settings.serverSettings.title' => '服务器设置',
 			'settings.serverSettings.reloadTooltip' => '从服务器重新加载',

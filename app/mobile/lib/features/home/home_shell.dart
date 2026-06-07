@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/knowledge/knowledge_screen.dart';
 import 'package:opendray/features/memory/memory_screen.dart';
 import 'package:opendray/features/more/more_screen.dart';
 import 'package:opendray/features/notes/notes_screen.dart';
@@ -34,18 +35,21 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       SessionsScreen(),
       MemoryScreen(),
       NotesScreen(),
+      KnowledgeScreen(),
       MoreScreen(),
     ];
     final tabs = <_TabSpec>[
       _TabSpec(icon: Icons.terminal_outlined, label: t.nav.sessions),
       _TabSpec(icon: Icons.psychology_outlined, label: t.nav.memory),
       _TabSpec(icon: Icons.description_outlined, label: t.nav.notes),
+      _TabSpec(icon: Icons.hub_outlined, label: t.nav.knowledge),
       _TabSpec(icon: Icons.more_horiz, label: t.nav.more),
     ];
 
     return Scaffold(
       body: IndexedStack(index: _index, children: pages),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _index,
         onTap: (i) => setState(() => _index = i),
         items: [

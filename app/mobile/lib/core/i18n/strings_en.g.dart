@@ -198,6 +198,9 @@ class TranslationsNavEn {
 
 	/// en: 'Workspace'
 	String get workspace => 'Workspace';
+
+	/// en: 'Knowledge'
+	String get knowledge => 'Knowledge';
 }
 
 // Path: web
@@ -239,6 +242,7 @@ class TranslationsWebEn {
 	late final TranslationsWebMemoryAmbientEn memoryAmbient = TranslationsWebMemoryAmbientEn.internal(_root);
 	late final TranslationsWebNoteEditorEn noteEditor = TranslationsWebNoteEditorEn.internal(_root);
 	late final TranslationsWebExportEn export = TranslationsWebExportEn.internal(_root);
+	late final TranslationsWebKnowledgeEn knowledge = TranslationsWebKnowledgeEn.internal(_root);
 }
 
 // Path: more
@@ -2784,6 +2788,60 @@ class TranslationsWebExportEn {
 	late final TranslationsWebExportHistoryEn history = TranslationsWebExportHistoryEn.internal(_root);
 	late final TranslationsWebExportImportEn import = TranslationsWebExportImportEn.internal(_root);
 	late final TranslationsWebExportImportsEn imports = TranslationsWebExportImportsEn.internal(_root);
+}
+
+// Path: web.knowledge
+class TranslationsWebKnowledgeEn {
+	TranslationsWebKnowledgeEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Knowledge'
+	String get title => 'Knowledge';
+
+	/// en: 'The self-evolving knowledge graph — entities, facts, playbooks, and skills distilled from your work.'
+	String get subtitle => 'The self-evolving knowledge graph — entities, facts, playbooks, and skills distilled from your work.';
+
+	/// en: 'Search knowledge…'
+	String get searchPlaceholder => 'Search knowledge…';
+
+	/// en: 'Search'
+	String get search => 'Search';
+
+	/// en: 'Browse'
+	String get browse => 'Browse';
+
+	/// en: 'Project path (cwd) for scoped search'
+	String get cwdPlaceholder => 'Project path (cwd) for scoped search';
+
+	/// en: 'No results.'
+	String get noResults => 'No results.';
+
+	/// en: 'Nothing here yet. Knowledge is distilled automatically as you work.'
+	String get empty => 'Nothing here yet. Knowledge is distilled automatically as you work.';
+
+	/// en: 'Connections'
+	String get neighbors => 'Connections';
+
+	/// en: 'Promote to global'
+	String get promote => 'Promote to global';
+
+	/// en: 'Make skill'
+	String get skillify => 'Make skill';
+
+	/// en: 'Promoted to global'
+	String get promoted => 'Promoted to global';
+
+	/// en: 'Skill created: {title}'
+	String skillified({required Object title}) => 'Skill created: ${title}';
+
+	/// en: 'Action failed'
+	String get actionFailed => 'Action failed';
+
+	/// en: 'Select a node to see details.'
+	String get selectHint => 'Select a node to see details.';
 }
 
 // Path: more.identity
@@ -13883,6 +13941,7 @@ extension on Translations {
 			'nav.backups' => 'Backups',
 			'nav.settings' => 'Settings',
 			'nav.workspace' => 'Workspace',
+			'nav.knowledge' => 'Knowledge',
 			'web.brand' => 'opendray',
 			'web.loading' => 'Loading…',
 			'web.topbar.expandSidebar' => 'Expand sidebar',
@@ -14359,9 +14418,9 @@ extension on Translations {
 			'web.memoryInspector.bulkDelete.items_one' => ({required Object count}) => '${count} memory item',
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} memory items',
 			'web.memoryInspector.bulkDelete.cancel' => 'Cancel',
-			'web.memoryInspector.bulkDelete.deleteAll' => 'Delete all',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryInspector.bulkDelete.deleteAll' => 'Delete all',
 			'web.memoryInspector.addMem.title' => 'Add memory',
 			'web.memoryInspector.addMem.description' => 'Manually create a memory. Agents create these automatically via the <1>memory_store</1> MCP tool — this form is for cases where the operator wants to seed a fact without going through an agent.',
 			'web.memoryInspector.addMem.textLabel' => 'Text',
@@ -14873,9 +14932,9 @@ extension on Translations {
 			'web.plugins.mcp.empty' => 'No MCP servers yet. Add one to expose extra tools to your agent sessions.',
 			'web.plugins.mcp.columns.name' => 'Name',
 			'web.plugins.mcp.columns.transport' => 'Transport',
-			'web.plugins.mcp.columns.spec' => 'Spec',
 			_ => null,
 		} ?? switch (path) {
+			'web.plugins.mcp.columns.spec' => 'Spec',
 			'web.plugins.mcp.columns.enabled' => 'Enabled',
 			'web.plugins.mcp.noUrl' => 'no url',
 			'web.plugins.mcp.noCommand' => 'no command',
@@ -15387,9 +15446,9 @@ extension on Translations {
 			'web.serverSettings.httpHelpers.presetTip.lmStudio' => 'LM Studio local server',
 			'web.serverSettings.httpHelpers.presetTip.openai' => 'OpenAI cloud (needs API key)',
 			'web.serverSettings.probe.unreachable' => ({required Object error}) => '✗ unreachable: ${error}',
-			'web.serverSettings.probe.connectionFailed' => 'connection failed',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.probe.connectionFailed' => 'connection failed',
 			'web.serverSettings.probe.reachable' => ({required Object detected, required Object total, required Object embedding}) => '✓ reachable ${detected}· ${total} model(s) total · ${embedding} embedding',
 			'web.serverSettings.probe.modelMissing' => ({required Object model}) => '⚠ Configured model ${model} isn\'t in the list. Pick one of the embedding models below or fix the name.',
 			'web.serverSettings.probe.embeddingModelsLabel' => 'embedding models:',
@@ -15706,6 +15765,21 @@ extension on Translations {
 			'web.export.imports.columns.when' => 'When',
 			'web.export.imports.noneCounts' => '(none)',
 			'web.export.imports.listFailedToast' => 'Failed to list imports',
+			'web.knowledge.title' => 'Knowledge',
+			'web.knowledge.subtitle' => 'The self-evolving knowledge graph — entities, facts, playbooks, and skills distilled from your work.',
+			'web.knowledge.searchPlaceholder' => 'Search knowledge…',
+			'web.knowledge.search' => 'Search',
+			'web.knowledge.browse' => 'Browse',
+			'web.knowledge.cwdPlaceholder' => 'Project path (cwd) for scoped search',
+			'web.knowledge.noResults' => 'No results.',
+			'web.knowledge.empty' => 'Nothing here yet. Knowledge is distilled automatically as you work.',
+			'web.knowledge.neighbors' => 'Connections',
+			'web.knowledge.promote' => 'Promote to global',
+			'web.knowledge.skillify' => 'Make skill',
+			'web.knowledge.promoted' => 'Promoted to global',
+			'web.knowledge.skillified' => ({required Object title}) => 'Skill created: ${title}',
+			'web.knowledge.actionFailed' => 'Action failed',
+			'web.knowledge.selectHint' => 'Select a node to see details.',
 			'more.title' => 'More',
 			'more.identity.signedInAs' => 'Signed in as',
 			'more.identity.server' => 'Server',
@@ -15886,6 +15960,8 @@ extension on Translations {
 			'sessions.inspector.notes.projectDocsHint' => 'Architecture / spec / decisions / plan / retros — typically authored or maintained by an agent.',
 			'sessions.inspector.notes.mappingCleared' => 'Mapping cleared — using default',
 			'sessions.inspector.notes.mappedTo' => ({required Object path}) => 'Mapped to ${path}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.cancelTooltip' => 'Cancel',
 			'sessions.inspector.notes.newDocTooltip' => 'New doc',
 			'sessions.inspector.notes.noProjectMapping' => 'Could not resolve a project mapping for this session. Check that the gateway has a notes vault configured and that the session cwd is set.',
@@ -15902,8 +15978,6 @@ extension on Translations {
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.cancel' => 'Cancel',
 			'sessions.spawnSheet.spawn' => 'Spawn',
 			'sessions.spawnSheet.providerLabel' => 'Provider',
@@ -16400,6 +16474,8 @@ extension on Translations {
 			'backupSchedules.emptyList' => 'No schedules yet.\nTap "New" to create one.',
 			'backupSchedules.validatePickTarget' => 'Pick a target.',
 			'backupSchedules.validateInterval' => 'Interval must be > 0.',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.formTitleEdit' => 'Edit schedule',
 			'backupSchedules.formTitleNew' => 'New schedule',
 			'backupSchedules.saveButtonEdit' => 'Save',
@@ -16416,8 +16492,6 @@ extension on Translations {
 			'backupTargetEditor.useHttps' => 'Use HTTPS',
 			'backupTargetEditor.pathStyle' => 'Path-style addressing',
 			'backupTargetEditor.pathStyleSubtitle' => 'Legacy / MinIO',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.kinds.local.label' => 'Local disk',
 			'backupTargetEditor.kinds.local.description' => 'Folder on the machine running opendray',
 			'backupTargetEditor.kinds.smb.label' => 'SMB share',
@@ -16914,6 +16988,8 @@ extension on Translations {
 			'settings.changeCredentials.confirmPassword' => 'Confirm new password',
 			'settings.changeCredentials.validatorRequired' => 'Required',
 			'settings.changeCredentials.passwordHelper' => 'At least 8 characters',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.passwordTooShort' => 'Must be at least 8 characters',
 			'settings.changeCredentials.passwordMismatch' => 'Doesn\'t match the new password',
 			'settings.changeCredentials.updatedSnack' => 'Credentials updated.',
@@ -16930,8 +17006,6 @@ extension on Translations {
 			'settings.logViewer.levels.debug' => 'Debug',
 			'settings.logViewer.levels.info' => 'Info',
 			'settings.logViewer.levels.warn' => 'Warn',
-			_ => null,
-		} ?? switch (path) {
 			'settings.logViewer.levels.error' => 'Error',
 			'settings.serverSettings.title' => 'Server settings',
 			'settings.serverSettings.reloadTooltip' => 'Reload from server',
