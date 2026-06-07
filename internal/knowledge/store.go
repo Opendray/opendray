@@ -300,6 +300,22 @@ func (s *Store) Neighborhood(ctx context.Context, id string) (Node, []Neighbor, 
 	return center, neighbors, nil
 }
 
+// FindEntityByName returns a live entity node matching (entityType, title)
+// case-insensitively within a project scope, or ErrNotFound. Phase 1B
+// canonicalization is exact / case-insensitive within the project; fuzzier
+// resolution (embedding-NN, LLM adjudication) and cross-project merge are
+// later refinements best tuned against live data.
+func (s *Store) FindEntityByName(ctx context.Context, entityType EntityType, name, scopeKey string) (Node, error) {
+	n, err := scanNode(s.pool.QueryRow(ctx, selectNodeSQL+`
+		WHERE archived_at IS NULL AND kind = 'entity'
+		  AND entity_type = $1 AND lower(title) = lower($2) AND scope_key = $3
+		ORDER BY created_at LIMIT 1`, string(entityType), name, scopeKey))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Node{}, ErrNotFound
+	}
+	return n, err
+}
+
 const selectNodeSQL = `
 	SELECT id, kind, COALESCE(entity_type, ''), title, body, scope,
 	       scope_key, maturity, confidence, provenance,

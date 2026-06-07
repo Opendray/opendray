@@ -42,6 +42,7 @@ type MemoryRow struct {
 type Anchorer struct {
 	store *Store
 	mem   MemorySource
+	llm   LLM // optional; nil = no fine-entity extraction (deterministic 1A)
 	log   *slog.Logger
 }
 
@@ -51,6 +52,13 @@ func NewAnchorer(pool *pgxpool.Pool, mem MemorySource, log *slog.Logger) *Anchor
 		log = slog.Default()
 	}
 	return &Anchorer{store: NewStore(pool), mem: mem, log: log.With("component", "knowledge.anchor")}
+}
+
+// WithLLM enables Phase 1B fine-entity extraction. Optional — without it the
+// anchorer stays deterministic (project-level anchoring only, the 1A path).
+func (a *Anchorer) WithLLM(llm LLM) *Anchorer {
+	a.llm = llm
+	return a
 }
 
 const projectEntityIDPrefix = "ent-project-"
@@ -127,7 +135,58 @@ func (a *Anchorer) anchorOne(ctx context.Context, projID string, row MemoryRow) 
 	if err := a.store.LinkFactSource(ctx, node.ID, row.ID); err != nil {
 		return err
 	}
-	return a.store.CreateEdge(ctx, Edge{SrcID: node.ID, EdgeType: EdgeAbout, DstID: projID})
+	if err := a.store.CreateEdge(ctx, Edge{SrcID: node.ID, EdgeType: EdgeAbout, DstID: projID}); err != nil {
+		return err
+	}
+	// Phase 1B — optional fine-entity extraction. Best-effort: a failure here
+	// never fails the project anchoring already committed above.
+	if a.llm != nil {
+		a.linkEntities(ctx, node.ID, row)
+	}
+	return nil
+}
+
+// linkEntities extracts fine entities from a fact and links the fact to each
+// (canonicalised) entity with an `about` edge. Best-effort; logs and moves on.
+func (a *Anchorer) linkEntities(ctx context.Context, factID string, row MemoryRow) {
+	ents, err := ExtractEntities(ctx, a.llm, row.Text)
+	if err != nil {
+		a.log.Warn("entity extraction failed", "memory_id", row.ID, "err", err)
+		return
+	}
+	for _, e := range ents {
+		entID, err := a.findOrCreateEntity(ctx, e, row.ScopeKey)
+		if err != nil {
+			a.log.Warn("entity upsert failed", "name", e.Name, "err", err)
+			continue
+		}
+		if err := a.store.CreateEdge(ctx, Edge{SrcID: factID, EdgeType: EdgeAbout, DstID: entID}); err != nil {
+			a.log.Warn("entity edge failed", "name", e.Name, "err", err)
+		}
+	}
+}
+
+// findOrCreateEntity canonicalises an extracted entity within the project
+// (exact, case-insensitive) and creates it when new.
+func (a *Anchorer) findOrCreateEntity(ctx context.Context, e ExtractedEntity, scopeKey string) (string, error) {
+	if existing, err := a.store.FindEntityByName(ctx, e.Type, e.Name, scopeKey); err == nil {
+		return existing.ID, nil
+	} else if !errors.Is(err, ErrNotFound) {
+		return "", err
+	}
+	node, err := a.store.CreateNode(ctx, Node{
+		Kind:       KindEntity,
+		EntityType: e.Type,
+		Title:      e.Name,
+		Scope:      ScopeProject,
+		ScopeKey:   scopeKey,
+		Maturity:   MaturityFact,
+		Provenance: map[string]any{"source": "extractor"},
+	})
+	if err != nil {
+		return "", err
+	}
+	return node.ID, nil
 }
 
 // factTitle makes a short display label from a memory fact. The full text is

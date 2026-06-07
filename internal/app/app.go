@@ -117,6 +117,28 @@ func (a knowledgeMemorySource) ListProjectMemories(ctx context.Context, scopeKey
 	return out, nil
 }
 
+// knowledgeLLM adapts the memory worker registry to knowledge.LLM so the
+// Phase 1B entity extractor gets a general completion path. It borrows the
+// TaskCapture worker config (the closest existing touchpoint: extract
+// structure from text) rather than introducing a dedicated worker TaskKind +
+// migration. A missing/disabled worker surfaces as an error, which the
+// anchorer treats as "skip fine-entity extraction" (degrades to 1A).
+type knowledgeLLM struct{ reg *memworker.Registry }
+
+func (a knowledgeLLM) Complete(ctx context.Context, system, user string) (string, error) {
+	resp, err := a.reg.Run(ctx, memworker.Request{
+		Task:         memworker.TaskCapture,
+		SystemPrompt: system,
+		UserInput:    user,
+		MaxTokens:    512,
+		Timeout:      20 * time.Second,
+	})
+	if err != nil {
+		return "", err
+	}
+	return resp.Content, nil
+}
+
 // New wires the runtime dependencies but does not start any goroutines.
 // Caller is responsible for calling Run or Close.
 func New(ctx context.Context, cfg config.Config) (*App, error) {
@@ -623,7 +645,8 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		if memorySvc != nil {
 			// Phase 1 — the anchorer reads episodic memory and lifts facts
 			// into the graph. Needs memory; without it we still serve CRUD.
-			knowledgeAnchorer = knowledge.NewAnchorer(st.Pool(), knowledgeMemorySource{mem: memorySvc}, log)
+			knowledgeAnchorer = knowledge.NewAnchorer(st.Pool(), knowledgeMemorySource{mem: memorySvc}, log).
+				WithLLM(knowledgeLLM{reg: memoryWorkerRegistry})
 		}
 		log.Info("knowledge graph (M-KG) enabled", "anchorer", knowledgeAnchorer != nil)
 	}
