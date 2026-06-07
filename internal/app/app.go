@@ -93,7 +93,8 @@ type App struct {
 	prWatcher            *prwatcher.Service     // polls open PRs' CI checks and emits pr.checks_completed
 	cliacctWatcher       *cliacct.Watcher       // optional; nil when [providers.claude] watcher_enabled = false
 	server               *http.Server
-	knowledgeAnchorer    *knowledge.Anchorer // M-KG Phase 1 anchor sweep; nil when [knowledge] disabled
+	knowledgeAnchorer    *knowledge.Anchorer  // M-KG Phase 1 anchor sweep; nil when [knowledge] disabled
+	knowledgeReflector   *knowledge.Reflector // M-KG Phase 3 fact->playbook sweep; nil when disabled
 }
 
 // knowledgeMemorySource adapts *memory.Service to knowledge.MemorySource so
@@ -640,13 +641,16 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// returns exact memory-only (M-U) behaviour.
 	var knowledgeHandlers *knowledge.Handlers
 	var knowledgeAnchorer *knowledge.Anchorer
+	var knowledgeReflector *knowledge.Reflector
 	if cfg.Knowledge.Enabled {
 		knowledgeHandlers = knowledge.NewHandlers(knowledge.NewService(st.Pool(), log), log)
 		if memorySvc != nil {
 			// Phase 1 — the anchorer reads episodic memory and lifts facts
 			// into the graph. Needs memory; without it we still serve CRUD.
+			kgLLM := knowledgeLLM{reg: memoryWorkerRegistry}
 			knowledgeAnchorer = knowledge.NewAnchorer(st.Pool(), knowledgeMemorySource{mem: memorySvc}, log).
-				WithLLM(knowledgeLLM{reg: memoryWorkerRegistry})
+				WithLLM(kgLLM)
+			knowledgeReflector = knowledge.NewReflector(st.Pool(), kgLLM, log)
 		}
 		log.Info("knowledge graph (M-KG) enabled", "anchorer", knowledgeAnchorer != nil)
 	}
@@ -855,6 +859,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		cliacctWatcher:       cliacctWatcher,
 		server:               srv,
 		knowledgeAnchorer:    knowledgeAnchorer,
+		knowledgeReflector:   knowledgeReflector,
 	}, nil
 }
 
@@ -934,6 +939,9 @@ func (a *App) Run(ctx context.Context) error {
 	// [knowledge] feature flag is off, so this is a no-op for M-U builds.
 	if a.knowledgeAnchorer != nil {
 		go a.knowledgeAnchorer.RunAnchorSweep(ctx, knowledge.AnchorSweepConfig{})
+	}
+	if a.knowledgeReflector != nil {
+		go a.knowledgeReflector.RunReflectSweep(ctx, knowledge.ReflectSweepConfig{})
 	}
 
 	// M-PB — backfill missing embeddings on the journal so the new

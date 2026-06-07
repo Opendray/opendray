@@ -316,6 +316,27 @@ func (s *Store) FindEntityByName(ctx context.Context, entityType EntityType, nam
 	return n, err
 }
 
+// ListProjectScopeKeys returns the distinct project scope keys (cwds) present
+// in the graph. Drives the reflect sweep over projects.
+func (s *Store) ListProjectScopeKeys(ctx context.Context) ([]string, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT DISTINCT scope_key FROM knowledge_nodes
+		WHERE scope = 'project' AND scope_key <> '' AND archived_at IS NULL`)
+	if err != nil {
+		return nil, fmt.Errorf("knowledge: list project scope keys: %w", err)
+	}
+	defer rows.Close()
+	out := []string{}
+	for rows.Next() {
+		var k string
+		if err := rows.Scan(&k); err != nil {
+			return nil, err
+		}
+		out = append(out, k)
+	}
+	return out, rows.Err()
+}
+
 const selectNodeSQL = `
 	SELECT id, kind, COALESCE(entity_type, ''), title, body, scope,
 	       scope_key, maturity, confidence, provenance,
