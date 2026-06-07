@@ -164,6 +164,79 @@ func (s *Store) ListEdges(ctx context.Context, nodeID string) ([]Edge, error) {
 	return out, rows.Err()
 }
 
+// EnsureEntity inserts a node when its (deterministic) id is new, and leaves
+// any existing row untouched; it returns the resulting node either way. Used
+// for idempotent canonical entities such as per-cwd project entities.
+func (s *Store) EnsureEntity(ctx context.Context, n Node) (Node, error) {
+	if err := n.Validate(); err != nil {
+		return Node{}, err
+	}
+	if n.ID == "" {
+		return Node{}, errors.New("knowledge: EnsureEntity requires a deterministic id")
+	}
+	if n.Maturity == "" {
+		n.Maturity = MaturityCandidate
+	}
+	if n.Provenance == nil {
+		n.Provenance = map[string]any{}
+	}
+	provJSON, err := json.Marshal(n.Provenance)
+	if err != nil {
+		return Node{}, fmt.Errorf("knowledge: marshal provenance: %w", err)
+	}
+	var entityType any
+	if n.EntityType != "" {
+		entityType = string(n.EntityType)
+	}
+	_, err = s.pool.Exec(ctx, `
+		INSERT INTO knowledge_nodes
+			(id, kind, entity_type, title, body, scope, scope_key, maturity, provenance)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)
+		ON CONFLICT (id) DO NOTHING`,
+		n.ID, string(n.Kind), entityType, n.Title, n.Body, string(n.Scope),
+		n.ScopeKey, string(n.Maturity), provJSON)
+	if err != nil {
+		return Node{}, fmt.Errorf("knowledge: ensure entity: %w", err)
+	}
+	return s.GetNode(ctx, n.ID)
+}
+
+// LinkFactSource records that a fact node is backed by a memory row. The
+// memory_id is a soft reference (no FK to memories — keeps memory decoupled).
+func (s *Store) LinkFactSource(ctx context.Context, nodeID, memoryID string) error {
+	_, err := s.pool.Exec(ctx, `
+		INSERT INTO knowledge_fact_sources (node_id, memory_id)
+		VALUES ($1, $2) ON CONFLICT (node_id, memory_id) DO NOTHING`,
+		nodeID, memoryID)
+	if err != nil {
+		return fmt.Errorf("knowledge: link fact source: %w", err)
+	}
+	return nil
+}
+
+// AnchoredMemoryIDs returns the set of memory ids already lifted into the
+// graph for a given project scope key, so the sweep skips them.
+func (s *Store) AnchoredMemoryIDs(ctx context.Context, scopeKey string) (map[string]struct{}, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT fs.memory_id
+		FROM knowledge_fact_sources fs
+		JOIN knowledge_nodes n ON n.id = fs.node_id
+		WHERE n.scope = 'project' AND n.scope_key = $1`, scopeKey)
+	if err != nil {
+		return nil, fmt.Errorf("knowledge: anchored memory ids: %w", err)
+	}
+	defer rows.Close()
+	out := map[string]struct{}{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		out[id] = struct{}{}
+	}
+	return out, rows.Err()
+}
+
 const selectNodeSQL = `
 	SELECT id, kind, COALESCE(entity_type, ''), title, body, scope,
 	       scope_key, maturity, confidence, provenance,

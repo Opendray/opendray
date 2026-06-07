@@ -93,6 +93,28 @@ type App struct {
 	prWatcher            *prwatcher.Service     // polls open PRs' CI checks and emits pr.checks_completed
 	cliacctWatcher       *cliacct.Watcher       // optional; nil when [providers.claude] watcher_enabled = false
 	server               *http.Server
+	knowledgeAnchorer    *knowledge.Anchorer // M-KG Phase 1 anchor sweep; nil when [knowledge] disabled
+}
+
+// knowledgeMemorySource adapts *memory.Service to knowledge.MemorySource so
+// the knowledge tier reads episodic memory through an interface it owns
+// (one-way dependency: knowledge never imports internal/memory).
+type knowledgeMemorySource struct{ mem *memory.Service }
+
+func (a knowledgeMemorySource) ListProjectKeys(ctx context.Context) ([]string, error) {
+	return a.mem.ListScopeKeys(ctx, memory.ScopeProject)
+}
+
+func (a knowledgeMemorySource) ListProjectMemories(ctx context.Context, scopeKey string, limit int) ([]knowledge.MemoryRow, error) {
+	mems, err := a.mem.List(ctx, memory.ScopeProject, scopeKey, limit)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]knowledge.MemoryRow, 0, len(mems))
+	for _, m := range mems {
+		out = append(out, knowledge.MemoryRow{ID: m.ID, Text: m.Text, ScopeKey: m.ScopeKey, CreatedAt: m.CreatedAt})
+	}
+	return out, nil
 }
 
 // New wires the runtime dependencies but does not start any goroutines.
@@ -595,9 +617,15 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// OFF by default. Decoupled: reads memory, never the reverse; disabling
 	// returns exact memory-only (M-U) behaviour.
 	var knowledgeHandlers *knowledge.Handlers
+	var knowledgeAnchorer *knowledge.Anchorer
 	if cfg.Knowledge.Enabled {
 		knowledgeHandlers = knowledge.NewHandlers(knowledge.NewService(st.Pool(), log), log)
-		log.Info("knowledge graph (M-KG) enabled")
+		if memorySvc != nil {
+			// Phase 1 — the anchorer reads episodic memory and lifts facts
+			// into the graph. Needs memory; without it we still serve CRUD.
+			knowledgeAnchorer = knowledge.NewAnchorer(st.Pool(), knowledgeMemorySource{mem: memorySvc}, log)
+		}
+		log.Info("knowledge graph (M-KG) enabled", "anchorer", knowledgeAnchorer != nil)
 	}
 	// Inject the cross-agent goal+plan+journal banner into every
 	// spawned session's system prompt. Composed alongside the
@@ -803,6 +831,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		prWatcher:            prWatcher,
 		cliacctWatcher:       cliacctWatcher,
 		server:               srv,
+		knowledgeAnchorer:    knowledgeAnchorer,
 	}, nil
 }
 
@@ -876,6 +905,13 @@ func (a *App) Run(ctx context.Context) error {
 		a.journaler.Run(ctx)
 		close(journalerDone)
 	}()
+
+	// M-KG Phase 1 — anchor sweep: lift episodic memory facts into the
+	// knowledge graph (project entities + fact nodes). nil when the
+	// [knowledge] feature flag is off, so this is a no-op for M-U builds.
+	if a.knowledgeAnchorer != nil {
+		go a.knowledgeAnchorer.RunAnchorSweep(ctx, knowledge.AnchorSweepConfig{})
+	}
 
 	// M-PB — backfill missing embeddings on the journal so the new
 	// cross-layer project_search hits historical entries, not just
