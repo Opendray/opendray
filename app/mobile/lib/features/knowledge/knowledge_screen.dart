@@ -20,6 +20,7 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
   final _searchCtrl = TextEditingController();
   bool _searching = false;
   String _kind = 'entity';
+  String _scope = 'all';
 
   @override
   void initState() {
@@ -39,9 +40,10 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
       _searching = false;
     });
     try {
-      final nodes = await ref
-          .read(knowledgeApiProvider)
-          .list(kind: _kind == 'all' ? null : _kind);
+      final nodes = await ref.read(knowledgeApiProvider).list(
+            kind: _kind == 'all' ? null : _kind,
+            scope: _scope == 'all' ? null : _scope,
+          );
       if (!mounted) return;
       setState(() => _state = AsyncValue.data(nodes));
     } on ApiException catch (e) {
@@ -99,6 +101,19 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
     }
   }
 
+  String _scopeLabel(String s) {
+    switch (s) {
+      case 'global':
+        return t.web.knowledge.scopes.global;
+      case 'project':
+        return t.web.knowledge.scopes.project;
+      case 'domain':
+        return t.web.knowledge.scopes.domain;
+      default:
+        return t.web.knowledge.scopes.all;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -149,6 +164,33 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
                         selected: _kind == k,
                         onSelected: (_) {
                           setState(() => _kind = k);
+                          if (!_searching) _load();
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 44,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Center(child: Text(t.web.knowledge.scope)),
+                  ),
+                  for (final s in const ['all', 'global', 'project', 'domain'])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ChoiceChip(
+                        label: Text(_scopeLabel(s)),
+                        selected: _scope == s,
+                        onSelected: (_) {
+                          setState(() => _scope = s);
                           if (!_searching) _load();
                         },
                       ),
@@ -325,6 +367,46 @@ class _DetailSheet extends ConsumerWidget {
                       }
                     },
                   ),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.delete_outline, size: 16),
+                  label: Text(t.web.knowledge.delete),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                  onPressed: () async {
+                    final nav = Navigator.of(context);
+                    final messenger = ScaffoldMessenger.of(context);
+                    final ok = await showDialog<bool>(
+                      context: context,
+                      builder: (c) => AlertDialog(
+                        content: Text(t.web.knowledge.deleteConfirm),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(c, false),
+                            child: Text(t.common.cancel),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(c, true),
+                            child: Text(t.web.knowledge.delete),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (ok != true) return;
+                    try {
+                      await api.delete(node.id);
+                      nav.pop();
+                      await onChanged();
+                      messenger.showSnackBar(
+                        SnackBar(content: Text(t.web.knowledge.deleted)),
+                      );
+                    } on Object {
+                      messenger.showSnackBar(
+                        SnackBar(content: Text(t.web.knowledge.actionFailed)),
+                      );
+                    }
+                  },
+                ),
               ],
             ),
             const SizedBox(height: 16),

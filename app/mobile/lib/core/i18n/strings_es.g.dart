@@ -1432,6 +1432,11 @@ class _TranslationsWebKnowledgeEs extends TranslationsWebKnowledgeEn {
 	@override String skillified({required Object title}) => 'Habilidad creada: ${title}';
 	@override String get actionFailed => 'La acción falló';
 	@override String get selectHint => 'Selecciona un nodo para ver los detalles.';
+	@override String get scope => 'Ámbito';
+	@override String get delete => 'Eliminar';
+	@override String get deleted => 'Eliminado';
+	@override String get deleteConfirm => '¿Eliminar este nodo? Las habilidades quedan eliminadas; los hechos/entidades derivados automáticamente pueden reaparecer en el próximo barrido.';
+	@override late final _TranslationsWebKnowledgeScopesEs scopes = _TranslationsWebKnowledgeScopesEs._(_root);
 	@override late final _TranslationsWebKnowledgeKindsEs kinds = _TranslationsWebKnowledgeKindsEs._(_root);
 }
 
@@ -4928,6 +4933,19 @@ class _TranslationsWebExportImportsEs extends TranslationsWebExportImportsEn {
 	@override late final _TranslationsWebExportImportsColumnsEs columns = _TranslationsWebExportImportsColumnsEs._(_root);
 	@override String get noneCounts => '(ninguno)';
 	@override String get listFailedToast => 'No se pudieron listar las importaciones';
+}
+
+// Path: web.knowledge.scopes
+class _TranslationsWebKnowledgeScopesEs extends TranslationsWebKnowledgeScopesEn {
+	_TranslationsWebKnowledgeScopesEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get all => 'Todos';
+	@override String get global => 'Global';
+	@override String get project => 'Proyecto';
+	@override String get domain => 'Dominio';
 }
 
 // Path: web.knowledge.kinds
@@ -9331,6 +9349,14 @@ extension on TranslationsEs {
 			'web.knowledge.skillified' => ({required Object title}) => 'Habilidad creada: ${title}',
 			'web.knowledge.actionFailed' => 'La acción falló',
 			'web.knowledge.selectHint' => 'Selecciona un nodo para ver los detalles.',
+			'web.knowledge.scope' => 'Ámbito',
+			'web.knowledge.delete' => 'Eliminar',
+			'web.knowledge.deleted' => 'Eliminado',
+			'web.knowledge.deleteConfirm' => '¿Eliminar este nodo? Las habilidades quedan eliminadas; los hechos/entidades derivados automáticamente pueden reaparecer en el próximo barrido.',
+			'web.knowledge.scopes.all' => 'Todos',
+			'web.knowledge.scopes.global' => 'Global',
+			'web.knowledge.scopes.project' => 'Proyecto',
+			'web.knowledge.scopes.domain' => 'Dominio',
 			'web.knowledge.kinds.all' => 'Todos',
 			'web.knowledge.kinds.entity' => 'Entidades',
 			'web.knowledge.kinds.fact' => 'Hechos',
@@ -9503,6 +9529,8 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.filenameHint' => 'nombre de archivo (p. ej. spec o design.md)',
 			'sessions.inspector.notes.create' => 'Crear',
 			'sessions.inspector.notes.filterHint' => 'Filtrar…',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.locationDialogTitle' => 'Ubicación de los documentos del proyecto',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => 'Falló la carga: ${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Falló la carga: ${error}',
@@ -9511,8 +9539,6 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Falló al crear: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => 'Falló al crear: ${error}',
 			'sessions.inspector.notes.personalHint' => 'Bloc de notas personal. Se guarda automáticamente mientras escribes. Los agentes de IA no escriben aquí.',
 			'sessions.inspector.notes.projectDocsHint' => 'Arquitectura / spec / decisiones / plan / retrospectivas. Normalmente redactados o mantenidos por un agente.',
@@ -10017,6 +10043,8 @@ extension on TranslationsEs {
 			'backupSchedules.deleteTitle' => '¿Eliminar programación?',
 			'backupSchedules.targetLabel' => 'Destino',
 			'backupSchedules.intervalLabel' => 'Intervalo',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.retentionLabel' => 'Retención (conservar las N más recientes)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No hay destinos de copia de seguridad configurados. Añade uno desde el panel de administración web o la pantalla de Destinos.',
@@ -10025,8 +10053,6 @@ extension on TranslationsEs {
 			'backupSchedules.okMsgDelete' => 'Programación eliminada.',
 			'backupSchedules.errorPrefixCreate' => 'Error al crear',
 			'backupSchedules.errorPrefixUpdate' => 'Error al actualizar',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.errorPrefixDelete' => 'Error al eliminar',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Elimina la especificación recurrente para el destino ${targetId}. Los blobs de copia de seguridad existentes no se modifican.',
 			'backupSchedules.emptyList' => 'Aún no hay programaciones.\nToca "Nueva" para crear una.',
@@ -10531,6 +10557,8 @@ extension on TranslationsEs {
 			'settings.account.section' => 'Cuenta',
 			'settings.account.changeCredentials' => 'Cambiar credenciales',
 			'settings.account.changeCredentialsSubtitle' => 'Usuario y contraseña',
+			_ => null,
+		} ?? switch (path) {
 			'settings.gateway.section' => 'Gateway',
 			'settings.gateway.serverSettings' => 'Ajustes del servidor',
 			'settings.gateway.serverSettingsSubtitle' => 'Dirección de escucha, registro, vault, memoria, rutas de almacenamiento…',
@@ -10539,8 +10567,6 @@ extension on TranslationsEs {
 			'settings.changeCredentials.title' => 'Cambiar credenciales',
 			'settings.changeCredentials.explanation' => 'Verifica tu contraseña actual y luego elige nuevas credenciales. Todas las demás sessions con sesión iniciada se revocarán.',
 			'settings.changeCredentials.currentPassword' => 'Contraseña actual',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.newUsername' => 'Nuevo usuario',
 			'settings.changeCredentials.newPassword' => 'Nueva contraseña',
 			'settings.changeCredentials.confirmPassword' => 'Confirma la nueva contraseña',

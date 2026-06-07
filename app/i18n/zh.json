@@ -2397,6 +2397,16 @@
       "skillified": "已生成技能:{title}",
       "actionFailed": "操作失败",
       "selectHint": "选择一个节点查看详情。",
+      "scope": "范围",
+      "delete": "删除",
+      "deleted": "已删除",
+      "deleteConfirm": "删除此节点?技能将永久删除;自动派生的事实/实体可能在下次扫描时重新出现。",
+      "scopes": {
+        "all": "全部",
+        "global": "全局",
+        "project": "项目",
+        "domain": "领域"
+      },
       "kinds": {
         "all": "全部",
         "entity": "实体",

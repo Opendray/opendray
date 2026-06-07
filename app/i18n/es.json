@@ -2397,6 +2397,16 @@
       "skillified": "Habilidad creada: {title}",
       "actionFailed": "La acción falló",
       "selectHint": "Selecciona un nodo para ver los detalles.",
+      "scope": "Ámbito",
+      "delete": "Eliminar",
+      "deleted": "Eliminado",
+      "deleteConfirm": "¿Eliminar este nodo? Las habilidades quedan eliminadas; los hechos/entidades derivados automáticamente pueden reaparecer en el próximo barrido.",
+      "scopes": {
+        "all": "Todos",
+        "global": "Global",
+        "project": "Proyecto",
+        "domain": "Dominio"
+      },
       "kinds": {
         "all": "Todos",
         "entity": "Entidades",

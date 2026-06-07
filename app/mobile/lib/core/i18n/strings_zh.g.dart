@@ -1432,6 +1432,11 @@ class _TranslationsWebKnowledgeZh extends TranslationsWebKnowledgeEn {
 	@override String skillified({required Object title}) => '已生成技能:${title}';
 	@override String get actionFailed => '操作失败';
 	@override String get selectHint => '选择一个节点查看详情。';
+	@override String get scope => '范围';
+	@override String get delete => '删除';
+	@override String get deleted => '已删除';
+	@override String get deleteConfirm => '删除此节点?技能将永久删除;自动派生的事实/实体可能在下次扫描时重新出现。';
+	@override late final _TranslationsWebKnowledgeScopesZh scopes = _TranslationsWebKnowledgeScopesZh._(_root);
 	@override late final _TranslationsWebKnowledgeKindsZh kinds = _TranslationsWebKnowledgeKindsZh._(_root);
 }
 
@@ -4928,6 +4933,19 @@ class _TranslationsWebExportImportsZh extends TranslationsWebExportImportsEn {
 	@override late final _TranslationsWebExportImportsColumnsZh columns = _TranslationsWebExportImportsColumnsZh._(_root);
 	@override String get noneCounts => '(无)';
 	@override String get listFailedToast => '加载导入列表失败';
+}
+
+// Path: web.knowledge.scopes
+class _TranslationsWebKnowledgeScopesZh extends TranslationsWebKnowledgeScopesEn {
+	_TranslationsWebKnowledgeScopesZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get all => '全部';
+	@override String get global => '全局';
+	@override String get project => '项目';
+	@override String get domain => '领域';
 }
 
 // Path: web.knowledge.kinds
@@ -9331,6 +9349,14 @@ extension on TranslationsZh {
 			'web.knowledge.skillified' => ({required Object title}) => '已生成技能:${title}',
 			'web.knowledge.actionFailed' => '操作失败',
 			'web.knowledge.selectHint' => '选择一个节点查看详情。',
+			'web.knowledge.scope' => '范围',
+			'web.knowledge.delete' => '删除',
+			'web.knowledge.deleted' => '已删除',
+			'web.knowledge.deleteConfirm' => '删除此节点?技能将永久删除;自动派生的事实/实体可能在下次扫描时重新出现。',
+			'web.knowledge.scopes.all' => '全部',
+			'web.knowledge.scopes.global' => '全局',
+			'web.knowledge.scopes.project' => '项目',
+			'web.knowledge.scopes.domain' => '领域',
 			'web.knowledge.kinds.all' => '全部',
 			'web.knowledge.kinds.entity' => '实体',
 			'web.knowledge.kinds.fact' => '事实',
@@ -9503,6 +9529,8 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.filenameHint' => '文件名（例如：spec 或 design.md）',
 			'sessions.inspector.notes.create' => '创建',
 			'sessions.inspector.notes.filterHint' => '筛选…',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.locationDialogTitle' => '项目文档位置',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
@@ -9511,8 +9539,6 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => '创建失败：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',
 			'sessions.inspector.notes.personalHint' => '个人草稿 — 随输入自动保存。AI agent 不会写入这里。',
 			'sessions.inspector.notes.projectDocsHint' => '架构 / 规范 / 决策 / 计划 / 回顾 — 通常由 agent 撰写或维护。',
@@ -10017,6 +10043,8 @@ extension on TranslationsZh {
 			'backupSchedules.deleteTitle' => '删除计划？',
 			'backupSchedules.targetLabel' => '目标',
 			'backupSchedules.intervalLabel' => '间隔',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.retentionLabel' => '保留（最近 N 个）',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'backupSchedules.noTargets' => '未配置任何备份目标。请从 Web 管理端或「目标」屏添加。',
@@ -10025,8 +10053,6 @@ extension on TranslationsZh {
 			'backupSchedules.okMsgDelete' => '计划已删除。',
 			'backupSchedules.errorPrefixCreate' => '创建失败',
 			'backupSchedules.errorPrefixUpdate' => '更新失败',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.errorPrefixDelete' => '删除失败',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => '移除目标 ${targetId} 的定期规格。已存在的备份不受影响。',
 			'backupSchedules.emptyList' => '暂无计划。\n点击「新建」创建一个。',
@@ -10531,6 +10557,8 @@ extension on TranslationsZh {
 			'settings.account.section' => '账户',
 			'settings.account.changeCredentials' => '修改凭据',
 			'settings.account.changeCredentialsSubtitle' => '用户名和密码',
+			_ => null,
+		} ?? switch (path) {
 			'settings.gateway.section' => '网关',
 			'settings.gateway.serverSettings' => '服务器设置',
 			'settings.gateway.serverSettingsSubtitle' => '监听地址、日志、凭据库、内存、存储路径…',
@@ -10539,8 +10567,6 @@ extension on TranslationsZh {
 			'settings.changeCredentials.title' => '修改凭据',
 			'settings.changeCredentials.explanation' => '验证当前密码，然后选择新凭据。其他已登录会话将全部失效。',
 			'settings.changeCredentials.currentPassword' => '当前密码',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.newUsername' => '新用户名',
 			'settings.changeCredentials.newPassword' => '新密码',
 			'settings.changeCredentials.confirmPassword' => '确认新密码',

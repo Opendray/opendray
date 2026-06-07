@@ -2397,6 +2397,16 @@
       "skillified": "Skill created: {title}",
       "actionFailed": "Action failed",
       "selectHint": "Select a node to see details.",
+      "scope": "Scope",
+      "delete": "Delete",
+      "deleted": "Deleted",
+      "deleteConfirm": "Delete this node? Skills stay deleted; auto-derived facts/entities may re-appear on the next sweep.",
+      "scopes": {
+        "all": "All",
+        "global": "Global",
+        "project": "Project",
+        "domain": "Domain"
+      },
       "kinds": {
         "all": "All",
         "entity": "Entities",

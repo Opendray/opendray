@@ -79,11 +79,18 @@ class KnowledgeApi {
   KnowledgeApi(this._dio);
   final Dio _dio;
 
-  Future<List<KnowledgeNode>> list({String? kind, int limit = 100}) async {
+  Future<List<KnowledgeNode>> list({
+    String? kind,
+    String? scope,
+    int limit = 100,
+  }) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
         '/api/v1/knowledge/nodes',
-        queryParameters: {if (kind != null && kind.isNotEmpty) 'kind': kind},
+        queryParameters: {
+          if (kind != null && kind.isNotEmpty) 'kind': kind,
+          if (scope != null && scope.isNotEmpty) 'scope': scope,
+        },
       );
       final raw = res.data?['nodes'];
       if (raw is! List) return const [];
@@ -158,6 +165,17 @@ class KnowledgeApi {
         '/api/v1/knowledge/nodes/$id/skillify',
       );
       return KnowledgeNode.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // delete removes a node — used to undo an accidental promote / skillify.
+  // Skills stay deleted (SKILL.md removed server-side); auto-derived
+  // facts/entities may re-appear on the next anchor sweep.
+  Future<void> delete(String id) async {
+    try {
+      await _dio.delete<void>('/api/v1/knowledge/nodes/$id');
     } on Object catch (e) {
       throw toApiException(e);
     }

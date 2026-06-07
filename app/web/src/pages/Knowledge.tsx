@@ -10,9 +10,11 @@ import {
   getKnowledgeGraph,
   promoteKnowledgeNode,
   skillifyKnowledgeNode,
+  deleteKnowledgeNode,
   type KnowledgeNode,
   type KnowledgeSearchHit,
   type KnowledgeKind,
+  type KnowledgeScope,
 } from '@/lib/knowledge'
 
 const KIND_STYLES: Record<string, string> = {
@@ -42,12 +44,14 @@ export function KnowledgePage() {
   const [hits, setHits] = useState<KnowledgeSearchHit[] | null>(null)
   const [selected, setSelected] = useState<KnowledgeNode | null>(null)
   const [kind, setKind] = useState<'all' | KnowledgeKind>('entity')
+  const [scope, setScope] = useState<'all' | KnowledgeScope>('all')
 
   const browse = useQuery({
-    queryKey: ['knowledge-nodes', kind, cwd],
+    queryKey: ['knowledge-nodes', kind, scope, cwd],
     queryFn: () =>
       listKnowledgeNodes({
         kind: kind === 'all' ? undefined : kind,
+        scope: scope === 'all' ? undefined : scope,
         scopeKey: cwd.trim() || undefined,
       }),
   })
@@ -83,6 +87,16 @@ export function KnowledgePage() {
     mutationFn: (id: string) => skillifyKnowledgeNode(id),
     onSuccess: (n) => {
       toast.success(t('web.knowledge.skillified', { title: n.title }))
+      qc.invalidateQueries({ queryKey: ['knowledge-nodes'] })
+    },
+    onError: () => toast.error(t('web.knowledge.actionFailed')),
+  })
+
+  const del = useMutation({
+    mutationFn: (id: string) => deleteKnowledgeNode(id),
+    onSuccess: () => {
+      toast.success(t('web.knowledge.deleted'))
+      setSelected(null)
       qc.invalidateQueries({ queryKey: ['knowledge-nodes'] })
     },
     onError: () => toast.error(t('web.knowledge.actionFailed')),
@@ -141,6 +155,24 @@ export function KnowledgePage() {
               }`}
             >
               {t(`web.knowledge.kinds.${k}`)}
+            </button>
+          ))}
+        </div>
+        <div className="mt-1 flex flex-wrap items-center gap-1">
+          <span className="mr-1 text-[11px] text-muted-foreground">
+            {t('web.knowledge.scope')}
+          </span>
+          {(['all', 'global', 'project', 'domain'] as const).map((sc) => (
+            <button
+              key={sc}
+              onClick={() => setScope(sc)}
+              className={`rounded px-2 py-1 text-xs ${
+                scope === sc
+                  ? 'bg-primary text-primary-foreground'
+                  : 'border border-border text-muted-foreground'
+              }`}
+            >
+              {t(`web.knowledge.scopes.${sc}`)}
             </button>
           ))}
         </div>
@@ -221,6 +253,16 @@ export function KnowledgePage() {
                     {t('web.knowledge.promote')}
                   </button>
                 )}
+                <button
+                  onClick={() => {
+                    if (window.confirm(t('web.knowledge.deleteConfirm')))
+                      del.mutate(selected.id)
+                  }}
+                  disabled={del.isPending}
+                  className="rounded-md border border-red-500/40 px-3 py-1.5 text-sm text-red-400 disabled:opacity-50"
+                >
+                  {t('web.knowledge.delete')}
+                </button>
               </div>
               <div>
                 <h3 className="text-sm font-medium mb-1">

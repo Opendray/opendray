@@ -103,3 +103,12 @@ export async function skillifyKnowledgeNode(id: string): Promise<KnowledgeNode> 
     { method: 'POST' },
   )
 }
+
+// deleteKnowledgeNode removes a node — used to undo an accidental promote /
+// skillify. Auto-derived facts/entities re-appear on the next anchor sweep;
+// skills stay deleted (and their SKILL.md is removed server-side).
+export async function deleteKnowledgeNode(id: string): Promise<void> {
+  await api(`/api/v1/knowledge/nodes/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  })
+}

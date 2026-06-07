@@ -2843,6 +2843,19 @@ class TranslationsWebKnowledgeEn {
 	/// en: 'Select a node to see details.'
 	String get selectHint => 'Select a node to see details.';
 
+	/// en: 'Scope'
+	String get scope => 'Scope';
+
+	/// en: 'Delete'
+	String get delete => 'Delete';
+
+	/// en: 'Deleted'
+	String get deleted => 'Deleted';
+
+	/// en: 'Delete this node? Skills stay deleted; auto-derived facts/entities may re-appear on the next sweep.'
+	String get deleteConfirm => 'Delete this node? Skills stay deleted; auto-derived facts/entities may re-appear on the next sweep.';
+
+	late final TranslationsWebKnowledgeScopesEn scopes = TranslationsWebKnowledgeScopesEn.internal(_root);
 	late final TranslationsWebKnowledgeKindsEn kinds = TranslationsWebKnowledgeKindsEn.internal(_root);
 }
 
@@ -9557,6 +9570,27 @@ class TranslationsWebExportImportsEn {
 	String get listFailedToast => 'Failed to list imports';
 }
 
+// Path: web.knowledge.scopes
+class TranslationsWebKnowledgeScopesEn {
+	TranslationsWebKnowledgeScopesEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'All'
+	String get all => 'All';
+
+	/// en: 'Global'
+	String get global => 'Global';
+
+	/// en: 'Project'
+	String get project => 'Project';
+
+	/// en: 'Domain'
+	String get domain => 'Domain';
+}
+
 // Path: web.knowledge.kinds
 class TranslationsWebKnowledgeKindsEn {
 	TranslationsWebKnowledgeKindsEn.internal(this._root);
@@ -15806,6 +15840,14 @@ extension on Translations {
 			'web.knowledge.skillified' => ({required Object title}) => 'Skill created: ${title}',
 			'web.knowledge.actionFailed' => 'Action failed',
 			'web.knowledge.selectHint' => 'Select a node to see details.',
+			'web.knowledge.scope' => 'Scope',
+			'web.knowledge.delete' => 'Delete',
+			'web.knowledge.deleted' => 'Deleted',
+			'web.knowledge.deleteConfirm' => 'Delete this node? Skills stay deleted; auto-derived facts/entities may re-appear on the next sweep.',
+			'web.knowledge.scopes.all' => 'All',
+			'web.knowledge.scopes.global' => 'Global',
+			'web.knowledge.scopes.project' => 'Project',
+			'web.knowledge.scopes.domain' => 'Domain',
 			'web.knowledge.kinds.all' => 'All',
 			'web.knowledge.kinds.entity' => 'Entities',
 			'web.knowledge.kinds.fact' => 'Facts',
@@ -15978,6 +16020,8 @@ extension on Translations {
 			'sessions.inspector.notes.filenameHint' => 'filename (e.g. spec or design.md)',
 			'sessions.inspector.notes.create' => 'Create',
 			'sessions.inspector.notes.filterHint' => 'Filter…',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.locationDialogTitle' => 'Project docs location',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
@@ -15986,8 +16030,6 @@ extension on Translations {
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => 'Create failed: ${error}',
 			'sessions.inspector.notes.personalHint' => 'Personal scratchpad — auto-saves as you type. AI agents do not write here.',
 			'sessions.inspector.notes.projectDocsHint' => 'Architecture / spec / decisions / plan / retros — typically authored or maintained by an agent.',
@@ -16492,6 +16534,8 @@ extension on Translations {
 			'backupSchedules.deleteTitle' => 'Delete schedule?',
 			'backupSchedules.targetLabel' => 'Target',
 			'backupSchedules.intervalLabel' => 'Interval',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.retentionLabel' => 'Retention (keep N most recent)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No backup targets configured. Add one from the web admin or the Targets screen.',
@@ -16500,8 +16544,6 @@ extension on Translations {
 			'backupSchedules.okMsgDelete' => 'Schedule deleted.',
 			'backupSchedules.errorPrefixCreate' => 'Create failed',
 			'backupSchedules.errorPrefixUpdate' => 'Update failed',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.errorPrefixDelete' => 'Delete failed',
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Removes the recurring spec for target ${targetId}. Existing backup blobs are not touched.',
 			'backupSchedules.emptyList' => 'No schedules yet.\nTap "New" to create one.',
@@ -17006,6 +17048,8 @@ extension on Translations {
 			'settings.account.section' => 'Account',
 			'settings.account.changeCredentials' => 'Change credentials',
 			'settings.account.changeCredentialsSubtitle' => 'Username and password',
+			_ => null,
+		} ?? switch (path) {
 			'settings.gateway.section' => 'Gateway',
 			'settings.gateway.serverSettings' => 'Server settings',
 			'settings.gateway.serverSettingsSubtitle' => 'Listen address, logging, vault, memory, storage paths…',
@@ -17014,8 +17058,6 @@ extension on Translations {
 			'settings.changeCredentials.title' => 'Change credentials',
 			'settings.changeCredentials.explanation' => 'Verify your current password, then pick new credentials. All other signed-in sessions will be revoked.',
 			'settings.changeCredentials.currentPassword' => 'Current password',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.newUsername' => 'New username',
 			'settings.changeCredentials.newPassword' => 'New password',
 			'settings.changeCredentials.confirmPassword' => 'Confirm new password',
