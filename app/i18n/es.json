@@ -38,7 +38,8 @@
     "plugins": "Plugins",
     "backups": "Copias de seguridad",
     "settings": "Ajustes",
-    "workspace": "Espacio de trabajo"
+    "workspace": "Espacio de trabajo",
+    "knowledge": "Conocimiento"
   },
   "web": {
     "brand": "opendray",
@@ -2379,6 +2380,23 @@
         "noneCounts": "(ninguno)",
         "listFailedToast": "No se pudieron listar las importaciones"
       }
+    },
+    "knowledge": {
+      "title": "Conocimiento",
+      "subtitle": "El grafo de conocimiento autoevolutivo: entidades, hechos, guías y habilidades destiladas de tu trabajo.",
+      "searchPlaceholder": "Buscar conocimiento…",
+      "search": "Buscar",
+      "browse": "Explorar",
+      "cwdPlaceholder": "Ruta del proyecto (cwd) para búsqueda con ámbito",
+      "noResults": "Sin resultados.",
+      "empty": "Aún no hay nada. El conocimiento se destila automáticamente mientras trabajas.",
+      "neighbors": "Conexiones",
+      "promote": "Promover a global",
+      "skillify": "Crear habilidad",
+      "promoted": "Promovido a global",
+      "skillified": "Habilidad creada: {title}",
+      "actionFailed": "La acción falló",
+      "selectHint": "Selecciona un nodo para ver los detalles."
     }
   },
   "more": {

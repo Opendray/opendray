@@ -38,7 +38,8 @@
     "plugins": "插件",
     "backups": "备份",
     "settings": "设置",
-    "workspace": "工作区"
+    "workspace": "工作区",
+    "knowledge": "知识"
   },
   "web": {
     "brand": "opendray",
@@ -2379,6 +2380,23 @@
         "noneCounts": "(无)",
         "listFailedToast": "加载导入列表失败"
       }
+    },
+    "knowledge": {
+      "title": "知识",
+      "subtitle": "自我进化的知识图谱——从你的工作中蒸馏出的实体、事实、playbook 与技能。",
+      "searchPlaceholder": "搜索知识…",
+      "search": "搜索",
+      "browse": "浏览",
+      "cwdPlaceholder": "项目路径(cwd),用于按范围搜索",
+      "noResults": "无结果。",
+      "empty": "暂无内容。知识会在你工作时自动蒸馏。",
+      "neighbors": "关联",
+      "promote": "提升为全局",
+      "skillify": "生成技能",
+      "promoted": "已提升为全局",
+      "skillified": "已生成技能:{title}",
+      "actionFailed": "操作失败",
+      "selectHint": "选择一个节点查看详情。"
     }
   },
   "more": {

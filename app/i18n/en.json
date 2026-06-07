@@ -38,7 +38,8 @@
     "plugins": "Plugins",
     "backups": "Backups",
     "settings": "Settings",
-    "workspace": "Workspace"
+    "workspace": "Workspace",
+    "knowledge": "Knowledge"
   },
   "web": {
     "brand": "opendray",
@@ -2379,6 +2380,23 @@
         "noneCounts": "(none)",
         "listFailedToast": "Failed to list imports"
       }
+    },
+    "knowledge": {
+      "title": "Knowledge",
+      "subtitle": "The self-evolving knowledge graph — entities, facts, playbooks, and skills distilled from your work.",
+      "searchPlaceholder": "Search knowledge…",
+      "search": "Search",
+      "browse": "Browse",
+      "cwdPlaceholder": "Project path (cwd) for scoped search",
+      "noResults": "No results.",
+      "empty": "Nothing here yet. Knowledge is distilled automatically as you work.",
+      "neighbors": "Connections",
+      "promote": "Promote to global",
+      "skillify": "Make skill",
+      "promoted": "Promoted to global",
+      "skillified": "Skill created: {title}",
+      "actionFailed": "Action failed",
+      "selectHint": "Select a node to see details."
     }
   },
   "more": {

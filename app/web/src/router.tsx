@@ -19,6 +19,7 @@ import { ArchivedPage } from '@/pages/Archived'
 import { BackupsPage } from '@/pages/Backups'
 import { ExportPage } from '@/pages/Export'
 import { NotesPage } from '@/pages/Notes'
+import { KnowledgePage } from '@/pages/Knowledge'
 import { PluginsPage } from '@/pages/Plugins'
 import { SettingsPage } from '@/pages/Settings'
 import { useAuth } from '@/stores/auth'
@@ -87,6 +88,12 @@ const notesRoute = createRoute({
   component: NotesPage,
 })
 
+const knowledgeRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/knowledge',
+  component: KnowledgePage,
+})
+
 const memoryRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/memory',
@@ -151,6 +158,7 @@ const routeTree = rootRoute.addChildren([
     integrationsRoute,
     activityRoute,
     notesRoute,
+    knowledgeRoute,
     memoryRoute,
     memoryProjectRoute,
     memoryArchivedRoute,
