@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -157,6 +158,45 @@ func (s *Service) Skillify(ctx context.Context, playbookID string) (Node, error)
 		return skill, fmt.Errorf("knowledge: write SKILL.md: %w", err)
 	}
 	return skill, nil
+}
+
+// RenderForSpawn builds a compact "Project knowledge" banner (the project's +
+// global skills and playbooks) to prepend to a spawning agent's system prompt.
+// Budget-capped; empty when there's nothing yet. This is the payoff — the brain
+// feeds accumulated cross-session/cross-project expertise into every session.
+func (s *Service) RenderForSpawn(ctx context.Context, cwd string, maxBytes int) (string, error) {
+	if maxBytes <= 0 {
+		maxBytes = 4096
+	}
+	skills := s.gatherForSpawn(ctx, KindSkill, cwd)
+	playbooks := s.gatherForSpawn(ctx, KindPlaybook, cwd)
+	if len(skills) == 0 && len(playbooks) == 0 {
+		return "", nil
+	}
+	var b strings.Builder
+	b.WriteString("## Project knowledge (opendray)\n")
+	writeSection := func(header string, nodes []Node) {
+		if len(nodes) == 0 || b.Len()+len(header) >= maxBytes {
+			return
+		}
+		b.WriteString(header)
+		for _, n := range nodes {
+			line := "- " + strings.TrimSpace(n.Title) + "\n"
+			if b.Len()+len(line) > maxBytes {
+				break
+			}
+			b.WriteString(line)
+		}
+	}
+	writeSection("\n### Skills\n", skills)
+	writeSection("\n### Playbooks\n", playbooks)
+	return b.String(), nil
+}
+
+func (s *Service) gatherForSpawn(ctx context.Context, kind NodeKind, cwd string) []Node {
+	proj, _ := s.store.ListNodes(ctx, NodeFilter{Kind: kind, Scope: ScopeProject, ScopeKey: cwd, Limit: 50})
+	global, _ := s.store.ListNodes(ctx, NodeFilter{Kind: kind, Scope: ScopeGlobal, Limit: 50})
+	return append(proj, global...)
 }
 
 // EmbedBackfillConfig tunes the background node-embedding loop.

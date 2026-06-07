@@ -660,6 +660,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	if cfg.Knowledge.Enabled {
 		knowledgeSvc = knowledge.NewService(st.Pool(), log)
 		knowledgeSvc.WithSkillSink(knowledgeSkillSink{dir: skillsRoot}) // Phase 4 — render promoted skills
+		sessionProvider.WithKnowledgeInjector(knowledgeSvc)             // feed the brain into every spawn
 		if memorySvc != nil {
 			// Phase 1 — the anchorer reads episodic memory and lifts facts
 			// into the graph. Needs memory; without it we still serve CRUD.

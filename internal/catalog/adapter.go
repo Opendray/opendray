@@ -77,6 +77,11 @@ type SessionProvider struct {
 	// injection (e.g. older builds without memory layers 2-4).
 	projectDocInjector ProjectDocInjector
 
+	// knowledgeInjector, when set, prepends a compact "Project
+	// knowledge" banner (skills + playbooks) at spawn. Backed by
+	// internal/knowledge.Service. Nil → no injection ([knowledge] off).
+	knowledgeInjector KnowledgeInjector
+
 	// projectDocBudget caps the rendered banner size in bytes. 0
 	// disables the cap (legacy behaviour). Operators dial this via
 	// WithProjectDocBudget; the catalog adapter calls
@@ -121,6 +126,13 @@ type AmbientInjector interface {
 type ProjectDocInjector interface {
 	RenderForSpawn(ctx context.Context, cwd string, recentLogs int) (string, error)
 	RenderForSpawnWithBudget(ctx context.Context, cwd string, recentLogs, maxBytes int) (string, error)
+}
+
+// KnowledgeInjector is the contract internal/knowledge.Service satisfies —
+// renders a compact "Project knowledge" banner (skills + playbooks) for the
+// spawning agent. Empty string means nothing to inject.
+type KnowledgeInjector interface {
+	RenderForSpawn(ctx context.Context, cwd string, maxBytes int) (string, error)
 }
 
 // ProjectScanner is the contract internal/projectscan.Service
@@ -220,6 +232,13 @@ func (sp *SessionProvider) WithAmbientInjector(inj AmbientInjector) *SessionProv
 // recent journal) to the agent's system prompt at spawn time.
 func (sp *SessionProvider) WithProjectDocInjector(inj ProjectDocInjector) *SessionProvider {
 	sp.projectDocInjector = inj
+	return sp
+}
+
+// WithKnowledgeInjector installs the M-KG knowledge injector — prepends a
+// compact "Project knowledge" (skills + playbooks) banner at spawn time.
+func (sp *SessionProvider) WithKnowledgeInjector(inj KnowledgeInjector) *SessionProvider {
+	sp.knowledgeInjector = inj
 	return sp
 }
 
@@ -505,6 +524,21 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 				} else if text != "" {
 					if err := injectAmbientMemoryFor(providerID, baseDir, text, &out); err != nil {
 						return session.PrepareOutput{}, fmt.Errorf("inject project docs: %w", err)
+					}
+				}
+			}
+		}
+
+		// M-KG — prepend the project's distilled knowledge (skills +
+		// playbooks). Best-effort; active only when the injector is wired
+		// (i.e. [knowledge] enabled). Nil/empty → skip silently.
+		if sp.knowledgeInjector != nil {
+			if cwd := session.Cwd(prepareCtx); cwd != "" {
+				if text, err := sp.knowledgeInjector.RenderForSpawn(prepareCtx, cwd, 4096); err != nil {
+					sp.log.Warn("knowledge render failed; skipping inject", "cwd", cwd, "err", err)
+				} else if text != "" {
+					if err := injectAmbientMemoryFor(providerID, baseDir, text, &out); err != nil {
+						return session.PrepareOutput{}, fmt.Errorf("inject knowledge: %w", err)
 					}
 				}
 			}
