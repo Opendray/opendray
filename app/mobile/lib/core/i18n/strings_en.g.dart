@@ -2370,6 +2370,7 @@ class TranslationsWebNotesEn {
 	late final TranslationsWebNotesPickerEn picker = TranslationsWebNotesPickerEn.internal(_root);
 	late final TranslationsWebNotesVaultSyncEn vaultSync = TranslationsWebNotesVaultSyncEn.internal(_root);
 	late final TranslationsWebNotesSyncBadgeEn syncBadge = TranslationsWebNotesSyncBadgeEn.internal(_root);
+	late final TranslationsWebNotesModesEn modes = TranslationsWebNotesModesEn.internal(_root);
 }
 
 // Path: web.activity
@@ -6901,6 +6902,21 @@ class TranslationsWebNotesSyncBadgeEn {
 
 	/// en: '—'
 	String get branchPlaceholder => '—';
+}
+
+// Path: web.notes.modes
+class TranslationsWebNotesModesEn {
+	TranslationsWebNotesModesEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Project doc'
+	String get project => 'Project doc';
+
+	/// en: 'Freeform vault'
+	String get vault => 'Freeform vault';
 }
 
 // Path: web.activity.filters
@@ -14984,6 +15000,8 @@ extension on Translations {
 			'web.notes.syncBadge.tooltipAutoOn' => ' · auto-sync on',
 			'web.notes.syncBadge.tooltipLastError' => ({required Object error}) => ' · last error: ${error}',
 			'web.notes.syncBadge.branchPlaceholder' => '—',
+			'web.notes.modes.project' => 'Project doc',
+			'web.notes.modes.vault' => 'Freeform vault',
 			'web.activity.title' => 'Activity',
 			'web.activity.subtitle' => 'Per-call audit of API requests made by registered integrations. Includes both inbound calls (a third-party app calling opendray with its API key) and outbound proxied calls (admin → opendray proxy → integration). Calls made directly by this admin UI are not recorded.',
 			'web.activity.refresh' => 'Refresh',
@@ -15276,10 +15294,10 @@ extension on Translations {
 			'web.integrations.edit_dialog.baseUrlProxyPlaceholder' => 'http://127.0.0.1:8080',
 			'web.integrations.edit_dialog.consumerHint' => 'This is a consumer-only integration. Changing base URL here would also require a route prefix; do that with delete + re-register.',
 			'web.integrations.edit_dialog.versionLabel' => 'Version',
-			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
-			'web.integrations.edit_dialog.scopesLabel' => 'Scopes',
 			_ => null,
 		} ?? switch (path) {
+			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
+			'web.integrations.edit_dialog.scopesLabel' => 'Scopes',
 			'web.integrations.edit_dialog.scopesIntro' => 'Trim or widen the API surface this integration\'s API key authorises. Live tokens are unaffected — the new scope set takes effect on the next request.',
 			'web.integrations.edit_dialog.errorModeSwitch' => 'Switching between consumer-only and reverse-proxy mode requires deleting the integration and re-registering — name and route_prefix can\'t change in place.',
 			'web.integrations.edit_dialog.updatedToast' => 'Integration updated',
@@ -15790,10 +15808,10 @@ extension on Translations {
 			'web.serverSettings.fields.memoryLibraryPath.hint' => 'Directory holding libonnxruntime.dylib (macOS) / libonnxruntime.so (Linux). After `brew install onnxruntime`, that\'s /opt/homebrew/opt/onnxruntime/lib.',
 			'web.serverSettings.fields.memoryModelPath.label' => 'Model path',
 			'web.serverSettings.fields.memoryModelPath.hint' => 'Absolute path to the .onnx weights. Download from HuggingFace, e.g. Xenova/bge-m3 or Xenova/bge-small-en-v1.5.',
-			'web.serverSettings.fields.memoryTokenizerPath.label' => 'Tokenizer path',
-			'web.serverSettings.fields.memoryTokenizerPath.hint' => 'Absolute path to tokenizer.json (HuggingFace standard format) — usually right next to the model.',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.fields.memoryTokenizerPath.label' => 'Tokenizer path',
+			'web.serverSettings.fields.memoryTokenizerPath.hint' => 'Absolute path to tokenizer.json (HuggingFace standard format) — usually right next to the model.',
 			'web.serverSettings.fields.memoryMaxSeqLen.label' => 'Max sequence length',
 			'web.serverSettings.fields.memoryMaxSeqLen.hint' => 'Tokens beyond this are truncated. bge-m3 default is 512. Empty = 512.',
 			'web.serverSettings.fields.claudeHistoryRoots.label' => 'History roots',
@@ -16304,10 +16322,10 @@ extension on Translations {
 			'sessions.action.errors.delete' => ({required Object error}) => 'Delete failed: ${error}',
 			'sessions.dirPicker.parent' => 'Parent',
 			'sessions.dirPicker.newFolder' => 'New folder',
-			'sessions.dirPicker.useThisFolder' => 'Use this folder',
-			'sessions.dirPicker.loading' => 'Loading…',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.dirPicker.useThisFolder' => 'Use this folder',
+			'sessions.dirPicker.loading' => 'Loading…',
 			'sessions.dirPicker.empty' => 'No subfolders here.\nPick this folder, or create a new one.',
 			'sessions.dirPicker.createdSnack' => ({required Object path}) => 'Created ${path}',
 			'sessions.dirPicker.mkdirFailedSnack' => ({required Object error}) => 'mkdir failed: ${error}',
@@ -16818,10 +16836,10 @@ extension on Translations {
 			'backups.encryption.random256bit' => '256-bit random key',
 			'backups.encryption.passphraseLabel' => 'Your passphrase',
 			'backups.encryption.passphraseHint' => 'At least 20 characters',
-			'backups.encryption.passphraseCopied' => 'Passphrase copied to clipboard',
-			'backups.restoreFromFile' => 'Restore from file',
 			_ => null,
 		} ?? switch (path) {
+			'backups.encryption.passphraseCopied' => 'Passphrase copied to clipboard',
+			'backups.restoreFromFile' => 'Restore from file',
 			'backups.restore.title' => 'Restore from bundle',
 			'backups.restore.subtitle' => 'Replay an encrypted .tar.gz.enc bundle into a Postgres database. The bundle is uploaded from this phone — pick a file produced by a prior backup.',
 			'backups.restore.bundleLabel' => 'Bundle file (.tar.gz.enc)',
@@ -17332,10 +17350,10 @@ extension on Translations {
 			'memory.rank.formula' => 'effective = similarity × age × hits × confidence',
 			'memory.rank.close' => 'Close',
 			'memory.kNew' => 'New',
-			'memory.searchHint' => 'Search…',
-			'memory.projectLabel' => 'Project',
 			_ => null,
 		} ?? switch (path) {
+			'memory.searchHint' => 'Search…',
+			'memory.projectLabel' => 'Project',
 			'memory.filterHint' => 'Filter by name or path…',
 			'memory.copied' => 'Copied',
 			'memory.copyTooltip' => 'Copy text',

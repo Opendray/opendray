@@ -86,6 +86,12 @@ const notesRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/notes',
   component: NotesPage,
+  // Notes hosts two modes: the project's official doc ('project', default)
+  // and the freeform markdown vault ('vault'). cwd selects the project.
+  validateSearch: (search) => ({
+    mode: search.mode === 'vault' ? 'vault' : 'project',
+    cwd: typeof search.cwd === 'string' ? search.cwd : '',
+  }),
 })
 
 const knowledgeRoute = createRoute({

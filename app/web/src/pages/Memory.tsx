@@ -38,7 +38,7 @@ export function MemoryPage() {
               size="sm"
               className="h-8 text-[11px]"
             >
-              <Link to="/memory/project" search={{ cwd: '' }}>
+              <Link to="/notes" search={{ mode: 'project', cwd: '' }}>
                 <FolderTree className="mr-1 size-3" />
                 {t('web.memory.navProject')}
               </Link>

@@ -924,6 +924,10 @@
         "tooltipAutoOn": " · 自动同步已开启",
         "tooltipLastError": " · 上次错误：{error}",
         "branchPlaceholder": "—"
+      },
+      "modes": {
+        "project": "项目文档",
+        "vault": "自由文档"
       }
     },
     "activity": {

@@ -924,6 +924,10 @@
         "tooltipAutoOn": " · sincronización automática activada",
         "tooltipLastError": " · último error: {error}",
         "branchPlaceholder": "—"
+      },
+      "modes": {
+        "project": "Doc del proyecto",
+        "vault": "Notas libres"
       }
     },
     "activity": {

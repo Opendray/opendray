@@ -1149,6 +1149,7 @@ class _TranslationsWebNotesZh extends TranslationsWebNotesEn {
 	@override late final _TranslationsWebNotesPickerZh picker = _TranslationsWebNotesPickerZh._(_root);
 	@override late final _TranslationsWebNotesVaultSyncZh vaultSync = _TranslationsWebNotesVaultSyncZh._(_root);
 	@override late final _TranslationsWebNotesSyncBadgeZh syncBadge = _TranslationsWebNotesSyncBadgeZh._(_root);
+	@override late final _TranslationsWebNotesModesZh modes = _TranslationsWebNotesModesZh._(_root);
 }
 
 // Path: web.activity
@@ -3587,6 +3588,17 @@ class _TranslationsWebNotesSyncBadgeZh extends TranslationsWebNotesSyncBadgeEn {
 	@override String get tooltipAutoOn => ' · 自动同步已开启';
 	@override String tooltipLastError({required Object error}) => ' · 上次错误：${error}';
 	@override String get branchPlaceholder => '—';
+}
+
+// Path: web.notes.modes
+class _TranslationsWebNotesModesZh extends TranslationsWebNotesModesEn {
+	_TranslationsWebNotesModesZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get project => '项目文档';
+	@override String get vault => '自由文档';
 }
 
 // Path: web.activity.filters
@@ -8375,6 +8387,8 @@ extension on TranslationsZh {
 			'web.notes.syncBadge.tooltipAutoOn' => ' · 自动同步已开启',
 			'web.notes.syncBadge.tooltipLastError' => ({required Object error}) => ' · 上次错误：${error}',
 			'web.notes.syncBadge.branchPlaceholder' => '—',
+			'web.notes.modes.project' => '项目文档',
+			'web.notes.modes.vault' => '自由文档',
 			'web.activity.title' => '活动',
 			'web.activity.subtitle' => '按调用维度审计每个由注册集成发起的 API 请求。包括入站调用（第三方应用以集成 API key 调用 opendray）和出站代理调用（admin → opendray 代理 → 集成）。本管理端 UI 直接发起的调用不会被记录。',
 			'web.activity.refresh' => '刷新',
@@ -8667,10 +8681,10 @@ extension on TranslationsZh {
 			'web.integrations.edit_dialog.baseUrlProxyPlaceholder' => 'http://127.0.0.1:8080',
 			'web.integrations.edit_dialog.consumerHint' => '这是一个仅消费型集成。在此修改 base URL 还需要 route prefix；请删除后重新注册。',
 			'web.integrations.edit_dialog.versionLabel' => 'Version',
-			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
-			'web.integrations.edit_dialog.scopesLabel' => 'Scopes',
 			_ => null,
 		} ?? switch (path) {
+			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
+			'web.integrations.edit_dialog.scopesLabel' => 'Scopes',
 			'web.integrations.edit_dialog.scopesIntro' => '收窄或放宽此集成 API key 授权的 API 范围。已颁发的 token 不受影响 — 新的 scope 集在下次请求时生效。',
 			'web.integrations.edit_dialog.errorModeSwitch' => '在仅消费型与反向代理型之间切换需要删除并重新注册 — name 和 route_prefix 无法原地修改。',
 			'web.integrations.edit_dialog.updatedToast' => '集成已更新',
@@ -9181,10 +9195,10 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.memoryLibraryPath.hint' => '存放 libonnxruntime.dylib (macOS) / libonnxruntime.so (Linux) 的目录。`brew install onnxruntime` 后即 /opt/homebrew/opt/onnxruntime/lib。',
 			'web.serverSettings.fields.memoryModelPath.label' => '模型路径',
 			'web.serverSettings.fields.memoryModelPath.hint' => '.onnx 权重的绝对路径。从 HuggingFace 下载，如 Xenova/bge-m3 或 Xenova/bge-small-en-v1.5。',
-			'web.serverSettings.fields.memoryTokenizerPath.label' => 'Tokenizer 路径',
-			'web.serverSettings.fields.memoryTokenizerPath.hint' => 'tokenizer.json（HuggingFace 标准格式）的绝对路径 — 通常和模型放在一起。',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.fields.memoryTokenizerPath.label' => 'Tokenizer 路径',
+			'web.serverSettings.fields.memoryTokenizerPath.hint' => 'tokenizer.json（HuggingFace 标准格式）的绝对路径 — 通常和模型放在一起。',
 			'web.serverSettings.fields.memoryMaxSeqLen.label' => '最大序列长度',
 			'web.serverSettings.fields.memoryMaxSeqLen.hint' => '超过这个 token 数会被截断。bge-m3 默认 512。留空 = 512。',
 			'web.serverSettings.fields.claudeHistoryRoots.label' => '历史根目录',
@@ -9695,10 +9709,10 @@ extension on TranslationsZh {
 			'sessions.action.errors.delete' => ({required Object error}) => '删除失败：${error}',
 			'sessions.dirPicker.parent' => '上级',
 			'sessions.dirPicker.newFolder' => '新建文件夹',
-			'sessions.dirPicker.useThisFolder' => '使用此文件夹',
-			'sessions.dirPicker.loading' => '加载中…',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.dirPicker.useThisFolder' => '使用此文件夹',
+			'sessions.dirPicker.loading' => '加载中…',
 			'sessions.dirPicker.empty' => '此处没有子文件夹。\n选择此文件夹，或新建一个。',
 			'sessions.dirPicker.createdSnack' => ({required Object path}) => '已创建 ${path}',
 			'sessions.dirPicker.mkdirFailedSnack' => ({required Object error}) => '创建文件夹失败：${error}',
@@ -10209,10 +10223,10 @@ extension on TranslationsZh {
 			'backups.encryption.random256bit' => '256 位随机密钥',
 			'backups.encryption.passphraseLabel' => '你的密语',
 			'backups.encryption.passphraseHint' => '至少 20 个字符',
-			'backups.encryption.passphraseCopied' => '密语已复制到剪贴板',
-			'backups.restoreFromFile' => '从文件恢复',
 			_ => null,
 		} ?? switch (path) {
+			'backups.encryption.passphraseCopied' => '密语已复制到剪贴板',
+			'backups.restoreFromFile' => '从文件恢复',
 			'backups.restore.title' => '从备份包恢复',
 			'backups.restore.subtitle' => '将加密的 .tar.gz.enc 备份包重放到 Postgres 数据库。备份包将从本机上传 — 请选择此前生成的文件。',
 			'backups.restore.bundleLabel' => '备份文件（.tar.gz.enc）',
@@ -10723,10 +10737,10 @@ extension on TranslationsZh {
 			'memory.rank.formula' => '有效分 = 相似度 × 时效 × 命中 × 置信度',
 			'memory.rank.close' => '关闭',
 			'memory.kNew' => '新建',
-			'memory.searchHint' => '搜索…',
-			'memory.projectLabel' => '项目',
 			_ => null,
 		} ?? switch (path) {
+			'memory.searchHint' => '搜索…',
+			'memory.projectLabel' => '项目',
 			'memory.filterHint' => '按名称或路径筛选…',
 			'memory.copied' => '已复制',
 			'memory.copyTooltip' => '复制文本',

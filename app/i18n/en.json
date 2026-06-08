@@ -924,6 +924,10 @@
         "tooltipAutoOn": " · auto-sync on",
         "tooltipLastError": " · last error: {error}",
         "branchPlaceholder": "—"
+      },
+      "modes": {
+        "project": "Project doc",
+        "vault": "Freeform vault"
       }
     },
     "activity": {

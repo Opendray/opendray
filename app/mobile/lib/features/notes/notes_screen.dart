@@ -6,6 +6,7 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/notes_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/notes/note_editor_dialog.dart';
+import 'package:opendray/features/project/project_screen.dart';
 import 'package:path/path.dart' as p;
 
 // Global Notes tab — vault drill-down browser.
@@ -17,14 +18,75 @@ import 'package:path/path.dart' as p;
 // .md files, and drills down level by level. Search collapses the
 // tree into a flat result list across the whole vault. Quick chips
 // jump to common roots (`personal/`, `projects/`).
+// NotesScreen is the project's official-doc home (Notes tab). It toggles
+// between the structured project doc (ProjectScreen — goal/plan/journal/
+// handbook/lifecycle, the default) and the freeform markdown vault.
+// Mirrors the web /notes mode switch. Memory = facts; Knowledge =
+// cross-project; Notes = where this project is.
 class NotesScreen extends ConsumerStatefulWidget {
   const NotesScreen({super.key});
 
   @override
-  ConsumerState<NotesScreen> createState() => _NotesScreenState();
+  ConsumerState<NotesScreen> createState() => _NotesScreenOuterState();
 }
 
-class _NotesScreenState extends ConsumerState<NotesScreen> {
+class _NotesScreenOuterState extends ConsumerState<NotesScreen> {
+  int _mode = 0; // 0 = project doc, 1 = freeform vault
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: SegmentedButton<int>(
+                segments: [
+                  ButtonSegment(
+                    value: 0,
+                    icon: const Icon(Icons.description_outlined, size: 18),
+                    label: Text(t.web.notes.modes.project),
+                  ),
+                  ButtonSegment(
+                    value: 1,
+                    icon: const Icon(Icons.folder_outlined, size: 18),
+                    label: Text(t.web.notes.modes.vault),
+                  ),
+                ],
+                selected: {_mode},
+                showSelectedIcon: false,
+                onSelectionChanged: (s) => setState(() => _mode = s.first),
+              ),
+            ),
+            Expanded(
+              // Strip the duplicate top inset so the child Scaffold's AppBar
+              // sits flush under the toggle (we already consumed SafeArea top).
+              child: MediaQuery.removePadding(
+                context: context,
+                removeTop: true,
+                child: IndexedStack(
+                  index: _mode,
+                  children: const [ProjectScreen(), NotesVaultScreen()],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class NotesVaultScreen extends ConsumerStatefulWidget {
+  const NotesVaultScreen({super.key});
+
+  @override
+  ConsumerState<NotesVaultScreen> createState() => _NotesScreenState();
+}
+
+class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
   AsyncValue<List<NoteSummary>> _state = const AsyncValue.loading();
   // Vault-relative directory the user is currently viewing. '' means
   // the vault root. Never has a trailing slash.

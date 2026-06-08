@@ -1149,6 +1149,7 @@ class _TranslationsWebNotesEs extends TranslationsWebNotesEn {
 	@override late final _TranslationsWebNotesPickerEs picker = _TranslationsWebNotesPickerEs._(_root);
 	@override late final _TranslationsWebNotesVaultSyncEs vaultSync = _TranslationsWebNotesVaultSyncEs._(_root);
 	@override late final _TranslationsWebNotesSyncBadgeEs syncBadge = _TranslationsWebNotesSyncBadgeEs._(_root);
+	@override late final _TranslationsWebNotesModesEs modes = _TranslationsWebNotesModesEs._(_root);
 }
 
 // Path: web.activity
@@ -3587,6 +3588,17 @@ class _TranslationsWebNotesSyncBadgeEs extends TranslationsWebNotesSyncBadgeEn {
 	@override String get tooltipAutoOn => ' · sincronización automática activada';
 	@override String tooltipLastError({required Object error}) => ' · último error: ${error}';
 	@override String get branchPlaceholder => '—';
+}
+
+// Path: web.notes.modes
+class _TranslationsWebNotesModesEs extends TranslationsWebNotesModesEn {
+	_TranslationsWebNotesModesEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get project => 'Doc del proyecto';
+	@override String get vault => 'Notas libres';
 }
 
 // Path: web.activity.filters
@@ -8375,6 +8387,8 @@ extension on TranslationsEs {
 			'web.notes.syncBadge.tooltipAutoOn' => ' · sincronización automática activada',
 			'web.notes.syncBadge.tooltipLastError' => ({required Object error}) => ' · último error: ${error}',
 			'web.notes.syncBadge.branchPlaceholder' => '—',
+			'web.notes.modes.project' => 'Doc del proyecto',
+			'web.notes.modes.vault' => 'Notas libres',
 			'web.activity.title' => 'Actividad',
 			'web.activity.subtitle' => 'Auditoría por llamada de las solicitudes API realizadas por las integraciones registradas. Incluye tanto las llamadas entrantes (una app de terceros que llama a opendray con su clave de API) como las llamadas salientes a través del proxy (admin → proxy de opendray → integración). Las llamadas hechas directamente por esta UI de administración no se registran.',
 			'web.activity.refresh' => 'Actualizar',
@@ -8667,10 +8681,10 @@ extension on TranslationsEs {
 			'web.integrations.edit_dialog.baseUrlProxyPlaceholder' => 'http://127.0.0.1:8080',
 			'web.integrations.edit_dialog.consumerHint' => 'Esta es una integración solo consumidora. Cambiar la URL base aquí también requeriría un prefijo de ruta; hazlo eliminando y volviendo a registrar.',
 			'web.integrations.edit_dialog.versionLabel' => 'Versión',
-			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
-			'web.integrations.edit_dialog.scopesLabel' => 'Scopes',
 			_ => null,
 		} ?? switch (path) {
+			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
+			'web.integrations.edit_dialog.scopesLabel' => 'Scopes',
 			'web.integrations.edit_dialog.scopesIntro' => 'Reduce o amplía la superficie de API que autoriza la API key de esta integración. Los tokens activos no se ven afectados: el nuevo conjunto de scopes surte efecto en la siguiente petición.',
 			'web.integrations.edit_dialog.errorModeSwitch' => 'Cambiar entre modo solo consumidora y reverse-proxy requiere eliminar la integración y volver a registrarla: el nombre y route_prefix no pueden cambiarse sobre la marcha.',
 			'web.integrations.edit_dialog.updatedToast' => 'Integración actualizada',
@@ -9181,10 +9195,10 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.memoryLibraryPath.hint' => 'Directorio que contiene libonnxruntime.dylib (macOS) / libonnxruntime.so (Linux). Tras `brew install onnxruntime`, es /opt/homebrew/opt/onnxruntime/lib.',
 			'web.serverSettings.fields.memoryModelPath.label' => 'Ruta del modelo',
 			'web.serverSettings.fields.memoryModelPath.hint' => 'Ruta absoluta a los pesos .onnx. Descárgalos de HuggingFace, p. ej. Xenova/bge-m3 o Xenova/bge-small-en-v1.5.',
-			'web.serverSettings.fields.memoryTokenizerPath.label' => 'Ruta del tokenizador',
-			'web.serverSettings.fields.memoryTokenizerPath.hint' => 'Ruta absoluta a tokenizer.json (formato estándar de HuggingFace), normalmente justo al lado del modelo.',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.fields.memoryTokenizerPath.label' => 'Ruta del tokenizador',
+			'web.serverSettings.fields.memoryTokenizerPath.hint' => 'Ruta absoluta a tokenizer.json (formato estándar de HuggingFace), normalmente justo al lado del modelo.',
 			'web.serverSettings.fields.memoryMaxSeqLen.label' => 'Longitud máxima de secuencia',
 			'web.serverSettings.fields.memoryMaxSeqLen.hint' => 'Los tokens que superan este límite se truncan. El valor por defecto de bge-m3 es 512. Vacío = 512.',
 			'web.serverSettings.fields.claudeHistoryRoots.label' => 'Raíces de historial',
@@ -9695,10 +9709,10 @@ extension on TranslationsEs {
 			'sessions.action.errors.delete' => ({required Object error}) => 'Falló al eliminar: ${error}',
 			'sessions.dirPicker.parent' => 'Superior',
 			'sessions.dirPicker.newFolder' => 'Nueva carpeta',
-			'sessions.dirPicker.useThisFolder' => 'Usar esta carpeta',
-			'sessions.dirPicker.loading' => 'Cargando…',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.dirPicker.useThisFolder' => 'Usar esta carpeta',
+			'sessions.dirPicker.loading' => 'Cargando…',
 			'sessions.dirPicker.empty' => 'No hay subcarpetas aquí.\nElige esta carpeta o crea una nueva.',
 			'sessions.dirPicker.createdSnack' => ({required Object path}) => 'Creada ${path}',
 			'sessions.dirPicker.mkdirFailedSnack' => ({required Object error}) => 'Falló mkdir: ${error}',
@@ -10209,10 +10223,10 @@ extension on TranslationsEs {
 			'backups.encryption.random256bit' => 'Clave aleatoria de 256 bits',
 			'backups.encryption.passphraseLabel' => 'Tu passphrase',
 			'backups.encryption.passphraseHint' => 'Al menos 20 caracteres',
-			'backups.encryption.passphraseCopied' => 'Passphrase copiada al portapapeles',
-			'backups.restoreFromFile' => 'Restaurar desde archivo',
 			_ => null,
 		} ?? switch (path) {
+			'backups.encryption.passphraseCopied' => 'Passphrase copiada al portapapeles',
+			'backups.restoreFromFile' => 'Restaurar desde archivo',
 			'backups.restore.title' => 'Restaurar desde paquete',
 			'backups.restore.subtitle' => 'Reproduce un paquete cifrado .tar.gz.enc en una base de datos Postgres. El paquete se sube desde este teléfono: elige un archivo generado por una copia de seguridad anterior.',
 			'backups.restore.bundleLabel' => 'Archivo de paquete (.tar.gz.enc)',
@@ -10723,10 +10737,10 @@ extension on TranslationsEs {
 			'memory.rank.formula' => 'effective = similarity × age × hits × confidence',
 			'memory.rank.close' => 'Cerrar',
 			'memory.kNew' => 'Nuevo',
-			'memory.searchHint' => 'Buscar…',
-			'memory.projectLabel' => 'Proyecto',
 			_ => null,
 		} ?? switch (path) {
+			'memory.searchHint' => 'Buscar…',
+			'memory.projectLabel' => 'Proyecto',
 			'memory.filterHint' => 'Filtrar por nombre o ruta…',
 			'memory.copied' => 'Copiado',
 			'memory.copyTooltip' => 'Copiar texto',

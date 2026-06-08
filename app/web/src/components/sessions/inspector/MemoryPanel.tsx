@@ -72,10 +72,10 @@ export function MemoryPanel({ cwd }: MemoryPanelProps) {
   return (
     <div className="space-y-3 text-xs">
       <Button asChild size="sm" className="h-8 w-full justify-between">
-        <Link to="/memory/project" search={{ cwd }}>
+        <Link to="/notes" search={{ mode: 'project', cwd }}>
           <span className="flex items-center gap-1.5">
             <Target className="size-3" />
-            Open project memory
+            Open project notes
           </span>
           <ArrowUpRight className="size-3" />
         </Link>
