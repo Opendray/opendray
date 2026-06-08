@@ -49,7 +49,7 @@ func (d *planDriftDetector) DetectDrift(ctx context.Context, in projectdoc.Drift
 	userInput := buildDriftUserInput(in)
 	resp, err := d.registry.Run(ctx, worker.Request{
 		Task:                     worker.TaskPlanDrift,
-		SystemPrompt:             projectdoc.PlanDriftSystemPrompt,
+		SystemPrompt:             projectdoc.DriftSystemPrompt(in.Kind),
 		UserInput:                userInput,
 		MaxTokens:                4096,
 		Timeout:                  5 * time.Minute,
@@ -91,7 +91,11 @@ const driftJSONSchema = `{
 func buildDriftUserInput(in projectdoc.DriftInput) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "## Project cwd\n\n`%s`\n\n", in.Cwd)
-	b.WriteString("## Current plan\n\n")
+	label := "Current plan"
+	if in.Kind == projectdoc.KindGoal {
+		label = "Current goal"
+	}
+	fmt.Fprintf(&b, "## %s\n\n", label)
 	b.WriteString(strings.TrimSpace(in.CurrentPlan))
 	b.WriteString("\n\n## Latest session summary\n\n")
 	b.WriteString(strings.TrimSpace(in.TranscriptSummary))

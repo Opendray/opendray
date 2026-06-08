@@ -24,6 +24,9 @@ type PlanDriftDetector interface {
 // short-circuit and return ShouldPropose=false rather than
 // hallucinating an initial plan.
 type DriftInput struct {
+	// Kind is the doc the detector is reviewing — KindPlan (default) or
+	// KindGoal. CurrentPlan holds that doc's current content either way.
+	Kind              Kind
 	Cwd               string
 	CurrentPlan       string
 	TranscriptSummary string
@@ -77,6 +80,49 @@ code fences, no commentary):
 
 If should_propose is false, new_plan and reason MUST still be present
 but may be empty strings.`
+
+// GoalDriftSystemPrompt is the goal-document variant. The GOAL is the
+// project's long-term intent — it changes rarely, so the bar is higher
+// than for the plan.
+const GoalDriftSystemPrompt = `You are a project goal reviewer.
+
+Given a project's CURRENT GOAL document (its long-term intent — what we
+are ultimately building and why), a summary of the session that just
+ended, and recent journal entries, decide whether the GOAL should be
+updated.
+
+UPDATE the goal ONLY when the session reveals a genuine shift in
+long-term intent or scope:
+1. The project's purpose / target audience changed.
+2. A major capability entered or left the project's scope.
+3. The goal as written is now inaccurate about what we are building.
+
+DO NOT update for routine progress, tactics, or step-by-step work —
+that belongs in the PLAN, not the goal. The goal changes rarely; when
+in doubt, do NOT propose.
+
+When updating, REWRITE the goal in full — your output replaces the
+document. Preserve unchanged parts verbatim.
+
+Respond ONLY with a JSON object (no prose, no code fences):
+
+{
+  "should_propose": <boolean>,
+  "new_plan":       <full markdown of the proposed replacement goal>,
+  "reason":         <one short sentence shown to the operator>
+}
+
+If should_propose is false, new_plan and reason MUST still be present
+but may be empty strings.`
+
+// DriftSystemPrompt returns the role block for the given doc kind
+// (goal vs plan). Defaults to the plan prompt.
+func DriftSystemPrompt(kind Kind) string {
+	if kind == KindGoal {
+		return GoalDriftSystemPrompt
+	}
+	return PlanDriftSystemPrompt
+}
 
 // ErrDetectorParse is returned when the LLM response cannot be
 // decoded into DriftOutput. Callers should treat it like any other

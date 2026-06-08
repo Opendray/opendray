@@ -258,7 +258,8 @@ func (j *Journaler) process(ctx context.Context, ev eventbus.Event, state string
 	// whether the project plan needs updating. We do this AFTER the
 	// journal write so a failure here can never block the basic
 	// journal flow.
-	j.maybeProposePlanDrift(sess, transcriptSummary)
+	j.maybeProposeDocDrift(sess, transcriptSummary, KindPlan)
+	j.maybeProposeDocDrift(sess, transcriptSummary, KindGoal)
 }
 
 // maybeProposePlanDrift runs the plan-drift detector and, if the
@@ -268,7 +269,7 @@ func (j *Journaler) process(ctx context.Context, ev eventbus.Event, state string
 // logged but never bubbled up to the caller. The work happens on
 // its own background context because the LLM call can run minutes
 // and the event delivery goroutine must not block.
-func (j *Journaler) maybeProposePlanDrift(sess SessionInfo, transcriptSummary string) {
+func (j *Journaler) maybeProposeDocDrift(sess SessionInfo, transcriptSummary string, kind Kind) {
 	if j.planDetector == nil {
 		return
 	}
@@ -281,7 +282,7 @@ func (j *Journaler) maybeProposePlanDrift(sess SessionInfo, transcriptSummary st
 	bgCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	currentDoc, err := j.docs.GetDoc(bgCtx, sess.Cwd, KindPlan)
+	currentDoc, err := j.docs.GetDoc(bgCtx, sess.Cwd, kind)
 	if err != nil {
 		// ErrNotFound is the "fresh project" case — leave it for the
 		// operator to seed the first plan. Other errors are logged.
@@ -301,6 +302,7 @@ func (j *Journaler) maybeProposePlanDrift(sess SessionInfo, transcriptSummary st
 	}
 
 	out, derr := j.planDetector.DetectDrift(bgCtx, DriftInput{
+		Kind:              kind,
 		Cwd:               sess.Cwd,
 		CurrentPlan:       currentDoc.Content,
 		TranscriptSummary: transcriptSummary,
@@ -318,9 +320,9 @@ func (j *Journaler) maybeProposePlanDrift(sess SessionInfo, transcriptSummary st
 
 	reason := strings.TrimSpace(out.Reason)
 	if reason == "" {
-		reason = "Plan-drift detector flagged this session as a likely plan update."
+		reason = "Drift detector flagged this session as a likely " + string(kind) + " update."
 	}
-	proposal, perr := j.docs.ProposeDoc(bgCtx, sess.Cwd, KindPlan, out.NewPlan, reason, sess.ID)
+	proposal, perr := j.docs.ProposeDoc(bgCtx, sess.Cwd, kind, out.NewPlan, reason, sess.ID)
 	if perr != nil {
 		j.log.Warn("journaler: plan-drift propose failed",
 			"cwd", sess.Cwd, "session_id", sess.ID, "err", perr)
