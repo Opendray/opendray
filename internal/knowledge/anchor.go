@@ -257,13 +257,20 @@ func isEphemeralCwd(cwd string) bool {
 
 var (
 	secretHintRe = regexp.MustCompile(`(?i)(api[\s_-]?key|secret|token|password|passwd|bearer|private[\s_-]?key|access[\s_-]?key|credential)`)
-	longTokenRe  = regexp.MustCompile(`[A-Za-z0-9_\-/+]{24,}`)
+	longTokenRe  = regexp.MustCompile(`[A-Za-z0-9_\-/+]{20,}`)
+	// "password: hunter2longish" / "app password Niv3!k8649" — a credential
+	// keyword followed (within a few chars) by an 8+ char opaque value. Catches
+	// the shorter passwords the long-token rule misses.
+	secretAssignRe = regexp.MustCompile(`(?i)(password|passwd|secret|api[\s_-]?key|access[\s_-]?key|token|app[\s_-]?password|credential)\b[\s:=]*\S{8,}`)
 )
 
-// looksLikeSecret flags facts that carry a credential (a secret-ish keyword +
-// a long opaque token), so we never lift them into the searchable/exportable
-// knowledge graph. Defence-in-depth — the secret should also not be in memory.
+// looksLikeSecret flags facts that carry a credential so we never lift them
+// into the searchable/exportable knowledge graph (or the KB pages). Best-effort
+// defence-in-depth — the secret should also be scrubbed from memory + rotated.
 func looksLikeSecret(text string) bool {
+	if secretAssignRe.MatchString(text) {
+		return true
+	}
 	return secretHintRe.MatchString(text) && longTokenRe.MatchString(text)
 }
 

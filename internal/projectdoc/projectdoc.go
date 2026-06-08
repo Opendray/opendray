@@ -47,14 +47,26 @@ const (
 	KindPlan           Kind = "plan"
 	KindTechStack      Kind = "tech_stack"      // M16b — scanner-managed
 	KindRecentActivity Kind = "recent_activity" // M16c — git-summary-managed
+	// M-KB — curated knowledge-base pages (AI-drafted, human-editable),
+	// fused into the note system. The three global pages live under GlobalCwd;
+	// the handbook is one curated doc per real project cwd.
+	KindInfrastructure Kind = "kb_infrastructure"
+	KindConventions    Kind = "kb_conventions"
+	KindLessons        Kind = "kb_lessons"
+	KindHandbook       Kind = "kb_handbook"
 )
+
+// GlobalCwd is the sentinel cwd under which cross-project (global) KB pages are
+// stored, so they reuse the existing (cwd, kind) document model unchanged.
+const GlobalCwd = "__global__"
 
 // ValidKind returns true for the supported document kinds.
 // Callers should use this rather than a hardcoded switch so the
 // list stays in one place.
 func ValidKind(k Kind) bool {
 	switch k {
-	case KindGoal, KindPlan, KindTechStack, KindRecentActivity:
+	case KindGoal, KindPlan, KindTechStack, KindRecentActivity,
+		KindInfrastructure, KindConventions, KindLessons, KindHandbook:
 		return true
 	}
 	return false

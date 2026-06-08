@@ -96,6 +96,7 @@ type App struct {
 	knowledgeAnchorer    *knowledge.Anchorer  // M-KG Phase 1 anchor sweep; nil when [knowledge] disabled
 	knowledgeReflector   *knowledge.Reflector // M-KG Phase 3 fact->playbook sweep; nil when disabled
 	knowledgeSvc         *knowledge.Service   // M-KG Phase 6 embed backfill; nil when disabled
+	knowledgeKBDrafter   *knowledge.KBDrafter // M-KB curated KB-page drafting; nil when disabled
 }
 
 // knowledgeMemorySource adapts *memory.Service to knowledge.MemorySource so
@@ -140,6 +141,32 @@ func (a knowledgeJournalSource) ListJournal(ctx context.Context, scopeKey string
 		})
 	}
 	return out, nil
+}
+
+// knowledgeDocSink adapts *projectdoc.Service to knowledge.DocSink so the KB
+// drafter writes curated pages INTO the note system (project_docs). A page the
+// operator has edited (updated_by=operator) is reported HumanLocked so the
+// drafter never overwrites it. One-way dependency (knowledge owns the interface).
+type knowledgeDocSink struct{ pd *projectdoc.Service }
+
+func (a knowledgeDocSink) GetKBDoc(ctx context.Context, cwd, kind string) (knowledge.KBDoc, error) {
+	d, err := a.pd.GetDoc(ctx, cwd, projectdoc.Kind(kind))
+	if errors.Is(err, projectdoc.ErrNotFound) {
+		return knowledge.KBDoc{}, nil
+	}
+	if err != nil {
+		return knowledge.KBDoc{}, err
+	}
+	return knowledge.KBDoc{
+		Content:     d.Content,
+		HumanLocked: d.UpdatedBy == projectdoc.AuthorOperator,
+		Exists:      true,
+	}, nil
+}
+
+func (a knowledgeDocSink) PutKBDoc(ctx context.Context, cwd, kind, content string) error {
+	_, err := a.pd.PutDoc(ctx, cwd, projectdoc.Kind(kind), content, projectdoc.AuthorAgent)
+	return err
 }
 
 // knowledgeLLM adapts the memory worker registry to knowledge.LLM so the
@@ -687,6 +714,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	var knowledgeAnchorer *knowledge.Anchorer
 	var knowledgeReflector *knowledge.Reflector
 	var knowledgeSvc *knowledge.Service
+	var knowledgeKBDrafter *knowledge.KBDrafter
 	if cfg.Knowledge.Enabled {
 		knowledgeSvc = knowledge.NewService(st.Pool(), log)
 		knowledgeSvc.WithSkillSink(knowledgeSkillSink{dir: skillsRoot}) // Phase 4 — render promoted skills
@@ -703,6 +731,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			knowledgeSvc.WithReanchor(func(c context.Context) error {
 				return knowledgeAnchorer.AnchorAll(c, 500)
 			})
+			// M-KB — curated KB pages drafted INTO the note system.
+			knowledgeKBDrafter = knowledge.NewKBDrafter(
+				knowledge.NewStore(st.Pool()), kgLLM,
+				knowledgeJournalSource{pd: projectDocSvc},
+				knowledgeDocSink{pd: projectDocSvc}, log)
 		}
 		knowledgeHandlers = knowledge.NewHandlers(knowledgeSvc, log)
 		log.Info("knowledge graph (M-KG) enabled", "anchorer", knowledgeAnchorer != nil)
@@ -914,6 +947,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		knowledgeAnchorer:    knowledgeAnchorer,
 		knowledgeReflector:   knowledgeReflector,
 		knowledgeSvc:         knowledgeSvc,
+		knowledgeKBDrafter:   knowledgeKBDrafter,
 	}, nil
 }
 
@@ -999,6 +1033,10 @@ func (a *App) Run(ctx context.Context) error {
 	}
 	if a.knowledgeSvc != nil {
 		go a.knowledgeSvc.RunEmbedBackfill(ctx, knowledge.EmbedBackfillConfig{})
+	}
+	// M-KB — draft curated knowledge-base pages into the note system.
+	if a.knowledgeKBDrafter != nil {
+		go a.knowledgeKBDrafter.RunKBSweep(ctx, knowledge.KBSweepConfig{})
 	}
 
 	// M-PB — backfill missing embeddings on the journal so the new
