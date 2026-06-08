@@ -110,13 +110,15 @@ The same discipline as the M-KB work: additive schema, feature-flagged, one-way 
 
 - **P-A — De-dup + ownership.** ✅ Folded: goal/plan are already canonical in Notes (projectdoc); Notes is now AI-current via P-B, and fact-node de-dup is P-G. No separate change needed.
 - **P-B — Notes AI drive.** ✅ DONE (d7c0779). Generalized the plan-drift detector to also propose GOAL on session-end; Notes stays AI-current via propose→approve. (Architecture proposals deferred — tech_stack stays scanner-managed.)
-- **P-C — Unified scheduler.** ⏳ PENDING. Fold anchor/reflect/KB/notes sweeps into one consolidation loop; shared dirty-check.
-- **P-D — Project lifecycle.** ⏳ PENDING. `status` (active/paused/archived) + archive UI + idle auto-suggest + injection/distillation skip.
+- **P-C — Unified scheduler.** ✅ DONE (3283397). `knowledge.ConsolidationEngine` runs one ordered loop (anchor → reflect → KB draft) per cycle, replacing the three independent sweep goroutines; each stage keeps its internal dirty-check + lock-awareness. Dead Run*Sweep loops + *SweepConfig types removed.
+- **P-D — Project lifecycle.** ✅ DONE (ba5397c). `project_lifecycle(cwd,status)` (migration 0040); GetStatus/SetStatus/ListProjects (idle_days + suggest_archive); frozen projects dropped from spawn injection, goal/plan drift, and handbook distillation; HTTP `GET /project-docs/projects` + `POST /project-docs/lifecycle`; web + mobile status badge / activate-pause-archive controls + idle hint; i18n (en/zh/es) + slang.
 - **P-E — Supersession.** ✅ DONE (65d85c1). KB + reflect prompts prefer current state / mark superseded. (Explicit alias map + entity supersedes edges deferred — prompt handles RCC→opendray.)
 - **P-F — Knowledge: reusable-features page.** ✅ DONE (65d85c1). New `kb_reusable` global page, end-to-end.
-- **P-G — Graph demotion / fact-node retirement.** ⏳ PENDING (biggest). Retiring fact nodes requires re-pointing reflect + KB feedstock from fact-nodes to Memory directly (new MemorySource for the drafters) — a substantial rewire; do carefully in a fresh pass.
+- **P-G — Graph demotion / fact-node retirement.** ✅ DONE (2f54739). Fact nodes retired: MemorySource gains ListAllMemories; anchorer extracts entities straight from Memory (entity→project, no fact node) and uses knowledge_fact_sources as a processed-marker against the project entity; reflect + KB feedstock come from Memory (WithMemory); ProjectBrain surfaces linked entities; migration 0041 deletes fact nodes/edges/markers (next sweep re-derives, bounded + idempotent). KindFact kept as a retired constant.
 
 Each phase: build → local rebuild + restart → operator validates → next. Push only after the whole arc is accepted.
+
+**ALL PHASES COMPLETE (2026-06-08, head 2f54739, ~36 commits local/UNPUSHED).** Awaiting the operator's unified live test (local rebuild + restart). NOTE on the first restart after this arc: migration 0041 retires fact nodes, so the first consolidation cycle re-derives entities from Memory (one-time LLM re-extraction, ~the cost of a graph reset); steady state returns to ~0 LLM thereafter. Do NOT push until the operator fully approves.
 
 ## 10. Decisions (SIGNED OFF 2026-06-08)
 
