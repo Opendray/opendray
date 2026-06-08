@@ -543,6 +543,24 @@
           "memories": "{count} memories"
         },
         "failedToast": "Reset failed"
+      },
+      "lifecycle": {
+        "status": {
+          "active": "Active",
+          "paused": "Paused",
+          "archived": "Archived"
+        },
+        "activate": "Activate",
+        "pause": "Pause",
+        "archive": "Archive",
+        "idleSuggest": "Idle — consider archiving",
+        "idleHint": "No activity for {days} days",
+        "failedToast": "Could not change project status",
+        "applied": {
+          "active": "Project re-activated",
+          "paused": "Project paused",
+          "archived": "Project archived"
+        }
       }
     },
     "memoryInspector": {

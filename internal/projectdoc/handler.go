@@ -49,9 +49,13 @@ func NewHandlers(svc *Service, log *slog.Logger) *Handlers {
 func (h *Handlers) Mount(r chi.Router) {
 	r.Route("/project-docs", func(r chi.Router) {
 		r.Get("/", h.listDocs)
+		// Static segments must register before the {kind} wildcard so
+		// /projects + /lifecycle aren't swallowed as a doc kind.
+		r.Get("/projects", h.listProjects)
+		r.Post("/lifecycle", h.setLifecycle)
+		r.Post("/reset", h.resetCwd)
 		r.Get("/{kind}", h.getDoc)
 		r.Put("/{kind}", h.putDoc)
-		r.Post("/reset", h.resetCwd)
 	})
 	r.Route("/project-doc-proposals", func(r chi.Router) {
 		r.Get("/pending", h.listPending)
@@ -201,6 +205,58 @@ func (h *Handlers) resetCwd(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, counts)
 }
 
+// ─── lifecycle (P-D) ──────────────────────────────────────────────
+
+// defaultIdleSuggestDays is the staleness threshold for the
+// "consider archiving" hint. 45 days ≈ a project untouched for a month
+// and a half — long enough to avoid nagging on active work, short
+// enough to surface genuinely dormant projects.
+const defaultIdleSuggestDays = 45
+
+// listProjects returns every known project (cwd) with its lifecycle
+// status + last activity, for the operator's project list. The
+// ?idle_days= query overrides the auto-suggest threshold (0 disables).
+func (h *Handlers) listProjects(w http.ResponseWriter, r *http.Request) {
+	idleDays := defaultIdleSuggestDays
+	if v := r.URL.Query().Get("idle_days"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
+			idleDays = n
+		}
+	}
+	projects, err := h.svc.ListProjects(r.Context(), idleDays)
+	if err != nil {
+		h.respondErr(w, err)
+		return
+	}
+	if projects == nil {
+		projects = []ProjectSummary{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"projects": projects})
+}
+
+// setLifecycle sets a project's status (active/paused/archived).
+// Body: {cwd, status}. updated_by defaults to operator.
+func (h *Handlers) setLifecycle(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Cwd       string        `json:"cwd"`
+		Status    ProjectStatus `json:"status"`
+		UpdatedBy Author        `json:"updated_by,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	author := body.UpdatedBy
+	if author == "" {
+		author = AuthorOperator
+	}
+	if err := h.svc.SetStatus(r.Context(), body.Cwd, body.Status, author); err != nil {
+		h.respondErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"cwd": body.Cwd, "status": body.Status})
+}
+
 // ─── proposals ────────────────────────────────────────────────────
 
 func (h *Handlers) propose(w http.ResponseWriter, r *http.Request) {
@@ -311,6 +367,7 @@ func (h *Handlers) respondErr(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusConflict, err)
 	case errors.Is(err, ErrInvalidKind),
 		errors.Is(err, ErrInvalidLogKind),
+		errors.Is(err, ErrInvalidStatus),
 		errors.Is(err, ErrEmptyCwd):
 		writeError(w, http.StatusBadRequest, err)
 	default:

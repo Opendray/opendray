@@ -284,6 +284,8 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
       body: Column(
         children: [
           _cwdPicker(),
+          if (_selectedKey != null && _selectedKey!.isNotEmpty)
+            _LifecycleBar(cwd: _selectedKey!),
           const SizedBox(height: 8),
           Expanded(
             child: TabBarView(
@@ -2227,6 +2229,150 @@ class _ArchivedCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// _LifecycleBar — P-D: shows the project's lifecycle status (active /
+// paused / archived) and lets the operator move it between them. Frozen
+// (paused/archived) projects are excluded from spawn injection and from
+// cross-project Knowledge distillation. Mirrors the web LifecycleControl.
+class _LifecycleBar extends ConsumerStatefulWidget {
+  const _LifecycleBar({required this.cwd});
+  final String cwd;
+
+  @override
+  ConsumerState<_LifecycleBar> createState() => _LifecycleBarState();
+}
+
+class _LifecycleBarState extends ConsumerState<_LifecycleBar> {
+  ProjectSummary? _summary;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant _LifecycleBar old) {
+    super.didUpdateWidget(old);
+    if (old.cwd != widget.cwd) _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final all = await ref.read(projectDocsApiProvider).listProjects();
+      if (!mounted) return;
+      ProjectSummary? found;
+      for (final pr in all) {
+        if (pr.cwd == widget.cwd) {
+          found = pr;
+          break;
+        }
+      }
+      setState(() => _summary = found);
+    } on Object {
+      // Non-fatal: the bar simply renders the default 'active' state.
+    }
+  }
+
+  Future<void> _set(String status) async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(projectDocsApiProvider).setLifecycle(widget.cwd, status);
+      await _load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_setLabel(status))),
+      );
+    } on Object catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${t.web.project.lifecycle.failedToast}: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  String _statusLabel(String s) {
+    final l = t.web.project.lifecycle.status;
+    switch (s) {
+      case 'paused':
+        return l.paused;
+      case 'archived':
+        return l.archived;
+      default:
+        return l.active;
+    }
+  }
+
+  String _setLabel(String s) {
+    final l = t.web.project.lifecycle.applied;
+    switch (s) {
+      case 'paused':
+        return l.paused;
+      case 'archived':
+        return l.archived;
+      default:
+        return l.active;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final status = _summary?.status ?? 'active';
+    final suggest = _summary?.suggestArchive ?? false;
+    final scheme = Theme.of(context).colorScheme;
+    final chipColor = status == 'archived'
+        ? scheme.surfaceContainerHighest
+        : status == 'paused'
+            ? scheme.tertiaryContainer
+            : scheme.secondaryContainer;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Chip(
+            label: Text(_statusLabel(status)),
+            backgroundColor: chipColor,
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          if (suggest && status == 'active')
+            Chip(
+              avatar: const Icon(Icons.schedule, size: 16),
+              label: Text(t.web.project.lifecycle.idleSuggest),
+              backgroundColor: scheme.tertiaryContainer,
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          if (status != 'active')
+            TextButton.icon(
+              onPressed: _busy ? null : () => _set('active'),
+              icon: const Icon(Icons.play_arrow, size: 18),
+              label: Text(t.web.project.lifecycle.activate),
+            ),
+          if (status == 'active')
+            TextButton.icon(
+              onPressed: _busy ? null : () => _set('paused'),
+              icon: const Icon(Icons.pause, size: 18),
+              label: Text(t.web.project.lifecycle.pause),
+            ),
+          if (status != 'archived')
+            TextButton.icon(
+              onPressed: _busy ? null : () => _set('archived'),
+              icon: const Icon(Icons.archive_outlined, size: 18),
+              label: Text(t.web.project.lifecycle.archive),
+            ),
+        ],
       ),
     );
   }

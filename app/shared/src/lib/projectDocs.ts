@@ -75,6 +75,42 @@ export async function putProjectDoc(input: {
   })
 }
 
+// ── lifecycle (P-D) ───────────────────────────────────────────
+
+export type ProjectStatus = 'active' | 'paused' | 'archived'
+
+export interface ProjectSummary {
+  cwd: string
+  status: ProjectStatus
+  updated_by: DocAuthor
+  last_activity_at?: string
+  idle_days: number
+  /** Active project idle past the threshold — suggest archiving. */
+  suggest_archive: boolean
+}
+
+/** Lists every known project with its lifecycle status + last activity.
+ * idleDays overrides the auto-suggest threshold (0 disables). */
+export async function listProjects(idleDays?: number): Promise<ProjectSummary[]> {
+  const qs = idleDays === undefined ? '' : `?idle_days=${idleDays}`
+  const res = await api<{ projects: ProjectSummary[] }>(
+    `/api/v1/project-docs/projects${qs}`,
+  )
+  return res.projects ?? []
+}
+
+/** Sets a project's lifecycle status. Frozen (paused/archived) projects are
+ * excluded from spawn injection and cross-project Knowledge distillation. */
+export async function setProjectLifecycle(
+  cwd: string,
+  status: ProjectStatus,
+): Promise<void> {
+  await api('/api/v1/project-docs/lifecycle', {
+    method: 'POST',
+    body: { cwd, status },
+  })
+}
+
 // ── proposals ─────────────────────────────────────────────────
 
 export interface DocProposal {

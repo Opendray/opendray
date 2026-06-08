@@ -543,6 +543,24 @@
           "memories": "{count} memorias"
         },
         "failedToast": "Error al restablecer"
+      },
+      "lifecycle": {
+        "status": {
+          "active": "Activo",
+          "paused": "Pausado",
+          "archived": "Archivado"
+        },
+        "activate": "Activar",
+        "pause": "Pausar",
+        "archive": "Archivar",
+        "idleSuggest": "Inactivo — considera archivar",
+        "idleHint": "Sin actividad durante {days} días",
+        "failedToast": "No se pudo cambiar el estado del proyecto",
+        "applied": {
+          "active": "Proyecto reactivado",
+          "paused": "Proyecto pausado",
+          "archived": "Proyecto archivado"
+        }
       }
     },
     "memoryInspector": {

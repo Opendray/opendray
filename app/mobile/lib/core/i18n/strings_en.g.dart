@@ -2323,6 +2323,7 @@ class TranslationsWebProjectEn {
 	late final TranslationsWebProjectInboxEn inbox = TranslationsWebProjectInboxEn.internal(_root);
 	late final TranslationsWebProjectArchivedEn archived = TranslationsWebProjectArchivedEn.internal(_root);
 	late final TranslationsWebProjectResetEn reset = TranslationsWebProjectResetEn.internal(_root);
+	late final TranslationsWebProjectLifecycleEn lifecycle = TranslationsWebProjectLifecycleEn.internal(_root);
 }
 
 // Path: web.memoryInspector
@@ -6122,6 +6123,36 @@ class TranslationsWebProjectResetEn {
 
 	/// en: 'Reset failed'
 	String get failedToast => 'Reset failed';
+}
+
+// Path: web.project.lifecycle
+class TranslationsWebProjectLifecycleEn {
+	TranslationsWebProjectLifecycleEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsWebProjectLifecycleStatusEn status = TranslationsWebProjectLifecycleStatusEn.internal(_root);
+
+	/// en: 'Activate'
+	String get activate => 'Activate';
+
+	/// en: 'Pause'
+	String get pause => 'Pause';
+
+	/// en: 'Archive'
+	String get archive => 'Archive';
+
+	/// en: 'Idle — consider archiving'
+	String get idleSuggest => 'Idle — consider archiving';
+
+	/// en: 'No activity for {days} days'
+	String idleHint({required Object days}) => 'No activity for ${days} days';
+
+	/// en: 'Could not change project status'
+	String get failedToast => 'Could not change project status';
+
+	late final TranslationsWebProjectLifecycleAppliedEn applied = TranslationsWebProjectLifecycleAppliedEn.internal(_root);
 }
 
 // Path: web.memoryInspector.status
@@ -11528,6 +11559,42 @@ class TranslationsWebProjectResetSummaryEn {
 	String memories({required Object count}) => '${count} memories';
 }
 
+// Path: web.project.lifecycle.status
+class TranslationsWebProjectLifecycleStatusEn {
+	TranslationsWebProjectLifecycleStatusEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Active'
+	String get active => 'Active';
+
+	/// en: 'Paused'
+	String get paused => 'Paused';
+
+	/// en: 'Archived'
+	String get archived => 'Archived';
+}
+
+// Path: web.project.lifecycle.applied
+class TranslationsWebProjectLifecycleAppliedEn {
+	TranslationsWebProjectLifecycleAppliedEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Project re-activated'
+	String get active => 'Project re-activated';
+
+	/// en: 'Project paused'
+	String get paused => 'Project paused';
+
+	/// en: 'Project archived'
+	String get archived => 'Project archived';
+}
+
 // Path: web.memoryInspector.scope.values
 class TranslationsWebMemoryInspectorScopeValuesEn {
 	TranslationsWebMemoryInspectorScopeValuesEn.internal(this._root);
@@ -14487,6 +14554,18 @@ extension on Translations {
 			'web.project.reset.summary.cleanup' => ({required Object count}) => '${count} cleanup',
 			'web.project.reset.summary.memories' => ({required Object count}) => '${count} memories',
 			'web.project.reset.failedToast' => 'Reset failed',
+			'web.project.lifecycle.status.active' => 'Active',
+			'web.project.lifecycle.status.paused' => 'Paused',
+			'web.project.lifecycle.status.archived' => 'Archived',
+			'web.project.lifecycle.activate' => 'Activate',
+			'web.project.lifecycle.pause' => 'Pause',
+			'web.project.lifecycle.archive' => 'Archive',
+			'web.project.lifecycle.idleSuggest' => 'Idle — consider archiving',
+			'web.project.lifecycle.idleHint' => ({required Object days}) => 'No activity for ${days} days',
+			'web.project.lifecycle.failedToast' => 'Could not change project status',
+			'web.project.lifecycle.applied.active' => 'Project re-activated',
+			'web.project.lifecycle.applied.paused' => 'Project paused',
+			'web.project.lifecycle.applied.archived' => 'Project archived',
 			'web.memoryInspector.status.label' => 'Active embedder',
 			'web.memoryInspector.status.unavailable' => 'unavailable',
 			'web.memoryInspector.status.probing' => 'probing…',
@@ -14550,6 +14629,8 @@ extension on Translations {
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => 'Migrated ${reembed}/${examined} memories to ${to}',
 			'web.memoryInspector.toasts.migrationFailed' => 'Migration failed',
 			'web.memoryInspector.toasts.syncIngested_one' => ({required Object count}) => 'Ingested ${count} new memory file',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.toasts.syncIngested_other' => ({required Object count}) => 'Ingested ${count} new memory files',
 			'web.memoryInspector.toasts.syncEmpty' => 'No new .md files to sync',
 			'web.memoryInspector.toasts.syncEmptyDescription' => 'Already in sync, or no Claude memory dir for this cwd.',
@@ -14562,8 +14643,6 @@ extension on Translations {
 			'web.memoryInspector.bulkDelete.items_one' => ({required Object count}) => '${count} memory item',
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} memory items',
 			'web.memoryInspector.bulkDelete.cancel' => 'Cancel',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.bulkDelete.deleteAll' => 'Delete all',
 			'web.memoryInspector.addMem.title' => 'Add memory',
 			'web.memoryInspector.addMem.description' => 'Manually create a memory. Agents create these automatically via the <1>memory_store</1> MCP tool — this form is for cases where the operator wants to seed a fact without going through an agent.',
@@ -15064,6 +15143,8 @@ extension on Translations {
 			'web.integrations.proxy.prefixPlaceholder' => '<prefix>',
 			'web.plugins.title' => 'Inspector plugins',
 			'web.plugins.subtitle' => 'Configure data sources surfaced in the right-hand Inspector panel when a session is open. Each plugin is admin-only and shared across all sessions. Click a section header to collapse it.',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.common.loading' => 'Loading…',
 			'web.plugins.common.cancel' => 'Cancel',
 			'web.plugins.common.edit' => 'Edit',
@@ -15076,8 +15157,6 @@ extension on Translations {
 			'web.plugins.mcp.empty' => 'No MCP servers yet. Add one to expose extra tools to your agent sessions.',
 			'web.plugins.mcp.columns.name' => 'Name',
 			'web.plugins.mcp.columns.transport' => 'Transport',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.mcp.columns.spec' => 'Spec',
 			'web.plugins.mcp.columns.enabled' => 'Enabled',
 			'web.plugins.mcp.noUrl' => 'no url',
@@ -15578,6 +15657,8 @@ extension on Translations {
 			'web.serverSettings.memoryInspectorCard.heading' => 'Inspector',
 			'web.serverSettings.memoryInspectorCard.description' => 'Browse, search and edit stored memories on the dedicated page.',
 			'web.serverSettings.memoryInspectorCard.openButton' => 'Open Memory →',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.localOnnxBanner' => 'Requires the binary to be compiled with <1>-tags local_onnx</1>. The standard build returns a clear stub error when this backend is selected. See <3>Memory → Local ONNX</3> tutorial for setup steps.',
 			'web.serverSettings.stringList.noneDefault' => '(none — using built-in defaults)',
 			'web.serverSettings.stringList.addPath' => 'Add path',
@@ -15590,8 +15671,6 @@ extension on Translations {
 			'web.serverSettings.httpHelpers.presetTip.lmStudio' => 'LM Studio local server',
 			'web.serverSettings.httpHelpers.presetTip.openai' => 'OpenAI cloud (needs API key)',
 			'web.serverSettings.probe.unreachable' => ({required Object error}) => '✗ unreachable: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.probe.connectionFailed' => 'connection failed',
 			'web.serverSettings.probe.reachable' => ({required Object detected, required Object total, required Object embedding}) => '✓ reachable ${detected}· ${total} model(s) total · ${embedding} embedding',
 			'web.serverSettings.probe.modelMissing' => ({required Object model}) => '⚠ Configured model ${model} isn\'t in the list. Pick one of the embedding models below or fix the name.',
@@ -16092,6 +16171,8 @@ extension on Translations {
 			'sessions.inspector.files.insertPathSubtitle' => 'Pastes the absolute path verbatim',
 			'sessions.inspector.files.readContent' => 'Read content',
 			'sessions.inspector.files.readContentSubtitle' => 'Up to 256 KiB plain text',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.files.readFailedApi' => ({required Object status, required Object message}) => 'Read failed (${status}): ${message}',
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => 'Read failed: ${error}',
 			'sessions.inspector.files.parent' => 'Parent',
@@ -16104,8 +16185,6 @@ extension on Translations {
 			'sessions.inspector.git.insertHash' => 'Insert hash',
 			'sessions.inspector.git.showFullPatch' => 'Show full patch',
 			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => 'Show failed (${status}): ${message}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => 'Show failed: ${error}',
 			'sessions.inspector.git.tabStatus' => 'Status',
 			'sessions.inspector.git.tabLog' => 'Log',
@@ -16606,6 +16685,8 @@ extension on Translations {
 			'backups.restore.outputTitle' => 'pg_restore output',
 			'backups.restore.noPgRestoreOutput' => '(empty — restore completed silently)',
 			'backups.restore.manifestTitle' => 'Manifest',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.manifestBackupId' => 'Backup ID',
 			'backups.restore.manifestVersion' => 'Manifest version',
 			'backups.restore.manifestCreatedAt' => 'Created',
@@ -16618,8 +16699,6 @@ extension on Translations {
 			'backups.restore.bytesRead' => 'Bytes read',
 			'backups.restore.targetDsnUsed' => 'Target DSN',
 			'backups.restore.targetDsnSelfLabel' => '(opendray\'s own DB)',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.done' => 'Done',
 			'backups.inventory.title' => 'What\'s in a backup',
 			'backups.inventory.summary' => ({required Object rows, required Object tables}) => '${rows} rows · ${tables} tables',
@@ -17120,6 +17199,8 @@ extension on Translations {
 			'about.fields.app' => 'App',
 			'about.fields.version' => 'Version',
 			'about.fields.versionFormat' => ({required Object version, required Object build}) => '${version} (build ${build})',
+			_ => null,
+		} ?? switch (path) {
 			'about.fields.package' => 'Package',
 			'about.fields.url' => 'URL',
 			'about.fields.signedInAs' => 'Signed in as',
@@ -17132,8 +17213,6 @@ extension on Translations {
 			'about.gateway.version' => 'Version',
 			'about.gateway.commit' => 'Commit',
 			'about.gateway.checking' => 'Checking for updates…',
-			_ => null,
-		} ?? switch (path) {
 			'about.gateway.upToDate' => 'Up to date',
 			'about.gateway.updateAvailable' => ({required Object version}) => 'Update available: ${version}',
 			'about.gateway.releaseNotes' => 'Release notes',

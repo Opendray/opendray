@@ -47,13 +47,22 @@ type DocSink interface {
 	PutKBDoc(ctx context.Context, cwd, kind, content string) error
 }
 
+// LifecycleFilter reports whether a project (cwd) is frozen (paused/archived).
+// P-D: a frozen project is excluded from per-project handbook distillation.
+// Optional — a nil filter treats every project as active. The app adapts
+// projectdoc's GetStatus to this; knowledge keeps no projectdoc import.
+type LifecycleFilter interface {
+	IsFrozen(ctx context.Context, cwd string) bool
+}
+
 // KBDrafter distils graph + journal into curated KB pages via the LLM.
 type KBDrafter struct {
-	store   *Store
-	llm     LLM
-	journal JournalSource
-	docs    DocSink
-	log     *slog.Logger
+	store     *Store
+	llm       LLM
+	journal   JournalSource
+	docs      DocSink
+	lifecycle LifecycleFilter
+	log       *slog.Logger
 }
 
 // NewKBDrafter builds a drafter. journal is optional (handbooks degrade to
@@ -63,6 +72,13 @@ func NewKBDrafter(store *Store, llm LLM, journal JournalSource, docs DocSink, lo
 		log = slog.Default()
 	}
 	return &KBDrafter{store: store, llm: llm, journal: journal, docs: docs, log: log.With("component", "knowledge.kb")}
+}
+
+// WithLifecycle installs the optional P-D lifecycle filter so frozen projects
+// are skipped during handbook distillation. Returns the receiver for chaining.
+func (d *KBDrafter) WithLifecycle(f LifecycleFilter) *KBDrafter {
+	d.lifecycle = f
+	return d
 }
 
 const kbSafety = `
@@ -129,6 +145,12 @@ func (d *KBDrafter) DraftAll(ctx context.Context) ([]KBDraftResult, error) {
 		default:
 		}
 		if isEphemeralCwd(k) || k == GlobalKBCwd {
+			continue
+		}
+		// P-D — a frozen (paused/archived) project is shelved: don't spend an
+		// LLM call refreshing its handbook. Its existing page is left in place,
+		// surfaced read-only.
+		if d.lifecycle != nil && d.lifecycle.IsFrozen(ctx, k) {
 			continue
 		}
 		pf, _ := d.store.ListNodes(ctx, NodeFilter{Kind: KindFact, Scope: ScopeProject, ScopeKey: k, Limit: 200})

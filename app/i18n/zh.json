@@ -543,6 +543,24 @@
           "memories": "{count} 条记忆"
         },
         "failedToast": "重置失败"
+      },
+      "lifecycle": {
+        "status": {
+          "active": "活跃",
+          "paused": "暂停",
+          "archived": "已归档"
+        },
+        "activate": "激活",
+        "pause": "暂停",
+        "archive": "归档",
+        "idleSuggest": "长期闲置 — 建议归档",
+        "idleHint": "已有 {days} 天无活动",
+        "failedToast": "无法更改项目状态",
+        "applied": {
+          "active": "项目已重新激活",
+          "paused": "项目已暂停",
+          "archived": "项目已归档"
+        }
       }
     },
     "memoryInspector": {

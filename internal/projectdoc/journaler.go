@@ -282,6 +282,12 @@ func (j *Journaler) maybeProposeDocDrift(sess SessionInfo, transcriptSummary str
 	bgCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
+	// P-D — a frozen project (paused/archived) is shelved; don't spend an LLM
+	// call proposing doc updates the operator has signalled they don't want.
+	if status, serr := j.docs.GetStatus(bgCtx, sess.Cwd); serr == nil && status.IsFrozen() {
+		return
+	}
+
 	currentDoc, err := j.docs.GetDoc(bgCtx, sess.Cwd, kind)
 	if err != nil {
 		// ErrNotFound is the "fresh project" case — leave it for the

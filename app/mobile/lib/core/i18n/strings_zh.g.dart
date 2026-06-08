@@ -1105,6 +1105,7 @@ class _TranslationsWebProjectZh extends TranslationsWebProjectEn {
 	@override late final _TranslationsWebProjectInboxZh inbox = _TranslationsWebProjectInboxZh._(_root);
 	@override late final _TranslationsWebProjectArchivedZh archived = _TranslationsWebProjectArchivedZh._(_root);
 	@override late final _TranslationsWebProjectResetZh reset = _TranslationsWebProjectResetZh._(_root);
+	@override late final _TranslationsWebProjectLifecycleZh lifecycle = _TranslationsWebProjectLifecycleZh._(_root);
 }
 
 // Path: web.memoryInspector
@@ -3165,6 +3166,23 @@ class _TranslationsWebProjectResetZh extends TranslationsWebProjectResetEn {
 	@override String successToast({required Object summary}) => '重置：已删除 ${summary}';
 	@override late final _TranslationsWebProjectResetSummaryZh summary = _TranslationsWebProjectResetSummaryZh._(_root);
 	@override String get failedToast => '重置失败';
+}
+
+// Path: web.project.lifecycle
+class _TranslationsWebProjectLifecycleZh extends TranslationsWebProjectLifecycleEn {
+	_TranslationsWebProjectLifecycleZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsWebProjectLifecycleStatusZh status = _TranslationsWebProjectLifecycleStatusZh._(_root);
+	@override String get activate => '激活';
+	@override String get pause => '暂停';
+	@override String get archive => '归档';
+	@override String get idleSuggest => '长期闲置 — 建议归档';
+	@override String idleHint({required Object days}) => '已有 ${days} 天无活动';
+	@override String get failedToast => '无法更改项目状态';
+	@override late final _TranslationsWebProjectLifecycleAppliedZh applied = _TranslationsWebProjectLifecycleAppliedZh._(_root);
 }
 
 // Path: web.memoryInspector.status
@@ -6051,6 +6069,30 @@ class _TranslationsWebProjectResetSummaryZh extends TranslationsWebProjectResetS
 	@override String memories({required Object count}) => '${count} 条记忆';
 }
 
+// Path: web.project.lifecycle.status
+class _TranslationsWebProjectLifecycleStatusZh extends TranslationsWebProjectLifecycleStatusEn {
+	_TranslationsWebProjectLifecycleStatusZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get active => '活跃';
+	@override String get paused => '暂停';
+	@override String get archived => '已归档';
+}
+
+// Path: web.project.lifecycle.applied
+class _TranslationsWebProjectLifecycleAppliedZh extends TranslationsWebProjectLifecycleAppliedEn {
+	_TranslationsWebProjectLifecycleAppliedZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get active => '项目已重新激活';
+	@override String get paused => '项目已暂停';
+	@override String get archived => '项目已归档';
+}
+
 // Path: web.memoryInspector.scope.values
 class _TranslationsWebMemoryInspectorScopeValuesZh extends TranslationsWebMemoryInspectorScopeValuesEn {
 	_TranslationsWebMemoryInspectorScopeValuesZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7953,6 +7995,18 @@ extension on TranslationsZh {
 			'web.project.reset.summary.cleanup' => ({required Object count}) => '${count} 条清理',
 			'web.project.reset.summary.memories' => ({required Object count}) => '${count} 条记忆',
 			'web.project.reset.failedToast' => '重置失败',
+			'web.project.lifecycle.status.active' => '活跃',
+			'web.project.lifecycle.status.paused' => '暂停',
+			'web.project.lifecycle.status.archived' => '已归档',
+			'web.project.lifecycle.activate' => '激活',
+			'web.project.lifecycle.pause' => '暂停',
+			'web.project.lifecycle.archive' => '归档',
+			'web.project.lifecycle.idleSuggest' => '长期闲置 — 建议归档',
+			'web.project.lifecycle.idleHint' => ({required Object days}) => '已有 ${days} 天无活动',
+			'web.project.lifecycle.failedToast' => '无法更改项目状态',
+			'web.project.lifecycle.applied.active' => '项目已重新激活',
+			'web.project.lifecycle.applied.paused' => '项目已暂停',
+			'web.project.lifecycle.applied.archived' => '项目已归档',
 			'web.memoryInspector.status.label' => '当前 embedder',
 			'web.memoryInspector.status.unavailable' => '不可用',
 			'web.memoryInspector.status.probing' => '探测中…',
@@ -8016,6 +8070,8 @@ extension on TranslationsZh {
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => '已迁移 ${reembed}/${examined} 条记忆到 ${to}',
 			'web.memoryInspector.toasts.migrationFailed' => '迁移失败',
 			'web.memoryInspector.toasts.syncIngested_one' => ({required Object count}) => '已摄取 ${count} 个新记忆文件',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.toasts.syncIngested_other' => ({required Object count}) => '已摄取 ${count} 个新记忆文件',
 			'web.memoryInspector.toasts.syncEmpty' => '没有需要同步的新 .md 文件',
 			'web.memoryInspector.toasts.syncEmptyDescription' => '已是最新，或该 cwd 没有 Claude memory 目录。',
@@ -8028,8 +8084,6 @@ extension on TranslationsZh {
 			'web.memoryInspector.bulkDelete.items_one' => ({required Object count}) => '${count} 条记忆',
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} 条记忆',
 			'web.memoryInspector.bulkDelete.cancel' => '取消',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.bulkDelete.deleteAll' => '全部删除',
 			'web.memoryInspector.addMem.title' => '添加记忆',
 			'web.memoryInspector.addMem.description' => '手动创建一条记忆。Agent 会通过 <1>memory_store</1> MCP 工具自动创建；此表单用于运维想跳过 agent 直接录入事实的场景。',
@@ -8530,6 +8584,8 @@ extension on TranslationsZh {
 			'web.integrations.proxy.prefixPlaceholder' => '<prefix>',
 			'web.plugins.title' => '检查器插件',
 			'web.plugins.subtitle' => '配置在会话打开时右侧检查器面板呈现的数据源。每个插件都是管理员级别且在所有会话间共享。点击章节标题可折叠。',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.common.loading' => '加载中…',
 			'web.plugins.common.cancel' => '取消',
 			'web.plugins.common.edit' => '编辑',
@@ -8542,8 +8598,6 @@ extension on TranslationsZh {
 			'web.plugins.mcp.empty' => '尚无 MCP 服务器。添加一个以为 agent 会话暴露额外工具。',
 			'web.plugins.mcp.columns.name' => '名称',
 			'web.plugins.mcp.columns.transport' => 'Transport',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.mcp.columns.spec' => '规范',
 			'web.plugins.mcp.columns.enabled' => '启用',
 			'web.plugins.mcp.noUrl' => '无 URL',
@@ -9044,6 +9098,8 @@ extension on TranslationsZh {
 			'web.serverSettings.memoryInspectorCard.heading' => '检查器',
 			'web.serverSettings.memoryInspectorCard.description' => '在专门页面浏览、搜索、编辑已存储的记忆。',
 			'web.serverSettings.memoryInspectorCard.openButton' => '打开记忆 →',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.localOnnxBanner' => '需要使用 <1>-tags local_onnx</1> 编译二进制。标准构建在选择此后端时会返回明确的 stub 错误。设置步骤参见 <3>记忆 → 本地 ONNX</3> 教程。',
 			'web.serverSettings.stringList.noneDefault' => '（无 — 使用内置默认值）',
 			'web.serverSettings.stringList.addPath' => '添加路径',
@@ -9056,8 +9112,6 @@ extension on TranslationsZh {
 			'web.serverSettings.httpHelpers.presetTip.lmStudio' => 'LM Studio 本地服务',
 			'web.serverSettings.httpHelpers.presetTip.openai' => 'OpenAI 云端（需要 API key）',
 			'web.serverSettings.probe.unreachable' => ({required Object error}) => '✗ 不可达：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.probe.connectionFailed' => '连接失败',
 			'web.serverSettings.probe.reachable' => ({required Object detected, required Object total, required Object embedding}) => '✓ 可达 ${detected}· 共 ${total} 个模型 · ${embedding} 个嵌入',
 			'web.serverSettings.probe.modelMissing' => ({required Object model}) => '⚠ 配置的模型 ${model} 不在列表中。从下方嵌入模型中选一个，或修正名称。',
@@ -9558,6 +9612,8 @@ extension on TranslationsZh {
 			'sessions.inspector.files.insertPathSubtitle' => '原样粘贴绝对路径',
 			'sessions.inspector.files.readContent' => '读取内容',
 			'sessions.inspector.files.readContentSubtitle' => '最多 256 KiB 纯文本',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.files.readFailedApi' => ({required Object status, required Object message}) => '读取失败（${status}）：${message}',
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => '读取失败：${error}',
 			'sessions.inspector.files.parent' => '上级',
@@ -9570,8 +9626,6 @@ extension on TranslationsZh {
 			'sessions.inspector.git.insertHash' => '插入哈希',
 			'sessions.inspector.git.showFullPatch' => '查看完整 patch',
 			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => '查看失败（${status}）：${message}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => '查看失败：${error}',
 			'sessions.inspector.git.tabStatus' => '状态',
 			'sessions.inspector.git.tabLog' => '日志',
@@ -10072,6 +10126,8 @@ extension on TranslationsZh {
 			'backups.restore.outputTitle' => 'pg_restore 输出',
 			'backups.restore.noPgRestoreOutput' => '（空 — 恢复无声完成）',
 			'backups.restore.manifestTitle' => '清单',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.manifestBackupId' => '备份 ID',
 			'backups.restore.manifestVersion' => '清单版本',
 			'backups.restore.manifestCreatedAt' => '创建时间',
@@ -10084,8 +10140,6 @@ extension on TranslationsZh {
 			'backups.restore.bytesRead' => '已读字节',
 			'backups.restore.targetDsnUsed' => '目标 DSN',
 			'backups.restore.targetDsnSelfLabel' => '（opendray 自身数据库）',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.done' => '完成',
 			'backups.inventory.title' => '备份里有什么',
 			'backups.inventory.summary' => ({required Object rows, required Object tables}) => '${rows} 行 · ${tables} 表',
@@ -10586,6 +10640,8 @@ extension on TranslationsZh {
 			'about.fields.app' => '应用',
 			'about.fields.version' => '版本',
 			'about.fields.versionFormat' => ({required Object version, required Object build}) => '${version}（build ${build}）',
+			_ => null,
+		} ?? switch (path) {
 			'about.fields.package' => '包名',
 			'about.fields.url' => 'URL',
 			'about.fields.signedInAs' => '登录账号',
@@ -10598,8 +10654,6 @@ extension on TranslationsZh {
 			'about.gateway.version' => '版本',
 			'about.gateway.commit' => '提交',
 			'about.gateway.checking' => '正在检查更新…',
-			_ => null,
-		} ?? switch (path) {
 			'about.gateway.upToDate' => '已是最新',
 			'about.gateway.updateAvailable' => ({required Object version}) => '有可用更新：${version}',
 			'about.gateway.releaseNotes' => '更新说明',

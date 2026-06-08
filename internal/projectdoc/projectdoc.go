@@ -868,6 +868,15 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 		}
 	}
 
+	// P-D — a frozen project (paused/archived) is shelved: drop its
+	// project-specific Notes + journal so a session spawned in it isn't primed
+	// with stale state. Cross-project Knowledge (global KB) still injects — it's
+	// transferable expertise, useful regardless of this project's lifecycle.
+	if status, _ := s.GetStatus(ctx, cwd); status.IsFrozen() {
+		goal, plan, techStack, recentActivity, handbook = "", "", "", "", ""
+		logs = nil
+	}
+
 	// M-KB — the global knowledge-base pages (cross-project reference) so a new
 	// session inherits our infrastructure, conventions, and hard-won lessons.
 	kbConventions := s.globalKBDoc(ctx, KindConventions)

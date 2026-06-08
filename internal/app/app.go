@@ -169,6 +169,20 @@ func (a knowledgeDocSink) PutKBDoc(ctx context.Context, cwd, kind, content strin
 	return err
 }
 
+// knowledgeLifecycle adapts *projectdoc.Service to knowledge.LifecycleFilter so
+// the KB drafter skips frozen (paused/archived) projects during handbook
+// distillation (P-D). A status lookup error defaults to "not frozen" — we'd
+// rather over-distill than silently drop an active project's handbook.
+type knowledgeLifecycle struct{ pd *projectdoc.Service }
+
+func (a knowledgeLifecycle) IsFrozen(ctx context.Context, cwd string) bool {
+	status, err := a.pd.GetStatus(ctx, cwd)
+	if err != nil {
+		return false
+	}
+	return status.IsFrozen()
+}
+
 // knowledgeLLM adapts the memory worker registry to knowledge.LLM so the
 // Phase 1B entity extractor gets a general completion path. It borrows the
 // TaskCapture worker config (the closest existing touchpoint: extract
@@ -750,7 +764,8 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			knowledgeKBDrafter = knowledge.NewKBDrafter(
 				knowledge.NewStore(st.Pool()), kbLLM,
 				knowledgeJournalSource{pd: projectDocSvc},
-				knowledgeDocSink{pd: projectDocSvc}, log)
+				knowledgeDocSink{pd: projectDocSvc}, log).
+				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc}) // P-D — skip frozen projects
 			knowledgeSvc.WithKBDrafter(knowledgeKBDrafter) // manual /kb/draft endpoint
 		}
 		knowledgeHandlers = knowledge.NewHandlers(knowledgeSvc, log)

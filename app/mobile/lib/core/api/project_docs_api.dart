@@ -86,6 +86,41 @@ class ProjectDocsApi {
     }
   }
 
+  // ── lifecycle (P-D) ────────────────────────────────────────────
+
+  /// Lists every known project with its lifecycle status + last activity.
+  /// [idleDays] overrides the auto-suggest threshold (0 disables).
+  Future<List<ProjectSummary>> listProjects({int? idleDays}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/project-docs/projects',
+        queryParameters: {if (idleDays != null) 'idle_days': idleDays},
+      );
+      final raw = res.data?['projects'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(ProjectSummary.fromJson)
+          .toList();
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  /// Sets a project's lifecycle status (active / paused / archived).
+  /// Frozen (paused/archived) projects are excluded from spawn injection
+  /// and cross-project Knowledge distillation.
+  Future<void> setLifecycle(String cwd, String status) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/api/v1/project-docs/lifecycle',
+        data: {'cwd': cwd, 'status': status},
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   // ── proposals ──────────────────────────────────────────────────
 
   Future<List<DocProposal>> listPendingProposals({String? cwd}) async {
@@ -225,6 +260,33 @@ class ProjectDoc {
   final String updatedBy;
 
   bool get isPersisted => id.isNotEmpty;
+}
+
+class ProjectSummary {
+  ProjectSummary({
+    required this.cwd,
+    required this.status,
+    required this.updatedBy,
+    required this.lastActivityAt,
+    required this.idleDays,
+    required this.suggestArchive,
+  });
+
+  factory ProjectSummary.fromJson(Map<String, dynamic> j) => ProjectSummary(
+    cwd: j['cwd']?.toString() ?? '',
+    status: j['status']?.toString() ?? 'active',
+    updatedBy: j['updated_by']?.toString() ?? 'operator',
+    lastActivityAt: DateTime.tryParse(j['last_activity_at']?.toString() ?? ''),
+    idleDays: (j['idle_days'] is int) ? j['idle_days'] as int : 0,
+    suggestArchive: j['suggest_archive'] == true,
+  );
+
+  final String cwd;
+  final String status;
+  final String updatedBy;
+  final DateTime? lastActivityAt;
+  final int idleDays;
+  final bool suggestArchive;
 }
 
 class DocProposal {

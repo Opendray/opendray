@@ -1105,6 +1105,7 @@ class _TranslationsWebProjectEs extends TranslationsWebProjectEn {
 	@override late final _TranslationsWebProjectInboxEs inbox = _TranslationsWebProjectInboxEs._(_root);
 	@override late final _TranslationsWebProjectArchivedEs archived = _TranslationsWebProjectArchivedEs._(_root);
 	@override late final _TranslationsWebProjectResetEs reset = _TranslationsWebProjectResetEs._(_root);
+	@override late final _TranslationsWebProjectLifecycleEs lifecycle = _TranslationsWebProjectLifecycleEs._(_root);
 }
 
 // Path: web.memoryInspector
@@ -3165,6 +3166,23 @@ class _TranslationsWebProjectResetEs extends TranslationsWebProjectResetEn {
 	@override String successToast({required Object summary}) => 'Restablecido: se eliminó ${summary}';
 	@override late final _TranslationsWebProjectResetSummaryEs summary = _TranslationsWebProjectResetSummaryEs._(_root);
 	@override String get failedToast => 'Error al restablecer';
+}
+
+// Path: web.project.lifecycle
+class _TranslationsWebProjectLifecycleEs extends TranslationsWebProjectLifecycleEn {
+	_TranslationsWebProjectLifecycleEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsWebProjectLifecycleStatusEs status = _TranslationsWebProjectLifecycleStatusEs._(_root);
+	@override String get activate => 'Activar';
+	@override String get pause => 'Pausar';
+	@override String get archive => 'Archivar';
+	@override String get idleSuggest => 'Inactivo — considera archivar';
+	@override String idleHint({required Object days}) => 'Sin actividad durante ${days} días';
+	@override String get failedToast => 'No se pudo cambiar el estado del proyecto';
+	@override late final _TranslationsWebProjectLifecycleAppliedEs applied = _TranslationsWebProjectLifecycleAppliedEs._(_root);
 }
 
 // Path: web.memoryInspector.status
@@ -6051,6 +6069,30 @@ class _TranslationsWebProjectResetSummaryEs extends TranslationsWebProjectResetS
 	@override String memories({required Object count}) => '${count} memorias';
 }
 
+// Path: web.project.lifecycle.status
+class _TranslationsWebProjectLifecycleStatusEs extends TranslationsWebProjectLifecycleStatusEn {
+	_TranslationsWebProjectLifecycleStatusEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get active => 'Activo';
+	@override String get paused => 'Pausado';
+	@override String get archived => 'Archivado';
+}
+
+// Path: web.project.lifecycle.applied
+class _TranslationsWebProjectLifecycleAppliedEs extends TranslationsWebProjectLifecycleAppliedEn {
+	_TranslationsWebProjectLifecycleAppliedEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get active => 'Proyecto reactivado';
+	@override String get paused => 'Proyecto pausado';
+	@override String get archived => 'Proyecto archivado';
+}
+
 // Path: web.memoryInspector.scope.values
 class _TranslationsWebMemoryInspectorScopeValuesEs extends TranslationsWebMemoryInspectorScopeValuesEn {
 	_TranslationsWebMemoryInspectorScopeValuesEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -7953,6 +7995,18 @@ extension on TranslationsEs {
 			'web.project.reset.summary.cleanup' => ({required Object count}) => '${count} limpieza',
 			'web.project.reset.summary.memories' => ({required Object count}) => '${count} memorias',
 			'web.project.reset.failedToast' => 'Error al restablecer',
+			'web.project.lifecycle.status.active' => 'Activo',
+			'web.project.lifecycle.status.paused' => 'Pausado',
+			'web.project.lifecycle.status.archived' => 'Archivado',
+			'web.project.lifecycle.activate' => 'Activar',
+			'web.project.lifecycle.pause' => 'Pausar',
+			'web.project.lifecycle.archive' => 'Archivar',
+			'web.project.lifecycle.idleSuggest' => 'Inactivo — considera archivar',
+			'web.project.lifecycle.idleHint' => ({required Object days}) => 'Sin actividad durante ${days} días',
+			'web.project.lifecycle.failedToast' => 'No se pudo cambiar el estado del proyecto',
+			'web.project.lifecycle.applied.active' => 'Proyecto reactivado',
+			'web.project.lifecycle.applied.paused' => 'Proyecto pausado',
+			'web.project.lifecycle.applied.archived' => 'Proyecto archivado',
 			'web.memoryInspector.status.label' => 'Embedder activo',
 			'web.memoryInspector.status.unavailable' => 'no disponible',
 			'web.memoryInspector.status.probing' => 'sondeando…',
@@ -8016,6 +8070,8 @@ extension on TranslationsEs {
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => 'Se migraron ${reembed}/${examined} memorias a ${to}',
 			'web.memoryInspector.toasts.migrationFailed' => 'La migración falló',
 			'web.memoryInspector.toasts.syncIngested_one' => ({required Object count}) => 'Se importó ${count} nuevo archivo de memoria',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.toasts.syncIngested_other' => ({required Object count}) => 'Se importaron ${count} nuevos archivos de memoria',
 			'web.memoryInspector.toasts.syncEmpty' => 'No hay nuevos archivos .md que sincronizar',
 			'web.memoryInspector.toasts.syncEmptyDescription' => 'Ya está sincronizado, o no hay directorio de memoria de Claude para este cwd.',
@@ -8028,8 +8084,6 @@ extension on TranslationsEs {
 			'web.memoryInspector.bulkDelete.items_one' => ({required Object count}) => '${count} elemento de memoria',
 			'web.memoryInspector.bulkDelete.items_other' => ({required Object count}) => '${count} elementos de memoria',
 			'web.memoryInspector.bulkDelete.cancel' => 'Cancelar',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.bulkDelete.deleteAll' => 'Eliminar todo',
 			'web.memoryInspector.addMem.title' => 'Añadir memoria',
 			'web.memoryInspector.addMem.description' => 'Crea manualmente una memoria. Los agentes las crean automáticamente mediante la herramienta MCP <1>memory_store</1>. Este formulario es para los casos en que el operador quiere insertar un hecho sin pasar por un agente.',
@@ -8530,6 +8584,8 @@ extension on TranslationsEs {
 			'web.integrations.proxy.prefixPlaceholder' => '<prefix>',
 			'web.plugins.title' => 'Plugins del Inspector',
 			'web.plugins.subtitle' => 'Configura las fuentes de datos que se muestran en el panel Inspector de la derecha cuando hay una session abierta. Cada plugin es solo para administradores y se comparte entre todas las sessions. Haz clic en el encabezado de una sección para contraerla.',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.common.loading' => 'Cargando…',
 			'web.plugins.common.cancel' => 'Cancelar',
 			'web.plugins.common.edit' => 'Editar',
@@ -8542,8 +8598,6 @@ extension on TranslationsEs {
 			'web.plugins.mcp.empty' => 'Aún no hay servidores MCP. Añade uno para exponer herramientas adicionales a tus sessions de agente.',
 			'web.plugins.mcp.columns.name' => 'Nombre',
 			'web.plugins.mcp.columns.transport' => 'Transport',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.mcp.columns.spec' => 'Spec',
 			'web.plugins.mcp.columns.enabled' => 'Habilitado',
 			'web.plugins.mcp.noUrl' => 'sin url',
@@ -9044,6 +9098,8 @@ extension on TranslationsEs {
 			'web.serverSettings.memoryInspectorCard.heading' => 'Inspector',
 			'web.serverSettings.memoryInspectorCard.description' => 'Explora, busca y edita las memorias almacenadas en la página dedicada.',
 			'web.serverSettings.memoryInspectorCard.openButton' => 'Abrir Memory →',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.localOnnxBanner' => 'Requiere que el binario se compile con <1>-tags local_onnx</1>. La compilación estándar devuelve un error de stub claro cuando se selecciona este backend. Consulta el tutorial <3>Memory → ONNX local</3> para los pasos de configuración.',
 			'web.serverSettings.stringList.noneDefault' => '(ninguno, usando los valores por defecto integrados)',
 			'web.serverSettings.stringList.addPath' => 'Añadir ruta',
@@ -9056,8 +9112,6 @@ extension on TranslationsEs {
 			'web.serverSettings.httpHelpers.presetTip.lmStudio' => 'Servidor local de LM Studio',
 			'web.serverSettings.httpHelpers.presetTip.openai' => 'Nube de OpenAI (necesita API key)',
 			'web.serverSettings.probe.unreachable' => ({required Object error}) => '✗ inaccesible: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.probe.connectionFailed' => 'conexión fallida',
 			'web.serverSettings.probe.reachable' => ({required Object detected, required Object total, required Object embedding}) => '✓ accesible ${detected}· ${total} modelo(s) en total · ${embedding} embedding',
 			'web.serverSettings.probe.modelMissing' => ({required Object model}) => '⚠ El modelo configurado ${model} no está en la lista. Elige uno de los modelos de embedding de abajo o corrige el nombre.',
@@ -9558,6 +9612,8 @@ extension on TranslationsEs {
 			'sessions.inspector.files.insertPathSubtitle' => 'Pega la ruta absoluta tal cual',
 			'sessions.inspector.files.readContent' => 'Leer contenido',
 			'sessions.inspector.files.readContentSubtitle' => 'Hasta 256 KiB de texto plano',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.files.readFailedApi' => ({required Object status, required Object message}) => 'Falló la lectura (${status}): ${message}',
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => 'Falló la lectura: ${error}',
 			'sessions.inspector.files.parent' => 'Superior',
@@ -9570,8 +9626,6 @@ extension on TranslationsEs {
 			'sessions.inspector.git.insertHash' => 'Insertar hash',
 			'sessions.inspector.git.showFullPatch' => 'Mostrar el parche completo',
 			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => 'Falló al mostrar (${status}): ${message}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => 'Falló al mostrar: ${error}',
 			'sessions.inspector.git.tabStatus' => 'Estado',
 			'sessions.inspector.git.tabLog' => 'Log',
@@ -10072,6 +10126,8 @@ extension on TranslationsEs {
 			'backups.restore.outputTitle' => 'Salida de pg_restore',
 			'backups.restore.noPgRestoreOutput' => '(vacío: la restauración se completó sin salida)',
 			'backups.restore.manifestTitle' => 'Manifiesto',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.manifestBackupId' => 'ID de copia de seguridad',
 			'backups.restore.manifestVersion' => 'Versión del manifiesto',
 			'backups.restore.manifestCreatedAt' => 'Creado',
@@ -10084,8 +10140,6 @@ extension on TranslationsEs {
 			'backups.restore.bytesRead' => 'Bytes leídos',
 			'backups.restore.targetDsnUsed' => 'DSN de destino',
 			'backups.restore.targetDsnSelfLabel' => '(la propia base de datos de opendray)',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.done' => 'Hecho',
 			'backups.inventory.title' => 'Qué contiene una copia de seguridad',
 			'backups.inventory.summary' => ({required Object rows, required Object tables}) => '${rows} filas · ${tables} tablas',
@@ -10586,6 +10640,8 @@ extension on TranslationsEs {
 			'about.fields.app' => 'App',
 			'about.fields.version' => 'Versión',
 			'about.fields.versionFormat' => ({required Object version, required Object build}) => '${version} (build ${build})',
+			_ => null,
+		} ?? switch (path) {
 			'about.fields.package' => 'Paquete',
 			'about.fields.url' => 'URL',
 			'about.fields.signedInAs' => 'Sesión iniciada como',
@@ -10598,8 +10654,6 @@ extension on TranslationsEs {
 			'about.gateway.version' => 'Versión',
 			'about.gateway.commit' => 'Commit',
 			'about.gateway.checking' => 'Buscando actualizaciones…',
-			_ => null,
-		} ?? switch (path) {
 			'about.gateway.upToDate' => 'Actualizado',
 			'about.gateway.updateAvailable' => ({required Object version}) => 'Actualización disponible: ${version}',
 			'about.gateway.releaseNotes' => 'Notas de la versión',
