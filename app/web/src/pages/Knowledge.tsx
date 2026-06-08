@@ -416,7 +416,8 @@ function GraphBrowser() {
           )}
         </div>
         <div className="mt-2 flex flex-wrap gap-1">
-          {(['all', 'entity', 'fact', 'playbook', 'skill'] as const).map((k) => (
+          {/* 'fact' retired (P-G): facts live in Memory, not the graph. */}
+          {(['all', 'entity', 'playbook', 'skill'] as const).map((k) => (
             <button
               key={k}
               onClick={() => setKind(k)}

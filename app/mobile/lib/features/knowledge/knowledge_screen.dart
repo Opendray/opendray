@@ -180,10 +180,10 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
+                // 'fact' retired (P-G): facts live in Memory, not the graph.
                 for (final k in const [
                   'all',
                   'entity',
-                  'fact',
                   'playbook',
                   'skill',
                 ])
