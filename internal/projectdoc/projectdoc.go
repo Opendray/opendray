@@ -851,7 +851,7 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 		return "", fmt.Errorf("projectdoc: render spawn logs: %w", err)
 	}
 
-	var goal, plan, techStack, recentActivity string
+	var goal, plan, techStack, recentActivity, handbook string
 	for _, d := range docs {
 		switch d.Kind {
 		case KindGoal:
@@ -862,10 +862,20 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 			techStack = strings.TrimSpace(d.Content)
 		case KindRecentActivity:
 			recentActivity = strings.TrimSpace(d.Content)
+		case KindHandbook:
+			handbook = stripKBSig(d.Content)
 		}
 	}
 
-	if goal == "" && plan == "" && techStack == "" && recentActivity == "" && len(logs) == 0 {
+	// M-KB — the global knowledge-base pages (cross-project reference) so a new
+	// session inherits our infrastructure, conventions, and hard-won lessons.
+	kbConventions := s.globalKBDoc(ctx, KindConventions)
+	kbInfrastructure := s.globalKBDoc(ctx, KindInfrastructure)
+	kbLessons := s.globalKBDoc(ctx, KindLessons)
+
+	if goal == "" && plan == "" && techStack == "" && recentActivity == "" &&
+		handbook == "" && kbConventions == "" && kbInfrastructure == "" &&
+		kbLessons == "" && len(logs) == 0 {
 		return "", nil
 	}
 
@@ -901,6 +911,10 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 	appendSection("Project plan", plan)
 	appendSection("Tech stack & structure", techStack)
 	appendSection("Project goal", goal)
+	appendSection("Project handbook", handbook)
+	appendSection("Conventions (how we work)", kbConventions)
+	appendSection("Infrastructure", kbInfrastructure)
+	appendSection("Lessons", kbLessons)
 	appendSection("Recent activity", recentActivity)
 
 	if len(logs) > 0 && !truncated {
@@ -919,6 +933,30 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 
 	b.WriteString(footer)
 	return b.String(), nil
+}
+
+// globalKBDoc fetches a global M-KB page (infrastructure / conventions /
+// lessons) for spawn injection. Empty on absence or error — never blocks spawn.
+func (s *Service) globalKBDoc(ctx context.Context, kind Kind) string {
+	d, err := s.GetDoc(ctx, GlobalCwd, kind)
+	if err != nil {
+		return ""
+	}
+	return stripKBSig(d.Content)
+}
+
+// stripKBSig removes the KB drafter's hidden signature marker line so it never
+// leaks into a spawn prompt or a rendered page.
+func stripKBSig(content string) string {
+	var b strings.Builder
+	for _, line := range strings.Split(content, "\n") {
+		if strings.Contains(line, "kb-sig:") {
+			continue
+		}
+		b.WriteString(line)
+		b.WriteByte('\n')
+	}
+	return strings.TrimSpace(b.String())
 }
 
 // renderJournalSection assembles the journal block, stopping when
