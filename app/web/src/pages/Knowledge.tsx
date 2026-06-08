@@ -147,6 +147,7 @@ function KnowledgeBaseView() {
     'kb_infrastructure',
     'kb_conventions',
     'kb_lessons',
+    'kb_reusable',
   ]
 
   return (

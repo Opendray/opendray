@@ -7464,6 +7464,7 @@ class _TranslationsWebKnowledgeKbKindsZh extends TranslationsWebKnowledgeKbKinds
 	@override String get kb_infrastructure => '基础设施';
 	@override String get kb_conventions => '开发规范';
 	@override String get kb_lessons => '经验教训';
+	@override String get kb_reusable => '可复用功能';
 	@override String get kb_handbook => '项目手册';
 }
 
@@ -9416,6 +9417,7 @@ extension on TranslationsZh {
 			'web.knowledge.kb.kinds.kb_infrastructure' => '基础设施',
 			'web.knowledge.kb.kinds.kb_conventions' => '开发规范',
 			'web.knowledge.kb.kinds.kb_lessons' => '经验教训',
+			'web.knowledge.kb.kinds.kb_reusable' => '可复用功能',
 			'web.knowledge.kb.kinds.kb_handbook' => '项目手册',
 			'web.knowledge.kinds.all' => '全部',
 			'web.knowledge.kinds.entity' => '实体',
@@ -9568,9 +9570,9 @@ extension on TranslationsZh {
 			'sessions.inspector.git.insertHash' => '插入哈希',
 			'sessions.inspector.git.showFullPatch' => '查看完整 patch',
 			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => '查看失败（${status}）：${message}',
-			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => '查看失败：${error}',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => '查看失败：${error}',
 			'sessions.inspector.git.tabStatus' => '状态',
 			'sessions.inspector.git.tabLog' => '日志',
 			'sessions.inspector.tasks.runCommand' => '运行命令',
@@ -10082,9 +10084,9 @@ extension on TranslationsZh {
 			'backups.restore.bytesRead' => '已读字节',
 			'backups.restore.targetDsnUsed' => '目标 DSN',
 			'backups.restore.targetDsnSelfLabel' => '（opendray 自身数据库）',
-			'backups.restore.done' => '完成',
 			_ => null,
 		} ?? switch (path) {
+			'backups.restore.done' => '完成',
 			'backups.inventory.title' => '备份里有什么',
 			'backups.inventory.summary' => ({required Object rows, required Object tables}) => '${rows} 行 · ${tables} 表',
 			'backups.inventory.description' => 'opendray Postgres 数据库的实时行数。备份会捕获以下所有行；磁盘上的二进制工件不包含在内。',
@@ -10596,9 +10598,9 @@ extension on TranslationsZh {
 			'about.gateway.version' => '版本',
 			'about.gateway.commit' => '提交',
 			'about.gateway.checking' => '正在检查更新…',
-			'about.gateway.upToDate' => '已是最新',
 			_ => null,
 		} ?? switch (path) {
+			'about.gateway.upToDate' => '已是最新',
 			'about.gateway.updateAvailable' => ({required Object version}) => '有可用更新：${version}',
 			'about.gateway.releaseNotes' => '更新说明',
 			'about.gateway.checkFailed' => '无法检查更新',

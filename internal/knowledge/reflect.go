@@ -70,6 +70,7 @@ Rules:
 - title = short imperative, e.g. "Ship an unreleased build to the local Mac".
 - applies_when = the trigger/situation. steps = concrete + ordered, reusing the real commands / paths / file names from the log. pitfalls = the actual failure modes that were hit.
 - Never duplicate an existing playbook title.
+- Reflect the CURRENT way of doing things — if the log shows a tool / path / process was replaced or deprecated, base the playbook on the current one, not the superseded predecessor.
 - JSON only: no prose, no markdown fences.`
 
 // ReflectProject drafts new playbooks for one project from its facts. Returns

@@ -20,6 +20,7 @@ export type DocKind =
   | 'kb_infrastructure'
   | 'kb_conventions'
   | 'kb_lessons'
+  | 'kb_reusable'
   | 'kb_handbook'
 export type DocAuthor = 'operator' | 'agent' | 'scanner'
 

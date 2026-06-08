@@ -7464,6 +7464,7 @@ class _TranslationsWebKnowledgeKbKindsEs extends TranslationsWebKnowledgeKbKinds
 	@override String get kb_infrastructure => 'Infraestructura';
 	@override String get kb_conventions => 'Convenciones';
 	@override String get kb_lessons => 'Lecciones';
+	@override String get kb_reusable => 'Funciones reutilizables';
 	@override String get kb_handbook => 'Manual';
 }
 
@@ -9416,6 +9417,7 @@ extension on TranslationsEs {
 			'web.knowledge.kb.kinds.kb_infrastructure' => 'Infraestructura',
 			'web.knowledge.kb.kinds.kb_conventions' => 'Convenciones',
 			'web.knowledge.kb.kinds.kb_lessons' => 'Lecciones',
+			'web.knowledge.kb.kinds.kb_reusable' => 'Funciones reutilizables',
 			'web.knowledge.kb.kinds.kb_handbook' => 'Manual',
 			'web.knowledge.kinds.all' => 'Todos',
 			'web.knowledge.kinds.entity' => 'Entidades',
@@ -9568,9 +9570,9 @@ extension on TranslationsEs {
 			'sessions.inspector.git.insertHash' => 'Insertar hash',
 			'sessions.inspector.git.showFullPatch' => 'Mostrar el parche completo',
 			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => 'Falló al mostrar (${status}): ${message}',
-			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => 'Falló al mostrar: ${error}',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => 'Falló al mostrar: ${error}',
 			'sessions.inspector.git.tabStatus' => 'Estado',
 			'sessions.inspector.git.tabLog' => 'Log',
 			'sessions.inspector.tasks.runCommand' => 'Ejecutar comando',
@@ -10082,9 +10084,9 @@ extension on TranslationsEs {
 			'backups.restore.bytesRead' => 'Bytes leídos',
 			'backups.restore.targetDsnUsed' => 'DSN de destino',
 			'backups.restore.targetDsnSelfLabel' => '(la propia base de datos de opendray)',
-			'backups.restore.done' => 'Hecho',
 			_ => null,
 		} ?? switch (path) {
+			'backups.restore.done' => 'Hecho',
 			'backups.inventory.title' => 'Qué contiene una copia de seguridad',
 			'backups.inventory.summary' => ({required Object rows, required Object tables}) => '${rows} filas · ${tables} tablas',
 			'backups.inventory.description' => 'Recuentos de filas en vivo desde la base de datos Postgres de opendray. Las copias de seguridad capturan todas las filas de abajo; los artefactos binarios en disco no se incluyen.',
@@ -10596,9 +10598,9 @@ extension on TranslationsEs {
 			'about.gateway.version' => 'Versión',
 			'about.gateway.commit' => 'Commit',
 			'about.gateway.checking' => 'Buscando actualizaciones…',
-			'about.gateway.upToDate' => 'Actualizado',
 			_ => null,
 		} ?? switch (path) {
+			'about.gateway.upToDate' => 'Actualizado',
 			'about.gateway.updateAvailable' => ({required Object version}) => 'Actualización disponible: ${version}',
 			'about.gateway.releaseNotes' => 'Notas de la versión',
 			'about.gateway.checkFailed' => 'Comprobación de actualizaciones no disponible',

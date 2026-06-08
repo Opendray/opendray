@@ -29,6 +29,7 @@ const (
 	KBKindInfrastructure = "kb_infrastructure"
 	KBKindConventions    = "kb_conventions"
 	KBKindLessons        = "kb_lessons"
+	KBKindReusable       = "kb_reusable"
 	KBKindHandbook       = "kb_handbook"
 )
 
@@ -68,6 +69,7 @@ const kbSafety = `
 Output human-readable GitHub-flavoured Markdown. Use "## " section headers and tight bullet lists.
 Deduplicate aggressively — merge restatements of the same fact into one line.
 NEVER include secrets: passwords, API keys, tokens, certificates' private material. If a value looks like a credential, omit it (you may name WHERE it is stored, never the value).
+When information conflicts across time, describe only the CURRENT state — if something was renamed, deprecated, or replaced (e.g. an old tool/host/path superseded by a new one), present the current one and note the predecessor as deprecated; never present superseded state as current.
 Be concise and factual. No preamble, no "here is", no markdown code fences around the whole document.`
 
 const kbInfraSystem = `You curate the home-lab / ecosystem INFRASTRUCTURE reference from a developer's accumulated facts and entities.
@@ -80,6 +82,10 @@ Capture the RULES the developer follows, as imperative bullets.` + kbSafety
 
 const kbLessonsSystem = `You curate a LESSONS / playbooks reference from already-distilled playbooks.
 Group related playbooks under thematic "## " sections. For each, give a one-line how-to and the key pitfall. Keep it skimmable — this is the "what we learned the hard way" index.` + kbSafety
+
+const kbReusableSystem = `You curate a REUSABLE FEATURES catalog from what has been built across the developer's projects.
+List features / components / patterns / integrations that could be LIFTED into a NEW project, grouped under "## " themes. For each: what it is, which project it came from, and how to reuse it.
+Only include things genuinely reusable across projects — skip one-off project specifics.` + kbSafety
 
 const kbHandbookSystem = `You curate a PROJECT HANDBOOK from one project's work log (journal), facts, and playbooks.
 Organize into: What it is, Tech stack & layout, How to build / run / deploy, Infrastructure it uses, Collaboration boundaries, Key lessons & pitfalls.
@@ -110,6 +116,7 @@ func (d *KBDrafter) DraftAll(ctx context.Context) ([]KBDraftResult, error) {
 	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindInfrastructure, kbInfraSystem, buildInfraFeedstock(facts, entities)))
 	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindConventions, kbConvSystem, buildConvFeedstock(facts)))
 	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindLessons, kbLessonsSystem, buildLessonsFeedstock(playbooks)))
+	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindReusable, kbReusableSystem, buildReusableFeedstock(playbooks, facts)))
 
 	keys, err := d.store.ListProjectScopeKeys(ctx)
 	if err != nil {
@@ -225,6 +232,21 @@ func buildLessonsFeedstock(playbooks []Node) string {
 			b.WriteByte('\n')
 		}
 	}
+	return b.String()
+}
+
+func buildReusableFeedstock(playbooks, facts []Node) string {
+	var b strings.Builder
+	if len(playbooks) > 0 {
+		b.WriteString("PLAYBOOKS (how things were built):\n")
+		for _, p := range playbooks {
+			b.WriteString("- ")
+			b.WriteString(p.Title)
+			b.WriteByte('\n')
+		}
+	}
+	b.WriteString("\nFACTS (mine for built features / components / integrations worth reusing):\n")
+	writeFactTitles(&b, facts)
 	return b.String()
 }
 

@@ -341,6 +341,8 @@ class _KbViewState extends ConsumerState<_KbView> {
         return t.web.knowledge.kb.kinds.kb_conventions;
       case 'kb_lessons':
         return t.web.knowledge.kb.kinds.kb_lessons;
+      case 'kb_reusable':
+        return t.web.knowledge.kb.kinds.kb_reusable;
       case 'kb_handbook':
         return t.web.knowledge.kb.kinds.kb_handbook;
       default:
@@ -438,6 +440,7 @@ class _KbViewState extends ConsumerState<_KbView> {
                   'kb_infrastructure',
                   'kb_conventions',
                   'kb_lessons',
+                  'kb_reusable',
                 ])
                   Padding(
                     padding: const EdgeInsets.only(right: 6),

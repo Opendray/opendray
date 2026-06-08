@@ -53,6 +53,7 @@ const (
 	KindInfrastructure Kind = "kb_infrastructure"
 	KindConventions    Kind = "kb_conventions"
 	KindLessons        Kind = "kb_lessons"
+	KindReusable       Kind = "kb_reusable" // reusable features/components to lift into new projects
 	KindHandbook       Kind = "kb_handbook"
 )
 
@@ -66,7 +67,7 @@ const GlobalCwd = "__global__"
 func ValidKind(k Kind) bool {
 	switch k {
 	case KindGoal, KindPlan, KindTechStack, KindRecentActivity,
-		KindInfrastructure, KindConventions, KindLessons, KindHandbook:
+		KindInfrastructure, KindConventions, KindLessons, KindReusable, KindHandbook:
 		return true
 	}
 	return false
@@ -872,10 +873,11 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 	kbConventions := s.globalKBDoc(ctx, KindConventions)
 	kbInfrastructure := s.globalKBDoc(ctx, KindInfrastructure)
 	kbLessons := s.globalKBDoc(ctx, KindLessons)
+	kbReusable := s.globalKBDoc(ctx, KindReusable)
 
 	if goal == "" && plan == "" && techStack == "" && recentActivity == "" &&
 		handbook == "" && kbConventions == "" && kbInfrastructure == "" &&
-		kbLessons == "" && len(logs) == 0 {
+		kbLessons == "" && kbReusable == "" && len(logs) == 0 {
 		return "", nil
 	}
 
@@ -915,6 +917,7 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 	appendSection("Conventions (how we work)", kbConventions)
 	appendSection("Infrastructure", kbInfrastructure)
 	appendSection("Lessons", kbLessons)
+	appendSection("Reusable features", kbReusable)
 	appendSection("Recent activity", recentActivity)
 
 	if len(logs) > 0 && !truncated {

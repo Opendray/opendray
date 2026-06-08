@@ -13969,6 +13969,9 @@ class TranslationsWebKnowledgeKbKindsEn {
 	/// en: 'Lessons'
 	String get kb_lessons => 'Lessons';
 
+	/// en: 'Reusable features'
+	String get kb_reusable => 'Reusable features';
+
 	/// en: 'Handbook'
 	String get kb_handbook => 'Handbook';
 }
@@ -15948,6 +15951,7 @@ extension on Translations {
 			'web.knowledge.kb.kinds.kb_infrastructure' => 'Infrastructure',
 			'web.knowledge.kb.kinds.kb_conventions' => 'Conventions',
 			'web.knowledge.kb.kinds.kb_lessons' => 'Lessons',
+			'web.knowledge.kb.kinds.kb_reusable' => 'Reusable features',
 			'web.knowledge.kb.kinds.kb_handbook' => 'Handbook',
 			'web.knowledge.kinds.all' => 'All',
 			'web.knowledge.kinds.entity' => 'Entities',
@@ -16100,9 +16104,9 @@ extension on Translations {
 			'sessions.inspector.git.insertHash' => 'Insert hash',
 			'sessions.inspector.git.showFullPatch' => 'Show full patch',
 			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => 'Show failed (${status}): ${message}',
-			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => 'Show failed: ${error}',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => 'Show failed: ${error}',
 			'sessions.inspector.git.tabStatus' => 'Status',
 			'sessions.inspector.git.tabLog' => 'Log',
 			'sessions.inspector.tasks.runCommand' => 'Run command',
@@ -16614,9 +16618,9 @@ extension on Translations {
 			'backups.restore.bytesRead' => 'Bytes read',
 			'backups.restore.targetDsnUsed' => 'Target DSN',
 			'backups.restore.targetDsnSelfLabel' => '(opendray\'s own DB)',
-			'backups.restore.done' => 'Done',
 			_ => null,
 		} ?? switch (path) {
+			'backups.restore.done' => 'Done',
 			'backups.inventory.title' => 'What\'s in a backup',
 			'backups.inventory.summary' => ({required Object rows, required Object tables}) => '${rows} rows · ${tables} tables',
 			'backups.inventory.description' => 'Live row counts from opendray\'s Postgres database. Backups capture every row below; binary artifacts on disk are not included.',
@@ -17128,9 +17132,9 @@ extension on Translations {
 			'about.gateway.version' => 'Version',
 			'about.gateway.commit' => 'Commit',
 			'about.gateway.checking' => 'Checking for updates…',
-			'about.gateway.upToDate' => 'Up to date',
 			_ => null,
 		} ?? switch (path) {
+			'about.gateway.upToDate' => 'Up to date',
 			'about.gateway.updateAvailable' => ({required Object version}) => 'Update available: ${version}',
 			'about.gateway.releaseNotes' => 'Release notes',
 			'about.gateway.checkFailed' => 'Update check unavailable',
