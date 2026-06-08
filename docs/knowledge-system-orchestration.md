@@ -108,13 +108,13 @@ The Knowledge web page already leads with the KB; the graph tab is the demoted v
 
 The same discipline as the M-KB work: additive schema, feature-flagged, one-way deps, local-until-tested.
 
-- **P-A — De-dup + ownership.** Stop surfacing/injecting goal/plan from Memory; Notes becomes canonical. (No schema change; injection + capture rules only.)
-- **P-B — Notes AI drive.** Consolidation proposes goal/plan/architecture/handbook from Memory+Journal (generalize the plan-drift detector). Propose→approve. Highest user value.
-- **P-C — Unified scheduler.** Fold anchor/reflect/KB/notes sweeps into one consolidation loop; shared dirty-check.
-- **P-D — Project lifecycle.** `status` column + archive UI + injection/distillation skip.
-- **P-E — Supersession.** Alias map + drafter "prefer-recent/mark-superseded" + entity supersedes edges.
-- **P-F — Knowledge: reusable-features page.**
-- **P-G — Graph demotion / fact-node retirement.**
+- **P-A — De-dup + ownership.** ✅ Folded: goal/plan are already canonical in Notes (projectdoc); Notes is now AI-current via P-B, and fact-node de-dup is P-G. No separate change needed.
+- **P-B — Notes AI drive.** ✅ DONE (d7c0779). Generalized the plan-drift detector to also propose GOAL on session-end; Notes stays AI-current via propose→approve. (Architecture proposals deferred — tech_stack stays scanner-managed.)
+- **P-C — Unified scheduler.** ⏳ PENDING. Fold anchor/reflect/KB/notes sweeps into one consolidation loop; shared dirty-check.
+- **P-D — Project lifecycle.** ⏳ PENDING. `status` (active/paused/archived) + archive UI + idle auto-suggest + injection/distillation skip.
+- **P-E — Supersession.** ✅ DONE (65d85c1). KB + reflect prompts prefer current state / mark superseded. (Explicit alias map + entity supersedes edges deferred — prompt handles RCC→opendray.)
+- **P-F — Knowledge: reusable-features page.** ✅ DONE (65d85c1). New `kb_reusable` global page, end-to-end.
+- **P-G — Graph demotion / fact-node retirement.** ⏳ PENDING (biggest). Retiring fact nodes requires re-pointing reflect + KB feedstock from fact-nodes to Memory directly (new MemorySource for the drafters) — a substantial rewire; do carefully in a fresh pass.
 
 Each phase: build → local rebuild + restart → operator validates → next. Push only after the whole arc is accepted.
 
