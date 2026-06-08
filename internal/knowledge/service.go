@@ -19,6 +19,7 @@ type Service struct {
 	emb       Embedder                    // optional; semantic search + backfill
 	skillSink SkillSink                   // optional; render promoted skills
 	reanchor  func(context.Context) error // optional; re-derive the graph after reset
+	kbDrafter *KBDrafter                  // optional; M-KB curated page drafting
 	log       *slog.Logger
 }
 
@@ -216,6 +217,21 @@ func (s *Service) Reset(ctx context.Context) error {
 		}()
 	}
 	return nil
+}
+
+// WithKBDrafter wires the KB-page drafter so the manual draft endpoint can
+// regenerate the curated knowledge-base pages on demand.
+func (s *Service) WithKBDrafter(d *KBDrafter) *Service {
+	s.kbDrafter = d
+	return s
+}
+
+// DraftKB regenerates all curated KB pages now, returning per-page results.
+func (s *Service) DraftKB(ctx context.Context) ([]KBDraftResult, error) {
+	if s.kbDrafter == nil {
+		return nil, errors.New("knowledge: KB drafter not configured")
+	}
+	return s.kbDrafter.DraftAll(ctx)
 }
 
 // DeleteNode removes a node — used to undo a mis-click (an accidental skillify

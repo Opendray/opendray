@@ -43,6 +43,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Get("/brain", h.projectBrain)
 		r.Get("/search", h.search)
 		r.Post("/reset", h.reset)
+		r.Post("/kb/draft", h.draftKB)
 	})
 }
 
@@ -199,6 +200,15 @@ func (h *Handlers) deleteNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handlers) draftKB(w http.ResponseWriter, r *http.Request) {
+	res, err := h.svc.DraftKB(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"results": res})
 }
 
 func (h *Handlers) reset(w http.ResponseWriter, r *http.Request) {

@@ -736,6 +736,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				knowledge.NewStore(st.Pool()), kgLLM,
 				knowledgeJournalSource{pd: projectDocSvc},
 				knowledgeDocSink{pd: projectDocSvc}, log)
+			knowledgeSvc.WithKBDrafter(knowledgeKBDrafter) // manual /kb/draft endpoint
 		}
 		knowledgeHandlers = knowledge.NewHandlers(knowledgeSvc, log)
 		log.Info("knowledge graph (M-KG) enabled", "anchorer", knowledgeAnchorer != nil)

@@ -85,29 +85,40 @@ const kbHandbookSystem = `You curate a PROJECT HANDBOOK from one project's work 
 Organize into: What it is, Tech stack & layout, How to build / run / deploy, Infrastructure it uses, Collaboration boundaries, Key lessons & pitfalls.
 Prefer concrete commands / paths / hosts from the log.` + kbSafety
 
+// KBDraftResult reports the outcome of drafting one KB page (returned by the
+// manual draft endpoint so failures are observable without log access).
+type KBDraftResult struct {
+	Kind   string `json:"kind"`
+	Cwd    string `json:"cwd"`
+	Status string `json:"status"` // written | skipped-empty | skipped-locked | skipped-unchanged | error
+	Bytes  int    `json:"bytes,omitempty"`
+	Err    string `json:"error,omitempty"`
+}
+
 // DraftAll refreshes every KB page once: the three global pages + one handbook
 // per non-ephemeral project. Each page is lock-aware and dirty-checked, so an
-// unchanged or human-edited page costs no LLM call.
-func (d *KBDrafter) DraftAll(ctx context.Context) error {
+// unchanged or human-edited page costs no LLM call. Returns per-page results.
+func (d *KBDrafter) DraftAll(ctx context.Context) ([]KBDraftResult, error) {
 	if d.llm == nil || d.docs == nil {
-		return nil
+		return nil, nil
 	}
 	facts, _ := d.store.ListNodes(ctx, NodeFilter{Kind: KindFact, Limit: 400})
 	entities, _ := d.store.ListNodes(ctx, NodeFilter{Kind: KindEntity, Limit: 400})
 	playbooks, _ := d.store.ListNodes(ctx, NodeFilter{Kind: KindPlaybook, Limit: 200})
 
-	d.draftOne(ctx, GlobalKBCwd, KBKindInfrastructure, kbInfraSystem, buildInfraFeedstock(facts, entities))
-	d.draftOne(ctx, GlobalKBCwd, KBKindConventions, kbConvSystem, buildConvFeedstock(facts))
-	d.draftOne(ctx, GlobalKBCwd, KBKindLessons, kbLessonsSystem, buildLessonsFeedstock(playbooks))
+	var out []KBDraftResult
+	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindInfrastructure, kbInfraSystem, buildInfraFeedstock(facts, entities)))
+	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindConventions, kbConvSystem, buildConvFeedstock(facts)))
+	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindLessons, kbLessonsSystem, buildLessonsFeedstock(playbooks)))
 
 	keys, err := d.store.ListProjectScopeKeys(ctx)
 	if err != nil {
-		return err
+		return out, err
 	}
 	for _, k := range keys {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return out, ctx.Err()
 		default:
 		}
 		if isEphemeralCwd(k) || k == GlobalKBCwd {
@@ -122,42 +133,52 @@ func (d *KBDrafter) DraftAll(ctx context.Context) error {
 		if len(pf) == 0 && len(jr) == 0 {
 			continue
 		}
-		d.draftOne(ctx, k, KBKindHandbook, kbHandbookSystem, buildHandbookFeedstock(k, pf, jr, pp))
+		out = append(out, d.draftOne(ctx, k, KBKindHandbook, kbHandbookSystem, buildHandbookFeedstock(k, pf, jr, pp)))
 	}
-	return nil
+	return out, nil
 }
 
-func (d *KBDrafter) draftOne(ctx context.Context, cwd, kind, system, feedstock string) {
+func (d *KBDrafter) draftOne(ctx context.Context, cwd, kind, system, feedstock string) KBDraftResult {
+	res := KBDraftResult{Kind: kind, Cwd: cwd}
 	if strings.TrimSpace(feedstock) == "" {
-		return
+		res.Status = "skipped-empty"
+		return res
 	}
 	cur, err := d.docs.GetKBDoc(ctx, cwd, kind)
 	if err != nil {
 		d.log.Warn("kb: get doc failed", "kind", kind, "cwd", cwd, "err", err)
-		return
+		res.Status, res.Err = "error", "get: "+err.Error()
+		return res
 	}
 	if cur.HumanLocked {
-		return // operator owns this page — never overwrite
+		res.Status = "skipped-locked"
+		return res // operator owns this page — never overwrite
 	}
 	sig := kbSig(feedstock)
 	if cur.Exists && extractKBSig(cur.Content) == sig {
-		return // feedstock unchanged since last draft — skip the LLM call
+		res.Status = "skipped-unchanged"
+		return res // feedstock unchanged since last draft — skip the LLM call
 	}
 	body, err := d.llm.Complete(ctx, system, feedstock)
 	if err != nil {
 		d.log.Warn("kb: draft failed", "kind", kind, "cwd", cwd, "err", err)
-		return
+		res.Status, res.Err = "error", "llm: "+err.Error()
+		return res
 	}
 	body = stripFences(strings.TrimSpace(body))
 	if body == "" {
-		return
+		res.Status, res.Err = "error", "empty llm output"
+		return res
 	}
 	body += fmt.Sprintf("\n\n<!-- kb-sig:%s -->\n", sig)
 	if err := d.docs.PutKBDoc(ctx, cwd, kind, body); err != nil {
 		d.log.Warn("kb: put doc failed", "kind", kind, "cwd", cwd, "err", err)
-		return
+		res.Status, res.Err = "error", "put: "+err.Error()
+		return res
 	}
 	d.log.Info("kb page drafted", "kind", kind, "cwd", cwd)
+	res.Status, res.Bytes = "written", len(body)
+	return res
 }
 
 // --- feedstock builders ---
@@ -335,7 +356,7 @@ func (d *KBDrafter) RunKBSweep(ctx context.Context, cfg KBSweepConfig) {
 			return
 		case <-timer.C:
 		}
-		if err := d.DraftAll(ctx); err != nil && ctx.Err() == nil {
+		if _, err := d.DraftAll(ctx); err != nil && ctx.Err() == nil {
 			d.log.Warn("kb sweep cycle failed", "err", err)
 		}
 		timer.Reset(cfg.Interval)
