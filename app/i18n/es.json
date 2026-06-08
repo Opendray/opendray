@@ -2407,6 +2407,30 @@
         "project": "Proyecto",
         "domain": "Dominio"
       },
+      "kb": {
+        "tab": "Base de conocimiento",
+        "graphTab": "Grafo",
+        "global": "Global",
+        "projectHandbook": "Manual del proyecto",
+        "locked": "Editado por ti",
+        "aiDrafted": "Redactado por IA",
+        "edit": "Editar",
+        "unlock": "Desbloquear (que lo gestione la IA)",
+        "regenerate": "Regenerar",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "editHint": "Guardar bloquea esta página para que la IA no la sobrescriba.",
+        "empty": "Aún no generada. Pulsa Regenerar, o se construye automáticamente mientras trabajas.",
+        "saved": "Guardado",
+        "unlocked": "Desbloqueada — la IA volverá a gestionar esta página",
+        "regenerating": "Regenerando en segundo plano…",
+        "kinds": {
+          "kb_infrastructure": "Infraestructura",
+          "kb_conventions": "Convenciones",
+          "kb_lessons": "Lecciones",
+          "kb_handbook": "Manual"
+        }
+      },
       "kinds": {
         "all": "Todos",
         "entity": "Entidades",

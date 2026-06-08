@@ -2407,6 +2407,30 @@
         "project": "Project",
         "domain": "Domain"
       },
+      "kb": {
+        "tab": "Knowledge Base",
+        "graphTab": "Graph",
+        "global": "Global",
+        "projectHandbook": "Project handbook",
+        "locked": "Edited by you",
+        "aiDrafted": "AI-drafted",
+        "edit": "Edit",
+        "unlock": "Unlock (let AI manage)",
+        "regenerate": "Regenerate",
+        "save": "Save",
+        "cancel": "Cancel",
+        "editHint": "Saving locks this page from AI overwrite.",
+        "empty": "Not generated yet. Click Regenerate, or it builds automatically as you work.",
+        "saved": "Saved",
+        "unlocked": "Unlocked — AI will manage this page again",
+        "regenerating": "Regenerating in the background…",
+        "kinds": {
+          "kb_infrastructure": "Infrastructure",
+          "kb_conventions": "Conventions",
+          "kb_lessons": "Lessons",
+          "kb_handbook": "Handbook"
+        }
+      },
       "kinds": {
         "all": "All",
         "entity": "Entities",

@@ -101,7 +101,9 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
   })
 
   const docsByKind = useMemo(() => {
-    const map: Record<DocKind, ProjectDoc | undefined> = {
+    // Partial: this screen only renders goal/plan/tech_stack/recent_activity;
+    // the kb_* doc kinds live in the Knowledge page, not here.
+    const map: Partial<Record<DocKind, ProjectDoc | undefined>> = {
       goal: undefined,
       plan: undefined,
       tech_stack: undefined,

@@ -11,8 +11,21 @@ import { api } from './api'
 
 // ── project_docs ──────────────────────────────────────────────
 
-export type DocKind = 'goal' | 'plan' | 'tech_stack' | 'recent_activity'
+export type DocKind =
+  | 'goal'
+  | 'plan'
+  | 'tech_stack'
+  | 'recent_activity'
+  // M-KB curated knowledge-base pages (fused into the note system).
+  | 'kb_infrastructure'
+  | 'kb_conventions'
+  | 'kb_lessons'
+  | 'kb_handbook'
 export type DocAuthor = 'operator' | 'agent' | 'scanner'
+
+// GlobalCwd sentinel: the cwd under which cross-project (global) KB pages live.
+// Mirrors projectdoc.GlobalCwd on the backend.
+export const GLOBAL_CWD = '__global__'
 
 export interface ProjectDoc {
   id: string
@@ -47,13 +60,16 @@ export async function putProjectDoc(input: {
   cwd: string
   kind: DocKind
   content: string
+  /** Defaults to 'operator' (a human edit, which locks a KB page from AI
+   * overwrite). Pass 'agent' to UNLOCK a KB page so the drafter manages it. */
+  updatedBy?: DocAuthor
 }): Promise<ProjectDoc> {
   return api<ProjectDoc>(`/api/v1/project-docs/${input.kind}`, {
     method: 'PUT',
     body: {
       cwd: input.cwd,
       content: input.content,
-      updated_by: 'operator',
+      updated_by: input.updatedBy ?? 'operator',
     },
   })
 }

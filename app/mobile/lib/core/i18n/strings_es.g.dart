@@ -1437,6 +1437,7 @@ class _TranslationsWebKnowledgeEs extends TranslationsWebKnowledgeEn {
 	@override String get deleted => 'Eliminado';
 	@override String get deleteConfirm => '¿Eliminar este nodo? Las habilidades quedan eliminadas; los hechos/entidades derivados automáticamente pueden reaparecer en el próximo barrido.';
 	@override late final _TranslationsWebKnowledgeScopesEs scopes = _TranslationsWebKnowledgeScopesEs._(_root);
+	@override late final _TranslationsWebKnowledgeKbEs kb = _TranslationsWebKnowledgeKbEs._(_root);
 	@override late final _TranslationsWebKnowledgeKindsEs kinds = _TranslationsWebKnowledgeKindsEs._(_root);
 }
 
@@ -4948,6 +4949,32 @@ class _TranslationsWebKnowledgeScopesEs extends TranslationsWebKnowledgeScopesEn
 	@override String get domain => 'Dominio';
 }
 
+// Path: web.knowledge.kb
+class _TranslationsWebKnowledgeKbEs extends TranslationsWebKnowledgeKbEn {
+	_TranslationsWebKnowledgeKbEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get tab => 'Base de conocimiento';
+	@override String get graphTab => 'Grafo';
+	@override String get global => 'Global';
+	@override String get projectHandbook => 'Manual del proyecto';
+	@override String get locked => 'Editado por ti';
+	@override String get aiDrafted => 'Redactado por IA';
+	@override String get edit => 'Editar';
+	@override String get unlock => 'Desbloquear (que lo gestione la IA)';
+	@override String get regenerate => 'Regenerar';
+	@override String get save => 'Guardar';
+	@override String get cancel => 'Cancelar';
+	@override String get editHint => 'Guardar bloquea esta página para que la IA no la sobrescriba.';
+	@override String get empty => 'Aún no generada. Pulsa Regenerar, o se construye automáticamente mientras trabajas.';
+	@override String get saved => 'Guardado';
+	@override String get unlocked => 'Desbloqueada — la IA volverá a gestionar esta página';
+	@override String get regenerating => 'Regenerando en segundo plano…';
+	@override late final _TranslationsWebKnowledgeKbKindsEs kinds = _TranslationsWebKnowledgeKbKindsEs._(_root);
+}
+
 // Path: web.knowledge.kinds
 class _TranslationsWebKnowledgeKindsEs extends TranslationsWebKnowledgeKindsEn {
 	_TranslationsWebKnowledgeKindsEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -7427,6 +7454,19 @@ class _TranslationsWebExportImportsColumnsEs extends TranslationsWebExportImport
 	@override String get when => 'Cuándo';
 }
 
+// Path: web.knowledge.kb.kinds
+class _TranslationsWebKnowledgeKbKindsEs extends TranslationsWebKnowledgeKbKindsEn {
+	_TranslationsWebKnowledgeKbKindsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get kb_infrastructure => 'Infraestructura';
+	@override String get kb_conventions => 'Convenciones';
+	@override String get kb_lessons => 'Lecciones';
+	@override String get kb_handbook => 'Manual';
+}
+
 // Path: sessions.inspector.shell.tabs
 class _TranslationsSessionsInspectorShellTabsEs extends TranslationsSessionsInspectorShellTabsEn {
 	_TranslationsSessionsInspectorShellTabsEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -9357,6 +9397,26 @@ extension on TranslationsEs {
 			'web.knowledge.scopes.global' => 'Global',
 			'web.knowledge.scopes.project' => 'Proyecto',
 			'web.knowledge.scopes.domain' => 'Dominio',
+			'web.knowledge.kb.tab' => 'Base de conocimiento',
+			'web.knowledge.kb.graphTab' => 'Grafo',
+			'web.knowledge.kb.global' => 'Global',
+			'web.knowledge.kb.projectHandbook' => 'Manual del proyecto',
+			'web.knowledge.kb.locked' => 'Editado por ti',
+			'web.knowledge.kb.aiDrafted' => 'Redactado por IA',
+			'web.knowledge.kb.edit' => 'Editar',
+			'web.knowledge.kb.unlock' => 'Desbloquear (que lo gestione la IA)',
+			'web.knowledge.kb.regenerate' => 'Regenerar',
+			'web.knowledge.kb.save' => 'Guardar',
+			'web.knowledge.kb.cancel' => 'Cancelar',
+			'web.knowledge.kb.editHint' => 'Guardar bloquea esta página para que la IA no la sobrescriba.',
+			'web.knowledge.kb.empty' => 'Aún no generada. Pulsa Regenerar, o se construye automáticamente mientras trabajas.',
+			'web.knowledge.kb.saved' => 'Guardado',
+			'web.knowledge.kb.unlocked' => 'Desbloqueada — la IA volverá a gestionar esta página',
+			'web.knowledge.kb.regenerating' => 'Regenerando en segundo plano…',
+			'web.knowledge.kb.kinds.kb_infrastructure' => 'Infraestructura',
+			'web.knowledge.kb.kinds.kb_conventions' => 'Convenciones',
+			'web.knowledge.kb.kinds.kb_lessons' => 'Lecciones',
+			'web.knowledge.kb.kinds.kb_handbook' => 'Manual',
 			'web.knowledge.kinds.all' => 'Todos',
 			'web.knowledge.kinds.entity' => 'Entidades',
 			'web.knowledge.kinds.fact' => 'Hechos',
@@ -9509,6 +9569,8 @@ extension on TranslationsEs {
 			'sessions.inspector.git.showFullPatch' => 'Mostrar el parche completo',
 			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => 'Falló al mostrar (${status}): ${message}',
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => 'Falló al mostrar: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.git.tabStatus' => 'Estado',
 			'sessions.inspector.git.tabLog' => 'Log',
 			'sessions.inspector.tasks.runCommand' => 'Ejecutar comando',
@@ -9529,8 +9591,6 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.filenameHint' => 'nombre de archivo (p. ej. spec o design.md)',
 			'sessions.inspector.notes.create' => 'Crear',
 			'sessions.inspector.notes.filterHint' => 'Filtrar…',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.locationDialogTitle' => 'Ubicación de los documentos del proyecto',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => 'Falló la carga: ${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Falló la carga: ${error}',
@@ -10023,6 +10083,8 @@ extension on TranslationsEs {
 			'backups.restore.targetDsnUsed' => 'DSN de destino',
 			'backups.restore.targetDsnSelfLabel' => '(la propia base de datos de opendray)',
 			'backups.restore.done' => 'Hecho',
+			_ => null,
+		} ?? switch (path) {
 			'backups.inventory.title' => 'Qué contiene una copia de seguridad',
 			'backups.inventory.summary' => ({required Object rows, required Object tables}) => '${rows} filas · ${tables} tablas',
 			'backups.inventory.description' => 'Recuentos de filas en vivo desde la base de datos Postgres de opendray. Las copias de seguridad capturan todas las filas de abajo; los artefactos binarios en disco no se incluyen.',
@@ -10043,8 +10105,6 @@ extension on TranslationsEs {
 			'backupSchedules.deleteTitle' => '¿Eliminar programación?',
 			'backupSchedules.targetLabel' => 'Destino',
 			'backupSchedules.intervalLabel' => 'Intervalo',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.retentionLabel' => 'Retención (conservar las N más recientes)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No hay destinos de copia de seguridad configurados. Añade uno desde el panel de administración web o la pantalla de Destinos.',
@@ -10537,6 +10597,8 @@ extension on TranslationsEs {
 			'about.gateway.commit' => 'Commit',
 			'about.gateway.checking' => 'Buscando actualizaciones…',
 			'about.gateway.upToDate' => 'Actualizado',
+			_ => null,
+		} ?? switch (path) {
 			'about.gateway.updateAvailable' => ({required Object version}) => 'Actualización disponible: ${version}',
 			'about.gateway.releaseNotes' => 'Notas de la versión',
 			'about.gateway.checkFailed' => 'Comprobación de actualizaciones no disponible',
@@ -10557,8 +10619,6 @@ extension on TranslationsEs {
 			'settings.account.section' => 'Cuenta',
 			'settings.account.changeCredentials' => 'Cambiar credenciales',
 			'settings.account.changeCredentialsSubtitle' => 'Usuario y contraseña',
-			_ => null,
-		} ?? switch (path) {
 			'settings.gateway.section' => 'Gateway',
 			'settings.gateway.serverSettings' => 'Ajustes del servidor',
 			'settings.gateway.serverSettingsSubtitle' => 'Dirección de escucha, registro, vault, memoria, rutas de almacenamiento…',

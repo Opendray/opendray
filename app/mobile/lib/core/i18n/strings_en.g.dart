@@ -2856,6 +2856,7 @@ class TranslationsWebKnowledgeEn {
 	String get deleteConfirm => 'Delete this node? Skills stay deleted; auto-derived facts/entities may re-appear on the next sweep.';
 
 	late final TranslationsWebKnowledgeScopesEn scopes = TranslationsWebKnowledgeScopesEn.internal(_root);
+	late final TranslationsWebKnowledgeKbEn kb = TranslationsWebKnowledgeKbEn.internal(_root);
 	late final TranslationsWebKnowledgeKindsEn kinds = TranslationsWebKnowledgeKindsEn.internal(_root);
 }
 
@@ -9591,6 +9592,65 @@ class TranslationsWebKnowledgeScopesEn {
 	String get domain => 'Domain';
 }
 
+// Path: web.knowledge.kb
+class TranslationsWebKnowledgeKbEn {
+	TranslationsWebKnowledgeKbEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Knowledge Base'
+	String get tab => 'Knowledge Base';
+
+	/// en: 'Graph'
+	String get graphTab => 'Graph';
+
+	/// en: 'Global'
+	String get global => 'Global';
+
+	/// en: 'Project handbook'
+	String get projectHandbook => 'Project handbook';
+
+	/// en: 'Edited by you'
+	String get locked => 'Edited by you';
+
+	/// en: 'AI-drafted'
+	String get aiDrafted => 'AI-drafted';
+
+	/// en: 'Edit'
+	String get edit => 'Edit';
+
+	/// en: 'Unlock (let AI manage)'
+	String get unlock => 'Unlock (let AI manage)';
+
+	/// en: 'Regenerate'
+	String get regenerate => 'Regenerate';
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+
+	/// en: 'Saving locks this page from AI overwrite.'
+	String get editHint => 'Saving locks this page from AI overwrite.';
+
+	/// en: 'Not generated yet. Click Regenerate, or it builds automatically as you work.'
+	String get empty => 'Not generated yet. Click Regenerate, or it builds automatically as you work.';
+
+	/// en: 'Saved'
+	String get saved => 'Saved';
+
+	/// en: 'Unlocked — AI will manage this page again'
+	String get unlocked => 'Unlocked — AI will manage this page again';
+
+	/// en: 'Regenerating in the background…'
+	String get regenerating => 'Regenerating in the background…';
+
+	late final TranslationsWebKnowledgeKbKindsEn kinds = TranslationsWebKnowledgeKbKindsEn.internal(_root);
+}
+
 // Path: web.knowledge.kinds
 class TranslationsWebKnowledgeKindsEn {
 	TranslationsWebKnowledgeKindsEn.internal(this._root);
@@ -13892,6 +13952,27 @@ class TranslationsWebExportImportsColumnsEn {
 	String get when => 'When';
 }
 
+// Path: web.knowledge.kb.kinds
+class TranslationsWebKnowledgeKbKindsEn {
+	TranslationsWebKnowledgeKbKindsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Infrastructure'
+	String get kb_infrastructure => 'Infrastructure';
+
+	/// en: 'Conventions'
+	String get kb_conventions => 'Conventions';
+
+	/// en: 'Lessons'
+	String get kb_lessons => 'Lessons';
+
+	/// en: 'Handbook'
+	String get kb_handbook => 'Handbook';
+}
+
 // Path: sessions.inspector.shell.tabs
 class TranslationsSessionsInspectorShellTabsEn {
 	TranslationsSessionsInspectorShellTabsEn.internal(this._root);
@@ -15848,6 +15929,26 @@ extension on Translations {
 			'web.knowledge.scopes.global' => 'Global',
 			'web.knowledge.scopes.project' => 'Project',
 			'web.knowledge.scopes.domain' => 'Domain',
+			'web.knowledge.kb.tab' => 'Knowledge Base',
+			'web.knowledge.kb.graphTab' => 'Graph',
+			'web.knowledge.kb.global' => 'Global',
+			'web.knowledge.kb.projectHandbook' => 'Project handbook',
+			'web.knowledge.kb.locked' => 'Edited by you',
+			'web.knowledge.kb.aiDrafted' => 'AI-drafted',
+			'web.knowledge.kb.edit' => 'Edit',
+			'web.knowledge.kb.unlock' => 'Unlock (let AI manage)',
+			'web.knowledge.kb.regenerate' => 'Regenerate',
+			'web.knowledge.kb.save' => 'Save',
+			'web.knowledge.kb.cancel' => 'Cancel',
+			'web.knowledge.kb.editHint' => 'Saving locks this page from AI overwrite.',
+			'web.knowledge.kb.empty' => 'Not generated yet. Click Regenerate, or it builds automatically as you work.',
+			'web.knowledge.kb.saved' => 'Saved',
+			'web.knowledge.kb.unlocked' => 'Unlocked — AI will manage this page again',
+			'web.knowledge.kb.regenerating' => 'Regenerating in the background…',
+			'web.knowledge.kb.kinds.kb_infrastructure' => 'Infrastructure',
+			'web.knowledge.kb.kinds.kb_conventions' => 'Conventions',
+			'web.knowledge.kb.kinds.kb_lessons' => 'Lessons',
+			'web.knowledge.kb.kinds.kb_handbook' => 'Handbook',
 			'web.knowledge.kinds.all' => 'All',
 			'web.knowledge.kinds.entity' => 'Entities',
 			'web.knowledge.kinds.fact' => 'Facts',
@@ -16000,6 +16101,8 @@ extension on Translations {
 			'sessions.inspector.git.showFullPatch' => 'Show full patch',
 			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => 'Show failed (${status}): ${message}',
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => 'Show failed: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.git.tabStatus' => 'Status',
 			'sessions.inspector.git.tabLog' => 'Log',
 			'sessions.inspector.tasks.runCommand' => 'Run command',
@@ -16020,8 +16123,6 @@ extension on Translations {
 			'sessions.inspector.notes.filenameHint' => 'filename (e.g. spec or design.md)',
 			'sessions.inspector.notes.create' => 'Create',
 			'sessions.inspector.notes.filterHint' => 'Filter…',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.locationDialogTitle' => 'Project docs location',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
@@ -16514,6 +16615,8 @@ extension on Translations {
 			'backups.restore.targetDsnUsed' => 'Target DSN',
 			'backups.restore.targetDsnSelfLabel' => '(opendray\'s own DB)',
 			'backups.restore.done' => 'Done',
+			_ => null,
+		} ?? switch (path) {
 			'backups.inventory.title' => 'What\'s in a backup',
 			'backups.inventory.summary' => ({required Object rows, required Object tables}) => '${rows} rows · ${tables} tables',
 			'backups.inventory.description' => 'Live row counts from opendray\'s Postgres database. Backups capture every row below; binary artifacts on disk are not included.',
@@ -16534,8 +16637,6 @@ extension on Translations {
 			'backupSchedules.deleteTitle' => 'Delete schedule?',
 			'backupSchedules.targetLabel' => 'Target',
 			'backupSchedules.intervalLabel' => 'Interval',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.retentionLabel' => 'Retention (keep N most recent)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No backup targets configured. Add one from the web admin or the Targets screen.',
@@ -17028,6 +17129,8 @@ extension on Translations {
 			'about.gateway.commit' => 'Commit',
 			'about.gateway.checking' => 'Checking for updates…',
 			'about.gateway.upToDate' => 'Up to date',
+			_ => null,
+		} ?? switch (path) {
 			'about.gateway.updateAvailable' => ({required Object version}) => 'Update available: ${version}',
 			'about.gateway.releaseNotes' => 'Release notes',
 			'about.gateway.checkFailed' => 'Update check unavailable',
@@ -17048,8 +17151,6 @@ extension on Translations {
 			'settings.account.section' => 'Account',
 			'settings.account.changeCredentials' => 'Change credentials',
 			'settings.account.changeCredentialsSubtitle' => 'Username and password',
-			_ => null,
-		} ?? switch (path) {
 			'settings.gateway.section' => 'Gateway',
 			'settings.gateway.serverSettings' => 'Server settings',
 			'settings.gateway.serverSettingsSubtitle' => 'Listen address, logging, vault, memory, storage paths…',

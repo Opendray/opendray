@@ -104,6 +104,13 @@ export async function skillifyKnowledgeNode(id: string): Promise<KnowledgeNode> 
   )
 }
 
+// draftKB triggers a background regeneration of all curated KB pages
+// (infrastructure / conventions / lessons / per-project handbooks). Returns
+// immediately (202); the drafter runs detached and updates the note docs.
+export async function draftKB(): Promise<void> {
+  await api('/api/v1/knowledge/kb/draft', { method: 'POST' })
+}
+
 // deleteKnowledgeNode removes a node — used to undo an accidental promote /
 // skillify. Auto-derived facts/entities re-appear on the next anchor sweep;
 // skills stay deleted (and their SKILL.md is removed server-side).

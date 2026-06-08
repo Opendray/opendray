@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 import { APIError } from '@/lib/api'
 import {
@@ -11,11 +13,284 @@ import {
   promoteKnowledgeNode,
   skillifyKnowledgeNode,
   deleteKnowledgeNode,
+  draftKB,
   type KnowledgeNode,
   type KnowledgeSearchHit,
   type KnowledgeKind,
   type KnowledgeScope,
 } from '@/lib/knowledge'
+import {
+  getProjectDoc,
+  putProjectDoc,
+  GLOBAL_CWD,
+  type DocKind,
+} from '@/lib/projectDocs'
+
+// ── shared bits ───────────────────────────────────────────────
+
+function TabBtn({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-t-md px-3 py-1.5 text-sm ${
+        active
+          ? 'bg-card font-medium border-x border-t border-border'
+          : 'text-muted-foreground hover:text-foreground'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+// strip the drafter's hidden signature marker before display
+function stripSig(s: string): string {
+  return s
+    .split('\n')
+    .filter((l) => !l.includes('kb-sig:'))
+    .join('\n')
+    .trim()
+}
+
+// explicit markdown styling so we don't depend on the typography plugin
+const MD = {
+  h1: (p: any) => <h1 className="mt-4 mb-2 text-lg font-semibold" {...p} />,
+  h2: (p: any) => (
+    <h2 className="mt-4 mb-1.5 text-base font-semibold border-b border-border pb-1" {...p} />
+  ),
+  h3: (p: any) => <h3 className="mt-3 mb-1 text-sm font-semibold" {...p} />,
+  p: (p: any) => <p className="my-1.5 text-sm leading-relaxed" {...p} />,
+  ul: (p: any) => <ul className="my-1.5 ml-5 list-disc space-y-0.5 text-sm" {...p} />,
+  ol: (p: any) => <ol className="my-1.5 ml-5 list-decimal space-y-0.5 text-sm" {...p} />,
+  li: (p: any) => <li className="leading-relaxed" {...p} />,
+  code: (p: any) => (
+    <code className="rounded bg-muted px-1 py-0.5 text-[12px] font-mono" {...p} />
+  ),
+  strong: (p: any) => <strong className="font-semibold" {...p} />,
+  a: (p: any) => <a className="text-primary underline" {...p} />,
+  hr: () => <hr className="my-3 border-border" />,
+}
+
+// ── Knowledge Base (curated pages) ────────────────────────────
+
+interface KBPage {
+  kind: DocKind
+  cwd: string
+}
+
+function KnowledgeBaseView() {
+  const { t } = useTranslation()
+  const qc = useQueryClient()
+  const [handbookCwd, setHandbookCwd] = useState('')
+  const [sel, setSel] = useState<KBPage>({
+    kind: 'kb_infrastructure',
+    cwd: GLOBAL_CWD,
+  })
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+
+  const doc = useQuery({
+    queryKey: ['kb-doc', sel.cwd, sel.kind],
+    queryFn: () => getProjectDoc(sel.cwd, sel.kind),
+  })
+
+  const save = useMutation({
+    mutationFn: () =>
+      putProjectDoc({ cwd: sel.cwd, kind: sel.kind, content: draft }),
+    onSuccess: () => {
+      setEditing(false)
+      toast.success(t('web.knowledge.kb.saved'))
+      qc.invalidateQueries({ queryKey: ['kb-doc'] })
+    },
+    onError: () => toast.error(t('web.knowledge.actionFailed')),
+  })
+
+  const unlock = useMutation({
+    mutationFn: () =>
+      putProjectDoc({
+        cwd: sel.cwd,
+        kind: sel.kind,
+        content: stripSig(doc.data?.content ?? ''),
+        updatedBy: 'agent',
+      }),
+    onSuccess: () => {
+      toast.success(t('web.knowledge.kb.unlocked'))
+      qc.invalidateQueries({ queryKey: ['kb-doc'] })
+    },
+    onError: () => toast.error(t('web.knowledge.actionFailed')),
+  })
+
+  const regen = useMutation({
+    mutationFn: () => draftKB(),
+    onSuccess: () => toast.success(t('web.knowledge.kb.regenerating')),
+    onError: () => toast.error(t('web.knowledge.actionFailed')),
+  })
+
+  const select = (p: KBPage) => {
+    setSel(p)
+    setEditing(false)
+  }
+
+  const content = stripSig(doc.data?.content ?? '')
+  const exists = !!doc.data?.id
+  const locked = doc.data?.updated_by === 'operator'
+
+  const globalKinds: DocKind[] = [
+    'kb_infrastructure',
+    'kb_conventions',
+    'kb_lessons',
+  ]
+
+  return (
+    <div className="flex flex-1 min-h-0 border border-border rounded-b-md rounded-tr-md">
+      {/* nav */}
+      <div className="w-64 shrink-0 overflow-auto border-r border-border p-2">
+        <p className="px-2 pb-1 pt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+          {t('web.knowledge.kb.global')}
+        </p>
+        {globalKinds.map((k) => (
+          <button
+            key={k}
+            onClick={() => select({ kind: k, cwd: GLOBAL_CWD })}
+            className={`block w-full rounded px-2 py-1.5 text-left text-sm ${
+              sel.cwd === GLOBAL_CWD && sel.kind === k
+                ? 'bg-primary text-primary-foreground'
+                : 'hover:bg-card'
+            }`}
+          >
+            {t(`web.knowledge.kb.kinds.${k}`)}
+          </button>
+        ))}
+
+        <p className="px-2 pb-1 pt-3 text-[11px] uppercase tracking-wide text-muted-foreground">
+          {t('web.knowledge.kb.projectHandbook')}
+        </p>
+        <input
+          value={handbookCwd}
+          onChange={(e) => setHandbookCwd(e.target.value)}
+          placeholder={t('web.knowledge.cwdPlaceholder')}
+          className="mb-1 w-full rounded-md border border-border bg-card px-2 py-1 text-xs"
+        />
+        <button
+          disabled={!handbookCwd.trim()}
+          onClick={() =>
+            select({ kind: 'kb_handbook', cwd: handbookCwd.trim() })
+          }
+          className={`block w-full rounded px-2 py-1.5 text-left text-sm disabled:opacity-40 ${
+            sel.kind === 'kb_handbook' && sel.cwd === handbookCwd.trim()
+              ? 'bg-primary text-primary-foreground'
+              : 'hover:bg-card'
+          }`}
+        >
+          {t('web.knowledge.kb.kinds.kb_handbook')}
+        </button>
+      </div>
+
+      {/* content */}
+      <div className="flex flex-1 flex-col min-h-0">
+        <div className="flex items-center gap-2 border-b border-border px-4 py-2">
+          <h2 className="text-sm font-medium">
+            {sel.kind === 'kb_handbook'
+              ? `${t('web.knowledge.kb.kinds.kb_handbook')} · ${sel.cwd.split('/').pop()}`
+              : t(`web.knowledge.kb.kinds.${sel.kind}`)}
+          </h2>
+          {exists && (
+            <span
+              className={`rounded px-1.5 py-0.5 text-[10px] ${
+                locked
+                  ? 'bg-amber-500/15 text-amber-400'
+                  : 'bg-emerald-500/15 text-emerald-400'
+              }`}
+            >
+              {locked ? t('web.knowledge.kb.locked') : t('web.knowledge.kb.aiDrafted')}
+            </span>
+          )}
+          <div className="ml-auto flex gap-2">
+            {!editing && (
+              <button
+                onClick={() => {
+                  setDraft(content)
+                  setEditing(true)
+                }}
+                className="rounded-md border border-border px-2.5 py-1 text-xs"
+              >
+                {t('web.knowledge.kb.edit')}
+              </button>
+            )}
+            {!editing && locked && (
+              <button
+                onClick={() => unlock.mutate()}
+                disabled={unlock.isPending}
+                className="rounded-md border border-border px-2.5 py-1 text-xs disabled:opacity-50"
+              >
+                {t('web.knowledge.kb.unlock')}
+              </button>
+            )}
+            {!editing && (
+              <button
+                onClick={() => regen.mutate()}
+                disabled={regen.isPending}
+                className="rounded-md border border-border px-2.5 py-1 text-xs disabled:opacity-50"
+              >
+                {t('web.knowledge.kb.regenerate')}
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-auto p-4">
+          {editing ? (
+            <div className="flex h-full flex-col gap-2">
+              <textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                className="flex-1 resize-none rounded-md border border-border bg-card p-3 font-mono text-sm"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => save.mutate()}
+                  disabled={save.isPending}
+                  className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-50"
+                >
+                  {t('web.knowledge.kb.save')}
+                </button>
+                <button
+                  onClick={() => setEditing(false)}
+                  className="rounded-md border border-border px-3 py-1.5 text-sm"
+                >
+                  {t('web.knowledge.kb.cancel')}
+                </button>
+                <span className="self-center text-[11px] text-muted-foreground">
+                  {t('web.knowledge.kb.editHint')}
+                </span>
+              </div>
+            </div>
+          ) : doc.isLoading ? (
+            <p className="text-sm text-muted-foreground">…</p>
+          ) : content ? (
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD}>
+              {content}
+            </ReactMarkdown>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {t('web.knowledge.kb.empty')}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Graph browser (the raw node graph — secondary) ────────────
 
 const KIND_STYLES: Record<string, string> = {
   entity: 'bg-blue-500/15 text-blue-400',
@@ -36,7 +311,7 @@ function KindBadge({ kind }: { kind: string }) {
   )
 }
 
-export function KnowledgePage() {
+function GraphBrowser() {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const [query, setQuery] = useState('')
@@ -105,13 +380,9 @@ export function KnowledgePage() {
   const nodes = hits ? hits.map((h) => h.node) : (browse.data ?? [])
 
   return (
-    <div className="flex flex-col h-full">
-      <header className="px-4 py-3 border-b border-border">
-        <h1 className="text-lg font-semibold">{t('web.knowledge.title')}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t('web.knowledge.subtitle')}
-        </p>
-        <div className="mt-3 flex gap-2">
+    <div className="flex flex-1 flex-col min-h-0 border border-border rounded-b-md rounded-tr-md">
+      <header className="border-b border-border px-4 py-3">
+        <div className="flex gap-2">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -291,6 +562,35 @@ export function KnowledgePage() {
             </div>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ── page ──────────────────────────────────────────────────────
+
+export function KnowledgePage() {
+  const { t } = useTranslation()
+  const [tab, setTab] = useState<'kb' | 'graph'>('kb')
+
+  return (
+    <div className="flex h-full flex-col">
+      <header className="px-4 pt-3">
+        <h1 className="text-lg font-semibold">{t('web.knowledge.title')}</h1>
+        <p className="text-sm text-muted-foreground">
+          {t('web.knowledge.subtitle')}
+        </p>
+        <div className="mt-2 flex items-center gap-1">
+          <TabBtn active={tab === 'kb'} onClick={() => setTab('kb')}>
+            {t('web.knowledge.kb.tab')}
+          </TabBtn>
+          <TabBtn active={tab === 'graph'} onClick={() => setTab('graph')}>
+            {t('web.knowledge.kb.graphTab')}
+          </TabBtn>
+        </div>
+      </header>
+      <div className="flex flex-1 flex-col min-h-0 px-4 pb-4">
+        {tab === 'kb' ? <KnowledgeBaseView /> : <GraphBrowser />}
       </div>
     </div>
   )

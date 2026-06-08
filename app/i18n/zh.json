@@ -2407,6 +2407,30 @@
         "project": "项目",
         "domain": "领域"
       },
+      "kb": {
+        "tab": "知识库",
+        "graphTab": "图谱",
+        "global": "全局",
+        "projectHandbook": "项目手册",
+        "locked": "你已编辑",
+        "aiDrafted": "AI 起草",
+        "edit": "编辑",
+        "unlock": "解锁(交还 AI 维护)",
+        "regenerate": "重新生成",
+        "save": "保存",
+        "cancel": "取消",
+        "editHint": "保存后此页将锁定,AI 不再覆盖。",
+        "empty": "尚未生成。点「重新生成」,或在你工作时自动构建。",
+        "saved": "已保存",
+        "unlocked": "已解锁——AI 将重新维护此页",
+        "regenerating": "正在后台重新生成…",
+        "kinds": {
+          "kb_infrastructure": "基础设施",
+          "kb_conventions": "开发规范",
+          "kb_lessons": "经验教训",
+          "kb_handbook": "项目手册"
+        }
+      },
       "kinds": {
         "all": "全部",
         "entity": "实体",

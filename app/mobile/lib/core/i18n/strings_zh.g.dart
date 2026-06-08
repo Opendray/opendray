@@ -1437,6 +1437,7 @@ class _TranslationsWebKnowledgeZh extends TranslationsWebKnowledgeEn {
 	@override String get deleted => '已删除';
 	@override String get deleteConfirm => '删除此节点?技能将永久删除;自动派生的事实/实体可能在下次扫描时重新出现。';
 	@override late final _TranslationsWebKnowledgeScopesZh scopes = _TranslationsWebKnowledgeScopesZh._(_root);
+	@override late final _TranslationsWebKnowledgeKbZh kb = _TranslationsWebKnowledgeKbZh._(_root);
 	@override late final _TranslationsWebKnowledgeKindsZh kinds = _TranslationsWebKnowledgeKindsZh._(_root);
 }
 
@@ -4948,6 +4949,32 @@ class _TranslationsWebKnowledgeScopesZh extends TranslationsWebKnowledgeScopesEn
 	@override String get domain => '领域';
 }
 
+// Path: web.knowledge.kb
+class _TranslationsWebKnowledgeKbZh extends TranslationsWebKnowledgeKbEn {
+	_TranslationsWebKnowledgeKbZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get tab => '知识库';
+	@override String get graphTab => '图谱';
+	@override String get global => '全局';
+	@override String get projectHandbook => '项目手册';
+	@override String get locked => '你已编辑';
+	@override String get aiDrafted => 'AI 起草';
+	@override String get edit => '编辑';
+	@override String get unlock => '解锁(交还 AI 维护)';
+	@override String get regenerate => '重新生成';
+	@override String get save => '保存';
+	@override String get cancel => '取消';
+	@override String get editHint => '保存后此页将锁定,AI 不再覆盖。';
+	@override String get empty => '尚未生成。点「重新生成」,或在你工作时自动构建。';
+	@override String get saved => '已保存';
+	@override String get unlocked => '已解锁——AI 将重新维护此页';
+	@override String get regenerating => '正在后台重新生成…';
+	@override late final _TranslationsWebKnowledgeKbKindsZh kinds = _TranslationsWebKnowledgeKbKindsZh._(_root);
+}
+
 // Path: web.knowledge.kinds
 class _TranslationsWebKnowledgeKindsZh extends TranslationsWebKnowledgeKindsEn {
 	_TranslationsWebKnowledgeKindsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7427,6 +7454,19 @@ class _TranslationsWebExportImportsColumnsZh extends TranslationsWebExportImport
 	@override String get when => '时间';
 }
 
+// Path: web.knowledge.kb.kinds
+class _TranslationsWebKnowledgeKbKindsZh extends TranslationsWebKnowledgeKbKindsEn {
+	_TranslationsWebKnowledgeKbKindsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get kb_infrastructure => '基础设施';
+	@override String get kb_conventions => '开发规范';
+	@override String get kb_lessons => '经验教训';
+	@override String get kb_handbook => '项目手册';
+}
+
 // Path: sessions.inspector.shell.tabs
 class _TranslationsSessionsInspectorShellTabsZh extends TranslationsSessionsInspectorShellTabsEn {
 	_TranslationsSessionsInspectorShellTabsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -9357,6 +9397,26 @@ extension on TranslationsZh {
 			'web.knowledge.scopes.global' => '全局',
 			'web.knowledge.scopes.project' => '项目',
 			'web.knowledge.scopes.domain' => '领域',
+			'web.knowledge.kb.tab' => '知识库',
+			'web.knowledge.kb.graphTab' => '图谱',
+			'web.knowledge.kb.global' => '全局',
+			'web.knowledge.kb.projectHandbook' => '项目手册',
+			'web.knowledge.kb.locked' => '你已编辑',
+			'web.knowledge.kb.aiDrafted' => 'AI 起草',
+			'web.knowledge.kb.edit' => '编辑',
+			'web.knowledge.kb.unlock' => '解锁(交还 AI 维护)',
+			'web.knowledge.kb.regenerate' => '重新生成',
+			'web.knowledge.kb.save' => '保存',
+			'web.knowledge.kb.cancel' => '取消',
+			'web.knowledge.kb.editHint' => '保存后此页将锁定,AI 不再覆盖。',
+			'web.knowledge.kb.empty' => '尚未生成。点「重新生成」,或在你工作时自动构建。',
+			'web.knowledge.kb.saved' => '已保存',
+			'web.knowledge.kb.unlocked' => '已解锁——AI 将重新维护此页',
+			'web.knowledge.kb.regenerating' => '正在后台重新生成…',
+			'web.knowledge.kb.kinds.kb_infrastructure' => '基础设施',
+			'web.knowledge.kb.kinds.kb_conventions' => '开发规范',
+			'web.knowledge.kb.kinds.kb_lessons' => '经验教训',
+			'web.knowledge.kb.kinds.kb_handbook' => '项目手册',
 			'web.knowledge.kinds.all' => '全部',
 			'web.knowledge.kinds.entity' => '实体',
 			'web.knowledge.kinds.fact' => '事实',
@@ -9509,6 +9569,8 @@ extension on TranslationsZh {
 			'sessions.inspector.git.showFullPatch' => '查看完整 patch',
 			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => '查看失败（${status}）：${message}',
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => '查看失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.git.tabStatus' => '状态',
 			'sessions.inspector.git.tabLog' => '日志',
 			'sessions.inspector.tasks.runCommand' => '运行命令',
@@ -9529,8 +9591,6 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.filenameHint' => '文件名（例如：spec 或 design.md）',
 			'sessions.inspector.notes.create' => '创建',
 			'sessions.inspector.notes.filterHint' => '筛选…',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.locationDialogTitle' => '项目文档位置',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
@@ -10023,6 +10083,8 @@ extension on TranslationsZh {
 			'backups.restore.targetDsnUsed' => '目标 DSN',
 			'backups.restore.targetDsnSelfLabel' => '（opendray 自身数据库）',
 			'backups.restore.done' => '完成',
+			_ => null,
+		} ?? switch (path) {
 			'backups.inventory.title' => '备份里有什么',
 			'backups.inventory.summary' => ({required Object rows, required Object tables}) => '${rows} 行 · ${tables} 表',
 			'backups.inventory.description' => 'opendray Postgres 数据库的实时行数。备份会捕获以下所有行；磁盘上的二进制工件不包含在内。',
@@ -10043,8 +10105,6 @@ extension on TranslationsZh {
 			'backupSchedules.deleteTitle' => '删除计划？',
 			'backupSchedules.targetLabel' => '目标',
 			'backupSchedules.intervalLabel' => '间隔',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.retentionLabel' => '保留（最近 N 个）',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'backupSchedules.noTargets' => '未配置任何备份目标。请从 Web 管理端或「目标」屏添加。',
@@ -10537,6 +10597,8 @@ extension on TranslationsZh {
 			'about.gateway.commit' => '提交',
 			'about.gateway.checking' => '正在检查更新…',
 			'about.gateway.upToDate' => '已是最新',
+			_ => null,
+		} ?? switch (path) {
 			'about.gateway.updateAvailable' => ({required Object version}) => '有可用更新：${version}',
 			'about.gateway.releaseNotes' => '更新说明',
 			'about.gateway.checkFailed' => '无法检查更新',
@@ -10557,8 +10619,6 @@ extension on TranslationsZh {
 			'settings.account.section' => '账户',
 			'settings.account.changeCredentials' => '修改凭据',
 			'settings.account.changeCredentialsSubtitle' => '用户名和密码',
-			_ => null,
-		} ?? switch (path) {
 			'settings.gateway.section' => '网关',
 			'settings.gateway.serverSettings' => '服务器设置',
 			'settings.gateway.serverSettingsSubtitle' => '监听地址、日志、凭据库、内存、存储路径…',
