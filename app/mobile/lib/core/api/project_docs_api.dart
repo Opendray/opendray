@@ -44,15 +44,12 @@ class ProjectDocsApi {
     required String cwd,
     required String kind,
     required String content,
+    String updatedBy = 'operator',
   }) async {
     try {
       final res = await _dio.put<Map<String, dynamic>>(
         '/api/v1/project-docs/$kind',
-        data: {
-          'cwd': cwd,
-          'content': content,
-          'updated_by': 'operator',
-        },
+        data: {'cwd': cwd, 'content': content, 'updated_by': updatedBy},
       );
       return ProjectDoc.fromJson(res.data ?? {});
     } on Object catch (e) {
@@ -95,9 +92,7 @@ class ProjectDocsApi {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
         '/api/v1/project-doc-proposals/pending',
-        queryParameters: {
-          if (cwd != null && cwd.isNotEmpty) 'cwd': cwd,
-        },
+        queryParameters: {if (cwd != null && cwd.isNotEmpty) 'cwd': cwd},
       );
       final raw = res.data?['proposals'];
       if (raw is! List) return const [];
@@ -183,8 +178,10 @@ class ProjectDocsApi {
   // than `days` (default 90) that aren't referenced by any pending
   // memory_conflicts row. Used by the mobile Journal tab's bulk-
   // prune panel.
-  Future<List<SessionLogEntry>> listStaleLogs(String cwd,
-      {int days = 90}) async {
+  Future<List<SessionLogEntry>> listStaleLogs(
+    String cwd, {
+    int days = 90,
+  }) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
         '/api/v1/session-logs/stale',
@@ -214,12 +211,12 @@ class ProjectDoc {
   });
 
   factory ProjectDoc.fromJson(Map<String, dynamic> j) => ProjectDoc(
-        id: j['id']?.toString() ?? '',
-        cwd: j['cwd']?.toString() ?? '',
-        kind: j['kind']?.toString() ?? '',
-        content: j['content']?.toString() ?? '',
-        updatedBy: j['updated_by']?.toString() ?? '',
-      );
+    id: j['id']?.toString() ?? '',
+    cwd: j['cwd']?.toString() ?? '',
+    kind: j['kind']?.toString() ?? '',
+    content: j['content']?.toString() ?? '',
+    updatedBy: j['updated_by']?.toString() ?? '',
+  );
 
   final String id;
   final String cwd;
@@ -242,15 +239,15 @@ class DocProposal {
   });
 
   factory DocProposal.fromJson(Map<String, dynamic> j) => DocProposal(
-        id: j['id']?.toString() ?? '',
-        cwd: j['cwd']?.toString() ?? '',
-        kind: j['kind']?.toString() ?? '',
-        proposedContent: j['proposed_content']?.toString() ?? '',
-        reason: j['reason']?.toString() ?? '',
-        proposedBySession: j['proposed_by_session']?.toString() ?? '',
-        createdAt: DateTime.tryParse(j['created_at']?.toString() ?? '') ??
-            DateTime.now(),
-      );
+    id: j['id']?.toString() ?? '',
+    cwd: j['cwd']?.toString() ?? '',
+    kind: j['kind']?.toString() ?? '',
+    proposedContent: j['proposed_content']?.toString() ?? '',
+    reason: j['reason']?.toString() ?? '',
+    proposedBySession: j['proposed_by_session']?.toString() ?? '',
+    createdAt:
+        DateTime.tryParse(j['created_at']?.toString() ?? '') ?? DateTime.now(),
+  );
 
   final String id;
   final String cwd;
@@ -274,16 +271,16 @@ class SessionLogEntry {
   });
 
   factory SessionLogEntry.fromJson(Map<String, dynamic> j) => SessionLogEntry(
-        id: j['id']?.toString() ?? '',
-        cwd: j['cwd']?.toString() ?? '',
-        sessionId: j['session_id']?.toString() ?? '',
-        kind: j['kind']?.toString() ?? '',
-        title: j['title']?.toString() ?? '',
-        content: j['content']?.toString() ?? '',
-        updatedBy: j['updated_by']?.toString() ?? '',
-        createdAt: DateTime.tryParse(j['created_at']?.toString() ?? '') ??
-            DateTime.now(),
-      );
+    id: j['id']?.toString() ?? '',
+    cwd: j['cwd']?.toString() ?? '',
+    sessionId: j['session_id']?.toString() ?? '',
+    kind: j['kind']?.toString() ?? '',
+    title: j['title']?.toString() ?? '',
+    content: j['content']?.toString() ?? '',
+    updatedBy: j['updated_by']?.toString() ?? '',
+    createdAt:
+        DateTime.tryParse(j['created_at']?.toString() ?? '') ?? DateTime.now(),
+  );
 
   final String id;
   final String cwd;

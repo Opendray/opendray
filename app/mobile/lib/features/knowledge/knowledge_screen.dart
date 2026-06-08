@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/knowledge_api.dart';
+import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 
 // Knowledge tab — read-mostly browser over the M-KG knowledge graph.
@@ -21,6 +22,7 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
   bool _searching = false;
   String _kind = 'entity';
   String _scope = 'all';
+  String _view = 'kb';
 
   @override
   void initState() {
@@ -40,7 +42,9 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
       _searching = false;
     });
     try {
-      final nodes = await ref.read(knowledgeApiProvider).list(
+      final nodes = await ref
+          .read(knowledgeApiProvider)
+          .list(
             kind: _kind == 'all' ? null : _kind,
             scope: _scope == 'all' ? null : _scope,
           );
@@ -121,136 +125,161 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
-              controller: _searchCtrl,
-              textInputAction: TextInputAction.search,
-              onSubmitted: (_) => _runSearch(),
-              decoration: InputDecoration(
-                hintText: t.web.knowledge.searchPlaceholder,
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searching
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchCtrl.clear();
-                          _load();
-                        },
-                      )
-                    : null,
-                border: const OutlineInputBorder(),
-                isDense: true,
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 44,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(
-                children: [
-                  for (final k in const [
-                    'all',
-                    'entity',
-                    'fact',
-                    'playbook',
-                    'skill',
-                  ])
-                    Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: ChoiceChip(
-                        label: Text(_kindLabel(k)),
-                        selected: _kind == k,
-                        onSelected: (_) {
-                          setState(() => _kind = k);
-                          if (!_searching) _load();
-                        },
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 44,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Center(child: Text(t.web.knowledge.scope)),
-                  ),
-                  for (final s in const ['all', 'global', 'project', 'domain'])
-                    Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: ChoiceChip(
-                        label: Text(_scopeLabel(s)),
-                        selected: _scope == s,
-                        onSelected: (_) {
-                          setState(() => _scope = s);
-                          if (!_searching) _load();
-                        },
-                      ),
-                    ),
-                ],
-              ),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+            child: SegmentedButton<String>(
+              showSelectedIcon: false,
+              segments: [
+                ButtonSegment(value: 'kb', label: Text(t.web.knowledge.kb.tab)),
+                ButtonSegment(
+                  value: 'graph',
+                  label: Text(t.web.knowledge.kb.graphTab),
+                ),
+              ],
+              selected: {_view},
+              onSelectionChanged: (s) => setState(() => _view = s.first),
             ),
           ),
           Expanded(
-            child: _state.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text('$e', textAlign: TextAlign.center),
-                ),
-              ),
-              data: (nodes) => nodes.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          _searching
-                              ? t.web.knowledge.noResults
-                              : t.web.knowledge.empty,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      child: ListView.separated(
-                        itemCount: nodes.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
-                        itemBuilder: (_, i) {
-                          final n = nodes[i];
-                          return ListTile(
-                            leading: _KindChip(kind: n.kind),
-                            title: Text(
-                              n.title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            subtitle: Text(
-                              n.scopeKey.isNotEmpty
-                                  ? '${n.scope} · ${n.scopeKey}'
-                                  : n.scope,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            onTap: () => _openDetail(n),
-                          );
-                        },
-                      ),
-                    ),
-            ),
+            child: _view == 'kb' ? const _KbView() : _graphView(context),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _graphView(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: TextField(
+            controller: _searchCtrl,
+            textInputAction: TextInputAction.search,
+            onSubmitted: (_) => _runSearch(),
+            decoration: InputDecoration(
+              hintText: t.web.knowledge.searchPlaceholder,
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searching
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchCtrl.clear();
+                        _load();
+                      },
+                    )
+                  : null,
+              border: const OutlineInputBorder(),
+              isDense: true,
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 44,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                for (final k in const [
+                  'all',
+                  'entity',
+                  'fact',
+                  'playbook',
+                  'skill',
+                ])
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: ChoiceChip(
+                      label: Text(_kindLabel(k)),
+                      selected: _kind == k,
+                      onSelected: (_) {
+                        setState(() => _kind = k);
+                        if (!_searching) _load();
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 44,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Center(child: Text(t.web.knowledge.scope)),
+                ),
+                for (final s in const ['all', 'global', 'project', 'domain'])
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: ChoiceChip(
+                      label: Text(_scopeLabel(s)),
+                      selected: _scope == s,
+                      onSelected: (_) {
+                        setState(() => _scope = s);
+                        if (!_searching) _load();
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          child: _state.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text('$e', textAlign: TextAlign.center),
+              ),
+            ),
+            data: (nodes) => nodes.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        _searching
+                            ? t.web.knowledge.noResults
+                            : t.web.knowledge.empty,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _load,
+                    child: ListView.separated(
+                      itemCount: nodes.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (_, i) {
+                        final n = nodes[i];
+                        return ListTile(
+                          leading: _KindChip(kind: n.kind),
+                          title: Text(
+                            n.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Text(
+                            n.scopeKey.isNotEmpty
+                                ? '${n.scope} · ${n.scopeKey}'
+                                : n.scope,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onTap: () => _openDetail(n),
+                        );
+                      },
+                    ),
+                  ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -266,6 +295,289 @@ class _KindChip extends StatelessWidget {
       visualDensity: VisualDensity.compact,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       padding: const EdgeInsets.symmetric(horizontal: 4),
+    );
+  }
+}
+
+// _KbView — the curated Knowledge Base pages (the human-readable surface),
+// fused with the note system (projectdoc kb_* docs). Global pages + per-project
+// handbook; AI-drafted, human edit locks a page from AI overwrite.
+class _KbView extends ConsumerStatefulWidget {
+  const _KbView();
+
+  @override
+  ConsumerState<_KbView> createState() => _KbViewState();
+}
+
+class _KbViewState extends ConsumerState<_KbView> {
+  static const _global = '__global__';
+  String _kind = 'kb_infrastructure';
+  String _cwd = _global;
+  final _cwdCtrl = TextEditingController();
+  final _editCtrl = TextEditingController();
+  bool _editing = false;
+  bool _busy = false;
+  AsyncValue<ProjectDoc> _doc = const AsyncValue.loading();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _cwdCtrl.dispose();
+    _editCtrl.dispose();
+    super.dispose();
+  }
+
+  String _stripSig(String s) =>
+      s.split('\n').where((l) => !l.contains('kb-sig:')).join('\n').trim();
+
+  String _kindLabel(String k) {
+    switch (k) {
+      case 'kb_conventions':
+        return t.web.knowledge.kb.kinds.kb_conventions;
+      case 'kb_lessons':
+        return t.web.knowledge.kb.kinds.kb_lessons;
+      case 'kb_handbook':
+        return t.web.knowledge.kb.kinds.kb_handbook;
+      default:
+        return t.web.knowledge.kb.kinds.kb_infrastructure;
+    }
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _doc = const AsyncValue.loading();
+      _editing = false;
+    });
+    try {
+      final d = await ref.read(projectDocsApiProvider).getDoc(_cwd, _kind);
+      if (mounted) setState(() => _doc = AsyncValue.data(d));
+    } on Object catch (e, st) {
+      if (mounted) setState(() => _doc = AsyncValue.error(e, st));
+    }
+  }
+
+  void _select(String kind, String cwd) {
+    setState(() {
+      _kind = kind;
+      _cwd = cwd;
+    });
+    _load();
+  }
+
+  Future<void> _save() async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(projectDocsApiProvider)
+          .putDoc(cwd: _cwd, kind: _kind, content: _editCtrl.text);
+      await _load();
+      messenger.showSnackBar(SnackBar(content: Text(t.web.knowledge.kb.saved)));
+    } on Object {
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.web.knowledge.actionFailed)),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _unlock(ProjectDoc d) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref
+          .read(projectDocsApiProvider)
+          .putDoc(
+            cwd: _cwd,
+            kind: _kind,
+            content: _stripSig(d.content),
+            updatedBy: 'agent',
+          );
+      await _load();
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.web.knowledge.kb.unlocked)),
+      );
+    } on Object {
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.web.knowledge.actionFailed)),
+      );
+    }
+  }
+
+  Future<void> _regen() async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(knowledgeApiProvider).draftKb();
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.web.knowledge.kb.regenerating)),
+      );
+    } on Object {
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.web.knowledge.actionFailed)),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 44,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                for (final k in const [
+                  'kb_infrastructure',
+                  'kb_conventions',
+                  'kb_lessons',
+                ])
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: ChoiceChip(
+                      label: Text(_kindLabel(k)),
+                      selected: _kind == k && _cwd == _global,
+                      onSelected: (_) => _select(k, _global),
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: ChoiceChip(
+                    label: Text(t.web.knowledge.kb.kinds.kb_handbook),
+                    selected: _kind == 'kb_handbook',
+                    onSelected: _cwdCtrl.text.trim().isEmpty
+                        ? null
+                        : (_) => _select('kb_handbook', _cwdCtrl.text.trim()),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+          child: TextField(
+            controller: _cwdCtrl,
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: t.web.knowledge.cwdPlaceholder,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        ),
+        Expanded(
+          child: _doc.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text('$e', textAlign: TextAlign.center),
+              ),
+            ),
+            data: (d) {
+              final content = _stripSig(d.content);
+              final locked = d.updatedBy == 'operator';
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                    child: Row(
+                      children: [
+                        if (d.isPersisted)
+                          Chip(
+                            label: Text(
+                              locked
+                                  ? t.web.knowledge.kb.locked
+                                  : t.web.knowledge.kb.aiDrafted,
+                              style: const TextStyle(fontSize: 10),
+                            ),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        const Spacer(),
+                        if (!_editing) ...[
+                          TextButton(
+                            onPressed: () {
+                              _editCtrl.text = content;
+                              setState(() => _editing = true);
+                            },
+                            child: Text(t.web.knowledge.kb.edit),
+                          ),
+                          if (locked)
+                            TextButton(
+                              onPressed: () => _unlock(d),
+                              child: Text(t.web.knowledge.kb.unlock),
+                            ),
+                          TextButton(
+                            onPressed: _regen,
+                            child: Text(t.web.knowledge.kb.regenerate),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: _editing
+                        ? Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _editCtrl,
+                                    maxLines: null,
+                                    expands: true,
+                                    textAlignVertical: TextAlignVertical.top,
+                                    style: const TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 13,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      alignLabelWithHint: true,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    FilledButton(
+                                      onPressed: _busy ? null : _save,
+                                      child: Text(t.web.knowledge.kb.save),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    TextButton(
+                                      onPressed: () =>
+                                          setState(() => _editing = false),
+                                      child: Text(t.web.knowledge.kb.cancel),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          )
+                        : SingleChildScrollView(
+                            padding: const EdgeInsets.all(12),
+                            child: SelectableText(
+                              content.isEmpty
+                                  ? t.web.knowledge.kb.empty
+                                  : content,
+                            ),
+                          ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

@@ -20,15 +20,15 @@ class KnowledgeNode {
   });
 
   factory KnowledgeNode.fromJson(Map<String, dynamic> json) => KnowledgeNode(
-        id: json['id'] as String? ?? '',
-        kind: json['kind'] as String? ?? '',
-        title: json['title'] as String? ?? '',
-        body: json['body'] as String? ?? '',
-        scope: json['scope'] as String? ?? '',
-        scopeKey: json['scope_key'] as String? ?? '',
-        maturity: json['maturity'] as String? ?? '',
-        entityType: json['entity_type'] as String? ?? '',
-      );
+    id: json['id'] as String? ?? '',
+    kind: json['kind'] as String? ?? '',
+    title: json['title'] as String? ?? '',
+    body: json['body'] as String? ?? '',
+    scope: json['scope'] as String? ?? '',
+    scopeKey: json['scope_key'] as String? ?? '',
+    maturity: json['maturity'] as String? ?? '',
+    entityType: json['entity_type'] as String? ?? '',
+  );
 
   final String id;
   final String kind;
@@ -65,11 +65,11 @@ class KnowledgeHit {
   KnowledgeHit({required this.node, required this.similarity});
 
   factory KnowledgeHit.fromJson(Map<String, dynamic> json) => KnowledgeHit(
-        node: KnowledgeNode.fromJson(
-          (json['node'] as Map?)?.cast<String, dynamic>() ?? const {},
-        ),
-        similarity: (json['similarity'] as num?)?.toDouble() ?? 0,
-      );
+    node: KnowledgeNode.fromJson(
+      (json['node'] as Map?)?.cast<String, dynamic>() ?? const {},
+    ),
+    similarity: (json['similarity'] as num?)?.toDouble() ?? 0,
+  );
 
   final KnowledgeNode node;
   final double similarity;
@@ -165,6 +165,15 @@ class KnowledgeApi {
         '/api/v1/knowledge/nodes/$id/skillify',
       );
       return KnowledgeNode.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // draftKb triggers a background regeneration of all curated KB pages.
+  Future<void> draftKb() async {
+    try {
+      await _dio.post<void>('/api/v1/knowledge/kb/draft');
     } on Object catch (e) {
       throw toApiException(e);
     }
