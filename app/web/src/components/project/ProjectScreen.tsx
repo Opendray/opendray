@@ -15,9 +15,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   AlertTriangle,
+  Archive,
   Check,
   Inbox,
   Loader2,
+  Pause,
+  Play,
   RotateCcw,
   Save,
   Trash2,
@@ -43,13 +46,16 @@ import {
   type ProjectDoc,
   type DocProposal,
   type SessionLogEntry,
+  type ProjectStatus,
   approveProposal,
   listProjectDocs,
   listPendingProposals,
+  listProjects,
   listSessionLogs,
   putProjectDoc,
   rejectProposal,
   resetProjectMemory,
+  setProjectLifecycle,
 } from '@/lib/projectDocs'
 import {
   type MemoryRecord,
@@ -162,16 +168,19 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
               )}
             </div>
           </div>
-          <ResetButton
-            cwd={cwd}
-            onDone={() => {
-              qc.invalidateQueries({ queryKey: ['project-docs', cwd] })
-              qc.invalidateQueries({ queryKey: ['project-doc-proposals', cwd] })
-              qc.invalidateQueries({ queryKey: ['session-logs', cwd] })
-              qc.invalidateQueries({ queryKey: ['archived-memories'] })
-              qc.invalidateQueries({ queryKey: ['memories'] })
-            }}
-          />
+          <div className="flex flex-none items-center gap-2">
+            <LifecycleControl cwd={cwd} />
+            <ResetButton
+              cwd={cwd}
+              onDone={() => {
+                qc.invalidateQueries({ queryKey: ['project-docs', cwd] })
+                qc.invalidateQueries({ queryKey: ['project-doc-proposals', cwd] })
+                qc.invalidateQueries({ queryKey: ['session-logs', cwd] })
+                qc.invalidateQueries({ queryKey: ['archived-memories'] })
+                qc.invalidateQueries({ queryKey: ['memories'] })
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -738,6 +747,94 @@ function ArchivedCard({
         )}
         {t('web.project.archived.restoreButton')}
       </Button>
+    </div>
+  )
+}
+
+// ─── Lifecycle control (P-D) ─────────────────────────────────
+
+// LifecycleControl shows the project's lifecycle status and lets the operator
+// move it between active / paused / archived. Frozen (paused/archived)
+// projects are excluded from spawn injection + cross-project distillation.
+function LifecycleControl({ cwd }: { cwd: string }) {
+  const { t } = useTranslation()
+  const qc = useQueryClient()
+
+  const projectsQuery = useQuery({
+    queryKey: ['projects-lifecycle'],
+    queryFn: () => listProjects(),
+  })
+  const summary = projectsQuery.data?.find((p) => p.cwd === cwd)
+  const status: ProjectStatus = summary?.status ?? 'active'
+  const suggestArchive = summary?.suggest_archive ?? false
+
+  const mutation = useMutation({
+    mutationFn: (next: ProjectStatus) => setProjectLifecycle(cwd, next),
+    onSuccess: (_data, next) => {
+      qc.invalidateQueries({ queryKey: ['projects-lifecycle'] })
+      toast.success(t(`web.project.lifecycle.applied.${next}`))
+    },
+    onError: (e) =>
+      toast.error(t('web.project.lifecycle.failedToast'), {
+        description: e instanceof Error ? e.message : String(e),
+      }),
+  })
+
+  const badgeVariant =
+    status === 'archived' ? 'muted' : status === 'paused' ? 'warning' : 'success'
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Badge variant={badgeVariant} className="text-[10px] capitalize">
+        {t(`web.project.lifecycle.status.${status}`)}
+      </Badge>
+      {suggestArchive && status === 'active' && (
+        <Badge
+          variant="warning"
+          className="text-[10px]"
+          title={t('web.project.lifecycle.idleHint', {
+            days: summary?.idle_days ?? 0,
+          })}
+        >
+          {t('web.project.lifecycle.idleSuggest')}
+        </Badge>
+      )}
+      {status !== 'active' && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex-none"
+          disabled={mutation.isPending}
+          onClick={() => mutation.mutate('active')}
+        >
+          <Play className="mr-1 h-3 w-3" />
+          {t('web.project.lifecycle.activate')}
+        </Button>
+      )}
+      {status === 'active' && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex-none"
+          disabled={mutation.isPending}
+          onClick={() => mutation.mutate('paused')}
+        >
+          <Pause className="mr-1 h-3 w-3" />
+          {t('web.project.lifecycle.pause')}
+        </Button>
+      )}
+      {status !== 'archived' && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex-none"
+          disabled={mutation.isPending}
+          onClick={() => mutation.mutate('archived')}
+        >
+          <Archive className="mr-1 h-3 w-3" />
+          {t('web.project.lifecycle.archive')}
+        </Button>
+      )}
     </div>
   )
 }
