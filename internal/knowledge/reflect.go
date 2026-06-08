@@ -35,6 +35,7 @@ type Reflector struct {
 	store   *Store
 	llm     LLM
 	journal JournalSource // optional; work-trace feedstock for playbooks
+	mem     MemorySource  // P-G: declarative facts come straight from Memory now
 	log     *slog.Logger
 }
 
@@ -50,6 +51,14 @@ func NewReflector(pool *pgxpool.Pool, llm LLM, log *slog.Logger) *Reflector {
 // playbooks are distilled from real work-traces, not just declarative facts.
 func (r *Reflector) WithJournal(src JournalSource) *Reflector {
 	r.journal = src
+	return r
+}
+
+// WithMemory wires episodic Memory as the declarative-fact feedstock (P-G —
+// fact nodes are retired; Memory is the fact store). Optional: without it the
+// reflector distils from the journal alone.
+func (r *Reflector) WithMemory(src MemorySource) *Reflector {
+	r.mem = src
 	return r
 }
 
@@ -76,9 +85,13 @@ Rules:
 // ReflectProject drafts new playbooks for one project from its facts. Returns
 // the number of playbooks created.
 func (r *Reflector) ReflectProject(ctx context.Context, scopeKey string, minFacts int) (int, error) {
-	facts, err := r.store.ListNodes(ctx, NodeFilter{Kind: KindFact, Scope: ScopeProject, ScopeKey: scopeKey, Limit: 200})
-	if err != nil {
-		return 0, err
+	var facts []MemoryRow
+	if r.mem != nil {
+		if fs, ferr := r.mem.ListProjectMemories(ctx, scopeKey, 200); ferr != nil {
+			r.log.Warn("reflect: list memories failed", "cwd", scopeKey, "err", ferr)
+		} else {
+			facts = fs
+		}
 	}
 	var journal []JournalEntry
 	if r.journal != nil {
@@ -146,7 +159,7 @@ func (r *Reflector) ReflectProject(ctx context.Context, scopeKey string, minFact
 
 // reflectSignature fingerprints a project's feedstock so an unchanged project
 // can be skipped (counts + newest journal time catch new facts / journal).
-func reflectSignature(facts []Node, journal []JournalEntry) string {
+func reflectSignature(facts []MemoryRow, journal []JournalEntry) string {
 	var newest int64
 	for _, j := range journal {
 		if u := j.CreatedAt.Unix(); u > newest {
@@ -156,7 +169,7 @@ func reflectSignature(facts []Node, journal []JournalEntry) string {
 	return fmt.Sprintf("f%d:j%d:%d", len(facts), len(journal), newest)
 }
 
-func buildReflectInput(journal []JournalEntry, facts, existing []Node) string {
+func buildReflectInput(journal []JournalEntry, facts []MemoryRow, existing []Node) string {
 	var b strings.Builder
 	if len(journal) > 0 {
 		b.WriteString("WORK LOG (real session traces — what was built, root-caused, fixed, decided; the primary source for procedures):\n")
@@ -178,7 +191,7 @@ func buildReflectInput(journal []JournalEntry, facts, existing []Node) string {
 		b.WriteString("\nKNOWN FACTS (supporting context — do not turn a lone fact into a playbook):\n")
 		for _, f := range facts {
 			b.WriteString("- ")
-			b.WriteString(f.Title)
+			b.WriteString(factTitle(f.Text))
 			b.WriteByte('\n')
 		}
 	}

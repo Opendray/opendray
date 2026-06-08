@@ -70,9 +70,14 @@ type BrainView struct {
 	Facts   []Node `json:"facts"`
 }
 
-// ProjectBrain assembles the project entity + its anchored facts for a cwd.
-// An absent project entity yields an empty view (not an error) so a freshly
-// enabled install returns 200 with nothing rather than 404.
+// ProjectBrain assembles the project entity + the entities it touches for a
+// cwd. An absent project entity yields an empty view (not an error) so a
+// freshly enabled install returns 200 with nothing rather than 404.
+//
+// P-G: fact nodes are retired (Memory is the fact store), so the view's Facts
+// field now carries the project's linked ENTITIES instead of a fact mirror —
+// the demoted graph tab shows "what this project touches"; the declarative
+// facts themselves live in Memory and the curated KB pages.
 func (s *Service) ProjectBrain(ctx context.Context, cwd string) (BrainView, error) {
 	center, neighbors, err := s.store.Neighborhood(ctx, ProjectEntityID(cwd))
 	if errors.Is(err, ErrNotFound) {
@@ -83,7 +88,7 @@ func (s *Service) ProjectBrain(ctx context.Context, cwd string) (BrainView, erro
 	}
 	view := BrainView{Project: &center}
 	for _, nb := range neighbors {
-		if nb.Node.Kind == KindFact {
+		if nb.Node.Kind == KindEntity && nb.Node.ID != center.ID {
 			view.Facts = append(view.Facts, nb.Node)
 		}
 	}

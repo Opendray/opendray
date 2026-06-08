@@ -121,6 +121,42 @@ func (a knowledgeMemorySource) ListProjectMemories(ctx context.Context, scopeKey
 	return out, nil
 }
 
+// ListAllMemories gathers project-scoped memories across every project key so
+// the cross-project KB pages distil straight from Memory (P-G). Per-key
+// failures are skipped; the overall cap bounds the total returned.
+func (a knowledgeMemorySource) ListAllMemories(ctx context.Context, limit int) ([]knowledge.MemoryRow, error) {
+	keys, err := a.mem.ListScopeKeys(ctx, memory.ScopeProject)
+	if err != nil {
+		return nil, err
+	}
+	if limit <= 0 {
+		limit = 400
+	}
+	// Spread the budget across projects so one large project can't crowd out
+	// the rest of the ecosystem's facts; at least a handful per project.
+	perKey := limit
+	if n := len(keys); n > 0 {
+		if perKey = limit / n; perKey < 20 {
+			perKey = 20
+		}
+	}
+	out := make([]knowledge.MemoryRow, 0, limit)
+	for _, k := range keys {
+		if len(out) >= limit {
+			break
+		}
+		rows, rerr := a.ListProjectMemories(ctx, k, perKey)
+		if rerr != nil {
+			continue
+		}
+		out = append(out, rows...)
+	}
+	if len(out) > limit {
+		out = out[:limit]
+	}
+	return out, nil
+}
+
 // knowledgeJournalSource adapts *projectdoc.Service to knowledge.JournalSource
 // so reflection distills playbooks from real session work-traces (the project
 // journal), not just declarative memory facts. One-way dependency: knowledge
@@ -758,7 +794,8 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			knowledgeAnchorer = knowledge.NewAnchorer(st.Pool(), knowledgeMemorySource{mem: memorySvc}, log).
 				WithLLM(kgLLM)
 			knowledgeReflector = knowledge.NewReflector(st.Pool(), kbLLM, log).
-				WithJournal(knowledgeJournalSource{pd: projectDocSvc})
+				WithJournal(knowledgeJournalSource{pd: projectDocSvc}).
+				WithMemory(knowledgeMemorySource{mem: memorySvc}) // P-G — facts from Memory
 			knowledgeSvc.WithReanchor(func(c context.Context) error {
 				return knowledgeAnchorer.AnchorAll(c, 500)
 			})
@@ -767,7 +804,8 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				knowledge.NewStore(st.Pool()), kbLLM,
 				knowledgeJournalSource{pd: projectDocSvc},
 				knowledgeDocSink{pd: projectDocSvc}, log).
-				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc}) // P-D — skip frozen projects
+				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc}). // P-D — skip frozen projects
+				WithMemory(knowledgeMemorySource{mem: memorySvc})     // P-G — facts from Memory
 			knowledgeSvc.WithKBDrafter(knowledgeKBDrafter) // manual /kb/draft endpoint
 			// P-C — one ordered loop (anchor → reflect → KB) replaces the three
 			// independent sweep goroutines so each stage drafts from the prior

@@ -22,6 +22,10 @@ type MemorySource interface {
 	// ListProjectMemories returns episodic fact rows for one project cwd,
 	// newest first, capped at limit.
 	ListProjectMemories(ctx context.Context, scopeKey string, limit int) ([]MemoryRow, error)
+	// ListAllMemories returns episodic fact rows across all project scope keys,
+	// newest first, capped at limit. P-G: the cross-project KB pages distil
+	// straight from Memory now that the fact-node layer is retired.
+	ListAllMemories(ctx context.Context, limit int) ([]MemoryRow, error)
 }
 
 // MemoryRow is one episodic memory fact, as the anchorer sees it.
@@ -123,45 +127,31 @@ func (a *Anchorer) AnchorProject(ctx context.Context, cwd string, limit int) (in
 	return n, nil
 }
 
+// anchorOne processes one not-yet-seen memory row. P-G: fact nodes are
+// retired — Memory IS the fact store — so this no longer copies the fact into
+// the graph. It extracts cross-project entities from the memory text and links
+// each to the project entity, then records the memory id against the project
+// entity (via knowledge_fact_sources) purely as a "processed" marker so the
+// next sweep skips it. The fact body is never duplicated.
 func (a *Anchorer) anchorOne(ctx context.Context, projID string, row MemoryRow) error {
 	if looksLikeSecret(row.Text) {
-		return nil // never lift secrets into the searchable knowledge graph
+		// Still mark processed so we don't re-scan a secret every sweep, but
+		// never extract entities from it into the searchable graph.
+		return a.store.LinkFactSource(ctx, projID, row.ID)
 	}
-	scopeKey := row.ScopeKey
-	title := factTitle(row.Text)
-	// Dedup: an identical fact already in this project → attach this memory to
-	// it instead of creating a duplicate node.
-	if existingID, ok, err := a.store.FactIDByTitle(ctx, scopeKey, title); err == nil && ok {
-		return a.store.LinkFactSource(ctx, existingID, row.ID)
-	}
-	node, err := a.store.CreateNode(ctx, Node{
-		Kind:       KindFact,
-		Title:      title,
-		Scope:      ScopeProject,
-		ScopeKey:   scopeKey,
-		Maturity:   MaturityFact,
-		Provenance: map[string]any{"source": "anchorer", "memory_id": row.ID},
-	})
-	if err != nil {
-		return err
-	}
-	if err := a.store.LinkFactSource(ctx, node.ID, row.ID); err != nil {
-		return err
-	}
-	if err := a.store.CreateEdge(ctx, Edge{SrcID: node.ID, EdgeType: EdgeAbout, DstID: projID}); err != nil {
-		return err
-	}
-	// Phase 1B — optional fine-entity extraction. Best-effort: a failure here
-	// never fails the project anchoring already committed above.
+	// Phase 1B — fine-entity extraction straight from the memory text. Best-
+	// effort: a failure logs but we still mark the memory processed so the
+	// sweep makes forward progress instead of retrying forever.
 	if a.llm != nil {
-		a.linkEntities(ctx, node.ID, row)
+		a.linkEntities(ctx, projID, row)
 	}
-	return nil
+	return a.store.LinkFactSource(ctx, projID, row.ID)
 }
 
-// linkEntities extracts fine entities from a fact and links the fact to each
-// (canonicalised) entity with an `about` edge. Best-effort; logs and moves on.
-func (a *Anchorer) linkEntities(ctx context.Context, factID string, row MemoryRow) {
+// linkEntities extracts entities from a memory fact and links each
+// (canonicalised) entity to the project entity with an `about` edge, so the
+// project's neighbourhood surfaces "what this project touches". Best-effort.
+func (a *Anchorer) linkEntities(ctx context.Context, projID string, row MemoryRow) {
 	ents, err := ExtractEntities(ctx, a.llm, row.Text)
 	if err != nil {
 		a.log.Warn("entity extraction failed", "memory_id", row.ID, "err", err)
@@ -173,7 +163,10 @@ func (a *Anchorer) linkEntities(ctx context.Context, factID string, row MemoryRo
 			a.log.Warn("entity upsert failed", "name", e.Name, "err", err)
 			continue
 		}
-		if err := a.store.CreateEdge(ctx, Edge{SrcID: factID, EdgeType: EdgeAbout, DstID: entID}); err != nil {
+		if entID == projID {
+			continue // don't self-link the project entity
+		}
+		if err := a.store.CreateEdge(ctx, Edge{SrcID: entID, EdgeType: EdgeAbout, DstID: projID}); err != nil {
 			a.log.Warn("entity edge failed", "name", e.Name, "err", err)
 		}
 	}

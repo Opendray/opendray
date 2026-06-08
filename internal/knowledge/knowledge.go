@@ -25,8 +25,12 @@ import (
 type NodeKind string
 
 const (
-	KindEntity   NodeKind = "entity"   // declarative backbone — a thing
-	KindFact     NodeKind = "fact"     // declarative assertion about an entity
+	KindEntity NodeKind = "entity" // declarative backbone — a thing
+	// KindFact is RETIRED (P-G): fact nodes were a 1:1 mirror of episodic
+	// Memory and are no longer produced (migration 0041 deleted existing ones).
+	// The constant is kept so Valid() still accepts legacy rows mid-migration
+	// and the node-validation surface stays stable. Memory is the fact store.
+	KindFact     NodeKind = "fact"
 	KindPlaybook NodeKind = "playbook" // procedural know-how
 	KindSkill    NodeKind = "skill"    // an invocable capability
 )

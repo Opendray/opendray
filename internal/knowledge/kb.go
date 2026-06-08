@@ -59,6 +59,7 @@ type KBDrafter struct {
 	store     *Store
 	llm       LLM
 	journal   JournalSource
+	mem       MemorySource // P-G: declarative facts come straight from Memory now
 	docs      DocSink
 	lifecycle LifecycleFilter
 	log       *slog.Logger
@@ -77,6 +78,15 @@ func NewKBDrafter(store *Store, llm LLM, journal JournalSource, docs DocSink, lo
 // are skipped during handbook distillation. Returns the receiver for chaining.
 func (d *KBDrafter) WithLifecycle(f LifecycleFilter) *KBDrafter {
 	d.lifecycle = f
+	return d
+}
+
+// WithMemory wires episodic Memory as the declarative-fact feedstock for the
+// infrastructure / conventions / reusable / handbook pages (P-G — fact nodes
+// retired). Optional: without it those pages distil from entities/playbooks
+// alone. Returns the receiver for chaining.
+func (d *KBDrafter) WithMemory(src MemorySource) *KBDrafter {
+	d.mem = src
 	return d
 }
 
@@ -123,7 +133,10 @@ func (d *KBDrafter) DraftAll(ctx context.Context) ([]KBDraftResult, error) {
 	if d.llm == nil || d.docs == nil {
 		return nil, nil
 	}
-	facts, _ := d.store.ListNodes(ctx, NodeFilter{Kind: KindFact, Limit: 400})
+	var facts []MemoryRow
+	if d.mem != nil {
+		facts, _ = d.mem.ListAllMemories(ctx, 400)
+	}
 	entities, _ := d.store.ListNodes(ctx, NodeFilter{Kind: KindEntity, Limit: 400})
 	playbooks, _ := d.store.ListNodes(ctx, NodeFilter{Kind: KindPlaybook, Limit: 200})
 
@@ -152,7 +165,10 @@ func (d *KBDrafter) DraftAll(ctx context.Context) ([]KBDraftResult, error) {
 		if d.lifecycle != nil && d.lifecycle.IsFrozen(ctx, k) {
 			continue
 		}
-		pf, _ := d.store.ListNodes(ctx, NodeFilter{Kind: KindFact, Scope: ScopeProject, ScopeKey: k, Limit: 200})
+		var pf []MemoryRow
+		if d.mem != nil {
+			pf, _ = d.mem.ListProjectMemories(ctx, k, 200)
+		}
 		pp, _ := d.store.ListNodes(ctx, NodeFilter{Kind: KindPlaybook, Scope: ScopeProject, ScopeKey: k, Limit: 100})
 		var jr []JournalEntry
 		if d.journal != nil {
@@ -211,7 +227,7 @@ func (d *KBDrafter) draftOne(ctx context.Context, cwd, kind, system, feedstock s
 
 // --- feedstock builders ---
 
-func buildInfraFeedstock(facts, entities []Node) string {
+func buildInfraFeedstock(facts []MemoryRow, entities []Node) string {
 	var b strings.Builder
 	b.WriteString("ENTITIES (grouped by type):\n")
 	byType := map[EntityType][]string{}
@@ -228,7 +244,7 @@ func buildInfraFeedstock(facts, entities []Node) string {
 	return b.String()
 }
 
-func buildConvFeedstock(facts []Node) string {
+func buildConvFeedstock(facts []MemoryRow) string {
 	var b strings.Builder
 	b.WriteString("FACTS (mine the conventions / habits / rules):\n")
 	writeFactTitles(&b, facts)
@@ -256,7 +272,7 @@ func buildLessonsFeedstock(playbooks []Node) string {
 	return b.String()
 }
 
-func buildReusableFeedstock(playbooks, facts []Node) string {
+func buildReusableFeedstock(playbooks []Node, facts []MemoryRow) string {
 	var b strings.Builder
 	if len(playbooks) > 0 {
 		b.WriteString("PLAYBOOKS (how things were built):\n")
@@ -271,7 +287,7 @@ func buildReusableFeedstock(playbooks, facts []Node) string {
 	return b.String()
 }
 
-func buildHandbookFeedstock(cwd string, facts []Node, journal []JournalEntry, playbooks []Node) string {
+func buildHandbookFeedstock(cwd string, facts []MemoryRow, journal []JournalEntry, playbooks []Node) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "PROJECT: %s\n\n", cwd)
 	if len(journal) > 0 {
@@ -305,10 +321,10 @@ func buildHandbookFeedstock(cwd string, facts []Node, journal []JournalEntry, pl
 	return b.String()
 }
 
-func writeFactTitles(b *strings.Builder, facts []Node) {
+func writeFactTitles(b *strings.Builder, facts []MemoryRow) {
 	for _, f := range facts {
-		t := strings.TrimSpace(f.Title)
-		if t == "" {
+		t := factTitle(f.Text)
+		if t == "" || t == "(empty fact)" {
 			continue
 		}
 		b.WriteString("- ")
