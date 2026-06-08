@@ -274,47 +274,6 @@ func looksLikeSecret(text string) bool {
 	return secretHintRe.MatchString(text) && longTokenRe.MatchString(text)
 }
 
-// AnchorSweepConfig tunes the background sweep.
-type AnchorSweepConfig struct {
-	Interval     time.Duration // between sweeps (default 10m)
-	InitialDelay time.Duration // before the first sweep (default 1m)
-	PerProject   int           // max memories pulled per project per sweep (default 500)
-}
-
-func (c AnchorSweepConfig) withDefaults() AnchorSweepConfig {
-	if c.Interval <= 0 {
-		c.Interval = 10 * time.Minute
-	}
-	if c.InitialDelay <= 0 {
-		c.InitialDelay = time.Minute
-	}
-	if c.PerProject <= 0 {
-		c.PerProject = 500
-	}
-	return c
-}
-
-// RunAnchorSweep blocks until ctx is cancelled, periodically anchoring new
-// memory facts across all projects. Soft-fails every step. Mirrors the
-// projectdoc embed-backfill loop shape; safe to launch in its own goroutine.
-func (a *Anchorer) RunAnchorSweep(ctx context.Context, cfg AnchorSweepConfig) {
-	cfg = cfg.withDefaults()
-	a.log.Info("knowledge anchor sweep running", "interval", cfg.Interval)
-	timer := time.NewTimer(cfg.InitialDelay)
-	defer timer.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-timer.C:
-		}
-		if err := a.AnchorAll(ctx, cfg.PerProject); err != nil && !errors.Is(err, context.Canceled) {
-			a.log.Warn("anchor sweep cycle failed", "err", err)
-		}
-		timer.Reset(cfg.Interval)
-	}
-}
-
 // AnchorAll runs one full anchoring pass across all projects. Exported so the
 // reset path can re-derive the graph immediately instead of waiting for the
 // next scheduled sweep.

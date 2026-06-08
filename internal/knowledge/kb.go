@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
-	"time"
 )
 
 // --- M-KB: curated, human-readable Knowledge Base pages -----------------------
@@ -366,43 +365,4 @@ func stripFences(s string) string {
 	}
 	s = strings.TrimSuffix(strings.TrimRight(s, "\n"), "```")
 	return strings.TrimSpace(s)
-}
-
-// KBSweepConfig tunes the background KB-drafting loop.
-type KBSweepConfig struct {
-	Interval     time.Duration // between sweeps (default 1h)
-	InitialDelay time.Duration // before the first sweep (default 7m)
-}
-
-func (c KBSweepConfig) withDefaults() KBSweepConfig {
-	if c.Interval <= 0 {
-		c.Interval = time.Hour
-	}
-	if c.InitialDelay <= 0 {
-		c.InitialDelay = 7 * time.Minute
-	}
-	return c
-}
-
-// RunKBSweep blocks until ctx is cancelled, periodically refreshing all KB
-// pages. Dirty-checked + lock-aware, so steady-state cost is ~0 LLM calls.
-func (d *KBDrafter) RunKBSweep(ctx context.Context, cfg KBSweepConfig) {
-	if d.llm == nil || d.docs == nil {
-		return
-	}
-	cfg = cfg.withDefaults()
-	d.log.Info("knowledge KB sweep running", "interval", cfg.Interval)
-	timer := time.NewTimer(cfg.InitialDelay)
-	defer timer.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-timer.C:
-		}
-		if _, err := d.DraftAll(ctx); err != nil && ctx.Err() == nil {
-			d.log.Warn("kb sweep cycle failed", "err", err)
-		}
-		timer.Reset(cfg.Interval)
-	}
 }

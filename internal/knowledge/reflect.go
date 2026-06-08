@@ -234,61 +234,31 @@ func parsePlaybooks(raw string) []draftPlaybook {
 	return parsed.Playbooks
 }
 
-// ReflectSweepConfig tunes the background reflection loop.
-type ReflectSweepConfig struct {
-	Interval     time.Duration // between sweeps (default 30m)
-	InitialDelay time.Duration // before the first sweep (default 5m)
-	MinFacts     int           // skip projects with fewer facts (default 5)
-}
-
-func (c ReflectSweepConfig) withDefaults() ReflectSweepConfig {
-	if c.Interval <= 0 {
-		c.Interval = 30 * time.Minute
+// ReflectAll runs one reflection pass across all projects, drafting playbooks
+// for each. Exported so the consolidation engine (P-C) can sequence it after
+// anchoring without owning the project-iteration logic. Returns the total
+// playbook count. Per-project errors are logged and skipped.
+func (r *Reflector) ReflectAll(ctx context.Context, minFacts int) (int, error) {
+	keys, err := r.store.ListProjectScopeKeys(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("reflect: list projects: %w", err)
 	}
-	if c.InitialDelay <= 0 {
-		c.InitialDelay = 5 * time.Minute
-	}
-	if c.MinFacts <= 0 {
-		c.MinFacts = 5
-	}
-	return c
-}
-
-// RunReflectSweep blocks until ctx is cancelled, periodically drafting
-// playbooks across all projects. Soft-fails every step.
-func (r *Reflector) RunReflectSweep(ctx context.Context, cfg ReflectSweepConfig) {
-	cfg = cfg.withDefaults()
-	r.log.Info("knowledge reflect sweep running", "interval", cfg.Interval, "min_facts", cfg.MinFacts)
-	timer := time.NewTimer(cfg.InitialDelay)
-	defer timer.Stop()
-	for {
+	total := 0
+	for _, k := range keys {
 		select {
 		case <-ctx.Done():
-			return
-		case <-timer.C:
+			return total, ctx.Err()
+		default:
 		}
-		keys, err := r.store.ListProjectScopeKeys(ctx)
+		n, err := r.ReflectProject(ctx, k, minFacts)
 		if err != nil {
-			r.log.Warn("reflect: list projects failed", "err", err)
-		} else {
-			total := 0
-			for _, k := range keys {
-				select {
-				case <-ctx.Done():
-					return
-				default:
-				}
-				n, err := r.ReflectProject(ctx, k, cfg.MinFacts)
-				if err != nil {
-					r.log.Warn("reflect project failed", "cwd", k, "err", err)
-					continue
-				}
-				total += n
-			}
-			if total > 0 {
-				r.log.Info("reflect sweep done", "playbooks", total)
-			}
+			r.log.Warn("reflect project failed", "cwd", k, "err", err)
+			continue
 		}
-		timer.Reset(cfg.Interval)
+		total += n
 	}
+	if total > 0 {
+		r.log.Info("reflect sweep done", "playbooks", total)
+	}
+	return total, nil
 }

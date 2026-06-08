@@ -93,10 +93,11 @@ type App struct {
 	prWatcher            *prwatcher.Service     // polls open PRs' CI checks and emits pr.checks_completed
 	cliacctWatcher       *cliacct.Watcher       // optional; nil when [providers.claude] watcher_enabled = false
 	server               *http.Server
-	knowledgeAnchorer    *knowledge.Anchorer  // M-KG Phase 1 anchor sweep; nil when [knowledge] disabled
-	knowledgeReflector   *knowledge.Reflector // M-KG Phase 3 fact->playbook sweep; nil when disabled
-	knowledgeSvc         *knowledge.Service   // M-KG Phase 6 embed backfill; nil when disabled
-	knowledgeKBDrafter   *knowledge.KBDrafter // M-KB curated KB-page drafting; nil when disabled
+	knowledgeAnchorer    *knowledge.Anchorer            // M-KG Phase 1 anchor sweep; nil when [knowledge] disabled
+	knowledgeReflector   *knowledge.Reflector           // M-KG Phase 3 fact->playbook sweep; nil when disabled
+	knowledgeSvc         *knowledge.Service             // M-KG Phase 6 embed backfill; nil when disabled
+	knowledgeKBDrafter   *knowledge.KBDrafter           // M-KB curated KB-page drafting; nil when disabled
+	knowledgeConsolidate *knowledge.ConsolidationEngine // P-C unified anchor→reflect→KB loop; nil when disabled
 }
 
 // knowledgeMemorySource adapts *memory.Service to knowledge.MemorySource so
@@ -741,6 +742,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	var knowledgeReflector *knowledge.Reflector
 	var knowledgeSvc *knowledge.Service
 	var knowledgeKBDrafter *knowledge.KBDrafter
+	var knowledgeConsolidate *knowledge.ConsolidationEngine
 	if cfg.Knowledge.Enabled {
 		knowledgeSvc = knowledge.NewService(st.Pool(), log)
 		knowledgeSvc.WithSkillSink(knowledgeSkillSink{dir: skillsRoot}) // Phase 4 — render promoted skills
@@ -767,6 +769,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				knowledgeDocSink{pd: projectDocSvc}, log).
 				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc}) // P-D — skip frozen projects
 			knowledgeSvc.WithKBDrafter(knowledgeKBDrafter) // manual /kb/draft endpoint
+			// P-C — one ordered loop (anchor → reflect → KB) replaces the three
+			// independent sweep goroutines so each stage drafts from the prior
+			// stage's fresh output instead of racing on separate timers.
+			knowledgeConsolidate = knowledge.NewConsolidationEngine(
+				knowledgeAnchorer, knowledgeReflector, knowledgeKBDrafter, log)
 		}
 		knowledgeHandlers = knowledge.NewHandlers(knowledgeSvc, log)
 		log.Info("knowledge graph (M-KG) enabled", "anchorer", knowledgeAnchorer != nil)
@@ -979,6 +986,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		knowledgeReflector:   knowledgeReflector,
 		knowledgeSvc:         knowledgeSvc,
 		knowledgeKBDrafter:   knowledgeKBDrafter,
+		knowledgeConsolidate: knowledgeConsolidate,
 	}, nil
 }
 
@@ -1053,21 +1061,15 @@ func (a *App) Run(ctx context.Context) error {
 		close(journalerDone)
 	}()
 
-	// M-KG Phase 1 — anchor sweep: lift episodic memory facts into the
-	// knowledge graph (project entities + fact nodes). nil when the
-	// [knowledge] feature flag is off, so this is a no-op for M-U builds.
-	if a.knowledgeAnchorer != nil {
-		go a.knowledgeAnchorer.RunAnchorSweep(ctx, knowledge.AnchorSweepConfig{})
-	}
-	if a.knowledgeReflector != nil {
-		go a.knowledgeReflector.RunReflectSweep(ctx, knowledge.ReflectSweepConfig{})
+	// P-C — one ordered consolidation loop (anchor → reflect → KB draft)
+	// replaces the three independent M-KG/M-KB sweep goroutines, so each stage
+	// distils from the prior stage's fresh output instead of racing on its own
+	// timer. nil when the [knowledge] feature flag is off (no-op for M-U builds).
+	if a.knowledgeConsolidate != nil {
+		go a.knowledgeConsolidate.Run(ctx, knowledge.ConsolidateConfig{})
 	}
 	if a.knowledgeSvc != nil {
 		go a.knowledgeSvc.RunEmbedBackfill(ctx, knowledge.EmbedBackfillConfig{})
-	}
-	// M-KB — draft curated knowledge-base pages into the note system.
-	if a.knowledgeKBDrafter != nil {
-		go a.knowledgeKBDrafter.RunKBSweep(ctx, knowledge.KBSweepConfig{})
 	}
 
 	// M-PB — backfill missing embeddings on the journal so the new
