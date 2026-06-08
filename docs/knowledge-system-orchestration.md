@@ -118,10 +118,12 @@ The same discipline as the M-KB work: additive schema, feature-flagged, one-way 
 
 Each phase: build → local rebuild + restart → operator validates → next. Push only after the whole arc is accepted.
 
-## 10. Open decisions (for sign-off)
+## 10. Decisions (SIGNED OFF 2026-06-08)
 
-1. **Notes canonical vs Memory** — confirm goal/plan/architecture live ONLY in Notes; Memory stops being a goal/plan source. (Removes the duplication.)
-2. **Notes AI-drive trigger** — every consolidation cycle on drift (auto-propose), or only when an agent/operator asks? (Proposal: auto-propose on drift, operator approves.)
-3. **Archive trigger** — operator-only, or also auto-suggest after N days idle? (Proposal: operator button + auto-suggest.)
-4. **Fact-node retirement** — demote-and-hide now, or fully retire (derive entities straight from Memory)? (Proposal: demote now, retire later.)
-5. **Reusable-features source** — auto-distilled from Journal/Notes across projects, or operator-curated only? (Proposal: AI-drafted, human-lockable, like other KB pages.)
+1. ✅ **Notes canonical.** goal / plan / architecture live ONLY in Notes; Memory stops being a goal/plan source.
+2. ✅ **Notes AI-drive = auto-propose on drift.** Every consolidation cycle, on detected drift, auto-file a Notes proposal; operator approves in the Inbox.
+3. ✅ **Archive = operator button + auto-suggest after N idle days.**
+4. ✅ **Fact nodes fully retired.** Entities are extracted straight from Memory; no `fact` node layer. (Memory is the fact store; Knowledge keeps entity + playbook + skill only.)
+5. ✅ **Reusable-features page = AI-drafted, human-lockable** (same model as the other KB pages).
+
+Implementation proceeds P-A → P-G (§9), each: build → local rebuild + restart → operator validates → next. Push only after the whole arc is accepted.
