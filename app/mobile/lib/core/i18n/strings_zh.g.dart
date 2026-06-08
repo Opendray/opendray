@@ -1106,6 +1106,9 @@ class _TranslationsWebProjectZh extends TranslationsWebProjectEn {
 	@override late final _TranslationsWebProjectArchivedZh archived = _TranslationsWebProjectArchivedZh._(_root);
 	@override late final _TranslationsWebProjectResetZh reset = _TranslationsWebProjectResetZh._(_root);
 	@override late final _TranslationsWebProjectLifecycleZh lifecycle = _TranslationsWebProjectLifecycleZh._(_root);
+	@override late final _TranslationsWebProjectDocMetaZh docMeta = _TranslationsWebProjectDocMetaZh._(_root);
+	@override late final _TranslationsWebProjectProposalBannerZh proposalBanner = _TranslationsWebProjectProposalBannerZh._(_root);
+	@override late final _TranslationsWebProjectHandbookZh handbook = _TranslationsWebProjectHandbookZh._(_root);
 }
 
 // Path: web.memoryInspector
@@ -3045,6 +3048,7 @@ class _TranslationsWebProjectTabsZh extends TranslationsWebProjectTabsEn {
 	@override String get inbox => '收件箱';
 	@override String get conflicts => '冲突';
 	@override String get archived => '已归档';
+	@override String get handbook => '手册';
 }
 
 // Path: web.project.docLabel
@@ -3183,6 +3187,48 @@ class _TranslationsWebProjectLifecycleZh extends TranslationsWebProjectLifecycle
 	@override String idleHint({required Object days}) => '已有 ${days} 天无活动';
 	@override String get failedToast => '无法更改项目状态';
 	@override late final _TranslationsWebProjectLifecycleAppliedZh applied = _TranslationsWebProjectLifecycleAppliedZh._(_root);
+	@override late final _TranslationsWebProjectLifecycleTooltipZh tooltip = _TranslationsWebProjectLifecycleTooltipZh._(_root);
+}
+
+// Path: web.project.docMeta
+class _TranslationsWebProjectDocMetaZh extends TranslationsWebProjectDocMetaEn {
+	_TranslationsWebProjectDocMetaZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsWebProjectDocMetaMaintainerZh maintainer = _TranslationsWebProjectDocMetaMaintainerZh._(_root);
+	@override late final _TranslationsWebProjectDocMetaPurposeZh purpose = _TranslationsWebProjectDocMetaPurposeZh._(_root);
+}
+
+// Path: web.project.proposalBanner
+class _TranslationsWebProjectProposalBannerZh extends TranslationsWebProjectProposalBannerEn {
+	_TranslationsWebProjectProposalBannerZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get text => 'AI 已对此文档提议更新,等待你批准。';
+	@override String get button => '去 Inbox 查看';
+}
+
+// Path: web.project.handbook
+class _TranslationsWebProjectHandbookZh extends TranslationsWebProjectHandbookEn {
+	_TranslationsWebProjectHandbookZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get empty => '尚无项目手册。后台引擎会从本项目的会话日志起草;你也可以在「知识」页手动生成。';
+	@override String get aiManaged => '由 AI 维护(随日志刷新)';
+	@override String get locked => '已锁定 — 你编辑过,AI 不会覆盖';
+	@override String get edit => '编辑';
+	@override String get save => '保存(锁定)';
+	@override String get cancel => '取消';
+	@override String get unlock => '解锁(交还 AI)';
+	@override String get saved => '项目手册已保存';
+	@override String get unlocked => '已解锁 — AI 将重新接管';
+	@override String get hint => '保存编辑即锁定本页;解锁后 AI 会在下一轮重新起草。';
 }
 
 // Path: web.memoryInspector.status
@@ -6093,6 +6139,45 @@ class _TranslationsWebProjectLifecycleAppliedZh extends TranslationsWebProjectLi
 	@override String get archived => '项目已归档';
 }
 
+// Path: web.project.lifecycle.tooltip
+class _TranslationsWebProjectLifecycleTooltipZh extends TranslationsWebProjectLifecycleTooltipEn {
+	_TranslationsWebProjectLifecycleTooltipZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get badge => '项目生命周期。冻结(暂停/归档)的项目不会被注入新会话,也不参与 AI 蒸馏。';
+	@override String get activate => '重新激活:注入新会话并恢复 AI 维护。';
+	@override String get pause => '暂停:冻结此项目——跳过会话注入与 AI 蒸馏,但仍留在活跃列表。';
+	@override String get archive => '归档:封存此项目——冻结并从常规视图隐藏。';
+}
+
+// Path: web.project.docMeta.maintainer
+class _TranslationsWebProjectDocMetaMaintainerZh extends TranslationsWebProjectDocMetaMaintainerEn {
+	_TranslationsWebProjectDocMetaMaintainerZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get coauthored => '你维护 · AI 提议';
+	@override String get auto => '自动生成 · 只读';
+	@override String get ai_lockable => 'AI 起草 · 编辑即锁定';
+}
+
+// Path: web.project.docMeta.purpose
+class _TranslationsWebProjectDocMetaPurposeZh extends TranslationsWebProjectDocMetaPurposeEn {
+	_TranslationsWebProjectDocMetaPurposeZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get goal => '项目的长期目标与意图——我们最终在做什么、为什么做。当某次会话改变了方向,AI 会向 Inbox 提议更新,由你批准。';
+	@override String get plan => '当前的路线图 / 进行中的工作。会话推进后 AI 会向 Inbox 提议更新,由你批准。';
+	@override String get tech_stack => '技术栈与结构,由项目扫描器自动生成(每 6 小时刷新)。';
+	@override String get recent_activity => '近期 Git 活动的 AI 摘要,自动刷新(每 12 小时)。';
+	@override String get kb_handbook => '项目手册:如何构建/运行/部署、用到的基础设施、协作边界、关键教训。AI 从工作日志起草;你一旦编辑即锁定,AI 不再覆盖。';
+}
+
 // Path: web.memoryInspector.scope.values
 class _TranslationsWebMemoryInspectorScopeValuesZh extends TranslationsWebMemoryInspectorScopeValuesEn {
 	_TranslationsWebMemoryInspectorScopeValuesZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7929,6 +8014,7 @@ extension on TranslationsZh {
 			'web.project.tabs.inbox' => '收件箱',
 			'web.project.tabs.conflicts' => '冲突',
 			'web.project.tabs.archived' => '已归档',
+			'web.project.tabs.handbook' => '手册',
 			'web.project.docLabel.goal' => '目标',
 			'web.project.docLabel.plan' => '计划',
 			'web.project.docLabel.tech_stack' => '技术栈',
@@ -8007,6 +8093,30 @@ extension on TranslationsZh {
 			'web.project.lifecycle.applied.active' => '项目已重新激活',
 			'web.project.lifecycle.applied.paused' => '项目已暂停',
 			'web.project.lifecycle.applied.archived' => '项目已归档',
+			'web.project.lifecycle.tooltip.badge' => '项目生命周期。冻结(暂停/归档)的项目不会被注入新会话,也不参与 AI 蒸馏。',
+			'web.project.lifecycle.tooltip.activate' => '重新激活:注入新会话并恢复 AI 维护。',
+			'web.project.lifecycle.tooltip.pause' => '暂停:冻结此项目——跳过会话注入与 AI 蒸馏,但仍留在活跃列表。',
+			'web.project.lifecycle.tooltip.archive' => '归档:封存此项目——冻结并从常规视图隐藏。',
+			'web.project.docMeta.maintainer.coauthored' => '你维护 · AI 提议',
+			'web.project.docMeta.maintainer.auto' => '自动生成 · 只读',
+			'web.project.docMeta.maintainer.ai_lockable' => 'AI 起草 · 编辑即锁定',
+			'web.project.docMeta.purpose.goal' => '项目的长期目标与意图——我们最终在做什么、为什么做。当某次会话改变了方向,AI 会向 Inbox 提议更新,由你批准。',
+			'web.project.docMeta.purpose.plan' => '当前的路线图 / 进行中的工作。会话推进后 AI 会向 Inbox 提议更新,由你批准。',
+			'web.project.docMeta.purpose.tech_stack' => '技术栈与结构,由项目扫描器自动生成(每 6 小时刷新)。',
+			'web.project.docMeta.purpose.recent_activity' => '近期 Git 活动的 AI 摘要,自动刷新(每 12 小时)。',
+			'web.project.docMeta.purpose.kb_handbook' => '项目手册:如何构建/运行/部署、用到的基础设施、协作边界、关键教训。AI 从工作日志起草;你一旦编辑即锁定,AI 不再覆盖。',
+			'web.project.proposalBanner.text' => 'AI 已对此文档提议更新,等待你批准。',
+			'web.project.proposalBanner.button' => '去 Inbox 查看',
+			'web.project.handbook.empty' => '尚无项目手册。后台引擎会从本项目的会话日志起草;你也可以在「知识」页手动生成。',
+			'web.project.handbook.aiManaged' => '由 AI 维护(随日志刷新)',
+			'web.project.handbook.locked' => '已锁定 — 你编辑过,AI 不会覆盖',
+			'web.project.handbook.edit' => '编辑',
+			'web.project.handbook.save' => '保存(锁定)',
+			'web.project.handbook.cancel' => '取消',
+			'web.project.handbook.unlock' => '解锁(交还 AI)',
+			'web.project.handbook.saved' => '项目手册已保存',
+			'web.project.handbook.unlocked' => '已解锁 — AI 将重新接管',
+			'web.project.handbook.hint' => '保存编辑即锁定本页;解锁后 AI 会在下一轮重新起草。',
 			'web.memoryInspector.status.label' => '当前 embedder',
 			'web.memoryInspector.status.unavailable' => '不可用',
 			'web.memoryInspector.status.probing' => '探测中…',
@@ -8045,6 +8155,8 @@ extension on TranslationsZh {
 			'web.memoryInspector.records.enterScopeKeyHint' => '输入 scope key 以浏览记忆。',
 			'web.memoryInspector.records.noMatchesForQuery' => ({required Object query}) => '未找到匹配 "${query}"',
 			'web.memoryInspector.records.noMemoriesInScope' => '此 scope 暂无记忆。',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.row.simBadge' => ({required Object value}) => '相似度 ${value}',
 			'web.memoryInspector.row.rankBadge' => ({required Object value}) => '排名分 ${value}',
 			'web.memoryInspector.row.rankTooltip' => ({required Object effective, required Object similarity, required Object age, required Object days, required Object hits, required Object confidence}) => '有效分 ${effective} = 相似度 ${similarity} × 时效 ${age} (${days}d) × 命中 ${hits} × 置信 ${confidence}',
@@ -8070,8 +8182,6 @@ extension on TranslationsZh {
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => '已迁移 ${reembed}/${examined} 条记忆到 ${to}',
 			'web.memoryInspector.toasts.migrationFailed' => '迁移失败',
 			'web.memoryInspector.toasts.syncIngested_one' => ({required Object count}) => '已摄取 ${count} 个新记忆文件',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.toasts.syncIngested_other' => ({required Object count}) => '已摄取 ${count} 个新记忆文件',
 			'web.memoryInspector.toasts.syncEmpty' => '没有需要同步的新 .md 文件',
 			'web.memoryInspector.toasts.syncEmptyDescription' => '已是最新，或该 cwd 没有 Claude memory 目录。',
@@ -8559,6 +8669,8 @@ extension on TranslationsZh {
 			'web.integrations.edit_dialog.versionLabel' => 'Version',
 			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
 			'web.integrations.edit_dialog.scopesLabel' => 'Scopes',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.edit_dialog.scopesIntro' => '收窄或放宽此集成 API key 授权的 API 范围。已颁发的 token 不受影响 — 新的 scope 集在下次请求时生效。',
 			'web.integrations.edit_dialog.errorModeSwitch' => '在仅消费型与反向代理型之间切换需要删除并重新注册 — name 和 route_prefix 无法原地修改。',
 			'web.integrations.edit_dialog.updatedToast' => '集成已更新',
@@ -8584,8 +8696,6 @@ extension on TranslationsZh {
 			'web.integrations.proxy.prefixPlaceholder' => '<prefix>',
 			'web.plugins.title' => '检查器插件',
 			'web.plugins.subtitle' => '配置在会话打开时右侧检查器面板呈现的数据源。每个插件都是管理员级别且在所有会话间共享。点击章节标题可折叠。',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.common.loading' => '加载中…',
 			'web.plugins.common.cancel' => '取消',
 			'web.plugins.common.edit' => '编辑',
@@ -9073,6 +9183,8 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.memoryModelPath.hint' => '.onnx 权重的绝对路径。从 HuggingFace 下载，如 Xenova/bge-m3 或 Xenova/bge-small-en-v1.5。',
 			'web.serverSettings.fields.memoryTokenizerPath.label' => 'Tokenizer 路径',
 			'web.serverSettings.fields.memoryTokenizerPath.hint' => 'tokenizer.json（HuggingFace 标准格式）的绝对路径 — 通常和模型放在一起。',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.memoryMaxSeqLen.label' => '最大序列长度',
 			'web.serverSettings.fields.memoryMaxSeqLen.hint' => '超过这个 token 数会被截断。bge-m3 默认 512。留空 = 512。',
 			'web.serverSettings.fields.claudeHistoryRoots.label' => '历史根目录',
@@ -9098,8 +9210,6 @@ extension on TranslationsZh {
 			'web.serverSettings.memoryInspectorCard.heading' => '检查器',
 			'web.serverSettings.memoryInspectorCard.description' => '在专门页面浏览、搜索、编辑已存储的记忆。',
 			'web.serverSettings.memoryInspectorCard.openButton' => '打开记忆 →',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.localOnnxBanner' => '需要使用 <1>-tags local_onnx</1> 编译二进制。标准构建在选择此后端时会返回明确的 stub 错误。设置步骤参见 <3>记忆 → 本地 ONNX</3> 教程。',
 			'web.serverSettings.stringList.noneDefault' => '（无 — 使用内置默认值）',
 			'web.serverSettings.stringList.addPath' => '添加路径',
@@ -9587,6 +9697,8 @@ extension on TranslationsZh {
 			'sessions.dirPicker.newFolder' => '新建文件夹',
 			'sessions.dirPicker.useThisFolder' => '使用此文件夹',
 			'sessions.dirPicker.loading' => '加载中…',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.dirPicker.empty' => '此处没有子文件夹。\n选择此文件夹，或新建一个。',
 			'sessions.dirPicker.createdSnack' => ({required Object path}) => '已创建 ${path}',
 			'sessions.dirPicker.mkdirFailedSnack' => ({required Object error}) => '创建文件夹失败：${error}',
@@ -9612,8 +9724,6 @@ extension on TranslationsZh {
 			'sessions.inspector.files.insertPathSubtitle' => '原样粘贴绝对路径',
 			'sessions.inspector.files.readContent' => '读取内容',
 			'sessions.inspector.files.readContentSubtitle' => '最多 256 KiB 纯文本',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.files.readFailedApi' => ({required Object status, required Object message}) => '读取失败（${status}）：${message}',
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => '读取失败：${error}',
 			'sessions.inspector.files.parent' => '上级',
@@ -10101,6 +10211,8 @@ extension on TranslationsZh {
 			'backups.encryption.passphraseHint' => '至少 20 个字符',
 			'backups.encryption.passphraseCopied' => '密语已复制到剪贴板',
 			'backups.restoreFromFile' => '从文件恢复',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.title' => '从备份包恢复',
 			'backups.restore.subtitle' => '将加密的 .tar.gz.enc 备份包重放到 Postgres 数据库。备份包将从本机上传 — 请选择此前生成的文件。',
 			'backups.restore.bundleLabel' => '备份文件（.tar.gz.enc）',
@@ -10126,8 +10238,6 @@ extension on TranslationsZh {
 			'backups.restore.outputTitle' => 'pg_restore 输出',
 			'backups.restore.noPgRestoreOutput' => '（空 — 恢复无声完成）',
 			'backups.restore.manifestTitle' => '清单',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.manifestBackupId' => '备份 ID',
 			'backups.restore.manifestVersion' => '清单版本',
 			'backups.restore.manifestCreatedAt' => '创建时间',
@@ -10615,6 +10725,8 @@ extension on TranslationsZh {
 			'memory.kNew' => '新建',
 			'memory.searchHint' => '搜索…',
 			'memory.projectLabel' => '项目',
+			_ => null,
+		} ?? switch (path) {
 			'memory.filterHint' => '按名称或路径筛选…',
 			'memory.copied' => '已复制',
 			'memory.copyTooltip' => '复制文本',
@@ -10640,8 +10752,6 @@ extension on TranslationsZh {
 			'about.fields.app' => '应用',
 			'about.fields.version' => '版本',
 			'about.fields.versionFormat' => ({required Object version, required Object build}) => '${version}（build ${build}）',
-			_ => null,
-		} ?? switch (path) {
 			'about.fields.package' => '包名',
 			'about.fields.url' => 'URL',
 			'about.fields.signedInAs' => '登录账号',

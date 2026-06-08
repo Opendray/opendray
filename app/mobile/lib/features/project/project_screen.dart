@@ -34,6 +34,9 @@ class ProjectScreen extends ConsumerStatefulWidget {
 class _ProjectScreenState extends ConsumerState<ProjectScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
+  // Tab order: Health Goal Plan Handbook Tech Activity Journal Inbox
+  // Conflicts Archived. Inbox is index 7 — the proposal banner taps to it.
+  static const int _inboxTabIndex = 7;
   AsyncValue<List<String>> _projectKeys = const AsyncValue.loading();
   String? _selectedKey;
 
@@ -49,9 +52,9 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
   @override
   void initState() {
     super.initState();
-    // Health + Goal + Plan + Tech + Activity + Journal + Inbox +
-    // Conflicts + Archived = 9 tabs (web parity).
-    _tabs = TabController(length: 9, vsync: this);
+    // Health + Goal + Plan + Handbook + Tech + Activity + Journal +
+    // Inbox + Conflicts + Archived = 10 tabs (web parity).
+    _tabs = TabController(length: 10, vsync: this);
     _loadKeys();
   }
 
@@ -272,6 +275,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
             Tab(text: 'Health'),
             Tab(text: 'Goal'),
             Tab(text: 'Plan'),
+            Tab(text: 'Handbook'),
             Tab(text: 'Tech'),
             Tab(text: 'Activity'),
             Tab(text: 'Journal'),
@@ -294,6 +298,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                 _healthTab(),
                 _docTab('goal'),
                 _docTab('plan'),
+                _handbookTab(),
                 _readonlyDocTab(
                   'tech_stack',
                   emptyText: 'No tech_stack scan yet. '
@@ -316,6 +321,128 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ── Doc self-description (A: make each note explain itself) ─────
+
+  // _docMaintainer maps a doc kind to who keeps it current, driving the badge.
+  String _docMaintainer(String kind) {
+    switch (kind) {
+      case 'tech_stack':
+      case 'recent_activity':
+        return 'auto';
+      case 'kb_handbook':
+        return 'ai_lockable';
+      default:
+        return 'coauthored';
+    }
+  }
+
+  String _maintainerLabel(String m) {
+    final l = t.web.project.docMeta.maintainer;
+    switch (m) {
+      case 'auto':
+        return l.auto;
+      case 'ai_lockable':
+        return l.ai_lockable;
+      default:
+        return l.coauthored;
+    }
+  }
+
+  String _docPurpose(String kind) {
+    final p = t.web.project.docMeta.purpose;
+    switch (kind) {
+      case 'goal':
+        return p.goal;
+      case 'plan':
+        return p.plan;
+      case 'tech_stack':
+        return p.tech_stack;
+      case 'recent_activity':
+        return p.recent_activity;
+      case 'kb_handbook':
+        return p.kb_handbook;
+      default:
+        return '';
+    }
+  }
+
+  // _docMetaStrip is the per-note header: maintenance badge + last editor +
+  // one-line purpose, so the note describes itself instead of a bare label.
+  Widget _docMetaStrip(String kind, ProjectDoc? doc) {
+    final scheme = Theme.of(context).colorScheme;
+    final m = _docMaintainer(kind);
+    final chipColor = m == 'auto'
+        ? scheme.surfaceContainerHighest
+        : m == 'ai_lockable'
+            ? scheme.secondaryContainer
+            : scheme.primaryContainer;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Chip(
+                  label: Text(_maintainerLabel(m)),
+                  backgroundColor: chipColor,
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                if (doc != null && doc.isPersisted)
+                  Text(
+                    doc.updatedBy,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _docPurpose(kind),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // _proposalBanner surfaces a pending AI proposal right on the goal/plan tab
+  // (P-B visibility) with a tap-through to the Inbox tab.
+  Widget _proposalBanner() {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      color: scheme.tertiaryContainer,
+      child: InkWell(
+        onTap: () => _tabs.animateTo(_inboxTabIndex),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              const Icon(Icons.inbox_outlined, size: 18),
+              const SizedBox(width: 8),
+              Expanded(child: Text(t.web.project.proposalBanner.text)),
+              Text(
+                t.web.project.proposalBanner.button,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: scheme.onTertiaryContainer,
+                ),
+              ),
+              const Icon(Icons.chevron_right, size: 18),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -345,10 +472,29 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
             updatedBy: 'operator',
           ),
         );
-        return _DocEditor(
-          key: ValueKey('$kind-${current.id}-${_selectedKey!}'),
-          doc: current,
-          onSaved: () => _loadAll(_selectedKey!),
+        final hasPending = _proposals.maybeWhen(
+          data: (props) => props.any((p) => p.kind == kind),
+          orElse: () => false,
+        );
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+              child: Column(
+                children: [
+                  _docMetaStrip(kind, current.isPersisted ? current : null),
+                  if (hasPending) _proposalBanner(),
+                ],
+              ),
+            ),
+            Expanded(
+              child: _DocEditor(
+                key: ValueKey('$kind-${current.id}-${_selectedKey!}'),
+                doc: current,
+                onSaved: () => _loadAll(_selectedKey!),
+              ),
+            ),
+          ],
         );
       },
     );
@@ -386,6 +532,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
           child: ListView(
             padding: const EdgeInsets.all(12),
             children: [
+              _docMetaStrip(kind, current.isPersisted ? current : null),
               if (current.content.trim().isEmpty)
                 Padding(
                   padding: const EdgeInsets.all(16),
@@ -398,6 +545,54 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                 SelectableText(
                   current.content,
                   style: Theme.of(context).textTheme.bodyMedium,
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ── Handbook (C: per-project freeform doc, AI-drafted + lockable) ──
+
+  Widget _handbookTab() {
+    if (_selectedKey == null) {
+      return Center(child: Text(t.project.pickFirst));
+    }
+    return _docs.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(t.project.loadFailed(error: e.toString())),
+        ),
+      ),
+      data: (docs) {
+        ProjectDoc? hb;
+        for (final d in docs) {
+          if (d.kind == 'kb_handbook') {
+            hb = d;
+            break;
+          }
+        }
+        return RefreshIndicator(
+          onRefresh: () async => _loadAll(_selectedKey!),
+          child: ListView(
+            padding: const EdgeInsets.all(12),
+            children: [
+              _docMetaStrip('kb_handbook', hb),
+              if (hb == null || hb.content.trim().isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Text(
+                    t.web.project.handbook.empty,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                )
+              else
+                _HandbookView(
+                  doc: hb,
+                  onChanged: () => _loadAll(_selectedKey!),
                 ),
             ],
           ),
@@ -1839,6 +2034,153 @@ class _DocEditorState extends State<_DocEditor> {
   }
 }
 
+// _HandbookView renders the project handbook (kb_handbook): AI-drafted,
+// human-editable. A human edit saves as 'operator' (locks it from AI
+// overwrite); Unlock saves as 'agent' to hand it back to the drafter.
+class _HandbookView extends ConsumerStatefulWidget {
+  const _HandbookView({required this.doc, required this.onChanged});
+  final ProjectDoc doc;
+  final VoidCallback onChanged;
+
+  @override
+  ConsumerState<_HandbookView> createState() => _HandbookViewState();
+}
+
+class _HandbookViewState extends ConsumerState<_HandbookView> {
+  bool _editing = false;
+  bool _busy = false;
+  late TextEditingController _ctl;
+
+  String _strip(String s) => s
+      .split('\n')
+      .where((l) => !l.contains('kb-sig:'))
+      .join('\n')
+      .trim();
+
+  @override
+  void initState() {
+    super.initState();
+    _ctl = TextEditingController(text: _strip(widget.doc.content));
+  }
+
+  @override
+  void didUpdateWidget(covariant _HandbookView old) {
+    super.didUpdateWidget(old);
+    if (!_editing) _ctl.text = _strip(widget.doc.content);
+  }
+
+  @override
+  void dispose() {
+    _ctl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save(String updatedBy) async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(projectDocsApiProvider).putDoc(
+            cwd: widget.doc.cwd,
+            kind: 'kb_handbook',
+            content: updatedBy == 'operator'
+                ? _ctl.text
+                : _strip(widget.doc.content),
+            updatedBy: updatedBy,
+          );
+      if (!mounted) return;
+      setState(() => _editing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(updatedBy == 'operator'
+              ? t.web.project.handbook.saved
+              : t.web.project.handbook.unlocked),
+        ),
+      );
+      widget.onChanged();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.project.docSaveFailed(error: e.toString()))),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final locked = widget.doc.updatedBy == 'operator';
+    final content = _strip(widget.doc.content);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Icon(locked ? Icons.lock_outline : Icons.check, size: 14),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                locked
+                    ? t.web.project.handbook.locked
+                    : t.web.project.handbook.aiManaged,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+            if (locked)
+              TextButton.icon(
+                onPressed: _busy ? null : () => _save('agent'),
+                icon: const Icon(Icons.lock_open, size: 16),
+                label: Text(t.web.project.handbook.unlock),
+              ),
+            if (!_editing)
+              TextButton.icon(
+                onPressed: () => setState(() {
+                  _ctl.text = content;
+                  _editing = true;
+                }),
+                icon: const Icon(Icons.edit, size: 16),
+                label: Text(t.web.project.handbook.edit),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (_editing) ...[
+          TextField(
+            controller: _ctl,
+            maxLines: null,
+            minLines: 12,
+            decoration: const InputDecoration(border: OutlineInputBorder()),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            t.web.project.handbook.hint,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: _busy ? null : () => setState(() => _editing = false),
+                child: Text(t.web.project.handbook.cancel),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.icon(
+                onPressed: _busy ? null : () => _save('operator'),
+                icon: const Icon(Icons.save_outlined, size: 16),
+                label: Text(t.web.project.handbook.save),
+              ),
+            ],
+          ),
+        ] else
+          SelectableText(
+            content,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+      ],
+    );
+  }
+}
+
 class _LogTile extends StatelessWidget {
   const _LogTile({required this.entry, required this.onDelete});
 
@@ -2340,11 +2682,14 @@ class _LifecycleBarState extends ConsumerState<_LifecycleBar> {
         runSpacing: 4,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Chip(
-            label: Text(_statusLabel(status)),
-            backgroundColor: chipColor,
-            visualDensity: VisualDensity.compact,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          Tooltip(
+            message: t.web.project.lifecycle.tooltip.badge,
+            child: Chip(
+              label: Text(_statusLabel(status)),
+              backgroundColor: chipColor,
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
           ),
           if (suggest && status == 'active')
             Chip(
@@ -2355,22 +2700,31 @@ class _LifecycleBarState extends ConsumerState<_LifecycleBar> {
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
           if (status != 'active')
-            TextButton.icon(
-              onPressed: _busy ? null : () => _set('active'),
-              icon: const Icon(Icons.play_arrow, size: 18),
-              label: Text(t.web.project.lifecycle.activate),
+            Tooltip(
+              message: t.web.project.lifecycle.tooltip.activate,
+              child: TextButton.icon(
+                onPressed: _busy ? null : () => _set('active'),
+                icon: const Icon(Icons.play_arrow, size: 18),
+                label: Text(t.web.project.lifecycle.activate),
+              ),
             ),
           if (status == 'active')
-            TextButton.icon(
-              onPressed: _busy ? null : () => _set('paused'),
-              icon: const Icon(Icons.pause, size: 18),
-              label: Text(t.web.project.lifecycle.pause),
+            Tooltip(
+              message: t.web.project.lifecycle.tooltip.pause,
+              child: TextButton.icon(
+                onPressed: _busy ? null : () => _set('paused'),
+                icon: const Icon(Icons.pause, size: 18),
+                label: Text(t.web.project.lifecycle.pause),
+              ),
             ),
           if (status != 'archived')
-            TextButton.icon(
-              onPressed: _busy ? null : () => _set('archived'),
-              icon: const Icon(Icons.archive_outlined, size: 18),
-              label: Text(t.web.project.lifecycle.archive),
+            Tooltip(
+              message: t.web.project.lifecycle.tooltip.archive,
+              child: TextButton.icon(
+                onPressed: _busy ? null : () => _set('archived'),
+                icon: const Icon(Icons.archive_outlined, size: 18),
+                label: Text(t.web.project.lifecycle.archive),
+              ),
             ),
         ],
       ),

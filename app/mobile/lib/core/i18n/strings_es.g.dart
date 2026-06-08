@@ -1106,6 +1106,9 @@ class _TranslationsWebProjectEs extends TranslationsWebProjectEn {
 	@override late final _TranslationsWebProjectArchivedEs archived = _TranslationsWebProjectArchivedEs._(_root);
 	@override late final _TranslationsWebProjectResetEs reset = _TranslationsWebProjectResetEs._(_root);
 	@override late final _TranslationsWebProjectLifecycleEs lifecycle = _TranslationsWebProjectLifecycleEs._(_root);
+	@override late final _TranslationsWebProjectDocMetaEs docMeta = _TranslationsWebProjectDocMetaEs._(_root);
+	@override late final _TranslationsWebProjectProposalBannerEs proposalBanner = _TranslationsWebProjectProposalBannerEs._(_root);
+	@override late final _TranslationsWebProjectHandbookEs handbook = _TranslationsWebProjectHandbookEs._(_root);
 }
 
 // Path: web.memoryInspector
@@ -3045,6 +3048,7 @@ class _TranslationsWebProjectTabsEs extends TranslationsWebProjectTabsEn {
 	@override String get inbox => 'Bandeja de entrada';
 	@override String get conflicts => 'Conflictos';
 	@override String get archived => 'Archivadas';
+	@override String get handbook => 'Manual';
 }
 
 // Path: web.project.docLabel
@@ -3183,6 +3187,48 @@ class _TranslationsWebProjectLifecycleEs extends TranslationsWebProjectLifecycle
 	@override String idleHint({required Object days}) => 'Sin actividad durante ${days} días';
 	@override String get failedToast => 'No se pudo cambiar el estado del proyecto';
 	@override late final _TranslationsWebProjectLifecycleAppliedEs applied = _TranslationsWebProjectLifecycleAppliedEs._(_root);
+	@override late final _TranslationsWebProjectLifecycleTooltipEs tooltip = _TranslationsWebProjectLifecycleTooltipEs._(_root);
+}
+
+// Path: web.project.docMeta
+class _TranslationsWebProjectDocMetaEs extends TranslationsWebProjectDocMetaEn {
+	_TranslationsWebProjectDocMetaEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsWebProjectDocMetaMaintainerEs maintainer = _TranslationsWebProjectDocMetaMaintainerEs._(_root);
+	@override late final _TranslationsWebProjectDocMetaPurposeEs purpose = _TranslationsWebProjectDocMetaPurposeEs._(_root);
+}
+
+// Path: web.project.proposalBanner
+class _TranslationsWebProjectProposalBannerEs extends TranslationsWebProjectProposalBannerEn {
+	_TranslationsWebProjectProposalBannerEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get text => 'La IA ha propuesto una actualización de este documento, a la espera de tu aprobación.';
+	@override String get button => 'Revisar en la Bandeja';
+}
+
+// Path: web.project.handbook
+class _TranslationsWebProjectHandbookEs extends TranslationsWebProjectHandbookEn {
+	_TranslationsWebProjectHandbookEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get empty => 'Aún no hay manual del proyecto. El motor en segundo plano lo redacta desde el registro de sesiones; también puedes generarlo desde la página de Conocimiento.';
+	@override String get aiManaged => 'Mantenido por IA (se actualiza desde el registro)';
+	@override String get locked => 'Bloqueado — lo editaste, la IA no lo sobrescribirá';
+	@override String get edit => 'Editar';
+	@override String get save => 'Guardar (bloquea)';
+	@override String get cancel => 'Cancelar';
+	@override String get unlock => 'Desbloquear (devolver a la IA)';
+	@override String get saved => 'Manual guardado';
+	@override String get unlocked => 'Desbloqueado — la IA volverá a gestionarlo';
+	@override String get hint => 'Guardar una edición bloquea la página; desbloquear deja que la IA la redacte de nuevo en el próximo ciclo.';
 }
 
 // Path: web.memoryInspector.status
@@ -6093,6 +6139,45 @@ class _TranslationsWebProjectLifecycleAppliedEs extends TranslationsWebProjectLi
 	@override String get archived => 'Proyecto archivado';
 }
 
+// Path: web.project.lifecycle.tooltip
+class _TranslationsWebProjectLifecycleTooltipEs extends TranslationsWebProjectLifecycleTooltipEn {
+	_TranslationsWebProjectLifecycleTooltipEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get badge => 'Ciclo de vida del proyecto. Los proyectos congelados (pausados/archivados) se excluyen de la inyección en nuevas sesiones y de la destilación por IA.';
+	@override String get activate => 'Reactivar: inyectar en nuevas sesiones y reanudar el mantenimiento por IA.';
+	@override String get pause => 'Pausar: congelar este proyecto — omitir inyección y destilación, pero mantenerlo en la lista activa.';
+	@override String get archive => 'Archivar: archivar este proyecto — congelado y oculto de las vistas habituales.';
+}
+
+// Path: web.project.docMeta.maintainer
+class _TranslationsWebProjectDocMetaMaintainerEs extends TranslationsWebProjectDocMetaMaintainerEn {
+	_TranslationsWebProjectDocMetaMaintainerEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get coauthored => 'Tú mantienes · IA propone';
+	@override String get auto => 'Autogenerado · solo lectura';
+	@override String get ai_lockable => 'Redactado por IA · se bloquea al editar';
+}
+
+// Path: web.project.docMeta.purpose
+class _TranslationsWebProjectDocMetaPurposeEs extends TranslationsWebProjectDocMetaPurposeEn {
+	_TranslationsWebProjectDocMetaPurposeEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get goal => 'La intención a largo plazo del proyecto: qué construimos y por qué. Cuando una sesión cambia el rumbo, la IA propone una actualización en tu Bandeja para que la apruebes.';
+	@override String get plan => 'La hoja de ruta actual / trabajo en curso. La IA propone una actualización en tu Bandeja tras avanzar una sesión; tú la apruebas.';
+	@override String get tech_stack => 'Stack y estructura, autogenerado por el escáner del proyecto (se actualiza cada 6 h).';
+	@override String get recent_activity => 'Resumen por IA de la actividad reciente de Git, actualizado automáticamente (cada 12 h).';
+	@override String get kb_handbook => 'Manual del proyecto: cómo construir / ejecutar / desplegar, infraestructura usada, límites de colaboración, lecciones clave. La IA lo redacta desde el registro; al editarlo se bloquea y la IA deja de sobrescribir.';
+}
+
 // Path: web.memoryInspector.scope.values
 class _TranslationsWebMemoryInspectorScopeValuesEs extends TranslationsWebMemoryInspectorScopeValuesEn {
 	_TranslationsWebMemoryInspectorScopeValuesEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -7929,6 +8014,7 @@ extension on TranslationsEs {
 			'web.project.tabs.inbox' => 'Bandeja de entrada',
 			'web.project.tabs.conflicts' => 'Conflictos',
 			'web.project.tabs.archived' => 'Archivadas',
+			'web.project.tabs.handbook' => 'Manual',
 			'web.project.docLabel.goal' => 'Objetivo',
 			'web.project.docLabel.plan' => 'Plan',
 			'web.project.docLabel.tech_stack' => 'Stack tecnológico',
@@ -8007,6 +8093,30 @@ extension on TranslationsEs {
 			'web.project.lifecycle.applied.active' => 'Proyecto reactivado',
 			'web.project.lifecycle.applied.paused' => 'Proyecto pausado',
 			'web.project.lifecycle.applied.archived' => 'Proyecto archivado',
+			'web.project.lifecycle.tooltip.badge' => 'Ciclo de vida del proyecto. Los proyectos congelados (pausados/archivados) se excluyen de la inyección en nuevas sesiones y de la destilación por IA.',
+			'web.project.lifecycle.tooltip.activate' => 'Reactivar: inyectar en nuevas sesiones y reanudar el mantenimiento por IA.',
+			'web.project.lifecycle.tooltip.pause' => 'Pausar: congelar este proyecto — omitir inyección y destilación, pero mantenerlo en la lista activa.',
+			'web.project.lifecycle.tooltip.archive' => 'Archivar: archivar este proyecto — congelado y oculto de las vistas habituales.',
+			'web.project.docMeta.maintainer.coauthored' => 'Tú mantienes · IA propone',
+			'web.project.docMeta.maintainer.auto' => 'Autogenerado · solo lectura',
+			'web.project.docMeta.maintainer.ai_lockable' => 'Redactado por IA · se bloquea al editar',
+			'web.project.docMeta.purpose.goal' => 'La intención a largo plazo del proyecto: qué construimos y por qué. Cuando una sesión cambia el rumbo, la IA propone una actualización en tu Bandeja para que la apruebes.',
+			'web.project.docMeta.purpose.plan' => 'La hoja de ruta actual / trabajo en curso. La IA propone una actualización en tu Bandeja tras avanzar una sesión; tú la apruebas.',
+			'web.project.docMeta.purpose.tech_stack' => 'Stack y estructura, autogenerado por el escáner del proyecto (se actualiza cada 6 h).',
+			'web.project.docMeta.purpose.recent_activity' => 'Resumen por IA de la actividad reciente de Git, actualizado automáticamente (cada 12 h).',
+			'web.project.docMeta.purpose.kb_handbook' => 'Manual del proyecto: cómo construir / ejecutar / desplegar, infraestructura usada, límites de colaboración, lecciones clave. La IA lo redacta desde el registro; al editarlo se bloquea y la IA deja de sobrescribir.',
+			'web.project.proposalBanner.text' => 'La IA ha propuesto una actualización de este documento, a la espera de tu aprobación.',
+			'web.project.proposalBanner.button' => 'Revisar en la Bandeja',
+			'web.project.handbook.empty' => 'Aún no hay manual del proyecto. El motor en segundo plano lo redacta desde el registro de sesiones; también puedes generarlo desde la página de Conocimiento.',
+			'web.project.handbook.aiManaged' => 'Mantenido por IA (se actualiza desde el registro)',
+			'web.project.handbook.locked' => 'Bloqueado — lo editaste, la IA no lo sobrescribirá',
+			'web.project.handbook.edit' => 'Editar',
+			'web.project.handbook.save' => 'Guardar (bloquea)',
+			'web.project.handbook.cancel' => 'Cancelar',
+			'web.project.handbook.unlock' => 'Desbloquear (devolver a la IA)',
+			'web.project.handbook.saved' => 'Manual guardado',
+			'web.project.handbook.unlocked' => 'Desbloqueado — la IA volverá a gestionarlo',
+			'web.project.handbook.hint' => 'Guardar una edición bloquea la página; desbloquear deja que la IA la redacte de nuevo en el próximo ciclo.',
 			'web.memoryInspector.status.label' => 'Embedder activo',
 			'web.memoryInspector.status.unavailable' => 'no disponible',
 			'web.memoryInspector.status.probing' => 'sondeando…',
@@ -8045,6 +8155,8 @@ extension on TranslationsEs {
 			'web.memoryInspector.records.enterScopeKeyHint' => 'Introduce una clave de scope para explorar las memorias.',
 			'web.memoryInspector.records.noMatchesForQuery' => ({required Object query}) => 'No hay coincidencias para "${query}"',
 			'web.memoryInspector.records.noMemoriesInScope' => 'Aún no hay memorias en este scope.',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.row.simBadge' => ({required Object value}) => 'sim ${value}',
 			'web.memoryInspector.row.rankBadge' => ({required Object value}) => 'rango ${value}',
 			'web.memoryInspector.row.rankTooltip' => ({required Object effective, required Object similarity, required Object age, required Object days, required Object hits, required Object confidence}) => 'efectivo ${effective} = sim ${similarity} × antigüedad ${age} (${days}d) × hits ${hits} × conf ${confidence}',
@@ -8070,8 +8182,6 @@ extension on TranslationsEs {
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => 'Se migraron ${reembed}/${examined} memorias a ${to}',
 			'web.memoryInspector.toasts.migrationFailed' => 'La migración falló',
 			'web.memoryInspector.toasts.syncIngested_one' => ({required Object count}) => 'Se importó ${count} nuevo archivo de memoria',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.toasts.syncIngested_other' => ({required Object count}) => 'Se importaron ${count} nuevos archivos de memoria',
 			'web.memoryInspector.toasts.syncEmpty' => 'No hay nuevos archivos .md que sincronizar',
 			'web.memoryInspector.toasts.syncEmptyDescription' => 'Ya está sincronizado, o no hay directorio de memoria de Claude para este cwd.',
@@ -8559,6 +8669,8 @@ extension on TranslationsEs {
 			'web.integrations.edit_dialog.versionLabel' => 'Versión',
 			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
 			'web.integrations.edit_dialog.scopesLabel' => 'Scopes',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.edit_dialog.scopesIntro' => 'Reduce o amplía la superficie de API que autoriza la API key de esta integración. Los tokens activos no se ven afectados: el nuevo conjunto de scopes surte efecto en la siguiente petición.',
 			'web.integrations.edit_dialog.errorModeSwitch' => 'Cambiar entre modo solo consumidora y reverse-proxy requiere eliminar la integración y volver a registrarla: el nombre y route_prefix no pueden cambiarse sobre la marcha.',
 			'web.integrations.edit_dialog.updatedToast' => 'Integración actualizada',
@@ -8584,8 +8696,6 @@ extension on TranslationsEs {
 			'web.integrations.proxy.prefixPlaceholder' => '<prefix>',
 			'web.plugins.title' => 'Plugins del Inspector',
 			'web.plugins.subtitle' => 'Configura las fuentes de datos que se muestran en el panel Inspector de la derecha cuando hay una session abierta. Cada plugin es solo para administradores y se comparte entre todas las sessions. Haz clic en el encabezado de una sección para contraerla.',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.common.loading' => 'Cargando…',
 			'web.plugins.common.cancel' => 'Cancelar',
 			'web.plugins.common.edit' => 'Editar',
@@ -9073,6 +9183,8 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.memoryModelPath.hint' => 'Ruta absoluta a los pesos .onnx. Descárgalos de HuggingFace, p. ej. Xenova/bge-m3 o Xenova/bge-small-en-v1.5.',
 			'web.serverSettings.fields.memoryTokenizerPath.label' => 'Ruta del tokenizador',
 			'web.serverSettings.fields.memoryTokenizerPath.hint' => 'Ruta absoluta a tokenizer.json (formato estándar de HuggingFace), normalmente justo al lado del modelo.',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.memoryMaxSeqLen.label' => 'Longitud máxima de secuencia',
 			'web.serverSettings.fields.memoryMaxSeqLen.hint' => 'Los tokens que superan este límite se truncan. El valor por defecto de bge-m3 es 512. Vacío = 512.',
 			'web.serverSettings.fields.claudeHistoryRoots.label' => 'Raíces de historial',
@@ -9098,8 +9210,6 @@ extension on TranslationsEs {
 			'web.serverSettings.memoryInspectorCard.heading' => 'Inspector',
 			'web.serverSettings.memoryInspectorCard.description' => 'Explora, busca y edita las memorias almacenadas en la página dedicada.',
 			'web.serverSettings.memoryInspectorCard.openButton' => 'Abrir Memory →',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.localOnnxBanner' => 'Requiere que el binario se compile con <1>-tags local_onnx</1>. La compilación estándar devuelve un error de stub claro cuando se selecciona este backend. Consulta el tutorial <3>Memory → ONNX local</3> para los pasos de configuración.',
 			'web.serverSettings.stringList.noneDefault' => '(ninguno, usando los valores por defecto integrados)',
 			'web.serverSettings.stringList.addPath' => 'Añadir ruta',
@@ -9587,6 +9697,8 @@ extension on TranslationsEs {
 			'sessions.dirPicker.newFolder' => 'Nueva carpeta',
 			'sessions.dirPicker.useThisFolder' => 'Usar esta carpeta',
 			'sessions.dirPicker.loading' => 'Cargando…',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.dirPicker.empty' => 'No hay subcarpetas aquí.\nElige esta carpeta o crea una nueva.',
 			'sessions.dirPicker.createdSnack' => ({required Object path}) => 'Creada ${path}',
 			'sessions.dirPicker.mkdirFailedSnack' => ({required Object error}) => 'Falló mkdir: ${error}',
@@ -9612,8 +9724,6 @@ extension on TranslationsEs {
 			'sessions.inspector.files.insertPathSubtitle' => 'Pega la ruta absoluta tal cual',
 			'sessions.inspector.files.readContent' => 'Leer contenido',
 			'sessions.inspector.files.readContentSubtitle' => 'Hasta 256 KiB de texto plano',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.files.readFailedApi' => ({required Object status, required Object message}) => 'Falló la lectura (${status}): ${message}',
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => 'Falló la lectura: ${error}',
 			'sessions.inspector.files.parent' => 'Superior',
@@ -10101,6 +10211,8 @@ extension on TranslationsEs {
 			'backups.encryption.passphraseHint' => 'Al menos 20 caracteres',
 			'backups.encryption.passphraseCopied' => 'Passphrase copiada al portapapeles',
 			'backups.restoreFromFile' => 'Restaurar desde archivo',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.title' => 'Restaurar desde paquete',
 			'backups.restore.subtitle' => 'Reproduce un paquete cifrado .tar.gz.enc en una base de datos Postgres. El paquete se sube desde este teléfono: elige un archivo generado por una copia de seguridad anterior.',
 			'backups.restore.bundleLabel' => 'Archivo de paquete (.tar.gz.enc)',
@@ -10126,8 +10238,6 @@ extension on TranslationsEs {
 			'backups.restore.outputTitle' => 'Salida de pg_restore',
 			'backups.restore.noPgRestoreOutput' => '(vacío: la restauración se completó sin salida)',
 			'backups.restore.manifestTitle' => 'Manifiesto',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.manifestBackupId' => 'ID de copia de seguridad',
 			'backups.restore.manifestVersion' => 'Versión del manifiesto',
 			'backups.restore.manifestCreatedAt' => 'Creado',
@@ -10615,6 +10725,8 @@ extension on TranslationsEs {
 			'memory.kNew' => 'Nuevo',
 			'memory.searchHint' => 'Buscar…',
 			'memory.projectLabel' => 'Proyecto',
+			_ => null,
+		} ?? switch (path) {
 			'memory.filterHint' => 'Filtrar por nombre o ruta…',
 			'memory.copied' => 'Copiado',
 			'memory.copyTooltip' => 'Copiar texto',
@@ -10640,8 +10752,6 @@ extension on TranslationsEs {
 			'about.fields.app' => 'App',
 			'about.fields.version' => 'Versión',
 			'about.fields.versionFormat' => ({required Object version, required Object build}) => '${version} (build ${build})',
-			_ => null,
-		} ?? switch (path) {
 			'about.fields.package' => 'Paquete',
 			'about.fields.url' => 'URL',
 			'about.fields.signedInAs' => 'Sesión iniciada como',

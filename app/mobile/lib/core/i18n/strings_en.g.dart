@@ -2324,6 +2324,9 @@ class TranslationsWebProjectEn {
 	late final TranslationsWebProjectArchivedEn archived = TranslationsWebProjectArchivedEn.internal(_root);
 	late final TranslationsWebProjectResetEn reset = TranslationsWebProjectResetEn.internal(_root);
 	late final TranslationsWebProjectLifecycleEn lifecycle = TranslationsWebProjectLifecycleEn.internal(_root);
+	late final TranslationsWebProjectDocMetaEn docMeta = TranslationsWebProjectDocMetaEn.internal(_root);
+	late final TranslationsWebProjectProposalBannerEn proposalBanner = TranslationsWebProjectProposalBannerEn.internal(_root);
+	late final TranslationsWebProjectHandbookEn handbook = TranslationsWebProjectHandbookEn.internal(_root);
 }
 
 // Path: web.memoryInspector
@@ -5891,6 +5894,9 @@ class TranslationsWebProjectTabsEn {
 
 	/// en: 'Archived'
 	String get archived => 'Archived';
+
+	/// en: 'Handbook'
+	String get handbook => 'Handbook';
 }
 
 // Path: web.project.docLabel
@@ -6153,6 +6159,72 @@ class TranslationsWebProjectLifecycleEn {
 	String get failedToast => 'Could not change project status';
 
 	late final TranslationsWebProjectLifecycleAppliedEn applied = TranslationsWebProjectLifecycleAppliedEn.internal(_root);
+	late final TranslationsWebProjectLifecycleTooltipEn tooltip = TranslationsWebProjectLifecycleTooltipEn.internal(_root);
+}
+
+// Path: web.project.docMeta
+class TranslationsWebProjectDocMetaEn {
+	TranslationsWebProjectDocMetaEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsWebProjectDocMetaMaintainerEn maintainer = TranslationsWebProjectDocMetaMaintainerEn.internal(_root);
+	late final TranslationsWebProjectDocMetaPurposeEn purpose = TranslationsWebProjectDocMetaPurposeEn.internal(_root);
+}
+
+// Path: web.project.proposalBanner
+class TranslationsWebProjectProposalBannerEn {
+	TranslationsWebProjectProposalBannerEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'AI has proposed an update to this document, awaiting your approval.'
+	String get text => 'AI has proposed an update to this document, awaiting your approval.';
+
+	/// en: 'Review in Inbox'
+	String get button => 'Review in Inbox';
+}
+
+// Path: web.project.handbook
+class TranslationsWebProjectHandbookEn {
+	TranslationsWebProjectHandbookEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'No project handbook yet. The background engine drafts it from this project’s session log; you can also generate it from the Knowledge page.'
+	String get empty => 'No project handbook yet. The background engine drafts it from this project’s session log; you can also generate it from the Knowledge page.';
+
+	/// en: 'AI-maintained (refreshes from the log)'
+	String get aiManaged => 'AI-maintained (refreshes from the log)';
+
+	/// en: 'Locked — you edited it, AI will not overwrite'
+	String get locked => 'Locked — you edited it, AI will not overwrite';
+
+	/// en: 'Edit'
+	String get edit => 'Edit';
+
+	/// en: 'Save (locks)'
+	String get save => 'Save (locks)';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+
+	/// en: 'Unlock (hand back to AI)'
+	String get unlock => 'Unlock (hand back to AI)';
+
+	/// en: 'Handbook saved'
+	String get saved => 'Handbook saved';
+
+	/// en: 'Unlocked — AI will manage it again'
+	String get unlocked => 'Unlocked — AI will manage it again';
+
+	/// en: 'Saving an edit locks the page; unlocking lets AI redraft it on the next cycle.'
+	String get hint => 'Saving an edit locks the page; unlocking lets AI redraft it on the next cycle.';
 }
 
 // Path: web.memoryInspector.status
@@ -11595,6 +11667,69 @@ class TranslationsWebProjectLifecycleAppliedEn {
 	String get archived => 'Project archived';
 }
 
+// Path: web.project.lifecycle.tooltip
+class TranslationsWebProjectLifecycleTooltipEn {
+	TranslationsWebProjectLifecycleTooltipEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Project lifecycle. Frozen (paused/archived) projects are excluded from new-session injection and AI distillation.'
+	String get badge => 'Project lifecycle. Frozen (paused/archived) projects are excluded from new-session injection and AI distillation.';
+
+	/// en: 'Re-activate: inject into new sessions and resume AI maintenance.'
+	String get activate => 'Re-activate: inject into new sessions and resume AI maintenance.';
+
+	/// en: 'Pause: freeze this project — skip session injection + AI distillation, but keep it in the active list.'
+	String get pause => 'Pause: freeze this project — skip session injection + AI distillation, but keep it in the active list.';
+
+	/// en: 'Archive: shelve this project — frozen and hidden from routine views.'
+	String get archive => 'Archive: shelve this project — frozen and hidden from routine views.';
+}
+
+// Path: web.project.docMeta.maintainer
+class TranslationsWebProjectDocMetaMaintainerEn {
+	TranslationsWebProjectDocMetaMaintainerEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'You maintain · AI proposes'
+	String get coauthored => 'You maintain · AI proposes';
+
+	/// en: 'Auto-generated · read-only'
+	String get auto => 'Auto-generated · read-only';
+
+	/// en: 'AI-drafted · locks on edit'
+	String get ai_lockable => 'AI-drafted · locks on edit';
+}
+
+// Path: web.project.docMeta.purpose
+class TranslationsWebProjectDocMetaPurposeEn {
+	TranslationsWebProjectDocMetaPurposeEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'The project's long-term intent — what we're ultimately building and why. When a session shifts the direction, AI proposes an update to your Inbox for approval.'
+	String get goal => 'The project\'s long-term intent — what we\'re ultimately building and why. When a session shifts the direction, AI proposes an update to your Inbox for approval.';
+
+	/// en: 'The current roadmap / work in progress. AI proposes an update to your Inbox after a session moves it forward; you approve.'
+	String get plan => 'The current roadmap / work in progress. AI proposes an update to your Inbox after a session moves it forward; you approve.';
+
+	/// en: 'Tech stack & structure, auto-generated by the project scanner (refreshes every 6h).'
+	String get tech_stack => 'Tech stack & structure, auto-generated by the project scanner (refreshes every 6h).';
+
+	/// en: 'An AI summary of recent Git activity, refreshed automatically (every 12h).'
+	String get recent_activity => 'An AI summary of recent Git activity, refreshed automatically (every 12h).';
+
+	/// en: 'Project handbook: how to build / run / deploy, infrastructure it uses, collaboration boundaries, key lessons. AI drafts it from the work log; once you edit it, it locks and AI stops overwriting.'
+	String get kb_handbook => 'Project handbook: how to build / run / deploy, infrastructure it uses, collaboration boundaries, key lessons. AI drafts it from the work log; once you edit it, it locks and AI stops overwriting.';
+}
+
 // Path: web.memoryInspector.scope.values
 class TranslationsWebMemoryInspectorScopeValuesEn {
 	TranslationsWebMemoryInspectorScopeValuesEn.internal(this._root);
@@ -14488,6 +14623,7 @@ extension on Translations {
 			'web.project.tabs.inbox' => 'Inbox',
 			'web.project.tabs.conflicts' => 'Conflicts',
 			'web.project.tabs.archived' => 'Archived',
+			'web.project.tabs.handbook' => 'Handbook',
 			'web.project.docLabel.goal' => 'Goal',
 			'web.project.docLabel.plan' => 'Plan',
 			'web.project.docLabel.tech_stack' => 'Tech stack',
@@ -14566,6 +14702,30 @@ extension on Translations {
 			'web.project.lifecycle.applied.active' => 'Project re-activated',
 			'web.project.lifecycle.applied.paused' => 'Project paused',
 			'web.project.lifecycle.applied.archived' => 'Project archived',
+			'web.project.lifecycle.tooltip.badge' => 'Project lifecycle. Frozen (paused/archived) projects are excluded from new-session injection and AI distillation.',
+			'web.project.lifecycle.tooltip.activate' => 'Re-activate: inject into new sessions and resume AI maintenance.',
+			'web.project.lifecycle.tooltip.pause' => 'Pause: freeze this project — skip session injection + AI distillation, but keep it in the active list.',
+			'web.project.lifecycle.tooltip.archive' => 'Archive: shelve this project — frozen and hidden from routine views.',
+			'web.project.docMeta.maintainer.coauthored' => 'You maintain · AI proposes',
+			'web.project.docMeta.maintainer.auto' => 'Auto-generated · read-only',
+			'web.project.docMeta.maintainer.ai_lockable' => 'AI-drafted · locks on edit',
+			'web.project.docMeta.purpose.goal' => 'The project\'s long-term intent — what we\'re ultimately building and why. When a session shifts the direction, AI proposes an update to your Inbox for approval.',
+			'web.project.docMeta.purpose.plan' => 'The current roadmap / work in progress. AI proposes an update to your Inbox after a session moves it forward; you approve.',
+			'web.project.docMeta.purpose.tech_stack' => 'Tech stack & structure, auto-generated by the project scanner (refreshes every 6h).',
+			'web.project.docMeta.purpose.recent_activity' => 'An AI summary of recent Git activity, refreshed automatically (every 12h).',
+			'web.project.docMeta.purpose.kb_handbook' => 'Project handbook: how to build / run / deploy, infrastructure it uses, collaboration boundaries, key lessons. AI drafts it from the work log; once you edit it, it locks and AI stops overwriting.',
+			'web.project.proposalBanner.text' => 'AI has proposed an update to this document, awaiting your approval.',
+			'web.project.proposalBanner.button' => 'Review in Inbox',
+			'web.project.handbook.empty' => 'No project handbook yet. The background engine drafts it from this project’s session log; you can also generate it from the Knowledge page.',
+			'web.project.handbook.aiManaged' => 'AI-maintained (refreshes from the log)',
+			'web.project.handbook.locked' => 'Locked — you edited it, AI will not overwrite',
+			'web.project.handbook.edit' => 'Edit',
+			'web.project.handbook.save' => 'Save (locks)',
+			'web.project.handbook.cancel' => 'Cancel',
+			'web.project.handbook.unlock' => 'Unlock (hand back to AI)',
+			'web.project.handbook.saved' => 'Handbook saved',
+			'web.project.handbook.unlocked' => 'Unlocked — AI will manage it again',
+			'web.project.handbook.hint' => 'Saving an edit locks the page; unlocking lets AI redraft it on the next cycle.',
 			'web.memoryInspector.status.label' => 'Active embedder',
 			'web.memoryInspector.status.unavailable' => 'unavailable',
 			'web.memoryInspector.status.probing' => 'probing…',
@@ -14604,6 +14764,8 @@ extension on Translations {
 			'web.memoryInspector.records.enterScopeKeyHint' => 'Enter a scope key to browse memories.',
 			'web.memoryInspector.records.noMatchesForQuery' => ({required Object query}) => 'No matches for "${query}"',
 			'web.memoryInspector.records.noMemoriesInScope' => 'No memories in this scope yet.',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.row.simBadge' => ({required Object value}) => 'sim ${value}',
 			'web.memoryInspector.row.rankBadge' => ({required Object value}) => 'rank ${value}',
 			'web.memoryInspector.row.rankTooltip' => ({required Object effective, required Object similarity, required Object age, required Object days, required Object hits, required Object confidence}) => 'effective ${effective} = sim ${similarity} × age ${age} (${days}d) × hits ${hits} × conf ${confidence}',
@@ -14629,8 +14791,6 @@ extension on Translations {
 			'web.memoryInspector.toasts.migrated' => ({required Object reembed, required Object examined, required Object to}) => 'Migrated ${reembed}/${examined} memories to ${to}',
 			'web.memoryInspector.toasts.migrationFailed' => 'Migration failed',
 			'web.memoryInspector.toasts.syncIngested_one' => ({required Object count}) => 'Ingested ${count} new memory file',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.toasts.syncIngested_other' => ({required Object count}) => 'Ingested ${count} new memory files',
 			'web.memoryInspector.toasts.syncEmpty' => 'No new .md files to sync',
 			'web.memoryInspector.toasts.syncEmptyDescription' => 'Already in sync, or no Claude memory dir for this cwd.',
@@ -15118,6 +15278,8 @@ extension on Translations {
 			'web.integrations.edit_dialog.versionLabel' => 'Version',
 			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
 			'web.integrations.edit_dialog.scopesLabel' => 'Scopes',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.edit_dialog.scopesIntro' => 'Trim or widen the API surface this integration\'s API key authorises. Live tokens are unaffected — the new scope set takes effect on the next request.',
 			'web.integrations.edit_dialog.errorModeSwitch' => 'Switching between consumer-only and reverse-proxy mode requires deleting the integration and re-registering — name and route_prefix can\'t change in place.',
 			'web.integrations.edit_dialog.updatedToast' => 'Integration updated',
@@ -15143,8 +15305,6 @@ extension on Translations {
 			'web.integrations.proxy.prefixPlaceholder' => '<prefix>',
 			'web.plugins.title' => 'Inspector plugins',
 			'web.plugins.subtitle' => 'Configure data sources surfaced in the right-hand Inspector panel when a session is open. Each plugin is admin-only and shared across all sessions. Click a section header to collapse it.',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.common.loading' => 'Loading…',
 			'web.plugins.common.cancel' => 'Cancel',
 			'web.plugins.common.edit' => 'Edit',
@@ -15632,6 +15792,8 @@ extension on Translations {
 			'web.serverSettings.fields.memoryModelPath.hint' => 'Absolute path to the .onnx weights. Download from HuggingFace, e.g. Xenova/bge-m3 or Xenova/bge-small-en-v1.5.',
 			'web.serverSettings.fields.memoryTokenizerPath.label' => 'Tokenizer path',
 			'web.serverSettings.fields.memoryTokenizerPath.hint' => 'Absolute path to tokenizer.json (HuggingFace standard format) — usually right next to the model.',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.memoryMaxSeqLen.label' => 'Max sequence length',
 			'web.serverSettings.fields.memoryMaxSeqLen.hint' => 'Tokens beyond this are truncated. bge-m3 default is 512. Empty = 512.',
 			'web.serverSettings.fields.claudeHistoryRoots.label' => 'History roots',
@@ -15657,8 +15819,6 @@ extension on Translations {
 			'web.serverSettings.memoryInspectorCard.heading' => 'Inspector',
 			'web.serverSettings.memoryInspectorCard.description' => 'Browse, search and edit stored memories on the dedicated page.',
 			'web.serverSettings.memoryInspectorCard.openButton' => 'Open Memory →',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.localOnnxBanner' => 'Requires the binary to be compiled with <1>-tags local_onnx</1>. The standard build returns a clear stub error when this backend is selected. See <3>Memory → Local ONNX</3> tutorial for setup steps.',
 			'web.serverSettings.stringList.noneDefault' => '(none — using built-in defaults)',
 			'web.serverSettings.stringList.addPath' => 'Add path',
@@ -16146,6 +16306,8 @@ extension on Translations {
 			'sessions.dirPicker.newFolder' => 'New folder',
 			'sessions.dirPicker.useThisFolder' => 'Use this folder',
 			'sessions.dirPicker.loading' => 'Loading…',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.dirPicker.empty' => 'No subfolders here.\nPick this folder, or create a new one.',
 			'sessions.dirPicker.createdSnack' => ({required Object path}) => 'Created ${path}',
 			'sessions.dirPicker.mkdirFailedSnack' => ({required Object error}) => 'mkdir failed: ${error}',
@@ -16171,8 +16333,6 @@ extension on Translations {
 			'sessions.inspector.files.insertPathSubtitle' => 'Pastes the absolute path verbatim',
 			'sessions.inspector.files.readContent' => 'Read content',
 			'sessions.inspector.files.readContentSubtitle' => 'Up to 256 KiB plain text',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.files.readFailedApi' => ({required Object status, required Object message}) => 'Read failed (${status}): ${message}',
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => 'Read failed: ${error}',
 			'sessions.inspector.files.parent' => 'Parent',
@@ -16660,6 +16820,8 @@ extension on Translations {
 			'backups.encryption.passphraseHint' => 'At least 20 characters',
 			'backups.encryption.passphraseCopied' => 'Passphrase copied to clipboard',
 			'backups.restoreFromFile' => 'Restore from file',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.title' => 'Restore from bundle',
 			'backups.restore.subtitle' => 'Replay an encrypted .tar.gz.enc bundle into a Postgres database. The bundle is uploaded from this phone — pick a file produced by a prior backup.',
 			'backups.restore.bundleLabel' => 'Bundle file (.tar.gz.enc)',
@@ -16685,8 +16847,6 @@ extension on Translations {
 			'backups.restore.outputTitle' => 'pg_restore output',
 			'backups.restore.noPgRestoreOutput' => '(empty — restore completed silently)',
 			'backups.restore.manifestTitle' => 'Manifest',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.manifestBackupId' => 'Backup ID',
 			'backups.restore.manifestVersion' => 'Manifest version',
 			'backups.restore.manifestCreatedAt' => 'Created',
@@ -17174,6 +17334,8 @@ extension on Translations {
 			'memory.kNew' => 'New',
 			'memory.searchHint' => 'Search…',
 			'memory.projectLabel' => 'Project',
+			_ => null,
+		} ?? switch (path) {
 			'memory.filterHint' => 'Filter by name or path…',
 			'memory.copied' => 'Copied',
 			'memory.copyTooltip' => 'Copy text',
@@ -17199,8 +17361,6 @@ extension on Translations {
 			'about.fields.app' => 'App',
 			'about.fields.version' => 'Version',
 			'about.fields.versionFormat' => ({required Object version, required Object build}) => '${version} (build ${build})',
-			_ => null,
-		} ?? switch (path) {
 			'about.fields.package' => 'Package',
 			'about.fields.url' => 'URL',
 			'about.fields.signedInAs' => 'Signed in as',

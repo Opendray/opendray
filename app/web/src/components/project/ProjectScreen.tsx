@@ -16,16 +16,22 @@ import { toast } from 'sonner'
 import {
   AlertTriangle,
   Archive,
+  ArrowRight,
   Check,
   Inbox,
   Loader2,
+  Lock,
   Pause,
+  Pencil,
   Play,
   RotateCcw,
   Save,
   Trash2,
+  Unlock,
   X,
 } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
@@ -107,17 +113,26 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
   })
 
   const docsByKind = useMemo(() => {
-    // Partial: this screen only renders goal/plan/tech_stack/recent_activity;
-    // the kb_* doc kinds live in the Knowledge page, not here.
+    // goal/plan/tech_stack/recent_activity + the project's own handbook
+    // (kb_handbook) — the other global kb_* kinds live in the Knowledge page.
     const map: Partial<Record<DocKind, ProjectDoc | undefined>> = {
       goal: undefined,
       plan: undefined,
       tech_stack: undefined,
       recent_activity: undefined,
+      kb_handbook: undefined,
     }
     for (const d of docsQuery.data ?? []) map[d.kind] = d
     return map
   }, [docsQuery.data])
+
+  // Which doc kinds have a pending AI proposal — drives the per-doc banner so
+  // the AI-drive (P-B) is visible right on the goal/plan tab, not just Inbox.
+  const pendingByKind = useMemo(() => {
+    const s = new Set<string>()
+    for (const p of proposalsQuery.data ?? []) s.add(p.kind)
+    return s
+  }, [proposalsQuery.data])
 
   const inboxCount = proposalsQuery.data?.length ?? 0
   const archivedCount = archivedQuery.data?.length ?? 0
@@ -193,6 +208,9 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
           <TabsTrigger value="health">{t('web.project.tabs.health')}</TabsTrigger>
           <TabsTrigger value="goal">{t('web.project.tabs.goal')}</TabsTrigger>
           <TabsTrigger value="plan">{t('web.project.tabs.plan')}</TabsTrigger>
+          <TabsTrigger value="handbook">
+            {t('web.project.tabs.handbook')}
+          </TabsTrigger>
           <TabsTrigger value="tech">{t('web.project.tabs.tech')}</TabsTrigger>
           <TabsTrigger value="activity">
             {t('web.project.tabs.activity')}
@@ -230,6 +248,8 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
             cwd={cwd}
             kind="goal"
             doc={docsByKind.goal}
+            hasPending={pendingByKind.has('goal')}
+            onGoToInbox={() => setActiveTab('inbox')}
             onSaved={() => qc.invalidateQueries({ queryKey: ['project-docs', cwd] })}
           />
         </TabsContent>
@@ -239,6 +259,16 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
             cwd={cwd}
             kind="plan"
             doc={docsByKind.plan}
+            hasPending={pendingByKind.has('plan')}
+            onGoToInbox={() => setActiveTab('inbox')}
+            onSaved={() => qc.invalidateQueries({ queryKey: ['project-docs', cwd] })}
+          />
+        </TabsContent>
+
+        <TabsContent value="handbook" className="flex-1 overflow-auto p-4">
+          <HandbookTab
+            cwd={cwd}
+            doc={docsByKind.kb_handbook}
             onSaved={() => qc.invalidateQueries({ queryKey: ['project-docs', cwd] })}
           />
         </TabsContent>
@@ -287,16 +317,100 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
   )
 }
 
+// ─── Doc self-description (A: make each note explain itself) ──
+
+// stripSig drops the KB drafter's hidden <!-- kb-sig:… --> marker line so it
+// never shows in the rendered handbook.
+function stripSig(s: string): string {
+  return s
+    .split('\n')
+    .filter((l) => !l.includes('kb-sig:'))
+    .join('\n')
+    .trim()
+}
+
+// explicit markdown styling (no dependency on the typography plugin)
+const MD = {
+  h1: (p: any) => <h1 className="mt-4 mb-2 text-lg font-semibold" {...p} />,
+  h2: (p: any) => (
+    <h2 className="border-border mt-4 mb-1.5 border-b pb-1 text-base font-semibold" {...p} />
+  ),
+  h3: (p: any) => <h3 className="mt-3 mb-1 text-sm font-semibold" {...p} />,
+  p: (p: any) => <p className="my-1.5 text-sm leading-relaxed" {...p} />,
+  ul: (p: any) => <ul className="my-1.5 ml-5 list-disc space-y-0.5 text-sm" {...p} />,
+  ol: (p: any) => <ol className="my-1.5 ml-5 list-decimal space-y-0.5 text-sm" {...p} />,
+  li: (p: any) => <li className="leading-relaxed" {...p} />,
+  code: (p: any) => (
+    <code className="bg-muted rounded px-1 py-0.5 font-mono text-[12px]" {...p} />
+  ),
+  strong: (p: any) => <strong className="font-semibold" {...p} />,
+  a: (p: any) => <a className="text-primary underline" {...p} />,
+  hr: () => <hr className="border-border my-3" />,
+}
+
+// How each doc kind is kept current — drives the badge so the operator can see
+// at a glance who owns the page (you / AI-proposed / auto-scanned).
+type Maintainer = 'coauthored' | 'auto' | 'ai_lockable'
+const DOC_MAINTAINER: Record<string, Maintainer> = {
+  goal: 'coauthored',
+  plan: 'coauthored',
+  tech_stack: 'auto',
+  recent_activity: 'auto',
+  kb_handbook: 'ai_lockable',
+}
+const MAINTAINER_STYLE: Record<Maintainer, string> = {
+  coauthored: 'bg-blue-500/15 text-blue-400',
+  auto: 'bg-zinc-500/15 text-zinc-300',
+  ai_lockable: 'bg-emerald-500/15 text-emerald-400',
+}
+
+// DocMetaStrip is the per-note header that explains what the note is, who
+// maintains it, and when it was last touched — so the page is self-describing
+// instead of a bare tab label.
+function DocMetaStrip({ kind, doc }: { kind: DocKind; doc?: ProjectDoc }) {
+  const { t } = useTranslation()
+  const maintainer = DOC_MAINTAINER[kind] ?? 'coauthored'
+  return (
+    <div className="bg-muted/20 mb-3 rounded-md p-3">
+      <div className="mb-1 flex items-center gap-2">
+        <span
+          className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${MAINTAINER_STYLE[maintainer]}`}
+        >
+          {t(`web.project.docMeta.maintainer.${maintainer}`)}
+        </span>
+        {doc?.updated_at && (
+          <span className="text-muted-foreground text-[11px]">
+            {t('web.project.editor.updatedBy')} <strong>{doc.updated_by}</strong> ·{' '}
+            {new Date(doc.updated_at).toLocaleString()}
+          </span>
+        )}
+      </div>
+      <p className="text-muted-foreground text-xs leading-relaxed">
+        {t(`web.project.docMeta.purpose.${kind}`)}
+      </p>
+    </div>
+  )
+}
+
 // ─── Doc editor (goal / plan) ────────────────────────────────
 
 interface DocEditorProps {
   cwd: string
   kind: DocKind
   doc?: ProjectDoc
+  hasPending?: boolean
+  onGoToInbox?: () => void
   onSaved: () => void
 }
 
-function DocEditor({ cwd, kind, doc, onSaved }: DocEditorProps) {
+function DocEditor({
+  cwd,
+  kind,
+  doc,
+  hasPending,
+  onGoToInbox,
+  onSaved,
+}: DocEditorProps) {
   const { t } = useTranslation()
   const labelFor = useDocLabel()
   const [text, setText] = useState(doc?.content ?? '')
@@ -323,21 +437,23 @@ function DocEditor({ cwd, kind, doc, onSaved }: DocEditorProps) {
 
   return (
     <div className="space-y-3">
-      <div className="text-muted-foreground flex items-center justify-between text-xs">
-        <span>
-          {doc ? (
-            <>
-              {t('web.project.editor.updatedBy')} <strong>{doc.updated_by}</strong>{' '}
-              <span className="ml-1">
-                {new Date(doc.updated_at).toLocaleString()}
-              </span>
-            </>
-          ) : (
-            <span>
-              {t('web.project.editor.noDocSet', { label: labelFor(kind) })}
-            </span>
-          )}
-        </span>
+      <DocMetaStrip kind={kind} doc={doc} />
+      {hasPending && (
+        <button
+          onClick={onGoToInbox}
+          className="flex w-full items-center justify-between gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-left text-xs text-amber-300 hover:bg-amber-500/15"
+        >
+          <span className="flex items-center gap-2">
+            <Inbox className="h-3.5 w-3.5 flex-none" />
+            {t('web.project.proposalBanner.text')}
+          </span>
+          <span className="flex items-center gap-1 font-medium">
+            {t('web.project.proposalBanner.button')}
+            <ArrowRight className="h-3.5 w-3.5" />
+          </span>
+        </button>
+      )}
+      <div className="flex items-center justify-end">
         <Button
           size="sm"
           disabled={!dirty || save.isPending}
@@ -383,6 +499,7 @@ function ReadonlyDocTab({ doc, kind }: ReadonlyDocTabProps) {
   if (!doc) {
     return (
       <div className="text-muted-foreground text-sm">
+        <DocMetaStrip kind={kind} doc={undefined} />
         <p className="mb-2">
           {t('web.project.readonly.noneCaptured', { label: kindLabel })}
         </p>
@@ -392,17 +509,146 @@ function ReadonlyDocTab({ doc, kind }: ReadonlyDocTabProps) {
   }
   return (
     <div className="space-y-3">
-      <div className="text-muted-foreground flex items-center justify-between text-xs">
-        <span>
-          {t('web.project.readonly.generatedBy')}{' '}
-          <strong>{doc.updated_by}</strong> ·{' '}
-          {t('web.project.readonly.lastRefresh')}{' '}
-          {new Date(doc.updated_at).toLocaleString()}
-        </span>
-      </div>
+      <DocMetaStrip kind={kind} doc={doc} />
       <pre className="bg-muted/30 max-h-[60vh] overflow-auto rounded-md p-3 font-mono text-xs whitespace-pre-wrap">
         {doc.content}
       </pre>
+    </div>
+  )
+}
+
+// ─── Handbook tab (C: per-project freeform doc, AI-drafted + lockable) ──
+
+function HandbookTab({
+  cwd,
+  doc,
+  onSaved,
+}: {
+  cwd: string
+  doc?: ProjectDoc
+  onSaved: () => void
+}) {
+  const { t } = useTranslation()
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+  const locked = doc?.updated_by === 'operator'
+  const content = stripSig(doc?.content ?? '')
+
+  // A human edit saves as 'operator' (locks the page from AI overwrite);
+  // unlock saves the current content as 'agent' to hand it back to the drafter.
+  const save = useMutation({
+    mutationFn: (updatedBy: 'operator' | 'agent') =>
+      putProjectDoc({
+        cwd,
+        kind: 'kb_handbook',
+        content: updatedBy === 'operator' ? draft : content,
+        updatedBy,
+      }),
+    onSuccess: (_d, updatedBy) => {
+      setEditing(false)
+      onSaved()
+      toast.success(
+        updatedBy === 'operator'
+          ? t('web.project.handbook.saved')
+          : t('web.project.handbook.unlocked'),
+      )
+    },
+    onError: (e: Error) =>
+      toast.error(t('web.project.editor.saveFailedToast'), { description: e.message }),
+  })
+
+  if (!doc?.content) {
+    return (
+      <div className="space-y-3">
+        <DocMetaStrip kind="kb_handbook" doc={undefined} />
+        <p className="text-muted-foreground text-sm">
+          {t('web.project.handbook.empty')}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      <DocMetaStrip kind="kb_handbook" doc={doc} />
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+          {locked ? (
+            <>
+              <Lock className="h-3 w-3" />
+              {t('web.project.handbook.locked')}
+            </>
+          ) : (
+            <>
+              <Check className="h-3 w-3" />
+              {t('web.project.handbook.aiManaged')}
+            </>
+          )}
+        </span>
+        <div className="flex gap-2">
+          {locked && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={save.isPending}
+              onClick={() => save.mutate('agent')}
+            >
+              <Unlock className="mr-1 h-3 w-3" />
+              {t('web.project.handbook.unlock')}
+            </Button>
+          )}
+          {!editing && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setDraft(content)
+                setEditing(true)
+              }}
+            >
+              <Pencil className="mr-1 h-3 w-3" />
+              {t('web.project.handbook.edit')}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {editing ? (
+        <div className="space-y-2">
+          <Textarea
+            rows={22}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            className="font-mono text-sm"
+          />
+          <p className="text-muted-foreground text-[11px]">
+            {t('web.project.handbook.hint')}
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
+              {t('web.project.handbook.cancel')}
+            </Button>
+            <Button
+              size="sm"
+              disabled={save.isPending}
+              onClick={() => save.mutate('operator')}
+            >
+              {save.isPending ? (
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+              ) : (
+                <Save className="mr-1 h-3 w-3" />
+              )}
+              {t('web.project.handbook.save')}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-muted/20 max-h-[65vh] overflow-auto rounded-md p-4">
+          <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD}>
+            {content}
+          </ReactMarkdown>
+        </div>
+      )}
     </div>
   )
 }
@@ -785,7 +1031,11 @@ function LifecycleControl({ cwd }: { cwd: string }) {
 
   return (
     <div className="flex items-center gap-1.5">
-      <Badge variant={badgeVariant} className="text-[10px] capitalize">
+      <Badge
+        variant={badgeVariant}
+        className="text-[10px] capitalize"
+        title={t('web.project.lifecycle.tooltip.badge')}
+      >
         {t(`web.project.lifecycle.status.${status}`)}
       </Badge>
       {suggestArchive && status === 'active' && (
@@ -804,6 +1054,7 @@ function LifecycleControl({ cwd }: { cwd: string }) {
           size="sm"
           variant="outline"
           className="flex-none"
+          title={t('web.project.lifecycle.tooltip.activate')}
           disabled={mutation.isPending}
           onClick={() => mutation.mutate('active')}
         >
@@ -816,6 +1067,7 @@ function LifecycleControl({ cwd }: { cwd: string }) {
           size="sm"
           variant="outline"
           className="flex-none"
+          title={t('web.project.lifecycle.tooltip.pause')}
           disabled={mutation.isPending}
           onClick={() => mutation.mutate('paused')}
         >
@@ -828,6 +1080,7 @@ function LifecycleControl({ cwd }: { cwd: string }) {
           size="sm"
           variant="outline"
           className="flex-none"
+          title={t('web.project.lifecycle.tooltip.archive')}
           disabled={mutation.isPending}
           onClick={() => mutation.mutate('archived')}
         >
