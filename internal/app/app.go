@@ -175,15 +175,27 @@ func (a knowledgeDocSink) PutKBDoc(ctx context.Context, cwd, kind, content strin
 // structure from text) rather than introducing a dedicated worker TaskKind +
 // migration. A missing/disabled worker surfaces as an error, which the
 // anchorer treats as "skip fine-entity extraction" (degrades to 1A).
-type knowledgeLLM struct{ reg *memworker.Registry }
+type knowledgeLLM struct {
+	reg       *memworker.Registry
+	maxTokens int           // 0 → 512 (small extraction default)
+	timeout   time.Duration // 0 → 20s
+}
 
 func (a knowledgeLLM) Complete(ctx context.Context, system, user string) (string, error) {
+	maxTokens := a.maxTokens
+	if maxTokens == 0 {
+		maxTokens = 512 // small entity-extraction default
+	}
+	timeout := a.timeout
+	if timeout == 0 {
+		timeout = 20 * time.Second
+	}
 	resp, err := a.reg.Run(ctx, memworker.Request{
 		Task:         memworker.TaskCapture,
 		SystemPrompt: system,
 		UserInput:    user,
-		MaxTokens:    512,
-		Timeout:      20 * time.Second,
+		MaxTokens:    maxTokens,
+		Timeout:      timeout,
 	})
 	if err != nil {
 		return "", err
@@ -724,16 +736,19 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			// into the graph. Needs memory; without it we still serve CRUD.
 			knowledgeSvc.WithEmbedder(memorySvc.Embedder()) // Phase 6 — reuse memory's embedder
 			kgLLM := knowledgeLLM{reg: memoryWorkerRegistry}
+			// Playbooks + KB pages need bigger output and more time than the
+			// small, frequent entity-extraction calls (which keep 512 tok/20s).
+			kbLLM := knowledgeLLM{reg: memoryWorkerRegistry, maxTokens: 4000, timeout: 180 * time.Second}
 			knowledgeAnchorer = knowledge.NewAnchorer(st.Pool(), knowledgeMemorySource{mem: memorySvc}, log).
 				WithLLM(kgLLM)
-			knowledgeReflector = knowledge.NewReflector(st.Pool(), kgLLM, log).
+			knowledgeReflector = knowledge.NewReflector(st.Pool(), kbLLM, log).
 				WithJournal(knowledgeJournalSource{pd: projectDocSvc})
 			knowledgeSvc.WithReanchor(func(c context.Context) error {
 				return knowledgeAnchorer.AnchorAll(c, 500)
 			})
 			// M-KB — curated KB pages drafted INTO the note system.
 			knowledgeKBDrafter = knowledge.NewKBDrafter(
-				knowledge.NewStore(st.Pool()), kgLLM,
+				knowledge.NewStore(st.Pool()), kbLLM,
 				knowledgeJournalSource{pd: projectDocSvc},
 				knowledgeDocSink{pd: projectDocSvc}, log)
 			knowledgeSvc.WithKBDrafter(knowledgeKBDrafter) // manual /kb/draft endpoint

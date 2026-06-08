@@ -1,6 +1,7 @@
 package knowledge
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -203,12 +204,14 @@ func (h *Handlers) deleteNode(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) draftKB(w http.ResponseWriter, r *http.Request) {
-	res, err := h.svc.DraftKB(r.Context())
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{"results": res})
+	// Drafting all pages can take minutes (one LLM call each), so run it
+	// detached on a background context — far past any HTTP request deadline.
+	go func() {
+		if _, err := h.svc.DraftKB(context.Background()); err != nil {
+			h.log.Warn("kb manual draft failed", "err", err)
+		}
+	}()
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (h *Handlers) reset(w http.ResponseWriter, r *http.Request) {
