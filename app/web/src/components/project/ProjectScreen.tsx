@@ -332,7 +332,6 @@ const DOC_MAINTAINER: Record<string, Maintainer> = {
   plan: 'coauthored',
   tech_stack: 'auto',
   recent_activity: 'auto',
-  kb_handbook: 'ai_lockable',
 }
 const MAINTAINER_STYLE: Record<Maintainer, string> = {
   coauthored: 'bg-blue-500/15 text-blue-400',
