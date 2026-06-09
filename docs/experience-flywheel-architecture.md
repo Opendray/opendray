@@ -1,9 +1,13 @@
 # The Experience Flywheel — unifying Memory · Notes · Knowledge
 
-> Status: PROPOSAL (awaiting operator sign-off). Supersedes
+> Status: MODEL ACCEPTED — implementation in progress. The operator
+> confirmed the flywheel model + the two-nature Knowledge refinement, and
+> chose "Notes = projectdoc" (§7). Backend edges + the web overhaul are
+> implemented, green, and committed LOCALLY (not pushed, not yet built —
+> the operator has live opendray sessions; the unified rebuild waits for
+> their go-ahead). Mobile follows after the web is validated. Supersedes
 > `knowledge-system-orchestration.md` and the M-KG/M-KB patch series.
-> This is a re-architecture, not another patch. All work stays local on
-> `feat/knowledge-graph` until approved.
+> See §10 for per-step progress.
 
 ## 0. Why a re-architecture (not another patch)
 
@@ -98,19 +102,21 @@ frameworks, reusable structures/components.
 
 ## 3. The loop edges (and their current status)
 
-| Edge | What it does | AI role | Human role | Status today |
+| Edge | What it does | AI role | Human role | Status |
 |------|--------------|---------|-----------|--------------|
 | **Capture** work → Memory | record facts/events as work happens | auto | prune rarely | ✅ exists |
-| **Crystallise** Memory → Notes | keep the project doc current from work | propose on drift | approve / edit | ⚠️ partial (goal/plan drift only) |
-| **Distil** Notes+Memory → Knowledge | lift transferable expertise | draft | review / lock | ✅ exists (reflect + KB drafter + consolidation engine) |
-| **Iterate** new evidence → supersede old Knowledge | keep knowledge current (DOS→Win→Linux) | detect contradiction → propose update | review | ❌ weak (prompt only) — wire to `memory_conflicts` |
-| **Inject** Knowledge → new project | bootstrap from prior experience; **enforce foundational rules** | assemble spawn banner | — | ⚠️ exists but undifferentiated (rules not marked binding) |
+| **Crystallise** Memory → Notes | keep the project doc current from work | propose on drift | approve / edit | ✅ P-B (goal + plan drift on session-end); continuous-from-loop deferred |
+| **Distil** Notes+Memory → Knowledge | lift transferable expertise | draft | review / lock | ✅ reflect + KB drafter + consolidation engine (P-C) |
+| **Iterate** new evidence → supersede old Knowledge | keep knowledge current (DOS→Win→Linux) | propose update on divergence | review/ratify | ✅ **B3** — a locked page whose feedstock diverged is re-drafted as a *proposal* (not overwritten); unlocked pages auto-redraft |
+| **Inject** Knowledge → new project | bootstrap from prior experience; **enforce foundational rules** | assemble spawn banner | — | ✅ **B2** — foundational injected FIRST as binding "RULES you MUST follow"; emergent as reference |
 
-**The revolution = close + strengthen the weak edges, not add stores:**
-make Crystallise continuous, make Iterate a real mechanism (reuse the
-existing `memory_conflicts` contradiction detector to drive knowledge
-updates), and make Inject distinguish **binding foundational rules** from
-**emergent guidance**.
+**The revolution was to close + strengthen the weak edges, not add stores.**
+Done: Iterate is now a real propose-on-divergence mechanism (B3, via the
+KB drafter's dirty-check + projectdoc proposals — simpler and broader than
+the originally-planned `memory_conflicts` wiring); Inject now distinguishes
+**binding foundational rules** from **emergent guidance** (B2). Crystallise
+runs on session-end (P-B); making it also fire from the consolidation loop
+is a deferred enhancement.
 
 ## 4. AI leads, human supervises (everywhere)
 
@@ -141,37 +147,33 @@ One uniform control model across all three rungs:
 Reuse the working loop-plumbing; remove the redundant parts; strengthen
 the weak edges. Concretely:
 
-- **Keep** (already correct loop edges): auto-capture; the consolidation
-  engine (P-C); reflect + KB distillation; supersession intent (P-E, to
-  be strengthened); reusable-features as Emergent (P-F); fact-node
-  retirement (P-G); per-project lifecycle (a Notes/project property);
-  the Notes self-description (badges/purpose, P-B drift banner).
-- **Remove / revert** (redundant): the `kb_handbook` per-project page +
-  its Notes tab; the move that dragged the *conflated* Project screen
-  (Notes + Memory tabs) into the Notes nav.
-- **Deconflate**: split the "Project" screen — `goal/plan/tech/journal/
-  inbox` → **Notes**; `health/conflicts/archived` → **Memory**.
-- **Build**: the Foundational knowledge type (fact + rules, binding,
-  human-locked) + binding-rule injection; the Iterate edge wired to
-  `memory_conflicts`; a continuous Crystallise edge.
-- **Re-express the UI**: from three silo tabs to a loop-aware shape (§8).
+- ✅ **Keep** (already correct loop edges): auto-capture; consolidation
+  engine (P-C); reflect + KB distillation; reusable-features as Emergent
+  (P-F); fact-node retirement (P-G); per-project lifecycle; Notes
+  self-description (badges/purpose, P-B drift banner).
+- ✅ **Remove**: the `kb_handbook` per-project page + its Notes tab + its
+  backend drafting + spawn injection (B1); the project/vault toggle that
+  jammed the conflated screen into Notes (superseded by the variant split).
+- ✅ **Deconflate**: ProjectScreen gained a `variant` — `notes`
+  (goal/plan/tech/activity/journal/inbox) at `/notes`; `memory`
+  (health/conflicts/archived) at `/memory/project` (R1).
+- ✅ **Build**: Foundational binding injection (B2); the Iterate edge as
+  propose-on-divergence (B3). Continuous Crystallise deferred.
+- ✅ **Re-express the UI** (web): Notes deconflated + self-describing;
+  Knowledge redesigned into Foundational/Emergent with binding markers +
+  iteration-proposal review (F3); vault demoted to `/vault`. Mobile
+  pending (after web validation).
 
-## 7. OPEN DECISION — the two "notes" systems
+## 7. DECISION (made) — the two "notes" systems
 
-There are two stores both claiming "the project's document":
-`projectdoc` (structured goal/plan/journal, DB-backed, AI-driven, with a
-`.opendray/*.md` mirror) and the **markdown vault** (files, git-synced,
-freeform). They must collapse to one. Recommendation:
+There were two stores both claiming "the project's document": `projectdoc`
+(structured goal/plan/journal, DB-backed, AI-driven, `.opendray/*.md`
+mirror) and the **markdown vault** (files, git-synced, freeform).
 
-> **Notes = `projectdoc`** (structured, AI-driven, the loop's ② rung).
-> Demote the markdown vault out of the core triad into a **Vault /
-> Obsidian-sync utility** (Settings/Integrations) — it stays useful for
-> human freeform notes + external sync, but it is *not* a peer of
-> Memory/Knowledge and no longer competes for the "Notes" name.
-
-(Alternatives: make the vault the canonical store and write goal/plan as
-structured front-matter into it; or keep both with explicitly separate
-names. Operator picks.)
+> ✅ **Resolved: Notes = `projectdoc`.** The markdown vault is demoted out
+> of the core triad to its own `/vault` route + nav item (a freeform /
+> Obsidian-sync utility) — no longer a peer of Memory/Knowledge, no longer
+> competing for the "Notes" name. Implemented in R1.
 
 ## 8. UI — express the flywheel, not the silos (sketch)
 
@@ -191,7 +193,33 @@ not pixels.
 ## 9. Rollout
 
 One coherent change, feature-flagged, local-until-approved, reversible.
-Sequence: (1) deconflate + delete redundancy; (2) Foundational type +
-binding injection; (3) Iterate edge via `memory_conflicts`; (4) continuous
-Crystallise; (5) loop-aware UI. Each step builds green; nothing is pushed
-until the whole arc is accepted.
+Each step builds green; nothing is pushed and nothing is rebuilt/restarted
+until the operator says so (they run live opendray sessions on the current
+binary).
+
+## 10. Progress
+
+All local on `feat/knowledge-graph`, green (`go build`/`test`/`vet`/
+`gofmt`, web `tsc`, i18n parity en/zh/es), **unpushed + not yet built**.
+
+- ✅ `c2eb79e` — this architecture doc.
+- ✅ **R1** `81229fc` — deconflate Notes/Memory (ProjectScreen `variant`),
+  `/notes` = project doc, `/memory/project` = memory hygiene, vault → `/vault`.
+- ✅ **B1** `72b7ed6` — remove per-project handbook (drafting + injection +
+  migration 0042); move frozen-skip to the Reflector.
+- ✅ **B2** `cde63de` — Foundational knowledge injected as binding rules,
+  first + un-truncated; drafter prompts emit an explicit "## Rules" section.
+- ✅ **B3** `3784737` — Iterate: locked pages get update *proposals* on
+  feedstock divergence (not overwrites).
+- ✅ **F3** `c8a87a6` — Knowledge page redesigned (Foundational/Emergent,
+  binding/lock markers, inline proposal review); subtitle refreshed.
+
+**Pending (gated on the operator):**
+- The single unified rebuild + restart (`opendray-v2-update-local.sh
+  --restart`) so the operator can validate the web — held until they pause
+  their live sessions and give the go-ahead.
+- **Mobile**: mirror the deconflation + Knowledge two-nature view + regen
+  slang — only after the web is validated.
+- Optional later: continuous Crystallise from the consolidation loop; a
+  loop-overview affordance (§8); explicit per-rule structured storage for
+  Foundational items.
