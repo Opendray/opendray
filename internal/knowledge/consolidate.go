@@ -30,21 +30,22 @@ type ConsolidationEngine struct {
 	anchorer  *Anchorer
 	reflector *Reflector
 	kb        *KBDrafter
+	overview  *OverviewDrafter
 	log       *slog.Logger
 }
 
 // NewConsolidationEngine wires the stages. Any of them may be nil.
-func NewConsolidationEngine(a *Anchorer, r *Reflector, kb *KBDrafter, log *slog.Logger) *ConsolidationEngine {
+func NewConsolidationEngine(a *Anchorer, r *Reflector, kb *KBDrafter, ov *OverviewDrafter, log *slog.Logger) *ConsolidationEngine {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &ConsolidationEngine{anchorer: a, reflector: r, kb: kb, log: log.With("component", "knowledge.consolidate")}
+	return &ConsolidationEngine{anchorer: a, reflector: r, kb: kb, overview: ov, log: log.With("component", "knowledge.consolidate")}
 }
 
 // Enabled reports whether at least one stage is wired (otherwise the loop is a
 // no-op and the caller can skip launching it).
 func (e *ConsolidationEngine) Enabled() bool {
-	return e.anchorer != nil || e.reflector != nil || e.kb != nil
+	return e.anchorer != nil || e.reflector != nil || e.kb != nil || e.overview != nil
 }
 
 // ConsolidateConfig tunes the unified loop. One interval drives the whole
@@ -121,6 +122,16 @@ func (e *ConsolidationEngine) RunOnce(ctx context.Context, cfg ConsolidateConfig
 	if e.kb != nil {
 		if _, err := e.kb.DraftAll(ctx); err != nil && !errors.Is(err, context.Canceled) {
 			e.log.Warn("consolidation: kb stage failed", "err", err)
+		}
+	}
+	if ctx.Err() != nil {
+		return
+	}
+	// Overview last — it synthesises the project's own goal/plan/tech + journal
+	// + memory into the per-project official document (Notes).
+	if e.overview != nil {
+		if _, err := e.overview.DraftAll(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			e.log.Warn("consolidation: overview stage failed", "err", err)
 		}
 	}
 }

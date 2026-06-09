@@ -149,14 +149,22 @@ func (d *KBDrafter) DraftAll(ctx context.Context) ([]KBDraftResult, error) {
 }
 
 func (d *KBDrafter) draftOne(ctx context.Context, cwd, kind, system, feedstock string) KBDraftResult {
+	return draftOrPropose(ctx, d.llm, d.docs, d.proposals, d.log, cwd, kind, system, feedstock)
+}
+
+// draftOrPropose is the shared lock-aware, dirty-checked draft path used by the
+// KB drafter and the Overview drafter. An unlocked page is rewritten in place;
+// a human-locked page whose feedstock diverged is filed as an update proposal
+// (B3 — Iterate) instead of overwritten.
+func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals ProposalSink, log *slog.Logger, cwd, kind, system, feedstock string) KBDraftResult {
 	res := KBDraftResult{Kind: kind, Cwd: cwd}
 	if strings.TrimSpace(feedstock) == "" {
 		res.Status = "skipped-empty"
 		return res
 	}
-	cur, err := d.docs.GetKBDoc(ctx, cwd, kind)
+	cur, err := docs.GetKBDoc(ctx, cwd, kind)
 	if err != nil {
-		d.log.Warn("kb: get doc failed", "kind", kind, "cwd", cwd, "err", err)
+		log.Warn("draft: get doc failed", "kind", kind, "cwd", cwd, "err", err)
 		res.Status, res.Err = "error", "get: "+err.Error()
 		return res
 	}
@@ -165,54 +173,51 @@ func (d *KBDrafter) draftOne(ctx context.Context, cwd, kind, system, feedstock s
 		res.Status = "skipped-unchanged"
 		return res // feedstock unchanged since last draft — nothing to do
 	}
-	// B3 (Iterate) — a human-locked page is never overwritten. If the feedstock
-	// has diverged and no proposal is already pending, file the refreshed draft
-	// as a proposal so the operator can ratify the update; otherwise leave it.
 	if cur.HumanLocked {
-		if d.proposals == nil {
+		if proposals == nil {
 			res.Status = "skipped-locked"
 			return res
 		}
-		if pending, _ := d.proposals.HasPendingKBProposal(ctx, cwd, kind); pending {
+		if pending, _ := proposals.HasPendingKBProposal(ctx, cwd, kind); pending {
 			res.Status = "skipped-pending"
 			return res
 		}
-		body, err := d.draftBody(ctx, system, feedstock, sig)
+		body, err := draftPageBody(ctx, llm, log, system, feedstock, sig)
 		if err != nil {
 			res.Status, res.Err = "error", err.Error()
 			return res
 		}
-		if err := d.proposals.ProposeKBDoc(ctx, cwd, kind, body,
+		if err := proposals.ProposeKBDoc(ctx, cwd, kind, body,
 			"New evidence has diverged from this locked page; review the refreshed draft."); err != nil {
-			d.log.Warn("kb: propose failed", "kind", kind, "cwd", cwd, "err", err)
+			log.Warn("draft: propose failed", "kind", kind, "cwd", cwd, "err", err)
 			res.Status, res.Err = "error", "propose: "+err.Error()
 			return res
 		}
-		d.log.Info("kb update proposed for locked page", "kind", kind, "cwd", cwd)
+		log.Info("update proposed for locked page", "kind", kind, "cwd", cwd)
 		res.Status, res.Bytes = "proposed", len(body)
 		return res
 	}
-	body, err := d.draftBody(ctx, system, feedstock, sig)
+	body, err := draftPageBody(ctx, llm, log, system, feedstock, sig)
 	if err != nil {
 		res.Status, res.Err = "error", err.Error()
 		return res
 	}
-	if err := d.docs.PutKBDoc(ctx, cwd, kind, body); err != nil {
-		d.log.Warn("kb: put doc failed", "kind", kind, "cwd", cwd, "err", err)
+	if err := docs.PutKBDoc(ctx, cwd, kind, body); err != nil {
+		log.Warn("draft: put doc failed", "kind", kind, "cwd", cwd, "err", err)
 		res.Status, res.Err = "error", "put: "+err.Error()
 		return res
 	}
-	d.log.Info("kb page drafted", "kind", kind, "cwd", cwd)
+	log.Info("page drafted", "kind", kind, "cwd", cwd)
 	res.Status, res.Bytes = "written", len(body)
 	return res
 }
 
-// draftBody runs the LLM and returns the cleaned page body with the feedstock
-// signature appended (so the next sweep's dirty-check can skip it).
-func (d *KBDrafter) draftBody(ctx context.Context, system, feedstock, sig string) (string, error) {
-	body, err := d.llm.Complete(ctx, system, feedstock)
+// draftPageBody runs the LLM and returns the cleaned page body with the
+// feedstock signature appended (so the next sweep's dirty-check can skip it).
+func draftPageBody(ctx context.Context, llm LLM, log *slog.Logger, system, feedstock, sig string) (string, error) {
+	body, err := llm.Complete(ctx, system, feedstock)
 	if err != nil {
-		d.log.Warn("kb: draft failed", "err", err)
+		log.Warn("draft: llm failed", "err", err)
 		return "", fmt.Errorf("llm: %w", err)
 	}
 	body = stripFences(strings.TrimSpace(body))

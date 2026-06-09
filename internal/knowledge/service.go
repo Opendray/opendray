@@ -20,6 +20,7 @@ type Service struct {
 	skillSink SkillSink                   // optional; render promoted skills
 	reanchor  func(context.Context) error // optional; re-derive the graph after reset
 	kbDrafter *KBDrafter                  // optional; M-KB curated page drafting
+	overview  *OverviewDrafter            // optional; per-project Overview drafting
 	log       *slog.Logger
 }
 
@@ -231,12 +232,35 @@ func (s *Service) WithKBDrafter(d *KBDrafter) *Service {
 	return s
 }
 
-// DraftKB regenerates all curated KB pages now, returning per-page results.
+// WithOverviewDrafter wires the per-project Overview drafter so the manual
+// draft endpoint refreshes the official project documents too.
+func (s *Service) WithOverviewDrafter(d *OverviewDrafter) *Service {
+	s.overview = d
+	return s
+}
+
+// DraftKB regenerates all curated KB pages + per-project Overviews now,
+// returning per-page results.
 func (s *Service) DraftKB(ctx context.Context) ([]KBDraftResult, error) {
-	if s.kbDrafter == nil {
+	if s.kbDrafter == nil && s.overview == nil {
 		return nil, errors.New("knowledge: KB drafter not configured")
 	}
-	return s.kbDrafter.DraftAll(ctx)
+	var out []KBDraftResult
+	if s.kbDrafter != nil {
+		res, err := s.kbDrafter.DraftAll(ctx)
+		out = append(out, res...)
+		if err != nil {
+			return out, err
+		}
+	}
+	if s.overview != nil {
+		res, err := s.overview.DraftAll(ctx)
+		out = append(out, res...)
+		if err != nil {
+			return out, err
+		}
+	}
+	return out, nil
 }
 
 // DeleteNode removes a node — used to undo a mis-click (an accidental skillify

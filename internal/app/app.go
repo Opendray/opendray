@@ -831,11 +831,23 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				WithMemory(knowledgeMemorySource{mem: memorySvc}).      // P-G — facts from Memory
 				WithProposals(knowledgeProposalSink{pd: projectDocSvc}) // B3 — propose updates to locked pages
 			knowledgeSvc.WithKBDrafter(knowledgeKBDrafter) // manual /kb/draft endpoint
-			// P-C — one ordered loop (anchor → reflect → KB) replaces the three
-			// independent sweep goroutines so each stage drafts from the prior
+			// The per-project Overview — the rich official document. Reads the
+			// project's own goal/plan/tech + journal + memory and writes a
+			// comprehensive Notes doc (kind=overview), lock-aware + propose-on-lock.
+			knowledgeOverview := knowledge.NewOverviewDrafter(
+				knowledge.NewStore(st.Pool()), kbLLM,
+				knowledgeDocSink{pd: projectDocSvc}, log).
+				WithMemory(knowledgeMemorySource{mem: memorySvc}).
+				WithJournal(knowledgeJournalSource{pd: projectDocSvc}).
+				WithProposals(knowledgeProposalSink{pd: projectDocSvc}).
+				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc})
+			knowledgeSvc.WithOverviewDrafter(knowledgeOverview)
+			// P-C — one ordered loop (anchor → reflect → KB → overview) replaces
+			// the independent sweep goroutines so each stage drafts from the prior
 			// stage's fresh output instead of racing on separate timers.
 			knowledgeConsolidate = knowledge.NewConsolidationEngine(
-				knowledgeAnchorer, knowledgeReflector, knowledgeKBDrafter, log)
+				knowledgeAnchorer, knowledgeReflector, knowledgeKBDrafter,
+				knowledgeOverview, log)
 		}
 		knowledgeHandlers = knowledge.NewHandlers(knowledgeSvc, log)
 		log.Info("knowledge graph (M-KG) enabled", "anchorer", knowledgeAnchorer != nil)

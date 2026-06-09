@@ -47,6 +47,10 @@ const (
 	KindPlan           Kind = "plan"
 	KindTechStack      Kind = "tech_stack"      // M16b — scanner-managed
 	KindRecentActivity Kind = "recent_activity" // M16c — git-summary-managed
+	// KindOverview is the project's rich, AI-maintained OFFICIAL document — the
+	// comprehensive page a developer reads to understand the whole project.
+	// Per-project (Notes), AI-drafted, human-lockable.
+	KindOverview Kind = "overview"
 	// Knowledge pages (AI-drafted, human-lockable) live under GlobalCwd.
 	// They are CROSS-PROJECT only (Experience Flywheel) — there is no
 	// per-project handbook; per-project docs are goal/plan/tech/journal above.
@@ -68,7 +72,7 @@ const GlobalCwd = "__global__"
 // list stays in one place.
 func ValidKind(k Kind) bool {
 	switch k {
-	case KindGoal, KindPlan, KindTechStack, KindRecentActivity,
+	case KindGoal, KindPlan, KindTechStack, KindRecentActivity, KindOverview,
 		KindInfrastructure, KindConventions, KindLessons, KindReusable:
 		// KindHandbook intentionally excluded — retired; callers can no
 		// longer create one.
