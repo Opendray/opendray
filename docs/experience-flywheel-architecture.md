@@ -213,13 +213,14 @@ All local on `feat/knowledge-graph`, green (`go build`/`test`/`vet`/
   feedstock divergence (not overwrites).
 - ✅ **F3** `c8a87a6` — Knowledge page redesigned (Foundational/Emergent,
   binding/lock markers, inline proposal review); subtitle refreshed.
+- ✅ **Mobile** `d272c2e` — full parity: ProjectScreen `variant`
+  (notes|memory), handbook removed, vault → More, Knowledge two-nature +
+  proposal review. Dead handbook i18n/types swept (web + shared too).
 
 **Pending (gated on the operator):**
 - The single unified rebuild + restart (`opendray-v2-update-local.sh
-  --restart`) so the operator can validate the web — held until they pause
-  their live sessions and give the go-ahead.
-- **Mobile**: mirror the deconflation + Knowledge two-nature view + regen
-  slang — only after the web is validated.
+  --restart`) so the operator can validate web (+ a Flutter rebuild for
+  mobile) — held until they pause their live opendray sessions.
 - Optional later: continuous Crystallise from the consolidation loop; a
   loop-overview affordance (§8); explicit per-rule structured storage for
   Foundational items.
