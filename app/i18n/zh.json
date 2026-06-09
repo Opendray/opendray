@@ -457,7 +457,8 @@
         "journal": "日志",
         "inbox": "收件箱",
         "conflicts": "冲突",
-        "archived": "已归档"
+        "archived": "已归档",
+        "overview": "概览"
       },
       "docLabel": {
         "goal": "目标",
@@ -578,12 +579,29 @@
           "goal": "项目的长期目标与意图——我们最终在做什么、为什么做。当某次会话改变了方向,AI 会向 Inbox 提议更新,由你批准。",
           "plan": "当前的路线图 / 进行中的工作。会话推进后 AI 会向 Inbox 提议更新,由你批准。",
           "tech_stack": "技术栈与结构,由项目扫描器自动生成(每 6 小时刷新)。",
-          "recent_activity": "近期 Git 活动的 AI 摘要,自动刷新(每 12 小时)。"
+          "recent_activity": "近期 Git 活动的 AI 摘要,自动刷新(每 12 小时)。",
+          "overview": "项目的官方文档——它是什么、有哪些功能、架构、如何构建/运行、依赖的基础设施。AI 从项目自身信号起草;你可编辑(即锁定)或重新生成。"
         }
       },
       "proposalBanner": {
         "text": "AI 已对此文档提议更新,等待你批准。",
         "button": "去 Inbox 查看"
+      },
+      "overview": {
+        "aiManaged": "由 AI 维护(随项目刷新)",
+        "locked": "已锁定 — 你编辑过;AI 的更新会以提议送达",
+        "edit": "编辑",
+        "save": "保存(锁定)",
+        "cancel": "取消",
+        "unlock": "解锁(交还 AI)",
+        "regenerate": "重新生成",
+        "generate": "立即生成",
+        "regenerateHint": "让 AI 根据项目最新状态重写概览",
+        "editHint": "保存即锁定本页;解锁后 AI 会重新起草。",
+        "empty": "还没有概览。后台引擎会从项目的目标/计划、技术栈扫描、日志与记忆起草——也可以现在立即生成。",
+        "saved": "概览已保存",
+        "unlocked": "已解锁 — AI 将重新接管",
+        "regenerating": "正在重新生成概览…"
       }
     },
     "memoryInspector": {

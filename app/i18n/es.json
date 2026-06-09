@@ -457,7 +457,8 @@
         "journal": "Diario",
         "inbox": "Bandeja de entrada",
         "conflicts": "Conflictos",
-        "archived": "Archivadas"
+        "archived": "Archivadas",
+        "overview": "Resumen"
       },
       "docLabel": {
         "goal": "Objetivo",
@@ -578,12 +579,29 @@
           "goal": "La intención a largo plazo del proyecto: qué construimos y por qué. Cuando una sesión cambia el rumbo, la IA propone una actualización en tu Bandeja para que la apruebes.",
           "plan": "La hoja de ruta actual / trabajo en curso. La IA propone una actualización en tu Bandeja tras avanzar una sesión; tú la apruebas.",
           "tech_stack": "Stack y estructura, autogenerado por el escáner del proyecto (se actualiza cada 6 h).",
-          "recent_activity": "Resumen por IA de la actividad reciente de Git, actualizado automáticamente (cada 12 h)."
+          "recent_activity": "Resumen por IA de la actividad reciente de Git, actualizado automáticamente (cada 12 h).",
+          "overview": "El documento oficial del proyecto: qué es, sus funciones, arquitectura, cómo construir/ejecutar y las bases en que se apoya. Redactado por IA desde las señales del propio proyecto; puedes editarlo (lo bloquea) o regenerarlo."
         }
       },
       "proposalBanner": {
         "text": "La IA ha propuesto una actualización de este documento, a la espera de tu aprobación.",
         "button": "Revisar en la Bandeja"
+      },
+      "overview": {
+        "aiManaged": "Mantenido por IA (se actualiza desde el proyecto)",
+        "locked": "Bloqueado — lo editaste; las actualizaciones de IA llegan como propuestas",
+        "edit": "Editar",
+        "save": "Guardar (bloquea)",
+        "cancel": "Cancelar",
+        "unlock": "Desbloquear (devolver a la IA)",
+        "regenerate": "Regenerar",
+        "generate": "Generar ahora",
+        "regenerateHint": "Pide a la IA que redacte el resumen con el estado más reciente",
+        "editHint": "Guardar bloquea la página; desbloquear deja que la IA la redacte.",
+        "empty": "Aún no hay resumen. El motor en segundo plano lo redacta desde el objetivo/plan, el escaneo de stack, el registro y la memoria — o genéralo ahora.",
+        "saved": "Resumen guardado",
+        "unlocked": "Desbloqueado — la IA volverá a gestionarlo",
+        "regenerating": "Regenerando el resumen…"
       }
     },
     "memoryInspector": {

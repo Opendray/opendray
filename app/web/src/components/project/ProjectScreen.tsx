@@ -20,13 +20,19 @@ import {
   Check,
   Inbox,
   Loader2,
+  Lock,
   Pause,
+  Pencil,
   Play,
+  RefreshCw,
   RotateCcw,
   Save,
   Trash2,
+  Unlock,
   X,
 } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
 
@@ -65,9 +71,38 @@ import {
   listArchived,
   restoreMemory,
 } from '@/lib/memory'
+import { draftKB } from '@/lib/knowledge'
 import { MemoryHealthCard } from '@/components/project/MemoryHealthCard'
 import { ConflictsPanel } from '@/components/project/ConflictsPanel'
 import { JournalStalePanel } from '@/components/project/JournalStalePanel'
+
+// strip the drafter's hidden signature marker before display/edit
+function stripSig(s: string): string {
+  return s
+    .split('\n')
+    .filter((l) => !l.includes('kb-sig:'))
+    .join('\n')
+    .trim()
+}
+
+// explicit markdown styling (no dependency on the typography plugin)
+const MD = {
+  h1: (p: any) => <h1 className="mt-4 mb-2 text-lg font-semibold" {...p} />,
+  h2: (p: any) => (
+    <h2 className="border-border mt-4 mb-1.5 border-b pb-1 text-base font-semibold" {...p} />
+  ),
+  h3: (p: any) => <h3 className="mt-3 mb-1 text-sm font-semibold" {...p} />,
+  p: (p: any) => <p className="my-1.5 text-sm leading-relaxed" {...p} />,
+  ul: (p: any) => <ul className="my-1.5 ml-5 list-disc space-y-0.5 text-sm" {...p} />,
+  ol: (p: any) => <ol className="my-1.5 ml-5 list-decimal space-y-0.5 text-sm" {...p} />,
+  li: (p: any) => <li className="leading-relaxed" {...p} />,
+  code: (p: any) => (
+    <code className="bg-muted rounded px-1 py-0.5 font-mono text-[12px]" {...p} />
+  ),
+  strong: (p: any) => <strong className="font-semibold" {...p} />,
+  a: (p: any) => <a className="text-primary underline" {...p} />,
+  hr: () => <hr className="border-border my-3" />,
+}
 
 // ProjectScreen renders one rung of the flywheel for a project (cwd).
 // variant='notes' → the project's official doc (goal/plan/tech/activity/
@@ -90,7 +125,7 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
   const qc = useQueryClient()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState(
-    variant === 'memory' ? 'health' : 'goal',
+    variant === 'memory' ? 'health' : 'overview',
   )
   // A conflict that implicates goal/plan is resolved by editing the doc — which
   // now lives on the Notes screen. From the memory variant, jump there.
@@ -124,6 +159,7 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
     // Notes-layer docs only: goal/plan/tech_stack/recent_activity. The kb_*
     // kinds live in the Knowledge page (cross-project), not per-project Notes.
     const map: Partial<Record<DocKind, ProjectDoc | undefined>> = {
+      overview: undefined,
       goal: undefined,
       plan: undefined,
       tech_stack: undefined,
@@ -214,6 +250,9 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
         <TabsList className="bg-muted/30 mx-4 mt-3 w-fit">
           {variant === 'notes' ? (
             <>
+              <TabsTrigger value="overview">
+                {t('web.project.tabs.overview')}
+              </TabsTrigger>
               <TabsTrigger value="goal">{t('web.project.tabs.goal')}</TabsTrigger>
               <TabsTrigger value="plan">{t('web.project.tabs.plan')}</TabsTrigger>
               <TabsTrigger value="tech">{t('web.project.tabs.tech')}</TabsTrigger>
@@ -254,6 +293,16 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
 
         <TabsContent value="health" className="flex-1 overflow-auto">
           <MemoryHealthCard cwd={cwd} />
+        </TabsContent>
+
+        <TabsContent value="overview" className="flex-1 overflow-auto p-4">
+          <OverviewTab
+            cwd={cwd}
+            doc={docsByKind.overview}
+            hasPending={pendingByKind.has('overview')}
+            onGoToInbox={() => setActiveTab('inbox')}
+            onSaved={() => qc.invalidateQueries({ queryKey: ['project-docs', cwd] })}
+          />
         </TabsContent>
 
         <TabsContent value="goal" className="flex-1 overflow-auto p-4">
@@ -328,6 +377,7 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
 // at a glance who owns the page (you / AI-proposed / auto-scanned).
 type Maintainer = 'coauthored' | 'auto'
 const DOC_MAINTAINER: Record<string, Maintainer> = {
+  overview: 'coauthored',
   goal: 'coauthored',
   plan: 'coauthored',
   tech_stack: 'auto',
@@ -362,6 +412,180 @@ function DocMetaStrip({ kind, doc }: { kind: DocKind; doc?: ProjectDoc }) {
       <p className="text-muted-foreground text-xs leading-relaxed">
         {t(`web.project.docMeta.purpose.${kind}`)}
       </p>
+    </div>
+  )
+}
+
+// ─── Overview — the project's rich, AI-maintained official doc ──
+
+function OverviewTab({
+  cwd,
+  doc,
+  hasPending,
+  onGoToInbox,
+  onSaved,
+}: {
+  cwd: string
+  doc?: ProjectDoc
+  hasPending?: boolean
+  onGoToInbox?: () => void
+  onSaved: () => void
+}) {
+  const { t } = useTranslation()
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+  const locked = doc?.updated_by === 'operator'
+  const content = stripSig(doc?.content ?? '')
+
+  const save = useMutation({
+    mutationFn: (updatedBy: 'operator' | 'agent') =>
+      putProjectDoc({
+        cwd,
+        kind: 'overview',
+        content: updatedBy === 'operator' ? draft : content,
+        updatedBy,
+      }),
+    onSuccess: (_d, updatedBy) => {
+      setEditing(false)
+      onSaved()
+      toast.success(
+        updatedBy === 'operator'
+          ? t('web.project.overview.saved')
+          : t('web.project.overview.unlocked'),
+      )
+    },
+    onError: (e: Error) =>
+      toast.error(t('web.project.editor.saveFailedToast'), { description: e.message }),
+  })
+
+  const regen = useMutation({
+    mutationFn: () => draftKB(),
+    onSuccess: () => toast.success(t('web.project.overview.regenerating')),
+    onError: () => toast.error(t('web.project.editor.saveFailedToast')),
+  })
+
+  return (
+    <div className="space-y-3">
+      <DocMetaStrip kind="overview" doc={doc} />
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+          {locked ? (
+            <>
+              <Lock className="h-3 w-3" />
+              {t('web.project.overview.locked')}
+            </>
+          ) : (
+            <>
+              <Check className="h-3 w-3" />
+              {t('web.project.overview.aiManaged')}
+            </>
+          )}
+        </span>
+        <div className="flex gap-2">
+          {locked && !editing && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={save.isPending}
+              onClick={() => save.mutate('agent')}
+            >
+              <Unlock className="mr-1 h-3 w-3" />
+              {t('web.project.overview.unlock')}
+            </Button>
+          )}
+          {!editing && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={regen.isPending}
+              onClick={() => regen.mutate()}
+              title={t('web.project.overview.regenerateHint')}
+            >
+              <RefreshCw className="mr-1 h-3 w-3" />
+              {t('web.project.overview.regenerate')}
+            </Button>
+          )}
+          {!editing && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setDraft(content)
+                setEditing(true)
+              }}
+            >
+              <Pencil className="mr-1 h-3 w-3" />
+              {t('web.project.overview.edit')}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {hasPending && !editing && (
+        <button
+          onClick={onGoToInbox}
+          className="flex w-full items-center justify-between gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-left text-xs text-amber-300 hover:bg-amber-500/15"
+        >
+          <span className="flex items-center gap-2">
+            <Inbox className="h-3.5 w-3.5 flex-none" />
+            {t('web.project.proposalBanner.text')}
+          </span>
+          <span className="flex items-center gap-1 font-medium">
+            {t('web.project.proposalBanner.button')}
+            <ArrowRight className="h-3.5 w-3.5" />
+          </span>
+        </button>
+      )}
+
+      {editing ? (
+        <div className="space-y-2">
+          <Textarea
+            rows={26}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            className="font-mono text-sm"
+          />
+          <p className="text-muted-foreground text-[11px]">
+            {t('web.project.overview.editHint')}
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
+              {t('web.project.overview.cancel')}
+            </Button>
+            <Button
+              size="sm"
+              disabled={save.isPending}
+              onClick={() => save.mutate('operator')}
+            >
+              {save.isPending ? (
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+              ) : (
+                <Save className="mr-1 h-3 w-3" />
+              )}
+              {t('web.project.overview.save')}
+            </Button>
+          </div>
+        </div>
+      ) : content ? (
+        <div className="bg-muted/20 rounded-md p-4">
+          <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD}>
+            {content}
+          </ReactMarkdown>
+        </div>
+      ) : (
+        <div className="text-muted-foreground space-y-2 text-sm">
+          <p>{t('web.project.overview.empty')}</p>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={regen.isPending}
+            onClick={() => regen.mutate()}
+          >
+            <RefreshCw className="mr-1 h-3 w-3" />
+            {t('web.project.overview.generate')}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

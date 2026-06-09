@@ -16,6 +16,8 @@ export type DocKind =
   | 'plan'
   | 'tech_stack'
   | 'recent_activity'
+  // The project's rich, AI-maintained official document (per-project Notes).
+  | 'overview'
   // Cross-project Knowledge pages (Experience Flywheel — global only;
   // per-project docs are goal/plan/journal above, no handbook).
   | 'kb_infrastructure'
