@@ -2443,7 +2443,7 @@
     },
     "knowledge": {
       "title": "Knowledge",
-      "subtitle": "The self-evolving knowledge graph — entities, facts, playbooks, and skills distilled from your work.",
+      "subtitle": "What we know across all projects — foundational infrastructure & rules, plus lessons and reusable features distilled from past work. Injected to bootstrap each new project.",
       "searchPlaceholder": "Search knowledge…",
       "search": "Search",
       "browse": "Browse",
@@ -2490,6 +2490,21 @@
           "kb_lessons": "Lessons",
           "kb_reusable": "Reusable features",
           "kb_handbook": "Handbook"
+        },
+        "foundational": "Foundational",
+        "foundationalHint": "Infrastructure & conventions — binding rules injected into every project.",
+        "emergent": "Emergent",
+        "emergentHint": "Lessons & reusable features distilled from past work — guidance.",
+        "bindingBadge": "Binding · must follow",
+        "referenceBadge": "Reference",
+        "proposal": {
+          "text": "AI proposed an update to this page (new evidence diverged).",
+          "preview": "Preview",
+          "hide": "Hide",
+          "approve": "Approve",
+          "reject": "Reject",
+          "approved": "Update approved",
+          "rejected": "Proposal rejected"
         }
       },
       "kinds": {

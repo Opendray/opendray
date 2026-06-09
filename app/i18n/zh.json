@@ -2443,7 +2443,7 @@
     },
     "knowledge": {
       "title": "知识",
-      "subtitle": "自我进化的知识图谱——从你的工作中蒸馏出的实体、事实、playbook 与技能。",
+      "subtitle": "跨所有项目沉淀的知识——基础设施与规约,加上从过往工作蒸馏的教训与可复用功能。开新项目时注入,快速起步、不从头再来。",
       "searchPlaceholder": "搜索知识…",
       "search": "搜索",
       "browse": "浏览",
@@ -2490,6 +2490,21 @@
           "kb_lessons": "经验教训",
           "kb_reusable": "可复用功能",
           "kb_handbook": "项目手册"
+        },
+        "foundational": "基础 / 规约",
+        "foundationalHint": "基础设施与规范——注入每个项目的强约束规则。",
+        "emergent": "经验",
+        "emergentHint": "从过往工作蒸馏的教训与可复用功能——参考性引导。",
+        "bindingBadge": "强约束 · 必须遵守",
+        "referenceBadge": "参考",
+        "proposal": {
+          "text": "AI 提议更新此页(出现了与之冲突的新证据)。",
+          "preview": "预览",
+          "hide": "收起",
+          "approve": "批准",
+          "reject": "拒绝",
+          "approved": "更新已批准",
+          "rejected": "提议已拒绝"
         }
       },
       "kinds": {

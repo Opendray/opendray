@@ -2443,7 +2443,7 @@
     },
     "knowledge": {
       "title": "Conocimiento",
-      "subtitle": "El grafo de conocimiento autoevolutivo: entidades, hechos, guías y habilidades destiladas de tu trabajo.",
+      "subtitle": "Lo que sabemos en todos los proyectos: infraestructura y reglas fundacionales, más lecciones y funciones reutilizables destiladas del trabajo previo. Se inyecta para arrancar cada proyecto nuevo.",
       "searchPlaceholder": "Buscar conocimiento…",
       "search": "Buscar",
       "browse": "Explorar",
@@ -2490,6 +2490,21 @@
           "kb_lessons": "Lecciones",
           "kb_reusable": "Funciones reutilizables",
           "kb_handbook": "Manual"
+        },
+        "foundational": "Fundacional",
+        "foundationalHint": "Infraestructura y convenciones — reglas vinculantes inyectadas en cada proyecto.",
+        "emergent": "Emergente",
+        "emergentHint": "Lecciones y funciones reutilizables destiladas del trabajo previo — orientación.",
+        "bindingBadge": "Vinculante · obligatorio",
+        "referenceBadge": "Referencia",
+        "proposal": {
+          "text": "La IA propuso una actualización de esta página (evidencia nueva divergente).",
+          "preview": "Vista previa",
+          "hide": "Ocultar",
+          "approve": "Aprobar",
+          "reject": "Rechazar",
+          "approved": "Actualización aprobada",
+          "rejected": "Propuesta rechazada"
         }
       },
       "kinds": {

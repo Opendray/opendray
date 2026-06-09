@@ -22,8 +22,12 @@ import {
 import {
   getProjectDoc,
   putProjectDoc,
+  listPendingProposals,
+  approveProposal,
+  rejectProposal,
   GLOBAL_CWD,
   type DocKind,
+  type DocProposal,
 } from '@/lib/projectDocs'
 
 // ── shared bits ───────────────────────────────────────────────
@@ -79,36 +83,84 @@ const MD = {
   hr: () => <hr className="my-3 border-border" />,
 }
 
-// ── Knowledge Base (curated pages) ────────────────────────────
+// ── Knowledge Base (the cross-project compounding asset) ──────
 
-interface KBPage {
-  kind: DocKind
-  cwd: string
+// Knowledge's two natures (Experience Flywheel §2). Foundational pages are
+// binding guardrails injected into every project; Emergent pages are distilled
+// guidance. Each datum has one home — there are no per-project pages here.
+const FOUNDATIONAL_KINDS: DocKind[] = ['kb_infrastructure', 'kb_conventions']
+const EMERGENT_KINDS: DocKind[] = ['kb_lessons', 'kb_reusable']
+const isFoundational = (k: DocKind) => FOUNDATIONAL_KINDS.includes(k)
+
+function NavSection({
+  label,
+  hint,
+  kinds,
+  sel,
+  onSelect,
+}: {
+  label: string
+  hint: string
+  kinds: DocKind[]
+  sel: DocKind
+  onSelect: (k: DocKind) => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <>
+      <p className="text-muted-foreground px-2 pt-3 pb-0.5 text-[11px] font-medium uppercase tracking-wide">
+        {label}
+      </p>
+      <p className="text-muted-foreground/70 px-2 pb-1 text-[10px] leading-tight">
+        {hint}
+      </p>
+      {kinds.map((k) => (
+        <button
+          key={k}
+          onClick={() => onSelect(k)}
+          className={`block w-full rounded px-2 py-1.5 text-left text-sm ${
+            sel === k ? 'bg-primary text-primary-foreground' : 'hover:bg-card'
+          }`}
+        >
+          {t(`web.knowledge.kb.kinds.${k}`)}
+        </button>
+      ))}
+    </>
+  )
 }
 
 function KnowledgeBaseView() {
   const { t } = useTranslation()
   const qc = useQueryClient()
-  const [handbookCwd, setHandbookCwd] = useState('')
-  const [sel, setSel] = useState<KBPage>({
-    kind: 'kb_infrastructure',
-    cwd: GLOBAL_CWD,
-  })
+  const [sel, setSel] = useState<DocKind>('kb_infrastructure')
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
+  const [showProposal, setShowProposal] = useState(false)
 
   const doc = useQuery({
-    queryKey: ['kb-doc', sel.cwd, sel.kind],
-    queryFn: () => getProjectDoc(sel.cwd, sel.kind),
+    queryKey: ['kb-doc', GLOBAL_CWD, sel],
+    queryFn: () => getProjectDoc(GLOBAL_CWD, sel),
   })
+  // B3 — pending AI update proposals for the locked global pages.
+  const proposals = useQuery({
+    queryKey: ['kb-proposals', GLOBAL_CWD],
+    queryFn: () => listPendingProposals(GLOBAL_CWD),
+  })
+  const pending: DocProposal | undefined = (proposals.data ?? []).find(
+    (p) => p.kind === sel,
+  )
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['kb-doc'] })
+    qc.invalidateQueries({ queryKey: ['kb-proposals'] })
+  }
 
   const save = useMutation({
-    mutationFn: () =>
-      putProjectDoc({ cwd: sel.cwd, kind: sel.kind, content: draft }),
+    mutationFn: () => putProjectDoc({ cwd: GLOBAL_CWD, kind: sel, content: draft }),
     onSuccess: () => {
       setEditing(false)
       toast.success(t('web.knowledge.kb.saved'))
-      qc.invalidateQueries({ queryKey: ['kb-doc'] })
+      invalidate()
     },
     onError: () => toast.error(t('web.knowledge.actionFailed')),
   })
@@ -116,14 +168,14 @@ function KnowledgeBaseView() {
   const unlock = useMutation({
     mutationFn: () =>
       putProjectDoc({
-        cwd: sel.cwd,
-        kind: sel.kind,
+        cwd: GLOBAL_CWD,
+        kind: sel,
         content: stripSig(doc.data?.content ?? ''),
         updatedBy: 'agent',
       }),
     onSuccess: () => {
       toast.success(t('web.knowledge.kb.unlocked'))
-      qc.invalidateQueries({ queryKey: ['kb-doc'] })
+      invalidate()
     },
     onError: () => toast.error(t('web.knowledge.actionFailed')),
   })
@@ -134,81 +186,79 @@ function KnowledgeBaseView() {
     onError: () => toast.error(t('web.knowledge.actionFailed')),
   })
 
-  const select = (p: KBPage) => {
-    setSel(p)
+  const approve = useMutation({
+    mutationFn: () => approveProposal(pending!.id),
+    onSuccess: () => {
+      setShowProposal(false)
+      toast.success(t('web.knowledge.kb.proposal.approved'))
+      invalidate()
+    },
+    onError: () => toast.error(t('web.knowledge.actionFailed')),
+  })
+  const reject = useMutation({
+    mutationFn: () => rejectProposal(pending!.id),
+    onSuccess: () => {
+      setShowProposal(false)
+      toast.success(t('web.knowledge.kb.proposal.rejected'))
+      invalidate()
+    },
+    onError: () => toast.error(t('web.knowledge.actionFailed')),
+  })
+
+  const select = (k: DocKind) => {
+    setSel(k)
     setEditing(false)
+    setShowProposal(false)
   }
 
   const content = stripSig(doc.data?.content ?? '')
   const exists = !!doc.data?.id
   const locked = doc.data?.updated_by === 'operator'
-
-  const globalKinds: DocKind[] = [
-    'kb_infrastructure',
-    'kb_conventions',
-    'kb_lessons',
-    'kb_reusable',
-  ]
+  const foundational = isFoundational(sel)
 
   return (
-    <div className="flex flex-1 min-h-0 border border-border rounded-b-md rounded-tr-md">
-      {/* nav */}
-      <div className="w-64 shrink-0 overflow-auto border-r border-border p-2">
-        <p className="px-2 pb-1 pt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
-          {t('web.knowledge.kb.global')}
-        </p>
-        {globalKinds.map((k) => (
-          <button
-            key={k}
-            onClick={() => select({ kind: k, cwd: GLOBAL_CWD })}
-            className={`block w-full rounded px-2 py-1.5 text-left text-sm ${
-              sel.cwd === GLOBAL_CWD && sel.kind === k
-                ? 'bg-primary text-primary-foreground'
-                : 'hover:bg-card'
-            }`}
-          >
-            {t(`web.knowledge.kb.kinds.${k}`)}
-          </button>
-        ))}
-
-        <p className="px-2 pb-1 pt-3 text-[11px] uppercase tracking-wide text-muted-foreground">
-          {t('web.knowledge.kb.projectHandbook')}
-        </p>
-        <input
-          value={handbookCwd}
-          onChange={(e) => setHandbookCwd(e.target.value)}
-          placeholder={t('web.knowledge.cwdPlaceholder')}
-          className="mb-1 w-full rounded-md border border-border bg-card px-2 py-1 text-xs"
+    <div className="border-border flex min-h-0 flex-1 rounded-b-md rounded-tr-md border">
+      {/* nav — two natures */}
+      <div className="border-border w-64 shrink-0 overflow-auto border-r p-2">
+        <NavSection
+          label={t('web.knowledge.kb.foundational')}
+          hint={t('web.knowledge.kb.foundationalHint')}
+          kinds={FOUNDATIONAL_KINDS}
+          sel={sel}
+          onSelect={select}
         />
-        <button
-          disabled={!handbookCwd.trim()}
-          onClick={() =>
-            select({ kind: 'kb_handbook', cwd: handbookCwd.trim() })
-          }
-          className={`block w-full rounded px-2 py-1.5 text-left text-sm disabled:opacity-40 ${
-            sel.kind === 'kb_handbook' && sel.cwd === handbookCwd.trim()
-              ? 'bg-primary text-primary-foreground'
-              : 'hover:bg-card'
-          }`}
-        >
-          {t('web.knowledge.kb.kinds.kb_handbook')}
-        </button>
+        <NavSection
+          label={t('web.knowledge.kb.emergent')}
+          hint={t('web.knowledge.kb.emergentHint')}
+          kinds={EMERGENT_KINDS}
+          sel={sel}
+          onSelect={select}
+        />
       </div>
 
       {/* content */}
-      <div className="flex flex-1 flex-col min-h-0">
-        <div className="flex items-center gap-2 border-b border-border px-4 py-2">
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="border-border flex items-center gap-2 border-b px-4 py-2">
           <h2 className="text-sm font-medium">
-            {sel.kind === 'kb_handbook'
-              ? `${t('web.knowledge.kb.kinds.kb_handbook')} · ${sel.cwd.split('/').pop()}`
-              : t(`web.knowledge.kb.kinds.${sel.kind}`)}
+            {t(`web.knowledge.kb.kinds.${sel}`)}
           </h2>
+          <span
+            className={`rounded px-1.5 py-0.5 text-[10px] ${
+              foundational
+                ? 'bg-amber-500/15 text-amber-400'
+                : 'bg-blue-500/15 text-blue-400'
+            }`}
+          >
+            {foundational
+              ? t('web.knowledge.kb.bindingBadge')
+              : t('web.knowledge.kb.referenceBadge')}
+          </span>
           {exists && (
             <span
               className={`rounded px-1.5 py-0.5 text-[10px] ${
                 locked
-                  ? 'bg-amber-500/15 text-amber-400'
-                  : 'bg-emerald-500/15 text-emerald-400'
+                  ? 'bg-emerald-500/15 text-emerald-400'
+                  : 'bg-zinc-500/15 text-zinc-300'
               }`}
             >
               {locked ? t('web.knowledge.kb.locked') : t('web.knowledge.kb.aiDrafted')}
@@ -221,7 +271,7 @@ function KnowledgeBaseView() {
                   setDraft(content)
                   setEditing(true)
                 }}
-                className="rounded-md border border-border px-2.5 py-1 text-xs"
+                className="border-border rounded-md border px-2.5 py-1 text-xs"
               >
                 {t('web.knowledge.kb.edit')}
               </button>
@@ -230,7 +280,7 @@ function KnowledgeBaseView() {
               <button
                 onClick={() => unlock.mutate()}
                 disabled={unlock.isPending}
-                className="rounded-md border border-border px-2.5 py-1 text-xs disabled:opacity-50"
+                className="border-border rounded-md border px-2.5 py-1 text-xs disabled:opacity-50"
               >
                 {t('web.knowledge.kb.unlock')}
               </button>
@@ -239,7 +289,7 @@ function KnowledgeBaseView() {
               <button
                 onClick={() => regen.mutate()}
                 disabled={regen.isPending}
-                className="rounded-md border border-border px-2.5 py-1 text-xs disabled:opacity-50"
+                className="border-border rounded-md border px-2.5 py-1 text-xs disabled:opacity-50"
               >
                 {t('web.knowledge.kb.regenerate')}
               </button>
@@ -247,41 +297,81 @@ function KnowledgeBaseView() {
           </div>
         </div>
 
+        {/* B3 — AI proposed an update to this (locked) page */}
+        {pending && !editing && (
+          <div className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="flex-1 text-amber-300">
+                {t('web.knowledge.kb.proposal.text')}
+              </span>
+              <button
+                onClick={() => setShowProposal((v) => !v)}
+                className="border-border rounded-md border px-2 py-0.5"
+              >
+                {showProposal
+                  ? t('web.knowledge.kb.proposal.hide')
+                  : t('web.knowledge.kb.proposal.preview')}
+              </button>
+              <button
+                onClick={() => approve.mutate()}
+                disabled={approve.isPending}
+                className="rounded-md bg-emerald-600/80 px-2 py-0.5 text-white disabled:opacity-50"
+              >
+                {t('web.knowledge.kb.proposal.approve')}
+              </button>
+              <button
+                onClick={() => reject.mutate()}
+                disabled={reject.isPending}
+                className="rounded-md border border-red-500/40 px-2 py-0.5 text-red-400 disabled:opacity-50"
+              >
+                {t('web.knowledge.kb.proposal.reject')}
+              </button>
+            </div>
+            {showProposal && (
+              <div className="bg-card mt-2 max-h-72 overflow-auto rounded-md p-3">
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD}>
+                  {stripSig(pending.proposed_content)}
+                </ReactMarkdown>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex-1 overflow-auto p-4">
           {editing ? (
             <div className="flex h-full flex-col gap-2">
               <textarea
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                className="flex-1 resize-none rounded-md border border-border bg-card p-3 font-mono text-sm"
+                className="border-border bg-card flex-1 resize-none rounded-md p-3 font-mono text-sm"
               />
               <div className="flex gap-2">
                 <button
                   onClick={() => save.mutate()}
                   disabled={save.isPending}
-                  className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-50"
+                  className="bg-primary text-primary-foreground rounded-md px-3 py-1.5 text-sm disabled:opacity-50"
                 >
                   {t('web.knowledge.kb.save')}
                 </button>
                 <button
                   onClick={() => setEditing(false)}
-                  className="rounded-md border border-border px-3 py-1.5 text-sm"
+                  className="border-border rounded-md border px-3 py-1.5 text-sm"
                 >
                   {t('web.knowledge.kb.cancel')}
                 </button>
-                <span className="self-center text-[11px] text-muted-foreground">
+                <span className="text-muted-foreground self-center text-[11px]">
                   {t('web.knowledge.kb.editHint')}
                 </span>
               </div>
             </div>
           ) : doc.isLoading ? (
-            <p className="text-sm text-muted-foreground">…</p>
+            <p className="text-muted-foreground text-sm">…</p>
           ) : content ? (
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD}>
               {content}
             </ReactMarkdown>
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               {t('web.knowledge.kb.empty')}
             </p>
           )}
