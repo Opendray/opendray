@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:opendray/core/api/api_exception.dart';
+import 'package:opendray/core/api/knowledge_api.dart';
 import 'package:opendray/core/api/memory_api.dart';
 import 'package:opendray/core/api/memory_conflicts_api.dart';
 import 'package:opendray/core/api/memory_health_api.dart';
@@ -41,9 +42,9 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
   bool get _isMemory => widget.variant == 'memory';
-  // notes tabs: Goal Plan Tech Activity Journal Inbox → Inbox is index 5
-  // (the proposal banner taps to it). memory variant has no inbox.
-  int get _inboxTabIndex => 5;
+  // notes tabs: Overview Goal Plan Tech Activity Journal Inbox → Inbox is
+  // index 6 (the proposal banner taps to it). memory variant has no inbox.
+  int get _inboxTabIndex => 6;
   AsyncValue<List<String>> _projectKeys = const AsyncValue.loading();
   String? _selectedKey;
 
@@ -59,9 +60,9 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
   @override
   void initState() {
     super.initState();
-    // notes = 6 tabs (goal/plan/tech/activity/journal/inbox);
+    // notes = 7 tabs (overview/goal/plan/tech/activity/journal/inbox);
     // memory = 3 tabs (health/conflicts/archived).
-    _tabs = TabController(length: _isMemory ? 3 : 6, vsync: this);
+    _tabs = TabController(length: _isMemory ? 3 : 7, vsync: this);
     _loadKeys();
   }
 
@@ -286,6 +287,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                   Tab(text: 'Archived'),
                 ]
               : const [
+                  Tab(text: 'Overview'),
                   Tab(text: 'Goal'),
                   Tab(text: 'Plan'),
                   Tab(text: 'Tech'),
@@ -312,6 +314,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                       _archivedTab(),
                     ]
                   : [
+                      _overviewTab(),
                       _docTab('goal'),
                       _docTab('plan'),
                       _readonlyDocTab(
@@ -364,6 +367,8 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
   String _docPurpose(String kind) {
     final p = t.web.project.docMeta.purpose;
     switch (kind) {
+      case 'overview':
+        return p.overview;
       case 'goal':
         return p.goal;
       case 'plan':
@@ -451,6 +456,51 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
           ),
         ),
       ),
+    );
+  }
+
+  // ── Overview — the project's rich, AI-maintained official doc ────
+
+  Widget _overviewTab() {
+    if (_selectedKey == null) {
+      return Center(child: Text(t.project.pickFirst));
+    }
+    return _docs.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(t.project.loadFailed(error: e.toString())),
+        ),
+      ),
+      data: (docs) {
+        ProjectDoc? ov;
+        for (final d in docs) {
+          if (d.kind == 'overview') {
+            ov = d;
+            break;
+          }
+        }
+        final hasPending = _proposals.maybeWhen(
+          data: (props) => props.any((p) => p.kind == 'overview'),
+          orElse: () => false,
+        );
+        return RefreshIndicator(
+          onRefresh: () async => _loadAll(_selectedKey!),
+          child: ListView(
+            padding: const EdgeInsets.all(12),
+            children: [
+              _docMetaStrip('overview', ov),
+              if (hasPending) _proposalBanner(),
+              _OverviewView(
+                cwd: _selectedKey!,
+                doc: ov,
+                onChanged: () => _loadAll(_selectedKey!),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1989,6 +2039,195 @@ class _DocEditorState extends State<_DocEditor> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// _OverviewView renders the project's official Overview doc: AI-maintained,
+// human-editable. Edit saves as 'operator' (locks); Unlock hands it back to
+// AI; Regenerate asks the drafter to refresh it. Mirrors the web Overview tab.
+class _OverviewView extends ConsumerStatefulWidget {
+  const _OverviewView({required this.cwd, required this.doc, required this.onChanged});
+  final String cwd;
+  final ProjectDoc? doc;
+  final VoidCallback onChanged;
+
+  @override
+  ConsumerState<_OverviewView> createState() => _OverviewViewState();
+}
+
+class _OverviewViewState extends ConsumerState<_OverviewView> {
+  bool _editing = false;
+  bool _busy = false;
+  late TextEditingController _ctl;
+
+  String _strip(String s) => s
+      .split('\n')
+      .where((l) => !l.contains('kb-sig:'))
+      .join('\n')
+      .trim();
+
+  @override
+  void initState() {
+    super.initState();
+    _ctl = TextEditingController(text: _strip(widget.doc?.content ?? ''));
+  }
+
+  @override
+  void didUpdateWidget(covariant _OverviewView old) {
+    super.didUpdateWidget(old);
+    if (!_editing) _ctl.text = _strip(widget.doc?.content ?? '');
+  }
+
+  @override
+  void dispose() {
+    _ctl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save(String updatedBy) async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(projectDocsApiProvider).putDoc(
+            cwd: widget.cwd,
+            kind: 'overview',
+            content: updatedBy == 'operator'
+                ? _ctl.text
+                : _strip(widget.doc?.content ?? ''),
+            updatedBy: updatedBy,
+          );
+      if (!mounted) return;
+      setState(() => _editing = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(updatedBy == 'operator'
+            ? t.web.project.overview.saved
+            : t.web.project.overview.unlocked),
+      ));
+      widget.onChanged();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.project.docSaveFailed(error: e.toString()))),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _regen() async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(knowledgeApiProvider).draftKb();
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.web.project.overview.regenerating)),
+      );
+    } on Object {
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.web.project.editor.saveFailedToast)),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final locked = widget.doc?.updatedBy == 'operator';
+    final content = _strip(widget.doc?.content ?? '');
+
+    if (_editing) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            controller: _ctl,
+            maxLines: null,
+            minLines: 16,
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+            decoration: const InputDecoration(border: OutlineInputBorder()),
+          ),
+          const SizedBox(height: 4),
+          Text(t.web.project.overview.editHint,
+              style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: _busy ? null : () => setState(() => _editing = false),
+                child: Text(t.web.project.overview.cancel),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.icon(
+                onPressed: _busy ? null : () => _save('operator'),
+                icon: const Icon(Icons.save_outlined, size: 16),
+                label: Text(t.web.project.overview.save),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Icon(locked ? Icons.lock_outline : Icons.check, size: 14),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                locked
+                    ? t.web.project.overview.locked
+                    : t.web.project.overview.aiManaged,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Wrap(
+          spacing: 4,
+          alignment: WrapAlignment.end,
+          children: [
+            if (locked)
+              TextButton.icon(
+                onPressed: _busy ? null : () => _save('agent'),
+                icon: const Icon(Icons.lock_open, size: 16),
+                label: Text(t.web.project.overview.unlock),
+              ),
+            TextButton.icon(
+              onPressed: _regen,
+              icon: const Icon(Icons.refresh, size: 16),
+              label: Text(t.web.project.overview.regenerate),
+            ),
+            TextButton.icon(
+              onPressed: () {
+                _ctl.text = content;
+                setState(() => _editing = true);
+              },
+              icon: const Icon(Icons.edit, size: 16),
+              label: Text(t.web.project.overview.edit),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (content.isEmpty)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(t.web.project.overview.empty,
+                  style: Theme.of(context).textTheme.bodyMedium),
+              const SizedBox(height: 8),
+              FilledButton.tonalIcon(
+                onPressed: _regen,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: Text(t.web.project.overview.generate),
+              ),
+            ],
+          )
+        else
+          SelectableText(content, style: Theme.of(context).textTheme.bodyMedium),
+      ],
     );
   }
 }

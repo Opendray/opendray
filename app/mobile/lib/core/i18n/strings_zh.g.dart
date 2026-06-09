@@ -1109,6 +1109,7 @@ class _TranslationsWebProjectZh extends TranslationsWebProjectEn {
 	@override late final _TranslationsWebProjectLifecycleZh lifecycle = _TranslationsWebProjectLifecycleZh._(_root);
 	@override late final _TranslationsWebProjectDocMetaZh docMeta = _TranslationsWebProjectDocMetaZh._(_root);
 	@override late final _TranslationsWebProjectProposalBannerZh proposalBanner = _TranslationsWebProjectProposalBannerZh._(_root);
+	@override late final _TranslationsWebProjectOverviewZh overview = _TranslationsWebProjectOverviewZh._(_root);
 }
 
 // Path: web.memoryInspector
@@ -3049,6 +3050,7 @@ class _TranslationsWebProjectTabsZh extends TranslationsWebProjectTabsEn {
 	@override String get inbox => '收件箱';
 	@override String get conflicts => '冲突';
 	@override String get archived => '已归档';
+	@override String get overview => '概览';
 }
 
 // Path: web.project.docLabel
@@ -3210,6 +3212,29 @@ class _TranslationsWebProjectProposalBannerZh extends TranslationsWebProjectProp
 	// Translations
 	@override String get text => 'AI 已对此文档提议更新,等待你批准。';
 	@override String get button => '去 Inbox 查看';
+}
+
+// Path: web.project.overview
+class _TranslationsWebProjectOverviewZh extends TranslationsWebProjectOverviewEn {
+	_TranslationsWebProjectOverviewZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get aiManaged => '由 AI 维护(随项目刷新)';
+	@override String get locked => '已锁定 — 你编辑过;AI 的更新会以提议送达';
+	@override String get edit => '编辑';
+	@override String get save => '保存(锁定)';
+	@override String get cancel => '取消';
+	@override String get unlock => '解锁(交还 AI)';
+	@override String get regenerate => '重新生成';
+	@override String get generate => '立即生成';
+	@override String get regenerateHint => '让 AI 根据项目最新状态重写概览';
+	@override String get editHint => '保存即锁定本页;解锁后 AI 会重新起草。';
+	@override String get empty => '还没有概览。后台引擎会从项目的目标/计划、技术栈扫描、日志与记忆起草——也可以现在立即生成。';
+	@override String get saved => '概览已保存';
+	@override String get unlocked => '已解锁 — AI 将重新接管';
+	@override String get regenerating => '正在重新生成概览…';
 }
 
 // Path: web.memoryInspector.status
@@ -6173,6 +6198,7 @@ class _TranslationsWebProjectDocMetaPurposeZh extends TranslationsWebProjectDocM
 	@override String get plan => '当前的路线图 / 进行中的工作。会话推进后 AI 会向 Inbox 提议更新,由你批准。';
 	@override String get tech_stack => '技术栈与结构,由项目扫描器自动生成(每 6 小时刷新)。';
 	@override String get recent_activity => '近期 Git 活动的 AI 摘要,自动刷新(每 12 小时)。';
+	@override String get overview => '项目的官方文档——它是什么、有哪些功能、架构、如何构建/运行、依赖的基础设施。AI 从项目自身信号起草;你可编辑(即锁定)或重新生成。';
 }
 
 // Path: web.memoryInspector.scope.values
@@ -8027,6 +8053,7 @@ extension on TranslationsZh {
 			'web.project.tabs.inbox' => '收件箱',
 			'web.project.tabs.conflicts' => '冲突',
 			'web.project.tabs.archived' => '已归档',
+			'web.project.tabs.overview' => '概览',
 			'web.project.docLabel.goal' => '目标',
 			'web.project.docLabel.plan' => '计划',
 			'web.project.docLabel.tech_stack' => '技术栈',
@@ -8115,8 +8142,23 @@ extension on TranslationsZh {
 			'web.project.docMeta.purpose.plan' => '当前的路线图 / 进行中的工作。会话推进后 AI 会向 Inbox 提议更新,由你批准。',
 			'web.project.docMeta.purpose.tech_stack' => '技术栈与结构,由项目扫描器自动生成(每 6 小时刷新)。',
 			'web.project.docMeta.purpose.recent_activity' => '近期 Git 活动的 AI 摘要,自动刷新(每 12 小时)。',
+			'web.project.docMeta.purpose.overview' => '项目的官方文档——它是什么、有哪些功能、架构、如何构建/运行、依赖的基础设施。AI 从项目自身信号起草;你可编辑(即锁定)或重新生成。',
 			'web.project.proposalBanner.text' => 'AI 已对此文档提议更新,等待你批准。',
 			'web.project.proposalBanner.button' => '去 Inbox 查看',
+			'web.project.overview.aiManaged' => '由 AI 维护(随项目刷新)',
+			'web.project.overview.locked' => '已锁定 — 你编辑过;AI 的更新会以提议送达',
+			'web.project.overview.edit' => '编辑',
+			'web.project.overview.save' => '保存(锁定)',
+			'web.project.overview.cancel' => '取消',
+			'web.project.overview.unlock' => '解锁(交还 AI)',
+			'web.project.overview.regenerate' => '重新生成',
+			'web.project.overview.generate' => '立即生成',
+			'web.project.overview.regenerateHint' => '让 AI 根据项目最新状态重写概览',
+			'web.project.overview.editHint' => '保存即锁定本页;解锁后 AI 会重新起草。',
+			'web.project.overview.empty' => '还没有概览。后台引擎会从项目的目标/计划、技术栈扫描、日志与记忆起草——也可以现在立即生成。',
+			'web.project.overview.saved' => '概览已保存',
+			'web.project.overview.unlocked' => '已解锁 — AI 将重新接管',
+			'web.project.overview.regenerating' => '正在重新生成概览…',
 			'web.memoryInspector.status.label' => '当前 embedder',
 			'web.memoryInspector.status.unavailable' => '不可用',
 			'web.memoryInspector.status.probing' => '探测中…',
@@ -8151,6 +8193,8 @@ extension on TranslationsZh {
 			'web.memoryInspector.records.addTooltip' => '手动在此 scope 创建一条记忆',
 			'web.memoryInspector.records.deleteAll' => '全部删除',
 			'web.memoryInspector.records.deleteAllTooltip' => '删除该 scope/scope_key 下的全部记忆',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.records.loading' => '加载中…',
 			'web.memoryInspector.records.enterScopeKeyHint' => '输入 scope key 以浏览记忆。',
 			'web.memoryInspector.records.noMatchesForQuery' => ({required Object query}) => '未找到匹配 "${query}"',
@@ -8167,8 +8211,6 @@ extension on TranslationsZh {
 			'web.memoryInspector.row.editTooltip' => '编辑该记忆',
 			'web.memoryInspector.row.deleteTooltip' => '删除该记忆',
 			'web.memoryInspector.row.emptyError' => '记忆文本不能为空',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.row.deleteConfirm' => ({required Object id}) => '删除记忆 ${id}? 不可恢复。',
 			'web.memoryInspector.toasts.deleted' => '记忆已删除',
 			'web.memoryInspector.toasts.deleteFailed' => '删除失败',
@@ -8665,6 +8707,8 @@ extension on TranslationsZh {
 			'web.integrations.edit_dialog.baseUrlProxySuffix' => '(反向代理目标)',
 			'web.integrations.edit_dialog.baseUrlConsumerPlaceholder' => '(留空 — 此集成消费 opendray API)',
 			'web.integrations.edit_dialog.baseUrlProxyPlaceholder' => 'http://127.0.0.1:8080',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.edit_dialog.consumerHint' => '这是一个仅消费型集成。在此修改 base URL 还需要 route prefix；请删除后重新注册。',
 			'web.integrations.edit_dialog.versionLabel' => 'Version',
 			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
@@ -8681,8 +8725,6 @@ extension on TranslationsZh {
 			'web.integrations.proxy.baseLabel' => 'base:',
 			'web.integrations.proxy.history' => '历史',
 			'web.integrations.proxy.historyEmpty' => '此集成尚无历史请求',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.proxy.send' => '发送',
 			'web.integrations.proxy.sending' => '发送中…',
 			'web.integrations.proxy.extraHeadersLabel' => '额外 header（每行一条，Name: Value）',
@@ -9179,6 +9221,8 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.memoryLocalModel.hint' => '仅作显示用 — 出现在日志 / Inspector 中。如 "bge-m3"、"bge-small-en-v1.5"。',
 			'web.serverSettings.fields.memoryLibraryPath.label' => '库路径',
 			'web.serverSettings.fields.memoryLibraryPath.hint' => '存放 libonnxruntime.dylib (macOS) / libonnxruntime.so (Linux) 的目录。`brew install onnxruntime` 后即 /opt/homebrew/opt/onnxruntime/lib。',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.memoryModelPath.label' => '模型路径',
 			'web.serverSettings.fields.memoryModelPath.hint' => '.onnx 权重的绝对路径。从 HuggingFace 下载，如 Xenova/bge-m3 或 Xenova/bge-small-en-v1.5。',
 			'web.serverSettings.fields.memoryTokenizerPath.label' => 'Tokenizer 路径',
@@ -9195,8 +9239,6 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.geminiTmpRoot.hint' => '存放 Gemini 每项目 tmp 文件夹的根目录。默认 ~/.gemini/tmp。',
 			'web.serverSettings.fields.geminiProjectsFile.label' => 'projects.json',
 			'web.serverSettings.fields.geminiProjectsFile.hint' => 'Gemini cwd→短名映射文件的路径。默认 ~/.gemini/projects.json。',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.backupLocalDir.label' => '本地备份目录',
 			'web.serverSettings.fields.backupLocalDir.hint' => '自动创建的 `local` 目标的默认根目录。留空 = ~/.opendray/backups。需要重启。',
 			'web.serverSettings.fields.backupExportDir.label' => '导出目录',
@@ -9693,6 +9735,8 @@ extension on TranslationsZh {
 			'sessions.terminal.connection.reconnecting' => '重连中…',
 			'sessions.terminal.connection.reconnectingWithError' => ({required Object error}) => '重连中（${error}）…',
 			'sessions.terminal.connection.disconnected' => '已断开',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.terminal.connection.disconnectedWithError' => ({required Object error}) => '已断开（${error}）',
 			'sessions.terminal.connection.ended' => '会话已结束',
 			'sessions.action.stop' => '停止',
@@ -9709,8 +9753,6 @@ extension on TranslationsZh {
 			'sessions.action.errors.delete' => ({required Object error}) => '删除失败：${error}',
 			'sessions.dirPicker.parent' => '上级',
 			'sessions.dirPicker.newFolder' => '新建文件夹',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.dirPicker.useThisFolder' => '使用此文件夹',
 			'sessions.dirPicker.loading' => '加载中…',
 			'sessions.dirPicker.empty' => '此处没有子文件夹。\n选择此文件夹，或新建一个。',
@@ -10207,6 +10249,8 @@ extension on TranslationsZh {
 			'backups.wizard.generateHint' => '服务器生成密码学级别随机密语，你复制到密码管理器，然后确认。',
 			'backups.wizard.helperRecommended' => '建议：从密码管理器生成 40+ 字符',
 			'backups.wizard.saveNowHeader' => '立即保存这个密语',
+			_ => null,
+		} ?? switch (path) {
 			'backups.wizard.saveNowBody' => '此处只显示一次。之后无法从 opendray 取回。',
 			'backups.statusReady' => '备份就绪',
 			'backups.statusCannot' => '备份无法运行',
@@ -10223,8 +10267,6 @@ extension on TranslationsZh {
 			'backups.encryption.random256bit' => '256 位随机密钥',
 			'backups.encryption.passphraseLabel' => '你的密语',
 			'backups.encryption.passphraseHint' => '至少 20 个字符',
-			_ => null,
-		} ?? switch (path) {
 			'backups.encryption.passphraseCopied' => '密语已复制到剪贴板',
 			'backups.restoreFromFile' => '从文件恢复',
 			'backups.restore.title' => '从备份包恢复',
@@ -10721,6 +10763,8 @@ extension on TranslationsZh {
 			'memory.status.dimensions' => ({required Object dim, required Object state}) => '${dim} 维 · ${state}',
 			'memory.status.enabled' => '已启用',
 			'memory.status.disabled' => '已禁用',
+			_ => null,
+		} ?? switch (path) {
 			'memory.status.floorNoModel' => '仅关键词（BM25）检索 — 未配置 embedding 模型。在 Settings 配置 dense 端点即可启用语义记忆。',
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => '已配置 ${model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => '已配置 ${model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。',
@@ -10737,8 +10781,6 @@ extension on TranslationsZh {
 			'memory.rank.formula' => '有效分 = 相似度 × 时效 × 命中 × 置信度',
 			'memory.rank.close' => '关闭',
 			'memory.kNew' => '新建',
-			_ => null,
-		} ?? switch (path) {
 			'memory.searchHint' => '搜索…',
 			'memory.projectLabel' => '项目',
 			'memory.filterHint' => '按名称或路径筛选…',

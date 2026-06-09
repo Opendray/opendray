@@ -1109,6 +1109,7 @@ class _TranslationsWebProjectEs extends TranslationsWebProjectEn {
 	@override late final _TranslationsWebProjectLifecycleEs lifecycle = _TranslationsWebProjectLifecycleEs._(_root);
 	@override late final _TranslationsWebProjectDocMetaEs docMeta = _TranslationsWebProjectDocMetaEs._(_root);
 	@override late final _TranslationsWebProjectProposalBannerEs proposalBanner = _TranslationsWebProjectProposalBannerEs._(_root);
+	@override late final _TranslationsWebProjectOverviewEs overview = _TranslationsWebProjectOverviewEs._(_root);
 }
 
 // Path: web.memoryInspector
@@ -3049,6 +3050,7 @@ class _TranslationsWebProjectTabsEs extends TranslationsWebProjectTabsEn {
 	@override String get inbox => 'Bandeja de entrada';
 	@override String get conflicts => 'Conflictos';
 	@override String get archived => 'Archivadas';
+	@override String get overview => 'Resumen';
 }
 
 // Path: web.project.docLabel
@@ -3210,6 +3212,29 @@ class _TranslationsWebProjectProposalBannerEs extends TranslationsWebProjectProp
 	// Translations
 	@override String get text => 'La IA ha propuesto una actualización de este documento, a la espera de tu aprobación.';
 	@override String get button => 'Revisar en la Bandeja';
+}
+
+// Path: web.project.overview
+class _TranslationsWebProjectOverviewEs extends TranslationsWebProjectOverviewEn {
+	_TranslationsWebProjectOverviewEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get aiManaged => 'Mantenido por IA (se actualiza desde el proyecto)';
+	@override String get locked => 'Bloqueado — lo editaste; las actualizaciones de IA llegan como propuestas';
+	@override String get edit => 'Editar';
+	@override String get save => 'Guardar (bloquea)';
+	@override String get cancel => 'Cancelar';
+	@override String get unlock => 'Desbloquear (devolver a la IA)';
+	@override String get regenerate => 'Regenerar';
+	@override String get generate => 'Generar ahora';
+	@override String get regenerateHint => 'Pide a la IA que redacte el resumen con el estado más reciente';
+	@override String get editHint => 'Guardar bloquea la página; desbloquear deja que la IA la redacte.';
+	@override String get empty => 'Aún no hay resumen. El motor en segundo plano lo redacta desde el objetivo/plan, el escaneo de stack, el registro y la memoria — o genéralo ahora.';
+	@override String get saved => 'Resumen guardado';
+	@override String get unlocked => 'Desbloqueado — la IA volverá a gestionarlo';
+	@override String get regenerating => 'Regenerando el resumen…';
 }
 
 // Path: web.memoryInspector.status
@@ -6173,6 +6198,7 @@ class _TranslationsWebProjectDocMetaPurposeEs extends TranslationsWebProjectDocM
 	@override String get plan => 'La hoja de ruta actual / trabajo en curso. La IA propone una actualización en tu Bandeja tras avanzar una sesión; tú la apruebas.';
 	@override String get tech_stack => 'Stack y estructura, autogenerado por el escáner del proyecto (se actualiza cada 6 h).';
 	@override String get recent_activity => 'Resumen por IA de la actividad reciente de Git, actualizado automáticamente (cada 12 h).';
+	@override String get overview => 'El documento oficial del proyecto: qué es, sus funciones, arquitectura, cómo construir/ejecutar y las bases en que se apoya. Redactado por IA desde las señales del propio proyecto; puedes editarlo (lo bloquea) o regenerarlo.';
 }
 
 // Path: web.memoryInspector.scope.values
@@ -8027,6 +8053,7 @@ extension on TranslationsEs {
 			'web.project.tabs.inbox' => 'Bandeja de entrada',
 			'web.project.tabs.conflicts' => 'Conflictos',
 			'web.project.tabs.archived' => 'Archivadas',
+			'web.project.tabs.overview' => 'Resumen',
 			'web.project.docLabel.goal' => 'Objetivo',
 			'web.project.docLabel.plan' => 'Plan',
 			'web.project.docLabel.tech_stack' => 'Stack tecnológico',
@@ -8115,8 +8142,23 @@ extension on TranslationsEs {
 			'web.project.docMeta.purpose.plan' => 'La hoja de ruta actual / trabajo en curso. La IA propone una actualización en tu Bandeja tras avanzar una sesión; tú la apruebas.',
 			'web.project.docMeta.purpose.tech_stack' => 'Stack y estructura, autogenerado por el escáner del proyecto (se actualiza cada 6 h).',
 			'web.project.docMeta.purpose.recent_activity' => 'Resumen por IA de la actividad reciente de Git, actualizado automáticamente (cada 12 h).',
+			'web.project.docMeta.purpose.overview' => 'El documento oficial del proyecto: qué es, sus funciones, arquitectura, cómo construir/ejecutar y las bases en que se apoya. Redactado por IA desde las señales del propio proyecto; puedes editarlo (lo bloquea) o regenerarlo.',
 			'web.project.proposalBanner.text' => 'La IA ha propuesto una actualización de este documento, a la espera de tu aprobación.',
 			'web.project.proposalBanner.button' => 'Revisar en la Bandeja',
+			'web.project.overview.aiManaged' => 'Mantenido por IA (se actualiza desde el proyecto)',
+			'web.project.overview.locked' => 'Bloqueado — lo editaste; las actualizaciones de IA llegan como propuestas',
+			'web.project.overview.edit' => 'Editar',
+			'web.project.overview.save' => 'Guardar (bloquea)',
+			'web.project.overview.cancel' => 'Cancelar',
+			'web.project.overview.unlock' => 'Desbloquear (devolver a la IA)',
+			'web.project.overview.regenerate' => 'Regenerar',
+			'web.project.overview.generate' => 'Generar ahora',
+			'web.project.overview.regenerateHint' => 'Pide a la IA que redacte el resumen con el estado más reciente',
+			'web.project.overview.editHint' => 'Guardar bloquea la página; desbloquear deja que la IA la redacte.',
+			'web.project.overview.empty' => 'Aún no hay resumen. El motor en segundo plano lo redacta desde el objetivo/plan, el escaneo de stack, el registro y la memoria — o genéralo ahora.',
+			'web.project.overview.saved' => 'Resumen guardado',
+			'web.project.overview.unlocked' => 'Desbloqueado — la IA volverá a gestionarlo',
+			'web.project.overview.regenerating' => 'Regenerando el resumen…',
 			'web.memoryInspector.status.label' => 'Embedder activo',
 			'web.memoryInspector.status.unavailable' => 'no disponible',
 			'web.memoryInspector.status.probing' => 'sondeando…',
@@ -8151,6 +8193,8 @@ extension on TranslationsEs {
 			'web.memoryInspector.records.addTooltip' => 'Crear manualmente una memoria en este scope',
 			'web.memoryInspector.records.deleteAll' => 'Eliminar todo',
 			'web.memoryInspector.records.deleteAllTooltip' => 'Eliminar todas las memorias de este scope/scope_key',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.records.loading' => 'Cargando…',
 			'web.memoryInspector.records.enterScopeKeyHint' => 'Introduce una clave de scope para explorar las memorias.',
 			'web.memoryInspector.records.noMatchesForQuery' => ({required Object query}) => 'No hay coincidencias para "${query}"',
@@ -8167,8 +8211,6 @@ extension on TranslationsEs {
 			'web.memoryInspector.row.editTooltip' => 'Editar esta memoria',
 			'web.memoryInspector.row.deleteTooltip' => 'Eliminar esta memoria',
 			'web.memoryInspector.row.emptyError' => 'El texto de la memoria no puede estar vacío',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.row.deleteConfirm' => ({required Object id}) => '¿Eliminar la memoria ${id}? Esto es permanente.',
 			'web.memoryInspector.toasts.deleted' => 'Memoria eliminada',
 			'web.memoryInspector.toasts.deleteFailed' => 'La eliminación falló',
@@ -8665,6 +8707,8 @@ extension on TranslationsEs {
 			'web.integrations.edit_dialog.baseUrlProxySuffix' => '(destino del reverse-proxy)',
 			'web.integrations.edit_dialog.baseUrlConsumerPlaceholder' => '(en blanco: esta integración consume la API de opendray)',
 			'web.integrations.edit_dialog.baseUrlProxyPlaceholder' => 'http://127.0.0.1:8080',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.edit_dialog.consumerHint' => 'Esta es una integración solo consumidora. Cambiar la URL base aquí también requeriría un prefijo de ruta; hazlo eliminando y volviendo a registrar.',
 			'web.integrations.edit_dialog.versionLabel' => 'Versión',
 			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
@@ -8681,8 +8725,6 @@ extension on TranslationsEs {
 			'web.integrations.proxy.baseLabel' => 'base:',
 			'web.integrations.proxy.history' => 'Historial',
 			'web.integrations.proxy.historyEmpty' => 'no hay peticiones anteriores para esta integración',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.proxy.send' => 'Enviar',
 			'web.integrations.proxy.sending' => 'Enviando…',
 			'web.integrations.proxy.extraHeadersLabel' => 'Headers adicionales (uno por línea, Nombre: Valor)',
@@ -9179,6 +9221,8 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.memoryLocalModel.hint' => 'Cosmético, aparece en los logs / el Inspector. p. ej. "bge-m3", "bge-small-en-v1.5".',
 			'web.serverSettings.fields.memoryLibraryPath.label' => 'Ruta de la biblioteca',
 			'web.serverSettings.fields.memoryLibraryPath.hint' => 'Directorio que contiene libonnxruntime.dylib (macOS) / libonnxruntime.so (Linux). Tras `brew install onnxruntime`, es /opt/homebrew/opt/onnxruntime/lib.',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.memoryModelPath.label' => 'Ruta del modelo',
 			'web.serverSettings.fields.memoryModelPath.hint' => 'Ruta absoluta a los pesos .onnx. Descárgalos de HuggingFace, p. ej. Xenova/bge-m3 o Xenova/bge-small-en-v1.5.',
 			'web.serverSettings.fields.memoryTokenizerPath.label' => 'Ruta del tokenizador',
@@ -9195,8 +9239,6 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.geminiTmpRoot.hint' => 'Raíz que contiene las carpetas tmp por proyecto de Gemini. Por defecto ~/.gemini/tmp.',
 			'web.serverSettings.fields.geminiProjectsFile.label' => 'projects.json',
 			'web.serverSettings.fields.geminiProjectsFile.hint' => 'Ruta al archivo de mapeo cwd→nombre-corto de Gemini. Por defecto ~/.gemini/projects.json.',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.backupLocalDir.label' => 'Directorio local de copias de seguridad',
 			'web.serverSettings.fields.backupLocalDir.hint' => 'Raíz por defecto para el destino `local` creado automáticamente. Vacío = ~/.opendray/backups. Requiere reinicio.',
 			'web.serverSettings.fields.backupExportDir.label' => 'Directorio de exportación',
@@ -9693,6 +9735,8 @@ extension on TranslationsEs {
 			'sessions.terminal.connection.reconnecting' => 'Reconectando…',
 			'sessions.terminal.connection.reconnectingWithError' => ({required Object error}) => 'Reconectando (${error})…',
 			'sessions.terminal.connection.disconnected' => 'Desconectado',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.terminal.connection.disconnectedWithError' => ({required Object error}) => 'Desconectado (${error})',
 			'sessions.terminal.connection.ended' => 'Sesión finalizada',
 			'sessions.action.stop' => 'Detener',
@@ -9709,8 +9753,6 @@ extension on TranslationsEs {
 			'sessions.action.errors.delete' => ({required Object error}) => 'Falló al eliminar: ${error}',
 			'sessions.dirPicker.parent' => 'Superior',
 			'sessions.dirPicker.newFolder' => 'Nueva carpeta',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.dirPicker.useThisFolder' => 'Usar esta carpeta',
 			'sessions.dirPicker.loading' => 'Cargando…',
 			'sessions.dirPicker.empty' => 'No hay subcarpetas aquí.\nElige esta carpeta o crea una nueva.',
@@ -10207,6 +10249,8 @@ extension on TranslationsEs {
 			'backups.wizard.generateHint' => 'El servidor genera una passphrase criptográficamente aleatoria, tú la copias a un gestor de contraseñas y luego confirmas.',
 			'backups.wizard.helperRecommended' => 'Recomendado: más de 40 caracteres desde un gestor de contraseñas',
 			'backups.wizard.saveNowHeader' => 'Guarda esta passphrase AHORA',
+			_ => null,
+		} ?? switch (path) {
 			'backups.wizard.saveNowBody' => 'Se muestra UNA SOLA VEZ. Después no podrás recuperarla desde opendray.',
 			'backups.statusReady' => 'Copias de seguridad listas',
 			'backups.statusCannot' => 'Las copias de seguridad no pueden ejecutarse',
@@ -10223,8 +10267,6 @@ extension on TranslationsEs {
 			'backups.encryption.random256bit' => 'Clave aleatoria de 256 bits',
 			'backups.encryption.passphraseLabel' => 'Tu passphrase',
 			'backups.encryption.passphraseHint' => 'Al menos 20 caracteres',
-			_ => null,
-		} ?? switch (path) {
 			'backups.encryption.passphraseCopied' => 'Passphrase copiada al portapapeles',
 			'backups.restoreFromFile' => 'Restaurar desde archivo',
 			'backups.restore.title' => 'Restaurar desde paquete',
@@ -10721,6 +10763,8 @@ extension on TranslationsEs {
 			'memory.status.dimensions' => ({required Object dim, required Object state}) => '${dim}-dim · ${state}',
 			'memory.status.enabled' => 'habilitado',
 			'memory.status.disabled' => 'deshabilitado',
+			_ => null,
+		} ?? switch (path) {
 			'memory.status.floorNoModel' => 'Solo recuperación por palabras clave (BM25) — no hay modelo de embedding configurado. Configura un endpoint denso en Settings para habilitar la memoria semántica.',
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configurado ${model} (denso) — reinicia el gateway para activar la memoria semántica y re-embeber las memorias existentes.',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => 'Configurado ${model} (denso) pero el endpoint está inalcanzable — se usa el piso de palabras clave hasta que responda (se actualiza al reiniciar).',
@@ -10737,8 +10781,6 @@ extension on TranslationsEs {
 			'memory.rank.formula' => 'effective = similarity × age × hits × confidence',
 			'memory.rank.close' => 'Cerrar',
 			'memory.kNew' => 'Nuevo',
-			_ => null,
-		} ?? switch (path) {
 			'memory.searchHint' => 'Buscar…',
 			'memory.projectLabel' => 'Proyecto',
 			'memory.filterHint' => 'Filtrar por nombre o ruta…',
