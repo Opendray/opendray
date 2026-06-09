@@ -879,16 +879,15 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 		logs = nil
 	}
 
-	// M-KB — the global knowledge-base pages (cross-project reference) so a new
-	// session inherits our infrastructure, conventions, and hard-won lessons.
-	kbConventions := s.globalKBDoc(ctx, KindConventions)
-	kbInfrastructure := s.globalKBDoc(ctx, KindInfrastructure)
+	// Knowledge (cross-project) splits into two natures (Experience Flywheel):
+	//  - Foundational (infrastructure + conventions) = binding rules / guardrails.
+	//  - Emergent (lessons + reusable) = transferable guidance, not binding.
+	foundational := s.foundationalRules(ctx)
 	kbLessons := s.globalKBDoc(ctx, KindLessons)
 	kbReusable := s.globalKBDoc(ctx, KindReusable)
 
 	if goal == "" && plan == "" && techStack == "" && recentActivity == "" &&
-		kbConventions == "" && kbInfrastructure == "" &&
-		kbLessons == "" && kbReusable == "" && len(logs) == 0 {
+		foundational == "" && kbLessons == "" && kbReusable == "" && len(logs) == 0 {
 		return "", nil
 	}
 
@@ -921,13 +920,13 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 		b.WriteString(section)
 	}
 
+	// Binding guardrails FIRST so a tight budget never truncates them away.
+	appendSection("Infrastructure & conventions — RULES you MUST follow", foundational)
 	appendSection("Project plan", plan)
 	appendSection("Tech stack & structure", techStack)
 	appendSection("Project goal", goal)
-	appendSection("Conventions (how we work)", kbConventions)
-	appendSection("Infrastructure", kbInfrastructure)
-	appendSection("Lessons", kbLessons)
-	appendSection("Reusable features", kbReusable)
+	appendSection("Lessons (reference)", kbLessons)
+	appendSection("Reusable features (reference)", kbReusable)
 	appendSection("Recent activity", recentActivity)
 
 	if len(logs) > 0 && !truncated {
@@ -948,14 +947,44 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 	return b.String(), nil
 }
 
-// globalKBDoc fetches a global M-KB page (infrastructure / conventions /
-// lessons) for spawn injection. Empty on absence or error — never blocks spawn.
+// globalKBDoc fetches a global Knowledge page for spawn injection. Empty on
+// absence or error — never blocks spawn.
 func (s *Service) globalKBDoc(ctx context.Context, kind Kind) string {
 	d, err := s.GetDoc(ctx, GlobalCwd, kind)
 	if err != nil {
 		return ""
 	}
 	return stripKBSig(d.Content)
+}
+
+// foundationalRules assembles the binding Foundational knowledge — the
+// infrastructure facts + the rules for using them, plus the dev conventions —
+// into one block injected as guardrails. An operator-locked page is marked
+// ratified; an AI-drafted one is flagged so the agent treats it with care.
+func (s *Service) foundationalRules(ctx context.Context) string {
+	var b strings.Builder
+	for _, kind := range []Kind{KindInfrastructure, KindConventions} {
+		d, err := s.GetDoc(ctx, GlobalCwd, kind)
+		if err != nil {
+			continue
+		}
+		body := stripKBSig(d.Content)
+		if body == "" {
+			continue
+		}
+		if b.Len() > 0 {
+			b.WriteString("\n\n")
+		}
+		b.WriteString(body)
+		if d.UpdatedBy != AuthorOperator {
+			b.WriteString("\n_(AI-drafted — verify before relying on it)_")
+		}
+	}
+	if b.Len() == 0 {
+		return ""
+	}
+	return b.String() +
+		"\n\nThese are the home-lab's standing rules. Follow them exactly; never deviate without the operator's say-so."
 }
 
 // stripKBSig removes the KB drafter's hidden signature marker line so it never

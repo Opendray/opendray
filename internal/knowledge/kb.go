@@ -77,13 +77,19 @@ NEVER include secrets: passwords, API keys, tokens, certificates' private materi
 When information conflicts across time, describe only the CURRENT state — if something was renamed, deprecated, or replaced (e.g. an old tool/host/path superseded by a new one), present the current one and note the predecessor as deprecated; never present superseded state as current.
 Be concise and factual. No preamble, no "here is", no markdown code fences around the whole document.`
 
-const kbInfraSystem = `You curate the home-lab / ecosystem INFRASTRUCTURE reference from a developer's accumulated facts and entities.
-Organize into sections such as: Hosts & network, Databases, Gateways & services, Credential stores (names/locations only), Build & deploy targets, Domains.
-Include concrete values that are NOT secrets (IPs, ports, hostnames, container names, paths, ID ranges).` + kbSafety
+// kbInfraSystem + kbConvSystem produce FOUNDATIONAL pages: standing ground
+// truth + the rules for using it. They are injected into every project as
+// BINDING constraints, so each page must end with an explicit, imperative
+// "## Rules (MUST follow)" section separated from the descriptive facts.
 
-const kbConvSystem = `You curate the DEVELOPMENT CONVENTIONS & habits reference from a developer's accumulated facts.
+const kbInfraSystem = `You curate the home-lab / ecosystem INFRASTRUCTURE reference from a developer's accumulated facts and entities.
+Organize the FACTS into sections such as: Hosts & network, Databases, Gateways & services, Credential stores (names/locations only), Build & deploy targets, Domains.
+Include concrete values that are NOT secrets (IPs, ports, hostnames, container names, paths, ID ranges).
+Then end with a "## Rules (MUST follow)" section: the imperative rules for USING this infrastructure (e.g. which account to connect as, where credentials must be stored, ID ranges to allocate from). These are binding — phrase them as commands.` + kbSafety
+
+const kbConvSystem = `You curate the DEVELOPMENT CONVENTIONS & policies the developer follows — the binding "how we work" rules.
 Organize into sections such as: Package manager & stack, Source control (commits / PR / branching), Coding rules, Release & deploy process, Naming, Workflow, Language & model preferences.
-Capture the RULES the developer follows, as imperative bullets.` + kbSafety
+Phrase every item as an imperative RULE the developer/agent must follow (not a description). End with a "## Rules (MUST follow)" section collecting the hardest must/never constraints.` + kbSafety
 
 const kbLessonsSystem = `You curate a LESSONS / playbooks reference from already-distilled playbooks.
 Group related playbooks under thematic "## " sections. For each, give a one-line how-to and the key pitfall. Keep it skimmable — this is the "what we learned the hard way" index.` + kbSafety
