@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ProjectScreen } from '@/components/project/ProjectScreen'
 import { FileBrowserDialog } from '@/components/sessions/FileBrowserDialog'
-import { listScopeKeys } from '@/lib/memory'
+import { listProjects } from '@/lib/projectDocs'
 
 type RoutePath = '/notes' | '/memory/project'
 
@@ -31,11 +31,14 @@ function ProjectWorkspace({
   const [picker, setPicker] = useState('')
   const [browserOpen, setBrowserOpen] = useState(false)
 
+  // Every project opendray knows about (project_docs ∪ session_logs), not just
+  // the ones with episodic memory — so the picker isn't limited to the cache.
   const projectsQuery = useQuery({
-    queryKey: ['memory-project-scope-keys'],
-    queryFn: () => listScopeKeys('project'),
+    queryKey: ['known-projects'],
+    queryFn: () => listProjects(),
     staleTime: 30_000,
   })
+  const knownCwds = (projectsQuery.data ?? []).map((p) => p.cwd)
 
   const open = (cwd: string) => navigate({ to: routePath, search: { cwd } })
 
@@ -75,12 +78,12 @@ function ProjectWorkspace({
           open(path)
         }}
       />
-      {projectsQuery.data && projectsQuery.data.length > 0 && (
+      {knownCwds.length > 0 && (
         <div className="space-y-1">
           <p className="text-muted-foreground text-xs">
             {t('web.project.picker.recentLabel')}
           </p>
-          {sortProjectsValidFirst(projectsQuery.data).map((cwd) => {
+          {sortProjectsValidFirst(knownCwds).map((cwd) => {
             const orphan = isLikelyOrphanScope(cwd)
             return (
               <button

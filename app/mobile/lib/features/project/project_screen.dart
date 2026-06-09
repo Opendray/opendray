@@ -74,11 +74,12 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
   Future<void> _loadKeys() async {
     setState(() => _projectKeys = const AsyncValue.loading());
     try {
-      final keys = await ref
-          .read(memoryApiProvider)
-          .scopeKeys(MemoryScope.project);
+      // Every project opendray knows about (project_docs ∪ session_logs),
+      // not just the ones with episodic memory — so the picker isn't limited
+      // to the cache.
+      final projects = await ref.read(projectDocsApiProvider).listProjects();
       if (!mounted) return;
-      keys.sort();
+      final keys = projects.map((p) => p.cwd).toList()..sort();
       // When the caller passed an initialCwd that's not yet in the
       // memory scope_keys list (a brand-new session whose project
       // has no L5 memories yet), inject it so the picker can still

@@ -115,7 +115,11 @@ func (s *Service) ListProjects(ctx context.Context, idleSuggestDays int) ([]Proj
 		       COALESCE(l.status, 'active')      AS status,
 		       COALESCE(l.updated_by, 'operator') AS updated_by,
 		       la.last_activity_at
-		  FROM (SELECT DISTINCT cwd FROM project_docs WHERE cwd <> '' AND cwd <> $1) d
+		  FROM (
+		       SELECT cwd FROM project_docs   WHERE cwd <> '' AND cwd <> $1
+		       UNION
+		       SELECT cwd FROM session_logs   WHERE cwd <> '' AND cwd <> $1
+		  ) d
 		  LEFT JOIN project_lifecycle l ON l.cwd = d.cwd
 		  LEFT JOIN (
 		       SELECT cwd, MAX(created_at) AS last_activity_at
