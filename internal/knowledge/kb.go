@@ -45,13 +45,23 @@ type DocSink interface {
 	PutKBDoc(ctx context.Context, cwd, kind, content string) error
 }
 
+// ProposalSink files an update PROPOSAL for a human-locked Knowledge page
+// (B3 — Iterate). When new evidence diverges from a page the operator has
+// locked, the drafter does not overwrite it; it proposes the refreshed draft
+// for the operator to approve. The app adapts projectdoc's proposal flow.
+type ProposalSink interface {
+	HasPendingKBProposal(ctx context.Context, cwd, kind string) (bool, error)
+	ProposeKBDoc(ctx context.Context, cwd, kind, content, reason string) error
+}
+
 // KBDrafter distils Memory + the graph into the global Knowledge pages.
 type KBDrafter struct {
-	store *Store
-	llm   LLM
-	mem   MemorySource // P-G: declarative facts come straight from Memory
-	docs  DocSink
-	log   *slog.Logger
+	store     *Store
+	llm       LLM
+	mem       MemorySource // P-G: declarative facts come straight from Memory
+	docs      DocSink
+	proposals ProposalSink // B3: propose updates to locked pages instead of skipping
+	log       *slog.Logger
 }
 
 // NewKBDrafter builds a drafter. docs + llm are required to do anything.
@@ -67,6 +77,13 @@ func NewKBDrafter(store *Store, llm LLM, docs DocSink, log *slog.Logger) *KBDraf
 // Optional: without it those pages distil from entities/playbooks alone.
 func (d *KBDrafter) WithMemory(src MemorySource) *KBDrafter {
 	d.mem = src
+	return d
+}
+
+// WithProposals enables B3 iteration: a locked page whose feedstock has
+// diverged gets a refreshed draft filed as a proposal (not an overwrite).
+func (d *KBDrafter) WithProposals(p ProposalSink) *KBDrafter {
+	d.proposals = p
 	return d
 }
 
@@ -143,27 +160,43 @@ func (d *KBDrafter) draftOne(ctx context.Context, cwd, kind, system, feedstock s
 		res.Status, res.Err = "error", "get: "+err.Error()
 		return res
 	}
-	if cur.HumanLocked {
-		res.Status = "skipped-locked"
-		return res // operator owns this page — never overwrite
-	}
 	sig := kbSig(feedstock)
 	if cur.Exists && extractKBSig(cur.Content) == sig {
 		res.Status = "skipped-unchanged"
-		return res // feedstock unchanged since last draft — skip the LLM call
+		return res // feedstock unchanged since last draft — nothing to do
 	}
-	body, err := d.llm.Complete(ctx, system, feedstock)
+	// B3 (Iterate) — a human-locked page is never overwritten. If the feedstock
+	// has diverged and no proposal is already pending, file the refreshed draft
+	// as a proposal so the operator can ratify the update; otherwise leave it.
+	if cur.HumanLocked {
+		if d.proposals == nil {
+			res.Status = "skipped-locked"
+			return res
+		}
+		if pending, _ := d.proposals.HasPendingKBProposal(ctx, cwd, kind); pending {
+			res.Status = "skipped-pending"
+			return res
+		}
+		body, err := d.draftBody(ctx, system, feedstock, sig)
+		if err != nil {
+			res.Status, res.Err = "error", err.Error()
+			return res
+		}
+		if err := d.proposals.ProposeKBDoc(ctx, cwd, kind, body,
+			"New evidence has diverged from this locked page; review the refreshed draft."); err != nil {
+			d.log.Warn("kb: propose failed", "kind", kind, "cwd", cwd, "err", err)
+			res.Status, res.Err = "error", "propose: "+err.Error()
+			return res
+		}
+		d.log.Info("kb update proposed for locked page", "kind", kind, "cwd", cwd)
+		res.Status, res.Bytes = "proposed", len(body)
+		return res
+	}
+	body, err := d.draftBody(ctx, system, feedstock, sig)
 	if err != nil {
-		d.log.Warn("kb: draft failed", "kind", kind, "cwd", cwd, "err", err)
-		res.Status, res.Err = "error", "llm: "+err.Error()
+		res.Status, res.Err = "error", err.Error()
 		return res
 	}
-	body = stripFences(strings.TrimSpace(body))
-	if body == "" {
-		res.Status, res.Err = "error", "empty llm output"
-		return res
-	}
-	body += fmt.Sprintf("\n\n<!-- kb-sig:%s -->\n", sig)
 	if err := d.docs.PutKBDoc(ctx, cwd, kind, body); err != nil {
 		d.log.Warn("kb: put doc failed", "kind", kind, "cwd", cwd, "err", err)
 		res.Status, res.Err = "error", "put: "+err.Error()
@@ -172,6 +205,21 @@ func (d *KBDrafter) draftOne(ctx context.Context, cwd, kind, system, feedstock s
 	d.log.Info("kb page drafted", "kind", kind, "cwd", cwd)
 	res.Status, res.Bytes = "written", len(body)
 	return res
+}
+
+// draftBody runs the LLM and returns the cleaned page body with the feedstock
+// signature appended (so the next sweep's dirty-check can skip it).
+func (d *KBDrafter) draftBody(ctx context.Context, system, feedstock, sig string) (string, error) {
+	body, err := d.llm.Complete(ctx, system, feedstock)
+	if err != nil {
+		d.log.Warn("kb: draft failed", "err", err)
+		return "", fmt.Errorf("llm: %w", err)
+	}
+	body = stripFences(strings.TrimSpace(body))
+	if body == "" {
+		return "", fmt.Errorf("empty llm output")
+	}
+	return body + fmt.Sprintf("\n\n<!-- kb-sig:%s -->\n", sig), nil
 }
 
 // --- feedstock builders ---

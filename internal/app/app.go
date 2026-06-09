@@ -207,9 +207,9 @@ func (a knowledgeDocSink) PutKBDoc(ctx context.Context, cwd, kind, content strin
 }
 
 // knowledgeLifecycle adapts *projectdoc.Service to knowledge.LifecycleFilter so
-// the KB drafter skips frozen (paused/archived) projects during handbook
-// distillation (P-D). A status lookup error defaults to "not frozen" — we'd
-// rather over-distill than silently drop an active project's handbook.
+// the reflector skips frozen (paused/archived) projects during distillation
+// (P-D). A status lookup error defaults to "not frozen" — we'd rather
+// over-distill than silently drop an active project.
 type knowledgeLifecycle struct{ pd *projectdoc.Service }
 
 func (a knowledgeLifecycle) IsFrozen(ctx context.Context, cwd string) bool {
@@ -218,6 +218,29 @@ func (a knowledgeLifecycle) IsFrozen(ctx context.Context, cwd string) bool {
 		return false
 	}
 	return status.IsFrozen()
+}
+
+// knowledgeProposalSink adapts *projectdoc.Service to knowledge.ProposalSink so
+// the KB drafter files an update PROPOSAL for a human-locked Knowledge page
+// instead of overwriting it (B3 — Iterate). One-way dependency.
+type knowledgeProposalSink struct{ pd *projectdoc.Service }
+
+func (a knowledgeProposalSink) HasPendingKBProposal(ctx context.Context, cwd, kind string) (bool, error) {
+	props, err := a.pd.ListPendingProposals(ctx, cwd)
+	if err != nil {
+		return false, err
+	}
+	for _, p := range props {
+		if string(p.Kind) == kind {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (a knowledgeProposalSink) ProposeKBDoc(ctx context.Context, cwd, kind, content, reason string) error {
+	_, err := a.pd.ProposeDoc(ctx, cwd, projectdoc.Kind(kind), content, reason, "")
+	return err
 }
 
 // knowledgeLLM adapts the memory worker registry to knowledge.LLM so the
@@ -805,7 +828,8 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			knowledgeKBDrafter = knowledge.NewKBDrafter(
 				knowledge.NewStore(st.Pool()), kbLLM,
 				knowledgeDocSink{pd: projectDocSvc}, log).
-				WithMemory(knowledgeMemorySource{mem: memorySvc}) // P-G — facts from Memory
+				WithMemory(knowledgeMemorySource{mem: memorySvc}).      // P-G — facts from Memory
+				WithProposals(knowledgeProposalSink{pd: projectDocSvc}) // B3 — propose updates to locked pages
 			knowledgeSvc.WithKBDrafter(knowledgeKBDrafter) // manual /kb/draft endpoint
 			// P-C — one ordered loop (anchor → reflect → KB) replaces the three
 			// independent sweep goroutines so each stage drafts from the prior
