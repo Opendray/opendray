@@ -457,8 +457,7 @@
         "journal": "日志",
         "inbox": "收件箱",
         "conflicts": "冲突",
-        "archived": "已归档",
-        "handbook": "手册"
+        "archived": "已归档"
       },
       "docLabel": {
         "goal": "目标",
@@ -573,32 +572,18 @@
       "docMeta": {
         "maintainer": {
           "coauthored": "你维护 · AI 提议",
-          "auto": "自动生成 · 只读",
-          "ai_lockable": "AI 起草 · 编辑即锁定"
+          "auto": "自动生成 · 只读"
         },
         "purpose": {
           "goal": "项目的长期目标与意图——我们最终在做什么、为什么做。当某次会话改变了方向,AI 会向 Inbox 提议更新,由你批准。",
           "plan": "当前的路线图 / 进行中的工作。会话推进后 AI 会向 Inbox 提议更新,由你批准。",
           "tech_stack": "技术栈与结构,由项目扫描器自动生成(每 6 小时刷新)。",
-          "recent_activity": "近期 Git 活动的 AI 摘要,自动刷新(每 12 小时)。",
-          "kb_handbook": "项目手册:如何构建/运行/部署、用到的基础设施、协作边界、关键教训。AI 从工作日志起草;你一旦编辑即锁定,AI 不再覆盖。"
+          "recent_activity": "近期 Git 活动的 AI 摘要,自动刷新(每 12 小时)。"
         }
       },
       "proposalBanner": {
         "text": "AI 已对此文档提议更新,等待你批准。",
         "button": "去 Inbox 查看"
-      },
-      "handbook": {
-        "empty": "尚无项目手册。后台引擎会从本项目的会话日志起草;你也可以在「知识」页手动生成。",
-        "aiManaged": "由 AI 维护(随日志刷新)",
-        "locked": "已锁定 — 你编辑过,AI 不会覆盖",
-        "edit": "编辑",
-        "save": "保存(锁定)",
-        "cancel": "取消",
-        "unlock": "解锁(交还 AI)",
-        "saved": "项目手册已保存",
-        "unlocked": "已解锁 — AI 将重新接管",
-        "hint": "保存编辑即锁定本页;解锁后 AI 会在下一轮重新起草。"
       }
     },
     "memoryInspector": {
@@ -925,10 +910,6 @@
         "tooltipAutoOn": " · 自动同步已开启",
         "tooltipLastError": " · 上次错误：{error}",
         "branchPlaceholder": "—"
-      },
-      "modes": {
-        "project": "项目文档",
-        "vault": "自由文档"
       }
     },
     "activity": {
@@ -2488,8 +2469,7 @@
           "kb_infrastructure": "基础设施",
           "kb_conventions": "开发规范",
           "kb_lessons": "经验教训",
-          "kb_reusable": "可复用功能",
-          "kb_handbook": "项目手册"
+          "kb_reusable": "可复用功能"
         },
         "foundational": "基础 / 规约",
         "foundationalHint": "基础设施与规范——注入每个项目的强约束规则。",
@@ -2580,6 +2560,10 @@
       "about": {
         "title": "关于",
         "subtitle": "构建版本与服务器信息"
+      },
+      "vault": {
+        "title": "文档库",
+        "subtitle": "自由 markdown 笔记(Obsidian 同步)"
       }
     },
     "signOut": "退出登录"

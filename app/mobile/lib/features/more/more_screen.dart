@@ -13,6 +13,7 @@ import 'package:opendray/features/integrations/integrations_screen.dart';
 import 'package:opendray/features/mcp/mcp_screen.dart';
 import 'package:opendray/features/memory_archived/archived_screen.dart';
 import 'package:opendray/features/more/about_screen.dart';
+import 'package:opendray/features/notes/notes_screen.dart';
 import 'package:opendray/features/project/project_screen.dart';
 import 'package:opendray/features/providers/providers_screen.dart';
 import 'package:opendray/features/settings/settings_screen.dart';
@@ -92,13 +93,19 @@ class MoreScreen extends ConsumerWidget {
             icon: Icons.flag_outlined,
             title: t.more.items.projectMemory.title,
             subtitle: t.more.items.projectMemory.subtitle,
-            onTap: () => _push(context, const ProjectScreen()),
+            onTap: () => _push(context, const ProjectScreen(variant: 'memory')),
           ),
           _MenuTile(
             icon: Icons.inventory_2_outlined,
             title: t.more.items.archived.title,
             subtitle: t.more.items.archived.subtitle,
             onTap: () => _push(context, const ArchivedMemoriesScreen()),
+          ),
+          _MenuTile(
+            icon: Icons.folder_outlined,
+            title: t.more.items.vault.title,
+            subtitle: t.more.items.vault.subtitle,
+            onTap: () => _push(context, const NotesVaultScreen()),
           ),
           const SizedBox(height: 8),
           _SectionHeader(label: t.more.sections.system),

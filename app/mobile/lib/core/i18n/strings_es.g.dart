@@ -128,6 +128,7 @@ class _TranslationsNavEs extends TranslationsNavEn {
 	@override String get settings => 'Ajustes';
 	@override String get workspace => 'Espacio de trabajo';
 	@override String get knowledge => 'Conocimiento';
+	@override String get vault => 'Bóveda';
 }
 
 // Path: web
@@ -1108,7 +1109,6 @@ class _TranslationsWebProjectEs extends TranslationsWebProjectEn {
 	@override late final _TranslationsWebProjectLifecycleEs lifecycle = _TranslationsWebProjectLifecycleEs._(_root);
 	@override late final _TranslationsWebProjectDocMetaEs docMeta = _TranslationsWebProjectDocMetaEs._(_root);
 	@override late final _TranslationsWebProjectProposalBannerEs proposalBanner = _TranslationsWebProjectProposalBannerEs._(_root);
-	@override late final _TranslationsWebProjectHandbookEs handbook = _TranslationsWebProjectHandbookEs._(_root);
 }
 
 // Path: web.memoryInspector
@@ -1149,7 +1149,6 @@ class _TranslationsWebNotesEs extends TranslationsWebNotesEn {
 	@override late final _TranslationsWebNotesPickerEs picker = _TranslationsWebNotesPickerEs._(_root);
 	@override late final _TranslationsWebNotesVaultSyncEs vaultSync = _TranslationsWebNotesVaultSyncEs._(_root);
 	@override late final _TranslationsWebNotesSyncBadgeEs syncBadge = _TranslationsWebNotesSyncBadgeEs._(_root);
-	@override late final _TranslationsWebNotesModesEs modes = _TranslationsWebNotesModesEs._(_root);
 }
 
 // Path: web.activity
@@ -1423,7 +1422,7 @@ class _TranslationsWebKnowledgeEs extends TranslationsWebKnowledgeEn {
 
 	// Translations
 	@override String get title => 'Conocimiento';
-	@override String get subtitle => 'El grafo de conocimiento autoevolutivo: entidades, hechos, guías y habilidades destiladas de tu trabajo.';
+	@override String get subtitle => 'Lo que sabemos en todos los proyectos: infraestructura y reglas fundacionales, más lecciones y funciones reutilizables destiladas del trabajo previo. Se inyecta para arrancar cada proyecto nuevo.';
 	@override String get searchPlaceholder => 'Buscar conocimiento…';
 	@override String get search => 'Buscar';
 	@override String get browse => 'Explorar';
@@ -1490,6 +1489,7 @@ class _TranslationsMoreItemsEs extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsDataExportEs dataExport = _TranslationsMoreItemsDataExportEs._(_root);
 	@override late final _TranslationsMoreItemsSettingsEs settings = _TranslationsMoreItemsSettingsEs._(_root);
 	@override late final _TranslationsMoreItemsAboutEs about = _TranslationsMoreItemsAboutEs._(_root);
+	@override late final _TranslationsMoreItemsVaultEs vault = _TranslationsMoreItemsVaultEs._(_root);
 }
 
 // Path: sessions.filters
@@ -3049,7 +3049,6 @@ class _TranslationsWebProjectTabsEs extends TranslationsWebProjectTabsEn {
 	@override String get inbox => 'Bandeja de entrada';
 	@override String get conflicts => 'Conflictos';
 	@override String get archived => 'Archivadas';
-	@override String get handbook => 'Manual';
 }
 
 // Path: web.project.docLabel
@@ -3211,25 +3210,6 @@ class _TranslationsWebProjectProposalBannerEs extends TranslationsWebProjectProp
 	// Translations
 	@override String get text => 'La IA ha propuesto una actualización de este documento, a la espera de tu aprobación.';
 	@override String get button => 'Revisar en la Bandeja';
-}
-
-// Path: web.project.handbook
-class _TranslationsWebProjectHandbookEs extends TranslationsWebProjectHandbookEn {
-	_TranslationsWebProjectHandbookEs._(TranslationsEs root) : this._root = root, super.internal(root);
-
-	final TranslationsEs _root; // ignore: unused_field
-
-	// Translations
-	@override String get empty => 'Aún no hay manual del proyecto. El motor en segundo plano lo redacta desde el registro de sesiones; también puedes generarlo desde la página de Conocimiento.';
-	@override String get aiManaged => 'Mantenido por IA (se actualiza desde el registro)';
-	@override String get locked => 'Bloqueado — lo editaste, la IA no lo sobrescribirá';
-	@override String get edit => 'Editar';
-	@override String get save => 'Guardar (bloquea)';
-	@override String get cancel => 'Cancelar';
-	@override String get unlock => 'Desbloquear (devolver a la IA)';
-	@override String get saved => 'Manual guardado';
-	@override String get unlocked => 'Desbloqueado — la IA volverá a gestionarlo';
-	@override String get hint => 'Guardar una edición bloquea la página; desbloquear deja que la IA la redacte de nuevo en el próximo ciclo.';
 }
 
 // Path: web.memoryInspector.status
@@ -3588,17 +3568,6 @@ class _TranslationsWebNotesSyncBadgeEs extends TranslationsWebNotesSyncBadgeEn {
 	@override String get tooltipAutoOn => ' · sincronización automática activada';
 	@override String tooltipLastError({required Object error}) => ' · último error: ${error}';
 	@override String get branchPlaceholder => '—';
-}
-
-// Path: web.notes.modes
-class _TranslationsWebNotesModesEs extends TranslationsWebNotesModesEn {
-	_TranslationsWebNotesModesEs._(TranslationsEs root) : this._root = root, super.internal(root);
-
-	final TranslationsEs _root; // ignore: unused_field
-
-	// Translations
-	@override String get project => 'Doc del proyecto';
-	@override String get vault => 'Notas libres';
 }
 
 // Path: web.activity.filters
@@ -5049,6 +5018,13 @@ class _TranslationsWebKnowledgeKbEs extends TranslationsWebKnowledgeKbEn {
 	@override String get unlocked => 'Desbloqueada — la IA volverá a gestionar esta página';
 	@override String get regenerating => 'Regenerando en segundo plano…';
 	@override late final _TranslationsWebKnowledgeKbKindsEs kinds = _TranslationsWebKnowledgeKbKindsEs._(_root);
+	@override String get foundational => 'Fundacional';
+	@override String get foundationalHint => 'Infraestructura y convenciones — reglas vinculantes inyectadas en cada proyecto.';
+	@override String get emergent => 'Emergente';
+	@override String get emergentHint => 'Lecciones y funciones reutilizables destiladas del trabajo previo — orientación.';
+	@override String get bindingBadge => 'Vinculante · obligatorio';
+	@override String get referenceBadge => 'Referencia';
+	@override late final _TranslationsWebKnowledgeKbProposalEs proposal = _TranslationsWebKnowledgeKbProposalEs._(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -5206,6 +5182,17 @@ class _TranslationsMoreItemsAboutEs extends TranslationsMoreItemsAboutEn {
 	// Translations
 	@override String get title => 'Acerca de';
 	@override String get subtitle => 'Versión de compilación e información del servidor';
+}
+
+// Path: more.items.vault
+class _TranslationsMoreItemsVaultEs extends TranslationsMoreItemsVaultEn {
+	_TranslationsMoreItemsVaultEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Bóveda';
+	@override String get subtitle => 'Notas markdown libres (sincronización Obsidian)';
 }
 
 // Path: sessions.detail.accountSwitcher
@@ -6173,7 +6160,6 @@ class _TranslationsWebProjectDocMetaMaintainerEs extends TranslationsWebProjectD
 	// Translations
 	@override String get coauthored => 'Tú mantienes · IA propone';
 	@override String get auto => 'Autogenerado · solo lectura';
-	@override String get ai_lockable => 'Redactado por IA · se bloquea al editar';
 }
 
 // Path: web.project.docMeta.purpose
@@ -6187,7 +6173,6 @@ class _TranslationsWebProjectDocMetaPurposeEs extends TranslationsWebProjectDocM
 	@override String get plan => 'La hoja de ruta actual / trabajo en curso. La IA propone una actualización en tu Bandeja tras avanzar una sesión; tú la apruebas.';
 	@override String get tech_stack => 'Stack y estructura, autogenerado por el escáner del proyecto (se actualiza cada 6 h).';
 	@override String get recent_activity => 'Resumen por IA de la actividad reciente de Git, actualizado automáticamente (cada 12 h).';
-	@override String get kb_handbook => 'Manual del proyecto: cómo construir / ejecutar / desplegar, infraestructura usada, límites de colaboración, lecciones clave. La IA lo redacta desde el registro; al editarlo se bloquea y la IA deja de sobrescribir.';
 }
 
 // Path: web.memoryInspector.scope.values
@@ -7604,7 +7589,22 @@ class _TranslationsWebKnowledgeKbKindsEs extends TranslationsWebKnowledgeKbKinds
 	@override String get kb_conventions => 'Convenciones';
 	@override String get kb_lessons => 'Lecciones';
 	@override String get kb_reusable => 'Funciones reutilizables';
-	@override String get kb_handbook => 'Manual';
+}
+
+// Path: web.knowledge.kb.proposal
+class _TranslationsWebKnowledgeKbProposalEs extends TranslationsWebKnowledgeKbProposalEn {
+	_TranslationsWebKnowledgeKbProposalEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get text => 'La IA propuso una actualización de esta página (evidencia nueva divergente).';
+	@override String get preview => 'Vista previa';
+	@override String get hide => 'Ocultar';
+	@override String get approve => 'Aprobar';
+	@override String get reject => 'Rechazar';
+	@override String get approved => 'Actualización aprobada';
+	@override String get rejected => 'Propuesta rechazada';
 }
 
 // Path: sessions.inspector.shell.tabs
@@ -7691,6 +7691,7 @@ extension on TranslationsEs {
 			'nav.settings' => 'Ajustes',
 			'nav.workspace' => 'Espacio de trabajo',
 			'nav.knowledge' => 'Conocimiento',
+			'nav.vault' => 'Bóveda',
 			'web.brand' => 'opendray',
 			'web.loading' => 'Cargando…',
 			'web.topbar.expandSidebar' => 'Expandir barra lateral',
@@ -8026,7 +8027,6 @@ extension on TranslationsEs {
 			'web.project.tabs.inbox' => 'Bandeja de entrada',
 			'web.project.tabs.conflicts' => 'Conflictos',
 			'web.project.tabs.archived' => 'Archivadas',
-			'web.project.tabs.handbook' => 'Manual',
 			'web.project.docLabel.goal' => 'Objetivo',
 			'web.project.docLabel.plan' => 'Plan',
 			'web.project.docLabel.tech_stack' => 'Stack tecnológico',
@@ -8111,24 +8111,12 @@ extension on TranslationsEs {
 			'web.project.lifecycle.tooltip.archive' => 'Archivar: archivar este proyecto — congelado y oculto de las vistas habituales.',
 			'web.project.docMeta.maintainer.coauthored' => 'Tú mantienes · IA propone',
 			'web.project.docMeta.maintainer.auto' => 'Autogenerado · solo lectura',
-			'web.project.docMeta.maintainer.ai_lockable' => 'Redactado por IA · se bloquea al editar',
 			'web.project.docMeta.purpose.goal' => 'La intención a largo plazo del proyecto: qué construimos y por qué. Cuando una sesión cambia el rumbo, la IA propone una actualización en tu Bandeja para que la apruebes.',
 			'web.project.docMeta.purpose.plan' => 'La hoja de ruta actual / trabajo en curso. La IA propone una actualización en tu Bandeja tras avanzar una sesión; tú la apruebas.',
 			'web.project.docMeta.purpose.tech_stack' => 'Stack y estructura, autogenerado por el escáner del proyecto (se actualiza cada 6 h).',
 			'web.project.docMeta.purpose.recent_activity' => 'Resumen por IA de la actividad reciente de Git, actualizado automáticamente (cada 12 h).',
-			'web.project.docMeta.purpose.kb_handbook' => 'Manual del proyecto: cómo construir / ejecutar / desplegar, infraestructura usada, límites de colaboración, lecciones clave. La IA lo redacta desde el registro; al editarlo se bloquea y la IA deja de sobrescribir.',
 			'web.project.proposalBanner.text' => 'La IA ha propuesto una actualización de este documento, a la espera de tu aprobación.',
 			'web.project.proposalBanner.button' => 'Revisar en la Bandeja',
-			'web.project.handbook.empty' => 'Aún no hay manual del proyecto. El motor en segundo plano lo redacta desde el registro de sesiones; también puedes generarlo desde la página de Conocimiento.',
-			'web.project.handbook.aiManaged' => 'Mantenido por IA (se actualiza desde el registro)',
-			'web.project.handbook.locked' => 'Bloqueado — lo editaste, la IA no lo sobrescribirá',
-			'web.project.handbook.edit' => 'Editar',
-			'web.project.handbook.save' => 'Guardar (bloquea)',
-			'web.project.handbook.cancel' => 'Cancelar',
-			'web.project.handbook.unlock' => 'Desbloquear (devolver a la IA)',
-			'web.project.handbook.saved' => 'Manual guardado',
-			'web.project.handbook.unlocked' => 'Desbloqueado — la IA volverá a gestionarlo',
-			'web.project.handbook.hint' => 'Guardar una edición bloquea la página; desbloquear deja que la IA la redacte de nuevo en el próximo ciclo.',
 			'web.memoryInspector.status.label' => 'Embedder activo',
 			'web.memoryInspector.status.unavailable' => 'no disponible',
 			'web.memoryInspector.status.probing' => 'sondeando…',
@@ -8167,8 +8155,6 @@ extension on TranslationsEs {
 			'web.memoryInspector.records.enterScopeKeyHint' => 'Introduce una clave de scope para explorar las memorias.',
 			'web.memoryInspector.records.noMatchesForQuery' => ({required Object query}) => 'No hay coincidencias para "${query}"',
 			'web.memoryInspector.records.noMemoriesInScope' => 'Aún no hay memorias en este scope.',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.row.simBadge' => ({required Object value}) => 'sim ${value}',
 			'web.memoryInspector.row.rankBadge' => ({required Object value}) => 'rango ${value}',
 			'web.memoryInspector.row.rankTooltip' => ({required Object effective, required Object similarity, required Object age, required Object days, required Object hits, required Object confidence}) => 'efectivo ${effective} = sim ${similarity} × antigüedad ${age} (${days}d) × hits ${hits} × conf ${confidence}',
@@ -8181,6 +8167,8 @@ extension on TranslationsEs {
 			'web.memoryInspector.row.editTooltip' => 'Editar esta memoria',
 			'web.memoryInspector.row.deleteTooltip' => 'Eliminar esta memoria',
 			'web.memoryInspector.row.emptyError' => 'El texto de la memoria no puede estar vacío',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.row.deleteConfirm' => ({required Object id}) => '¿Eliminar la memoria ${id}? Esto es permanente.',
 			'web.memoryInspector.toasts.deleted' => 'Memoria eliminada',
 			'web.memoryInspector.toasts.deleteFailed' => 'La eliminación falló',
@@ -8387,8 +8375,6 @@ extension on TranslationsEs {
 			'web.notes.syncBadge.tooltipAutoOn' => ' · sincronización automática activada',
 			'web.notes.syncBadge.tooltipLastError' => ({required Object error}) => ' · último error: ${error}',
 			'web.notes.syncBadge.branchPlaceholder' => '—',
-			'web.notes.modes.project' => 'Doc del proyecto',
-			'web.notes.modes.vault' => 'Notas libres',
 			'web.activity.title' => 'Actividad',
 			'web.activity.subtitle' => 'Auditoría por llamada de las solicitudes API realizadas por las integraciones registradas. Incluye tanto las llamadas entrantes (una app de terceros que llama a opendray con su clave de API) como las llamadas salientes a través del proxy (admin → proxy de opendray → integración). Las llamadas hechas directamente por esta UI de administración no se registran.',
 			'web.activity.refresh' => 'Actualizar',
@@ -8681,8 +8667,6 @@ extension on TranslationsEs {
 			'web.integrations.edit_dialog.baseUrlProxyPlaceholder' => 'http://127.0.0.1:8080',
 			'web.integrations.edit_dialog.consumerHint' => 'Esta es una integración solo consumidora. Cambiar la URL base aquí también requeriría un prefijo de ruta; hazlo eliminando y volviendo a registrar.',
 			'web.integrations.edit_dialog.versionLabel' => 'Versión',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
 			'web.integrations.edit_dialog.scopesLabel' => 'Scopes',
 			'web.integrations.edit_dialog.scopesIntro' => 'Reduce o amplía la superficie de API que autoriza la API key de esta integración. Los tokens activos no se ven afectados: el nuevo conjunto de scopes surte efecto en la siguiente petición.',
@@ -8697,6 +8681,8 @@ extension on TranslationsEs {
 			'web.integrations.proxy.baseLabel' => 'base:',
 			'web.integrations.proxy.history' => 'Historial',
 			'web.integrations.proxy.historyEmpty' => 'no hay peticiones anteriores para esta integración',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.proxy.send' => 'Enviar',
 			'web.integrations.proxy.sending' => 'Enviando…',
 			'web.integrations.proxy.extraHeadersLabel' => 'Headers adicionales (uno por línea, Nombre: Valor)',
@@ -9195,8 +9181,6 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.memoryLibraryPath.hint' => 'Directorio que contiene libonnxruntime.dylib (macOS) / libonnxruntime.so (Linux). Tras `brew install onnxruntime`, es /opt/homebrew/opt/onnxruntime/lib.',
 			'web.serverSettings.fields.memoryModelPath.label' => 'Ruta del modelo',
 			'web.serverSettings.fields.memoryModelPath.hint' => 'Ruta absoluta a los pesos .onnx. Descárgalos de HuggingFace, p. ej. Xenova/bge-m3 o Xenova/bge-small-en-v1.5.',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.memoryTokenizerPath.label' => 'Ruta del tokenizador',
 			'web.serverSettings.fields.memoryTokenizerPath.hint' => 'Ruta absoluta a tokenizer.json (formato estándar de HuggingFace), normalmente justo al lado del modelo.',
 			'web.serverSettings.fields.memoryMaxSeqLen.label' => 'Longitud máxima de secuencia',
@@ -9211,6 +9195,8 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.geminiTmpRoot.hint' => 'Raíz que contiene las carpetas tmp por proyecto de Gemini. Por defecto ~/.gemini/tmp.',
 			'web.serverSettings.fields.geminiProjectsFile.label' => 'projects.json',
 			'web.serverSettings.fields.geminiProjectsFile.hint' => 'Ruta al archivo de mapeo cwd→nombre-corto de Gemini. Por defecto ~/.gemini/projects.json.',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.backupLocalDir.label' => 'Directorio local de copias de seguridad',
 			'web.serverSettings.fields.backupLocalDir.hint' => 'Raíz por defecto para el destino `local` creado automáticamente. Vacío = ~/.opendray/backups. Requiere reinicio.',
 			'web.serverSettings.fields.backupExportDir.label' => 'Directorio de exportación',
@@ -9554,7 +9540,7 @@ extension on TranslationsEs {
 			'web.export.imports.noneCounts' => '(ninguno)',
 			'web.export.imports.listFailedToast' => 'No se pudieron listar las importaciones',
 			'web.knowledge.title' => 'Conocimiento',
-			'web.knowledge.subtitle' => 'El grafo de conocimiento autoevolutivo: entidades, hechos, guías y habilidades destiladas de tu trabajo.',
+			'web.knowledge.subtitle' => 'Lo que sabemos en todos los proyectos: infraestructura y reglas fundacionales, más lecciones y funciones reutilizables destiladas del trabajo previo. Se inyecta para arrancar cada proyecto nuevo.',
 			'web.knowledge.searchPlaceholder' => 'Buscar conocimiento…',
 			'web.knowledge.search' => 'Buscar',
 			'web.knowledge.browse' => 'Explorar',
@@ -9596,7 +9582,19 @@ extension on TranslationsEs {
 			'web.knowledge.kb.kinds.kb_conventions' => 'Convenciones',
 			'web.knowledge.kb.kinds.kb_lessons' => 'Lecciones',
 			'web.knowledge.kb.kinds.kb_reusable' => 'Funciones reutilizables',
-			'web.knowledge.kb.kinds.kb_handbook' => 'Manual',
+			'web.knowledge.kb.foundational' => 'Fundacional',
+			'web.knowledge.kb.foundationalHint' => 'Infraestructura y convenciones — reglas vinculantes inyectadas en cada proyecto.',
+			'web.knowledge.kb.emergent' => 'Emergente',
+			'web.knowledge.kb.emergentHint' => 'Lecciones y funciones reutilizables destiladas del trabajo previo — orientación.',
+			'web.knowledge.kb.bindingBadge' => 'Vinculante · obligatorio',
+			'web.knowledge.kb.referenceBadge' => 'Referencia',
+			'web.knowledge.kb.proposal.text' => 'La IA propuso una actualización de esta página (evidencia nueva divergente).',
+			'web.knowledge.kb.proposal.preview' => 'Vista previa',
+			'web.knowledge.kb.proposal.hide' => 'Ocultar',
+			'web.knowledge.kb.proposal.approve' => 'Aprobar',
+			'web.knowledge.kb.proposal.reject' => 'Rechazar',
+			'web.knowledge.kb.proposal.approved' => 'Actualización aprobada',
+			'web.knowledge.kb.proposal.rejected' => 'Propuesta rechazada',
 			'web.knowledge.kinds.all' => 'Todos',
 			'web.knowledge.kinds.entity' => 'Entidades',
 			'web.knowledge.kinds.fact' => 'Hechos',
@@ -9635,6 +9633,8 @@ extension on TranslationsEs {
 			'more.items.settings.subtitle' => 'Idioma, apariencia, cuenta',
 			'more.items.about.title' => 'Acerca de',
 			'more.items.about.subtitle' => 'Versión de compilación e información del servidor',
+			'more.items.vault.title' => 'Bóveda',
+			'more.items.vault.subtitle' => 'Notas markdown libres (sincronización Obsidian)',
 			'more.signOut' => 'Cerrar sesión',
 			'sessions.title' => 'Sesiones',
 			'sessions.refresh' => 'Actualizar',

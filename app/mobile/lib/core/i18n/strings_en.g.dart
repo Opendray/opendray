@@ -201,6 +201,9 @@ class TranslationsNavEn {
 
 	/// en: 'Knowledge'
 	String get knowledge => 'Knowledge';
+
+	/// en: 'Vault'
+	String get vault => 'Vault';
 }
 
 // Path: web
@@ -2326,7 +2329,6 @@ class TranslationsWebProjectEn {
 	late final TranslationsWebProjectLifecycleEn lifecycle = TranslationsWebProjectLifecycleEn.internal(_root);
 	late final TranslationsWebProjectDocMetaEn docMeta = TranslationsWebProjectDocMetaEn.internal(_root);
 	late final TranslationsWebProjectProposalBannerEn proposalBanner = TranslationsWebProjectProposalBannerEn.internal(_root);
-	late final TranslationsWebProjectHandbookEn handbook = TranslationsWebProjectHandbookEn.internal(_root);
 }
 
 // Path: web.memoryInspector
@@ -2370,7 +2372,6 @@ class TranslationsWebNotesEn {
 	late final TranslationsWebNotesPickerEn picker = TranslationsWebNotesPickerEn.internal(_root);
 	late final TranslationsWebNotesVaultSyncEn vaultSync = TranslationsWebNotesVaultSyncEn.internal(_root);
 	late final TranslationsWebNotesSyncBadgeEn syncBadge = TranslationsWebNotesSyncBadgeEn.internal(_root);
-	late final TranslationsWebNotesModesEn modes = TranslationsWebNotesModesEn.internal(_root);
 }
 
 // Path: web.activity
@@ -2806,8 +2807,8 @@ class TranslationsWebKnowledgeEn {
 	/// en: 'Knowledge'
 	String get title => 'Knowledge';
 
-	/// en: 'The self-evolving knowledge graph — entities, facts, playbooks, and skills distilled from your work.'
-	String get subtitle => 'The self-evolving knowledge graph — entities, facts, playbooks, and skills distilled from your work.';
+	/// en: 'What we know across all projects — foundational infrastructure & rules, plus lessons and reusable features distilled from past work. Injected to bootstrap each new project.'
+	String get subtitle => 'What we know across all projects — foundational infrastructure & rules, plus lessons and reusable features distilled from past work. Injected to bootstrap each new project.';
 
 	/// en: 'Search knowledge…'
 	String get searchPlaceholder => 'Search knowledge…';
@@ -2921,6 +2922,7 @@ class TranslationsMoreItemsEn {
 	late final TranslationsMoreItemsDataExportEn dataExport = TranslationsMoreItemsDataExportEn.internal(_root);
 	late final TranslationsMoreItemsSettingsEn settings = TranslationsMoreItemsSettingsEn.internal(_root);
 	late final TranslationsMoreItemsAboutEn about = TranslationsMoreItemsAboutEn.internal(_root);
+	late final TranslationsMoreItemsVaultEn vault = TranslationsMoreItemsVaultEn.internal(_root);
 }
 
 // Path: sessions.filters
@@ -5895,9 +5897,6 @@ class TranslationsWebProjectTabsEn {
 
 	/// en: 'Archived'
 	String get archived => 'Archived';
-
-	/// en: 'Handbook'
-	String get handbook => 'Handbook';
 }
 
 // Path: web.project.docLabel
@@ -6187,45 +6186,6 @@ class TranslationsWebProjectProposalBannerEn {
 
 	/// en: 'Review in Inbox'
 	String get button => 'Review in Inbox';
-}
-
-// Path: web.project.handbook
-class TranslationsWebProjectHandbookEn {
-	TranslationsWebProjectHandbookEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'No project handbook yet. The background engine drafts it from this project’s session log; you can also generate it from the Knowledge page.'
-	String get empty => 'No project handbook yet. The background engine drafts it from this project’s session log; you can also generate it from the Knowledge page.';
-
-	/// en: 'AI-maintained (refreshes from the log)'
-	String get aiManaged => 'AI-maintained (refreshes from the log)';
-
-	/// en: 'Locked — you edited it, AI will not overwrite'
-	String get locked => 'Locked — you edited it, AI will not overwrite';
-
-	/// en: 'Edit'
-	String get edit => 'Edit';
-
-	/// en: 'Save (locks)'
-	String get save => 'Save (locks)';
-
-	/// en: 'Cancel'
-	String get cancel => 'Cancel';
-
-	/// en: 'Unlock (hand back to AI)'
-	String get unlock => 'Unlock (hand back to AI)';
-
-	/// en: 'Handbook saved'
-	String get saved => 'Handbook saved';
-
-	/// en: 'Unlocked — AI will manage it again'
-	String get unlocked => 'Unlocked — AI will manage it again';
-
-	/// en: 'Saving an edit locks the page; unlocking lets AI redraft it on the next cycle.'
-	String get hint => 'Saving an edit locks the page; unlocking lets AI redraft it on the next cycle.';
 }
 
 // Path: web.memoryInspector.status
@@ -6902,21 +6862,6 @@ class TranslationsWebNotesSyncBadgeEn {
 
 	/// en: '—'
 	String get branchPlaceholder => '—';
-}
-
-// Path: web.notes.modes
-class TranslationsWebNotesModesEn {
-	TranslationsWebNotesModesEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Project doc'
-	String get project => 'Project doc';
-
-	/// en: 'Freeform vault'
-	String get vault => 'Freeform vault';
 }
 
 // Path: web.activity.filters
@@ -9768,6 +9713,26 @@ class TranslationsWebKnowledgeKbEn {
 	String get regenerating => 'Regenerating in the background…';
 
 	late final TranslationsWebKnowledgeKbKindsEn kinds = TranslationsWebKnowledgeKbKindsEn.internal(_root);
+
+	/// en: 'Foundational'
+	String get foundational => 'Foundational';
+
+	/// en: 'Infrastructure & conventions — binding rules injected into every project.'
+	String get foundationalHint => 'Infrastructure & conventions — binding rules injected into every project.';
+
+	/// en: 'Emergent'
+	String get emergent => 'Emergent';
+
+	/// en: 'Lessons & reusable features distilled from past work — guidance.'
+	String get emergentHint => 'Lessons & reusable features distilled from past work — guidance.';
+
+	/// en: 'Binding · must follow'
+	String get bindingBadge => 'Binding · must follow';
+
+	/// en: 'Reference'
+	String get referenceBadge => 'Reference';
+
+	late final TranslationsWebKnowledgeKbProposalEn proposal = TranslationsWebKnowledgeKbProposalEn.internal(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -9987,6 +9952,21 @@ class TranslationsMoreItemsAboutEn {
 
 	/// en: 'Build version & server info'
 	String get subtitle => 'Build version & server info';
+}
+
+// Path: more.items.vault
+class TranslationsMoreItemsVaultEn {
+	TranslationsMoreItemsVaultEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Vault'
+	String get title => 'Vault';
+
+	/// en: 'Freeform markdown notes (Obsidian-sync)'
+	String get subtitle => 'Freeform markdown notes (Obsidian-sync)';
 }
 
 // Path: sessions.detail.accountSwitcher
@@ -11717,9 +11697,6 @@ class TranslationsWebProjectDocMetaMaintainerEn {
 
 	/// en: 'Auto-generated · read-only'
 	String get auto => 'Auto-generated · read-only';
-
-	/// en: 'AI-drafted · locks on edit'
-	String get ai_lockable => 'AI-drafted · locks on edit';
 }
 
 // Path: web.project.docMeta.purpose
@@ -11741,9 +11718,6 @@ class TranslationsWebProjectDocMetaPurposeEn {
 
 	/// en: 'An AI summary of recent Git activity, refreshed automatically (every 12h).'
 	String get recent_activity => 'An AI summary of recent Git activity, refreshed automatically (every 12h).';
-
-	/// en: 'Project handbook: how to build / run / deploy, infrastructure it uses, collaboration boundaries, key lessons. AI drafts it from the work log; once you edit it, it locks and AI stops overwriting.'
-	String get kb_handbook => 'Project handbook: how to build / run / deploy, infrastructure it uses, collaboration boundaries, key lessons. AI drafts it from the work log; once you edit it, it locks and AI stops overwriting.';
 }
 
 // Path: web.memoryInspector.scope.values
@@ -14189,9 +14163,36 @@ class TranslationsWebKnowledgeKbKindsEn {
 
 	/// en: 'Reusable features'
 	String get kb_reusable => 'Reusable features';
+}
 
-	/// en: 'Handbook'
-	String get kb_handbook => 'Handbook';
+// Path: web.knowledge.kb.proposal
+class TranslationsWebKnowledgeKbProposalEn {
+	TranslationsWebKnowledgeKbProposalEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'AI proposed an update to this page (new evidence diverged).'
+	String get text => 'AI proposed an update to this page (new evidence diverged).';
+
+	/// en: 'Preview'
+	String get preview => 'Preview';
+
+	/// en: 'Hide'
+	String get hide => 'Hide';
+
+	/// en: 'Approve'
+	String get approve => 'Approve';
+
+	/// en: 'Reject'
+	String get reject => 'Reject';
+
+	/// en: 'Update approved'
+	String get approved => 'Update approved';
+
+	/// en: 'Proposal rejected'
+	String get rejected => 'Proposal rejected';
 }
 
 // Path: sessions.inspector.shell.tabs
@@ -14304,6 +14305,7 @@ extension on Translations {
 			'nav.settings' => 'Settings',
 			'nav.workspace' => 'Workspace',
 			'nav.knowledge' => 'Knowledge',
+			'nav.vault' => 'Vault',
 			'web.brand' => 'opendray',
 			'web.loading' => 'Loading…',
 			'web.topbar.expandSidebar' => 'Expand sidebar',
@@ -14639,7 +14641,6 @@ extension on Translations {
 			'web.project.tabs.inbox' => 'Inbox',
 			'web.project.tabs.conflicts' => 'Conflicts',
 			'web.project.tabs.archived' => 'Archived',
-			'web.project.tabs.handbook' => 'Handbook',
 			'web.project.docLabel.goal' => 'Goal',
 			'web.project.docLabel.plan' => 'Plan',
 			'web.project.docLabel.tech_stack' => 'Tech stack',
@@ -14724,24 +14725,12 @@ extension on Translations {
 			'web.project.lifecycle.tooltip.archive' => 'Archive: shelve this project — frozen and hidden from routine views.',
 			'web.project.docMeta.maintainer.coauthored' => 'You maintain · AI proposes',
 			'web.project.docMeta.maintainer.auto' => 'Auto-generated · read-only',
-			'web.project.docMeta.maintainer.ai_lockable' => 'AI-drafted · locks on edit',
 			'web.project.docMeta.purpose.goal' => 'The project\'s long-term intent — what we\'re ultimately building and why. When a session shifts the direction, AI proposes an update to your Inbox for approval.',
 			'web.project.docMeta.purpose.plan' => 'The current roadmap / work in progress. AI proposes an update to your Inbox after a session moves it forward; you approve.',
 			'web.project.docMeta.purpose.tech_stack' => 'Tech stack & structure, auto-generated by the project scanner (refreshes every 6h).',
 			'web.project.docMeta.purpose.recent_activity' => 'An AI summary of recent Git activity, refreshed automatically (every 12h).',
-			'web.project.docMeta.purpose.kb_handbook' => 'Project handbook: how to build / run / deploy, infrastructure it uses, collaboration boundaries, key lessons. AI drafts it from the work log; once you edit it, it locks and AI stops overwriting.',
 			'web.project.proposalBanner.text' => 'AI has proposed an update to this document, awaiting your approval.',
 			'web.project.proposalBanner.button' => 'Review in Inbox',
-			'web.project.handbook.empty' => 'No project handbook yet. The background engine drafts it from this project’s session log; you can also generate it from the Knowledge page.',
-			'web.project.handbook.aiManaged' => 'AI-maintained (refreshes from the log)',
-			'web.project.handbook.locked' => 'Locked — you edited it, AI will not overwrite',
-			'web.project.handbook.edit' => 'Edit',
-			'web.project.handbook.save' => 'Save (locks)',
-			'web.project.handbook.cancel' => 'Cancel',
-			'web.project.handbook.unlock' => 'Unlock (hand back to AI)',
-			'web.project.handbook.saved' => 'Handbook saved',
-			'web.project.handbook.unlocked' => 'Unlocked — AI will manage it again',
-			'web.project.handbook.hint' => 'Saving an edit locks the page; unlocking lets AI redraft it on the next cycle.',
 			'web.memoryInspector.status.label' => 'Active embedder',
 			'web.memoryInspector.status.unavailable' => 'unavailable',
 			'web.memoryInspector.status.probing' => 'probing…',
@@ -14780,8 +14769,6 @@ extension on Translations {
 			'web.memoryInspector.records.enterScopeKeyHint' => 'Enter a scope key to browse memories.',
 			'web.memoryInspector.records.noMatchesForQuery' => ({required Object query}) => 'No matches for "${query}"',
 			'web.memoryInspector.records.noMemoriesInScope' => 'No memories in this scope yet.',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.row.simBadge' => ({required Object value}) => 'sim ${value}',
 			'web.memoryInspector.row.rankBadge' => ({required Object value}) => 'rank ${value}',
 			'web.memoryInspector.row.rankTooltip' => ({required Object effective, required Object similarity, required Object age, required Object days, required Object hits, required Object confidence}) => 'effective ${effective} = sim ${similarity} × age ${age} (${days}d) × hits ${hits} × conf ${confidence}',
@@ -14794,6 +14781,8 @@ extension on Translations {
 			'web.memoryInspector.row.editTooltip' => 'Edit this memory',
 			'web.memoryInspector.row.deleteTooltip' => 'Delete this memory',
 			'web.memoryInspector.row.emptyError' => 'Memory text cannot be empty',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.row.deleteConfirm' => ({required Object id}) => 'Delete memory ${id}? This is permanent.',
 			'web.memoryInspector.toasts.deleted' => 'Memory deleted',
 			'web.memoryInspector.toasts.deleteFailed' => 'Delete failed',
@@ -15000,8 +14989,6 @@ extension on Translations {
 			'web.notes.syncBadge.tooltipAutoOn' => ' · auto-sync on',
 			'web.notes.syncBadge.tooltipLastError' => ({required Object error}) => ' · last error: ${error}',
 			'web.notes.syncBadge.branchPlaceholder' => '—',
-			'web.notes.modes.project' => 'Project doc',
-			'web.notes.modes.vault' => 'Freeform vault',
 			'web.activity.title' => 'Activity',
 			'web.activity.subtitle' => 'Per-call audit of API requests made by registered integrations. Includes both inbound calls (a third-party app calling opendray with its API key) and outbound proxied calls (admin → opendray proxy → integration). Calls made directly by this admin UI are not recorded.',
 			'web.activity.refresh' => 'Refresh',
@@ -15294,8 +15281,6 @@ extension on Translations {
 			'web.integrations.edit_dialog.baseUrlProxyPlaceholder' => 'http://127.0.0.1:8080',
 			'web.integrations.edit_dialog.consumerHint' => 'This is a consumer-only integration. Changing base URL here would also require a route prefix; do that with delete + re-register.',
 			'web.integrations.edit_dialog.versionLabel' => 'Version',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
 			'web.integrations.edit_dialog.scopesLabel' => 'Scopes',
 			'web.integrations.edit_dialog.scopesIntro' => 'Trim or widen the API surface this integration\'s API key authorises. Live tokens are unaffected — the new scope set takes effect on the next request.',
@@ -15310,6 +15295,8 @@ extension on Translations {
 			'web.integrations.proxy.baseLabel' => 'base:',
 			'web.integrations.proxy.history' => 'History',
 			'web.integrations.proxy.historyEmpty' => 'no past requests for this integration',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.proxy.send' => 'Send',
 			'web.integrations.proxy.sending' => 'Sending…',
 			'web.integrations.proxy.extraHeadersLabel' => 'Extra headers (one per line, Name: Value)',
@@ -15808,8 +15795,6 @@ extension on Translations {
 			'web.serverSettings.fields.memoryLibraryPath.hint' => 'Directory holding libonnxruntime.dylib (macOS) / libonnxruntime.so (Linux). After `brew install onnxruntime`, that\'s /opt/homebrew/opt/onnxruntime/lib.',
 			'web.serverSettings.fields.memoryModelPath.label' => 'Model path',
 			'web.serverSettings.fields.memoryModelPath.hint' => 'Absolute path to the .onnx weights. Download from HuggingFace, e.g. Xenova/bge-m3 or Xenova/bge-small-en-v1.5.',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.memoryTokenizerPath.label' => 'Tokenizer path',
 			'web.serverSettings.fields.memoryTokenizerPath.hint' => 'Absolute path to tokenizer.json (HuggingFace standard format) — usually right next to the model.',
 			'web.serverSettings.fields.memoryMaxSeqLen.label' => 'Max sequence length',
@@ -15824,6 +15809,8 @@ extension on Translations {
 			'web.serverSettings.fields.geminiTmpRoot.hint' => 'Root holding Gemini per-project tmp folders. Default ~/.gemini/tmp.',
 			'web.serverSettings.fields.geminiProjectsFile.label' => 'projects.json',
 			'web.serverSettings.fields.geminiProjectsFile.hint' => 'Path to Gemini\'s cwd→short-name mapping file. Default ~/.gemini/projects.json.',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.backupLocalDir.label' => 'Local backup directory',
 			'web.serverSettings.fields.backupLocalDir.hint' => 'Default root for the auto-created `local` target. Empty = ~/.opendray/backups. Restart required.',
 			'web.serverSettings.fields.backupExportDir.label' => 'Export directory',
@@ -16167,7 +16154,7 @@ extension on Translations {
 			'web.export.imports.noneCounts' => '(none)',
 			'web.export.imports.listFailedToast' => 'Failed to list imports',
 			'web.knowledge.title' => 'Knowledge',
-			'web.knowledge.subtitle' => 'The self-evolving knowledge graph — entities, facts, playbooks, and skills distilled from your work.',
+			'web.knowledge.subtitle' => 'What we know across all projects — foundational infrastructure & rules, plus lessons and reusable features distilled from past work. Injected to bootstrap each new project.',
 			'web.knowledge.searchPlaceholder' => 'Search knowledge…',
 			'web.knowledge.search' => 'Search',
 			'web.knowledge.browse' => 'Browse',
@@ -16209,7 +16196,19 @@ extension on Translations {
 			'web.knowledge.kb.kinds.kb_conventions' => 'Conventions',
 			'web.knowledge.kb.kinds.kb_lessons' => 'Lessons',
 			'web.knowledge.kb.kinds.kb_reusable' => 'Reusable features',
-			'web.knowledge.kb.kinds.kb_handbook' => 'Handbook',
+			'web.knowledge.kb.foundational' => 'Foundational',
+			'web.knowledge.kb.foundationalHint' => 'Infrastructure & conventions — binding rules injected into every project.',
+			'web.knowledge.kb.emergent' => 'Emergent',
+			'web.knowledge.kb.emergentHint' => 'Lessons & reusable features distilled from past work — guidance.',
+			'web.knowledge.kb.bindingBadge' => 'Binding · must follow',
+			'web.knowledge.kb.referenceBadge' => 'Reference',
+			'web.knowledge.kb.proposal.text' => 'AI proposed an update to this page (new evidence diverged).',
+			'web.knowledge.kb.proposal.preview' => 'Preview',
+			'web.knowledge.kb.proposal.hide' => 'Hide',
+			'web.knowledge.kb.proposal.approve' => 'Approve',
+			'web.knowledge.kb.proposal.reject' => 'Reject',
+			'web.knowledge.kb.proposal.approved' => 'Update approved',
+			'web.knowledge.kb.proposal.rejected' => 'Proposal rejected',
 			'web.knowledge.kinds.all' => 'All',
 			'web.knowledge.kinds.entity' => 'Entities',
 			'web.knowledge.kinds.fact' => 'Facts',
@@ -16248,6 +16247,8 @@ extension on Translations {
 			'more.items.settings.subtitle' => 'Language, appearance, account',
 			'more.items.about.title' => 'About',
 			'more.items.about.subtitle' => 'Build version & server info',
+			'more.items.vault.title' => 'Vault',
+			'more.items.vault.subtitle' => 'Freeform markdown notes (Obsidian-sync)',
 			'more.signOut' => 'Sign out',
 			'sessions.title' => 'Sessions',
 			'sessions.refresh' => 'Refresh',

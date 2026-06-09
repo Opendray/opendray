@@ -9,76 +9,27 @@ import 'package:opendray/features/notes/note_editor_dialog.dart';
 import 'package:opendray/features/project/project_screen.dart';
 import 'package:path/path.dart' as p;
 
-// Global Notes tab — vault drill-down browser.
-//
-// A flat list mixes personal scratchpads with every project's docs
-// in one stream — usable when the vault has 10 notes, unreadable
-// at 200. Mirrors the web admin's NotesTreeView pattern: the user
-// starts at the vault root, sees top-level folders + any root-level
-// .md files, and drills down level by level. Search collapses the
-// tree into a flat result list across the whole vault. Quick chips
-// jump to common roots (`personal/`, `projects/`).
-// NotesScreen is the project's official-doc home (Notes tab). It toggles
-// between the structured project doc (ProjectScreen — goal/plan/journal/
-// handbook/lifecycle, the default) and the freeform markdown vault.
-// Mirrors the web /notes mode switch. Memory = facts; Knowledge =
-// cross-project; Notes = where this project is.
-class NotesScreen extends ConsumerStatefulWidget {
+// NotesScreen (Notes tab) is the project's official doc — goal/plan/tech/
+// activity/journal/inbox. Deconflated per the Experience Flywheel: memory
+// hygiene lives under Memory, the freeform markdown vault under More.
+// Memory = facts; Knowledge = cross-project; Notes = where this project is.
+class NotesScreen extends ConsumerWidget {
   const NotesScreen({super.key});
 
   @override
-  ConsumerState<NotesScreen> createState() => _NotesScreenOuterState();
-}
-
-class _NotesScreenOuterState extends ConsumerState<NotesScreen> {
-  int _mode = 0; // 0 = project doc, 1 = freeform vault
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: SegmentedButton<int>(
-                segments: [
-                  ButtonSegment(
-                    value: 0,
-                    icon: const Icon(Icons.description_outlined, size: 18),
-                    label: Text(t.web.notes.modes.project),
-                  ),
-                  ButtonSegment(
-                    value: 1,
-                    icon: const Icon(Icons.folder_outlined, size: 18),
-                    label: Text(t.web.notes.modes.vault),
-                  ),
-                ],
-                selected: {_mode},
-                showSelectedIcon: false,
-                onSelectionChanged: (s) => setState(() => _mode = s.first),
-              ),
-            ),
-            Expanded(
-              // Strip the duplicate top inset so the child Scaffold's AppBar
-              // sits flush under the toggle (we already consumed SafeArea top).
-              child: MediaQuery.removePadding(
-                context: context,
-                removeTop: true,
-                child: IndexedStack(
-                  index: _mode,
-                  children: const [ProjectScreen(), NotesVaultScreen()],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  Widget build(BuildContext context, WidgetRef ref) {
+    return const ProjectScreen(variant: 'notes');
   }
 }
 
+// NotesVaultScreen — the markdown/Obsidian-sync vault, demoted out of the
+// core triad (reachable from the More menu).
+//
+// A flat list mixes personal scratchpads with every project's docs in one
+// stream — usable at 10 notes, unreadable at 200. Mirrors the web vault: the
+// user starts at the root, sees top-level folders + root-level .md files, and
+// drills down level by level. Search collapses the tree into a flat result
+// list; quick chips jump to common roots (`personal/`, `projects/`).
 class NotesVaultScreen extends ConsumerStatefulWidget {
   const NotesVaultScreen({super.key});
 

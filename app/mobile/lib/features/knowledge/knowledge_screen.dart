@@ -311,13 +311,17 @@ class _KbView extends ConsumerStatefulWidget {
 
 class _KbViewState extends ConsumerState<_KbView> {
   static const _global = '__global__';
+  static const _foundational = ['kb_infrastructure', 'kb_conventions'];
+  static const _emergent = ['kb_lessons', 'kb_reusable'];
   String _kind = 'kb_infrastructure';
-  String _cwd = _global;
-  final _cwdCtrl = TextEditingController();
   final _editCtrl = TextEditingController();
   bool _editing = false;
   bool _busy = false;
+  bool _showProposal = false;
   AsyncValue<ProjectDoc> _doc = const AsyncValue.loading();
+  List<DocProposal> _proposals = const [];
+
+  bool get _isFoundational => _foundational.contains(_kind);
 
   @override
   void initState() {
@@ -327,7 +331,6 @@ class _KbViewState extends ConsumerState<_KbView> {
 
   @override
   void dispose() {
-    _cwdCtrl.dispose();
     _editCtrl.dispose();
     super.dispose();
   }
@@ -343,8 +346,6 @@ class _KbViewState extends ConsumerState<_KbView> {
         return t.web.knowledge.kb.kinds.kb_lessons;
       case 'kb_reusable':
         return t.web.knowledge.kb.kinds.kb_reusable;
-      case 'kb_handbook':
-        return t.web.knowledge.kb.kinds.kb_handbook;
       default:
         return t.web.knowledge.kb.kinds.kb_infrastructure;
     }
@@ -354,20 +355,32 @@ class _KbViewState extends ConsumerState<_KbView> {
     setState(() {
       _doc = const AsyncValue.loading();
       _editing = false;
+      _showProposal = false;
     });
     try {
-      final d = await ref.read(projectDocsApiProvider).getDoc(_cwd, _kind);
-      if (mounted) setState(() => _doc = AsyncValue.data(d));
+      final api = ref.read(projectDocsApiProvider);
+      final d = await api.getDoc(_global, _kind);
+      final props = await api.listPendingProposals(cwd: _global);
+      if (mounted) {
+        setState(() {
+          _doc = AsyncValue.data(d);
+          _proposals = props;
+        });
+      }
     } on Object catch (e, st) {
       if (mounted) setState(() => _doc = AsyncValue.error(e, st));
     }
   }
 
-  void _select(String kind, String cwd) {
-    setState(() {
-      _kind = kind;
-      _cwd = cwd;
-    });
+  DocProposal? get _pending {
+    for (final p in _proposals) {
+      if (p.kind == _kind) return p;
+    }
+    return null;
+  }
+
+  void _select(String kind) {
+    setState(() => _kind = kind);
     _load();
   }
 
@@ -377,7 +390,7 @@ class _KbViewState extends ConsumerState<_KbView> {
     try {
       await ref
           .read(projectDocsApiProvider)
-          .putDoc(cwd: _cwd, kind: _kind, content: _editCtrl.text);
+          .putDoc(cwd: _global, kind: _kind, content: _editCtrl.text);
       await _load();
       messenger.showSnackBar(SnackBar(content: Text(t.web.knowledge.kb.saved)));
     } on Object {
@@ -392,10 +405,8 @@ class _KbViewState extends ConsumerState<_KbView> {
   Future<void> _unlock(ProjectDoc d) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await ref
-          .read(projectDocsApiProvider)
-          .putDoc(
-            cwd: _cwd,
+      await ref.read(projectDocsApiProvider).putDoc(
+            cwd: _global,
             kind: _kind,
             content: _stripSig(d.content),
             updatedBy: 'agent',
@@ -408,6 +419,33 @@ class _KbViewState extends ConsumerState<_KbView> {
       messenger.showSnackBar(
         SnackBar(content: Text(t.web.knowledge.actionFailed)),
       );
+    }
+  }
+
+  Future<void> _decide(bool approve) async {
+    final p = _pending;
+    if (p == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      final api = ref.read(projectDocsApiProvider);
+      if (approve) {
+        await api.approveProposal(p.id);
+      } else {
+        await api.rejectProposal(p.id);
+      }
+      await _load();
+      messenger.showSnackBar(SnackBar(
+        content: Text(approve
+            ? t.web.knowledge.kb.proposal.approved
+            : t.web.knowledge.kb.proposal.rejected),
+      ));
+    } on Object {
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.web.knowledge.actionFailed)),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -425,8 +463,29 @@ class _KbViewState extends ConsumerState<_KbView> {
     }
   }
 
+  Widget _sectionLabel(String text) => Padding(
+        padding: const EdgeInsets.only(right: 6, left: 2),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 10,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+
+  Widget _chip(String k) => Padding(
+        padding: const EdgeInsets.only(right: 6),
+        child: ChoiceChip(
+          label: Text(_kindLabel(k)),
+          selected: _kind == k,
+          onSelected: (_) => _select(k),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Column(
       children: [
         SizedBox(
@@ -436,42 +495,11 @@ class _KbViewState extends ConsumerState<_KbView> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
-                for (final k in const [
-                  'kb_infrastructure',
-                  'kb_conventions',
-                  'kb_lessons',
-                  'kb_reusable',
-                ])
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: ChoiceChip(
-                      label: Text(_kindLabel(k)),
-                      selected: _kind == k && _cwd == _global,
-                      onSelected: (_) => _select(k, _global),
-                    ),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: ChoiceChip(
-                    label: Text(t.web.knowledge.kb.kinds.kb_handbook),
-                    selected: _kind == 'kb_handbook',
-                    onSelected: _cwdCtrl.text.trim().isEmpty
-                        ? null
-                        : (_) => _select('kb_handbook', _cwdCtrl.text.trim()),
-                  ),
-                ),
+                _sectionLabel(t.web.knowledge.kb.foundational),
+                for (final k in _foundational) _chip(k),
+                _sectionLabel(t.web.knowledge.kb.emergent),
+                for (final k in _emergent) _chip(k),
               ],
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
-          child: TextField(
-            controller: _cwdCtrl,
-            decoration: InputDecoration(
-              isDense: true,
-              hintText: t.web.knowledge.cwdPlaceholder,
-              border: const OutlineInputBorder(),
             ),
           ),
         ),
@@ -487,13 +515,31 @@ class _KbViewState extends ConsumerState<_KbView> {
             data: (d) {
               final content = _stripSig(d.content);
               final locked = d.updatedBy == 'operator';
+              final pending = _pending;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-                    child: Row(
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
+                        Chip(
+                          label: Text(
+                            _isFoundational
+                                ? t.web.knowledge.kb.bindingBadge
+                                : t.web.knowledge.kb.referenceBadge,
+                            style: const TextStyle(fontSize: 10),
+                          ),
+                          backgroundColor: _isFoundational
+                              ? scheme.tertiaryContainer
+                              : scheme.secondaryContainer,
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
                         if (d.isPersisted)
                           Chip(
                             label: Text(
@@ -503,8 +549,9 @@ class _KbViewState extends ConsumerState<_KbView> {
                               style: const TextStyle(fontSize: 10),
                             ),
                             visualDensity: VisualDensity.compact,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
                           ),
-                        const Spacer(),
                         if (!_editing) ...[
                           TextButton(
                             onPressed: () {
@@ -526,6 +573,55 @@ class _KbViewState extends ConsumerState<_KbView> {
                       ],
                     ),
                   ),
+                  if (pending != null && !_editing)
+                    Container(
+                      margin: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: scheme.tertiaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            t.web.knowledge.kb.proposal.text,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          Row(
+                            children: [
+                              TextButton(
+                                onPressed: () => setState(
+                                    () => _showProposal = !_showProposal),
+                                child: Text(_showProposal
+                                    ? t.web.knowledge.kb.proposal.hide
+                                    : t.web.knowledge.kb.proposal.preview),
+                              ),
+                              const Spacer(),
+                              TextButton(
+                                onPressed: _busy ? null : () => _decide(false),
+                                child: Text(t.web.knowledge.kb.proposal.reject),
+                              ),
+                              FilledButton(
+                                onPressed: _busy ? null : () => _decide(true),
+                                child: Text(t.web.knowledge.kb.proposal.approve),
+                              ),
+                            ],
+                          ),
+                          if (_showProposal)
+                            Container(
+                              constraints: const BoxConstraints(maxHeight: 240),
+                              margin: const EdgeInsets.only(top: 6),
+                              child: SingleChildScrollView(
+                                child: SelectableText(
+                                  _stripSig(pending.proposedContent),
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   Expanded(
                     child: _editing
                         ? Padding(
@@ -584,6 +680,7 @@ class _KbViewState extends ConsumerState<_KbView> {
     );
   }
 }
+
 
 class _DetailSheet extends ConsumerWidget {
   const _DetailSheet({required this.node, required this.onChanged});

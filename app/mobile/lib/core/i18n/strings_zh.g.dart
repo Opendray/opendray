@@ -128,6 +128,7 @@ class _TranslationsNavZh extends TranslationsNavEn {
 	@override String get settings => '设置';
 	@override String get workspace => '工作区';
 	@override String get knowledge => '知识';
+	@override String get vault => '文档库';
 }
 
 // Path: web
@@ -1108,7 +1109,6 @@ class _TranslationsWebProjectZh extends TranslationsWebProjectEn {
 	@override late final _TranslationsWebProjectLifecycleZh lifecycle = _TranslationsWebProjectLifecycleZh._(_root);
 	@override late final _TranslationsWebProjectDocMetaZh docMeta = _TranslationsWebProjectDocMetaZh._(_root);
 	@override late final _TranslationsWebProjectProposalBannerZh proposalBanner = _TranslationsWebProjectProposalBannerZh._(_root);
-	@override late final _TranslationsWebProjectHandbookZh handbook = _TranslationsWebProjectHandbookZh._(_root);
 }
 
 // Path: web.memoryInspector
@@ -1149,7 +1149,6 @@ class _TranslationsWebNotesZh extends TranslationsWebNotesEn {
 	@override late final _TranslationsWebNotesPickerZh picker = _TranslationsWebNotesPickerZh._(_root);
 	@override late final _TranslationsWebNotesVaultSyncZh vaultSync = _TranslationsWebNotesVaultSyncZh._(_root);
 	@override late final _TranslationsWebNotesSyncBadgeZh syncBadge = _TranslationsWebNotesSyncBadgeZh._(_root);
-	@override late final _TranslationsWebNotesModesZh modes = _TranslationsWebNotesModesZh._(_root);
 }
 
 // Path: web.activity
@@ -1423,7 +1422,7 @@ class _TranslationsWebKnowledgeZh extends TranslationsWebKnowledgeEn {
 
 	// Translations
 	@override String get title => '知识';
-	@override String get subtitle => '自我进化的知识图谱——从你的工作中蒸馏出的实体、事实、playbook 与技能。';
+	@override String get subtitle => '跨所有项目沉淀的知识——基础设施与规约,加上从过往工作蒸馏的教训与可复用功能。开新项目时注入,快速起步、不从头再来。';
 	@override String get searchPlaceholder => '搜索知识…';
 	@override String get search => '搜索';
 	@override String get browse => '浏览';
@@ -1490,6 +1489,7 @@ class _TranslationsMoreItemsZh extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsDataExportZh dataExport = _TranslationsMoreItemsDataExportZh._(_root);
 	@override late final _TranslationsMoreItemsSettingsZh settings = _TranslationsMoreItemsSettingsZh._(_root);
 	@override late final _TranslationsMoreItemsAboutZh about = _TranslationsMoreItemsAboutZh._(_root);
+	@override late final _TranslationsMoreItemsVaultZh vault = _TranslationsMoreItemsVaultZh._(_root);
 }
 
 // Path: sessions.filters
@@ -3049,7 +3049,6 @@ class _TranslationsWebProjectTabsZh extends TranslationsWebProjectTabsEn {
 	@override String get inbox => '收件箱';
 	@override String get conflicts => '冲突';
 	@override String get archived => '已归档';
-	@override String get handbook => '手册';
 }
 
 // Path: web.project.docLabel
@@ -3211,25 +3210,6 @@ class _TranslationsWebProjectProposalBannerZh extends TranslationsWebProjectProp
 	// Translations
 	@override String get text => 'AI 已对此文档提议更新,等待你批准。';
 	@override String get button => '去 Inbox 查看';
-}
-
-// Path: web.project.handbook
-class _TranslationsWebProjectHandbookZh extends TranslationsWebProjectHandbookEn {
-	_TranslationsWebProjectHandbookZh._(TranslationsZh root) : this._root = root, super.internal(root);
-
-	final TranslationsZh _root; // ignore: unused_field
-
-	// Translations
-	@override String get empty => '尚无项目手册。后台引擎会从本项目的会话日志起草;你也可以在「知识」页手动生成。';
-	@override String get aiManaged => '由 AI 维护(随日志刷新)';
-	@override String get locked => '已锁定 — 你编辑过,AI 不会覆盖';
-	@override String get edit => '编辑';
-	@override String get save => '保存(锁定)';
-	@override String get cancel => '取消';
-	@override String get unlock => '解锁(交还 AI)';
-	@override String get saved => '项目手册已保存';
-	@override String get unlocked => '已解锁 — AI 将重新接管';
-	@override String get hint => '保存编辑即锁定本页;解锁后 AI 会在下一轮重新起草。';
 }
 
 // Path: web.memoryInspector.status
@@ -3588,17 +3568,6 @@ class _TranslationsWebNotesSyncBadgeZh extends TranslationsWebNotesSyncBadgeEn {
 	@override String get tooltipAutoOn => ' · 自动同步已开启';
 	@override String tooltipLastError({required Object error}) => ' · 上次错误：${error}';
 	@override String get branchPlaceholder => '—';
-}
-
-// Path: web.notes.modes
-class _TranslationsWebNotesModesZh extends TranslationsWebNotesModesEn {
-	_TranslationsWebNotesModesZh._(TranslationsZh root) : this._root = root, super.internal(root);
-
-	final TranslationsZh _root; // ignore: unused_field
-
-	// Translations
-	@override String get project => '项目文档';
-	@override String get vault => '自由文档';
 }
 
 // Path: web.activity.filters
@@ -5049,6 +5018,13 @@ class _TranslationsWebKnowledgeKbZh extends TranslationsWebKnowledgeKbEn {
 	@override String get unlocked => '已解锁——AI 将重新维护此页';
 	@override String get regenerating => '正在后台重新生成…';
 	@override late final _TranslationsWebKnowledgeKbKindsZh kinds = _TranslationsWebKnowledgeKbKindsZh._(_root);
+	@override String get foundational => '基础 / 规约';
+	@override String get foundationalHint => '基础设施与规范——注入每个项目的强约束规则。';
+	@override String get emergent => '经验';
+	@override String get emergentHint => '从过往工作蒸馏的教训与可复用功能——参考性引导。';
+	@override String get bindingBadge => '强约束 · 必须遵守';
+	@override String get referenceBadge => '参考';
+	@override late final _TranslationsWebKnowledgeKbProposalZh proposal = _TranslationsWebKnowledgeKbProposalZh._(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -5206,6 +5182,17 @@ class _TranslationsMoreItemsAboutZh extends TranslationsMoreItemsAboutEn {
 	// Translations
 	@override String get title => '关于';
 	@override String get subtitle => '构建版本与服务器信息';
+}
+
+// Path: more.items.vault
+class _TranslationsMoreItemsVaultZh extends TranslationsMoreItemsVaultEn {
+	_TranslationsMoreItemsVaultZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '文档库';
+	@override String get subtitle => '自由 markdown 笔记(Obsidian 同步)';
 }
 
 // Path: sessions.detail.accountSwitcher
@@ -6173,7 +6160,6 @@ class _TranslationsWebProjectDocMetaMaintainerZh extends TranslationsWebProjectD
 	// Translations
 	@override String get coauthored => '你维护 · AI 提议';
 	@override String get auto => '自动生成 · 只读';
-	@override String get ai_lockable => 'AI 起草 · 编辑即锁定';
 }
 
 // Path: web.project.docMeta.purpose
@@ -6187,7 +6173,6 @@ class _TranslationsWebProjectDocMetaPurposeZh extends TranslationsWebProjectDocM
 	@override String get plan => '当前的路线图 / 进行中的工作。会话推进后 AI 会向 Inbox 提议更新,由你批准。';
 	@override String get tech_stack => '技术栈与结构,由项目扫描器自动生成(每 6 小时刷新)。';
 	@override String get recent_activity => '近期 Git 活动的 AI 摘要,自动刷新(每 12 小时)。';
-	@override String get kb_handbook => '项目手册:如何构建/运行/部署、用到的基础设施、协作边界、关键教训。AI 从工作日志起草;你一旦编辑即锁定,AI 不再覆盖。';
 }
 
 // Path: web.memoryInspector.scope.values
@@ -7604,7 +7589,22 @@ class _TranslationsWebKnowledgeKbKindsZh extends TranslationsWebKnowledgeKbKinds
 	@override String get kb_conventions => '开发规范';
 	@override String get kb_lessons => '经验教训';
 	@override String get kb_reusable => '可复用功能';
-	@override String get kb_handbook => '项目手册';
+}
+
+// Path: web.knowledge.kb.proposal
+class _TranslationsWebKnowledgeKbProposalZh extends TranslationsWebKnowledgeKbProposalEn {
+	_TranslationsWebKnowledgeKbProposalZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get text => 'AI 提议更新此页(出现了与之冲突的新证据)。';
+	@override String get preview => '预览';
+	@override String get hide => '收起';
+	@override String get approve => '批准';
+	@override String get reject => '拒绝';
+	@override String get approved => '更新已批准';
+	@override String get rejected => '提议已拒绝';
 }
 
 // Path: sessions.inspector.shell.tabs
@@ -7691,6 +7691,7 @@ extension on TranslationsZh {
 			'nav.settings' => '设置',
 			'nav.workspace' => '工作区',
 			'nav.knowledge' => '知识',
+			'nav.vault' => '文档库',
 			'web.brand' => 'opendray',
 			'web.loading' => '加载中…',
 			'web.topbar.expandSidebar' => '展开侧边栏',
@@ -8026,7 +8027,6 @@ extension on TranslationsZh {
 			'web.project.tabs.inbox' => '收件箱',
 			'web.project.tabs.conflicts' => '冲突',
 			'web.project.tabs.archived' => '已归档',
-			'web.project.tabs.handbook' => '手册',
 			'web.project.docLabel.goal' => '目标',
 			'web.project.docLabel.plan' => '计划',
 			'web.project.docLabel.tech_stack' => '技术栈',
@@ -8111,24 +8111,12 @@ extension on TranslationsZh {
 			'web.project.lifecycle.tooltip.archive' => '归档:封存此项目——冻结并从常规视图隐藏。',
 			'web.project.docMeta.maintainer.coauthored' => '你维护 · AI 提议',
 			'web.project.docMeta.maintainer.auto' => '自动生成 · 只读',
-			'web.project.docMeta.maintainer.ai_lockable' => 'AI 起草 · 编辑即锁定',
 			'web.project.docMeta.purpose.goal' => '项目的长期目标与意图——我们最终在做什么、为什么做。当某次会话改变了方向,AI 会向 Inbox 提议更新,由你批准。',
 			'web.project.docMeta.purpose.plan' => '当前的路线图 / 进行中的工作。会话推进后 AI 会向 Inbox 提议更新,由你批准。',
 			'web.project.docMeta.purpose.tech_stack' => '技术栈与结构,由项目扫描器自动生成(每 6 小时刷新)。',
 			'web.project.docMeta.purpose.recent_activity' => '近期 Git 活动的 AI 摘要,自动刷新(每 12 小时)。',
-			'web.project.docMeta.purpose.kb_handbook' => '项目手册:如何构建/运行/部署、用到的基础设施、协作边界、关键教训。AI 从工作日志起草;你一旦编辑即锁定,AI 不再覆盖。',
 			'web.project.proposalBanner.text' => 'AI 已对此文档提议更新,等待你批准。',
 			'web.project.proposalBanner.button' => '去 Inbox 查看',
-			'web.project.handbook.empty' => '尚无项目手册。后台引擎会从本项目的会话日志起草;你也可以在「知识」页手动生成。',
-			'web.project.handbook.aiManaged' => '由 AI 维护(随日志刷新)',
-			'web.project.handbook.locked' => '已锁定 — 你编辑过,AI 不会覆盖',
-			'web.project.handbook.edit' => '编辑',
-			'web.project.handbook.save' => '保存(锁定)',
-			'web.project.handbook.cancel' => '取消',
-			'web.project.handbook.unlock' => '解锁(交还 AI)',
-			'web.project.handbook.saved' => '项目手册已保存',
-			'web.project.handbook.unlocked' => '已解锁 — AI 将重新接管',
-			'web.project.handbook.hint' => '保存编辑即锁定本页;解锁后 AI 会在下一轮重新起草。',
 			'web.memoryInspector.status.label' => '当前 embedder',
 			'web.memoryInspector.status.unavailable' => '不可用',
 			'web.memoryInspector.status.probing' => '探测中…',
@@ -8167,8 +8155,6 @@ extension on TranslationsZh {
 			'web.memoryInspector.records.enterScopeKeyHint' => '输入 scope key 以浏览记忆。',
 			'web.memoryInspector.records.noMatchesForQuery' => ({required Object query}) => '未找到匹配 "${query}"',
 			'web.memoryInspector.records.noMemoriesInScope' => '此 scope 暂无记忆。',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.row.simBadge' => ({required Object value}) => '相似度 ${value}',
 			'web.memoryInspector.row.rankBadge' => ({required Object value}) => '排名分 ${value}',
 			'web.memoryInspector.row.rankTooltip' => ({required Object effective, required Object similarity, required Object age, required Object days, required Object hits, required Object confidence}) => '有效分 ${effective} = 相似度 ${similarity} × 时效 ${age} (${days}d) × 命中 ${hits} × 置信 ${confidence}',
@@ -8181,6 +8167,8 @@ extension on TranslationsZh {
 			'web.memoryInspector.row.editTooltip' => '编辑该记忆',
 			'web.memoryInspector.row.deleteTooltip' => '删除该记忆',
 			'web.memoryInspector.row.emptyError' => '记忆文本不能为空',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryInspector.row.deleteConfirm' => ({required Object id}) => '删除记忆 ${id}? 不可恢复。',
 			'web.memoryInspector.toasts.deleted' => '记忆已删除',
 			'web.memoryInspector.toasts.deleteFailed' => '删除失败',
@@ -8387,8 +8375,6 @@ extension on TranslationsZh {
 			'web.notes.syncBadge.tooltipAutoOn' => ' · 自动同步已开启',
 			'web.notes.syncBadge.tooltipLastError' => ({required Object error}) => ' · 上次错误：${error}',
 			'web.notes.syncBadge.branchPlaceholder' => '—',
-			'web.notes.modes.project' => '项目文档',
-			'web.notes.modes.vault' => '自由文档',
 			'web.activity.title' => '活动',
 			'web.activity.subtitle' => '按调用维度审计每个由注册集成发起的 API 请求。包括入站调用（第三方应用以集成 API key 调用 opendray）和出站代理调用（admin → opendray 代理 → 集成）。本管理端 UI 直接发起的调用不会被记录。',
 			'web.activity.refresh' => '刷新',
@@ -8681,8 +8667,6 @@ extension on TranslationsZh {
 			'web.integrations.edit_dialog.baseUrlProxyPlaceholder' => 'http://127.0.0.1:8080',
 			'web.integrations.edit_dialog.consumerHint' => '这是一个仅消费型集成。在此修改 base URL 还需要 route prefix；请删除后重新注册。',
 			'web.integrations.edit_dialog.versionLabel' => 'Version',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
 			'web.integrations.edit_dialog.scopesLabel' => 'Scopes',
 			'web.integrations.edit_dialog.scopesIntro' => '收窄或放宽此集成 API key 授权的 API 范围。已颁发的 token 不受影响 — 新的 scope 集在下次请求时生效。',
@@ -8697,6 +8681,8 @@ extension on TranslationsZh {
 			'web.integrations.proxy.baseLabel' => 'base:',
 			'web.integrations.proxy.history' => '历史',
 			'web.integrations.proxy.historyEmpty' => '此集成尚无历史请求',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.proxy.send' => '发送',
 			'web.integrations.proxy.sending' => '发送中…',
 			'web.integrations.proxy.extraHeadersLabel' => '额外 header（每行一条，Name: Value）',
@@ -9195,8 +9181,6 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.memoryLibraryPath.hint' => '存放 libonnxruntime.dylib (macOS) / libonnxruntime.so (Linux) 的目录。`brew install onnxruntime` 后即 /opt/homebrew/opt/onnxruntime/lib。',
 			'web.serverSettings.fields.memoryModelPath.label' => '模型路径',
 			'web.serverSettings.fields.memoryModelPath.hint' => '.onnx 权重的绝对路径。从 HuggingFace 下载，如 Xenova/bge-m3 或 Xenova/bge-small-en-v1.5。',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.memoryTokenizerPath.label' => 'Tokenizer 路径',
 			'web.serverSettings.fields.memoryTokenizerPath.hint' => 'tokenizer.json（HuggingFace 标准格式）的绝对路径 — 通常和模型放在一起。',
 			'web.serverSettings.fields.memoryMaxSeqLen.label' => '最大序列长度',
@@ -9211,6 +9195,8 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.geminiTmpRoot.hint' => '存放 Gemini 每项目 tmp 文件夹的根目录。默认 ~/.gemini/tmp。',
 			'web.serverSettings.fields.geminiProjectsFile.label' => 'projects.json',
 			'web.serverSettings.fields.geminiProjectsFile.hint' => 'Gemini cwd→短名映射文件的路径。默认 ~/.gemini/projects.json。',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.backupLocalDir.label' => '本地备份目录',
 			'web.serverSettings.fields.backupLocalDir.hint' => '自动创建的 `local` 目标的默认根目录。留空 = ~/.opendray/backups。需要重启。',
 			'web.serverSettings.fields.backupExportDir.label' => '导出目录',
@@ -9554,7 +9540,7 @@ extension on TranslationsZh {
 			'web.export.imports.noneCounts' => '(无)',
 			'web.export.imports.listFailedToast' => '加载导入列表失败',
 			'web.knowledge.title' => '知识',
-			'web.knowledge.subtitle' => '自我进化的知识图谱——从你的工作中蒸馏出的实体、事实、playbook 与技能。',
+			'web.knowledge.subtitle' => '跨所有项目沉淀的知识——基础设施与规约,加上从过往工作蒸馏的教训与可复用功能。开新项目时注入,快速起步、不从头再来。',
 			'web.knowledge.searchPlaceholder' => '搜索知识…',
 			'web.knowledge.search' => '搜索',
 			'web.knowledge.browse' => '浏览',
@@ -9596,7 +9582,19 @@ extension on TranslationsZh {
 			'web.knowledge.kb.kinds.kb_conventions' => '开发规范',
 			'web.knowledge.kb.kinds.kb_lessons' => '经验教训',
 			'web.knowledge.kb.kinds.kb_reusable' => '可复用功能',
-			'web.knowledge.kb.kinds.kb_handbook' => '项目手册',
+			'web.knowledge.kb.foundational' => '基础 / 规约',
+			'web.knowledge.kb.foundationalHint' => '基础设施与规范——注入每个项目的强约束规则。',
+			'web.knowledge.kb.emergent' => '经验',
+			'web.knowledge.kb.emergentHint' => '从过往工作蒸馏的教训与可复用功能——参考性引导。',
+			'web.knowledge.kb.bindingBadge' => '强约束 · 必须遵守',
+			'web.knowledge.kb.referenceBadge' => '参考',
+			'web.knowledge.kb.proposal.text' => 'AI 提议更新此页(出现了与之冲突的新证据)。',
+			'web.knowledge.kb.proposal.preview' => '预览',
+			'web.knowledge.kb.proposal.hide' => '收起',
+			'web.knowledge.kb.proposal.approve' => '批准',
+			'web.knowledge.kb.proposal.reject' => '拒绝',
+			'web.knowledge.kb.proposal.approved' => '更新已批准',
+			'web.knowledge.kb.proposal.rejected' => '提议已拒绝',
 			'web.knowledge.kinds.all' => '全部',
 			'web.knowledge.kinds.entity' => '实体',
 			'web.knowledge.kinds.fact' => '事实',
@@ -9635,6 +9633,8 @@ extension on TranslationsZh {
 			'more.items.settings.subtitle' => '语言、外观、账户',
 			'more.items.about.title' => '关于',
 			'more.items.about.subtitle' => '构建版本与服务器信息',
+			'more.items.vault.title' => '文档库',
+			'more.items.vault.subtitle' => '自由 markdown 笔记(Obsidian 同步)',
 			'more.signOut' => '退出登录',
 			'sessions.title' => '会话',
 			'sessions.refresh' => '刷新',

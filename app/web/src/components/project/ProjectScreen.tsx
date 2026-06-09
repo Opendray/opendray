@@ -326,7 +326,7 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
 
 // How each doc kind is kept current — drives the badge so the operator can see
 // at a glance who owns the page (you / AI-proposed / auto-scanned).
-type Maintainer = 'coauthored' | 'auto' | 'ai_lockable'
+type Maintainer = 'coauthored' | 'auto'
 const DOC_MAINTAINER: Record<string, Maintainer> = {
   goal: 'coauthored',
   plan: 'coauthored',
@@ -336,7 +336,6 @@ const DOC_MAINTAINER: Record<string, Maintainer> = {
 const MAINTAINER_STYLE: Record<Maintainer, string> = {
   coauthored: 'bg-blue-500/15 text-blue-400',
   auto: 'bg-zinc-500/15 text-zinc-300',
-  ai_lockable: 'bg-emerald-500/15 text-emerald-400',
 }
 
 // DocMetaStrip is the per-note header that explains what the note is, who

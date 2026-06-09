@@ -16,12 +16,12 @@ export type DocKind =
   | 'plan'
   | 'tech_stack'
   | 'recent_activity'
-  // M-KB curated knowledge-base pages (fused into the note system).
+  // Cross-project Knowledge pages (Experience Flywheel — global only;
+  // per-project docs are goal/plan/journal above, no handbook).
   | 'kb_infrastructure'
   | 'kb_conventions'
   | 'kb_lessons'
   | 'kb_reusable'
-  | 'kb_handbook'
 export type DocAuthor = 'operator' | 'agent' | 'scanner'
 
 // GlobalCwd sentinel: the cwd under which cross-project (global) KB pages live.

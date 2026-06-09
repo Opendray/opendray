@@ -528,7 +528,7 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
             onOpenProject: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => const ProjectScreen(),
+                  builder: (_) => const ProjectScreen(variant: 'memory'),
                 ),
               );
             },

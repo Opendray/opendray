@@ -457,8 +457,7 @@
         "journal": "Diario",
         "inbox": "Bandeja de entrada",
         "conflicts": "Conflictos",
-        "archived": "Archivadas",
-        "handbook": "Manual"
+        "archived": "Archivadas"
       },
       "docLabel": {
         "goal": "Objetivo",
@@ -573,32 +572,18 @@
       "docMeta": {
         "maintainer": {
           "coauthored": "Tú mantienes · IA propone",
-          "auto": "Autogenerado · solo lectura",
-          "ai_lockable": "Redactado por IA · se bloquea al editar"
+          "auto": "Autogenerado · solo lectura"
         },
         "purpose": {
           "goal": "La intención a largo plazo del proyecto: qué construimos y por qué. Cuando una sesión cambia el rumbo, la IA propone una actualización en tu Bandeja para que la apruebes.",
           "plan": "La hoja de ruta actual / trabajo en curso. La IA propone una actualización en tu Bandeja tras avanzar una sesión; tú la apruebas.",
           "tech_stack": "Stack y estructura, autogenerado por el escáner del proyecto (se actualiza cada 6 h).",
-          "recent_activity": "Resumen por IA de la actividad reciente de Git, actualizado automáticamente (cada 12 h).",
-          "kb_handbook": "Manual del proyecto: cómo construir / ejecutar / desplegar, infraestructura usada, límites de colaboración, lecciones clave. La IA lo redacta desde el registro; al editarlo se bloquea y la IA deja de sobrescribir."
+          "recent_activity": "Resumen por IA de la actividad reciente de Git, actualizado automáticamente (cada 12 h)."
         }
       },
       "proposalBanner": {
         "text": "La IA ha propuesto una actualización de este documento, a la espera de tu aprobación.",
         "button": "Revisar en la Bandeja"
-      },
-      "handbook": {
-        "empty": "Aún no hay manual del proyecto. El motor en segundo plano lo redacta desde el registro de sesiones; también puedes generarlo desde la página de Conocimiento.",
-        "aiManaged": "Mantenido por IA (se actualiza desde el registro)",
-        "locked": "Bloqueado — lo editaste, la IA no lo sobrescribirá",
-        "edit": "Editar",
-        "save": "Guardar (bloquea)",
-        "cancel": "Cancelar",
-        "unlock": "Desbloquear (devolver a la IA)",
-        "saved": "Manual guardado",
-        "unlocked": "Desbloqueado — la IA volverá a gestionarlo",
-        "hint": "Guardar una edición bloquea la página; desbloquear deja que la IA la redacte de nuevo en el próximo ciclo."
       }
     },
     "memoryInspector": {
@@ -925,10 +910,6 @@
         "tooltipAutoOn": " · sincronización automática activada",
         "tooltipLastError": " · último error: {error}",
         "branchPlaceholder": "—"
-      },
-      "modes": {
-        "project": "Doc del proyecto",
-        "vault": "Notas libres"
       }
     },
     "activity": {
@@ -2488,8 +2469,7 @@
           "kb_infrastructure": "Infraestructura",
           "kb_conventions": "Convenciones",
           "kb_lessons": "Lecciones",
-          "kb_reusable": "Funciones reutilizables",
-          "kb_handbook": "Manual"
+          "kb_reusable": "Funciones reutilizables"
         },
         "foundational": "Fundacional",
         "foundationalHint": "Infraestructura y convenciones — reglas vinculantes inyectadas en cada proyecto.",
@@ -2580,6 +2560,10 @@
       "about": {
         "title": "Acerca de",
         "subtitle": "Versión de compilación e información del servidor"
+      },
+      "vault": {
+        "title": "Bóveda",
+        "subtitle": "Notas markdown libres (sincronización Obsidian)"
       }
     },
     "signOut": "Cerrar sesión"
