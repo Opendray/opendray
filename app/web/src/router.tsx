@@ -14,11 +14,11 @@ import { IntegrationsPage } from '@/pages/Integrations'
 import { ActivityPage } from '@/pages/Activity'
 import { MemoryPage } from '@/pages/Memory'
 import { MemoryWorkersPage } from '@/pages/MemoryWorkers'
-import { ProjectPage } from '@/pages/Project'
+import { ProjectPage, NotesPage } from '@/pages/Project'
 import { ArchivedPage } from '@/pages/Archived'
 import { BackupsPage } from '@/pages/Backups'
 import { ExportPage } from '@/pages/Export'
-import { NotesPage } from '@/pages/Notes'
+import { VaultPage } from '@/pages/Notes'
 import { KnowledgePage } from '@/pages/Knowledge'
 import { PluginsPage } from '@/pages/Plugins'
 import { SettingsPage } from '@/pages/Settings'
@@ -86,12 +86,18 @@ const notesRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/notes',
   component: NotesPage,
-  // Notes hosts two modes: the project's official doc ('project', default)
-  // and the freeform markdown vault ('vault'). cwd selects the project.
+  // Notes = the project's official doc; cwd selects the project.
   validateSearch: (search) => ({
-    mode: search.mode === 'vault' ? 'vault' : 'project',
     cwd: typeof search.cwd === 'string' ? search.cwd : '',
   }),
+})
+
+// Vault — the markdown/Obsidian-sync utility, demoted out of the core
+// Memory/Notes/Knowledge triad (Experience Flywheel §7).
+const vaultRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/vault',
+  component: VaultPage,
 })
 
 const knowledgeRoute = createRoute({
@@ -164,6 +170,7 @@ const routeTree = rootRoute.addChildren([
     integrationsRoute,
     activityRoute,
     notesRoute,
+    vaultRoute,
     knowledgeRoute,
     memoryRoute,
     memoryProjectRoute,

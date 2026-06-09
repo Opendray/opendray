@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useSearch, useNavigate } from '@tanstack/react-router'
 import {
   Plus,
   Loader2,
@@ -9,10 +8,6 @@ import {
   Calendar,
   NotebookPen,
   FolderOpen,
-  FolderSearch,
-  Folder,
-  AlertCircle,
-  FileText,
   PanelRightClose,
   PanelRightOpen,
 } from 'lucide-react'
@@ -21,11 +16,6 @@ import { toast } from 'sonner'
 import { Trans, useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { ProjectScreen } from '@/components/project/ProjectScreen'
-import { FileBrowserDialog } from '@/components/sessions/FileBrowserDialog'
-import { listScopeKeys } from '@/lib/memory'
 import {
   listNotes,
   notesInfo,
@@ -57,177 +47,11 @@ const LS_OUTLINE_OPEN = 'opendray.notes.outlineOpen'
 
 type LeftMode = 'tree' | 'tags'
 
-// NotesPage is the project's official documentation home. It has two
-// modes: the structured, AI-driven project doc (goal / plan / journal /
-// handbook / lifecycle — the default) and the freeform markdown vault.
-// Memory holds episodic facts; Knowledge holds cross-project expertise;
-// Notes is "where this project is", in human-readable form.
-export function NotesPage() {
-  const { t } = useTranslation()
-  const search = useSearch({ strict: false }) as {
-    mode?: 'project' | 'vault'
-    cwd?: string
-  }
-  const navigate = useNavigate()
-  const mode = search.mode === 'vault' ? 'vault' : 'project'
-
-  const setMode = (m: 'project' | 'vault') =>
-    navigate({ to: '/notes', search: { mode: m, cwd: search.cwd ?? '' } })
-
-  return (
-    <div className="flex h-full flex-col">
-      {/* Mode switch: project doc (default) vs freeform vault. */}
-      <div className="border-border flex shrink-0 items-center gap-1 border-b px-3 py-2">
-        <button
-          type="button"
-          onClick={() => setMode('project')}
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] transition-colors',
-            mode === 'project'
-              ? 'bg-card border-border text-foreground border'
-              : 'text-muted-foreground hover:text-foreground',
-          )}
-        >
-          <FileText className="size-3.5" />
-          {t('web.notes.modes.project')}
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode('vault')}
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] transition-colors',
-            mode === 'vault'
-              ? 'bg-card border-border text-foreground border'
-              : 'text-muted-foreground hover:text-foreground',
-          )}
-        >
-          <NotebookPen className="size-3.5" />
-          {t('web.notes.modes.vault')}
-        </button>
-      </div>
-      <div className="min-h-0 flex-1">
-        {mode === 'project' ? (
-          <ProjectDocPane cwd={search.cwd ?? ''} />
-        ) : (
-          <VaultView />
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ProjectDocPane is the "project doc" mode: a cwd picker that opens the
-// per-project ProjectScreen (goal / plan / journal / handbook / lifecycle).
-// Self-contained (navigates within /notes) so it never leaves the page.
-function ProjectDocPane({ cwd }: { cwd: string }) {
-  const { t } = useTranslation()
-  const navigate = useNavigate()
-  const [picker, setPicker] = useState('')
-  const [browserOpen, setBrowserOpen] = useState(false)
-  const projectsQuery = useQuery({
-    queryKey: ['memory-project-scope-keys'],
-    queryFn: () => listScopeKeys('project'),
-    staleTime: 30_000,
-  })
-
-  const open = (target: string) =>
-    navigate({ to: '/notes', search: { mode: 'project', cwd: target } })
-
-  if (cwd) return <ProjectScreen cwd={cwd} />
-
-  return (
-    <div className="mx-auto max-w-2xl space-y-4 p-6">
-      <h1 className="text-xl font-semibold">{t('web.project.picker.title')}</h1>
-      <p className="text-muted-foreground text-sm">
-        {t('web.project.picker.subtitle')}
-      </p>
-      <div className="flex gap-2">
-        <Input
-          placeholder={t('web.project.picker.pathPlaceholder')}
-          value={picker}
-          onChange={(e) => setPicker(e.target.value)}
-          className="font-mono"
-        />
-        <Button
-          variant="outline"
-          onClick={() => setBrowserOpen(true)}
-          title={t('web.project.picker.browseTooltip')}
-        >
-          <FolderSearch className="mr-1 size-3.5" />
-          {t('web.project.picker.browse')}
-        </Button>
-        <Button disabled={!picker.trim()} onClick={() => open(picker.trim())}>
-          {t('web.project.picker.open')}
-        </Button>
-      </div>
-      <FileBrowserDialog
-        open={browserOpen}
-        onOpenChange={setBrowserOpen}
-        initialPath={picker.trim() || undefined}
-        onSelect={(path) => {
-          setPicker(path)
-          open(path)
-        }}
-      />
-      {projectsQuery.data && projectsQuery.data.length > 0 && (
-        <div className="space-y-1">
-          <p className="text-muted-foreground text-xs">
-            {t('web.project.picker.recentLabel')}
-          </p>
-          {sortProjectsValidFirst(projectsQuery.data).map((c) => {
-            const orphan = isLikelyOrphanScope(c)
-            return (
-              <button
-                key={c}
-                className={cn(
-                  'hover:bg-muted/50 flex w-full items-center gap-2 rounded-md p-2 text-left',
-                  orphan && 'opacity-60',
-                )}
-                onClick={() => open(c)}
-                title={orphan ? t('web.project.picker.orphanTooltip') : undefined}
-              >
-                {orphan ? (
-                  <AlertCircle className="h-4 w-4 flex-none text-amber-500" />
-                ) : (
-                  <Folder className="text-muted-foreground h-4 w-4 flex-none" />
-                )}
-                <span className="truncate font-mono text-xs">{c}</span>
-                {orphan && (
-                  <span className="text-muted-foreground ml-auto text-[10px]">
-                    {t('web.project.picker.orphanBadge')}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// Heuristic shared with the old /memory/project picker: a real project
-// cwd has ≥2 non-empty path segments; one-segment scope_keys are orphan
-// mirror-import data, shown de-emphasised.
-function isLikelyOrphanScope(cwd: string): boolean {
-  return cwd.split('/').filter((s) => s.length > 0).length < 2
-}
-
-function sortProjectsValidFirst(cwds: string[]): string[] {
-  return [...cwds].sort((a, b) => {
-    const ao = isLikelyOrphanScope(a)
-    const bo = isLikelyOrphanScope(b)
-    if (ao && !bo) return 1
-    if (!ao && bo) return -1
-    return a.localeCompare(b)
-  })
-}
-
-// VaultView is the markdown-vault browser/editor (the "freeform docs"
-// mode of the Notes page). Two-pane layout: left = navigation (tree or
+// VaultPage is the markdown-vault browser/editor (demoted out of the
+// core triad — a freeform/Obsidian-sync utility). Two-pane layout: left = navigation (tree or
 // tag picker, with title/path filter at top), right = NoteEditor for the
 // selected note. Independent of any session.
-function VaultView() {
+export function VaultPage() {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const { data: info } = useQuery({

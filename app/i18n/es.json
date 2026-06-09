@@ -39,7 +39,8 @@
     "backups": "Copias de seguridad",
     "settings": "Ajustes",
     "workspace": "Espacio de trabajo",
-    "knowledge": "Conocimiento"
+    "knowledge": "Conocimiento",
+    "vault": "Bóveda"
   },
   "web": {
     "brand": "opendray",

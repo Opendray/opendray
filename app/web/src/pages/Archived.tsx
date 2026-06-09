@@ -87,8 +87,8 @@ export function ArchivedPage() {
               </div>
               {scope === 'project' && scopeKey && (
                 <Link
-                  to="/notes"
-                  search={{ mode: 'project', cwd: scopeKey }}
+                  to="/memory/project"
+                  search={{ cwd: scopeKey }}
                   className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs"
                 >
                   {t('web.archived.openProject')}{' '}

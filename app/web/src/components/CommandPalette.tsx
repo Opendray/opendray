@@ -139,8 +139,11 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <Brain /> Memory
             <CommandShortcut>g m</CommandShortcut>
           </CommandItem>
-          <CommandItem onSelect={() => navigate({ to: '/notes', search: { mode: 'project', cwd: '' } })}>
+          <CommandItem onSelect={() => navigate({ to: '/notes', search: { cwd: '' } })}>
             <Brain /> Project notes
+          </CommandItem>
+          <CommandItem onSelect={() => navigate({ to: '/memory/project', search: { cwd: '' } })}>
+            <Brain /> Project memory
           </CommandItem>
           <CommandItem onSelect={go('/memory/archived')}>
             <Brain /> Archived memories

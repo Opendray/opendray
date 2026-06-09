@@ -20,19 +20,15 @@ import {
   Check,
   Inbox,
   Loader2,
-  Lock,
   Pause,
-  Pencil,
   Play,
   RotateCcw,
   Save,
   Trash2,
-  Unlock,
   X,
 } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from '@tanstack/react-router'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -73,8 +69,14 @@ import { MemoryHealthCard } from '@/components/project/MemoryHealthCard'
 import { ConflictsPanel } from '@/components/project/ConflictsPanel'
 import { JournalStalePanel } from '@/components/project/JournalStalePanel'
 
+// ProjectScreen renders one rung of the flywheel for a project (cwd).
+// variant='notes' → the project's official doc (goal/plan/tech/activity/
+// journal/inbox); variant='memory' → its memory hygiene (health/conflicts/
+// archived). Deconflated per the Experience Flywheel architecture so Notes
+// and Memory never embed each other.
 interface ProjectScreenProps {
   cwd: string
+  variant?: 'notes' | 'memory'
 }
 
 function useDocLabel() {
@@ -83,13 +85,19 @@ function useDocLabel() {
     t(`web.project.docLabel.${kind}`)
 }
 
-export function ProjectScreen({ cwd }: ProjectScreenProps) {
+export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
   const { t } = useTranslation()
   const qc = useQueryClient()
-  // Controlled tabs so quick-actions in ConflictsPanel can jump
-  // directly to the Plan / Goal editor without the operator
-  // hunting for the right tab.
-  const [activeTab, setActiveTab] = useState('health')
+  const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState(
+    variant === 'memory' ? 'health' : 'goal',
+  )
+  // A conflict that implicates goal/plan is resolved by editing the doc — which
+  // now lives on the Notes screen. From the memory variant, jump there.
+  const jumpToDoc = (tab: string) =>
+    variant === 'memory'
+      ? navigate({ to: '/notes', search: { cwd } })
+      : setActiveTab(tab)
 
   const docsQuery = useQuery({
     queryKey: ['project-docs', cwd],
@@ -113,14 +121,13 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
   })
 
   const docsByKind = useMemo(() => {
-    // goal/plan/tech_stack/recent_activity + the project's own handbook
-    // (kb_handbook) — the other global kb_* kinds live in the Knowledge page.
+    // Notes-layer docs only: goal/plan/tech_stack/recent_activity. The kb_*
+    // kinds live in the Knowledge page (cross-project), not per-project Notes.
     const map: Partial<Record<DocKind, ProjectDoc | undefined>> = {
       goal: undefined,
       plan: undefined,
       tech_stack: undefined,
       recent_activity: undefined,
-      kb_handbook: undefined,
     }
     for (const d of docsQuery.data ?? []) map[d.kind] = d
     return map
@@ -205,38 +212,44 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
         className="flex flex-1 flex-col overflow-hidden"
       >
         <TabsList className="bg-muted/30 mx-4 mt-3 w-fit">
-          <TabsTrigger value="health">{t('web.project.tabs.health')}</TabsTrigger>
-          <TabsTrigger value="goal">{t('web.project.tabs.goal')}</TabsTrigger>
-          <TabsTrigger value="plan">{t('web.project.tabs.plan')}</TabsTrigger>
-          <TabsTrigger value="handbook">
-            {t('web.project.tabs.handbook')}
-          </TabsTrigger>
-          <TabsTrigger value="tech">{t('web.project.tabs.tech')}</TabsTrigger>
-          <TabsTrigger value="activity">
-            {t('web.project.tabs.activity')}
-          </TabsTrigger>
-          <TabsTrigger value="journal">
-            {t('web.project.tabs.journal')}
-          </TabsTrigger>
-          <TabsTrigger value="inbox" className="relative">
-            {t('web.project.tabs.inbox')}
-            {inboxCount > 0 && (
-              <span className="bg-destructive text-destructive-foreground absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold">
-                {inboxCount}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="conflicts">
-            {t('web.project.tabs.conflicts')}
-          </TabsTrigger>
-          <TabsTrigger value="archived" className="relative">
-            {t('web.project.tabs.archived')}
-            {archivedCount > 0 && (
-              <span className="bg-secondary absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold">
-                {archivedCount}
-              </span>
-            )}
-          </TabsTrigger>
+          {variant === 'notes' ? (
+            <>
+              <TabsTrigger value="goal">{t('web.project.tabs.goal')}</TabsTrigger>
+              <TabsTrigger value="plan">{t('web.project.tabs.plan')}</TabsTrigger>
+              <TabsTrigger value="tech">{t('web.project.tabs.tech')}</TabsTrigger>
+              <TabsTrigger value="activity">
+                {t('web.project.tabs.activity')}
+              </TabsTrigger>
+              <TabsTrigger value="journal">
+                {t('web.project.tabs.journal')}
+              </TabsTrigger>
+              <TabsTrigger value="inbox" className="relative">
+                {t('web.project.tabs.inbox')}
+                {inboxCount > 0 && (
+                  <span className="bg-destructive text-destructive-foreground absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold">
+                    {inboxCount}
+                  </span>
+                )}
+              </TabsTrigger>
+            </>
+          ) : (
+            <>
+              <TabsTrigger value="health">
+                {t('web.project.tabs.health')}
+              </TabsTrigger>
+              <TabsTrigger value="conflicts">
+                {t('web.project.tabs.conflicts')}
+              </TabsTrigger>
+              <TabsTrigger value="archived" className="relative">
+                {t('web.project.tabs.archived')}
+                {archivedCount > 0 && (
+                  <span className="bg-secondary absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold">
+                    {archivedCount}
+                  </span>
+                )}
+              </TabsTrigger>
+            </>
+          )}
         </TabsList>
 
         <TabsContent value="health" className="flex-1 overflow-auto">
@@ -261,14 +274,6 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
             doc={docsByKind.plan}
             hasPending={pendingByKind.has('plan')}
             onGoToInbox={() => setActiveTab('inbox')}
-            onSaved={() => qc.invalidateQueries({ queryKey: ['project-docs', cwd] })}
-          />
-        </TabsContent>
-
-        <TabsContent value="handbook" className="flex-1 overflow-auto p-4">
-          <HandbookTab
-            cwd={cwd}
-            doc={docsByKind.kb_handbook}
             onSaved={() => qc.invalidateQueries({ queryKey: ['project-docs', cwd] })}
           />
         </TabsContent>
@@ -298,7 +303,7 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
         </TabsContent>
 
         <TabsContent value="conflicts" className="flex-1 overflow-auto">
-          <ConflictsPanel cwd={cwd} onJumpTab={setActiveTab} />
+          <ConflictsPanel cwd={cwd} onJumpTab={jumpToDoc} />
         </TabsContent>
 
         <TabsContent value="archived" className="flex-1 overflow-auto p-4">
@@ -318,35 +323,6 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
 }
 
 // ─── Doc self-description (A: make each note explain itself) ──
-
-// stripSig drops the KB drafter's hidden <!-- kb-sig:… --> marker line so it
-// never shows in the rendered handbook.
-function stripSig(s: string): string {
-  return s
-    .split('\n')
-    .filter((l) => !l.includes('kb-sig:'))
-    .join('\n')
-    .trim()
-}
-
-// explicit markdown styling (no dependency on the typography plugin)
-const MD = {
-  h1: (p: any) => <h1 className="mt-4 mb-2 text-lg font-semibold" {...p} />,
-  h2: (p: any) => (
-    <h2 className="border-border mt-4 mb-1.5 border-b pb-1 text-base font-semibold" {...p} />
-  ),
-  h3: (p: any) => <h3 className="mt-3 mb-1 text-sm font-semibold" {...p} />,
-  p: (p: any) => <p className="my-1.5 text-sm leading-relaxed" {...p} />,
-  ul: (p: any) => <ul className="my-1.5 ml-5 list-disc space-y-0.5 text-sm" {...p} />,
-  ol: (p: any) => <ol className="my-1.5 ml-5 list-decimal space-y-0.5 text-sm" {...p} />,
-  li: (p: any) => <li className="leading-relaxed" {...p} />,
-  code: (p: any) => (
-    <code className="bg-muted rounded px-1 py-0.5 font-mono text-[12px]" {...p} />
-  ),
-  strong: (p: any) => <strong className="font-semibold" {...p} />,
-  a: (p: any) => <a className="text-primary underline" {...p} />,
-  hr: () => <hr className="border-border my-3" />,
-}
 
 // How each doc kind is kept current — drives the badge so the operator can see
 // at a glance who owns the page (you / AI-proposed / auto-scanned).
@@ -513,142 +489,6 @@ function ReadonlyDocTab({ doc, kind }: ReadonlyDocTabProps) {
       <pre className="bg-muted/30 max-h-[60vh] overflow-auto rounded-md p-3 font-mono text-xs whitespace-pre-wrap">
         {doc.content}
       </pre>
-    </div>
-  )
-}
-
-// ─── Handbook tab (C: per-project freeform doc, AI-drafted + lockable) ──
-
-function HandbookTab({
-  cwd,
-  doc,
-  onSaved,
-}: {
-  cwd: string
-  doc?: ProjectDoc
-  onSaved: () => void
-}) {
-  const { t } = useTranslation()
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState('')
-  const locked = doc?.updated_by === 'operator'
-  const content = stripSig(doc?.content ?? '')
-
-  // A human edit saves as 'operator' (locks the page from AI overwrite);
-  // unlock saves the current content as 'agent' to hand it back to the drafter.
-  const save = useMutation({
-    mutationFn: (updatedBy: 'operator' | 'agent') =>
-      putProjectDoc({
-        cwd,
-        kind: 'kb_handbook',
-        content: updatedBy === 'operator' ? draft : content,
-        updatedBy,
-      }),
-    onSuccess: (_d, updatedBy) => {
-      setEditing(false)
-      onSaved()
-      toast.success(
-        updatedBy === 'operator'
-          ? t('web.project.handbook.saved')
-          : t('web.project.handbook.unlocked'),
-      )
-    },
-    onError: (e: Error) =>
-      toast.error(t('web.project.editor.saveFailedToast'), { description: e.message }),
-  })
-
-  if (!doc?.content) {
-    return (
-      <div className="space-y-3">
-        <DocMetaStrip kind="kb_handbook" doc={undefined} />
-        <p className="text-muted-foreground text-sm">
-          {t('web.project.handbook.empty')}
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-3">
-      <DocMetaStrip kind="kb_handbook" doc={doc} />
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-          {locked ? (
-            <>
-              <Lock className="h-3 w-3" />
-              {t('web.project.handbook.locked')}
-            </>
-          ) : (
-            <>
-              <Check className="h-3 w-3" />
-              {t('web.project.handbook.aiManaged')}
-            </>
-          )}
-        </span>
-        <div className="flex gap-2">
-          {locked && (
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={save.isPending}
-              onClick={() => save.mutate('agent')}
-            >
-              <Unlock className="mr-1 h-3 w-3" />
-              {t('web.project.handbook.unlock')}
-            </Button>
-          )}
-          {!editing && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                setDraft(content)
-                setEditing(true)
-              }}
-            >
-              <Pencil className="mr-1 h-3 w-3" />
-              {t('web.project.handbook.edit')}
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {editing ? (
-        <div className="space-y-2">
-          <Textarea
-            rows={22}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            className="font-mono text-sm"
-          />
-          <p className="text-muted-foreground text-[11px]">
-            {t('web.project.handbook.hint')}
-          </p>
-          <div className="flex justify-end gap-2">
-            <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
-              {t('web.project.handbook.cancel')}
-            </Button>
-            <Button
-              size="sm"
-              disabled={save.isPending}
-              onClick={() => save.mutate('operator')}
-            >
-              {save.isPending ? (
-                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-              ) : (
-                <Save className="mr-1 h-3 w-3" />
-              )}
-              {t('web.project.handbook.save')}
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-muted/20 max-h-[65vh] overflow-auto rounded-md p-4">
-          <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD}>
-            {content}
-          </ReactMarkdown>
-        </div>
-      )}
     </div>
   )
 }

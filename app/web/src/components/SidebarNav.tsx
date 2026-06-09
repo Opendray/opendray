@@ -9,6 +9,7 @@ import {
   Settings,
   Boxes,
   NotebookPen,
+  BookText,
   Brain,
   Network,
   Archive,
@@ -46,6 +47,7 @@ const groups: NavItem[][] = [
     { to: '/integrations', icon: Plug, labelKey: 'nav.integrations', shortcut: 'g i' },
   ],
   [
+    { to: '/vault', icon: BookText, labelKey: 'nav.vault', shortcut: 'g v' },
     { to: '/plugins', icon: Boxes, labelKey: 'nav.plugins', shortcut: 'g l' },
     { to: '/backups', icon: Archive, labelKey: 'nav.backups', shortcut: 'g b' },
     { to: '/settings', icon: Settings, labelKey: 'nav.settings', shortcut: 'g ,' },

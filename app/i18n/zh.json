@@ -39,7 +39,8 @@
     "backups": "备份",
     "settings": "设置",
     "workspace": "工作区",
-    "knowledge": "知识"
+    "knowledge": "知识",
+    "vault": "文档库"
   },
   "web": {
     "brand": "opendray",

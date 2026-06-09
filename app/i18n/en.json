@@ -39,7 +39,8 @@
     "backups": "Backups",
     "settings": "Settings",
     "workspace": "Workspace",
-    "knowledge": "Knowledge"
+    "knowledge": "Knowledge",
+    "vault": "Vault"
   },
   "web": {
     "brand": "opendray",
