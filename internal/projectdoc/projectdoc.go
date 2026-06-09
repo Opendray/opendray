@@ -47,14 +47,16 @@ const (
 	KindPlan           Kind = "plan"
 	KindTechStack      Kind = "tech_stack"      // M16b — scanner-managed
 	KindRecentActivity Kind = "recent_activity" // M16c — git-summary-managed
-	// M-KB — curated knowledge-base pages (AI-drafted, human-editable),
-	// fused into the note system. The three global pages live under GlobalCwd;
-	// the handbook is one curated doc per real project cwd.
+	// Knowledge pages (AI-drafted, human-lockable) live under GlobalCwd.
+	// They are CROSS-PROJECT only (Experience Flywheel) — there is no
+	// per-project handbook; per-project docs are goal/plan/tech/journal above.
 	KindInfrastructure Kind = "kb_infrastructure"
 	KindConventions    Kind = "kb_conventions"
 	KindLessons        Kind = "kb_lessons"
 	KindReusable       Kind = "kb_reusable" // reusable features/components to lift into new projects
-	KindHandbook       Kind = "kb_handbook"
+	// KindHandbook is RETIRED — kept only so the DB CHECK + legacy rows stay
+	// valid until migration 0042 clears them. Not created or injected.
+	KindHandbook Kind = "kb_handbook"
 )
 
 // GlobalCwd is the sentinel cwd under which cross-project (global) KB pages are
@@ -67,7 +69,9 @@ const GlobalCwd = "__global__"
 func ValidKind(k Kind) bool {
 	switch k {
 	case KindGoal, KindPlan, KindTechStack, KindRecentActivity,
-		KindInfrastructure, KindConventions, KindLessons, KindReusable, KindHandbook:
+		KindInfrastructure, KindConventions, KindLessons, KindReusable:
+		// KindHandbook intentionally excluded — retired; callers can no
+		// longer create one.
 		return true
 	}
 	return false
@@ -852,7 +856,7 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 		return "", fmt.Errorf("projectdoc: render spawn logs: %w", err)
 	}
 
-	var goal, plan, techStack, recentActivity, handbook string
+	var goal, plan, techStack, recentActivity string
 	for _, d := range docs {
 		switch d.Kind {
 		case KindGoal:
@@ -863,8 +867,6 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 			techStack = strings.TrimSpace(d.Content)
 		case KindRecentActivity:
 			recentActivity = strings.TrimSpace(d.Content)
-		case KindHandbook:
-			handbook = stripKBSig(d.Content)
 		}
 	}
 
@@ -873,7 +875,7 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 	// with stale state. Cross-project Knowledge (global KB) still injects — it's
 	// transferable expertise, useful regardless of this project's lifecycle.
 	if status, _ := s.GetStatus(ctx, cwd); status.IsFrozen() {
-		goal, plan, techStack, recentActivity, handbook = "", "", "", "", ""
+		goal, plan, techStack, recentActivity = "", "", "", ""
 		logs = nil
 	}
 
@@ -885,7 +887,7 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 	kbReusable := s.globalKBDoc(ctx, KindReusable)
 
 	if goal == "" && plan == "" && techStack == "" && recentActivity == "" &&
-		handbook == "" && kbConventions == "" && kbInfrastructure == "" &&
+		kbConventions == "" && kbInfrastructure == "" &&
 		kbLessons == "" && kbReusable == "" && len(logs) == 0 {
 		return "", nil
 	}
@@ -922,7 +924,6 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 	appendSection("Project plan", plan)
 	appendSection("Tech stack & structure", techStack)
 	appendSection("Project goal", goal)
-	appendSection("Project handbook", handbook)
 	appendSection("Conventions (how we work)", kbConventions)
 	appendSection("Infrastructure", kbInfrastructure)
 	appendSection("Lessons", kbLessons)

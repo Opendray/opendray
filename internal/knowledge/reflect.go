@@ -31,12 +31,21 @@ type JournalSource interface {
 	ListJournal(ctx context.Context, scopeKey string, limit int) ([]JournalEntry, error)
 }
 
+// LifecycleFilter reports whether a project (cwd) is frozen (paused/archived).
+// P-D: a frozen project is excluded from per-project distillation. Optional —
+// a nil filter treats every project as active. The app adapts projectdoc's
+// GetStatus to this; knowledge keeps no projectdoc import.
+type LifecycleFilter interface {
+	IsFrozen(ctx context.Context, cwd string) bool
+}
+
 type Reflector struct {
-	store   *Store
-	llm     LLM
-	journal JournalSource // optional; work-trace feedstock for playbooks
-	mem     MemorySource  // P-G: declarative facts come straight from Memory now
-	log     *slog.Logger
+	store     *Store
+	llm       LLM
+	journal   JournalSource   // optional; work-trace feedstock for playbooks
+	mem       MemorySource    // P-G: declarative facts come straight from Memory now
+	lifecycle LifecycleFilter // P-D: skip frozen projects
+	log       *slog.Logger
 }
 
 // NewReflector builds a Reflector over the shared pool and an LLM.
@@ -59,6 +68,13 @@ func (r *Reflector) WithJournal(src JournalSource) *Reflector {
 // reflector distils from the journal alone.
 func (r *Reflector) WithMemory(src MemorySource) *Reflector {
 	r.mem = src
+	return r
+}
+
+// WithLifecycle installs the optional P-D lifecycle filter so frozen
+// (paused/archived) projects are skipped during distillation.
+func (r *Reflector) WithLifecycle(f LifecycleFilter) *Reflector {
+	r.lifecycle = f
 	return r
 }
 
@@ -262,6 +278,10 @@ func (r *Reflector) ReflectAll(ctx context.Context, minFacts int) (int, error) {
 		case <-ctx.Done():
 			return total, ctx.Err()
 		default:
+		}
+		// P-D — a frozen (paused/archived) project is shelved: don't distil it.
+		if r.lifecycle != nil && r.lifecycle.IsFrozen(ctx, k) {
+			continue
 		}
 		n, err := r.ReflectProject(ctx, k, minFacts)
 		if err != nil {

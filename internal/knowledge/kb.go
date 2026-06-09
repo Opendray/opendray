@@ -29,7 +29,6 @@ const (
 	KBKindConventions    = "kb_conventions"
 	KBKindLessons        = "kb_lessons"
 	KBKindReusable       = "kb_reusable"
-	KBKindHandbook       = "kb_handbook"
 )
 
 // KBDoc is the current state of a KB page as the drafter sees it.
@@ -46,45 +45,26 @@ type DocSink interface {
 	PutKBDoc(ctx context.Context, cwd, kind, content string) error
 }
 
-// LifecycleFilter reports whether a project (cwd) is frozen (paused/archived).
-// P-D: a frozen project is excluded from per-project handbook distillation.
-// Optional — a nil filter treats every project as active. The app adapts
-// projectdoc's GetStatus to this; knowledge keeps no projectdoc import.
-type LifecycleFilter interface {
-	IsFrozen(ctx context.Context, cwd string) bool
-}
-
-// KBDrafter distils graph + journal into curated KB pages via the LLM.
+// KBDrafter distils Memory + the graph into the global Knowledge pages.
 type KBDrafter struct {
-	store     *Store
-	llm       LLM
-	journal   JournalSource
-	mem       MemorySource // P-G: declarative facts come straight from Memory now
-	docs      DocSink
-	lifecycle LifecycleFilter
-	log       *slog.Logger
+	store *Store
+	llm   LLM
+	mem   MemorySource // P-G: declarative facts come straight from Memory
+	docs  DocSink
+	log   *slog.Logger
 }
 
-// NewKBDrafter builds a drafter. journal is optional (handbooks degrade to
-// facts-only without it); docs + llm are required to do anything.
-func NewKBDrafter(store *Store, llm LLM, journal JournalSource, docs DocSink, log *slog.Logger) *KBDrafter {
+// NewKBDrafter builds a drafter. docs + llm are required to do anything.
+func NewKBDrafter(store *Store, llm LLM, docs DocSink, log *slog.Logger) *KBDrafter {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &KBDrafter{store: store, llm: llm, journal: journal, docs: docs, log: log.With("component", "knowledge.kb")}
-}
-
-// WithLifecycle installs the optional P-D lifecycle filter so frozen projects
-// are skipped during handbook distillation. Returns the receiver for chaining.
-func (d *KBDrafter) WithLifecycle(f LifecycleFilter) *KBDrafter {
-	d.lifecycle = f
-	return d
+	return &KBDrafter{store: store, llm: llm, docs: docs, log: log.With("component", "knowledge.kb")}
 }
 
 // WithMemory wires episodic Memory as the declarative-fact feedstock for the
-// infrastructure / conventions / reusable / handbook pages (P-G — fact nodes
-// retired). Optional: without it those pages distil from entities/playbooks
-// alone. Returns the receiver for chaining.
+// infrastructure / conventions / reusable pages (P-G — fact nodes retired).
+// Optional: without it those pages distil from entities/playbooks alone.
 func (d *KBDrafter) WithMemory(src MemorySource) *KBDrafter {
 	d.mem = src
 	return d
@@ -112,10 +92,6 @@ const kbReusableSystem = `You curate a REUSABLE FEATURES catalog from what has b
 List features / components / patterns / integrations that could be LIFTED into a NEW project, grouped under "## " themes. For each: what it is, which project it came from, and how to reuse it.
 Only include things genuinely reusable across projects — skip one-off project specifics.` + kbSafety
 
-const kbHandbookSystem = `You curate a PROJECT HANDBOOK from one project's work log (journal), facts, and playbooks.
-Organize into: What it is, Tech stack & layout, How to build / run / deploy, Infrastructure it uses, Collaboration boundaries, Key lessons & pitfalls.
-Prefer concrete commands / paths / hosts from the log.` + kbSafety
-
 // KBDraftResult reports the outcome of drafting one KB page (returned by the
 // manual draft endpoint so failures are observable without log access).
 type KBDraftResult struct {
@@ -126,9 +102,10 @@ type KBDraftResult struct {
 	Err    string `json:"error,omitempty"`
 }
 
-// DraftAll refreshes every KB page once: the three global pages + one handbook
-// per non-ephemeral project. Each page is lock-aware and dirty-checked, so an
-// unchanged or human-edited page costs no LLM call. Returns per-page results.
+// DraftAll refreshes the global Knowledge pages once. Knowledge is
+// cross-project only (Experience Flywheel): per-project documentation lives in
+// Notes, not here — there is no per-project handbook. Each page is lock-aware
+// and dirty-checked, so an unchanged or human-edited page costs no LLM call.
 func (d *KBDrafter) DraftAll(ctx context.Context) ([]KBDraftResult, error) {
 	if d.llm == nil || d.docs == nil {
 		return nil, nil
@@ -145,40 +122,6 @@ func (d *KBDrafter) DraftAll(ctx context.Context) ([]KBDraftResult, error) {
 	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindConventions, kbConvSystem, buildConvFeedstock(facts)))
 	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindLessons, kbLessonsSystem, buildLessonsFeedstock(playbooks)))
 	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindReusable, kbReusableSystem, buildReusableFeedstock(playbooks, facts)))
-
-	keys, err := d.store.ListProjectScopeKeys(ctx)
-	if err != nil {
-		return out, err
-	}
-	for _, k := range keys {
-		select {
-		case <-ctx.Done():
-			return out, ctx.Err()
-		default:
-		}
-		if isEphemeralCwd(k) || k == GlobalKBCwd {
-			continue
-		}
-		// P-D — a frozen (paused/archived) project is shelved: don't spend an
-		// LLM call refreshing its handbook. Its existing page is left in place,
-		// surfaced read-only.
-		if d.lifecycle != nil && d.lifecycle.IsFrozen(ctx, k) {
-			continue
-		}
-		var pf []MemoryRow
-		if d.mem != nil {
-			pf, _ = d.mem.ListProjectMemories(ctx, k, 200)
-		}
-		pp, _ := d.store.ListNodes(ctx, NodeFilter{Kind: KindPlaybook, Scope: ScopeProject, ScopeKey: k, Limit: 100})
-		var jr []JournalEntry
-		if d.journal != nil {
-			jr, _ = d.journal.ListJournal(ctx, k, 50)
-		}
-		if len(pf) == 0 && len(jr) == 0 {
-			continue
-		}
-		out = append(out, d.draftOne(ctx, k, KBKindHandbook, kbHandbookSystem, buildHandbookFeedstock(k, pf, jr, pp)))
-	}
 	return out, nil
 }
 
@@ -284,40 +227,6 @@ func buildReusableFeedstock(playbooks []Node, facts []MemoryRow) string {
 	}
 	b.WriteString("\nFACTS (mine for built features / components / integrations worth reusing):\n")
 	writeFactTitles(&b, facts)
-	return b.String()
-}
-
-func buildHandbookFeedstock(cwd string, facts []MemoryRow, journal []JournalEntry, playbooks []Node) string {
-	var b strings.Builder
-	fmt.Fprintf(&b, "PROJECT: %s\n\n", cwd)
-	if len(journal) > 0 {
-		b.WriteString("WORK LOG (session traces):\n")
-		for _, j := range journal {
-			b.WriteString("- ")
-			if t := strings.TrimSpace(j.Title); t != "" {
-				b.WriteString(t)
-				b.WriteString(": ")
-			}
-			c := strings.TrimSpace(j.Content)
-			if len(c) > 400 {
-				c = c[:400] + "…"
-			}
-			b.WriteString(strings.ReplaceAll(c, "\n", " "))
-			b.WriteByte('\n')
-		}
-	}
-	if len(facts) > 0 {
-		b.WriteString("\nFACTS:\n")
-		writeFactTitles(&b, facts)
-	}
-	if len(playbooks) > 0 {
-		b.WriteString("\nPLAYBOOKS (lessons):\n")
-		for _, p := range playbooks {
-			b.WriteString("- ")
-			b.WriteString(p.Title)
-			b.WriteByte('\n')
-		}
-	}
 	return b.String()
 }
 

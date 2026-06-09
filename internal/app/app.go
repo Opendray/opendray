@@ -795,17 +795,17 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				WithLLM(kgLLM)
 			knowledgeReflector = knowledge.NewReflector(st.Pool(), kbLLM, log).
 				WithJournal(knowledgeJournalSource{pd: projectDocSvc}).
-				WithMemory(knowledgeMemorySource{mem: memorySvc}) // P-G — facts from Memory
+				WithMemory(knowledgeMemorySource{mem: memorySvc}).   // P-G — facts from Memory
+				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc}) // P-D — skip frozen projects
 			knowledgeSvc.WithReanchor(func(c context.Context) error {
 				return knowledgeAnchorer.AnchorAll(c, 500)
 			})
-			// M-KB — curated KB pages drafted INTO the note system.
+			// Knowledge — the global cross-project KB pages (Experience Flywheel:
+			// per-project docs live in Notes, so there is no handbook here).
 			knowledgeKBDrafter = knowledge.NewKBDrafter(
 				knowledge.NewStore(st.Pool()), kbLLM,
-				knowledgeJournalSource{pd: projectDocSvc},
 				knowledgeDocSink{pd: projectDocSvc}, log).
-				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc}). // P-D — skip frozen projects
-				WithMemory(knowledgeMemorySource{mem: memorySvc})     // P-G — facts from Memory
+				WithMemory(knowledgeMemorySource{mem: memorySvc}) // P-G — facts from Memory
 			knowledgeSvc.WithKBDrafter(knowledgeKBDrafter) // manual /kb/draft endpoint
 			// P-C — one ordered loop (anchor → reflect → KB) replaces the three
 			// independent sweep goroutines so each stage drafts from the prior
