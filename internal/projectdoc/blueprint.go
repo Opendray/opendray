@@ -98,6 +98,12 @@ func (s *Service) ListSections(ctx context.Context, cwd string) ([]Section, erro
 	if len(sections) > 0 {
 		return sections, nil
 	}
+	// Ephemeral cwds (tmp dirs from third-party consumers / tests) are
+	// not projects: serve the in-memory defaults so a UI that opens one
+	// still renders, but never persist a blueprint for them.
+	if IsEphemeralCwd(cwd) {
+		return defaultSections(cwd), nil
+	}
 	if err := s.seedSections(ctx, cwd); err != nil {
 		return nil, err
 	}
@@ -152,6 +158,9 @@ func (s *Service) PutSection(ctx context.Context, sec Section) (Section, error) 
 	}
 	if sec.Cwd == GlobalCwd {
 		return Section{}, fmt.Errorf("projectdoc: %q has no blueprint", GlobalCwd)
+	}
+	if IsEphemeralCwd(sec.Cwd) {
+		return Section{}, ErrEphemeralCwd
 	}
 	if !ValidSectionSlug(sec.Slug) {
 		return Section{}, fmt.Errorf("%w: bad slug %q", ErrInvalidKind, sec.Slug)
@@ -229,6 +238,11 @@ func (s *Service) validateWriteTarget(ctx context.Context, cwd string, kind Kind
 	}
 	if cwd == GlobalCwd {
 		return nil
+	}
+	// Temp dirs are not projects — refuse to create doc footprint for
+	// them (third-party consumers + tests spawn there constantly).
+	if IsEphemeralCwd(cwd) {
+		return ErrEphemeralCwd
 	}
 	ok, err := s.HasSection(ctx, cwd, string(kind), "")
 	if err != nil {

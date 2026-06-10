@@ -201,6 +201,12 @@ func (j *Journaler) process(ctx context.Context, ev eventbus.Event, state string
 		j.log.Warn("journaler: session has no cwd", "session_id", sessionID)
 		return
 	}
+	if IsEphemeralCwd(sess.Cwd) {
+		// Temp dirs (third-party consumers, tests) are not projects:
+		// no journal entry, no transcript-summary LLM spend, no drift.
+		j.log.Debug("journaler: ephemeral cwd — skipped", "session_id", sessionID, "cwd", sess.Cwd)
+		return
+	}
 	inputs, err := j.lookup.History(ctx, sessionID, j.inputsLimit)
 	if err != nil {
 		// History errors are non-fatal — we just emit a metadata-only

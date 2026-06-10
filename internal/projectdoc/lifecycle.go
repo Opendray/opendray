@@ -143,6 +143,12 @@ func (s *Service) ListProjects(ctx context.Context, idleSuggestDays int) ([]Proj
 		if err := rows.Scan(&p.Cwd, &statusStr, &byStr, &lastActive); err != nil {
 			return nil, err
 		}
+		// Throwaway /tmp-style cwds (third-party consumers, tests) are
+		// not projects — never list them. New footprint for them is
+		// blocked at the source; this also hides any legacy residue.
+		if IsEphemeralCwd(p.Cwd) {
+			continue
+		}
 		p.Status = ProjectStatus(statusStr)
 		p.UpdatedBy = Author(byStr)
 		p.LastActivityAt = lastActive

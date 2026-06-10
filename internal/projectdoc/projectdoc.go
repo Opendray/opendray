@@ -497,6 +497,9 @@ func (s *Service) AppendLog(ctx context.Context, e LogEntry) (LogEntry, error) {
 	if strings.TrimSpace(e.Cwd) == "" {
 		return LogEntry{}, ErrEmptyCwd
 	}
+	if IsEphemeralCwd(e.Cwd) {
+		return LogEntry{}, ErrEphemeralCwd
+	}
 	if e.Kind == "" {
 		e.Kind = LogKindManual
 	}

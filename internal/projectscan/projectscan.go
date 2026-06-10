@@ -482,6 +482,11 @@ func NewService(docs *projectdoc.Service, log *slog.Logger) *Service {
 // returning the resulting project_doc row. HTTP handlers call this
 // when they want to echo the new doc back in the response.
 func (s *Service) RunAndReturn(ctx context.Context, cwd string) (projectdoc.Doc, error) {
+	if projectdoc.IsEphemeralCwd(cwd) {
+		// Temp dirs (third-party consumers, tests) are not projects —
+		// no tech_stack doc, no scan cost.
+		return projectdoc.Doc{}, nil
+	}
 	info, err := s.scanner.Scan(ctx, cwd)
 	if err != nil {
 		return projectdoc.Doc{}, err

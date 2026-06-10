@@ -417,6 +417,7 @@ func (h *Handlers) respondErr(w http.ResponseWriter, err error) {
 	case errors.Is(err, ErrInvalidKind),
 		errors.Is(err, ErrInvalidLogKind),
 		errors.Is(err, ErrInvalidStatus),
+		errors.Is(err, ErrEphemeralCwd),
 		errors.Is(err, ErrEmptyCwd):
 		writeError(w, http.StatusBadRequest, err)
 	default:

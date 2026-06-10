@@ -112,6 +112,16 @@ cycle on the new binary.
 - **Flywheel leak fixed:** the Anchor stage and the KB drafter now
   honour project lifecycle — paused/archived projects stop feeding the
   graph and the cross-project pages.
+- **Ephemeral cwds are not projects.** Sessions spawned in temp dirs
+  (`/tmp`, `/var/folders`, `.cache`, … — third-party consumers and
+  tests do this constantly) leave NO project footprint:
+  `projectdoc.IsEphemeralCwd` (the predicate the knowledge anchorer
+  always used, now canonical) gates the journaler, drift, capture
+  (no memory at all, not even quarantine), both scanners, blueprint
+  seeding, doc writes, and `ListProjects`. Migration 0049 purges the
+  legacy residue (docs/journal/blueprint/lifecycle deleted; their
+  project-scope memories soft-archived, restorable in the grace
+  window).
 
 ## 4. The curation channel (Phase 4)
 

@@ -366,6 +366,10 @@ func NewService(docs *projectdoc.Service, log *slog.Logger, opts ...ServiceOptio
 // whether to retry. LLM call failures degrade silently to raw
 // markdown.
 func (s *Service) Run(ctx context.Context, cwd string) (projectdoc.Doc, error) {
+	if projectdoc.IsEphemeralCwd(cwd) {
+		// Temp dirs are not projects — skip before the git read + LLM.
+		return projectdoc.Doc{}, nil
+	}
 	commits, err := s.reader.Read(ctx, cwd, s.defaultSince, s.limit)
 	if err != nil {
 		return projectdoc.Doc{}, err
@@ -441,7 +445,9 @@ func (s *Service) IsStale(ctx context.Context, cwd string, maxAge time.Duration)
 // is idempotent (UPSERT) so the worst case is one redundant LLM
 // call, not corrupted data.
 func (s *Service) RefreshAsync(cwd string) {
-	if cwd == "" {
+	// Temp dirs (third-party consumers, tests) are not projects — no
+	// activity doc, no LLM spend.
+	if cwd == "" || projectdoc.IsEphemeralCwd(cwd) {
 		return
 	}
 	go func() {

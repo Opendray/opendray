@@ -10,7 +10,12 @@ import (
 
 	"github.com/opendray/opendray-v2/internal/memory"
 	"github.com/opendray/opendray-v2/internal/memory/summarizer"
+	"github.com/opendray/opendray-v2/internal/projectdoc"
 )
+
+// isEphemeralCwd delegates to the canonical predicate so capture and
+// the Notes layer agree on what counts as a throwaway temp dir.
+func isEphemeralCwd(cwd string) bool { return projectdoc.IsEphemeralCwd(cwd) }
 
 // MemoryWriter is the slice of memory.Service the capture pipeline
 // needs. Defined locally so tests can pass a mock.
@@ -110,6 +115,12 @@ type runner struct {
 // facts from its origin + the integration's declared policy.
 // skip=true means the session must produce no memory at all.
 func (r *runner) routeForSession(ctx context.Context, sess SessionInfo) (tier string, expiry *time.Time, skip bool) {
+	// Sessions running in throwaway temp dirs (third-party consumers,
+	// tests) are not project work — they leave no memory at all,
+	// regardless of origin. Mirrors projectdoc.IsEphemeralCwd.
+	if isEphemeralCwd(sess.Cwd) {
+		return "", nil, true
+	}
 	if sess.Origin != "integration" {
 		return memory.TierDurable, nil, false
 	}
