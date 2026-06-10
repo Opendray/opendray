@@ -34,6 +34,7 @@ import (
 	_ "github.com/opendray/opendray-v2/internal/channel/wecom"    // register kind=wecom
 	"github.com/opendray/opendray-v2/internal/cliacct"
 	"github.com/opendray/opendray-v2/internal/config"
+	"github.com/opendray/opendray-v2/internal/cortex"
 	customtask "github.com/opendray/opendray-v2/internal/customtask"
 	"github.com/opendray/opendray-v2/internal/eventbus"
 	fsapi "github.com/opendray/opendray-v2/internal/fs"
@@ -852,6 +853,16 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		knowledgeHandlers = knowledge.NewHandlers(knowledgeSvc, log)
 		log.Info("knowledge graph (M-KG) enabled", "anchorer", knowledgeAnchorer != nil)
 	}
+	// Cortex — the unified module governing the Memory → Notes →
+	// Knowledge flywheel. A facade only: re-mounts the three layer
+	// handler sets under /api/v1/cortex and adds cross-layer endpoints
+	// (status aggregation; quarantine/blueprint/conversations follow).
+	// Legacy mounts stay for integrations + the not-yet-migrated mobile.
+	cortexSvc := cortex.NewService(projectDocSvc, log,
+		cortex.WithMemoryEnabled(memorySvc != nil),
+		cortex.WithKnowledgeEnabled(knowledgeSvc != nil),
+	)
+	cortexHandlers := cortex.NewHandlers(cortexSvc, projectDocHandlers, memoryHandlers, knowledgeHandlers, log)
 	// Inject the cross-agent goal+plan+journal banner into every
 	// spawned session's system prompt. Composed alongside the
 	// memory-layer-5 banner (ambient injector) inside the catalog
@@ -1021,6 +1032,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				if knowledgeHandlers != nil {
 					knowledgeHandlers.Mount(r)
 				}
+				cortexHandlers.Mount(r)
 				r.Get("/integrations/_events", eventsHandler.Serve)
 			})
 		},
