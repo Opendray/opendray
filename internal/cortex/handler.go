@@ -33,6 +33,8 @@ type Handlers struct {
 	mem        *memory.Handlers
 	know       *knowledge.Handlers // nil when the knowledge layer is disabled
 	quarantine QuarantineSource    // nil when memory is disabled
+	proposer   *BlueprintProposer  // nil when no worker registry
+	docsSvc    *projectdoc.Service // blueprint apply
 	log        *slog.Logger
 }
 
@@ -58,6 +60,19 @@ func (h *Handlers) WithQuarantine(q QuarantineSource) *Handlers {
 	return h
 }
 
+// WithBlueprintProposer wires the AI blueprint proposer (Phase 3).
+// Nil → the propose route 503s.
+func (h *Handlers) WithBlueprintProposer(p *BlueprintProposer) *Handlers {
+	h.proposer = p
+	return h
+}
+
+// WithDocs wires the projectdoc service for blueprint apply.
+func (h *Handlers) WithDocs(docs *projectdoc.Service) *Handlers {
+	h.docsSvc = docs
+	return h
+}
+
 // Mount registers the /cortex namespace on r. r should already have
 // the dual-auth (admin OR integration) middleware applied — the
 // re-mounted layer handlers enforce their own per-route scopes
@@ -68,6 +83,11 @@ func (h *Handlers) Mount(r chi.Router) {
 		// Quarantine routes register before the re-mounted memory
 		// handlers so /memory/quarantine wins over memory's /{id}.
 		h.mountQuarantine(r)
+		// Blueprint (Phase 3): AI-propose + operator-accept apply.
+		// Per-section CRUD lives on the re-mounted projectdoc routes
+		// (/cortex/project-docs/blueprint*).
+		r.Post("/blueprint/propose", h.proposeBlueprint)
+		r.Put("/blueprint", h.applyBlueprint)
 		h.docs.Mount(r)
 		h.mem.Mount(r)
 		if h.know != nil {
@@ -84,6 +104,76 @@ func (h *Handlers) status(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, st)
+}
+
+// proposeBlueprint runs the AI blueprint proposer for ?cwd=. Nothing
+// is persisted — the response is shown to the operator, who applies
+// it (possibly edited) via PUT /cortex/blueprint.
+func (h *Handlers) proposeBlueprint(w http.ResponseWriter, r *http.Request) {
+	if h.proposer == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "blueprint proposer not configured"})
+		return
+	}
+	cwd := r.URL.Query().Get("cwd")
+	prop, err := h.proposer.Propose(r.Context(), cwd)
+	if err != nil {
+		h.log.Error("blueprint propose failed", "cwd", cwd, "err", err)
+		writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, prop)
+}
+
+// applyBlueprint replaces a project's blueprint with the given section
+// set: every listed section is upserted, every existing section absent
+// from the list is removed (overview excepted — it is reserved).
+// Section docs of removed sections are kept (re-adding a slug
+// resurrects its content).
+func (h *Handlers) applyBlueprint(w http.ResponseWriter, r *http.Request) {
+	if h.docsSvc == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "docs service not wired"})
+		return
+	}
+	var body struct {
+		Cwd      string               `json:"cwd"`
+		Sections []projectdoc.Section `json:"sections"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	if body.Cwd == "" || len(body.Sections) == 0 {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "cwd and sections are required"})
+		return
+	}
+	keep := make(map[string]bool, len(body.Sections)+1)
+	keep[projectdoc.SlugOverview] = true
+	for _, sec := range body.Sections {
+		sec.Cwd = body.Cwd
+		if _, err := h.docsSvc.PutSection(r.Context(), sec); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		keep[sec.Slug] = true
+	}
+	existing, err := h.docsSvc.ListSections(r.Context(), body.Cwd)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	for _, sec := range existing {
+		if !keep[sec.Slug] {
+			if err := h.docsSvc.DeleteSection(r.Context(), body.Cwd, sec.Slug); err != nil {
+				h.log.Warn("blueprint apply: delete section failed", "cwd", body.Cwd, "slug", sec.Slug, "err", err)
+			}
+		}
+	}
+	sections, err := h.docsSvc.ListSections(r.Context(), body.Cwd)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"sections": sections})
 }
 
 func writeJSON(w http.ResponseWriter, code int, body any) {

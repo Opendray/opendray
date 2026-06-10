@@ -402,6 +402,13 @@ func (s *Service) Run(ctx context.Context, cwd string) (projectdoc.Doc, error) {
 	defer cancel()
 	doc, err := s.docs.PutDoc(persistCtx, cwd, projectdoc.KindRecentActivity, body, projectdoc.AuthorScanner)
 	if err != nil {
+		// Cortex Phase 3 — the operator removed the recent_activity
+		// section from this project's blueprint; respect that and
+		// silently stop writing it.
+		if errors.Is(err, projectdoc.ErrInvalidKind) {
+			s.log.Debug("gitactivity: recent_activity section not in blueprint — skipped", "cwd", cwd)
+			return projectdoc.Doc{}, nil
+		}
 		return projectdoc.Doc{}, fmt.Errorf("gitactivity: persist: %w", err)
 	}
 	s.log.Info("gitactivity.scanned",

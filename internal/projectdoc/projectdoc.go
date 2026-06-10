@@ -37,9 +37,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Kind enumerates the project_docs.kind column. Currently goal /
-// plan; future kinds (rationale, decision_index) extend by
-// loosening the DB CHECK + adding constants here.
+// Kind is the project_docs.kind column. Since the blueprint system
+// (Cortex Phase 3, migration 0046) it is a per-project SECTION SLUG —
+// the constants below are the default blueprint's slugs plus the
+// reserved global kb_* pages, not a closed enum. Validation is
+// syntax-level (ValidKind) plus a service-layer blueprint check on
+// writes.
 type Kind string
 
 const (
@@ -67,18 +70,39 @@ const (
 // stored, so they reuse the existing (cwd, kind) document model unchanged.
 const GlobalCwd = "__global__"
 
-// ValidKind returns true for the supported document kinds.
-// Callers should use this rather than a hardcoded switch so the
-// list stays in one place.
-func ValidKind(k Kind) bool {
+// IsGlobalKBKind reports whether k is one of the fixed cross-project
+// Knowledge pages stored under GlobalCwd. The retired kb_handbook is
+// intentionally excluded.
+func IsGlobalKBKind(k Kind) bool {
 	switch k {
-	case KindGoal, KindPlan, KindTechStack, KindRecentActivity, KindOverview,
-		KindInfrastructure, KindConventions, KindLessons, KindReusable:
-		// KindHandbook intentionally excluded — retired; callers can no
-		// longer create one.
+	case KindInfrastructure, KindConventions, KindLessons, KindReusable:
 		return true
 	}
 	return false
+}
+
+// ValidKind is the syntax-level check: either a fixed global KB page
+// or a well-formed per-project section slug. Whether a slug actually
+// exists in a project's blueprint is checked on the write paths
+// (PutDoc / ProposeDoc) — reads stay permissive so content of a
+// removed-then-re-added section is never unreachable.
+func ValidKind(k Kind) bool {
+	return IsGlobalKBKind(k) || ValidSectionSlug(string(k))
+}
+
+// validateKindForCwd enforces the kind↔cwd pairing: kb_* pages live
+// only under GlobalCwd, and per-project slugs never under it.
+func validateKindForCwd(cwd string, k Kind) error {
+	if !ValidKind(k) {
+		return ErrInvalidKind
+	}
+	if IsGlobalKBKind(k) != (cwd == GlobalCwd) {
+		if IsGlobalKBKind(k) {
+			return fmt.Errorf("%w: %s is a global knowledge page (cwd must be %s)", ErrInvalidKind, k, GlobalCwd)
+		}
+		return fmt.Errorf("%w: %s is not a global knowledge page", ErrInvalidKind, k)
+	}
+	return nil
 }
 
 // LogKind enumerates session_logs.kind. session_summary covers the
@@ -271,11 +295,11 @@ func (s *Service) ListDocsForCwd(ctx context.Context, cwd string) ([]Doc, error)
 // string replaces what was there — there is no incremental patch
 // surface. Operator UI binds the field to a markdown textarea.
 func (s *Service) PutDoc(ctx context.Context, cwd string, kind Kind, content string, author Author) (Doc, error) {
-	if !ValidKind(kind) {
-		return Doc{}, ErrInvalidKind
-	}
 	if strings.TrimSpace(cwd) == "" {
 		return Doc{}, ErrEmptyCwd
+	}
+	if err := s.validateWriteTarget(ctx, cwd, kind); err != nil {
+		return Doc{}, err
 	}
 	if author == "" {
 		author = AuthorOperator
@@ -311,11 +335,11 @@ func (s *Service) PutDoc(ctx context.Context, cwd string, kind Kind, content str
 // plan; the change lands here in 'pending' state until the
 // operator approves via ApproveProposal.
 func (s *Service) ProposeDoc(ctx context.Context, cwd string, kind Kind, proposedContent, reason, sessionID string) (Proposal, error) {
-	if !ValidKind(kind) {
-		return Proposal{}, ErrInvalidKind
-	}
 	if strings.TrimSpace(cwd) == "" {
 		return Proposal{}, ErrEmptyCwd
+	}
+	if err := s.validateWriteTarget(ctx, cwd, kind); err != nil {
+		return Proposal{}, err
 	}
 	id := newID("pdp_")
 	var byID any
@@ -860,18 +884,17 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 		return "", fmt.Errorf("projectdoc: render spawn logs: %w", err)
 	}
 
-	var goal, plan, techStack, recentActivity string
+	// The blueprint decides WHICH sections inject and in what order
+	// (Cortex Phase 3). Lookup failure degrades to the default
+	// blueprint so spawn never breaks on blueprint plumbing.
+	sections, bErr := s.ListSections(ctx, cwd)
+	if bErr != nil {
+		s.log.Warn("projectdoc: render spawn blueprint failed — using defaults", "cwd", cwd, "err", bErr)
+		sections = defaultSections(cwd)
+	}
+	content := make(map[string]string, len(docs))
 	for _, d := range docs {
-		switch d.Kind {
-		case KindGoal:
-			goal = strings.TrimSpace(d.Content)
-		case KindPlan:
-			plan = strings.TrimSpace(d.Content)
-		case KindTechStack:
-			techStack = strings.TrimSpace(d.Content)
-		case KindRecentActivity:
-			recentActivity = strings.TrimSpace(d.Content)
-		}
+		content[string(d.Kind)] = strings.TrimSpace(d.Content)
 	}
 
 	// P-D — a frozen project (paused/archived) is shelved: drop its
@@ -879,7 +902,7 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 	// with stale state. Cross-project Knowledge (global KB) still injects — it's
 	// transferable expertise, useful regardless of this project's lifecycle.
 	if status, _ := s.GetStatus(ctx, cwd); status.IsFrozen() {
-		goal, plan, techStack, recentActivity = "", "", "", ""
+		content = map[string]string{}
 		logs = nil
 	}
 
@@ -890,8 +913,14 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 	kbLessons := s.globalKBDoc(ctx, KindLessons)
 	kbReusable := s.globalKBDoc(ctx, KindReusable)
 
-	if goal == "" && plan == "" && techStack == "" && recentActivity == "" &&
-		foundational == "" && kbLessons == "" && kbReusable == "" && len(logs) == 0 {
+	anySection := false
+	for _, sec := range sections {
+		if sec.Inject && content[sec.Slug] != "" {
+			anySection = true
+			break
+		}
+	}
+	if !anySection && foundational == "" && kbLessons == "" && kbReusable == "" && len(logs) == 0 {
 		return "", nil
 	}
 
@@ -926,12 +955,16 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 
 	// Binding guardrails FIRST so a tight budget never truncates them away.
 	appendSection("Infrastructure & conventions — RULES you MUST follow", foundational)
-	appendSection("Project plan", plan)
-	appendSection("Tech stack & structure", techStack)
-	appendSection("Project goal", goal)
+	// Blueprint sections in blueprint order (pinned first, then
+	// position) — the operator controls spawn priority by reordering.
+	for _, sec := range sections {
+		if !sec.Inject {
+			continue
+		}
+		appendSection(sec.Title, content[sec.Slug])
+	}
 	appendSection("Lessons (reference)", kbLessons)
 	appendSection("Reusable features (reference)", kbReusable)
-	appendSection("Recent activity", recentActivity)
 
 	if len(logs) > 0 && !truncated {
 		jb, jTrunc := renderJournalSection(logs, maxBytes-b.Len()-footerReserve)

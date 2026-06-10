@@ -254,30 +254,54 @@ func (j *Journaler) process(ctx context.Context, ev eventbus.Event, state string
 	j.log.Info("journaler: appended session summary",
 		"session_id", sessionID, "cwd", sess.Cwd, "title", title)
 
-	// M-PA — once the journal entry is safely persisted, decide
-	// whether the project plan needs updating. We do this AFTER the
-	// journal write so a failure here can never block the basic
-	// journal flow.
-	j.maybeProposeDocDrift(sess, transcriptSummary, KindPlan)
-	j.maybeProposeDocDrift(sess, transcriptSummary, KindGoal)
+	// M-PA / Cortex Phase 3 — once the journal entry is safely
+	// persisted, walk the project's blueprint and keep each
+	// drift-eligible section current. Done AFTER the journal write so
+	// a failure here can never block the basic journal flow.
+	j.driftBlueprintSections(sess, transcriptSummary)
 }
 
-// maybeProposePlanDrift runs the plan-drift detector and, if the
-// detector says the plan needs updating, files a proposal into the
-// operator's inbox. Soft-fail at every step — detector errors,
-// proposal write errors, and empty-plan short-circuits are all
-// logged but never bubbled up to the caller. The work happens on
-// its own background context because the LLM call can run minutes
-// and the event delivery goroutine must not block.
-func (j *Journaler) maybeProposeDocDrift(sess SessionInfo, transcriptSummary string, kind Kind) {
-	if j.planDetector == nil {
+// driftBlueprintSections runs drift detection for every blueprint
+// section the AI is responsible for keeping current:
+//
+//   - mode=ai      → detector runs; an unlocked doc is auto-updated
+//     (PutDoc as agent), a human-locked one gets a proposal.
+//   - mode=human   → detector runs; always a proposal.
+//   - mode=scanner → skipped (mechanically rebuilt elsewhere).
+//   - overview     → skipped (its own consolidation drafter owns it).
+//
+// This is the "goal/plan/tech-stack actually track the work" fix: the
+// old behaviour (everything piles up as proposals) is preserved only
+// where a human has explicitly claimed a section.
+func (j *Journaler) driftBlueprintSections(sess SessionInfo, transcriptSummary string) {
+	if j.planDetector == nil || strings.TrimSpace(transcriptSummary) == "" {
 		return
 	}
-	if strings.TrimSpace(transcriptSummary) == "" {
-		// Without a summary we have nothing concrete to feed the
-		// detector. Skip rather than asking the LLM to guess.
-		return
+	bgCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	sections, err := j.docs.ListSections(bgCtx, sess.Cwd)
+	cancel()
+	if err != nil {
+		j.log.Debug("journaler: blueprint list failed — falling back to goal/plan drift",
+			"cwd", sess.Cwd, "err", err)
+		sections = defaultSections(sess.Cwd)
 	}
+	for _, sec := range sections {
+		if sec.MaintainerMode == "scanner" || sec.Slug == SlugOverview {
+			continue
+		}
+		j.maybeProposeDocDrift(sess, transcriptSummary, sec)
+	}
+}
+
+// maybeProposeDocDrift runs the drift detector for one blueprint
+// section and applies or proposes the update per the section's
+// maintainer mode + lock state. Soft-fail at every step — detector
+// errors, write errors, and empty-doc short-circuits are all logged
+// but never bubbled up. Runs on its own background context because
+// the LLM call can take minutes and the event delivery goroutine
+// must not block.
+func (j *Journaler) maybeProposeDocDrift(sess SessionInfo, transcriptSummary string, sec Section) {
+	kind := Kind(sec.Slug)
 
 	bgCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
@@ -291,9 +315,9 @@ func (j *Journaler) maybeProposeDocDrift(sess SessionInfo, transcriptSummary str
 	currentDoc, err := j.docs.GetDoc(bgCtx, sess.Cwd, kind)
 	if err != nil {
 		// ErrNotFound is the "fresh project" case — leave it for the
-		// operator to seed the first plan. Other errors are logged.
+		// operator to seed the first content. Other errors are logged.
 		if err != ErrNotFound {
-			j.log.Debug("journaler: plan-drift get-plan failed", "cwd", sess.Cwd, "err", err)
+			j.log.Debug("journaler: drift get-doc failed", "cwd", sess.Cwd, "kind", kind, "err", err)
 		}
 		return
 	}
@@ -303,24 +327,27 @@ func (j *Journaler) maybeProposeDocDrift(sess SessionInfo, transcriptSummary str
 
 	logs, err := j.docs.ListLogs(bgCtx, sess.Cwd, j.driftJournalLookback)
 	if err != nil {
-		j.log.Debug("journaler: plan-drift list-logs failed", "cwd", sess.Cwd, "err", err)
+		j.log.Debug("journaler: drift list-logs failed", "cwd", sess.Cwd, "err", err)
 		logs = nil
 	}
 
 	out, derr := j.planDetector.DetectDrift(bgCtx, DriftInput{
-		Kind:              kind,
-		Cwd:               sess.Cwd,
-		CurrentPlan:       currentDoc.Content,
-		TranscriptSummary: transcriptSummary,
-		RecentJournal:     logs,
+		Kind:               kind,
+		Cwd:                sess.Cwd,
+		CurrentPlan:        currentDoc.Content,
+		TranscriptSummary:  transcriptSummary,
+		RecentJournal:      logs,
+		SectionTitle:       sec.Title,
+		SectionDescription: sec.Description,
+		SectionPromptHint:  sec.PromptHint,
 	})
 	if derr != nil {
-		j.log.Warn("journaler: plan-drift detector failed", "cwd", sess.Cwd, "err", derr)
+		j.log.Warn("journaler: drift detector failed", "cwd", sess.Cwd, "kind", kind, "err", derr)
 		return
 	}
 	if !out.ShouldPropose {
-		j.log.Debug("journaler: plan-drift detector saw no change needed",
-			"cwd", sess.Cwd, "session_id", sess.ID)
+		j.log.Debug("journaler: drift detector saw no change needed",
+			"cwd", sess.Cwd, "kind", kind, "session_id", sess.ID)
 		return
 	}
 
@@ -328,14 +355,30 @@ func (j *Journaler) maybeProposeDocDrift(sess SessionInfo, transcriptSummary str
 	if reason == "" {
 		reason = "Drift detector flagged this session as a likely " + string(kind) + " update."
 	}
-	proposal, perr := j.docs.ProposeDoc(bgCtx, sess.Cwd, kind, out.NewPlan, reason, sess.ID)
-	if perr != nil {
-		j.log.Warn("journaler: plan-drift propose failed",
-			"cwd", sess.Cwd, "session_id", sess.ID, "err", perr)
+
+	// AI-maintained + unlocked → apply directly so the doc actually
+	// tracks the work. A human edit (updated_by=operator) or an
+	// explicit human maintainer mode keeps the proposal gate.
+	locked := currentDoc.UpdatedBy == AuthorOperator
+	if sec.MaintainerMode == "ai" && !locked {
+		if _, uerr := j.docs.PutDoc(bgCtx, sess.Cwd, kind, out.NewPlan, AuthorAgent); uerr != nil {
+			j.log.Warn("journaler: drift auto-apply failed",
+				"cwd", sess.Cwd, "kind", kind, "session_id", sess.ID, "err", uerr)
+			return
+		}
+		j.log.Info("journaler: drift auto-applied",
+			"cwd", sess.Cwd, "kind", kind, "session_id", sess.ID, "reason", reason)
 		return
 	}
-	j.log.Info("journaler: plan-drift proposal filed",
-		"cwd", sess.Cwd, "session_id", sess.ID, "proposal_id", proposal.ID)
+
+	proposal, perr := j.docs.ProposeDoc(bgCtx, sess.Cwd, kind, out.NewPlan, reason, sess.ID)
+	if perr != nil {
+		j.log.Warn("journaler: drift propose failed",
+			"cwd", sess.Cwd, "kind", kind, "session_id", sess.ID, "err", perr)
+		return
+	}
+	j.log.Info("journaler: drift proposal filed",
+		"cwd", sess.Cwd, "kind", kind, "session_id", sess.ID, "proposal_id", proposal.ID)
 }
 
 // buildJournalBody assembles a deterministic markdown summary. Kept

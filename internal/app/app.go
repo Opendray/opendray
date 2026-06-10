@@ -874,7 +874,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		cortexOpts = append(cortexOpts, cortex.WithQuarantineCounter(memorySvc.CountQuarantined))
 	}
 	cortexSvc := cortex.NewService(projectDocSvc, log, cortexOpts...)
-	cortexHandlers := cortex.NewHandlers(cortexSvc, projectDocHandlers, memoryHandlers, knowledgeHandlers, log)
+	cortexHandlers := cortex.NewHandlers(cortexSvc, projectDocHandlers, memoryHandlers, knowledgeHandlers, log).
+		WithDocs(projectDocSvc).
+		WithBlueprintProposer(cortex.NewBlueprintProposer(projectDocSvc, memoryWorkerRegistry))
 	if memorySvc != nil {
 		// Guarded: assigning a nil *memory.Service to the interface
 		// field would dodge the handler's nil check (typed nil).

@@ -50,10 +50,15 @@ func (h *Handlers) Mount(r chi.Router) {
 	r.Route("/project-docs", func(r chi.Router) {
 		r.Get("/", h.listDocs)
 		// Static segments must register before the {kind} wildcard so
-		// /projects + /lifecycle aren't swallowed as a doc kind.
+		// /projects + /lifecycle + /blueprint aren't swallowed as a
+		// doc kind.
 		r.Get("/projects", h.listProjects)
 		r.Post("/lifecycle", h.setLifecycle)
 		r.Post("/reset", h.resetCwd)
+		// Blueprint (Cortex Phase 3) — the per-project section set.
+		r.Get("/blueprint", h.listSections)
+		r.Put("/blueprint/{slug}", h.putSection)
+		r.Delete("/blueprint/{slug}", h.deleteSection)
 		r.Get("/{kind}", h.getDoc)
 		r.Put("/{kind}", h.putDoc)
 	})
@@ -96,6 +101,50 @@ func (h *Handlers) listStale(w http.ResponseWriter, r *http.Request) {
 		out = []LogEntry{}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"stale": out})
+}
+
+// ─── blueprint (Cortex Phase 3) ────────────────────────────────────
+
+func (h *Handlers) listSections(w http.ResponseWriter, r *http.Request) {
+	cwd := r.URL.Query().Get("cwd")
+	sections, err := h.svc.ListSections(r.Context(), cwd)
+	if err != nil {
+		h.respondErr(w, err)
+		return
+	}
+	if sections == nil {
+		sections = []Section{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"sections": sections})
+}
+
+func (h *Handlers) putSection(w http.ResponseWriter, r *http.Request) {
+	var body Section
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	body.Slug = chi.URLParam(r, "slug")
+	sec, err := h.svc.PutSection(r.Context(), body)
+	if err != nil {
+		h.respondErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, sec)
+}
+
+func (h *Handlers) deleteSection(w http.ResponseWriter, r *http.Request) {
+	cwd := r.URL.Query().Get("cwd")
+	slug := chi.URLParam(r, "slug")
+	if err := h.svc.DeleteSection(r.Context(), cwd, slug); err != nil {
+		if errors.Is(err, ErrReservedSection) {
+			writeError(w, http.StatusForbidden, err)
+			return
+		}
+		h.respondErr(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // ─── project_docs ─────────────────────────────────────────────────

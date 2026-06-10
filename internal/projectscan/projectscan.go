@@ -489,6 +489,13 @@ func (s *Service) RunAndReturn(ctx context.Context, cwd string) (projectdoc.Doc,
 	body := RenderMarkdown(info)
 	doc, err := s.docs.PutDoc(ctx, cwd, projectdoc.KindTechStack, body, projectdoc.AuthorScanner)
 	if err != nil {
+		// Cortex Phase 3 — the operator removed the tech_stack section
+		// from this project's blueprint; the scanner respects that and
+		// silently stops writing it.
+		if errors.Is(err, projectdoc.ErrInvalidKind) {
+			s.log.Debug("projectscan: tech_stack section not in blueprint — skipped", "cwd", cwd)
+			return projectdoc.Doc{}, nil
+		}
 		return projectdoc.Doc{}, fmt.Errorf("projectscan: persist: %w", err)
 	}
 	s.log.Info("projectscan.scanned",

@@ -48,8 +48,11 @@ func (d *planDriftDetector) DetectDrift(ctx context.Context, in projectdoc.Drift
 
 	userInput := buildDriftUserInput(in)
 	resp, err := d.registry.Run(ctx, worker.Request{
-		Task:                     worker.TaskPlanDrift,
-		SystemPrompt:             projectdoc.DriftSystemPrompt(in.Kind),
+		Task: worker.TaskPlanDrift,
+		// Cortex Phase 3 — section-aware: goal/plan keep their tuned
+		// prompts, custom blueprint sections get a prompt built from
+		// their own title/description/hint.
+		SystemPrompt:             projectdoc.SectionDriftSystemPrompt(in),
 		UserInput:                userInput,
 		MaxTokens:                4096,
 		Timeout:                  5 * time.Minute,
@@ -92,8 +95,15 @@ func buildDriftUserInput(in projectdoc.DriftInput) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "## Project cwd\n\n`%s`\n\n", in.Cwd)
 	label := "Current plan"
-	if in.Kind == projectdoc.KindGoal {
+	switch {
+	case in.Kind == projectdoc.KindGoal:
 		label = "Current goal"
+	case in.Kind != "" && in.Kind != projectdoc.KindPlan:
+		title := strings.TrimSpace(in.SectionTitle)
+		if title == "" {
+			title = string(in.Kind)
+		}
+		label = "Current \"" + title + "\" section"
 	}
 	fmt.Fprintf(&b, "## %s\n\n", label)
 	b.WriteString(strings.TrimSpace(in.CurrentPlan))

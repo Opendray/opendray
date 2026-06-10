@@ -55,6 +55,14 @@ const (
 	// Gemini agent for capture (higher quality but slower and
 	// more expensive), matching the other 5 touchpoints.
 	TaskCapture TaskKind = "capture"
+	// TaskBlueprint is the Cortex doc-blueprint proposer: classify a
+	// project from repo signals, propose a doc section set
+	// (operator-triggered, applied only on operator accept).
+	TaskBlueprint TaskKind = "blueprint"
+	// TaskCuration is the Cortex curation-conversation channel: the
+	// operator discusses a doc section or knowledge page with the AI
+	// and the AI produces a revision (apply or proposal).
+	TaskCuration TaskKind = "curation"
 )
 
 // AllTasks returns every recognised TaskKind in a stable order.
@@ -64,6 +72,7 @@ func AllTasks() []TaskKind {
 	return []TaskKind{
 		TaskGatekeeper, TaskCleaner, TaskGitActivity, TaskTranscript,
 		TaskPlanDrift, TaskConflictDetector, TaskCapture,
+		TaskBlueprint, TaskCuration,
 	}
 }
 
@@ -172,7 +181,8 @@ type Config struct {
 func (c Config) Valid() error {
 	switch c.Task {
 	case TaskGatekeeper, TaskCleaner, TaskGitActivity, TaskTranscript,
-		TaskPlanDrift, TaskConflictDetector, TaskCapture:
+		TaskPlanDrift, TaskConflictDetector, TaskCapture,
+		TaskBlueprint, TaskCuration:
 	default:
 		return errors.New("memory worker: invalid task")
 	}
