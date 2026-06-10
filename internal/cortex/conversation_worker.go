@@ -220,7 +220,16 @@ NEVER include secrets (passwords, API keys, tokens) in any output. Preserve part
 	switch conv.TargetKind {
 	case TargetKBPage:
 		system.WriteString("\n\nThe target is a CROSS-PROJECT knowledge page")
-		if conv.TargetSlug == string(projectdoc.KindInfrastructure) || conv.TargetSlug == string(projectdoc.KindConventions) {
+		foundational := false
+		if sections, err := s.docs.ListSections(ctx, projectdoc.GlobalCwd); err == nil {
+			for _, sec := range sections {
+				if sec.Slug == conv.TargetSlug {
+					foundational = sec.Nature == "foundational"
+					break
+				}
+			}
+		}
+		if foundational {
 			system.WriteString(" of the FOUNDATIONAL nature: standing ground truth + binding rules injected into every project. This conversation is how the operator re-drafts policy with you (重新制定方针). Keep the \"## Rules (MUST follow)\" section explicit and imperative.")
 		} else {
 			system.WriteString(" of the EMERGENT nature: distilled lessons / reusable assets. Guidance, not law.")

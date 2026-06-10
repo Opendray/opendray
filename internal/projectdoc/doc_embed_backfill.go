@@ -44,15 +44,17 @@ func (s *Service) RunDocEmbedBackfill(ctx context.Context, cfg LogEmbedBackfillC
 	}
 }
 
-// backfillDocsOneCycle reads one batch of un-embedded goal/plan docs,
-// embeds them, writes the vectors back individually. Returns the number
-// of rows successfully embedded so the caller picks the next sleep.
+// backfillDocsOneCycle reads one batch of un-embedded docs (ALL kinds
+// since the knowledge blueprint — custom sections + global kb pages
+// included), embeds them, writes the vectors back individually.
+// Returns the number of rows successfully embedded so the caller picks
+// the next sleep.
 func (s *Service) backfillDocsOneCycle(ctx context.Context, batch int) (int, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT id, content
 		  FROM project_docs
 		 WHERE embedding IS NULL
-		   AND kind IN ('goal', 'plan')
+		   AND content <> ''
 		 ORDER BY updated_at DESC
 		 LIMIT $1`, batch)
 	if err != nil {

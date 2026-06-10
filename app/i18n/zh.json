@@ -2519,7 +2519,23 @@
           "rejected": "提议已拒绝"
         },
         "discuss": "与 AI 讨论",
-        "discussHint": "与 AI 对话重新制定这页方针——已锁定的页面只会产生提案，绝不覆写"
+        "discussHint": "与 AI 对话重新制定这页方针——已锁定的页面只会产生提案，绝不覆写",
+        "onDemand": "按需",
+        "removePage": "移除页面",
+        "removePageHint": "从知识库移除此页（内容保留，重新添加同名标识即可恢复）",
+        "pageRemovedToast": "页面已移除",
+        "newPage": {
+          "button": "新建知识页",
+          "title": "新建知识页",
+          "description": "为每个知识领域建立独立的细粒度页面，而不是把所有内容塞进四个经典页——AI 按页索引，只检索任务需要的部分。",
+          "slugPlaceholder": "network_topology",
+          "titlePlaceholder": "标题（如：网络拓扑）",
+          "descPlaceholder": "一句话：这个页面收录什么",
+          "inject": "注入每次启动",
+          "injectHint": "关闭（多数情况推荐）：页面不进启动横幅，AI 通过记忆搜索按需取用。开启：基础类页面作为强约束注入，经验类作为参考注入。",
+          "create": "创建页面",
+          "createdToast": "知识页已创建"
+        }
       },
       "kinds": {
         "all": "全部",
@@ -2534,19 +2550,19 @@
         "title": "心智中枢 Cortex",
         "subtitle": "一个模块、三层一环：原始记忆结晶为各项目的官方文档，再蒸馏为跨项目知识，并注入每个新会话。",
         "disabled": "未启用",
-        "pendingProposals": "{{count}} 个待审",
+        "pendingProposals": "{count} 个待审",
         "loopHint": "记忆 → 笔记 → 知识 → 注入每次启动。层级提升是转化，绝不是复制。",
         "activeProjects": "活跃项目",
-        "idle": "闲置 {{days}} 天",
+        "idle": "闲置 {days} 天",
         "memory": {
           "title": "记忆",
           "description": "从会话中自动采集的原始事实——按相关性召回；第三方来源默认隔离。",
-          "quarantine": "{{count}} 条隔离中"
+          "quarantine": "{count} 条隔离中"
         },
         "notes": {
           "title": "笔记",
           "description": "每个项目的官方文档——按蓝图组织章节，AI 随工作进展持续维护。",
-          "projects": "{{count}} 个活跃"
+          "projects": "{count} 个活跃"
         },
         "knowledge": {
           "title": "知识",
@@ -2578,7 +2594,7 @@
         "propose": "AI 提议",
         "proposeHint": "识别项目类型并提议契合的章节结构",
         "proposeFailed": "提议失败",
-        "proposalNote": "AI 判断项目类型为：{{type}}——{{reason}} 请在下方审阅并自由修改后应用。",
+        "proposalNote": "AI 判断项目类型为：{type}——{reason} 请在下方审阅并自由修改后应用。",
         "addSection": "添加章节",
         "slugPlaceholder": "标识",
         "titlePlaceholder": "标题",
@@ -2606,7 +2622,7 @@
         "promotedToast": "已升格为正式记忆",
         "discardedToast": "已丢弃",
         "actionFailed": "操作失败",
-        "expires": "{{date}} 到期"
+        "expires": "{date} 到期"
       }
     }
   },

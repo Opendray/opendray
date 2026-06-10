@@ -39,9 +39,15 @@ func TestValidKind_BlueprintSemantics(t *testing.T) {
 			t.Errorf("ValidKind(%q) = false, want true", k)
 		}
 	}
-	// Retired handbook stays invalid.
-	if ValidKind(KindHandbook) {
-		t.Errorf("ValidKind(kb_handbook) = true, want false (retired)")
+	// The retired handbook is now merely a syntactically valid kb_*
+	// slug — writes are gated by knowledge-blueprint membership, and
+	// it is seeded nowhere.
+	if !ValidKind(KindHandbook) {
+		t.Errorf("ValidKind(kb_handbook) = false, want true (syntax-level only)")
+	}
+	// Custom knowledge pages are valid kinds (knowledge blueprint).
+	if !ValidKind("kb_network_topology") {
+		t.Errorf("ValidKind(kb_network_topology) = false, want true")
 	}
 	// Arbitrary well-formed section slugs are now valid kinds.
 	if !ValidKind("api_surface") {
@@ -81,6 +87,52 @@ func TestDefaultSectionsShape(t *testing.T) {
 		}
 		if !ValidMaintainerMode(sec.MaintainerMode) {
 			t.Errorf("default section %q has bad mode %q", sec.Slug, sec.MaintainerMode)
+		}
+	}
+}
+
+func TestKBDefaultSectionsShape(t *testing.T) {
+	secs := kbDefaultSections()
+	if len(secs) != 4 {
+		t.Fatalf("knowledge blueprint defaults = %d sections, want 4", len(secs))
+	}
+	natures := map[string]int{}
+	for _, sec := range secs {
+		if sec.Cwd != GlobalCwd {
+			t.Errorf("section %q cwd = %q, want %q", sec.Slug, sec.Cwd, GlobalCwd)
+		}
+		if !ValidGlobalKBSlug(sec.Slug) {
+			t.Errorf("slug %q fails ValidGlobalKBSlug", sec.Slug)
+		}
+		if !ValidNature(sec.Nature) {
+			t.Errorf("section %q nature %q invalid", sec.Slug, sec.Nature)
+		}
+		if !sec.Pinned {
+			t.Errorf("classic page %q must be pinned (drafter + guardrails depend on it)", sec.Slug)
+		}
+		if !sec.Inject {
+			t.Errorf("classic page %q should inject by default", sec.Slug)
+		}
+		natures[sec.Nature]++
+	}
+	if natures["foundational"] != 2 || natures["emergent"] != 2 {
+		t.Errorf("natures = %v, want 2 foundational + 2 emergent", natures)
+	}
+}
+
+func TestValidGlobalKBSlug(t *testing.T) {
+	for slug, want := range map[string]bool{
+		"kb_infrastructure":   true,
+		"kb_network_topology": true,
+		"kb_x":                true,
+		"kb_":                 false, // nothing after the prefix
+		"goal":                false, // no prefix
+		"kb_Bad":              false, // uppercase
+		"kb_has-dash":         false,
+		"":                    false,
+	} {
+		if got := ValidGlobalKBSlug(slug); got != want {
+			t.Errorf("ValidGlobalKBSlug(%q) = %v, want %v", slug, got, want)
 		}
 	}
 }

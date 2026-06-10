@@ -81,13 +81,14 @@ func IsGlobalKBKind(k Kind) bool {
 	return false
 }
 
-// ValidKind is the syntax-level check: either a fixed global KB page
-// or a well-formed per-project section slug. Whether a slug actually
-// exists in a project's blueprint is checked on the write paths
-// (PutDoc / ProposeDoc) — reads stay permissive so content of a
-// removed-then-re-added section is never unreachable.
+// ValidKind is the syntax-level check: either a global knowledge page
+// slug (kb_*, extensible since the knowledge blueprint) or a
+// well-formed per-project section slug. Whether a slug actually exists
+// in its blueprint is checked on the write paths (PutDoc / ProposeDoc)
+// — reads stay permissive so content of a removed-then-re-added
+// section is never unreachable.
 func ValidKind(k Kind) bool {
-	return IsGlobalKBKind(k) || ValidSectionSlug(string(k))
+	return ValidGlobalKBSlug(string(k)) || ValidSectionSlug(string(k))
 }
 
 // validateKindForCwd enforces the kind↔cwd pairing: kb_* pages live
@@ -96,8 +97,9 @@ func validateKindForCwd(cwd string, k Kind) error {
 	if !ValidKind(k) {
 		return ErrInvalidKind
 	}
-	if IsGlobalKBKind(k) != (cwd == GlobalCwd) {
-		if IsGlobalKBKind(k) {
+	isKB := ValidGlobalKBSlug(string(k))
+	if isKB != (cwd == GlobalCwd) {
+		if isKB {
 			return fmt.Errorf("%w: %s is a global knowledge page (cwd must be %s)", ErrInvalidKind, k, GlobalCwd)
 		}
 		return fmt.Errorf("%w: %s is not a global knowledge page", ErrInvalidKind, k)
@@ -570,18 +572,17 @@ func (s *Service) embedLogBestEffort(ctx context.Context, e LogEntry) {
 	}
 }
 
-// embedDocBestEffort computes + persists an embedding for a goal /
-// plan doc so cross-layer search can match them semantically instead of
-// by substring. No-op for non-searchable kinds (tech_stack /
-// recent_activity) and when no embedder is wired. Soft-fails: on error
-// the embedding stays NULL and the backfill loop retries. The vector
-// lives in the same space as memories.embedding / session_logs.embedding
-// (same embedder), so cosines are directly comparable across layers.
+// embedDocBestEffort computes + persists an embedding for a doc so
+// cross-layer search can match it semantically instead of by
+// substring. Since the knowledge blueprint EVERY doc embeds — custom
+// project sections and global kb_* pages included — so agents can
+// retrieve exactly the section a task needs instead of swallowing
+// whole injected pages. Soft-fails: on error the embedding stays NULL
+// and the backfill loop retries. The vector lives in the same space
+// as memories.embedding / session_logs.embedding (same embedder), so
+// cosines are directly comparable across layers.
 func (s *Service) embedDocBestEffort(ctx context.Context, d Doc) {
 	if s.embedder == nil {
-		return
-	}
-	if d.Kind != KindGoal && d.Kind != KindPlan {
 		return
 	}
 	text := strings.TrimSpace(d.Content)
@@ -909,12 +910,24 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 		logs = nil
 	}
 
-	// Knowledge (cross-project) splits into two natures (Experience Flywheel):
-	//  - Foundational (infrastructure + conventions) = binding rules / guardrails.
-	//  - Emergent (lessons + reusable) = transferable guidance, not binding.
-	foundational := s.foundationalRules(ctx)
-	kbLessons := s.globalKBDoc(ctx, KindLessons)
-	kbReusable := s.globalKBDoc(ctx, KindReusable)
+	// Knowledge (cross-project) splits into two natures (Experience
+	// Flywheel), and since the knowledge blueprint the page set is
+	// dynamic: foundational pages inject as binding guardrails,
+	// emergent pages as reference — each only when its inject flag is
+	// on. Pages with inject=false are reached on demand via
+	// cross-layer search instead.
+	kbSections := s.globalKBSections(ctx)
+	foundational := s.foundationalRules(ctx, kbSections)
+	type kbRef struct{ title, body string }
+	var emergent []kbRef
+	for _, sec := range kbSections {
+		if sec.Nature != "emergent" || !sec.Inject {
+			continue
+		}
+		if body := s.globalKBDoc(ctx, Kind(sec.Slug)); body != "" {
+			emergent = append(emergent, kbRef{title: sec.Title + " (reference)", body: body})
+		}
+	}
 
 	anySection := false
 	for _, sec := range sections {
@@ -923,7 +936,7 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 			break
 		}
 	}
-	if !anySection && foundational == "" && kbLessons == "" && kbReusable == "" && len(logs) == 0 {
+	if !anySection && foundational == "" && len(emergent) == 0 && len(logs) == 0 {
 		return "", nil
 	}
 
@@ -957,7 +970,7 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 	}
 
 	// Binding guardrails FIRST so a tight budget never truncates them away.
-	appendSection("Infrastructure & conventions — RULES you MUST follow", foundational)
+	appendSection("Foundational knowledge — RULES you MUST follow", foundational)
 	// Blueprint sections in blueprint order (pinned first, then
 	// position) — the operator controls spawn priority by reordering.
 	for _, sec := range sections {
@@ -966,8 +979,9 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 		}
 		appendSection(sec.Title, content[sec.Slug])
 	}
-	appendSection("Lessons (reference)", kbLessons)
-	appendSection("Reusable features (reference)", kbReusable)
+	for _, ref := range emergent {
+		appendSection(ref.title, ref.body)
+	}
 
 	if len(logs) > 0 && !truncated {
 		jb, jTrunc := renderJournalSection(logs, maxBytes-b.Len()-footerReserve)
@@ -997,14 +1011,29 @@ func (s *Service) globalKBDoc(ctx context.Context, kind Kind) string {
 	return stripKBSig(d.Content)
 }
 
-// foundationalRules assembles the binding Foundational knowledge — the
-// infrastructure facts + the rules for using them, plus the dev conventions —
-// into one block injected as guardrails. An operator-locked page is marked
-// ratified; an AI-drafted one is flagged so the agent treats it with care.
-func (s *Service) foundationalRules(ctx context.Context) string {
+// globalKBSections returns the knowledge blueprint (lazily seeded with
+// the classic four). Empty on error — spawn must never block on it.
+func (s *Service) globalKBSections(ctx context.Context) []Section {
+	sections, err := s.ListSections(ctx, GlobalCwd)
+	if err != nil {
+		s.log.Warn("projectdoc: knowledge blueprint unavailable — using classics", "err", err)
+		return kbDefaultSections()
+	}
+	return sections
+}
+
+// foundationalRules assembles the binding Foundational knowledge — every
+// foundational-nature page with inject=true (classically infrastructure +
+// conventions; extensible since the knowledge blueprint) — into one block
+// injected as guardrails. An operator-locked page is ratified; an
+// AI-drafted one is flagged so the agent treats it with care.
+func (s *Service) foundationalRules(ctx context.Context, kbSections []Section) string {
 	var b strings.Builder
-	for _, kind := range []Kind{KindInfrastructure, KindConventions} {
-		d, err := s.GetDoc(ctx, GlobalCwd, kind)
+	for _, sec := range kbSections {
+		if sec.Nature != "foundational" || !sec.Inject {
+			continue
+		}
+		d, err := s.GetDoc(ctx, GlobalCwd, Kind(sec.Slug))
 		if err != nil {
 			continue
 		}

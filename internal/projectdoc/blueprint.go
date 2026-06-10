@@ -32,10 +32,18 @@ type Section struct {
 	// PromptHint steers the AI maintainer ("track the public API
 	// surface", "keep this a one-page pitch").
 	PromptHint string `json:"prompt_hint,omitempty"`
-	// Pinned sections sort first and cannot be deleted (overview).
+	// Pinned sections sort first and cannot be deleted (overview; the
+	// four classic knowledge pages).
 	Pinned bool `json:"pinned"`
-	// Inject includes this section's doc in the spawn banner.
-	Inject    bool      `json:"inject"`
+	// Inject includes this section's doc in the spawn banner. Pages
+	// with inject=false are reached on demand via cross-layer search
+	// instead — agents index only what a task needs.
+	Inject bool `json:"inject"`
+	// Nature classifies GLOBAL knowledge pages: "foundational"
+	// (binding ground truth + rules, injected as guardrails) or
+	// "emergent" (distilled guidance, injected as reference). Always
+	// empty for per-project sections.
+	Nature    string    `json:"nature,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -44,18 +52,35 @@ type Section struct {
 // blueprint, pinned, undeletable.
 const SlugOverview = "overview"
 
-var slugRe = regexp.MustCompile(`^[a-z][a-z0-9_]{1,47}$`)
+var (
+	slugRe = regexp.MustCompile(`^[a-z][a-z0-9_]{1,47}$`)
+	// kbSlugRe requires a real name after the kb_ prefix.
+	kbSlugRe = regexp.MustCompile(`^kb_[a-z0-9][a-z0-9_]{0,44}$`)
+)
 
-// ValidSectionSlug reports whether s is a legal blueprint slug. kb_*
-// is reserved for the global Knowledge pages and never valid inside a
-// per-project blueprint.
+// ValidSectionSlug reports whether s is a legal PER-PROJECT blueprint
+// slug. kb_* is reserved for the global Knowledge pages and never
+// valid inside a per-project blueprint.
 func ValidSectionSlug(s string) bool {
 	return slugRe.MatchString(s) && !strings.HasPrefix(s, "kb_")
+}
+
+// ValidGlobalKBSlug reports whether s is a legal GLOBAL knowledge page
+// slug: kb_-prefixed, same syntax. The knowledge base is extensible —
+// any new knowledge domain gets its own kb_* page instead of being
+// crammed into the four classics.
+func ValidGlobalKBSlug(s string) bool {
+	return kbSlugRe.MatchString(s)
 }
 
 // ValidMaintainerMode reports whether m is ai|human|scanner.
 func ValidMaintainerMode(m string) bool {
 	return m == "ai" || m == "human" || m == "scanner"
+}
+
+// ValidNature reports whether n is a legal knowledge nature.
+func ValidNature(n string) bool {
+	return n == "foundational" || n == "emergent"
 }
 
 // ErrReservedSection is returned when a caller tries to delete or
@@ -80,16 +105,32 @@ func defaultSections(cwd string) []Section {
 	}
 }
 
+// kbDefaultSections is the global knowledge blueprint a fresh install
+// gets — the four classic pages, pinned (the KB drafter re-drafts them
+// and the spawn guardrails build on the foundational pair). Mirrors
+// the 0050 seed.
+func kbDefaultSections() []Section {
+	return []Section{
+		{Cwd: GlobalCwd, Slug: string(KindInfrastructure), Title: "Infrastructure", Position: 0, MaintainerMode: "ai", Pinned: true, Inject: true, Nature: "foundational",
+			Description: "Standing ground truth about the home-lab/ecosystem: hosts, networks, databases, gateways — plus the binding rules for using them."},
+		{Cwd: GlobalCwd, Slug: string(KindConventions), Title: "Conventions", Position: 1, MaintainerMode: "ai", Pinned: true, Inject: true, Nature: "foundational",
+			Description: "The binding development conventions & policies: stack, source control, coding rules, release process."},
+		{Cwd: GlobalCwd, Slug: string(KindLessons), Title: "Lessons", Position: 2, MaintainerMode: "ai", Pinned: true, Inject: true, Nature: "emergent",
+			Description: "Distilled playbooks and hard-won lessons from past work — reference guidance, not law."},
+		{Cwd: GlobalCwd, Slug: string(KindReusable), Title: "Reusable features", Position: 3, MaintainerMode: "ai", Pinned: true, Inject: true, Nature: "emergent",
+			Description: "Catalog of features/components/patterns liftable into new projects."},
+	}
+}
+
 // ListSections returns the blueprint for cwd ordered pinned-first then
 // by position. A never-seen cwd is lazily seeded with the default
 // blueprint (idempotent — ON CONFLICT DO NOTHING), so every project
 // always has a usable section set without an explicit setup step.
+// GlobalCwd returns the KNOWLEDGE blueprint — the knowledge base's
+// page set, extensible exactly like a project's sections.
 func (s *Service) ListSections(ctx context.Context, cwd string) ([]Section, error) {
 	if strings.TrimSpace(cwd) == "" {
 		return nil, ErrEmptyCwd
-	}
-	if cwd == GlobalCwd {
-		return nil, fmt.Errorf("projectdoc: %q has no blueprint (global KB pages are fixed)", GlobalCwd)
 	}
 	sections, err := s.querySections(ctx, cwd)
 	if err != nil {
@@ -101,7 +142,7 @@ func (s *Service) ListSections(ctx context.Context, cwd string) ([]Section, erro
 	// Ephemeral cwds (tmp dirs from third-party consumers / tests) are
 	// not projects: serve the in-memory defaults so a UI that opens one
 	// still renders, but never persist a blueprint for them.
-	if IsEphemeralCwd(cwd) {
+	if cwd != GlobalCwd && IsEphemeralCwd(cwd) {
 		return defaultSections(cwd), nil
 	}
 	if err := s.seedSections(ctx, cwd); err != nil {
@@ -113,7 +154,7 @@ func (s *Service) ListSections(ctx context.Context, cwd string) ([]Section, erro
 func (s *Service) querySections(ctx context.Context, cwd string) ([]Section, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT cwd, slug, title, description, position, maintainer_mode,
-		       prompt_hint, pinned, inject, created_at, updated_at
+		       prompt_hint, pinned, inject, COALESCE(nature, ''), created_at, updated_at
 		  FROM doc_blueprint_sections
 		 WHERE cwd = $1
 		 ORDER BY pinned DESC, position ASC, slug ASC`, cwd)
@@ -126,7 +167,7 @@ func (s *Service) querySections(ctx context.Context, cwd string) ([]Section, err
 		var sec Section
 		if err := rows.Scan(&sec.Cwd, &sec.Slug, &sec.Title, &sec.Description,
 			&sec.Position, &sec.MaintainerMode, &sec.PromptHint,
-			&sec.Pinned, &sec.Inject, &sec.CreatedAt, &sec.UpdatedAt); err != nil {
+			&sec.Pinned, &sec.Inject, &sec.Nature, &sec.CreatedAt, &sec.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("projectdoc: scan section: %w", err)
 		}
 		out = append(out, sec)
@@ -135,14 +176,18 @@ func (s *Service) querySections(ctx context.Context, cwd string) ([]Section, err
 }
 
 func (s *Service) seedSections(ctx context.Context, cwd string) error {
-	for _, sec := range defaultSections(cwd) {
+	defaults := defaultSections(cwd)
+	if cwd == GlobalCwd {
+		defaults = kbDefaultSections()
+	}
+	for _, sec := range defaults {
 		if _, err := s.pool.Exec(ctx, `
 			INSERT INTO doc_blueprint_sections
-				(cwd, slug, title, description, position, maintainer_mode, prompt_hint, pinned, inject)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+				(cwd, slug, title, description, position, maintainer_mode, prompt_hint, pinned, inject, nature)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 			ON CONFLICT (cwd, slug) DO NOTHING`,
 			sec.Cwd, sec.Slug, sec.Title, sec.Description, sec.Position,
-			sec.MaintainerMode, sec.PromptHint, sec.Pinned, sec.Inject); err != nil {
+			sec.MaintainerMode, sec.PromptHint, sec.Pinned, sec.Inject, sec.Nature); err != nil {
 			return fmt.Errorf("projectdoc: seed section %s: %w", sec.Slug, err)
 		}
 	}
@@ -150,20 +195,35 @@ func (s *Service) seedSections(ctx context.Context, cwd string) error {
 }
 
 // PutSection upserts one blueprint section (create a new section or
-// retitle / reorder / re-mode an existing one). The reserved overview
-// keeps its pinned flag no matter what the caller sends.
+// retitle / reorder / re-mode an existing one). Per-project sections
+// must not use the kb_ prefix; GLOBAL knowledge pages must — and carry
+// a nature (foundational|emergent). Pinned reserved sections keep
+// their flag no matter what the caller sends.
 func (s *Service) PutSection(ctx context.Context, sec Section) (Section, error) {
 	if strings.TrimSpace(sec.Cwd) == "" {
 		return Section{}, ErrEmptyCwd
 	}
 	if sec.Cwd == GlobalCwd {
-		return Section{}, fmt.Errorf("projectdoc: %q has no blueprint", GlobalCwd)
-	}
-	if IsEphemeralCwd(sec.Cwd) {
-		return Section{}, ErrEphemeralCwd
-	}
-	if !ValidSectionSlug(sec.Slug) {
-		return Section{}, fmt.Errorf("%w: bad slug %q", ErrInvalidKind, sec.Slug)
+		if !ValidGlobalKBSlug(sec.Slug) {
+			return Section{}, fmt.Errorf("%w: knowledge pages need a kb_* slug, got %q", ErrInvalidKind, sec.Slug)
+		}
+		if !ValidNature(sec.Nature) {
+			return Section{}, fmt.Errorf("projectdoc: knowledge nature must be foundational|emergent, got %q", sec.Nature)
+		}
+		if IsGlobalKBKind(Kind(sec.Slug)) {
+			sec.Pinned = true // the classic four stay pinned
+		}
+	} else {
+		if IsEphemeralCwd(sec.Cwd) {
+			return Section{}, ErrEphemeralCwd
+		}
+		if !ValidSectionSlug(sec.Slug) {
+			return Section{}, fmt.Errorf("%w: bad slug %q", ErrInvalidKind, sec.Slug)
+		}
+		sec.Nature = "" // nature is a knowledge-layer concept
+		if sec.Slug == SlugOverview {
+			sec.Pinned = true // the front page stays pinned
+		}
 	}
 	if !ValidMaintainerMode(sec.MaintainerMode) {
 		return Section{}, fmt.Errorf("projectdoc: maintainer_mode must be ai|human|scanner, got %q", sec.MaintainerMode)
@@ -171,18 +231,15 @@ func (s *Service) PutSection(ctx context.Context, sec Section) (Section, error) 
 	if strings.TrimSpace(sec.Title) == "" {
 		return Section{}, errors.New("projectdoc: section title is required")
 	}
-	if sec.Slug == SlugOverview {
-		sec.Pinned = true // the front page stays pinned
-	}
-	// Lazy-seed first so a brand-new project's custom section lands in
-	// a complete blueprint rather than an otherwise-empty one.
+	// Lazy-seed first so a brand-new blueprint's custom section lands
+	// in a complete set rather than an otherwise-empty one.
 	if _, err := s.ListSections(ctx, sec.Cwd); err != nil {
 		return Section{}, err
 	}
 	row := s.pool.QueryRow(ctx, `
 		INSERT INTO doc_blueprint_sections
-			(cwd, slug, title, description, position, maintainer_mode, prompt_hint, pinned, inject)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+			(cwd, slug, title, description, position, maintainer_mode, prompt_hint, pinned, inject, nature)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		ON CONFLICT (cwd, slug) DO UPDATE SET
 			title = EXCLUDED.title,
 			description = EXCLUDED.description,
@@ -191,33 +248,34 @@ func (s *Service) PutSection(ctx context.Context, sec Section) (Section, error) 
 			prompt_hint = EXCLUDED.prompt_hint,
 			pinned = EXCLUDED.pinned,
 			inject = EXCLUDED.inject,
+			nature = EXCLUDED.nature,
 			updated_at = NOW()
 		RETURNING cwd, slug, title, description, position, maintainer_mode,
-		          prompt_hint, pinned, inject, created_at, updated_at`,
+		          prompt_hint, pinned, inject, COALESCE(nature, ''), created_at, updated_at`,
 		sec.Cwd, sec.Slug, sec.Title, sec.Description, sec.Position,
-		sec.MaintainerMode, sec.PromptHint, sec.Pinned, sec.Inject)
+		sec.MaintainerMode, sec.PromptHint, sec.Pinned, sec.Inject, sec.Nature)
 	var out Section
 	if err := row.Scan(&out.Cwd, &out.Slug, &out.Title, &out.Description,
 		&out.Position, &out.MaintainerMode, &out.PromptHint,
-		&out.Pinned, &out.Inject, &out.CreatedAt, &out.UpdatedAt); err != nil {
+		&out.Pinned, &out.Inject, &out.Nature, &out.CreatedAt, &out.UpdatedAt); err != nil {
 		return Section{}, fmt.Errorf("projectdoc: put section: %w", err)
 	}
 	return out, nil
 }
 
-// DeleteSection removes a section from the blueprint. The overview is
-// reserved and cannot be deleted. The section's project_docs row is
-// deliberately KEPT — deleting a section hides it; re-adding the same
-// slug resurrects the content. Accidental deletes lose nothing.
+// DeleteSection removes a section from the blueprint. Pinned reserved
+// sections (overview; the classic knowledge four) cannot be deleted.
+// The section's project_docs row is deliberately KEPT — deleting a
+// section hides it; re-adding the same slug resurrects the content.
 func (s *Service) DeleteSection(ctx context.Context, cwd, slug string) error {
 	if strings.TrimSpace(cwd) == "" {
 		return ErrEmptyCwd
 	}
-	if slug == SlugOverview {
+	if slug == SlugOverview || (cwd == GlobalCwd && IsGlobalKBKind(Kind(slug))) {
 		return ErrReservedSection
 	}
 	tag, err := s.pool.Exec(ctx, `
-		DELETE FROM doc_blueprint_sections WHERE cwd = $1 AND slug = $2`, cwd, slug)
+		DELETE FROM doc_blueprint_sections WHERE cwd = $1 AND slug = $2 AND NOT pinned`, cwd, slug)
 	if err != nil {
 		return fmt.Errorf("projectdoc: delete section: %w", err)
 	}
@@ -236,14 +294,13 @@ func (s *Service) validateWriteTarget(ctx context.Context, cwd string, kind Kind
 	if err := validateKindForCwd(cwd, kind); err != nil {
 		return err
 	}
-	if cwd == GlobalCwd {
-		return nil
-	}
 	// Temp dirs are not projects — refuse to create doc footprint for
 	// them (third-party consumers + tests spawn there constantly).
-	if IsEphemeralCwd(cwd) {
+	if cwd != GlobalCwd && IsEphemeralCwd(cwd) {
 		return ErrEphemeralCwd
 	}
+	// Both project docs AND global knowledge pages must exist in their
+	// blueprint (lazily seeded with the defaults).
 	ok, err := s.HasSection(ctx, cwd, string(kind), "")
 	if err != nil {
 		s.log.Warn("projectdoc: blueprint check failed — allowing write",
@@ -251,7 +308,7 @@ func (s *Service) validateWriteTarget(ctx context.Context, cwd string, kind Kind
 		return nil
 	}
 	if !ok {
-		return fmt.Errorf("%w: section %q is not in this project's blueprint", ErrInvalidKind, kind)
+		return fmt.Errorf("%w: %q is not in this blueprint", ErrInvalidKind, kind)
 	}
 	return nil
 }

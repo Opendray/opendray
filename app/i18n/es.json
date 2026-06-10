@@ -2519,7 +2519,23 @@
           "rejected": "Propuesta rechazada"
         },
         "discuss": "Hablar con la IA",
-        "discussHint": "Redacta de nuevo esta política conversando con la IA — las páginas bloqueadas reciben propuestas, nunca sobrescrituras"
+        "discussHint": "Redacta de nuevo esta política conversando con la IA — las páginas bloqueadas reciben propuestas, nunca sobrescrituras",
+        "onDemand": "bajo demanda",
+        "removePage": "Quitar página",
+        "removePageHint": "Quita esta página de la base de conocimiento (su contenido se conserva y vuelve si se re-añade el slug)",
+        "pageRemovedToast": "Página quitada",
+        "newPage": {
+          "button": "Nueva página de conocimiento",
+          "title": "Nueva página de conocimiento",
+          "description": "Da a cada dominio de conocimiento su propia página de grano fino en vez de engordar las clásicas — los agentes indexan páginas individualmente y recuperan solo lo que una tarea necesita.",
+          "slugPlaceholder": "network_topology",
+          "titlePlaceholder": "Título (p. ej. Topología de red)",
+          "descPlaceholder": "Una frase: qué va en esta página",
+          "inject": "inyectar en cada arranque",
+          "injectHint": "Apagado (recomendado): la página queda fuera del banner de arranque y los agentes la alcanzan bajo demanda vía búsqueda. Encendido: las fundacionales se inyectan como reglas vinculantes, las emergentes como referencia.",
+          "create": "Crear página",
+          "createdToast": "Página de conocimiento creada"
+        }
       },
       "kinds": {
         "all": "Todos",
@@ -2534,19 +2550,19 @@
         "title": "Cortex",
         "subtitle": "Un módulo, tres peldaños, un ciclo: la memoria bruta cristaliza en el documento oficial de cada proyecto, se destila en conocimiento entre proyectos y se inyecta en cada nueva sesión.",
         "disabled": "desactivado",
-        "pendingProposals": "{{count}} pendientes",
+        "pendingProposals": "{count} pendientes",
         "loopHint": "Memoria → Notas → Conocimiento → inyectado en cada arranque. Ascender es transformar, nunca copiar.",
         "activeProjects": "Proyectos activos",
-        "idle": "inactivo {{days}}d",
+        "idle": "inactivo {days}d",
         "memory": {
           "title": "Memoria",
           "description": "Hechos episódicos capturados de tus sesiones — recuperados por relevancia, en cuarentena si vienen de terceros.",
-          "quarantine": "{{count}} en cuarentena"
+          "quarantine": "{count} en cuarentena"
         },
         "notes": {
           "title": "Notas",
           "description": "El documento oficial de cada proyecto — secciones según su plano, mantenidas por la IA mientras trabajas.",
-          "projects": "{{count}} activos"
+          "projects": "{count} activos"
         },
         "knowledge": {
           "title": "Conocimiento",
@@ -2578,7 +2594,7 @@
         "propose": "Proponer (IA)",
         "proposeHint": "Clasifica el proyecto y propone un conjunto de secciones a medida",
         "proposeFailed": "Propuesta fallida",
-        "proposalNote": "La IA lo clasificó como: {{type}} — {{reason}} Revísalo, edítalo y aplica.",
+        "proposalNote": "La IA lo clasificó como: {type} — {reason} Revísalo, edítalo y aplica.",
         "addSection": "Añadir sección",
         "slugPlaceholder": "slug",
         "titlePlaceholder": "Título",
@@ -2606,7 +2622,7 @@
         "promotedToast": "Promocionada a memoria duradera",
         "discardedToast": "Descartada",
         "actionFailed": "Acción fallida",
-        "expires": "expira {{date}}"
+        "expires": "expira {date}"
       }
     }
   },

@@ -25,11 +25,33 @@ import {
   listPendingProposals,
   approveProposal,
   rejectProposal,
+  listBlueprintSections,
+  putBlueprintSection,
+  deleteBlueprintSection,
   GLOBAL_CWD,
+  type BlueprintSection,
   type DocKind,
   type DocProposal,
 } from '@/lib/projectDocs'
 import { CurationChat } from '@/components/cortex/CurationChat'
+import { Loader2, Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 // ── shared bits ───────────────────────────────────────────────
 
@@ -86,23 +108,35 @@ const MD = {
 
 // ── Knowledge Base (the cross-project compounding asset) ──────
 
-// Knowledge's two natures (Experience Flywheel §2). Foundational pages are
-// binding guardrails injected into every project; Emergent pages are distilled
-// guidance. Each datum has one home — there are no per-project pages here.
-const FOUNDATIONAL_KINDS: DocKind[] = ['kb_infrastructure', 'kb_conventions']
-const EMERGENT_KINDS: DocKind[] = ['kb_lessons', 'kb_reusable']
-const isFoundational = (k: DocKind) => FOUNDATIONAL_KINDS.includes(k)
+// Knowledge's two natures (Experience Flywheel §2). Foundational pages
+// are binding guardrails injected into every project; Emergent pages
+// are distilled guidance. The PAGE SET is dynamic since the knowledge
+// blueprint: the classic four are pinned, and the operator (or AI)
+// can add new kb_* pages so every knowledge domain gets its own
+// fine-grained, individually-indexed document.
+const CLASSIC_KB_KINDS = new Set([
+  'kb_infrastructure',
+  'kb_conventions',
+  'kb_lessons',
+  'kb_reusable',
+])
+
+function kbPageLabel(sec: BlueprintSection, t: (k: string) => string): string {
+  return CLASSIC_KB_KINDS.has(sec.slug)
+    ? t(`web.knowledge.kb.kinds.${sec.slug}`)
+    : sec.title
+}
 
 function NavSection({
   label,
   hint,
-  kinds,
+  sections,
   sel,
   onSelect,
 }: {
   label: string
   hint: string
-  kinds: DocKind[]
+  sections: BlueprintSection[]
   sel: DocKind
   onSelect: (k: DocKind) => void
 }) {
@@ -115,18 +149,149 @@ function NavSection({
       <p className="text-muted-foreground/70 px-2 pb-1 text-[10px] leading-tight">
         {hint}
       </p>
-      {kinds.map((k) => (
+      {sections.map((sec) => (
         <button
-          key={k}
-          onClick={() => onSelect(k)}
+          key={sec.slug}
+          onClick={() => onSelect(sec.slug)}
           className={`block w-full rounded px-2 py-1.5 text-left text-sm ${
-            sel === k ? 'bg-primary text-primary-foreground' : 'hover:bg-card'
+            sel === sec.slug ? 'bg-primary text-primary-foreground' : 'hover:bg-card'
           }`}
+          title={sec.description}
         >
-          {t(`web.knowledge.kb.kinds.${k}`)}
+          {kbPageLabel(sec, t)}
+          {!sec.inject && (
+            <span className="text-muted-foreground/60 ml-1.5 text-[9px] uppercase">
+              {t('web.knowledge.kb.onDemand')}
+            </span>
+          )}
         </button>
       ))}
     </>
+  )
+}
+
+// NewPageDialog creates a kb_* knowledge page (a blueprint section
+// under the global cwd). Fine-grained pages keep each knowledge domain
+// individually indexable instead of growing the four classics forever.
+function NewPageDialog({
+  open,
+  onOpenChange,
+  onCreated,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  onCreated: (slug: string) => void
+}) {
+  const { t } = useTranslation()
+  const qc = useQueryClient()
+  const [slug, setSlug] = useState('')
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [nature, setNature] = useState<'foundational' | 'emergent'>('emergent')
+  const [inject, setInject] = useState(false)
+
+  const fullSlug = 'kb_' + slug.trim()
+  const valid = /^kb_[a-z0-9][a-z0-9_]{0,44}$/.test(fullSlug) && title.trim() !== ''
+
+  const create = useMutation({
+    mutationFn: () =>
+      putBlueprintSection({
+        cwd: GLOBAL_CWD,
+        slug: fullSlug,
+        title: title.trim(),
+        description: description.trim(),
+        position: 99,
+        maintainer_mode: 'ai',
+        prompt_hint: '',
+        pinned: false,
+        inject,
+        nature,
+      }),
+    onSuccess: (sec) => {
+      toast.success(t('web.knowledge.kb.newPage.createdToast'))
+      qc.invalidateQueries({ queryKey: ['kb-blueprint'] })
+      onOpenChange(false)
+      setSlug('')
+      setTitle('')
+      setDescription('')
+      onCreated(sec.slug)
+    },
+    onError: (e: Error) =>
+      toast.error(t('web.knowledge.actionFailed'), { description: e.message }),
+  })
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('web.knowledge.kb.newPage.title')}</DialogTitle>
+          <DialogDescription>
+            {t('web.knowledge.kb.newPage.description')}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground font-mono text-sm">kb_</span>
+            <Input
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              placeholder={t('web.knowledge.kb.newPage.slugPlaceholder')}
+              className="h-8 font-mono text-sm"
+            />
+          </div>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={t('web.knowledge.kb.newPage.titlePlaceholder')}
+            className="h-8 text-sm"
+          />
+          <Input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder={t('web.knowledge.kb.newPage.descPlaceholder')}
+            className="h-8 text-sm"
+          />
+          <div className="flex items-center gap-4 text-sm">
+            <Select
+              value={nature}
+              onValueChange={(v) => setNature(v as 'foundational' | 'emergent')}
+            >
+              <SelectTrigger className="h-8 w-44 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="foundational">
+                  {t('web.knowledge.kb.foundational')}
+                </SelectItem>
+                <SelectItem value="emergent">
+                  {t('web.knowledge.kb.emergent')}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <label className="text-muted-foreground flex items-center gap-1.5 text-xs">
+              <input
+                type="checkbox"
+                checked={inject}
+                onChange={(e) => setInject(e.target.checked)}
+              />
+              {t('web.knowledge.kb.newPage.inject')}
+            </label>
+          </div>
+          <p className="text-muted-foreground text-[11px]">
+            {t('web.knowledge.kb.newPage.injectHint')}
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {t('web.knowledge.kb.cancel')}
+          </Button>
+          <Button disabled={!valid || create.isPending} onClick={() => create.mutate()}>
+            {create.isPending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+            {t('web.knowledge.kb.newPage.create')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -138,10 +303,32 @@ function KnowledgeBaseView() {
   const [draft, setDraft] = useState('')
   const [showProposal, setShowProposal] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
+  const [newPageOpen, setNewPageOpen] = useState(false)
+
+  // The knowledge blueprint: the page set is data, not a constant.
+  const blueprint = useQuery({
+    queryKey: ['kb-blueprint'],
+    queryFn: () => listBlueprintSections(GLOBAL_CWD),
+  })
+  const kbSections = blueprint.data ?? []
+  const foundationalSections = kbSections.filter((s) => s.nature === 'foundational')
+  const emergentSections = kbSections.filter((s) => s.nature !== 'foundational')
+  const selSection = kbSections.find((s) => s.slug === sel)
 
   const doc = useQuery({
     queryKey: ['kb-doc', GLOBAL_CWD, sel],
     queryFn: () => getProjectDoc(GLOBAL_CWD, sel),
+  })
+
+  const removePage = useMutation({
+    mutationFn: () => deleteBlueprintSection(GLOBAL_CWD, sel),
+    onSuccess: () => {
+      toast.success(t('web.knowledge.kb.pageRemovedToast'))
+      qc.invalidateQueries({ queryKey: ['kb-blueprint'] })
+      setSel('kb_infrastructure')
+    },
+    onError: (e: Error) =>
+      toast.error(t('web.knowledge.actionFailed'), { description: e.message }),
   })
   // B3 — pending AI update proposals for the locked global pages.
   const proposals = useQuery({
@@ -217,33 +404,40 @@ function KnowledgeBaseView() {
   const content = stripSig(doc.data?.content ?? '')
   const exists = !!doc.data?.id
   const locked = doc.data?.updated_by === 'operator'
-  const foundational = isFoundational(sel)
+  const foundational = selSection?.nature === 'foundational'
 
   return (
     <div className="border-border flex min-h-0 flex-1 rounded-b-md rounded-tr-md border">
-      {/* nav — two natures */}
-      <div className="border-border w-64 shrink-0 overflow-auto border-r p-2">
+      {/* nav — two natures, page set from the knowledge blueprint */}
+      <div className="border-border flex w-64 shrink-0 flex-col overflow-auto border-r p-2">
         <NavSection
           label={t('web.knowledge.kb.foundational')}
           hint={t('web.knowledge.kb.foundationalHint')}
-          kinds={FOUNDATIONAL_KINDS}
+          sections={foundationalSections}
           sel={sel}
           onSelect={select}
         />
         <NavSection
           label={t('web.knowledge.kb.emergent')}
           hint={t('web.knowledge.kb.emergentHint')}
-          kinds={EMERGENT_KINDS}
+          sections={emergentSections}
           sel={sel}
           onSelect={select}
         />
+        <button
+          onClick={() => setNewPageOpen(true)}
+          className="text-muted-foreground hover:text-foreground mt-2 flex items-center gap-1 rounded px-2 py-1.5 text-left text-xs"
+        >
+          <Plus className="h-3 w-3" />
+          {t('web.knowledge.kb.newPage.button')}
+        </button>
       </div>
 
       {/* content */}
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="border-border flex items-center gap-2 border-b px-4 py-2">
           <h2 className="text-sm font-medium">
-            {t(`web.knowledge.kb.kinds.${sel}`)}
+            {selSection ? kbPageLabel(selSection, t) : sel}
           </h2>
           <span
             className={`rounded px-1.5 py-0.5 text-[10px] ${
@@ -308,6 +502,16 @@ function KnowledgeBaseView() {
                 title={t('web.knowledge.kb.discussHint')}
               >
                 {t('web.knowledge.kb.discuss')}
+              </button>
+            )}
+            {!editing && selSection && !selSection.pinned && (
+              <button
+                onClick={() => removePage.mutate()}
+                disabled={removePage.isPending}
+                className="rounded-md border border-red-500/40 px-2.5 py-1 text-xs text-red-400 disabled:opacity-50"
+                title={t('web.knowledge.kb.removePageHint')}
+              >
+                {t('web.knowledge.kb.removePage')}
               </button>
             )}
           </div>
@@ -407,6 +611,12 @@ function KnowledgeBaseView() {
           )}
         </div>
       </div>
+
+      <NewPageDialog
+        open={newPageOpen}
+        onOpenChange={setNewPageOpen}
+        onCreated={(slug) => select(slug)}
+      />
     </div>
   )
 }

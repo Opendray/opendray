@@ -59,16 +59,33 @@ func (w *SummarizerWorker) Run(ctx context.Context, req Request) (Response, erro
 		body["max_tokens"] = req.MaxTokens
 	}
 	if req.ResponseFormatJSONSchema != "" {
-		// json_schema form per LM Studio / OpenAI 2024 spec. We
-		// embed the schema verbatim — callers must hand us a
-		// valid JSON Schema string.
+		// json_schema form per LM Studio / OpenAI 2024 spec. Callers
+		// hand us either a bare JSON Schema or the full envelope
+		// {"name":…,"schema":…,"strict":…} (the convention every
+		// task uses). UNWRAP the envelope — embedding it verbatim
+		// under "schema" produced a double-wrapped non-schema that
+		// strict endpoints (LM Studio) reject with 400
+		// "Invalid JSON Schema".
 		var schema any
 		if err := json.Unmarshal([]byte(req.ResponseFormatJSONSchema), &schema); err == nil {
+			name := "memory_worker_response"
+			strict := true
+			if env, ok := schema.(map[string]any); ok {
+				if inner, hasInner := env["schema"]; hasInner {
+					if n, _ := env["name"].(string); n != "" {
+						name = n
+					}
+					if st, hasStrict := env["strict"].(bool); hasStrict {
+						strict = st
+					}
+					schema = inner
+				}
+			}
 			body["response_format"] = map[string]any{
 				"type": "json_schema",
 				"json_schema": map[string]any{
-					"name":   "memory_worker_response",
-					"strict": true,
+					"name":   name,
+					"strict": strict,
 					"schema": schema,
 				},
 			}

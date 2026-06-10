@@ -95,10 +95,15 @@ export interface BlueprintSection {
   position: number
   maintainer_mode: MaintainerMode
   prompt_hint?: string
-  /** Pinned sections sort first and cannot be deleted (overview). */
+  /** Pinned sections sort first and cannot be deleted (overview; the
+   * classic knowledge four). */
   pinned: boolean
-  /** Include this section's doc in the spawn banner. */
+  /** Include this section's doc in the spawn banner. Pages with
+   * inject=false are reached on demand via cross-layer search. */
   inject: boolean
+  /** Knowledge nature ('foundational' | 'emergent') — GLOBAL pages
+   * only; empty/absent for per-project sections. */
+  nature?: string
   created_at?: string
   updated_at?: string
 }

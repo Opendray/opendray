@@ -36,6 +36,11 @@ const (
 	SourceJournal SourceLayer = "journal" // session_logs table
 	SourceGoal    SourceLayer = "goal"    // project_docs.kind='goal'
 	SourcePlan    SourceLayer = "plan"    // project_docs.kind='plan'
+	// SourceDoc — any other per-project blueprint section.
+	SourceDoc SourceLayer = "doc"
+	// SourceKnowledge — a global kb_* knowledge page. Searching pulls
+	// the one relevant page on demand instead of injecting everything.
+	SourceKnowledge SourceLayer = "knowledge"
 )
 
 // Hit is one merged search result. Raw cosine Similarity is run
@@ -237,44 +242,52 @@ func (s *Service) searchJournal(ctx context.Context, req SearchRequest, topK int
 // fixed 0.6 similarity so a fresh edit is still findable. project_docs
 // is tiny per cwd (one row per kind), so doing both passes is cheap.
 func (s *Service) searchDocs(ctx context.Context, req SearchRequest, topK int) []Hit {
-	docLayer := func(kind projectdoc.Kind) SourceLayer {
-		if kind == projectdoc.KindPlan {
+	docLayer := func(cwd string, kind projectdoc.Kind) SourceLayer {
+		switch {
+		case cwd == projectdoc.GlobalCwd:
+			return SourceKnowledge
+		case kind == projectdoc.KindPlan:
 			return SourcePlan
+		case kind == projectdoc.KindGoal:
+			return SourceGoal
 		}
-		return SourceGoal
+		return SourceDoc
 	}
 
 	var out []Hit
 	embedded := map[string]bool{} // doc ids covered by the semantic pass
 
-	// Semantic pass over embedded goal/plan docs.
+	// Semantic pass over embedded docs: every section of THIS project
+	// plus the global knowledge pages — so an agent retrieves exactly
+	// the section/page a task needs instead of swallowing the whole
+	// injected corpus.
 	if embedder := s.docs.Embedder(); embedder != nil {
 		if vecs, err := embedder.Embed(ctx, []string{req.Query}); err == nil && len(vecs) > 0 && len(vecs[0]) > 0 {
 			rows, err := s.pool.Query(ctx, `
-				SELECT id, kind, content, updated_at,
+				SELECT id, cwd, kind, content, updated_at,
 				       1 - (embedding <=> $1::vector) AS similarity
 				  FROM project_docs
-				 WHERE cwd = $2
-				   AND kind IN ('goal', 'plan')
-				   AND embedder = $3
+				 WHERE cwd IN ($2, $3)
+				   AND embedder = $4
 				   AND embedding IS NOT NULL
 				 ORDER BY embedding <=> $1::vector
-				 LIMIT $4`,
-				pgvecLiteral(vecs[0]), req.Cwd, embedder.Name(), topK)
+				 LIMIT $5`,
+				pgvecLiteral(vecs[0]), req.Cwd, projectdoc.GlobalCwd, embedder.Name(), topK)
 			if err == nil {
 				for rows.Next() {
 					var (
-						id, kind, content string
-						updatedAt         time.Time
-						similarity        float64
+						id, cwd, kind, content string
+						updatedAt              time.Time
+						similarity             float64
 					)
-					if err := rows.Scan(&id, &kind, &content, &updatedAt, &similarity); err != nil {
+					if err := rows.Scan(&id, &cwd, &kind, &content, &updatedAt, &similarity); err != nil {
 						break
 					}
 					embedded[id] = true
 					out = append(out, Hit{
-						Source:     docLayer(projectdoc.Kind(kind)),
+						Source:     docLayer(cwd, projectdoc.Kind(kind)),
 						ID:         id,
+						Title:      string(kind),
 						Text:       content,
 						CreatedAt:  updatedAt,
 						Similarity: float32(similarity),
@@ -285,32 +298,33 @@ func (s *Service) searchDocs(ctx context.Context, req SearchRequest, topK int) [
 		}
 	}
 
-	// Lexical fallback for goal/plan docs the semantic pass didn't cover.
-	docs, err := s.docs.ListDocsForCwd(ctx, req.Cwd)
-	if err != nil {
-		return out
-	}
+	// Lexical fallback for docs the semantic pass didn't cover (fresh
+	// edits inside the backfill window, embedder outages).
 	q := strings.ToLower(strings.TrimSpace(req.Query))
 	if q == "" {
 		return out
 	}
-	for _, d := range docs {
-		if d.Kind != projectdoc.KindGoal && d.Kind != projectdoc.KindPlan {
+	for _, cwd := range []string{req.Cwd, projectdoc.GlobalCwd} {
+		docs, err := s.docs.ListDocsForCwd(ctx, cwd)
+		if err != nil {
 			continue
 		}
-		if embedded[d.ID] {
-			continue
+		for _, d := range docs {
+			if embedded[d.ID] {
+				continue
+			}
+			if !strings.Contains(strings.ToLower(d.Content), q) {
+				continue
+			}
+			out = append(out, Hit{
+				Source:     docLayer(cwd, d.Kind),
+				ID:         d.ID,
+				Title:      string(d.Kind),
+				Text:       d.Content,
+				CreatedAt:  d.UpdatedAt,
+				Similarity: 0.6,
+			})
 		}
-		if !strings.Contains(strings.ToLower(d.Content), q) {
-			continue
-		}
-		out = append(out, Hit{
-			Source:     docLayer(d.Kind),
-			ID:         d.ID,
-			Text:       d.Content,
-			CreatedAt:  d.UpdatedAt,
-			Similarity: 0.6,
-		})
 	}
 	return out
 }
