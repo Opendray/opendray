@@ -1,9 +1,12 @@
-import { Archive, Brain, FolderTree, Workflow } from 'lucide-react'
+import { Archive, Brain, FolderTree, ShieldQuestion, Workflow } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { MemoryInspector } from '@/components/settings/MemoryInspector'
+import { getCortexStatus } from '@/lib/cortex'
 
 // MemoryPage is the top-level browser/editor for the cross-CLI
 // persistent memory store. Configuration (which embedder, dim,
@@ -17,6 +20,12 @@ import { MemoryInspector } from '@/components/settings/MemoryInspector'
 // unified-memory surfaces.
 export function MemoryPage() {
   const { t } = useTranslation()
+  const statusQuery = useQuery({
+    queryKey: ['cortex-status'],
+    queryFn: getCortexStatus,
+    refetchInterval: 30_000,
+  })
+  const quarantineCount = statusQuery.data?.memory.quarantine_count ?? 0
 
   return (
     <div className="flex flex-1 flex-col min-h-0">
@@ -38,7 +47,7 @@ export function MemoryPage() {
               size="sm"
               className="h-8 text-[11px]"
             >
-              <Link to="/memory/project" search={{ cwd: '' }}>
+              <Link to="/cortex/memory/project" search={{ cwd: '' }}>
                 <FolderTree className="mr-1 size-3" />
                 {t('web.memory.navProject')}
               </Link>
@@ -49,7 +58,23 @@ export function MemoryPage() {
               size="sm"
               className="h-8 text-[11px]"
             >
-              <Link to="/memory/archived">
+              <Link to="/cortex/memory/quarantine">
+                <ShieldQuestion className="mr-1 size-3" />
+                {t('web.memory.navQuarantine')}
+                {quarantineCount > 0 && (
+                  <Badge variant="warning" className="ml-1.5 text-[9px]">
+                    {quarantineCount}
+                  </Badge>
+                )}
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="h-8 text-[11px]"
+            >
+              <Link to="/cortex/memory/archived">
                 <Archive className="mr-1 size-3" />
                 {t('web.memory.navArchived')}
               </Link>
@@ -60,7 +85,7 @@ export function MemoryPage() {
               size="sm"
               className="h-8 text-[11px]"
             >
-              <Link to="/memory/workers">
+              <Link to="/cortex/memory/workers">
                 <Workflow className="mr-1 size-3" />
                 {t('web.memory.navWorkers')}
               </Link>

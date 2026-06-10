@@ -34,6 +34,11 @@ export interface MemoryRecord {
   archived_at?: string | null
   /** Why the row was archived (e.g. "duplicate", "stale", "dormant-project"). */
   archived_reason?: string
+  /** Memory tier (Cortex): 'durable' | 'quarantine'. Standard reads only
+   * return durable rows; populated by the quarantine review queue + Get. */
+  tier?: string
+  /** TTL deadline for quarantined rows; absent on durable rows. */
+  quarantine_expires_at?: string | null
 }
 
 export interface SearchHit {

@@ -16,7 +16,7 @@ import { ProjectScreen } from '@/components/project/ProjectScreen'
 import { FileBrowserDialog } from '@/components/sessions/FileBrowserDialog'
 import { listProjects } from '@/lib/projectDocs'
 
-type RoutePath = '/notes' | '/memory/project'
+type RoutePath = '/cortex/project' | '/cortex/memory/project'
 
 function ProjectWorkspace({
   variant,
@@ -114,14 +114,15 @@ function ProjectWorkspace({
   )
 }
 
-// NotesPage — the project's official doc (flywheel rung ②).
+// NotesPage — the Cortex project workspace (flywheel rung ②: the
+// project's official doc, blueprint-shaped).
 export function NotesPage() {
-  return <ProjectWorkspace variant="notes" routePath="/notes" />
+  return <ProjectWorkspace variant="notes" routePath="/cortex/project" />
 }
 
 // ProjectMemoryPage — the project's memory hygiene (flywheel rung ①, per cwd).
 export function ProjectPage() {
-  return <ProjectWorkspace variant="memory" routePath="/memory/project" />
+  return <ProjectWorkspace variant="memory" routePath="/cortex/memory/project" />
 }
 
 // Heuristic: a real project cwd has at least two non-empty path segments;

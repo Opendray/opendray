@@ -135,18 +135,21 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <Plug /> Integrations
             <CommandShortcut>g i</CommandShortcut>
           </CommandItem>
-          <CommandItem onSelect={go('/memory')}>
-            <Brain /> Memory
-            <CommandShortcut>g m</CommandShortcut>
+          <CommandItem onSelect={go('/cortex')}>
+            <Brain /> Cortex
+            <CommandShortcut>g x</CommandShortcut>
           </CommandItem>
-          <CommandItem onSelect={() => navigate({ to: '/notes', search: { cwd: '' } })}>
-            <Brain /> Project notes
+          <CommandItem onSelect={() => navigate({ to: '/cortex/project', search: { cwd: '' } })}>
+            <Brain /> Cortex · project doc
           </CommandItem>
-          <CommandItem onSelect={() => navigate({ to: '/memory/project', search: { cwd: '' } })}>
-            <Brain /> Project memory
+          <CommandItem onSelect={go('/cortex/knowledge')}>
+            <Brain /> Cortex · knowledge
           </CommandItem>
-          <CommandItem onSelect={go('/memory/archived')}>
-            <Brain /> Archived memories
+          <CommandItem onSelect={go('/cortex/memory')}>
+            <Brain /> Cortex · memory
+          </CommandItem>
+          <CommandItem onSelect={go('/cortex/memory/quarantine')}>
+            <Brain /> Cortex · quarantine
           </CommandItem>
           <CommandItem onSelect={go('/activity')}>
             <Activity /> Activity

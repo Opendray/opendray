@@ -11,7 +11,10 @@ import { api } from './api'
 
 // ── project_docs ──────────────────────────────────────────────
 
-export type DocKind =
+// Since the Cortex blueprint system, a doc kind is a per-project
+// section SLUG — the known literals below are the default blueprint
+// plus the fixed global KB pages; any custom section slug is valid.
+export type KnownDocKind =
   | 'goal'
   | 'plan'
   | 'tech_stack'
@@ -19,11 +22,13 @@ export type DocKind =
   // The project's rich, AI-maintained official document (per-project Notes).
   | 'overview'
   // Cross-project Knowledge pages (Experience Flywheel — global only;
-  // per-project docs are goal/plan/journal above, no handbook).
+  // per-project docs are blueprint sections, no handbook).
   | 'kb_infrastructure'
   | 'kb_conventions'
   | 'kb_lessons'
   | 'kb_reusable'
+// `string & {}` keeps literal autocomplete while accepting custom slugs.
+export type DocKind = KnownDocKind | (string & {})
 export type DocAuthor = 'operator' | 'agent' | 'scanner'
 
 // GlobalCwd sentinel: the cwd under which cross-project (global) KB pages live.
@@ -77,6 +82,59 @@ export async function putProjectDoc(input: {
   })
 }
 
+// ── blueprint (Cortex Phase 3) ────────────────────────────────
+
+export type MaintainerMode = 'ai' | 'human' | 'scanner'
+
+/** One section of a project's doc blueprint: its slug IS the doc kind. */
+export interface BlueprintSection {
+  cwd: string
+  slug: string
+  title: string
+  description?: string
+  position: number
+  maintainer_mode: MaintainerMode
+  prompt_hint?: string
+  /** Pinned sections sort first and cannot be deleted (overview). */
+  pinned: boolean
+  /** Include this section's doc in the spawn banner. */
+  inject: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+/** Lists the project's blueprint (lazily seeded with defaults). */
+export async function listBlueprintSections(
+  cwd: string,
+): Promise<BlueprintSection[]> {
+  const res = await api<{ sections: BlueprintSection[] }>(
+    `/api/v1/project-docs/blueprint?cwd=${encodeURIComponent(cwd)}`,
+  )
+  return res.sections ?? []
+}
+
+/** Creates or updates one blueprint section. */
+export async function putBlueprintSection(
+  section: BlueprintSection,
+): Promise<BlueprintSection> {
+  return api<BlueprintSection>(
+    `/api/v1/project-docs/blueprint/${section.slug}`,
+    { method: 'PUT', body: section },
+  )
+}
+
+/** Removes a section from the blueprint (its doc content is kept and
+ * resurrects if the slug is re-added). The overview is reserved. */
+export async function deleteBlueprintSection(
+  cwd: string,
+  slug: string,
+): Promise<void> {
+  await api(
+    `/api/v1/project-docs/blueprint/${slug}?cwd=${encodeURIComponent(cwd)}`,
+    { method: 'DELETE' },
+  )
+}
+
 // ── lifecycle (P-D) ───────────────────────────────────────────
 
 export type ProjectStatus = 'active' | 'paused' | 'archived'
@@ -118,7 +176,7 @@ export async function setProjectLifecycle(
 export interface DocProposal {
   id: string
   cwd: string
-  kind: 'goal' | 'plan'
+  kind: DocKind
   proposed_content: string
   proposed_by_session?: string
   reason: string

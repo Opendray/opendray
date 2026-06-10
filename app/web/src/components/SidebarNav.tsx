@@ -8,10 +8,8 @@ import {
   Activity,
   Settings,
   Boxes,
-  NotebookPen,
   BookText,
   Brain,
-  Network,
   Archive,
   type LucideIcon,
 } from 'lucide-react'
@@ -36,9 +34,10 @@ interface NavItem {
 const groups: NavItem[][] = [
   [
     { to: '/sessions', icon: Layers, labelKey: 'nav.sessions', shortcut: 'g s' },
-    { to: '/notes', icon: NotebookPen, labelKey: 'nav.notes', shortcut: 'g n' },
-    { to: '/memory', icon: Brain, labelKey: 'nav.memory', shortcut: 'g m' },
-    { to: '/knowledge', icon: Network, labelKey: 'nav.knowledge', shortcut: 'g k' },
+    // Cortex — the unified Memory → Notes → Knowledge module. One
+    // entry; the three rungs are layered inside (they are one loop,
+    // not three silos).
+    { to: '/cortex', icon: Brain, labelKey: 'nav.cortex', shortcut: 'g x' },
     { to: '/activity', icon: Activity, labelKey: 'nav.activity', shortcut: 'g a' },
   ],
   [

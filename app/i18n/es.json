@@ -40,7 +40,8 @@
     "settings": "Ajustes",
     "workspace": "Espacio de trabajo",
     "knowledge": "Conocimiento",
-    "vault": "Bóveda"
+    "vault": "Bóveda",
+    "cortex": "Cortex"
   },
   "web": {
     "brand": "opendray",
@@ -236,6 +237,14 @@
         "createdToast": "Directorio creado",
         "mkdirFailedToast": "Error al crear el directorio",
         "homeFailedToast": "Error al leer el directorio personal"
+      },
+      "notes": {
+        "cortexDoc": {
+          "title": "Doc del proyecto (Cortex)",
+          "hint": "El documento oficial del proyecto — solo lectura aquí; abre el espacio Cortex para editar, conversar o cambiar el plano.",
+          "open": "Abrir espacio",
+          "empty": "vacío"
+        }
       }
     },
     "memory": {
@@ -244,7 +253,8 @@
       "navProject": "Proyecto",
       "navArchived": "Archivadas",
       "navWorkers": "Workers",
-      "navConfiguration": "Configuración →"
+      "navConfiguration": "Configuración →",
+      "navQuarantine": "Cuarentena"
     },
     "journalStale": {
       "title": "Purgar entradas obsoletas",
@@ -458,7 +468,8 @@
         "inbox": "Bandeja de entrada",
         "conflicts": "Conflictos",
         "archived": "Archivadas",
-        "overview": "Resumen"
+        "overview": "Resumen",
+        "hygiene": "Higiene"
       },
       "docLabel": {
         "goal": "Objetivo",
@@ -473,7 +484,8 @@
         "saveFailedToast": "Error al guardar",
         "savedToast": "{label} guardado",
         "goalPlaceholder": "¿Qué estamos construyendo? Un párrafo. Lo lee cada agente al iniciarse.",
-        "planPlaceholder": "Plan activo: qué estamos haciendo ahora mismo y qué viene después. Se actualiza a medida que avanza el trabajo."
+        "planPlaceholder": "Plan activo: qué estamos haciendo ahora mismo y qué viene después. Se actualiza a medida que avanza el trabajo.",
+        "sectionPlaceholder": "Escribe esta sección en markdown…"
       },
       "readonly": {
         "tech_stack": {
@@ -486,7 +498,8 @@
         },
         "noneCaptured": "Aún no se ha capturado ningún {label}.",
         "generatedBy": "Generado por",
-        "lastRefresh": "última actualización"
+        "lastRefresh": "última actualización",
+        "customEmpty": "Sección gestionada por el escáner; se rellena cuando éste corre."
       },
       "journal": {
         "loading": "Cargando…",
@@ -573,7 +586,8 @@
       "docMeta": {
         "maintainer": {
           "coauthored": "Tú mantienes · IA propone",
-          "auto": "Autogenerado · solo lectura"
+          "auto": "Autogenerado · solo lectura",
+          "human": "Autoría humana"
         },
         "purpose": {
           "goal": "La intención a largo plazo del proyecto: qué construimos y por qué. Cuando una sesión cambia el rumbo, la IA propone una actualización en tu Bandeja para que la apruebes.",
@@ -2503,7 +2517,9 @@
           "reject": "Rechazar",
           "approved": "Actualización aprobada",
           "rejected": "Propuesta rechazada"
-        }
+        },
+        "discuss": "Hablar con la IA",
+        "discussHint": "Redacta de nuevo esta política conversando con la IA — las páginas bloqueadas reciben propuestas, nunca sobrescrituras"
       },
       "kinds": {
         "all": "Todos",
@@ -2511,6 +2527,86 @@
         "fact": "Hechos",
         "playbook": "Guías",
         "skill": "Habilidades"
+      }
+    },
+    "cortex": {
+      "home": {
+        "title": "Cortex",
+        "subtitle": "Un módulo, tres peldaños, un ciclo: la memoria bruta cristaliza en el documento oficial de cada proyecto, se destila en conocimiento entre proyectos y se inyecta en cada nueva sesión.",
+        "disabled": "desactivado",
+        "pendingProposals": "{{count}} pendientes",
+        "loopHint": "Memoria → Notas → Conocimiento → inyectado en cada arranque. Ascender es transformar, nunca copiar.",
+        "activeProjects": "Proyectos activos",
+        "idle": "inactivo {{days}}d",
+        "memory": {
+          "title": "Memoria",
+          "description": "Hechos episódicos capturados de tus sesiones — recuperados por relevancia, en cuarentena si vienen de terceros.",
+          "quarantine": "{{count}} en cuarentena"
+        },
+        "notes": {
+          "title": "Notas",
+          "description": "El documento oficial de cada proyecto — secciones según su plano, mantenidas por la IA mientras trabajas.",
+          "projects": "{{count}} activos"
+        },
+        "knowledge": {
+          "title": "Conocimiento",
+          "description": "Experiencia iterable entre proyectos: reglas fundacionales vinculantes + lecciones emergentes, inyectadas en cada arranque."
+        }
+      },
+      "chat": {
+        "title": "Chat de curación",
+        "show": "Hablar con la IA",
+        "hide": "Ocultar chat",
+        "emptyHint": "Pide a la IA actualizar, reestructurar o reescribir este documento. Los cambios se aplican directamente si lo mantiene la IA, o llegan a la bandeja si lo bloqueaste.",
+        "placeholder": "p. ej. actualiza esto con el trabajo reciente · ⌘↵ para enviar",
+        "thinking": "La IA está trabajando…",
+        "sendFailed": "Error al enviar",
+        "escalate": "Escalar a sesión",
+        "escalated": "Escalado",
+        "escalateHint": "Lanza una sesión de agente completa, fundamentada en el código, con esta conversación",
+        "escalateFailed": "Error al escalar",
+        "escalatedToast": "Sesión de agente lanzada",
+        "closeHint": "Cerrar esta conversación",
+        "revisionApplied": "Documento actualizado",
+        "revisionProposed": "Propuesta creada — revísala en la bandeja"
+      },
+      "blueprint": {
+        "open": "Plano",
+        "openHint": "Edita qué secciones documenta este proyecto",
+        "title": "Plano del documento",
+        "description": "El conjunto de secciones del documento oficial. Cada tipo de proyecto merece secciones distintas — dale forma tú o deja que la IA proponga.",
+        "propose": "Proponer (IA)",
+        "proposeHint": "Clasifica el proyecto y propone un conjunto de secciones a medida",
+        "proposeFailed": "Propuesta fallida",
+        "proposalNote": "La IA lo clasificó como: {{type}} — {{reason}} Revísalo, edítalo y aplica.",
+        "addSection": "Añadir sección",
+        "slugPlaceholder": "slug",
+        "titlePlaceholder": "Título",
+        "hintPlaceholder": "Pista para el mantenedor — una frase que guíe a la IA (opcional)",
+        "mode": {
+          "ai": "IA",
+          "human": "Humano",
+          "scanner": "Escáner"
+        },
+        "inject": "inyectar",
+        "reserved": "reservada",
+        "deleteNote": "Quitar una sección la oculta sin borrar su contenido — vuelve a añadir el mismo slug para recuperarla.",
+        "cancel": "Cancelar",
+        "apply": "Aplicar plano",
+        "applyFailed": "Error al aplicar",
+        "appliedToast": "Plano aplicado"
+      },
+      "quarantine": {
+        "title": "Cuarentena",
+        "subtitle": "Memorias capturadas de sesiones de terceros (integraciones). Nunca alimentan la consolidación ni la inyección — promociona las valiosas, descarta el ruido; el resto expira solo.",
+        "empty": "Cuarentena vacía — no hay capturas de terceros por revisar.",
+        "promote": "Promocionar",
+        "promoteHint": "Mover a memoria duradera (entra en la recuperación y consolidación)",
+        "discard": "Descartar",
+        "promotedToast": "Promocionada a memoria duradera",
+        "discardedToast": "Descartada",
+        "actionFailed": "Acción fallida",
+        "expires": "expira {{date}}"
       }
     }
   },

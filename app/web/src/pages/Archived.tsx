@@ -87,7 +87,7 @@ export function ArchivedPage() {
               </div>
               {scope === 'project' && scopeKey && (
                 <Link
-                  to="/memory/project"
+                  to="/cortex/memory/project"
                   search={{ cwd: scopeKey }}
                   className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs"
                 >

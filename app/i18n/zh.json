@@ -40,7 +40,8 @@
     "settings": "设置",
     "workspace": "工作区",
     "knowledge": "知识",
-    "vault": "文档库"
+    "vault": "文档库",
+    "cortex": "心智中枢"
   },
   "web": {
     "brand": "opendray",
@@ -236,6 +237,14 @@
         "createdToast": "文件夹已创建",
         "mkdirFailedToast": "创建失败",
         "homeFailedToast": "读取家目录失败"
+      },
+      "notes": {
+        "cortexDoc": {
+          "title": "项目文档（心智中枢）",
+          "hint": "项目的官方文档——此处只读；进入心智中枢工作区可编辑、对话或调整蓝图。",
+          "open": "打开工作区",
+          "empty": "空"
+        }
       }
     },
     "memory": {
@@ -244,7 +253,8 @@
       "navProject": "项目",
       "navArchived": "已归档",
       "navWorkers": "Workers",
-      "navConfiguration": "配置 →"
+      "navConfiguration": "配置 →",
+      "navQuarantine": "隔离区"
     },
     "journalStale": {
       "title": "清理陈旧条目",
@@ -458,7 +468,8 @@
         "inbox": "收件箱",
         "conflicts": "冲突",
         "archived": "已归档",
-        "overview": "概览"
+        "overview": "概览",
+        "hygiene": "记忆卫生"
       },
       "docLabel": {
         "goal": "目标",
@@ -473,7 +484,8 @@
         "saveFailedToast": "保存失败",
         "savedToast": "{label}已保存",
         "goalPlaceholder": "我们在做什么？一段文字。每个 agent 在 spawn 时都会读取。",
-        "planPlaceholder": "当前计划 — 现在在做什么、下一步是什么。随进度更新。"
+        "planPlaceholder": "当前计划 — 现在在做什么、下一步是什么。随进度更新。",
+        "sectionPlaceholder": "以 markdown 撰写本章节…"
       },
       "readonly": {
         "tech_stack": {
@@ -486,7 +498,8 @@
         },
         "noneCaptured": "尚未捕获{label}。",
         "generatedBy": "生成者",
-        "lastRefresh": "最近刷新"
+        "lastRefresh": "最近刷新",
+        "customEmpty": "本章节由扫描器维护，扫描运行后自动填充。"
       },
       "journal": {
         "loading": "加载中…",
@@ -573,7 +586,8 @@
       "docMeta": {
         "maintainer": {
           "coauthored": "你维护 · AI 提议",
-          "auto": "自动生成 · 只读"
+          "auto": "自动生成 · 只读",
+          "human": "人工撰写"
         },
         "purpose": {
           "goal": "项目的长期目标与意图——我们最终在做什么、为什么做。当某次会话改变了方向,AI 会向 Inbox 提议更新,由你批准。",
@@ -2503,7 +2517,9 @@
           "reject": "拒绝",
           "approved": "更新已批准",
           "rejected": "提议已拒绝"
-        }
+        },
+        "discuss": "与 AI 讨论",
+        "discussHint": "与 AI 对话重新制定这页方针——已锁定的页面只会产生提案，绝不覆写"
       },
       "kinds": {
         "all": "全部",
@@ -2511,6 +2527,86 @@
         "fact": "事实",
         "playbook": "Playbook",
         "skill": "技能"
+      }
+    },
+    "cortex": {
+      "home": {
+        "title": "心智中枢 Cortex",
+        "subtitle": "一个模块、三层一环：原始记忆结晶为各项目的官方文档，再蒸馏为跨项目知识，并注入每个新会话。",
+        "disabled": "未启用",
+        "pendingProposals": "{{count}} 个待审",
+        "loopHint": "记忆 → 笔记 → 知识 → 注入每次启动。层级提升是转化，绝不是复制。",
+        "activeProjects": "活跃项目",
+        "idle": "闲置 {{days}} 天",
+        "memory": {
+          "title": "记忆",
+          "description": "从会话中自动采集的原始事实——按相关性召回；第三方来源默认隔离。",
+          "quarantine": "{{count}} 条隔离中"
+        },
+        "notes": {
+          "title": "笔记",
+          "description": "每个项目的官方文档——按蓝图组织章节，AI 随工作进展持续维护。",
+          "projects": "{{count}} 个活跃"
+        },
+        "knowledge": {
+          "title": "知识",
+          "description": "跨项目、可迭代的经验资产：绑定性基础方针 + 涌现的经验教训，注入每次启动。"
+        }
+      },
+      "chat": {
+        "title": "管护对话",
+        "show": "与 AI 讨论",
+        "hide": "收起对话",
+        "emptyHint": "让 AI 更新、重组或重写这份文档。AI 维护且未锁定时直接生效；你锁定过的文档会以提案进入收件箱。",
+        "placeholder": "例如：根据最近的工作更新本节 · ⌘↵ 发送",
+        "thinking": "AI 处理中…",
+        "sendFailed": "发送失败",
+        "escalate": "升级为会话",
+        "escalated": "已升级",
+        "escalateHint": "拉起完整 agent 会话，基于代码库取证，并携带本对话上下文",
+        "escalateFailed": "升级失败",
+        "escalatedToast": "Agent 会话已启动",
+        "closeHint": "关闭此对话",
+        "revisionApplied": "文档已更新",
+        "revisionProposed": "已生成提案——请到收件箱审阅"
+      },
+      "blueprint": {
+        "open": "蓝图",
+        "openHint": "编辑本项目文档包含哪些章节",
+        "title": "文档蓝图",
+        "description": "本项目官方文档的章节结构。不同类型的项目应有不同的章节——可自行调整，也可让 AI 按项目类型提议。",
+        "propose": "AI 提议",
+        "proposeHint": "识别项目类型并提议契合的章节结构",
+        "proposeFailed": "提议失败",
+        "proposalNote": "AI 判断项目类型为：{{type}}——{{reason}} 请在下方审阅并自由修改后应用。",
+        "addSection": "添加章节",
+        "slugPlaceholder": "标识",
+        "titlePlaceholder": "标题",
+        "hintPlaceholder": "维护提示——一句话指引 AI 如何维护本章节（可选）",
+        "mode": {
+          "ai": "AI",
+          "human": "人工",
+          "scanner": "扫描器"
+        },
+        "inject": "注入",
+        "reserved": "保留",
+        "deleteNote": "删除章节只是隐藏，内容不会丢——重新添加同名标识即可恢复。",
+        "cancel": "取消",
+        "apply": "应用蓝图",
+        "applyFailed": "应用失败",
+        "appliedToast": "蓝图已应用"
+      },
+      "quarantine": {
+        "title": "隔离区",
+        "subtitle": "来自第三方（集成）会话采集的记忆。它们不参与知识蒸馏与启动注入——有价值的升格为正式记忆，噪音直接丢弃，其余到期自动清除。",
+        "empty": "隔离区为空——没有待审的第三方采集。",
+        "promote": "升格",
+        "promoteHint": "移入正式记忆（参与召回与知识蒸馏）",
+        "discard": "丢弃",
+        "promotedToast": "已升格为正式记忆",
+        "discardedToast": "已丢弃",
+        "actionFailed": "操作失败",
+        "expires": "{{date}} 到期"
       }
     }
   },

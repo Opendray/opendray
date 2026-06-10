@@ -1,16 +1,14 @@
-// ProjectScreen — web parity with app/mobile/lib/features/project/
-// project_screen.dart. Hosts the cross-CLI project memory UI:
-//
-//   Goal / Plan / Tech / Activity / Journal / Inbox / Conflicts / Archived
-//
-// Goal + Plan are operator-editable; Tech (project scanner output)
-// and Activity (git activity LLM summary) are scanner-managed and
-// read-only; Journal is the auto-appended session-end log; Inbox
-// queues agent-proposed goal/plan edits for approval; Conflicts is
-// the only operator gate left; Archived is the read-only restorable
-// view of what the auto-cleaner soft-deleted.
+// ProjectScreen — the Cortex project workspace (Notes rung of the
+// flywheel). The tab set is no longer hardcoded: it renders the
+// project's doc BLUEPRINT — overview front page + whatever sections
+// this project's blueprint declares (a mobile app, a service, and a
+// CLI can each carry a different section set). Per section: an
+// editor / readonly view by maintainer mode, plus a curation chat to
+// actively ask the AI for updates. Journal + Inbox + memory Hygiene
+// complete the workspace. variant='memory' keeps the standalone
+// hygiene view for the legacy route until mobile parity lands.
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
@@ -19,8 +17,10 @@ import {
   ArrowRight,
   Check,
   Inbox,
+  LayoutList,
   Loader2,
   Lock,
+  MessageSquare,
   Pause,
   Pencil,
   Play,
@@ -50,12 +50,14 @@ import {
 } from '@/components/ui/dialog'
 
 import {
+  type BlueprintSection,
   type DocKind,
   type ProjectDoc,
   type DocProposal,
   type SessionLogEntry,
   type ProjectStatus,
   approveProposal,
+  listBlueprintSections,
   listProjectDocs,
   listPendingProposals,
   listProjects,
@@ -75,6 +77,8 @@ import { draftKB } from '@/lib/knowledge'
 import { MemoryHealthCard } from '@/components/project/MemoryHealthCard'
 import { ConflictsPanel } from '@/components/project/ConflictsPanel'
 import { JournalStalePanel } from '@/components/project/JournalStalePanel'
+import { CurationChat } from '@/components/cortex/CurationChat'
+import { BlueprintEditor } from '@/components/cortex/BlueprintEditor'
 
 // strip the drafter's hidden signature marker before display/edit
 function stripSig(s: string): string {
@@ -114,10 +118,25 @@ interface ProjectScreenProps {
   variant?: 'notes' | 'memory'
 }
 
-function useDocLabel() {
+const CLASSIC_LABEL_KINDS = new Set([
+  'overview',
+  'goal',
+  'plan',
+  'tech_stack',
+  'recent_activity',
+  'kb_infrastructure',
+  'kb_conventions',
+  'kb_lessons',
+  'kb_reusable',
+])
+
+function useDocLabel(section?: BlueprintSection) {
   const { t } = useTranslation()
-  return (kind: DocKind | 'goal' | 'plan'): string =>
-    t(`web.project.docLabel.${kind}`)
+  return (kind: DocKind | 'goal' | 'plan'): string => {
+    if (CLASSIC_LABEL_KINDS.has(kind)) return t(`web.project.docLabel.${kind}`)
+    // Custom blueprint sections label themselves.
+    return section?.slug === kind ? section.title : String(kind)
+  }
 }
 
 export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
@@ -127,12 +146,33 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
   const [activeTab, setActiveTab] = useState(
     variant === 'memory' ? 'health' : 'overview',
   )
+  const [blueprintOpen, setBlueprintOpen] = useState(false)
   // A conflict that implicates goal/plan is resolved by editing the doc — which
-  // now lives on the Notes screen. From the memory variant, jump there.
+  // lives on the Cortex project workspace. From the memory variant, jump there.
   const jumpToDoc = (tab: string) =>
     variant === 'memory'
-      ? navigate({ to: '/notes', search: { cwd } })
+      ? navigate({ to: '/cortex/project', search: { cwd } })
       : setActiveTab(tab)
+
+  // The blueprint IS the tab set (Cortex Phase 3) — lazily seeded with
+  // the classic overview/goal/plan/tech/activity on first visit.
+  const blueprintQuery = useQuery({
+    queryKey: ['blueprint', cwd],
+    queryFn: () => listBlueprintSections(cwd),
+    enabled: !!cwd && variant === 'notes',
+  })
+  const sections = useMemo(
+    () => blueprintQuery.data ?? [],
+    [blueprintQuery.data],
+  )
+  // If the active section tab disappears (blueprint edit), fall back
+  // to the overview front page.
+  useEffect(() => {
+    if (variant !== 'notes' || sections.length === 0) return
+    const fixed = ['journal', 'inbox', 'hygiene']
+    if (fixed.includes(activeTab)) return
+    if (!sections.some((s) => s.slug === activeTab)) setActiveTab('overview')
+  }, [sections, activeTab, variant])
 
   const docsQuery = useQuery({
     queryKey: ['project-docs', cwd],
@@ -156,15 +196,9 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
   })
 
   const docsByKind = useMemo(() => {
-    // Notes-layer docs only: goal/plan/tech_stack/recent_activity. The kb_*
-    // kinds live in the Knowledge page (cross-project), not per-project Notes.
-    const map: Partial<Record<DocKind, ProjectDoc | undefined>> = {
-      overview: undefined,
-      goal: undefined,
-      plan: undefined,
-      tech_stack: undefined,
-      recent_activity: undefined,
-    }
+    // Keyed by section slug — the blueprint decides which of these the
+    // UI shows. kb_* docs live in the Knowledge layer, never here.
+    const map: Record<string, ProjectDoc | undefined> = {}
     for (const d of docsQuery.data ?? []) map[d.kind] = d
     return map
   }, [docsQuery.data])
@@ -227,6 +261,18 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
             </div>
           </div>
           <div className="flex flex-none items-center gap-2">
+            {variant === 'notes' && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-none"
+                onClick={() => setBlueprintOpen(true)}
+                title={t('web.cortex.blueprint.openHint')}
+              >
+                <LayoutList className="mr-1 h-3 w-3" />
+                {t('web.cortex.blueprint.open')}
+              </Button>
+            )}
             <LifecycleControl cwd={cwd} />
             <ResetButton
               cwd={cwd}
@@ -247,18 +293,14 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
         onValueChange={setActiveTab}
         className="flex flex-1 flex-col overflow-hidden"
       >
-        <TabsList className="bg-muted/30 mx-4 mt-3 w-fit">
+        <TabsList className="bg-muted/30 mx-4 mt-3 w-fit max-w-[calc(100%-2rem)] flex-wrap">
           {variant === 'notes' ? (
             <>
-              <TabsTrigger value="overview">
-                {t('web.project.tabs.overview')}
-              </TabsTrigger>
-              <TabsTrigger value="goal">{t('web.project.tabs.goal')}</TabsTrigger>
-              <TabsTrigger value="plan">{t('web.project.tabs.plan')}</TabsTrigger>
-              <TabsTrigger value="tech">{t('web.project.tabs.tech')}</TabsTrigger>
-              <TabsTrigger value="activity">
-                {t('web.project.tabs.activity')}
-              </TabsTrigger>
+              {sections.map((sec) => (
+                <TabsTrigger key={sec.slug} value={sec.slug}>
+                  {sectionTabLabel(sec, t)}
+                </TabsTrigger>
+              ))}
               <TabsTrigger value="journal">
                 {t('web.project.tabs.journal')}
               </TabsTrigger>
@@ -269,6 +311,9 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
                     {inboxCount}
                   </span>
                 )}
+              </TabsTrigger>
+              <TabsTrigger value="hygiene">
+                {t('web.project.tabs.hygiene')}
               </TabsTrigger>
             </>
           ) : (
@@ -295,44 +340,46 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
           <MemoryHealthCard cwd={cwd} />
         </TabsContent>
 
-        <TabsContent value="overview" className="flex-1 overflow-auto p-4">
-          <OverviewTab
-            cwd={cwd}
-            doc={docsByKind.overview}
-            hasPending={pendingByKind.has('overview')}
-            onGoToInbox={() => setActiveTab('inbox')}
-            onSaved={() => qc.invalidateQueries({ queryKey: ['project-docs', cwd] })}
-          />
-        </TabsContent>
+        {variant === 'notes' &&
+          sections.map((sec) => (
+            <TabsContent
+              key={sec.slug}
+              value={sec.slug}
+              className="flex-1 overflow-auto p-4"
+            >
+              <SectionTab
+                cwd={cwd}
+                section={sec}
+                doc={docsByKind[sec.slug]}
+                hasPending={pendingByKind.has(sec.slug)}
+                onGoToInbox={() => setActiveTab('inbox')}
+                onSaved={() =>
+                  qc.invalidateQueries({ queryKey: ['project-docs', cwd] })
+                }
+              />
+            </TabsContent>
+          ))}
 
-        <TabsContent value="goal" className="flex-1 overflow-auto p-4">
-          <DocEditor
-            cwd={cwd}
-            kind="goal"
-            doc={docsByKind.goal}
-            hasPending={pendingByKind.has('goal')}
-            onGoToInbox={() => setActiveTab('inbox')}
-            onSaved={() => qc.invalidateQueries({ queryKey: ['project-docs', cwd] })}
-          />
-        </TabsContent>
-
-        <TabsContent value="plan" className="flex-1 overflow-auto p-4">
-          <DocEditor
-            cwd={cwd}
-            kind="plan"
-            doc={docsByKind.plan}
-            hasPending={pendingByKind.has('plan')}
-            onGoToInbox={() => setActiveTab('inbox')}
-            onSaved={() => qc.invalidateQueries({ queryKey: ['project-docs', cwd] })}
-          />
-        </TabsContent>
-
-        <TabsContent value="tech" className="flex-1 overflow-auto p-4">
-          <ReadonlyDocTab doc={docsByKind.tech_stack} kind="tech_stack" />
-        </TabsContent>
-
-        <TabsContent value="activity" className="flex-1 overflow-auto p-4">
-          <ReadonlyDocTab doc={docsByKind.recent_activity} kind="recent_activity" />
+        <TabsContent value="hygiene" className="flex-1 overflow-auto">
+          <MemoryHealthCard cwd={cwd} />
+          <div className="p-4 pt-0">
+            <h3 className="mb-2 text-sm font-semibold">
+              {t('web.project.tabs.conflicts')}
+            </h3>
+            <ConflictsPanel cwd={cwd} onJumpTab={jumpToDoc} />
+            <h3 className="mt-4 mb-2 text-sm font-semibold">
+              {t('web.project.tabs.archived')}
+            </h3>
+            <ArchivedTab
+              records={archivedQuery.data ?? []}
+              loading={archivedQuery.isLoading}
+              onChange={() =>
+                qc.invalidateQueries({
+                  queryKey: ['archived-memories', 'project', cwd],
+                })
+              }
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="journal" className="flex-1 overflow-auto p-4">
@@ -367,33 +414,156 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
           />
         </TabsContent>
       </Tabs>
+
+      {variant === 'notes' && (
+        <BlueprintEditor
+          cwd={cwd}
+          open={blueprintOpen}
+          onOpenChange={setBlueprintOpen}
+          onApplied={() => {
+            qc.invalidateQueries({ queryKey: ['blueprint', cwd] })
+            qc.invalidateQueries({ queryKey: ['project-docs', cwd] })
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+// sectionTabLabel prefers the localized label for the classic slugs
+// (so zh/es operators keep translated tabs) and falls back to the
+// section's own stored title for custom sections.
+const CLASSIC_TAB_KEY: Record<string, string> = {
+  overview: 'web.project.tabs.overview',
+  goal: 'web.project.tabs.goal',
+  plan: 'web.project.tabs.plan',
+  tech_stack: 'web.project.tabs.tech',
+  recent_activity: 'web.project.tabs.activity',
+}
+function sectionTabLabel(
+  sec: BlueprintSection,
+  t: (k: string) => string,
+): string {
+  const key = CLASSIC_TAB_KEY[sec.slug]
+  return key ? t(key) : sec.title
+}
+
+// ─── SectionTab — one blueprint section, rendered by maintainer mode ──
+
+function SectionTab({
+  cwd,
+  section,
+  doc,
+  hasPending,
+  onGoToInbox,
+  onSaved,
+}: {
+  cwd: string
+  section: BlueprintSection
+  doc?: ProjectDoc
+  hasPending: boolean
+  onGoToInbox: () => void
+  onSaved: () => void
+}) {
+  const { t } = useTranslation()
+  const [chatOpen, setChatOpen] = useState(false)
+
+  let body: React.ReactNode
+  if (section.slug === 'overview') {
+    body = (
+      <OverviewTab
+        cwd={cwd}
+        doc={doc}
+        hasPending={hasPending}
+        onGoToInbox={onGoToInbox}
+        onSaved={onSaved}
+      />
+    )
+  } else if (section.maintainer_mode === 'scanner') {
+    body = <ReadonlyDocTab doc={doc} kind={section.slug} section={section} />
+  } else {
+    body = (
+      <DocEditor
+        cwd={cwd}
+        kind={section.slug}
+        doc={doc}
+        section={section}
+        hasPending={hasPending}
+        onGoToInbox={onGoToInbox}
+        onSaved={onSaved}
+      />
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {body}
+      <div>
+        <Button
+          size="sm"
+          variant={chatOpen ? 'default' : 'outline'}
+          onClick={() => setChatOpen((v) => !v)}
+        >
+          <MessageSquare className="mr-1 h-3 w-3" />
+          {chatOpen ? t('web.cortex.chat.hide') : t('web.cortex.chat.show')}
+        </Button>
+      </div>
+      {chatOpen && (
+        <CurationChat
+          targetKind="doc_section"
+          targetCwd={cwd}
+          targetSlug={section.slug}
+          onRevision={onSaved}
+        />
+      )}
     </div>
   )
 }
 
 // ─── Doc self-description (A: make each note explain itself) ──
 
-// How each doc kind is kept current — drives the badge so the operator can see
-// at a glance who owns the page (you / AI-proposed / auto-scanned).
-type Maintainer = 'coauthored' | 'auto'
-const DOC_MAINTAINER: Record<string, Maintainer> = {
-  overview: 'coauthored',
-  goal: 'coauthored',
-  plan: 'coauthored',
-  tech_stack: 'auto',
-  recent_activity: 'auto',
-}
+// How each doc is kept current — derived from the blueprint section's
+// maintainer mode so the operator can see at a glance who owns the page.
+type Maintainer = 'coauthored' | 'auto' | 'human'
 const MAINTAINER_STYLE: Record<Maintainer, string> = {
   coauthored: 'bg-blue-500/15 text-blue-400',
   auto: 'bg-zinc-500/15 text-zinc-300',
+  human: 'bg-emerald-500/15 text-emerald-400',
+}
+const CLASSIC_PURPOSE_KEY: Record<string, string> = {
+  overview: 'web.project.docMeta.purpose.overview',
+  goal: 'web.project.docMeta.purpose.goal',
+  plan: 'web.project.docMeta.purpose.plan',
+  tech_stack: 'web.project.docMeta.purpose.tech_stack',
+  recent_activity: 'web.project.docMeta.purpose.recent_activity',
+}
+
+function maintainerOf(kind: DocKind, section?: BlueprintSection): Maintainer {
+  const mode =
+    section?.maintainer_mode ??
+    (kind === 'tech_stack' || kind === 'recent_activity' ? 'scanner' : 'ai')
+  if (mode === 'scanner') return 'auto'
+  if (mode === 'human') return 'human'
+  return 'coauthored'
 }
 
 // DocMetaStrip is the per-note header that explains what the note is, who
 // maintains it, and when it was last touched — so the page is self-describing
-// instead of a bare tab label.
-function DocMetaStrip({ kind, doc }: { kind: DocKind; doc?: ProjectDoc }) {
+// instead of a bare tab label. Custom sections describe themselves via the
+// blueprint's own description text.
+function DocMetaStrip({
+  kind,
+  doc,
+  section,
+}: {
+  kind: DocKind
+  doc?: ProjectDoc
+  section?: BlueprintSection
+}) {
   const { t } = useTranslation()
-  const maintainer = DOC_MAINTAINER[kind] ?? 'coauthored'
+  const maintainer = maintainerOf(kind, section)
+  const purposeKey = CLASSIC_PURPOSE_KEY[kind]
+  const purpose = purposeKey ? t(purposeKey) : (section?.description ?? '')
   return (
     <div className="bg-muted/20 mb-3 rounded-md p-3">
       <div className="mb-1 flex items-center gap-2">
@@ -409,9 +579,9 @@ function DocMetaStrip({ kind, doc }: { kind: DocKind; doc?: ProjectDoc }) {
           </span>
         )}
       </div>
-      <p className="text-muted-foreground text-xs leading-relaxed">
-        {t(`web.project.docMeta.purpose.${kind}`)}
-      </p>
+      {purpose && (
+        <p className="text-muted-foreground text-xs leading-relaxed">{purpose}</p>
+      )}
     </div>
   )
 }
@@ -596,6 +766,7 @@ interface DocEditorProps {
   cwd: string
   kind: DocKind
   doc?: ProjectDoc
+  section?: BlueprintSection
   hasPending?: boolean
   onGoToInbox?: () => void
   onSaved: () => void
@@ -605,12 +776,13 @@ function DocEditor({
   cwd,
   kind,
   doc,
+  section,
   hasPending,
   onGoToInbox,
   onSaved,
 }: DocEditorProps) {
   const { t } = useTranslation()
-  const labelFor = useDocLabel()
+  const labelFor = useDocLabel(section)
   const [text, setText] = useState(doc?.content ?? '')
   const [dirty, setDirty] = useState(false)
   useMemo(() => {
@@ -635,7 +807,7 @@ function DocEditor({
 
   return (
     <div className="space-y-3">
-      <DocMetaStrip kind={kind} doc={doc} />
+      <DocMetaStrip kind={kind} doc={doc} section={section} />
       {hasPending && (
         <button
           onClick={onGoToInbox}
@@ -675,7 +847,10 @@ function DocEditor({
         placeholder={
           kind === 'goal'
             ? t('web.project.editor.goalPlaceholder')
-            : t('web.project.editor.planPlaceholder')
+            : kind === 'plan'
+              ? t('web.project.editor.planPlaceholder')
+              : (section?.description ??
+                t('web.project.editor.sectionPlaceholder'))
         }
         className="font-mono text-sm"
       />
@@ -687,17 +862,23 @@ function DocEditor({
 
 interface ReadonlyDocTabProps {
   doc?: ProjectDoc
-  kind: 'tech_stack' | 'recent_activity'
+  kind: DocKind
+  section?: BlueprintSection
 }
 
-function ReadonlyDocTab({ doc, kind }: ReadonlyDocTabProps) {
+function ReadonlyDocTab({ doc, kind, section }: ReadonlyDocTabProps) {
   const { t } = useTranslation()
-  const kindLabel = t(`web.project.readonly.${kind}.label`)
-  const emptyHint = t(`web.project.readonly.${kind}.empty`)
+  const classic = kind === 'tech_stack' || kind === 'recent_activity'
+  const kindLabel = classic
+    ? t(`web.project.readonly.${kind}.label`)
+    : (section?.title ?? String(kind))
+  const emptyHint = classic
+    ? t(`web.project.readonly.${kind}.empty`)
+    : t('web.project.readonly.customEmpty')
   if (!doc) {
     return (
       <div className="text-muted-foreground text-sm">
-        <DocMetaStrip kind={kind} doc={undefined} />
+        <DocMetaStrip kind={kind} doc={undefined} section={section} />
         <p className="mb-2">
           {t('web.project.readonly.noneCaptured', { label: kindLabel })}
         </p>
@@ -707,7 +888,7 @@ function ReadonlyDocTab({ doc, kind }: ReadonlyDocTabProps) {
   }
   return (
     <div className="space-y-3">
-      <DocMetaStrip kind={kind} doc={doc} />
+      <DocMetaStrip kind={kind} doc={doc} section={section} />
       <pre className="bg-muted/30 max-h-[60vh] overflow-auto rounded-md p-3 font-mono text-xs whitespace-pre-wrap">
         {doc.content}
       </pre>

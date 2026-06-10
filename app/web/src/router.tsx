@@ -15,6 +15,8 @@ import { ActivityPage } from '@/pages/Activity'
 import { MemoryPage } from '@/pages/Memory'
 import { MemoryWorkersPage } from '@/pages/MemoryWorkers'
 import { ProjectPage, NotesPage } from '@/pages/Project'
+import { CortexPage } from '@/pages/Cortex'
+import { QuarantinePage } from '@/pages/Quarantine'
 import { ArchivedPage } from '@/pages/Archived'
 import { BackupsPage } from '@/pages/Backups'
 import { ExportPage } from '@/pages/Export'
@@ -82,14 +84,119 @@ const activityRoute = createRoute({
   component: ActivityPage,
 })
 
-const notesRoute = createRoute({
+// ── Cortex — the unified Memory → Notes → Knowledge module ──────
+// One nav entry, layered inside: home (the flywheel), project
+// workspace (Notes), knowledge (global), memory (raw + hygiene +
+// quarantine). The old /notes /memory /knowledge routes redirect so
+// bookmarks survive.
+
+const cortexRoute = createRoute({
   getParentRoute: () => protectedRoute,
-  path: '/notes',
+  path: '/cortex',
+  component: CortexPage,
+})
+
+const cortexProjectRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/cortex/project',
   component: NotesPage,
-  // Notes = the project's official doc; cwd selects the project.
   validateSearch: (search) => ({
     cwd: typeof search.cwd === 'string' ? search.cwd : '',
   }),
+})
+
+const cortexKnowledgeRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/cortex/knowledge',
+  component: KnowledgePage,
+})
+
+const cortexMemoryRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/cortex/memory',
+  component: MemoryPage,
+})
+
+const cortexMemoryProjectRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/cortex/memory/project',
+  component: ProjectPage,
+  validateSearch: (search) => ({
+    cwd: typeof search.cwd === 'string' ? search.cwd : '',
+  }),
+})
+
+const cortexMemoryQuarantineRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/cortex/memory/quarantine',
+  component: QuarantinePage,
+})
+
+const cortexMemoryArchivedRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/cortex/memory/archived',
+  component: ArchivedPage,
+})
+
+const cortexMemoryWorkersRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/cortex/memory/workers',
+  component: MemoryWorkersPage,
+})
+
+// Legacy redirects — the silo tabs are gone, the data is not.
+const notesRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/notes',
+  validateSearch: (search) => ({
+    cwd: typeof search.cwd === 'string' ? search.cwd : '',
+  }),
+  beforeLoad: ({ search }) => {
+    throw redirect({ to: '/cortex/project', search })
+  },
+})
+
+const knowledgeRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/knowledge',
+  beforeLoad: () => {
+    throw redirect({ to: '/cortex/knowledge' })
+  },
+})
+
+const memoryRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/memory',
+  beforeLoad: () => {
+    throw redirect({ to: '/cortex/memory' })
+  },
+})
+
+const memoryProjectRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/memory/project',
+  validateSearch: (search) => ({
+    cwd: typeof search.cwd === 'string' ? search.cwd : '',
+  }),
+  beforeLoad: ({ search }) => {
+    throw redirect({ to: '/cortex/memory/project', search })
+  },
+})
+
+const memoryArchivedRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/memory/archived',
+  beforeLoad: () => {
+    throw redirect({ to: '/cortex/memory/archived' })
+  },
+})
+
+const memoryWorkersRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/memory/workers',
+  beforeLoad: () => {
+    throw redirect({ to: '/cortex/memory/workers' })
+  },
 })
 
 // Vault — the markdown/Obsidian-sync utility, demoted out of the core
@@ -98,39 +205,6 @@ const vaultRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/vault',
   component: VaultPage,
-})
-
-const knowledgeRoute = createRoute({
-  getParentRoute: () => protectedRoute,
-  path: '/knowledge',
-  component: KnowledgePage,
-})
-
-const memoryRoute = createRoute({
-  getParentRoute: () => protectedRoute,
-  path: '/memory',
-  component: MemoryPage,
-})
-
-const memoryProjectRoute = createRoute({
-  getParentRoute: () => protectedRoute,
-  path: '/memory/project',
-  component: ProjectPage,
-  validateSearch: (search) => ({
-    cwd: typeof search.cwd === 'string' ? search.cwd : '',
-  }),
-})
-
-const memoryArchivedRoute = createRoute({
-  getParentRoute: () => protectedRoute,
-  path: '/memory/archived',
-  component: ArchivedPage,
-})
-
-const memoryWorkersRoute = createRoute({
-  getParentRoute: () => protectedRoute,
-  path: '/memory/workers',
-  component: MemoryWorkersPage,
 })
 
 const pluginsRoute = createRoute({
@@ -169,6 +243,14 @@ const routeTree = rootRoute.addChildren([
     channelsRoute,
     integrationsRoute,
     activityRoute,
+    cortexRoute,
+    cortexProjectRoute,
+    cortexKnowledgeRoute,
+    cortexMemoryRoute,
+    cortexMemoryProjectRoute,
+    cortexMemoryQuarantineRoute,
+    cortexMemoryArchivedRoute,
+    cortexMemoryWorkersRoute,
     notesRoute,
     vaultRoute,
     knowledgeRoute,

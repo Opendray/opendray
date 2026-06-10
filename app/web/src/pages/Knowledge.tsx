@@ -29,6 +29,7 @@ import {
   type DocKind,
   type DocProposal,
 } from '@/lib/projectDocs'
+import { CurationChat } from '@/components/cortex/CurationChat'
 
 // ── shared bits ───────────────────────────────────────────────
 
@@ -136,6 +137,7 @@ function KnowledgeBaseView() {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const [showProposal, setShowProposal] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
 
   const doc = useQuery({
     queryKey: ['kb-doc', GLOBAL_CWD, sel],
@@ -209,6 +211,7 @@ function KnowledgeBaseView() {
     setSel(k)
     setEditing(false)
     setShowProposal(false)
+    setChatOpen(false)
   }
 
   const content = stripSig(doc.data?.content ?? '')
@@ -294,8 +297,35 @@ function KnowledgeBaseView() {
                 {t('web.knowledge.kb.regenerate')}
               </button>
             )}
+            {!editing && (
+              <button
+                onClick={() => setChatOpen((v) => !v)}
+                className={`rounded-md border px-2.5 py-1 text-xs ${
+                  chatOpen
+                    ? 'border-primary bg-primary/15 text-primary'
+                    : 'border-border'
+                }`}
+                title={t('web.knowledge.kb.discussHint')}
+              >
+                {t('web.knowledge.kb.discuss')}
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Governance conversation — discuss + re-draft this page with
+            the AI (重新制定方针). Locked pages get proposals, never
+            silent overwrites. */}
+        {chatOpen && !editing && (
+          <div className="border-b p-3">
+            <CurationChat
+              targetKind="kb_page"
+              targetCwd={GLOBAL_CWD}
+              targetSlug={sel}
+              onRevision={invalidate}
+            />
+          </div>
+        )}
 
         {/* B3 — AI proposed an update to this (locked) page */}
         {pending && !editing && (
