@@ -35,6 +35,8 @@ type Handlers struct {
 	quarantine QuarantineSource    // nil when memory is disabled
 	proposer   *BlueprintProposer  // nil when no worker registry
 	docsSvc    *projectdoc.Service // blueprint apply
+	curation   *CurationService    // nil → conversation routes 503
+	convStore  *ConversationStore
 	log        *slog.Logger
 }
 
@@ -73,6 +75,13 @@ func (h *Handlers) WithDocs(docs *projectdoc.Service) *Handlers {
 	return h
 }
 
+// WithCuration wires the conversation channel (Phase 4).
+func (h *Handlers) WithCuration(svc *CurationService, store *ConversationStore) *Handlers {
+	h.curation = svc
+	h.convStore = store
+	return h
+}
+
 // Mount registers the /cortex namespace on r. r should already have
 // the dual-auth (admin OR integration) middleware applied — the
 // re-mounted layer handlers enforce their own per-route scopes
@@ -88,6 +97,8 @@ func (h *Handlers) Mount(r chi.Router) {
 		// (/cortex/project-docs/blueprint*).
 		r.Post("/blueprint/propose", h.proposeBlueprint)
 		r.Put("/blueprint", h.applyBlueprint)
+		// Curation conversations (Phase 4).
+		h.mountConversations(r)
 		h.docs.Mount(r)
 		h.mem.Mount(r)
 		if h.know != nil {

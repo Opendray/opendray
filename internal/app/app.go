@@ -874,9 +874,22 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		cortexOpts = append(cortexOpts, cortex.WithQuarantineCounter(memorySvc.CountQuarantined))
 	}
 	cortexSvc := cortex.NewService(projectDocSvc, log, cortexOpts...)
+	// Phase 4 — curation conversations: the channel for actively
+	// maintaining docs + re-drafting Foundational knowledge with the
+	// AI. Lightweight worker LLM turns; escalation spawns a real
+	// session in the project cwd (or the gateway's own workspace for
+	// global knowledge pages).
+	cortexConvStore := cortex.NewConversationStore(st.Pool())
+	workspaceCwd, _ := os.Getwd()
+	cortexCuration := cortex.NewCurationService(cortexConvStore, projectDocSvc, memoryWorkerRegistry, bus, log).
+		WithSessionLauncher(&curationSessionLauncher{mgr: sessionMgr}, workspaceCwd)
+	if memquerySvc != nil {
+		cortexCuration.WithContextSource(&curationContextAdapter{mq: memquerySvc})
+	}
 	cortexHandlers := cortex.NewHandlers(cortexSvc, projectDocHandlers, memoryHandlers, knowledgeHandlers, log).
 		WithDocs(projectDocSvc).
-		WithBlueprintProposer(cortex.NewBlueprintProposer(projectDocSvc, memoryWorkerRegistry))
+		WithBlueprintProposer(cortex.NewBlueprintProposer(projectDocSvc, memoryWorkerRegistry)).
+		WithCuration(cortexCuration, cortexConvStore)
 	if memorySvc != nil {
 		// Guarded: assigning a nil *memory.Service to the interface
 		// field would dodge the handler's nil check (typed nil).
@@ -1934,6 +1947,65 @@ func (a *summarizerIntegrationLookup) LookupBaseURL(ctx context.Context, id stri
 		return "", false, err
 	}
 	return row.BaseURL, row.Enabled, nil
+}
+
+// curationContextAdapter implements cortex.ContextSource over the
+// cross-layer memquery service: top-K facts/journal/doc hits rendered
+// as a compact bullet list for the curation prompt.
+type curationContextAdapter struct {
+	mq *memquery.Service
+}
+
+func (a *curationContextAdapter) RelevantContext(ctx context.Context, cwd, query string, topK int) (string, error) {
+	hits, err := a.mq.Search(ctx, memquery.SearchRequest{Cwd: cwd, Query: query, TopK: topK})
+	if err != nil {
+		return "", err
+	}
+	var b strings.Builder
+	for _, h := range hits {
+		text := strings.TrimSpace(h.Text)
+		if len(text) > 400 {
+			text = text[:400] + "…"
+		}
+		if h.Title != "" {
+			fmt.Fprintf(&b, "- [%s] **%s** — %s\n", h.Source, h.Title, text)
+		} else {
+			fmt.Fprintf(&b, "- [%s] %s\n", h.Source, text)
+		}
+	}
+	return b.String(), nil
+}
+
+// curationSessionLauncher implements cortex.SessionLauncher over the
+// session manager: spawn a claude session in cwd, give the CLI a
+// moment to boot, then type the seed prompt and submit it.
+type curationSessionLauncher struct {
+	mgr *session.Manager
+}
+
+func (l *curationSessionLauncher) Launch(ctx context.Context, cwd, name, seedPrompt string) (string, error) {
+	sess, err := l.mgr.Create(ctx, session.CreateRequest{
+		Name:       name,
+		ProviderID: "claude",
+		Cwd:        cwd,
+	})
+	if err != nil {
+		return "", err
+	}
+	// Seed the prompt once the CLI has had a moment to draw its input
+	// box. Detached goroutine: the conversation row already links the
+	// session; a failed seed leaves a usable (just unprimed) session.
+	go func(sid, prompt string) {
+		time.Sleep(4 * time.Second)
+		bg, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := l.mgr.Input(bg, sid, []byte(prompt)); err != nil {
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+		_ = l.mgr.Input(bg, sid, []byte{'\r'})
+	}(sess.ID, seedPrompt)
+	return sess.ID, nil
 }
 
 // capturePolicyAdapter implements capture.PolicyResolver against the
