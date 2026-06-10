@@ -14,6 +14,20 @@ import (
 // in the same project, which is the whole point of the store.
 type Scope string
 
+// Tier separates trusted long-term memory from quarantined capture
+// (Cortex Phase 2). Tier is a storage-level fact filtered in the store
+// layer, so every consumer — ambient injector, knowledge anchorer, KB
+// drafter, conflict detector, list/search APIs — sees durable-only by
+// default without per-call-site patches.
+const (
+	// TierDurable is normal long-term memory (the default).
+	TierDurable = "durable"
+	// TierQuarantine holds facts captured from sessions whose
+	// integration memory_policy is 'quarantine': excluded from
+	// consolidation + injection until promoted, auto-expired by TTL.
+	TierQuarantine = "quarantine"
+)
+
 const (
 	ScopeProject Scope = "project"
 	ScopeGlobal  Scope = "global"
@@ -100,6 +114,14 @@ type Memory struct {
 	// filters archived rows out entirely).
 	ArchivedAt     *time.Time `json:"archived_at,omitempty"`
 	ArchivedReason string     `json:"archived_reason,omitempty"`
+
+	// Tier — durable | quarantine. Populated by Get/ListQuarantined;
+	// the standard read paths only ever return durable rows so they
+	// leave it empty.
+	Tier string `json:"tier,omitempty"`
+	// QuarantineExpiresAt is the TTL deadline for quarantined rows;
+	// nil on durable rows.
+	QuarantineExpiresAt *time.Time `json:"quarantine_expires_at,omitempty"`
 }
 
 // SearchHit is one match returned by Store.Search, paired with its
@@ -143,6 +165,11 @@ type InsertRequest struct {
 	SourceRef         string
 	SummarizerSession string
 	Confidence        *float32
+
+	// Tier routes the row into durable (empty/default) or quarantine.
+	// QuarantineExpiresAt must be set when Tier == TierQuarantine.
+	Tier                string
+	QuarantineExpiresAt *time.Time
 }
 
 // UpdateRequest carries the new text + (optional) metadata for an
@@ -237,6 +264,19 @@ type Store interface {
 	// cutoff (the end of the grace window). Returns the row count
 	// removed; zero is not an error.
 	PurgeArchived(ctx context.Context, cutoff time.Time) (int64, error)
+	// ListQuarantined returns active quarantine-tier memories across
+	// all scopes, newest first — the Cortex review queue.
+	ListQuarantined(ctx context.Context, limit int) ([]Memory, error)
+	// CountQuarantined returns the number of active quarantine-tier
+	// rows (the Cortex home badge).
+	CountQuarantined(ctx context.Context) (int, error)
+	// Promote moves a quarantined memory to the durable tier (clears
+	// the TTL). Returns ErrNotFound when id isn't an active
+	// quarantined row.
+	Promote(ctx context.Context, id string) error
+	// PurgeExpiredQuarantine hard-deletes quarantined rows whose TTL
+	// passed. Returns the row count removed; zero is not an error.
+	PurgeExpiredQuarantine(ctx context.Context, now time.Time) (int64, error)
 	// Close releases store-level resources (DB conns, files).
 	// Safe to call multiple times.
 	Close() error

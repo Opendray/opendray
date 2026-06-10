@@ -569,7 +569,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			}
 		}
 	}
-	memoryHandlers := memory.NewHandlers(memorySvc, log)
+	memoryHandlers := memory.NewHandlers(memorySvc, log).
+		// Cortex Phase 2 — direct /memory/store calls from integration
+		// keys route into the tier their memory_policy declares.
+		WithPolicyLookup(&capturePolicyAdapter{svc: intgrSvc})
 
 	// Backup subsystem — opt-in. The passphrase resolution chain
 	// (env > KEY_FILE > default keyfile, see internal/backup/keyfile.go)
@@ -746,6 +749,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// SummarizerProviderID still win (pre-M-PE behaviour).
 		WorkerProvider: memworker.NewSummarizerProvider(
 			memoryWorkerRegistry, memworker.TaskCapture),
+		// Cortex Phase 2 — integration-created sessions route their
+		// facts by the integration's declared memory_policy.
+		Policy: &capturePolicyAdapter{svc: intgrSvc},
 	})
 	if ceErr != nil {
 		st.Close()
@@ -816,7 +822,8 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			// small, frequent entity-extraction calls (which keep 512 tok/20s).
 			kbLLM := knowledgeLLM{reg: memoryWorkerRegistry, maxTokens: 4000, timeout: 180 * time.Second}
 			knowledgeAnchorer = knowledge.NewAnchorer(st.Pool(), knowledgeMemorySource{mem: memorySvc}, log).
-				WithLLM(kgLLM)
+				WithLLM(kgLLM).
+				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc}) // Cortex P2 — frozen projects stop feeding the graph
 			knowledgeReflector = knowledge.NewReflector(st.Pool(), kbLLM, log).
 				WithJournal(knowledgeJournalSource{pd: projectDocSvc}).
 				WithMemory(knowledgeMemorySource{mem: memorySvc}).   // P-G — facts from Memory
@@ -829,8 +836,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			knowledgeKBDrafter = knowledge.NewKBDrafter(
 				knowledge.NewStore(st.Pool()), kbLLM,
 				knowledgeDocSink{pd: projectDocSvc}, log).
-				WithMemory(knowledgeMemorySource{mem: memorySvc}).      // P-G — facts from Memory
-				WithProposals(knowledgeProposalSink{pd: projectDocSvc}) // B3 — propose updates to locked pages
+				WithMemory(knowledgeMemorySource{mem: memorySvc}).       // P-G — facts from Memory
+				WithProposals(knowledgeProposalSink{pd: projectDocSvc}). // B3 — propose updates to locked pages
+				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc})     // Cortex P2 — frozen projects leave the feedstock
 			knowledgeSvc.WithKBDrafter(knowledgeKBDrafter) // manual /kb/draft endpoint
 			// The per-project Overview — the rich official document. Reads the
 			// project's own goal/plan/tech + journal + memory and writes a
@@ -858,11 +866,20 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// handler sets under /api/v1/cortex and adds cross-layer endpoints
 	// (status aggregation; quarantine/blueprint/conversations follow).
 	// Legacy mounts stay for integrations + the not-yet-migrated mobile.
-	cortexSvc := cortex.NewService(projectDocSvc, log,
+	cortexOpts := []cortex.Option{
 		cortex.WithMemoryEnabled(memorySvc != nil),
 		cortex.WithKnowledgeEnabled(knowledgeSvc != nil),
-	)
+	}
+	if memorySvc != nil {
+		cortexOpts = append(cortexOpts, cortex.WithQuarantineCounter(memorySvc.CountQuarantined))
+	}
+	cortexSvc := cortex.NewService(projectDocSvc, log, cortexOpts...)
 	cortexHandlers := cortex.NewHandlers(cortexSvc, projectDocHandlers, memoryHandlers, knowledgeHandlers, log)
+	if memorySvc != nil {
+		// Guarded: assigning a nil *memory.Service to the interface
+		// field would dodge the handler's nil check (typed nil).
+		cortexHandlers.WithQuarantine(memorySvc)
+	}
 	// Inject the cross-agent goal+plan+journal banner into every
 	// spawned session's system prompt. Composed alongside the
 	// memory-layer-5 banner (ambient injector) inside the catalog
@@ -1917,6 +1934,24 @@ func (a *summarizerIntegrationLookup) LookupBaseURL(ctx context.Context, id stri
 	return row.BaseURL, row.Enabled, nil
 }
 
+// capturePolicyAdapter implements capture.PolicyResolver against the
+// integration registry. Unknown integrations resolve to "" so the
+// runner applies its quarantine default.
+type capturePolicyAdapter struct {
+	svc *integration.Service
+}
+
+func (a *capturePolicyAdapter) MemoryPolicy(ctx context.Context, integrationID string) (string, error) {
+	if integrationID == "" {
+		return "", nil
+	}
+	i, err := a.svc.Get(ctx, integrationID)
+	if err != nil {
+		return "", err
+	}
+	return string(i.MemoryPolicy), nil
+}
+
 // captureSessionAdapter implements capture.SessionLister by
 // translating session.Manager.List into capture.SessionInfo.
 type captureSessionAdapter struct {
@@ -1931,10 +1966,12 @@ func (a *captureSessionAdapter) List(ctx context.Context) ([]capture.SessionInfo
 	out := make([]capture.SessionInfo, 0, len(rows))
 	for _, r := range rows {
 		out = append(out, capture.SessionInfo{
-			ID:         r.ID,
-			ProviderID: r.ProviderID,
-			Cwd:        r.Cwd,
-			State:      string(r.State),
+			ID:            r.ID,
+			ProviderID:    r.ProviderID,
+			Cwd:           r.Cwd,
+			State:         string(r.State),
+			Origin:        string(r.Origin),
+			IntegrationID: r.IntegrationID,
 		})
 	}
 	return out, nil

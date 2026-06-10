@@ -45,10 +45,11 @@ type MemoryRow struct {
 // Phase 1A is deterministic (project-level, no LLM). Phase 1B adds LLM entity
 // extraction + canonicalization for finer entities (services / hosts / …).
 type Anchorer struct {
-	store *Store
-	mem   MemorySource
-	llm   LLM // optional; nil = no fine-entity extraction (deterministic 1A)
-	log   *slog.Logger
+	store     *Store
+	mem       MemorySource
+	llm       LLM             // optional; nil = no fine-entity extraction (deterministic 1A)
+	lifecycle LifecycleFilter // optional; skip frozen (paused/archived) projects
+	log       *slog.Logger
 }
 
 // NewAnchorer builds an Anchorer over the shared pool and a memory source.
@@ -63,6 +64,16 @@ func NewAnchorer(pool *pgxpool.Pool, mem MemorySource, log *slog.Logger) *Anchor
 // anchorer stays deterministic (project-level anchoring only, the 1A path).
 func (a *Anchorer) WithLLM(llm LLM) *Anchorer {
 	a.llm = llm
+	return a
+}
+
+// WithLifecycle installs the lifecycle filter so frozen (paused/archived)
+// projects stop feeding the graph. Cortex Phase 2 closed this gap: the
+// Reflector honoured P-D from the start, but the Anchor stage ran first
+// in every consolidation cycle and kept lifting abandoned projects'
+// facts regardless.
+func (a *Anchorer) WithLifecycle(f LifecycleFilter) *Anchorer {
+	a.lifecycle = f
 	return a
 }
 
@@ -281,6 +292,9 @@ func (a *Anchorer) AnchorAll(ctx context.Context, perProject int) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
+		}
+		if a.lifecycle != nil && a.lifecycle.IsFrozen(ctx, cwd) {
+			continue // paused/archived projects stop feeding the graph
 		}
 		n, err := a.AnchorProject(ctx, cwd, perProject)
 		if err != nil {

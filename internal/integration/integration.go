@@ -32,6 +32,32 @@ const (
 	HealthUnhealthy HealthStatus = "unhealthy"
 )
 
+// MemoryPolicy declares what the memory capture pipeline does with
+// sessions an integration creates (Cortex Phase 2 — quarantine by
+// default so third-party temp sessions can't pollute durable memory).
+type MemoryPolicy string
+
+const (
+	// MemoryPolicyNone — sessions never produce memory.
+	MemoryPolicyNone MemoryPolicy = "none"
+	// MemoryPolicyQuarantine — facts land in the quarantine tier:
+	// excluded from consolidation + spawn injection, reviewable and
+	// promotable, auto-expired after a TTL. The default.
+	MemoryPolicyQuarantine MemoryPolicy = "quarantine"
+	// MemoryPolicyFull — trusted: facts are durable, same as operator
+	// sessions.
+	MemoryPolicyFull MemoryPolicy = "full"
+)
+
+// ValidMemoryPolicy reports whether p is one of the declared policies.
+func ValidMemoryPolicy(p MemoryPolicy) bool {
+	switch p {
+	case MemoryPolicyNone, MemoryPolicyQuarantine, MemoryPolicyFull:
+		return true
+	}
+	return false
+}
+
 // Integration is the public view of one registered external app.
 // `APIKeyHash` is excluded from JSON; the plaintext key is returned
 // once at registration and never again.
@@ -48,6 +74,10 @@ type Integration struct {
 	HealthLastSeen *time.Time     `json:"health_last_seen,omitempty"`
 	CreatedAt      time.Time      `json:"created_at"`
 	RotatedAt      *time.Time     `json:"rotated_at,omitempty"`
+
+	// MemoryPolicy routes memory capture for sessions this integration
+	// creates: none | quarantine (default) | full.
+	MemoryPolicy MemoryPolicy `json:"memory_policy"`
 
 	// IsSystem flags rows opendray manages itself (e.g. the
 	// auto-registered opendray-memory MCP integration). The UI

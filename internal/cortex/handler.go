@@ -28,11 +28,12 @@ import (
 //	    /cortex/memory*               → same handlers as /memory*
 //	    /cortex/knowledge*            → same handlers as /knowledge*
 type Handlers struct {
-	svc  *Service
-	docs *projectdoc.Handlers
-	mem  *memory.Handlers
-	know *knowledge.Handlers // nil when the knowledge layer is disabled
-	log  *slog.Logger
+	svc        *Service
+	docs       *projectdoc.Handlers
+	mem        *memory.Handlers
+	know       *knowledge.Handlers // nil when the knowledge layer is disabled
+	quarantine QuarantineSource    // nil when memory is disabled
+	log        *slog.Logger
 }
 
 // NewHandlers wires the Cortex HTTP surface. svc and docs must be
@@ -50,6 +51,13 @@ func NewHandlers(svc *Service, docs *projectdoc.Handlers, mem *memory.Handlers, 
 	}
 }
 
+// WithQuarantine wires the quarantine review queue (Phase 2). q may be
+// nil when memory is disabled — the routes then 503.
+func (h *Handlers) WithQuarantine(q QuarantineSource) *Handlers {
+	h.quarantine = q
+	return h
+}
+
 // Mount registers the /cortex namespace on r. r should already have
 // the dual-auth (admin OR integration) middleware applied — the
 // re-mounted layer handlers enforce their own per-route scopes
@@ -57,6 +65,9 @@ func NewHandlers(svc *Service, docs *projectdoc.Handlers, mem *memory.Handlers, 
 func (h *Handlers) Mount(r chi.Router) {
 	r.Route("/cortex", func(r chi.Router) {
 		r.Get("/status", h.status)
+		// Quarantine routes register before the re-mounted memory
+		// handlers so /memory/quarantine wins over memory's /{id}.
+		h.mountQuarantine(r)
 		h.docs.Mount(r)
 		h.mem.Mount(r)
 		if h.know != nil {

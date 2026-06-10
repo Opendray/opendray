@@ -53,6 +53,10 @@ type RegisterRequest struct {
 	Scopes      []string `json:"scopes,omitempty"`
 	Version     string   `json:"version,omitempty"`
 	IsSystem    bool     `json:"-"`
+	// MemoryPolicy declares how the capture pipeline treats sessions
+	// this integration creates (none|quarantine|full). Empty defaults
+	// to quarantine — safe by default.
+	MemoryPolicy MemoryPolicy `json:"memory_policy,omitempty"`
 }
 
 // RegisterResult bundles the persisted integration with the one-time
@@ -102,6 +106,10 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (RegisterRe
 		// status is tracked by `BaseURL == ""` everywhere else.
 		storedPrefix = "_consumer_" + id
 	}
+	policy := req.MemoryPolicy
+	if policy == "" {
+		policy = MemoryPolicyQuarantine
+	}
 	i := Integration{
 		ID:           id,
 		Name:         req.Name,
@@ -113,6 +121,7 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (RegisterRe
 		HealthStatus: HealthUnknown,
 		CreatedAt:    time.Now().UTC(),
 		IsSystem:     req.IsSystem,
+		MemoryPolicy: policy,
 		apiKeyHash:   hash,
 	}
 	if len(i.Scopes) == 0 {
@@ -289,6 +298,9 @@ func validateRegister(req RegisterRequest) error {
 	hasPrefix := req.RoutePrefix != ""
 	if hasURL != hasPrefix {
 		return errors.New("base_url and route_prefix must be set together (or both empty for a consumer-only integration)")
+	}
+	if req.MemoryPolicy != "" && !ValidMemoryPolicy(req.MemoryPolicy) {
+		return fmt.Errorf("memory_policy must be none|quarantine|full, got %q", req.MemoryPolicy)
 	}
 	if hasURL {
 		if u, err := url.Parse(req.BaseURL); err != nil || u.Scheme == "" || u.Host == "" {

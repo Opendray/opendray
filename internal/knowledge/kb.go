@@ -60,7 +60,8 @@ type KBDrafter struct {
 	llm       LLM
 	mem       MemorySource // P-G: declarative facts come straight from Memory
 	docs      DocSink
-	proposals ProposalSink // B3: propose updates to locked pages instead of skipping
+	proposals ProposalSink    // B3: propose updates to locked pages instead of skipping
+	lifecycle LifecycleFilter // Cortex Phase 2: frozen projects' facts leave the feedstock
 	log       *slog.Logger
 }
 
@@ -85,6 +86,37 @@ func (d *KBDrafter) WithMemory(src MemorySource) *KBDrafter {
 func (d *KBDrafter) WithProposals(p ProposalSink) *KBDrafter {
 	d.proposals = p
 	return d
+}
+
+// WithLifecycle installs the lifecycle filter so paused/archived projects'
+// facts stop feeding the cross-project Knowledge pages (Cortex Phase 2 —
+// previously DraftAll distilled from ALL memories regardless of status).
+func (d *KBDrafter) WithLifecycle(f LifecycleFilter) *KBDrafter {
+	d.lifecycle = f
+	return d
+}
+
+// filterFrozenFacts drops facts whose project (scope key) is frozen.
+// IsFrozen results are memoised per cwd — feedstock batches repeat the
+// same handful of projects hundreds of times.
+func filterFrozenFacts(ctx context.Context, lc LifecycleFilter, facts []MemoryRow) []MemoryRow {
+	if lc == nil || len(facts) == 0 {
+		return facts
+	}
+	frozen := make(map[string]bool)
+	out := make([]MemoryRow, 0, len(facts))
+	for _, f := range facts {
+		st, ok := frozen[f.ScopeKey]
+		if !ok {
+			st = lc.IsFrozen(ctx, f.ScopeKey)
+			frozen[f.ScopeKey] = st
+		}
+		if st {
+			continue
+		}
+		out = append(out, f)
+	}
+	return out
 }
 
 const kbSafety = `
@@ -136,6 +168,7 @@ func (d *KBDrafter) DraftAll(ctx context.Context) ([]KBDraftResult, error) {
 	var facts []MemoryRow
 	if d.mem != nil {
 		facts, _ = d.mem.ListAllMemories(ctx, 400)
+		facts = filterFrozenFacts(ctx, d.lifecycle, facts)
 	}
 	entities, _ := d.store.ListNodes(ctx, NodeFilter{Kind: KindEntity, Limit: 400})
 	playbooks, _ := d.store.ListNodes(ctx, NodeFilter{Kind: KindPlaybook, Limit: 200})

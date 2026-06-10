@@ -521,6 +521,13 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 	if name == "" {
 		name = defaultSessionName(req.ProviderID, req.Cwd)
 	}
+	origin := req.origin
+	if origin == "" {
+		// Callers that bypass the HTTP handler (tests, internal spawns)
+		// default to operator — matching the DB default and the truth
+		// for every pre-0044 row.
+		origin = OriginOperator
+	}
 	sess := Session{
 		ID:              sessID,
 		Name:            name,
@@ -530,6 +537,8 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		State:           StateRunning,
 		ClaudeAccountID: req.ClaudeAccountID,
 		ParentSessionID: req.ParentSessionID,
+		Origin:          origin,
+		IntegrationID:   req.integrationID,
 		StartedAt:       time.Now().UTC(),
 	}
 	if sess.Args == nil {

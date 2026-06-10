@@ -89,6 +89,9 @@ type MemoryAdapter interface {
 	Archive(ctx context.Context, id, reason string) error
 	// PurgeArchived hard-deletes archived rows past the grace cutoff.
 	PurgeArchived(ctx context.Context, cutoff time.Time) (int64, error)
+	// PurgeExpiredQuarantine hard-deletes quarantined rows past their
+	// TTL (Cortex Phase 2 — un-reviewed third-party capture ages out).
+	PurgeExpiredQuarantine(ctx context.Context, now time.Time) (int64, error)
 	// ArchiveDormantStale soft-archives never-hit aged facts of a dormant
 	// project (the lifecycle signal). Returns the count archived.
 	ArchiveDormantStale(ctx context.Context, scope memory.Scope, scopeKey string, agedBefore, dormantBefore time.Time, reason string) (int64, error)
@@ -346,7 +349,8 @@ func (s *Service) ArchiveDormant(ctx context.Context, scopeKey string) (int64, e
 }
 
 // PurgeExpired hard-deletes memories whose soft-archive grace window has
-// elapsed. Called once per scheduler tick. Returns the count purged.
+// elapsed, plus quarantined rows past their TTL (Cortex Phase 2).
+// Called once per scheduler tick. Returns the count purged.
 func (s *Service) PurgeExpired(ctx context.Context) (int64, error) {
 	cutoff := time.Now().Add(-s.cfg.GracePeriod)
 	n, err := s.mem.PurgeArchived(ctx, cutoff)
@@ -356,7 +360,14 @@ func (s *Service) PurgeExpired(ctx context.Context) (int64, error) {
 	if n > 0 {
 		s.log.Info("cleaner.purged_expired", "count", n, "grace", s.cfg.GracePeriod)
 	}
-	return n, nil
+	q, err := s.mem.PurgeExpiredQuarantine(ctx, time.Now())
+	if err != nil {
+		return n, fmt.Errorf("cleaner: purge expired quarantine: %w", err)
+	}
+	if q > 0 {
+		s.log.Info("cleaner.purged_expired_quarantine", "count", q)
+	}
+	return n + q, nil
 }
 
 // archiveReason builds a short archived_reason from a verdict label and

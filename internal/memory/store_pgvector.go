@@ -120,22 +120,40 @@ func (s *PgvectorStore) Insert(ctx context.Context, req InsertRequest) (string, 
 		confidence = *req.Confidence
 	}
 
+	// Tier: empty defers to the DB default ('durable'). Quarantined
+	// rows must carry their TTL deadline.
+	tier := req.Tier
+	if tier == "" {
+		tier = TierDurable
+	}
+	if tier == TierQuarantine && req.QuarantineExpiresAt == nil {
+		return "", errors.New("memory: quarantine insert needs an expiry")
+	}
+	var quarantineExpiry any
+	if req.QuarantineExpiresAt != nil {
+		quarantineExpiry = *req.QuarantineExpiresAt
+	}
+
 	if req.SourceKind != "" {
 		_, err = s.pool.Exec(ctx, `
 			INSERT INTO memories
 				(id, scope, scope_key, text, embedding, embedder, metadata,
-				 source_kind, source_ref, summarizer_session, confidence)
+				 source_kind, source_ref, summarizer_session, confidence,
+				 tier, quarantine_expires_at)
 			VALUES ($1, $2, $3, $4, $5::vector, $6, $7::jsonb,
-			        $8, $9, $10, $11)
+			        $8, $9, $10, $11, $12, $13)
 		`, id, string(req.Scope), req.ScopeKey, req.Text, vec, req.Embedder, metaJSON,
-			sourceKind, sourceRef, summSession, confidence)
+			sourceKind, sourceRef, summSession, confidence,
+			tier, quarantineExpiry)
 	} else {
 		// Skip provenance columns entirely so DB CHECK + DEFAULT apply
 		// — equivalent to legacy callers' behaviour pre-Phase-A.
 		_, err = s.pool.Exec(ctx, `
-			INSERT INTO memories (id, scope, scope_key, text, embedding, embedder, metadata)
-			VALUES ($1, $2, $3, $4, $5::vector, $6, $7::jsonb)
-		`, id, string(req.Scope), req.ScopeKey, req.Text, vec, req.Embedder, metaJSON)
+			INSERT INTO memories (id, scope, scope_key, text, embedding, embedder, metadata,
+			                      tier, quarantine_expires_at)
+			VALUES ($1, $2, $3, $4, $5::vector, $6, $7::jsonb, $8, $9)
+		`, id, string(req.Scope), req.ScopeKey, req.Text, vec, req.Embedder, metaJSON,
+			tier, quarantineExpiry)
 	}
 	if err != nil {
 		return "", fmt.Errorf("memory: insert: %w", err)
@@ -223,7 +241,7 @@ func (s *PgvectorStore) Search(ctx context.Context, q SearchQuery) ([]SearchHit,
 		       created_at, updated_at, hit_count, last_hit_at,
 		       1 - (embedding <=> $1::vector) AS similarity
 		FROM memories
-		WHERE embedder = $2 AND archived_at IS NULL AND %s
+		WHERE embedder = $2 AND archived_at IS NULL AND tier = 'durable' AND %s
 		ORDER BY embedding <=> $1::vector ASC
 		LIMIT $%d
 	`, whereScope, len(args))
@@ -272,7 +290,7 @@ func (s *PgvectorStore) List(ctx context.Context, scope Scope, scopeKey string, 
 		SELECT id, scope, scope_key, text, embedder, metadata,
 		       created_at, updated_at, hit_count, last_hit_at
 		FROM memories
-		WHERE archived_at IS NULL AND %s
+		WHERE archived_at IS NULL AND tier = 'durable' AND %s
 		ORDER BY created_at DESC
 		LIMIT $%d
 	`, where, len(args))
@@ -370,12 +388,14 @@ func (s *PgvectorStore) Get(ctx context.Context, id string) (Memory, error) {
 	err := s.pool.QueryRow(ctx, `
 		SELECT id, scope, scope_key, text, embedder, metadata,
 		       created_at, updated_at, hit_count, last_hit_at,
-		       source_kind, source_ref, summarizer_session, confidence
+		       source_kind, source_ref, summarizer_session, confidence,
+		       tier, quarantine_expires_at
 		  FROM memories
 		 WHERE id = $1 AND archived_at IS NULL`, id,
 	).Scan(&m.ID, &m.Scope, &m.ScopeKey, &m.Text, &m.Embedder, &meta,
 		&m.CreatedAt, &m.UpdatedAt, &m.HitCount, &m.LastHitAt,
-		&srcKind, &srcRef, &summSes, &conf)
+		&srcKind, &srcRef, &summSes, &conf,
+		&m.Tier, &m.QuarantineExpiresAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return Memory{}, ErrNotFound
@@ -556,7 +576,7 @@ func (s *PgvectorStore) ListScopeKeys(ctx context.Context, scope Scope) ([]strin
 	}
 	rows, err := s.pool.Query(ctx, `
 		SELECT DISTINCT scope_key FROM memories
-		WHERE scope = $1 AND scope_key <> '' AND archived_at IS NULL
+		WHERE scope = $1 AND scope_key <> '' AND archived_at IS NULL AND tier = 'durable'
 		ORDER BY scope_key
 	`, string(scope))
 	if err != nil {
@@ -682,6 +702,108 @@ func (s *PgvectorStore) PurgeArchived(ctx context.Context, cutoff time.Time) (in
 		 WHERE archived_at IS NOT NULL AND archived_at < $1`, cutoff)
 	if err != nil {
 		return 0, fmt.Errorf("memory: purge archived: %w", err)
+	}
+	return tag.RowsAffected(), nil
+}
+
+// ListQuarantined returns active quarantine-tier rows across every
+// scope, newest first — the Cortex review queue. Provenance fields
+// are included so the operator can see which session/integration
+// produced each fact.
+func (s *PgvectorStore) ListQuarantined(ctx context.Context, limit int) ([]Memory, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, scope, scope_key, text, embedder, metadata,
+		       created_at, updated_at, hit_count, last_hit_at,
+		       source_kind, source_ref, summarizer_session, confidence,
+		       tier, quarantine_expires_at
+		FROM memories
+		WHERE tier = 'quarantine' AND archived_at IS NULL
+		ORDER BY created_at DESC
+		LIMIT $1
+	`, limit)
+	if err != nil {
+		return nil, fmt.Errorf("memory: list quarantined: %w", err)
+	}
+	defer rows.Close()
+	var out []Memory
+	for rows.Next() {
+		var (
+			m       Memory
+			meta    []byte
+			srcKind sql.NullString
+			srcRef  sql.NullString
+			summSes sql.NullString
+			conf    sql.NullFloat64
+		)
+		if err := rows.Scan(&m.ID, &m.Scope, &m.ScopeKey, &m.Text, &m.Embedder, &meta,
+			&m.CreatedAt, &m.UpdatedAt, &m.HitCount, &m.LastHitAt,
+			&srcKind, &srcRef, &summSes, &conf,
+			&m.Tier, &m.QuarantineExpiresAt); err != nil {
+			return nil, err
+		}
+		if len(meta) > 0 {
+			_ = json.Unmarshal(meta, &m.Metadata)
+		}
+		if srcKind.Valid {
+			m.SourceKind = srcKind.String
+		}
+		if srcRef.Valid {
+			m.SourceRef = srcRef.String
+		}
+		if summSes.Valid {
+			m.SummarizerSession = summSes.String
+		}
+		if conf.Valid {
+			v := float32(conf.Float64)
+			m.Confidence = &v
+		}
+		out = append(out, m)
+	}
+	return out, rows.Err()
+}
+
+// CountQuarantined returns the active quarantine-tier row count.
+func (s *PgvectorStore) CountQuarantined(ctx context.Context) (int, error) {
+	var n int
+	err := s.pool.QueryRow(ctx, `
+		SELECT COUNT(*) FROM memories
+		WHERE tier = 'quarantine' AND archived_at IS NULL`).Scan(&n)
+	if err != nil {
+		if isRelationDoesNotExist(err) {
+			return 0, nil
+		}
+		return 0, fmt.Errorf("memory: count quarantined: %w", err)
+	}
+	return n, nil
+}
+
+// Promote moves a quarantined memory into the durable tier.
+func (s *PgvectorStore) Promote(ctx context.Context, id string) error {
+	tag, err := s.pool.Exec(ctx, `
+		UPDATE memories
+		   SET tier = 'durable', quarantine_expires_at = NULL, updated_at = NOW()
+		 WHERE id = $1 AND tier = 'quarantine' AND archived_at IS NULL`, id)
+	if err != nil {
+		return fmt.Errorf("memory: promote: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// PurgeExpiredQuarantine hard-deletes quarantined rows past their TTL.
+func (s *PgvectorStore) PurgeExpiredQuarantine(ctx context.Context, now time.Time) (int64, error) {
+	tag, err := s.pool.Exec(ctx, `
+		DELETE FROM memories
+		 WHERE tier = 'quarantine'
+		   AND quarantine_expires_at IS NOT NULL
+		   AND quarantine_expires_at < $1`, now)
+	if err != nil {
+		return 0, fmt.Errorf("memory: purge expired quarantine: %w", err)
 	}
 	return tag.RowsAffected(), nil
 }

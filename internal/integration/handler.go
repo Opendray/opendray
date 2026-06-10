@@ -3,6 +3,7 @@ package integration
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -91,20 +92,27 @@ func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var req struct {
-		BaseURL *string   `json:"base_url,omitempty"`
-		Scopes  *[]string `json:"scopes,omitempty"`
-		Version *string   `json:"version,omitempty"`
-		Enabled *bool     `json:"enabled,omitempty"`
+		BaseURL      *string       `json:"base_url,omitempty"`
+		Scopes       *[]string     `json:"scopes,omitempty"`
+		Version      *string       `json:"version,omitempty"`
+		Enabled      *bool         `json:"enabled,omitempty"`
+		MemoryPolicy *MemoryPolicy `json:"memory_policy,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
+	if req.MemoryPolicy != nil && !ValidMemoryPolicy(*req.MemoryPolicy) {
+		writeError(w, http.StatusBadRequest,
+			fmt.Errorf("memory_policy must be none|quarantine|full, got %q", *req.MemoryPolicy))
+		return
+	}
 	patch := UpdatePatch{
-		BaseURL: req.BaseURL,
-		Scopes:  req.Scopes,
-		Version: req.Version,
-		Enabled: req.Enabled,
+		BaseURL:      req.BaseURL,
+		Scopes:       req.Scopes,
+		Version:      req.Version,
+		Enabled:      req.Enabled,
+		MemoryPolicy: req.MemoryPolicy,
 	}
 	i, err := h.svc.Update(r.Context(), id, patch)
 	if errors.Is(err, ErrNotFound) {

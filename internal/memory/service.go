@@ -294,6 +294,14 @@ type StoreRequest struct {
 	SourceRef         string   `json:"source_ref,omitempty"`         // summarizer call id, mirror file path, etc.
 	SummarizerSession string   `json:"summarizer_session,omitempty"` // session id when source_kind='summarizer'
 	Confidence        *float32 `json:"confidence,omitempty"`         // summarizer self-reported 0..1
+
+	// Tier — set by the capture pipeline from the session's
+	// integration memory_policy (Cortex Phase 2); never accepted from
+	// HTTP/MCP clients (the handlers overwrite it from the principal).
+	// Empty means durable. QuarantineExpiresAt is required when Tier
+	// is TierQuarantine.
+	Tier                string     `json:"-"`
+	QuarantineExpiresAt *time.Time `json:"-"`
 }
 
 // SearchRequest mirrors a /memory.search tool call — text query
@@ -374,7 +382,13 @@ func (s *Service) Store(ctx context.Context, req StoreRequest) (string, error) {
 
 	// (M11) Dedup-on-store. Reuses the embedding we just computed so
 	// we don't pay a second embed call for the same text.
-	if s.dedupThreshold > 0 {
+	//
+	// Quarantine writes skip the merge entirely: dedup search only
+	// sees durable rows, so a quarantined fact matching a durable one
+	// would otherwise merge its text INTO the durable row — laundering
+	// quarantined content past the review queue. A duplicate inside
+	// quarantine is acceptable; it expires or gets reviewed.
+	if s.dedupThreshold > 0 && req.Tier != TierQuarantine {
 		hits, sErr := s.store.Search(ctx, SearchQuery{
 			Vector:   emb[0],
 			Embedder: s.emb.Name(),
@@ -416,22 +430,59 @@ func (s *Service) Store(ctx context.Context, req StoreRequest) (string, error) {
 	}
 
 	id, err := s.store.Insert(ctx, InsertRequest{
-		Scope:             req.Scope,
-		ScopeKey:          req.ScopeKey,
-		Text:              req.Text,
-		Embedder:          s.emb.Name(),
-		Embedding:         emb[0],
-		Metadata:          req.Metadata,
-		SourceKind:        req.SourceKind,
-		SourceRef:         req.SourceRef,
-		SummarizerSession: req.SummarizerSession,
-		Confidence:        req.Confidence,
+		Scope:               req.Scope,
+		ScopeKey:            req.ScopeKey,
+		Text:                req.Text,
+		Embedder:            s.emb.Name(),
+		Embedding:           emb[0],
+		Metadata:            req.Metadata,
+		SourceKind:          req.SourceKind,
+		SourceRef:           req.SourceRef,
+		SummarizerSession:   req.SummarizerSession,
+		Confidence:          req.Confidence,
+		Tier:                req.Tier,
+		QuarantineExpiresAt: req.QuarantineExpiresAt,
 	})
 	if err != nil {
 		return "", err
 	}
-	s.log.Info("memory.store", "id", id, "scope", req.Scope, "scope_key", req.ScopeKey, "len", len(req.Text))
+	s.log.Info("memory.store", "id", id, "scope", req.Scope, "scope_key", req.ScopeKey,
+		"tier", orDurable(req.Tier), "len", len(req.Text))
 	return id, nil
+}
+
+// orDurable normalizes an empty tier for logging.
+func orDurable(tier string) string {
+	if tier == "" {
+		return TierDurable
+	}
+	return tier
+}
+
+// ListQuarantined returns the quarantine review queue (cross-scope,
+// newest first).
+func (s *Service) ListQuarantined(ctx context.Context, limit int) ([]Memory, error) {
+	return s.store.ListQuarantined(ctx, limit)
+}
+
+// CountQuarantined returns the number of active quarantined memories.
+func (s *Service) CountQuarantined(ctx context.Context) (int, error) {
+	return s.store.CountQuarantined(ctx)
+}
+
+// PromoteQuarantined moves a quarantined memory into the durable tier
+// (the operator judged it valuable).
+func (s *Service) PromoteQuarantined(ctx context.Context, id string) error {
+	if err := s.store.Promote(ctx, id); err != nil {
+		return err
+	}
+	s.log.Info("memory.quarantine_promoted", "id", id)
+	return nil
+}
+
+// PurgeExpiredQuarantine removes quarantined rows past their TTL.
+func (s *Service) PurgeExpiredQuarantine(ctx context.Context, now time.Time) (int64, error) {
+	return s.store.PurgeExpiredQuarantine(ctx, now)
 }
 
 // mergeMetadata combines an existing memory's metadata with the
