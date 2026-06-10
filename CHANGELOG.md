@@ -10,6 +10,46 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.7.3] — 2026-06-10
+
+### Fixed
+
+- **Mac Safari terminal regressions** introduced in v2.7.2 by #323. The
+  chat no longer extends past the browser bottom; Claude's TUI input
+  wraps correctly past the visible right edge after 3-4 lines; and
+  `[disconnected — reconnecting…]` stops stacking — it announces once
+  per disconnect cycle, then prints `[reconnected]` on recovery or
+  `[connection lost — refresh the page to reconnect]` after retries are
+  exhausted. WebKit's `ResizeObserver` fires late on absolute-positioned
+  elements nested inside flex containers, which left `fit()` reading a
+  stale size after sidebar/banner shifts; the xterm host now stays
+  in-flow with `contain: layout paint` instead. The WebSocket retry
+  budget was also bumped (`maxRetries` 6 → 30, `maxBackoff` 8s → 15s)
+  so an idle proxy bouncing the socket doesn't read as "broken forever."
+- **iOS web terminal scrollback.** Two-finger drag on the terminal
+  canvas now scrolls xterm's scrollback. `.xterm-viewport` got
+  `-webkit-overflow-scrolling: touch`, `overscroll-behavior: contain`,
+  and `touch-action: pan-y`. The AppShell switched from `h-svh` to
+  `h-dvh` so the layout tracks the live visual viewport (keyboard,
+  address-bar) instead of locking to the address-bar-visible height.
+
+### Added
+
+- **Web: "update available" badge on the Settings icon.** A small
+  accent dot appears on the gear in the sidebar (expanded, icon-rail,
+  and mobile slide-over) when a newer release is detected — so the
+  upgrade prompt finds operators instead of waiting for them to open
+  About. Background poll every 6 hours, shares the `['version']` query
+  cache with the existing AboutSection so a manual "Check now" updates
+  the badge immediately. Suppressed while `pending=true` to avoid
+  nagging during an in-flight upgrade. i18n parity preserved across
+  en / es / zh.
+- **GitHub Sponsors landing material.** `SPONSORS.md` (pitch, five
+  tiers, FAQ, thank-you wall), `docs/sponsors/dashboard-copy.md`
+  (paste-ready text for both the Opendray org and the navidrast
+  personal Sponsors dashboards), and `.github/FUNDING.yml` updated to
+  list both accounts.
+
 ## [v2.7.2] — 2026-06-04
 
 ### Added
