@@ -13,7 +13,24 @@ export function wsURL(path: string, token: string): string {
 export interface BinaryWSCallbacks {
   onMessage?: (data: Uint8Array) => void
   onOpen?: () => void
+  /**
+   * Fires once per disconnect *cycle* — the first time the connection
+   * drops, and not again until a successful reconnect resets the state.
+   * Lets callers surface a "reconnecting" line without stacking it on
+   * every bounce when an idle proxy drops the socket every few seconds.
+   */
   onClose?: () => void
+  /**
+   * Fires once when the socket comes back up after a prior onClose.
+   * Lets callers clear/replace the "reconnecting" line they wrote.
+   */
+  onReconnect?: () => void
+  /**
+   * Fires when reconnect attempts have been exhausted and the socket
+   * is permanently dead. Callers should surface a CTA (refresh / reopen)
+   * rather than the still-trying "reconnecting" line.
+   */
+  onGiveUp?: () => void
   onError?: (err: Event) => void
 }
 
@@ -31,10 +48,18 @@ export class BinaryWS {
   private ws: WebSocket | null = null
   private closed = false
   private backoff = 500
-  private readonly maxBackoff = 8_000
-  private readonly maxRetries = 6
+  private readonly maxBackoff = 15_000
+  // High enough that an idle-proxy bouncing the socket every few
+  // seconds doesn't hit the permanent-give-up path during normal
+  // use; capped so a server that's gone for good still eventually
+  // surfaces the give-up state instead of polling forever.
+  private readonly maxRetries = 30
   private retries = 0
   private timer: ReturnType<typeof setTimeout> | null = null
+  // True between the first onClose of a disconnect cycle and the
+  // next successful onopen. Prevents stacking "[disconnected]" lines
+  // when the proxy closes the socket every backoff window.
+  private disconnectAnnounced = false
 
   constructor(url: string, cb: BinaryWSCallbacks = {}) {
     this.url = url
@@ -76,7 +101,10 @@ export class BinaryWS {
     ws.onopen = () => {
       this.backoff = 500
       this.retries = 0
+      const wasDisconnected = this.disconnectAnnounced
+      this.disconnectAnnounced = false
       this.cb.onOpen?.()
+      if (wasDisconnected) this.cb.onReconnect?.()
     }
     ws.onmessage = (ev) => {
       if (ev.data instanceof ArrayBuffer) {
@@ -89,7 +117,14 @@ export class BinaryWS {
       this.cb.onError?.(ev)
     }
     ws.onclose = (ev) => {
-      this.cb.onClose?.()
+      // Announce the disconnect ONCE per cycle — not on every retry.
+      // A flaky proxy that drops the socket every backoff window used
+      // to write a fresh "[disconnected]" line each bounce, which
+      // stacked on screen and obscured what Claude was actually saying.
+      if (!this.closed && !this.disconnectAnnounced) {
+        this.disconnectAnnounced = true
+        this.cb.onClose?.()
+      }
       if (this.closed) return
       // Stop retrying for normal / explicit server-side close. The
       // server uses 1000 (normal) or 1001 (going away); also halt
@@ -102,6 +137,7 @@ export class BinaryWS {
       this.retries++
       if (this.retries >= this.maxRetries) {
         this.closed = true
+        this.cb.onGiveUp?.()
         return
       }
       const wait = this.backoff
