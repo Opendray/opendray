@@ -148,6 +148,18 @@
   }
 }
 
+/* xterm scrollback on iOS Safari needs explicit momentum-touch
+   scrolling on the viewport div — without it, two-finger drag on
+   the canvas doesn't scroll xterm's scrollback at all, which reads
+   as "I can't scroll up to see previous output on iOS." The
+   `overscroll-behavior: contain` prevents the gesture from leaking
+   to the page (which used to scroll the whole AppShell instead). */
+.xterm-viewport {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
 /* highlight.js theme — a compact mapping that uses palette-friendly
    colors for both light and dark modes. The Inspector's file viewer
    wraps lines into our own gutter, so only inline class colors are

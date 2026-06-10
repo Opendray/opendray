@@ -30,7 +30,13 @@ export function AppShell() {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="h-svh flex flex-col bg-background text-foreground">
+      {/* h-dvh (not h-svh): on iOS the visual viewport shrinks when the
+          soft keyboard opens or grows when the address bar collapses.
+          h-svh locks the shell to the address-bar-visible height, which
+          leaves the bottom of the chat clipped past the visible viewport
+          when the keyboard is up. h-dvh tracks the live viewport so the
+          shell always fits exactly what the user can see. */}
+      <div className="h-dvh flex flex-col bg-background text-foreground">
         <Topbar onOpenPalette={() => setPaletteOpen(true)} />
         <HealthBanner />
         <div className="flex-1 flex overflow-hidden min-h-0 relative">
