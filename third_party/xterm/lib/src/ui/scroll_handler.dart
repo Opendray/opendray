@@ -3,10 +3,21 @@ import 'package:flutter/widgets.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/src/ui/infinite_scroll_view.dart';
 
-/// Handles scrolling gestures in the alternate screen buffer. In alternate
-/// screen buffer, the terminal don't have a scrollback buffer, instead, the
-/// scroll gestures are converted to escape sequences based on the current
-/// report mode declared by the application.
+/// Handles scrolling gestures for applications that have grabbed the mouse
+/// (i.e. [Terminal.mouseMode] is not [MouseMode.none] — Claude Code, Codex,
+/// Gemini, vim, …). Such an app runs in the alternate screen, which has no
+/// xterm scrollback to scroll; instead it drives its own viewport from wheel
+/// input, so a finger swipe is converted to mouse-wheel escape sequences and
+/// sent to the app.
+///
+/// The gate is the app's mouse mode, NOT [Terminal.isUsingAltBuffer]: those
+/// two diverge mid-session (a CLI can sit in the alternate buffer while it has
+/// momentarily turned mouse reporting off, e.g. a sub-pager or a modal), and a
+/// wheel report sent to an app that isn't listening for the mouse just
+/// vanishes — leaving a swipe silently doing nothing. Gating on mouse mode is
+/// exactly what the (working) web terminal does (`mouseTrackingMode !== 'none'`):
+/// when the app isn't tracking the mouse we do nothing here and let the inner
+/// viewport's native scroll handle the scrollback.
 class TerminalScrollGestureHandler extends StatefulWidget {
   const TerminalScrollGestureHandler({
     super.key,
@@ -39,9 +50,11 @@ class TerminalScrollGestureHandler extends StatefulWidget {
 
 class _TerminalScrollGestureHandlerState
     extends State<TerminalScrollGestureHandler> {
-  /// Whether the application is in alternate screen buffer. If false, then this
-  /// widget does nothing.
-  var isAltBuffer = false;
+  /// Whether the application has mouse reporting enabled (any mode other than
+  /// [MouseMode.none]). When false this widget does nothing and the swipe falls
+  /// through to the inner viewport's native scroll. Mirrors the web terminal's
+  /// `mouseTrackingMode !== 'none'` gate.
+  var mouseActive = false;
 
   /// The variable that tracks the line offset in last scroll event. Used to
   /// determine how many the scroll events should be sent to the terminal.
@@ -58,7 +71,7 @@ class _TerminalScrollGestureHandlerState
   @override
   void initState() {
     widget.terminal.addListener(_onTerminalUpdated);
-    isAltBuffer = widget.terminal.isUsingAltBuffer;
+    mouseActive = widget.terminal.mouseMode != MouseMode.none;
     super.initState();
   }
 
@@ -73,15 +86,16 @@ class _TerminalScrollGestureHandlerState
     if (oldWidget.terminal != widget.terminal) {
       oldWidget.terminal.removeListener(_onTerminalUpdated);
       widget.terminal.addListener(_onTerminalUpdated);
-      isAltBuffer = widget.terminal.isUsingAltBuffer;
+      mouseActive = widget.terminal.mouseMode != MouseMode.none;
     }
     super.didUpdateWidget(oldWidget);
   }
 
   void _onTerminalUpdated() {
-    if (isAltBuffer != widget.terminal.isUsingAltBuffer) {
-      isAltBuffer = widget.terminal.isUsingAltBuffer;
-      setState(() {});
+    final active = widget.terminal.mouseMode != MouseMode.none;
+    if (active != mouseActive) {
+      mouseActive = active;
+      if (mounted) setState(() {});
     }
   }
 
@@ -127,6 +141,10 @@ class _TerminalScrollGestureHandlerState
   /// Mouse drags are left alone (they drive text selection).
   void _onPointerMove(PointerMoveEvent event) {
     if (event.kind != PointerDeviceKind.touch) return;
+    // Re-check live: the mode can flip between the setState that built this
+    // Listener and the pointer event arriving. Don't fire a wheel report at an
+    // app that has since dropped mouse tracking.
+    if (widget.terminal.mouseMode == MouseMode.none) return;
     final lineHeight = widget.getLineHeight();
     if (lineHeight <= 0) return;
     lastPointerPosition = event.position;
@@ -141,7 +159,7 @@ class _TerminalScrollGestureHandlerState
 
   @override
   Widget build(BuildContext context) {
-    if (!isAltBuffer) {
+    if (!mouseActive) {
       return widget.child;
     }
 

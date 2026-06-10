@@ -51,6 +51,7 @@ function buildTheme(applied: 'light' | 'dark') {
  */
 export function EndedSessionView({ sessionId }: EndedSessionViewProps) {
   const { t } = useTranslation()
+  const rootRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const xtermRef = useRef<XTerm | null>(null)
   const fitRef = useRef<FitAddon | null>(null)
@@ -115,8 +116,11 @@ export function EndedSessionView({ sessionId }: EndedSessionViewProps) {
         }
       })
     }
+    // Observe the in-flow root (not the host) — WebKit's RO fires late
+    // on absolute-positioned elements inside flex-1 min-h-0; see
+    // Terminal.tsx for the full rationale.
     const ro = new ResizeObserver(scheduleFit)
-    ro.observe(containerRef.current)
+    if (rootRef.current) ro.observe(rootRef.current)
     scheduleFit()
     void document.fonts?.ready?.then(scheduleFit)
 
@@ -131,11 +135,16 @@ export function EndedSessionView({ sessionId }: EndedSessionViewProps) {
   }, [sessionId, themeApplied, t])
 
   return (
-    <div className="h-full w-full bg-background relative overflow-hidden">
-      {/* Clipped + absolutely sized so replay content can't escape to
-          the scrollable <main> and start a fit()/scrollbar feedback
-          loop — same isolation as the live Terminal. */}
-      <div ref={containerRef} className="absolute inset-0 p-2 overflow-hidden" />
+    <div ref={rootRef} className="h-full w-full bg-background relative overflow-hidden">
+      {/* `contain: layout` + `overflow-hidden` isolates the replay
+          terminal from <main>'s scrollbar without the WebKit-late RO
+          quirk that `absolute inset-0` has inside flex-1 min-h-0 —
+          see Terminal.tsx for the full rationale. */}
+      <div
+        ref={containerRef}
+        className="h-full w-full p-2 overflow-hidden"
+        style={{ contain: 'layout paint' }}
+      />
     </div>
   )
 }
