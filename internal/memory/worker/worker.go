@@ -172,8 +172,14 @@ type Config struct {
 	SummarizerID string     `json:"summarizer_id"` // when Kind==WorkerSummarizer; "" → registry default
 	ProviderID   string     `json:"provider_id"`   // when Kind==WorkerAgent: "claude" | "gemini"
 	AccountID    string     `json:"account_id"`    // when ProviderID=="claude"; "" → catalog's default account
-	Enabled      bool       `json:"enabled"`
-	UpdatedAt    time.Time  `json:"updated_at"`
+	// Model pins the agent CLI's model (`claude --model …` /
+	// `gemini --model …`) so cheap chores run on cheap models
+	// (e.g. haiku) and only the judgement-heavy touchpoints pay for
+	// frontier quality. Empty keeps the CLI default. Ignored for
+	// summarizer-kind workers (their model lives on the provider row).
+	Model     string    `json:"model"`
+	Enabled   bool      `json:"enabled"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // Valid returns nil if the config is internally consistent.

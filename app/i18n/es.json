@@ -421,7 +421,9 @@
           "label": "Motor de captura",
           "description": "Extracción de hechos por cada trigger a partir de los transcripts de sesión. El modo agente ofrece hechos notablemente mejores en sesiones largas; el modo summarizer es barato y local."
         }
-      }
+      },
+      "modelLabel": "Modelo",
+      "modelHint": "Fija el modelo del CLI para esta tarea (p. ej. haiku para tareas básicas). Vacío = predeterminado del CLI."
     },
     "archived": {
       "loading": "Cargando…",
@@ -2567,7 +2569,8 @@
         "knowledge": {
           "title": "Conocimiento",
           "description": "Experiencia iterable entre proyectos: reglas fundacionales vinculantes + lecciones emergentes, inyectadas en cada arranque."
-        }
+        },
+        "settings": "Ajustes"
       },
       "chat": {
         "title": "Chat de curación",
@@ -2623,6 +2626,26 @@
         "discardedToast": "Descartada",
         "actionFailed": "Acción fallida",
         "expires": "expira {date}"
+      },
+      "settings": {
+        "injection": {
+          "title": "Inyección al arranque",
+          "hint": "Cuánto contexto de Cortex paga cada sesión nueva por adelantado. Aplica en el próximo arranque — sin reiniciar.",
+          "active": "activo",
+          "mode": {
+            "lean": {
+              "label": "Ligero — índice + bajo demanda (recomendado)",
+              "description": "Inyecta solo las reglas fundacionales vinculantes más un índice compacto de secciones y páginas de conocimiento. Los agentes recuperan exactamente lo que necesitan vía doc_read / project_search. Ahorra tokens y evita ahogar las sesiones largas."
+            },
+            "full": {
+              "label": "Completo — inyectar todo",
+              "description": "Inyecta al arranque cada sección y página marcada para inyección, completa (comportamiento clásico). Simple, pero cuesta tokens en cada sesión y satura la ventana de contexto."
+            }
+          },
+          "savedToast": "Modo de inyección guardado — aplica en el próximo arranque",
+          "saveFailed": "Error al guardar",
+          "note": "En modo completo siguen aplicando los flags de inyección por sección/página; en modo ligero las reglas fundacionales siempre se inyectan y el resto va al índice."
+        }
       }
     }
   },

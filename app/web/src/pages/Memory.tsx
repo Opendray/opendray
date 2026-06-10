@@ -85,7 +85,7 @@ export function MemoryPage() {
               size="sm"
               className="h-8 text-[11px]"
             >
-              <Link to="/cortex/memory/workers">
+              <Link to="/cortex/settings">
                 <Workflow className="mr-1 size-3" />
                 {t('web.memory.navWorkers')}
               </Link>

@@ -215,6 +215,21 @@ type Service struct {
 	// Tests flip this on via DisableMirror() so they don't dirty
 	// arbitrary directories on the host.
 	mirrorDisabled bool
+
+	// spawnMode resolves the operator's spawn injection mode at render
+	// time ("full"|"lean", Cortex settings). Nil = full (legacy).
+	spawnMode SpawnModeSource
+}
+
+// SpawnModeSource resolves the spawn injection mode per render —
+// "full" injects everything inject-flagged, "lean" injects guardrails
+// plus a compact index and lets agents fetch the rest on demand.
+type SpawnModeSource func(ctx context.Context) string
+
+// WithSpawnMode installs the spawn-mode resolver (Cortex settings).
+func (s *Service) WithSpawnMode(src SpawnModeSource) *Service {
+	s.spawnMode = src
+	return s
 }
 
 // NewService wires a Service against an existing pgx pool.
@@ -879,6 +894,13 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 		recentLogs = 5
 	}
 
+	// Lean mode (Cortex settings): guardrails + a compact index;
+	// agents pull full sections/pages on demand instead of paying
+	// for the whole corpus in every spawn.
+	if s.spawnMode != nil && s.spawnMode(ctx) == "lean" {
+		return s.renderLeanSpawn(ctx, cwd)
+	}
+
 	docs, err := s.ListDocsForCwd(ctx, cwd)
 	if err != nil {
 		return "", fmt.Errorf("projectdoc: render spawn docs: %w", err)
@@ -998,6 +1020,82 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 	}
 
 	b.WriteString(footer)
+	return b.String(), nil
+}
+
+// renderLeanSpawn is the lean-mode banner: binding foundational rules
+// in full (they are the guardrails — never indexed away), then a
+// compact INDEX of the project's doc sections and the knowledge pages
+// with instructions to fetch content on demand through the memory MCP.
+// One screen instead of the whole corpus: spawn stays cheap and the
+// agent's context window stays available for actual work.
+func (s *Service) renderLeanSpawn(ctx context.Context, cwd string) (string, error) {
+	frozen := false
+	if status, _ := s.GetStatus(ctx, cwd); status.IsFrozen() {
+		frozen = true
+	}
+
+	kbSections := s.globalKBSections(ctx)
+	foundational := s.foundationalRules(ctx, kbSections)
+
+	var b strings.Builder
+	b.WriteString("## Project context (cross-agent shared, read-only)\n\n")
+	if foundational != "" {
+		b.WriteString("### Foundational knowledge — RULES you MUST follow\n\n")
+		b.WriteString(foundational)
+		b.WriteString("\n\n")
+	}
+
+	if !frozen {
+		sections, err := s.ListSections(ctx, cwd)
+		if err != nil {
+			sections = defaultSections(cwd)
+		}
+		docs, _ := s.ListDocsForCwd(ctx, cwd)
+		filled := make(map[string]Doc, len(docs))
+		for _, d := range docs {
+			filled[string(d.Kind)] = d
+		}
+		b.WriteString("### Project doc index\n\n")
+		for _, sec := range sections {
+			d, has := filled[sec.Slug]
+			state := "empty"
+			if has && strings.TrimSpace(d.Content) != "" {
+				state = "updated " + d.UpdatedAt.Format("2006-01-02") + " by " + string(d.UpdatedBy)
+			}
+			fmt.Fprintf(&b, "- **%s** (`%s`, %s)", sec.Title, sec.Slug, state)
+			if desc := strings.TrimSpace(sec.Description); desc != "" {
+				b.WriteString(" — " + desc)
+			}
+			b.WriteString("\n")
+		}
+		b.WriteString("\n")
+	}
+
+	b.WriteString("### Knowledge index (cross-project)\n\n")
+	for _, sec := range kbSections {
+		if sec.Nature == "foundational" && sec.Inject {
+			continue // already injected in full above
+		}
+		authority := "reference"
+		if sec.Nature == "foundational" {
+			authority = "binding"
+		}
+		fmt.Fprintf(&b, "- **%s** (`%s`, %s)", sec.Title, sec.Slug, authority)
+		if desc := strings.TrimSpace(sec.Description); desc != "" {
+			b.WriteString(" — " + desc)
+		}
+		b.WriteString("\n")
+	}
+	b.WriteString("\n")
+
+	b.WriteString("The indexes above are NOT loaded — fetch on demand via the opendray-memory MCP tools: " +
+		"`doc_read` (pass a section slug or kb_* page slug) for a specific document, " +
+		"`project_search` for cross-layer semantic search (facts, journal, docs, knowledge), " +
+		"`memory_search` for episodic facts. Fetch ONLY what the task needs.\n\n" +
+		"If your work changes the goal or plan, do **not** silently overwrite them. " +
+		"Use the `project_goal_set` / `project_plan_set` MCP tools — they file a proposal " +
+		"the operator approves before the live doc updates.\n")
 	return b.String(), nil
 }
 

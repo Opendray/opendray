@@ -27,6 +27,7 @@ import {
 import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
   Select,
@@ -50,6 +51,11 @@ import {
 } from '@/lib/memoryWorkers'
 import { listProviders as listSummarizerProviders } from '@/lib/memoryAmbient'
 import { listClaudeAccounts } from '@/lib/claudeAccounts'
+import {
+  type SpawnMode,
+  getCortexSettings,
+  putCortexSettings,
+} from '@/lib/cortex'
 import {
   CostBlock,
   ProfilesBlock,
@@ -134,6 +140,17 @@ export function MemoryWorkersPage() {
         </p>
       </header>
 
+      {/* § 0. Spawn injection — how much Cortex context each new
+          session pays for upfront (Cortex settings, no restart). */}
+      <section className="space-y-3">
+        <SectionTitle
+          step={0}
+          title={t('web.cortex.settings.injection.title')}
+          hint={t('web.cortex.settings.injection.hint')}
+        />
+        <SpawnInjectionBlock />
+      </section>
+
       {/* § 1. Providers — HTTP endpoint registry consumed by both
           Workers and (legacy) Capture rule pins. */}
       <section className="space-y-3">
@@ -207,6 +224,64 @@ export function MemoryWorkersPage() {
   )
 }
 
+// SpawnInjectionBlock — the full↔lean switch (Cortex settings).
+// lean: spawn carries the binding guardrails + a compact index;
+// agents pull sections/pages on demand via doc_read / project_search.
+function SpawnInjectionBlock() {
+  const { t } = useTranslation()
+  const qc = useQueryClient()
+  const settingsQuery = useQuery({
+    queryKey: ['cortex-settings'],
+    queryFn: getCortexSettings,
+  })
+  const save = useMutation({
+    mutationFn: (mode: SpawnMode) => putCortexSettings({ spawn_mode: mode }),
+    onSuccess: () => {
+      toast.success(t('web.cortex.settings.injection.savedToast'))
+      qc.invalidateQueries({ queryKey: ['cortex-settings'] })
+    },
+    onError: (e: Error) =>
+      toast.error(t('web.cortex.settings.injection.saveFailed'), {
+        description: e.message,
+      }),
+  })
+  const mode = settingsQuery.data?.spawn_mode ?? 'full'
+
+  return (
+    <div className="bg-card space-y-3 rounded-md border p-4">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+        {(['lean', 'full'] as SpawnMode[]).map((m) => (
+          <button
+            key={m}
+            onClick={() => save.mutate(m)}
+            disabled={save.isPending || settingsQuery.isLoading}
+            className={`rounded-md border p-3 text-left text-sm transition-colors ${
+              mode === m
+                ? 'border-primary bg-primary/10'
+                : 'border-border hover:bg-muted/40'
+            }`}
+          >
+            <div className="mb-1 flex items-center gap-2 font-medium">
+              {t(`web.cortex.settings.injection.mode.${m}.label`)}
+              {mode === m && (
+                <Badge variant="success" className="text-[9px]">
+                  {t('web.cortex.settings.injection.active')}
+                </Badge>
+              )}
+            </div>
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              {t(`web.cortex.settings.injection.mode.${m}.description`)}
+            </p>
+          </button>
+        ))}
+      </div>
+      <p className="text-muted-foreground text-[11px]">
+        {t('web.cortex.settings.injection.note')}
+      </p>
+    </div>
+  )
+}
+
 function SectionTitle({
   step,
   title,
@@ -252,6 +327,7 @@ function WorkerCard({
     (config.provider_id as AgentProviderID) ?? '',
   )
   const [accountId, setAccountId] = useState(config.account_id ?? '')
+  const [model, setModel] = useState(config.model ?? '')
   const [enabled, setEnabled] = useState(config.enabled)
 
   const agentAllowed = taskAgentSupported(config.task)
@@ -260,6 +336,7 @@ function WorkerCard({
     summarizerId !== (config.summarizer_id ?? '') ||
     providerId !== ((config.provider_id as string) ?? '') ||
     accountId !== (config.account_id ?? '') ||
+    model !== (config.model ?? '') ||
     enabled !== config.enabled
 
   const save = useMutation({
@@ -270,6 +347,7 @@ function WorkerCard({
         provider_id: kind === 'agent' ? providerId || undefined : '',
         account_id:
           kind === 'agent' && providerId === 'claude' ? accountId : '',
+        model: kind === 'agent' ? model.trim() : '',
         enabled,
       }),
     onSuccess: () => {
@@ -441,6 +519,22 @@ function WorkerCard({
                     </SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <label className="text-muted-foreground mb-1 block text-[10px] tracking-wide uppercase">
+                  {t('web.memoryWorkers.modelLabel')}
+                </label>
+                <Input
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  placeholder={
+                    providerId === 'gemini'
+                      ? 'gemini-2.5-flash'
+                      : 'haiku · sonnet · opus'
+                  }
+                  className="h-9 font-mono text-xs"
+                  title={t('web.memoryWorkers.modelHint')}
+                />
               </div>
               {providerId === 'claude' && (
                 <div>

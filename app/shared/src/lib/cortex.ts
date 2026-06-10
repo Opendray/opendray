@@ -87,6 +87,30 @@ export async function applyBlueprint(
   return res.sections ?? []
 }
 
+// ── runtime settings ──────────────────────────────────────────
+
+export type SpawnMode = 'full' | 'lean'
+
+export interface CortexSettings {
+  /** full = inject everything inject-flagged; lean = guardrails + a
+   * compact index, agents fetch the rest on demand (doc_read /
+   * project_search MCP tools). */
+  spawn_mode: SpawnMode
+}
+
+export async function getCortexSettings(): Promise<CortexSettings> {
+  return api<CortexSettings>('/api/v1/cortex/settings')
+}
+
+export async function putCortexSettings(
+  patch: Partial<CortexSettings>,
+): Promise<CortexSettings> {
+  return api<CortexSettings>('/api/v1/cortex/settings', {
+    method: 'PUT',
+    body: patch,
+  })
+}
+
 // ── curation conversations (Phase 4) ──────────────────────────
 
 export type ConversationTargetKind = 'doc_section' | 'kb_page' | 'blueprint'

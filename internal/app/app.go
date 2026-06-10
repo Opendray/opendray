@@ -886,10 +886,15 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	if memquerySvc != nil {
 		cortexCuration.WithContextSource(&curationContextAdapter{mq: memquerySvc})
 	}
+	// Runtime settings (spawn injection mode) — the projectdoc renderer
+	// resolves the mode per spawn, so flipping full↔lean needs no restart.
+	cortexSettings := cortex.NewSettingsStore(st.Pool())
+	projectDocSvc.WithSpawnMode(cortexSettings.SpawnModeSource())
 	cortexHandlers := cortex.NewHandlers(cortexSvc, projectDocHandlers, memoryHandlers, knowledgeHandlers, log).
 		WithDocs(projectDocSvc).
 		WithBlueprintProposer(cortex.NewBlueprintProposer(projectDocSvc, memoryWorkerRegistry)).
-		WithCuration(cortexCuration, cortexConvStore)
+		WithCuration(cortexCuration, cortexConvStore).
+		WithSettings(cortexSettings)
 	if memorySvc != nil {
 		// Guarded: assigning a nil *memory.Service to the interface
 		// field would dodge the handler's nil check (typed nil).

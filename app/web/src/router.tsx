@@ -138,10 +138,22 @@ const cortexMemoryArchivedRoute = createRoute({
   component: ArchivedPage,
 })
 
+// The Cortex settings page — every AI-drive knob in one place
+// (spawn injection mode, per-task workers + models, capture rules,
+// ambient profiles, cost audit). The old "memory workers" page grew
+// into this; its route redirects.
+const cortexSettingsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/cortex/settings',
+  component: MemoryWorkersPage,
+})
+
 const cortexMemoryWorkersRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/cortex/memory/workers',
-  component: MemoryWorkersPage,
+  beforeLoad: () => {
+    throw redirect({ to: '/cortex/settings' })
+  },
 })
 
 // Legacy redirects — the silo tabs are gone, the data is not.
@@ -195,7 +207,7 @@ const memoryWorkersRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/memory/workers',
   beforeLoad: () => {
-    throw redirect({ to: '/cortex/memory/workers' })
+    throw redirect({ to: '/cortex/settings' })
   },
 })
 
@@ -246,6 +258,7 @@ const routeTree = rootRoute.addChildren([
     cortexRoute,
     cortexProjectRoute,
     cortexKnowledgeRoute,
+    cortexSettingsRoute,
     cortexMemoryRoute,
     cortexMemoryProjectRoute,
     cortexMemoryQuarantineRoute,

@@ -433,6 +433,26 @@ var toolDefs = []map[string]any{
 		},
 	},
 	{
+		"name": "doc_read",
+		"description": "Read ONE document on demand: a section of this " +
+			"project's official doc (e.g. \"plan\", \"tech_stack\", or a " +
+			"custom section slug from the project doc index) or a global " +
+			"knowledge page (kb_* slug from the knowledge index). Use " +
+			"this to pull exactly the document a task needs instead of " +
+			"relying on whatever was injected at spawn.",
+		"inputSchema": map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"slug": map[string]any{
+					"type": "string",
+					"description": "Section slug (project doc) or kb_* slug " +
+						"(global knowledge page).",
+				},
+			},
+			"required": []string{"slug"},
+		},
+	},
+	{
 		"name": "project_search",
 		"description": "Search ACROSS all memory layers (facts + " +
 			"journal entries + goal/plan documents) in the current " +
@@ -499,6 +519,8 @@ func (s *memMCPServer) handleToolCall(req rpcRequest) {
 		result, err = s.callSessionLogAppend("manual", params.Arguments)
 	case "decision_record":
 		result, err = s.callSessionLogAppend("decision", params.Arguments)
+	case "doc_read":
+		result, err = s.callDocRead(params.Arguments)
 	case "project_search":
 		result, err = s.callProjectSearch(params.Arguments)
 	default:
@@ -767,6 +789,50 @@ func (s *memMCPServer) callProjectDocGet(kind string) (any, error) {
 		fmt.Fprintf(&b, "(no %s set for this project yet)", kind)
 	} else {
 		fmt.Fprintf(&b, "# Project %s\n\n_last updated by %s_\n\n%s", kind, doc.UpdatedBy, doc.Content)
+	}
+	return map[string]any{
+		"content": []map[string]any{
+			{"type": "text", "text": b.String()},
+		},
+	}, nil
+}
+
+// callDocRead fetches ONE document on demand: a project doc section
+// (slug from the project's blueprint) or a global knowledge page
+// (kb_* slug). The lean spawn mode injects only an index; this is how
+// the agent pulls the actual content it needs.
+func (s *memMCPServer) callDocRead(args json.RawMessage) (any, error) {
+	var in struct {
+		Slug string `json:"slug"`
+	}
+	if err := json.Unmarshal(args, &in); err != nil {
+		return nil, fmt.Errorf("bad arguments: %w", err)
+	}
+	slug := strings.TrimSpace(in.Slug)
+	if slug == "" {
+		return nil, errors.New("doc_read requires a slug")
+	}
+	cwd := s.cfg.scopeKey
+	if strings.HasPrefix(slug, "kb_") {
+		cwd = "__global__" // knowledge pages live under the global sentinel
+	}
+	if cwd == "" {
+		return nil, errors.New("doc_read requires OPENDRAY_MEMORY_SCOPE_KEY (cwd) to be set")
+	}
+	path := "/api/v1/project-docs/" + urlQuery(slug) + "?cwd=" + urlQuery(cwd)
+	var doc struct {
+		Kind      string `json:"kind"`
+		Content   string `json:"content"`
+		UpdatedBy string `json:"updated_by"`
+	}
+	if err := s.gatewayGetJSON(path, &doc); err != nil {
+		return nil, err
+	}
+	var b strings.Builder
+	if strings.TrimSpace(doc.Content) == "" {
+		fmt.Fprintf(&b, "(document %q is empty)", slug)
+	} else {
+		fmt.Fprintf(&b, "# %s\n\n_last updated by %s_\n\n%s", slug, doc.UpdatedBy, doc.Content)
 	}
 	return map[string]any{
 		"content": []map[string]any{

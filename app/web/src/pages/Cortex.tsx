@@ -13,6 +13,7 @@ import {
   Inbox,
   Network,
   RefreshCcwDot,
+  Settings,
   ShieldQuestion,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -40,14 +41,23 @@ export function CortexPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
-      <div>
-        <h1 className="flex items-center gap-2 text-xl font-semibold">
-          <RefreshCcwDot className="h-5 w-5" />
-          {t('web.cortex.home.title')}
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          {t('web.cortex.home.subtitle')}
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="flex items-center gap-2 text-xl font-semibold">
+            <RefreshCcwDot className="h-5 w-5" />
+            {t('web.cortex.home.title')}
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {t('web.cortex.home.subtitle')}
+          </p>
+        </div>
+        <Link
+          to="/cortex/settings"
+          className="text-muted-foreground hover:text-foreground flex flex-none items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs"
+        >
+          <Settings className="h-3.5 w-3.5" />
+          {t('web.cortex.home.settings')}
+        </Link>
       </div>
 
       {/* The loop, rung by rung. Each card is the entry into that layer. */}

@@ -421,7 +421,9 @@
           "label": "Capture 引擎",
           "description": "按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。"
         }
-      }
+      },
+      "modelLabel": "模型",
+      "modelHint": "为该任务固定 CLI 模型（如基础杂活用 haiku）。留空 = CLI 默认。"
     },
     "archived": {
       "loading": "加载中…",
@@ -2567,7 +2569,8 @@
         "knowledge": {
           "title": "知识",
           "description": "跨项目、可迭代的经验资产：绑定性基础方针 + 涌现的经验教训，注入每次启动。"
-        }
+        },
+        "settings": "设置"
       },
       "chat": {
         "title": "管护对话",
@@ -2623,6 +2626,26 @@
         "discardedToast": "已丢弃",
         "actionFailed": "操作失败",
         "expires": "{date} 到期"
+      },
+      "settings": {
+        "injection": {
+          "title": "启动注入",
+          "hint": "每个新会话启动时预先加载多少心智中枢上下文。下次启动生效——无需重启。",
+          "active": "当前",
+          "mode": {
+            "lean": {
+              "label": "精简——索引 + 按需取用（推荐）",
+              "description": "只注入强约束的基础方针，外加文档章节与知识页的紧凑索引。AI 通过 doc_read / project_search 工具按任务需要精准取回。省 token，长会话也不会被开场信息淹没。"
+            },
+            "full": {
+              "label": "完整——全部注入",
+              "description": "启动时把所有标记注入的章节与知识页完整注入（旧行为）。简单直接，但每个会话都花 token，且挤占上下文窗口。"
+            }
+          },
+          "savedToast": "注入模式已保存——下次启动生效",
+          "saveFailed": "保存失败",
+          "note": "完整模式下章节/知识页各自的注入开关（蓝图编辑器 / 知识页）仍然生效；精简模式下基础方针始终注入，其余一律走索引。"
+        }
       }
     }
   },

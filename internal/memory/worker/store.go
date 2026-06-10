@@ -27,13 +27,13 @@ func (s *store) Get(ctx context.Context, task TaskKind) (Config, error) {
 	row := s.pool.QueryRow(ctx, `
 		SELECT task, kind, COALESCE(summarizer_id, ''),
 		       COALESCE(provider_id, ''), COALESCE(account_id, ''),
-		       enabled, updated_at
+		       COALESCE(model, ''), enabled, updated_at
 		  FROM memory_workers
 		 WHERE task = $1`, string(task))
 	var c Config
 	var taskStr, kindStr string
 	err := row.Scan(&taskStr, &kindStr, &c.SummarizerID, &c.ProviderID,
-		&c.AccountID, &c.Enabled, &c.UpdatedAt)
+		&c.AccountID, &c.Model, &c.Enabled, &c.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return Config{}, ErrNoWorkerConfigured
@@ -50,7 +50,7 @@ func (s *store) List(ctx context.Context) ([]Config, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT task, kind, COALESCE(summarizer_id, ''),
 		       COALESCE(provider_id, ''), COALESCE(account_id, ''),
-		       enabled, updated_at
+		       COALESCE(model, ''), enabled, updated_at
 		  FROM memory_workers
 		 ORDER BY task`)
 	if err != nil {
@@ -62,7 +62,7 @@ func (s *store) List(ctx context.Context) ([]Config, error) {
 		var c Config
 		var taskStr, kindStr string
 		if err := rows.Scan(&taskStr, &kindStr, &c.SummarizerID, &c.ProviderID,
-			&c.AccountID, &c.Enabled, &c.UpdatedAt); err != nil {
+			&c.AccountID, &c.Model, &c.Enabled, &c.UpdatedAt); err != nil {
 			return nil, err
 		}
 		c.Task = TaskKind(taskStr)
@@ -80,18 +80,19 @@ func (s *store) Upsert(ctx context.Context, c Config) error {
 	}
 	_, err := s.pool.Exec(ctx, `
 		INSERT INTO memory_workers
-		    (task, kind, summarizer_id, provider_id, account_id, enabled, updated_at)
+		    (task, kind, summarizer_id, provider_id, account_id, model, enabled, updated_at)
 		VALUES
-		    ($1, $2, NULLIF($3, ''), NULLIF($4, ''), NULLIF($5, ''), $6, NOW())
+		    ($1, $2, NULLIF($3, ''), NULLIF($4, ''), NULLIF($5, ''), NULLIF($6, ''), $7, NOW())
 		ON CONFLICT (task) DO UPDATE SET
 		    kind          = EXCLUDED.kind,
 		    summarizer_id = EXCLUDED.summarizer_id,
 		    provider_id   = EXCLUDED.provider_id,
 		    account_id    = EXCLUDED.account_id,
+		    model         = EXCLUDED.model,
 		    enabled       = EXCLUDED.enabled,
 		    updated_at    = NOW()`,
 		string(c.Task), string(c.Kind), c.SummarizerID,
-		c.ProviderID, c.AccountID, c.Enabled)
+		c.ProviderID, c.AccountID, c.Model, c.Enabled)
 	if err != nil {
 		return fmt.Errorf("memory worker store: upsert: %w", err)
 	}

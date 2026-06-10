@@ -37,6 +37,7 @@ type Handlers struct {
 	docsSvc    *projectdoc.Service // blueprint apply
 	curation   *CurationService    // nil → conversation routes 503
 	convStore  *ConversationStore
+	settings   *SettingsStore // nil → settings routes 503
 	log        *slog.Logger
 }
 
@@ -82,6 +83,12 @@ func (h *Handlers) WithCuration(svc *CurationService, store *ConversationStore) 
 	return h
 }
 
+// WithSettings wires the Cortex runtime settings store.
+func (h *Handlers) WithSettings(s *SettingsStore) *Handlers {
+	h.settings = s
+	return h
+}
+
 // Mount registers the /cortex namespace on r. r should already have
 // the dual-auth (admin OR integration) middleware applied — the
 // re-mounted layer handlers enforce their own per-route scopes
@@ -97,6 +104,8 @@ func (h *Handlers) Mount(r chi.Router) {
 		// (/cortex/project-docs/blueprint*).
 		r.Post("/blueprint/propose", h.proposeBlueprint)
 		r.Put("/blueprint", h.applyBlueprint)
+		// Runtime settings (spawn injection mode, …).
+		h.mountSettings(r)
 		// Curation conversations (Phase 4).
 		h.mountConversations(r)
 		h.docs.Mount(r)

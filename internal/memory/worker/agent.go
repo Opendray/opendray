@@ -169,14 +169,18 @@ func (w *AgentWorker) buildCommand(req Request, sessionID string) ([]string, []s
 		args := []string{
 			"--print",
 			"--session-id", sessionID,
-			// NOTE: --bare is tempting (it skips hooks / plugin
-			// sync / CLAUDE.md auto-discovery), but it forces
-			// auth via ANTHROPIC_API_KEY only — our multi-account
-			// OAuth tokens (CLAUDE_CODE_OAUTH_TOKEN) get ignored
-			// and the call fails with exit 1 "Not logged in".
-			// We rely on the scratch CWD to isolate from project
-			// CLAUDE.md, and --print already skips tool use so
-			// PostToolUse hooks won't fire.
+		}
+		// NOTE: --bare is tempting (it skips hooks / plugin
+		// sync / CLAUDE.md auto-discovery), but it forces
+		// auth via ANTHROPIC_API_KEY only — our multi-account
+		// OAuth tokens (CLAUDE_CODE_OAUTH_TOKEN) get ignored
+		// and the call fails with exit 1 "Not logged in".
+		// We rely on the scratch CWD to isolate from project
+		// CLAUDE.md, and --print already skips tool use so
+		// PostToolUse hooks won't fire.
+		if w.cfg.Model != "" {
+			// Per-task model pin: cheap chores on cheap models.
+			args = append(args, "--model", w.cfg.Model)
 		}
 		sys := req.SystemPrompt
 		if req.ResponseFormatJSONSchema != "" {
@@ -210,6 +214,9 @@ func (w *AgentWorker) buildCommand(req Request, sessionID string) ([]string, []s
 		args := []string{
 			"--print",
 			"--session-id", sessionID,
+		}
+		if w.cfg.Model != "" {
+			args = append(args, "--model", w.cfg.Model)
 		}
 		sys := req.SystemPrompt
 		if req.ResponseFormatJSONSchema != "" {

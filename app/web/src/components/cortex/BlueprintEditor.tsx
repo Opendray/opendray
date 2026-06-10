@@ -171,8 +171,10 @@ export function BlueprintEditor({ cwd, open, onOpenChange, onApplied }: Blueprin
           <Loader2 className="mx-auto my-6 h-4 w-4 animate-spin" />
         ) : (
           <div className="space-y-2">
+            {/* Index-only key: a slug-derived key remounts the row on
+                every keystroke and the input loses focus. */}
             {draft.map((s, i) => (
-              <div key={`${s.slug}-${i}`} className="bg-card space-y-2 rounded-md border p-2.5">
+              <div key={i} className="bg-card space-y-2 rounded-md border p-2.5">
                 <div className="flex items-center gap-2">
                   <Input
                     value={s.slug}
