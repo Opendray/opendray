@@ -38,7 +38,8 @@
     "plugins": "Plugins",
     "backups": "Backups",
     "settings": "Settings",
-    "workspace": "Workspace"
+    "workspace": "Workspace",
+    "updateAvailable": "Update available"
   },
   "web": {
     "brand": "opendray",

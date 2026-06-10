@@ -38,7 +38,8 @@
     "plugins": "插件",
     "backups": "备份",
     "settings": "设置",
-    "workspace": "工作区"
+    "workspace": "工作区",
+    "updateAvailable": "有可用更新"
   },
   "web": {
     "brand": "opendray",

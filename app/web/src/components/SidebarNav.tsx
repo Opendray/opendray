@@ -1,5 +1,6 @@
 import { Fragment } from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
 import {
   Layers,
   Cpu,
@@ -19,6 +20,14 @@ import { cn } from '@/lib/utils'
 import { useLayout } from '@/stores/layout'
 import { useIsMobile } from '../lib/useIsMobile'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { getVersionInfo, type VersionInfo } from '@/lib/version'
+
+// 6 hours between background version checks — releases are weekly at
+// most, so anything more frequent burns server cycles for a state
+// that rarely changes. The badge also picks up any refetch the
+// Settings/About panel triggers, since both observers share the
+// `['version']` query cache.
+const UPDATE_POLL_INTERVAL_MS = 6 * 60 * 60 * 1000
 
 interface NavItem {
   to: string
@@ -58,6 +67,19 @@ export function SidebarNav() {
   // On mobile the nav is a full-width slide-over (positioned by AppShell),
   // so never collapse it to the icon rail there.
   const collapsed = collapsedState && !isMobile
+  // Background poll for available updates so the gear icon can carry
+  // a "new version waiting" dot without the operator having to open
+  // the About panel. Shares the `['version']` cache with AboutSection.
+  const { data: version } = useQuery<VersionInfo>({
+    queryKey: ['version'],
+    queryFn: getVersionInfo,
+    refetchInterval: UPDATE_POLL_INTERVAL_MS,
+    staleTime: UPDATE_POLL_INTERVAL_MS,
+  })
+  // Don't badge while an upgrade is already queued — the operator
+  // has already acted, the dot would just be noise until the daemon
+  // restarts and the version check resolves clean.
+  const updateAvailable = !!version?.updateAvailable && !version?.pending
   return (
     <nav
       className={cn(
@@ -88,11 +110,15 @@ export function SidebarNav() {
                 ? location.pathname.startsWith('/sessions') ||
                   location.pathname === '/'
                 : location.pathname.startsWith(to)
+            const showUpdateDot = to === '/settings' && updateAvailable
+            const updateLabel = t('nav.updateAvailable')
             const link = (
               <Link
                 key={to}
                 to={to}
-                aria-label={label}
+                aria-label={
+                  showUpdateDot ? `${label} — ${updateLabel}` : label
+                }
                 className={cn(
                   'flex items-center h-7 rounded-md text-[13px] transition-all duration-100',
                   'text-muted-foreground hover:text-foreground hover:bg-card',
@@ -100,7 +126,19 @@ export function SidebarNav() {
                   collapsed ? 'justify-center px-0' : 'gap-2.5 px-2.5',
                 )}
               >
-                <Icon className="size-3.5 shrink-0" />
+                <span className="relative shrink-0">
+                  <Icon className="size-3.5 shrink-0" />
+                  {showUpdateDot && (
+                    // Small accent dot anchored to the icon so it
+                    // reads as a badge on the gear, not a separate
+                    // chip — visible in both collapsed and expanded
+                    // sidebar without changing the row height.
+                    <span
+                      className="absolute -right-0.5 -top-0.5 size-1.5 rounded-full bg-accent ring-2 ring-card"
+                      aria-hidden
+                    />
+                  )}
+                </span>
                 {!collapsed && (
                   <>
                     <span className="flex-1">{label}</span>
@@ -118,6 +156,9 @@ export function SidebarNav() {
                 <TooltipContent side="right">
                   {label}
                   <span className="ml-2 text-muted-foreground">{shortcut}</span>
+                  {showUpdateDot && (
+                    <span className="ml-2 text-accent">{updateLabel}</span>
+                  )}
                 </TooltipContent>
               </Tooltip>
             )
