@@ -1,5 +1,14 @@
 # The Experience Flywheel — unifying Memory · Notes · Knowledge
 
+> **SUPERSEDED by [`cortex-architecture.md`](cortex-architecture.md).**
+> The flywheel MODEL this doc defined (three rungs, one loop, two-nature
+> Knowledge, AI-leads-human-supervises) still holds — Cortex is its
+> completion: the three rungs fused into one named module, the fixed doc
+> kinds replaced by per-project blueprints, third-party capture
+> quarantined, the curation-conversation channel added, and the UI
+> re-expressed behind a single nav entry. Do not base new decisions on
+> the per-step status below; it is historical.
+
 > Status: MODEL ACCEPTED — implementation in progress. The operator
 > confirmed the flywheel model + the two-nature Knowledge refinement, and
 > chose "Notes = projectdoc" (§7). Backend edges + the web overhaul are
