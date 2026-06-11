@@ -106,7 +106,7 @@ flowchart LR
 
 ## ステータス
 
-**v2.7.3**（最新）。v2 世代は引き続き進化を続けています。major-as-generation（major = 製品世代であり、SemVer 厳密な意味での「破壊的変更」ではない）方針については
+**v2.7.4**（最新）。v2 世代は引き続き進化を続けています。major-as-generation（major = 製品世代であり、SemVer 厳密な意味での「破壊的変更」ではない）方針については
 [`VERSIONING.md`](VERSIONING.md) を、リリース履歴の全体については
 [`CHANGELOG.md`](CHANGELOG.md) を参照してください。
 

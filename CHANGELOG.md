@@ -10,6 +10,40 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.7.4] — 2026-06-11
+
+### Added
+
+- **Inspector: one-click download for files + zip-on-the-fly for
+  folders.** Every row in the Files tree now carries a hover-revealed
+  Download icon. Clicking it on a file streams the bytes as an
+  attachment with the original filename (including unicode via RFC
+  5987 `filename*=`); clicking it on a folder streams a built-on-the-
+  fly zip archive of the visible subtree (hidden entries + symlinks
+  skipped to match the tree's listing). `http.ServeContent` handles
+  Range requests so resume works on large files; the zip builder
+  walks deterministically and skips per-file permission errors
+  instead of aborting the whole archive. Downloads are confined to a
+  caller-supplied `root` (the session's cwd in the inspector) and
+  the server EvalSymlinks-checks the resolved target stays inside
+  it, so a hand-crafted URL can't exfiltrate files from outside the
+  inspector's view even with a leaked admin token.
+- **Plugins: drag-and-drop install of `SKILL.md`.** Drag a
+  `SKILL.md` onto the Agent skills table and the daemon slugs the
+  frontmatter `name:` into an id and writes it to `<vault>/<id>/
+  SKILL.md` — no id prompt, no editor modal. Vault collisions return
+  409; built-in collisions become overrides with the existing badge.
+  i18n parity preserved across en/es/zh.
+
+### Fixed
+
+- **Web sessions: breathing room around the chat pane.** Slimmed
+  the chrome (SessionTabs `h-9 → h-7`, WorkbenchHeader `h-14 → h-11`,
+  avatar `36 → 28px`) and reserved a 12px bottom strip so Claude's
+  input no longer sits flush against the browser bottom edge. Net
+  result: chat-top moves up ~20px and typing feels less cramped on
+  tall windows.
+
 ## [v2.7.3] — 2026-06-10
 
 ### Fixed
