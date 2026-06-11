@@ -106,7 +106,7 @@ Tout ce qui apparaît dans le diagramme tourne sur ton réseau. Aucune dépendan
 
 ## État
 
-**v2.7.3** (dernière). La génération v2 continue d'itérer. Voir
+**v2.7.4** (dernière). La génération v2 continue d'itérer. Voir
 [`VERSIONING.md`](VERSIONING.md) pour la politique major-comme-génération
 (major = génération de produit, pas un « breaking change » strict au sens SemVer) et
 [`CHANGELOG.md`](CHANGELOG.md) pour l'historique complet des releases.

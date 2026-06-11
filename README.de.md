@@ -106,7 +106,7 @@ Alles im Diagramm läuft in deinem Netzwerk. Keine Cloud-Abhängigkeiten, keine 
 
 ## Status
 
-**v2.7.3** (aktuell). Die v2-Generation iteriert weiter. Siehe
+**v2.7.4** (aktuell). Die v2-Generation iteriert weiter. Siehe
 [`VERSIONING.md`](VERSIONING.md) für die Major-als-Generation-Policy
 (Major = Produktgeneration, kein strikter SemVer-"Breaking Change") und
 [`CHANGELOG.md`](CHANGELOG.md) für die vollständige Release-Historie.
