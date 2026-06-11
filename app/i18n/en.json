@@ -423,7 +423,11 @@
         }
       },
       "modelLabel": "Model",
-      "modelHint": "Pin the CLI model for this task (e.g. haiku for cheap chores). Empty = CLI default."
+      "modelHint": "Pin the CLI model for this task (e.g. haiku for cheap chores). Empty = CLI default.",
+      "modelCliDefault": "CLI default (latest)",
+      "modelCustom": "Custom…",
+      "modelCustomPlaceholder": "exact model id",
+      "modelBackToList": "List"
     },
     "archived": {
       "loading": "Loading…",
@@ -2630,7 +2634,7 @@
       "settings": {
         "injection": {
           "title": "Spawn injection",
-          "hint": "How much Cortex context each new session pays for upfront. Applies on the next spawn — no restart.",
+          "hint": "How much Cortex context each NEW SESSION loads upfront. Switching takes effect immediately for sessions spawned afterwards — the backend never needs a restart.",
           "active": "active",
           "mode": {
             "lean": {
@@ -2642,7 +2646,7 @@
               "description": "Inject every inject-flagged section and knowledge page in full at spawn (legacy behaviour). Simple, but costs tokens on every session and crowds the context window."
             }
           },
-          "savedToast": "Injection mode saved — applies on the next spawn",
+          "savedToast": "Injection mode saved — new sessions use it immediately (no backend restart)",
           "saveFailed": "Save failed",
           "note": "Per-section and per-page inject flags (blueprint editor / knowledge pages) still apply in full mode; in lean mode foundational rules always inject and everything else is indexed."
         }

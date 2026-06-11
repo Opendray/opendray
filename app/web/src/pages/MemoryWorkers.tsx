@@ -43,6 +43,7 @@ import {
   type WorkerConfig,
   type WorkerKind,
   type TaskKind,
+  listAgentModels,
   listMemoryWorkerCalls,
   listMemoryWorkers,
   taskAgentSupported,
@@ -220,6 +221,88 @@ export function MemoryWorkersPage() {
         />
         <CostBlock />
       </section>
+    </div>
+  )
+}
+
+// ModelPicker — dropdown fed by the backend's model catalog for the
+// chosen agent CLI (stable aliases first, pinned ids after), with a
+// "custom…" escape hatch for anything not listed. Selecting from the
+// list avoids typos / version-name drift breaking worker calls.
+function ModelPicker({
+  providerId,
+  value,
+  onChange,
+}: {
+  providerId: AgentProviderID
+  value: string
+  onChange: (v: string) => void
+}) {
+  const { t } = useTranslation()
+  const modelsQuery = useQuery({
+    queryKey: ['agent-models', providerId],
+    queryFn: () => listAgentModels(providerId),
+    staleTime: 5 * 60_000,
+  })
+  const options = modelsQuery.data ?? []
+  const isListed = value === '' || options.some((m) => m.id === value)
+  const [custom, setCustom] = useState(!isListed)
+
+  return (
+    <div>
+      <label className="text-muted-foreground mb-1 block text-[10px] tracking-wide uppercase">
+        {t('web.memoryWorkers.modelLabel')}
+      </label>
+      {custom ? (
+        <div className="flex items-center gap-1">
+          <Input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={t('web.memoryWorkers.modelCustomPlaceholder')}
+            className="h-9 font-mono text-xs"
+            autoFocus
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-9 px-2 text-[11px]"
+            onClick={() => {
+              setCustom(false)
+              onChange('')
+            }}
+          >
+            {t('web.memoryWorkers.modelBackToList')}
+          </Button>
+        </div>
+      ) : (
+        <Select
+          value={value || '__default__'}
+          onValueChange={(v) => {
+            if (v === '__custom__') {
+              setCustom(true)
+              return
+            }
+            onChange(v === '__default__' ? '' : v)
+          }}
+        >
+          <SelectTrigger title={t('web.memoryWorkers.modelHint')}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__default__">
+              {t('web.memoryWorkers.modelCliDefault')}
+            </SelectItem>
+            {options.map((m) => (
+              <SelectItem key={m.id} value={m.id}>
+                {m.label}
+              </SelectItem>
+            ))}
+            <SelectItem value="__custom__">
+              {t('web.memoryWorkers.modelCustom')}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      )}
     </div>
   )
 }
@@ -520,22 +603,13 @@ function WorkerCard({
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <label className="text-muted-foreground mb-1 block text-[10px] tracking-wide uppercase">
-                  {t('web.memoryWorkers.modelLabel')}
-                </label>
-                <Input
+              {providerId && (
+                <ModelPicker
+                  providerId={providerId}
                   value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  placeholder={
-                    providerId === 'gemini'
-                      ? 'gemini-2.5-flash'
-                      : 'haiku · sonnet · opus'
-                  }
-                  className="h-9 font-mono text-xs"
-                  title={t('web.memoryWorkers.modelHint')}
+                  onChange={setModel}
                 />
-              </div>
+              )}
               {providerId === 'claude' && (
                 <div>
                   <label className="text-muted-foreground mb-1 block text-[10px] tracking-wide uppercase">

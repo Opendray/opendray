@@ -423,7 +423,11 @@
         }
       },
       "modelLabel": "Modelo",
-      "modelHint": "Fija el modelo del CLI para esta tarea (p. ej. haiku para tareas básicas). Vacío = predeterminado del CLI."
+      "modelHint": "Fija el modelo del CLI para esta tarea (p. ej. haiku para tareas básicas). Vacío = predeterminado del CLI.",
+      "modelCliDefault": "Predeterminado del CLI (último)",
+      "modelCustom": "Personalizado…",
+      "modelCustomPlaceholder": "id exacto del modelo",
+      "modelBackToList": "Lista"
     },
     "archived": {
       "loading": "Cargando…",
@@ -2630,7 +2634,7 @@
       "settings": {
         "injection": {
           "title": "Inyección al arranque",
-          "hint": "Cuánto contexto de Cortex paga cada sesión nueva por adelantado. Aplica en el próximo arranque — sin reiniciar.",
+          "hint": "Cuánto contexto de Cortex carga cada SESIÓN NUEVA por adelantado. El cambio aplica de inmediato a las sesiones creadas después — el backend nunca necesita reiniciarse.",
           "active": "activo",
           "mode": {
             "lean": {
@@ -2642,7 +2646,7 @@
               "description": "Inyecta al arranque cada sección y página marcada para inyección, completa (comportamiento clásico). Simple, pero cuesta tokens en cada sesión y satura la ventana de contexto."
             }
           },
-          "savedToast": "Modo de inyección guardado — aplica en el próximo arranque",
+          "savedToast": "Modo guardado — las sesiones nuevas lo usan de inmediato (sin reiniciar el backend)",
           "saveFailed": "Error al guardar",
           "note": "En modo completo siguen aplicando los flags de inyección por sección/página; en modo ligero las reglas fundacionales siempre se inyectan y el resto va al índice."
         }

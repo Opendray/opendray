@@ -36,10 +36,57 @@ func (h *Handlers) Mount(r chi.Router) {
 	r.Route("/memory/workers", func(r chi.Router) {
 		r.Get("/", h.list)
 		r.Get("/calls", h.listCalls)
+		r.Get("/models", h.listModels)
 		r.Get("/{task}", h.get)
 		r.Put("/{task}", h.upsert)
 		r.Post("/{task}/test", h.test)
 	})
+}
+
+// ModelOption is one selectable model for an agent CLI.
+type ModelOption struct {
+	ID    string `json:"id"`
+	Label string `json:"label"`
+	// Recommended marks the safe defaults (stable aliases that track
+	// the latest version — immune to version-number drift).
+	Recommended bool `json:"recommended,omitempty"`
+}
+
+// agentModelCatalog lists the selectable models per agent CLI. The
+// claude entries lead with the STABLE ALIASES (haiku/sonnet/opus) —
+// the CLI resolves them to the current model version, so they never
+// break on a version bump; pinned full ids follow for operators who
+// need an exact snapshot. Discovered live for local HTTP providers
+// (the summarizer probe), curated here for agent CLIs which expose no
+// reliable list command.
+var agentModelCatalog = map[string][]ModelOption{
+	"claude": {
+		{ID: "haiku", Label: "Haiku — fastest/cheapest (alias, tracks latest)", Recommended: true},
+		{ID: "sonnet", Label: "Sonnet — balanced (alias, tracks latest)", Recommended: true},
+		{ID: "opus", Label: "Opus — deepest reasoning (alias, tracks latest)", Recommended: true},
+		{ID: "claude-haiku-4-5", Label: "claude-haiku-4-5 (pinned)"},
+		{ID: "claude-sonnet-4-6", Label: "claude-sonnet-4-6 (pinned)"},
+		{ID: "claude-opus-4-8", Label: "claude-opus-4-8 (pinned)"},
+	},
+	"gemini": {
+		{ID: "gemini-2.5-flash-lite", Label: "gemini-2.5-flash-lite — cheapest", Recommended: true},
+		{ID: "gemini-2.5-flash", Label: "gemini-2.5-flash — balanced", Recommended: true},
+		{ID: "gemini-2.5-pro", Label: "gemini-2.5-pro — deepest"},
+	},
+}
+
+// listModels returns the model options for ?provider_id=claude|gemini.
+// Local/HTTP providers don't use this — their model list comes live
+// from the endpoint itself (memory probe, /v1/models).
+func (h *Handlers) listModels(w http.ResponseWriter, r *http.Request) {
+	provider := r.URL.Query().Get("provider_id")
+	models, ok := agentModelCatalog[provider]
+	if !ok {
+		writeError(w, http.StatusBadRequest,
+			errors.New("provider_id must be claude or gemini"))
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"models": models})
 }
 
 // list returns the config rows for all four tasks. Used by the

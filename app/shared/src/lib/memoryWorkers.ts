@@ -138,3 +138,23 @@ export function taskDescription(t: TaskKind): string {
 export function taskAgentSupported(t: TaskKind): boolean {
   return t !== 'gatekeeper'
 }
+
+// ── agent model catalog ───────────────────────────────────────
+
+export interface ModelOption {
+  id: string
+  label: string
+  /** Stable aliases that track the latest version — safe defaults. */
+  recommended?: boolean
+}
+
+/** Lists selectable models for an agent CLI (claude | gemini). Local
+ * HTTP providers list models live via the memory probe instead. */
+export async function listAgentModels(
+  providerId: AgentProviderID,
+): Promise<ModelOption[]> {
+  const res = await api<{ models: ModelOption[] }>(
+    `/api/v1/memory/workers/models?provider_id=${providerId}`,
+  )
+  return res.models ?? []
+}
