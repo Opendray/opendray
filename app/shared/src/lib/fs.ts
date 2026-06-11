@@ -48,14 +48,24 @@ export async function readFile(path: string): Promise<string | null> {
 /**
  * Build a same-origin URL that, when navigated to, streams the
  * referenced file as a download (server sets `Content-Disposition:
- * attachment`). Auth rides in the query string — browsers can't add
- * Authorization headers to anchor navigations, and the gateway's
- * combined middleware accepts a `?token=` fallback (same path the
- * Terminal WS uses).
+ * attachment`). The caller MUST pass a `root` — the server verifies
+ * the resolved file path stays inside it, so downloads are confined
+ * to the directory subtree the operator is browsing (typically the
+ * session's `cwd`), not arbitrary system paths.
+ *
+ * Auth rides in the query string — browsers can't add Authorization
+ * headers to anchor navigations, and the gateway's combined
+ * middleware accepts a `?token=` fallback (same path the Terminal WS
+ * uses).
  */
-export function fsDownloadURL(path: string, token: string): string {
+export function fsDownloadURL(
+  path: string,
+  root: string,
+  token: string,
+): string {
   return (
     `/api/v1/fs/download?path=${encodeURIComponent(path)}` +
+    `&root=${encodeURIComponent(root)}` +
     `&token=${encodeURIComponent(token)}`
   )
 }
@@ -63,11 +73,18 @@ export function fsDownloadURL(path: string, token: string): string {
 /**
  * Same as `fsDownloadURL`, but for a directory subtree — the gateway
  * streams a zip archive built on the fly. Hidden entries and symlinks
- * are skipped to match the file-tree's listing behaviour.
+ * are skipped to match the file-tree's listing behaviour. The `root`
+ * confinement applies the same way: the resolved directory must live
+ * inside the caller-supplied root.
  */
-export function fsZipURL(path: string, token: string): string {
+export function fsZipURL(
+  path: string,
+  root: string,
+  token: string,
+): string {
   return (
     `/api/v1/fs/zip?path=${encodeURIComponent(path)}` +
+    `&root=${encodeURIComponent(root)}` +
     `&token=${encodeURIComponent(token)}`
   )
 }

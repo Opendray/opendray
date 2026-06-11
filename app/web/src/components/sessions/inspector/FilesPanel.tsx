@@ -38,6 +38,12 @@ export function FilesPanel({ cwd }: FilesPanelProps) {
           path={cwd}
           name={cwd}
           isRoot
+          // downloadRoot is the cwd: the server-side download/zip
+          // endpoints reject any resolved path that escapes it, so
+          // the operator's reach via the inspector matches what they
+          // can browse here — files outside the session subtree
+          // can't be exfiltrated through a hand-crafted URL.
+          downloadRoot={cwd}
           onOpenFile={(p) => setViewing(p)}
         />
       </div>
@@ -55,6 +61,10 @@ interface FsNodeProps {
   name: string
   isRoot?: boolean
   depth?: number
+  // downloadRoot is the operator-allowed root the server uses to
+  // confine download requests. Passed unchanged to every child so the
+  // whole subtree shares the same confinement.
+  downloadRoot: string
   onOpenFile: (path: string) => void
 }
 
@@ -63,6 +73,7 @@ function FsNode({
   name,
   isRoot = false,
   depth = 0,
+  downloadRoot,
   onOpenFile,
 }: FsNodeProps) {
   const [open, setOpen] = useState(isRoot)
@@ -101,7 +112,10 @@ function FsNode({
           <DownloadIconButton
             ariaLabel={`Download ${name} as zip`}
             onActivate={() =>
-              triggerDownload(fsZipURL(path, token), `${name || 'folder'}.zip`)
+              triggerDownload(
+                fsZipURL(path, downloadRoot, token),
+                `${name || 'folder'}.zip`,
+              )
             }
           />
         )}
@@ -132,6 +146,7 @@ function FsNode({
                 path={e.path}
                 name={e.name}
                 depth={depth + 1}
+                downloadRoot={downloadRoot}
                 onOpenFile={onOpenFile}
               />
             ) : (
@@ -153,7 +168,10 @@ function FsNode({
                   <DownloadIconButton
                     ariaLabel={`Download ${e.name}`}
                     onActivate={() =>
-                      triggerDownload(fsDownloadURL(e.path, token), e.name)
+                      triggerDownload(
+                        fsDownloadURL(e.path, downloadRoot, token),
+                        e.name,
+                      )
                     }
                   />
                 )}

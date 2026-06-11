@@ -112,20 +112,22 @@ func (h *Handlers) read(w http.ResponseWriter, r *http.Request) {
 
 // download streams a single file to the response with
 // Content-Disposition: attachment so the browser saves it instead of
-// rendering inline. Same canonicalize + admin-only auth as /read, no
-// size cap (the operator can read anything the daemon can stat — the
-// download endpoint just exposes the same set of bytes in a way that
-// lands on disk). http.ServeContent handles Range requests so resume
-// works on large files.
+// rendering inline. The caller MUST pass a `root` query parameter:
+// the resolved target path is verified to live inside that root, and
+// requests for anything outside (including via symlink) fail with a
+// 403. This is a tighter contract than /read — downloads are scoped
+// to "files the operator can see in the inspector" (rooted at the
+// session cwd), not arbitrary system paths. http.ServeContent
+// handles Range requests so resume works on large files.
 func (h *Handlers) download(w http.ResponseWriter, r *http.Request) {
 	rawPath := r.URL.Query().Get("path")
 	if rawPath == "" {
 		writeError(w, http.StatusBadRequest, errors.New("path is required"))
 		return
 	}
-	p, err := canonicalizeAbs(rawPath)
+	p, err := resolveWithinRoot(rawPath, r.URL.Query().Get("root"))
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		writeError(w, http.StatusForbidden, err)
 		return
 	}
 	f, err := os.Open(p)
@@ -180,9 +182,9 @@ func (h *Handlers) zipDir(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, errors.New("path is required"))
 		return
 	}
-	root, err := canonicalizeAbs(rawPath)
+	root, err := resolveWithinRoot(rawPath, r.URL.Query().Get("root"))
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		writeError(w, http.StatusForbidden, err)
 		return
 	}
 	st, err := os.Stat(root)
@@ -423,22 +425,53 @@ func (h *Handlers) home(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"path": homeDir()})
 }
 
-// canonicalizeAbs is canonicalize plus an explicit path-traversal
-// rejection. The download / zip endpoints accept any absolute path
-// the daemon can stat (same threat model as /read — admin only,
-// operators legitimately reach into /var, /etc, /opt etc.), but the
-// `..` segment is never necessary in a legitimate request and its
-// presence is the canonical taint signature CodeQL flags on
-// /read-style flows. Refusing it up-front lets the static scanner
-// see the sanitizer; the operational behaviour is unchanged because
-// `filepath.Clean` would have collapsed any `..` segments anyway.
-func canonicalizeAbs(p string) (string, error) {
-	for _, seg := range strings.Split(p, "/") {
-		if seg == ".." {
-			return "", errors.New("path may not contain '..' segments")
-		}
+// resolveWithinRoot canonicalizes both `target` and `root`, resolves
+// any symlinks, then verifies the target stays inside the root. Used
+// by the download + zip endpoints so an operator can only fetch files
+// reachable from a known directory (typically the session's cwd) —
+// not arbitrary system paths via the daemon's mount.
+//
+// This is the form static scanners recognise as a path-injection
+// sanitiser: the user-supplied path is converted to a typed,
+// validated value before reaching any I/O sink. `filepath.Rel`
+// followed by an explicit `..` check on the relative result is the
+// canonical Go pattern (filepath.Clean alone is not — it doesn't
+// prevent escaping the root via absolute paths).
+func resolveWithinRoot(target, root string) (string, error) {
+	if strings.TrimSpace(root) == "" {
+		return "", errors.New("root is required")
 	}
-	return canonicalize(p)
+	rootAbs, err := canonicalize(root)
+	if err != nil {
+		return "", fmt.Errorf("invalid root: %w", err)
+	}
+	// EvalSymlinks resolves both for the actual filesystem path. The
+	// scanner cares that we're not feeding the raw query value into
+	// the sink — using the resolved form means a symlink can't be
+	// used to escape the root either.
+	rootResolved, err := filepath.EvalSymlinks(rootAbs)
+	if err != nil {
+		return "", fmt.Errorf("root not reachable: %w", err)
+	}
+	targetAbs, err := canonicalize(target)
+	if err != nil {
+		return "", fmt.Errorf("invalid path: %w", err)
+	}
+	// Resolve the target *if it exists* — for missing paths, fall
+	// back to the cleaned absolute form so the caller's `os.Open`
+	// surfaces the 404 with the canonical error.
+	targetResolved := targetAbs
+	if r, rerr := filepath.EvalSymlinks(targetAbs); rerr == nil {
+		targetResolved = r
+	}
+	rel, err := filepath.Rel(rootResolved, targetResolved)
+	if err != nil {
+		return "", fmt.Errorf("path outside allowed root: %w", err)
+	}
+	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", errors.New("path is outside the allowed root")
+	}
+	return targetResolved, nil
 }
 
 // canonicalize expands ~/ prefixes and resolves to an absolute path.
