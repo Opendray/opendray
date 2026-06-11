@@ -15,13 +15,14 @@ import (
 // later phases hang the consolidation / graduation engine off this type
 // (and give it a read-only handle to internal/memory as its feedstock).
 type Service struct {
-	store     *Store
-	emb       Embedder                    // optional; semantic search + backfill
-	skillSink SkillSink                   // optional; render promoted skills
-	reanchor  func(context.Context) error // optional; re-derive the graph after reset
-	kbDrafter *KBDrafter                  // optional; M-KB curated page drafting
-	overview  *OverviewDrafter            // optional; per-project Overview drafting
-	log       *slog.Logger
+	store       *Store
+	emb         Embedder                    // optional; semantic search + backfill
+	skillSink   SkillSink                   // optional; render promoted skills
+	skillifyLLM LLM                         // optional; LLM-authored SKILL.md on promotion
+	reanchor    func(context.Context) error // optional; re-derive the graph after reset
+	kbDrafter   *KBDrafter                  // optional; M-KB curated page drafting
+	overview    *OverviewDrafter            // optional; per-project Overview drafting
+	log         *slog.Logger
 }
 
 // NewService matches the projectdoc.NewService(pool, log) shape used at the
@@ -129,6 +130,50 @@ func (s *Service) WithSkillSink(sink SkillSink) *Service {
 	return s
 }
 
+// WithSkillifyLLM enables LLM-authored skills: instead of copying the
+// playbook body verbatim into SKILL.md, promotion drafts a complete,
+// structured skill document (overview / when-to-use / procedure with
+// real commands / pitfalls / verification). Without it, promotion
+// falls back to the mechanical render.
+func (s *Service) WithSkillifyLLM(llm LLM) *Service {
+	s.skillifyLLM = llm
+	return s
+}
+
+const skillifySystem = `You turn a distilled PLAYBOOK into a production-grade agent SKILL file (Claude Code SKILL.md format).
+
+Output the COMPLETE file and nothing else:
+1. YAML frontmatter: name (the given slug, verbatim), description (ONE sentence, <200 chars: what this skill does AND when to reach for it — this line is all an agent sees before deciding to load the skill, make it count).
+2. Body sections:
+   ## Overview — 2-3 sentences: the problem this solves and the outcome.
+   ## When to use — concrete triggers; also when NOT to use it.
+   ## Procedure — numbered, executable steps reusing the playbook's REAL commands, paths, hostnames, file names. An agent must be able to follow this without guessing.
+   ## Pitfalls — the actual failure modes and how to avoid them.
+   ## Verification — how to confirm it worked.
+
+Rules: never invent commands or values absent from the playbook; keep every concrete detail it has; NEVER include secrets (passwords, tokens, keys) — name where a credential lives, never its value; no markdown fences around the file.`
+
+// generateSkillMarkdown asks the skillify LLM for a full SKILL.md.
+// Empty string on any failure — callers fall back to the mechanical
+// render rather than blocking promotion.
+func (s *Service) generateSkillMarkdown(ctx context.Context, slug string, pb Node) string {
+	if s.skillifyLLM == nil {
+		return ""
+	}
+	input := "Slug: " + slug + "\n\nPlaybook title: " + pb.Title + "\n\nPlaybook body:\n" + pb.Body
+	out, err := s.skillifyLLM.Complete(ctx, skillifySystem, input)
+	if err != nil {
+		s.log.Warn("skillify llm failed — using mechanical render", "err", err)
+		return ""
+	}
+	out = strings.TrimSpace(out)
+	if !strings.HasPrefix(out, "---") {
+		s.log.Warn("skillify llm returned non-frontmatter output — using mechanical render")
+		return ""
+	}
+	return out
+}
+
 // Skillify promotes a playbook to a skill: it creates a skill node (the final
 // rung of the fact->playbook->skill maturity axis), links it to the source
 // playbook, and renders a SKILL.md the skills loader can pick up. Conservative
@@ -161,11 +206,46 @@ func (s *Service) Skillify(ctx context.Context, playbookID string) (Node, error)
 	if err := s.store.CreateEdge(ctx, Edge{SrcID: skill.ID, EdgeType: EdgeDerivedFrom, DstID: pb.ID}); err != nil {
 		s.log.Warn("skill derived_from edge failed", "err", err)
 	}
-	md := renderSkillMarkdown(slug, skillDescription(pb.Title, pb.Body), pb.Body)
+	md := s.generateSkillMarkdown(ctx, slug, pb)
+	if md == "" {
+		md = renderSkillMarkdown(slug, skillDescription(pb.Title, pb.Body), pb.Body)
+	} else if _, uerr := s.store.UpdateNodeBody(ctx, skill.ID, md); uerr != nil {
+		s.log.Warn("skillify: store generated body failed", "err", uerr)
+	}
 	if err := s.skillSink.WriteSkill(ctx, slug, md); err != nil {
 		return skill, fmt.Errorf("knowledge: write SKILL.md: %w", err)
 	}
 	return skill, nil
+}
+
+// SetSkillEnabled flips a skill on/off: disabled removes its SKILL.md
+// from the vault (no session loads it; the node and its history stay),
+// enabled re-renders the file. With hundreds of distilled skills a
+// project needs 1-2 — this is the per-skill switch.
+func (s *Service) SetSkillEnabled(ctx context.Context, id string, enabled bool) (Node, error) {
+	n, err := s.store.SetNodeEnabled(ctx, id, enabled)
+	if err != nil {
+		return Node{}, err
+	}
+	if n.Kind != KindSkill || s.skillSink == nil {
+		return n, nil
+	}
+	slug, _ := n.Provenance["skill_id"].(string)
+	if slug == "" {
+		slug = skillSlug(n.Title)
+	}
+	if enabled {
+		md := n.Body
+		if !strings.HasPrefix(strings.TrimSpace(md), "---") {
+			md = renderSkillMarkdown(slug, skillDescription(n.Title, n.Body), n.Body)
+		}
+		if werr := s.skillSink.WriteSkill(ctx, slug, md); werr != nil {
+			return n, fmt.Errorf("knowledge: re-render skill: %w", werr)
+		}
+	} else if derr := s.skillSink.DeleteSkill(ctx, slug); derr != nil {
+		return n, fmt.Errorf("knowledge: remove skill file: %w", derr)
+	}
+	return n, nil
 }
 
 // RenderForSpawn builds a compact "Project knowledge" banner (the project's +
@@ -279,7 +359,14 @@ func (s *Service) DeleteNode(ctx context.Context, id string) error {
 func (s *Service) gatherForSpawn(ctx context.Context, kind NodeKind, cwd string) []Node {
 	proj, _ := s.store.ListNodes(ctx, NodeFilter{Kind: kind, Scope: ScopeProject, ScopeKey: cwd, Limit: 50})
 	global, _ := s.store.ListNodes(ctx, NodeFilter{Kind: kind, Scope: ScopeGlobal, Limit: 50})
-	return append(proj, global...)
+	all := append(proj, global...)
+	out := all[:0]
+	for _, n := range all {
+		if n.Enabled {
+			out = append(out, n)
+		}
+	}
+	return out
 }
 
 // EmbedBackfillConfig tunes the background node-embedding loop.

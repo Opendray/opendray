@@ -40,6 +40,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Get("/nodes/{id}/graph", h.neighborhood)
 		r.Post("/nodes/{id}/promote", h.promote)
 		r.Post("/nodes/{id}/skillify", h.skillify)
+		r.Post("/nodes/{id}/enable", h.setEnabled)
 		r.Post("/edges", h.createEdge)
 		r.Get("/brain", h.projectBrain)
 		r.Get("/search", h.search)
@@ -174,6 +175,29 @@ func (h *Handlers) skillify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, skill)
+}
+
+// setEnabled flips a node's enabled flag. For skills this also
+// writes/removes the vault SKILL.md so sessions only ever load
+// enabled skills.
+func (h *Handlers) setEnabled(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Enabled bool `json:"enabled"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	n, err := h.svc.SetSkillEnabled(r.Context(), chi.URLParam(r, "id"), body.Enabled)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, n)
 }
 
 func (h *Handlers) search(w http.ResponseWriter, r *http.Request) {

@@ -22,6 +22,9 @@ export interface KnowledgeNode {
   /** Skill usage tracking: sessions whose transcript referenced this skill. */
   use_count?: number
   last_used_at?: string | null
+  /** Skills: disabled skills keep their node but their SKILL.md is
+   * removed from the vault, so no session loads them. */
+  enabled?: boolean
   created_at: string
   updated_at: string
   archived_at?: string | null
@@ -121,4 +124,16 @@ export async function deleteKnowledgeNode(id: string): Promise<void> {
   await api(`/api/v1/knowledge/nodes/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   })
+}
+
+/** Flips a node's enabled flag. For skills this writes/removes the
+ * vault SKILL.md so sessions only load enabled skills. */
+export async function setKnowledgeNodeEnabled(
+  id: string,
+  enabled: boolean,
+): Promise<KnowledgeNode> {
+  return api<KnowledgeNode>(
+    `/api/v1/knowledge/nodes/${encodeURIComponent(id)}/enable`,
+    { method: 'POST', body: { enabled } },
+  )
 }

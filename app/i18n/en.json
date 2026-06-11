@@ -2589,7 +2589,11 @@
         "staleBadge": "never used",
         "staleHint": "Injected for 14+ days without any session referencing it — consider retiring",
         "usage": "used in {{count}} sessions",
-        "lastUsed": "last {{date}}"
+        "lastUsed": "last {{date}}",
+        "enabledToast": "Skill enabled — new sessions load it",
+        "disabledToast": "Skill disabled — removed from the loaded set",
+        "disabledBadge": "off",
+        "toggleHint": "Enabled skills are loadable by sessions; disable what this period of work doesn't need"
       }
     },
     "cortex": {

@@ -2589,7 +2589,11 @@
         "staleBadge": "从未用到",
         "staleHint": "注入超过 14 天没有任何会话引用——可考虑退役",
         "usage": "{{count}} 个会话用到",
-        "lastUsed": "最近 {{date}}"
+        "lastUsed": "最近 {{date}}",
+        "enabledToast": "技能已启用——新会话将可加载",
+        "disabledToast": "技能已停用——已从加载集合移除",
+        "disabledBadge": "停用",
+        "toggleHint": "启用的技能才会被会话加载；当前阶段用不到的就停掉"
       }
     },
     "cortex": {

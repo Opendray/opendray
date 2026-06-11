@@ -154,6 +154,10 @@ type Node struct {
 	// as retirement candidates so the injected set stays lean.
 	UseCount   int        `json:"use_count"`
 	LastUsedAt *time.Time `json:"last_used_at,omitempty"`
+
+	// Enabled (skills): a disabled skill keeps its node but its
+	// SKILL.md is removed from the vault so no session loads it.
+	Enabled bool `json:"enabled"`
 }
 
 // Validate enforces the closed ontology before a write. It mirrors the DB

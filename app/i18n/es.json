@@ -2589,7 +2589,11 @@
         "staleBadge": "nunca usado",
         "staleHint": "Inyectado 14+ días sin que ninguna sesión lo refiera — considera retirarlo",
         "usage": "usado en {{count}} sesiones",
-        "lastUsed": "último {{date}}"
+        "lastUsed": "último {{date}}",
+        "enabledToast": "Skill activado — las sesiones nuevas lo cargan",
+        "disabledToast": "Skill desactivado — fuera del conjunto cargado",
+        "disabledBadge": "off",
+        "toggleHint": "Solo los skills activados se cargan; desactiva lo que esta etapa no necesita"
       }
     },
     "cortex": {

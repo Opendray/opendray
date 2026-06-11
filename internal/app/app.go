@@ -252,8 +252,9 @@ func (a knowledgeProposalSink) ProposeKBDoc(ctx context.Context, cwd, kind, cont
 // anchorer treats as "skip fine-entity extraction" (degrades to 1A).
 type knowledgeLLM struct {
 	reg       *memworker.Registry
-	maxTokens int           // 0 → 512 (small extraction default)
-	timeout   time.Duration // 0 → 20s
+	maxTokens int                // 0 → 512 (small extraction default)
+	timeout   time.Duration      // 0 → 20s
+	task      memworker.TaskKind // 0-value → TaskCapture
 }
 
 func (a knowledgeLLM) Complete(ctx context.Context, system, user string) (string, error) {
@@ -265,8 +266,12 @@ func (a knowledgeLLM) Complete(ctx context.Context, system, user string) (string
 	if timeout == 0 {
 		timeout = 20 * time.Second
 	}
+	task := a.task
+	if task == "" {
+		task = memworker.TaskCapture
+	}
 	resp, err := a.reg.Run(ctx, memworker.Request{
-		Task:         memworker.TaskCapture,
+		Task:         task,
 		SystemPrompt: system,
 		UserInput:    user,
 		MaxTokens:    maxTokens,
@@ -812,7 +817,15 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	if cfg.Knowledge.Enabled {
 		knowledgeSvc = knowledge.NewService(st.Pool(), log)
 		knowledgeSvc.WithSkillSink(knowledgeSkillSink{dir: skillsRoot}) // Phase 4 — render promoted skills
-		sessionProvider.WithKnowledgeInjector(knowledgeSvc)             // feed the brain into every spawn
+		// Skill promotion drafts a full structured SKILL.md via the
+		// curation worker (overview / when-to-use / procedure /
+		// pitfalls / verification) instead of copying the playbook
+		// body verbatim.
+		knowledgeSvc.WithSkillifyLLM(knowledgeLLM{
+			reg: memoryWorkerRegistry, maxTokens: 4000, timeout: 180 * time.Second,
+			task: memworker.TaskCuration,
+		})
+		sessionProvider.WithKnowledgeInjector(knowledgeSvc) // feed the brain into every spawn
 		if memorySvc != nil {
 			// Phase 1 — the anchorer reads episodic memory and lifts facts
 			// into the graph. Needs memory; without it we still serve CRUD.

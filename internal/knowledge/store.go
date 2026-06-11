@@ -605,7 +605,7 @@ const selectNodeSQL = `
 	SELECT id, kind, COALESCE(entity_type, ''), title, body, scope,
 	       scope_key, maturity, confidence, provenance,
 	       created_at, updated_at, archived_at,
-	       COALESCE(use_count, 0), last_used_at
+	       COALESCE(use_count, 0), last_used_at, COALESCE(enabled, TRUE)
 	FROM knowledge_nodes`
 
 // RecordSkillUsage bumps use_count / last_used_at for every active
@@ -630,6 +630,36 @@ func (s *Store) RecordSkillUsage(ctx context.Context, transcript string) (int64,
 	return tag.RowsAffected(), nil
 }
 
+// SetNodeEnabled flips a node's enabled flag (skills: controls whether
+// its SKILL.md exists in the vault). Returns the updated node.
+func (s *Store) SetNodeEnabled(ctx context.Context, id string, enabled bool) (Node, error) {
+	tag, err := s.pool.Exec(ctx, `
+		UPDATE knowledge_nodes SET enabled = $1, updated_at = NOW()
+		 WHERE id = $2 AND archived_at IS NULL`, enabled, id)
+	if err != nil {
+		return Node{}, fmt.Errorf("knowledge: set enabled: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return Node{}, ErrNotFound
+	}
+	return s.GetNode(ctx, id)
+}
+
+// UpdateNodeBody replaces a node's body (used when the skillify LLM
+// produces the full SKILL.md so the stored node matches the file).
+func (s *Store) UpdateNodeBody(ctx context.Context, id, body string) (Node, error) {
+	tag, err := s.pool.Exec(ctx, `
+		UPDATE knowledge_nodes SET body = $1, updated_at = NOW()
+		 WHERE id = $2 AND archived_at IS NULL`, body, id)
+	if err != nil {
+		return Node{}, fmt.Errorf("knowledge: update node body: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return Node{}, ErrNotFound
+	}
+	return s.GetNode(ctx, id)
+}
+
 // rowScanner is satisfied by both pgx.Row (QueryRow) and pgx.Rows (Query).
 type rowScanner interface {
 	Scan(dest ...any) error
@@ -644,7 +674,7 @@ func scanNode(r rowScanner) (Node, error) {
 	if err := r.Scan(&n.ID, &kind, &entityType, &n.Title, &n.Body, &scope,
 		&n.ScopeKey, &maturity, &confidence, &provJSON,
 		&n.CreatedAt, &n.UpdatedAt, &archivedAt,
-		&n.UseCount, &n.LastUsedAt); err != nil {
+		&n.UseCount, &n.LastUsedAt, &n.Enabled); err != nil {
 		return Node{}, err
 	}
 	n.Kind = NodeKind(kind)

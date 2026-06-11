@@ -12,6 +12,7 @@ import {
   getKnowledgeGraph,
   promoteKnowledgeNode,
   skillifyKnowledgeNode,
+  setKnowledgeNodeEnabled,
   deleteKnowledgeNode,
   draftKB,
   type KnowledgeNode,
@@ -34,6 +35,7 @@ import {
   type DocProposal,
 } from '@/lib/projectDocs'
 import { CurationChat } from '@/components/cortex/CurationChat'
+import { Switch } from '@/components/ui/switch'
 import { Loader2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -970,6 +972,19 @@ function DistillationView() {
     },
     onError: () => toast.error(t('web.knowledge.actionFailed')),
   })
+  const toggle = useMutation({
+    mutationFn: (input: { id: string; enabled: boolean }) =>
+      setKnowledgeNodeEnabled(input.id, input.enabled),
+    onSuccess: (n) => {
+      toast.success(
+        n.enabled
+          ? t('web.knowledge.distill.enabledToast')
+          : t('web.knowledge.distill.disabledToast'),
+      )
+      refresh()
+    },
+    onError: () => toast.error(t('web.knowledge.actionFailed')),
+  })
   const remove = useMutation({
     mutationFn: (id: string) => deleteKnowledgeNode(id),
     onSuccess: () => {
@@ -1078,15 +1093,20 @@ function DistillationView() {
           ) : (
             <div className="space-y-2">
               {skills.map((n) => {
+                const enabled = n.enabled !== false
                 const stale =
+                  enabled &&
                   (n.use_count ?? 0) === 0 &&
                   Date.now() - new Date(n.created_at).getTime() >
                     14 * 24 * 3600 * 1000
                 return (
-                  <div key={n.id} className="bg-card rounded-md border p-3">
+                  <div
+                    key={n.id}
+                    className={`bg-card rounded-md border p-3 ${enabled ? '' : 'opacity-60'}`}
+                  >
                     <div className="mb-1 flex items-start justify-between gap-2">
                       <span className="text-sm font-medium">{n.title}</span>
-                      <span className="flex flex-none gap-1">
+                      <span className="flex flex-none items-center gap-1.5">
                         {stale && (
                           <span
                             className="rounded bg-zinc-500/20 px-1.5 py-0.5 text-[9px] text-zinc-300"
@@ -1095,9 +1115,23 @@ function DistillationView() {
                             {t('web.knowledge.distill.staleBadge')}
                           </span>
                         )}
-                        <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] text-emerald-400">
-                          {t('web.knowledge.distill.injectedBadge')}
-                        </span>
+                        {enabled ? (
+                          <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] text-emerald-400">
+                            {t('web.knowledge.distill.injectedBadge')}
+                          </span>
+                        ) : (
+                          <span className="rounded bg-zinc-500/15 px-1.5 py-0.5 text-[9px] text-zinc-400">
+                            {t('web.knowledge.distill.disabledBadge')}
+                          </span>
+                        )}
+                        <Switch
+                          checked={enabled}
+                          disabled={toggle.isPending}
+                          onCheckedChange={(v) =>
+                            toggle.mutate({ id: n.id, enabled: v })
+                          }
+                          title={t('web.knowledge.distill.toggleHint')}
+                        />
                       </span>
                     </div>
                     <p className="text-muted-foreground text-[11px]">
