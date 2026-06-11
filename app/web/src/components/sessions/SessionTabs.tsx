@@ -20,7 +20,7 @@ export function SessionTabs({ onCloseTab }: SessionTabsProps) {
   if (tabs.length === 0) return null
 
   return (
-    <div className="h-9 flex items-center border-b border-border bg-background overflow-x-auto">
+    <div className="h-7 flex items-center border-b border-border bg-background overflow-x-auto">
       {tabs.map((tab, i) => {
         const active = tab.id === currentId
         return (
@@ -34,7 +34,7 @@ export function SessionTabs({ onCloseTab }: SessionTabsProps) {
               if (e.key === 'Enter') setCurrent(tab.id)
             }}
             className={cn(
-              'group h-9 px-3 flex items-center gap-2 border-r border-border cursor-pointer min-w-[140px] max-w-[220px] shrink-0 transition-colors',
+              'group h-7 px-3 flex items-center gap-2 border-r border-border cursor-pointer min-w-[140px] max-w-[220px] shrink-0 transition-colors',
               active
                 ? 'bg-card text-foreground'
                 : 'text-muted-foreground hover:text-foreground hover:bg-card/60',
