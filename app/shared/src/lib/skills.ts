@@ -41,3 +41,19 @@ export async function updateSkill(id: string, body: string): Promise<Skill> {
 export async function deleteSkill(id: string): Promise<void> {
   await api(`/api/v1/skills/${id}`, { method: 'DELETE' })
 }
+
+/**
+ * Upload a SKILL.md to install it as a vault skill. The server derives
+ * the id from the frontmatter `name:` field (slugified) — no separate
+ * id prompt. Used by the drag-and-drop affordance on the Plugins page.
+ *
+ * Rejects on:
+ *   - missing/blank `name:` in the frontmatter
+ *   - id collision with an existing vault skill (409 — delete first)
+ *   - empty file or >4 MB body
+ */
+export async function uploadSkill(file: File): Promise<Skill> {
+  const fd = new FormData()
+  fd.append('file', file)
+  return api<Skill>('/api/v1/skills/upload', { method: 'POST', body: fd })
+}
