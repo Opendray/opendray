@@ -1366,6 +1366,12 @@
         "deleteConfirm": "Delete skill \"{id}\" from your vault? This removes the SKILL.md file.",
         "removedToast": "Skill removed",
         "deleteFailedToast": "Delete failed",
+        "dropHint": "Or drop a SKILL.md here to install it.",
+        "dropToInstall": "Drop SKILL.md to install",
+        "uploading": "Installing skill…",
+        "uploadedToast": "Skill \"{id}\" installed",
+        "uploadFailedToast": "Skill upload failed",
+        "uploadInvalidTypeToast": "Only SKILL.md files can be installed by drop",
         "editor": {
           "createTitle": "New skill",
           "customizeTitle": "Customize built-in: {id}",

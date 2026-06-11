@@ -1366,6 +1366,12 @@
         "deleteConfirm": "¿Eliminar la habilidad \"{id}\" de tu vault? Esto elimina el archivo SKILL.md.",
         "removedToast": "Habilidad eliminada",
         "deleteFailedToast": "Error al eliminar",
+        "dropHint": "O suelta un SKILL.md aquí para instalarlo.",
+        "dropToInstall": "Suelta el SKILL.md para instalar",
+        "uploading": "Instalando habilidad…",
+        "uploadedToast": "Habilidad \"{id}\" instalada",
+        "uploadFailedToast": "Error al subir la habilidad",
+        "uploadInvalidTypeToast": "Solo se pueden instalar archivos SKILL.md por arrastre",
         "editor": {
           "createTitle": "Nueva habilidad",
           "customizeTitle": "Personalizar la integrada: {id}",
