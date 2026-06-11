@@ -10,9 +10,13 @@
 -- Skills are NOT touched — the operator retires those by hand from
 -- the workbench (some may have been hand-curated).
 
+-- (knowledge_nodes has no archived_reason column — the reason lives
+-- in provenance instead.)
 UPDATE knowledge_nodes
    SET archived_at = NOW(),
-       archived_reason = 'distillation rework (0055) — re-distilled under quality gates'
+       provenance = jsonb_set(COALESCE(provenance, '{}'::jsonb),
+                              '{archived_reason}',
+                              '"distillation rework (0055) — re-distilled under quality gates"')
  WHERE kind = 'playbook'
    AND archived_at IS NULL;
 
