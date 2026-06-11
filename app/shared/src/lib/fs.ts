@@ -44,3 +44,64 @@ export async function readFile(path: string): Promise<string | null> {
     throw e
   }
 }
+
+/**
+ * Build a same-origin URL that, when navigated to, streams the
+ * referenced file as a download (server sets `Content-Disposition:
+ * attachment`). The caller MUST pass a `root` — the server verifies
+ * the resolved file path stays inside it, so downloads are confined
+ * to the directory subtree the operator is browsing (typically the
+ * session's `cwd`), not arbitrary system paths.
+ *
+ * Auth rides in the query string — browsers can't add Authorization
+ * headers to anchor navigations, and the gateway's combined
+ * middleware accepts a `?token=` fallback (same path the Terminal WS
+ * uses).
+ */
+export function fsDownloadURL(
+  path: string,
+  root: string,
+  token: string,
+): string {
+  return (
+    `/api/v1/fs/download?path=${encodeURIComponent(path)}` +
+    `&root=${encodeURIComponent(root)}` +
+    `&token=${encodeURIComponent(token)}`
+  )
+}
+
+/**
+ * Same as `fsDownloadURL`, but for a directory subtree — the gateway
+ * streams a zip archive built on the fly. Hidden entries and symlinks
+ * are skipped to match the file-tree's listing behaviour. The `root`
+ * confinement applies the same way: the resolved directory must live
+ * inside the caller-supplied root.
+ */
+export function fsZipURL(
+  path: string,
+  root: string,
+  token: string,
+): string {
+  return (
+    `/api/v1/fs/zip?path=${encodeURIComponent(path)}` +
+    `&root=${encodeURIComponent(root)}` +
+    `&token=${encodeURIComponent(token)}`
+  )
+}
+
+/**
+ * Trigger a browser download for the given URL via an off-DOM `<a
+ * download>`. Used by the Files inspector so the click doesn't have
+ * to be on an anchor (we want the hover-icon affordance, not an
+ * always-visible link).
+ */
+export function triggerDownload(url: string, suggestedName?: string): void {
+  const a = document.createElement('a')
+  a.href = url
+  if (suggestedName) a.download = suggestedName
+  a.rel = 'noopener'
+  a.style.display = 'none'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+}
