@@ -153,11 +153,14 @@
    the canvas doesn't scroll xterm's scrollback at all, which reads
    as "I can't scroll up to see previous output on iOS." The
    `overscroll-behavior: contain` prevents the gesture from leaking
-   to the page (which used to scroll the whole AppShell instead). */
+   to the page (which used to scroll the whole AppShell instead).
+   `touch-action` is deliberately left at the default `auto` (not
+   `pan-y`) — claiming pan-y for the browser broke xterm's
+   selection-drag on iOS (the contextual copy pill never anchored
+   because pointerup arrived without a finished selection). */
 .xterm-viewport {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  touch-action: pan-y;
 }
 
 /* highlight.js theme — a compact mapping that uses palette-friendly
