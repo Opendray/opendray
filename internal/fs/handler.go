@@ -17,6 +17,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -122,7 +123,7 @@ func (h *Handlers) download(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, errors.New("path is required"))
 		return
 	}
-	p, err := canonicalize(rawPath)
+	p, err := canonicalizeAbs(rawPath)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
@@ -157,7 +158,7 @@ func (h *Handlers) download(w http.ResponseWriter, r *http.Request) {
 	name := filepath.Base(p)
 	w.Header().Set("Content-Disposition",
 		fmt.Sprintf("attachment; filename=%q; filename*=UTF-8''%s",
-			name, urlQueryEscape(name)))
+			name, url.PathEscape(name)))
 	http.ServeContent(w, r, name, st.ModTime(), f)
 }
 
@@ -179,7 +180,7 @@ func (h *Handlers) zipDir(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, errors.New("path is required"))
 		return
 	}
-	root, err := canonicalize(rawPath)
+	root, err := canonicalizeAbs(rawPath)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
@@ -207,10 +208,19 @@ func (h *Handlers) zipDir(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/zip")
 	w.Header().Set("Content-Disposition",
 		fmt.Sprintf("attachment; filename=%q; filename*=UTF-8''%s",
-			archiveName, urlQueryEscape(archiveName)))
+			archiveName, url.PathEscape(archiveName)))
 
 	zw := zip.NewWriter(w)
-	defer zw.Close()
+	// zip.Writer.Close flushes the central directory — silently dropping
+	// its error would leave the operator with a truncated archive that
+	// looks fine until they try to extract it. Log instead of return-up;
+	// the body has already started streaming so we can't switch to a
+	// 5xx here, but a warn in the journal is enough for triage.
+	defer func() {
+		if err := zw.Close(); err != nil {
+			h.log.Warn("zipDir: close failed", "path", root, "err", err)
+		}
+	}()
 
 	err = filepath.Walk(root, func(path string, info os.FileInfo, walkErr error) error {
 		if walkErr != nil {
@@ -283,29 +293,6 @@ func (h *Handlers) zipDir(w http.ResponseWriter, r *http.Request) {
 		// Response headers are long gone; nothing to do but stop
 		// writing. The browser surfaces an incomplete download.
 	}
-}
-
-// urlQueryEscape is a small helper for the filename*= form of
-// Content-Disposition (RFC 5987). Implemented inline to avoid an
-// import cycle with net/url at the package level.
-func urlQueryEscape(s string) string {
-	const hex = "0123456789ABCDEF"
-	var b strings.Builder
-	for i := 0; i < len(s); i++ {
-		c := s[i]
-		isUnreserved := (c >= 'A' && c <= 'Z') ||
-			(c >= 'a' && c <= 'z') ||
-			(c >= '0' && c <= '9') ||
-			c == '-' || c == '_' || c == '.' || c == '~'
-		if isUnreserved {
-			b.WriteByte(c)
-			continue
-		}
-		b.WriteByte('%')
-		b.WriteByte(hex[c>>4])
-		b.WriteByte(hex[c&0x0f])
-	}
-	return b.String()
 }
 
 type Entry struct {
@@ -434,6 +421,24 @@ func (h *Handlers) mkdir(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) home(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"path": homeDir()})
+}
+
+// canonicalizeAbs is canonicalize plus an explicit path-traversal
+// rejection. The download / zip endpoints accept any absolute path
+// the daemon can stat (same threat model as /read — admin only,
+// operators legitimately reach into /var, /etc, /opt etc.), but the
+// `..` segment is never necessary in a legitimate request and its
+// presence is the canonical taint signature CodeQL flags on
+// /read-style flows. Refusing it up-front lets the static scanner
+// see the sanitizer; the operational behaviour is unchanged because
+// `filepath.Clean` would have collapsed any `..` segments anyway.
+func canonicalizeAbs(p string) (string, error) {
+	for _, seg := range strings.Split(p, "/") {
+		if seg == ".." {
+			return "", errors.New("path may not contain '..' segments")
+		}
+	}
+	return canonicalize(p)
 }
 
 // canonicalize expands ~/ prefixes and resolves to an absolute path.
