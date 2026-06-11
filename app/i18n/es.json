@@ -395,31 +395,48 @@
       "tasks": {
         "gatekeeper": {
           "label": "Gatekeeper",
-          "description": "Filtro previo a la escritura en cada memory_store. Alta frecuencia (objetivo <500ms), solo-summarizer."
+          "description": "Filtro previo a la escritura en cada memory_store. Alta frecuencia (objetivo <500ms), solo-summarizer.",
+          "modelAdvice": "Juicio sí/no de alta frecuencia — un modelo ligero (haiku / flash-lite / codex-mini / local) basta."
         },
         "cleaner": {
           "label": "Bibliotecario de limpieza",
-          "description": "Bibliotecario LLM periódico. Evalúa los recuerdos antiguos como conservar / obsoleto / duplicado."
+          "description": "Bibliotecario LLM periódico. Evalúa los recuerdos antiguos como conservar / obsoleto / duplicado.",
+          "modelAdvice": "Veredictos por lotes sobre hechos viejos — modelo ligero recomendado; corre programado."
         },
         "gitactivity": {
           "label": "Resumidor de actividad de git",
-          "description": "git log → narrativa de 2-3 párrafos cada 24h. Encaja de forma natural con un worker de agente."
+          "description": "git log → narrativa de 2-3 párrafos cada 24h. Encaja de forma natural con un worker de agente.",
+          "modelAdvice": "Resumen narrativo del historial git — un modelo equilibrado (sonnet / flash) se lee mejor."
         },
         "transcript": {
           "label": "Resumidor de transcript de sesión",
-          "description": "Resumen al final de la sesión sobre \"qué hizo el agente\". Encaja de forma natural con un worker de agente."
+          "description": "Resumen al final de la sesión sobre \"qué hizo el agente\". Encaja de forma natural con un worker de agente.",
+          "modelAdvice": "Resúmenes de sesión — modelo equilibrado recomendado; alimenta el diario y la detección de deriva."
         },
         "plan_drift": {
           "label": "Detector de desviación del plan",
-          "description": "Al terminar cada sesión, comprueba si el plan del proyecto necesita actualizarse y presenta una propuesta. Encaja con un worker de agente para un razonamiento más completo."
+          "description": "Al terminar cada sesión, comprueba si el plan del proyecto necesita actualizarse y presenta una propuesta. Encaja con un worker de agente para un razonamiento más completo.",
+          "modelAdvice": "Reescribe goal/plan/secciones — exige criterio; un modelo fuerte (sonnet/opus) evita malas actualizaciones."
         },
         "conflict_detector": {
           "label": "Detector de conflictos entre capas",
-          "description": "Escaneo diario que encuentra contradicciones entre hechos / plan / objetivo / diario. Un modelo de mayor calidad = menos falsos positivos."
+          "description": "Escaneo diario que encuentra contradicciones entre hechos / plan / objetivo / diario. Un modelo de mayor calidad = menos falsos positivos.",
+          "modelAdvice": "Escaneo diario de contradicciones — un modelo equilibrado basta."
         },
         "capture": {
           "label": "Motor de captura",
-          "description": "Extracción de hechos por cada trigger a partir de los transcripts de sesión. El modo agente ofrece hechos notablemente mejores en sesiones largas; el modo summarizer es barato y local."
+          "description": "Extracción de hechos por cada trigger a partir de los transcripts de sesión. El modo agente ofrece hechos notablemente mejores en sesiones largas; el modo summarizer es barato y local.",
+          "modelAdvice": "La tarea más frecuente: extracción de hechos — usa el modelo MÁS BARATO que funcione (haiku / local)."
+        },
+        "blueprint": {
+          "modelAdvice": "Clasificación ocasional del proyecto — modelo equilibrado; aquí la calidad importa más que el costo.",
+          "label": "Proponedor de planos",
+          "description": "Clasifica un proyecto y propone su conjunto de secciones. Disparado por el operador."
+        },
+        "curation": {
+          "modelAdvice": "Tu editor conversacional de docs/políticas — modelo fuerte recomendado (sonnet/opus).",
+          "label": "Chat de curación",
+          "description": "Impulsa el canal conversacional que actualiza secciones y re-redacta páginas de conocimiento."
         }
       },
       "modelLabel": "Modelo",
@@ -427,7 +444,8 @@
       "modelCliDefault": "Predeterminado del CLI (último)",
       "modelCustom": "Personalizado…",
       "modelCustomPlaceholder": "id exacto del modelo",
-      "modelBackToList": "Lista"
+      "modelBackToList": "Lista",
+      "cliCodex": "Codex (codex exec)"
     },
     "archived": {
       "loading": "Cargando…",
@@ -2549,6 +2567,23 @@
         "fact": "Hechos",
         "playbook": "Guías",
         "skill": "Habilidades"
+      },
+      "distill": {
+        "tab": "Destilación",
+        "intro": "La recompensa del ciclo: el trabajo repetido se destila en PLAYBOOKS; promueves los buenos a SKILLS, que se inyectan en cada sesión nueva. Cuanto más usas opendray, mejor te conoce la IA.",
+        "playbooks": "Playbooks — destilados, pendientes de revisión",
+        "playbooksHint": "Destilados por la IA de diarios y hechos. Promueve lo reutilizable; descarta el ruido.",
+        "playbooksEmpty": "Nada destilado aún — aparecerán según el ciclo digiera el trabajo.",
+        "skills": "Skills — activos, inyectados al arranque",
+        "skillsHint": "Playbooks promovidos. Cada sesión nueva los recibe como skills.",
+        "skillsEmpty": "Sin skills aún — promueve un playbook para crear el primero.",
+        "skillify": "Promover a skill",
+        "skillifyHint": "Renderizar como skill e inyectar en cada arranque",
+        "discard": "Descartar",
+        "retire": "Retirar skill",
+        "injectedBadge": "inyectado",
+        "skillifiedToast": "Promovido — las sesiones nuevas reciben este skill",
+        "removedToast": "Eliminado"
       }
     },
     "cortex": {

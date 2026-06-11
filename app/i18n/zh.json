@@ -395,31 +395,48 @@
       "tasks": {
         "gatekeeper": {
           "label": "Gatekeeper",
-          "description": "每次 memory_store 前的预写过滤器。高频（目标 <500ms） — 仅 summarizer。"
+          "description": "每次 memory_store 前的预写过滤器。高频（目标 <500ms） — 仅 summarizer。",
+          "modelAdvice": "高频的是/否判断——轻量模型（haiku / flash-lite / codex-mini / 本地）完全够用。"
         },
         "cleaner": {
           "label": "Cleaner librarian",
-          "description": "周期性 LLM 整理。对旧记忆判定为保留 / 过期 / 重复。"
+          "description": "周期性 LLM 整理。对旧记忆判定为保留 / 过期 / 重复。",
+          "modelAdvice": "批量判定旧事实去留——推荐轻量模型；按计划周期运行。"
         },
         "gitactivity": {
           "label": "Git 活动总结器",
-          "description": "git log → 每 24 小时生成 2-3 段叙事。天然适合 agent worker。"
+          "description": "git log → 每 24 小时生成 2-3 段叙事。天然适合 agent worker。",
+          "modelAdvice": "git 历史的叙事性总结——均衡模型（sonnet / flash）的可读性明显更好。"
         },
         "transcript": {
           "label": "会话记录总结器",
-          "description": "会话结束时的“agent 都做了什么”总结。天然适合 agent worker。"
+          "description": "会话结束时的“agent 都做了什么”总结。天然适合 agent worker。",
+          "modelAdvice": "会话「agent 做了什么」总结——推荐均衡模型；其产出供日志与漂移检测使用。"
         },
         "plan_drift": {
           "label": "计划漂移检测",
-          "description": "每个 session 结束后判断项目 plan 是否需要更新并提出 proposal。用 agent 推理质量更高。"
+          "description": "每个 session 结束后判断项目 plan 是否需要更新并提出 proposal。用 agent 推理质量更高。",
+          "modelAdvice": "改写目标/计划/章节——判断密集型；强模型（sonnet/opus）能避免糟糕的自动更新。"
         },
         "conflict_detector": {
           "label": "跨层冲突检测",
-          "description": "每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。"
+          "description": "每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。",
+          "modelAdvice": "每日跨层矛盾扫描——均衡模型即可。"
         },
         "capture": {
           "label": "Capture 引擎",
-          "description": "按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。"
+          "description": "按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。",
+          "modelAdvice": "频率最高的任务：每隔几条消息抽取事实——用能干活的最便宜模型（haiku / 本地）。"
+        },
+        "blueprint": {
+          "modelAdvice": "偶发、由你手动触发的项目分类——均衡模型；这里质量比成本重要。",
+          "label": "蓝图提议器",
+          "description": "根据仓库信号识别项目类型并提议文档章节结构。由蓝图编辑器手动触发。"
+        },
+        "curation": {
+          "modelAdvice": "你的对话式文档/方针编辑器——推荐强模型（sonnet/opus）；它改写的是你依赖的文档。",
+          "label": "管护对话",
+          "description": "驱动「与 AI 讨论」通道：更新文档章节、重订知识页；修订遵循锁定状态。"
         }
       },
       "modelLabel": "模型",
@@ -427,7 +444,8 @@
       "modelCliDefault": "CLI 默认（最新）",
       "modelCustom": "自定义…",
       "modelCustomPlaceholder": "精确模型 ID",
-      "modelBackToList": "返回列表"
+      "modelBackToList": "返回列表",
+      "cliCodex": "Codex（codex exec）"
     },
     "archived": {
       "loading": "加载中…",
@@ -2549,6 +2567,23 @@
         "fact": "事实",
         "playbook": "Playbook",
         "skill": "技能"
+      },
+      "distill": {
+        "tab": "蒸馏",
+        "intro": "飞轮的回报所在：重复出现的工作被蒸馏为「手册」（AI 从你的项目中起草）；你把真正可复用的提升为「技能」——渲染成技能文件并注入每个新会话。opendray 用得越多，AI 越懂你的工作方式。",
+        "playbooks": "手册——已蒸馏，待审阅",
+        "playbooksHint": "AI 从项目日志与事实中蒸馏。把真正可复用的提升为技能，噪音直接丢弃。",
+        "playbooksEmpty": "还没有蒸馏产物——随着整合循环消化项目工作，手册会陆续出现。",
+        "skills": "技能——生效中，随启动注入",
+        "skillsHint": "已提升的手册。每个新会话都会获得这些技能。",
+        "skillsEmpty": "还没有技能——提升一个手册来创建第一个。",
+        "skillify": "提升为技能",
+        "skillifyHint": "渲染为技能文件并注入每次启动",
+        "discard": "丢弃",
+        "retire": "退役技能",
+        "injectedBadge": "已注入",
+        "skillifiedToast": "已提升——新会话将获得此技能",
+        "removedToast": "已移除"
       }
     },
     "cortex": {

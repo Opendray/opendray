@@ -7,7 +7,7 @@ import { api } from './api'
 
 export type TaskKind = 'gatekeeper' | 'cleaner' | 'gitactivity' | 'transcript'
 export type WorkerKind = 'summarizer' | 'agent'
-export type AgentProviderID = 'claude' | 'gemini'
+export type AgentProviderID = 'claude' | 'gemini' | 'codex'
 
 export interface WorkerConfig {
   task: TaskKind

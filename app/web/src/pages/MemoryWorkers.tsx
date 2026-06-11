@@ -497,6 +497,11 @@ function WorkerCard({
           <p className="text-muted-foreground mt-1 text-xs">
             {taskLabels.description(config.task)}
           </p>
+          {/* Model guidance — what strength this chore actually needs,
+              so operators don't burn frontier money on plumbing. */}
+          <p className="mt-1 text-[11px] text-blue-400/90">
+            {t(`web.memoryWorkers.tasks.${config.task}.modelAdvice`)}
+          </p>
         </div>
         <div className="text-muted-foreground flex flex-col items-end text-[10px]">
           <span>
@@ -599,6 +604,9 @@ function WorkerCard({
                     </SelectItem>
                     <SelectItem value="gemini">
                       {t('web.memoryWorkers.cliGemini')}
+                    </SelectItem>
+                    <SelectItem value="codex">
+                      {t('web.memoryWorkers.cliCodex')}
                     </SelectItem>
                   </SelectContent>
                 </Select>

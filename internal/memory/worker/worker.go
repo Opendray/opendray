@@ -197,12 +197,10 @@ func (c Config) Valid() error {
 		return nil
 	case WorkerAgent:
 		switch c.ProviderID {
-		case "claude", "gemini":
+		case "claude", "gemini", "codex":
 			return nil
-		case "codex":
-			return ErrAgentUnsupported
 		default:
-			return errors.New("memory worker: agent provider_id required (claude or gemini)")
+			return errors.New("memory worker: agent provider_id required (claude, gemini, or codex)")
 		}
 	default:
 		return errors.New("memory worker: invalid kind")

@@ -74,7 +74,7 @@ func (w *AgentWorker) Kind() WorkerKind { return WorkerAgent }
 
 func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 	switch w.cfg.ProviderID {
-	case "claude", "gemini":
+	case "claude", "gemini", "codex":
 	default:
 		return Response{}, ErrAgentUnsupported
 	}
@@ -98,7 +98,7 @@ func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 	defer func() { _ = os.RemoveAll(scratch) }()
 
 	sessionID := uuid.NewString()
-	args, env, err := w.buildCommand(req, sessionID)
+	args, env, err := w.buildCommand(req, sessionID, scratch)
 	if err != nil {
 		return Response{}, err
 	}
@@ -129,9 +129,23 @@ func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 	// Feed the user input then close stdin so the agent knows
 	// the prompt is complete. `claude --print` reads until EOF
 	// before generating, mirroring most non-interactive CLIs.
+	// Codex has no system-prompt flag, so its system block (plus the
+	// JSON-schema instruction) is folded into stdin ahead of the
+	// user input.
+	input := req.UserInput
+	if w.cfg.ProviderID == "codex" {
+		sys := req.SystemPrompt
+		if req.ResponseFormatJSONSchema != "" {
+			sys = sys + "\n\nReturn a single JSON object conforming to this schema:\n```json\n" +
+				req.ResponseFormatJSONSchema + "\n```\nOutput nothing else."
+		}
+		if sys != "" {
+			input = sys + "\n\n---\n\n" + input
+		}
+	}
 	go func() {
 		defer stdin.Close()
-		_, _ = stdin.Write([]byte(req.UserInput))
+		_, _ = stdin.Write([]byte(input))
 	}()
 
 	if err := cmd.Wait(); err != nil {
@@ -151,6 +165,15 @@ func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 	dur := time.Since(t0).Milliseconds()
 
 	out := stdout.String()
+	// Codex prints a progress transcript to stdout; the clean final
+	// message lands in the --output-last-message file.
+	if w.cfg.ProviderID == "codex" {
+		if data, rerr := os.ReadFile(filepath.Join(scratch, "last-message.txt")); rerr == nil {
+			if s := string(bytes.TrimSpace(data)); s != "" {
+				out = s
+			}
+		}
+	}
 	return Response{
 		Content:    out,
 		DurationMS: dur,
@@ -163,7 +186,7 @@ func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 	}, nil
 }
 
-func (w *AgentWorker) buildCommand(req Request, sessionID string) ([]string, []string, error) {
+func (w *AgentWorker) buildCommand(req Request, sessionID, scratch string) ([]string, []string, error) {
 	switch w.cfg.ProviderID {
 	case "claude":
 		args := []string{
@@ -210,6 +233,23 @@ func (w *AgentWorker) buildCommand(req Request, sessionID string) ([]string, []s
 			}
 		}
 		return args, env, nil
+	case "codex":
+		// `codex exec` is the non-interactive mode: prompt from stdin
+		// ("-"), read-only sandbox (a worker must never write), no git
+		// requirement in the scratch dir, and the clean final message
+		// written to a file Run reads back (stdout carries a progress
+		// transcript). System prompt is folded into stdin by Run.
+		args := []string{
+			"exec",
+			"--skip-git-repo-check",
+			"--sandbox", "read-only",
+			"--output-last-message", filepath.Join(scratch, "last-message.txt"),
+		}
+		if w.cfg.Model != "" {
+			args = append(args, "--model", w.cfg.Model)
+		}
+		args = append(args, "-")
+		return args, nil, nil
 	case "gemini":
 		args := []string{
 			"--print",

@@ -73,6 +73,11 @@ var agentModelCatalog = map[string][]ModelOption{
 		{ID: "gemini-2.5-flash", Label: "gemini-2.5-flash — balanced", Recommended: true},
 		{ID: "gemini-2.5-pro", Label: "gemini-2.5-pro — deepest"},
 	},
+	"codex": {
+		{ID: "gpt-5.1-codex-mini", Label: "gpt-5.1-codex-mini — cheapest", Recommended: true},
+		{ID: "gpt-5.1-codex", Label: "gpt-5.1-codex — balanced", Recommended: true},
+		{ID: "gpt-5.1", Label: "gpt-5.1 — general/deepest"},
+	},
 }
 
 // listModels returns the model options for ?provider_id=claude|gemini.
@@ -83,7 +88,7 @@ func (h *Handlers) listModels(w http.ResponseWriter, r *http.Request) {
 	models, ok := agentModelCatalog[provider]
 	if !ok {
 		writeError(w, http.StatusBadRequest,
-			errors.New("provider_id must be claude or gemini"))
+			errors.New("provider_id must be claude, gemini, or codex"))
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"models": models})

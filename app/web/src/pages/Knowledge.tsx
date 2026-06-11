@@ -903,7 +903,7 @@ function GraphBrowser() {
 
 export function KnowledgePage() {
   const { t } = useTranslation()
-  const [tab, setTab] = useState<'kb' | 'graph'>('kb')
+  const [tab, setTab] = useState<'kb' | 'distill' | 'graph'>('kb')
 
   return (
     <div className="flex h-full flex-col">
@@ -916,13 +916,175 @@ export function KnowledgePage() {
           <TabBtn active={tab === 'kb'} onClick={() => setTab('kb')}>
             {t('web.knowledge.kb.tab')}
           </TabBtn>
+          <TabBtn active={tab === 'distill'} onClick={() => setTab('distill')}>
+            {t('web.knowledge.distill.tab')}
+          </TabBtn>
           <TabBtn active={tab === 'graph'} onClick={() => setTab('graph')}>
             {t('web.knowledge.kb.graphTab')}
           </TabBtn>
         </div>
       </header>
       <div className="flex flex-1 flex-col min-h-0 px-4 pb-4">
-        {tab === 'kb' ? <KnowledgeBaseView /> : <GraphBrowser />}
+        {tab === 'kb' ? (
+          <KnowledgeBaseView />
+        ) : tab === 'distill' ? (
+          <DistillationView />
+        ) : (
+          <GraphBrowser />
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Distillation workbench — repeated experience → reusable skills ──
+//
+// The flywheel's payoff: the more you use opendray, the better the AI
+// knows you. Playbooks are AI-distilled from project work (the
+// reflect stage); the operator promotes the good ones into SKILLS —
+// rendered as skill files and injected into every spawn. This view
+// replaces the raw graph browser as the working surface; the graph
+// stays available as a plumbing/advanced tab.
+function DistillationView() {
+  const { t } = useTranslation()
+  const qc = useQueryClient()
+
+  const playbooksQuery = useQuery({
+    queryKey: ['knowledge-nodes', 'playbook'],
+    queryFn: () => listKnowledgeNodes({ kind: 'playbook' }),
+  })
+  const skillsQuery = useQuery({
+    queryKey: ['knowledge-nodes', 'skill'],
+    queryFn: () => listKnowledgeNodes({ kind: 'skill' }),
+  })
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ['knowledge-nodes', 'playbook'] })
+    qc.invalidateQueries({ queryKey: ['knowledge-nodes', 'skill'] })
+  }
+
+  const skillify = useMutation({
+    mutationFn: (id: string) => skillifyKnowledgeNode(id),
+    onSuccess: () => {
+      toast.success(t('web.knowledge.distill.skillifiedToast'))
+      refresh()
+    },
+    onError: () => toast.error(t('web.knowledge.actionFailed')),
+  })
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteKnowledgeNode(id),
+    onSuccess: () => {
+      toast.success(t('web.knowledge.distill.removedToast'))
+      refresh()
+    },
+    onError: () => toast.error(t('web.knowledge.actionFailed')),
+  })
+
+  const playbooks = playbooksQuery.data ?? []
+  const skills = skillsQuery.data ?? []
+
+  return (
+    <div className="border-border min-h-0 flex-1 overflow-auto rounded-b-md rounded-tr-md border p-4">
+      <p className="text-muted-foreground mb-4 max-w-3xl text-xs leading-relaxed">
+        {t('web.knowledge.distill.intro')}
+      </p>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Playbooks — distilled, awaiting promotion */}
+        <section>
+          <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold">
+            {t('web.knowledge.distill.playbooks')}
+            <span className="text-muted-foreground text-[11px] font-normal">
+              {playbooks.length}
+            </span>
+          </h2>
+          <p className="text-muted-foreground/80 mb-2 text-[11px]">
+            {t('web.knowledge.distill.playbooksHint')}
+          </p>
+          {playbooksQuery.isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : playbooks.length === 0 ? (
+            <p className="text-muted-foreground py-6 text-center text-xs">
+              {t('web.knowledge.distill.playbooksEmpty')}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {playbooks.map((n) => (
+                <div key={n.id} className="bg-card rounded-md border p-3">
+                  <div className="mb-1.5 flex items-start justify-between gap-2">
+                    <span className="text-sm font-medium">{n.title}</span>
+                    {n.scope === 'global' && (
+                      <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[9px] text-blue-400">
+                        global
+                      </span>
+                    )}
+                  </div>
+                  {typeof n.provenance?.summary === 'string' && (
+                    <p className="text-muted-foreground mb-2 line-clamp-3 text-xs">
+                      {String(n.provenance.summary)}
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => skillify.mutate(n.id)}
+                      disabled={skillify.isPending}
+                      className="bg-primary text-primary-foreground rounded-md px-2.5 py-1 text-xs disabled:opacity-50"
+                      title={t('web.knowledge.distill.skillifyHint')}
+                    >
+                      {t('web.knowledge.distill.skillify')}
+                    </button>
+                    <button
+                      onClick={() => remove.mutate(n.id)}
+                      disabled={remove.isPending}
+                      className="rounded-md border border-red-500/40 px-2.5 py-1 text-xs text-red-400 disabled:opacity-50"
+                    >
+                      {t('web.knowledge.distill.discard')}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Skills — promoted, injected into every spawn */}
+        <section>
+          <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold">
+            {t('web.knowledge.distill.skills')}
+            <span className="text-muted-foreground text-[11px] font-normal">
+              {skills.length}
+            </span>
+          </h2>
+          <p className="text-muted-foreground/80 mb-2 text-[11px]">
+            {t('web.knowledge.distill.skillsHint')}
+          </p>
+          {skillsQuery.isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : skills.length === 0 ? (
+            <p className="text-muted-foreground py-6 text-center text-xs">
+              {t('web.knowledge.distill.skillsEmpty')}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {skills.map((n) => (
+                <div key={n.id} className="bg-card rounded-md border p-3">
+                  <div className="mb-1 flex items-start justify-between gap-2">
+                    <span className="text-sm font-medium">{n.title}</span>
+                    <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] text-emerald-400">
+                      {t('web.knowledge.distill.injectedBadge')}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => remove.mutate(n.id)}
+                    disabled={remove.isPending}
+                    className="text-muted-foreground hover:text-destructive mt-1 text-[11px]"
+                  >
+                    {t('web.knowledge.distill.retire')}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   )

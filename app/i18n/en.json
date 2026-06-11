@@ -395,31 +395,48 @@
       "tasks": {
         "gatekeeper": {
           "label": "Gatekeeper",
-          "description": "Pre-write filter on every memory_store. High frequency (<500ms target) — summarizer-only."
+          "description": "Pre-write filter on every memory_store. High frequency (<500ms target) — summarizer-only.",
+          "modelAdvice": "High-frequency yes/no judgement — a light model (haiku / flash-lite / codex-mini / local) is plenty."
         },
         "cleaner": {
           "label": "Cleaner librarian",
-          "description": "Periodic LLM librarian. Judges aged memories as keep / stale / duplicate."
+          "description": "Periodic LLM librarian. Judges aged memories as keep / stale / duplicate.",
+          "modelAdvice": "Batch keep/stale verdicts on old facts — light model recommended; runs on a schedule."
         },
         "gitactivity": {
           "label": "Git activity summariser",
-          "description": "git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker."
+          "description": "git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker.",
+          "modelAdvice": "Narrative summary of git history — a balanced model (sonnet / flash) reads noticeably better."
         },
         "transcript": {
           "label": "Session transcript summariser",
-          "description": "Session-end \"what did the agent do\" summary. Naturally fits an agent worker."
+          "description": "Session-end \"what did the agent do\" summary. Naturally fits an agent worker.",
+          "modelAdvice": "Session 'what the agent did' summaries — balanced model recommended; feeds the journal and drift detection."
         },
         "plan_drift": {
           "label": "Plan drift detector",
-          "description": "After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning."
+          "description": "After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning.",
+          "modelAdvice": "Rewrites your goal/plan/sections — judgement-heavy; a strong model (sonnet/opus) avoids bad auto-updates."
         },
         "conflict_detector": {
           "label": "Cross-layer conflict detector",
-          "description": "Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives."
+          "description": "Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.",
+          "modelAdvice": "Daily cross-layer contradiction scan — balanced model is enough."
         },
         "capture": {
           "label": "Capture engine",
-          "description": "Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local."
+          "description": "Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.",
+          "modelAdvice": "Highest-frequency task: fact extraction every few messages — use the CHEAPEST model that works (haiku / local)."
+        },
+        "blueprint": {
+          "modelAdvice": "Occasional, operator-triggered project classification — balanced model; quality matters more than cost here.",
+          "label": "Blueprint proposer",
+          "description": "Classifies a project from repo signals and proposes its doc section set. Operator-triggered from the blueprint editor."
+        },
+        "curation": {
+          "modelAdvice": "Your conversational doc/policy editor — strong model recommended (sonnet/opus); it rewrites documents you rely on.",
+          "label": "Curation chat",
+          "description": "Drives the talk-to-AI channel that updates doc sections and re-drafts knowledge pages; revisions respect lock state."
         }
       },
       "modelLabel": "Model",
@@ -427,7 +444,8 @@
       "modelCliDefault": "CLI default (latest)",
       "modelCustom": "Custom…",
       "modelCustomPlaceholder": "exact model id",
-      "modelBackToList": "List"
+      "modelBackToList": "List",
+      "cliCodex": "Codex (codex exec)"
     },
     "archived": {
       "loading": "Loading…",
@@ -2549,6 +2567,23 @@
         "fact": "Facts",
         "playbook": "Playbooks",
         "skill": "Skills"
+      },
+      "distill": {
+        "tab": "Distillation",
+        "intro": "The flywheel's payoff: repeated work distils into PLAYBOOKS (AI-drafted from your projects); you promote the good ones into SKILLS, which are rendered as skill files and injected into every new session. The more you use opendray, the better the AI knows how you work.",
+        "playbooks": "Playbooks — distilled, awaiting review",
+        "playbooksHint": "AI-distilled from project journals + facts. Promote what's genuinely reusable; discard noise.",
+        "playbooksEmpty": "Nothing distilled yet — playbooks appear as the consolidation loop digests project work.",
+        "skills": "Skills — active, injected at spawn",
+        "skillsHint": "Promoted playbooks. Every new session receives these as skills.",
+        "skillsEmpty": "No skills yet — promote a playbook to create the first one.",
+        "skillify": "Promote to skill",
+        "skillifyHint": "Render as a skill file and inject into every spawn",
+        "discard": "Discard",
+        "retire": "Retire skill",
+        "injectedBadge": "injected",
+        "skillifiedToast": "Promoted — new sessions receive this skill",
+        "removedToast": "Removed"
       }
     },
     "cortex": {
