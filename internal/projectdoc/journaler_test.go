@@ -83,3 +83,25 @@ func TestCompactOneLine(t *testing.T) {
 		}
 	}
 }
+
+func TestSessionSucceeded(t *testing.T) {
+	zero, fail := 0, 1
+	cases := []struct {
+		name  string
+		exit  *int
+		state string
+		want  bool
+	}{
+		{"clean exit", &zero, "ended", true},
+		{"no exit code recorded", nil, "ended", true},
+		{"non-zero exit", &fail, "ended", false},
+		{"operator stop is not a failure", &fail, "stopped", true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := SessionSucceeded(SessionInfo{ExitCode: tc.exit}, tc.state); got != tc.want {
+				t.Errorf("SessionSucceeded(exit=%v, state=%s) = %v, want %v", tc.exit, tc.state, got, tc.want)
+			}
+		})
+	}
+}

@@ -103,9 +103,11 @@ type Journaler struct {
 	driftJournalLookback int
 
 	// skillUsage, when set, receives the raw session transcript after
-	// each session ends so skill use_count / last_used_at can be
-	// bumped (Cortex distillation workbench). Best-effort.
-	skillUsage func(ctx context.Context, transcript string)
+	// each session ends — plus whether the session SUCCEEDED — so skill
+	// use_count / last_used_at and the success/failure outcome counters
+	// can be bumped (the experience compiler's closed feedback loop).
+	// Best-effort.
+	skillUsage func(ctx context.Context, transcript string, success bool)
 
 	// transcriptMaxBytes caps how much transcript we feed the LLM.
 	// 16 KiB ≈ 4k tokens — enough context for a meaningful summary
@@ -144,9 +146,10 @@ func (j *Journaler) WithSummariser(s TranscriptSummariser) *Journaler {
 }
 
 // WithSkillUsage installs the optional skill-usage recorder: after a
-// session ends its transcript is handed over so skills it referenced
-// get their use counters bumped. Pass nil to disable.
-func (j *Journaler) WithSkillUsage(fn func(ctx context.Context, transcript string)) *Journaler {
+// session ends its transcript is handed over — with the session's
+// outcome — so skills it referenced get their use + outcome counters
+// bumped. Pass nil to disable.
+func (j *Journaler) WithSkillUsage(fn func(ctx context.Context, transcript string, success bool)) *Journaler {
 	j.skillUsage = fn
 	return j
 }
@@ -246,7 +249,7 @@ func (j *Journaler) process(ctx context.Context, ev eventbus.Event, state string
 			// before the summary call so a summariser failure can't
 			// starve the usage counters.
 			if j.skillUsage != nil {
-				j.skillUsage(ctx, transcript)
+				j.skillUsage(ctx, transcript, SessionSucceeded(sess, state))
 			}
 			// LLM gets its own background context — the eventbus
 			// goroutine that delivered session.ended is short-lived;
@@ -404,6 +407,18 @@ func (j *Journaler) maybeProposeDocDrift(sess SessionInfo, transcriptSummary str
 	}
 	j.log.Info("journaler: drift proposal filed",
 		"cwd", sess.Cwd, "kind", kind, "session_id", sess.ID, "proposal_id", proposal.ID)
+}
+
+// SessionSucceeded is the shared "did this session end well" heuristic:
+// a clean exit (code 0 / none recorded) is a success, and an explicit
+// operator stop counts as success too — stopping an interactive session
+// is how work normally finishes, not a failure signal. Only a non-zero
+// exit from a session that ended by itself reads as failure.
+func SessionSucceeded(sess SessionInfo, state string) bool {
+	if state == "stopped" {
+		return true
+	}
+	return sess.ExitCode == nil || *sess.ExitCode == 0
 }
 
 // buildJournalBody assembles a deterministic markdown summary. Kept

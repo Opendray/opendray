@@ -22,6 +22,10 @@ export interface KnowledgeNode {
   /** Skill usage tracking: sessions whose transcript referenced this skill. */
   use_count?: number
   last_used_at?: string | null
+  /** Outcome tracking: of the sessions that referenced this skill, how many
+   * ended in success vs failure — the experience compiler's feedback loop. */
+  success_count?: number
+  failure_count?: number
   /** Skills: disabled skills keep their node but their SKILL.md is
    * removed from the vault, so no session loads them. */
   enabled?: boolean
@@ -136,6 +140,31 @@ export async function setKnowledgeNodeEnabled(
     `/api/v1/knowledge/nodes/${encodeURIComponent(id)}/enable`,
     { method: 'POST', body: { enabled } },
   )
+}
+
+// ── retirement proposals (the closed feedback loop) ───────────
+
+export type RetirementReason = 'never_used' | 'low_success' | 'dormant'
+
+export interface RetirementCandidate {
+  node: KnowledgeNode
+  reason: RetirementReason
+}
+
+/** Skills the outcome loop proposes to retire: never referenced after 14+
+ * days, repeatedly loaded into sessions that then fail, or long dormant. */
+export async function listRetirementCandidates(): Promise<RetirementCandidate[]> {
+  const res = await api<{ candidates: RetirementCandidate[] }>(
+    '/api/v1/knowledge/skills/retirement',
+  )
+  return res.candidates ?? []
+}
+
+/** Workbench ranking: recurrence × manual time cost, computed by the
+ * experience compiler and stored in provenance. Missing → 0 (legacy rows). */
+export function candidateScore(n: KnowledgeNode): number {
+  const v = n.provenance?.score
+  return typeof v === 'number' ? v : 0
 }
 
 // ── impact view (the graph's production face) ─────────────────

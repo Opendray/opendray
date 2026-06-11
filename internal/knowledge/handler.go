@@ -44,10 +44,25 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Post("/edges", h.createEdge)
 		r.Get("/brain", h.projectBrain)
 		r.Get("/impact", h.impact)
+		r.Get("/skills/retirement", h.retirement)
 		r.Get("/search", h.search)
 		r.Post("/reset", h.reset)
 		r.Post("/kb/draft", h.draftKB)
 	})
+}
+
+// retirement returns the skills the closed feedback loop proposes to retire
+// (never used / loaded-but-failing / dormant) for the workbench.
+func (h *Handlers) retirement(w http.ResponseWriter, r *http.Request) {
+	out, err := h.svc.RetirementCandidates(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if out == nil {
+		out = []RetirementCandidate{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"candidates": out})
 }
 
 // impact returns entities ordered by blast radius for the Impact view.

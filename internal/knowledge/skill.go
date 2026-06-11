@@ -6,12 +6,22 @@ import (
 )
 
 // SkillSink persists a rendered SKILL.md so the skills loader (internal/skills)
-// can pick it up as a vault skill (<skills>/<id>/SKILL.md). The app wires a
-// filesystem impl; knowledge owns the interface so it never imports
-// internal/skills (the one-way dependency rule).
+// can pick it up as a vault skill (<skills>/<id>/SKILL.md). WriteSkillAsset
+// places an extra file next to SKILL.md — the experience compiler ships a
+// skill's executable form as <skills>/<id>/run.sh. The app wires a filesystem
+// impl; knowledge owns the interface so it never imports internal/skills
+// (the one-way dependency rule).
 type SkillSink interface {
 	WriteSkill(ctx context.Context, id, markdown string) error
+	WriteSkillAsset(ctx context.Context, id, name, content string) error
 	DeleteSkill(ctx context.Context, id string) error
+}
+
+// TaskSink registers a compiled skill's runnable form as an opendray custom
+// task so the operator (and integrations) can run it directly. cwd="" means
+// global. The app adapts internal/customtask; best-effort by design.
+type TaskSink interface {
+	EnsureSkillTask(ctx context.Context, slug, title, description, cwd string) error
 }
 
 // skillSlug turns a title into a skills-loader id / dirname (lowercase,

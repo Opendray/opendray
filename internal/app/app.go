@@ -95,10 +95,10 @@ type App struct {
 	cliacctWatcher       *cliacct.Watcher       // optional; nil when [providers.claude] watcher_enabled = false
 	server               *http.Server
 	knowledgeAnchorer    *knowledge.Anchorer            // M-KG Phase 1 anchor sweep; nil when [knowledge] disabled
-	knowledgeReflector   *knowledge.Reflector           // M-KG Phase 3 fact->playbook sweep; nil when disabled
+	knowledgeCompiler    *knowledge.ExperienceCompiler  // experience compiler: cross-project recurrence mining; nil when disabled
 	knowledgeSvc         *knowledge.Service             // M-KG Phase 6 embed backfill; nil when disabled
 	knowledgeKBDrafter   *knowledge.KBDrafter           // M-KB curated KB-page drafting; nil when disabled
-	knowledgeConsolidate *knowledge.ConsolidationEngine // P-C unified anchor→reflect→KB loop; nil when disabled
+	knowledgeConsolidate *knowledge.ConsolidationEngine // P-C unified anchor→compile→KB loop; nil when disabled
 }
 
 // knowledgeMemorySource adapts *memory.Service to knowledge.MemorySource so
@@ -294,6 +294,22 @@ func (s knowledgeSkillSink) WriteSkill(_ context.Context, id, markdown string) e
 		return err
 	}
 	return os.WriteFile(filepath.Join(d, "SKILL.md"), []byte(markdown), 0o600)
+}
+
+// WriteSkillAsset places an extra file next to SKILL.md — the experience
+// compiler ships a skill's executable form as run.sh. Scripts get the
+// executable bit; everything else stays 0600. The id/name are slugs minted
+// server-side (never operator input), so the join stays inside the vault.
+func (s knowledgeSkillSink) WriteSkillAsset(_ context.Context, id, name, content string) error {
+	d := filepath.Join(s.dir, id)
+	if err := os.MkdirAll(d, 0o700); err != nil {
+		return err
+	}
+	mode := os.FileMode(0o600)
+	if strings.HasSuffix(name, ".sh") {
+		mode = 0o700
+	}
+	return os.WriteFile(filepath.Join(d, name), []byte(content), mode)
 }
 
 func (s knowledgeSkillSink) DeleteSkill(_ context.Context, id string) error {
@@ -810,13 +826,16 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// returns exact memory-only (M-U) behaviour.
 	var knowledgeHandlers *knowledge.Handlers
 	var knowledgeAnchorer *knowledge.Anchorer
-	var knowledgeReflector *knowledge.Reflector
+	var knowledgeCompiler *knowledge.ExperienceCompiler
 	var knowledgeSvc *knowledge.Service
 	var knowledgeKBDrafter *knowledge.KBDrafter
 	var knowledgeConsolidate *knowledge.ConsolidationEngine
 	if cfg.Knowledge.Enabled {
 		knowledgeSvc = knowledge.NewService(st.Pool(), log)
 		knowledgeSvc.WithSkillSink(knowledgeSkillSink{dir: skillsRoot}) // Phase 4 — render promoted skills
+		// Compiled skills (experience compiler) also land as click-runnable
+		// custom tasks pointing at the rendered run.sh.
+		knowledgeSvc.WithTaskSink(knowledgeTaskSink{tasks: customTaskSvc, skillsRoot: skillsRoot})
 		// Skill promotion drafts a full structured SKILL.md via the
 		// curation worker (overview / when-to-use / procedure /
 		// pitfalls / verification) instead of copying the playbook
@@ -837,10 +856,16 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			knowledgeAnchorer = knowledge.NewAnchorer(st.Pool(), knowledgeMemorySource{mem: memorySvc}, log).
 				WithLLM(kgLLM).
 				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc}) // Cortex P2 — frozen projects stop feeding the graph
-			knowledgeReflector = knowledge.NewReflector(st.Pool(), kbLLM, log).
-				WithJournal(knowledgeJournalSource{pd: projectDocSvc}).
-				WithMemory(knowledgeMemorySource{mem: memorySvc}).   // P-G — facts from Memory
-				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc}) // P-D — skip frozen projects
+			// The experience compiler — outcome-driven distillation. It mines
+			// session episodes ACROSS projects, clusters them by embedding
+			// similarity, and only drafts a candidate when the same procedure
+			// SUCCEEDED in ≥2 sessions (repetition + success evidence; never a
+			// single session). Candidates are ranked by recurrence × manual
+			// time cost so what saves the most operator time distills first.
+			knowledgeCompiler = knowledge.NewExperienceCompiler(st.Pool(), kbLLM, log).
+				WithEpisodes(knowledgeEpisodeSource{pool: st.Pool()}).
+				WithEmbedder(memorySvc.Embedder()).
+				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc}) // P-D — frozen projects leave the feedstock
 			knowledgeSvc.WithReanchor(func(c context.Context) error {
 				return knowledgeAnchorer.AnchorAll(c, 500)
 			})
@@ -864,11 +889,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				WithProposals(knowledgeProposalSink{pd: projectDocSvc}).
 				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc})
 			knowledgeSvc.WithOverviewDrafter(knowledgeOverview)
-			// P-C — one ordered loop (anchor → reflect → KB → overview) replaces
+			// P-C — one ordered loop (anchor → compile → KB → overview) replaces
 			// the independent sweep goroutines so each stage drafts from the prior
 			// stage's fresh output instead of racing on separate timers.
 			knowledgeConsolidate = knowledge.NewConsolidationEngine(
-				knowledgeAnchorer, knowledgeReflector, knowledgeKBDrafter,
+				knowledgeAnchorer, knowledgeCompiler, knowledgeKBDrafter,
 				knowledgeOverview, log)
 		}
 		knowledgeHandlers = knowledge.NewHandlers(knowledgeSvc, log)
@@ -990,13 +1015,14 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// whether the project plan needs updating and files a proposal
 	// when so.
 	journaler.WithPlanDetector(newPlanDriftDetector(memoryWorkerRegistry))
-	// Skill usage tracking — bump use counters for skills the session's
-	// transcript referenced, so the distillation workbench can surface
-	// never-used skills as retirement candidates.
+	// Skill usage + outcome tracking — bump use counters for skills the
+	// session's transcript referenced AND record whether that session
+	// succeeded, so the workbench can propose retiring skills that are
+	// never used or that keep getting loaded into failing sessions.
 	if cfg.Knowledge.Enabled {
 		knowledgeUsageStore := knowledge.NewStore(st.Pool())
-		journaler.WithSkillUsage(func(c context.Context, transcript string) {
-			if _, err := knowledgeUsageStore.RecordSkillUsage(c, transcript); err != nil {
+		journaler.WithSkillUsage(func(c context.Context, transcript string, success bool) {
+			if _, err := knowledgeUsageStore.RecordSkillUsage(c, transcript, success); err != nil {
 				log.Debug("skill usage recording failed", "err", err)
 			}
 		})
@@ -1130,7 +1156,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		cliacctWatcher:       cliacctWatcher,
 		server:               srv,
 		knowledgeAnchorer:    knowledgeAnchorer,
-		knowledgeReflector:   knowledgeReflector,
+		knowledgeCompiler:    knowledgeCompiler,
 		knowledgeSvc:         knowledgeSvc,
 		knowledgeKBDrafter:   knowledgeKBDrafter,
 		knowledgeConsolidate: knowledgeConsolidate,

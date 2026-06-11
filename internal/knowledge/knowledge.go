@@ -155,6 +155,12 @@ type Node struct {
 	UseCount   int        `json:"use_count"`
 	LastUsedAt *time.Time `json:"last_used_at,omitempty"`
 
+	// Outcome tracking (skills): of the sessions that referenced this
+	// skill, how many ended in success (exit 0 / clean stop) vs failure.
+	// Skills that get loaded but keep failing are retirement candidates.
+	SuccessCount int `json:"success_count"`
+	FailureCount int `json:"failure_count"`
+
 	// Enabled (skills): a disabled skill keeps its node but its
 	// SKILL.md is removed from the vault so no session loads it.
 	Enabled bool `json:"enabled"`

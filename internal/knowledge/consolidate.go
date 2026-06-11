@@ -18,7 +18,8 @@ import (
 // dependency order per cycle:
 //
 //	anchor   — lift new Memory facts into entities (substrate)
-//	reflect  — distil facts + journal into playbooks
+//	compile  — mine cross-project episodes for recurring, repeatedly
+//	           successful procedures (the experience compiler)
 //	KB draft — render the human-readable KB pages from the fresh facts/playbooks
 //
 // Every stage is already dirty-checked + lock-aware internally, so steady-state
@@ -27,25 +28,25 @@ import (
 
 // ConsolidationEngine sequences the knowledge-side consolidation stages.
 type ConsolidationEngine struct {
-	anchorer  *Anchorer
-	reflector *Reflector
-	kb        *KBDrafter
-	overview  *OverviewDrafter
-	log       *slog.Logger
+	anchorer *Anchorer
+	compiler *ExperienceCompiler
+	kb       *KBDrafter
+	overview *OverviewDrafter
+	log      *slog.Logger
 }
 
 // NewConsolidationEngine wires the stages. Any of them may be nil.
-func NewConsolidationEngine(a *Anchorer, r *Reflector, kb *KBDrafter, ov *OverviewDrafter, log *slog.Logger) *ConsolidationEngine {
+func NewConsolidationEngine(a *Anchorer, c *ExperienceCompiler, kb *KBDrafter, ov *OverviewDrafter, log *slog.Logger) *ConsolidationEngine {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &ConsolidationEngine{anchorer: a, reflector: r, kb: kb, overview: ov, log: log.With("component", "knowledge.consolidate")}
+	return &ConsolidationEngine{anchorer: a, compiler: c, kb: kb, overview: ov, log: log.With("component", "knowledge.consolidate")}
 }
 
 // Enabled reports whether at least one stage is wired (otherwise the loop is a
 // no-op and the caller can skip launching it).
 func (e *ConsolidationEngine) Enabled() bool {
-	return e.anchorer != nil || e.reflector != nil || e.kb != nil || e.overview != nil
+	return e.anchorer != nil || e.compiler != nil || e.kb != nil || e.overview != nil
 }
 
 // ConsolidateConfig tunes the unified loop. One interval drives the whole
@@ -54,7 +55,6 @@ type ConsolidateConfig struct {
 	Interval     time.Duration // between cycles (default 15m)
 	InitialDelay time.Duration // before the first cycle (default 1m)
 	PerProject   int           // anchor: max memories pulled per project (default 500)
-	MinFacts     int           // reflect: skip projects with fewer facts (default 5)
 }
 
 func (c ConsolidateConfig) withDefaults() ConsolidateConfig {
@@ -66,9 +66,6 @@ func (c ConsolidateConfig) withDefaults() ConsolidateConfig {
 	}
 	if c.PerProject <= 0 {
 		c.PerProject = 500
-	}
-	if c.MinFacts <= 0 {
-		c.MinFacts = 5
 	}
 	return c
 }
@@ -83,7 +80,7 @@ func (e *ConsolidationEngine) Run(ctx context.Context, cfg ConsolidateConfig) {
 	cfg = cfg.withDefaults()
 	e.log.Info("knowledge consolidation engine running",
 		"interval", cfg.Interval,
-		"anchor", e.anchorer != nil, "reflect", e.reflector != nil, "kb", e.kb != nil)
+		"anchor", e.anchorer != nil, "compile", e.compiler != nil, "kb", e.kb != nil)
 	timer := time.NewTimer(cfg.InitialDelay)
 	defer timer.Stop()
 	for {
@@ -97,7 +94,7 @@ func (e *ConsolidationEngine) Run(ctx context.Context, cfg ConsolidateConfig) {
 	}
 }
 
-// RunOnce executes a single ordered cycle: anchor → reflect → KB. Each stage
+// RunOnce executes a single ordered cycle: anchor → compile → KB. Each stage
 // soft-fails (logged, not propagated) so one bad stage never starves the next
 // cycle. A cancelled context short-circuits the remaining stages.
 func (e *ConsolidationEngine) RunOnce(ctx context.Context, cfg ConsolidateConfig) {
@@ -111,9 +108,9 @@ func (e *ConsolidationEngine) RunOnce(ctx context.Context, cfg ConsolidateConfig
 	if ctx.Err() != nil {
 		return
 	}
-	if e.reflector != nil {
-		if _, err := e.reflector.ReflectAll(ctx, cfg.MinFacts); err != nil && !errors.Is(err, context.Canceled) {
-			e.log.Warn("consolidation: reflect stage failed", "err", err)
+	if e.compiler != nil {
+		if _, err := e.compiler.CompileAll(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			e.log.Warn("consolidation: experience-compile stage failed", "err", err)
 		}
 	}
 	if ctx.Err() != nil {

@@ -9,10 +9,14 @@ import {
   listKnowledgeNodes,
   getKnowledgeGraph,
   listImpactEntities,
+  listRetirementCandidates,
+  candidateScore,
   skillifyKnowledgeNode,
   setKnowledgeNodeEnabled,
   deleteKnowledgeNode,
   draftKB,
+  type KnowledgeNode,
+  type RetirementReason,
 } from '@/lib/knowledge'
 import {
   getProjectDoc,
@@ -815,14 +819,47 @@ export function KnowledgePage() {
   )
 }
 
-// ── Distillation workbench — repeated experience → reusable skills ──
+// ── Distillation workbench — repeated experience → tested skills ──
 //
-// The flywheel's payoff: the more you use opendray, the better the AI
-// knows you. Playbooks are AI-distilled from project work (the
-// reflect stage); the operator promotes the good ones into SKILLS —
-// rendered as skill files and injected into every spawn. This view
-// replaces the raw graph browser as the working surface; the graph
-// stays available as a plumbing/advanced tab.
+// The experience compiler mines session episodes ACROSS projects and only
+// drafts a candidate when the same procedure SUCCEEDED in ≥2 sessions
+// (repetition + success evidence — never a single session). Candidates are
+// ranked by recurrence × the procedure's manual time cost, so what saves
+// the most operator time distills first. Where the procedure is fully
+// mechanical the candidate carries an executable run.sh (with a validation
+// step) — promotion ships it next to SKILL.md and registers a custom task.
+// The outcome loop then watches every promoted skill: sessions that load
+// it report success/failure, and the retirement list proposes dropping
+// what the evidence says isn't working.
+
+// Candidate provenance written by the experience compiler.
+function compilerStats(n: KnowledgeNode) {
+  const p = n.provenance ?? {}
+  return {
+    recurrence: typeof p.recurrence === 'number' ? p.recurrence : 0,
+    estMinutes: typeof p.est_minutes === 'number' ? p.est_minutes : 0,
+    projects: Array.isArray(p.projects) ? p.projects.length : 0,
+    compiled: typeof p.script === 'string' && p.script !== '',
+  }
+}
+
+function RetireReasonBadge({ reason }: { reason: RetirementReason }) {
+  const { t } = useTranslation()
+  const styles: Record<RetirementReason, string> = {
+    never_used: 'bg-zinc-500/20 text-zinc-300',
+    low_success: 'bg-red-500/15 text-red-400',
+    dormant: 'bg-amber-500/15 text-amber-400',
+  }
+  return (
+    <span
+      className={`rounded px-1.5 py-0.5 text-[9px] ${styles[reason]}`}
+      title={t(`web.knowledge.distill.retirement.${reason}Hint`)}
+    >
+      {t(`web.knowledge.distill.retirement.${reason}`)}
+    </span>
+  )
+}
+
 function DistillationView() {
   const { t } = useTranslation()
   const qc = useQueryClient()
@@ -835,9 +872,14 @@ function DistillationView() {
     queryKey: ['knowledge-nodes', 'skill'],
     queryFn: () => listKnowledgeNodes({ kind: 'skill' }),
   })
+  const retirementQuery = useQuery({
+    queryKey: ['knowledge-retirement'],
+    queryFn: () => listRetirementCandidates(),
+  })
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ['knowledge-nodes', 'playbook'] })
     qc.invalidateQueries({ queryKey: ['knowledge-nodes', 'skill'] })
+    qc.invalidateQueries({ queryKey: ['knowledge-retirement'] })
   }
 
   const skillify = useMutation({
@@ -870,8 +912,16 @@ function DistillationView() {
     onError: () => toast.error(t('web.knowledge.actionFailed')),
   })
 
-  const playbooks = playbooksQuery.data ?? []
+  // Rank candidates by what saves the most operator time: recurrence ×
+  // manual time cost (the compiler's score). Ties / legacy rows fall back
+  // to recency via the API's updated_at ordering.
+  const playbooks = [...(playbooksQuery.data ?? [])].sort(
+    (a, b) => candidateScore(b) - candidateScore(a),
+  )
   const skills = skillsQuery.data ?? []
+  const retireReasons = new Map(
+    (retirementQuery.data ?? []).map((c) => [c.node.id, c.reason]),
+  )
 
   return (
     <div className="border-border min-h-0 flex-1 overflow-auto rounded-b-md rounded-tr-md border p-4">
@@ -899,52 +949,71 @@ function DistillationView() {
             </p>
           ) : (
             <div className="space-y-2">
-              {playbooks.map((n) => (
-                <div key={n.id} className="bg-card rounded-md border p-3">
-                  <div className="mb-1.5 flex items-start justify-between gap-2">
-                    <span className="text-sm font-medium">{n.title}</span>
-                    <span className="flex flex-none gap-1">
-                      {/^automate:/i.test(n.title) && (
-                        <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[9px] text-amber-400">
-                          {t('web.knowledge.distill.automateBadge')}
-                        </span>
-                      )}
-                      {/^pitfall:/i.test(n.title) && (
-                        <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[9px] text-red-400">
-                          {t('web.knowledge.distill.pitfallBadge')}
-                        </span>
-                      )}
-                      {n.scope === 'global' && (
-                        <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[9px] text-blue-400">
-                          global
-                        </span>
-                      )}
-                    </span>
+              {playbooks.map((n) => {
+                const stats = compilerStats(n)
+                return (
+                  <div key={n.id} className="bg-card rounded-md border p-3">
+                    <div className="mb-1.5 flex items-start justify-between gap-2">
+                      <span className="text-sm font-medium">{n.title}</span>
+                      <span className="flex flex-none gap-1">
+                        {stats.compiled && (
+                          <span
+                            className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] text-emerald-400"
+                            title={t('web.knowledge.distill.compiledHint')}
+                          >
+                            {t('web.knowledge.distill.compiledBadge')}
+                          </span>
+                        )}
+                        {n.scope === 'global' && (
+                          <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[9px] text-blue-400">
+                            global
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    {stats.recurrence > 0 && (
+                      <p
+                        className="text-muted-foreground mb-1 text-[11px]"
+                        title={t('web.knowledge.distill.scoreHint')}
+                      >
+                        {t('web.knowledge.distill.recurrence', {
+                          count: stats.recurrence,
+                        })}
+                        {' · '}
+                        {t('web.knowledge.distill.timeCost', {
+                          minutes: stats.estMinutes,
+                        })}
+                        {stats.projects > 1 &&
+                          ` · ${t('web.knowledge.distill.projectSpan', {
+                            count: stats.projects,
+                          })}`}
+                      </p>
+                    )}
+                    {typeof n.provenance?.summary === 'string' && (
+                      <p className="text-muted-foreground mb-2 line-clamp-3 text-xs">
+                        {String(n.provenance.summary)}
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => skillify.mutate(n.id)}
+                        disabled={skillify.isPending}
+                        className="bg-primary text-primary-foreground rounded-md px-2.5 py-1 text-xs disabled:opacity-50"
+                        title={t('web.knowledge.distill.skillifyHint')}
+                      >
+                        {t('web.knowledge.distill.skillify')}
+                      </button>
+                      <button
+                        onClick={() => remove.mutate(n.id)}
+                        disabled={remove.isPending}
+                        className="rounded-md border border-red-500/40 px-2.5 py-1 text-xs text-red-400 disabled:opacity-50"
+                      >
+                        {t('web.knowledge.distill.discard')}
+                      </button>
+                    </div>
                   </div>
-                  {typeof n.provenance?.summary === 'string' && (
-                    <p className="text-muted-foreground mb-2 line-clamp-3 text-xs">
-                      {String(n.provenance.summary)}
-                    </p>
-                  )}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => skillify.mutate(n.id)}
-                      disabled={skillify.isPending}
-                      className="bg-primary text-primary-foreground rounded-md px-2.5 py-1 text-xs disabled:opacity-50"
-                      title={t('web.knowledge.distill.skillifyHint')}
-                    >
-                      {t('web.knowledge.distill.skillify')}
-                    </button>
-                    <button
-                      onClick={() => remove.mutate(n.id)}
-                      disabled={remove.isPending}
-                      className="rounded-md border border-red-500/40 px-2.5 py-1 text-xs text-red-400 disabled:opacity-50"
-                    >
-                      {t('web.knowledge.distill.discard')}
-                    </button>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </section>
@@ -970,11 +1039,9 @@ function DistillationView() {
             <div className="space-y-2">
               {skills.map((n) => {
                 const enabled = n.enabled !== false
-                const stale =
-                  enabled &&
-                  (n.use_count ?? 0) === 0 &&
-                  Date.now() - new Date(n.created_at).getTime() >
-                    14 * 24 * 3600 * 1000
+                const retireReason = retireReasons.get(n.id)
+                const outcomes = (n.success_count ?? 0) + (n.failure_count ?? 0)
+                const compiled = compilerStats(n).compiled
                 return (
                   <div
                     key={n.id}
@@ -983,12 +1050,13 @@ function DistillationView() {
                     <div className="mb-1 flex items-start justify-between gap-2">
                       <span className="text-sm font-medium">{n.title}</span>
                       <span className="flex flex-none items-center gap-1.5">
-                        {stale && (
+                        {retireReason && <RetireReasonBadge reason={retireReason} />}
+                        {compiled && (
                           <span
-                            className="rounded bg-zinc-500/20 px-1.5 py-0.5 text-[9px] text-zinc-300"
-                            title={t('web.knowledge.distill.staleHint')}
+                            className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] text-emerald-400"
+                            title={t('web.knowledge.distill.compiledHint')}
                           >
-                            {t('web.knowledge.distill.staleBadge')}
+                            {t('web.knowledge.distill.compiledBadge')}
                           </span>
                         )}
                         {enabled ? (
@@ -1014,6 +1082,11 @@ function DistillationView() {
                       {t('web.knowledge.distill.usage', {
                         count: n.use_count ?? 0,
                       })}
+                      {outcomes > 0 &&
+                        ` · ${t('web.knowledge.distill.outcomes', {
+                          ok: n.success_count ?? 0,
+                          failed: n.failure_count ?? 0,
+                        })}`}
                       {n.last_used_at &&
                         ` · ${t('web.knowledge.distill.lastUsed', {
                           date: new Date(n.last_used_at).toLocaleDateString(),

@@ -18,6 +18,7 @@ type Service struct {
 	store       *Store
 	emb         Embedder                    // optional; semantic search + backfill
 	skillSink   SkillSink                   // optional; render promoted skills
+	taskSink    TaskSink                    // optional; register compiled skills as custom tasks
 	skillifyLLM LLM                         // optional; LLM-authored SKILL.md on promotion
 	reanchor    func(context.Context) error // optional; re-derive the graph after reset
 	kbDrafter   *KBDrafter                  // optional; M-KB curated page drafting
@@ -130,6 +131,14 @@ func (s *Service) WithSkillSink(sink SkillSink) *Service {
 	return s
 }
 
+// WithTaskSink enables the compiled-skill path: when a promoted candidate
+// carries an executable script, promotion also registers an opendray custom
+// task pointing at the rendered run.sh.
+func (s *Service) WithTaskSink(sink TaskSink) *Service {
+	s.taskSink = sink
+	return s
+}
+
 // WithSkillifyLLM enables LLM-authored skills: instead of copying the
 // playbook body verbatim into SKILL.md, promotion drafts a complete,
 // structured skill document (overview / when-to-use / procedure with
@@ -161,6 +170,9 @@ func (s *Service) generateSkillMarkdown(ctx context.Context, slug string, pb Nod
 		return ""
 	}
 	input := "Slug: " + slug + "\n\nPlaybook title: " + pb.Title + "\n\nPlaybook body:\n" + pb.Body
+	if provenanceString(pb, "script") != "" {
+		input += "\n\nNote: this skill ships an executable `run.sh` (same directory as SKILL.md) that performs the whole procedure including its validation step. The Procedure section should lead with running it and keep the manual steps as the fallback."
+	}
 	out, err := s.skillifyLLM.Complete(ctx, skillifySystem, input)
 	if err != nil {
 		s.log.Warn("skillify llm failed — using mechanical render", "err", err)
@@ -175,10 +187,12 @@ func (s *Service) generateSkillMarkdown(ctx context.Context, slug string, pb Nod
 }
 
 // Skillify promotes a playbook to a skill: it creates a skill node (the final
-// rung of the fact->playbook->skill maturity axis), links it to the source
-// playbook, and renders a SKILL.md the skills loader can pick up. Conservative
-// by design — promotion is explicit (operator/agent-triggered), not automatic;
-// evidence-based auto-promotion needs the runtime usage-feedback loop.
+// rung of the maturity axis), links it to the source candidate, and renders a
+// SKILL.md the skills loader can pick up. When the candidate was compiled by
+// the experience compiler with an executable form, promotion also materialises
+// run.sh next to SKILL.md and registers it as an opendray custom task — a
+// skill is a tested artifact, not prose, wherever possible. Promotion stays
+// explicit (operator/agent-triggered), not automatic.
 func (s *Service) Skillify(ctx context.Context, playbookID string) (Node, error) {
 	if s.skillSink == nil {
 		return Node{}, errors.New("knowledge: skill rendering is not configured")
@@ -191,6 +205,14 @@ func (s *Service) Skillify(ctx context.Context, playbookID string) (Node, error)
 		return Node{}, fmt.Errorf("knowledge: can only skillify a playbook, got %q", pb.Kind)
 	}
 	slug := skillSlug(pb.Title)
+	prov := map[string]any{"source": "skillify", "from_playbook": pb.ID, "skill_id": slug}
+	// Carry the compiled form (and its provenance trail) onto the skill node
+	// so disable/enable can re-materialise run.sh without the playbook.
+	for _, k := range []string{"script", "validation", "sessions", "projects", "recurrence", "est_minutes", "score", "cluster_sig"} {
+		if v, ok := pb.Provenance[k]; ok {
+			prov[k] = v
+		}
+	}
 	skill, err := s.store.CreateNode(ctx, Node{
 		Kind:       KindSkill,
 		Title:      pb.Title,
@@ -198,7 +220,7 @@ func (s *Service) Skillify(ctx context.Context, playbookID string) (Node, error)
 		Scope:      pb.Scope,
 		ScopeKey:   pb.ScopeKey,
 		Maturity:   MaturitySkill,
-		Provenance: map[string]any{"source": "skillify", "from_playbook": pb.ID, "skill_id": slug},
+		Provenance: prov,
 	})
 	if err != nil {
 		return Node{}, err
@@ -215,7 +237,39 @@ func (s *Service) Skillify(ctx context.Context, playbookID string) (Node, error)
 	if err := s.skillSink.WriteSkill(ctx, slug, md); err != nil {
 		return skill, fmt.Errorf("knowledge: write SKILL.md: %w", err)
 	}
+	s.materialiseCompiledForm(ctx, slug, skill)
 	return skill, nil
+}
+
+// materialiseCompiledForm writes the executable run.sh next to SKILL.md and
+// registers the custom task, when the node carries a compiled script. Both
+// are best-effort: the prose skill stands on its own.
+func (s *Service) materialiseCompiledForm(ctx context.Context, slug string, n Node) {
+	script := provenanceString(n, "script")
+	if script == "" || s.skillSink == nil {
+		return
+	}
+	if err := s.skillSink.WriteSkillAsset(ctx, slug, "run.sh", script); err != nil {
+		s.log.Warn("skillify: write run.sh failed", "slug", slug, "err", err)
+		return
+	}
+	if s.taskSink == nil {
+		return
+	}
+	cwd := ""
+	if n.Scope == ScopeProject {
+		cwd = n.ScopeKey
+	}
+	desc := "Compiled skill (validated procedure): " + n.Title
+	if err := s.taskSink.EnsureSkillTask(ctx, slug, n.Title, desc, cwd); err != nil {
+		s.log.Warn("skillify: custom task registration failed", "slug", slug, "err", err)
+	}
+}
+
+// provenanceString reads a string field off a node's provenance.
+func provenanceString(n Node, key string) string {
+	v, _ := n.Provenance[key].(string)
+	return strings.TrimSpace(v)
 }
 
 // SetSkillEnabled flips a skill on/off: disabled removes its SKILL.md
@@ -242,10 +296,59 @@ func (s *Service) SetSkillEnabled(ctx context.Context, id string, enabled bool) 
 		if werr := s.skillSink.WriteSkill(ctx, slug, md); werr != nil {
 			return n, fmt.Errorf("knowledge: re-render skill: %w", werr)
 		}
+		// Compiled skills get their executable form back too.
+		s.materialiseCompiledForm(ctx, slug, n)
 	} else if derr := s.skillSink.DeleteSkill(ctx, slug); derr != nil {
 		return n, fmt.Errorf("knowledge: remove skill file: %w", derr)
 	}
 	return n, nil
+}
+
+// RetirementCandidate is one skill the closed feedback loop proposes to
+// retire, with the machine-readable reason.
+type RetirementCandidate struct {
+	Node Node `json:"node"`
+	// Reason: never_used | low_success | dormant
+	Reason string `json:"reason"`
+}
+
+// Retirement thresholds. A skill is proposed for retirement when it is
+// enabled and (a) was never referenced 14+ days after creation, (b) keeps
+// getting loaded into sessions that then FAIL, or (c) used to be referenced
+// but has gone quiet. The loop only proposes — the operator retires.
+const (
+	retireNeverUsedAfter = 14 * 24 * time.Hour
+	retireDormantAfter   = 45 * 24 * time.Hour
+	retireMinOutcomes    = 3
+	retireMaxSuccessRate = 0.4
+)
+
+// RetirementCandidates closes the feedback loop: skills carry use counters
+// and per-session outcome counters (did the session that referenced the
+// skill end in success?); this surfaces the ones the evidence says to drop.
+func (s *Service) RetirementCandidates(ctx context.Context) ([]RetirementCandidate, error) {
+	skills, err := s.store.ListNodes(ctx, NodeFilter{Kind: KindSkill, Limit: 500})
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	out := []RetirementCandidate{}
+	for _, n := range skills {
+		if !n.Enabled {
+			continue
+		}
+		switch {
+		case n.UseCount == 0 && now.Sub(n.CreatedAt) > retireNeverUsedAfter:
+			out = append(out, RetirementCandidate{Node: n, Reason: "never_used"})
+		case n.SuccessCount+n.FailureCount >= retireMinOutcomes &&
+			float64(n.SuccessCount)/float64(n.SuccessCount+n.FailureCount) < retireMaxSuccessRate:
+			// Loaded but abandoned: sessions reference it and still fail.
+			out = append(out, RetirementCandidate{Node: n, Reason: "low_success"})
+		case n.UseCount > 0 && n.LastUsedAt != nil && now.Sub(*n.LastUsedAt) > retireDormantAfter:
+			out = append(out, RetirementCandidate{Node: n, Reason: "dormant"})
+		}
+	}
+	return out, nil
 }
 
 // RenderForSpawn builds a compact "Project knowledge" banner (the project's +

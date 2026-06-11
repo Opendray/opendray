@@ -1,6 +1,9 @@
 package knowledge
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestValidateDraftPlaybook(t *testing.T) {
 	good := draftPlaybook{
@@ -44,6 +47,19 @@ func TestValidateDraftPlaybook(t *testing.T) {
 				t.Errorf("reject must carry a reason")
 			}
 		})
+	}
+}
+
+func TestRenderPlaybookBody(t *testing.T) {
+	body := renderPlaybookBody(draftPlaybook{
+		AppliesWhen: "shipping a Go API",
+		Steps:       []string{"read infra registry", "create LXC"},
+		Pitfalls:    []string{"TCC denial"},
+	})
+	for _, want := range []string{"Applies when:", "## Steps", "1. read infra registry", "2. create LXC", "## Pitfalls", "- TCC denial"} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("body missing %q:\n%s", want, body)
+		}
 	}
 }
 
