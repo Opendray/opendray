@@ -660,6 +660,61 @@ func (s *Store) UpdateNodeBody(ctx context.Context, id, body string) (Node, erro
 	return s.GetNode(ctx, id)
 }
 
+// ImpactEntity is one row of the impact view: an entity plus how many
+// live nodes connect to it (its blast radius).
+type ImpactEntity struct {
+	Node   Node `json:"node"`
+	Degree int  `json:"degree"`
+}
+
+// ListImpactEntities returns live entities ordered by connection
+// degree — the production face of the graph: pick an entity (a
+// database, a host, a tool) and see everything that depends on it
+// before you touch it.
+func (s *Store) ListImpactEntities(ctx context.Context, limit int) ([]ImpactEntity, error) {
+	if limit <= 0 || limit > 500 {
+		limit = 200
+	}
+	rows, err := s.pool.Query(ctx, `
+		SELECT n.id, COUNT(e.*) AS degree
+		  FROM knowledge_nodes n
+		  LEFT JOIN knowledge_edges e
+		         ON (e.src_id = n.id OR e.dst_id = n.id)
+		 WHERE n.kind = 'entity' AND n.archived_at IS NULL
+		 GROUP BY n.id
+		 ORDER BY degree DESC, n.updated_at DESC
+		 LIMIT $1`, limit)
+	if err != nil {
+		return nil, fmt.Errorf("knowledge: impact entities: %w", err)
+	}
+	type row struct {
+		id     string
+		degree int
+	}
+	var ids []row
+	for rows.Next() {
+		var r row
+		if err := rows.Scan(&r.id, &r.degree); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		ids = append(ids, r)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	out := make([]ImpactEntity, 0, len(ids))
+	for _, r := range ids {
+		n, err := s.GetNode(ctx, r.id)
+		if err != nil {
+			continue
+		}
+		out = append(out, ImpactEntity{Node: n, Degree: r.degree})
+	}
+	return out, nil
+}
+
 // rowScanner is satisfied by both pgx.Row (QueryRow) and pgx.Rows (Query).
 type rowScanner interface {
 	Scan(dest ...any) error

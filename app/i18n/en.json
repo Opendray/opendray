@@ -2570,9 +2570,9 @@
       },
       "distill": {
         "tab": "Distillation",
-        "intro": "The flywheel's payoff: repeated work distils into PLAYBOOKS (AI-drafted from your projects); you promote the good ones into SKILLS, which are rendered as skill files and injected into every new session. The more you use opendray, the better the AI knows how you work.",
+        "intro": "A SKILL is a proven, repeatable PROCEDURE — a workflow with a trigger, concrete numbered steps (real commands/paths), pitfalls, and evidence it actually happened in your work log. Facts and preferences are NOT skills (they live in memory and the conventions page). A structural gate now rejects anything below that bar: fewer than 3 steps, no concrete artifacts, or no evidence never reaches this list.",
         "playbooks": "Playbooks — distilled, awaiting review",
-        "playbooksHint": "AI-distilled from project journals + facts. Promote what's genuinely reusable; discard noise.",
+        "playbooksHint": "Every candidate here passed the gate: ≥3 concrete steps + verbatim evidence from your sessions. Review the evidence, promote what you'll reuse, discard the rest.",
         "playbooksEmpty": "Nothing distilled yet — playbooks appear as the consolidation loop digests project work.",
         "skills": "Skills — active, injected at spawn",
         "skillsHint": "Promoted playbooks. Every new session receives these as skills.",
@@ -2594,6 +2594,16 @@
         "disabledToast": "Skill disabled — removed from the loaded set",
         "disabledBadge": "off",
         "toggleHint": "Enabled skills are loadable by sessions; disable what this period of work doesn't need"
+      },
+      "impact": {
+        "tab": "Impact",
+        "intro": "Pick an entity (a database, host, tool) to see its blast radius — every project, playbook and skill connected to it. Check here BEFORE touching shared infrastructure.",
+        "filter": "Filter entities…",
+        "empty": "No entities yet — the anchorer lifts them from project work as the loop runs.",
+        "pickOne": "Select an entity on the left to see what depends on it.",
+        "degreeHint": "connections (blast radius)",
+        "blastRadius": "{{count}} connected nodes",
+        "noLinks": "Nothing links to this entity yet."
       }
     },
     "cortex": {

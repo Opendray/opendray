@@ -281,6 +281,11 @@ func (s *Service) RenderForSpawn(ctx context.Context, cwd string, maxBytes int) 
 	return b.String(), nil
 }
 
+// ImpactEntities returns entities ordered by blast radius.
+func (s *Service) ImpactEntities(ctx context.Context, limit int) ([]ImpactEntity, error) {
+	return s.store.ListImpactEntities(ctx, limit)
+}
+
 // WithReanchor wires a re-derive trigger used after Reset so the graph rebuilds
 // immediately rather than waiting for the next scheduled sweep.
 func (s *Service) WithReanchor(fn func(context.Context) error) *Service {

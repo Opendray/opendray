@@ -2570,9 +2570,9 @@
       },
       "distill": {
         "tab": "Destilación",
-        "intro": "La recompensa del ciclo: el trabajo repetido se destila en PLAYBOOKS; promueves los buenos a SKILLS, que se inyectan en cada sesión nueva. Cuanto más usas opendray, mejor te conoce la IA.",
+        "intro": "Un SKILL es un PROCEDIMIENTO probado y repetible — un flujo con disparador, pasos numerados concretos (comandos/rutas reales), trampas y evidencia de que ocurrió en tu registro de trabajo. Los hechos y preferencias NO son skills (viven en la memoria y la página de convenciones). Una puerta estructural rechaza lo que no llega a ese listón.",
         "playbooks": "Playbooks — destilados, pendientes de revisión",
-        "playbooksHint": "Destilados por la IA de diarios y hechos. Promueve lo reutilizable; descarta el ruido.",
+        "playbooksHint": "Cada candidato aquí pasó la puerta: ≥3 pasos concretos + evidencia literal de tus sesiones. Revisa la evidencia, promueve lo reutilizable, descarta el resto.",
         "playbooksEmpty": "Nada destilado aún — aparecerán según el ciclo digiera el trabajo.",
         "skills": "Skills — activos, inyectados al arranque",
         "skillsHint": "Playbooks promovidos. Cada sesión nueva los recibe como skills.",
@@ -2594,6 +2594,16 @@
         "disabledToast": "Skill desactivado — fuera del conjunto cargado",
         "disabledBadge": "off",
         "toggleHint": "Solo los skills activados se cargan; desactiva lo que esta etapa no necesita"
+      },
+      "impact": {
+        "tab": "Impacto",
+        "intro": "Elige una entidad (base de datos, host, herramienta) para ver su radio de impacto — cada proyecto, playbook y skill conectado. Mira aquí ANTES de tocar infraestructura compartida.",
+        "filter": "Filtrar entidades…",
+        "empty": "Sin entidades aún — el anclador las extrae del trabajo según corre el ciclo.",
+        "pickOne": "Selecciona una entidad a la izquierda para ver qué depende de ella.",
+        "degreeHint": "conexiones (radio de impacto)",
+        "blastRadius": "{{count}} nodos conectados",
+        "noLinks": "Nada enlaza con esta entidad todavía."
       }
     },
     "cortex": {

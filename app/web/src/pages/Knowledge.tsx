@@ -5,20 +5,14 @@ import { toast } from 'sonner'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
-import { APIError } from '@/lib/api'
 import {
   listKnowledgeNodes,
-  searchKnowledge,
   getKnowledgeGraph,
-  promoteKnowledgeNode,
+  listImpactEntities,
   skillifyKnowledgeNode,
   setKnowledgeNodeEnabled,
   deleteKnowledgeNode,
   draftKB,
-  type KnowledgeNode,
-  type KnowledgeSearchHit,
-  type KnowledgeKind,
-  type KnowledgeScope,
 } from '@/lib/knowledge'
 import {
   getProjectDoc,
@@ -644,268 +638,150 @@ function KindBadge({ kind }: { kind: string }) {
   )
 }
 
-function GraphBrowser() {
+function ImpactView() {
   const { t } = useTranslation()
-  const qc = useQueryClient()
-  const [query, setQuery] = useState('')
-  const [cwd, setCwd] = useState('')
-  const [hits, setHits] = useState<KnowledgeSearchHit[] | null>(null)
-  const [selected, setSelected] = useState<KnowledgeNode | null>(null)
-  const [kind, setKind] = useState<'all' | KnowledgeKind>('entity')
-  const [scope, setScope] = useState<'all' | KnowledgeScope>('all')
+  const [selId, setSelId] = useState<string | null>(null)
+  const [filter, setFilter] = useState('')
 
-  const browse = useQuery({
-    queryKey: ['knowledge-nodes', kind, scope, cwd],
-    queryFn: () =>
-      listKnowledgeNodes({
-        kind: kind === 'all' ? undefined : kind,
-        scope: scope === 'all' ? undefined : scope,
-        scopeKey: cwd.trim() || undefined,
-      }),
+  const entitiesQuery = useQuery({
+    queryKey: ['knowledge-impact'],
+    queryFn: () => listImpactEntities(),
+  })
+  const detailQuery = useQuery({
+    queryKey: ['knowledge-impact-detail', selId],
+    queryFn: () => getKnowledgeGraph(selId!),
+    enabled: !!selId,
   })
 
-  const graph = useQuery({
-    queryKey: ['knowledge-graph', selected?.id],
-    queryFn: () => getKnowledgeGraph(selected!.id),
-    enabled: !!selected,
-  })
-
-  const runSearch = async () => {
-    if (!query.trim()) {
-      setHits(null)
-      return
-    }
-    try {
-      setHits(await searchKnowledge(query.trim(), cwd.trim(), 20))
-    } catch (e) {
-      toast.error(e instanceof APIError ? e.message : String(e))
-    }
+  const entities = (entitiesQuery.data ?? []).filter(
+    (e) =>
+      !filter.trim() ||
+      e.node.title.toLowerCase().includes(filter.trim().toLowerCase()),
+  )
+  const neighbors = detailQuery.data?.neighbors ?? []
+  const grouped: Record<string, typeof neighbors> = {}
+  for (const n of neighbors) {
+    const k = n.node.kind
+    grouped[k] = grouped[k] ? [...grouped[k], n] : [n]
   }
-
-  const promote = useMutation({
-    mutationFn: (id: string) => promoteKnowledgeNode(id, 'global'),
-    onSuccess: () => {
-      toast.success(t('web.knowledge.promoted'))
-      qc.invalidateQueries({ queryKey: ['knowledge-nodes'] })
-    },
-    onError: () => toast.error(t('web.knowledge.actionFailed')),
-  })
-
-  const skillify = useMutation({
-    mutationFn: (id: string) => skillifyKnowledgeNode(id),
-    onSuccess: (n) => {
-      toast.success(t('web.knowledge.skillified', { title: n.title }))
-      qc.invalidateQueries({ queryKey: ['knowledge-nodes'] })
-    },
-    onError: () => toast.error(t('web.knowledge.actionFailed')),
-  })
-
-  const del = useMutation({
-    mutationFn: (id: string) => deleteKnowledgeNode(id),
-    onSuccess: () => {
-      toast.success(t('web.knowledge.deleted'))
-      setSelected(null)
-      qc.invalidateQueries({ queryKey: ['knowledge-nodes'] })
-    },
-    onError: () => toast.error(t('web.knowledge.actionFailed')),
-  })
-
-  const nodes = hits ? hits.map((h) => h.node) : (browse.data ?? [])
+  const groupOrder = ['entity', 'playbook', 'skill', 'fact']
 
   return (
-    <div className="flex flex-1 flex-col min-h-0 border border-border rounded-b-md rounded-tr-md">
-      <header className="border-b border-border px-4 py-3">
-        <div className="flex gap-2">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && runSearch()}
-            placeholder={t('web.knowledge.searchPlaceholder')}
-            className="flex-1 rounded-md border border-border bg-card px-3 py-1.5 text-sm"
+    <div className="border-border flex min-h-0 flex-1 rounded-b-md rounded-tr-md border">
+      {/* entity list — sorted by blast radius */}
+      <div className="border-border flex w-72 shrink-0 flex-col border-r">
+        <div className="border-border border-b p-2">
+          <p className="text-muted-foreground mb-1.5 px-1 text-[11px] leading-snug">
+            {t('web.knowledge.impact.intro')}
+          </p>
+          <Input
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder={t('web.knowledge.impact.filter')}
+            className="h-7 text-xs"
           />
-          <input
-            value={cwd}
-            onChange={(e) => setCwd(e.target.value)}
-            placeholder={t('web.knowledge.cwdPlaceholder')}
-            className="w-72 rounded-md border border-border bg-card px-3 py-1.5 text-sm"
-          />
-          <button
-            onClick={runSearch}
-            className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground"
-          >
-            {t('web.knowledge.search')}
-          </button>
-          {hits && (
-            <button
-              onClick={() => {
-                setHits(null)
-                setQuery('')
-              }}
-              className="rounded-md border border-border px-3 py-1.5 text-sm"
-            >
-              {t('web.knowledge.browse')}
-            </button>
-          )}
         </div>
-        <div className="mt-2 flex flex-wrap gap-1">
-          {/* 'fact' retired (P-G): facts live in Memory, not the graph. */}
-          {(['all', 'entity', 'playbook', 'skill'] as const).map((k) => (
-            <button
-              key={k}
-              onClick={() => setKind(k)}
-              className={`rounded px-2 py-1 text-xs ${
-                kind === k
-                  ? 'bg-primary text-primary-foreground'
-                  : 'border border-border text-muted-foreground'
-              }`}
-            >
-              {t(`web.knowledge.kinds.${k}`)}
-            </button>
-          ))}
-        </div>
-        <div className="mt-1 flex flex-wrap items-center gap-1">
-          <span className="mr-1 text-[11px] text-muted-foreground">
-            {t('web.knowledge.scope')}
-          </span>
-          {(['all', 'global', 'project', 'domain'] as const).map((sc) => (
-            <button
-              key={sc}
-              onClick={() => setScope(sc)}
-              className={`rounded px-2 py-1 text-xs ${
-                scope === sc
-                  ? 'bg-primary text-primary-foreground'
-                  : 'border border-border text-muted-foreground'
-              }`}
-            >
-              {t(`web.knowledge.scopes.${sc}`)}
-            </button>
-          ))}
-        </div>
-      </header>
-
-      <div className="flex flex-1 min-h-0">
-        <div className="w-1/2 overflow-auto border-r border-border">
-          {nodes.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">
-              {browse.isLoading
-                ? '…'
-                : hits
-                  ? t('web.knowledge.noResults')
-                  : t('web.knowledge.empty')}
+        <div className="min-h-0 flex-1 overflow-auto p-1.5">
+          {entitiesQuery.isLoading ? (
+            <Loader2 className="m-4 h-4 w-4 animate-spin" />
+          ) : entities.length === 0 ? (
+            <p className="text-muted-foreground p-4 text-center text-xs">
+              {t('web.knowledge.impact.empty')}
             </p>
           ) : (
-            <ul className="divide-y divide-border">
-              {nodes.map((n) => (
-                <li key={n.id}>
-                  <button
-                    onClick={() => setSelected(n)}
-                    className={`w-full text-left px-4 py-2 hover:bg-card ${
-                      selected?.id === n.id ? 'bg-card' : ''
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <KindBadge kind={n.kind} />
-                      <span className="text-sm truncate">{n.title}</span>
-                    </div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {n.scope}
-                      {n.scope_key ? ` · ${n.scope_key}` : ''}
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="w-1/2 overflow-auto p-4">
-          {!selected ? (
-            <p className="text-sm text-muted-foreground">
-              {t('web.knowledge.selectHint')}
-            </p>
-          ) : (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <KindBadge kind={selected.kind} />
-                <h2 className="text-base font-medium">{selected.title}</h2>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {selected.scope}
-                {selected.scope_key ? ` · ${selected.scope_key}` : ''} ·{' '}
-                {selected.maturity}
-              </div>
-              {selected.body && (
-                <pre className="whitespace-pre-wrap rounded-md bg-card p-3 text-sm">
-                  {selected.body}
-                </pre>
-              )}
-              <div className="flex gap-2">
-                {selected.kind === 'playbook' && (
-                  <button
-                    onClick={() => skillify.mutate(selected.id)}
-                    disabled={skillify.isPending}
-                    className="rounded-md bg-emerald-600/80 px-3 py-1.5 text-sm text-white disabled:opacity-50"
-                  >
-                    {t('web.knowledge.skillify')}
-                  </button>
+            entities.map((e) => (
+              <button
+                key={e.node.id}
+                onClick={() => setSelId(e.node.id)}
+                className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm ${
+                  selId === e.node.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'hover:bg-card'
+                }`}
+              >
+                <span className="min-w-0 flex-1 truncate">{e.node.title}</span>
+                {e.node.entity_type && (
+                  <span className="text-[9px] uppercase opacity-60">
+                    {e.node.entity_type}
+                  </span>
                 )}
-                {selected.scope !== 'global' && (
-                  <button
-                    onClick={() => promote.mutate(selected.id)}
-                    disabled={promote.isPending}
-                    className="rounded-md border border-border px-3 py-1.5 text-sm disabled:opacity-50"
-                  >
-                    {t('web.knowledge.promote')}
-                  </button>
-                )}
-                <button
-                  onClick={() => {
-                    if (window.confirm(t('web.knowledge.deleteConfirm')))
-                      del.mutate(selected.id)
-                  }}
-                  disabled={del.isPending}
-                  className="rounded-md border border-red-500/40 px-3 py-1.5 text-sm text-red-400 disabled:opacity-50"
+                <span
+                  className={`rounded px-1.5 py-0.5 text-[10px] ${
+                    selId === e.node.id ? 'bg-black/20' : 'bg-muted'
+                  }`}
+                  title={t('web.knowledge.impact.degreeHint')}
                 >
-                  {t('web.knowledge.delete')}
-                </button>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium mb-1">
-                  {t('web.knowledge.neighbors')}
-                </h3>
-                {graph.data?.neighbors?.length ? (
-                  <ul className="space-y-1">
-                    {graph.data.neighbors.map((nb, i) => (
-                      <li key={i}>
-                        <button
-                          onClick={() => setSelected(nb.node)}
-                          className="text-left text-sm hover:underline"
-                        >
-                          <span className="text-[11px] text-muted-foreground">
-                            {nb.direction === 'out' ? '→' : '←'} {nb.edge_type}:{' '}
-                          </span>
-                          {nb.node.title}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-xs text-muted-foreground">—</p>
-                )}
-              </div>
-            </div>
+                  {e.degree}
+                </span>
+              </button>
+            ))
           )}
         </div>
+      </div>
+
+      {/* blast radius of the selected entity */}
+      <div className="min-h-0 flex-1 overflow-auto p-4">
+        {!selId ? (
+          <p className="text-muted-foreground py-10 text-center text-sm">
+            {t('web.knowledge.impact.pickOne')}
+          </p>
+        ) : detailQuery.isLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <>
+            <h2 className="mb-1 text-base font-semibold">
+              {detailQuery.data?.node.title}
+            </h2>
+            <p className="text-muted-foreground mb-4 text-xs">
+              {t('web.knowledge.impact.blastRadius', {
+                count: neighbors.length,
+              })}
+            </p>
+            {neighbors.length === 0 && (
+              <p className="text-muted-foreground text-sm">
+                {t('web.knowledge.impact.noLinks')}
+              </p>
+            )}
+            {groupOrder
+              .filter((k) => grouped[k]?.length)
+              .map((k) => (
+                <section key={k} className="mb-4">
+                  <h3 className="mb-1.5 flex items-center gap-2 text-sm font-semibold">
+                    <KindBadge kind={k} />
+                    <span className="text-muted-foreground text-[11px] font-normal">
+                      {grouped[k].length}
+                    </span>
+                  </h3>
+                  <div className="space-y-1">
+                    {grouped[k].map((n) => (
+                      <div
+                        key={n.node.id}
+                        className="bg-card flex items-center gap-2 rounded-md border px-2.5 py-1.5"
+                      >
+                        <span className="min-w-0 flex-1 truncate text-sm">
+                          {n.node.kind === 'entity' &&
+                          n.node.entity_type === 'project'
+                            ? n.node.scope_key || n.node.title
+                            : n.node.title}
+                        </span>
+                        <span className="text-muted-foreground text-[10px]">
+                          {n.edge_type}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+          </>
+        )}
       </div>
     </div>
   )
 }
 
-// ── page ──────────────────────────────────────────────────────
-
 export function KnowledgePage() {
   const { t } = useTranslation()
-  const [tab, setTab] = useState<'kb' | 'distill' | 'graph'>('kb')
+  const [tab, setTab] = useState<'kb' | 'distill' | 'impact'>('kb')
 
   return (
     <div className="flex h-full flex-col">
@@ -921,8 +797,8 @@ export function KnowledgePage() {
           <TabBtn active={tab === 'distill'} onClick={() => setTab('distill')}>
             {t('web.knowledge.distill.tab')}
           </TabBtn>
-          <TabBtn active={tab === 'graph'} onClick={() => setTab('graph')}>
-            {t('web.knowledge.kb.graphTab')}
+          <TabBtn active={tab === 'impact'} onClick={() => setTab('impact')}>
+            {t('web.knowledge.impact.tab')}
           </TabBtn>
         </div>
       </header>
@@ -932,7 +808,7 @@ export function KnowledgePage() {
         ) : tab === 'distill' ? (
           <DistillationView />
         ) : (
-          <GraphBrowser />
+          <ImpactView />
         )}
       </div>
     </div>

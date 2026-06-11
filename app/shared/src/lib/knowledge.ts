@@ -137,3 +137,20 @@ export async function setKnowledgeNodeEnabled(
     { method: 'POST', body: { enabled } },
   )
 }
+
+// ── impact view (the graph's production face) ─────────────────
+
+export interface ImpactEntity {
+  node: KnowledgeNode
+  /** Number of live nodes connected to this entity — its blast radius. */
+  degree: number
+}
+
+/** Entities ordered by blast radius: pick one (a database, a host, a
+ * tool) and see everything that depends on it before you touch it. */
+export async function listImpactEntities(limit = 200): Promise<ImpactEntity[]> {
+  const res = await api<{ entities: ImpactEntity[] }>(
+    `/api/v1/knowledge/impact?n=${limit}`,
+  )
+  return res.entities ?? []
+}

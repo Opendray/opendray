@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"regexp"
 )
 
 // Reflector is the Phase 3 graduation engine: it reads a project's facts and,
@@ -83,14 +84,68 @@ type draftPlaybook struct {
 	AppliesWhen string   `json:"applies_when"`
 	Steps       []string `json:"steps"`
 	Pitfalls    []string `json:"pitfalls"`
+	// Evidence: verbatim short quotes from the work log proving this
+	// procedure actually happened. Required — a draft without evidence
+	// is rejected by the structural gate.
+	Evidence []string `json:"evidence"`
+}
+
+// concreteArtifactRe spots a step that references something REAL: a
+// path, a flag, an inline-code span, a file extension, a host:port,
+// or a known tool invocation. Steps made only of prose don't count.
+var concreteArtifactRe = regexp.MustCompile(
+	"(/[\\w.-]+)|(--[\\w-]+)|(`[^`]+`)|([\\w-]+\\.(sh|go|ts|tsx|dart|md|toml|ya?ml|sql|json|service))|(\\b\\d{2,5}/tcp\\b)|(:\\d{2,5}\\b)|(\\b(ssh|curl|git|go|pnpm|npm|docker|pct|psql|systemctl|launchctl|flutter|make|kubectl)\\b)")
+
+// validateDraftPlaybook is the STRUCTURAL quality gate. The prompt
+// asks for quality; this enforces it — a one-liner fact, a greeting,
+// or an evidence-free claim never becomes a playbook no matter what
+// the model returns. Returns ("", true) when the draft qualifies, or
+// (reason, false) for the reject log.
+func validateDraftPlaybook(d draftPlaybook) (string, bool) {
+	title := strings.TrimSpace(d.Title)
+	if len(title) < 12 || !strings.Contains(title, " ") {
+		return "title too thin", false
+	}
+	if len(strings.TrimSpace(d.AppliesWhen)) < 10 {
+		return "no usable applies_when trigger", false
+	}
+	steps := 0
+	concrete := 0
+	for _, st := range d.Steps {
+		st = strings.TrimSpace(st)
+		if st == "" {
+			continue
+		}
+		steps++
+		if concreteArtifactRe.MatchString(st) {
+			concrete++
+		}
+	}
+	if steps < 3 {
+		return fmt.Sprintf("only %d steps — not a procedure", steps), false
+	}
+	if concrete < 2 {
+		return "steps lack concrete artifacts (commands/paths/files)", false
+	}
+	evidence := 0
+	for _, e := range d.Evidence {
+		if len(strings.TrimSpace(e)) >= 15 {
+			evidence++
+		}
+	}
+	if evidence == 0 {
+		return "no evidence quotes from the work log", false
+	}
+	return "", true
 }
 
 const reflectSystem = `You distill durable, reusable PROCEDURAL knowledge (playbooks) from a project's work log.
 The WORK LOG holds real session traces — what was built, how a bug was root-caused and fixed, what was decided. Mine it for repeatable how-tos.
 Output ONLY new, genuinely reusable playbooks as JSON:
-{"playbooks":[{"title":"...","applies_when":"...","steps":["..."],"pitfalls":["..."]}]}
+{"playbooks":[{"title":"...","applies_when":"...","steps":["..."],"pitfalls":["..."],"evidence":["..."]}]}
 Rules:
-- Emit a playbook ONLY when the log supports a CONCRETE, repeatable procedure someone could follow next time. If nothing rises to that bar, return {"playbooks":[]}.
+- Emit a playbook ONLY when the log supports a CONCRETE, repeatable procedure someone could follow next time. If nothing rises to that bar, return {"playbooks":[]} — returning nothing is the CORRECT output for thin logs; junk playbooks are rejected by a structural gate anyway (min 3 steps, real commands/paths, evidence required).
+- evidence = 1-3 SHORT VERBATIM quotes from the work log proving this procedure actually happened. No evidence → the draft is discarded.
 - Prefer fix-with-root-cause and multi-step how-tos. NEVER turn a single declarative fact (a preference, a value, a config) into a playbook.
 - title = short imperative, e.g. "Ship an unreleased build to the local Mac".
 - applies_when = the trigger/situation. steps = concrete + ordered, reusing the real commands / paths / file names from the log. pitfalls = the actual failure modes that were hit.
@@ -154,14 +209,25 @@ func (r *Reflector) ReflectProject(ctx context.Context, scopeKey string, minFact
 		if _, dup := existingTitles[strings.ToLower(title)]; dup {
 			continue
 		}
+		if reason, ok := validateDraftPlaybook(d); !ok {
+			r.log.Info("reflect: draft rejected by quality gate",
+				"cwd", scopeKey, "title", title, "reason", reason)
+			continue
+		}
 		node, err := r.store.CreateNode(ctx, Node{
-			Kind:       KindPlaybook,
-			Title:      title,
-			Body:       renderPlaybookBody(d),
-			Scope:      ScopeProject,
-			ScopeKey:   scopeKey,
-			Maturity:   MaturityPlaybook,
-			Provenance: map[string]any{"source": "reflector", "from_facts": len(facts)},
+			Kind:     KindPlaybook,
+			Title:    title,
+			Body:     renderPlaybookBody(d),
+			Scope:    ScopeProject,
+			ScopeKey: scopeKey,
+			Maturity: MaturityPlaybook,
+			Provenance: map[string]any{
+				"source":       "reflector",
+				"from_facts":   len(facts),
+				"applies_when": strings.TrimSpace(d.AppliesWhen),
+				"steps":        len(d.Steps),
+				"evidence":     d.Evidence,
+			},
 		})
 		if err != nil {
 			r.log.Warn("playbook create failed", "title", title, "err", err)
@@ -245,6 +311,14 @@ func renderPlaybookBody(d draftPlaybook) string {
 		for _, p := range d.Pitfalls {
 			b.WriteString("- ")
 			b.WriteString(strings.TrimSpace(p))
+			b.WriteByte('\n')
+		}
+	}
+	if len(d.Evidence) > 0 {
+		b.WriteString("\n## Evidence (from the work log)\n")
+		for _, e := range d.Evidence {
+			b.WriteString("> ")
+			b.WriteString(strings.TrimSpace(e))
 			b.WriteByte('\n')
 		}
 	}

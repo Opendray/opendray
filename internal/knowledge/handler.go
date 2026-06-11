@@ -43,10 +43,25 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Post("/nodes/{id}/enable", h.setEnabled)
 		r.Post("/edges", h.createEdge)
 		r.Get("/brain", h.projectBrain)
+		r.Get("/impact", h.impact)
 		r.Get("/search", h.search)
 		r.Post("/reset", h.reset)
 		r.Post("/kb/draft", h.draftKB)
 	})
+}
+
+// impact returns entities ordered by blast radius for the Impact view.
+func (h *Handlers) impact(w http.ResponseWriter, r *http.Request) {
+	limit, _ := strconv.Atoi(r.URL.Query().Get("n"))
+	out, err := h.svc.ImpactEntities(r.Context(), limit)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if out == nil {
+		out = []ImpactEntity{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"entities": out})
 }
 
 func (h *Handlers) listNodes(w http.ResponseWriter, r *http.Request) {
