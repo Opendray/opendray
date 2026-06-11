@@ -1366,6 +1366,12 @@
         "deleteConfirm": "从 vault 删除 skill \"{id}\"? 这会移除该 SKILL.md 文件。",
         "removedToast": "Skill 已移除",
         "deleteFailedToast": "删除失败",
+        "dropHint": "或将 SKILL.md 文件拖放到此处以安装。",
+        "dropToInstall": "拖放 SKILL.md 以安装",
+        "uploading": "正在安装 skill…",
+        "uploadedToast": "Skill \"{id}\" 已安装",
+        "uploadFailedToast": "上传 skill 失败",
+        "uploadInvalidTypeToast": "仅支持拖放 SKILL.md 文件",
         "editor": {
           "createTitle": "新建 skill",
           "customizeTitle": "自定义内置：{id}",

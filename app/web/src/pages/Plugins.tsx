@@ -59,6 +59,7 @@ import {
   createSkill,
   updateSkill,
   deleteSkill,
+  uploadSkill,
 } from '@/lib/skills'
 import {
   listMcps,
@@ -977,6 +978,9 @@ function SkillsSection() {
   })
   const [editingId, setEditingId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  // Drag-and-drop install: hover state for the overlay + a guard so the
+  // user can't fire two uploads on a double-drop.
+  const [dragActive, setDragActive] = useState(false)
 
   const remove = useMutation({
     mutationFn: deleteSkill,
@@ -989,6 +993,42 @@ function SkillsSection() {
         description: err.message,
       }),
   })
+
+  const upload = useMutation({
+    mutationFn: uploadSkill,
+    onSuccess: (s) => {
+      qc.invalidateQueries({ queryKey: ['skills'] })
+      toast.success(
+        t('web.plugins.skills.uploadedToast', { id: s.id }),
+      )
+    },
+    onError: (err: Error) =>
+      toast.error(t('web.plugins.skills.uploadFailedToast'), {
+        description: err.message,
+      }),
+  })
+
+  // Single entry point for both drop and the hidden file input. .md
+  // gate is best-effort — the server is the authoritative check
+  // (must have a `name:` frontmatter to be a real SKILL).
+  const handleFiles = (files: FileList | File[] | null) => {
+    if (!files) return
+    const arr = Array.from(files)
+    if (arr.length === 0) return
+    for (const f of arr) {
+      const looksLikeMarkdown =
+        f.name.toLowerCase().endsWith('.md') ||
+        f.type === 'text/markdown' ||
+        f.type === ''
+      if (!looksLikeMarkdown) {
+        toast.error(t('web.plugins.skills.uploadInvalidTypeToast'), {
+          description: f.name,
+        })
+        continue
+      }
+      upload.mutate(f)
+    }
+  }
 
   return (
     <CollapsibleSection
@@ -1013,7 +1053,39 @@ function SkillsSection() {
         </Button>
       }
     >
-      <div className="rounded-md border border-border overflow-hidden">
+      <div
+        className={cn(
+          'relative rounded-md border border-border overflow-hidden',
+          dragActive && 'ring-2 ring-accent/70',
+        )}
+        onDragEnter={(e) => {
+          // Only react to file drags — ignore the in-page text drags
+          // (e.g. selection in the SKILL editor) so the overlay stays
+          // out of the way during normal use.
+          if (!Array.from(e.dataTransfer.types).includes('Files')) return
+          e.preventDefault()
+          setDragActive(true)
+        }}
+        onDragOver={(e) => {
+          if (!Array.from(e.dataTransfer.types).includes('Files')) return
+          // preventDefault on dragover is required for the subsequent
+          // drop event to fire.
+          e.preventDefault()
+          e.dataTransfer.dropEffect = 'copy'
+        }}
+        onDragLeave={(e) => {
+          // Fires when crossing into a child element too — only reset
+          // when the cursor actually leaves the container box.
+          if (e.target !== e.currentTarget) return
+          setDragActive(false)
+        }}
+        onDrop={(e) => {
+          if (!Array.from(e.dataTransfer.types).includes('Files')) return
+          e.preventDefault()
+          setDragActive(false)
+          handleFiles(e.dataTransfer.files)
+        }}
+      >
         {isLoading ? (
           <div className="px-4 py-6 flex items-center gap-2 text-[12px] text-muted-foreground">
             <Loader2 className="size-3 animate-spin" />
@@ -1022,6 +1094,9 @@ function SkillsSection() {
         ) : (skills ?? []).length === 0 ? (
           <div className="px-4 py-8 text-center text-[12px] text-muted-foreground">
             {t('web.plugins.skills.empty')}
+            <div className="mt-2 text-[11px] text-muted-foreground/70">
+              {t('web.plugins.skills.dropHint')}
+            </div>
           </div>
         ) : (
           <table className="w-full text-[12px]">
@@ -1142,6 +1217,19 @@ function SkillsSection() {
               ))}
             </tbody>
           </table>
+        )}
+        {dragActive && (
+          <div className="pointer-events-none absolute inset-1 rounded-sm border-2 border-dashed border-accent/70 bg-accent/10 flex items-center justify-center">
+            <div className="text-[12px] font-mono text-accent">
+              {t('web.plugins.skills.dropToInstall')}
+            </div>
+          </div>
+        )}
+        {upload.isPending && (
+          <div className="pointer-events-none absolute inset-1 rounded-sm bg-background/60 flex items-center justify-center text-[12px] text-muted-foreground gap-2">
+            <Loader2 className="size-3.5 animate-spin" />
+            {t('web.plugins.skills.uploading')}
+          </div>
         )}
       </div>
 
