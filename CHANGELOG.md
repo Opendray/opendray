@@ -10,6 +10,23 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.7.5] — 2026-06-11
+
+### Fixed
+
+- **iOS Safari: restored the contextual copy pill on terminal text
+  selection** (regression from v2.7.3). PR #353 added `touch-action:
+  pan-y` to `.xterm-viewport` so iOS scrollback worked with the
+  clipped pane, but the same property claimed horizontal /
+  diagonal gestures for the browser and broke xterm's selection-drag
+  on iPad and iPhone — the pill (anchored at `pointerup` once a
+  selection finishes) never appeared because `pointerup` arrived
+  with no finished selection to anchor to. Dropped `pan-y` (the
+  default `auto` is sufficient for iOS scrollback) and added a
+  `touchend` belt-and-suspenders fallback so the pill anchors
+  reliably even when iOS Safari's synthesised `pointerup` doesn't
+  fire (or fires with stale coordinates) on canvas-internal events.
+
 ## [v2.7.4] — 2026-06-11
 
 ### Added
