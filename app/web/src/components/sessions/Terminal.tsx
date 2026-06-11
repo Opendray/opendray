@@ -551,13 +551,19 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   }, [themeApplied])
 
   // Anchor the copy pill where the selection ended. pointerup covers
-  // both mouse-drag and touch; we defer one frame so xterm finalizes
+  // mouse and most touch cases; we defer one frame so xterm finalizes
   // the selection first, then place the pill at the pointer (clamped
   // inside the box, flipped below the point near the top edge).
+  //
+  // touchend is a belt-and-suspenders fallback for iOS Safari: with
+  // touch events directly on a <canvas> inside an overflow-hidden
+  // container, the synthesised pointerup occasionally doesn't fire
+  // (or fires with stale coordinates), leaving a finished selection
+  // with no pill anchored to it.
   useEffect(() => {
     const root = rootRef.current
     if (!root) return
-    const onPointerUp = (e: PointerEvent) => {
+    const anchorAt = (x: number, y: number) => {
       requestAnimationFrame(() => {
         const term = xtermRef.current
         if (!term || !term.hasSelection()) {
@@ -565,16 +571,26 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
           return
         }
         const rect = root.getBoundingClientRect()
-        const rawY = e.clientY - rect.top
+        const rawY = y - rect.top
         setPill({
-          x: Math.min(Math.max(e.clientX - rect.left, 48), rect.width - 48),
+          x: Math.min(Math.max(x - rect.left, 48), rect.width - 48),
           y: rawY,
           below: rawY < 44,
         })
       })
     }
+    const onPointerUp = (e: PointerEvent) => anchorAt(e.clientX, e.clientY)
+    const onTouchEnd = (e: TouchEvent) => {
+      const t = e.changedTouches[0]
+      if (!t) return
+      anchorAt(t.clientX, t.clientY)
+    }
     root.addEventListener('pointerup', onPointerUp)
-    return () => root.removeEventListener('pointerup', onPointerUp)
+    root.addEventListener('touchend', onTouchEnd, { passive: true })
+    return () => {
+      root.removeEventListener('pointerup', onPointerUp)
+      root.removeEventListener('touchend', onTouchEnd)
+    }
   }, [])
 
   return (
