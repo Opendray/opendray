@@ -102,6 +102,11 @@ type Journaler struct {
 	// a sense of project momentum without exploding the prompt.
 	driftJournalLookback int
 
+	// skillUsage, when set, receives the raw session transcript after
+	// each session ends so skill use_count / last_used_at can be
+	// bumped (Cortex distillation workbench). Best-effort.
+	skillUsage func(ctx context.Context, transcript string)
+
 	// transcriptMaxBytes caps how much transcript we feed the LLM.
 	// 16 KiB ≈ 4k tokens — enough context for a meaningful summary
 	// without paying tokens we don't need. Older content is
@@ -135,6 +140,14 @@ func NewJournaler(docs *Service, bus *eventbus.Hub, lookup SessionLookup, log *s
 // for chained setup.
 func (j *Journaler) WithSummariser(s TranscriptSummariser) *Journaler {
 	j.summariser = s
+	return j
+}
+
+// WithSkillUsage installs the optional skill-usage recorder: after a
+// session ends its transcript is handed over so skills it referenced
+// get their use counters bumped. Pass nil to disable.
+func (j *Journaler) WithSkillUsage(fn func(ctx context.Context, transcript string)) *Journaler {
+	j.skillUsage = fn
 	return j
 }
 
@@ -229,6 +242,12 @@ func (j *Journaler) process(ctx context.Context, ev eventbus.Event, state string
 		if terr != nil {
 			j.log.Debug("journaler: transcript fetch failed", "session_id", sessionID, "err", terr)
 		} else if strings.TrimSpace(transcript) != "" {
+			// Skill usage tracking — cheap title grep, no LLM. Done
+			// before the summary call so a summariser failure can't
+			// starve the usage counters.
+			if j.skillUsage != nil {
+				j.skillUsage(ctx, transcript)
+			}
 			// LLM gets its own background context — the eventbus
 			// goroutine that delivered session.ended is short-lived;
 			// don't block it on a 60-180s reasoning model call.

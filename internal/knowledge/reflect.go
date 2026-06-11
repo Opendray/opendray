@@ -96,6 +96,11 @@ Rules:
 - applies_when = the trigger/situation. steps = concrete + ordered, reusing the real commands / paths / file names from the log. pitfalls = the actual failure modes that were hit.
 - Never duplicate an existing playbook title.
 - Reflect the CURRENT way of doing things — if the log shows a tool / path / process was replaced or deprecated, base the playbook on the current one, not the superseded predecessor.
+
+Two SPECIAL playbook categories (use the exact title prefixes — the UI badges them):
+- "Automate: <procedure>" — emit when the log shows the operator manually driving the SAME multi-step procedure in two or more separate sessions (a release ritual, container provisioning, the same fix-deploy dance). steps = the repeated procedure as observed; pitfalls = what varies between runs; applies_when = the recurring trigger. End the last step with a concrete automation suggestion (a script, an opendray custom task, or a skill).
+- "Pitfall: <failure>" — emit when a FAILURE pattern recurs or cost real time: what was attempted, why it fails (root cause), and the working alternative. These are the mistakes the next session must not repeat — more valuable than success stories. A single severe, well-understood failure qualifies.
+
 - JSON only: no prose, no markdown fences.`
 
 // ReflectProject drafts new playbooks for one project from its facts. Returns

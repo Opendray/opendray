@@ -2583,7 +2583,13 @@
         "retire": "Retirar skill",
         "injectedBadge": "inyectado",
         "skillifiedToast": "Promovido — las sesiones nuevas reciben este skill",
-        "removedToast": "Eliminado"
+        "removedToast": "Eliminado",
+        "automateBadge": "candidato a automatizar",
+        "pitfallBadge": "trampa",
+        "staleBadge": "nunca usado",
+        "staleHint": "Inyectado 14+ días sin que ninguna sesión lo refiera — considera retirarlo",
+        "usage": "usado en {{count}} sesiones",
+        "lastUsed": "último {{date}}"
       }
     },
     "cortex": {

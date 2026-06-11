@@ -245,8 +245,13 @@ function ModelPicker({
     staleTime: 5 * 60_000,
   })
   const options = modelsQuery.data ?? []
-  const isListed = value === '' || options.some((m) => m.id === value)
-  const [custom, setCustom] = useState(!isListed)
+  // Derive the mode every render — initializing state from the (still
+  // loading) catalog locked the picker into custom-input mode whenever
+  // a model was already saved. Custom is only an explicit choice or a
+  // genuinely unlisted value once the catalog has loaded.
+  const [customMode, setCustomMode] = useState(false)
+  const listed = value === '' || options.some((m) => m.id === value)
+  const custom = customMode || (!!modelsQuery.data && !listed)
 
   return (
     <div>
@@ -267,7 +272,7 @@ function ModelPicker({
             variant="ghost"
             className="h-9 px-2 text-[11px]"
             onClick={() => {
-              setCustom(false)
+              setCustomMode(false)
               onChange('')
             }}
           >
@@ -279,7 +284,7 @@ function ModelPicker({
           value={value || '__default__'}
           onValueChange={(v) => {
             if (v === '__custom__') {
-              setCustom(true)
+              setCustomMode(true)
               return
             }
             onChange(v === '__default__' ? '' : v)

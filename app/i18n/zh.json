@@ -2583,7 +2583,13 @@
         "retire": "退役技能",
         "injectedBadge": "已注入",
         "skillifiedToast": "已提升——新会话将获得此技能",
-        "removedToast": "已移除"
+        "removedToast": "已移除",
+        "automateBadge": "自动化候选",
+        "pitfallBadge": "踩坑",
+        "staleBadge": "从未用到",
+        "staleHint": "注入超过 14 天没有任何会话引用——可考虑退役",
+        "usage": "{{count}} 个会话用到",
+        "lastUsed": "最近 {{date}}"
       }
     },
     "cortex": {

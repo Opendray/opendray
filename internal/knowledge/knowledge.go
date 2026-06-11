@@ -148,6 +148,12 @@ type Node struct {
 	CreatedAt  time.Time      `json:"created_at"`
 	UpdatedAt  time.Time      `json:"updated_at"`
 	ArchivedAt *time.Time     `json:"archived_at,omitempty"`
+
+	// Usage tracking (skills): how often a session transcript actually
+	// referenced this skill, and when last. Surfaces never-used skills
+	// as retirement candidates so the injected set stays lean.
+	UseCount   int        `json:"use_count"`
+	LastUsedAt *time.Time `json:"last_used_at,omitempty"`
 }
 
 // Validate enforces the closed ontology before a write. It mirrors the DB

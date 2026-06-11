@@ -977,6 +977,17 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// whether the project plan needs updating and files a proposal
 	// when so.
 	journaler.WithPlanDetector(newPlanDriftDetector(memoryWorkerRegistry))
+	// Skill usage tracking — bump use counters for skills the session's
+	// transcript referenced, so the distillation workbench can surface
+	// never-used skills as retirement candidates.
+	if cfg.Knowledge.Enabled {
+		knowledgeUsageStore := knowledge.NewStore(st.Pool())
+		journaler.WithSkillUsage(func(c context.Context, transcript string) {
+			if _, err := knowledgeUsageStore.RecordSkillUsage(c, transcript); err != nil {
+				log.Debug("skill usage recording failed", "err", err)
+			}
+		})
+	}
 	log.Info("transcript-aware journaler enabled (worker-registry routing)",
 		"plan_drift_enabled", true)
 

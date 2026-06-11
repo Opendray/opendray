@@ -1012,11 +1012,23 @@ function DistillationView() {
                 <div key={n.id} className="bg-card rounded-md border p-3">
                   <div className="mb-1.5 flex items-start justify-between gap-2">
                     <span className="text-sm font-medium">{n.title}</span>
-                    {n.scope === 'global' && (
-                      <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[9px] text-blue-400">
-                        global
-                      </span>
-                    )}
+                    <span className="flex flex-none gap-1">
+                      {/^automate:/i.test(n.title) && (
+                        <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[9px] text-amber-400">
+                          {t('web.knowledge.distill.automateBadge')}
+                        </span>
+                      )}
+                      {/^pitfall:/i.test(n.title) && (
+                        <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[9px] text-red-400">
+                          {t('web.knowledge.distill.pitfallBadge')}
+                        </span>
+                      )}
+                      {n.scope === 'global' && (
+                        <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[9px] text-blue-400">
+                          global
+                        </span>
+                      )}
+                    </span>
                   </div>
                   {typeof n.provenance?.summary === 'string' && (
                     <p className="text-muted-foreground mb-2 line-clamp-3 text-xs">
@@ -1065,23 +1077,48 @@ function DistillationView() {
             </p>
           ) : (
             <div className="space-y-2">
-              {skills.map((n) => (
-                <div key={n.id} className="bg-card rounded-md border p-3">
-                  <div className="mb-1 flex items-start justify-between gap-2">
-                    <span className="text-sm font-medium">{n.title}</span>
-                    <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] text-emerald-400">
-                      {t('web.knowledge.distill.injectedBadge')}
-                    </span>
+              {skills.map((n) => {
+                const stale =
+                  (n.use_count ?? 0) === 0 &&
+                  Date.now() - new Date(n.created_at).getTime() >
+                    14 * 24 * 3600 * 1000
+                return (
+                  <div key={n.id} className="bg-card rounded-md border p-3">
+                    <div className="mb-1 flex items-start justify-between gap-2">
+                      <span className="text-sm font-medium">{n.title}</span>
+                      <span className="flex flex-none gap-1">
+                        {stale && (
+                          <span
+                            className="rounded bg-zinc-500/20 px-1.5 py-0.5 text-[9px] text-zinc-300"
+                            title={t('web.knowledge.distill.staleHint')}
+                          >
+                            {t('web.knowledge.distill.staleBadge')}
+                          </span>
+                        )}
+                        <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] text-emerald-400">
+                          {t('web.knowledge.distill.injectedBadge')}
+                        </span>
+                      </span>
+                    </div>
+                    <p className="text-muted-foreground text-[11px]">
+                      {t('web.knowledge.distill.usage', {
+                        count: n.use_count ?? 0,
+                      })}
+                      {n.last_used_at &&
+                        ` · ${t('web.knowledge.distill.lastUsed', {
+                          date: new Date(n.last_used_at).toLocaleDateString(),
+                        })}`}
+                    </p>
+                    <button
+                      onClick={() => remove.mutate(n.id)}
+                      disabled={remove.isPending}
+                      className="text-muted-foreground hover:text-destructive mt-1 text-[11px]"
+                    >
+                      {t('web.knowledge.distill.retire')}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => remove.mutate(n.id)}
-                    disabled={remove.isPending}
-                    className="text-muted-foreground hover:text-destructive mt-1 text-[11px]"
-                  >
-                    {t('web.knowledge.distill.retire')}
-                  </button>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </section>

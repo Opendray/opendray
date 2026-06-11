@@ -19,6 +19,9 @@ export interface KnowledgeNode {
   maturity: string
   confidence?: number | null
   provenance?: Record<string, unknown>
+  /** Skill usage tracking: sessions whose transcript referenced this skill. */
+  use_count?: number
+  last_used_at?: string | null
   created_at: string
   updated_at: string
   archived_at?: string | null

@@ -604,8 +604,31 @@ func (s *Store) Reset(ctx context.Context) error {
 const selectNodeSQL = `
 	SELECT id, kind, COALESCE(entity_type, ''), title, body, scope,
 	       scope_key, maturity, confidence, provenance,
-	       created_at, updated_at, archived_at
+	       created_at, updated_at, archived_at,
+	       COALESCE(use_count, 0), last_used_at
 	FROM knowledge_nodes`
+
+// RecordSkillUsage bumps use_count / last_used_at for every active
+// skill whose title appears (case-insensitively) in the given session
+// transcript text. One SQL statement, no LLM cost — a deliberate
+// heuristic: a skill the agent talked about / followed shows up by
+// name; skills that never do are retirement candidates.
+func (s *Store) RecordSkillUsage(ctx context.Context, transcript string) (int64, error) {
+	if strings.TrimSpace(transcript) == "" {
+		return 0, nil
+	}
+	tag, err := s.pool.Exec(ctx, `
+		UPDATE knowledge_nodes
+		   SET use_count = use_count + 1, last_used_at = NOW()
+		 WHERE kind = 'skill'
+		   AND archived_at IS NULL
+		   AND title <> ''
+		   AND POSITION(lower(title) IN lower($1)) > 0`, transcript)
+	if err != nil {
+		return 0, fmt.Errorf("knowledge: record skill usage: %w", err)
+	}
+	return tag.RowsAffected(), nil
+}
 
 // rowScanner is satisfied by both pgx.Row (QueryRow) and pgx.Rows (Query).
 type rowScanner interface {
@@ -620,7 +643,8 @@ func scanNode(r rowScanner) (Node, error) {
 	var archivedAt *time.Time
 	if err := r.Scan(&n.ID, &kind, &entityType, &n.Title, &n.Body, &scope,
 		&n.ScopeKey, &maturity, &confidence, &provJSON,
-		&n.CreatedAt, &n.UpdatedAt, &archivedAt); err != nil {
+		&n.CreatedAt, &n.UpdatedAt, &archivedAt,
+		&n.UseCount, &n.LastUsedAt); err != nil {
 		return Node{}, err
 	}
 	n.Kind = NodeKind(kind)

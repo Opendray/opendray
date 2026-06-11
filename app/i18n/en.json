@@ -2583,7 +2583,13 @@
         "retire": "Retire skill",
         "injectedBadge": "injected",
         "skillifiedToast": "Promoted — new sessions receive this skill",
-        "removedToast": "Removed"
+        "removedToast": "Removed",
+        "automateBadge": "automation candidate",
+        "pitfallBadge": "pitfall",
+        "staleBadge": "never used",
+        "staleHint": "Injected for 14+ days without any session referencing it — consider retiring",
+        "usage": "used in {{count}} sessions",
+        "lastUsed": "last {{date}}"
       }
     },
     "cortex": {
