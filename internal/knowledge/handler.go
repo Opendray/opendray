@@ -44,6 +44,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Post("/skills/distill", h.distillSkill)
 		r.Post("/edges", h.createEdge)
 		r.Get("/brain", h.projectBrain)
+		r.Get("/graph-all", h.graphAll)
 		r.Get("/impact", h.impact)
 		r.Get("/skills/retirement", h.retirement)
 		r.Get("/search", h.search)
@@ -64,6 +65,18 @@ func (h *Handlers) retirement(w http.ResponseWriter, r *http.Request) {
 		out = []RetirementCandidate{}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"candidates": out})
+}
+
+// graphAll returns every live node + edge (capped, most-connected first)
+// for the network graph view's initial render.
+func (h *Handlers) graphAll(w http.ResponseWriter, r *http.Request) {
+	limit, _ := strconv.Atoi(r.URL.Query().Get("n"))
+	out, err := h.svc.GraphAll(r.Context(), limit)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
 }
 
 // impact returns entities ordered by blast radius for the Impact view.

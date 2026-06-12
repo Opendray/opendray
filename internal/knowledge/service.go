@@ -475,6 +475,11 @@ func (s *Service) ImpactEntities(ctx context.Context, limit int) ([]ImpactEntity
 	return s.store.ListImpactEntities(ctx, limit)
 }
 
+// GraphAll returns the capped full-graph snapshot for the network view.
+func (s *Service) GraphAll(ctx context.Context, limit int) (GraphSnapshot, error) {
+	return s.store.GraphAll(ctx, limit)
+}
+
 // WithReanchor wires a re-derive trigger used after Reset so the graph rebuilds
 // immediately rather than waiting for the next scheduled sweep.
 func (s *Service) WithReanchor(fn func(context.Context) error) *Service {

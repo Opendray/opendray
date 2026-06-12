@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -8,7 +8,7 @@ import remarkGfm from 'remark-gfm'
 import {
   listKnowledgeNodes,
   getKnowledgeGraph,
-  listImpactEntities,
+  getKnowledgeGraphAll,
   listRetirementCandidates,
   candidateScore,
   skillifyKnowledgeNode,
@@ -16,6 +16,7 @@ import {
   deleteKnowledgeNode,
   draftKB,
   type KnowledgeNode,
+  type KnowledgeEdge,
   type RetirementReason,
 } from '@/lib/knowledge'
 import {
@@ -621,13 +622,38 @@ function KnowledgeBaseView() {
   )
 }
 
-// ── Graph browser (the raw node graph — secondary) ────────────
+// ── Graph view (Obsidian-style force-directed network) ────────
 
 const KIND_STYLES: Record<string, string> = {
   entity: 'bg-blue-500/15 text-blue-400',
+  project: 'bg-violet-500/15 text-violet-400',
   fact: 'bg-zinc-500/15 text-zinc-300',
   playbook: 'bg-amber-500/15 text-amber-400',
   skill: 'bg-emerald-500/15 text-emerald-400',
+}
+
+// Canvas can't consume tailwind classes — same palette as KIND_STYLES,
+// resolved to the -400 hex values.
+const KIND_COLORS: Record<string, string> = {
+  entity: '#60a5fa',
+  project: '#a78bfa',
+  fact: '#d4d4d8',
+  playbook: '#fbbf24',
+  skill: '#34d399',
+}
+
+// Projects are entities, but they're the anchors everything hangs off —
+// give them their own color so the map reads at a glance.
+function nodeColorKey(n: KnowledgeNode): string {
+  return n.kind === 'entity' && n.entity_type === 'project' ? 'project' : n.kind
+}
+
+function nodeDisplayTitle(n: KnowledgeNode): string {
+  if (n.kind === 'entity' && n.entity_type === 'project' && n.scope_key) {
+    const parts = n.scope_key.split('/')
+    return parts[parts.length - 1] || n.title
+  }
+  return n.title
 }
 
 function KindBadge({ kind }: { kind: string }) {
@@ -642,26 +668,384 @@ function KindBadge({ kind }: { kind: string }) {
   )
 }
 
-function ImpactView() {
+interface SimNode {
+  id: string
+  x: number
+  y: number
+  vx: number
+  vy: number
+  r: number
+  color: string
+  label: string
+  degree: number
+  dragged: boolean
+}
+
+interface SimEdge {
+  a: number // index into nodes
+  b: number
+}
+
+// Hand-rolled force simulation — node repulsion + edge springs + center
+// gravity, cooled by an alpha that decays to rest and re-heats on
+// interaction. ~500 nodes is fine for the O(n²) repulsion pass because
+// the sim stops ticking once cooled.
+const SIM = {
+  repulsion: 1600,
+  spring: 0.05,
+  springLength: 70,
+  gravity: 0.03,
+  damping: 0.82,
+  alphaDecay: 0.985,
+  alphaMin: 0.02,
+}
+
+function GraphCanvas({
+  nodes,
+  edges,
+  selectedId,
+  onSelect,
+}: {
+  nodes: KnowledgeNode[]
+  edges: KnowledgeEdge[]
+  selectedId: string | null
+  onSelect: (id: string | null) => void
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const onSelectRef = useRef(onSelect)
+  onSelectRef.current = onSelect
+  const selectedRef = useRef(selectedId)
+
+  // The whole sim lives in refs — React renders the canvas exactly once
+  // and rAF drives everything else.
+  const simRef = useRef<{
+    nodes: SimNode[]
+    edges: SimEdge[]
+    byId: Map<string, number>
+    alpha: number
+    view: { x: number; y: number; k: number }
+    hovered: number
+  }>({
+    nodes: [],
+    edges: [],
+    byId: new Map(),
+    alpha: 0,
+    view: { x: 0, y: 0, k: 1 },
+    hovered: -1,
+  })
+
+  // (Re)build sim state when the data changes; keep positions of nodes
+  // that survived so a refetch doesn't scramble the layout.
+  useEffect(() => {
+    const sim = simRef.current
+    const prev = new Map(sim.nodes.map((n) => [n.id, n]))
+    const degree = new Map<string, number>()
+    for (const e of edges) {
+      degree.set(e.src_id, (degree.get(e.src_id) ?? 0) + 1)
+      degree.set(e.dst_id, (degree.get(e.dst_id) ?? 0) + 1)
+    }
+    sim.nodes = nodes.map((n, i) => {
+      const d = degree.get(n.id) ?? 0
+      // Phyllotaxis spiral for fresh nodes — deterministic, evenly spread.
+      const angle = i * 2.39996
+      const radius = 22 * Math.sqrt(i + 1)
+      const old = prev.get(n.id)
+      return {
+        id: n.id,
+        x: old?.x ?? Math.cos(angle) * radius,
+        y: old?.y ?? Math.sin(angle) * radius,
+        vx: 0,
+        vy: 0,
+        r: 4 + Math.min(11, Math.sqrt(d) * 2),
+        color: KIND_COLORS[nodeColorKey(n)] ?? KIND_COLORS.fact,
+        label: nodeDisplayTitle(n),
+        degree: d,
+        dragged: false,
+      }
+    })
+    sim.byId = new Map(sim.nodes.map((n, i) => [n.id, i]))
+    sim.edges = edges
+      .map((e) => ({
+        a: sim.byId.get(e.src_id) ?? -1,
+        b: sim.byId.get(e.dst_id) ?? -1,
+      }))
+      .filter((e) => e.a >= 0 && e.b >= 0)
+    sim.alpha = 1
+  }, [nodes, edges])
+
+  useEffect(() => {
+    selectedRef.current = selectedId
+    simRef.current.alpha = Math.max(simRef.current.alpha, SIM.alphaMin)
+  }, [selectedId])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    const sim = simRef.current
+
+    let raf = 0
+    let width = 0
+    let height = 0
+
+    const resize = () => {
+      const dpr = window.devicePixelRatio || 1
+      width = canvas.clientWidth
+      height = canvas.clientHeight
+      canvas.width = Math.max(1, Math.round(width * dpr))
+      canvas.height = Math.max(1, Math.round(height * dpr))
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    }
+    const ro = new ResizeObserver(resize)
+    ro.observe(canvas)
+    resize()
+
+    const toWorld = (sx: number, sy: number) => ({
+      x: (sx - width / 2 - sim.view.x) / sim.view.k,
+      y: (sy - height / 2 - sim.view.y) / sim.view.k,
+    })
+    const hitTest = (sx: number, sy: number): number => {
+      const p = toWorld(sx, sy)
+      for (let i = sim.nodes.length - 1; i >= 0; i--) {
+        const n = sim.nodes[i]
+        const dx = n.x - p.x
+        const dy = n.y - p.y
+        const hr = n.r + 3 / sim.view.k
+        if (dx * dx + dy * dy <= hr * hr) return i
+      }
+      return -1
+    }
+
+    const step = () => {
+      const ns = sim.nodes
+      if (sim.alpha > SIM.alphaMin && ns.length > 0) {
+        sim.alpha *= SIM.alphaDecay
+        const a = sim.alpha
+        // pairwise repulsion
+        for (let i = 0; i < ns.length; i++) {
+          const ni = ns[i]
+          for (let j = i + 1; j < ns.length; j++) {
+            const nj = ns[j]
+            let dx = ni.x - nj.x
+            let dy = nj.y === ni.y && dx === 0 ? 0.1 : ni.y - nj.y
+            const d2 = Math.max(dx * dx + dy * dy, 64)
+            const f = (SIM.repulsion * a) / d2
+            const d = Math.sqrt(d2)
+            dx /= d
+            dy /= d
+            ni.vx += dx * f
+            ni.vy += dy * f
+            nj.vx -= dx * f
+            nj.vy -= dy * f
+          }
+        }
+        // edge springs
+        for (const e of sim.edges) {
+          const na = ns[e.a]
+          const nb = ns[e.b]
+          const dx = nb.x - na.x
+          const dy = nb.y - na.y
+          const d = Math.max(Math.sqrt(dx * dx + dy * dy), 1)
+          const f = SIM.spring * a * (d - SIM.springLength)
+          const fx = (dx / d) * f
+          const fy = (dy / d) * f
+          na.vx += fx
+          na.vy += fy
+          nb.vx -= fx
+          nb.vy -= fy
+        }
+        // center gravity + integration
+        for (const n of ns) {
+          n.vx -= n.x * SIM.gravity * a
+          n.vy -= n.y * SIM.gravity * a
+          if (!n.dragged) {
+            n.vx *= SIM.damping
+            n.vy *= SIM.damping
+            n.x += n.vx
+            n.y += n.vy
+          } else {
+            n.vx = 0
+            n.vy = 0
+          }
+        }
+      }
+      draw()
+      raf = requestAnimationFrame(step)
+    }
+
+    const draw = () => {
+      ctx.clearRect(0, 0, width, height)
+      ctx.save()
+      ctx.translate(width / 2 + sim.view.x, height / 2 + sim.view.y)
+      ctx.scale(sim.view.k, sim.view.k)
+
+      const fg = getComputedStyle(canvas).color || '#a1a1aa'
+      const selIdx = selectedRef.current
+        ? (sim.byId.get(selectedRef.current) ?? -1)
+        : -1
+
+      // edges first
+      ctx.lineWidth = 1 / sim.view.k
+      ctx.strokeStyle = fg
+      ctx.globalAlpha = 0.16
+      ctx.beginPath()
+      for (const e of sim.edges) {
+        const a = sim.nodes[e.a]
+        const b = sim.nodes[e.b]
+        ctx.moveTo(a.x, a.y)
+        ctx.lineTo(b.x, b.y)
+      }
+      ctx.stroke()
+      ctx.globalAlpha = 1
+
+      // nodes
+      for (let i = 0; i < sim.nodes.length; i++) {
+        const n = sim.nodes[i]
+        ctx.beginPath()
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2)
+        ctx.fillStyle = n.color
+        ctx.fill()
+        if (i === selIdx || i === sim.hovered) {
+          ctx.lineWidth = 2 / sim.view.k
+          ctx.strokeStyle = fg
+          ctx.stroke()
+        }
+      }
+
+      // labels appear as you zoom in; hubs + the active node always show
+      const fontPx = Math.max(10 / sim.view.k, 4)
+      ctx.font = `${fontPx}px ui-sans-serif, system-ui, sans-serif`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'top'
+      ctx.fillStyle = fg
+      for (let i = 0; i < sim.nodes.length; i++) {
+        const n = sim.nodes[i]
+        const show =
+          i === selIdx || i === sim.hovered || sim.view.k >= 1.2 || n.degree >= 5
+        if (!show) continue
+        ctx.globalAlpha = i === selIdx || i === sim.hovered ? 1 : 0.75
+        ctx.fillText(n.label.slice(0, 42), n.x, n.y + n.r + 3 / sim.view.k)
+      }
+      ctx.globalAlpha = 1
+      ctx.restore()
+    }
+
+    // ── interaction: drag nodes, pan background, wheel zoom ──
+    let pointerDown = false
+    let dragIdx = -1
+    let moved = false
+    let lastX = 0
+    let lastY = 0
+
+    const onPointerDown = (ev: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect()
+      const sx = ev.clientX - rect.left
+      const sy = ev.clientY - rect.top
+      pointerDown = true
+      moved = false
+      lastX = sx
+      lastY = sy
+      dragIdx = hitTest(sx, sy)
+      if (dragIdx >= 0) sim.nodes[dragIdx].dragged = true
+      canvas.setPointerCapture(ev.pointerId)
+    }
+    const onPointerMove = (ev: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect()
+      const sx = ev.clientX - rect.left
+      const sy = ev.clientY - rect.top
+      if (!pointerDown) {
+        const h = hitTest(sx, sy)
+        if (h !== sim.hovered) {
+          sim.hovered = h
+          canvas.style.cursor = h >= 0 ? 'pointer' : 'grab'
+        }
+        return
+      }
+      if (Math.abs(sx - lastX) + Math.abs(sy - lastY) > 3) moved = true
+      if (dragIdx >= 0) {
+        const p = toWorld(sx, sy)
+        const n = sim.nodes[dragIdx]
+        n.x = p.x
+        n.y = p.y
+        sim.alpha = Math.max(sim.alpha, 0.3)
+      } else if (moved) {
+        sim.view.x += sx - lastX
+        sim.view.y += sy - lastY
+        lastX = sx
+        lastY = sy
+      }
+      if (dragIdx >= 0) {
+        lastX = sx
+        lastY = sy
+      }
+    }
+    const onPointerUp = (ev: PointerEvent) => {
+      if (!pointerDown) return
+      pointerDown = false
+      if (dragIdx >= 0) sim.nodes[dragIdx].dragged = false
+      if (!moved) {
+        const rect = canvas.getBoundingClientRect()
+        const i = hitTest(ev.clientX - rect.left, ev.clientY - rect.top)
+        onSelectRef.current(i >= 0 ? sim.nodes[i].id : null)
+      }
+      dragIdx = -1
+    }
+    const onWheel = (ev: WheelEvent) => {
+      ev.preventDefault()
+      const rect = canvas.getBoundingClientRect()
+      const sx = ev.clientX - rect.left
+      const sy = ev.clientY - rect.top
+      const before = toWorld(sx, sy)
+      sim.view.k = Math.min(
+        5,
+        Math.max(0.15, sim.view.k * Math.exp(-ev.deltaY * 0.0015)),
+      )
+      // keep the point under the cursor stationary while zooming
+      sim.view.x = sx - width / 2 - before.x * sim.view.k
+      sim.view.y = sy - height / 2 - before.y * sim.view.k
+    }
+
+    canvas.addEventListener('pointerdown', onPointerDown)
+    canvas.addEventListener('pointermove', onPointerMove)
+    canvas.addEventListener('pointerup', onPointerUp)
+    canvas.addEventListener('wheel', onWheel, { passive: false })
+    raf = requestAnimationFrame(step)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+      canvas.removeEventListener('pointerdown', onPointerDown)
+      canvas.removeEventListener('pointermove', onPointerMove)
+      canvas.removeEventListener('pointerup', onPointerUp)
+      canvas.removeEventListener('wheel', onWheel)
+    }
+  }, [])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="text-muted-foreground block h-full w-full"
+    />
+  )
+}
+
+function GraphView() {
   const { t } = useTranslation()
   const [selId, setSelId] = useState<string | null>(null)
-  const [filter, setFilter] = useState('')
 
-  const entitiesQuery = useQuery({
-    queryKey: ['knowledge-impact'],
-    queryFn: () => listImpactEntities(),
+  const graphQuery = useQuery({
+    queryKey: ['knowledge-graph-all'],
+    queryFn: () => getKnowledgeGraphAll(),
   })
   const detailQuery = useQuery({
-    queryKey: ['knowledge-impact-detail', selId],
+    queryKey: ['knowledge-graph-detail', selId],
     queryFn: () => getKnowledgeGraph(selId!),
     enabled: !!selId,
   })
 
-  const entities = (entitiesQuery.data ?? []).filter(
-    (e) =>
-      !filter.trim() ||
-      e.node.title.toLowerCase().includes(filter.trim().toLowerCase()),
-  )
+  const nodes = graphQuery.data?.nodes ?? []
+  const edges = graphQuery.data?.edges ?? []
   const neighbors = detailQuery.data?.neighbors ?? []
   const grouped: Record<string, typeof neighbors> = {}
   for (const n of neighbors) {
@@ -669,114 +1053,119 @@ function ImpactView() {
     grouped[k] = grouped[k] ? [...grouped[k], n] : [n]
   }
   const groupOrder = ['entity', 'playbook', 'skill', 'fact']
+  const selNode = detailQuery.data?.node
 
   return (
-    <div className="border-border flex min-h-0 flex-1 rounded-b-md rounded-tr-md border">
-      {/* entity list — sorted by blast radius */}
-      <div className="border-border flex w-72 shrink-0 flex-col border-r">
-        <div className="border-border border-b p-2">
-          <p className="text-muted-foreground mb-1.5 px-1 text-[11px] leading-snug">
-            {t('web.knowledge.impact.intro')}
-          </p>
-          <Input
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            placeholder={t('web.knowledge.impact.filter')}
-            className="h-7 text-xs"
-          />
-        </div>
-        <div className="min-h-0 flex-1 overflow-auto p-1.5">
-          {entitiesQuery.isLoading ? (
+    <div className="border-border flex min-h-0 flex-1 flex-col rounded-b-md rounded-tr-md border">
+      <p className="text-muted-foreground border-border border-b px-3 py-2 text-[11px] leading-snug">
+        {t('web.knowledge.graph.intro')}
+      </p>
+      <div className="flex min-h-0 flex-1">
+        <div className="relative min-h-0 flex-1 overflow-hidden">
+          {graphQuery.isLoading ? (
             <Loader2 className="m-4 h-4 w-4 animate-spin" />
-          ) : entities.length === 0 ? (
-            <p className="text-muted-foreground p-4 text-center text-xs">
-              {t('web.knowledge.impact.empty')}
-            </p>
+          ) : nodes.length === 0 ? (
+            <div className="flex h-full items-center justify-center p-8">
+              <p className="text-muted-foreground max-w-md text-center text-sm leading-relaxed">
+                {t('web.knowledge.graph.empty')}
+              </p>
+            </div>
           ) : (
-            entities.map((e) => (
-              <button
-                key={e.node.id}
-                onClick={() => setSelId(e.node.id)}
-                className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm ${
-                  selId === e.node.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'hover:bg-card'
-                }`}
-              >
-                <span className="min-w-0 flex-1 truncate">{e.node.title}</span>
-                {e.node.entity_type && (
-                  <span className="text-[9px] uppercase opacity-60">
-                    {e.node.entity_type}
-                  </span>
-                )}
-                <span
-                  className={`rounded px-1.5 py-0.5 text-[10px] ${
-                    selId === e.node.id ? 'bg-black/20' : 'bg-muted'
-                  }`}
-                  title={t('web.knowledge.impact.degreeHint')}
-                >
-                  {e.degree}
-                </span>
-              </button>
-            ))
+            <>
+              <GraphCanvas
+                nodes={nodes}
+                edges={edges}
+                selectedId={selId}
+                onSelect={setSelId}
+              />
+              {/* legend + controls hint, floating over the canvas */}
+              <div className="bg-card/80 border-border pointer-events-none absolute bottom-2 left-2 rounded-md border px-2.5 py-1.5 backdrop-blur">
+                <div className="flex items-center gap-3">
+                  {['project', 'entity', 'playbook', 'skill'].map((k) => (
+                    <span key={k} className="flex items-center gap-1 text-[10px]">
+                      <span
+                        className="inline-block h-2 w-2 rounded-full"
+                        style={{ backgroundColor: KIND_COLORS[k] }}
+                      />
+                      {t(`web.knowledge.graph.legend.${k}`)}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-muted-foreground/80 mt-1 text-[10px]">
+                  {t('web.knowledge.graph.hint')}
+                </p>
+              </div>
+            </>
           )}
         </div>
-      </div>
 
-      {/* blast radius of the selected entity */}
-      <div className="min-h-0 flex-1 overflow-auto p-4">
-        {!selId ? (
-          <p className="text-muted-foreground py-10 text-center text-sm">
-            {t('web.knowledge.impact.pickOne')}
-          </p>
-        ) : detailQuery.isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <>
-            <h2 className="mb-1 text-base font-semibold">
-              {detailQuery.data?.node.title}
-            </h2>
-            <p className="text-muted-foreground mb-4 text-xs">
-              {t('web.knowledge.impact.blastRadius', {
-                count: neighbors.length,
-              })}
-            </p>
-            {neighbors.length === 0 && (
-              <p className="text-muted-foreground text-sm">
-                {t('web.knowledge.impact.noLinks')}
-              </p>
-            )}
-            {groupOrder
-              .filter((k) => grouped[k]?.length)
-              .map((k) => (
-                <section key={k} className="mb-4">
-                  <h3 className="mb-1.5 flex items-center gap-2 text-sm font-semibold">
-                    <KindBadge kind={k} />
-                    <span className="text-muted-foreground text-[11px] font-normal">
-                      {grouped[k].length}
-                    </span>
-                  </h3>
-                  <div className="space-y-1">
-                    {grouped[k].map((n) => (
-                      <div
-                        key={n.node.id}
-                        className="bg-card flex items-center gap-2 rounded-md border px-2.5 py-1.5"
-                      >
-                        <span className="min-w-0 flex-1 truncate text-sm">
-                          {n.node.kind === 'entity' &&
-                          n.node.entity_type === 'project'
-                            ? n.node.scope_key || n.node.title
-                            : n.node.title}
-                        </span>
-                        <span className="text-muted-foreground text-[10px]">
-                          {n.edge_type}
-                        </span>
-                      </div>
+        {/* side panel — the selected node's neighborhood, grouped by kind */}
+        {selId && (
+          <div className="border-border flex w-80 shrink-0 flex-col border-l">
+            <div className="border-border flex items-center gap-2 border-b px-3 py-2">
+              <h2 className="min-w-0 flex-1 truncate text-sm font-semibold">
+                {selNode ? nodeDisplayTitle(selNode) : '…'}
+              </h2>
+              {selNode && <KindBadge kind={nodeColorKey(selNode)} />}
+              <button
+                onClick={() => setSelId(null)}
+                className="text-muted-foreground hover:text-foreground text-xs"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-auto p-3">
+              {detailQuery.isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  {selNode?.body && (
+                    <p className="text-muted-foreground mb-3 line-clamp-4 text-xs">
+                      {selNode.body}
+                    </p>
+                  )}
+                  <p className="text-muted-foreground mb-3 text-xs">
+                    {t('web.knowledge.graph.connections', {
+                      count: neighbors.length,
+                    })}
+                  </p>
+                  {neighbors.length === 0 && (
+                    <p className="text-muted-foreground text-sm">
+                      {t('web.knowledge.graph.noLinks')}
+                    </p>
+                  )}
+                  {groupOrder
+                    .filter((k) => grouped[k]?.length)
+                    .map((k) => (
+                      <section key={k} className="mb-4">
+                        <h3 className="mb-1.5 flex items-center gap-2 text-sm font-semibold">
+                          <KindBadge kind={k} />
+                          <span className="text-muted-foreground text-[11px] font-normal">
+                            {grouped[k].length}
+                          </span>
+                        </h3>
+                        <div className="space-y-1">
+                          {grouped[k].map((n) => (
+                            <button
+                              key={n.node.id}
+                              onClick={() => setSelId(n.node.id)}
+                              className="bg-card hover:bg-card/60 flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 text-left"
+                            >
+                              <span className="min-w-0 flex-1 truncate text-sm">
+                                {nodeDisplayTitle(n.node)}
+                              </span>
+                              <span className="text-muted-foreground text-[10px]">
+                                {n.edge_type}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </section>
                     ))}
-                  </div>
-                </section>
-              ))}
-          </>
+                </>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -785,7 +1174,7 @@ function ImpactView() {
 
 export function KnowledgePage() {
   const { t } = useTranslation()
-  const [tab, setTab] = useState<'kb' | 'distill' | 'impact'>('kb')
+  const [tab, setTab] = useState<'kb' | 'distill' | 'graph'>('kb')
 
   return (
     <div className="flex h-full flex-col">
@@ -801,8 +1190,8 @@ export function KnowledgePage() {
           <TabBtn active={tab === 'distill'} onClick={() => setTab('distill')}>
             {t('web.knowledge.distill.tab')}
           </TabBtn>
-          <TabBtn active={tab === 'impact'} onClick={() => setTab('impact')}>
-            {t('web.knowledge.impact.tab')}
+          <TabBtn active={tab === 'graph'} onClick={() => setTab('graph')}>
+            {t('web.knowledge.graph.tab')}
           </TabBtn>
         </div>
       </header>
@@ -812,7 +1201,7 @@ export function KnowledgePage() {
         ) : tab === 'distill' ? (
           <DistillationView />
         ) : (
-          <ImpactView />
+          <GraphView />
         )}
       </div>
     </div>

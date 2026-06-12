@@ -2610,15 +2610,19 @@
           "dormantHint": "Once used, but not referenced for 45+ days — the outcome loop proposes retirement"
         }
       },
-      "impact": {
-        "tab": "Impact",
-        "intro": "Pick an entity (a database, host, tool) to see its blast radius — every project, playbook and skill connected to it. Check here BEFORE touching shared infrastructure.",
-        "filter": "Filter entities…",
-        "empty": "No entities yet — the anchorer lifts them from project work as the loop runs.",
-        "pickOne": "Select an entity on the left to see what depends on it.",
-        "degreeHint": "connections (blast radius)",
-        "blastRadius": "{{count}} connected nodes",
-        "noLinks": "Nothing links to this entity yet."
+      "graph": {
+        "tab": "Graph",
+        "intro": "The relationship map of everything the AI has learned: which projects share tech, which skills and pitfalls attach to which entities. Check a node’s blast radius here BEFORE touching shared infrastructure.",
+        "empty": "No knowledge yet — the graph builds itself as sessions run: the anchor sweep lifts entities out of project work, and distillation adds playbooks and skills. Come back after a few working sessions.",
+        "hint": "Scroll to zoom · drag the background to pan · drag a node to untangle · click a node to inspect it",
+        "legend": {
+          "project": "Project",
+          "entity": "Entity",
+          "playbook": "Playbook",
+          "skill": "Skill"
+        },
+        "connections": "{{count}} connected nodes",
+        "noLinks": "Nothing links to this node yet."
       }
     },
     "cortex": {

@@ -734,6 +734,88 @@ func (s *Store) ListImpactEntities(ctx context.Context, limit int) ([]ImpactEnti
 	return out, nil
 }
 
+// GraphSnapshot is the payload for the full-graph network view: live
+// nodes plus every edge whose both endpoints survived the cap.
+type GraphSnapshot struct {
+	Nodes []Node `json:"nodes"`
+	Edges []Edge `json:"edges"`
+}
+
+// GraphAll returns up to limit live nodes — most-connected first, so the
+// network view keeps the graph's core when the cap bites — plus all
+// edges between the returned nodes.
+func (s *Store) GraphAll(ctx context.Context, limit int) (GraphSnapshot, error) {
+	if limit <= 0 || limit > 500 {
+		limit = 500
+	}
+	out := GraphSnapshot{Nodes: []Node{}, Edges: []Edge{}}
+
+	idRows, err := s.pool.Query(ctx, `
+		SELECT n.id
+		  FROM knowledge_nodes n
+		  LEFT JOIN knowledge_edges e
+		         ON (e.src_id = n.id OR e.dst_id = n.id)
+		 WHERE n.archived_at IS NULL
+		 GROUP BY n.id
+		 ORDER BY COUNT(e.*) DESC, n.updated_at DESC
+		 LIMIT $1`, limit)
+	if err != nil {
+		return out, fmt.Errorf("knowledge: graph-all ids: %w", err)
+	}
+	ids := []string{}
+	for idRows.Next() {
+		var id string
+		if err := idRows.Scan(&id); err != nil {
+			idRows.Close()
+			return out, err
+		}
+		ids = append(ids, id)
+	}
+	idRows.Close()
+	if err := idRows.Err(); err != nil {
+		return out, err
+	}
+	if len(ids) == 0 {
+		return out, nil
+	}
+
+	nodeRows, err := s.pool.Query(ctx, selectNodeSQL+`
+		WHERE archived_at IS NULL AND id = ANY($1)`, ids)
+	if err != nil {
+		return out, fmt.Errorf("knowledge: graph-all nodes: %w", err)
+	}
+	defer nodeRows.Close()
+	for nodeRows.Next() {
+		n, err := scanNode(nodeRows)
+		if err != nil {
+			return out, err
+		}
+		out.Nodes = append(out.Nodes, n)
+	}
+	if err := nodeRows.Err(); err != nil {
+		return out, err
+	}
+
+	edgeRows, err := s.pool.Query(ctx, `
+		SELECT src_id, edge_type, dst_id, created_at
+		  FROM knowledge_edges
+		 WHERE src_id = ANY($1) AND dst_id = ANY($1)`, ids)
+	if err != nil {
+		return out, fmt.Errorf("knowledge: graph-all edges: %w", err)
+	}
+	defer edgeRows.Close()
+	for edgeRows.Next() {
+		var e Edge
+		var et string
+		if err := edgeRows.Scan(&e.SrcID, &et, &e.DstID, &e.CreatedAt); err != nil {
+			return out, err
+		}
+		e.EdgeType = EdgeType(et)
+		out.Edges = append(out.Edges, e)
+	}
+	return out, edgeRows.Err()
+}
+
 // rowScanner is satisfied by both pgx.Row (QueryRow) and pgx.Rows (Query).
 type rowScanner interface {
 	Scan(dest ...any) error

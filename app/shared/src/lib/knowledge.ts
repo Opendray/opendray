@@ -167,6 +167,31 @@ export function candidateScore(n: KnowledgeNode): number {
   return typeof v === 'number' ? v : 0
 }
 
+// ── full-graph network view ───────────────────────────────────
+
+export interface KnowledgeEdge {
+  src_id: string
+  edge_type: string
+  dst_id: string
+  created_at?: string
+}
+
+export interface KnowledgeGraphSnapshot {
+  nodes: KnowledgeNode[]
+  edges: KnowledgeEdge[]
+}
+
+/** All live nodes + the edges between them, capped (most-connected
+ * first) for the network graph's initial render. */
+export async function getKnowledgeGraphAll(
+  limit = 500,
+): Promise<KnowledgeGraphSnapshot> {
+  const res = await api<KnowledgeGraphSnapshot>(
+    `/api/v1/knowledge/graph-all?n=${limit}`,
+  )
+  return { nodes: res.nodes ?? [], edges: res.edges ?? [] }
+}
+
 // ── impact view (the graph's production face) ─────────────────
 
 export interface ImpactEntity {

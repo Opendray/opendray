@@ -2610,15 +2610,19 @@
           "dormantHint": "Se usó alguna vez, pero lleva 45+ días sin referencias — el bucle de resultados propone retirarlo"
         }
       },
-      "impact": {
-        "tab": "Impacto",
-        "intro": "Elige una entidad (base de datos, host, herramienta) para ver su radio de impacto — cada proyecto, playbook y skill conectado. Mira aquí ANTES de tocar infraestructura compartida.",
-        "filter": "Filtrar entidades…",
-        "empty": "Sin entidades aún — el anclador las extrae del trabajo según corre el ciclo.",
-        "pickOne": "Selecciona una entidad a la izquierda para ver qué depende de ella.",
-        "degreeHint": "conexiones (radio de impacto)",
-        "blastRadius": "{{count}} nodos conectados",
-        "noLinks": "Nada enlaza con esta entidad todavía."
+      "graph": {
+        "tab": "Grafo",
+        "intro": "El mapa de relaciones de todo lo que la IA ha aprendido: qué proyectos comparten tecnología, qué skills y trampas se asocian a qué entidades. Comprueba aquí el radio de impacto de un nodo ANTES de tocar infraestructura compartida.",
+        "empty": "Sin conocimiento aún — el grafo se construye solo mientras corren las sessions: el barrido de anclaje extrae entidades del trabajo de proyecto y la destilación añade playbooks y skills. Vuelve tras unas cuantas sesiones de trabajo.",
+        "hint": "Rueda para zoom · arrastra el fondo para desplazarte · arrastra un nodo para desenredar · clic en un nodo para inspeccionarlo",
+        "legend": {
+          "project": "Proyecto",
+          "entity": "Entidad",
+          "playbook": "Playbook",
+          "skill": "Skill"
+        },
+        "connections": "{{count}} nodos conectados",
+        "noLinks": "Nada enlaza con este nodo todavía."
       }
     },
     "cortex": {
