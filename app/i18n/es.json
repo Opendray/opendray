@@ -2586,21 +2586,25 @@
         "discard": "Descartar",
         "retire": "Retirar skill",
         "injectedBadge": "inyectado",
-        "skillifiedToast": "Promovido — las sesiones nuevas reciben este skill",
+        "skillifiedToast": "Promovido — publicado en Plugins → Agent Skills; las nuevas sessions reciben esta skill",
         "removedToast": "Eliminado",
-        "usage": "usado en {{count}} sesiones",
-        "lastUsed": "último {{date}}",
+        "usage": "usado en {count} sesiones",
+        "lastUsed": "último {date}",
         "enabledToast": "Skill activado — las sesiones nuevas lo cargan",
         "disabledToast": "Skill desactivado — fuera del conjunto cargado",
         "disabledBadge": "off",
         "toggleHint": "Solo los skills activados se cargan; desactiva lo que esta etapa no necesita",
+        "viewHint": "Clic para ver el procedimiento completo",
+        "inAgentSkills": "en Plugins → Agent Skills",
+        "agentSkillsHint": "El SKILL.md renderizado vive en el vault de skills — míralo o gestiónalo en Plugins → Agent Skills.",
+        "notInVault": "desactivado — SKILL.md retirado del vault",
         "compiledBadge": "compilado",
         "compiledHint": "Incluye un run.sh ejecutable con paso de validación; al promover también se registra como tarea personalizada",
-        "recurrence": "exitoso ×{{count}}",
-        "timeCost": "~{{minutes}} min manual",
-        "projectSpan": "{{count}} proyectos",
+        "recurrence": "exitoso ×{count}",
+        "timeCost": "~{minutes} min manual",
+        "projectSpan": "{count} proyectos",
         "scoreHint": "Ordenado por recurrencia × coste de tiempo manual — lo que más tiempo ahorra se destila primero",
-        "outcomes": "{{ok}} ok / {{failed}} fallidas tras cargarlo",
+        "outcomes": "{ok} ok / {failed} fallidas tras cargarlo",
         "retirement": {
           "never_used": "nunca usado",
           "never_usedHint": "Inyectado 14+ días sin que ninguna sesión lo refiera — el bucle de resultados propone retirarlo",
@@ -2621,7 +2625,7 @@
           "playbook": "Playbook",
           "skill": "Skill"
         },
-        "connections": "{{count}} nodos conectados",
+        "connections": "{count} nodos conectados",
         "noLinks": "Nada enlaza con este nodo todavía."
       }
     },
@@ -2648,7 +2652,20 @@
           "title": "Conocimiento",
           "description": "Experiencia iterable entre proyectos: reglas fundacionales vinculantes + lecciones emergentes, inyectadas en cada arranque."
         },
-        "settings": "Ajustes"
+        "settings": "Ajustes",
+        "proposals": {
+          "title": "Propuestas pendientes ({count})",
+          "hint": "Actualizaciones propuestas por la IA para notas de proyecto y páginas KB, a la espera de tu veredicto. Aprueba para publicar, rechaza para descartar.",
+          "kbLabel": "Base de conocimiento",
+          "preview": "Vista previa",
+          "hide": "Ocultar",
+          "approve": "Aprobar",
+          "reject": "Rechazar",
+          "open": "Abrir la página correspondiente",
+          "approvedToast": "Propuesta aprobada — documento actualizado",
+          "rejectedToast": "Propuesta rechazada",
+          "failedToast": "La acción falló"
+        }
       },
       "chat": {
         "title": "Chat de curación",

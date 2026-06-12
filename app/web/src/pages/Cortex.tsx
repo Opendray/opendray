@@ -4,7 +4,8 @@
 // every new session. One module, three rungs, one loop — no more
 // silo tabs.
 
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import {
   ArrowRight,
@@ -17,10 +18,20 @@ import {
   ShieldQuestion,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 import { Badge } from '@/components/ui/badge'
 import { getCortexStatus } from '@/lib/cortex'
-import { listProjects } from '@/lib/projectDocs'
+import {
+  approveProposal,
+  GLOBAL_CWD,
+  listPendingProposals,
+  listProjects,
+  rejectProposal,
+  type DocProposal,
+} from '@/lib/projectDocs'
 
 export function CortexPage() {
   const { t } = useTranslation()
@@ -137,6 +148,10 @@ export function CortexPage() {
         {t('web.cortex.home.loopHint')}
       </p>
 
+      {/* Everything waiting on the operator, reviewable right here —
+          the rung-card PENDING badges are counts; this is the inbox. */}
+      <ProposalInbox />
+
       {/* Active projects — jump straight into a workspace. */}
       {activeProjects.length > 0 && (
         <div className="space-y-1.5">
@@ -161,6 +176,134 @@ export function CortexPage() {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+// ProposalInbox lists every pending doc proposal (project notes + KB
+// pages) with an inline preview and approve / reject — so a PENDING
+// badge on the rung cards is always one click from the actual content,
+// regardless of which project it belongs to.
+function ProposalInbox() {
+  const { t } = useTranslation()
+  const qc = useQueryClient()
+  const [openId, setOpenId] = useState<string | null>(null)
+
+  const proposalsQuery = useQuery({
+    queryKey: ['cortex-pending-proposals'],
+    queryFn: () => listPendingProposals(),
+    refetchInterval: 30_000,
+  })
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['cortex-pending-proposals'] })
+    qc.invalidateQueries({ queryKey: ['cortex-status'] })
+  }
+  const approve = useMutation({
+    mutationFn: (id: string) => approveProposal(id),
+    onSuccess: () => {
+      toast.success(t('web.cortex.home.proposals.approvedToast'))
+      invalidate()
+    },
+    onError: (e: Error) =>
+      toast.error(t('web.cortex.home.proposals.failedToast'), {
+        description: e.message,
+      }),
+  })
+  const reject = useMutation({
+    mutationFn: (id: string) => rejectProposal(id),
+    onSuccess: () => {
+      toast.success(t('web.cortex.home.proposals.rejectedToast'))
+      invalidate()
+    },
+    onError: (e: Error) =>
+      toast.error(t('web.cortex.home.proposals.failedToast'), {
+        description: e.message,
+      }),
+  })
+
+  const proposals = proposalsQuery.data ?? []
+  if (proposals.length === 0) return null
+
+  const projectLabel = (p: DocProposal) => {
+    if (p.cwd === GLOBAL_CWD) return t('web.cortex.home.proposals.kbLabel')
+    const parts = p.cwd.split('/')
+    return parts[parts.length - 1] || p.cwd
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <h2 className="flex items-center gap-2 text-sm font-semibold">
+        <Inbox className="h-4 w-4" />
+        {t('web.cortex.home.proposals.title', { count: proposals.length })}
+      </h2>
+      <p className="text-muted-foreground text-xs">
+        {t('web.cortex.home.proposals.hint')}
+      </p>
+      {proposals.map((p) => (
+        <div key={p.id} className="bg-card rounded-md border">
+          <div className="flex items-center gap-2 p-2.5">
+            <Badge variant="outline" className="flex-none text-[10px]">
+              {projectLabel(p)}
+            </Badge>
+            <code className="text-muted-foreground flex-none text-[10px]">
+              {p.kind}
+            </code>
+            <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
+              {p.reason}
+            </span>
+            <span className="text-muted-foreground/70 flex-none text-[10px]">
+              {new Date(p.created_at).toLocaleDateString()}
+            </span>
+            <button
+              onClick={() => setOpenId(openId === p.id ? null : p.id)}
+              className="border-border flex-none rounded-md border px-2 py-0.5 text-[11px]"
+            >
+              {openId === p.id
+                ? t('web.cortex.home.proposals.hide')
+                : t('web.cortex.home.proposals.preview')}
+            </button>
+            <button
+              onClick={() => approve.mutate(p.id)}
+              disabled={approve.isPending || reject.isPending}
+              className="flex-none rounded-md bg-emerald-600/80 px-2 py-0.5 text-[11px] text-white disabled:opacity-50"
+            >
+              {t('web.cortex.home.proposals.approve')}
+            </button>
+            <button
+              onClick={() => reject.mutate(p.id)}
+              disabled={approve.isPending || reject.isPending}
+              className="flex-none rounded-md border border-red-500/40 px-2 py-0.5 text-[11px] text-red-400 disabled:opacity-50"
+            >
+              {t('web.cortex.home.proposals.reject')}
+            </button>
+            {p.cwd === GLOBAL_CWD ? (
+              <Link
+                to="/cortex/knowledge"
+                className="text-muted-foreground hover:text-foreground flex-none"
+                title={t('web.cortex.home.proposals.open')}
+              >
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            ) : (
+              <Link
+                to="/cortex/project"
+                search={{ cwd: p.cwd }}
+                className="text-muted-foreground hover:text-foreground flex-none"
+                title={t('web.cortex.home.proposals.open')}
+              >
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            )}
+          </div>
+          {openId === p.id && (
+            <div className="border-border max-h-72 overflow-auto border-t p-3 text-sm">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {p.proposed_content}
+              </ReactMarkdown>
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import ReactMarkdown from 'react-markdown'
@@ -1221,6 +1222,75 @@ export function KnowledgePage() {
 // it report success/failure, and the retirement list proposes dropping
 // what the evidence says isn't working.
 
+// The vault directory name the skill sink rendered this skill under —
+// recorded by skillify as provenance.skill_id (legacy rows fall back to
+// nothing and the dialog just omits the slug).
+function skillSlugOf(n: KnowledgeNode): string {
+  const v = n.provenance?.skill_id
+  return typeof v === 'string' ? v : ''
+}
+
+// SKILL.md bodies carry YAML frontmatter — noise in a rendered preview.
+function stripFrontmatter(md: string): string {
+  const m = md.match(/^---\n[\s\S]*?\n---\n?/)
+  return m ? md.slice(m[0].length) : md
+}
+
+// NodePreviewDialog shows a playbook / skill's full body (the actual
+// procedure) so the operator can judge it before promoting, retiring or
+// trusting it. Skills link through to Plugins → Agent Skills, where the
+// rendered SKILL.md lives once the skill is enabled.
+function NodePreviewDialog({
+  node,
+  onClose,
+}: {
+  node: KnowledgeNode | null
+  onClose: () => void
+}) {
+  const { t } = useTranslation()
+  if (!node) return null
+  const slug = skillSlugOf(node)
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="flex max-h-[80vh] flex-col overflow-hidden sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 pr-6">
+            <span className="min-w-0 truncate">{node.title}</span>
+            <KindBadge kind={node.kind} />
+          </DialogTitle>
+          {node.kind === 'skill' && (
+            <DialogDescription className="flex flex-wrap items-center gap-2">
+              {slug && (
+                <code className="bg-muted rounded px-1 py-0.5 text-[11px]">
+                  {slug}
+                </code>
+              )}
+              {node.enabled !== false ? (
+                <Link
+                  to="/plugins"
+                  className="text-primary text-xs underline underline-offset-2"
+                  title={t('web.knowledge.distill.agentSkillsHint')}
+                >
+                  {t('web.knowledge.distill.inAgentSkills')}
+                </Link>
+              ) : (
+                <span className="text-muted-foreground text-xs">
+                  {t('web.knowledge.distill.notInVault')}
+                </span>
+              )}
+            </DialogDescription>
+          )}
+        </DialogHeader>
+        <div className="border-border min-h-0 flex-1 overflow-auto rounded-md border p-3">
+          <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD}>
+            {stripFrontmatter(node.body)}
+          </ReactMarkdown>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 // Candidate provenance written by the experience compiler.
 function compilerStats(n: KnowledgeNode) {
   const p = n.provenance ?? {}
@@ -1252,6 +1322,7 @@ function RetireReasonBadge({ reason }: { reason: RetirementReason }) {
 function DistillationView() {
   const { t } = useTranslation()
   const qc = useQueryClient()
+  const [preview, setPreview] = useState<KnowledgeNode | null>(null)
 
   const playbooksQuery = useQuery({
     queryKey: ['knowledge-nodes', 'playbook'],
@@ -1343,7 +1414,13 @@ function DistillationView() {
                 return (
                   <div key={n.id} className="bg-card rounded-md border p-3">
                     <div className="mb-1.5 flex items-start justify-between gap-2">
-                      <span className="text-sm font-medium">{n.title}</span>
+                      <button
+                        onClick={() => setPreview(n)}
+                        className="text-left text-sm font-medium hover:underline"
+                        title={t('web.knowledge.distill.viewHint')}
+                      >
+                        {n.title}
+                      </button>
                       <span className="flex flex-none gap-1">
                         {stats.compiled && (
                           <span
@@ -1437,7 +1514,13 @@ function DistillationView() {
                     className={`bg-card rounded-md border p-3 ${enabled ? '' : 'opacity-60'}`}
                   >
                     <div className="mb-1 flex items-start justify-between gap-2">
-                      <span className="text-sm font-medium">{n.title}</span>
+                      <button
+                        onClick={() => setPreview(n)}
+                        className="text-left text-sm font-medium hover:underline"
+                        title={t('web.knowledge.distill.viewHint')}
+                      >
+                        {n.title}
+                      </button>
                       <span className="flex flex-none items-center gap-1.5">
                         {retireReason && <RetireReasonBadge reason={retireReason} />}
                         {compiled && (
@@ -1481,13 +1564,24 @@ function DistillationView() {
                           date: new Date(n.last_used_at).toLocaleDateString(),
                         })}`}
                     </p>
-                    <button
-                      onClick={() => remove.mutate(n.id)}
-                      disabled={remove.isPending}
-                      className="text-muted-foreground hover:text-destructive mt-1 text-[11px]"
-                    >
-                      {t('web.knowledge.distill.retire')}
-                    </button>
+                    <div className="mt-1 flex items-center gap-3">
+                      <button
+                        onClick={() => remove.mutate(n.id)}
+                        disabled={remove.isPending}
+                        className="text-muted-foreground hover:text-destructive text-[11px]"
+                      >
+                        {t('web.knowledge.distill.retire')}
+                      </button>
+                      {enabled && (
+                        <Link
+                          to="/plugins"
+                          className="text-primary text-[11px] underline-offset-2 hover:underline"
+                          title={t('web.knowledge.distill.agentSkillsHint')}
+                        >
+                          {t('web.knowledge.distill.inAgentSkills')} →
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 )
               })}
@@ -1495,6 +1589,8 @@ function DistillationView() {
           )}
         </section>
       </div>
+
+      <NodePreviewDialog node={preview} onClose={() => setPreview(null)} />
     </div>
   )
 }

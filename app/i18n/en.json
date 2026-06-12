@@ -2586,21 +2586,25 @@
         "discard": "Discard",
         "retire": "Retire skill",
         "injectedBadge": "injected",
-        "skillifiedToast": "Promoted — new sessions receive this skill",
+        "skillifiedToast": "Promoted — published to Plugins → Agent Skills; new sessions receive this skill",
         "removedToast": "Removed",
-        "usage": "used in {{count}} sessions",
-        "lastUsed": "last {{date}}",
+        "usage": "used in {count} sessions",
+        "lastUsed": "last {date}",
         "enabledToast": "Skill enabled — new sessions load it",
         "disabledToast": "Skill disabled — removed from the loaded set",
         "disabledBadge": "off",
         "toggleHint": "Enabled skills are loadable by sessions; disable what this period of work doesn't need",
+        "viewHint": "Click to view the full procedure",
+        "inAgentSkills": "in Plugins → Agent Skills",
+        "agentSkillsHint": "The rendered SKILL.md lives in the skills vault — view or manage it under Plugins → Agent Skills.",
+        "notInVault": "disabled — SKILL.md removed from the vault",
         "compiledBadge": "compiled",
         "compiledHint": "Ships an executable run.sh with a validation step; promotion also registers it as a custom task",
-        "recurrence": "succeeded ×{{count}}",
-        "timeCost": "~{{minutes}} min manual",
-        "projectSpan": "{{count}} projects",
+        "recurrence": "succeeded ×{count}",
+        "timeCost": "~{minutes} min manual",
+        "projectSpan": "{count} projects",
         "scoreHint": "Ranked by recurrence × manual time cost — what saves the most operator time distills first",
-        "outcomes": "{{ok}} ok / {{failed}} failed after loading",
+        "outcomes": "{ok} ok / {failed} failed after loading",
         "retirement": {
           "never_used": "never used",
           "never_usedHint": "Injected for 14+ days without any session referencing it — the outcome loop proposes retirement",
@@ -2621,7 +2625,7 @@
           "playbook": "Playbook",
           "skill": "Skill"
         },
-        "connections": "{{count}} connected nodes",
+        "connections": "{count} connected nodes",
         "noLinks": "Nothing links to this node yet."
       }
     },
@@ -2648,7 +2652,20 @@
           "title": "Knowledge",
           "description": "Cross-project, iterable expertise: binding foundational rules + emergent lessons, injected into every spawn."
         },
-        "settings": "Settings"
+        "settings": "Settings",
+        "proposals": {
+          "title": "Pending proposals ({count})",
+          "hint": "AI-proposed updates to project notes and KB pages, waiting for your verdict. Approve to publish, reject to drop.",
+          "kbLabel": "Knowledge Base",
+          "preview": "Preview",
+          "hide": "Hide",
+          "approve": "Approve",
+          "reject": "Reject",
+          "open": "Open the owning page",
+          "approvedToast": "Proposal approved — document updated",
+          "rejectedToast": "Proposal rejected",
+          "failedToast": "Action failed"
+        }
       },
       "chat": {
         "title": "Curation chat",
