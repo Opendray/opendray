@@ -21,6 +21,31 @@ type Handlers struct {
 	loader      *Loader
 	secretsPath string
 	log         *slog.Logger
+
+	// builtins are gateway-provided servers (e.g. opendray-memory)
+	// surfaced in the list for visibility. Read-only: create with a
+	// colliding id, update, and delete are all rejected.
+	builtins []Server
+}
+
+// SetBuiltins installs the gateway-provided server descriptors shown at
+// the top of the registry list. Called from app startup once the memory
+// auto-attach decision is made; safe to leave unset (no built-ins shown).
+func (h *Handlers) SetBuiltins(servers []Server) {
+	for i := range servers {
+		servers[i].Builtin = true
+	}
+	h.builtins = servers
+}
+
+// isBuiltin reports whether id belongs to a gateway-provided server.
+func (h *Handlers) isBuiltin(id string) bool {
+	for _, b := range h.builtins {
+		if b.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 func NewHandlers(loader *Loader, secretsPath string, log *slog.Logger) *Handlers {
@@ -67,12 +92,14 @@ func (h *Handlers) list(w http.ResponseWriter, _ *http.Request) {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
-	// Strip SourcePath from the API response — it's a server-side
-	// implementation detail.
-	out := make([]Server, len(all))
-	for i, s := range all {
+	// Built-ins first so the auto-attached gateway servers are always
+	// visible, then the vault entries. Strip SourcePath from the API
+	// response — it's a server-side implementation detail.
+	out := make([]Server, 0, len(h.builtins)+len(all))
+	out = append(out, h.builtins...)
+	for _, s := range all {
 		s.SourcePath = ""
-		out[i] = s
+		out = append(out, s)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"servers": out})
 }
@@ -82,6 +109,12 @@ func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
 	if !ValidID(id) {
 		writeError(w, http.StatusBadRequest, errors.New("invalid id"))
 		return
+	}
+	for _, b := range h.builtins {
+		if b.ID == id {
+			writeJSON(w, http.StatusOK, b)
+			return
+		}
 	}
 	s, err := h.loader.Get(id)
 	if err != nil {
@@ -103,6 +136,13 @@ func (h *Handlers) test(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	if !ValidID(id) {
 		writeError(w, http.StatusBadRequest, errors.New("invalid id"))
+		return
+	}
+	if h.isBuiltin(id) {
+		// Built-ins authenticate with a gateway-minted key injected at
+		// spawn time, which the registry test path doesn't carry.
+		writeError(w, http.StatusConflict,
+			fmt.Errorf("%s is a built-in opendray server — it is attached and authenticated automatically at session spawn", id))
 		return
 	}
 	s, err := h.loader.Get(id)
@@ -131,6 +171,11 @@ func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 	if !ValidID(id) {
 		writeError(w, http.StatusBadRequest,
 			errors.New("id must be lowercase alphanumeric / dash / underscore"))
+		return
+	}
+	if h.isBuiltin(id) {
+		writeError(w, http.StatusConflict,
+			fmt.Errorf("%s is a built-in opendray server; pick another id", id))
 		return
 	}
 	if h.loader.VaultRoot() == "" {
@@ -180,6 +225,11 @@ func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, errors.New("invalid id"))
 		return
 	}
+	if h.isBuiltin(id) {
+		writeError(w, http.StatusConflict,
+			fmt.Errorf("%s is a built-in opendray server and cannot be edited", id))
+		return
+	}
 	if h.loader.VaultRoot() == "" {
 		writeError(w, http.StatusConflict, errors.New("vault root not configured"))
 		return
@@ -224,6 +274,11 @@ func (h *Handlers) delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	if !ValidID(id) {
 		writeError(w, http.StatusBadRequest, errors.New("invalid id"))
+		return
+	}
+	if h.isBuiltin(id) {
+		writeError(w, http.StatusConflict,
+			fmt.Errorf("%s is a built-in opendray server and cannot be deleted", id))
 		return
 	}
 	if h.loader.VaultRoot() == "" {

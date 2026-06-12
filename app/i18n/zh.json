@@ -1377,6 +1377,10 @@
         "toggleFailedToast": "切换失败",
         "codexUnsupportedBadge": "Codex: 不支持",
         "codexUnsupportedTooltip": "Codex CLI 仅支持 stdio 传输方式。Codex 会话将跳过此服务器；claude 和 gemini 仍会使用。",
+        "builtinBadge": "内置",
+        "builtinTooltip": "由 opendray 自身提供——自动附加到每个支持 MCP 的会话。不可编辑或删除。",
+        "builtinDescription": "opendray 的共享记忆与知识服务器：memory_search / memory_store、project_goal 与 project_plan 读写、session_log_append、decision_record、doc_read、skill_distill、project_search。自动附加到每个 Claude / Codex / Gemini 会话。",
+        "builtinAutoAttach": "始终启用",
         "editor": {
           "createTitle": "新建 MCP 服务器",
           "editTitle": "编辑 MCP: {id}",

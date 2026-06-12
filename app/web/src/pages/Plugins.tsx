@@ -296,11 +296,27 @@ function McpSection() {
                   className="border-t border-border hover:bg-card/40 align-top"
                 >
                   <td className="px-3 py-2">
-                    <div className="font-medium font-mono">{s.name}</div>
-                    {s.description && (
-                      <div className="text-[10px] text-muted-foreground/70 italic">
-                        {s.description}
+                    <div className="font-medium font-mono flex items-center gap-1.5">
+                      {s.name}
+                      {s.builtin && (
+                        <span
+                          className="inline-flex items-center text-[9.5px] px-1.5 py-px rounded bg-violet-500/15 text-violet-300 border border-violet-500/30 font-sans"
+                          title={t('web.plugins.mcp.builtinTooltip')}
+                        >
+                          {t('web.plugins.mcp.builtinBadge')}
+                        </span>
+                      )}
+                    </div>
+                    {s.builtin ? (
+                      <div className="text-[10px] text-muted-foreground/70 max-w-[420px]">
+                        {t('web.plugins.mcp.builtinDescription')}
                       </div>
+                    ) : (
+                      s.description && (
+                        <div className="text-[10px] text-muted-foreground/70 italic">
+                          {s.description}
+                        </div>
+                      )
                     )}
                   </td>
                   <td className="px-3 py-2 font-mono text-[10.5px]">
@@ -330,55 +346,66 @@ function McpSection() {
                         )}
                   </td>
                   <td className="px-3 py-2">
-                    <Switch
-                      checked={s.enabled}
-                      onCheckedChange={() => toggle.mutate(s)}
-                      disabled={toggle.isPending}
-                    />
+                    {s.builtin ? (
+                      <span
+                        className="inline-flex items-center text-[9.5px] px-1.5 py-px rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                        title={t('web.plugins.mcp.builtinTooltip')}
+                      >
+                        {t('web.plugins.mcp.builtinAutoAttach')}
+                      </span>
+                    ) : (
+                      <Switch
+                        checked={s.enabled}
+                        onCheckedChange={() => toggle.mutate(s)}
+                        disabled={toggle.isPending}
+                      />
+                    )}
                   </td>
                   <td className="px-3 py-2 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => test.mutate(s.id)}
-                        disabled={test.isPending && test.variables === s.id}
-                        className="h-7 px-2 text-[11px] gap-1"
-                        title={t('web.plugins.mcp.test.title')}
-                      >
-                        {test.isPending && test.variables === s.id ? (
-                          <Loader2 className="size-3 animate-spin" />
-                        ) : (
-                          <Plug className="size-3" />
-                        )}
-                        {t('web.plugins.mcp.test.button')}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingId(s.id)}
-                        className="h-7 px-2 text-[11px] gap-1"
-                      >
-                        <Pencil className="size-3" />
-                        {t('web.plugins.common.edit')}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          if (
-                            confirm(
-                              t('web.plugins.mcp.deleteConfirm', { id: s.id }),
-                            )
-                          ) {
-                            remove.mutate(s.id)
-                          }
-                        }}
-                        className="h-7 px-2 text-[11px] gap-1 text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="size-3" />
-                      </Button>
-                    </div>
+                    {!s.builtin && (
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => test.mutate(s.id)}
+                          disabled={test.isPending && test.variables === s.id}
+                          className="h-7 px-2 text-[11px] gap-1"
+                          title={t('web.plugins.mcp.test.title')}
+                        >
+                          {test.isPending && test.variables === s.id ? (
+                            <Loader2 className="size-3 animate-spin" />
+                          ) : (
+                            <Plug className="size-3" />
+                          )}
+                          {t('web.plugins.mcp.test.button')}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingId(s.id)}
+                          className="h-7 px-2 text-[11px] gap-1"
+                        >
+                          <Pencil className="size-3" />
+                          {t('web.plugins.common.edit')}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (
+                              confirm(
+                                t('web.plugins.mcp.deleteConfirm', { id: s.id }),
+                              )
+                            ) {
+                              remove.mutate(s.id)
+                            }
+                          }}
+                          className="h-7 px-2 text-[11px] gap-1 text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="size-3" />
+                        </Button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

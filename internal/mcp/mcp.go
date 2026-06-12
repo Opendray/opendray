@@ -47,6 +47,12 @@ type Server struct {
 	URL         string            `json:"url,omitempty"`
 	Headers     map[string]string `json:"headers,omitempty"`
 	Enabled     bool              `json:"enabled"`
+	// Builtin marks servers opendray itself provides (e.g. the
+	// auto-attached opendray-memory MCP). Built-ins are injected by the
+	// gateway, not loaded from the vault — they are read-only in the
+	// registry API (no update / delete) and always attach to every
+	// session that supports MCP. Never persisted to mcp.json.
+	Builtin bool `json:"builtin,omitempty"`
 	// SourcePath is the absolute fs path the server was loaded from.
 	// Set by the loader, not persisted.
 	SourcePath string `json:"-"`

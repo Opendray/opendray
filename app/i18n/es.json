@@ -1377,6 +1377,10 @@
         "toggleFailedToast": "Error al alternar",
         "codexUnsupportedBadge": "Codex: no compatible",
         "codexUnsupportedTooltip": "El CLI de codex solo admite el transport stdio. Este servidor se omitirá en las sessions de codex; claude y gemini lo seguirán usando.",
+        "builtinBadge": "Integrado",
+        "builtinTooltip": "Provisto por el propio opendray — se adjunta automáticamente a cada session que admite MCP. No se puede editar ni eliminar.",
+        "builtinDescription": "El servidor compartido de memoria y conocimiento de opendray: memory_search / memory_store, project_goal y project_plan get/set, session_log_append, decision_record, doc_read, skill_distill, project_search. Se adjunta automáticamente a cada session de Claude / Codex / Gemini.",
+        "builtinAutoAttach": "siempre activo",
         "editor": {
           "createTitle": "Nuevo servidor MCP",
           "editTitle": "Editar MCP: {id}",

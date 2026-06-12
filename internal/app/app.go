@@ -576,6 +576,19 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 					"bin", binPath,
 					"base_url", listenLoopback(cfg.Listen))
 
+				// Surface the auto-attached server in the Plugins → MCP
+				// registry list so operators can see it exists. Command
+				// only — the integration key is injected at spawn time
+				// and never exposed through the registry API.
+				mcpHandlers.SetBuiltins([]mcpapi.Server{{
+					ID:        "opendray-memory",
+					Name:      "opendray-memory",
+					Transport: "stdio",
+					Command:   binPath,
+					Args:      []string{"mcp-memory"},
+					Enabled:   true,
+				}})
+
 				// Wire the local-memory mirror so each session spawn
 				// pulls Claude's <cwd>/.claude/projects/.../memory/*.md
 				// files into the shared store. Cross-CLI search picks
