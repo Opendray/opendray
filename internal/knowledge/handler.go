@@ -41,6 +41,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Post("/nodes/{id}/promote", h.promote)
 		r.Post("/nodes/{id}/skillify", h.skillify)
 		r.Post("/nodes/{id}/enable", h.setEnabled)
+		r.Post("/skills/distill", h.distillSkill)
 		r.Post("/edges", h.createEdge)
 		r.Get("/brain", h.projectBrain)
 		r.Get("/impact", h.impact)
@@ -205,6 +206,39 @@ func (h *Handlers) skillify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, skill)
+}
+
+// distillSkill is the manual-trigger distillation path (Hermes: the
+// operator tells the in-session agent "save this procedure as a
+// skill"). The agent authors the draft from its live context; the
+// structural gate validates it; it lands DISABLED awaiting the
+// operator's enable click in the workbench.
+func (h *Handlers) distillSkill(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Title       string   `json:"title"`
+		AppliesWhen string   `json:"applies_when"`
+		Steps       []string `json:"steps"`
+		Pitfalls    []string `json:"pitfalls"`
+		Evidence    []string `json:"evidence"`
+		SessionID   string   `json:"session_id"`
+		Cwd         string   `json:"cwd"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	node, err := h.svc.DistillSkillFromAgent(r.Context(), draftPlaybook{
+		Title:       body.Title,
+		AppliesWhen: body.AppliesWhen,
+		Steps:       body.Steps,
+		Pitfalls:    body.Pitfalls,
+		Evidence:    body.Evidence,
+	}, body.SessionID, body.Cwd)
+	if err != nil {
+		writeError(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, node)
 }
 
 // setEnabled flips a node's enabled flag. For skills this also

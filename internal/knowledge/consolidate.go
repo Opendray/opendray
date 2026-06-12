@@ -32,7 +32,21 @@ type ConsolidationEngine struct {
 	compiler *ExperienceCompiler
 	kb       *KBDrafter
 	overview *OverviewDrafter
-	log      *slog.Logger
+	// curator runs the skill-lifecycle sweep (active→stale→auto-
+	// disabled). Optional, like every other stage.
+	curator interface {
+		CurateSkills(ctx context.Context) (int, int, error)
+	}
+	log *slog.Logger
+}
+
+// WithCurator wires the skill-lifecycle curator (the knowledge
+// Service implements it).
+func (e *ConsolidationEngine) WithCurator(c interface {
+	CurateSkills(ctx context.Context) (int, int, error)
+}) *ConsolidationEngine {
+	e.curator = c
+	return e
 }
 
 // NewConsolidationEngine wires the stages. Any of them may be nil.
@@ -129,6 +143,18 @@ func (e *ConsolidationEngine) RunOnce(ctx context.Context, cfg ConsolidateConfig
 	if e.overview != nil {
 		if _, err := e.overview.DraftAll(ctx); err != nil && !errors.Is(err, context.Canceled) {
 			e.log.Warn("consolidation: overview stage failed", "err", err)
+		}
+	}
+	if ctx.Err() != nil {
+		return
+	}
+	// Curator — the Hermes-style lifecycle sweep over the skill
+	// library (active → stale 30d → auto-disabled 90d). Cheap SQL.
+	if e.curator != nil {
+		if stale, disabled, err := e.curator.CurateSkills(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			e.log.Warn("consolidation: curator stage failed", "err", err)
+		} else if stale+disabled > 0 {
+			e.log.Info("consolidation: curator swept skills", "stale", stale, "auto_disabled", disabled)
 		}
 	}
 }

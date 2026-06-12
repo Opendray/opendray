@@ -152,13 +152,14 @@ func (s *Service) WithSkillifyLLM(llm LLM) *Service {
 const skillifySystem = `You turn a distilled PLAYBOOK into a production-grade agent SKILL file (Claude Code SKILL.md format).
 
 Output the COMPLETE file and nothing else:
-1. YAML frontmatter: name (the given slug, verbatim), description (ONE sentence, <200 chars: what this skill does AND when to reach for it — this line is all an agent sees before deciding to load the skill, make it count).
+1. YAML frontmatter: name (the given slug, verbatim), description (ONE sentence, <200 chars: what this skill does AND when to reach for it — this line is all an agent sees before deciding to load the skill, make it count), category (one of: deploy, debug, infra, build, release, data, research, ops), tags (3-5 lowercase keywords for semantic activation and curator grouping).
 2. Body sections:
    ## Overview — 2-3 sentences: the problem this solves and the outcome.
    ## When to use — concrete triggers; also when NOT to use it.
    ## Procedure — numbered, executable steps reusing the playbook's REAL commands, paths, hostnames, file names. An agent must be able to follow this without guessing.
    ## Pitfalls — the actual failure modes and how to avoid them.
    ## Verification — how to confirm it worked.
+   ## Success criteria — measurable outcomes (what must be true, and an efficiency budget such as "≤N tool calls / ≤M minutes" when the playbook's durations support one).
 
 Rules: never invent commands or values absent from the playbook; keep every concrete detail it has; NEVER include secrets (passwords, tokens, keys) — name where a credential lives, never its value; no markdown fences around the file.`
 
@@ -382,6 +383,91 @@ func (s *Service) RenderForSpawn(ctx context.Context, cwd string, maxBytes int) 
 	writeSection("\n### Skills\n", skills)
 	writeSection("\n### Playbooks\n", playbooks)
 	return b.String(), nil
+}
+
+// CurateSkills is the Hermes-style curator pass: a periodic lifecycle
+// sweep over the skill library so it stays lean without manual
+// gardening. State machine (provenance.lifecycle):
+//
+//	active → stale  (30d without a session referencing it; badge only)
+//	stale  → auto-disabled (90d unused; SKILL.md removed — no session
+//	         loads it; fully reversible via the workbench toggle)
+//
+// No LLM, one cheap sweep per consolidation cycle.
+func (s *Service) CurateSkills(ctx context.Context) (stale, disabled int, err error) {
+	skills, err := s.store.ListNodes(ctx, NodeFilter{Kind: KindSkill, Limit: 500})
+	if err != nil {
+		return 0, 0, err
+	}
+	now := time.Now().UTC()
+	for _, n := range skills {
+		if !n.Enabled {
+			continue
+		}
+		ref := n.CreatedAt
+		if n.LastUsedAt != nil {
+			ref = *n.LastUsedAt
+		}
+		idle := now.Sub(ref)
+		current, _ := n.Provenance["lifecycle"].(string)
+		switch {
+		case idle > 90*24*time.Hour:
+			if _, derr := s.SetSkillEnabled(ctx, n.ID, false); derr != nil {
+				s.log.Warn("curator: auto-disable failed", "skill", n.Title, "err", derr)
+				continue
+			}
+			if uerr := s.store.SetNodeLifecycle(ctx, n.ID, "auto-disabled"); uerr != nil {
+				s.log.Warn("curator: lifecycle mark failed", "skill", n.Title, "err", uerr)
+			}
+			disabled++
+			s.log.Info("curator: skill auto-disabled (90d unused)", "skill", n.Title)
+		case idle > 30*24*time.Hour && current != "stale":
+			if uerr := s.store.SetNodeLifecycle(ctx, n.ID, "stale"); uerr != nil {
+				s.log.Warn("curator: lifecycle mark failed", "skill", n.Title, "err", uerr)
+				continue
+			}
+			stale++
+		case idle <= 30*24*time.Hour && current != "" && current != "active":
+			// A used skill recovers.
+			_ = s.store.SetNodeLifecycle(ctx, n.ID, "active")
+		}
+	}
+	return stale, disabled, nil
+}
+
+// DistillSkillFromAgent is the manual-trigger path (Hermes: "回顾刚才的
+// 过程，提取为技能"): the IN-SESSION agent — which has the live context —
+// authors the procedure, the structural gate validates it, and it lands
+// as a DISABLED skill awaiting operator review in the workbench. The
+// operator's enable click is the approval.
+func (s *Service) DistillSkillFromAgent(ctx context.Context, d draftPlaybook, sessionID, cwd string) (Node, error) {
+	if reason, ok := validateDraftPlaybook(d); !ok {
+		return Node{}, fmt.Errorf("knowledge: draft rejected by quality gate: %s", reason)
+	}
+	scope, scopeKey := ScopeGlobal, ""
+	if cwd != "" {
+		scope, scopeKey = ScopeProject, cwd
+	}
+	node, err := s.store.CreateNode(ctx, Node{
+		Kind:     KindSkill,
+		Title:    strings.TrimSpace(d.Title),
+		Body:     renderPlaybookBody(d),
+		Scope:    scope,
+		ScopeKey: scopeKey,
+		Maturity: MaturitySkill,
+		Provenance: map[string]any{
+			"source":       "agent_distilled",
+			"session_id":   sessionID,
+			"applies_when": strings.TrimSpace(d.AppliesWhen),
+			"evidence":     d.Evidence,
+			"lifecycle":    "pending-review",
+		},
+	})
+	if err != nil {
+		return Node{}, err
+	}
+	// Disabled until the operator reviews + enables (no SKILL.md yet).
+	return s.store.SetNodeEnabled(ctx, node.ID, false)
 }
 
 // ImpactEntities returns entities ordered by blast radius.

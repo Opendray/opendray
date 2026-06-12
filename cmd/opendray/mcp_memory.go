@@ -453,6 +453,45 @@ var toolDefs = []map[string]any{
 		},
 	},
 	{
+		"name": "skill_distill",
+		"description": "Save a procedure from THIS session as a reusable " +
+			"skill, when the operator asks you to (e.g. \"把刚才的过程存为技能\" " +
+			"/ \"save this as a skill\"). You author the draft from your live " +
+			"context; a structural quality gate validates it (≥3 concrete " +
+			"steps with real commands/paths, a trigger, evidence quotes); it " +
+			"lands DISABLED in the operator's workbench for review — their " +
+			"enable click is the approval. Never include secrets.",
+		"inputSchema": map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"title": map[string]any{
+					"type":        "string",
+					"description": "Short imperative title (e.g. 'Deploy a Nuxt app update to the PDA-web LXC').",
+				},
+				"applies_when": map[string]any{
+					"type":        "string",
+					"description": "The trigger/situation in which to reach for this skill.",
+				},
+				"steps": map[string]any{
+					"type":        "array",
+					"items":       map[string]any{"type": "string"},
+					"description": "≥3 ordered, concrete steps reusing the REAL commands/paths from this session.",
+				},
+				"pitfalls": map[string]any{
+					"type":        "array",
+					"items":       map[string]any{"type": "string"},
+					"description": "Failure modes actually hit and how to avoid them.",
+				},
+				"evidence": map[string]any{
+					"type":        "array",
+					"items":       map[string]any{"type": "string"},
+					"description": "1-3 short verbatim quotes from this session proving the procedure happened.",
+				},
+			},
+			"required": []string{"title", "applies_when", "steps", "evidence"},
+		},
+	},
+	{
 		"name": "project_search",
 		"description": "Search ACROSS all memory layers (facts + " +
 			"journal entries + goal/plan documents) in the current " +
@@ -521,6 +560,8 @@ func (s *memMCPServer) handleToolCall(req rpcRequest) {
 		result, err = s.callSessionLogAppend("decision", params.Arguments)
 	case "doc_read":
 		result, err = s.callDocRead(params.Arguments)
+	case "skill_distill":
+		result, err = s.callSkillDistill(params.Arguments)
 	case "project_search":
 		result, err = s.callProjectSearch(params.Arguments)
 	default:
@@ -837,6 +878,46 @@ func (s *memMCPServer) callDocRead(args json.RawMessage) (any, error) {
 	return map[string]any{
 		"content": []map[string]any{
 			{"type": "text", "text": b.String()},
+		},
+	}, nil
+}
+
+// callSkillDistill posts an agent-authored skill draft for operator
+// review (manual-trigger distillation).
+func (s *memMCPServer) callSkillDistill(args json.RawMessage) (any, error) {
+	var in struct {
+		Title       string   `json:"title"`
+		AppliesWhen string   `json:"applies_when"`
+		Steps       []string `json:"steps"`
+		Pitfalls    []string `json:"pitfalls"`
+		Evidence    []string `json:"evidence"`
+	}
+	if err := json.Unmarshal(args, &in); err != nil {
+		return nil, fmt.Errorf("bad arguments: %w", err)
+	}
+	payload := map[string]any{
+		"title":        in.Title,
+		"applies_when": in.AppliesWhen,
+		"steps":        in.Steps,
+		"pitfalls":     in.Pitfalls,
+		"evidence":     in.Evidence,
+		// No session-id env is plumbed into the MCP subprocess; the
+		// cwd is the meaningful provenance anchor.
+		"session_id": "",
+		"cwd":        s.cfg.scopeKey,
+	}
+	var node struct {
+		ID    string `json:"id"`
+		Title string `json:"title"`
+	}
+	if err := s.gatewayPostJSON("/api/v1/knowledge/skills/distill", payload, &node); err != nil {
+		return nil, err
+	}
+	return map[string]any{
+		"content": []map[string]any{
+			{"type": "text", "text": "Skill draft \"" + node.Title + "\" submitted (id " + node.ID +
+				"). It is DISABLED pending the operator's review in Cortex → 知识 → 蒸馏 — " +
+				"tell the operator it is waiting there."},
 		},
 	}, nil
 }

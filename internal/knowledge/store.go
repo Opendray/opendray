@@ -651,6 +651,19 @@ func (s *Store) SetNodeEnabled(ctx context.Context, id string, enabled bool) (No
 	return s.GetNode(ctx, id)
 }
 
+// SetNodeLifecycle stamps the curator lifecycle state into provenance.
+func (s *Store) SetNodeLifecycle(ctx context.Context, id, state string) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE knowledge_nodes
+		   SET provenance = jsonb_set(COALESCE(provenance, '{}'::jsonb), '{lifecycle}', to_jsonb($2::text)),
+		       updated_at = NOW()
+		 WHERE id = $1 AND archived_at IS NULL`, id, state)
+	if err != nil {
+		return fmt.Errorf("knowledge: set lifecycle: %w", err)
+	}
+	return nil
+}
+
 // UpdateNodeBody replaces a node's body (used when the skillify LLM
 // produces the full SKILL.md so the stored node matches the file).
 func (s *Store) UpdateNodeBody(ctx context.Context, id, body string) (Node, error) {

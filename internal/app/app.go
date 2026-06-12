@@ -894,7 +894,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			// stage's fresh output instead of racing on separate timers.
 			knowledgeConsolidate = knowledge.NewConsolidationEngine(
 				knowledgeAnchorer, knowledgeCompiler, knowledgeKBDrafter,
-				knowledgeOverview, log)
+				knowledgeOverview, log).
+				// Hermes-style curator: skill lifecycle sweep
+				// (active → stale 30d → auto-disabled 90d).
+				WithCurator(knowledgeSvc)
 		}
 		knowledgeHandlers = knowledge.NewHandlers(knowledgeSvc, log)
 		log.Info("knowledge graph (M-KG) enabled", "anchorer", knowledgeAnchorer != nil)
