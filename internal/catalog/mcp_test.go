@@ -13,7 +13,7 @@ func TestRenderClaudeMCP_StdioServer(t *testing.T) {
 	servers := []MCPServer{
 		{Name: "fs", Command: "npx", Args: []string{"-y", "@modelcontextprotocol/server-filesystem", "/tmp"}},
 	}
-	args, env, err := renderMCP("claude", dir, servers)
+	args, env, err := renderMCP("claude", dir, "", servers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestRenderClaudeMCP_HTTPServer(t *testing.T) {
 		{Name: "remote", Transport: "http", URL: "https://api.example.com/mcp",
 			Headers: map[string]string{"Authorization": "Bearer xyz"}},
 	}
-	args, _, err := renderMCP("claude", dir, servers)
+	args, _, err := renderMCP("claude", dir, "", servers)
 	if err != nil || len(args) != 2 {
 		t.Fatalf("unexpected args=%v err=%v", args, err)
 	}
@@ -61,7 +61,7 @@ func TestRenderClaudeMCP_DropsInvalid(t *testing.T) {
 		{Name: "no-url", Transport: "sse"},                    // dropped (no url)
 		{Name: "ok", Command: "node", Args: []string{"x.js"}}, // kept
 	}
-	args, _, err := renderMCP("claude", dir, servers)
+	args, _, err := renderMCP("claude", dir, "", servers)
 	if err != nil || len(args) != 2 {
 		t.Fatalf("args=%v err=%v", args, err)
 	}
@@ -81,7 +81,7 @@ func TestRenderCodexMCP_TomlOutput(t *testing.T) {
 		{Name: "fs", Command: "npx", Args: []string{"-y", "server-fs"},
 			Env: map[string]string{"DEBUG": "1", "PATH": "/usr/bin"}},
 	}
-	args, env, err := renderMCP("codex", dir, servers)
+	args, env, err := renderMCP("codex", dir, "", servers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,7 +122,7 @@ trust_level = "trusted"
 		t.Fatal(err)
 	}
 
-	_, env, err := renderMCP("codex", t.TempDir(), []MCPServer{
+	_, env, err := renderMCP("codex", t.TempDir(), "", []MCPServer{
 		{Name: "fs", Command: "npx"},
 	})
 	if err != nil {
@@ -151,7 +151,7 @@ func TestRenderCodexMCP_SkipsNonStdio(t *testing.T) {
 		{Name: "remote", Transport: "http", URL: "https://x"},
 		{Name: "stdio", Command: "node"},
 	}
-	_, env, err := renderMCP("codex", dir, servers)
+	_, env, err := renderMCP("codex", dir, "", servers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -164,23 +164,9 @@ func TestRenderCodexMCP_SkipsNonStdio(t *testing.T) {
 	}
 }
 
-func TestRenderGeminiMCP_SettingsOutput(t *testing.T) {
-	dir := t.TempDir()
-	servers := []MCPServer{
-		{Name: "fs", Command: "npx", Args: []string{"-y", "server-fs"}},
-	}
-	args, env, err := renderMCP("gemini", dir, servers)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(args) != 0 {
-		t.Errorf("args=%v, want none", args)
-	}
-	home, ok := env["GEMINI_CONFIG_DIR"]
-	if !ok {
-		t.Fatalf("GEMINI_CONFIG_DIR missing from env=%v", env)
-	}
-	body, err := os.ReadFile(filepath.Join(home, "settings.json"))
+func readGeminiSettings(t *testing.T, cwd string) map[string]any {
+	t.Helper()
+	body, err := os.ReadFile(filepath.Join(cwd, ".gemini", "settings.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -188,14 +174,168 @@ func TestRenderGeminiMCP_SettingsOutput(t *testing.T) {
 	if err := json.Unmarshal(body, &got); err != nil {
 		t.Fatalf("invalid json: %v", err)
 	}
-	servers0 := got["mcpServers"].(map[string]any)["fs"].(map[string]any)
-	if servers0["command"].(string) != "npx" {
-		t.Errorf("command=%v", servers0["command"])
+	return got
+}
+
+func TestRenderGeminiMCP_WritesWorkspaceSettings(t *testing.T) {
+	cwd := t.TempDir()
+	servers := []MCPServer{
+		{Name: "fs", Command: "npx", Args: []string{"-y", "server-fs"}},
+	}
+	args, env, err := renderMCP("gemini", t.TempDir(), cwd, servers)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(args) != 0 || len(env) != 0 {
+		t.Errorf("args=%v env=%v, want none (gemini reads <cwd>/.gemini/settings.json)", args, env)
+	}
+	got := readGeminiSettings(t, cwd)
+	fs := got["mcpServers"].(map[string]any)["fs"].(map[string]any)
+	if fs["command"].(string) != "npx" {
+		t.Errorf("command=%v", fs["command"])
+	}
+	// Managed-entry ledger + gitignore note must exist so the next render
+	// can prune stale entries and the file never lands in version control.
+	if _, err := os.Stat(filepath.Join(cwd, ".gemini", geminiManagedFile)); err != nil {
+		t.Errorf("managed ledger missing: %v", err)
+	}
+	gi, err := os.ReadFile(filepath.Join(cwd, ".gemini", ".gitignore"))
+	if err != nil {
+		t.Fatalf("gitignore missing: %v", err)
+	}
+	if !strings.Contains(string(gi), "settings.json") {
+		t.Errorf("gitignore does not cover settings.json: %s", gi)
+	}
+}
+
+func TestRenderGeminiMCP_MergePreservesUserConfig(t *testing.T) {
+	cwd := t.TempDir()
+	dir := filepath.Join(cwd, ".gemini")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	user := `{
+  "ui": {"theme": "Default"},
+  "mcpServers": {
+    "user-server": {"command": "uvx", "args": ["my-mcp"]}
+  }
+}`
+	if err := os.WriteFile(filepath.Join(dir, "settings.json"), []byte(user), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, _, err := renderMCP("gemini", t.TempDir(), cwd, []MCPServer{
+		{Name: "fs", Command: "npx"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := readGeminiSettings(t, cwd)
+	if _, ok := got["ui"].(map[string]any); !ok {
+		t.Errorf("user ui key lost: %v", got)
+	}
+	mcps := got["mcpServers"].(map[string]any)
+	if _, ok := mcps["user-server"]; !ok {
+		t.Errorf("user mcp entry lost: %v", mcps)
+	}
+	if _, ok := mcps["fs"]; !ok {
+		t.Errorf("managed entry missing: %v", mcps)
+	}
+}
+
+func TestRenderGeminiMCP_RemovesStaleManagedEntries(t *testing.T) {
+	cwd := t.TempDir()
+	if _, _, err := renderMCP("gemini", t.TempDir(), cwd, []MCPServer{
+		{Name: "fs", Command: "npx"},
+		{Name: "old", Command: "node"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	// Second spawn: "old" disabled / removed from the registry.
+	if _, _, err := renderMCP("gemini", t.TempDir(), cwd, []MCPServer{
+		{Name: "fs", Command: "npx"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	mcps := readGeminiSettings(t, cwd)["mcpServers"].(map[string]any)
+	if _, ok := mcps["old"]; ok {
+		t.Errorf("stale managed entry survived: %v", mcps)
+	}
+	if _, ok := mcps["fs"]; !ok {
+		t.Errorf("live managed entry missing: %v", mcps)
+	}
+
+	// Full cleanup (no MCP servers at all this spawn).
+	if err := syncGeminiWorkspaceMCP(cwd, nil); err != nil {
+		t.Fatal(err)
+	}
+	got := readGeminiSettings(t, cwd)
+	if _, ok := got["mcpServers"]; ok {
+		t.Errorf("managed entries not cleaned up: %v", got)
+	}
+	if _, err := os.Stat(filepath.Join(cwd, ".gemini", geminiManagedFile)); !os.IsNotExist(err) {
+		t.Errorf("managed ledger should be removed after cleanup, err=%v", err)
+	}
+}
+
+func TestRenderGeminiMCP_MalformedUserSettingsErrors(t *testing.T) {
+	cwd := t.TempDir()
+	dir := filepath.Join(cwd, ".gemini")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "settings.json"), []byte("{not json"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := renderMCP("gemini", t.TempDir(), cwd, []MCPServer{
+		{Name: "fs", Command: "npx"},
+	}); err == nil {
+		t.Fatal("expected error on malformed user settings.json (must not clobber)")
+	}
+}
+
+func TestGeminiFolderUntrusted(t *testing.T) {
+	cfg := t.TempDir()
+	proj := filepath.Join(t.TempDir(), "proj")
+	if err := os.MkdirAll(proj, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	// No trust store at all → untrusted (folder trust defaults to on).
+	if !geminiFolderUntrustedIn(cfg, proj) {
+		t.Error("expected untrusted with empty trust store")
+	}
+
+	// TRUST_FOLDER on an ancestor covers the subtree.
+	trust := `{"` + filepath.Dir(proj) + `": "TRUST_FOLDER"}`
+	if err := os.WriteFile(filepath.Join(cfg, "trustedFolders.json"), []byte(trust), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if geminiFolderUntrustedIn(cfg, proj) {
+		t.Error("expected trusted under a TRUST_FOLDER ancestor")
+	}
+
+	// Longest match wins: DO_NOT_TRUST on the folder itself overrides.
+	trust = `{"` + filepath.Dir(proj) + `": "TRUST_FOLDER", "` + proj + `": "DO_NOT_TRUST"}`
+	if err := os.WriteFile(filepath.Join(cfg, "trustedFolders.json"), []byte(trust), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if !geminiFolderUntrustedIn(cfg, proj) {
+		t.Error("expected untrusted when DO_NOT_TRUST matches more specifically")
+	}
+
+	// Feature explicitly disabled → everything trusted.
+	settings := `{"security": {"folderTrust": {"enabled": false}}}`
+	if err := os.WriteFile(filepath.Join(cfg, "settings.json"), []byte(settings), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if geminiFolderUntrustedIn(cfg, proj) {
+		t.Error("expected trusted when folderTrust is disabled")
 	}
 }
 
 func TestRenderMCP_UnknownProviderNoOp(t *testing.T) {
-	args, env, err := renderMCP("unknown-provider", t.TempDir(), []MCPServer{
+	args, env, err := renderMCP("unknown-provider", t.TempDir(), "", []MCPServer{
 		{Name: "x", Command: "y"},
 	})
 	if err != nil || args != nil || env != nil {
@@ -204,7 +344,7 @@ func TestRenderMCP_UnknownProviderNoOp(t *testing.T) {
 }
 
 func TestRenderMCP_EmptyServers(t *testing.T) {
-	args, env, err := renderMCP("claude", t.TempDir(), nil)
+	args, env, err := renderMCP("claude", t.TempDir(), "", nil)
 	if err != nil || args != nil || env != nil {
 		t.Errorf("expected no-op for empty servers, got args=%v env=%v err=%v", args, env, err)
 	}

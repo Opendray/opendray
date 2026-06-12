@@ -45,6 +45,12 @@ type PrepareOutput struct {
 	// fragile mtime-based guessing. Empty for providers that don't
 	// support pre-assigned session IDs (e.g. codex).
 	ClaudeSessionID string
+
+	// Notices are one-time operator hints surfaced at the top of the
+	// session terminal (and the ring buffer / transcript) before the
+	// CLI's own output — e.g. "gemini will disable MCP here because the
+	// folder is untrusted". Plain text; the manager adds styling.
+	Notices []string
 }
 
 // ProviderResolver maps a provider_id to its ProviderInfo. The catalog

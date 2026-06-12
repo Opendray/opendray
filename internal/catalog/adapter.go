@@ -582,7 +582,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 				sp.log.Warn("MCP servers reference unset secrets",
 					"provider", providerID, "missing", missing)
 			}
-			extraArgs, mcpEnv, err := renderMCP(providerID, baseDir, resolved)
+			extraArgs, mcpEnv, err := renderMCP(providerID, baseDir, cwd, resolved)
 			if err != nil {
 				return session.PrepareOutput{}, err
 			}
@@ -593,23 +593,31 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			for k, v := range mcpEnv {
 				out.Env[k] = v
 			}
+		}
 
-			// Gemini mirroring: if renderMCP set GEMINI_CONFIG_DIR,
-			// symlink the user's real ~/.gemini into the scratch dir
-			// so they stay logged in.
-			if providerID == "gemini" && out.Env["GEMINI_CONFIG_DIR"] != "" {
-				home := out.Env["GEMINI_CONFIG_DIR"]
-				userHome := os.Getenv("GEMINI_CONFIG_DIR")
-				if userHome == "" {
-					if h, err := os.UserHomeDir(); err == nil {
-						userHome = filepath.Join(h, ".gemini")
-					}
+		if providerID == "gemini" {
+			cwd := session.Cwd(prepareCtx)
+			if cwd != "" && !mcpEnabled {
+				// No MCP servers this spawn — still drop any entries a
+				// previous spawn wrote into <cwd>/.gemini/settings.json
+				// so stale credentials don't linger there.
+				if err := syncGeminiWorkspaceMCP(cwd, nil); err != nil {
+					sp.log.Warn("gemini workspace MCP cleanup failed",
+						"cwd", cwd, "err", err)
 				}
-				if userHome != "" && userHome != home {
-					if err := mirrorGeminiHome(userHome, home); err != nil {
-						return session.PrepareOutput{}, fmt.Errorf("mirror gemini home: %w", err)
-					}
-				}
+			}
+			if cwd != "" && mcpEnabled && geminiFolderUntrusted(cwd) {
+				// Folder trust would silently disable everything we just
+				// rendered. Surface a one-time spawn hint in the session
+				// terminal + gateway log; we deliberately do NOT edit the
+				// user's trust store.
+				out.Notices = append(out.Notices,
+					"opendray: Gemini marks this folder as untrusted, so it disables ALL MCP servers "+
+						"(including opendray-memory) and workspace settings here. "+
+						"Trust the folder once — accept Gemini's folder-trust prompt or run /trust — "+
+						"then restart the session to attach MCP.")
+				sp.log.Warn("gemini folder untrusted; gemini will disable MCP servers for this session",
+					"cwd", cwd)
 			}
 		}
 
@@ -1266,36 +1274,6 @@ func appendToFile(path, content string) error {
 	defer f.Close()
 	if _, err := f.WriteString(content); err != nil {
 		return fmt.Errorf("write %s: %w", path, err)
-	}
-	return nil
-}
-
-func mirrorGeminiHome(src, dest string) error {
-	if err := os.MkdirAll(dest, 0o700); err != nil {
-		return err
-	}
-	entries, err := os.ReadDir(src)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-	skip := map[string]bool{
-		"settings.json": true,
-	}
-	for _, e := range entries {
-		if skip[e.Name()] {
-			continue
-		}
-		srcPath := filepath.Join(src, e.Name())
-		dstPath := filepath.Join(dest, e.Name())
-		if err := os.Symlink(srcPath, dstPath); err != nil {
-			if os.IsExist(err) {
-				continue
-			}
-			return fmt.Errorf("symlink %s: %w", e.Name(), err)
-		}
 	}
 	return nil
 }

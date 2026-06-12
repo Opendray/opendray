@@ -636,6 +636,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	var (
 		extraArgs []string
 		extraEnv  map[string]string
+		notices   []string
 	)
 	var preparedClaudeSessionID string
 	if p.Prepare != nil {
@@ -654,6 +655,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		}
 		extraArgs = out.Args
 		extraEnv = out.Env
+		notices = out.Notices
 		// Capture the agent-side session UUID so the M18 transcript
 		// reader can anchor the right *.jsonl file. For fresh spawns
 		// this lands in the Insert below via sess.ClaudeSessionID;
@@ -726,6 +728,18 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		subs:         make(map[chan []byte]struct{}),
 		lastActivity: sess.StartedAt,
 		endedCh:      make(chan struct{}),
+	}
+
+	// Provider prepare-time notices render once at the top of the
+	// terminal stream, before any CLI output. Seeded straight into the
+	// ring + virtual terminal (pumpStdout hasn't started yet, so order
+	// is deterministic); every attached client replays the ring.
+	for _, n := range notices {
+		line := "\x1b[33m⚠ " + n + "\x1b[0m\r\n\r\n"
+		_, _ = rs.ring.Write([]byte(line))
+		if rs.vt != nil {
+			_, _ = rs.vt.Write([]byte(line))
+		}
 	}
 
 	m.mu.Lock()
