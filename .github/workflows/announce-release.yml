@@ -1,0 +1,170 @@
+name: Announce release
+
+# Fires after release.yml has published the GitHub release. Pulls the
+# relevant CHANGELOG section, drafts a tweet from its first ### Added /
+# ### Fixed bullets, and posts the draft + an intent URL as a comment
+# on the release. That keeps a one-tap "Tweet this" path on the release
+# page so you don't have to copy-paste from CHANGELOG every cut.
+#
+# Optionally posts the same draft to Typefully if TYPEFULLY_API_KEY is
+# set in repo secrets — the draft lands in your queue and you approve
+# it from the phone app. With no API key configured, the workflow
+# still produces the release comment so the manual path always works.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to re-announce (e.g. v2.7.5). Must already be released.'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  # Needed to comment on the release with the tweet draft.
+  issues: write
+  pull-requests: write
+
+jobs:
+  draft:
+    name: Draft + announce
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Resolve tag + extract CHANGELOG section
+        id: extract
+        env:
+          TAG: ${{ github.event.release.tag_name || github.event.inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TAG:-}" ]; then
+            echo "::error::no tag resolved from release or workflow input"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+          # Find the "## [vX.Y.Z]" block in CHANGELOG.md and slice
+          # everything up to (but not including) the next "## [" header.
+          version_no_v="${TAG#v}"
+          section=$(awk -v ver="$version_no_v" '
+            $0 ~ "^## \\[v?" ver "\\]" { capture=1; next }
+            capture && /^## \[/ { exit }
+            capture { print }
+          ' CHANGELOG.md || true)
+
+          if [ -z "$section" ]; then
+            echo "::warning::no CHANGELOG section found for $TAG — falling back to release body"
+            section="${{ github.event.release.body }}"
+          fi
+
+          # Stash for the next steps via a file (multi-line outputs are
+          # awkward in GITHUB_OUTPUT).
+          mkdir -p tweet
+          printf '%s\n' "$section" > tweet/section.md
+
+      - name: Compose tweet
+        id: compose
+        env:
+          TAG: ${{ steps.extract.outputs.tag }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          RELEASE_URL: ${{ github.event.release.html_url }}
+        run: |
+          set -euo pipefail
+          # First non-empty bullet under ### Added or ### Fixed becomes
+          # the lede; the rest of the headline is up to ~140 chars so the
+          # full tweet (lede + URL + link) stays inside 280.
+          lede=$(awk '
+            /^### / { in_section=1; next }
+            in_section && /^- / {
+              sub(/^- /, "")
+              # Strip leading **bold** label.
+              sub(/^\*\*[^*]+\*\*\s*/, "")
+              # Stop at the first newline-break sentence.
+              split($0, parts, /\. /)
+              print parts[1]
+              exit
+            }
+          ' tweet/section.md | head -c 200 || true)
+
+          if [ -z "$lede" ]; then
+            lede="release notes in the link"
+          fi
+
+          # Trim trailing punctuation so we can add our own period.
+          lede=$(echo "$lede" | sed -E 's/[[:punct:]]*$//')
+
+          url="${RELEASE_URL:-$REPO_URL/releases/tag/$TAG}"
+          tweet=$(printf 'opendray %s shipped — %s.\n\n%s' "$TAG" "$lede" "$url")
+
+          # Compose intent URL (one-tap "Tweet this" link the release
+          # comment surfaces).
+          intent_url="https://x.com/intent/tweet?text=$(jq -rn --arg t "$tweet" '$t | @uri')"
+
+          {
+            echo 'tweet<<EOF'
+            echo "$tweet"
+            echo 'EOF'
+            echo "intent_url=$intent_url"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Post Typefully draft (optional)
+        id: typefully
+        # Secrets can't be referenced in `if:` directly — gate with a
+        # `continue-on-error` step that exits 0 fast when the key is
+        # absent so the rest of the workflow still runs.
+        env:
+          TYPEFULLY_API_KEY: ${{ secrets.TYPEFULLY_API_KEY }}
+          TWEET: ${{ steps.compose.outputs.tweet }}
+        run: |
+          if [ -z "${TYPEFULLY_API_KEY:-}" ]; then
+            echo "TYPEFULLY_API_KEY not set — skipping Typefully draft (intent URL still posted)"
+            exit 0
+          fi
+          set -euo pipefail
+          body=$(jq -n --arg c "$TWEET" '{content: $c, schedule_date: "next-free-slot"}')
+          resp=$(curl -sS -w '\n%{http_code}' \
+            -H "X-API-KEY: $TYPEFULLY_API_KEY" \
+            -H 'Content-Type: application/json' \
+            -d "$body" \
+            https://api.typefully.com/v1/drafts/)
+          code=$(echo "$resp" | tail -n1)
+          if [ "$code" != "200" ] && [ "$code" != "201" ]; then
+            echo "::warning::Typefully draft API returned $code — skipping (manual intent URL still posted)"
+            exit 0
+          fi
+          echo "draft_url=$(echo "$resp" | head -n -1 | jq -r '.share_url // empty')" >> "$GITHUB_OUTPUT"
+
+      - name: Append draft + intent URL to release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.extract.outputs.tag }}
+          TWEET: ${{ steps.compose.outputs.tweet }}
+          INTENT_URL: ${{ steps.compose.outputs.intent_url }}
+          TYPEFULLY_URL: ${{ steps.typefully.outputs.draft_url }}
+        run: |
+          set -euo pipefail
+          # Read existing release notes; we append, never replace.
+          existing=$(gh release view "$TAG" --json body -q .body)
+
+          {
+            echo "$existing"
+            echo
+            echo '---'
+            echo
+            echo '## Announce on X'
+            echo
+            echo '```'
+            echo "$TWEET"
+            echo '```'
+            echo
+            echo "[Tweet this]($INTENT_URL)"
+            if [ -n "${TYPEFULLY_URL:-}" ]; then
+              echo
+              echo "Typefully draft: $TYPEFULLY_URL"
+            fi
+          } > tweet/notes.md
+
+          gh release edit "$TAG" --notes-file tweet/notes.md
