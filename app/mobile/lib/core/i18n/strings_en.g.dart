@@ -67,6 +67,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsAboutEn about = TranslationsAboutEn.internal(_root);
 	late final TranslationsSettingsEn settings = TranslationsSettingsEn.internal(_root);
 	late final TranslationsMemoryQuarantineEn memoryQuarantine = TranslationsMemoryQuarantineEn.internal(_root);
+	late final TranslationsCortexHubEn cortexHub = TranslationsCortexHubEn.internal(_root);
 }
 
 // Path: common
@@ -1941,6 +1942,81 @@ class TranslationsMemoryQuarantineEn {
 	String countBadge({required Object count}) => '${count} pending';
 }
 
+// Path: cortexHub
+class TranslationsCortexHubEn {
+	TranslationsCortexHubEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Cortex'
+	String get title => 'Cortex';
+
+	/// en: 'The experience flywheel: Memory → Notes → Knowledge, fed back into every session.'
+	String get subtitle => 'The experience flywheel: Memory → Notes → Knowledge, fed back into every session.';
+
+	/// en: 'Memory'
+	String get memory => 'Memory';
+
+	/// en: 'Raw cross-session facts the agents store and recall.'
+	String get memoryDesc => 'Raw cross-session facts the agents store and recall.';
+
+	/// en: 'Notes'
+	String get notes => 'Notes';
+
+	/// en: 'Each project’s official goal / plan / journal.'
+	String get notesDesc => 'Each project’s official goal / plan / journal.';
+
+	/// en: 'Knowledge'
+	String get knowledge => 'Knowledge';
+
+	/// en: 'Cross-project, distilled expertise.'
+	String get knowledgeDesc => 'Cross-project, distilled expertise.';
+
+	/// en: '{count} to review'
+	String quarantineBadge({required Object count}) => '${count} to review';
+
+	/// en: '{count} pending'
+	String pendingBadge({required Object count}) => '${count} pending';
+
+	/// en: 'disabled'
+	String get disabled => 'disabled';
+
+	/// en: 'Pending proposals ({count})'
+	String inboxTitle({required Object count}) => 'Pending proposals (${count})';
+
+	/// en: 'AI-proposed updates to project notes and KB pages. Approve to publish, reject to drop.'
+	String get inboxHint => 'AI-proposed updates to project notes and KB pages. Approve to publish, reject to drop.';
+
+	/// en: 'Knowledge Base'
+	String get kbLabel => 'Knowledge Base';
+
+	/// en: 'Preview'
+	String get preview => 'Preview';
+
+	/// en: 'Hide'
+	String get hide => 'Hide';
+
+	/// en: 'Approve'
+	String get approve => 'Approve';
+
+	/// en: 'Reject'
+	String get reject => 'Reject';
+
+	/// en: 'Proposal approved'
+	String get approvedToast => 'Proposal approved';
+
+	/// en: 'Proposal rejected'
+	String get rejectedToast => 'Proposal rejected';
+
+	/// en: 'Action failed: {error}'
+	String actionFailed({required Object error}) => 'Action failed: ${error}';
+
+	/// en: 'Failed to load: {error}'
+	String loadFailed({required Object error}) => 'Failed to load: ${error}';
+}
+
 // Path: web.topbar
 class TranslationsWebTopbarEn {
 	TranslationsWebTopbarEn.internal(this._root);
@@ -3124,6 +3200,7 @@ class TranslationsMoreItemsEn {
 	late final TranslationsMoreItemsSkillsEn skills = TranslationsMoreItemsSkillsEn.internal(_root);
 	late final TranslationsMoreItemsGitHostsEn gitHosts = TranslationsMoreItemsGitHostsEn.internal(_root);
 	late final TranslationsMoreItemsCustomTasksEn customTasks = TranslationsMoreItemsCustomTasksEn.internal(_root);
+	late final TranslationsMoreItemsCortexHubEn cortexHub = TranslationsMoreItemsCortexHubEn.internal(_root);
 	late final TranslationsMoreItemsProjectMemoryEn projectMemory = TranslationsMoreItemsProjectMemoryEn.internal(_root);
 	late final TranslationsMoreItemsArchivedEn archived = TranslationsMoreItemsArchivedEn.internal(_root);
 	late final TranslationsMoreItemsQuarantineEn quarantine = TranslationsMoreItemsQuarantineEn.internal(_root);
@@ -10622,6 +10699,21 @@ class TranslationsMoreItemsCustomTasksEn {
 	String get subtitle => 'Slash commands shown in the session task picker';
 }
 
+// Path: more.items.cortexHub
+class TranslationsMoreItemsCortexHubEn {
+	TranslationsMoreItemsCortexHubEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Cortex'
+	String get title => 'Cortex';
+
+	/// en: 'Memory → Notes → Knowledge hub + pending proposals'
+	String get subtitle => 'Memory → Notes → Knowledge hub + pending proposals';
+}
+
 // Path: more.items.projectMemory
 class TranslationsMoreItemsProjectMemoryEn {
 	TranslationsMoreItemsProjectMemoryEn.internal(this._root);
@@ -17839,6 +17931,8 @@ extension on Translations {
 			'more.items.gitHosts.subtitle' => 'PAT credentials for GitHub / GitLab / etc.',
 			'more.items.customTasks.title' => 'Custom tasks',
 			'more.items.customTasks.subtitle' => 'Slash commands shown in the session task picker',
+			'more.items.cortexHub.title' => 'Cortex',
+			'more.items.cortexHub.subtitle' => 'Memory → Notes → Knowledge hub + pending proposals',
 			'more.items.projectMemory.title' => 'Project goal / plan / journal',
 			'more.items.projectMemory.subtitle' => 'Per-cwd memory layers 2-4 + agent proposals',
 			'more.items.archived.title' => 'Archived memories',
@@ -18164,10 +18258,10 @@ extension on Translations {
 			'providers.accounts.importLocal' => 'Import local',
 			'providers.accounts.addHint' => 'Adding a new account is gateway-host only.',
 			'providers.accounts.addBody' => 'The new directory shows up here automatically. See the docs for OAuth flow steps.',
-			'providers.accounts.loadFailed' => ({required Object error}) => 'Failed to load accounts: ${error}',
-			'providers.accounts.intro' => 'Sessions spawned with the Claude provider pick from these accounts (or fall back to env).',
 			_ => null,
 		} ?? switch (path) {
+			'providers.accounts.loadFailed' => ({required Object error}) => 'Failed to load accounts: ${error}',
+			'providers.accounts.intro' => 'Sessions spawned with the Claude provider pick from these accounts (or fall back to env).',
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} enabled.',
 			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} disabled.',
 			'providers.accounts.renamedSnack' => ({required Object name}) => 'Renamed to ${name}.',
@@ -18678,10 +18772,10 @@ extension on Translations {
 			'channels.notifications.modes.everyLabel' => 'Every event (noisy)',
 			'channels.notifications.modes.everyDescription' => 'No suppression — only for low-frequency channels.',
 			'channels.popup.enable' => 'Enable',
-			'channels.popup.disable' => 'Disable',
-			'channels.popup.mute' => 'Mute',
 			_ => null,
 		} ?? switch (path) {
+			'channels.popup.disable' => 'Disable',
+			'channels.popup.mute' => 'Mute',
 			'channels.popup.unmute' => 'Unmute',
 			'channels.popup.deleteLabel' => 'Delete',
 			'channels.badges.running' => 'running',
@@ -19170,6 +19264,28 @@ extension on Translations {
 			'memoryQuarantine.actionFailed' => ({required Object error}) => 'Action failed: ${error}',
 			'memoryQuarantine.expires' => ({required Object date}) => 'expires ${date}',
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} pending',
+			'cortexHub.title' => 'Cortex',
+			'cortexHub.subtitle' => 'The experience flywheel: Memory → Notes → Knowledge, fed back into every session.',
+			'cortexHub.memory' => 'Memory',
+			'cortexHub.memoryDesc' => 'Raw cross-session facts the agents store and recall.',
+			'cortexHub.notes' => 'Notes',
+			'cortexHub.notesDesc' => 'Each project’s official goal / plan / journal.',
+			'cortexHub.knowledge' => 'Knowledge',
+			'cortexHub.knowledgeDesc' => 'Cross-project, distilled expertise.',
+			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} to review',
+			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pending',
+			'cortexHub.disabled' => 'disabled',
+			'cortexHub.inboxTitle' => ({required Object count}) => 'Pending proposals (${count})',
+			'cortexHub.inboxHint' => 'AI-proposed updates to project notes and KB pages. Approve to publish, reject to drop.',
+			'cortexHub.kbLabel' => 'Knowledge Base',
+			'cortexHub.preview' => 'Preview',
+			'cortexHub.hide' => 'Hide',
+			'cortexHub.approve' => 'Approve',
+			'cortexHub.reject' => 'Reject',
+			'cortexHub.approvedToast' => 'Proposal approved',
+			'cortexHub.rejectedToast' => 'Proposal rejected',
+			'cortexHub.actionFailed' => ({required Object error}) => 'Action failed: ${error}',
+			'cortexHub.loadFailed' => ({required Object error}) => 'Failed to load: ${error}',
 			_ => null,
 		};
 	}

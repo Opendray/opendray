@@ -66,6 +66,7 @@ class TranslationsEs extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsAboutEs about = _TranslationsAboutEs._(_root);
 	@override late final _TranslationsSettingsEs settings = _TranslationsSettingsEs._(_root);
 	@override late final _TranslationsMemoryQuarantineEs memoryQuarantine = _TranslationsMemoryQuarantineEs._(_root);
+	@override late final _TranslationsCortexHubEs cortexHub = _TranslationsCortexHubEs._(_root);
 }
 
 // Path: common
@@ -909,6 +910,37 @@ class _TranslationsMemoryQuarantineEs extends TranslationsMemoryQuarantineEn {
 	@override String countBadge({required Object count}) => '${count} pendientes';
 }
 
+// Path: cortexHub
+class _TranslationsCortexHubEs extends TranslationsCortexHubEn {
+	_TranslationsCortexHubEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Cortex';
+	@override String get subtitle => 'El volante de experiencia: Memoria → Notas → Conocimiento, realimentado en cada session.';
+	@override String get memory => 'Memoria';
+	@override String get memoryDesc => 'Hechos crudos entre sessions que los agentes guardan y recuerdan.';
+	@override String get notes => 'Notas';
+	@override String get notesDesc => 'El objetivo / plan / diario oficial de cada proyecto.';
+	@override String get knowledge => 'Conocimiento';
+	@override String get knowledgeDesc => 'Experiencia destilada entre proyectos.';
+	@override String quarantineBadge({required Object count}) => '${count} por revisar';
+	@override String pendingBadge({required Object count}) => '${count} pendientes';
+	@override String get disabled => 'desactivado';
+	@override String inboxTitle({required Object count}) => 'Propuestas pendientes (${count})';
+	@override String get inboxHint => 'Actualizaciones propuestas por la IA para notas y páginas KB. Aprueba para publicar, rechaza para descartar.';
+	@override String get kbLabel => 'Base de conocimiento';
+	@override String get preview => 'Vista previa';
+	@override String get hide => 'Ocultar';
+	@override String get approve => 'Aprobar';
+	@override String get reject => 'Rechazar';
+	@override String get approvedToast => 'Propuesta aprobada';
+	@override String get rejectedToast => 'Propuesta rechazada';
+	@override String actionFailed({required Object error}) => 'La acción falló: ${error}';
+	@override String loadFailed({required Object error}) => 'Error al cargar: ${error}';
+}
+
 // Path: web.topbar
 class _TranslationsWebTopbarEs extends TranslationsWebTopbarEn {
 	_TranslationsWebTopbarEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -1573,6 +1605,7 @@ class _TranslationsMoreItemsEs extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsSkillsEs skills = _TranslationsMoreItemsSkillsEs._(_root);
 	@override late final _TranslationsMoreItemsGitHostsEs gitHosts = _TranslationsMoreItemsGitHostsEs._(_root);
 	@override late final _TranslationsMoreItemsCustomTasksEs customTasks = _TranslationsMoreItemsCustomTasksEs._(_root);
+	@override late final _TranslationsMoreItemsCortexHubEs cortexHub = _TranslationsMoreItemsCortexHubEs._(_root);
 	@override late final _TranslationsMoreItemsProjectMemoryEs projectMemory = _TranslationsMoreItemsProjectMemoryEs._(_root);
 	@override late final _TranslationsMoreItemsArchivedEs archived = _TranslationsMoreItemsArchivedEs._(_root);
 	@override late final _TranslationsMoreItemsQuarantineEs quarantine = _TranslationsMoreItemsQuarantineEs._(_root);
@@ -5470,6 +5503,17 @@ class _TranslationsMoreItemsCustomTasksEs extends TranslationsMoreItemsCustomTas
 	// Translations
 	@override String get title => 'Tareas personalizadas';
 	@override String get subtitle => 'Comandos slash que se muestran en el selector de tareas de la session';
+}
+
+// Path: more.items.cortexHub
+class _TranslationsMoreItemsCortexHubEs extends TranslationsMoreItemsCortexHubEn {
+	_TranslationsMoreItemsCortexHubEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Cortex';
+	@override String get subtitle => 'Hub Memoria → Notas → Conocimiento + propuestas pendientes';
 }
 
 // Path: more.items.projectMemory
@@ -10610,6 +10654,8 @@ extension on TranslationsEs {
 			'more.items.gitHosts.subtitle' => 'Credenciales PAT para GitHub / GitLab / etc.',
 			'more.items.customTasks.title' => 'Tareas personalizadas',
 			'more.items.customTasks.subtitle' => 'Comandos slash que se muestran en el selector de tareas de la session',
+			'more.items.cortexHub.title' => 'Cortex',
+			'more.items.cortexHub.subtitle' => 'Hub Memoria → Notas → Conocimiento + propuestas pendientes',
 			'more.items.projectMemory.title' => 'Objetivo / plan / diario del proyecto',
 			'more.items.projectMemory.subtitle' => 'Capas de memoria 2-4 por cwd + propuestas del agente',
 			'more.items.archived.title' => 'Memorias archivadas',
@@ -10935,10 +10981,10 @@ extension on TranslationsEs {
 			'providers.accounts.importLocal' => 'Importar local',
 			'providers.accounts.addHint' => 'Añadir una cuenta nueva solo se puede hacer en el host del gateway.',
 			'providers.accounts.addBody' => 'El nuevo directorio aparece aquí automáticamente. Consulta la documentación para los pasos del flujo OAuth.',
-			'providers.accounts.loadFailed' => ({required Object error}) => 'Error al cargar las cuentas: ${error}',
-			'providers.accounts.intro' => 'Las sessions creadas con el proveedor Claude eligen entre estas cuentas (o recurren a las variables de entorno).',
 			_ => null,
 		} ?? switch (path) {
+			'providers.accounts.loadFailed' => ({required Object error}) => 'Error al cargar las cuentas: ${error}',
+			'providers.accounts.intro' => 'Las sessions creadas con el proveedor Claude eligen entre estas cuentas (o recurren a las variables de entorno).',
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} activada.',
 			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} desactivada.',
 			'providers.accounts.renamedSnack' => ({required Object name}) => 'Renombrada a ${name}.',
@@ -11449,10 +11495,10 @@ extension on TranslationsEs {
 			'channels.notifications.modes.everyLabel' => 'Cada evento (ruidoso)',
 			'channels.notifications.modes.everyDescription' => 'Sin supresión. Solo para canales de baja frecuencia.',
 			'channels.popup.enable' => 'Activar',
-			'channels.popup.disable' => 'Desactivar',
-			'channels.popup.mute' => 'Silenciar',
 			_ => null,
 		} ?? switch (path) {
+			'channels.popup.disable' => 'Desactivar',
+			'channels.popup.mute' => 'Silenciar',
 			'channels.popup.unmute' => 'Reactivar sonido',
 			'channels.popup.deleteLabel' => 'Eliminar',
 			'channels.badges.running' => 'en ejecución',
@@ -11941,6 +11987,28 @@ extension on TranslationsEs {
 			'memoryQuarantine.actionFailed' => ({required Object error}) => 'La acción falló: ${error}',
 			'memoryQuarantine.expires' => ({required Object date}) => 'expira ${date}',
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} pendientes',
+			'cortexHub.title' => 'Cortex',
+			'cortexHub.subtitle' => 'El volante de experiencia: Memoria → Notas → Conocimiento, realimentado en cada session.',
+			'cortexHub.memory' => 'Memoria',
+			'cortexHub.memoryDesc' => 'Hechos crudos entre sessions que los agentes guardan y recuerdan.',
+			'cortexHub.notes' => 'Notas',
+			'cortexHub.notesDesc' => 'El objetivo / plan / diario oficial de cada proyecto.',
+			'cortexHub.knowledge' => 'Conocimiento',
+			'cortexHub.knowledgeDesc' => 'Experiencia destilada entre proyectos.',
+			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} por revisar',
+			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pendientes',
+			'cortexHub.disabled' => 'desactivado',
+			'cortexHub.inboxTitle' => ({required Object count}) => 'Propuestas pendientes (${count})',
+			'cortexHub.inboxHint' => 'Actualizaciones propuestas por la IA para notas y páginas KB. Aprueba para publicar, rechaza para descartar.',
+			'cortexHub.kbLabel' => 'Base de conocimiento',
+			'cortexHub.preview' => 'Vista previa',
+			'cortexHub.hide' => 'Ocultar',
+			'cortexHub.approve' => 'Aprobar',
+			'cortexHub.reject' => 'Rechazar',
+			'cortexHub.approvedToast' => 'Propuesta aprobada',
+			'cortexHub.rejectedToast' => 'Propuesta rechazada',
+			'cortexHub.actionFailed' => ({required Object error}) => 'La acción falló: ${error}',
+			'cortexHub.loadFailed' => ({required Object error}) => 'Error al cargar: ${error}',
 			_ => null,
 		};
 	}

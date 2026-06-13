@@ -2888,6 +2888,10 @@
         "title": "自定义任务",
         "subtitle": "会话任务选择器中显示的斜杠命令"
       },
+      "cortexHub": {
+        "title": "Cortex",
+        "subtitle": "记忆 → 笔记 → 知识中枢 + 待审提案"
+      },
       "projectMemory": {
         "title": "项目目标 / 计划 / 日志",
         "subtitle": "按 cwd 的记忆层 2-4 + 代理提案"
@@ -4510,5 +4514,29 @@
     "actionFailed": "操作失败：{error}",
     "expires": "{date} 过期",
     "countBadge": "{count} 条待审"
+  },
+  "cortexHub": {
+    "title": "Cortex",
+    "subtitle": "经验飞轮：记忆 → 笔记 → 知识，回流到每个会话。",
+    "memory": "记忆",
+    "memoryDesc": "代理存取的跨会话原始事实。",
+    "notes": "笔记",
+    "notesDesc": "每个项目的官方目标 / 计划 / 日志。",
+    "knowledge": "知识",
+    "knowledgeDesc": "跨项目沉淀的专业知识。",
+    "quarantineBadge": "{count} 条待审",
+    "pendingBadge": "{count} 条待审",
+    "disabled": "已禁用",
+    "inboxTitle": "待审提案（{count}）",
+    "inboxHint": "AI 对项目笔记与知识库页面提出的更新。批准即发布，拒绝即丢弃。",
+    "kbLabel": "知识库",
+    "preview": "预览",
+    "hide": "收起",
+    "approve": "批准",
+    "reject": "拒绝",
+    "approvedToast": "提案已批准",
+    "rejectedToast": "提案已拒绝",
+    "actionFailed": "操作失败：{error}",
+    "loadFailed": "加载失败：{error}"
   }
 }

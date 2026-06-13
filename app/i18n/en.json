@@ -2888,6 +2888,10 @@
         "title": "Custom tasks",
         "subtitle": "Slash commands shown in the session task picker"
       },
+      "cortexHub": {
+        "title": "Cortex",
+        "subtitle": "Memory → Notes → Knowledge hub + pending proposals"
+      },
       "projectMemory": {
         "title": "Project goal / plan / journal",
         "subtitle": "Per-cwd memory layers 2-4 + agent proposals"
@@ -4510,5 +4514,29 @@
     "actionFailed": "Action failed: {error}",
     "expires": "expires {date}",
     "countBadge": "{count} pending"
+  },
+  "cortexHub": {
+    "title": "Cortex",
+    "subtitle": "The experience flywheel: Memory → Notes → Knowledge, fed back into every session.",
+    "memory": "Memory",
+    "memoryDesc": "Raw cross-session facts the agents store and recall.",
+    "notes": "Notes",
+    "notesDesc": "Each project’s official goal / plan / journal.",
+    "knowledge": "Knowledge",
+    "knowledgeDesc": "Cross-project, distilled expertise.",
+    "quarantineBadge": "{count} to review",
+    "pendingBadge": "{count} pending",
+    "disabled": "disabled",
+    "inboxTitle": "Pending proposals ({count})",
+    "inboxHint": "AI-proposed updates to project notes and KB pages. Approve to publish, reject to drop.",
+    "kbLabel": "Knowledge Base",
+    "preview": "Preview",
+    "hide": "Hide",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approvedToast": "Proposal approved",
+    "rejectedToast": "Proposal rejected",
+    "actionFailed": "Action failed: {error}",
+    "loadFailed": "Failed to load: {error}"
   }
 }

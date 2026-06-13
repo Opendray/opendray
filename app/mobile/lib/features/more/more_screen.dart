@@ -6,6 +6,7 @@ import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/backups/backups_screen.dart';
 import 'package:opendray/features/channels/channels_screen.dart';
+import 'package:opendray/features/cortex/cortex_hub_screen.dart';
 import 'package:opendray/features/custom_tasks/custom_tasks_screen.dart';
 import 'package:opendray/features/data_export/data_export_screen.dart';
 import 'package:opendray/features/githosts/githosts_screen.dart';
@@ -90,6 +91,12 @@ class MoreScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           _SectionHeader(label: t.more.sections.memory),
+          _MenuTile(
+            icon: Icons.auto_awesome_motion_outlined,
+            title: t.more.items.cortexHub.title,
+            subtitle: t.more.items.cortexHub.subtitle,
+            onTap: () => _push(context, const CortexHubScreen()),
+          ),
           _MenuTile(
             icon: Icons.flag_outlined,
             title: t.more.items.projectMemory.title,

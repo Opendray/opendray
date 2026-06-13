@@ -2888,6 +2888,10 @@
         "title": "Tareas personalizadas",
         "subtitle": "Comandos slash que se muestran en el selector de tareas de la session"
       },
+      "cortexHub": {
+        "title": "Cortex",
+        "subtitle": "Hub Memoria → Notas → Conocimiento + propuestas pendientes"
+      },
       "projectMemory": {
         "title": "Objetivo / plan / diario del proyecto",
         "subtitle": "Capas de memoria 2-4 por cwd + propuestas del agente"
@@ -4510,5 +4514,29 @@
     "actionFailed": "La acción falló: {error}",
     "expires": "expira {date}",
     "countBadge": "{count} pendientes"
+  },
+  "cortexHub": {
+    "title": "Cortex",
+    "subtitle": "El volante de experiencia: Memoria → Notas → Conocimiento, realimentado en cada session.",
+    "memory": "Memoria",
+    "memoryDesc": "Hechos crudos entre sessions que los agentes guardan y recuerdan.",
+    "notes": "Notas",
+    "notesDesc": "El objetivo / plan / diario oficial de cada proyecto.",
+    "knowledge": "Conocimiento",
+    "knowledgeDesc": "Experiencia destilada entre proyectos.",
+    "quarantineBadge": "{count} por revisar",
+    "pendingBadge": "{count} pendientes",
+    "disabled": "desactivado",
+    "inboxTitle": "Propuestas pendientes ({count})",
+    "inboxHint": "Actualizaciones propuestas por la IA para notas y páginas KB. Aprueba para publicar, rechaza para descartar.",
+    "kbLabel": "Base de conocimiento",
+    "preview": "Vista previa",
+    "hide": "Ocultar",
+    "approve": "Aprobar",
+    "reject": "Rechazar",
+    "approvedToast": "Propuesta aprobada",
+    "rejectedToast": "Propuesta rechazada",
+    "actionFailed": "La acción falló: {error}",
+    "loadFailed": "Error al cargar: {error}"
   }
 }

@@ -66,6 +66,7 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsAboutZh about = _TranslationsAboutZh._(_root);
 	@override late final _TranslationsSettingsZh settings = _TranslationsSettingsZh._(_root);
 	@override late final _TranslationsMemoryQuarantineZh memoryQuarantine = _TranslationsMemoryQuarantineZh._(_root);
+	@override late final _TranslationsCortexHubZh cortexHub = _TranslationsCortexHubZh._(_root);
 }
 
 // Path: common
@@ -909,6 +910,37 @@ class _TranslationsMemoryQuarantineZh extends TranslationsMemoryQuarantineEn {
 	@override String countBadge({required Object count}) => '${count} 条待审';
 }
 
+// Path: cortexHub
+class _TranslationsCortexHubZh extends TranslationsCortexHubEn {
+	_TranslationsCortexHubZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Cortex';
+	@override String get subtitle => '经验飞轮：记忆 → 笔记 → 知识，回流到每个会话。';
+	@override String get memory => '记忆';
+	@override String get memoryDesc => '代理存取的跨会话原始事实。';
+	@override String get notes => '笔记';
+	@override String get notesDesc => '每个项目的官方目标 / 计划 / 日志。';
+	@override String get knowledge => '知识';
+	@override String get knowledgeDesc => '跨项目沉淀的专业知识。';
+	@override String quarantineBadge({required Object count}) => '${count} 条待审';
+	@override String pendingBadge({required Object count}) => '${count} 条待审';
+	@override String get disabled => '已禁用';
+	@override String inboxTitle({required Object count}) => '待审提案（${count}）';
+	@override String get inboxHint => 'AI 对项目笔记与知识库页面提出的更新。批准即发布，拒绝即丢弃。';
+	@override String get kbLabel => '知识库';
+	@override String get preview => '预览';
+	@override String get hide => '收起';
+	@override String get approve => '批准';
+	@override String get reject => '拒绝';
+	@override String get approvedToast => '提案已批准';
+	@override String get rejectedToast => '提案已拒绝';
+	@override String actionFailed({required Object error}) => '操作失败：${error}';
+	@override String loadFailed({required Object error}) => '加载失败：${error}';
+}
+
 // Path: web.topbar
 class _TranslationsWebTopbarZh extends TranslationsWebTopbarEn {
 	_TranslationsWebTopbarZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -1573,6 +1605,7 @@ class _TranslationsMoreItemsZh extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsSkillsZh skills = _TranslationsMoreItemsSkillsZh._(_root);
 	@override late final _TranslationsMoreItemsGitHostsZh gitHosts = _TranslationsMoreItemsGitHostsZh._(_root);
 	@override late final _TranslationsMoreItemsCustomTasksZh customTasks = _TranslationsMoreItemsCustomTasksZh._(_root);
+	@override late final _TranslationsMoreItemsCortexHubZh cortexHub = _TranslationsMoreItemsCortexHubZh._(_root);
 	@override late final _TranslationsMoreItemsProjectMemoryZh projectMemory = _TranslationsMoreItemsProjectMemoryZh._(_root);
 	@override late final _TranslationsMoreItemsArchivedZh archived = _TranslationsMoreItemsArchivedZh._(_root);
 	@override late final _TranslationsMoreItemsQuarantineZh quarantine = _TranslationsMoreItemsQuarantineZh._(_root);
@@ -5470,6 +5503,17 @@ class _TranslationsMoreItemsCustomTasksZh extends TranslationsMoreItemsCustomTas
 	// Translations
 	@override String get title => '自定义任务';
 	@override String get subtitle => '会话任务选择器中显示的斜杠命令';
+}
+
+// Path: more.items.cortexHub
+class _TranslationsMoreItemsCortexHubZh extends TranslationsMoreItemsCortexHubEn {
+	_TranslationsMoreItemsCortexHubZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Cortex';
+	@override String get subtitle => '记忆 → 笔记 → 知识中枢 + 待审提案';
 }
 
 // Path: more.items.projectMemory
@@ -10610,6 +10654,8 @@ extension on TranslationsZh {
 			'more.items.gitHosts.subtitle' => 'GitHub / GitLab 等的 PAT 凭据',
 			'more.items.customTasks.title' => '自定义任务',
 			'more.items.customTasks.subtitle' => '会话任务选择器中显示的斜杠命令',
+			'more.items.cortexHub.title' => 'Cortex',
+			'more.items.cortexHub.subtitle' => '记忆 → 笔记 → 知识中枢 + 待审提案',
 			'more.items.projectMemory.title' => '项目目标 / 计划 / 日志',
 			'more.items.projectMemory.subtitle' => '按 cwd 的记忆层 2-4 + 代理提案',
 			'more.items.archived.title' => '已归档记忆',
@@ -10935,10 +10981,10 @@ extension on TranslationsZh {
 			'providers.accounts.importLocal' => '导入本地',
 			'providers.accounts.addHint' => '添加新账号仅可在网关主机上操作。',
 			'providers.accounts.addBody' => '新目录会自动出现在这里。OAuth 流程步骤参见文档。',
-			'providers.accounts.loadFailed' => ({required Object error}) => '加载账号失败：${error}',
-			'providers.accounts.intro' => '以 Claude 提供商启动的会话会从这些账号中选择（或回退到环境变量）。',
 			_ => null,
 		} ?? switch (path) {
+			'providers.accounts.loadFailed' => ({required Object error}) => '加载账号失败：${error}',
+			'providers.accounts.intro' => '以 Claude 提供商启动的会话会从这些账号中选择（或回退到环境变量）。',
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
 			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} 已停用。',
 			'providers.accounts.renamedSnack' => ({required Object name}) => '已重命名为 ${name}。',
@@ -11449,10 +11495,10 @@ extension on TranslationsZh {
 			'channels.notifications.modes.everyLabel' => '每次事件（嘈杂）',
 			'channels.notifications.modes.everyDescription' => '不抑制 — 仅适合低频通道。',
 			'channels.popup.enable' => '启用',
-			'channels.popup.disable' => '停用',
-			'channels.popup.mute' => '静音',
 			_ => null,
 		} ?? switch (path) {
+			'channels.popup.disable' => '停用',
+			'channels.popup.mute' => '静音',
 			'channels.popup.unmute' => '取消静音',
 			'channels.popup.deleteLabel' => '删除',
 			'channels.badges.running' => '运行中',
@@ -11941,6 +11987,28 @@ extension on TranslationsZh {
 			'memoryQuarantine.actionFailed' => ({required Object error}) => '操作失败：${error}',
 			'memoryQuarantine.expires' => ({required Object date}) => '${date} 过期',
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} 条待审',
+			'cortexHub.title' => 'Cortex',
+			'cortexHub.subtitle' => '经验飞轮：记忆 → 笔记 → 知识，回流到每个会话。',
+			'cortexHub.memory' => '记忆',
+			'cortexHub.memoryDesc' => '代理存取的跨会话原始事实。',
+			'cortexHub.notes' => '笔记',
+			'cortexHub.notesDesc' => '每个项目的官方目标 / 计划 / 日志。',
+			'cortexHub.knowledge' => '知识',
+			'cortexHub.knowledgeDesc' => '跨项目沉淀的专业知识。',
+			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} 条待审',
+			'cortexHub.pendingBadge' => ({required Object count}) => '${count} 条待审',
+			'cortexHub.disabled' => '已禁用',
+			'cortexHub.inboxTitle' => ({required Object count}) => '待审提案（${count}）',
+			'cortexHub.inboxHint' => 'AI 对项目笔记与知识库页面提出的更新。批准即发布，拒绝即丢弃。',
+			'cortexHub.kbLabel' => '知识库',
+			'cortexHub.preview' => '预览',
+			'cortexHub.hide' => '收起',
+			'cortexHub.approve' => '批准',
+			'cortexHub.reject' => '拒绝',
+			'cortexHub.approvedToast' => '提案已批准',
+			'cortexHub.rejectedToast' => '提案已拒绝',
+			'cortexHub.actionFailed' => ({required Object error}) => '操作失败：${error}',
+			'cortexHub.loadFailed' => ({required Object error}) => '加载失败：${error}',
 			_ => null,
 		};
 	}
