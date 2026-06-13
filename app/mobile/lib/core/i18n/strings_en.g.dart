@@ -45,6 +45,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsNavEn nav = TranslationsNavEn.internal(_root);
 	late final TranslationsWebEn web = TranslationsWebEn.internal(_root);
 	late final TranslationsMoreEn more = TranslationsMoreEn.internal(_root);
+	late final TranslationsActivityEn activity = TranslationsActivityEn.internal(_root);
 	late final TranslationsSessionsEn sessions = TranslationsSessionsEn.internal(_root);
 	late final TranslationsMcpEn mcp = TranslationsMcpEn.internal(_root);
 	late final TranslationsProvidersEn providers = TranslationsProvidersEn.internal(_root);
@@ -271,6 +272,36 @@ class TranslationsMoreEn {
 
 	/// en: 'Sign out'
 	String get signOut => 'Sign out';
+}
+
+// Path: activity
+class TranslationsActivityEn {
+	TranslationsActivityEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Activity'
+	String get title => 'Activity';
+
+	/// en: 'No integration calls recorded yet.'
+	String get empty => 'No integration calls recorded yet.';
+
+	/// en: 'Failed to load activity'
+	String get loadFailed => 'Failed to load activity';
+
+	/// en: '{count} calls'
+	String callsCount({required Object count}) => '${count} calls';
+
+	/// en: 'inbound'
+	String get directionInbound => 'inbound';
+
+	/// en: 'outbound'
+	String get directionOutbound => 'outbound';
+
+	late final TranslationsActivityFilterEn filter = TranslationsActivityFilterEn.internal(_root);
+	late final TranslationsActivityDetailEn detail = TranslationsActivityDetailEn.internal(_root);
 }
 
 // Path: sessions
@@ -3209,6 +3240,7 @@ class TranslationsMoreItemsEn {
 
 	// Translations
 	late final TranslationsMoreItemsIntegrationsEn integrations = TranslationsMoreItemsIntegrationsEn.internal(_root);
+	late final TranslationsMoreItemsActivityEn activity = TranslationsMoreItemsActivityEn.internal(_root);
 	late final TranslationsMoreItemsChannelsEn channels = TranslationsMoreItemsChannelsEn.internal(_root);
 	late final TranslationsMoreItemsProvidersEn providers = TranslationsMoreItemsProvidersEn.internal(_root);
 	late final TranslationsMoreItemsMcpEn mcp = TranslationsMoreItemsMcpEn.internal(_root);
@@ -3224,6 +3256,81 @@ class TranslationsMoreItemsEn {
 	late final TranslationsMoreItemsSettingsEn settings = TranslationsMoreItemsSettingsEn.internal(_root);
 	late final TranslationsMoreItemsAboutEn about = TranslationsMoreItemsAboutEn.internal(_root);
 	late final TranslationsMoreItemsVaultEn vault = TranslationsMoreItemsVaultEn.internal(_root);
+}
+
+// Path: activity.filter
+class TranslationsActivityFilterEn {
+	TranslationsActivityFilterEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Filter calls'
+	String get title => 'Filter calls';
+
+	/// en: 'Direction'
+	String get direction => 'Direction';
+
+	/// en: 'All'
+	String get directionAll => 'All';
+
+	/// en: 'Status'
+	String get status => 'Status';
+
+	/// en: 'All'
+	String get statusAll => 'All';
+
+	/// en: 'Integration'
+	String get integration => 'Integration';
+
+	/// en: 'All integrations'
+	String get integrationAll => 'All integrations';
+
+	/// en: 'Apply'
+	String get apply => 'Apply';
+
+	/// en: 'Clear'
+	String get clear => 'Clear';
+
+	/// en: '{count} active'
+	String activeCount({required Object count}) => '${count} active';
+}
+
+// Path: activity.detail
+class TranslationsActivityDetailEn {
+	TranslationsActivityDetailEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Call detail'
+	String get title => 'Call detail';
+
+	/// en: 'Integration'
+	String get integration => 'Integration';
+
+	/// en: 'Direction'
+	String get direction => 'Direction';
+
+	/// en: 'Status'
+	String get status => 'Status';
+
+	/// en: 'Duration'
+	String get duration => 'Duration';
+
+	/// en: 'Bytes'
+	String get bytes => 'Bytes';
+
+	/// en: 'Request ID'
+	String get requestId => 'Request ID';
+
+	/// en: 'Resource'
+	String get resource => 'Resource';
+
+	/// en: 'Timestamp'
+	String get timestamp => 'Timestamp';
 }
 
 // Path: sessions.filters
@@ -10626,6 +10733,21 @@ class TranslationsMoreItemsIntegrationsEn {
 	String get subtitle => 'API callers — recent activity & error rates';
 }
 
+// Path: more.items.activity
+class TranslationsMoreItemsActivityEn {
+	TranslationsMoreItemsActivityEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Activity'
+	String get title => 'Activity';
+
+	/// en: 'Integration API call audit'
+	String get subtitle => 'Integration API call audit';
+}
+
 // Path: more.items.channels
 class TranslationsMoreItemsChannelsEn {
 	TranslationsMoreItemsChannelsEn.internal(this._root);
@@ -18003,6 +18125,8 @@ extension on Translations {
 			'more.sections.system' => 'System',
 			'more.items.integrations.title' => 'Integrations',
 			'more.items.integrations.subtitle' => 'API callers — recent activity & error rates',
+			'more.items.activity.title' => 'Activity',
+			'more.items.activity.subtitle' => 'Integration API call audit',
 			'more.items.channels.title' => 'Channels',
 			'more.items.channels.subtitle' => 'Notification destinations',
 			'more.items.providers.title' => 'Providers',
@@ -18034,6 +18158,31 @@ extension on Translations {
 			'more.items.vault.title' => 'Vault',
 			'more.items.vault.subtitle' => 'Freeform markdown notes (Obsidian-sync)',
 			'more.signOut' => 'Sign out',
+			'activity.title' => 'Activity',
+			'activity.empty' => 'No integration calls recorded yet.',
+			'activity.loadFailed' => 'Failed to load activity',
+			'activity.callsCount' => ({required Object count}) => '${count} calls',
+			'activity.directionInbound' => 'inbound',
+			'activity.directionOutbound' => 'outbound',
+			'activity.filter.title' => 'Filter calls',
+			'activity.filter.direction' => 'Direction',
+			'activity.filter.directionAll' => 'All',
+			'activity.filter.status' => 'Status',
+			'activity.filter.statusAll' => 'All',
+			'activity.filter.integration' => 'Integration',
+			'activity.filter.integrationAll' => 'All integrations',
+			'activity.filter.apply' => 'Apply',
+			'activity.filter.clear' => 'Clear',
+			'activity.filter.activeCount' => ({required Object count}) => '${count} active',
+			'activity.detail.title' => 'Call detail',
+			'activity.detail.integration' => 'Integration',
+			'activity.detail.direction' => 'Direction',
+			'activity.detail.status' => 'Status',
+			'activity.detail.duration' => 'Duration',
+			'activity.detail.bytes' => 'Bytes',
+			'activity.detail.requestId' => 'Request ID',
+			'activity.detail.resource' => 'Resource',
+			'activity.detail.timestamp' => 'Timestamp',
 			'sessions.title' => 'Sessions',
 			'sessions.refresh' => 'Refresh',
 			'sessions.actions' => 'Actions',
@@ -18311,6 +18460,8 @@ extension on Translations {
 			'providers.errorPrefix.rename' => 'Rename failed',
 			'providers.errorPrefix.delete' => 'Delete failed',
 			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'providers.updateCheck.sectionTitle' => 'CLI version',
 			'providers.updateCheck.checking' => 'Checking for updates…',
 			'providers.updateCheck.checkFailed' => 'Couldn\'t check for updates',
@@ -18338,8 +18489,6 @@ extension on Translations {
 			'providers.accounts.deleteLabel' => 'Delete',
 			'providers.accounts.deleteBody' => 'Removes the account and its stored OAuth token. Sessions already using this account stay running but reauth will fail.',
 			'providers.accounts.deletedSnack' => ({required Object name}) => 'Deleted ${name}.',
-			_ => null,
-		} ?? switch (path) {
 			'providers.accounts.importSyncedSnack' => 'Already in sync — gateway has no new accounts.',
 			'providers.accounts.importedSnackOne' => ({required Object n}) => 'Imported ${n} account.',
 			'providers.accounts.importedSnackOther' => ({required Object n}) => 'Imported ${n} accounts.',
@@ -18825,6 +18974,8 @@ extension on Translations {
 			'githosts.form.pausedSubtitle' => 'Paused — sessions skip this host.',
 			'githosts.deleteBody' => ({required Object host}) => 'Removes the credential. Sessions trying to list PRs from ${host} will fall back to the unauthenticated API.',
 			'githosts.deletedSnack' => ({required Object name}) => 'Deleted ${name}.',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.enabledSnack' => ({required Object name}) => '${name} enabled.',
 			'githosts.disabledSnack' => ({required Object name}) => '${name} disabled.',
 			'githosts.emptyList' => 'No git hosts configured.\n\nAdd a credential so the gateway can list pull requests across your repos.',
@@ -18852,8 +19003,6 @@ extension on Translations {
 			'channels.notifications.snippetLengthCap' => 'Snippet length cap',
 			'channels.notifications.snippetHelper' => 'Embeds the recent terminal tail in each notification.',
 			'channels.notifications.snippetNoCap' => 'no cap',
-			_ => null,
-		} ?? switch (path) {
 			'channels.notifications.snippetChars' => ({required Object n}) => '${n} chars',
 			'channels.notifications.updatedSnack' => 'Notification preferences updated.',
 			'channels.notifications.modes.onceLabel' => 'Once per session',
@@ -19339,6 +19488,8 @@ extension on Translations {
 			'settings.serverSettings.fields.httpApiKey' => 'HTTP api key',
 			'settings.serverSettings.fields.httpDimensions' => 'HTTP dimensions',
 			'settings.serverSettings.fields.pgDumpPath' => 'pg_dump path',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.pgRestorePath' => 'pg_restore path',
 			'settings.serverSettings.fields.tmpRoot' => 'tmp root',
 			'settings.serverSettings.fields.projectsJson' => 'projects.json',
@@ -19366,8 +19517,6 @@ extension on Translations {
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} pending',
 			'cortexHub.title' => 'Cortex',
 			'cortexHub.subtitle' => 'The experience flywheel: Memory → Notes → Knowledge, fed back into every session.',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.memory' => 'Memory',
 			'cortexHub.memoryDesc' => 'Raw cross-session facts the agents store and recall.',
 			'cortexHub.notes' => 'Notes',

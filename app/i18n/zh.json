@@ -2872,6 +2872,10 @@
         "title": "集成",
         "subtitle": "API 调用方 — 近期活动与错误率"
       },
+      "activity": {
+        "title": "活动",
+        "subtitle": "集成 API 调用审计"
+      },
       "channels": {
         "title": "通道",
         "subtitle": "通知目的地"
@@ -2934,6 +2938,37 @@
       }
     },
     "signOut": "退出登录"
+  },
+  "activity": {
+    "title": "活动",
+    "empty": "暂无集成调用记录。",
+    "loadFailed": "加载活动失败",
+    "callsCount": "{count} 次调用",
+    "directionInbound": "入站",
+    "directionOutbound": "出站",
+    "filter": {
+      "title": "筛选调用",
+      "direction": "方向",
+      "directionAll": "全部",
+      "status": "状态",
+      "statusAll": "全部",
+      "integration": "集成",
+      "integrationAll": "全部集成",
+      "apply": "应用",
+      "clear": "清除",
+      "activeCount": "{count} 个生效"
+    },
+    "detail": {
+      "title": "调用详情",
+      "integration": "集成",
+      "direction": "方向",
+      "status": "状态",
+      "duration": "耗时",
+      "bytes": "字节",
+      "requestId": "请求 ID",
+      "resource": "资源",
+      "timestamp": "时间"
+    }
   },
   "sessions": {
     "title": "会话",

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/activity/activity_screen.dart';
 import 'package:opendray/features/backups/backups_screen.dart';
 import 'package:opendray/features/channels/channels_screen.dart';
 import 'package:opendray/features/cortex/cortex_hub_screen.dart';
@@ -47,6 +48,12 @@ class MoreScreen extends ConsumerWidget {
           _IdentityCard(auth: auth),
           const SizedBox(height: 8),
           _SectionHeader(label: t.more.sections.gateway),
+          _MenuTile(
+            icon: Icons.timeline_outlined,
+            title: t.more.items.activity.title,
+            subtitle: t.more.items.activity.subtitle,
+            onTap: () => _push(context, const ActivityScreen()),
+          ),
           _MenuTile(
             icon: Icons.api_outlined,
             title: t.more.items.integrations.title,

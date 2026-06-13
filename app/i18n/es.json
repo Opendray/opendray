@@ -2872,6 +2872,10 @@
         "title": "Integraciones",
         "subtitle": "Llamadores de la API: actividad reciente y tasas de error"
       },
+      "activity": {
+        "title": "Actividad",
+        "subtitle": "Auditoría de llamadas API de integraciones"
+      },
       "channels": {
         "title": "Canales",
         "subtitle": "Destinos de notificaciones"
@@ -2934,6 +2938,37 @@
       }
     },
     "signOut": "Cerrar sesión"
+  },
+  "activity": {
+    "title": "Actividad",
+    "empty": "Aún no hay llamadas de integración registradas.",
+    "loadFailed": "Error al cargar la actividad",
+    "callsCount": "{count} llamadas",
+    "directionInbound": "entrante",
+    "directionOutbound": "saliente",
+    "filter": {
+      "title": "Filtrar llamadas",
+      "direction": "Dirección",
+      "directionAll": "Todas",
+      "status": "Estado",
+      "statusAll": "Todos",
+      "integration": "Integración",
+      "integrationAll": "Todas las integraciones",
+      "apply": "Aplicar",
+      "clear": "Limpiar",
+      "activeCount": "{count} activos"
+    },
+    "detail": {
+      "title": "Detalle de llamada",
+      "integration": "Integración",
+      "direction": "Dirección",
+      "status": "Estado",
+      "duration": "Duración",
+      "bytes": "Bytes",
+      "requestId": "ID de solicitud",
+      "resource": "Recurso",
+      "timestamp": "Marca de tiempo"
+    }
   },
   "sessions": {
     "title": "Sesiones",

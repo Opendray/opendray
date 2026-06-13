@@ -44,6 +44,7 @@ class TranslationsEs extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsNavEs nav = _TranslationsNavEs._(_root);
 	@override late final _TranslationsWebEs web = _TranslationsWebEs._(_root);
 	@override late final _TranslationsMoreEs more = _TranslationsMoreEs._(_root);
+	@override late final _TranslationsActivityEs activity = _TranslationsActivityEs._(_root);
 	@override late final _TranslationsSessionsEs sessions = _TranslationsSessionsEs._(_root);
 	@override late final _TranslationsMcpEs mcp = _TranslationsMcpEs._(_root);
 	@override late final _TranslationsProvidersEs providers = _TranslationsProvidersEs._(_root);
@@ -184,6 +185,23 @@ class _TranslationsMoreEs extends TranslationsMoreEn {
 	@override late final _TranslationsMoreSectionsEs sections = _TranslationsMoreSectionsEs._(_root);
 	@override late final _TranslationsMoreItemsEs items = _TranslationsMoreItemsEs._(_root);
 	@override String get signOut => 'Cerrar sesión';
+}
+
+// Path: activity
+class _TranslationsActivityEs extends TranslationsActivityEn {
+	_TranslationsActivityEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Actividad';
+	@override String get empty => 'Aún no hay llamadas de integración registradas.';
+	@override String get loadFailed => 'Error al cargar la actividad';
+	@override String callsCount({required Object count}) => '${count} llamadas';
+	@override String get directionInbound => 'entrante';
+	@override String get directionOutbound => 'saliente';
+	@override late final _TranslationsActivityFilterEs filter = _TranslationsActivityFilterEs._(_root);
+	@override late final _TranslationsActivityDetailEs detail = _TranslationsActivityDetailEs._(_root);
 }
 
 // Path: sessions
@@ -1604,6 +1622,7 @@ class _TranslationsMoreItemsEs extends TranslationsMoreItemsEn {
 
 	// Translations
 	@override late final _TranslationsMoreItemsIntegrationsEs integrations = _TranslationsMoreItemsIntegrationsEs._(_root);
+	@override late final _TranslationsMoreItemsActivityEs activity = _TranslationsMoreItemsActivityEs._(_root);
 	@override late final _TranslationsMoreItemsChannelsEs channels = _TranslationsMoreItemsChannelsEs._(_root);
 	@override late final _TranslationsMoreItemsProvidersEs providers = _TranslationsMoreItemsProvidersEs._(_root);
 	@override late final _TranslationsMoreItemsMcpEs mcp = _TranslationsMoreItemsMcpEs._(_root);
@@ -1619,6 +1638,43 @@ class _TranslationsMoreItemsEs extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsSettingsEs settings = _TranslationsMoreItemsSettingsEs._(_root);
 	@override late final _TranslationsMoreItemsAboutEs about = _TranslationsMoreItemsAboutEs._(_root);
 	@override late final _TranslationsMoreItemsVaultEs vault = _TranslationsMoreItemsVaultEs._(_root);
+}
+
+// Path: activity.filter
+class _TranslationsActivityFilterEs extends TranslationsActivityFilterEn {
+	_TranslationsActivityFilterEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Filtrar llamadas';
+	@override String get direction => 'Dirección';
+	@override String get directionAll => 'Todas';
+	@override String get status => 'Estado';
+	@override String get statusAll => 'Todos';
+	@override String get integration => 'Integración';
+	@override String get integrationAll => 'Todas las integraciones';
+	@override String get apply => 'Aplicar';
+	@override String get clear => 'Limpiar';
+	@override String activeCount({required Object count}) => '${count} activos';
+}
+
+// Path: activity.detail
+class _TranslationsActivityDetailEs extends TranslationsActivityDetailEn {
+	_TranslationsActivityDetailEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Detalle de llamada';
+	@override String get integration => 'Integración';
+	@override String get direction => 'Dirección';
+	@override String get status => 'Estado';
+	@override String get duration => 'Duración';
+	@override String get bytes => 'Bytes';
+	@override String get requestId => 'ID de solicitud';
+	@override String get resource => 'Recurso';
+	@override String get timestamp => 'Marca de tiempo';
 }
 
 // Path: sessions.filters
@@ -5444,6 +5500,17 @@ class _TranslationsMoreItemsIntegrationsEs extends TranslationsMoreItemsIntegrat
 	// Translations
 	@override String get title => 'Integraciones';
 	@override String get subtitle => 'Llamadores de la API: actividad reciente y tasas de error';
+}
+
+// Path: more.items.activity
+class _TranslationsMoreItemsActivityEs extends TranslationsMoreItemsActivityEn {
+	_TranslationsMoreItemsActivityEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Actividad';
+	@override String get subtitle => 'Auditoría de llamadas API de integraciones';
 }
 
 // Path: more.items.channels
@@ -10686,6 +10753,8 @@ extension on TranslationsEs {
 			'more.sections.system' => 'Sistema',
 			'more.items.integrations.title' => 'Integraciones',
 			'more.items.integrations.subtitle' => 'Llamadores de la API: actividad reciente y tasas de error',
+			'more.items.activity.title' => 'Actividad',
+			'more.items.activity.subtitle' => 'Auditoría de llamadas API de integraciones',
 			'more.items.channels.title' => 'Canales',
 			'more.items.channels.subtitle' => 'Destinos de notificaciones',
 			'more.items.providers.title' => 'Proveedores',
@@ -10717,6 +10786,31 @@ extension on TranslationsEs {
 			'more.items.vault.title' => 'Bóveda',
 			'more.items.vault.subtitle' => 'Notas markdown libres (sincronización Obsidian)',
 			'more.signOut' => 'Cerrar sesión',
+			'activity.title' => 'Actividad',
+			'activity.empty' => 'Aún no hay llamadas de integración registradas.',
+			'activity.loadFailed' => 'Error al cargar la actividad',
+			'activity.callsCount' => ({required Object count}) => '${count} llamadas',
+			'activity.directionInbound' => 'entrante',
+			'activity.directionOutbound' => 'saliente',
+			'activity.filter.title' => 'Filtrar llamadas',
+			'activity.filter.direction' => 'Dirección',
+			'activity.filter.directionAll' => 'Todas',
+			'activity.filter.status' => 'Estado',
+			'activity.filter.statusAll' => 'Todos',
+			'activity.filter.integration' => 'Integración',
+			'activity.filter.integrationAll' => 'Todas las integraciones',
+			'activity.filter.apply' => 'Aplicar',
+			'activity.filter.clear' => 'Limpiar',
+			'activity.filter.activeCount' => ({required Object count}) => '${count} activos',
+			'activity.detail.title' => 'Detalle de llamada',
+			'activity.detail.integration' => 'Integración',
+			'activity.detail.direction' => 'Dirección',
+			'activity.detail.status' => 'Estado',
+			'activity.detail.duration' => 'Duración',
+			'activity.detail.bytes' => 'Bytes',
+			'activity.detail.requestId' => 'ID de solicitud',
+			'activity.detail.resource' => 'Recurso',
+			'activity.detail.timestamp' => 'Marca de tiempo',
 			'sessions.title' => 'Sesiones',
 			'sessions.refresh' => 'Actualizar',
 			'sessions.actions' => 'Acciones',
@@ -10994,6 +11088,8 @@ extension on TranslationsEs {
 			'providers.errorPrefix.rename' => 'Error al renombrar',
 			'providers.errorPrefix.delete' => 'Error al eliminar',
 			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'providers.updateCheck.sectionTitle' => 'Versión del CLI',
 			'providers.updateCheck.checking' => 'Buscando actualizaciones…',
 			'providers.updateCheck.checkFailed' => 'No se pudo buscar actualizaciones',
@@ -11021,8 +11117,6 @@ extension on TranslationsEs {
 			'providers.accounts.deleteLabel' => 'Eliminar',
 			'providers.accounts.deleteBody' => 'Elimina la cuenta y su token OAuth almacenado. Las sessions que ya usan esta cuenta siguen funcionando, pero la reautenticación fallará.',
 			'providers.accounts.deletedSnack' => ({required Object name}) => '${name} eliminada.',
-			_ => null,
-		} ?? switch (path) {
 			'providers.accounts.importSyncedSnack' => 'Ya está sincronizado, el gateway no tiene cuentas nuevas.',
 			'providers.accounts.importedSnackOne' => ({required Object n}) => 'Se importó ${n} cuenta.',
 			'providers.accounts.importedSnackOther' => ({required Object n}) => 'Se importaron ${n} cuentas.',
@@ -11508,6 +11602,8 @@ extension on TranslationsEs {
 			'githosts.form.pausedSubtitle' => 'En pausa. Las sessions omiten este host.',
 			'githosts.deleteBody' => ({required Object host}) => 'Elimina la credencial. Las sessions que intenten listar PRs de ${host} recurrirán a la API sin autenticar.',
 			'githosts.deletedSnack' => ({required Object name}) => '${name} eliminado.',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.enabledSnack' => ({required Object name}) => '${name} habilitado.',
 			'githosts.disabledSnack' => ({required Object name}) => '${name} deshabilitado.',
 			'githosts.emptyList' => 'No hay hosts de Git configurados.\n\nAñade una credencial para que el gateway pueda listar pull requests en todos tus repos.',
@@ -11535,8 +11631,6 @@ extension on TranslationsEs {
 			'channels.notifications.snippetLengthCap' => 'Límite de longitud del fragmento',
 			'channels.notifications.snippetHelper' => 'Incrusta el final reciente del terminal en cada notificación.',
 			'channels.notifications.snippetNoCap' => 'sin límite',
-			_ => null,
-		} ?? switch (path) {
 			'channels.notifications.snippetChars' => ({required Object n}) => '${n} caracteres',
 			'channels.notifications.updatedSnack' => 'Preferencias de notificación actualizadas.',
 			'channels.notifications.modes.onceLabel' => 'Una vez por session',
@@ -12022,6 +12116,8 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.httpApiKey' => 'API key HTTP',
 			'settings.serverSettings.fields.httpDimensions' => 'Dimensiones HTTP',
 			'settings.serverSettings.fields.pgDumpPath' => 'Ruta de pg_dump',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.pgRestorePath' => 'Ruta de pg_restore',
 			'settings.serverSettings.fields.tmpRoot' => 'Raíz de tmp',
 			'settings.serverSettings.fields.projectsJson' => 'projects.json',
@@ -12049,8 +12145,6 @@ extension on TranslationsEs {
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} pendientes',
 			'cortexHub.title' => 'Cortex',
 			'cortexHub.subtitle' => 'El volante de experiencia: Memoria → Notas → Conocimiento, realimentado en cada session.',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.memory' => 'Memoria',
 			'cortexHub.memoryDesc' => 'Hechos crudos entre sessions que los agentes guardan y recuerdan.',
 			'cortexHub.notes' => 'Notas',

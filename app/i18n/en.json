@@ -2872,6 +2872,10 @@
         "title": "Integrations",
         "subtitle": "API callers — recent activity & error rates"
       },
+      "activity": {
+        "title": "Activity",
+        "subtitle": "Integration API call audit"
+      },
       "channels": {
         "title": "Channels",
         "subtitle": "Notification destinations"
@@ -2934,6 +2938,37 @@
       }
     },
     "signOut": "Sign out"
+  },
+  "activity": {
+    "title": "Activity",
+    "empty": "No integration calls recorded yet.",
+    "loadFailed": "Failed to load activity",
+    "callsCount": "{count} calls",
+    "directionInbound": "inbound",
+    "directionOutbound": "outbound",
+    "filter": {
+      "title": "Filter calls",
+      "direction": "Direction",
+      "directionAll": "All",
+      "status": "Status",
+      "statusAll": "All",
+      "integration": "Integration",
+      "integrationAll": "All integrations",
+      "apply": "Apply",
+      "clear": "Clear",
+      "activeCount": "{count} active"
+    },
+    "detail": {
+      "title": "Call detail",
+      "integration": "Integration",
+      "direction": "Direction",
+      "status": "Status",
+      "duration": "Duration",
+      "bytes": "Bytes",
+      "requestId": "Request ID",
+      "resource": "Resource",
+      "timestamp": "Timestamp"
+    }
   },
   "sessions": {
     "title": "Sessions",

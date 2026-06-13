@@ -44,6 +44,7 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsNavZh nav = _TranslationsNavZh._(_root);
 	@override late final _TranslationsWebZh web = _TranslationsWebZh._(_root);
 	@override late final _TranslationsMoreZh more = _TranslationsMoreZh._(_root);
+	@override late final _TranslationsActivityZh activity = _TranslationsActivityZh._(_root);
 	@override late final _TranslationsSessionsZh sessions = _TranslationsSessionsZh._(_root);
 	@override late final _TranslationsMcpZh mcp = _TranslationsMcpZh._(_root);
 	@override late final _TranslationsProvidersZh providers = _TranslationsProvidersZh._(_root);
@@ -184,6 +185,23 @@ class _TranslationsMoreZh extends TranslationsMoreEn {
 	@override late final _TranslationsMoreSectionsZh sections = _TranslationsMoreSectionsZh._(_root);
 	@override late final _TranslationsMoreItemsZh items = _TranslationsMoreItemsZh._(_root);
 	@override String get signOut => '退出登录';
+}
+
+// Path: activity
+class _TranslationsActivityZh extends TranslationsActivityEn {
+	_TranslationsActivityZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '活动';
+	@override String get empty => '暂无集成调用记录。';
+	@override String get loadFailed => '加载活动失败';
+	@override String callsCount({required Object count}) => '${count} 次调用';
+	@override String get directionInbound => '入站';
+	@override String get directionOutbound => '出站';
+	@override late final _TranslationsActivityFilterZh filter = _TranslationsActivityFilterZh._(_root);
+	@override late final _TranslationsActivityDetailZh detail = _TranslationsActivityDetailZh._(_root);
 }
 
 // Path: sessions
@@ -1604,6 +1622,7 @@ class _TranslationsMoreItemsZh extends TranslationsMoreItemsEn {
 
 	// Translations
 	@override late final _TranslationsMoreItemsIntegrationsZh integrations = _TranslationsMoreItemsIntegrationsZh._(_root);
+	@override late final _TranslationsMoreItemsActivityZh activity = _TranslationsMoreItemsActivityZh._(_root);
 	@override late final _TranslationsMoreItemsChannelsZh channels = _TranslationsMoreItemsChannelsZh._(_root);
 	@override late final _TranslationsMoreItemsProvidersZh providers = _TranslationsMoreItemsProvidersZh._(_root);
 	@override late final _TranslationsMoreItemsMcpZh mcp = _TranslationsMoreItemsMcpZh._(_root);
@@ -1619,6 +1638,43 @@ class _TranslationsMoreItemsZh extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsSettingsZh settings = _TranslationsMoreItemsSettingsZh._(_root);
 	@override late final _TranslationsMoreItemsAboutZh about = _TranslationsMoreItemsAboutZh._(_root);
 	@override late final _TranslationsMoreItemsVaultZh vault = _TranslationsMoreItemsVaultZh._(_root);
+}
+
+// Path: activity.filter
+class _TranslationsActivityFilterZh extends TranslationsActivityFilterEn {
+	_TranslationsActivityFilterZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '筛选调用';
+	@override String get direction => '方向';
+	@override String get directionAll => '全部';
+	@override String get status => '状态';
+	@override String get statusAll => '全部';
+	@override String get integration => '集成';
+	@override String get integrationAll => '全部集成';
+	@override String get apply => '应用';
+	@override String get clear => '清除';
+	@override String activeCount({required Object count}) => '${count} 个生效';
+}
+
+// Path: activity.detail
+class _TranslationsActivityDetailZh extends TranslationsActivityDetailEn {
+	_TranslationsActivityDetailZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '调用详情';
+	@override String get integration => '集成';
+	@override String get direction => '方向';
+	@override String get status => '状态';
+	@override String get duration => '耗时';
+	@override String get bytes => '字节';
+	@override String get requestId => '请求 ID';
+	@override String get resource => '资源';
+	@override String get timestamp => '时间';
 }
 
 // Path: sessions.filters
@@ -5444,6 +5500,17 @@ class _TranslationsMoreItemsIntegrationsZh extends TranslationsMoreItemsIntegrat
 	// Translations
 	@override String get title => '集成';
 	@override String get subtitle => 'API 调用方 — 近期活动与错误率';
+}
+
+// Path: more.items.activity
+class _TranslationsMoreItemsActivityZh extends TranslationsMoreItemsActivityEn {
+	_TranslationsMoreItemsActivityZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '活动';
+	@override String get subtitle => '集成 API 调用审计';
 }
 
 // Path: more.items.channels
@@ -10686,6 +10753,8 @@ extension on TranslationsZh {
 			'more.sections.system' => '系统',
 			'more.items.integrations.title' => '集成',
 			'more.items.integrations.subtitle' => 'API 调用方 — 近期活动与错误率',
+			'more.items.activity.title' => '活动',
+			'more.items.activity.subtitle' => '集成 API 调用审计',
 			'more.items.channels.title' => '通道',
 			'more.items.channels.subtitle' => '通知目的地',
 			'more.items.providers.title' => '提供商',
@@ -10717,6 +10786,31 @@ extension on TranslationsZh {
 			'more.items.vault.title' => '文档库',
 			'more.items.vault.subtitle' => '自由 markdown 笔记(Obsidian 同步)',
 			'more.signOut' => '退出登录',
+			'activity.title' => '活动',
+			'activity.empty' => '暂无集成调用记录。',
+			'activity.loadFailed' => '加载活动失败',
+			'activity.callsCount' => ({required Object count}) => '${count} 次调用',
+			'activity.directionInbound' => '入站',
+			'activity.directionOutbound' => '出站',
+			'activity.filter.title' => '筛选调用',
+			'activity.filter.direction' => '方向',
+			'activity.filter.directionAll' => '全部',
+			'activity.filter.status' => '状态',
+			'activity.filter.statusAll' => '全部',
+			'activity.filter.integration' => '集成',
+			'activity.filter.integrationAll' => '全部集成',
+			'activity.filter.apply' => '应用',
+			'activity.filter.clear' => '清除',
+			'activity.filter.activeCount' => ({required Object count}) => '${count} 个生效',
+			'activity.detail.title' => '调用详情',
+			'activity.detail.integration' => '集成',
+			'activity.detail.direction' => '方向',
+			'activity.detail.status' => '状态',
+			'activity.detail.duration' => '耗时',
+			'activity.detail.bytes' => '字节',
+			'activity.detail.requestId' => '请求 ID',
+			'activity.detail.resource' => '资源',
+			'activity.detail.timestamp' => '时间',
 			'sessions.title' => '会话',
 			'sessions.refresh' => '刷新',
 			'sessions.actions' => '操作',
@@ -10994,6 +11088,8 @@ extension on TranslationsZh {
 			'providers.errorPrefix.rename' => '重命名失败',
 			'providers.errorPrefix.delete' => '删除失败',
 			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'providers.updateCheck.sectionTitle' => 'CLI 版本',
 			'providers.updateCheck.checking' => '正在检查更新…',
 			'providers.updateCheck.checkFailed' => '无法检查更新',
@@ -11021,8 +11117,6 @@ extension on TranslationsZh {
 			'providers.accounts.deleteLabel' => '删除',
 			'providers.accounts.deleteBody' => '移除该账号及其存储的 OAuth token。已使用此账号的会话保持运行，但重新认证会失败。',
 			'providers.accounts.deletedSnack' => ({required Object name}) => '已删除 ${name}。',
-			_ => null,
-		} ?? switch (path) {
 			'providers.accounts.importSyncedSnack' => '已同步 — 网关没有新账号。',
 			'providers.accounts.importedSnackOne' => ({required Object n}) => '已导入 ${n} 个账号。',
 			'providers.accounts.importedSnackOther' => ({required Object n}) => '已导入 ${n} 个账号。',
@@ -11508,6 +11602,8 @@ extension on TranslationsZh {
 			'githosts.form.pausedSubtitle' => '已暂停 — 会话跳过此主机。',
 			'githosts.deleteBody' => ({required Object host}) => '移除该凭据。试图列出 ${host} 的 PR 的会话将回退到未认证 API。',
 			'githosts.deletedSnack' => ({required Object name}) => '已删除 ${name}。',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
 			'githosts.disabledSnack' => ({required Object name}) => '${name} 已停用。',
 			'githosts.emptyList' => '未配置任何 Git 主机。\n\n添加一个凭据，让网关可以列出你仓库的 pull request。',
@@ -11535,8 +11631,6 @@ extension on TranslationsZh {
 			'channels.notifications.snippetLengthCap' => '片段长度上限',
 			'channels.notifications.snippetHelper' => '在每条通知中嵌入终端最近的内容。',
 			'channels.notifications.snippetNoCap' => '无上限',
-			_ => null,
-		} ?? switch (path) {
 			'channels.notifications.snippetChars' => ({required Object n}) => '${n} 字符',
 			'channels.notifications.updatedSnack' => '通知偏好已更新。',
 			'channels.notifications.modes.onceLabel' => '每会话一次',
@@ -12022,6 +12116,8 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.httpApiKey' => 'HTTP api key',
 			'settings.serverSettings.fields.httpDimensions' => 'HTTP dimensions',
 			'settings.serverSettings.fields.pgDumpPath' => 'pg_dump 路径',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.pgRestorePath' => 'pg_restore 路径',
 			'settings.serverSettings.fields.tmpRoot' => '临时根目录',
 			'settings.serverSettings.fields.projectsJson' => 'projects.json',
@@ -12049,8 +12145,6 @@ extension on TranslationsZh {
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} 条待审',
 			'cortexHub.title' => 'Cortex',
 			'cortexHub.subtitle' => '经验飞轮：记忆 → 笔记 → 知识，回流到每个会话。',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.memory' => '记忆',
 			'cortexHub.memoryDesc' => '代理存取的跨会话原始事实。',
 			'cortexHub.notes' => '笔记',
