@@ -18,6 +18,7 @@ import {
   Globe,
   Loader2,
   RotateCcw,
+  Trash2,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -26,6 +27,7 @@ import { Badge } from '@/components/ui/badge'
 
 import {
   type MemoryRecord,
+  deleteMemory,
   listArchived,
   restoreMemory,
 } from '@/lib/memory'
@@ -190,6 +192,31 @@ function ArchivedProject({
     },
   })
 
+  // Bulk permanent delete: hard-delete every archived row in this
+  // project NOW, skipping the 30-day grace window. Fan-out over the
+  // visible rows (not DeleteByScope, which would also wipe ACTIVE
+  // memories under the cwd) so only the archived ones go.
+  const deleteAll = useMutation({
+    mutationFn: async () => {
+      const results = await Promise.allSettled(
+        group.records.map((r) => deleteMemory(r.id)),
+      )
+      const ok = results.filter((r) => r.status === 'fulfilled').length
+      const failed = results.length - ok
+      if (failed > 0) throw new Error(String(failed))
+      return ok
+    },
+    onSuccess: (count) => {
+      toast.success(t('web.archived.deletedAllToast', { count }))
+      onChange()
+    },
+    onError: () => {
+      toast.error(t('web.archived.deleteFailedToast'))
+      onChange()
+    },
+  })
+  const busy = restoreAll.isPending || deleteAll.isPending
+
   return (
     <div className={first ? '' : 'border-t'}>
       {/* Collapsed project header — the whole row toggles. */}
@@ -238,7 +265,7 @@ function ArchivedProject({
             variant="outline"
             size="sm"
             className="h-7 px-2 text-[11px]"
-            disabled={restoreAll.isPending}
+            disabled={busy}
             onClick={() => {
               if (
                 !window.confirm(
@@ -259,6 +286,32 @@ function ArchivedProject({
               <RotateCcw className="mr-1 h-3 w-3" />
             )}
             {t('web.archived.restoreAll')}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-destructive h-7 px-2 text-[11px]"
+            disabled={busy}
+            onClick={() => {
+              if (
+                !window.confirm(
+                  t('web.archived.deleteAllConfirm', {
+                    count: group.records.length,
+                    project: group.label,
+                  }),
+                )
+              )
+                return
+              deleteAll.mutate()
+            }}
+            title={t('web.archived.deleteAllTooltip')}
+          >
+            {deleteAll.isPending ? (
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+            ) : (
+              <Trash2 className="mr-1 h-3 w-3" />
+            )}
+            {t('web.archived.deleteAll')}
           </Button>
         </div>
       </div>
@@ -296,6 +349,22 @@ function ArchivedRow({
       onChange()
     },
   })
+  // Permanent delete — skips the 30-day grace window. Hard-deletes via
+  // the existing per-id endpoint (works on archived rows too).
+  const remove = useMutation({
+    mutationFn: () => deleteMemory(record.id),
+    onSuccess: () => {
+      toast.success(t('web.archived.deletedToast'))
+      onChange()
+    },
+    onError: (e: Error) => {
+      toast.error(t('web.archived.deleteFailedToast'), {
+        description: e.message,
+      })
+      onChange()
+    },
+  })
+  const busy = restore.isPending || remove.isPending
 
   return (
     <div className="bg-card rounded-md border p-3">
@@ -315,19 +384,39 @@ function ArchivedRow({
       <pre className="bg-muted/20 mb-3 max-h-32 overflow-auto rounded p-2 font-mono text-[11px] whitespace-pre-wrap">
         {record.text}
       </pre>
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => restore.mutate()}
-        disabled={restore.isPending}
-      >
-        {restore.isPending ? (
-          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-        ) : (
-          <RotateCcw className="mr-1 h-3 w-3" />
-        )}
-        {t('web.archived.restoreButton')}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => restore.mutate()}
+          disabled={busy}
+        >
+          {restore.isPending ? (
+            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+          ) : (
+            <RotateCcw className="mr-1 h-3 w-3" />
+          )}
+          {t('web.archived.restoreButton')}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-muted-foreground hover:text-destructive"
+          onClick={() => {
+            if (!window.confirm(t('web.archived.deleteConfirm'))) return
+            remove.mutate()
+          }}
+          disabled={busy}
+          title={t('web.archived.deleteTooltip')}
+        >
+          {remove.isPending ? (
+            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+          ) : (
+            <Trash2 className="mr-1 h-3 w-3" />
+          )}
+          {t('web.archived.deleteButton')}
+        </Button>
+      </div>
     </div>
   )
 }
