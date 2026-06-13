@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
+import 'package:opendray/core/api/cortex_api.dart';
 import 'package:opendray/core/api/knowledge_api.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
@@ -258,13 +259,52 @@ class _KbViewState extends ConsumerState<_KbView> {
   bool _showProposal = false;
   AsyncValue<ProjectDoc> _doc = const AsyncValue.loading();
   List<DocProposal> _proposals = const [];
+  // Custom kb_* pages beyond the four classics, pulled from the global
+  // blueprint so operator/AI-added pages show up + are selectable.
+  List<BlueprintSection> _extra = const [];
 
-  bool get _isFoundational => _foundational.contains(_kind);
+  static const _classic = {
+    'kb_infrastructure',
+    'kb_conventions',
+    'kb_lessons',
+    'kb_reusable',
+  };
+
+  bool get _isFoundational =>
+      _foundational.contains(_kind) ||
+      _extra.any((s) => s.slug == _kind && s.nature == 'foundational');
 
   @override
   void initState() {
     super.initState();
     _load();
+    _loadSections();
+  }
+
+  Future<void> _loadSections() async {
+    try {
+      final secs = await ref.read(cortexApiProvider).listSections(_global);
+      if (!mounted) return;
+      setState(() => _extra =
+          secs.where((s) => !_classic.contains(s.slug)).toList()
+            ..sort((a, b) => a.position.compareTo(b.position)));
+    } on Object catch (_) {
+      // Non-fatal: the four classics still render without the extras.
+    }
+  }
+
+  // Create a new kb_* knowledge page (a global blueprint section), then
+  // select it. Mirrors the web NewPageDialog.
+  Future<void> _newPage() async {
+    final created = await showDialog<BlueprintSection>(
+      context: context,
+      builder: (_) => const _NewKbPageDialog(),
+    );
+    if (created == null || !mounted) return;
+    await _loadSections();
+    if (!mounted) return;
+    setState(() => _kind = created.slug);
+    await _load();
   }
 
   @override
@@ -284,8 +324,16 @@ class _KbViewState extends ConsumerState<_KbView> {
         return t.web.knowledge.kb.kinds.kb_lessons;
       case 'kb_reusable':
         return t.web.knowledge.kb.kinds.kb_reusable;
-      default:
+      case 'kb_infrastructure':
         return t.web.knowledge.kb.kinds.kb_infrastructure;
+      default:
+        // Custom page → its blueprint title (slug minus kb_ as fallback).
+        for (final s in _extra) {
+          if (s.slug == k) {
+            return s.title.isNotEmpty ? s.title : k.replaceFirst('kb_', '');
+          }
+        }
+        return k.replaceFirst('kb_', '');
     }
   }
 
@@ -435,8 +483,20 @@ class _KbViewState extends ConsumerState<_KbView> {
               children: [
                 _sectionLabel(t.web.knowledge.kb.foundational),
                 for (final k in _foundational) _chip(k),
+                for (final s in _extra)
+                  if (s.nature == 'foundational') _chip(s.slug),
                 _sectionLabel(t.web.knowledge.kb.emergent),
                 for (final k in _emergent) _chip(k),
+                for (final s in _extra)
+                  if (s.nature != 'foundational') _chip(s.slug),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, top: 4),
+                  child: ActionChip(
+                    avatar: const Icon(Icons.add, size: 16),
+                    label: Text(t.web.knowledge.kb.newPage.button),
+                    onPressed: _newPage,
+                  ),
+                ),
               ],
             ),
           ),
@@ -805,6 +865,158 @@ class _DetailSheet extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// _NewKbPageDialog creates a kb_* knowledge page (a global blueprint
+// section). Mirrors the web NewPageDialog: slug (kb_ prefixed), title,
+// optional description, nature (foundational/emergent), inject toggle.
+class _NewKbPageDialog extends ConsumerStatefulWidget {
+  const _NewKbPageDialog();
+
+  @override
+  ConsumerState<_NewKbPageDialog> createState() => _NewKbPageDialogState();
+}
+
+class _NewKbPageDialogState extends ConsumerState<_NewKbPageDialog> {
+  final _slug = TextEditingController();
+  final _title = TextEditingController();
+  final _desc = TextEditingController();
+  String _nature = 'emergent';
+  bool _inject = false;
+  bool _busy = false;
+
+  static final _slugRe = RegExp(r'^kb_[a-z0-9][a-z0-9_]{0,44}$');
+
+  @override
+  void dispose() {
+    _slug.dispose();
+    _title.dispose();
+    _desc.dispose();
+    super.dispose();
+  }
+
+  bool get _valid =>
+      _slugRe.hasMatch('kb_${_slug.text.trim()}') && _title.text.trim().isNotEmpty;
+
+  Future<void> _create() async {
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final sec = await ref.read(cortexApiProvider).putBlueprintSection(
+            BlueprintSection(
+              cwd: '__global__',
+              slug: 'kb_${_slug.text.trim()}',
+              title: _title.text.trim(),
+              description: _desc.text.trim(),
+              position: 99,
+              maintainerMode: 'ai',
+              promptHint: '',
+              pinned: false,
+              inject: _inject,
+              nature: _nature,
+            ),
+          );
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.web.knowledge.kb.newPage.createdToast)),
+      );
+      Navigator.of(context).pop(sec);
+    } on Object catch (e) {
+      if (mounted) {
+        setState(() => _busy = false);
+        messenger.showSnackBar(
+          SnackBar(content: Text('${t.web.knowledge.actionFailed}: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(t.web.knowledge.kb.newPage.title),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(t.web.knowledge.kb.newPage.description,
+                style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Text('kb_', style: TextStyle(fontFamily: 'monospace')),
+                Expanded(
+                  child: TextField(
+                    controller: _slug,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: t.web.knowledge.kb.newPage.slugPlaceholder,
+                      isDense: true,
+                    ),
+                    style: const TextStyle(fontFamily: 'monospace'),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _title,
+              decoration: InputDecoration(
+                hintText: t.web.knowledge.kb.newPage.titlePlaceholder,
+                isDense: true,
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _desc,
+              decoration: InputDecoration(
+                hintText: t.web.knowledge.kb.newPage.descPlaceholder,
+                isDense: true,
+              ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: _nature,
+              decoration: const InputDecoration(isDense: true),
+              items: [
+                DropdownMenuItem(
+                    value: 'foundational',
+                    child: Text(t.web.knowledge.kb.foundational)),
+                DropdownMenuItem(
+                    value: 'emergent',
+                    child: Text(t.web.knowledge.kb.emergent)),
+              ],
+              onChanged: (v) => setState(() => _nature = v ?? 'emergent'),
+            ),
+            const SizedBox(height: 4),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              controlAffinity: ListTileControlAffinity.leading,
+              value: _inject,
+              onChanged: (v) => setState(() => _inject = v ?? false),
+              title: Text(t.web.knowledge.kb.newPage.inject),
+              subtitle: Text(t.web.knowledge.kb.newPage.injectHint,
+                  style: Theme.of(context).textTheme.bodySmall),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.of(context).pop(),
+          child: Text(t.web.knowledge.kb.cancel),
+        ),
+        FilledButton(
+          onPressed: (_valid && !_busy) ? _create : null,
+          child: Text(t.web.knowledge.kb.newPage.create),
+        ),
+      ],
     );
   }
 }

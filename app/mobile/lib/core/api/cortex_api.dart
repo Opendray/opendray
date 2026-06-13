@@ -78,6 +78,21 @@ class CortexApi {
     }
   }
 
+  /// Creates or updates a single blueprint section (PUT keyed by slug).
+  /// Used to add a new KB page (global cwd) or edit one section without
+  /// rewriting the whole set. Mirrors web putBlueprintSection.
+  Future<BlueprintSection> putBlueprintSection(BlueprintSection section) async {
+    try {
+      final res = await _dio.put<Map<String, dynamic>>(
+        '/api/v1/project-docs/blueprint/${section.slug}',
+        data: section.toJson(),
+      );
+      return BlueprintSection.fromJson(res.data ?? const {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   /// Asks the AI to classify the project and propose a tailored section
   /// set. Nothing is persisted — apply via [applyBlueprint] on accept.
   Future<BlueprintProposal> proposeBlueprint(String cwd) async {
@@ -273,6 +288,7 @@ class BlueprintSection {
     required this.promptHint,
     required this.pinned,
     required this.inject,
+    this.nature = 'emergent',
   });
 
   factory BlueprintSection.fromJson(Map<String, dynamic> j) =>
@@ -286,6 +302,7 @@ class BlueprintSection {
         promptHint: j['prompt_hint']?.toString() ?? '',
         pinned: j['pinned'] == true,
         inject: j['inject'] == true,
+        nature: j['nature']?.toString() ?? 'emergent',
       );
 
   Map<String, dynamic> toJson() => {
@@ -298,6 +315,7 @@ class BlueprintSection {
         'prompt_hint': promptHint,
         'pinned': pinned,
         'inject': inject,
+        'nature': nature,
       };
 
   final String cwd;
@@ -309,6 +327,8 @@ class BlueprintSection {
   final String promptHint;
   final bool pinned;
   final bool inject;
+  // 'foundational' (binding, injected into every project) | 'emergent'.
+  final String nature;
 }
 
 class BlueprintProposal {
