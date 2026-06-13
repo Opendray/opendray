@@ -833,6 +833,33 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				log.Info("project unarchived — memories restored", "cwd", cwd, "count", n)
 			}
 		})
+
+		// Backfill: projects archived before the bridge existed never
+		// had their memories shelved (the hook only fires on a live
+		// transition). Sweep every currently-archived project once at
+		// startup and archive its still-active rows. Idempotent —
+		// ArchiveByScope only touches archived_at IS NULL — so this is
+		// safe to run on every boot; best-effort in the background so
+		// it never blocks startup.
+		go func() {
+			ctx := context.Background()
+			cwds, err := projectDocSvc.ListArchivedCwds(ctx)
+			if err != nil {
+				log.Warn("archive reconcile: list archived projects failed", "err", err)
+				return
+			}
+			for _, cwd := range cwds {
+				n, err := memorySvc.ArchiveByScope(ctx, memory.ScopeProject, cwd, memory.ReasonProjectArchived)
+				if err != nil {
+					log.Warn("archive reconcile failed", "cwd", cwd, "err", err)
+					continue
+				}
+				if n > 0 {
+					log.Info("archive reconcile — shelved memories of already-archived project",
+						"cwd", cwd, "count", n)
+				}
+			}
+		}()
 	}
 
 	// M-PB — now that projectDocSvc exists, build the cross-layer

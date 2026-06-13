@@ -329,9 +329,14 @@ func (s *PgvectorStore) ListArchived(ctx context.Context, scope Scope, scopeKey 
 	if limit <= 0 {
 		limit = 100
 	}
-	args := []interface{}{string(scope), scopeKey, limit}
+	// Empty scopeKey means "every key under this scope" — the cross-
+	// project Archived view passes "" to list every project's archived
+	// rows. Without this, an empty key filtered `scope_key = ''` and
+	// matched nothing for project rows (whose key is the cwd), so the
+	// Archived page was always blank. Global scope only has the empty key.
 	where := `scope = $1 AND scope_key = $2`
-	if scope == ScopeGlobal {
+	args := []interface{}{string(scope), scopeKey, limit}
+	if scope == ScopeGlobal || scopeKey == "" {
 		where = `scope = $1`
 		args = []interface{}{string(scope), limit}
 	}

@@ -124,6 +124,29 @@ func (s *Service) SetStatus(ctx context.Context, cwd string, status ProjectStatu
 	return nil
 }
 
+// ListArchivedCwds returns the cwds of every project currently in the
+// archived state. Sourced straight from project_lifecycle (not the
+// docs/logs join ListProjects uses) so a project with only memories
+// and no docs is still covered — the startup memory-archive reconcile
+// needs the authoritative archived set.
+func (s *Service) ListArchivedCwds(ctx context.Context) ([]string, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT cwd FROM project_lifecycle WHERE status = 'archived'`)
+	if err != nil {
+		return nil, fmt.Errorf("projectdoc: list archived cwds: %w", err)
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var cwd string
+		if err := rows.Scan(&cwd); err != nil {
+			return nil, err
+		}
+		out = append(out, cwd)
+	}
+	return out, rows.Err()
+}
+
 // ListProjects returns every cwd opendray knows about (from project_docs)
 // joined with its lifecycle status + last journal activity. idleSuggestDays
 // drives the SuggestArchive flag: an active project whose newest journal entry
