@@ -12235,6 +12235,30 @@ class TranslationsSettingsServerSettingsFieldsEn {
 
 	/// en: 'projects.json'
 	String get projectsJson => 'projects.json';
+
+	/// en: 'Dedup threshold'
+	String get dedupThreshold => 'Dedup threshold';
+
+	/// en: 'Write-time fold threshold; 0 = embedder default, negative disables folding.'
+	String get dedupHelper => 'Write-time fold threshold; 0 = embedder default, negative disables folding.';
+
+	/// en: 'Gatekeeper'
+	String get gatekeeperEnabled => 'Gatekeeper';
+
+	/// en: 'Pre-write LLM judge for memory_store. Provider routed in Cortex settings.'
+	String get gatekeeperHelper => 'Pre-write LLM judge for memory_store. Provider routed in Cortex settings.';
+
+	/// en: 'Cleaner'
+	String get cleanerEnabled => 'Cleaner';
+
+	/// en: 'Periodic auto-librarian that soft-archives stale / duplicate memories.'
+	String get cleanerHelper => 'Periodic auto-librarian that soft-archives stale / duplicate memories.';
+
+	/// en: 'Knowledge graph'
+	String get knowledgeEnabled => 'Knowledge graph';
+
+	/// en: 'The structured entities/playbooks/skills layer on top of memory.'
+	String get knowledgeHelper => 'The structured entities/playbooks/skills layer on top of memory.';
 }
 
 // Path: web.sessions.list.row
@@ -19263,6 +19287,14 @@ extension on Translations {
 			'settings.serverSettings.fields.pgRestorePath' => 'pg_restore path',
 			'settings.serverSettings.fields.tmpRoot' => 'tmp root',
 			'settings.serverSettings.fields.projectsJson' => 'projects.json',
+			'settings.serverSettings.fields.dedupThreshold' => 'Dedup threshold',
+			'settings.serverSettings.fields.dedupHelper' => 'Write-time fold threshold; 0 = embedder default, negative disables folding.',
+			'settings.serverSettings.fields.gatekeeperEnabled' => 'Gatekeeper',
+			'settings.serverSettings.fields.gatekeeperHelper' => 'Pre-write LLM judge for memory_store. Provider routed in Cortex settings.',
+			'settings.serverSettings.fields.cleanerEnabled' => 'Cleaner',
+			'settings.serverSettings.fields.cleanerHelper' => 'Periodic auto-librarian that soft-archives stale / duplicate memories.',
+			'settings.serverSettings.fields.knowledgeEnabled' => 'Knowledge graph',
+			'settings.serverSettings.fields.knowledgeHelper' => 'The structured entities/playbooks/skills layer on top of memory.',
 			'settings.serverSettings.validateInteger' => ({required Object field}) => '"${field}" must be an integer',
 			'settings.serverSettings.validateNumber' => ({required Object field}) => '"${field}" must be a number',
 			'memoryQuarantine.title' => 'Quarantine',
@@ -19287,6 +19319,8 @@ extension on Translations {
 			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} to review',
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pending',
 			'cortexHub.disabled' => 'disabled',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.inboxTitle' => ({required Object count}) => 'Pending proposals (${count})',
 			'cortexHub.inboxHint' => 'AI-proposed updates to project notes and KB pages. Approve to publish, reject to drop.',
 			'cortexHub.kbLabel' => 'Knowledge Base',
@@ -19295,8 +19329,6 @@ extension on Translations {
 			'cortexHub.approve' => 'Approve',
 			'cortexHub.reject' => 'Reject',
 			'cortexHub.approvedToast' => 'Proposal approved',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.rejectedToast' => 'Proposal rejected',
 			'cortexHub.actionFailed' => ({required Object error}) => 'Action failed: ${error}',
 			'cortexHub.loadFailed' => ({required Object error}) => 'Failed to load: ${error}',

@@ -287,6 +287,33 @@ List<_Section> _buildSections() => <_Section>[
         placeholder: 'project',
       ),
       _Field(
+        label: t.settings.serverSettings.fields.dedupThreshold,
+        path: 'memory.dedup_threshold',
+        kind: _FieldKind.numberDouble,
+        helper: t.settings.serverSettings.fields.dedupHelper,
+        placeholder: '0',
+      ),
+      // Background governance (config.toml gates; provider routing for
+      // gatekeeper/cleaner lives in Cortex settings → Workers).
+      _Field(
+        label: t.settings.serverSettings.fields.gatekeeperEnabled,
+        path: 'memory.gatekeeper.enabled',
+        kind: _FieldKind.switchToggle,
+        helper: t.settings.serverSettings.fields.gatekeeperHelper,
+      ),
+      _Field(
+        label: t.settings.serverSettings.fields.cleanerEnabled,
+        path: 'memory.cleaner.enabled',
+        kind: _FieldKind.switchToggle,
+        helper: t.settings.serverSettings.fields.cleanerHelper,
+      ),
+      _Field(
+        label: t.settings.serverSettings.fields.knowledgeEnabled,
+        path: 'knowledge.enabled',
+        kind: _FieldKind.switchToggle,
+        helper: t.settings.serverSettings.fields.knowledgeHelper,
+      ),
+      _Field(
         label: t.settings.serverSettings.fields.httpBaseUrl,
         path: 'memory.http.base_url',
         kind: _FieldKind.text,

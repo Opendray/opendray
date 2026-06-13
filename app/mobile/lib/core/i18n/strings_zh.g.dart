@@ -6358,6 +6358,14 @@ class _TranslationsSettingsServerSettingsFieldsZh extends TranslationsSettingsSe
 	@override String get pgRestorePath => 'pg_restore 路径';
 	@override String get tmpRoot => '临时根目录';
 	@override String get projectsJson => 'projects.json';
+	@override String get dedupThreshold => '去重阈值';
+	@override String get dedupHelper => '写入折叠阈值；0=随嵌入器，负值关闭折叠。';
+	@override String get gatekeeperEnabled => 'Gatekeeper';
+	@override String get gatekeeperHelper => 'memory_store 的写前 LLM 判官。执行 provider 在 Cortex 设置中路由。';
+	@override String get cleanerEnabled => 'Cleaner';
+	@override String get cleanerHelper => '周期性自动馆员，软归档过期/重复记忆。';
+	@override String get knowledgeEnabled => '知识图谱';
+	@override String get knowledgeHelper => '建立在记忆之上的结构化实体/手册/技能层。';
 }
 
 // Path: web.sessions.list.row
@@ -11980,6 +11988,14 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.pgRestorePath' => 'pg_restore 路径',
 			'settings.serverSettings.fields.tmpRoot' => '临时根目录',
 			'settings.serverSettings.fields.projectsJson' => 'projects.json',
+			'settings.serverSettings.fields.dedupThreshold' => '去重阈值',
+			'settings.serverSettings.fields.dedupHelper' => '写入折叠阈值；0=随嵌入器，负值关闭折叠。',
+			'settings.serverSettings.fields.gatekeeperEnabled' => 'Gatekeeper',
+			'settings.serverSettings.fields.gatekeeperHelper' => 'memory_store 的写前 LLM 判官。执行 provider 在 Cortex 设置中路由。',
+			'settings.serverSettings.fields.cleanerEnabled' => 'Cleaner',
+			'settings.serverSettings.fields.cleanerHelper' => '周期性自动馆员，软归档过期/重复记忆。',
+			'settings.serverSettings.fields.knowledgeEnabled' => '知识图谱',
+			'settings.serverSettings.fields.knowledgeHelper' => '建立在记忆之上的结构化实体/手册/技能层。',
 			'settings.serverSettings.validateInteger' => ({required Object field}) => '「${field}」必须是整数',
 			'settings.serverSettings.validateNumber' => ({required Object field}) => '「${field}」必须是数字',
 			'memoryQuarantine.title' => '隔离区',
@@ -12004,6 +12020,8 @@ extension on TranslationsZh {
 			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} 条待审',
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} 条待审',
 			'cortexHub.disabled' => '已禁用',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.inboxTitle' => ({required Object count}) => '待审提案（${count}）',
 			'cortexHub.inboxHint' => 'AI 对项目笔记与知识库页面提出的更新。批准即发布，拒绝即丢弃。',
 			'cortexHub.kbLabel' => '知识库',
@@ -12012,8 +12030,6 @@ extension on TranslationsZh {
 			'cortexHub.approve' => '批准',
 			'cortexHub.reject' => '拒绝',
 			'cortexHub.approvedToast' => '提案已批准',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.rejectedToast' => '提案已拒绝',
 			'cortexHub.actionFailed' => ({required Object error}) => '操作失败：${error}',
 			'cortexHub.loadFailed' => ({required Object error}) => '加载失败：${error}',

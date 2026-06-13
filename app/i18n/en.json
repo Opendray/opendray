@@ -4499,7 +4499,15 @@
         "pgDumpPath": "pg_dump path",
         "pgRestorePath": "pg_restore path",
         "tmpRoot": "tmp root",
-        "projectsJson": "projects.json"
+        "projectsJson": "projects.json",
+        "dedupThreshold": "Dedup threshold",
+        "dedupHelper": "Write-time fold threshold; 0 = embedder default, negative disables folding.",
+        "gatekeeperEnabled": "Gatekeeper",
+        "gatekeeperHelper": "Pre-write LLM judge for memory_store. Provider routed in Cortex settings.",
+        "cleanerEnabled": "Cleaner",
+        "cleanerHelper": "Periodic auto-librarian that soft-archives stale / duplicate memories.",
+        "knowledgeEnabled": "Knowledge graph",
+        "knowledgeHelper": "The structured entities/playbooks/skills layer on top of memory."
       },
       "validateInteger": "\"{field}\" must be an integer",
       "validateNumber": "\"{field}\" must be a number"

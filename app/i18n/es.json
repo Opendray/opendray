@@ -4499,7 +4499,15 @@
         "pgDumpPath": "Ruta de pg_dump",
         "pgRestorePath": "Ruta de pg_restore",
         "tmpRoot": "Raíz de tmp",
-        "projectsJson": "projects.json"
+        "projectsJson": "projects.json",
+        "dedupThreshold": "Umbral de dedup",
+        "dedupHelper": "Umbral de plegado al escribir; 0 = por defecto, negativo desactiva.",
+        "gatekeeperEnabled": "Gatekeeper",
+        "gatekeeperHelper": "Juez LLM pre-escritura para memory_store. Provider en ajustes de Cortex.",
+        "cleanerEnabled": "Cleaner",
+        "cleanerHelper": "Auto-bibliotecario periódico que archiva memorias obsoletas / duplicadas.",
+        "knowledgeEnabled": "Grafo de conocimiento",
+        "knowledgeHelper": "La capa estructurada de entidades/playbooks/skills sobre la memoria."
       },
       "validateInteger": "\"{field}\" debe ser un entero",
       "validateNumber": "\"{field}\" debe ser un número"

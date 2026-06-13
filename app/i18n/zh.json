@@ -4499,7 +4499,15 @@
         "pgDumpPath": "pg_dump 路径",
         "pgRestorePath": "pg_restore 路径",
         "tmpRoot": "临时根目录",
-        "projectsJson": "projects.json"
+        "projectsJson": "projects.json",
+        "dedupThreshold": "去重阈值",
+        "dedupHelper": "写入折叠阈值；0=随嵌入器，负值关闭折叠。",
+        "gatekeeperEnabled": "Gatekeeper",
+        "gatekeeperHelper": "memory_store 的写前 LLM 判官。执行 provider 在 Cortex 设置中路由。",
+        "cleanerEnabled": "Cleaner",
+        "cleanerHelper": "周期性自动馆员，软归档过期/重复记忆。",
+        "knowledgeEnabled": "知识图谱",
+        "knowledgeHelper": "建立在记忆之上的结构化实体/手册/技能层。"
       },
       "validateInteger": "「{field}」必须是整数",
       "validateNumber": "「{field}」必须是数字"

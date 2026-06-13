@@ -6358,6 +6358,14 @@ class _TranslationsSettingsServerSettingsFieldsEs extends TranslationsSettingsSe
 	@override String get pgRestorePath => 'Ruta de pg_restore';
 	@override String get tmpRoot => 'Raíz de tmp';
 	@override String get projectsJson => 'projects.json';
+	@override String get dedupThreshold => 'Umbral de dedup';
+	@override String get dedupHelper => 'Umbral de plegado al escribir; 0 = por defecto, negativo desactiva.';
+	@override String get gatekeeperEnabled => 'Gatekeeper';
+	@override String get gatekeeperHelper => 'Juez LLM pre-escritura para memory_store. Provider en ajustes de Cortex.';
+	@override String get cleanerEnabled => 'Cleaner';
+	@override String get cleanerHelper => 'Auto-bibliotecario periódico que archiva memorias obsoletas / duplicadas.';
+	@override String get knowledgeEnabled => 'Grafo de conocimiento';
+	@override String get knowledgeHelper => 'La capa estructurada de entidades/playbooks/skills sobre la memoria.';
 }
 
 // Path: web.sessions.list.row
@@ -11980,6 +11988,14 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.pgRestorePath' => 'Ruta de pg_restore',
 			'settings.serverSettings.fields.tmpRoot' => 'Raíz de tmp',
 			'settings.serverSettings.fields.projectsJson' => 'projects.json',
+			'settings.serverSettings.fields.dedupThreshold' => 'Umbral de dedup',
+			'settings.serverSettings.fields.dedupHelper' => 'Umbral de plegado al escribir; 0 = por defecto, negativo desactiva.',
+			'settings.serverSettings.fields.gatekeeperEnabled' => 'Gatekeeper',
+			'settings.serverSettings.fields.gatekeeperHelper' => 'Juez LLM pre-escritura para memory_store. Provider en ajustes de Cortex.',
+			'settings.serverSettings.fields.cleanerEnabled' => 'Cleaner',
+			'settings.serverSettings.fields.cleanerHelper' => 'Auto-bibliotecario periódico que archiva memorias obsoletas / duplicadas.',
+			'settings.serverSettings.fields.knowledgeEnabled' => 'Grafo de conocimiento',
+			'settings.serverSettings.fields.knowledgeHelper' => 'La capa estructurada de entidades/playbooks/skills sobre la memoria.',
 			'settings.serverSettings.validateInteger' => ({required Object field}) => '"${field}" debe ser un entero',
 			'settings.serverSettings.validateNumber' => ({required Object field}) => '"${field}" debe ser un número',
 			'memoryQuarantine.title' => 'Cuarentena',
@@ -12004,6 +12020,8 @@ extension on TranslationsEs {
 			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} por revisar',
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pendientes',
 			'cortexHub.disabled' => 'desactivado',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.inboxTitle' => ({required Object count}) => 'Propuestas pendientes (${count})',
 			'cortexHub.inboxHint' => 'Actualizaciones propuestas por la IA para notas y páginas KB. Aprueba para publicar, rechaza para descartar.',
 			'cortexHub.kbLabel' => 'Base de conocimiento',
@@ -12012,8 +12030,6 @@ extension on TranslationsEs {
 			'cortexHub.approve' => 'Aprobar',
 			'cortexHub.reject' => 'Rechazar',
 			'cortexHub.approvedToast' => 'Propuesta aprobada',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.rejectedToast' => 'Propuesta rechazada',
 			'cortexHub.actionFailed' => ({required Object error}) => 'La acción falló: ${error}',
 			'cortexHub.loadFailed' => ({required Object error}) => 'Error al cargar: ${error}',
