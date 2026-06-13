@@ -2364,6 +2364,18 @@
           "nameRequiredToast": "名称不能为空",
           "createdToast": "已创建 Provider {name}",
           "createFailedToast": "创建失败"
+        },
+        "modelSelect": {
+          "editTitle": "更换模型",
+          "dialogTitle": "更换模型 — {name}",
+          "custom": "自定义…",
+          "backToList": "从列表选择",
+          "refresh": "重新扫描端点上的模型",
+          "unreachable": "端点不可达——请手动输入模型名；服务启动后会显示模型列表。",
+          "none": "端点有响应但没有公布任何模型——在 LM Studio 加载或在 Ollama pull 一个模型后重新扫描。",
+          "notOnEndpoint": "端点上不存在",
+          "save": "保存模型",
+          "savedToast": "{name} 现在使用 {model}"
         }
       },
       "rules": {

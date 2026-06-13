@@ -2364,6 +2364,18 @@
           "nameRequiredToast": "Name is required",
           "createdToast": "Provider {name} created",
           "createFailedToast": "Create failed"
+        },
+        "modelSelect": {
+          "editTitle": "Change model",
+          "dialogTitle": "Change model — {name}",
+          "custom": "Custom…",
+          "backToList": "Pick from list",
+          "refresh": "Re-scan the endpoint for models",
+          "unreachable": "Endpoint not reachable — type the model name manually; the list appears once the service is up.",
+          "none": "The endpoint responded but advertises no models — load one in LM Studio / pull one in Ollama, then re-scan.",
+          "notOnEndpoint": "not on endpoint",
+          "save": "Save model",
+          "savedToast": "{name} now uses {model}"
         }
       },
       "rules": {
