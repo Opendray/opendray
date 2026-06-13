@@ -9,6 +9,7 @@ import 'package:opendray/core/api/memory_health_api.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/cortex/blueprint_editor_screen.dart';
 import 'package:opendray/features/sessions/directory_picker_sheet.dart';
 import 'package:path/path.dart' as p;
 
@@ -288,12 +289,28 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
       appBar: AppBar(
         title: Text(t.project.title),
         actions: [
-          if (_selectedKey != null && _selectedKey!.isNotEmpty)
+          if (_selectedKey != null && _selectedKey!.isNotEmpty) ...[
+            IconButton(
+              icon: const Icon(Icons.dashboard_customize_outlined),
+              tooltip: t.web.cortex.blueprint.open,
+              onPressed: () async {
+                final changed = await Navigator.of(context).push<bool>(
+                  MaterialPageRoute<bool>(
+                    builder: (_) =>
+                        BlueprintEditorScreen(cwd: _selectedKey!),
+                  ),
+                );
+                if ((changed ?? false) && mounted) {
+                  await _loadAll(_selectedKey!);
+                }
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.restart_alt),
               tooltip: t.project.resetTooltip,
               onPressed: () => _confirmReset(_selectedKey!),
             ),
+          ],
         ],
         bottom: TabBar(
           controller: _tabs,

@@ -318,6 +318,26 @@ class BlueprintSection {
         'nature': nature,
       };
 
+  BlueprintSection copyWith({
+    String? slug,
+    String? title,
+    int? position,
+    String? maintainerMode,
+    bool? inject,
+  }) =>
+      BlueprintSection(
+        cwd: cwd,
+        slug: slug ?? this.slug,
+        title: title ?? this.title,
+        description: description,
+        position: position ?? this.position,
+        maintainerMode: maintainerMode ?? this.maintainerMode,
+        promptHint: promptHint,
+        pinned: pinned,
+        inject: inject ?? this.inject,
+        nature: nature,
+      );
+
   final String cwd;
   final String slug;
   final String title;
