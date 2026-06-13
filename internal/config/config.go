@@ -249,9 +249,10 @@ type MemoryGatekeeperConfig struct {
 }
 
 type ProvidersConfig struct {
-	Claude ClaudeProviderConfig `toml:"claude" json:"claude"`
-	Codex  CodexProviderConfig  `toml:"codex" json:"codex"`
-	Gemini GeminiProviderConfig `toml:"gemini" json:"gemini"`
+	Claude      ClaudeProviderConfig      `toml:"claude" json:"claude"`
+	Codex       CodexProviderConfig       `toml:"codex" json:"codex"`
+	Gemini      GeminiProviderConfig      `toml:"gemini" json:"gemini"`
+	Antigravity AntigravityProviderConfig `toml:"antigravity" json:"antigravity"`
 }
 
 // ClaudeProviderConfig points at where Claude Code CLI persists
@@ -316,6 +317,16 @@ type CodexProviderConfig struct {
 type GeminiProviderConfig struct {
 	TmpRoot      string `toml:"tmp_root" json:"tmp_root"`
 	ProjectsFile string `toml:"projects_file" json:"projects_file"`
+}
+
+// AntigravityProviderConfig points at the Antigravity (agy) CLI's
+// per-conversation SQLite store. Each conversation is a standalone
+// <trajectory-uuid>.db; opendray reads them read-only to reconstruct
+// the session transcript.
+//
+// Default: ~/.gemini/antigravity-cli/conversations.
+type AntigravityProviderConfig struct {
+	ConversationsRoot string `toml:"conversations_root" json:"conversations_root"`
 }
 
 // MCPConfig points at the MCP server registry directory and the

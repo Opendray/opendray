@@ -49,6 +49,8 @@ func (m *Manager) Transcript(ctx context.Context, sessionID string, maxBytes int
 		return codexTranscript(m.codexHistoryCfg, sess.Cwd, sess.StartedAt, endedAt, maxBytes), nil
 	case "gemini":
 		return geminiTranscript(m.geminiHistoryCfg, sess.Cwd, sess.StartedAt, endedAt, maxBytes), nil
+	case "antigravity":
+		return antigravityTranscript(m.antigravityHistoryCfg, sess.Cwd, sess.StartedAt, endedAt, maxBytes), nil
 	default:
 		return nil, nil
 	}

@@ -1883,6 +1883,10 @@
         "gemini": {
           "title": "存储 · Gemini",
           "desc": "Gemini 每项目 tmp 与 projects.json。"
+        },
+        "antigravity": {
+          "title": "存储 · Antigravity",
+          "desc": "Antigravity (agy) 按会话存储的 SQLite 库。"
         }
       },
       "loading": "正在加载服务器设置…",
@@ -2068,6 +2072,10 @@
         "geminiProjectsFile": {
           "label": "projects.json",
           "hint": "Gemini cwd→短名映射文件的路径。默认 ~/.gemini/projects.json。"
+        },
+        "antigravityConversationsRoot": {
+          "label": "会话目录",
+          "hint": "存放 agy 按会话 .db 文件的根目录。默认 ~/.gemini/antigravity-cli/conversations。"
         },
         "backupLocalDir": {
           "label": "本地备份目录",
@@ -3420,6 +3428,8 @@
     "cliLabel": "CLI",
     "cliClaude": "Claude",
     "cliGemini": "Gemini",
+    "cliCodex": "Codex（codex exec）",
+    "cliAntigravity": "Antigravity（agy --print）",
     "claudeAccountLabel": "Claude 账号",
     "claudeAccountDefault": "默认",
     "test": "测试",
@@ -4428,7 +4438,8 @@
         "backup": "备份",
         "storageClaude": "存储 · Claude",
         "storageCodex": "存储 · Codex",
-        "storageGemini": "存储 · Gemini"
+        "storageGemini": "存储 · Gemini",
+        "storageAntigravity": "存储 · Antigravity"
       },
       "sectionDescriptions": {
         "general": "监听地址、管理员账号、令牌 TTL。",
@@ -4440,7 +4451,8 @@
         "backup": "加密的数据库备份 + 管理数据导出。密语保存在密钥文件（设置 → 备份）。",
         "storageClaude": "Claude 会话记录在磁盘的存放位置。",
         "storageCodex": "Codex 会话根目录。",
-        "storageGemini": "按项目的临时目录 + projects.json 路径。"
+        "storageGemini": "按项目的临时目录 + projects.json 路径。",
+        "storageAntigravity": "agy 按会话存储的 SQLite 库。"
       },
       "fields": {
         "listenAddress": "监听地址",
@@ -4500,6 +4512,7 @@
         "pgRestorePath": "pg_restore 路径",
         "tmpRoot": "临时根目录",
         "projectsJson": "projects.json",
+        "conversationsRoot": "会话目录",
         "dedupThreshold": "去重阈值",
         "dedupHelper": "写入折叠阈值；0=随嵌入器，负值关闭折叠。",
         "gatekeeperEnabled": "Gatekeeper",

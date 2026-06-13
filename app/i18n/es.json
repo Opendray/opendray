@@ -1883,6 +1883,10 @@
         "gemini": {
           "title": "Almacenamiento · Gemini",
           "desc": "Carpeta tmp por proyecto de Gemini + projects.json."
+        },
+        "antigravity": {
+          "title": "Almacenamiento · Antigravity",
+          "desc": "Almacén SQLite por conversación de Antigravity (agy)."
         }
       },
       "loading": "Cargando ajustes del servidor…",
@@ -2068,6 +2072,10 @@
         "geminiProjectsFile": {
           "label": "projects.json",
           "hint": "Ruta al archivo de mapeo cwd→nombre-corto de Gemini. Por defecto ~/.gemini/projects.json."
+        },
+        "antigravityConversationsRoot": {
+          "label": "Directorio de conversaciones",
+          "hint": "Raíz con los archivos .db por conversación de agy. Por defecto ~/.gemini/antigravity-cli/conversations."
         },
         "backupLocalDir": {
           "label": "Directorio local de copias de seguridad",
@@ -3420,6 +3428,8 @@
     "cliLabel": "CLI",
     "cliClaude": "Claude",
     "cliGemini": "Gemini",
+    "cliCodex": "Codex (codex exec)",
+    "cliAntigravity": "Antigravity (agy --print)",
     "claudeAccountLabel": "Cuenta de Claude",
     "claudeAccountDefault": "Predeterminada",
     "test": "Probar",
@@ -4428,7 +4438,8 @@
         "backup": "Copia de seguridad",
         "storageClaude": "Almacenamiento · Claude",
         "storageCodex": "Almacenamiento · Codex",
-        "storageGemini": "Almacenamiento · Gemini"
+        "storageGemini": "Almacenamiento · Gemini",
+        "storageAntigravity": "Almacenamiento · Antigravity"
       },
       "sectionDescriptions": {
         "general": "Dirección de escucha, cuenta del operador, TTL del token.",
@@ -4440,7 +4451,8 @@
         "backup": "Copias de seguridad cifradas de la BD + exportaciones de datos de admin. La frase de contraseña vive en el keyfile (Ajustes → Copias de seguridad).",
         "storageClaude": "Dónde viven los transcripts de Claude en disco.",
         "storageCodex": "Raíz de las sessions de Codex.",
-        "storageGemini": "Rutas de tmp por proyecto + projects.json."
+        "storageGemini": "Rutas de tmp por proyecto + projects.json.",
+        "storageAntigravity": "Almacén SQLite por conversación de agy."
       },
       "fields": {
         "listenAddress": "Dirección de escucha",
@@ -4500,6 +4512,7 @@
         "pgRestorePath": "Ruta de pg_restore",
         "tmpRoot": "Raíz de tmp",
         "projectsJson": "projects.json",
+        "conversationsRoot": "Directorio de conversaciones",
         "dedupThreshold": "Umbral de dedup",
         "dedupHelper": "Umbral de plegado al escribir; 0 = por defecto, negativo desactiva.",
         "gatekeeperEnabled": "Gatekeeper",

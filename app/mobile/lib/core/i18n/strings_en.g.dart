@@ -670,6 +670,12 @@ class TranslationsMemoryWorkersEn {
 	/// en: 'Gemini'
 	String get cliGemini => 'Gemini';
 
+	/// en: 'Codex (codex exec)'
+	String get cliCodex => 'Codex (codex exec)';
+
+	/// en: 'Antigravity (agy --print)'
+	String get cliAntigravity => 'Antigravity (agy --print)';
+
 	/// en: 'Claude account'
 	String get claudeAccountLabel => 'Claude account';
 
@@ -9109,6 +9115,7 @@ class TranslationsWebServerSettingsSectionsEn {
 	late final TranslationsWebServerSettingsSectionsClaudeEn claude = TranslationsWebServerSettingsSectionsClaudeEn.internal(_root);
 	late final TranslationsWebServerSettingsSectionsCodexEn codex = TranslationsWebServerSettingsSectionsCodexEn.internal(_root);
 	late final TranslationsWebServerSettingsSectionsGeminiEn gemini = TranslationsWebServerSettingsSectionsGeminiEn.internal(_root);
+	late final TranslationsWebServerSettingsSectionsAntigravityEn antigravity = TranslationsWebServerSettingsSectionsAntigravityEn.internal(_root);
 }
 
 // Path: web.serverSettings.restart
@@ -9234,6 +9241,7 @@ class TranslationsWebServerSettingsFieldsEn {
 	late final TranslationsWebServerSettingsFieldsCodexSessionsRootEn codexSessionsRoot = TranslationsWebServerSettingsFieldsCodexSessionsRootEn.internal(_root);
 	late final TranslationsWebServerSettingsFieldsGeminiTmpRootEn geminiTmpRoot = TranslationsWebServerSettingsFieldsGeminiTmpRootEn.internal(_root);
 	late final TranslationsWebServerSettingsFieldsGeminiProjectsFileEn geminiProjectsFile = TranslationsWebServerSettingsFieldsGeminiProjectsFileEn.internal(_root);
+	late final TranslationsWebServerSettingsFieldsAntigravityConversationsRootEn antigravityConversationsRoot = TranslationsWebServerSettingsFieldsAntigravityConversationsRootEn.internal(_root);
 	late final TranslationsWebServerSettingsFieldsBackupLocalDirEn backupLocalDir = TranslationsWebServerSettingsFieldsBackupLocalDirEn.internal(_root);
 	late final TranslationsWebServerSettingsFieldsBackupExportDirEn backupExportDir = TranslationsWebServerSettingsFieldsBackupExportDirEn.internal(_root);
 	late final TranslationsWebServerSettingsFieldsBackupPgDumpPathEn backupPgDumpPath = TranslationsWebServerSettingsFieldsBackupPgDumpPathEn.internal(_root);
@@ -12016,6 +12024,9 @@ class TranslationsSettingsServerSettingsSectionsEn {
 
 	/// en: 'Storage · Gemini'
 	String get storageGemini => 'Storage · Gemini';
+
+	/// en: 'Storage · Antigravity'
+	String get storageAntigravity => 'Storage · Antigravity';
 }
 
 // Path: settings.serverSettings.sectionDescriptions
@@ -12055,6 +12066,9 @@ class TranslationsSettingsServerSettingsSectionDescriptionsEn {
 
 	/// en: 'Per-project tmp + projects.json paths.'
 	String get storageGemini => 'Per-project tmp + projects.json paths.';
+
+	/// en: 'agy per-conversation SQLite store.'
+	String get storageAntigravity => 'agy per-conversation SQLite store.';
 }
 
 // Path: settings.serverSettings.fields
@@ -12235,6 +12249,9 @@ class TranslationsSettingsServerSettingsFieldsEn {
 
 	/// en: 'projects.json'
 	String get projectsJson => 'projects.json';
+
+	/// en: 'Conversations directory'
+	String get conversationsRoot => 'Conversations directory';
 
 	/// en: 'Dedup threshold'
 	String get dedupThreshold => 'Dedup threshold';
@@ -14068,6 +14085,21 @@ class TranslationsWebServerSettingsSectionsGeminiEn {
 	String get desc => 'Gemini per-project tmp + projects.json.';
 }
 
+// Path: web.serverSettings.sections.antigravity
+class TranslationsWebServerSettingsSectionsAntigravityEn {
+	TranslationsWebServerSettingsSectionsAntigravityEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Storage · Antigravity'
+	String get title => 'Storage · Antigravity';
+
+	/// en: 'Antigravity (agy) per-conversation SQLite store.'
+	String get desc => 'Antigravity (agy) per-conversation SQLite store.';
+}
+
 // Path: web.serverSettings.fields.listenAddress
 class TranslationsWebServerSettingsFieldsListenAddressEn {
 	TranslationsWebServerSettingsFieldsListenAddressEn.internal(this._root);
@@ -14597,6 +14629,21 @@ class TranslationsWebServerSettingsFieldsGeminiProjectsFileEn {
 
 	/// en: 'Path to Gemini's cwd→short-name mapping file. Default ~/.gemini/projects.json.'
 	String get hint => 'Path to Gemini\'s cwd→short-name mapping file. Default ~/.gemini/projects.json.';
+}
+
+// Path: web.serverSettings.fields.antigravityConversationsRoot
+class TranslationsWebServerSettingsFieldsAntigravityConversationsRootEn {
+	TranslationsWebServerSettingsFieldsAntigravityConversationsRootEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Conversations directory'
+	String get label => 'Conversations directory';
+
+	/// en: 'Root holding agy's per-conversation .db files. Default ~/.gemini/antigravity-cli/conversations.'
+	String get hint => 'Root holding agy\'s per-conversation .db files. Default ~/.gemini/antigravity-cli/conversations.';
 }
 
 // Path: web.serverSettings.fields.backupLocalDir
@@ -17241,6 +17288,8 @@ extension on Translations {
 			'web.serverSettings.sections.codex.desc' => 'Codex sessions root.',
 			'web.serverSettings.sections.gemini.title' => 'Storage · Gemini',
 			'web.serverSettings.sections.gemini.desc' => 'Gemini per-project tmp + projects.json.',
+			'web.serverSettings.sections.antigravity.title' => 'Storage · Antigravity',
+			'web.serverSettings.sections.antigravity.desc' => 'Antigravity (agy) per-conversation SQLite store.',
 			'web.serverSettings.loading' => 'Loading server settings…',
 			'web.serverSettings.loadFailed' => ({required Object message}) => 'Failed to load: ${message}',
 			'web.serverSettings.noConfigFlag' => 'opendray was started without a -config flag. Settings are loaded from environment variables only and cannot be edited here.',
@@ -17261,10 +17310,10 @@ extension on Translations {
 			'web.serverSettings.restart.buttonTitle' => 'Self-exec the gateway process',
 			'web.serverSettings.restart.dirtyConfirm' => 'You have unsaved changes. Restart will use the LAST SAVED config. Continue?',
 			'web.serverSettings.restart.confirm' => 'Restart the opendray gateway? All open terminal sessions will reconnect automatically.',
-			'web.serverSettings.restart.overlay' => 'Restarting server…',
-			'web.serverSettings.restart.waiting' => ({required Object tick}) => 'Waiting for /health · ${tick}s',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.restart.overlay' => 'Restarting server…',
+			'web.serverSettings.restart.waiting' => ({required Object tick}) => 'Waiting for /health · ${tick}s',
 			'web.serverSettings.restart.timedOutTitle' => 'Restart timed out',
 			'web.serverSettings.restart.timedOutDesc' => 'Health endpoint never came back. Check server logs.',
 			'web.serverSettings.restart.successToast' => 'Server restarted',
@@ -17352,6 +17401,8 @@ extension on Translations {
 			'web.serverSettings.fields.geminiTmpRoot.hint' => 'Root holding Gemini per-project tmp folders. Default ~/.gemini/tmp.',
 			'web.serverSettings.fields.geminiProjectsFile.label' => 'projects.json',
 			'web.serverSettings.fields.geminiProjectsFile.hint' => 'Path to Gemini\'s cwd→short-name mapping file. Default ~/.gemini/projects.json.',
+			'web.serverSettings.fields.antigravityConversationsRoot.label' => 'Conversations directory',
+			'web.serverSettings.fields.antigravityConversationsRoot.hint' => 'Root holding agy\'s per-conversation .db files. Default ~/.gemini/antigravity-cli/conversations.',
 			'web.serverSettings.fields.backupLocalDir.label' => 'Local backup directory',
 			'web.serverSettings.fields.backupLocalDir.hint' => 'Default root for the auto-created `local` target. Empty = ~/.opendray/backups. Restart required.',
 			'web.serverSettings.fields.backupExportDir.label' => 'Export directory',
@@ -17773,12 +17824,12 @@ extension on Translations {
 			'web.knowledge.kb.regenerating' => 'Regenerating in the background…',
 			'web.knowledge.kb.kinds.kb_infrastructure' => 'Infrastructure',
 			'web.knowledge.kb.kinds.kb_conventions' => 'Conventions',
+			_ => null,
+		} ?? switch (path) {
 			'web.knowledge.kb.kinds.kb_lessons' => 'Lessons',
 			'web.knowledge.kb.kinds.kb_reusable' => 'Reusable features',
 			'web.knowledge.kb.foundational' => 'Foundational',
 			'web.knowledge.kb.foundationalHint' => 'Infrastructure & conventions — binding rules injected into every project.',
-			_ => null,
-		} ?? switch (path) {
 			'web.knowledge.kb.emergent' => 'Emergent',
 			'web.knowledge.kb.emergentHint' => 'Lessons & reusable features distilled from past work — guidance.',
 			'web.knowledge.kb.bindingBadge' => 'Binding · must follow',
@@ -18287,12 +18338,12 @@ extension on Translations {
 			'providers.accounts.deleteLabel' => 'Delete',
 			'providers.accounts.deleteBody' => 'Removes the account and its stored OAuth token. Sessions already using this account stay running but reauth will fail.',
 			'providers.accounts.deletedSnack' => ({required Object name}) => 'Deleted ${name}.',
+			_ => null,
+		} ?? switch (path) {
 			'providers.accounts.importSyncedSnack' => 'Already in sync — gateway has no new accounts.',
 			'providers.accounts.importedSnackOne' => ({required Object n}) => 'Imported ${n} account.',
 			'providers.accounts.importedSnackOther' => ({required Object n}) => 'Imported ${n} accounts.',
 			'providers.accounts.importing' => 'Syncing…',
-			_ => null,
-		} ?? switch (path) {
 			'providers.accounts.importLocal' => 'Import local',
 			'providers.accounts.addHint' => 'Adding a new account is gateway-host only.',
 			'providers.accounts.addBody' => 'The new directory shows up here automatically. See the docs for OAuth flow steps.',
@@ -18393,6 +18444,8 @@ extension on Translations {
 			'memoryWorkers.cliLabel' => 'CLI',
 			'memoryWorkers.cliClaude' => 'Claude',
 			'memoryWorkers.cliGemini' => 'Gemini',
+			'memoryWorkers.cliCodex' => 'Codex (codex exec)',
+			'memoryWorkers.cliAntigravity' => 'Antigravity (agy --print)',
 			'memoryWorkers.claudeAccountLabel' => 'Claude account',
 			'memoryWorkers.claudeAccountDefault' => 'Default',
 			'memoryWorkers.test' => 'Test',
@@ -18799,14 +18852,14 @@ extension on Translations {
 			'channels.notifications.snippetLengthCap' => 'Snippet length cap',
 			'channels.notifications.snippetHelper' => 'Embeds the recent terminal tail in each notification.',
 			'channels.notifications.snippetNoCap' => 'no cap',
+			_ => null,
+		} ?? switch (path) {
 			'channels.notifications.snippetChars' => ({required Object n}) => '${n} chars',
 			'channels.notifications.updatedSnack' => 'Notification preferences updated.',
 			'channels.notifications.modes.onceLabel' => 'Once per session',
 			'channels.notifications.modes.onceDescription' => 'Fire once when idle, stay silent until reply or end.',
 			'channels.notifications.modes.cooldownLabel' => 'Time-window cooldown',
 			'channels.notifications.modes.cooldownDescription' => 'Suppress repeats within the chosen window.',
-			_ => null,
-		} ?? switch (path) {
 			'channels.notifications.modes.everyLabel' => 'Every event (noisy)',
 			'channels.notifications.modes.everyDescription' => 'No suppression — only for low-frequency channels.',
 			'channels.popup.enable' => 'Enable',
@@ -19220,6 +19273,7 @@ extension on Translations {
 			'settings.serverSettings.sections.storageClaude' => 'Storage · Claude',
 			'settings.serverSettings.sections.storageCodex' => 'Storage · Codex',
 			'settings.serverSettings.sections.storageGemini' => 'Storage · Gemini',
+			'settings.serverSettings.sections.storageAntigravity' => 'Storage · Antigravity',
 			'settings.serverSettings.sectionDescriptions.general' => 'Listen address, operator account, token TTL.',
 			'settings.serverSettings.sectionDescriptions.logging' => 'Verbosity, format, and on-disk log path.',
 			'settings.serverSettings.sectionDescriptions.sessions' => 'Idle detection thresholds.',
@@ -19230,6 +19284,7 @@ extension on Translations {
 			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Where Claude transcripts live on disk.',
 			'settings.serverSettings.sectionDescriptions.storageCodex' => 'Codex sessions root.',
 			'settings.serverSettings.sectionDescriptions.storageGemini' => 'Per-project tmp + projects.json paths.',
+			'settings.serverSettings.sectionDescriptions.storageAntigravity' => 'agy per-conversation SQLite store.',
 			'settings.serverSettings.fields.listenAddress' => 'Listen address',
 			'settings.serverSettings.fields.adminUser' => 'Admin user',
 			'settings.serverSettings.fields.adminUserHelper' => 'Effective when no keyfile or env var is set. Otherwise see Settings → Account.',
@@ -19287,6 +19342,7 @@ extension on Translations {
 			'settings.serverSettings.fields.pgRestorePath' => 'pg_restore path',
 			'settings.serverSettings.fields.tmpRoot' => 'tmp root',
 			'settings.serverSettings.fields.projectsJson' => 'projects.json',
+			'settings.serverSettings.fields.conversationsRoot' => 'Conversations directory',
 			'settings.serverSettings.fields.dedupThreshold' => 'Dedup threshold',
 			'settings.serverSettings.fields.dedupHelper' => 'Write-time fold threshold; 0 = embedder default, negative disables folding.',
 			'settings.serverSettings.fields.gatekeeperEnabled' => 'Gatekeeper',
@@ -19310,6 +19366,8 @@ extension on Translations {
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} pending',
 			'cortexHub.title' => 'Cortex',
 			'cortexHub.subtitle' => 'The experience flywheel: Memory → Notes → Knowledge, fed back into every session.',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.memory' => 'Memory',
 			'cortexHub.memoryDesc' => 'Raw cross-session facts the agents store and recall.',
 			'cortexHub.notes' => 'Notes',
@@ -19319,8 +19377,6 @@ extension on Translations {
 			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} to review',
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pending',
 			'cortexHub.disabled' => 'disabled',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.inboxTitle' => ({required Object count}) => 'Pending proposals (${count})',
 			'cortexHub.inboxHint' => 'AI-proposed updates to project notes and KB pages. Approve to publish, reject to drop.',
 			'cortexHub.kbLabel' => 'Knowledge Base',

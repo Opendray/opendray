@@ -357,6 +357,8 @@ class _TranslationsMemoryWorkersZh extends TranslationsMemoryWorkersEn {
 	@override String get cliLabel => 'CLI';
 	@override String get cliClaude => 'Claude';
 	@override String get cliGemini => 'Gemini';
+	@override String get cliCodex => 'Codex（codex exec）';
+	@override String get cliAntigravity => 'Antigravity（agy --print）';
 	@override String get claudeAccountLabel => 'Claude 账号';
 	@override String get claudeAccountDefault => '默认';
 	@override String get test => '测试';
@@ -4635,6 +4637,7 @@ class _TranslationsWebServerSettingsSectionsZh extends TranslationsWebServerSett
 	@override late final _TranslationsWebServerSettingsSectionsClaudeZh claude = _TranslationsWebServerSettingsSectionsClaudeZh._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsCodexZh codex = _TranslationsWebServerSettingsSectionsCodexZh._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsGeminiZh gemini = _TranslationsWebServerSettingsSectionsGeminiZh._(_root);
+	@override late final _TranslationsWebServerSettingsSectionsAntigravityZh antigravity = _TranslationsWebServerSettingsSectionsAntigravityZh._(_root);
 }
 
 // Path: web.serverSettings.restart
@@ -4718,6 +4721,7 @@ class _TranslationsWebServerSettingsFieldsZh extends TranslationsWebServerSettin
 	@override late final _TranslationsWebServerSettingsFieldsCodexSessionsRootZh codexSessionsRoot = _TranslationsWebServerSettingsFieldsCodexSessionsRootZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsGeminiTmpRootZh geminiTmpRoot = _TranslationsWebServerSettingsFieldsGeminiTmpRootZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsGeminiProjectsFileZh geminiProjectsFile = _TranslationsWebServerSettingsFieldsGeminiProjectsFileZh._(_root);
+	@override late final _TranslationsWebServerSettingsFieldsAntigravityConversationsRootZh antigravityConversationsRoot = _TranslationsWebServerSettingsFieldsAntigravityConversationsRootZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsBackupLocalDirZh backupLocalDir = _TranslationsWebServerSettingsFieldsBackupLocalDirZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsBackupExportDirZh backupExportDir = _TranslationsWebServerSettingsFieldsBackupExportDirZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsBackupPgDumpPathZh backupPgDumpPath = _TranslationsWebServerSettingsFieldsBackupPgDumpPathZh._(_root);
@@ -6273,6 +6277,7 @@ class _TranslationsSettingsServerSettingsSectionsZh extends TranslationsSettings
 	@override String get storageClaude => '存储 · Claude';
 	@override String get storageCodex => '存储 · Codex';
 	@override String get storageGemini => '存储 · Gemini';
+	@override String get storageAntigravity => '存储 · Antigravity';
 }
 
 // Path: settings.serverSettings.sectionDescriptions
@@ -6292,6 +6297,7 @@ class _TranslationsSettingsServerSettingsSectionDescriptionsZh extends Translati
 	@override String get storageClaude => 'Claude 会话记录在磁盘的存放位置。';
 	@override String get storageCodex => 'Codex 会话根目录。';
 	@override String get storageGemini => '按项目的临时目录 + projects.json 路径。';
+	@override String get storageAntigravity => 'agy 按会话存储的 SQLite 库。';
 }
 
 // Path: settings.serverSettings.fields
@@ -6358,6 +6364,7 @@ class _TranslationsSettingsServerSettingsFieldsZh extends TranslationsSettingsSe
 	@override String get pgRestorePath => 'pg_restore 路径';
 	@override String get tmpRoot => '临时根目录';
 	@override String get projectsJson => 'projects.json';
+	@override String get conversationsRoot => '会话目录';
 	@override String get dedupThreshold => '去重阈值';
 	@override String get dedupHelper => '写入折叠阈值；0=随嵌入器，负值关闭折叠。';
 	@override String get gatekeeperEnabled => 'Gatekeeper';
@@ -7367,6 +7374,17 @@ class _TranslationsWebServerSettingsSectionsGeminiZh extends TranslationsWebServ
 	@override String get desc => 'Gemini 每项目 tmp 与 projects.json。';
 }
 
+// Path: web.serverSettings.sections.antigravity
+class _TranslationsWebServerSettingsSectionsAntigravityZh extends TranslationsWebServerSettingsSectionsAntigravityEn {
+	_TranslationsWebServerSettingsSectionsAntigravityZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '存储 · Antigravity';
+	@override String get desc => 'Antigravity (agy) 按会话存储的 SQLite 库。';
+}
+
 // Path: web.serverSettings.fields.listenAddress
 class _TranslationsWebServerSettingsFieldsListenAddressZh extends TranslationsWebServerSettingsFieldsListenAddressEn {
 	_TranslationsWebServerSettingsFieldsListenAddressZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7752,6 +7770,17 @@ class _TranslationsWebServerSettingsFieldsGeminiProjectsFileZh extends Translati
 	// Translations
 	@override String get label => 'projects.json';
 	@override String get hint => 'Gemini cwd→短名映射文件的路径。默认 ~/.gemini/projects.json。';
+}
+
+// Path: web.serverSettings.fields.antigravityConversationsRoot
+class _TranslationsWebServerSettingsFieldsAntigravityConversationsRootZh extends TranslationsWebServerSettingsFieldsAntigravityConversationsRootEn {
+	_TranslationsWebServerSettingsFieldsAntigravityConversationsRootZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '会话目录';
+	@override String get hint => '存放 agy 按会话 .db 文件的根目录。默认 ~/.gemini/antigravity-cli/conversations。';
 }
 
 // Path: web.serverSettings.fields.backupLocalDir
@@ -9942,6 +9971,8 @@ extension on TranslationsZh {
 			'web.serverSettings.sections.codex.desc' => 'Codex 会话根目录。',
 			'web.serverSettings.sections.gemini.title' => '存储 · Gemini',
 			'web.serverSettings.sections.gemini.desc' => 'Gemini 每项目 tmp 与 projects.json。',
+			'web.serverSettings.sections.antigravity.title' => '存储 · Antigravity',
+			'web.serverSettings.sections.antigravity.desc' => 'Antigravity (agy) 按会话存储的 SQLite 库。',
 			'web.serverSettings.loading' => '正在加载服务器设置…',
 			'web.serverSettings.loadFailed' => ({required Object message}) => '加载失败：${message}',
 			'web.serverSettings.noConfigFlag' => 'opendray 启动时未指定 -config，设置仅从环境变量加载，无法在此编辑。',
@@ -9962,10 +9993,10 @@ extension on TranslationsZh {
 			'web.serverSettings.restart.buttonTitle' => '对网关进程执行 self-exec',
 			'web.serverSettings.restart.dirtyConfirm' => '您有未保存的修改。重启将使用「上次保存」的配置，是否继续？',
 			'web.serverSettings.restart.confirm' => '重启 opendray 网关？所有打开的终端会话将自动重新连接。',
-			'web.serverSettings.restart.overlay' => '正在重启服务器…',
-			'web.serverSettings.restart.waiting' => ({required Object tick}) => '等待 /health · ${tick}s',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.restart.overlay' => '正在重启服务器…',
+			'web.serverSettings.restart.waiting' => ({required Object tick}) => '等待 /health · ${tick}s',
 			'web.serverSettings.restart.timedOutTitle' => '重启超时',
 			'web.serverSettings.restart.timedOutDesc' => 'Health 接口未恢复。请查看服务器日志。',
 			'web.serverSettings.restart.successToast' => '服务器已重启',
@@ -10053,6 +10084,8 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.geminiTmpRoot.hint' => '存放 Gemini 每项目 tmp 文件夹的根目录。默认 ~/.gemini/tmp。',
 			'web.serverSettings.fields.geminiProjectsFile.label' => 'projects.json',
 			'web.serverSettings.fields.geminiProjectsFile.hint' => 'Gemini cwd→短名映射文件的路径。默认 ~/.gemini/projects.json。',
+			'web.serverSettings.fields.antigravityConversationsRoot.label' => '会话目录',
+			'web.serverSettings.fields.antigravityConversationsRoot.hint' => '存放 agy 按会话 .db 文件的根目录。默认 ~/.gemini/antigravity-cli/conversations。',
 			'web.serverSettings.fields.backupLocalDir.label' => '本地备份目录',
 			'web.serverSettings.fields.backupLocalDir.hint' => '自动创建的 `local` 目标的默认根目录。留空 = ~/.opendray/backups。需要重启。',
 			'web.serverSettings.fields.backupExportDir.label' => '导出目录',
@@ -10474,12 +10507,12 @@ extension on TranslationsZh {
 			'web.knowledge.kb.regenerating' => '正在后台重新生成…',
 			'web.knowledge.kb.kinds.kb_infrastructure' => '基础设施',
 			'web.knowledge.kb.kinds.kb_conventions' => '开发规范',
+			_ => null,
+		} ?? switch (path) {
 			'web.knowledge.kb.kinds.kb_lessons' => '经验教训',
 			'web.knowledge.kb.kinds.kb_reusable' => '可复用功能',
 			'web.knowledge.kb.foundational' => '基础 / 规约',
 			'web.knowledge.kb.foundationalHint' => '基础设施与规范——注入每个项目的强约束规则。',
-			_ => null,
-		} ?? switch (path) {
 			'web.knowledge.kb.emergent' => '经验',
 			'web.knowledge.kb.emergentHint' => '从过往工作蒸馏的教训与可复用功能——参考性引导。',
 			'web.knowledge.kb.bindingBadge' => '强约束 · 必须遵守',
@@ -10988,12 +11021,12 @@ extension on TranslationsZh {
 			'providers.accounts.deleteLabel' => '删除',
 			'providers.accounts.deleteBody' => '移除该账号及其存储的 OAuth token。已使用此账号的会话保持运行，但重新认证会失败。',
 			'providers.accounts.deletedSnack' => ({required Object name}) => '已删除 ${name}。',
+			_ => null,
+		} ?? switch (path) {
 			'providers.accounts.importSyncedSnack' => '已同步 — 网关没有新账号。',
 			'providers.accounts.importedSnackOne' => ({required Object n}) => '已导入 ${n} 个账号。',
 			'providers.accounts.importedSnackOther' => ({required Object n}) => '已导入 ${n} 个账号。',
 			'providers.accounts.importing' => '同步中…',
-			_ => null,
-		} ?? switch (path) {
 			'providers.accounts.importLocal' => '导入本地',
 			'providers.accounts.addHint' => '添加新账号仅可在网关主机上操作。',
 			'providers.accounts.addBody' => '新目录会自动出现在这里。OAuth 流程步骤参见文档。',
@@ -11094,6 +11127,8 @@ extension on TranslationsZh {
 			'memoryWorkers.cliLabel' => 'CLI',
 			'memoryWorkers.cliClaude' => 'Claude',
 			'memoryWorkers.cliGemini' => 'Gemini',
+			'memoryWorkers.cliCodex' => 'Codex（codex exec）',
+			'memoryWorkers.cliAntigravity' => 'Antigravity（agy --print）',
 			'memoryWorkers.claudeAccountLabel' => 'Claude 账号',
 			'memoryWorkers.claudeAccountDefault' => '默认',
 			'memoryWorkers.test' => '测试',
@@ -11500,14 +11535,14 @@ extension on TranslationsZh {
 			'channels.notifications.snippetLengthCap' => '片段长度上限',
 			'channels.notifications.snippetHelper' => '在每条通知中嵌入终端最近的内容。',
 			'channels.notifications.snippetNoCap' => '无上限',
+			_ => null,
+		} ?? switch (path) {
 			'channels.notifications.snippetChars' => ({required Object n}) => '${n} 字符',
 			'channels.notifications.updatedSnack' => '通知偏好已更新。',
 			'channels.notifications.modes.onceLabel' => '每会话一次',
 			'channels.notifications.modes.onceDescription' => '空闲时触发一次，回复或结束前不再触发。',
 			'channels.notifications.modes.cooldownLabel' => '时间窗冷却',
 			'channels.notifications.modes.cooldownDescription' => '在所选时间窗内抑制重复。',
-			_ => null,
-		} ?? switch (path) {
 			'channels.notifications.modes.everyLabel' => '每次事件（嘈杂）',
 			'channels.notifications.modes.everyDescription' => '不抑制 — 仅适合低频通道。',
 			'channels.popup.enable' => '启用',
@@ -11921,6 +11956,7 @@ extension on TranslationsZh {
 			'settings.serverSettings.sections.storageClaude' => '存储 · Claude',
 			'settings.serverSettings.sections.storageCodex' => '存储 · Codex',
 			'settings.serverSettings.sections.storageGemini' => '存储 · Gemini',
+			'settings.serverSettings.sections.storageAntigravity' => '存储 · Antigravity',
 			'settings.serverSettings.sectionDescriptions.general' => '监听地址、管理员账号、令牌 TTL。',
 			'settings.serverSettings.sectionDescriptions.logging' => '详细程度、格式、磁盘日志路径。',
 			'settings.serverSettings.sectionDescriptions.sessions' => '空闲检测阈值。',
@@ -11931,6 +11967,7 @@ extension on TranslationsZh {
 			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Claude 会话记录在磁盘的存放位置。',
 			'settings.serverSettings.sectionDescriptions.storageCodex' => 'Codex 会话根目录。',
 			'settings.serverSettings.sectionDescriptions.storageGemini' => '按项目的临时目录 + projects.json 路径。',
+			'settings.serverSettings.sectionDescriptions.storageAntigravity' => 'agy 按会话存储的 SQLite 库。',
 			'settings.serverSettings.fields.listenAddress' => '监听地址',
 			'settings.serverSettings.fields.adminUser' => '管理员用户',
 			'settings.serverSettings.fields.adminUserHelper' => '当未设置密钥文件或环境变量时生效。否则参见 设置 → 账户。',
@@ -11988,6 +12025,7 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.pgRestorePath' => 'pg_restore 路径',
 			'settings.serverSettings.fields.tmpRoot' => '临时根目录',
 			'settings.serverSettings.fields.projectsJson' => 'projects.json',
+			'settings.serverSettings.fields.conversationsRoot' => '会话目录',
 			'settings.serverSettings.fields.dedupThreshold' => '去重阈值',
 			'settings.serverSettings.fields.dedupHelper' => '写入折叠阈值；0=随嵌入器，负值关闭折叠。',
 			'settings.serverSettings.fields.gatekeeperEnabled' => 'Gatekeeper',
@@ -12011,6 +12049,8 @@ extension on TranslationsZh {
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} 条待审',
 			'cortexHub.title' => 'Cortex',
 			'cortexHub.subtitle' => '经验飞轮：记忆 → 笔记 → 知识，回流到每个会话。',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.memory' => '记忆',
 			'cortexHub.memoryDesc' => '代理存取的跨会话原始事实。',
 			'cortexHub.notes' => '笔记',
@@ -12020,8 +12060,6 @@ extension on TranslationsZh {
 			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} 条待审',
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} 条待审',
 			'cortexHub.disabled' => '已禁用',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.inboxTitle' => ({required Object count}) => '待审提案（${count}）',
 			'cortexHub.inboxHint' => 'AI 对项目笔记与知识库页面提出的更新。批准即发布，拒绝即丢弃。',
 			'cortexHub.kbLabel' => '知识库',

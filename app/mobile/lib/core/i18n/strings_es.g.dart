@@ -357,6 +357,8 @@ class _TranslationsMemoryWorkersEs extends TranslationsMemoryWorkersEn {
 	@override String get cliLabel => 'CLI';
 	@override String get cliClaude => 'Claude';
 	@override String get cliGemini => 'Gemini';
+	@override String get cliCodex => 'Codex (codex exec)';
+	@override String get cliAntigravity => 'Antigravity (agy --print)';
 	@override String get claudeAccountLabel => 'Cuenta de Claude';
 	@override String get claudeAccountDefault => 'Predeterminada';
 	@override String get test => 'Probar';
@@ -4635,6 +4637,7 @@ class _TranslationsWebServerSettingsSectionsEs extends TranslationsWebServerSett
 	@override late final _TranslationsWebServerSettingsSectionsClaudeEs claude = _TranslationsWebServerSettingsSectionsClaudeEs._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsCodexEs codex = _TranslationsWebServerSettingsSectionsCodexEs._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsGeminiEs gemini = _TranslationsWebServerSettingsSectionsGeminiEs._(_root);
+	@override late final _TranslationsWebServerSettingsSectionsAntigravityEs antigravity = _TranslationsWebServerSettingsSectionsAntigravityEs._(_root);
 }
 
 // Path: web.serverSettings.restart
@@ -4718,6 +4721,7 @@ class _TranslationsWebServerSettingsFieldsEs extends TranslationsWebServerSettin
 	@override late final _TranslationsWebServerSettingsFieldsCodexSessionsRootEs codexSessionsRoot = _TranslationsWebServerSettingsFieldsCodexSessionsRootEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsGeminiTmpRootEs geminiTmpRoot = _TranslationsWebServerSettingsFieldsGeminiTmpRootEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsGeminiProjectsFileEs geminiProjectsFile = _TranslationsWebServerSettingsFieldsGeminiProjectsFileEs._(_root);
+	@override late final _TranslationsWebServerSettingsFieldsAntigravityConversationsRootEs antigravityConversationsRoot = _TranslationsWebServerSettingsFieldsAntigravityConversationsRootEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsBackupLocalDirEs backupLocalDir = _TranslationsWebServerSettingsFieldsBackupLocalDirEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsBackupExportDirEs backupExportDir = _TranslationsWebServerSettingsFieldsBackupExportDirEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsBackupPgDumpPathEs backupPgDumpPath = _TranslationsWebServerSettingsFieldsBackupPgDumpPathEs._(_root);
@@ -6273,6 +6277,7 @@ class _TranslationsSettingsServerSettingsSectionsEs extends TranslationsSettings
 	@override String get storageClaude => 'Almacenamiento · Claude';
 	@override String get storageCodex => 'Almacenamiento · Codex';
 	@override String get storageGemini => 'Almacenamiento · Gemini';
+	@override String get storageAntigravity => 'Almacenamiento · Antigravity';
 }
 
 // Path: settings.serverSettings.sectionDescriptions
@@ -6292,6 +6297,7 @@ class _TranslationsSettingsServerSettingsSectionDescriptionsEs extends Translati
 	@override String get storageClaude => 'Dónde viven los transcripts de Claude en disco.';
 	@override String get storageCodex => 'Raíz de las sessions de Codex.';
 	@override String get storageGemini => 'Rutas de tmp por proyecto + projects.json.';
+	@override String get storageAntigravity => 'Almacén SQLite por conversación de agy.';
 }
 
 // Path: settings.serverSettings.fields
@@ -6358,6 +6364,7 @@ class _TranslationsSettingsServerSettingsFieldsEs extends TranslationsSettingsSe
 	@override String get pgRestorePath => 'Ruta de pg_restore';
 	@override String get tmpRoot => 'Raíz de tmp';
 	@override String get projectsJson => 'projects.json';
+	@override String get conversationsRoot => 'Directorio de conversaciones';
 	@override String get dedupThreshold => 'Umbral de dedup';
 	@override String get dedupHelper => 'Umbral de plegado al escribir; 0 = por defecto, negativo desactiva.';
 	@override String get gatekeeperEnabled => 'Gatekeeper';
@@ -7367,6 +7374,17 @@ class _TranslationsWebServerSettingsSectionsGeminiEs extends TranslationsWebServ
 	@override String get desc => 'Carpeta tmp por proyecto de Gemini + projects.json.';
 }
 
+// Path: web.serverSettings.sections.antigravity
+class _TranslationsWebServerSettingsSectionsAntigravityEs extends TranslationsWebServerSettingsSectionsAntigravityEn {
+	_TranslationsWebServerSettingsSectionsAntigravityEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Almacenamiento · Antigravity';
+	@override String get desc => 'Almacén SQLite por conversación de Antigravity (agy).';
+}
+
 // Path: web.serverSettings.fields.listenAddress
 class _TranslationsWebServerSettingsFieldsListenAddressEs extends TranslationsWebServerSettingsFieldsListenAddressEn {
 	_TranslationsWebServerSettingsFieldsListenAddressEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -7752,6 +7770,17 @@ class _TranslationsWebServerSettingsFieldsGeminiProjectsFileEs extends Translati
 	// Translations
 	@override String get label => 'projects.json';
 	@override String get hint => 'Ruta al archivo de mapeo cwd→nombre-corto de Gemini. Por defecto ~/.gemini/projects.json.';
+}
+
+// Path: web.serverSettings.fields.antigravityConversationsRoot
+class _TranslationsWebServerSettingsFieldsAntigravityConversationsRootEs extends TranslationsWebServerSettingsFieldsAntigravityConversationsRootEn {
+	_TranslationsWebServerSettingsFieldsAntigravityConversationsRootEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Directorio de conversaciones';
+	@override String get hint => 'Raíz con los archivos .db por conversación de agy. Por defecto ~/.gemini/antigravity-cli/conversations.';
 }
 
 // Path: web.serverSettings.fields.backupLocalDir
@@ -9942,6 +9971,8 @@ extension on TranslationsEs {
 			'web.serverSettings.sections.codex.desc' => 'Raíz de sesiones de Codex.',
 			'web.serverSettings.sections.gemini.title' => 'Almacenamiento · Gemini',
 			'web.serverSettings.sections.gemini.desc' => 'Carpeta tmp por proyecto de Gemini + projects.json.',
+			'web.serverSettings.sections.antigravity.title' => 'Almacenamiento · Antigravity',
+			'web.serverSettings.sections.antigravity.desc' => 'Almacén SQLite por conversación de Antigravity (agy).',
 			'web.serverSettings.loading' => 'Cargando ajustes del servidor…',
 			'web.serverSettings.loadFailed' => ({required Object message}) => 'Error al cargar: ${message}',
 			'web.serverSettings.noConfigFlag' => 'opendray se inició sin la opción -config. Los ajustes se cargan únicamente desde variables de entorno y no pueden editarse aquí.',
@@ -9962,10 +9993,10 @@ extension on TranslationsEs {
 			'web.serverSettings.restart.buttonTitle' => 'Auto-ejecutar el proceso del gateway',
 			'web.serverSettings.restart.dirtyConfirm' => 'Tienes cambios sin guardar. El reinicio usará la ÚLTIMA configuración GUARDADA. ¿Continuar?',
 			'web.serverSettings.restart.confirm' => '¿Reiniciar el gateway de opendray? Todas las sesiones de terminal abiertas se reconectarán automáticamente.',
-			'web.serverSettings.restart.overlay' => 'Reiniciando servidor…',
-			'web.serverSettings.restart.waiting' => ({required Object tick}) => 'Esperando a /health · ${tick}s',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.restart.overlay' => 'Reiniciando servidor…',
+			'web.serverSettings.restart.waiting' => ({required Object tick}) => 'Esperando a /health · ${tick}s',
 			'web.serverSettings.restart.timedOutTitle' => 'Se agotó el tiempo del reinicio',
 			'web.serverSettings.restart.timedOutDesc' => 'El endpoint de salud nunca respondió. Revisa los logs del servidor.',
 			'web.serverSettings.restart.successToast' => 'Servidor reiniciado',
@@ -10053,6 +10084,8 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.geminiTmpRoot.hint' => 'Raíz que contiene las carpetas tmp por proyecto de Gemini. Por defecto ~/.gemini/tmp.',
 			'web.serverSettings.fields.geminiProjectsFile.label' => 'projects.json',
 			'web.serverSettings.fields.geminiProjectsFile.hint' => 'Ruta al archivo de mapeo cwd→nombre-corto de Gemini. Por defecto ~/.gemini/projects.json.',
+			'web.serverSettings.fields.antigravityConversationsRoot.label' => 'Directorio de conversaciones',
+			'web.serverSettings.fields.antigravityConversationsRoot.hint' => 'Raíz con los archivos .db por conversación de agy. Por defecto ~/.gemini/antigravity-cli/conversations.',
 			'web.serverSettings.fields.backupLocalDir.label' => 'Directorio local de copias de seguridad',
 			'web.serverSettings.fields.backupLocalDir.hint' => 'Raíz por defecto para el destino `local` creado automáticamente. Vacío = ~/.opendray/backups. Requiere reinicio.',
 			'web.serverSettings.fields.backupExportDir.label' => 'Directorio de exportación',
@@ -10474,12 +10507,12 @@ extension on TranslationsEs {
 			'web.knowledge.kb.regenerating' => 'Regenerando en segundo plano…',
 			'web.knowledge.kb.kinds.kb_infrastructure' => 'Infraestructura',
 			'web.knowledge.kb.kinds.kb_conventions' => 'Convenciones',
+			_ => null,
+		} ?? switch (path) {
 			'web.knowledge.kb.kinds.kb_lessons' => 'Lecciones',
 			'web.knowledge.kb.kinds.kb_reusable' => 'Funciones reutilizables',
 			'web.knowledge.kb.foundational' => 'Fundacional',
 			'web.knowledge.kb.foundationalHint' => 'Infraestructura y convenciones — reglas vinculantes inyectadas en cada proyecto.',
-			_ => null,
-		} ?? switch (path) {
 			'web.knowledge.kb.emergent' => 'Emergente',
 			'web.knowledge.kb.emergentHint' => 'Lecciones y funciones reutilizables destiladas del trabajo previo — orientación.',
 			'web.knowledge.kb.bindingBadge' => 'Vinculante · obligatorio',
@@ -10988,12 +11021,12 @@ extension on TranslationsEs {
 			'providers.accounts.deleteLabel' => 'Eliminar',
 			'providers.accounts.deleteBody' => 'Elimina la cuenta y su token OAuth almacenado. Las sessions que ya usan esta cuenta siguen funcionando, pero la reautenticación fallará.',
 			'providers.accounts.deletedSnack' => ({required Object name}) => '${name} eliminada.',
+			_ => null,
+		} ?? switch (path) {
 			'providers.accounts.importSyncedSnack' => 'Ya está sincronizado, el gateway no tiene cuentas nuevas.',
 			'providers.accounts.importedSnackOne' => ({required Object n}) => 'Se importó ${n} cuenta.',
 			'providers.accounts.importedSnackOther' => ({required Object n}) => 'Se importaron ${n} cuentas.',
 			'providers.accounts.importing' => 'Sincronizando…',
-			_ => null,
-		} ?? switch (path) {
 			'providers.accounts.importLocal' => 'Importar local',
 			'providers.accounts.addHint' => 'Añadir una cuenta nueva solo se puede hacer en el host del gateway.',
 			'providers.accounts.addBody' => 'El nuevo directorio aparece aquí automáticamente. Consulta la documentación para los pasos del flujo OAuth.',
@@ -11094,6 +11127,8 @@ extension on TranslationsEs {
 			'memoryWorkers.cliLabel' => 'CLI',
 			'memoryWorkers.cliClaude' => 'Claude',
 			'memoryWorkers.cliGemini' => 'Gemini',
+			'memoryWorkers.cliCodex' => 'Codex (codex exec)',
+			'memoryWorkers.cliAntigravity' => 'Antigravity (agy --print)',
 			'memoryWorkers.claudeAccountLabel' => 'Cuenta de Claude',
 			'memoryWorkers.claudeAccountDefault' => 'Predeterminada',
 			'memoryWorkers.test' => 'Probar',
@@ -11500,14 +11535,14 @@ extension on TranslationsEs {
 			'channels.notifications.snippetLengthCap' => 'Límite de longitud del fragmento',
 			'channels.notifications.snippetHelper' => 'Incrusta el final reciente del terminal en cada notificación.',
 			'channels.notifications.snippetNoCap' => 'sin límite',
+			_ => null,
+		} ?? switch (path) {
 			'channels.notifications.snippetChars' => ({required Object n}) => '${n} caracteres',
 			'channels.notifications.updatedSnack' => 'Preferencias de notificación actualizadas.',
 			'channels.notifications.modes.onceLabel' => 'Una vez por session',
 			'channels.notifications.modes.onceDescription' => 'Se dispara una vez al quedar inactiva, permanece en silencio hasta la respuesta o el fin.',
 			'channels.notifications.modes.cooldownLabel' => 'Cooldown por ventana de tiempo',
 			'channels.notifications.modes.cooldownDescription' => 'Suprime las repeticiones dentro de la ventana elegida.',
-			_ => null,
-		} ?? switch (path) {
 			'channels.notifications.modes.everyLabel' => 'Cada evento (ruidoso)',
 			'channels.notifications.modes.everyDescription' => 'Sin supresión. Solo para canales de baja frecuencia.',
 			'channels.popup.enable' => 'Activar',
@@ -11921,6 +11956,7 @@ extension on TranslationsEs {
 			'settings.serverSettings.sections.storageClaude' => 'Almacenamiento · Claude',
 			'settings.serverSettings.sections.storageCodex' => 'Almacenamiento · Codex',
 			'settings.serverSettings.sections.storageGemini' => 'Almacenamiento · Gemini',
+			'settings.serverSettings.sections.storageAntigravity' => 'Almacenamiento · Antigravity',
 			'settings.serverSettings.sectionDescriptions.general' => 'Dirección de escucha, cuenta del operador, TTL del token.',
 			'settings.serverSettings.sectionDescriptions.logging' => 'Verbosidad, formato y ruta del log en disco.',
 			'settings.serverSettings.sectionDescriptions.sessions' => 'Umbrales de detección de inactividad.',
@@ -11931,6 +11967,7 @@ extension on TranslationsEs {
 			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Dónde viven los transcripts de Claude en disco.',
 			'settings.serverSettings.sectionDescriptions.storageCodex' => 'Raíz de las sessions de Codex.',
 			'settings.serverSettings.sectionDescriptions.storageGemini' => 'Rutas de tmp por proyecto + projects.json.',
+			'settings.serverSettings.sectionDescriptions.storageAntigravity' => 'Almacén SQLite por conversación de agy.',
 			'settings.serverSettings.fields.listenAddress' => 'Dirección de escucha',
 			'settings.serverSettings.fields.adminUser' => 'Usuario admin',
 			'settings.serverSettings.fields.adminUserHelper' => 'Efectivo cuando no hay keyfile ni variable de entorno configurada. Si no, consulta Ajustes → Cuenta.',
@@ -11988,6 +12025,7 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.pgRestorePath' => 'Ruta de pg_restore',
 			'settings.serverSettings.fields.tmpRoot' => 'Raíz de tmp',
 			'settings.serverSettings.fields.projectsJson' => 'projects.json',
+			'settings.serverSettings.fields.conversationsRoot' => 'Directorio de conversaciones',
 			'settings.serverSettings.fields.dedupThreshold' => 'Umbral de dedup',
 			'settings.serverSettings.fields.dedupHelper' => 'Umbral de plegado al escribir; 0 = por defecto, negativo desactiva.',
 			'settings.serverSettings.fields.gatekeeperEnabled' => 'Gatekeeper',
@@ -12011,6 +12049,8 @@ extension on TranslationsEs {
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} pendientes',
 			'cortexHub.title' => 'Cortex',
 			'cortexHub.subtitle' => 'El volante de experiencia: Memoria → Notas → Conocimiento, realimentado en cada session.',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.memory' => 'Memoria',
 			'cortexHub.memoryDesc' => 'Hechos crudos entre sessions que los agentes guardan y recuerdan.',
 			'cortexHub.notes' => 'Notas',
@@ -12020,8 +12060,6 @@ extension on TranslationsEs {
 			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} por revisar',
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pendientes',
 			'cortexHub.disabled' => 'desactivado',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.inboxTitle' => ({required Object count}) => 'Propuestas pendientes (${count})',
 			'cortexHub.inboxHint' => 'Actualizaciones propuestas por la IA para notas y páginas KB. Aprueba para publicar, rechaza para descartar.',
 			'cortexHub.kbLabel' => 'Base de conocimiento',

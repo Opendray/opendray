@@ -19,6 +19,7 @@ const PROVIDER_ICON_MAP: Record<string, string> = {
   claude: 'claude',
   codex: 'openai',
   gemini: 'gemini',
+  antigravity: 'antigravity',
   shell: 'shell',
 }
 

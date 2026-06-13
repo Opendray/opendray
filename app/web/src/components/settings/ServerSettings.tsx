@@ -65,6 +65,7 @@ export const SERVER_SECTIONS = [
   { id: 'claude' },
   { id: 'codex' },
   { id: 'gemini' },
+  { id: 'antigravity' },
 ] as const
 
 export type ServerSectionId = (typeof SERVER_SECTIONS)[number]['id']
@@ -99,6 +100,7 @@ const RESTART_REQUIRED_SECTIONS: Record<ServerSectionId, boolean> = {
   claude: false, // history paths are read on each request, no restart needed
   codex: false,
   gemini: false,
+  antigravity: false,
 }
 
 interface ServerSettingsProps {
@@ -1295,6 +1297,33 @@ function SectionForm({
           )}
         </FormGrid>
       )
+
+    case 'antigravity':
+      return (
+        <FormGrid>
+          {F(
+            'antigravityConversationsRoot',
+            'providers.antigravity.conversations_root',
+            <PathInput
+              value={c.providers.antigravity.conversations_root}
+              onChange={(v) =>
+                setDraft({
+                  ...draft,
+                  providers: {
+                    ...c.providers,
+                    antigravity: {
+                      ...c.providers.antigravity,
+                      conversations_root: v,
+                    },
+                  },
+                })
+              }
+              placeholder="~/.gemini/antigravity-cli/conversations"
+              expectDir
+            />,
+          )}
+        </FormGrid>
+      )
   }
 }
 
@@ -1581,6 +1610,12 @@ function mergeSection(
       out.providers = {
         ...out.providers,
         gemini: src.providers.gemini,
+      }
+      break
+    case 'antigravity':
+      out.providers = {
+        ...out.providers,
+        antigravity: src.providers.antigravity,
       }
       break
   }

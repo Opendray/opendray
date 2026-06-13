@@ -1883,6 +1883,10 @@
         "gemini": {
           "title": "Storage · Gemini",
           "desc": "Gemini per-project tmp + projects.json."
+        },
+        "antigravity": {
+          "title": "Storage · Antigravity",
+          "desc": "Antigravity (agy) per-conversation SQLite store."
         }
       },
       "loading": "Loading server settings…",
@@ -2068,6 +2072,10 @@
         "geminiProjectsFile": {
           "label": "projects.json",
           "hint": "Path to Gemini's cwd→short-name mapping file. Default ~/.gemini/projects.json."
+        },
+        "antigravityConversationsRoot": {
+          "label": "Conversations directory",
+          "hint": "Root holding agy's per-conversation .db files. Default ~/.gemini/antigravity-cli/conversations."
         },
         "backupLocalDir": {
           "label": "Local backup directory",
@@ -3420,6 +3428,8 @@
     "cliLabel": "CLI",
     "cliClaude": "Claude",
     "cliGemini": "Gemini",
+    "cliCodex": "Codex (codex exec)",
+    "cliAntigravity": "Antigravity (agy --print)",
     "claudeAccountLabel": "Claude account",
     "claudeAccountDefault": "Default",
     "test": "Test",
@@ -4428,7 +4438,8 @@
         "backup": "Backup",
         "storageClaude": "Storage · Claude",
         "storageCodex": "Storage · Codex",
-        "storageGemini": "Storage · Gemini"
+        "storageGemini": "Storage · Gemini",
+        "storageAntigravity": "Storage · Antigravity"
       },
       "sectionDescriptions": {
         "general": "Listen address, operator account, token TTL.",
@@ -4440,7 +4451,8 @@
         "backup": "Encrypted DB backups + admin data exports. Passphrase lives in the keyfile (Settings → Backups).",
         "storageClaude": "Where Claude transcripts live on disk.",
         "storageCodex": "Codex sessions root.",
-        "storageGemini": "Per-project tmp + projects.json paths."
+        "storageGemini": "Per-project tmp + projects.json paths.",
+        "storageAntigravity": "agy per-conversation SQLite store."
       },
       "fields": {
         "listenAddress": "Listen address",
@@ -4500,6 +4512,7 @@
         "pgRestorePath": "pg_restore path",
         "tmpRoot": "tmp root",
         "projectsJson": "projects.json",
+        "conversationsRoot": "Conversations directory",
         "dedupThreshold": "Dedup threshold",
         "dedupHelper": "Write-time fold threshold; 0 = embedder default, negative disables folding.",
         "gatekeeperEnabled": "Gatekeeper",

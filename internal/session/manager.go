@@ -146,6 +146,13 @@ func WithGeminiHistoryConfig(cfg GeminiHistoryConfig) ManagerOption {
 	return func(m *Manager) { m.geminiHistoryCfg = cfg }
 }
 
+// WithAntigravityHistoryConfig overrides the agy conversations root used
+// by Manager.Transcript. Empty config = ~/.gemini/antigravity-cli/
+// conversations default.
+func WithAntigravityHistoryConfig(cfg AntigravityHistoryConfig) ManagerOption {
+	return func(m *Manager) { m.antigravityHistoryCfg = cfg }
+}
+
 // Manager owns the lifecycle of all live sessions in this process.
 // Sessions are persisted in postgres for visibility / audit, but the
 // authoritative state for a running session is the in-memory map here.
@@ -162,9 +169,10 @@ type Manager struct {
 	turnThreshold time.Duration
 	turnInterval  time.Duration
 
-	claudeHistoryCfg ClaudeHistoryConfig
-	codexHistoryCfg  CodexHistoryConfig
-	geminiHistoryCfg GeminiHistoryConfig
+	claudeHistoryCfg      ClaudeHistoryConfig
+	codexHistoryCfg       CodexHistoryConfig
+	geminiHistoryCfg      GeminiHistoryConfig
+	antigravityHistoryCfg AntigravityHistoryConfig
 
 	mu       sync.RWMutex
 	closed   bool

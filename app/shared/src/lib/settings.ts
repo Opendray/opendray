@@ -53,6 +53,9 @@ export interface ServerConfig {
       tmp_root: string
       projects_file: string
     }
+    antigravity: {
+      conversations_root: string
+    }
   }
   memory: {
     backend: string
@@ -165,6 +168,7 @@ export function emptyConfig(): ServerConfig {
       },
       codex: { sessions_root: '' },
       gemini: { tmp_root: '', projects_file: '' },
+      antigravity: { conversations_root: '' },
     },
     memory: {
       backend: '',

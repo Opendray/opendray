@@ -471,6 +471,23 @@ List<_Section> _buildSections() => <_Section>[
       ),
     ],
   ),
+  _Section(
+    id: 'antigravity',
+    title: t.settings.serverSettings.sections.storageAntigravity,
+    description: t.settings.serverSettings.sectionDescriptions.storageAntigravity,
+    restartRequired: false,
+    fields: [
+      _Field(
+        label: t.settings.serverSettings.fields.conversationsRoot,
+        path: 'providers.antigravity.conversations_root',
+        kind: _FieldKind.text,
+        monospace: true,
+        // session/antigravity_db.go falls back to
+        // ~/.gemini/antigravity-cli/conversations.
+        placeholder: '~/.gemini/antigravity-cli/conversations',
+      ),
+    ],
+  ),
 ];
 
 // ── Dot-path helpers ────────────────────────────────────────────

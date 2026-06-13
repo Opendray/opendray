@@ -418,6 +418,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		session.WithClaudeHistoryConfig(resolveClaudeHistoryConfig(cfg.Providers.Claude)),
 		session.WithCodexHistoryConfig(resolveCodexHistoryConfig(cfg.Providers.Codex)),
 		session.WithGeminiHistoryConfig(resolveGeminiHistoryConfig(cfg.Providers.Gemini)),
+		session.WithAntigravityHistoryConfig(resolveAntigravityHistoryConfig(cfg.Providers.Antigravity)),
 		// Lets Manager.SwitchClaudeAccount migrate the conversation
 		// transcript JSONL into the new account's projects/ tree
 		// before respawning, so --resume actually finds the
@@ -2047,6 +2048,15 @@ func resolveGeminiHistoryConfig(c config.GeminiProviderConfig) session.GeminiHis
 	}
 	if c.ProjectsFile != "" {
 		out.ProjectsFile = expandPath(c.ProjectsFile)
+	}
+	return out
+}
+
+// resolveAntigravityHistoryConfig expands ~/ in [providers.antigravity].
+func resolveAntigravityHistoryConfig(c config.AntigravityProviderConfig) session.AntigravityHistoryConfig {
+	out := session.AntigravityHistoryConfig{}
+	if c.ConversationsRoot != "" {
+		out.ConversationsRoot = expandPath(c.ConversationsRoot)
 	}
 	return out
 }
