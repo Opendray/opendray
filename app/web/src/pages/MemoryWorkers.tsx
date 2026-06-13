@@ -809,6 +809,9 @@ function WorkerCard({
                     <SelectItem value="codex">
                       {t('web.memoryWorkers.cliCodex')}
                     </SelectItem>
+                    <SelectItem value="antigravity">
+                      {t('web.memoryWorkers.cliAntigravity')}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

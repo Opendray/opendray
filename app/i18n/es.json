@@ -457,6 +457,7 @@
       "modelCustomPlaceholder": "id exacto del modelo",
       "modelBackToList": "Lista",
       "cliCodex": "Codex (codex exec)",
+      "cliAntigravity": "Antigravity (agy --print)",
       "infraGateOff": "El enrutado de {label} está guardado, pero su puerta de función está APAGADA en Server Settings — no se ejecutará nada hasta que la actives allí.",
       "infraGateOpen": "Activarla",
       "providerModel": "modelo:"

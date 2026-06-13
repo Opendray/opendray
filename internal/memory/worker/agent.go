@@ -74,7 +74,7 @@ func (w *AgentWorker) Kind() WorkerKind { return WorkerAgent }
 
 func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 	switch w.cfg.ProviderID {
-	case "claude", "gemini", "codex":
+	case "claude", "gemini", "codex", "antigravity":
 	default:
 		return Response{}, ErrAgentUnsupported
 	}
@@ -103,7 +103,7 @@ func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 		return Response{}, err
 	}
 
-	binary := w.cfg.ProviderID
+	binary := agentBinary(w.cfg.ProviderID)
 	if p, err := exec.LookPath(binary); err == nil {
 		binary = p
 	}
@@ -133,7 +133,10 @@ func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 	// JSON-schema instruction) is folded into stdin ahead of the
 	// user input.
 	input := req.UserInput
-	if w.cfg.ProviderID == "codex" {
+	// codex and antigravity (agy) have no system-prompt CLI flag, so the
+	// system block (+ JSON-schema instruction) is folded into stdin ahead
+	// of the user input.
+	if w.cfg.ProviderID == "codex" || w.cfg.ProviderID == "antigravity" {
 		sys := req.SystemPrompt
 		if req.ResponseFormatJSONSchema != "" {
 			sys = sys + "\n\nReturn a single JSON object conforming to this schema:\n```json\n" +
@@ -275,6 +278,26 @@ func (w *AgentWorker) buildCommand(req Request, sessionID, scratch string) ([]st
 			args = append(args, "--include-directories", filepath.Dir(path))
 		}
 		return args, nil, nil
+	case "antigravity":
+		// agy --print reads the prompt from stdin and prints the
+		// response to stdout (verified). No system-prompt flag — the
+		// system block is folded into stdin by Run (see above).
+		// --dangerously-skip-permissions keeps a worker non-interactive
+		// (no tool-permission prompts that would hang the pipe).
+		args := []string{"--print", "--dangerously-skip-permissions"}
+		if w.cfg.Model != "" {
+			args = append(args, "--model", w.cfg.Model)
+		}
+		return args, nil, nil
 	}
 	return nil, nil, ErrAgentUnsupported
+}
+
+// agentBinary maps a worker provider id to its executable. Identity for
+// claude/gemini/codex; antigravity's CLI is `agy`.
+func agentBinary(providerID string) string {
+	if providerID == "antigravity" {
+		return "agy"
+	}
+	return providerID
 }
