@@ -48,6 +48,18 @@ const SIMPLE: Record<string, IconData> = {
 // the same metric. Paths are simplified renderings of each brand's
 // official mark.
 const INLINE: Record<string, IconData> = {
+	// Antigravity (Google) — the real mark renders from the curated
+	// multi-colour SVG (public/icons/antigravity.svg); this entry only
+	// supplies the brand hex so the avatar disc tints correctly
+	// (hasBrandIcon/brandHex read SIMPLE/INLINE, not CURATED). The path
+	// is the simplified Google-style spark and is never drawn for
+	// curated keys.
+	antigravity: {
+		title: 'Antigravity',
+		hex: '3186FF',
+		path: 'M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z',
+	},
+
 	// OpenAI — six-fold rotational sunburst, simplified.
 	openai: {
 		title: 'OpenAI',
@@ -119,6 +131,7 @@ export interface BrandIconProps {
 const CURATED = new Set([
 	'claude',
 	'gemini',
+	'antigravity',
 	'openai',
 	'shell',
 	'slack',

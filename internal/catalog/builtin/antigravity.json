@@ -24,7 +24,7 @@
     "supportsResume": true,
     "supportsStream": true,
     "supportsImages": true,
-    "supportsMcp": false
+    "supportsMcp": true
   },
   "configSchema": [
     {

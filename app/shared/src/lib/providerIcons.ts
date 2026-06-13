@@ -9,6 +9,7 @@ const MAP: Record<string, string> = {
 	claude: 'claude',
 	codex: 'openai', // Codex CLI is OpenAI-branded
 	gemini: 'gemini',
+	antigravity: 'antigravity',
 	shell: 'shell',
 }
 

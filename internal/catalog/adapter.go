@@ -595,18 +595,21 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			}
 		}
 
-		if providerID == "gemini" {
+		// gemini + antigravity both render MCP into <cwd>/.gemini/
+		// settings.json (agy reads the same workspace file gemini does).
+		// Clean up stale entries when MCP is off this spawn so removed
+		// servers (and their credentials) don't linger.
+		if providerID == "gemini" || providerID == "antigravity" {
 			cwd := session.Cwd(prepareCtx)
 			if cwd != "" && !mcpEnabled {
-				// No MCP servers this spawn — still drop any entries a
-				// previous spawn wrote into <cwd>/.gemini/settings.json
-				// so stale credentials don't linger there.
 				if err := syncGeminiWorkspaceMCP(cwd, nil); err != nil {
-					sp.log.Warn("gemini workspace MCP cleanup failed",
-						"cwd", cwd, "err", err)
+					sp.log.Warn("workspace MCP cleanup failed",
+						"provider", providerID, "cwd", cwd, "err", err)
 				}
 			}
-			if cwd != "" && mcpEnabled && geminiFolderUntrusted(cwd) {
+			// Folder-trust disabling is a gemini-cli feature; agy's trust
+			// model is unverified, so only gemini gets the hint.
+			if providerID == "gemini" && cwd != "" && mcpEnabled && geminiFolderUntrusted(cwd) {
 				// Folder trust would silently disable everything we just
 				// rendered. Surface a one-time spawn hint in the session
 				// terminal + gateway log; we deliberately do NOT edit the
