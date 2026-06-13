@@ -181,6 +181,7 @@
         "bypassClaude": "Omitir las confirmaciones de permisos",
         "bypassCodex": "Omitir aprobaciones y sandbox (--dangerously-bypass-approvals-and-sandbox)",
         "bypassGemini": "Modo YOLO (--yolo)",
+        "bypassAntigravity": "Omitir permisos / YOLO (--dangerously-skip-permissions)",
         "bypassOnHint": "Esta session se ejecutará con autonomía elevada.",
         "bypassOffHint": "Desactivado. Las confirmaciones y los prompts se comportan con normalidad.",
         "errorPickProvider": "Elige un proveedor.",
@@ -2723,7 +2724,10 @@
           "low_successHint": "Las sesiones que cargan este skill siguen terminando en fallo — el bucle de resultados propone retirarlo",
           "dormant": "inactivo",
           "dormantHint": "Se usó alguna vez, pero lleva 45+ días sin referencias — el bucle de resultados propone retirarlo"
-        }
+        },
+        "retirementEmpty": "Sin candidatos a retiro: todas las habilidades aportan.",
+        "retirementHint": "Habilidades que el bucle de resultados propone descartar; desactiva las que consideres.",
+        "retirementTitle": "Candidatos a retiro"
       },
       "graph": {
         "tab": "Grafo",
@@ -3230,6 +3234,7 @@
         "labelClaude": "Omitir permisos",
         "labelCodex": "Omitir aprobaciones y sandbox",
         "labelGemini": "Modo YOLO",
+        "labelAntigravity": "Omitir permisos / YOLO",
         "subtitleOn": "Esta session se ejecutará con autonomía elevada.",
         "subtitleOff": "Desactivado. Las confirmaciones y los prompts se comportan de forma normal."
       },

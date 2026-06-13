@@ -181,6 +181,7 @@
         "bypassClaude": "Bypass permission prompts",
         "bypassCodex": "Bypass approvals & sandbox (--dangerously-bypass-approvals-and-sandbox)",
         "bypassGemini": "YOLO mode (--yolo)",
+        "bypassAntigravity": "Bypass permissions / YOLO (--dangerously-skip-permissions)",
         "bypassOnHint": "This session will run with elevated autonomy.",
         "bypassOffHint": "Off — confirmations and prompts behave normally.",
         "errorPickProvider": "Pick a provider.",
@@ -2723,7 +2724,10 @@
           "low_successHint": "Sessions that load this skill keep ending in failure — the outcome loop proposes retirement",
           "dormant": "dormant",
           "dormantHint": "Once used, but not referenced for 45+ days — the outcome loop proposes retirement"
-        }
+        },
+        "retirementEmpty": "No retirement candidates — all skills are pulling their weight.",
+        "retirementHint": "Skills the outcome loop proposes dropping — disable the ones you agree with.",
+        "retirementTitle": "Retirement candidates"
       },
       "graph": {
         "tab": "Graph",
@@ -3230,6 +3234,7 @@
         "labelClaude": "Bypass permissions",
         "labelCodex": "Bypass approvals & sandbox",
         "labelGemini": "YOLO mode",
+        "labelAntigravity": "Bypass permissions / YOLO",
         "subtitleOn": "This session will run with elevated autonomy.",
         "subtitleOff": "Off — confirmations and prompts behave normally."
       },

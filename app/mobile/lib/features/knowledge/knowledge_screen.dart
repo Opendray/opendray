@@ -893,6 +893,8 @@ class _DistillView extends ConsumerStatefulWidget {
 class _DistillViewState extends ConsumerState<_DistillView> {
   AsyncValue<List<KnowledgeNode>> _playbooks = const AsyncValue.loading();
   AsyncValue<List<KnowledgeNode>> _skills = const AsyncValue.loading();
+  AsyncValue<List<RetirementCandidate>> _retirement =
+      const AsyncValue.loading();
   bool _busy = false;
 
   @override
@@ -918,6 +920,27 @@ class _DistillViewState extends ConsumerState<_DistillView> {
       if (mounted) setState(() => _skills = AsyncValue.data(sk));
     } on Object catch (e, st) {
       if (mounted) setState(() => _skills = AsyncValue.error(e, st));
+    }
+    try {
+      final rc = await api.retirementCandidates();
+      if (mounted) setState(() => _retirement = AsyncValue.data(rc));
+    } on Object catch (e, st) {
+      if (mounted) setState(() => _retirement = AsyncValue.error(e, st));
+    }
+  }
+
+  Future<void> _disableCandidate(String id) async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(knowledgeApiProvider).setEnabled(id, enabled: false);
+      _snack(t.web.knowledge.distill.disabledToast);
+    } on ApiException catch (_) {
+      _snack(t.web.knowledge.actionFailed);
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+        await _load();
+      }
     }
   }
 
@@ -1067,6 +1090,32 @@ class _DistillViewState extends ConsumerState<_DistillView> {
                           onPreview: () => _preview(n),
                           onToggle: () => _toggle(n),
                           onRetire: () => _remove(n.id),
+                        ),
+                    ],
+                  ),
+          ),
+          const SizedBox(height: 16),
+          _SectionHeader(
+            title: t.web.knowledge.distill.retirementTitle,
+            hint: t.web.knowledge.distill.retirementHint,
+            count: _retirement.valueOrNull?.length,
+          ),
+          _retirement.when(
+            loading: () => const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator())),
+            error: (e, _) => Padding(
+                padding: const EdgeInsets.all(8), child: Text(e.toString())),
+            data: (rows) => rows.isEmpty
+                ? _empty(t.web.knowledge.distill.retirementEmpty)
+                : Column(
+                    children: [
+                      for (final c in rows)
+                        _RetirementCard(
+                          candidate: c,
+                          busy: _busy,
+                          onPreview: () => _preview(c.node),
+                          onDisable: () => _disableCandidate(c.node.id),
                         ),
                     ],
                   ),
@@ -1261,6 +1310,89 @@ class _SkillCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+String _retireReasonLabel(String reason) => switch (reason) {
+      'never_used' => t.web.knowledge.distill.retirement.never_used,
+      'low_success' => t.web.knowledge.distill.retirement.low_success,
+      'dormant' => t.web.knowledge.distill.retirement.dormant,
+      _ => reason,
+    };
+
+String _retireReasonHint(String reason) => switch (reason) {
+      'never_used' => t.web.knowledge.distill.retirement.never_usedHint,
+      'low_success' => t.web.knowledge.distill.retirement.low_successHint,
+      'dormant' => t.web.knowledge.distill.retirement.dormantHint,
+      _ => '',
+    };
+
+// _RetirementCard surfaces a skill the outcome loop flags for retirement:
+// the WHY (reason badge + hint) plus a one-tap disable. The operator can
+// also preview the body before deciding.
+class _RetirementCard extends StatelessWidget {
+  const _RetirementCard({
+    required this.candidate,
+    required this.busy,
+    required this.onPreview,
+    required this.onDisable,
+  });
+  final RetirementCandidate candidate;
+  final bool busy;
+  final VoidCallback onPreview;
+  final VoidCallback onDisable;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final node = candidate.node;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: onPreview,
+                    child: Text(node.title,
+                        style: Theme.of(context).textTheme.titleSmall),
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    _retireReasonLabel(candidate.reason),
+                    style: const TextStyle(fontSize: 10, color: Colors.amber),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _retireReasonHint(candidate.reason),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: busy ? null : onDisable,
+                style: TextButton.styleFrom(foregroundColor: scheme.error),
+                child: Text(t.web.knowledge.distill.retire),
+              ),
+            ),
+          ],
         ),
       ),
     );

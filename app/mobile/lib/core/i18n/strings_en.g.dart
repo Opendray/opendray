@@ -5982,6 +5982,9 @@ class TranslationsWebSessionsSpawnEn {
 	/// en: 'YOLO mode (--yolo)'
 	String get bypassGemini => 'YOLO mode (--yolo)';
 
+	/// en: 'Bypass permissions / YOLO (--dangerously-skip-permissions)'
+	String get bypassAntigravity => 'Bypass permissions / YOLO (--dangerously-skip-permissions)';
+
 	/// en: 'This session will run with elevated autonomy.'
 	String get bypassOnHint => 'This session will run with elevated autonomy.';
 
@@ -10563,6 +10566,15 @@ class TranslationsWebKnowledgeDistillEn {
 	String outcomes({required Object ok, required Object failed}) => '${ok} ok / ${failed} failed after loading';
 
 	late final TranslationsWebKnowledgeDistillRetirementEn retirement = TranslationsWebKnowledgeDistillRetirementEn.internal(_root);
+
+	/// en: 'No retirement candidates — all skills are pulling their weight.'
+	String get retirementEmpty => 'No retirement candidates — all skills are pulling their weight.';
+
+	/// en: 'Skills the outcome loop proposes dropping — disable the ones you agree with.'
+	String get retirementHint => 'Skills the outcome loop proposes dropping — disable the ones you agree with.';
+
+	/// en: 'Retirement candidates'
+	String get retirementTitle => 'Retirement candidates';
 }
 
 // Path: web.knowledge.graph
@@ -11551,6 +11563,9 @@ class TranslationsSessionsSpawnSheetBypassEn {
 
 	/// en: 'YOLO mode'
 	String get labelGemini => 'YOLO mode';
+
+	/// en: 'Bypass permissions / YOLO'
+	String get labelAntigravity => 'Bypass permissions / YOLO';
 
 	/// en: 'This session will run with elevated autonomy.'
 	String get subtitleOn => 'This session will run with elevated autonomy.';
@@ -16148,6 +16163,7 @@ extension on Translations {
 			'web.sessions.spawn.bypassClaude' => 'Bypass permission prompts',
 			'web.sessions.spawn.bypassCodex' => 'Bypass approvals & sandbox (--dangerously-bypass-approvals-and-sandbox)',
 			'web.sessions.spawn.bypassGemini' => 'YOLO mode (--yolo)',
+			'web.sessions.spawn.bypassAntigravity' => 'Bypass permissions / YOLO (--dangerously-skip-permissions)',
 			'web.sessions.spawn.bypassOnHint' => 'This session will run with elevated autonomy.',
 			'web.sessions.spawn.bypassOffHint' => 'Off — confirmations and prompts behave normally.',
 			'web.sessions.spawn.errorPickProvider' => 'Pick a provider.',
@@ -16504,9 +16520,9 @@ extension on Translations {
 			'web.project.lifecycle.tooltip.badge' => 'Project lifecycle. Frozen (paused/archived) projects are excluded from new-session injection and AI distillation.',
 			'web.project.lifecycle.tooltip.activate' => 'Re-activate: inject into new sessions and resume AI maintenance.',
 			'web.project.lifecycle.tooltip.pause' => 'Pause: freeze this project — skip session injection + AI distillation, but keep it in the active list.',
-			'web.project.lifecycle.tooltip.archive' => 'Archive: shelve this project — frozen and hidden from routine views.',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.lifecycle.tooltip.archive' => 'Archive: shelve this project — frozen and hidden from routine views.',
 			'web.project.docMeta.maintainer.coauthored' => 'You maintain · AI proposes',
 			'web.project.docMeta.maintainer.auto' => 'Auto-generated · read-only',
 			'web.project.docMeta.maintainer.human' => 'Human-authored',
@@ -17018,9 +17034,9 @@ extension on Translations {
 			'web.integrations.loading' => 'Loading…',
 			'web.integrations.tabs.registered' => 'Registered',
 			'web.integrations.tabs.console' => 'Reverse proxy',
-			'web.integrations.empty.title' => 'No integrations yet',
 			_ => null,
 		} ?? switch (path) {
+			'web.integrations.empty.title' => 'No integrations yet',
 			'web.integrations.empty.description' => 'Register an external app to give it a scoped API key. Its code stays out of this repo.',
 			'web.integrations.empty.register' => 'Register integration',
 			'web.integrations.groupSystem' => 'System (managed by opendray)',
@@ -17532,9 +17548,9 @@ extension on Translations {
 			'web.serverSettings.restart.button' => 'Restart server',
 			'web.serverSettings.restart.buttonTitle' => 'Self-exec the gateway process',
 			'web.serverSettings.restart.dirtyConfirm' => 'You have unsaved changes. Restart will use the LAST SAVED config. Continue?',
-			'web.serverSettings.restart.confirm' => 'Restart the opendray gateway? All open terminal sessions will reconnect automatically.',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.restart.confirm' => 'Restart the opendray gateway? All open terminal sessions will reconnect automatically.',
 			'web.serverSettings.restart.overlay' => 'Restarting server…',
 			'web.serverSettings.restart.waiting' => ({required Object tick}) => 'Waiting for /health · ${tick}s',
 			'web.serverSettings.restart.timedOutTitle' => 'Restart timed out',
@@ -18046,9 +18062,9 @@ extension on Translations {
 			'web.knowledge.kb.unlocked' => 'Unlocked — AI will manage this page again',
 			'web.knowledge.kb.regenerating' => 'Regenerating in the background…',
 			'web.knowledge.kb.kinds.kb_infrastructure' => 'Infrastructure',
-			'web.knowledge.kb.kinds.kb_conventions' => 'Conventions',
 			_ => null,
 		} ?? switch (path) {
+			'web.knowledge.kb.kinds.kb_conventions' => 'Conventions',
 			'web.knowledge.kb.kinds.kb_lessons' => 'Lessons',
 			'web.knowledge.kb.kinds.kb_reusable' => 'Reusable features',
 			'web.knowledge.kb.foundational' => 'Foundational',
@@ -18123,6 +18139,9 @@ extension on Translations {
 			'web.knowledge.distill.retirement.low_successHint' => 'Sessions that load this skill keep ending in failure — the outcome loop proposes retirement',
 			'web.knowledge.distill.retirement.dormant' => 'dormant',
 			'web.knowledge.distill.retirement.dormantHint' => 'Once used, but not referenced for 45+ days — the outcome loop proposes retirement',
+			'web.knowledge.distill.retirementEmpty' => 'No retirement candidates — all skills are pulling their weight.',
+			'web.knowledge.distill.retirementHint' => 'Skills the outcome loop proposes dropping — disable the ones you agree with.',
+			'web.knowledge.distill.retirementTitle' => 'Retirement candidates',
 			'web.knowledge.graph.tab' => 'Graph',
 			'web.knowledge.graph.intro' => 'The relationship map of everything the AI has learned: which projects share tech, which skills and pitfalls attach to which entities. Check a node’s blast radius here BEFORE touching shared infrastructure.',
 			'web.knowledge.graph.empty' => 'No knowledge yet — the graph builds itself as sessions run: the anchor sweep lifts entities out of project work, and distillation adds playbooks and skills. Come back after a few working sessions.',
@@ -18489,6 +18508,7 @@ extension on Translations {
 			'sessions.spawnSheet.bypass.labelClaude' => 'Bypass permissions',
 			'sessions.spawnSheet.bypass.labelCodex' => 'Bypass approvals & sandbox',
 			'sessions.spawnSheet.bypass.labelGemini' => 'YOLO mode',
+			'sessions.spawnSheet.bypass.labelAntigravity' => 'Bypass permissions / YOLO',
 			'sessions.spawnSheet.bypass.subtitleOn' => 'This session will run with elevated autonomy.',
 			'sessions.spawnSheet.bypass.subtitleOff' => 'Off — confirmations and prompts behave normally.',
 			'sessions.spawnSheet.noProviders.title' => 'No providers configured',
@@ -18556,13 +18576,13 @@ extension on Translations {
 			'mcp.popup.viewRawSubtitle' => 'Read-only inspector for the server JSON',
 			'mcp.popup.deleteLabel' => 'Delete',
 			'mcp.kv.transport' => 'Transport',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.kv.description' => 'Description',
 			'mcp.kv.command' => 'Command',
 			'mcp.kv.args' => 'Args',
 			'mcp.kv.headers' => 'Headers',
 			'mcp.deleteServerBody' => ({required Object id}) => 'Removes the vault directory for ${id}. Sessions that reference this server stop being able to spawn it.',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.deleteServerSnack' => ({required Object id}) => 'Deleted ${id}.',
 			'mcp.serversCount' => ({required Object count}) => 'Servers (${count})',
 			'mcp.secretsCount' => ({required Object count}) => 'Secrets (${count})',
@@ -19070,13 +19090,13 @@ extension on Translations {
 			'githosts.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'githosts.errorPrefix.toggle' => 'Toggle failed',
 			'githosts.errorPrefix.delete' => 'Delete failed',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.form.kindLabel' => 'Kind',
 			'githosts.form.hostLabel' => 'Host',
 			'githosts.form.nameLabel' => 'Name',
 			'githosts.form.nameHint' => 'work-github, personal-gitlab, …',
 			'githosts.form.kinds.github' => 'GitHub',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.form.kinds.gitlab' => 'GitLab',
 			'githosts.form.kinds.bitbucket' => 'Bitbucket',
 			'githosts.form.kinds.gitea' => 'Gitea',
@@ -19584,13 +19604,13 @@ extension on Translations {
 			'settings.serverSettings.fields.gitRoot' => 'Git root',
 			'settings.serverSettings.fields.personalPrefix' => 'Personal prefix',
 			'settings.serverSettings.fields.projectsPrefix' => 'Projects prefix',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.registryRoot' => 'Registry root',
 			'settings.serverSettings.fields.secretsFile' => 'Secrets file',
 			'settings.serverSettings.fields.backend' => 'Backend',
 			'settings.serverSettings.fields.store' => 'Store',
 			'settings.serverSettings.fields.defaultTopK' => 'Default top-k',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.similarityThreshold' => 'Similarity threshold',
 			'settings.serverSettings.fields.defaultScope' => 'Default scope',
 			'settings.serverSettings.fields.preserveHelper' => 'Blank to preserve current.',

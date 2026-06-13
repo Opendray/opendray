@@ -3044,6 +3044,7 @@ class _TranslationsWebSessionsSpawnZh extends TranslationsWebSessionsSpawnEn {
 	@override String get bypassClaude => '跳过权限提示';
 	@override String get bypassCodex => '跳过所有批准与沙盒 (--dangerously-bypass-approvals-and-sandbox)';
 	@override String get bypassGemini => 'YOLO 模式 (--yolo)';
+	@override String get bypassAntigravity => '跳过权限 / YOLO (--dangerously-skip-permissions)';
 	@override String get bypassOnHint => '本次会话将以更高的自主权运行。';
 	@override String get bypassOffHint => '关闭 — 确认与提示按正常流程处理。';
 	@override String get errorPickProvider => '请选择一个 Provider。';
@@ -5406,6 +5407,9 @@ class _TranslationsWebKnowledgeDistillZh extends TranslationsWebKnowledgeDistill
 	@override String get scoreHint => '按「复现次数 × 手动耗时」排序——最省操作员时间的优先蒸馏';
 	@override String outcomes({required Object ok, required Object failed}) => '加载后 ${ok} 次成功 / ${failed} 次失败';
 	@override late final _TranslationsWebKnowledgeDistillRetirementZh retirement = _TranslationsWebKnowledgeDistillRetirementZh._(_root);
+	@override String get retirementEmpty => '暂无退役候选——所有技能都在发挥作用。';
+	@override String get retirementHint => '结果回路建议淘汰的技能——同意的可禁用。';
+	@override String get retirementTitle => '退役候选';
 }
 
 // Path: web.knowledge.graph
@@ -5973,6 +5977,7 @@ class _TranslationsSessionsSpawnSheetBypassZh extends TranslationsSessionsSpawnS
 	@override String get labelClaude => '绕过权限';
 	@override String get labelCodex => '跳过批准与沙盒';
 	@override String get labelGemini => 'YOLO 模式';
+	@override String get labelAntigravity => '跳过权限 / YOLO';
 	@override String get subtitleOn => '此会话将以提升的自主权运行。';
 	@override String get subtitleOff => '关闭 — 确认和提示按正常方式处理。';
 }
@@ -8722,6 +8727,7 @@ extension on TranslationsZh {
 			'web.sessions.spawn.bypassClaude' => '跳过权限提示',
 			'web.sessions.spawn.bypassCodex' => '跳过所有批准与沙盒 (--dangerously-bypass-approvals-and-sandbox)',
 			'web.sessions.spawn.bypassGemini' => 'YOLO 模式 (--yolo)',
+			'web.sessions.spawn.bypassAntigravity' => '跳过权限 / YOLO (--dangerously-skip-permissions)',
 			'web.sessions.spawn.bypassOnHint' => '本次会话将以更高的自主权运行。',
 			'web.sessions.spawn.bypassOffHint' => '关闭 — 确认与提示按正常流程处理。',
 			'web.sessions.spawn.errorPickProvider' => '请选择一个 Provider。',
@@ -9078,9 +9084,9 @@ extension on TranslationsZh {
 			'web.project.lifecycle.tooltip.badge' => '项目生命周期。冻结(暂停/归档)的项目不会被注入新会话,也不参与 AI 蒸馏。',
 			'web.project.lifecycle.tooltip.activate' => '重新激活:注入新会话并恢复 AI 维护。',
 			'web.project.lifecycle.tooltip.pause' => '暂停:冻结此项目——跳过会话注入与 AI 蒸馏,但仍留在活跃列表。',
-			'web.project.lifecycle.tooltip.archive' => '归档:封存此项目——冻结并从常规视图隐藏。',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.lifecycle.tooltip.archive' => '归档:封存此项目——冻结并从常规视图隐藏。',
 			'web.project.docMeta.maintainer.coauthored' => '你维护 · AI 提议',
 			'web.project.docMeta.maintainer.auto' => '自动生成 · 只读',
 			'web.project.docMeta.maintainer.human' => '人工撰写',
@@ -9592,9 +9598,9 @@ extension on TranslationsZh {
 			'web.integrations.loading' => '加载中…',
 			'web.integrations.tabs.registered' => '已注册',
 			'web.integrations.tabs.console' => '反向代理',
-			'web.integrations.empty.title' => '暂无集成',
 			_ => null,
 		} ?? switch (path) {
+			'web.integrations.empty.title' => '暂无集成',
 			'web.integrations.empty.description' => '注册一个外部应用，给它一个受限的 API key。它的代码不需要进入本仓库。',
 			'web.integrations.empty.register' => '注册集成',
 			'web.integrations.groupSystem' => '系统（由 opendray 管理）',
@@ -10106,9 +10112,9 @@ extension on TranslationsZh {
 			'web.serverSettings.restart.button' => '重启服务器',
 			'web.serverSettings.restart.buttonTitle' => '对网关进程执行 self-exec',
 			'web.serverSettings.restart.dirtyConfirm' => '您有未保存的修改。重启将使用「上次保存」的配置，是否继续？',
-			'web.serverSettings.restart.confirm' => '重启 opendray 网关？所有打开的终端会话将自动重新连接。',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.restart.confirm' => '重启 opendray 网关？所有打开的终端会话将自动重新连接。',
 			'web.serverSettings.restart.overlay' => '正在重启服务器…',
 			'web.serverSettings.restart.waiting' => ({required Object tick}) => '等待 /health · ${tick}s',
 			'web.serverSettings.restart.timedOutTitle' => '重启超时',
@@ -10620,9 +10626,9 @@ extension on TranslationsZh {
 			'web.knowledge.kb.unlocked' => '已解锁——AI 将重新维护此页',
 			'web.knowledge.kb.regenerating' => '正在后台重新生成…',
 			'web.knowledge.kb.kinds.kb_infrastructure' => '基础设施',
-			'web.knowledge.kb.kinds.kb_conventions' => '开发规范',
 			_ => null,
 		} ?? switch (path) {
+			'web.knowledge.kb.kinds.kb_conventions' => '开发规范',
 			'web.knowledge.kb.kinds.kb_lessons' => '经验教训',
 			'web.knowledge.kb.kinds.kb_reusable' => '可复用功能',
 			'web.knowledge.kb.foundational' => '基础 / 规约',
@@ -10697,6 +10703,9 @@ extension on TranslationsZh {
 			'web.knowledge.distill.retirement.low_successHint' => '加载此技能的会话持续以失败告终——结果回路建议退役',
 			'web.knowledge.distill.retirement.dormant' => '休眠',
 			'web.knowledge.distill.retirement.dormantHint' => '曾被使用，但已 45+ 天无引用——结果回路建议退役',
+			'web.knowledge.distill.retirementEmpty' => '暂无退役候选——所有技能都在发挥作用。',
+			'web.knowledge.distill.retirementHint' => '结果回路建议淘汰的技能——同意的可禁用。',
+			'web.knowledge.distill.retirementTitle' => '退役候选',
 			'web.knowledge.graph.tab' => '图谱',
 			'web.knowledge.graph.intro' => 'AI 所学一切的关系图谱：哪些项目共用同一技术、哪些技能与坑绑定在哪些实体上。动共享基础设施之前，先在这里确认节点的爆炸半径。',
 			'web.knowledge.graph.empty' => '还没有知识——图谱会随着会话运行自动生长：锚定扫描从项目工作中提取实体，蒸馏再沉淀出手册与技能。跑几个工作会话后再来看看。',
@@ -11063,6 +11072,7 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.bypass.labelClaude' => '绕过权限',
 			'sessions.spawnSheet.bypass.labelCodex' => '跳过批准与沙盒',
 			'sessions.spawnSheet.bypass.labelGemini' => 'YOLO 模式',
+			'sessions.spawnSheet.bypass.labelAntigravity' => '跳过权限 / YOLO',
 			'sessions.spawnSheet.bypass.subtitleOn' => '此会话将以提升的自主权运行。',
 			'sessions.spawnSheet.bypass.subtitleOff' => '关闭 — 确认和提示按正常方式处理。',
 			'sessions.spawnSheet.noProviders.title' => '未配置任何提供商',
@@ -11130,13 +11140,13 @@ extension on TranslationsZh {
 			'mcp.popup.viewRawSubtitle' => '服务器 JSON 的只读查看器',
 			'mcp.popup.deleteLabel' => '删除',
 			'mcp.kv.transport' => '传输',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.kv.description' => '描述',
 			'mcp.kv.command' => '命令',
 			'mcp.kv.args' => '参数',
 			'mcp.kv.headers' => 'Headers',
 			'mcp.deleteServerBody' => ({required Object id}) => '移除 ${id} 的密钥库目录。引用此服务器的会话将无法启动。',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.deleteServerSnack' => ({required Object id}) => '已删除 ${id}。',
 			'mcp.serversCount' => ({required Object count}) => '服务器（${count}）',
 			'mcp.secretsCount' => ({required Object count}) => '密钥（${count}）',
@@ -11644,13 +11654,13 @@ extension on TranslationsZh {
 			'githosts.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'githosts.errorPrefix.toggle' => '切换失败',
 			'githosts.errorPrefix.delete' => '删除失败',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.form.kindLabel' => '类型',
 			'githosts.form.hostLabel' => '主机',
 			'githosts.form.nameLabel' => '名称',
 			'githosts.form.nameHint' => 'work-github、personal-gitlab、…',
 			'githosts.form.kinds.github' => 'GitHub',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.form.kinds.gitlab' => 'GitLab',
 			'githosts.form.kinds.bitbucket' => 'Bitbucket',
 			'githosts.form.kinds.gitea' => 'Gitea',
@@ -12158,13 +12168,13 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.gitRoot' => 'Git 根',
 			'settings.serverSettings.fields.personalPrefix' => '个人前缀',
 			'settings.serverSettings.fields.projectsPrefix' => '项目前缀',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.registryRoot' => '注册表根',
 			'settings.serverSettings.fields.secretsFile' => '密钥文件',
 			'settings.serverSettings.fields.backend' => '后端',
 			'settings.serverSettings.fields.store' => '存储',
 			'settings.serverSettings.fields.defaultTopK' => '默认 top-k',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.similarityThreshold' => '相似度阈值',
 			'settings.serverSettings.fields.defaultScope' => '默认范围',
 			'settings.serverSettings.fields.preserveHelper' => '留空 = 保留当前值。',

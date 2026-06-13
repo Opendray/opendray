@@ -44,6 +44,7 @@ const BYPASS_FLAGS: Record<string, string[]> = {
   claude: ['--dangerously-skip-permissions'],
   codex: ['--dangerously-bypass-approvals-and-sandbox'],
   gemini: ['--yolo'],
+  antigravity: ['--dangerously-skip-permissions'],
 }
 
 // i18n key suffix per provider for the bypass toggle label. Different
@@ -53,6 +54,7 @@ const BYPASS_LABEL_KEY: Record<string, string> = {
   claude: 'web.sessions.spawn.bypassClaude',
   codex: 'web.sessions.spawn.bypassCodex',
   gemini: 'web.sessions.spawn.bypassGemini',
+  antigravity: 'web.sessions.spawn.bypassAntigravity',
 }
 
 export function SpawnDialog({

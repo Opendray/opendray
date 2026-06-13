@@ -225,6 +225,43 @@ class KnowledgeApi {
       throw toApiException(e);
     }
   }
+
+  // Skills the outcome loop proposes to retire: never referenced after
+  // 14+ days, repeatedly loaded into sessions that then fail, or long
+  // dormant. The operator disables (or deletes) the ones they agree with.
+  Future<List<RetirementCandidate>> retirementCandidates() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/knowledge/skills/retirement',
+      );
+      final raw = res.data?['candidates'];
+      return raw is List
+          ? raw
+              .whereType<Map<String, dynamic>>()
+              .map(RetirementCandidate.fromJson)
+              .toList()
+          : <RetirementCandidate>[];
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+}
+
+// RetirementCandidate pairs a skill node with WHY the outcome loop
+// flagged it: 'never_used' | 'low_success' | 'dormant'.
+class RetirementCandidate {
+  RetirementCandidate({required this.node, required this.reason});
+
+  factory RetirementCandidate.fromJson(Map<String, dynamic> j) =>
+      RetirementCandidate(
+        node: KnowledgeNode.fromJson(
+          (j['node'] as Map?)?.cast<String, dynamic>() ?? const {},
+        ),
+        reason: j['reason'] as String? ?? '',
+      );
+
+  final KnowledgeNode node;
+  final String reason;
 }
 
 final knowledgeApiProvider = Provider<KnowledgeApi>((ref) {

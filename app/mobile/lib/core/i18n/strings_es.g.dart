@@ -3044,6 +3044,7 @@ class _TranslationsWebSessionsSpawnEs extends TranslationsWebSessionsSpawnEn {
 	@override String get bypassClaude => 'Omitir las confirmaciones de permisos';
 	@override String get bypassCodex => 'Omitir aprobaciones y sandbox (--dangerously-bypass-approvals-and-sandbox)';
 	@override String get bypassGemini => 'Modo YOLO (--yolo)';
+	@override String get bypassAntigravity => 'Omitir permisos / YOLO (--dangerously-skip-permissions)';
 	@override String get bypassOnHint => 'Esta session se ejecutará con autonomía elevada.';
 	@override String get bypassOffHint => 'Desactivado. Las confirmaciones y los prompts se comportan con normalidad.';
 	@override String get errorPickProvider => 'Elige un proveedor.';
@@ -5406,6 +5407,9 @@ class _TranslationsWebKnowledgeDistillEs extends TranslationsWebKnowledgeDistill
 	@override String get scoreHint => 'Ordenado por recurrencia × coste de tiempo manual — lo que más tiempo ahorra se destila primero';
 	@override String outcomes({required Object ok, required Object failed}) => '${ok} ok / ${failed} fallidas tras cargarlo';
 	@override late final _TranslationsWebKnowledgeDistillRetirementEs retirement = _TranslationsWebKnowledgeDistillRetirementEs._(_root);
+	@override String get retirementEmpty => 'Sin candidatos a retiro: todas las habilidades aportan.';
+	@override String get retirementHint => 'Habilidades que el bucle de resultados propone descartar; desactiva las que consideres.';
+	@override String get retirementTitle => 'Candidatos a retiro';
 }
 
 // Path: web.knowledge.graph
@@ -5973,6 +5977,7 @@ class _TranslationsSessionsSpawnSheetBypassEs extends TranslationsSessionsSpawnS
 	@override String get labelClaude => 'Omitir permisos';
 	@override String get labelCodex => 'Omitir aprobaciones y sandbox';
 	@override String get labelGemini => 'Modo YOLO';
+	@override String get labelAntigravity => 'Omitir permisos / YOLO';
 	@override String get subtitleOn => 'Esta session se ejecutará con autonomía elevada.';
 	@override String get subtitleOff => 'Desactivado. Las confirmaciones y los prompts se comportan de forma normal.';
 }
@@ -8722,6 +8727,7 @@ extension on TranslationsEs {
 			'web.sessions.spawn.bypassClaude' => 'Omitir las confirmaciones de permisos',
 			'web.sessions.spawn.bypassCodex' => 'Omitir aprobaciones y sandbox (--dangerously-bypass-approvals-and-sandbox)',
 			'web.sessions.spawn.bypassGemini' => 'Modo YOLO (--yolo)',
+			'web.sessions.spawn.bypassAntigravity' => 'Omitir permisos / YOLO (--dangerously-skip-permissions)',
 			'web.sessions.spawn.bypassOnHint' => 'Esta session se ejecutará con autonomía elevada.',
 			'web.sessions.spawn.bypassOffHint' => 'Desactivado. Las confirmaciones y los prompts se comportan con normalidad.',
 			'web.sessions.spawn.errorPickProvider' => 'Elige un proveedor.',
@@ -9078,9 +9084,9 @@ extension on TranslationsEs {
 			'web.project.lifecycle.tooltip.badge' => 'Ciclo de vida del proyecto. Los proyectos congelados (pausados/archivados) se excluyen de la inyección en nuevas sesiones y de la destilación por IA.',
 			'web.project.lifecycle.tooltip.activate' => 'Reactivar: inyectar en nuevas sesiones y reanudar el mantenimiento por IA.',
 			'web.project.lifecycle.tooltip.pause' => 'Pausar: congelar este proyecto — omitir inyección y destilación, pero mantenerlo en la lista activa.',
-			'web.project.lifecycle.tooltip.archive' => 'Archivar: archivar este proyecto — congelado y oculto de las vistas habituales.',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.lifecycle.tooltip.archive' => 'Archivar: archivar este proyecto — congelado y oculto de las vistas habituales.',
 			'web.project.docMeta.maintainer.coauthored' => 'Tú mantienes · IA propone',
 			'web.project.docMeta.maintainer.auto' => 'Autogenerado · solo lectura',
 			'web.project.docMeta.maintainer.human' => 'Autoría humana',
@@ -9592,9 +9598,9 @@ extension on TranslationsEs {
 			'web.integrations.loading' => 'Cargando…',
 			'web.integrations.tabs.registered' => 'Registradas',
 			'web.integrations.tabs.console' => 'Reverse proxy',
-			'web.integrations.empty.title' => 'Aún no hay integraciones',
 			_ => null,
 		} ?? switch (path) {
+			'web.integrations.empty.title' => 'Aún no hay integraciones',
 			'web.integrations.empty.description' => 'Registra una aplicación externa para darle una API key con alcance limitado. Su código se queda fuera de este repositorio.',
 			'web.integrations.empty.register' => 'Registrar integración',
 			'web.integrations.groupSystem' => 'Sistema (gestionado por opendray)',
@@ -10106,9 +10112,9 @@ extension on TranslationsEs {
 			'web.serverSettings.restart.button' => 'Reiniciar servidor',
 			'web.serverSettings.restart.buttonTitle' => 'Auto-ejecutar el proceso del gateway',
 			'web.serverSettings.restart.dirtyConfirm' => 'Tienes cambios sin guardar. El reinicio usará la ÚLTIMA configuración GUARDADA. ¿Continuar?',
-			'web.serverSettings.restart.confirm' => '¿Reiniciar el gateway de opendray? Todas las sesiones de terminal abiertas se reconectarán automáticamente.',
 			_ => null,
 		} ?? switch (path) {
+			'web.serverSettings.restart.confirm' => '¿Reiniciar el gateway de opendray? Todas las sesiones de terminal abiertas se reconectarán automáticamente.',
 			'web.serverSettings.restart.overlay' => 'Reiniciando servidor…',
 			'web.serverSettings.restart.waiting' => ({required Object tick}) => 'Esperando a /health · ${tick}s',
 			'web.serverSettings.restart.timedOutTitle' => 'Se agotó el tiempo del reinicio',
@@ -10620,9 +10626,9 @@ extension on TranslationsEs {
 			'web.knowledge.kb.unlocked' => 'Desbloqueada — la IA volverá a gestionar esta página',
 			'web.knowledge.kb.regenerating' => 'Regenerando en segundo plano…',
 			'web.knowledge.kb.kinds.kb_infrastructure' => 'Infraestructura',
-			'web.knowledge.kb.kinds.kb_conventions' => 'Convenciones',
 			_ => null,
 		} ?? switch (path) {
+			'web.knowledge.kb.kinds.kb_conventions' => 'Convenciones',
 			'web.knowledge.kb.kinds.kb_lessons' => 'Lecciones',
 			'web.knowledge.kb.kinds.kb_reusable' => 'Funciones reutilizables',
 			'web.knowledge.kb.foundational' => 'Fundacional',
@@ -10697,6 +10703,9 @@ extension on TranslationsEs {
 			'web.knowledge.distill.retirement.low_successHint' => 'Las sesiones que cargan este skill siguen terminando en fallo — el bucle de resultados propone retirarlo',
 			'web.knowledge.distill.retirement.dormant' => 'inactivo',
 			'web.knowledge.distill.retirement.dormantHint' => 'Se usó alguna vez, pero lleva 45+ días sin referencias — el bucle de resultados propone retirarlo',
+			'web.knowledge.distill.retirementEmpty' => 'Sin candidatos a retiro: todas las habilidades aportan.',
+			'web.knowledge.distill.retirementHint' => 'Habilidades que el bucle de resultados propone descartar; desactiva las que consideres.',
+			'web.knowledge.distill.retirementTitle' => 'Candidatos a retiro',
 			'web.knowledge.graph.tab' => 'Grafo',
 			'web.knowledge.graph.intro' => 'El mapa de relaciones de todo lo que la IA ha aprendido: qué proyectos comparten tecnología, qué skills y trampas se asocian a qué entidades. Comprueba aquí el radio de impacto de un nodo ANTES de tocar infraestructura compartida.',
 			'web.knowledge.graph.empty' => 'Sin conocimiento aún — el grafo se construye solo mientras corren las sessions: el barrido de anclaje extrae entidades del trabajo de proyecto y la destilación añade playbooks y skills. Vuelve tras unas cuantas sesiones de trabajo.',
@@ -11063,6 +11072,7 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.bypass.labelClaude' => 'Omitir permisos',
 			'sessions.spawnSheet.bypass.labelCodex' => 'Omitir aprobaciones y sandbox',
 			'sessions.spawnSheet.bypass.labelGemini' => 'Modo YOLO',
+			'sessions.spawnSheet.bypass.labelAntigravity' => 'Omitir permisos / YOLO',
 			'sessions.spawnSheet.bypass.subtitleOn' => 'Esta session se ejecutará con autonomía elevada.',
 			'sessions.spawnSheet.bypass.subtitleOff' => 'Desactivado. Las confirmaciones y los prompts se comportan de forma normal.',
 			'sessions.spawnSheet.noProviders.title' => 'No hay proveedores configurados',
@@ -11130,13 +11140,13 @@ extension on TranslationsEs {
 			'mcp.popup.viewRawSubtitle' => 'Inspector de solo lectura para el JSON del servidor',
 			'mcp.popup.deleteLabel' => 'Eliminar',
 			'mcp.kv.transport' => 'Transport',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.kv.description' => 'Descripción',
 			'mcp.kv.command' => 'Command',
 			'mcp.kv.args' => 'Args',
 			'mcp.kv.headers' => 'Headers',
 			'mcp.deleteServerBody' => ({required Object id}) => 'Elimina el directorio del vault para ${id}. Las sesiones que referencian este servidor dejan de poder iniciarlo.',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.deleteServerSnack' => ({required Object id}) => 'Eliminado ${id}.',
 			'mcp.serversCount' => ({required Object count}) => 'Servidores (${count})',
 			'mcp.secretsCount' => ({required Object count}) => 'Secretos (${count})',
@@ -11644,13 +11654,13 @@ extension on TranslationsEs {
 			'githosts.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'githosts.errorPrefix.toggle' => 'Error al alternar',
 			'githosts.errorPrefix.delete' => 'Error al eliminar',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.form.kindLabel' => 'Tipo',
 			'githosts.form.hostLabel' => 'Host',
 			'githosts.form.nameLabel' => 'Nombre',
 			'githosts.form.nameHint' => 'work-github, personal-gitlab, …',
 			'githosts.form.kinds.github' => 'GitHub',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.form.kinds.gitlab' => 'GitLab',
 			'githosts.form.kinds.bitbucket' => 'Bitbucket',
 			'githosts.form.kinds.gitea' => 'Gitea',
@@ -12158,13 +12168,13 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.gitRoot' => 'Raíz de git',
 			'settings.serverSettings.fields.personalPrefix' => 'Prefijo personal',
 			'settings.serverSettings.fields.projectsPrefix' => 'Prefijo de proyectos',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.registryRoot' => 'Raíz del registro',
 			'settings.serverSettings.fields.secretsFile' => 'Archivo de secretos',
 			'settings.serverSettings.fields.backend' => 'Backend',
 			'settings.serverSettings.fields.store' => 'Almacén',
 			'settings.serverSettings.fields.defaultTopK' => 'Top-k por defecto',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.similarityThreshold' => 'Umbral de similitud',
 			'settings.serverSettings.fields.defaultScope' => 'Ámbito por defecto',
 			'settings.serverSettings.fields.preserveHelper' => 'En blanco para conservar el actual.',
