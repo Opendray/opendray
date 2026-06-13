@@ -59,7 +59,11 @@ func renderMCP(providerID, baseDir, cwd string, servers []MCPServer) ([]string, 
 		return renderClaudeMCP(baseDir, servers)
 	case "codex":
 		return renderCodexMCP(baseDir, servers)
-	case "gemini":
+	case "gemini", "antigravity":
+		// Antigravity (agy) is gemini-lineage: it keeps its config under
+		// ~/.gemini/antigravity-cli/ and reads the same workspace
+		// <cwd>/.gemini/settings.json mcpServers map gemini does, so the
+		// identical non-destructive merge attaches opendray-memory.
 		return renderGeminiMCP(cwd, servers)
 	default:
 		// Provider declared supportsMcp=true but we have no renderer

@@ -1,0 +1,84 @@
+{
+  "$schema": "https://opendray.dev/schemas/manifest-v2.json",
+  "id": "antigravity",
+  "displayName": "Antigravity CLI",
+  "displayName_zh": "Antigravity CLI",
+  "description": "Google Antigravity CLI (agy) — agentic coding with Gemini / Claude / GPT-OSS models, sandbox, and MCP plugins",
+  "description_zh": "Google Antigravity CLI（agy）—— 支持 Gemini / Claude / GPT-OSS 多模型、沙盒与 MCP 插件的智能编码助手",
+  "icon": "🪐",
+  "version": "1.0.0",
+  "kind": "cli",
+  "executable": "agy",
+  "npmPackage": "",
+  "modelFlag": "--model",
+  "knownModels": [
+    "Gemini 3.5 Flash (Medium)",
+    "Gemini 3.5 Flash (High)",
+    "Gemini 3.1 Pro (High)",
+    "Gemini 3.1 Pro (Low)",
+    "Claude Sonnet 4.6 (Thinking)",
+    "Claude Opus 4.6 (Thinking)",
+    "GPT-OSS 120B (Medium)"
+  ],
+  "capabilities": {
+    "supportsResume": true,
+    "supportsStream": true,
+    "supportsImages": true,
+    "supportsMcp": true
+  },
+  "configSchema": [
+    {
+      "key": "authNote",
+      "label": "Authentication",
+      "label_zh": "认证",
+      "type": "note",
+      "group": "auth",
+      "description": "Antigravity signs in with your Google / Antigravity account — run `agy` once in a terminal to log in. No API key is set here.",
+      "description_zh": "Antigravity 使用你的 Google / Antigravity 账号登录 —— 先在终端运行一次 `agy` 完成登录。此处无需填写 API 密钥。"
+    },
+    {
+      "key": "bypassPermissions",
+      "label": "Bypass Permissions",
+      "label_zh": "跳过权限检查",
+      "type": "boolean",
+      "group": "runtime",
+      "default": false,
+      "cliFlag": "--dangerously-skip-permissions",
+      "description": "Auto-approve all tool permission requests — full autonomous mode",
+      "description_zh": "自动批准所有工具权限请求 —— 完全自主模式"
+    },
+    {
+      "key": "sandbox",
+      "label": "Sandbox",
+      "label_zh": "沙盒",
+      "type": "boolean",
+      "group": "runtime",
+      "default": false,
+      "cliFlag": "--sandbox",
+      "description": "Run with terminal restrictions enabled (sandboxed shell)",
+      "description_zh": "启用终端限制运行（沙盒 shell）"
+    },
+    {
+      "key": "command",
+      "label": "Command Path",
+      "label_zh": "命令路径",
+      "type": "string",
+      "group": "advanced",
+      "placeholder": "agy"
+    },
+    {
+      "key": "extraArgs",
+      "label": "Extra CLI Args",
+      "label_zh": "额外 CLI 参数",
+      "type": "args",
+      "group": "advanced"
+    }
+  ],
+  "ui": {
+    "activityBar": {
+      "id": "antigravity",
+      "icon": "🪐",
+      "title": "Antigravity"
+    }
+  }
+}

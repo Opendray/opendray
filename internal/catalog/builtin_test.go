@@ -2,16 +2,19 @@ package catalog
 
 import "testing"
 
-// TestLoadBuiltin_AllFourPresent guards the M2 catalog scope locked
-// in ADR 0004: backend ships claude/codex/gemini/shell, no more.
-// If you intentionally add a fifth manifest, update ADR 0004 and this
-// test together.
-func TestLoadBuiltin_AllFourPresent(t *testing.T) {
+// TestLoadBuiltin_AllPresent guards the catalog's builtin set: the M2
+// scope (claude/codex/gemini/shell, ADR 0004) plus antigravity (agy),
+// added as a gemini-lineage cloud CLI. If you intentionally add another
+// manifest, update ADR 0004 and this test together.
+func TestLoadBuiltin_AllPresent(t *testing.T) {
 	manifests, hashes, err := LoadBuiltin()
 	if err != nil {
 		t.Fatalf("LoadBuiltin: %v", err)
 	}
-	want := map[string]bool{"claude": true, "codex": true, "gemini": true, "shell": true}
+	want := map[string]bool{
+		"claude": true, "codex": true, "gemini": true,
+		"shell": true, "antigravity": true,
+	}
 	if len(manifests) != len(want) {
 		t.Errorf("got %d manifests, want %d", len(manifests), len(want))
 	}

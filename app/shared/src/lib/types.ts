@@ -96,6 +96,10 @@ export type ConfigFieldType =
   | 'select'
   | 'secret'
   | 'args'
+  // Read-only informational row — label + description, no input. Used
+  // for providers whose auth lives outside opendray (e.g. Antigravity's
+  // Google login).
+  | 'note'
 
 export interface ConfigField {
   key: string
